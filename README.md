@@ -1,4 +1,9 @@
 # Viadot
+<p>
+<a href="https://github.com/psf/black" target="_blank">
+    <img src="https://img.shields.io/badge/code%20style-black-000000.svg" alt="Build">
+</a>
+</p>
 A simple data ingestion library to guide data flows from some places to other places
 
 ## Getting Data from a Source
@@ -30,4 +35,19 @@ cd tests/ && pytest .
 run.sh
 poetry shell
 FLOW_NAME=supermetrics_to_azure_sql; python -m viadot.flows.$FLOW_NAME
+```
+
+## Uploading pkg to PyPi
+
+Generate the `requirements.txt` file from poetry.
+
+```bash
+poetry export -f requirements.txt --output requirements.txt --with-credentials --dev
+```
+
+And then publish with poetry.
+
+```bash
+poetry update
+poetry publish --build
 ```
