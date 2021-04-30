@@ -12,6 +12,7 @@ from .base import Source
 
 logger = logging.get_logger(__name__)
 
+
 class Supermetrics(Source):
     """
     A class implementing the Supermetrics API.
@@ -26,8 +27,9 @@ class Supermetrics(Source):
         by default None
     """
 
+    API_ENDPOINT = "https://api.supermetrics.com/enterprise/v2/query/data/json"
+
     def __init__(self, *args, query_params: Dict[str, Any] = None, **kwargs):
-        API_ENDPOINT = "https://api.supermetrics.com/enterprise/v2/query/data/json"
         DEFAULT_CREDENTIALS = local_config.get("SUPERMETRICS")
         credentials = kwargs.pop("credentials", DEFAULT_CREDENTIALS)
         super().__init__(*args, credentials=credentials, **kwargs)
@@ -59,12 +61,12 @@ class Supermetrics(Source):
         self.query_params["api_key"] = self.credentials["API_KEY"]
         params = {"json": json.dumps(self.query_params)}
         try:
-            response = requests.get(API_ENDPOINT, params=params)
+            response = requests.get(self.API_ENDPOINT, params=params)
         except ConnectionError as e:
             # retry once
             logger.warning(f"Error: \n\n{e} \n\nRetrying once in 5s...")
             time.sleep(5)
-            response = requests.get(API_ENDPOINT, params=params)
+            response = requests.get(self.API_ENDPOINT, params=params)
         assert response.ok
 
         response_json = response.json()
