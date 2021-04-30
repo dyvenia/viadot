@@ -31,3 +31,18 @@ run.sh
 poetry shell
 FLOW_NAME=supermetrics_to_azure_sql; python -m viadot.flows.$FLOW_NAME
 ```
+
+## Uploading pkg to PyPi
+
+Generate the `requirements.txt` file from poetry.
+
+```bash
+poetry export -f requirements.txt --output requirements.txt --with-credentials --dev
+```
+
+And then publish with poetry.
+
+```bash
+poetry update
+poetry publish --build
+```
