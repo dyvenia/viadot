@@ -1,0 +1,23 @@
+site_name: Viadot Docs
+nav:
+  - Home: index.md
+  - About: about.md
+  - Howtos:
+      - Flows: howtos/flows.md
+  - Tutorials:
+      - Tutorials: tutorials/placeholder.md
+  - References:
+      - Sources: references/sources.md
+      # - "Task library": references/sources.md
+theme:
+  name: "material"
+  features:
+    - navigation.tabs
+plugins:
+  - search
+  - mkdocstrings:
+      handlers:
+        python:
+          rendering:
+            show_root_heading: yes
+dev_addr: "0.0.0.0:8000"
