@@ -1,4 +1,9 @@
 # Viadot
+<p>
+<a href="https://github.com/psf/black" target="_blank">
+    <img src="https://img.shields.io/badge/code%20style-black-000000.svg" alt="Build">
+</a>
+</p>
 A simple data ingestion library to guide data flows from some places to other places
 
 ## Getting Data from a Source
