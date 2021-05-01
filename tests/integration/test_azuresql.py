@@ -13,7 +13,7 @@ def azure_sql(TEST_CSV_FILE_PATH, TEST_CSV_FILE_BLOB_PATH):
     azstorage = AzureBlobStorage()
     azstorage.to_storage(from_path=TEST_CSV_FILE_PATH, to_path=TEST_CSV_FILE_BLOB_PATH)
 
-    azure_sql = AzureSQL()
+    azure_sql = AzureSQL(config_key="AZURE_SQL")
 
     yield azure_sql
 

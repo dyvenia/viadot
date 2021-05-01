@@ -35,9 +35,4 @@ class AzureBlobStorage(Source):
             container=container_name, blob=blob_path
         )
 
-        with open(from_path, "rb") as data:
-            content_settings = ContentSettings(content_type="text/plain")
-            blob_client.upload_blob(data, overwrite=True)
-            blob_client.set_http_headers(content_settings=content_settings)
-
         return True

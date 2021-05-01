@@ -15,7 +15,7 @@ RUN groupadd docker && \
 RUN echo "Acquire::Check-Valid-Until \"false\";\nAcquire::Check-Date \"false\";" | cat > /etc/apt/apt.conf.d/10no--check-valid-until
 
 # System packages
-RUN apt-get update && yes | apt-get install gcc unixodbc-dev build-essential curl graphviz sudo
+RUN apt-get update && yes | apt-get install vim gcc unixodbc-dev build-essential curl graphviz sudo
 
 # Azure CLI
 RUN curl -sL https://aka.ms/InstallAzureCLIDeb | bash
@@ -24,10 +24,12 @@ RUN curl -sL https://aka.ms/InstallAzureCLIDeb | bash
 RUN curl https://packages.microsoft.com/keys/microsoft.asc | apt-key add - && \
     curl https://packages.microsoft.com/config/debian/10/prod.list > /etc/apt/sources.list.d/mssql-release.list && \
     apt-get update && \
+    apt-get install libsqliteodbc && \
     ACCEPT_EULA=Y apt-get install -y msodbcsql17 && \
     ACCEPT_EULA=Y apt-get install -y mssql-tools && \
     echo 'export PATH="$PATH:/opt/mssql-tools/bin"' >> ~/.bashrc
 
+COPY docker/odbcinst.ini /etc
 
 # Python env
 WORKDIR /code

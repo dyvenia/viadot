@@ -1,13 +1,14 @@
 site_name: Viadot Docs
 nav:
-  - Home: index.md
-  - About: about.md
+  - Home: home.md
   - Howtos:
+      - "Config File": howtos/config_file.md
       - Flows: howtos/flows.md
   - Tutorials:
       - Tutorials: tutorials/placeholder.md
   - References:
-      - Sources: references/sources.md
+      - "SQL Sources": references/sql_sources.md
+      - "API Sources": references/api_sources.md
       # - "Task library": references/sources.md
 theme:
   name: "material"
@@ -16,6 +17,8 @@ theme:
 plugins:
   - search
   - mkdocstrings:
+      watch:
+        - viadot
       handlers:
         python:
           rendering:
