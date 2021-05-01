@@ -14,13 +14,13 @@ TABLE = "test_supermetrics"
 
 @pytest.fixture
 def supermetrics():
-    supermetrics = Supermetrics()
+    supermetrics = Supermetrics(config_key="SUPERMETRICS")
     yield supermetrics
 
 
 @pytest.fixture
 def azstorage():
-    azstorage = AzureBlobStorage()
+    azstorage = AzureBlobStorage(config_key="AZURE_BLOB_STORAGE")
     yield azstorage
     os.remove(FILE_PATH)
 
@@ -66,7 +66,7 @@ def test_upload(azstorage):
 
 
 def test_bulk_insert():
-    azuresql = AzureSQL()
+    azuresql = AzureSQL(config_key="AZURE_SQL")
     azuresql.create_table(
         schema=SCHEMA, table=TABLE, dtypes=dtypes, if_exists="replace"
     )
