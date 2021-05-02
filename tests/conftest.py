@@ -6,12 +6,12 @@ import pytest
 
 @pytest.fixture(scope="session")
 def TEST_SUPERMETRICS_FILE_PATH():
-    return "/home/viadot/tests/integration/test_supermetrics.csv"
+    return "test_supermetrics.csv"
 
 
 @pytest.fixture(scope="session")
 def TEST_CSV_FILE_PATH():
-    return "/home/viadot/tests/test_data_countries.csv"
+    return "test_data_countries.csv"
 
 
 @pytest.fixture(scope="session")
