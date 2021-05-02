@@ -4,6 +4,15 @@
     <img src="https://img.shields.io/badge/code%20style-black-000000.svg" alt="Build">
 </a>
 </p>
+
+---
+
+**Documentation**: <a href="https://dyvenia.github.io/viadot/" target="_blank">https://dyvenia.github.io/viadot/</a>
+
+**Source Code**: <a href="https://github.com/dyvenia/viadot" target="_blank">https://github.com/dyvenia/viadot</a>
+
+---
+
 A simple data ingestion library to guide data flows from some places to other places
 
 ## Getting Data from a Source
