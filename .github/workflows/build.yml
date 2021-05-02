@@ -62,7 +62,7 @@ jobs:
       - name: Test with pytest
         if: always()
         env:
-          VIADOT_CONFIG_PATH: .config/credentials.json
+          VIADOT_CONFIG_PATH: .config/credentials.json.template
         run: |
           pytest tests/unit
 
