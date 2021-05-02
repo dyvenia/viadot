@@ -138,7 +138,7 @@ dmypy.json
 .azure
 
 # Viadot
-.config
+.config/credentials.json
 .local
 *.csv
 
