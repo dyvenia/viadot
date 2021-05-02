@@ -4,8 +4,9 @@ import pytest
 from os.path import expanduser, join
 from viadot.config import Config
 
-LOCAL_CREDENTIALS_PATH = "/home/viadot/tests/unit/credentials.json"
 USER_HOME = expanduser("~")
+UNIT_TESTS_DIR_PATH = os.path.dirname(os.path.realpath(__file__))
+LOCAL_CREDENTIALS_PATH = os.path.join(UNIT_TESTS_DIR_PATH, "credentials.json")
 
 
 @pytest.fixture(scope="session")

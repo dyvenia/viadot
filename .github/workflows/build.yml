@@ -16,8 +16,8 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        # 3.9 doesn't work yet
-        python-version: [3.7, 3.8]
+        # 3.8+. 3.9 should be supported by late 2021.
+        python-version: [3.8]
 
     steps:
       - uses: actions/checkout@v2
@@ -45,23 +45,22 @@ jobs:
       - name: Format with black
         id: blackCheck
         if: always()
-        run: black --check --line-length 88 .
+        run: black --check .
         continue-on-error: true
 
       - name: Commit Black changes to the pull request
         if: ${{ always() && steps.blackCheck.outcome == 'failure' }}
         run: |
-          black --line-length 88 .
           git config --global user.name 'github-actions[bot]'
           git config --global user.email 'github-actions[bot]@users.noreply.github.com'
           git remote set-url origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/$GITHUB_REPOSITORY
-          git fetch
+          black .
           git checkout $GITHUB_HEAD_REF
           git commit -am "🎨 Format Python code with Black"
           git push
+
       - name: Test with pytest
-        env:
-          VIADOT_CONFIG_PATH: .config/credentials.json.template
+        if: always()
         run: |
           pytest tests/unit
 
