@@ -75,9 +75,10 @@ jobs:
     runs-on: ubuntu-latest
     if: github.event_name == 'push'
     steps:
+      - name: Install MkDocs
+        run: pip install mkdocs-material
       - name: Publish docs to GitHub Pages
-      - run: pip install mkdocs-material
-      - run: mkdocs gh-deploy --force
+        run: mkdocs gh-deploy --force
 
   publish_docker:
     needs: build
