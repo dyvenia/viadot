@@ -62,7 +62,7 @@ def test_fetch_supermetrics(supermetrics):
 
 
 def test_upload(azstorage):
-    azstorage.to_storage(from_path=FILE_PATH, to_path=BLOB_PATH)
+    azstorage.to_storage(from_path=FILE_PATH, to_path=BLOB_PATH, overwrite=True)
 
 
 def test_bulk_insert():

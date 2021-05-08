@@ -11,7 +11,9 @@ def azure_sql(TEST_CSV_FILE_PATH, TEST_CSV_FILE_BLOB_PATH):
 
     # Upload the test file to Blob Storage.
     azstorage = AzureBlobStorage()
-    azstorage.to_storage(from_path=TEST_CSV_FILE_PATH, to_path=TEST_CSV_FILE_BLOB_PATH)
+    azstorage.to_storage(
+        from_path=TEST_CSV_FILE_PATH, to_path=TEST_CSV_FILE_BLOB_PATH, overwrite=True
+    )
 
     azure_sql = AzureSQL(config_key="AZURE_SQL")
 
