@@ -75,8 +75,12 @@ jobs:
     runs-on: ubuntu-latest
     if: github.event_name == 'push'
     steps:
+      - name: Checkout 🛎️
+        uses: actions/checkout@v2.3
       - name: Install MkDocs
         run: pip install mkdocs-material
+      - name: Build docs
+        run: mkdocs build
       - name: Publish docs to GitHub Pages
         run: cd ../ && mkdocs gh-deploy --force
 
