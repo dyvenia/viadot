@@ -24,7 +24,7 @@ class AzureBlobStorage(Source):
         credentials = credentials or DEFAULT_CREDENTIALS
         super().__init__(*args, credentials=credentials, **kwargs)
 
-    def to_storage(self, from_path: str, to_path: str):
+    def to_storage(self, from_path: str, to_path: str, overwrite: bool = False):
 
         conn_str = self.credentials["CONNECTION_STRING"]
         blob_service_client = BlobServiceClient.from_connection_string(conn_str)
@@ -34,5 +34,8 @@ class AzureBlobStorage(Source):
         blob_client = blob_service_client.get_blob_client(
             container=container_name, blob=blob_path
         )
+
+        with open(from_path, "rb") as data:
+            blob_client.upload_blob(data, overwrite=overwrite)
 
         return True
