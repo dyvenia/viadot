@@ -78,7 +78,7 @@ jobs:
       - name: Install MkDocs
         run: pip install mkdocs-material
       - name: Publish docs to GitHub Pages
-        run: mkdocs gh-deploy --force
+        run: cd ../ && mkdocs gh-deploy --force
 
   publish_docker:
     needs: build
