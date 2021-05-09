@@ -34,9 +34,9 @@ COPY docker/odbcinst.ini /etc
 # Python env
 WORKDIR /code
 COPY requirements.txt /code/
-RUN pip install --upgrade pip && \
-    pip install -r requirements.txt && \
-    pip install .
+RUN pip install --upgrade pip
+RUN pip install -r requirements.txt
+RUN pip install .
 
 
 # Workdir
