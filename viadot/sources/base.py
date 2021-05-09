@@ -61,9 +61,10 @@ class SQL(Source):
         *args,
         **kwargs,
     ):
-        if config_key != None:
+        if config_key:
             DEFAULT_CREDENTIALS = local_config.get(config_key)
             credentials = kwargs.pop("credentials", DEFAULT_CREDENTIALS)
+            credentials["driver"] = "ODBC Driver 17 for SQL Server"
         else:
             credentials = {
                 "driver": driver,
@@ -89,14 +90,15 @@ class SQL(Source):
             conn_str += "UID=" + self.credentials["user"] + ";"
         if "password" in self.credentials and self.credentials["password"] != None:
             conn_str += "PWD=" + self.credentials["password"] + ";"
+        print(conn_str)
         return conn_str
 
     @property
-    def con(self):
-        """A singleton connection
+    def con(self) -> pyodbc.Connection:
+        """A singleton-like property for initiating a connection to the database.
 
         Returns:
-            [type]: [description]
+            pyodbc.Connection: database connection.
         """
         if not self._con:
             self._con = pyodbc.connect(self.conn_str)
