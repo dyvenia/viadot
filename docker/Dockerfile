@@ -15,7 +15,7 @@ RUN groupadd docker && \
 RUN echo "Acquire::Check-Valid-Until \"false\";\nAcquire::Check-Date \"false\";" | cat > /etc/apt/apt.conf.d/10no--check-valid-until
 
 # System packages
-RUN apt-get update && yes | apt-get install vim gcc unixodbc-dev libsqliteodbc build-essential curl graphviz sudo
+RUN apt-get update && yes | apt-get install vim gcc unixodbc-dev build-essential curl graphviz sudo
 
 # Azure CLI
 RUN curl -sL https://aka.ms/InstallAzureCLIDeb | bash
