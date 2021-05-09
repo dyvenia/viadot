@@ -76,7 +76,7 @@ jobs:
     if: github.event_name == 'push'
     steps:
       - name: Checkout 🛎️
-        uses: actions/checkout@v2.3
+        uses: actions/checkout@v2
       - name: Install MkDocs
         run: pip install mkdocs-material
       - name: Build docs
