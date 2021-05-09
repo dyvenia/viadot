@@ -13,6 +13,7 @@ class Config(dict):
                 config = config[key]
             return cls(**config)
 
+
 try:
     local_config = Config.from_json(join(USER_HOME, ".config", "credentials.json"))
 except FileNotFoundError:

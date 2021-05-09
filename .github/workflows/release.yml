@@ -1,0 +1,103 @@
+# This workflow will upload a Python Package using Twine when a release is created
+# For more information see: https://help.github.com/en/actions/language-and-framework-guides/using-python-with-github-actions#publishing-to-package-registries
+
+name: Publish a release to Docker registry and PyPI
+
+# Controls when the action will run.
+on:
+  # Triggers the workflow when a release is created
+  release:
+    types: [created]
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+env:
+  IMAGE_NAME: viadot
+  PACKAGE_NAME: viadot
+
+# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+jobs:
+  # Validate the docker image.
+  # See also https://docs.docker.com/docker-hub/builds/automated-testing/
+  test_docker:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Test docker image
+        run: |
+          if [ -f docker-compose.test.yml ]; then
+            docker-compose --file docker/docker-compose.test.yml build
+            docker-compose --file docker/docker-compose.test.yml run sut
+          else
+            docker build . --file docker/Dockerfile
+          fi
+  # Push the image to GitHub Packages.
+  # See also https://docs.docker.com/docker-hub/builds/
+  publish_docker:
+    # Ensure test job passes before pushing the image.
+    needs: test_docker
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Build
+        run: docker build . --file docker/Dockerfile --tag $IMAGE_NAME
+
+      - name: Log into registry
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login docker.pkg.github.com -u ${{ github.actor }} --password-stdin
+
+      - name: Push
+        run: |
+          IMAGE_ID=docker.pkg.github.com/${{ github.repository }}/$IMAGE_NAME
+          # Change all uppercase to lowercase
+          IMAGE_ID=$(echo $IMAGE_ID | tr '[A-Z]' '[a-z]')
+          # Strip git ref prefix from version
+          VERSION=$(echo "${{ github.ref }}" | sed -e 's,.*/\(.*\),\1,')
+          # Strip "v" prefix from tag name
+          [[ "${{ github.ref }}" == "refs/tags/"* ]] && VERSION=$(echo $VERSION | sed -e 's/^v//')
+          # Use Docker `latest` tag convention
+          [ "$VERSION" == "main" ] && VERSION=latest
+          echo IMAGE_ID=$IMAGE_ID
+          echo VERSION=$VERSION
+          docker tag $IMAGE_NAME $IMAGE_ID:$VERSION
+          docker push $IMAGE_ID:$VERSION
+  publish_pypi:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+      - uses: actions/checkout@v2
+
+      # Sets up python
+      - uses: actions/setup-python@v2
+        with:
+          python-version: 3.8
+
+      # Automatically bump package version
+      - name: Autobump version
+        run: |
+          # from refs/tags/v1.2.3 get 1.2.3
+          VERSION=$(echo $GITHUB_REF | sed 's#.*/v##')
+          PLACEHOLDER='__version__ = "develop"'
+          VERSION_FILE='$PACKAGE_NAME/__init__.py'
+          # ensure the placeholder is there. If grep doesn't find the placeholder
+          # it exits with exit code 1 and github actions aborts the build. 
+          grep "$PLACEHOLDER" "$VERSION_FILE"
+          sed -i "s/$PLACEHOLDER/__version__ = \"${VERSION}\"/g" "$VERSION_FILE"
+        shell: bash
+
+      # Install dependencies
+      - name: "Installs dependencies"
+        run: |
+          python3 -m pip install --upgrade pip
+          python3 -m pip install setuptools wheel twine
+
+      # Build and upload to PyPI
+      - name: "Builds and uploads to PyPI"
+        run: |
+          python3 setup.py sdist bdist_wheel
+          python3 -m twine upload dist/*
+        env:
+          TWINE_USERNAME: acivitillo
+          TWINE_PASSWORD: ${{ secrets.TWINE_TOKEN }}

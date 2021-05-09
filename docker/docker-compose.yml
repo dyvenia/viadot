@@ -2,9 +2,6 @@ version: "3"
 
 services:
   viadot:
-    build:
-      context: ../
-      dockerfile: docker/Dockerfile
     image: viadot
     container_name: viadot_testing
     volumes:
@@ -13,16 +10,11 @@ services:
     stdin_open: true
     restart: "always"
   viadot_docs:
-    build:
-      context: ../
-      dockerfile: docker/Dockerfile
     image: viadot
     container_name: viadot_docs
     volumes:
       - ../:/home/viadot
     working_dir: /home/viadot
-    tty: true
-    stdin_open: true
     ports: 
       - 8000:8000
     command: "mkdocs serve"
