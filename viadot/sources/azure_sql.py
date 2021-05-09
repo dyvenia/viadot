@@ -1,10 +1,8 @@
 from typing import Any, Dict, List, Literal
 
-import pyodbc
 from prefect.utilities import logging
 
-from ..config import local_config
-from .base import Source, SQL
+from .base import SQL
 
 logger = logging.get_logger(__name__)
 

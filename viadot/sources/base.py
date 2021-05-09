@@ -90,7 +90,6 @@ class SQL(Source):
             conn_str += "UID=" + self.credentials["user"] + ";"
         if "password" in self.credentials and self.credentials["password"] != None:
             conn_str += "PWD=" + self.credentials["password"] + ";"
-        print(conn_str)
         return conn_str
 
     @property

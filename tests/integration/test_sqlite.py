@@ -6,7 +6,7 @@ TABLE = "test"
 
 
 @pytest.fixture(scope="session")
-def sqlite(TEST_CSV_FILE_PATH):
+def sqlite():
 
     sqlite = SQLite(driver="{SQLite}", server="localhost", db="testfile.sqlite")
 

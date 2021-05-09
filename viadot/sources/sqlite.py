@@ -1,12 +1,4 @@
-from typing import Any, Dict, List, Literal
-
-import pyodbc
-from prefect.utilities import logging
-
-from ..config import local_config
-from .base import Source, SQL
-
-logger = logging.get_logger(__name__)
+from .base import SQL
 
 
 class SQLite(SQL):
