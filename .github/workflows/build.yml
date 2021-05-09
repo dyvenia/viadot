@@ -76,12 +76,9 @@ jobs:
     if: github.event_name == 'push'
     steps:
       - uses: actions/checkout@v2
-
-      - name: Install MkDocs
-        run: pip install mkdocs-material mkdocstrings
-
-      - name: Build & publish docs to GitHub Pages
-        run: mkdocs gh-deploy --force
+      - uses: actions/setup-python@v2
+      - run: pip install mkdocs-material mkdocstrings
+      - run: mkdocs gh-deploy --force
 
   publish_docker:
     needs: build
