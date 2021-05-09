@@ -78,7 +78,7 @@ jobs:
       - name: Checkout 🛎️
         uses: actions/checkout@v2
       - name: Install MkDocs
-        run: pip install mkdocs-material
+        run: pip install mkdocs-material mkdocstrings
       - name: Build & publish docs to GitHub Pages
         run: mkdocs gh-deploy --force
 
