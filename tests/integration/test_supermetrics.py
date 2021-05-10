@@ -1,5 +1,5 @@
-from viadot.sources import Supermetrics
 from viadot.config import local_config
+from viadot.sources import Supermetrics
 
 
 def test_connection():

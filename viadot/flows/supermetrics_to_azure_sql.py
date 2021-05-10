@@ -1,6 +1,8 @@
+from typing import Any, Dict, List
+
 from prefect import Flow
-from ..tasks import SupermetricsToCSV, BlobFromCSV, CreateTableFromBlob
-from typing import Dict, List, Any
+
+from ..tasks import BlobFromCSV, CreateTableFromBlob, SupermetricsToCSV
 
 supermetrics_to_csv_task = SupermetricsToCSV()
 csv_to_blob_storage_task = BlobFromCSV()
@@ -43,7 +45,10 @@ class SupermetricsToAzureSQL(Flow):
             query=self.query, path=self.local_file_path, flow=self
         )
         csv_to_blob_storage_task.bind(
-            from_path=self.local_file_path, to_path=self.blob_path, overwrite=self.overwrite_blob, flow=self
+            from_path=self.local_file_path,
+            to_path=self.blob_path,
+            overwrite=self.overwrite_blob,
+            flow=self,
         )
         blob_to_azure_sql_task.bind(
             blob_path=self.blob_path,

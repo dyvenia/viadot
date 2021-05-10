@@ -1,5 +1,6 @@
 import pyodbc
 import pytest
+
 from viadot.sources.azure_blob_storage import AzureBlobStorage
 from viadot.sources.azure_sql import AzureSQL
 

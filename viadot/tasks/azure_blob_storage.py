@@ -1,5 +1,6 @@
 import prefect
 from prefect import Task
+
 from ..sources import AzureBlobStorage
 
 
@@ -17,5 +18,7 @@ class BlobFromCSV(Task):
         blob_storage = AzureBlobStorage()
 
         logger.info(f"Copying from {from_path} to {to_path}...")
-        blob_storage.to_storage(from_path=from_path, to_path=to_path, overwrite=overwrite)
+        blob_storage.to_storage(
+            from_path=from_path, to_path=to_path, overwrite=overwrite
+        )
         logger.info(f"Successfully uploaded data to {to_path}.")

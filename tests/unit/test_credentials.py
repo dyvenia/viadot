@@ -1,7 +1,9 @@
 import json
 import os
+from os.path import dirname, expanduser, join, realpath
+
 import pytest
-from os.path import expanduser, join, dirname, realpath
+
 from viadot.config import Config
 
 USER_HOME = expanduser("~")
