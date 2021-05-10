@@ -1,6 +1,8 @@
+from typing import Any, Dict, Literal
+
 import prefect
 from prefect import Task
-from typing import Dict, Any, Literal
+
 from ..sources import AzureSQL
 
 
@@ -38,7 +40,7 @@ class CreateTableFromBlob(Task):
         logger = prefect.context.get("logger")
 
         # create table
-        azure_sql = AzureSQL()
+        azure_sql = AzureSQL(config_key="AZURE_SQL")
         azure_sql.create_table(
             schema=schema, table=table, dtypes=dtypes, if_exists=if_exists
         )

@@ -1,14 +1,13 @@
 import os
-import pandas
 from abc import abstractmethod
 from typing import Any, Dict, Literal
-import pyodbc
 
+import pandas
 import pyarrow as pa
+import pyodbc
+from prefect.utilities import logging
 
 from ..config import local_config
-
-from prefect.utilities import logging
 
 logger = logging.get_logger(__name__)
 

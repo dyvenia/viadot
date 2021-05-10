@@ -1,8 +1,10 @@
-import pytest
+import datetime
+import os
+
 import numpy
 import pyarrow
-import os
-import datetime
+import pytest
+
 from viadot.sources.uk_carbon_intensity import UKCarbonIntensity
 
 LOCAL_TESTS_PATH = "/home/viadot/tests"

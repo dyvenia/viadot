@@ -1,5 +1,6 @@
-import pytest
 import pandas
+import pytest
+
 from viadot.sources.sqlite import SQLite
 
 TABLE = "test"
