@@ -14,6 +14,7 @@ class SupermetricsToAzureSQL(Flow):
         query: Dict[str, Any] = None,
         dtypes: Dict[str, Any] = None,
         blob_path: str = None,
+        overwrite_blob: bool = True,
         table: str = None,
         schema: str = None,
         local_file_path: str = None,
@@ -22,11 +23,12 @@ class SupermetricsToAzureSQL(Flow):
         **kwargs: Dict[str, Any]
     ):
         self.query = query
-        self.dtypes = dtypes
+        self.local_file_path = local_file_path or "test.csv"
         self.blob_path = blob_path
+        self.overwrite_blob = overwrite_blob
         self.table = table
         self.schema = schema
-        self.local_file_path = local_file_path or "test.csv"
+        self.dtypes = dtypes
         self.if_exists = if_exists
         self.tasks = [
             supermetrics_to_csv_task,
@@ -41,7 +43,7 @@ class SupermetricsToAzureSQL(Flow):
             query=self.query, path=self.local_file_path, flow=self
         )
         csv_to_blob_storage_task.bind(
-            from_path=self.local_file_path, to_path=self.blob_path, flow=self
+            from_path=self.local_file_path, to_path=self.blob_path, overwrite=self.overwrite_blob, flow=self
         )
         blob_to_azure_sql_task.bind(
             blob_path=self.blob_path,
