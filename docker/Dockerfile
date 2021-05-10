@@ -37,14 +37,19 @@ COPY requirements.txt /code/
 RUN pip install --upgrade pip
 RUN pip install -r requirements.txt
 
+COPY . .
+RUN pip install .
+
+RUN rm -rf /code
+
 
 # Workdir
 ENV USER viadot
 ENV HOME="/home/$USER"
 WORKDIR ${HOME}
 
-RUN pip install .
-
 USER ${USER}
+
+
 
 EXPOSE 8000
