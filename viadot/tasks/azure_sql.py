@@ -1,6 +1,8 @@
+from typing import Any, Dict, Literal
+
 import prefect
 from prefect import Task
-from typing import Dict, Any, Literal
+
 from ..sources import AzureSQL
 
 

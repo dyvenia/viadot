@@ -1,6 +1,7 @@
 import os
 
 import pytest
+
 from viadot.config import local_config
 from viadot.sources import AzureBlobStorage, AzureSQL, Supermetrics
 

@@ -1,6 +1,8 @@
-import prefect
 import datetime
+
+import prefect
 from prefect import Task
+
 from viadot.sources import UKCarbonIntensity
 
 
