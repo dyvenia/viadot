@@ -77,6 +77,8 @@ jobs:
     steps:
       - name: Install MkDocs
         run: pip install mkdocs-material
+      - name: Install viadot
+        run: pip install .
       - name: Publish docs to GitHub Pages
         run: mkdocs gh-deploy --force
 
