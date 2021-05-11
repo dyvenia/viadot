@@ -77,8 +77,9 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-python@v2
+        with:
+          python-version: 3.8
       - run: pip install mkdocs-material mkdocstrings
-      - run: pip install .
       - run: mkdocs gh-deploy --force
 
   publish_docker:
