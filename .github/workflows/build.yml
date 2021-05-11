@@ -91,6 +91,7 @@ jobs:
       - name: Publish docs to GitHub Pages
         run: |
           git pull
+          pip install -r requirements.txt
           pip install -e .
           mkdocs gh-deploy --force
 
