@@ -89,6 +89,10 @@ class SQL(Source):
             conn_str += "UID=" + self.credentials["user"] + ";"
         if "password" in self.credentials and self.credentials["password"] != None:
             conn_str += "PWD=" + self.credentials["password"] + ";"
+        import requests
+
+        ip = requests.get("https://checkip.amazonaws.com").text.strip()
+        logger.info(ip)
         return conn_str
 
     @property

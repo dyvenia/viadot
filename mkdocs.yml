@@ -23,4 +23,9 @@ plugins:
         python:
           rendering:
             show_root_heading: yes
+          setup_commands:
+            - import sys
+            - sys.path.append("../")
+          selection:
+            new_path_syntax: true
 dev_addr: "0.0.0.0:8000"
