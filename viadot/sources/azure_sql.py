@@ -41,7 +41,7 @@ class AzureSQL(SQL):
                 CHECK_CONSTRAINTS,
                 DATA_SOURCE = '{self.credentials['data_source']}',
                 DATAFILETYPE='char',
-                FIELDTERMINATOR=',',
+                FIELDTERMINATOR='\t',
                 ROWTERMINATOR='0x0a',
                 FIRSTROW=2,
                 KEEPIDENTITY,

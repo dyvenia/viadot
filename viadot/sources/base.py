@@ -44,7 +44,7 @@ class Source:
                 out_df = df
         elif if_exists == "replace":
             out_df = df
-        out_df.to_csv(path, index=False)
+        out_df.to_csv(path, sep="\t", index=False)
         return True
 
 
