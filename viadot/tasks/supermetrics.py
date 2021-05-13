@@ -8,7 +8,7 @@ from ..sources import Supermetrics
 
 
 class SupermetricsToCSV(Task):
-    def __init__(self,  *args, max_retries: int = 5, retry_delay: timedelta.Timedelta = timedelta(seconds=10), **kwargs):
+    def __init__(self,  *args, max_retries: int = 5, retry_delay: timedelta = timedelta(seconds=10), **kwargs):
         super().__init__(
             name="supermetrics_to_csv",
             max_retries=max_retries,
@@ -20,7 +20,7 @@ class SupermetricsToCSV(Task):
     def __call__(self):
         """Download Supermetrics data to a CSV"""
 
-    def run(self, query: Dict[str, Any], path: str, max_retries: int = 5, retry_delay: timedelta.Timedelta = timedelta(seconds=10)):
+    def run(self, query: Dict[str, Any], path: str, max_retries: int = 5, retry_delay: timedelta = timedelta(seconds=10)):
 
         logger = prefect.context.get("logger")
 

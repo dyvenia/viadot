@@ -68,8 +68,8 @@ class Supermetrics(Source):
 
         try:
             response = requests.get(self.API_ENDPOINT, params=params)
-            r.raise_for_status()
-        except HTTPError, ConnectionError, Timeout as e:
+            response.raise_for_status()
+        except (HTTPError, ConnectionError, Timeout) as e:
             raise APIError(f"The API call to {self.API_ENDPOINT} failed.") from e
 
         return response.json()
