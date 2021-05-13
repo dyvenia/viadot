@@ -60,13 +60,7 @@ class Supermetrics(Source):
 
         self.query_params["api_key"] = self.credentials["API_KEY"]
         params = {"json": json.dumps(self.query_params)}
-        try:
-            response = requests.get(self.API_ENDPOINT, params=params)
-        except ConnectionError as e:
-            # retry once
-            logger.warning(f"Error: \n\n{e} \n\nRetrying once in 5s...")
-            time.sleep(5)
-            response = requests.get(self.API_ENDPOINT, params=params)
+        response = requests.get(self.API_ENDPOINT, params=params)
         assert response.ok
 
         response_json = response.json()
