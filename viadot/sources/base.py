@@ -136,7 +136,9 @@ class SQL(Source):
         else:
             fqn = f"{schema}.{table}"
         indent = "  "
-        dtypes_rows = [indent + f'"{col}"' + " " + dtype for col, dtype in dtypes.items()]
+        dtypes_rows = [
+            indent + f'"{col}"' + " " + dtype for col, dtype in dtypes.items()
+        ]
 
         dtypes_formatted = ",\n".join(dtypes_rows)
         create_table_sql = f"CREATE TABLE {fqn}(\n{dtypes_formatted}\n)"
