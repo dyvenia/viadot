@@ -6,11 +6,16 @@ from typing import Any, Dict
 import pandas as pd
 import requests
 from prefect.utilities import logging
+from requests.exceptions import HTTPError, ConnectionError, Timeout
 
 from ..config import local_config
 from .base import Source
 
 logger = logging.get_logger(__name__)
+
+
+class APIError(Exception):
+    pass
 
 
 class Supermetrics(Source):
@@ -60,12 +65,14 @@ class Supermetrics(Source):
 
         self.query_params["api_key"] = self.credentials["API_KEY"]
         params = {"json": json.dumps(self.query_params)}
-        response = requests.get(self.API_ENDPOINT, params=params)
-        assert response.ok
 
-        response_json = response.json()
+        try:
+            response = requests.get(self.API_ENDPOINT, params=params)
+            r.raise_for_status()
+        except HTTPError, ConnectionError, Timeout as e:
+            raise APIError(f"The API call to {self.API_ENDPOINT} failed.") from e
 
-        return response_json
+        return response.json()
 
     def to_df(self) -> pd.DataFrame:
         data = self.to_json()["data"]
