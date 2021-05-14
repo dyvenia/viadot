@@ -91,8 +91,6 @@ class SQL(Source):
             conn_str += "PWD=" + self.credentials["password"] + ";"
         import requests
 
-        ip = requests.get("https://checkip.amazonaws.com").text.strip()
-        logger.info(ip)
         return conn_str
 
     @property
