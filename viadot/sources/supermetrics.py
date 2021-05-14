@@ -6,7 +6,7 @@ from typing import Any, Dict
 import pandas as pd
 import requests
 from prefect.utilities import logging
-from requests.exceptions import HTTPError, ConnectionError, Timeout
+from requests.exceptions import ConnectionError, HTTPError, Timeout
 
 from ..config import local_config
 from .base import Source
