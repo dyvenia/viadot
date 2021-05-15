@@ -1,6 +1,6 @@
 # Using StatsToCSV and StatsToExcel class
 
-For downloading UK Carbon Intensity Statistics to a csv or excel file, Initialize the object.
+For downloading UK Carbon Intensity Statistics to a csv or excel file, use StatsToCSV or StatsToExcel class.
 
 ## Initialize the StatsToCSV and StatsToExcel
 ```python
