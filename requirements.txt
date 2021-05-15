@@ -33,7 +33,7 @@ lunr==0.5.8; python_version >= "3.5"
 markdown==3.3.4; python_version >= "3.6" and python_version < "4.0"
 markupsafe==1.1.1; python_version >= "3.6" and python_full_version < "3.0.0" and python_version < "4.0" or python_version >= "3.6" and python_version < "4.0" and python_full_version >= "3.5.0"
 marshmallow-oneofschema==2.1.0; python_version >= "3.6"
-marshmallow==3.11.1; python_version >= "3.6"
+marshmallow==3.12.1; python_version >= "3.6"
 mkdocs-autorefs==0.1.1; python_version >= "3.6" and python_version < "4.0"
 mkdocs-material-extensions==1.0.1; python_version >= "3.5"
 mkdocs-material==7.1.3
