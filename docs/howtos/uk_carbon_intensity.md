@@ -23,3 +23,6 @@ Optional, use days_back parameter to download statistics for this time.
 By default it is 10 days, but You can use for example 30, `run(filename, 30)`.
 
 ## Running tests
+
+To run tests of StatsToCSV and StatsToExcel class go into tests/prefect directory and run command:
+`pytest`
