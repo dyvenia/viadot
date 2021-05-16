@@ -35,6 +35,5 @@ def test_uk_carbon_intensity_to_excel(ukci_task_excel):
 def test_uk_carbon_intensity_to_excel_contain(ukci_task_excel):
     ukci_task_excel.run(path=TEST_FILE_PATH_EXCEL)
     excel_file = load_workbook(TEST_FILE_PATH_EXCEL)
-    excel_file2 = excel_file.active
-    value = excel_file2['A1'].value
+    value = excel_file['A1'].value
     assert value == "from"
