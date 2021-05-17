@@ -44,7 +44,7 @@ class Source:
                 out_df = df
         elif if_exists == "replace":
             out_df = df
-        out_df.to_csv(path, index=False)
+        out_df.to_csv(path, sep="\t", index=False)
         return True
 
     def to_excel(self, path: str, if_exists="replace"):
@@ -73,9 +73,10 @@ class SQL(Source):
         *args,
         **kwargs,
     ):
-        if config_key != None:
+        if config_key:
             DEFAULT_CREDENTIALS = local_config.get(config_key)
             credentials = kwargs.pop("credentials", DEFAULT_CREDENTIALS)
+            credentials["driver"] = "ODBC Driver 17 for SQL Server"
         else:
             credentials = {
                 "driver": driver,
@@ -101,14 +102,16 @@ class SQL(Source):
             conn_str += "UID=" + self.credentials["user"] + ";"
         if "password" in self.credentials and self.credentials["password"] != None:
             conn_str += "PWD=" + self.credentials["password"] + ";"
+        import requests
+
         return conn_str
 
     @property
-    def con(self):
-        """A singleton connection
+    def con(self) -> pyodbc.Connection:
+        """A singleton-like property for initiating a connection to the database.
 
         Returns:
-            [type]: [description]
+            pyodbc.Connection: database connection.
         """
         if not self._con:
             self._con = pyodbc.connect(self.conn_str)
@@ -144,7 +147,10 @@ class SQL(Source):
         else:
             fqn = f"{schema}.{table}"
         indent = "  "
-        dtypes_rows = [indent + col + " " + dtype for col, dtype in dtypes.items()]
+        dtypes_rows = [
+            indent + f'"{col}"' + " " + dtype for col, dtype in dtypes.items()
+        ]
+
         dtypes_formatted = ",\n".join(dtypes_rows)
         create_table_sql = f"CREATE TABLE {fqn}(\n{dtypes_formatted}\n)"
         if if_exists == "replace":

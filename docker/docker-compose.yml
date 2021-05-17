@@ -2,7 +2,7 @@ version: "3"
 
 services:
   viadot:
-    image: viadot
+    image: viadot:dev
     container_name: viadot_testing
     volumes:
       - ../:/home/viadot
@@ -10,7 +10,7 @@ services:
     stdin_open: true
     restart: "always"
   viadot_docs:
-    image: viadot
+    image: viadot:dev
     container_name: viadot_docs
     volumes:
       - ../:/home/viadot

@@ -1,10 +1,7 @@
 from typing import Any, Dict, List, Literal
-
-import pyodbc
 from prefect.utilities import logging
 
-from ..config import local_config
-from .base import SQL, Source
+from .base import SQL
 
 logger = logging.get_logger(__name__)
 
@@ -43,7 +40,7 @@ class AzureSQL(SQL):
                 CHECK_CONSTRAINTS,
                 DATA_SOURCE = '{self.credentials['data_source']}',
                 DATAFILETYPE='char',
-                FIELDTERMINATOR=',',
+                FIELDTERMINATOR='\t',
                 ROWTERMINATOR='0x0a',
                 FIRSTROW=2,
                 KEEPIDENTITY,

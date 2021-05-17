@@ -1,3 +1,4 @@
+import pyodbc
 import pytest
 
 from viadot.sources.azure_blob_storage import AzureBlobStorage
@@ -20,7 +21,15 @@ def azure_sql(TEST_CSV_FILE_PATH, TEST_CSV_FILE_BLOB_PATH):
 
     yield azure_sql
 
-    azure_sql.run(f"DROP TABLE {SCHEMA}.{TABLE}")
+    try:
+        azure_sql.run(f"DROP TABLE {SCHEMA}.{TABLE}")
+    except pyodbc.ProgrammingError:
+        # in case tests end prematurely
+        pass
+
+
+def test_connection(azure_sql):
+    azure_sql.con
 
 
 def test_create_table(azure_sql):
@@ -31,7 +40,7 @@ def test_create_table(azure_sql):
     assert result == True
 
 
-def test_bulk_insert(azure_sql, TEST_CSV_FILE_PATH, TEST_CSV_FILE_BLOB_PATH):
+def test_bulk_insert(azure_sql, TEST_CSV_FILE_BLOB_PATH):
     azure_sql.bulk_insert(
         schema=SCHEMA,
         table=TABLE,
