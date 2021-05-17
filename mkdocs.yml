@@ -4,11 +4,13 @@ nav:
   - Howtos:
       - "Config File": howtos/config_file.md
       - Flows: howtos/flows.md
+      - "Get Excel file": howtos/uk_carbon_intensity.md
   - Tutorials:
       - Tutorials: tutorials/placeholder.md
   - References:
       - "SQL Sources": references/sql_sources.md
       - "API Sources": references/api_sources.md
+      - "Tasks library": references/task_library.md
       # - "Task library": references/sources.md
 theme:
   name: "material"

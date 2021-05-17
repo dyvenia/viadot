@@ -47,6 +47,19 @@ class Source:
         out_df.to_csv(path, sep="\t", index=False)
         return True
 
+    def to_excel(self, path: str, if_exists="replace"):
+        df = self.to_df()
+        if if_exists == "append":
+            if os.path.isfile(path):
+                excel_df = pandas.read_excel(path)
+                out_df = pandas.concat([excel_df, df])
+            else:
+                out_df = df
+        elif if_exists == "replace":
+            out_df = df
+        out_df.to_excel(path, index=False, encoding="utf8")
+        return True
+
 
 class SQL(Source):
     def __init__(
