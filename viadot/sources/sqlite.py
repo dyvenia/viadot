@@ -1,5 +1,6 @@
 from .base import SQL
 
+
 class SQLite(SQL):
     """A SQLite source
 

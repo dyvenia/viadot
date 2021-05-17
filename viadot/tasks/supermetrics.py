@@ -50,7 +50,7 @@ class SupermetricsToCSV(Task):
             ds_user=ds_user,
             fields=fields,
             date_range_type=date_range_type,
-            max_rows=max_rows
+            max_rows=max_rows,
         )
         query = {param: val for param, val in query.items() if val is not None}
         supermetrics = Supermetrics()
