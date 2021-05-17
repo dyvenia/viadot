@@ -1,6 +1,8 @@
+from typing import Any, Dict, List
+
 from prefect import Flow
-from ..tasks import SupermetricsToCSV, BlobFromCSV, CreateTableFromBlob
-from typing import Dict, List, Any
+
+from ..tasks import BlobFromCSV, CreateTableFromBlob, SupermetricsToCSV
 
 supermetrics_to_csv_task = SupermetricsToCSV()
 csv_to_blob_storage_task = BlobFromCSV()

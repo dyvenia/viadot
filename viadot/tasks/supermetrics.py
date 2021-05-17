@@ -1,6 +1,8 @@
+from typing import Any, Dict
+
 import prefect
 from prefect import Task
-from typing import Dict, Any
+
 from ..sources import Supermetrics
 
 

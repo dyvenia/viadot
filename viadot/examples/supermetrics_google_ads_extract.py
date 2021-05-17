@@ -1,6 +1,7 @@
+from prefect.storage import github
+
 from ..config import local_config
 from ..flows.supermetrics_to_azure_sql import SupermetricsToAzureSQL
-from prefect.storage import github
 
 SUPERMETRICS_CREDENTIALS = local_config.get("SUPERMETRICS")
 

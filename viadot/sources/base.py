@@ -1,14 +1,13 @@
 import os
-import pandas
 from abc import abstractmethod
 from typing import Any, Dict, Literal
-import pyodbc
 
+import pandas
 import pyarrow as pa
+import pyodbc
+from prefect.utilities import logging
 
 from ..config import local_config
-
-from prefect.utilities import logging
 
 logger = logging.get_logger(__name__)
 
@@ -58,10 +57,10 @@ class Source:
                 out_df = df
         elif if_exists == "replace":
             out_df = df
-        out_df.to_excel(path, index=False, encoding='utf8')
+        out_df.to_excel(path, index=False, encoding="utf8")
         return True
 
-        
+
 class SQL(Source):
     def __init__(
         self,

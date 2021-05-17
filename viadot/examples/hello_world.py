@@ -1,7 +1,7 @@
 import prefect
-from prefect import task, Flow
-from prefect.storage import GitHub
+from prefect import Flow, task
 from prefect.run_configs import DockerRun
+from prefect.storage import GitHub
 
 
 @task
