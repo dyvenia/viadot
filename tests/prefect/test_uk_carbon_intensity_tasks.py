@@ -3,9 +3,7 @@ import os
 import openpyxl
 import pytest
 from openpyxl import load_workbook
-
-from viadot.tasks.open_apis.uk_carbon_intensity import StatsToCSV
-from viadot.tasks.open_apis.uk_carbon_intensity_excel import StatsToExcel
+from viadot.tasks.open_apis.uk_carbon_intensity import StatsToCSV, StatsToExcel
 
 TEST_FILE_PATH = "/home/viadot/tests/uk_carbon_intensity_test.csv"
 TEST_FILE_PATH_EXCEL = "/home/viadot/tests/uk_carbon_intensity_test.xlsx"
