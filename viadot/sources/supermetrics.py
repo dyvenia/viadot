@@ -23,6 +23,7 @@ class Supermetrics(Source):
     A class implementing the Supermetrics API.
 
     Documentation for this API is located at: https://supermetrics.com/docs/product-api-getting-started/
+    Usage limits: https://supermetrics.com/docs/product-api-usage-limits/
 
     Parameters
     ----------
