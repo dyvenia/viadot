@@ -30,7 +30,7 @@ class SupermetricsToCSV(Task):
         self,
         path: str,
         ds_id: str,
-        ds_account: List[str],
+        ds_account: str,
         ds_user: str,
         fields: List[str],
         date_range_type: str = None,
@@ -41,6 +41,12 @@ class SupermetricsToCSV(Task):
         retry_delay: timedelta = timedelta(seconds=10),
     ):
         logger = prefect.context.get("logger")
+
+        if max_retries:
+            self.max_retries = max_retries
+
+        if retry_delay:
+            self.retry_delay = retry_delay
 
         # Build the URL
         # Note the task accepts only one account per query due to low reliability of Supermetrics
