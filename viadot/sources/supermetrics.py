@@ -1,5 +1,5 @@
 import json
-import time
+import time 
 import urllib
 from typing import Any, Dict
 
@@ -77,7 +77,10 @@ class Supermetrics(Source):
 
     def to_df(self) -> pd.DataFrame:
         data = self.to_json()["data"]
-        df = pd.DataFrame(data[1:], columns=data[0])
+        if data:
+            df = pd.DataFrame(data[1:], columns=data[0])
+        else:
+            df = pd.DataFrame(columns=data[0])
         return df
 
     def query(self, params: Dict[str, Any]):
