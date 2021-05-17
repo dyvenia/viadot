@@ -34,8 +34,16 @@ class Source:
         table = pa.Table.from_pandas(df)
         return table
 
-    def to_csv(self, path: str, if_exists="replace"):
+    def to_csv(self, path: str, if_exists: str="replace", if_empty: str = "warn"):
         df = self.to_df()
+
+        if df.empty:
+            if if_empty == "warn":
+                logger.warning("The query produced no data.")
+            elif if_empty == "skip":
+                logger.debug("The query produced no data. Skipping...")
+                return False
+
         if if_exists == "append":
             if os.path.isfile(path):
                 csv_df = pandas.read_csv(path)
