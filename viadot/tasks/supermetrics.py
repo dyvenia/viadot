@@ -34,7 +34,7 @@ class SupermetricsToCSV(Task):
         ds_user: str,
         fields: List[str],
         date_range_type: str = None,
-        settings: Dict[str, Any] = None,   
+        settings: Dict[str, Any] = None,
         filter: str = None,
         max_rows: int = 1000000,
         if_exists: str = "replace",
@@ -60,7 +60,7 @@ class SupermetricsToCSV(Task):
             date_range_type=date_range_type,
             settings=settings,
             filter=filter,
-            max_rows=max_rows
+            max_rows=max_rows,
         )
         query = {param: val for param, val in query.items() if val is not None}
         supermetrics = Supermetrics()

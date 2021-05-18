@@ -75,12 +75,14 @@ class SupermetricsToAzureSQL(Flow):
             if_exists="append",
             if_empty=self.if_empty,
             max_retries=self.max_download_retries,
-            flow=flow
+            flow=flow,
         )
         return t
 
     def gen_flow(self) -> Flow:
-        supermetrics_downloads = apply_map(self.gen_supermetrics_task, self.ds_accounts, flow=self)
+        supermetrics_downloads = apply_map(
+            self.gen_supermetrics_task, self.ds_accounts, flow=self
+        )
         csv_to_blob_storage_task.bind(
             from_path=self.local_file_path,
             to_path=self.blob_path,
