@@ -21,6 +21,8 @@ class SupermetricsToAzureSQL(Flow):
         ds_user: str,
         fields: List[str],
         date_range_type: str = None,
+        settings: Dict[str, Any] = None,
+        filter: str = None,
         max_rows: int = 1000000,
         dtypes: Dict[str, Any] = None,
         blob_path: str = None,
@@ -39,6 +41,8 @@ class SupermetricsToAzureSQL(Flow):
         self.ds_user = ds_user
         self.fields = fields
         self.date_range_type = date_range_type
+        self.settings = settings
+        self.filter = filter
         self.max_rows = max_rows
         self.local_file_path = local_file_path or "test.csv"
         self.blob_path = blob_path
@@ -59,11 +63,14 @@ class SupermetricsToAzureSQL(Flow):
 
     def gen_supermetrics_task(self, ds_account: str, flow: Flow = None) -> Task:
         t = supermetrics_to_csv_task.bind(
-            ds_id = self.ds_id,
-            ds_account = ds_account,
-            ds_user = self.ds_user,
-            fields = self.fields,
-            date_range_type = self.date_range_type,
+            ds_id=self.ds_id,
+            ds_account=ds_account,
+            ds_user=self.ds_user,
+            fields=self.fields,
+            date_range_type=self.date_range_type,
+            settinngs=self.settings,
+            filter=self.filter,
+            max_rows=self.max_rows,
             path=self.local_file_path,
             if_exists="append",
             if_empty=self.if_empty,
