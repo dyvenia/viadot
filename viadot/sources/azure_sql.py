@@ -1,4 +1,5 @@
 from typing import Any, Dict, List, Literal
+
 from prefect.utilities import logging
 
 from .base import SQL
