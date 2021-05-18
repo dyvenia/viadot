@@ -34,7 +34,7 @@ class Source:
         table = pa.Table.from_pandas(df)
         return table
 
-    def to_csv(self, path: str, if_exists: str="replace", if_empty: str = "warn"):
+    def to_csv(self, path: str, if_exists: str="replace", if_empty: str = "warn", sep="\t"):
         df = self.to_df()
 
         if df.empty:
@@ -46,13 +46,13 @@ class Source:
 
         if if_exists == "append":
             if os.path.isfile(path):
-                csv_df = pandas.read_csv(path)
+                csv_df = pandas.read_csv(path, sep=sep)
                 out_df = pandas.concat([csv_df, df])
             else:
                 out_df = df
         elif if_exists == "replace":
             out_df = df
-        out_df.to_csv(path, sep="\t", index=False)
+        out_df.to_csv(path, sep=sep, index=False)
         return True
 
     def to_excel(self, path: str, if_exists="replace"):
