@@ -68,7 +68,7 @@ class SupermetricsToAzureSQL(Flow):
             ds_user=self.ds_user,
             fields=self.fields,
             date_range_type=self.date_range_type,
-            settinngs=self.settings,
+            settings=self.settings,
             filter=self.filter,
             max_rows=self.max_rows,
             path=self.local_file_path,
