@@ -34,7 +34,9 @@ class Source:
         table = pa.Table.from_pandas(df)
         return table
 
-    def to_csv(self, path: str, if_exists: str="replace", if_empty: str = "warn", sep="\t"):
+    def to_csv(
+        self, path: str, if_exists: str = "replace", if_empty: str = "warn", sep="\t"
+    ):
         df = self.to_df()
 
         if df.empty:
