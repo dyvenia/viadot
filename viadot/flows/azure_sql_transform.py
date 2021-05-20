@@ -16,11 +16,13 @@ class AzureSQLTransform(Flow):
         self,
         name: str,
         query: str,
+        tags: List[str] = ["transform"],
         *args: List[any],
         **kwargs: Dict[str, Any]
     ):
         self.query = query
         self.tasks = [query_task]
+        self.tags = tags
         super().__init__(*args, name=name, **kwargs)
         self.gen_flow()
 
