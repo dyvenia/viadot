@@ -20,12 +20,14 @@ class Pipeline(Flow):
         super().__init__(*args, name=name, **kwargs)
         self.gen_flow()
 
-    def gen_start_flow_run_task(self, flow_name: Flow = None) -> Task:
-        t = start_flow_run_task.bind(flow_name=flow_name, flow=self)
+    def gen_start_flow_run_task(self, flow_name: str, flow: Flow = None) -> Task:
+        t = start_flow_run_task.bind(flow_name=flow_name, flow=flow)
         return t
 
     def gen_flow(self) -> Flow:
-        extract_flow_runs = apply_map(self.gen_start_flow_run_task, flow_name=self)
+        extract_flow_runs = apply_map(
+            self.gen_start_flow_run_task, flow_name=self, flow=self
+        )
         transform_flow_run = start_flow_run_task.bind(
             flow_name=self.transform_flow_name, flow=self
         )
