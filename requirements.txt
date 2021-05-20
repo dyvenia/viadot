@@ -93,3 +93,4 @@ zict==2.0.0; python_version >= "3.7"
 zipp==3.4.1; python_version >= "3.6" and python_full_version < "3.0.0" and python_version < "3.8" or python_full_version >= "3.6.0" and python_version < "3.8" and python_version >= "3.6"
 openpyxl==3.0.7
 jupyterlab==3.0.14
+pygit2==1.5.0

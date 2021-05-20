@@ -4,7 +4,6 @@ FROM prefecthq/prefect:latest-python3.8
 # Add user
 RUN useradd --create-home viadot && \
     chown -R viadot /home/viadot && \
-    chmod 700 /home/viadot && \
     usermod -aG sudo viadot && \
     find /usr/local/lib -type d -exec chmod 777 {} \; && \
     find /usr/local/bin -type d -exec chmod 777 {} \;
