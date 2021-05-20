@@ -55,3 +55,39 @@ class CreateTableFromBlob(Task):
             if_exists=if_exists,
         )
         logger.info(f"Successfully inserted data into {fqn}.")
+
+
+class RunAzureSQLDBQuery(Task):
+    """
+    Task for running an Azure SQL Database query.
+
+    Args:
+    - query (str, required): The query to execute on the database.
+    """
+    def __init__(self, *args, **kwargs):
+        
+        super().__init__(name="run_azure_sql_db_query", *args, **kwargs)
+
+    def __call__(self):
+        """Run an Azure SQL Database query"""
+
+    def run(
+        self,
+        query: str
+    ):
+        """Run an Azure SQL Database query
+
+        Parameters
+        ----------
+        query : str
+            The query to execute on the database.
+        """
+        logger = prefect.context.get("logger")
+
+        # run the query and fetch the results if it's a select
+        azure_sql = AzureSQL(config_key="AZURE_SQL")
+        result = azure_sql.run(query)
+
+        logger.info(f"Successfully ran the query.")
+        return result
+
