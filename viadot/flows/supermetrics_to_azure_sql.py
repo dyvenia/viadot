@@ -28,11 +28,12 @@ class SupermetricsToAzureSQL(Flow):
         blob_path: str = None,
         overwrite_blob: bool = True,
         table: str = None,
-        schema: str = None,
+        schema: str = None, 
         local_file_path: str = None,
         if_exists: str = "replace",  # this applies to the full CSV file, not per chunk
         if_empty: str = "warn",
         max_download_retries: int = 5,
+        tags: List[str] = ["extract"],
         *args: List[any],
         **kwargs: Dict[str, Any]
     ):
@@ -44,7 +45,7 @@ class SupermetricsToAzureSQL(Flow):
         self.settings = settings
         self.filter = filter
         self.max_rows = max_rows
-        self.local_file_path = local_file_path or "test.csv"
+        self.local_file_path = local_file_path or name + ".csv"
         self.blob_path = blob_path
         self.overwrite_blob = overwrite_blob
         self.table = table
@@ -53,6 +54,7 @@ class SupermetricsToAzureSQL(Flow):
         self.if_exists = if_exists
         self.if_empty = if_empty
         self.max_download_retries = max_download_retries
+        self.tags = tags
         self.tasks = [
             supermetrics_to_csv_task,
             csv_to_blob_storage_task,
