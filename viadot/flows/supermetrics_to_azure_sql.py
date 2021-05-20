@@ -28,7 +28,7 @@ class SupermetricsToAzureSQL(Flow):
         blob_path: str = None,
         overwrite_blob: bool = True,
         table: str = None,
-        schema: str = None, 
+        schema: str = None,
         local_file_path: str = None,
         if_exists: str = "replace",  # this applies to the full CSV file, not per chunk
         if_empty: str = "warn",
