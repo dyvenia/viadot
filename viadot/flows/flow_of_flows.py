@@ -5,9 +5,15 @@ from prefect.tasks.prefect import StartFlowRun
 
 start_flow_run_task = StartFlowRun()
 
+
 class Pipeline(Flow):
     def __init__(
-        self, name: str, extract_flows_names:List[str], transform_flow_name: str, *args: List[any], **kwargs: Dict[str, Any]
+        self,
+        name: str,
+        extract_flows_names: List[str],
+        transform_flow_name: str,
+        *args: List[any],
+        **kwargs: Dict[str, Any]
     ):
         self.extract_flows_names = extract_flows_names
         self.transform_flow_name = transform_flow_name
@@ -15,21 +21,12 @@ class Pipeline(Flow):
         self.gen_flow()
 
     def gen_start_flow_run_task(self, flow_name: Flow = None) -> Task:
-        t = start_flow_run_task.bind(
-            flow_name=flow_name,
-            flow=self,
-        )
+        t = start_flow_run_task.bind(flow_name=flow_name, flow=self)
         return t
-        
+
     def gen_flow(self) -> Flow:
-       extract_flow_runs = apply_map(
-            self.gen_start_flow_run_task, flow_name=self
+        extract_flow_runs = apply_map(self.gen_start_flow_run_task, flow_name=self)
+        transform_flow_run = start_flow_run_task.bind(
+            flow_name=self.transform_flow_name, flow=self
         )
-       transform_flow_run = start_flow_run_task.bind(
-           flow_name = transform_flow_name
-           flow=self
-       )
-       transform_flow_run.set_upstream(start_flow_run_task, flow=self)
-
-
-
+        transform_flow_run.set_upstream(start_flow_run_task, flow=self)
