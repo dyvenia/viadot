@@ -1,10 +1,9 @@
-from ..tasks.azure_sql import RunAzureSQLDBQuery
-
 from typing import Any, Dict, List
 
 from prefect import Flow
 from prefect.utilities import logging
 
+from ..tasks.azure_sql import RunAzureSQLDBQuery
 
 logger = logging.get_logger(__name__)
 
@@ -27,7 +26,4 @@ class AzureSQLTransform(Flow):
         self.gen_flow()
 
     def gen_flow(self) -> Flow:
-        query_task.bind(
-            query=self.query,
-            flow=self
-        )
+        query_task.bind(query=self.query, flow=self)

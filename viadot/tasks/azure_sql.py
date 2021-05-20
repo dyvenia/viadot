@@ -64,17 +64,15 @@ class RunAzureSQLDBQuery(Task):
     Args:
     - query (str, required): The query to execute on the database.
     """
+
     def __init__(self, *args, **kwargs):
-        
+
         super().__init__(name="run_azure_sql_db_query", *args, **kwargs)
 
     def __call__(self):
         """Run an Azure SQL Database query"""
 
-    def run(
-        self,
-        query: str
-    ):
+    def run(self, query: str):
         """Run an Azure SQL Database query
 
         Parameters
@@ -90,4 +88,3 @@ class RunAzureSQLDBQuery(Task):
 
         logger.info(f"Successfully ran the query.")
         return result
-
