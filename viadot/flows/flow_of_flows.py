@@ -26,7 +26,7 @@ class Pipeline(Flow):
 
     def gen_flow(self) -> Flow:
         extract_flow_runs = apply_map(
-            self.gen_start_flow_run_task, flow_name=self, flow=self
+            self.gen_start_flow_run_task, flow_name=self.name, flow=self
         )
         transform_flow_run = start_flow_run_task.bind(
             flow_name=self.transform_flow_name, flow=self
