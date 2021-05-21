@@ -30,7 +30,14 @@ The above code pulls data from the API to a pandas `DataFrame`.
 
 ## Loading Data to a Source
 
-TODO
+For creating SQlite database and uploading table with data (pandas DataFrame as input) use LoadDF class.
+
+```python
+from viadot.tasks.sqlite_tasks import LoadDF
+table = LoadDF()
+table.run(table_name=TABLE_NAME, dtypes=dtypes, db_path=database_path, df=df, if_exists="replace")
+```
+
 
 ## Running tests
 ```

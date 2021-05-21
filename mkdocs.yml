@@ -5,6 +5,7 @@ nav:
       - "Config File": howtos/config_file.md
       - Flows: howtos/flows.md
       - "Get Excel file": howtos/uk_carbon_intensity.md
+      - "Get data as pandas DataFrame": howtos/run_sql.md
   - Tutorials:
       - Tutorials: tutorials/placeholder.md
   - References:
