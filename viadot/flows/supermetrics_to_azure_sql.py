@@ -45,7 +45,7 @@ class SupermetricsToAzureSQL(Flow):
         self.settings = settings
         self.filter = filter
         self.max_rows = max_rows
-        self.local_file_path = local_file_path or name + ".csv"
+        self.local_file_path = local_file_path or self.slugify(name) + ".csv"
         self.blob_path = blob_path
         self.overwrite_blob = overwrite_blob
         self.table = table
@@ -62,6 +62,10 @@ class SupermetricsToAzureSQL(Flow):
         ]
         super().__init__(*args, name=name, **kwargs)
         self.gen_flow()
+
+    @staticmethod
+    def slugify(name):
+        return name.replace(" ", "_").lower()
 
     def gen_supermetrics_task(self, ds_account: str, flow: Flow = None) -> Task:
         t = supermetrics_to_csv_task.bind(
