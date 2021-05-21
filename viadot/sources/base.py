@@ -61,7 +61,7 @@ class Source:
         out_df.to_excel(path, index=False, encoding='utf8')
         return True
 
-        
+
 class SQL(Source):
     def __init__(
         self,
@@ -102,6 +102,7 @@ class SQL(Source):
             conn_str += "UID=" + self.credentials["user"] + ";"
         if "password" in self.credentials and self.credentials["password"] != None:
             conn_str += "PWD=" + self.credentials["password"] + ";"
+
         return conn_str
 
     @property
@@ -121,6 +122,11 @@ class SQL(Source):
         if query.upper().startswith("SELECT"):
             return cursor.fetchall()
         self.con.commit()
+
+    def to_df(self, query: str):
+        conn = self.con
+        df = pandas.read_sql_query(query, conn)
+        return df
 
     def create_table(
         self,
@@ -185,7 +191,9 @@ class SQL(Source):
 
         columns = ", ".join(df.columns)
         sql = f"INSERT INTO {table} ({columns})\n VALUES {values}"
-        return sql
+
+        return self.run(sql)
+        # return sql
 
     def _sql_column(self, column_name):
         if isinstance(column_name, str):
