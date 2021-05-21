@@ -31,4 +31,4 @@ class Pipeline(Flow):
         transform_flow_run = start_flow_run_task.bind(
             flow_name=self.transform_flow_name, flow=self
         )
-        transform_flow_run.set_upstream(start_flow_run_task, flow=self)
+        transform_flow_run.set_upstream(extract_flow_runs, flow=self)
