@@ -2,7 +2,6 @@ import shutil
 from typing import Any
 
 import pygit2
-import prefect
 from prefect import Task
 from prefect.client import Secret
 from prefect.utilities.tasks import defaults_from_attrs
@@ -16,6 +15,17 @@ class CloneRepo(Task):
     - repo (str, optional): the name of the repository to clone; must be
         provided in the form `organization/repo_name` or `user/repo_name`; can also be
         provided to the `run` method
+    - to (str, optional): the destination folder for the repository; defaults to the repository's name
+    - bare (bool, optional): whether to clone a read-only copy; defaults to `False`
+
+    Example:
+        ```python
+        from prefect import Flow
+        from viadot.tasks.github import CloneRepo
+        with Flow(name="example") as f:
+            task = CloneRepo()(repo='fishtown-analytics/dbt')
+        out = f.run()
+        ```
     """
 
     def __init__(
@@ -40,8 +50,15 @@ class CloneRepo(Task):
         bare: bool = None,
         access_token_secret: str = None,
     ):
+        """
+        Clones the repo.
 
-        logger = prefect.context.get("logger")
+        Args:
+        - repo (str, optional): the name of the repository to clone; must be
+            provided in the form `organization/repo_name` or `user/repo_name`
+        - to (str, optional): the destination folder for the repository; defaults to the repository's name
+        - bare (bool, optional): whether to clone a read-only copy; defaults to `False`
+        """
 
         shutil.rmtree(to, ignore_errors=True)  # Delete folder on run
 
@@ -49,4 +66,4 @@ class CloneRepo(Task):
         repo_url = f"https://{git_token}:x-oauth-basic@github.com/{repo}"
         pygit2.clone_repository(repo_url, to, bare=bare)
 
-        logger.info(f"Repo {repo} has been successfully cloned.")
+        self.logger.info(f"Repo {repo} has been successfully cloned.")

@@ -1,6 +1,5 @@
 from typing import Any, Dict, Literal
 
-import prefect
 from prefect import Task
 
 from ..sources import AzureSQL
@@ -37,7 +36,6 @@ class CreateTableFromBlob(Task):
         if_exists : Literal, optional
             What to do if the table already exists, by default ["fail", "replace"]
         """
-        logger = prefect.context.get("logger")
 
         # create table
         azure_sql = AzureSQL(config_key="AZURE_SQL")
@@ -45,7 +43,7 @@ class CreateTableFromBlob(Task):
             schema=schema, table=table, dtypes=dtypes, if_exists=if_exists
         )
         fqn = f"{schema}.{table}" if schema else table
-        logger.info(f"Successfully created table {fqn}.")
+        self.logger.info(f"Successfully created table {fqn}.")
 
         # insert data
         azure_sql.bulk_insert(
@@ -54,7 +52,7 @@ class CreateTableFromBlob(Task):
             source_path=blob_path,
             if_exists=if_exists,
         )
-        logger.info(f"Successfully inserted data into {fqn}.")
+        self.logger.info(f"Successfully inserted data into {fqn}.")
 
 
 class RunAzureSQLDBQuery(Task):
@@ -80,11 +78,10 @@ class RunAzureSQLDBQuery(Task):
         query : str
             The query to execute on the database.
         """
-        logger = prefect.context.get("logger")
 
         # run the query and fetch the results if it's a select
         azure_sql = AzureSQL(config_key="AZURE_SQL")
         result = azure_sql.run(query)
 
-        logger.info(f"Successfully ran the query.")
+        self.logger.info(f"Successfully ran the query.")
         return result
