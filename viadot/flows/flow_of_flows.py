@@ -4,6 +4,7 @@ from prefect import Task, Flow, apply_map
 from prefect.tasks.prefect import StartFlowRun
 
 start_flow_run_task = StartFlowRun(wait=True)
+start_flow_run_task_2 = StartFlowRun(wait=True)
 
 
 class Pipeline(Flow):
@@ -28,7 +29,7 @@ class Pipeline(Flow):
         extract_flow_runs = apply_map(
             self.gen_start_flow_run_task, self.extract_flows_names, flow=self
         )
-        transform_flow_run = start_flow_run_task.bind(
+        transform_flow_run = start_flow_run_task_2.bind(
             flow_name=self.transform_flow_name, flow=self
         )
         transform_flow_run.set_upstream(extract_flow_runs, flow=self)
