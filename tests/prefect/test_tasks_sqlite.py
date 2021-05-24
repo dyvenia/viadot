@@ -24,7 +24,7 @@ def create_test_sql_file(TEST_SQL_FILE_PATH):
 
 @pytest.fixture(scope="session")
 def sql_to_df_task(create_test_sql_file):
-    sql_to_df_task = SQLtoDF(db_path=DB_PATH, sql_path=create_test_sql_file)
+    sql_to_df_task = SQLtoDF(db_path=DB_PATH, sql_path=TEST_SQL_FILE_PATH)
     yield sql_to_df_task
 
 def test_create_table_from_df(load_table):
