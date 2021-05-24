@@ -11,6 +11,21 @@ def load_table():
     load_table = Insert()
     yield load_table
 
+@pytest.fixture(scope="session")
+def TEST_SQL_FILE_PATH():
+    return "test_sql.sql"
+
+@pytest.fixture(scope="session", autouse=True)
+def create_test_sql_file(TEST_SQL_FILE_PATH):
+    with open(TEST_SQL_FILE_PATH, 'w') as sql_file:
+        sql_file.write("SELECT * FROM test;")
+    yield
+    os.remove(TEST_SQL_FILE_PATH)
+
+@pytest.fixture(scope="session")
+def sql_to_df_task(create_test_sql_file):
+    sql_to_df_task = SQLtoDF(db_path=DB_PATH, sql_path=create_test_sql_file)
+    yield sql_to_df_task
 
 def test_create_table_from_df(load_table):
     dtypes = {"country": "VARCHAR(100)", "sales": "FLOAT(24)"}
@@ -24,13 +39,7 @@ def test_create_table_from_df(load_table):
                    )
     assert result == True
 
-@pytest.fixture(scope="session")
-def run_sql():
-    run_sql = SQLtoDF(db_path=DB_PATH, sql_path=SQL_PATH)
-    yield run_sql
-
-def test_not_select(run_sql):
+def test_not_select(sql_to_df_task):
     empty_df = pd.DataFrame()
-    result = run_sql.run()
-
+    result = sql_to_df_task.run()
     assert result == empty_df
