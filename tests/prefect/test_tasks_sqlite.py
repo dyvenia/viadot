@@ -1,7 +1,6 @@
 import pytest
 import pandas
 from viadot.tasks.sqlite_tasks import SQLtoDF, Insert
-import pandas as pd
 
 TABLE = 'test'
 DB_PATH = '/home/viadot/tests/testfile_db.sqlite'
@@ -25,6 +24,13 @@ def test_create_table_from_df(load_table):
                    )
     assert result == True
 
-def test_run_sql():
+@pytest.fixture(scope="session")
+def run_sql():
     run_sql = SQLtoDF(db_path=DB_PATH, sql_path=SQL_PATH)
     yield run_sql
+
+def test_not_select(run_sql):
+    empty_df = pandas.DataFrame()
+    result = run.run_sql()
+
+    assert result == empty_df
