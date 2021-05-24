@@ -1,6 +1,6 @@
 from typing import Any, Dict
 
-from azure.storage.blob import BlobServiceClient, ContentSettings
+from azure.storage.blob import BlobServiceClient, BlobClient
 
 from ..config import local_config
 from .base import Source
@@ -25,7 +25,23 @@ class AzureBlobStorage(Source):
         super().__init__(*args, credentials=credentials, **kwargs)
 
     def to_storage(self, from_path: str, to_path: str, overwrite: bool = False):
+        """A
 
+        Args:
+            from_path (str): Path to the local file to be uploaded to the storge.
+            to_path (str): The destination path in the format 'container/path/a.csv'
+            overwrite (bool, optional): [description]. Defaults to False.
+
+        Example:
+        ```python
+        from viadot.sources import AzureBlobStorage
+        storage = AzureBlobStorage()
+        storage.to_storage('tests/test.csv')
+        ```
+
+        Returns:
+            bool: Whether the operation was successful.
+        """
         conn_str = self.credentials["CONNECTION_STRING"]
         blob_service_client = BlobServiceClient.from_connection_string(conn_str)
 
@@ -39,3 +55,38 @@ class AzureBlobStorage(Source):
             blob_client.upload_blob(data, overwrite=overwrite)
 
         return True
+
+    def exists(self, path: str) -> bool:
+        """
+        Check if blob exists in Azure Storage.
+
+        Args:
+            path (str): The bolb path in the format 'container/path/a.csv'
+
+        Example:
+        ```python
+        from viadot.sources.azure_blob_storage import AzureBlobStorage
+
+        path = "tests/test.csv"
+        container_name = path.split("/")[0]
+        blob_path = "/".join(path.split("/")[1:])
+        conn_str = self.credentials["CONNECTION_STRING"]
+        blob = BlobClient.from_connection_string(
+            conn_str=conn_str, container_name=container_name, blob_name=blob_path
+        )
+
+        blob.exists()
+        ```
+
+        Returns:
+            bool: Whether the operation was successful.
+        """
+        container_name = path.split("/")[0]
+        blob_path = "/".join(path.split("/")[1:])
+        conn_str = self.credentials["CONNECTION_STRING"]
+
+        blob = BlobClient.from_connection_string(
+            conn_str=conn_str, container_name=container_name, blob_name=blob_path
+        )
+        if_exists = blob.exists()
+        return if_exists
