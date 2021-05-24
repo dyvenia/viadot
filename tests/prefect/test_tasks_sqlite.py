@@ -1,5 +1,5 @@
 import pytest
-import pandas
+import pandas as pd
 from viadot.tasks.sqlite_tasks import SQLtoDF, Insert
 
 TABLE = 'test'
@@ -30,7 +30,7 @@ def run_sql():
     yield run_sql
 
 def test_not_select(run_sql):
-    empty_df = pandas.DataFrame()
+    empty_df = pd.DataFrame()
     result = run_sql.run()
 
     assert result == empty_df
