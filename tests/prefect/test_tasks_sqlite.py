@@ -15,7 +15,7 @@ def load_table():
 
 def test_create_table_from_df(load_table):
     dtypes = {"country": "VARCHAR(100)", "sales": "FLOAT(24)"}
-    data = pd.DataFrame({"country": 'italy', "sales": 100.})
+    df_data = pd.DataFrame({"country": ['italy'], "sales": [100.]})
     load = load_table.run(table_name=TABLE,
                    schema=None,
                    dtypes=dtypes,
