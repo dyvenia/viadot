@@ -1,6 +1,7 @@
 import pytest
 import pandas as pd
 from viadot.tasks.sqlite_tasks import SQLtoDF, Insert
+import os
 
 TABLE = 'test'
 DB_PATH = '/home/viadot/tests/testfile_db.sqlite'
@@ -24,7 +25,7 @@ def create_test_sql_file(TEST_SQL_FILE_PATH):
 
 @pytest.fixture(scope="session")
 def sql_to_df_task(create_test_sql_file):
-    sql_to_df_task = SQLtoDF(db_path=DB_PATH, sql_path=TEST_SQL_FILE_PATH)
+    sql_to_df_task = SQLtoDF(db_path=DB_PATH, sql_path=create_test_sql_file)
     yield sql_to_df_task
 
 def test_create_table_from_df(load_table):
