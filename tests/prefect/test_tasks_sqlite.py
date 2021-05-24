@@ -31,6 +31,6 @@ def run_sql():
 
 def test_not_select(run_sql):
     empty_df = pandas.DataFrame()
-    result = run.run_sql()
+    result = run_sql.run()
 
     assert result == empty_df
