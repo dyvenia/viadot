@@ -9,8 +9,7 @@ from sqlalchemy import create_engine
 from typing import Any, Dict
 import os
 
-
-class LoadDF(Task):
+class Insert(Task):
 
     def __init__(self, *args, **kwargs):
         super().__init__(name="load_DF", *args, **kwargs)
@@ -29,6 +28,10 @@ class LoadDF(Task):
 
         return True
 
+class BulkInsert(Task):
+    pass
+
+
 class SQLtoDF(Task):
     def __init__(self, *args, db_path: str = None, sql_path: str = None, **kwargs):
         super().__init__(name="SQLtoDF", *args, **kwargs)
@@ -36,7 +39,7 @@ class SQLtoDF(Task):
         self.db_path = db_path
 
     def __call__(self):
-        """Generate a SQL query"""
+        """Generate a DataFrame from SQL query"""
 
     def run(self):
         sqlite = SQLite(driver="{SQLite}", server="localhost", db=self.db_path)

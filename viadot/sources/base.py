@@ -127,6 +127,8 @@ class SQL(Source):
         conn = self.con
         if query.upper().startswith("SELECT"):
             return pandas.read_sql_query(query, conn)
+        else:
+            return pandas.DataFrame()
 
     def create_table(
         self,

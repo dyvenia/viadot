@@ -1,15 +1,15 @@
 import pytest
 import pandas
-from viadot.tasks.sqlite_tasks import SQLtoDF, LoadDF
+from viadot.tasks.sqlite_tasks import SQLtoDF, Insert
 import pandas as pd
 
-TABLE = "test"
-DB_PATH = ':memory:'
-SQL_PATH = "home/viadot/tests/testfile.sql"
+TABLE = 'test'
+DB_PATH = '/home/viadot/tests/testfile_db.sqlite'
+SQL_PATH = '/home/viadot/tests/testfile.sql'
 
 @pytest.fixture(scope="session")
 def load_table():
-    load_table = LoadDF()
+    load_table = Insert()
     yield load_table
 
 
