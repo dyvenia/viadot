@@ -125,8 +125,8 @@ class SQL(Source):
 
     def to_df(self, query: str):
         conn = self.con
-        df = pandas.read_sql_query(query, conn)
-        return df
+        if query.upper().startswith("SELECT"):
+            return pandas.read_sql_query(query, conn)
 
     def create_table(
         self,
@@ -193,7 +193,6 @@ class SQL(Source):
         sql = f"INSERT INTO {table} ({columns})\n VALUES {values}"
 
         return self.run(sql)
-        # return sql
 
     def _sql_column(self, column_name):
         if isinstance(column_name, str):

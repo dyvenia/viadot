@@ -29,9 +29,9 @@ class LoadDF(Task):
 
         return True
 
-class RunSQL(Task):
+class SQLtoDF(Task):
     def __init__(self, *args, db_path: str = None, sql_path: str = None, **kwargs):
-        super().__init__(name="run_SQL", *args, **kwargs)
+        super().__init__(name="SQLtoDF", *args, **kwargs)
         self.sql_path = sql_path
         self.db_path = db_path
 
@@ -47,5 +47,5 @@ class RunSQL(Task):
 
         df = sqlite.to_df(query)
         logger.info(f"Successfully creating SQL query from file.")
-        
+
         return df

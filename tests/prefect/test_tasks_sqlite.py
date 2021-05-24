@@ -1,9 +1,7 @@
 import pytest
 import pandas
-from viadot.tasks.sqlite_tasks import RunSQL, LoadDF
-from collections import defaultdict
+from viadot.tasks.sqlite_tasks import SQLtoDF, LoadDF
 import pandas as pd
-import os
 
 TABLE = "test"
 DB_PATH = ':memory:'
@@ -17,19 +15,16 @@ def load_table():
 
 def test_create_table_from_df(load_table):
     dtypes = {"country": "VARCHAR(100)", "sales": "FLOAT(24)"}
-    data = defaultdict(list)
-    data["country"].append('italy')
-    data["sales"].append(100.0)
-    df_data = pd.DataFrame(data)
-    df = load_table.run(table_name=TABLE,
+    data = pd.DataFrame({"country": 'italy', "sales": 100.})
+    load = load_table.run(table_name=TABLE,
                    schema=None,
                    dtypes=dtypes,
                    db_path=DB_PATH,
                    df=df_data,
                    if_exists="replace"
                    )
-    assert df == True
+    assert load == True
 
 def test_run_sql():
-    run_sql = RunSQL(db_path=DB_PATH, sql_path=SQL_PATH)
+    run_sql = SQLtoDF(db_path=DB_PATH, sql_path=SQL_PATH)
     yield run_sql
