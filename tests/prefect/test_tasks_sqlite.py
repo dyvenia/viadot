@@ -16,17 +16,25 @@ def load_table():
 def TEST_SQL_FILE_PATH():
     return "test_sql.sql"
 
-@pytest.fixture(scope="session", autouse=True)
-def create_test_sql_file(TEST_SQL_FILE_PATH):
-    with open(TEST_SQL_FILE_PATH, 'w') as sql_file:
+# @pytest.fixture(scope="session", autouse=True)
+# def create_test_sql_file(TEST_SQL_FILE_PATH):
+#     with open(TEST_SQL_FILE_PATH, 'w') as sql_file:
+#         sql_file.write("SELECT * FROM test;")
+#     yield
+#     os.remove(TEST_SQL_FILE_PATH)
+
+@pytest.fixture(scope="session")
+def create_test_sql_file():
+    with open(SQL_PATH, 'w') as sql_file:
         sql_file.write("SELECT * FROM test;")
     yield
-    os.remove(TEST_SQL_FILE_PATH)
+    os.remove(SQL_PATH)
 
 @pytest.fixture(scope="session")
 def sql_to_df_task(create_test_sql_file):
     #sql_to_df_task = SQLtoDF(db_path=DB_PATH, sql_path=create_test_sql_file)  #NoneType
-    sql_to_df_task = SQLtoDF(db_path=DB_PATH, sql_path=TEST_SQL_FILE_PATH)
+    # sql_to_df_task = SQLtoDF(db_path=DB_PATH, sql_path=TEST_SQL_FILE_PATH)     #not a function
+    sql_to_df_task = SQLtoDF(db_path=DB_PATH, sql_path=SQL_PATH)
     yield sql_to_df_task
 
 def test_create_table_from_df(load_table):
