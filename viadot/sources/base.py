@@ -117,7 +117,9 @@ class SQL(Source):
         if "user" in self.credentials and self.credentials["user"] != None:
             conn_str += "UID=" + "{" + self.credentials["user"] + "}" + ";"
         if "password" in self.credentials and self.credentials["password"] != None:
-            conn_str += "PWD=" + "{" + self.credentials["password"] + "}"
+            conn_str += "PWD=" + "{" + self.credentials["password"] + "}" + ";"
+        if "authentication" in self.credentials:
+            conn_str += "Authentication=" + self.credentials["authentication"] + ";"
 
         return conn_str
 
