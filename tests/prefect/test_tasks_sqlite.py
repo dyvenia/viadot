@@ -5,7 +5,8 @@ import os
 
 TABLE = 'test'
 DB_PATH = '/home/viadot/tests/testfile_db.sqlite'
-SQL_PATH = '/home/viadot/tests/testfile.sql'
+SQL_PATH_SELECT = '/home/viadot/tests/testfile_select.sql'
+SQL_PATH_NOTSELECT = '/home/viadot/tests/testfile_notselect.sql'
 
 @pytest.fixture(scope="session")
 def load_table():
@@ -13,43 +14,43 @@ def load_table():
     yield load_table
 
 @pytest.fixture(scope="session")
-def TEST_SQL_FILE_PATH():
-    return "test_sql.sql"
-
-# @pytest.fixture(scope="session", autouse=True)
-# def create_test_sql_file(TEST_SQL_FILE_PATH):
-#     with open(TEST_SQL_FILE_PATH, 'w') as sql_file:
-#         sql_file.write("SELECT * FROM test;")
-#     yield
-#     os.remove(TEST_SQL_FILE_PATH)
+def create_test_sql_file_notselect():
+    with open(SQL_PATH_NOTSELECT, 'w') as sql_file:
+        sql_file.write("INSERT ...")
+    yield
+    os.remove(SQL_PATH_NOTSELECT)
 
 @pytest.fixture(scope="session")
-def create_test_sql_file():
-    with open(SQL_PATH, 'w') as sql_file:
+def create_test_sql_file_select():
+    with open(SQL_PATH_SELECT, 'w') as sql_file:
         sql_file.write("SELECT * FROM test;")
     yield
-    os.remove(SQL_PATH)
+    os.remove(SQL_PATH_SELECT)
 
 @pytest.fixture(scope="session")
-def sql_to_df_task(create_test_sql_file):
-    #sql_to_df_task = SQLtoDF(db_path=DB_PATH, sql_path=create_test_sql_file)  #NoneType
-    # sql_to_df_task = SQLtoDF(db_path=DB_PATH, sql_path=TEST_SQL_FILE_PATH)     #not a function
-    sql_to_df_task = SQLtoDF(db_path=DB_PATH, sql_path=SQL_PATH)
-    yield sql_to_df_task
+def sql_to_df_task_notselect(create_test_sql_file_notselect):
+    sql_to_df_task_notselect = SQLtoDF(db_path=DB_PATH, sql_path=SQL_PATH_NOTSELECT)
+    yield sql_to_df_task_notselect
 
-def test_create_table_from_df(load_table):
+@pytest.fixture(scope="session")
+def sql_to_df_task_select(create_test_sql_file_select):
+    sql_to_df_task_select = SQLtoDF(db_path=DB_PATH, sql_path=SQL_PATH_SELECT)
+    yield sql_to_df_task_select
+
+def test_query_select(sql_to_df_task_select, load_table):
     dtypes = {"country": "VARCHAR(100)", "sales": "FLOAT(24)"}
     df_data = pd.DataFrame({"country": ['italy'], "sales": [100.]})
-    result = load_table.run(table_name=TABLE,
+    table = load_table.run(table_name=TABLE,
                    schema=None,
                    dtypes=dtypes,
                    db_path=DB_PATH,
                    df=df_data,
                    if_exists="replace"
                    )
-    assert result == True
+    table_from_query = sql_to_df_task_select.run()
+    assert table == True
+    assert not table_from_query.empty
 
-def test_not_select(sql_to_df_task):
-    empty_df = pd.DataFrame()
-    result = sql_to_df_task.run()
-    assert result == empty_df
+def test_query_not_select(sql_to_df_task_notselect):
+    table_from_query = sql_to_df_task_notselect.run()
+    assert table_from_query.empty
