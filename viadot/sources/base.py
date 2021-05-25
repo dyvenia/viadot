@@ -86,7 +86,7 @@ class SQL(Source):
         if config_key:
             DEFAULT_CREDENTIALS = local_config.get(config_key)
             credentials = kwargs.pop("credentials", DEFAULT_CREDENTIALS)
-            credentials["driver"] = "ODBC Driver 17 for SQL Server"
+
         else:
             credentials = {
                 "driver": driver,
@@ -101,6 +101,12 @@ class SQL(Source):
 
     @property
     def conn_str(self):
+        """Generate a connection string from params or config.
+        Note that the user and password are escapedd with '{}' characters.
+
+        Returns:
+            str: The ODBC connection string.
+        """
         conn_str = ""
         if "driver" in self.credentials:
             conn_str += "DRIVER=" + self.credentials["driver"] + ";"
@@ -109,9 +115,9 @@ class SQL(Source):
         if "db_name" in self.credentials:
             conn_str += "DATABASE=" + self.credentials["db_name"] + ";"
         if "user" in self.credentials and self.credentials["user"] != None:
-            conn_str += "UID=" + self.credentials["user"] + ";"
+            conn_str += "UID=" + "{" + self.credentials["user"] + "}" + ";"
         if "password" in self.credentials and self.credentials["password"] != None:
-            conn_str += "PWD=" + self.credentials["password"] + ";"
+            conn_str += "PWD=" + "{" + self.credentials["password"] + "}"
 
         return conn_str
 

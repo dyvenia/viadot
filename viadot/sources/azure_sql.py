@@ -14,6 +14,7 @@ class AzureSQL(SQL):
         **kwargs,
     ):
         super().__init__(*args, **kwargs)
+        self.credentials["driver"] = "ODBC Driver 17 for SQL Server"
 
     @property
     def schemas(self) -> List[str]:
