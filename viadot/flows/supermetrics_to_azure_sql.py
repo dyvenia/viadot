@@ -25,6 +25,8 @@ class SupermetricsToAzureSQL(Flow):
         settings: Dict[str, Any] = None,
         filter: str = None,
         max_rows: int = 1000000,
+        max_columns: int = None,
+        order_columns: str = None,
         dtypes: Dict[str, Any] = None,
         blob_path: str = None,
         overwrite_blob: bool = True,
@@ -47,6 +49,8 @@ class SupermetricsToAzureSQL(Flow):
         self.settings = settings
         self.filter = filter
         self.max_rows = max_rows
+        self.max_columns = max_columns
+        self.order_columns = order_columns
         self.local_file_path = local_file_path or self.slugify(name) + ".csv"
         self.blob_path = blob_path
         self.overwrite_blob = overwrite_blob
@@ -80,6 +84,8 @@ class SupermetricsToAzureSQL(Flow):
             settings=self.settings,
             filter=self.filter,
             max_rows=self.max_rows,
+            max_columns=self.max_columns,
+            order_columns=self.order_columns,
             path=self.local_file_path,
             if_exists="append",
             if_empty=self.if_empty,

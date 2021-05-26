@@ -48,6 +48,8 @@ class SupermetricsToCSV(Task):
         settings: Dict[str, Any] = None,
         filter: str = None,
         max_rows: int = None,
+        max_columns: int = None,
+        order_columns: str = None,
         if_exists: str = None,
         if_empty: str = None,
         max_retries: int = None,
@@ -72,6 +74,8 @@ class SupermetricsToCSV(Task):
             settings=settings,
             filter=filter,
             max_rows=max_rows,
+            max_columns=max_columns,
+            order_columns=order_columns,
         )
         query = {param: val for param, val in query.items() if val is not None}
         supermetrics = Supermetrics()
