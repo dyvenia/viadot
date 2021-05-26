@@ -18,6 +18,7 @@ class SupermetricsToAzureSQL(Flow):
         name: str,
         ds_id: str,
         ds_accounts: List[str],
+        ds_segments: List[str],
         ds_user: str,
         fields: List[str],
         date_range_type: str = None,
@@ -39,6 +40,7 @@ class SupermetricsToAzureSQL(Flow):
     ):
         self.ds_id = ds_id
         self.ds_accounts = ds_accounts
+        self.ds_segments = ds_segments
         self.ds_user = ds_user
         self.fields = fields
         self.date_range_type = date_range_type
@@ -71,6 +73,7 @@ class SupermetricsToAzureSQL(Flow):
         t = supermetrics_to_csv_task.bind(
             ds_id=self.ds_id,
             ds_account=ds_account,
+            ds_segments=self.ds_segments,
             ds_user=self.ds_user,
             fields=self.fields,
             date_range_type=self.date_range_type,

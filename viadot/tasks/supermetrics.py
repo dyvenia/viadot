@@ -38,11 +38,12 @@ class SupermetricsToCSV(Task):
     )
     def run(
         self,
-        path: str,
-        ds_id: str,
-        ds_account: str,
-        ds_user: str,
-        fields: List[str],
+        path: str = None,
+        ds_id: str = None,
+        ds_account: str = None,
+        ds_segments: List[str] = None,
+        ds_user: str = None,
+        fields: List[str] = None,
         date_range_type: str = None,
         settings: Dict[str, Any] = None,
         filter: str = None,
@@ -64,6 +65,7 @@ class SupermetricsToCSV(Task):
         query = dict(
             ds_id=ds_id,
             ds_accounts=[ds_account],
+            ds_segments=ds_segments,
             ds_user=ds_user,
             fields=fields,
             date_range_type=date_range_type,
