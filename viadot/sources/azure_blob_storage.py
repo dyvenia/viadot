@@ -1,6 +1,6 @@
 from typing import Any, Dict
 
-from azure.storage.blob import BlobServiceClient, BlobClient
+from azure.storage.blob import BlobClient, BlobServiceClient
 
 from ..config import local_config
 from .base import Source

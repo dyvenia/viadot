@@ -7,22 +7,20 @@ SUPERMETRICS_CREDENTIALS = local_config.get("SUPERMETRICS")
 
 google_ads_flow = SupermetricsToAzureSQL(
     "Google Ads extract",
-    query={
-        "ds_id": "AW",
-        "ds_accounts": SUPERMETRICS_CREDENTIALS["SOURCES"]["Google Ads"]["Accounts"],
-        "ds_user": SUPERMETRICS_CREDENTIALS["USER"],
-        "date_range_type": "last_year_inc",
-        "fields": [
-            "Date",
-            "profile",
-            "Campaignname",
-            "Impressions",
-            "Clicks",
-            "Cost_eur",
-            "SearchImpressionShare",
-        ],
-        "max_rows": 1000000,
-    },
+    ds_id="AW",
+    ds_accounts=SUPERMETRICS_CREDENTIALS["SOURCES"]["Google Ads"]["Accounts"],
+    ds_user=SUPERMETRICS_CREDENTIALS["USER"],
+    date_range_type="last_year_inc",
+    fields=[
+        "Date",
+        "profile",
+        "Campaignname",
+        "Impressions",
+        "Clicks",
+        "Cost_eur",
+        "SearchImpressionShare",
+    ],
+    max_rows=1000000,
     dtypes={
         "Date": "DATE",
         "Account": "VARCHAR(255)",
@@ -37,5 +35,5 @@ google_ads_flow = SupermetricsToAzureSQL(
     blob_path="tests/supermetrics/google_ads.csv",
 )
 
-# google_ads_flow.visualize()
+# google_ads_flow.visualize()  # print the generated execution graph
 google_ads_flow.run()
