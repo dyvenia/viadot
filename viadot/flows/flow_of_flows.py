@@ -1,6 +1,6 @@
 from typing import Any, Dict, List
 
-from prefect import Task, Flow, apply_map
+from prefect import Flow, Task, apply_map
 from prefect.tasks.prefect import StartFlowRun
 
 start_flow_run_task = StartFlowRun(wait=True)
