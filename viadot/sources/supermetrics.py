@@ -77,6 +77,8 @@ class Supermetrics(Source):
             raise APIError(
                 f"Did not receive any reponse for the API call to {self.API_ENDPOINT}."
             )
+        except Exception as e:
+            raise APIError("Unknown error.") from e
 
         return response.json()
 
