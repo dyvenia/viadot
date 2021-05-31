@@ -36,6 +36,7 @@ class SupermetricsToAzureSQL(Flow):
         if_exists: str = "replace",  # this applies to the full CSV file, not per chunk
         if_empty: str = "warn",
         max_download_retries: int = 5,
+        supermetrics_task_timeout: int = 60 * 60,
         tags: List[str] = ["extract"],
         *args: List[any],
         **kwargs: Dict[str, Any]
@@ -60,6 +61,7 @@ class SupermetricsToAzureSQL(Flow):
         self.if_exists = if_exists
         self.if_empty = if_empty
         self.max_download_retries = max_download_retries
+        self.supermetrics_task_timeout = supermetrics_task_timeout
         self.tags = tags
         self.tasks = [
             supermetrics_to_csv_task,
@@ -90,6 +92,7 @@ class SupermetricsToAzureSQL(Flow):
             if_exists="append",
             if_empty=self.if_empty,
             max_retries=self.max_download_retries,
+            timeout=self.supermetrics_task_timeout,
             flow=flow,
         )
         return t
