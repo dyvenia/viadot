@@ -13,6 +13,7 @@ class SupermetricsToCSV(Task):
         *args,
         max_retries: int = 5,
         retry_delay: timedelta = timedelta(seconds=10),
+        timeout: int = 60 * 60,
         max_rows: int = 1_000_000,
         if_exists: str = "replace",
         if_empty: str = "warn",
@@ -26,6 +27,7 @@ class SupermetricsToCSV(Task):
             name="supermetrics_to_csv",
             max_retries=max_retries,
             retry_delay=retry_delay,
+            timeout=timeout,
             *args,
             **kwargs,
         )
@@ -34,7 +36,7 @@ class SupermetricsToCSV(Task):
         """Download Supermetrics data to a CSV"""
 
     @defaults_from_attrs(
-        "max_rows", "if_exists", "if_empty", "max_retries", "retry_delay"
+        "max_rows", "if_exists", "if_empty", "max_retries", "retry_delay", "timeout"
     )
     def run(
         self,
@@ -54,6 +56,7 @@ class SupermetricsToCSV(Task):
         if_empty: str = None,
         max_retries: int = None,
         retry_delay: timedelta = None,
+        timeout: int = None,
     ):
 
         if max_retries:
