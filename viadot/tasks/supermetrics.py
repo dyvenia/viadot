@@ -1,5 +1,5 @@
 from datetime import timedelta
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Union
 
 from prefect import Task
 from prefect.utilities.tasks import defaults_from_attrs
@@ -42,7 +42,7 @@ class SupermetricsToCSV(Task):
         self,
         path: str = None,
         ds_id: str = None,
-        ds_account: str = None,
+        ds_accounts: Union[str, List[str]] = None,
         ds_segments: List[str] = None,
         ds_user: str = None,
         fields: List[str] = None,
@@ -65,11 +65,14 @@ class SupermetricsToCSV(Task):
         if retry_delay:
             self.retry_delay = retry_delay
 
+        if isinstance(ds_accounts, str):
+            ds_accounts = [ds_accounts]
+
         # Build the URL
         # Note the task accepts only one account per query
         query = dict(
             ds_id=ds_id,
-            ds_accounts=[ds_account],
+            ds_accounts=ds_accounts,
             ds_segments=ds_segments,
             ds_user=ds_user,
             fields=fields,
