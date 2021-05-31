@@ -1,6 +1,6 @@
 import json
-import time
 import urllib
+from copy import deepcopy
 from typing import Any, Dict
 
 import pandas as pd
@@ -76,11 +76,25 @@ class Supermetrics(Source):
         return response.json()
 
     def to_df(self) -> pd.DataFrame:
+        """Download data into a pandas DataFrame.
+
+        Note that Supermetric can calculate some fields on the fly and alias them in the
+        returned result. For example, if the query requests the `position` field,
+        Supermetric may return an `Average position` caclulated field.
+        For this reason we take columns names from the actual results rather than from input fields.
+
+        Returns:
+            pd.DataFrame: the DataFrame containing query results
+        """
         data = self.to_json()["data"]
         if data:
             df = pd.DataFrame(data[1:], columns=data[0])
         else:
-            df = pd.DataFrame(columns=data[0])
+            query_params_cp = deepcopy(self.query_params)
+            query_params_cp["offset_start"] = 0
+            query_params_cp["offset_end"] = 0
+            columns = Supermetrics(query_params=query_params_cp).to_df().columns
+            df = pd.DataFrame(columns=columns)
         return df
 
     def query(self, params: Dict[str, Any]):
