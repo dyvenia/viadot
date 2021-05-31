@@ -1,4 +1,4 @@
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Union
 
 from prefect import Flow, Task, apply_map
 from prefect.utilities import logging
@@ -37,6 +37,7 @@ class SupermetricsToAzureSQL(Flow):
         if_empty: str = "warn",
         max_download_retries: int = 5,
         supermetrics_task_timeout: int = 60 * 60,
+        parallel: bool = None,
         tags: List[str] = ["extract"],
         *args: List[any],
         **kwargs: Dict[str, Any]
@@ -62,6 +63,7 @@ class SupermetricsToAzureSQL(Flow):
         self.if_empty = if_empty
         self.max_download_retries = max_download_retries
         self.supermetrics_task_timeout = supermetrics_task_timeout
+        self.parallel = parallel
         self.tags = tags
         self.tasks = [
             supermetrics_to_csv_task,
@@ -75,10 +77,12 @@ class SupermetricsToAzureSQL(Flow):
     def slugify(name):
         return name.replace(" ", "_").lower()
 
-    def gen_supermetrics_task(self, ds_account: str, flow: Flow = None) -> Task:
+    def gen_supermetrics_task(
+        self, ds_accounts: Union[str, List[str]], flow: Flow = None
+    ) -> Task:
         t = supermetrics_to_csv_task.bind(
             ds_id=self.ds_id,
-            ds_account=ds_account,
+            ds_accounts=ds_accounts,
             ds_segments=self.ds_segments,
             ds_user=self.ds_user,
             fields=self.fields,
@@ -98,9 +102,16 @@ class SupermetricsToAzureSQL(Flow):
         return t
 
     def gen_flow(self) -> Flow:
-        supermetrics_downloads = apply_map(
-            self.gen_supermetrics_task, self.ds_accounts, flow=self
-        )
+        if self.parallel:
+            # generate a separate task for each account
+            supermetrics_downloads = apply_map(
+                self.gen_supermetrics_task, self.ds_accounts, flow=self
+            )
+        else:
+            supermetrics_downloads = self.gen_supermetrics_task(
+                ds_accounts=self.ds_accounts, flow=self
+            )
+
         csv_to_blob_storage_task.bind(
             from_path=self.local_file_path,
             to_path=self.blob_path,
