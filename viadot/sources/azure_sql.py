@@ -47,7 +47,7 @@ class AzureSQL(SQL):
                 FIRSTROW=2,
                 KEEPIDENTITY,
                 TABLOCK,
-                CODEPAGE = 'RAW'
+                CODEPAGE = '65001'
             );
         """
         if if_exists == "replace":
