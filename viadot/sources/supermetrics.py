@@ -7,6 +7,7 @@ import pandas as pd
 import requests
 from prefect.utilities import logging
 from requests.exceptions import ConnectionError, HTTPError, Timeout
+from urllib3.exceptions import ProtocolError
 
 from ..config import local_config
 from .base import Source
@@ -72,6 +73,10 @@ class Supermetrics(Source):
             response.raise_for_status()
         except (HTTPError, ConnectionError, Timeout) as e:
             raise APIError(f"The API call to {self.API_ENDPOINT} failed.") from e
+        except ProtocolError as e:
+            raise APIError(
+                f"Did not receive any reponse for the API call to {self.API_ENDPOINT}."
+            )
 
         return response.json()
 
