@@ -13,7 +13,7 @@ class SupermetricsToCSV(Task):
         *args,
         max_retries: int = 5,
         retry_delay: timedelta = timedelta(seconds=10),
-        timeout: int = 60 * 60,
+        timeout: int = 60 * 30,
         max_rows: int = 1_000_000,
         if_exists: str = "replace",
         if_empty: str = "warn",
