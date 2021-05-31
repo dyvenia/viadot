@@ -46,7 +46,8 @@ class AzureSQL(SQL):
                 ROWTERMINATOR='0x0a',
                 FIRSTROW=2,
                 KEEPIDENTITY,
-                TABLOCK
+                TABLOCK,
+                CODEPAGE = 'RAW'
             );
         """
         if if_exists == "replace":
