@@ -18,7 +18,7 @@ class CreateTableFromBlob(Task):
         schema: str,
         table: str,
         dtypes: Dict[str, Any],
-        if_exists: Literal = ["fail", "replace"],
+        if_exists: Literal = ["fail", "replace", "append"],
     ):
         """Create a table from an Azure Blob object.
         Currently, only CSV files are supported.
@@ -36,15 +36,16 @@ class CreateTableFromBlob(Task):
         if_exists : Literal, optional
             What to do if the table already exists, by default ["fail", "replace"]
         """
-
+    fqn = f"{schema}.{table}" if schema else table
         # create table
-        azure_sql = AzureSQL(config_key="AZURE_SQL")
-        azure_sql.create_table(
-            schema=schema, table=table, dtypes=dtypes, if_exists=if_exists
-        )
-        fqn = f"{schema}.{table}" if schema else table
-        self.logger.info(f"Successfully created table {fqn}.")
-
+        if if_exists == "replace":
+            azure_sql = AzureSQL(config_key="AZURE_SQL")
+            azure_sql.create_table(
+                schema=schema, table=table, dtypes=dtypes, if_exists=if_exists
+            )
+  
+            self.logger.info(f"Successfully created table {fqn}.")
+   
         # insert data
         azure_sql.bulk_insert(
             schema=schema,
