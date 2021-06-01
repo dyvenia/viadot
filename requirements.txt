@@ -96,3 +96,5 @@ jupyterlab==3.0.14
 pygit2==1.5.0
 azure-keyvault==4.1.0
 azure-identity==1.6.0
+great-expectations==0.13.19
+matplotlib==3.4.2
