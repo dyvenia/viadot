@@ -38,9 +38,9 @@ class CreateTableFromBlob(Task):
         """
 
         fqn = f"{schema}.{table}" if schema else table
+        azure_sql = AzureSQL(config_key="AZURE_SQL")
         # create table
         if if_exists == "replace":
-            azure_sql = AzureSQL(config_key="AZURE_SQL")
             azure_sql.create_table(
                 schema=schema, table=table, dtypes=dtypes, if_exists=if_exists
             )
