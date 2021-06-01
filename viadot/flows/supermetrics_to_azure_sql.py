@@ -37,7 +37,7 @@ class SupermetricsToAzureSQL(Flow):
         if_empty: str = "warn",
         max_download_retries: int = 5,
         supermetrics_task_timeout: int = 60 * 30,
-        parallel: bool = None,
+        parallel: bool = True,
         tags: List[str] = ["extract"],
         *args: List[any],
         **kwargs: Dict[str, Any]
