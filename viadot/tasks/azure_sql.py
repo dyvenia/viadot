@@ -36,24 +36,25 @@ class CreateTableFromBlob(Task):
         if_exists : Literal, optional
             What to do if the table already exists, by default ["fail", "replace"]
         """
+
     fqn = f"{schema}.{table}" if schema else table
-        # create table
-        if if_exists == "replace":
-            azure_sql = AzureSQL(config_key="AZURE_SQL")
-            azure_sql.create_table(
-                schema=schema, table=table, dtypes=dtypes, if_exists=if_exists
-            )
-  
-            self.logger.info(f"Successfully created table {fqn}.")
-   
-        # insert data
-        azure_sql.bulk_insert(
-            schema=schema,
-            table=table,
-            source_path=blob_path,
-            if_exists=if_exists,
+    # create table
+    if if_exists == "replace":
+        azure_sql = AzureSQL(config_key="AZURE_SQL")
+        azure_sql.create_table(
+            schema=schema, table=table, dtypes=dtypes, if_exists=if_exists
         )
-        self.logger.info(f"Successfully inserted data into {fqn}.")
+
+        self.logger.info(f"Successfully created table {fqn}.")
+
+        # insert data
+    azure_sql.bulk_insert(
+        schema=schema,
+        table=table,
+        source_path=blob_path,
+        if_exists=if_exists,
+    )
+    self.logger.info(f"Successfully inserted data into {fqn}.")
 
 
 class RunAzureSQLDBQuery(Task):
