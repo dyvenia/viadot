@@ -126,6 +126,7 @@ class SupermetricsToAzureSQL(Flow):
             schema=self.schema,
             table=self.table,
             dtypes=self.dtypes,
+            sep=self.sep,
             if_exists=self.if_exists,
             flow=self,
         )

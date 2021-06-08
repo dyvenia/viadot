@@ -31,6 +31,7 @@ class AzureSQL(SQL):
         table: str,
         schema: str = None,
         source_path: str = None,
+        sep="\t",
         if_exists: Literal = "append",
     ):
         if schema is None:
@@ -42,7 +43,7 @@ class AzureSQL(SQL):
                 CHECK_CONSTRAINTS,
                 DATA_SOURCE = '{self.credentials['data_source']}',
                 DATAFILETYPE='char',
-                FIELDTERMINATOR='\t',
+                FIELDTERMINATOR='{sep}',
                 ROWTERMINATOR='0x0a',
                 FIRSTROW=2,
                 KEEPIDENTITY,

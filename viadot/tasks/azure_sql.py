@@ -1,26 +1,31 @@
 from typing import Any, Dict, Literal
 
 from prefect import Task
+from prefect.utilities.tasks import defaults_from_attrs
 
 from ..sources import AzureSQL
 
 
 class CreateTableFromBlob(Task):
-    def __init__(self, *args, **kwargs):
+    def __init__(self, sep="\t", *args, **kwargs):
+        self.sep = sep
         super().__init__(name="blob_to_azure_sql", *args, **kwargs)
 
     def __call__(self):
         """Bulk insert a CSV into an Azure SQL table"""
 
+    @defaults_from_attrs("sep")
     def run(
         self,
         blob_path: str,
         schema: str,
         table: str,
         dtypes: Dict[str, Any],
+        sep: str = None,
         if_exists: Literal = ["fail", "replace", "append"],
     ):
-        """Create a table from an Azure Blob object.
+        """
+        Create a table from an Azure Blob object.
         Currently, only CSV files are supported.
 
         Parameters
@@ -33,8 +38,10 @@ class CreateTableFromBlob(Task):
             Destination table.
         dtypes : Dict[str, Any]
             Data types to force.
+        sep: str
+            The separator to use to read the CSV file.
         if_exists : Literal, optional
-            What to do if the table already exists, by default ["fail", "replace"]
+            What to do if the table already exists.
         """
 
         fqn = f"{schema}.{table}" if schema else table
@@ -52,6 +59,7 @@ class CreateTableFromBlob(Task):
             schema=schema,
             table=table,
             source_path=blob_path,
+            sep=sep,
             if_exists=if_exists,
         )
         self.logger.info(f"Successfully inserted data into {fqn}.")
