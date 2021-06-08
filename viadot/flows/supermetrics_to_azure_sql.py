@@ -39,6 +39,7 @@ class SupermetricsToAzureSQL(Flow):
         supermetrics_task_timeout: int = 60 * 30,
         parallel: bool = True,
         tags: List[str] = ["extract"],
+        sep: str = None,
         *args: List[any],
         **kwargs: Dict[str, Any]
     ):
@@ -65,6 +66,7 @@ class SupermetricsToAzureSQL(Flow):
         self.supermetrics_task_timeout = supermetrics_task_timeout
         self.parallel = parallel
         self.tags = tags
+        self.sep = sep
         self.tasks = [
             supermetrics_to_csv_task,
             csv_to_blob_storage_task,
@@ -97,6 +99,7 @@ class SupermetricsToAzureSQL(Flow):
             if_empty=self.if_empty,
             max_retries=self.max_download_retries,
             timeout=self.supermetrics_task_timeout,
+            sep=self.sep,
             flow=flow,
         )
         return t

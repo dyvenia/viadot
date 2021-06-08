@@ -19,12 +19,14 @@ class SupermetricsToCSV(Task):
         max_rows: int = 1_000_000,
         if_exists: str = "replace",
         if_empty: str = "warn",
+        sep="\t",
         **kwargs,
     ):
         self.path = path
         self.max_rows = max_rows
         self.if_exists = if_exists
         self.if_empty = if_empty
+        self.sep = sep
 
         super().__init__(
             name="supermetrics_to_csv",
@@ -47,6 +49,7 @@ class SupermetricsToCSV(Task):
         "max_retries",
         "retry_delay",
         "timeout",
+        "sep",
     )
     def run(
         self,
@@ -67,6 +70,7 @@ class SupermetricsToCSV(Task):
         max_retries: int = None,
         retry_delay: timedelta = None,
         timeout: int = None,
+        sep: str = None,
     ):
 
         if max_retries:
@@ -99,7 +103,7 @@ class SupermetricsToCSV(Task):
 
         # Download data to a local CSV file
         self.logger.info(f"Downloading data to {path}...")
-        supermetrics.to_csv(path, if_exists=if_exists, if_empty=if_empty)
+        supermetrics.to_csv(path, if_exists=if_exists, if_empty=if_empty, sep=sep)
         self.logger.info(f"Successfully downloaded data to {path}.")
 
 
