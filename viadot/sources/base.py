@@ -43,7 +43,7 @@ class Source:
             if if_empty == "warn":
                 logger.warning("The query produced no data.")
             elif if_empty == "skip":
-                logger.debug("The query produced no data. Skipping...")
+                logger.info("The query produced no data. Skipping...")
                 return False
 
         if if_exists == "append":
@@ -146,7 +146,7 @@ class SQL(Source):
         table: str,
         schema: str = None,
         dtypes: Dict[str, Any] = None,
-        if_exists: Literal = ["fail", "replace"],
+        if_exists: Literal["fail", "replace"] = "fail",
     ):
         """Create a Table in the Database
 
@@ -154,7 +154,7 @@ class SQL(Source):
             table (str): Table name
             schema (str, optional): [description]. Defaults to None.
             dtypes (Dict[str, Any], optional): [description]. Defaults to None.
-            if_exists (Literal, optional): [description]. Defaults to ["fail", "replace"].
+            if_exists (Literal, optional): [description]. Defaults to "fail".
 
         Returns:
             [type]: [description]
