@@ -65,7 +65,7 @@ class Supermetrics(Source):
         Note that Supermetrics API will sometimes hang and not return any error message,
         so we're adding a timeout to GET.
 
-        See [requests docs](https://docs.python-requests.org/e  n/master/user/advanced/#timeouts)
+        See [requests docs](https://docs.python-requests.org/en/master/user/advanced/#timeouts)
         for an explanation of why this timeout value will work on long-running queries but fail fast
         on connection issues.
         """
