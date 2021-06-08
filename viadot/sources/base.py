@@ -43,7 +43,7 @@ class Source:
             if if_empty == "warn":
                 logger.warning("The query produced no data.")
             elif if_empty == "skip":
-                logger.info("The query produced no data. Skipping...")
+                logger.warning("The query produced no data. Skipping...")
                 return False
 
         if if_exists == "append":
