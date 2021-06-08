@@ -1,7 +1,7 @@
 import json
 import urllib
 from copy import deepcopy
-from typing import Any, Dict
+from typing import Any, Dict, List
 
 import pandas as pd
 import requests
@@ -70,6 +70,7 @@ class Supermetrics(Source):
 
         try:
             response = requests.get(self.API_ENDPOINT, params=params)
+            # return response
             response.raise_for_status()
         except (HTTPError, ConnectionError, Timeout) as e:
             raise APIError(f"The API call to {self.API_ENDPOINT} failed.") from e
@@ -82,6 +83,15 @@ class Supermetrics(Source):
 
         return response.json()
 
+    def _get_col_names(self) -> List[str]:
+        query_params_cp = deepcopy(self.query_params)
+        query_params_cp["offset_start"] = 0
+        query_params_cp["offset_end"] = 0
+        response_dict = Supermetrics(query_params=query_params_cp).to_json()
+        cols_meta = response_dict["meta"]["query"]["fields"]
+        columns = [col_meta["field_name"] for col_meta in cols_meta]
+        return columns
+
     def to_df(self) -> pd.DataFrame:
         """Download data into a pandas DataFrame.
 
@@ -93,14 +103,11 @@ class Supermetrics(Source):
         Returns:
             pd.DataFrame: the DataFrame containing query results
         """
+        columns = self._get_col_names()
         data = self.to_json()["data"]
         if data:
-            df = pd.DataFrame(data[1:], columns=data[0])
+            df = pd.DataFrame(data[1:], columns=columns)
         else:
-            query_params_cp = deepcopy(self.query_params)
-            query_params_cp["offset_start"] = 0
-            query_params_cp["offset_end"] = 0
-            columns = Supermetrics(query_params=query_params_cp).to_df().columns
             df = pd.DataFrame(columns=columns)
         return df
 
