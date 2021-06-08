@@ -39,7 +39,7 @@ class SupermetricsToAzureSQL(Flow):
         supermetrics_task_timeout: int = 60 * 30,
         parallel: bool = True,
         tags: List[str] = ["extract"],
-        sep: str = None,
+        sep: str = "\t",
         *args: List[any],
         **kwargs: Dict[str, Any]
     ):
