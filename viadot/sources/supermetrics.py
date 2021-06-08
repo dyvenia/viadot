@@ -6,7 +6,7 @@ from typing import Any, Dict, List
 import pandas as pd
 import requests
 from prefect.utilities import logging
-from requests.exceptions import ConnectionError, HTTPError, Timeout
+from requests.exceptions import ConnectionError, HTTPError, Timeout, ReadTimeout
 from urllib3.exceptions import ProtocolError
 
 from ..config import local_config
@@ -60,7 +60,15 @@ class Supermetrics(Source):
         obj.query_params["api_key"] = credentials["API_KEY"]
         return obj
 
-    def to_json(self) -> Dict[str, Any]:
+    def to_json(self, timeout=(3.05, 60 * 30)) -> Dict[str, Any]:
+        """Download query results to a dictionary.
+        Note that Supermetrics API will sometimes hang and not return any error message,
+        so we're adding a timeout to GET.
+
+        See [requests docs](https://docs.python-requests.org/e  n/master/user/advanced/#timeouts)
+        for an explanation of why this timeout value will work on long-running queries but fail fast
+        on connection issues.
+        """
 
         if not self.query_params:
             raise ValueError("Please build the query first")
@@ -69,9 +77,14 @@ class Supermetrics(Source):
         params = {"json": json.dumps(self.query_params)}
 
         try:
-            response = requests.get(self.API_ENDPOINT, params=params)
+            response = requests.get(self.API_ENDPOINT, params=params, timeout=timeout)
             # return response
             response.raise_for_status()
+        except ReadTimeout as e:
+            msg = "The connection was successful, "
+            msg += f"however the API call to {self.API_ENDPOINT} timed out after {timeout[1]}s "
+            msg += "while waiting for the server to return data."
+            raise APIError(msg)
         except (HTTPError, ConnectionError, Timeout) as e:
             raise APIError(f"The API call to {self.API_ENDPOINT} failed.") from e
         except ProtocolError as e:
