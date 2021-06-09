@@ -96,14 +96,34 @@ class Supermetrics(Source):
 
         return response.json()
 
+    @staticmethod
+    def __get_col_names_google_analytics(response: dict) -> List[str]:
+        """This is required as Supermetrics allows pivoting GA data but does not return
+        the pivoted table's column names in the meta field. Due to this, we're
+        forced to read them from the data."""
+        try:
+            return response["data"][0]
+        except IndexError as e:
+            raise ValueError(
+                "Couldn't find column names as query returned no data"
+            ) from e
+
+    @staticmethod
+    def __get_col_names_other(response: dict) -> List[str]:
+        cols_meta = response["meta"]["query"]["fields"]
+        columns = [col_meta["field_name"] for col_meta in cols_meta]
+        return columns
+
     def _get_col_names(self) -> List[str]:
+
         query_params_cp = deepcopy(self.query_params)
         query_params_cp["offset_start"] = 0
         query_params_cp["offset_end"] = 0
-        response_dict = Supermetrics(query_params=query_params_cp).to_json()
-        cols_meta = response_dict["meta"]["query"]["fields"]
-        columns = [col_meta["field_name"] for col_meta in cols_meta]
-        return columns
+        response: dict = Supermetrics(query_params=query_params_cp).to_json()
+        if self.query_params["ds_id"] == "GA":
+            return self.__get_col_names_google_analytics(response)
+        else:
+            return self.__get_col_names_other(response)
 
     def to_df(self) -> pd.DataFrame:
         """Download data into a pandas DataFrame.
