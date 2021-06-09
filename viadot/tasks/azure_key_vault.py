@@ -3,6 +3,7 @@ import os
 from azure.identity import EnvironmentCredential
 from azure.keyvault.secrets import SecretClient
 from prefect.tasks.secrets.base import SecretBase
+from prefect.tasks.secrets import PrefectSecret
 from prefect.utilities.tasks import defaults_from_attrs
 
 
@@ -15,7 +16,19 @@ def get_key_vault(
         os.environ["AZURE_TENANT_ID"] = key_vault_credentials["AZURE_TENANT_ID"]
         os.environ["AZURE_CLIENT_ID"] = key_vault_credentials["AZURE_CLIENT_ID"]
         os.environ["AZURE_CLIENT_SECRET"] = key_vault_credentials["AZURE_CLIENT_SECRET"]
-
+    else:
+        try:
+            # we can read the credentials automatically if user uses the default name
+            credentials = PrefectSecret("AZURE_CREDENTIALS").run()
+            key_vault_credentials = credentials["KEY_VAULT"][vault_name]
+            os.environ["AZURE_TENANT_ID"] = key_vault_credentials["AZURE_TENANT_ID"]
+            os.environ["AZURE_CLIENT_ID"] = key_vault_credentials["AZURE_CLIENT_ID"]
+            os.environ["AZURE_CLIENT_SECRET"] = key_vault_credentials[
+                "AZURE_CLIENT_SECRET"
+            ]
+        except ValueError as e:
+            # go to step 3 (attempt to read from env)
+            pass
     credentials = EnvironmentCredential()
     vault_url = f"https://{vault_name}.vault.azure.net"
     key_vault = SecretClient(
@@ -70,7 +83,8 @@ class ReadAzureKeyVaultSecret(SecretBase):
             - secret (str): the name of the secret to retrieve
             - vault_name (str): the name of the vault from which to fetch the secret
             - credentials (dict, optional): your Azure Key Vault credentials passed from an upstream
-                Secret task; this Secret must be a JSON string
+                Secret task. By default, credentials are read from the `AZURE_CREDENTIALS`
+                Prefect Secret; this Secret must be a JSON string
                 with the subkey `KEY_VAULT` and then vault_name containing three keys:
                 `AZURE_TENANT_ID`, `AZURE_CLIENT_ID`, and `AZURE_CLIENT_SECRET`, which will be
                 passed directly to `SecretClient`.  If not provided here or in context, the task
@@ -81,14 +95,12 @@ class ReadAzureKeyVaultSecret(SecretBase):
         Example:
             ```python
             from prefect import Flow
-            from prefect.tasks.secrets import PrefectSecret
             from viadot.tasks import ReadAzureKeyVaultSecret
 
             azure_secret_task = ReadAzureKeyVaultSecret()
 
             with Flow(name="example") as f:
-                azure_credentials = PrefectSecret("AZURE_CREDENTIALS")
-                secret = azure_secret_task(secret="test", vault_name="my_vault_name", credentials=azure_credentials)
+                secret = azure_secret_task(secret="test", vault_name="my_vault_name")
             out = f.run()
             ```
         Returns:
