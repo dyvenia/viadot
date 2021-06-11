@@ -1,6 +1,6 @@
 from adlfs import AzureDatalakeFileSystem, AzureBlobFileSystem
 
-from typing import Any, Dict
+from typing import Any, Dict, List
 
 from ..config import local_config
 from .base import Source
@@ -23,14 +23,17 @@ class AzureDataLake(Source):
     def __init__(
         self, credentials: Dict[str, Any] = None, gen: int = 2, *args, **kwargs
     ):
-        DEFAULT_CREDENTIALS = local_config.get("AZURE_BLOB_STORAGE")
-        credentials = credentials or DEFAULT_CREDENTIALS
+
+        credentials = credentials or {}
+
         super().__init__(*args, credentials=credentials, **kwargs)
+
         storage_account_name = self.credentials["ACCOUNT_NAME"]
         tenant_id = self.credentials["AZURE_TENANT_ID"]
         client_id = self.credentials["AZURE_CLIENT_ID"]
         client_secret = self.credentials["AZURE_CLIENT_SECRET"]
 
+        self.gen = gen
         self.storage_options = {
             "tenant_id": tenant_id,
             "client_id": client_id,
@@ -51,42 +54,38 @@ class AzureDataLake(Source):
                 client_secret=client_secret,
             )
 
-    def upload(self, from_path: str, to_path: str, overwrite: bool = False):
-        raise NotImplemented
-        # """Upload a file to the lake.
+    def upload(
+        self,
+        from_path: str,
+        to_path: str,
+        recursive: bool = False,
+        overwrite: bool = False,
+    ) -> None:
+        """
+        Upload file(s) to the lake.
 
-        # Args:
-        #     from_path (str): Path to the local file to be uploaded.
-        #     to_path (str): The destination path in the format 'filesystem/path/a.csv'
-        #     overwrite (bool, optional): Whether to overwrite the file if it exists.
-        #     Defaults to False.
+        Args:
+            from_path (str): Path to the local file(s) to be uploaded.
+            to_path (str): Path to the destination file/folder
+            recursive (bool): Set this to true if working with directories.
+            overwrite (bool): Whether to overwrite the file(s) if they exist.
 
-        # Example:
-        # ```python
-        # from viadot.sources import AzureDataLake
-        # lake = AzureDataLake()
-        # lake.upload('tests/test.csv', to_path="tests/test.csv")
-        # ```
+        Example:
+        ```python
+        from viadot.sources import AzureDataLake
+        lake = AzureDataLake()
+        lake.upload(from_path='tests/test.csv', to_path="sandbox/test.csv")
+        ```
+        """
 
-        # Returns:
-        #     bool: Whether the operation was successful.
-        # """
+        if self.gen == 1:
+            raise NotImplemented(
+                "Azure Data Lake Gen1 does not support simple file upload."
+            )
 
-        # file_system_name = to_path.split("/")[0]
-        # file_system_client = self.service_client.get_file_system_client(
-        #     file_system_name
-        # )
-
-        # file_path = "/".join(to_path.split("/")[1:])
-        # file_client = file_system_client.get_file_client(file_path)
-
-        # file_client = file_client.create_file()
-        # with open(from_path, "rb") as f:
-        #     file_content = f.read()
-
-        # file_client.upload_data(data=file_content, overwrite=overwrite)
-
-        # return True
+        self.fs.upload(
+            lpath=from_path, rpath=to_path, recursive=recursive, overwrite=overwrite
+        )
 
     def exists(self, path: str) -> bool:
         """
@@ -108,8 +107,19 @@ class AzureDataLake(Source):
         """
         return self.fs.exists(path)
 
-    def download(self, from_path, to_path: str, recursive: bool = False):
+    def download(
+        self,
+        from_path: str,
+        to_path: str,
+        recursive: bool = False,
+        overwrite: bool = True,
+    ) -> None:
+        if overwrite is False:
+            raise NotImplemented(
+                "Currently, only the default behavior (overwrite) is available."
+            )
+
         self.fs.download(rpath=from_path, lpath=to_path, recursive=recursive)
 
-    def ls(self, path: str):
+    def ls(self, path: str) -> List[str]:
         return self.fs.ls(path)

@@ -65,6 +65,84 @@ class CreateTableFromBlob(Task):
         self.logger.info(f"Successfully inserted data into {fqn}.")
 
 
+class AzureSQLBulkInsert(Task):
+    def __init__(
+        self,
+        from_path: str = None,
+        schema: str = None,
+        table: str = None,
+        dtypes: Dict[str, Any] = None,
+        sep="\t",
+        if_exists: Literal["fail", "replace", "append"] = "fail",
+        credentials_secret: str = "AZURE_SQL",
+        *args,
+        **kwargs,
+    ):
+        self.from_path = from_path
+        self.schema = schema
+        self.table = table
+        self.dtypes = dtypes
+        self.sep = sep
+        self.if_exists = if_exists
+        self.credentials_secret = credentials_secret
+        super().__init__(name="azure_sql_bulk_insert", *args, **kwargs)
+
+    def __call__(self):
+        """Bulk insert CSV(s) into an Azure SQL table"""
+
+    @defaults_from_attrs("sep", "if_exists", "credentials_secret")
+    def run(
+        self,
+        from_path: str = None,
+        schema: str = None,
+        table: str = None,
+        dtypes: Dict[str, Any] = None,
+        sep: str = None,
+        if_exists: Literal["fail", "replace", "append"] = None,
+        credentials_secret: str = None,
+    ):
+        """
+        Bulk insert data from Azure Data Lake into an Azure SQL Database table.
+        This task also creates the table if it doesn't exist.
+        Currently, only CSV files are supported.
+
+        Parameters
+        ----------
+        from_path : str
+            Path to the file(s) to be inserted.
+        schema : str
+            Destination schema.
+        table : str
+            Destination table.
+        dtypes : Dict[str, Any]
+            Data types to force.
+        sep: str
+            The separator to use to read the CSV file.
+        if_exists : Literal, optional
+            What to do if the table already exists.
+        """
+
+        fqn = f"{schema}.{table}" if schema else table
+        azure_sql = AzureSQL(config_key=credentials_secret)
+        # create table
+        if if_exists == "replace":
+            azure_sql.create_table(
+                schema=schema, table=table, dtypes=dtypes, if_exists=if_exists
+            )
+
+            self.logger.info(f"Successfully created table {fqn}.")
+
+            # insert data
+        azure_sql.bulk_insert(
+            schema=schema,
+            table=table,
+            source_path=from_path,
+            sep=sep,
+            if_exists=if_exists,
+        )
+        self.logger.info(f"Successfully inserted data into {fqn}.")
+
+
 class RunAzureSQLDBQuery(Task):
     """
     Task for running an Azure SQL Database query.
