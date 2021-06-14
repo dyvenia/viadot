@@ -16,7 +16,7 @@ blob_to_azure_sql_task = CreateTableFromBlob()
 logger = logging.get_logger(__name__)
 
 
-class AzureDLGen1ToAzureSQL(Flow):
+class ADLSGen1ToAzureSQL(Flow):
     """Bulk insert a file from an Azure Data Lake gen1 to Azure SQL Database.
 
     Args:
@@ -41,7 +41,6 @@ class AzureDLGen1ToAzureSQL(Flow):
         table: str = None,
         schema: str = None,
         if_exists: str = "replace",
-        if_empty: str = "warn",
         sp_credentials_secret: str = None,
         vault_name: str = None,
         *args: List[any],
@@ -57,7 +56,6 @@ class AzureDLGen1ToAzureSQL(Flow):
         self.schema = schema
         self.dtypes = dtypes
         self.if_exists = if_exists
-        self.if_empty = if_empty
         self.sp_credentials_secret = sp_credentials_secret
         self.vault_name = vault_name
         super().__init__(*args, name=name, **kwargs)
