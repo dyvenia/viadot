@@ -1,14 +1,20 @@
-from adlfs import AzureDatalakeFileSystem, AzureBlobFileSystem
-
+import os
 from typing import Any, Dict, List
 
-from ..config import local_config
+import pandas as pd
+from adlfs import AzureBlobFileSystem, AzureDatalakeFileSystem
+
 from .base import Source
 
 
 class AzureDataLake(Source):
     """
     A class for pulling data from the Azure Data Lakes (gen1 and gen2).
+    You can either connect to the lake in general or to a particular path,
+    eg.
+    lake = AzureDataLake(); lake.exists("a/b/c.csv")
+    vs
+    lake = AzureDataLake(path="a/b/c.csv"); lake.exists()
 
     Parameters
     ----------
@@ -21,7 +27,12 @@ class AzureDataLake(Source):
     """
 
     def __init__(
-        self, credentials: Dict[str, Any] = None, gen: int = 2, *args, **kwargs
+        self,
+        path: str = None,
+        gen: int = 2,
+        credentials: Dict[str, Any] = None,
+        *args,
+        **kwargs,
     ):
 
         credentials = credentials or {}
@@ -33,6 +44,7 @@ class AzureDataLake(Source):
         client_id = self.credentials["AZURE_CLIENT_ID"]
         client_secret = self.credentials["AZURE_CLIENT_SECRET"]
 
+        self.path = path
         self.gen = gen
         self.storage_options = {
             "tenant_id": tenant_id,
@@ -46,18 +58,21 @@ class AzureDataLake(Source):
                 client_id=client_id,
                 client_secret=client_secret,
             )
+            self.base_url = f"adl://{storage_account_name}"
         elif gen == 2:
+            self.storage_options["account_name"] = storage_account_name
             self.fs = AzureBlobFileSystem(
                 account_name=storage_account_name,
                 tenant_id=tenant_id,
                 client_id=client_id,
                 client_secret=client_secret,
             )
+            self.base_url = f"az://"
 
     def upload(
         self,
         from_path: str,
-        to_path: str,
+        to_path: str = None,
         recursive: bool = False,
         overwrite: bool = False,
     ) -> None:
@@ -83,11 +98,15 @@ class AzureDataLake(Source):
                 "Azure Data Lake Gen1 does not support simple file upload."
             )
 
+        to_path = to_path or self.path
         self.fs.upload(
-            lpath=from_path, rpath=to_path, recursive=recursive, overwrite=overwrite
+            lpath=from_path,
+            rpath=to_path,
+            recursive=recursive,
+            overwrite=overwrite,
         )
 
-    def exists(self, path: str) -> bool:
+    def exists(self, path: str = None) -> bool:
         """
         Check if a location exists in Azure Data Lake.
 
@@ -105,12 +124,13 @@ class AzureDataLake(Source):
         Returns:
             bool: Whether the paths exists.
         """
+        path = path or self.path
         return self.fs.exists(path)
 
     def download(
         self,
-        from_path: str,
         to_path: str,
+        from_path: str = None,
         recursive: bool = False,
         overwrite: bool = True,
     ) -> None:
@@ -119,7 +139,18 @@ class AzureDataLake(Source):
                 "Currently, only the default behavior (overwrite) is available."
             )
 
+        from_path = from_path or self.path
         self.fs.download(rpath=from_path, lpath=to_path, recursive=recursive)
 
-    def ls(self, path: str) -> List[str]:
+    def to_df(self, path: str = None, sep: str = "\t"):
+        path = path or self.path
+        url = os.path.join(self.base_url, path)
+        return pd.read_csv(url, storage_options=self.storage_options, sep=sep)
+
+    def ls(self, path: str = None) -> List[str]:
+        path = path or self.path
         return self.fs.ls(path)
+
+    def rm(self, path: str = None, recursive: bool = False):
+        path = path or self.path
+        self.fs.rm(path, recursive=recursive)
