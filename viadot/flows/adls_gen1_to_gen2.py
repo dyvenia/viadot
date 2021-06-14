@@ -22,7 +22,7 @@ def add_ingestion_metadata(
     """Add ingestion metadata column(s), eg. data download date"""
     df = pd.read_csv(path, sep=sep)
     df["_viadot_downloaded_at_utc"] = datetime.now(timezone.utc)
-    df.to_csv(path, sep=sep)
+    df.to_csv(path, sep=sep, index=False)
 
 
 class ADLSGen1ToGen2(Flow):
