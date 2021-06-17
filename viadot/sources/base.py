@@ -45,6 +45,8 @@ class Source:
             elif if_empty == "skip":
                 logger.warning("The query produced no data. Skipping...")
                 return False
+            elif if_empty == "fail":
+                raise ValueError("The query produced no data.")
 
         if if_exists == "append":
             if os.path.isfile(path):
@@ -74,27 +76,19 @@ class Source:
 class SQL(Source):
     def __init__(
         self,
-        server: str = None,
-        db: str = None,
-        user: str = None,
-        pw: str = None,
         driver: str = None,
         config_key: str = None,
         *args,
         **kwargs,
     ):
         if config_key:
-            DEFAULT_CREDENTIALS = local_config.get(config_key)
-            credentials = kwargs.pop("credentials", DEFAULT_CREDENTIALS)
+            config_credentials = local_config.get(config_key)
 
-        else:
-            credentials = {
-                "driver": driver,
-                "server": server,
-                "db_name": db,
-                "user": user,
-                "password": pw,
-            }
+        credentials = config_credentials if config_key else kwargs.pop("credentials")
+
+        if driver:
+            credentials["driver"] = driver
+
         super().__init__(*args, credentials=credentials, **kwargs)
 
         self._con = None
@@ -107,17 +101,14 @@ class SQL(Source):
         Returns:
             str: The ODBC connection string.
         """
-        conn_str = ""
-        if "driver" in self.credentials:
-            conn_str += "DRIVER=" + self.credentials["driver"] + ";"
-        if "server" in self.credentials:
-            conn_str += "SERVER=" + self.credentials["server"] + ";"
-        if "db_name" in self.credentials:
-            conn_str += "DATABASE=" + self.credentials["db_name"] + ";"
-        if "user" in self.credentials and self.credentials["user"] != None:
-            conn_str += "UID=" + "{" + self.credentials["user"] + "}" + ";"
-        if "password" in self.credentials and self.credentials["password"] != None:
-            conn_str += "PWD=" + "{" + self.credentials["password"] + "}" + ";"
+        driver = self.credentials["driver"]
+        server = self.credentials["server"]
+        db_name = self.credentials["db_name"]
+        uid = self.credentials["user"]
+        pwd = self.credentials["password"]
+
+        conn_str = f"DRIVER={{{driver}}};SERVER={server};DATABASE={db_name};UID={uid};PWD={pwd};"
+
         if "authentication" in self.credentials:
             conn_str += "Authentication=" + self.credentials["authentication"] + ";"
 
@@ -151,8 +142,8 @@ class SQL(Source):
         """Create a Table in the Database
 
         Args:
-            table (str): Table name
-            schema (str, optional): [description]. Defaults to None.
+            table (str): The destination table. Defaults to None.
+            schema (str, optional): The destination schema. Defaults to None.
             dtypes (Dict[str, Any], optional): [description]. Defaults to None.
             if_exists (Literal, optional): [description]. Defaults to "fail".
 
