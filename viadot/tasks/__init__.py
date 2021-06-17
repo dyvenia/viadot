@@ -4,7 +4,8 @@ from .azure_data_lake import (
     AzureDataLakeUpload,
     AzureDataLakeToDF,
 )
-from .azure_sql import CreateTableFromBlob, AzureSQLBulkInsert
+from .azure_sql import CreateTableFromBlob, AzureSQLBulkInsert, AzureSQLCreateTable
 from .supermetrics import SupermetricsToCSV, SupermetricsToDF
 from .github import CloneRepo
 from .azure_key_vault import ReadAzureKeyVaultSecret, CreateAzureKeyVaultSecret
+from .bcp import BCPTask
