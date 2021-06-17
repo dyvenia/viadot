@@ -4,3 +4,4 @@ from .supermetrics_to_azure_sql import SupermetricsToAzureSQL
 from .supermetrics_to_azure_sql_v2 import SupermetricsToAzureSQLv2
 from .adls_gen1_to_azure_sql import ADLSGen1ToAzureSQL
 from .adls_gen1_to_gen2 import ADLSGen1ToGen2
+from .adls_gen1_to_azure_sql_new import ADLSGen1ToAzureSQLNew
