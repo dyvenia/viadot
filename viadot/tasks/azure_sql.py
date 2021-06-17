@@ -1,9 +1,11 @@
+import json
 from typing import Any, Dict, Literal
 
 from prefect import Task
 from prefect.utilities.tasks import defaults_from_attrs
 
 from ..sources import AzureSQL
+from .azure_key_vault import ReadAzureKeyVaultSecret
 
 
 class CreateTableFromBlob(Task):
@@ -141,6 +143,71 @@ class AzureSQLBulkInsert(Task):
             if_exists=if_exists,
         )
         self.logger.info(f"Successfully inserted data into {fqn}.")
+
+
+class AzureSQLCreateTable(Task):
+    def __init__(
+        self,
+        schema: str = None,
+        table: str = None,
+        dtypes: Dict[str, Any] = None,
+        if_exists: Literal["fail", "replace", "append"] = "fail",
+        credentials_secret: str = "AZURE_SQL",
+        vault_name: str = None,
+        *args,
+        **kwargs,
+    ):
+        self.schema = schema
+        self.table = table
+        self.dtypes = dtypes
+        self.if_exists = if_exists
+        self.credentials_secret = credentials_secret
+        self.vault_name = vault_name
+        super().__init__(name="azure_sql_create_table", *args, **kwargs)
+
+    def __call__(self):
+        """Create a table in Azure SQL"""
+
+    @defaults_from_attrs("if_exists", "credentials_secret")
+    def run(
+        self,
+        schema: str = None,
+        table: str = None,
+        dtypes: Dict[str, Any] = None,
+        if_exists: Literal["fail", "replace", "append"] = None,
+        credentials_secret: str = None,
+        vault_name: str = None,
+    ):
+        """
+        Create a table in Azure SQL Database.
+
+        Parameters
+        ----------
+        schema : str
+            Destination schema.
+        table : str
+            Destination table.
+        dtypes : Dict[str, Any]
+            Data types to force.
+        if_exists : Literal, optional
+            What to do if the table already exists.
+        """
+
+        azure_secret_task = ReadAzureKeyVaultSecret()
+        credentials_str = azure_secret_task.run(
+            secret=credentials_secret, vault_name=vault_name
+        )
+        credentials = json.loads(credentials_str)
+
+        fqn = f"{schema}.{table}" if schema else table
+        azure_sql = AzureSQL(credentials=credentials)
+
+        if if_exists == "replace":
+            azure_sql.create_table(
+                schema=schema, table=table, dtypes=dtypes, if_exists=if_exists
+            )
+
+            self.logger.info(f"Successfully created table {fqn}.")
 
 
 class RunAzureSQLDBQuery(Task):
