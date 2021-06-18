@@ -20,9 +20,6 @@ RUN apt update && yes | apt install vim gcc unixodbc-dev build-essential curl py
 RUN apt remove python-cffi
 RUN pip install --upgrade cffi
 
-# Azure CLI
-RUN curl -sL https://aka.ms/InstallAzureCLIDeb | bash
-
 # ODBC
 RUN curl https://packages.microsoft.com/keys/microsoft.asc | apt-key add - && \
     curl https://packages.microsoft.com/config/debian/10/prod.list > /etc/apt/sources.list.d/mssql-release.list && \
