@@ -78,13 +78,14 @@ class SQL(Source):
         self,
         driver: str = None,
         config_key: str = None,
+        credentials: str = None,
         *args,
         **kwargs,
     ):
         if config_key:
             config_credentials = local_config.get(config_key)
 
-        credentials = config_credentials if config_key else kwargs.pop("credentials")
+        credentials = config_credentials if config_key else credentials
 
         if driver:
             credentials["driver"] = driver
