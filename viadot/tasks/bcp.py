@@ -1,13 +1,30 @@
 import json
+from datetime import timedelta
 
 from prefect.tasks.shell import ShellTask
+from prefect.utilities.tasks import defaults_from_attrs
 from viadot.tasks import ReadAzureKeyVaultSecret
 
 
 class BCPTask(ShellTask):
-    def __init__(self, *args, **kwargs):
-        super().__init__(name="bcp", log_stderr=True, return_all=True, *args, **kwargs)
+    def __init__(
+        self,
+        max_retries: int = 3,
+        retry_delay: timedelta = timedelta(seconds=10),
+        *args,
+        **kwargs,
+    ):
+        super().__init__(
+            name="bcp",
+            log_stderr=True,
+            return_all=True,
+            max_retries=max_retries,
+            retry_delay=retry_delay,
+            *args,
+            **kwargs,
+        )
 
+    @defaults_from_attrs("max_retries", "retry_delay")
     def run(
         self,
         path: str = None,
@@ -16,6 +33,8 @@ class BCPTask(ShellTask):
         credentials: dict = None,
         credentials_secret: str = None,
         vault_name: str = None,
+        max_retries: int = None,
+        retry_delay: timedelta = None,
         **kwargs,
     ):
         azure_secret_task = ReadAzureKeyVaultSecret()

@@ -1,5 +1,6 @@
 import json
 import os
+from datetime import timedelta
 
 import pandas as pd
 from prefect import Task
@@ -17,6 +18,8 @@ class AzureDataLakeDownload(Task):
         recursive: bool = False,
         gen: int = 2,
         vault_name: str = None,
+        max_retries: int = 3,
+        retry_delay: timedelta = timedelta(seconds=10),
         *args,
         **kwargs,
     ):
@@ -25,12 +28,26 @@ class AzureDataLakeDownload(Task):
         self.recursive = recursive
         self.gen = gen
         self.vault_name = vault_name
-        super().__init__(name="adls_download", *args, **kwargs)
+        super().__init__(
+            name="adls_download",
+            max_retries=max_retries,
+            retry_delay=retry_delay,
+            *args,
+            **kwargs,
+        )
 
     def __call__(self):
         """Download file(s) from the Azure Data Lake"""
 
-    @defaults_from_attrs("from_path", "to_path", "recursive", "gen", "vault_name")
+    @defaults_from_attrs(
+        "from_path",
+        "to_path",
+        "recursive",
+        "gen",
+        "vault_name",
+        "max_retries",
+        "retry_delay",
+    )
     def run(
         self,
         from_path: str = None,
@@ -39,6 +56,8 @@ class AzureDataLakeDownload(Task):
         gen: int = None,
         sp_credentials_secret: str = None,
         vault_name: str = None,
+        max_retries: int = None,
+        retry_delay: timedelta = None,
     ):
         """Download file(s) from Azure Data Lake.
 
@@ -82,6 +101,8 @@ class AzureDataLakeUpload(Task):
         overwrite: bool = False,
         gen: int = 2,
         vault_name: str = None,
+        max_retries: int = 3,
+        retry_delay: timedelta = timedelta(seconds=10),
         *args,
         **kwargs,
     ):
@@ -91,13 +112,26 @@ class AzureDataLakeUpload(Task):
         self.overwrite = overwrite
         self.gen = gen
         self.vault_name = vault_name
-        super().__init__(name="adls_upload", *args, **kwargs)
+        super().__init__(
+            name="adls_upload",
+            max_retries=max_retries,
+            retry_delay=retry_delay,
+            *args,
+            **kwargs,
+        )
 
     def __call__(self):
         """Upload file(s) to the Azure Data Lake"""
 
     @defaults_from_attrs(
-        "from_path", "to_path", "recursive", "overwrite", "gen", "vault_name"
+        "from_path",
+        "to_path",
+        "recursive",
+        "overwrite",
+        "gen",
+        "vault_name",
+        "max_retries",
+        "retry_delay",
     )
     def run(
         self,
@@ -108,6 +142,8 @@ class AzureDataLakeUpload(Task):
         gen: int = None,
         sp_credentials_secret: str = None,
         vault_name: str = None,
+        max_retries: int = None,
+        retry_delay: timedelta = None,
     ):
         """Download file(s) from Azure Data Lake.
 
@@ -155,6 +191,8 @@ class AzureDataLakeToDF(Task):
         sep: str = "\t",
         gen: int = 2,
         vault_name: str = None,
+        max_retries: int = 3,
+        retry_delay: timedelta = timedelta(seconds=10),
         *args,
         **kwargs,
     ):
@@ -162,12 +200,25 @@ class AzureDataLakeToDF(Task):
         self.sep = sep
         self.gen = gen
         self.vault_name = vault_name
-        super().__init__(name="adls_to_df", *args, **kwargs)
+        super().__init__(
+            name="adls_to_df",
+            max_retries=max_retries,
+            retry_delay=retry_delay,
+            *args,
+            **kwargs,
+        )
 
     def __call__(self):
         """Load file(s) from the Azure Data Lake to a pandas DataFrame."""
 
-    @defaults_from_attrs("path", "sep", "gen", "vault_name")
+    @defaults_from_attrs(
+        "path",
+        "sep",
+        "gen",
+        "vault_name",
+        "max_retries",
+        "retry_delay",
+    )
     def run(
         self,
         path: str = None,
@@ -175,6 +226,8 @@ class AzureDataLakeToDF(Task):
         gen: int = None,
         sp_credentials_secret: str = None,
         vault_name: str = None,
+        max_retries: int = None,
+        retry_delay: timedelta = None,
     ) -> pd.DataFrame:
         """Load file(s) from Azure Data Lake to a pandas DataFrame.
 
