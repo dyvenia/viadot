@@ -1,9 +1,8 @@
-from datetime import timezone, datetime
 from typing import Any, Dict, List
 
-import pandas as pd
-from prefect import Flow, task
+from prefect import Flow
 from prefect.utilities import logging
+from viadot.dask_utils import METADATA_COLUMNS, add_ingestion_metadata_task
 
 from ..tasks import (
     AzureDataLakeDownload,
@@ -19,19 +18,6 @@ bulk_insert_task = BCPTask()
 
 
 logger = logging.get_logger(__name__)
-
-METADATA_COLUMNS = {"_viadot_downloaded_at_utc": "DATETIME"}
-
-
-@task
-def add_ingestion_metadata(
-    path: str,
-    sep: str = "\t",
-):
-    """Add ingestion metadata column(s), eg. data download date"""
-    df = pd.read_csv(path, sep=sep)
-    df["_viadot_downloaded_at_utc"] = datetime.now(timezone.utc).replace(microsecond=0)
-    df.to_csv(path, sep=sep, index=False)
 
 
 class ADLSGen1ToAzureSQLNew(Flow):
@@ -99,7 +85,9 @@ class ADLSGen1ToAzureSQLNew(Flow):
             vault_name=self.vault_name,
             flow=self,
         )
-        add_ingestion_metadata.bind(path=self.local_file_path, sep=self.sep, flow=self)
+        add_ingestion_metadata_task.bind(
+            path=self.local_file_path, sep=self.sep, flow=self
+        )
         gen2_upload_task.bind(
             from_path=self.local_file_path,
             to_path=self.gen2_path,
@@ -126,7 +114,7 @@ class ADLSGen1ToAzureSQLNew(Flow):
             flow=self,
         )
 
-        add_ingestion_metadata.set_upstream(gen1_download_task, flow=self)
-        gen2_upload_task.set_upstream(add_ingestion_metadata, flow=self)
-        create_table_task.set_upstream(add_ingestion_metadata, flow=self)
+        add_ingestion_metadata_task.set_upstream(gen1_download_task, flow=self)
+        gen2_upload_task.set_upstream(add_ingestion_metadata_task, flow=self)
+        create_table_task.set_upstream(add_ingestion_metadata_task, flow=self)
         bulk_insert_task.set_upstream(create_table_task, flow=self)
