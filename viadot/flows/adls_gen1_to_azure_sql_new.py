@@ -20,6 +20,8 @@ bulk_insert_task = BCPTask()
 
 logger = logging.get_logger(__name__)
 
+METADATA_COLUMNS = {"_viadot_downloaded_at_utc": "DATETIME"}
+
 
 @task
 def add_ingestion_metadata(
@@ -28,7 +30,7 @@ def add_ingestion_metadata(
 ):
     """Add ingestion metadata column(s), eg. data download date"""
     df = pd.read_csv(path, sep=sep)
-    df["_viadot_downloaded_at_utc"] = datetime.now(timezone.utc)
+    df["_viadot_downloaded_at_utc"] = datetime.now(timezone.utc).replace(microsecond=0)
     df.to_csv(path, sep=sep, index=False)
 
 
@@ -81,6 +83,7 @@ class ADLSGen1ToAzureSQLNew(Flow):
         self.sqldb_credentials_secret = sqldb_credentials_secret
         self.vault_name = vault_name
         super().__init__(*args, name=name, **kwargs)
+        self.dtypes.update(METADATA_COLUMNS)
         self.gen_flow()
 
     @staticmethod
