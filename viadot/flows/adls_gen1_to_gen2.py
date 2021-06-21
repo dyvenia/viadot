@@ -26,7 +26,7 @@ def add_ingestion_metadata(
 
 
 class ADLSGen1ToGen2(Flow):
-    """Bulk insert a file from an Azure Data Lake gen1 to Azure SQL Database.
+    """Move file(s) from Azure Data Lake gen1 to gen2.
 
     Args:
         name (str): The name of the flow.
@@ -36,7 +36,7 @@ class ADLSGen1ToGen2(Flow):
         overwrite (str): Whether to overwrite the destination file(s).
         gen1_sp_credentials_secret (str): The Key Vault secret holding Service Pricipal credentials for gen1 lake
         gen2_sp_credentials_secret (str): The Key Vault secret holding Service Pricipal credentials for gen2 lake
-        vault_name (str): The name of the vault from which to retrieve `sp_credentials_secret`
+        vault_name (str): The name of the vault from which to retrieve the secrets.
     """
 
     def __init__(
