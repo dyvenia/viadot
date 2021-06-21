@@ -57,7 +57,6 @@ class Supermetrics(Source):
         obj = Supermetrics(credentials=credentials)
         params = cls.get_params_from_api_query(url)
         obj.query_params = params
-        obj.query_params["api_key"] = credentials["API_KEY"]
         return obj
 
     def to_json(self, timeout=(3.05, 60 * 30)) -> Dict[str, Any]:
@@ -73,11 +72,13 @@ class Supermetrics(Source):
         if not self.query_params:
             raise ValueError("Please build the query first")
 
-        self.query_params["api_key"] = self.credentials["API_KEY"]
         params = {"json": json.dumps(self.query_params)}
+        headers = {"Authorization": f'Bearer {self.credentials["API_KEY"]}'}
 
         try:
-            response = requests.get(self.API_ENDPOINT, params=params, timeout=timeout)
+            response = requests.get(
+                self.API_ENDPOINT, params=params, headers=headers, timeout=timeout
+            )
             # return response
             response.raise_for_status()
         except ReadTimeout as e:
