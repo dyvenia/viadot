@@ -11,6 +11,19 @@ from .azure_key_vault import ReadAzureKeyVaultSecret
 
 
 class AzureDataLakeDownload(Task):
+    """
+    Task for downloading data from the Azure Data lakes (gen1 and gen2).
+
+    Args:
+        from_path (str, optional): The path from which to download the file(s). Defaults to None.
+        to_path (str, optional): The destination path. Defaults to None.
+        recursive (bool, optional): Set this to true if downloading entire directories.
+        gen (int, optional): The generation of the Azure Data Lake. Defaults to 2.
+        vault_name (str, optional): The name of the vault from which to fetch the secret. Defaults to None.
+        max_retries (int, optional): [description]. Defaults to 3.
+        retry_delay (timedelta, optional): [description]. Defaults to timedelta(seconds=10).
+    """
+
     def __init__(
         self,
         from_path: str = None,
@@ -28,6 +41,7 @@ class AzureDataLakeDownload(Task):
         self.recursive = recursive
         self.gen = gen
         self.vault_name = vault_name
+
         super().__init__(
             name="adls_download",
             max_retries=max_retries,
@@ -59,12 +73,12 @@ class AzureDataLakeDownload(Task):
         max_retries: int = None,
         retry_delay: timedelta = None,
     ):
-        """Download file(s) from Azure Data Lake.
+        """Task run method.
 
         Args:
             from_path (str): The path from which to download the file(s).
             to_path (str): The destination path.
-            recursive (bool): Set to true if downloading entire directories.
+            recursive (bool): Set this to true if downloading entire directories.
             gen (int): The generation of the Azure Data Lake.
             sp_credentials_secret (str, optional): The name of the Azure Key Vault secret containing a dictionary with
             ACCOUNT_NAME and Service Principal credentials (TENANT_ID, CLIENT_ID, CLIENT_SECRET). Defaults to None.
@@ -93,6 +107,17 @@ class AzureDataLakeDownload(Task):
 
 
 class AzureDataLakeUpload(Task):
+    """Upload file(s) to Azure Data Lake.
+
+    Args:
+        from_path (str, optional): The local path from which to upload the file(s). Defaults to None.
+        to_path (str, optional): The destination path. Defaults to None.
+        recursive (bool, optional): Set this to true if uploading entire directories. Defaults to False.
+        overwrite (bool, optional): Whether to overwrite files in the lake. Defaults to False.
+        gen (int, optional): The generation of the Azure Data Lake. Defaults to 2.
+        vault_name (str, optional): The name of the vault from which to obtain the secret. Defaults to None.
+    """
+
     def __init__(
         self,
         from_path: str = None,
@@ -145,7 +170,7 @@ class AzureDataLakeUpload(Task):
         max_retries: int = None,
         retry_delay: timedelta = None,
     ):
-        """Download file(s) from Azure Data Lake.
+        """Task run method.
 
         Args:
             from_path (str): The path from which to upload the file(s).
@@ -196,6 +221,14 @@ class AzureDataLakeToDF(Task):
         *args,
         **kwargs,
     ):
+        """Load file(s) from the Azure Data Lake to a pandas DataFrame.
+
+        Args:
+            path (str, optional): The path from which to load the DataFrame. Defaults to None.
+            sep (str, optional): The separator to use when reading the CSV file. Defaults to "\t".
+            gen (int, optional): The generation of the Azure Data Lake. Defaults to 2.
+            vault_name (str, optional): The name of the vault from which to obtain the secret. Defaults to None.
+        """
         self.path = path
         self.sep = sep
         self.gen = gen
@@ -229,7 +262,7 @@ class AzureDataLakeToDF(Task):
         max_retries: int = None,
         retry_delay: timedelta = None,
     ) -> pd.DataFrame:
-        """Load file(s) from Azure Data Lake to a pandas DataFrame.
+        """Task run method.
 
         Args:
             path (str): The path to file(s) which should be loaded into a DataFrame.
