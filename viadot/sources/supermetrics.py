@@ -3,10 +3,12 @@ import urllib
 from copy import deepcopy
 from typing import Any, Dict, List
 
+import numpy as np
 import pandas as pd
 import requests
 from prefect.utilities import logging
-from requests.exceptions import ConnectionError, HTTPError, Timeout, ReadTimeout
+from requests.exceptions import (ConnectionError, HTTPError, ReadTimeout,
+                                 Timeout)
 from urllib3.exceptions import ProtocolError
 
 from ..config import local_config
@@ -140,7 +142,7 @@ class Supermetrics(Source):
         columns = self._get_col_names()
         data = self.to_json()["data"]
         if data:
-            df = pd.DataFrame(data[1:], columns=columns)
+            df = pd.DataFrame(data[1:], columns=columns).replace("", np.nan)
         else:
             df = pd.DataFrame(columns=columns)
         return df
