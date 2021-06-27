@@ -1,6 +1,7 @@
-from prefect import task
-from datetime import timezone, datetime
+from datetime import datetime, timezone
+
 import pandas as pd
+from prefect import task
 
 METADATA_COLUMNS = {"_viadot_downloaded_at_utc": "DATETIME"}
 

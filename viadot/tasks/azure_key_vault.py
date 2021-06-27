@@ -2,8 +2,8 @@ import os
 
 from azure.identity import EnvironmentCredential
 from azure.keyvault.secrets import SecretClient
-from prefect.tasks.secrets.base import SecretBase
 from prefect.tasks.secrets import PrefectSecret
+from prefect.tasks.secrets.base import SecretBase
 from prefect.utilities.tasks import defaults_from_attrs
 
 

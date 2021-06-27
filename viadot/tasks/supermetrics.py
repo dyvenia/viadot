@@ -128,10 +128,6 @@ class SupermetricsToDF(Task):
             **kwargs,
         )
 
-    def __call__(self):
-        """Download Supermetrics data to a pandas DataFrame"""
-        super().__call__(self)
-
     @defaults_from_attrs(
         "max_rows",
         "max_retries",

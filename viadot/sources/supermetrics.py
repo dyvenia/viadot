@@ -7,8 +7,7 @@ import numpy as np
 import pandas as pd
 import requests
 from prefect.utilities import logging
-from requests.exceptions import (ConnectionError, HTTPError, ReadTimeout,
-                                 Timeout)
+from requests.exceptions import ConnectionError, HTTPError, ReadTimeout, Timeout
 from urllib3.exceptions import ProtocolError
 
 from ..config import local_config
