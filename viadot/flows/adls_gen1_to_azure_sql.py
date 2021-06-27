@@ -2,11 +2,8 @@ from typing import Any, Dict, List
 
 from prefect import Flow
 from prefect.utilities import logging
-from ..tasks import (
-    AzureDataLakeDownload,
-    BlobFromCSV,
-    CreateTableFromBlob,
-)
+
+from ..tasks import AzureDataLakeDownload, BlobFromCSV, CreateTableFromBlob
 
 gen1_download_task = AzureDataLakeDownload(gen=1)
 csv_to_blob_storage_task = BlobFromCSV()

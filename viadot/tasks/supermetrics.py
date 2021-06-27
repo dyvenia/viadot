@@ -1,7 +1,7 @@
 from datetime import timedelta
 from typing import Any, Dict, List, Union
-import pandas as pd
 
+import pandas as pd
 from prefect import Task
 from prefect.utilities.tasks import defaults_from_attrs
 

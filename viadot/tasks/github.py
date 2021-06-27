@@ -1,18 +1,17 @@
 import base64
+import os
 
 # import shutil
 import urllib
 
-# from typing import Any
+from github import Github
 
 # import pygit2
 from prefect import Task
 from prefect.client import Secret
 from prefect.utilities.tasks import defaults_from_attrs
 
-import os
-
-from github import Github
+# from typing import Any
 
 
 # This task is broken on some systems

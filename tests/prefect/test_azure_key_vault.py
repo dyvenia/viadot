@@ -1,6 +1,6 @@
 import pytest
 
-from viadot.tasks import ReadAzureKeyVaultSecret, CreateAzureKeyVaultSecret
+from viadot.tasks import CreateAzureKeyVaultSecret, ReadAzureKeyVaultSecret
 
 
 class TestReadAzureKeyVaultSecret:
