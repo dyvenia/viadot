@@ -2,6 +2,7 @@ from typing import Any, Dict, List
 
 from prefect import Flow
 from prefect.utilities import logging
+
 from viadot.task_utils import METADATA_COLUMNS, add_ingestion_metadata_task
 
 from ..tasks import (

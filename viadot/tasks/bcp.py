@@ -3,6 +3,7 @@ from datetime import timedelta
 
 from prefect.tasks.shell import ShellTask
 from prefect.utilities.tasks import defaults_from_attrs
+
 from viadot.tasks import ReadAzureKeyVaultSecret
 
 

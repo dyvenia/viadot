@@ -3,7 +3,7 @@ from typing import Any, Dict, List, Union
 from prefect import Flow, Task, apply_map
 from prefect.utilities import logging
 
-from ..tasks import SupermetricsToCSV, AzureDataLakeUpload, AzureSQLBulkInsert
+from ..tasks import AzureDataLakeUpload, AzureSQLBulkInsert, SupermetricsToCSV
 
 logger = logging.get_logger(__name__)
 
