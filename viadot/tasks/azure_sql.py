@@ -1,4 +1,5 @@
 import json
+from datetime import timedelta
 from typing import Any, Dict, Literal
 
 from prefect import Task
@@ -154,6 +155,8 @@ class AzureSQLCreateTable(Task):
         if_exists: Literal["fail", "replace", "append"] = "fail",
         credentials_secret: str = "AZURE_SQL",
         vault_name: str = None,
+        max_retries: int = 3,
+        retry_delay: timedelta = timedelta(seconds=10),
         *args,
         **kwargs,
     ):
@@ -163,7 +166,13 @@ class AzureSQLCreateTable(Task):
         self.if_exists = if_exists
         self.credentials_secret = credentials_secret
         self.vault_name = vault_name
-        super().__init__(name="azure_sql_create_table", *args, **kwargs)
+        super().__init__(
+            name="azure_sql_create_table",
+            max_retries=max_retries,
+            retry_delay=retry_delay,
+            *args,
+            **kwargs,
+        )
 
     def __call__(self):
         """Create a table in Azure SQL"""
@@ -177,6 +186,8 @@ class AzureSQLCreateTable(Task):
         if_exists: Literal["fail", "replace", "append"] = None,
         credentials_secret: str = None,
         vault_name: str = None,
+        max_retries: int = None,
+        retry_delay: timedelta = None,
     ):
         """
         Create a table in Azure SQL Database.
