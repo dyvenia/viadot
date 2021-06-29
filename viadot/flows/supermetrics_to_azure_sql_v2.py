@@ -99,6 +99,13 @@ class SupermetricsToAzureSQLv2(Flow):
     def gen_supermetrics_task(
         self, ds_accounts: Union[str, List[str]], flow: Flow = None
     ) -> Task:
+
+        if len(self.ds_accounts) > 1:
+            # force append when writing in parallel
+            if_exists = "append"
+        else:
+            if_exists = self.if_exists
+
         t = supermetrics_to_csv_task.bind(
             ds_id=self.ds_id,
             ds_accounts=ds_accounts,
@@ -112,7 +119,7 @@ class SupermetricsToAzureSQLv2(Flow):
             max_columns=self.max_columns,
             order_columns=self.order_columns,
             path=self.local_file_path,
-            if_exists="append",
+            if_exists=if_exists,
             if_empty=self.if_empty,
             max_retries=self.max_download_retries,
             timeout=self.supermetrics_task_timeout,
