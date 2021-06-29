@@ -86,5 +86,5 @@ class BCPTask(ShellTask):
         uid = credentials["user"]
         pwd = credentials["password"]
 
-        command = f"/opt/mssql-tools/bin/bcp {fqn} in {path} -S {server} -d {db_name} -U {uid} -P '{pwd}' -c -F 2 -b 5000"
+        command = f"/opt/mssql-tools/bin/bcp {fqn} in {path} -S {server} -d {db_name} -U {uid} -P '{pwd}' -c -F 2 -b 5000 -h 'TABLOCK'"
         return super().run(command=command, **kwargs)
