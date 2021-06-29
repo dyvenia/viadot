@@ -3,13 +3,15 @@ from typing import Any, Dict, List, Union
 from prefect import Flow, Task, apply_map
 from prefect.utilities import logging
 
-from ..tasks import AzureDataLakeUpload, AzureSQLBulkInsert, SupermetricsToCSV
+from ..task_utils import METADATA_COLUMNS, add_ingestion_metadata_task
+from ..tasks import AzureDataLakeUpload, AzureSQLCreateTable, BCPTask, SupermetricsToCSV
 
 logger = logging.get_logger(__name__)
 
 supermetrics_to_csv_task = SupermetricsToCSV()
 csv_to_adls_task = AzureDataLakeUpload()
-bulk_insert_task = AzureSQLBulkInsert()
+create_table_task = AzureSQLCreateTable()
+bulk_insert_task = BCPTask()
 
 
 class SupermetricsToAzureSQLv2(Flow):
@@ -28,7 +30,7 @@ class SupermetricsToAzureSQLv2(Flow):
         max_columns: int = None,
         order_columns: str = None,
         local_file_path: str = None,
-        blob_path: str = None,
+        adls_path: str = None,
         sep: str = "\t",
         overwrite_adls: bool = True,
         if_empty: str = "warn",
@@ -61,13 +63,13 @@ class SupermetricsToAzureSQLv2(Flow):
 
         # AzureDataLakeUpload
         self.local_file_path = local_file_path or self.slugify(name) + ".csv"
-        self.blob_path = blob_path
+        self.adls_path = adls_path
         self.sep = sep
         self.overwrite_adls = overwrite_adls
         self.if_empty = if_empty
         self.adls_sp_credentials_secret = adls_sp_credentials_secret
 
-        # AzureSQLBulkInsert
+        # BCPTask
         self.table = table
         self.schema = schema
         self.dtypes = dtypes
@@ -87,6 +89,7 @@ class SupermetricsToAzureSQLv2(Flow):
             bulk_insert_task,
         ]
         super().__init__(*args, name=name, **kwargs)
+        self.dtypes.update(METADATA_COLUMNS)
         self.gen_flow()
 
     @staticmethod
@@ -128,26 +131,37 @@ class SupermetricsToAzureSQLv2(Flow):
             supermetrics_downloads = self.gen_supermetrics_task(
                 ds_accounts=self.ds_accounts, flow=self
             )
+        add_ingestion_metadata_task.bind(
+            path=self.local_file_path, sep=self.sep, flow=self
+        )
 
         csv_to_adls_task.bind(
             from_path=self.local_file_path,
-            to_path=self.blob_path,
+            to_path=self.adls_path,
             overwrite=self.overwrite_adls,
             sp_credentials_secret=self.adls_sp_credentials_secret,
             vault_name=self.vault_name,
             flow=self,
         )
-        bulk_insert_task.bind(
-            from_path=self.blob_path,
+        create_table_task.bind(
             schema=self.schema,
             table=self.table,
             dtypes=self.dtypes,
-            sep=self.sep,
             if_exists=self.if_exists,
             credentials_secret=self.sqldb_credentials_secret,
-            # vault_name=self.vault_name,  # add when KV support is added
+            vault_name=self.vault_name,
+            flow=self,
+        )
+        bulk_insert_task.bind(
+            path=self.local_file_path,
+            schema=self.schema,
+            table=self.table,
+            credentials_secret=self.sqldb_credentials_secret,
+            vault_name=self.vault_name,
             flow=self,
         )
 
-        csv_to_adls_task.set_upstream(supermetrics_downloads, flow=self)
-        bulk_insert_task.set_upstream(csv_to_adls_task, flow=self)
+        add_ingestion_metadata_task.set_upstream(supermetrics_downloads, flow=self)
+        csv_to_adls_task.set_upstream(add_ingestion_metadata_task, flow=self)
+        create_table_task.set_upstream(add_ingestion_metadata_task, flow=self)
+        bulk_insert_task.set_upstream(create_table_task, flow=self)
