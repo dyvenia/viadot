@@ -129,8 +129,8 @@ class DownloadGitHubFile(Task):
             branch (str, optional): The GitHub branch to use. Defaults to "main".
         """
         git_token = Secret(access_token_secret).get()
-        repo_name = repo.split("/")[-1]
-        to_path = to_path or os.path.join(repo_name, from_path)
+        file_name = from_path.split("/")[-1]
+        to_path = to_path or file_name
 
         g = Github(git_token)
         repo = g.get_repo(repo)
