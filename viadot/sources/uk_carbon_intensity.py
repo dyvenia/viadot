@@ -1,6 +1,5 @@
 import pandas as pd
 import requests
-from prefect.utilities import logging
 
 from .base import Source
 
@@ -31,7 +30,7 @@ class UKCarbonIntensity(Source):
         else:
             raise f"Error {response.json()}"
 
-    def to_df(self):
+    def to_df(self, if_empty: str = "warn"):
         """Returns a pandas DataFrame with flattened data
 
         Returns:
@@ -46,6 +45,9 @@ class UKCarbonIntensity(Source):
         min_ = []
         index = []
         json_data = self.to_json()
+
+        if not json_data:
+            self._handle_if_empty(if_empty)
 
         for row in json_data["data"]:
             from_.append(row["from"])

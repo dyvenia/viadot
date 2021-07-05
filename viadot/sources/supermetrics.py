@@ -156,13 +156,7 @@ class Supermetrics(Source):
             df = pd.DataFrame(columns=columns)
 
         if df.empty:
-            if if_empty == "warn":
-                logger.warning("The query produced no data.")
-            elif if_empty == "skip":
-                logger.warning("The query produced no data. Skipping...")
-                return False
-            elif if_empty == "fail":
-                raise ValueError("The query produced no data.")
+            self._handle_if_empty(if_empty)
 
         return df
 
