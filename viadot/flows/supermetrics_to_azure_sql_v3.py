@@ -1,7 +1,10 @@
+import os
 from typing import Any, Dict, List, Union
 
 import pandas as pd
 from prefect import Flow, Task, apply_map, task
+from prefect.storage import Git, GitHub
+from prefect.tasks.control_flow import case
 from prefect.utilities import logging
 
 from ..task_utils import METADATA_COLUMNS, add_ingestion_metadata_task
@@ -29,6 +32,24 @@ def union_dfs_task(dfs: List[pd.DataFrame]):
     return pd.concat(dfs, ignore_index=True)
 
 
+@task
+def df_to_csv_task(df, path: str, if_exists: str = "replace", sep: str = "\t"):
+    if if_exists == "append":
+        if os.path.isfile(path):
+            csv_df = pd.read_csv(path, sep=sep)
+            out_df = pd.concat([csv_df, df])
+        else:
+            out_df = df
+    elif if_exists == "replace":
+        out_df = df
+    out_df.to_csv(path, sep=sep, index=False)
+
+
+@task
+def is_stored_locally(f: Flow):
+    return f.storage is None
+
+
 class SupermetricsToAzureSQLv3(Flow):
     def __init__(
         self,
@@ -44,7 +65,7 @@ class SupermetricsToAzureSQLv3(Flow):
         max_rows: int = 1000000,
         max_columns: int = None,
         order_columns: str = None,
-        expectation_suite_path: str = None,
+        expectation_suite_name: str = None,
         local_file_path: str = None,
         adls_path: str = None,
         sep: str = "\t",
@@ -62,7 +83,7 @@ class SupermetricsToAzureSQLv3(Flow):
         tags: List[str] = ["extract"],
         vault_name: str = None,
         *args: List[any],
-        **kwargs: Dict[str, Any]
+        **kwargs: Dict[str, Any],
     ):
         """
         Flow for downloading data from different marketing APIs to a local CSV
@@ -82,7 +103,7 @@ class SupermetricsToAzureSQLv3(Flow):
             max_rows (int, optional): A query parameter passed to the SupermetricsToCSV task. Defaults to 1000000.
             max_columns (int, optional): A query parameter passed to the SupermetricsToCSV task. Defaults to None.
             order_columns (str, optional): A query parameter passed to the SupermetricsToCSV task. Defaults to None.
-            expectation_suite_path (str, optional): The path to the expectations suite JSON file.
+            expectation_suite_name (str, optional): The name of the expectation suite, eg. `failure`.
             Currently, only GitHub URLs are supported. Defaults to None.
             local_file_path (str, optional): Local destination path. Defaults to None.
             adls_path (str, optional): Azure Data Lake destination path. Defaults to None.
@@ -117,8 +138,7 @@ class SupermetricsToAzureSQLv3(Flow):
         self.max_columns = max_columns
         self.order_columns = order_columns
 
-        # DownloadGitHubFile (download expectations)
-        self.expectation_suite_path = expectation_suite_path
+        # RunGreatExpectationsValidation
 
         # AzureDataLakeUpload
         self.local_file_path = local_file_path or self.slugify(name) + ".csv"
@@ -131,7 +151,7 @@ class SupermetricsToAzureSQLv3(Flow):
         # BCPTask
         self.table = table
         self.schema = schema
-        self.dtypes = dtypes
+        self.dtypes = dtypes or {}
         self.if_exists = if_exists
         self.sqldb_credentials_secret = sqldb_credentials_secret
 
@@ -143,12 +163,49 @@ class SupermetricsToAzureSQLv3(Flow):
         self.vault_name = vault_name
 
         super().__init__(*args, name=name, **kwargs)
+
+        # DownloadGitHubFile (download expectations)
+        self.expectation_suite_name = expectation_suite_name
+        self.expectation_suite_file_name = expectation_suite_name + ".json"
+        self.expectation_suite_path = self._get_expectation_suite_path()
+        self.expectation_suite_local_path = os.path.join(
+            os.getcwd(), "expectations", self.expectation_suite_file_name
+        )
+        self.storage_repo = self._get_expectation_suite_repo()
+
         self.dtypes.update(METADATA_COLUMNS)
         self.gen_flow()
 
     @staticmethod
     def slugify(name):
         return name.replace(" ", "_").lower()
+
+    def _get_expectation_suite_repo(self):
+        if self.storage is None:
+            return None
+        return self.storage.repo
+
+    def _get_expectation_suite_path(self):
+
+        if self.storage is None:
+            return os.path.join(os.getcwd(), self.expectation_suite_file_name)
+
+        else:
+            if isinstance(self.storage, GitHub):
+                path = self.storage.path
+            elif isinstance(self.storage, Git):
+                # assuming this is DevOps
+                path = self.storage.flow_path
+            else:
+                try:
+                    path = self.storage.path
+                except AttributeError:
+                    raise NotImplemented("Unsupported storage type.")
+
+            flow_dir_path = path[: path.rfind("/")]
+            return os.path.join(
+                flow_dir_path, "expectations", self.expectation_suite_file_name
+            )
 
     def gen_supermetrics_task(
         self, ds_accounts: Union[str, List[str]], flow: Flow = None
@@ -177,60 +234,69 @@ class SupermetricsToAzureSQLv3(Flow):
         if self.parallel:
             # generate a separate task for each account
             dfs = apply_map(self.gen_supermetrics_task, self.ds_accounts, flow=self)
+            df = union_dfs_task.bind(dfs, flow=self)
         else:
-            dfs = self.gen_supermetrics_task(ds_accounts=self.ds_accounts, flow=self)
-        df = union_dfs_task.bind(dfs)
-        download_expectations = download_github_file_task.bind(
-            repo="dyvenia/workstreams_vel",
-            from_path="/flows/google_ads_fr_extract/expectations/failure.json",
-            to_path="failure.json",
-            flow=self,
-        )
+            df = self.gen_supermetrics_task(ds_accounts=self.ds_accounts, flow=self)
+
         validation = validation_task.bind(
             df=df,
-            expectations_path=expectations_path,
-            expectation_suite_name=expectation_suite_name,
-            upstream_tasks=[download_expectations_suite],
+            expectations_path=os.getcwd(),
+            expectation_suite_name=self.expectation_suite_name,
+            flow=self,
         )
 
-        # df_to_csv_task.bind(
-        #     df=df,
-        #     path=self.local_file_path,
-        #     if_exists=if_exists,
-        #     sep=self.sep,
-        # )
+        local = is_stored_locally.bind(self, flow=self)
+        with case(local, False):
+            download_expectations = download_github_file_task.bind(
+                repo=self.storage_repo,
+                from_path=self.expectation_suite_path,
+                to_path=self.expectation_suite_local_path,
+                flow=self,
+            )
+            validation.set_upstream(download_expectations, flow=self)
 
-        # add_ingestion_metadata_task.bind(
-        #     path=self.local_file_path, sep=self.sep, flow=self
-        # )
+        df_to_csv = df_to_csv_task.bind(
+            df=df,
+            path=self.local_file_path,
+            if_exists=self.if_exists,
+            sep=self.sep,
+            flow=self,
+        )
 
-        # csv_to_adls_task.bind(
-        #     from_path=self.local_file_path,
-        #     to_path=self.adls_path,
-        #     overwrite=self.overwrite_adls,
-        #     sp_credentials_secret=self.adls_sp_credentials_secret,
-        #     vault_name=self.vault_name,
-        #     flow=self,
-        # )
-        # create_table_task.bind(
-        #     schema=self.schema,
-        #     table=self.table,
-        #     dtypes=self.dtypes,
-        #     if_exists=self.if_exists,
-        #     credentials_secret=self.sqldb_credentials_secret,
-        #     vault_name=self.vault_name,
-        #     flow=self,
-        # )
-        # bulk_insert_task.bind(
-        #     path=self.local_file_path,
-        #     schema=self.schema,
-        #     table=self.table,
-        #     credentials_secret=self.sqldb_credentials_secret,
-        #     vault_name=self.vault_name,
-        #     flow=self,
-        # )
+        add_ingestion_metadata = add_ingestion_metadata_task.bind(
+            path=self.local_file_path, sep=self.sep, flow=self
+        )
 
-        add_ingestion_metadata_task.set_upstream(supermetrics_downloads, flow=self)
-        # csv_to_adls_task.set_upstream(add_ingestion_metadata_task, flow=self)
-        # create_table_task.set_upstream(add_ingestion_metadata_task, flow=self)
-        # bulk_insert_task.set_upstream(create_table_task, flow=self)
+        csv_to_adls_task.bind(
+            from_path=self.local_file_path,
+            to_path=self.adls_path,
+            overwrite=self.overwrite_adls,
+            sp_credentials_secret=self.adls_sp_credentials_secret,
+            vault_name=self.vault_name,
+            flow=self,
+        )
+        create_table_task.bind(
+            schema=self.schema,
+            table=self.table,
+            dtypes=self.dtypes,
+            if_exists=self.if_exists,
+            credentials_secret=self.sqldb_credentials_secret,
+            vault_name=self.vault_name,
+            flow=self,
+        )
+        bulk_insert_task.bind(
+            path=self.local_file_path,
+            schema=self.schema,
+            table=self.table,
+            credentials_secret=self.sqldb_credentials_secret,
+            vault_name=self.vault_name,
+            flow=self,
+        )
+
+        df_to_csv.set_upstream(validation, flow=self)
+        add_ingestion_metadata.set_upstream(df_to_csv, flow=self)
+        csv_to_adls_task.set_upstream(add_ingestion_metadata_task, flow=self)
+
+        create_table_task.set_upstream(validation, flow=self)
+        bulk_insert_task.set_upstream(create_table_task, flow=self)
+        bulk_insert_task.set_upstream(add_ingestion_metadata, flow=self)
