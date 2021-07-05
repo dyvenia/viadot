@@ -1,6 +1,6 @@
 import pandas as pd
 
-from viadot.sources.base import SQL, Source
+from viadot.sources.base import Source
 
 from .test_credentials import get_credentials
 
@@ -8,8 +8,11 @@ CREDENTIALS = get_credentials("SQL_SOURCE_TEST")
 
 
 class EmptySource(Source):
-    def to_df(self):
-        return pd.DataFrame()
+    def to_df(self, if_empty):
+        df = pd.DataFrame()
+        if df.empty:
+            self._handle_if_empty(if_empty)
+        return df
 
 
 def test_empty_source_skip():

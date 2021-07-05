@@ -4,12 +4,12 @@ import os
 # import shutil
 import urllib
 
-from github import Github
-
 # import pygit2
 from prefect import Task
 from prefect.client import Secret
 from prefect.utilities.tasks import defaults_from_attrs
+
+from github import Github, UnknownObjectException
 
 # from typing import Any
 
@@ -106,7 +106,7 @@ class DownloadGitHubFile(Task):
         self.to_path = to_path
         self.access_token_secret = access_token_secret
         self.branch = branch
-        super().__init__(**kwargs)
+        super().__init__(name="download_github_file", **kwargs)
 
     @defaults_from_attrs(
         "repo", "from_path", "to_path", "access_token_secret", "branch"
@@ -133,10 +133,14 @@ class DownloadGitHubFile(Task):
         to_path = to_path or file_name
 
         g = Github(git_token)
-        repo = g.get_repo(repo)
-        content_encoded = repo.get_contents(
-            urllib.parse.quote(from_path), ref=branch
-        ).content
+        repo_obj = g.get_repo(repo)
+        try:
+            content_encoded = repo_obj.get_contents(
+                urllib.parse.quote(from_path), ref=branch
+            ).content
+        except UnknownObjectException as e:
+            full_path = os.path.join(repo, from_path)
+            raise ValueError(f"The specified file does not exist under {full_path}.")
         content = base64.b64decode(content_encoded)
 
         if os.path.dirname(to_path):

@@ -2,12 +2,13 @@ import os
 from abc import abstractmethod
 from typing import Any, Dict, Literal
 
-import pandas
+import pandas as pd
 import pyarrow as pa
 import pyodbc
 from prefect.utilities import logging
 
 from ..config import local_config
+from ..signals import SKIP
 
 logger = logging.get_logger(__name__)
 
@@ -22,36 +23,36 @@ class Source:
         pass
 
     @abstractmethod
-    def to_df():
+    def to_df(self, if_empty: str = None):
         pass
 
     @abstractmethod
     def query():
         pass
 
-    def to_arrow(self):
-        df = self.to_df()
+    def to_arrow(self, if_empty: str = "warn") -> pa.Table:
+
+        try:
+            df = self.to_df(if_empty=if_empty)
+        except SKIP:
+            return False
+
         table = pa.Table.from_pandas(df)
         return table
 
     def to_csv(
         self, path: str, if_exists: str = "replace", if_empty: str = "warn", sep="\t"
-    ):
-        df = self.to_df()
+    ) -> bool:
 
-        if df.empty:
-            if if_empty == "warn":
-                logger.warning("The query produced no data.")
-            elif if_empty == "skip":
-                logger.warning("The query produced no data. Skipping...")
-                return False
-            elif if_empty == "fail":
-                raise ValueError("The query produced no data.")
+        try:
+            df = self.to_df(if_empty=if_empty)
+        except SKIP:
+            return False
 
         if if_exists == "append":
             if os.path.isfile(path):
-                csv_df = pandas.read_csv(path, sep=sep)
-                out_df = pandas.concat([csv_df, df])
+                csv_df = pd.read_csv(path, sep=sep)
+                out_df = pd.concat([csv_df, df])
             else:
                 out_df = df
         elif if_exists == "replace":
@@ -59,18 +60,33 @@ class Source:
         out_df.to_csv(path, sep=sep, index=False)
         return True
 
-    def to_excel(self, path: str, if_exists="replace"):
-        df = self.to_df()
+    def to_excel(
+        self, path: str, if_exists: str = "replace", if_empty: str = "warn"
+    ) -> bool:
+
+        try:
+            df = self.to_df(if_empty=if_empty)
+        except SKIP:
+            return False
+
         if if_exists == "append":
             if os.path.isfile(path):
-                excel_df = pandas.read_excel(path)
-                out_df = pandas.concat([excel_df, df])
+                excel_df = pd.read_excel(path)
+                out_df = pd.concat([excel_df, df])
             else:
                 out_df = df
         elif if_exists == "replace":
             out_df = df
         out_df.to_excel(path, index=False, encoding="utf8")
         return True
+
+    def _handle_if_empty(self, if_empty: str = None):
+        if if_empty == "warn":
+            logger.warning("The query produced no data.")
+        elif if_empty == "skip":
+            raise SKIP("The query produced no data. Skipping...")
+        elif if_empty == "fail":
+            raise ValueError("The query produced no data.")
 
 
 class SQL(Source):
@@ -139,7 +155,7 @@ class SQL(Source):
         schema: str = None,
         dtypes: Dict[str, Any] = None,
         if_exists: Literal["fail", "replace"] = "fail",
-    ):
+    ) -> bool:
         """Create a Table in the Database
 
         Args:
@@ -149,7 +165,7 @@ class SQL(Source):
             if_exists (Literal, optional): [description]. Defaults to "fail".
 
         Returns:
-            [type]: [description]
+            bool: Whether the operation was successful.
         """
         if schema is None:
             fqn = f"{table}"
@@ -173,16 +189,16 @@ class SQL(Source):
         self.run(create_table_sql)
         return True
 
-    def insert_into(self, table: str, df: pandas.DataFrame):
+    def insert_into(self, table: str, df: pd.DataFrame) -> str:
         """Inserts values from a pandas dataframe into an existing
         database table
 
         Args:
             table (str): table name
-            df (pandas.DataFrame): pandas dataframe
+            df (pd.DataFrame): pandas dataframe
 
         Returns:
-            [type]: [description]
+            str: The executed SQL insert query.
         """
 
         values = ""
@@ -201,7 +217,7 @@ class SQL(Source):
         sql = f"INSERT INTO {table} ({columns})\n VALUES {values}"
         return sql
 
-    def _sql_column(self, column_name):
+    def _sql_column(self, column_name: str) -> str:
         if isinstance(column_name, str):
             out_name = f"'{column_name}'"
         else:
