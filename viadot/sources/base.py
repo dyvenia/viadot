@@ -37,16 +37,7 @@ class Source:
     def to_csv(
         self, path: str, if_exists: str = "replace", if_empty: str = "warn", sep="\t"
     ):
-        df = self.to_df()
-
-        if df.empty:
-            if if_empty == "warn":
-                logger.warning("The query produced no data.")
-            elif if_empty == "skip":
-                logger.warning("The query produced no data. Skipping...")
-                return False
-            elif if_empty == "fail":
-                raise ValueError("The query produced no data.")
+        df = self.to_df(if_empty=if_empty)
 
         if if_exists == "append":
             if os.path.isfile(path):
