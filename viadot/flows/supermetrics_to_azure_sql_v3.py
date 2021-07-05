@@ -65,7 +65,7 @@ class SupermetricsToAzureSQLv3(Flow):
         max_rows: int = 1000000,
         max_columns: int = None,
         order_columns: str = None,
-        expectation_suite_name: str = None,
+        expectation_suite_name: str = "failure",
         local_file_path: str = None,
         adls_path: str = None,
         sep: str = "\t",
@@ -103,7 +103,7 @@ class SupermetricsToAzureSQLv3(Flow):
             max_rows (int, optional): A query parameter passed to the SupermetricsToCSV task. Defaults to 1000000.
             max_columns (int, optional): A query parameter passed to the SupermetricsToCSV task. Defaults to None.
             order_columns (str, optional): A query parameter passed to the SupermetricsToCSV task. Defaults to None.
-            expectation_suite_name (str, optional): The name of the expectation suite, eg. `failure`.
+            expectation_suite_name (str, optional): The name of the expectation suite. Defaults to "failure".
             Currently, only GitHub URLs are supported. Defaults to None.
             local_file_path (str, optional): Local destination path. Defaults to None.
             adls_path (str, optional): Azure Data Lake destination path. Defaults to None.
