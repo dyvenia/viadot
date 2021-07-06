@@ -4,6 +4,7 @@ from typing import Any, Dict, List
 import pandas as pd
 from adlfs import AzureBlobFileSystem, AzureDatalakeFileSystem
 
+from ..config import local_config
 from .base import Source
 
 
@@ -35,7 +36,7 @@ class AzureDataLake(Source):
         **kwargs,
     ):
 
-        credentials = credentials or {}
+        credentials = credentials or local_config.get("AZURE_ADLS")
 
         super().__init__(*args, credentials=credentials, **kwargs)
 
