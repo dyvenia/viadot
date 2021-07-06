@@ -1,13 +1,15 @@
 import json
 import os
+from os.path import dirname, expanduser, join, realpath
+
 import pytest
-from os.path import expanduser, join, dirname, realpath
+
 from viadot.config import Config
 
 USER_HOME = expanduser("~")
 UNIT_TESTS_DIR_PATH = dirname(realpath(__file__))
-UNIT_TESTS_CONFIG_PATH = join(UNIT_TESTS_DIR_PATH, "config.json")
-DEFAULT_CONFIG_PATH = join(USER_HOME, ".config", "config.json")
+UNIT_TESTS_CONFIG_PATH = join(UNIT_TESTS_DIR_PATH, "credentials.json")
+DEFAULT_CONFIG_PATH = join(USER_HOME, ".config", "credentials.json")
 
 
 @pytest.fixture(scope="session")

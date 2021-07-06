@@ -1,10 +1,8 @@
 from typing import Any, Dict, List, Literal
 
-import pyodbc
 from prefect.utilities import logging
 
-from ..config import local_config
-from .base import Source, SQL
+from .base import SQL
 
 logger = logging.get_logger(__name__)
 
@@ -16,6 +14,7 @@ class AzureSQL(SQL):
         **kwargs,
     ):
         super().__init__(*args, **kwargs)
+        self.credentials["driver"] = "ODBC Driver 17 for SQL Server"
 
     @property
     def schemas(self) -> List[str]:
@@ -32,6 +31,7 @@ class AzureSQL(SQL):
         table: str,
         schema: str = None,
         source_path: str = None,
+        sep="\t",
         if_exists: Literal = "append",
     ):
         if schema is None:
@@ -43,11 +43,12 @@ class AzureSQL(SQL):
                 CHECK_CONSTRAINTS,
                 DATA_SOURCE = '{self.credentials['data_source']}',
                 DATAFILETYPE='char',
-                FIELDTERMINATOR=',',
+                FIELDTERMINATOR='{sep}',
                 ROWTERMINATOR='0x0a',
                 FIRSTROW=2,
                 KEEPIDENTITY,
-                TABLOCK
+                TABLOCK,
+                CODEPAGE = '65001'
             );
         """
         if if_exists == "replace":

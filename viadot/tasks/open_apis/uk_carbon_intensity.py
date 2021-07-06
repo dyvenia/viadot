@@ -1,6 +1,8 @@
-import prefect
 import datetime
+
+import prefect
 from prefect import Task
+
 from viadot.sources import UKCarbonIntensity
 
 
@@ -53,6 +55,7 @@ class StatsToCSV(Task):
 
         # Download data to a local CSV file
         logger.info(f"Successfully downloaded data to {path}.")
+
 
 class StatsToExcel(Task):
     """A Prefect task for downloading UK Carbon Instensity Statistics (stats) to a excel file."""

@@ -3,16 +3,18 @@ from typing import Any, Dict, List, Union
 from prefect import Flow, Task, apply_map
 from prefect.utilities import logging
 
-from ..tasks import BlobFromCSV, CreateTableFromBlob, SupermetricsToCSV
+from ..task_utils import METADATA_COLUMNS, add_ingestion_metadata_task
+from ..tasks import AzureDataLakeUpload, AzureSQLCreateTable, BCPTask, SupermetricsToCSV
 
 logger = logging.get_logger(__name__)
 
 supermetrics_to_csv_task = SupermetricsToCSV()
-csv_to_blob_storage_task = BlobFromCSV()
-blob_to_azure_sql_task = CreateTableFromBlob()
+csv_to_adls_task = AzureDataLakeUpload()
+create_table_task = AzureSQLCreateTable()
+bulk_insert_task = BCPTask()
 
 
-class SupermetricsToAzureSQL(Flow):
+class SupermetricsToAzureSQLv2(Flow):
     def __init__(
         self,
         name: str,
@@ -27,22 +29,26 @@ class SupermetricsToAzureSQL(Flow):
         max_rows: int = 1000000,
         max_columns: int = None,
         order_columns: str = None,
-        dtypes: Dict[str, Any] = None,
-        blob_path: str = None,
-        overwrite_blob: bool = True,
+        local_file_path: str = None,
+        adls_path: str = None,
+        sep: str = "\t",
+        overwrite_adls: bool = True,
+        if_empty: str = "warn",
+        adls_sp_credentials_secret: str = None,
         table: str = None,
         schema: str = None,
-        local_file_path: str = None,
+        dtypes: Dict[str, Any] = None,
         if_exists: str = "replace",  # this applies to the full CSV file, not per chunk
-        if_empty: str = "warn",
+        sqldb_credentials_secret: str = None,
         max_download_retries: int = 5,
         supermetrics_task_timeout: int = 60 * 30,
         parallel: bool = True,
         tags: List[str] = ["extract"],
-        sep: str = "\t",
+        vault_name: str = None,
         *args: List[any],
         **kwargs: Dict[str, Any]
     ):
+        # SupermetricsToCSV
         self.ds_id = ds_id
         self.ds_accounts = ds_accounts
         self.ds_segments = ds_segments
@@ -54,25 +60,36 @@ class SupermetricsToAzureSQL(Flow):
         self.max_rows = max_rows
         self.max_columns = max_columns
         self.order_columns = order_columns
+
+        # AzureDataLakeUpload
         self.local_file_path = local_file_path or self.slugify(name) + ".csv"
-        self.blob_path = blob_path
-        self.overwrite_blob = overwrite_blob
+        self.adls_path = adls_path
+        self.sep = sep
+        self.overwrite_adls = overwrite_adls
+        self.if_empty = if_empty
+        self.adls_sp_credentials_secret = adls_sp_credentials_secret
+
+        # BCPTask
         self.table = table
         self.schema = schema
         self.dtypes = dtypes
         self.if_exists = if_exists
-        self.if_empty = if_empty
+        self.sqldb_credentials_secret = sqldb_credentials_secret
+
+        # Global
         self.max_download_retries = max_download_retries
         self.supermetrics_task_timeout = supermetrics_task_timeout
         self.parallel = parallel
         self.tags = tags
-        self.sep = sep
+        self.vault_name = vault_name
+
         self.tasks = [
             supermetrics_to_csv_task,
-            csv_to_blob_storage_task,
-            blob_to_azure_sql_task,
+            csv_to_adls_task,
+            bulk_insert_task,
         ]
         super().__init__(*args, name=name, **kwargs)
+        self.dtypes.update(METADATA_COLUMNS)
         self.gen_flow()
 
     @staticmethod
@@ -82,6 +99,13 @@ class SupermetricsToAzureSQL(Flow):
     def gen_supermetrics_task(
         self, ds_accounts: Union[str, List[str]], flow: Flow = None
     ) -> Task:
+
+        if len(self.ds_accounts) > 1:
+            # force append when writing in parallel
+            if_exists = "append"
+        else:
+            if_exists = self.if_exists
+
         t = supermetrics_to_csv_task.bind(
             ds_id=self.ds_id,
             ds_accounts=ds_accounts,
@@ -95,7 +119,7 @@ class SupermetricsToAzureSQL(Flow):
             max_columns=self.max_columns,
             order_columns=self.order_columns,
             path=self.local_file_path,
-            if_exists="append",
+            if_exists=if_exists,
             if_empty=self.if_empty,
             max_retries=self.max_download_retries,
             timeout=self.supermetrics_task_timeout,
@@ -114,22 +138,37 @@ class SupermetricsToAzureSQL(Flow):
             supermetrics_downloads = self.gen_supermetrics_task(
                 ds_accounts=self.ds_accounts, flow=self
             )
+        add_ingestion_metadata_task.bind(
+            path=self.local_file_path, sep=self.sep, flow=self
+        )
 
-        csv_to_blob_storage_task.bind(
+        csv_to_adls_task.bind(
             from_path=self.local_file_path,
-            to_path=self.blob_path,
-            overwrite=self.overwrite_blob,
+            to_path=self.adls_path,
+            overwrite=self.overwrite_adls,
+            sp_credentials_secret=self.adls_sp_credentials_secret,
+            vault_name=self.vault_name,
             flow=self,
         )
-        blob_to_azure_sql_task.bind(
-            blob_path=self.blob_path,
+        create_table_task.bind(
             schema=self.schema,
             table=self.table,
             dtypes=self.dtypes,
-            sep=self.sep,
             if_exists=self.if_exists,
+            credentials_secret=self.sqldb_credentials_secret,
+            vault_name=self.vault_name,
+            flow=self,
+        )
+        bulk_insert_task.bind(
+            path=self.local_file_path,
+            schema=self.schema,
+            table=self.table,
+            credentials_secret=self.sqldb_credentials_secret,
+            vault_name=self.vault_name,
             flow=self,
         )
 
-        csv_to_blob_storage_task.set_upstream(supermetrics_downloads, flow=self)
-        blob_to_azure_sql_task.set_upstream(csv_to_blob_storage_task, flow=self)
+        add_ingestion_metadata_task.set_upstream(supermetrics_downloads, flow=self)
+        csv_to_adls_task.set_upstream(add_ingestion_metadata_task, flow=self)
+        create_table_task.set_upstream(add_ingestion_metadata_task, flow=self)
+        bulk_insert_task.set_upstream(create_table_task, flow=self)

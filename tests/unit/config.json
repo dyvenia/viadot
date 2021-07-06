@@ -1,9 +1,0 @@
-{
-    "TEST_STANZA": {
-        "TEST_KEY": "abc"
-    },
-    "TEST_STANZA_2": {
-        "TEST_OTHER_KEY": "def",
-        "TEST_OTHER_KEY_2": 123
-    }
-}

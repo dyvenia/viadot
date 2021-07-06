@@ -1,7 +1,7 @@
 import prefect
-from prefect import task, Flow
-from prefect.storage import GitHub
+from prefect import Flow, task
 from prefect.run_configs import DockerRun
+from prefect.storage import GitHub
 
 
 @task
@@ -17,14 +17,14 @@ def say_bye():
 
 
 STORAGE = GitHub(
-    repo="dyvenia/fiotto",
-    path="fiotto/examples/hello_world.py",
+    repo="dyvenia/viadot",
+    path="viadot/examples/hello_world.py",
     access_token_secret="github_token",  # name of the Prefect secret with the GitHub token
 )
 RUN_CONFIG = DockerRun(
     image="prefecthq/prefect",
     env={"SOME_VAR": "value"},
-    labels=["testing"],
+    labels=["dev"],
 )
 
 with Flow("Hello, world!", storage=STORAGE, run_config=RUN_CONFIG) as flow:
@@ -34,4 +34,5 @@ with Flow("Hello, world!", storage=STORAGE, run_config=RUN_CONFIG) as flow:
 
 
 if __name__ == "__main__":
-    flow.run()
+    flow.run()  # run locally
+    flow.register(project_name="dev")  # deploy
