@@ -5,6 +5,8 @@ nav:
       - "Config File": howtos/config_file.md
       - Flows: howtos/flows.md
       - "Get Excel file": howtos/uk_carbon_intensity.md
+      - "SQLtoDF": howtos/sqltodf.md
+      - "Insert data": howtos/insert.md
   - Tutorials:
       - Tutorials: tutorials/placeholder.md
   - References:

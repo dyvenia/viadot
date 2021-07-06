@@ -80,6 +80,7 @@ class Source:
         out_df.to_excel(path, index=False, encoding="utf8")
         return True
 
+
     def _handle_if_empty(self, if_empty: str = None):
         if if_empty == "warn":
             logger.warning("The query produced no data.")
@@ -149,6 +150,13 @@ class SQL(Source):
             return cursor.fetchall()
         self.con.commit()
 
+    def to_df(self, query: str):
+        conn = self.con
+        if query.upper().startswith("SELECT"):
+            return pandas.read_sql_query(query, conn)
+        else:
+            return pandas.DataFrame()
+
     def create_table(
         self,
         table: str,
@@ -215,7 +223,8 @@ class SQL(Source):
 
         columns = ", ".join(df.columns)
         sql = f"INSERT INTO {table} ({columns})\n VALUES {values}"
-        return sql
+
+        return self.run(sql)
 
     def _sql_column(self, column_name: str) -> str:
         if isinstance(column_name, str):
