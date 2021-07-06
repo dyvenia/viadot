@@ -3,7 +3,7 @@ import os
 import pandas as pd
 import pytest
 
-from viadot.tasks.sqlite_tasks import Insert, SQLtoDF
+from viadot.tasks.sqlite import Insert, SQLtoDF
 
 TABLE = "test"
 DB_PATH = "/home/viadot/tests/testfile_db.sqlite"
