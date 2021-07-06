@@ -7,7 +7,9 @@ import numpy as np
 import pandas as pd
 import requests
 from prefect.utilities import logging
+from requests.adapters import HTTPAdapter
 from requests.exceptions import ConnectionError, HTTPError, ReadTimeout, Timeout
+from requests.packages.urllib3.util.retry import Retry
 from urllib3.exceptions import ProtocolError
 
 from ..config import local_config
@@ -77,10 +79,18 @@ class Supermetrics(Source):
         headers = {"Authorization": f'Bearer {self.credentials["API_KEY"]}'}
 
         try:
-            response = requests.get(
+            session = requests.Session()
+            retry_strategy = Retry(
+                total=3, status_forcelist=[429, 500, 502, 503, 504], backoff_factor=1
+            )
+            adapter = HTTPAdapter(max_retries=retry_strategy)
+
+            session.mount("http://", adapter)
+            session.mount("https://", adapter)
+
+            response = session.get(
                 self.API_ENDPOINT, params=params, headers=headers, timeout=timeout
             )
-            # return response
             response.raise_for_status()
         except ReadTimeout as e:
             msg = "The connection was successful, "
