@@ -80,7 +80,6 @@ class Source:
         out_df.to_excel(path, index=False, encoding="utf8")
         return True
 
-
     def _handle_if_empty(self, if_empty: str = None):
         if if_empty == "warn":
             logger.warning("The query produced no data.")

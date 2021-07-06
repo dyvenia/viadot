@@ -4,12 +4,12 @@ import os
 # import shutil
 import urllib
 
+from github import Github, UnknownObjectException
+
 # import pygit2
 from prefect import Task
 from prefect.client import Secret
 from prefect.utilities.tasks import defaults_from_attrs
-
-from github import Github, UnknownObjectException
 
 # from typing import Any
 

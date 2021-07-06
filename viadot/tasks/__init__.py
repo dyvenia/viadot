@@ -7,6 +7,6 @@ from .azure_data_lake import (
 from .azure_key_vault import CreateAzureKeyVaultSecret, ReadAzureKeyVaultSecret
 from .azure_sql import AzureSQLBulkInsert, AzureSQLCreateTable, CreateTableFromBlob
 from .bcp import BCPTask
-from .great_expectations import RunGreatExpectationsValidation
 from .github import DownloadGitHubFile
+from .great_expectations import RunGreatExpectationsValidation
 from .supermetrics import SupermetricsToCSV, SupermetricsToDF
