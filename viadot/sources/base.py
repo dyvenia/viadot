@@ -152,9 +152,9 @@ class SQL(Source):
     def to_df(self, query: str):
         conn = self.con
         if query.upper().startswith("SELECT"):
-            return pandas.read_sql_query(query, conn)
+            return pd.read_sql_query(query, conn)
         else:
-            return pandas.DataFrame()
+            return pd.DataFrame()
 
     def create_table(
         self,
