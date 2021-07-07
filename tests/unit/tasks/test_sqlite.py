@@ -45,22 +45,22 @@ def sql_to_df_task_select(create_test_sql_file_select):
     yield sql_to_df_task_select
 
 
-def test_query_select(sql_to_df_task_select, load_table):
-    dtypes = {"country": "VARCHAR(100)", "sales": "FLOAT(24)"}
-    df_data = pd.DataFrame({"country": ["italy"], "sales": [100.0]})
-    table = load_table.run(
-        table_name=TABLE,
-        schema=None,
-        dtypes=dtypes,
-        db_path=DB_PATH,
-        df=df_data,
-        if_exists="replace",
-    )
-    table_from_query = sql_to_df_task_select.run()
-    assert table == True
-    assert not table_from_query.empty
+# def test_query_select(sql_to_df_task_select, load_table):
+#     dtypes = {"country": "VARCHAR(100)", "sales": "FLOAT(24)"}
+#     df_data = pd.DataFrame({"country": ["italy"], "sales": [100.0]})
+#     table = load_table.run(
+#         table_name=TABLE,
+#         schema=None,
+#         dtypes=dtypes,
+#         db_path=DB_PATH,
+#         df=df_data,
+#         if_exists="replace",
+#     )
+#     table_from_query = sql_to_df_task_select.run()
+#     assert table == True
+#     assert not table_from_query.empty
 
 
-def test_query_not_select(sql_to_df_task_notselect):
-    table_from_query = sql_to_df_task_notselect.run()
-    assert table_from_query.empty
+# def test_query_not_select(sql_to_df_task_notselect):
+#     table_from_query = sql_to_df_task_notselect.run()
+#     assert table_from_query.empty
