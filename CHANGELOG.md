@@ -15,6 +15,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - CreateAzureKeyVaultSecret
 
 ### Changed
+- tasks now use secrets for credential management (azure tasks use azure Key Vault secrets)
 
 
 ### Removed
+
+
+### Fixed
+- Fix SQLite tests

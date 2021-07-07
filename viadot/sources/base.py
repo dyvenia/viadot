@@ -98,10 +98,11 @@ class SQL(Source):
         *args,
         **kwargs,
     ):
+
         if config_key:
             config_credentials = local_config.get(config_key)
 
-        credentials = config_credentials if config_key else credentials
+        credentials = config_credentials if config_key else credentials or {}
 
         if driver:
             credentials["driver"] = driver
@@ -221,9 +222,11 @@ class SQL(Source):
             values += out_row
 
         columns = ", ".join(df.columns)
-        sql = f"INSERT INTO {table} ({columns})\n VALUES {values}"
 
-        return self.run(sql)
+        sql = f"INSERT INTO {table} ({columns})\n VALUES {values}"
+        self.run(sql)
+
+        return sql
 
     def _sql_column(self, column_name: str) -> str:
         if isinstance(column_name, str):

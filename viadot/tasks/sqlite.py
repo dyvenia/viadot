@@ -21,7 +21,7 @@ class Insert(Task):
         if_exists: str = "fail",
     ):
 
-        sqlite = SQLite(driver="{SQLite}", server="localhost", db=db_path)
+        sqlite = SQLite(credentials=dict(db_name=db_path))
         sqlite.create_table(
             table=table_name, schema=schema, dtypes=dtypes, if_exists=if_exists
         )
@@ -44,7 +44,7 @@ class SQLtoDF(Task):
         """Generate a DataFrame from SQL query"""
 
     def run(self):
-        sqlite = SQLite(driver="{SQLite}", server="localhost", db=self.db_path)
+        sqlite = SQLite(credentials=dict(db_name=self.db_path))
         logger = prefect.context.get("logger")
         logger.info(f"Creating SQL query from: {self.sql_path}")
         with open(self.sql_path, "r") as queryfile:

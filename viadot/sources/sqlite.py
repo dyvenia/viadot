@@ -14,4 +14,21 @@ class SQLite(SQL):
         *args,
         **kwargs,
     ):
-        super().__init__(*args, **kwargs)
+        super().__init__(*args, driver="SQLite", **kwargs)
+        self.credentials["server"] = "localhost"
+
+    @property
+    def conn_str(self):
+        """Generate a connection string from params or config.
+        Note that the user and password are escapedd with '{}' characters.
+
+        Returns:
+            str: The ODBC connection string.
+        """
+        driver = self.credentials["driver"]
+        server = self.credentials["server"]
+        db_name = self.credentials["db_name"]
+
+        conn_str = f"DRIVER={{{driver}}};SERVER={server};DATABASE={db_name};"
+
+        return conn_str
