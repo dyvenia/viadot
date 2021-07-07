@@ -9,7 +9,7 @@ TABLE = "test"
 @pytest.fixture(scope="session")
 def sqlite():
 
-    sqlite = SQLite(driver="{SQLite}", server="localhost", db="testfile.sqlite")
+    sqlite = SQLite(credentials=dict(db_name="testfile.sqlite"))
 
     yield sqlite
 
@@ -35,10 +35,12 @@ def test_insert_into_sql(sqlite, DF):
     assert "('italy', 100)" in sql
     assert sql[-1] == ";"
 
+    # clean up
+    sqlite.run(f"DELETE FROM {TABLE}")
+
 
 def test_insert_into_run(sqlite, DF):
-    sql = sqlite.insert_into(TABLE, DF)
-    sqlite.run(sql)
-    results = sqlite.run("select * from test")
+    sqlite.insert_into(TABLE, DF)
+    results = sqlite.run(f"SELECT * FROM {TABLE}")
     df = pandas.DataFrame.from_records(results, columns=["country", "sales"])
     assert df["sales"].sum() == 230

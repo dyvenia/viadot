@@ -8,8 +8,10 @@ from prefect.utilities.tasks import defaults_from_attrs
 
 
 def get_key_vault(
-    vault_name: str, credentials: str, secret_client_kwargs: dict
+    credentials: str, secret_client_kwargs: dict, vault_name: str = None
 ) -> SecretClient:
+    if not vault_name:
+        vault_name = PrefectSecret("AZURE_DEFAULT_KEYVAULT").run()
     if credentials:
         # set credentials as env variables so that they're discoverable by EnvironmentCredential
         key_vault_credentials = credentials["KEY_VAULT"][vault_name]

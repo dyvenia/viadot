@@ -4,6 +4,7 @@ from datetime import timedelta
 
 import pandas as pd
 from prefect import Task
+from prefect.tasks.secrets import PrefectSecret
 from prefect.utilities.tasks import defaults_from_attrs
 
 from ..sources import AzureDataLake
@@ -84,6 +85,17 @@ class AzureDataLakeDownload(Task):
             ACCOUNT_NAME and Service Principal credentials (TENANT_ID, CLIENT_ID, CLIENT_SECRET). Defaults to None.
             vault_name (str, optional): The name of the vault from which to obtain the secret. Defaults to None.
         """
+        file_name = from_path.split("/")[-1]
+        to_path = to_path or file_name
+
+        if not sp_credentials_secret:
+            # attempt to read a default for the service principal secret name
+            try:
+                sp_credentials_secret = PrefectSecret(
+                    "AZURE_DEFAULT_ADLS_SERVICE_PRINCIPAL_SECRET"
+                ).run()
+            except ValueError:
+                pass
 
         if sp_credentials_secret:
             azure_secret_task = ReadAzureKeyVaultSecret()
@@ -183,6 +195,15 @@ class AzureDataLakeUpload(Task):
             vault_name (str, optional): The name of the vault from which to obtain the secret. Defaults to None.
         """
 
+        if not sp_credentials_secret:
+            # attempt to read a default for the service principal secret name
+            try:
+                sp_credentials_secret = PrefectSecret(
+                    "AZURE_DEFAULT_ADLS_SERVICE_PRINCIPAL_SECRET"
+                ).run()
+            except ValueError:
+                pass
+
         if sp_credentials_secret:
             azure_secret_task = ReadAzureKeyVaultSecret()
             credentials_str = azure_secret_task.run(
@@ -272,6 +293,15 @@ class AzureDataLakeToDF(Task):
             ACCOUNT_NAME and Service Principal credentials (TENANT_ID, CLIENT_ID, CLIENT_SECRET). Defaults to None.
             vault_name (str, optional): The name of the vault from which to obtain the secret. Defaults to None.
         """
+
+        if not sp_credentials_secret:
+            # attempt to read a default for the service principal secret name
+            try:
+                sp_credentials_secret = PrefectSecret(
+                    "AZURE_DEFAULT_ADLS_SERVICE_PRINCIPAL_SECRET"
+                ).run()
+            except ValueError:
+                pass
 
         if sp_credentials_secret:
             azure_secret_task = ReadAzureKeyVaultSecret()

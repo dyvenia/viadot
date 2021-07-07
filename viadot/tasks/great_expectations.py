@@ -1,22 +1,22 @@
 import os
 
-import pandas as pd
-from prefect.tasks.great_expectations import RunGreatExpectationsValidation
-from prefect.utilities.tasks import defaults_from_attrs
-
 import great_expectations as ge
+import pandas as pd
 from great_expectations.data_context import BaseDataContext
 from great_expectations.data_context.types.base import (
     DataContextConfig,
     DatasourceConfig,
     FilesystemStoreBackendDefaults,
 )
+from prefect.tasks.great_expectations import RunGreatExpectationsValidation
+from prefect.utilities.tasks import defaults_from_attrs
 
 
 class RunGreatExpectationsValidation(RunGreatExpectationsValidation):
     """
     Task for running data validation with Great Expectations on a pandas DataFrame.
-    See https://docs.prefect.io/api/latest/tasks/great_expectations.html#rungreatexpectationsvalidation for full documentation.
+    See https://docs.prefect.io/api/latest/tasks/great_expectations.html#rungreatexpectationsvalidation
+    for full documentation.
 
     Args:
         expectations_path (str): The path of your Great Expectations project, eg. `/home/viadot/my_flow`
@@ -39,13 +39,15 @@ class RunGreatExpectationsValidation(RunGreatExpectationsValidation):
     def _get_ge_context_local(expectations_path: str) -> BaseDataContext:
         """
         This is configured to work with an in-memory pandas DataFrame.
-        This setup allows us to run validations before (perhaps unnecessarily) writing any data to disk,
-        as well as at any other stage.
+        This setup allows us to run validations before (perhaps unnecessarily) writing any data
+        to disk, as well as at any other stage.
 
         Currently using local storage.
 
         Args:
-        expectations_path (str): The path of your Great Expectations project, eg. `/home/viadot/my_flow`
+        expectations_path (str): The path to your Great Expectations project,
+        eg. `/home/viadot/my_flow`. Expectation suites need to be placed inside the
+        `expectations` folder, eg. `/home/viadot/my_flow/expectations/failure.json`.
 
         Returns:
             BaseDataContext: The GE context (ie. config) required to run the validations.

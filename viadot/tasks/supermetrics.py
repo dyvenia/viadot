@@ -111,12 +111,14 @@ class SupermetricsToDF(Task):
     def __init__(
         self,
         *args,
+        if_empty: str = "warn",
+        max_rows: int = 1_000_000,
         max_retries: int = 5,
         retry_delay: timedelta = timedelta(seconds=10),
         timeout: int = 60 * 30,
-        max_rows: int = 1_000_000,
         **kwargs,
     ):
+        self.if_empty = if_empty
         self.max_rows = max_rows
 
         super().__init__(
@@ -129,6 +131,7 @@ class SupermetricsToDF(Task):
         )
 
     @defaults_from_attrs(
+        "if_empty",
         "max_rows",
         "max_retries",
         "retry_delay",
@@ -147,6 +150,7 @@ class SupermetricsToDF(Task):
         max_rows: int = None,
         max_columns: int = None,
         order_columns: str = None,
+        if_empty: str = None,
         max_retries: int = None,
         retry_delay: timedelta = None,
         timeout: int = None,
@@ -182,6 +186,6 @@ class SupermetricsToDF(Task):
 
         # Download data to a local CSV file
         self.logger.info(f"Downloading data to a DataFrame...")
-        df = supermetrics.to_df()
+        df = supermetrics.to_df(if_empty=if_empty)
         self.logger.info(f"Successfully downloaded data to a DataFrame.")
         return df

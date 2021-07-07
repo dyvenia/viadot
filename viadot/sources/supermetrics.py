@@ -7,7 +7,9 @@ import numpy as np
 import pandas as pd
 import requests
 from prefect.utilities import logging
+from requests.adapters import HTTPAdapter
 from requests.exceptions import ConnectionError, HTTPError, ReadTimeout, Timeout
+from requests.packages.urllib3.util.retry import Retry
 from urllib3.exceptions import ProtocolError
 
 from ..config import local_config
@@ -77,18 +79,33 @@ class Supermetrics(Source):
         headers = {"Authorization": f'Bearer {self.credentials["API_KEY"]}'}
 
         try:
-            response = requests.get(
+            session = requests.Session()
+            retry_strategy = Retry(
+                total=3, status_forcelist=[429, 500, 502, 503, 504], backoff_factor=1
+            )
+            adapter = HTTPAdapter(max_retries=retry_strategy)
+
+            session.mount("http://", adapter)
+            session.mount("https://", adapter)
+
+            response = session.get(
                 self.API_ENDPOINT, params=params, headers=headers, timeout=timeout
             )
-            # return response
             response.raise_for_status()
         except ReadTimeout as e:
             msg = "The connection was successful, "
             msg += f"however the API call to {self.API_ENDPOINT} timed out after {timeout[1]}s "
             msg += "while waiting for the server to return data."
             raise APIError(msg)
-        except (HTTPError, ConnectionError, Timeout) as e:
-            raise APIError(f"The API call to {self.API_ENDPOINT} failed.") from e
+        except HTTPError as e:
+            raise APIError(
+                f"The API call to {self.API_ENDPOINT} failed. "
+                "Perhaps your account credentials need to be refreshed?",
+            ) from e
+        except (ConnectionError, Timeout) as e:
+            raise APIError(
+                f"The API call to {self.API_ENDPOINT} failed due to connection issues."
+            ) from e
         except ProtocolError as e:
             raise APIError(
                 f"Did not receive any reponse for the API call to {self.API_ENDPOINT}."
@@ -127,13 +144,16 @@ class Supermetrics(Source):
         else:
             return self.__get_col_names_other(response)
 
-    def to_df(self) -> pd.DataFrame:
+    def to_df(self, if_empty: str = "warn") -> pd.DataFrame:
         """Download data into a pandas DataFrame.
 
         Note that Supermetric can calculate some fields on the fly and alias them in the
         returned result. For example, if the query requests the `position` field,
         Supermetric may return an `Average position` caclulated field.
         For this reason we take columns names from the actual results rather than from input fields.
+
+        Args:
+            if_empty (str, optional): What to do if query returned no data. Defaults to "warn".
 
         Returns:
             pd.DataFrame: the DataFrame containing query results
@@ -144,6 +164,10 @@ class Supermetrics(Source):
             df = pd.DataFrame(data[1:], columns=columns).replace("", np.nan)
         else:
             df = pd.DataFrame(columns=columns)
+
+        if df.empty:
+            self._handle_if_empty(if_empty)
+
         return df
 
     def query(self, params: Dict[str, Any]):
