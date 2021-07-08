@@ -5,7 +5,7 @@ import pytest
 from viadot.tasks.sqlite import Insert, SQLtoDF
 
 TABLE = "test"
-DB_PATH = "/home/viadot/tests/testfile_db.sqlite"
+DB_PATH = "testfile.sqlite"
 SQL_PATH_SELECT = "testfile_select.sql"
 SQL_PATH_NOTSELECT = "testfile_notselect.sql"
 
