@@ -1,4 +1,3 @@
-import errno
 import os
 
 import pandas as pd
@@ -7,17 +6,8 @@ from viadot.tasks.sqlite import Insert, SQLtoDF
 
 TABLE = "test"
 DB_PATH = "/home/viadot/tests/testfile_db.sqlite"
-SQL_PATH_SELECT = "/home/viadot/tests/testfile_select.sql"
-SQL_PATH_NOTSELECT = "/home/viadot/tests/testfile_notselect.sql"
-
-
-# make dir for files if it doesn't exist
-if not os.path.exists(os.path.dirname(SQL_PATH_SELECT)):
-    try:
-        os.makedirs(os.path.dirname(SQL_PATH_SELECT))
-    except OSError as exc:  # Guard against race condition
-        if exc.errno != errno.EEXIST:
-            raise
+SQL_PATH_SELECT = "testfile_select.sql"
+SQL_PATH_NOTSELECT = "testfile_notselect.sql"
 
 
 @pytest.fixture(scope="session")
