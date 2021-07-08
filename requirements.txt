@@ -11,6 +11,7 @@ prefect==0.14.17
 pyarrow==3.0.0
 pyodbc==4.0.30
 pytest==5.4.3
+pytest-cov==2.12.1
 requests==2.25.1
 openpyxl==3.0.7
 jupyterlab==3.0.14
