@@ -70,6 +70,7 @@ jobs:
         env:
           VIADOT_CONFIG_PATH: .config/credentials.json.template
         run: |
+          sudo apt install libsqliteodbc
           pytest tests/unit
 
       - name: Generate coverage report

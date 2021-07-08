@@ -14,7 +14,9 @@ class SQLite(SQL):
         *args,
         **kwargs,
     ):
-        super().__init__(*args, driver="SQLite", **kwargs)
+        super().__init__(
+            *args, driver="/usr/lib/x86_64-linux-gnu/odbc/libsqlite3odbc.so", **kwargs
+        )
         self.credentials["server"] = "localhost"
 
     @property
