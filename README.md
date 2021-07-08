@@ -1,5 +1,5 @@
 # Viadot
-[![build status](https://github.com/dyvenia/viadot/actions/workflows/build/badge.svg)](https://github.com/dyvenia/viadot/actions/workflows/build)
+[![build status](https://github.com/dyvenia/viadot/actions/workflows/build.yml/badge.svg)](https://github.com/dyvenia/viadot/actions/workflows/build.yml)
 [![formatting](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 [![codecov](https://codecov.io/gh/Trymzet/dyvenia/branch/main/graph/badge.svg?token=k40ALkXbNq)](https://codecov.io/gh/Trymzet/dyvenia)
 ---
