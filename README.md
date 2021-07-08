@@ -1,10 +1,7 @@
 # Viadot
-<p>
-<a href="https://github.com/psf/black" target="_blank">
-    <img src="https://img.shields.io/badge/code%20style-black-000000.svg" alt="Build">
-</a>
-</p>
-
+[![build status](https://github.com/dyvenia/viadot/actions/workflows/build/badge.svg)](https://github.com/dyvenia/viadot/actions/workflows/build)
+[![formatting](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
+[![codecov](https://codecov.io/gh/Trymzet/dyvenia/branch/main/graph/badge.svg?token=k40ALkXbNq)](https://codecov.io/gh/Trymzet/dyvenia)
 ---
 
 **Documentation**: <a href="https://dyvenia.github.io/viadot/" target="_blank">https://dyvenia.github.io/viadot/</a>
