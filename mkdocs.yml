@@ -1,4 +1,5 @@
 site_name: Viadot Docs
+site_url: "https://dyvenia.github.io/viadot/"
 nav:
   - Home: home.md
   - Howtos:
@@ -30,7 +31,7 @@ plugins:
           setup_commands:
             - import sys
             - sys.path.append("../")
-            - sys.path.append("viadot")
+            - sys.path.append("/home/runner/work")
           selection:
             new_path_syntax: true
 dev_addr: "0.0.0.0:8000"
