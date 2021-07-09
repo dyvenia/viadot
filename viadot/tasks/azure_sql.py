@@ -3,6 +3,7 @@ from datetime import timedelta
 from typing import Any, Dict, Literal
 
 from prefect import Task
+from prefect.tasks.secrets import PrefectSecret
 from prefect.utilities.tasks import defaults_from_attrs
 
 from ..sources import AzureSQL
@@ -13,9 +14,6 @@ class CreateTableFromBlob(Task):
     def __init__(self, sep="\t", *args, **kwargs):
         self.sep = sep
         super().__init__(name="blob_to_azure_sql", *args, **kwargs)
-
-    def __call__(self):
-        """Bulk insert a CSV into an Azure SQL table"""
 
     @defaults_from_attrs("sep")
     def run(
@@ -90,9 +88,6 @@ class AzureSQLBulkInsert(Task):
         self.credentials_secret = credentials_secret
         super().__init__(name="azure_sql_bulk_insert", *args, **kwargs)
 
-    def __call__(self):
-        """Bulk insert CSV(s) into an Azure SQL table"""
-
     @defaults_from_attrs("sep", "if_exists", "credentials_secret")
     def run(
         self,
@@ -153,7 +148,7 @@ class AzureSQLCreateTable(Task):
         table: str = None,
         dtypes: Dict[str, Any] = None,
         if_exists: Literal["fail", "replace", "append"] = "fail",
-        credentials_secret: str = "AZURE_SQL",
+        credentials_secret: str = None,
         vault_name: str = None,
         max_retries: int = 3,
         retry_delay: timedelta = timedelta(seconds=10),
@@ -174,10 +169,7 @@ class AzureSQLCreateTable(Task):
             **kwargs,
         )
 
-    def __call__(self):
-        """Create a table in Azure SQL"""
-
-    @defaults_from_attrs("if_exists", "credentials_secret")
+    @defaults_from_attrs("if_exists")
     def run(
         self,
         schema: str = None,
@@ -204,13 +196,22 @@ class AzureSQLCreateTable(Task):
             What to do if the table already exists.
         """
 
-        azure_secret_task = ReadAzureKeyVaultSecret()
-        credentials_str = azure_secret_task.run(
-            secret=credentials_secret, vault_name=vault_name
-        )
-        credentials = json.loads(credentials_str)
+        if not credentials_secret:
+            # attempt to read a default for the service principal secret name
+            try:
+                credentials_secret = PrefectSecret(
+                    "AZURE_DEFAULT_SQLDB_SERVICE_PRINCIPAL_SECRET"
+                ).run()
+            except ValueError:
+                pass
 
-        fqn = f"{schema}.{table}" if schema else table
+        if credentials_secret:
+            azure_secret_task = ReadAzureKeyVaultSecret()
+            credentials_str = azure_secret_task.run(
+                secret=credentials_secret, vault_name=vault_name
+            )
+            credentials = json.loads(credentials_str)
+
         azure_sql = AzureSQL(credentials=credentials)
 
         if if_exists == "replace":
@@ -218,6 +219,7 @@ class AzureSQLCreateTable(Task):
                 schema=schema, table=table, dtypes=dtypes, if_exists=if_exists
             )
 
+            fqn = f"{schema}.{table}" if schema else table
             self.logger.info(f"Successfully created table {fqn}.")
 
 
@@ -229,14 +231,24 @@ class RunAzureSQLDBQuery(Task):
     - query (str, required): The query to execute on the database.
     """
 
-    def __init__(self, *args, **kwargs):
+    def __init__(
+        self,
+        credentials_secret: str = None,
+        vault_name: str = None,
+        *args,
+        **kwargs,
+    ):
+        self.credentials_secret = credentials_secret
+        self.vault_name = vault_name
 
         super().__init__(name="run_azure_sql_db_query", *args, **kwargs)
 
-    def __call__(self):
-        """Run an Azure SQL Database query"""
-
-    def run(self, query: str):
+    def run(
+        self,
+        query: str,
+        credentials_secret: str = None,
+        vault_name: str = None,
+    ):
         """Run an Azure SQL Database query
 
         Parameters
@@ -245,8 +257,24 @@ class RunAzureSQLDBQuery(Task):
             The query to execute on the database.
         """
 
+        if not credentials_secret:
+            # attempt to read a default for the service principal secret name
+            try:
+                credentials_secret = PrefectSecret(
+                    "AZURE_DEFAULT_SQLDB_SERVICE_PRINCIPAL_SECRET"
+                ).run()
+            except ValueError:
+                pass
+
+        if credentials_secret:
+            azure_secret_task = ReadAzureKeyVaultSecret()
+            credentials_str = azure_secret_task.run(
+                secret=credentials_secret, vault_name=vault_name
+            )
+            credentials = json.loads(credentials_str)
+        azure_sql = AzureSQL(credentials=credentials)
+
         # run the query and fetch the results if it's a select
-        azure_sql = AzureSQL(config_key="AZURE_SQL")
         result = azure_sql.run(query)
 
         self.logger.info(f"Successfully ran the query.")
