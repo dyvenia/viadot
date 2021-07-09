@@ -12,4 +12,4 @@ jobs:
         with:
           python-version: 3.8
       - run: pip install mkdocs-material mkdocstrings azure-core azure-storage-blob azure-keyvault azure-identity adlfs prefect pandas pyarrow pyodbc PyGithub
-      - run: mkdocs gh-deploy --force
+      - run: PYTHONPATH=. mkdocs gh-deploy --force
