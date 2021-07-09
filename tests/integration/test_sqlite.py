@@ -17,8 +17,10 @@ def sqlite():
 
 
 def test_conn_str(sqlite):
+    DRIVER = "/usr/lib/x86_64-linux-gnu/odbc/libsqlite3odbc.so"
     assert (
-        sqlite.conn_str == "DRIVER={SQLite};SERVER=localhost;DATABASE=testfile.sqlite;"
+        sqlite.conn_str
+        == f"DRIVER={{{DRIVER}}};SERVER=localhost;DATABASE=testfile.sqlite;"
     )
 
 
