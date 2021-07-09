@@ -12,4 +12,4 @@ jobs:
         uses: Trymzet/mkdocs-deploy-gh-pages@master
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          EXTRA_PACKAGES: "gcc libffi-dev make automake g++ subversion python3-dev"
+          EXTRA_PACKAGES: "gcc libffi-dev make g++ python3-dev"
