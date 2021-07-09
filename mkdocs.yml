@@ -30,8 +30,5 @@ plugins:
             show_root_heading: yes
           setup_commands:
             - import sys
-            - sys.path.append("../")
-            - sys.path.append("/home/runner/work")
-          selection:
-            new_path_syntax: true
+            - sys.path.append("/home/runner/work/viadot")
 dev_addr: "0.0.0.0:8000"
