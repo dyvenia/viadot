@@ -5,8 +5,8 @@ class SQLite(SQL):
     """A SQLite source
 
     Args:
-        server ([str]): server string, usually localhost
-        db ([str]): the file path to the db e.g. /home/somedb.sqlite
+        server (str): server string, usually localhost
+        db (str): the file path to the db e.g. /home/somedb.sqlite
     """
 
     def __init__(
