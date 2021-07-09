@@ -17,4 +17,4 @@ class Config(dict):
 try:
     local_config = Config.from_json(join(USER_HOME, ".config", "credentials.json"))
 except FileNotFoundError:
-    local_config = None
+    local_config = {}
