@@ -30,5 +30,5 @@ plugins:
             show_root_heading: yes
           setup_commands:
             - import sys
-            - sys.path.append("/home/runner/work/viadot")
+            - sys.path.append("/github/workspace")
 dev_addr: "0.0.0.0:8000"
