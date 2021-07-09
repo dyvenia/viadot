@@ -9,7 +9,12 @@ from .azure_key_vault import (
     ReadAzureKeyVaultSecret,
     DeleteAzureKeyVaultSecret,
 )
-from .azure_sql import AzureSQLBulkInsert, AzureSQLCreateTable, CreateTableFromBlob
+from .azure_sql import (
+    AzureSQLBulkInsert,
+    AzureSQLCreateTable,
+    CreateTableFromBlob,
+    RunAzureSQLDBQuery,
+)
 from .bcp import BCPTask
 from .github import DownloadGitHubFile
 from .great_expectations import RunGreatExpectationsValidation
