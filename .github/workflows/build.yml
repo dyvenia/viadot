@@ -73,14 +73,14 @@ jobs:
           sudo apt install libsqliteodbc
           pytest tests/unit
 
-      - name: Generate coverage report
-        run: |
-          pytest --cov-report xml --cov=viadot tests/
-      - name: Upload coverage report to Codecov
-        uses: codecov/codecov-action@v1
-        with:
-          token: ${{ secrets.CODECOV_TOKEN }}
-          fail_ci_if_error: true
+      # - name: Generate coverage report
+      #   run: |
+      #     pytest --cov-report xml --cov=viadot tests/
+      # - name: Upload coverage report to Codecov
+      #   uses: codecov/codecov-action@v1
+      #   with:
+      #     token: ${{ secrets.CODECOV_TOKEN }}
+      #     fail_ci_if_error: true
 
   publish_docker:
     needs: build
@@ -125,4 +125,4 @@ jobs:
         uses: mhausenblas/mkdocs-deploy-gh-pages@master
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          EXTRA_PACKAGES: gcc libffi-dev
+          EXTRA_PACKAGES: gcc, libffi-dev
