@@ -1,0 +1,15 @@
+on:
+  workflow_dispatch:
+
+jobs:
+  publish_docs:
+    name: Publish docs
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout main
+        uses: actions/checkout@v2
+      - name: Deploy docs
+        uses: mhausenblas/mkdocs-deploy-gh-pages@master
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          EXTRA_PACKAGES: gcc, libffi-dev
