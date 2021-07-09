@@ -1,3 +1,7 @@
+on:
+  workflow_dispatch:
+
+jobs:
   publish_docs:
     name: Publish docs
     runs-on: ubuntu-latest
