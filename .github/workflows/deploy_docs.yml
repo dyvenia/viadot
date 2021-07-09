@@ -11,5 +11,5 @@ jobs:
       - uses: actions/setup-python@v2
         with:
           python-version: 3.8
-      - run: pip install mkdocs-material mkdocstrings azure
+      - run: pip install mkdocs-material mkdocstrings azure-core azure-storage-blob azure-keyvault azure-identity adlfs
       - run: mkdocs gh-deploy --force
