@@ -7,9 +7,9 @@ from prefect import Task
 from ..sources.sqlite import SQLite
 
 
-class Insert(Task):
+class SQLiteInsert(Task):
     def __init__(self, *args, **kwargs):
-        super().__init__(name="load_DF", *args, **kwargs)
+        super().__init__(name="load_df", *args, **kwargs)
 
     def run(
         self,
@@ -30,27 +30,27 @@ class Insert(Task):
         return True
 
 
-class BulkInsert(Task):
+class SQLiteBulkInsert(Task):
     pass
 
 
-class SQLtoDF(Task):
+class SQLiteSQLtoDF(Task):
     def __init__(self, *args, db_path: str = None, sql_path: str = None, **kwargs):
-        super().__init__(name="SQLtoDF", *args, **kwargs)
+        super().__init__(name="sqlite_sql_to_df", *args, **kwargs)
         self.sql_path = sql_path
         self.db_path = db_path
 
     def __call__(self):
-        """Generate a DataFrame from SQL query"""
+        """Generate a DataFrame from a SQLite SQL query"""
 
     def run(self):
         sqlite = SQLite(credentials=dict(db_name=self.db_path))
         logger = prefect.context.get("logger")
-        logger.info(f"Creating SQL query from: {self.sql_path}")
+        logger.info(f"Loading a DataFrame from {self.sql_path}")
         with open(self.sql_path, "r") as queryfile:
             query = queryfile.read()
 
         df = sqlite.to_df(query)
-        logger.info(f"Successfully creating SQL query from file.")
+        logger.info(f"DataFrame was successfully loaded.")
 
         return df

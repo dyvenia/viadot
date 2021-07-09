@@ -4,9 +4,14 @@ from .azure_data_lake import (
     AzureDataLakeToDF,
     AzureDataLakeUpload,
 )
-from .azure_key_vault import CreateAzureKeyVaultSecret, ReadAzureKeyVaultSecret
+from .azure_key_vault import (
+    CreateAzureKeyVaultSecret,
+    ReadAzureKeyVaultSecret,
+    DeleteAzureKeyVaultSecret,
+)
 from .azure_sql import AzureSQLBulkInsert, AzureSQLCreateTable, CreateTableFromBlob
 from .bcp import BCPTask
 from .github import DownloadGitHubFile
 from .great_expectations import RunGreatExpectationsValidation
 from .supermetrics import SupermetricsToCSV, SupermetricsToDF
+from .sqlite import SQLiteInsert, SQLiteBulkInsert, SQLiteSQLtoDF

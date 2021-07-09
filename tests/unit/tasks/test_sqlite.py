@@ -1,8 +1,9 @@
 import os
+from viadot.tasks.sqlite import SQLiteInsert, SQLiteSQLtoDF
 
 import pandas as pd
 import pytest
-from viadot.tasks.sqlite import Insert, SQLtoDF
+from viadot.tasks import SQLiteSQLtoDF, SQLiteInsert
 
 TABLE = "test"
 DB_PATH = "testfile.sqlite"
@@ -12,7 +13,7 @@ SQL_PATH_NOTSELECT = "testfile_notselect.sql"
 
 @pytest.fixture(scope="session")
 def load_table():
-    load_table = Insert()
+    load_table = SQLiteInsert()
     yield load_table
 
 
@@ -34,13 +35,15 @@ def create_test_sql_file_select():
 
 @pytest.fixture(scope="session")
 def sql_to_df_task_notselect(create_test_sql_file_notselect):
-    sql_to_df_task_notselect = SQLtoDF(db_path=DB_PATH, sql_path=SQL_PATH_NOTSELECT)
+    sql_to_df_task_notselect = SQLiteSQLtoDF(
+        db_path=DB_PATH, sql_path=SQL_PATH_NOTSELECT
+    )
     yield sql_to_df_task_notselect
 
 
 @pytest.fixture(scope="session")
 def sql_to_df_task_select(create_test_sql_file_select):
-    sql_to_df_task_select = SQLtoDF(db_path=DB_PATH, sql_path=SQL_PATH_SELECT)
+    sql_to_df_task_select = SQLiteSQLtoDF(db_path=DB_PATH, sql_path=SQL_PATH_SELECT)
     yield sql_to_df_task_select
 
 
