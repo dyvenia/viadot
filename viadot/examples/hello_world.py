@@ -35,4 +35,4 @@ with Flow("Hello, world!", storage=STORAGE, run_config=RUN_CONFIG) as flow:
 
 if __name__ == "__main__":
     flow.run()  # run locally
-    flow.register(project_name="dev")  # deploy
+    # flow.register(project_name="dev")  # deploy
