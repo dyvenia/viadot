@@ -11,11 +11,15 @@ class SQLite(SQL):
 
     def __init__(
         self,
+        query_timeout: int = 60,
         *args,
         **kwargs,
     ):
         super().__init__(
-            *args, driver="/usr/lib/x86_64-linux-gnu/odbc/libsqlite3odbc.so", **kwargs
+            *args,
+            driver="/usr/lib/x86_64-linux-gnu/odbc/libsqlite3odbc.so",
+            query_timeout=query_timeout,
+            **kwargs,
         )
         self.credentials["server"] = "localhost"
 
