@@ -10,6 +10,26 @@ from ..sources import AzureSQL
 from .azure_key_vault import ReadAzureKeyVaultSecret
 
 
+def get_credentials(credentials_secret: str, vault_name: str = None):
+    if not credentials_secret:
+        # attempt to read a default for the service principal secret name
+        try:
+            credentials_secret = PrefectSecret(
+                "AZURE_DEFAULT_SQLDB_SERVICE_PRINCIPAL_SECRET"
+            ).run()
+        except ValueError:
+            pass
+
+    if credentials_secret:
+        azure_secret_task = ReadAzureKeyVaultSecret()
+        credentials_str = azure_secret_task.run(
+            secret=credentials_secret, vault_name=vault_name
+        )
+        credentials = json.loads(credentials_str)
+
+        return credentials
+
+
 class CreateTableFromBlob(Task):
     def __init__(self, sep="\t", *args, **kwargs):
         self.sep = sep
@@ -47,7 +67,7 @@ class CreateTableFromBlob(Task):
 
         fqn = f"{schema}.{table}" if schema else table
         azure_sql = AzureSQL(config_key="AZURE_SQL")
-        # create table
+
         if if_exists == "replace":
             azure_sql.create_table(
                 schema=schema, table=table, dtypes=dtypes, if_exists=if_exists
@@ -55,7 +75,6 @@ class CreateTableFromBlob(Task):
 
             self.logger.info(f"Successfully created table {fqn}.")
 
-            # insert data
         azure_sql.bulk_insert(
             schema=schema,
             table=table,
@@ -75,7 +94,7 @@ class AzureSQLBulkInsert(Task):
         dtypes: Dict[str, Any] = None,
         sep="\t",
         if_exists: Literal["fail", "replace", "append"] = "fail",
-        credentials_secret: str = "AZURE_SQL",
+        credentials_secret: str = None,
         *args,
         **kwargs,
     ):
@@ -98,6 +117,7 @@ class AzureSQLBulkInsert(Task):
         sep: str = None,
         if_exists: Literal["fail", "replace", "append"] = None,
         credentials_secret: str = None,
+        vault_name: str = None,
     ):
         """
         Bulk insert data from Azure Data Lake into an Azure SQL Database table.
@@ -118,11 +138,15 @@ class AzureSQLBulkInsert(Task):
             The separator to use to read the CSV file.
         if_exists : Literal, optional
             What to do if the table already exists.
+        credentials_secret (str, optional): The name of the Azure Key Vault secret containing a dictionary
+        with SQL db credentials (server, db_name, user, and password).
+        vault_name (str, optional): The name of the vault from which to obtain the secret. Defaults to None.
         """
 
         fqn = f"{schema}.{table}" if schema else table
-        azure_sql = AzureSQL(config_key=credentials_secret)
-        # create table
+        credentials = get_credentials(credentials_secret, vault_name=vault_name)
+        azure_sql = AzureSQL(credentials=credentials)
+
         if if_exists == "replace":
             azure_sql.create_table(
                 schema=schema, table=table, dtypes=dtypes, if_exists=if_exists
@@ -130,7 +154,6 @@ class AzureSQLBulkInsert(Task):
 
             self.logger.info(f"Successfully created table {fqn}.")
 
-            # insert data
         azure_sql.bulk_insert(
             schema=schema,
             table=table,
@@ -184,34 +207,17 @@ class AzureSQLCreateTable(Task):
         """
         Create a table in Azure SQL Database.
 
-        Parameters
-        ----------
-        schema : str
-            Destination schema.
-        table : str
-            Destination table.
-        dtypes : Dict[str, Any]
-            Data types to force.
-        if_exists : Literal, optional
-            What to do if the table already exists.
+        Args:
+            schema (str, optional): Destination schema.
+            table (str, optional): Destination table.
+            dtypes (Dict[str, Any], optional): Data types to force.
+            if_exists (Literal, optional): What to do if the table already exists.
+            credentials_secret (str, optional): The name of the Azure Key Vault secret containing a dictionary
+            with SQL db credentials (server, db_name, user, and password).
+            vault_name (str, optional): The name of the vault from which to obtain the secret. Defaults to None.
         """
 
-        if not credentials_secret:
-            # attempt to read a default for the service principal secret name
-            try:
-                credentials_secret = PrefectSecret(
-                    "AZURE_DEFAULT_SQLDB_SERVICE_PRINCIPAL_SECRET"
-                ).run()
-            except ValueError:
-                pass
-
-        if credentials_secret:
-            azure_secret_task = ReadAzureKeyVaultSecret()
-            credentials_str = azure_secret_task.run(
-                secret=credentials_secret, vault_name=vault_name
-            )
-            credentials = json.loads(credentials_str)
-
+        credentials = get_credentials(credentials_secret, vault_name=vault_name)
         azure_sql = AzureSQL(credentials=credentials)
 
         if if_exists == "replace":
@@ -228,7 +234,10 @@ class RunAzureSQLDBQuery(Task):
     Task for running an Azure SQL Database query.
 
     Args:
-    - query (str, required): The query to execute on the database.
+        query (str, required): The query to execute on the database.
+        credentials_secret (str, optional): The name of the Azure Key Vault secret containing a dictionary
+        with SQL db credentials (server, db_name, user, and password).
+        vault_name (str, optional): The name of the vault from which to obtain the secret. Defaults to None.
     """
 
     def __init__(
@@ -251,27 +260,14 @@ class RunAzureSQLDBQuery(Task):
     ):
         """Run an Azure SQL Database query
 
-        Parameters
-        ----------
-        query : str
-            The query to execute on the database.
+        Args:
+            query (str, required): The query to execute on the database.
+            credentials_secret (str, optional): The name of the Azure Key Vault secret containing a dictionary
+            with SQL db credentials (server, db_name, user, and password).
+            vault_name (str, optional): The name of the vault from which to obtain the secret. Defaults to None.
         """
 
-        if not credentials_secret:
-            # attempt to read a default for the service principal secret name
-            try:
-                credentials_secret = PrefectSecret(
-                    "AZURE_DEFAULT_SQLDB_SERVICE_PRINCIPAL_SECRET"
-                ).run()
-            except ValueError:
-                pass
-
-        if credentials_secret:
-            azure_secret_task = ReadAzureKeyVaultSecret()
-            credentials_str = azure_secret_task.run(
-                secret=credentials_secret, vault_name=vault_name
-            )
-            credentials = json.loads(credentials_str)
+        credentials = get_credentials(credentials_secret, vault_name=vault_name)
         azure_sql = AzureSQL(credentials=credentials)
 
         # run the query and fetch the results if it's a select
