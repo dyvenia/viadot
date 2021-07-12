@@ -146,9 +146,12 @@ class SQL(Source):
     def run(self, query: str):
         cursor = self.con.cursor()
         cursor.execute(query)
-        if query.upper().startswith("SELECT"):
+
+        if query.strip().upper().startswith("SELECT"):
             return cursor.fetchall()
-        self.con.commit()
+        else:
+            self.con.commit()
+            return True
 
     def to_df(self, query: str):
         conn = self.con
