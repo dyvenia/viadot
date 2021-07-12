@@ -37,12 +37,6 @@ def test_insert_into_sql(sqlite, DF):
     assert "('italy', 100)" in sql
     assert sql[-1] == ";"
 
-    # clean up
-    sqlite.run(f"DELETE FROM {TABLE}")
-
-
-def test_insert_into_run(sqlite, DF):
-    sqlite.insert_into(TABLE, DF)
     results = sqlite.run(f"SELECT * FROM {TABLE}")
     df = pandas.DataFrame.from_records(results, columns=["country", "sales"])
     assert df["sales"].sum() == 230
