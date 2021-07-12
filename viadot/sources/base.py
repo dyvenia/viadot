@@ -41,7 +41,11 @@ class Source:
         return table
 
     def to_csv(
-        self, path: str, if_exists: str = "replace", if_empty: str = "warn", sep="\t"
+        self,
+        path: str,
+        if_exists: Literal["append", "replace"] = "replace",
+        if_empty: str = "warn",
+        sep="\t",
     ) -> bool:
 
         try:
@@ -50,14 +54,14 @@ class Source:
             return False
 
         if if_exists == "append":
-            if os.path.isfile(path):
-                csv_df = pd.read_csv(path, sep=sep)
-                out_df = pd.concat([csv_df, df])
-            else:
-                out_df = df
+            mode = "a"
         elif if_exists == "replace":
-            out_df = df
-        out_df.to_csv(path, sep=sep, index=False)
+            mode = "w"
+        else:
+            raise ValueError("'if_exists' must be one of ['append', 'replace']")
+
+        df.to_csv(path, sep=sep, mode=mode, index=False)
+
         return True
 
     def to_excel(
@@ -164,9 +168,9 @@ class SQL(Source):
         if query.strip().upper().startswith("SELECT"):
             result = cursor.fetchall()
         else:
-            self.con.commit()
             result = True
 
+        self.con.commit()
         cursor.close()
 
         return result
