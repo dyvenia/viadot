@@ -95,9 +95,22 @@ class SQL(Source):
         driver: str = None,
         config_key: str = None,
         credentials: str = None,
+        query_timeout: int = 60 * 60,
         *args,
         **kwargs,
     ):
+        """A base SQL source class.
+
+        Args:
+            driver (str, optional): The SQL driver to use. Defaults to None.
+            config_key (str, optional): The key inside local config containing the config.
+            User can choose to use this or pass credentials directly to the `credentials`
+            parameter. Defaults to None.
+            credentials (str, optional): Credentials for the connection. Defaults to None.
+            query_timeout (int, optional): The timeout for executed queries. Defaults to 1 hour.
+        """
+
+        self.query_timeout = query_timeout
 
         if config_key:
             config_credentials = local_config.get(config_key)
@@ -140,7 +153,8 @@ class SQL(Source):
             pyodbc.Connection: database connection.
         """
         if not self._con:
-            self._con = pyodbc.connect(self.conn_str)
+            self._con = pyodbc.connect(self.conn_str, timeout=5)
+            self._con.timeout = self.query_timeout
         return self._con
 
     def run(self, query: str):
