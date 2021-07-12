@@ -3,6 +3,7 @@ from typing import Any, Dict
 import pandas as pd
 import prefect
 from prefect import Task
+from prefect.utilities.tasks import defaults_from_attrs
 
 from ..sources.sqlite import SQLite
 
@@ -36,18 +37,23 @@ class SQLiteBulkInsert(Task):
 
 class SQLiteSQLtoDF(Task):
     def __init__(self, *args, db_path: str = None, sql_path: str = None, **kwargs):
-        super().__init__(name="sqlite_sql_to_df", *args, **kwargs)
-        self.sql_path = sql_path
         self.db_path = db_path
+        self.sql_path = sql_path
+
+        super().__init__(name="sqlite_sql_to_df", *args, **kwargs)
 
     def __call__(self):
         """Generate a DataFrame from a SQLite SQL query"""
 
-    def run(self):
-        sqlite = SQLite(credentials=dict(db_name=self.db_path))
+    @defaults_from_attrs("db_path", "sql_path")
+    def run(self, sql_path: str = None, db_path: str = None):
+
+        sqlite = SQLite(credentials=dict(db_name=db_path))
+
         logger = prefect.context.get("logger")
-        logger.info(f"Loading a DataFrame from {self.sql_path}")
-        with open(self.sql_path, "r") as queryfile:
+        logger.info(f"Loading a DataFrame from {sql_path}...")
+
+        with open(sql_path, "r") as queryfile:
             query = queryfile.read()
 
         df = sqlite.to_df(query)
