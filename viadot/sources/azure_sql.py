@@ -108,3 +108,27 @@ class AzureSQL(SQL):
         self.run(create_master_key_sql)
         self.run(create_external_db_credential_sql)
         self.run(create_external_db_sql)
+
+    def exists(self, table: str, schema: str = None) -> bool:
+        """Check whether a table exists.
+
+        Args:
+            table (str): The table to be checked.
+            schema (str, optional): The schema whethe the table is located. Defaults to 'dbo'.
+
+        Returns:
+            bool: Whether the table exists.
+        """
+
+        if not schema:
+            schema = "dbo"
+
+        list_table_info_query = f"""
+            SELECT *
+            FROM sys.tables t
+            JOIN sys.schemas s
+                ON t.schema_id = s.schema_id
+            WHERE s.name = '{schema}' AND t.name = '{table}'
+        """
+        exists = bool(self.run(list_table_info_query))
+        return exists
