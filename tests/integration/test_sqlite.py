@@ -9,7 +9,7 @@ TABLE = "test"
 @pytest.fixture(scope="session")
 def sqlite():
 
-    sqlite = SQLite(credentials=dict(db_name="testfile.sqlite"))
+    sqlite = SQLite(credentials=dict(db_name="testfile.sqlite"), query_timeout=5)
 
     yield sqlite
 
