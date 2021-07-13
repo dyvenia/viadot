@@ -27,6 +27,7 @@ jobs:
         uses: actions/setup-python@v2
         with:
           python-version: ${{ matrix.python-version }}
+          ref: ${{ github.ref }}
 
       - name: Cache pip
         id: cache-pip
@@ -100,7 +101,10 @@ jobs:
     runs-on: ubuntu-latest
     if: github.event_name == 'push'
     steps:
-      - uses: actions/checkout@v2
+      - name: 'Checkout source code'
+        uses: actions/checkout@v2
+        with:
+          ref: ${{ github.ref }}
 
       - name: Build image
         run: export DOCKER_BUILDKIT=1 && docker build . --file docker/Dockerfile --tag $IMAGE_NAME

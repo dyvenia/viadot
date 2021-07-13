@@ -23,8 +23,10 @@ jobs:
   test_docker:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
-
+      - name: 'Checkout source code'
+        uses: actions/checkout@v2
+        with:
+            ref: ${{ github.ref }}
       - name: Test docker image
         run: |
           if [ -f docker-compose.test.yml ]; then
@@ -40,7 +42,10 @@ jobs:
     needs: test_docker
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - name: 'Checkout source code'
+        uses: actions/checkout@v2
+        with:
+            ref: ${{ github.ref }}
 
       - name: Build
         run: docker build . --file docker/Dockerfile --tag $IMAGE_NAME
@@ -68,7 +73,10 @@ jobs:
 
     steps:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
-      - uses: actions/checkout@v2
+      - name: 'Checkout source code'
+        uses: actions/checkout@v2
+        with:
+            ref: ${{ github.ref }}
 
       # Sets up python
       - uses: actions/setup-python@v2

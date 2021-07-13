@@ -1,0 +1,48 @@
+name: deploy_pypi
+
+on:
+  workflow_dispatch:
+
+jobs:
+  publish_pypi:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+      - name: 'Checkout source code'
+        uses: actions/checkout@v2
+        with:
+            ref: ${{ github.ref }}
+
+      # Sets up python
+      - uses: actions/setup-python@v2
+        with:
+          python-version: 3.8
+
+      # Automatically bump package version
+      - name: Autobump version
+        run: |
+          # from refs/tags/v1.2.3 get 1.2.3
+          VERSION=$(echo $GITHUB_REF | sed 's#.*/v##')
+          PLACEHOLDER='__version__ = "develop"'
+          VERSION_FILE='$PACKAGE_NAME/__init__.py'
+          # ensure the placeholder is there. If grep doesn't find the placeholder
+          # it exits with exit code 1 and github actions aborts the build. 
+          grep "$PLACEHOLDER" "$VERSION_FILE"
+          sed -i "s/$PLACEHOLDER/__version__ = \"${VERSION}\"/g" "$VERSION_FILE"
+        shell: bash
+
+      # Install dependencies
+      - name: "Installs dependencies"
+        run: |
+          python3 -m pip install --upgrade pip
+          python3 -m pip install setuptools wheel twine
+
+      # Build and upload to PyPI
+      - name: "Builds and uploads to PyPI"
+        run: |
+          python3 setup.py sdist bdist_wheel
+          python3 -m twine upload dist/*
+        env:
+          TWINE_USERNAME: acivitillo
+          TWINE_PASSWORD: ${{ secrets.TWINE_TOKEN }}
