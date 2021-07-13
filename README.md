@@ -78,4 +78,4 @@ pip install -e .
 - any other relevant resources updated (esp. `viadot/docs`)
 
 Please follow the standards and best practices used within the library (eg. when adding tasks, see how other tasks are constructed, etc.). For any questions,
-please reach out to us via [our Slack channel]().
+please reach out to us here on GitHub.
