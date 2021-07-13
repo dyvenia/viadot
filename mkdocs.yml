@@ -1,10 +1,13 @@
 site_name: Viadot Docs
+site_url: "https://dyvenia.github.io/viadot/"
 nav:
   - Home: home.md
   - Howtos:
       - "Config File": howtos/config_file.md
       - Flows: howtos/flows.md
       - "Get Excel file": howtos/uk_carbon_intensity.md
+      - "SQLtoDF": howtos/sqltodf.md
+      - "Insert data": howtos/insert.md
   - Tutorials:
       - Tutorials: tutorials/placeholder.md
   - References:
@@ -25,9 +28,4 @@ plugins:
         python:
           rendering:
             show_root_heading: yes
-          setup_commands:
-            - import sys
-            - sys.path.append("../")
-          selection:
-            new_path_syntax: true
 dev_addr: "0.0.0.0:8000"

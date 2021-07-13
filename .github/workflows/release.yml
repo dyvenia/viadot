@@ -1,7 +1,8 @@
 # This workflow will upload a Python Package using Twine when a release is created
 # For more information see: https://help.github.com/en/actions/language-and-framework-guides/using-python-with-github-actions#publishing-to-package-registries
 
-name: Publish a release to Docker registry and PyPI
+name: release
+# Publish a release to Docker registry and PyPI
 
 # Controls when the action will run.
 on:
@@ -101,3 +102,14 @@ jobs:
         env:
           TWINE_USERNAME: acivitillo
           TWINE_PASSWORD: ${{ secrets.TWINE_TOKEN }}
+  publish_docs:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-python@v2
+        with:
+          python-version: 3.8
+      - run: pip install mkdocs-material mkdocstrings
+      - run: pip install -r requirements.txt
+      - run: pip install -e .
+      - run: mkdocs gh-deploy --force

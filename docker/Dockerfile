@@ -3,6 +3,7 @@ FROM prefecthq/prefect:latest-python3.8
 
 # Add user
 RUN useradd --create-home viadot && \
+    chown -R viadot /home/viadot && \
     usermod -aG sudo viadot && \
     find /usr/local/lib -type d -exec chmod 777 {} \; && \
     find /usr/local/bin -type d -exec chmod 777 {} \;
@@ -15,10 +16,9 @@ RUN groupadd docker && \
 RUN echo "Acquire::Check-Valid-Until \"false\";\nAcquire::Check-Date \"false\";" | cat > /etc/apt/apt.conf.d/10no--check-valid-until
 
 # System packages
-RUN apt-get update && yes | apt-get install vim gcc unixodbc-dev build-essential curl graphviz sudo
-
-# Azure CLI
-RUN curl -sL https://aka.ms/InstallAzureCLIDeb | bash
+RUN apt update && yes | apt install vim gcc unixodbc-dev build-essential curl python3-dev libboost-all-dev libpq-dev graphviz python3-gi sudo git
+RUN apt remove python-cffi
+RUN pip install --upgrade cffi
 
 # ODBC
 RUN curl https://packages.microsoft.com/keys/microsoft.asc | apt-key add - && \

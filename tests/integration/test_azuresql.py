@@ -38,22 +38,25 @@ def test_create_table(azure_sql):
         schema=SCHEMA, table=TABLE, dtypes=dtypes, if_exists="replace"
     )
     assert result == True
+    table_object_id = azure_sql.run(f"SELECT OBJECT_ID('{SCHEMA}.{TABLE}', 'U')")[0][0]
+    assert table_object_id is not None
 
 
 def test_bulk_insert(azure_sql, TEST_CSV_FILE_BLOB_PATH):
-    azure_sql.bulk_insert(
+
+    azstorage = AzureBlobStorage()
+    assert azstorage.exists(TEST_CSV_FILE_BLOB_PATH)
+
+    executed = azure_sql.bulk_insert(
         schema=SCHEMA,
         table=TABLE,
         source_path=TEST_CSV_FILE_BLOB_PATH,
         if_exists="replace",
     )
+    assert executed is True
+
     result = azure_sql.run(f"SELECT SUM(sales) FROM {SCHEMA}.{TABLE} AS total")
     assert int(result[0][0]) == 230
-
-
-def test_run(azure_sql):
-    results = azure_sql.run(f"SELECT * FROM {SCHEMA}.{TABLE}")
-    assert len(results) > 0
 
 
 def test_schemas(azure_sql):
