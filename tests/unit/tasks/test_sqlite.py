@@ -1,9 +1,10 @@
 import os
-from viadot.tasks.sqlite import SQLiteInsert, SQLiteSQLtoDF
 
 import pandas as pd
 import pytest
-from viadot.tasks import SQLiteSQLtoDF, SQLiteInsert
+
+from viadot.tasks import SQLiteInsert, SQLiteSQLtoDF
+from viadot.tasks.sqlite import SQLiteInsert, SQLiteSQLtoDF
 
 TABLE = "test"
 DB_PATH = "testfile.sqlite"
