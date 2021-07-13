@@ -8,11 +8,11 @@ mkdocs==1.1.2
 mkdocstrings==0.15.0
 pandas==1.3.0
 prefect==0.14.17
-pyarrow==3.0.0
+pyarrow==4.0.1
 pyodbc==4.0.30
 pytest==5.4.3
 pytest-cov==2.12.1
-requests==2.25.1
+requests==2.26.0
 openpyxl==3.0.7
 jupyterlab==3.0.16
 azure-keyvault==4.1.0
