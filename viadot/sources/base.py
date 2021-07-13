@@ -60,7 +60,7 @@ class Source:
         else:
             raise ValueError("'if_exists' must be one of ['append', 'replace']")
 
-        df.to_csv(path, sep=sep, mode=mode, index=False)
+        df.to_csv(path, sep=sep, mode=mode, index=False, header=not os.path.exists(path))
 
         return True
 
