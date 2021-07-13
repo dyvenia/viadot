@@ -1,5 +1,6 @@
-from viadot.tasks import AzureSQLCreateTable, RunAzureSQLDBQuery
 import logging
+
+from viadot.tasks import AzureSQLCreateTable, RunAzureSQLDBQuery
 
 logger = logging.getLogger(__name__)
 

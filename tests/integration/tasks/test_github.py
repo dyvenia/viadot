@@ -1,6 +1,6 @@
-from viadot.tasks.github import DownloadGitHubFile
 import os
 
+from viadot.tasks.github import DownloadGitHubFile
 
 # def test_github_clone_task():
 #     clone_repo_task = CloneRepo()

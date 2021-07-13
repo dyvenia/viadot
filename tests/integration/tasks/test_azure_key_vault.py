@@ -2,6 +2,7 @@ import uuid
 
 import pytest
 from azure.core.exceptions import ResourceNotFoundError
+
 from viadot.tasks import (
     CreateAzureKeyVaultSecret,
     DeleteAzureKeyVaultSecret,

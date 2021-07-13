@@ -1,4 +1,5 @@
 import pytest
+
 from viadot.flows import AzureSQLTransform
 from viadot.tasks import RunAzureSQLDBQuery
 
