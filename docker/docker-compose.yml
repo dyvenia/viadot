@@ -19,3 +19,12 @@ services:
       - 8000:8000
     command: "mkdocs serve"
     restart: "always"
+  jupyter_lab:
+    image: viadot:dev
+    container_name: viadot_jupyter_lab
+    ports:
+      - 9000:8888
+    volumes:
+      - ../:/home/viadot
+    command: jupyter lab --no-browser --ip 0.0.0.0 --LabApp.token=''
+    restart: "always"

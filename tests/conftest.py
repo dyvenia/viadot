@@ -29,6 +29,6 @@ def DF():
 
 @pytest.fixture(scope="session", autouse=True)
 def create_test_csv_file(DF, TEST_CSV_FILE_PATH):
-    DF.to_csv(TEST_CSV_FILE_PATH, index=False)
+    DF.to_csv(TEST_CSV_FILE_PATH, index=False, sep="\t")
     yield
     os.remove(TEST_CSV_FILE_PATH)

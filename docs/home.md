@@ -1,6 +1,9 @@
 # Viadot
 A simple data ingestion library to guide data flows from some places to other places
 
+## Structure
+This documentation is following the [diátaxis](https://diataxis.fr/) framework.
+
 ## Getting Data from a Source
 
 viadot supports few sources. For instance, the UK Carbon Intensity API does not require credentials.

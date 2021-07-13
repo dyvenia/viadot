@@ -1,13 +1,17 @@
+name: deploy_docs
+
 on:
   workflow_dispatch:
+
 jobs:
   publish_docs:
-    name: Pblish docs
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout main
-        uses: actions/checkout@v2
-      - name: Deploy docs
-        uses: mhausenblas/mkdocs-deploy-gh-pages@master
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - uses: actions/checkout@v2
+      - uses: actions/setup-python@v2
+        with:
+          python-version: 3.8
+      - run: pip install mkdocs-material mkdocstrings
+      - run: pip install -r requirements.txt
+      - run: pip install -e .
+      - run: mkdocs gh-deploy --force

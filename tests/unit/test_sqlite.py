@@ -9,7 +9,7 @@ TABLE = "test"
 @pytest.fixture(scope="session")
 def sqlite():
 
-    sqlite = SQLite(driver="{SQLite}", server="localhost", db="testfile.sqlite")
+    sqlite = SQLite(credentials=dict(db_name="testfile.sqlite"), query_timeout=5)
 
     yield sqlite
 
@@ -17,8 +17,10 @@ def sqlite():
 
 
 def test_conn_str(sqlite):
+    DRIVER = "/usr/lib/x86_64-linux-gnu/odbc/libsqlite3odbc.so"
     assert (
-        sqlite.conn_str == "DRIVER={SQLite};SERVER=localhost;DATABASE=testfile.sqlite;"
+        sqlite.conn_str
+        == f"DRIVER={{{DRIVER}}};SERVER=localhost;DATABASE=testfile.sqlite;"
     )
 
 
@@ -35,10 +37,6 @@ def test_insert_into_sql(sqlite, DF):
     assert "('italy', 100)" in sql
     assert sql[-1] == ";"
 
-
-def test_insert_into_run(sqlite, DF):
-    sql = sqlite.insert_into(TABLE, DF)
-    sqlite.run(sql)
-    results = sqlite.run("select * from test")
+    results = sqlite.run(f"SELECT * FROM {TABLE}")
     df = pandas.DataFrame.from_records(results, columns=["country", "sales"])
     assert df["sales"].sum() == 230

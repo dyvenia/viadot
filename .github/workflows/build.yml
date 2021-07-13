@@ -1,3 +1,5 @@
+name: build
+
 on:
   push:
     branches:
@@ -26,17 +28,25 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
 
+      - name: Cache pip
+        id: cache-pip
+        uses: actions/cache@v2
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+
       - name: Install dependencies
         run: |
-          python -m pip install --upgrade pip
-          python -m pip install flake8 black isort pytest
-          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
-          if [ -f requirements-dev.txt ]; then pip install -r requirements-dev.txt; fi
+          pip install -r requirements.txt
+        if: steps.cache.outputs.cache-hit != 'true'
         continue-on-error: false
-
+        
       - name: Lint with flake8
         if: always()
         run: |
+          pip install flake8
           # stop the build if there are Python syntax errors or undefined names
           flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
           # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
@@ -44,12 +54,16 @@ jobs:
 
       - name: Format imports with isort
         if: always()
-        run: isort --profile black .
+        run: |
+          pip install isort
+          isort --profile black .
 
       - name: Format with black
         id: blackCheck
         if: always()
-        run: black --check .
+        run: |
+          pip install black
+          black --check .
         continue-on-error: true
 
       - name: Commit Black changes to the pull request
@@ -68,32 +82,18 @@ jobs:
         env:
           VIADOT_CONFIG_PATH: .config/credentials.json.template
         run: |
+          pip install pytest
+          sudo apt install libsqliteodbc
           pytest tests/unit
 
-  publish_docs:
-    needs: build
-    runs-on: ubuntu-latest
-    if: github.event_name == 'push'
-    steps:
-      - name: Checkout Master
-        uses: actions/checkout@v2
-
-      - name: Set up Python 3.7
-        uses: actions/setup-python@v2
-        with:
-          python-version: 3.8
-
-      - name: Install MkDocs
-        run: |
-          python -m pip install --upgrade pip
-          pip install mkdocs-material mkdocstrings
-
-      - name: Publish docs to GitHub Pages
-        run: |
-          git pull
-          pip install -r requirements.txt
-          pip install -e .
-          mkdocs gh-deploy --force
+      # - name: Generate coverage report
+      #   run: |
+      #     pytest --cov-report xml --cov=viadot tests/
+      # - name: Upload coverage report to Codecov
+      #   uses: codecov/codecov-action@v1
+      #   with:
+      #     token: ${{ secrets.CODECOV_TOKEN }}
+      #     fail_ci_if_error: true
 
   publish_docker:
     needs: build
@@ -127,3 +127,15 @@ jobs:
           echo VERSION=$VERSION
           docker tag $IMAGE_NAME $IMAGE_ID:$VERSION
           docker push $IMAGE_ID:$VERSION
+
+  # publish_docs:
+  #   name: Publish docs
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - name: Checkout main
+  #       uses: actions/checkout@v2
+  #     - name: Deploy docs
+  #       uses: mhausenblas/mkdocs-deploy-gh-pages@master
+  #       env:
+  #         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  #         EXTRA_PACKAGES: "build-base libgcc libffi-dev make g++ python3-dev lapack-dev openblas-dev"
