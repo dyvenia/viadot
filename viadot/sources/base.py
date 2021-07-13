@@ -46,10 +46,32 @@ class Source:
         if_exists: Literal["append", "replace"] = "replace",
         if_empty: str = "warn",
         sep="\t",
+        **kwargs,
     ) -> bool:
+        """
+        Write from source to a CSV file.
+        Note that the source can be a particular file or table,
+        but also a database in general. Therefore, some sources may require
+        additional parameters to pull the right resource. Hence this method
+        passes kwargs to the `to_df()` method implemented by the concrete source.
+
+        Args:
+            path (str): The destination path.
+            if_exists (Literal[, optional): What to do if the file exists.
+            Defaults to "replace".
+            if_empty (str, optional): What to do if the source contains no data.
+            Defaults to "warn".
+            sep (str, optional): The separator to use in the CSV. Defaults to "\t".
+
+        Raises:
+            ValueError: If the `if_exists` argument is incorrect.
+
+        Returns:
+            bool: Whether the operation was successful.
+        """
 
         try:
-            df = self.to_df(if_empty=if_empty)
+            df = self.to_df(if_empty=if_empty, **kwargs)
         except SKIP:
             return False
 
@@ -60,7 +82,9 @@ class Source:
         else:
             raise ValueError("'if_exists' must be one of ['append', 'replace']")
 
-        df.to_csv(path, sep=sep, mode=mode, index=False, header=not os.path.exists(path))
+        df.to_csv(
+            path, sep=sep, mode=mode, index=False, header=not os.path.exists(path)
+        )
 
         return True
 
@@ -139,8 +163,8 @@ class SQL(Source):
         driver = self.credentials["driver"]
         server = self.credentials["server"]
         db_name = self.credentials["db_name"]
-        uid = self.credentials["user"]
-        pwd = self.credentials["password"]
+        uid = self.credentials.get("user") or ""
+        pwd = self.credentials.get("password") or ""
 
         conn_str = f"DRIVER={{{driver}}};SERVER={server};DATABASE={db_name};UID={uid};PWD={pwd};"
 
@@ -175,12 +199,15 @@ class SQL(Source):
 
         return result
 
-    def to_df(self, query: str):
+    def to_df(self, query: str, if_empty: str = None) -> pd.DataFrame:
         conn = self.con
         if query.upper().startswith("SELECT"):
-            return pd.read_sql_query(query, conn)
+            df = pd.read_sql_query(query, conn)
+            if df.empty:
+                self._handle_if_empty(if_empty=if_empty)
         else:
-            return pd.DataFrame()
+            df = pd.DataFrame()
+        return df
 
     def create_table(
         self,
@@ -189,7 +216,7 @@ class SQL(Source):
         dtypes: Dict[str, Any] = None,
         if_exists: Literal["fail", "replace"] = "fail",
     ) -> bool:
-        """Create a Table in the Database
+        """Create a table.
 
         Args:
             table (str): The destination table. Defaults to None.
@@ -223,8 +250,8 @@ class SQL(Source):
         return True
 
     def insert_into(self, table: str, df: pd.DataFrame) -> str:
-        """Inserts values from a pandas dataframe into an existing
-        database table
+        """Insert values from a pandas DataFrame into an existing
+        database table.
 
         Args:
             table (str): table name
