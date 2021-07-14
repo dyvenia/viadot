@@ -19,5 +19,5 @@ azure-keyvault==4.1.0
 azure-identity==1.6.0
 great-expectations==0.13.22
 matplotlib
-adlfs==0.7.6
+adlfs==2021.7.0
 PyGithub==1.55
