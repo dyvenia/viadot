@@ -83,11 +83,6 @@ class SupermetricsToAzureSQLv2(Flow):
         self.tags = tags
         self.vault_name = vault_name
 
-        self.tasks = [
-            supermetrics_to_csv_task,
-            csv_to_adls_task,
-            bulk_insert_task,
-        ]
         super().__init__(*args, name=name, **kwargs)
         self.dtypes.update(METADATA_COLUMNS)
         self.gen_flow()
