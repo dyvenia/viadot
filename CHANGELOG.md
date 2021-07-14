@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 
+## [0.2.1] - 2021-07-14
+### Added
+- Flows:
+  - `SupermetricsToAdls` - supporting immutable ADLS setup
+
+### Changed
+- A default value for the `ds_user` parameter in `SupermetricsToAzureSQLv3` can now be 
+specified in the `SUPERMETRICS_DEFAULT_USER` secret
+- Updated multiple dependencies
+
+### Fixed
+- Fixed "Local run of `SupermetricsToAzureSQLv3` skips all tasks after `union_dfs_task`" (#59)
+- Fixed the `release` GitHub action
+
+
 ## [0.2.0] - 2021-07-12
 ### Added
 - Sources:
@@ -44,19 +59,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Supermetrics Google Ads extract
 
 ### Changed
-- tasks now use secrets for credential management (azure tasks use Azure Key Vault secrets)
+- Tasks now use secrets for credential management (azure tasks use Azure Key Vault secrets)
 - SQL source now has a default query timeout of 1 hour
 
 
 ### Fixed
 - Fix `SQLite` tests
-- multiple stability improvements with retries and timeouts
+- Multiple stability improvements with retries and timeouts
 
 
 ## [0.1.12] - 2021-05-08
 
 ### Changed
-- moved from poetry to pip
+- Moved from poetry to pip
 
 ### Fixed
 - Fix `AzureBlobStorage`'s `to_storage()` method is missing the final upload blob part
