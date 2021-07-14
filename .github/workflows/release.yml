@@ -98,14 +98,14 @@ jobs:
       # Install dependencies
       - name: "Installs dependencies"
         run: |
-          python3 -m pip install --upgrade pip
-          python3 -m pip install setuptools wheel twine
+          python -m pip install --upgrade pip
+          python -m pip install setuptools wheel twine
 
       # Build and upload to PyPI
       - name: "Builds and uploads to PyPI"
         run: |
-          python3 setup.py sdist bdist_wheel
-          python3 -m twine upload dist/*
+          python setup.py sdist bdist_wheel
+          python -m twine upload dist/*
         env:
           TWINE_USERNAME: acivitillo
           TWINE_PASSWORD: ${{ secrets.TWINE_TOKEN }}
