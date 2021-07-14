@@ -25,7 +25,7 @@ class AzureBlobStorage(Source):
         super().__init__(*args, credentials=credentials, **kwargs)
 
     def to_storage(self, from_path: str, to_path: str, overwrite: bool = False):
-        """A
+        """Upload a file to the storage.
 
         Args:
             from_path (str): Path to the local file to be uploaded to the storge.

@@ -19,7 +19,7 @@ services:
       - 8000:8000
     command: "mkdocs serve"
     restart: "always"
-  jupyter_lab:
+  viadot_jupyter_lab:
     image: viadot:dev
     container_name: viadot_jupyter_lab
     ports:
