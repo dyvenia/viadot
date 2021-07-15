@@ -197,24 +197,23 @@ class SupermetricsToAzureSQLv3(Flow):
         if self.storage is None:
             return os.path.join(os.getcwd(), self.expectation_suite_file_name)
 
+        elif isinstance(self.storage, GitHub):
+            path = self.storage.path
+        elif isinstance(self.storage, Git):
+            # assuming this is DevOps
+            path = self.storage.flow_path
+        elif isinstance(self.storage, Local):
+            path = self.storage.directory
         else:
-            if isinstance(self.storage, GitHub):
+            try:
                 path = self.storage.path
-            elif isinstance(self.storage, Git):
-                # assuming this is DevOps
-                path = self.storage.flow_path
-            elif isinstance(self.storage, Local):
-                path = self.storage.directory
-            else:
-                try:
-                    path = self.storage.path
-                except AttributeError:
-                    raise NotImplemented("Unsupported storage type.")
+            except AttributeError:
+                raise NotImplemented("Unsupported storage type.")
 
-            flow_dir_path = path[: path.rfind("/")]
-            return os.path.join(
-                flow_dir_path, "expectations", self.expectation_suite_file_name
-            )
+        flow_dir_path = path[: path.rfind("/")]
+        return os.path.join(
+            flow_dir_path, "expectations", self.expectation_suite_file_name
+        )
 
     def gen_supermetrics_task(
         self, ds_accounts: Union[str, List[str]], flow: Flow = None
