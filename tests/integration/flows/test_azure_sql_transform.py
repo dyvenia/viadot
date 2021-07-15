@@ -1,7 +1,7 @@
 import pytest
 
 from viadot.flows import AzureSQLTransform
-from viadot.tasks import RunAzureSQLDBQuery
+from viadot.tasks import AzureSQLDBQuery
 
 SCHEMA = "sandbox"
 TABLE = "test"
@@ -10,7 +10,7 @@ FQN = f"{SCHEMA}.{TABLE}"
 
 @pytest.fixture()
 def TEST_TABLE():
-    run_sql_task = RunAzureSQLDBQuery()
+    run_sql_task = AzureSQLDBQuery()
     run_sql_task.run(f"CREATE TABLE {FQN} (id INT, name VARCHAR(25))")
     run_sql_task.run(f"INSERT INTO {FQN} VALUES (1, 'Mike')")
     yield

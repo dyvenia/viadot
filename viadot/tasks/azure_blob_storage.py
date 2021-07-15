@@ -2,7 +2,7 @@ from prefect import Task
 
 from ..sources import AzureBlobStorage
 
-# from ..tasks import ReadAzureKeyVaultSecret
+# from ..tasks import AzureKeyVaultSecret
 
 
 class BlobFromCSV(Task):
@@ -34,9 +34,9 @@ class BlobFromCSV(Task):
             ```python
             from prefect import Flow
             from prefect.tasks.secrets import PrefectSecret
-            from viadot.tasks import ReadAzureKeyVaultSecret
+            from viadot.tasks import AzureKeyVaultSecret
 
-            azure_secret_task = ReadAzureKeyVaultSecret()
+            azure_secret_task = AzureKeyVaultSecret()
 
             with Flow(name="example") as f:
                 azure_credentials = PrefectSecret("AZURE_CREDENTIALS")
@@ -46,7 +46,7 @@ class BlobFromCSV(Task):
         """
 
         # if sp_credentials_secret:
-        #     azure_secret_task = ReadAzureKeyVaultSecret()
+        #     azure_secret_task = AzureKeyVaultSecret()
         #     credentials = azure_secret_task.run(
         #         secret=sp_credentials_secret, vault_name=vault_name
         #     )

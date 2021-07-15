@@ -2,9 +2,9 @@ from typing import Any, Dict, List
 
 from prefect import Flow
 
-from ..tasks.azure_sql import RunAzureSQLDBQuery
+from ..tasks.azure_sql import AzureSQLDBQuery
 
-query_task = RunAzureSQLDBQuery()
+query_task = AzureSQLDBQuery()
 
 
 class AzureSQLTransform(Flow):

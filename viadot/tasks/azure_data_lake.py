@@ -8,7 +8,7 @@ from prefect.tasks.secrets import PrefectSecret
 from prefect.utilities.tasks import defaults_from_attrs
 
 from ..sources import AzureDataLake
-from .azure_key_vault import ReadAzureKeyVaultSecret
+from .azure_key_vault import AzureKeyVaultSecret
 
 
 class AzureDataLakeDownload(Task):
@@ -98,7 +98,7 @@ class AzureDataLakeDownload(Task):
                 pass
 
         if sp_credentials_secret:
-            azure_secret_task = ReadAzureKeyVaultSecret()
+            azure_secret_task = AzureKeyVaultSecret()
             credentials_str = azure_secret_task.run(
                 secret=sp_credentials_secret, vault_name=vault_name
             )
@@ -205,7 +205,7 @@ class AzureDataLakeUpload(Task):
                 pass
 
         if sp_credentials_secret:
-            azure_secret_task = ReadAzureKeyVaultSecret()
+            azure_secret_task = AzureKeyVaultSecret()
             credentials_str = azure_secret_task.run(
                 secret=sp_credentials_secret, vault_name=vault_name
             )
@@ -304,7 +304,7 @@ class AzureDataLakeToDF(Task):
                 pass
 
         if sp_credentials_secret:
-            azure_secret_task = ReadAzureKeyVaultSecret()
+            azure_secret_task = AzureKeyVaultSecret()
             credentials_str = azure_secret_task.run(
                 secret=sp_credentials_secret, vault_name=vault_name
             )

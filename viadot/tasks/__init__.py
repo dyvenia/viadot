@@ -7,13 +7,13 @@ from .azure_data_lake import (
 from .azure_key_vault import (
     CreateAzureKeyVaultSecret,
     DeleteAzureKeyVaultSecret,
-    ReadAzureKeyVaultSecret,
+    AzureKeyVaultSecret,
 )
 from .azure_sql import (
     AzureSQLBulkInsert,
     AzureSQLCreateTable,
     CreateTableFromBlob,
-    RunAzureSQLDBQuery,
+    AzureSQLDBQuery,
 )
 from .bcp import BCPTask
 from .github import DownloadGitHubFile

@@ -6,7 +6,7 @@ from azure.core.exceptions import ResourceNotFoundError
 from viadot.tasks import (
     CreateAzureKeyVaultSecret,
     DeleteAzureKeyVaultSecret,
-    ReadAzureKeyVaultSecret,
+    AzureKeyVaultSecret,
 )
 
 uuid4 = uuid.uuid4()
@@ -23,8 +23,8 @@ def test_create_azure_key_vault_secret():
 
 
 def test_read_azure_key_vault_secret():
-    read_azure_key_vault_task = ReadAzureKeyVaultSecret()
-    value = read_azure_key_vault_task.run(secret=SECRET_NAME)
+    azure_key_vault_task = AzureKeyVaultSecret()
+    value = azure_key_vault_task.run(secret=SECRET_NAME)
     assert value == SECRET_VALUE
 
 
@@ -35,5 +35,5 @@ def test_delete_azure_key_vault_secret():
     assert was_successful
 
     with pytest.raises(ResourceNotFoundError):
-        read_azure_key_vault_task = ReadAzureKeyVaultSecret()
-        read_azure_key_vault_task.run(secret=SECRET_NAME)
+        azure_key_vault_task = AzureKeyVaultSecret()
+        azure_key_vault_task.run(secret=SECRET_NAME)
