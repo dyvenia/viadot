@@ -89,6 +89,7 @@ class RunGreatExpectationsValidation(RunGreatExpectationsValidation):
         batch_kwargs = self._get_batch_kwargs(df)
         context = self._get_ge_context_local(expectations_path)
 
+        self.logger.info("Beginning validation run...")
         super().run(
             batch_kwargs=batch_kwargs,  # input data
             context=context,  # ~project config
