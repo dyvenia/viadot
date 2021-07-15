@@ -1,14 +1,15 @@
 import os
-import pendulum
 from typing import Any, Dict, List, Union
 
 import pandas as pd
+import pendulum
 from prefect import Flow, Task, apply_map, task
-from prefect.storage import Git, GitHub
+from prefect.storage import Git, GitHub, Local
 from prefect.tasks.control_flow import case
+from prefect.tasks.secrets import PrefectSecret
 from prefect.utilities import logging
 
-from ..task_utils import METADATA_COLUMNS, add_ingestion_metadata_task
+from ..task_utils import add_ingestion_metadata_task
 from ..tasks import (
     AzureDataLakeUpload,
     DownloadGitHubFile,
@@ -30,21 +31,13 @@ def union_dfs_task(dfs: List[pd.DataFrame]):
 
 
 @task
-def df_to_csv_task(df, path: str, if_exists: str = "replace", sep: str = "\t"):
-    if if_exists == "append":
-        if os.path.isfile(path):
-            csv_df = pd.read_csv(path, sep=sep)
-            out_df = pd.concat([csv_df, df])
-        else:
-            out_df = df
-    elif if_exists == "replace":
-        out_df = df
-    out_df.to_csv(path, sep=sep, index=False)
+def df_to_csv_task(df, path: str, sep: str = "\t"):
+    df.to_csv(path, sep=sep, index=False)
 
 
 @task
 def is_stored_locally(f: Flow):
-    return f.storage is None
+    return f.storage is None or isinstance(f.storage, Local)
 
 
 class SupermetricsToAdls(Flow):
@@ -111,6 +104,14 @@ class SupermetricsToAdls(Flow):
             tags (List[str], optional): Flow tags to use, eg. to control flow concurrency. Defaults to ["extract"].
             vault_name (str, optional): The name of the vault from which to obtain the secrets. Defaults to None.
         """
+
+        if not ds_user:
+            try:
+                ds_user = PrefectSecret("SUPERMETRICS_DEFAULT_USER").run()
+            except ValueError as e:
+                msg = "Neither 'ds_user' parameter nor 'SUPERMETRICS_DEFAULT_USER' secret were not specified"
+                raise ValueError(msg) from e
+
         # SupermetricsToDF
         self.ds_id = ds_id
         self.ds_accounts = ds_accounts
@@ -155,7 +156,6 @@ class SupermetricsToAdls(Flow):
         )
         self.storage_repo = self._get_expectation_suite_repo()
 
-        # self.dtypes.update(METADATA_COLUMNS)
         self.gen_flow()
 
     @staticmethod
@@ -163,7 +163,7 @@ class SupermetricsToAdls(Flow):
         return name.replace(" ", "_").lower()
 
     def _get_expectation_suite_repo(self):
-        if self.storage is None:
+        if self.storage is None or isinstance(self.storage, Local):
             return None
         return self.storage.repo
 
@@ -171,23 +171,23 @@ class SupermetricsToAdls(Flow):
 
         if self.storage is None:
             return os.path.join(os.getcwd(), self.expectation_suite_file_name)
-
+        elif isinstance(self.storage, GitHub):
+            path = self.storage.path
+        elif isinstance(self.storage, Git):
+            # assuming this is DevOps
+            path = self.storage.flow_path
+        elif isinstance(self.storage, Local):
+            path = self.storage.directory
         else:
-            if isinstance(self.storage, GitHub):
+            try:
                 path = self.storage.path
-            elif isinstance(self.storage, Git):
-                # assuming this is DevOps
-                path = self.storage.flow_path
-            else:
-                try:
-                    path = self.storage.path
-                except AttributeError:
-                    raise NotImplemented("Unsupported storage type.")
+            except AttributeError:
+                raise NotImplemented("Unsupported storage type.")
 
-            flow_dir_path = path[: path.rfind("/")]
-            return os.path.join(
-                flow_dir_path, "expectations", self.expectation_suite_file_name
-            )
+        flow_dir_path = path[: path.rfind("/")]
+        return os.path.join(
+            flow_dir_path, "expectations", self.expectation_suite_file_name
+        )
 
     def gen_supermetrics_task(
         self, ds_accounts: Union[str, List[str]], flow: Flow = None
@@ -228,19 +228,21 @@ class SupermetricsToAdls(Flow):
         )
 
         local = is_stored_locally.bind(self, flow=self)
-        with case(local, False):
-            download_expectations = download_github_file_task.bind(
-                repo=self.storage_repo,
-                from_path=self.expectation_suite_path,
-                to_path=self.expectation_suite_local_path,
-                flow=self,
-            )
-            validation.set_upstream(download_expectations, flow=self)
+        with case(local, True):
+            pass_the_other_case = True
+        if not pass_the_other_case:
+            with case(local, False):
+                download_expectations = download_github_file_task.bind(
+                    repo=self.storage_repo,
+                    from_path=self.expectation_suite_path,
+                    to_path=self.expectation_suite_local_path,
+                    flow=self,
+                )
+                validation.set_upstream(download_expectations, flow=self)
 
         df_to_csv = df_to_csv_task.bind(
             df=df,
             path=self.local_file_path,
-            if_exists=self.if_exists,
             sep=self.sep,
             flow=self,
         )
