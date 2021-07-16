@@ -8,6 +8,9 @@ uuid_4 = uuid.uuid4()
 file_name = f"test_file_{uuid_4}.csv"
 adls_path = f"raw/supermetrics/{file_name}"
 
+file_name_parquet = f"test_file_{uuid_4}.parquet"
+adls_path_parquet = f"raw/supermetrics/{file_name_parquet}"
+
 # TODO: add pytest-depends as download tests depend on the upload
 # and can't be ran separately
 
@@ -29,4 +32,13 @@ def test_azure_data_lake_download():
 def test_azure_data_lake_to_df():
     task = AzureDataLakeToDF()
     df = task.run(path=adls_path, sep="\t")
+    assert not df.empty
+
+
+def test_azure_data_lake_to_df_parquet(TEST_PARQUET_FILE_PATH):
+    upload_task = AzureDataLakeUpload()
+    upload_task.run(from_path=TEST_PARQUET_FILE_PATH, to_path=adls_path_parquet)
+
+    lake_to_df_task = AzureDataLakeToDF()
+    df = lake_to_df_task.run(path=adls_path_parquet)
     assert not df.empty

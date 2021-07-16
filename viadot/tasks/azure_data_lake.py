@@ -243,10 +243,11 @@ class AzureDataLakeToDF(Task):
         **kwargs,
     ):
         """Load file(s) from the Azure Data Lake to a pandas DataFrame.
+        Currently supports CSV and parquet files.
 
         Args:
             path (str, optional): The path from which to load the DataFrame. Defaults to None.
-            sep (str, optional): The separator to use when reading the CSV file. Defaults to "\t".
+            sep (str, optional): The separator to use when reading a CSV file. Defaults to "\t".
             gen (int, optional): The generation of the Azure Data Lake. Defaults to 2.
             vault_name (str, optional): The name of the vault from which to obtain the secret. Defaults to None.
         """
