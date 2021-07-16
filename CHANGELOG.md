@@ -5,7 +5,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Added
+- Added support for parquet in `AzureDataLakeToDF`
+- Added proper logging to the `RunGreatExpectationsValidation` task
+- Tests
 
+### Changed
+- Renamed `ReadAzureKeyVaultSecret` and `RunAzureSQLDBQuery` tasks to match Prefect naming style
+
+### Fixed
+- Removed the broken version autobump from CI
 
 ## [0.2.1] - 2021-07-14
 ### Added
