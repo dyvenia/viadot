@@ -1,17 +1,25 @@
+import logging
 import os
+from typing import Tuple
+
+import pandas as pd
+from prefect.engine import signals
+from prefect.tasks.great_expectations import RunGreatExpectationsValidation
+from prefect.utilities.tasks import defaults_from_attrs
 
 import great_expectations as ge
-import pandas as pd
 from great_expectations.data_context import BaseDataContext
 from great_expectations.data_context.types.base import (
     DataContextConfig,
     DatasourceConfig,
     FilesystemStoreBackendDefaults,
 )
-from prefect.tasks.great_expectations import RunGreatExpectationsValidation
-from prefect.utilities.tasks import defaults_from_attrs
+from great_expectations.validation_operators.types.validation_operator_result import (
+    ValidationOperatorResult,
+)
 
 
+# Simplifies the setup and adds logging to the standard Prefect task
 class RunGreatExpectationsValidation(RunGreatExpectationsValidation):
     """
     Task for running data validation with Great Expectations on a pandas DataFrame.
@@ -90,14 +98,40 @@ class RunGreatExpectationsValidation(RunGreatExpectationsValidation):
         context = self._get_ge_context_local(expectations_path)
 
         self.logger.info("Beginning validation run...")
-        super().run(
-            batch_kwargs=batch_kwargs,  # input data
-            context=context,  # ~project config
-            **kwargs,
+
+        try:
+            results = super().run(
+                batch_kwargs=batch_kwargs,  # input data
+                context=context,  # ~project config
+                **kwargs,
+            )
+        except signals.FAIL as e:
+            results = e.state.result
+
+        # Show summary of results
+        n_successful, n_expectations = self._get_stats_from_results(results)
+        status = "success" if results.success else "failure"
+        level = logging.INFO if results.success else logging.ERROR
+        self.logger.log(
+            msg=f"Validation finished with status '{status}'. {n_successful}/{n_expectations} test(s) passed.",
+            level=level,
         )
+
         data_docs_path = os.path.join(
             expectations_path, "uncommitted", "data_docs", "local_site", "index.html"
         )
-        self.logger.info(
-            f"Validation finished. To explore the docs, open {data_docs_path} in a browser."
-        )
+        self.logger.info(f"To explore the docs, open {data_docs_path} in a browser.")
+
+        if not results.success:
+            raise signals.FAIL(result=results)
+
+        return results
+
+    def _get_stats_from_results(
+        self, result: ValidationOperatorResult
+    ) -> Tuple[int, int]:
+        result_identifier = result.list_validation_result_identifiers()[0]
+        stats = result._list_validation_statistics()[result_identifier]
+        n_successful = stats["successful_expectations"]
+        n_expectations = stats["evaluated_expectations"]
+        return n_successful, n_expectations
