@@ -2,7 +2,7 @@ import os
 from typing import Any, Dict, List, Union
 
 import pandas as pd
-from prefect import Flow, Task, apply_map, task
+from prefect import Flow, Task, apply_map, task, Parameter
 from prefect.storage import Git, GitHub, Local
 from prefect.tasks.control_flow import case
 from prefect.tasks.secrets import PrefectSecret
@@ -186,6 +186,7 @@ class ADLSToAzureSQL(Flow):
 
 
     def gen_flow(self) -> Flow:
+        adls_path_parquet = Parameter("adls_path_parquet", default = self.adls_path_parquet, flow=self)
 
         df = lake_to_df_task.bind(
             path=adls_path_parquet
@@ -218,9 +219,6 @@ class ADLSToAzureSQL(Flow):
             flow=self,
         )
 
-        add_ingestion_metadata = add_ingestion_metadata_task.bind(
-            path=self.local_file_path, sep=self.sep, flow=self
-        )
 
         csv_to_adls_task.bind(
             from_path=self.local_file_path,
@@ -249,9 +247,9 @@ class ADLSToAzureSQL(Flow):
         )
 
         df_to_csv.set_upstream(validation, flow=self)
-        add_ingestion_metadata.set_upstream(df_to_csv, flow=self)
-        csv_to_adls_task.set_upstream(add_ingestion_metadata_task, flow=self)
+        
+        csv_to_adls_task.set_upstream(df_to_csv, flow=self)
 
         create_table_task.set_upstream(validation, flow=self)
         bulk_insert_task.set_upstream(create_table_task, flow=self)
-        bulk_insert_task.set_upstream(add_ingestion_metadata, flow=self)
+        bulk_insert_task.set_upstream(create_table_task, flow=self)

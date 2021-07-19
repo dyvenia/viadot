@@ -8,6 +8,7 @@ from prefect import Flow, Task, apply_map, task
 from prefect.storage import Git, GitHub
 from prefect.tasks.control_flow import case
 from prefect.utilities import logging
+from prefect.backend import kv 
 
 from ..task_utils_v2 import METADATA_COLUMNS, add_ingestion_metadata_task
 from ..tasks import (
@@ -23,6 +24,11 @@ supermetrics_to_df_task = SupermetricsToDF()
 download_github_file_task = DownloadGitHubFile()
 validation_task = RunGreatExpectationsValidation()
 parquet_to_adls_task = AzureDataLakeUpload()
+
+
+@task
+def get_data_types(df: pd.DataFrame) -> dict:
+    df.dtypes.to_dict()
 
 
 @task
@@ -128,8 +134,10 @@ class SupermetricsToAdls(Flow):
         # RunGreatExpectationsValidation
 
         # AzureDataLakeUpload
+        
         self.local_file_path = local_file_path or self.slugify(name) + ".parquet"
-        self.adls_dir_path = os.path.join(
+        self.adls_dir_path = adls_dir_path 
+        self.adls_file_path = os.path.join(
             adls_dir_path, str(pendulum.now("utc")) + ".parquet"
         )
         self.overwrite_adls = overwrite_adls
@@ -236,26 +244,27 @@ class SupermetricsToAdls(Flow):
             )
             validation.set_upstream(download_expectations, flow=self)
 
+        df_with_metadata = add_ingestion_metadata_task(df, flow=self)
+
+        # get_data_types = get_data_types(df_with_metadata)
+
         df_to_parquet = df_to_parquet_task.bind(
-            df=df,
+            df=df_with_metadata,
             path=self.local_file_path,
             if_exists=self.if_exists,
             flow=self,
         )
 
-        add_ingestion_metadata = add_ingestion_metadata_task.bind(
-            path=self.local_file_path, flow=self
-        )
-
         parquet_to_adls_task.bind(
             from_path=self.local_file_path,
-            to_path=self.adls_dir_path,
+            to_path=self.adls_file_path,
             overwrite=self.overwrite_adls,
             sp_credentials_secret=self.adls_sp_credentials_secret,
             vault_name=self.vault_name,
             flow=self,
         )
 
-        df_to_parquet.set_upstream(validation, flow=self)
-        add_ingestion_metadata.set_upstream(df_to_parquet, flow=self)
-        parquet_to_adls_task.set_upstream(add_ingestion_metadata_task, flow=self)
+        df_with_metadata.set_upstream(validation, flow=self)
+        df_to_parquet.set_upstream(df_with_metadata, flow=self)
+        parquet_to_adls_task.set_upstream(df_to_parquet, flow=self)
+        prefect.kv set foo bar 
