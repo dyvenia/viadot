@@ -8,7 +8,7 @@ from prefect import Flow, Task, apply_map, task
 from prefect.storage import Git, GitHub
 from prefect.tasks.control_flow import case
 from prefect.utilities import logging
-from prefect.backend import kv 
+from prefect.backend import set_key_value, get_key_value
 
 from ..task_utils_v2 import METADATA_COLUMNS, add_ingestion_metadata_task
 from ..tasks import (
@@ -134,9 +134,9 @@ class SupermetricsToAdls(Flow):
         # RunGreatExpectationsValidation
 
         # AzureDataLakeUpload
-        
+
         self.local_file_path = local_file_path or self.slugify(name) + ".parquet"
-        self.adls_dir_path = adls_dir_path 
+        self.adls_dir_path = adls_dir_path
         self.adls_file_path = os.path.join(
             adls_dir_path, str(pendulum.now("utc")) + ".parquet"
         )
@@ -267,4 +267,5 @@ class SupermetricsToAdls(Flow):
         df_with_metadata.set_upstream(validation, flow=self)
         df_to_parquet.set_upstream(df_with_metadata, flow=self)
         parquet_to_adls_task.set_upstream(df_to_parquet, flow=self)
-        prefect.kv set foo bar 
+
+        set_key_value(key=self.adls_dir_path, value=self.adls_file_path)
