@@ -164,3 +164,8 @@ class AzureDataLake(Source):
     def rm(self, path: str = None, recursive: bool = False):
         path = path or self.path
         self.fs.rm(path, recursive=recursive)
+
+    def cp(self, from_path: str = None, to_path: str = None, recursive: bool = False):
+        from_path = from_path or self.path
+        to_path = to_path
+        self.fs.cp(from_path, to_path, recursive=recursive)
