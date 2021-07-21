@@ -1,7 +1,11 @@
 import os
 import pendulum
 import pyarrow
+import json
 from typing import Any, Dict, List, Union
+
+from visions.functional import infer_type
+from visions.typesets.complete_set import CompleteSet
 
 import pandas as pd
 from prefect import Flow, Task, apply_map, task
@@ -24,6 +28,7 @@ supermetrics_to_df_task = SupermetricsToDF()
 download_github_file_task = DownloadGitHubFile()
 validation_task = RunGreatExpectationsValidation()
 parquet_to_adls_task = AzureDataLakeUpload()
+json_to_adls_task = AzureDataLakeUpload()
 
 
 @task
@@ -34,6 +39,20 @@ def get_data_types(df: pd.DataFrame) -> dict:
 @task
 def union_dfs_task(dfs: List[pd.DataFrame]):
     return pd.concat(dfs, ignore_index=True)
+
+
+@task
+def df_get_data_types_task(df):
+    typeset = CompleteSet()
+    dtypes = infer_type(df, typeset)
+    dtypes_dict = {k: str(v) for k, v in dtypes.items()}
+    return dtypes_dict
+
+
+@task
+def dtypes_to_json_task(dtypes_dict, local_json_path: str):
+    with open(local_json_path, "w") as fp:
+        json.dump(dtypes_dict, fp)
 
 
 @task
@@ -136,9 +155,12 @@ class SupermetricsToAdls(Flow):
         # AzureDataLakeUpload
 
         self.local_file_path = local_file_path or self.slugify(name) + ".parquet"
+        self.local_json_path = self.slugify(name) + ".json"
+        self.now = str(pendulum.now("utc"))
         self.adls_dir_path = adls_dir_path
-        self.adls_file_path = os.path.join(
-            adls_dir_path, str(pendulum.now("utc")) + ".parquet"
+        self.adls_file_path = os.path.join(adls_dir_path, self.now + ".parquet")
+        self.adls_schema_file_dir_file = os.path.join(
+            adls_dir_path, "schema", self.now + ".json"
         )
         self.overwrite_adls = overwrite_adls
         self.if_empty = if_empty
@@ -263,9 +285,20 @@ class SupermetricsToAdls(Flow):
             vault_name=self.vault_name,
             flow=self,
         )
-
+        dtypes_dict = df_get_data_types_task.bind(df_with_metadata, flow=self)
+        dtypes_to_json_task.bind(
+            dtypes_dict=dtypes_dict, local_json_path=self.local_json_path, flow=self
+        )
+        json_to_adls_task.bind(
+            from_path=self.local_json_path,
+            to_path=self.adls_schema_file_dir_file,
+            overwrite=self.overwrite_adls,
+            sp_credentials_secret=self.adls_sp_credentials_secret,
+            vault_name=self.vault_name,
+            flow=self,
+        )
         df_with_metadata.set_upstream(validation, flow=self)
         df_to_parquet.set_upstream(df_with_metadata, flow=self)
         parquet_to_adls_task.set_upstream(df_to_parquet, flow=self)
-
+        json_to_adls_task.set_upstream(dtypes_to_json_task, flow=self)
         set_key_value(key=self.adls_dir_path, value=self.adls_file_path)
