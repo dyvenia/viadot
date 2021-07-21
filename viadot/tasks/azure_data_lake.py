@@ -73,7 +73,7 @@ class AzureDataLakeDownload(Task):
         vault_name: str = None,
         max_retries: int = None,
         retry_delay: timedelta = None,
-    ):
+    ) -> None:
         """Task run method.
 
         Args:
@@ -181,7 +181,7 @@ class AzureDataLakeUpload(Task):
         vault_name: str = None,
         max_retries: int = None,
         retry_delay: timedelta = None,
-    ):
+    ) -> None:
         """Task run method.
 
         Args:
@@ -388,7 +388,7 @@ class AzureDataLakeCopy(Task):
         vault_name: str = None,
         max_retries: int = None,
         retry_delay: timedelta = None,
-    ):
+    ) -> None:
         """Task run method.
 
         Args:

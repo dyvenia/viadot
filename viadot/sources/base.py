@@ -1,6 +1,6 @@
 import os
 from abc import abstractmethod
-from typing import Any, Dict, Literal
+from typing import Any, Dict, Literal, NoReturn, List, Tuple
 
 import pandas as pd
 import pyarrow as pa
@@ -11,6 +11,8 @@ from ..config import local_config
 from ..signals import SKIP
 
 logger = logging.get_logger(__name__)
+
+Record = Tuple[Any]
 
 
 class Source:
@@ -108,7 +110,7 @@ class Source:
         out_df.to_excel(path, index=False, encoding="utf8")
         return True
 
-    def _handle_if_empty(self, if_empty: str = None):
+    def _handle_if_empty(self, if_empty: str = None) -> NoReturn:
         if if_empty == "warn":
             logger.warning("The query produced no data.")
         elif if_empty == "skip":
@@ -153,7 +155,7 @@ class SQL(Source):
         self._con = None
 
     @property
-    def conn_str(self):
+    def conn_str(self) -> str:
         """Generate a connection string from params or config.
         Note that the user and password are escapedd with '{}' characters.
 
@@ -185,7 +187,7 @@ class SQL(Source):
             self._con.timeout = self.query_timeout
         return self._con
 
-    def run(self, query: str):
+    def run(self, query: str) -> List[Record]:
         cursor = self.con.cursor()
         cursor.execute(query)
 
