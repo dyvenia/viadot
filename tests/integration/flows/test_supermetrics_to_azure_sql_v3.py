@@ -3,6 +3,7 @@ import os
 import uuid
 
 from prefect.storage import Local
+
 from viadot.flows import SupermetricsToAzureSQLv3
 
 CWD = os.getcwd()

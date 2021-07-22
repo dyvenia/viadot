@@ -2,7 +2,7 @@ import os
 from typing import Any, Dict, List, Union
 
 import pandas as pd
-from prefect import Flow, Task, apply_map, task, Parameter
+from prefect import Flow, Parameter, Task, apply_map, task
 from prefect.storage import Git, GitHub, Local
 from prefect.tasks.control_flow import case
 from prefect.tasks.secrets import PrefectSecret
@@ -10,12 +10,12 @@ from prefect.utilities import logging
 
 from ..task_utils import METADATA_COLUMNS, add_ingestion_metadata_task
 from ..tasks import (
+    AzureDataLakeToDF,
     AzureDataLakeUpload,
     AzureSQLCreateTable,
     BCPTask,
     DownloadGitHubFile,
     RunGreatExpectationsValidation,
-    AzureDataLakeToDF,
 )
 
 logger = logging.get_logger(__name__)
@@ -109,10 +109,8 @@ class ADLSToAzureSQL(Flow):
             vault_name (str, optional): The name of the vault from which to obtain the secrets. Defaults to None.
         """
 
-
-        # Read parquet file from raw 
+        # Read parquet file from raw
         self.path = adls_path_parquet
-
 
         # RunGreatExpectationsValidation
 
@@ -183,14 +181,12 @@ class ADLSToAzureSQL(Flow):
             flow_dir_path, "expectations", self.expectation_suite_file_name
         )
 
-
-
     def gen_flow(self) -> Flow:
-        adls_path_parquet = Parameter("adls_path_parquet", default = self.adls_path_parquet, flow=self)
+        adls_path_parquet = Parameter(
+            "adls_path_parquet", default=self.adls_path_parquet, flow=self
+        )
 
-        df = lake_to_df_task.bind(
-            path=adls_path_parquet
-            )
+        df = lake_to_df_task.bind(path=adls_path_parquet)
 
         validation = validation_task.bind(
             df=df,
@@ -219,7 +215,6 @@ class ADLSToAzureSQL(Flow):
             flow=self,
         )
 
-
         csv_to_adls_task.bind(
             from_path=self.local_file_path,
             to_path=self.to_path,
@@ -247,7 +242,7 @@ class ADLSToAzureSQL(Flow):
         )
 
         df_to_csv.set_upstream(validation, flow=self)
-        
+
         csv_to_adls_task.set_upstream(df_to_csv, flow=self)
 
         create_table_task.set_upstream(validation, flow=self)

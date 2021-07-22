@@ -1,6 +1,7 @@
 from datetime import datetime, timezone
-import pyarrow
+
 import pandas as pd
+import pyarrow
 from prefect import task
 
 METADATA_COLUMNS = {"_viadot_downloaded_at_utc": "DATETIME"}

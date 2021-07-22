@@ -1,6 +1,6 @@
 import os
 from abc import abstractmethod
-from typing import Any, Dict, Literal, NoReturn, List, Tuple
+from typing import Any, Dict, List, Literal, NoReturn, Tuple
 
 import pandas as pd
 import pyarrow as pa
