@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added support for parquet in `AzureDataLakeToDF`
 - Added proper logging to the `RunGreatExpectationsValidation` task
 - Tests
+- Flows:
+  - `ADLSToAzureSQL` - promoting files to conformed, operations and creating SQL table
 
 ### Changed
 - Renamed `ReadAzureKeyVaultSecret` and `RunAzureSQLDBQuery` tasks to match Prefect naming style
