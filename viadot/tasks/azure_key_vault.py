@@ -188,7 +188,7 @@ class CreateAzureKeyVaultSecret(SecretBase):
         credentials: dict = None,
         max_retries: int = None,
         retry_delay: timedelta = None,
-    ) -> str:
+    ) -> bool:
         """
         Task run method.
 
@@ -284,7 +284,7 @@ class DeleteAzureKeyVaultSecret(SecretBase):
         credentials: dict = None,
         max_retries: int = None,
         retry_delay: timedelta = None,
-    ) -> str:
+    ) -> bool:
         """
         Task run method.
 

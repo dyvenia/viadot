@@ -59,7 +59,7 @@ class BCPTask(ShellTask):
         max_retries: int = None,
         retry_delay: timedelta = None,
         **kwargs,
-    ):
+    ) -> str:
         """
         Task run method.
 
