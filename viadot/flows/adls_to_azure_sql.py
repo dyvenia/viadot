@@ -50,7 +50,7 @@ class ADLSToAzureSQL(Flow):
         expectation_suite_name: str = "failure",
         local_file_path: str = None,
         adls_path_parquet: str = None,
-        to_path: str,
+        to_path: str = None,
         sep: str = "\t",
         overwrite_adls: bool = True,
         if_empty: str = "warn",
