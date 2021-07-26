@@ -9,17 +9,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added support for parquet in `AzureDataLakeToDF`
 - Added proper logging to the `RunGreatExpectationsValidation` task
 - Tests
+- Flows:
+  - `ADLSToAzureSQL` - promoting files to conformed, operations and creating SQL table
+   
 
 ### Changed
 - Renamed `ReadAzureKeyVaultSecret` and `RunAzureSQLDBQuery` tasks to match Prefect naming style
-
+- Flows:
+  - `SupermetricsToADLS` - changed csv to parquet file extension. File and schema info are loaded to the `RAW` container. 
 ### Fixed
 - Removed the broken version autobump from CI
 
 ## [0.2.1] - 2021-07-14
 ### Added
 - Flows:
-  - `SupermetricsToAdls` - supporting immutable ADLS setup
+  - `SupermetricsToADLS` - supporting immutable ADLS setup
 
 ### Changed
 - A default value for the `ds_user` parameter in `SupermetricsToAzureSQLv3` can now be 

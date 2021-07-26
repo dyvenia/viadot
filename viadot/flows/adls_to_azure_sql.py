@@ -1,29 +1,32 @@
 import os
-from typing import Any, Dict, List, Union
-
+from typing import Any, Dict, List
+import json
+from viadot.tasks.azure_data_lake import AzureDataLakeDownload
 import pandas as pd
-from prefect import Flow, Parameter, Task, apply_map, task
-from prefect.storage import Git, GitHub, Local
-from prefect.tasks.control_flow import case
-from prefect.tasks.secrets import PrefectSecret
-from prefect.utilities import logging
 
-from ..task_utils import METADATA_COLUMNS, add_ingestion_metadata_task
+
+from prefect import Flow, task, Parameter
+from prefect.storage import Local
+from prefect.utilities import logging
+from prefect.backend import get_key_value
+
 from ..tasks import (
     AzureDataLakeToDF,
     AzureDataLakeUpload,
     AzureSQLCreateTable,
     BCPTask,
     DownloadGitHubFile,
-    RunGreatExpectationsValidation,
+    AzureDataLakeToDF,
+    AzureDataLakeCopy,
 )
 
 logger = logging.get_logger(__name__)
 
 lake_to_df_task = AzureDataLakeToDF()
+download_json_file_task = AzureDataLakeDownload()
 download_github_file_task = DownloadGitHubFile()
-validation_task = RunGreatExpectationsValidation()
-csv_to_adls_task = AzureDataLakeUpload()
+promote_to_conformed_task = AzureDataLakeUpload()
+promote_to_operations_task = AzureDataLakeCopy()
 create_table_task = AzureSQLCreateTable()
 bulk_insert_task = BCPTask()
 
@@ -31,6 +34,40 @@ bulk_insert_task = BCPTask()
 @task
 def union_dfs_task(dfs: List[pd.DataFrame]):
     return pd.concat(dfs, ignore_index=True)
+
+
+@task
+def map_data_types_task(json_shema_path: str):
+    file_dtypes = open(json_shema_path)
+    dict_dtypes = json.load(file_dtypes)
+    dict_mapping = {
+        "Float": "REAL",
+        "Image": None,
+        "" "Categorical": "VARCHAR(500)",
+        "Time": "TIME",
+        "Boolean": "BIT",
+        "DateTime": "DATETIMEOFFSET",  # DATETIMEOFFSET is the only timezone-aware dtype in TSQL
+        "Object": "VARCHAR(500)",
+        "EmailAddress": "VARCHAR(50)",
+        "File": None,
+        "Geometry": "GEOMETRY",
+        "Ordinal": "VARCHAR(500)",
+        "Integer": "INT",
+        "Generic": "VARCHAR(500)",
+        "UUID": "UNIQUEIDENTIFIER",
+        "Complex": None,
+        "Date": "DATE",
+        "String": "VARCHAR(500)",
+        "IPAddress": "VARCHAR(39)",
+        "Path": "VARCHAR(500)",
+        "TimeDelta": "VARCHAR(20)",  # datetime.datetime.timedelta; eg. '1 days 11:00:00'
+        "URL": "VARCHAR(500)",
+        "Count": "INT",
+    }
+    dict_dtypes_mapped = {}
+    for k in dict_dtypes:
+        dict_dtypes_mapped[k] = dict_mapping[dict_dtypes[k]]
+    return dict_dtypes_mapped
 
 
 @task
@@ -47,22 +84,18 @@ class ADLSToAzureSQL(Flow):
     def __init__(
         self,
         name: str,
-        expectation_suite_name: str = "failure",
         local_file_path: str = None,
-        adls_path_parquet: str = None,
-        to_path: str = None,
+        adls_path: str = None,
         sep: str = "\t",
         overwrite_adls: bool = True,
         if_empty: str = "warn",
         adls_sp_credentials_secret: str = None,
         table: str = None,
         schema: str = None,
-        dtypes: Dict[str, Any] = None,
         if_exists: str = "replace",  # this applies to the full CSV file, not per chunk
         sqldb_credentials_secret: str = None,
         max_download_retries: int = 5,
-        parallel: bool = True,
-        tags: List[str] = ["extract"],
+        tags: List[str] = ["promotion"],
         vault_name: str = None,
         *args: List[any],
         **kwargs: Dict[str, Any],
@@ -74,22 +107,9 @@ class ADLSToAzureSQL(Flow):
 
         Args:
             name (str): The name of the flow.
-            ds_id (str): A query parameter passed to the SupermetricsToCSV task
-            ds_accounts (List[str]): A query parameter passed to the SupermetricsToCSV task
-            ds_user (str): A query parameter passed to the SupermetricsToCSV task. A default value
-            can also be set as a 'SUPERMETRICS_DEFAULT_USER' Prefect secret.
-            fields (List[str]): A query parameter passed to the SupermetricsToCSV task
-            ds_segments (List[str], optional): A query parameter passed to the SupermetricsToCSV task. Defaults to None.
-            date_range_type (str, optional): A query parameter passed to the SupermetricsToCSV task. Defaults to None.
-            settings (Dict[str, Any], optional): A query parameter passed to the SupermetricsToCSV task. Defaults to None.
-            filter (str, optional): A query parameter passed to the SupermetricsToCSV task. Defaults to None.
-            max_rows (int, optional): A query parameter passed to the SupermetricsToCSV task. Defaults to 1000000.
-            max_columns (int, optional): A query parameter passed to the SupermetricsToCSV task. Defaults to None.
-            order_columns (str, optional): A query parameter passed to the SupermetricsToCSV task. Defaults to None.
-            expectation_suite_name (str, optional): The name of the expectation suite. Defaults to "failure".
-            Currently, only GitHub URLs are supported. Defaults to None.
             local_file_path (str, optional): Local destination path. Defaults to None.
-            adls_path (str, optional): Azure Data Lake destination path. Defaults to None.
+            adls_path (str): The path to an ADLS folder or file. If you pass a path to a directory,
+            the latest file from that directory will be loaded. We assume that the files are named using timestamps.
             sep (str, optional): The separator to use in the CSV. Defaults to "\t".
             overwrite_adls (bool, optional): Whether to overwrite the file in ADLS. Defaults to True.
             if_empty (str, optional): What to do if the Supermetrics query returns no data. Defaults to "warn".
@@ -98,115 +118,82 @@ class ADLSToAzureSQL(Flow):
             Defaults to None.
             table (str, optional): Destination table. Defaults to None.
             schema (str, optional): Destination schema. Defaults to None.
-            dtypes (Dict[str, Any], optional): The data types to use for the table. Defaults to None.
             if_exists (str, optional): What to do if the table exists. Defaults to "replace".
             sqldb_credentials_secret (str, optional): The name of the Azure Key Vault secret containing a dictionary with
             Azure SQL Database credentials. Defaults to None.
             max_download_retries (int, optional): How many times to retry the download. Defaults to 5.
-            supermetrics_task_timeout (int, optional): The timeout for the download task. Defaults to 60*30.
-            parallel (bool, optional): Whether to parallelize the downloads. Defaults to True.
-            tags (List[str], optional): Flow tags to use, eg. to control flow concurrency. Defaults to ["extract"].
+            tags (List[str], optional): Flow tags to use, eg. to control flow concurrency. Defaults to ["promotion"].
             vault_name (str, optional): The name of the vault from which to obtain the secrets. Defaults to None.
         """
+        adls_path = adls_path.strip("/")
 
-        # Read parquet file from raw
-        self.path = adls_path_parquet
+        # Read parquet file from RAW
+        if adls_path.split(".")[-1] in ["csv", "parquet"]:
+            self.adls_path = adls_path
+        else:
+            self.adls_path = get_key_value(key=adls_path)
 
-        # RunGreatExpectationsValidation
+        # Read schema info json from RAW
+        self.adls_root_dir_path = os.path.split(self.adls_path)[0]
+        self.adls_file_name = os.path.split(self.adls_path)[-1]
+        extension = os.path.splitext(self.adls_path)[-1]
+        json_schema_file_name = self.adls_file_name.replace(extension, ".json")
+        self.json_shema_path = os.path.join(
+            self.adls_root_dir_path,
+            "schema",
+            json_schema_file_name,
+        )
 
         # AzureDataLakeUpload
         self.local_file_path = local_file_path or self.slugify(name) + ".csv"
-        self.to_path = to_path
+        self.local_json_path = self.slugify(name) + ".json"
         self.sep = sep
         self.overwrite_adls = overwrite_adls
         self.if_empty = if_empty
         self.adls_sp_credentials_secret = adls_sp_credentials_secret
+        self.adls_path_conformed = self.get_promoted_path(env="conformed")
+        self.adls_path_operations = self.get_promoted_path(env="operations")
 
         # BCPTask
         self.table = table
         self.schema = schema
-        self.dtypes = dtypes or {}
         self.if_exists = if_exists
         self.sqldb_credentials_secret = sqldb_credentials_secret
 
         # Global
         self.max_download_retries = max_download_retries
-        self.parallel = parallel
         self.tags = tags
         self.vault_name = vault_name
 
         super().__init__(*args, name=name, **kwargs)
 
-        # DownloadGitHubFile (download expectations)
-        self.expectation_suite_name = expectation_suite_name
-        self.expectation_suite_file_name = expectation_suite_name + ".json"
-        self.expectation_suite_path = self._get_expectation_suite_path()
-        self.expectation_suite_local_path = os.path.join(
-            os.getcwd(), "expectations", self.expectation_suite_file_name
-        )
-        self.storage_repo = self._get_expectation_suite_repo()
-
-        self.dtypes.update(METADATA_COLUMNS)
+        # self.dtypes.update(METADATA_COLUMNS)
         self.gen_flow()
 
     @staticmethod
     def slugify(name):
         return name.replace(" ", "_").lower()
 
-    def _get_expectation_suite_repo(self):
-        if self.storage is None or isinstance(self.storage, Local):
-            return None
-        return self.storage.repo
-
-    def _get_expectation_suite_path(self):
-
-        if self.storage is None:
-            return os.path.join(os.getcwd(), self.expectation_suite_file_name)
-
-        elif isinstance(self.storage, GitHub):
-            path = self.storage.path
-        elif isinstance(self.storage, Git):
-            # assuming this is DevOps
-            path = self.storage.flow_path
-        elif isinstance(self.storage, Local):
-            path = self.storage.directory
+    def get_promoted_path(self, env: str) -> str:
+        adls_path_clean = self.adls_path.strip("/")
+        extension = adls_path_clean.split(".")[-1]
+        if extension in ["csv", "parquet"]:
+            file_name = adls_path_clean.split("/")[-2] + ".csv"
+            common_path = "/".join(adls_path_clean.split("/")[1:-2])
         else:
-            try:
-                path = self.storage.path
-            except AttributeError:
-                raise NotImplemented("Unsupported storage type.")
+            file_name = adls_path_clean.split("/")[-1] + ".csv"
+            common_path = "/".join(adls_path_clean.split("/")[1:-1])
 
-        flow_dir_path = path[: path.rfind("/")]
-        return os.path.join(
-            flow_dir_path, "expectations", self.expectation_suite_file_name
-        )
+        promoted_path = os.path.join(env, common_path, file_name)
+
+        return promoted_path
 
     def gen_flow(self) -> Flow:
-        adls_path_parquet = Parameter(
-            "adls_path_parquet", default=self.adls_path_parquet, flow=self
-        )
+        adls_raw_file_path = Parameter("adls_raw_file_path", default=self.adls_path)
 
-        df = lake_to_df_task.bind(path=adls_path_parquet)
+        df = lake_to_df_task.bind(path=adls_raw_file_path, flow=self)
 
-        validation = validation_task.bind(
-            df=df,
-            expectations_path=os.getcwd(),
-            expectation_suite_name=self.expectation_suite_name,
-            flow=self,
-        )
-
-        local = is_stored_locally.bind(self, flow=self)
-        with case(local, True):
-            pass_the_other_case = True
-        if not pass_the_other_case:
-            with case(local, False):
-                download_expectations = download_github_file_task.bind(
-                    repo=self.storage_repo,
-                    from_path=self.expectation_suite_path,
-                    to_path=self.expectation_suite_local_path,
-                    flow=self,
-                )
-                validation.set_upstream(download_expectations, flow=self)
+        dtypes = map_data_types_task.bind(self.local_json_path, flow=self)
 
         df_to_csv = df_to_csv_task.bind(
             df=df,
@@ -215,18 +202,31 @@ class ADLSToAzureSQL(Flow):
             flow=self,
         )
 
-        csv_to_adls_task.bind(
+        promote_to_conformed_task.bind(
             from_path=self.local_file_path,
-            to_path=self.to_path,
+            to_path=self.adls_path_conformed,
             overwrite=self.overwrite_adls,
             sp_credentials_secret=self.adls_sp_credentials_secret,
             vault_name=self.vault_name,
             flow=self,
         )
+        promote_to_operations_task.bind(
+            from_path=self.adls_path_conformed,
+            to_path=self.adls_path_operations,
+            sp_credentials_secret=self.adls_sp_credentials_secret,
+            vault_name=self.vault_name,
+            flow=self,
+        )
+        download_json_file_task.bind(
+            from_path=self.json_shema_path,
+            to_path=self.local_json_path,
+            flow=self,
+        )
+
         create_table_task.bind(
             schema=self.schema,
             table=self.table,
-            dtypes=self.dtypes,
+            dtypes=dtypes,
             if_exists=self.if_exists,
             credentials_secret=self.sqldb_credentials_secret,
             vault_name=self.vault_name,
@@ -241,10 +241,9 @@ class ADLSToAzureSQL(Flow):
             flow=self,
         )
 
-        df_to_csv.set_upstream(validation, flow=self)
-
-        csv_to_adls_task.set_upstream(df_to_csv, flow=self)
-
-        create_table_task.set_upstream(validation, flow=self)
-        bulk_insert_task.set_upstream(create_table_task, flow=self)
+        dtypes.set_upstream(download_json_file_task, flow=self)
+        promote_to_conformed_task.set_upstream(df_to_csv, flow=self)
+        map_data_types_task.set_upstream(lake_to_df_task, flow=self)
+        create_table_task.set_upstream(df_to_csv, flow=self)
+        promote_to_operations_task.set_upstream(promote_to_conformed_task, flow=self)
         bulk_insert_task.set_upstream(create_table_task, flow=self)

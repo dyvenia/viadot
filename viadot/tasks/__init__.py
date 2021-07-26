@@ -3,6 +3,7 @@ from .azure_data_lake import (
     AzureDataLakeDownload,
     AzureDataLakeToDF,
     AzureDataLakeUpload,
+    AzureDataLakeCopy,
 )
 from .azure_key_vault import (
     AzureKeyVaultSecret,
