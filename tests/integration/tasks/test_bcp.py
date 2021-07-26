@@ -1,7 +1,8 @@
 import pytest
+from prefect.engine.signals import FAIL
+
 from viadot.tasks import BCPTask
 from viadot.tasks.azure_sql import AzureSQLCreateTable, AzureSQLDBQuery
-from prefect.engine.signals import FAIL
 
 SCHEMA = "sandbox"
 TABLE = "test_bcp"

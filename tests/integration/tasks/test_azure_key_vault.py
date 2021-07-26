@@ -4,9 +4,9 @@ import pytest
 from azure.core.exceptions import ResourceNotFoundError
 
 from viadot.tasks import (
+    AzureKeyVaultSecret,
     CreateAzureKeyVaultSecret,
     DeleteAzureKeyVaultSecret,
-    AzureKeyVaultSecret,
 )
 
 uuid4 = uuid.uuid4()

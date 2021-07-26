@@ -2,12 +2,8 @@ import logging
 import os
 from typing import Tuple
 
-import pandas as pd
-from prefect.engine import signals
-from prefect.tasks.great_expectations import RunGreatExpectationsValidation
-from prefect.utilities.tasks import defaults_from_attrs
-
 import great_expectations as ge
+import pandas as pd
 from great_expectations.data_context import BaseDataContext
 from great_expectations.data_context.types.base import (
     DataContextConfig,
@@ -17,6 +13,9 @@ from great_expectations.data_context.types.base import (
 from great_expectations.validation_operators.types.validation_operator_result import (
     ValidationOperatorResult,
 )
+from prefect.engine import signals
+from prefect.tasks.great_expectations import RunGreatExpectationsValidation
+from prefect.utilities.tasks import defaults_from_attrs
 
 
 # Simplifies the setup and adds logging to the standard Prefect task

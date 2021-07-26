@@ -4,6 +4,7 @@ import shutil
 
 import pytest
 from prefect.engine import signals
+
 from viadot.tasks import RunGreatExpectationsValidation
 
 CWD = os.getcwd()

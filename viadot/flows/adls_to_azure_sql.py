@@ -11,6 +11,7 @@ from prefect.utilities import logging
 from prefect.backend import get_key_value
 
 from ..tasks import (
+    AzureDataLakeToDF,
     AzureDataLakeUpload,
     AzureSQLCreateTable,
     BCPTask,

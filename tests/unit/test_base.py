@@ -1,6 +1,7 @@
 import os
 
 import pandas as pd
+
 from viadot.sources.base import SQL, Source
 
 from .test_credentials import get_credentials
