@@ -51,8 +51,9 @@ class AzureDataLakeDownload(Task):
             **kwargs,
         )
 
-    def __call__(self):
+    def __call__(self, *args, **kwargs):
         """Download file(s) from the Azure Data Lake"""
+        return super().__call__(*args, **kwargs)
 
     @defaults_from_attrs(
         "from_path",
@@ -157,8 +158,9 @@ class AzureDataLakeUpload(Task):
             **kwargs,
         )
 
-    def __call__(self):
+    def __call__(self, *args, **kwargs):
         """Upload file(s) to the Azure Data Lake"""
+        return super().__call__(*args, **kwargs)
 
     @defaults_from_attrs(
         "from_path",
@@ -263,8 +265,9 @@ class AzureDataLakeToDF(Task):
             **kwargs,
         )
 
-    def __call__(self):
+    def __call__(self, *args, **kwargs):
         """Load file(s) from the Azure Data Lake to a pandas DataFrame."""
+        return super().__call__(*args, **kwargs)
 
     @defaults_from_attrs(
         "path",
@@ -366,8 +369,9 @@ class AzureDataLakeCopy(Task):
             **kwargs,
         )
 
-    def __call__(self):
+    def __call__(self, *args, **kwargs):
         """Copy file(s) from the Azure Data Lake"""
+        return super().__call__(*args, **kwargs)
 
     @defaults_from_attrs(
         "from_path",
@@ -431,3 +435,96 @@ class AzureDataLakeCopy(Task):
         self.logger.info(f"Copying data from {full_dl_path} to {to_path}...")
         lake.cp(from_path=from_path, to_path=to_path, recursive=recursive)
         self.logger.info(f"Successfully copied data to {to_path}.")
+
+
+class AzureDataLakeList(Task):
+    """
+    Task for listing files in Azure Data Lake.
+
+    Args:
+        path (str, optional): The path to the directory which contents you want to list. Defaults to None.
+        gen (int, optional): The generation of the Azure Data Lake. Defaults to 2.
+        vault_name (str, optional): The name of the vault from which to fetch the secret. Defaults to None.
+        max_retries (int, optional): [description]. Defaults to 3.
+        retry_delay (timedelta, optional): [description]. Defaults to timedelta(seconds=10).
+    """
+
+    def __init__(
+        self,
+        path: str = None,
+        gen: int = 2,
+        vault_name: str = None,
+        max_retries: int = 3,
+        retry_delay: timedelta = timedelta(seconds=10),
+        *args,
+        **kwargs,
+    ):
+        self.path = path
+        self.gen = gen
+        self.vault_name = vault_name
+
+        super().__init__(
+            name="adls_list",
+            max_retries=max_retries,
+            retry_delay=retry_delay,
+            *args,
+            **kwargs,
+        )
+
+    @defaults_from_attrs(
+        "path",
+        "gen",
+        "vault_name",
+        "max_retries",
+        "retry_delay",
+    )
+    def run(
+        self,
+        path: str = None,
+        gen: int = None,
+        sp_credentials_secret: str = None,
+        vault_name: str = None,
+        max_retries: int = None,
+        retry_delay: timedelta = None,
+    ) -> None:
+        """Task run method.
+
+        Args:
+            from_path (str): The path to the directory which contents you want to list. Defaults to None.
+            gen (int): The generation of the Azure Data Lake. Defaults to None.
+            sp_credentials_secret (str, optional): The name of the Azure Key Vault secret containing a dictionary with
+            ACCOUNT_NAME and Service Principal credentials (TENANT_ID, CLIENT_ID, CLIENT_SECRET). Defaults to None.
+            vault_name (str, optional): The name of the vault from which to obtain the secret. Defaults to None.
+        """
+
+        if not sp_credentials_secret:
+            # attempt to read a default for the service principal secret name
+            try:
+                sp_credentials_secret = PrefectSecret(
+                    "AZURE_DEFAULT_ADLS_SERVICE_PRINCIPAL_SECRET"
+                ).run()
+            except ValueError:
+                pass
+
+        if sp_credentials_secret:
+            azure_secret_task = AzureKeyVaultSecret()
+            credentials_str = azure_secret_task.run(
+                secret=sp_credentials_secret, vault_name=vault_name
+            )
+            credentials = json.loads(credentials_str)
+        else:
+            credentials = {
+                "ACCOUNT_NAME": os.environ["AZURE_ACCOUNT_NAME"],
+                "AZURE_TENANT_ID": os.environ["AZURE_TENANT_ID"],
+                "AZURE_CLIENT_ID": os.environ["AZURE_CLIENT_ID"],
+                "AZURE_CLIENT_SECRET": os.environ["AZURE_CLIENT_SECRET"],
+            }
+        lake = AzureDataLake(gen=gen, credentials=credentials)
+
+        full_dl_path = os.path.join(credentials["ACCOUNT_NAME"], path)
+
+        self.logger.info(f"Listing files in {full_dl_path}...")
+        files = lake.ls(path)
+        self.logger.info(f"Successfully listed files in {full_dl_path}.")
+
+        return files
