@@ -1,6 +1,6 @@
 import os
 from datetime import datetime, timezone
-from typing import List, Generator, Tuple
+from typing import List
 
 import pandas as pd
 import prefect
