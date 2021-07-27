@@ -298,6 +298,9 @@ class AzureDataLakeToDF(Task):
             vault_name (str, optional): The name of the vault from which to obtain the secret. Defaults to None.
         """
 
+        if path is None:
+            raise ValueError("Please provide the path to the file to be downloaded.")
+
         if not sp_credentials_secret:
             # attempt to read a default for the service principal secret name
             try:
