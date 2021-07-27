@@ -8,15 +8,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Added support for parquet in `AzureDataLakeToDF`
 - Added proper logging to the `RunGreatExpectationsValidation` task
+- Added the `viz` Prefect extra to requirements to allow flow visualizaion
+- Added a few utility tasks in `task_utils`
+- Added `geopy` dependency
 - Tests
+- Tasks:
+  - `AzureDataLakeList` - for listing files in an ADLS directory
 - Flows:
-  - `ADLSToAzureSQL` - promoting files to conformed, operations and creating SQL table
+  - `ADLSToAzureSQL` - promoting files to conformed, operations, 
+  creating an SQL table and inserting the data into it
   - `ADLSContainerToContainer` - copying files between ADLS containers
+
 
 ### Changed
 - Renamed `ReadAzureKeyVaultSecret` and `RunAzureSQLDBQuery` tasks to match Prefect naming style
 - Flows:
   - `SupermetricsToADLS` - changed csv to parquet file extension. File and schema info are loaded to the `RAW` container. 
+
 ### Fixed
 - Removed the broken version autobump from CI
 
