@@ -1,7 +1,9 @@
+import os
 from datetime import datetime, timezone
+from typing import List
 
 import pandas as pd
-import pyarrow
+import prefect
 from prefect import task
 
 METADATA_COLUMNS = {"_viadot_downloaded_at_utc": "DATETIME"}
@@ -19,3 +21,26 @@ def add_ingestion_metadata_task(
     df2 = df.copy(deep=True)
     df2["_viadot_downloaded_at_utc"] = datetime.now(timezone.utc).replace(microsecond=0)
     return df2
+
+
+@task
+def get_latest_timestamp_file(files: List[str]) -> str:
+    """
+    Return the name of the latest file in a given data lake directory,
+    given a list of paths in that directory. Such list can be obtained using the
+    `AzureDataLakeList` task. This task is useful for working with immutable data lakes as
+    the data is often written in the format /path/table_name/TIMESTAMP.parquet.
+    """
+
+    logger = prefect.context.get("logger")
+
+    extract_fname = (
+        lambda f: os.path.basename(f).replace(".csv", "").replace(".parquet", "")
+    )
+    file_names = [extract_fname(file) for file in files]
+    latest_file_name = max(file_names, key=lambda d: datetime.fromisoformat(d))
+    latest_file = files[file_names.index(latest_file_name)]
+
+    logger.debug(f"Latest file: {latest_file}")
+
+    return latest_file
