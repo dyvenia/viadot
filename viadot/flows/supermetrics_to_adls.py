@@ -14,7 +14,7 @@ from prefect.tasks.control_flow import case
 from prefect.utilities import logging
 from prefect.backend import set_key_value, get_key_value
 
-from ..task_utils_v2 import METADATA_COLUMNS, add_ingestion_metadata_task
+from ..task_utils import METADATA_COLUMNS, add_ingestion_metadata_task
 from ..tasks import (
     AzureDataLakeUpload,
     DownloadGitHubFile,
