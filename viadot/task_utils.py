@@ -1,6 +1,6 @@
 import os
 from datetime import datetime, timezone
-from typing import List
+from typing import List, Generator, Tuple
 
 import pandas as pd
 import prefect
@@ -44,3 +44,10 @@ def get_latest_timestamp_file(files: List[str]) -> str:
     logger.debug(f"Latest file: {latest_file}")
 
     return latest_file
+
+
+@task
+def chunk_df(df: pd.DataFrame, size: int = 10_000) -> List[pd.DataFrame]:
+    n_rows = df.shape[0]
+    chunks = [df[i : i + size] for i in range(0, n_rows, size)]
+    return chunks
