@@ -24,7 +24,7 @@ def add_ingestion_metadata_task(
 
 
 @task
-def get_latest_timestamp_file(files: List[str]) -> str:
+def get_latest_timestamp_file_path(files: List[str]) -> str:
     """
     Return the name of the latest file in a given data lake directory,
     given a list of paths in that directory. Such list can be obtained using the
