@@ -21,3 +21,4 @@ great-expectations==0.13.22
 matplotlib
 adlfs==2021.7.0
 PyGithub==1.55
+geopy==2.2.0
