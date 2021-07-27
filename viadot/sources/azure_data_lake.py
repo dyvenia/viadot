@@ -144,9 +144,18 @@ class AzureDataLake(Source):
         self.fs.download(rpath=from_path, lpath=to_path, recursive=recursive)
 
     def to_df(self, path: str = None, sep: str = "\t"):
+
         path = path or self.path
         url = os.path.join(self.base_url, path)
-        return pd.read_csv(url, storage_options=self.storage_options, sep=sep)
+
+        if url.endswith(".csv"):
+            df = pd.read_csv(url, storage_options=self.storage_options, sep=sep)
+        elif url.endswith(".parquet"):
+            df = pd.read_parquet(url, storage_options=self.storage_options)
+        else:
+            raise ValueError("Only CSV and parquet formats are supported.")
+
+        return df
 
     def ls(self, path: str = None) -> List[str]:
         path = path or self.path
@@ -155,3 +164,8 @@ class AzureDataLake(Source):
     def rm(self, path: str = None, recursive: bool = False):
         path = path or self.path
         self.fs.rm(path, recursive=recursive)
+
+    def cp(self, from_path: str = None, to_path: str = None, recursive: bool = False):
+        from_path = from_path or self.path
+        to_path = to_path
+        self.fs.cp(from_path, to_path, recursive=recursive)

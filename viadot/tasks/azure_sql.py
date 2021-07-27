@@ -7,7 +7,7 @@ from prefect.tasks.secrets import PrefectSecret
 from prefect.utilities.tasks import defaults_from_attrs
 
 from ..sources import AzureSQL
-from .azure_key_vault import ReadAzureKeyVaultSecret
+from .azure_key_vault import AzureKeyVaultSecret
 
 
 def get_credentials(credentials_secret: str, vault_name: str = None):
@@ -21,7 +21,7 @@ def get_credentials(credentials_secret: str, vault_name: str = None):
             pass
 
     if credentials_secret:
-        azure_secret_task = ReadAzureKeyVaultSecret()
+        azure_secret_task = AzureKeyVaultSecret()
         credentials_str = azure_secret_task.run(
             secret=credentials_secret, vault_name=vault_name
         )
@@ -229,7 +229,7 @@ class AzureSQLCreateTable(Task):
             self.logger.info(f"Successfully created table {fqn}.")
 
 
-class RunAzureSQLDBQuery(Task):
+class AzureSQLDBQuery(Task):
     """
     Task for running an Azure SQL Database query.
 

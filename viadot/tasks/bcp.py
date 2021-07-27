@@ -1,10 +1,11 @@
 import json
 from datetime import timedelta
 
+from prefect.tasks.secrets import PrefectSecret
 from prefect.tasks.shell import ShellTask
 from prefect.utilities.tasks import defaults_from_attrs
 
-from viadot.tasks import ReadAzureKeyVaultSecret
+from .azure_key_vault import AzureKeyVaultSecret
 
 
 class BCPTask(ShellTask):
@@ -58,7 +59,7 @@ class BCPTask(ShellTask):
         max_retries: int = None,
         retry_delay: timedelta = None,
         **kwargs,
-    ):
+    ) -> str:
         """
         Task run method.
 
@@ -73,11 +74,20 @@ class BCPTask(ShellTask):
         Returns:
             str: the output of the bcp CLI command
         """
-        azure_secret_task = ReadAzureKeyVaultSecret()
-        credentials_str = azure_secret_task.run(
-            secret=credentials_secret, vault_name=vault_name
-        )
-        credentials = json.loads(credentials_str)
+        if not credentials_secret:
+            # attempt to read a default for the service principal secret name
+            try:
+                credentials_secret = PrefectSecret(
+                    "AZURE_DEFAULT_SQLDB_SERVICE_PRINCIPAL_SECRET"
+                ).run()
+            except ValueError:
+                pass
+
+        if credentials_secret:
+            credentials_str = AzureKeyVaultSecret(
+                credentials_secret, vault_name=vault_name
+            ).run()
+            credentials = json.loads(credentials_str)
 
         fqn = f"{schema}.{table}" if schema else table
 

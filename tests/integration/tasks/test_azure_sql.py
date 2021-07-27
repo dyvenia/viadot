@@ -1,6 +1,6 @@
 import logging
 
-from viadot.tasks import AzureSQLCreateTable, RunAzureSQLDBQuery
+from viadot.tasks import AzureSQLCreateTable, AzureSQLDBQuery
 
 logger = logging.getLogger(__name__)
 
@@ -22,7 +22,7 @@ def test_azure_sql_create_table():
 
 def test_azure_sql_run_sqldb_query_empty_result():
 
-    run_sql_task = RunAzureSQLDBQuery()
+    sql_query_task = AzureSQLDBQuery()
 
     list_table_info_query = f"""
         SELECT *
@@ -31,27 +31,27 @@ def test_azure_sql_run_sqldb_query_empty_result():
             ON t.schema_id = s.schema_id
         WHERE s.name = '{SCHEMA}' AND t.name = '{TABLE}'
     """
-    exists = bool(run_sql_task.run(list_table_info_query))
+    exists = bool(sql_query_task.run(list_table_info_query))
     assert exists
 
-    result = run_sql_task.run(f"SELECT * FROM {SCHEMA}.{TABLE}")
+    result = sql_query_task.run(f"SELECT * FROM {SCHEMA}.{TABLE}")
     assert result == []
 
 
 def test_azure_sql_run_insert_query():
 
-    run_sql_task = RunAzureSQLDBQuery()
+    sql_query_task = AzureSQLDBQuery()
 
-    run_sql_task.run(f"INSERT INTO {SCHEMA}.{TABLE} VALUES (1, 'Mike')")
-    result = list(run_sql_task.run(f"SELECT * FROM {SCHEMA}.{TABLE}")[0])
+    sql_query_task.run(f"INSERT INTO {SCHEMA}.{TABLE} VALUES (1, 'Mike')")
+    result = list(sql_query_task.run(f"SELECT * FROM {SCHEMA}.{TABLE}")[0])
     assert result == [1, "Mike"]
 
 
 def test_azure_sql_run_drop_query():
 
-    run_sql_task = RunAzureSQLDBQuery()
+    sql_query_task = AzureSQLDBQuery()
 
-    result = run_sql_task.run(f"DROP TABLE {SCHEMA}.{TABLE}")
+    result = sql_query_task.run(f"DROP TABLE {SCHEMA}.{TABLE}")
     assert result is True
 
     list_table_info_query = f"""
@@ -61,5 +61,5 @@ def test_azure_sql_run_drop_query():
             ON t.schema_id = s.schema_id
         WHERE s.name = '{SCHEMA}' AND t.name = '{TABLE}'
     """
-    exists = bool(run_sql_task.run(list_table_info_query))
+    exists = bool(sql_query_task.run(list_table_info_query))
     assert not exists

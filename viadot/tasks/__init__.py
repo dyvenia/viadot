@@ -3,17 +3,19 @@ from .azure_data_lake import (
     AzureDataLakeDownload,
     AzureDataLakeToDF,
     AzureDataLakeUpload,
+    AzureDataLakeCopy,
+    AzureDataLakeList,
 )
 from .azure_key_vault import (
+    AzureKeyVaultSecret,
     CreateAzureKeyVaultSecret,
     DeleteAzureKeyVaultSecret,
-    ReadAzureKeyVaultSecret,
 )
 from .azure_sql import (
     AzureSQLBulkInsert,
     AzureSQLCreateTable,
+    AzureSQLDBQuery,
     CreateTableFromBlob,
-    RunAzureSQLDBQuery,
 )
 from .bcp import BCPTask
 from .github import DownloadGitHubFile

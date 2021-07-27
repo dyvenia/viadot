@@ -41,7 +41,7 @@ def get_key_vault(
     return key_vault
 
 
-class ReadAzureKeyVaultSecret(SecretBase):
+class AzureKeyVaultSecret(SecretBase):
     """
     Task for retrieving secrets from an Azure Key Vault and returning it as a dictionary.
     Note that all initialization arguments can optionally be provided or overwritten at runtime.
@@ -106,9 +106,9 @@ class ReadAzureKeyVaultSecret(SecretBase):
         Example:
             ```python
             from prefect import Flow
-            from viadot.tasks import ReadAzureKeyVaultSecret
+            from viadot.tasks import AzureKeyVaultSecret
 
-            azure_secret_task = ReadAzureKeyVaultSecret()
+            azure_secret_task = AzureKeyVaultSecret()
 
             with Flow(name="example") as f:
                 secret = azure_secret_task(secret="test", vault_name="my_vault_name")
@@ -188,7 +188,7 @@ class CreateAzureKeyVaultSecret(SecretBase):
         credentials: dict = None,
         max_retries: int = None,
         retry_delay: timedelta = None,
-    ) -> str:
+    ) -> bool:
         """
         Task run method.
 
@@ -284,7 +284,7 @@ class DeleteAzureKeyVaultSecret(SecretBase):
         credentials: dict = None,
         max_retries: int = None,
         retry_delay: timedelta = None,
-    ) -> str:
+    ) -> bool:
         """
         Task run method.
 

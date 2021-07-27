@@ -2,37 +2,50 @@ import json
 import os
 import uuid
 
+import pytest
 from prefect.storage import Local
+
 from viadot.flows import SupermetricsToAzureSQLv3
 
 CWD = os.getcwd()
 STORAGE = Local(path=CWD)
 
-expectation_suite = {
-    "data_asset_type": "Dataset",
-    "expectation_suite_name": "failure",
-    "expectations": [
-        {
-            "expectation_type": "expect_table_row_count_to_be_between",
-            "kwargs": {"max_value": 10, "min_value": 10},
-            "meta": {},
-        },
-    ],
-    "meta": {
-        "columns": {
-            "All Users": {"description": ""},
-            "Date": {"description": ""},
-            "M-Site_Better Space: All Landing Page Sessions": {"description": ""},
-            "M-site_Accessories: All Landing Page Sessions": {"description": ""},
-            "M-site_More Space: All Landing Page Sessions": {"description": ""},
-            "M-site_Replacement: All Landing Page Sessions": {"description": ""},
-        },
-        "great_expectations_version": "0.13.19",
-    },
-}
 
-with open(os.path.join(CWD, "expectations", "failure.json"), "w") as f:
-    json.dump(expectation_suite, f)
+@pytest.fixture(scope="session")
+def expectation_suite():
+    expectation_suite = {
+        "data_asset_type": "Dataset",
+        "expectation_suite_name": "failure",
+        "expectations": [
+            {
+                "expectation_type": "expect_table_row_count_to_be_between",
+                "kwargs": {
+                    "max_value": {"$PARAMETER": "trunc(previous_run_row_count * 1.1)"},
+                    "min_value": {"$PARAMETER": "trunc(previous_run_row_count * 0.9)"},
+                },
+                "meta": {},
+            },
+        ],
+        "meta": {
+            "columns": {
+                "All Users": {"description": ""},
+                "Date": {"description": ""},
+                "M-Site_Better Space: All Landing Page Sessions": {"description": ""},
+                "M-site_Accessories: All Landing Page Sessions": {"description": ""},
+                "M-site_More Space: All Landing Page Sessions": {"description": ""},
+                "M-site_Replacement: All Landing Page Sessions": {"description": ""},
+            },
+            "great_expectations_version": "0.13.19",
+        },
+    }
+
+    with open(os.path.join(CWD, "expectations", "failure.json"), "w") as f:
+        json.dump(expectation_suite, f)
+
+    yield
+
+    os.remove(os.path.join(CWD, "expectations", "failure.json"))
+
 
 uuid_4 = uuid.uuid4()
 file_name = f"test_file_{uuid_4}.csv"
