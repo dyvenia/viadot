@@ -11,7 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Tests
 - Flows:
   - `ADLSToAzureSQL` - promoting files to conformed, operations and creating SQL table
-   
+  - `ADLSContainerToContainer` - copying files between ADLS containers
 
 ### Changed
 - Renamed `ReadAzureKeyVaultSecret` and `RunAzureSQLDBQuery` tasks to match Prefect naming style
