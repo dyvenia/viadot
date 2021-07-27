@@ -266,15 +266,13 @@ class SupermetricsToAzureSQLv3(Flow):
                 )
                 validation.set_upstream(download_expectations, flow=self)
 
+        add_ingestion_metadata = add_ingestion_metadata_task.bind(df=df, flow=self)
+
         df_to_csv = df_to_csv_task.bind(
             df=df,
             path=self.local_file_path,
             sep=self.sep,
             flow=self,
-        )
-
-        add_ingestion_metadata = add_ingestion_metadata_task.bind(
-            path=self.local_file_path, sep=self.sep, flow=self
         )
 
         csv_to_adls_task.bind(
