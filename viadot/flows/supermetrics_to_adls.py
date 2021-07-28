@@ -1,6 +1,5 @@
 import os
 import pendulum
-import pyarrow
 import json
 from typing import Any, Dict, List, Union
 
@@ -9,12 +8,12 @@ from visions.typesets.complete_set import CompleteSet
 
 import pandas as pd
 from prefect import Flow, Task, apply_map, task
-from prefect.storage import Git, GitHub
-from prefect.tasks.control_flow import case
 from prefect.utilities import logging
 from prefect.backend import set_key_value
 
-from ..task_utils import METADATA_COLUMNS, add_ingestion_metadata_task
+from pathlib import Path
+
+from ..task_utils import add_ingestion_metadata_task
 from ..tasks import (
     AzureDataLakeUpload,
     DownloadGitHubFile,
@@ -66,11 +65,6 @@ def df_to_parquet_task(df, path: str, if_exists: str = "replace"):
     elif if_exists == "replace":
         out_df = df
     out_df.to_parquet(path, index=False)
-
-
-@task
-def is_stored_locally(f: Flow):
-    return f.storage is None
 
 
 class SupermetricsToADLS(Flow):
@@ -172,51 +166,29 @@ class SupermetricsToADLS(Flow):
         self.parallel = parallel
         self.tags = tags
         self.vault_name = vault_name
+        self.flow_dir_path = self._get_flow_dir_path()
 
         super().__init__(*args, name=name, **kwargs)
 
         # DownloadGitHubFile (download expectations)
         self.expectation_suite_name = expectation_suite_name
         self.expectation_suite_file_name = expectation_suite_name + ".json"
-        self.expectation_suite_path = self._get_expectation_suite_path()
-        self.expectation_suite_local_path = os.path.join(
-            os.getcwd(), "expectations", self.expectation_suite_file_name
-        )
-        self.storage_repo = self._get_expectation_suite_repo()
+        # self.expectation_suite_path = self._get_expectation_suite_path()
 
-        # self.dtypes.update(METADATA_COLUMNS)
         self.gen_flow()
 
     @staticmethod
     def slugify(name):
         return name.replace(" ", "_").lower()
 
-    def _get_expectation_suite_repo(self):
-        if self.storage is None:
-            return None
-        return self.storage.repo
-
-    def _get_expectation_suite_path(self):
-
-        if self.storage is None:
-            return os.path.join(os.getcwd(), self.expectation_suite_file_name)
-
-        else:
-            if isinstance(self.storage, GitHub):
-                path = self.storage.path
-            elif isinstance(self.storage, Git):
-                # assuming this is DevOps
-                path = self.storage.flow_path
-            else:
-                try:
-                    path = self.storage.path
-                except AttributeError:
-                    raise NotImplemented("Unsupported storage type.")
-
-            flow_dir_path = path[: path.rfind("/")]
-            return os.path.join(
-                flow_dir_path, "expectations", self.expectation_suite_file_name
-            )
+    def _get_flow_dir_path(self):
+        try:
+            flow_dir_path = Path(__file__).resolve().parent
+        except NameError:
+            # when flow is ran from a Jupyter notebook
+            flow_dir_path = os.path.abspath(".")
+        logger.warning(flow_dir_path)
+        return flow_dir_path
 
     def gen_supermetrics_task(
         self, ds_accounts: Union[str, List[str]], flow: Flow = None
@@ -251,24 +223,12 @@ class SupermetricsToADLS(Flow):
 
         validation = validation_task.bind(
             df=df,
-            expectations_path=os.getcwd(),
+            expectations_path=self.flow_dir_path,
             expectation_suite_name=self.expectation_suite_name,
             flow=self,
         )
 
-        local = is_stored_locally.bind(self, flow=self)
-        with case(local, False):
-            download_expectations = download_github_file_task.bind(
-                repo=self.storage_repo,
-                from_path=self.expectation_suite_path,
-                to_path=self.expectation_suite_local_path,
-                flow=self,
-            )
-            validation.set_upstream(download_expectations, flow=self)
-
         df_with_metadata = add_ingestion_metadata_task(df, flow=self)
-
-        # get_data_types = get_data_types(df_with_metadata)
 
         df_to_parquet = df_to_parquet_task.bind(
             df=df_with_metadata,
@@ -298,7 +258,6 @@ class SupermetricsToADLS(Flow):
             flow=self,
         )
         df_with_metadata.set_upstream(validation, flow=self)
-        df_to_parquet.set_upstream(df_with_metadata, flow=self)
         parquet_to_adls_task.set_upstream(df_to_parquet, flow=self)
         json_to_adls_task.set_upstream(dtypes_to_json_task, flow=self)
         set_key_value(key=self.adls_dir_path, value=self.adls_file_path)
