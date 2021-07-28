@@ -75,11 +75,6 @@ def df_to_csv_task(df, path: str, sep: str = "\t"):
     df.to_csv(path, sep=sep, index=False)
 
 
-@task
-def is_stored_locally(f: Flow):
-    return f.storage is None or isinstance(f.storage, Local)
-
-
 class ADLSToAzureSQL(Flow):
     def __init__(
         self,
