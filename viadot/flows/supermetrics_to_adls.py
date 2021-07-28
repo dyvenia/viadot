@@ -187,7 +187,6 @@ class SupermetricsToADLS(Flow):
         except NameError:
             # when flow is ran from a Jupyter notebook
             flow_dir_path = os.path.abspath(".")
-        logger.warning(flow_dir_path)
         return flow_dir_path
 
     def gen_supermetrics_task(
