@@ -62,7 +62,7 @@ However, when developing, the easiest way is to use the provided Jupyter Lab con
 
 
 ## How to contribute
-1. Clone the repo  
+1. Clone the release branch 
 2. Pull the docker env by running `viadot/docker/update.sh`
 3. Run the env with `viadot/docker/run.sh`
 4. Log into the dev container and install viadot in development mode: 
