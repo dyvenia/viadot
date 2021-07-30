@@ -1,24 +1,30 @@
 from typing import Any, Dict, List
+from viadot.flows.adls_to_azure_sql import df_to_csv_task
 
 from prefect import Flow
 from prefect.utilities import logging
+from prefect.utilities.tasks import task
 
 from viadot.task_utils import METADATA_COLUMNS, add_ingestion_metadata_task
 
 from ..tasks import (
-    AzureDataLakeDownload,
+    AzureDataLakeToDF,
     AzureDataLakeUpload,
     AzureSQLCreateTable,
     BCPTask,
 )
 
-gen1_download_task = AzureDataLakeDownload(gen=1)
+gen1_download_task = AzureDataLakeToDF(gen=1)
 gen2_upload_task = AzureDataLakeUpload(gen=2)
 create_table_task = AzureSQLCreateTable()
 bulk_insert_task = BCPTask()
 
-
 logger = logging.get_logger(__name__)
+
+
+@task
+def df_to_csv_task(df, path):
+    df.to_csv(path)
 
 
 class ADLSGen1ToAzureSQLNew(Flow):
@@ -78,17 +84,15 @@ class ADLSGen1ToAzureSQLNew(Flow):
         return name.replace(" ", "_").lower()
 
     def gen_flow(self) -> Flow:
-        gen1_download_task.bind(
-            from_path=self.gen1_path,
-            to_path=self.local_file_path,
+        df = gen1_download_task.bind(
+            path=self.gen1_path,
             gen=1,
             sp_credentials_secret=self.gen1_sp_credentials_secret,
             vault_name=self.vault_name,
             flow=self,
         )
-        add_ingestion_metadata_task.bind(
-            path=self.local_file_path, sep=self.sep, flow=self
-        )
+        add_ingestion_metadata_task.bind(df=df, flow=self)
+        df_to_csv_task.bind(df=df, path=self.local_file_path, flow=self)
         gen2_upload_task.bind(
             from_path=self.local_file_path,
             to_path=self.gen2_path,
@@ -116,6 +120,6 @@ class ADLSGen1ToAzureSQLNew(Flow):
         )
 
         add_ingestion_metadata_task.set_upstream(gen1_download_task, flow=self)
-        gen2_upload_task.set_upstream(add_ingestion_metadata_task, flow=self)
+        gen2_upload_task.set_upstream(df_to_csv_task, flow=self)
         create_table_task.set_upstream(add_ingestion_metadata_task, flow=self)
         bulk_insert_task.set_upstream(create_table_task, flow=self)
