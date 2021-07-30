@@ -1,18 +1,13 @@
 from typing import Any, Dict, List
-from viadot.flows.adls_to_azure_sql import df_to_csv_task
 
+import pandas as pd
 from prefect import Flow
 from prefect.utilities import logging
 from prefect.utilities.tasks import task
-
+from viadot.flows.adls_to_azure_sql import df_to_csv_task
 from viadot.task_utils import METADATA_COLUMNS, add_ingestion_metadata_task
 
-from ..tasks import (
-    AzureDataLakeToDF,
-    AzureDataLakeUpload,
-    AzureSQLCreateTable,
-    BCPTask,
-)
+from ..tasks import AzureDataLakeToDF, AzureDataLakeUpload, AzureSQLCreateTable, BCPTask
 
 gen1_download_task = AzureDataLakeToDF(gen=1)
 gen2_upload_task = AzureDataLakeUpload(gen=2)
@@ -23,8 +18,8 @@ logger = logging.get_logger(__name__)
 
 
 @task
-def df_to_csv_task(df, path):
-    df.to_csv(path)
+def df_to_csv_task(df: pd.DataFrame, path: str) -> None:
+    df.to_csv(path, index=False, sep="\t")
 
 
 class ADLSGen1ToAzureSQLNew(Flow):
@@ -91,8 +86,8 @@ class ADLSGen1ToAzureSQLNew(Flow):
             vault_name=self.vault_name,
             flow=self,
         )
-        add_ingestion_metadata_task.bind(df=df, flow=self)
-        df_to_csv_task.bind(df=df, path=self.local_file_path, flow=self)
+        df_with_metadata = add_ingestion_metadata_task.bind(df=df, flow=self)
+        df_to_csv_task.bind(df=df_with_metadata, path=self.local_file_path, flow=self)
         gen2_upload_task.bind(
             from_path=self.local_file_path,
             to_path=self.gen2_path,
@@ -119,7 +114,6 @@ class ADLSGen1ToAzureSQLNew(Flow):
             flow=self,
         )
 
-        add_ingestion_metadata_task.set_upstream(gen1_download_task, flow=self)
         gen2_upload_task.set_upstream(df_to_csv_task, flow=self)
-        create_table_task.set_upstream(add_ingestion_metadata_task, flow=self)
+        create_table_task.set_upstream(df_to_csv_task, flow=self)
         bulk_insert_task.set_upstream(create_table_task, flow=self)
