@@ -83,6 +83,7 @@ class SupermetricsToADLS(Flow):
         max_columns: int = None,
         order_columns: str = None,
         expectation_suite_name: str = "failure",
+        expectations_path: str = None,
         local_file_path: str = None,
         adls_dir_path: str = None,
         overwrite_adls: bool = True,
@@ -166,7 +167,7 @@ class SupermetricsToADLS(Flow):
         self.parallel = parallel
         self.tags = tags
         self.vault_name = vault_name
-        self.flow_dir_path = self._get_flow_dir_path()
+        self.expectations_path = expectations_path
 
         super().__init__(*args, name=name, **kwargs)
 
@@ -180,14 +181,6 @@ class SupermetricsToADLS(Flow):
     @staticmethod
     def slugify(name):
         return name.replace(" ", "_").lower()
-
-    def _get_flow_dir_path(self):
-        try:
-            flow_dir_path = Path(__file__).resolve().parent
-        except NameError:
-            # when flow is ran from a Jupyter notebook
-            flow_dir_path = os.path.abspath(".")
-        return flow_dir_path
 
     def gen_supermetrics_task(
         self, ds_accounts: Union[str, List[str]], flow: Flow = None
@@ -222,7 +215,7 @@ class SupermetricsToADLS(Flow):
 
         validation = validation_task.bind(
             df=df,
-            expectations_path=self.flow_dir_path,
+            expectations_path=self.expectations_path,
             expectation_suite_name=self.expectation_suite_name,
             flow=self,
         )
