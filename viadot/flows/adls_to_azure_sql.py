@@ -185,18 +185,18 @@ class ADLSToAzureSQL(Flow):
 
     def gen_flow(self) -> Flow:
         adls_raw_file_path = Parameter("adls_raw_file_path", default=self.adls_path)
-
-        df = lake_to_df_task.bind(path=adls_raw_file_path, flow=self)
-
+        df = lake_to_df_task.bind(
+            path=adls_raw_file_path,
+            sp_credentials_secret=self.adls_sp_credentials_secret,
+            flow=self,
+        )
         dtypes = map_data_types_task.bind(self.local_json_path, flow=self)
-
         df_to_csv = df_to_csv_task.bind(
             df=df,
             path=self.local_file_path,
             sep=self.sep,
             flow=self,
         )
-
         promote_to_conformed_task.bind(
             from_path=self.local_file_path,
             to_path=self.adls_path_conformed,
@@ -215,9 +215,9 @@ class ADLSToAzureSQL(Flow):
         download_json_file_task.bind(
             from_path=self.json_shema_path,
             to_path=self.local_json_path,
+            sp_credentials_secret=self.adls_sp_credentials_secret,
             flow=self,
         )
-
         create_table_task.bind(
             schema=self.schema,
             table=self.table,
