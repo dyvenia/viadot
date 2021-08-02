@@ -198,13 +198,15 @@ class RunGreatExpectationsValidation(RunGreatExpectationsValidation):
 
     @defaults_from_attrs("df", "expectations_path", "evaluation_parameters")
     def run(self, df: pd.DataFrame = None, expectations_path: str = None, **kwargs):
-        self.logger.warning(expectations_path)
-        self.logger.warning(os.listdir("/home/viadot/"))
-        self.logger.warning(os.listdir("/home/viadot/workstreams_vel/flows"))
-        batch_kwargs = self._get_batch_kwargs(df)
-        context = self._get_ge_context_local(expectations_path)
+        try:
+            self.logger.warning(expectations_path)
+            self.logger.warning(os.listdir("/home/viadot/"))
+            self.logger.warning(os.listdir("/home/viadot/workstreams_vel/flows"))
+        except:
+            batch_kwargs = self._get_batch_kwargs(df)
+            context = self._get_ge_context_local(expectations_path)
 
-        self.logger.info("Beginning validation run...")
+            self.logger.info("Beginning validation run...")
 
         try:
             results = self.run_new(  # TODO: change to super() once eval params are added to Prefect
