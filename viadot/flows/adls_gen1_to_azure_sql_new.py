@@ -18,8 +18,14 @@ logger = logging.get_logger(__name__)
 
 
 @task
-def df_to_csv_task(df: pd.DataFrame, path: str) -> None:
-    df.to_csv(path, index=False, sep="\t")
+def df_to_csv_task(df: pd.DataFrame, path: str, sep: str) -> None:
+    df.to_csv(path, index=False, sep=sep)
+
+
+@task
+def df_replace_special_chars(df: pd.DataFrame) -> None:
+    df = df.replace(r"\n", "", regex=True)
+    return df
 
 
 class ADLSGen1ToAzureSQLNew(Flow):
@@ -45,6 +51,7 @@ class ADLSGen1ToAzureSQLNew(Flow):
         local_file_path: str = None,
         overwrite: bool = True,
         sep: str = "\t",
+        lineterminator: str = "\r",
         schema: str = None,
         table: str = None,
         dtypes: dict = None,
@@ -62,6 +69,7 @@ class ADLSGen1ToAzureSQLNew(Flow):
         self.gen2_path = gen2_path
         self.overwrite = overwrite
         self.sep = sep
+        self.lineterminator = lineterminator
         self.schema = schema
         self.table = table
         self.dtypes = dtypes
@@ -82,12 +90,16 @@ class ADLSGen1ToAzureSQLNew(Flow):
         df = gen1_download_task.bind(
             path=self.gen1_path,
             gen=1,
+            lineterminator=self.lineterminator,
             sp_credentials_secret=self.gen1_sp_credentials_secret,
             vault_name=self.vault_name,
             flow=self,
         )
-        df_with_metadata = add_ingestion_metadata_task.bind(df=df, flow=self)
-        df_to_csv_task.bind(df=df_with_metadata, path=self.local_file_path, flow=self)
+        df2 = df_replace_special_chars.bind(df=df, flow=self)
+        df_with_metadata = add_ingestion_metadata_task.bind(df=df2, flow=self)
+        df_to_csv_task.bind(
+            df=df_with_metadata, path=self.local_file_path, sep=self.sep, flow=self
+        )
         gen2_upload_task.bind(
             from_path=self.local_file_path,
             to_path=self.gen2_path,
@@ -113,7 +125,8 @@ class ADLSGen1ToAzureSQLNew(Flow):
             vault_name=self.vault_name,
             flow=self,
         )
-
+        df_with_metadata.set_upstream(df_replace_special_chars, flow=self)
+        df_to_csv_task.set_upstream(df_with_metadata, flow=self)
         gen2_upload_task.set_upstream(df_to_csv_task, flow=self)
         create_table_task.set_upstream(df_to_csv_task, flow=self)
         bulk_insert_task.set_upstream(create_table_task, flow=self)

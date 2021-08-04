@@ -143,13 +143,18 @@ class AzureDataLake(Source):
         from_path = from_path or self.path
         self.fs.download(rpath=from_path, lpath=to_path, recursive=recursive)
 
-    def to_df(self, path: str = None, sep: str = "\t"):
+    def to_df(self, path: str = None, sep: str = "\t", lineterminator: str = "\r"):
 
         path = path or self.path
         url = os.path.join(self.base_url, path)
 
         if url.endswith(".csv"):
-            df = pd.read_csv(url, storage_options=self.storage_options, sep=sep)
+            df = pd.read_csv(
+                url,
+                storage_options=self.storage_options,
+                sep=sep,
+                lineterminator=lineterminator,
+            )
         elif url.endswith(".parquet"):
             df = pd.read_parquet(url, storage_options=self.storage_options)
         else:
