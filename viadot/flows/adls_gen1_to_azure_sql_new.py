@@ -99,7 +99,7 @@ class ADLSGen1ToAzureSQLNew(Flow):
         df2 = df_replace_special_chars.bind(df=df, flow=self)
         df_with_metadata = add_ingestion_metadata_task.bind(df=df2, flow=self)
         df_to_csv_task.bind(
-            df=df_with_metadata, path=self.local_file_path, sep=self.sep, flow=self
+            df=df_with_metadata, path=self.local_file_path, sep="\t", flow=self
         )
         gen2_upload_task.bind(
             from_path=self.local_file_path,
