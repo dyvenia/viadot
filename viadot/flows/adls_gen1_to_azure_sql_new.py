@@ -91,6 +91,7 @@ class ADLSGen1ToAzureSQLNew(Flow):
             path=self.gen1_path,
             gen=1,
             lineterminator=self.lineterminator,
+            sep=self.sep,
             sp_credentials_secret=self.gen1_sp_credentials_secret,
             vault_name=self.vault_name,
             flow=self,
@@ -125,6 +126,7 @@ class ADLSGen1ToAzureSQLNew(Flow):
             vault_name=self.vault_name,
             flow=self,
         )
+
         df_with_metadata.set_upstream(df_replace_special_chars, flow=self)
         df_to_csv_task.set_upstream(df_with_metadata, flow=self)
         gen2_upload_task.set_upstream(df_to_csv_task, flow=self)
