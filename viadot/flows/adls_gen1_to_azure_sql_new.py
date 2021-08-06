@@ -19,12 +19,12 @@ logger = logging.get_logger(__name__)
 
 @task
 def df_to_csv_task(df: pd.DataFrame, path: str, sep: str) -> None:
-    df.to_csv(path, index=False, sep=sep)
+    df.to_csv(path, index=False, sep="\t")
 
 
 @task
 def df_replace_special_chars(df: pd.DataFrame) -> None:
-    df = df.replace(r"\n", "", regex=True)
+    df = df.replace(r"\n|\t", "", regex=True)
     return df
 
 
