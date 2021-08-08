@@ -20,18 +20,15 @@ Viadot supports several API and RDBMS sources, private and public. Currently, we
 from viadot.sources.uk_carbon_intensity import UKCarbonIntensity
 ukci = UKCarbonIntensity()
 ukci.query("/intensity")
-ukci.to_df()
+df = ukci.to_df()
 ```
 
-The above code pulls data from the API to a pandas `DataFrame`.
+The above `df` is a python pandas `DataFrame` object. The above df contains data downloaded from viadot from the Carbon Intensity UK API.
 
 ## Loading Data to a Source
-Depending on the source, viadot provides different methds of uploading data.
-For instance, for SQL sources, this would be bulk inserts. For data lake sources, it would be
-a file upload. We also provide ready-made pipelines including data valiadation steps using
-Great Expectations.
+Depending on the source, viadot provides different methods of uploading data. For instance, for SQL sources, this would be bulk inserts. For data lake sources, it would be a file upload. We also provide ready-made pipelines including data validation steps using Great Expectations.
 
-An example of loading data into SQLite from a pandas `DataFrame` using the `SQLiteInsert` task:
+An example of loading data into SQLite from a pandas `DataFrame` using the `SQLiteInsert` Prefect task:
 
 ```python
 from viadot.tasks import SQLiteInsert
@@ -77,5 +74,4 @@ pip install -e .
 - changes added to `CHANGELOG.md`
 - any other relevant resources updated (esp. `viadot/docs`)
 
-Please follow the standards and best practices used within the library (eg. when adding tasks, see how other tasks are constructed, etc.). For any questions,
-please reach out to us here on GitHub.
+Please follow the standards and best practices used within the library (eg. when adding tasks, see how other tasks are constructed, etc.). For any questions, please reach out to us here on GitHub.
