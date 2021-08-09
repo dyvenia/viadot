@@ -35,6 +35,7 @@ def say_bye():
 STORAGE = GitHub(
     repo="dyvenia/viadot",
     path="viadot/examples/hello_world.py",
+    ref="0.2.3",
     access_token_secret="github_token",  # name of the Prefect secret with the GitHub token
 )
 RUN_CONFIG = DockerRun(
