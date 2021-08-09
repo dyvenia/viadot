@@ -5,10 +5,13 @@ from prefect.storage import GitHub
 
 from pathlib import Path
 
+import inspect
 
-file_path = Path(__file__).resolve().parent
+file_path = inspect.getfile(lambda: None)
+dir_path = Path(file_path).parent
+# file_path = Path(__file__).resolve().parent
 
-with open(str(file_path) + "/answer.txt", "r") as my_file:
+with open(str(dir_path) + "/answer.txt", "r") as my_file:
     answer = my_file.read()
 
 
@@ -54,5 +57,5 @@ with Flow("Hello, world!", storage=STORAGE, run_config=RUN_CONFIG) as flow:
 
 
 if __name__ == "__main__":
-    flow.run()  # run locally
-    # flow.register(project_name="dev")  # deploy
+    # flow.run()  # run locally
+    flow.register(project_name="dev")  # deploy
