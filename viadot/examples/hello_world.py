@@ -3,11 +3,27 @@ from prefect import Flow, task
 from prefect.run_configs import DockerRun
 from prefect.storage import GitHub
 
+from pathlib import Path
+
+
+file_path = Path(__file__).resolve().parent
+
+with open(str(file_path) + "/answer.txt", "r") as my_file:
+    answer = my_file.read()
+
 
 @task
 def say_hello():
     logger = prefect.context.get("logger")
     logger.info("Hello!")
+
+
+@task
+def show_answer():
+    logger = prefect.context.get("logger")
+    logger.info(
+        f"The answer to the Ultimate Question of Life, the Universe, and Everything is: {answer}"
+    )
 
 
 @task
@@ -29,8 +45,11 @@ RUN_CONFIG = DockerRun(
 
 with Flow("Hello, world!", storage=STORAGE, run_config=RUN_CONFIG) as flow:
     hello = say_hello()
+    print_answer = show_answer()
     bye = say_bye()
-    bye.set_upstream(hello, flow=flow)
+
+    print_answer.set_upstream(hello, flow=flow)
+    bye.set_upstream(answer, flow=flow)
 
 
 if __name__ == "__main__":
