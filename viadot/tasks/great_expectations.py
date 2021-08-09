@@ -98,118 +98,19 @@ class RunGreatExpectationsValidation(RunGreatExpectationsValidation):
         context = BaseDataContext(project_config=data_context_config)
         return context
 
-    def run_new(
-        self,
-        checkpoint_name: str = None,
-        context: "ge.DataContext" = None,
-        assets_to_validate: list = None,
-        batch_kwargs: dict = None,
-        expectation_suite_name: str = None,
-        context_root_dir: str = None,
-        runtime_environment: Optional[dict] = None,
-        run_name: str = None,
-        run_info_at_end: bool = True,
-        disable_markdown_artifact: bool = None,
-        validation_operator: str = "action_list_operator",
-        evaluation_parameters: dict = None,
-    ):
-        """Adds evaluation parameters to GE task"""
-
-        runtime_environment = runtime_environment or dict()
-
-        # Load context if not provided directly
-        if not context:
-            context = ge.DataContext(
-                context_root_dir=context_root_dir,
-                runtime_environment=runtime_environment,
-            )
-
-        # Check that the parameters are mutually exclusive
-        if (
-            sum(
-                bool(x)
-                for x in [
-                    (expectation_suite_name and batch_kwargs),
-                    assets_to_validate,
-                    checkpoint_name,
-                ]
-            )
-            != 1
-        ):
-            raise ValueError(
-                "Exactly one of expectation_suite_name + batch_kwargs, assets_to_validate, or "
-                "checkpoint_name is required to run validation."
-            )
-
-        # If assets are not provided directly through `assets_to_validate` then they need be loaded
-        #   if a checkpoint_name is supplied, then load suite and batch_kwargs from there
-        #   otherwise get batch from `batch_kwargs` and `expectation_suite_name`
-
-        if not assets_to_validate:
-            assets_to_validate = []
-            if checkpoint_name:
-                ge_checkpoint = context.get_checkpoint(checkpoint_name)
-
-                for batch in ge_checkpoint["batches"]:
-                    batch_kwargs = batch["batch_kwargs"]
-                    for suite_name in batch["expectation_suite_names"]:
-                        suite = context.get_expectation_suite(suite_name)
-                        batch = context.get_batch(batch_kwargs, suite)
-                        assets_to_validate.append(batch)
-                validation_operator = ge_checkpoint["validation_operator_name"]
-            else:
-                assets_to_validate.append(
-                    context.get_batch(batch_kwargs, expectation_suite_name)
-                )
-
-        # Run validation operator
-        results = context.run_validation_operator(
-            validation_operator,
-            assets_to_validate=assets_to_validate,
-            run_id={"run_name": run_name or prefect.context.get("task_slug")},
-            evaluation_parameters=evaluation_parameters,
-        )
-
-        # Generate artifact markdown
-        if not disable_markdown_artifact:
-            run_info_at_end = True
-            validation_results_page_renderer = (
-                ge.render.renderer.ValidationResultsPageRenderer(
-                    run_info_at_end=run_info_at_end
-                )
-            )
-            rendered_document_content_list = (
-                validation_results_page_renderer.render_validation_operator_result(
-                    validation_operator_result=results
-                )
-            )
-            markdown_artifact = " ".join(
-                ge.render.view.DefaultMarkdownPageView().render(
-                    rendered_document_content_list
-                )
-            )
-
-            create_markdown(markdown_artifact)
-
-        if not results.success:
-            raise signals.FAIL(result=results)
-
-        return results
-
     @defaults_from_attrs("df", "expectations_path", "evaluation_parameters")
     def run(self, df: pd.DataFrame = None, expectations_path: str = None, **kwargs):
-        try:
-            self.logger.warning(expectations_path)
-            self.logger.warning(os.listdir("/home/viadot/"))
-            self.logger.warning(os.listdir("/home/viadot/workstreams_vel/flows"))
-        except:
-            batch_kwargs = self._get_batch_kwargs(df)
-            context = self._get_ge_context_local(expectations_path)
+        # self.logger.warning(expectations_path)
+        # self.logger.warning(os.listdir("/home/viadot/"))
+        # self.logger.warning(os.listdir("/home/viadot/workstreams_vel/flows"))
 
-            self.logger.info("Beginning validation run...")
+        batch_kwargs = self._get_batch_kwargs(df)
+        context = self._get_ge_context_local(expectations_path)
+
+        self.logger.info("Beginning validation run...")
 
         try:
-            results = self.run_new(  # TODO: change to super() once eval params are added to Prefect
+            results = super().run(
                 batch_kwargs=batch_kwargs,  # input data
                 context=context,  # ~project config
                 **kwargs,
