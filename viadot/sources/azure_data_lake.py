@@ -143,7 +143,16 @@ class AzureDataLake(Source):
         from_path = from_path or self.path
         self.fs.download(rpath=from_path, lpath=to_path, recursive=recursive)
 
-    def to_df(self, path: str = None, sep: str = "\t", lineterminator: str = "\r"):
+    def to_df(
+        self,
+        path: str = None,
+        sep: str = "\t",
+        quoting: int = 0,
+        lineterminator: str = None,
+        error_bad_lines: bool = None,
+    ):
+        if quoting is None:
+            quoting = 0
 
         path = path or self.path
         url = os.path.join(self.base_url, path)
@@ -153,7 +162,9 @@ class AzureDataLake(Source):
                 url,
                 storage_options=self.storage_options,
                 sep=sep,
+                quoting=quoting,
                 lineterminator=lineterminator,
+                error_bad_lines=error_bad_lines,
             )
         elif url.endswith(".parquet"):
             df = pd.read_parquet(url, storage_options=self.storage_options)
