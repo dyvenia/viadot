@@ -31,6 +31,10 @@ RUN curl https://packages.microsoft.com/keys/microsoft.asc | apt-key add - && \
 
 COPY docker/odbcinst.ini /etc
 
+# Dynamically populate odbcinst with the downloaded version of MSSQL ODBC driver
+RUN VERSION=$(apt policy msodbcsql17 | grep -i installed | cut -d ":" -f 2 | sed -r 's/\s+//g') && \
+  sed 's/libmsodbcsql-17.8.so.1.1/libmsodbcsql-'"$VERSION"'/' /etc/odbcinst.ini | tee /etc/odbcinst.ini
+
 # Python env
 WORKDIR /code
 COPY requirements.txt /code/
