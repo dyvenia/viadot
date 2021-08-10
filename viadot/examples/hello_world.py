@@ -1,17 +1,22 @@
+import inspect
+import os
+from pathlib import Path
+
 import prefect
 from prefect import Flow, task
 from prefect.run_configs import DockerRun
 from prefect.storage import GitHub
 
-from pathlib import Path
-
-import inspect
-
 file_path = inspect.getfile(lambda: None)
 dir_path = Path(file_path).parent
 # file_path = Path(__file__).resolve().parent
+file_path = str(dir_path) + "/answer.txt"
 
-with open(str(dir_path) + "/answer.txt", "r") as my_file:
+print(file_path)
+print(os.getcwd())
+print(os.listdir())
+
+with open(file_path, "r") as my_file:
     answer = my_file.read()
 
 
