@@ -6,20 +6,24 @@ import prefect
 from prefect import Flow, task
 from prefect.run_configs import DockerRun
 from prefect.storage import GitHub
+from prefect.utilities import logging
 
 file_path = inspect.getfile(lambda: None)
 dir_path = Path(file_path).parent
 # file_path = Path(__file__).resolve().parent
 file_path = str(dir_path) + "/answer.txt"
 
+logger = logging.get_logger(__name__)
+logger.warning(file_path)
+logger.warning(os.getcwd())
+logger.warning(os.listdir())
+logger.warning(os.listdir("/home"))
+
 
 @task
 def say_hello():
     logger = prefect.context.get("logger")
     logger.info("Hello!")
-    logger.info(file_path)
-    logger.info(os.getcwd())
-    logger.info(os.listdir())
 
 
 @task
