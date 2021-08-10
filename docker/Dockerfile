@@ -23,17 +23,13 @@ RUN pip install --upgrade cffi
 # ODBC
 RUN curl https://packages.microsoft.com/keys/microsoft.asc | apt-key add - && \
     curl https://packages.microsoft.com/config/debian/10/prod.list > /etc/apt/sources.list.d/mssql-release.list && \
-    apt-get update && \
-    apt-get install libsqliteodbc && \
-    ACCEPT_EULA=Y apt-get install -y msodbcsql17 && \
-    ACCEPT_EULA=Y apt-get install -y mssql-tools && \
+    apt update && \
+    apt install libsqliteodbc && \
+    ACCEPT_EULA=Y apt install -y msodbcsql17=17.8.1.1-1 && \
+    ACCEPT_EULA=Y apt install -y mssql-tools && \
     echo 'export PATH="$PATH:/opt/mssql-tools/bin"' >> ~/.bashrc
 
 COPY docker/odbcinst.ini /etc
-
-# Dynamically populate odbcinst with the downloaded version of MSSQL ODBC driver
-RUN VERSION=$(apt policy msodbcsql17 | grep -i installed | cut -d ":" -f 2 | sed -r 's/\s+//g') && \
-  sed 's/libmsodbcsql-17.8.so.1.1/libmsodbcsql-'"$VERSION"'/' /etc/odbcinst.ini | tee /etc/odbcinst.ini
 
 # Python env
 WORKDIR /code
