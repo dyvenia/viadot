@@ -12,23 +12,21 @@ dir_path = Path(file_path).parent
 # file_path = Path(__file__).resolve().parent
 file_path = str(dir_path) + "/answer.txt"
 
-print(file_path)
-print(os.getcwd())
-print(os.listdir())
-
-with open(file_path, "r") as my_file:
-    answer = my_file.read()
-
 
 @task
 def say_hello():
     logger = prefect.context.get("logger")
     logger.info("Hello!")
+    logger.info(file_path)
+    logger.info(os.getcwd())
+    logger.info(os.listdir())
 
 
 @task
 def show_answer():
     logger = prefect.context.get("logger")
+    with open(file_path, "r") as my_file:
+        answer = my_file.read()
     logger.info(
         f"The answer to the Ultimate Question of Life, the Universe, and Everything is: {answer}"
     )
@@ -58,7 +56,7 @@ with Flow("Hello, world!", storage=STORAGE, run_config=RUN_CONFIG) as flow:
     bye = say_bye()
 
     print_answer.set_upstream(hello, flow=flow)
-    bye.set_upstream(answer, flow=flow)
+    bye.set_upstream(print_answer, flow=flow)
 
 
 if __name__ == "__main__":
