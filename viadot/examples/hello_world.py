@@ -1,23 +1,14 @@
-import inspect
-import os
 from pathlib import Path
 
 import prefect
 from prefect import Flow, task
 from prefect.run_configs import DockerRun
 from prefect.storage import Git
-from prefect.utilities import logging
 
 
 dir_path = Path(__file__).resolve().parent
 file_path = dir_path.joinpath("answer.txt")
 
-logger = logging.get_logger(__name__)
-
-
-logger.warning(f"dir_path: {dir_path}")
-logger.warning(f"file_path: {file_path}")
-logger.warning(f"dir content: {os.listdir(dir_path)}")
 
 with open(file_path, "r") as my_file:
     answer = my_file.read()
