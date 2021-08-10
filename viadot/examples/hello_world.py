@@ -17,7 +17,7 @@ logger = logging.get_logger(__name__)
 
 logger.warning(f"dir_path: {dir_path}")
 logger.warning(f"file_path: {file_path}")
-logger.warning(f"dir content: {os.path.listdir(dir_path)}")
+logger.warning(f"dir content: {os.listdir(dir_path)}")
 
 with open(file_path, "r") as my_file:
     answer = my_file.read()
