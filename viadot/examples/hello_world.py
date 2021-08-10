@@ -12,12 +12,15 @@ from prefect.utilities import logging
 dir_path = Path(__file__).resolve().parent
 file_path = dir_path.joinpath("answer.txt")
 
-
 logger = logging.get_logger(__name__)
 
 
 logger.warning(f"dir_path: {dir_path}")
 logger.warning(f"file_path: {file_path}")
+logger.warning(f"dir content: {os.path.listdir(dir_path)}")
+
+with open(file_path, "r") as my_file:
+    answer = my_file.read()
 
 
 @task
@@ -29,8 +32,6 @@ def say_hello():
 @task
 def show_answer():
     logger = prefect.context.get("logger")
-    with open(file_path, "r") as my_file:
-        answer = my_file.read()
     logger.info(
         f"The answer to the Ultimate Question of Life, the Universe, and Everything is: {answer}"
     )
