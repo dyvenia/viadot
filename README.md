@@ -21,7 +21,13 @@ from viadot.sources.uk_carbon_intensity import UKCarbonIntensity
 ukci = UKCarbonIntensity()
 ukci.query("/intensity")
 df = ukci.to_df()
+df
 ```
+
+**Output:**
+|    | from              | to                |   forecast |   actual | index    |
+|---:|:------------------|:------------------|-----------:|---------:|:---------|
+|  0 | 2021-08-10T11:00Z | 2021-08-10T11:30Z |        211 |      216 | moderate |
 
 The above `df` is a python pandas `DataFrame` object. The above df contains data downloaded from viadot from the Carbon Intensity UK API.
 
@@ -60,9 +66,9 @@ However, when developing, the easiest way is to use the provided Jupyter Lab con
 
 ## How to contribute
 1. Clone the release branch 
-2. Pull the docker env by running `viadot/docker/update.sh`
+2. Pull the docker env by running `viadot/docker/update.sh -t dev`
 3. Run the env with `viadot/docker/run.sh`
-4. Log into the dev container and install viadot in development mode: 
+4. Log into the dev container and install in development mode so that viadot will auto-install at each code change: 
 ```
 docker exec -it viadot_testing bash
 pip install -e .
