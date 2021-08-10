@@ -5,17 +5,23 @@ from pathlib import Path
 import prefect
 from prefect import Flow, task
 from prefect.run_configs import DockerRun
-from prefect.storage import GitHub
+from prefect.storage import Git
 from prefect.utilities import logging
 
 file_path = inspect.getfile(lambda: None)
+
 dir_path = Path(file_path).parent
 dir_path_2 = os.path.abspath("")
-# file_path = Path(__file__).resolve().parent
-file_path = str(dir_path) + "/answer.txt"
+dir_path_3 = Path(__file__).resolve().parent
+
+file_path_2 = str(dir_path) + "/answer.txt"
 
 logger = logging.get_logger(__name__)
-logger.warning(dir_path_2)
+logger.warning(f"file_path: {file_path}")
+logger.warning(f"file_path_2: {file_path_2}")
+logger.warning(f"dir_path: {dir_path}")
+logger.warning(f"dir_path_2: {dir_path_2}")
+logger.warning(f"dir_path_3: {dir_path_3}")
 logger.warning(os.listdir("/home/viadot"))
 
 
@@ -41,11 +47,12 @@ def say_bye():
     logger.info("Bye!")
 
 
-STORAGE = GitHub(
+STORAGE = Git(
+    repo_host="github.com",
     repo="dyvenia/viadot",
-    path="viadot/examples/hello_world.py",
-    ref="0.2.3",
-    access_token_secret="github_token",  # name of the Prefect secret with the GitHub token
+    flow_path="viadot/examples/hello_world.py",
+    branch_name="0.2.3",
+    git_token_secret_name="github_token",  # name of the Prefect secret with the GitHub token
 )
 RUN_CONFIG = DockerRun(
     image="prefecthq/prefect",
