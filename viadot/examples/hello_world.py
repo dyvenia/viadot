@@ -10,14 +10,13 @@ from prefect.utilities import logging
 
 file_path = inspect.getfile(lambda: None)
 dir_path = Path(file_path).parent
+dir_path_2 = os.path.abspath("")
 # file_path = Path(__file__).resolve().parent
 file_path = str(dir_path) + "/answer.txt"
 
 logger = logging.get_logger(__name__)
-logger.warning(file_path)
-logger.warning(os.getcwd())
-logger.warning(os.listdir())
-logger.warning(os.listdir("/home"))
+logger.warning(dir_path_2)
+logger.warning(os.listdir("/home/viadot"))
 
 
 @task
