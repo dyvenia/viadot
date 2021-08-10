@@ -93,4 +93,4 @@ def test_supermetrics_to_azure_sql():
     assert result.is_successful
 
     task_results = result.result.values()
-    assert all([task_result.is_successful for task_result in task_results])
+    assert all([task_result.is_successful() for task_result in task_results])
