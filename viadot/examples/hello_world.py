@@ -8,21 +8,16 @@ from prefect.run_configs import DockerRun
 from prefect.storage import Git
 from prefect.utilities import logging
 
-file_path = inspect.getfile(lambda: None)
 
-dir_path = Path(file_path).parent
-dir_path_2 = os.path.abspath("")
-dir_path_3 = Path(__file__).resolve().parent
+dir_path = Path(__file__).resolve().parent
+file_path = dir_path.joinpath("answer.txt")
 
-file_path_2 = str(dir_path) + "/answer.txt"
 
 logger = logging.get_logger(__name__)
-logger.warning(f"file_path: {file_path}")
-logger.warning(f"file_path_2: {file_path_2}")
+
+
 logger.warning(f"dir_path: {dir_path}")
-logger.warning(f"dir_path_2: {dir_path_2}")
-logger.warning(f"dir_path_3: {dir_path_3}")
-logger.warning(os.listdir("/home/viadot"))
+logger.warning(f"file_path: {file_path}")
 
 
 @task
