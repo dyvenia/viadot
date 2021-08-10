@@ -20,7 +20,7 @@ RUN apt update && yes | apt install vim gcc unixodbc-dev build-essential curl py
 RUN apt remove python-cffi
 RUN pip install --upgrade cffi
 
-# ODBC
+# ODBC -- make sure to pin driver version as it's reflected in odbcinst.ini
 RUN curl https://packages.microsoft.com/keys/microsoft.asc | apt-key add - && \
     curl https://packages.microsoft.com/config/debian/10/prod.list > /etc/apt/sources.list.d/mssql-release.list && \
     apt update && \
