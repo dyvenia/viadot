@@ -9,6 +9,7 @@ from viadot.tasks import RunGreatExpectationsValidation
 
 CWD = os.getcwd()
 PATH = os.path.join(CWD, "expectations_test")
+EXPECTATIONS_PATH = os.path.join(PATH, "expectations")
 
 
 @pytest.fixture(scope="function")
@@ -43,10 +44,10 @@ def expectation_suite_pass():
         },
     }
 
-    if not os.path.exists(os.path.join(PATH, "expectations")):
-        os.makedirs(os.path.join(PATH, "expectations"))
+    if not os.path.exists(EXPECTATIONS_PATH):
+        os.makedirs(EXPECTATIONS_PATH)
 
-    expectation_suite_path = os.path.join(PATH, "expectations", "failure.json")
+    expectation_suite_path = os.path.join(EXPECTATIONS_PATH, "failure.json")
 
     with open(expectation_suite_path, "w") as f:
         json.dump(expectation_suite, f)
@@ -90,10 +91,10 @@ def expectation_suite_fail():
         },
     }
 
-    if not os.path.exists(os.path.join(PATH, "expectations")):
-        os.makedirs(os.path.join(PATH, "expectations"))
+    if not os.path.exists(EXPECTATIONS_PATH):
+        os.makedirs(EXPECTATIONS_PATH)
 
-    expectation_suite_path = os.path.join(PATH, "expectations", "failure.json")
+    expectation_suite_path = os.path.join(EXPECTATIONS_PATH, "failure.json")
 
     with open(expectation_suite_path, "w") as f:
         json.dump(expectation_suite, f)
@@ -110,7 +111,7 @@ def test_ge_pass(expectation_suite_pass, DF):
     try:
         great_expectations_task.run(
             df=DF,
-            expectations_path=PATH,
+            expectations_path=EXPECTATIONS_PATH,
             expectation_suite_name="failure",
         )
     except signals.FAIL:
@@ -123,7 +124,7 @@ def test_ge_fail(expectation_suite_fail, DF):
 
     with pytest.raises(signals.FAIL):
         great_expectations_task.run(
-            df=DF, expectations_path=PATH, expectation_suite_name="failure"
+            df=DF, expectations_path=EXPECTATIONS_PATH, expectation_suite_name="failure"
         )
 
 
@@ -135,7 +136,7 @@ def test_ge_evaluation_params(expectation_suite_pass, DF):
     try:
         great_expectations_task.run(
             df=DF,
-            expectations_path=PATH,
+            expectations_path=EXPECTATIONS_PATH,
             expectation_suite_name="failure",
             evaluation_parameters=evaluation_params,
         )
@@ -146,7 +147,7 @@ def test_ge_evaluation_params(expectation_suite_pass, DF):
     with pytest.raises(signals.FAIL):
         great_expectations_task.run(
             df=DF,
-            expectations_path=PATH,
+            expectations_path=EXPECTATIONS_PATH,
             expectation_suite_name="failure",
             evaluation_parameters=failing_evaluation_params,
         )
