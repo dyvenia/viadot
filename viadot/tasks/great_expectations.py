@@ -1,10 +1,9 @@
 import logging
 import os
-from typing import Any, Dict, Optional, Tuple
+from pathlib import Path
+from typing import Any, Dict, Tuple
 
 import pandas as pd
-import prefect
-from prefect.artifacts import create_markdown
 from prefect.engine import signals
 from prefect.tasks.great_expectations import RunGreatExpectationsValidation
 from prefect.utilities.tasks import defaults_from_attrs
@@ -29,7 +28,7 @@ class RunGreatExpectationsValidation(RunGreatExpectationsValidation):
     for full documentation.
 
     Args:
-        expectations_path (str): The path of your Great Expectations project, eg. `/home/viadot/my_flow`
+        expectations_path (str): The path to the directory containing the expectation suites.
         df (pd.DataFrame): The DataFrame to validate.
     """
 
@@ -51,7 +50,7 @@ class RunGreatExpectationsValidation(RunGreatExpectationsValidation):
         return {"dataset": dataset, "datasource": "pandas"}
 
     @staticmethod
-    def _get_ge_context_local(expectations_path: str) -> BaseDataContext:
+    def _get_ge_context_local(great_expectations_project_path: str) -> BaseDataContext:
         """
         This is configured to work with an in-memory pandas DataFrame.
         This setup allows us to run validations before (perhaps unnecessarily) writing any data
@@ -60,7 +59,7 @@ class RunGreatExpectationsValidation(RunGreatExpectationsValidation):
         Currently using local storage.
 
         Args:
-        expectations_path (str): The path to your Great Expectations project,
+        great_expectations_project_path (str): The path to the Great Expectations project,
         eg. `/home/viadot/my_flow`. Expectation suites need to be placed inside the
         `expectations` folder, eg. `/home/viadot/my_flow/expectations/failure.json`.
 
@@ -74,7 +73,9 @@ class RunGreatExpectationsValidation(RunGreatExpectationsValidation):
                     batch_kwargs_generators={},  # override the CSV default
                 )
             },
-            store_backend_defaults=FilesystemStoreBackendDefaults(expectations_path),
+            store_backend_defaults=FilesystemStoreBackendDefaults(
+                great_expectations_project_path
+            ),
             validation_operators={
                 "action_list_operator": {
                     "class_name": "ActionListValidationOperator",
@@ -100,12 +101,11 @@ class RunGreatExpectationsValidation(RunGreatExpectationsValidation):
 
     @defaults_from_attrs("df", "expectations_path", "evaluation_parameters")
     def run(self, df: pd.DataFrame = None, expectations_path: str = None, **kwargs):
-        # self.logger.warning(expectations_path)
-        # self.logger.warning(os.listdir("/home/viadot/"))
-        # self.logger.warning(os.listdir("/home/viadot/workstreams_vel/flows"))
+
+        great_expectations_project_path = str(Path(expectations_path).parent)
 
         batch_kwargs = self._get_batch_kwargs(df)
-        context = self._get_ge_context_local(expectations_path)
+        context = self._get_ge_context_local(great_expectations_project_path)
 
         self.logger.info("Beginning validation run...")
 
@@ -128,7 +128,11 @@ class RunGreatExpectationsValidation(RunGreatExpectationsValidation):
         )
 
         data_docs_path = os.path.join(
-            expectations_path, "uncommitted", "data_docs", "local_site", "index.html"
+            great_expectations_project_path,
+            "uncommitted",
+            "data_docs",
+            "local_site",
+            "index.html",
         )
         self.logger.info(f"To explore the docs, open {data_docs_path} in a browser.")
 
