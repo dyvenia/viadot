@@ -1,4 +1,4 @@
-## Loading Data to a Source
+## Loading Data to DF
 
 For getting pandas DataFrame from sql query use SQLtoDF class.  
 During connection to an SQLite database, SQLite automatically creates
