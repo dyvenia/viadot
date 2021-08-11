@@ -1,17 +1,15 @@
-import os
-import pendulum
 import json
+import os
 from typing import Any, Dict, List, Union
 
+import pandas as pd
+import pendulum
+from prefect import Flow, Task, apply_map, task
+from prefect.backend import set_key_value
+from prefect.tasks.secrets import PrefectSecret
+from prefect.utilities import logging
 from visions.functional import infer_type
 from visions.typesets.complete_set import CompleteSet
-
-import pandas as pd
-from prefect import Flow, Task, apply_map, task
-from prefect.utilities import logging
-from prefect.backend import set_key_value
-
-from pathlib import Path
 
 from ..task_utils import add_ingestion_metadata_task
 from ..tasks import (
@@ -73,8 +71,8 @@ class SupermetricsToADLS(Flow):
         name: str,
         ds_id: str,
         ds_accounts: List[str],
-        ds_user: str,
         fields: List[str],
+        ds_user: str = None,
         ds_segments: List[str] = None,
         date_range_type: str = None,
         settings: Dict[str, Any] = None,
@@ -84,6 +82,7 @@ class SupermetricsToADLS(Flow):
         order_columns: str = None,
         expectation_suite_name: str = "failure",
         expectations_path: str = None,
+        evaluation_parameters: dict = None,
         local_file_path: str = None,
         adls_dir_path: str = None,
         overwrite_adls: bool = True,
@@ -116,6 +115,8 @@ class SupermetricsToADLS(Flow):
             max_columns (int, optional): A query parameter passed to the SupermetricsToCSV task. Defaults to None.
             order_columns (str, optional): A query parameter passed to the SupermetricsToCSV task. Defaults to None.
             expectation_suite_name (str, optional): The name of the expectation suite. Defaults to "failure".
+            expectations_path (str, optional): The path to the directory containing the expectation suite(s). Defaults to None.
+            evaluation_parameters (str, optional): A dictionary containing evaluation parameters for the validation. Defaults to None.
             Currently, only GitHub URLs are supported. Defaults to None.
             local_file_path (str, optional): Local destination path. Defaults to None.
             adls_dir_path (str, optional): Azure Data Lake destination folder/catalog path. Defaults to None.
@@ -131,6 +132,13 @@ class SupermetricsToADLS(Flow):
             tags (List[str], optional): Flow tags to use, eg. to control flow concurrency. Defaults to ["extract"].
             vault_name (str, optional): The name of the vault from which to obtain the secrets. Defaults to None.
         """
+        if not ds_user:
+            try:
+                ds_user = PrefectSecret("SUPERMETRICS_DEFAULT_USER").run()
+            except ValueError as e:
+                msg = "Neither 'ds_user' parameter nor 'SUPERMETRICS_DEFAULT_USER' secret were not specified"
+                raise ValueError(msg) from e
+
         # SupermetricsToDF
         self.ds_id = ds_id
         self.ds_accounts = ds_accounts
@@ -168,13 +176,13 @@ class SupermetricsToADLS(Flow):
         self.tags = tags
         self.vault_name = vault_name
         self.expectations_path = expectations_path
+        self.evaluation_parameters = evaluation_parameters
 
         super().__init__(*args, name=name, **kwargs)
 
         # DownloadGitHubFile (download expectations)
         self.expectation_suite_name = expectation_suite_name
         self.expectation_suite_file_name = expectation_suite_name + ".json"
-        # self.expectation_suite_path = self._get_expectation_suite_path()
 
         self.gen_flow()
 
@@ -217,6 +225,7 @@ class SupermetricsToADLS(Flow):
             df=df,
             expectations_path=self.expectations_path,
             expectation_suite_name=self.expectation_suite_name,
+            evaluation_parameters=self.evaluation_parameters,
             flow=self,
         )
 
