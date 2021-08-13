@@ -1,23 +1,22 @@
+import json
 import os
 from typing import Any, Dict, List
-import json
-from viadot.tasks.azure_data_lake import AzureDataLakeDownload
+
 import pandas as pd
-
-
-from prefect import Flow, task, Parameter
+from prefect import Flow, Parameter, task
+from prefect.backend import get_key_value
 from prefect.storage import Local
 from prefect.utilities import logging
-from prefect.backend import get_key_value
+
+from viadot.tasks.azure_data_lake import AzureDataLakeDownload
 
 from ..tasks import (
+    AzureDataLakeCopy,
     AzureDataLakeToDF,
     AzureDataLakeUpload,
     AzureSQLCreateTable,
     BCPTask,
     DownloadGitHubFile,
-    AzureDataLakeToDF,
-    AzureDataLakeCopy,
 )
 
 logger = logging.get_logger(__name__)

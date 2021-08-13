@@ -30,8 +30,9 @@ json_to_adls_task = AzureDataLakeUpload()
 
 @task
 def write_to_json(dict_, path):
-    with open(path, mode='w') as f:
+    with open(path, mode="w") as f:
         json.dump(dict_, f)
+
 
 @task
 def get_data_types(df: pd.DataFrame) -> dict:
@@ -184,7 +185,7 @@ class SupermetricsToADLS(Flow):
         # self.expectations_path = expectations_path
         self.expectation_suite = expectation_suite
         self.expectations_path = os.path.abspath("expectations")
-        self.expectation_suite_name = expectation_suite['expectation_suite_name']
+        self.expectation_suite_name = expectation_suite["expectation_suite_name"]
         self.evaluation_parameters = evaluation_parameters
 
         super().__init__(*args, name=name, **kwargs)
@@ -229,10 +230,12 @@ class SupermetricsToADLS(Flow):
             df = union_dfs_task.bind(dfs, flow=self)
         else:
             df = self.gen_supermetrics_task(ds_accounts=self.ds_accounts, flow=self)
-        
+
         json = write_to_json(
-            dict_=self.expectation_suite, 
-            path=os.path.join(self.expectations_path, self.expectation_suite_name + ".json"),
+            dict_=self.expectation_suite,
+            path=os.path.join(
+                self.expectations_path, self.expectation_suite_name + ".json"
+            ),
             flow=self,
         )
 
