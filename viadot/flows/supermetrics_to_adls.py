@@ -6,6 +6,7 @@ from typing import Any, Dict, List, Union
 import pandas as pd
 import pendulum
 from prefect import Flow, Task, apply_map, task
+import prefect
 from prefect.backend import set_key_value
 from prefect.tasks.secrets import PrefectSecret
 from prefect.utilities import logging
@@ -31,10 +32,16 @@ json_to_adls_task = AzureDataLakeUpload()
 
 @task
 def write_to_json(dict_, path):
+
+    logger = prefect.context.get("logger")
+    logger.info(f"Writing to {path}...")
+
     # create parent directories if they don't exist
     Path(path).parent.mkdir(parents=True, exist_ok=True)
     with open(path, mode="w") as f:
         json.dump(dict_, f)
+
+    logger.info(f"Successfully wrote to {path}.")
 
 
 @task
@@ -89,8 +96,6 @@ class SupermetricsToADLS(Flow):
         max_rows: int = 1000000,
         max_columns: int = None,
         order_columns: str = None,
-        # expectation_suite_name: str = "failure",
-        # expectations_path: str = None,
         expectation_suite: dict = None,
         evaluation_parameters: dict = None,
         local_file_path: str = None,
@@ -124,8 +129,7 @@ class SupermetricsToADLS(Flow):
             max_rows (int, optional): A query parameter passed to the SupermetricsToCSV task. Defaults to 1000000.
             max_columns (int, optional): A query parameter passed to the SupermetricsToCSV task. Defaults to None.
             order_columns (str, optional): A query parameter passed to the SupermetricsToCSV task. Defaults to None.
-            expectation_suite_name (str, optional): The name of the expectation suite. Defaults to "failure".
-            expectations_path (str, optional): The path to the directory containing the expectation suite(s). Defaults to None.
+            expectation_suite (dict, optional): The Great Expectations suite used to valiaate the data. Defaults to None.
             evaluation_parameters (str, optional): A dictionary containing evaluation parameters for the validation. Defaults to None.
             Currently, only GitHub URLs are supported. Defaults to None.
             local_file_path (str, optional): Local destination path. Defaults to None.
@@ -164,9 +168,12 @@ class SupermetricsToADLS(Flow):
         self.if_exists = if_exists
 
         # RunGreatExpectationsValidation
+        self.expectation_suite = expectation_suite
+        self.expectations_path = os.path.abspath("expectations")
+        self.expectation_suite_name = expectation_suite["expectation_suite_name"]
+        self.evaluation_parameters = evaluation_parameters
 
         # AzureDataLakeUpload
-
         self.local_file_path = local_file_path or self.slugify(name) + ".parquet"
         self.local_json_path = self.slugify(name) + ".json"
         self.now = str(pendulum.now("utc"))
@@ -185,17 +192,8 @@ class SupermetricsToADLS(Flow):
         self.parallel = parallel
         self.tags = tags
         self.vault_name = vault_name
-        # self.expectations_path = expectations_path
-        self.expectation_suite = expectation_suite
-        self.expectations_path = os.path.abspath("expectations")
-        self.expectation_suite_name = expectation_suite["expectation_suite_name"]
-        self.evaluation_parameters = evaluation_parameters
 
         super().__init__(*args, name=name, **kwargs)
-
-        # DownloadGitHubFile (download expectations)
-        # self.expectation_suite_name = expectation_suite_name
-        # self.expectation_suite_file_name = expectation_suite_name + ".json"
 
         self.gen_flow()
 
