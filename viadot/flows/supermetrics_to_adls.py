@@ -1,5 +1,6 @@
 import json
 import os
+from pathlib import Path
 from typing import Any, Dict, List, Union
 
 import pandas as pd
@@ -30,6 +31,8 @@ json_to_adls_task = AzureDataLakeUpload()
 
 @task
 def write_to_json(dict_, path):
+    # create parent directories if they don't exist
+    Path(path).parent.mkdir(parents=True, exist_ok=True)
     with open(path, mode="w") as f:
         json.dump(dict_, f)
 
