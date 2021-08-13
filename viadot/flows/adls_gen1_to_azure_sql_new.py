@@ -4,6 +4,7 @@ import pandas as pd
 from prefect import Flow
 from prefect.utilities import logging
 from prefect.utilities.tasks import task
+
 from viadot.flows.adls_to_azure_sql import df_to_csv_task
 from viadot.task_utils import METADATA_COLUMNS, add_ingestion_metadata_task
 

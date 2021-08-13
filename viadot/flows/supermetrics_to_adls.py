@@ -29,6 +29,12 @@ json_to_adls_task = AzureDataLakeUpload()
 
 
 @task
+def write_to_json(dict_, path):
+    with open(path, mode="w") as f:
+        json.dump(dict_, f)
+
+
+@task
 def get_data_types(df: pd.DataFrame) -> dict:
     df.dtypes.to_dict()
 
@@ -80,8 +86,9 @@ class SupermetricsToADLS(Flow):
         max_rows: int = 1000000,
         max_columns: int = None,
         order_columns: str = None,
-        expectation_suite_name: str = "failure",
-        expectations_path: str = None,
+        # expectation_suite_name: str = "failure",
+        # expectations_path: str = None,
+        expectation_suite: dict = None,
         evaluation_parameters: dict = None,
         local_file_path: str = None,
         adls_dir_path: str = None,
@@ -175,14 +182,17 @@ class SupermetricsToADLS(Flow):
         self.parallel = parallel
         self.tags = tags
         self.vault_name = vault_name
-        self.expectations_path = expectations_path
+        # self.expectations_path = expectations_path
+        self.expectation_suite = expectation_suite
+        self.expectations_path = os.path.abspath("expectations")
+        self.expectation_suite_name = expectation_suite["expectation_suite_name"]
         self.evaluation_parameters = evaluation_parameters
 
         super().__init__(*args, name=name, **kwargs)
 
         # DownloadGitHubFile (download expectations)
-        self.expectation_suite_name = expectation_suite_name
-        self.expectation_suite_file_name = expectation_suite_name + ".json"
+        # self.expectation_suite_name = expectation_suite_name
+        # self.expectation_suite_file_name = expectation_suite_name + ".json"
 
         self.gen_flow()
 
@@ -221,6 +231,14 @@ class SupermetricsToADLS(Flow):
         else:
             df = self.gen_supermetrics_task(ds_accounts=self.ds_accounts, flow=self)
 
+        json = write_to_json(
+            dict_=self.expectation_suite,
+            path=os.path.join(
+                self.expectations_path, self.expectation_suite_name + ".json"
+            ),
+            flow=self,
+        )
+
         validation = validation_task.bind(
             df=df,
             expectations_path=self.expectations_path,
@@ -258,6 +276,9 @@ class SupermetricsToADLS(Flow):
             vault_name=self.vault_name,
             flow=self,
         )
+
+        json.set_upstream(df, flow=self)
+        validation.set_upstream(json, flow=self)
         df_with_metadata.set_upstream(validation, flow=self)
         parquet_to_adls_task.set_upstream(df_to_parquet, flow=self)
         json_to_adls_task.set_upstream(dtypes_to_json_task, flow=self)
