@@ -34,14 +34,14 @@ json_to_adls_task = AzureDataLakeUpload()
 def write_to_json(dict_, path):
 
     logger = prefect.context.get("logger")
-    logger.info(f"Writing to {path}...")
+    logger.debug(f"Writing to {path}...")
 
     # create parent directories if they don't exist
     Path(path).parent.mkdir(parents=True, exist_ok=True)
     with open(path, mode="w") as f:
         json.dump(dict_, f)
 
-    logger.info(f"Successfully wrote to {path}.")
+    logger.debug(f"Successfully wrote to {path}.")
 
 
 @task
