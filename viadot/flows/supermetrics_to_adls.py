@@ -232,7 +232,7 @@ class SupermetricsToADLS(Flow):
         else:
             df = self.gen_supermetrics_task(ds_accounts=self.ds_accounts, flow=self)
 
-        json = write_to_json(
+        write_json = write_to_json.bind(
             dict_=self.expectation_suite,
             path=os.path.join(
                 self.expectations_path, self.expectation_suite_name + ".json"
@@ -248,7 +248,7 @@ class SupermetricsToADLS(Flow):
             flow=self,
         )
 
-        df_with_metadata = add_ingestion_metadata_task(df, flow=self)
+        df_with_metadata = add_ingestion_metadata_task.bind(df, flow=self)
 
         df_to_parquet = df_to_parquet_task.bind(
             df=df_with_metadata,
@@ -278,8 +278,8 @@ class SupermetricsToADLS(Flow):
             flow=self,
         )
 
-        json.set_upstream(df, flow=self)
-        validation.set_upstream(json, flow=self)
+        write_json.set_upstream(df, flow=self)
+        validation.set_upstream(write_json, flow=self)
         df_with_metadata.set_upstream(validation, flow=self)
         parquet_to_adls_task.set_upstream(df_to_parquet, flow=self)
         json_to_adls_task.set_upstream(dtypes_to_json_task, flow=self)
