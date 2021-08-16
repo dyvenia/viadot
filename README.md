@@ -97,9 +97,10 @@ However, when developing, the easiest way is to use the provided Jupyter Lab con
 
 ## How to contribute
 
-1. Setup locally
-2. Test your changes with `pytest`
-3. Submit a PR. The PR should contain the following:
+1. Fork repository if you do not have write access
+2. Setup locally
+3. Test your changes with `pytest`
+4. Submit a PR. The PR should contain the following:
 - new/changed functionality
 - tests for the changes
 - changes added to `CHANGELOG.md`
