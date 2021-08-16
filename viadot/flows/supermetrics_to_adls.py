@@ -169,7 +169,7 @@ class SupermetricsToADLS(Flow):
 
         # RunGreatExpectationsValidation
         self.expectation_suite = expectation_suite
-        self.expectations_path = os.path.abspath("expectations")
+        self.expectations_path = "/tmp/expectations"
         self.expectation_suite_name = expectation_suite["expectation_suite_name"]
         self.evaluation_parameters = evaluation_parameters
 
