@@ -126,14 +126,12 @@ class RunGreatExpectationsValidation(RunGreatExpectationsValidation):
             level=level,
         )
 
-        data_docs_path = os.path.join(
-            great_expectations_project_path,
-            "uncommitted",
-            "data_docs",
-            "local_site",
-            "index.html",
-        )
-        self.logger.info(f"To explore the docs, open {data_docs_path} in a browser.")
+        validation_ids = [res for res in results["run_results"]]
+        validation_id = validation_ids[0]
+        url_dicts = context.get_docs_sites_urls(resource_identifier=validation_id)
+        validation_site_url = url_dicts[0]["site_url"]
+
+        self.logger.info(f"To explore the docs, visit {validation_site_url}.")
 
         if not results.success:
             raise signals.FAIL(result=results)
