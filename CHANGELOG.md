@@ -6,7 +6,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 ### Changed
-- Refactored `RunGreatExpectationsValidation` task to use this [recipe](https://docs.prefect.io/orchestration/flow_config/storage.html#loading-additional-files-with-git-storage)
+
+- Modified `RunGreatExpectationsValidation` task to use the built in support for evaluation parameters added in Prefect v0.15.3
+- Modified `SupermetricsToADLS` and `ADLSGen1ToAzureSQLNew` flows to align with this [recipe](https://docs.prefect.io/orchestration/flow_config/storage.html#loading-additional-files-with-git-storage) for reading the expectation suite JSON.
+The suite is now loaded before flow initialization in the flow's python file and passed as an argument to the flow's constructor.
+- Modified `RunGreatExpectationsValidation`'s `expectations_path` parameter to point to the directory containing the expectation suites instead of the
+Great Expectations project directory, which was confusing. The project directory is now only used internally and not exposed to the user.
+- Changed `visions` dependency to `visions[all]`, which includes Shapely and other required libraries (eg. imagehash).
+- Changed the logging of docs URL for `RunGreatExpectationsValidation` task to use GE's recipe from [the docs](https://docs.greatexpectations.io/docs/guides/validation/advanced/how_to_implement_custom_notifications/)
+
+### Added
+- Added a test for `SupermetricsToADLS` flow
+- Added PR template for new PRs
 
 
 ## [0.2.2] - 2021-07-27
