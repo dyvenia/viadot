@@ -16,8 +16,7 @@ RUN groupadd docker && \
 RUN echo "Acquire::Check-Valid-Until \"false\";\nAcquire::Check-Date \"false\";" | cat > /etc/apt/apt.conf.d/10no--check-valid-until
 
 # System packages
-RUN apt update && yes | apt install vim gcc unixodbc-dev build-essential curl python3-dev libboost-all-dev libpq-dev \
-  graphviz-dev libgraphviz-dev pkg-config python3-gi sudo git
+RUN apt update && yes | apt install vim gcc unixodbc-dev build-essential curl python3-dev libboost-all-dev libpq-dev graphviz python3-gi sudo git
 RUN apt remove python-cffi
 RUN pip install --upgrade cffi
 
