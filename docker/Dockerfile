@@ -16,15 +16,20 @@ RUN groupadd docker && \
 RUN echo "Acquire::Check-Valid-Until \"false\";\nAcquire::Check-Date \"false\";" | cat > /etc/apt/apt.conf.d/10no--check-valid-until
 
 # System packages
-RUN apt-get update && yes | apt install vim gcc unixodbc-dev build-essential curl python3-dev libboost-all-dev libpq-dev graphviz python3-gi sudo git
-RUN apt-get remove python-cffi  # this breaks the build since Aug 18th, 2021
+RUN apt update && yes | apt install vim unixodbc-dev build-essential \
+    curl python3-dev libboost-all-dev libpq-dev graphviz python3-gi sudo git
 RUN pip install --upgrade cffi
+
+RUN curl http://archive.ubuntu.com/ubuntu/pool/main/g/glibc/multiarch-support_2.27-3ubuntu1_amd64.deb \
+    -o multiarch-support_2.27-3ubuntu1_amd64.deb && \
+    apt install ./multiarch-support_2.27-3ubuntu1_amd64.deb
+
 
 # ODBC -- make sure to pin driver version as it's reflected in odbcinst.ini
 RUN curl https://packages.microsoft.com/keys/microsoft.asc | apt-key add - && \
     curl https://packages.microsoft.com/config/debian/10/prod.list > /etc/apt/sources.list.d/mssql-release.list && \
-    apt-get update && \
-    apt-get install libsqliteodbc && \
+    apt update && \
+    apt install libsqliteodbc && \
     ACCEPT_EULA=Y apt install -y msodbcsql17=17.8.1.1-1 && \
     ACCEPT_EULA=Y apt install -y mssql-tools && \
     echo 'export PATH="$PATH:/opt/mssql-tools/bin"' >> ~/.bashrc
