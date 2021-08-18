@@ -1,6 +1,7 @@
 import json
 import os
 from datetime import timedelta
+from typing import List
 
 import pandas as pd
 from prefect import Task
@@ -477,6 +478,12 @@ class AzureDataLakeList(Task):
         vault_name (str, optional): The name of the vault from which to fetch the secret. Defaults to None.
         max_retries (int, optional): [description]. Defaults to 3.
         retry_delay (timedelta, optional): [description]. Defaults to timedelta(seconds=10).
+
+    Returns:
+        List[str]: The list of paths to the contents of `path`. These paths
+        do not include the container, eg. the path to the file located at
+        "https://my_storage_acc.blob.core.windows.net/raw/supermetrics/test_file.txt"
+        will be shown as "raw/supermetrics/test_file.txt".
     """
 
     def __init__(
@@ -516,7 +523,7 @@ class AzureDataLakeList(Task):
         vault_name: str = None,
         max_retries: int = None,
         retry_delay: timedelta = None,
-    ) -> None:
+    ) -> List[str]:
         """Task run method.
 
         Args:
@@ -525,6 +532,12 @@ class AzureDataLakeList(Task):
             sp_credentials_secret (str, optional): The name of the Azure Key Vault secret containing a dictionary with
             ACCOUNT_NAME and Service Principal credentials (TENANT_ID, CLIENT_ID, CLIENT_SECRET). Defaults to None.
             vault_name (str, optional): The name of the vault from which to obtain the secret. Defaults to None.
+
+        Returns:
+            List[str]: The list of paths to the contents of `path`. These paths
+            do not include the container, eg. the path to the file located at
+            "https://my_storage_acc.blob.core.windows.net/raw/supermetrics/test_file.txt"
+            will be shown as "raw/supermetrics/test_file.txt".
         """
 
         if not sp_credentials_secret:
