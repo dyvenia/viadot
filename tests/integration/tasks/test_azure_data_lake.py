@@ -2,8 +2,13 @@ import os
 import uuid
 
 from viadot.sources import AzureDataLake
-from viadot.tasks import AzureDataLakeDownload, AzureDataLakeToDF, AzureDataLakeUpload
-from viadot.tasks.azure_data_lake import AzureDataLakeCopy
+from viadot.tasks import (
+    AzureDataLakeDownload,
+    AzureDataLakeToDF,
+    AzureDataLakeUpload,
+    AzureDataLakeCopy,
+    AzureDataLakeList,
+)
 
 uuid_4 = uuid.uuid4()
 uuid_4_2 = uuid.uuid4()
@@ -54,3 +59,9 @@ def test_azure_data_lake_copy():
     copy_task.run(from_path=adls_path, to_path=adls_path_2)
     file = AzureDataLake(adls_path_2)
     assert file.exists()
+
+
+def test_azure_data_lake_list():
+    list_task = AzureDataLakeList()
+    files = list_task.run(path="raw/supermetrics")
+    assert adls_path in files
