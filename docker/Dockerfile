@@ -17,7 +17,7 @@ RUN echo "Acquire::Check-Valid-Until \"false\";\nAcquire::Check-Date \"false\";"
 
 # System packages
 RUN apt update && yes | apt install vim gcc unixodbc-dev build-essential curl python3-dev libboost-all-dev libpq-dev graphviz python3-gi sudo git
-RUN apt remove python-cffi
+# RUN apt remove python-cffi  # this breaks the build since Aug 18th, 2021
 RUN pip install --upgrade cffi
 
 # ODBC -- make sure to pin driver version as it's reflected in odbcinst.ini
