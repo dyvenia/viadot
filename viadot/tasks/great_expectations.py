@@ -1,10 +1,15 @@
 import logging
 import os
+import shutil
 from pathlib import Path
 from typing import Any, Dict, Tuple
 
-import great_expectations as ge
 import pandas as pd
+from prefect.engine import signals
+from prefect.tasks.great_expectations import RunGreatExpectationsValidation
+from prefect.utilities.tasks import defaults_from_attrs
+
+import great_expectations as ge
 from great_expectations.data_context import BaseDataContext
 from great_expectations.data_context.types.base import (
     DataContextConfig,
@@ -14,9 +19,6 @@ from great_expectations.data_context.types.base import (
 from great_expectations.validation_operators.types.validation_operator_result import (
     ValidationOperatorResult,
 )
-from prefect.engine import signals
-from prefect.tasks.great_expectations import RunGreatExpectationsValidation
-from prefect.utilities.tasks import defaults_from_attrs
 
 
 # Simplifies the setup and adds logging to the standard Prefect task
@@ -36,12 +38,14 @@ class RunGreatExpectationsValidation(RunGreatExpectationsValidation):
         df: pd.DataFrame = None,
         expectations_path: str = None,
         evaluation_parameters: Dict[str, Any] = None,
+        keep_output: bool = True,
         **kwargs,
     ):
         super().__init__(**kwargs)
         self.df = df
         self.expectations_path = expectations_path
         self.evaluation_parameters = evaluation_parameters
+        self.keep_output = keep_output
 
     @staticmethod
     def _get_batch_kwargs(df: pd.DataFrame) -> dict:
@@ -49,7 +53,7 @@ class RunGreatExpectationsValidation(RunGreatExpectationsValidation):
         return {"dataset": dataset, "datasource": "pandas"}
 
     @staticmethod
-    def _get_ge_context_local(great_expectations_project_path: str) -> BaseDataContext:
+    def _get_ge_context_local(ge_project_path: str) -> BaseDataContext:
         """
         This is configured to work with an in-memory pandas DataFrame.
         This setup allows us to run validations before (perhaps unnecessarily) writing any data
@@ -58,7 +62,7 @@ class RunGreatExpectationsValidation(RunGreatExpectationsValidation):
         Currently using local storage.
 
         Args:
-        great_expectations_project_path (str): The path to the Great Expectations project,
+        ge_project_path (str): The path to the Great Expectations project,
         eg. `/home/viadot/my_flow`. Expectation suites need to be placed inside the
         `expectations` folder, eg. `/home/viadot/my_flow/expectations/failure.json`.
 
@@ -72,9 +76,7 @@ class RunGreatExpectationsValidation(RunGreatExpectationsValidation):
                     batch_kwargs_generators={},  # override the CSV default
                 )
             },
-            store_backend_defaults=FilesystemStoreBackendDefaults(
-                great_expectations_project_path
-            ),
+            store_backend_defaults=FilesystemStoreBackendDefaults(ge_project_path),
             validation_operators={
                 "action_list_operator": {
                     "class_name": "ActionListValidationOperator",
@@ -98,13 +100,21 @@ class RunGreatExpectationsValidation(RunGreatExpectationsValidation):
         context = BaseDataContext(project_config=data_context_config)
         return context
 
-    @defaults_from_attrs("df", "expectations_path", "evaluation_parameters")
-    def run(self, df: pd.DataFrame = None, expectations_path: str = None, **kwargs):
+    @defaults_from_attrs(
+        "df", "expectations_path", "evaluation_parameters", "keep_output"
+    )
+    def run(
+        self,
+        df: pd.DataFrame = None,
+        expectations_path: str = None,
+        keep_output: bool = None,
+        **kwargs,
+    ):
 
-        great_expectations_project_path = str(Path(expectations_path).parent)
+        ge_project_path = str(Path(expectations_path).parent)
 
         batch_kwargs = self._get_batch_kwargs(df)
-        context = self._get_ge_context_local(great_expectations_project_path)
+        context = self._get_ge_context_local(ge_project_path)
 
         self.logger.info("Beginning validation run...")
 
@@ -131,7 +141,17 @@ class RunGreatExpectationsValidation(RunGreatExpectationsValidation):
         url_dicts = context.get_docs_sites_urls(resource_identifier=validation_id)
         validation_site_url = url_dicts[0]["site_url"]
 
-        self.logger.info(f"To explore the docs, visit {validation_site_url}.")
+        if keep_output:
+            docs_msg = f"To explore the docs, visit {validation_site_url}"
+            docs_msg += " or the 'Artifacts' tab on the Prefect flow run dashboard."
+            self.logger.info(docs_msg)
+
+        else:
+            docs_path = os.path.join(ge_project_path, "uncommitted")
+            checkpoints_path = os.path.join(ge_project_path, "checkpoints")
+
+            shutil.rmtree(docs_path)
+            shutil.rmtree(checkpoints_path)
 
         if not results.success:
             raise signals.FAIL(result=results)
