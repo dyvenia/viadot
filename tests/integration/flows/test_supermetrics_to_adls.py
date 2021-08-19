@@ -1,16 +1,11 @@
-import json
 import logging
 import os
-from pathlib import Path
 
 import pytest
 from prefect.storage import Local
-
 from viadot.flows import SupermetricsToADLS
 
 CWD = os.getcwd()
-dir_path = Path(__file__).resolve().parent
-expectations_path = dir_path.joinpath("expectations")
 adls_dir_path = "raw/supermetrics"
 STORAGE = Local(path=CWD)
 
@@ -45,15 +40,7 @@ def expectation_suite():
         },
     }
 
-    expectation_suite_path = str(expectations_path.joinpath("failure.json"))
-    Path(expectation_suite_path).parent.mkdir(parents=True, exist_ok=True)
-
-    with open(os.path.join(expectation_suite_path), "w") as f:
-        json.dump(expectation_suite, f)
-
-    yield
-
-    os.remove(os.path.join(expectation_suite_path))
+    yield expectation_suite
 
 
 def test_supermetrics_to_adls(expectation_suite):
@@ -78,8 +65,7 @@ def test_supermetrics_to_adls(expectation_suite):
         order_columns="alphabetic",
         max_columns=100,
         max_rows=10,
-        expectations_path=expectations_path,
-        expectation_suite_name="failure",
+        expectation_suite=expectation_suite,
         evaluation_parameters=dict(previous_run_row_count=9),
         adls_dir_path=adls_dir_path,
         parallel=False,
