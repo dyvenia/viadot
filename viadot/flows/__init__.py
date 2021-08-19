@@ -6,5 +6,3 @@ from .azure_sql_transform import AzureSQLTransform
 from .flow_of_flows import Pipeline
 from .supermetrics_to_adls import SupermetricsToADLS
 from .supermetrics_to_azure_sql import SupermetricsToAzureSQL
-from .supermetrics_to_azure_sql_v2 import SupermetricsToAzureSQLv2
-from .supermetrics_to_azure_sql_v3 import SupermetricsToAzureSQLv3
