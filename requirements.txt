@@ -21,7 +21,6 @@ great-expectations==0.13.22
 matplotlib
 adlfs==2021.8.1
 PyGithub==1.55
-geopy==2.2.0
 Shapely==1.7.1
 imagehash==4.2.1
 visions==0.7.1
