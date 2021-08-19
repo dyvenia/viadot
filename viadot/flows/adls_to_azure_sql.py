@@ -1,23 +1,22 @@
+import json
 import os
 from typing import Any, Dict, List
-import json
-from viadot.tasks.azure_data_lake import AzureDataLakeDownload
+
 import pandas as pd
-
-
-from prefect import Flow, task, Parameter
+from prefect import Flow, Parameter, task
+from prefect.backend import get_key_value
 from prefect.storage import Local
 from prefect.utilities import logging
-from prefect.backend import get_key_value
+
+from viadot.tasks.azure_data_lake import AzureDataLakeDownload
 
 from ..tasks import (
+    AzureDataLakeCopy,
     AzureDataLakeToDF,
     AzureDataLakeUpload,
     AzureSQLCreateTable,
     BCPTask,
     DownloadGitHubFile,
-    AzureDataLakeToDF,
-    AzureDataLakeCopy,
 )
 
 logger = logging.get_logger(__name__)
@@ -73,11 +72,6 @@ def map_data_types_task(json_shema_path: str):
 @task
 def df_to_csv_task(df, path: str, sep: str = "\t"):
     df.to_csv(path, sep=sep, index=False)
-
-
-@task
-def is_stored_locally(f: Flow):
-    return f.storage is None or isinstance(f.storage, Local)
 
 
 class ADLSToAzureSQL(Flow):
@@ -190,18 +184,18 @@ class ADLSToAzureSQL(Flow):
 
     def gen_flow(self) -> Flow:
         adls_raw_file_path = Parameter("adls_raw_file_path", default=self.adls_path)
-
-        df = lake_to_df_task.bind(path=adls_raw_file_path, flow=self)
-
+        df = lake_to_df_task.bind(
+            path=adls_raw_file_path,
+            sp_credentials_secret=self.adls_sp_credentials_secret,
+            flow=self,
+        )
         dtypes = map_data_types_task.bind(self.local_json_path, flow=self)
-
         df_to_csv = df_to_csv_task.bind(
             df=df,
             path=self.local_file_path,
             sep=self.sep,
             flow=self,
         )
-
         promote_to_conformed_task.bind(
             from_path=self.local_file_path,
             to_path=self.adls_path_conformed,
@@ -220,9 +214,9 @@ class ADLSToAzureSQL(Flow):
         download_json_file_task.bind(
             from_path=self.json_shema_path,
             to_path=self.local_json_path,
+            sp_credentials_secret=self.adls_sp_credentials_secret,
             flow=self,
         )
-
         create_table_task.bind(
             schema=self.schema,
             table=self.table,

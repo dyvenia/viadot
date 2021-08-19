@@ -1,8 +1,9 @@
 from typing import Any, Dict, List
 
 from prefect import Flow, task
-from prefect.utilities import logging
 from prefect.storage import Local
+from prefect.utilities import logging
+
 from ..tasks import AzureDataLakeCopy
 
 copy_task = AzureDataLakeCopy()

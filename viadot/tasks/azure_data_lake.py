@@ -1,6 +1,7 @@
 import json
 import os
 from datetime import timedelta
+from typing import List
 
 import pandas as pd
 from prefect import Task
@@ -237,6 +238,9 @@ class AzureDataLakeToDF(Task):
         self,
         path: str = None,
         sep: str = "\t",
+        quoting: int = 0,
+        lineterminator: str = None,
+        error_bad_lines: bool = None,
         gen: int = 2,
         vault_name: str = None,
         max_retries: int = 3,
@@ -250,11 +254,18 @@ class AzureDataLakeToDF(Task):
         Args:
             path (str, optional): The path from which to load the DataFrame. Defaults to None.
             sep (str, optional): The separator to use when reading a CSV file. Defaults to "\t".
+            quoting (int, optional): The quoting mode to use when reading a CSV file. Defaults to 0.
+            lineterminator (str, optional): The newline separator to use when reading a CSV file. Defaults to None.
+            error_bad_lines (bool, optional): Whether to raise an exception on bad lines. Defaults to None.
             gen (int, optional): The generation of the Azure Data Lake. Defaults to 2.
             vault_name (str, optional): The name of the vault from which to obtain the secret. Defaults to None.
         """
         self.path = path
         self.sep = sep
+        self.quoting = quoting
+        self.lineterminator = lineterminator
+        self.error_bad_lines = error_bad_lines
+
         self.gen = gen
         self.vault_name = vault_name
         super().__init__(
@@ -272,6 +283,9 @@ class AzureDataLakeToDF(Task):
     @defaults_from_attrs(
         "path",
         "sep",
+        "quoting",
+        "lineterminator",
+        "error_bad_lines",
         "gen",
         "vault_name",
         "max_retries",
@@ -281,6 +295,9 @@ class AzureDataLakeToDF(Task):
         self,
         path: str = None,
         sep: str = None,
+        quoting: int = None,
+        lineterminator: str = None,
+        error_bad_lines: bool = None,
         gen: int = None,
         sp_credentials_secret: str = None,
         vault_name: str = None,
@@ -292,11 +309,17 @@ class AzureDataLakeToDF(Task):
         Args:
             path (str): The path to file(s) which should be loaded into a DataFrame.
             sep (str): The field separator to use when loading the file to the DataFrame.
+            quoting (int, optional): The quoting mode to use when reading a CSV file. Defaults to 0.
+            lineterminator (str, optional): The newline separator to use when reading a CSV file. Defaults to None.
+            error_bad_lines (bool, optional): Whether to raise an exception on bad lines. Defaults to None.
             gen (int): The generation of the Azure Data Lake.
             sp_credentials_secret (str, optional): The name of the Azure Key Vault secret containing a dictionary with
             ACCOUNT_NAME and Service Principal credentials (TENANT_ID, CLIENT_ID, CLIENT_SECRET). Defaults to None.
             vault_name (str, optional): The name of the vault from which to obtain the secret. Defaults to None.
         """
+
+        if quoting is None:
+            quoting = 0
 
         if path is None:
             raise ValueError("Please provide the path to the file to be downloaded.")
@@ -327,7 +350,12 @@ class AzureDataLakeToDF(Task):
 
         full_dl_path = os.path.join(credentials["ACCOUNT_NAME"], path)
         self.logger.info(f"Downloading data from {full_dl_path} to a DataFrame...")
-        df = lake.to_df(sep=sep)
+        df = lake.to_df(
+            sep=sep,
+            quoting=quoting,
+            lineterminator=lineterminator,
+            error_bad_lines=error_bad_lines,
+        )
         self.logger.info(f"Successfully loaded data.")
         return df
 
@@ -450,6 +478,12 @@ class AzureDataLakeList(Task):
         vault_name (str, optional): The name of the vault from which to fetch the secret. Defaults to None.
         max_retries (int, optional): [description]. Defaults to 3.
         retry_delay (timedelta, optional): [description]. Defaults to timedelta(seconds=10).
+
+    Returns:
+        List[str]: The list of paths to the contents of `path`. These paths
+        do not include the container, eg. the path to the file located at
+        "https://my_storage_acc.blob.core.windows.net/raw/supermetrics/test_file.txt"
+        will be shown as "raw/supermetrics/test_file.txt".
     """
 
     def __init__(
@@ -489,7 +523,7 @@ class AzureDataLakeList(Task):
         vault_name: str = None,
         max_retries: int = None,
         retry_delay: timedelta = None,
-    ) -> None:
+    ) -> List[str]:
         """Task run method.
 
         Args:
@@ -498,6 +532,12 @@ class AzureDataLakeList(Task):
             sp_credentials_secret (str, optional): The name of the Azure Key Vault secret containing a dictionary with
             ACCOUNT_NAME and Service Principal credentials (TENANT_ID, CLIENT_ID, CLIENT_SECRET). Defaults to None.
             vault_name (str, optional): The name of the vault from which to obtain the secret. Defaults to None.
+
+        Returns:
+            List[str]: The list of paths to the contents of `path`. These paths
+            do not include the container, eg. the path to the file located at
+            "https://my_storage_acc.blob.core.windows.net/raw/supermetrics/test_file.txt"
+            will be shown as "raw/supermetrics/test_file.txt".
         """
 
         if not sp_credentials_secret:

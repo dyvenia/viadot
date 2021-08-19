@@ -1,10 +1,10 @@
 import logging
 import os
-from typing import Any, Dict, Optional, Tuple
+import shutil
+from pathlib import Path
+from typing import Any, Dict, Tuple
 
 import pandas as pd
-import prefect
-from prefect.artifacts import create_markdown
 from prefect.engine import signals
 from prefect.tasks.great_expectations import RunGreatExpectationsValidation
 from prefect.utilities.tasks import defaults_from_attrs
@@ -29,7 +29,7 @@ class RunGreatExpectationsValidation(RunGreatExpectationsValidation):
     for full documentation.
 
     Args:
-        expectations_path (str): The path of your Great Expectations project, eg. `/home/viadot/my_flow`
+        expectations_path (str): The path to the directory containing the expectation suites.
         df (pd.DataFrame): The DataFrame to validate.
     """
 
@@ -38,12 +38,14 @@ class RunGreatExpectationsValidation(RunGreatExpectationsValidation):
         df: pd.DataFrame = None,
         expectations_path: str = None,
         evaluation_parameters: Dict[str, Any] = None,
+        keep_output: bool = True,
         **kwargs,
     ):
         super().__init__(**kwargs)
         self.df = df
         self.expectations_path = expectations_path
         self.evaluation_parameters = evaluation_parameters
+        self.keep_output = keep_output
 
     @staticmethod
     def _get_batch_kwargs(df: pd.DataFrame) -> dict:
@@ -51,7 +53,7 @@ class RunGreatExpectationsValidation(RunGreatExpectationsValidation):
         return {"dataset": dataset, "datasource": "pandas"}
 
     @staticmethod
-    def _get_ge_context_local(expectations_path: str) -> BaseDataContext:
+    def _get_ge_context_local(ge_project_path: str) -> BaseDataContext:
         """
         This is configured to work with an in-memory pandas DataFrame.
         This setup allows us to run validations before (perhaps unnecessarily) writing any data
@@ -60,7 +62,7 @@ class RunGreatExpectationsValidation(RunGreatExpectationsValidation):
         Currently using local storage.
 
         Args:
-        expectations_path (str): The path to your Great Expectations project,
+        ge_project_path (str): The path to the Great Expectations project,
         eg. `/home/viadot/my_flow`. Expectation suites need to be placed inside the
         `expectations` folder, eg. `/home/viadot/my_flow/expectations/failure.json`.
 
@@ -74,7 +76,7 @@ class RunGreatExpectationsValidation(RunGreatExpectationsValidation):
                     batch_kwargs_generators={},  # override the CSV default
                 )
             },
-            store_backend_defaults=FilesystemStoreBackendDefaults(expectations_path),
+            store_backend_defaults=FilesystemStoreBackendDefaults(ge_project_path),
             validation_operators={
                 "action_list_operator": {
                     "class_name": "ActionListValidationOperator",
@@ -98,114 +100,26 @@ class RunGreatExpectationsValidation(RunGreatExpectationsValidation):
         context = BaseDataContext(project_config=data_context_config)
         return context
 
-    def run_new(
+    @defaults_from_attrs(
+        "df", "expectations_path", "evaluation_parameters", "keep_output"
+    )
+    def run(
         self,
-        checkpoint_name: str = None,
-        context: "ge.DataContext" = None,
-        assets_to_validate: list = None,
-        batch_kwargs: dict = None,
-        expectation_suite_name: str = None,
-        context_root_dir: str = None,
-        runtime_environment: Optional[dict] = None,
-        run_name: str = None,
-        run_info_at_end: bool = True,
-        disable_markdown_artifact: bool = None,
-        validation_operator: str = "action_list_operator",
-        evaluation_parameters: dict = None,
+        df: pd.DataFrame = None,
+        expectations_path: str = None,
+        keep_output: bool = None,
+        **kwargs,
     ):
-        """Adds evaluation parameters to GE task"""
 
-        runtime_environment = runtime_environment or dict()
-
-        # Load context if not provided directly
-        if not context:
-            context = ge.DataContext(
-                context_root_dir=context_root_dir,
-                runtime_environment=runtime_environment,
-            )
-
-        # Check that the parameters are mutually exclusive
-        if (
-            sum(
-                bool(x)
-                for x in [
-                    (expectation_suite_name and batch_kwargs),
-                    assets_to_validate,
-                    checkpoint_name,
-                ]
-            )
-            != 1
-        ):
-            raise ValueError(
-                "Exactly one of expectation_suite_name + batch_kwargs, assets_to_validate, or "
-                "checkpoint_name is required to run validation."
-            )
-
-        # If assets are not provided directly through `assets_to_validate` then they need be loaded
-        #   if a checkpoint_name is supplied, then load suite and batch_kwargs from there
-        #   otherwise get batch from `batch_kwargs` and `expectation_suite_name`
-
-        if not assets_to_validate:
-            assets_to_validate = []
-            if checkpoint_name:
-                ge_checkpoint = context.get_checkpoint(checkpoint_name)
-
-                for batch in ge_checkpoint["batches"]:
-                    batch_kwargs = batch["batch_kwargs"]
-                    for suite_name in batch["expectation_suite_names"]:
-                        suite = context.get_expectation_suite(suite_name)
-                        batch = context.get_batch(batch_kwargs, suite)
-                        assets_to_validate.append(batch)
-                validation_operator = ge_checkpoint["validation_operator_name"]
-            else:
-                assets_to_validate.append(
-                    context.get_batch(batch_kwargs, expectation_suite_name)
-                )
-
-        # Run validation operator
-        results = context.run_validation_operator(
-            validation_operator,
-            assets_to_validate=assets_to_validate,
-            run_id={"run_name": run_name or prefect.context.get("task_slug")},
-            evaluation_parameters=evaluation_parameters,
-        )
-
-        # Generate artifact markdown
-        if not disable_markdown_artifact:
-            run_info_at_end = True
-            validation_results_page_renderer = (
-                ge.render.renderer.ValidationResultsPageRenderer(
-                    run_info_at_end=run_info_at_end
-                )
-            )
-            rendered_document_content_list = (
-                validation_results_page_renderer.render_validation_operator_result(
-                    validation_operator_result=results
-                )
-            )
-            markdown_artifact = " ".join(
-                ge.render.view.DefaultMarkdownPageView().render(
-                    rendered_document_content_list
-                )
-            )
-
-            create_markdown(markdown_artifact)
-
-        if not results.success:
-            raise signals.FAIL(result=results)
-
-        return results
-
-    @defaults_from_attrs("df", "expectations_path", "evaluation_parameters")
-    def run(self, df: pd.DataFrame = None, expectations_path: str = None, **kwargs):
+        ge_project_path = str(Path(expectations_path).parent)
 
         batch_kwargs = self._get_batch_kwargs(df)
-        context = self._get_ge_context_local(expectations_path)
+        context = self._get_ge_context_local(ge_project_path)
 
         self.logger.info("Beginning validation run...")
 
         try:
-            results = self.run_new(  # TODO: change to super() once eval params are added to Prefect
+            results = super().run(
                 batch_kwargs=batch_kwargs,  # input data
                 context=context,  # ~project config
                 **kwargs,
@@ -222,10 +136,22 @@ class RunGreatExpectationsValidation(RunGreatExpectationsValidation):
             level=level,
         )
 
-        data_docs_path = os.path.join(
-            expectations_path, "uncommitted", "data_docs", "local_site", "index.html"
-        )
-        self.logger.info(f"To explore the docs, open {data_docs_path} in a browser.")
+        validation_ids = [res for res in results["run_results"]]
+        validation_id = validation_ids[0]
+        url_dicts = context.get_docs_sites_urls(resource_identifier=validation_id)
+        validation_site_url = url_dicts[0]["site_url"]
+
+        if keep_output:
+            docs_msg = f"To explore the docs, visit {validation_site_url}"
+            docs_msg += " or the 'Artifacts' tab on the Prefect flow run dashboard."
+            self.logger.info(docs_msg)
+
+        else:
+            docs_path = os.path.join(ge_project_path, "uncommitted")
+            checkpoints_path = os.path.join(ge_project_path, "checkpoints")
+
+            shutil.rmtree(docs_path)
+            shutil.rmtree(checkpoints_path)
 
         if not results.success:
             raise signals.FAIL(result=results)

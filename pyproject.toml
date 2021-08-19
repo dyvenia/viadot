@@ -8,5 +8,5 @@ omit = [
 [tool.pytest.ini_options]
 log_format = "%(asctime)s %(levelname)s %(message)s"
 log_date_format = "%Y-%m-%d %H:%M:%S"
-log_cli=false
-log_level=30
+log_cli=true
+log_level="WARNING"

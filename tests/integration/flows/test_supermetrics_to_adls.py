@@ -1,14 +1,15 @@
-import json
+import logging
 import os
-import uuid
 
 import pytest
 from prefect.storage import Local
-
-from viadot.flows import SupermetricsToAzureSQLv3
+from viadot.flows import SupermetricsToADLS
 
 CWD = os.getcwd()
+adls_dir_path = "raw/supermetrics"
 STORAGE = Local(path=CWD)
+
+logger = logging.getLogger(__name__)
 
 
 @pytest.fixture(scope="session")
@@ -20,8 +21,8 @@ def expectation_suite():
             {
                 "expectation_type": "expect_table_row_count_to_be_between",
                 "kwargs": {
-                    "max_value": {"$PARAMETER": "trunc(previous_run_row_count * 1.1)"},
-                    "min_value": {"$PARAMETER": "trunc(previous_run_row_count * 0.9)"},
+                    "max_value": {"$PARAMETER": "trunc(previous_run_row_count * 1.2)"},
+                    "min_value": {"$PARAMETER": "trunc(previous_run_row_count * 0.8)"},
                 },
                 "meta": {},
             },
@@ -39,21 +40,11 @@ def expectation_suite():
         },
     }
 
-    with open(os.path.join(CWD, "expectations", "failure.json"), "w") as f:
-        json.dump(expectation_suite, f)
-
-    yield
-
-    os.remove(os.path.join(CWD, "expectations", "failure.json"))
+    yield expectation_suite
 
 
-uuid_4 = uuid.uuid4()
-file_name = f"test_file_{uuid_4}.csv"
-adls_path = f"raw/supermetrics/{file_name}"
-
-
-def test_supermetrics_to_azure_sql():
-    flow = SupermetricsToAzureSQLv3(
+def test_supermetrics_to_adls(expectation_suite):
+    flow = SupermetricsToADLS(
         "Google Analytics Load Times extract test",
         ds_id="GA",
         ds_segments=[
@@ -74,23 +65,14 @@ def test_supermetrics_to_azure_sql():
         order_columns="alphabetic",
         max_columns=100,
         max_rows=10,
-        expectation_suite_name="failure",
-        adls_path=adls_path,
-        dtypes={
-            "Date": "DATE",
-            "All Users": "FLOAT(24)",
-            "M-Site_Better Space: All Landing Page Sessions": "VARCHAR(255)",
-            "M-site_Accessories: All Landing Page Sessions": "VARCHAR(255)",
-            "M-site_More Space: All Landing Page Sessions": "FLOAT(24)",
-            "M-site_Replacement: All Landing Page Sessions": "VARCHAR(255)",
-        },
-        schema="sandbox",
-        table="test_supermetrics_to_azure_sql",
+        expectation_suite=expectation_suite,
+        evaluation_parameters=dict(previous_run_row_count=9),
+        adls_dir_path=adls_dir_path,
         parallel=False,
         storage=STORAGE,
     )
     result = flow.run()
-    assert result.is_successful
+    assert result.is_successful()
 
     task_results = result.result.values()
-    assert all([task_result.is_successful for task_result in task_results])
+    assert all([task_result.is_successful() for task_result in task_results])

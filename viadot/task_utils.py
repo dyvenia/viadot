@@ -5,6 +5,7 @@ from typing import List
 import pandas as pd
 import prefect
 from prefect import task
+from prefect.storage import Git
 
 METADATA_COLUMNS = {"_viadot_downloaded_at_utc": "DATETIME"}
 
@@ -51,3 +52,14 @@ def chunk_df(df: pd.DataFrame, size: int = 10_000) -> List[pd.DataFrame]:
     n_rows = df.shape[0]
     chunks = [df[i : i + size] for i in range(0, n_rows, size)]
     return chunks
+
+
+class Git(Git):
+    @property
+    def git_clone_url(self):
+        """
+        Build the git url to clone
+        """
+        if self.use_ssh:
+            return f"git@{self.repo_host}:{self.repo}"
+        return f"https://{self.git_token_secret}@{self.repo_host}/{self.repo}"

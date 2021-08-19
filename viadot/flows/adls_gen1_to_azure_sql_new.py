@@ -1,24 +1,32 @@
 from typing import Any, Dict, List
 
+import pandas as pd
 from prefect import Flow
 from prefect.utilities import logging
+from prefect.utilities.tasks import task
 
+from viadot.flows.adls_to_azure_sql import df_to_csv_task
 from viadot.task_utils import METADATA_COLUMNS, add_ingestion_metadata_task
 
-from ..tasks import (
-    AzureDataLakeDownload,
-    AzureDataLakeUpload,
-    AzureSQLCreateTable,
-    BCPTask,
-)
+from ..tasks import AzureDataLakeToDF, AzureDataLakeUpload, AzureSQLCreateTable, BCPTask
 
-gen1_download_task = AzureDataLakeDownload(gen=1)
+gen1_to_df_task = AzureDataLakeToDF(gen=1)
 gen2_upload_task = AzureDataLakeUpload(gen=2)
 create_table_task = AzureSQLCreateTable()
 bulk_insert_task = BCPTask()
 
-
 logger = logging.get_logger(__name__)
+
+
+@task
+def df_to_csv_task(df: pd.DataFrame, path: str, sep: str = "\t") -> None:
+    df.to_csv(path, index=False, sep=sep)
+
+
+@task
+def df_replace_special_chars(df: pd.DataFrame) -> None:
+    df = df.replace(r"\n|\t", "", regex=True)
+    return df
 
 
 class ADLSGen1ToAzureSQLNew(Flow):
@@ -30,6 +38,11 @@ class ADLSGen1ToAzureSQLNew(Flow):
         gen2_path (str): The path of the final gen2 file/folder.
         local_file_path (str): Where the gen1 file should be downloaded.
         overwrite (str): Whether to overwrite the destination file(s).
+        read_sep (str): The delimiter for the gen1 file.
+        write_sep (str): The delimiter for the output file.
+        read_quoting (str): The quoting option for the input file.
+        read_lineterminator (str): The line terminator for the input file.
+        read_error_bad_lines (bool): Whether to raise an exception on bad lines.
         gen1_sp_credentials_secret (str): The Key Vault secret holding Service Pricipal credentials for gen1 lake
         gen2_sp_credentials_secret (str): The Key Vault secret holding Service Pricipal credentials for gen2 lake
         sqldb_credentials_secret (str): The Key Vault secret holding Azure SQL Database credentials
@@ -43,7 +56,11 @@ class ADLSGen1ToAzureSQLNew(Flow):
         gen2_path: str,
         local_file_path: str = None,
         overwrite: bool = True,
-        sep: str = "\t",
+        read_sep: str = "\t",
+        write_sep: str = "\t",
+        read_quoting: str = None,
+        read_lineterminator: str = None,
+        read_error_bad_lines: bool = True,
         schema: str = None,
         table: str = None,
         dtypes: dict = None,
@@ -60,7 +77,11 @@ class ADLSGen1ToAzureSQLNew(Flow):
         self.local_file_path = local_file_path or self.slugify(name) + ".csv"
         self.gen2_path = gen2_path
         self.overwrite = overwrite
-        self.sep = sep
+        self.read_sep = read_sep
+        self.write_sep = write_sep
+        self.read_quoting = read_quoting
+        self.read_lineterminator = read_lineterminator
+        self.read_error_bad_lines = read_error_bad_lines
         self.schema = schema
         self.table = table
         self.dtypes = dtypes
@@ -78,16 +99,24 @@ class ADLSGen1ToAzureSQLNew(Flow):
         return name.replace(" ", "_").lower()
 
     def gen_flow(self) -> Flow:
-        gen1_download_task.bind(
-            from_path=self.gen1_path,
-            to_path=self.local_file_path,
+        df = gen1_to_df_task.bind(
+            path=self.gen1_path,
             gen=1,
+            lineterminator=self.read_lineterminator,
+            sep=self.read_sep,
+            quoting=self.read_quoting,
+            error_bad_lines=self.read_error_bad_lines,
             sp_credentials_secret=self.gen1_sp_credentials_secret,
             vault_name=self.vault_name,
             flow=self,
         )
-        add_ingestion_metadata_task.bind(
-            path=self.local_file_path, sep=self.sep, flow=self
+        df2 = df_replace_special_chars.bind(df=df, flow=self)
+        df_with_metadata = add_ingestion_metadata_task.bind(df=df2, flow=self)
+        df_to_csv_task.bind(
+            df=df_with_metadata,
+            path=self.local_file_path,
+            sep=self.write_sep,
+            flow=self,
         )
         gen2_upload_task.bind(
             from_path=self.local_file_path,
@@ -115,7 +144,8 @@ class ADLSGen1ToAzureSQLNew(Flow):
             flow=self,
         )
 
-        add_ingestion_metadata_task.set_upstream(gen1_download_task, flow=self)
-        gen2_upload_task.set_upstream(add_ingestion_metadata_task, flow=self)
-        create_table_task.set_upstream(add_ingestion_metadata_task, flow=self)
+        df_with_metadata.set_upstream(df_replace_special_chars, flow=self)
+        df_to_csv_task.set_upstream(df_with_metadata, flow=self)
+        gen2_upload_task.set_upstream(df_to_csv_task, flow=self)
+        create_table_task.set_upstream(df_to_csv_task, flow=self)
         bulk_insert_task.set_upstream(create_table_task, flow=self)
