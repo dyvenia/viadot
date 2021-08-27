@@ -202,6 +202,7 @@ class ADLSToAzureSQL(Flow):
                 flow=self,
             )
             dtypes = map_data_types_task.bind(self.local_json_path, flow=self)
+            map_data_types_task.set_upstream(download_json_file_task, flow=self)
         else:
             dtypes = self.dtypes
 
