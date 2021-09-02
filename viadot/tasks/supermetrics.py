@@ -112,6 +112,27 @@ class SupermetricsToCSV(Task):
 
 
 class SupermetricsToDF(Task):
+    """
+    Task for downloading data from the Supermetrics API to a pandas DataFrame.
+
+    Args:
+        ds_id (str, optional): A Supermetrics query parameter.
+        ds_accounts (Union[str, List[str]], optional): A Supermetrics query parameter. Defaults to None.
+        ds_segments (List[str], optional): A Supermetrics query parameter. Defaults to None.
+        ds_user (str, optional): A Supermetrics query parameter. Defaults to None.
+        fields (List[str], optional): A Supermetrics query parameter. Defaults to None.
+        date_range_type (str, optional): A Supermetrics query parameter. Defaults to None.
+        settings (Dict[str, Any], optional): A Supermetrics query parameter. Defaults to None.
+        filter (str, optional): A Supermetrics query parameter. Defaults to None.
+        max_rows (int, optional): A Supermetrics query parameter. Defaults to None.
+        max_columns (int, optional): A Supermetrics query parameter. Defaults to None.
+        order_columns (str, optional): A Supermetrics query parameter. Defaults to None.
+        if_empty (str, optional): What to do if query returns no data. Defaults to "warn".
+        max_retries (int, optional): The maximum number of retries. Defaults to 5.
+        retry_delay (timedelta, optional): The delay between task retries. Defaults to 10 seconds.
+        timeout (int, optional): Task timeout. Defaults to 30 minuntes.
+    """
+
     def __init__(
         self,
         *args,
@@ -122,6 +143,7 @@ class SupermetricsToDF(Task):
         timeout: int = 60 * 30,
         **kwargs,
     ):
+
         self.if_empty = if_empty
         self.max_rows = max_rows
 
@@ -161,6 +183,29 @@ class SupermetricsToDF(Task):
         retry_delay: timedelta = None,
         timeout: int = None,
     ) -> pd.DataFrame:
+        """
+        Task run method.
+
+        Args:
+            ds_id (str, optional): A Supermetrics query parameter.
+            ds_accounts (Union[str, List[str]], optional): A Supermetrics query parameter. Defaults to None.
+            ds_segments (List[str], optional): A Supermetrics query parameter. Defaults to None.
+            ds_user (str, optional): A Supermetrics query parameter. Defaults to None.
+            fields (List[str], optional): A Supermetrics query parameter. Defaults to None.
+            date_range_type (str, optional): A Supermetrics query parameter. Defaults to None.
+            settings (Dict[str, Any], optional): A Supermetrics query parameter. Defaults to None.
+            filter (str, optional): A Supermetrics query parameter. Defaults to None.
+            max_rows (int, optional): A Supermetrics query parameter. Defaults to None.
+            max_columns (int, optional): A Supermetrics query parameter. Defaults to None.
+            order_columns (str, optional): A Supermetrics query parameter. Defaults to None.
+            if_empty (str, optional): What to do if query returns no data. Defaults to "warn".
+            max_retries (int, optional): The maximum number of retries. Defaults to 5.
+            retry_delay (timedelta, optional): The delay between task retries. Defaults to 10 seconds.
+            timeout (int, optional): Task timeout. Defaults to 30 minuntes.
+
+        Returns:
+            pd.DataFrame: The query result as a pandas DataFrame.
+        """
 
         if max_retries:
             self.max_retries = max_retries
