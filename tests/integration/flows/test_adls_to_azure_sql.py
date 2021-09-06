@@ -1,5 +1,3 @@
-import pytest
-
 from viadot.flows import ADLSToAzureSQL
 
 
