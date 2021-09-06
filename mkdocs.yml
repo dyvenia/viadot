@@ -1,7 +1,7 @@
 site_name: Viadot Docs
 site_url: "https://dyvenia.github.io/viadot/"
 nav:
-  - Home: home.md
+  - Home: index.md
   - Howtos:
       - "Config File": howtos/config_file.md
       - "Running a task": "howtos/running_tasks.md"
