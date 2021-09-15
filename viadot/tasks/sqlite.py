@@ -36,6 +36,17 @@ class SQLiteBulkInsert(Task):
 
 
 class SQLiteSQLtoDF(Task):
+    """
+    Task for downloading data from the SQLite to a pandas DataFrame.
+
+    SQLite will create a new database in the directory specified by the 'db_path' parameter.
+
+    Args:
+        db_path (str, optional): The path to the database to be used. Defaults to None.
+        sql_path (str, optional): The path to the text file containing the query. Defaults to None.
+
+    """
+
     def __init__(self, *args, db_path: str = None, sql_path: str = None, **kwargs):
         self.db_path = db_path
         self.sql_path = sql_path
@@ -46,7 +57,7 @@ class SQLiteSQLtoDF(Task):
         """Generate a DataFrame from a SQLite SQL query"""
 
     @defaults_from_attrs("db_path", "sql_path")
-    def run(self, sql_path: str = None, db_path: str = None):
+    def run(self, sql_path: str = None, db_path: str = None) -> pd.DataFrame:
 
         sqlite = SQLite(credentials=dict(db_name=db_path))
 

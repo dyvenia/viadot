@@ -1,25 +1,17 @@
 site_name: Viadot Docs
 site_url: "https://dyvenia.github.io/viadot/"
 nav:
-  - Home: home.md
+  - Home: index.md
   - Howtos:
       - "Config File": howtos/config_file.md
-      - Flows: howtos/flows.md
-      - "Get Excel file": howtos/uk_carbon_intensity.md
-      - "SQLtoDF": howtos/sqltodf.md
-      - "Insert data": howtos/insert.md
-      - "AzureDataLakeToDF": howtos/parquet_csv_to_df.md
-      - "Copy file from ADLS Gen1 to Gen2": howtos/copy_files_from_different_ADLS.md
-      - "Copy file within the ADLS": howtos/copy_from_container_to_containter_ADLS.md
-      - "Download file from ADLS": howto/download_file_from_ADLS.md
-      
+      - "Running a task": "howtos/running_tasks.md"
+      - Flows: howtos/flows.md 
   - Tutorials:
-      - Tutorials: tutorials/placeholder.md
+      - Tutorials: tutorials/adding_source.md
   - References:
       - "SQL Sources": references/sql_sources.md
       - "API Sources": references/api_sources.md
-      - "Tasks library": references/task_library.md
-      # - "Task library": references/sources.md
+      - "Task library": references/task_library.md
 theme:
   name: "material"
   features:
@@ -33,4 +25,7 @@ plugins:
         python:
           rendering:
             show_root_heading: yes
+markdown_extensions:
+  - pymdownx.highlight
+  - pymdownx.superfences
 dev_addr: "0.0.0.0:8000"

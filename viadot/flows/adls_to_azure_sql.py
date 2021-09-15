@@ -84,6 +84,7 @@ class ADLSToAzureSQL(Flow):
         overwrite_adls: bool = True,
         if_empty: str = "warn",
         adls_sp_credentials_secret: str = None,
+        dtypes: Dict[str, Any] = None,
         table: str = None,
         schema: str = None,
         if_exists: str = "replace",  # this applies to the full CSV file, not per chunk
@@ -110,6 +111,8 @@ class ADLSToAzureSQL(Flow):
             adls_sp_credentials_secret (str, optional): The name of the Azure Key Vault secret containing a dictionary with
             ACCOUNT_NAME and Service Principal credentials (TENANT_ID, CLIENT_ID, CLIENT_SECRET) for the Azure Data Lake.
             Defaults to None.
+            dtypes (dict, optional): Which custom data types should be used for SQL table creation task.
+            To be used only in case that dtypes need to be manually mapped - dtypes from raw schema file in use by default. Defaults to None.
             table (str, optional): Destination table. Defaults to None.
             schema (str, optional): Destination schema. Defaults to None.
             if_exists (str, optional): What to do if the table exists. Defaults to "replace".
@@ -128,6 +131,7 @@ class ADLSToAzureSQL(Flow):
             self.adls_path = get_key_value(key=adls_path)
 
         # Read schema info json from RAW
+        self.dtypes = dtypes
         self.adls_root_dir_path = os.path.split(self.adls_path)[0]
         self.adls_file_name = os.path.split(self.adls_path)[-1]
         extension = os.path.splitext(self.adls_path)[-1]
@@ -189,7 +193,19 @@ class ADLSToAzureSQL(Flow):
             sp_credentials_secret=self.adls_sp_credentials_secret,
             flow=self,
         )
-        dtypes = map_data_types_task.bind(self.local_json_path, flow=self)
+
+        if not self.dtypes:
+            download_json_file_task.bind(
+                from_path=self.json_shema_path,
+                to_path=self.local_json_path,
+                sp_credentials_secret=self.adls_sp_credentials_secret,
+                flow=self,
+            )
+            dtypes = map_data_types_task.bind(self.local_json_path, flow=self)
+            map_data_types_task.set_upstream(download_json_file_task, flow=self)
+        else:
+            dtypes = self.dtypes
+
         df_to_csv = df_to_csv_task.bind(
             df=df,
             path=self.local_file_path,
@@ -211,12 +227,6 @@ class ADLSToAzureSQL(Flow):
             vault_name=self.vault_name,
             flow=self,
         )
-        download_json_file_task.bind(
-            from_path=self.json_shema_path,
-            to_path=self.local_json_path,
-            sp_credentials_secret=self.adls_sp_credentials_secret,
-            flow=self,
-        )
         create_table_task.bind(
             schema=self.schema,
             table=self.table,
@@ -235,9 +245,9 @@ class ADLSToAzureSQL(Flow):
             flow=self,
         )
 
-        dtypes.set_upstream(download_json_file_task, flow=self)
+        # dtypes.set_upstream(download_json_file_task, flow=self)
         promote_to_conformed_task.set_upstream(df_to_csv, flow=self)
-        map_data_types_task.set_upstream(lake_to_df_task, flow=self)
+        # map_data_types_task.set_upstream(download_json_file_task, flow=self)
         create_table_task.set_upstream(df_to_csv, flow=self)
         promote_to_operations_task.set_upstream(promote_to_conformed_task, flow=self)
         bulk_insert_task.set_upstream(create_table_task, flow=self)

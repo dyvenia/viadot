@@ -1,18 +1,28 @@
+# Task library
 
 ::: viadot.tasks.open_apis.uk_carbon_intensity.StatsToCSV
-
 ::: viadot.tasks.open_apis.uk_carbon_intensity.StatsToExcel
 
-::: viadot.tasks.adls_container_to_container.py
+::: viadot.tasks.azure_data_lake.AzureDataLakeDownload
+::: viadot.tasks.azure_data_lake.AzureDataLakeUpload
+::: viadot.tasks.azure_data_lake.AzureDataLakeToDF
+::: viadot.tasks.azure_data_lake.AzureDataLakeCopy
+::: viadot.tasks.azure_data_lake.AzureDataLakeList
 
-::: viadot.tasks.adls_gen1_to_azure_sql_new.py
+::: viadot.tasks.azure_key_vault.AzureKeyVaultSecret
+::: viadot.tasks.azure_key_vault.CreateAzureKeyVaultSecret
+::: viadot.tasks.azure_key_vault.DeleteAzureKeyVaultSecret
 
-::: viadot.tasks.adls_gen1_to_gen2.py
+::: viadot.tasks.azure_sql.AzureSQLBulkInsert
+::: viadot.tasks.azure_sql.AzureSQLCreateTable
+::: viadot.tasks.azure_sql.AzureSQLDBQuery
 
-::: viadot.tasks.adls_to_azure_sql.py
+::: viadot.tasks.bcp.BCPTask
 
-::: viadot.tasks.azure_sql_transform.py
+::: viadot.tasks.great_expectations.RunGreatExpectationsValidation
 
-::: viadot.tasks.flow_of_flows.py
+::: viadot.tasks.sqlite.SQLiteInsert
+::: viadot.tasks.sqlite.SQLiteSQLtoDF
 
-::: viadot.tasks.supermetrics_to_azure_sql_v3.py
+::: viadot.tasks.supermetrics.SupermetricsToCSV
+::: viadot.tasks.supermetrics.SupermetricsToDF
