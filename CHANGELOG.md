@@ -6,6 +6,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+## [0.2.5] - 2021-09-20
+### Added
+- Added `start` and `end_date` parameters to `SupermetricsToADLS` flow
+- Added a tutorial on how to pull data from `Supermetrics`
+
 ## [0.2.4] - 2021-09-06
 ### Added
 - Added documentation (both docstrings and MKDocs docs) for multiple tasks
