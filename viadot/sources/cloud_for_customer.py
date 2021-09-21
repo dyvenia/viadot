@@ -1,29 +1,9 @@
 from .base import Source
-import pyodata
 import requests
 import pandas as pd
 from typing import Any, Dict, List
-from pyodata.v2.service import EntityContainer, EntityProxy
-
-
-class EntityContainerByKey(EntityContainer):
-    """
-    This class is overriding of pyodata class
-    It allows for EntityContainer['Employee'] instead of EntityContainer.Employee
-    """
-
-    def __getitem__(self, name):
-        return getattr(self, name)
-
-
-class EntityProxyByKey(EntityProxy):
-    """
-    This class is overriding of pyodata class
-    It allows for EntityProxy['Employee'] instead of EntityContainer.Employee
-    """
-
-    def __getitem__(self, name):
-        return getattr(self, name)
+import urllib
+from urllib.parse import urljoin
 
 
 class CloudForCustomers(Source):
@@ -34,54 +14,49 @@ class CloudForCustomers(Source):
     ----------
     api_url : str, optional
         The URL endpoint to call, by default northwind test API
+    endpoint : str, optional
+    params : Dict[str, Any] optional,
+             like filter parameters
     """
 
     def __init__(
         self,
         *args,
-        url: str = "http://services.odata.org/V2/Northwind/Northwind.svc/",
-        **kwargs,
+        url: str = None,
+        endpoint: str = None,
+        username: str = None,
+        password: str = None,
+        params: Dict[str, Any] = None,
+        **kwargs
     ):
         super().__init__(*args, **kwargs)
-        self.SERVICE_URL = url
-        self.source = pyodata.Client(self.SERVICE_URL, requests.Session())
+        self.API_URL = url
+        self.QUERY_ENDPOINT = endpoint
+        self.params = params
+        self.auth = (username, password)
 
-    def to_df(
-        self,
-        entity_name: str = None,
-        fields: List[str] = None,
-        if_empty: str = None,
-    ) -> pd.DataFrame:
-
-        if fields is not None and entity_name is not None:
-            df = pd.DataFrame(columns=fields)
-            entity = self.source.entity_sets
-            entity.__class__ = EntityContainerByKey
-            entity = self.source.entity_sets[entity_name]
-            entity_list = entity.get_entities()
-
-            for entity in entity_list.execute():
-                entity.__class__ = EntityProxyByKey
-                mini_dict = {}
-                for index, field in enumerate(fields):
-                    mini_dict[field] = entity[field]
-                df = df.append(mini_dict, ignore_index=True)
-            return df
-        else:
-            return pd.DataFrame([])
-
-    def to_json(self, entity_name: str = None, fields: List[str] = None):
-
-        url = f"{self.SERVICE_URL}{entity_name}?$format=json"
-        headers = {"Accept": "application/json"}
+    def to_json(self, fields: List[str] = None):
         try:
-            response = requests.get(url, params={}, headers=headers)
+            requests.utils.quote(self.params["filter"])
+            response = requests.get(
+                urljoin(self.API_URL, self.QUERY_ENDPOINT),
+                params=self.params,
+                auth=self.auth,
+            )
             dirty_json = response.json()
             clean_json = {}
             for element in dirty_json["d"]["results"]:
                 for key, object_of_interest in element.items():
-                    if key != "__metadata" and key != "Employee" and key in fields:
+                    if key != "__metadata" and key in fields:
                         clean_json[key] = object_of_interest
             return clean_json
         except requests.exceptions.HTTPError as e:
             return "Error: " + str(e)
+
+    def to_df(self, fields: List[str] = None, if_empty: str = None) -> pd.DataFrame:
+        if fields is not None:
+            data = self.to_json(fields=fields)
+            df = pd.DataFrame([data])
+            return df
+        else:
+            return pd.DataFrame([])
