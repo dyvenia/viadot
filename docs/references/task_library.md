@@ -9,20 +9,28 @@
 ::: viadot.tasks.azure_data_lake.AzureDataLakeCopy
 ::: viadot.tasks.azure_data_lake.AzureDataLakeList
 
+::: viadot.tasks.azure_blob_storage.BlobFromCSV
+
 ::: viadot.tasks.azure_key_vault.AzureKeyVaultSecret
 ::: viadot.tasks.azure_key_vault.CreateAzureKeyVaultSecret
 ::: viadot.tasks.azure_key_vault.DeleteAzureKeyVaultSecret
 
 ::: viadot.tasks.azure_sql.AzureSQLBulkInsert
 ::: viadot.tasks.azure_sql.AzureSQLCreateTable
+::: viadot.tasks.azure_sql.CreateTableFromBlob
 ::: viadot.tasks.azure_sql.AzureSQLDBQuery
 
 ::: viadot.tasks.bcp.BCPTask
 
 ::: viadot.tasks.great_expectations.RunGreatExpectationsValidation
 
+::: viadot.tasks.github.DownloadGitHubFile
+
 ::: viadot.tasks.sqlite.SQLiteInsert
 ::: viadot.tasks.sqlite.SQLiteSQLtoDF
 
 ::: viadot.tasks.supermetrics.SupermetricsToCSV
 ::: viadot.tasks.supermetrics.SupermetricsToDF
+
+:::viadot.task_utils.add_ingestion_metadata_task
+:::viadot.task_utils.get_latest_timestamp_file_path
