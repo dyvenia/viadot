@@ -152,6 +152,8 @@ class SupermetricsToADLS(Flow):
             fields (List[str]): A query parameter passed to the SupermetricsToCSV task
             ds_segments (List[str], optional): A query parameter passed to the SupermetricsToCSV task. Defaults to None.
             date_range_type (str, optional): A query parameter passed to the SupermetricsToCSV task. Defaults to None.
+            start_date (str, optional): A query paramter to pass start date to the date range filter. Defaults to None.
+            end_date (str, optional): A query paramter to pass end date to the date range filter. Defaults to None.
             settings (Dict[str, Any], optional): A query parameter passed to the SupermetricsToCSV task. Defaults to None.
             filter (str, optional): A query parameter passed to the SupermetricsToCSV task. Defaults to None.
             max_rows (int, optional): A query parameter passed to the SupermetricsToCSV task. Defaults to 1000000.

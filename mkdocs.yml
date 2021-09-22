@@ -11,7 +11,10 @@ nav:
   - References:
       - "SQL Sources": references/sql_sources.md
       - "API Sources": references/api_sources.md
+  - Task library:
       - "Task library": references/task_library.md
+      - "Flows library": references/flows_library.md
+
 theme:
   name: "material"
   features:
