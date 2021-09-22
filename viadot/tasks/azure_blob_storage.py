@@ -23,26 +23,12 @@ class BlobFromCSV(Task):
         """[summary]
 
         Args:
-            from_path (str): [description]
-            to_path (str): [description]
-            overwrite (bool, optional): [description]. Defaults to False.
+            from_path (str): The path from which to download the file(s). Defaults to None.
+            to_path (str): The destination path. Defaults to None.
+            overwrite (bool): Indicator what to do if file already exists. Defaults to False.
             sp_credentials_secret (str, optional): The name of the Azure KeyVault secret containing a dictionary with
             Service Principal credentials (TENANT_ID, CLIENT_ID, CLIENT_SECRET). Defaults to None.
             vault_name (str, optional): The name of the vault from which to obtain the secret. Defaults to None.
-
-        Example:
-            ```python
-            from prefect import Flow
-            from prefect.tasks.secrets import PrefectSecret
-            from viadot.tasks import AzureKeyVaultSecret
-
-            azure_secret_task = AzureKeyVaultSecret()
-
-            with Flow(name="example") as f:
-                azure_credentials = PrefectSecret("AZURE_CREDENTIALS")
-                secret = azure_secret_task(secret="test", vault_name="my_vault_name", credentials=azure_credentials)
-            out = f.run()
-            ```
         """
 
         # if sp_credentials_secret:
