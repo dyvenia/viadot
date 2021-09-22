@@ -9,7 +9,6 @@
 ::: viadot.tasks.azure_data_lake.AzureDataLakeCopy
 ::: viadot.tasks.azure_data_lake.AzureDataLakeList
 
-::: viadot.tasks.azure_blob_storage.BlobFromCSV
 
 ::: viadot.tasks.azure_key_vault.AzureKeyVaultSecret
 ::: viadot.tasks.azure_key_vault.CreateAzureKeyVaultSecret
@@ -17,14 +16,11 @@
 
 ::: viadot.tasks.azure_sql.AzureSQLBulkInsert
 ::: viadot.tasks.azure_sql.AzureSQLCreateTable
-::: viadot.tasks.azure_sql.CreateTableFromBlob
 ::: viadot.tasks.azure_sql.AzureSQLDBQuery
 
 ::: viadot.tasks.bcp.BCPTask
 
 ::: viadot.tasks.great_expectations.RunGreatExpectationsValidation
-
-::: viadot.tasks.github.DownloadGitHubFile
 
 ::: viadot.tasks.sqlite.SQLiteInsert
 ::: viadot.tasks.sqlite.SQLiteSQLtoDF
