@@ -24,4 +24,3 @@ PyGithub==1.55
 Shapely==1.7.1
 imagehash==4.2.1
 visions==0.7.1
-pyodata==1.7.1
