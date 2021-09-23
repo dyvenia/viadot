@@ -6,6 +6,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### Added
+- Source:
+  - `CloudForCustomers`
+- Added a test for `CloudForCustomers` source
+
 ## [0.2.4] - 2021-09-06
 ### Added
 - Added documentation (both docstrings and MKDocs docs) for multiple tasks
