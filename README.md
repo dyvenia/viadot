@@ -81,3 +81,8 @@ pip install -e .
 - any other relevant resources updated (esp. `viadot/docs`)
 
 Please follow the standards and best practices used within the library (eg. when adding tasks, see how other tasks are constructed, etc.). For any questions, please reach out to us here on GitHub.
+
+
+### Style guidelines
+- the code should be formatted with Black (easiest way is to use the VSCode extension)
+- commit messages begin with an emoji, then a description starting with one of the following verbs, capitalized: "Added", "Updated", "Removed", "Fixed", and, sporadically, other ones, such as "Upgraded", "Downgraded", or whatever you find relevant for your particular situation
