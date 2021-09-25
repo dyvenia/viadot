@@ -14,7 +14,12 @@ from prefect.utilities import logging
 from visions.functional import infer_type
 from visions.typesets.complete_set import CompleteSet
 
-from ..task_utils import add_ingestion_metadata_task
+from ..task_utils import (
+    add_ingestion_metadata_task,
+    df_get_data_types_task,
+    df_mapp_mixed_dtypes_for_parquet,
+    update_dtypes_dict,
+)
 from ..tasks import (
     AzureDataLakeUpload,
     DownloadGitHubFile,
@@ -49,9 +54,9 @@ def write_to_json(dict_, path):
     logger.debug(f"Successfully wrote to {path}.")
 
 
-@task
-def get_data_types(df: pd.DataFrame) -> dict:
-    df.dtypes.to_dict()
+# @task
+# def get_data_types(df: pd.DataFrame) -> dict:
+#     df.dtypes.to_dict()
 
 
 @task
@@ -59,12 +64,12 @@ def union_dfs_task(dfs: List[pd.DataFrame]):
     return pd.concat(dfs, ignore_index=True)
 
 
-@task
-def df_get_data_types_task(df):
-    typeset = CompleteSet()
-    dtypes = infer_type(df, typeset)
-    dtypes_dict = {k: str(v) for k, v in dtypes.items()}
-    return dtypes_dict
+# @task
+# def df_get_data_types_task(df):
+#     typeset = CompleteSet()
+#     dtypes = infer_type(df, typeset)
+#     dtypes_dict = {k: str(v) for k, v in dtypes.items()}
+#     return dtypes_dict
 
 
 @task
@@ -301,10 +306,15 @@ class SupermetricsToADLS(Flow):
             validation_upstream = validation
 
         df_with_metadata = add_ingestion_metadata_task.bind(df, flow=self)
+        dtypes_dict = df_get_data_types_task.bind(df_with_metadata, flow=self)
+
+        df_to_be_loaded = df_mapp_mixed_dtypes_for_parquet(
+            df_with_metadata, dtypes_dict, flow=self
+        )
 
         if self.output_file_extension == ".parquet":
             df_to_file = df_to_parquet_task.bind(
-                df=df_with_metadata,
+                df=df_to_be_loaded,
                 path=self.local_file_path,
                 if_exists=self.if_exists,
                 flow=self,
@@ -325,9 +335,10 @@ class SupermetricsToADLS(Flow):
             vault_name=self.vault_name,
             flow=self,
         )
-        dtypes_dict = df_get_data_types_task.bind(df_with_metadata, flow=self)
+
+        dtypes_updated = update_dtypes_dict(dtypes_dict, flow=self)
         dtypes_to_json_task.bind(
-            dtypes_dict=dtypes_dict, local_json_path=self.local_json_path, flow=self
+            dtypes_dict=dtypes_updated, local_json_path=self.local_json_path, flow=self
         )
         json_to_adls_task.bind(
             from_path=self.local_json_path,
@@ -341,6 +352,10 @@ class SupermetricsToADLS(Flow):
         write_json.set_upstream(df, flow=self)
         validation.set_upstream(write_json, flow=self)
         df_with_metadata.set_upstream(validation_upstream, flow=self)
+        df_to_be_loaded.set_upstream(dtypes_dict, flow=self)
+        dtypes_dict.set_upstream(df_with_metadata, flow=self)
+
+        dtypes_to_json_task.set_upstream(dtypes_updated, flow=self)
         file_to_adls_task.set_upstream(df_to_file, flow=self)
         json_to_adls_task.set_upstream(dtypes_to_json_task, flow=self)
         set_key_value(key=self.adls_dir_path, value=self.adls_file_path)
