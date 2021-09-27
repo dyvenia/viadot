@@ -223,31 +223,32 @@ class SQL(Source):
         Args:
             table (str): The destination table. Defaults to None.
             schema (str, optional): The destination schema. Defaults to None.
-            dtypes (Dict[str, Any], optional): [description]. Defaults to None.
-            if_exists (Literal, optional): [description]. Defaults to "fail".
+            dtypes (Dict[str, Any], optional): The data types to use for the table. Defaults to None.
+            if_exists (Literal, optional): What to do if the table already exists. Defaults to "fail".
 
         Returns:
             bool: Whether the operation was successful.
         """
-        if schema is None:
-            fqn = f"{table}"
-        else:
-            fqn = f"{schema}.{table}"
+        fqn = f"{schema}.{table}" if schema is not None else table
+        exists_query = (
+            f"SELECT * FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME='{fqn}'"
+        )
+        exists = bool(self.run(exists_query))
+
+        if exists:
+            if if_exists == "replace":
+                self.run(f"DROP TABLE {fqn}")
+            elif if_exists == "fail":
+                raise ValueError(
+                    "The table already exists and 'if_exists' is set to 'fail'."
+                )
+
         indent = "  "
         dtypes_rows = [
             indent + f'"{col}"' + " " + dtype for col, dtype in dtypes.items()
         ]
-
         dtypes_formatted = ",\n".join(dtypes_rows)
         create_table_sql = f"CREATE TABLE {fqn}(\n{dtypes_formatted}\n)"
-        if if_exists == "replace":
-            try:
-                if schema == None:
-                    self.run(f"DROP TABLE {table}")
-                else:
-                    self.run(f"DROP TABLE {schema}.{table}")
-            except:
-                pass
         self.run(create_table_sql)
         return True
 
