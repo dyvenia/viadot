@@ -54,22 +54,9 @@ def write_to_json(dict_, path):
     logger.debug(f"Successfully wrote to {path}.")
 
 
-# @task
-# def get_data_types(df: pd.DataFrame) -> dict:
-#     df.dtypes.to_dict()
-
-
 @task
 def union_dfs_task(dfs: List[pd.DataFrame]):
     return pd.concat(dfs, ignore_index=True)
-
-
-# @task
-# def df_get_data_types_task(df):
-#     typeset = CompleteSet()
-#     dtypes = infer_type(df, typeset)
-#     dtypes_dict = {k: str(v) for k, v in dtypes.items()}
-#     return dtypes_dict
 
 
 @task
