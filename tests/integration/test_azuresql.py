@@ -6,6 +6,7 @@ from viadot.sources.azure_sql import AzureSQL
 
 SCHEMA = "sandbox"
 TABLE = "test"
+TABLE_2 = "test2"
 
 
 @pytest.fixture(scope="session")
@@ -23,6 +24,7 @@ def azure_sql(TEST_CSV_FILE_PATH, TEST_CSV_FILE_BLOB_PATH):
 
     try:
         azure_sql.run(f"DROP TABLE {SCHEMA}.{TABLE}")
+        azure_sql.run(f"DROP TABLE {SCHEMA}.{TABLE_2}")
     except pyodbc.ProgrammingError:
         # in case tests end prematurely
         pass
@@ -36,6 +38,16 @@ def test_create_table(azure_sql):
     dtypes = {"country": "VARCHAR(100)", "sales": "FLOAT(24)"}
     result = azure_sql.create_table(
         schema=SCHEMA, table=TABLE, dtypes=dtypes, if_exists="replace"
+    )
+    assert result == True
+    table_object_id = azure_sql.run(f"SELECT OBJECT_ID('{SCHEMA}.{TABLE}', 'U')")[0][0]
+    assert table_object_id is not None
+
+
+def test_create_table_append(azure_sql):
+    dtypes = {"country": "VARCHAR(100)", "sales": "FLOAT(24)"}
+    result = azure_sql.create_table(
+        schema=SCHEMA, table=TABLE_2, dtypes=dtypes, if_exists="append"
     )
     assert result == True
     table_object_id = azure_sql.run(f"SELECT OBJECT_ID('{SCHEMA}.{TABLE}', 'U')")[0][0]
