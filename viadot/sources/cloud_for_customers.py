@@ -4,19 +4,17 @@ import pandas as pd
 from typing import Any, Dict, List
 import urllib
 from urllib.parse import urljoin
+from ..config import local_config
 
 
 class CloudForCustomers(Source):
     """
     Fetches data from Cloud for Customer.
 
-    Parameters
-    ----------
-    api_url : str, optional
-        The URL endpoint to call, by default northwind test API
-    endpoint : str, optional
-    params : Dict[str, Any] optional,
-             like filter parameters
+    Args:
+        url (str, optional): The url to the API. Defaults to None.
+        endpoint (str, optional): The endpoint of the API. Defaults to None.
+        params (Dict[str, Any]): The query parameters like filter by creation date time. Defaults to json format.
     """
 
     def __init__(
@@ -24,16 +22,15 @@ class CloudForCustomers(Source):
         *args,
         url: str = None,
         endpoint: str = None,
-        username: str = None,
-        password: str = None,
         params: Dict[str, Any] = {"$format": "json"},
         **kwargs
     ):
         super().__init__(*args, **kwargs)
+        credentials = local_config.get("CLOUD_FOR_CUSTOMERS")
         self.API_URL = url
         self.QUERY_ENDPOINT = endpoint
         self.params = params
-        self.auth = (username, password)
+        self.auth = (credentials["username"], credentials["password"])
 
     def to_json(self, fields: List[str] = None):
         try:
@@ -57,14 +54,6 @@ class CloudForCustomers(Source):
 
     def to_df(self, fields: List[str] = None, if_empty: str = None) -> pd.DataFrame:
         if fields != None:
-            data = self.to_json(fields=fields)
-            df = pd.DataFrame([data])
-            return df
-        else:
-            return pd.DataFrame([])
-
-    def to_df(self, fields: List[str] = None, if_empty: str = None) -> pd.DataFrame:
-        if fields is not None:
             data = self.to_json(fields=fields)
             df = pd.DataFrame([data])
             return df
