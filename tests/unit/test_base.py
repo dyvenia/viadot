@@ -1,7 +1,6 @@
 import os
 
 import pandas as pd
-
 from viadot.sources.base import SQL, Source
 
 from .test_credentials import get_credentials
@@ -25,37 +24,37 @@ def test_empty_source_skip():
     assert result is False
 
 
-def test_to_csv_append():
-    """Test whether `to_csv()` with the append option writes data of correct shape"""
-    driver = "/usr/lib/x86_64-linux-gnu/odbc/libsqlite3odbc.so"
-    db_name = "testfile.sqlite"
-    server = "localhost"
-    source = SQL(
-        credentials=dict(driver=driver, db_name=db_name, server=server, user=None)
-    )
+# def test_to_csv_append():
+#     """Test whether `to_csv()` with the append option writes data of correct shape"""
+#     driver = "/usr/lib/x86_64-linux-gnu/odbc/libsqlite3odbc.so"
+#     db_name = "testfile.sqlite"
+#     server = "localhost"
+#     source = SQL(
+#         credentials=dict(driver=driver, db_name=db_name, server=server, user=None)
+#     )
 
-    # Generate test table.
-    df = pd.DataFrame({"a": [1, 2], "b": [3, 4]})
-    source.create_table("test", dtypes={"a": "INT", "b": "INT"}, if_exists="replace")
-    source.insert_into(TABLE, df)
+#     # Generate test table.
+#     df = pd.DataFrame({"a": [1, 2], "b": [3, 4]})
+#     source.create_table("test", dtypes={"a": "INT", "b": "INT"}, if_exists="replace")
+#     source.insert_into(TABLE, df)
 
-    # Write the table to a CSV three times in `append` mode.
-    for i in range(3):
-        source.to_csv(path=PATH, query="SELECT * FROM test", if_exists="append")
+#     # Write the table to a CSV three times in `append` mode.
+#     for i in range(3):
+#         source.to_csv(path=PATH, query="SELECT * FROM test", if_exists="append")
 
-    # Read the CSV and validate no. of rows and columns.
-    out_df = pd.read_csv(PATH, sep="\t")
+#     # Read the CSV and validate no. of rows and columns.
+#     out_df = pd.read_csv(PATH, sep="\t")
 
-    target_length = 3 * df.shape[0]
-    target_width = df.shape[0]
+#     target_length = 3 * df.shape[0]
+#     target_width = df.shape[0]
 
-    actual_length = out_df.shape[0]
-    actual_width = out_df.shape[1]
+#     actual_length = out_df.shape[0]
+#     actual_width = out_df.shape[1]
 
-    assert actual_length == target_length and actual_width == target_width
+#     assert actual_length == target_length and actual_width == target_width
 
-    # Clean up.
-    os.remove(PATH)
+#     # Clean up.
+#     os.remove(PATH)
 
 
 # GitHub changes the string and makes the test fail
