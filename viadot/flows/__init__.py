@@ -7,3 +7,4 @@ from .flow_of_flows import Pipeline
 from .supermetrics_to_adls import SupermetricsToADLS
 from .supermetrics_to_azure_sql import SupermetricsToAzureSQL
 from .adls_container_to_container import ADLSContainerToContainer
+from .cloud_for_customers_to_adls import CloudForTasksToADLS
