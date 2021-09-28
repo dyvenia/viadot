@@ -32,7 +32,7 @@ class CloudForCustomers(Source):
         self.params = params
         self.auth = (credentials["username"], credentials["password"])
 
-    def to_json(self, fields: List[str] = None):
+    def to_json(self, fields: List[str] = None) -> List:
         try:
             for key, val in self.params.items():
                 if key != "$format":
@@ -43,19 +43,27 @@ class CloudForCustomers(Source):
                 auth=self.auth,
             )
             dirty_json = response.json()
-            clean_json = {}
+            entity_dict = {}
+            ids = 0
             for element in dirty_json["d"]["results"]:
+                new_entity = {}
                 for key, object_of_interest in element.items():
                     if key != "__metadata" and key in fields:
-                        clean_json[key] = object_of_interest
-            return clean_json
+                        new_entity[key] = object_of_interest
+                entity_dict[ids] = new_entity
+                ids += 1
+            return entity_dict
+
         except requests.exceptions.HTTPError as e:
             return "Error: " + str(e)
 
     def to_df(self, fields: List[str] = None, if_empty: str = None) -> pd.DataFrame:
+        df = pd.DataFrame([])
         if fields != None:
-            data = self.to_json(fields=fields)
-            df = pd.DataFrame([data])
+            entity_dict = self.to_json(fields=fields)
+            for k, val in entity_dict.items():
+                new_df = pd.DataFrame([val])
+                df = df.append(new_df, ignore_index=True)
             return df
         else:
-            return pd.DataFrame([])
+            return df
