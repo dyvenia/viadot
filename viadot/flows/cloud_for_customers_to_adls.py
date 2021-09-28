@@ -39,7 +39,7 @@ def df_to_csv_task(df, path: str, if_exists: str = "replace"):
     out_df.to_csv(path, index=False)
 
 
-class CloudForTasksToADLS(Flow):
+class CloudForCustomersTasksToADLS(Flow):
     def __init__(
         self,
         url: str,
