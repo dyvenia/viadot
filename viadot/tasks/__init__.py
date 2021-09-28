@@ -22,3 +22,4 @@ from .github import DownloadGitHubFile
 from .great_expectations import RunGreatExpectationsValidation
 from .sqlite import SQLiteBulkInsert, SQLiteInsert, SQLiteSQLtoDF
 from .supermetrics import SupermetricsToCSV, SupermetricsToDF
+from .cloud_for_customers import CloudForCustomersToCSV, CloudForCustomersToDF
