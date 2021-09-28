@@ -32,7 +32,7 @@ class CloudForCustomers(Source):
         self.params = params
         self.auth = (credentials["username"], credentials["password"])
 
-    def to_json(self, fields: List[str] = None) -> List:
+    def to_json(self, fields: List[str] = None):
         try:
             for key, val in self.params.items():
                 if key != "$format":
