@@ -211,12 +211,20 @@ class SQL(Source):
             df = pd.DataFrame()
         return df
 
+    def _check_if_table_exists(self, table: str, schema: str = None) -> bool:
+        fqn = f"{schema}.{table}" if schema is not None else table
+        exists_query = (
+            f"SELECT * FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME='{fqn}'"
+        )
+        exists = bool(self.run(exists_query))
+        return exists
+
     def create_table(
         self,
         table: str,
         schema: str = None,
         dtypes: Dict[str, Any] = None,
-        if_exists: Literal["fail", "replace"] = "fail",
+        if_exists: Literal["fail", "replace", "skip"] = "fail",
     ) -> bool:
         """Create a table.
 
@@ -230,11 +238,7 @@ class SQL(Source):
             bool: Whether the operation was successful.
         """
         fqn = f"{schema}.{table}" if schema is not None else table
-        exists_query = (
-            f"SELECT * FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME='{fqn}'"
-        )
-        exists = bool(self.run(exists_query))
-
+        exists = self._check_if_table_exists(schema, table)
         if exists:
             if if_exists == "replace":
                 self.run(f"DROP TABLE {fqn}")
