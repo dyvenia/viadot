@@ -27,43 +27,36 @@ class CloudForCustomers(Source):
     ):
         super().__init__(*args, **kwargs)
         credentials = local_config.get("CLOUD_FOR_CUSTOMERS")
-        self.API_URL = url
-        self.QUERY_ENDPOINT = endpoint
+        self.api_url = url
+        self.query_endpoint = endpoint
         self.params = params
         self.auth = (credentials["username"], credentials["password"])
 
-    def to_json(self, fields: List[str] = None):
-        try:
-            for key, val in self.params.items():
-                if key != "$format":
-                    requests.utils.quote(self.params.get(key))
-            response = requests.get(
-                urljoin(self.API_URL, self.QUERY_ENDPOINT),
-                params=self.params,
-                auth=self.auth,
-            )
-            dirty_json = response.json()
-            entity_dict = {}
-            ids = 0
-            for element in dirty_json["d"]["results"]:
-                new_entity = {}
-                for key, object_of_interest in element.items():
-                    if key != "__metadata" and key in fields:
-                        new_entity[key] = object_of_interest
-                entity_dict[ids] = new_entity
-                ids += 1
-            return entity_dict
+    def to_records(self, fields: List[str] = None) -> List:
 
-        except requests.exceptions.HTTPError as e:
-            return "Error: " + str(e)
+        for key, val in self.params.items():
+            if key != "$format":
+                requests.utils.quote(self.params.get(key))
+        response = requests.get(
+            urljoin(self.api_url, self.query_endpoint),
+            params=self.params,
+            auth=self.auth,
+        )
+        dirty_json = response.json()
+        entity_list = []
+        for element in dirty_json["d"]["results"]:
+            new_entity = {}
+            for key, object_of_interest in element.items():
+                if key != "__metadata" and key in fields:
+                    new_entity[key] = object_of_interest
+            entity_list.append(new_entity)
+        return entity_list
 
     def to_df(self, fields: List[str] = None, if_empty: str = None) -> pd.DataFrame:
         df = pd.DataFrame([])
         if fields != None:
-            entity_dict = self.to_json(fields=fields)
-            for k, val in entity_dict.items():
-                new_df = pd.DataFrame([val])
-                df = df.append(new_df, ignore_index=True)
+            records = self.to_records(fields=fields)
+            df = pd.DataFrame(data=records)
             return df
         else:
             return df
