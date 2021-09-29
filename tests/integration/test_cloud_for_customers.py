@@ -33,19 +33,3 @@ def test_csv(cloud_for_customers):
         path=TEST_FILE_1, fields=["EmployeeID", "FirstName", "LastName"]
     )
     assert os.path.isfile(TEST_FILE_1) == True
-
-
-def test_connections():
-    credentials = local_config.get("CLOUD_FOR_CUSTOMERS")
-    url = "https://my336539.crm.ondemand.com/sap/c4c/odata/v1/c4codataapi/"
-    endpoint = "ServiceRequestCollection"
-    c4c = CloudForCustomers(
-        url=url,
-        endpoint=endpoint,
-        username=credentials["username"],
-        password=credentials["password"],
-    )
-    df = c4c.to_df(
-        fields=["ProductRecipientPartyName", "CreationDateTime", "CreatedBy"]
-    )
-    assert df.empty == False
