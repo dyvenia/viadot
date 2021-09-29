@@ -33,24 +33,26 @@ class CloudForCustomers(Source):
         self.auth = (credentials["username"], credentials["password"])
 
     def to_records(self, fields: List[str] = None) -> List:
-
-        for key, val in self.params.items():
-            if key != "$format":
-                requests.utils.quote(self.params.get(key))
-        response = requests.get(
-            urljoin(self.api_url, self.query_endpoint),
-            params=self.params,
-            auth=self.auth,
-        )
-        dirty_json = response.json()
-        entity_list = []
-        for element in dirty_json["d"]["results"]:
-            new_entity = {}
-            for key, object_of_interest in element.items():
-                if key != "__metadata" and key in fields:
-                    new_entity[key] = object_of_interest
-            entity_list.append(new_entity)
-        return entity_list
+        try:
+            for key, val in self.params.items():
+                if key != "$format":
+                    requests.utils.quote(self.params.get(key))
+            response = requests.get(
+                urljoin(self.api_url, self.query_endpoint),
+                params=self.params,
+                auth=self.auth,
+            )
+            dirty_json = response.json()
+            entity_list = []
+            for element in dirty_json["d"]["results"]:
+                new_entity = {}
+                for key, object_of_interest in element.items():
+                    if key != "__metadata" and key in fields:
+                        new_entity[key] = object_of_interest
+                entity_list.append(new_entity)
+            return entity_list
+        except requests.exceptions.HTTPError as e:
+            return "Error: " + str(e)
 
     def to_df(self, fields: List[str] = None, if_empty: str = None) -> pd.DataFrame:
         df = pd.DataFrame([])
