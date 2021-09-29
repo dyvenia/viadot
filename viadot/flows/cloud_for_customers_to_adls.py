@@ -39,6 +39,19 @@ def df_to_csv_task(df, path: str, if_exists: str = "replace"):
     out_df.to_csv(path, index=False)
 
 
+@task
+def df_to_parquet_task(df, path: str, if_exists: str = "replace"):
+    if if_exists == "append":
+        if os.path.isfile(path):
+            parquet_df = pd.read_parquet(path)
+            out_df = pd.concat([parquet_df, df])
+        else:
+            out_df = df
+    elif if_exists == "replace":
+        out_df = df
+    out_df.to_parquet(path, index=False)
+
+
 class CloudForCustomersToADLS(Flow):
     def __init__(
         self,
@@ -90,12 +103,20 @@ class CloudForCustomersToADLS(Flow):
 
         df_with_metadata = add_ingestion_metadata_task.bind(df, flow=self)
 
-        df_to_file = df_to_csv_task.bind(
-            df=df_with_metadata,
-            path=self.local_file_path,
-            if_exists=self.if_exists,
-            flow=self,
-        )
+        if self.output_file_extension == ".parquet":
+            df_to_file = df_to_parquet_task.bind(
+                df=df_with_metadata,
+                path=self.local_file_path,
+                if_exists=self.if_exists,
+                flow=self,
+            )
+        else:
+            df_to_file = df_to_csv_task.bind(
+                df=df_with_metadata,
+                path=self.local_file_path,
+                if_exists=self.if_exists,
+                flow=self,
+            )
 
         file_to_adls_task.bind(
             from_path=self.local_file_path,
