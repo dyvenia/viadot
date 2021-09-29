@@ -2,7 +2,6 @@ from .base import Source
 import requests
 import pandas as pd
 from typing import Any, Dict, List
-import urllib
 from urllib.parse import urljoin
 from ..config import local_config
 
@@ -34,25 +33,25 @@ class CloudForCustomers(Source):
 
     def to_records(self, fields: List[str] = None) -> List:
         try:
-            for key, val in self.params.items():
-                if key != "$format":
-                    requests.utils.quote(self.params.get(key))
             response = requests.get(
                 urljoin(self.api_url, self.query_endpoint),
                 params=self.params,
                 auth=self.auth,
             )
-            dirty_json = response.json()
-            entity_list = []
-            for element in dirty_json["d"]["results"]:
-                new_entity = {}
-                for key, object_of_interest in element.items():
-                    if key != "__metadata" and key in fields:
-                        new_entity[key] = object_of_interest
-                entity_list.append(new_entity)
-            return entity_list
-        except requests.exceptions.HTTPError as e:
-            return "Error: " + str(e)
+            response.raise_for_status()
+
+        except Exception as e:
+            raise
+
+        dirty_json = response.json()
+        entity_list = []
+        for element in dirty_json["d"]["results"]:
+            new_entity = {}
+            for key, object_of_interest in element.items():
+                if key != "__metadata" and key in fields:
+                    new_entity[key] = object_of_interest
+            entity_list.append(new_entity)
+        return entity_list
 
     def to_df(self, fields: List[str] = None, if_empty: str = None) -> pd.DataFrame:
         df = pd.DataFrame([])
