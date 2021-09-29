@@ -33,3 +33,14 @@ def test_csv(cloud_for_customers):
         path=TEST_FILE_1, fields=["EmployeeID", "FirstName", "LastName"]
     )
     assert os.path.isfile(TEST_FILE_1) == True
+
+
+def test_credentials():
+    credentials = local_config.get("CLOUD_FOR_CUSTOMERS")
+    url = credentials["server"]
+    endpoint = "ServiceRequestCollection"
+    c4c = CloudForCustomers(url=url, endpoint=endpoint)
+    df = c4c.to_df(
+        fields=["ProductRecipientPartyName", "CreationDateTime", "CreatedBy"]
+    )
+    assert df.empty == False
