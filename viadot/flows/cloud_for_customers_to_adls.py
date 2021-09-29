@@ -79,20 +79,14 @@ class CloudForCustomersToADLS(Flow):
 
         self.gen_flow()
 
-    def cloud_for_customers_to_df_task(self, flow: Flow = None) -> Task:
+    def gen_flow(self) -> Flow:
 
-        c4c_df = cloud_for_customers_to_df_task.bind(
+        df = cloud_for_customers_to_df_task.bind(
             url=self.url,
             endpoint=self.endpoint,
             fields=self.fields,
-            flow=flow,
+            flow=self,
         )
-
-        return c4c_df
-
-    def gen_flow(self) -> Flow:
-
-        df = self.cloud_for_customers_to_df_task(flow=self)
 
         df_with_metadata = add_ingestion_metadata_task.bind(df, flow=self)
 
