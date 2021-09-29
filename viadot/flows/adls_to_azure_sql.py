@@ -80,7 +80,8 @@ class ADLSToAzureSQL(Flow):
         name: str,
         local_file_path: str = None,
         adls_path: str = None,
-        sep: str = "\t",
+        read_sep: str = "\t",
+        write_sep: str = "\t",
         overwrite_adls: bool = True,
         if_empty: str = "warn",
         adls_sp_credentials_secret: str = None,
@@ -105,7 +106,8 @@ class ADLSToAzureSQL(Flow):
             local_file_path (str, optional): Local destination path. Defaults to None.
             adls_path (str): The path to an ADLS folder or file. If you pass a path to a directory,
             the latest file from that directory will be loaded. We assume that the files are named using timestamps.
-            sep (str, optional): The separator to use in the CSV. Defaults to "\t".
+            read_sep (str, optional): The delimiter for the source file. Defaults to "\t".
+            write_sep (str, optional): The delimiter for the output CSV file. Defaults to "\t".
             overwrite_adls (bool, optional): Whether to overwrite the file in ADLS. Defaults to True.
             if_empty (str, optional): What to do if the Supermetrics query returns no data. Defaults to "warn".
             adls_sp_credentials_secret (str, optional): The name of the Azure Key Vault secret containing a dictionary with
@@ -145,7 +147,8 @@ class ADLSToAzureSQL(Flow):
         # AzureDataLakeUpload
         self.local_file_path = local_file_path or self.slugify(name) + ".csv"
         self.local_json_path = self.slugify(name) + ".json"
-        self.sep = sep
+        self.read_sep = read_sep
+        self.write_sep = write_sep
         self.overwrite_adls = overwrite_adls
         self.if_empty = if_empty
         self.adls_sp_credentials_secret = adls_sp_credentials_secret
@@ -191,6 +194,7 @@ class ADLSToAzureSQL(Flow):
         df = lake_to_df_task.bind(
             path=adls_raw_file_path,
             sp_credentials_secret=self.adls_sp_credentials_secret,
+            sep=self.read_sep,
             flow=self,
         )
 
@@ -209,7 +213,7 @@ class ADLSToAzureSQL(Flow):
         df_to_csv = df_to_csv_task.bind(
             df=df,
             path=self.local_file_path,
-            sep=self.sep,
+            sep=self.write_sep,
             flow=self,
         )
         promote_to_conformed_task.bind(
