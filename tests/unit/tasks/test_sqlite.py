@@ -30,7 +30,6 @@ def create_test_sql_file_notselect():
         sql_file.write("INSERT ...")
     yield
     os.remove(SQL_PATH_NOTSELECT)
-    sqlite_query_task.run(query=f"DROP TABLE {TABLE}")
 
 
 def test_query_select(create_test_sql_file_select):
