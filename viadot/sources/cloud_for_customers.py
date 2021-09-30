@@ -49,7 +49,8 @@ class CloudForCustomers(Source):
             new_entity = {}
             for key, object_of_interest in element.items():
                 if key != "__metadata" and key != "Photo" and key != "":
-                    new_entity[key] = object_of_interest
+                    if "{" not in str(object_of_interest):
+                        new_entity[key] = object_of_interest
             entity_list.append(new_entity)
         return entity_list
 
