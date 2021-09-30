@@ -212,10 +212,7 @@ class SQL(Source):
         return df
 
     def _check_if_table_exists(self, table: str, schema: str = None) -> bool:
-        fqn = f"{schema}.{table}" if schema is not None else table
-        exists_query = (
-            f"SELECT * FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME='{fqn}'"
-        )
+        exists_query = f"SELECT * FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA = '{schema}' AND TABLE_NAME='{table}'"
         exists = bool(self.run(exists_query))
         return exists
 
@@ -238,7 +235,8 @@ class SQL(Source):
             bool: Whether the operation was successful.
         """
         fqn = f"{schema}.{table}" if schema is not None else table
-        exists = self._check_if_table_exists(schema, table)
+        exists = self._check_if_table_exists(schema=schema, table=table)
+
         if exists:
             if if_exists == "replace":
                 self.run(f"DROP TABLE {fqn}")

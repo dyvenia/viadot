@@ -7,7 +7,7 @@ from viadot.sources import AzureBlobStorage, AzureSQL, Supermetrics
 
 SUPERMETRICS_CREDENTIALS = local_config.get("SUPERMETRICS")
 FILE_PATH = "/home/viadot/tests/integration/test_supermetrics.csv"
-BLOB_PATH = "testing/supermetrics/test_supermetrics.csv"
+BLOB_PATH = "tests/supermetrics/test_supermetrics.csv"
 
 SCHEMA = "sandbox"
 TABLE = "test_supermetrics"
@@ -68,6 +68,7 @@ def test_upload(azstorage):
 
 def test_bulk_insert():
     azuresql = AzureSQL(config_key="AZURE_SQL")
+
     azuresql.create_table(
         schema=SCHEMA, table=TABLE, dtypes=dtypes, if_exists="replace"
     )
