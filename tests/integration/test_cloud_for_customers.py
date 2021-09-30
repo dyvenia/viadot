@@ -18,9 +18,9 @@ def cloud_for_customers():
     os.remove(TEST_FILE_1)
 
 
-def test_to_json(cloud_for_customers):
-    data = cloud_for_customers.to_json(fields=["EmployeeID", "FirstName", "LastName"])
-    assert "EmployeeID" in data
+def test_to_records(cloud_for_customers):
+    data = cloud_for_customers.to_records()
+    assert "EmployeeID" in data[0].keys()
 
 
 def test_to_df(cloud_for_customers):
