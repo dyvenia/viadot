@@ -55,9 +55,9 @@ def df_to_parquet_task(df, path: str, if_exists: str = "replace"):
 class CloudForCustomersToADLS(Flow):
     def __init__(
         self,
-        url: str,
-        endpoint: str,
-        name: str,
+        url: str = None,
+        endpoint: str = None,
+        name: str = None,
         adls_sp_credentials_secret: str = None,
         fields: List[str] = None,
         local_file_path: str = None,

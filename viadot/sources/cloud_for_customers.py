@@ -26,12 +26,12 @@ class CloudForCustomers(Source):
     ):
         super().__init__(*args, **kwargs)
         credentials = local_config.get("CLOUD_FOR_CUSTOMERS")
-        self.api_url = url
+        self.api_url = url or credentials["server"]
         self.query_endpoint = endpoint
         self.params = params
         self.auth = (credentials["username"], credentials["password"])
 
-    def to_records(self, fields: List[str] = None) -> List:
+    def to_records(self) -> List:
         try:
             response = requests.get(
                 urljoin(self.api_url, self.query_endpoint),
@@ -48,16 +48,14 @@ class CloudForCustomers(Source):
         for element in dirty_json["d"]["results"]:
             new_entity = {}
             for key, object_of_interest in element.items():
-                if key != "__metadata" and key in fields:
+                if key != "__metadata" and key != "Photo" and key != "":
                     new_entity[key] = object_of_interest
             entity_list.append(new_entity)
         return entity_list
 
     def to_df(self, fields: List[str] = None, if_empty: str = None) -> pd.DataFrame:
-        df = pd.DataFrame([])
-        if fields != None:
-            records = self.to_records(fields=fields)
-            df = pd.DataFrame(data=records)
-            return df
-        else:
-            return df
+        records = self.to_records()
+        df = pd.DataFrame(data=records)
+        if fields:
+            return df[fields]
+        return df
