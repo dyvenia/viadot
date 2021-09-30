@@ -20,5 +20,5 @@ from .azure_sql import (
 from .bcp import BCPTask
 from .github import DownloadGitHubFile
 from .great_expectations import RunGreatExpectationsValidation
-from .sqlite import SQLiteBulkInsert, SQLiteInsert, SQLiteSQLtoDF
+from .sqlite import SQLiteInsert, SQLiteSQLtoDF, SQLiteQuery
 from .supermetrics import SupermetricsToCSV, SupermetricsToDF

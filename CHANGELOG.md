@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 ### Added
 - Added handling for `if_exists="append"` in `SQL.create_table()`
+- Added the `SQLiteQuery` task
 
 ## [0.2.6] - 2021-09-22
 ### Added
