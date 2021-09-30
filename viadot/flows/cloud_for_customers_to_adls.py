@@ -58,6 +58,7 @@ class CloudForCustomersToADLS(Flow):
         url: str = None,
         endpoint: str = None,
         name: str = None,
+        params: Dict[str, Any] = {},
         adls_sp_credentials_secret: str = None,
         fields: List[str] = None,
         local_file_path: str = None,
@@ -74,6 +75,7 @@ class CloudForCustomersToADLS(Flow):
         self.url = url
         self.endpoint = endpoint
         self.fields = fields
+        self.params = params
 
         # AzureDataLakeUpload
         self.adls_sp_credentials_secret = adls_sp_credentials_secret
@@ -98,6 +100,7 @@ class CloudForCustomersToADLS(Flow):
             url=self.url,
             endpoint=self.endpoint,
             fields=self.fields,
+            params=self.params,
             flow=self,
         )
 

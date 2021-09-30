@@ -21,7 +21,7 @@ class CloudForCustomers(Source):
         *args,
         url: str = None,
         endpoint: str = None,
-        params: Dict[str, Any] = {"$format": "json"},
+        params: Dict[str, Any] = {},
         **kwargs
     ):
         super().__init__(*args, **kwargs)
@@ -29,6 +29,7 @@ class CloudForCustomers(Source):
         self.api_url = url or credentials["server"]
         self.query_endpoint = endpoint
         self.params = params
+        self.params["$format"] = "json"
         self.auth = (credentials["username"], credentials["password"])
 
     def to_records(self) -> List:
@@ -49,6 +50,7 @@ class CloudForCustomers(Source):
             new_entity = {}
             for key, object_of_interest in element.items():
                 if key != "__metadata" and key != "Photo" and key != "":
+                    # skip the column which contain nested structure
                     if "{" not in str(object_of_interest):
                         new_entity[key] = object_of_interest
             entity_list.append(new_entity)

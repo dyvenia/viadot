@@ -49,9 +49,12 @@ class CloudForCustomersToCSV(Task):
         if_exists: str = None,
         if_empty: str = None,
         sep: str = None,
+        params: Dict[str, Any] = {},
     ):
 
-        cloud_for_customers = CloudForCustomers(url=url, endpoint=endpoint)
+        cloud_for_customers = CloudForCustomers(
+            url=url, endpoint=endpoint, params=params
+        )
 
         # Download data to a local CSV file
         self.logger.info(f"Downloading data to {path}...")
@@ -86,9 +89,12 @@ class CloudForCustomersToDF(Task):
         url: str = None,
         endpoint: str = None,
         fields: List[str] = None,
+        params: Dict[str, Any] = {},
     ):
 
-        cloud_for_customers = CloudForCustomers(url=url, endpoint=endpoint)
+        cloud_for_customers = CloudForCustomers(
+            url=url, endpoint=endpoint, params=params
+        )
 
         df = cloud_for_customers.to_df(if_empty=self.if_empty, fields=fields)
         self.logger.info(f"Successfully downloaded data to a DataFrame.")
