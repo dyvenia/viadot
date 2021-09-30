@@ -5,8 +5,8 @@ from viadot.sources.azure_blob_storage import AzureBlobStorage
 from viadot.sources.azure_sql import AzureSQL
 
 SCHEMA = "sandbox"
-TABLE = "test"
-TABLE_2 = "test2"
+TABLE = "test_azure_sql"
+TABLE_2 = "test_azure_sql_2"
 
 
 @pytest.fixture(scope="session")
