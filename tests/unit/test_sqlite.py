@@ -27,7 +27,7 @@ def test_conn_str(sqlite):
 def test_create_table(sqlite):
     dtypes = {"country": "VARCHAR(100)", "sales": "FLOAT(24)"}
     result = sqlite.create_table(table=TABLE, dtypes=dtypes, if_exists="replace")
-    assert result == True
+    assert result is True
 
 
 def test_insert_into_sql(sqlite, DF):
