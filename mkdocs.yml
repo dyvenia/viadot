@@ -6,12 +6,13 @@ nav:
       - "Config File": howtos/config_file.md
       - "Running a task": "howtos/running_tasks.md"
       - Flows: howtos/flows.md 
-  - Tutorials:
-      - Tutorials: tutorials/adding_source.md
+  - Tutorials: tutorials/adding_source.md
   - References:
       - "SQL Sources": references/sql_sources.md
       - "API Sources": references/api_sources.md
-      - "Task library": references/task_library.md
+      - "Flows library": references/flows_library.md
+  - Task library: references/task_library.md
+
 theme:
   name: "material"
   features:
