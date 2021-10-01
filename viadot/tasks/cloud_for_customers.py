@@ -13,20 +13,20 @@ class CloudForCustomersToCSV(Task):
     Task for downloading data from the Cloud For Customers to a csv file.
 
     Args:
+        if_exists (str, optional): What to do if the table already exists.
         if_empty (str, optional): What to do if query returns no data. Defaults to "warn".
+        sep: The separator used in csv file by default '\t',
     """
 
     def __init__(
         self,
         *args,
-        path: str = "cloud_for_customers_extract.csv",
         if_exists: str = "replace",
         if_empty: str = "warn",
         sep="\t",
         **kwargs,
     ):
 
-        self.path = path
         self.if_exists = if_exists
         self.if_empty = if_empty
         self.sep = sep
@@ -41,29 +41,22 @@ class CloudForCustomersToCSV(Task):
         """Download Cloud For Customers data to a CSV"""
         super().__call__(self)
 
-    @defaults_from_attrs(
-        "path",
-        "if_exists",
-        "if_empty",
-        "sep",
-    )
     def run(
         self,
-        path: str = None,
+        path: str = "cloud_for_customers_extract.csv",
         url: str = None,
         endpoint: str = None,
         fields: List[str] = None,
-        if_exists: str = None,
-        if_empty: str = None,
-        sep: str = None,
         params: Dict[str, Any] = {},
     ):
         """
         Run Task CloudForCustomersToCSV.
 
         Args:
+            path (str, optional): The path to the output file. By default in current dir with filename "cloud_for_customers_extract.csv".
             url (str, optional): The url to the API. Defaults value from credential.json file.
             endpoint (str, optional): The endpoint of the API. Defaults to None.
+            fields (List, optional): The appropriate columns of interest, by default the task returns each column.
             params (Dict[str, Any]): The query parameters like filter by creation date time. Defaults to json format.
         """
         cloud_for_customers = CloudForCustomers(
@@ -73,7 +66,11 @@ class CloudForCustomersToCSV(Task):
         # Download data to a local CSV file
         self.logger.info(f"Downloading data to {path}...")
         cloud_for_customers.to_csv(
-            path=path, if_exists=if_exists, if_empty=if_empty, sep=sep, fields=fields
+            path=path,
+            if_exists=self.if_exists,
+            if_empty=self.if_empty,
+            sep=self.sep,
+            fields=fields,
         )
         self.logger.info(f"Successfully downloaded data to {path}.")
 
@@ -118,6 +115,7 @@ class CloudForCustomersToDF(Task):
         Args:
             url (str, optional): The url to the API. Defaults value from credential.json file.
             endpoint (str, optional): The endpoint of the API. Defaults to None.
+            fields (List, optional): The appropriate columns of interest, by default the task returns each column.
             params (Dict[str, Any]): The query parameters like filter by creation date time. Defaults to json format.
         """
         cloud_for_customers = CloudForCustomers(
