@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 ### Added
 - Added the `SQLiteQuery` task
+- Added style guidelines to the `README`
 
 ### Changed
 - Modified `ADLSToAzureSQL` - *read_sep* and *write_sep* parameters added to the flow.
