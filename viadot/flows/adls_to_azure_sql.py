@@ -184,12 +184,12 @@ class ADLSToAzureSQL(Flow):
 
     def get_promoted_path(self, env: str) -> str:
         adls_path_clean = self.adls_path.strip("/")
-        extension = adls_path_clean.split(".")[-1]
-        if extension in ["csv", "parquet"]:
+        extension = adls_path_clean.split(".")[-1].strip()
+        if extension == "parquet":
             file_name = adls_path_clean.split("/")[-2] + ".csv"
             common_path = "/".join(adls_path_clean.split("/")[1:-2])
         else:
-            file_name = adls_path_clean.split("/")[-1] + ".csv"
+            file_name = adls_path_clean.split("/")[-1]
             common_path = "/".join(adls_path_clean.split("/")[1:-1])
 
         promoted_path = os.path.join(env, common_path, file_name)
