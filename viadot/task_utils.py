@@ -3,6 +3,11 @@ from datetime import datetime, timezone
 from typing import List
 
 import pandas as pd
+
+import visions
+from visions.functional import infer_type
+from visions.typesets.complete_set import CompleteSet
+
 import prefect
 from prefect import task
 from prefect.storage import Git
@@ -52,6 +57,53 @@ def chunk_df(df: pd.DataFrame, size: int = 10_000) -> List[pd.DataFrame]:
     n_rows = df.shape[0]
     chunks = [df[i : i + size] for i in range(0, n_rows, size)]
     return chunks
+
+
+@task
+def df_get_data_types_task(df: pd.DataFrame) -> dict:
+    typeset = CompleteSet()
+    dtypes = infer_type(df, typeset)
+    dtypes_dict = {k: str(v) for k, v in dtypes.items()}
+    return dtypes_dict
+
+
+@task
+def df_mapp_mixed_dtypes_for_parquet(df, dtypes_dict) -> pd.DataFrame:
+    """
+    Pandas is not able to handle mixed dtypes in the column in to_parquet
+    Mapping 'object' visions dtype to 'string' dtype to allow Pandas to_parquet
+
+    Args:
+        dict_dtypes_mapped (dict): Data types dictionary inferenced by Visions
+        df (pd.DataFrame): input DataFrame.
+
+    Returns:
+        df_mapped (pd.DataFrame): Pandas DataFrame with mapped Data Types to workaround Pandas to_parquet bug connected with mixed dtypes in object:.
+    """
+
+    df_mapped = df.copy()
+    for col, dtype in dtypes_dict.items():
+        if dtype == "Object":
+            df_mapped[col] = df_mapped[col].astype("string")
+    return df_mapped
+
+
+@task
+def update_dtypes_dict(dtypes_dict):
+    """
+    Task to update dtypes_dictionary that will be stored in the schema. It's required due to workaround Pandas to_parquet bug connected with mixed dtypes in object
+
+    Args:
+        dtypes_dict (dict): Data types dictionary inferenced by Visions
+
+    Returns:
+        dtypes_dict_updated (dict): Data types dictionary updated to follow Pandas requeirments in to_parquet functionality.
+    """
+    dtypes_dict_updated = {
+        k: ("String" if v == "Object" else str(v)) for k, v in dtypes_dict.items()
+    }
+
+    return dtypes_dict_updated
 
 
 class Git(Git):

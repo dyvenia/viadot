@@ -3,27 +3,38 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+
 ## [Unreleased]
-
-## [0.2.6] - 2021-09-22
 ### Added
-- Added flows library docs to the references page
-### [Changed]
-- Moved task library docs page to topbar
-- Updated docs for task and flows
-
-## [0.2.5] - 2021-09-20
-### Added
-- Added `start` and `end_date` parameters to `SupermetricsToADLS` flow
-- Added a tutorial on how to pull data from `Supermetrics`
-
-### Added
+- Added the `SQLiteQuery` task
+- Added style guidelines to the `README`
 - Source:
   - `CloudForCustomers`
 - Added a test for `CloudForCustomers` source
 - Added tasks `CloudForCustomersToDF`, `CloudForCustomersToCSV`
 - Added support for parquet in `CloudForCustomersToDF`
 - Added flow `CloudForCustomersToADLS`
+
+### Changed
+- Modified `ADLSToAzureSQL` - *read_sep* and *write_sep* parameters added to the flow.
+
+### Fixed
+- Fixed `ADLSToAzureSQL` breaking in `"append"` mode if the table didn't exist (#145).
+
+## [0.2.6] - 2021-09-22
+### Added
+- Added flows library docs to the references page
+
+### Changed
+- Moved task library docs page to topbar
+- Updated docs for task and flows
+
+
+## [0.2.5] - 2021-09-20
+### Added
+- Added `start` and `end_date` parameters to `SupermetricsToADLS` flow
+- Added a tutorial on how to pull data from `Supermetrics`
 
 
 ## [0.2.4] - 2021-09-06
@@ -32,9 +43,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added `start_date` and `end_date` parameters to the `SupermetricsToAzureSQL` flow
 - Added a temporary workaround `df_to_csv_task` task to the `SupermetricsToADLS` flow to handle mixed dtype columns not handled automatically by DataFrame's `to_parquet()` method
 
+
 ## [0.2.3] - 2021-08-19
 ### Changed
-
 - Modified `RunGreatExpectationsValidation` task to use the built in support for evaluation parameters added in Prefect v0.15.3
 - Modified `SupermetricsToADLS` and `ADLSGen1ToAzureSQLNew` flows to align with this [recipe](https://docs.prefect.io/orchestration/flow_config/storage.html#loading-additional-files-with-git-storage) for reading the expectation suite JSON
 The suite now has to be loaded before flow initialization in the flow's python file and passed as an argument to the flow's constructor.
@@ -57,6 +68,7 @@ This allows the user to simply pass a dict with their expectations and not worry
 - Removed `SupermetricsToAzureSQLv2` and `SupermetricsToAzureSQLv3` flows
 - Removed `geopy` dependency
 
+
 ## [0.2.2] - 2021-07-27
 ### Added
 - Added support for parquet in `AzureDataLakeToDF`
@@ -71,7 +83,6 @@ This allows the user to simply pass a dict with their expectations and not worry
   creating an SQL table and inserting the data into it
   - `ADLSContainerToContainer` - copying files between ADLS containers
 
-
 ### Changed
 - Renamed `ReadAzureKeyVaultSecret` and `RunAzureSQLDBQuery` tasks to match Prefect naming style
 - Flows:
@@ -79,6 +90,7 @@ This allows the user to simply pass a dict with their expectations and not worry
 
 ### Fixed
 - Removed the broken version autobump from CI
+
 
 ## [0.2.1] - 2021-07-14
 ### Added

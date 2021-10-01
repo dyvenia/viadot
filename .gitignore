@@ -76,6 +76,7 @@ target/
 
 # Jupyter Notebook
 .ipynb_checkpoints
+.jupyter
 
 # IPython
 profile_default/
@@ -147,3 +148,5 @@ config.toml
 
 # MKDocs
 desktop.ini
+
+.viminfo

@@ -5,3 +5,4 @@ from .supermetrics import Supermetrics
 from .cloud_for_customers import CloudForCustomers
 # APIS
 from .uk_carbon_intensity import UKCarbonIntensity
+from .sqlite import SQLite

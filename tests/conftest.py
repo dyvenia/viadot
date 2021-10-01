@@ -21,7 +21,7 @@ def TEST_PARQUET_FILE_PATH():
 
 @pytest.fixture(scope="session")
 def TEST_CSV_FILE_BLOB_PATH():
-    return "testing/testing_access/test.csv"
+    return "tests/test.csv"
 
 
 @pytest.fixture(scope="session", autouse=True)
