@@ -44,14 +44,25 @@ def test_create_table(azure_sql):
     assert table_object_id is not None
 
 
-def test_create_table_append(azure_sql):
+def test_create_table_skip_1(azure_sql):
+    """Test that if_exists = "skip" works when the table doesn't exist"""
     dtypes = {"country": "VARCHAR(100)", "sales": "FLOAT(24)"}
     result = azure_sql.create_table(
-        schema=SCHEMA, table=TABLE_2, dtypes=dtypes, if_exists="append"
+        schema=SCHEMA, table=TABLE_2, dtypes=dtypes, if_exists="skip"
     )
     assert result == True
+
     table_object_id = azure_sql.run(f"SELECT OBJECT_ID('{SCHEMA}.{TABLE}', 'U')")[0][0]
     assert table_object_id is not None
+
+
+def test_create_table_skip_2(azure_sql):
+    """Test that if_exists = "skip" works when the table exists"""
+    dtypes = {"country": "VARCHAR(100)", "sales": "FLOAT(24)"}
+    result = azure_sql.create_table(
+        schema=SCHEMA, table=TABLE, dtypes=dtypes, if_exists="skip"
+    )
+    assert result == False
 
 
 def test_bulk_insert(azure_sql, TEST_CSV_FILE_BLOB_PATH):
