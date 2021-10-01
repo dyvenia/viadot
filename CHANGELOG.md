@@ -10,6 +10,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Source:
   - `CloudForCustomers`
 - Added a test for `CloudForCustomers` source
+- Added support for parquet in `AzureDataLakeToDF`
+
 
 ## [0.2.4] - 2021-09-06
 ### Added
