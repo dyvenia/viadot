@@ -244,6 +244,8 @@ class SQL(Source):
                 raise ValueError(
                     "The table already exists and 'if_exists' is set to 'fail'."
                 )
+            elif if_exists == "skip":
+                return False
 
         indent = "  "
         dtypes_rows = [

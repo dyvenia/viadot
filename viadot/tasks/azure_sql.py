@@ -207,10 +207,15 @@ class AzureSQLCreateTable(Task):
         azure_sql = AzureSQL(credentials=credentials)
 
         fqn = f"{schema}.{table}" if schema is not None else table
-        azure_sql.create_table(
+        created = azure_sql.create_table(
             schema=schema, table=table, dtypes=dtypes, if_exists=if_exists
         )
-        self.logger.info(f"Successfully created table {fqn}.")
+        if created:
+            self.logger.info(f"Successfully created table {fqn}.")
+        else:
+            self.logger.info(
+                f"Table {fqn} has not been created as if_exists is set to {if_exists}."
+            )
 
 
 class AzureSQLDBQuery(Task):
