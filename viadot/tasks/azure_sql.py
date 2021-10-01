@@ -49,20 +49,13 @@ class CreateTableFromBlob(Task):
         Create a table from an Azure Blob object.
         Currently, only CSV files are supported.
 
-        Parameters
-        ----------
-        blob_path : str
-            Path to the blob, eg. 'container_name/path/to.csv'.
-        schema : str
-            Destination schema.
-        table : str
-            Destination table.
-        dtypes : Dict[str, Any]
-            Data types to force.
-        sep: str
-            The separator to use to read the CSV file.
-        if_exists : Literal, optional
-            What to do if the table already exists.
+        Args:
+        from_path (str): Path to the file to be inserted.
+        schema (str): Destination schema.
+        table (str): Destination table.
+        dtypes (Dict[str, Any]): Data types to force.
+        sep (str): The separator to use to read the CSV file.
+        if_exists (Literal, optional): What to do if the table already exists.
         """
 
         fqn = f"{schema}.{table}" if schema else table
@@ -124,20 +117,13 @@ class AzureSQLBulkInsert(Task):
         This task also creates the table if it doesn't exist.
         Currently, only CSV files are supported.
 
-        Parameters
-        ----------
-        from_path : str
-            Path to the file(s) to be inserted.
-        schema : str
-            Destination schema.
-        table : str
-            Destination table.
-        dtypes : Dict[str, Any]
-            Data types to force.
-        sep: str
-            The separator to use to read the CSV file.
-        if_exists : Literal, optional
-            What to do if the table already exists.
+        Args:
+        from_path (str): Path to the file to be inserted.
+        schema (str): Destination schema.
+        table (str): Destination table.
+        dtypes (Dict[str, Any]): Data types to force.
+        sep (str): The separator to use to read the CSV file.
+        if_exists (Literal, optional): What to do if the table already exists.
         credentials_secret (str, optional): The name of the Azure Key Vault secret containing a dictionary
         with SQL db credentials (server, db_name, user, and password).
         vault_name (str, optional): The name of the vault from which to obtain the secret. Defaults to None.

@@ -115,6 +115,8 @@ class SupermetricsToADLS(Flow):
         ds_user: str = None,
         ds_segments: List[str] = None,
         date_range_type: str = None,
+        start_date: str = None,
+        end_date: str = None,
         settings: Dict[str, Any] = None,
         filter: str = None,
         max_rows: int = 1000000,
@@ -150,6 +152,8 @@ class SupermetricsToADLS(Flow):
             fields (List[str]): A query parameter passed to the SupermetricsToCSV task
             ds_segments (List[str], optional): A query parameter passed to the SupermetricsToCSV task. Defaults to None.
             date_range_type (str, optional): A query parameter passed to the SupermetricsToCSV task. Defaults to None.
+            start_date (str, optional): A query paramter to pass start date to the date range filter. Defaults to None.
+            end_date (str, optional): A query paramter to pass end date to the date range filter. Defaults to None.
             settings (Dict[str, Any], optional): A query parameter passed to the SupermetricsToCSV task. Defaults to None.
             filter (str, optional): A query parameter passed to the SupermetricsToCSV task. Defaults to None.
             max_rows (int, optional): A query parameter passed to the SupermetricsToCSV task. Defaults to 1000000.
@@ -188,6 +192,8 @@ class SupermetricsToADLS(Flow):
         self.ds_user = ds_user
         self.fields = fields
         self.date_range_type = date_range_type
+        self.start_date = start_date
+        self.end_date = end_date
         self.settings = settings
         self.filter = filter
         self.max_rows = max_rows
@@ -246,6 +252,8 @@ class SupermetricsToADLS(Flow):
             ds_user=self.ds_user,
             fields=self.fields,
             date_range_type=self.date_range_type,
+            start_date=self.start_date,
+            end_date=self.end_date,
             settings=self.settings,
             filter=self.filter,
             max_rows=self.max_rows,
