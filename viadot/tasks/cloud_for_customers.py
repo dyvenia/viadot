@@ -9,6 +9,13 @@ from ..sources import CloudForCustomers
 
 
 class CloudForCustomersToCSV(Task):
+    """
+    Task for downloading data from the Cloud For Customers to a csv file.
+
+    Args:
+        if_empty (str, optional): What to do if query returns no data. Defaults to "warn".
+    """
+
     def __init__(
         self,
         *args,
@@ -51,7 +58,14 @@ class CloudForCustomersToCSV(Task):
         sep: str = None,
         params: Dict[str, Any] = {},
     ):
+        """
+        Run Task CloudForCustomersToCSV.
 
+        Args:
+            url (str, optional): The url to the API. Defaults value from credential.json file.
+            endpoint (str, optional): The endpoint of the API. Defaults to None.
+            params (Dict[str, Any]): The query parameters like filter by creation date time. Defaults to json format.
+        """
         cloud_for_customers = CloudForCustomers(
             url=url, endpoint=endpoint, params=params
         )
@@ -65,6 +79,13 @@ class CloudForCustomersToCSV(Task):
 
 
 class CloudForCustomersToDF(Task):
+    """
+    Task for downloading data from the Cloud For Customers to a pandas DataFrame.
+
+    Args:
+        if_empty (str, optional): What to do if query returns no data. Defaults to "warn".
+    """
+
     def __init__(
         self,
         *args,
@@ -91,7 +112,14 @@ class CloudForCustomersToDF(Task):
         fields: List[str] = None,
         params: Dict[str, Any] = {},
     ):
+        """
+        Run Task CloudForCustomersToDF.
 
+        Args:
+            url (str, optional): The url to the API. Defaults value from credential.json file.
+            endpoint (str, optional): The endpoint of the API. Defaults to None.
+            params (Dict[str, Any]): The query parameters like filter by creation date time. Defaults to json format.
+        """
         cloud_for_customers = CloudForCustomers(
             url=url, endpoint=endpoint, params=params
         )
