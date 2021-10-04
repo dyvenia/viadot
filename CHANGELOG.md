@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 
 ## [Unreleased]
+### Changed
+- CI/CD: `dev` image is now only published on push to the `dev` branch
 
 ## [0.2.7] - 2021-10-04
 ### Added
@@ -20,8 +22,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Changed CI/CD algorithm
   - the `latest` Docker image is now only updated on release and is the same exact image as the latest release
   - the `dev` image is released only on pushes and PRs to the `dev` branch (so dev branch = dev image)
-
-### Changed
 - Modified `ADLSToAzureSQL` - *read_sep* and *write_sep* parameters added to the flow.
 
 ### Fixed
