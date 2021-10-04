@@ -60,7 +60,11 @@ cd docker
 ./update.sh
 ```
 
-__Note__: you may need to grant executable privilege to the update and run scripts
+__Note__: you may need to grant executable privilege to the update and run scripts. If you're running on Unix:
+```
+sudo chmod +x update.sh
+sudo chmod +x run.sh
+```
 
 Run the enviroment
 
