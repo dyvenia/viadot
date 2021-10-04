@@ -6,14 +6,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 
 ## [Unreleased]
+
+## [0.2.7] - 2021-10-04
 ### Added
-- Added the `SQLiteQuery` task
-- Added style guidelines to the `README`
-- Source:
-  - `CloudForCustomers`
-- Added tasks `CloudForCustomersToDF`, `CloudForCustomersToCSV`
+- Added `SQLiteQuery` task
+- Added `CloudForCustomers` source
+- Added `CloudForCustomersToDF` and `CloudForCustomersToCSV` tasks
+- Added `CloudForCustomersToADLS` flow
 - Added support for parquet in `CloudForCustomersToDF`
-- Added flow `CloudForCustomersToADLS`
+- Added style guidelines to the `README`
+
+### Changed
+- Changed CI/CD algorithm
+  - the `latest` Docker image is now only updated on release and is the same exact image as the latest release
+  - the `dev` image is released only on pushes and PRs to the `dev` branch (so dev branch = dev image)
 
 ### Changed
 - Modified `ADLSToAzureSQL` - *read_sep* and *write_sep* parameters added to the flow.
