@@ -98,10 +98,7 @@ jobs:
   publish_docker:
     needs: build
     runs-on: ubuntu-latest
-    on:
-      push:
-        branches:
-          - "dev"
+    if: github.ref == 'refs/heads/dev' && github.event_name == 'push'
     steps:
       - name: 'Checkout source code'
         uses: actions/checkout@v2
