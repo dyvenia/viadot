@@ -156,7 +156,7 @@ class AzureSQLCreateTable(Task):
         schema: str = None,
         table: str = None,
         dtypes: Dict[str, Any] = None,
-        if_exists: Literal["fail", "replace", "append"] = "fail",
+        if_exists: Literal["fail", "replace", "skip"] = "fail",
         credentials_secret: str = None,
         vault_name: str = None,
         max_retries: int = 3,
@@ -184,7 +184,7 @@ class AzureSQLCreateTable(Task):
         schema: str = None,
         table: str = None,
         dtypes: Dict[str, Any] = None,
-        if_exists: Literal["fail", "replace", "append"] = None,
+        if_exists: Literal["fail", "replace", "skip"] = None,
         credentials_secret: str = None,
         vault_name: str = None,
         max_retries: int = None,
@@ -206,13 +206,16 @@ class AzureSQLCreateTable(Task):
         credentials = get_credentials(credentials_secret, vault_name=vault_name)
         azure_sql = AzureSQL(credentials=credentials)
 
-        if if_exists == "replace":
-            azure_sql.create_table(
-                schema=schema, table=table, dtypes=dtypes, if_exists=if_exists
-            )
-
-            fqn = f"{schema}.{table}" if schema else table
+        fqn = f"{schema}.{table}" if schema is not None else table
+        created = azure_sql.create_table(
+            schema=schema, table=table, dtypes=dtypes, if_exists=if_exists
+        )
+        if created:
             self.logger.info(f"Successfully created table {fqn}.")
+        else:
+            self.logger.info(
+                f"Table {fqn} has not been created as if_exists is set to {if_exists}."
+            )
 
 
 class AzureSQLDBQuery(Task):

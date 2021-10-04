@@ -211,43 +211,48 @@ class SQL(Source):
             df = pd.DataFrame()
         return df
 
+    def _check_if_table_exists(self, table: str, schema: str = None) -> bool:
+        exists_query = f"SELECT * FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA = '{schema}' AND TABLE_NAME='{table}'"
+        exists = bool(self.run(exists_query))
+        return exists
+
     def create_table(
         self,
         table: str,
         schema: str = None,
         dtypes: Dict[str, Any] = None,
-        if_exists: Literal["fail", "replace"] = "fail",
+        if_exists: Literal["fail", "replace", "skip"] = "fail",
     ) -> bool:
         """Create a table.
 
         Args:
             table (str): The destination table. Defaults to None.
             schema (str, optional): The destination schema. Defaults to None.
-            dtypes (Dict[str, Any], optional): [description]. Defaults to None.
-            if_exists (Literal, optional): [description]. Defaults to "fail".
+            dtypes (Dict[str, Any], optional): The data types to use for the table. Defaults to None.
+            if_exists (Literal, optional): What to do if the table already exists. Defaults to "fail".
 
         Returns:
             bool: Whether the operation was successful.
         """
-        if schema is None:
-            fqn = f"{table}"
-        else:
-            fqn = f"{schema}.{table}"
+        fqn = f"{schema}.{table}" if schema is not None else table
+        exists = self._check_if_table_exists(schema=schema, table=table)
+
+        if exists:
+            if if_exists == "replace":
+                self.run(f"DROP TABLE {fqn}")
+            elif if_exists == "fail":
+                raise ValueError(
+                    "The table already exists and 'if_exists' is set to 'fail'."
+                )
+            elif if_exists == "skip":
+                return False
+
         indent = "  "
         dtypes_rows = [
             indent + f'"{col}"' + " " + dtype for col, dtype in dtypes.items()
         ]
-
         dtypes_formatted = ",\n".join(dtypes_rows)
         create_table_sql = f"CREATE TABLE {fqn}(\n{dtypes_formatted}\n)"
-        if if_exists == "replace":
-            try:
-                if schema == None:
-                    self.run(f"DROP TABLE {table}")
-                else:
-                    self.run(f"DROP TABLE {schema}.{table}")
-            except:
-                pass
         self.run(create_table_sql)
         return True
 

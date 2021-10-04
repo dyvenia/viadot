@@ -1,3 +1,4 @@
+from logging import log
 from typing import Any, Dict
 
 import pandas as pd
@@ -9,9 +10,36 @@ from ..sources.sqlite import SQLite
 
 
 class SQLiteInsert(Task):
-    def __init__(self, *args, **kwargs):
-        super().__init__(name="load_df", *args, **kwargs)
+    """
+    Task for inserting data from a pandas DataFrame into SQLite.
 
+    Args:
+        db_path (str, optional): The path to the database to be used. Defaults to None.
+        sql_path (str, optional): The path to the text file containing the query. Defaults to None.
+
+    """
+
+    def __init__(
+        self,
+        df: pd.DataFrame = None,
+        db_path: str = None,
+        schema: str = None,
+        table_name: str = None,
+        if_exists: str = "fail",
+        dtypes: Dict[str, Any] = None,
+        *args,
+        **kwargs,
+    ):
+        self.db_path = db_path
+        self.table_name = table_name
+        self.df = df
+        self.dtypes = dtypes
+        self.schema = schema
+        self.if_exists = if_exists
+
+        super().__init__(name="sqlite_insert", *args, **kwargs)
+
+    @defaults_from_attrs("df", "db_path", "schema", "table_name", "if_exists", "dtypes")
     def run(
         self,
         table_name: str = None,
@@ -19,7 +47,7 @@ class SQLiteInsert(Task):
         dtypes: Dict[str, Any] = None,
         db_path: str = None,
         df: pd.DataFrame = None,
-        if_exists: str = "fail",
+        if_exists: str = "skip",
     ):
 
         sqlite = SQLite(credentials=dict(db_name=db_path))
@@ -29,10 +57,6 @@ class SQLiteInsert(Task):
         sqlite.insert_into(table=table_name, df=df)
 
         return True
-
-
-class SQLiteBulkInsert(Task):
-    pass
 
 
 class SQLiteSQLtoDF(Task):
@@ -47,7 +71,7 @@ class SQLiteSQLtoDF(Task):
 
     """
 
-    def __init__(self, *args, db_path: str = None, sql_path: str = None, **kwargs):
+    def __init__(self, db_path: str = None, sql_path: str = None, *args, **kwargs):
         self.db_path = db_path
         self.sql_path = sql_path
 
@@ -71,3 +95,32 @@ class SQLiteSQLtoDF(Task):
         logger.info(f"DataFrame was successfully loaded.")
 
         return df
+
+
+class SQLiteQuery(Task):
+    """
+    Task for running an SQLite query.
+
+    Args:
+        query (str, optional): The query to execute on the database. Defaults to None.
+        db_path (str, optional): The path to the database to be used. Defaults to None.
+    """
+
+    def __init__(self, query: str = None, db_path: str = None, *args, **kwargs):
+        self.query = query
+        self.db_path = db_path
+        super().__init__(name="sqlite_query", *args, **kwargs)
+
+    def __call__(self):
+        """Run an SQL query on SQLite"""
+
+    @defaults_from_attrs("query", "db_path")
+    def run(self, query: str = None, db_path: str = None):
+        sqlite = SQLite(credentials=dict(db_name=db_path))
+
+        # run the query and fetch the results if it's a select
+        result = sqlite.run(query=query)
+
+        self.logger.info(f"Successfully ran the query.")
+
+        return result
