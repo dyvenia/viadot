@@ -43,20 +43,56 @@ insert_task = SQLiteInsert()
 insert_task.run(table_name=TABLE_NAME, dtypes=dtypes, db_path=database_path, df=df, if_exists="replace")
 ```
 
+## Local Setup
+
+Before testing or running flows setup the enviroment by following these steps:
+
+Clone repository, enter it and checkout release branch
+```
+git clone git@github.com:dyvenia/viadot.git
+cd viadot {X.X.X}
+```
+
+Enter docker subdirectory, setup docker enviroment
+
+```
+cd docker
+./update.sh
+```
+
+__Note__: you may need to grant executable privilege to the update and run scripts. If you're running on Unix: 
+
+```
+sudo chmod +x update.sh
+sudo chmod +x run.sh
+```
+
+Run the enviroment
+
+```
+./run.sh
+```
+
+Enter the enviroment and install dependencies
+
+```
+docker exec -it viadot_testing bash
+pip install -e --user .
+```
 
 ## Running tests
+
 To run tests, log into the container and run pytest:
 ```
 cd viadot/docker
-run.sh
 docker exec -it viadot_testing bash
 pytest
 ```
 
 ## Running flows locally
+
 You can run the example flows from the terminal:
 ```
-run.sh
 docker exec -it viadot_testing bash
 FLOW_NAME=hello_world; python -m viadot.examples.$FLOW_NAME
 ```
@@ -65,16 +101,11 @@ However, when developing, the easiest way is to use the provided Jupyter Lab con
 
 
 ## How to contribute
-1. Clone the release branch 
-2. Pull the docker env by running `viadot/docker/update.sh -t dev`
-3. Run the env with `viadot/docker/run.sh`
-4. Log into the dev container and install in development mode so that viadot will auto-install at each code change: 
-```
-docker exec -it viadot_testing bash
-pip install -e .
-```
-5. Edit and test your changes with `pytest`
-6. Submit a PR. The PR should contain the following:
+
+1. Fork repository if you do not have write access
+2. Setup locally
+3. Test your changes with `pytest`
+4. Submit a PR. The PR should contain the following:
 - new/changed functionality
 - tests for the changes
 - changes added to `CHANGELOG.md`
