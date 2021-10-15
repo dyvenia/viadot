@@ -10,7 +10,7 @@ from prefect.utilities import logging
 
 from viadot.tasks.azure_data_lake import AzureDataLakeDownload
 
-from viadot.tasks import (
+from ..tasks import (
     AzureDataLakeCopy,
     AzureDataLakeToDF,
     AzureDataLakeUpload,
