@@ -47,34 +47,30 @@ insert_task.run(table_name=TABLE_NAME, dtypes=dtypes, db_path=database_path, df=
 
 Before testing or running flows setup the enviroment by following these steps:
 
-Clone repository, enter it and checkout release branch
+Clone the `dev` branch and enter the repo root folder:
 ```
-git clone git@github.com:dyvenia/viadot.git
-cd viadot {X.X.X}
+git clone -b dev https://github.com/dyvenia/viadot.git && \
+cd viadot
 ```
 
-Enter docker subdirectory, setup docker enviroment
-
+Enter the `docker` subdirectory and set up our docker enviroment:
 ```
 cd docker
 ./update.sh
 ```
 
-__Note__: you may need to grant executable privilege to the update and run scripts. If you're running on Unix: 
-
+__Note__: If you're running on Unix, you may need to grant executable privilege to the update and run scripts: 
 ```
-sudo chmod +x update.sh
+sudo chmod +x update.sh && \
 sudo chmod +x run.sh
 ```
 
-Run the enviroment
-
+Run the enviroment:
 ```
 ./run.sh
 ```
 
-Enter the enviroment and install dependencies
-
+Enter the enviroment and install dependencies:
 ```
 docker exec -it viadot_testing bash
 pip install -e --user .
