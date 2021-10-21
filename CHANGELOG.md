@@ -8,6 +8,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 ### Changed
 - CI/CD: `dev` image is now only published on push to the `dev` branch
+- Docker: 
+  - updated registry links to use the new `ghcr.io` domain
+  - `run.sh` now also accepts the `-t` option. When run in standard mode, it will only spin up the `viadot_jupyter_lab` service.
+  When ran with `-t dev`, it will also spin up `viadot_testing` and `viadot_docs` containers.
 
 ## [0.2.7] - 2021-10-04
 ### Added
