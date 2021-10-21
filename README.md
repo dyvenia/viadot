@@ -43,26 +43,20 @@ insert_task = SQLiteInsert()
 insert_task.run(table_name=TABLE_NAME, dtypes=dtypes, db_path=database_path, df=df, if_exists="replace")
 ```
 
-## Local Setup
+## Set up
 
-Before testing or running flows setup the enviroment by following these steps:
-
-Clone the `dev` branch and enter the repo root folder:
+__Note__: If you're running on Unix, after cloning the repo, you may need to grant executable privileges to the `update.sh` and `run.sh` scripts: 
 ```
-git clone -b dev https://github.com/dyvenia/viadot.git && \
-cd viadot
+sudo chmod +x viadot/docker/update.sh && \
+sudo chmod +x viadot/docker/run.sh
 ```
 
-Enter the `docker` subdirectory and set up our docker enviroment:
+### a) user
+Clone the `main` branch, enter the `docker` folder, and set up the environment:
 ```
-cd docker
+git clone https://github.com/dyvenia/viadot.git && \
+cd viadot/docker && \
 ./update.sh
-```
-
-__Note__: If you're running on Unix, you may need to grant executable privilege to the update and run scripts: 
-```
-sudo chmod +x update.sh && \
-sudo chmod +x run.sh
 ```
 
 Run the enviroment:
@@ -70,17 +64,29 @@ Run the enviroment:
 ./run.sh
 ```
 
-Enter the enviroment and install dependencies:
+### b) developer
+Clone the `dev` branch, enter the `docker` folder, and set up the environment:
 ```
-docker exec -it viadot_testing bash
-pip install -e --user .
+git clone -b dev https://github.com/dyvenia/viadot.git && \
+cd viadot/docker && \
+./update.sh -t dev
 ```
+
+Run the enviroment:
+```
+./run.sh -t dev
+```
+
+Install the library in development mode (repeat for the `viadot_jupyter_lab` container if needed):
+```
+docker exec -it viadot_testing pip install -e . --user
+```
+
 
 ## Running tests
 
 To run tests, log into the container and run pytest:
 ```
-cd viadot/docker
 docker exec -it viadot_testing bash
 pytest
 ```
@@ -93,13 +99,13 @@ docker exec -it viadot_testing bash
 FLOW_NAME=hello_world; python -m viadot.examples.$FLOW_NAME
 ```
 
-However, when developing, the easiest way is to use the provided Jupyter Lab container available at `http://localhost:9000/`.
+However, when developing, the easiest way is to use the provided Jupyter Lab container available in the browser at `http://localhost:9000/`.
 
 
 ## How to contribute
 
 1. Fork repository if you do not have write access
-2. Setup locally
+2. Set up locally
 3. Test your changes with `pytest`
 4. Submit a PR. The PR should contain the following:
 - new/changed functionality
