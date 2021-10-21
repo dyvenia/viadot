@@ -2,16 +2,18 @@ version: "3"
 
 services:
   viadot:
-    image: viadot:dev
+    image: viadot:${IMAGE_TAG:-latest}
     container_name: viadot_testing
+    profiles: ["dev"]
     volumes:
       - ../:/home/viadot
     tty: true
     stdin_open: true
     restart: "always"
   viadot_docs:
-    image: viadot:dev
+    image: viadot:${IMAGE_TAG:-latest}
     container_name: viadot_docs
+    profiles: ["dev"]
     volumes:
       - ../:/home/viadot
     working_dir: /home/viadot
@@ -20,8 +22,9 @@ services:
     command: "mkdocs serve"
     restart: "always"
   viadot_jupyter_lab:
-    image: viadot:dev
+    image: viadot:${IMAGE_TAG:-latest}
     container_name: viadot_jupyter_lab
+    profiles: ["dev", "user"]
     ports:
       - 9000:8888
     volumes:
