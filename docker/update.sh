@@ -1,4 +1,4 @@
-IMAGE_ID=docker.pkg.github.com/dyvenia/viadot/viadot
+IMAGE_ID=ghcr.io/dyvenia/viadot/viadot
 IMAGE_TAG=latest
 
 
@@ -10,7 +10,7 @@ do
 done
 
 
-docker login https://docker.pkg.github.com
+docker login ghcr.io
 docker pull $IMAGE_ID:$IMAGE_TAG
 docker tag $IMAGE_ID:$IMAGE_TAG viadot:$IMAGE_TAG
 docker image rm $IMAGE_ID:$IMAGE_TAG
