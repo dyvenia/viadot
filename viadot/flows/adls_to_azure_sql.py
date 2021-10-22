@@ -73,6 +73,7 @@ def map_data_types_task(json_shema_path: str):
 def df_to_csv_task(df, path: str, sep: str = "\t"):
     df.to_csv(path, sep=sep, index=False)
 
+
 @task
 def df_to_parquet_task(df, path: str):
     df.to_parquet(path)
@@ -198,7 +199,7 @@ class ADLSToAzureSQL(Flow):
         promoted_path = os.path.join(env, common_path, file_name)
 
         return promoted_path
-    
+
     def create_to_file_task(self, df, file_type):
         df_to_type = None
         if file_type == "csv":
@@ -239,7 +240,7 @@ class ADLSToAzureSQL(Flow):
 
         adls_file_type = self.adls_path.split(".")[-1]
         df_to_type = self.create_to_file_task(df, adls_file_type)
-            
+
         promote_to_conformed_task.bind(
             from_path=self.local_file_path,
             to_path=self.adls_path_conformed,
