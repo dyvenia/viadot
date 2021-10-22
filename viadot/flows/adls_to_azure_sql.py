@@ -199,7 +199,7 @@ class ADLSToAzureSQL(Flow):
 
         return promoted_path
     
-    def create_df_to_type_object(self, df, file_type):
+    def create_to_file_task(self, df, file_type):
         df_to_type = None
         if file_type == "csv":
             df_to_type = df_to_csv_task.bind(
@@ -238,7 +238,7 @@ class ADLSToAzureSQL(Flow):
             dtypes = self.dtypes
 
         adls_file_type = self.adls_path.split(".")[-1]
-        df_to_type = self.create_df_to_type_object(df, adls_file_type)
+        df_to_type = self.create_to_file_task(df, adls_file_type)
             
         promote_to_conformed_task.bind(
             from_path=self.local_file_path,
