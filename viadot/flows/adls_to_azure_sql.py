@@ -201,21 +201,21 @@ class ADLSToAzureSQL(Flow):
         return promoted_path
 
     def create_to_file_task(self, df, file_type):
-        df_to_type = None
+        df_to_file = None
         if file_type == "csv":
-            df_to_type = df_to_csv_task.bind(
+            df_to_file = df_to_csv_task.bind(
                 df=df,
                 path=self.local_file_path,
                 sep=self.write_sep,
                 flow=self,
             )
         else:
-            df_to_type = df_to_parquet_task.bind(
+            df_to_file = df_to_parquet_task.bind(
                 df=df,
                 path=self.local_file_path,
                 flow=self,
             )
-        return df_to_type
+        return df_to_file
 
     def gen_flow(self) -> Flow:
         adls_raw_file_path = Parameter("adls_raw_file_path", default=self.adls_path)
@@ -239,7 +239,7 @@ class ADLSToAzureSQL(Flow):
             dtypes = self.dtypes
 
         adls_file_type = self.adls_path.split(".")[-1]
-        df_to_type = self.create_to_file_task(df, adls_file_type)
+        df_to_file = self.create_to_file_task(df, adls_file_type)
 
         promote_to_conformed_task.bind(
             from_path=self.local_file_path,
@@ -275,8 +275,8 @@ class ADLSToAzureSQL(Flow):
         )
 
         # dtypes.set_upstream(download_json_file_task, flow=self)
-        promote_to_conformed_task.set_upstream(df_to_type, flow=self)
+        promote_to_conformed_task.set_upstream(df_to_file, flow=self)
         # map_data_types_task.set_upstream(download_json_file_task, flow=self)
-        create_table_task.set_upstream(df_to_type, flow=self)
+        create_table_task.set_upstream(df_to_file, flow=self)
         promote_to_operations_task.set_upstream(promote_to_conformed_task, flow=self)
         bulk_insert_task.set_upstream(create_table_task, flow=self)
