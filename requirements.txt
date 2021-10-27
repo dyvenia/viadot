@@ -4,7 +4,7 @@ black==21.9b0
 mkdocs-autorefs==0.3.0
 mkdocs-material-extensions==1.0.3
 mkdocs-material==7.3.0
-mkdocs==1.2.2
+mkdocs==1.2.3
 mkdocstrings==0.16.2
 pandas==1.3.3
 prefect[viz]==0.15.5
