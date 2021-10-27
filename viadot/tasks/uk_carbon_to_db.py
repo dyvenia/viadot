@@ -13,11 +13,9 @@ class StatsToDF(Task):
     def __init__(self, *args, **kwargs):
         """Generate the task."""
         super().__init__(name="uk_carbon_intensity_stats_to_df", *args, **kwargs)
-
-    def __call__(self):
       
 
-    def run(self, df: pd.DataFrame, days_back: int = 1):
+    def run(self, days_back: int=1):
         """
         Run the task.
 
@@ -35,7 +33,6 @@ class StatsToDF(Task):
         carbon = UKCarbonIntensity()
         now = datetime.datetime.now()
         dfs =[]
-        logger.info(f"Downloading data to {df}...")
         for i in range(days_back):
             from_delta = datetime.timedelta(days=i + 1)
             to_delta = datetime.timedelta(days=i)
@@ -43,10 +40,9 @@ class StatsToDF(Task):
             from_ = now - from_delta
             carbon.query(f"/intensity/stats/{from_.isoformat()}/{to.isoformat()}")
             dfs.append(carbon.to_df())
-            pd.concat(dfs)
-            df.append
+        df = pd.concat(dfs)
 
         # Download data to pandas.DataFrame
         logger.info(f"Successfully downloaded data to {df}.")
-
+        return df
 

@@ -1,6 +1,5 @@
 import pandas as pd
-
-from typing import Any, Dict
+from typing import Any, Dict, List
 
 from prefect import Flow, Task, Parameter
 
@@ -12,42 +11,49 @@ sqlite_insert_task = SQLiteInsert()
 class UKCarbonIntensityToSQLite(Flow):
     def __init__(
         self,
+        name: str,
         days_back: int,
-        df: pd.DataFrame,
-        db_path: str,
+        db_path: str, 
         table_name: str,
-        schema: str,
+        if_exists: str,
         dtypes: Dict[str, Any],
-        if_exists: str = "skip",
-        
+        schema: str = None,
+        *args: List[any],
+        **kwargs: Dict[str, Any]
     ):
         self.days_back = days_back
-        self.df = df
         self.db_path = db_path
+        self.schema = schema
         self.table_name = table_name
         self.dtypes = dtypes
-        self.schema = schema
         self.if_exists = if_exists
-        
-       
-        super().__init__(*args, **kwargs)
+        super().__init__(*args,name=name, **kwargs)
         self.gen_flow()
-        
+    
 
     def gen_flow(self) -> Flow:
-    
         uk_carbon_intensity_stats_to_df_task.bind(
-            df = self.df,
             days_back = self.days_back,
-            flow=self,
+            flow=self
         )
         sqlite_insert_task.bind(
+            db_path=self.db_path, 
             schema=self.schema,
-            table=self.table,
             dtypes=self.dtypes,
-            sep=self.sep,
+            table_name=self.table_name,
             if_exists=self.if_exists,
-            flow=self,
+            flow=self
         )
-
+        
+    def run(self):
+        df = uk_carbon_intensity_stats_to_df_task.run()
+        sqlite_insert_task.run(
+            db_path=self.db_path, 
+            schema=self.schema,
+            dtypes=self.dtypes,
+            table_name=self.table_name,
+            if_exists=self.if_exists,
+            df=df)
+        
+        
     
