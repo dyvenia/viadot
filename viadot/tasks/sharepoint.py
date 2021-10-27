@@ -1,6 +1,5 @@
 from datetime import timedelta
 from typing import Any, Dict, List, Union
-import openpyxl
 import os
 
 import pandas as pd
@@ -17,7 +16,7 @@ class SharepointToDF(Task):
 
     Args:
         path_to_file (str): Path to Excel file.
-        nrows (int, optional): Number of rows to read at a time. Defaults to 10000.
+        nrows (int, optional): Number of rows to read at a time. Defaults to 50000.
         check_col_names (bool, optional): Check if columns in separate sheets are the same. Defaults to False.
         if_empty (str, optional): What to do if query returns no data. Defaults to "warn".
     
@@ -27,7 +26,7 @@ class SharepointToDF(Task):
     def __init__(
         self,
         path_to_file: str = None,
-        nrows: int = 10000,
+        nrows: int = 50000,
         check_col_names: bool = False,
         if_empty: str = "warn",
         *args,
@@ -45,9 +44,9 @@ class SharepointToDF(Task):
             **kwargs,
         )
 
-    # def __call__(self):
-    #     """Download Sharepoint data to a DF"""
-    #     super().__call__(self)
+    def __call__(self):
+        """Download Sharepoint data to a DF"""
+        super().__call__(self)
 
 
     def check_column_names(self, df_header, header_to_compare):
@@ -124,11 +123,9 @@ class SharepointToDF(Task):
         """	
         self.path_to_file = path_to_file
         
-        # pobieranie pliku
         filename = os.path.basename(self.path_to_file)
         s.download_file(filename=filename)
 
-        ## ## ##
     
         self.nrows = nrows
 

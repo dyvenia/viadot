@@ -15,8 +15,7 @@ class Sharepoint(Source):
 		site: str = None, 
 		username: str = None, 
 		password: str = None,
-		url_to_file: str = None, 
-		# filename: str = None,
+		url_to_file: str = None,
 		*args, 
 		**kwargs):
 		"""
@@ -29,14 +28,12 @@ class Sharepoint(Source):
 			password (str, optional): Sharepoint password. Defaults to None.
 			url_to_file (str, optional): Full url to file 
 					(e.g : https://{tenant_name}.sharepoint.com/sites/{folder}/Shared%20Documents/Dashboard/{file_name}). Defaults to None.
-			# filename (str, optional): Name of output file. Defaults to None.
 		"""		
 		credentials = local_config.get("SHAREPOINT")
 		self.site= site or credentials["site"]
 		self.username= username or credentials["username"]
 		self.password=password or credentials["password"]
 		self.url_to_file= url_to_file or credentials["file_url"]
-		# self.filename=filename
 
 		super().__init__(*args, **kwargs)
         
@@ -51,13 +48,4 @@ class Sharepoint(Source):
 	def download_file(self,filename:str = 'Sharepoint_file.xlsm') -> None:
 		conn = self.check_connection()
 		conn.getfile(url=self.url_to_file, filename=filename)
-
-
-# wrzucic to do sourca i pozniej zmienic w tasku i we Flow zeby mozna bylo wpisywac takie parametry
-# self.sharepoint_dir = sharepoint_dir
-# self.filename=filename
-# url_to_file= f'https://velux.sharepoint.com/sites/{self.sharepoint_dir}/Shared%20Documents/Dashboard/{self.filename}'
-
-		
-
 
