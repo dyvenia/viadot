@@ -218,9 +218,8 @@ class ADLSToAzureSQL(Flow):
         return df_to_type
 
     def gen_flow(self) -> Flow:
-        adls_raw_file_path = Parameter("adls_raw_file_path", default=self.adls_path)
         df = lake_to_df_task.bind(
-            path=adls_raw_file_path,
+            path=self.adls_path,
             sp_credentials_secret=self.adls_sp_credentials_secret,
             sep=self.read_sep,
             flow=self,
