@@ -98,7 +98,7 @@ jobs:
   publish_docker:
     needs: build
     runs-on: ubuntu-latest
-    if: github.event_name == 'push'
+    if: github.ref == 'refs/heads/dev' && github.event_name == 'push'
     steps:
       - name: 'Checkout source code'
         uses: actions/checkout@v2
@@ -114,15 +114,11 @@ jobs:
       - name: Push image
         run: |
           IMAGE_ID=docker.pkg.github.com/${{ github.repository }}/$IMAGE_NAME
+          
           # Change all uppercase to lowercase
           IMAGE_ID=$(echo $IMAGE_ID | tr '[A-Z]' '[a-z]')
-          # Strip git ref prefix from version
-          VERSION=$(echo "${{ github.ref }}" | sed -e 's,.*/\(.*\),\1,')
 
-          # Use Docker `dev` tag
-          [ "$VERSION" == "dev"] && VERSION=dev
-
+          # Publish with the `dev` label
           echo IMAGE_ID=$IMAGE_ID
-          echo VERSION=$VERSION
-          docker tag $IMAGE_NAME $IMAGE_ID:$VERSION
-          docker push $IMAGE_ID:$VERSION
+          docker tag $IMAGE_NAME $IMAGE_ID:dev
+          docker push $IMAGE_ID:dev

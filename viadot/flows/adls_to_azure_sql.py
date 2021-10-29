@@ -74,6 +74,11 @@ def df_to_csv_task(df, path: str, sep: str = "\t"):
     df.to_csv(path, sep=sep, index=False)
 
 
+@task
+def df_to_parquet_task(df, path: str):
+    df.to_parquet(path)
+
+
 class ADLSToAzureSQL(Flow):
     def __init__(
         self,
@@ -125,7 +130,6 @@ class ADLSToAzureSQL(Flow):
             vault_name (str, optional): The name of the vault from which to obtain the secrets. Defaults to None.
         """
         adls_path = adls_path.strip("/")
-
         # Read parquet
         if adls_path.split(".")[-1] in ["csv", "parquet"]:
             self.adls_path = adls_path
@@ -196,10 +200,26 @@ class ADLSToAzureSQL(Flow):
 
         return promoted_path
 
+    def create_to_file_task(self, df, file_type):
+        df_to_type = None
+        if file_type == "csv":
+            df_to_type = df_to_csv_task.bind(
+                df=df,
+                path=self.local_file_path,
+                sep=self.write_sep,
+                flow=self,
+            )
+        else:
+            df_to_type = df_to_parquet_task.bind(
+                df=df,
+                path=self.local_file_path,
+                flow=self,
+            )
+        return df_to_type
+
     def gen_flow(self) -> Flow:
-        adls_raw_file_path = Parameter("adls_raw_file_path", default=self.adls_path)
         df = lake_to_df_task.bind(
-            path=adls_raw_file_path,
+            path=self.adls_path,
             sp_credentials_secret=self.adls_sp_credentials_secret,
             sep=self.read_sep,
             flow=self,
@@ -217,12 +237,9 @@ class ADLSToAzureSQL(Flow):
         else:
             dtypes = self.dtypes
 
-        df_to_csv = df_to_csv_task.bind(
-            df=df,
-            path=self.local_file_path,
-            sep=self.write_sep,
-            flow=self,
-        )
+        adls_file_type = self.adls_path.split(".")[-1]
+        df_to_type = self.create_to_file_task(df, adls_file_type)
+
         promote_to_conformed_task.bind(
             from_path=self.local_file_path,
             to_path=self.adls_path_conformed,
@@ -257,8 +274,8 @@ class ADLSToAzureSQL(Flow):
         )
 
         # dtypes.set_upstream(download_json_file_task, flow=self)
-        promote_to_conformed_task.set_upstream(df_to_csv, flow=self)
+        promote_to_conformed_task.set_upstream(df_to_type, flow=self)
         # map_data_types_task.set_upstream(download_json_file_task, flow=self)
-        create_table_task.set_upstream(df_to_csv, flow=self)
+        create_table_task.set_upstream(df_to_type, flow=self)
         promote_to_operations_task.set_upstream(promote_to_conformed_task, flow=self)
         bulk_insert_task.set_upstream(create_table_task, flow=self)
