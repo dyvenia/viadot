@@ -68,6 +68,11 @@ class SharepointToDF(Task):
         return df_header_list
 
 
+    def df_replace_special_chars(self,df: pd.DataFrame) -> None:
+        df = df.replace(r"\n|\t", "", regex=True)
+        return df
+
+
     def split_sheet(self, sheetname, skiprows, nrows, chunks, **kwargs):
         """
         Split sheet by chunks.
@@ -76,6 +81,7 @@ class SharepointToDF(Task):
             sheetname (str): The sheeet on which we iterate.
             skiprows (int): How many rows are we skipping.
             nrows (int): How many rows does our chunk have.
+            chunks(list): List of data in chunks.
 
         Returns:
             List[df]: List of data frames
@@ -106,7 +112,7 @@ class SharepointToDF(Task):
     def run(
         self,
         path_to_file: str = None,
-        nrows: int = 10000,
+        nrows: int = 50000,
         check_col_names: bool = False,
         **kwargs
         ):
@@ -148,7 +154,7 @@ class SharepointToDF(Task):
             df_chunks.rename(columns=columns, inplace=True)
             df = pd.concat([df_header, df_chunks])
             
-
+        df = self.df_replace_special_chars(df)
         self.logger.info(f"Successfully converted data to a DataFrame.")
         return df
 
