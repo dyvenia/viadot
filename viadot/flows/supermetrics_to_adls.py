@@ -346,5 +346,3 @@ class SupermetricsToADLS(Flow):
         file_to_adls_task.set_upstream(df_to_file, flow=self)
         json_to_adls_task.set_upstream(dtypes_to_json_task, flow=self)
         set_key_value(key=self.adls_dir_path, value=self.adls_file_path)
-
-        shutil.rmtree(self.local_json_path)
