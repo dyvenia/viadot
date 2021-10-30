@@ -6,6 +6,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.11]
+### Fixed
+- ADLSToAzureSQL - fixed path to csv issue. 
+- SupermetricsToADLS - fixed local json path issue. 
+
+## [0.2.10] - 2021-10-29
+### Release due to CI/CD error
+
+## [0.2.9] - 2021-10-29
+### Release due to CI/CD error
+
 ## [0.2.8] - 2021-10-29
 ### Changed
 - CI/CD: `dev` image is now only published on push to the `dev` branch
