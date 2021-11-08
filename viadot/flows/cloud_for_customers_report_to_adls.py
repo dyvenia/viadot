@@ -9,15 +9,11 @@ from prefect.utilities import logging
 
 
 from ..task_utils import add_ingestion_metadata_task
-from ..tasks import (
-    AzureDataLakeUpload,
-    CloudForCustomersToDF,
-)
+from ..tasks import AzureDataLakeUpload
 from ..sources import CloudForCustomers
 
 logger = logging.get_logger(__name__)
 
-cloud_for_customers_to_df_task = CloudForCustomersToDF()
 file_to_adls_task = AzureDataLakeUpload()
 
 

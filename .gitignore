@@ -142,6 +142,7 @@ dmypy.json
 .config/credentials.json
 .local
 *.csv
+adam
 
 # Prefect
 config.toml

@@ -1,5 +1,5 @@
 IMAGE_ID=docker.pkg.github.com/dyvenia/viadot/viadot
-IMAGE_TAG=latest
+IMAGE_TAG=dev
 
 
 while getopts t: flag
