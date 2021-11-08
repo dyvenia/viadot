@@ -1,3 +1,4 @@
+import json
 import os
 from datetime import datetime, timezone
 from typing import List
@@ -104,6 +105,38 @@ def update_dtypes_dict(dtypes_dict):
     }
 
     return dtypes_dict_updated
+
+
+@task
+def df_to_csv(df, path: str, sep="\t", if_exists="replace", **kwargs):
+    if if_exists == "append":
+        if os.path.isfile(path):
+            csv_df = pd.read_csv(path)
+            out_df = pd.concat([csv_df, df])
+        else:
+            out_df = df
+    elif if_exists == "replace":
+        out_df = df
+    out_df.to_csv(path, index=False, sep=sep)
+
+
+@task
+def df_to_parquet(df, path: str, if_exists="replace", **kwargs):
+    if if_exists == "append":
+        if os.path.isfile(path):
+            parquet_df = pd.read_parquet(path)
+            out_df = pd.concat([parquet_df, df])
+        else:
+            out_df = df
+    elif if_exists == "replace":
+        out_df = df
+    out_df.to_parquet(path, index=False, **kwargs)
+
+
+@task
+def dtypes_to_json(dtypes_dict, local_json_path: str):
+    with open(local_json_path, "w") as fp:
+        json.dump(dtypes_dict, fp)
 
 
 class Git(Git):
