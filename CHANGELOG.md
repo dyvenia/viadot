@@ -4,12 +4,36 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-
 ## [Unreleased]
 ### Added
 - Added `Sharepoint` source
 - Added `SharepointToDF` task
 - Added `SharepointToADLS` flow
+- Added `df_to_csv` task to task_utils.py
+- Added `df_to_parquet` task to task_utils.py
+- Added `dtypes_to_json` task to task_utils.py
+## [0.2.11]
+### Fixed
+- ADLSToAzureSQL - fixed path to csv issue. 
+- SupermetricsToADLS - fixed local json path issue. 
+
+## [0.2.10] - 2021-10-29
+### Release due to CI/CD error
+
+## [0.2.9] - 2021-10-29
+### Release due to CI/CD error
+
+## [0.2.8] - 2021-10-29
+### Changed
+- CI/CD: `dev` image is now only published on push to the `dev` branch
+- Docker: 
+  - updated registry links to use the new `ghcr.io` domain
+  - `run.sh` now also accepts the `-t` option. When run in standard mode, it will only spin up the `viadot_jupyter_lab` service.
+  When ran with `-t dev`, it will also spin up `viadot_testing` and `viadot_docs` containers.
+
+### Fixed
+- ADLSToAzureSQL - fixed path parameter issue.
+
 
 ## [0.2.7] - 2021-10-04
 ### Added
@@ -25,8 +49,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Changed CI/CD algorithm
   - the `latest` Docker image is now only updated on release and is the same exact image as the latest release
   - the `dev` image is released only on pushes and PRs to the `dev` branch (so dev branch = dev image)
-
-### Changed
 - Modified `ADLSToAzureSQL` - *read_sep* and *write_sep* parameters added to the flow.
 
 ### Fixed
