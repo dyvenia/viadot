@@ -68,15 +68,11 @@ def c4c_report_to_df(direct_url: str, skip=0, top=500):
         chunk_from_url = CloudForCustomers(direct_url=new_url)
         df = chunk_from_url.to_df()
         final_df = final_df.append(df)
-        if not final_df.empty:
-            df_count = df.count()[1]
-            if df_count != top:
-                next_batch = False
-            skip += top
-            iteration += 1
-        else:
-            print("this CHANNEL was empty")
-            break
+        df_count = final_df.shape[1]
+        if df_count != top:
+            next_batch = False
+        skip += top
+        iteration += 1
         print(iteration)
 
     return final_df
@@ -101,6 +97,27 @@ class CloudForCustomersReportToADLS(Flow):
         *args: List[any],
         **kwargs: Dict[str, Any],
     ):
+        """
+        Flow for downloading data from different marketing APIs to a local CSV
+        using Cloud for Customers API, then uploading it to Azure Data Lake.
+
+        Args:
+            direct_url (str, optional): The url to the API. Defaults to None.
+            name (str): The name of the flow.
+            adls_sp_credentials_secret (str, optional): The name of the Azure Key Vault secret containing a dictionary with
+            ACCOUNT_NAME and Service Principal credentials (TENANT_ID, CLIENT_ID, CLIENT_SECRET) for the Azure Data Lake.
+            Defaults to None.
+            local_file_path (str, optional): Local destination path. Defaults to None.
+            output_file_extension (str, optional): Output file extension - to allow selection of .csv for data which is not easy to handle with parquet. Defaults to ".parquet"..
+            adls_dir_path (str, optional): Azure Data Lake destination folder/catalog path. Defaults to None.
+            if_empty (str, optional): What to do if the Supermetrics query returns no data. Defaults to "warn".
+            if_exists (str, optional): What to do if the table already exists.
+            skip (int, optional): Initial index value of reading row.
+            top (int, optional): The value of top reading row.
+            channels (List[str], optional): Filtering parameters passed to the url.
+            months (List[str], optional): Filtering parameters passed to the url.
+            years (List[str], optional): Filtering parameters passed to the url.
+        """
 
         self.if_empty = if_empty
         self.direct_url = direct_url

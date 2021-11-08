@@ -44,6 +44,7 @@ class CloudForCustomersToCSV(Task):
     def run(
         self,
         path: str = "cloud_for_customers_extract.csv",
+        direct_url: str = None,
         url: str = None,
         endpoint: str = None,
         fields: List[str] = None,
@@ -60,7 +61,7 @@ class CloudForCustomersToCSV(Task):
             params (Dict[str, Any]): The query parameters like filter by creation date time. Defaults to json format.
         """
         cloud_for_customers = CloudForCustomers(
-            url=url, endpoint=endpoint, params=params
+            url=url, direct_url=direct_url, endpoint=endpoint, params=params
         )
 
         # Download data to a local CSV file
@@ -104,6 +105,7 @@ class CloudForCustomersToDF(Task):
 
     def run(
         self,
+        direct_url: str = None,
         url: str = None,
         endpoint: str = None,
         fields: List[str] = None,
@@ -119,7 +121,7 @@ class CloudForCustomersToDF(Task):
             params (Dict[str, Any]): The query parameters like filter by creation date time. Defaults to json format.
         """
         cloud_for_customers = CloudForCustomers(
-            url=url, endpoint=endpoint, params=params
+            url=url, direct_url=direct_url, endpoint=endpoint, params=params
         )
 
         df = cloud_for_customers.to_df(if_empty=self.if_empty, fields=fields)
