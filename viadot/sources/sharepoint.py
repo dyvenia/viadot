@@ -4,9 +4,6 @@ import sharepy
 from .base import Source
 from ..config import local_config
 
-from visions.functional import infer_type
-from visions.typesets.complete_set import CompleteSet
-
 
 class Sharepoint(Source):
     def __init__(

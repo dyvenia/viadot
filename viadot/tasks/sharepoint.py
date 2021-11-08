@@ -1,4 +1,4 @@
-from typing import Dict, List
+from typing import List
 import os
 import pandas as pd
 from prefect import Task
