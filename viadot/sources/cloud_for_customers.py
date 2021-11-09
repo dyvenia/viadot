@@ -33,10 +33,10 @@ def column_mapper(url=url):
 
 def change_to_meta_url(url):
     meta_url = ""
-    beging = url.split(".svc")[0]
+    start = url.split(".svc")[0]
     ending = url.split("/")[-1]
     e = ending.split("?")[0]
-    meta_url = beging + ".svc/$metadata?entityset=" + e
+    meta_url = start + ".svc/$metadata?entityset=" + e
     return meta_url
 
 
@@ -47,7 +47,12 @@ def response_to_entity_list(dirty_json, url):
     for element in dirty_json["d"]["results"]:
         new_entity = {}
         for key, object_of_interest in element.items():
-            if key != "__metadata" and key != "Photo" and key != "":
+            if (
+                key != "__metadata"
+                and key != "Photo"
+                and key != ""
+                and key != "Picture"
+            ):
                 # skip the column which contain nested structure
                 if "{" not in str(object_of_interest):
                     new_key = column_maper_dict.get(key)
@@ -64,16 +69,6 @@ class APIError(Exception):
 
 
 class CloudForCustomers(Source):
-    """
-    Fetches data from Cloud for Customer.
-
-    Args:
-        direct_url (str, optional): The url to the API in case of prepared report. Defaults to None.
-        url (str, optional): The url to the API. Defaults to None.
-        endpoint (str, optional): The endpoint of the API. Defaults to None.
-        params (Dict[str, Any]): The query parameters like filter by creation date time. Defaults to json format.
-    """
-
     def __init__(
         self,
         *args,
@@ -83,13 +78,22 @@ class CloudForCustomers(Source):
         params: Dict[str, Any] = {},
         **kwargs,
     ):
+        """
+        Fetches data from Cloud for Customer.
+
+        Args:
+            direct_url (str, optional): The url to the API in case of prepared report. Defaults to None.
+            url (str, optional): The url to the API. Defaults to None.
+            endpoint (str, optional): The endpoint of the API. Defaults to None.
+            params (Dict[str, Any]): The query parameters like filter by creation date time. Defaults to json format.
+        """
         super().__init__(*args, **kwargs)
         credentials = local_config.get("CLOUD_FOR_CUSTOMERS")
         self.url = url or credentials["server"]
         self.query_endpoint = endpoint
         self.params = params
         self.params["$format"] = "json"
-        # if user use both direct_url and url the priority has direct_url
+        access = {"username": None, "password": None}
         if direct_url:
             if "my336539" in direct_url:
                 access = credentials.get("QA")
@@ -116,15 +120,17 @@ class CloudForCustomers(Source):
                     response = self.check_url(url, params=self.params)
                     first = False
                 else:
-                    response = self.check_url(url, params=self.params)
+                    response = self.check_url(url)
 
             if response.status_code == 200:
                 dirty_json = response.json()
-                entity_list = response_to_entity_list(dirty_json, url)
+                entity_from_response = response_to_entity_list(dirty_json, url)
+                entity_list.append(entity_from_response)
             url = dirty_json["d"].get("__next")
             if url is None:
                 break
-        return entity_list
+        flat_entity_list = [item for sublist in entity_list for item in sublist]
+        return flat_entity_list
 
     def check_url(self, url, params=None):
         try:

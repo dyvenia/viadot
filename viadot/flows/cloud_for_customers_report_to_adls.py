@@ -49,10 +49,9 @@ def df_to_parquet_task(df, path: str, if_exists: str = "replace"):
 
 
 @task
-def c4c_report_to_df(direct_url: str, skip=0, top=500):
+def c4c_report_to_df(direct_url: str, skip=0, top=1000):
     final_df = pd.DataFrame()
     next_batch = True
-    iteration = 0
     while next_batch:
         new_url = f"{direct_url}&$top={top}&$skip={skip}"
         chunk_from_url = CloudForCustomers(direct_url=new_url)
@@ -62,16 +61,36 @@ def c4c_report_to_df(direct_url: str, skip=0, top=500):
         if df_count != top:
             next_batch = False
         skip += top
-        iteration += 1
-        print(iteration)
 
     return final_df
+
+
+@task
+def c4c_to_df(
+    url: str = None,
+    endpoint: str = None,
+    direct_url: str = None,
+    fields: List[str] = None,
+    params: Dict[str, Any] = {},
+    if_empty: str = "warn",
+):
+    cloud_for_customers = CloudForCustomers(
+        url=url, direct_url=direct_url, endpoint=endpoint, params=params
+    )
+
+    df = cloud_for_customers.to_df(if_empty=if_empty, fields=fields)
+
+    return df
 
 
 class CloudForCustomersReportToADLS(Flow):
     def __init__(
         self,
         direct_url: str = None,
+        url: str = None,
+        endpoint: str = None,
+        params: Dict[str, Any] = {},
+        fields: List[str] = None,
         name: str = None,
         adls_sp_credentials_secret: str = None,
         local_file_path: str = None,
@@ -101,7 +120,7 @@ class CloudForCustomersReportToADLS(Flow):
             output_file_extension (str, optional): Output file extension - to allow selection of .csv for data which is not easy to handle with parquet. Defaults to ".parquet"..
             adls_dir_path (str, optional): Azure Data Lake destination folder/catalog path. Defaults to None.
             if_empty (str, optional): What to do if the Supermetrics query returns no data. Defaults to "warn".
-            if_exists (str, optional): What to do if the table already exists.
+            if_exists (str, optional): What to do if the table already exists. Defaults to "replace".
             skip (int, optional): Initial index value of reading row.
             top (int, optional): The value of top reading row.
             channels (List[str], optional): Filtering parameters passed to the url.
@@ -125,13 +144,17 @@ class CloudForCustomersReportToADLS(Flow):
         self.adls_file_path = os.path.join(
             adls_dir_path, self.now + self.output_file_extension
         )
-
+        # in case of non-report invoking
+        self.url = url
+        self.endpoint = endpoint
+        self.params = params
+        self.fields = fields
+        # filtering for direct_url for reports
         self.channels = channels
         self.months = months
         self.years = years
 
-        self.urls_for_month = []
-        self.urls_for_month.append(self.direct_url)
+        self.urls_for_month = [self.direct_url]
 
         self.urls_for_month = self.create_url_with_fields(
             fields_list=self.channels, filter_code="CCHANNETZTEXT12CE6C2FA0D77995"
@@ -171,6 +194,20 @@ class CloudForCustomersReportToADLS(Flow):
     def slugify(name):
         return name.replace(" ", "_").lower()
 
+    def gen_c4c(
+        self, url: str, direct_url: str, endpoint: str, params: str, flow: Flow = None
+    ) -> Task:
+
+        df = c4c_to_df.bind(
+            url=url,
+            endpoint=endpoint,
+            params=params,
+            direct_url=direct_url,
+            flow=flow,
+        )
+
+        return df
+
     def gen_c4c_report_months(
         self, urls_for_month: Union[str, List[str]], flow: Flow = None
     ) -> Task:
@@ -185,9 +222,17 @@ class CloudForCustomersReportToADLS(Flow):
         return report
 
     def gen_flow(self) -> Flow:
-
-        dfs = apply_map(self.gen_c4c_report_months, self.urls_for_month, flow=self)
-        df = union_dfs_task.bind(dfs, flow=self)
+        if self.direct_url:
+            dfs = apply_map(self.gen_c4c_report_months, self.urls_for_month, flow=self)
+            df = union_dfs_task.bind(dfs, flow=self)
+        elif self.url:
+            df = self.gen_c4c(
+                url=self.url,
+                direct_url=self.direct_url,
+                endpoint=self.endpoint,
+                params=self.params,
+                flow=self,
+            )
 
         df_with_metadata = add_ingestion_metadata_task.bind(df, flow=self)
 
