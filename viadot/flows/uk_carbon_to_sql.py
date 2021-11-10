@@ -13,6 +13,7 @@ class UKCarbonIntensityToSQLite(Flow):
         self,
         name: str,
         days_back: int,
+        df: pd.DataFrame,
         db_path: str, 
         table_name: str,
         if_exists: str,
@@ -22,12 +23,13 @@ class UKCarbonIntensityToSQLite(Flow):
         **kwargs: Dict[str, Any]
     ):
         self.days_back = days_back
+        self.df = df
         self.db_path = db_path
         self.schema = schema
         self.table_name = table_name
         self.dtypes = dtypes
         self.if_exists = if_exists
-        super().__init__(*args,name=name, **kwargs)
+        super().__init__(*args,name=name,**kwargs)
         self.gen_flow()
     
 
@@ -37,7 +39,8 @@ class UKCarbonIntensityToSQLite(Flow):
             flow=self
         )
         sqlite_insert_task.bind(
-            db_path=self.db_path, 
+            db_path=self.db_path,
+            df=self.df,
             schema=self.schema,
             dtypes=self.dtypes,
             table_name=self.table_name,
