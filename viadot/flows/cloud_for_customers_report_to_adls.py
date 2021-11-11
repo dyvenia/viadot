@@ -1,99 +1,33 @@
-import json
 import os
-import shutil
-from pathlib import Path
 from typing import Any, Dict, List, Union
 
 import pandas as pd
 import pendulum
-from prefect import Flow, Task, apply_map, task
-from prefect import Flow, Task, apply_map, task
+from prefect import Flow, Task, apply_map
 from prefect.backend import set_key_value
-from prefect.tasks.secrets import PrefectSecret
 from prefect.utilities import logging
-from visions.functional import infer_type
-from visions.typesets.complete_set import CompleteSet
 
-from ..task_utils import add_ingestion_metadata_task
-from ..tasks import AzureDataLakeUpload
-from ..sources import CloudForCustomers
+
+from ..task_utils import (
+    add_ingestion_metadata_task,
+    union_dfs_task,
+    df_to_csv_task,
+    df_to_parquet_task,
+)
+
+from ..tasks import AzureDataLakeUpload, c4c_report_to_df, c4c_to_df
 
 logger = logging.get_logger(__name__)
 
 file_to_adls_task = AzureDataLakeUpload()
 
 
-@task
-def union_dfs_task(dfs: List[pd.DataFrame]):
-    return pd.concat(dfs, ignore_index=True)
-
-
-@task
-def df_to_csv_task(df, path: str, if_exists: str = "replace"):
-    if if_exists == "append":
-        if os.path.isfile(path):
-            csv_df = pd.read_csv(path)
-            out_df = pd.concat([csv_df, df])
-        else:
-            out_df = df
-    elif if_exists == "replace":
-        out_df = df
-    out_df.to_csv(path, index=False)
-
-
-@task
-def df_to_parquet_task(df, path: str, if_exists: str = "replace"):
-    if if_exists == "append":
-        if os.path.isfile(path):
-            parquet_df = pd.read_parquet(path)
-            out_df = pd.concat([parquet_df, df])
-        else:
-            out_df = df
-    elif if_exists == "replace":
-        out_df = df
-    out_df.to_parquet(path, index=False)
-
-
-@task
-def c4c_report_to_df(direct_url: str, skip=0, top=1000):
-    final_df = pd.DataFrame()
-    next_batch = True
-    while next_batch:
-        new_url = f"{direct_url}&$top={top}&$skip={skip}"
-        chunk_from_url = CloudForCustomers(direct_url=new_url)
-        df = chunk_from_url.to_df()
-        final_df = final_df.append(df)
-        df_count = final_df.shape[1]
-        if df_count != top:
-            next_batch = False
-        skip += top
-
-    return final_df
-
-
-@task
-def c4c_to_df(
-    url: str = None,
-    endpoint: str = None,
-    direct_url: str = None,
-    fields: List[str] = None,
-    params: Dict[str, Any] = {},
-    if_empty: str = "warn",
-):
-    cloud_for_customers = CloudForCustomers(
-        url=url, direct_url=direct_url, endpoint=endpoint, params=params
-    )
-
-    df = cloud_for_customers.to_df(if_empty=if_empty, fields=fields)
-
-    return df
-
-
 class CloudForCustomersReportToADLS(Flow):
     def __init__(
         self,
-        direct_url: str = None,
+        report_url: str = None,
         url: str = None,
+        source_type: str = "QA",
         endpoint: str = None,
         params: Dict[str, Any] = {},
         fields: List[str] = None,
@@ -117,7 +51,7 @@ class CloudForCustomersReportToADLS(Flow):
         using Cloud for Customers API, then uploading it to Azure Data Lake.
 
         Args:
-            direct_url (str, optional): The url to the API. Defaults to None.
+            report_url (str, optional): The url to the API. Defaults to None.
             name (str): The name of the flow.
             adls_sp_credentials_secret (str, optional): The name of the Azure Key Vault secret containing a dictionary with
             ACCOUNT_NAME and Service Principal credentials (TENANT_ID, CLIENT_ID, CLIENT_SECRET) for the Azure Data Lake.
@@ -135,7 +69,8 @@ class CloudForCustomersReportToADLS(Flow):
         """
 
         self.if_empty = if_empty
-        self.direct_url = direct_url
+        self.report_url = report_url
+        self.source_type = source_type
         self.skip = skip
         self.top = top
         # AzureDataLakeUpload
@@ -155,22 +90,22 @@ class CloudForCustomersReportToADLS(Flow):
         self.endpoint = endpoint
         self.params = params
         self.fields = fields
-        # filtering for direct_url for reports
+        # filtering for report_url for reports
         self.channels = channels
         self.months = months
         self.years = years
 
-        self.urls_for_month = [self.direct_url]
+        self.report_urls_with_filters = [self.report_url]
 
-        self.urls_for_month = self.create_url_with_fields(
+        self.report_urls_with_filters = self.create_url_with_fields(
             fields_list=self.channels, filter_code="CCHANNETZTEXT12CE6C2FA0D77995"
         )
 
-        self.urls_for_month = self.create_url_with_fields(
+        self.report_urls_with_filters = self.create_url_with_fields(
             fields_list=self.months, filter_code="CMONTH_ID"
         )
 
-        self.urls_for_month = self.create_url_with_fields(
+        self.report_urls_with_filters = self.create_url_with_fields(
             fields_list=self.years, filter_code="CYEAR_ID"
         )
 
@@ -181,11 +116,11 @@ class CloudForCustomersReportToADLS(Flow):
     def create_url_with_fields(self, fields_list, filter_code):
         urls_list_result = []
         add_filter = True
-        if len(self.urls_for_month) > 1:
+        if len(self.report_urls_with_filters) > 1:
             add_filter = False
 
         if fields_list:
-            for url in self.urls_for_month:
+            for url in self.report_urls_with_filters:
                 for field in fields_list:
                     if add_filter:
                         new_url = f"{url}&$filter=({filter_code}%20eq%20%27{field}%27)"
@@ -194,47 +129,58 @@ class CloudForCustomersReportToADLS(Flow):
                     urls_list_result.append(new_url)
             return urls_list_result
         else:
-            return self.urls_for_month
+            return self.report_urls_with_filters
 
     @staticmethod
     def slugify(name):
         return name.replace(" ", "_").lower()
 
     def gen_c4c(
-        self, url: str, direct_url: str, endpoint: str, params: str, flow: Flow = None
+        self,
+        url: str,
+        report_url: str,
+        endpoint: str,
+        params: str,
+        source_type: str,
+        flow: Flow = None,
     ) -> Task:
 
         df = c4c_to_df.bind(
             url=url,
+            source_type=source_type,
             endpoint=endpoint,
             params=params,
-            direct_url=direct_url,
+            report_url=report_url,
             flow=flow,
         )
 
         return df
 
     def gen_c4c_report_months(
-        self, urls_for_month: Union[str, List[str]], flow: Flow = None
+        self, report_urls_with_filters: Union[str, List[str]], flow: Flow = None
     ) -> Task:
 
         report = c4c_report_to_df.bind(
             skip=self.skip,
             top=self.top,
-            direct_url=urls_for_month,
+            report_url=report_urls_with_filters,
+            source_type=self.source_type,
             flow=flow,
         )
 
         return report
 
     def gen_flow(self) -> Flow:
-        if self.direct_url:
-            dfs = apply_map(self.gen_c4c_report_months, self.urls_for_month, flow=self)
+        if self.report_url:
+            dfs = apply_map(
+                self.gen_c4c_report_months, self.report_urls_with_filters, flow=self
+            )
             df = union_dfs_task.bind(dfs, flow=self)
         elif self.url:
             df = self.gen_c4c(
                 url=self.url,
-                direct_url=self.direct_url,
+                report_url=self.report_url,
+                source_type=self.source_type,
                 endpoint=self.endpoint,
                 params=self.params,
                 flow=self,
