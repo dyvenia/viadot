@@ -8,7 +8,6 @@ from typing import Any, Dict, List
 def c4c_report_to_df(report_url: str, source_type: str = "QA", skip=0, top=1000):
     final_df = pd.DataFrame()
     next_batch = True
-    iteration = 0
     while next_batch:
         new_url = f"{report_url}&$top={top}&$skip={skip}"
         chunk_from_url = CloudForCustomers(report_url=new_url, source_type=source_type)
@@ -19,7 +18,6 @@ def c4c_report_to_df(report_url: str, source_type: str = "QA", skip=0, top=1000)
             if df_count != top:
                 next_batch = False
             skip += top
-            iteration += 1
         else:
             break
     return final_df
