@@ -43,38 +43,71 @@ insert_task = SQLiteInsert()
 insert_task.run(table_name=TABLE_NAME, dtypes=dtypes, db_path=database_path, df=df, if_exists="replace")
 ```
 
+## Set up
+
+__Note__: If you're running on Unix, after cloning the repo, you may need to grant executable privileges to the `update.sh` and `run.sh` scripts: 
+```
+sudo chmod +x viadot/docker/update.sh && \
+sudo chmod +x viadot/docker/run.sh
+```
+
+### a) user
+Clone the `main` branch, enter the `docker` folder, and set up the environment:
+```
+git clone https://github.com/dyvenia/viadot.git && \
+cd viadot/docker && \
+./update.sh
+```
+
+Run the enviroment:
+```
+./run.sh
+```
+
+### b) developer
+Clone the `dev` branch, enter the `docker` folder, and set up the environment:
+```
+git clone -b dev https://github.com/dyvenia/viadot.git && \
+cd viadot/docker && \
+./update.sh -t dev
+```
+
+Run the enviroment:
+```
+./run.sh -t dev
+```
+
+Install the library in development mode (repeat for the `viadot_jupyter_lab` container if needed):
+```
+docker exec -it viadot_testing pip install -e . --user
+```
+
 
 ## Running tests
+
 To run tests, log into the container and run pytest:
 ```
-cd viadot/docker
-run.sh
 docker exec -it viadot_testing bash
 pytest
 ```
 
 ## Running flows locally
+
 You can run the example flows from the terminal:
 ```
-run.sh
 docker exec -it viadot_testing bash
 FLOW_NAME=hello_world; python -m viadot.examples.$FLOW_NAME
 ```
 
-However, when developing, the easiest way is to use the provided Jupyter Lab container available at `http://localhost:9000/`.
+However, when developing, the easiest way is to use the provided Jupyter Lab container available in the browser at `http://localhost:9000/`.
 
 
 ## How to contribute
-1. Clone the release branch 
-2. Pull the docker env by running `viadot/docker/update.sh -t dev`
-3. Run the env with `viadot/docker/run.sh`
-4. Log into the dev container and install in development mode so that viadot will auto-install at each code change: 
-```
-docker exec -it viadot_testing bash
-pip install -e .
-```
-5. Edit and test your changes with `pytest`
-6. Submit a PR. The PR should contain the following:
+
+1. Fork repository if you do not have write access
+2. Set up locally
+3. Test your changes with `pytest`
+4. Submit a PR. The PR should contain the following:
 - new/changed functionality
 - tests for the changes
 - changes added to `CHANGELOG.md`
