@@ -8,15 +8,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
-- Added task column_mapper to `CloudForCustomers`
-- Added retry connection in `CloudForCustomers`
+- Stability improvements for CloudForClustomers
 - Added batching with top parameter in `CloudForCustomersReportToADLS`
-- Added support for parquet in `CloudForCustomersReportToADLS`
+- Added support for Parquet in `CloudForCustomersReportToADLS`
 - Added channel filtering in `CloudForCustomersReportToADLS`
 
 ### Changed
-- Changed QA/Prod logging via URL in `CloudForCustomers`
-- Unifing `CloudForCustomersToADLS` into `CloudForCustomersReportToADLS`
+- Unifying `CloudForCustomersToADLS` into `CloudForCustomersReportToADLS`
 - Changed `CloudForCustomersToDF` Task class into task function
 
 ## [0.2.11]
