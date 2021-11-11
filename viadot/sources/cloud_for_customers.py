@@ -4,8 +4,8 @@ import pandas as pd
 from typing import Any, Dict, List
 from urllib.parse import urljoin
 from ..config import local_config
-
-import time
+from ..exceptions import APIError
+import numpy as np
 from requests.adapters import HTTPAdapter
 from requests.exceptions import ConnectionError, HTTPError, ReadTimeout, Timeout
 from urllib3.exceptions import ProtocolError
@@ -13,21 +13,20 @@ import logging
 import re
 from requests.packages.urllib3.util.retry import Retry
 
-url = "https://my341115.crm.ondemand.com/sap/c4c/odata/ana_businessanalytics_analytics.svc/$metadata?entityset=RPZ1F90A299C830A29C6659D3QueryResult"
 
-
-def column_mapper(url=url):
-    credentials = local_config.get("CLOUD_FOR_CUSTOMERS")
-    access = credentials.get("Prod")
-    auth = (access["username"], access["password"])
-    response = requests.get(url, auth=auth)
+def map_columns(url=None):
     column_mapping = {}
-    for sentence in response.text.split("/>"):
-        result = re.search(r'(?<=Name=")([^"]+).+(sap:label=")([^"]+)+', sentence)
-        if result:
-            key = result.groups(0)[0]
-            val = result.groups(0)[2]
-            column_mapping[key] = val
+    if url:
+        credentials = local_config.get("CLOUD_FOR_CUSTOMERS")
+        c4c_credentials = credentials.get("Prod")
+        auth = (c4c_credentials["username"], c4c_credentials["password"])
+        response = requests.get(url, auth=auth)
+        for sentence in response.text.split("/>"):
+            result = re.search(r'(?<=Name=")([^"]+).+(sap:label=")([^"]+)+', sentence)
+            if result:
+                key = result.groups(0)[0]
+                val = result.groups(0)[2]
+                column_mapping[key] = val
     return column_mapping
 
 
@@ -35,25 +34,19 @@ def change_to_meta_url(url):
     meta_url = ""
     start = url.split(".svc")[0]
     ending = url.split("/")[-1]
-    e = ending.split("?")[0]
-    meta_url = start + ".svc/$metadata?entityset=" + e
+    url_end = ending.split("?")[0]
+    meta_url = start + ".svc/$metadata?entityset=" + url_end
     return meta_url
 
 
 def response_to_entity_list(dirty_json, url):
     metadata_url = change_to_meta_url(url)
-    column_maper_dict = column_mapper(metadata_url)
+    column_maper_dict = map_columns(metadata_url)
     entity_list = []
     for element in dirty_json["d"]["results"]:
         new_entity = {}
         for key, object_of_interest in element.items():
-            if (
-                key != "__metadata"
-                and key != "Photo"
-                and key != ""
-                and key != "Picture"
-            ):
-                # skip the column which contain nested structure
+            if key not in ["__metadata", "Photo", "", "Picture"]:
                 if "{" not in str(object_of_interest):
                     new_key = column_maper_dict.get(key)
                     if new_key:
@@ -64,55 +57,45 @@ def response_to_entity_list(dirty_json, url):
     return entity_list
 
 
-class APIError(Exception):
-    pass
-
-
 class CloudForCustomers(Source):
     def __init__(
         self,
         *args,
-        direct_url: str = None,
+        report_url: str = None,
         url: str = None,
         endpoint: str = None,
         params: Dict[str, Any] = {},
+        source_type: str = "QA",
         **kwargs,
     ):
         """
         Fetches data from Cloud for Customer.
 
         Args:
-            direct_url (str, optional): The url to the API in case of prepared report. Defaults to None.
+            report_url (str, optional): The url to the API in case of prepared report. Defaults to None.
             url (str, optional): The url to the API. Defaults to None.
             endpoint (str, optional): The endpoint of the API. Defaults to None.
             params (Dict[str, Any]): The query parameters like filter by creation date time. Defaults to json format.
         """
         super().__init__(*args, **kwargs)
-        credentials = local_config.get("CLOUD_FOR_CUSTOMERS")
-        self.url = url or credentials["server"]
+        c4c_credentials = local_config.get("CLOUD_FOR_CUSTOMERS")
+        source_credential = c4c_credentials.get(source_type)
+        self.url = url or source_credential["server"]
+        self.report_url = report_url
         self.query_endpoint = endpoint
         self.params = params
         self.params["$format"] = "json"
-        access = {"username": None, "password": None}
-        if direct_url:
-            if "my336539" in direct_url:
-                access = credentials.get("QA")
-            elif "my341115" in direct_url:
-                access = credentials.get("Prod")
-        elif url:
-            if "my336539" in url:
-                access = credentials.get("QA")
-            elif "my341115" in url:
-                access = credentials.get("Prod")
-        self.auth = (access["username"], access["password"])
-        self.direct_url = direct_url
+        if source_credential:
+            self.auth = (source_credential["username"], source_credential["password"])
+        else:
+            self.auth = (None, None)
 
     def to_records(self) -> List:
         entity_list = []
         first = True
         while True:
-            if self.direct_url:
-                url = self.direct_url
+            if self.report_url:
+                url = self.report_url
                 response = self.check_url(url)
             elif self.url:
                 if first:
@@ -124,13 +107,15 @@ class CloudForCustomers(Source):
 
             if response.status_code == 200:
                 dirty_json = response.json()
-                entity_from_response = response_to_entity_list(dirty_json, url)
-                entity_list.append(entity_from_response)
+                if self.report_url:
+                    entity_list = response_to_entity_list(dirty_json, url)
+                elif self.url:
+                    entity_list_np = np.array(entity_list)
+                    entity_list = entity_list_np.flatten()
             url = dirty_json["d"].get("__next")
             if url is None:
                 break
-        flat_entity_list = [item for sublist in entity_list for item in sublist]
-        return flat_entity_list
+        return entity_list
 
     def check_url(self, url, params=None):
         try:
@@ -146,6 +131,8 @@ class CloudForCustomers(Source):
             session.mount("https://", adapter)
             response = session.get(url, params=params, auth=self.auth)
             response.raise_for_status()
+
+        # TODO: abstract below and put as handle_api_response() into utils.py
         except ReadTimeout as e:
             msg = "The connection was successful, "
             msg += f"however the API call to {url} timed out after .... s "
