@@ -3,6 +3,8 @@ from datetime import datetime, timezone
 from typing import List
 
 import pandas as pd
+from pathlib import Path
+import shutil
 
 import visions
 from visions.functional import infer_type
@@ -50,6 +52,12 @@ def get_latest_timestamp_file_path(files: List[str]) -> str:
     logger.debug(f"Latest file: {latest_file}")
 
     return latest_file
+
+
+@task
+def dtypes_to_json_task(dtypes_dict, local_json_path: str):
+    with open(local_json_path, "w") as fp:
+        json.dump(dtypes_dict, fp)
 
 
 @task
@@ -104,6 +112,61 @@ def update_dtypes_dict(dtypes_dict):
     }
 
     return dtypes_dict_updated
+
+
+@task
+def union_dfs_task(dfs: List[pd.DataFrame]):
+    return pd.concat(dfs, ignore_index=True)
+
+
+@task
+def df_to_csv_task(df, path: str, if_exists: str = "replace"):
+    if if_exists == "append":
+        if os.path.isfile(path):
+            csv_df = pd.read_csv(path)
+            out_df = pd.concat([csv_df, df])
+        else:
+            out_df = df
+    elif if_exists == "replace":
+        out_df = df
+    out_df.to_csv(path, index=False)
+
+
+@task
+def df_to_parquet_task(df, path: str, if_exists: str = "replace"):
+    if if_exists == "append":
+        if os.path.isfile(path):
+            parquet_df = pd.read_parquet(path)
+            out_df = pd.concat([parquet_df, df])
+        else:
+            out_df = df
+    elif if_exists == "replace":
+        out_df = df
+    out_df.to_parquet(path, index=False)
+
+
+@task
+def write_to_json(dict_, path):
+
+    logger = prefect.context.get("logger")
+
+    if os.path.isfile(path):
+        logger.warning(f"File {path} already exists. Overwriting...")
+    else:
+        logger.debug(f"Writing to {path}...")
+
+    # create parent directories if they don't exist
+    Path(path).parent.mkdir(parents=True, exist_ok=True)
+    with open(path, mode="w") as f:
+        json.dump(dict_, f)
+
+    logger.debug(f"Successfully wrote to {path}.")
+
+
+@task
+def cleanup_validation_clutter(expectations_path):
+    ge_project_path = Path(expectations_path).parent
+    shutil.rmtree(ge_project_path)
 
 
 class Git(Git):
