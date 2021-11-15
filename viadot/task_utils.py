@@ -108,7 +108,7 @@ def update_dtypes_dict(dtypes_dict):
 
 
 @task
-def df_to_csv(df, path: str, sep="\t", if_exists="replace", **kwargs):
+def df_to_csv(df, path: str, sep="\t", if_exists="replace", **kwargs) -> None:
     if if_exists == "append":
         if os.path.isfile(path):
             csv_df = pd.read_csv(path)
@@ -121,7 +121,7 @@ def df_to_csv(df, path: str, sep="\t", if_exists="replace", **kwargs):
 
 
 @task
-def df_to_parquet(df, path: str, if_exists="replace", **kwargs):
+def df_to_parquet(df, path: str, if_exists="replace", **kwargs) -> None:
     if if_exists == "append":
         if os.path.isfile(path):
             parquet_df = pd.read_parquet(path)
@@ -134,7 +134,7 @@ def df_to_parquet(df, path: str, if_exists="replace", **kwargs):
 
 
 @task
-def dtypes_to_json(dtypes_dict, local_json_path: str):
+def dtypes_to_json(dtypes_dict, local_json_path: str) -> None:
     with open(local_json_path, "w") as fp:
         json.dump(dtypes_dict, fp)
 

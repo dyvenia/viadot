@@ -14,8 +14,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added `dtypes_to_json` task to task_utils.py
 ## [0.2.11]
 ### Fixed
-- ADLSToAzureSQL - fixed path to csv issue. 
-- SupermetricsToADLS - fixed local json path issue. 
+- `ADLSToAzureSQL` - fixed path to csv issue. 
+- `SupermetricsToADLS` - fixed local json path issue. 
 
 ## [0.2.10] - 2021-10-29
 ### Release due to CI/CD error
@@ -32,7 +32,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   When ran with `-t dev`, it will also spin up `viadot_testing` and `viadot_docs` containers.
 
 ### Fixed
-- ADLSToAzureSQL - fixed path parameter issue.
+- `ADLSToAzureSQL` - fixed path parameter issue.
 
 
 ## [0.2.7] - 2021-10-04

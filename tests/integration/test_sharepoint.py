@@ -18,9 +18,9 @@ DF = pd.read_excel(FILE_NAME, sheet_name=2)
 def test_connection():
     credentials = local_config.get("SHAREPOINT")
     site = f'https://{credentials["site"]}'
-    s_connect = s.get_connection()
-    status = s_connect.get(site)
-    assert str(status) == "<Response [200]>"
+    conn = s.get_connection()
+    response = conn.get(site)
+    assert response.status_code == 200
 
 
 def test_file_extension():
@@ -55,7 +55,7 @@ def test_get_data_types():
 
 def test_map_dtypes_for_parquet():
     dtyps_dict = df_get_data_types_task.run(DF)
-    df_map = s_flow.df_mapp_mixed_dtypes_for_parquet_task(DF, dtyps_dict)
+    df_map = s_flow.df_map_mixed_dtypes_for_parquet_task(DF, dtyps_dict)
     sum_df_cols = (
         DF.select_dtypes(include=["object", "string"]).columns.value_counts().sum()
     )
