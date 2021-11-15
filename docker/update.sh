@@ -2,7 +2,6 @@ IMAGE_ID=ghcr.io/dyvenia/viadot/viadot
 IMAGE_TAG=latest
 
 
-
 while getopts t: flag
 do
     case "${flag}" in
