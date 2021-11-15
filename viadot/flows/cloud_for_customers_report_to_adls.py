@@ -57,7 +57,8 @@ class CloudForCustomersReportToADLS(Flow):
             ACCOUNT_NAME and Service Principal credentials (TENANT_ID, CLIENT_ID, CLIENT_SECRET) for the Azure Data Lake.
             Defaults to None.
             local_file_path (str, optional): Local destination path. Defaults to None.
-            output_file_extension (str, optional): Output file extension - to allow selection of .csv for data which is not easy to handle with parquet. Defaults to ".parquet"..
+            output_file_extension (str, optional): Output file extension - to allow selection of .csv for data which is not easy
+            to handle with parquet. Defaults to ".csv".
             adls_dir_path (str, optional): Azure Data Lake destination folder/catalog path. Defaults to None.
             if_empty (str, optional): What to do if the Supermetrics query returns no data. Defaults to "warn".
             if_exists (str, optional): What to do if the table already exists. Defaults to "replace".
@@ -127,6 +128,7 @@ class CloudForCustomersReportToADLS(Flow):
                     elif not add_filter:
                         new_url = f"{url}%20and%20({filter_code}%20eq%20%27{field}%27)"
                     urls_list_result.append(new_url)
+            print(urls_list_result)
             return urls_list_result
         else:
             return self.report_urls_with_filters

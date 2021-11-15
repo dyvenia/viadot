@@ -65,7 +65,7 @@ class CloudForCustomers(Source):
         url: str = None,
         endpoint: str = None,
         params: Dict[str, Any] = {},
-        source_type: str = "QA",
+        env: str = "QA",
         **kwargs,
     ):
         """
@@ -76,10 +76,11 @@ class CloudForCustomers(Source):
             url (str, optional): The url to the API. Defaults to None.
             endpoint (str, optional): The endpoint of the API. Defaults to None.
             params (Dict[str, Any]): The query parameters like filter by creation date time. Defaults to json format.
+            env (str, optional): The development environments. Defaults to 'QA'.
         """
         super().__init__(*args, **kwargs)
         c4c_credentials = local_config.get("CLOUD_FOR_CUSTOMERS")
-        source_credential = c4c_credentials.get(source_type)
+        source_credential = c4c_credentials.get(env)
         self.url = url or source_credential["server"]
         self.report_url = report_url
         self.query_endpoint = endpoint
