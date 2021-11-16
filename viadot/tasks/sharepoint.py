@@ -143,10 +143,12 @@ class SharepointToDF(Task):
         """
         self.path_to_file = path_to_file
         self.url_to_file = url_to_file
-        saved_file = os.path.basename(self.path_to_file)
+        path_to_file = os.path.basename(self.path_to_file)
 
         s = Sharepoint()
-        s.download_file(self.url_to_file, saved_file=saved_file)
+        s.download_file(
+            download_from_path=self.url_to_file, download_to_path=path_to_file
+        )
 
         self.nrows = nrows
 
