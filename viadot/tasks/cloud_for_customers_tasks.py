@@ -5,7 +5,7 @@ from typing import Any, Dict, List
 
 
 @task
-def c4c_report_to_df(report_url: str, env: str = "QA", skip=0, top=1000):
+def c4c_report_to_df(report_url: str, env: str = "QA", skip: int = 0, top: int = 1000):
     final_df = pd.DataFrame()
     next_batch = True
     while next_batch:

@@ -27,7 +27,7 @@ class CloudForCustomersReportToADLS(Flow):
         self,
         report_url: str = None,
         url: str = None,
-        source_type: str = "QA",
+        env: str = "QA",
         endpoint: str = None,
         params: Dict[str, Any] = {},
         fields: List[str] = None,
@@ -71,7 +71,7 @@ class CloudForCustomersReportToADLS(Flow):
 
         self.if_empty = if_empty
         self.report_url = report_url
-        self.source_type = source_type
+        self.env = env
         self.skip = skip
         self.top = top
         # AzureDataLakeUpload
@@ -114,7 +114,7 @@ class CloudForCustomersReportToADLS(Flow):
 
         self.gen_flow()
 
-    def create_url_with_fields(self, fields_list, filter_code):
+    def create_url_with_fields(self, fields_list: List[str], filter_code: str) -> List:
         urls_list_result = []
         add_filter = True
         if len(self.report_urls_with_filters) > 1:
@@ -128,7 +128,6 @@ class CloudForCustomersReportToADLS(Flow):
                     elif not add_filter:
                         new_url = f"{url}%20and%20({filter_code}%20eq%20%27{field}%27)"
                     urls_list_result.append(new_url)
-            print(urls_list_result)
             return urls_list_result
         else:
             return self.report_urls_with_filters
@@ -143,13 +142,13 @@ class CloudForCustomersReportToADLS(Flow):
         report_url: str,
         endpoint: str,
         params: str,
-        source_type: str,
+        env: str,
         flow: Flow = None,
     ) -> Task:
 
         df = c4c_to_df.bind(
             url=url,
-            source_type=source_type,
+            env=env,
             endpoint=endpoint,
             params=params,
             report_url=report_url,
@@ -166,7 +165,7 @@ class CloudForCustomersReportToADLS(Flow):
             skip=self.skip,
             top=self.top,
             report_url=report_urls_with_filters,
-            source_type=self.source_type,
+            env=self.env,
             flow=flow,
         )
 
@@ -182,7 +181,7 @@ class CloudForCustomersReportToADLS(Flow):
             df = self.gen_c4c(
                 url=self.url,
                 report_url=self.report_url,
-                source_type=self.source_type,
+                env=self.env,
                 endpoint=self.endpoint,
                 params=self.params,
                 flow=self,

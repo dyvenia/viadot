@@ -14,7 +14,7 @@ import re
 from requests.packages.urllib3.util.retry import Retry
 
 
-def map_columns(url=None):
+def map_columns(url: str = None) -> Dict:
     column_mapping = {}
     if url:
         credentials = local_config.get("CLOUD_FOR_CUSTOMERS")
@@ -30,7 +30,7 @@ def map_columns(url=None):
     return column_mapping
 
 
-def change_to_meta_url(url):
+def change_to_meta_url(url: str) -> str:
     meta_url = ""
     start = url.split(".svc")[0]
     ending = url.split("/")[-1]
@@ -39,7 +39,7 @@ def change_to_meta_url(url):
     return meta_url
 
 
-def response_to_entity_list(dirty_json, url):
+def response_to_entity_list(dirty_json: Dict[str, Any], url: str) -> List:
     metadata_url = change_to_meta_url(url)
     column_maper_dict = map_columns(metadata_url)
     entity_list = []
@@ -118,7 +118,7 @@ class CloudForCustomers(Source):
                 break
         return entity_list
 
-    def check_url(self, url, params=None):
+    def check_url(self, url: str, params: Dict[str, Any] = None):
         try:
             session = requests.Session()
             retry_strategy = Retry(

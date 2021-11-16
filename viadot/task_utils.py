@@ -5,6 +5,7 @@ from typing import List
 import pandas as pd
 from pathlib import Path
 import shutil
+import json
 
 import visions
 from visions.functional import infer_type
