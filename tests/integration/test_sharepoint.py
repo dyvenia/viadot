@@ -15,42 +15,42 @@ s.download_file(download_to_path=FILE_NAME)
 DF = pd.read_excel(FILE_NAME, sheet_name=1)
 
 
-# def test_connection():
-#     credentials = local_config.get("SHAREPOINT")
-#     site = f'https://{credentials["site"]}'
-#     conn = s.get_connection()
-#     response = conn.get(site)
-#     assert response.status_code == 200
+def test_connection():
+    credentials = local_config.get("SHAREPOINT")
+    site = f'https://{credentials["site"]}'
+    conn = s.get_connection()
+    response = conn.get(site)
+    assert response.status_code == 200
 
 
-# def test_file_extension():
-#     file_ext = [".xlsm", ".xlsx"]
-#     assert pathlib.Path(s.download_from_path).suffix in file_ext
+def test_file_extension():
+    file_ext = [".xlsm", ".xlsx"]
+    assert pathlib.Path(s.download_from_path).suffix in file_ext
 
 
-# def test_file_name():
-#     assert os.path.basename(s.download_from_path) == FILE_NAME
+def test_file_name():
+    assert os.path.basename(s.download_from_path) == FILE_NAME
 
 
-# def test_file_download():
-#     s.download_file(download_to_path=FILE_NAME)
-#     files = []
-#     for file in os.listdir():
-#         if os.path.isfile(os.path.join(file)):
-#             files.append(file)
-#     assert FILE_NAME in files
-#     os.remove(FILE_NAME)
+def test_file_download():
+    s.download_file(download_to_path=FILE_NAME)
+    files = []
+    for file in os.listdir():
+        if os.path.isfile(os.path.join(file)):
+            files.append(file)
+    assert FILE_NAME in files
+    os.remove(FILE_NAME)
 
 
-# def test_file_to_df():
-#     df_test = pd.DataFrame(data={"col1": [1, 2]})
-#     assert type(DF) == type(df_test)
+def test_file_to_df():
+    df_test = pd.DataFrame(data={"col1": [1, 2]})
+    assert type(DF) == type(df_test)
 
 
-# def test_get_data_types():
-#     dtypes_map = df_get_data_types_task.run(DF)
-#     dtypes = [v for k, v in dtypes_map.items()]
-#     assert "String" in dtypes
+def test_get_data_types():
+    dtypes_map = df_get_data_types_task.run(DF)
+    dtypes = [v for k, v in dtypes_map.items()]
+    assert "String" in dtypes
 
 
 def test_map_dtypes_for_parquet():
