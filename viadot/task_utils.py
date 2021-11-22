@@ -1,7 +1,7 @@
 import json
 import os
 from datetime import datetime, timezone
-from typing import List
+from typing import Dict, List
 
 import pandas as pd
 
@@ -69,7 +69,9 @@ def df_get_data_types_task(df: pd.DataFrame) -> dict:
 
 
 @task
-def df_mapp_mixed_dtypes_for_parquet(df, dtypes_dict) -> pd.DataFrame:
+def df_map_mixed_dtypes_for_parquet(
+    df: pd.DataFrame, dtypes_dict: dict
+) -> pd.DataFrame:
     """
     Pandas is not able to handle mixed dtypes in the column in to_parquet
     Mapping 'object' visions dtype to 'string' dtype to allow Pandas to_parquet
@@ -81,7 +83,6 @@ def df_mapp_mixed_dtypes_for_parquet(df, dtypes_dict) -> pd.DataFrame:
     Returns:
         df_mapped (pd.DataFrame): Pandas DataFrame with mapped Data Types to workaround Pandas to_parquet bug connected with mixed dtypes in object:.
     """
-
     df_mapped = df.copy()
     for col, dtype in dtypes_dict.items():
         if dtype == "Object":
@@ -90,7 +91,7 @@ def df_mapp_mixed_dtypes_for_parquet(df, dtypes_dict) -> pd.DataFrame:
 
 
 @task
-def update_dtypes_dict(dtypes_dict):
+def update_dtypes_dict(dtypes_dict: dict) -> dict:
     """
     Task to update dtypes_dictionary that will be stored in the schema. It's required due to workaround Pandas to_parquet bug connected with mixed dtypes in object
 
@@ -108,7 +109,9 @@ def update_dtypes_dict(dtypes_dict):
 
 
 @task
-def df_to_csv(df, path: str, sep="\t", if_exists="replace", **kwargs) -> None:
+def df_to_csv(
+    df: pd.DataFrame, path: str, sep="\t", if_exists="replace", **kwargs
+) -> None:
     if if_exists == "append":
         if os.path.isfile(path):
             csv_df = pd.read_csv(path)
@@ -121,7 +124,9 @@ def df_to_csv(df, path: str, sep="\t", if_exists="replace", **kwargs) -> None:
 
 
 @task
-def df_to_parquet(df, path: str, if_exists="replace", **kwargs) -> None:
+def df_to_parquet(
+    df: pd.DataFrame, path: str, if_exists: str = "replace", **kwargs
+) -> None:
     if if_exists == "append":
         if os.path.isfile(path):
             parquet_df = pd.read_parquet(path)
@@ -134,7 +139,7 @@ def df_to_parquet(df, path: str, if_exists="replace", **kwargs) -> None:
 
 
 @task
-def dtypes_to_json(dtypes_dict, local_json_path: str) -> None:
+def dtypes_to_json(dtypes_dict: dict, local_json_path: str) -> None:
     with open(local_json_path, "w") as fp:
         json.dump(dtypes_dict, fp)
 

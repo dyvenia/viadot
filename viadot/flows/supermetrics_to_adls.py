@@ -17,7 +17,7 @@ from visions.typesets.complete_set import CompleteSet
 from ..task_utils import (
     add_ingestion_metadata_task,
     df_get_data_types_task,
-    df_mapp_mixed_dtypes_for_parquet,
+    df_map_mixed_dtypes_for_parquet,
     update_dtypes_dict,
 )
 from ..tasks import (
@@ -295,7 +295,7 @@ class SupermetricsToADLS(Flow):
         df_with_metadata = add_ingestion_metadata_task.bind(df, flow=self)
         dtypes_dict = df_get_data_types_task.bind(df_with_metadata, flow=self)
 
-        df_to_be_loaded = df_mapp_mixed_dtypes_for_parquet(
+        df_to_be_loaded = df_map_mixed_dtypes_for_parquet(
             df_with_metadata, dtypes_dict, flow=self
         )
 
