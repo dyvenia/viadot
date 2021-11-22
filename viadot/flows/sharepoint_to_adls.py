@@ -3,7 +3,9 @@ from typing import Any, Dict, List
 import pendulum
 from prefect import Flow, task
 from prefect.backend import set_key_value
+from prefect.utilities import logging
 
+logger = logging.get_logger()
 
 from ..task_utils import (
     df_get_data_types_task,
@@ -11,6 +13,7 @@ from ..task_utils import (
     df_to_csv,
     df_to_parquet,
     dtypes_to_json,
+    df_map_mixed_dtypes_for_parquet,
 )
 from ..tasks import AzureDataLakeUpload
 from ..tasks.sharepoint import SharepointToDF
@@ -20,26 +23,13 @@ file_to_adls_task = AzureDataLakeUpload()
 json_to_adls_task = AzureDataLakeUpload()
 
 
-@task
-def df_map_mixed_dtypes_for_parquet_task(df, dtypes_dict):
-    df_mapped = df.copy()
-    for col, dtype in dtypes_dict.items():
-        if dtype != "Date":
-            if dtype == "DateTime":
-                df_mapped[col] = df_mapped[col].astype("string")
-            else:
-                df_mapped[col] = df_mapped[col].astype(f"{dtype.lower()}")
-        if dtype == "Object":
-            df_mapped[col] = df_mapped[col].astype("string")
-    return df_mapped
-
-
 class SharepointToADLS(Flow):
     def __init__(
         self,
         name: str = None,
         nrows_to_df: int = None,
-        file_from_sharepoint: str = None,
+        path_to_file: str = None,
+        url_to_file: str = None,
         output_file_extension: str = ".csv",
         local_dir_path: str = None,
         adls_dir_path: str = None,
@@ -53,7 +43,8 @@ class SharepointToADLS(Flow):
         # SharepointToDF
         self.if_empty = if_empty
         self.nrows = nrows_to_df
-        self.file_from_sharepoint = file_from_sharepoint
+        self.path_to_file = path_to_file
+        self.url_to_file = url_to_file
         self.local_dir_path = local_dir_path
 
         # AzureDataLakeUpload
@@ -82,13 +73,15 @@ class SharepointToADLS(Flow):
 
     def gen_flow(self) -> Flow:
         df = excel_to_df_task.bind(
-            path_to_file=self.file_from_sharepoint,
+            path_to_file=self.path_to_file,
+            url_to_file=self.url_to_file,
             nrows=self.nrows,
             flow=self,
         )
+
         df_with_metadata = add_ingestion_metadata_task.bind(df, flow=self)
         dtypes_dict = df_get_data_types_task.bind(df_with_metadata, flow=self)
-        df_mapped = df_map_mixed_dtypes_for_parquet_task.bind(
+        df_mapped = df_map_mixed_dtypes_for_parquet.bind(
             df_with_metadata, dtypes_dict, flow=self
         )
         if self.output_file_extension == ".parquet":

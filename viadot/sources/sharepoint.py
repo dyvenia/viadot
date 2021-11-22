@@ -1,4 +1,5 @@
 from pandas._config import config
+from typing import Dict, Any
 import sharepy
 
 from .base import Source
@@ -6,38 +7,40 @@ from ..config import local_config
 
 
 class Sharepoint(Source):
+    """
+    A Sharepoint class to connect and download specific Excel file from Sharepoint.
+
+    Args:
+        credentials (dict): In credentials should be included:
+            "site" - Path to sharepoint website (e.g : {tenant_name}.sharepoint.com)
+            "username" - Sharepoint username (e.g username@{tenant_name}.com)
+            "password"
+        download_from_path (str, optional): Full url to file
+                        (e.g : https://{tenant_name}.sharepoint.com/sites/{directory}/Shared%20Documents/Dashboard/file). Defaults to None.
+    """
+
     def __init__(
         self,
-        site: str = None,
-        username: str = None,
-        password: str = None,
+        credentials: Dict[str, Any] = None,
         download_from_path: str = None,
         *args,
-        **kwargs
+        **kwargs,
     ):
-        """
-        A Sharepoint class to connect and download specific Excel file from Sharepoint.
 
-        Args:
-                site (str, optional): Path to sharepoint website (e.g : {tenant_name}.sharepoint.com). Defaults to None.
-                username (str, optional): Sharepoint username (e.g username@{tenant_name}.com). Defaults to None.
-                password (str, optional): Sharepoint password. Defaults to None.
-                download_from_path (str, optional): Full url to file
-                                (e.g : https://{tenant_name}.sharepoint.com/sites/{folder}/Shared%20Documents/Dashboard/file). Defaults to None.
-        """
-        credentials = local_config.get("SHAREPOINT")
-        self.site = site or credentials["site"]
-        self.download_from_path = download_from_path or credentials["file_url"]
-        self.username = username
-        self.password = password
-
+        DEFAULT_CREDENTIALS = local_config.get("SHAREPOINT")
+        credentials = credentials or DEFAULT_CREDENTIALS
+        self.download_from_path = download_from_path or DEFAULT_CREDENTIALS["file_url"]
+        self.required_credentials = ["site", "username", "password"]
         super().__init__(*args, credentials=credentials, **kwargs)
 
     def get_connection(self) -> sharepy.session.SharePointSession:
+        if any([rq not in self.credentials for rq in self.required_credentials]):
+            raise KeyError("Missing credentials.")
+
         return sharepy.connect(
-            site=self.site,
-            username=self.username or self.credentials["username"],
-            password=self.password or self.credentials["password"],
+            site=self.credentials["site"],
+            username=self.credentials["username"],
+            password=self.credentials["password"],
         )
 
     def download_file(
@@ -45,7 +48,9 @@ class Sharepoint(Source):
         download_from_path: str = None,
         download_to_path: str = "Sharepoint_file.xlsm",
     ) -> None:
+
         conn = self.get_connection()
         conn.getfile(
-            url=download_from_path or self.download_from_path, filename=download_to_path
+            url=download_from_path or self.download_from_path,
+            filename=download_to_path,
         )
