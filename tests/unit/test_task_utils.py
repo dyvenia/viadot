@@ -5,7 +5,6 @@ from typing import List
 from viadot.task_utils import df_get_data_types_task, df_map_mixed_dtypes_for_parquet
 
 
-@pytest.fixture
 def count_dtypes(dtypes_dict: dict = None, dtypes_to_count: List[str] = None) -> int:
     dtypes_counter = 0
     for v in dtypes_dict.values():
