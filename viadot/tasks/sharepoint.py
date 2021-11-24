@@ -5,6 +5,8 @@ import pandas as pd
 from prefect import Task
 from prefect.utilities.tasks import defaults_from_attrs
 from prefect.utilities import logging
+
+from ..exceptions import ValidationError
 from ..sources import Sharepoint
 
 logger = logging.get_logger()
@@ -19,6 +21,7 @@ class SharepointToDF(Task):
         url_to_file (str):  Link to a file on Sharepoint.
                         (e.g : https://{tenant_name}.sharepoint.com/sites/{folder}/Shared%20Documents/Dashboard/file). Defaults to None.
         nrows (int, optional): Number of rows to read at a time. Defaults to 50000.
+        sheet_number (int): Sheet number to be extracted from file. Counting from 0, if None all sheets are axtracted. Defaults to None.
         validate_excel_file (bool, optional): Check if columns in separate sheets are the same. Defaults to False.
         if_empty (str, optional): What to do if query returns no data. Defaults to "warn".
 
@@ -31,6 +34,7 @@ class SharepointToDF(Task):
         path_to_file: str = None,
         url_to_file: str = None,
         nrows: int = 50000,
+        sheet_number: int = None,
         validate_excel_file: bool = False,
         if_empty: str = "warn",
         *args,
@@ -41,6 +45,7 @@ class SharepointToDF(Task):
         self.path_to_file = path_to_file
         self.url_to_file = url_to_file
         self.nrows = nrows
+        self.sheet_number = sheet_number
         self.validate_excel_file = validate_excel_file
 
         super().__init__(
@@ -69,8 +74,8 @@ class SharepointToDF(Task):
         df_header_list = df_header.columns.tolist()
         if header_to_compare is not None:
             if df_header_list != header_to_compare:
-                logger.info("Columns in sheets are different")
-                exit()
+                raise ValidationError("Columns in sheets are different")
+
         return df_header_list
 
     def df_replace_special_chars(self, df: pd.DataFrame):
@@ -113,7 +118,7 @@ class SharepointToDF(Task):
                 break
             else:
                 logger.debug(f" - chunk {i_chunk+1} ({df_chunk.shape[0]} rows)")
-                df_chunk["country_code"] = sheetname
+                df_chunk["sheet_name"] = sheetname
                 temp_chunks.append(df_chunk)
             i_chunk += 1
         return temp_chunks
@@ -122,6 +127,7 @@ class SharepointToDF(Task):
         "path_to_file",
         "url_to_file",
         "nrows",
+        "sheet_number",
         "validate_excel_file",
     )
     def run(
@@ -130,6 +136,7 @@ class SharepointToDF(Task):
         url_to_file: str = None,
         nrows: int = 50000,
         validate_excel_file: bool = False,
+        sheet_number: int = None,
         **kwargs,
     ) -> None:
         """
@@ -139,6 +146,7 @@ class SharepointToDF(Task):
             path_to_file (str): Path to Excel file. Defaults to None.
             url_to_file (str): Link to a file on Sharepoint. Defaults to None.
             nrows (int, optional): Number of rows to read at a time. Defaults to 50000.
+            sheet_number (int): Sheet number to be extracted from file. Counting from 0, if None all sheets are axtracted. Defaults to None.
             validate_excel_file (bool, optional): Check if columns in separate sheets are the same. Defaults to False.
 
         Returns:
@@ -147,17 +155,24 @@ class SharepointToDF(Task):
         self.path_to_file = path_to_file
         self.url_to_file = url_to_file
         path_to_file = os.path.basename(self.path_to_file)
+        self.sheet_number = sheet_number
 
         s = Sharepoint(download_from_path=self.url_to_file)
         s.download_file(download_to_path=path_to_file)
 
         self.nrows = nrows
         excel = pd.ExcelFile(self.path_to_file)
+
+        if self.sheet_number is not None:
+            sheet_names_list = [excel.sheet_names[self.sheet_number]]
+        else:
+            sheet_names_list = excel.sheet_names
+
         header_to_compare = None
         chunks = []
 
-        for sheetname in excel.sheet_names:
-            df_header = pd.read_excel(self.path_to_file, sheet_name=sheetname, nrows=1)
+        for sheetname in sheet_names_list:
+            df_header = pd.read_excel(self.path_to_file, sheet_name=sheetname, nrows=0)
 
             if validate_excel_file:
                 header_to_compare = self.check_column_names(
@@ -170,7 +185,7 @@ class SharepointToDF(Task):
             # Rename the columns to concatenate the chunks with the header.
             columns = {i: col for i, col in enumerate(df_header.columns.tolist())}
             last_column = len(columns)
-            columns[last_column] = "country_code"
+            columns[last_column] = "sheet_name"
 
             df_chunks.rename(columns=columns, inplace=True)
             df = pd.concat([df_header, df_chunks])
