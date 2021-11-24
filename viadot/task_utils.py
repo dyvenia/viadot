@@ -121,12 +121,12 @@ def df_to_csv(
     if if_exists == "append" and os.path.isfile(path):
         csv_df = pd.read_csv(path)
         out_df = pd.concat([csv_df, df])
-        out_df.to_csv(path, index=False, sep=sep)
     elif if_exists == "replace":
         out_df = df
-        out_df.to_csv(path, index=False, sep=sep)
     elif if_exists == "skip":
         logger.info("Skipped.")
+        return
+    out_df.to_csv(path, index=False, sep=sep)
 
 
 @task
@@ -139,12 +139,12 @@ def df_to_parquet(
     if if_exists == "append" and os.path.isfile(path):
         parquet_df = pd.read_parquet(path)
         out_df = pd.concat([parquet_df, df])
-        out_df.to_parquet(path, index=False, **kwargs)
     elif if_exists == "replace":
         out_df = df
-        out_df.to_parquet(path, index=False, **kwargs)
     elif if_exists == "skip":
         logger.info("Skipped.")
+        return
+    out_df.to_parquet(path, index=False, **kwargs)
 
 
 @task
