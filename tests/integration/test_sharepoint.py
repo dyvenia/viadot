@@ -16,6 +16,13 @@ s.download_file(download_to_path=FILE_NAME)
 DF = pd.read_excel(FILE_NAME, sheet_name=0)
 
 
+def test_credentials():
+    credentials = {"site": "tenant.sharepoint.com", "username": "User"}
+    s = Sharepoint(credentials=credentials)
+    with pytest.raises(ValueError, match="Missing credentials."):
+        s.get_connection()
+
+
 def test_connection():
     credentials = local_config.get("SHAREPOINT")
     site = f'https://{credentials["site"]}'
