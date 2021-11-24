@@ -30,6 +30,8 @@ class SharepointToADLS(Flow):
         nrows_to_df: int = None,
         path_to_file: str = None,
         url_to_file: str = None,
+        sheet_number: int = None,
+        validate_excel_file: bool = False,
         output_file_extension: str = ".csv",
         local_dir_path: str = None,
         adls_dir_path: str = None,
@@ -39,13 +41,33 @@ class SharepointToADLS(Flow):
         *args: List[any],
         **kwargs: Dict[str, Any],
     ):
+        """
+        Flow for downloading Excel file from Sharepoint then uploading it to Azure Data Lake.
 
+        Args:
+            name (str, optional): The name of the flow. Defaults to None.
+            nrows_to_df (int, optional): Number of rows to read at a time. Defaults to 50000. Defaults to None.
+            path_to_file (str, optional): Path to local Excel file. Defaults to None.
+            url_to_file (str, optional): Link to a file on Sharepoint.
+                        (e.g : https://{tenant_name}.sharepoint.com/sites/{folder}/Shared%20Documents/Dashboard/file). Defaults to None.
+            sheet_number (int, optional): Sheet number to be extracted from file. Counting from 0, if None all sheets are axtracted. Defaults to None.
+            validate_excel_file (bool, optional): Check if columns in separate sheets are the same. Defaults to False.
+            output_file_extension (str, optional): Output file extension - to allow selection of .csv for data which is not easy to handle with parquet. Defaults to ".csv".
+            local_dir_path (str, optional): File directory. Defaults to None.
+            adls_dir_path (str, optional): Azure Data Lake destination folder/catalog path. Defaults to None.
+            adls_sp_credentials_secret (str, optional): The name of the Azure Key Vault secret containing a dictionary with
+            ACCOUNT_NAME and Service Principal credentials (TENANT_ID, CLIENT_ID, CLIENT_SECRET) for the Azure Data Lake.
+            Defaults to None.
+            if_empty (str, optional): What to do if query returns no data. Defaults to "warn".
+        """
         # SharepointToDF
         self.if_empty = if_empty
         self.nrows = nrows_to_df
         self.path_to_file = path_to_file
         self.url_to_file = url_to_file
         self.local_dir_path = local_dir_path
+        self.sheet_number = sheet_number
+        self.validate_excel_file = validate_excel_file
 
         # AzureDataLakeUpload
         self.adls_sp_credentials_secret = adls_sp_credentials_secret
@@ -76,6 +98,8 @@ class SharepointToADLS(Flow):
             path_to_file=self.path_to_file,
             url_to_file=self.url_to_file,
             nrows=self.nrows,
+            sheet_number=self.sheet_number,
+            validate_excel_file=self.validate_excel_file,
             flow=self,
         )
 
