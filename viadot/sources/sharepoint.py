@@ -1,4 +1,3 @@
-from pandas._config import config
 from typing import Dict, Any
 import sharepy
 
@@ -35,7 +34,7 @@ class Sharepoint(Source):
 
     def get_connection(self) -> sharepy.session.SharePointSession:
         if any([rq not in self.credentials for rq in self.required_credentials]):
-            raise KeyError("Missing credentials.")
+            raise ValueError("Missing credentials.")
 
         return sharepy.connect(
             site=self.credentials["site"],
