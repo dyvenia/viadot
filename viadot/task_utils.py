@@ -1,7 +1,7 @@
 import json
 import os
 from datetime import datetime, timezone
-from typing import Dict, List
+from typing import List, Literal
 
 import pandas as pd
 
@@ -12,7 +12,9 @@ from visions.typesets.complete_set import CompleteSet
 import prefect
 from prefect import task
 from prefect.storage import Git
+from prefect.utilities import logging
 
+logger = logging.get_logger()
 METADATA_COLUMNS = {"_viadot_downloaded_at_utc": "DATETIME"}
 
 
@@ -110,32 +112,39 @@ def update_dtypes_dict(dtypes_dict: dict) -> dict:
 
 @task
 def df_to_csv(
-    df: pd.DataFrame, path: str, sep="\t", if_exists="replace", **kwargs
+    df: pd.DataFrame,
+    path: str,
+    sep="\t",
+    if_exists: Literal["append", "replace", "skip"] = "replace",
+    **kwargs,
 ) -> None:
-    if if_exists == "append":
-        if os.path.isfile(path):
-            csv_df = pd.read_csv(path)
-            out_df = pd.concat([csv_df, df])
-        else:
-            out_df = df
+    if if_exists == "append" and os.path.isfile(path):
+        csv_df = pd.read_csv(path)
+        out_df = pd.concat([csv_df, df])
+        out_df.to_csv(path, index=False, sep=sep)
     elif if_exists == "replace":
         out_df = df
-    out_df.to_csv(path, index=False, sep=sep)
+        out_df.to_csv(path, index=False, sep=sep)
+    elif if_exists == "skip":
+        logger.info("Skipped.")
 
 
 @task
 def df_to_parquet(
-    df: pd.DataFrame, path: str, if_exists: str = "replace", **kwargs
+    df: pd.DataFrame,
+    path: str,
+    if_exists: Literal["append", "replace", "skip"] = "replace",
+    **kwargs,
 ) -> None:
-    if if_exists == "append":
-        if os.path.isfile(path):
-            parquet_df = pd.read_parquet(path)
-            out_df = pd.concat([parquet_df, df])
-        else:
-            out_df = df
+    if if_exists == "append" and os.path.isfile(path):
+        parquet_df = pd.read_parquet(path)
+        out_df = pd.concat([parquet_df, df])
+        out_df.to_parquet(path, index=False, **kwargs)
     elif if_exists == "replace":
         out_df = df
-    out_df.to_parquet(path, index=False, **kwargs)
+        out_df.to_parquet(path, index=False, **kwargs)
+    elif if_exists == "skip":
+        logger.info("Skipped.")
 
 
 @task
