@@ -126,6 +126,8 @@ def df_to_csv(
     elif if_exists == "skip":
         logger.info("Skipped.")
         return
+    else:
+        out_df = df
     out_df.to_csv(path, index=False, sep=sep)
 
 
@@ -144,6 +146,8 @@ def df_to_parquet(
     elif if_exists == "skip":
         logger.info("Skipped.")
         return
+    else:
+        out_df = df
     out_df.to_parquet(path, index=False, **kwargs)
 
 
