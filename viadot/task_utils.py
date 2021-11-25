@@ -4,8 +4,10 @@ from datetime import datetime, timezone
 from typing import List, Literal
 
 import pandas as pd
+from pathlib import Path
+import shutil
+import json
 
-import visions
 from visions.functional import infer_type
 from visions.typesets.complete_set import CompleteSet
 
@@ -53,6 +55,12 @@ def get_latest_timestamp_file_path(files: List[str]) -> str:
     logger.debug(f"Latest file: {latest_file}")
 
     return latest_file
+
+
+@task
+def dtypes_to_json_task(dtypes_dict, local_json_path: str):
+    with open(local_json_path, "w") as fp:
+        json.dump(dtypes_dict, fp)
 
 
 @task
@@ -155,6 +163,34 @@ def df_to_parquet(
 def dtypes_to_json(dtypes_dict: dict, local_json_path: str) -> None:
     with open(local_json_path, "w") as fp:
         json.dump(dtypes_dict, fp)
+
+
+def union_dfs_task(dfs: List[pd.DataFrame]):
+    return pd.concat(dfs, ignore_index=True)
+
+
+@task
+def write_to_json(dict_, path):
+
+    logger = prefect.context.get("logger")
+
+    if os.path.isfile(path):
+        logger.warning(f"File {path} already exists. Overwriting...")
+    else:
+        logger.debug(f"Writing to {path}...")
+
+    # create parent directories if they don't exist
+    Path(path).parent.mkdir(parents=True, exist_ok=True)
+    with open(path, mode="w") as f:
+        json.dump(dict_, f)
+
+    logger.debug(f"Successfully wrote to {path}.")
+
+
+@task
+def cleanup_validation_clutter(expectations_path):
+    ge_project_path = Path(expectations_path).parent
+    shutil.rmtree(ge_project_path)
 
 
 class Git(Git):

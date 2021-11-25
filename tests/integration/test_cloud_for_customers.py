@@ -36,8 +36,8 @@ def test_csv(cloud_for_customers):
 
 
 def test_credentials():
-    credentials = local_config.get("CLOUD_FOR_CUSTOMERS")
-    url = credentials["server"]
+    qa_credentials = local_config.get("CLOUD_FOR_CUSTOMERS")["QA"]
+    url = qa_credentials["server"]
     endpoint = "ServiceRequestCollection"
     c4c = CloudForCustomers(url=url, endpoint=endpoint)
     df = c4c.to_df(
