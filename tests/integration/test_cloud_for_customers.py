@@ -13,7 +13,9 @@ TEST_FILE_1 = os.path.join(LOCAL_TESTS_PATH, "tests_out.csv")
 def cloud_for_customers():
     url = "http://services.odata.org/V2/Northwind/Northwind.svc/"
     endpoint = "Employees"
-    cloud_for_customers = CloudForCustomers(url=url, endpoint=endpoint, params={"$top": "2"})
+    cloud_for_customers = CloudForCustomers(
+        url=url, endpoint=endpoint, params={"$top": "2"}
+    )
     yield cloud_for_customers
     os.remove(TEST_FILE_1)
 

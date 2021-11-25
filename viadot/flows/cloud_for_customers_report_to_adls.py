@@ -5,8 +5,12 @@ import pendulum
 from prefect import Flow, Task, apply_map
 from prefect.backend import set_key_value
 
-from ..task_utils import (add_ingestion_metadata_task, df_to_csv,
-                          df_to_parquet, union_dfs_task)
+from ..task_utils import (
+    add_ingestion_metadata_task,
+    df_to_csv,
+    df_to_parquet,
+    union_dfs_task,
+)
 from ..tasks import AzureDataLakeUpload, c4c_report_to_df, c4c_to_df
 
 file_to_adls_task = AzureDataLakeUpload()
