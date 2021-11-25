@@ -13,7 +13,9 @@ TEST_FILE_1 = os.path.join(LOCAL_TESTS_PATH, "tests_out.csv")
 def cloud_for_customers():
     url = "http://services.odata.org/V2/Northwind/Northwind.svc/"
     endpoint = "Employees"
-    cloud_for_customers = CloudForCustomers(url=url, endpoint=endpoint)
+    cloud_for_customers = CloudForCustomers(
+        url=url, endpoint=endpoint, params={"$top": "2"}
+    )
     yield cloud_for_customers
     os.remove(TEST_FILE_1)
 
@@ -36,10 +38,10 @@ def test_csv(cloud_for_customers):
 
 
 def test_credentials():
-    credentials = local_config.get("CLOUD_FOR_CUSTOMERS")
-    url = credentials["server"]
+    qa_credentials = local_config.get("CLOUD_FOR_CUSTOMERS")["QA"]
+    url = qa_credentials["server"]
     endpoint = "ServiceRequestCollection"
-    c4c = CloudForCustomers(url=url, endpoint=endpoint)
+    c4c = CloudForCustomers(url=url, endpoint=endpoint, params={"$top": "2"})
     df = c4c.to_df(
         fields=["ProductRecipientPartyName", "CreationDateTime", "CreatedBy"]
     )
