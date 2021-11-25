@@ -19,6 +19,7 @@ class Source:
     def __init__(self, *args, credentials: Dict[str, Any] = None, **kwargs):
         self.credentials = credentials
         self.data: pa.Table = None
+        self.logger = logger
 
     @abstractmethod
     def to_json(self):

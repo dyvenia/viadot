@@ -165,6 +165,7 @@ def dtypes_to_json(dtypes_dict: dict, local_json_path: str) -> None:
         json.dump(dtypes_dict, fp)
 
 
+@task
 def union_dfs_task(dfs: List[pd.DataFrame]):
     return pd.concat(dfs, ignore_index=True)
 
