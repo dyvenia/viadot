@@ -14,7 +14,7 @@ from prefect.utilities import logging
 from visions.functional import infer_type
 from visions.typesets.complete_set import CompleteSet
 
-from ..task_utils import add_ingestion_metadata_task
+from ..task_utils import add_ingestion_metadata_task, df_to_csv, df_to_parquet
 from ..tasks import (
     AzureDataLakeUpload,
     CloudForCustomersToDF,
@@ -24,32 +24,6 @@ logger = logging.get_logger(__name__)
 
 cloud_for_customers_to_df_task = CloudForCustomersToDF()
 file_to_adls_task = AzureDataLakeUpload()
-
-
-@task
-def df_to_csv_task(df, path: str, if_exists: str = "replace"):
-    if if_exists == "append":
-        if os.path.isfile(path):
-            csv_df = pd.read_csv(path)
-            out_df = pd.concat([csv_df, df])
-        else:
-            out_df = df
-    elif if_exists == "replace":
-        out_df = df
-    out_df.to_csv(path, index=False)
-
-
-@task
-def df_to_parquet_task(df, path: str, if_exists: str = "replace"):
-    if if_exists == "append":
-        if os.path.isfile(path):
-            parquet_df = pd.read_parquet(path)
-            out_df = pd.concat([parquet_df, df])
-        else:
-            out_df = df
-    elif if_exists == "replace":
-        out_df = df
-    out_df.to_parquet(path, index=False)
 
 
 class CloudForCustomersToADLS(Flow):
@@ -107,14 +81,14 @@ class CloudForCustomersToADLS(Flow):
         df_with_metadata = add_ingestion_metadata_task.bind(df, flow=self)
 
         if self.output_file_extension == ".parquet":
-            df_to_file = df_to_parquet_task.bind(
+            df_to_file = df_to_parquet.bind(
                 df=df_with_metadata,
                 path=self.local_file_path,
                 if_exists=self.if_exists,
                 flow=self,
             )
         else:
-            df_to_file = df_to_csv_task.bind(
+            df_to_file = df_to_csv.bind(
                 df=df_with_metadata,
                 path=self.local_file_path,
                 if_exists=self.if_exists,

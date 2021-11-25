@@ -1,6 +1,7 @@
+import json
 import os
 from datetime import datetime, timezone
-from typing import List
+from typing import List, Literal
 
 import pandas as pd
 
@@ -11,7 +12,9 @@ from visions.typesets.complete_set import CompleteSet
 import prefect
 from prefect import task
 from prefect.storage import Git
+from prefect.utilities import logging
 
+logger = logging.get_logger()
 METADATA_COLUMNS = {"_viadot_downloaded_at_utc": "DATETIME"}
 
 
@@ -68,7 +71,9 @@ def df_get_data_types_task(df: pd.DataFrame) -> dict:
 
 
 @task
-def df_mapp_mixed_dtypes_for_parquet(df, dtypes_dict) -> pd.DataFrame:
+def df_map_mixed_dtypes_for_parquet(
+    df: pd.DataFrame, dtypes_dict: dict
+) -> pd.DataFrame:
     """
     Pandas is not able to handle mixed dtypes in the column in to_parquet
     Mapping 'object' visions dtype to 'string' dtype to allow Pandas to_parquet
@@ -80,7 +85,6 @@ def df_mapp_mixed_dtypes_for_parquet(df, dtypes_dict) -> pd.DataFrame:
     Returns:
         df_mapped (pd.DataFrame): Pandas DataFrame with mapped Data Types to workaround Pandas to_parquet bug connected with mixed dtypes in object:.
     """
-
     df_mapped = df.copy()
     for col, dtype in dtypes_dict.items():
         if dtype == "Object":
@@ -89,7 +93,7 @@ def df_mapp_mixed_dtypes_for_parquet(df, dtypes_dict) -> pd.DataFrame:
 
 
 @task
-def update_dtypes_dict(dtypes_dict):
+def update_dtypes_dict(dtypes_dict: dict) -> dict:
     """
     Task to update dtypes_dictionary that will be stored in the schema. It's required due to workaround Pandas to_parquet bug connected with mixed dtypes in object
 
@@ -104,6 +108,53 @@ def update_dtypes_dict(dtypes_dict):
     }
 
     return dtypes_dict_updated
+
+
+@task
+def df_to_csv(
+    df: pd.DataFrame,
+    path: str,
+    sep="\t",
+    if_exists: Literal["append", "replace", "skip"] = "replace",
+    **kwargs,
+) -> None:
+    if if_exists == "append" and os.path.isfile(path):
+        csv_df = pd.read_csv(path)
+        out_df = pd.concat([csv_df, df])
+    elif if_exists == "replace":
+        out_df = df
+    elif if_exists == "skip":
+        logger.info("Skipped.")
+        return
+    else:
+        out_df = df
+    out_df.to_csv(path, index=False, sep=sep)
+
+
+@task
+def df_to_parquet(
+    df: pd.DataFrame,
+    path: str,
+    if_exists: Literal["append", "replace", "skip"] = "replace",
+    **kwargs,
+) -> None:
+    if if_exists == "append" and os.path.isfile(path):
+        parquet_df = pd.read_parquet(path)
+        out_df = pd.concat([parquet_df, df])
+    elif if_exists == "replace":
+        out_df = df
+    elif if_exists == "skip":
+        logger.info("Skipped.")
+        return
+    else:
+        out_df = df
+    out_df.to_parquet(path, index=False, **kwargs)
+
+
+@task
+def dtypes_to_json(dtypes_dict: dict, local_json_path: str) -> None:
+    with open(local_json_path, "w") as fp:
+        json.dump(dtypes_dict, fp)
 
 
 class Git(Git):

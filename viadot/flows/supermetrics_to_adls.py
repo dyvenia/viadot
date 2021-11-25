@@ -17,8 +17,10 @@ from visions.typesets.complete_set import CompleteSet
 from ..task_utils import (
     add_ingestion_metadata_task,
     df_get_data_types_task,
-    df_mapp_mixed_dtypes_for_parquet,
+    df_map_mixed_dtypes_for_parquet,
     update_dtypes_dict,
+    df_to_csv,
+    df_to_parquet,
 )
 from ..tasks import (
     AzureDataLakeUpload,
@@ -63,32 +65,6 @@ def union_dfs_task(dfs: List[pd.DataFrame]):
 def dtypes_to_json_task(dtypes_dict, local_json_path: str):
     with open(local_json_path, "w") as fp:
         json.dump(dtypes_dict, fp)
-
-
-@task
-def df_to_parquet_task(df, path: str, if_exists: str = "replace"):
-    if if_exists == "append":
-        if os.path.isfile(path):
-            parquet_df = pd.read_parquet(path)
-            out_df = pd.concat([parquet_df, df])
-        else:
-            out_df = df
-    elif if_exists == "replace":
-        out_df = df
-    out_df.to_parquet(path, index=False)
-
-
-@task
-def df_to_csv_task(df, path: str, if_exists: str = "replace"):
-    if if_exists == "append":
-        if os.path.isfile(path):
-            csv_df = pd.read_csv(path)
-            out_df = pd.concat([csv_df, df])
-        else:
-            out_df = df
-    elif if_exists == "replace":
-        out_df = df
-    out_df.to_csv(path, index=False)
 
 
 @task
@@ -295,19 +271,19 @@ class SupermetricsToADLS(Flow):
         df_with_metadata = add_ingestion_metadata_task.bind(df, flow=self)
         dtypes_dict = df_get_data_types_task.bind(df_with_metadata, flow=self)
 
-        df_to_be_loaded = df_mapp_mixed_dtypes_for_parquet(
+        df_to_be_loaded = df_map_mixed_dtypes_for_parquet(
             df_with_metadata, dtypes_dict, flow=self
         )
 
         if self.output_file_extension == ".parquet":
-            df_to_file = df_to_parquet_task.bind(
+            df_to_file = df_to_parquet.bind(
                 df=df_to_be_loaded,
                 path=self.local_file_path,
                 if_exists=self.if_exists,
                 flow=self,
             )
         else:
-            df_to_file = df_to_csv_task.bind(
+            df_to_file = df_to_csv.bind(
                 df=df_with_metadata,
                 path=self.local_file_path,
                 if_exists=self.if_exists,
