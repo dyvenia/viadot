@@ -6,10 +6,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 
 ## [Unreleased]
+
+## [0.2.12]
 ### Added
 - Added `Sharepoint` source
 - Added `SharepointToDF` task
 - Added `SharepointToADLS` flow
+- Added `CloudForCustomers` source
+- Added `c4c_report_to_df` taks
+- Added `def c4c_to_df` task
+- Added `CloudForCustomersReportToADLS` flow
 - Added `df_to_csv` task to task_utils.py
 - Added `df_to_parquet` task to task_utils.py
 - Added `dtypes_to_json` task to task_utils.py
@@ -34,17 +40,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 - `ADLSToAzureSQL` - fixed path parameter issue.
-
-
-### Added
-- Stability improvements for CloudForClustomers
-- Added batching with top parameter in `CloudForCustomersReportToADLS`
-- Added support for Parquet in `CloudForCustomersReportToADLS`
-- Added channel filtering in `CloudForCustomersReportToADLS`
-
-### Changed
-- Unifying `CloudForCustomersToADLS` into `CloudForCustomersReportToADLS`
-- Changed `CloudForCustomersToDF` Task class into task function
 
 ## [0.2.11]
 ### Fixed
