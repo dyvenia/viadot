@@ -4,6 +4,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+
 ## [Unreleased]
 ### Added
 - Added `Sharepoint` source
@@ -34,6 +35,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 - `ADLSToAzureSQL` - fixed path parameter issue.
 
+
+### Added
+- Stability improvements for CloudForClustomers
+- Added batching with top parameter in `CloudForCustomersReportToADLS`
+- Added support for Parquet in `CloudForCustomersReportToADLS`
+- Added channel filtering in `CloudForCustomersReportToADLS`
+
+### Changed
+- Unifying `CloudForCustomersToADLS` into `CloudForCustomersReportToADLS`
+- Changed `CloudForCustomersToDF` Task class into task function
 
 ## [0.2.11]
 ### Fixed

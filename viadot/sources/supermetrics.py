@@ -13,13 +13,10 @@ from requests.packages.urllib3.util.retry import Retry
 from urllib3.exceptions import ProtocolError
 
 from ..config import local_config
+from ..exceptions import APIError
 from .base import Source
 
 logger = logging.get_logger(__name__)
-
-
-class APIError(Exception):
-    pass
 
 
 class Supermetrics(Source):
