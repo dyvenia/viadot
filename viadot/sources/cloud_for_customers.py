@@ -5,7 +5,6 @@ from typing import Any, Dict, List
 from urllib.parse import urljoin
 from ..config import local_config
 from ..exceptions import APIError
-import numpy as np
 from requests.adapters import HTTPAdapter
 from requests.exceptions import ConnectionError, HTTPError, ReadTimeout, Timeout
 from urllib3.exceptions import ProtocolError
@@ -81,20 +80,25 @@ class CloudForCustomers(Source):
         while url:
             response = self.get_response(self.full_url, params=self.params)
             response_json = response.json()
-            records_np = np.array(records)  # ?
-            new_records = records_np.flatten()
-            records.extend(new_records)
+            if isinstance(response_json["d"], dict):
+                # ODATA v2+ API
+                new_records = response_json["d"].get("results")
+                url = response_json["d"].get("__next")
+            else:
+                # ODATA v1
+                new_records = response_json["d"]
+                url = response_json.get("__next")
 
-            url = response_json["d"].get("__next")
+            records.extend(new_records)
 
         return records
 
     def to_records(self) -> List[Dict[str, Any]]:
         """Download a list of entities in the records format"""
         if self.is_report:
-            self._to_records_report()
+            return self._to_records_report()
         else:
-            self._to_records_other()
+            return self._to_records_other()
 
     def response_to_entity_list(self, dirty_json: Dict[str, Any], url: str) -> List:
         metadata_url = self.change_to_meta_url(url)
@@ -164,7 +168,7 @@ class CloudForCustomers(Source):
 
         return response
 
-    def to_df(self, fields: List[str] = None) -> pd.DataFrame:
+    def to_df(self, fields: List[str] = None, if_empty: str = "warn") -> pd.DataFrame:
         records = self.to_records()
         df = pd.DataFrame(data=records)
         if fields:
