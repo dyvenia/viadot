@@ -1,4 +1,4 @@
-azure-core==1.19.0
+azure-core==1.20.1
 azure-storage-blob==12.9.0
 black==21.11b1
 mkdocs-autorefs==0.3.0
