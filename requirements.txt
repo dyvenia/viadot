@@ -1,4 +1,4 @@
-azure-core==1.19.0
+azure-core==1.20.1
 azure-storage-blob==12.9.0
 black==21.11b1
 mkdocs-autorefs==0.3.0
@@ -14,13 +14,13 @@ pytest==6.2.5
 pytest-cov==3.0.0
 requests==2.25.0
 openpyxl==3.0.9
-jupyterlab==3.1.14
+jupyterlab==3.2.4
 azure-keyvault==4.1.0
-azure-identity==1.7.0
+azure-identity==1.7.1
 great-expectations==0.13.36
 matplotlib
 adlfs==2021.9.1
 PyGithub==1.55
-Shapely==1.7.1
+Shapely==1.8.0
 imagehash==4.2.1
 visions==0.7.4
