@@ -46,15 +46,14 @@ class Supermetrics(Source):
     def get_params_from_api_query(cls, url: str) -> Dict[str, Any]:
         url_unquoted = urllib.parse.unquote(url)
         s = urllib.parse.parse_qs(url_unquoted)
-        params = s[
-            "https://api.supermetrics.com/enterprise/v2/query/data/powerbi?json"
-        ][0]
+        endpoint = list(s.keys())[0]
+        params = s[endpoint][0]
         params_d = json.loads(params)
         return params_d
 
     @classmethod
     def from_url(cls, url: str, credentials: Dict[str, Any] = None):
-        obj = Supermetrics(credentials=credentials)
+        obj = Supermetrics(credentials=credentials or local_config.get("SUPERMETRICS"))
         params = cls.get_params_from_api_query(url)
         obj.query_params = params
         return obj
