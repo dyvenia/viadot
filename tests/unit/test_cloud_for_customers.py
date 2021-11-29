@@ -4,8 +4,8 @@ import os
 import numpy
 import pytest
 
-LOCAL_TESTS_PATH = "/home/viadot/tests"
-TEST_FILE_1 = os.path.join(LOCAL_TESTS_PATH, "tests_out.csv")
+
+TEST_FILE_1 = "tests_out.csv"
 
 
 @pytest.fixture(scope="session")
