@@ -9,6 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 - `Supermetrics` source: `to_df()` now correctly handles `if_empty` in case of empty results
 
+### Changed
+- `Sharepoint` and `CloudForCustomers` sources will now provide an informative `CredentialError` which is also raised early. This will make issues with input credenials immediately clear to the user.
+
 ## [0.2.12]
 ### Added
 - Added `Sharepoint` source
