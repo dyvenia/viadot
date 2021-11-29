@@ -9,17 +9,13 @@ def test_connection():
         "ds_id": "AW",
         "ds_accounts": ["1007802423"],
         "ds_user": credentials["USER"],
-        "date_range_type": "last_year_inc",
+        "date_range_type": "last_month",
         "fields": [
             "Date",
-            "profile",
             "Campaignname",
-            "Impressions",
             "Clicks",
-            "Cost_eur",
-            "SearchImpressionShare",
         ],
-        "max_rows": 1000000,
+        "max_rows": 1,
     }
     df = s.query(google_ads_params).to_df()
     assert df.count()[0] > 0

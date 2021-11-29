@@ -4,3 +4,7 @@ class ValidationError(Exception):
 
 class APIError(Exception):
     pass
+
+
+class CredentialError(Exception):
+    pass
