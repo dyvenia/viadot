@@ -112,20 +112,33 @@ class Supermetrics(Source):
 
         return response.json()
 
-    @staticmethod
-    def __get_col_names_google_analytics(response: dict) -> List[str]:
-        """This is required as Supermetrics allows pivoting GA data but does not return
-        the pivoted table's column names in the meta field. Due to this, we're
-        forced to read them from the data."""
-        try:
-            return response["data"][0]
-        except IndexError as e:
-            raise ValueError(
-                "Couldn't find column names as query returned no data"
-            ) from e
+    @classmethod
+    def _get_col_names_google_analytics(
+        cls,
+        response: dict,
+    ) -> List[str]:
 
-    @staticmethod
-    def __get_col_names_other(response: dict) -> List[str]:
+        # Supermetrics allows pivoting GA data, in which case it generates additional columns,
+        # which are not enlisted in response's query metadata but are instead added as the first row of data.
+        is_pivoted = any(
+            field["field_split"] == "column"
+            for field in response["meta"]["query"]["fields"]
+        )
+
+        if is_pivoted:
+            if not response["data"]:
+                raise ValueError(
+                    "Couldn't find column names as query returned no data."
+                )
+            columns = response["data"][0]
+        else:
+            # non-pivoted data; query fields match result fields
+            cols_meta = response["meta"]["query"]["fields"]
+            columns = [col_meta["field_name"] for col_meta in cols_meta]
+        return columns
+
+    @classmethod
+    def _get_col_names_other(cls, response: dict) -> List[str]:
         cols_meta = response["meta"]["query"]["fields"]
         columns = [col_meta["field_name"] for col_meta in cols_meta]
         return columns
@@ -137,9 +150,9 @@ class Supermetrics(Source):
         query_params_cp["offset_end"] = 0
         response: dict = Supermetrics(query_params=query_params_cp).to_json()
         if self.query_params["ds_id"] == "GA":
-            return self.__get_col_names_google_analytics(response)
+            return Supermetrics._get_col_names_google_analytics(response)
         else:
-            return self.__get_col_names_other(response)
+            return Supermetrics._get_col_names_other(response)
 
     def to_df(self, if_empty: str = "warn") -> pd.DataFrame:
         """Download data into a pandas DataFrame.
@@ -155,8 +168,13 @@ class Supermetrics(Source):
         Returns:
             pd.DataFrame: the DataFrame containing query results
         """
-        columns = self._get_col_names()
+        try:
+            columns = self._get_col_names()
+        except ValueError:
+            columns = None
+
         data = self.to_json()["data"]
+
         if data:
             df = pd.DataFrame(data[1:], columns=columns).replace("", np.nan)
         else:
