@@ -13,7 +13,7 @@ from requests.packages.urllib3.util.retry import Retry
 from urllib3.exceptions import ProtocolError
 
 from ..config import local_config
-from ..exceptions import APIError
+from ..exceptions import APIError, CredentialError
 from .base import Source
 
 logger = logging.get_logger(__name__)
@@ -39,6 +39,8 @@ class Supermetrics(Source):
     def __init__(self, *args, query_params: Dict[str, Any] = None, **kwargs):
         DEFAULT_CREDENTIALS = local_config.get("SUPERMETRICS")
         credentials = kwargs.pop("credentials", DEFAULT_CREDENTIALS)
+        if credentials is None:
+            raise CredentialError("Missing credentials.")
         super().__init__(*args, credentials=credentials, **kwargs)
         self.query_params = query_params
 
