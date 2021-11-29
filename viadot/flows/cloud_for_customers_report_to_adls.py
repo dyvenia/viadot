@@ -27,9 +27,11 @@ class CloudForCustomersReportToADLS(Flow):
         fields: List[str] = None,
         name: str = None,
         adls_sp_credentials_secret: str = None,
+        overwrite_adls: bool = False,
         local_file_path: str = None,
         output_file_extension: str = ".csv",
         adls_dir_path: str = None,
+        adls_file_path: str = None,
         if_empty: str = "warn",
         if_exists: str = "replace",
         skip: int = 0,
@@ -53,9 +55,11 @@ class CloudForCustomersReportToADLS(Flow):
             local_file_path (str, optional): Local destination path. Defaults to None.
             output_file_extension (str, optional): Output file extension - to allow selection of .csv for data which is not easy
             to handle with parquet. Defaults to ".csv".
+            overwrite_adls (bool, optional): Whether to overwrite the file in ADLS. Defaults to True.
             adls_dir_path (str, optional): Azure Data Lake destination folder/catalog path. Defaults to None.
+            adls_file_path (str, optional): Azure Data Lake destination file path. Defaults to None.
             if_empty (str, optional): What to do if the Supermetrics query returns no data. Defaults to "warn".
-            if_exists (str, optional): What to do if the table already exists. Defaults to "replace".
+            if_exists (str, optional): What to do if the local file already exists. Defaults to "replace".
             skip (int, optional): Initial index value of reading row.
             top (int, optional): The value of top reading row.
             channels (List[str], optional): Filtering parameters passed to the url.
@@ -71,15 +75,17 @@ class CloudForCustomersReportToADLS(Flow):
         # AzureDataLakeUpload
         self.adls_sp_credentials_secret = adls_sp_credentials_secret
         self.if_exists = if_exists
+        self.overwrite_adls = overwrite_adls
         self.output_file_extension = output_file_extension
         self.local_file_path = (
             local_file_path or self.slugify(name) + self.output_file_extension
         )
         self.now = str(pendulum.now("utc"))
         self.adls_dir_path = adls_dir_path
-        self.adls_file_path = os.path.join(
+        self.adls_file_path = adls_file_path or os.path.join(
             adls_dir_path, self.now + self.output_file_extension
         )
+
         # in case of non-report invoking
         self.url = url
         self.endpoint = endpoint
@@ -201,6 +207,7 @@ class CloudForCustomersReportToADLS(Flow):
         file_to_adls_task.bind(
             from_path=self.local_file_path,
             to_path=self.adls_file_path,
+            overwrite=self.overwrite_adls,
             sp_credentials_secret=self.adls_sp_credentials_secret,
             flow=self,
         )
@@ -208,5 +215,4 @@ class CloudForCustomersReportToADLS(Flow):
         df_with_metadata.set_upstream(df, flow=self)
         df_to_file.set_upstream(df_with_metadata, flow=self)
         file_to_adls_task.set_upstream(df_to_file, flow=self)
-
         set_key_value(key=self.adls_dir_path, value=self.adls_file_path)
