@@ -1,7 +1,6 @@
 import datetime
 import os
 
-import numpy
 import pyarrow
 import pytest
 
@@ -29,7 +28,7 @@ def test_to_json(carbon):
 def test_to_df(carbon):
     carbon.query("/intensity")
     df = carbon.to_df()
-    assert type(df["actual"][0]) == numpy.int64
+    assert not df.empty
 
 
 def test_to_arrow(carbon):
@@ -46,7 +45,7 @@ def test_to_csv(carbon):
 
 def test_stats_to_csv(carbon):
     now = datetime.datetime.now()
-    for i in range(10):
+    for i in range(3):
         from_delta = datetime.timedelta(days=i + 1)
         to_delta = datetime.timedelta(days=i)
         to = now - to_delta
