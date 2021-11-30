@@ -6,11 +6,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 
 ## [Unreleased]
+
+=======
+### Added
+- Added support for file path to `CloudForCustomersReportToADLS` flow
+
 ### Fixed
 - `Supermetrics` source: `to_df()` now correctly handles `if_empty` in case of empty results
 
 ### Changed
 - `Sharepoint` and `CloudForCustomers` sources will now provide an informative `CredentialError` which is also raised early. This will make issues with input credenials immediately clear to the user.
+- Removed set_key_value from `CloudForCustomersReportToADLS` flow
 
 ## [0.2.12]
 ### Added
