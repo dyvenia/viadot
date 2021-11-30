@@ -13,7 +13,7 @@ from requests.packages.urllib3.util.retry import Retry
 from urllib3.exceptions import ProtocolError
 
 from ..config import local_config
-from ..exceptions import APIError
+from ..exceptions import APIError, CredentialError
 from .base import Source
 
 logger = logging.get_logger(__name__)
@@ -39,6 +39,8 @@ class Supermetrics(Source):
     def __init__(self, *args, query_params: Dict[str, Any] = None, **kwargs):
         DEFAULT_CREDENTIALS = local_config.get("SUPERMETRICS")
         credentials = kwargs.pop("credentials", DEFAULT_CREDENTIALS)
+        if credentials is None:
+            raise CredentialError("Missing credentials.")
         super().__init__(*args, credentials=credentials, **kwargs)
         self.query_params = query_params
 
@@ -46,15 +48,14 @@ class Supermetrics(Source):
     def get_params_from_api_query(cls, url: str) -> Dict[str, Any]:
         url_unquoted = urllib.parse.unquote(url)
         s = urllib.parse.parse_qs(url_unquoted)
-        params = s[
-            "https://api.supermetrics.com/enterprise/v2/query/data/powerbi?json"
-        ][0]
+        endpoint = list(s.keys())[0]
+        params = s[endpoint][0]
         params_d = json.loads(params)
         return params_d
 
     @classmethod
     def from_url(cls, url: str, credentials: Dict[str, Any] = None):
-        obj = Supermetrics(credentials=credentials)
+        obj = Supermetrics(credentials=credentials or local_config.get("SUPERMETRICS"))
         params = cls.get_params_from_api_query(url)
         obj.query_params = params
         return obj
@@ -112,20 +113,33 @@ class Supermetrics(Source):
 
         return response.json()
 
-    @staticmethod
-    def __get_col_names_google_analytics(response: dict) -> List[str]:
-        """This is required as Supermetrics allows pivoting GA data but does not return
-        the pivoted table's column names in the meta field. Due to this, we're
-        forced to read them from the data."""
-        try:
-            return response["data"][0]
-        except IndexError as e:
-            raise ValueError(
-                "Couldn't find column names as query returned no data"
-            ) from e
+    @classmethod
+    def _get_col_names_google_analytics(
+        cls,
+        response: dict,
+    ) -> List[str]:
 
-    @staticmethod
-    def __get_col_names_other(response: dict) -> List[str]:
+        # Supermetrics allows pivoting GA data, in which case it generates additional columns,
+        # which are not enlisted in response's query metadata but are instead added as the first row of data.
+        is_pivoted = any(
+            field["field_split"] == "column"
+            for field in response["meta"]["query"]["fields"]
+        )
+
+        if is_pivoted:
+            if not response["data"]:
+                raise ValueError(
+                    "Couldn't find column names as query returned no data."
+                )
+            columns = response["data"][0]
+        else:
+            # non-pivoted data; query fields match result fields
+            cols_meta = response["meta"]["query"]["fields"]
+            columns = [col_meta["field_name"] for col_meta in cols_meta]
+        return columns
+
+    @classmethod
+    def _get_col_names_other(cls, response: dict) -> List[str]:
         cols_meta = response["meta"]["query"]["fields"]
         columns = [col_meta["field_name"] for col_meta in cols_meta]
         return columns
@@ -137,9 +151,9 @@ class Supermetrics(Source):
         query_params_cp["offset_end"] = 0
         response: dict = Supermetrics(query_params=query_params_cp).to_json()
         if self.query_params["ds_id"] == "GA":
-            return self.__get_col_names_google_analytics(response)
+            return Supermetrics._get_col_names_google_analytics(response)
         else:
-            return self.__get_col_names_other(response)
+            return Supermetrics._get_col_names_other(response)
 
     def to_df(self, if_empty: str = "warn") -> pd.DataFrame:
         """Download data into a pandas DataFrame.
@@ -155,8 +169,13 @@ class Supermetrics(Source):
         Returns:
             pd.DataFrame: the DataFrame containing query results
         """
-        columns = self._get_col_names()
+        try:
+            columns = self._get_col_names()
+        except ValueError:
+            columns = None
+
         data = self.to_json()["data"]
+
         if data:
             df = pd.DataFrame(data[1:], columns=columns).replace("", np.nan)
         else:

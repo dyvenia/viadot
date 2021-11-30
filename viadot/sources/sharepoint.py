@@ -1,8 +1,10 @@
-from typing import Dict, Any
+from typing import Any, Dict
+
 import sharepy
 
-from .base import Source
 from ..config import local_config
+from ..exceptions import CredentialError
+from .base import Source
 
 
 class Sharepoint(Source):
@@ -28,13 +30,15 @@ class Sharepoint(Source):
 
         DEFAULT_CREDENTIALS = local_config.get("SHAREPOINT")
         credentials = credentials or DEFAULT_CREDENTIALS
-        self.download_from_path = download_from_path or DEFAULT_CREDENTIALS["file_url"]
-        self.required_credentials = ["site", "username", "password"]
+        if credentials is None:
+            raise CredentialError("Credentials not found.")
+        self.download_from_path = download_from_path or credentials.get("file_url")
+        self.required_credentials = ["site", "username", "password", "file_url"]
         super().__init__(*args, credentials=credentials, **kwargs)
 
     def get_connection(self) -> sharepy.session.SharePointSession:
         if any([rq not in self.credentials for rq in self.required_credentials]):
-            raise ValueError("Missing credentials.")
+            raise CredentialError("Missing credentials.")
 
         return sharepy.connect(
             site=self.credentials["site"],
@@ -47,6 +51,9 @@ class Sharepoint(Source):
         download_from_path: str = None,
         download_to_path: str = "Sharepoint_file.xlsm",
     ) -> None:
+
+        if not download_from_path or self.download_from_path:
+            raise CredentialError("Missing required parameter 'download_from_path'.")
 
         conn = self.get_connection()
         conn.getfile(
