@@ -6,6 +6,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 
 ## [Unreleased]
+### Added
+- Added support for file path to `CloudForCustomersReportToADLS` flow
+
+### Changed
+- Removed set_key_value from `CloudForCustomersReportToADLS` flow
 
 ## [0.2.12]
 ### Added
