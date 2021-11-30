@@ -4,7 +4,7 @@ import pandas as pd
 from typing import Any, Dict, List
 from urllib.parse import urljoin
 from ..config import local_config
-from ..exceptions import APIError
+from ..exceptions import APIError, CredentialError
 from requests.adapters import HTTPAdapter
 from requests.exceptions import ConnectionError, HTTPError, ReadTimeout, Timeout
 from urllib3.exceptions import ProtocolError
@@ -36,10 +36,18 @@ class CloudForCustomers(Source):
         """
         super().__init__(*args, **kwargs)
 
-        DEFAULT_CREDENTIALS = local_config["CLOUD_FOR_CUSTOMERS"].get(env)
-        self.credentials = credentials or DEFAULT_CREDENTIALS
-        self.url = url or self.credentials.get("server")
+        try:
+            DEFAULT_CREDENTIALS = local_config["CLOUD_FOR_CUSTOMERS"].get(env)
+        except KeyError:
+            DEFAULT_CREDENTIALS = None
+        credentials = credentials or DEFAULT_CREDENTIALS or {}
+
+        self.url = url or credentials.get("server")
         self.report_url = report_url
+
+        if self.url is None and report_url is None:
+            raise CredentialError("One of: ('url', 'report_url') is required.")
+
         self.is_report = bool(report_url)
         self.query_endpoint = endpoint
         self.params = params or {}
@@ -53,6 +61,8 @@ class CloudForCustomers(Source):
         if self.url:
             self.full_url = urljoin(self.url, self.query_endpoint)
 
+        super().__init__(*args, credentials=credentials, **kwargs)
+
     @staticmethod
     def change_to_meta_url(url: str) -> str:
         start = url.split(".svc")[0]
@@ -61,8 +71,7 @@ class CloudForCustomers(Source):
         meta_url = start + ".svc/$metadata?entityset=" + end
         return meta_url
 
-    def _to_records_report(self) -> List[Dict[str, Any]]:
-        url = self.report_url
+    def _to_records_report(self, url: str) -> List[Dict[str, Any]]:
         records = []
         while url:
             response = self.get_response(url)
@@ -74,8 +83,7 @@ class CloudForCustomers(Source):
 
         return records
 
-    def _to_records_other(self) -> List[Dict[str, Any]]:
-        url = self.full_url
+    def _to_records_other(self, url: str) -> List[Dict[str, Any]]:
         records = []
         while url:
             response = self.get_response(self.full_url, params=self.params)
@@ -96,9 +104,11 @@ class CloudForCustomers(Source):
     def to_records(self) -> List[Dict[str, Any]]:
         """Download a list of entities in the records format"""
         if self.is_report:
-            return self._to_records_report()
+            url = self.report_url
+            return self._to_records_report(url=url)
         else:
-            return self._to_records_other()
+            url = self.full_url
+            return self._to_records_other(url=url)
 
     def response_to_entity_list(self, dirty_json: Dict[str, Any], url: str) -> List:
         metadata_url = self.change_to_meta_url(url)
