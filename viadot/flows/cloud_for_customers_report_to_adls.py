@@ -215,4 +215,3 @@ class CloudForCustomersReportToADLS(Flow):
         df_with_metadata.set_upstream(df, flow=self)
         df_to_file.set_upstream(df_with_metadata, flow=self)
         file_to_adls_task.set_upstream(df_to_file, flow=self)
-        set_key_value(key=self.adls_dir_path, value=self.adls_file_path)
