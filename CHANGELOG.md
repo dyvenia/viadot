@@ -4,7 +4,53 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+
 ## [Unreleased]
+
+=======
+### Added
+- Added support for file path to `CloudForCustomersReportToADLS` flow
+
+### Fixed
+- `Supermetrics` source: `to_df()` now correctly handles `if_empty` in case of empty results
+
+### Changed
+- `Sharepoint` and `CloudForCustomers` sources will now provide an informative `CredentialError` which is also raised early. This will make issues with input credenials immediately clear to the user.
+- Removed set_key_value from `CloudForCustomersReportToADLS` flow
+
+## [0.2.12]
+### Added
+- Added `Sharepoint` source
+- Added `SharepointToDF` task
+- Added `SharepointToADLS` flow
+- Added `CloudForCustomers` source
+- Added `c4c_report_to_df` taks
+- Added `def c4c_to_df` task
+- Added `CloudForCustomersReportToADLS` flow
+- Added `df_to_csv` task to task_utils.py
+- Added `df_to_parquet` task to task_utils.py
+- Added `dtypes_to_json` task to task_utils.py
+## [0.2.11]
+### Fixed
+- `ADLSToAzureSQL` - fixed path to csv issue. 
+- `SupermetricsToADLS` - fixed local json path issue. 
+
+## [0.2.10] - 2021-10-29
+### Release due to CI/CD error
+
+## [0.2.9] - 2021-10-29
+### Release due to CI/CD error
+
+## [0.2.8] - 2021-10-29
+### Changed
+- CI/CD: `dev` image is now only published on push to the `dev` branch
+- Docker: 
+  - updated registry links to use the new `ghcr.io` domain
+  - `run.sh` now also accepts the `-t` option. When run in standard mode, it will only spin up the `viadot_jupyter_lab` service.
+  When ran with `-t dev`, it will also spin up `viadot_testing` and `viadot_docs` containers.
+
+### Fixed
+- `ADLSToAzureSQL` - fixed path parameter issue.
 
 ## [0.2.11]
 ### Fixed

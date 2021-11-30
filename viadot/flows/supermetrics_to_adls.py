@@ -1,24 +1,23 @@
-import json
 import os
-import shutil
-from pathlib import Path
 from typing import Any, Dict, List, Union
 
-import pandas as pd
 import pendulum
-import prefect
-from prefect import Flow, Task, apply_map, task
+from prefect import Flow, Task, apply_map
 from prefect.backend import set_key_value
 from prefect.tasks.secrets import PrefectSecret
 from prefect.utilities import logging
-from visions.functional import infer_type
-from visions.typesets.complete_set import CompleteSet
 
 from ..task_utils import (
     add_ingestion_metadata_task,
+    cleanup_validation_clutter,
     df_get_data_types_task,
-    df_mapp_mixed_dtypes_for_parquet,
+    df_map_mixed_dtypes_for_parquet,
+    df_to_csv,
+    df_to_parquet,
+    dtypes_to_json_task,
+    union_dfs_task,
     update_dtypes_dict,
+    write_to_json,
 )
 from ..tasks import (
     AzureDataLakeUpload,
@@ -34,67 +33,6 @@ download_github_file_task = DownloadGitHubFile()
 validation_task = RunGreatExpectationsValidation()
 file_to_adls_task = AzureDataLakeUpload()
 json_to_adls_task = AzureDataLakeUpload()
-
-
-@task
-def write_to_json(dict_, path):
-
-    logger = prefect.context.get("logger")
-
-    if os.path.isfile(path):
-        logger.warning(f"File {path} already exists. Overwriting...")
-    else:
-        logger.debug(f"Writing to {path}...")
-
-    # create parent directories if they don't exist
-    Path(path).parent.mkdir(parents=True, exist_ok=True)
-    with open(path, mode="w") as f:
-        json.dump(dict_, f)
-
-    logger.debug(f"Successfully wrote to {path}.")
-
-
-@task
-def union_dfs_task(dfs: List[pd.DataFrame]):
-    return pd.concat(dfs, ignore_index=True)
-
-
-@task
-def dtypes_to_json_task(dtypes_dict, local_json_path: str):
-    with open(local_json_path, "w") as fp:
-        json.dump(dtypes_dict, fp)
-
-
-@task
-def df_to_parquet_task(df, path: str, if_exists: str = "replace"):
-    if if_exists == "append":
-        if os.path.isfile(path):
-            parquet_df = pd.read_parquet(path)
-            out_df = pd.concat([parquet_df, df])
-        else:
-            out_df = df
-    elif if_exists == "replace":
-        out_df = df
-    out_df.to_parquet(path, index=False)
-
-
-@task
-def df_to_csv_task(df, path: str, if_exists: str = "replace"):
-    if if_exists == "append":
-        if os.path.isfile(path):
-            csv_df = pd.read_csv(path)
-            out_df = pd.concat([csv_df, df])
-        else:
-            out_df = df
-    elif if_exists == "replace":
-        out_df = df
-    out_df.to_csv(path, index=False)
-
-
-@task
-def cleanup_validation_clutter(expectations_path):
-    ge_project_path = Path(expectations_path).parent
-    shutil.rmtree(ge_project_path)
 
 
 class SupermetricsToADLS(Flow):
@@ -295,19 +233,19 @@ class SupermetricsToADLS(Flow):
         df_with_metadata = add_ingestion_metadata_task.bind(df, flow=self)
         dtypes_dict = df_get_data_types_task.bind(df_with_metadata, flow=self)
 
-        df_to_be_loaded = df_mapp_mixed_dtypes_for_parquet(
+        df_to_be_loaded = df_map_mixed_dtypes_for_parquet(
             df_with_metadata, dtypes_dict, flow=self
         )
 
         if self.output_file_extension == ".parquet":
-            df_to_file = df_to_parquet_task.bind(
+            df_to_file = df_to_parquet.bind(
                 df=df_to_be_loaded,
                 path=self.local_file_path,
                 if_exists=self.if_exists,
                 flow=self,
             )
         else:
-            df_to_file = df_to_csv_task.bind(
+            df_to_file = df_to_csv.bind(
                 df=df_with_metadata,
                 path=self.local_file_path,
                 if_exists=self.if_exists,
