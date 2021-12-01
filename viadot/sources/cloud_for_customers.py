@@ -52,9 +52,8 @@ class CloudForCustomers(Source):
         self.query_endpoint = endpoint
         self.params = params or {}
         self.params["$format"] = "json"
-
-        if self.credentials:
-            self.auth = (self.credentials["username"], self.credentials["password"])
+        if credentials:
+            self.auth = (credentials["username"], credentials["password"])
         else:
             self.auth = (None, None)
 
