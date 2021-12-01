@@ -4,12 +4,8 @@ import pandas as pd
 from typing import Any, Dict, List
 from urllib.parse import urljoin
 from ..config import local_config
-from ..exceptions import APIError, CredentialError
-from requests.adapters import HTTPAdapter
-from requests.exceptions import ConnectionError, HTTPError, ReadTimeout, Timeout
-from urllib3.exceptions import ProtocolError
+from ..utils import handle_api_response
 import re
-from requests.packages.urllib3.util.retry import Retry
 
 
 class CloudForCustomers(Source):
@@ -141,40 +137,10 @@ class CloudForCustomers(Source):
                     column_mapping[key] = val
         return column_mapping
 
-    def get_response(self, url: str, params: Dict[str, Any] = None):
-        try:
-            session = requests.Session()
-            retry_strategy = Retry(
-                total=3,
-                status_forcelist=[429, 500, 502, 503, 504],
-                backoff_factor=1,
-            )
-            adapter = HTTPAdapter(max_retries=retry_strategy)
-
-            session.mount("http://", adapter)
-            session.mount("https://", adapter)
-            response = session.get(url, params=params, auth=self.auth)
-            response.raise_for_status()
-        # TODO: abstract below and put as handle_api_response() into utils.py
-        except ReadTimeout as e:
-            msg = "The connection was successful, "
-            msg += f"however the API call to {url} timed out after .... s "
-            msg += "while waiting for the server to return data."
-            raise APIError(msg)
-        except HTTPError as e:
-            raise APIError(
-                f"The API call to {url} failed. "
-                "Perhaps your account credentials need to be refreshed?",
-            ) from e
-        except (ConnectionError, Timeout) as e:
-            raise APIError(
-                f"The API call to {url} failed due to connection issues."
-            ) from e
-        except ProtocolError as e:
-            raise APIError(f"Did not receive any reponse for the API call to {url}.")
-        except Exception as e:
-            raise APIError("Unknown error.") from e
-
+    def get_response(self, url: str, timeout: tuple = (3.05, 60 * 30)):
+        response = handle_api_response(
+            url=url, params=self.params, auth=self.auth, timeout=timeout
+        )
         return response
 
     def to_df(self, fields: List[str] = None, if_empty: str = "warn") -> pd.DataFrame:

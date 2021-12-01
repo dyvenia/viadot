@@ -12,6 +12,7 @@ from requests.exceptions import ConnectionError, HTTPError, ReadTimeout, Timeout
 from requests.packages.urllib3.util.retry import Retry
 from urllib3.exceptions import ProtocolError
 
+from ..utils import handle_api_response
 from ..config import local_config
 from ..exceptions import APIError, CredentialError
 from .base import Source
@@ -76,41 +77,9 @@ class Supermetrics(Source):
         params = {"json": json.dumps(self.query_params)}
         headers = {"Authorization": f'Bearer {self.credentials["API_KEY"]}'}
 
-        try:
-            session = requests.Session()
-            retry_strategy = Retry(
-                total=3, status_forcelist=[429, 500, 502, 503, 504], backoff_factor=1
-            )
-            adapter = HTTPAdapter(max_retries=retry_strategy)
-
-            session.mount("http://", adapter)
-            session.mount("https://", adapter)
-
-            response = session.get(
-                self.API_ENDPOINT, params=params, headers=headers, timeout=timeout
-            )
-            response.raise_for_status()
-        except ReadTimeout as e:
-            msg = "The connection was successful, "
-            msg += f"however the API call to {self.API_ENDPOINT} timed out after {timeout[1]}s "
-            msg += "while waiting for the server to return data."
-            raise APIError(msg)
-        except HTTPError as e:
-            raise APIError(
-                f"The API call to {self.API_ENDPOINT} failed. "
-                "Perhaps your account credentials need to be refreshed?",
-            ) from e
-        except (ConnectionError, Timeout) as e:
-            raise APIError(
-                f"The API call to {self.API_ENDPOINT} failed due to connection issues."
-            ) from e
-        except ProtocolError as e:
-            raise APIError(
-                f"Did not receive any reponse for the API call to {self.API_ENDPOINT}."
-            )
-        except Exception as e:
-            raise APIError("Unknown error.") from e
-
+        response = handle_api_response(
+            url=self.API_ENDPOINT, params=params, headers=headers, timeout=timeout
+        )
         return response.json()
 
     @classmethod
