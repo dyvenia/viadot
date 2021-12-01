@@ -52,9 +52,8 @@ class CloudForCustomers(Source):
         self.query_endpoint = endpoint
         self.params = params or {}
         self.params["$format"] = "json"
-
-        if self.credentials:
-            self.auth = (self.credentials["username"], self.credentials["password"])
+        if credentials:
+            self.auth = (credentials["username"], credentials["password"])
         else:
             self.auth = (None, None)
 
@@ -154,6 +153,7 @@ class CloudForCustomers(Source):
 
             session.mount("http://", adapter)
             session.mount("https://", adapter)
+            print(self.auth)
             response = session.get(url, params=params, auth=self.auth)
             response.raise_for_status()
         # TODO: abstract below and put as handle_api_response() into utils.py
