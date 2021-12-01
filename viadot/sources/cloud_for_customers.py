@@ -153,7 +153,6 @@ class CloudForCustomers(Source):
 
             session.mount("http://", adapter)
             session.mount("https://", adapter)
-            print(self.auth)
             response = session.get(url, params=params, auth=self.auth)
             response.raise_for_status()
         # TODO: abstract below and put as handle_api_response() into utils.py
