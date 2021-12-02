@@ -5,6 +5,7 @@ from typing import Any, Dict, List
 from urllib.parse import urljoin
 from ..config import local_config
 from ..utils import handle_api_response
+from ..exceptions import CredentialError
 import re
 
 

@@ -1,4 +1,4 @@
-from .exceptions import APIError, CredentialError
+from .exceptions import APIError
 from requests.adapters import HTTPAdapter
 from requests.exceptions import ConnectionError, HTTPError, ReadTimeout, Timeout
 from urllib3.exceptions import ProtocolError
