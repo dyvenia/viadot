@@ -13,11 +13,27 @@ def slugify(name: str) -> str:
 
 def handle_api_response(
     url: str,
-    params: Dict[str, Any] = None,
     auth: tuple = None,
     headers: Dict[str, Any] = None,
     timeout: tuple = (3.05, 60 * 30),
 ):
+    """Handle and raise Python exceptions during request with retry strategy for specyfic status.
+
+    Args:
+        url (str): the URL which trying to connect.
+        auth (tuple, optional): authorization information. Defaults to None.
+        headers (Dict[str, Any], optional): the request header also includes parameters such as the content type. Defaults to None.
+        timeout (tuple, optional): the request times out. Defaults to (3.05, 60 * 30).
+
+    Raises:
+        ReadTimeout: stop waiting for a response after a given number of seconds with the timeout parameter.
+        HTTPError: exception that indicates when HTTP status codes returned values different than 200.
+        ConnectionError: exception that indicates when client is unable to connect to the server.
+        APIError: defined by user.
+
+    Returns:
+        response
+    """
     try:
         session = requests.Session()
         retry_strategy = Retry(
@@ -30,7 +46,10 @@ def handle_api_response(
         session.mount("http://", adapter)
         session.mount("https://", adapter)
         response = session.get(
-            url, params=params, auth=auth, headers=headers, timeout=timeout
+            url,
+            auth=auth,
+            headers=headers,
+            timeout=timeout,
         )
         response.raise_for_status()
 
