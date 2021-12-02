@@ -16,7 +16,7 @@ class CloudForCustomers(Source):
         report_url: str = None,
         url: str = None,
         endpoint: str = None,
-        params: Dict[str, Any] = None,
+        headers: Dict[str, Any] = None,
         env: str = "QA",
         credentials: Dict[str, Any] = None,
         **kwargs,
@@ -28,7 +28,7 @@ class CloudForCustomers(Source):
             report_url (str, optional): The url to the API in case of prepared report. Defaults to None.
             url (str, optional): The url to the API. Defaults to None.
             endpoint (str, optional): The endpoint of the API. Defaults to None.
-            params (Dict[str, Any]): The query parameters like filter by creation date time. Defaults to json format.
+            headers (Dict[str, Any]): The query parameters like filter by creation date time. Defaults to json format.
             env (str, optional): The development environments. Defaults to 'QA'.
         """
         super().__init__(*args, **kwargs)
@@ -47,8 +47,8 @@ class CloudForCustomers(Source):
 
         self.is_report = bool(report_url)
         self.query_endpoint = endpoint
-        self.params = params or {}
-        self.params["$format"] = "json"
+        self.headers = headers or {}
+        self.headers["$format"] = "json"
         if credentials:
             self.auth = (credentials["username"], credentials["password"])
         else:
@@ -82,7 +82,7 @@ class CloudForCustomers(Source):
     def _to_records_other(self, url: str) -> List[Dict[str, Any]]:
         records = []
         while url:
-            response = self.get_response(self.full_url, params=self.params)
+            response = self.get_response(self.full_url, headers=self.headers)
             response_json = response.json()
             if isinstance(response_json["d"], dict):
                 # ODATA v2+ API
@@ -140,7 +140,7 @@ class CloudForCustomers(Source):
 
     def get_response(self, url: str, timeout: tuple = (3.05, 60 * 30)):
         response = handle_api_response(
-            url=url, params=self.params, auth=self.auth, timeout=timeout
+            url=url, headers=self.headers, auth=self.auth, timeout=timeout
         )
         return response
 

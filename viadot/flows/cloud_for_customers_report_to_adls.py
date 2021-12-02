@@ -23,7 +23,7 @@ class CloudForCustomersReportToADLS(Flow):
         url: str = None,
         env: str = "QA",
         endpoint: str = None,
-        params: Dict[str, Any] = {},
+        headers: Dict[str, Any] = {},
         fields: List[str] = None,
         name: str = None,
         adls_sp_credentials_secret: str = None,
@@ -89,7 +89,7 @@ class CloudForCustomersReportToADLS(Flow):
         # in case of non-report invoking
         self.url = url
         self.endpoint = endpoint
-        self.params = params
+        self.headers = headers
         self.fields = fields
         # filtering for report_url for reports
         self.channels = channels
@@ -141,7 +141,7 @@ class CloudForCustomersReportToADLS(Flow):
         url: str,
         report_url: str,
         endpoint: str,
-        params: str,
+        headers: str,
         env: str,
         flow: Flow = None,
     ) -> Task:
@@ -150,7 +150,7 @@ class CloudForCustomersReportToADLS(Flow):
             url=url,
             env=env,
             endpoint=endpoint,
-            params=params,
+            headers=headers,
             report_url=report_url,
             flow=flow,
         )
@@ -183,7 +183,7 @@ class CloudForCustomersReportToADLS(Flow):
                 report_url=self.report_url,
                 env=self.env,
                 endpoint=self.endpoint,
-                params=self.params,
+                headers=self.headers,
                 flow=self,
             )
 

@@ -29,7 +29,7 @@ def c4c_to_df(
     endpoint: str = None,
     report_url: str = None,
     fields: List[str] = None,
-    params: Dict[str, Any] = {},
+    headers: Dict[str, Any] = {},
     env: str = "QA",
     if_empty: str = "warn",
 ):
@@ -37,7 +37,7 @@ def c4c_to_df(
         url=url,
         report_url=report_url,
         endpoint=endpoint,
-        params=params,
+        headers=headers,
         env=env,
     )
 
