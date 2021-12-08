@@ -7,7 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-=======
+## [0.2.14]
+### Fixed
+- authorization issue within `CloudForCustomers` source
+
+## [0.2.13]
 ### Added
 - Added support for file path to `CloudForCustomersReportToADLS` flow
 
