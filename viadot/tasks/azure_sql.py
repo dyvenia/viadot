@@ -43,7 +43,7 @@ class CreateTableFromBlob(Task):
         table: str,
         dtypes: Dict[str, Any],
         sep: str = None,
-        if_exists: Literal = ["fail", "replace", "append"],
+        if_exists: Literal = ["fail", "replace", "append", "delete"],
     ):
         """
         Create a table from an Azure Blob object.
@@ -86,7 +86,7 @@ class AzureSQLBulkInsert(Task):
         table: str = None,
         dtypes: Dict[str, Any] = None,
         sep="\t",
-        if_exists: Literal["fail", "replace", "append"] = "fail",
+        if_exists: Literal["fail", "replace", "append", "delete"] = "fail",
         credentials_secret: str = None,
         *args,
         **kwargs,
@@ -108,7 +108,7 @@ class AzureSQLBulkInsert(Task):
         table: str = None,
         dtypes: Dict[str, Any] = None,
         sep: str = None,
-        if_exists: Literal["fail", "replace", "append"] = None,
+        if_exists: Literal["fail", "replace", "append", "delete"] = None,
         credentials_secret: str = None,
         vault_name: str = None,
     ):
@@ -156,7 +156,7 @@ class AzureSQLCreateTable(Task):
         schema: str = None,
         table: str = None,
         dtypes: Dict[str, Any] = None,
-        if_exists: Literal["fail", "replace", "skip"] = "fail",
+        if_exists: Literal["fail", "replace", "skip", "delete"] = "fail",
         credentials_secret: str = None,
         vault_name: str = None,
         max_retries: int = 3,
@@ -184,7 +184,7 @@ class AzureSQLCreateTable(Task):
         schema: str = None,
         table: str = None,
         dtypes: Dict[str, Any] = None,
-        if_exists: Literal["fail", "replace", "skip"] = None,
+        if_exists: Literal["fail", "replace", "skip", "delete"] = None,
         credentials_secret: str = None,
         vault_name: str = None,
         max_retries: int = None,
