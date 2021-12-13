@@ -11,9 +11,11 @@ RUN useradd --create-home viadot && \
 RUN groupadd docker && \
     usermod -aG docker viadot
 
+
 # Release File Error
 # https://stackoverflow.com/questions/63526272/release-file-is-not-valid-yet-docker
 RUN echo "Acquire::Check-Valid-Until \"false\";\nAcquire::Check-Date \"false\";" | cat > /etc/apt/apt.conf.d/10no--check-valid-until
+
 
 # System packages
 RUN apt update && yes | apt install vim unixodbc-dev build-essential \
@@ -36,7 +38,14 @@ RUN curl https://packages.microsoft.com/keys/microsoft.asc | apt-key add - && \
 
 COPY docker/odbcinst.ini /etc
 
+
 # Python env
+
+# This one's needed for the SAP RFC connector. 
+# It must be installed here as the SAP package does not define its dependencies, 
+# so `pip install pyrfc` breaks if all deps are not already present.
+RUN pip install cython==0.29.24
+
 WORKDIR /code
 COPY requirements.txt /code/
 RUN pip install --upgrade pip
