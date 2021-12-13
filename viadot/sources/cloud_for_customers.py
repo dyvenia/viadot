@@ -39,7 +39,7 @@ class CloudForCustomers(Source):
             DEFAULT_CREDENTIALS = local_config["CLOUD_FOR_CUSTOMERS"].get(env)
         except KeyError:
             DEFAULT_CREDENTIALS = None
-        # credentials = credentials or DEFAULT_CREDENTIALS or {}
+
         self.credentials = credentials or DEFAULT_CREDENTIALS or {}
 
         self.url = url or self.credentials.get("server")
