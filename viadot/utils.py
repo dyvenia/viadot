@@ -14,15 +14,15 @@ def slugify(name: str) -> str:
 def handle_api_response(
     url: str,
     auth: tuple = None,
-    headers: Dict[str, Any] = None,
+    params: Dict[str, Any] = None,
     timeout: tuple = (3.05, 60 * 30),
-):
+) -> requests.models.Response:
     """Handle and raise Python exceptions during request with retry strategy for specyfic status.
 
     Args:
         url (str): the URL which trying to connect.
         auth (tuple, optional): authorization information. Defaults to None.
-        headers (Dict[str, Any], optional): the request header also includes parameters such as the content type. Defaults to None.
+        params (Dict[str, Any], optional): the request params also includes parameters such as the content type. Defaults to None.
         timeout (tuple, optional): the request times out. Defaults to (3.05, 60 * 30).
 
     Raises:
@@ -48,7 +48,7 @@ def handle_api_response(
         response = session.get(
             url,
             auth=auth,
-            headers=headers,
+            params=params,
             timeout=timeout,
         )
         response.raise_for_status()

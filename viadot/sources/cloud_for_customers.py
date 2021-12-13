@@ -16,7 +16,7 @@ class CloudForCustomers(Source):
         report_url: str = None,
         url: str = None,
         endpoint: str = None,
-        headers: Dict[str, Any] = None,
+        params: Dict[str, Any] = None,
         env: str = "QA",
         credentials: Dict[str, Any] = None,
         **kwargs,
@@ -28,8 +28,10 @@ class CloudForCustomers(Source):
             report_url (str, optional): The url to the API in case of prepared report. Defaults to None.
             url (str, optional): The url to the API. Defaults to None.
             endpoint (str, optional): The endpoint of the API. Defaults to None.
-            headers (Dict[str, Any]): The query parameters like filter by creation date time. Defaults to json format.
+            params (Dict[str, Any]): The query parameters like filter by creation date time. Defaults to json format.
             env (str, optional): The development environments. Defaults to 'QA'.
+            credentials (Dict[str, Any], optional): The credentials are provided from environmental variable
+            in local_config or with this parameter. Defaults to None than use credentials from local_config.
         """
         super().__init__(*args, **kwargs)
 
@@ -37,9 +39,10 @@ class CloudForCustomers(Source):
             DEFAULT_CREDENTIALS = local_config["CLOUD_FOR_CUSTOMERS"].get(env)
         except KeyError:
             DEFAULT_CREDENTIALS = None
-        credentials = credentials or DEFAULT_CREDENTIALS or {}
+        # credentials = credentials or DEFAULT_CREDENTIALS or {}
+        self.credentials = credentials or DEFAULT_CREDENTIALS or {}
 
-        self.url = url or credentials.get("server")
+        self.url = url or self.credentials.get("server")
         self.report_url = report_url
 
         if self.url is None and report_url is None:
@@ -47,17 +50,13 @@ class CloudForCustomers(Source):
 
         self.is_report = bool(report_url)
         self.query_endpoint = endpoint
-        self.headers = headers or {}
-        self.headers["$format"] = "json"
-        if credentials:
-            self.auth = (credentials["username"], credentials["password"])
-        else:
-            self.auth = (None, None)
+        self.params = params or {}
+        self.params["$format"] = "json"
 
         if self.url:
             self.full_url = urljoin(self.url, self.query_endpoint)
 
-        super().__init__(*args, credentials=credentials, **kwargs)
+        super().__init__(*args, credentials=self.credentials, **kwargs)
 
     @staticmethod
     def change_to_meta_url(url: str) -> str:
@@ -82,7 +81,7 @@ class CloudForCustomers(Source):
     def _to_records_other(self, url: str) -> List[Dict[str, Any]]:
         records = []
         while url:
-            response = self.get_response(self.full_url, headers=self.headers)
+            response = self.get_response(self.full_url, params=self.params)
             response_json = response.json()
             if isinstance(response_json["d"], dict):
                 # ODATA v2+ API
@@ -126,8 +125,9 @@ class CloudForCustomers(Source):
     def map_columns(self, url: str = None) -> Dict[str, str]:
         column_mapping = {}
         if url:
-            auth = (self.credentials["username"], self.credentials["password"])
-            response = requests.get(url, auth=auth)
+            username = self.credentials.get("username")
+            pw = self.credentials.get("password")
+            response = requests.get(url, params=self.params, auth=(username, pw))
             for sentence in response.text.split("/>"):
                 result = re.search(
                     r'(?<=Name=")([^"]+).+(sap:label=")([^"]+)+', sentence
@@ -138,9 +138,11 @@ class CloudForCustomers(Source):
                     column_mapping[key] = val
         return column_mapping
 
-    def get_response(self, url: str, timeout: tuple = (3.05, 60 * 30)):
+    def get_response(self, url: str, timeout: tuple = (3.05, 60 * 30)) -> pd.DataFrame:
+        username = self.credentials.get("username")
+        pw = self.credentials.get("password")
         response = handle_api_response(
-            url=url, headers=self.headers, auth=self.auth, timeout=timeout
+            url=url, params=self.params, auth=(username, pw), timeout=timeout
         )
         return response
 
