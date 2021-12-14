@@ -4,6 +4,7 @@ from .azure_data_lake import (
     AzureDataLakeDownload,
     AzureDataLakeList,
     AzureDataLakeToDF,
+    AzureDataLakeFlattenDF,
     AzureDataLakeUpload,
 )
 from .azure_key_vault import (
