@@ -156,20 +156,35 @@ class AzureDataLake(Source):
 
         path = path or self.path
         url = os.path.join(self.base_url, path)
+        print(os.path.splitext(os.path.split(path)[1])[1])
 
-        if url.endswith(".csv"):
-            df = pd.read_csv(
-                url,
-                storage_options=self.storage_options,
-                sep=sep,
-                quoting=quoting,
-                lineterminator=lineterminator,
-                error_bad_lines=error_bad_lines,
-            )
-        elif url.endswith(".parquet"):
-            df = pd.read_parquet(url, storage_options=self.storage_options)
+        if os.path.splitext(os.path.split(path)[1])[1]:
+            if url.endswith(".csv"):
+                df = pd.read_csv(
+                    url,
+                    storage_options=self.storage_options,
+                    sep=sep,
+                    quoting=quoting,
+                    lineterminator=lineterminator,
+                    error_bad_lines=error_bad_lines,
+                )
+            elif url.endswith(".parquet"):
+                df = pd.read_parquet(url, storage_options=self.storage_options)
+            elif url.endswith(".json"):
+                df = pd.read_json(url, storage_options=self.storage_options, lines=True)
+            else:
+                raise ValueError("Only CSV, parquet and JSON formats are supported.")
         else:
-            raise ValueError("Only CSV and parquet formats are supported.")
+            files = self.ls(path)
+            dfs = []
+            for file in files:
+                print(file)
+                df = pd.read_json(
+                    f"az://{file}", storage_options=self.storage_options, lines=True
+                )
+                dfs.append(df)
+            return pd.concat(dfs)
+            pass
 
         return df
 
