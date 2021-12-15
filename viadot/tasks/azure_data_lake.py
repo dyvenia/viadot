@@ -1,6 +1,6 @@
 import json
 import os
-from datetime import timedelta
+from datetime import datetime, timedelta
 from typing import List
 
 import pandas as pd
@@ -386,6 +386,26 @@ class AzureDataLakeSplitDF(Task):
                     df_merged.append(df_by_processID)
         df_final = [df for by_processID in df_merged for df in by_processID]
         return df_final
+
+
+class AzureDataLakeDFToCSV(Task):
+    def __init__(self, dataframes: List[pd.DataFrame] = None, *args, **kwargs):
+        self.dataframes = dataframes
+        super().__init__(name="save_df", *args, **kwargs)
+
+    def __call__(self, *args, **kwargs):
+        """Save DataFrames into csv files by 'machineIDx' column"""
+        return super().__call__(*args, **kwargs)
+
+    def run(self, dataframes: List[pd.DataFrame] = None):
+        for dataframe in dataframes:
+            telegram_type = dataframe["telegramTypeFriendly"].unique()[0]
+            telegram_date = str(datetime.now()).replace(" ", "-")
+            machine_id = dataframe["machineIDx"].unique()[0]
+
+            dataframe.to_csv(
+                f"azure-packml-{telegram_type}-{telegram_date}-{machine_id}.csv"
+            )
 
 
 class AzureDataLakeCopy(Task):
