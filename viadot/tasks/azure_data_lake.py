@@ -360,6 +360,34 @@ class AzureDataLakeToDF(Task):
         return df
 
 
+class AzureDataLakeSplitDF(Task):
+    def __init__(self, dataframe: pd.DataFrame = None, *args, **kwargs):
+        self.dataframe = dataframe
+        super().__init__(name="split_df", *args, **kwargs)
+
+    def __call__(self, *args, **kwargs):
+        """Split DataFrame into smaller ones by 'machineIDx' column"""
+        return super().__call__(*args, **kwargs)
+
+    def run(self, dataframe: pd.DataFrame = None):
+        df_merged = []
+        if "machineIDx" in dataframe.columns:
+            df_by_machineID = [
+                value for _, value in dataframe.groupby(["machineIDx"], as_index=False)
+            ]
+            if "dataContent.processID" in dataframe.columns:
+                for machine_df in df_by_machineID:
+                    df_by_processID = [
+                        value
+                        for _, value in machine_df.groupby(
+                            ["dataContent.processID"], as_index=False
+                        )
+                    ]
+                    df_merged.append(df_by_processID)
+        df_final = [df for by_processID in df_merged for df in by_processID]
+        return df_final
+
+
 class AzureDataLakeCopy(Task):
     """
     Task for copying data between the Azure Data lakes files.
