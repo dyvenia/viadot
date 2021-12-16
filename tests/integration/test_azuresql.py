@@ -49,14 +49,19 @@ def test_create_table_replace(azure_sql):
     assert table_object_id is not None
 
 
-def test_create_table_delete(azure_sql):
-    dtypes = {"country": "VARCHAR(100)", "sales": "FLOAT(24)"}
-    result_replace = azure_sql.create_table(
-        schema=SCHEMA, table=TABLE, dtypes=dtypes, if_exists="replace"
+def test_create_table_delete(azure_sql, TEST_CSV_FILE_BLOB_PATH):
+    executed = azure_sql.bulk_insert(
+        schema=SCHEMA,
+        table=TABLE,
+        source_path=TEST_CSV_FILE_BLOB_PATH,
+        if_exists="replace",
     )
-    assert result_replace == True
+    assert executed is True
 
-    table_object_id_replace = azure_sql.run(
+    result = azure_sql.run(f"SELECT SUM(sales) FROM {SCHEMA}.{TABLE} AS total")
+    assert int(result[0][0]) == 230
+
+    table_object_id_insert = azure_sql.run(
         f"SELECT OBJECT_ID('{SCHEMA}.{TABLE}', 'U')"
     )[0][0]
 
@@ -69,7 +74,9 @@ def test_create_table_delete(azure_sql):
         f"SELECT OBJECT_ID('{SCHEMA}.{TABLE}', 'U')"
     )[0][0]
 
-    assert table_object_id_replace == table_object_id_delete
+    result = azure_sql.run(f"SELECT SUM(sales) FROM {SCHEMA}.{TABLE} AS total")
+    assert result[0][0] is None
+    assert table_object_id_insert == table_object_id_delete
 
 
 def test_create_table_skip_1(azure_sql):
