@@ -34,11 +34,23 @@ def test_connection(azure_sql):
     azure_sql.con
 
 
-def test_create_table(azure_sql):
+def test_table_exists(azure_sql):
+    result = azure_sql.exists(table=TABLE, schema=SCHEMA)
+    assert result == False
+
+
+def test_create_table_replace(azure_sql):
     dtypes = {"country": "VARCHAR(100)", "sales": "FLOAT(24)"}
     result = azure_sql.create_table(
         schema=SCHEMA, table=TABLE, dtypes=dtypes, if_exists="replace"
     )
+    assert result == True
+    table_object_id = azure_sql.run(f"SELECT OBJECT_ID('{SCHEMA}.{TABLE}', 'U')")[0][0]
+    assert table_object_id is not None
+
+
+def test_create_table_delete(azure_sql):
+    result = azure_sql.create_table(schema=SCHEMA, table=TABLE, if_exists="delete")
     assert result == True
     table_object_id = azure_sql.run(f"SELECT OBJECT_ID('{SCHEMA}.{TABLE}', 'U')")[0][0]
     assert table_object_id is not None
