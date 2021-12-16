@@ -32,8 +32,8 @@ class Sharepoint(Source):
         credentials = credentials or DEFAULT_CREDENTIALS
         if credentials is None:
             raise CredentialError("Credentials not found.")
-        self.download_from_path = download_from_path or credentials.get("file_url")
-        self.required_credentials = ["site", "username", "password", "file_url"]
+        self.download_from_path = download_from_path
+        self.required_credentials = ["site", "username", "password"]
         super().__init__(*args, credentials=credentials, **kwargs)
 
     def get_connection(self) -> sharepy.session.SharePointSession:
@@ -52,7 +52,8 @@ class Sharepoint(Source):
         download_to_path: str = "Sharepoint_file.xlsm",
     ) -> None:
 
-        if not download_from_path or self.download_from_path:
+        download_from_path = download_from_path or self.download_from_path
+        if not download_from_path:
             raise CredentialError("Missing required parameter 'download_from_path'.")
 
         conn = self.get_connection()
