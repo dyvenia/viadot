@@ -360,6 +360,32 @@ class AzureDataLakeToDF(Task):
         return df
 
 
+class AzureDataLakeFlattenDF(Task):
+    def __init__(self, dataframe: pd.DataFrame = None, *args, **kwargs):
+        self.dataframe = dataframe
+        super().__init__(name="flatten_df", *args, **kwargs)
+
+    def __call__(self, *args, **kwargs):
+        """Flatten columns in previously loaded pandas Data Frame"""
+        return super().__call__(*args, **kwargs)
+
+    def run(self, dataframe: pd.DataFrame = None):
+        s = (dataframe.applymap(type) == list).all()
+        list_columns = s[s].index.tolist()
+
+        # applymap for columns that contains dicts (eg totals)
+        s = (dataframe.applymap(type) == dict).all()
+        dict_columns = s[s].index.tolist()
+
+        print(dict_columns)
+
+        for col in dict_columns + list_columns:
+            print(col)
+            columns_df = pd.json_normalize(dataframe[col]).add_prefix(f"{col}.")
+            dataframe = pd.concat([dataframe, columns_df], axis=1).drop(columns=[col])
+        return dataframe
+
+
 class AzureDataLakeSplitDF(Task):
     def __init__(self, dataframe: pd.DataFrame = None, *args, **kwargs):
         self.dataframe = dataframe
@@ -384,6 +410,7 @@ class AzureDataLakeSplitDF(Task):
                         )
                     ]
                     df_merged.append(df_by_processID)
+                df_merged = [item for sublist in df_merged for item in sublist]
             else:
                 df_merged = df_by_machineID
         return df_merged
