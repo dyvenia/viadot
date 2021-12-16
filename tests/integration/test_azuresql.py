@@ -50,10 +50,26 @@ def test_create_table_replace(azure_sql):
 
 
 def test_create_table_delete(azure_sql):
-    result = azure_sql.create_table(schema=SCHEMA, table=TABLE, if_exists="delete")
-    assert result == True
-    table_object_id = azure_sql.run(f"SELECT OBJECT_ID('{SCHEMA}.{TABLE}', 'U')")[0][0]
-    assert table_object_id is not None
+    dtypes = {"country": "VARCHAR(100)", "sales": "FLOAT(24)"}
+    result_replace = azure_sql.create_table(
+        schema=SCHEMA, table=TABLE, dtypes=dtypes, if_exists="replace"
+    )
+    assert result_replace == True
+
+    table_object_id_replace = azure_sql.run(
+        f"SELECT OBJECT_ID('{SCHEMA}.{TABLE}', 'U')"
+    )[0][0]
+
+    result_delete = azure_sql.create_table(
+        schema=SCHEMA, table=TABLE, if_exists="delete"
+    )
+    assert result_delete == True
+
+    table_object_id_delete = azure_sql.run(
+        f"SELECT OBJECT_ID('{SCHEMA}.{TABLE}', 'U')"
+    )[0][0]
+
+    assert table_object_id_replace == table_object_id_delete
 
 
 def test_create_table_skip_1(azure_sql):
