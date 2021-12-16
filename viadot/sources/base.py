@@ -222,7 +222,7 @@ class SQL(Source):
         table: str,
         schema: str = None,
         dtypes: Dict[str, Any] = None,
-        if_exists: Literal["fail", "replace", "skip"] = "fail",
+        if_exists: Literal["fail", "replace", "skip", "delete"] = "fail",
     ) -> bool:
         """Create a table.
 
@@ -241,6 +241,9 @@ class SQL(Source):
         if exists:
             if if_exists == "replace":
                 self.run(f"DROP TABLE {fqn}")
+            elif if_exists == "delete":
+                self.run(f"DELETE FROM {fqn}")
+                return True
             elif if_exists == "fail":
                 raise ValueError(
                     "The table already exists and 'if_exists' is set to 'fail'."
