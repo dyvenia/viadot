@@ -384,8 +384,9 @@ class AzureDataLakeSplitDF(Task):
                         )
                     ]
                     df_merged.append(df_by_processID)
-        df_final = [df for by_processID in df_merged for df in by_processID]
-        return df_final
+            else:
+                df_merged = df_by_machineID
+        return df_merged
 
 
 class AzureDataLakeDFToCSV(Task):
@@ -398,14 +399,14 @@ class AzureDataLakeDFToCSV(Task):
         return super().__call__(*args, **kwargs)
 
     def run(self, dataframes: List[pd.DataFrame] = None):
+        replacements = {" ": "-", ":": "-"}
+        transTable = str(datetime.now()).maketrans(replacements)
+        telegram_date = str(datetime.now()).translate(transTable)
         for dataframe in dataframes:
             telegram_type = dataframe["telegramTypeFriendly"].unique()[0]
-            telegram_date = str(datetime.now()).replace(" ", "-")
             machine_id = dataframe["machineIDx"].unique()[0]
 
-            dataframe.to_csv(
-                f"azure-packml-{telegram_type}-{telegram_date}-{machine_id}.csv"
-            )
+            dataframe.to_csv(f"azure-{telegram_type}-{telegram_date}-{machine_id}.csv")
 
 
 class AzureDataLakeCopy(Task):
