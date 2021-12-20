@@ -73,20 +73,12 @@ def test_azure_data_lake_split_df(TEST_JSON_MACHINE_FILE_PATH):
     filelist = os.listdir(".")
     for df in split_dfs:
         telegram_type = df["telegramTypeFriendly"].values[0]
-        machine_name = df["machineIDx"].values[0]
-
-        if not any(
-            file.startswith(f"azure-{telegram_type}")
-            and file.endswith(f"-{machine_name}.csv")
-            for file in filelist
-        ):
+        if not any(file.startswith(f"azure-{telegram_type}") for file in filelist):
             found = False
             break
 
         for file in filelist:
-            if file.startswith(f"azure-{telegram_type}") and file.endswith(
-                f"-{machine_name}.csv"
-            ):
+            if file.startswith(f"azure-{telegram_type}"):
                 os.remove(file)
 
     assert found

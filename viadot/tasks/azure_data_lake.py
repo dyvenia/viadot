@@ -376,13 +376,11 @@ class AzureDataLakeFlattenDF(Task):
         # applymap for columns that contains dicts (eg totals)
         s = (dataframe.applymap(type) == dict).all()
         dict_columns = s[s].index.tolist()
-
         print(dict_columns)
 
         for col in dict_columns + list_columns:
-            print(col)
             columns_df = pd.json_normalize(dataframe[col]).add_prefix(f"{col}.")
-            dataframe = pd.concat([dataframe, columns_df], axis=1).drop(columns=[col])
+            dataframe = pd.concat([dataframe, columns_df]).drop(columns=[col])
         return dataframe
 
 
@@ -426,14 +424,16 @@ class AzureDataLakeDFToCSV(Task):
         return super().__call__(*args, **kwargs)
 
     def run(self, dataframes: List[pd.DataFrame] = None):
-        replacements = {" ": "-", ":": "-"}
-        transTable = str(datetime.now()).maketrans(replacements)
-        telegram_date = str(datetime.now()).translate(transTable)
         for dataframe in dataframes:
             telegram_type = dataframe["telegramTypeFriendly"].unique()[0]
-            machine_id = dataframe["machineIDx"].unique()[0]
-
-            dataframe.to_csv(f"azure-{telegram_type}-{telegram_date}-{machine_id}.csv")
+            if not any(
+                file.startswith(f"azure-{telegram_type}") for file in os.listdir(".")
+            ):
+                dataframe.to_csv(f"azure-{telegram_type}.csv")
+            else:
+                dataframe.to_csv(
+                    f"azure-{telegram_type}.csv", mode="a", index=False, header=False
+                )
 
 
 class AzureDataLakeCopy(Task):
