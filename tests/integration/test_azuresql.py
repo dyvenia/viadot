@@ -34,7 +34,12 @@ def test_connection(azure_sql):
     azure_sql.con
 
 
-def test_create_table(azure_sql):
+def test_table_exists(azure_sql):
+    result = azure_sql.exists(table=TABLE, schema=SCHEMA)
+    assert result == False
+
+
+def test_create_table_replace(azure_sql):
     dtypes = {"country": "VARCHAR(100)", "sales": "FLOAT(24)"}
     result = azure_sql.create_table(
         schema=SCHEMA, table=TABLE, dtypes=dtypes, if_exists="replace"
@@ -42,6 +47,36 @@ def test_create_table(azure_sql):
     assert result == True
     table_object_id = azure_sql.run(f"SELECT OBJECT_ID('{SCHEMA}.{TABLE}', 'U')")[0][0]
     assert table_object_id is not None
+
+
+def test_create_table_delete(azure_sql, TEST_CSV_FILE_BLOB_PATH):
+    insert_executed = azure_sql.bulk_insert(
+        schema=SCHEMA,
+        table=TABLE,
+        source_path=TEST_CSV_FILE_BLOB_PATH,
+        if_exists="replace",
+    )
+    assert insert_executed is True
+
+    result = azure_sql.run(f"SELECT SUM(sales) FROM {SCHEMA}.{TABLE} AS total")
+    assert int(result[0][0]) == 230
+
+    table_object_id_insert = azure_sql.run(
+        f"SELECT OBJECT_ID('{SCHEMA}.{TABLE}', 'U')"
+    )[0][0]
+
+    delete_executed = azure_sql.create_table(
+        schema=SCHEMA, table=TABLE, if_exists="delete"
+    )
+    assert delete_executed is True
+
+    table_object_id_delete = azure_sql.run(
+        f"SELECT OBJECT_ID('{SCHEMA}.{TABLE}', 'U')"
+    )[0][0]
+
+    result = azure_sql.run(f"SELECT SUM(sales) FROM {SCHEMA}.{TABLE} AS total")
+    assert result[0][0] is None
+    assert table_object_id_insert == table_object_id_delete
 
 
 def test_create_table_skip_1(azure_sql):
