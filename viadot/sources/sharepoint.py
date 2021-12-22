@@ -32,7 +32,7 @@ class Sharepoint(Source):
         credentials = credentials or DEFAULT_CREDENTIALS
         if credentials is None:
             raise CredentialError("Credentials not found.")
-        self.download_from_path = download_from_path
+        self.url = download_from_path
         self.required_credentials = ["site", "username", "password"]
         super().__init__(*args, credentials=credentials, **kwargs)
 
@@ -48,16 +48,16 @@ class Sharepoint(Source):
 
     def download_file(
         self,
-        download_from_path: str = None,
+        url: str = None,
         download_to_path: str = "Sharepoint_file.xlsm",
     ) -> None:
 
-        download_from_path = download_from_path or self.download_from_path
-        if not download_from_path:
-            raise CredentialError("Missing required parameter 'download_from_path'.")
+        url = url or self.url
+        if not url:
+            raise CredentialError("Missing required parameter 'url'.")
 
         conn = self.get_connection()
         conn.getfile(
-            url=download_from_path or self.download_from_path,
+            url=url,
             filename=download_to_path,
         )

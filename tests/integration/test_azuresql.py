@@ -50,13 +50,13 @@ def test_create_table_replace(azure_sql):
 
 
 def test_create_table_delete(azure_sql, TEST_CSV_FILE_BLOB_PATH):
-    executed = azure_sql.bulk_insert(
+    insert_executed = azure_sql.bulk_insert(
         schema=SCHEMA,
         table=TABLE,
         source_path=TEST_CSV_FILE_BLOB_PATH,
         if_exists="replace",
     )
-    assert executed is True
+    assert insert_executed is True
 
     result = azure_sql.run(f"SELECT SUM(sales) FROM {SCHEMA}.{TABLE} AS total")
     assert int(result[0][0]) == 230
@@ -65,10 +65,10 @@ def test_create_table_delete(azure_sql, TEST_CSV_FILE_BLOB_PATH):
         f"SELECT OBJECT_ID('{SCHEMA}.{TABLE}', 'U')"
     )[0][0]
 
-    result_delete = azure_sql.create_table(
+    delete_executed = azure_sql.create_table(
         schema=SCHEMA, table=TABLE, if_exists="delete"
     )
-    assert result_delete == True
+    assert delete_executed is True
 
     table_object_id_delete = azure_sql.run(
         f"SELECT OBJECT_ID('{SCHEMA}.{TABLE}', 'U')"
