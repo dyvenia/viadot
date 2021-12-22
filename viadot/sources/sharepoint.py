@@ -48,16 +48,16 @@ class Sharepoint(Source):
 
     def download_file(
         self,
-        url: str = None,
+        download_from_path: str = None,
         download_to_path: str = "Sharepoint_file.xlsm",
     ) -> None:
 
-        url = url or self.url
-        if not url:
-            raise CredentialError("Missing required parameter 'url'.")
+        download_from_path = download_from_path or self.url
+        if not download_from_path:
+            raise ValueError("Missing required parameter 'download_from_path'.")
 
         conn = self.get_connection()
         conn.getfile(
-            url=url,
+            url=download_from_path,
             filename=download_to_path,
         )
