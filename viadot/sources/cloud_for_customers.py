@@ -23,7 +23,6 @@ class CloudForCustomers(Source):
     ):
         """
         Fetches data from Cloud for Customer.
-
         Args:
             report_url (str, optional): The url to the API in case of prepared report. Defaults to None.
             url (str, optional): The url to the API. Defaults to None.
@@ -39,10 +38,9 @@ class CloudForCustomers(Source):
             DEFAULT_CREDENTIALS = local_config["CLOUD_FOR_CUSTOMERS"].get(env)
         except KeyError:
             DEFAULT_CREDENTIALS = None
-
         self.credentials = credentials or DEFAULT_CREDENTIALS or {}
 
-        self.url = url or self.credentials.get("server")
+        self.url = url or credentials.get("server")
         self.report_url = report_url
 
         if self.url is None and report_url is None:
@@ -80,18 +78,26 @@ class CloudForCustomers(Source):
 
     def _to_records_other(self, url: str) -> List[Dict[str, Any]]:
         records = []
+
         while url:
             response = self.get_response(self.full_url, params=self.params)
             response_json = response.json()
             if isinstance(response_json["d"], dict):
                 # ODATA v2+ API
                 new_records = response_json["d"].get("results")
+                url = None
+                self.params = None
+                self.endpoint = None
                 url = response_json["d"].get("__next")
+                self.full_url = url
             else:
                 # ODATA v1
                 new_records = response_json["d"]
+                url = None
+                self.params = None
+                self.endpoint = None
                 url = response_json.get("__next")
-
+                self.full_url = url
             records.extend(new_records)
 
         return records
