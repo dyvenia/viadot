@@ -40,7 +40,7 @@ class CloudForCustomers(Source):
             DEFAULT_CREDENTIALS = None
         self.credentials = credentials or DEFAULT_CREDENTIALS or {}
 
-        self.url = url or credentials.get("server")
+        self.url = url or self.credentials.get("server")
         self.report_url = report_url
 
         if self.url is None and report_url is None:
@@ -80,7 +80,7 @@ class CloudForCustomers(Source):
         records = []
 
         while url:
-            response = self.get_response(self.full_url, params=self.params)
+            response = self.get_response(self.full_url)
             response_json = response.json()
             if isinstance(response_json["d"], dict):
                 # ODATA v2+ API

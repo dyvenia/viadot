@@ -60,8 +60,7 @@ class C4CReportToDF(Task):
         next_batch = True
         while next_batch:
             new_url = f"{report_url}&$top={top}&$skip={skip}"
-            print(f"new_url: {new_url}")
-            chunk_from_url = CloudForCustomers(url=new_url, env=env)
+            chunk_from_url = CloudForCustomers(report_url=new_url, env=env)
             df = chunk_from_url.to_df()
             final_df = final_df.append(df)
             if not final_df.empty:
