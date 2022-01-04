@@ -11,12 +11,12 @@ class Pipeline(Flow):
         name: str,
         project_name: str,
         extract_flows_names: List[str],
-        transform_flow_names: List[str],
+        transform_flows_names: List[str],
         *args: List[any],
         **kwargs: Dict[str, Any]
     ):
         self.extract_flows_names = extract_flows_names
-        self.transform_flow_names = transform_flow_names
+        self.transform_flows_names = transform_flows_names
         self.project_name = project_name
         super().__init__(*args, name=name, **kwargs)
         self.gen_flow()
@@ -33,6 +33,6 @@ class Pipeline(Flow):
             self.gen_start_flow_run_task, self.extract_flows_names, flow=self
         )
         transform_flow_runs = apply_map(
-            self.gen_start_flow_run_task, self.transform_flow_names, flow=self
+            self.gen_start_flow_run_task, self.transform_flows_names, flow=self
         )
         transform_flow_runs.set_upstream(extract_flow_runs, flow=self)
