@@ -142,7 +142,8 @@ dmypy.json
 .config/credentials.json
 .local
 *.csv
-
+adam
+hubspot_at
 # Prefect
 config.toml
 

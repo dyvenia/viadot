@@ -103,10 +103,10 @@ class C4CToDF(Task):
     def run(
         self,
         url: str = None,
+        env: str = "QA",
         endpoint: str = None,
         fields: List[str] = None,
         params: List[str] = None,
-        env: str = "QA",
         if_empty: str = "warn",
     ):
         """
@@ -115,6 +115,10 @@ class C4CToDF(Task):
         Args:
             url (str, optional): The url to the API in case of prepared report. Defaults to None.
             env (str, optional): The development environments. Defaults to 'QA'.
+            endpoint (str, optional): The endpoint of the API. Defaults to None.
+            fields (List[str], optional): The C4C Table fields. Defaults to None.
+            params (Dict[str, Any]): The query parameters like filter by creation date time. Defaults to json format.
+            if_empty (str, optional): What to do if query returns no data. Defaults to "warn".
 
         Returns:
             pd.DataFrame: The query result as a pandas DataFrame.

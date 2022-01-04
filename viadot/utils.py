@@ -51,6 +51,7 @@ def handle_api_response(
             params=params,
             timeout=timeout,
         )
+
         response.raise_for_status()
 
     except ReadTimeout as e:

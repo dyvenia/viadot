@@ -16,6 +16,7 @@ from prefect import task
 from prefect.storage import Git
 from prefect.utilities import logging
 
+
 logger = logging.get_logger()
 METADATA_COLUMNS = {"_viadot_downloaded_at_utc": "DATETIME"}
 

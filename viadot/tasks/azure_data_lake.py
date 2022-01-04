@@ -151,6 +151,7 @@ class AzureDataLakeUpload(Task):
         self.overwrite = overwrite
         self.gen = gen
         self.vault_name = vault_name
+
         super().__init__(
             name="adls_upload",
             max_retries=max_retries,
