@@ -249,7 +249,7 @@ class AzureDataLakeToDF(Task):
         **kwargs,
     ):
         """Load file(s) from the Azure Data Lake to a pandas DataFrame.
-        Currently supports CSV and parquet files.
+         Currently supports CSV, parquet and JSON files.
 
         Args:
             path (str, optional): The path from which to load the DataFrame. Defaults to None.

@@ -6,6 +6,7 @@
 ::: viadot.tasks.azure_data_lake.AzureDataLakeDownload
 ::: viadot.tasks.azure_data_lake.AzureDataLakeUpload
 ::: viadot.tasks.azure_data_lake.AzureDataLakeToDF
+::: viadot.tasks.azure_data_lake.AzureDataLakeFlattenDF
 ::: viadot.tasks.azure_data_lake.AzureDataLakeCopy
 ::: viadot.tasks.azure_data_lake.AzureDataLakeList
 
