@@ -16,6 +16,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.2.13]
 ### Added
 - Added support for file path to `CloudForCustomersReportToADLS` flow
+- Added `flow_of_flows` list handling
+- Added support for JSON files in `AzureDataLakeToDF`
 
 ### Fixed
 - `Supermetrics` source: `to_df()` now correctly handles `if_empty` in case of empty results
@@ -36,6 +38,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added `df_to_csv` task to task_utils.py
 - Added `df_to_parquet` task to task_utils.py
 - Added `dtypes_to_json` task to task_utils.py
+
 ## [0.2.11]
 ### Fixed
 - `ADLSToAzureSQL` - fixed path to csv issue. 
