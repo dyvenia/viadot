@@ -6,6 +6,8 @@
 ::: viadot.tasks.azure_data_lake.AzureDataLakeDownload
 ::: viadot.tasks.azure_data_lake.AzureDataLakeUpload
 ::: viadot.tasks.azure_data_lake.AzureDataLakeToDF
+::: viadot.tasks.azure_data_lake.AzureDataLakeSplitDF
+::: viadot.tasks.azure_data_lake.AzureDataLakeDFToCSV
 ::: viadot.tasks.azure_data_lake.AzureDataLakeCopy
 ::: viadot.tasks.azure_data_lake.AzureDataLakeList
 
@@ -30,3 +32,5 @@
 
 :::viadot.task_utils.add_ingestion_metadata_task
 :::viadot.task_utils.get_latest_timestamp_file_path
+
+:::viadot.utils.FlattenDataFrame
