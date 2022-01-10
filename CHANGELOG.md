@@ -11,6 +11,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 - authorization issue within `CloudForCustomers` source
 
+### Added
+- `JSON` files are now supported in `azure_data_lake` tasks
+- DataFrames can now be separated into smaller ones by `machineIDx` and `processID` by `AzureDataLakeSplitDF` task
+
 ## [0.2.13]
 ### Added
 - Added support for file path to `CloudForCustomersReportToADLS` flow
