@@ -1,6 +1,6 @@
 import json
 import os
-from datetime import timedelta
+from datetime import datetime, timedelta
 from typing import List
 
 import pandas as pd
@@ -358,6 +358,82 @@ class AzureDataLakeToDF(Task):
         )
         self.logger.info(f"Successfully loaded data.")
         return df
+
+
+class AzureDataLakeFlattenDF(Task):
+    def __init__(self, dataframe: pd.DataFrame = None, *args, **kwargs):
+        self.dataframe = dataframe
+        super().__init__(name="flatten_df", *args, **kwargs)
+
+    def __call__(self, *args, **kwargs):
+        """Flatten columns in previously loaded pandas Data Frame"""
+        return super().__call__(*args, **kwargs)
+
+    def run(self, dataframe: pd.DataFrame = None):
+        s = (dataframe.applymap(type) == list).all()
+        list_columns = s[s].index.tolist()
+
+        # applymap for columns that contains dicts (eg totals)
+        s = (dataframe.applymap(type) == dict).all()
+        dict_columns = s[s].index.tolist()
+        print(dict_columns)
+
+        for col in dict_columns + list_columns:
+            columns_df = pd.json_normalize(dataframe[col]).add_prefix(f"{col}.")
+            dataframe = pd.concat([dataframe, columns_df]).drop(columns=[col])
+        return dataframe
+
+
+class AzureDataLakeSplitDF(Task):
+    def __init__(self, dataframe: pd.DataFrame = None, *args, **kwargs):
+        self.dataframe = dataframe
+        super().__init__(name="split_df", *args, **kwargs)
+
+    def __call__(self, *args, **kwargs):
+        """Split DataFrame into smaller ones by 'machineIDx' column"""
+        return super().__call__(*args, **kwargs)
+
+    def run(self, dataframe: pd.DataFrame = None):
+        df_merged = []
+        if "machineIDx" in dataframe.columns:
+            df_by_machineID = [
+                value for _, value in dataframe.groupby(["machineIDx"], as_index=False)
+            ]
+            if "dataContent.processID" in dataframe.columns:
+                for machine_df in df_by_machineID:
+                    df_by_processID = [
+                        value
+                        for _, value in machine_df.groupby(
+                            ["dataContent.processID"], as_index=False
+                        )
+                    ]
+                    df_merged.append(df_by_processID)
+                df_merged = [item for sublist in df_merged for item in sublist]
+            else:
+                df_merged = df_by_machineID
+        return df_merged
+
+
+class AzureDataLakeDFToCSV(Task):
+    def __init__(self, dataframes: List[pd.DataFrame] = None, *args, **kwargs):
+        self.dataframes = dataframes
+        super().__init__(name="save_df", *args, **kwargs)
+
+    def __call__(self, *args, **kwargs):
+        """Save DataFrames into csv files by 'machineIDx' column"""
+        return super().__call__(*args, **kwargs)
+
+    def run(self, dataframes: List[pd.DataFrame] = None):
+        for dataframe in dataframes:
+            telegram_type = dataframe["telegramTypeFriendly"].unique()[0]
+            if not any(
+                file.startswith(f"azure-{telegram_type}") for file in os.listdir(".")
+            ):
+                dataframe.to_csv(f"azure-{telegram_type}.csv")
+            else:
+                dataframe.to_csv(
+                    f"azure-{telegram_type}.csv", mode="a", index=False, header=False
+                )
 
 
 class AzureDataLakeCopy(Task):

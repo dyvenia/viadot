@@ -15,6 +15,11 @@ def TEST_CSV_FILE_PATH():
 
 
 @pytest.fixture(scope="session")
+def TEST_JSON_MACHINE_FILE_PATH():
+    return "../../test_file_json.json"
+
+
+@pytest.fixture(scope="session")
 def TEST_PARQUET_FILE_PATH():
     return "test_data_countries.parquet"
 
