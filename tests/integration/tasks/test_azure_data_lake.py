@@ -5,11 +5,11 @@ from viadot.sources import AzureDataLake
 from viadot.tasks import (
     AzureDataLakeDownload,
     AzureDataLakeToDF,
-    AzureDataLakeFlattenDF,
     AzureDataLakeUpload,
     AzureDataLakeCopy,
     AzureDataLakeList,
 )
+from viadot.utils import FlattenDataFrame
 
 uuid_4 = uuid.uuid4()
 uuid_4_2 = uuid.uuid4()
@@ -56,7 +56,7 @@ def test_azure_data_lake_to_df_json(TEST_JSON_FILE_PATH):
     to_df_task = AzureDataLakeToDF()
     df = to_df_task.run(path=adls_path_json)
 
-    flatten_task = AzureDataLakeFlattenDF()
+    flatten_task = FlattenDataFrame()
     flattened_df = flatten_task.run(df)
 
     has_flattened = True

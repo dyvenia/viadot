@@ -4,7 +4,6 @@ from .azure_data_lake import (
     AzureDataLakeDownload,
     AzureDataLakeList,
     AzureDataLakeToDF,
-    AzureDataLakeFlattenDF,
     AzureDataLakeUpload,
 )
 from .azure_key_vault import (
@@ -25,3 +24,5 @@ from .sqlite import SQLiteInsert, SQLiteSQLtoDF, SQLiteQuery
 from .supermetrics import SupermetricsToCSV, SupermetricsToDF
 from .sharepoint import SharepointToDF
 from .cloud_for_customers import c4c_report_to_df, c4c_to_df
+
+from ..utils import FlattenDataFrame

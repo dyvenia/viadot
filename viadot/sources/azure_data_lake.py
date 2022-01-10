@@ -175,12 +175,28 @@ class AzureDataLake(Source):
                 raise ValueError("Only CSV, parquet and JSON formats are supported.")
         else:
             files = self.ls(path)
+            file_extention = os.path.splitext(files[0])[1]
             dfs = []
             for file in files:
-                print(file)
-                df = pd.read_json(
-                    f"az://{file}", storage_options=self.storage_options, lines=True
-                )
+                if file_extention == "json":
+                    df = pd.read_json(
+                        f"az://{file}", storage_options=self.storage_options, lines=True
+                    )
+                elif file_extention == "csv":
+                    df = pd.read_csv(
+                        url,
+                        storage_options=self.storage_options,
+                        sep=sep,
+                        quoting=quoting,
+                        lineterminator=lineterminator,
+                        error_bad_lines=error_bad_lines,
+                    )
+                elif file_extention == "parquet":
+                    df = pd.read_parquet(url, storage_options=self.storage_options)
+                else:
+                    raise ValueError(
+                        "Only CSV, parquet and JSON formats are supported."
+                    )
                 dfs.append(df)
             df = pd.concat(dfs)
 
