@@ -29,8 +29,8 @@ class CloudForCustomers(Source):
             endpoint (str, optional): The endpoint of the API. Defaults to None.
             params (Dict[str, Any]): The query parameters like filter by creation date time. Defaults to json format.
             env (str, optional): The development environments. Defaults to 'QA'.
-            credentials (Dict[str, Any], optional): The credentials are provided from environmental variable
-            in local_config or with this parameter. Defaults to None than use credentials from local_config.
+            credentials (Dict[str, Any], optional): The credentials are populated with values from config file or this
+            parameter. Defaults to None than use credentials from local_config.
         """
         super().__init__(*args, **kwargs)
 
