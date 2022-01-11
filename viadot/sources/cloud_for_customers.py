@@ -78,9 +78,10 @@ class CloudForCustomers(Source):
 
     def _to_records_other(self, url: str) -> List[Dict[str, Any]]:
         records = []
-
+        tmp_full_url = self.full_url
+        tmp_params = self.params
         while url:
-            response = self.get_response(self.full_url)
+            response = self.get_response(tmp_full_url)
             response_json = response.json()
             if isinstance(response_json["d"], dict):
                 # ODATA v2+ API
@@ -89,7 +90,8 @@ class CloudForCustomers(Source):
                 self.params = None
                 self.endpoint = None
                 url = response_json["d"].get("__next")
-                self.full_url = url
+                tmp_full_url = url
+
             else:
                 # ODATA v1
                 new_records = response_json["d"]
@@ -97,8 +99,10 @@ class CloudForCustomers(Source):
                 self.params = None
                 self.endpoint = None
                 url = response_json.get("__next")
-                self.full_url = url
+                tmp_full_url = url
+
             records.extend(new_records)
+        self.params = tmp_params
 
         return records
 
