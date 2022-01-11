@@ -34,7 +34,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added `df_to_csv` task to task_utils.py
 - Added `df_to_parquet` task to task_utils.py
 - Added `dtypes_to_json` task to task_utils.py
-- Added `flow_of_flows` list handling
+
 ## [0.2.11]
 ### Fixed
 - `ADLSToAzureSQL` - fixed path to csv issue. 
