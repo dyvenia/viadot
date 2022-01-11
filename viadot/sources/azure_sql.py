@@ -37,6 +37,7 @@ class AzureSQL(SQL):
         if schema is None:
             schema = self.DEFAULT_SCHEMA
         fqn = f"{schema}.{table}"
+        print(f"fqn: {fqn}")
         insert_sql = f"""
             BULK INSERT {fqn} FROM '{source_path}'
             WITH (
@@ -53,6 +54,7 @@ class AzureSQL(SQL):
         """
         if if_exists == "replace":
             self.run(f"DELETE FROM {schema}.{table}")
+        print(f"insert_sql: {insert_sql}")
         self.run(insert_sql)
         return True
 

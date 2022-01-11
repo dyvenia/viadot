@@ -99,6 +99,7 @@ class AzureSQLBulkInsert(Task):
         self.if_exists = if_exists
         self.credentials_secret = credentials_secret
         super().__init__(name="azure_sql_bulk_insert", *args, **kwargs)
+        print(f"credentials: {self.credentials_secret}")
 
     @defaults_from_attrs("sep", "if_exists", "credentials_secret")
     def run(

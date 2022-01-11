@@ -28,7 +28,7 @@ download_github_file_task = DownloadGitHubFile()
 promote_to_conformed_task = AzureDataLakeUpload()
 promote_to_operations_task = AzureDataLakeCopy()
 create_table_task = AzureSQLCreateTable()
-bulk_insert_task = AzureSQLBulkInsert()  # BCPTask() #
+bulk_insert_task = BCPTask()  # AzureSQLBulkInsert()  #
 
 
 @task
@@ -246,6 +246,7 @@ class ADLSToAzureSQL(Flow):
         )
         bulk_insert_task.bind(
             path=self.local_file_path,
+            # from_path=self.local_file_path,
             schema=self.schema,
             table=self.table,
             credentials_secret=self.sqldb_credentials_secret,

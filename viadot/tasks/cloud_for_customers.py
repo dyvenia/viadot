@@ -45,7 +45,8 @@ class C4CReportToDF(Task):
         top: int = 1000,
     ):
         """
-        Task run method.
+        Task for downloading data from the Cloud for Customers to a pandas DataFrame using report URL
+        (generated in Azure Data Factory).
 
         Args:
             report_url (str, optional): The url to the API in case of prepared report. Defaults to None.
@@ -110,7 +111,7 @@ class C4CToDF(Task):
         if_empty: str = "warn",
     ):
         """
-        Task run method.
+        Task for downloading data from the Cloud for Customers to a pandas DataFrame using normal URL (with query parameters).
 
         Args:
             url (str, optional): The url to the API in case of prepared report. Defaults to None.
