@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 =======
 ### Added
 - Added support for file path to `CloudForCustomersReportToADLS` flow
+- Added flow_of_flows list handling
 
 ### Fixed
 - `Supermetrics` source: `to_df()` now correctly handles `if_empty` in case of empty results
