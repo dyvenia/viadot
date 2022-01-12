@@ -245,7 +245,6 @@ class ADLSToAzureSQL(Flow):
         )
         bulk_insert_task.bind(
             path=self.local_file_path,
-            # from_path=self.local_file_path,
             schema=self.schema,
             table=self.table,
             credentials_secret=self.sqldb_credentials_secret,

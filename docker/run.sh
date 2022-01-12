@@ -1,5 +1,5 @@
 IMAGE_TAG=latest
-PROFILE="dev"
+PROFILE="user"
 
 while getopts t: flag
 do
