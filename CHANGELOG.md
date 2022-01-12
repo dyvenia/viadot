@@ -45,6 +45,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added `dtypes_to_json` task to task_utils.py
 
 ## [0.2.11] - 2021-10-30
+
 ### Fixed
 - `ADLSToAzureSQL` - fixed path to csv issue. 
 - `SupermetricsToADLS` - fixed local json path issue. 

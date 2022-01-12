@@ -16,6 +16,7 @@ from prefect import task
 from prefect.storage import Git
 from prefect.utilities import logging
 
+
 logger = logging.get_logger()
 METADATA_COLUMNS = {"_viadot_downloaded_at_utc": "DATETIME"}
 
@@ -127,7 +128,7 @@ def df_to_csv(
     **kwargs,
 ) -> None:
     if if_exists == "append" and os.path.isfile(path):
-        csv_df = pd.read_csv(path)
+        csv_df = pd.read_csv(path, sep=sep)
         out_df = pd.concat([csv_df, df])
     elif if_exists == "replace":
         out_df = df
