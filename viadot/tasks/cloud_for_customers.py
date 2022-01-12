@@ -47,6 +47,7 @@ class C4CReportToDF(Task):
         """
         Task for downloading data from the Cloud for Customers to a pandas DataFrame using report URL
         (generated in Azure Data Factory).
+        C4CReportToDF task can not contain endpoint and params, this parameters are stored in generated report_url.
 
         Args:
             report_url (str, optional): The url to the API in case of prepared report. Defaults to None.
@@ -112,6 +113,13 @@ class C4CToDF(Task):
     ):
         """
         Task for downloading data from the Cloud for Customers to a pandas DataFrame using normal URL (with query parameters).
+        This task grab data from table from 'scratch' with passing table name in url or endpoint. It is rocommended to add
+        some filters parameters in this case.
+
+        Example:
+            url = "https://mysource.com/sap/c4c/odata/v1/c4codataapi"
+            endpoint = "ServiceRequestCollection"
+            params = {"filter": "CreationDateTime > 2021-12-21T00:00:00Z"}
 
         Args:
             url (str, optional): The url to the API in case of prepared report. Defaults to None.
