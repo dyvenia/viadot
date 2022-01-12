@@ -88,7 +88,7 @@ class ADLSToAzureSQL(Flow):
         dtypes: Dict[str, Any] = None,
         table: str = None,
         schema: str = None,
-        if_exists: Literal["fail", "replace", "append"] = "replace",
+        if_exists: Literal["fail", "replace", "append", "delete"] = "replace",
         sqldb_credentials_secret: str = None,
         max_download_retries: int = 5,
         tags: List[str] = ["promotion"],

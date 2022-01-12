@@ -1,19 +1,25 @@
 import os
-from typing import Any, Dict, List, Union
+from typing import Any, Dict, List, Union, Optional
 
 import pendulum
 from prefect import Flow, Task, apply_map
 from prefect.backend import set_key_value
-
+from ..utils import slugify
 from ..task_utils import (
     add_ingestion_metadata_task,
     df_to_csv,
     df_to_parquet,
     union_dfs_task,
 )
-from ..tasks import AzureDataLakeUpload, c4c_report_to_df, c4c_to_df
+from ..tasks import (
+    AzureDataLakeUpload,
+    C4CToDF,
+    C4CReportToDF,
+)
 
 file_to_adls_task = AzureDataLakeUpload()
+c4c_report_to_df = C4CReportToDF()
+c4c_to_df = C4CToDF()
 
 
 class CloudForCustomersReportToADLS(Flow):
@@ -55,16 +61,16 @@ class CloudForCustomersReportToADLS(Flow):
             local_file_path (str, optional): Local destination path. Defaults to None.
             output_file_extension (str, optional): Output file extension - to allow selection of .csv for data which is not easy
             to handle with parquet. Defaults to ".csv".
-            overwrite_adls (bool, optional): Whether to overwrite the file in ADLS. Defaults to True.
+            overwrite_adls (bool, optional): Whether to overwrite the file in ADLS. Defaults to False.
             adls_dir_path (str, optional): Azure Data Lake destination folder/catalog path. Defaults to None.
             adls_file_path (str, optional): Azure Data Lake destination file path. Defaults to None.
             if_empty (str, optional): What to do if the Supermetrics query returns no data. Defaults to "warn".
             if_exists (str, optional): What to do if the local file already exists. Defaults to "replace".
-            skip (int, optional): Initial index value of reading row.
-            top (int, optional): The value of top reading row.
-            channels (List[str], optional): Filtering parameters passed to the url.
-            months (List[str], optional): Filtering parameters passed to the url.
-            years (List[str], optional): Filtering parameters passed to the url.
+            skip (int, optional): Initial index value of reading row. Defaults to 0.
+            top (int, optional): The value of top reading row. Defaults to 1000.
+            channels (List[str], optional): Filtering parameters passed to the url. Defaults to None.
+            months (List[str], optional): Filtering parameters passed to the url. Defaults to None.
+            years (List[str], optional): Filtering parameters passed to the url. Defaults to None.
         """
 
         self.if_empty = if_empty
@@ -78,7 +84,7 @@ class CloudForCustomersReportToADLS(Flow):
         self.overwrite_adls = overwrite_adls
         self.output_file_extension = output_file_extension
         self.local_file_path = (
-            local_file_path or self.slugify(name) + self.output_file_extension
+            local_file_path or slugify(name) + self.output_file_extension
         )
         self.now = str(pendulum.now("utc"))
         self.adls_dir_path = adls_dir_path
@@ -132,14 +138,9 @@ class CloudForCustomersReportToADLS(Flow):
         else:
             return self.report_urls_with_filters
 
-    @staticmethod
-    def slugify(name):
-        return name.replace(" ", "_").lower()
-
     def gen_c4c(
         self,
         url: str,
-        report_url: str,
         endpoint: str,
         params: str,
         env: str,
@@ -151,7 +152,6 @@ class CloudForCustomersReportToADLS(Flow):
             env=env,
             endpoint=endpoint,
             params=params,
-            report_url=report_url,
             flow=flow,
         )
 
@@ -180,7 +180,6 @@ class CloudForCustomersReportToADLS(Flow):
         elif self.url:
             df = self.gen_c4c(
                 url=self.url,
-                report_url=self.report_url,
                 env=self.env,
                 endpoint=self.endpoint,
                 params=self.params,
