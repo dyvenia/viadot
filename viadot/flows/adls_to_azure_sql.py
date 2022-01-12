@@ -17,7 +17,6 @@ from ..tasks import (
     AzureSQLCreateTable,
     BCPTask,
     DownloadGitHubFile,
-    AzureSQLBulkInsert,
 )
 
 logger = logging.get_logger(__name__)
@@ -28,7 +27,7 @@ download_github_file_task = DownloadGitHubFile()
 promote_to_conformed_task = AzureDataLakeUpload()
 promote_to_operations_task = AzureDataLakeCopy()
 create_table_task = AzureSQLCreateTable()
-bulk_insert_task = BCPTask()  # AzureSQLBulkInsert()  #
+bulk_insert_task = BCPTask()
 
 
 @task
