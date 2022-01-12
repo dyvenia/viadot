@@ -15,6 +15,7 @@ def handle_api_response(
     url: str,
     auth: tuple = None,
     params: Dict[str, Any] = None,
+    headers: Dict[str, Any] = None,
     timeout: tuple = (3.05, 60 * 30),
 ) -> requests.models.Response:
     """Handle and raise Python exceptions during request with retry strategy for specyfic status.
@@ -23,6 +24,7 @@ def handle_api_response(
         url (str): the URL which trying to connect.
         auth (tuple, optional): authorization information. Defaults to None.
         params (Dict[str, Any], optional): the request params also includes parameters such as the content type. Defaults to None.
+        headers: Dict[str, Any], optional): the request headers required by Supermetrics API.
         timeout (tuple, optional): the request times out. Defaults to (3.05, 60 * 30).
 
     Raises:
@@ -49,6 +51,7 @@ def handle_api_response(
             url,
             auth=auth,
             params=params,
+            headers=headers,
             timeout=timeout,
         )
 
