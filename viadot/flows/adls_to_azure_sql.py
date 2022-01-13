@@ -3,6 +3,7 @@ import os
 from typing import Any, Dict, List, Literal
 
 import pandas as pd
+from pandas.core.frame import DataFrame
 from prefect import Flow, Parameter, task
 from prefect.backend import get_key_value
 from prefect.storage import Local
@@ -10,6 +11,7 @@ from prefect.utilities import logging
 
 from viadot.tasks.azure_data_lake import AzureDataLakeDownload
 
+from ..exceptions import ValidationError
 from ..tasks import (
     AzureDataLakeCopy,
     AzureDataLakeToDF,
@@ -17,6 +19,7 @@ from ..tasks import (
     AzureSQLCreateTable,
     BCPTask,
     DownloadGitHubFile,
+    AzureSQLDBQuery,
 )
 
 logger = logging.get_logger(__name__)
@@ -28,6 +31,7 @@ promote_to_conformed_task = AzureDataLakeUpload()
 promote_to_operations_task = AzureDataLakeCopy()
 create_table_task = AzureSQLCreateTable()
 bulk_insert_task = BCPTask()
+azure_query_task = AzureSQLDBQuery()
 
 
 @task
@@ -72,6 +76,22 @@ def map_data_types_task(json_shema_path: str):
 @task
 def df_to_csv_task(df, path: str, sep: str = "\t"):
     df.to_csv(path, sep=sep, index=False)
+
+
+@task
+def check_column_order_task(
+    table: str = None, df: DataFrame = None, sqldb_credentials_secret: str = None
+):
+    query = f"SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = '{table}'"
+    result = azure_query_task.run(
+        query=query, credentials_secret=sqldb_credentials_secret
+    )
+    sql_columns = [table for row in result for table in row]
+    file_columns = list(df.columns)
+    if sql_columns != file_columns:
+        raise ValidationError(
+            "The columns differ in the SQL table and the file being loaded."
+        )
 
 
 class ADLSToAzureSQL(Flow):
@@ -215,6 +235,13 @@ class ADLSToAzureSQL(Flow):
         else:
             dtypes = self.dtypes
 
+        check_column_order = check_column_order_task.bind(
+            table=self.table,
+            df=df,
+            sqldb_credentials_secret=self.sqldb_credentials_secret,
+            flow=self,
+        )
+
         df_to_csv = df_to_csv_task.bind(
             df=df, path=self.local_file_path, sep=self.write_sep, flow=self
         )
@@ -252,6 +279,8 @@ class ADLSToAzureSQL(Flow):
             flow=self,
         )
 
+        check_column_order.set_upstream(lake_to_df_task, flow=self)
+        df_to_csv.set_upstream(check_column_order, flow=self)
         # dtypes.set_upstream(download_json_file_task, flow=self)
         promote_to_conformed_task.set_upstream(df_to_csv, flow=self)
         promote_to_conformed_task.set_upstream(df_to_csv, flow=self)
