@@ -1,6 +1,7 @@
 import json
 from datetime import timedelta
 from typing import Any, Dict, Literal
+import pandas as pd
 
 from prefect import Task
 from prefect.tasks.secrets import PrefectSecret
@@ -8,6 +9,8 @@ from prefect.utilities.tasks import defaults_from_attrs
 
 from ..sources import AzureSQL
 from .azure_key_vault import AzureKeyVaultSecret
+
+from ..exceptions import ValidationError
 
 
 def get_credentials(credentials_secret: str, vault_name: str = None):
@@ -264,3 +267,62 @@ class AzureSQLDBQuery(Task):
 
         self.logger.info(f"Successfully ran the query.")
         return result
+
+
+class ChangeColumnOrder(Task):
+    """
+    Task for checking the order of columns in the loaded DF and in the SQL table into which the DF is loaded.
+    """
+
+    def __init__(
+        self,
+        table: str = None,
+        if_exists: Literal["fail", "replace", "append", "delete"] = "replace",
+        df: pd.DataFrame = None,
+        credentials_secret: str = None,
+        vault_name: str = None,
+        *args,
+        **kwargs,
+    ):
+        self.credentials_secret = credentials_secret
+        self.vault_name = vault_name
+
+        super().__init__(name="run_check_column_order", *args, **kwargs)
+
+    def run(
+        self,
+        table: str = None,
+        if_exists: Literal["fail", "replace", "append", "delete"] = "replace",
+        df: pd.DataFrame = None,
+        credentials_secret: str = None,
+        vault_name: str = None,
+    ):
+        """
+        Run a checking column order
+
+        Args:
+            table (str, optional): SQL table name without schema. Defaults to None.
+            if_exists (Literal, optional): What to do if the table exists. Defaults to "replace".
+            df (pd.DataFrame, optional): Data Frame. Defaults to None.
+            credentials_secret (str, optional): The name of the Azure Key Vault secret containing a dictionary
+            with SQL db credentials (server, db_name, user, and password). Defaults to None.
+            vault_name (str, optional): The name of the vault from which to obtain the secret. Defaults to None.
+
+        Raises:
+            ValidationError: If column order in SQL table is different from Data Frame
+        """
+        credentials = get_credentials(credentials_secret, vault_name=vault_name)
+        azure_sql = AzureSQL(credentials=credentials)
+
+        if if_exists not in ["replace", "fail"]:
+            query = f"SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = '{table}'"
+            result = azure_sql.run(query=query)
+            sql_columns = [table for row in result for table in row]
+
+            file_columns = list(df.columns)
+            if sql_columns != file_columns:
+                raise ValidationError(
+                    "The columns differ in the SQL table and the file being loaded."
+                )
+        else:
+            self.logger.info("The table will be replaced.")
