@@ -81,6 +81,17 @@ class SharepointToDF(Task):
     def df_replace_special_chars(self, df: pd.DataFrame):
         return df.replace(r"\n|\t", "", regex=True)
 
+        """
+        Replace "\n" and "\t" with "".
+
+        Args:
+            df (pd.DataFrame): Pandas data frame to replace characters.
+
+        Returns:
+            df (pd.DataFrame): Pandas data frame 
+
+        """
+
     def split_sheet(
         self,
         sheetname: str = None,

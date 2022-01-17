@@ -11,6 +11,17 @@ from .azure_key_vault import AzureKeyVaultSecret
 
 
 def get_credentials(credentials_secret: str, vault_name: str = None):
+    """
+    Get Azure credentials.
+
+    Args:
+        credentials_secret (str): The name of the Azure Key Vault secret containing a dictionary
+        with SQL db credentials (server, db_name, user, and password).
+        vault_name (str, optional): The name of the vault from which to obtain the secret. Defaults to None.
+
+    Returns: Credentials
+
+    """
     if not credentials_secret:
         # attempt to read a default for the service principal secret name
         try:
