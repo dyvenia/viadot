@@ -83,9 +83,9 @@ def check_column_order_task(
     table: str = None,
     df: DataFrame = None,
     sqldb_credentials_secret: str = None,
-    if_exists: str = None,
+    if_exists: Literal["fail", "replace", "append", "delete"] = "replace",
 ):
-    if if_exists != "replace":
+    if if_exists not in ["replace", "fail"]:
         query = f"SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = '{table}'"
         result = azure_query_task.run(
             query=query, credentials_secret=sqldb_credentials_secret
@@ -288,10 +288,8 @@ class ADLSToAzureSQL(Flow):
 
         check_column_order.set_upstream(lake_to_df_task, flow=self)
         df_to_csv.set_upstream(check_column_order, flow=self)
-        # dtypes.set_upstream(download_json_file_task, flow=self)
         promote_to_conformed_task.set_upstream(df_to_csv, flow=self)
         promote_to_conformed_task.set_upstream(df_to_csv, flow=self)
-        # map_data_types_task.set_upstream(download_json_file_task, flow=self)
         create_table_task.set_upstream(df_to_csv, flow=self)
         promote_to_operations_task.set_upstream(promote_to_conformed_task, flow=self)
         bulk_insert_task.set_upstream(create_table_task, flow=self)
