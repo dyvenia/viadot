@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 ## Added
-- Added `check_column_order_task` task to `ADLSToAzureSQL` Flow
+- Added `ChangeColumnOrder` task
 
 ## [0.2.15] - 2022-01-12
 ### Added
