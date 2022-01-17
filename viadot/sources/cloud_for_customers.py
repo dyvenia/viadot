@@ -7,6 +7,7 @@ from ..config import local_config
 from ..utils import handle_api_response
 from ..exceptions import CredentialError
 import re
+from copy import deepcopy
 
 
 class CloudForCustomers(Source):
@@ -65,6 +66,9 @@ class CloudForCustomers(Source):
         return meta_url
 
     def _to_records_report(self, url: str) -> List[Dict[str, Any]]:
+        """Fetches the data from source with report_url.
+        At first enter url is from function parameter. At next is generated automaticaly.
+        """
         records = []
         while url:
             response = self.get_response(url)
@@ -77,33 +81,28 @@ class CloudForCustomers(Source):
         return records
 
     def _to_records_other(self, url: str) -> List[Dict[str, Any]]:
+        """Fetches the data from source with url.
+        At first enter url is a join of url and endpoint passed into this function.
+        At any other entering it bring `__next_url` adress, generated automatically, but without params.
+        """
         records = []
-        tmp_full_url = self.full_url
-        tmp_params = self.params
+        tmp_full_url = deepcopy(url)
+        tmp_params = deepcopy(self.params)
         while url:
-            response = self.get_response(tmp_full_url)
+            response = self.get_response(tmp_full_url, params=tmp_params)
             response_json = response.json()
             if isinstance(response_json["d"], dict):
                 # ODATA v2+ API
                 new_records = response_json["d"].get("results")
-                url = None
-                self.params = None
-                self.endpoint = None
-                url = response_json["d"].get("__next")
-                tmp_full_url = url
-
+                url = response_json["d"].get("__next", None)
             else:
                 # ODATA v1
                 new_records = response_json["d"]
-                url = None
-                self.params = None
-                self.endpoint = None
-                url = response_json.get("__next")
-                tmp_full_url = url
-
+                url = response_json.get("__next", None)
+            # prevents concatenation of previous url's with params with the same params
+            tmp_params = None
+            tmp_full_url = url
             records.extend(new_records)
-        self.params = tmp_params
-
         return records
 
     def to_records(self) -> List[Dict[str, Any]]:
@@ -148,11 +147,16 @@ class CloudForCustomers(Source):
                     column_mapping[key] = val
         return column_mapping
 
-    def get_response(self, url: str, timeout: tuple = (3.05, 60 * 30)) -> pd.DataFrame:
+    def get_response(
+        self, url: str, params: Dict[str, Any] = None, timeout: tuple = (3.05, 60 * 30)
+    ) -> pd.DataFrame:
         username = self.credentials.get("username")
         pw = self.credentials.get("password")
         response = handle_api_response(
-            url=url, params=self.params, auth=(username, pw), timeout=timeout
+            url=url,
+            params=params,
+            auth=(username, pw),
+            timeout=timeout,
         )
         return response
 
