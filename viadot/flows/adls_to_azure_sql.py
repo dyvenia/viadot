@@ -80,18 +80,24 @@ def df_to_csv_task(df, path: str, sep: str = "\t"):
 
 @task
 def check_column_order_task(
-    table: str = None, df: DataFrame = None, sqldb_credentials_secret: str = None
+    table: str = None,
+    df: DataFrame = None,
+    sqldb_credentials_secret: str = None,
+    if_exists: str = None,
 ):
-    query = f"SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = '{table}'"
-    result = azure_query_task.run(
-        query=query, credentials_secret=sqldb_credentials_secret
-    )
-    sql_columns = [table for row in result for table in row]
-    file_columns = list(df.columns)
-    if sql_columns != file_columns:
-        raise ValidationError(
-            "The columns differ in the SQL table and the file being loaded."
+    if if_exists != "replace":
+        query = f"SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = '{table}'"
+        result = azure_query_task.run(
+            query=query, credentials_secret=sqldb_credentials_secret
         )
+        sql_columns = [table for row in result for table in row]
+        file_columns = list(df.columns)
+        if sql_columns != file_columns:
+            raise ValidationError(
+                "The columns differ in the SQL table and the file being loaded."
+            )
+    else:
+        logger.info("The table will be replaced.")
 
 
 class ADLSToAzureSQL(Flow):
@@ -239,6 +245,7 @@ class ADLSToAzureSQL(Flow):
             table=self.table,
             df=df,
             sqldb_credentials_secret=self.sqldb_credentials_secret,
+            if_exists=self.if_exists,
             flow=self,
         )
 
