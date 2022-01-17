@@ -8,14 +8,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 ## Added
 - Added `check_column_order_task` task to `ADLSToAzureSQL` Flow
+
 ## [0.2.15] - 2022-01-12
 ### Added
 - new option to `ADLSToAzureSQL` Flow - `if_exists="delete"`
 - `SQL` source: `create_table()` already handles `if_exists`; now it handles a new option for `if_exists()`
-- `C4CToDF` and `C4CReportToDF` tasks are provided as a class instead of function
-
-### Fixed 
-- Appending issue within CloudForCustomers source
 
 ## [0.2.14]
 ### Fixed
