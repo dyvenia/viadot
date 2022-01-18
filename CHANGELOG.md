@@ -14,6 +14,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed 
 - Appending issue within CloudForCustomers source
+- An early return bug in `UKCarbonIntensity` in `to_df` method
+
 ## [0.2.14] - 2021-12-01
 ### Fixed
 - authorization issue within `CloudForCustomers` source
