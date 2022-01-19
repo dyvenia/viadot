@@ -1,4 +1,4 @@
-FROM prefecthq/prefect:latest-python3.8
+FROM prefecthq/prefect:0.15.11-python3.8
 
 
 # Add user
