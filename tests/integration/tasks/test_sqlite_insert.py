@@ -3,7 +3,7 @@ import os
 import pytest
 import pandas as pd
 
-from viadot.tasks.sqlite import SQLiteInsert
+from viadot.tasks.sqlite import SQLiteInsert, SQLiteSQLtoDF, SQLiteQuery
 
 TABLE = "test"
 
@@ -12,9 +12,6 @@ TABLE = "test"
 def sqlite_insert():
     task = SQLiteInsert()
     yield task
-    os.remove("testdb.sqlite")
-    os.remove("testdb1.sqlite")
-    os.remove("testdb2.sqlite")
 
 
 def test_sqlite_insert_proper(sqlite_insert):
@@ -33,6 +30,7 @@ def test_sqlite_insert_proper(sqlite_insert):
         cursor.execute("""SELECT COUNT(*) from test """)
         result = cursor.fetchall()
         assert result[0][0] != 0
+    os.remove("testdb.sqlite")
 
 
 def test_sqlite_insert_empty(caplog, sqlite_insert):
@@ -53,6 +51,7 @@ def test_sqlite_insert_empty(caplog, sqlite_insert):
         assert result2[0][0] == 0
 
     assert "DataFrame is empty" in caplog.text
+    os.remove("testdb1.sqlite")
 
 
 def test_sqlite_insert_not(caplog, sqlite_insert):
@@ -72,3 +71,35 @@ def test_sqlite_insert_not(caplog, sqlite_insert):
         assert result3[0][0] == 0
 
     assert "Object is not a pandas DataFrame" in caplog.text
+    os.remove("testdb2.sqlite")
+
+
+def test_sqlite_sql_to_df(sqlite_insert):
+    task = SQLiteSQLtoDF()
+    with sqlite3.connect("testdb3.sqlite") as db:
+        cursor = db.cursor()
+        cursor.execute("""CREATE TABLE IF NOT EXISTS test ([AA] INT, [BB] INT) """)
+        cursor.execute("""INSERT INTO test VALUES (11,22), (11,33)""")
+
+    script = "SELECT * FROM test"
+    with open("testscript.sql", "w") as file:
+        file.write(script)
+    df = task.run(db_path="testdb3.sqlite", sql_path="testscript.sql")
+    assert isinstance(df, pd.DataFrame) == True
+    expected = pd.DataFrame({"AA": [11, 11], "BB": [22, 33]})
+    assert df.equals(expected) == True
+    os.remove("testdb3.sqlite")
+    os.remove("testscript.sql")
+
+
+def test_sqlite_to_query(sqlite_insert):
+    with sqlite3.connect("testdb4.sqlite") as db:
+        cursor = db.cursor()
+        cursor.execute("""CREATE TABLE IF NOT EXISTS test ([AA] INT, [BB] INT) """)
+        query = "INSERT INTO test VALUES (11,22), (11,33)"
+        task = SQLiteQuery()
+        task.run(query=query, db_path="testdb4.sqlite")
+        cursor.execute("""SELECT COUNT(*) from test """)
+        result = cursor.fetchall()
+        assert result[0][0] != 0
+    os.remove("testdb4.sqlite")
