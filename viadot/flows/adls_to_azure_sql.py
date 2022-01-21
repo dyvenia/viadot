@@ -219,7 +219,7 @@ class ADLSToAzureSQL(Flow):
         else:
             dtypes = self.dtypes
 
-        check_column_order = check_column_order_task.bind(
+        df_reorder = check_column_order_task.bind(
             table=self.table,
             df=df,
             if_exists=self.if_exists,
@@ -228,7 +228,10 @@ class ADLSToAzureSQL(Flow):
         )
 
         df_to_csv = df_to_csv_task.bind(
-            df=df, path=self.local_file_path, sep=self.write_sep, flow=self
+            df=df_reorder,
+            path=self.local_file_path,
+            sep=self.write_sep,
+            flow=self,
         )
 
         promote_to_conformed_task.bind(
@@ -264,8 +267,8 @@ class ADLSToAzureSQL(Flow):
             flow=self,
         )
 
-        check_column_order.set_upstream(lake_to_df_task, flow=self)
-        df_to_csv.set_upstream(check_column_order, flow=self)
+        df_reorder.set_upstream(lake_to_df_task, flow=self)
+        df_to_csv.set_upstream(df_reorder, flow=self)
         promote_to_conformed_task.set_upstream(df_to_csv, flow=self)
         promote_to_conformed_task.set_upstream(df_to_csv, flow=self)
         create_table_task.set_upstream(df_to_csv, flow=self)

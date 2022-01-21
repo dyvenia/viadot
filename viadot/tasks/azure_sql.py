@@ -1,6 +1,6 @@
 import json
 from datetime import timedelta
-from typing import Any, Dict, Literal
+from typing import Any, Dict, List, Literal
 import pandas as pd
 
 from prefect import Task
@@ -269,9 +269,10 @@ class AzureSQLDBQuery(Task):
         return result
 
 
-class ChangeColumnOrder(Task):
+class CheckColumnOrder(Task):
     """
-    Task for checking the order of columns in the loaded DF and in the SQL table into which the DF is loaded.
+    Task for checking the order of columns in the loaded DF and in the SQL table into which the data from DF will be loaded.
+    If order is different then DF columns are reordered according to the columns of the SQL table.
     """
 
     def __init__(
@@ -288,6 +289,16 @@ class ChangeColumnOrder(Task):
         self.vault_name = vault_name
 
         super().__init__(name="run_check_column_order", *args, **kwargs)
+
+    def df_change_order(
+        self, df: pd.DataFrame = None, sql_column_list: List[str] = None
+    ):
+        df_column_list = list(df.columns)
+        if set(df_column_list) == set(sql_column_list):
+            df_column_list = sql_column_list
+
+        df_changed = df.loc[:, sql_column_list]
+        return df_changed
 
     def run(
         self,
@@ -307,9 +318,6 @@ class ChangeColumnOrder(Task):
             credentials_secret (str, optional): The name of the Azure Key Vault secret containing a dictionary
             with SQL db credentials (server, db_name, user, and password). Defaults to None.
             vault_name (str, optional): The name of the vault from which to obtain the secret. Defaults to None.
-
-        Raises:
-            ValidationError: If column order in SQL table is different from Data Frame
         """
         credentials = get_credentials(credentials_secret, vault_name=vault_name)
         azure_sql = AzureSQL(credentials=credentials)
@@ -317,12 +325,14 @@ class ChangeColumnOrder(Task):
         if if_exists not in ["replace", "fail"]:
             query = f"SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = '{table}'"
             result = azure_sql.run(query=query)
-            sql_columns = [table for row in result for table in row]
+            sql_column_list = [table for row in result for table in row]
+            df_column_list = list(df.columns)
 
-            file_columns = list(df.columns)
-            if sql_columns != file_columns:
-                raise ValidationError(
-                    "The columns differ in the SQL table and the file being loaded."
+            if sql_column_list != df_column_list:
+                self.logger.warning(
+                    "Detected column order difference between the CSV file and the table. Reordering..."
                 )
+                df = self.df_change_order(df=df, sql_column_list=sql_column_list)
+
         else:
             self.logger.info("The table will be replaced.")
