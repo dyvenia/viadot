@@ -34,6 +34,11 @@ class Source:
         pass
 
     def to_arrow(self, if_empty: str = "warn") -> pa.Table:
+        """
+        Creates a pyarrow table from source.
+        Args:
+            if_empty (str, optional): : What to do if data sourse contains no data. Defaults to "warn".
+        """
 
         try:
             df = self.to_df(if_empty=if_empty)
@@ -94,6 +99,14 @@ class Source:
     def to_excel(
         self, path: str, if_exists: str = "replace", if_empty: str = "warn"
     ) -> bool:
+        """
+        Write from source to a excel file.
+        Args:
+            path (str): The destination path.
+            if_exists (str, optional): What to do if the file exists. Defaults to "replace".
+            if_empty (str, optional): What to do if the source contains no data.
+
+        """
 
         try:
             df = self.to_df(if_empty=if_empty)
