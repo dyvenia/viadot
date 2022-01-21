@@ -18,7 +18,7 @@ from ..tasks import (
     BCPTask,
     DownloadGitHubFile,
     AzureSQLDBQuery,
-    ChangeColumnOrder,
+    CheckColumnOrder,
 )
 
 logger = logging.get_logger(__name__)
@@ -31,7 +31,7 @@ promote_to_operations_task = AzureDataLakeCopy()
 create_table_task = AzureSQLCreateTable()
 bulk_insert_task = BCPTask()
 azure_query_task = AzureSQLDBQuery()
-check_column_order_task = ChangeColumnOrder()
+check_column_order_task = CheckColumnOrder()
 
 
 @task
