@@ -66,6 +66,12 @@ def dtypes_to_json_task(dtypes_dict, local_json_path: str):
 
 @task
 def chunk_df(df: pd.DataFrame, size: int = 10_000) -> List[pd.DataFrame]:
+    """
+    Creates pandas Dataframes list of chunks with a given size.
+    Args:
+        df (pd.DataFrame): Input pandas DataFrame.
+        size (int, optional): Size of a chunk. Defaults to 10000.
+    """
     n_rows = df.shape[0]
     chunks = [df[i : i + size] for i in range(0, n_rows, size)]
     return chunks
@@ -73,6 +79,11 @@ def chunk_df(df: pd.DataFrame, size: int = 10_000) -> List[pd.DataFrame]:
 
 @task
 def df_get_data_types_task(df: pd.DataFrame) -> dict:
+    """
+    Returns dictionary containing datatypes of pandas DataFrame columns.
+    Args:
+        df (pd.DataFrame): Input pandas DataFrame.
+    """
     typeset = CompleteSet()
     dtypes = infer_type(df, typeset)
     dtypes_dict = {k: str(v) for k, v in dtypes.items()}
@@ -127,6 +138,14 @@ def df_to_csv(
     if_exists: Literal["append", "replace", "skip"] = "replace",
     **kwargs,
 ) -> None:
+    """
+    Task to create csv file based on pandas DataFrame.
+    Args:
+    df (pd.DataFrame): Input pandas DataFrame.
+    path (str): Path to output csv file.
+    sep (str, optional): The separator to use in the CSV. Defaults to "\t".
+    if_exists (Literal["append", "replace", "skip"], optional): What to do if the table exists. Defaults to "replace".
+    """
     if if_exists == "append" and os.path.isfile(path):
         csv_df = pd.read_csv(path, sep=sep)
         out_df = pd.concat([csv_df, df])
@@ -147,6 +166,13 @@ def df_to_parquet(
     if_exists: Literal["append", "replace", "skip"] = "replace",
     **kwargs,
 ) -> None:
+    """
+    Task to create parquet file based on pandas DataFrame.
+    Args:
+    df (pd.DataFrame): Input pandas DataFrame.
+    path (str): Path to output parquet file.
+    if_exists (Literal["append", "replace", "skip"], optional): What to do if the table exists. Defaults to "replace".
+    """
     if if_exists == "append" and os.path.isfile(path):
         parquet_df = pd.read_parquet(path)
         out_df = pd.concat([parquet_df, df])
