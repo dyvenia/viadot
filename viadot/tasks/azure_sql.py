@@ -295,9 +295,12 @@ class CheckColumnOrder(Task):
     ):
         df_column_list = list(df.columns)
         if set(df_column_list) == set(sql_column_list):
-            df_column_list = sql_column_list
+            df_changed = df.loc[:, sql_column_list]
+        else:
+            raise ValidationError(
+                "Detected discrepancies in the number of columns between the CSV file and the table!"
+            )
 
-        df_changed = df.loc[:, sql_column_list]
         return df_changed
 
     def run(
@@ -333,6 +336,5 @@ class CheckColumnOrder(Task):
                     "Detected column order difference between the CSV file and the table. Reordering..."
                 )
                 df = self.df_change_order(df=df, sql_column_list=sql_column_list)
-
         else:
             self.logger.info("The table will be replaced.")
