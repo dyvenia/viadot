@@ -116,6 +116,7 @@ class CloudForCustomers(Source):
             return self._to_records_other(url=url)
 
     def response_to_entity_list(self, dirty_json: Dict[str, Any], url: str) -> List:
+        """Creates entity list from a json reponse."""
         metadata_url = self.change_to_meta_url(url)
         column_maper_dict = self.map_columns(metadata_url)
         entity_list = []
@@ -133,6 +134,7 @@ class CloudForCustomers(Source):
         return entity_list
 
     def map_columns(self, url: str = None) -> Dict[str, str]:
+        """Returns dictionary with mapped columns from API url."""
         column_mapping = {}
         if url:
             username = self.credentials.get("username")
@@ -149,6 +151,11 @@ class CloudForCustomers(Source):
         return column_mapping
 
     def get_response(self, url: str, timeout: tuple = (3.05, 60 * 30)) -> pd.DataFrame:
+        """Returns API response in a DataFrame.
+        Args:
+            url (str):  The url to the API.
+            timeout (tuple, optional): Timeout value in form (connect timeout, read timeout). Defaults to (3.05, 60 * 30).
+        """
         username = self.credentials.get("username")
         pw = self.credentials.get("password")
         response = handle_api_response(
@@ -157,6 +164,10 @@ class CloudForCustomers(Source):
         return response
 
     def to_df(self, fields: List[str] = None, if_empty: str = "warn") -> pd.DataFrame:
+        """Returns records in a pandas DataFrame.
+        Args:
+            fields (List[str], optional): List of fields to put in DataFrame. Defaults to None.
+        """
         records = self.to_records()
         df = pd.DataFrame(data=records)
         if fields:

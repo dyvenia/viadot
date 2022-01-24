@@ -22,6 +22,7 @@ class UKCarbonIntensity(Source):
         self.API_ENDPOINT = "https://api.carbonintensity.org.uk"
 
     def to_json(self):
+        """Creates json file"""
         url = f"{self.API_ENDPOINT}{self.api_url}"
         headers = {"Accept": "application/json"}
         response = requests.get(url, params={}, headers=headers)

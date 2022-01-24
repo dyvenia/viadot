@@ -216,6 +216,11 @@ class SQL(Source):
         return result
 
     def to_df(self, query: str, if_empty: str = None) -> pd.DataFrame:
+        """Creates DataFrame form SQL query.
+        Args:
+            query (str): SQL query. If don't start with "SELECT" returns empty DataFrame.
+            if_empty (str, optional): What to do if the query returns no data. Defaults to None.
+        """
         conn = self.con
         if query.upper().startswith("SELECT"):
             df = pd.read_sql_query(query, conn)
@@ -226,6 +231,11 @@ class SQL(Source):
         return df
 
     def _check_if_table_exists(self, table: str, schema: str = None) -> bool:
+        """Checks if table exists.
+        Args:
+            table (str): Table name.
+            schema (str, optional): Schema name. Defaults to None.
+        """
         exists_query = f"SELECT * FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA = '{schema}' AND TABLE_NAME='{table}'"
         exists = bool(self.run(exists_query))
         return exists
@@ -305,6 +315,7 @@ class SQL(Source):
         return sql
 
     def _sql_column(self, column_name: str) -> str:
+        """Returns the name of a column"""
         if isinstance(column_name, str):
             out_name = f"'{column_name}'"
         else:
