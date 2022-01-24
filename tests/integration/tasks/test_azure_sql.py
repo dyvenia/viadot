@@ -1,6 +1,7 @@
 import logging
 import pandas as pd
 import pytest
+from viadot.exceptions import ValidationError
 
 from viadot.tasks import AzureSQLCreateTable, AzureSQLDBQuery, CheckColumnOrder
 
@@ -67,7 +68,7 @@ def test_azure_sql_run_drop_query():
     assert not exists
 
 
-def test_check_column_order_append(caplog):
+def test_check_column_order_append_same_col_number(caplog):
     create_table_task = AzureSQLCreateTable()
     with caplog.at_level(logging.INFO):
         create_table_task.run(
@@ -89,6 +90,28 @@ def test_check_column_order_append(caplog):
         "Detected column order difference between the CSV file and the table. Reordering..."
         in caplog.text
     )
+
+
+def test_check_column_order_append_diff_col_number(caplog):
+    create_table_task = AzureSQLCreateTable()
+    with caplog.at_level(logging.INFO):
+        create_table_task.run(
+            schema=SCHEMA,
+            table=TABLE,
+            dtypes={"id": "INT", "name": "VARCHAR(25)", "street": "VARCHAR(25)"},
+            if_exists="replace",
+        )
+    assert "Successfully created table sandbox" in caplog.text
+
+    data = {"id": [1], "age": ["40"], "street": ["Green"], "name": ["Tom"]}
+    df = pd.DataFrame(data)
+    print(f"COMP: \ndf: {df.columns} \nsql: ")
+    check_column_order = CheckColumnOrder()
+    with pytest.raises(
+        ValidationError,
+        match=r"Detected discrepancies in the number of columns between the CSV file and the table!",
+    ):
+        check_column_order.run(table=TABLE, if_exists="append", df=df)
 
 
 def test_check_column_order_replace(caplog):
