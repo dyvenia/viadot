@@ -79,8 +79,6 @@ class SharepointToDF(Task):
         return df_header_list
 
     def df_replace_special_chars(self, df: pd.DataFrame):
-        return df.replace(r"\n|\t", "", regex=True)
-
         """
         Replace "\n" and "\t" with "".
 
@@ -88,9 +86,10 @@ class SharepointToDF(Task):
             df (pd.DataFrame): Pandas data frame to replace characters.
 
         Returns:
-            df (pd.DataFrame): Pandas data frame 
+            df (pd.DataFrame): Pandas data frame
 
         """
+        return df.replace(r"\n|\t", "", regex=True)
 
     def split_sheet(
         self,
