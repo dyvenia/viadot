@@ -10,6 +10,9 @@ from viadot.task_utils import (
     df_map_mixed_dtypes_for_parquet,
     df_to_csv,
     df_to_parquet,
+    union_dfs_task,
+    dtypes_to_json,
+    write_to_json,
 )
 
 
@@ -105,3 +108,39 @@ def test_df_to_parquet():
     result = pd.read_parquet("test.parquet")
     assert df.equals(result)
     os.remove("test.parquet")
+
+
+def test_union_dfs_task():
+    df1 = pd.DataFrame(
+        {
+            "a": {0: "a", 1: "b", 2: "c"},
+            "b": {0: "a", 1: "b", 2: "c"},
+            "w": {0: "a", 1: "b", 2: "c"},
+        }
+    )
+    df2 = pd.DataFrame(
+        {
+            "a": {0: "d", 1: "e"},
+            "b": {0: "d", 1: "e"},
+        }
+    )
+    list_dfs = []
+    list_dfs.append(df1)
+    list_dfs.append(df2)
+    res = union_dfs_task.run(list_dfs)
+    assert isinstance(res, pd.DataFrame)
+    assert len(res) == 5
+
+
+def test_dtypes_to_json():
+    dtypes = {"country": "VARCHAR(100)", "sales": "FLOAT(24)"}
+    dtypes_to_json.run(dtypes_dict=dtypes, local_json_path="dtypes.json")
+    assert os.path.exists("dtypes.json")
+    os.remove("dtypes.json")
+
+
+def test_write_to_json():
+    dict = {"name": "John", 1: [2, 4, 3]}
+    write_to_json.run(dict, "dict.json")
+    assert os.path.exists("dict.json")
+    os.remove("dict.json")

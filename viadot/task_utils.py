@@ -188,18 +188,34 @@ def df_to_parquet(
 
 @task
 def dtypes_to_json(dtypes_dict: dict, local_json_path: str) -> None:
+    """
+    Creates json file from a dictionary.
+    Args:
+        dtypes_dict (dict): Dictionary containing data types.
+        local_json_path (str): Path to local json file.
+    """
     with open(local_json_path, "w") as fp:
         json.dump(dtypes_dict, fp)
 
 
 @task
 def union_dfs_task(dfs: List[pd.DataFrame]):
+    """
+    Create one DataFrame from a list of pandas DataFrames.
+    Args:
+        dfs (List[pd.DataFrame]): List of pandas Dataframes to concat. In case of different size of DataFrames NaN values can appear.
+    """
     return pd.concat(dfs, ignore_index=True)
 
 
 @task
 def write_to_json(dict_, path):
-
+    """
+    Creates json file from a dictionary. Log record informs about the writing file proccess.
+    Args:
+        dict_ (dict): Dictionary.
+        path (str): Path to local json file.
+    """
     logger = prefect.context.get("logger")
 
     if os.path.isfile(path):
