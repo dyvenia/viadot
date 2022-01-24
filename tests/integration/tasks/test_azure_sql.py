@@ -1,9 +1,8 @@
 import logging
 import pandas as pd
 import pytest
-from viadot.exceptions import ValidationError
 
-from viadot.tasks import AzureSQLCreateTable, AzureSQLDBQuery, ChangeColumnOrder
+from viadot.tasks import AzureSQLCreateTable, AzureSQLDBQuery, CheckColumnOrder
 
 logger = logging.getLogger(__name__)
 
@@ -68,7 +67,7 @@ def test_azure_sql_run_drop_query():
     assert not exists
 
 
-def test_change_column_order_check_append(caplog):
+def test_check_column_order_append(caplog):
     create_table_task = AzureSQLCreateTable()
     with caplog.at_level(logging.INFO):
         create_table_task.run(
@@ -82,15 +81,17 @@ def test_change_column_order_check_append(caplog):
     data = {"id": [1], "street": ["Green"], "name": ["Tom"]}
     df = pd.DataFrame(data)
 
-    check_column_order = ChangeColumnOrder()
-    with pytest.raises(
-        ValidationError,
-        match=r"The columns differ in the SQL table and the file being loaded.",
-    ):
+    check_column_order = CheckColumnOrder()
+    with caplog.at_level(logging.WARNING):
         check_column_order.run(table=TABLE, if_exists="append", df=df)
 
+    assert (
+        "Detected column order difference between the CSV file and the table. Reordering..."
+        in caplog.text
+    )
 
-def test_change_column_order_check_replace(caplog):
+
+def test_check_column_order_replace(caplog):
     create_table_task = AzureSQLCreateTable()
     with caplog.at_level(logging.INFO):
         create_table_task.run(
@@ -104,7 +105,7 @@ def test_change_column_order_check_replace(caplog):
     data = {"id": [1], "street": ["Green"], "name": ["Tom"]}
     df = pd.DataFrame(data)
 
-    check_column_order = ChangeColumnOrder()
+    check_column_order = CheckColumnOrder()
     with caplog.at_level(logging.INFO):
         check_column_order.run(table=TABLE, if_exists="replace", df=df)
     assert "The table will be replaced." in caplog.text
