@@ -125,6 +125,7 @@ class Source:
         return True
 
     def _handle_if_empty(self, if_empty: str = None) -> NoReturn:
+        """What to do if empty."""
         if if_empty == "warn":
             logger.warning("The query produced no data.")
         elif if_empty == "skip":
