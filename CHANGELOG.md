@@ -5,6 +5,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Added
+- C4C connection with url and report_url documentation
+
+### Fixed 
+- C4C connection with url and report_url optimization
+- column mapper in C4C source
 
 ## [0.2.15] - 2022-01-12
 ### Added
