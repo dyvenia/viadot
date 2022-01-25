@@ -298,7 +298,7 @@ class CheckColumnOrder(Task):
             df_changed = df.loc[:, sql_column_list]
         else:
             raise ValidationError(
-                "Detected discrepancies in the number of columns between the CSV file and the table!"
+                "Detected discrepancies in number of columns or different column names between the CSV file and the SQL table!"
             )
 
         return df_changed

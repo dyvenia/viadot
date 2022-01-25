@@ -109,7 +109,7 @@ def test_check_column_order_append_diff_col_number(caplog):
     check_column_order = CheckColumnOrder()
     with pytest.raises(
         ValidationError,
-        match=r"Detected discrepancies in the number of columns between the CSV file and the table!",
+        match=r"Detected discrepancies in number of columns or different column names between the CSV file and the SQL table!",
     ):
         check_column_order.run(table=TABLE, if_exists="append", df=df)
 
