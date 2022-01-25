@@ -115,10 +115,20 @@ However, when developing, the easiest way is to use the provided Jupyter Lab con
 
 Please follow the standards and best practices used within the library (eg. when adding tasks, see how other tasks are constructed, etc.). For any questions, please reach out to us here on GitHub.
 
-
 ### Style guidelines
 - the code should be formatted with Black using default settings (easiest way is to use the VSCode extension)
 - commit messages should:
     - begin with an emoji
     - start with one of the following verbs, capitalized, immediately after the summary emoji: "Added", "Updated", "Removed", "Fixed", "Renamed", and, sporadically, other ones, such as "Upgraded", "Downgraded", or whatever you find relevant for your particular situation
     - contain a useful description of what the commit is doing
+
+## Set up Black for development in VSCode
+Your code should be formatted with Black when you want to contribute. To set up Black in Visual Studio Code follow instructions below. 
+1. Install `black` in your environment by writing in the terminal:
+```
+pip install black
+```
+2. Go to the settings - gear icon in the bottom left corner and select `Settings` or type "Ctrl" + ",".
+3. Find the `Format On Save` setting - check the box.
+4. Find the `Python Formatting Provider` and select "black" in the drop-down list.
+5. Your code should auto format on save now.
