@@ -136,7 +136,7 @@ class CloudForCustomers(Source):
         if url:
             username = self.credentials.get("username")
             pw = self.credentials.get("password")
-            response = requests.get(url, params=self.params, auth=(username, pw))
+            response = requests.get(url, auth=(username, pw))
             for sentence in response.text.split("/>"):
                 result = re.search(
                     r'(?<=Name=")([^"]+).+(sap:label=")([^"]+)+', sentence
