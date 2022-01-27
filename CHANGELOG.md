@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 ### Changed
 - pinned Prefect version to 0.15.11
+- `df_to_csv` now creates dirs if they don't exist
 
 ## [0.2.15] - 2022-01-12
 ### Added

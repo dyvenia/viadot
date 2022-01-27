@@ -127,12 +127,22 @@ def df_to_csv(
     if_exists: Literal["append", "replace", "skip"] = "replace",
     **kwargs,
 ) -> None:
+
+    # create directories if they don't exist
+    cloud_host_protocols = ["az://", "adl://", "s3://"]
+    if not any(path.startswith(protocol) for protocol in cloud_host_protocols):
+        try:
+            directory = os.path.dirname(path)
+            os.makedirs(directory, exist_ok=True)
+        except:
+            pass
+
     if if_exists == "append" and os.path.isfile(path):
         csv_df = pd.read_csv(path, sep=sep)
         out_df = pd.concat([csv_df, df])
     elif if_exists == "replace":
         out_df = df
-    elif if_exists == "skip":
+    elif if_exists == "skip" and os.path.isfile(path):
         logger.info("Skipped.")
         return
     else:
