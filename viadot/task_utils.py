@@ -127,16 +127,23 @@ def df_to_csv(
     if_exists: Literal["append", "replace", "skip"] = "replace",
     **kwargs,
 ) -> None:
+
     if if_exists == "append" and os.path.isfile(path):
         csv_df = pd.read_csv(path, sep=sep)
         out_df = pd.concat([csv_df, df])
     elif if_exists == "replace":
         out_df = df
-    elif if_exists == "skip":
+    elif if_exists == "skip" and os.path.isfile(path):
         logger.info("Skipped.")
         return
     else:
         out_df = df
+
+    # create directories if they don't exist
+    if not os.path.isfile(path):
+        directory = os.path.dirname(path)
+        os.makedirs(directory, exist_ok=True)
+
     out_df.to_csv(path, index=False, sep=sep)
 
 
