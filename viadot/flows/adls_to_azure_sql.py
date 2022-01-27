@@ -24,7 +24,7 @@ logger = logging.get_logger(__name__)
 lake_to_df_task = AzureDataLakeToDF()
 download_json_file_task = AzureDataLakeDownload()
 download_github_file_task = DownloadGitHubFile()
-promote_to_conformed_task = AzureDataLakeUpload()
+promote_to_conformed_task = AzureDataLakeCopy()
 promote_to_operations_task = AzureDataLakeCopy()
 create_table_task = AzureSQLCreateTable()
 bulk_insert_task = BCPTask()
@@ -222,7 +222,6 @@ class ADLSToAzureSQL(Flow):
         promote_to_conformed_task.bind(
             from_path=self.local_file_path,
             to_path=self.adls_path_conformed,
-            overwrite=self.overwrite_adls,
             sp_credentials_secret=self.adls_sp_credentials_secret,
             vault_name=self.vault_name,
             flow=self,
