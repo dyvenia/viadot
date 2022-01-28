@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 ### Added
+- KeyVault support in Sharepoint task
+### Added
 -`SQLIteInsert` check if DataFrame is empty or object is not a DataFrame
 
 ## [0.2.15] - 2022-01-12
