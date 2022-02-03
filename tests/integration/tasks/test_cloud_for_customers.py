@@ -8,7 +8,7 @@ def test_c4c_to_df():
     c4c_to_df = C4CToDF()
     df = c4c_to_df.run(url=url, endpoint=endpoint)
     answer = df.head()
-
+    print(df)
     assert answer.shape[1] == 23
 
 
@@ -21,3 +21,10 @@ def test_c4c_report_to_df():
     answer = df.head()
 
     assert answer.shape[0] == 5
+
+
+def test_c4c_to_df_kv():
+    task = C4CToDF()
+    res = task.run(credentials_secret="aia-c4c", endpoint="ActivityCollection")
+    answer = res.head()
+    assert answer.shape[1] == 19
