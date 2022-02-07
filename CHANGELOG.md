@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 ### Added
 - new source `SAPRFC` for connecting with SAP using the `pyRFC` library
+- new task `SAPRFCToDF` for loading data from SAP to a pandas DataFrame
 
 ### Changed
 - pinned Prefect version to 0.15.11

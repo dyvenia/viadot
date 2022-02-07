@@ -89,20 +89,18 @@ class SAPRFC(Source):
     - etc.
     """
 
-    def __init__(
-        self, delimiter: str = None, autopick_delimiter: bool = True, *args, **kwargs
-    ):
+    def __init__(self, sep: str = None, autopick_sep: bool = True, *args, **kwargs):
 
         self._con = None
-        DEFAULT_CREDENTIALS = local_config.get("SAP")
+        DEFAULT_CREDENTIALS = local_config.get("SAP").get("DEV")
         credentials = kwargs.pop("credentials", DEFAULT_CREDENTIALS)
         if credentials is None:
             raise CredentialError("Missing credentials.")
 
         super().__init__(*args, credentials=credentials, **kwargs)
 
-        self.delimiter = delimiter
-        self.autopick_delimiter = autopick_delimiter
+        self.sep = sep
+        self.autopick_sep = autopick_sep
         self.client_side_filters = None
 
     @property
@@ -263,14 +261,14 @@ class SAPRFC(Source):
         offset_pos = sql.upper().find(" OFFSET ") + 1
         return int(sql[offset_pos:].split()[1])
 
-    def query(self, sql: str, delimiter: str = None) -> None:
+    def query(self, sql: str, sep: str = None) -> None:
         """Parse an SQL query into pyRFC commands and save it into
         an internal dictionary.
 
         Args:
             sql (str): The SQL query to be ran.
-            delimiter (str, optional): The delimiter to be used
-            to split columns in the result blob. Defaults to self.delimiter.
+            sep (str, optional): The separator to be used
+            to split columns in the result blob. Defaults to self.sep.
 
         Raises:
             ValueError: If the query is not a SELECT query.
@@ -279,7 +277,7 @@ class SAPRFC(Source):
         if not sql.strip().upper().startswith("SELECT"):
             raise ValueError("Only SELECT queries are supported.")
 
-        delimiter = delimiter if delimiter is not None else self.delimiter
+        sep = sep if sep is not None else self.sep
 
         self.sql = sql
 
@@ -298,7 +296,7 @@ class SAPRFC(Source):
             OPTIONS=options,
             ROWCOUNT=limit,
             ROWSKIPS=offset,
-            DELIMITER=delimiter,
+            DELIMITER=sep,
         )
         # SAP doesn't understand None, so we filter out non-specified parameters
         query_json_filtered = {
@@ -335,17 +333,17 @@ class SAPRFC(Source):
         """
         params = self._query
         columns = self.select_columns_aliased
-        delimiter = self._query.get("DELIMITER")
+        sep = self._query.get("DELIMITER")
 
-        if delimiter is None or self.autopick_delimiter:
-            DELIMITERS = ["|", "/t", "#", ";", "@"]
-            for delimiter in DELIMITERS:
-                self._query["DELIMITER"] = delimiter
+        if sep is None or self.autopick_sep:
+            SEPARATORS = ["|", "/t", "#", ";", "@"]
+            for sep in SEPARATORS:
+                self._query["DELIMITER"] = sep
                 try:
                     response = self.call("RFC_READ_TABLE", **params)
                     record_key = "WA"
                     data_raw = response["DATA"]
-                    records = [row[record_key].split(delimiter) for row in data_raw]
+                    records = [row[record_key].split(sep) for row in data_raw]
                 except ValueError:
                     continue
         df = pd.DataFrame(records, columns=columns)
