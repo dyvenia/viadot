@@ -1,0 +1,366 @@
+import re
+from collections import OrderedDict
+from typing import List, Literal, Union, Tuple, OrderedDict as OrderedDictType
+
+import pandas as pd
+import pyrfc
+from sql_metadata import Parser
+from viadot.config import local_config
+from viadot.exceptions import CredentialError
+from viadot.sources.base import Source
+
+
+def remove_whitespaces(text):
+    return " ".join(text.split())
+
+
+def get_keyword_for_condition(where: str, condition: str) -> str:
+    where = where[: where.find(condition)]
+    return where.split()[-1]
+
+
+def get_where_uppercased(where: str) -> str:
+    """
+    Uppercase a WHERE clause's keywords without
+    altering the original string.
+    """
+    where_and_uppercased = re.sub(" and ", " AND ", where)
+    where_and_and_or_uppercased = re.sub(" or ", " OR ", where_and_uppercased)
+    return where_and_and_or_uppercased
+
+
+def remove_last_condition(where: str) -> str:
+    """Remove the last condtion from a WHERE clause."""
+    where = get_where_uppercased(where)
+    split_by_and = where.split(" AND ")
+    conditions = [expr.split(" OR ") for expr in split_by_and]
+    conditions_flattened = [
+        condition for sublist in conditions for condition in sublist
+    ]
+
+    condition_to_remove = conditions_flattened[-1]
+
+    where_trimmed = where[: where.find(condition_to_remove)].split()
+    where_trimmed_without_last_keyword = " ".join(where_trimmed[:-1])
+
+    return where_trimmed_without_last_keyword, condition_to_remove
+
+
+def trim_where(where: str) -> Tuple[str, OrderedDictType[str, str]]:
+    """
+    Trim a WHERE clause to 75 characters or less,
+    as required by SAP. The rest of filters will be applied
+    in-memory on client side.
+    """
+
+    if len(where) <= 75:
+        return where, None
+
+    wheres_to_add = OrderedDict()
+    keywords_with_conditions = []
+    where_trimmed = where
+    while len(where_trimmed) > 75:
+        # trim the where
+        where_trimmed, removed_condition = remove_last_condition(where_trimmed)
+
+        # store the removed conditions so we can readd them later
+        keyword = get_keyword_for_condition(where, removed_condition)
+        keywords_with_conditions.append((keyword, removed_condition))
+
+    wheres_to_add_sorted = keywords_with_conditions[::-1]
+    wheres_to_add = OrderedDict(wheres_to_add_sorted)
+
+    return where_trimmed, wheres_to_add
+
+
+class SAPRFC(Source):
+    """
+    A class for querying SAP with SQL using the RFC protocol.
+
+    Note that only a very limited subset of SQL is supported:
+    - aliases
+    - where clauses combined using the AND operator
+    - limit & offset
+
+    Unsupported:
+    - aggregations
+    - joins
+    - subqueries
+    - etc.
+    """
+
+    def __init__(
+        self, delimiter: str = None, autopick_delimiter: bool = True, *args, **kwargs
+    ):
+
+        self._con = None
+        DEFAULT_CREDENTIALS = local_config.get("SAP")
+        credentials = kwargs.pop("credentials", DEFAULT_CREDENTIALS)
+        if credentials is None:
+            raise CredentialError("Missing credentials.")
+
+        super().__init__(*args, credentials=credentials, **kwargs)
+
+        self.delimiter = delimiter
+        self.autopick_delimiter = autopick_delimiter
+        self.client_side_filters = None
+
+    @property
+    def con(self) -> pyrfc.Connection:
+        if self._con is not None:
+            return self._con
+        con = pyrfc.Connection(**self.credentials)
+        self._con = con
+        return con
+
+    def check_connection(self) -> None:
+        self.logger.info("Checking the connection...")
+        self.con.ping()
+        self.logger.info("Connection has been validated successfully.")
+
+    def get_function_parameters(
+        self,
+        function_name: str,
+        description: Union[None, Literal["short", "long"]] = "short",
+        *args,
+    ) -> Union[List[str], pd.DataFrame]:
+        descr = self.con.get_function_description(function_name, *args)
+        param_names = [param["name"] for param in descr.parameters]
+        detailed_params = descr.parameters
+        filtered_detailed_params = [
+            {
+                "name": param["name"],
+                "parameter_type": param["parameter_type"],
+                "default_value": param["default_value"],
+                "optional": param["optional"],
+                "parameter_text": param["parameter_text"],
+            }
+            for param in descr.parameters
+        ]
+
+        if description is not None:
+            if description == "long":
+                params = detailed_params
+            elif description == "short":
+                params = filtered_detailed_params
+            else:
+                raise ValueError(
+                    "Incorrect value for 'description'. Correct values: (None, 'short', 'long'"
+                )
+
+            params = pd.DataFrame.from_records(params)
+        else:
+            params = param_names
+
+        return params
+
+    def _get_where_condition(self, sql: str) -> str:
+
+        if " WHERE " not in sql.upper():
+            return None
+
+        if " LIMIT " in sql.upper():
+            limit_pos = sql.upper().find(" LIMIT ") + 1
+        else:
+            limit_pos = len(sql)
+        where = sql[sql.upper().find(" WHERE ") + len(" WHERE ") : limit_pos]
+        where_sanitized = remove_whitespaces(where)
+        where_trimmed, client_side_filters = trim_where(where_sanitized)
+        if client_side_filters:
+            self.logger.warning(
+                "A WHERE clause longer than 75 character limit detected."
+            )
+            if "OR" in [key.upper() for key in client_side_filters.keys()]:
+                raise ValueError(
+                    "WHERE conditions after the 75 character limit can only be combined with the AND keyword."
+                )
+            else:
+                filters_pretty = list(client_side_filters.items())
+                self.logger.warning(
+                    f"Trimmed conditions ({filters_pretty}) will be applied client-side."
+                )
+                self.logger.warning(f"See the documentation for caveats.")
+
+        self.client_side_filters = client_side_filters
+        return where_trimmed
+
+    @staticmethod
+    def _get_table_name(sql: str) -> str:
+        parsed = Parser(sql)
+        if len(parsed.tables) > 1:
+            raise ValueError("Querying more than one table is not supported.")
+        return parsed.tables[0]
+
+    def _build_pandas_filter_query(
+        self, client_side_filters: OrderedDictType[str, str]
+    ) -> str:
+        for i, f in enumerate(client_side_filters.items()):
+            if i == 0:
+                # skip the first keyword; we assume it's "AND"
+                query = f[1]
+            else:
+                query += " " + f[0] + " " + f[1]
+
+            filter_column_name = f[1].split()[0]
+            resolved_column_name = self._resolve_col_name(filter_column_name)
+        query = query.replace("=", "==").replace(
+            filter_column_name, resolved_column_name
+        )
+        return query
+
+    def extract_values(self, sql: str) -> None:
+        """TODO: This should cover all values, not just columns"""
+        self.where = self._get_where_condition(sql)
+        self.select_columns = self._get_columns(sql, aliased=False)
+        self.select_columns_aliased = self._get_columns(sql, aliased=True)
+
+    def _resolve_col_name(self, column: str) -> str:
+        return self.aliases_keyed_by_columns.get(column, column)
+
+    def _get_columns(self, sql: str, aliased: bool = False) -> List[str]:
+        parsed = Parser(sql)
+        columns = list(parsed.columns_dict["select"])
+        if aliased:
+            aliases_keyed_by_alias = parsed.columns_aliases
+            aliases_keyed_by_columns = OrderedDict(
+                {val: key for key, val in aliases_keyed_by_alias.items()}
+            )
+
+            self.aliases_keyed_by_columns = aliases_keyed_by_columns
+
+            columns = [
+                aliases_keyed_by_columns[col]
+                if col in aliases_keyed_by_columns
+                else col
+                for col in columns
+            ]
+
+        if self.client_side_filters:
+            # In case the WHERE clause is > 75 characters long, we execute the rest of the filters
+            # client-side. To do this, we need to pull all fields in the client-side WHERE conditions.
+            # Below code adds these columns to the list of SELECTed fields.
+            cols_to_add = [v.split()[0] for v in self.client_side_filters.values()]
+            if aliased:
+                cols_to_add = [aliases_keyed_by_columns[col] for col in cols_to_add]
+            columns.extend(cols_to_add)
+            columns = list(dict.fromkeys(columns))  # remove duplicates
+
+        return columns
+
+    @staticmethod
+    def _get_limit(sql: str) -> int:
+        """Get limit from the query"""
+        if " LIMIT " not in sql.upper():
+            return None
+        limit_pos = sql.upper().find(" LIMIT ") + 1
+        return int(sql[limit_pos:].split()[1])
+
+    @staticmethod
+    def _get_offset(sql: str) -> int:
+        """Get offset from the query"""
+        if " OFFSET " not in sql.upper():
+            return None
+        offset_pos = sql.upper().find(" OFFSET ") + 1
+        return int(sql[offset_pos:].split()[1])
+
+    def query(self, sql: str, delimiter: str = None) -> None:
+        """Parse an SQL query into pyRFC commands and save it into
+        an internal dictionary.
+
+        Args:
+            sql (str): The SQL query to be ran.
+            delimiter (str, optional): The delimiter to be used
+            to split columns in the result blob. Defaults to self.delimiter.
+
+        Raises:
+            ValueError: If the query is not a SELECT query.
+        """
+
+        if not sql.strip().upper().startswith("SELECT"):
+            raise ValueError("Only SELECT queries are supported.")
+
+        delimiter = delimiter if delimiter is not None else self.delimiter
+
+        self.sql = sql
+
+        self.extract_values(sql)
+
+        table_name = self._get_table_name(sql)
+        # this has to be called before checking client_side_filters
+        where = self.where
+        columns = self.select_columns
+        options = [{"TEXT": where}] if where else None
+        limit = self._get_limit(sql)
+        offset = self._get_offset(sql)
+        query_json = dict(
+            QUERY_TABLE=table_name,
+            FIELDS=columns,
+            OPTIONS=options,
+            ROWCOUNT=limit,
+            ROWSKIPS=offset,
+            DELIMITER=delimiter,
+        )
+        # SAP doesn't understand None, so we filter out non-specified parameters
+        query_json_filtered = {
+            key: query_json[key] for key in query_json if query_json[key] is not None
+        }
+        self._query = query_json_filtered
+
+    def call(self, func: str, *args, **kwargs):
+        """Call a SAP RFC function"""
+        return self.con.call(func, *args, **kwargs)
+
+    def _get_alias(self, column: str) -> str:
+        return self.aliases_keyed_by_columns.get(column, column)
+
+    def _get_client_side_filter_cols(self):
+        return [f[1].split()[0] for f in self.client_side_filters.items()]
+
+    def to_df(self):
+        """
+        Load the results of a query into a pandas DataFrame.
+
+        Due to SAP limitations, if the length of the WHERE clause is longer than 75
+        characters, we trim whe WHERE clause and perform the rest of the filtering
+        on the resulting DataFrame. Eg. if the WHERE clause contains 4 conditions
+        and has 80 characters, we only perform 3 filters in the query, and perform
+        the last filter on the DataFrame.
+
+        Source: https://success.jitterbit.com/display/DOC/Guide+to+Using+RFC_READ_TABLE+to+Query+SAP+Tables#GuidetoUsingRFC_READ_TABLEtoQuerySAPTables-create-the-operation
+        - WHERE clause: 75 character limit
+        - SELECT: 512 character row limit
+
+        Returns:
+            pd.DataFrame: A DataFrame representing the result of the query provided in `PyRFC.query()`.
+        """
+        params = self._query
+        columns = self.select_columns_aliased
+        delimiter = self._query.get("DELIMITER")
+
+        if delimiter is None or self.autopick_delimiter:
+            DELIMITERS = ["|", "/t", "#", ";", "@"]
+            for delimiter in DELIMITERS:
+                self._query["DELIMITER"] = delimiter
+                try:
+                    response = self.call("RFC_READ_TABLE", **params)
+                    record_key = "WA"
+                    data_raw = response["DATA"]
+                    records = [row[record_key].split(delimiter) for row in data_raw]
+                except ValueError:
+                    continue
+        df = pd.DataFrame(records, columns=columns)
+
+        if self.client_side_filters:
+            filter_query = self._build_pandas_filter_query(self.client_side_filters)
+            df.query(filter_query, inplace=True)
+            client_side_filter_cols_aliased = [
+                self._get_alias(col) for col in self._get_client_side_filter_cols()
+            ]
+            cols_to_drop = [
+                col
+                for col in client_side_filter_cols_aliased
+                if col not in self.select_columns_aliased
+            ]
+            df.drop(cols_to_drop, axis=1, inplace=True)
+
+        return df
