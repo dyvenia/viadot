@@ -93,7 +93,7 @@ class SAPRFC(Source):
 
         self._con = None
         DEFAULT_CREDENTIALS = local_config.get("SAP").get("DEV")
-        credentials = kwargs.pop("credentials", DEFAULT_CREDENTIALS)
+        credentials = kwargs.pop("credentials") or DEFAULT_CREDENTIALS
         if credentials is None:
             raise CredentialError("Missing credentials.")
 

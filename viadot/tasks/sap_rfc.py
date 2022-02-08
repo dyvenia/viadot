@@ -84,7 +84,6 @@ class SAPRFCToDF(Task):
             raise ValueError("Please provide the query.")
 
         sap = SAPRFC(sep=sep, autopick_sep=autopick_sep, credentials=credentials)
-        self.logger.warning(sap.credentials)
         sap.query(query)
 
         self.logger.info(f"Downloading data from SAP to a DataFrame...")
