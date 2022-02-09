@@ -1,9 +1,6 @@
 import pytest
 import os
-import pathlib
-import json
 import pandas as pd
-import configparser
 from viadot.exceptions import CredentialError
 
 from viadot.sources import Sharepoint
@@ -13,9 +10,8 @@ from viadot.tasks.sharepoint import SharepointToDF
 
 
 def get_url():
-    with open(".config/credentials.json", "r") as f:
-        config = json.load(f)
-    return config["SHAREPOINT"]["url"]
+    credentials = local_config.get("SHAREPOINT")
+    return credentials["url"]
 
 
 @pytest.fixture(scope="session")
