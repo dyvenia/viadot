@@ -71,6 +71,10 @@ def map_data_types_task(json_shema_path: str):
 
 @task
 def df_to_csv_task(df, path: str, sep: str = "\t"):
+    for col in range(len(df.columns)):
+        df[df.columns[col]] = (
+            df[df.columns[col]].astype(str).str.replace(r"\t", "", regex=True)
+        )
     df.to_csv(path, sep=sep, index=False)
 
 
