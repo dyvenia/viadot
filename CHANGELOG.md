@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 ### Added
 - new source `SAPRFC` for connecting with SAP using the `pyRFC` library (requires pyrfc as well as the SAP NW RFC library that can be downloaded [here](https://support.sap.com/en/product/connectors/nwrfcsdk.html)
+- new source `DuckDB` for connecting with the `DuckDB` database
 - new task `SAPRFCToDF` for loading data from SAP to a pandas DataFrame
 
 ### Changed
