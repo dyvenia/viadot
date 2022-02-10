@@ -30,7 +30,6 @@ def test__get_where_condition():
     assert sap._get_where_condition(sql1) == "table1.c = 1", sap._get_where_condition(
         sql1
     )
-    print(sap._get_where_condition(sql2))
     assert (
         sap._get_where_condition(sql2) == "a=1 AND b=2 OR c LIKE 'a%' AND d IN (1, 2)"
     ), sap._get_where_condition(sql2)
