@@ -7,6 +7,6 @@ services:
     ports:
       - 5678:8888
     volumes:
-      - ../../:/home/viadot
+      - ../../../:/home/viadot
     command: jupyter lab --no-browser --ip 0.0.0.0 --LabApp.token=''
     restart: "unless-stopped"
