@@ -6,6 +6,7 @@ from typing import Any, Dict, List
 from prefect.utilities.tasks import defaults_from_attrs
 from prefect.tasks.secrets import PrefectSecret
 from .azure_key_vault import AzureKeyVaultSecret
+from viadot.config import local_config
 
 
 class C4CReportToDF(Task):
@@ -79,6 +80,8 @@ class C4CReportToDF(Task):
                 credentials_secret, vault_name=vault_name
             ).run()
             credentials = json.loads(credentials_str)[env]
+        else:
+            credentials = local_config.get("CLOUD_FOR_CUSTOMERS")[env]
 
         final_df = pd.DataFrame()
         next_batch = True
@@ -173,7 +176,8 @@ class C4CToDF(Task):
                 credentials_secret, vault_name=vault_name
             ).run()
             credentials = json.loads(credentials_str)[env]
-
+        else:
+            credentials = local_config.get("CLOUD_FOR_CUSTOMERS")[env]
         cloud_for_customers = CloudForCustomers(
             url=url,
             params=params,
