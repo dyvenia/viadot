@@ -5,6 +5,7 @@ import pandas as pd
 
 from prefect import Task
 from prefect.utilities.tasks import defaults_from_attrs
+from prefect.utilities import logging
 
 logger = logging.get_logger()
 
@@ -12,9 +13,16 @@ logger = logging.get_logger()
 class PrefectExtract(Task):
     def __init__(
         self,
+        flow_name: str = None,
+        if_date_range_type: bool = None,
+        date: List[str] = None,
         *args,
         **kwargs,
     ):
+
+        self.flow_name = flow_name
+        self.if_date_range_type = if_date_range_type
+        self.date = date
 
         super().__init__(
             name="prefect_extract_details",
@@ -30,8 +38,8 @@ class PrefectExtract(Task):
         """
         Generate Flow run ids
         """
-        for ind in range(len(run_ids_list)):
-            yield run_ids_list[ind]
+        for id in range(len(run_ids_list)):
+            yield run_ids_list[id]
 
     def check_fails(self, flow_run_ids: str = None):
         """
@@ -51,9 +59,49 @@ class PrefectExtract(Task):
         time_success = full_date_success[1].split(".")[0]
         return [date_success, time_success]
 
-    @defaults_from_attrs()
+    @defaults_from_attrs(
+        "flow_name",
+        "if_date_range_type",
+        "date",
+    )
     def run(
         self,
+        flow_name,
+        if_date_range_type,
+        date,
         **kwargs,
     ) -> None:
-        pass
+
+        client = prefect.Client()
+
+        query = (
+            """
+             {           
+                flow (where: { name: { _eq: "%s" } } )
+                {
+                flow_runs(
+                    order_by: {end_time: desc}
+                    where: {start_time:{ _is_null:false } } ) 
+                    {
+                      id
+                      end_time
+                      start_time
+                      state
+                    }  
+                } 
+            }
+        """
+            % flow_name
+        )
+
+        flow_runs = client.graphql(query)
+        flow_runs_ids = flow_runs.data.flow[0]["flow_runs"]
+
+        last_success = self.check_fails(flow_runs_ids)
+        if if_date_range_type is True:
+            print(self.if_date_range_type)
+
+        new_date = self.format_date(last_success)[0]
+        new_last_days = self.format_date(last_success)[1]
+
+        return [new_date, new_last_days]
