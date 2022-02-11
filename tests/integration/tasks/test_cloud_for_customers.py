@@ -8,7 +8,6 @@ def test_c4c_to_df():
     c4c_to_df = C4CToDF()
     df = c4c_to_df.run(url=url, endpoint=endpoint)
     answer = df.head()
-    print(df)
     assert answer.shape[1] == 23
 
 
