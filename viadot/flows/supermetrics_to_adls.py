@@ -24,6 +24,7 @@ from ..tasks import (
     DownloadGitHubFile,
     RunGreatExpectationsValidation,
     SupermetricsToDF,
+    PrefectExtract,
 )
 
 logger = logging.get_logger(__name__)
@@ -33,6 +34,7 @@ download_github_file_task = DownloadGitHubFile()
 validation_task = RunGreatExpectationsValidation()
 file_to_adls_task = AzureDataLakeUpload()
 json_to_adls_task = AzureDataLakeUpload()
+prefect_extract = PrefectExtract()
 
 
 class SupermetricsToADLS(Flow):
@@ -115,6 +117,7 @@ class SupermetricsToADLS(Flow):
                 msg = "Neither 'ds_user' parameter nor 'SUPERMETRICS_DEFAULT_USER' secret were not specified"
                 raise ValueError(msg) from e
 
+        self.flow_name = name
         # SupermetricsToDF
         self.ds_id = ds_id
         self.ds_accounts = ds_accounts
@@ -197,6 +200,15 @@ class SupermetricsToADLS(Flow):
         return t
 
     def gen_flow(self) -> Flow:
+        if self.date_range_type is not None:
+            prefect_extract.run(
+                flow_name=self.flow_name, if_date_range_type=True, flow=self
+            )
+        if self.start_date is not None and self.end_date is not None:
+            prefect_extract.run(
+                flow_name=self.flow_name, if_date_range_type=False, flow=self
+            )
+
         if self.parallel:
             # generate a separate task for each account
             dfs = apply_map(self.gen_supermetrics_task, self.ds_accounts, flow=self)
