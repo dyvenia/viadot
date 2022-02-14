@@ -1,4 +1,5 @@
-from typing import List, Literal, NoReturn, Tuple, Any, Union
+from multiprocessing.sharedctypes import Value
+from typing import Any, List, Literal, NoReturn, Tuple, Union
 
 import pandas as pd
 from prefect.utilities import logging
@@ -21,7 +22,7 @@ class DuckDB(Source):
     def __init__(
         self,
         config_key: str = "DuckDB",
-        credentials: str = None,
+        credentials: dict = None,
         *args,
         **kwargs,
     ):
@@ -31,7 +32,7 @@ class DuckDB(Source):
             config_key (str, optional): The key inside local config containing the config.
             User can choose to use this or pass credentials directly to the `credentials`
             parameter. Defaults to None.
-            credentials (str, optional): Credentials for the connection. Defaults to None.
+            credentials (dict, optional): Credentials for the connection. Defaults to None.
         """
 
         if config_key:
@@ -61,7 +62,7 @@ class DuckDB(Source):
 
     @property
     def tables(self) -> List[str]:
-        """Show the list of tables (fully qualified).
+        """Show the list of fully qualified table names.
 
         Returns:
             List[str]: The list of tables in the format '{SCHEMA}.{TABLE}'.
@@ -82,6 +83,23 @@ class DuckDB(Source):
     def run(
         self, query: str, fetch_type: Literal["record", "dataframe"] = "record"
     ) -> Union[List[Record], bool]:
+        """Run a query on DuckDB.
+
+        Args:
+            query (str): The query to execute.
+            fetch_type (Literal[, optional): How to return the data: either
+            in the default record format or as a pandas DataFrame. Defaults to "record".
+
+        Returns:
+            Union[List[Record], bool]: Either the result set of a query or,
+            in case of DDL/DML queries, a boolean describing whether
+            the query was excuted successfuly.
+        """
+        allowed_fetch_type_values = ["record", "dataframe"]
+        if fetch_type not in allowed_fetch_type_values:
+            raise ValueError(
+                f"Only the values {allowed_fetch_type_values} are allowed for 'fetch_type'"
+            )
         cursor = self.con.cursor()
         cursor.execute(query)
 
@@ -113,7 +131,22 @@ class DuckDB(Source):
         schema: str = None,
         if_exists: Literal["fail", "replace", "skip", "delete"] = "fail",
     ) -> NoReturn:
-        schema = schema or DuckDB.DEAULT_SCHEMA
+        """Create a DuckDB table with a CTAS from Parquet file(s).
+
+        Args:
+            table (str): Destination table.
+            path (str): The path to the source Parquet file(s). Glob expressions are
+            also allowed here (eg. `my_folder/*.parquet`).
+            schema (str, optional): Destination schema. Defaults to None.
+            if_exists (Literal[, optional): What to do if the table already exists. Defaults to "fail".
+
+        Raises:
+            ValueError: If the table exists and `if_exists` is set to `fail`.
+
+        Returns:
+            NoReturn: Does not return anything.
+        """
+        schema = schema or DuckDB.DEFAULT_SCHEMA
         fqn = schema + "." + table
         exists = self._check_if_table_exists(schema=schema, table=table)
 
@@ -158,7 +191,7 @@ class DuckDB(Source):
             bool: Whether the table was dropped.
         """
 
-        schema = schema or DuckDB.DEAULT_SCHEMA
+        schema = schema or DuckDB.DEFAULT_SCHEMA
         fqn = schema + "." + table
 
         self.logger.info(f"Dropping table {fqn}...")
@@ -170,7 +203,7 @@ class DuckDB(Source):
         return dropped
 
     def _check_if_table_exists(self, table: str, schema: str = None) -> bool:
-        schema = schema or DuckDB.DEAULT_SCHEMA
+        schema = schema or DuckDB.DEFAULT_SCHEMA
         fqn = schema + "." + table
         return fqn in self.tables
 
