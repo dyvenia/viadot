@@ -24,16 +24,16 @@ def get_where_uppercased(where: str) -> str:
     Uppercase a WHERE clause's keywords without
     altering the original string.
     """
-    where_and_uppercased = re.sub(" and ", " AND ", where)
-    where_and_and_or_uppercased = re.sub(" or ", " OR ", where_and_uppercased)
+    where_and_uppercased = re.sub("\\sand ", " AND ", where)
+    where_and_and_or_uppercased = re.sub("\\sor ", " OR ", where_and_uppercased)
     return where_and_and_or_uppercased
 
 
 def remove_last_condition(where: str) -> str:
     """Remove the last condtion from a WHERE clause."""
     where = get_where_uppercased(where)
-    split_by_and = where.split(" AND ")
-    conditions = [expr.split(" OR ") for expr in split_by_and]
+    split_by_and = re.split("\\sAND ", where)
+    conditions = [re.split("\\sOR ", expr) for expr in split_by_and]
     conditions_flattened = [
         condition for sublist in conditions for condition in sublist
     ]
@@ -93,7 +93,7 @@ class SAPRFC(Source):
 
         self._con = None
         DEFAULT_CREDENTIALS = local_config.get("SAP").get("DEV")
-        credentials = kwargs.pop("credentials") or DEFAULT_CREDENTIALS
+        credentials = kwargs.pop("credentials", None) or DEFAULT_CREDENTIALS
         if credentials is None:
             raise CredentialError("Missing credentials.")
 
@@ -154,14 +154,14 @@ class SAPRFC(Source):
 
     def _get_where_condition(self, sql: str) -> str:
 
-        if " WHERE " not in sql.upper():
+        where_match = re.search("\\sWHERE ", sql.upper())
+        if not where_match:
             return None
 
-        if " LIMIT " in sql.upper():
-            limit_pos = sql.upper().find(" LIMIT ") + 1
-        else:
-            limit_pos = len(sql)
-        where = sql[sql.upper().find(" WHERE ") + len(" WHERE ") : limit_pos]
+        limit_match = re.search("\\sLIMIT ", sql.upper())
+        limit_pos = limit_match.span()[0] if limit_match else len(sql)
+
+        where = sql[where_match.span()[1] : limit_pos]
         where_sanitized = remove_whitespaces(where)
         where_trimmed, client_side_filters = trim_where(where_sanitized)
         if client_side_filters:
@@ -201,7 +201,7 @@ class SAPRFC(Source):
 
             filter_column_name = f[1].split()[0]
             resolved_column_name = self._resolve_col_name(filter_column_name)
-        query = query.replace("=", "==").replace(
+        query = re.sub("\\s?=\\s?", " == ", query).replace(
             filter_column_name, resolved_column_name
         )
         return query
@@ -213,6 +213,7 @@ class SAPRFC(Source):
         self.select_columns_aliased = self._get_columns(sql, aliased=True)
 
     def _resolve_col_name(self, column: str) -> str:
+        """Get aliased column name if it exists, otherwise return column name."""
         return self.aliases_keyed_by_columns.get(column, column)
 
     def _get_columns(self, sql: str, aliased: bool = False) -> List[str]:
@@ -248,18 +249,20 @@ class SAPRFC(Source):
     @staticmethod
     def _get_limit(sql: str) -> int:
         """Get limit from the query"""
-        if " LIMIT " not in sql.upper():
+        limit_match = re.search("\\sLIMIT ", sql.upper())
+        if not limit_match:
             return None
-        limit_pos = sql.upper().find(" LIMIT ") + 1
-        return int(sql[limit_pos:].split()[1])
+
+        return int(sql[limit_match.span()[1] :].split()[0])
 
     @staticmethod
     def _get_offset(sql: str) -> int:
         """Get offset from the query"""
-        if " OFFSET " not in sql.upper():
+        offset_match = re.search("\\sOFFSET ", sql.upper())
+        if not offset_match:
             return None
-        offset_pos = sql.upper().find(" OFFSET ") + 1
-        return int(sql[offset_pos:].split()[1])
+
+        return int(sql[offset_match.span()[1] :].split()[0])
 
     def query(self, sql: str, sep: str = None) -> None:
         """Parse an SQL query into pyRFC commands and save it into
