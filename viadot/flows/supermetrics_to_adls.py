@@ -201,9 +201,18 @@ class SupermetricsToADLS(Flow):
 
     def gen_flow(self) -> Flow:
         if self.date_range_type is not None:
-            prefect_extract.run(
+            difference = prefect_extract.run(
                 flow_name=self.flow_name, if_date_range_type=True, flow=self
             )
+            old_range_splitted = self.date_range_type.split("_")
+
+            old_range = int(old_range_splitted[1])
+            new_range = old_range + difference
+
+            new_range_splitted = old_range_splitted
+            new_range_splitted[1] = str(new_range)
+            self.date_range_type = "_".join(new_range_splitted)
+
         if self.start_date is not None and self.end_date is not None:
             prefect_extract.run(
                 flow_name=self.flow_name, if_date_range_type=False, flow=self

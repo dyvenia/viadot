@@ -49,15 +49,21 @@ class PrefectExtract(Task):
             if flow_run.state == "Success":
                 return flow_run.start_time
 
-    def format_date(self, last_success: str = None):
+    def format_date(self, last_success: str = None, data_range: bool = None):
         """
         Split date to date and time. Calculations for set new date are needed.
         """
-        today = date.today()
-        full_date_success = last_success.split("T")
-        date_success = full_date_success[0]
-        time_success = full_date_success[1].split(".")[0]
-        return [date_success, time_success]
+        today = datetime.today()
+        date_success = last_success.split("T")[0]
+        date_success = datetime.strptime(date_success, "%Y-%m-%d")
+
+        if data_range is True:
+            difference = today - date_success
+            return difference.days
+        if data_range is False:
+            formated_date = date_success
+
+        return formated_date
 
     @defaults_from_attrs(
         "flow_name",
@@ -98,10 +104,6 @@ class PrefectExtract(Task):
         flow_runs_ids = flow_runs.data.flow[0]["flow_runs"]
 
         last_success = self.check_fails(flow_runs_ids)
-        if if_date_range_type is True:
-            print(self.if_date_range_type)
+        new_date = self.format_date(last_success, data_range=if_date_range_type)
 
-        new_date = self.format_date(last_success)[0]
-        new_last_days = self.format_date(last_success)[1]
-
-        return [new_date, new_last_days]
+        return new_date
