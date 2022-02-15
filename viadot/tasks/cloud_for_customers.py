@@ -69,9 +69,8 @@ class C4CReportToDF(Task):
         """
 
         if not credentials_secret:
-            # attempt to read a default for the service principal secret name
             try:
-                credentials_secret = PrefectSecret("C4C_AIA").run()
+                credentials_secret = PrefectSecret("C4C_KV").run()
             except ValueError:
                 pass
 
@@ -165,9 +164,8 @@ class C4CToDF(Task):
             pd.DataFrame: The query result as a pandas DataFrame.
         """
         if not credentials_secret:
-            # attempt to read a default for the service principal secret name
             try:
-                credentials_secret = PrefectSecret("C4C_AIA").run()
+                credentials_secret = PrefectSecret("C4C_KV").run()
             except ValueError:
                 pass
 
