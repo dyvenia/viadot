@@ -13,3 +13,4 @@ except ImportError:
 # APIS
 from .uk_carbon_intensity import UKCarbonIntensity
 from .sqlite import SQLite
+from .duckdb import DuckDB
