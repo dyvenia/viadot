@@ -7,7 +7,7 @@ from .sharepoint import Sharepoint
 
 try:
     from .sap_rfc import SAPRFC
-except ValueError:
+except ImportError:
     pass
 
 # APIS

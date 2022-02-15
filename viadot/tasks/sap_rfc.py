@@ -4,7 +4,10 @@ import pandas as pd
 from prefect import Task
 from prefect.utilities.tasks import defaults_from_attrs
 
-from ..sources import SAPRFC
+try:
+    from ..sources import SAPRFC
+except ImportError:
+    raise
 
 
 class SAPRFCToDF(Task):

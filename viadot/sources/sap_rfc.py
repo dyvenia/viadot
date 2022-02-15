@@ -7,7 +7,7 @@ import pandas as pd
 try:
     import pyrfc
 except ModuleNotFoundError:
-    raise ValueError("pyfrc is required to use the SAPRFC source.")
+    raise ImportError("pyfrc is required to use the SAPRFC source.")
 from sql_metadata import Parser
 from viadot.config import local_config
 from viadot.exceptions import CredentialError
