@@ -173,7 +173,7 @@ class SharepointToDF(Task):
         if not credentials_secret:
             # attempt to read a default for the service principal secret name
             try:
-                credentials_secret = PrefectSecret("SHAREPOINT_AIA").run()
+                credentials_secret = PrefectSecret("SHAREPOINT_KV").run()
             except ValueError:
                 pass
 
