@@ -29,3 +29,5 @@ try:
     from .sap_rfc import SAPRFCToDF
 except ImportError:
     pass
+
+from .duckdb import DuckDBCreateTableFromParquet, DuckDBQuery
