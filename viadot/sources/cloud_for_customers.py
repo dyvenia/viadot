@@ -22,9 +22,12 @@ class CloudForCustomers(Source):
         credentials: Dict[str, Any] = None,
         **kwargs,
     ):
-        """
-        Fetches data from Cloud for Customer.
-        Args:
+        """Cloud for Customers connector build for fetching Odata source.
+        See [pyodata docs](https://pyodata.readthedocs.io/en/latest/index.html) for an explanation
+        how Odata works.
+
+        Parameters
+        ----------
             report_url (str, optional): The url to the API in case of prepared report. Defaults to None.
             url (str, optional): The url to the API. Defaults to None.
             endpoint (str, optional): The endpoint of the API. Defaults to None.
@@ -106,7 +109,9 @@ class CloudForCustomers(Source):
         return records
 
     def to_records(self) -> List[Dict[str, Any]]:
-        """Download a list of entities in the records format"""
+        """
+        Download a list of entities in the records format
+        """
         if self.is_report:
             url = self.report_url
             return self._to_records_report(url=url)
