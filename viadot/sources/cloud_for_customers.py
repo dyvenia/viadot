@@ -115,6 +115,15 @@ class CloudForCustomers(Source):
             return self._to_records_other(url=url)
 
     def response_to_entity_list(self, dirty_json: Dict[str, Any], url: str) -> List:
+        """Changing request json response to list.
+
+        Args:
+            dirty_json (Dict[str, Any]): json from response.
+            url (str): the URL which trying to fetch metadata.
+
+        Returns:
+            List: List of dictionaries.
+        """
         metadata_url = self.change_to_meta_url(url)
         column_maper_dict = self.map_columns(metadata_url)
         entity_list = []
@@ -132,6 +141,14 @@ class CloudForCustomers(Source):
         return entity_list
 
     def map_columns(self, url: str = None) -> Dict[str, str]:
+        """Fetch metadata from url used to column name map.
+
+        Args:
+            url (str, optional): the URL which trying to fetch metadata. Defaults to None.
+
+        Returns:
+            Dict[str, str]: Property Name as key mapped to the value of sap label.
+        """
         column_mapping = {}
         if url:
             username = self.credentials.get("username")
@@ -149,7 +166,20 @@ class CloudForCustomers(Source):
 
     def get_response(
         self, url: str, params: Dict[str, Any] = None, timeout: tuple = (3.05, 60 * 30)
-    ) -> pd.DataFrame:
+    ) -> requests.models.Response:
+        """Handle and raise Python exceptions during request. Using of url and service endpoint needs additional parameters
+           stores in params. report_url contain additional params in their structure.
+           In report_url scenario it can not contain params parameter.
+
+        Args:
+            url (str): the URL which trying to connect.
+            params (Dict[str, Any], optional): Additional parameters like filter, used in case of normal url.
+            Defaults to None used in case of report_url, which can not contain params.
+            timeout (tuple, optional): the request times out. Defaults to (3.05, 60 * 30).
+
+        Returns:
+            requests.models.Response
+        """
         username = self.credentials.get("username")
         pw = self.credentials.get("password")
         response = handle_api_response(
