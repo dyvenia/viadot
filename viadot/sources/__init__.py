@@ -4,7 +4,11 @@ from .azure_sql import AzureSQL
 from .supermetrics import Supermetrics
 from .cloud_for_customers import CloudForCustomers
 from .sharepoint import Sharepoint
-from .sap_rfc import SAPRFC
+
+try:
+    from .sap_rfc import SAPRFC
+except ValueError:
+    pass
 
 # APIS
 from .uk_carbon_intensity import UKCarbonIntensity
