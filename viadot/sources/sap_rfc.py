@@ -94,6 +94,16 @@ class SAPRFC(Source):
     """
 
     def __init__(self, sep: str = None, autopick_sep: bool = True, *args, **kwargs):
+        """Create an instance of the SAPRFC class.
+
+        Args:
+            sep (str, optional): Which separator to use when querying SAP. Defaults to None.
+            autopick_sep (bool, optional): Whether to automatically pick a working separator.
+            Defaults to True.
+
+        Raises:
+            CredentialError: If provided credentials are incorrect.
+        """
 
         self._con = None
         DEFAULT_CREDENTIALS = local_config.get("SAP").get("DEV")
@@ -126,6 +136,27 @@ class SAPRFC(Source):
         description: Union[None, Literal["short", "long"]] = "short",
         *args,
     ) -> Union[List[str], pd.DataFrame]:
+        """Get the description for a SAP RFC function.
+
+        Args:
+            function_name (str): The name of the function to detail.
+            description (Union[None, Literal[, optional): Whether to display
+            a short or a long description. Defaults to "short".
+
+        Raises:
+            ValueError: If the argument for description is incorrect.
+
+        Returns:
+            Union[List[str], pd.DataFrame]: Either a list of the function's
+            parameter names (if 'description' is set to None),
+            or a short or long description.
+        """
+        if description is not None:
+            if description not in ["short", "long"]:
+                raise ValueError(
+                    "Incorrect value for 'description'. Correct values: (None, 'short', 'long'"
+                )
+
         descr = self.con.get_function_description(function_name, *args)
         param_names = [param["name"] for param in descr.parameters]
         detailed_params = descr.parameters
@@ -143,13 +174,8 @@ class SAPRFC(Source):
         if description is not None:
             if description == "long":
                 params = detailed_params
-            elif description == "short":
-                params = filtered_detailed_params
             else:
-                raise ValueError(
-                    "Incorrect value for 'description'. Correct values: (None, 'short', 'long'"
-                )
-
+                params = filtered_detailed_params
             params = pd.DataFrame.from_records(params)
         else:
             params = param_names
@@ -157,6 +183,19 @@ class SAPRFC(Source):
         return params
 
     def _get_where_condition(self, sql: str) -> str:
+        """Retrieve the WHERE conditions from a SQL query.
+
+        Args:
+            sql (str): The input SQL query.
+
+        Raises:
+            ValueError: Raised if the WHERE clause is longer than
+            75 characters (SAP's limitation) and the condition for the
+            extra clause(s) is OR.
+
+        Returns:
+            str: The where clause trimmed to <= 75 characters.
+        """
 
         where_match = re.search("\\sWHERE ", sql.upper())
         if not where_match:
@@ -196,6 +235,18 @@ class SAPRFC(Source):
     def _build_pandas_filter_query(
         self, client_side_filters: OrderedDictType[str, str]
     ) -> str:
+        """Build a WHERE clause that will be applied client-side.
+        This is required if the WHERE clause passed to query() is
+        longer than 75 characters.
+
+        Args:
+            client_side_filters (OrderedDictType[str, str]): The
+            client-side filters to apply.
+
+        Returns:
+            str: the WHERE clause reformatted to fit the format
+            required by DataFrame.query().
+        """
         for i, f in enumerate(client_side_filters.items()):
             if i == 0:
                 # skip the first keyword; we assume it's "AND"
@@ -221,6 +272,16 @@ class SAPRFC(Source):
         return self.aliases_keyed_by_columns.get(column, column)
 
     def _get_columns(self, sql: str, aliased: bool = False) -> List[str]:
+        """Retrieve column names from a SQL query.
+
+        Args:
+            sql (str): The SQL query to parse.
+            aliased (bool, optional): Whether to returned aliased
+            names. Defaults to False.
+
+        Returns:
+            List[str]: A list of column names.
+        """
         parsed = Parser(sql)
         columns = list(parsed.columns_dict["select"])
         if aliased:
