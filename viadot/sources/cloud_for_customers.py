@@ -171,7 +171,6 @@ class CloudForCustomers(Source):
                     column_mapping[key] = val
         return column_mapping
 
-
     def get_response(
         self, url: str, params: Dict[str, Any] = None, timeout: tuple = (3.05, 60 * 30)
     ) -> requests.models.Response:
