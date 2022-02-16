@@ -2,6 +2,7 @@ import os
 
 import pytest
 from viadot.sources.duckdb import DuckDB
+import os
 
 TABLE = "test_table"
 SCHEMA = "test_schema"
@@ -11,6 +12,10 @@ DATABASE_PATH = "test.duckdb"
 
 @pytest.fixture(scope="session")
 def duckdb():
+    try:
+        os.remove(DATABASE_PATH)
+    except FileNotFoundError:
+        pass
     duckdb = DuckDB(credentials=dict(database=DATABASE_PATH))
     yield duckdb
     os.remove(DATABASE_PATH)
