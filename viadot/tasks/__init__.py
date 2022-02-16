@@ -24,4 +24,11 @@ from .great_expectations import RunGreatExpectationsValidation
 from .sqlite import SQLiteInsert, SQLiteSQLtoDF, SQLiteQuery
 from .supermetrics import SupermetricsToCSV, SupermetricsToDF
 from .sharepoint import SharepointToDF
-from .cloud_for_customers import c4c_report_to_df, c4c_to_df
+from .cloud_for_customers import C4CReportToDF, C4CToDF
+
+try:
+    from .sap_rfc import SAPRFCToDF
+except ImportError:
+    pass
+
+from .duckdb import DuckDBCreateTableFromParquet, DuckDBQuery

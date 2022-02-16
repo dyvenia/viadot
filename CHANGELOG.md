@@ -4,25 +4,43 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-
 ## [Unreleased]
 ## Added
 - Added `CheckColumnOrder` task
 
 ## [0.2.15] - 2022-01-12
 ### Added
+- new source `SAPRFC` for connecting with SAP using the `pyRFC` library (requires pyrfc as well as the SAP NW RFC library that can be downloaded [here](https://support.sap.com/en/product/connectors/nwrfcsdk.html)
+- new source `DuckDB` for connecting with the `DuckDB` database
+- new task `SAPRFCToDF` for loading data from SAP to a pandas DataFrame
+- new tasks, `DuckDBQuery` and `DuckDBCreateTableFromParquet`, for interacting with DuckDB
+- new flow `SAPToDuckDB` for moving data from SAP to DuckDB
+
+### Changed
+- pinned Prefect version to 0.15.11
+- `df_to_csv` now creates dirs if they don't exist
+
+### Fixed
+- fixed an issue with duckdb calls seeing initial db snapshot instead of the updated state (#282)
+
+## [0.2.15] - 2022-01-12
+### Added
 - new option to `ADLSToAzureSQL` Flow - `if_exists="delete"`
 - `SQL` source: `create_table()` already handles `if_exists`; now it handles a new option for `if_exists()`
+- `C4CToDF` and `C4CReportToDF` tasks are provided as a class instead of function
+
 
 ### Fixed 
 - Appending issue within CloudForCustomers source
 - An early return bug in `UKCarbonIntensity` in `to_df` method
 
-## [0.2.14]
+
+## [0.2.14] - 2021-12-01
+
 ### Fixed
 - authorization issue within `CloudForCustomers` source
 
-## [0.2.13]
+## [0.2.13] - 2021-11-30
 ### Added
 - Added support for file path to `CloudForCustomersReportToADLS` flow
 - Added `flow_of_flows` list handling
@@ -35,7 +53,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `Sharepoint` and `CloudForCustomers` sources will now provide an informative `CredentialError` which is also raised early. This will make issues with input credenials immediately clear to the user.
 - Removed set_key_value from `CloudForCustomersReportToADLS` flow
 
-## [0.2.12]
+## [0.2.12] - 2021-11-25
 ### Added
 - Added `Sharepoint` source
 - Added `SharepointToDF` task
@@ -48,32 +66,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added `df_to_parquet` task to task_utils.py
 - Added `dtypes_to_json` task to task_utils.py
 
-## [0.2.11]
+## [0.2.11] - 2021-10-30
+
 ### Fixed
 - `ADLSToAzureSQL` - fixed path to csv issue. 
 - `SupermetricsToADLS` - fixed local json path issue. 
-
-## [0.2.10] - 2021-10-29
-### Release due to CI/CD error
-
-## [0.2.9] - 2021-10-29
-### Release due to CI/CD error
-
-## [0.2.8] - 2021-10-29
-### Changed
-- CI/CD: `dev` image is now only published on push to the `dev` branch
-- Docker: 
-  - updated registry links to use the new `ghcr.io` domain
-  - `run.sh` now also accepts the `-t` option. When run in standard mode, it will only spin up the `viadot_jupyter_lab` service.
-  When ran with `-t dev`, it will also spin up `viadot_testing` and `viadot_docs` containers.
-
-### Fixed
-- `ADLSToAzureSQL` - fixed path parameter issue.
-
-## [0.2.11]
-### Fixed
-- ADLSToAzureSQL - fixed path to csv issue. 
-- SupermetricsToADLS - fixed local json path issue. 
 
 ## [0.2.10] - 2021-10-29
 ### Release due to CI/CD error

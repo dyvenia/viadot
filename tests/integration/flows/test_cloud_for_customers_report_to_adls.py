@@ -9,8 +9,8 @@ def test_cloud_for_customers_report_to_adls():
     month = ["01"]
     year = ["2021"]
     flow = CloudForCustomersReportToADLS(
-        direct_url=credentials_prod["server"],
-        source_type="Prod",
+        report_url=credentials_prod["server"],
+        env="Prod",
         channels=channels,
         months=month,
         years=year,

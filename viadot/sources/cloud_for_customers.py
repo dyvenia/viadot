@@ -4,12 +4,9 @@ import pandas as pd
 from typing import Any, Dict, List
 from urllib.parse import urljoin
 from ..config import local_config
-from ..exceptions import APIError, CredentialError
-from requests.adapters import HTTPAdapter
-from requests.exceptions import ConnectionError, HTTPError, ReadTimeout, Timeout
-from urllib3.exceptions import ProtocolError
+from ..utils import handle_api_response
+from ..exceptions import CredentialError
 import re
-from requests.packages.urllib3.util.retry import Retry
 
 
 class CloudForCustomers(Source):
@@ -26,13 +23,14 @@ class CloudForCustomers(Source):
     ):
         """
         Fetches data from Cloud for Customer.
-
         Args:
             report_url (str, optional): The url to the API in case of prepared report. Defaults to None.
             url (str, optional): The url to the API. Defaults to None.
             endpoint (str, optional): The endpoint of the API. Defaults to None.
             params (Dict[str, Any]): The query parameters like filter by creation date time. Defaults to json format.
             env (str, optional): The development environments. Defaults to 'QA'.
+            credentials (Dict[str, Any], optional): The credentials are populated with values from config file or this
+            parameter. Defaults to None than use credentials from local_config.
         """
         super().__init__(*args, **kwargs)
 
@@ -40,9 +38,9 @@ class CloudForCustomers(Source):
             DEFAULT_CREDENTIALS = local_config["CLOUD_FOR_CUSTOMERS"].get(env)
         except KeyError:
             DEFAULT_CREDENTIALS = None
-        credentials = credentials or DEFAULT_CREDENTIALS or {}
+        self.credentials = credentials or DEFAULT_CREDENTIALS or {}
 
-        self.url = url or credentials.get("server")
+        self.url = url or self.credentials.get("server")
         self.report_url = report_url
 
         if self.url is None and report_url is None:
@@ -52,15 +50,11 @@ class CloudForCustomers(Source):
         self.query_endpoint = endpoint
         self.params = params or {}
         self.params["$format"] = "json"
-        if credentials:
-            self.auth = (credentials["username"], credentials["password"])
-        else:
-            self.auth = (None, None)
 
         if self.url:
             self.full_url = urljoin(self.url, self.query_endpoint)
 
-        super().__init__(*args, credentials=credentials, **kwargs)
+        super().__init__(*args, credentials=self.credentials, **kwargs)
 
     @staticmethod
     def change_to_meta_url(url: str) -> str:
@@ -84,19 +78,31 @@ class CloudForCustomers(Source):
 
     def _to_records_other(self, url: str) -> List[Dict[str, Any]]:
         records = []
+        tmp_full_url = self.full_url
+        tmp_params = self.params
         while url:
-            response = self.get_response(self.full_url, params=self.params)
+            response = self.get_response(tmp_full_url)
             response_json = response.json()
             if isinstance(response_json["d"], dict):
                 # ODATA v2+ API
                 new_records = response_json["d"].get("results")
+                url = None
+                self.params = None
+                self.endpoint = None
                 url = response_json["d"].get("__next")
+                tmp_full_url = url
+
             else:
                 # ODATA v1
                 new_records = response_json["d"]
+                url = None
+                self.params = None
+                self.endpoint = None
                 url = response_json.get("__next")
+                tmp_full_url = url
 
             records.extend(new_records)
+        self.params = tmp_params
 
         return records
 
@@ -129,8 +135,9 @@ class CloudForCustomers(Source):
     def map_columns(self, url: str = None) -> Dict[str, str]:
         column_mapping = {}
         if url:
-            auth = (self.credentials["username"], self.credentials["password"])
-            response = requests.get(url, auth=auth)
+            username = self.credentials.get("username")
+            pw = self.credentials.get("password")
+            response = requests.get(url, params=self.params, auth=(username, pw))
             for sentence in response.text.split("/>"):
                 result = re.search(
                     r'(?<=Name=")([^"]+).+(sap:label=")([^"]+)+', sentence
@@ -141,40 +148,12 @@ class CloudForCustomers(Source):
                     column_mapping[key] = val
         return column_mapping
 
-    def get_response(self, url: str, params: Dict[str, Any] = None):
-        try:
-            session = requests.Session()
-            retry_strategy = Retry(
-                total=3,
-                status_forcelist=[429, 500, 502, 503, 504],
-                backoff_factor=1,
-            )
-            adapter = HTTPAdapter(max_retries=retry_strategy)
-
-            session.mount("http://", adapter)
-            session.mount("https://", adapter)
-            response = session.get(url, params=params, auth=self.auth)
-            response.raise_for_status()
-        # TODO: abstract below and put as handle_api_response() into utils.py
-        except ReadTimeout as e:
-            msg = "The connection was successful, "
-            msg += f"however the API call to {url} timed out after .... s "
-            msg += "while waiting for the server to return data."
-            raise APIError(msg)
-        except HTTPError as e:
-            raise APIError(
-                f"The API call to {url} failed. "
-                "Perhaps your account credentials need to be refreshed?",
-            ) from e
-        except (ConnectionError, Timeout) as e:
-            raise APIError(
-                f"The API call to {url} failed due to connection issues."
-            ) from e
-        except ProtocolError as e:
-            raise APIError(f"Did not receive any reponse for the API call to {url}.")
-        except Exception as e:
-            raise APIError("Unknown error.") from e
-
+    def get_response(self, url: str, timeout: tuple = (3.05, 60 * 30)) -> pd.DataFrame:
+        username = self.credentials.get("username")
+        pw = self.credentials.get("password")
+        response = handle_api_response(
+            url=url, params=self.params, auth=(username, pw), timeout=timeout
+        )
         return response
 
     def to_df(self, fields: List[str] = None, if_empty: str = "warn") -> pd.DataFrame:
