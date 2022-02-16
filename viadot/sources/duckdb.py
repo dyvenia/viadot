@@ -44,21 +44,20 @@ class DuckDB(Source):
 
         super().__init__(*args, credentials=credentials, **kwargs)
 
-        self._con = None
-
     @property
     def con(self) -> duckdb.DuckDBPyConnection:
-        """A singleton-like property for initiating a connection to the database.
+        """Return a new connection to the database. As the views are highly isolated,
+        we need a new connection for each query in order to see the changes from
+        previous queries (eg. if we create a new table and then we want to list
+        tables from INFORMATION_SCHEMA, we need to create a new DuckDB connection).
 
         Returns:
             duckdb.DuckDBPyConnection: database connection.
         """
-        if not self._con:
-            self._con = duckdb.connect(
-                database=self.credentials.get("database"),
-                read_only=self.credentials.get("read_only", False),
-            )
-        return self._con
+        return duckdb.connect(
+            database=self.credentials.get("database"),
+            read_only=self.credentials.get("read_only", False),
+        )
 
     @property
     def tables(self) -> List[str]:
