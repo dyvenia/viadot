@@ -43,7 +43,6 @@ class SAPToDuckDB(Flow):
             By default, they're taken from the local viadot config.
             duckdb_credentials (dict, optional): The config to use for connecting with DuckDB. Defaults to None.
         """
-        # Flow for downloading SAP data and loading it to DuckDB.
 
         # SAPRFCToDF
         self.query = query
