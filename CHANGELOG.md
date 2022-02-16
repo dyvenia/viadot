@@ -3,10 +3,10 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
-
 ## [Unreleased]
+
+## [0.3.0] - 2022-02-16
 ### Added
--`SQLIteInsert` check if DataFrame is empty or object is not a DataFrame
 - new source `SAPRFC` for connecting with SAP using the `pyRFC` library (requires pyrfc as well as the SAP NW RFC library that can be downloaded [here](https://support.sap.com/en/product/connectors/nwrfcsdk.html)
 - new source `DuckDB` for connecting with the `DuckDB` database
 - new task `SAPRFCToDF` for loading data from SAP to a pandas DataFrame
@@ -15,8 +15,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added `CheckColumnOrder` task
 - C4C connection with url and report_url documentation
 -`SQLIteInsert` check if DataFrame is empty or object is not a DataFrame
-- KeyVault support in Sharepoint task
-- added KeyVault support in `CloudForCustomers` tasks
+- KeyVault support in `SharepointToDF` task
+- KeyVault support in `CloudForCustomers` tasks
 
 ### Changed
 - pinned Prefect version to 0.15.11
