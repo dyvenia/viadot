@@ -40,6 +40,11 @@ class SQLite(SQL):
         return conn_str
 
     def _check_if_table_exists(self, table: str, schema: str = None) -> bool:
+        """Checks if table exists.
+        Args:
+            table (str): Table name.
+            schema (str, optional): Schema name. Defaults to None.
+        """
         fqn = f"{schema}.{table}" if schema is not None else table
         exists_query = (
             f"SELECT name FROM sqlite_master WHERE type='table' AND name='{fqn}'"

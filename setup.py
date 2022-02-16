@@ -13,6 +13,11 @@ def get_version(package: str):
 with open("README.md", "r") as fh:
     long_description = fh.read()
 
+
+extras = {
+    "sap": ["pyrfc==2.5.0", "sql-metadata==2.3.0"],
+}
+
 setuptools.setup(
     name="viadot",
     version=get_version("viadot"),
@@ -22,6 +27,7 @@ setuptools.setup(
     long_description_content_type="text/markdown",
     url="https://github.com/dyvenia/viadot",
     packages=setuptools.find_packages(),
+    extras=extras,
     classifiers=[
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: MIT License",

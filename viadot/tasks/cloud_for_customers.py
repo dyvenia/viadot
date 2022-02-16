@@ -1,8 +1,12 @@
 from prefect import task, Task
+import json
 import pandas as pd
 from ..sources import CloudForCustomers
 from typing import Any, Dict, List
 from prefect.utilities.tasks import defaults_from_attrs
+from prefect.tasks.secrets import PrefectSecret
+from .azure_key_vault import AzureKeyVaultSecret
+from viadot.config import local_config
 
 
 class C4CReportToDF(Task):
@@ -43,6 +47,8 @@ class C4CReportToDF(Task):
         env: str = "QA",
         skip: int = 0,
         top: int = 1000,
+        credentials_secret: str = None,
+        vault_name: str = None,
     ):
         """
         Task for downloading data from the Cloud for Customers to a pandas DataFrame using report URL
@@ -54,15 +60,35 @@ class C4CReportToDF(Task):
             env (str, optional): The development environments. Defaults to 'QA'.
             skip (int, optional): Initial index value of reading row. Defaults to 0.
             top (int, optional): The value of top reading row. Defaults to 1000.
+            credentials_secret (str, optional): The name of the Azure Key Vault secret containing a dictionary
+            with C4C credentials. Defaults to None.
+            vault_name (str, optional): The name of the vault from which to obtain the secret. Defaults to None.
 
         Returns:
             pd.DataFrame: The query result as a pandas DataFrame.
         """
+
+        if not credentials_secret:
+            try:
+                credentials_secret = PrefectSecret("C4C_KV").run()
+            except ValueError:
+                pass
+
+        if credentials_secret:
+            credentials_str = AzureKeyVaultSecret(
+                credentials_secret, vault_name=vault_name
+            ).run()
+            credentials = json.loads(credentials_str)[env]
+        else:
+            credentials = local_config.get("CLOUD_FOR_CUSTOMERS")[env]
+
         final_df = pd.DataFrame()
         next_batch = True
         while next_batch:
             new_url = f"{report_url}&$top={top}&$skip={skip}"
-            chunk_from_url = CloudForCustomers(report_url=new_url, env=env)
+            chunk_from_url = CloudForCustomers(
+                report_url=new_url, env=env, credentials=credentials
+            )
             df = chunk_from_url.to_df()
             final_df = final_df.append(df)
             if not final_df.empty:
@@ -110,6 +136,8 @@ class C4CToDF(Task):
         fields: List[str] = None,
         params: List[str] = None,
         if_empty: str = "warn",
+        credentials_secret: str = None,
+        vault_name: str = None,
     ):
         """
         Task for downloading data from the Cloud for Customers to a pandas DataFrame using normal URL (with query parameters).
@@ -128,12 +156,33 @@ class C4CToDF(Task):
             fields (List[str], optional): The C4C Table fields. Defaults to None.
             params (Dict[str, Any]): The query parameters like filter by creation date time. Defaults to json format.
             if_empty (str, optional): What to do if query returns no data. Defaults to "warn".
+            credentials_secret (str, optional): The name of the Azure Key Vault secret containing a dictionary
+            with C4C credentials. Defaults to None.
+            vault_name (str, optional): The name of the vault from which to obtain the secret. Defaults to None.
 
         Returns:
             pd.DataFrame: The query result as a pandas DataFrame.
         """
+        if not credentials_secret:
+            try:
+                credentials_secret = PrefectSecret("C4C_KV").run()
+            except ValueError:
+                pass
+
+        if credentials_secret:
+            credentials_str = AzureKeyVaultSecret(
+                credentials_secret, vault_name=vault_name
+            ).run()
+            credentials = json.loads(credentials_str)[env]
+        else:
+            credentials = local_config.get("CLOUD_FOR_CUSTOMERS")[env]
         cloud_for_customers = CloudForCustomers(
-            url=url, params=params, endpoint=endpoint, env=env, fields=fields
+            url=url,
+            params=params,
+            endpoint=endpoint,
+            env=env,
+            fields=fields,
+            credentials=credentials,
         )
 
         df = cloud_for_customers.to_df(if_empty=if_empty, fields=fields)

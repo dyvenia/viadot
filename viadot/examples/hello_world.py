@@ -41,7 +41,7 @@ STORAGE = Git(
     git_token_secret_name="github_token",  # name of the Prefect secret with the GitHub token
 )
 RUN_CONFIG = DockerRun(
-    image="prefecthq/prefect",
+    image="prefecthq/prefect:0.15.11-python3.8",
     env={"SOME_VAR": "value"},
     labels=["dev"],
 )
