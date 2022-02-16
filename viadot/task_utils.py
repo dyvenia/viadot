@@ -139,7 +139,6 @@ def df_to_csv(
     **kwargs,
 ) -> None:
 
-
     """
     Task to create csv file based on pandas DataFrame.
     Args:
@@ -148,15 +147,6 @@ def df_to_csv(
     sep (str, optional): The separator to use in the CSV. Defaults to "\t".
     if_exists (Literal["append", "replace", "skip"], optional): What to do if the table exists. Defaults to "replace".
     """
-
-    # create directories if they don't exist
-    cloud_host_protocols = ["az://", "adl://", "s3://"]
-    if not any(path.startswith(protocol) for protocol in cloud_host_protocols):
-        try:
-            directory = os.path.dirname(path)
-            os.makedirs(directory, exist_ok=True)
-        except:
-            pass
 
     if if_exists == "append" and os.path.isfile(path):
         csv_df = pd.read_csv(path, sep=sep)
@@ -168,6 +158,14 @@ def df_to_csv(
         return
     else:
         out_df = df
+
+    # create directories if they don't exist
+    try:
+        if not os.path.isfile(path):
+            directory = os.path.dirname(path)
+            os.makedirs(directory, exist_ok=True)
+    except:
+        pass
 
     out_df.to_csv(path, index=False, sep=sep)
 
