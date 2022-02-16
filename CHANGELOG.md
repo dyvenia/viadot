@@ -14,7 +14,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - new flow `SAPToDuckDB` for moving data from SAP to DuckDB
 - Added `CheckColumnOrder` task
 - C4C connection with url and report_url documentation
+-`SQLIteInsert` check if DataFrame is empty or object is not a DataFrame
+- KeyVault support in Sharepoint task
+- added KeyVault support in `CloudForCustomers` tasks
 
+- 
 ### Changed
 - pinned Prefect version to 0.15.11
 - `df_to_csv` now creates dirs if they don't exist
@@ -23,6 +27,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - fixed an issue with duckdb calls seeing initial db snapshot instead of the updated state (#282)
 - C4C connection with url and report_url optimization
 - column mapper in C4C source
+
 
 ## [0.2.15] - 2022-01-12
 ### Added
