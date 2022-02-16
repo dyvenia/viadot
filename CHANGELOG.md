@@ -5,16 +5,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
-## Added
-- Added `CheckColumnOrder` task
-
-## [0.2.15] - 2022-01-12
 ### Added
 - new source `SAPRFC` for connecting with SAP using the `pyRFC` library (requires pyrfc as well as the SAP NW RFC library that can be downloaded [here](https://support.sap.com/en/product/connectors/nwrfcsdk.html)
 - new source `DuckDB` for connecting with the `DuckDB` database
 - new task `SAPRFCToDF` for loading data from SAP to a pandas DataFrame
 - new tasks, `DuckDBQuery` and `DuckDBCreateTableFromParquet`, for interacting with DuckDB
 - new flow `SAPToDuckDB` for moving data from SAP to DuckDB
+- Added `CheckColumnOrder` task
+- C4C connection with url and report_url documentation
 
 ### Changed
 - pinned Prefect version to 0.15.11
@@ -22,6 +20,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 - fixed an issue with duckdb calls seeing initial db snapshot instead of the updated state (#282)
+- C4C connection with url and report_url optimization
+- column mapper in C4C source
 
 ## [0.2.15] - 2022-01-12
 ### Added
