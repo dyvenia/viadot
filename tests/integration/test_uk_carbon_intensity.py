@@ -53,3 +53,9 @@ def test_stats_to_csv(carbon):
         carbon.query(f"/intensity/stats/{from_.isoformat()}/{to.isoformat()}")
         carbon.to_csv(TEST_FILE_2, if_exists="append")
     assert os.path.isfile(TEST_FILE_2) == True
+
+
+def test_to_df_today(carbon):
+    carbon.query("/intensity/date")
+    df = carbon.to_df()
+    assert len(df) > 1

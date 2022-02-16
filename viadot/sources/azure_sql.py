@@ -1,4 +1,4 @@
-from typing import Any, Dict, List, Literal
+from typing import List, Literal
 
 from prefect.utilities import logging
 
@@ -8,6 +8,8 @@ logger = logging.get_logger(__name__)
 
 
 class AzureSQL(SQL):
+    DEFAULT_SCHEMA = "dbo"
+
     def __init__(
         self,
         *args,
@@ -131,7 +133,7 @@ class AzureSQL(SQL):
         """
 
         if not schema:
-            schema = "dbo"
+            schema = self.DEFAULT_SCHEMA
 
         list_table_info_query = f"""
             SELECT *

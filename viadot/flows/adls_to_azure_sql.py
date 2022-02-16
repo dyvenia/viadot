@@ -17,6 +17,8 @@ from ..tasks import (
     AzureSQLCreateTable,
     BCPTask,
     DownloadGitHubFile,
+    AzureSQLDBQuery,
+    CheckColumnOrder,
 )
 
 logger = logging.get_logger(__name__)
@@ -28,6 +30,8 @@ promote_to_conformed_task = AzureDataLakeCopy()
 promote_to_operations_task = AzureDataLakeCopy()
 create_table_task = AzureSQLCreateTable()
 bulk_insert_task = BCPTask()
+azure_query_task = AzureSQLDBQuery()
+check_column_order_task = CheckColumnOrder()
 
 
 @task
@@ -215,8 +219,19 @@ class ADLSToAzureSQL(Flow):
         else:
             dtypes = self.dtypes
 
+        df_reorder = check_column_order_task.bind(
+            table=self.table,
+            df=df,
+            if_exists=self.if_exists,
+            credentials_secret=self.sqldb_credentials_secret,
+            flow=self,
+        )
+
         df_to_csv = df_to_csv_task.bind(
-            df=df, path=self.local_file_path, sep=self.write_sep, flow=self
+            df=df_reorder,
+            path=self.local_file_path,
+            sep=self.write_sep,
+            flow=self,
         )
 
         promote_to_conformed_task.bind(
@@ -251,10 +266,10 @@ class ADLSToAzureSQL(Flow):
             flow=self,
         )
 
-        # dtypes.set_upstream(download_json_file_task, flow=self)
+        df_reorder.set_upstream(lake_to_df_task, flow=self)
+        df_to_csv.set_upstream(df_reorder, flow=self)
         promote_to_conformed_task.set_upstream(df_to_csv, flow=self)
         promote_to_conformed_task.set_upstream(df_to_csv, flow=self)
-        # map_data_types_task.set_upstream(download_json_file_task, flow=self)
         create_table_task.set_upstream(df_to_csv, flow=self)
         promote_to_operations_task.set_upstream(promote_to_conformed_task, flow=self)
         bulk_insert_task.set_upstream(create_table_task, flow=self)

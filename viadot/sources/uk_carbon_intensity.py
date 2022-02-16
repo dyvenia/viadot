@@ -79,7 +79,7 @@ class UKCarbonIntensity(Source):
                         "min": min_,
                     }
                 )
-            return df
+        return df
 
     def query(self, api_url: str):
         self.api_url = api_url

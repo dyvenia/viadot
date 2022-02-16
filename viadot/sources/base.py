@@ -1,6 +1,6 @@
 import os
 from abc import abstractmethod
-from typing import Any, Dict, List, Literal, NoReturn, Tuple
+from typing import Any, Dict, List, Literal, NoReturn, Tuple, Union
 
 import pandas as pd
 import pyarrow as pa
@@ -202,7 +202,7 @@ class SQL(Source):
             self._con.timeout = self.query_timeout
         return self._con
 
-    def run(self, query: str) -> List[Record]:
+    def run(self, query: str) -> Union[List[Record], bool]:
         cursor = self.con.cursor()
         cursor.execute(query)
 
