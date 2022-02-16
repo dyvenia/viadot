@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - new source `DuckDB` for connecting with the `DuckDB` database
 - new task `SAPRFCToDF` for loading data from SAP to a pandas DataFrame
 - new tasks, `DuckDBQuery` and `DuckDBCreateTableFromParquet`, for interacting with DuckDB
+- new flow `SAPToDuckDB` for moving data from SAP to DuckDB
 
 ### Changed
 - pinned Prefect version to 0.15.11
