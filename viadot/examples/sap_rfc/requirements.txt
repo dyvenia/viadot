@@ -1,0 +1,3 @@
+cython==0.29.24
+pyrfc==2.5.0
+sql-metadata==2.3.0
