@@ -1,12 +1,22 @@
 import pytest
 import os
 import pathlib
+import json
 import pandas as pd
+import configparser
 from viadot.exceptions import CredentialError
 
 from viadot.sources import Sharepoint
 from viadot.config import local_config
 from viadot.task_utils import df_get_data_types_task
+from viadot.tasks.sharepoint import SharepointToDF
+from prefect.tasks.secrets import PrefectSecret
+
+
+def get_url():
+    with open(".config/credentials.json", "r") as f:
+        config = json.load(f)
+    return config["SHAREPOINT"]["url"]
 
 
 @pytest.fixture(scope="session")
@@ -17,8 +27,8 @@ def sharepoint():
 
 @pytest.fixture(scope="session")
 def FILE_NAME(sharepoint):
-    path = "EUL Data.xlsm"
-    sharepoint.download_file(download_to_path=path)
+    path = "Questionnaires.xlsx"
+    sharepoint.download_file(download_to_path=path, download_from_path=get_url())
     yield path
     os.remove(path)
 
@@ -38,6 +48,19 @@ def test_connection(sharepoint):
     assert response.status_code == 200
 
 
+def test_sharepoint_to_df_task():
+    task = SharepointToDF()
+    credentials_secret = PrefectSecret("SHAREPOINT_KV").run()
+    res = task.run(
+        credentials_secret=credentials_secret,
+        sheet_number=0,
+        path_to_file="Questionnaires.xlsx",
+        url_to_file=get_url(),
+    )
+    assert isinstance(res, pd.DataFrame)
+    os.remove("Questionnaires.xlsx")
+
+
 def test_file_download(FILE_NAME):
     files = []
     for file in os.listdir():
@@ -47,12 +70,12 @@ def test_file_download(FILE_NAME):
 
 
 def test_autopopulating_download_from(FILE_NAME):
-    assert os.path.basename(sharepoint.download_from_path) == FILE_NAME
+    assert os.path.basename(get_url()) == FILE_NAME
 
 
 def test_file_extension(sharepoint):
-    file_ext = [".xlsm", ".xlsx"]
-    assert pathlib.Path(sharepoint.download_from_path).suffix in file_ext
+    file_ext = (".xlsm", ".xlsx")
+    assert get_url().endswith(file_ext)
 
 
 def test_file_to_df(FILE_NAME):

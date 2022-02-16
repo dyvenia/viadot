@@ -2,6 +2,7 @@ from logging import log
 from typing import Any, Dict
 
 import pandas as pd
+from pendulum import instance
 import prefect
 from prefect import Task
 from prefect.utilities.tasks import defaults_from_attrs
@@ -54,7 +55,13 @@ class SQLiteInsert(Task):
         sqlite.create_table(
             table=table_name, schema=schema, dtypes=dtypes, if_exists=if_exists
         )
-        sqlite.insert_into(table=table_name, df=df)
+        logger = prefect.context.get("logger")
+        if isinstance(df, pd.DataFrame) == False:
+            logger.warning("Object is not a pandas DataFrame")
+        elif df.empty:
+            logger.warning("DataFrame is empty")
+        else:
+            sqlite.insert_into(table=table_name, df=df)
 
         return True
 

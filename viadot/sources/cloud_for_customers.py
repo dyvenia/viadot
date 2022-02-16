@@ -129,6 +129,7 @@ class CloudForCustomers(Source):
         Returns:
             List: List of dictionaries.
         """
+
         metadata_url = self.change_to_meta_url(url)
         column_maper_dict = self.map_columns(metadata_url)
         entity_list = []
@@ -146,6 +147,7 @@ class CloudForCustomers(Source):
         return entity_list
 
     def map_columns(self, url: str = None) -> Dict[str, str]:
+
         """Fetch metadata from url used to column name map.
 
         Args:
@@ -196,6 +198,10 @@ class CloudForCustomers(Source):
         return response
 
     def to_df(self, fields: List[str] = None, if_empty: str = "warn") -> pd.DataFrame:
+        """Returns records in a pandas DataFrame.
+        Args:
+            fields (List[str], optional): List of fields to put in DataFrame. Defaults to None.
+        """
         records = self.to_records()
         df = pd.DataFrame(data=records)
         if fields:

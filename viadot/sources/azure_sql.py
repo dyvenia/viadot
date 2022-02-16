@@ -20,11 +20,13 @@ class AzureSQL(SQL):
 
     @property
     def schemas(self) -> List[str]:
+        """Returns list of schemas"""
         schemas_tuples = self.run("SELECT s.name as schema_name from sys.schemas s")
         return [schema_tuple[0] for schema_tuple in schemas_tuples]
 
     @property
     def tables(self) -> List[str]:
+        """Returns list of tables"""
         tables_tuples = self.run("SELECT * FROM information_schema.tables")
         return [table for row in tables_tuples for table in row]
 
@@ -36,6 +38,14 @@ class AzureSQL(SQL):
         sep="\t",
         if_exists: Literal = "append",
     ):
+        """Fuction to bulk insert.
+        Args:
+            table (str): Table name.
+            schema (str, optional): Schema name. Defaults to None.
+            source_path (str, optional): Full path to a data file. Defaults to one.
+            sep (str, optional):  field terminator to be used for char and widechar data files. Defaults to "\t".
+            if_exists (Literal, optional): What to do if the table already exists. Defaults to "append".
+        """
         if schema is None:
             schema = self.DEFAULT_SCHEMA
         fqn = f"{schema}.{table}"
