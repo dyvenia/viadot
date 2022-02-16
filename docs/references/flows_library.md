@@ -8,5 +8,4 @@
 ::: viadot.flows.azure_sql_transform.AzureSQLTransform
 ::: viadot.flows.supermetrics_to_adls.SupermetricsToADLS
 ::: viadot.flows.supermetrics_to_azure_sql.SupermetricsToAzureSQL
-
-
+::: viadot.flows.cloud_for_customers_report_to_adls.CloudForCustomersReportToADLS

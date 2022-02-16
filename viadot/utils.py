@@ -34,7 +34,7 @@ def handle_api_response(
         APIError: defined by user.
 
     Returns:
-        response
+        requests.models.Response
     """
     try:
         session = requests.Session()
