@@ -1,13 +1,23 @@
 import os
-
+import pytest
 import pandas as pd
+import pyarrow as pa
 from viadot.sources.base import SQL, Source
+from viadot.signals import SKIP
 
 from .test_credentials import get_credentials
 
 CREDENTIALS = get_credentials("SQL_SOURCE_TEST")
 TABLE = "test"
 PATH = "t.csv"
+
+
+class NotEmptySource(Source):
+    def to_df(self, if_empty):
+        df = pd.DataFrame.from_dict(
+            data={"country": ["italy", "germany", "spain"], "sales": [100, 50, 80]}
+        )
+        return df
 
 
 class EmptySource(Source):
@@ -22,6 +32,38 @@ def test_empty_source_skip():
     empty = EmptySource()
     result = empty.to_csv(path=PATH, if_empty="skip")
     assert result is False
+
+
+def test_to_csv():
+    src = NotEmptySource()
+    res = src.to_csv(path="testbase.csv")
+    assert res == True
+    assert os.path.isfile("testbase.csv") == True
+    os.remove("testbase.csv")
+
+
+def test_to_arrow():
+    src = NotEmptySource()
+    res = src.to_arrow("testbase.arrow")
+    assert isinstance(res, pa.Table) == True
+
+
+def test_to_excel():
+    src = NotEmptySource()
+    res = src.to_excel(path="testbase.xlsx")
+    assert res == True
+    assert os.path.isfile("testbase.xlsx") == True
+    os.remove("testbase.xlsx")
+
+
+def test_handle_if_empty(caplog):
+    src = EmptySource()
+    src._handle_if_empty(if_empty="warn")
+    assert "WARNING The query produced no data." in caplog.text
+    with pytest.raises(ValueError):
+        src._handle_if_empty(if_empty="fail")
+    with pytest.raises(SKIP):
+        src._handle_if_empty(if_empty="skip")
 
 
 # def test_to_csv_append():

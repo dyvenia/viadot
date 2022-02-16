@@ -12,6 +12,16 @@ from prefect.utilities.tasks import defaults_from_attrs
 def get_key_vault(
     credentials: str, secret_client_kwargs: dict, vault_name: str = None
 ) -> SecretClient:
+    """
+    Get Azure Key Vault.
+
+    Args:
+        credentials (str): Azure Key Vault credentials.
+        secret_client_kwargs (dict): Keyword arguments to forward to the SecretClient.
+        vault_name (str, optional): The name of the vault. Defaults to None
+
+    Returns: Azure Key Vault
+    """
     if not vault_name:
         vault_name = PrefectSecret("AZURE_DEFAULT_KEYVAULT").run()
     if credentials:

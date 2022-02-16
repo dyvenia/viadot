@@ -9,6 +9,22 @@ from ..sources import Supermetrics
 
 
 class SupermetricsToCSV(Task):
+    """
+    Task to downloading data from Supermetrics API to CSV file.
+
+    Args:
+        path (str, optional): The destination path. Defaults to "supermetrics_extract.csv".
+        max_retries (int, optional): The maximum number of retries. Defaults to 5.
+        retry_delay (timedelta, optional): The delay between task retries. Defaults to 10 seconds.
+        timeout (int, optional): Task timeout. Defaults to 30 minuntes.
+        max_rows (int, optional): Maximum number of rows the query results should contain. Defaults to 1 000 000.
+        max_cols (int, optional): Maximum number of columns the query results should contain. Defaults to None.
+        if_exists (str, optional): What to do if file already exists. Defaults to "replace".
+        if_empty (str, optional): What to do if query returns no data. Defaults to "warn".
+        sep (str, optional): The separator in a target csv file. Defaults to "/t".
+
+    """
+
     def __init__(
         self,
         *args,
@@ -74,6 +90,33 @@ class SupermetricsToCSV(Task):
         timeout: int = None,
         sep: str = None,
     ):
+
+        """
+        Task run method.
+
+        Args:
+            path (str, optional): The destination path. Defaulrs to None
+            ds_id (str, optional): A Supermetrics query parameter.
+            ds_accounts (Union[str, List[str]], optional): A Supermetrics query parameter. Defaults to None.
+            ds_segments (List[str], optional): A Supermetrics query parameter. Defaults to None.
+            ds_user (str, optional): A Supermetrics query parameter. Defaults to None.
+            fields (List[str], optional): A Supermetrics query parameter. Defaults to None.
+            date_range_type (str, optional): A Supermetrics query parameter. Defaults to None.
+            start_date (str, optional): A Supermetrics query parameter. Defaults to None.
+            end_date (str, optional) A Supermetrics query parameter. Defaults to None.
+            settings (Dict[str, Any], optional): A Supermetrics query parameter. Defaults to None.
+            filter (str, optional): A Supermetrics query parameter. Defaults to None.
+            max_rows (int, optional): A Supermetrics query parameter. Defaults to None.
+            max_columns (int, optional): A Supermetrics query parameter. Defaults to None.
+            order_columns (str, optional): A Supermetrics query parameter. Defaults to None.
+            if_exists (str, optional): What to do if file already exists. Defaults to "replace".
+            if_empty (str, optional): What to do if query returns no data. Defaults to "warn".
+            max_retries (int, optional): The maximum number of retries. Defaults to 5.
+            retry_delay (timedelta, optional): The delay between task retries. Defaults to 10 seconds.
+            timeout (int, optional): Task timeout. Defaults to 30 minuntes.
+            sep (str, optional)
+
+        """
 
         if max_retries:
             self.max_retries = max_retries

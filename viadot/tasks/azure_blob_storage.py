@@ -6,6 +6,10 @@ from ..sources import AzureBlobStorage
 
 
 class BlobFromCSV(Task):
+    """
+    Task for generating Azure Blob Storage from CSV file
+    """
+
     def __init__(self, *args, **kwargs):
         super().__init__(name="csv_to_blob_storage", *args, **kwargs)
 

@@ -1,13 +1,16 @@
 from typing import List
 import os
 import copy
+import json
 import pandas as pd
 from prefect import Task
 from prefect.utilities.tasks import defaults_from_attrs
 from prefect.utilities import logging
+from prefect.tasks.secrets import PrefectSecret
 
 from ..exceptions import ValidationError
 from ..sources import Sharepoint
+from .azure_key_vault import AzureKeyVaultSecret
 
 logger = logging.get_logger()
 
@@ -79,6 +82,16 @@ class SharepointToDF(Task):
         return df_header_list
 
     def df_replace_special_chars(self, df: pd.DataFrame):
+        """
+        Replace "\n" and "\t" with "".
+
+        Args:
+            df (pd.DataFrame): Pandas data frame to replace characters.
+
+        Returns:
+            df (pd.DataFrame): Pandas data frame
+
+        """
         return df.replace(r"\n|\t", "", regex=True)
 
     def split_sheet(
@@ -137,6 +150,8 @@ class SharepointToDF(Task):
         nrows: int = 50000,
         validate_excel_file: bool = False,
         sheet_number: int = None,
+        credentials_secret: str = None,
+        vault_name: str = None,
         **kwargs,
     ) -> None:
         """
@@ -148,16 +163,32 @@ class SharepointToDF(Task):
             nrows (int, optional): Number of rows to read at a time. Defaults to 50000.
             sheet_number (int): Sheet number to be extracted from file. Counting from 0, if None all sheets are axtracted. Defaults to None.
             validate_excel_file (bool, optional): Check if columns in separate sheets are the same. Defaults to False.
+            credentials_secret (str, optional): The name of the Azure Key Vault secret containing a dictionary with
+            ACCOUNT_NAME and Service Principal credentials (TENANT_ID, CLIENT_ID, CLIENT_SECRET). Defaults to None.
+            vault_name (str, optional): The name of the vault from which to obtain the secret. Defaults to None.
 
         Returns:
             pd.DataFrame: Pandas data frame
         """
+        if not credentials_secret:
+            # attempt to read a default for the service principal secret name
+            try:
+                credentials_secret = PrefectSecret("SHAREPOINT_KV").run()
+            except ValueError:
+                pass
+
+        if credentials_secret:
+            credentials_str = AzureKeyVaultSecret(
+                credentials_secret, vault_name=vault_name
+            ).run()
+            credentials = json.loads(credentials_str)
+
         self.path_to_file = path_to_file
         self.url_to_file = url_to_file
         path_to_file = os.path.basename(self.path_to_file)
         self.sheet_number = sheet_number
 
-        s = Sharepoint(download_from_path=self.url_to_file)
+        s = Sharepoint(download_from_path=self.url_to_file, credentials=credentials)
         s.download_file(download_to_path=path_to_file)
 
         self.nrows = nrows
