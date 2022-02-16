@@ -7,6 +7,7 @@ from ..config import local_config
 from ..utils import handle_api_response
 from ..exceptions import CredentialError
 import re
+from copy import deepcopy
 
 
 class CloudForCustomers(Source):
@@ -21,9 +22,12 @@ class CloudForCustomers(Source):
         credentials: Dict[str, Any] = None,
         **kwargs,
     ):
-        """
-        Fetches data from Cloud for Customer.
-        Args:
+        """Cloud for Customers connector build for fetching Odata source.
+        See [pyodata docs](https://pyodata.readthedocs.io/en/latest/index.html) for an explanation
+        how Odata works.
+
+        Parameters
+        ----------
             report_url (str, optional): The url to the API in case of prepared report. Defaults to None.
             url (str, optional): The url to the API. Defaults to None.
             endpoint (str, optional): The endpoint of the API. Defaults to None.
@@ -65,6 +69,9 @@ class CloudForCustomers(Source):
         return meta_url
 
     def _to_records_report(self, url: str) -> List[Dict[str, Any]]:
+        """Fetches the data from source with report_url.
+        At first enter url is from function parameter. At next is generated automaticaly.
+        """
         records = []
         while url:
             response = self.get_response(url)
@@ -77,37 +84,34 @@ class CloudForCustomers(Source):
         return records
 
     def _to_records_other(self, url: str) -> List[Dict[str, Any]]:
+        """Fetches the data from source with url.
+        At first enter url is a join of url and endpoint passed into this function.
+        At any other entering it bring `__next_url` adress, generated automatically, but without params.
+        """
         records = []
-        tmp_full_url = self.full_url
-        tmp_params = self.params
+        tmp_full_url = deepcopy(url)
+        tmp_params = deepcopy(self.params)
         while url:
-            response = self.get_response(tmp_full_url)
+            response = self.get_response(tmp_full_url, params=tmp_params)
             response_json = response.json()
             if isinstance(response_json["d"], dict):
                 # ODATA v2+ API
                 new_records = response_json["d"].get("results")
-                url = None
-                self.params = None
-                self.endpoint = None
-                url = response_json["d"].get("__next")
-                tmp_full_url = url
-
+                url = response_json["d"].get("__next", None)
             else:
                 # ODATA v1
                 new_records = response_json["d"]
-                url = None
-                self.params = None
-                self.endpoint = None
-                url = response_json.get("__next")
-                tmp_full_url = url
-
+                url = response_json.get("__next", None)
+            # prevents concatenation of previous url's with params with the same params
+            tmp_params = None
+            tmp_full_url = url
             records.extend(new_records)
-        self.params = tmp_params
-
         return records
 
     def to_records(self) -> List[Dict[str, Any]]:
-        """Download a list of entities in the records format"""
+        """
+        Download a list of entities in the records format
+        """
         if self.is_report:
             url = self.report_url
             return self._to_records_report(url=url)
@@ -116,7 +120,16 @@ class CloudForCustomers(Source):
             return self._to_records_other(url=url)
 
     def response_to_entity_list(self, dirty_json: Dict[str, Any], url: str) -> List:
-        """Creates entity list from a json reponse."""
+        """Changing request json response to list.
+
+        Args:
+            dirty_json (Dict[str, Any]): json from response.
+            url (str): the URL which trying to fetch metadata.
+
+        Returns:
+            List: List of dictionaries.
+        """
+
         metadata_url = self.change_to_meta_url(url)
         column_maper_dict = self.map_columns(metadata_url)
         entity_list = []
@@ -134,12 +147,20 @@ class CloudForCustomers(Source):
         return entity_list
 
     def map_columns(self, url: str = None) -> Dict[str, str]:
-        """Returns dictionary with mapped columns from API url."""
+
+        """Fetch metadata from url used to column name map.
+
+        Args:
+            url (str, optional): the URL which trying to fetch metadata. Defaults to None.
+
+        Returns:
+            Dict[str, str]: Property Name as key mapped to the value of sap label.
+        """
         column_mapping = {}
         if url:
             username = self.credentials.get("username")
             pw = self.credentials.get("password")
-            response = requests.get(url, params=self.params, auth=(username, pw))
+            response = requests.get(url, auth=(username, pw))
             for sentence in response.text.split("/>"):
                 result = re.search(
                     r'(?<=Name=")([^"]+).+(sap:label=")([^"]+)+', sentence
@@ -150,16 +171,30 @@ class CloudForCustomers(Source):
                     column_mapping[key] = val
         return column_mapping
 
-    def get_response(self, url: str, timeout: tuple = (3.05, 60 * 30)) -> pd.DataFrame:
-        """Returns API response in a DataFrame.
+
+    def get_response(
+        self, url: str, params: Dict[str, Any] = None, timeout: tuple = (3.05, 60 * 30)
+    ) -> requests.models.Response:
+        """Handle and raise Python exceptions during request. Using of url and service endpoint needs additional parameters
+           stores in params. report_url contain additional params in their structure.
+           In report_url scenario it can not contain params parameter.
+
         Args:
-            url (str):  The url to the API.
-            timeout (tuple, optional): Timeout value in form (connect timeout, read timeout). Defaults to (3.05, 60 * 30).
+            url (str): the URL which trying to connect.
+            params (Dict[str, Any], optional): Additional parameters like filter, used in case of normal url.
+            Defaults to None used in case of report_url, which can not contain params.
+            timeout (tuple, optional): the request times out. Defaults to (3.05, 60 * 30).
+
+        Returns:
+            requests.models.Response
         """
         username = self.credentials.get("username")
         pw = self.credentials.get("password")
         response = handle_api_response(
-            url=url, params=self.params, auth=(username, pw), timeout=timeout
+            url=url,
+            params=params,
+            auth=(username, pw),
+            timeout=timeout,
         )
         return response
 
