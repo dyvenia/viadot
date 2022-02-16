@@ -38,11 +38,11 @@ class SAPRFCToDF(Task):
 
         Args:
             query (str, optional): The query to be executed with pyRFC.
-            sep (str, optional): The separator to use when reading a CSV file. Defaults to "\t".
+            sep (str, optional): The separator to use when reading query results. Defaults to "\t".
             autopick_sep (str, optional): Whether SAPRFC should try different separators in case
             the query fails with the default one.
             credentials (dict, optional): The credentials to use to authenticate with SAP.
-            By default, their taken from the local viadot config.
+            By default, they're taken from the local viadot config.
         """
         self.query = query
         self.sep = sep
