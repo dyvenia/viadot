@@ -57,6 +57,9 @@ class GetFlowLastSuccessfulRun(Task):
         diff_type: Literal["time", "date"] = "date",
     ):
         """Calculations for set new date are needed."""
+        base_date = self.get_formatted_date(base_date, diff_type)
+        date_to_compare = self.get_formatted_date(date_to_compare, diff_type)
+
         if is_date_range_type is True:
             if diff_type == "date":
                 difference = base_date - date_to_compare
@@ -84,6 +87,23 @@ class GetFlowLastSuccessfulRun(Task):
             return True
         if diff > 1:
             return False
+
+    def get_formatted_date(
+        self,
+        time_unclean: str = None,
+        return_value: Literal["time", "date"] = "date",
+    ):
+        """from prefect format date (in string) get clean time or date in datetime type."""
+        if return_value == "time":
+            time_extracted = time_unclean.split("T")[1]
+            time_clean_str = time_extracted.split(".")[0]
+            time_clean = datetime.strptime(time_clean_str[:8], "%H:%M:%S")
+            return time_clean.time()
+
+        if return_value == "date":
+            date_extracted = time_unclean.split("T")[0]
+            date_clean = datetime.strptime(date_extracted, "%Y-%m-%d")
+            return date_clean.date()
 
     @defaults_from_attrs(
         "flow_name",
