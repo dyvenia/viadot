@@ -6,6 +6,7 @@ from prefect import Flow, Task, apply_map
 from prefect.backend import set_key_value
 from prefect.tasks.secrets import PrefectSecret
 from prefect.utilities import logging
+from tasks.prefect import GetFlowLastSuccessfulRun
 
 from ..task_utils import (
     add_ingestion_metadata_task,
@@ -34,7 +35,7 @@ download_github_file_task = DownloadGitHubFile()
 validation_task = RunGreatExpectationsValidation()
 file_to_adls_task = AzureDataLakeUpload()
 json_to_adls_task = AzureDataLakeUpload()
-prefect_extract = GetFlowLastSuccessfulRun()
+prefect_get_successful_run = GetFlowLastSuccessfulRun()
 
 
 class SupermetricsToADLS(Flow):
@@ -201,8 +202,8 @@ class SupermetricsToADLS(Flow):
 
     def gen_flow(self) -> Flow:
         if self.date_range_type is not None:
-            difference = prefect_extract.run(
-                flow_name=self.flow_name, if_date_range_type=True, flow=self
+            difference = prefect_get_successful_run.run(
+                flow_name=self.flow_name, is_date_range_type=True, flow=self
             )
             old_range_splitted = self.date_range_type.split("_")
 
@@ -214,7 +215,7 @@ class SupermetricsToADLS(Flow):
             self.date_range_type = "_".join(new_range_splitted)
 
         if self.start_date is not None and self.end_date is not None:
-            prefect_extract.run(
+            prefect_get_successful_run.run(
                 flow_name=self.flow_name, if_date_range_type=False, flow=self
             )
 
