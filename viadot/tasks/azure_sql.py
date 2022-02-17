@@ -289,6 +289,7 @@ class CheckColumnOrder(Task):
     def __init__(
         self,
         table: str = None,
+        schema: str = None,
         if_exists: Literal["fail", "replace", "append", "delete"] = "replace",
         df: pd.DataFrame = None,
         credentials_secret: str = None,
@@ -317,6 +318,7 @@ class CheckColumnOrder(Task):
     def run(
         self,
         table: str = None,
+        schema: str = None,
         if_exists: Literal["fail", "replace", "append", "delete"] = "replace",
         df: pd.DataFrame = None,
         credentials_secret: str = None,
@@ -327,6 +329,7 @@ class CheckColumnOrder(Task):
 
         Args:
             table (str, optional): SQL table name without schema. Defaults to None.
+            schema (str, optional): SQL schema name. Defaults to None.
             if_exists (Literal, optional): What to do if the table exists. Defaults to "replace".
             df (pd.DataFrame, optional): Data Frame. Defaults to None.
             credentials_secret (str, optional): The name of the Azure Key Vault secret containing a dictionary
@@ -337,7 +340,7 @@ class CheckColumnOrder(Task):
         azure_sql = AzureSQL(credentials=credentials)
 
         if if_exists not in ["replace", "fail"]:
-            query = f"SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = '{table}'"
+            query = f"SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = '{schema}' AND TABLE_NAME = '{table}'"
             result = azure_sql.run(query=query)
             sql_column_list = [table for row in result for table in row]
             df_column_list = list(df.columns)
@@ -347,7 +350,6 @@ class CheckColumnOrder(Task):
                     "Detected column order difference between the CSV file and the table. Reordering..."
                 )
                 df = self.df_change_order(df=df, sql_column_list=sql_column_list)
-                print(df)
             else:
                 return df
         else:
