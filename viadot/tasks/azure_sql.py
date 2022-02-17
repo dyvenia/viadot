@@ -347,5 +347,9 @@ class CheckColumnOrder(Task):
                     "Detected column order difference between the CSV file and the table. Reordering..."
                 )
                 df = self.df_change_order(df=df, sql_column_list=sql_column_list)
+                print(df)
+            else:
+                return df
         else:
             self.logger.info("The table will be replaced.")
+            return df

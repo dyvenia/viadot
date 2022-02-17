@@ -74,12 +74,15 @@ def map_data_types_task(json_shema_path: str):
 
 
 @task
-def df_to_csv_task(df, path: str, sep: str = "\t"):
-    for col in range(len(df.columns)):
-        df[df.columns[col]] = (
-            df[df.columns[col]].astype(str).str.replace(r"\t", "", regex=True)
-        )
-    df.to_csv(path, sep=sep, index=False)
+def df_to_csv_task(df, remove_tab, path: str, sep: str = "\t"):
+    if remove_tab == True:
+        for col in range(len(df.columns)):
+            df[df.columns[col]] = (
+                df[df.columns[col]].astype(str).str.replace(r"\t", "", regex=True)
+            )
+        df.to_csv(path, sep=sep, index=False)
+    else:
+        df.to_csv(path, sep=sep, index=False)
 
 
 class ADLSToAzureSQL(Flow):
@@ -90,6 +93,7 @@ class ADLSToAzureSQL(Flow):
         adls_path: str = None,
         read_sep: str = "\t",
         write_sep: str = "\t",
+        remove_tab: bool = False,
         overwrite_adls: bool = True,
         if_empty: str = "warn",
         adls_sp_credentials_secret: str = None,
@@ -116,6 +120,7 @@ class ADLSToAzureSQL(Flow):
             the latest file from that directory will be loaded. We assume that the files are named using timestamps.
             read_sep (str, optional): The delimiter for the source file. Defaults to "\t".
             write_sep (str, optional): The delimiter for the output CSV file. Defaults to "\t".
+            remove_tab (bool, optional): Whether to remove tab delimiters from the data. Defaults to False.
             overwrite_adls (bool, optional): Whether to overwrite the file in ADLS. Defaults to True.
             if_empty (str, optional): What to do if the Supermetrics query returns no data. Defaults to "warn".
             adls_sp_credentials_secret (str, optional): The name of the Azure Key Vault secret containing a dictionary with
@@ -167,6 +172,8 @@ class ADLSToAzureSQL(Flow):
         self.schema = schema
         self.if_exists = self._map_if_exists(if_exists)
 
+        # Generate CSV
+        self.remove_tab = remove_tab
         # BCPTask
         self.sqldb_credentials_secret = sqldb_credentials_secret
 
@@ -235,11 +242,12 @@ class ADLSToAzureSQL(Flow):
             df=df_reorder,
             path=self.local_file_path,
             sep=self.write_sep,
+            remove_tab=self.remove_tab,
             flow=self,
         )
 
         promote_to_conformed_task.bind(
-            from_path=self.local_file_path,
+            from_path=self.adls_path,
             to_path=self.adls_path_conformed,
             sp_credentials_secret=self.adls_sp_credentials_secret,
             vault_name=self.vault_name,
