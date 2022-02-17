@@ -34,7 +34,7 @@ download_github_file_task = DownloadGitHubFile()
 validation_task = RunGreatExpectationsValidation()
 file_to_adls_task = AzureDataLakeUpload()
 json_to_adls_task = AzureDataLakeUpload()
-prefect_extract = PrefectExtract()
+prefect_extract = GetFlowLastSuccessfulRun()
 
 
 class SupermetricsToADLS(Flow):
