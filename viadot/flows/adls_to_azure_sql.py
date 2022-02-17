@@ -232,6 +232,7 @@ class ADLSToAzureSQL(Flow):
 
         df_reorder = check_column_order_task.bind(
             table=self.table,
+            schema=self.schema,
             df=df,
             if_exists=self.if_exists,
             credentials_secret=self.sqldb_credentials_secret,

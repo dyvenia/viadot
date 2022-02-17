@@ -84,7 +84,7 @@ def test_check_column_order_append_same_col_number(caplog):
 
     check_column_order = CheckColumnOrder()
     with caplog.at_level(logging.WARNING):
-        check_column_order.run(table=TABLE, if_exists="append", df=df)
+        check_column_order.run(table=TABLE, schema=SCHEMA, if_exists="append", df=df)
 
     assert (
         "Detected column order difference between the CSV file and the table. Reordering..."
