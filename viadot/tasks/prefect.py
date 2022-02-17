@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Literal
 import prefect
 from datetime import date, datetime
 import pandas as pd
@@ -10,18 +10,18 @@ from prefect.utilities import logging
 logger = logging.get_logger()
 
 
-class PrefectExtract(Task):
+class GetFlowLastSuccessfulRun(Task):
     def __init__(
         self,
         flow_name: str = None,
-        if_date_range_type: bool = None,
+        is_date_range_type: bool = None,
         date: List[str] = None,
         *args,
         **kwargs,
     ):
 
         self.flow_name = flow_name
-        self.if_date_range_type = if_date_range_type
+        self.is_date_range_type = is_date_range_type
         self.date = date
 
         super().__init__(
@@ -49,31 +49,51 @@ class PrefectExtract(Task):
             if flow_run.state == "Success":
                 return flow_run.start_time
 
-    def format_date(self, last_success: str = None, data_range: bool = None):
-        """
-        Split date to date and time. Calculations for set new date are needed.
-        """
-        today = datetime.today()
-        date_success = last_success.split("T")[0]
-        date_success = datetime.strptime(date_success, "%Y-%m-%d")
+    def calculate_difference(
+        self,
+        date_to_compare: datetime = None,
+        base_date: datetime = datetime.today(),
+        is_date_range_type: bool = None,
+        diff_type: Literal["time", "date"] = "date",
+    ):
+        """Calculations for set new date are needed."""
+        if is_date_range_type is True:
+            if diff_type == "date":
+                difference = base_date - date_to_compare
+                return difference.days
+            if diff_type == "time":
+                difference_h = abs(base_date.hour - date_to_compare.hour)
+                if difference_h >= 1:
+                    return difference_h
+                else:
+                    return difference_h
+        if is_date_range_type is False:
+            return date_to_compare
 
-        if data_range is True:
-            difference = today - date_success
-            return difference.days
-        if data_range is False:
-            formated_date = date_success
-
-        return formated_date
+    def check_if_scheduled_run(
+        self, time_run: str = None, time_schedule: str = None
+    ) -> bool:
+        """Check if run was schduled or started by user"""
+        diff = self.calculate_difference(
+            date_to_compare=time_run,
+            base_date=time_schedule,
+            is_date_range_type=True,
+            diff_type="time",
+        )
+        if diff < 1:
+            return True
+        if diff > 1:
+            return False
 
     @defaults_from_attrs(
         "flow_name",
-        "if_date_range_type",
+        "is_date_range_type",
         "date",
     )
     def run(
         self,
         flow_name,
-        if_date_range_type,
+        is_date_range_type,
         date,
         **kwargs,
     ) -> None:
@@ -93,6 +113,7 @@ class PrefectExtract(Task):
                       end_time
                       start_time
                       state
+                      scheduled_start_time
                     }  
                 } 
             }
@@ -100,10 +121,31 @@ class PrefectExtract(Task):
             % flow_name
         )
 
+        ## check if is scheduled
+
         flow_runs = client.graphql(query)
         flow_runs_ids = flow_runs.data.flow[0]["flow_runs"]
 
-        last_success = self.check_fails(flow_runs_ids)
-        new_date = self.format_date(last_success, data_range=if_date_range_type)
+        last_success_start_time = self.check_fails(flow_runs_ids)
+        time_schedule = flow_runs_ids[0]["scheduled_start_time"]
+
+        is_scheduled = self.check_if_scheduled_run(
+            time_run=last_success_start_time,
+            time_schedule=time_schedule,
+        )
+        if is_scheduled is True:
+            new_date = self.calculate_difference(
+                date_to_compare=last_success_start_time,
+                base_date=time_schedule,
+                is_date_range_type=is_date_range_type,
+                diff_type="date",
+            )
+        if is_scheduled is False:
+            new_date = self.calculate_difference(
+                date_to_compare=last_success_start_time,
+                base_date=time_schedule,
+                is_date_range_type=is_date_range_type,
+                diff_type="date",
+            )
 
         return new_date
