@@ -9,7 +9,6 @@ ENV SAPNWRFC_HOME=/usr/local/sap/nwrfcsdk
 
 RUN ldconfig
 
-COPY requirements.txt .
-RUN xargs -L 1 pip install < requirements.txt
+RUN pip install pyrfc==2.5.0
 
 USER viadot
