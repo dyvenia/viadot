@@ -6,7 +6,6 @@ from prefect import Flow, Task, apply_map
 from prefect.backend import set_key_value
 from prefect.tasks.secrets import PrefectSecret
 from prefect.utilities import logging
-from tasks.prefect import GetFlowLastSuccessfulRun
 
 from ..task_utils import (
     add_ingestion_metadata_task,
@@ -25,7 +24,7 @@ from ..tasks import (
     DownloadGitHubFile,
     RunGreatExpectationsValidation,
     SupermetricsToDF,
-    PrefectExtract,
+    GetFlowLastSuccessfulRun,
 )
 
 logger = logging.get_logger(__name__)
@@ -175,6 +174,18 @@ class SupermetricsToADLS(Flow):
     def slugify(name):
         return name.replace(" ", "_").lower()
 
+    def change_date_range_task(
+        date_range_type: str = None, difference: int = None, flow: Flow = None
+    ) -> Task:
+        old_range_splitted = date_range_type.split("_")
+        old_range = int(old_range_splitted[1])
+        new_range = old_range + difference
+
+        new_range_splitted = old_range_splitted
+        new_range_splitted[1] = str(new_range)
+        date_range_type = "_".join(new_range_splitted)
+        return date_range_type
+
     def gen_supermetrics_task(
         self, ds_accounts: Union[str, List[str]], flow: Flow = None
     ) -> Task:
@@ -203,20 +214,12 @@ class SupermetricsToADLS(Flow):
     def gen_flow(self) -> Flow:
         if self.date_range_type is not None:
             difference = prefect_get_successful_run.run(
-                flow_name=self.flow_name, is_date_range_type=True, flow=self
+                flow_name=self.flow_name,
+                date_range_type=self.date_range_type,
+                flow=self,
             )
-            old_range_splitted = self.date_range_type.split("_")
-
-            old_range = int(old_range_splitted[1])
-            new_range = old_range + difference
-
-            new_range_splitted = old_range_splitted
-            new_range_splitted[1] = str(new_range)
-            self.date_range_type = "_".join(new_range_splitted)
-
-        if self.start_date is not None and self.end_date is not None:
-            prefect_get_successful_run.run(
-                flow_name=self.flow_name, if_date_range_type=False, flow=self
+            self.date_range_type = self.change_date_range_task(
+                date_range_type=self.date_range_type, difference=difference, flow=self
             )
 
         if self.parallel:
