@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Added `SQLServer` source
 
+### Changed
+- Changed the base class of `AzureSQL` to `SQLServer`
+
 ### Fixed
 - fixed OpenSSL config for old SQL Servers still using TLS < 1.2
 
