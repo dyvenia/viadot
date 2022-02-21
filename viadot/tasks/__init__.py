@@ -31,4 +31,4 @@ try:
 except ImportError:
     pass
 
-from .duckdb import DuckDBCreateTableFromParquet, DuckDBQuery
+from .duckdb import DuckDBCreateTableFromParquet, DuckDBQuery, DuckDBToDF
