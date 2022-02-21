@@ -30,19 +30,31 @@ class GetFlowLastSuccessfulRun(Task):
         )
 
     def __call__(self):
-        """Extract details from Prefect Flow"""
+        """Extract time from Prefect Flow run"""
         super().__call__(self)
 
     def iter_throught_flow_runs_ids(self, run_ids_list: List[str] = None):
         """
         Generate Flow run ids
+
+        Args:
+            run_ids_list (List[str], optional): List of Flow run ids. Defaults to None.
+
+        Yields:
+            str: Flow id
         """
         for id in range(len(run_ids_list)):
             yield run_ids_list[id]
 
-    def get_time_from_last_successful_run(self, flow_run_ids: str = None):
+    def get_time_from_last_successful_run(self, flow_run_ids: List[str] = None) -> str:
         """
-        Get start_time from last Flow run where state was success
+        Get start_time from last Flow run where state was success.
+
+        Args:
+            flow_run_ids (List[str], optional): List of Flow run ids. Defaults to None.
+
+        Returns:
+            str: start_time of Flow run
         """
         for flow_run in self.iter_throught_flow_runs_ids(flow_run_ids):
             if flow_run.state == "Success":
@@ -54,7 +66,14 @@ class GetFlowLastSuccessfulRun(Task):
         base_date: str = str(datetime.today()),
         diff_type: Literal["time", "date"] = "date",
     ):
-        """Calculations for set new date are needed."""
+        """
+        Calculate diffrence between two dates.
+
+        Args:
+            date_to_compare (str, optional): Date to compare with base_date. Defaults to None.
+            base_date (str, optional): The base date - can be saved as Prefect schedule date. Defaults to str(datetime.today()).
+            diff_type (Literal["time", "date"], optional): _description_. Defaults to "date".
+        """
         base_date = self.get_formatted_date(base_date, diff_type)
         date_to_compare = self.get_formatted_date(date_to_compare, diff_type)
 
@@ -76,7 +95,16 @@ class GetFlowLastSuccessfulRun(Task):
     def check_if_scheduled_run(
         self, time_run: str = None, time_schedule: str = None
     ) -> bool:
-        """Check if run was schduled or started by user"""
+        """
+        Check if run was schduled or started by user.
+
+        Args:
+            time_run (str, optional): The time the Flow was started. Defaults to None.
+            time_schedule (str, optional): Scheduled time of Flow. Defaults to None.
+
+        Returns:
+            bool: True if flow run was started automatically. False if Flow was started by user.
+        """
         diff = self.calculate_difference(
             date_to_compare=time_run,
             base_date=time_schedule,
@@ -93,8 +121,14 @@ class GetFlowLastSuccessfulRun(Task):
         return_value: Literal["time", "date"] = "date",
     ):
         """
-        from prefect format date (in string) get clean time or date in datetime type.
-        - date from Prefect: '2022-02-21T01:00:00+00:00'
+        Format date from "2022-02-21T01:00:00+00:00" to date or time.
+
+        Args:
+            time_unclean (str, optional): _description_. Defaults to None.
+            return_value (Literal["time", "date"], optional): Choose the format to be extracted from datetime - time or date. Defaults to "date".
+
+        Returns:
+            datetime: Date (datetime.date) or time (datetime.time)
         """
         if return_value == "time":
             time_extracted = time_unclean.split("T")[1]
