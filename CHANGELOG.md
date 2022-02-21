@@ -3,10 +3,16 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
 ## [Unreleased]
-## [0.3.2] - 2022-02-17
 ### Fixed
-- fixed an issue with schema info within `CheckColumnOrder` class. 
+- fixed OpenSSL config for old SQL Servers still using TLS < 1.2
+
+## [0.3.2] - 2022-02-17
+
+### Fixed
+- fixed an issue with schema info within `CheckColumnOrder` class.
+
 ## [0.3.1] - 2022-02-17
 ### Changed
 -`ADLSToAzureSQL` - added `remove_tab`  parameter to remove uncessery tab separators from data. 
