@@ -1,3 +1,4 @@
+from os import times_result
 from typing import List, Literal
 import prefect
 from datetime import date, datetime
@@ -14,15 +15,13 @@ class GetFlowLastSuccessfulRun(Task):
     def __init__(
         self,
         flow_name: str = None,
-        is_date_range_type: bool = None,
-        date: List[str] = None,
+        date_range_type: bool = None,
         *args,
         **kwargs,
     ):
 
         self.flow_name = flow_name
-        self.is_date_range_type = is_date_range_type
-        self.date = date
+        self.date_range_type = date_range_type
 
         super().__init__(
             name="prefect_extract_details",
@@ -41,7 +40,7 @@ class GetFlowLastSuccessfulRun(Task):
         for id in range(len(run_ids_list)):
             yield run_ids_list[id]
 
-    def check_fails(self, flow_run_ids: str = None):
+    def get_time_from_last_successful_run(self, flow_run_ids: str = None):
         """
         Get start_time from last Flow run where state was success
         """
@@ -51,27 +50,28 @@ class GetFlowLastSuccessfulRun(Task):
 
     def calculate_difference(
         self,
-        date_to_compare: datetime = None,
-        base_date: datetime = datetime.today(),
-        is_date_range_type: bool = None,
+        date_to_compare: str = None,
+        base_date: str = str(datetime.today()),
         diff_type: Literal["time", "date"] = "date",
     ):
         """Calculations for set new date are needed."""
         base_date = self.get_formatted_date(base_date, diff_type)
         date_to_compare = self.get_formatted_date(date_to_compare, diff_type)
 
-        if is_date_range_type is True:
-            if diff_type == "date":
-                difference = base_date - date_to_compare
-                return difference.days
-            if diff_type == "time":
-                difference_h = abs(base_date.hour - date_to_compare.hour)
-                if difference_h >= 1:
-                    return difference_h
-                else:
-                    return difference_h
-        if is_date_range_type is False:
-            return date_to_compare
+        if diff_type == "date":
+            difference = abs(base_date - date_to_compare)
+            return difference.days
+
+        if diff_type == "time":
+            difference_h = abs(base_date.hour - date_to_compare.hour)
+            if difference_h <= 1:
+                difference_m = date_to_compare.minute - base_date.minute
+                if difference_m <= 0:
+                    return 1
+                if difference_m > 0:
+                    return float(f"1.{(abs(difference_m))}")
+            if difference_h > 1:
+                return difference_h
 
     def check_if_scheduled_run(
         self, time_run: str = None, time_schedule: str = None
@@ -80,12 +80,11 @@ class GetFlowLastSuccessfulRun(Task):
         diff = self.calculate_difference(
             date_to_compare=time_run,
             base_date=time_schedule,
-            is_date_range_type=True,
             diff_type="time",
         )
         if diff < 1:
             return True
-        if diff > 1:
+        if diff >= 1:
             return False
 
     def get_formatted_date(
@@ -93,7 +92,10 @@ class GetFlowLastSuccessfulRun(Task):
         time_unclean: str = None,
         return_value: Literal["time", "date"] = "date",
     ):
-        """from prefect format date (in string) get clean time or date in datetime type."""
+        """
+        from prefect format date (in string) get clean time or date in datetime type.
+        - date from Prefect: '2022-02-21T01:00:00+00:00'
+        """
         if return_value == "time":
             time_extracted = time_unclean.split("T")[1]
             time_clean_str = time_extracted.split(".")[0]
@@ -107,14 +109,12 @@ class GetFlowLastSuccessfulRun(Task):
 
     @defaults_from_attrs(
         "flow_name",
-        "is_date_range_type",
-        "date",
+        "date_range_type",
     )
     def run(
         self,
         flow_name,
-        is_date_range_type,
-        date,
+        date_range_type,
         **kwargs,
     ) -> None:
 
@@ -141,14 +141,11 @@ class GetFlowLastSuccessfulRun(Task):
             % flow_name
         )
 
-        ## check if is scheduled
-
         flow_runs = client.graphql(query)
         flow_runs_ids = flow_runs.data.flow[0]["flow_runs"]
 
-        last_success_start_time = self.check_fails(flow_runs_ids)
+        last_success_start_time = self.get_time_from_last_successful_run(flow_runs_ids)
         time_schedule = flow_runs_ids[0]["scheduled_start_time"]
-
         is_scheduled = self.check_if_scheduled_run(
             time_run=last_success_start_time,
             time_schedule=time_schedule,
@@ -157,15 +154,9 @@ class GetFlowLastSuccessfulRun(Task):
             new_date = self.calculate_difference(
                 date_to_compare=last_success_start_time,
                 base_date=time_schedule,
-                is_date_range_type=is_date_range_type,
                 diff_type="date",
             )
         if is_scheduled is False:
-            new_date = self.calculate_difference(
-                date_to_compare=last_success_start_time,
-                base_date=time_schedule,
-                is_date_range_type=is_date_range_type,
-                diff_type="date",
-            )
+            return self.date_range_type
 
         return new_date

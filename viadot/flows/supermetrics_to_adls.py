@@ -175,9 +175,9 @@ class SupermetricsToADLS(Flow):
         return name.replace(" ", "_").lower()
 
     def change_date_range_task(
-        date_range_type: str = None, difference: int = None, flow: Flow = None
+        self, date_range: str = None, difference: int = None, flow: Flow = None
     ) -> Task:
-        old_range_splitted = date_range_type.split("_")
+        old_range_splitted = date_range.split("_")
         old_range = int(old_range_splitted[1])
         new_range = old_range + difference
 
@@ -219,7 +219,7 @@ class SupermetricsToADLS(Flow):
                 flow=self,
             )
             self.date_range_type = self.change_date_range_task(
-                date_range_type=self.date_range_type, difference=difference, flow=self
+                date_range=self.date_range_type, difference=difference, flow=self
             )
 
         if self.parallel:
