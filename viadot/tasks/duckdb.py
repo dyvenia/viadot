@@ -2,6 +2,7 @@ from typing import Any, List, Literal, Tuple, Union, NoReturn
 
 from prefect import Task
 from prefect.utilities.tasks import defaults_from_attrs
+import pandas as pd
 
 from ..sources import DuckDB
 
@@ -128,3 +129,70 @@ class DuckDBCreateTableFromParquet(Task):
             self.logger.info(
                 f"Table {fqn} has not been created as if_exists is set to {if_exists}."
             )
+
+
+class DuckDBToDF(Task):
+    """
+    Load a table from DuckDB to a pandas DataFrame.
+
+    Args:
+        schema (str, optional): Source schema.
+        table (str, optional): Source table.
+        if_empty (Literal[, optional): What to do if the query returns no data.
+        Defaults to "warn".
+        credentials (dict, optional): The config to use for connecting with the db.
+
+    Returns:
+        pd.DataFrame: a pandas DataFrame containing the table data.
+    """
+
+    def __init__(
+        self,
+        schema: str = None,
+        table: str = None,
+        if_empty: Literal["warn", "skip", "fail"] = "warn",
+        credentials: dict = None,
+        *args,
+        **kwargs,
+    ):
+
+        self.schema = schema
+        self.table = table
+        self.if_empty = if_empty
+        self.credentials = credentials
+
+        super().__init__(name="duckdb_to_df", *args, **kwargs)
+
+    @defaults_from_attrs("schema", "table", "if_empty", "credentials")
+    def run(
+        self,
+        schema: str = None,
+        table: str = None,
+        if_empty: Literal["warn", "skip", "fail"] = None,
+        credentials: dict = None,
+    ) -> pd.DataFrame:
+        """Load a DuckDB table into a pandas DataFrame.
+
+        Args:
+            schema (str, optional): Source schema.
+            table (str, optional): Source table.
+            if_empty (Literal[, optional): What to do if the query returns no data.
+            Defaults to "warn".
+            credentials (dict, optional): The config to use for connecting with the db.
+
+        Returns:
+            pd.DataFrame: a pandas DataFrame containing the table data.
+        """
+
+        if table is None:
+            raise ValueError("Table is required.")
+
+        duckdb = DuckDB(credentials=credentials)
+
+        # run the query and fetch the results if it's a select
+        fqn = f"{schema}.{table}" if schema else table
+        query = f"SELECT * FROM {fqn}"
+        df = duckdb.to_df(query, if_empty=if_empty)
+
+        self.logger.info(f"Data has been loaded sucessfully.")
+        return df

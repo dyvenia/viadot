@@ -115,7 +115,7 @@ class DuckDB(Source):
         cursor.close()
         return result
 
-    def _handle_if_empty(self, if_empty: str = None) -> NoReturn:
+    def _handle_if_empty(self, if_empty: str = "warn") -> NoReturn:
         if if_empty == "warn":
             logger.warning("The query produced no data.")
         elif if_empty == "skip":

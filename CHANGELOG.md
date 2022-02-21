@@ -6,6 +6,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 ### Added
 - Added `SQLServer` source
+- Added `DuckDBToDF` task
 
 ### Changed
 - Changed the base class of `AzureSQL` to `SQLServer`
