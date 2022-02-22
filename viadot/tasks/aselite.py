@@ -5,6 +5,7 @@ from prefect.tasks.secrets import PrefectSecret
 from .azure_key_vault import AzureKeyVaultSecret
 from viadot.config import local_config
 import json
+from viadot.sources.azure_sql import AzureSQL
 
 
 class ASELiteToDF(Task):
@@ -46,9 +47,9 @@ class ASELiteToDF(Task):
             ).run()
             credentials = json.loads(credentials_str)
         else:
-            credentials = local_config.get("xxxxxxxxxxxxxxxxxxxxxxxxxxx")
-        aselite = ASElite(credentials=credentials, db_name=db_name)
+            credentials = local_config.get("ASLite_SQL")
 
-        df = aselite.to_df(query=query, if_empty=if_empty)
-
-        return df
+        ase = AzureSQL(credentials=credentials)
+        ase.conn_str
+        ase.con
+        return ase.to_df(query)
