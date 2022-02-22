@@ -7,7 +7,7 @@ from viadot.sources import DuckDB
 BRONZE_SCHEMA = "bronze_schema"
 SILVER_SCHEMA = "silver_schema"
 TABLE = "test_table"
-DATABASE_PATH = "test_db_123.duckdb"
+DATABASE_PATH = "test_db_1234.duckdb"
 CREDENTIALS = dict(database=DATABASE_PATH)
 
 
