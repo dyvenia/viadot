@@ -1,4 +1,4 @@
-FROM viadot:latest
+FROM viadot:dev
 
 USER root
 
@@ -11,5 +11,9 @@ RUN ldconfig
 
 COPY requirements.txt .
 RUN xargs -L 1 pip install < requirements.txt
+
+ARG HTTP_PROXY=""
+ENV HTTP_PROXY=$HTTP_PROXY
+RUN git config --global http.proxy ${HTTP_PROXY:-""}
 
 USER viadot
