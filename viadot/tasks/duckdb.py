@@ -190,7 +190,7 @@ class DuckDBToDF(Task):
         duckdb = DuckDB(credentials=credentials)
 
         # run the query and fetch the results if it's a select
-        fqn = f"{schema}.{table}" if schema else table
+        fqn = f"{schema}.{table}" if schema is not None else table
         query = f"SELECT * FROM {fqn}"
         df = duckdb.to_df(query, if_empty=if_empty)
 

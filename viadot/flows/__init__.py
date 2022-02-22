@@ -14,3 +14,5 @@ try:
     from .sap_to_duckdb import SAPToDuckDB
 except ImportError:
     pass
+
+from .duckdb_transform import DuckDBTransform

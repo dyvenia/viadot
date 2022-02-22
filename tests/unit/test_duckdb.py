@@ -7,15 +7,11 @@ import os
 TABLE = "test_table"
 SCHEMA = "test_schema"
 TABLE_MULTIPLE_PARQUETS = "test_multiple_parquets"
-DATABASE_PATH = "test.duckdb"
+DATABASE_PATH = "test_db_123.duckdb"
 
 
 @pytest.fixture(scope="session")
 def duckdb():
-    try:
-        os.remove(DATABASE_PATH)
-    except FileNotFoundError:
-        pass
     duckdb = DuckDB(credentials=dict(database=DATABASE_PATH))
     yield duckdb
     os.remove(DATABASE_PATH)

@@ -1,4 +1,3 @@
-from multiprocessing.sharedctypes import Value
 from typing import Any, List, Literal, NoReturn, Tuple, Union
 
 import pandas as pd
@@ -69,6 +68,20 @@ class DuckDB(Source):
         tables_meta: List[Tuple] = self.run("SELECT * FROM information_schema.tables")
         tables = [table_meta[1] + "." + table_meta[2] for table_meta in tables_meta]
         return tables
+
+    @property
+    def schemas(self) -> List[str]:
+        """Show the list of schemas.
+
+        Returns:
+            List[str]: The list ofschemas.
+        """
+        self.logger.warning(
+            "DuckDB does not expose a way to list schemas. `DuckDB.schemas` only contains schemas with tables."
+        )
+        tables_meta: List[Tuple] = self.run("SELECT * FROM information_schema.tables")
+        schemas = [table_meta[1] for table_meta in tables_meta]
+        return schemas
 
     def to_df(self, query: str, if_empty: str = None) -> pd.DataFrame:
         if query.upper().startswith("SELECT"):
@@ -162,9 +175,7 @@ class DuckDB(Source):
             elif if_exists == "skip":
                 return False
 
-        schema_exists = self._check_if_schema_exists(schema)
-        if not schema_exists:
-            self.run(f"CREATE SCHEMA {schema}")
+        self.run(f"CREATE SCHEMA IF NOT EXISTS {schema}")
 
         self.logger.info(f"Creating table {fqn}...")
         ingest_query = f"CREATE TABLE {fqn} AS SELECT * FROM '{path}';"
