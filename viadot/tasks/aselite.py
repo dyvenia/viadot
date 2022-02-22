@@ -10,10 +10,11 @@ from viadot.sources.azure_sql import AzureSQL
 
 class ASELiteToDF(Task):
     def __init__(
-        self, credentials: Dict[str, Any] = None, db_name: str = None, *args, **kwargs
+        self, credentials: Dict[str, Any] = None, db_name: str = None, query: str =None, *args, **kwargs
     ):
         self.credentials = credentials
         self.db_name = db_name
+        self.query = query
 
         super().__init__(
             name="aselite",
@@ -52,4 +53,5 @@ class ASELiteToDF(Task):
         ase = AzureSQL(credentials=credentials)
         ase.conn_str
         ase.con
-        return ase.to_df(query)
+        final_df = ase.to_df(self.query)
+        return final_df

@@ -195,6 +195,11 @@ def cleanup_validation_clutter(expectations_path):
     shutil.rmtree(ge_project_path)
 
 
+@task
+def df_converts_bytes_to_int(cls, df):
+    return df.applymap(lambda x: list(map(int, x)) if isinstance(x, bytes) else x)
+
+
 class Git(Git):
     @property
     def git_clone_url(self):
