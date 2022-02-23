@@ -8,4 +8,3 @@ from .sharepoint import Sharepoint
 # APIS
 from .uk_carbon_intensity import UKCarbonIntensity
 from .sqlite import SQLite
-from .aselite import ASELite
