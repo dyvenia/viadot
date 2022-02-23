@@ -63,7 +63,7 @@ class GetFlowNewDateRange(Task):
         for flow_run in self.iter_throught_flow_runs(
             flow_runs_details=flow_runs_details
         ):
-            if flow_run["state"] == "Failed":
+            if flow_run["state"] == "Success":
                 return flow_run["start_time"]
 
     def calculate_difference(
