@@ -1,8 +1,6 @@
 from prefect import Task
-from ..sources import ASELite
-from ..sources import AzureSQL
 from viadot.sources.base import SQL
-from typing import Any, Dict, List
+from typing import Any, Dict
 from prefect.tasks.secrets import PrefectSecret
 from .azure_key_vault import AzureKeyVaultSecret
 from viadot.config import local_config
@@ -23,7 +21,7 @@ class ASELiteToDF(Task):
         Args:
             credentials (Dict[str, Any], optional): ASElite SQL Database credentials. Defaults to None.
             db_name(str, optional): Name of ASElite database. Defaults to None.
-            query(str, optional),
+            query(str, optional): Query to perform on a database. Defaults to None.
         Returns: Pandas DataFrame
         """
         self.credentials = credentials
@@ -31,13 +29,13 @@ class ASELiteToDF(Task):
         self.query = query
 
         super().__init__(
-            name="aselite",
+            name="ASElite_to_df",
             *args,
             **kwargs,
         )
 
     def __call__(self, *args, **kwargs):
-        """Download aselite to df"""
+        """Download from aselite database to df"""
         return super().__call__(*args, **kwargs)
 
     def run(
