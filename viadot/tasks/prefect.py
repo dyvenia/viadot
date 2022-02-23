@@ -11,7 +11,7 @@ from prefect.utilities import logging
 logger = logging.get_logger()
 
 
-class GetFlowLastSuccessfulRun(Task):
+class GetFlowNewDateRange(Task):
     def __init__(
         self,
         flow_name: str = None,
@@ -33,32 +33,38 @@ class GetFlowLastSuccessfulRun(Task):
         """Extract time from Prefect Flow run"""
         super().__call__(self)
 
-    def iter_throught_flow_runs_ids(self, run_ids_list: List[str] = None):
+    def iter_throught_flow_runs(self, flow_runs_details: List[dict] = None):
         """
         Generate Flow run ids
 
         Args:
-            run_ids_list (List[str], optional): List of Flow run ids. Defaults to None.
+            flow_runs_details (List[dict], optional): List of Flow run details. Defaults to None.
 
         Yields:
-            str: Flow id
+            dict: Flow run details
         """
-        for id in range(len(run_ids_list)):
-            yield run_ids_list[id]
+        for x in range(len(flow_runs_details)):
+            for flow_run in flow_runs_details[x]["flow_runs"]:
+                yield flow_run
 
-    def get_time_from_last_successful_run(self, flow_run_ids: List[str] = None) -> str:
+    def get_time_from_last_successful_run(
+        self, flow_runs_details: List[dict] = None
+    ) -> str:
         """
         Get start_time from last Flow run where state was success.
 
         Args:
-            flow_run_ids (List[str], optional): List of Flow run ids. Defaults to None.
+            flow_runs_details (List[dict], optional): List of Flow run details. Defaults to None.
 
         Returns:
-            str: start_time of Flow run
+            str: Flow run start_time
         """
-        for flow_run in self.iter_throught_flow_runs_ids(flow_run_ids):
-            if flow_run.state == "Success":
-                return flow_run.start_time
+
+        for flow_run in self.iter_throught_flow_runs(
+            flow_runs_details=flow_runs_details
+        ):
+            if flow_run["state"] == "Failed":
+                return flow_run["start_time"]
 
     def calculate_difference(
         self,
@@ -83,12 +89,16 @@ class GetFlowLastSuccessfulRun(Task):
 
         if diff_type == "time":
             difference_h = abs(base_date.hour - date_to_compare.hour)
-            if difference_h <= 1:
-                difference_m = date_to_compare.minute - base_date.minute
-                if difference_m <= 0:
-                    return 1
+            difference_m = date_to_compare.minute - base_date.minute
+            if difference_h == 1:
+                if difference_m < 0:
+                    return 0
                 if difference_m > 0:
                     return float(f"1.{(abs(difference_m))}")
+                if difference_m == 0:
+                    return 1
+            if difference_h < 1:
+                return 0
             if difference_h > 1:
                 return difference_h
 
@@ -110,9 +120,9 @@ class GetFlowLastSuccessfulRun(Task):
             base_date=time_schedule,
             diff_type="time",
         )
-        if diff < 1:
+        if diff <= 1:
             return True
-        if diff >= 1:
+        if diff > 1:
             return False
 
     def get_formatted_date(
@@ -141,6 +151,16 @@ class GetFlowLastSuccessfulRun(Task):
             date_clean = datetime.strptime(date_extracted, "%Y-%m-%d")
             return date_clean.date()
 
+    def change_date_range(self, date_range: str = None, difference: int = None):
+        old_range_splitted = date_range.split("_")
+        old_range = int(old_range_splitted[1])
+        new_range = old_range + difference
+
+        new_range_splitted = old_range_splitted
+        new_range_splitted[1] = str(new_range)
+        date_range_type = "_".join(new_range_splitted)
+        return date_range_type
+
     @defaults_from_attrs(
         "flow_name",
         "date_range_type",
@@ -151,9 +171,6 @@ class GetFlowLastSuccessfulRun(Task):
         date_range_type,
         **kwargs,
     ) -> None:
-
-        client = prefect.Client()
-
         query = (
             """
              {           
@@ -175,22 +192,31 @@ class GetFlowLastSuccessfulRun(Task):
             % flow_name
         )
 
+        client = prefect.Client()
         flow_runs = client.graphql(query)
-        flow_runs_ids = flow_runs.data.flow[0]["flow_runs"]
+        flow_runs_details = flow_runs.data.flow
 
-        last_success_start_time = self.get_time_from_last_successful_run(flow_runs_ids)
-        time_schedule = flow_runs_ids[0]["scheduled_start_time"]
+        time_schedule = flow_runs_details[0]["flow_runs"][0]["scheduled_start_time"]
+
+        last_success_start_time = self.get_time_from_last_successful_run(
+            flow_runs_details
+        )
+
         is_scheduled = self.check_if_scheduled_run(
             time_run=last_success_start_time,
             time_schedule=time_schedule,
         )
+
         if is_scheduled is True:
-            new_date = self.calculate_difference(
+            difference_days = self.calculate_difference(
                 date_to_compare=last_success_start_time,
                 base_date=time_schedule,
                 diff_type="date",
             )
-        if is_scheduled is False:
-            return self.date_range_type
+            date_range_type = self.change_date_range(
+                date_range=date_range_type, difference=difference_days
+            )
+            return date_range_type
 
-        return new_date
+        if is_scheduled is False:
+            return 0

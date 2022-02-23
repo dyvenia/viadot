@@ -24,7 +24,7 @@ from ..tasks import (
     DownloadGitHubFile,
     RunGreatExpectationsValidation,
     SupermetricsToDF,
-    GetFlowLastSuccessfulRun,
+    GetFlowNewDateRange,
 )
 
 logger = logging.get_logger(__name__)
@@ -34,7 +34,7 @@ download_github_file_task = DownloadGitHubFile()
 validation_task = RunGreatExpectationsValidation()
 file_to_adls_task = AzureDataLakeUpload()
 json_to_adls_task = AzureDataLakeUpload()
-prefect_get_successful_run = GetFlowLastSuccessfulRun()
+prefect_get_new_date_range = GetFlowNewDateRange()
 
 
 class SupermetricsToADLS(Flow):
@@ -174,18 +174,6 @@ class SupermetricsToADLS(Flow):
     def slugify(name):
         return name.replace(" ", "_").lower()
 
-    def change_date_range_task(
-        self, date_range: str = None, difference: int = None, flow: Flow = None
-    ) -> Task:
-        old_range_splitted = date_range.split("_")
-        old_range = int(old_range_splitted[1])
-        new_range = old_range + difference
-
-        new_range_splitted = old_range_splitted
-        new_range_splitted[1] = str(new_range)
-        date_range_type = "_".join(new_range_splitted)
-        return date_range_type
-
     def gen_supermetrics_task(
         self, ds_accounts: Union[str, List[str]], flow: Flow = None
     ) -> Task:
@@ -213,13 +201,10 @@ class SupermetricsToADLS(Flow):
 
     def gen_flow(self) -> Flow:
         if self.date_range_type is not None:
-            difference = prefect_get_successful_run.run(
+            self.date_range_type = prefect_get_new_date_range.run(
                 flow_name=self.flow_name,
                 date_range_type=self.date_range_type,
                 flow=self,
-            )
-            self.date_range_type = self.change_date_range_task(
-                date_range=self.date_range_type, difference=difference, flow=self
             )
 
         if self.parallel:
