@@ -14,7 +14,7 @@ class ASELitetoADLS(Flow):
         self,
         name: str,
         query: str = None,
-        #db_name: str = None,
+        # db_name: str = None,
         sqldb_credentials_secret: str = None,
         vault_name: str = None,
         file_path: str = "None",
@@ -30,8 +30,7 @@ class ASELitetoADLS(Flow):
 
         Args:
             name (str): The name of the flow.
-            query (str):
-            db_name (str):
+            query (str): Query to perform on a database. Defaults to None.
             sqldb_credentials_secret (str, optional): The name of the Azure Key Vault secret containing a dictionary with
             ASElite SQL Database credentials. Defaults to None.
             vault_name (str, optional): The name of the vault from which to obtain the secrets. Defaults to None.
@@ -42,7 +41,7 @@ class ASELitetoADLS(Flow):
             overwrite (str, optional): Whether to overwrite the destination file. Defaults to True.
         """
         self.query = query
-        #self.db_name = db_name
+        # self.db_name = db_name
         self.sqldb_credentials_secret = sqldb_credentials_secret
         self.vault_name = vault_name
         self.overwrite = overwrite
@@ -59,7 +58,7 @@ class ASELitetoADLS(Flow):
     def gen_flow(self) -> Flow:
         df = df_task.bind(
             query=self.query,
-            #db_name=self.db_name,
+            # db_name=self.db_name,
             credentials_secret=self.sqldb_credentials_secret,
             vault_name=self.vault_name,
             flow=self,
