@@ -59,7 +59,6 @@ def test_df_converts_bytes_to_int():
 
     df = pd.DataFrame.from_dict(dane)
     test_df = df_converts_bytes_to_int.run(df)
-    test_df = df_converts_bytes_to_int.run(df)
     lst = test_df["RKZ"][0]
     is_it_or_not = all(isinstance(x, (int, int)) for x in lst)
     assert is_it_or_not == True
