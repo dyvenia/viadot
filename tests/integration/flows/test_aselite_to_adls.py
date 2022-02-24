@@ -49,8 +49,8 @@ def test_aselite_to_adls():
     flow = ASELitetoADLS(
         "Test flow ",
         query=query_designer,
-        sqldb_credentials_secret="AIA-ASELITE-QA",
-        vault_name="azuwevelcrkeyv001s",
+        sqldb_credentials_secret=credentials_secret,
+        vault_name=vault_name,
         file_path=TMP_FILE_NAME,
         to_path="raw/supermetrics/mp/result_df_flow_at_des_m.csv",
         run_config=RUN_CONFIG,
