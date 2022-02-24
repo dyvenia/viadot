@@ -10,23 +10,16 @@ import prefect
 
 class ASELiteToDF(Task):
     def __init__(
-        self,
-        credentials: Dict[str, Any] = None,
-        db_name: str = None,
-        query: str = None,
-        *args,
-        **kwargs
+        self, credentials: Dict[str, Any] = None, query: str = None, *args, **kwargs
     ):
         """
         Task for obtaining data from ASElite source.
         Args:
             credentials (Dict[str, Any], optional): ASElite SQL Database credentials. Defaults to None.
-            db_name(str, optional): Name of ASElite database. Defaults to None.
             query(str, optional): Query to perform on a database. Defaults to None.
         Returns: Pandas DataFrame
         """
         self.credentials = credentials
-        self.db_name = db_name
         self.query = query
 
         super().__init__(
@@ -42,9 +35,7 @@ class ASELiteToDF(Task):
     def run(
         self,
         credentials: Dict[str, Any] = None,
-        # db_name: str = None,
         query: str = None,
-        if_empty: str = None,
         credentials_secret: str = None,
         vault_name: str = None,
     ):
@@ -65,8 +56,8 @@ class ASELiteToDF(Task):
             credentials = local_config.get("ASELite_SQL")
             logger.info("Loaded credentials from local source")
 
-        aselite = SQL(credentials=credentials)  # , db_name=db_name
+        aselite = SQL(credentials=credentials)
         logger.info("Connected to ASELITE SOURCE")
-        df = aselite.to_df(query=query, if_empty=if_empty)
+        df = aselite.to_df(query=self.query)
         logger.info("Succefully collected data from query")
         return df
