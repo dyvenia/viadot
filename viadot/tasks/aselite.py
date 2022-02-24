@@ -34,8 +34,8 @@ class ASELiteToDF(Task):
 
     def run(
         self,
+        query: str,
         credentials: Dict[str, Any] = None,
-        query: str = None,
         credentials_secret: str = None,
         vault_name: str = None,
     ):
@@ -58,6 +58,6 @@ class ASELiteToDF(Task):
 
         aselite = SQL(credentials=credentials)
         logger.info("Connected to ASELITE SOURCE")
-        df = aselite.to_df(query=self.query)
+        df = aselite.to_df(query=query)
         logger.info("Succefully collected data from query")
         return df
