@@ -5,6 +5,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+
+### Added
+- Added new task `GetFlowNewDateRange` to change date range based on Prefect flows
 ### Changed
 - pinned Prefect version to 0.15.11
 - `df_to_csv` now creates dirs if they don't exist
