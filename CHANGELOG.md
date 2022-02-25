@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added `SQLServer` source
 - Added `DuckDBToDF` task
 - Added `DuckDBTransform` flow
+- Added `SQLServerCreateTable` task
 
 ### Changed
 - Changed the base class of `AzureSQL` to `SQLServer`

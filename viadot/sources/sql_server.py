@@ -22,8 +22,10 @@ class SQLServer(SQL):
     @property
     def tables(self) -> List[str]:
         """Returns list of tables"""
-        tables_tuples = self.run("SELECT * FROM information_schema.tables")
-        return [table for row in tables_tuples for table in row]
+        tables_tuples = self.run(
+            "SELECT schema_name(t.schema_id), t.name FROM sys.tables t"
+        )
+        return [".".join(row) for row in tables_tuples]
 
     def exists(self, table: str, schema: str = None) -> bool:
         """Check whether a table exists.
