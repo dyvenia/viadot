@@ -3,9 +3,9 @@ import pandas as pd
 import datetime
 from datetime import date
 
-from viadot.tasks import GetFlowLastSuccessfulRun
+from viadot.tasks import GetFlowNewDateRange
 
-PREFECT_TASK = GetFlowLastSuccessfulRun()
+PREFECT_TASK = GetFlowNewDateRange()
 DATE_FROM_PREFECT = "2022-01-01T01:30:00+00:00"
 DATE_FROM_PREFECT2 = "2022-01-04T02:20:00+00:00"
 PREFECT_JSON = {
@@ -78,7 +78,7 @@ def test_calculate_difference_time():
 
 
 def test_get_time_from_last_successful_run():
-    flow_runs = PREFECT_JSON["data"]["flow"][0]["flow_runs"]
+    flow_runs = PREFECT_JSON["data"]["flow"]
     start_time_success = PREFECT_TASK.get_time_from_last_successful_run(
         flow_runs_details=flow_runs
     )
@@ -95,3 +95,12 @@ def test_check_if_scheduled_run():
         time_run="2022-02-21T02:20:00+00:00", time_schedule="2022-02-15T01:00:00+00:00"
     )
     assert is_scheduled is False
+
+
+def test_change_date_range():
+    date_range = "last_5_days"
+    difference = 10
+    date_range_new = PREFECT_TASK.change_date_range(
+        date_range=date_range, difference=difference
+    )
+    assert date_range_new == "last_15_days"
