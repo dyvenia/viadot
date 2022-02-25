@@ -200,7 +200,7 @@ class SupermetricsToADLS(Flow):
         return t
 
     def gen_flow(self) -> Flow:
-        if self.date_range_type is not None:
+        if self.date_range_type is not None and "days" in self.date_range_type:
             self.date_range_type = prefect_get_new_date_range.run(
                 flow_name=self.flow_name,
                 date_range_type=self.date_range_type,
