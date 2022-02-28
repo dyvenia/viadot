@@ -76,7 +76,7 @@ def map_data_types_task(json_shema_path: str):
 @task
 def df_to_csv_task(df, remove_tab, path: str, sep: str = "\t"):
     # if table doesn't exist it will be created later -  df equals None
-    if df == None:
+    if df is None:
         logger.warning("DataFrame is None")
     else:
         if remove_tab == True:
