@@ -3,9 +3,8 @@ import os
 from typing import Any, Dict, List, Literal
 
 import pandas as pd
-from prefect import Flow, Parameter, task
+from prefect import Flow, task
 from prefect.backend import get_key_value
-from prefect.storage import Local
 from prefect.utilities import logging
 
 from viadot.tasks.azure_data_lake import AzureDataLakeDownload
@@ -13,7 +12,6 @@ from viadot.tasks.azure_data_lake import AzureDataLakeDownload
 from ..tasks import (
     AzureDataLakeCopy,
     AzureDataLakeToDF,
-    AzureDataLakeUpload,
     AzureSQLCreateTable,
     BCPTask,
     DownloadGitHubFile,
@@ -46,7 +44,7 @@ def map_data_types_task(json_shema_path: str):
     dict_mapping = {
         "Float": "REAL",
         "Image": None,
-        "" "Categorical": "VARCHAR(500)",
+        "Categorical": "VARCHAR(500)",
         "Time": "TIME",
         "Boolean": "BIT",
         "DateTime": "DATETIMEOFFSET",  # DATETIMEOFFSET is the only timezone-aware dtype in TSQL
@@ -174,6 +172,7 @@ class ADLSToAzureSQL(Flow):
 
         # Generate CSV
         self.remove_tab = remove_tab
+
         # BCPTask
         self.sqldb_credentials_secret = sqldb_credentials_secret
 
