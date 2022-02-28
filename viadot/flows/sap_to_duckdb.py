@@ -18,8 +18,7 @@ class SAPToDuckDB(Flow):
         table: str,
         local_file_path: str,
         name: str = None,
-        sep: str = "\t",
-        autopick_sep: bool = True,
+        sep: str = None,
         schema: str = None,
         table_if_exists: Literal[
             "fail", "replace", "append", "skip", "delete"
@@ -36,9 +35,8 @@ class SAPToDuckDB(Flow):
             table (str): Destination table in DuckDB.
             local_file_path (str): The path to the source Parquet file.
             name (str, optional): The name of the flow. Defaults to None.
-            sep (str, optional): The separator to use when reading query results. Defaults to "\t".
-            autopick_sep (bool, optional): Whether SAPRFC should try different separators
-            in case the query fails with the default one. Defaults to True.
+            sep (str, optional): The separator to use when reading query results. If not provided,
+            multiple options are automatically tried. Defaults to None.
             schema (str, optional): Destination schema in DuckDB. Defaults to None.
             table_if_exists (Literal, optional):  What to do if the table already exists. Defaults to "fail".
             sap_credentials (dict, optional): The credentials to use to authenticate with SAP.
@@ -49,7 +47,6 @@ class SAPToDuckDB(Flow):
         # SAPRFCToDF
         self.query = query
         self.sep = sep
-        self.autopick_sep = autopick_sep
         self.sap_credentials = sap_credentials
 
         # DuckDBCreateTableFromParquet
@@ -73,7 +70,6 @@ class SAPToDuckDB(Flow):
         df = self.sap_to_df_task.bind(
             query=self.query,
             sep=self.sep,
-            autopick_sep=self.autopick_sep,
             flow=self,
         )
 

@@ -93,13 +93,12 @@ class SAPRFC(Source):
     - etc.
     """
 
-    def __init__(self, sep: str = None, autopick_sep: bool = True, *args, **kwargs):
+    def __init__(self, sep: str = None, *args, **kwargs):
         """Create an instance of the SAPRFC class.
 
         Args:
-            sep (str, optional): Which separator to use when querying SAP. Defaults to None.
-            autopick_sep (bool, optional): Whether to automatically pick a working separator.
-            Defaults to True.
+            sep (str, optional): Which separator to use when querying SAP. If not provided,
+            multiple options are automatically tried.
 
         Raises:
             CredentialError: If provided credentials are incorrect.
@@ -114,7 +113,6 @@ class SAPRFC(Source):
         super().__init__(*args, credentials=credentials, **kwargs)
 
         self.sep = sep
-        self.autopick_sep = autopick_sep
         self.client_side_filters = None
 
     @property
@@ -403,7 +401,8 @@ class SAPRFC(Source):
         columns = self.select_columns_aliased
         sep = self._query.get("DELIMITER")
 
-        if sep is None or self.autopick_sep:
+        if sep is None:
+            # automatically find a working separator
             SEPARATORS = ["|", "/t", "#", ";", "@"]
             for sep in SEPARATORS:
                 self._query["DELIMITER"] = sep
