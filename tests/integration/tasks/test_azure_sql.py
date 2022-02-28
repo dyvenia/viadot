@@ -132,3 +132,13 @@ def test_check_column_order_replace(caplog):
     with caplog.at_level(logging.INFO):
         check_column_order.run(table=TABLE, if_exists="replace", df=df)
     assert "The table will be replaced." in caplog.text
+
+
+def test_check_column_order_append_not_exists(caplog):
+    check_column_order = CheckColumnOrder()
+    data = {"id": [1], "street": ["Green"], "name": ["Tom"]}
+    df = pd.DataFrame(data)
+    check_column_order.run(
+        table="non_existing_table_123", schema="sandbox", if_exists="append", df=df
+    )
+    assert "Table doesn't exists" in caplog.text
