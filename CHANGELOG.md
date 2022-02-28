@@ -9,6 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added `DuckDBToDF` task
 - Added `DuckDBTransform` flow
 - Added `SQLServerCreateTable` task
+- Added `credentials` param to `BCPTask`
+- Added `get_sql_dtypes_from_df` and `update_dict` util tasks
+- Added `DuckDBToSQLServer` flow
 
 ### Changed
 - Changed the base class of `AzureSQL` to `SQLServer`
@@ -16,6 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 - fixed OpenSSL config for old SQL Servers still using TLS < 1.2
+- `BCPTask` now correctly handles custom SQL Server port 
 
 ## [0.3.2] - 2022-02-17
 ### Fixed

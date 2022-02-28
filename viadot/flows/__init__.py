@@ -16,3 +16,4 @@ except ImportError:
     pass
 
 from .duckdb_transform import DuckDBTransform
+from .duckdb_to_sql_server import DuckDBToSQLServer
