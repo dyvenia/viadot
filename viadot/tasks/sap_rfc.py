@@ -14,8 +14,7 @@ class SAPRFCToDF(Task):
     def __init__(
         self,
         query: str = None,
-        sep: str = "\t",
-        autopick_sep: bool = True,
+        sep: str = None,
         credentials: dict = None,
         max_retries: int = 3,
         retry_delay: timedelta = timedelta(seconds=10),
@@ -38,15 +37,13 @@ class SAPRFCToDF(Task):
 
         Args:
             query (str, optional): The query to be executed with pyRFC.
-            sep (str, optional): The separator to use when reading query results. Defaults to "\t".
-            autopick_sep (str, optional): Whether SAPRFC should try different separators in case
-            the query fails with the default one.
+            sep (str, optional): The separator to use when reading query results. If not provided,
+            multiple options are automatically tried. Defaults to None.
             credentials (dict, optional): The credentials to use to authenticate with SAP.
             By default, they're taken from the local viadot config.
         """
         self.query = query
         self.sep = sep
-        self.autopick_sep = autopick_sep
         self.credentials = credentials
 
         super().__init__(
@@ -60,7 +57,6 @@ class SAPRFCToDF(Task):
     @defaults_from_attrs(
         "query",
         "sep",
-        "autopick_sep",
         "credentials",
         "max_retries",
         "retry_delay",
@@ -69,7 +65,6 @@ class SAPRFCToDF(Task):
         self,
         query: str = None,
         sep: str = None,
-        autopick_sep: bool = None,
         credentials: dict = None,
         max_retries: int = None,
         retry_delay: timedelta = None,
@@ -78,15 +73,14 @@ class SAPRFCToDF(Task):
 
         Args:
             query (str, optional): The query to be executed with pyRFC.
-            sep (str, optional): The separator to use when reading a CSV file. Defaults to "\t".
-            autopick_sep (str, optional): Whether SAPRFC should try different separators in case
-            the query fails with the default one.
+            sep (str, optional): The separator to use when reading query results. If not provided,
+            multiple options are automatically tried. Defaults to None.
         """
 
         if query is None:
             raise ValueError("Please provide the query.")
 
-        sap = SAPRFC(sep=sep, autopick_sep=autopick_sep, credentials=credentials)
+        sap = SAPRFC(sep=sep, credentials=credentials)
         sap.query(query)
 
         self.logger.info(f"Downloading data from SAP to a DataFrame...")
