@@ -141,7 +141,7 @@ class DuckDB(Source):
         table: str,
         path: str,
         schema: str = None,
-        if_exists: Literal["fail", "replace", "skip", "delete"] = "fail",
+        if_exists: Literal["fail", "replace", "append", "skip", "delete"] = "fail",
     ) -> NoReturn:
         """Create a DuckDB table with a CTAS from Parquet file(s).
 
@@ -165,6 +165,12 @@ class DuckDB(Source):
         if exists:
             if if_exists == "replace":
                 self.run(f"DROP TABLE {fqn}")
+            elif if_exists == "append":
+                self.logger.info(f"Appending to table {fqn}...")
+                ingest_query = f"COPY {fqn} FROM '{path}' (FORMAT 'parquet')"
+                self.run(ingest_query)
+                self.logger.info(f"Successfully appended data to table '{fqn}'.")
+                return True
             elif if_exists == "delete":
                 self.run(f"DELETE FROM {fqn}")
                 return True
@@ -181,10 +187,6 @@ class DuckDB(Source):
         ingest_query = f"CREATE TABLE {fqn} AS SELECT * FROM '{path}';"
         self.run(ingest_query)
         self.logger.info(f"Table {fqn} has been created successfully.")
-
-    def insert_into_from_parquet():
-        # check with Marcin if needed
-        pass
 
     def drop_table(self, table: str, schema: str = None) -> bool:
         """

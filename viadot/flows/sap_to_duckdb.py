@@ -21,7 +21,9 @@ class SAPToDuckDB(Flow):
         sep: str = "\t",
         autopick_sep: bool = True,
         schema: str = None,
-        table_if_exists: Literal["fail", "replace", "skip", "delete"] = "fail",
+        table_if_exists: Literal[
+            "fail", "replace", "append", "skip", "delete"
+        ] = "fail",
         sap_credentials: dict = None,
         duckdb_credentials: dict = None,
         *args: List[any],

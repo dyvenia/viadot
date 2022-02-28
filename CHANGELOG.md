@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added `credentials` param to `BCPTask`
 - Added `get_sql_dtypes_from_df` and `update_dict` util tasks
 - Added `DuckDBToSQLServer` flow
+- Added `if_exists="append"` option to `DuckDB.create_table_from_parquet()`
 
 ### Changed
 - Changed the base class of `AzureSQL` to `SQLServer`
