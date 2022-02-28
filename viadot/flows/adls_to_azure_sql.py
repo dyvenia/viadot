@@ -75,14 +75,18 @@ def map_data_types_task(json_shema_path: str):
 
 @task
 def df_to_csv_task(df, remove_tab, path: str, sep: str = "\t"):
-    if remove_tab == True:
-        for col in range(len(df.columns)):
-            df[df.columns[col]] = (
-                df[df.columns[col]].astype(str).str.replace(r"\t", "", regex=True)
-            )
-        df.to_csv(path, sep=sep, index=False)
+    # if table doesn't exist it will be created later -  df equals None
+    if df == None:
+        logger.warning("DataFrame is None")
     else:
-        df.to_csv(path, sep=sep, index=False)
+        if remove_tab == True:
+            for col in range(len(df.columns)):
+                df[df.columns[col]] = (
+                    df[df.columns[col]].astype(str).str.replace(r"\t", "", regex=True)
+                )
+            df.to_csv(path, sep=sep, index=False)
+        else:
+            df.to_csv(path, sep=sep, index=False)
 
 
 class ADLSToAzureSQL(Flow):
@@ -238,7 +242,7 @@ class ADLSToAzureSQL(Flow):
             credentials_secret=self.sqldb_credentials_secret,
             flow=self,
         )
-
+        print(df)
         df_to_csv = df_to_csv_task.bind(
             df=df_reorder,
             path=self.local_file_path,

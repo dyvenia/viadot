@@ -2,6 +2,7 @@ import json
 from datetime import timedelta
 from typing import Any, Dict, List, Literal
 import pandas as pd
+import sys
 
 from prefect import Task
 from prefect.tasks.secrets import PrefectSecret
@@ -339,19 +340,26 @@ class CheckColumnOrder(Task):
         credentials = get_credentials(credentials_secret, vault_name=vault_name)
         azure_sql = AzureSQL(credentials=credentials)
 
+        check_if_exists_query = f"""SELECT COLUMN_NAME, DATA_TYPE FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = '{table}' AND TABLE_SCHEMA='{schema}'"""
+        check_result = azure_sql.run(query=check_if_exists_query)
         if if_exists not in ["replace", "fail"]:
-            query = f"SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = '{schema}' AND TABLE_NAME = '{table}'"
-            result = azure_sql.run(query=query)
-            sql_column_list = [table for row in result for table in row]
-            df_column_list = list(df.columns)
+            if if_exists == "append" and not check_result:
+                self.logger.warning("Table doesn't exists.")
+                return
+            elif check_result:
 
-            if sql_column_list != df_column_list:
-                self.logger.warning(
-                    "Detected column order difference between the CSV file and the table. Reordering..."
-                )
-                df = self.df_change_order(df=df, sql_column_list=sql_column_list)
-            else:
-                return df
+                query = f"SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = '{schema}' AND TABLE_NAME = '{table}'"
+                result = azure_sql.run(query=query)
+                sql_column_list = [table for row in result for table in row]
+                df_column_list = list(df.columns)
+
+                if sql_column_list != df_column_list:
+                    self.logger.warning(
+                        "Detected column order difference between the CSV file and the table. Reordering..."
+                    )
+                    df = self.df_change_order(df=df, sql_column_list=sql_column_list)
+                else:
+                    return df
         else:
             self.logger.info("The table will be replaced.")
             return df
