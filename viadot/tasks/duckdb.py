@@ -77,7 +77,7 @@ class DuckDBCreateTableFromParquet(Task):
     def __init__(
         self,
         schema: str = None,
-        if_exists: Literal["fail", "replace", "skip", "delete"] = "fail",
+        if_exists: Literal["fail", "replace", "append", "skip", "delete"] = "fail",
         credentials: dict = None,
         *args,
         **kwargs,
@@ -98,7 +98,7 @@ class DuckDBCreateTableFromParquet(Task):
         table: str,
         path: str,
         schema: str = None,
-        if_exists: Literal["fail", "replace", "skip", "delete"] = None,
+        if_exists: Literal["fail", "replace", "append", "skip", "delete"] = None,
     ) -> NoReturn:
         """
         Create a DuckDB table with a CTAS from Parquet file(s).
