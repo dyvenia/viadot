@@ -1,6 +1,8 @@
+import os
 from typing import Any, Dict, List, Literal
 
-from prefect import Flow
+import prefect
+from prefect import Flow, task
 from prefect.utilities import logging
 
 from ..task_utils import df_to_csv as df_to_csv_task
@@ -13,6 +15,21 @@ logger = logging.get_logger(__name__)
 duckdb_to_df_task = DuckDBToDF()
 create_table_task = SQLServerCreateTable()
 bulk_insert_task = BCPTask()
+
+
+@task
+def cleanup_csv_task(path: str):
+
+    logger = prefect.context.get("logger")
+
+    logger.info(f"Removing file {path}...")
+    try:
+        os.remove(path)
+        logger.info(f"File {path} has been successfully removed.")
+        return True
+    except Exception as e:
+        logger.exception(f"File {path} could not be removed.")
+        return False
 
 
 class DuckDBToSQLServer(Flow):
@@ -125,6 +142,8 @@ class DuckDBToSQLServer(Flow):
             credentials=self.sql_server_credentials,
             flow=self,
         )
+        cleanup_csv_task.bind(path=self.local_file_path, flow=self)
 
         create_table_task.set_upstream(df_to_csv, flow=self)
         bulk_insert_task.set_upstream(create_table_task, flow=self)
+        cleanup_csv_task.set_upstream(bulk_insert_task, flow=self)
