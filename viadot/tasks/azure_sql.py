@@ -245,11 +245,15 @@ class AzureSQLDBQuery(Task):
 
     def __init__(
         self,
+        save_query: bool = False,
+        file_name: str = None,
         credentials_secret: str = None,
         vault_name: str = None,
         *args,
         **kwargs,
     ):
+        self.save_query = save_query
+        self.file_name = file_name
         self.credentials_secret = credentials_secret
         self.vault_name = vault_name
 
@@ -258,6 +262,8 @@ class AzureSQLDBQuery(Task):
     def run(
         self,
         query: str,
+        file_name: str = None,
+        save_query: bool = False,
         credentials_secret: str = None,
         vault_name: str = None,
     ):
@@ -277,6 +283,11 @@ class AzureSQLDBQuery(Task):
         result = azure_sql.run(query)
 
         self.logger.info(f"Successfully ran the query.")
+        if save_query == True:
+            file = open(file_name, "w")
+            file.write(query)
+            file.close
+
         return result
 
 
