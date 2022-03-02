@@ -344,7 +344,7 @@ class CheckColumnOrder(Task):
         check_result = azure_sql.run(query=check_if_exists_query)
         if if_exists not in ["replace", "fail"]:
             if if_exists == "append" and not check_result:
-                self.logger.warning("Table doesn't exists.")
+                self.logger.warning("Aimed table doesn't exists.")
                 return
             elif check_result:
 

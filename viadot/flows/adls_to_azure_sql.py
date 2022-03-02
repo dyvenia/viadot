@@ -105,6 +105,7 @@ class ADLSToAzureSQL(Flow):
         table: str = None,
         schema: str = None,
         if_exists: Literal["fail", "replace", "append", "delete"] = "replace",
+        check_col_order: bool = True,
         sqldb_credentials_secret: str = None,
         max_download_retries: int = 5,
         tags: List[str] = ["promotion"],
@@ -135,6 +136,7 @@ class ADLSToAzureSQL(Flow):
             table (str, optional): Destination table. Defaults to None.
             schema (str, optional): Destination schema. Defaults to None.
             if_exists (Literal, optional): What to do if the table exists. Defaults to "replace".
+            check_col_order (bool, optional): Whether to check column order. Defaults to True.
             sqldb_credentials_secret (str, optional): The name of the Azure Key Vault secret containing a dictionary with
             Azure SQL Database credentials. Defaults to None.
             max_download_retries (int, optional): How many times to retry the download. Defaults to 5.
@@ -175,7 +177,7 @@ class ADLSToAzureSQL(Flow):
         self.table = table
         self.schema = schema
         self.if_exists = self._map_if_exists(if_exists)
-
+        self.check_col_oreder = check_col_order
         # Generate CSV
         self.remove_tab = remove_tab
         # BCPTask
@@ -242,14 +244,22 @@ class ADLSToAzureSQL(Flow):
             credentials_secret=self.sqldb_credentials_secret,
             flow=self,
         )
-        print(df)
-        df_to_csv = df_to_csv_task.bind(
-            df=df_reorder,
-            path=self.local_file_path,
-            sep=self.write_sep,
-            remove_tab=self.remove_tab,
-            flow=self,
-        )
+        if self.check_col_oreder == False:
+            df_to_csv = df_to_csv_task.bind(
+                df=df,
+                path=self.local_file_path,
+                sep=self.write_sep,
+                remove_tab=self.remove_tab,
+                flow=self,
+            )
+        else:
+            df_to_csv = df_to_csv_task.bind(
+                df=df_reorder,
+                path=self.local_file_path,
+                sep=self.write_sep,
+                remove_tab=self.remove_tab,
+                flow=self,
+            )
 
         promote_to_conformed_task.bind(
             from_path=self.adls_path,
