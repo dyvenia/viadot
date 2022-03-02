@@ -2,7 +2,11 @@ import pytest
 import numpy as np
 import os
 import pandas as pd
+import logging
 from typing import List
+from viadot.config import local_config
+from azure.devops.v6_0.wiki import WikiClient
+from msrest.authentication import BasicAuthentication
 
 from viadot.task_utils import (
     chunk_df,
@@ -13,7 +17,10 @@ from viadot.task_utils import (
     union_dfs_task,
     dtypes_to_json,
     write_to_json,
+    upload_query_to_devops,
 )
+
+logger = logging.getLogger(__name__)
 
 
 def count_dtypes(dtypes_dict: dict = None, dtypes_to_count: List[str] = None) -> int:
@@ -144,3 +151,35 @@ def test_write_to_json():
     write_to_json.run(dict, "dict.json")
     assert os.path.exists("dict.json")
     os.remove("dict.json")
+
+
+def test_upload_query_to_devops(caplog):
+    query = f"""
+        SELECT *
+        FROM sys.tables t
+        JOIN sys.schemas s
+            ON t.schema_id = s.schema_id
+    """
+    path = "test_query_upload.txt"
+    file = open(path, "w+")
+    file.write(query)
+    project = local_config.get("AZURE-DEVOPS")["project"]
+    wiki_identifier = local_config.get("AZURE-DEVOPS")["wiki_identifier"]
+    devops_path = "/Advanced Insights and Analytics/Marketing Insights/Data Inventory/Test upload API -"
+    personal_access_token = local_config.get("AZURE-DEVOPS")["personal_access_token"]
+    organization_url = local_config.get("AZURE-DEVOPS")["organization_url"]
+    credentials = BasicAuthentication("", personal_access_token)
+    task = upload_query_to_devops
+    with caplog.at_level(logging.INFO):
+        task.run(
+            file_path=path,
+            project=project,
+            wiki_identifier=wiki_identifier,
+            devops_path=devops_path,
+            personal_access_token=personal_access_token,
+            organization_url=organization_url,
+        )
+    wiki = WikiClient(base_url=organization_url, creds=credentials)
+    wiki.delete_page(project=project, wiki_identifier=wiki_identifier, path=devops_path)
+    assert "Successfully loaded query" in caplog.text
+    os.remove(path)

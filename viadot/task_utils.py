@@ -2,6 +2,7 @@ import json
 import os
 from datetime import datetime, timezone
 from typing import List, Literal
+from viadot.config import local_config
 
 import pandas as pd
 from pathlib import Path
@@ -15,6 +16,10 @@ import prefect
 from prefect import task
 from prefect.storage import Git
 from prefect.utilities import logging
+
+from msrest.authentication import BasicAuthentication
+from azure.devops.v6_0.wiki import WikiPageCreateOrUpdateParameters
+from azure.devops.v6_0.wiki import WikiClient
 
 
 logger = logging.get_logger()
@@ -255,6 +260,34 @@ def write_to_json(dict_, path):
 def cleanup_validation_clutter(expectations_path):
     ge_project_path = Path(expectations_path).parent
     shutil.rmtree(ge_project_path)
+
+
+@task
+def upload_query_to_devops(
+    file_path: str = None,
+    project: str = None,
+    wiki_identifier: str = None,
+    devops_path: str = None,
+    personal_access_token: str = None,
+    organization_url: str = None,
+):
+
+    credentials = BasicAuthentication("", personal_access_token)
+    file = open(file_path, "r")
+    file_content = file.read()
+    file_content = "```sql" + "\n" + file_content + "\n" + "```"
+    create_parameters = WikiPageCreateOrUpdateParameters(content=file_content)
+    wiki = WikiClient(base_url=organization_url, creds=credentials)
+    wiki.create_or_update_page(
+        parameters=create_parameters,
+        project=project,
+        wiki_identifier=wiki_identifier,
+        path=devops_path,
+        version=None,
+        comment=None,
+        version_descriptor=None,
+    )
+    logger.info("Successfully loaded query to DevOps wiki")
 
 
 class Git(Git):
