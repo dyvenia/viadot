@@ -403,16 +403,36 @@ class SAPRFC(Source):
 
         if sep is None:
             # automatically find a working separator
-            SEPARATORS = ["|", "/t", "#", ";", "@"]
-            for sep in SEPARATORS:
-                self._query["DELIMITER"] = sep
-                try:
-                    response = self.call("RFC_READ_TABLE", **params)
-                    record_key = "WA"
-                    data_raw = response["DATA"]
-                    records = [row[record_key].split(sep) for row in data_raw]
-                except ValueError:
-                    continue
+            SEPARATORS = [
+                "|",
+                "/t",
+                "#",
+                ";",
+                "@",
+                "%",
+                "^",
+                "`",
+                "~",
+                "{",
+                "}",
+                "$",
+            ]
+        else:
+            SEPARATORS = [sep]
+
+        records = None
+        for sep in SEPARATORS:
+            self._query["DELIMITER"] = sep
+            try:
+                response = self.call("RFC_READ_TABLE", **params)
+                record_key = "WA"
+                data_raw = response["DATA"]
+                records = [row[record_key].split(sep) for row in data_raw]
+            except ValueError:
+                continue
+        if records is None:
+            raise ValueError("None of the separators worked.")
+
         df = pd.DataFrame(records, columns=columns)
 
         if self.client_side_filters:
