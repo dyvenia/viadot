@@ -165,7 +165,7 @@ def test_upload_query_to_devops(caplog):
     file.write(query)
     project = local_config.get("AZURE-DEVOPS")["project"]
     wiki_identifier = local_config.get("AZURE-DEVOPS")["wiki_identifier"]
-    devops_path = "/Advanced Insights and Analytics/Marketing Insights/Data Inventory/Test upload API -"
+    devops_path = local_config.get("AZURE-DEVOPS")["devops_path_for_test"]
     personal_access_token = local_config.get("AZURE-DEVOPS")["personal_access_token"]
     organization_url = local_config.get("AZURE-DEVOPS")["organization_url"]
     credentials = BasicAuthentication("", personal_access_token)
