@@ -16,6 +16,7 @@ from .azure_sql import (
     AzureSQLCreateTable,
     AzureSQLDBQuery,
     CreateTableFromBlob,
+    CheckColumnOrder,
 )
 from .bcp import BCPTask
 from .github import DownloadGitHubFile
@@ -25,3 +26,10 @@ from .supermetrics import SupermetricsToCSV, SupermetricsToDF
 from .sharepoint import SharepointToDF
 from .cloud_for_customers import C4CReportToDF, C4CToDF
 from .aselite import ASELiteToDF
+
+try:
+    from .sap_rfc import SAPRFCToDF
+except ImportError:
+    pass
+
+from .duckdb import DuckDBCreateTableFromParquet, DuckDBQuery, DuckDBToDF

@@ -1,5 +1,6 @@
 from viadot.tasks import C4CToDF, C4CReportToDF
 from viadot.config import local_config
+from prefect.tasks.secrets import PrefectSecret
 
 
 def test_c4c_to_df():
@@ -24,6 +25,7 @@ def test_c4c_report_to_df():
 
 def test_c4c_to_df_kv():
     task = C4CToDF()
-    res = task.run(credentials_secret="aia-c4c", endpoint="ActivityCollection")
+    credentials_secret = PrefectSecret("C4C_KV").run()
+    res = task.run(credentials_secret=credentials_secret, endpoint="ActivityCollection")
     answer = res.head()
     assert answer.shape[1] == 19

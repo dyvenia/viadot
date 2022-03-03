@@ -40,3 +40,10 @@ def test_insert_into_sql(sqlite, DF):
     results = sqlite.run(f"SELECT * FROM {TABLE}")
     df = pandas.DataFrame.from_records(results, columns=["country", "sales"])
     assert df["sales"].sum() == 230
+
+
+def test_check_if_table_exists(sqlite):
+    exists = sqlite._check_if_table_exists(TABLE)
+    assert exists == True
+    not_exists = sqlite._check_if_table_exists("test_table")
+    assert not_exists == False

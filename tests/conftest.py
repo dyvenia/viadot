@@ -20,6 +20,11 @@ def TEST_PARQUET_FILE_PATH():
 
 
 @pytest.fixture(scope="session")
+def TEST_PARQUET_FILE_PATH_2():
+    return "test_data_countries_2.parquet"
+
+
+@pytest.fixture(scope="session")
 def TEST_CSV_FILE_BLOB_PATH():
     return "tests/test.csv"
 
@@ -50,3 +55,10 @@ def create_test_parquet_file(DF, TEST_PARQUET_FILE_PATH):
 def TEST_CSV_ASELITE_PATH():
     file_path = "raw/supermetrics/mp/result_df_flow_at_des_m.csv"
     return file_path
+
+
+@pytest.fixture(scope="session", autouse=True)
+def create_test_parquet_file_2(DF, TEST_PARQUET_FILE_PATH_2):
+    DF.to_parquet(TEST_PARQUET_FILE_PATH_2, index=False)
+    yield
+    os.remove(TEST_PARQUET_FILE_PATH_2)

@@ -161,6 +161,7 @@ class RunGreatExpectationsValidation(RunGreatExpectationsValidation):
     def _get_stats_from_results(
         self, result: ValidationOperatorResult
     ) -> Tuple[int, int]:
+        """Returns Tuple containing number of successful and evaluated expectations"""
         result_identifier = result.list_validation_result_identifiers()[0]
         stats = result._list_validation_statistics()[result_identifier]
         n_successful = stats["successful_expectations"]
