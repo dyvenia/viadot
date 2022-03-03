@@ -271,6 +271,19 @@ def upload_query_to_devops(
     personal_access_token: str = None,
     organization_url: str = None,
 ):
+    """
+    Task for uploading query to a DevOps page.
+
+    Args:
+        file_path (str, optional): Path where to save a query. Defaults to None.
+        project (str, optional): Name od DevOps project. Defaults to None.
+        wiki_identifier (str, optional): Name of DevOps Wiki. Defaults to None.
+        devops_path (str, optional): Path to DevOps page where to upload query. Defaults to None.
+        personal_access_token (str, optional): Presonl access token to Azure DevOps. Defaults to None.
+            Instruction how to create PAT: https://docs.microsoft.com/en-us/azure/devops/organizations/accounts/use-personal-access-tokens-to-authenticate
+        organization_url(str, optional): Service URL. Defaults to None.
+
+    """
 
     credentials = BasicAuthentication("", personal_access_token)
     file = open(file_path, "r")

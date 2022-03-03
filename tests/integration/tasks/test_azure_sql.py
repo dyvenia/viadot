@@ -144,6 +144,6 @@ def test_azure_sql_query_save():
     """
     file = "saved_query.txt"
     query_task = AzureSQLDBQuery()
-    query_task.run(save_query=True, file_name=file, query=list_table_info_query)
+    query_task.run(save_query=True, file_path=file, query=list_table_info_query)
     assert os.path.isfile(file)
     os.remove(file)

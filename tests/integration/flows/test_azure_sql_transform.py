@@ -51,7 +51,7 @@ def test_azure_sql_transform_save_query(caplog):
             ON t.schema_id = s.schema_id
     """,
         save_query=True,
-        file_name=file,
+        file_path=file,
         project=project,
         wiki_identifier=wiki_identifier,
         devops_path=devops_path,
