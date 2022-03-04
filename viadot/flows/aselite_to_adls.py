@@ -14,7 +14,6 @@ class ASELitetoADLS(Flow):
         self,
         name: str,
         query: str = None,
-        # db_name: str = None,
         sqldb_credentials_secret: str = None,
         vault_name: str = None,
         file_path: str = "None",
@@ -22,6 +21,7 @@ class ASELitetoADLS(Flow):
         to_path: str = None,
         if_exists: Literal["replace", "append", "delete"] = "replace",
         overwrite: bool = True,
+        convert_bytes: bool = False,
         *args: List[any],
         **kwargs: Dict[str, Any]
     ):
@@ -41,7 +41,6 @@ class ASELitetoADLS(Flow):
             overwrite (str, optional): Whether to overwrite the destination file. Defaults to True.
         """
         self.query = query
-        # self.db_name = db_name
         self.sqldb_credentials_secret = sqldb_credentials_secret
         self.vault_name = vault_name
         self.overwrite = overwrite
@@ -50,6 +49,7 @@ class ASELitetoADLS(Flow):
         self.sep = sep
         self.to_path = to_path
         self.if_exists = if_exists
+        self.convert_bytes = convert_bytes
 
         super().__init__(*args, name=name, **kwargs)
 
@@ -58,16 +58,16 @@ class ASELitetoADLS(Flow):
     def gen_flow(self) -> Flow:
         df = df_task.bind(
             query=self.query,
-            # db_name=self.db_name,
             credentials_secret=self.sqldb_credentials_secret,
             vault_name=self.vault_name,
             flow=self,
         )
 
-        convert_df = df_converts_bytes_to_int.bind(df, flow=self)
+        if self.convert_bytes == True:
+            df = df_converts_bytes_to_int.bind(df, flow=self)
 
         create_csv = df_to_csv.bind(
-            convert_df,
+            df,
             path=self.file_path,
             sep=self.sep,
             if_exists=self.if_exists,
@@ -81,6 +81,5 @@ class ASELitetoADLS(Flow):
             flow=self,
         )
 
-        convert_df.set_upstream(df, flow=self)
-        create_csv.set_upstream(convert_df, flow=self)
+        create_csv.set_upstream(df, flow=self)
         adls_upload.set_upstream(create_csv, flow=self)
