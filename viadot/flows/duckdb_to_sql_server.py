@@ -7,7 +7,6 @@ from prefect.utilities import logging
 
 from ..task_utils import df_to_csv as df_to_csv_task
 from ..task_utils import get_sql_dtypes_from_df as get_sql_dtypes_from_df_task
-from ..task_utils import update_dict as update_dict_task
 from ..tasks import BCPTask, DuckDBToDF, SQLServerCreateTable
 
 logger = logging.get_logger(__name__)
@@ -119,13 +118,11 @@ class DuckDBToSQLServer(Flow):
             sep=self.write_sep,
             flow=self,
         )
-
-        dtypes_from_df = get_sql_dtypes_from_df_task.bind(df=df, flow=self)
         if self.dtypes:
-            # Update dtypes with the ones provided by user
-            dtypes = update_dict_task.bind(dtypes_from_df, self.dtypes, flow=self)
+            # Use user-provided dtypes.
+            dtypes = self.dtypes
         else:
-            dtypes = dtypes_from_df
+            dtypes = get_sql_dtypes_from_df_task.bind(df=df, flow=self)
 
         create_table_task.bind(
             schema=self.sql_server_schema,
