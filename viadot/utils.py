@@ -5,6 +5,13 @@ from urllib3.exceptions import ProtocolError
 from requests.packages.urllib3.util.retry import Retry
 from typing import Any, Dict
 import requests
+from viadot.config import local_config
+import pyodbc
+import pandas as pd
+from typing import List, Literal
+from prefect.tasks.secrets import PrefectSecret
+from viadot.tasks.azure_key_vault import AzureKeyVaultSecret
+import json
 
 
 def slugify(name: str) -> str:
@@ -75,3 +82,51 @@ def handle_api_response(
         raise APIError("Unknown error.") from e
 
     return response
+
+
+def generate_table_dtypes(
+    credentials: str = None,
+    table_name: str = None,
+    db_name: str = None,
+    reserve: float = 1.4,
+    driver: str = None,
+    only_dict: bool = True,
+) -> dict:
+    """Functon that automaticy generate dtypes dict from SQL table.
+
+    Args:
+        credentials (str, optional): Local credentials. Defaults to None.
+        table_name (str): Table name. Defaults to None.
+        db_name (str): Data base name. Defaults to None.
+        reserve (str): How many signs add to varchar, percentage of value. Defaults to 1.4.
+        driver (str): Pyodbc database driver. Defaults to None.
+        only_dict (bool): choose to generate dictionary or whole dataframe. Defaults to True.
+
+    Returns:
+        Dictionary
+    """
+    sql = SQL(credentials=credentials, driver=driver)
+    if db_name:
+        sql.credentials["db_name"] = db_name
+
+    sql.credentials["driver"] = driver
+
+    query_admin = f"""select COLUMN_NAME, DATA_TYPE, CHARACTER_MAXIMUM_LENGTH, 
+        NUMERIC_PRECISION, DATETIME_PRECISION, 
+        IS_NULLABLE 
+        from INFORMATION_SCHEMA.COLUMNS
+        where TABLE_NAME='{table_name}'
+        order by CHARACTER_MAXIMUM_LENGTH desc"""
+
+    data = sql.run(query_admin)
+    df = pd.DataFrame.from_records(data)
+    create_int = lambda x: int(int(x) * reserve / 10) * 10 if int(x) > 30 else 30
+
+    df[2] = df[2].astype(str).apply(lambda x: str(x.replace(".0", "")))
+    df[2] = df[2].apply(
+        lambda x: f"varchar({create_int(x)})" if x.isdigit() else "varchar(500)"
+    )
+    if only_dict:
+        return dict(zip(df[0], df[2]))
+    else:
+        return df
