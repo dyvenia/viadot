@@ -86,7 +86,6 @@ def handle_api_response(
 
 
 def generate_table_dtypes(
-    credentials: str = None,
     table_name: str = None,
     db_name: str = None,
     reserve: float = 1.4,
