@@ -12,6 +12,7 @@ from typing import List, Literal
 from prefect.tasks.secrets import PrefectSecret
 from viadot.tasks.azure_key_vault import AzureKeyVaultSecret
 import json
+from viadot.sources import SQL
 
 
 def slugify(name: str) -> str:
