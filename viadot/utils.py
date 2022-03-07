@@ -12,7 +12,7 @@ from typing import List, Literal
 from prefect.tasks.secrets import PrefectSecret
 from viadot.tasks.azure_key_vault import AzureKeyVaultSecret
 import json
-from viadot.sources import SQL
+from viadot.sources import AzureSQL
 
 
 def slugify(name: str) -> str:
@@ -91,26 +91,24 @@ def generate_table_dtypes(
     db_name: str = None,
     reserve: float = 1.4,
     driver: str = None,
+    config_key: str = None,
     only_dict: bool = True,
 ) -> dict:
     """Functon that automaticy generate dtypes dict from SQL table.
 
     Args:
-        credentials (str, optional): Local credentials. Defaults to None.
         table_name (str): Table name. Defaults to None.
         db_name (str): Data base name. Defaults to None.
         reserve (str): How many signs add to varchar, percentage of value. Defaults to 1.4.
-        driver (str): Pyodbc database driver. Defaults to None.
+        config_key (str): The key inside local config containing the config.
         only_dict (bool): choose to generate dictionary or whole dataframe. Defaults to True.
 
     Returns:
         Dictionary
     """
-    sql = SQL(credentials=credentials, driver=driver)
+    sql = AzureSQL(config_key=config_key, driver=driver)
     if db_name:
         sql.credentials["db_name"] = db_name
-
-    sql.credentials["driver"] = driver
 
     query_admin = f"""select COLUMN_NAME, DATA_TYPE, CHARACTER_MAXIMUM_LENGTH, 
         NUMERIC_PRECISION, DATETIME_PRECISION, 

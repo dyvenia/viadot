@@ -28,7 +28,7 @@ from viadot.task_utils import (
 SCHEMA = "sandbox"
 TABLE = "test"
 driver = "ODBC Driver 17 for SQL Server"
-credentials = local_config.get("AZURE_SQL")
+config_key = local_config.get("AZURE_SQL")
 
 
 def count_dtypes(dtypes_dict: dict = None, dtypes_to_count: List[str] = None) -> int:
