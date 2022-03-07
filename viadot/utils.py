@@ -89,7 +89,6 @@ def generate_table_dtypes(
     table_name: str = None,
     db_name: str = None,
     reserve: float = 1.4,
-    driver: str = None,
     config_key: str = None,
     only_dict: bool = True,
 ) -> dict:
@@ -105,7 +104,7 @@ def generate_table_dtypes(
     Returns:
         Dictionary
     """
-    sql = AzureSQL(config_key=config_key, driver=driver)
+    sql = AzureSQL(config_key=config_key)
     if db_name:
         sql.credentials["db_name"] = db_name
 
