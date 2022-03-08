@@ -5,13 +5,9 @@ import pandas as pd
 from typing import List
 from viadot.utils import generate_table_dtypes
 from viadot.config import local_config
-import pyodbc
-import pandas as pd
 from typing import List, Literal
 from prefect.tasks.secrets import PrefectSecret
 from viadot.tasks.azure_key_vault import AzureKeyVaultSecret
-import json
-from viadot.utils import generate_table_dtypes
 from viadot.tasks import AzureSQLCreateTable
 
 from viadot.task_utils import (
@@ -171,8 +167,6 @@ def test_generate_dtypes():
         dtypes={"id": "INT", "name": "VARCHAR(25)"},
         if_exists="replace",
     )
-    test_dict = generate_table_dtypes(
-        credentials=credentials, table_name=TABLE, driver=driver
-    )
+    test_dict = generate_table_dtypes(config_key=config_key, table_name=TABLE)
 
     assert isinstance(test_dict, dict)
