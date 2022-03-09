@@ -150,6 +150,8 @@ config.toml
 desktop.ini
 
 .viminfo
+gosia
+tmp
 
 # SAP RFC lib
 sap_netweaver_rfc

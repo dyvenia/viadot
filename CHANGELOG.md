@@ -4,6 +4,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ## [Unreleased]
+
 ### Added
 - Added `SQLServer` source
 - Added `DuckDBToDF` task
@@ -13,6 +14,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added `get_sql_dtypes_from_df` and `update_dict` util tasks
 - Added `DuckDBToSQLServer` flow
 - Added `if_exists="append"` option to `DuckDB.create_table_from_parquet()`
+- Added new task `GetFlowNewDateRange` to change date range based on Prefect flows
+- Added 'ReRunFailedFlow' task for automatical re-run flow on Prefect if failed
 
 ### Changed
 - Changed the base class of `AzureSQL` to `SQLServer`
