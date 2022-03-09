@@ -16,6 +16,7 @@ from .azure_sql import (
     AzureSQLCreateTable,
     AzureSQLDBQuery,
     CreateTableFromBlob,
+    CheckColumnOrder,
 )
 from .bcp import BCPTask
 from .github import DownloadGitHubFile
@@ -26,3 +27,11 @@ from .sharepoint import SharepointToDF
 from .cloud_for_customers import C4CReportToDF, C4CToDF
 from .prefect import GetFlowNewDateRange
 from .prefect_conformed import ReRunFailedFlow
+
+try:
+    from .sap_rfc import SAPRFCToDF
+except ImportError:
+    pass
+
+from .duckdb import DuckDBCreateTableFromParquet, DuckDBQuery, DuckDBToDF
+from .sql_server import SQLServerCreateTable

@@ -1,6 +1,6 @@
 import os
 from abc import abstractmethod
-from typing import Any, Dict, List, Literal, NoReturn, Tuple
+from typing import Any, Dict, List, Literal, NoReturn, Tuple, Union
 
 import pandas as pd
 import pyarrow as pa
@@ -34,6 +34,11 @@ class Source:
         pass
 
     def to_arrow(self, if_empty: str = "warn") -> pa.Table:
+        """
+        Creates a pyarrow table from source.
+        Args:
+            if_empty (str, optional): : What to do if data sourse contains no data. Defaults to "warn".
+        """
 
         try:
             df = self.to_df(if_empty=if_empty)
@@ -94,6 +99,14 @@ class Source:
     def to_excel(
         self, path: str, if_exists: str = "replace", if_empty: str = "warn"
     ) -> bool:
+        """
+        Write from source to a excel file.
+        Args:
+            path (str): The destination path.
+            if_exists (str, optional): What to do if the file exists. Defaults to "replace".
+            if_empty (str, optional): What to do if the source contains no data.
+
+        """
 
         try:
             df = self.to_df(if_empty=if_empty)
@@ -112,6 +125,7 @@ class Source:
         return True
 
     def _handle_if_empty(self, if_empty: str = None) -> NoReturn:
+        """What to do if empty."""
         if if_empty == "warn":
             logger.warning("The query produced no data.")
         elif if_empty == "skip":
@@ -188,7 +202,7 @@ class SQL(Source):
             self._con.timeout = self.query_timeout
         return self._con
 
-    def run(self, query: str) -> List[Record]:
+    def run(self, query: str) -> Union[List[Record], bool]:
         cursor = self.con.cursor()
         cursor.execute(query)
 
@@ -203,6 +217,11 @@ class SQL(Source):
         return result
 
     def to_df(self, query: str, if_empty: str = None) -> pd.DataFrame:
+        """Creates DataFrame form SQL query.
+        Args:
+            query (str): SQL query. If don't start with "SELECT" returns empty DataFrame.
+            if_empty (str, optional): What to do if the query returns no data. Defaults to None.
+        """
         conn = self.con
         if query.upper().startswith("SELECT"):
             df = pd.read_sql_query(query, conn)
@@ -213,6 +232,11 @@ class SQL(Source):
         return df
 
     def _check_if_table_exists(self, table: str, schema: str = None) -> bool:
+        """Checks if table exists.
+        Args:
+            table (str): Table name.
+            schema (str, optional): Schema name. Defaults to None.
+        """
         exists_query = f"SELECT * FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA = '{schema}' AND TABLE_NAME='{table}'"
         exists = bool(self.run(exists_query))
         return exists
@@ -292,6 +316,7 @@ class SQL(Source):
         return sql
 
     def _sql_column(self, column_name: str) -> str:
+        """Returns the name of a column"""
         if isinstance(column_name, str):
             out_name = f"'{column_name}'"
         else:
