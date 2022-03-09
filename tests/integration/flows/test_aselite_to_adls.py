@@ -59,9 +59,6 @@ def test_aselite_to_adls():
     result = flow.run()
     assert result.is_successful()
 
-
-def test_generated_csv_file():
-
     MAIN_DF = pd.read_csv(TMP_FILE_NAME, delimiter="\t")
 
     if isinstance(MAIN_DF, pd.DataFrame):
