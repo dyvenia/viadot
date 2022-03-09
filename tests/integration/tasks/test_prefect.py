@@ -4,6 +4,13 @@ import datetime
 from datetime import date
 
 from viadot.tasks import GetFlowNewDateRange
+from viadot.tasks.prefect import (
+    get_time_from_last_successful_run,
+    calculate_difference,
+    check_if_scheduled_run,
+    get_formatted_date,
+)
+
 
 PREFECT_TASK = GetFlowNewDateRange()
 DATE_FROM_PREFECT = "2022-01-01T01:30:00+00:00"
@@ -39,21 +46,17 @@ PREFECT_JSON = {
 
 
 def test_get_formatted_dated():
-    new_date = PREFECT_TASK.get_formatted_date(
-        time_unclean=DATE_FROM_PREFECT, return_value="date"
-    )
+    new_date = get_formatted_date(time_unclean=DATE_FROM_PREFECT, return_value="date")
     assert new_date == datetime.date(2022, 1, 1)
     assert isinstance(new_date, date)
 
-    new_time = PREFECT_TASK.get_formatted_date(
-        time_unclean=DATE_FROM_PREFECT, return_value="time"
-    )
+    new_time = get_formatted_date(time_unclean=DATE_FROM_PREFECT, return_value="time")
     assert new_time == datetime.time(1, 30)
     assert isinstance(new_time, datetime.time)
 
 
 def test_calculate_difference_date():
-    diff_days = PREFECT_TASK.calculate_difference(
+    diff_days = calculate_difference(
         date_to_compare=DATE_FROM_PREFECT2,
         base_date=DATE_FROM_PREFECT,
         diff_type="date",
@@ -62,14 +65,14 @@ def test_calculate_difference_date():
 
 
 def test_calculate_difference_time():
-    diff_hours = PREFECT_TASK.calculate_difference(
+    diff_hours = calculate_difference(
         date_to_compare=DATE_FROM_PREFECT2,
         base_date=DATE_FROM_PREFECT,
         diff_type="time",
     )
     assert diff_hours == 0
 
-    diff_hours = PREFECT_TASK.calculate_difference(
+    diff_hours = calculate_difference(
         date_to_compare="2022-01-04T02:50:00+00:00",
         base_date=DATE_FROM_PREFECT,
         diff_type="time",
@@ -79,19 +82,17 @@ def test_calculate_difference_time():
 
 def test_get_time_from_last_successful_run():
     flow_runs = PREFECT_JSON["data"]["flow"]
-    start_time_success = PREFECT_TASK.get_time_from_last_successful_run(
-        flow_runs_details=flow_runs
-    )
+    start_time_success = get_time_from_last_successful_run(flow_runs_details=flow_runs)
     assert start_time_success == "2022-02-20T01:05:36.142547+00:00"
 
 
 def test_check_if_scheduled_run():
-    is_scheduled = PREFECT_TASK.check_if_scheduled_run(
+    is_scheduled = check_if_scheduled_run(
         time_run="2022-02-21T01:40:00+00:00", time_schedule="2022-02-15T01:00:00+00:00"
     )
     assert is_scheduled is True
 
-    is_scheduled = PREFECT_TASK.check_if_scheduled_run(
+    is_scheduled = check_if_scheduled_run(
         time_run="2022-02-21T02:20:00+00:00", time_schedule="2022-02-15T01:00:00+00:00"
     )
     assert is_scheduled is False
