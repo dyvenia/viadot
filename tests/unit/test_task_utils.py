@@ -3,7 +3,6 @@ import numpy as np
 import os
 import pandas as pd
 from typing import List
-from viadot.utils import generate_table_dtypes
 from viadot.config import local_config
 from typing import List, Literal
 from prefect.tasks.secrets import PrefectSecret
@@ -19,6 +18,7 @@ from viadot.task_utils import (
     union_dfs_task,
     dtypes_to_json,
     write_to_json,
+    generate_table_dtypes,
 )
 
 SCHEMA = "sandbox"
@@ -167,6 +167,6 @@ def test_generate_dtypes():
         dtypes={"id": "INT", "name": "VARCHAR(25)"},
         if_exists="replace",
     )
-    test_dict = generate_table_dtypes(config_key=config_key, table_name=TABLE)
+    test_dict = generate_table_dtypes.run(config_key=config_key, table_name=TABLE)
 
     assert isinstance(test_dict, dict)

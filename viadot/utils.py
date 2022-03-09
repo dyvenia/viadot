@@ -12,7 +12,6 @@ from typing import List, Literal
 from prefect.tasks.secrets import PrefectSecret
 from viadot.tasks.azure_key_vault import AzureKeyVaultSecret
 import json
-from viadot.sources import AzureSQL
 
 
 def slugify(name: str) -> str:
@@ -83,4 +82,3 @@ def handle_api_response(
         raise APIError("Unknown error.") from e
 
     return response
-
