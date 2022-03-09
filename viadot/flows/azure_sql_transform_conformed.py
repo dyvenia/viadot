@@ -1,6 +1,6 @@
 from typing import Any, Dict, List
-
-from prefect import Flow
+# from prefect.triggers import all_successful, any_failed
+from prefect import Flow, task
 
 from ..tasks.azure_sql import  AzureSQLDBQuery
 from ..tasks.prefect_conformed import ReRunFailedFlow
@@ -8,7 +8,6 @@ from ..tasks.prefect_conformed import ReRunFailedFlow
 
 query_task = AzureSQLDBQuery()
 prefect_rerun_failed_flow_task = ReRunFailedFlow()
-
 
 class AzureSQLTransform(Flow): 
     def __init__(
@@ -40,19 +39,17 @@ class AzureSQLTransform(Flow):
 
         super().__init__(*args, name=name, **kwargs)
         self.gen_flow()
+        
 
     def gen_flow(self) -> Flow:            
-        gen_flow_task = query_task.bind(
+        query_task.bind(
             query=self.query,
             credentials_secret=self.sqldb_credentials_secret,
             vault_name=self.vault_name,
             flow=self,
         )
         
-        # run checks for last flow and re-run if failed
-        
-        if gen_flow_task:         
-            prefect_rerun_failed_flow_task.bind(
-                flow_name=self.name,
-                flow=self,
-            )
+        prefect_rerun_failed_flow_task.bind(
+            flow_name=self.name,
+            flow=self,
+        )
