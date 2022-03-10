@@ -339,6 +339,8 @@ def generate_table_dtypes(
         where TABLE_NAME='{table_name}'
         order by CHARACTER_MAXIMUM_LENGTH desc"""
 
+    if sql.con:
+        print("Connection established")
     data = sql.run(query_admin)
     df = pd.DataFrame.from_records(data)
     create_int = lambda x: int(int(x) * reserve / 10) * 10 if int(x) > 30 else 30

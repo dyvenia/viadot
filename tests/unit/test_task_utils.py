@@ -23,7 +23,7 @@ from viadot.task_utils import (
 )
 
 SCHEMA = "sandbox"
-TABLE = "test_azure_sql_2"
+TABLE = "test"
 
 
 def count_dtypes(dtypes_dict: dict = None, dtypes_to_count: List[str] = None) -> int:
