@@ -23,8 +23,6 @@ from viadot.task_utils import (
 
 SCHEMA = "sandbox"
 TABLE = "test"
-driver = "ODBC Driver 17 for SQL Server"
-config_key = "AZURE_SQL"
 
 
 def count_dtypes(dtypes_dict: dict = None, dtypes_to_count: List[str] = None) -> int:
@@ -167,6 +165,13 @@ def test_generate_dtypes():
         dtypes={"id": "INT", "name": "VARCHAR(25)"},
         if_exists="replace",
     )
+    credentials_secret = PrefectSecret(
+        "AZURE_DEFAULT_SQLDB_SERVICE_PRINCIPAL_SECRET"
+    ).run()
+    vault_name = PrefectSecret("AZURE_DEFAULT_KEYVAULT").run()
+    credentials_str = AzureKeyVaultSecret(
+        credentials_secret, vault_name=vault_name
+    ).run()
     test_dict = generate_table_dtypes.run(config_key=config_key, table_name=TABLE)
 
     assert isinstance(test_dict, dict)
