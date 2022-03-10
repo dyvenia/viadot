@@ -174,7 +174,7 @@ def test_generate_dtypes():
         credentials_secret, vault_name=vault_name
     ).run()
     test_dict = generate_table_dtypes.run(
-        credentials=json.loads(credentials_str), table_name=TABLE
+        credentials=eval(credentials_str), table_name=TABLE
     )
 
     assert isinstance(test_dict, dict)
