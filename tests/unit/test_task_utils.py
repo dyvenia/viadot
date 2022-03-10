@@ -8,6 +8,7 @@ from typing import List, Literal
 from prefect.tasks.secrets import PrefectSecret
 from viadot.tasks.azure_key_vault import AzureKeyVaultSecret
 from viadot.tasks import AzureSQLCreateTable
+import json
 
 from viadot.task_utils import (
     chunk_df,
@@ -172,6 +173,8 @@ def test_generate_dtypes():
     credentials_str = AzureKeyVaultSecret(
         credentials_secret, vault_name=vault_name
     ).run()
-    test_dict = generate_table_dtypes.run(config_key=config_key, table_name=TABLE)
+    test_dict = generate_table_dtypes.run(
+        credentials=json.loads(credentials_str), table_name=TABLE
+    )
 
     assert isinstance(test_dict, dict)
