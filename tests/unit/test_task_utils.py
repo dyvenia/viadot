@@ -23,7 +23,7 @@ from viadot.task_utils import (
 )
 
 SCHEMA = "sandbox"
-TABLE = "CRM_00"
+TABLE = "test_azure_sql_2"
 
 
 def count_dtypes(dtypes_dict: dict = None, dtypes_to_count: List[str] = None) -> int:
@@ -158,23 +158,22 @@ def test_write_to_json():
 
 def test_generate_dtypes():
 
-    create_table_task = AzureSQLCreateTable()
+    # create_table_task = AzureSQLCreateTable()
 
-    create_table_task.run(
-        schema=SCHEMA,
-        table=TABLE,
-        dtypes={"id": "INT", "name": "VARCHAR(25)"},
-        if_exists="replace",
-    )
+    # create_table_task.run(
+    #     schema=SCHEMA,
+    #     table=TABLE,
+    #     dtypes={"id": "INT", "name": "VARCHAR(25)"},
+    #     if_exists="replace",
+    # )
 
-    credentials_secret = PrefectSecret("aselite_prod").run()
-    vault_name = PrefectSecret("AZURE_DEFAULT_KEYVAULT").run()
+    # credentials_secret = PrefectSecret("aselite_prod").run()
+    # vault_name = PrefectSecret("AZURE_DEFAULT_KEYVAULT").run()
 
-    credentials_str = AzureKeyVaultSecret(
-        credentials_secret, vault_name=vault_name
-    ).run()
-    test_dict = generate_table_dtypes.run(
-        credentials=json.loads(credentials_str), table_name=TABLE
-    )
+    # credentials_str = AzureKeyVaultSecret(
+    #     credentials_secret, vault_name=vault_name
+    # ).run()
+
+    test_dict = generate_table_dtypes.run(config_key="AZURE_SQL", table_name=TABLE)
 
     assert isinstance(test_dict, dict)
