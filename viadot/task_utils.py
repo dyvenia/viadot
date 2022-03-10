@@ -328,7 +328,7 @@ def generate_table_dtypes(
     """
     from viadot.sources import AzureSQL
 
-    sql = AzureSQL(config_key=config_key, credentials=credentials)
+    sql = AzureSQL(config_key=config_key)
     if db_name:
         sql.credentials["db_name"] = db_name
 
