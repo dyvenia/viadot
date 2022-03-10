@@ -23,7 +23,7 @@ from viadot.task_utils import (
 )
 
 SCHEMA = "sandbox"
-TABLE = "test"
+TABLE = "CRM_00"
 
 
 def count_dtypes(dtypes_dict: dict = None, dtypes_to_count: List[str] = None) -> int:
@@ -166,10 +166,10 @@ def test_generate_dtypes():
         dtypes={"id": "INT", "name": "VARCHAR(25)"},
         if_exists="replace",
     )
-    credentials_secret = PrefectSecret(
-        "AZURE_DEFAULT_SQLDB_SERVICE_PRINCIPAL_SECRET"
-    ).run()
+
+    credentials_secret = PrefectSecret("aselite_prod").run()
     vault_name = PrefectSecret("AZURE_DEFAULT_KEYVAULT").run()
+
     credentials_str = AzureKeyVaultSecret(
         credentials_secret, vault_name=vault_name
     ).run()
