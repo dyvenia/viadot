@@ -9,7 +9,7 @@ logger = logging.get_logger()
 @task
 def run_flows_list(flow_name: str, flows_list: List[List] = [List[None]]):
     """
-    Task for running multiple flows in given order. Task will create flow of flows.
+    Task for running multiple flows in the given order. Task will create flow of flows.
     Args:
         flow_name(str): Name of a new flow.
         flows_list(List[List]): List containing lists of flow names and project names - [["flow1_name" , "project_name"], ["flow2_name" , "project_name"]].
@@ -37,7 +37,7 @@ def run_flows_list(flow_name: str, flows_list: List[List] = [List[None]]):
 
 
 class MultipleFlows(Flow):
-    """Flow to run multiple flows in given order.
+    """Flow to run multiple flows in the given order.
     Args:
         flow_name(str): Name of a new flow.
         flows_list(List[List]): List containing lists of flow names and project names - [["flow1_name" , "project_name"], ["flow2_name" , "project_name"]].
