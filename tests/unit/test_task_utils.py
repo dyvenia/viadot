@@ -3,6 +3,11 @@ import numpy as np
 import os
 import pandas as pd
 from typing import List
+from viadot.config import local_config
+from typing import List, Literal
+from prefect.tasks.secrets import PrefectSecret
+from viadot.tasks.azure_key_vault import AzureKeyVaultSecret
+from viadot.tasks import AzureSQLCreateTable
 
 from viadot.task_utils import (
     chunk_df,
@@ -13,7 +18,13 @@ from viadot.task_utils import (
     union_dfs_task,
     dtypes_to_json,
     write_to_json,
+    generate_table_dtypes,
 )
+
+SCHEMA = "sandbox"
+TABLE = "test"
+driver = "ODBC Driver 17 for SQL Server"
+config_key = "AZURE_SQL"
 
 
 def count_dtypes(dtypes_dict: dict = None, dtypes_to_count: List[str] = None) -> int:
@@ -144,3 +155,18 @@ def test_write_to_json():
     write_to_json.run(dict, "dict.json")
     assert os.path.exists("dict.json")
     os.remove("dict.json")
+
+
+def test_generate_dtypes():
+
+    create_table_task = AzureSQLCreateTable()
+
+    create_table_task.run(
+        schema=SCHEMA,
+        table=TABLE,
+        dtypes={"id": "INT", "name": "VARCHAR(25)"},
+        if_exists="replace",
+    )
+    test_dict = generate_table_dtypes.run(config_key=config_key, table_name=TABLE)
+
+    assert isinstance(test_dict, dict)
