@@ -312,6 +312,7 @@ def generate_table_dtypes(
     reserve: float = 1.4,
     config_key: str = None,
     only_dict: bool = True,
+    credentials: str = None,
 ) -> dict:
     """Functon that automaticy generate dtypes dict from SQL table.
 
@@ -327,7 +328,7 @@ def generate_table_dtypes(
     """
     from viadot.sources import AzureSQL
 
-    sql = AzureSQL(config_key=config_key)
+    sql = AzureSQL(config_key=config_key, credentials=credentials)
     if db_name:
         sql.credentials["db_name"] = db_name
 
