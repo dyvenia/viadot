@@ -3,7 +3,7 @@ from prefect.tasks.prefect import create_flow_run, wait_for_flow_run
 from typing import Dict, List, Any
 from prefect.utilities import logging
 
-logger = logging.get_logger(__name__)
+logger = logging.get_logger()
 
 
 @task
@@ -11,8 +11,9 @@ def run_flows_list(flow_name: str, flows_list: List[List] = [List[None]]):
     """
     Task for running multiple flows in given order. Task will create flow of flows.
     Args:
-        flow_name(str): Name of new flow.
-        flows_list(List[List]): List containing lists of flow names and project names - [["flow1_name" , "project_name"], ["flow2_name" , "project_name"]]. Defaults to [List[None]].
+        flow_name(str): Name of a new flow.
+        flows_list(List[List]): List containing lists of flow names and project names - [["flow1_name" , "project_name"], ["flow2_name" , "project_name"]].
+            Flows have to be in the correct oreder. Defaults to [List[None]].
     """
     with Flow(flow_name) as flow:
         for i in range(len(flows_list) - 1):
@@ -28,16 +29,19 @@ def run_flows_list(flow_name: str, flows_list: List[List] = [List[None]]):
         for i in range(1, len(flows_list)):
             exec(f"flow_{i}.set_upstream(wait_for_flow_{i-1})")
         flow_state = flow.run()
-        print(flow_state.is_failed())
         if flow_state.is_failed():
+            logger.error("One of the flows has failed!")
             raise ValueError("One of the flows has failed!")
+        else:
+            logger.info("All of the tasks succeeded.")
 
 
 class MultipleFlows(Flow):
     """Flow to run multiple flows in given order.
     Args:
-        flow_name(str): Name of new flow.
-        flows_list(List[List]): List containing lists of flow names and project names - [["flow1_name" , "project_name"], ["flow2_name" , "project_name"]]. Defaults to [List[None]].
+        flow_name(str): Name of a new flow.
+        flows_list(List[List]): List containing lists of flow names and project names - [["flow1_name" , "project_name"], ["flow2_name" , "project_name"]].
+            Flows have to be in the correct oreder. Defaults to [List[None]].
     """
 
     def __init__(
