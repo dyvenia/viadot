@@ -174,6 +174,8 @@ def test_generate_dtypes():
     #     credentials_secret, vault_name=vault_name
     # ).run()
 
-    test_dict = generate_table_dtypes.run(config_key="AZURE_SQL", table_name=TABLE)
+    test_dict = generate_table_dtypes.run(
+        config_key="AZURE_SQL", table_name=TABLE, schema=SCHEMA
+    )
 
     assert isinstance(test_dict, dict)

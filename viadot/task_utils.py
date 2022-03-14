@@ -313,6 +313,7 @@ def generate_table_dtypes(
     config_key: str = None,
     only_dict: bool = True,
     credentials: str = None,
+    schema: str = None,
 ) -> dict:
     """Functon that automaticy generate dtypes dict from SQL table.
 
@@ -328,7 +329,7 @@ def generate_table_dtypes(
     """
     from viadot.sources import AzureSQL
 
-    sql = AzureSQL(config_key=config_key)
+    sql = AzureSQL(config_key=config_key, credentials=credentials)
     if db_name:
         sql.credentials["db_name"] = db_name
 
@@ -336,7 +337,7 @@ def generate_table_dtypes(
         NUMERIC_PRECISION, DATETIME_PRECISION, 
         IS_NULLABLE 
         from INFORMATION_SCHEMA.COLUMNS
-        where TABLE_NAME='{table_name}'
+        where TABLE_NAME='{table_name}' and TABLE_SCHEMA='{schema}'
         order by CHARACTER_MAXIMUM_LENGTH desc"""
 
     if sql.con:
