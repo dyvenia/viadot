@@ -271,7 +271,7 @@ class AzureSQLDBQuery(Task):
 
         Args:
             query (str, required): The query to execute on the database.
-            file_name (str, optional): Path where to save a query. Defaults to None.
+            file_path (str, optional): Path where to save a query. Defaults to None.
             save_query (bool, optional): Whether to save a query. Defaults to False.
             credentials_secret (str, optional): The name of the Azure Key Vault secret containing a dictionary
             with SQL db credentials (server, db_name, user, and password).

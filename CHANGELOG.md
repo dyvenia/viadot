@@ -4,12 +4,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ## [Unreleased]
-### Added
-- Added `upload_query_to_devops` task
 ### Changed
 - Changed `AzureSQLTransform` - added option to save query to DevOps
 - Changed `AzureSQLDBQuery` - added option to save query to file
 ### Added
+- Added `upload_query_to_devops` task
 - Added `SQLServer` source
 - Added `DuckDBToDF` task
 - Added `DuckDBTransform` flow
