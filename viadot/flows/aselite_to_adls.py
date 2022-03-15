@@ -22,6 +22,7 @@ class ASELitetoADLS(Flow):
         if_exists: Literal["replace", "append", "delete"] = "replace",
         overwrite: bool = True,
         convert_bytes: bool = False,
+        sp_credentials_secret: str = None,
         *args: List[any],
         **kwargs: Dict[str, Any]
     ):
@@ -39,6 +40,8 @@ class ASELitetoADLS(Flow):
             to_path (str): The path to an ADLS file. Defaults to None.
             if_exists (Literal, optional): What to do if the table exists. Defaults to "replace".
             overwrite (str, optional): Whether to overwrite the destination file. Defaults to True.
+            sp_credentials_secret (str, optional): The name of the Azure Key Vault secret containing a dictionary with
+            ACCOUNT_NAME and Service Principal credentials (TENANT_ID, CLIENT_ID, CLIENT_SECRET). Defaults to None.
         """
         self.query = query
         self.sqldb_credentials_secret = sqldb_credentials_secret
@@ -50,6 +53,7 @@ class ASELitetoADLS(Flow):
         self.to_path = to_path
         self.if_exists = if_exists
         self.convert_bytes = convert_bytes
+        self.sp_credentials_secret = sp_credentials_secret
 
         super().__init__(*args, name=name, **kwargs)
 
@@ -78,6 +82,7 @@ class ASELitetoADLS(Flow):
             from_path=self.file_path,
             to_path=self.to_path,
             overwrite=self.overwrite,
+            sp_credentials_secret=self.sp_credentials_secret,
             flow=self,
         )
 
