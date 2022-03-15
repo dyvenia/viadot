@@ -177,7 +177,7 @@ class ADLSToAzureSQL(Flow):
         self.table = table
         self.schema = schema
         self.if_exists = self._map_if_exists(if_exists)
-        self.check_col_oreder = check_col_order
+        self.check_col_order = check_col_order
         # Generate CSV
         self.remove_tab = remove_tab
         # BCPTask
@@ -244,7 +244,7 @@ class ADLSToAzureSQL(Flow):
             credentials_secret=self.sqldb_credentials_secret,
             flow=self,
         )
-        if self.check_col_oreder == False:
+        if self.check_col_order == False:
             df_to_csv = df_to_csv_task.bind(
                 df=df,
                 path=self.local_file_path,

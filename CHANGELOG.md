@@ -7,8 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 - Fixed bug with `CheckColumnOrder` task
 ### Added
- - Added `check_col_order` parameter in `ADLSToAzureSQL`
-### Added
+- Added `check_col_order` parameter in `ADLSToAzureSQL`
 - Added `SQLServer` source
 - Added `DuckDBToDF` task
 - Added `DuckDBTransform` flow

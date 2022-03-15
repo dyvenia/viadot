@@ -141,4 +141,4 @@ def test_check_column_order_append_not_exists(caplog):
     check_column_order.run(
         table="non_existing_table_123", schema="sandbox", if_exists="append", df=df
     )
-    assert "Table doesn't exists" in caplog.text
+    assert "table doesn't exists" in caplog.text

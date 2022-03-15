@@ -340,15 +340,13 @@ class CheckColumnOrder(Task):
         credentials = get_credentials(credentials_secret, vault_name=vault_name)
         azure_sql = AzureSQL(credentials=credentials)
 
-        check_if_exists_query = f"""SELECT COLUMN_NAME, DATA_TYPE FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = '{table}' AND TABLE_SCHEMA='{schema}'"""
-        check_result = azure_sql.run(query=check_if_exists_query)
+        query = f"SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = '{schema}' AND TABLE_NAME = '{table}'"
+        check_result = azure_sql.run(query=query)
         if if_exists not in ["replace", "fail"]:
             if if_exists == "append" and not check_result:
                 self.logger.warning("Aimed table doesn't exists.")
                 return
             elif check_result:
-
-                query = f"SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = '{schema}' AND TABLE_NAME = '{table}'"
                 result = azure_sql.run(query=query)
                 sql_column_list = [table for row in result for table in row]
                 df_column_list = list(df.columns)
