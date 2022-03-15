@@ -258,7 +258,7 @@ def cleanup_validation_clutter(expectations_path):
 
 
 @task
-def df_converts_bytes_to_int(df):
+def df_converts_bytes_to_int(df: pd.DataFrame) -> pd.DataFrame:
     logger = prefect.context.get("logger")
     logger.info("Converting bytes in dataframe columns to list of integers")
     return df.applymap(lambda x: list(map(int, x)) if isinstance(x, bytes) else x)

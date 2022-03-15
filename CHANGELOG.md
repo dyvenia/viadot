@@ -4,9 +4,10 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ## [Unreleased]
+
+### Added
 - added `ASEliteToDF` task and `ASEliteToADLS` flow
 - added KeyVault support in `CloudForCustomers` tasks
-### Added
 - Added `SQLServer` source
 - Added `DuckDBToDF` task
 - Added `DuckDBTransform` flow

@@ -46,7 +46,7 @@ def test_map_dtypes_for_parquet():
 
 
 def test_df_converts_bytes_to_int():
-    dane = {
+    data = {
         "ID": {0: 1, 1: 2, 2: 100, 3: 101, 4: 102},
         "SpracheText": {
             0: "TE_CATALOG_BASE_LANG",
@@ -64,11 +64,11 @@ def test_df_converts_bytes_to_int():
         },
     }
 
-    df = pd.DataFrame.from_dict(dane)
+    df = pd.DataFrame.from_dict(data)
     test_df = df_converts_bytes_to_int.run(df)
     lst = test_df["RKZ"][0]
-    is_it_or_not = all(isinstance(x, (int, int)) for x in lst)
-    assert is_it_or_not == True
+    is_int = all(isinstance(x, (int, int)) for x in lst)
+    assert is_int == True
 
 
 def test_chunk_df():

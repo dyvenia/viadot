@@ -9,14 +9,14 @@ df_task = ASELiteToDF()
 file_to_adls_task = AzureDataLakeUpload()
 
 
-class ASELitetoADLS(Flow):
+class ASELiteToADLS(Flow):
     def __init__(
         self,
         name: str,
         query: str = None,
         sqldb_credentials_secret: str = None,
         vault_name: str = None,
-        file_path: str = "None",
+        file_path: str = None,
         sep: str = "\t",
         to_path: str = None,
         if_exists: Literal["replace", "append", "delete"] = "replace",
@@ -27,7 +27,7 @@ class ASELitetoADLS(Flow):
         **kwargs: Dict[str, Any]
     ):
         """
-        Flow for downloading data from ASElite to csv file, then uploading it to Azure Storage Explorer.
+        Flow for downloading data from ASElite to csv file, then uploading it to ADLS.
 
         Args:
             name (str): The name of the flow.

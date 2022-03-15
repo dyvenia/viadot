@@ -1,11 +1,11 @@
-from prefect import Task
-from viadot.sources.base import SQL
+import json
+import prefect
 from typing import Any, Dict
+from prefect import Task
 from prefect.tasks.secrets import PrefectSecret
 from .azure_key_vault import AzureKeyVaultSecret
 from viadot.config import local_config
-import json
-import prefect
+from viadot.sources import AzureSQL
 
 
 class ASELiteToDF(Task):
@@ -56,7 +56,7 @@ class ASELiteToDF(Task):
             credentials = local_config.get("ASELite_SQL")
             logger.info("Loaded credentials from local source")
 
-        aselite = SQL(credentials=credentials)
+        aselite = AzureSQL(credentials=credentials)
         logger.info("Connected to ASELITE SOURCE")
         df = aselite.to_df(query=query)
         logger.info("Succefully collected data from query")
