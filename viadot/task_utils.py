@@ -13,6 +13,7 @@ from prefect.storage import Git
 from prefect.utilities import logging
 from visions.functional import infer_type
 from visions.typesets.complete_set import CompleteSet
+from viadot.sources import AzureSQL
 
 
 logger = logging.get_logger()
@@ -327,10 +328,9 @@ def generate_table_dtypes(
     Returns:
         Dictionary
     """
-    from viadot.sources import AzureSQL
 
     sql = AzureSQL(config_key=config_key, credentials=credentials)
-    if db_name:
+    if db_name == True:
         sql.credentials["db_name"] = db_name
 
     query_admin = f"""select COLUMN_NAME, DATA_TYPE, CHARACTER_MAXIMUM_LENGTH, 
@@ -340,7 +340,7 @@ def generate_table_dtypes(
         where TABLE_NAME='{table_name}' and TABLE_SCHEMA='{schema}'
         order by CHARACTER_MAXIMUM_LENGTH desc"""
 
-    if sql.con:
+    if sql.con == True:
         print("Connection established")
     data = sql.run(query_admin)
     df = pd.DataFrame.from_records(data)
@@ -350,10 +350,17 @@ def generate_table_dtypes(
     df[2] = df[2].apply(
         lambda x: f"varchar({create_int(x)})" if x.isdigit() else "varchar(500)"
     )
-    if only_dict:
+    if only_dict == True:
         return dict(zip(df[0], df[2]))
     else:
         return df
+
+
+@task
+def df_converts_bytes_to_int(df):
+    logger = prefect.context.get("logger")
+    logger.info("Converting bytes in dataframe columns to list of integers")
+    return df.applymap(lambda x: list(map(int, x)) if isinstance(x, bytes) else x)
 
 
 class Git(Git):
