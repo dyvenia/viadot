@@ -160,9 +160,9 @@ def test_upload_query_to_devops(caplog):
         JOIN sys.schemas s
             ON t.schema_id = s.schema_id
     """
-    path = "test_query_upload.txt"
-    file = open(path, "w+")
-    file.write(query)
+    file_path = "test_query_upload.txt"
+    with open(file_path, "w+") as file:
+        file.write(query)
     project = local_config.get("AZURE-DEVOPS")["project"]
     wiki_identifier = local_config.get("AZURE-DEVOPS")["wiki_identifier"]
     devops_path = local_config.get("AZURE-DEVOPS")["devops_path_for_test"]
@@ -172,7 +172,7 @@ def test_upload_query_to_devops(caplog):
     task = upload_query_to_devops
     with caplog.at_level(logging.INFO):
         task.run(
-            file_path=path,
+            file_path=file_path,
             project=project,
             wiki_identifier=wiki_identifier,
             devops_path=devops_path,
@@ -182,4 +182,4 @@ def test_upload_query_to_devops(caplog):
     wiki = WikiClient(base_url=organization_url, creds=credentials)
     wiki.delete_page(project=project, wiki_identifier=wiki_identifier, path=devops_path)
     assert "Successfully loaded query" in caplog.text
-    os.remove(path)
+    os.remove(file_path)

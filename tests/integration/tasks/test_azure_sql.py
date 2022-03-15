@@ -142,8 +142,8 @@ def test_azure_sql_query_save():
         JOIN sys.schemas s
             ON t.schema_id = s.schema_id
     """
-    file = "saved_query.txt"
+    file_path = "saved_query.txt"
     query_task = AzureSQLDBQuery()
-    query_task.run(save_query=True, file_path=file, query=list_table_info_query)
-    assert os.path.isfile(file)
-    os.remove(file)
+    query_task.run(save_query=True, file_path=file_path, query=list_table_info_query)
+    assert os.path.isfile(file_path)
+    os.remove(file_path)
