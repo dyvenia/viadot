@@ -285,10 +285,9 @@ class AzureSQLDBQuery(Task):
         result = azure_sql.run(query)
 
         self.logger.info(f"Successfully ran the query.")
-        if save_query == True:
-            file = open(file_path, "w")
-            file.write(query)
-            file.close
+        if save_query is True:
+            with open(file_path, "w") as file:
+                file.write(query)
 
         return result
 

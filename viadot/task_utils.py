@@ -286,8 +286,8 @@ def upload_query_to_devops(
     """
 
     credentials = BasicAuthentication("", personal_access_token)
-    file = open(file_path, "r")
-    file_content = file.read()
+    with open(file_path, "r") as file:
+        file_content = file.read()
     file_content = "```sql" + "\n" + file_content + "\n" + "```"
     create_parameters = WikiPageCreateOrUpdateParameters(content=file_content)
     wiki = WikiClient(base_url=organization_url, creds=credentials)

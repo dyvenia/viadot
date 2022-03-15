@@ -73,7 +73,7 @@ class AzureSQLTransform(Flow):
             file_path=self.file_path,
             flow=self,
         )
-        if self.save_query == True:
+        if self.save_query is True:
             query_to_devops.bind(
                 project=self.project,
                 wiki_identifier=self.wiki_identifier,
