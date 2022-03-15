@@ -76,3 +76,36 @@ def test_supermetrics_to_adls(expectation_suite):
 
     task_results = result.result.values()
     assert all([task_result.is_successful() for task_result in task_results])
+
+
+def test_supermetrics_to_adls_file_name(expectation_suite):
+    flow = SupermetricsToADLS(
+        "Google Analytics Load Times extract test file name",
+        ds_id="GA",
+        ds_segments=[
+            "R1fbzFNQQ3q_GYvdpRr42w",
+            "I8lnFFvdSFKc50lP7mBKNA",
+            "Lg7jR0VWS5OqGPARtGYKrw",
+            "h8ViuGLfRX-cCL4XKk6yfQ",
+            "-1",
+        ],
+        ds_accounts=["8326007", "58338899"],
+        date_range_type="last_year_inc",
+        fields=[
+            {"id": "Date"},
+            {"id": "segment", "split": "column"},
+            {"id": "AvgPageLoadTime_calc"},
+        ],
+        settings={"avoid_sampling": "true"},
+        order_columns="alphabetic",
+        max_columns=100,
+        max_rows=10,
+        evaluation_parameters=dict(previous_run_row_count=9),
+        adls_dir_path=adls_dir_path,
+        expectation_suite=expectation_suite,
+        adls_file_name="test_file.csv",
+        parallel=False,
+        storage=STORAGE,
+    )
+    result = flow.run()
+    assert result.is_successful()
