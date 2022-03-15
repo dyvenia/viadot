@@ -57,7 +57,7 @@ class SharepointToADLS(Flow):
             output_file_extension (str, optional): Output file extension - to allow selection of .csv for data which is not easy to handle with parquet. Defaults to ".csv".
             local_dir_path (str, optional): File directory. Defaults to None.
             adls_dir_path (str, optional): Azure Data Lake destination folder/catalog path. Defaults to None.
-            adls_file_name (str, optional):Name of file in ADLS. Defaults to None.
+            adls_file_name (str, optional): Name of file in ADLS. Defaults to None.
             adls_sp_credentials_secret (str, optional): The name of the Azure Key Vault secret containing a dictionary with
             ACCOUNT_NAME and Service Principal credentials (TENANT_ID, CLIENT_ID, CLIENT_SECRET) for the Azure Data Lake.
             Defaults to None.
@@ -85,7 +85,7 @@ class SharepointToADLS(Flow):
             self.local_file_path = self.slugify(name) + self.output_file_extension
         self.local_json_path = self.slugify(name) + ".json"
         self.adls_dir_path = adls_dir_path
-        if adls_file_name != None:
+        if adls_file_name is not None:
             self.adls_file_path = os.path.join(adls_dir_path, adls_file_name)
             self.adls_schema_file_dir_file = os.path.join(
                 adls_dir_path, "schema", Path(adls_file_name).stem + ".json"
