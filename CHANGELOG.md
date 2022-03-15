@@ -4,8 +4,6 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ## [Unreleased]
-### Fixed
-- Fixed bug with `CheckColumnOrder` task
 ### Added
 - Added `check_col_order` parameter in `ADLSToAzureSQL`
 - Added `SQLServer` source
@@ -17,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `df_to_parquet()` task now creates directories if needed
 
 ### Fixed
+- Fixed bug with `CheckColumnOrder` task
 - fixed OpenSSL config for old SQL Servers still using TLS < 1.2
 
 ## [0.3.2] - 2022-02-17
