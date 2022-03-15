@@ -6,8 +6,7 @@ from typing import List
 from viadot.config import local_config
 from typing import List, Literal
 from prefect.tasks.secrets import PrefectSecret
-from viadot.tasks.azure_key_vault import AzureKeyVaultSecret
-from viadot.tasks import AzureSQLCreateTable
+from viadot.sources.azure_blob_storage import AzureBlobStorage
 import json
 
 from viadot.task_utils import (
@@ -19,7 +18,6 @@ from viadot.task_utils import (
     union_dfs_task,
     dtypes_to_json,
     write_to_json,
-    generate_table_dtypes,
 )
 
 SCHEMA = "sandbox"
@@ -154,28 +152,3 @@ def test_write_to_json():
     write_to_json.run(dict, "dict.json")
     assert os.path.exists("dict.json")
     os.remove("dict.json")
-
-
-def test_generate_dtypes():
-
-    # create_table_task = AzureSQLCreateTable()
-
-    # create_table_task.run(
-    #     schema=SCHEMA,
-    #     table=TABLE,
-    #     dtypes={"id": "INT", "name": "VARCHAR(25)"},
-    #     if_exists="replace",
-    # )
-
-    # credentials_secret = PrefectSecret("aselite_prod").run()
-    # vault_name = PrefectSecret("AZURE_DEFAULT_KEYVAULT").run()
-
-    # credentials_str = AzureKeyVaultSecret(
-    #     credentials_secret, vault_name=vault_name
-    # ).run()
-
-    test_dict = generate_table_dtypes.run(
-        config_key="AZURE_SQL", table_name=TABLE, schema=SCHEMA
-    )
-
-    assert isinstance(test_dict, dict)
