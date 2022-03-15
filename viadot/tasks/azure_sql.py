@@ -349,10 +349,7 @@ class CheckColumnOrder(Task):
         """
         credentials = get_credentials(credentials_secret, vault_name=vault_name)
         azure_sql = AzureSQL(credentials=credentials)
-        print(list(df.columns))
-        print("****")
         df = self.rename_columns(df)
-        print(list(df.columns))
         query = f"SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = '{schema}' AND TABLE_NAME = '{table}'"
         check_result = azure_sql.run(query=query)
         if if_exists not in ["replace", "fail"]:
