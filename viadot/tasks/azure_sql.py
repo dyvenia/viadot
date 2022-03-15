@@ -352,11 +352,14 @@ class CheckColumnOrder(Task):
         df = self.rename_columns(df)
         query = f"SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = '{schema}' AND TABLE_NAME = '{table}'"
         check_result = azure_sql.run(query=query)
+        print("******")
+        print(check_result)
+        print("******")
         if if_exists not in ["replace", "fail"]:
             if if_exists == "append" and not check_result:
                 self.logger.warning("Aimed table doesn't exists.")
                 return
-            elif check_result:
+            elif check_result is not []:
                 result = azure_sql.run(query=query)
                 sql_column_list = [table for row in result for table in row]
                 df_column_list = list(df.columns)
