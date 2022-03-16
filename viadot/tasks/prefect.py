@@ -208,7 +208,6 @@ class GetFlowNewDateRange(Task):
 
         time_schedule = flow_runs_details[0]["flow_runs"][0]["scheduled_start_time"]
         last_success_start_time = get_time_from_last_successful_run(flow_runs_details)
-
         is_scheduled = check_if_scheduled_run(
             time_run=last_success_start_time,
             time_schedule=time_schedule,
@@ -220,10 +219,10 @@ class GetFlowNewDateRange(Task):
                 base_date=time_schedule,
                 diff_type="date",
             )
-            date_range_type = self.change_date_range(
+            new_date_range_type = self.change_date_range(
                 date_range=date_range_type, difference=difference_days
             )
-            return date_range_type
+            return new_date_range_type
 
         if is_scheduled is False:
-            return 0
+            return date_range_type
