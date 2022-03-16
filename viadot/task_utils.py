@@ -315,6 +315,7 @@ def generate_table_dtypes(
     only_dict: bool = True,
     credentials: str = None,
     schema: str = None,
+    connection: object = None,
 ) -> dict:
     """Functon that automaticy generate dtypes dict from SQL table.
 
@@ -323,35 +324,53 @@ def generate_table_dtypes(
         db_name (str): Data base name. Defaults to None.
         reserve (str): How many signs add to varchar, percentage of value. Defaults to 1.4.
         config_key (str): The key inside local config containing the config.
-        only_dict (bool): choose to generate dictionary or whole dataframe. Defaults to True.
+        only_dict (bool): Choose to generate dictionary or whole dataframe. Defaults to True.
+        credentials (str, optional): Credentials for the connection. Defaults to None.
+        schema (str, optional): Schema name. Defaults to None.
+        connection (object, optional): Object of connection to database. Defaults to None.
 
     Returns:
         Dictionary
     """
 
-    sql = AzureSQL(config_key=config_key, credentials=credentials)
-    if db_name == True:
-        sql.credentials["db_name"] = db_name
-
     query_admin = f"""select COLUMN_NAME, DATA_TYPE, CHARACTER_MAXIMUM_LENGTH, 
-        NUMERIC_PRECISION, DATETIME_PRECISION, 
-        IS_NULLABLE 
-        from INFORMATION_SCHEMA.COLUMNS
-        where TABLE_NAME='{table_name}' and TABLE_SCHEMA='{schema}'
-        order by CHARACTER_MAXIMUM_LENGTH desc"""
+            NUMERIC_PRECISION, DATETIME_PRECISION, 
+            IS_NULLABLE 
+            from INFORMATION_SCHEMA.COLUMNS
+            where TABLE_NAME='{table_name}' and TABLE_SCHEMA='{schema}'
+            order by CHARACTER_MAXIMUM_LENGTH desc"""
+    col_names = [
+        "COLUMN_NAME",
+        "DATA_TYPE",
+        "CHARACTER_MAXIMUM_LENGTH",
+        "NUMERIC_PRECISION",
+        "DATETIME_PRECISION",
+        "IS_NULLABLE",
+    ]
+    if connection is None:
+        sql = AzureSQL(config_key=config_key, credentials=credentials)
+        if db_name == True:
+            sql.credentials["db_name"] = db_name
 
-    if sql.con == True:
-        print("Connection established")
-    data = sql.run(query_admin)
-    df = pd.DataFrame.from_records(data)
+        if sql.con == True:
+            print("Connection established")
+        data = sql.run(query_admin)
+        df = pd.DataFrame.from_records(data, columns=col_names)
+    elif connection:
+        df = pd.read_sql_query(query_admin, connection)
+
     create_int = lambda x: int(int(x) * reserve / 10) * 10 if int(x) > 30 else 30
 
-    df[2] = df[2].astype(str).apply(lambda x: str(x.replace(".0", "")))
-    df[2] = df[2].apply(
+    df["CHARACTER_MAXIMUM_LENGTH"] = (
+        df["CHARACTER_MAXIMUM_LENGTH"]
+        .astype(str)
+        .apply(lambda x: str(x.replace(".0", "")))
+    )
+    df["CHARACTER_MAXIMUM_LENGTH"] = df["CHARACTER_MAXIMUM_LENGTH"].apply(
         lambda x: f"varchar({create_int(x)})" if x.isdigit() else "varchar(500)"
     )
     if only_dict == True:
-        return dict(zip(df[0], df[2]))
+        return dict(zip(df["COLUMN_NAME"], df["CHARACTER_MAXIMUM_LENGTH"]))
     else:
         return df
 
