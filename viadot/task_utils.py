@@ -1,21 +1,18 @@
+import copy
 import json
 import os
+import shutil
 from datetime import datetime, timezone
+from pathlib import Path
 from typing import List, Literal
 
 import pandas as pd
-from pathlib import Path
-import shutil
-import json
-
-from visions.functional import infer_type
-from visions.typesets.complete_set import CompleteSet
-
 import prefect
 from prefect import task
 from prefect.storage import Git
 from prefect.utilities import logging
-
+from visions.functional import infer_type
+from visions.typesets.complete_set import CompleteSet
 
 logger = logging.get_logger()
 METADATA_COLUMNS = {"_viadot_downloaded_at_utc": "DATETIME"}
@@ -88,6 +85,56 @@ def df_get_data_types_task(df: pd.DataFrame) -> dict:
     dtypes = infer_type(df, typeset)
     dtypes_dict = {k: str(v) for k, v in dtypes.items()}
     return dtypes_dict
+
+
+@task
+def get_sql_dtypes_from_df(df: pd.DataFrame) -> dict:
+    """Obtain SQL data types from a pandas DataFrame"""
+    typeset = CompleteSet()
+    dtypes = infer_type(df, typeset)
+    dtypes_dict = {k: str(v) for k, v in dtypes.items()}
+    dict_mapping = {
+        "Float": "REAL",
+        "Image": None,
+        "Categorical": "VARCHAR(500)",
+        "Time": "TIME",
+        "Boolean": "BIT",
+        "DateTime": "DATETIMEOFFSET",  # DATETIMEOFFSET is the only timezone-aware dtype in TSQL
+        "Object": "VARCHAR(500)",
+        "EmailAddress": "VARCHAR(50)",
+        "File": None,
+        "Geometry": "GEOMETRY",
+        "Ordinal": "VARCHAR(500)",
+        "Integer": "INT",
+        "Generic": "VARCHAR(500)",
+        "UUID": "UNIQUEIDENTIFIER",
+        "Complex": None,
+        "Date": "DATE",
+        "String": "VARCHAR(500)",
+        "IPAddress": "VARCHAR(39)",
+        "Path": "VARCHAR(500)",
+        "TimeDelta": "VARCHAR(20)",  # datetime.datetime.timedelta; eg. '1 days 11:00:00'
+        "URL": "VARCHAR(500)",
+        "Count": "INT",
+    }
+    dict_dtypes_mapped = {}
+    for k in dtypes_dict:
+        dict_dtypes_mapped[k] = dict_mapping[dtypes_dict[k]]
+
+    # This is required as pandas cannot handle mixed dtypes in Object columns
+    dtypes_dict_fixed = {
+        k: ("String" if v == "Object" else str(v))
+        for k, v in dict_dtypes_mapped.items()
+    }
+
+    return dtypes_dict_fixed
+
+
+@task
+def update_dict(d: dict, d_new: dict) -> dict:
+    d_copy = copy.deepcopy(d)
+    d_copy.update(d_new)
+    return d_copy
 
 
 @task
@@ -255,6 +302,13 @@ def write_to_json(dict_, path):
 def cleanup_validation_clutter(expectations_path):
     ge_project_path = Path(expectations_path).parent
     shutil.rmtree(ge_project_path)
+
+
+@task
+def df_converts_bytes_to_int(df: pd.DataFrame) -> pd.DataFrame:
+    logger = prefect.context.get("logger")
+    logger.info("Converting bytes in dataframe columns to list of integers")
+    return df.applymap(lambda x: list(map(int, x)) if isinstance(x, bytes) else x)
 
 
 class Git(Git):
