@@ -57,6 +57,12 @@ def get_latest_timestamp_file_path(files: List[str]) -> str:
 
 @task
 def dtypes_to_json_task(dtypes_dict, local_json_path: str):
+    """
+    Creates json file from a dictionary.
+    Args:
+        dtypes_dict (dict): Dictionary containing data types.
+        local_json_path (str): Path to local json file.
+    """
     with open(local_json_path, "w") as fp:
         json.dump(dtypes_dict, fp)
 
@@ -251,18 +257,6 @@ def df_to_parquet(
         pass
 
     out_df.to_parquet(path, index=False, **kwargs)
-
-
-@task
-def dtypes_to_json(dtypes_dict: dict, local_json_path: str) -> None:
-    """
-    Creates json file from a dictionary.
-    Args:
-        dtypes_dict (dict): Dictionary containing data types.
-        local_json_path (str): Path to local json file.
-    """
-    with open(local_json_path, "w") as fp:
-        json.dump(dtypes_dict, fp)
 
 
 @task

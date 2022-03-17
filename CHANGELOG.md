@@ -35,6 +35,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Removed
 - Removed `autopick_sep` parameter from `SAPRFC` functions. The separator is now always picked automatically if not provided.
+- Removed `dtypes_to_json` task to task_utils.py
 
 
 ## [0.3.2] - 2022-02-17

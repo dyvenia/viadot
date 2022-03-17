@@ -10,7 +10,7 @@ from viadot.task_utils import (
     df_to_csv,
     df_to_parquet,
     union_dfs_task,
-    dtypes_to_json,
+    dtypes_to_json_task,
     write_to_json,
     df_converts_bytes_to_int,
 )
@@ -158,9 +158,9 @@ def test_union_dfs_task():
     assert len(res) == 5
 
 
-def test_dtypes_to_json():
+def test_dtypes_to_json_task():
     dtypes = {"country": "VARCHAR(100)", "sales": "FLOAT(24)"}
-    dtypes_to_json.run(dtypes_dict=dtypes, local_json_path="dtypes.json")
+    dtypes_to_json_task.run(dtypes_dict=dtypes, local_json_path="dtypes.json")
     assert os.path.exists("dtypes.json")
     os.remove("dtypes.json")
 
