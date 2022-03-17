@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Added new task `GetFlowNewDateRange` to change date range based on Prefect flows
 - Added `check_col_order` parameter in `ADLSToAzureSQL`
 - Added `ASEliteToDF` task and `ASEliteToADLS` flow
 - Added KeyVault support in `CloudForCustomers` tasks

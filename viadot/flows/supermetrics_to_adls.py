@@ -24,6 +24,7 @@ from ..tasks import (
     DownloadGitHubFile,
     RunGreatExpectationsValidation,
     SupermetricsToDF,
+    GetFlowNewDateRange,
 )
 
 logger = logging.get_logger(__name__)
@@ -33,6 +34,7 @@ download_github_file_task = DownloadGitHubFile()
 validation_task = RunGreatExpectationsValidation()
 file_to_adls_task = AzureDataLakeUpload()
 json_to_adls_task = AzureDataLakeUpload()
+prefect_get_new_date_range = GetFlowNewDateRange()
 
 
 class SupermetricsToADLS(Flow):
@@ -67,6 +69,7 @@ class SupermetricsToADLS(Flow):
         parallel: bool = True,
         tags: List[str] = ["extract"],
         vault_name: str = None,
+        check_missing_data: bool = True,
         *args: List[any],
         **kwargs: Dict[str, Any],
     ):
@@ -107,6 +110,7 @@ class SupermetricsToADLS(Flow):
             parallel (bool, optional): Whether to parallelize the downloads. Defaults to True.
             tags (List[str], optional): Flow tags to use, eg. to control flow concurrency. Defaults to ["extract"].
             vault_name (str, optional): The name of the vault from which to obtain the secrets. Defaults to None.
+            check_missing_data (bool, optional): Whether to check missing data. Defaults to True.
         """
         if not ds_user:
             try:
@@ -115,6 +119,8 @@ class SupermetricsToADLS(Flow):
                 msg = "Neither 'ds_user' parameter nor 'SUPERMETRICS_DEFAULT_USER' secret were not specified"
                 raise ValueError(msg) from e
 
+        self.flow_name = name
+        self.check_missing_data = check_missing_data
         # SupermetricsToDF
         self.ds_id = ds_id
         self.ds_accounts = ds_accounts
@@ -197,6 +203,14 @@ class SupermetricsToADLS(Flow):
         return t
 
     def gen_flow(self) -> Flow:
+        if self.check_missing_data is True:
+            if self.date_range_type is not None and "days" in self.date_range_type:
+                self.date_range_type = prefect_get_new_date_range.run(
+                    flow_name=self.flow_name,
+                    date_range_type=self.date_range_type,
+                    flow=self,
+                )
+
         if self.parallel:
             # generate a separate task for each account
             dfs = apply_map(self.gen_supermetrics_task, self.ds_accounts, flow=self)

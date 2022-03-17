@@ -25,6 +25,7 @@ from .sqlite import SQLiteInsert, SQLiteSQLtoDF, SQLiteQuery
 from .supermetrics import SupermetricsToCSV, SupermetricsToDF
 from .sharepoint import SharepointToDF
 from .cloud_for_customers import C4CReportToDF, C4CToDF
+from .prefect import GetFlowNewDateRange
 from .aselite import ASELiteToDF
 
 try:
@@ -34,3 +35,4 @@ except ImportError:
 
 from .duckdb import DuckDBCreateTableFromParquet, DuckDBQuery, DuckDBToDF
 from .sql_server import SQLServerCreateTable
+
