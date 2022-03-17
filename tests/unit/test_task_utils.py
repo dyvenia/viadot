@@ -3,7 +3,6 @@ import numpy as np
 import os
 import pandas as pd
 from typing import List
-
 from viadot.task_utils import (
     chunk_df,
     df_get_data_types_task,
@@ -13,6 +12,7 @@ from viadot.task_utils import (
     union_dfs_task,
     dtypes_to_json_task,
     write_to_json,
+    df_converts_bytes_to_int,
 )
 
 
@@ -43,6 +43,32 @@ def test_map_dtypes_for_parquet():
     sum_of_mapped_dtypes = count_dtypes(dtyps_dict_mapped, ["String"])
 
     assert sum_of_dtypes == sum_of_mapped_dtypes
+
+
+def test_df_converts_bytes_to_int():
+    data = {
+        "ID": {0: 1, 1: 2, 2: 100, 3: 101, 4: 102},
+        "SpracheText": {
+            0: "TE_CATALOG_BASE_LANG",
+            1: "TE_Docu",
+            2: "TE_German",
+            3: "TE_English",
+            4: "TE_French",
+        },
+        "RKZ": {
+            0: b"\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\r\x01\x00\x00\x00\x00\x00\x00\x04\x00\x00q\x9f#NV\x8dG\x00",
+            1: b"\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\r\x01\x00\x00\x00\x00\x00\x00\x04\x00\x00<\xa0#NV\x8dG\x00",
+            2: b"\r\xa3\x86\x01\x00\x01\x00\x00\x00\x00\x04\r\x01\x00\x00\x00\x00\x00\x00\x04\x00\x003\x9f#NV\x8dG\x00",
+            3: b"\r\xa3\x86\x01\x00\x01\x00\x00\x00\x00\x04\r\x01\x00\x00\x00\x00\x00\x00\x04\x00\x00R\x9f#NV\x8dG\x00",
+            4: b"\r\xa3\x86\x01\x00\x01\x00\x00\x00\x00\x04\r\x01\x00\x00\x00\x00\x00\x00\x04\x00\x00\xee\x9f#NV\x8dG\x00",
+        },
+    }
+
+    df = pd.DataFrame.from_dict(data)
+    test_df = df_converts_bytes_to_int.run(df)
+    lst = test_df["RKZ"][0]
+    is_int = all(isinstance(x, (int, int)) for x in lst)
+    assert is_int == True
 
 
 def test_chunk_df():

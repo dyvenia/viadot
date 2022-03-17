@@ -4,9 +4,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ## [Unreleased]
-### Removed
-- Removed `dtypes_to_json` task to task_utils.py
+
 ### Added
+
+- Added `check_col_order` parameter in `ADLSToAzureSQL`
+- Added `ASEliteToDF` task and `ASEliteToADLS` flow
+- Added KeyVault support in `CloudForCustomers` tasks
 - Added `SQLServer` source
 - Added `DuckDBToDF` task
 - Added `DuckDBTransform` flow
@@ -20,8 +23,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Changed the base class of `AzureSQL` to `SQLServer`
 - `df_to_parquet()` task now creates directories if needed
 - Added several more separators to check for automatically in `SAPRFC.to_df()`
+- Upgraded `duckdb` version to 0.3.2
 
 ### Fixed
+
+- Fixed bug with `CheckColumnOrder` task
 - Fixed OpenSSL config for old SQL Servers still using TLS < 1.2
 - `BCPTask` now correctly handles custom SQL Server port 
 - Fixed `SAPRFC.to_df()` ignoring user-specified separator
@@ -29,6 +35,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Removed
 - Removed `autopick_sep` parameter from `SAPRFC` functions. The separator is now always picked automatically if not provided.
+- Removed `dtypes_to_json` task to task_utils.py
+
 
 ## [0.3.2] - 2022-02-17
 ### Fixed
