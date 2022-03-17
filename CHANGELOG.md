@@ -6,8 +6,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
-- added `ASEliteToDF` task and `ASEliteToADLS` flow
-- added KeyVault support in `CloudForCustomers` tasks
+
+- Added `check_col_order` parameter in `ADLSToAzureSQL`
+- Added `ASEliteToDF` task and `ASEliteToADLS` flow
+- Added KeyVault support in `CloudForCustomers` tasks
 - Added `SQLServer` source
 - Added `DuckDBToDF` task
 - Added `DuckDBTransform` flow
@@ -24,6 +26,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Upgraded `duckdb` version to 0.3.2
 
 ### Fixed
+
+- Fixed bug with `CheckColumnOrder` task
 - Fixed OpenSSL config for old SQL Servers still using TLS < 1.2
 - `BCPTask` now correctly handles custom SQL Server port 
 - Fixed `SAPRFC.to_df()` ignoring user-specified separator
@@ -31,6 +35,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Removed
 - Removed `autopick_sep` parameter from `SAPRFC` functions. The separator is now always picked automatically if not provided.
+
 
 ## [0.3.2] - 2022-02-17
 ### Fixed
