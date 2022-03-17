@@ -1,4 +1,5 @@
 import pandas as pd
+import os
 from viadot.flows import ADLSToAzureSQL
 from viadot.flows.adls_to_azure_sql import df_to_csv_task
 
@@ -53,5 +54,14 @@ def test_df_to_csv_task():
     df = pd.DataFrame(data=d)
     assert df["col1"].astype(str).str.contains("\t")[1] == True
     task = df_to_csv_task
-    task.run(df, "result.csv")
+    task.run(df, path="result.csv", remove_tab=True)
     assert df["col1"].astype(str).str.contains("\t")[1] != True
+
+
+def test_df_to_csv_task_none(caplog):
+    df = None
+    task = df_to_csv_task
+    path = "result_none.csv"
+    task.run(df, path=path, remove_tab=False)
+    assert "DataFrame is None" in caplog.text
+    assert os.path.isfile(path) == False

@@ -57,6 +57,12 @@ def get_latest_timestamp_file_path(files: List[str]) -> str:
 
 @task
 def dtypes_to_json_task(dtypes_dict, local_json_path: str):
+    """
+    Creates json file from a dictionary.
+    Args:
+        dtypes_dict (dict): Dictionary containing data types.
+        local_json_path (str): Path to local json file.
+    """
     with open(local_json_path, "w") as fp:
         json.dump(dtypes_dict, fp)
 
@@ -254,18 +260,6 @@ def df_to_parquet(
 
 
 @task
-def dtypes_to_json(dtypes_dict: dict, local_json_path: str) -> None:
-    """
-    Creates json file from a dictionary.
-    Args:
-        dtypes_dict (dict): Dictionary containing data types.
-        local_json_path (str): Path to local json file.
-    """
-    with open(local_json_path, "w") as fp:
-        json.dump(dtypes_dict, fp)
-
-
-@task
 def union_dfs_task(dfs: List[pd.DataFrame]):
     """
     Create one DataFrame from a list of pandas DataFrames.
@@ -302,6 +296,13 @@ def write_to_json(dict_, path):
 def cleanup_validation_clutter(expectations_path):
     ge_project_path = Path(expectations_path).parent
     shutil.rmtree(ge_project_path)
+
+
+@task
+def df_converts_bytes_to_int(df: pd.DataFrame) -> pd.DataFrame:
+    logger = prefect.context.get("logger")
+    logger.info("Converting bytes in dataframe columns to list of integers")
+    return df.applymap(lambda x: list(map(int, x)) if isinstance(x, bytes) else x)
 
 
 class Git(Git):
