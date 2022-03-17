@@ -51,7 +51,11 @@ class Sharepoint(Source):
         download_from_path: str = None,
         download_to_path: str = "Sharepoint_file.xlsm",
     ) -> None:
-
+        """Function to download files from Sharepoint.
+        Args:
+            download_from_path (str): Path from which to download file. Defaults to None.
+            download_to_path (str, optional): Path to destination file. Defaults to "Sharepoint_file.xlsm".
+        """
         download_from_path = download_from_path or self.url
         if not download_from_path:
             raise ValueError("Missing required parameter 'download_from_path'.")

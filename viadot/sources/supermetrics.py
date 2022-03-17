@@ -47,6 +47,7 @@ class Supermetrics(Source):
 
     @classmethod
     def get_params_from_api_query(cls, url: str) -> Dict[str, Any]:
+        """Returns parmeters from API query in a dictionary"""
         url_unquoted = urllib.parse.unquote(url)
         s = urllib.parse.parse_qs(url_unquoted)
         endpoint = list(s.keys())[0]
@@ -87,6 +88,7 @@ class Supermetrics(Source):
         cls,
         response: dict,
     ) -> List[str]:
+        """Returns list of Google Analytics columns names"""
 
         # Supermetrics allows pivoting GA data, in which case it generates additional columns,
         # which are not enlisted in response's query metadata but are instead added as the first row of data.
@@ -109,11 +111,13 @@ class Supermetrics(Source):
 
     @classmethod
     def _get_col_names_other(cls, response: dict) -> List[str]:
+        """Returns list of columns names (to Google Analytics use  _get_col_names_google_analytics ()"""
         cols_meta = response["meta"]["query"]["fields"]
         columns = [col_meta["field_name"] for col_meta in cols_meta]
         return columns
 
     def _get_col_names(self) -> List[str]:
+        """Returns list of columns names"""
 
         query_params_cp = deepcopy(self.query_params)
         query_params_cp["offset_start"] = 0

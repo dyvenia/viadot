@@ -1,0 +1,12 @@
+version: "3"
+
+services:
+  viadot_saprfc_lab:
+    image: viadot:sap_rfc
+    container_name: viadot_saprfc_lab
+    ports:
+      - 5678:8888
+    volumes:
+      - ../../../:/home/viadot
+    command: jupyter lab --no-browser --ip 0.0.0.0 --LabApp.token=''
+    restart: "unless-stopped"

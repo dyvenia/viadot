@@ -1,31 +1,13 @@
-from typing import Any, Dict, List, Literal
+from typing import Literal
 
 from prefect.utilities import logging
 
-from .base import SQL
+from .sql_server import SQLServer
 
 logger = logging.get_logger(__name__)
 
 
-class AzureSQL(SQL):
-    def __init__(
-        self,
-        *args,
-        **kwargs,
-    ):
-        super().__init__(*args, **kwargs)
-        self.credentials["driver"] = "ODBC Driver 17 for SQL Server"
-
-    @property
-    def schemas(self) -> List[str]:
-        schemas_tuples = self.run("SELECT s.name as schema_name from sys.schemas s")
-        return [schema_tuple[0] for schema_tuple in schemas_tuples]
-
-    @property
-    def tables(self) -> List[str]:
-        tables_tuples = self.run("SELECT * FROM information_schema.tables")
-        return [table for row in tables_tuples for table in row]
-
+class AzureSQL(SQLServer):
     def bulk_insert(
         self,
         table: str,
@@ -34,6 +16,14 @@ class AzureSQL(SQL):
         sep="\t",
         if_exists: Literal = "append",
     ):
+        """Fuction to bulk insert.
+        Args:
+            table (str): Table name.
+            schema (str, optional): Schema name. Defaults to None.
+            source_path (str, optional): Full path to a data file. Defaults to one.
+            sep (str, optional):  field terminator to be used for char and widechar data files. Defaults to "\t".
+            if_exists (Literal, optional): What to do if the table already exists. Defaults to "append".
+        """
         if schema is None:
             schema = self.DEFAULT_SCHEMA
         fqn = f"{schema}.{table}"
@@ -108,27 +98,3 @@ class AzureSQL(SQL):
         self.run(create_master_key_sql)
         self.run(create_external_db_credential_sql)
         self.run(create_external_db_sql)
-
-    def exists(self, table: str, schema: str = None) -> bool:
-        """Check whether a table exists.
-
-        Args:
-            table (str): The table to be checked.
-            schema (str, optional): The schema whethe the table is located. Defaults to 'dbo'.
-
-        Returns:
-            bool: Whether the table exists.
-        """
-
-        if not schema:
-            schema = "dbo"
-
-        list_table_info_query = f"""
-            SELECT *
-            FROM sys.tables t
-            JOIN sys.schemas s
-                ON t.schema_id = s.schema_id
-            WHERE s.name = '{schema}' AND t.name = '{table}'
-        """
-        exists = bool(self.run(list_table_info_query))
-        return exists
