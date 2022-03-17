@@ -304,6 +304,13 @@ def cleanup_validation_clutter(expectations_path):
     shutil.rmtree(ge_project_path)
 
 
+@task
+def df_converts_bytes_to_int(df: pd.DataFrame) -> pd.DataFrame:
+    logger = prefect.context.get("logger")
+    logger.info("Converting bytes in dataframe columns to list of integers")
+    return df.applymap(lambda x: list(map(int, x)) if isinstance(x, bytes) else x)
+
+
 class Git(Git):
     @property
     def git_clone_url(self):
