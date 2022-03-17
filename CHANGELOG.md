@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Added `MultipleFlows` flow class which enables running multiple flows in a given order.
 - Added new task `GetFlowNewDateRange` to change date range based on Prefect flows
 - Added `check_col_order` parameter in `ADLSToAzureSQL`
 - Added `ASEliteToDF` task and `ASEliteToADLS` flow
