@@ -1,10 +1,15 @@
-from .exceptions import APIError
+from typing import Any, Dict
+
+import pendulum
+import prefect
+import requests
+from prefect.utilities.graphql import EnumValue, with_args
 from requests.adapters import HTTPAdapter
 from requests.exceptions import ConnectionError, HTTPError, ReadTimeout, Timeout
-from urllib3.exceptions import ProtocolError
 from requests.packages.urllib3.util.retry import Retry
-from typing import Any, Dict
-import requests
+from urllib3.exceptions import ProtocolError
+
+from .exceptions import APIError
 
 
 def slugify(name: str) -> str:
@@ -75,3 +80,40 @@ def handle_api_response(
         raise APIError("Unknown error.") from e
 
     return response
+
+
+def get_flow_last_run_date(flow_name: str) -> str:
+    """
+    Retrieve a flow's last run date as an ISO datetime string.
+
+    This function assumes you are already authenticated with Prefect Cloud.
+    """
+    client = prefect.Client()
+    result = client.graphql(
+        {
+            "query": {
+                with_args(
+                    "flow_run",
+                    {
+                        "where": {
+                            "flow": {"name": {"_eq": flow_name}},
+                            "start_time": {"_is_null": False},
+                            "state": {"_eq": "Success"},
+                        },
+                        "order_by": {"start_time": EnumValue("desc")},
+                        "limit": 1,
+                    },
+                ): {"start_time"}
+            }
+        }
+    )
+    flow_run_data = result.get("data", {}).get("flow_run")
+
+    if not flow_run_data:
+        return None
+
+    last_run_date_raw_format = flow_run_data[0]["start_time"]
+    last_run_date = (
+        pendulum.parse(last_run_date_raw_format).format("YYYY-MM-DDTHH:MM:SS") + "Z"
+    )
+    return last_run_date
