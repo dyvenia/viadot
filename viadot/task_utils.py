@@ -97,30 +97,30 @@ def df_get_data_types_task(df: pd.DataFrame) -> dict:
 def get_sql_dtypes_from_df(df: pd.DataFrame) -> dict:
     """Obtain SQL data types from a pandas DataFrame"""
     typeset = CompleteSet()
-    dtypes = infer_type(df, typeset)
+    dtypes = infer_type(df.head(10000), typeset)
     dtypes_dict = {k: str(v) for k, v in dtypes.items()}
     dict_mapping = {
         "Float": "REAL",
         "Image": None,
         "Categorical": "VARCHAR(500)",
         "Time": "TIME",
-        "Boolean": "BIT",
+        "Boolean": "VARCHAR(5)",  # Bool is True/False, Microsoft expects 0/1
         "DateTime": "DATETIMEOFFSET",  # DATETIMEOFFSET is the only timezone-aware dtype in TSQL
         "Object": "VARCHAR(500)",
         "EmailAddress": "VARCHAR(50)",
         "File": None,
         "Geometry": "GEOMETRY",
-        "Ordinal": "VARCHAR(500)",
+        "Ordinal": "INT",
         "Integer": "INT",
         "Generic": "VARCHAR(500)",
-        "UUID": "UNIQUEIDENTIFIER",
+        "UUID": "VARCHAR(50)",  # Microsoft uses a custom UUID format so we can't use it
         "Complex": None,
         "Date": "DATE",
         "String": "VARCHAR(500)",
         "IPAddress": "VARCHAR(39)",
-        "Path": "VARCHAR(500)",
+        "Path": "VARCHAR(255)",
         "TimeDelta": "VARCHAR(20)",  # datetime.datetime.timedelta; eg. '1 days 11:00:00'
-        "URL": "VARCHAR(500)",
+        "URL": "VARCHAR(255)",
         "Count": "INT",
     }
     dict_dtypes_mapped = {}
