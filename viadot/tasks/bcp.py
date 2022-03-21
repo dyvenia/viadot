@@ -113,5 +113,5 @@ class BCPTask(ShellTask):
             # but not in BCP's 'server' argument.
             server = server.replace(" ", "")
 
-        command = f"/opt/mssql-tools/bin/bcp {fqn} in {path} -S {server} -d {db_name} -U {uid} -P '{pwd}' -c -F 2 -b 5000 -h 'TABLOCK'"
+        command = f"/opt/mssql-tools/bin/bcp {fqn} in '{path}' -S {server} -d {db_name} -U {uid} -P '{pwd}' -c -F 2 -b 5000 -h 'TABLOCK'"
         return super().run(command=command, **kwargs)
