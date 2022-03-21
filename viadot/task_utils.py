@@ -306,7 +306,7 @@ def df_converts_bytes_to_int(df: pd.DataFrame) -> pd.DataFrame:
 
 
 @task
-def df_clean_column(df: pd.DataFrame, columns_to_clean: list(str)) -> pd.DataFrame:
+def df_clean_column(df: pd.DataFrame, columns_to_clean: List[str]) -> pd.DataFrame:
     if columns_to_clean == None:
         col_lst = list(df.columns)
     else:

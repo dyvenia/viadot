@@ -24,7 +24,7 @@ class ASELiteToADLS(Flow):
         convert_bytes: bool = False,
         sp_credentials_secret: str = None,
         remove_special_characters: bool = None,
-        columns_to_clean: list[str] = None,
+        columns_to_clean: List[str] = None,
         *args: List[any],
         **kwargs: Dict[str, Any]
     ):
