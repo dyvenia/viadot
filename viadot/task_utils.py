@@ -65,6 +65,10 @@ def dtypes_to_json_task(dtypes_dict: dict, local_json_path: str) -> None:
         dtypes_dict (dict): Dictionary containing data types.
         local_json_path (str): Path to local json file.
     """
+
+
+def dtypes_to_json_task(dtypes_dict: dict, local_json_path: str) -> None:
+
     with open(local_json_path, "w") as fp:
         json.dump(dtypes_dict, fp)
 
