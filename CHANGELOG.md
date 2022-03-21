@@ -21,6 +21,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added `DuckDBToSQLServer` flow
 - Added `if_exists="append"` option to `DuckDB.create_table_from_parquet()`
 - Added `get_flow_last_run_date` util function
+- Added `df_to_dataset` task util for writing DataFrames to data lakes using `pyarrow`
 
 ### Changed
 - Changed the base class of `AzureSQL` to `SQLServer`
