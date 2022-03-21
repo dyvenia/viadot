@@ -349,10 +349,10 @@ def generate_table_dtypes(
     ]
     if connection is None:
         sql = AzureSQL(config_key=config_key, credentials=credentials)
-        if db_name == True:
+        if db_name:
             sql.credentials["db_name"] = db_name
 
-        if sql.con == True:
+        if sql.con:
             print("Connection established")
         data = sql.run(query_admin)
         df = pd.DataFrame.from_records(data, columns=col_names)
