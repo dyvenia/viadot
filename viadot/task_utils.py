@@ -305,6 +305,23 @@ def df_converts_bytes_to_int(df: pd.DataFrame) -> pd.DataFrame:
     return df.applymap(lambda x: list(map(int, x)) if isinstance(x, bytes) else x)
 
 
+@task
+def df_clean_column(df: pd.DataFrame, columns_to_clean: list(str)) -> pd.DataFrame:
+    if columns_to_clean == None:
+        col_lst = list(df.columns)
+    else:
+        col_lst = columns_to_clean
+
+    df[col_lst].replace(
+        to_replace=[r"\\t|\\n|\\r", "\t|\n|\r"],
+        value=["", ""],
+        regex=True,
+        inplace=True,
+    )
+
+    return df
+
+
 class Git(Git):
     @property
     def git_clone_url(self):
