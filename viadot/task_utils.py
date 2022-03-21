@@ -21,7 +21,7 @@ METADATA_COLUMNS = {"_viadot_downloaded_at_utc": "DATETIME"}
 @task
 def add_ingestion_metadata_task(
     df: pd.DataFrame,
-):
+) -> pd.DataFrame:
     """Add ingestion metadata columns, eg. data download date
 
     Args:
@@ -56,7 +56,7 @@ def get_latest_timestamp_file_path(files: List[str]) -> str:
 
 
 @task
-def dtypes_to_json_task(dtypes_dict, local_json_path: str):
+def dtypes_to_json_task(dtypes_dict: dict, local_json_path: str) -> None:
     with open(local_json_path, "w") as fp:
         json.dump(dtypes_dict, fp)
 
@@ -266,7 +266,7 @@ def dtypes_to_json(dtypes_dict: dict, local_json_path: str) -> None:
 
 
 @task
-def union_dfs_task(dfs: List[pd.DataFrame]):
+def union_dfs_task(dfs: List[pd.DataFrame]) -> pd.DataFrame:
     """
     Create one DataFrame from a list of pandas DataFrames.
     Args:
@@ -276,7 +276,7 @@ def union_dfs_task(dfs: List[pd.DataFrame]):
 
 
 @task
-def write_to_json(dict_, path):
+def write_to_json(dict_: dict, path: str) -> None:
     """
     Creates json file from a dictionary. Log record informs about the writing file proccess.
     Args:
@@ -299,7 +299,7 @@ def write_to_json(dict_, path):
 
 
 @task
-def cleanup_validation_clutter(expectations_path):
+def cleanup_validation_clutter(expectations_path: str) -> None:
     ge_project_path = Path(expectations_path).parent
     shutil.rmtree(ge_project_path)
 
