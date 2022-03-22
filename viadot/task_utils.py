@@ -347,6 +347,7 @@ def generate_table_dtypes(
         "DATETIME_PRECISION",
         "IS_NULLABLE",
     ]
+    tmp_values = []
     if connection is None:
         sql = AzureSQL(config_key=config_key, credentials=credentials)
         if db_name:
@@ -359,18 +360,26 @@ def generate_table_dtypes(
     elif connection:
         df = pd.read_sql_query(query_admin, connection)
 
-    create_int = lambda x: int(int(x) * reserve / 10) * 10 if int(x) > 30 else 30
+    create_int = lambda x: str(int(int(x) * reserve / 10) * 10 if int(x) > 30 else 30)
 
     df["CHARACTER_MAXIMUM_LENGTH"] = (
         df["CHARACTER_MAXIMUM_LENGTH"]
         .astype(str)
         .apply(lambda x: str(x.replace(".0", "")))
     )
-    df["CHARACTER_MAXIMUM_LENGTH"] = df["CHARACTER_MAXIMUM_LENGTH"].apply(
-        lambda x: f"varchar({create_int(x)})" if x.isdigit() else "varchar(500)"
-    )
+    types_val = df[["DATA_TYPE", "CHARACTER_MAXIMUM_LENGTH"]].values.tolist()
+    types_keys = df["COLUMN_NAME"].values.tolist()
+    for x in types_val:
+        if x[1] in ["nan"]:
+            x[1] = ""
+        elif x[1] == "-1":
+            x[1] = "(500)"
+        else:
+            x[1] = "(" + create_int(x[1]) + ")"
+    for x in types_val:
+        tmp_values.append("".join(x).upper())
     if only_dict == True:
-        return dict(zip(df["COLUMN_NAME"], df["CHARACTER_MAXIMUM_LENGTH"]))
+        return dict(zip(types_keys, tmp_values))
     else:
         return df
 
