@@ -13,6 +13,7 @@ from viadot.task_utils import (
     dtypes_to_json_task,
     write_to_json,
     df_converts_bytes_to_int,
+    df_clean_column,
 )
 
 
@@ -69,6 +70,20 @@ def test_df_converts_bytes_to_int():
     lst = test_df["RKZ"][0]
     is_int = all(isinstance(x, (int, int)) for x in lst)
     assert is_int == True
+
+
+def test_df_clean_column():
+    data = {
+        "col_1": ["a", "b \\r", "\t c", "d \r\n a"],
+        "col_2": ["a", "b \\r", "\t c", "d \r\n a"],
+    }
+    expected_output = {
+        "col_1": {0: "a", 1: "b ", 2: " c", 3: "d  a"},
+        "col_2": {0: "a", 1: "b ", 2: " c", 3: "d  a"},
+    }
+    df = pd.DataFrame.from_dict(data)
+    output = df_clean_column.run(df).to_dict()
+    assert expected_output == output
 
 
 def test_chunk_df():

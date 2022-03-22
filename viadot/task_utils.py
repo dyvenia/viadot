@@ -5,6 +5,7 @@ import shutil
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import List, Literal
+from numpy import column_stack
 
 import pandas as pd
 import prefect
@@ -306,18 +307,32 @@ def df_converts_bytes_to_int(df: pd.DataFrame) -> pd.DataFrame:
 
 
 @task
-def df_clean_column(df: pd.DataFrame, columns_to_clean: List[str]) -> pd.DataFrame:
+def df_clean_column(
+    df: pd.DataFrame, columns_to_clean: List[str] = None
+) -> pd.DataFrame:
+    """
+    Function that remove special characters from data frame like escape symbols etc.
+    Args:
+    df (pd.DataFrame): DataFrame
+    columns_to_clean (List[str]): List of columns
+    """
     if columns_to_clean == None:
-        col_lst = list(df.columns)
+        df.replace(
+            to_replace=[r"\\t|\\n|\\r", "\t|\n|\r"],
+            value=["", ""],
+            regex=True,
+            inplace=True,
+        )
+
     else:
         col_lst = columns_to_clean
-
-    df[col_lst].replace(
-        to_replace=[r"\\t|\\n|\\r", "\t|\n|\r"],
-        value=["", ""],
-        regex=True,
-        inplace=True,
-    )
+        for x in col_lst:
+            df[x].replace(
+                to_replace=[r"\\t|\\n|\\r", "\t|\n|\r"],
+                value=["", ""],
+                regex=True,
+                inplace=True,
+            )
 
     return df
 

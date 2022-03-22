@@ -44,6 +44,9 @@ class ASELiteToADLS(Flow):
             overwrite (str, optional): Whether to overwrite the destination file. Defaults to True.
             sp_credentials_secret (str, optional): The name of the Azure Key Vault secret containing a dictionary with
             ACCOUNT_NAME and Service Principal credentials (TENANT_ID, CLIENT_ID, CLIENT_SECRET). Defaults to None.
+            remove_special_characters (str, optional): Call a function that remove special characters like escape symbols. Defaults to None.
+            columns_to_clean (List(str), optional): Select columns to clean, used with remove_special_characters.
+            If None whole data frame will be processed. Defaults to None.
         """
         self.query = query
         self.sqldb_credentials_secret = sqldb_credentials_secret
