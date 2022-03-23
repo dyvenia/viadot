@@ -1,7 +1,7 @@
 import pandas as pd
 import os
 from viadot.flows import ADLSToAzureSQL
-from viadot.flows.adls_to_azure_sql import df_to_csv_task
+from viadot.flows.adls_to_azure_sql import remove_tab
 
 
 def test_get_promoted_adls_path_csv_file():
@@ -49,19 +49,10 @@ def test_get_promoted_adls_path_dir_starts_with_slash():
     assert promoted_path == "conformed/supermetrics/adls_ga_load_times_fr_test.csv"
 
 
-def test_df_to_csv_task():
+def test_remove_tab():
     d = {"col1": ["rat", "\tdog"], "col2": ["cat", 4]}
     df = pd.DataFrame(data=d)
     assert df["col1"].astype(str).str.contains("\t")[1] == True
-    task = df_to_csv_task
-    task.run(df, path="result.csv", remove_tab=True)
+    task = remove_tab
+    task.run(df)
     assert df["col1"].astype(str).str.contains("\t")[1] != True
-
-
-def test_df_to_csv_task_none(caplog):
-    df = None
-    task = df_to_csv_task
-    path = "result_none.csv"
-    task.run(df, path=path, remove_tab=False)
-    assert "DataFrame is None" in caplog.text
-    assert os.path.isfile(path) == False

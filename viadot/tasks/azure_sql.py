@@ -356,7 +356,7 @@ class CheckColumnOrder(Task):
             if if_exists == "append" and not check_result:
                 self.logger.warning("Aimed table doesn't exists.")
                 return
-            elif check_result is not []:
+            elif check_result:
                 result = azure_sql.run(query=query)
                 sql_column_list = [table for row in result for table in row]
                 df_column_list = list(df.columns)

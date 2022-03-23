@@ -19,6 +19,8 @@ from ..tasks import (
     CheckColumnOrder,
 )
 
+from viadot.task_utils import df_to_csv
+
 logger = logging.get_logger(__name__)
 
 lake_to_df_task = AzureDataLakeToDF()
@@ -72,19 +74,20 @@ def map_data_types_task(json_shema_path: str):
 
 
 @task
-def df_to_csv_task(df, remove_tab, path: str, sep: str = "\t"):
-    # if table doesn't exist it will be created later -  df equals None
+def remove_tab(df: pd.DataFrame):
+    for col in range(len(df.columns)):
+        df[df.columns[col]] = (
+            df[df.columns[col]].astype(str).str.replace(r"\t", "", regex=True)
+        )
+    return df
+
+
+@task
+def df_to_csv_none(df: pd.DataFrame = None, path: str = None, sep: str = "\t"):
     if df is None:
         logger.warning("DataFrame is None")
     else:
-        if remove_tab == True:
-            for col in range(len(df.columns)):
-                df[df.columns[col]] = (
-                    df[df.columns[col]].astype(str).str.replace(r"\t", "", regex=True)
-                )
-            df.to_csv(path, sep=sep, index=False)
-        else:
-            df.to_csv(path, sep=sep, index=False)
+        df.to_csv(path, sep=sep, index=False)
 
 
 class ADLSToAzureSQL(Flow):
@@ -235,30 +238,36 @@ class ADLSToAzureSQL(Flow):
         else:
             dtypes = self.dtypes
 
-        df_reorder = check_column_order_task.bind(
-            table=self.table,
-            schema=self.schema,
-            df=df,
-            if_exists=self.if_exists,
-            credentials_secret=self.sqldb_credentials_secret,
-            flow=self,
-        )
+        if self.remove_tab == True:
+            df = remove_tab(df, flow=self)
+
         if self.check_col_order == False:
-            df_to_csv = df_to_csv_task.bind(
+            df_to_csv_task = df_to_csv_none.bind(
                 df=df,
                 path=self.local_file_path,
                 sep=self.write_sep,
-                remove_tab=self.remove_tab,
                 flow=self,
             )
+            df_to_csv_task.set_upstream(lake_to_df_task, flow=self)
         else:
-            df_to_csv = df_to_csv_task.bind(
+
+            df_reorder = check_column_order_task.bind(
+                table=self.table,
+                schema=self.schema,
+                df=df,
+                if_exists=self.if_exists,
+                credentials_secret=self.sqldb_credentials_secret,
+                flow=self,
+            )
+            df_to_csv_task = df_to_csv_none.bind(
                 df=df_reorder,
                 path=self.local_file_path,
                 sep=self.write_sep,
-                remove_tab=self.remove_tab,
                 flow=self,
             )
+
+            df_reorder.set_upstream(lake_to_df_task, flow=self)
+            df_to_csv_task.set_upstream(df_reorder, flow=self)
 
         promote_to_conformed_task.bind(
             from_path=self.adls_path,
@@ -292,10 +301,10 @@ class ADLSToAzureSQL(Flow):
             flow=self,
         )
 
-        df_reorder.set_upstream(lake_to_df_task, flow=self)
-        df_to_csv.set_upstream(df_reorder, flow=self)
-        promote_to_conformed_task.set_upstream(df_to_csv, flow=self)
-        promote_to_conformed_task.set_upstream(df_to_csv, flow=self)
-        create_table_task.set_upstream(df_to_csv, flow=self)
+        # df_reorder.set_upstream(lake_to_df_task, flow=self)
+        # df_to_csv_task.set_upstream(df_reorder, flow=self)
+        # promote_to_conformed_task.set_upstream(df_to_csv_task, flow=self)
+        promote_to_conformed_task.set_upstream(df_to_csv_task, flow=self)
+        create_table_task.set_upstream(df_to_csv_task, flow=self)
         promote_to_operations_task.set_upstream(promote_to_conformed_task, flow=self)
         bulk_insert_task.set_upstream(create_table_task, flow=self)
