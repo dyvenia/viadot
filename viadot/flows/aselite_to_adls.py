@@ -1,7 +1,7 @@
 from typing import Any, Dict, List, Literal
 from prefect import Flow
 from viadot.tasks import AzureDataLakeUpload
-from viadot.task_utils import df_to_csv, df_converts_bytes_to_int
+from viadot.task_utils import df_to_csv, df_converts_bytes_to_int, df_clean_column
 from viadot.tasks.aselite import ASELiteToDF
 
 
@@ -23,6 +23,8 @@ class ASELiteToADLS(Flow):
         overwrite: bool = True,
         convert_bytes: bool = False,
         sp_credentials_secret: str = None,
+        remove_special_characters: bool = None,
+        columns_to_clean: List[str] = None,
         *args: List[any],
         **kwargs: Dict[str, Any]
     ):
@@ -42,6 +44,9 @@ class ASELiteToADLS(Flow):
             overwrite (str, optional): Whether to overwrite the destination file. Defaults to True.
             sp_credentials_secret (str, optional): The name of the Azure Key Vault secret containing a dictionary with
             ACCOUNT_NAME and Service Principal credentials (TENANT_ID, CLIENT_ID, CLIENT_SECRET). Defaults to None.
+            remove_special_characters (str, optional): Call a function that remove special characters like escape symbols. Defaults to None.
+            columns_to_clean (List(str), optional): Select columns to clean, used with remove_special_characters.
+            If None whole data frame will be processed. Defaults to None.
         """
         self.query = query
         self.sqldb_credentials_secret = sqldb_credentials_secret
@@ -54,6 +59,8 @@ class ASELiteToADLS(Flow):
         self.if_exists = if_exists
         self.convert_bytes = convert_bytes
         self.sp_credentials_secret = sp_credentials_secret
+        self.remove_special_characters = remove_special_characters
+        self.columns_to_clean = columns_to_clean
 
         super().__init__(*args, name=name, **kwargs)
 
@@ -69,6 +76,9 @@ class ASELiteToADLS(Flow):
 
         if self.convert_bytes == True:
             df = df_converts_bytes_to_int.bind(df, flow=self)
+
+        if self.remove_special_characters == True:
+            df = df_clean_column(df, columns_to_clean=self.columns_to_clean, flow=self)
 
         create_csv = df_to_csv.bind(
             df,
