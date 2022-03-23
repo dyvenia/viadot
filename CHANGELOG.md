@@ -24,6 +24,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added `df_to_dataset` task util for writing DataFrames to data lakes using `pyarrow`
 
 ### Changed
+- Changed task `df_to_csv` to two different tasks `remove_tab` and `df_to_csv_none`
 - Changed the base class of `AzureSQL` to `SQLServer`
 - `df_to_parquet()` task now creates directories if needed
 - Added several more separators to check for automatically in `SAPRFC.to_df()`

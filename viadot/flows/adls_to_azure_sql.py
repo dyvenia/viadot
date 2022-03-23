@@ -75,6 +75,11 @@ def map_data_types_task(json_shema_path: str):
 
 @task
 def remove_tab(df: pd.DataFrame):
+    """
+    Task to remove unnecessary tab in a DataFrame.
+    Args:
+        df(pd.DataFrame): Pandas DataFrame to tranform.
+    """
     for col in range(len(df.columns)):
         df[df.columns[col]] = (
             df[df.columns[col]].astype(str).str.replace(r"\t", "", regex=True)
@@ -84,6 +89,13 @@ def remove_tab(df: pd.DataFrame):
 
 @task
 def df_to_csv_none(df: pd.DataFrame = None, path: str = None, sep: str = "\t"):
+    """
+    Task to save DataFrame to csv file. Warns if DataFrame is None.
+    Args:
+        df (pd.DataFrame, optional): Pandas DataFrame to tranform. Default to None.
+        path (str, optional): Path where to save a csv file. Default to None.
+        sep (str, optional): Separator to use in csv file. Default to "\t".
+    """
     if df is None:
         logger.warning("DataFrame is None")
     else:
@@ -301,9 +313,6 @@ class ADLSToAzureSQL(Flow):
             flow=self,
         )
 
-        # df_reorder.set_upstream(lake_to_df_task, flow=self)
-        # df_to_csv_task.set_upstream(df_reorder, flow=self)
-        # promote_to_conformed_task.set_upstream(df_to_csv_task, flow=self)
         promote_to_conformed_task.set_upstream(df_to_csv_task, flow=self)
         create_table_task.set_upstream(df_to_csv_task, flow=self)
         promote_to_operations_task.set_upstream(promote_to_conformed_task, flow=self)
