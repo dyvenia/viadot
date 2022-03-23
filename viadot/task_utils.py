@@ -9,6 +9,8 @@ from numpy import column_stack
 
 import pandas as pd
 import prefect
+import pyarrow as pa
+import pyarrow.dataset as ds
 from prefect import task
 from prefect.storage import Git
 from prefect.utilities import logging
@@ -98,30 +100,30 @@ def df_get_data_types_task(df: pd.DataFrame) -> dict:
 def get_sql_dtypes_from_df(df: pd.DataFrame) -> dict:
     """Obtain SQL data types from a pandas DataFrame"""
     typeset = CompleteSet()
-    dtypes = infer_type(df, typeset)
+    dtypes = infer_type(df.head(10000), typeset)
     dtypes_dict = {k: str(v) for k, v in dtypes.items()}
     dict_mapping = {
         "Float": "REAL",
         "Image": None,
         "Categorical": "VARCHAR(500)",
         "Time": "TIME",
-        "Boolean": "BIT",
+        "Boolean": "VARCHAR(5)",  # Bool is True/False, Microsoft expects 0/1
         "DateTime": "DATETIMEOFFSET",  # DATETIMEOFFSET is the only timezone-aware dtype in TSQL
         "Object": "VARCHAR(500)",
         "EmailAddress": "VARCHAR(50)",
         "File": None,
         "Geometry": "GEOMETRY",
-        "Ordinal": "VARCHAR(500)",
+        "Ordinal": "INT",
         "Integer": "INT",
         "Generic": "VARCHAR(500)",
-        "UUID": "UNIQUEIDENTIFIER",
+        "UUID": "VARCHAR(50)",  # Microsoft uses a custom UUID format so we can't use it
         "Complex": None,
         "Date": "DATE",
         "String": "VARCHAR(500)",
         "IPAddress": "VARCHAR(39)",
-        "Path": "VARCHAR(500)",
+        "Path": "VARCHAR(255)",
         "TimeDelta": "VARCHAR(20)",  # datetime.datetime.timedelta; eg. '1 days 11:00:00'
-        "URL": "VARCHAR(500)",
+        "URL": "VARCHAR(255)",
         "Count": "INT",
     }
     dict_dtypes_mapped = {}
@@ -334,6 +336,38 @@ def df_clean_column(
             )
 
     return df
+def df_to_dataset(
+    df: pd.DataFrame, partitioning_flavor="hive", format="parquet", **kwargs
+) -> None:
+    """
+    Use `pyarrow.dataset.write_to_dataset()` to write from a pandas DataFrame to a dataset.
+    This enables several data lake-specific optimizations such as parallel writes, partitioning,
+    and file size (via `max_rows_per_file` parameter).
+
+    Args:
+        df (pd.DataFrame): The pandas DataFrame to write.
+        partitioning_flavor (str, optional): The partitioning flavor to use. Defaults to "hive".
+        format (str, optional): The dataset format. Defaults to 'parquet'.
+        kwargs: Keyword arguments to be passed to `write_to_dataset()`. See
+        https://arrow.apache.org/docs/python/generated/pyarrow.dataset.write_dataset.html.
+
+    Examples:
+        table = pa.Table.from_pandas(df_contact)
+        base_dir = "/home/viadot/contact"
+        partition_cols = ["updated_at_year", "updated_at_month", "updated_at_day"]
+
+        df_to_dataset(
+            data=table,
+            base_dir=base_dir,
+            partitioning=partition_cols,
+            existing_data_behavior='overwrite_or_ignore',
+            max_rows_per_file=100_000
+        )
+    """
+    table = pa.Table.from_pandas(df)
+    ds.write_dataset(
+        data=table, partitioning_flavor=partitioning_flavor, format=format, **kwargs
+    )
 
 
 class Git(Git):
