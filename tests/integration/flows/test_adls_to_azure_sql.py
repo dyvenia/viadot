@@ -25,28 +25,40 @@ def test_get_promoted_adls_path_file_starts_with_slash():
     adls_path_dir_starts_with_slash = "/raw/supermetrics/adls_ga_load_times_fr_test/"
     flow = ADLSToAzureSQL(name="test", adls_path=adls_path_dir_starts_with_slash)
     promoted_path = flow.get_promoted_path(env="conformed")
-    assert promoted_path == "conformed/supermetrics/adls_ga_load_times_fr_test.csv"
+    assert (
+        promoted_path
+        == "conformed/supermetrics/adls_ga_load_times_fr_test/2021-07-14T13:09:02.997357+00:00.csv"
+    )
 
 
 def test_get_promoted_adls_path_dir_slash():
     adls_path_dir_slash = "raw/supermetrics/adls_ga_load_times_fr_test/"
     flow = ADLSToAzureSQL(name="test", adls_path=adls_path_dir_slash)
     promoted_path = flow.get_promoted_path(env="conformed")
-    assert promoted_path == "conformed/supermetrics/adls_ga_load_times_fr_test.csv"
+    assert (
+        promoted_path
+        == "conformed/supermetrics/adls_ga_load_times_fr_test/2021-07-14T13:09:02.997357+00:00.csv"
+    )
 
 
 def test_get_promoted_adls_path_dir():
     adls_path_dir = "raw/supermetrics/adls_ga_load_times_fr_test"
     flow = ADLSToAzureSQL(name="test", adls_path=adls_path_dir)
     promoted_path = flow.get_promoted_path(env="conformed")
-    assert promoted_path == "conformed/supermetrics/adls_ga_load_times_fr_test.csv"
+    assert (
+        promoted_path
+        == "conformed/supermetrics/adls_ga_load_times_fr_test/2021-07-14T13:09:02.997357+00:00.csv"
+    )
 
 
 def test_get_promoted_adls_path_dir_starts_with_slash():
     adls_path_dir_starts_with_slash = "/raw/supermetrics/adls_ga_load_times_fr_test/"
     flow = ADLSToAzureSQL(name="test", adls_path=adls_path_dir_starts_with_slash)
     promoted_path = flow.get_promoted_path(env="conformed")
-    assert promoted_path == "conformed/supermetrics/adls_ga_load_times_fr_test.csv"
+    assert (
+        promoted_path
+        == "conformed/supermetrics/adls_ga_load_times_fr_test/2021-07-14T13:09:02.997357+00:00.csv"
+    )
 
 
 def test_remove_tab():
