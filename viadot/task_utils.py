@@ -325,8 +325,7 @@ def df_clean_column(
         )
 
     else:
-        col_lst = columns_to_clean
-        for x in col_lst:
+        for x in columns_to_clean:
             df[x].replace(
                 to_replace=[r"\\t|\\n|\\r", "\t|\n|\r"],
                 value=["", ""],
