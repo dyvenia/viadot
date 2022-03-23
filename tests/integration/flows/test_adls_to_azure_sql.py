@@ -1,7 +1,7 @@
 import pandas as pd
 import os
 from viadot.flows import ADLSToAzureSQL
-from viadot.flows.adls_to_azure_sql import remove_tab
+from viadot.flows.adls_to_azure_sql import remove_tab, df_to_csv_none
 
 
 def test_get_promoted_adls_path_csv_file():
@@ -56,3 +56,9 @@ def test_remove_tab():
     task = remove_tab
     task.run(df)
     assert df["col1"].astype(str).str.contains("\t")[1] != True
+
+
+def test_df_to_csv_none(caplog):
+    task = df_to_csv_none
+    task.run()
+    assert "DataFrame is None" in caplog.text
