@@ -19,8 +19,6 @@ from ..tasks import (
     CheckColumnOrder,
 )
 
-from viadot.task_utils import df_to_csv
-
 logger = logging.get_logger(__name__)
 
 lake_to_df_task = AzureDataLakeToDF()
