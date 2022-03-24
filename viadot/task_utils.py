@@ -348,11 +348,15 @@ def df_clean_column(
 ) -> pd.DataFrame:
     """
     Function that remove special characters from data frame like escape symbols etc.
+
     Args:
     df (pd.DataFrame): DataFrame
-    columns_to_clean (List[str]): List of columns
+    columns_to_clean (List[str]): List of columns. Defaults is None.
+
+    Returns:
+    pd.DataFrame
     """
-    if columns_to_clean == None:
+    if columns_to_clean is None:
         df.replace(
             to_replace=[r"\\t|\\n|\\r", "\t|\n|\r"],
             value=["", ""],
