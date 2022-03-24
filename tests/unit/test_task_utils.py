@@ -185,3 +185,17 @@ def test_df_clean_column():
     df = pd.DataFrame.from_dict(data)
     output = df_clean_column.run(df).to_dict()
     assert expected_output == output
+
+
+def test_df_clean_column_defined():
+    data = {
+        "col_1": ["a", "b", "c", "d  a"],
+        "col_2": ["a", "b \\r", "\t c", "d \r\n a"],
+    }
+    expected_output = {
+        "col_1": {0: "a", 1: "b", 2: "c", 3: "d  a"},
+        "col_2": {0: "a", 1: "b ", 2: " c", 3: "d  a"},
+    }
+    df = pd.DataFrame.from_dict(data)
+    output = df_clean_column.run(df, ["col_2"]).to_dict()
+    assert output == expected_output
