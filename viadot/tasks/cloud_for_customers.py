@@ -195,7 +195,7 @@ class C4CToDF(Task):
         else:
             credentials = local_config.get("CLOUD_FOR_CUSTOMERS")[env]
 
-        self.logger.info(f"Downloading data from {url}...")
+        self.logger.info(f"Downloading data from {url+endpoint}...")
 
         chunks = []
         offset = 0
