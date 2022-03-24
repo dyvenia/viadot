@@ -78,12 +78,12 @@ def remove_tab(df: pd.DataFrame):
     """
     Task to remove unnecessary tab in a DataFrame.
     Args:
-        df(pd.DataFrame): Pandas DataFrame to tranform.
+        df(pd.DataFrame, optional): Pandas DataFrame to tranform.
+    Returns:
+        pd.DataFrame: DataFrame without unnecessery tabs.
     """
-    for col in range(len(df.columns)):
-        df[df.columns[col]] = (
-            df[df.columns[col]].astype(str).str.replace(r"\t", "", regex=True)
-        )
+    for col in df.columns:
+        df[col] = df[col].astype(str).str.replace(r"\t", "", regex=True)
     return df
 
 
@@ -95,6 +95,7 @@ def df_to_csv_none(df: pd.DataFrame = None, path: str = None, sep: str = "\t"):
         df (pd.DataFrame, optional): Pandas DataFrame to tranform. Default to None.
         path (str, optional): Path where to save a csv file. Default to None.
         sep (str, optional): Separator to use in csv file. Default to "\t".
+
     """
     if df is None:
         logger.warning("DataFrame is None")

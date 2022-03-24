@@ -321,6 +321,8 @@ class CheckColumnOrder(Task):
         Function to remove spaces at the end of column name.
         Args:
             df(pd.DataFrame): Dataframe to transform. Defaults to None.
+        Returns:
+            pd.DataFrame: Dataframe with changed names
         """
         for col in df.columns:
             df = df.rename(columns={col: col.strip()})
