@@ -197,6 +197,16 @@ class C4CToDF(Task):
 
         self.logger.info(f"Downloading data from {url+endpoint}...")
 
+        # If we get any of these in params, we don't perform any chunking
+        if any(["$skip" in params, "$top" in params]):
+            return CloudForCustomers(
+                url=url,
+                endpoint=endpoint,
+                params=params,
+                env=env,
+                credentials=credentials,
+            ).to_df(if_empty=if_empty, fields=fields)
+
         chunks = []
         offset = 0
         while True:

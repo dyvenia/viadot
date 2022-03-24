@@ -41,6 +41,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fixed some mappings in `get_sql_dtypes_from_df()` and optimized performance
 - Fixed `BCPTask` - the case when the file path contained a space
 - Fixed credential evaluation logic (`credentials` is now evaluated before `config_key`)
+- Fix "$top" and "$skip" values being ignored by `C4CToDF` task if provided in the `params` parameter
 
 ### Removed
 - Removed `autopick_sep` parameter from `SAPRFC` functions. The separator is now always picked automatically if not provided.
