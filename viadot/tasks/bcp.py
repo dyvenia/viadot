@@ -13,12 +13,13 @@ class BCPTask(ShellTask):
     Task for bulk inserting data into SQL Server-compatible databases.
 
     Args:
-        - path (str, optional): the path to the local CSV file to be inserted
-        - schema (str, optional): the destination schema
-        - table (str, optional): the destination table
+        - path (str, optional): The path to the local CSV file to be inserted.
+        - schema (str, optional): The destination schema.
+        - table (str, optional): The destination table.
+        - chunksize (int, optional): The chunk size to use.
         - credentials (dict, optional): The credentials to use for connecting with the database.
-        - vault_name (str): the name of the vault from which to fetch the secret
-        - **kwargs (dict, optional): additional keyword arguments to pass to the Task constructor
+        - vault_name (str): The name of the vault from which to fetch the secret.
+        - **kwargs (dict, optional): Additional keyword arguments to pass to the Task constructor.
     """
 
     def __init__(
@@ -26,6 +27,7 @@ class BCPTask(ShellTask):
         path: str = None,
         schema: str = None,
         table: str = None,
+        chunksize: int = 5000,
         credentials: dict = None,
         vault_name: str = None,
         max_retries: int = 3,
@@ -36,6 +38,7 @@ class BCPTask(ShellTask):
         self.path = path
         self.schema = schema
         self.table = table
+        self.chunksize = chunksize
         self.credentials = credentials
         self.vault_name = vault_name
 
@@ -53,6 +56,7 @@ class BCPTask(ShellTask):
         "path",
         "schema",
         "table",
+        "chunksize",
         "credentials",
         "vault_name",
         "max_retries",
@@ -63,6 +67,7 @@ class BCPTask(ShellTask):
         path: str = None,
         schema: str = None,
         table: str = None,
+        chunksize: int = None,
         credentials: dict = None,
         credentials_secret: str = None,
         vault_name: str = None,
@@ -74,16 +79,17 @@ class BCPTask(ShellTask):
         Task run method.
 
         Args:
-        - path (str, optional): the path to the local CSV file to be inserted
-        - schema (str, optional): the destination schema
-        - table (str, optional): the destination table
+        - path (str, optional): The path to the local CSV file to be inserted.
+        - schema (str, optional): The destination schema.
+        - table (str, optional): The destination table.
+        - chunksize (int, optional): The chunk size to use. By default 5000.
         - credentials (dict, optional): The credentials to use for connecting with SQL Server.
-        - credentials_secret (str, optional): the name of the Key Vault secret containing database credentials
+        - credentials_secret (str, optional): The name of the Key Vault secret containing database credentials.
         (server, db_name, user, password)
-        - vault_name (str): the name of the vault from which to fetch the secret
+        - vault_name (str): The name of the vault from which to fetch the secret.
 
         Returns:
-            str: the output of the bcp CLI command
+            str: The output of the bcp CLI command.
         """
         if not credentials:
             if not credentials_secret:
@@ -113,5 +119,5 @@ class BCPTask(ShellTask):
             # but not in BCP's 'server' argument.
             server = server.replace(" ", "")
 
-        command = f"/opt/mssql-tools/bin/bcp {fqn} in '{path}' -S {server} -d {db_name} -U {uid} -P '{pwd}' -c -F 2 -b 5000 -h 'TABLOCK'"
+        command = f"/opt/mssql-tools/bin/bcp {fqn} in '{path}' -S {server} -d {db_name} -U {uid} -P '{pwd}' -c -F 2 -b {chunksize} -h 'TABLOCK'"
         return super().run(command=command, **kwargs)
