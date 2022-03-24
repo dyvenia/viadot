@@ -398,6 +398,8 @@ def df_clean_column(df: pd.DataFrame) -> pd.DataFrame:
         )
 
     return df
+
+
 def df_to_dataset(
     df: pd.DataFrame, partitioning_flavor="hive", format="parquet", **kwargs
 ) -> None:
