@@ -1,17 +1,16 @@
 import json
 from datetime import timedelta
 from typing import Any, Dict, List, Literal
+
 import pandas as pd
-import sys
 
 from prefect import Task
 from prefect.tasks.secrets import PrefectSecret
 from prefect.utilities.tasks import defaults_from_attrs
 
+from ..exceptions import ValidationError
 from ..sources import AzureSQL
 from .azure_key_vault import AzureKeyVaultSecret
-
-from ..exceptions import ValidationError
 
 
 def get_credentials(credentials_secret: str, vault_name: str = None):
