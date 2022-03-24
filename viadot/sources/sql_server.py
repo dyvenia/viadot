@@ -7,11 +7,12 @@ class SQLServer(SQL):
 
     def __init__(
         self,
+        config_key="SQL_SERVER",
+        driver="ODBC Driver 17 for SQL Server",
         *args,
         **kwargs,
     ):
-        super().__init__(*args, **kwargs)
-        self.credentials["driver"] = "ODBC Driver 17 for SQL Server"
+        super().__init__(*args, driver=driver, config_key=config_key, **kwargs)
 
     @property
     def schemas(self) -> List[str]:

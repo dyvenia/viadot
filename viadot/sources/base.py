@@ -159,8 +159,10 @@ class SQL(Source):
 
         if config_key:
             config_credentials = local_config.get(config_key)
+        else:
+            config_credentials = None
 
-        credentials = config_credentials if config_key else credentials or {}
+        credentials = credentials or config_credentials or {}
 
         if driver:
             credentials["driver"] = driver
@@ -172,7 +174,7 @@ class SQL(Source):
     @property
     def conn_str(self) -> str:
         """Generate a connection string from params or config.
-        Note that the user and password are escapedd with '{}' characters.
+        Note that the user and password are escaped with '{}' characters.
 
         Returns:
             str: The ODBC connection string.
@@ -206,7 +208,8 @@ class SQL(Source):
         cursor = self.con.cursor()
         cursor.execute(query)
 
-        if query.strip().upper().startswith("SELECT"):
+        query_sanitized = query.strip().upper()
+        if query_sanitized.startswith("SELECT") or query_sanitized.startswith("WITH"):
             result = cursor.fetchall()
         else:
             result = True
