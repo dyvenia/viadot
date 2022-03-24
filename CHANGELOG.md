@@ -23,6 +23,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added `get_flow_last_run_date` util function
 - Added `df_to_dataset` task util for writing DataFrames to data lakes using `pyarrow`
 - Added retries to Cloud for Customers tasks
+- Added `chunksize` parameter to `C4CToDF` task to allow pulling data in chunks
 
 ### Changed
 - Changed the base class of `AzureSQL` to `SQLServer`
