@@ -1,12 +1,16 @@
-from prefect import task, Task
 import json
-import pandas as pd
-from ..sources import CloudForCustomers
+from datetime import timedelta
 from typing import Any, Dict, List
-from prefect.utilities.tasks import defaults_from_attrs
-from prefect.tasks.secrets import PrefectSecret
-from .azure_key_vault import AzureKeyVaultSecret
+
+import pandas as pd
 from viadot.config import local_config
+
+from prefect import Task
+from prefect.tasks.secrets import PrefectSecret
+from prefect.utilities.tasks import defaults_from_attrs
+
+from ..sources import CloudForCustomers
+from .azure_key_vault import AzureKeyVaultSecret
 
 
 class C4CReportToDF(Task):
@@ -17,6 +21,8 @@ class C4CReportToDF(Task):
         env: str = "QA",
         skip: int = 0,
         top: int = 1000,
+        max_retries: int = 3,
+        retry_delay: timedelta = timedelta(seconds=10),
         **kwargs,
     ):
 
@@ -27,6 +33,8 @@ class C4CReportToDF(Task):
 
         super().__init__(
             name="c4c_report_to_df",
+            max_retries=max_retries,
+            retry_delay=retry_delay,
             *args,
             **kwargs,
         )
@@ -49,6 +57,8 @@ class C4CReportToDF(Task):
         top: int = 1000,
         credentials_secret: str = None,
         vault_name: str = None,
+        max_retries: int = 3,
+        retry_delay: timedelta = timedelta(seconds=10),
     ):
         """
         Task for downloading data from the Cloud for Customers to a pandas DataFrame using report URL
@@ -111,6 +121,8 @@ class C4CToDF(Task):
         params: Dict[str, Any] = {},
         env: str = "QA",
         if_empty: str = "warn",
+        max_retries: int = 3,
+        retry_delay: timedelta = timedelta(seconds=10),
         **kwargs,
     ):
 
@@ -123,6 +135,8 @@ class C4CToDF(Task):
 
         super().__init__(
             name="c4c_to_df",
+            max_retries=max_retries,
+            retry_delay=retry_delay,
             *args,
             **kwargs,
         )
