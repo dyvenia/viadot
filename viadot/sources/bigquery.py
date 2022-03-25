@@ -17,21 +17,22 @@ class BigQuery(Source):
     who have access to specific BigQuery project.
     """
 
-    def __init__(self, credentials: dict = None, *args, **kwargs):
+    def __init__(
+        self, credentials_key: str = None, credentials: dict = None, *args, **kwargs
+    ):
         """
         Create an instance of BigQuery class.
 
         Args:
+            credentials_key (str): Credential key to dictionary where details are stored. Defaults to None.
             credentials (dict, optional): Credentials dictionary - credentials can be generate as key
             for User Principal inside a BigQuery project. Defaults to None.
 
         Raises:
             CredentialError: In case credentials cannot be found.
         """
-        self.credentials = credentials
         self.path_json = "credentials_json.json"
-
-        DEFAULT_CREDENTIALS = local_config.get("BIGQUERY")
+        DEFAULT_CREDENTIALS = local_config.get(credentials_key)
         credentials = credentials or DEFAULT_CREDENTIALS
         if credentials is None:
             raise CredentialError("Credentials not found.")
@@ -78,3 +79,15 @@ class BigQuery(Source):
         tables = self.client.list_tables(dataset)
         tables_name = [table.table_id for table in tables]
         return tables_name
+
+    def query(self, query: str = None) -> bigquery.job.query.QueryJob:
+        """
+        Query throught Bigquery table.
+
+        Args:
+            query (str, optional): String with query. Defaults to None.
+
+        Returns:
+            bigquery.job.query.QueryJob: Query result.
+        """
+        return self.client.query(query)
