@@ -27,6 +27,7 @@ from .sharepoint import SharepointToDF
 from .cloud_for_customers import C4CReportToDF, C4CToDF
 from .prefect import GetFlowNewDateRange
 from .aselite import ASELiteToDF
+from .bigquery import BigQueryToDF
 
 try:
     from .sap_rfc import SAPRFCToDF
@@ -35,4 +36,3 @@ except ImportError:
 
 from .duckdb import DuckDBCreateTableFromParquet, DuckDBQuery, DuckDBToDF
 from .sql_server import SQLServerCreateTable
-
