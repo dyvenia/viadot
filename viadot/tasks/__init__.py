@@ -16,6 +16,7 @@ from .azure_sql import (
     AzureSQLCreateTable,
     AzureSQLDBQuery,
     CreateTableFromBlob,
+    AzureSQLToDF,
     CheckColumnOrder,
 )
 from .bcp import BCPTask
@@ -35,4 +36,3 @@ except ImportError:
 
 from .duckdb import DuckDBCreateTableFromParquet, DuckDBQuery, DuckDBToDF
 from .sql_server import SQLServerCreateTable
-

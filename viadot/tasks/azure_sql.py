@@ -253,7 +253,7 @@ class AzureSQLDBQuery(Task):
         self.credentials_secret = credentials_secret
         self.vault_name = vault_name
 
-        super().__init__(name="run_azure_sql_db_query", *args, **kwargs)
+        super().__init__(name="azure_sql_db_query", *args, **kwargs)
 
     def run(
         self,
@@ -278,6 +278,53 @@ class AzureSQLDBQuery(Task):
 
         self.logger.info(f"Successfully ran the query.")
         return result
+
+
+class AzureSQLToDF(Task):
+    """
+    Task for loading the result of an Azure SQL Database query into a pandas DataFrame.
+
+    Args:
+        query (str, required): The query to execute on the database.
+        credentials_secret (str, optional): The name of the Azure Key Vault secret containing a dictionary
+        with SQL db credentials (server, db_name, user, and password).
+        vault_name (str, optional): The name of the vault from which to obtain the secret. Defaults to None.
+    """
+
+    def __init__(
+        self,
+        credentials_secret: str = None,
+        vault_name: str = None,
+        *args,
+        **kwargs,
+    ):
+        self.credentials_secret = credentials_secret
+        self.vault_name = vault_name
+
+        super().__init__(name="azure_sql_to_df", *args, **kwargs)
+
+    def run(
+        self,
+        query: str,
+        credentials_secret: str = None,
+        vault_name: str = None,
+    ):
+        """Load the result of an Azure SQL Database query into a pandas DataFrame.
+
+        Args:
+            query (str, required): The query to execute on the database.
+            credentials_secret (str, optional): The name of the Azure Key Vault secret containing a dictionary
+            with SQL db credentials (server, db_name, user, and password).
+            vault_name (str, optional): The name of the vault from which to obtain the secret. Defaults to None.
+        """
+
+        credentials = get_credentials(credentials_secret, vault_name=vault_name)
+        azure_sql = AzureSQL(credentials=credentials)
+
+        df = azure_sql.to_df(query)
+
+        self.logger.info(f"Successfully downloaded data to a DataFrame.")
+        return df
 
 
 class CheckColumnOrder(Task):
@@ -315,7 +362,7 @@ class CheckColumnOrder(Task):
 
         return df_changed
 
-    def rename_columns(self, df: pd.DataFrame = None):
+    def sanitize_columns(self, df: pd.DataFrame = None):
         """
         Function to remove spaces at the end of column name.
         Args:
@@ -348,7 +395,7 @@ class CheckColumnOrder(Task):
         """
         credentials = get_credentials(credentials_secret, vault_name=vault_name)
         azure_sql = AzureSQL(credentials=credentials)
-        df = self.rename_columns(df)
+        df = self.sanitize_columns(df)
         query = f"SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = '{schema}' AND TABLE_NAME = '{table}'"
         check_result = azure_sql.run(query=query)
         if if_exists not in ["replace", "fail"]:
