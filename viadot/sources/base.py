@@ -230,7 +230,8 @@ class SQL(Source):
         """
         conn = con or self.con
 
-        if query.upper().startswith("SELECT"):
+        query_sanitized = query.strip().upper()
+        if query_sanitized.startswith("SELECT") or query_sanitized.startswith("WITH"):
             df = pd.read_sql_query(query, conn)
             if df.empty:
                 self._handle_if_empty(if_empty=if_empty)
