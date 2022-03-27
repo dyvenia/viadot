@@ -219,13 +219,17 @@ class SQL(Source):
 
         return result
 
-    def to_df(self, query: str, if_empty: str = None) -> pd.DataFrame:
+    def to_df(
+        self, query: str, con: pyodbc.Connection = None, if_empty: str = None
+    ) -> pd.DataFrame:
         """Creates DataFrame form SQL query.
         Args:
             query (str): SQL query. If don't start with "SELECT" returns empty DataFrame.
+            con (pyodbc.Connection, optional): The connection to use to pull the data.
             if_empty (str, optional): What to do if the query returns no data. Defaults to None.
         """
-        conn = self.con
+        conn = con or self.con
+
         if query.upper().startswith("SELECT"):
             df = pd.read_sql_query(query, conn)
             if df.empty:

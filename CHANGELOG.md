@@ -25,6 +25,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added retries to Cloud for Customers tasks
 - Added `chunksize` parameter to `C4CToDF` task to allow pulling data in chunks
 - Added `chunksize` parameter to `BCPTask` task to allow more control over the load process
+- Added support for SQL Server's custom `datetimeoffset` type
 
 ### Changed
 - Changed the base class of `AzureSQL` to `SQLServer`

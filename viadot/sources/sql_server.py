@@ -1,5 +1,8 @@
-from .base import SQL
+import struct
+from datetime import datetime, timedelta, timezone
 from typing import List
+
+from .base import SQL
 
 
 class SQLServer(SQL):
@@ -13,6 +16,7 @@ class SQLServer(SQL):
         **kwargs,
     ):
         super().__init__(*args, driver=driver, config_key=config_key, **kwargs)
+        self.con.add_output_converter(-155, self._handle_datetimeoffset)
 
     @property
     def schemas(self) -> List[str]:
@@ -27,6 +31,37 @@ class SQLServer(SQL):
             "SELECT schema_name(t.schema_id), t.name FROM sys.tables t"
         )
         return [".".join(row) for row in tables_tuples]
+
+    @staticmethod
+    def _handle_datetimeoffset(dto_value):
+        """
+        Adds support for SQL Server's custom `datetimeoffset` type, which is not
+        handled natively by ODBC/pyodbc.
+
+        See: https://github.com/mkleehammer/pyodbc/issues/134#issuecomment-281739794
+        """
+        (
+            year,
+            month,
+            day,
+            hour,
+            minute,
+            second,
+            nanoseconds,
+            offset_hours,
+            offset_minutes,
+        ) = struct.unpack("<6hI2h", dto_value)
+        dt = datetime(
+            year,
+            month,
+            day,
+            hour,
+            minute,
+            second,
+            nanoseconds // 1000,
+            tzinfo=timezone(timedelta(hours=offset_hours, minutes=offset_minutes)),
+        )
+        return dt
 
     def exists(self, table: str, schema: str = None) -> bool:
         """Check whether a table exists.
