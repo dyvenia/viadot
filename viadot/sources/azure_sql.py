@@ -8,6 +8,9 @@ logger = logging.get_logger(__name__)
 
 
 class AzureSQL(SQLServer):
+    def __init__(self, *args, config_key="AZURE_SQL", **kwargs):
+        super().__init__(*args, config_key=config_key, **kwargs)
+
     def bulk_insert(
         self,
         table: str,
