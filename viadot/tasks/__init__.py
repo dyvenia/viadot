@@ -16,6 +16,7 @@ from .azure_sql import (
     AzureSQLCreateTable,
     AzureSQLDBQuery,
     CreateTableFromBlob,
+    AzureSQLToDF,
     CheckColumnOrder,
 )
 from .bcp import BCPTask
