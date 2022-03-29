@@ -1,6 +1,7 @@
 import logging
 import pandas as pd
 import pytest
+import pyodbc
 from viadot.exceptions import ValidationError
 
 from viadot.tasks import AzureSQLCreateTable, AzureSQLDBQuery, CheckColumnOrder
@@ -142,3 +143,18 @@ def test_check_column_order_append_not_exists(caplog):
         table="non_existing_table_123", schema="sandbox", if_exists="append", df=df
     )
     assert "table doesn't exists" in caplog.text
+
+
+def test_azure_sql_if_failed(caplog):
+    query = """SELECT * FROM sandbox.test_if_failed;
+    CREATE TABLE sandbox.test_if_failed (id INT, name VARCHAR(25));
+    INSERT INTO sandbox.test_if_failed VALUES (1, 'Mike');
+    DROP TABLE sandbox.test_if_failed;
+   """
+    task = AzureSQLDBQuery()
+    success = task.run(query, if_failed="skip")
+    assert success
+    assert "Following query failed" in caplog.text
+
+    with pytest.raises(pyodbc.ProgrammingError):
+        task.run(query, if_failed="break")

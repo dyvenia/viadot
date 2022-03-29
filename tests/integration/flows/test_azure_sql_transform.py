@@ -1,11 +1,19 @@
 import pytest
+import pyodbc
 
 from viadot.flows import AzureSQLTransform
 from viadot.tasks import AzureSQLDBQuery
 
+
 SCHEMA = "sandbox"
-TABLE = "test"
+TABLE = "test1"
 FQN = f"{SCHEMA}.{TABLE}"
+
+query = """SELECT * FROM sandbox.test_if_failed;
+    CREATE TABLE sandbox.test_if_failed (id INT, name VARCHAR(25));
+    INSERT INTO sandbox.test_if_failed VALUES (1, 'Mike');
+    DROP TABLE sandbox.test_if_failed;
+   """
 
 
 @pytest.fixture()
@@ -26,3 +34,16 @@ def test_azure_sql_transform(TEST_TABLE):
     task = list(result.result.keys())[0]
     actual_result = result.result[task].result[0]
     assert list(actual_result) == [1, "Mike"]
+
+
+def test_azure_sql_transform_if_failed_skip(caplog):
+    flow = AzureSQLTransform(name="test", query=query, if_failed="skip")
+    success = flow.run()
+    assert success
+    assert "Following query failed" in caplog.text
+
+
+def test_azure_sql_transform_if_failed_break(caplog):
+    flow = AzureSQLTransform(name="test", query=query, if_failed="break")
+    flow.run()
+    assert "pyodbc.ProgrammingError" in caplog.text
