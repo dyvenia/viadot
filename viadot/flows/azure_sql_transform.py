@@ -25,6 +25,7 @@ class AzureSQLTransform(Flow):
         Args:
             name (str): The name of the flow.
             query (str, required): The query to execute on the database.
+            if_failed (Literal["break", "skip"], optional): What to do if one of the subqueries fails. Defaults to "break".
             credentials_secret (str, optional): The name of the Azure Key Vault secret containing a dictionary
             with SQL db credentials (server, db_name, user, and password).
             vault_name (str, optional): The name of the vault from which to obtain the secret. Defaults to None.
