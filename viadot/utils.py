@@ -130,7 +130,7 @@ def get_flow_last_run_date(flow_name: str) -> str:
 
 @curry
 def custom_state_handler(
-    obj: Union["Flow", "Task"],
+    tracked_obj: Union["Flow", "Task"],
     old_state: "prefect.engine.state.State",
     new_state: "prefect.engine.state.State",
     only_states: list = None,
@@ -164,8 +164,8 @@ def custom_state_handler(
     message = Mail(
         from_email="notifications@dyvenia.com",
         to_emails="notifications@dyvenia.com",
-        subject=f"The flow {obj.name} - Status {new_state}",
-        html_content=f"<strong>The flow {cast(str,obj.name)} FAILED at {curr_dt}. \
+        subject=f"The flow {tracked_obj.name} - Status {new_state}",
+        html_content=f"<strong>The flow {cast(str,tracked_obj.name)} FAILED at {curr_dt}. \
     <p>More details here: {url}</p></strong>",
     )
     try:

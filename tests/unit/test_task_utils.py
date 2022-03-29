@@ -178,7 +178,7 @@ def test_write_to_json():
 
 def test_custom_state_handler():
     final_state = custom_state_handler(
-        obj="Flow",
+        tracked_obj="Flow",
         old_state=Success,
         new_state=Failed,
         only_states=[Failed],
