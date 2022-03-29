@@ -16,7 +16,7 @@ from ..tasks import (
     BCPTask,
     DownloadGitHubFile,
     AzureSQLDBQuery,
-    CheckColumnOrder,
+    EnsureDFColumnOrder,
 )
 
 logger = logging.get_logger(__name__)
@@ -29,7 +29,7 @@ promote_to_operations_task = AzureDataLakeCopy()
 create_table_task = AzureSQLCreateTable()
 bulk_insert_task = BCPTask()
 azure_query_task = AzureSQLDBQuery()
-check_column_order_task = CheckColumnOrder()
+ensure_df_column_order_task = EnsureDFColumnOrder()
 
 
 @task
@@ -235,7 +235,7 @@ class ADLSToAzureSQL(Flow):
         else:
             dtypes = self.dtypes
 
-        df_reorder = check_column_order_task.bind(
+        df_reorder = ensure_df_column_order_task.bind(
             table=self.table,
             schema=self.schema,
             df=df,

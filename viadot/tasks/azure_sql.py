@@ -327,7 +327,7 @@ class AzureSQLToDF(Task):
         return df
 
 
-class CheckColumnOrder(Task):
+class EnsureDFColumnOrder(Task):
     """
     Task for checking the order of columns in the loaded DF and in the SQL table into which the data from DF will be loaded.
     If order is different then DF columns are reordered according to the columns of the SQL table.
@@ -347,7 +347,7 @@ class CheckColumnOrder(Task):
         self.credentials_secret = credentials_secret
         self.vault_name = vault_name
 
-        super().__init__(name="run_check_column_order", *args, **kwargs)
+        super().__init__(name="run_ensure_df_column_order", *args, **kwargs)
 
     def df_change_order(
         self, df: pd.DataFrame = None, sql_column_list: List[str] = None

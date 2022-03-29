@@ -3,7 +3,7 @@ import pandas as pd
 import pytest
 from viadot.exceptions import ValidationError
 
-from viadot.tasks import AzureSQLCreateTable, AzureSQLDBQuery, CheckColumnOrder
+from viadot.tasks import AzureSQLCreateTable, AzureSQLDBQuery, EnsureDFColumnOrder
 
 logger = logging.getLogger(__name__)
 
@@ -68,7 +68,7 @@ def test_azure_sql_run_drop_query():
     assert not exists
 
 
-def test_check_column_order_append_same_col_number(caplog):
+def test_ensure_df_column_order_append_same_col_number(caplog):
     create_table_task = AzureSQLCreateTable()
     with caplog.at_level(logging.INFO):
         create_table_task.run(
@@ -82,9 +82,9 @@ def test_check_column_order_append_same_col_number(caplog):
     data = {"id": [1], "street": ["Green"], "name": ["Tom"]}
     df = pd.DataFrame(data)
 
-    check_column_order = CheckColumnOrder()
+    ensure_df_column_order = EnsureDFColumnOrder()
     with caplog.at_level(logging.WARNING):
-        check_column_order.run(table=TABLE, schema=SCHEMA, if_exists="append", df=df)
+        ensure_df_column_order.run(table=TABLE, schema=SCHEMA, if_exists="append", df=df)
 
     assert (
         "Detected column order difference between the CSV file and the table. Reordering..."
@@ -92,7 +92,7 @@ def test_check_column_order_append_same_col_number(caplog):
     )
 
 
-def test_check_column_order_append_diff_col_number(caplog):
+def test_ensure_df_column_order_append_diff_col_number(caplog):
     create_table_task = AzureSQLCreateTable()
     with caplog.at_level(logging.INFO):
         create_table_task.run(
@@ -106,15 +106,15 @@ def test_check_column_order_append_diff_col_number(caplog):
     data = {"id": [1], "age": ["40"], "street": ["Green"], "name": ["Tom"]}
     df = pd.DataFrame(data)
     print(f"COMP: \ndf: {df.columns} \nsql: ")
-    check_column_order = CheckColumnOrder()
+    ensure_df_column_order = EnsureDFColumnOrder()
     with pytest.raises(
         ValidationError,
         match=r"Detected discrepancies in number of columns or different column names between the CSV file and the SQL table!",
     ):
-        check_column_order.run(table=TABLE, schema=SCHEMA, if_exists="append", df=df)
+        ensure_df_column_order.run(table=TABLE, schema=SCHEMA, if_exists="append", df=df)
 
 
-def test_check_column_order_replace(caplog):
+def test_ensure_df_column_order_replace(caplog):
     create_table_task = AzureSQLCreateTable()
     with caplog.at_level(logging.INFO):
         create_table_task.run(
@@ -128,17 +128,17 @@ def test_check_column_order_replace(caplog):
     data = {"id": [1], "street": ["Green"], "name": ["Tom"]}
     df = pd.DataFrame(data)
 
-    check_column_order = CheckColumnOrder()
+    ensure_df_column_order = EnsureDFColumnOrder()
     with caplog.at_level(logging.INFO):
-        check_column_order.run(table=TABLE, if_exists="replace", df=df)
+        ensure_df_column_order.run(table=TABLE, if_exists="replace", df=df)
     assert "The table will be replaced." in caplog.text
 
 
-def test_check_column_order_append_not_exists(caplog):
-    check_column_order = CheckColumnOrder()
+def test_ensure_df_column_order_append_not_exists(caplog):
+    ensure_df_column_order = EnsureDFColumnOrder()
     data = {"id": [1], "street": ["Green"], "name": ["Tom"]}
     df = pd.DataFrame(data)
-    check_column_order.run(
+    ensure_df_column_order.run(
         table="non_existing_table_123", schema="sandbox", if_exists="append", df=df
     )
     assert "table doesn't exists" in caplog.text
