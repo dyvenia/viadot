@@ -1,4 +1,4 @@
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Literal
 
 from prefect import Flow
 
@@ -12,6 +12,7 @@ class AzureSQLTransform(Flow):
         self,
         name: str,
         query: str,
+        if_failed: Literal["break", "skip"] = "break",
         sqldb_credentials_secret: str = None,
         vault_name: str = None,
         tags: List[str] = ["transform"],
@@ -30,6 +31,7 @@ class AzureSQLTransform(Flow):
             tags (list, optional): Tag for marking flow. Defaults to "transform".
         """
         self.query = query
+        self.if_failed = if_failed
         self.tags = tags
         self.sqldb_credentials_secret = sqldb_credentials_secret
         self.vault_name = vault_name
@@ -41,6 +43,7 @@ class AzureSQLTransform(Flow):
     def gen_flow(self) -> Flow:
         query_task.bind(
             query=self.query,
+            if_failed=self.if_failed,
             credentials_secret=self.sqldb_credentials_secret,
             vault_name=self.vault_name,
             flow=self,

@@ -1,3 +1,4 @@
+from asyncio.log import logger
 import json
 from datetime import timedelta
 from typing import Any, Dict, List, Literal
@@ -245,6 +246,7 @@ class AzureSQLDBQuery(Task):
 
     def __init__(
         self,
+        if_failed: Literal["break", "skip"] = "break",
         credentials_secret: str = None,
         vault_name: str = None,
         *args,
@@ -252,12 +254,14 @@ class AzureSQLDBQuery(Task):
     ):
         self.credentials_secret = credentials_secret
         self.vault_name = vault_name
+        self.if_failed = if_failed
 
         super().__init__(name="azure_sql_db_query", *args, **kwargs)
 
     def run(
         self,
         query: str,
+        if_failed: Literal["break", "skip"] = "break",
         credentials_secret: str = None,
         vault_name: str = None,
     ):
@@ -274,7 +278,20 @@ class AzureSQLDBQuery(Task):
         azure_sql = AzureSQL(credentials=credentials)
 
         # run the query and fetch the results if it's a select
-        result = azure_sql.run(query)
+        if if_failed == "break":
+            result = azure_sql.run(query)
+        elif if_failed == "skip":
+            count = 0
+            for char in enumerate(query):
+                if char[1] == ";":
+                    count = count + 1
+            splited = query.split(";")
+            for i in range(0, count):
+                try:
+                    result = azure_sql.run(query=splited[i])
+                except:
+                    logger.warning("Following query failed: " + splited[i])
+                pass
 
         self.logger.info(f"Successfully ran the query.")
         return result
