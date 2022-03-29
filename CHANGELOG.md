@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 ### Added
+- Added `if_failed` parameter in `AzureSQLDBQuery` and `AzureSQLTransform`. This parameter indicates what to do if subquery fails
 - Added `MultipleFlows` flow class which enables running multiple flows in a given order.
 - Added new task `GetFlowNewDateRange` to change date range based on Prefect flows
 - Added `check_col_order` parameter in `ADLSToAzureSQL`
