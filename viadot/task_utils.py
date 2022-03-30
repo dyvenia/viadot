@@ -4,17 +4,20 @@ import os
 import shutil
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import List, Literal
+from typing import List, Literal, Dict, Any
 
 import pandas as pd
 import prefect
 import pyarrow as pa
 import pyarrow.dataset as ds
-from prefect import task
+from prefect import task, Task
 from prefect.storage import Git
 from prefect.utilities import logging
 from visions.functional import infer_type
 from visions.typesets.complete_set import CompleteSet
+
+from .exceptions import ValidationError
+from .sources.base import SQL
 
 logger = logging.get_logger()
 METADATA_COLUMNS = {"_viadot_downloaded_at_utc": "DATETIME"}
@@ -340,6 +343,105 @@ def df_to_dataset(
     ds.write_dataset(
         data=table, partitioning_flavor=partitioning_flavor, format=format, **kwargs
     )
+
+
+class EnsureDFColumnOrder(Task):
+    """
+    Task for checking the order of columns in the loaded DF and in the SQL table into which the data from DF will be loaded.
+    If order is different then DF columns are reordered according to the columns of the SQL table.
+    """
+
+    def __init__(
+        self,
+        table: str = None,
+        schema: str = None,
+        if_exists: Literal["fail", "replace", "append", "delete"] = "replace",
+        df: pd.DataFrame = None,
+        dtypes: Dict[str, Any] = None,
+        config_key: str = None,
+        driver: str = "ODBC Driver 17 for SQL Server",
+        *args,
+        **kwargs,
+    ):
+        self.dtypes = dtypes
+        self.config_key = config_key
+        self.driver = driver
+
+        super().__init__(name="run_ensure_df_column_order", *args, **kwargs)
+
+    def df_change_order(
+        self, df: pd.DataFrame = None, sql_column_list: List[str] = None
+    ):
+        df_column_list = list(df.columns)
+        if set(df_column_list) == set(sql_column_list):
+            df_changed = df.loc[:, sql_column_list]
+        else:
+
+            raise ValidationError(
+                "Detected discrepancies in number of columns or different column names between the CSV file and the SQL table!"
+            )
+
+        return df_changed
+
+    def sanitize_columns(self, df: pd.DataFrame = None):
+        """
+        Function to remove spaces at the end of column name.
+        Args:
+            df(pd.DataFrame): Dataframe to transform. Defaults to None.
+        """
+        for col in df.columns:
+            df = df.rename(columns={col: col.strip()})
+        return df
+
+    def run(
+        self,
+        table: str = None,
+        schema: str = None,
+        if_exists: Literal["fail", "replace", "append", "delete"] = "replace",
+        df: pd.DataFrame = None,
+        dtypes: Dict[str, Any] = None,
+        config_key: str = None,
+        driver: str = "ODBC Driver 17 for SQL Server",
+    ):
+        """
+        Run a checking column order
+
+        Args:
+            table (str, optional): SQL table name without schema. Defaults to None.
+            schema (str, optional): SQL schema name. Defaults to None.
+            if_exists (Literal, optional): What to do if the table exists. Defaults to "replace".
+            df (pd.DataFrame, optional): Data Frame. Defaults to None.
+            credentials_secret (str, optional): The name of the Azure Key Vault secret containing a dictionary
+            with SQL db credentials (server, db_name, user, and password). Defaults to None.
+            vault_name (str, optional): The name of the vault from which to obtain the secret. Defaults to None.
+        """
+
+        sql = SQL(config_key=config_key, driver=driver)
+        df = self.sanitize_columns(df)
+        query = f"SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = '{schema}' AND TABLE_NAME = '{table}'"
+        check_result = sql.to_df(query)
+        if if_exists not in ["replace", "fail"]:
+            if if_exists == "append" and check_result.empty:
+                self.logger.warning("Aimed table doesn't exists.")
+                return
+            elif check_result.empty == False:
+                result = sql.to_df(query)
+                sql_column_list = list(result["COLUMN_NAME"])
+                df_column_list = list(df.columns)
+                if sql_column_list != df_column_list:
+                    self.logger.warning(
+                        "Detected column order difference between the CSV file and the table. Reordering..."
+                    )
+                    df = self.df_change_order(df=df, sql_column_list=sql_column_list)
+                else:
+                    return df
+        elif if_exists == "replace" and dtypes is not None:
+            dtypes_columns_order = list(dtypes.keys())
+            df = self.df_change_order(df=df, sql_column_list=dtypes_columns_order)
+            return df
+        else:
+            self.logger.info("The table will be replaced.")
+            return df
 
 
 class Git(Git):
