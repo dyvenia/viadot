@@ -15,6 +15,7 @@ from prefect import task
 from prefect.storage import Git
 from prefect.utilities import logging
 from prefect.tasks.secrets import PrefectSecret
+from prefect.engine.state import Failed
 from prefect import Task, Flow
 from sendgrid import SendGridAPIClient
 from sendgrid.helpers.mail import Mail
@@ -354,7 +355,7 @@ def custom_mail_state_handler(
     tracked_obj: Union["Flow", "Task"],
     old_state: prefect.engine.state.State,
     new_state: prefect.engine.state.State,
-    only_states: list = None,
+    only_states: list = [Failed],
     local_api_key: str = None,
     credentials_secret: str = None,
     vault_name: str = None,
