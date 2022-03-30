@@ -3,12 +3,12 @@ import os
 from typing import Any, Dict, List, Literal
 
 import pandas as pd
-from prefect import Flow, task
+from prefect import Flow, config, task
 from prefect.backend import get_key_value
 from prefect.utilities import logging
 
 from viadot.tasks.azure_data_lake import AzureDataLakeDownload
-
+from ..task_utils import EnsureDFColumnOrder
 from ..tasks import (
     AzureDataLakeCopy,
     AzureDataLakeToDF,
@@ -16,7 +16,6 @@ from ..tasks import (
     BCPTask,
     DownloadGitHubFile,
     AzureSQLDBQuery,
-    EnsureDFColumnOrder,
 )
 
 logger = logging.get_logger(__name__)
@@ -105,6 +104,7 @@ class ADLSToAzureSQL(Flow):
         if_exists: Literal["fail", "replace", "append", "delete"] = "replace",
         check_col_order: bool = True,
         sqldb_credentials_secret: str = None,
+        config_key: str = "AZURE_SQL",
         max_download_retries: int = 5,
         tags: List[str] = ["promotion"],
         vault_name: str = None,
@@ -181,6 +181,7 @@ class ADLSToAzureSQL(Flow):
 
         # BCPTask
         self.sqldb_credentials_secret = sqldb_credentials_secret
+        self.config_key = config_key
 
         # Global
         self.max_download_retries = max_download_retries
@@ -240,7 +241,7 @@ class ADLSToAzureSQL(Flow):
             schema=self.schema,
             df=df,
             if_exists=self.if_exists,
-            credentials_secret=self.sqldb_credentials_secret,
+            config_key=self.config_key,
             flow=self,
         )
         if self.check_col_order == False:
