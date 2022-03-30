@@ -9,7 +9,7 @@ SCHEMA = "sandbox"
 TABLE = "test1"
 FQN = f"{SCHEMA}.{TABLE}"
 
-query = """SELECT * FROM sandbox.test_if_failed;
+QUERY = """SELECT * FROM sandbox.test_if_failed;
     CREATE TABLE sandbox.test_if_failed (id INT, name VARCHAR(25));
     INSERT INTO sandbox.test_if_failed VALUES (1, 'Mike');
     DROP TABLE sandbox.test_if_failed;
@@ -37,13 +37,13 @@ def test_azure_sql_transform(TEST_TABLE):
 
 
 def test_azure_sql_transform_if_failed_skip(caplog):
-    flow = AzureSQLTransform(name="test", query=query, if_failed="skip")
-    success = flow.run()
-    assert success
+    flow = AzureSQLTransform(name="test", query=QUERY, if_failed="skip")
+    result = flow.run()
+    assert result
     assert "Following query failed" in caplog.text
 
 
 def test_azure_sql_transform_if_failed_break(caplog):
-    flow = AzureSQLTransform(name="test", query=query, if_failed="break")
+    flow = AzureSQLTransform(name="test", query=QUERY, if_failed="break")
     flow.run()
     assert "pyodbc.ProgrammingError" in caplog.text

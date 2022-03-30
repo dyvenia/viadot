@@ -269,7 +269,8 @@ class AzureSQLDBQuery(Task):
 
         Args:
             query (str, required): The query to execute on the database.
-            if_failed (Literal["break", "skip"], optional): What to do if one of the subqueries fails. Defaults to "break".
+            if_failed (Literal["break", "skip"], optional): What to do if one of the subqueries fails. Defaults to "break". When "skip"
+            subqueries must have semicolons at the end.
             credentials_secret (str, optional): The name of the Azure Key Vault secret containing a dictionary
             with SQL db credentials (server, db_name, user, and password).
             vault_name (str, optional): The name of the vault from which to obtain the secret. Defaults to None.
@@ -295,7 +296,6 @@ class AzureSQLDBQuery(Task):
                     logger.warning(
                         "WARNING! Following query failed: " + splited[i][0:99]
                     )
-                pass
 
         self.logger.info(f"Successfully ran the query.")
         return result

@@ -145,16 +145,24 @@ def test_check_column_order_append_not_exists(caplog):
     assert "table doesn't exists" in caplog.text
 
 
-def test_azure_sql_if_failed(caplog):
+def test_azure_sql_if_failed_break(caplog):
     query = """SELECT * FROM sandbox.test_if_failed;
     CREATE TABLE sandbox.test_if_failed (id INT, name VARCHAR(25));
     INSERT INTO sandbox.test_if_failed VALUES (1, 'Mike');
     DROP TABLE sandbox.test_if_failed;
    """
     task = AzureSQLDBQuery()
-    success = task.run(query, if_failed="skip")
-    assert success
-    assert "Following query failed" in caplog.text
-
     with pytest.raises(pyodbc.ProgrammingError):
         task.run(query, if_failed="break")
+
+
+def test_azure_sql_if_failed_skip(caplog):
+    query = """SELECT * FROM sandbox.test_if_failed;
+    CREATE TABLE sandbox.test_if_failed (id INT, name VARCHAR(25));
+    INSERT INTO sandbox.test_if_failed VALUES (1, 'Mike');
+    DROP TABLE sandbox.test_if_failed;
+   """
+    task = AzureSQLDBQuery()
+    result = task.run(query, if_failed="skip")
+    assert result
+    assert "Following query failed" in caplog.text
