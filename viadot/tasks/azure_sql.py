@@ -1,3 +1,4 @@
+from asyncio.log import logger
 import json
 from datetime import timedelta
 from typing import Any, Dict, List, Literal
@@ -245,6 +246,7 @@ class AzureSQLDBQuery(Task):
 
     def __init__(
         self,
+        if_failed: Literal["break", "skip"] = "break",
         credentials_secret: str = None,
         vault_name: str = None,
         *args,
@@ -252,12 +254,14 @@ class AzureSQLDBQuery(Task):
     ):
         self.credentials_secret = credentials_secret
         self.vault_name = vault_name
+        self.if_failed = if_failed
 
         super().__init__(name="azure_sql_db_query", *args, **kwargs)
 
     def run(
         self,
         query: str,
+        if_failed: Literal["break", "skip"] = "break",
         credentials_secret: str = None,
         vault_name: str = None,
     ):
@@ -265,6 +269,8 @@ class AzureSQLDBQuery(Task):
 
         Args:
             query (str, required): The query to execute on the database.
+            if_failed (Literal["break", "skip"], optional): What to do if one of the subqueries fails. Defaults to "break". When "skip"
+            subqueries must have semicolons at the end.
             credentials_secret (str, optional): The name of the Azure Key Vault secret containing a dictionary
             with SQL db credentials (server, db_name, user, and password).
             vault_name (str, optional): The name of the vault from which to obtain the secret. Defaults to None.
@@ -274,7 +280,22 @@ class AzureSQLDBQuery(Task):
         azure_sql = AzureSQL(credentials=credentials)
 
         # run the query and fetch the results if it's a select
-        result = azure_sql.run(query)
+        if if_failed == "break":
+            result = azure_sql.run(query)
+        elif if_failed == "skip":
+            count = 0
+            for char in enumerate(query):
+                if char[1] == ";":
+                    count = count + 1
+            splited = query.split(";")
+            for i in range(0, count):
+                try:
+                    result = azure_sql.run(query=splited[i])
+                except:
+                    # limited length of query in warning to 100 characteres
+                    logger.warning(
+                        "WARNING! Following query failed: " + splited[i][0:99]
+                    )
 
         self.logger.info(f"Successfully ran the query.")
         return result
