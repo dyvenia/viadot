@@ -411,9 +411,8 @@ class EnsureDFColumnOrder(Task):
             schema (str, optional): SQL schema name. Defaults to None.
             if_exists (Literal, optional): What to do if the table exists. Defaults to "replace".
             df (pd.DataFrame, optional): Data Frame. Defaults to None.
-            credentials_secret (str, optional): The name of the Azure Key Vault secret containing a dictionary
-            with SQL db credentials (server, db_name, user, and password). Defaults to None.
-            vault_name (str, optional): The name of the vault from which to obtain the secret. Defaults to None.
+            config_key (str, optional): The key inside local config containing the config.
+            driver (str, optional): The SQL driver to use. Defaults to "ODBC Driver 17 for SQL Server".
         """
 
         sql = SQL(config_key=config_key, driver=driver)

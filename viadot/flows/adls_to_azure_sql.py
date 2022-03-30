@@ -137,6 +137,7 @@ class ADLSToAzureSQL(Flow):
             check_col_order (bool, optional): Whether to check column order. Defaults to True.
             sqldb_credentials_secret (str, optional): The name of the Azure Key Vault secret containing a dictionary with
             Azure SQL Database credentials. Defaults to None.
+            config_key (str, optional): The key inside local config containing the config. Defaults to "AZURE_SQL".
             max_download_retries (int, optional): How many times to retry the download. Defaults to 5.
             tags (List[str], optional): Flow tags to use, eg. to control flow concurrency. Defaults to ["promotion"].
             vault_name (str, optional): The name of the vault from which to obtain the secrets. Defaults to None.
