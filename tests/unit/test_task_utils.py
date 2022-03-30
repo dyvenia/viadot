@@ -201,7 +201,7 @@ def test_ensure_df_column_order_append_same_col_number(caplog):
             schema=SCHEMA,
             if_exists="append",
             df=df,
-            config_key="AZURE_SQL_PROD",
+            config_key="AZURE_SQL",
         )
 
         assert (
@@ -234,7 +234,7 @@ def test_ensure_df_column_order_append_diff_col_number(caplog):
             schema=SCHEMA,
             if_exists="append",
             df=df,
-            config_key="AZURE_SQL_PROD",
+            config_key="AZURE_SQL",
         )
 
 
@@ -255,7 +255,7 @@ def test_ensure_df_column_order_replace(caplog):
     ensure_df_column_order = EnsureDFColumnOrder()
     with caplog.at_level(logging.INFO):
         ensure_df_column_order.run(
-            table=TABLE, if_exists="replace", df=df, config_key="AZURE_SQL_PROD"
+            table=TABLE, if_exists="replace", df=df, config_key="AZURE_SQL"
         )
     assert "The table will be replaced." in caplog.text
 
@@ -269,6 +269,6 @@ def test_ensure_df_column_order_append_not_exists(caplog):
         schema="sandbox",
         if_exists="append",
         df=df,
-        config_key="AZURE_SQL_PROD",
+        config_key="AZURE_SQL",
     )
     assert "table doesn't exists" in caplog.text
