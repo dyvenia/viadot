@@ -4,9 +4,7 @@ import os
 import pandas as pd
 import prefect
 from typing import List
-from viadot.utils import custom_state_handler
-from prefect.engine.state import Failed, Success
-from prefect import Task, Flow
+
 from viadot.task_utils import (
     chunk_df,
     df_get_data_types_task,
@@ -174,15 +172,3 @@ def test_write_to_json():
     write_to_json.run(dict, "dict.json")
     assert os.path.exists("dict.json")
     os.remove("dict.json")
-
-
-def test_custom_state_handler():
-    final_state = custom_state_handler(
-        tracked_obj="Flow",
-        old_state=Success,
-        new_state=Failed,
-        only_states=[Failed],
-        API_KEY=None,
-    )
-
-    assert final_state == prefect.engine.state.Failed

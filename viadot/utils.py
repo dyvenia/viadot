@@ -1,22 +1,15 @@
 from typing import Any, Dict
-from datetime import datetime
-from typing import TYPE_CHECKING, Any, Callable, Union, cast
-
+from typing import Any
 import pendulum
 import prefect
 import requests
 import prefect.client
-from prefect.engine.state import Failed
+
 from prefect.utilities.graphql import EnumValue, with_args
-from prefect import Task, Flow
-from sendgrid import SendGridAPIClient
-from sendgrid.helpers.mail import Mail
-from toolz import curry
 from requests.adapters import HTTPAdapter
 from requests.exceptions import ConnectionError, HTTPError, ReadTimeout, Timeout
 from requests.packages.urllib3.util.retry import Retry
 from urllib3.exceptions import ProtocolError
-
 
 from .exceptions import APIError
 
@@ -126,55 +119,3 @@ def get_flow_last_run_date(flow_name: str) -> str:
         pendulum.parse(last_run_date_raw_format).format("YYYY-MM-DDTHH:MM:SS") + "Z"
     )
     return last_run_date
-
-
-@curry
-def custom_state_handler(
-    tracked_obj: Union["Flow", "Task"],
-    old_state: "prefect.engine.state.State",
-    new_state: "prefect.engine.state.State",
-    only_states: list = None,
-    API_KEY: str = None,
-) -> "prefect.engine.state.State":
-    """
-    Custom state handler configured to work with sendgrid.
-    Works as a standalone state handler, or can be called from within a custom state handler.
-    Args:
-        - tracked_obj (Task or Flow): Task or Flow object the handler is registered with
-        - old_state (State): previous state of tracked object
-        - new_state (State): new state of tracked object
-        - only_states ([State], optional): similar to `ignore_states`, but instead _only_
-            notifies you if the Task / Flow is in a state from the provided list of `State`
-            classes
-    Returns:
-        - State: the `new_state` object that was provided
-    Raises:
-        - ValueError: if the email notification fails for any reason
-
-    """
-    curr_dt = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    only_states = only_states or []
-    if only_states and not any(
-        [isinstance(new_state, included) for included in only_states]
-    ):
-        return new_state
-    url = prefect.client.Client().get_cloud_url(
-        "flow-run", prefect.context["flow_run_id"], as_user=False
-    )
-    message = Mail(
-        from_email="notifications@dyvenia.com",
-        to_emails="notifications@dyvenia.com",
-        subject=f"The flow {tracked_obj.name} - Status {new_state}",
-        html_content=f"<strong>The flow {cast(str,tracked_obj.name)} FAILED at {curr_dt}. \
-    <p>More details here: {url}</p></strong>",
-    )
-    try:
-        sg = SendGridAPIClient(API_KEY)
-        response = sg.send(message)
-        print(response.status_code)
-        print(response.body)
-        print(response.headers)
-    except Exception as e:
-        print(e.message)
-
-    return new_state
