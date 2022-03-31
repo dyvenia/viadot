@@ -6,18 +6,18 @@ BIGQ = BigQuery(credentials_key="BIGQUERY_TESTS")
 
 def test_list_project():
     proj = BIGQ.list_projects()
-    assert proj == "wise-trainer-342008"
+    assert proj == "manifest-geode-341308"
 
 
 def test_list_datasets():
     datasets = BIGQ.list_datasets()
-    assert ["test_data", "wise"] == datasets
+    assert ["manigeo", "official_empty"] == datasets
 
 
 def test_list_tables():
     datasets = BIGQ.list_datasets()
     tables = BIGQ.list_tables(datasets[0])
-    assert ["crm_data"] == tables
+    assert ["manigeo_tab", "test_data"] == tables
 
 
 def test_query():

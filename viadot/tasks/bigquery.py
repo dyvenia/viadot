@@ -94,7 +94,7 @@ class BigQueryToDF(Task):
                 where date between PARSE_DATE("%Y-%m-%d", "{start_date}") and PARSE_DATE("%Y-%m-%d", "{end_date}") 
                 order by date desc"""
             else:
-                query = f"""SELECT * FROM `{dataset}.{table}` where date < CURRENT_DATE() order by date desc"""
+                query = f"""SELECT * FROM `{project}.{dataset}.{table}` where date < CURRENT_DATE() order by date desc"""
 
             query_job = bigq.query(query)
             df = query_job.result().to_dataframe()
