@@ -29,6 +29,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added `AzureSQLToDF` task
 
 ### Changed
+- Changed name of `CheckColumnOrder` task to `EnsureDFColumnOrder`. Added support for all SQL sources. Changed task location to `task_utils.py`
 - Changed the base class of `AzureSQL` to `SQLServer`
 - `df_to_parquet()` task now creates directories if needed
 - Added several more separators to check for automatically in `SAPRFC.to_df()`

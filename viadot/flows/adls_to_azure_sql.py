@@ -3,12 +3,12 @@ import os
 from typing import Any, Dict, List, Literal
 
 import pandas as pd
-from prefect import Flow, task
+from prefect import Flow, config, task
 from prefect.backend import get_key_value
 from prefect.utilities import logging
 
 from viadot.tasks.azure_data_lake import AzureDataLakeDownload
-
+from ..task_utils import EnsureDFColumnOrder
 from ..tasks import (
     AzureDataLakeCopy,
     AzureDataLakeToDF,
@@ -16,7 +16,6 @@ from ..tasks import (
     BCPTask,
     DownloadGitHubFile,
     AzureSQLDBQuery,
-    CheckColumnOrder,
 )
 
 logger = logging.get_logger(__name__)
@@ -29,7 +28,7 @@ promote_to_operations_task = AzureDataLakeCopy()
 create_table_task = AzureSQLCreateTable()
 bulk_insert_task = BCPTask()
 azure_query_task = AzureSQLDBQuery()
-check_column_order_task = CheckColumnOrder()
+ensure_df_column_order_task = EnsureDFColumnOrder()
 
 
 @task
@@ -235,7 +234,7 @@ class ADLSToAzureSQL(Flow):
         else:
             dtypes = self.dtypes
 
-        df_reorder = check_column_order_task.bind(
+        df_reorder = ensure_df_column_order_task.bind(
             table=self.table,
             schema=self.schema,
             df=df,
