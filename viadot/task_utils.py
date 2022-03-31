@@ -11,12 +11,11 @@ import pandas as pd
 import prefect
 import pyarrow as pa
 import pyarrow.dataset as ds
-from prefect import task
+from prefect import task, Task, Flow
 from prefect.storage import Git
 from prefect.utilities import logging
 from prefect.tasks.secrets import PrefectSecret
 from prefect.engine.state import Failed
-from prefect import Task, Flow
 from sendgrid import SendGridAPIClient
 from sendgrid.helpers.mail import Mail
 from visions.functional import infer_type

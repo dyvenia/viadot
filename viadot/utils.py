@@ -1,5 +1,4 @@
 from typing import Any, Dict
-from typing import Any
 import pendulum
 import prefect
 import requests
