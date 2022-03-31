@@ -4,7 +4,6 @@ import os
 import pandas as pd
 import prefect
 from typing import List
-from prefect.engine.state import Failed, Success
 
 
 from viadot.task_utils import (
@@ -17,7 +16,6 @@ from viadot.task_utils import (
     dtypes_to_json_task,
     write_to_json,
     df_converts_bytes_to_int,
-    custom_mail_state_handler,
     df_clean_column,
 )
 
@@ -176,20 +174,6 @@ def test_write_to_json():
     write_to_json.run(dict, "dict.json")
     assert os.path.exists("dict.json")
     os.remove("dict.json")
-
-
-def test_custom_state_handler():
-    final_state = custom_mail_state_handler(
-        tracked_obj="Flow",
-        old_state=Success,
-        new_state=Failed,
-        only_states=[Failed],
-        local_api_key=None,
-        credentials_secret="SENDGRIND",
-        vault_name="azuwevelcrkeyv001s",
-    )
-
-    assert final_state == prefect.engine.state.Failed
 
 
 def test_df_clean_column():
