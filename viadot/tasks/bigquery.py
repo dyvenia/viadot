@@ -33,7 +33,7 @@ class BigQueryToDF(Task):
         Args:
             project (str, optional): Project name. Defaults to None.
             dataset (str, optional): Dataset name. Defaults to None.
-            table (str, optional): Table name . Defaults to None.
+            table (str, optional): Table name. Defaults to None.
             credentials_key (str, optional): Credential key to dictionary where details are stored. Defaults to "BIGQUERY".
             credentials (dict, optional): Credentials dictionary - credentials can be generate as key
             for User Principal inside a BigQuery project. Defaults to None.

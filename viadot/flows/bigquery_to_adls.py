@@ -56,13 +56,13 @@ class BigQueryToADLS(Flow):
             name (str, optional): _description_. Defaults to None.
             project (str, optional): Project name. Defaults to None.
             dataset (str, optional): Dataset name. Defaults to None.
-            table (str, optional): Table name . Defaults to None.
+            table (str, optional): Table name. Defaults to None.
             credentials_key (str, optional): Credential key to dictionary where details are stored. Defaults to "BIGQUERY".
             credentials (dict, optional): Credentials dictionary - credentials can be generate as key
             for User Principal inside a BigQuery project. Defaults to None.
             start_date (str, optional): A query parameter to pass start date e.g. "2022-01-01". Defaults to None.
             end_date (str, optional): A query parameter to pass end date e.g. "2022-01-01". Defaults to None.
-            output_file_extension (str, optional): Output file extension - to allow selection of .csv for data
+            output_file_extension (str, optional): Output file extension - to allow selection of.csv for data
             which is not easy to handle with parquet. Defaults to ".parquet".
             adls_dir_path (str, optional): Azure Data Lake destination folder/catalog path. Defaults to None.
             local_file_path (str, optional): Local destination path. Defaults to None.
@@ -70,7 +70,7 @@ class BigQueryToADLS(Flow):
             adls_sp_credentials_secret (str, optional): The name of the Azure Key Vault secret containing a dictionary with
             ACCOUNT_NAME and Service Principal credentials (TENANT_ID, CLIENT_ID, CLIENT_SECRET) for the Azure Data Lake.
             Defaults to None.
-            if_exists (str, optional): Whether the file exists. Defaults to "replace".
+            if_exists (str, optional): What to do if the file exists. Defaults to "replace".
         """
 
         # BigQueryToDF

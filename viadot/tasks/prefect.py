@@ -201,15 +201,11 @@ class GetFlowNewDateRange(Task):
         """
             % flow_name
         )
-        print(f"Before -> '{flow_name}' date_range_type = {date_range_type}")
+
         client = prefect.Client()
         flow_runs = client.graphql(query)
         flow_runs_details = flow_runs.data.flow
         time_schedule = flow_runs_details[0]["flow_runs"][0]["scheduled_start_time"]
-        # for flow_run in iter_throught_flow_runs(flow_runs_details=flow_runs_details):
-        # if flow_run["scheduled_start_time"]:
-        # time_schedule = flow_run["scheduled_start_time"]
-        # break
 
         last_success_start_time = get_time_from_last_successful_run(flow_runs_details)
         is_scheduled = check_if_scheduled_run(
@@ -226,9 +222,7 @@ class GetFlowNewDateRange(Task):
             new_date_range_type = self.change_date_range(
                 date_range=date_range_type, difference=difference_days
             )
-            print(f"After -> '{flow_name}' date_range_type = {new_date_range_type}")
             return new_date_range_type
 
         if is_scheduled is False:
-            print("FLOW was not scheduled")
             return date_range_type
