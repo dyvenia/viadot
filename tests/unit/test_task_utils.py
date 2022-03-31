@@ -18,6 +18,7 @@ from viadot.task_utils import (
     write_to_json,
     df_converts_bytes_to_int,
     custom_mail_state_handler,
+    df_clean_column,
 )
 
 
@@ -189,3 +190,29 @@ def test_custom_state_handler():
     )
 
     assert final_state == prefect.engine.state.Failed
+def test_df_clean_column():
+    data = {
+        "col_1": ["a", "b \\r", "\t c", "d \r\n a"],
+        "col_2": ["a", "b \\r", "\t c", "d \r\n a"],
+    }
+    expected_output = {
+        "col_1": {0: "a", 1: "b ", 2: " c", 3: "d  a"},
+        "col_2": {0: "a", 1: "b ", 2: " c", 3: "d  a"},
+    }
+    df = pd.DataFrame.from_dict(data)
+    output = df_clean_column.run(df).to_dict()
+    assert expected_output == output
+
+
+def test_df_clean_column_defined():
+    data = {
+        "col_1": ["a", "b", "c", "d  a"],
+        "col_2": ["a", "b \\r", "\t c", "d \r\n a"],
+    }
+    expected_output = {
+        "col_1": {0: "a", 1: "b", 2: "c", 3: "d  a"},
+        "col_2": {0: "a", 1: "b ", 2: " c", 3: "d  a"},
+    }
+    df = pd.DataFrame.from_dict(data)
+    output = df_clean_column.run(df, ["col_2"]).to_dict()
+    assert output == expected_output
