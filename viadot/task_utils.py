@@ -15,6 +15,7 @@ from prefect.storage import Git
 from prefect.utilities import logging
 from visions.functional import infer_type
 from visions.typesets.complete_set import CompleteSet
+from .tasks.azure_key_vault import AzureKeyVaultSecret
 
 from .exceptions import ValidationError
 from .sources.base import SQL
@@ -400,8 +401,9 @@ class EnsureDFColumnOrder(Task):
         if_exists: Literal["fail", "replace", "append", "delete"] = "replace",
         df: pd.DataFrame = None,
         dtypes: Dict[str, Any] = None,
-        config_key: str = None,
         driver: str = "ODBC Driver 17 for SQL Server",
+        credentials_secret: dict = None,
+        vault_name: str = None,
     ):
         """
         Run a checking column order
@@ -411,11 +413,17 @@ class EnsureDFColumnOrder(Task):
             schema (str, optional): SQL schema name. Defaults to None.
             if_exists (Literal, optional): What to do if the table exists. Defaults to "replace".
             df (pd.DataFrame, optional): Data Frame. Defaults to None.
-            config_key (str, optional): The key inside local config containing the config.
             driver (str, optional): The SQL driver to use. Defaults to "ODBC Driver 17 for SQL Server".
-        """
+            credentials_secret (str, optional): The name of the Azure Key Vault secret containing a dictionary
+            with SQL db credentials (server, db_name, user, and password). Defaults to None.
+            vault_name (str, optional): The name of the vault from which to obtain the secret. Defaults to None.
 
-        sql = SQL(config_key=config_key, driver=driver)
+        """
+        credentials_str = AzureKeyVaultSecret(
+            credentials_secret, vault_name=vault_name
+        ).run()
+        credentials = json.loads(credentials_str)
+        sql = SQL(driver=driver, credentials=credentials)
         df = self.sanitize_columns(df)
         query = f"SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = '{schema}' AND TABLE_NAME = '{table}'"
         check_result = sql.to_df(query)

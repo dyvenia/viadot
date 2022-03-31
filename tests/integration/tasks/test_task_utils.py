@@ -2,6 +2,8 @@ import logging
 import pytest
 import pandas as pd
 
+from prefect.tasks.secrets import PrefectSecret
+
 from viadot.tasks import AzureSQLCreateTable
 from viadot.exceptions import ValidationError
 from viadot.task_utils import EnsureDFColumnOrder
@@ -9,6 +11,8 @@ from viadot.task_utils import EnsureDFColumnOrder
 
 SCHEMA = "sandbox"
 TABLE = "test"
+
+CREDENTIALS = PrefectSecret("AZURE_DEFAULT_SQLDB_SERVICE_PRINCIPAL_SECRET").run()
 
 
 def test_ensure_df_column_order_append_same_col_number(caplog):
@@ -32,7 +36,7 @@ def test_ensure_df_column_order_append_same_col_number(caplog):
             schema=SCHEMA,
             if_exists="append",
             df=df,
-            config_key="AZURE_SQL",
+            credentials_secret=CREDENTIALS,
         )
 
         assert (
@@ -65,7 +69,7 @@ def test_ensure_df_column_order_append_diff_col_number(caplog):
             schema=SCHEMA,
             if_exists="append",
             df=df,
-            config_key="AZURE_SQL",
+            credentials_secret=CREDENTIALS,
         )
 
 
@@ -86,7 +90,7 @@ def test_ensure_df_column_order_replace(caplog):
     ensure_df_column_order = EnsureDFColumnOrder()
     with caplog.at_level(logging.INFO):
         ensure_df_column_order.run(
-            table=TABLE, if_exists="replace", df=df, config_key="AZURE_SQL"
+            table=TABLE, if_exists="replace", df=df, credentials_secret=CREDENTIALS
         )
     assert "The table will be replaced." in caplog.text
 
@@ -100,6 +104,6 @@ def test_ensure_df_column_order_append_not_exists(caplog):
         schema="sandbox",
         if_exists="append",
         df=df,
-        config_key="AZURE_SQL",
+        credentials_secret=CREDENTIALS,
     )
     assert "table doesn't exists" in caplog.text
