@@ -416,6 +416,8 @@ def custom_mail_state_handler(
         print(e.message)
 
     return new_state
+
+
 @task
 def df_clean_column(
     df: pd.DataFrame, columns_to_clean: List[str] = None

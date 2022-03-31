@@ -190,6 +190,8 @@ def test_custom_state_handler():
     )
 
     assert final_state == prefect.engine.state.Failed
+
+
 def test_df_clean_column():
     data = {
         "col_1": ["a", "b \\r", "\t c", "d \r\n a"],
