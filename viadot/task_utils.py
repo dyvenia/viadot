@@ -21,6 +21,7 @@ from sendgrid.helpers.mail import Mail
 from visions.functional import infer_type
 from visions.typesets.complete_set import CompleteSet
 from viadot.tasks import AzureKeyVaultSecret
+from viadot.config import local_config
 
 
 logger = logging.get_logger()
