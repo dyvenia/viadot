@@ -342,6 +342,40 @@ def df_to_dataset(
     )
 
 
+@task
+def df_clean_column(
+    df: pd.DataFrame, columns_to_clean: List[str] = None
+) -> pd.DataFrame:
+    """
+    Function that remove special characters from data frame like escape symbols etc.
+
+    Args:
+    df (pd.DataFrame): DataFrame
+    columns_to_clean (List[str]): List of columns. Defaults is None.
+
+    Returns:
+    pd.DataFrame
+    """
+    if columns_to_clean is None:
+        df.replace(
+            to_replace=[r"\\t|\\n|\\r", "\t|\n|\r"],
+            value=["", ""],
+            regex=True,
+            inplace=True,
+        )
+
+    else:
+        for x in columns_to_clean:
+            df[x].replace(
+                to_replace=[r"\\t|\\n|\\r", "\t|\n|\r"],
+                value=["", ""],
+                regex=True,
+                inplace=True,
+            )
+
+    return df
+
+
 class Git(Git):
     @property
     def git_clone_url(self):
