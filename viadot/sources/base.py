@@ -139,7 +139,7 @@ class SQL(Source):
         self,
         driver: str = None,
         config_key: str = None,
-        credentials: str = None,
+        credentials: dict = None,
         query_timeout: int = 60 * 60,
         *args,
         **kwargs,
@@ -151,7 +151,7 @@ class SQL(Source):
             config_key (str, optional): The key inside local config containing the config.
             User can choose to use this or pass credentials directly to the `credentials`
             parameter. Defaults to None.
-            credentials (str, optional): Credentials for the connection. Defaults to None.
+            credentials (dict, optional): Credentials for the connection. Defaults to None.
             query_timeout (int, optional): The timeout for executed queries. Defaults to 1 hour.
         """
 
