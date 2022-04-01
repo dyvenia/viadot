@@ -24,7 +24,7 @@ def test_ensure_df_column_order_append_same_col_number(caplog):
             dtypes={"id": "INT", "name": "VARCHAR(25)", "street": "VARCHAR(25)"},
             if_exists="replace",
         )
-    assert "Successfully created table sandbox" in caplog.text
+    assert f"Successfully created table {SCHEMA}" in caplog.text
 
     data = {"id": [1], "street": ["Green"], "name": ["Tom"]}
     df = pd.DataFrame(data)
@@ -54,7 +54,7 @@ def test_ensure_df_column_order_append_diff_col_number(caplog):
             dtypes={"id": "INT", "name": "VARCHAR(25)", "street": "VARCHAR(25)"},
             if_exists="replace",
         )
-    assert "Successfully created table sandbox" in caplog.text
+    assert f"Successfully created table {SCHEMA}" in caplog.text
 
     data = {"id": [1], "age": ["40"], "street": ["Green"], "name": ["Tom"]}
     df = pd.DataFrame(data)
@@ -82,7 +82,7 @@ def test_ensure_df_column_order_replace(caplog):
             dtypes={"id": "INT", "name": "VARCHAR(25)", "street": "VARCHAR(25)"},
             if_exists="replace",
         )
-    assert "Successfully created table sandbox" in caplog.text
+    assert f"Successfully created table {SCHEMA}" in caplog.text
 
     data = {"id": [1], "street": ["Green"], "name": ["Tom"]}
     df = pd.DataFrame(data)
@@ -101,7 +101,7 @@ def test_ensure_df_column_order_append_not_exists(caplog):
     df = pd.DataFrame(data)
     ensure_df_column_order.run(
         table="non_existing_table_123",
-        schema="sandbox",
+        schema=SCHEMA,
         if_exists="append",
         df=df,
         credentials_secret=CREDENTIALS,

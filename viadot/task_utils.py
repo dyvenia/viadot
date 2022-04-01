@@ -373,11 +373,16 @@ class EnsureDFColumnOrder(Task):
     def df_change_order(
         self, df: pd.DataFrame = None, sql_column_list: List[str] = None
     ):
+        """
+        Function to change column order in a DataFrame based on order in SQL table.
+        Args:
+            df(pd.DataFrame, optional): DataFrame to transform. Defaults to None.
+            sql_column_list(List[str], optional): List of columns in SQL table. Defaults to None.
+        """
         df_column_list = list(df.columns)
         if set(df_column_list) == set(sql_column_list):
             df_changed = df.loc[:, sql_column_list]
         else:
-
             raise ValidationError(
                 "Detected discrepancies in number of columns or different column names between the CSV file and the SQL table!"
             )
@@ -386,7 +391,7 @@ class EnsureDFColumnOrder(Task):
 
     def sanitize_columns(self, df: pd.DataFrame = None):
         """
-        Function to remove spaces at the end of column name.
+        Function to remove spaces from the beginning and from the end of a column name.
         Args:
             df(pd.DataFrame): Dataframe to transform. Defaults to None.
         """
@@ -413,6 +418,7 @@ class EnsureDFColumnOrder(Task):
             schema (str, optional): SQL schema name. Defaults to None.
             if_exists (Literal, optional): What to do if the table exists. Defaults to "replace".
             df (pd.DataFrame, optional): Data Frame. Defaults to None.
+            dtypes (Dict[str,Any], optional): The data types to use for the table. Defaults to None.
             driver (str, optional): The SQL driver to use. Defaults to "ODBC Driver 17 for SQL Server".
             credentials_secret (str, optional): The name of the Azure Key Vault secret containing a dictionary
             with SQL db credentials (server, db_name, user, and password). Defaults to None.

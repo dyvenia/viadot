@@ -1,9 +1,6 @@
 import logging
-import pandas as pd
-import pytest
-from viadot.exceptions import ValidationError
 
-from viadot.tasks import AzureSQLCreateTable, AzureSQLDBQuery, EnsureDFColumnOrder
+from viadot.tasks import AzureSQLCreateTable, AzureSQLDBQuery
 
 logger = logging.getLogger(__name__)
 
