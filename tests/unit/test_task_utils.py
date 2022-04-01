@@ -176,14 +176,14 @@ def test_write_to_json():
     os.remove("dict.json")
 
 
-def test_df_clean_column():
+def test_df_clean_column_all():
     data = {
-        "col_1": ["a", "b \\r", "\t c", "d \r\n a"],
-        "col_2": ["a", "b \\r", "\t c", "d \r\n a"],
+        "col_1": ["a", "b\\r", "\tc", "d \r\n a"],
+        "col_2": ["a", "b\\r", "\tc", "d \r\n a"],
     }
     expected_output = {
-        "col_1": {0: "a", 1: "b ", 2: " c", 3: "d  a"},
-        "col_2": {0: "a", 1: "b ", 2: " c", 3: "d  a"},
+        "col_1": {0: "a", 1: "b", 2: "c", 3: "d  a"},
+        "col_2": {0: "a", 1: "b", 2: "c", 3: "d  a"},
     }
     df = pd.DataFrame.from_dict(data)
     output = df_clean_column.run(df).to_dict()
@@ -193,11 +193,11 @@ def test_df_clean_column():
 def test_df_clean_column_defined():
     data = {
         "col_1": ["a", "b", "c", "d  a"],
-        "col_2": ["a", "b \\r", "\t c", "d \r\n a"],
+        "col_2": ["a\t\r", "b\\r", "\tc", "d \r\n a"],
     }
     expected_output = {
         "col_1": {0: "a", 1: "b", 2: "c", 3: "d  a"},
-        "col_2": {0: "a", 1: "b ", 2: " c", 3: "d  a"},
+        "col_2": {0: "a", 1: "b", 2: "c", 3: "d  a"},
     }
     df = pd.DataFrame.from_dict(data)
     output = df_clean_column.run(df, ["col_2"]).to_dict()

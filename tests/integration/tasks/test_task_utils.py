@@ -1,7 +1,6 @@
 from viadot.task_utils import custom_mail_state_handler
 from prefect.tasks.secrets import PrefectSecret
 from prefect.engine.state import Failed, Success
-import prefect
 
 
 def test_custom_state_handler():
@@ -17,4 +16,4 @@ def test_custom_state_handler():
         vault_name=vault_name,
     )
 
-    assert final_state == prefect.engine.state.Failed
+    assert final_state == Failed
