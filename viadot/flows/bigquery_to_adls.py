@@ -35,10 +35,10 @@ class BigQueryToADLS(Flow):
         project: str = None,
         dataset: str = None,
         table: str = None,
-        credentials_key: str = "BIGQUERY",
-        credentials: str = None,
+        date_column_name: str = "date",
         start_date: str = None,
         end_date: str = None,
+        credentials_key: str = "BIGQUERY",
         output_file_extension: str = ".parquet",
         adls_dir_path: str = None,
         local_file_path: str = None,
@@ -54,14 +54,16 @@ class BigQueryToADLS(Flow):
 
         Args:
             name (str, optional): _description_. Defaults to None.
-            project (str, optional): Project name. Defaults to None.
+            project (str, optional): Project name - taken from the json file (project_id). Defaults to None.
             dataset (str, optional): Dataset name. Defaults to None.
             table (str, optional): Table name. Defaults to None.
-            credentials_key (str, optional): Credential key to dictionary where details are stored. Defaults to "BIGQUERY".
-            credentials (dict, optional): Credentials dictionary - credentials can be generate as key
-            for User Principal inside a BigQuery project. Defaults to None.
+            date_column_name (str, optional): The query is based on a date, the user can provide the name
+            of the date columnn if it is different than "date". If the user-specified column does not exist,
+            all data will be retrieved from the table. Defaults to "date".
             start_date (str, optional): A query parameter to pass start date e.g. "2022-01-01". Defaults to None.
             end_date (str, optional): A query parameter to pass end date e.g. "2022-01-01". Defaults to None.
+            credentials_key (str, optional): Credential key to dictionary where details are stored.
+            credentials can be generated as key for User Principal inside a BigQuery project. Defaults to "BIGQUERY".
             output_file_extension (str, optional): Output file extension - to allow selection of.csv for data
             which is not easy to handle with parquet. Defaults to ".parquet".
             adls_dir_path (str, optional): Azure Data Lake destination folder/catalog path. Defaults to None.
@@ -74,13 +76,13 @@ class BigQueryToADLS(Flow):
         """
 
         # BigQueryToDF
-        self.credentials = credentials
         self.credentials_key = credentials_key
         self.project = project
         self.dataset = dataset
         self.table = table
         self.start_date = start_date
         self.end_date = end_date
+        self.date_column_name = date_column_name
 
         # AzureDataLakeUpload
         self.adls_sp_credentials_secret = adls_sp_credentials_secret
@@ -121,9 +123,9 @@ class BigQueryToADLS(Flow):
             dataset=self.dataset,
             table=self.table,
             credentials_key=self.credentials_key,
-            credentials=self.credentials,
             start_date=self.start_date,
             end_date=self.end_date,
+            date_column_name=self.date_column_name,
             flow=self,
         )
 
