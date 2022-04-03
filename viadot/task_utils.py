@@ -311,7 +311,6 @@ def df_converts_bytes_to_int(df: pd.DataFrame) -> pd.DataFrame:
     max_retries=3,
     retry_delay=timedelta(seconds=10),
 )
-@task
 def df_to_dataset(
     df: pd.DataFrame, partitioning_flavor="hive", format="parquet", **kwargs
 ) -> None:
