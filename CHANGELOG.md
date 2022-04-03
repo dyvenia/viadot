@@ -7,9 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 ### Added
-- Added new function `df_clean_column` that clean data frame columns from special characters
+- Added `df_clean_column` util task that removes special characters from a pandas DataFrame
 - Added `MultipleFlows` flow class which enables running multiple flows in a given order.
-- Added new task `GetFlowNewDateRange` to change date range based on Prefect flows
+- Added `GetFlowNewDateRange` task to change date range based on Prefect flows
 - Added `check_col_order` parameter in `ADLSToAzureSQL`
 - Added `ASEliteToDF` task and `ASEliteToADLS` flow
 - Added KeyVault support in `CloudForCustomers` tasks
