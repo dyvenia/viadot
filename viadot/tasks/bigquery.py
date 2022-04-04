@@ -28,8 +28,12 @@ class BigQueryToDF(Task):
         **kwargs,
     ):
         """
-        Initialize BigQueryToDF object.
-        For querying on database - dataset and table name is required.
+        Initialize BigQueryToDF object. For querying on database - dataset and table name is required.
+
+        There are 3 cases:
+            If start_date and end_date are not None - all data from the start date to the end date will be retrieved.
+            If start_date and end_date are left as default (none) - the data is pulled to "yesterday" (current date -1)
+            If the column that looks like a date does not exist in the table, get all the data from the table.
 
         Args:
             project (str, optional): Project name - taken from the json file (project_id). Defaults to None.
@@ -38,11 +42,9 @@ class BigQueryToDF(Task):
             date_column_name (str, optional): The query is based on a date, the user can provide the name
             of the date columnn if it is different than "date". If the user-specified column does not exist,
             all data will be retrieved from the table. Defaults to "date".
-            for User Principal inside a BigQuery project. Defaults to None.
             start_date (str, optional): A query parameter to pass start date e.g. "2022-01-01". Defaults to None.
             end_date (str, optional): A query parameter to pass end date e.g. "2022-01-01". Defaults to None.
             credentials_key (str, optional): Credential key to dictionary where details are stored.
-            credentials can be generated as key for User Principal inside a BigQuery project. Defaults to "BIGQUERY".
         """
         self.credentials_key = credentials_key
         self.project = project
@@ -82,16 +84,16 @@ class BigQueryToDF(Task):
         credentials_key: str = "BIGQUERY",
         **kwargs,
     ) -> None:
-        bigq = BigQuery(credentials_key=credentials_key)
+        bigqery = BigQuery(credentials_key=credentials_key)
 
-        project = project or bigq.list_projects()
-        dataset = dataset or bigq.list_datasets()
-        table = table or bigq.list_tables(dataset)
+        project = project or bigqery.list_projects()
+        dataset = dataset or bigqery.list_datasets()
+        table = table or bigqery.list_tables(dataset)
 
         if (
-            project in bigq.list_projects()
-            and dataset in bigq.list_datasets()
-            and table in bigq.list_tables(dataset)
+            project in bigqery.list_projects()
+            and dataset in bigqery.list_datasets()
+            and table in bigqery.list_tables(dataset)
         ):
             try:
                 if start_date is not None and end_date is not None:
@@ -103,7 +105,7 @@ class BigQueryToDF(Task):
                     where {date_column_name} < CURRENT_DATE() 
                     order by {date_column_name} desc"""
 
-                query_job = bigq.query(query)
+                query_job = bigqery.query(query)
                 df = query_job.result().to_dataframe()
 
             except BadRequest:
@@ -111,7 +113,7 @@ class BigQueryToDF(Task):
                     f"'{date_column_name}' column not recognized. Dawnloading all the data from '{table}'."
                 )
                 query = f"SELECT * FROM `{project}.{dataset}.{table}`"
-                query_job = bigq.query(query)
+                query_job = bigqery.query(query)
                 df = query_job.result().to_dataframe()
 
         else:

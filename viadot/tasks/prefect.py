@@ -36,7 +36,7 @@ def get_time_from_last_successful_run(flow_runs_details: List[dict] = None) -> s
     """
 
     for flow_run in iter_throught_flow_runs(flow_runs_details=flow_runs_details):
-        if flow_run["state"] == "Failed":
+        if flow_run["state"] == "Success":
             return flow_run["start_time"]
 
 

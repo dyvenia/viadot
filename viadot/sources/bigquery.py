@@ -11,9 +11,9 @@ import os
 
 class BigQuery(Source):
     """
-    Class to connect with Bigquery Project and tables.
+    Class to connect with Bigquery project and tables.
 
-    Note that credentials used for authentication can be generated for User Principal
+    Note that credentials used for authentication can be generated only for User Principal
     who have access to specific BigQuery project.
     """
 
