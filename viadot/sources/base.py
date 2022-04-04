@@ -159,8 +159,10 @@ class SQL(Source):
 
         if config_key:
             config_credentials = local_config.get(config_key)
+        else:
+            config_credentials = None
 
-        credentials = config_credentials if config_key else credentials or {}
+        credentials = credentials or config_credentials or {}
 
         if driver:
             credentials["driver"] = driver
@@ -172,7 +174,7 @@ class SQL(Source):
     @property
     def conn_str(self) -> str:
         """Generate a connection string from params or config.
-        Note that the user and password are escapedd with '{}' characters.
+        Note that the user and password are escaped with '{}' characters.
 
         Returns:
             str: The ODBC connection string.
@@ -206,7 +208,8 @@ class SQL(Source):
         cursor = self.con.cursor()
         cursor.execute(query)
 
-        if query.strip().upper().startswith("SELECT"):
+        query_sanitized = query.strip().upper()
+        if query_sanitized.startswith("SELECT") or query_sanitized.startswith("WITH"):
             result = cursor.fetchall()
         else:
             result = True
@@ -216,14 +219,19 @@ class SQL(Source):
 
         return result
 
-    def to_df(self, query: str, if_empty: str = None) -> pd.DataFrame:
+    def to_df(
+        self, query: str, con: pyodbc.Connection = None, if_empty: str = None
+    ) -> pd.DataFrame:
         """Creates DataFrame form SQL query.
         Args:
             query (str): SQL query. If don't start with "SELECT" returns empty DataFrame.
+            con (pyodbc.Connection, optional): The connection to use to pull the data.
             if_empty (str, optional): What to do if the query returns no data. Defaults to None.
         """
-        conn = self.con
-        if query.upper().startswith("SELECT"):
+        conn = con or self.con
+
+        query_sanitized = query.strip().upper()
+        if query_sanitized.startswith("SELECT") or query_sanitized.startswith("WITH"):
             df = pd.read_sql_query(query, conn)
             if df.empty:
                 self._handle_if_empty(if_empty=if_empty)

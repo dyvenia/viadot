@@ -1,12 +1,16 @@
-from prefect import task, Task
 import json
+from datetime import timedelta
+from typing import Dict, List
+
 import pandas as pd
-from ..sources import CloudForCustomers
-from typing import Any, Dict, List
-from prefect.utilities.tasks import defaults_from_attrs
-from prefect.tasks.secrets import PrefectSecret
-from .azure_key_vault import AzureKeyVaultSecret
 from viadot.config import local_config
+
+from prefect import Task
+from prefect.tasks.secrets import PrefectSecret
+from prefect.utilities.tasks import defaults_from_attrs
+
+from ..sources import CloudForCustomers
+from .azure_key_vault import AzureKeyVaultSecret
 
 
 class C4CReportToDF(Task):
@@ -17,6 +21,8 @@ class C4CReportToDF(Task):
         env: str = "QA",
         skip: int = 0,
         top: int = 1000,
+        max_retries: int = 3,
+        retry_delay: timedelta = timedelta(seconds=10),
         **kwargs,
     ):
 
@@ -27,6 +33,8 @@ class C4CReportToDF(Task):
 
         super().__init__(
             name="c4c_report_to_df",
+            max_retries=max_retries,
+            retry_delay=retry_delay,
             *args,
             **kwargs,
         )
@@ -49,15 +57,15 @@ class C4CReportToDF(Task):
         top: int = 1000,
         credentials_secret: str = None,
         vault_name: str = None,
+        max_retries: int = 3,
+        retry_delay: timedelta = timedelta(seconds=10),
     ):
         """
-        Task for downloading data from the Cloud for Customers to a pandas DataFrame using report URL
-        (generated in Azure Data Factory).
-        C4CReportToDF task can not contain endpoint and params, this parameters are stored in generated report_url.
+        Task for downloading data from the Cloud for Customers to a pandas DataFrame using report URL.
 
         Args:
-            report_url (str, optional): The url to the API in case of prepared report. Defaults to None.
-            env (str, optional): The development environments. Defaults to 'QA'.
+            report_url (str, optional): The URL to the report. Defaults to None.
+            env (str, optional): The environment to use. Defaults to 'QA'.
             skip (int, optional): Initial index value of reading row. Defaults to 0.
             top (int, optional): The value of top reading row. Defaults to 1000.
             credentials_secret (str, optional): The name of the Azure Key Vault secret containing a dictionary
@@ -108,9 +116,12 @@ class C4CToDF(Task):
         url: str = None,
         endpoint: str = None,
         fields: List[str] = None,
-        params: Dict[str, Any] = {},
+        params: Dict[str, str] = None,
+        chunksize: int = 10000,
         env: str = "QA",
         if_empty: str = "warn",
+        max_retries: int = 3,
+        retry_delay: timedelta = timedelta(seconds=10),
         **kwargs,
     ):
 
@@ -118,23 +129,29 @@ class C4CToDF(Task):
         self.endpoint = endpoint
         self.fields = fields
         self.params = params
+        self.chunksize = chunksize
         self.env = env
         self.if_empty = if_empty
 
         super().__init__(
             name="c4c_to_df",
+            max_retries=max_retries,
+            retry_delay=retry_delay,
             *args,
             **kwargs,
         )
 
-    @defaults_from_attrs("url", "endpoint", "fields", "params", "env", "if_empty")
+    @defaults_from_attrs(
+        "url", "endpoint", "fields", "params", "chunksize", "env", "if_empty"
+    )
     def run(
         self,
         url: str = None,
         env: str = "QA",
         endpoint: str = None,
         fields: List[str] = None,
-        params: List[str] = None,
+        params: Dict[str, str] = None,
+        chunksize: int = None,
         if_empty: str = "warn",
         credentials_secret: str = None,
         vault_name: str = None,
@@ -147,14 +164,15 @@ class C4CToDF(Task):
         Example:
             url = "https://mysource.com/sap/c4c/odata/v1/c4codataapi"
             endpoint = "ServiceRequestCollection"
-            params = {"filter": "CreationDateTime > 2021-12-21T00:00:00Z"}
+            params = {"$filter": "CreationDateTime ge 2021-12-21T00:00:00Z"}
 
         Args:
             url (str, optional): The url to the API in case of prepared report. Defaults to None.
-            env (str, optional): The development environments. Defaults to 'QA'.
+            env (str, optional): The environment to use. Defaults to 'QA'.
             endpoint (str, optional): The endpoint of the API. Defaults to None.
             fields (List[str], optional): The C4C Table fields. Defaults to None.
-            params (Dict[str, Any]): The query parameters like filter by creation date time. Defaults to json format.
+            params (Dict[str, str]): Query parameters. Defaults to $format=json.
+            chunksize (int, optional): How many rows to retrieve from C4C at a time. Uses a server-side cursor.
             if_empty (str, optional): What to do if query returns no data. Defaults to "warn".
             credentials_secret (str, optional): The name of the Azure Key Vault secret containing a dictionary
             with C4C credentials. Defaults to None.
@@ -176,15 +194,49 @@ class C4CToDF(Task):
             credentials = json.loads(credentials_str)[env]
         else:
             credentials = local_config.get("CLOUD_FOR_CUSTOMERS")[env]
-        cloud_for_customers = CloudForCustomers(
-            url=url,
-            params=params,
-            endpoint=endpoint,
-            env=env,
-            fields=fields,
-            credentials=credentials,
-        )
 
-        df = cloud_for_customers.to_df(if_empty=if_empty, fields=fields)
+        self.logger.info(f"Downloading data from {url+endpoint}...")
+
+        # If we get any of these in params, we don't perform any chunking
+        if any(["$skip" in params, "$top" in params]):
+            return CloudForCustomers(
+                url=url,
+                endpoint=endpoint,
+                params=params,
+                env=env,
+                credentials=credentials,
+            ).to_df(if_empty=if_empty, fields=fields)
+
+        chunks = []
+        offset = 0
+        while True:
+            chunk_no = int(offset / chunksize) + 1
+            boundaries = {"$skip": offset, "$top": chunksize}
+            params.update(boundaries)
+
+            self.logger.info(f"Downloading chunk no. {chunk_no}...")
+
+            chunk = CloudForCustomers(
+                url=url,
+                endpoint=endpoint,
+                params=params,
+                env=env,
+                credentials=credentials,
+            ).to_df(if_empty=if_empty, fields=fields)
+
+            self.logger.debug(f"Chunk no. {chunk_no} has been downloaded successfully.")
+
+            chunks.append(chunk)
+
+            if chunk.shape[0] < chunksize:
+                break
+
+            offset += chunksize
+
+        self.logger.info(f"Data from {url+endpoint} has been downloaded successfully.")
+
+        df = pd.concat(chunks)
+
+        del chunks
 
         return df
