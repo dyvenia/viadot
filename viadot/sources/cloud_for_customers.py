@@ -8,6 +8,9 @@ from ..utils import handle_api_response
 from ..exceptions import CredentialError
 import re
 from copy import deepcopy
+from prefect.utilities import logging
+
+logger = logging.get_logger(__name__)
 
 
 class CloudForCustomers(Source):
@@ -75,7 +78,17 @@ class CloudForCustomers(Source):
         records = []
         while url:
             response = self.get_response(url)
-            response_json = response.json()
+            try:
+                response_json = response.json()
+                logger.info("Data converted to JSON format.")
+            except requests.exceptions.JSONDecodeError:
+                logger.error(
+                    "Could not convert to JSON format. Content might be empty."
+                )
+
+            if not response_json:
+                logger.warning("It seems that JSON does not contain any data.")
+
             new_records = self.response_to_entity_list(response_json, url)
             records.extend(new_records)
 
@@ -93,7 +106,15 @@ class CloudForCustomers(Source):
         tmp_params = deepcopy(self.params)
         while url:
             response = self.get_response(tmp_full_url, params=tmp_params)
-            response_json = response.json()
+            try:
+                response_json = response.json()
+                logger.info("Data converted to JSON format.")
+            except requests.exceptions.JSONDecodeError as e:
+                logger.error("Could not convert to JSON format")
+
+            if not response_json:
+                logger.warning("It seems that JSON does not contain any data.")
+
             if isinstance(response_json["d"], dict):
                 # ODATA v2+ API
                 new_records = response_json["d"].get("results")
@@ -134,6 +155,7 @@ class CloudForCustomers(Source):
         metadata_url = self.change_to_meta_url(url)
         column_maper_dict = self.map_columns(metadata_url)
         entity_list = []
+        logger.info("Converting JSON to list...")
         for element in dirty_json["d"]["results"]:
             new_entity = {}
             for key, object_of_interest in element.items():
@@ -145,6 +167,7 @@ class CloudForCustomers(Source):
                         else:
                             new_entity[key] = object_of_interest
             entity_list.append(new_entity)
+        logger.info("JSON converted to list.")
         return entity_list
 
     def map_columns(self, url: str = None) -> Dict[str, str]:
@@ -196,6 +219,19 @@ class CloudForCustomers(Source):
             auth=(username, pw),
             timeout=timeout,
         )
+
+        if response.raise_for_status() is not None:
+            logger.error(
+                f"Could not connect to the server. Error message: {response.raise_for_status()}"
+            )
+        else:
+            logger.info("Connected succesfully.")
+
+        if response.text:
+            logger.info("Fetched the data from the server.")
+        else:
+            logger.warning("It seems that the response does not contain any data.")
+
         return response
 
     def to_df(self, fields: List[str] = None, if_empty: str = "warn") -> pd.DataFrame:
@@ -205,6 +241,8 @@ class CloudForCustomers(Source):
         """
         records = self.to_records()
         df = pd.DataFrame(data=records)
+        if df.empty:
+            logger.warning("The newly created dataframe is empty.")
         if fields:
             return df[fields]
         return df
