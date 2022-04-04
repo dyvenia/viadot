@@ -364,6 +364,10 @@ class EnsureDFColumnOrder(Task):
         *args,
         **kwargs,
     ):
+        self.table = table
+        self.schema = schema
+        self.if_exists = if_exists
+        self.df = df
         self.dtypes = dtypes
         self.config_key = config_key
         self.driver = driver

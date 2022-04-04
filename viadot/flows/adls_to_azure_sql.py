@@ -239,6 +239,7 @@ class ADLSToAzureSQL(Flow):
             schema=self.schema,
             df=df,
             if_exists=self.if_exists,
+            dtypes=self.dtypes,
             credentials_secret=self.sqldb_credentials_secret,
             flow=self,
         )
