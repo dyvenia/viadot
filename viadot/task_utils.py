@@ -2,7 +2,7 @@ import copy
 import json
 import os
 import shutil
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import List, Literal
 
@@ -387,19 +387,10 @@ def df_converts_bytes_to_int(df: pd.DataFrame) -> pd.DataFrame:
     return df.applymap(lambda x: list(map(int, x)) if isinstance(x, bytes) else x)
 
 
-@task
-def df_clean_column(df: pd.DataFrame) -> pd.DataFrame:
-    if "Customer Requested" in list(df.columns):
-        df["Customer Requested"].replace(
-            to_replace=[r"\\t|\\n|\\r", "\t|\n|\r"],
-            value=["", ""],
-            regex=True,
-            inplace=True,
-        )
-
-    return df
-
-
+@task(
+    max_retries=3,
+    retry_delay=timedelta(seconds=10),
+)
 def df_to_dataset(
     df: pd.DataFrame, partitioning_flavor="hive", format="parquet", **kwargs
 ) -> None:
@@ -439,15 +430,19 @@ def df_clean_column(
     df: pd.DataFrame, columns_to_clean: List[str] = None
 ) -> pd.DataFrame:
     """
-    Function that remove special characters from data frame like escape symbols etc.
+    Function that removes special characters (such as escape symbols)
+    from a pandas DataFrame.
 
     Args:
-    df (pd.DataFrame): DataFrame
-    columns_to_clean (List[str]): List of columns. Defaults is None.
+    df (pd.DataFrame): The DataFrame to clean.
+    columns_to_clean (List[str]): A list of columns to clean. Defaults is None.
 
     Returns:
-    pd.DataFrame
+    pd.DataFrame: The cleaned DataFrame
     """
+
+    df = df.copy()
+
     if columns_to_clean is None:
         df.replace(
             to_replace=[r"\\t|\\n|\\r", "\t|\n|\r"],
@@ -455,16 +450,14 @@ def df_clean_column(
             regex=True,
             inplace=True,
         )
-
     else:
-        for x in columns_to_clean:
-            df[x].replace(
+        for col in columns_to_clean:
+            df[col].replace(
                 to_replace=[r"\\t|\\n|\\r", "\t|\n|\r"],
                 value=["", ""],
                 regex=True,
                 inplace=True,
             )
-
     return df
 
 
