@@ -3,6 +3,7 @@ from typing import List
 from black import json
 from .base import Source
 from google.cloud import bigquery
+from google.oauth2 import service_account
 from ..config import local_config
 from ..exceptions import CredentialError
 
@@ -28,19 +29,14 @@ class BigQuery(Source):
         Raises:
             CredentialError: In case credentials cannot be found.
         """
-        self.path_json = "credentials_json.json"
         credentials = local_config.get(credentials_key)
         if credentials is None:
             raise CredentialError("Credentials not found.")
 
         super().__init__(*args, credentials=credentials, **kwargs)
 
-        with open(self.path_json, "w") as json_file:
-            json.dump(credentials, json_file)
-
-        os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = self.path_json
-        self.client = bigquery.Client()
-        os.remove(self.path_json)
+        credentials = service_account.Credentials.from_service_account_info(credentials)
+        self.client = bigquery.Client(credentials=credentials)
 
     def list_projects(self) -> str:
         """

@@ -1,3 +1,4 @@
+import pandas as pd
 from google.api_core.exceptions import BadRequest
 from prefect import Task
 from prefect.utilities.tasks import defaults_from_attrs
@@ -106,7 +107,8 @@ class BigQueryToDF(Task):
                     order by {date_column_name} desc"""
 
                 query_job = bigqery.query(query)
-                df = query_job.result().to_dataframe()
+                df_iter = query_job.result().to_dataframe_iterable()
+                df = pd.concat(df_iter)
 
             except BadRequest:
                 logger.warning(
@@ -114,7 +116,8 @@ class BigQueryToDF(Task):
                 )
                 query = f"SELECT * FROM `{project}.{dataset}.{table}`"
                 query_job = bigqery.query(query)
-                df = query_job.result().to_dataframe()
+                df_iter = query_job.result().to_dataframe_iterable()
+                df = pd.concat(df_iter)
 
         else:
             raise DBDataAccessError("Wrong dataset name or table name!")
