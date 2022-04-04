@@ -381,8 +381,6 @@ def custom_mail_state_handler(
 
     """
 
-    logger = prefect.context.get("logger")
-
     if credentials_secret is None:
         try:
             credentials_secret = PrefectSecret("mail_notifier_api_key").run()
