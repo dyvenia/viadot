@@ -15,6 +15,8 @@ from prefect.storage import Git
 from prefect.utilities import logging
 from visions.functional import infer_type
 from visions.typesets.complete_set import CompleteSet
+from viadot.sources import AzureSQL
+
 
 logger = logging.get_logger()
 METADATA_COLUMNS = {"_viadot_downloaded_at_utc": "DATETIME"}
@@ -298,6 +300,84 @@ def write_to_json(dict_, path):
 def cleanup_validation_clutter(expectations_path):
     ge_project_path = Path(expectations_path).parent
     shutil.rmtree(ge_project_path)
+
+
+@task
+def generate_table_dtypes(
+    table_name: str = None,
+    db_name: str = None,
+    reserve: float = 1.4,
+    config_key: str = None,
+    only_dict: bool = True,
+    credentials: str = None,
+    schema: str = None,
+    connection: object = None,
+) -> dict:
+    """Functon that automaticy generate dtypes dict from SQL table.
+
+    Args:
+        table_name (str): Table name. Defaults to None.
+        db_name (str): Data base name. Defaults to None.
+        reserve (str): How many signs add to varchar, percentage of value. Defaults to 1.4.
+        config_key (str): The key inside local config containing the config.
+        only_dict (bool): Choose to generate dictionary or whole dataframe. Defaults to True.
+        credentials (str, optional): Credentials for the connection. Defaults to None.
+        schema (str, optional): Schema name. Defaults to None.
+        connection (object, optional): Object of connection to database. Defaults to None.
+
+    Returns:
+        Dictionary
+    """
+
+    query_admin = f"""select COLUMN_NAME, DATA_TYPE, CHARACTER_MAXIMUM_LENGTH, 
+            NUMERIC_PRECISION, DATETIME_PRECISION, 
+            IS_NULLABLE 
+            from INFORMATION_SCHEMA.COLUMNS
+            where TABLE_NAME='{table_name}' and TABLE_SCHEMA='{schema}'
+            order by CHARACTER_MAXIMUM_LENGTH desc"""
+    col_names = [
+        "COLUMN_NAME",
+        "DATA_TYPE",
+        "CHARACTER_MAXIMUM_LENGTH",
+        "NUMERIC_PRECISION",
+        "DATETIME_PRECISION",
+        "IS_NULLABLE",
+    ]
+    tmp_values = []
+    if connection is None:
+        sql = AzureSQL(config_key=config_key, credentials=credentials)
+        if db_name:
+            sql.credentials["db_name"] = db_name
+
+        if sql.con:
+            print("Connection established")
+        data = sql.run(query_admin)
+        df = pd.DataFrame.from_records(data, columns=col_names)
+    elif connection:
+        df = pd.read_sql_query(query_admin, connection)
+
+    create_int = lambda x: str(int(int(x) * reserve / 10) * 10 if int(x) > 30 else 30)
+
+    df["CHARACTER_MAXIMUM_LENGTH"] = (
+        df["CHARACTER_MAXIMUM_LENGTH"]
+        .astype(str)
+        .apply(lambda x: str(x.replace(".0", "")))
+    )
+    types_val = df[["DATA_TYPE", "CHARACTER_MAXIMUM_LENGTH"]].values.tolist()
+    types_keys = df["COLUMN_NAME"].values.tolist()
+    for x in types_val:
+        if x[1] in ["nan"]:
+            x[1] = ""
+        elif x[1] == "-1":
+            x[1] = "(500)"
+        else:
+            x[1] = "(" + create_int(x[1]) + ")"
+    for x in types_val:
+        tmp_values.append("".join(x).upper())
+    if only_dict == True:
+        return dict(zip(types_keys, tmp_values))
+    else:
+        return df
 
 
 @task

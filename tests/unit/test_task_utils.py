@@ -3,6 +3,12 @@ import numpy as np
 import os
 import pandas as pd
 from typing import List
+from viadot.config import local_config
+from typing import List, Literal
+from prefect.tasks.secrets import PrefectSecret
+from viadot.sources.azure_blob_storage import AzureBlobStorage
+import json
+
 from viadot.task_utils import (
     chunk_df,
     df_get_data_types_task,
@@ -15,6 +21,9 @@ from viadot.task_utils import (
     df_converts_bytes_to_int,
     df_clean_column,
 )
+
+SCHEMA = "sandbox"
+TABLE = "test"
 
 
 def count_dtypes(dtypes_dict: dict = None, dtypes_to_count: List[str] = None) -> int:
