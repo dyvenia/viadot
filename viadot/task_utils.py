@@ -377,6 +377,9 @@ def custom_mail_state_handler(
     Returns: State: the `new_state` object that was provided
 
     """
+
+    logger = prefect.context.get("logger")
+
     if credentials_secret is None:
         try:
             credentials_secret = PrefectSecret("mail_notifier_api_key").run()
@@ -391,7 +394,7 @@ def custom_mail_state_handler(
     elif local_api_key is not None:
         api_key = local_config.get(local_api_key).get("API_KEY")
     else:
-        print("Please provide API KEY")
+        raise Exception("Please provide API KEY")
 
     curr_dt = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     only_states = only_states or []
@@ -410,10 +413,10 @@ def custom_mail_state_handler(
     <p>More details here: {url}</p></strong>",
     )
     try:
-        sg = SendGridAPIClient(api_key)
-        response = sg.send(message)
+        send_grid = SendGridAPIClient(api_key)
+        response = send_grid.send(message)
     except Exception as e:
-        print(e.message)
+        raise e
 
     return new_state
 

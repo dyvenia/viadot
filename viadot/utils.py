@@ -2,7 +2,6 @@ from typing import Any, Dict
 import pendulum
 import prefect
 import requests
-import prefect.client
 
 from prefect.utilities.graphql import EnumValue, with_args
 from requests.adapters import HTTPAdapter
