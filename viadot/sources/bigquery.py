@@ -15,7 +15,7 @@ class BigQuery(Source):
     Class to connect with Bigquery project and tables.
 
     Note that credentials used for authentication can be generated only for User Principal
-    who have access to specific BigQuery project.
+    who has access to specific BigQuery project.
     """
 
     def __init__(self, credentials_key: str = None, *args, **kwargs):
