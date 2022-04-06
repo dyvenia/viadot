@@ -2,19 +2,27 @@ import copy
 import json
 import os
 import shutil
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
-from typing import List, Literal
+from typing import TYPE_CHECKING, Any, Callable, Union, cast, List, Literal
+from toolz import curry
 
 import pandas as pd
 import prefect
 import pyarrow as pa
 import pyarrow.dataset as ds
-from prefect import task
+from prefect import task, Task, Flow
 from prefect.storage import Git
 from prefect.utilities import logging
+from prefect.tasks.secrets import PrefectSecret
+from prefect.engine.state import Failed
+from sendgrid import SendGridAPIClient
+from sendgrid.helpers.mail import Mail
 from visions.functional import infer_type
 from visions.typesets.complete_set import CompleteSet
+from viadot.tasks import AzureKeyVaultSecret
+from viadot.config import local_config
+
 
 logger = logging.get_logger()
 METADATA_COLUMNS = {"_viadot_downloaded_at_utc": "DATETIME"}
@@ -307,7 +315,10 @@ def df_converts_bytes_to_int(df: pd.DataFrame) -> pd.DataFrame:
     return df.applymap(lambda x: list(map(int, x)) if isinstance(x, bytes) else x)
 
 
-@task
+@task(
+    max_retries=3,
+    retry_delay=timedelta(seconds=10),
+)
 def df_to_dataset(
     df: pd.DataFrame, partitioning_flavor="hive", format="parquet", **kwargs
 ) -> None:
@@ -340,6 +351,111 @@ def df_to_dataset(
     ds.write_dataset(
         data=table, partitioning_flavor=partitioning_flavor, format=format, **kwargs
     )
+
+
+@curry
+def custom_mail_state_handler(
+    tracked_obj: Union["Flow", "Task"],
+    old_state: prefect.engine.state.State,
+    new_state: prefect.engine.state.State,
+    only_states: list = [Failed],
+    local_api_key: str = None,
+    credentials_secret: str = None,
+    vault_name: str = None,
+) -> prefect.engine.state.State:
+
+    """
+    Custom state handler configured to work with sendgrid.
+    Works as a standalone state handler, or can be called from within a custom state handler.
+    Args:
+        tracked_obj (Task or Flow): Task or Flow object the handler is registered with.
+        old_state (State): previous state of tracked object.
+        new_state (State): new state of tracked object.
+        only_states ([State], optional): similar to `ignore_states`, but instead _only_
+            notifies you if the Task / Flow is in a state from the provided list of `State`
+            classes.
+        local_api_key (str, optional): Api key from local config.
+        credentials_secret (str, optional): The name of the Azure Key Vault secret containing a dictionary with API KEY.
+        vault_name (str, optional): Name of key vault.
+    Returns: State: the `new_state` object that was provided
+
+    """
+
+    if credentials_secret is None:
+        try:
+            credentials_secret = PrefectSecret("mail_notifier_api_key").run()
+        except ValueError:
+            pass
+
+    if credentials_secret is not None:
+        credentials_str = AzureKeyVaultSecret(
+            credentials_secret, vault_name=vault_name
+        ).run()
+        api_key = json.loads(credentials_str).get("API_KEY")
+    elif local_api_key is not None:
+        api_key = local_config.get(local_api_key).get("API_KEY")
+    else:
+        raise Exception("Please provide API KEY")
+
+    curr_dt = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    only_states = only_states or []
+    if only_states and not any(
+        [isinstance(new_state, included) for included in only_states]
+    ):
+        return new_state
+    url = prefect.client.Client().get_cloud_url(
+        "flow-run", prefect.context["flow_run_id"], as_user=False
+    )
+    message = Mail(
+        from_email="notifications@dyvenia.com",
+        to_emails="notifications@dyvenia.com",
+        subject=f"The flow {tracked_obj.name} - Status {new_state}",
+        html_content=f"<strong>The flow {cast(str,tracked_obj.name)} FAILED at {curr_dt}. \
+    <p>More details here: {url}</p></strong>",
+    )
+    try:
+        send_grid = SendGridAPIClient(api_key)
+        response = send_grid.send(message)
+    except Exception as e:
+        raise e
+
+    return new_state
+
+
+@task
+def df_clean_column(
+    df: pd.DataFrame, columns_to_clean: List[str] = None
+) -> pd.DataFrame:
+    """
+    Function that removes special characters (such as escape symbols)
+    from a pandas DataFrame.
+
+    Args:
+    df (pd.DataFrame): The DataFrame to clean.
+    columns_to_clean (List[str]): A list of columns to clean. Defaults is None.
+
+    Returns:
+    pd.DataFrame: The cleaned DataFrame
+    """
+
+    df = df.copy()
+
+    if columns_to_clean is None:
+        df.replace(
+            to_replace=[r"\\t|\\n|\\r", "\t|\n|\r"],
+            value=["", ""],
+            regex=True,
+            inplace=True,
+        )
+    else:
+        for col in columns_to_clean:
+            df[col].replace(
+                to_replace=[r"\\t|\\n|\\r", "\t|\n|\r"],
+                value=["", ""],
+                regex=True,
+                inplace=True,
+            )
+    return df
 
 
 class Git(Git):
