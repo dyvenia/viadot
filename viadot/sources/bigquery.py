@@ -1,6 +1,5 @@
 from pydoc import cli
 from typing import List
-from black import json
 from .base import Source
 from google.cloud import bigquery
 from google.oauth2 import service_account
@@ -58,12 +57,12 @@ class BigQuery(Source):
         datasets_name = [dataset.dataset_id for dataset in list_datasets]
         return datasets_name
 
-    def list_tables(self, dataset: str = None) -> List[str]:
+    def list_tables(self, dataset: str) -> List[str]:
         """
-        Get tables from BigQuery dataset.
+        Get tables from BigQuery dataset. Dataset is required.
 
         Args:
-            dataset (str, optional): Dataset from Bigquery project. Defaults to None.
+            dataset (str): Dataset from Bigquery project. Defaults to None.
 
         Returns:
             List[str]: List of tables from BigQuery dataset

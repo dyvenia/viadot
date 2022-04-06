@@ -74,7 +74,6 @@ class BigQueryToADLS(Flow):
             Defaults to None.
             if_exists (str, optional): What to do if the file exists. Defaults to "replace".
         """
-
         # BigQueryToDF
         self.credentials_key = credentials_key
         self.project = project
