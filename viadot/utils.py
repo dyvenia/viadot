@@ -1,8 +1,8 @@
 from typing import Any, Dict
-
 import pendulum
 import prefect
 import requests
+
 from prefect.utilities.graphql import EnumValue, with_args
 from requests.adapters import HTTPAdapter
 from requests.exceptions import ConnectionError, HTTPError, ReadTimeout, Timeout
