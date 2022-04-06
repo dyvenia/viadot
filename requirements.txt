@@ -31,4 +31,3 @@ duckdb==0.3.2
 google-cloud==0.34.0
 google-auth==2.6.2
 sendgrid==6.9.7
-
