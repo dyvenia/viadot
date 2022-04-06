@@ -286,7 +286,7 @@ class AzureSQLDBQuery(Task):
             count = 0
             for char in enumerate(query):
                 if char[1] == ";":
-                    count = count + 1
+                    count += 1
             splited = query.split(";")
             for i in range(0, count):
                 try:
