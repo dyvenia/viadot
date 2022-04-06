@@ -243,9 +243,7 @@ def build_merge_query(
     return merge_query
 
 
-def gen_bulk_insert_query_from_df(
-    df: pd.DataFrame, table_fqn: str, **kwargs
-) -> str:
+def gen_bulk_insert_query_from_df(df: pd.DataFrame, table_fqn: str, **kwargs) -> str:
     """
     Converts a DataFrame to a bulk INSERT query.
 
@@ -271,6 +269,11 @@ def gen_bulk_insert_query_from_df(
            (2, 'Noneprefix', 0, NULL, 'APPROVED', NULL),
            (3, 'fooNULLbar', 1, 2.34, 'APPROVED', NULL);
     """
+    if df.shape[1] == 1:
+        raise NotImplementedError(
+            "Currently, this function only handles DataFrames with at least two columns."
+        )
+
     df = df.copy().assign(**kwargs)
     df = _cast_df_cols(df)
 
