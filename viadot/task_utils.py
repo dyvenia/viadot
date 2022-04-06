@@ -362,6 +362,8 @@ def custom_mail_state_handler(
     local_api_key: str = None,
     credentials_secret: str = None,
     vault_name: str = None,
+    from_email: str = None,
+    to_emails: str = None,
 ) -> prefect.engine.state.State:
 
     """
@@ -377,6 +379,8 @@ def custom_mail_state_handler(
         local_api_key (str, optional): Api key from local config.
         credentials_secret (str, optional): The name of the Azure Key Vault secret containing a dictionary with API KEY.
         vault_name (str, optional): Name of key vault.
+        from_email (str): Sender mailbox address.
+        to_emails (str): Receiver mailbox address.
     Returns: State: the `new_state` object that was provided
 
     """
@@ -407,8 +411,8 @@ def custom_mail_state_handler(
         "flow-run", prefect.context["flow_run_id"], as_user=False
     )
     message = Mail(
-        from_email="notifications@dyvenia.com",
-        to_emails="notifications@dyvenia.com",
+        from_email=from_email,
+        to_emails=to_emails,
         subject=f"The flow {tracked_obj.name} - Status {new_state}",
         html_content=f"<strong>The flow {cast(str,tracked_obj.name)} FAILED at {curr_dt}. \
     <p>More details here: {url}</p></strong>",
