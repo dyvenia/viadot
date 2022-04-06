@@ -1,12 +1,10 @@
 from pydoc import cli
 from typing import List
 from .base import Source
-from google.cloud import bigquery
+import google.cloud.bigquery as bigquery
 from google.oauth2 import service_account
 from ..config import local_config
 from ..exceptions import CredentialError
-
-import os
 
 
 class BigQuery(Source):
