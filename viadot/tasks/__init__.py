@@ -18,6 +18,7 @@ from .azure_sql import (
     CreateTableFromBlob,
     AzureSQLToDF,
     CheckColumnOrder,
+    AzureSQLUpsert,
 )
 from .bcp import BCPTask
 from .github import DownloadGitHubFile
