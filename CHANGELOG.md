@@ -6,7 +6,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 
 ## [Unreleased]
-
+## [0.4.1] - 2022-04-07
+### Changed
+- bumped version
 ## [0.4.0] - 2022-04-07
 ### Added
 - Added `custom_mail_state_handler` function that sends mail notification using custom smtp server.
