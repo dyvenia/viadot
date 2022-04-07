@@ -32,6 +32,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added `chunksize` parameter to `BCPTask` task to allow more control over the load process
 - Added support for SQL Server's custom `datetimeoffset` type
 - Added `AzureSQLToDF` task
+- Added `AzureDataLakeRemove` task
 - Added `AzureSQLUpsert` task
 
 ### Changed
