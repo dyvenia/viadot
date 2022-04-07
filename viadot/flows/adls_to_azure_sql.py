@@ -3,9 +3,8 @@ import os
 from typing import Any, Dict, List, Literal
 
 import pandas as pd
-from prefect import Flow, Parameter, task
+from prefect import Flow, task
 from prefect.backend import get_key_value
-from prefect.storage import Local
 from prefect.utilities import logging
 
 from viadot.tasks.azure_data_lake import AzureDataLakeDownload
@@ -13,7 +12,6 @@ from viadot.tasks.azure_data_lake import AzureDataLakeDownload
 from ..tasks import (
     AzureDataLakeCopy,
     AzureDataLakeToDF,
-    AzureDataLakeUpload,
     AzureSQLCreateTable,
     BCPTask,
     DownloadGitHubFile,
@@ -46,7 +44,7 @@ def map_data_types_task(json_shema_path: str):
     dict_mapping = {
         "Float": "REAL",
         "Image": None,
-        "" "Categorical": "VARCHAR(500)",
+        "Categorical": "VARCHAR(500)",
         "Time": "TIME",
         "Boolean": "BIT",
         "DateTime": "DATETIMEOFFSET",  # DATETIMEOFFSET is the only timezone-aware dtype in TSQL
@@ -75,14 +73,18 @@ def map_data_types_task(json_shema_path: str):
 
 @task
 def df_to_csv_task(df, remove_tab, path: str, sep: str = "\t"):
-    if remove_tab == True:
-        for col in range(len(df.columns)):
-            df[df.columns[col]] = (
-                df[df.columns[col]].astype(str).str.replace(r"\t", "", regex=True)
-            )
-        df.to_csv(path, sep=sep, index=False)
+    # if table doesn't exist it will be created later -  df equals None
+    if df is None:
+        logger.warning("DataFrame is None")
     else:
-        df.to_csv(path, sep=sep, index=False)
+        if remove_tab == True:
+            for col in range(len(df.columns)):
+                df[df.columns[col]] = (
+                    df[df.columns[col]].astype(str).str.replace(r"\t", "", regex=True)
+                )
+            df.to_csv(path, sep=sep, index=False)
+        else:
+            df.to_csv(path, sep=sep, index=False)
 
 
 class ADLSToAzureSQL(Flow):
@@ -101,6 +103,7 @@ class ADLSToAzureSQL(Flow):
         table: str = None,
         schema: str = None,
         if_exists: Literal["fail", "replace", "append", "delete"] = "replace",
+        check_col_order: bool = True,
         sqldb_credentials_secret: str = None,
         max_download_retries: int = 5,
         tags: List[str] = ["promotion"],
@@ -131,6 +134,7 @@ class ADLSToAzureSQL(Flow):
             table (str, optional): Destination table. Defaults to None.
             schema (str, optional): Destination schema. Defaults to None.
             if_exists (Literal, optional): What to do if the table exists. Defaults to "replace".
+            check_col_order (bool, optional): Whether to check column order. Defaults to True.
             sqldb_credentials_secret (str, optional): The name of the Azure Key Vault secret containing a dictionary with
             Azure SQL Database credentials. Defaults to None.
             max_download_retries (int, optional): How many times to retry the download. Defaults to 5.
@@ -171,9 +175,10 @@ class ADLSToAzureSQL(Flow):
         self.table = table
         self.schema = schema
         self.if_exists = self._map_if_exists(if_exists)
-
+        self.check_col_order = check_col_order
         # Generate CSV
         self.remove_tab = remove_tab
+
         # BCPTask
         self.sqldb_credentials_secret = sqldb_credentials_secret
 
@@ -238,14 +243,22 @@ class ADLSToAzureSQL(Flow):
             credentials_secret=self.sqldb_credentials_secret,
             flow=self,
         )
-
-        df_to_csv = df_to_csv_task.bind(
-            df=df_reorder,
-            path=self.local_file_path,
-            sep=self.write_sep,
-            remove_tab=self.remove_tab,
-            flow=self,
-        )
+        if self.check_col_order == False:
+            df_to_csv = df_to_csv_task.bind(
+                df=df,
+                path=self.local_file_path,
+                sep=self.write_sep,
+                remove_tab=self.remove_tab,
+                flow=self,
+            )
+        else:
+            df_to_csv = df_to_csv_task.bind(
+                df=df_reorder,
+                path=self.local_file_path,
+                sep=self.write_sep,
+                remove_tab=self.remove_tab,
+                flow=self,
+            )
 
         promote_to_conformed_task.bind(
             from_path=self.adls_path,

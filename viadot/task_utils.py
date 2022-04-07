@@ -1,20 +1,27 @@
+import copy
 import json
 import os
-from datetime import datetime, timezone
-from typing import List, Literal
+import shutil
+from datetime import datetime, timedelta, timezone
+from pathlib import Path
+from typing import TYPE_CHECKING, Any, Callable, Union, cast, List, Literal
+from toolz import curry
 
 import pandas as pd
-from pathlib import Path
-import shutil
-import json
-
-from visions.functional import infer_type
-from visions.typesets.complete_set import CompleteSet
-
 import prefect
-from prefect import task
+import pyarrow as pa
+import pyarrow.dataset as ds
+from prefect import task, Task, Flow
 from prefect.storage import Git
 from prefect.utilities import logging
+from prefect.tasks.secrets import PrefectSecret
+from prefect.engine.state import Failed
+from sendgrid import SendGridAPIClient
+from sendgrid.helpers.mail import Mail
+from visions.functional import infer_type
+from visions.typesets.complete_set import CompleteSet
+from viadot.tasks import AzureKeyVaultSecret
+from viadot.config import local_config
 
 
 logger = logging.get_logger()
@@ -60,6 +67,12 @@ def get_latest_timestamp_file_path(files: List[str]) -> str:
 
 @task
 def dtypes_to_json_task(dtypes_dict, local_json_path: str):
+    """
+    Creates json file from a dictionary.
+    Args:
+        dtypes_dict (dict): Dictionary containing data types.
+        local_json_path (str): Path to local json file.
+    """
     with open(local_json_path, "w") as fp:
         json.dump(dtypes_dict, fp)
 
@@ -88,6 +101,56 @@ def df_get_data_types_task(df: pd.DataFrame) -> dict:
     dtypes = infer_type(df, typeset)
     dtypes_dict = {k: str(v) for k, v in dtypes.items()}
     return dtypes_dict
+
+
+@task
+def get_sql_dtypes_from_df(df: pd.DataFrame) -> dict:
+    """Obtain SQL data types from a pandas DataFrame"""
+    typeset = CompleteSet()
+    dtypes = infer_type(df.head(10000), typeset)
+    dtypes_dict = {k: str(v) for k, v in dtypes.items()}
+    dict_mapping = {
+        "Float": "REAL",
+        "Image": None,
+        "Categorical": "VARCHAR(500)",
+        "Time": "TIME",
+        "Boolean": "VARCHAR(5)",  # Bool is True/False, Microsoft expects 0/1
+        "DateTime": "DATETIMEOFFSET",  # DATETIMEOFFSET is the only timezone-aware dtype in TSQL
+        "Object": "VARCHAR(500)",
+        "EmailAddress": "VARCHAR(50)",
+        "File": None,
+        "Geometry": "GEOMETRY",
+        "Ordinal": "INT",
+        "Integer": "INT",
+        "Generic": "VARCHAR(500)",
+        "UUID": "VARCHAR(50)",  # Microsoft uses a custom UUID format so we can't use it
+        "Complex": None,
+        "Date": "DATE",
+        "String": "VARCHAR(500)",
+        "IPAddress": "VARCHAR(39)",
+        "Path": "VARCHAR(255)",
+        "TimeDelta": "VARCHAR(20)",  # datetime.datetime.timedelta; eg. '1 days 11:00:00'
+        "URL": "VARCHAR(255)",
+        "Count": "INT",
+    }
+    dict_dtypes_mapped = {}
+    for k in dtypes_dict:
+        dict_dtypes_mapped[k] = dict_mapping[dtypes_dict[k]]
+
+    # This is required as pandas cannot handle mixed dtypes in Object columns
+    dtypes_dict_fixed = {
+        k: ("String" if v == "Object" else str(v))
+        for k, v in dict_dtypes_mapped.items()
+    }
+
+    return dtypes_dict_fixed
+
+
+@task
+def update_dict(d: dict, d_new: dict) -> dict:
+    d_copy = copy.deepcopy(d)
+    d_copy.update(d_new)
+    return d_copy
 
 
 @task
@@ -194,19 +257,16 @@ def df_to_parquet(
         return
     else:
         out_df = df
+
+    # create directories if they don't exist
+    try:
+        if not os.path.isfile(path):
+            directory = os.path.dirname(path)
+            os.makedirs(directory, exist_ok=True)
+    except:
+        pass
+
     out_df.to_parquet(path, index=False, **kwargs)
-
-
-@task
-def dtypes_to_json(dtypes_dict: dict, local_json_path: str) -> None:
-    """
-    Creates json file from a dictionary.
-    Args:
-        dtypes_dict (dict): Dictionary containing data types.
-        local_json_path (str): Path to local json file.
-    """
-    with open(local_json_path, "w") as fp:
-        json.dump(dtypes_dict, fp)
 
 
 @task
@@ -246,6 +306,160 @@ def write_to_json(dict_, path):
 def cleanup_validation_clutter(expectations_path):
     ge_project_path = Path(expectations_path).parent
     shutil.rmtree(ge_project_path)
+
+
+@task
+def df_converts_bytes_to_int(df: pd.DataFrame) -> pd.DataFrame:
+    logger = prefect.context.get("logger")
+    logger.info("Converting bytes in dataframe columns to list of integers")
+    return df.applymap(lambda x: list(map(int, x)) if isinstance(x, bytes) else x)
+
+
+@task(
+    max_retries=3,
+    retry_delay=timedelta(seconds=10),
+)
+def df_to_dataset(
+    df: pd.DataFrame, partitioning_flavor="hive", format="parquet", **kwargs
+) -> None:
+    """
+    Use `pyarrow.dataset.write_to_dataset()` to write from a pandas DataFrame to a dataset.
+    This enables several data lake-specific optimizations such as parallel writes, partitioning,
+    and file size (via `max_rows_per_file` parameter).
+
+    Args:
+        df (pd.DataFrame): The pandas DataFrame to write.
+        partitioning_flavor (str, optional): The partitioning flavor to use. Defaults to "hive".
+        format (str, optional): The dataset format. Defaults to 'parquet'.
+        kwargs: Keyword arguments to be passed to `write_to_dataset()`. See
+        https://arrow.apache.org/docs/python/generated/pyarrow.dataset.write_dataset.html.
+
+    Examples:
+        table = pa.Table.from_pandas(df_contact)
+        base_dir = "/home/viadot/contact"
+        partition_cols = ["updated_at_year", "updated_at_month", "updated_at_day"]
+
+        df_to_dataset(
+            data=table,
+            base_dir=base_dir,
+            partitioning=partition_cols,
+            existing_data_behavior='overwrite_or_ignore',
+            max_rows_per_file=100_000
+        )
+    """
+    table = pa.Table.from_pandas(df)
+    ds.write_dataset(
+        data=table, partitioning_flavor=partitioning_flavor, format=format, **kwargs
+    )
+
+
+@curry
+def custom_mail_state_handler(
+    tracked_obj: Union["Flow", "Task"],
+    old_state: prefect.engine.state.State,
+    new_state: prefect.engine.state.State,
+    only_states: list = [Failed],
+    local_api_key: str = None,
+    credentials_secret: str = None,
+    vault_name: str = None,
+    from_email: str = None,
+    to_emails: str = None,
+) -> prefect.engine.state.State:
+
+    """
+    Custom state handler configured to work with sendgrid.
+    Works as a standalone state handler, or can be called from within a custom state handler.
+    Args:
+        tracked_obj (Task or Flow): Task or Flow object the handler is registered with.
+        old_state (State): previous state of tracked object.
+        new_state (State): new state of tracked object.
+        only_states ([State], optional): similar to `ignore_states`, but instead _only_
+            notifies you if the Task / Flow is in a state from the provided list of `State`
+            classes.
+        local_api_key (str, optional): Api key from local config.
+        credentials_secret (str, optional): The name of the Azure Key Vault secret containing a dictionary with API KEY.
+        vault_name (str, optional): Name of key vault.
+        from_email (str): Sender mailbox address.
+        to_emails (str): Receiver mailbox address.
+    Returns: State: the `new_state` object that was provided
+
+    """
+
+    if credentials_secret is None:
+        try:
+            credentials_secret = PrefectSecret("mail_notifier_api_key").run()
+        except ValueError:
+            pass
+
+    if credentials_secret is not None:
+        credentials_str = AzureKeyVaultSecret(
+            credentials_secret, vault_name=vault_name
+        ).run()
+        api_key = json.loads(credentials_str).get("API_KEY")
+    elif local_api_key is not None:
+        api_key = local_config.get(local_api_key).get("API_KEY")
+    else:
+        raise Exception("Please provide API KEY")
+
+    curr_dt = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    only_states = only_states or []
+    if only_states and not any(
+        [isinstance(new_state, included) for included in only_states]
+    ):
+        return new_state
+    url = prefect.client.Client().get_cloud_url(
+        "flow-run", prefect.context["flow_run_id"], as_user=False
+    )
+    message = Mail(
+        from_email=from_email,
+        to_emails=to_emails,
+        subject=f"The flow {tracked_obj.name} - Status {new_state}",
+        html_content=f"<strong>The flow {cast(str,tracked_obj.name)} FAILED at {curr_dt}. \
+    <p>More details here: {url}</p></strong>",
+    )
+    try:
+        send_grid = SendGridAPIClient(api_key)
+        response = send_grid.send(message)
+    except Exception as e:
+        raise e
+
+    return new_state
+
+
+@task
+def df_clean_column(
+    df: pd.DataFrame, columns_to_clean: List[str] = None
+) -> pd.DataFrame:
+    """
+    Function that removes special characters (such as escape symbols)
+    from a pandas DataFrame.
+
+    Args:
+    df (pd.DataFrame): The DataFrame to clean.
+    columns_to_clean (List[str]): A list of columns to clean. Defaults is None.
+
+    Returns:
+    pd.DataFrame: The cleaned DataFrame
+    """
+
+    df = df.copy()
+
+    if columns_to_clean is None:
+        df.replace(
+            to_replace=[r"\\t|\\n|\\r", "\t|\n|\r"],
+            value=["", ""],
+            regex=True,
+            inplace=True,
+        )
+    else:
+        for col in columns_to_clean:
+            df[col].replace(
+                to_replace=[r"\\t|\\n|\\r", "\t|\n|\r"],
+                value=["", ""],
+                regex=True,
+                inplace=True,
+            )
+    return df
 
 
 class Git(Git):
