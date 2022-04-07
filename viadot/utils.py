@@ -300,6 +300,6 @@ def gen_bulk_insert_query_from_df(df: pd.DataFrame, table_fqn: str, **kwargs) ->
 
     # Change the double quotes into single quotes, as explained above.
     # Note this pattern should be improved at a later time to cover more edge cases.
-    pattern = r'(")(.*)(")(\)|,)'
-    values_clean = re.sub(pattern, r"'\2'\4", values)
+    double_quotes_pattern = r'(")(.*)(")(\)|,)'
+    values_clean = re.sub(double_quotes_pattern, r"'\2'\4", values)
     return f"INSERT INTO {table_fqn} ({columns})\n\nVALUES {values_clean}"
