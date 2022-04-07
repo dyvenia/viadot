@@ -69,8 +69,8 @@ def test_azure_data_lake_list():
 
 
 def test_azure_data_lake_remove():
-    file_1 = AzureDataLake(adls_path)
-    file_2 = AzureDataLake(adls_path_2)
+    file = AzureDataLake(adls_path)
+    assert file.exists()
     remove_task = AzureDataLakeRemove()
     remove_task.run(path=adls_path)
-    assert not file_1.exists() and not file_2.exists()
+    assert not file.exists()
