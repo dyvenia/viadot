@@ -480,6 +480,12 @@ class AzureSQLUpsert(Task):
             vault_name (str, optional): The name of the vault from which to obtain the secret. Defaults to None.
         """
 
+        if not table:
+            raise ValueError("'table' was not provided.")
+
+        if not on:
+            raise ValueError("'on' was not provided.")
+
         credentials = get_credentials(credentials_secret, vault_name=vault_name)
         azure_sql = AzureSQL(credentials=credentials)
 
