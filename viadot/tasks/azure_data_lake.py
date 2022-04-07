@@ -576,15 +576,15 @@ class AzureDataLakeList(Task):
 
 class AzureDataLakeRemove(Task):
     """
-    Task for removing files in Azure Data Lake.
+    Task for removing objects from Azure Data Lake.
 
     Args:
         path (str, optional): The path to the directory from which to delete files. Defaults to None.
         recursive (bool): Set this to true if removing entire directories.
         gen (int, optional): The generation of the Azure Data Lake. Defaults to 2.
         vault_name (str, optional): The name of the vault from which to fetch the secret. Defaults to None.
-        max_retries (int, optional): [description]. Defaults to 3.
-        retry_delay (timedelta, optional): [description]. Defaults to timedelta(seconds=10).
+        max_retries (int, optional): Maximum number of retries before failing. Defaults to 3.
+        retry_delay (timedelta, optional): Time to wait before the next retry attempt. Defaults to timedelta(seconds=10).
     """
 
     def __init__(
@@ -664,7 +664,7 @@ class AzureDataLakeRemove(Task):
             }
         lake = AzureDataLake(gen=gen, credentials=credentials)
 
-        full_dl_path = os.path.join(credentials["ACCOUNT_NAME"], path)
-        self.logger.info(f"Deleting files from {full_dl_path}...")
+        full_path = os.path.join(credentials["ACCOUNT_NAME"], path)
+        self.logger.info(f"Deleting files from {full_path}...")
         lake.rm(path, recursive=recursive)
-        self.logger.info(f"Successfully deleted files from {full_dl_path}.")
+        self.logger.info(f"Successfully deleted files from {full_path}.")
