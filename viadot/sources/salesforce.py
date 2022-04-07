@@ -22,7 +22,7 @@ class Salesforce(Source):
         self,
         *args,
         credentials: Dict[str, Any] = None,
-        domain: str,
+        domain: str = None,
         client_id: str = None,
         env: str = "QA",
         **kwargs,
@@ -55,11 +55,7 @@ class Salesforce(Source):
         else:
             raise ValueError("The only environments available are QA and DEV.")
 
-    def upsert(
-        self,
-        dict: Dict[str, Any],
-        table: str,
-    ) -> None:
+    def upsert(self, dict: Dict[str, Any], table: str, externalID: str = None) -> None:
         if len(dict) == 0:
             raise ValueError(f"Dictionary is empty")
 
@@ -67,14 +63,22 @@ class Salesforce(Source):
         records = dict["records"]
         records_cp = records.copy()
         for record in records_cp:
-            key = record["Id"]
+            if externalID:
+                if record[externalID] == None:
+                    continue
+                else:
+                    merged_key = f"{externalID}/{record[externalID]}"
+                    record.pop(externalID)
+            else:
+                merged_key = record["Id"]
             record.pop("Id")
             try:
-                response = table_to_upsert.upsert(data=record, record_id=key)
+                print(merged_key)
+                response = table_to_upsert.upsert(data=record, record_id=merged_key)
             except SalesforceMalformedRequest as e:
-                raise ValueError(f"Upsert of record {key} failed.") from e
+                raise ValueError(f"Upsert of record {merged_key} failed.") from e
             codes = {200: "updated", 201: "created", 204: "updated"}
-            logger.info(f"Successfully {codes[response]} record {key}.")
+            logger.info(f"Successfully {codes[response]} record {merged_key}.")
             if response not in list(codes.keys()):
                 raise ValueError(
                     f"Upsert failed for record: \n{record} with response {response}"
