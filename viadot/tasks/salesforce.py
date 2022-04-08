@@ -1,13 +1,8 @@
-import json
-import os
 from datetime import timedelta
-from typing import List
-from ..config import local_config
-from typing import Any, Dict, List
+from typing import Any, Dict
 
 import pandas as pd
 from prefect import Task
-from prefect.tasks.secrets import PrefectSecret
 from prefect.utilities.tasks import defaults_from_attrs
 
 from ..sources import Salesforce
@@ -15,27 +10,31 @@ from ..sources import Salesforce
 
 class SalesforceUpsert(Task):
     """
-    Task for upserting data to Salesforce.
+    Task for upserting a pandas DataFrame to Salesforce.
 
     Args:
+    TODO
     """
 
     def __init__(
         self,
-        credentials: Dict[str, Any] = None,
-        domain: str = None,
-        client_id: str = None,
-        dict: Dict[str, Any] = None,
         table: str = None,
-        env: str = None,
+        external_id: str = None,
+        domain: str = "test",
+        client_id: str = "viadot",
+        credentials: Dict[str, Any] = None,
+        env: str = "DEV",
         max_retries: int = 3,
         retry_delay: timedelta = timedelta(seconds=10),
         *args,
         **kwargs,
     ):
-        self.credentials = credentials
+        self.table = table
+        self.external_id = external_id
         self.domain = domain
         self.client_id = client_id
+        self.credentials = credentials
+        self.env = env
 
         super().__init__(
             name="salesforce_upsert",
@@ -50,33 +49,30 @@ class SalesforceUpsert(Task):
         return super().__call__(*args, **kwargs)
 
     @defaults_from_attrs(
-        "credentials",
+        "table",
+        "external_id",
         "domain",
         "client_id",
-        "dict",
-        "table",
+        "credentials",
         "env",
         "max_retries",
         "retry_delay",
     )
     def run(
         self,
-        credentials: Dict[str, Any] = None,
+        df: pd.DataFrame = None,
+        table: str = None,
+        external_id: str = None,
         domain: str = None,
         client_id: str = None,
-        dict: Dict[str, Any] = None,
-        table: str = None,
+        credentials: Dict[str, Any] = None,
         env: str = None,
-        max_retries: int = 3,
-        retry_delay: timedelta = timedelta(seconds=10),
+        max_retries: int = None,
+        retry_delay: timedelta = None,
     ) -> None:
-
-        if not credentials:
-            credentials = local_config.get("SALESFORCE").get(env)
-
         salesforce = Salesforce(
-            credentials=credentials, domain=domain, client_id=client_id
+            credentials=credentials, env=env, domain=domain, client_id=client_id
         )
-        self.logger.info(f"Upserting {len(dict)} rows to Salesforce...")
-        salesforce.upsert(dict=dict, table=table)
-        self.logger.info(f"Successfully upserted to Salesforce.")
+        self.logger.info(f"Upserting {df.shape[0]} rows to Salesforce...")
+        salesforce.upsert(df=df, table=table, external_id=external_id)
+        self.logger.info(f"Successfully upserted {df.shape[0]} rows to Salesforce.")
