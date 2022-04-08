@@ -5,6 +5,7 @@ from .azure_data_lake import (
     AzureDataLakeList,
     AzureDataLakeToDF,
     AzureDataLakeUpload,
+    AzureDataLakeRemove,
 )
 from .azure_key_vault import (
     AzureKeyVaultSecret,
