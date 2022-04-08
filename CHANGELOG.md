@@ -6,6 +6,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 
 ## [Unreleased]
+## [0.4.2] - 2022-04-08
+### Added
+- Added `AzureDataLakeRemove` task
+### Changed
+- Changed name of task file from `prefect` to `prefect_data_range`
+### Fixed
+- Fixed out of range issue in `prefect_data_range`
 ## [0.4.1] - 2022-04-07
 ### Changed
 - bumped version
