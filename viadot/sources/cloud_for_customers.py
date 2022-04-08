@@ -80,14 +80,12 @@ class CloudForCustomers(Source):
             response = self.get_response(url)
             try:
                 response_json = response.json()
-                logger.info("Data converted to JSON format.")
+                logger.info("Data fetched correctly.")
             except requests.exceptions.JSONDecodeError:
-                logger.error(
-                    "Could not convert to JSON format. Content might be empty."
-                )
+                logger.error("Data could not be fetched.")
 
             if not response_json:
-                logger.warning("It seems that JSON does not contain any data.")
+                logger.warning("It seems that the query produced no data.")
 
             new_records = self.response_to_entity_list(response_json, url)
             records.extend(new_records)
@@ -108,12 +106,12 @@ class CloudForCustomers(Source):
             response = self.get_response(tmp_full_url, params=tmp_params)
             try:
                 response_json = response.json()
-                logger.info("Data converted to JSON format.")
+                logger.info("Data fetched correctly.")
             except requests.exceptions.JSONDecodeError as e:
-                logger.error("Could not convert to JSON format")
+                logger.error("Data could not be fetched.")
 
             if not response_json:
-                logger.warning("It seems that JSON does not contain any data.")
+                logger.warning("It seems that the query produced no data.")
 
             if isinstance(response_json["d"], dict):
                 # ODATA v2+ API
@@ -155,7 +153,6 @@ class CloudForCustomers(Source):
         metadata_url = self.change_to_meta_url(url)
         column_maper_dict = self.map_columns(metadata_url)
         entity_list = []
-        logger.info("Converting JSON to list...")
         for element in dirty_json["d"]["results"]:
             new_entity = {}
             for key, object_of_interest in element.items():
@@ -167,7 +164,7 @@ class CloudForCustomers(Source):
                         else:
                             new_entity[key] = object_of_interest
             entity_list.append(new_entity)
-        logger.info("JSON converted to list.")
+        logger.info("Data conversion successful.")
         return entity_list
 
     def map_columns(self, url: str = None) -> Dict[str, str]:
@@ -220,11 +217,7 @@ class CloudForCustomers(Source):
             timeout=timeout,
         )
 
-        if response.raise_for_status() is not None:
-            logger.error(
-                f"Could not connect to the server. Error message: {response.raise_for_status()}"
-            )
-        else:
+        if response is not None:
             logger.info("Connected succesfully.")
 
         if response.text:
@@ -242,7 +235,7 @@ class CloudForCustomers(Source):
         records = self.to_records()
         df = pd.DataFrame(data=records)
         if df.empty:
-            logger.warning("The newly created dataframe is empty.")
+            logger.warning("The newly created DataFrame is empty.")
         if fields:
             return df[fields]
         return df
