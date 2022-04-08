@@ -6,16 +6,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 
 ## [Unreleased]
+## Fixed
+- Fixed `get_flow_last_run_date()` incorrectly parsing the date
+
+
 ## [0.4.2] - 2022-04-08
 ### Added
 - Added `AzureDataLakeRemove` task
 ### Changed
-- Changed name of task file from `prefect` to `prefect_data_range`
+- Changed name of task file from `prefect` to `prefect_date_range`
 ### Fixed
-- Fixed out of range issue in `prefect_data_range`
+- Fixed out of range issue in `prefect_date_range`
+
+
 ## [0.4.1] - 2022-04-07
 ### Changed
 - bumped version
+
+
 ## [0.4.0] - 2022-04-07
 ### Added
 - Added `custom_mail_state_handler` function that sends mail notification using custom smtp server.
