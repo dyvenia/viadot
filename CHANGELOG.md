@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 
 ## [Unreleased]
+
+## [0.4.0] - 2022-04-07
 ### Added
 - Added `custom_mail_state_handler` function that sends mail notification using custom smtp server.
 - Added new function `df_clean_column` that cleans data frame columns from special characters
@@ -13,7 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added `MultipleFlows` flow class which enables running multiple flows in a given order.
 - Added `GetFlowNewDateRange` task to change date range based on Prefect flows
 - Added `check_col_order` parameter in `ADLSToAzureSQL`
-- Added `ASEliteToDF` task and `ASEliteToADLS` flow
+- Added new source `ASElite` 
 - Added KeyVault support in `CloudForCustomers` tasks
 - Added `SQLServer` source
 - Added `DuckDBToDF` task
@@ -31,6 +33,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added support for SQL Server's custom `datetimeoffset` type
 - Added `AzureSQLToDF` task
 - Added logging to `CloudForCustomers` class.
+- Added `AzureDataLakeRemove` task
 - Added `AzureSQLUpsert` task
 
 ### Changed
