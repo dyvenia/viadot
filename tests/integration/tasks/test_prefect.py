@@ -4,7 +4,7 @@ import datetime
 from datetime import date
 
 from viadot.tasks import GetFlowNewDateRange
-from viadot.tasks.prefect import (
+from viadot.tasks.prefect_date_range import (
     get_time_from_last_successful_run,
     calculate_difference,
     check_if_scheduled_run,
