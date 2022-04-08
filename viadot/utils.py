@@ -116,9 +116,7 @@ def get_flow_last_run_date(flow_name: str) -> str:
         return None
 
     last_run_date_raw_format = flow_run_data[0]["start_time"]
-    last_run_date = (
-        pendulum.parse(last_run_date_raw_format).format("YYYY-MM-DDTHH:MM:SS") + "Z"
-    )
+    last_run_date = last_run_date_raw_format.split(".")[0] + "Z"
     return last_run_date
 
 
