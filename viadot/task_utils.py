@@ -4,17 +4,25 @@ import os
 import shutil
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
-from typing import List, Literal
+from typing import TYPE_CHECKING, Any, Callable, Union, cast, List, Literal
+from toolz import curry
 
 import pandas as pd
 import prefect
 import pyarrow as pa
 import pyarrow.dataset as ds
-from prefect import task
+from prefect import task, Task, Flow
 from prefect.storage import Git
 from prefect.utilities import logging
+from prefect.tasks.secrets import PrefectSecret
+from prefect.engine.state import Failed
+from sendgrid import SendGridAPIClient
+from sendgrid.helpers.mail import Mail
 from visions.functional import infer_type
 from visions.typesets.complete_set import CompleteSet
+from viadot.tasks import AzureKeyVaultSecret
+from viadot.config import local_config
+
 
 logger = logging.get_logger()
 METADATA_COLUMNS = {"_viadot_downloaded_at_utc": "DATETIME"}
@@ -374,6 +382,10 @@ def custom_mail_state_handler(
         from_email (str): Sender mailbox address.
         to_emails (str): Receiver mailbox address.
     Returns: State: the `new_state` object that was provided
+<<<<<<< HEAD
+=======
+
+>>>>>>> a8c7a85218aee3536bbc81d517f509bd058126d5
     """
 
     if credentials_secret is None:

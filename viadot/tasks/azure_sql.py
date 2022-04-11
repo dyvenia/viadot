@@ -10,6 +10,11 @@ from prefect.utilities.tasks import defaults_from_attrs
 
 from ..exceptions import ValidationError
 from ..sources import AzureSQL
+from ..utils import (
+    build_merge_query,
+    gen_bulk_insert_query_from_df,
+    get_sql_server_table_dtypes,
+)
 from .azure_key_vault import AzureKeyVaultSecret
 
 
@@ -322,8 +327,12 @@ class AzureSQLToDF(Task):
         azure_sql = AzureSQL(credentials=credentials)
 
         df = azure_sql.to_df(query)
+        nrows = df.shape[0]
+        ncols = df.shape[1]
 
-        self.logger.info(f"Successfully downloaded data to a DataFrame.")
+        self.logger.info(
+            f"Successfully downloaded {nrows} rows and {ncols} columns of data to a DataFrame."
+        )
         return df
 
 
@@ -417,3 +426,101 @@ class CheckColumnOrder(Task):
         else:
             self.logger.info("The table will be replaced.")
             return df
+
+
+class AzureSQLUpsert(Task):
+    """Task for upserting data from a pandas DataFrame into AzureSQL.
+
+    Args:
+        schema (str, optional): The schema where the data should be upserted. Defaults to None.
+        table (str, optional): The table where the data should be upserted. Defaults to None.
+        on (str, optional): The field on which to merge (upsert). Defaults to None.
+        credentials_secret (str, optional): The name of the Azure Key Vault secret containing a dictionary
+        vault_name (str, optional): The name of the vault from which to obtain the secret. Defaults to None.
+    """
+
+    def __init__(
+        self,
+        schema: str = None,
+        table: str = None,
+        on: str = None,
+        credentials_secret: str = None,
+        *args,
+        **kwargs,
+    ):
+        self.schema = schema
+        self.table = table
+        self.on = on
+        self.credentials_secret = credentials_secret
+        super().__init__(name="azure_sql_upsert", *args, **kwargs)
+
+    @defaults_from_attrs(
+        "schema",
+        "table",
+        "on",
+        "credentials_secret",
+    )
+    def run(
+        self,
+        df: pd.DataFrame,
+        schema: str = None,
+        table: str = None,
+        on: str = None,
+        credentials_secret: str = None,
+        vault_name: str = None,
+    ):
+        """Upsert data from a pandas DataFrame into AzureSQL using a temporary staging table.
+
+        Args:
+            df (pd.DataFrame): The DataFrame to upsert.
+            schema (str, optional): The schema where the data should be upserted. Defaults to None.
+            table (str, optional): The table where the data should be upserted. Defaults to None.
+            on (str, optional): The field on which to merge (upsert). Defaults to None.
+            credentials_secret (str, optional): The name of the Azure Key Vault secret containing a dictionary
+            vault_name (str, optional): The name of the vault from which to obtain the secret. Defaults to None.
+        """
+
+        if not table:
+            raise ValueError("'table' was not provided.")
+
+        if not on:
+            raise ValueError("'on' was not provided.")
+
+        credentials = get_credentials(credentials_secret, vault_name=vault_name)
+        azure_sql = AzureSQL(credentials=credentials)
+
+        # Create a temporary staging table.
+        # Hashtag marks a temp table in SQL server.
+        stg_table = "#" + "stg_" + table
+        dtypes = get_sql_server_table_dtypes(
+            schema=schema, table=table, con=azure_sql.con
+        )
+        created = azure_sql.create_table(
+            schema=schema, table=stg_table, dtypes=dtypes, if_exists="fail"
+        )
+
+        # Insert data into the temp table
+        stg_table_fqn = f"{schema}.{stg_table}"
+        insert_query = gen_bulk_insert_query_from_df(df, table_fqn=stg_table_fqn)
+        inserted = azure_sql.run(insert_query)
+
+        # Upsert into prod table
+        merge_query = build_merge_query(
+            stg_schema=schema,
+            stg_table=stg_table,
+            schema=schema,
+            table=table,
+            primary_key=on,
+            con=azure_sql.con,
+        )
+
+        merged = azure_sql.run(merge_query)
+
+        if merged:
+            rows = df.shape[0]
+            table_fqn = f"{schema}.{table}"
+            self.logger.info(
+                f"Successfully upserted {rows} rows of data into table '{table_fqn}'."
+            )
+
+        return True

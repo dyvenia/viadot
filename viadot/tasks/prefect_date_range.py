@@ -129,13 +129,32 @@ def get_formatted_date(
 
 
 class GetFlowNewDateRange(Task):
+    """
+    Get the flow date_range_type and add the days if the last run of the flow was unsuccessful.
+    A task that checks the status of the last flow run and change it if the last flow has failed.
+
+    If it is originally 'last_14_days' but the flow has run in Failed state for the last 2 days
+    then from 'last_14_days' it will be 'last_16_days' in the next flow_run.
+
+    Note that here is the check whether the flow run has been planned.
+    Only If the flow was run by a prefect (according to the planned schedule), a change of date dates is possible.
+    """
+
     def __init__(
         self,
         flow_name: str = None,
-        date_range_type: bool = None,
+        date_range_type: str = None,
         *args,
         **kwargs,
     ):
+        """
+        Initialize GetFlowNewDateRange class.
+
+        Args:
+            flow_name (str, optional): Prefect flow name. Defaults to None.
+            date_range_type (str, optional): String argument that should look like this: 'last_X_days' -
+            X is a number of days. Defaults to None.
+        """
 
         self.flow_name = flow_name
         self.date_range_type = date_range_type
@@ -206,7 +225,10 @@ class GetFlowNewDateRange(Task):
         flow_runs = client.graphql(query)
         flow_runs_details = flow_runs.data.flow
 
-        time_schedule = flow_runs_details[0]["flow_runs"][0]["scheduled_start_time"]
+        for flow_run in iter_throught_flow_runs(flow_runs_details=flow_runs_details):
+            if flow_run["scheduled_start_time"]:
+                time_schedule = flow_run["scheduled_start_time"]
+                break
         last_success_start_time = get_time_from_last_successful_run(flow_runs_details)
         is_scheduled = check_if_scheduled_run(
             time_run=last_success_start_time,
