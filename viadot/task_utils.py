@@ -345,6 +345,78 @@ def df_to_dataset(
     )
 
 
+@curry
+def custom_mail_state_handler(
+    tracked_obj: Union["Flow", "Task"],
+    old_state: prefect.engine.state.State,
+    new_state: prefect.engine.state.State,
+    only_states: list = [Failed],
+    local_api_key: str = None,
+    credentials_secret: str = None,
+    vault_name: str = None,
+    from_email: str = None,
+    to_emails: str = None,
+) -> prefect.engine.state.State:
+
+    """
+    Custom state handler configured to work with sendgrid.
+    Works as a standalone state handler, or can be called from within a custom state handler.
+    Args:
+        tracked_obj (Task or Flow): Task or Flow object the handler is registered with.
+        old_state (State): previous state of tracked object.
+        new_state (State): new state of tracked object.
+        only_states ([State], optional): similar to `ignore_states`, but instead _only_
+            notifies you if the Task / Flow is in a state from the provided list of `State`
+            classes.
+        local_api_key (str, optional): Api key from local config.
+        credentials_secret (str, optional): The name of the Azure Key Vault secret containing a dictionary with API KEY.
+        vault_name (str, optional): Name of key vault.
+        from_email (str): Sender mailbox address.
+        to_emails (str): Receiver mailbox address.
+    Returns: State: the `new_state` object that was provided
+    """
+
+    if credentials_secret is None:
+        try:
+            credentials_secret = PrefectSecret("mail_notifier_api_key").run()
+        except ValueError:
+            pass
+
+    if credentials_secret is not None:
+        credentials_str = AzureKeyVaultSecret(
+            credentials_secret, vault_name=vault_name
+        ).run()
+        api_key = json.loads(credentials_str).get("API_KEY")
+    elif local_api_key is not None:
+        api_key = local_config.get(local_api_key).get("API_KEY")
+    else:
+        raise Exception("Please provide API KEY")
+
+    curr_dt = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    only_states = only_states or []
+    if only_states and not any(
+        [isinstance(new_state, included) for included in only_states]
+    ):
+        return new_state
+    url = prefect.client.Client().get_cloud_url(
+        "flow-run", prefect.context["flow_run_id"], as_user=False
+    )
+    message = Mail(
+        from_email=from_email,
+        to_emails=to_emails,
+        subject=f"The flow {tracked_obj.name} - Status {new_state}",
+        html_content=f"<strong>The flow {cast(str,tracked_obj.name)} FAILED at {curr_dt}. \
+    <p>More details here: {url}</p></strong>",
+    )
+    try:
+        send_grid = SendGridAPIClient(api_key)
+        response = send_grid.send(message)
+    except Exception as e:
+        raise e
+
+    return new_state
+
+
 @task
 def df_clean_column(
     df: pd.DataFrame, columns_to_clean: List[str] = None
