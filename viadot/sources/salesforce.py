@@ -1,12 +1,12 @@
-import os
-from stat import SF_IMMUTABLE
-from prefect.utilities import logging
-from typing import Any, Dict, List
-from ..config import local_config
-from .base import Source
+from typing import Any, Dict, List, OrderedDict
+
 import pandas as pd
+from prefect.utilities import logging
 from simple_salesforce import Salesforce as SF
 from simple_salesforce.exceptions import SalesforceMalformedRequest
+
+from ..config import local_config
+from .base import Source
 
 logger = logging.get_logger(__name__)
 
@@ -21,10 +21,10 @@ class Salesforce(Source):
     def __init__(
         self,
         *args,
+        domain: str = "test",
+        client_id: str = "viadot",
         credentials: Dict[str, Any] = None,
-        domain: str = None,
-        client_id: str = None,
-        env: str = "QA",
+        env: str = "DEV",
         **kwargs,
     ):
         try:
@@ -36,15 +36,7 @@ class Salesforce(Source):
 
         super().__init__(*args, credentials=self.credentials, **kwargs)
 
-        if env == "QA":
-            self.salesforce = SF(
-                username=self.credentials["username"],
-                password=self.credentials["password"],
-                security_token=self.credentials["token"],
-                domain=domain,
-                client_id=client_id,
-            )
-        elif env == "DEV":
+        if env == "DEV":
             self.salesforce = SF(
                 username=self.credentials["username"],
                 password=self.credentials["password"],
@@ -52,33 +44,53 @@ class Salesforce(Source):
                 domain=domain,
                 client_id=client_id,
             )
-        else:
-            raise ValueError("The only environments available are QA and DEV.")
+        elif env == "QA":
+            self.salesforce = SF(
+                username=self.credentials["username"],
+                password=self.credentials["password"],
+                security_token=self.credentials["token"],
+                domain=domain,
+                client_id=client_id,
+            )
 
-    def upsert(self, dict: Dict[str, Any], table: str, externalID: str = None) -> None:
-        if len(dict) == 0:
-            raise ValueError(f"Dictionary is empty")
+        else:
+            raise ValueError("The only available environments are DEV and QA.")
+
+    def upsert(self, df: pd.DataFrame, table: str, external_id: str = None) -> None:
+
+        if df.empty:
+            logger.info("No data to upsert.")
+            return
+
+        if external_id and external_id not in df.columns:
+            raise ValueError(
+                f"Passed DataFrame does not contain column '{external_id}'."
+            )
 
         table_to_upsert = getattr(self.salesforce, table)
-        records = dict["records"]
+        records = df.to_dict("records")
         records_cp = records.copy()
+
         for record in records_cp:
-            if externalID:
-                if record[externalID] == None:
+            if external_id:
+                if record[external_id] is None:
                     continue
                 else:
-                    merged_key = f"{externalID}/{record[externalID]}"
-                    record.pop(externalID)
+                    merge_key = f"{external_id}/{record[external_id]}"
+                    record.pop(external_id)
             else:
-                merged_key = record["Id"]
+                merge_key = record["Id"]
+
             record.pop("Id")
+
             try:
-                print(merged_key)
-                response = table_to_upsert.upsert(data=record, record_id=merged_key)
+                response = table_to_upsert.upsert(data=record, record_id=merge_key)
             except SalesforceMalformedRequest as e:
-                raise ValueError(f"Upsert of record {merged_key} failed.") from e
+                raise ValueError(f"Upsert of record {merge_key} failed.") from e
+
             codes = {200: "updated", 201: "created", 204: "updated"}
-            logger.info(f"Successfully {codes[response]} record {merged_key}.")
+            logger.info(f"Successfully {codes[response]} record {merge_key}.")
+
             if response not in list(codes.keys()):
                 raise ValueError(
                     f"Upsert failed for record: \n{record} with response {response}"
@@ -87,20 +99,31 @@ class Salesforce(Source):
             f"Successfully upserted {len(records)} records into table '{table}'."
         )
 
-    def download(self, table: str, columns: List[str] = None):
-        query = ""
-        separator = ","
-        if columns:
-            query = f"SELECT {separator.join(columns)} FROM {table}"
-        else:
-            query = f"SELECT FIELDS(STANDARD) FROM {table}"
+    def download(
+        self, query: str = None, table: str = None, columns: List[str] = None
+    ) -> List[OrderedDict]:
+        if not query:
+            if columns:
+                columns_str = ", ".join(columns)
+            else:
+                columns_str = "FIELDS(STANDARD)"
+            query = f"SELECT {columns_str} FROM {table}"
+        records = self.salesforce.query(query).get("records")
+        # Take trash out.
+        _ = [record.pop("attributes") for record in records]
+        return records
 
-        data_dict = self.salesforce.query(query)
-        return data_dict
+    def to_df(
+        self,
+        query: str = None,
+        table: str = None,
+        columns: List[str] = None,
+        if_empty: str = None,
+    ) -> pd.DataFrame:
+        # TODO: handle if_empty, add typing (should be Literal)
+        records = self.download(query=query, table=table, columns=columns)
 
-    def to_df(self, dict: Dict[str, Any]):
-        if len(dict) > 0:
-            df = pd.DataFrame(dict, columns=dict.keys())
-        else:
-            raise ValueError(f"Dictionary is empty.")
-        return df
+        if not records:
+            raise ValueError(f"Query produced no data.")
+
+        return pd.DataFrame(records)
