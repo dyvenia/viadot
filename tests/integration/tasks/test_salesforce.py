@@ -1,4 +1,5 @@
 import pandas as pd
+import pytest
 from viadot.tasks import SalesforceUpsert
 
 
