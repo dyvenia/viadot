@@ -9,7 +9,6 @@ def test_bigquery_to_adls():
 
     flow_bigquery = BigQueryToADLS(
         name="BigQuery to ADLS",
-        project="manifest-geode-341308",
         dataset="official_empty",
         table="space",
         credentials_key="BIGQUERY_TESTS",

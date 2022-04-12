@@ -1,3 +1,4 @@
+import pandas as pd
 from viadot.sources import BigQuery
 
 
@@ -5,19 +6,32 @@ BIGQ = BigQuery(credentials_key="BIGQUERY_TESTS")
 
 
 def test_list_project():
-    proj = BIGQ.list_projects()
-    assert proj == "manifest-geode-341308"
+    project = BIGQ.get_project_id()
+    assert project == "manifest-geode-341308"
 
 
 def test_list_datasets():
-    datasets = BIGQ.list_datasets()
-    assert ["manigeo", "official_empty"] == datasets
+    datasets = list(BIGQ.list_datasets())
+    assert datasets == ["manigeo", "official_empty"]
 
 
 def test_list_tables():
     datasets = BIGQ.list_datasets()
-    tables = BIGQ.list_tables(datasets[0])
-    assert ["manigeo_tab", "test_data"] == tables
+    tables = list(BIGQ.list_tables(datasets[0]))
+    assert tables == ["test_data", "manigeo_tab"]
+
+
+def test_query_is_df():
+    query = """
+            SELECT name, SUM(number) AS total
+            FROM `bigquery-public-data.usa_names.usa_1910_2013`
+            GROUP BY name, gender
+            ORDER BY total DESC 
+            LIMIT 4
+            """
+    df = BIGQ.query_to_df(query)
+
+    assert isinstance(df, pd.DataFrame)
 
 
 def test_query():
@@ -28,14 +42,7 @@ def test_query():
             ORDER BY total DESC 
             LIMIT 4
             """
-    names = {}
-    query_job = BIGQ.query(query)
-    for row in query_job:
-        names[row["name"]] = row["total"]
+    df = BIGQ.query_to_df(query)
+    total_received = df["total"].values
 
-    assert names == {
-        "James": 4924235,
-        "John": 4818746,
-        "Robert": 4703680,
-        "Michael": 4280040,
-    }
+    assert total_received == [4924235, 4818746, 4703680, 4280040]
