@@ -7,11 +7,38 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 ### Added
+- Added `Salesforce` source
+- Added `SalesforceUpsert` task
+
+### Fixed
+- Fixed `get_flow_last_run_date()` incorrectly parsing the date
+
+
+## [0.4.2] - 2022-04-08
+### Added
+- Added `AzureDataLakeRemove` task
+
+### Changed
+- Changed name of task file from `prefect` to `prefect_date_range`
+
+### Fixed
+- Fixed out of range issue in `prefect_date_range`
+
+
+## [0.4.1] - 2022-04-07
+### Changed
+- bumped version
+
+
+## [0.4.0] - 2022-04-07
+### Added
+- Added `custom_mail_state_handler` function that sends mail notification using custom smtp server.
+- Added new function `df_clean_column` that cleans data frame columns from special characters
 - Added `df_clean_column` util task that removes special characters from a pandas DataFrame
 - Added `MultipleFlows` flow class which enables running multiple flows in a given order.
 - Added `GetFlowNewDateRange` task to change date range based on Prefect flows
 - Added `check_col_order` parameter in `ADLSToAzureSQL`
-- Added `ASEliteToDF` task and `ASEliteToADLS` flow
+- Added new source `ASElite` 
 - Added KeyVault support in `CloudForCustomers` tasks
 - Added `SQLServer` source
 - Added `DuckDBToDF` task
@@ -28,6 +55,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added `chunksize` parameter to `BCPTask` task to allow more control over the load process
 - Added support for SQL Server's custom `datetimeoffset` type
 - Added `AzureSQLToDF` task
+- Added `AzureDataLakeRemove` task
+- Added `AzureSQLUpsert` task
 
 ### Changed
 - Changed the base class of `AzureSQL` to `SQLServer`

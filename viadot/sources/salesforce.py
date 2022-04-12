@@ -95,6 +95,7 @@ class Salesforce(Source):
                 raise ValueError(
                     f"Upsert failed for record: \n{record} with response {response}"
                 )
+
         logger.info(
             f"Successfully upserted {len(records)} records into table '{table}'."
         )
