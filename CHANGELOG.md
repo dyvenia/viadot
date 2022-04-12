@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 ## Fixed
 - Fixed `get_flow_last_run_date()` incorrectly parsing the date
+- Fixed `MultipleFlows` when one flow is passed and when last flow fails.
 
 
 ## [0.4.2] - 2022-04-08
