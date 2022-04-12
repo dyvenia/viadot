@@ -32,7 +32,6 @@ class BigQueryToADLS(Flow):
     def __init__(
         self,
         name: str = None,
-        project: str = None,
         dataset: str = None,
         table: str = None,
         date_column_name: str = "date",
@@ -54,7 +53,6 @@ class BigQueryToADLS(Flow):
 
         Args:
             name (str, optional): _description_. Defaults to None.
-            project (str, optional): Project name - taken from the json file (project_id). Defaults to None.
             dataset (str, optional): Dataset name. Defaults to None.
             table (str, optional): Table name. Defaults to None.
             date_column_name (str, optional): The query is based on a date, the user can provide the name
@@ -76,7 +74,6 @@ class BigQueryToADLS(Flow):
         """
         # BigQueryToDF
         self.credentials_key = credentials_key
-        self.project = project
         self.dataset = dataset
         self.table = table
         self.start_date = start_date
@@ -118,7 +115,6 @@ class BigQueryToADLS(Flow):
 
     def gen_flow(self) -> Flow:
         df = bigquery_to_df_task.bind(
-            project=self.project,
             dataset=self.dataset,
             table=self.table,
             credentials_key=self.credentials_key,

@@ -1,10 +1,11 @@
-from pydoc import cli
 from typing import List
-from .base import Source
-import google.cloud.bigquery as bigquery
+import pandas_gbq
+import pandas as pd
 from google.oauth2 import service_account
+
 from ..config import local_config
-from ..exceptions import CredentialError
+from ..exceptions import CredentialError, DBDataAccessError
+from .base import Source
 
 
 class BigQuery(Source):
@@ -26,23 +27,17 @@ class BigQuery(Source):
         Raises:
             CredentialError: In case credentials cannot be found.
         """
-        credentials = local_config.get(credentials_key)
-        if credentials is None:
+        self.credentials_raw = local_config.get(credentials_key)
+        if self.credentials_raw is None:
             raise CredentialError("Credentials not found.")
 
-        super().__init__(*args, credentials=credentials, **kwargs)
+        super().__init__(*args, credentials=self.credentials_raw, **kwargs)
 
-        credentials = service_account.Credentials.from_service_account_info(credentials)
-        self.client = bigquery.Client(credentials=credentials)
-
-    def list_projects(self) -> str:
-        """
-        Get project name from BigQuery.
-
-        Returns:
-            str: Project name
-        """
-        return self.client.project
+        credentials = service_account.Credentials.from_service_account_info(
+            self.credentials_raw
+        )
+        self.client = pandas_gbq.context.credentials = credentials
+        pandas_gbq.context.project = self.credentials_raw["project_id"]
 
     def list_datasets(self) -> List[str]:
         """
@@ -51,32 +46,68 @@ class BigQuery(Source):
         Returns:
             List[str]: List of datasets from BigQuery project.
         """
-        list_datasets = list(self.client.list_datasets())
-        datasets_name = [dataset.dataset_id for dataset in list_datasets]
-        return datasets_name
+        query = f"""SELECT schema_name 
+                FROM {self.get_project_id()}.INFORMATION_SCHEMA.SCHEMATA
+                """
+        df = self.query_to_df(query)
+        return df["schema_name"].values
 
     def list_tables(self, dataset: str) -> List[str]:
         """
         Get tables from BigQuery dataset. Dataset is required.
 
         Args:
-            dataset (str): Dataset from Bigquery project. Defaults to None.
+            dataset (str): Dataset from Bigquery project.
 
+        Returns:
+            List[str]: List of tables from BigQuery dataset.
+        """
+        query = f"""SELECT table_name 
+                FROM {self.get_project_id()}.{dataset}.INFORMATION_SCHEMA.TABLES
+                """
+        df = self.query_to_df(query)
+        return df["table_name"].values
+
+    def list_columns(self, dataset: str, table: str) -> List[str]:
+        """
+        Get columns from BigQuery table. Dataset name and Table name are required.
+
+        Args:
+            dataset (str): Dataset from Bigquery project.
+            table (str): Table name from given dataset.
         Returns:
             List[str]: List of tables from BigQuery dataset
         """
-        tables = self.client.list_tables(dataset)
-        tables_name = [table.table_id for table in tables]
-        return tables_name
+        query = f"""SELECT column_name
+                FROM {self.get_project_id()}.{dataset}.INFORMATION_SCHEMA.COLUMNS
+                WHERE table_name="{table}"
+                """
+        df = self.query_to_df(query)
+        return df["column_name"].values
 
-    def query(self, query: str = None) -> bigquery.job.query.QueryJob:
+    def get_project_id(self) -> str:
+        """
+        Get project id from json file generated for specific project.
+
+        Returns:
+            str: Project name.
+        """
+        return self.credentials_raw["project_id"]
+
+    def query_to_df(self, query: str) -> pd.DataFrame:
         """
         Query throught Bigquery table.
 
         Args:
-            query (str, optional): String with query. Defaults to None.
+            query (str): SQL-Like Query to return data values.
+
+        Raises:
+            DBDataAccessError: When dataset name or table name are incorrect.
 
         Returns:
-            bigquery.job.query.QueryJob: Query result.
+            pd.DataFrame: Query result.
         """
-        return self.client.query(query)
+        try:
+            return pandas_gbq.read_gbq(query)
+        except:
+            raise DBDataAccessError
