@@ -1,13 +1,6 @@
-from asyncio.log import logger
-import pytest
-import os
-import pathlib
-import json
 import pandas as pd
-import configparser
-from viadot.exceptions import CredentialError
+import pytest
 from viadot.sources import Salesforce
-from viadot.config import local_config
 
 
 @pytest.fixture(scope="session")
@@ -21,15 +14,8 @@ def test_df_external():
     data = {
         "Id": ["111"],
         "LastName": ["John Tester-External"],
-        "SAPContactId__c": [100551557],
+        "SAPContactId__c": ["112"],
     }
-    df = pd.DataFrame(data=data)
-    yield df
-
-
-@pytest.fixture(scope="session")
-def test_df():
-    data = {"Id": ["112"], "LastName": ["John Tester-Internal"]}
     df = pd.DataFrame(data=data)
     yield df
 
