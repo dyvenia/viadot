@@ -1,4 +1,4 @@
-from typing import Any, Dict, List, OrderedDict
+from typing import Any, Dict, List, OrderedDict, Literal
 
 import pandas as pd
 from prefect.utilities import logging
@@ -19,7 +19,7 @@ class Salesforce(Source):
         domain (str): domain of a connection; defaults to 'test' (sandbox). Can be added only if built-in username/password/security token is provided.
         client_id (str): client id to keep the track of API calls.
         credentials (dict): credentials to connect with. If not provided, will read from local config file.
-        env (str): environment information.
+        env (Literal): environment information, provides information about credential and connection configuration; defaults to 'DEV'.
     ----------
     """
 
@@ -29,7 +29,7 @@ class Salesforce(Source):
         domain: str = "test",
         client_id: str = "viadot",
         credentials: Dict[str, Any] = None,
-        env: str = "DEV",
+        env: Literal["DEV", "QA", "PROD"] = "DEV",
         **kwargs,
     ):
         try:
