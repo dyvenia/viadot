@@ -16,7 +16,7 @@ def test_df():
 
 def test_salesforce_upsert(test_df):
     try:
-        sf = SalesforceUpsert(table="Contact", external_id="SAPContactId__c")
+        sf = SalesforceUpsert()
         sf.run(test_df, table="Contact", external_id="SAPContactId__c")
     except Exception as exception:
         assert False, exception

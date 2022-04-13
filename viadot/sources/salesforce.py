@@ -6,6 +6,7 @@ from simple_salesforce import Salesforce as SF
 from simple_salesforce.exceptions import SalesforceMalformedRequest
 
 from ..config import local_config
+from ..exceptions import CredentialError
 from .base import Source
 
 logger = logging.get_logger(__name__)
@@ -14,7 +15,11 @@ logger = logging.get_logger(__name__)
 class Salesforce(Source):
     """
     A class for pulling data from theSalesforce.
-    Parameters
+    Args:
+        domain (str): domain of a connection; defaults to 'test' (sandbox). Can be added only if built-in username/password/security token is provided.
+        client_id (str): client id to keep the track of API calls.
+        credentials (dict): credentials to connect with. If not provided, will read from local config file.
+        env (str): environment information.
     ----------
     """
 
@@ -33,6 +38,9 @@ class Salesforce(Source):
             DEFAULT_CREDENTIALS = None
 
         self.credentials = credentials or DEFAULT_CREDENTIALS or {}
+
+        if self.credentials is None:
+            raise CredentialError("Credentials not found.")
 
         super().__init__(*args, credentials=self.credentials, **kwargs)
 

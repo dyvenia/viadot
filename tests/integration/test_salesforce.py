@@ -20,7 +20,7 @@ def test_df_external():
     yield df
 
 
-def test_upsert_task_empty(salesforce):
+def test_upsert_empty(salesforce):
     try:
         df = pd.DataFrame()
         salesforce.upsert(df=df, table="Contact")
@@ -28,7 +28,7 @@ def test_upsert_task_empty(salesforce):
         assert False, exception
 
 
-def test_upsert_task_external_id_correct(salesforce, test_df_external):
+def test_upsert_external_id_correct(salesforce, test_df_external):
     try:
         salesforce.upsert(
             df=test_df_external, table="Contact", external_id="SAPContactId__c"
@@ -42,22 +42,22 @@ def test_upsert_task_external_id_correct(salesforce, test_df_external):
     assert exists != None
 
 
-def test_upsert_task_external_id_wrong(salesforce, test_df_external):
+def test_upsert_external_id_wrong(salesforce, test_df_external):
     with pytest.raises(ValueError):
         salesforce.upsert(df=test_df_external, table="Contact", external_id="SAPId")
 
 
-def test_download_task_no_query(salesforce):
+def test_download_no_query(salesforce):
     ordered_dict = salesforce.download(table="Account")
     assert len(ordered_dict) > 0
 
 
-def test_download_task_with_query(salesforce):
+def test_download_with_query(salesforce):
     query = "SELECT Id, Name FROM Account"
     ordered_dict = salesforce.download(query=query)
     assert len(ordered_dict) > 0
 
 
-def test_to_df_task(salesforce):
+def test_to_df(salesforce):
     df = salesforce.to_df(table="Account")
     assert df.empty == False
