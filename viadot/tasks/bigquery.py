@@ -52,9 +52,6 @@ class BigQueryToDF(Task):
         self.end_date = end_date
         self.date_column_name = date_column_name
 
-        self.bigquery = BigQuery(credentials_key=credentials_key)
-        self.project = self.bigquery.get_project_id()
-
         super().__init__(
             name="bigquery_to_df",
             *args,
@@ -83,25 +80,27 @@ class BigQueryToDF(Task):
         credentials_key: str = "BIGQUERY",
         **kwargs,
     ) -> None:
+        bigquery = BigQuery(credentials_key=credentials_key)
+        project = bigquery.get_project_id()
         try:
-            table_columns = self.bigquery.list_columns(dataset=dataset, table=table)
+            table_columns = bigquery.list_columns(dataset=dataset, table=table)
             if date_column_name not in table_columns:
                 logger.warning(
                     f"'{date_column_name}' column is not recognized. Downloading all the data from '{table}'."
                 )
-                query = f"SELECT * FROM `{self.project}.{dataset}.{table}`"
-                df = self.bigquery.query_to_df(query)
+                query = f"SELECT * FROM `{project}.{dataset}.{table}`"
+                df = bigquery.query_to_df(query)
             else:
                 if start_date is not None and end_date is not None:
                     query = f"""SELECT * FROM `{dataset}.{table}` 
                     where {date_column_name} between PARSE_DATE("%Y-%m-%d", "{start_date}") and PARSE_DATE("%Y-%m-%d", "{end_date}") 
                     order by {date_column_name} desc"""
                 else:
-                    query = f"""SELECT * FROM `{self.project}.{dataset}.{table}` 
+                    query = f"""SELECT * FROM `{project}.{dataset}.{table}` 
                     where {date_column_name} < CURRENT_DATE() 
                     order by {date_column_name} desc"""
 
-                df = self.bigquery.query_to_df(query)
+                df = bigquery.query_to_df(query)
                 logger.info(
                     f"Downloaded the data from the '{table}' table into the data frame."
                 )
