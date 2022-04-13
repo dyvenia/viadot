@@ -32,7 +32,7 @@ class BigQueryToDF(Task):
 
         There are 3 cases:
             If start_date and end_date are not None - all data from the start date to the end date will be retrieved.
-            If start_date and end_date are left as default (none) - the data is pulled to "yesterday" (current date -1)
+            If start_date and end_date are left as default (None) - the data is pulled till "yesterday" (current date -1)
             If the column that looks like a date does not exist in the table, get all the data from the table.
 
         Args:
@@ -51,6 +51,9 @@ class BigQueryToDF(Task):
         self.start_date = start_date
         self.end_date = end_date
         self.date_column_name = date_column_name
+
+        self.bigquery = BigQuery(credentials_key=credentials_key)
+        self.project = self.bigquery.get_project_id()
 
         super().__init__(
             name="bigquery_to_df",
@@ -80,28 +83,25 @@ class BigQueryToDF(Task):
         credentials_key: str = "BIGQUERY",
         **kwargs,
     ) -> None:
-        bigquery = BigQuery(credentials_key=credentials_key)
-        project = bigquery.get_project_id()
-
         try:
-            table_columns = bigquery.list_columns(dataset=dataset, table=table)
+            table_columns = self.bigquery.list_columns(dataset=dataset, table=table)
             if date_column_name not in table_columns:
                 logger.warning(
-                    f"'{date_column_name}' column not recognized. Downloading all the data from '{table}'."
+                    f"'{date_column_name}' column is not recognized. Downloading all the data from '{table}'."
                 )
-                query = f"SELECT * FROM `{project}.{dataset}.{table}`"
-                df = bigquery.query_to_df(query)
+                query = f"SELECT * FROM `{self.project}.{dataset}.{table}`"
+                df = self.bigquery.query_to_df(query)
             else:
                 if start_date is not None and end_date is not None:
                     query = f"""SELECT * FROM `{dataset}.{table}` 
                     where {date_column_name} between PARSE_DATE("%Y-%m-%d", "{start_date}") and PARSE_DATE("%Y-%m-%d", "{end_date}") 
                     order by {date_column_name} desc"""
                 else:
-                    query = f"""SELECT * FROM `{project}.{dataset}.{table}` 
+                    query = f"""SELECT * FROM `{self.project}.{dataset}.{table}` 
                     where {date_column_name} < CURRENT_DATE() 
                     order by {date_column_name} desc"""
 
-                df = bigquery.query_to_df(query)
+                df = self.bigquery.query_to_df(query)
                 logger.info(
                     f"Downloaded the data from the '{table}' table into the data frame."
                 )

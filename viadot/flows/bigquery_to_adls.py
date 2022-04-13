@@ -51,6 +51,11 @@ class BigQueryToADLS(Flow):
         Flow for downloading data from BigQuery project to a local CSV or Parquet file
         using Bigquery API, then uploading it to Azure Data Lake.
 
+        There are 3 cases:
+            If start_date and end_date are not None - all data from the start date to the end date will be retrieved.
+            If start_date and end_date are left as default (None) - the data is pulled till "yesterday" (current date -1)
+            If the column that looks like a date does not exist in the table, get all the data from the table.
+
         Args:
             name (str, optional): _description_. Defaults to None.
             dataset (str, optional): Dataset name. Defaults to None.

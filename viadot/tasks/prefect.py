@@ -205,8 +205,8 @@ class GetFlowNewDateRange(Task):
         client = prefect.Client()
         flow_runs = client.graphql(query)
         flow_runs_details = flow_runs.data.flow
-        time_schedule = flow_runs_details[0]["flow_runs"][0]["scheduled_start_time"]
 
+        time_schedule = flow_runs_details[0]["flow_runs"][0]["scheduled_start_time"]
         last_success_start_time = get_time_from_last_successful_run(flow_runs_details)
         is_scheduled = check_if_scheduled_run(
             time_run=last_success_start_time,
