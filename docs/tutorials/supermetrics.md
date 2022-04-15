@@ -12,3 +12,5 @@ To pull data from Supermetrics we will create flow basing on `SupermetricsToADLS
 Data types are automaticly detected and mapped to meet Microsoft Azure SQL Database requirments. Schema json will be stored in the data lake (parquet_file_directory/schema) 
 
 
+
+

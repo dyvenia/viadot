@@ -12,7 +12,7 @@
 
 A simple data ingestion library to guide data flows from some places to other places.
 
-## Structure
+##  Structure
 This documentation is following the diátaxis framework.
 
 ## Getting Data from a Source

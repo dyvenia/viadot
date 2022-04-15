@@ -6,4 +6,4 @@ You can connect directly with prepeard report URL adress or with table adding sp
 ## Pull data from Supermetrics and save output as a csv file on Azure Data Lake
 
 To pull data from CloudForCustomers we will create flow basing on `CloudForCustomersReportToADLS`
-:::viadot.flows.CloudForCustomersReportToADLS 
+::: viadot.flows.cloud_for_customers_report_to_adls.CloudForCustomersReportToADLS
