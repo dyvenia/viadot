@@ -6,15 +6,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 
 ## [Unreleased]
-## Fixed
+### Added
+- Added `Salesforce` source
+- Added `SalesforceUpsert` task
+
+### Fixed
 - Fixed `get_flow_last_run_date()` incorrectly parsing the date
+- Fixed C4C secret handling (tasks now correctly read the secret as the credentials, rather than assuming the secret is a container for credentials for all environments and trying to access specific key inside it). In other words, tasks now assume the secret holds credentials, rather than a dict of the form `{env: credentials, env2: credentials2}`
 
 
 ## [0.4.2] - 2022-04-08
 ### Added
 - Added `AzureDataLakeRemove` task
+
 ### Changed
 - Changed name of task file from `prefect` to `prefect_date_range`
+
 ### Fixed
 - Fixed out of range issue in `prefect_date_range`
 

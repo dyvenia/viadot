@@ -1,6 +1,6 @@
 import json
 from datetime import timedelta
-from typing import Dict, List
+from typing import Dict, Generator, List
 
 import pandas as pd
 from viadot.config import local_config
@@ -117,7 +117,7 @@ class C4CToDF(Task):
         endpoint: str = None,
         fields: List[str] = None,
         params: Dict[str, str] = None,
-        chunksize: int = 10000,
+        chunksize: int = 20000,
         env: str = "QA",
         if_empty: str = "warn",
         max_retries: int = 3,
@@ -191,7 +191,7 @@ class C4CToDF(Task):
             credentials_str = AzureKeyVaultSecret(
                 credentials_secret, vault_name=vault_name
             ).run()
-            credentials = json.loads(credentials_str)[env]
+            credentials = json.loads(credentials_str)
         else:
             credentials = local_config.get("CLOUD_FOR_CUSTOMERS")[env]
 
@@ -207,36 +207,40 @@ class C4CToDF(Task):
                 credentials=credentials,
             ).to_df(if_empty=if_empty, fields=fields)
 
-        chunks = []
-        offset = 0
-        while True:
-            chunk_no = int(offset / chunksize) + 1
-            boundaries = {"$skip": offset, "$top": chunksize}
-            params.update(boundaries)
+        def _generate_chunks() -> Generator[pd.DataFrame, None, None]:
+            """
+            Util returning chunks as a generator to save memory.
+            """
+            offset = 0
+            total_record_count = 0
+            while True:
+                boundaries = {"$skip": offset, "$top": chunksize}
+                params.update(boundaries)
 
-            self.logger.info(f"Downloading chunk no. {chunk_no}...")
+                chunk = CloudForCustomers(
+                    url=url,
+                    endpoint=endpoint,
+                    params=params,
+                    env=env,
+                    credentials=credentials,
+                ).to_df(if_empty=if_empty, fields=fields)
 
-            chunk = CloudForCustomers(
-                url=url,
-                endpoint=endpoint,
-                params=params,
-                env=env,
-                credentials=credentials,
-            ).to_df(if_empty=if_empty, fields=fields)
+                chunk_record_count = chunk.shape[0]
+                total_record_count += chunk_record_count
+                self.logger.info(
+                    f"Successfully downloaded {total_record_count} records."
+                )
 
-            self.logger.debug(f"Chunk no. {chunk_no} has been downloaded successfully.")
+                yield chunk
 
-            chunks.append(chunk)
+                if chunk.shape[0] < chunksize:
+                    break
 
-            if chunk.shape[0] < chunksize:
-                break
-
-            offset += chunksize
+                offset += chunksize
 
         self.logger.info(f"Data from {url+endpoint} has been downloaded successfully.")
 
+        chunks = _generate_chunks()
         df = pd.concat(chunks)
-
-        del chunks
 
         return df
