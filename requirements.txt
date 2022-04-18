@@ -15,7 +15,7 @@ pytest==6.2.5
 pytest-cov==3.0.0
 requests==2.25.0
 openpyxl==3.0.9
-jupyterlab==3.2.4
+jupyterlab==3.3.4
 azure-keyvault==4.1.0
 azure-identity==1.7.1
 great-expectations==0.14.12
