@@ -115,6 +115,41 @@ class Salesforce(Source):
             f"Successfully upserted {len(records)} records into table '{table}'."
         )
 
+    def bulk_upsert(
+        self,
+        df: pd.DataFrame,
+        table: str,
+        external_id: str = None,
+        key: str = "Id",
+        batch_size: int = 10000,
+    ) -> None:
+
+        if df.empty:
+            logger.info("No data to upsert.")
+            return
+
+        if external_id and external_id not in df.columns:
+            raise ValueError(
+                f"Passed DataFrame does not contain column '{external_id}'."
+            )
+        records = df.to_dict("records")
+
+        try:
+            response = self.salesforce.bulk.__getattr__(table).upsert(
+                data=records, external_id_field=external_id, batch_size=batch_size
+            )
+        except SalesforceMalformedRequest as e:
+            raise ValueError(f"Upsert of records failed: {e}") from e
+
+        logger.info(f"Successfully upserted bulk records.")
+
+        if any(result.get("success") != True for result in response):
+            raise ValueError(f"Upsert failed for records with response {response}")
+
+        logger.info(
+            f"Successfully upserted {len(records)} records into table '{table}'."
+        )
+
     def download(
         self, query: str = None, table: str = None, columns: List[str] = None
     ) -> List[OrderedDict]:
