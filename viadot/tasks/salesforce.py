@@ -123,10 +123,11 @@ class SalesforceUpsert(Task):
             env=env,
             domain=domain,
             client_id=client_id,
-            raise_on_error=raise_on_error,
         )
         self.logger.info(f"Upserting {df.shape[0]} rows to Salesforce...")
-        salesforce.upsert(df=df, table=table, external_id=external_id)
+        salesforce.upsert(
+            df=df, table=table, external_id=external_id, raise_on_error=raise_on_error
+        )
         self.logger.info(f"Successfully upserted {df.shape[0]} rows to Salesforce.")
 
 
@@ -216,10 +217,13 @@ class SalesforceBulkUpsert(Task):
             env=env,
             domain=domain,
             client_id=client_id,
-            raise_on_error=raise_on_error,
         )
         self.logger.info(f"Upserting {df.shape[0]} rows to Salesforce...")
         salesforce.bulk_upsert(
-            df=df, table=table, external_id=external_id, batch_size=batch_size
+            df=df,
+            table=table,
+            external_id=external_id,
+            batch_size=batch_size,
+            raise_on_error=raise_on_error,
         )
         self.logger.info(f"Successfully upserted {df.shape[0]} rows to Salesforce.")
