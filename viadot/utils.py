@@ -301,5 +301,5 @@ def gen_bulk_insert_query_from_df(df: pd.DataFrame, table_fqn: str, **kwargs) ->
     double_quotes_pattern = r'(")(.*)(")(\)|,)'
     values_clean = re.sub(double_quotes_pattern, r"'\2'\4", values)
     # Hacky - replaces starting and ending double quotes.
-    values_clean = values.replace('",', "',").replace(', "', ", '")
+    values_clean = values.replace('",', "',").replace(', "', ", '").replace('("', "('")
     return f"INSERT INTO {table_fqn} ({columns})\n\nVALUES {values_clean}"
