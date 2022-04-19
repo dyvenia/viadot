@@ -1,14 +1,14 @@
 import re
-from typing import Any, Dict
+from typing import Any, Dict, List
 
 import pandas as pd
-import pendulum
 import prefect
 import pyodbc
 import requests
 from prefect.utilities.graphql import EnumValue, with_args
 from requests.adapters import HTTPAdapter
-from requests.exceptions import ConnectionError, HTTPError, ReadTimeout, Timeout
+from requests.exceptions import (ConnectionError, HTTPError, ReadTimeout,
+                                 Timeout)
 from requests.packages.urllib3.util.retry import Retry
 from urllib3.exceptions import ProtocolError
 
@@ -241,7 +241,9 @@ def build_merge_query(
     return merge_query
 
 
-def gen_bulk_insert_query_from_df(df: pd.DataFrame, table_fqn: str, **kwargs) -> str:
+def gen_bulk_insert_query_from_df(
+    df: pd.DataFrame, table_fqn: str, chunksize=1000, **kwargs
+) -> str:
     """
     Converts a DataFrame to a bulk INSERT query.
 
@@ -272,6 +274,25 @@ def gen_bulk_insert_query_from_df(df: pd.DataFrame, table_fqn: str, **kwargs) ->
             "Currently, this function only handles DataFrames with at least two columns."
         )
 
+    def _gen_insert_query_from_records(records: List[tuple]) -> str:
+
+        tuples = map(str, tuple(records))
+
+        # Change Nones to NULLs
+        none_nan_pattern = r"(?<=\W)(nan|None)(?=\W)"
+        values = re.sub(none_nan_pattern, "NULL", (",\n" + " " * 7).join(tuples))
+
+        # Change the double quotes into single quotes, as explained above.
+        # Note this pattern should be improved at a later time to cover more edge cases.
+        double_quotes_pattern = r'(")(.*)(")(\)|,)'
+        values_clean = re.sub(double_quotes_pattern, r"'\2'\4", values)
+        # Hacky - replaces starting and ending double quotes.
+        values_clean = (
+            values.replace('",', "',").replace(', "', ", '").replace('("', "('")
+        )
+
+        return f"INSERT INTO {table_fqn} ({columns})\n\nVALUES {values_clean}"
+
     df = df.copy().assign(**kwargs)
     df = _cast_df_cols(df)
 
@@ -290,16 +311,17 @@ def gen_bulk_insert_query_from_df(df: pd.DataFrame, table_fqn: str, **kwargs) ->
         )
         for row in tuples_raw
     ]
-    tuples = map(str, tuple(tuples_escaped))
 
-    # Change Nones to NULLs
-    none_nan_pattern = r"(?<=\W)(nan|None)(?=\W)"
-    values = re.sub(none_nan_pattern, "NULL", (",\n" + " " * 7).join(tuples))
-
-    # Change the double quotes into single quotes, as explained above.
-    # Note this pattern should be improved at a later time to cover more edge cases.
-    double_quotes_pattern = r'(")(.*)(")(\)|,)'
-    values_clean = re.sub(double_quotes_pattern, r"'\2'\4", values)
-    # Hacky - replaces starting and ending double quotes.
-    values_clean = values.replace('",', "',").replace(', "', ", '").replace('("', "('")
-    return f"INSERT INTO {table_fqn} ({columns})\n\nVALUES {values_clean}"
+    if len(tuples_escaped) > chunksize:
+        insert_query = ""
+        chunk_start = 0
+        for chunk_end in range(chunksize, len(tuples_escaped), chunksize):
+            chunk = tuples_escaped[chunk_start:chunk_end]
+            chunk_start += chunksize
+            if len(tuples_escaped) - chunk_end < chunksize:
+                chunk = tuples_escaped[chunk_end:]
+            chunk_insert_query = _gen_insert_query_from_records(chunk)
+            insert_query += chunk_insert_query + ";\n\n"
+        return insert_query
+    else:
+        return _gen_insert_query_from_records(tuples_escaped)
