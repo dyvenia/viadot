@@ -71,7 +71,13 @@ class Salesforce(Source):
         else:
             raise ValueError("The only available environments are DEV, QA, and PROD.")
 
-    def upsert(self, df: pd.DataFrame, table: str, external_id: str = None) -> None:
+    def upsert(
+        self,
+        df: pd.DataFrame,
+        table: str,
+        external_id: str = None,
+        raise_on_error: bool = False,
+    ) -> None:
 
         if df.empty:
             logger.info("No data to upsert.")
@@ -99,12 +105,16 @@ class Salesforce(Source):
             try:
                 response = table_to_upsert.upsert(data=record, record_id=merge_key)
             except SalesforceMalformedRequest as e:
-                raise ValueError(f"Upsert of record {merge_key} failed.") from e
+                msg = f"Upsert of record {merge_key} failed."
+                if raise_on_error:
+                    raise ValueError(msg) from e
+                else:
+                    self.logger.warning(msg)
 
             codes = {200: "updated", 201: "created", 204: "updated"}
             logger.info(f"Successfully {codes[response]} record {merge_key}.")
 
-            if response not in list(codes.keys()):
+            if response not in codes:
                 raise ValueError(
                     f"Upsert failed for record: \n{record} with response {response}"
                 )
@@ -118,8 +128,8 @@ class Salesforce(Source):
         df: pd.DataFrame,
         table: str,
         external_id: str = None,
-        key: str = "Id",
         batch_size: int = 10000,
+        raise_on_error: bool = False,
     ) -> None:
 
         if df.empty:
@@ -137,12 +147,21 @@ class Salesforce(Source):
                 data=records, external_id_field=external_id, batch_size=batch_size
             )
         except SalesforceMalformedRequest as e:
+            # Bulk insert didn't work at all.
             raise ValueError(f"Upsert of records failed: {e}") from e
 
         logger.info(f"Successfully upserted bulk records.")
 
-        if any(result.get("success") != True for result in response):
-            raise ValueError(f"Upsert failed for records with response {response}")
+        if any(result.get("success") is not True for result in response):
+            # Upsert of some individual records failed.
+            failed_records = [
+                result for result in response if result.get("success") is not True
+            ]
+            msg = f"Upsert failed for records {failed_records} with response {response}"
+            if raise_on_error:
+                raise ValueError(msg)
+            else:
+                self.logger.warning(msg)
 
         logger.info(
             f"Successfully upserted {len(records)} records into table '{table}'."
