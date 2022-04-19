@@ -18,9 +18,9 @@ class C4CReportToDF(Task):
         self,
         *args,
         report_url: str = None,
-        env: str = "QA",
         skip: int = 0,
         top: int = 1000,
+        env: str = "QA",
         max_retries: int = 3,
         retry_delay: timedelta = timedelta(seconds=10),
         **kwargs,
@@ -69,7 +69,7 @@ class C4CReportToDF(Task):
             skip (int, optional): Initial index value of reading row. Defaults to 0.
             top (int, optional): The value of top reading row. Defaults to 1000.
             credentials_secret (str, optional): The name of the Azure Key Vault secret containing a dictionary
-            with C4C credentials. Defaults to None.
+            with C4C credentials (username & password). Defaults to None.
             vault_name (str, optional): The name of the vault from which to obtain the secret. Defaults to None.
 
         Returns:
@@ -86,7 +86,7 @@ class C4CReportToDF(Task):
             credentials_str = AzureKeyVaultSecret(
                 credentials_secret, vault_name=vault_name
             ).run()
-            credentials = json.loads(credentials_str)[env]
+            credentials = json.loads(credentials_str)
         else:
             credentials = local_config.get("CLOUD_FOR_CUSTOMERS")[env]
 
