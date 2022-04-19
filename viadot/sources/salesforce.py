@@ -44,7 +44,7 @@ class Salesforce(Source):
 
         super().__init__(*args, credentials=self.credentials, **kwargs)
 
-        if env == "DEV":
+        if env.upper() == "DEV":
             self.salesforce = SF(
                 username=self.credentials["username"],
                 password=self.credentials["password"],
@@ -52,7 +52,7 @@ class Salesforce(Source):
                 domain=domain,
                 client_id=client_id,
             )
-        elif env == "QA":
+        elif env.upper() == "QA":
             self.salesforce = SF(
                 username=self.credentials["username"],
                 password=self.credentials["password"],
@@ -60,9 +60,16 @@ class Salesforce(Source):
                 domain=domain,
                 client_id=client_id,
             )
-
+        elif env.upper() == "PROD":
+            self.salesforce = SF(
+                username=self.credentials["username"],
+                password=self.credentials["password"],
+                security_token=self.credentials["token"],
+                domain=domain,
+                client_id=client_id,
+            )
         else:
-            raise ValueError("The only available environments are DEV and QA.")
+            raise ValueError("The only available environments are DEV, QA, and PROD.")
 
     def upsert(self, df: pd.DataFrame, table: str, external_id: str = None) -> None:
 
