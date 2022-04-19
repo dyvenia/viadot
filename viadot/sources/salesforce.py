@@ -94,9 +94,7 @@ class Salesforce(Source):
                     merge_key = f"{external_id}/{record[external_id]}"
                     record.pop(external_id)
             else:
-                merge_key = record["Id"]
-
-            record.pop("Id")
+                merge_key = record.pop("Id")
 
             try:
                 response = table_to_upsert.upsert(data=record, record_id=merge_key)
