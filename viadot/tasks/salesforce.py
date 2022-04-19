@@ -52,6 +52,7 @@ class SalesforceUpsert(Task):
         domain: str = "test",
         client_id: str = "viadot",
         env: str = "DEV",
+        raise_on_error: bool = False,
         max_retries: int = 3,
         retry_delay: timedelta = timedelta(seconds=10),
         *args,
@@ -62,6 +63,7 @@ class SalesforceUpsert(Task):
         self.domain = domain
         self.client_id = client_id
         self.env = env
+        self.raise_on_error = raise_on_error
 
         super().__init__(
             name="salesforce_upsert",
@@ -81,6 +83,7 @@ class SalesforceUpsert(Task):
         "domain",
         "client_id",
         "env",
+        "raise_on_error",
         "max_retries",
         "retry_delay",
     )
@@ -94,6 +97,7 @@ class SalesforceUpsert(Task):
         credentials_secret: str = None,
         vault_name: str = None,
         env: str = None,
+        raise_on_error: bool = None,
         max_retries: int = None,
         retry_delay: timedelta = None,
     ) -> None:
@@ -110,17 +114,23 @@ class SalesforceUpsert(Task):
                 the required credentials (eg. username, password, token). Defaults to None.
             vault_name (str, optional): The name of the vault from which to obtain the secret. Defaults to None.
             env (str, optional): Environment information, provides information about credential and connection configuration. Defaults to 'DEV'.
+            raise_on_error (bool, optional): Whether to raise an exception if a row upsert fails.
+                If False, we only display a warning. Defaults to False.
         """
         credentials = get_credentials(credentials_secret, vault_name=vault_name)
         salesforce = Salesforce(
-            credentials=credentials, env=env, domain=domain, client_id=client_id
+            credentials=credentials,
+            env=env,
+            domain=domain,
+            client_id=client_id,
+            raise_on_error=raise_on_error,
         )
         self.logger.info(f"Upserting {df.shape[0]} rows to Salesforce...")
         salesforce.upsert(df=df, table=table, external_id=external_id)
         self.logger.info(f"Successfully upserted {df.shape[0]} rows to Salesforce.")
 
 
-class SalesforceBatchUpsert(Task):
+class SalesforceBulkUpsert(Task):
     """
     Task for upserting a pandas DataFrame to Salesforce.
 
@@ -134,6 +144,7 @@ class SalesforceBatchUpsert(Task):
         domain: str = "test",
         client_id: str = "viadot",
         env: str = "DEV",
+        raise_on_error: bool = False,
         max_retries: int = 3,
         retry_delay: timedelta = timedelta(seconds=10),
         *args,
@@ -144,9 +155,10 @@ class SalesforceBatchUpsert(Task):
         self.domain = domain
         self.client_id = client_id
         self.env = env
+        self.raise_on_error = raise_on_error
 
         super().__init__(
-            name="salesforce_upsert",
+            name="salesforce_bulk_upsert",
             max_retries=max_retries,
             retry_delay=retry_delay,
             *args,
@@ -163,6 +175,7 @@ class SalesforceBatchUpsert(Task):
         "domain",
         "client_id",
         "env",
+        "raise_on_error",
         "max_retries",
         "retry_delay",
     )
@@ -177,6 +190,7 @@ class SalesforceBatchUpsert(Task):
         credentials_secret: str = None,
         vault_name: str = None,
         env: str = None,
+        raise_on_error: bool = None,
         max_retries: int = None,
         retry_delay: timedelta = None,
     ) -> None:
@@ -193,10 +207,16 @@ class SalesforceBatchUpsert(Task):
                 the required credentials (eg. username, password, token). Defaults to None.
             vault_name (str, optional): The name of the vault from which to obtain the secret. Defaults to None.
             env (str, optional): Environment information, provides information about credential and connection configuration. Defaults to 'DEV'.
+            raise_on_error (bool, optional): Whether to raise an exception if a row upsert fails.
+                If False, we only display a warning. Defaults to False.
         """
         credentials = get_credentials(credentials_secret, vault_name=vault_name)
         salesforce = Salesforce(
-            credentials=credentials, env=env, domain=domain, client_id=client_id
+            credentials=credentials,
+            env=env,
+            domain=domain,
+            client_id=client_id,
+            raise_on_error=raise_on_error,
         )
         self.logger.info(f"Upserting {df.shape[0]} rows to Salesforce...")
         salesforce.bulk_upsert(
