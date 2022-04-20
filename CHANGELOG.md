@@ -7,14 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 ### Added
+- Added `ADLSContainerToContainer` test
 - Added `Salesforce` source
 - Added `SalesforceUpsert` task
 - Added C4C secret handling to `CloudForCustomersReportToADLS` flow (`c4c_credentials_secret` parameter)
 
 ### Fixed
+- `C4CToDF`, `TEST_TABLE` in AzureSQLTransform tests
 - Fixed `get_flow_last_run_date()` incorrectly parsing the date
 - Fixed C4C secret handling (tasks now correctly read the secret as the credentials, rather than assuming the secret is a container for credentials for all environments and trying to access specific key inside it). In other words, tasks now assume the secret holds credentials, rather than a dict of the form `{env: credentials, env2: credentials2}`
 
+### Changed
+- Changed `AzureDataLake` tests
 
 ## [0.4.2] - 2022-04-08
 ### Added
