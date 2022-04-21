@@ -6,7 +6,7 @@ from viadot.flows import PrefectLogs
 
 @pytest.fixture(scope="session")
 def expectation_suite():
-    expectation_suite = {
+    expectation_suite = """ { 
         "data": {
             "flow": [
                 {
@@ -48,7 +48,7 @@ def expectation_suite():
                 },
             ]
         }
-    }
+    } """
 
     yield expectation_suite
 
@@ -61,9 +61,7 @@ def test_prefect_logs(expectation_suite):
         scheduled_start_time="2022-04-19",
         filter_type="_gte",
         local_file_path=f"prefect_extract_logs_{run_date}.parquet",
-        adls_path=f"raw/supermetrics/mp/prefect_extract_logs_{run_date}.parquet"
-        # adls_sp_credentials_secret="App-Azure-CR-DatalakeGen2-AIA",
-        # vault_name = "azuwevelcrkeyv001s",
+        adls_path=f"raw/supermetrics/mp/prefect_extract_logs_{run_date}.parquet",
     )
 
     results = flow.run()
