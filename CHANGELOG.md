@@ -45,6 +45,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added `SalesforceUpsert` task
 - Added `SalesforceBulkUpsert` task
 - Added C4C secret handling to `CloudForCustomersReportToADLS` flow (`c4c_credentials_secret` parameter)
+- Added `PrefectLogs` flow
 
 ### Fixed
 - Fixed `get_flow_last_run_date()` incorrectly parsing the date
