@@ -1,7 +1,7 @@
 import pytest
 import datetime
 
-from viadot.tasks import PrefectLogs
+from viadot.flows import PrefectLogs
 
 
 @pytest.fixture(scope="session")
