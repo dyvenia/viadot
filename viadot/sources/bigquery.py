@@ -10,34 +10,39 @@ from .base import Source
 
 class BigQuery(Source):
     """
-    Class to connect with Bigquery project and tables.
+    Class to connect with Bigquery project and SQL tables.
 
     Note that credentials used for authentication can be generated only for User Principal
     who has access to specific BigQuery project.
     """
 
-    def __init__(self, credentials_key: str = None, *args, **kwargs):
+    def __init__(
+        self, credentials_key: str = None, credentials: dict = None, *args, **kwargs
+    ):
         """
         Create an instance of BigQuery class.
 
         Args:
-            credentials_key (str): Credential key to dictionary where details are stored. Credentials can be generated as key
+            credentials_key (str, optional): Credential key to dictionary where details are stored. Credentials can be generated as key
             for User Principal inside a BigQuery project. Defaults to None.
+            credentials (str, optional): Credentials stored in dictionary. Defaults to None.
 
         Raises:
             CredentialError: In case credentials cannot be found.
         """
-        self.credentials_raw = local_config.get(credentials_key)
-        if self.credentials_raw is None:
+        DEFAULT_CREDENTIALS = local_config.get(credentials_key)
+        credentials = credentials or DEFAULT_CREDENTIALS
+
+        if credentials is None:
             raise CredentialError("Credentials not found.")
 
-        super().__init__(*args, credentials=self.credentials_raw, **kwargs)
-
-        credentials = service_account.Credentials.from_service_account_info(
-            self.credentials_raw
+        credentials_service_account = (
+            service_account.Credentials.from_service_account_info(credentials)
         )
-        self.client = pandas_gbq.context.credentials = credentials
-        pandas_gbq.context.project = self.credentials_raw["project_id"]
+        pandas_gbq.context.credentials = credentials_service_account
+
+        super().__init__(*args, credentials=credentials, **kwargs)
+        pandas_gbq.context.project = self.credentials["project_id"]
 
     def list_datasets(self) -> List[str]:
         """
@@ -76,7 +81,7 @@ class BigQuery(Source):
             dataset (str): Dataset from Bigquery project.
             table (str): Table name from given dataset.
         Returns:
-            List[str]: List of tables from BigQuery dataset
+            List[str]: List of table names from the BigQuery dataset.
         """
         query = f"""SELECT column_name
                 FROM {self.get_project_id()}.{dataset}.INFORMATION_SCHEMA.COLUMNS
@@ -92,7 +97,7 @@ class BigQuery(Source):
         Returns:
             str: Project name.
         """
-        return self.credentials_raw["project_id"]
+        return self.credentials["project_id"]
 
     def query_to_df(self, query: str) -> pd.DataFrame:
         """

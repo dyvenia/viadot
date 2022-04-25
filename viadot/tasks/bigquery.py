@@ -1,3 +1,4 @@
+import json
 import pandas as pd
 from prefect import Task
 from prefect.utilities.tasks import defaults_from_attrs
@@ -6,6 +7,7 @@ from prefect.tasks.secrets import PrefectSecret
 
 from ..exceptions import DBDataAccessError
 from ..sources import BigQuery
+from .azure_key_vault import AzureKeyVaultSecret
 
 logger = logging.get_logger()
 
@@ -22,13 +24,15 @@ class BigQueryToDF(Task):
         start_date: str = None,
         end_date: str = None,
         date_column_name: str = "date",
-        credentials_key: str = "BIGQUERY",
+        credentials_key: str = None,
+        credentials_secret: str = None,
+        vault_name: str = None,
         *args,
         **kwargs,
     ):
         """
         Initialize BigQueryToDF object. For querying on database - dataset and table name is required.
-        The project name is taken from config/credential json file.
+        The name of the project is taken from the config/credential json file so there is no need to enter its name.
 
         There are 3 cases:
             If start_date and end_date are not None - all data from the start date to the end date will be retrieved.
@@ -43,14 +47,19 @@ class BigQueryToDF(Task):
             all data will be retrieved from the table. Defaults to "date".
             start_date (str, optional): A query parameter to pass start date e.g. "2022-01-01". Defaults to None.
             end_date (str, optional): A query parameter to pass end date e.g. "2022-01-01". Defaults to None.
-            credentials_key (str, optional): Credential key to dictionary where details are stored.
+            credentials_key (str, optional): Credential key to dictionary where details are stored (local config).
+            credentials can be generated as key for User Principal inside a BigQuery project. Defaults to None.
+            credentials_secret (str, optional): The name of the Azure Key Vault secret for Bigquery project. Defaults to None.
+            vault_name (str, optional): The name of the vault from which to obtain the secrets. Defaults to None.
         """
-        self.credentials_key = credentials_key
         self.dataset = dataset
         self.table = table
         self.start_date = start_date
         self.end_date = end_date
         self.date_column_name = date_column_name
+        self.credentials_key = credentials_key
+        self.credentials_secret = credentials_secret
+        self.vault_name = vault_name
 
         super().__init__(
             name="bigquery_to_df",
@@ -69,6 +78,8 @@ class BigQueryToDF(Task):
         "start_date",
         "end_date",
         "credentials_key",
+        "credentials_secret",
+        "vault_name",
     )
     def run(
         self,
@@ -77,10 +88,19 @@ class BigQueryToDF(Task):
         date_column_name: str = "date",
         start_date: str = None,
         end_date: str = None,
-        credentials_key: str = "BIGQUERY",
+        credentials_key: str = None,
+        credentials_secret: str = None,
+        vault_name: str = None,
         **kwargs,
     ) -> None:
-        bigquery = BigQuery(credentials_key=credentials_key)
+        credentials = None
+        if credentials_secret:
+            credentials_str = AzureKeyVaultSecret(
+                credentials_secret, vault_name=vault_name
+            ).run()
+            credentials = json.loads(credentials_str)
+
+        bigquery = BigQuery(credentials_key=credentials_key, credentials=credentials)
         project = bigquery.get_project_id()
         try:
             table_columns = bigquery.list_columns(dataset=dataset, table=table)
