@@ -149,4 +149,3 @@ class ADLSGen1ToAzureSQLNew(Flow):
         gen2_upload_task.set_upstream(df_to_csv_task, flow=self)
         create_table_task.set_upstream(df_to_csv_task, flow=self)
         bulk_insert_task.set_upstream(create_table_task, flow=self)
-
