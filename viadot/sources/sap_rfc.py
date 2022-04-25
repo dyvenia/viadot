@@ -93,12 +93,13 @@ class SAPRFC(Source):
     - etc.
     """
 
-    def __init__(self, sep: str = None, *args, **kwargs):
+    def __init__(self, sep: str = None, func: str = "RFC_READ_TABLE", *args, **kwargs):
         """Create an instance of the SAPRFC class.
 
         Args:
             sep (str, optional): Which separator to use when querying SAP. If not provided,
             multiple options are automatically tried.
+            func (str, optional): SAP RFC function to use. Defaults to "RFC_READ_TABLE".
 
         Raises:
             CredentialError: If provided credentials are incorrect.
@@ -114,6 +115,7 @@ class SAPRFC(Source):
 
         self.sep = sep
         self.client_side_filters = None
+        self.func = func
 
     @property
     def con(self) -> pyrfc.Connection:
@@ -400,7 +402,8 @@ class SAPRFC(Source):
         params = self._query
         columns = self.select_columns_aliased
         sep = self._query.get("DELIMITER")
-
+        func = self.func
+        print(func)
         if sep is None:
             # automatically find a working separator
             SEPARATORS = [
@@ -424,7 +427,7 @@ class SAPRFC(Source):
         for sep in SEPARATORS:
             self._query["DELIMITER"] = sep
             try:
-                response = self.call("RFC_READ_TABLE", **params)
+                response = self.call(func, **params)
                 record_key = "WA"
                 data_raw = response["DATA"]
                 records = [row[record_key].split(sep) for row in data_raw]

@@ -15,6 +15,7 @@ class SAPRFCToDF(Task):
         self,
         query: str = None,
         sep: str = None,
+        func: str = "RFC_READ_TABLE",
         credentials: dict = None,
         max_retries: int = 3,
         retry_delay: timedelta = timedelta(seconds=10),
@@ -39,12 +40,14 @@ class SAPRFCToDF(Task):
             query (str, optional): The query to be executed with pyRFC.
             sep (str, optional): The separator to use when reading query results. If not provided,
             multiple options are automatically tried. Defaults to None.
+            func (str, optional): SAP RFC function to use. Defaults to "RFC_READ_TABLE".
             credentials (dict, optional): The credentials to use to authenticate with SAP.
             By default, they're taken from the local viadot config.
         """
         self.query = query
         self.sep = sep
         self.credentials = credentials
+        self.func = func
 
         super().__init__(
             name="sap_rfc_to_df",
@@ -57,6 +60,7 @@ class SAPRFCToDF(Task):
     @defaults_from_attrs(
         "query",
         "sep",
+        "func",
         "credentials",
         "max_retries",
         "retry_delay",
@@ -66,6 +70,7 @@ class SAPRFCToDF(Task):
         query: str = None,
         sep: str = None,
         credentials: dict = None,
+        func: str = "RFC_READ_TABLE",
         max_retries: int = None,
         retry_delay: timedelta = None,
     ) -> pd.DataFrame:
@@ -75,14 +80,13 @@ class SAPRFCToDF(Task):
             query (str, optional): The query to be executed with pyRFC.
             sep (str, optional): The separator to use when reading query results. If not provided,
             multiple options are automatically tried. Defaults to None.
+            func (str, optional): SAP RFC function to use. Defaults to "RFC_READ_TABLE".
         """
-
+        self.func = func
         if query is None:
             raise ValueError("Please provide the query.")
-
-        sap = SAPRFC(sep=sep, credentials=credentials)
+        sap = SAPRFC(sep=sep, credentials=credentials, func=self.func)
         sap.query(query)
-
         self.logger.info(f"Downloading data from SAP to a DataFrame...")
         self.logger.debug(f"Running query: \n{query}.")
 
