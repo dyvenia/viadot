@@ -382,10 +382,7 @@ def custom_mail_state_handler(
         from_email (str): Sender mailbox address.
         to_emails (str): Receiver mailbox address.
     Returns: State: the `new_state` object that was provided
-<<<<<<< HEAD
-=======
 
->>>>>>> a8c7a85218aee3536bbc81d517f509bd058126d5
     """
 
     if credentials_secret is None:
