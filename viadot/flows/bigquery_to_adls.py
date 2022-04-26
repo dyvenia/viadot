@@ -6,8 +6,6 @@ from prefect import Flow
 from prefect.backend import set_key_value
 from prefect.utilities import logging
 
-logger = logging.get_logger()
-
 from ..task_utils import (
     df_get_data_types_task,
     add_ingestion_metadata_task,
@@ -32,8 +30,8 @@ class BigQueryToADLS(Flow):
     def __init__(
         self,
         name: str = None,
-        dataset: str = None,
-        table: str = None,
+        dataset_name: str = None,
+        table_name: str = None,
         date_column_name: str = "date",
         start_date: str = None,
         end_date: str = None,
@@ -46,7 +44,7 @@ class BigQueryToADLS(Flow):
         adls_file_name: str = None,
         adls_sp_credentials_secret: str = None,
         if_exists: str = "replace",
-        *args: List[any],
+        *args: List[Any],
         **kwargs: Dict[str, Any],
     ):
         """
@@ -60,8 +58,8 @@ class BigQueryToADLS(Flow):
 
         Args:
             name (str, optional): _description_. Defaults to None.
-            dataset (str, optional): Dataset name. Defaults to None.
-            table (str, optional): Table name. Defaults to None.
+            dataset_name (str, optional): Dataset name. Defaults to None.
+            table_name (str, optional): Table name. Defaults to None.
             date_column_name (str, optional): The query is based on a date, the user can provide the name
             of the date columnn if it is different than "date". If the user-specified column does not exist,
             all data will be retrieved from the table. Defaults to "date".
@@ -83,8 +81,8 @@ class BigQueryToADLS(Flow):
         """
         # BigQueryToDF
         self.credentials_key = credentials_key
-        self.dataset = dataset
-        self.table = table
+        self.dataset_name = dataset_name
+        self.table_name = table_name
         self.start_date = start_date
         self.end_date = end_date
         self.date_column_name = date_column_name
@@ -126,8 +124,8 @@ class BigQueryToADLS(Flow):
 
     def gen_flow(self) -> Flow:
         df = bigquery_to_df_task.bind(
-            dataset=self.dataset,
-            table=self.table,
+            dataset_name=self.dataset_name,
+            table_name=self.table_name,
             credentials_key=self.credentials_key,
             start_date=self.start_date,
             end_date=self.end_date,

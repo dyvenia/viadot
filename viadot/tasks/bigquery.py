@@ -1,9 +1,10 @@
 import json
+from typing import Any, Dict, List
 import pandas as pd
 from prefect import Task
 from prefect.utilities.tasks import defaults_from_attrs
 from prefect.utilities import logging
-from prefect.tasks.secrets import PrefectSecret
+
 
 from ..exceptions import DBDataAccessError
 from ..sources import BigQuery
@@ -19,16 +20,16 @@ class BigQueryToDF(Task):
 
     def __init__(
         self,
-        dataset: str = None,
-        table: str = None,
+        dataset_name: str = None,
+        table_name: str = None,
         start_date: str = None,
         end_date: str = None,
         date_column_name: str = "date",
         credentials_key: str = None,
         credentials_secret: str = None,
         vault_name: str = None,
-        *args,
-        **kwargs,
+        *args: List[Any],
+        **kwargs: Dict[str, Any],
     ):
         """
         Initialize BigQueryToDF object. For querying on database - dataset and table name is required.
@@ -40,8 +41,8 @@ class BigQueryToDF(Task):
             If the column that looks like a date does not exist in the table, get all the data from the table.
 
         Args:
-            dataset (str, optional): Dataset name. Defaults to None.
-            table (str, optional): Table name. Defaults to None.
+            dataset_name (str, optional): Dataset name. Defaults to None.
+            table_name (str, optional): Table name. Defaults to None.
             date_column_name (str, optional): The query is based on a date, the user can provide the name
             of the date columnn if it is different than "date". If the user-specified column does not exist,
             all data will be retrieved from the table. Defaults to "date".
@@ -52,8 +53,8 @@ class BigQueryToDF(Task):
             credentials_secret (str, optional): The name of the Azure Key Vault secret for Bigquery project. Defaults to None.
             vault_name (str, optional): The name of the vault from which to obtain the secrets. Defaults to None.
         """
-        self.dataset = dataset
-        self.table = table
+        self.dataset_name = dataset_name
+        self.table_name = table_name
         self.start_date = start_date
         self.end_date = end_date
         self.date_column_name = date_column_name
@@ -72,8 +73,8 @@ class BigQueryToDF(Task):
         super().__call__(self)
 
     @defaults_from_attrs(
-        "dataset",
-        "table",
+        "dataset_name",
+        "table_name",
         "date_column_name",
         "start_date",
         "end_date",
@@ -83,15 +84,15 @@ class BigQueryToDF(Task):
     )
     def run(
         self,
-        dataset: str = None,
-        table: str = None,
+        dataset_name: str = None,
+        table_name: str = None,
         date_column_name: str = "date",
         start_date: str = None,
         end_date: str = None,
         credentials_key: str = None,
         credentials_secret: str = None,
         vault_name: str = None,
-        **kwargs,
+        **kwargs: Dict[str, Any],
     ) -> None:
         credentials = None
         if credentials_secret:
@@ -103,31 +104,33 @@ class BigQueryToDF(Task):
         bigquery = BigQuery(credentials_key=credentials_key, credentials=credentials)
         project = bigquery.get_project_id()
         try:
-            table_columns = bigquery.list_columns(dataset=dataset, table=table)
+            table_columns = bigquery.list_columns(
+                dataset_name=dataset_name, table_name=table_name
+            )
             if date_column_name not in table_columns:
                 logger.warning(
-                    f"'{date_column_name}' column is not recognized. Downloading all the data from '{table}'."
+                    f"'{date_column_name}' column is not recognized. Downloading all the data from '{table_name}'."
                 )
-                query = f"SELECT * FROM `{project}.{dataset}.{table}`"
+                query = f"SELECT * FROM `{project}.{dataset_name}.{table_name}`"
                 df = bigquery.query_to_df(query)
             else:
                 if start_date is not None and end_date is not None:
-                    query = f"""SELECT * FROM `{dataset}.{table}` 
+                    query = f"""SELECT * FROM `{dataset_name}.{table_name}` 
                     where {date_column_name} between PARSE_DATE("%Y-%m-%d", "{start_date}") and PARSE_DATE("%Y-%m-%d", "{end_date}") 
                     order by {date_column_name} desc"""
                 else:
-                    query = f"""SELECT * FROM `{project}.{dataset}.{table}` 
+                    query = f"""SELECT * FROM `{project}.{dataset_name}.{table_name}` 
                     where {date_column_name} < CURRENT_DATE() 
                     order by {date_column_name} desc"""
 
                 df = bigquery.query_to_df(query)
                 logger.info(
-                    f"Downloaded the data from the '{table}' table into the data frame."
+                    f"Downloaded the data from the '{table_name}' table into the data frame."
                 )
 
         except DBDataAccessError:
             logger.warning(
-                f"Table name '{table}' or dataset '{dataset}' not recognized. Returning empty data frame."
+                f"Table name '{table_name}' or dataset '{dataset_name}' not recognized. Returning empty data frame."
             )
             df = pd.DataFrame()
         return df

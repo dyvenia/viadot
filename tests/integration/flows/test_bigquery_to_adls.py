@@ -9,8 +9,8 @@ def test_bigquery_to_adls():
 
     flow_bigquery = BigQueryToADLS(
         name="BigQuery to ADLS",
-        dataset="official_empty",
-        table="space",
+        dataset_name="official_empty",
+        table_name="space",
         credentials_key="BIGQUERY_TESTS",
         adls_dir_path="raw/tests",
         adls_sp_credentials_secret=credentials_secret,

@@ -10,8 +10,8 @@ TABLE_NAME = "space"
 
 def test_bigquery_to_df_success():
     bigquery_to_df_task = BigQueryToDF(
-        dataset=DATASET_NAME,
-        table=TABLE_NAME,
+        dataset_name=DATASET_NAME,
+        table_name=TABLE_NAME,
         date_column_name="date",
         credentials_key="BIGQUERY_TESTS",
     )
@@ -26,8 +26,8 @@ def test_bigquery_to_df_wrong_table_name(caplog):
     bigquery_to_df_task = BigQueryToDF()
     with caplog.at_level(logging.WARNING):
         bigquery_to_df_task.run(
-            dataset=DATASET_NAME,
-            table="wrong_table_name",
+            dataset_name=DATASET_NAME,
+            table_name="wrong_table_name",
             date_column_name="date",
             credentials_key="BIGQUERY_TESTS",
         )
@@ -36,8 +36,8 @@ def test_bigquery_to_df_wrong_table_name(caplog):
 
 def test_bigquery_to_df_wrong_column_name(caplog):
     bigquery_to_df_task = BigQueryToDF(
-        dataset=DATASET_NAME,
-        table=TABLE_NAME,
+        dataset_name=DATASET_NAME,
+        table_name=TABLE_NAME,
         date_column_name="wrong_column_name",
         credentials_key="BIGQUERY_TESTS",
     )

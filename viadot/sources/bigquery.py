@@ -57,35 +57,35 @@ class BigQuery(Source):
         df = self.query_to_df(query)
         return df["schema_name"].values
 
-    def list_tables(self, dataset: str) -> List[str]:
+    def list_tables(self, dataset_name: str) -> List[str]:
         """
         Get tables from BigQuery dataset. Dataset is required.
 
         Args:
-            dataset (str): Dataset from Bigquery project.
+            dataset_name (str): Dataset from Bigquery project.
 
         Returns:
             List[str]: List of tables from BigQuery dataset.
         """
         query = f"""SELECT table_name 
-                FROM {self.get_project_id()}.{dataset}.INFORMATION_SCHEMA.TABLES
+                FROM {self.get_project_id()}.{dataset_name}.INFORMATION_SCHEMA.TABLES
                 """
         df = self.query_to_df(query)
         return df["table_name"].values
 
-    def list_columns(self, dataset: str, table: str) -> List[str]:
+    def list_columns(self, dataset_name: str, table_name: str) -> List[str]:
         """
         Get columns from BigQuery table. Dataset name and Table name are required.
 
         Args:
-            dataset (str): Dataset from Bigquery project.
-            table (str): Table name from given dataset.
+            dataset_name (str): Dataset from Bigquery project.
+            table_name (str): Table name from given dataset.
         Returns:
             List[str]: List of table names from the BigQuery dataset.
         """
         query = f"""SELECT column_name
-                FROM {self.get_project_id()}.{dataset}.INFORMATION_SCHEMA.COLUMNS
-                WHERE table_name="{table}"
+                FROM {self.get_project_id()}.{dataset_name}.INFORMATION_SCHEMA.COLUMNS
+                WHERE table_name="{table_name}"
                 """
         df = self.query_to_df(query)
         return df["column_name"].values
