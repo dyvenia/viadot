@@ -403,7 +403,6 @@ class SAPRFC(Source):
         columns = self.select_columns_aliased
         sep = self._query.get("DELIMITER")
         func = self.func
-        print(func)
         if sep is None:
             # automatically find a working separator
             SEPARATORS = [

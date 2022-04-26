@@ -1,6 +1,7 @@
 import csv
+import pandas as pd
 from typing import Any, Dict, List, Literal
-from prefect import Flow
+from prefect import Flow, task, unmapped
 
 from viadot.tasks import SAPRFCToDF
 from viadot.tasks import AzureDataLakeUpload
@@ -10,11 +11,19 @@ download_sap_task = SAPRFCToDF()
 file_to_adls_task = AzureDataLakeUpload()
 
 
+@task
+def concat_dfs(dfs: List[pd.DataFrame]):
+    output_df = pd.DataFrame()
+    for i in range(len(dfs) - 1):
+        output_df = pd.concat([output_df, dfs[i]], axis=1)
+    return output_df
+
+
 class SAPRFCToADLS(Flow):
     def __init__(
         self,
         name: str,
-        query: str = None,
+        query_list: List[str] = None,
         sep: str = None,
         func: str = "BBP_RFC_READ_TABLE",
         sap_credentials: dict = None,
@@ -30,7 +39,7 @@ class SAPRFCToADLS(Flow):
         **kwargs: Dict[str, Any],
     ):
         """ """
-        self.query = query
+        self.query_list = query_list
         self.sep = sep
         self.func = func
         self.sap_credentials = sap_credentials
@@ -48,15 +57,17 @@ class SAPRFCToADLS(Flow):
         self.gen_flow()
 
     def gen_flow(self) -> Flow:
-        df = download_sap_task.bind(
-            query=self.query,
-            sep=self.sep,
-            func=self.func,
-            credentials=self.sap_credentials,
+
+        df = download_sap_task.map(
+            query=self.query_list,
+            sep=unmapped(self.sep),
+            func=unmapped(self.func),
+            credentials=unmapped(self.sap_credentials),
             flow=self,
         )
+        df_full = concat_dfs.bind(df, flow=self)
         csv = df_to_csv.bind(
-            df=df,
+            df=df_full,
             sep=self.file_sep,
             path=self.local_file_path,
             if_exists=self.if_exists,
@@ -70,5 +81,6 @@ class SAPRFCToADLS(Flow):
             gen=self.gen,
             flow=self,
         )
-        csv.set_upstream(df, flow=self)
+        df_full.set_upstream(df, flow=self)
+        csv.set_upstream(df_full, flow=self)
         adls_upload.set_upstream(csv, flow=self)
