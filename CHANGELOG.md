@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 ### Added
+- Added `func` parameter to `SAPRFC` 
+- Added `SAPRFCToADLS` flow which downloads data from SAP Database to df, exports df to csv and uploads it to Azure Storage Explorer.
 - Added `Salesforce` source
 - Added `SalesforceUpsert` task
 - Added `SalesforceBulkUpsert` task

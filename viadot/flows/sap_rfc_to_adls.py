@@ -45,7 +45,7 @@ class SAPRFCToADLS(Flow):
         **kwargs: Dict[str, Any],
     ):
         """
-        Flow for downloading data from SAP DataBase using the RFC protocol.
+        Flow for downloading data from SAP DataBase using the RFC protocol and uploading it to Azure Storage Explorer.
 
         Note that only a very limited subset of SQL is supported:
             - aliases
