@@ -21,8 +21,8 @@ def concat_dfs(dfs: List[pd.DataFrame]):
         full_df (pd.DataFrame()): Pandas dataframe containing all columns from dataframes from list.
     """
     full_df = pd.DataFrame()
-    for i in range(len(dfs) - 1):
-        full_df = pd.concat([full_df, dfs[i]], axis=1)
+    for df in dfs:
+        full_df = pd.concat([full_df, df], axis=1)
     return full_df
 
 
