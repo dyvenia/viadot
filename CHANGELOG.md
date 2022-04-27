@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 ### Added
+- Added `BigQueryToADLS` flow class which anables extract data from BigQuery.
 - Added `Salesforce` source
 - Added `SalesforceUpsert` task
 - Added `SalesforceBulkUpsert` task
