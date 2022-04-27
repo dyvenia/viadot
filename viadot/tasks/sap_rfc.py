@@ -82,10 +82,9 @@ class SAPRFCToDF(Task):
             multiple options are automatically tried. Defaults to None.
             func (str, optional): SAP RFC function to use. Defaults to "RFC_READ_TABLE".
         """
-        self.func = func
         if query is None:
             raise ValueError("Please provide the query.")
-        sap = SAPRFC(sep=sep, credentials=credentials, func=self.func)
+        sap = SAPRFC(sep=sep, credentials=credentials, func=func)
         sap.query(query)
         self.logger.info(f"Downloading data from SAP to a DataFrame...")
         self.logger.debug(f"Running query: \n{query}.")
