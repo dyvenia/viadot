@@ -70,7 +70,7 @@ class SAPRFCToDF(Task):
         query: str = None,
         sep: str = None,
         credentials: dict = None,
-        func: str = "RFC_READ_TABLE",
+        func: str = None,
         max_retries: int = None,
         retry_delay: timedelta = None,
     ) -> pd.DataFrame:
@@ -80,7 +80,7 @@ class SAPRFCToDF(Task):
             query (str, optional): The query to be executed with pyRFC.
             sep (str, optional): The separator to use when reading query results. If not provided,
             multiple options are automatically tried. Defaults to None.
-            func (str, optional): SAP RFC function to use. Defaults to "RFC_READ_TABLE".
+            func (str, optional): SAP RFC function to use. Defaults to None.
         """
         if query is None:
             raise ValueError("Please provide the query.")
