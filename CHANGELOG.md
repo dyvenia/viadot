@@ -8,13 +8,41 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 ### Added
 - Added `BigQueryToADLS` flow class which anables extract data from BigQuery.
+- Added `Salesforce` source
+- Added `SalesforceUpsert` task
+- Added `SalesforceBulkUpsert` task
+- Added C4C secret handling to `CloudForCustomersReportToADLS` flow (`c4c_credentials_secret` parameter)
+
+### Fixed
+- Fixed `get_flow_last_run_date()` incorrectly parsing the date
+- Fixed C4C secret handling (tasks now correctly read the secret as the credentials, rather than assuming the secret is a container for credentials for all environments and trying to access specific key inside it). In other words, tasks now assume the secret holds credentials, rather than a dict of the form `{env: credentials, env2: credentials2}`
+- Fixed `utils.gen_bulk_insert_query_from_df()` failing with > 1000 rows due to INSERT clause limit by chunking the data into multiple INSERTs
+
+## [0.4.2] - 2022-04-08
+### Added
+- Added `AzureDataLakeRemove` task
+
+### Changed
+- Changed name of task file from `prefect` to `prefect_date_range`
+
+### Fixed
+- Fixed out of range issue in `prefect_date_range`
+
+
+## [0.4.1] - 2022-04-07
+### Changed
+- bumped version
+
+
+## [0.4.0] - 2022-04-07
+### Added
 - Added `custom_mail_state_handler` function that sends mail notification using custom smtp server.
 - Added new function `df_clean_column` that cleans data frame columns from special characters
 - Added `df_clean_column` util task that removes special characters from a pandas DataFrame
 - Added `MultipleFlows` flow class which enables running multiple flows in a given order.
 - Added `GetFlowNewDateRange` task to change date range based on Prefect flows
 - Added `check_col_order` parameter in `ADLSToAzureSQL`
-- Added `ASEliteToDF` task and `ASEliteToADLS` flow
+- Added new source `ASElite` 
 - Added KeyVault support in `CloudForCustomers` tasks
 - Added `SQLServer` source
 - Added `DuckDBToDF` task
@@ -31,6 +59,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added `chunksize` parameter to `BCPTask` task to allow more control over the load process
 - Added support for SQL Server's custom `datetimeoffset` type
 - Added `AzureSQLToDF` task
+- Added `AzureDataLakeRemove` task
+- Added `AzureSQLUpsert` task
 
 ### Changed
 - Changed the base class of `AzureSQL` to `SQLServer`

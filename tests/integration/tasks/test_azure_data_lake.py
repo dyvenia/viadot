@@ -9,6 +9,7 @@ from viadot.tasks import (
     AzureDataLakeCopy,
     AzureDataLakeList,
 )
+from viadot.tasks.azure_data_lake import AzureDataLakeRemove
 
 uuid_4 = uuid.uuid4()
 uuid_4_2 = uuid.uuid4()
@@ -65,3 +66,11 @@ def test_azure_data_lake_list():
     list_task = AzureDataLakeList()
     files = list_task.run(path="raw/supermetrics")
     assert adls_path in files
+
+
+def test_azure_data_lake_remove():
+    file = AzureDataLake(adls_path)
+    assert file.exists()
+    remove_task = AzureDataLakeRemove()
+    remove_task.run(path=adls_path)
+    assert not file.exists()

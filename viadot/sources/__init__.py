@@ -5,6 +5,8 @@ from .supermetrics import Supermetrics
 from .cloud_for_customers import CloudForCustomers
 from .sharepoint import Sharepoint
 from .bigquery import BigQuery
+from .salesforce import Salesforce
+
 
 try:
     from .sap_rfc import SAPRFC
