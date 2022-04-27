@@ -470,12 +470,9 @@ def concat_dfs(dfs: List[pd.DataFrame]):
     Args:
         dfs (List[pd.DataFrame]): List of dataframes to concat.
     Returns:
-        full_df (pd.DataFrame()): Pandas dataframe containing all columns from dataframes from list.
+        pd.DataFrame(): Pandas dataframe containing all columns from dataframes from list.
     """
-    full_df = pd.DataFrame()
-    for df in dfs:
-        full_df = pd.concat([full_df, df], axis=1)
-    return full_df
+    return pd.concat(dfs, axis=1)
 
 
 class Git(Git):
