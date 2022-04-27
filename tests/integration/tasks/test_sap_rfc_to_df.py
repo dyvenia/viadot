@@ -10,4 +10,4 @@ def test_sap_rfc_to_df_bbp():
         func="BBP_RFC_READ_TABLE",
     )
     df = task.run()
-    assert len(df.columns) == 4 and df.empty == False
+    assert len(df.columns) == 4 and not df.empty

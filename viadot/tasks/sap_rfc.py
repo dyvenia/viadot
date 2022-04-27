@@ -15,7 +15,7 @@ class SAPRFCToDF(Task):
         self,
         query: str = None,
         sep: str = None,
-        func: str = "RFC_READ_TABLE",
+        func: str = None,
         credentials: dict = None,
         max_retries: int = 3,
         retry_delay: timedelta = timedelta(seconds=10),
@@ -40,7 +40,7 @@ class SAPRFCToDF(Task):
             query (str, optional): The query to be executed with pyRFC.
             sep (str, optional): The separator to use when reading query results. If not provided,
             multiple options are automatically tried. Defaults to None.
-            func (str, optional): SAP RFC function to use. Defaults to "RFC_READ_TABLE".
+            func (str, optional): SAP RFC function to use. Defaults to None.
             credentials (dict, optional): The credentials to use to authenticate with SAP.
             By default, they're taken from the local viadot config.
         """
