@@ -2,6 +2,7 @@ from viadot.flows import SharepointToADLS
 from unittest import mock
 import pandas as pd
 from prefect.tasks.secrets import PrefectSecret
+import os
 
 
 def test_sharepoint_to_adls_run_flow():
@@ -26,3 +27,5 @@ def test_sharepoint_to_adls_run_flow():
         )
         result = flow.run()
         assert result.is_successful()
+        os.remove("test_sharepoint_to_adls_run_flow.csv")
+        os.remove("test_sharepoint_to_adls_run_flow.json")
