@@ -1,9 +1,8 @@
 import os
-from typing import Any, Dict, List, Union, Optional
+from typing import Any, Dict, List, Union
 
 import pendulum
 from prefect import Flow, Task, apply_map
-from prefect.backend import set_key_value
 from ..utils import slugify
 from ..task_utils import (
     add_ingestion_metadata_task,
@@ -25,26 +24,27 @@ c4c_to_df = C4CToDF()
 class CloudForCustomersReportToADLS(Flow):
     def __init__(
         self,
+        name: str = None,
         report_url: str = None,
         url: str = None,
-        env: str = "QA",
         endpoint: str = None,
         params: Dict[str, Any] = {},
         fields: List[str] = None,
-        name: str = None,
-        adls_sp_credentials_secret: str = None,
-        overwrite_adls: bool = False,
-        local_file_path: str = None,
-        output_file_extension: str = ".csv",
-        adls_dir_path: str = None,
-        adls_file_path: str = None,
-        if_empty: str = "warn",
-        if_exists: str = "replace",
         skip: int = 0,
         top: int = 1000,
         channels: List[str] = None,
         months: List[str] = None,
         years: List[str] = None,
+        env: str = "QA",
+        c4c_credentials_secret: str = None,
+        local_file_path: str = None,
+        output_file_extension: str = ".csv",
+        adls_dir_path: str = None,
+        adls_file_path: str = None,
+        overwrite_adls: bool = False,
+        adls_sp_credentials_secret: str = None,
+        if_empty: str = "warn",
+        if_exists: str = "replace",
         *args: List[any],
         **kwargs: Dict[str, Any],
     ):
@@ -53,31 +53,40 @@ class CloudForCustomersReportToADLS(Flow):
         using Cloud for Customers API, then uploading it to Azure Data Lake.
 
         Args:
-            report_url (str, optional): The url to the API. Defaults to None.
             name (str): The name of the flow.
-            adls_sp_credentials_secret (str, optional): The name of the Azure Key Vault secret containing a dictionary with
-            ACCOUNT_NAME and Service Principal credentials (TENANT_ID, CLIENT_ID, CLIENT_SECRET) for the Azure Data Lake.
-            Defaults to None.
-            local_file_path (str, optional): Local destination path. Defaults to None.
-            output_file_extension (str, optional): Output file extension - to allow selection of .csv for data which is not easy
-            to handle with parquet. Defaults to ".csv".
-            overwrite_adls (bool, optional): Whether to overwrite the file in ADLS. Defaults to False.
-            adls_dir_path (str, optional): Azure Data Lake destination folder/catalog path. Defaults to None.
-            adls_file_path (str, optional): Azure Data Lake destination file path. Defaults to None.
-            if_empty (str, optional): What to do if the Supermetrics query returns no data. Defaults to "warn".
-            if_exists (str, optional): What to do if the local file already exists. Defaults to "replace".
+            report_url (str, optional): The url to the API. Defaults to None.
+            url (str, optional): ???
+            endpoint (str, optional): ???
+            params (dict, optional): ???
+            fields (list, optional): ???
             skip (int, optional): Initial index value of reading row. Defaults to 0.
             top (int, optional): The value of top reading row. Defaults to 1000.
             channels (List[str], optional): Filtering parameters passed to the url. Defaults to None.
             months (List[str], optional): Filtering parameters passed to the url. Defaults to None.
             years (List[str], optional): Filtering parameters passed to the url. Defaults to None.
+            env (str, optional): ???
+            c4c_credentials_secret (str, optional): The name of the Azure Key Vault secret containing a dictionary with
+            username and password for the Cloud for Customers instance.
+            local_file_path (str, optional): Local destination path. Defaults to None.
+            output_file_extension (str, optional): Output file extension - to allow selection of .csv for data which is not easy
+            to handle with parquet. Defaults to ".csv".
+            adls_dir_path (str, optional): Azure Data Lake destination folder/catalog path. Defaults to None.
+            adls_file_path (str, optional): Azure Data Lake destination file path. Defaults to None.
+            overwrite_adls (bool, optional): Whether to overwrite the file in ADLS. Defaults to False.
+            adls_sp_credentials_secret (str, optional): The name of the Azure Key Vault secret containing a dictionary with
+            ACCOUNT_NAME and Service Principal credentials (TENANT_ID, CLIENT_ID, CLIENT_SECRET) for the Azure Data Lake.
+            Defaults to None.
+            if_empty (str, optional): What to do if the Supermetrics query returns no data. Defaults to "warn".
+            if_exists (str, optional): What to do if the local file already exists. Defaults to "replace".
         """
 
-        self.if_empty = if_empty
         self.report_url = report_url
-        self.env = env
         self.skip = skip
         self.top = top
+        self.if_empty = if_empty
+        self.env = env
+        self.c4c_credentials_secret = c4c_credentials_secret
+
         # AzureDataLakeUpload
         self.adls_sp_credentials_secret = adls_sp_credentials_secret
         self.if_exists = if_exists
@@ -97,7 +106,8 @@ class CloudForCustomersReportToADLS(Flow):
         self.endpoint = endpoint
         self.params = params
         self.fields = fields
-        # filtering for report_url for reports
+
+        # filtering report_url for reports
         self.channels = channels
         self.months = months
         self.years = years
@@ -144,14 +154,16 @@ class CloudForCustomersReportToADLS(Flow):
         endpoint: str,
         params: str,
         env: str,
+        credentials_secret: str = None,
         flow: Flow = None,
     ) -> Task:
 
         df = c4c_to_df.bind(
             url=url,
-            env=env,
             endpoint=endpoint,
             params=params,
+            env=env,
+            credentials_secret=credentials_secret,
             flow=flow,
         )
 
@@ -162,10 +174,11 @@ class CloudForCustomersReportToADLS(Flow):
     ) -> Task:
 
         report = c4c_report_to_df.bind(
+            report_url=report_urls_with_filters,
             skip=self.skip,
             top=self.top,
-            report_url=report_urls_with_filters,
             env=self.env,
+            credentials_secret=self.c4c_credentials_secret,
             flow=flow,
         )
 
@@ -180,9 +193,10 @@ class CloudForCustomersReportToADLS(Flow):
         elif self.url:
             df = self.gen_c4c(
                 url=self.url,
-                env=self.env,
                 endpoint=self.endpoint,
                 params=self.params,
+                env=self.env,
+                credentials_secret=self.c4c_credentials_secret,
                 flow=self,
             )
 
