@@ -17,7 +17,7 @@ class SAPRFCToADLS(Flow):
         query: str = None,
         queries: List[str] = None,
         rfc_sep: str = None,
-        func: str = "BBP_RFC_READ_TABLE",
+        func: str = "RFC_READ_TABLE",
         sap_credentials: dict = None,
         output_file_extension: str = ".parquet",
         local_file_path: str = None,
@@ -49,9 +49,9 @@ class SAPRFCToADLS(Flow):
             query (str): Query to be executed with pyRFC. If multiple queries needed use `queries` parmeter. Defaults to None.
             queries(List[str]) The list of queries to be executed with pyRFC. Defaults to None.
             rfc_sep(str, optional): Which separator to use when querying SAP. If not provided, multiple options are automatically tried.
-            func (str, optional): SAP RFC function to use. Defaults to "BBP_RFC_READ_TABLE".
+            func (str, optional): SAP RFC function to use. Defaults to "RFC_READ_TABLE".
             sap_credentials (dict, optional): The credentials to use to authenticate with SAP. By default, they're taken from the local viadot config.
-
+            output_file_extension (str, optional): Output file extension - to allow selection of .csv for data which is not easy to handle with parquet. Defaults to ".parquet".
             local_file_path (str, optional): Local destination path. Defaults to None.
             file_sep(str, optional): The separator to use in the CSV. Defaults to "\t".
             if_exists (Literal["append", "replace", "skip"], optional): What to do if the table exists. Defaults to "replace".
