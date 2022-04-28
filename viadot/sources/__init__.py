@@ -6,7 +6,7 @@ from .cloud_for_customers import CloudForCustomers
 from .sharepoint import Sharepoint
 from .bigquery import BigQuery
 from .salesforce import Salesforce
-
+from .outlook import Outlook
 
 try:
     from .sap_rfc import SAPRFC
