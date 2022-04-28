@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 ### Added
+- Added `error_log_file` parameter in `BCPTask` that enables setting name of errors logs file 
+- Added `on_error` parameter in `BCPTask` that tells what to do if bcp orror occurs. 
+- Added error log file and `on_error` parameter in `ADLSToAzureSQL`
 - Added `adls_file_name` in  `SupermetricsToADLS` and `SharepointToADLS` flows
 - Added `BigQueryToADLS` flow class which anables extract data from BigQuery.
 - Added `Salesforce` source

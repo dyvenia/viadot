@@ -1,22 +1,37 @@
 import json
 from datetime import timedelta
+from typing import Literal
 
 from prefect.tasks.secrets import PrefectSecret
 from prefect.tasks.shell import ShellTask
 from prefect.utilities.tasks import defaults_from_attrs
+from prefect.utilities import logging
 
 from .azure_key_vault import AzureKeyVaultSecret
+
+logger = logging.get_logger()
+
+
+def parse_logs(log_file_name: str):
+    with open(log_file_name) as f:
+        f = f.readlines()
+    for line in f:
+        if "#" in line:
+            line = line.replace("#", "")
+            line = line.replace("@", "")
+            logger.warning(line)
 
 
 class BCPTask(ShellTask):
     """
     Task for bulk inserting data into SQL Server-compatible databases.
-
     Args:
         - path (str, optional): The path to the local CSV file to be inserted.
         - schema (str, optional): The destination schema.
         - table (str, optional): The destination table.
         - chunksize (int, optional): The chunk size to use.
+        - error_log_file (string, optional): Full path of an error file. Defaults to "log_file.log".
+        - on_error (Literal["skip", "fail"], optional): What to do if error occurs. Defaults to "skip".
         - credentials (dict, optional): The credentials to use for connecting with the database.
         - vault_name (str): The name of the vault from which to fetch the secret.
         - **kwargs (dict, optional): Additional keyword arguments to pass to the Task constructor.
@@ -28,6 +43,8 @@ class BCPTask(ShellTask):
         schema: str = None,
         table: str = None,
         chunksize: int = 5000,
+        error_log_file: str = "log_file.log",
+        on_error: Literal["skip", "fail"] = "skip",
         credentials: dict = None,
         vault_name: str = None,
         max_retries: int = 3,
@@ -39,6 +56,8 @@ class BCPTask(ShellTask):
         self.schema = schema
         self.table = table
         self.chunksize = chunksize
+        self.error_log_file = error_log_file
+        self.on_error = on_error
         self.credentials = credentials
         self.vault_name = vault_name
 
@@ -57,6 +76,8 @@ class BCPTask(ShellTask):
         "schema",
         "table",
         "chunksize",
+        "error_log_file",
+        "on_error",
         "credentials",
         "vault_name",
         "max_retries",
@@ -68,6 +89,8 @@ class BCPTask(ShellTask):
         schema: str = None,
         table: str = None,
         chunksize: int = None,
+        error_log_file: str = None,
+        on_error: Literal = None,
         credentials: dict = None,
         credentials_secret: str = None,
         vault_name: str = None,
@@ -77,17 +100,16 @@ class BCPTask(ShellTask):
     ) -> str:
         """
         Task run method.
-
         Args:
         - path (str, optional): The path to the local CSV file to be inserted.
         - schema (str, optional): The destination schema.
         - table (str, optional): The destination table.
         - chunksize (int, optional): The chunk size to use. By default 5000.
+        - on_error (Literal, optional): What to do if error occur. Defaults to None.
         - credentials (dict, optional): The credentials to use for connecting with SQL Server.
         - credentials_secret (str, optional): The name of the Key Vault secret containing database credentials.
         (server, db_name, user, password)
         - vault_name (str): The name of the vault from which to fetch the secret.
-
         Returns:
             str: The output of the bcp CLI command.
         """
@@ -119,5 +141,15 @@ class BCPTask(ShellTask):
             # but not in BCP's 'server' argument.
             server = server.replace(" ", "")
 
-        command = f"/opt/mssql-tools/bin/bcp {fqn} in '{path}' -S {server} -d {db_name} -U {uid} -P '{pwd}' -c -F 2 -b {chunksize} -h 'TABLOCK'"
-        return super().run(command=command, **kwargs)
+        if on_error == "skip":
+            max_error = 0
+        elif on_error == "fail":
+            max_error = 1
+        else:
+            raise ValueError(
+                "Please provide correct 'on_error' parameter value - 'skip' or 'fail'. "
+            )
+        command = f"/opt/mssql-tools/bin/bcp {fqn} in '{path}' -S {server} -d {db_name} -U {uid} -P '{pwd}' -c -F 2 -b {chunksize} -h 'TABLOCK' -e '{error_log_file}' -m {max_error}"
+        run_command = super().run(command=command, **kwargs)
+        parse_logs(error_log_file)
+        return run_command
