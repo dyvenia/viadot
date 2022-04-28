@@ -93,6 +93,7 @@ class Salesforce(Source):
         records_cp = records.copy()
 
         for record in records_cp:
+            response = 0
             if external_id:
                 if record[external_id] is None:
                     continue
@@ -118,6 +119,8 @@ class Salesforce(Source):
                 raise ValueError(
                     f"Upsert failed for record: \n{record} with response {response}"
                 )
+            else:
+                logger.info(f"Successfully {codes[response]} record {merge_key}.")
 
         logger.info(
             f"Successfully upserted {len(records)} records into table '{table}'."
@@ -141,7 +144,7 @@ class Salesforce(Source):
                 f"Passed DataFrame does not contain column '{external_id}'."
             )
         records = df.to_dict("records")
-
+        response = 0
         try:
             response = self.salesforce.bulk.__getattr__(table).upsert(
                 data=records, external_id_field=external_id, batch_size=batch_size
