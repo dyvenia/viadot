@@ -1,7 +1,8 @@
-from viadot.flows import ADLSGen1ToAzureSQLNew
-import pandas as pd
+import os
 import pytest
+import pandas as pd
 from unittest import mock
+from viadot.flows import ADLSGen1ToAzureSQLNew
 
 
 d = {"col1": [1, 2], "col2": [3, 4]}
@@ -10,7 +11,6 @@ SCHEMA = "sandbox"
 TABLE = "test_bcp"
 
 
-@pytest.fixture()
 def test_adls_gen1_to_azure_sql_new_init_args():
 
     flow = ADLSGen1ToAzureSQLNew(
@@ -66,3 +66,4 @@ def test_adls_gen1_to_azure_sql_new_flow_run_mock():
         result = flow.run()
 
         assert result.is_successful()
+        os.remove("test_adls_g1g2.csv")
