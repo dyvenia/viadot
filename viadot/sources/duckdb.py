@@ -1,4 +1,3 @@
-from multiprocessing.sharedctypes import Value
 from typing import Any, List, Literal, NoReturn, Tuple, Union
 
 import pandas as pd
@@ -70,6 +69,20 @@ class DuckDB(Source):
         tables = [table_meta[1] + "." + table_meta[2] for table_meta in tables_meta]
         return tables
 
+    @property
+    def schemas(self) -> List[str]:
+        """Show the list of schemas.
+
+        Returns:
+            List[str]: The list ofschemas.
+        """
+        self.logger.warning(
+            "DuckDB does not expose a way to list schemas. `DuckDB.schemas` only contains schemas with tables."
+        )
+        tables_meta: List[Tuple] = self.run("SELECT * FROM information_schema.tables")
+        schemas = [table_meta[1] for table_meta in tables_meta]
+        return schemas
+
     def to_df(self, query: str, if_empty: str = None) -> pd.DataFrame:
         if query.upper().startswith("SELECT"):
             df = self.run(query, fetch_type="dataframe")
@@ -115,7 +128,7 @@ class DuckDB(Source):
         cursor.close()
         return result
 
-    def _handle_if_empty(self, if_empty: str = None) -> NoReturn:
+    def _handle_if_empty(self, if_empty: str = "warn") -> NoReturn:
         if if_empty == "warn":
             logger.warning("The query produced no data.")
         elif if_empty == "skip":
@@ -128,7 +141,7 @@ class DuckDB(Source):
         table: str,
         path: str,
         schema: str = None,
-        if_exists: Literal["fail", "replace", "skip", "delete"] = "fail",
+        if_exists: Literal["fail", "replace", "append", "skip", "delete"] = "fail",
     ) -> NoReturn:
         """Create a DuckDB table with a CTAS from Parquet file(s).
 
@@ -152,6 +165,12 @@ class DuckDB(Source):
         if exists:
             if if_exists == "replace":
                 self.run(f"DROP TABLE {fqn}")
+            elif if_exists == "append":
+                self.logger.info(f"Appending to table {fqn}...")
+                ingest_query = f"COPY {fqn} FROM '{path}' (FORMAT 'parquet')"
+                self.run(ingest_query)
+                self.logger.info(f"Successfully appended data to table '{fqn}'.")
+                return True
             elif if_exists == "delete":
                 self.run(f"DELETE FROM {fqn}")
                 return True
@@ -162,18 +181,12 @@ class DuckDB(Source):
             elif if_exists == "skip":
                 return False
 
-        schema_exists = self._check_if_schema_exists(schema)
-        if not schema_exists:
-            self.run(f"CREATE SCHEMA {schema}")
+        self.run(f"CREATE SCHEMA IF NOT EXISTS {schema}")
 
         self.logger.info(f"Creating table {fqn}...")
         ingest_query = f"CREATE TABLE {fqn} AS SELECT * FROM '{path}';"
         self.run(ingest_query)
         self.logger.info(f"Table {fqn} has been created successfully.")
-
-    def insert_into_from_parquet():
-        # check with Marcin if needed
-        pass
 
     def drop_table(self, table: str, schema: str = None) -> bool:
         """

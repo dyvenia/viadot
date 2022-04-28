@@ -13,7 +13,7 @@ from ..task_utils import (
     add_ingestion_metadata_task,
     df_to_csv,
     df_to_parquet,
-    dtypes_to_json,
+    dtypes_to_json_task,
     df_map_mixed_dtypes_for_parquet,
 )
 from ..tasks import AzureDataLakeUpload
@@ -140,7 +140,7 @@ class SharepointToADLS(Flow):
             flow=self,
         )
 
-        dtypes_to_json.bind(
+        dtypes_to_json_task.bind(
             dtypes_dict=dtypes_dict, local_json_path=self.local_json_path, flow=self
         )
         json_to_adls_task.bind(
@@ -151,11 +151,11 @@ class SharepointToADLS(Flow):
         )
 
         df_mapped.set_upstream(df_with_metadata, flow=self)
-        dtypes_to_json.set_upstream(df_mapped, flow=self)
-        df_to_file.set_upstream(dtypes_to_json, flow=self)
+        dtypes_to_json_task.set_upstream(df_mapped, flow=self)
+        df_to_file.set_upstream(dtypes_to_json_task, flow=self)
 
         file_to_adls_task.set_upstream(df_to_file, flow=self)
-        json_to_adls_task.set_upstream(dtypes_to_json, flow=self)
+        json_to_adls_task.set_upstream(dtypes_to_json_task, flow=self)
         set_key_value(key=self.adls_dir_path, value=self.adls_file_path)
 
     @staticmethod

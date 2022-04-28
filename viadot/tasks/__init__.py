@@ -5,6 +5,7 @@ from .azure_data_lake import (
     AzureDataLakeList,
     AzureDataLakeToDF,
     AzureDataLakeUpload,
+    AzureDataLakeRemove,
 )
 from .azure_key_vault import (
     AzureKeyVaultSecret,
@@ -16,7 +17,9 @@ from .azure_sql import (
     AzureSQLCreateTable,
     AzureSQLDBQuery,
     CreateTableFromBlob,
+    AzureSQLToDF,
     CheckColumnOrder,
+    AzureSQLUpsert,
 )
 from .bcp import BCPTask
 from .github import DownloadGitHubFile
@@ -25,10 +28,15 @@ from .sqlite import SQLiteInsert, SQLiteSQLtoDF, SQLiteQuery
 from .supermetrics import SupermetricsToCSV, SupermetricsToDF
 from .sharepoint import SharepointToDF
 from .cloud_for_customers import C4CReportToDF, C4CToDF
+from .prefect_date_range import GetFlowNewDateRange
+from .aselite import ASELiteToDF
+from .bigquery import BigQueryToDF
+from .salesforce import SalesforceUpsert, SalesforceBulkUpsert
 
 try:
     from .sap_rfc import SAPRFCToDF
 except ImportError:
     pass
 
-from .duckdb import DuckDBCreateTableFromParquet, DuckDBQuery
+from .duckdb import DuckDBCreateTableFromParquet, DuckDBQuery, DuckDBToDF
+from .sql_server import SQLServerCreateTable

@@ -1,16 +1,21 @@
 import json
 from datetime import timedelta
 from typing import Any, Dict, List, Literal
+
 import pandas as pd
 
 from prefect import Task
 from prefect.tasks.secrets import PrefectSecret
 from prefect.utilities.tasks import defaults_from_attrs
 
-from ..sources import AzureSQL
-from .azure_key_vault import AzureKeyVaultSecret
-
 from ..exceptions import ValidationError
+from ..sources import AzureSQL
+from ..utils import (
+    build_merge_query,
+    gen_bulk_insert_query_from_df,
+    get_sql_server_table_dtypes,
+)
+from .azure_key_vault import AzureKeyVaultSecret
 
 
 def get_credentials(credentials_secret: str, vault_name: str = None):
@@ -253,7 +258,7 @@ class AzureSQLDBQuery(Task):
         self.credentials_secret = credentials_secret
         self.vault_name = vault_name
 
-        super().__init__(name="run_azure_sql_db_query", *args, **kwargs)
+        super().__init__(name="azure_sql_db_query", *args, **kwargs)
 
     def run(
         self,
@@ -278,6 +283,57 @@ class AzureSQLDBQuery(Task):
 
         self.logger.info(f"Successfully ran the query.")
         return result
+
+
+class AzureSQLToDF(Task):
+    """
+    Task for loading the result of an Azure SQL Database query into a pandas DataFrame.
+
+    Args:
+        query (str, required): The query to execute on the database.
+        credentials_secret (str, optional): The name of the Azure Key Vault secret containing a dictionary
+        with SQL db credentials (server, db_name, user, and password).
+        vault_name (str, optional): The name of the vault from which to obtain the secret. Defaults to None.
+    """
+
+    def __init__(
+        self,
+        credentials_secret: str = None,
+        vault_name: str = None,
+        *args,
+        **kwargs,
+    ):
+        self.credentials_secret = credentials_secret
+        self.vault_name = vault_name
+
+        super().__init__(name="azure_sql_to_df", *args, **kwargs)
+
+    def run(
+        self,
+        query: str,
+        credentials_secret: str = None,
+        vault_name: str = None,
+    ):
+        """Load the result of an Azure SQL Database query into a pandas DataFrame.
+
+        Args:
+            query (str, required): The query to execute on the database.
+            credentials_secret (str, optional): The name of the Azure Key Vault secret containing a dictionary
+            with SQL db credentials (server, db_name, user, and password).
+            vault_name (str, optional): The name of the vault from which to obtain the secret. Defaults to None.
+        """
+
+        credentials = get_credentials(credentials_secret, vault_name=vault_name)
+        azure_sql = AzureSQL(credentials=credentials)
+
+        df = azure_sql.to_df(query)
+        nrows = df.shape[0]
+        ncols = df.shape[1]
+
+        self.logger.info(
+            f"Successfully downloaded {nrows} rows and {ncols} columns of data to a DataFrame."
+        )
+        return df
 
 
 class CheckColumnOrder(Task):
@@ -315,6 +371,16 @@ class CheckColumnOrder(Task):
 
         return df_changed
 
+    def sanitize_columns(self, df: pd.DataFrame = None):
+        """
+        Function to remove spaces at the end of column name.
+        Args:
+            df(pd.DataFrame): Dataframe to transform. Defaults to None.
+        """
+        for col in df.columns:
+            df = df.rename(columns={col: col.strip()})
+        return df
+
     def run(
         self,
         table: str = None,
@@ -338,20 +404,123 @@ class CheckColumnOrder(Task):
         """
         credentials = get_credentials(credentials_secret, vault_name=vault_name)
         azure_sql = AzureSQL(credentials=credentials)
-
+        df = self.sanitize_columns(df)
+        query = f"SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = '{schema}' AND TABLE_NAME = '{table}'"
+        check_result = azure_sql.run(query=query)
         if if_exists not in ["replace", "fail"]:
-            query = f"SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = '{schema}' AND TABLE_NAME = '{table}'"
-            result = azure_sql.run(query=query)
-            sql_column_list = [table for row in result for table in row]
-            df_column_list = list(df.columns)
+            if if_exists == "append" and not check_result:
+                self.logger.warning("Aimed table doesn't exists.")
+                return
+            elif check_result is not []:
+                result = azure_sql.run(query=query)
+                sql_column_list = [table for row in result for table in row]
+                df_column_list = list(df.columns)
 
-            if sql_column_list != df_column_list:
-                self.logger.warning(
-                    "Detected column order difference between the CSV file and the table. Reordering..."
-                )
-                df = self.df_change_order(df=df, sql_column_list=sql_column_list)
-            else:
-                return df
+                if sql_column_list != df_column_list:
+                    self.logger.warning(
+                        "Detected column order difference between the CSV file and the table. Reordering..."
+                    )
+                    df = self.df_change_order(df=df, sql_column_list=sql_column_list)
+                else:
+                    return df
         else:
             self.logger.info("The table will be replaced.")
             return df
+
+
+class AzureSQLUpsert(Task):
+    """Task for upserting data from a pandas DataFrame into AzureSQL.
+
+    Args:
+        schema (str, optional): The schema where the data should be upserted. Defaults to None.
+        table (str, optional): The table where the data should be upserted. Defaults to None.
+        on (str, optional): The field on which to merge (upsert). Defaults to None.
+        credentials_secret (str, optional): The name of the Azure Key Vault secret containing a dictionary
+        vault_name (str, optional): The name of the vault from which to obtain the secret. Defaults to None.
+    """
+
+    def __init__(
+        self,
+        schema: str = None,
+        table: str = None,
+        on: str = None,
+        credentials_secret: str = None,
+        *args,
+        **kwargs,
+    ):
+        self.schema = schema
+        self.table = table
+        self.on = on
+        self.credentials_secret = credentials_secret
+        super().__init__(name="azure_sql_upsert", *args, **kwargs)
+
+    @defaults_from_attrs(
+        "schema",
+        "table",
+        "on",
+        "credentials_secret",
+    )
+    def run(
+        self,
+        df: pd.DataFrame,
+        schema: str = None,
+        table: str = None,
+        on: str = None,
+        credentials_secret: str = None,
+        vault_name: str = None,
+    ):
+        """Upsert data from a pandas DataFrame into AzureSQL using a temporary staging table.
+
+        Args:
+            df (pd.DataFrame): The DataFrame to upsert.
+            schema (str, optional): The schema where the data should be upserted. Defaults to None.
+            table (str, optional): The table where the data should be upserted. Defaults to None.
+            on (str, optional): The field on which to merge (upsert). Defaults to None.
+            credentials_secret (str, optional): The name of the Azure Key Vault secret containing a dictionary
+            vault_name (str, optional): The name of the vault from which to obtain the secret. Defaults to None.
+        """
+
+        if not table:
+            raise ValueError("'table' was not provided.")
+
+        if not on:
+            raise ValueError("'on' was not provided.")
+
+        credentials = get_credentials(credentials_secret, vault_name=vault_name)
+        azure_sql = AzureSQL(credentials=credentials)
+
+        # Create a temporary staging table.
+        # Hashtag marks a temp table in SQL server.
+        stg_table = "#" + "stg_" + table
+        dtypes = get_sql_server_table_dtypes(
+            schema=schema, table=table, con=azure_sql.con
+        )
+        created = azure_sql.create_table(
+            schema=schema, table=stg_table, dtypes=dtypes, if_exists="fail"
+        )
+
+        # Insert data into the temp table
+        stg_table_fqn = f"{schema}.{stg_table}"
+        insert_query = gen_bulk_insert_query_from_df(df, table_fqn=stg_table_fqn)
+        inserted = azure_sql.run(insert_query)
+
+        # Upsert into prod table
+        merge_query = build_merge_query(
+            stg_schema=schema,
+            stg_table=stg_table,
+            schema=schema,
+            table=table,
+            primary_key=on,
+            con=azure_sql.con,
+        )
+
+        merged = azure_sql.run(merge_query)
+
+        if merged:
+            rows = df.shape[0]
+            table_fqn = f"{schema}.{table}"
+            self.logger.info(
+                f"Successfully upserted {rows} rows of data into table '{table_fqn}'."
+            )
+
+        return True

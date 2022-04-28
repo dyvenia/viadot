@@ -7,15 +7,11 @@ import os
 TABLE = "test_table"
 SCHEMA = "test_schema"
 TABLE_MULTIPLE_PARQUETS = "test_multiple_parquets"
-DATABASE_PATH = "test.duckdb"
+DATABASE_PATH = "test_db_123.duckdb"
 
 
 @pytest.fixture(scope="session")
 def duckdb():
-    try:
-        os.remove(DATABASE_PATH)
-    except FileNotFoundError:
-        pass
     duckdb = DuckDB(credentials=dict(database=DATABASE_PATH))
     yield duckdb
     os.remove(DATABASE_PATH)
@@ -38,6 +34,24 @@ def test_create_table_from_parquet(duckdb, TEST_PARQUET_FILE_PATH):
     )
     df = duckdb.to_df(f"SELECT * FROM {SCHEMA}.{TABLE}")
     assert df.shape[0] == 3
+    duckdb.drop_table(TABLE, schema=SCHEMA)
+    duckdb.run(f"DROP SCHEMA {SCHEMA}")
+
+
+def test_create_table_from_parquet_append(duckdb, TEST_PARQUET_FILE_PATH):
+    duckdb.create_table_from_parquet(
+        schema=SCHEMA, table=TABLE, path=TEST_PARQUET_FILE_PATH
+    )
+    df = duckdb.to_df(f"SELECT * FROM {SCHEMA}.{TABLE}")
+    assert df.shape[0] == 3
+
+    # now append
+    duckdb.create_table_from_parquet(
+        schema=SCHEMA, table=TABLE, path=TEST_PARQUET_FILE_PATH, if_exists="append"
+    )
+    df = duckdb.to_df(f"SELECT * FROM {SCHEMA}.{TABLE}")
+    assert df.shape[0] == 6
+
     duckdb.drop_table(TABLE, schema=SCHEMA)
     duckdb.run(f"DROP SCHEMA {SCHEMA}")
 

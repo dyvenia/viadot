@@ -2,7 +2,9 @@ import pytest
 import numpy as np
 import os
 import pandas as pd
+import prefect
 from typing import List
+
 
 from viadot.task_utils import (
     chunk_df,
@@ -11,8 +13,10 @@ from viadot.task_utils import (
     df_to_csv,
     df_to_parquet,
     union_dfs_task,
-    dtypes_to_json,
+    dtypes_to_json_task,
     write_to_json,
+    df_converts_bytes_to_int,
+    df_clean_column,
 )
 
 
@@ -43,6 +47,32 @@ def test_map_dtypes_for_parquet():
     sum_of_mapped_dtypes = count_dtypes(dtyps_dict_mapped, ["String"])
 
     assert sum_of_dtypes == sum_of_mapped_dtypes
+
+
+def test_df_converts_bytes_to_int():
+    data = {
+        "ID": {0: 1, 1: 2, 2: 100, 3: 101, 4: 102},
+        "SpracheText": {
+            0: "TE_CATALOG_BASE_LANG",
+            1: "TE_Docu",
+            2: "TE_German",
+            3: "TE_English",
+            4: "TE_French",
+        },
+        "RKZ": {
+            0: b"\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\r\x01\x00\x00\x00\x00\x00\x00\x04\x00\x00q\x9f#NV\x8dG\x00",
+            1: b"\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\r\x01\x00\x00\x00\x00\x00\x00\x04\x00\x00<\xa0#NV\x8dG\x00",
+            2: b"\r\xa3\x86\x01\x00\x01\x00\x00\x00\x00\x04\r\x01\x00\x00\x00\x00\x00\x00\x04\x00\x003\x9f#NV\x8dG\x00",
+            3: b"\r\xa3\x86\x01\x00\x01\x00\x00\x00\x00\x04\r\x01\x00\x00\x00\x00\x00\x00\x04\x00\x00R\x9f#NV\x8dG\x00",
+            4: b"\r\xa3\x86\x01\x00\x01\x00\x00\x00\x00\x04\r\x01\x00\x00\x00\x00\x00\x00\x04\x00\x00\xee\x9f#NV\x8dG\x00",
+        },
+    }
+
+    df = pd.DataFrame.from_dict(data)
+    test_df = df_converts_bytes_to_int.run(df)
+    lst = test_df["RKZ"][0]
+    is_int = all(isinstance(x, (int, int)) for x in lst)
+    assert is_int == True
 
 
 def test_chunk_df():
@@ -132,9 +162,9 @@ def test_union_dfs_task():
     assert len(res) == 5
 
 
-def test_dtypes_to_json():
+def test_dtypes_to_json_task():
     dtypes = {"country": "VARCHAR(100)", "sales": "FLOAT(24)"}
-    dtypes_to_json.run(dtypes_dict=dtypes, local_json_path="dtypes.json")
+    dtypes_to_json_task.run(dtypes_dict=dtypes, local_json_path="dtypes.json")
     assert os.path.exists("dtypes.json")
     os.remove("dtypes.json")
 
@@ -144,3 +174,31 @@ def test_write_to_json():
     write_to_json.run(dict, "dict.json")
     assert os.path.exists("dict.json")
     os.remove("dict.json")
+
+
+def test_df_clean_column_all():
+    data = {
+        "col_1": ["a", "b\\r", "\tc", "d \r\n a"],
+        "col_2": ["a", "b\\r", "\tc", "d \r\n a"],
+    }
+    expected_output = {
+        "col_1": {0: "a", 1: "b", 2: "c", 3: "d  a"},
+        "col_2": {0: "a", 1: "b", 2: "c", 3: "d  a"},
+    }
+    df = pd.DataFrame.from_dict(data)
+    output = df_clean_column.run(df).to_dict()
+    assert expected_output == output
+
+
+def test_df_clean_column_defined():
+    data = {
+        "col_1": ["a", "b", "c", "d  a"],
+        "col_2": ["a\t\r", "b\\r", "\tc", "d \r\n a"],
+    }
+    expected_output = {
+        "col_1": {0: "a", 1: "b", 2: "c", 3: "d  a"},
+        "col_2": {0: "a", 1: "b", 2: "c", 3: "d  a"},
+    }
+    df = pd.DataFrame.from_dict(data)
+    output = df_clean_column.run(df, ["col_2"]).to_dict()
+    assert output == expected_output

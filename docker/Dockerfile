@@ -18,7 +18,7 @@ RUN echo "Acquire::Check-Valid-Until \"false\";\nAcquire::Check-Date \"false\";"
 
 
 # System packages
-RUN apt update && yes | apt install vim unixodbc-dev build-essential \
+RUN apt update -q && yes | apt install -q vim unixodbc-dev build-essential \
     curl python3-dev libboost-all-dev libpq-dev graphviz python3-gi sudo git
 RUN pip install --upgrade cffi
 
@@ -26,6 +26,9 @@ RUN curl http://archive.ubuntu.com/ubuntu/pool/main/g/glibc/multiarch-support_2.
     -o multiarch-support_2.27-3ubuntu1_amd64.deb && \
     apt install ./multiarch-support_2.27-3ubuntu1_amd64.deb
 
+# Fix for old SQL Servers still using TLS < 1.2
+RUN chmod +rwx /usr/lib/ssl/openssl.cnf && \
+    sed -i 's/SECLEVEL=2/SECLEVEL=1/g' /usr/lib/ssl/openssl.cnf
 
 # ODBC -- make sure to pin driver version as it's reflected in odbcinst.ini
 RUN curl https://packages.microsoft.com/keys/microsoft.asc | apt-key add - && \
