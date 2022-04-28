@@ -30,6 +30,8 @@ from .sharepoint import SharepointToDF
 from .cloud_for_customers import C4CReportToDF, C4CToDF
 from .prefect_date_range import GetFlowNewDateRange
 from .aselite import ASELiteToDF
+from .bigquery import BigQueryToDF
+from .salesforce import SalesforceUpsert, SalesforceBulkUpsert
 
 try:
     from .sap_rfc import SAPRFCToDF

@@ -11,6 +11,8 @@ from copy import deepcopy
 
 
 class CloudForCustomers(Source):
+    DEFAULT_PARAMS = {"$format": "json"}
+
     def __init__(
         self,
         *args,
@@ -52,8 +54,14 @@ class CloudForCustomers(Source):
 
         self.is_report = bool(report_url)
         self.query_endpoint = endpoint
-        self.params = params or {}
-        self.params["$format"] = "json"
+
+        if params:
+            params_merged = self.DEFAULT_PARAMS.copy()
+            params_merged.update(params)
+
+            self.params = params_merged
+        else:
+            self.params = self.DEFAULT_PARAMS
 
         if self.url:
             self.full_url = urljoin(self.url, self.query_endpoint)
@@ -74,7 +82,7 @@ class CloudForCustomers(Source):
         """
         records = []
         while url:
-            response = self.get_response(url)
+            response = self.get_response(url, params=self.params)
             response_json = response.json()
             new_records = self.response_to_entity_list(response_json, url)
             records.extend(new_records)
@@ -88,9 +96,9 @@ class CloudForCustomers(Source):
         At first enter url is a join of url and endpoint passed into this function.
         At any other entering it bring `__next_url` adress, generated automatically, but without params.
         """
-        records = []
         tmp_full_url = deepcopy(url)
         tmp_params = deepcopy(self.params)
+        records = []
         while url:
             response = self.get_response(tmp_full_url, params=tmp_params)
             response_json = response.json()
@@ -198,13 +206,24 @@ class CloudForCustomers(Source):
         )
         return response
 
-    def to_df(self, fields: List[str] = None, if_empty: str = "warn") -> pd.DataFrame:
+    def to_df(
+        self,
+        fields: List[str] = None,
+        if_empty: str = "warn",
+        dtype: dict = None,
+        **kwargs,
+    ) -> pd.DataFrame:
         """Returns records in a pandas DataFrame.
         Args:
             fields (List[str], optional): List of fields to put in DataFrame. Defaults to None.
+            dtype (dict, optional): The dtypes to use in the DataFrame. We catch this parameter here since
+            pandas doesn't support passing dtypes (eg. as a dict) to the constructor.
+            kwargs: The parameters to pass to DataFrame constructor.
         """
         records = self.to_records()
-        df = pd.DataFrame(data=records)
+        df = pd.DataFrame(data=records, **kwargs)
+        if dtype:
+            df = df.astype(dtype)
         if fields:
             return df[fields]
         return df
