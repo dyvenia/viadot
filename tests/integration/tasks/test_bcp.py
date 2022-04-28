@@ -76,7 +76,6 @@ def test_bcp_log_error(TEST_CSV_FILE_PATH, test_error_table):
         error_log_file=ERROR_LOG_FILE,
     )
     assert (
-        os.path.exists(ERROR_LOG_FILE) is True
-        and os.path.getsize(ERROR_LOG_FILE) is not 0
+        os.path.exists(ERROR_LOG_FILE) is True and os.path.getsize(ERROR_LOG_FILE) != 0
     )
     os.remove(ERROR_LOG_FILE)
