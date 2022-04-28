@@ -16,16 +16,13 @@ def run_flows_list(flow_name: str, flows_list: List[List] = [List[None]]):
             Flows have to be in the correct oreder. Defaults to [List[None]].
     """
     with Flow(flow_name) as flow:
-        for i in range(len(flows_list) - 1):
+        for i in range(len(flows_list)):
             exec(
                 f"flow_{i}= create_flow_run(flow_name=flows_list[i][0], project_name=flows_list[i][1])"
             )
             exec(
                 f"wait_for_flow_{i} = wait_for_flow_run(flow_{i}, raise_final_state=True)"
             )
-        exec(
-            f"flow_{len(flows_list)-1} = create_flow_run(flow_name=flows_list[len(flows_list)-1][0], project_name=flows_list[i][1])"
-        )
         for i in range(1, len(flows_list)):
             exec(f"flow_{i}.set_upstream(wait_for_flow_{i-1})")
         flow_state = flow.run()
