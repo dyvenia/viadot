@@ -1,6 +1,6 @@
 import pandas as pd
 from viadot.config import local_config
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Tuple
 from prefect import Task
 from prefect.utilities.tasks import defaults_from_attrs
 
@@ -43,17 +43,15 @@ class OutlookToDF(Task):
         """Download Outlook Mesagess to DF"""
         return super().__call__(*args, **kwargs)
 
-    @defaults_from_attrs(
-        "mailbox_name",
-        "start_date",
-        "end_date",
-    )
+    @defaults_from_attrs("mailbox_name", "start_date", "end_date", "limit")
     def run(
         self,
         mailbox_name: str,
         start_date: str = None,
         end_date: str = None,
-    ):
+        limit: int = 10000,
+        nout=2,
+    ) -> Tuple[int, int]:
         """
         Task for downloading data from the Outlook API to a CSV file.
 
@@ -66,6 +64,9 @@ class OutlookToDF(Task):
             pd.DataFrame: The API GET as a pandas DataFrame.
         """
         df_inbox, df_outbox = Outlook(
-            mailbox_name=mailbox_name, start_date=start_date, end_date=end_date
+            mailbox_name=mailbox_name,
+            start_date=start_date,
+            end_date=end_date,
+            limit=limit,
         ).to_df()
-        return df_inbox, df_outbox
+        return (df_inbox, df_outbox)
