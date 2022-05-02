@@ -1,4 +1,5 @@
 from viadot.flows import DuckDBTransform
+from viadot.tasks import DuckDBQuery, DuckDBToDF
 import pytest
 import pandas as pd
 from unittest import mock
@@ -22,6 +23,25 @@ def test_create_table_from_parquet(duckdb, TEST_PARQUET_FILE_PATH):
     duckdb.create_table_from_parquet(
         schema=SCHEMA, table=TABLE, path=TEST_PARQUET_FILE_PATH
     )
+
+
+def test_duckdb_query():
+
+    db_query = DuckDBQuery(credentials=dict(database=DATABASE_PATH))
+
+    result = db_query.run(f"select * from {SCHEMA}.{TABLE}")
+    assert type(result) == list
+    assert len(result) > 1
+
+
+def test_duckdb_to_df():
+
+    instance = DuckDBToDF(
+        schema=SCHEMA, table=TABLE, credentials=dict(database=DATABASE_PATH)
+    )
+    test_df = instance.run()
+    assert test_df.shape > (1, 1)
+    assert type(test_df) == pd.core.frame.DataFrame
 
 
 def test_duckdb_transform_init():
