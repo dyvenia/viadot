@@ -2,16 +2,19 @@ import os
 import pandas as pd
 from unittest import mock
 from viadot.flows import SupermetricsToAzureSQL
+from prefect.storage import Local
 from io import StringIO
 from csv import reader
+from viadot.config import local_config
+
+CWD = os.getcwd()
+adls_dir_path = "raw/supermetrics"
+STORAGE = Local(path=CWD)
+SCHEMA = "sandbox"
+TABLE = "test_supermetrics"
 
 
 def test_supermetrics_to_azure_sql_init():
-
-    tasks_set = """{<Task: Constant[str]>,
-                <Task: blob_to_azure_sql>,
-                <Task: csv_to_blob_storage>,
-                <Task: supermetrics_to_csv>}"""
 
     instance = SupermetricsToAzureSQL(
         "test_name",
@@ -22,32 +25,49 @@ def test_supermetrics_to_azure_sql_init():
     )
 
     assert instance
-    assert instance.__dict__["tasks"] == tasks_set
+    assert instance.__dict__["ds_id"] == "example_id"
 
 
-def test_supermetrics_to_azure_sql_run_flow():
+def test_supermetrics_to_azure_sql_run_flow_mock():
 
     with mock.patch.object(
         SupermetricsToAzureSQL, "run", return_value=True
     ) as mock_method:
+
+        credentials = local_config.get("SUPERMETRICS")
+
         flow = SupermetricsToAzureSQL(
-            "test_name_extract",
-            ds_id="example_id",
-            ds_accounts="example_accounts",
-            ds_user="example_user",
-            date_range_type="last_year_inc",
-            max_rows=10,
-            fields=["Date", "profile", "Campaignname"],
-            schema="raw",
-            table="test_name_extract",
-            local_file_path="test.csv",
-            blob_path="tests/supermetrics/test.csv",
-            if_exists="replace",
+            "test_supermetrics",
+            ds_id="GA",
+            ds_segments=[
+                "R1fbzFNQQ3q_GYvdpRr42w",
+                "I8lnFFvdSFKc50lP7mBKNA",
+                "Lg7jR0VWS5OqGPARtGYKrw",
+                "h8ViuGLfRX-cCL4XKk6yfQ",
+                "-1",
+            ],
+            ds_accounts=["8326007", "58338899"],
+            date_range_type="last_month",
+            ds_user=credentials["USER"],
+            fields=[
+                {"id": "Date"},
+                {"id": "segment", "split": "column"},
+                {"id": "AvgPageLoadTime_calc"},
+            ],
             dtypes={
-                "Date": "DATE",
-                "profile": "VARCHAR(255)",
-                "Campaignname": "VARCHAR(255)",
+                "date": "DATE",
+                "segment": "VARCHAR(255)",
+                "AvgPageLoadTime_calc": "VARCHAR(255)",
             },
+            settings={"avoid_sampling": "true"},
+            order_columns="alphabetic",
+            max_columns=10,
+            max_rows=1,
+            schema=SCHEMA,
+            table=TABLE,
+            local_file_path="test_supermetrics.csv",
+            blob_path="tests/test.csv",
+            storage=STORAGE,
         )
 
         flow.run()
