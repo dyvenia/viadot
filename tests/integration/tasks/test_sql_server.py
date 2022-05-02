@@ -1,11 +1,21 @@
 import json
 import logging
+import inspect
+import types
 from viadot.tasks import SQLServerCreateTable
 from viadot.tasks.azure_key_vault import AzureKeyVaultSecret
 from prefect.tasks.secrets import PrefectSecret
 
 SCHEMA = "sandbox"
 TABLE = "test"
+
+
+def test_sql_server_create_table_init():
+    instance = SQLServerCreateTable()
+    name = instance.__dict__["name"]
+    assert inspect.isclass(SQLServerCreateTable)
+    assert isinstance(instance, SQLServerCreateTable)
+    assert name == "sql_server_create_table"
 
 
 def test_sql_server_create_table(caplog):
