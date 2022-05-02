@@ -5,7 +5,7 @@ from unittest import mock
 from viadot.flows import ADLSGen1ToAzureSQLNew
 
 
-d = {"col1": [1, 2], "col2": [3, 4]}
+d = {"country": [1, 2], "sales": [3, 4]}
 df = pd.DataFrame(data=d)
 SCHEMA = "sandbox"
 TABLE = "test_bcp"
