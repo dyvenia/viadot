@@ -3,8 +3,11 @@ from viadot.config import local_config
 from typing import Any, Dict, List, Tuple
 from prefect import Task
 from prefect.utilities.tasks import defaults_from_attrs
+from prefect.utilities import logging
 
 from ..sources import Outlook
+
+logger = logging.get_logger()
 
 
 class OutlookToDF(Task):
@@ -17,7 +20,7 @@ class OutlookToDF(Task):
         extension_file: str = ".csv",
         limit: int = 10000,
         *args: List[Any],
-        **kwargs: Dict[str, Any]
+        **kwargs: Dict[str, Any],
     ):
 
         self.mailbox_name = mailbox_name
@@ -50,8 +53,8 @@ class OutlookToDF(Task):
         start_date: str = None,
         end_date: str = None,
         limit: int = 10000,
-        nout=2,
-    ) -> Tuple[int, int]:
+        # nout: int = 2,
+    ) -> pd.DataFrame:  # Tuple[int, int]:
         """
         Task for downloading data from the Outlook API to a CSV file.
 
@@ -59,14 +62,20 @@ class OutlookToDF(Task):
             mailbox_name (str): Mailbox name.
             start_date (str, optional): A filtering start date parameter e.g. "2022-01-01". Defaults to None.
             end_date (str, optional): A filtering end date parameter e.g. "2022-01-02". Defaults to None.
+            limit (str, optional): A limit to access last top messages. Defaults to 10_000.
 
         Returns:
-            pd.DataFrame: The API GET as a pandas DataFrame.
+            pd.DataFrame: The API GET as a pandas DataFrames from Outlook inbox and outbox, respectively.
         """
-        df_inbox, df_outbox = Outlook(
+        outlook = Outlook(
             mailbox_name=mailbox_name,
             start_date=start_date,
             end_date=end_date,
             limit=limit,
-        ).to_df()
-        return (df_inbox, df_outbox)
+        )
+        df = outlook.to_df()
+        # df_inbox, df_outbox = outlook.to_df()
+        logger.info(
+            f"Downloaded the data from the '{outlook.mailbox_name}' into the Data Frame."
+        )
+        return df  # (df_inbox, df_outbox)

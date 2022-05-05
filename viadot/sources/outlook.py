@@ -15,6 +15,8 @@ class Outlook(Source):
         credentials: Dict[str, Any] = None,
         extension_file: str = ".csv",
         limit: int = 10000,
+        request_retries: int = 10,
+        # token_backend: str = "token_backend.txt",
         *args: List[Any],
         **kwargs: Dict[str, Any],
     ):
@@ -38,6 +40,8 @@ class Outlook(Source):
         except KeyError:
             DEFAULT_CREDENTIALS = None
 
+        # self.token_backend = token_backend
+        self.request_retries = request_retries
         self.credentials = credentials or DEFAULT_CREDENTIALS
         self.extension_file = extension_file
         self.mailbox_name = mailbox_name
@@ -48,6 +52,8 @@ class Outlook(Source):
             auth_flow_type="credentials",
             tenant_id=self.credentials["tenant_id"],
             main_resource=self.mailbox_name,
+            request_retries=self.request_retries,
+            # token_backend=self.token_backend,
         )
         if self.account.authenticate():
             print(f"{self.mailbox_name} Authenticated!")
@@ -61,7 +67,8 @@ class Outlook(Source):
     def to_df(self):
         date_range_end_time = datetime.datetime.strptime(self.end_date, "%Y-%m-%d")
         date_range_start_time = datetime.datetime.strptime(self.start_date, "%Y-%m-%d")
-        data_list_outbox, data_list_inbox = [], []
+        data = []
+        # data_list_outbox, data_list_inbox = [], []
 
         while True:
             try:
@@ -87,6 +94,7 @@ class Outlook(Source):
                         categories = ""
                         if message.categories:
                             categories = ", ".join(c for c in message.categories)
+
                         row = {
                             "subject": fetched.get("subject"),
                             "conversation ID": fetched.get("conversationId"),
@@ -97,18 +105,30 @@ class Outlook(Source):
                             "read": fetched.get("isRead"),
                             "received time": fetched.get("receivedDateTime"),
                         }
+                        row["mail adress"] = (
+                            self.mailbox_name.split("@")[0]
+                            .replace(".", "_")
+                            .replace("-", "_")
+                        )
+
                         if sender_mail == self.mailbox_name:
-                            data_list_outbox.append(row)
+                            row["Inbox"] = False
+                        # data_list_outbox.append(row)
                         else:
-                            data_list_inbox.append(row)
+                            row["Inbox"] = True
+                        # data_list_inbox.append(row)
+
+                        data.append(row)
                     except KeyError:
                         print(f"KeyError - nie ma w:")
             except StopIteration:
                 break
-        df_inbox = pd.DataFrame(data=data_list_inbox)
-        df_outbox = pd.DataFrame(data=data_list_outbox)
+        df = pd.DataFrame(data=data)
 
-        return df_inbox, df_outbox
+        # df_inbox = pd.DataFrame(data=data_list_inbox)
+        # df_outbox = pd.DataFrame(data=data_list_outbox)
+
+        return df  # df_inbox, df_outbox
 
     def to_csv(self):
         df_inbox, df_outbox = self.to_df()
