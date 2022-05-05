@@ -3,6 +3,11 @@ from viadot.config import local_config
 from viadot.sources import AzureDataLake
 from viadot.tasks import AzureDataLakeRemove
 
+try:
+    import pyrfc
+except ModuleNotFoundError:
+    raise
+
 ADLS_PATH = "raw/supermetrics/mp/test_file_sap.parquet"
 FILE_NAME = "test_file.parquet"
 
