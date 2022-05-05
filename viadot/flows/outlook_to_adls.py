@@ -1,5 +1,5 @@
 import os
-from typing import Any, Dict, List, Union, Tuple, Literal
+from typing import Any, Dict, List, Union, Literal
 
 import pendulum
 from prefect import Flow, Task, apply_map, task
@@ -11,38 +11,6 @@ from ..tasks import OutlookToDF, AzureDataLakeUpload
 
 file_to_adls_task = AzureDataLakeUpload()
 outlook_to_df = OutlookToDF()
-
-
-COLUMN_LIST = [
-    "subject",
-    "conversation ID",
-    "conversation index",
-    "categories",
-    "sender",
-    "unread",
-    "received time",
-]
-
-
-@task
-def df_to_csv_file_task(
-    df_tuple: Tuple[pd.DataFrame, pd.DataFrame],
-    dir_path: str,
-    extension_file: str = ".csv",
-    # header: List[str] = COLUMN_LIST,
-):
-    # DF_IN = pd.DataFrame(columns=header)
-    # DF_OUT = pd.DataFrame(columns=header)
-    df_in = df_tuple[0]
-    df_out = df_tuple[1]
-    # df_in = DF_IN.append(df_in, ignore_index=True)
-    # df_out = DF_OUT.append(df_out, ignore_index=True)
-    df_out.to_csv(
-        f"{dir_path}/Outbox{extension_file}", mode="a", index=False
-    )  # , header=False)
-    df_in.to_csv(
-        f"{dir_path}/Inbox{extension_file}", mode="a", index=False
-    )  # , header=False)
 
 
 class OutlookToCSVs(Flow):
@@ -75,39 +43,12 @@ class OutlookToCSVs(Flow):
         self.extension_file = extension_file
         self.overwrite_adls = overwrite_adls
         self.adls_sp_credentials_secret = adls_sp_credentials_secret
-        # self.dir_names = [
-        #     mailbox.split("@")[0].replace(".", "_").replace("-", "_")
-        #     for mailbox in self.mailbox_list
-        # ]
-        # self.local_file_paths = [
-        #     dir + "/" + box + self.extension_file
-        #     for dir in self.dir_names
-        #     for box in ["Inbox", "Outbox"]
-        # ]
 
-        # self.adls_file_paths = [
-        #     f"{self.adls_dir_path}/{file}" for file in self.local_file_paths
-        # ]
-        # for dir in self.dir_names:
-        #     if not os.path.exists(dir):
-        #         os.makedirs(dir)
         self.if_exsists = if_exists
 
         super().__init__(*args, name=name, **kwargs)
 
         self.gen_flow()
-
-    # def gen_outlook_df(
-    #     self, mailbox_list: Union[str, List[str]], flow: Flow = None
-    # ) -> Task:
-    #     df = outlook_to_df.bind(
-    #         mailbox_name=mailbox_list,
-    #         start_date=self.start_date,
-    #         end_date=self.end_date,
-    #         limit=self.limit,
-    #         flow=flow,
-    #     )
-    #     return df  # dfs_tuple
 
     def gen_outlook_df(
         self, mailbox_list: Union[str, List[str]], flow: Flow = None

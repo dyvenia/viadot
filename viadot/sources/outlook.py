@@ -16,7 +16,6 @@ class Outlook(Source):
         extension_file: str = ".csv",
         limit: int = 10000,
         request_retries: int = 10,
-        # token_backend: str = "token_backend.txt",
         *args: List[Any],
         **kwargs: Dict[str, Any],
     ):
@@ -40,7 +39,6 @@ class Outlook(Source):
         except KeyError:
             DEFAULT_CREDENTIALS = None
 
-        # self.token_backend = token_backend
         self.request_retries = request_retries
         self.credentials = credentials or DEFAULT_CREDENTIALS
         self.extension_file = extension_file
@@ -53,7 +51,6 @@ class Outlook(Source):
             tenant_id=self.credentials["tenant_id"],
             main_resource=self.mailbox_name,
             request_retries=self.request_retries,
-            # token_backend=self.token_backend,
         )
         if self.account.authenticate():
             print(f"{self.mailbox_name} Authenticated!")
@@ -68,7 +65,6 @@ class Outlook(Source):
         date_range_end_time = datetime.datetime.strptime(self.end_date, "%Y-%m-%d")
         date_range_start_time = datetime.datetime.strptime(self.start_date, "%Y-%m-%d")
         data = []
-        # data_list_outbox, data_list_inbox = [], []
 
         while True:
             try:
@@ -110,13 +106,10 @@ class Outlook(Source):
                             .replace(".", "_")
                             .replace("-", "_")
                         )
-
                         if sender_mail == self.mailbox_name:
                             row["Inbox"] = False
-                        # data_list_outbox.append(row)
                         else:
                             row["Inbox"] = True
-                        # data_list_inbox.append(row)
 
                         data.append(row)
                     except KeyError:
@@ -125,10 +118,7 @@ class Outlook(Source):
                 break
         df = pd.DataFrame(data=data)
 
-        # df_inbox = pd.DataFrame(data=data_list_inbox)
-        # df_outbox = pd.DataFrame(data=data_list_outbox)
-
-        return df  # df_inbox, df_outbox
+        return df
 
     def to_csv(self):
         df_inbox, df_outbox = self.to_df()

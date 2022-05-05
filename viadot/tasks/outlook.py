@@ -53,8 +53,7 @@ class OutlookToDF(Task):
         start_date: str = None,
         end_date: str = None,
         limit: int = 10000,
-        # nout: int = 2,
-    ) -> pd.DataFrame:  # Tuple[int, int]:
+    ) -> pd.DataFrame:
         """
         Task for downloading data from the Outlook API to a CSV file.
 
@@ -74,8 +73,8 @@ class OutlookToDF(Task):
             limit=limit,
         )
         df = outlook.to_df()
-        # df_inbox, df_outbox = outlook.to_df()
+
         logger.info(
             f"Downloaded the data from the '{outlook.mailbox_name}' into the Data Frame."
         )
-        return df  # (df_inbox, df_outbox)
+        return df
