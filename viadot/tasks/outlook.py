@@ -64,7 +64,7 @@ class OutlookToDF(Task):
             limit (str, optional): A limit to access last top messages. Defaults to 10_000.
 
         Returns:
-            pd.DataFrame: The API GET as a pandas DataFrames from Outlook inbox and outbox, respectively.
+            pd.DataFrame: The API GET as a pandas DataFrames from Outlook.
         """
         outlook = Outlook(
             mailbox_name=mailbox_name,
