@@ -13,9 +13,9 @@ logger = logging.get_logger()
 
 
 def parse_logs(log_file_name: str):
-    with open(log_file_name) as f:
-        f = f.readlines()
-    for line in f:
+    with open(log_file_name) as log_file:
+        log_file = log_file.readlines()
+    for line in log_file:
         if "#" in line:
             line = line.replace("#", "")
             line = line.replace("@", "")

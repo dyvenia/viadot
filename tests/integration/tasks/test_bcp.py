@@ -1,6 +1,6 @@
-from genericpath import exists
 import pytest
 import os
+
 from prefect.engine.signals import FAIL
 
 from viadot.tasks import BCPTask
