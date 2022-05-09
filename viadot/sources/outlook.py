@@ -121,7 +121,6 @@ class Outlook(Source):
         return df
 
     def to_csv(self):
-        df_inbox, df_outbox = self.to_df()
+        df = self.to_df()
         file_name = self.mailbox_name.split("@")[0].replace(".", "_").replace("-", "_")
-        df_inbox.to_csv(f"{file_name}_Inbox{self.extension_file}", index=False)
-        df_outbox.to_csv(f"{file_name}_Outbox{self.extension_file}", index=False)
+        df.to_csv(f"{file_name}{self.extension_file}", index=False)

@@ -13,7 +13,7 @@ file_to_adls_task = AzureDataLakeUpload()
 outlook_to_df = OutlookToDF()
 
 
-class OutlookToCSVs(Flow):
+class OutlookToADLS(Flow):
     def __init__(
         self,
         mailbox_list: List[str],
@@ -69,7 +69,7 @@ class OutlookToCSVs(Flow):
         self, mailbox_list: Union[str, List[str]], flow: Flow = None
     ) -> Task:
 
-        report = outlook_to_df.bind(
+        df = outlook_to_df.bind(
             mailbox_name=mailbox_list,
             start_date=self.start_date,
             end_date=self.end_date,
@@ -77,7 +77,7 @@ class OutlookToCSVs(Flow):
             flow=flow,
         )
 
-        return report
+        return df
 
     def gen_flow(self) -> Flow:
 
