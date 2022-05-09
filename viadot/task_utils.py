@@ -268,6 +268,7 @@ def upload_query_to_devops(
     project: str = None,
     wiki_identifier: str = None,
     devops_path: str = None,
+    overwrite: bool = True,
     personal_access_token: str = None,
     organization_url: str = None,
 ):
@@ -279,6 +280,7 @@ def upload_query_to_devops(
         project (str, optional): Name od DevOps project. Defaults to None.
         wiki_identifier (str, optional): Name of DevOps Wiki. Defaults to None.
         devops_path (str, optional): Path to DevOps page where to upload query. Defaults to None.
+        overwrite (bool, optional): Whether to overwrite the page. Defaults to True.
         personal_access_token (str, optional): Presonl access token to Azure DevOps. Defaults to None.
             Instruction how to create PAT: https://docs.microsoft.com/en-us/azure/devops/organizations/accounts/use-personal-access-tokens-to-authenticate
         organization_url(str, optional): Service URL. Defaults to None.
@@ -291,6 +293,14 @@ def upload_query_to_devops(
     file_content = "```sql" + "\n" + file_content + "\n" + "```"
     create_parameters = WikiPageCreateOrUpdateParameters(content=file_content)
     wiki = WikiClient(base_url=organization_url, creds=credentials)
+    if overwrite is True:
+        try:
+            wiki.delete_page(
+                project=project, wiki_identifier=wiki_identifier, path=devops_path
+            )
+            logger.warning("Previous version of Wiki Page was deleted.")
+        except:
+            pass
     wiki.create_or_update_page(
         parameters=create_parameters,
         project=project,

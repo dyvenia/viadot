@@ -179,7 +179,7 @@ def test_upload_query_to_devops(caplog):
             personal_access_token=personal_access_token,
             organization_url=organization_url,
         )
+    assert "Successfully loaded query" in caplog.text
     wiki = WikiClient(base_url=organization_url, creds=credentials)
     wiki.delete_page(project=project, wiki_identifier=wiki_identifier, path=devops_path)
-    assert "Successfully loaded query" in caplog.text
     os.remove(file_path)

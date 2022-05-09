@@ -19,6 +19,7 @@ class AzureSQLTransform(Flow):
         project: str = None,
         wiki_identifier: str = None,
         devops_path: str = None,
+        overwrite: bool = True,
         personal_access_token: str = None,
         organization_url: str = None,
         sqldb_credentials_secret: str = None,
@@ -37,6 +38,7 @@ class AzureSQLTransform(Flow):
             project (str, optional): Name od DevOps project. Defaults to None.
             wiki_identifier (str, optional): Name of DevOps Wiki. Defaults to None.
             devops_path (str, optional): Path to DevOps page where to upload query. Defaults to None.
+            overwrite (bool, optional): Whether to overwrite the page. Defaults to True.
             personal_access_token (str, optional): Presonl access token to Azure DevOps. Defaults to None.
                 Instruction how to create PAT: https://docs.microsoft.com/en-us/azure/devops/organizations/accounts/use-personal-access-tokens-to-authenticate
             organization_url(str, optional): Service URL. Defaults to None.
@@ -58,6 +60,7 @@ class AzureSQLTransform(Flow):
         self.project = project
         self.wiki_identifier = wiki_identifier
         self.devops_path = devops_path
+        self.overwrite = overwrite
         self.personal_access_token = personal_access_token
         self.organization_url = organization_url
 
@@ -78,6 +81,7 @@ class AzureSQLTransform(Flow):
                 project=self.project,
                 wiki_identifier=self.wiki_identifier,
                 devops_path=self.devops_path,
+                overwrite=self.overwrite,
                 organization_url=self.organization_url,
                 file_path=self.file_path,
                 personal_access_token=self.personal_access_token,
