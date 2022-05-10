@@ -150,7 +150,7 @@ class Salesforce(Source):
             response = self.salesforce.bulk.__getattr__(table).upsert(
                 data=records, external_id_field=external_id, batch_size=batch_size
             )
-        except SalesforceMalformedRequest as e:
+        except SalesforceResourceNotFound as e:
             # Bulk insert didn't work at all.
             raise ValueError(f"Upsert of records failed: {e}") from e
 
