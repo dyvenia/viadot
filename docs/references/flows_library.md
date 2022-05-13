@@ -26,6 +26,10 @@
 
 ::: viadot.flows.duckdb_transform.DuckDBTransform
 
+::: viadot.flows.sap_to_duckdb.SAPToDuckDB
+
 ::: viadot.flows.flow_of_flows.Pipeline
 
 ::: viadot.flows.sharepoint_to_adls.SharepointToADLS
+
+::: viadot.flows.bigquery_to_adls.BigQueryToADLS

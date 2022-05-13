@@ -10,5 +10,7 @@
 
 ::: viadot.sources.sqlite.SQLite
 
+::: viadot.sources.sql_server.SQLServer
+
 ::: viadot.sources.duckdb.DuckDB
 

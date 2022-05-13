@@ -10,4 +10,6 @@
 
 ::: viadot.sources.azure_blob_storage.AzureBlobStorage
 
+::: viadot.sources.sap_rfc.SAPRFC
+
 ::: viadot.sources.bigquery.BigQuery

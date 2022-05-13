@@ -1,4 +1,4 @@
-# Task library
+# **Task library**
 
 ::: viadot.tasks.open_apis.uk_carbon_intensity.StatsToCSV
 
@@ -38,10 +38,27 @@
 
 ::: viadot.tasks.supermetrics.SupermetricsToDF
 
+::: viadot.tasks.cloud_for_customers.C4CToDF
+
+::: viadot.tasks.cloud_for_customers.C4CReportToDF
+
+::: viadot.tasks.sharepoint.SharepointToDF
+
+::: viadot.tasks.aselite.ASELiteToDF
+
+::: viadot.tasks.duckdb.DuckDBQuery
+
+::: viadot.tasks.sap_rfc.SAPRFCToDF
+
+::: viadot.tasks.prefect_date_range.GetFlowNewDateRange
+
+::: viadot.tasks.salesforce.SalesforceUpsert
+
+::: viadot.tasks.salesforce.SalesforceBulkUpsert
+
+::: viadot.tasks.bigquery.BigQueryToDF
+
 :::viadot.task_utils.add_ingestion_metadata_task
 
 :::viadot.task_utils.get_latest_timestamp_file_path
 
-::: viadot.tasks.cloud_for_customers.C4CToDF
-
-::: viadot.tasks.cloud_for_customers.C4CReportToDF
