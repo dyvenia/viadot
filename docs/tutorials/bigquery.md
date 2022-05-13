@@ -12,19 +12,19 @@ Note that credentials used for authentication can be generated only for User Pri
 To pull the data from BigQuery we create flow basing on `BigQueryToADLS`
 :::viadot.flows.BigQueryToADLS
 
-## Example uasage
+## Example usage
 
 ```
 flow = BigQueryToADLS(
     "1-raw BigQuery flow",
     dataset_name = "name",
     table_name = "name",
-    adls_dir_path=[adls dir path],
+    adls_dir_path="adls directory path",
     output_file_extension=".csv",
-    adls_sp_credentials_secret=[adls credentials],
+    adls_sp_credentials_secret="adls credentials secret",
     if_exists="replace",
-    credentials_secret=[credentials secret],
-    vault_name=[vault name],
+    credentials_secret="credentials secret",
+    vault_name="vault name",
 )
 
 flow.run()
