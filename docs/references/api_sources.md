@@ -9,3 +9,5 @@
 ::: viadot.sources.sharepoint.Sharepoint
 
 ::: viadot.sources.azure_blob_storage.AzureBlobStorage
+
+::: viadot.sources.bigquery.BigQuery
