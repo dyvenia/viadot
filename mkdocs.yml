@@ -12,6 +12,9 @@ nav:
       - "Adding source": tutorials/adding_source.md
       - "Cloud for customers": tutorials/cloud_for_customers.md
       - "Aselite": tutorials/aselite.md
+      - "Supermetrics": tutorials/supermetrics.md
+      - "Sharepoint": tutorials/sharepoint.md
+      - "Bigquery": tutorials/bigquery.md
   - References:
       - "SQL Sources": references/sql_sources.md
       - "API Sources": references/api_sources.md
