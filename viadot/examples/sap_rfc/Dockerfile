@@ -13,7 +13,9 @@ COPY requirements.txt .
 RUN xargs -L 1 pip install < requirements.txt
 
 ARG HTTP_PROXY=""
+ARG NO_PROXY=""
 ENV HTTP_PROXY=$HTTP_PROXY
+ENV NO_PROXY=$NO_PROXY
 RUN git config --global http.proxy ${HTTP_PROXY:-""}
 
 USER viadot
