@@ -1,6 +1,7 @@
 import os
 import json
 import pytest
+import logging
 from viadot.flows import DuckDBToSQLServer
 from unittest import mock
 from viadot.sources import DuckDB
@@ -25,10 +26,13 @@ def test__check_if_schema_exists(duckdb):
     assert not duckdb._check_if_schema_exists(SCHEMA)
 
 
-def test_create_table_from_parquet(duckdb, TEST_PARQUET_FILE_PATH):
-    duckdb.create_table_from_parquet(
-        schema=SCHEMA, table=TABLE, path=TEST_PARQUET_FILE_PATH
-    )
+def test_create_table_from_parquet(duckdb, TEST_PARQUET_FILE_PATH, caplog):
+    with caplog.at_level(logging.INFO):
+        duckdb.create_table_from_parquet(
+            schema=SCHEMA, table=TABLE, path=TEST_PARQUET_FILE_PATH
+        )
+
+    assert "created successfully" in caplog.text
 
 
 def test_duckdb_sql_server_init():

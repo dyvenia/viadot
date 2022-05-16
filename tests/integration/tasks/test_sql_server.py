@@ -30,13 +30,13 @@ def test_sql_server_create_table(caplog):
     )
 
     dtypes = {
-        "Date": "DATE",
-        "profile": "VARCHAR(255)",
-        "Campaignname": "VARCHAR(255)",
-        "Impressions": "FLOAT(24)",
-        "Clicks": "FLOAT(24)",
-        "Cost_eur": "FLOAT(24)",
-        "SearchImpressionShare": "VARCHAR(255)",
+        "date": "DATE",
+        "name": "VARCHAR(255)",
+        "id": "VARCHAR(255)",
+        "weather": "FLOAT(24)",
+        "rain": "FLOAT(24)",
+        "temp": "FLOAT(24)",
+        "summary": "VARCHAR(255)",
     }
 
     create_table_task = SQLServerCreateTable()
