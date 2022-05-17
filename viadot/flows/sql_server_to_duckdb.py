@@ -75,7 +75,4 @@ class SQLServerToDuckDB(Flow):
             if_exists=self.if_exists,
             flow=self,
         )
-
-        df_with_metadata.set_upstream(df, flow=self)
-        parquet.set_upstream(df_with_metadata, flow=self)
         create_duckdb_table.set_upstream(parquet, flow=self)

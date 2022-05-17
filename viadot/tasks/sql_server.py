@@ -113,8 +113,8 @@ class SQLServerToDF(Task):
         Load the result of a SQL Server Database query into a pandas DataFrame.
 
         Args:
-            query (str, required): The query to execute on the SQL Server database. If don't start with "SELECT"
-                returns empty DataFrame.
+            query (str, required): The query to execute on the SQL Server database. If the qery doesn't start
+                with "SELECT" returns an empty DataFrame.
             config_key (str, optional): The key inside local config containing the credentials. Defaults to None.
 
         """

@@ -2,7 +2,7 @@ import json
 import pytest
 
 from viadot.flows.sql_server_to_duckdb import SQLServerToDuckDB
-from viadot.tasks import SQLServerCreateTable, DuckDBToDF
+from viadot.tasks import SQLServerCreateTable, DuckDBToDF, DuckDBQuery, AzureSQLDBQuery
 from viadot.tasks.azure_key_vault import AzureKeyVaultSecret
 from prefect.tasks.secrets import PrefectSecret
 
@@ -37,6 +37,10 @@ def create_sql_server_table():
         if_exists="replace",
         credentials=json.loads(credentials_str),
     )
+    drop_sqlserver = AzureSQLDBQuery()
+    drop_sqlserver.run(
+        query=f"DROP TABLE {SCHEMA}.{TABLE}", credentials_secret=credentials_secret
+    )
 
 
 def test_sql_server_to_duckdb(create_sql_server_table):
@@ -68,3 +72,5 @@ def test_sql_server_to_duckdb(create_sql_server_table):
         "summary",
         "_viadot_downloaded_at_utc",
     ]
+    drop_duckdb = DuckDBQuery()
+    drop_duckdb.run(query=f"DROP TABLE {SCHEMA}.{TABLE}", credentials=duckdb_creds)
