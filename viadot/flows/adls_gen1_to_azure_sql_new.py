@@ -10,6 +10,7 @@ from viadot.task_utils import METADATA_COLUMNS, add_ingestion_metadata_task
 
 from ..tasks import AzureDataLakeToDF, AzureDataLakeUpload, AzureSQLCreateTable, BCPTask
 
+
 gen1_to_df_task = AzureDataLakeToDF(gen=1)
 gen2_upload_task = AzureDataLakeUpload(gen=2)
 create_table_task = AzureSQLCreateTable()
@@ -149,4 +150,3 @@ class ADLSGen1ToAzureSQLNew(Flow):
         gen2_upload_task.set_upstream(df_to_csv_task, flow=self)
         create_table_task.set_upstream(df_to_csv_task, flow=self)
         bulk_insert_task.set_upstream(create_table_task, flow=self)
-
