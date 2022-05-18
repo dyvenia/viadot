@@ -7,11 +7,10 @@ import pyodbc
 import requests
 from prefect.utilities.graphql import EnumValue, with_args
 from requests.adapters import HTTPAdapter
-from requests.exceptions import (ConnectionError, HTTPError, ReadTimeout,
-                                 Timeout)
+from requests.exceptions import ConnectionError, HTTPError, ReadTimeout, Timeout
 from requests.packages.urllib3.util.retry import Retry
 from urllib3.exceptions import ProtocolError
-
+from itertools import chain
 from .exceptions import APIError
 
 
@@ -325,3 +324,23 @@ def gen_bulk_insert_query_from_df(
         return insert_query
     else:
         return _gen_insert_query_from_records(tuples_escaped)
+
+
+def union_credentials_dict(*dicts):
+    """Function that union list of dictionaries
+
+    Args:
+        dicts (List[Dict]): list of dictionaries with credentials.
+
+    Returns:
+        Dict: A single dictionary createb by union method.
+
+    Examples:
+
+    >>> a = {"a":1}
+    >>> b = {"b":2}
+    >>> union_credentials_dict(a ,b)
+    {'a': 1, 'b': 2}
+
+    """
+    return dict(chain.from_iterable(dct.items() for dct in dicts))
