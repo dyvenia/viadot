@@ -163,7 +163,6 @@ Please follow the standards and best practices used within the library (eg. when
     - begin with an emoji
     - start with one of the following verbs, capitalized, immediately after the summary emoji: "Added", "Updated", "Removed", "Fixed", "Renamed", and, sporadically, other ones, such as "Upgraded", "Downgraded", or whatever you find relevant for your particular situation
     - contain a useful description of what the commit is doing
-    - contain a useful description of what the commit is doing
 
 ## Set up Black for development in VSCode
 Your code should be formatted with Black when you want to contribute. To set up Black in Visual Studio Code follow instructions below. 
