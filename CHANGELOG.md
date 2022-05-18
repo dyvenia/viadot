@@ -5,6 +5,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Added
+- Added `SQLServerToDF` task
+- Added `SQLServerToDuckDB` flow which downloads data from SQLServer table, loads it to parquet file and then uplads it do DuckDB
+- Added complete proxy set up in `SAPRFC` example (`viadot/examples/sap_rfc`)
+
+
 ## [0.4.3] - 2022-04-28
 ### Added
 - Added `adls_file_name` in  `SupermetricsToADLS` and `SharepointToADLS` flows
@@ -20,6 +26,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fixed `utils.gen_bulk_insert_query_from_df()` failing with > 1000 rows due to INSERT clause limit by chunking the data into multiple INSERTs
 - Fixed `get_flow_last_run_date()` incorrectly parsing the date
 - Fixed `MultipleFlows` when one flow is passed and when last flow fails.
+
 
 ## [0.4.2] - 2022-04-08
 ### Added
