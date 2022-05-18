@@ -1,8 +1,7 @@
 import json
 import logging
 import inspect
-import types
-from viadot.tasks import SQLServerCreateTable
+from viadot.tasks import SQLServerCreateTable, SQLServerToDF
 from viadot.tasks.azure_key_vault import AzureKeyVaultSecret
 from prefect.tasks.secrets import PrefectSecret
 
@@ -19,7 +18,6 @@ def test_sql_server_create_table_init():
 
 
 def test_sql_server_create_table(caplog):
-
     credentials_secret = PrefectSecret(
         "AZURE_DEFAULT_SQLDB_SERVICE_PRINCIPAL_SECRET"
     ).run()
@@ -49,3 +47,17 @@ def test_sql_server_create_table(caplog):
             credentials=json.loads(credentials_str),
         )
         assert "Successfully created table" in caplog.text
+
+
+def test_sql_server_to_df():
+    task = SQLServerToDF(config_key="AZURE_SQL")
+    df = task.run(query=f"SELECT * FROM {SCHEMA}.{TABLE}")
+    assert df.columns.to_list() == [
+        "date",
+        "name",
+        "id",
+        "weather",
+        "rain",
+        "temp",
+        "summary",
+    ]
