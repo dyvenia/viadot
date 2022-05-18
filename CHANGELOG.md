@@ -7,7 +7,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 ### Added
  - Added `.databricks-connect` file for configuring databricks connectivity
-
 ### Changed
  - Changed README with added databricks/spark usage instructions
  - Modified dockerfile to accomodate databricks installation
