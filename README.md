@@ -82,6 +82,8 @@ Install the library in development mode (repeat for the `viadot_jupyter_lab` con
 docker exec -it viadot_testing pip install -e . --user
 ```
 
+### Databricks integration
+To connect to a Databricks cluster, modify `/.databricks-connect` with the desired values. Follow step 2 of this [link](https://docs.microsoft.com/en-us/azure/databricks/dev-tools/databricks-connect) to retrieve the values from the Databricks cluster.
 
 ## Running tests
 
@@ -101,6 +103,13 @@ FLOW_NAME=hello_world; python -m viadot.examples.$FLOW_NAME
 
 However, when developing, the easiest way is to use the provided Jupyter Lab container available in the browser at `http://localhost:9000/`.
 
+## Executing Spark jobs locally using databricks-connect
+To begin using spark you must first create a Spark Session: `spark = SparkSession.builder.appName('session_name').getOrCreate()`. `spark` will be used to access all the spark methods. Here is a list of commonly used spark methods (WIP):
+* spark.createDataFrame(df): Create a Spark dataframe from a Pandas dataframe
+* sparkdf.write.saveAsTable("schema.table"): Takes a Spark Dataframe and saves it as a table in Databricks.
+* Ensure to use the correct schema, as it should be created and specified by the administrator
+* table = spark.sql("select * from schema.table"): example of a simple query run through Python
+
 
 ## How to contribute
 
@@ -108,44 +117,13 @@ However, when developing, the easiest way is to use the provided Jupyter Lab con
 2. Set up locally
 3. Test your changes with `pytest`
 4. Submit a PR. The PR should contain the following:
-    - new/changed functionality
-    - tests for the changes
-    - changes added to `CHANGELOG.md`
-    - any other relevant resources updated (esp. `viadot/docs`)
-
-The general flow of working for this repository in case of forking:
-1. Pull before making any changes
-2. Create a new branch with 
-```
-git checkout -b <name>
-```
-3. Make some work on repository
-4. Stage changes with 
-```
-git add <files>
-```
-5. Commit the changes with 
-```
-git commit -m <message>
-``` 
-__Note__: See out Style Guidelines for more information about commit messages and PR names
-
-6. Fetch and pull the changes that could happen while working with 
-```
-git fetch <remote> <branch>
-git checkout <remote>/<branch>
-```
-7. Push your changes on repostory using 
-```
-git push origin <name>
-```
-8. Use merge to finish your push to repository 
-```
-git checkout <where_merging_to>
-git merge <branch_to_merge>
-```
+- new/changed functionality
+- tests for the changes
+- changes added to `CHANGELOG.md`
+- any other relevant resources updated (esp. `viadot/docs`)
 
 Please follow the standards and best practices used within the library (eg. when adding tasks, see how other tasks are constructed, etc.). For any questions, please reach out to us here on GitHub.
+
 
 ### Style guidelines
 - the code should be formatted with Black using default settings (easiest way is to use the VSCode extension)
@@ -153,14 +131,3 @@ Please follow the standards and best practices used within the library (eg. when
     - begin with an emoji
     - start with one of the following verbs, capitalized, immediately after the summary emoji: "Added", "Updated", "Removed", "Fixed", "Renamed", and, sporadically, other ones, such as "Upgraded", "Downgraded", or whatever you find relevant for your particular situation
     - contain a useful description of what the commit is doing
-
-## Set up Black for development in VSCode
-Your code should be formatted with Black when you want to contribute. To set up Black in Visual Studio Code follow instructions below. 
-1. Install `black` in your environment by writing in the terminal:
-```
-pip install black
-```
-2. Go to the settings - gear icon in the bottom left corner and select `Settings` or type "Ctrl" + ",".
-3. Find the `Format On Save` setting - check the box.
-4. Find the `Python Formatting Provider` and select "black" in the drop-down list.
-5. Your code should auto format on save now.
