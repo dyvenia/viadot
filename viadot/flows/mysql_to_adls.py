@@ -25,13 +25,14 @@ class MySqlToADLS(Flow):
         **kwargs: Dict[str, Any]
     ):
         """
-        Flow for downloading data from ASElite to csv file, then uploading it to ADLS.
+        Flow for downloading data from MySQL to csv file, then uploading it to ADLS.
 
         Args:
             name (str): The name of the flow.
+            country_short (str): Country short to extract proper credentials.
             query (str): Query to perform on a database. Defaults to None.
             sqldb_credentials_secret (str, optional): The name of the Azure Key Vault secret containing a dictionary with
-            ASElite SQL Database credentials. Defaults to None.
+            MySQL Database credentials. Defaults to None.
             vault_name (str, optional): The name of the vault from which to obtain the secrets. Defaults to None.
             file_path (str, optional): Local destination path. Defaults to None.
             sep (str, optional): The delimiter for the output CSV file. Defaults to "\t".
