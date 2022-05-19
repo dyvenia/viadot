@@ -36,7 +36,7 @@ class MySqlToDf(Task):
         )
 
     def __call__(self, *args, **kwargs):
-        """Download from aselite database to df"""
+        """Download from MySQL database to df"""
         return super().__call__(*args, **kwargs)
 
     def run(
