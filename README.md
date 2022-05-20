@@ -82,9 +82,6 @@ Install the library in development mode (repeat for the `viadot_jupyter_lab` con
 docker exec -it viadot_testing pip install -e . --user
 ```
 
-### Databricks integration
-To connect to a Databricks cluster, modify `/.databricks-connect` with the desired values. Follow step 2 of this [link](https://docs.microsoft.com/en-us/azure/databricks/dev-tools/databricks-connect) to retrieve the values from the Databricks cluster.
-
 ## Running tests
 
 To run tests, log into the container and run pytest:
@@ -104,6 +101,28 @@ FLOW_NAME=hello_world; python -m viadot.examples.$FLOW_NAME
 However, when developing, the easiest way is to use the provided Jupyter Lab container available in the browser at `http://localhost:9000/`.
 
 ## Executing Spark jobs locally using databricks-connect
+### Setting up
+To begin using spark, you must first declare the environmental variables as follows:
+```
+DATABRICKS_HOST = os.getenv("DATABRICKS_HOST")
+DATABRICKS_API_TOKEN = os.getenv("DATABRICKS_API_TOKEN")
+DATABRICKS_ORG_ID = os.getenv("DATABRICKS_ORG_ID")
+DATABRICKS_PORT = os.getenv("DATABRICKS_PORT")
+DATABRICKS_CLUSTER_ID = os.getenv("DATABRICKS_CLUSTER_ID")
+```
+
+Alternatively, you can also create a file called `.databricks-connect` in the root directory and add the required variables there. It should follow the following format:
+```
+{
+  "host": "",
+  "token": "",
+  "cluster_id": "",
+  "org_id": "",
+  "port": ""
+}
+```
+To retrieve the values, follow step 2 in this [link](https://docs.microsoft.com/en-us/azure/databricks/dev-tools/databricks-connect)
+### Executing spark functions
 To begin using spark you must first create a Spark Session: `spark = SparkSession.builder.appName('session_name').getOrCreate()`. `spark` will be used to access all the spark methods. Here is a list of commonly used spark methods (WIP):
 * spark.createDataFrame(df): Create a Spark dataframe from a Pandas dataframe
 * sparkdf.write.saveAsTable("schema.table"): Takes a Spark Dataframe and saves it as a table in Databricks.
