@@ -6,10 +6,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 ### Added
- - Added `.databricks-connect` file for configuring databricks connectivity
+ - Enabled Databricks Connect in the image. Specify the variables [this way](./README.md#executing-spark-jobs)
+
 ### Changed
- - Changed README with added databricks/spark usage instructions
- - Modified dockerfile to accomodate databricks installation
+ - Changed README with added Databricks/Spark usage instructions
+ - Modified Dockerfile to accomodate Databricks installation
+
+
 ## [0.4.3] - 2022-04-28
 ### Added
 - Added `adls_file_name` in  `SupermetricsToADLS` and `SharepointToADLS` flows
