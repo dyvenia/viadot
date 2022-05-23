@@ -21,3 +21,4 @@ from .duckdb_transform import DuckDBTransform
 from .duckdb_to_sql_server import DuckDBToSQLServer
 from .multiple_flows import MultipleFlows
 from .sql_server_to_duckdb import SQLServerToDuckDB
+from .epicor_to_duckdb import EpicorOrdersToDuckDB

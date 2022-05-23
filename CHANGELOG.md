@@ -6,6 +6,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 ### Added
+- Added new connector - Epicor. Created `Epicor` source, `EpicorToDF` task and `EpicorToDuckDB` flow.
 - Added `SQLServerToDF` task
 - Added `SQLServerToDuckDB` flow which downloads data from SQLServer table, loads it to parquet file and then uplads it do DuckDB
 - Added complete proxy set up in `SAPRFC` example (`viadot/examples/sap_rfc`)
