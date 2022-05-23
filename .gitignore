@@ -153,3 +153,6 @@ desktop.ini
 
 # SAP RFC lib
 sap_netweaver_rfc
+
+# Databricks-connect
+.databricks-conenct
