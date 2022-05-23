@@ -234,6 +234,6 @@ class EpicorOrdersToDF(Task):
             start_date_field=start_date_field,
             end_date_field=end_date_field,
         )
-        data = epicor.get_xml_data()
+        data = epicor.get_xml_response()
         df = parse_orders_xml(data)
         return df

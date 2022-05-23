@@ -99,7 +99,7 @@ class Epicor(Source):
                         "The data filter must be provided due to full data size."
                     )
 
-    def get_xml_data(self):
+    def get_xml_response(self):
         "Function for getting response from Epicor API"
 
         self.check_filter()
