@@ -32,4 +32,8 @@ duckdb==0.3.2
 google-auth==2.6.2
 sendgrid==6.9.7
 pandas-gbq==0.17.4
+<<<<<<< HEAD
 databricks-connect==10.4.0b0
+=======
+databricks-connect==10.4.0b0
+>>>>>>> e04b6386ac2083dffd4b2a773e9dd804ee32a5dc
