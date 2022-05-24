@@ -21,6 +21,7 @@ class MySqlToADLS(Flow):
         if_exists: Literal["replace", "append", "delete"] = "replace",
         overwrite: bool = True,
         sp_credentials_secret: str = None,
+        credentials_secret: str = None,
         *args: List[any],
         **kwargs: Dict[str, Any]
     ):
@@ -41,6 +42,7 @@ class MySqlToADLS(Flow):
             overwrite (str, optional): Whether to overwrite the destination file. Defaults to True.
             sp_credentials_secret (str, optional): The name of the Azure Key Vault secret containing a dictionary with
             ACCOUNT_NAME and Service Principal credentials (TENANT_ID, CLIENT_ID, CLIENT_SECRET). Defaults to None.
+            credentials_secret (str, optional): Key Vault name. Defaults to None.
             remove_special_characters (str, optional): Call a function that remove special characters like escape symbols. Defaults to None.
             columns_to_clean (List(str), optional): Select columns to clean, used with remove_special_characters.
             If None whole data frame will be processed. Defaults to None.
@@ -56,6 +58,7 @@ class MySqlToADLS(Flow):
         self.to_path = to_path
         self.if_exists = if_exists
         self.sp_credentials_secret = sp_credentials_secret
+        self.credentials_secret = credentials_secret
 
         super().__init__(*args, name=name, **kwargs)
 
@@ -65,7 +68,9 @@ class MySqlToADLS(Flow):
 
         df_task = MySqlToDf(country_short=self.country_short)
 
-        df = df_task.bind(query=self.query, flow=self)
+        df = df_task.bind(
+            credentials_secret=self.credentials_secret, query=self.query, flow=self
+        )
 
         create_csv = df_to_csv.bind(
             df,
