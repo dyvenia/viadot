@@ -102,7 +102,7 @@ However, when developing, the easiest way is to use the provided Jupyter Lab con
 
 ## Executing Spark jobs
 ### Setting up
-To begin using spark, you must first declare the environmental variables as follows:
+To begin using Spark, you must first declare the environmental variables as follows:
 ```
 DATABRICKS_HOST = os.getenv("DATABRICKS_HOST")
 DATABRICKS_API_TOKEN = os.getenv("DATABRICKS_API_TOKEN")
@@ -123,8 +123,8 @@ Alternatively, you can also create a file called `.databricks-connect` in the ro
 ```
 To retrieve the values, follow step 2 in this [link](https://docs.microsoft.com/en-us/azure/databricks/dev-tools/databricks-connect)
 
-### Executing spark functions
-To begin using Spark, you must first create a Spark Session: `spark = SparkSession.builder.appName('session_name').getOrCreate()`. `spark` will be used to access all the spark methods. Here is a list of commonly used Spark methods (WIP):
+### Executing Spark functions
+To begin using Spark, you must first create a Spark Session: `spark = SparkSession.builder.appName('session_name').getOrCreate()`. `spark` will be used to access all the Spark methods. Here is a list of commonly used Spark methods (WIP):
 * `spark.createDataFrame(df)`: Create a Spark DataFrame from a Pandas DataFrame
 * `sparkdf.write.saveAsTable("schema.table")`: Takes a Spark DataFrame and saves it as a table in Databricks.
 * Ensure to use the correct schema, as it should be created and specified by the administrator
