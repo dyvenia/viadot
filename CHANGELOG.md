@@ -6,11 +6,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 ### Added
- - Enabled Databricks Connect in the image. Specify the variables [this way](./README.md#executing-spark-jobs)
+ - Enabled Databricks Connect in the image. To enable, [follow this guide](./README.md#executing-spark-jobs)
 
 ### Changed
- - Changed README with added Databricks/Spark usage instructions
- - Modified Dockerfile to accomodate Databricks installation
+- Added `SQLServerToDF` task
+- Added `SQLServerToDuckDB` flow which downloads data from SQLServer table, loads it to parquet file and then uplads it do DuckDB
+- Added complete proxy set up in `SAPRFC` example (`viadot/examples/sap_rfc`)
+- Added Databricks/Spark setup to the image. See README for setup & usage instructions.
 
 
 ## [0.4.3] - 2022-04-28
@@ -28,6 +30,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fixed `utils.gen_bulk_insert_query_from_df()` failing with > 1000 rows due to INSERT clause limit by chunking the data into multiple INSERTs
 - Fixed `get_flow_last_run_date()` incorrectly parsing the date
 - Fixed `MultipleFlows` when one flow is passed and when last flow fails.
+
 
 ## [0.4.2] - 2022-04-08
 ### Added
