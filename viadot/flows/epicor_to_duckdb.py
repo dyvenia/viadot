@@ -24,17 +24,17 @@ class EpicorOrdersToDuckDB(Flow):
         **kwargs: Dict[str, Any],
     ):
         """
-        Flow for downloading orders data from Epicor API and uploading it to DuckDB using .parquet files.
+        Flow for downloading orders data from Epicor API and uploading it to DuckDB using Parquet files.
 
         Args:
             base_url (str, required): Base url to Epicor Orders.
-            filters_xml (str, required): Filters in form of XML. The date filter is necessary.
+            filters_xml (str, required): Filters in form of XML. The date filter is required.
             local_file_path (str): The path to the source Parquet file.
-            epicor_credentials (Dict[str, Any], optional): Credentials to connect with Epicor Api containing host, port,
+            epicor_credentials (Dict[str, Any], optional): Credentials to connect with Epicor API containing host, port,
                 username and password. Defaults to None.
             epicor_config_key (str, optional): Credential key to dictionary where details are stored. Defaults to None.
-            start_date_field (str, optional) The name of filters filed containing start date. Defaults to "BegInvoiceDate".
-            end_date_field (str, optional) The name of filters filed containing end date. Defaults to "EndInvoiceDate".
+            start_date_field (str, optional) The name of filters field containing start date. Defaults to "BegInvoiceDate".
+            end_date_field (str, optional) The name of filters field containing end date. Defaults to "EndInvoiceDate".
             duckdb_table (str, optional): Destination table in DuckDB. Defaults to None.
             duckdb_schema (str, optional): Destination schema in DuckDB. Defaults to None.
             if_exists (Literal, optional):  What to do if the table already exists. Defaults to "fail".

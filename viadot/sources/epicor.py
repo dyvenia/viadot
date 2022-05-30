@@ -24,12 +24,12 @@ class Epicor(Source):
 
         Args:
             base_url (str, required): Base url to Epicor Orders.
-            filters_xml (str, required): Filters in form of XML. The date filter is necessary.
-            credentials (Dict[str, Any], optional): Credentials to connect with Epicor Api containing host, port, username and password.
+            filters_xml (str, required): Filters in form of XML. The date filter is required.
+            credentials (Dict[str, Any], optional): Credentials to connect with Epicor API containing host, port, username and password.
                 Defaults to None.
             config_key (str, optional): Credential key to dictionary where details are stored.
-            start_date_field (str, optional) The name of filters filed containing start date. Defaults to "BegInvoiceDate".
-            end_date_field (str, optional) The name of filters filed containing end date. Defaults to "EndInvoiceDate".
+            start_date_field (str, optional) The name of filters field containing start date. Defaults to "BegInvoiceDate".
+            end_date_field (str, optional) The name of filters field containing end date. Defaults to "EndInvoiceDate".
         """
         DEFAULT_CREDENTIALS = local_config.get(config_key)
         credentials = credentials or DEFAULT_CREDENTIALS
@@ -85,7 +85,7 @@ class Epicor(Source):
             + str(self.generate_token())
         )
 
-    def check_filter(self) -> None:
+    def validate_filter(self) -> None:
         "Function checking if user had specified date range filters."
 
         root = ET.fromstring(self.filters_xml)
@@ -96,13 +96,13 @@ class Epicor(Source):
                     or subchild.tag == self.end_date_field
                 ) and subchild.text == None:
                     raise DataRangeError(
-                        "The data filter must be provided due to full data size."
+                        "Too much data. Please provide a date range filter."
                     )
 
     def get_xml_response(self):
         "Function for getting response from Epicor API"
 
-        self.check_filter()
+        self.validate_filter()
         payload = self.filters_xml
         url = self.generate_url()
         headers = {"Content-Type": "application/xml"}

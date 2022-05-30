@@ -42,9 +42,9 @@ def epicor_error():
 
 
 def test_connection(epicor):
-    assert epicor.get_xml_response().status_code == 200
+    assert epicor.get_xml_response().ok
 
 
-def test_check_filter(epicor_error):
+def test_validate_filter(epicor_error):
     with pytest.raises(DataRangeError):
-        epicor_error.check_filter()
+        epicor_error.validate_filter()
