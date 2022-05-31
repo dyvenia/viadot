@@ -37,7 +37,7 @@ def test_epicor_to_duckdb():
     df_task = DuckDBToDF(credentials=duckdb_creds)
     df = df_task.run(table=TABLE, schema=SCHEMA)
 
-    assert df.shape == (24, 58)
+    assert df.shape == (24, 59)
 
     run_query = DuckDBQuery()
     run_query.run(query=f"DROP TABLE {SCHEMA}.{TABLE}", credentials=duckdb_creds)

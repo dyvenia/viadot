@@ -17,4 +17,4 @@ def test_epicor_orders_to_df():
 </OrderQuery>""",
     )
     df = task.run()
-    assert df.shape == (24, 57)
+    assert df.shape == (24, 58)

@@ -1,10 +1,177 @@
 import requests
-from typing import Any, Dict
+import pandas as pd
+from typing import Any, Dict, Optional
 import xml.etree.ElementTree as ET
 
 from .base import Source
 from ..config import local_config
 from ..exceptions import CredentialError, DataRangeError
+
+from pydantic import BaseModel
+
+""" 
+The official documentation does not specify the list of required 
+fields so they were set as optional in BaseModel classes.
+"""
+
+
+class TrackingNumbers(BaseModel):
+    TrackingNumber: Optional[str]
+
+
+class ShipToAddress(BaseModel):
+    ShipToNumber: Optional[str]
+    Attention: Optional[str]
+    AddressLine1: Optional[str]
+    AddressLine2: Optional[str]
+    AddressLine3: Optional[str]
+    City: Optional[str]
+    State: Optional[str]
+    Zip: Optional[str]
+    Country: Optional[str]
+    EmailAddress: Optional[str]
+    PhoneNumber: Optional[str]
+    FaxNumber: Optional[str]
+
+
+class InvoiceTotals(BaseModel):
+    Merchandise: Optional[str]
+    InboundFreight: Optional[str]
+    OutboundFreight: Optional[str]
+    Handling: Optional[str]
+    Delivery: Optional[str]
+    Pickup: Optional[str]
+    Restocking: Optional[str]
+    MinimumCharge: Optional[str]
+    DiscountAllowance: Optional[str]
+    SalesTax: Optional[str]
+    TotalInvoice: Optional[str]
+
+
+class HeaderInformation(BaseModel):
+    CompanyNumber: Optional[str]
+    OrderNumber: Optional[str]
+    InvoiceNumber: Optional[str]
+    CustomerNumber: Optional[str]
+    CustomerDescription: Optional[str]
+    CustomerPurchaseOrderNumber: Optional[str]
+    Contact: Optional[str]
+    SellingWarehouse: Optional[str]
+    ShippingWarehouse: Optional[str]
+    ShippingMethod: Optional[str]
+    PaymentTerms: Optional[str]
+    PaymentTermsDescription: Optional[str]
+    FreightTerms: Optional[str]
+    FreightTermsDescription: Optional[str]
+    SalesRepOne: Optional[str]
+    SalesRepOneDescription: Optional[str]
+    EntryDate: Optional[str]
+    OrderDate: Optional[str]
+    RequiredDate: Optional[str]
+    ShippedDate: Optional[str]
+    InvoiceDate: Optional[str]
+    ShipToAddress: Optional[ShipToAddress]
+    TrackingNumbers: Optional[TrackingNumbers]
+    InvoiceTotals: Optional[InvoiceTotals]
+
+
+class LineItemDetail(BaseModel):
+    ProductNumber: Optional[str]
+    ProductDescription1: Optional[str]
+    ProductDescription2: Optional[str]
+    CustomerProductNumber: Optional[str]
+    LineItemNumber: Optional[str]
+    QuantityOrdered: Optional[str]
+    QuantityShipped: Optional[str]
+    QuantityBackordered: Optional[str]
+    Price: Optional[str]
+    UnitOfMeasure: Optional[str]
+    ExtendedPrice: Optional[str]
+    QuantityShippedExtension: Optional[str]
+    LineItemShipWarehouse: Optional[str]
+
+
+class Order(BaseModel):
+    HeaderInformation: Optional[HeaderInformation]
+    LineItemDetail: Optional[LineItemDetail]
+
+
+def parse_orders_xml(xml_data: str) -> pd.DataFrame:
+    """
+    Function to parse xml containing Epicor Orders Data.
+
+    Args:
+        xml_data (str, required): Response from Epicor API in form of xml
+    Returns:
+        pd.DataFrame: DataFrame containing parsed orders data.
+    """
+    final_df = pd.DataFrame()
+    ship_dict = {}
+    invoice_dict = {}
+    header_params_dict = {}
+    item_params_dict = {}
+
+    root = ET.fromstring(xml_data.text)
+
+    for order in root.findall("Order"):
+        for header in order.findall("HeaderInformation"):
+            for tracking_numbers in header.findall("TrackingNumbers"):
+                numbers = ""
+                for tracking_number in tracking_numbers.findall("TrackingNumber"):
+                    numbers = numbers + "'" + tracking_number.text + "'"
+                result_numbers = TrackingNumbers(TrackingNumber=numbers)
+
+            for shipto in header.findall("ShipToAddress"):
+                for ship_param in ShipToAddress.__dict__.get("__annotations__"):
+                    try:
+                        ship_value = shipto.find(f"{ship_param}").text
+                    except:
+                        ship_value = None
+                    ship_parameter = {ship_param: ship_value}
+                    ship_dict.update(ship_parameter)
+                ship_address = ShipToAddress(**ship_dict)
+
+            for invoice in header.findall("InvoiceTotals"):
+                for invoice_param in InvoiceTotals.__dict__.get("__annotations__"):
+                    try:
+                        invoice_value = invoice.find(f"{invoice_param}").text
+                    except:
+                        invoice_value = None
+                    invoice_parameter = {invoice_param: invoice_value}
+                    invoice_dict.update(invoice_parameter)
+                invoice_total = InvoiceTotals(**invoice_dict)
+
+            for header_param in HeaderInformation.__dict__.get("__annotations__"):
+                try:
+                    header_value = header.find(f"{header_param}").text
+                except:
+                    header_value = None
+                if header_param == "TrackingNumbers":
+                    header_parameter = {header_param: result_numbers}
+                elif header_param == "ShipToAddress":
+                    header_parameter = {header_param: ship_address}
+                elif header_param == "InvoiceTotals":
+                    header_parameter = {header_param: invoice_total}
+                else:
+                    header_parameter = {header_param: header_value}
+                header_params_dict.update(header_parameter)
+            header_info = HeaderInformation(**header_params_dict)
+        for items in order.findall("LineItemDetails"):
+            for item in items.findall("LineItemDetail"):
+                for item_param in LineItemDetail.__dict__.get("__annotations__"):
+                    try:
+                        item_value = item.find(f"{item_param}").text
+                    except:
+                        item_value = None
+                    item_parameter = {item_param: item_value}
+                    item_params_dict.update(item_parameter)
+                line_item = LineItemDetail(**item_params_dict)
+                row = Order(HeaderInformation=header_info, LineItemDetail=line_item)
+                my_dict = row.dict()
+                final_df = final_df.append(
+                    pd.json_normalize(my_dict, max_level=2), ignore_index=True
+                )
+    return final_df
 
 
 class Epicor(Source):
@@ -34,7 +201,8 @@ class Epicor(Source):
         DEFAULT_CREDENTIALS = local_config.get(config_key)
         credentials = credentials or DEFAULT_CREDENTIALS
 
-        if credentials is None:
+        required_credentials = ["host", "port", "username", "password"]
+        if any([cred_key not in credentials for cred_key in required_credentials]):
             raise CredentialError("Credentials not found.")
 
         self.credentials = credentials
@@ -47,7 +215,7 @@ class Epicor(Source):
         super().__init__(*args, credentials=credentials, **kwargs)
 
     def generate_token(self) -> str:
-        "Function to generate API access token that last 24 hours"
+        "Function to generate API access token that is valid for 24 hours"
 
         url = (
             "http://"
@@ -60,15 +228,11 @@ class Epicor(Source):
             + self.credentials["password"]
         )
 
-        payload = {}
-        files = {}
         headers = {
             "Content-Type": "application/xml",
         }
 
-        response = requests.request(
-            "POST", url, headers=headers, data=payload, files=files
-        )
+        response = requests.request("POST", url, headers=headers)
 
         return response.text
 
@@ -109,3 +273,8 @@ class Epicor(Source):
         response = requests.request("POST", url, headers=headers, data=payload)
 
         return response
+
+    def to_df(self):
+        data = self.get_xml_response()
+        df = parse_orders_xml(data)
+        return df
