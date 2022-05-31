@@ -43,6 +43,7 @@ class BigQueryToADLS(Flow):
         local_file_path: str = None,
         adls_file_name: str = None,
         adls_sp_credentials_secret: str = None,
+        overwrite_file: bool = False,
         if_exists: str = "replace",
         *args: List[Any],
         **kwargs: Dict[str, Any],
@@ -57,7 +58,7 @@ class BigQueryToADLS(Flow):
             If the column that looks like a date does not exist in the table, get all the data from the table.
 
         Args:
-            name (str, optional): _description_. Defaults to None.
+            name (str): The name of the flow.
             dataset_name (str, optional): Dataset name. Defaults to None.
             table_name (str, optional): Table name. Defaults to None.
             date_column_name (str, optional): The query is based on a date, the user can provide the name
@@ -77,6 +78,7 @@ class BigQueryToADLS(Flow):
             adls_sp_credentials_secret (str, optional): The name of the Azure Key Vault secret containing a dictionary with
             ACCOUNT_NAME and Service Principal credentials (TENANT_ID, CLIENT_ID, CLIENT_SECRET) for the Azure Data Lake.
             Defaults to None.
+            overwrite_file (bool, optional): Whether to overwrite files in the lake. Defaults to False.
             if_exists (str, optional): What to do if the file exists. Defaults to "replace".
         """
         # BigQueryToDF
@@ -90,6 +92,7 @@ class BigQueryToADLS(Flow):
         self.credentials_secret = credentials_secret
 
         # AzureDataLakeUpload
+        self.overwrite = overwrite_file
         self.adls_sp_credentials_secret = adls_sp_credentials_secret
         self.if_exists = if_exists
         self.output_file_extension = output_file_extension
@@ -159,6 +162,7 @@ class BigQueryToADLS(Flow):
         file_to_adls_task.bind(
             from_path=self.local_file_path,
             to_path=self.adls_file_path,
+            overwrite=self.overwrite,
             sp_credentials_secret=self.adls_sp_credentials_secret,
             flow=self,
         )
@@ -171,6 +175,7 @@ class BigQueryToADLS(Flow):
         json_to_adls_task.bind(
             from_path=self.local_json_path,
             to_path=self.adls_schema_file_dir_file,
+            overwrite=self.overwrite,
             sp_credentials_secret=self.adls_sp_credentials_secret,
             flow=self,
         )
