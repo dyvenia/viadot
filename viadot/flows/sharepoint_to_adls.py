@@ -38,7 +38,7 @@ class SharepointToADLS(Flow):
         adls_dir_path: str = None,
         adls_file_name: str = None,
         adls_sp_credentials_secret: str = None,
-        overwrite_file: bool = False,
+        overwrite_adls: bool = False,
         if_empty: str = "warn",
         if_exists: str = "replace",
         *args: List[any],
@@ -62,7 +62,7 @@ class SharepointToADLS(Flow):
             adls_sp_credentials_secret (str, optional): The name of the Azure Key Vault secret containing a dictionary with
             ACCOUNT_NAME and Service Principal credentials (TENANT_ID, CLIENT_ID, CLIENT_SECRET) for the Azure Data Lake.
             Defaults to None.
-            overwrite_file (bool, optional): Whether to overwrite files in the lake. Defaults to False.
+            overwrite_adls (bool, optional): Whether to overwrite files in the lake. Defaults to False.
             if_empty (str, optional): What to do if query returns no data. Defaults to "warn".
         """
         # SharepointToDF
@@ -75,7 +75,7 @@ class SharepointToADLS(Flow):
         self.validate_excel_file = validate_excel_file
 
         # AzureDataLakeUpload
-        self.overwrite = overwrite_file
+        self.overwrite = overwrite_adls
         self.adls_sp_credentials_secret = adls_sp_credentials_secret
         self.if_exists = if_exists
         self.output_file_extension = output_file_extension

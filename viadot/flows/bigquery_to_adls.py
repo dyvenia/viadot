@@ -43,7 +43,7 @@ class BigQueryToADLS(Flow):
         local_file_path: str = None,
         adls_file_name: str = None,
         adls_sp_credentials_secret: str = None,
-        overwrite_file: bool = False,
+        overwrite_adls: bool = False,
         if_exists: str = "replace",
         *args: List[Any],
         **kwargs: Dict[str, Any],
@@ -78,7 +78,7 @@ class BigQueryToADLS(Flow):
             adls_sp_credentials_secret (str, optional): The name of the Azure Key Vault secret containing a dictionary with
             ACCOUNT_NAME and Service Principal credentials (TENANT_ID, CLIENT_ID, CLIENT_SECRET) for the Azure Data Lake.
             Defaults to None.
-            overwrite_file (bool, optional): Whether to overwrite files in the lake. Defaults to False.
+            overwrite_adls (bool, optional): Whether to overwrite files in the lake. Defaults to False.
             if_exists (str, optional): What to do if the file exists. Defaults to "replace".
         """
         # BigQueryToDF
@@ -92,7 +92,7 @@ class BigQueryToADLS(Flow):
         self.credentials_secret = credentials_secret
 
         # AzureDataLakeUpload
-        self.overwrite = overwrite_file
+        self.overwrite = overwrite_adls
         self.adls_sp_credentials_secret = adls_sp_credentials_secret
         self.if_exists = if_exists
         self.output_file_extension = output_file_extension
