@@ -28,7 +28,7 @@ class SharepointToADLS(Flow):
     def __init__(
         self,
         name: str,
-        url_to_file: str,
+        url_to_file: str = None,
         nrows_to_df: int = None,
         path_to_file: str = None,
         sheet_number: int = None,
@@ -49,7 +49,7 @@ class SharepointToADLS(Flow):
 
         Args:
             name (str): The name of the flow.
-            url_to_file (str): Link to a file on Sharepoint.
+            url_to_file (str, optional): Link to a file on Sharepoint. Defaults to None.
                         (e.g : https://{tenant_name}.sharepoint.com/sites/{folder}/Shared%20Documents/Dashboard/file).
             nrows_to_df (int, optional): Number of rows to read at a time. Defaults to 50000. Defaults to None.
             path_to_file (str, optional): Path to local Excel file. Defaults to None.
