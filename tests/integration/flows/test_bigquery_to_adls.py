@@ -1,7 +1,7 @@
 from viadot.flows import BigQueryToADLS
 from prefect.tasks.secrets import PrefectSecret
 import pendulum
-
+import os
 
 ADLS_PATH = "raw/tests"
 FILE_NAME = str(pendulum.now("utc")) + ".parquet"
@@ -13,7 +13,7 @@ ADLS_CREDENTIAL_SECRET = PrefectSecret(
 
 def test_bigquery_to_adls():
     flow_bigquery = BigQueryToADLS(
-        name="BigQuery to ADLS extract",
+        name="Test BigQuery to ADLS extract",
         dataset_name="official_empty",
         table_name="space",
         adls_file_name=FILE_NAME,
@@ -27,11 +27,13 @@ def test_bigquery_to_adls():
 
     task_results = result.result.values()
     assert all([task_result.is_successful() for task_result in task_results])
+    os.remove("test_bigquery_to_adls_extract.parquet")
+    os.remove("test_bigquery_to_adls_extract.json")
 
 
 def test_bigquery_to_adls_overwrite_true():
     flow_bigquery = BigQueryToADLS(
-        name="BigQuery to ADLS overwrite true",
+        name="Test BigQuery to ADLS overwrite true",
         dataset_name="official_empty",
         table_name="space",
         credentials_key=BIGQ_CREDENTIAL_KEY,
@@ -46,11 +48,13 @@ def test_bigquery_to_adls_overwrite_true():
 
     task_results = result.result.values()
     assert all([task_result.is_successful() for task_result in task_results])
+    os.remove("test_bigquery_to_adls_overwrite_true.parquet")
+    os.remove("test_bigquery_to_adls_overwrite_true.json")
 
 
 def test_bigquery_to_adls_false():
     flow_bigquery = BigQueryToADLS(
-        name="BigQuery to ADLS overwrite false",
+        name="Test BigQuery to ADLS overwrite false",
         dataset_name="official_empty",
         table_name="space",
         adls_file_name=FILE_NAME,
@@ -62,3 +66,5 @@ def test_bigquery_to_adls_false():
 
     result = flow_bigquery.run()
     assert result.is_failed()
+    os.remove("test_bigquery_to_adls_overwrite_false.parquet")
+    os.remove("test_bigquery_to_adls_overwrite_false.json")
