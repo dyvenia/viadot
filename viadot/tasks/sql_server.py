@@ -4,6 +4,8 @@ from typing import Any, Dict, Literal
 from prefect import Task
 from prefect.utilities.tasks import defaults_from_attrs
 
+from viadot.sources import sql_server
+
 from ..config import local_config
 from ..sources import SQLServer
 
@@ -81,3 +83,47 @@ class SQLServerCreateTable(Task):
             self.logger.info(
                 f"Table {fqn} has not been created as if_exists is set to {if_exists}."
             )
+
+
+class SQLServerToDF(Task):
+    def __init__(
+        self,
+        config_key: str = None,
+        *args,
+        **kwargs,
+    ):
+        """
+        Task for downloading data from SQL Server to a pandas DataFrame.
+
+        Args:
+            config_key (str, optional): The key inside local config containing the credentials. Defaults to None.
+
+        """
+        self.config_key = config_key
+
+        super().__init__(name="sql_server_to_df", *args, **kwargs)
+
+    @defaults_from_attrs("config_key")
+    def run(
+        self,
+        query: str,
+        config_key: str = None,
+    ):
+        """
+        Load the result of a SQL Server Database query into a pandas DataFrame.
+
+        Args:
+            query (str, required): The query to execute on the SQL Server database. If the qery doesn't start
+                with "SELECT" returns an empty DataFrame.
+            config_key (str, optional): The key inside local config containing the credentials. Defaults to None.
+
+        """
+        sql_server = SQLServer(config_key=config_key)
+        df = sql_server.to_df(query=query)
+        nrows = df.shape[0]
+        ncols = df.shape[1]
+
+        self.logger.info(
+            f"Successfully downloaded {nrows} rows and {ncols} columns of data to a DataFrame."
+        )
+        return df

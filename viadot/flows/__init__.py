@@ -25,3 +25,6 @@ try:
     from .sap_rfc_to_adls import SAPRFCToADLS
 except ImportError:
     pass
+  
+from .sql_server_to_duckdb import SQLServerToDuckDB
+
