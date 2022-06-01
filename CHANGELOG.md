@@ -17,6 +17,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.4.3] - 2022-04-28
 ### Added
+- Added `func` parameter to `SAPRFC` 
+- Added `SAPRFCToADLS` flow which downloads data from SAP Database to to a pandas DataFrame, exports df to csv and uploads it to Azure Data Lake.
 - Added `adls_file_name` in  `SupermetricsToADLS` and `SharepointToADLS` flows
 - Added `BigQueryToADLS` flow class which anables extract data from BigQuery.
 - Added `Salesforce` source
