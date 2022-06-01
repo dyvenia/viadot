@@ -222,19 +222,19 @@ class Epicor(Source):
             + self.credentials["host"]
             + ":"
             + str(self.credentials["port"])
-            + "/api/security/token/?username="
-            + self.credentials["username"]
-            + "&password="
-            + self.credentials["password"]
+            + "/api/security/token/"
         )
 
         headers = {
-            "Content-Type": "application/xml",
+            "Content-Type": "application/json",
+            "username": self.credentials["username"],
+            "password": self.credentials["password"],
         }
 
         response = requests.request("POST", url, headers=headers)
-
-        return response.text
+        root = ET.fromstring(response.text)
+        token = root.find("AccessToken").text
+        return token
 
     def generate_url(self) -> str:
         "Function to generate url to download data"
@@ -245,8 +245,6 @@ class Epicor(Source):
             + ":"
             + str(self.credentials["port"])
             + self.base_url
-            + "?token="
-            + str(self.generate_token())
         )
 
     def validate_filter(self) -> None:
@@ -269,12 +267,16 @@ class Epicor(Source):
         self.validate_filter()
         payload = self.filters_xml
         url = self.generate_url()
-        headers = {"Content-Type": "application/xml"}
+        headers = {
+            "Content-Type": "application/xml",
+            "Authorization": "Bearer " + self.generate_token(),
+        }
         response = requests.request("POST", url, headers=headers, data=payload)
 
         return response
 
     def to_df(self):
+        "Function for creating pandas DataFrame from Epicor API response"
         data = self.get_xml_response()
         df = parse_orders_xml(data)
         return df
