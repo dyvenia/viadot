@@ -350,6 +350,16 @@ class EnsureDFColumnOrder(Task):
     """
     Task for checking the order of columns in the loaded DF and in the SQL table into which the data from DF will be loaded.
     If order is different then DF columns are reordered according to the columns of the SQL table.
+
+    Args:
+            table (str, optional): SQL table name without schema. Defaults to None.
+            schema (str, optional): SQL schema name. Defaults to None.
+            if_exists (Literal, optional): What to do if the table exists. Defaults to "replace".
+            df (pd.DataFrame, optional): Data Frame. Defaults to None.
+            dtypes (Dict[str,Any], optional): The data types to use for the table. Defaults to None.
+            config_key (str, optional): Config key containing credentials to database. Defaults to None.
+            driver (str, optional): The SQL driver to use. Defaults to "ODBC Driver 17 for SQL Server".
+
     """
 
     def __init__(
@@ -393,7 +403,7 @@ class EnsureDFColumnOrder(Task):
 
         return df_changed
 
-    def sanitize_columns(self, df: pd.DataFrame = None):
+    def sanitize_columns(self, df: pd.DataFrame = None) -> pd.DataFrame:
         """
         Function to remove spaces from the beginning and from the end of a column name.
         Args:
