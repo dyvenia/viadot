@@ -1,10 +1,7 @@
-import os
 from typing import Any, Dict, List, Union, Literal
 
-import pendulum
-from prefect import Flow, Task, apply_map, task
+from prefect import Flow, Task, apply_map
 import pandas as pd
-from ..utils import slugify
 from ..task_utils import (
     df_to_csv,
     union_dfs_task,
@@ -26,7 +23,7 @@ class OutlookToADLS(Flow):
         start_date: str = None,
         end_date: str = None,
         local_file_path: str = None,
-        extension_file: str = ".parquet",
+        output_file_extension: str = ".parquet",
         adls_file_path: str = None,
         overwrite_adls: bool = True,
         adls_sp_credentials_secret: str = None,
@@ -35,8 +32,8 @@ class OutlookToADLS(Flow):
         *args: List[Any],
         **kwargs: Dict[str, Any],
     ):
-        """Flow for downloading data from Outlook source to a local file (parquet by default, otherwise csv for example)
-        using Outlook API, then uploading it to Azure Data Lake.
+        """
+        Flow for downloading data from Outlook source to Azure Data Lake in parquet format by default.
 
         Args:
             mailbox_list (List[str]): Mailbox name.
@@ -44,7 +41,7 @@ class OutlookToADLS(Flow):
             start_date (str, optional): A filtering start date parameter e.g. "2022-01-01". Defaults to None.
             end_date (str, optional): A filtering end date parameter e.g. "2022-01-02". Defaults to None.
             local_file_path (str, optional): Local destination path. Defaults to None.
-            extension_file (str, optional): Output file extension. Defaults to ".parquet".
+            output_file_extension (str, optional): Output file extension. Defaults to ".parquet".
             adls_file_path (str, optional): Azure Data Lake destination file path. Defaults to None.
             overwrite_adls (bool, optional): Whether to overwrite the file in ADLS. Defaults to True.
             adls_sp_credentials_secret (str, optional): The name of the Azure Key Vault secret containing a dictionary with
@@ -62,7 +59,7 @@ class OutlookToADLS(Flow):
 
         # AzureDataLakeUpload
         self.adls_file_path = adls_file_path
-        self.extension_file = extension_file
+        self.output_file_extension = output_file_extension
         self.overwrite_adls = overwrite_adls
         self.adls_sp_credentials_secret = adls_sp_credentials_secret
 
@@ -91,7 +88,7 @@ class OutlookToADLS(Flow):
         df = union_dfs_task.bind(dfs, flow=self)
         df_with_metadata = add_ingestion_metadata_task.bind(df, flow=self)
 
-        if self.extension_file == ".parquet":
+        if self.output_file_extension == ".parquet":
             df_to_file = df_to_parquet.bind(
                 df=df_with_metadata,
                 path=self.local_file_path,

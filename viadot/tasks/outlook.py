@@ -17,7 +17,7 @@ class OutlookToDF(Task):
         start_date: str = None,
         end_date: str = None,
         credentials: Dict[str, Any] = None,
-        extension_file: str = ".csv",
+        output_file_extension: str = ".csv",
         limit: int = 10000,
         *args: List[Any],
         **kwargs: Dict[str, Any],
@@ -26,15 +26,9 @@ class OutlookToDF(Task):
         self.mailbox_name = mailbox_name
         self.start_date = start_date
         self.end_date = end_date
-        self.extension_file = extension_file
+        self.output_file_extension = output_file_extension
         self.limit = limit
-
-        try:
-            DEFAULT_CREDENTIALS = local_config["OUTLOOK"]
-        except KeyError:
-            DEFAULT_CREDENTIALS = None
-
-        self.credentials = credentials or DEFAULT_CREDENTIALS
+        self.credentials = credentials
 
         super().__init__(
             name="outlook_to_csv",
@@ -43,7 +37,7 @@ class OutlookToDF(Task):
         )
 
     def __call__(self, *args, **kwargs):
-        """Download Outlook Mesagess to DF"""
+        """Download Outlook Messages to DF"""
         return super().__call__(*args, **kwargs)
 
     @defaults_from_attrs("mailbox_name", "start_date", "end_date", "limit")
@@ -67,6 +61,7 @@ class OutlookToDF(Task):
             pd.DataFrame: The API GET as a pandas DataFrames from Outlook.
         """
         outlook = Outlook(
+            credentials=self.credentials,
             mailbox_name=mailbox_name,
             start_date=start_date,
             end_date=end_date,
