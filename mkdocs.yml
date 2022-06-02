@@ -6,13 +6,20 @@ nav:
       - "Config File": howtos/config_file.md
       - "Running a task": "howtos/running_tasks.md"
       - Flows: howtos/flows.md 
-  - Tutorials: tutorials/adding_source.md
+      - "State handlers": "howtos/state_handlers.md"
+      - "Multiple Flows": "howtos/multipleflows.md"
+  - Tutorials: 
+      - "Adding source": tutorials/adding_source.md
+      - "Cloud for customers": tutorials/cloud_for_customers.md
+      - "Aselite": tutorials/aselite.md
   - References:
       - "SQL Sources": references/sql_sources.md
       - "API Sources": references/api_sources.md
       - "Flows library": references/flows_library.md
-  - Task library: references/task_library.md
-
+  - Task library: 
+      - "Tasks": tasks/task_library.md
+      - "Utilities tasks": tasks/taks_utils.md
+  - Utilities functions: utils/utils.md
 theme:
   name: "material"
   features:
