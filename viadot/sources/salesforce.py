@@ -3,7 +3,7 @@ from typing import Any, Dict, List, OrderedDict, Literal
 import pandas as pd
 from prefect.utilities import logging
 from simple_salesforce import Salesforce as SF
-from simple_salesforce.exceptions import SalesforceMalformedRequest
+from simple_salesforce.exceptions import SalesforceResourceNotFound
 
 from ..config import local_config
 from ..exceptions import CredentialError
@@ -91,40 +91,41 @@ class Salesforce(Source):
         table_to_upsert = getattr(self.salesforce, table)
         records = df.to_dict("records")
         records_cp = records.copy()
-
+        successes = 0
         for record in records_cp:
-            response = 0
             if external_id:
                 if record[external_id] is None:
                     continue
                 else:
                     merge_key = f"{external_id}/{record[external_id]}"
                     record.pop(external_id)
+                    record.pop("Id")
             else:
                 merge_key = record.pop("Id")
-
             try:
                 response = table_to_upsert.upsert(data=record, record_id=merge_key)
-            except SalesforceMalformedRequest as e:
-                msg = f"Upsert of record {merge_key} failed."
-                if raise_on_error:
-                    raise ValueError(msg) from e
+                codes = {200: "updated", 201: "created", 204: "updated"}
+
+                if response not in codes:
+                    msg = (
+                        f"Upsert failed for record: \n{record} with response {response}"
+                    )
+                    if raise_on_error:
+                        raise ValueError(msg)
+                    else:
+                        self.logger.warning(msg)
                 else:
-                    self.logger.warning(msg)
+                    successes += 1
+                    logger.info(f"Successfully {codes[response]} record {merge_key}.")
+            except SalesforceResourceNotFound as e:
+                if raise_on_error:
+                    raise e
+                else:
+                    self.logger.warning(
+                        f"Upsert failed for record: \n{record} with response {e}"
+                    )
 
-            codes = {200: "updated", 201: "created", 204: "updated"}
-            logger.info(f"Successfully {codes[response]} record {merge_key}.")
-
-            if response not in codes:
-                raise ValueError(
-                    f"Upsert failed for record: \n{record} with response {response}"
-                )
-            else:
-                logger.info(f"Successfully {codes[response]} record {merge_key}.")
-
-        logger.info(
-            f"Successfully upserted {len(records)} records into table '{table}'."
-        )
+        logger.info(f"Successfully upserted {successes} records into table '{table}'.")
 
     def bulk_upsert(
         self,
@@ -149,7 +150,7 @@ class Salesforce(Source):
             response = self.salesforce.bulk.__getattr__(table).upsert(
                 data=records, external_id_field=external_id, batch_size=batch_size
             )
-        except SalesforceMalformedRequest as e:
+        except SalesforceResourceNotFound as e:
             # Bulk insert didn't work at all.
             raise ValueError(f"Upsert of records failed: {e}") from e
 

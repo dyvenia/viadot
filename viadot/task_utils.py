@@ -462,6 +462,19 @@ def df_clean_column(
     return df
 
 
+@task
+def concat_dfs(dfs: List[pd.DataFrame]):
+    """
+    Task to combine list of data frames into one
+
+    Args:
+        dfs (List[pd.DataFrame]): List of dataframes to concat.
+    Returns:
+        pd.DataFrame(): Pandas dataframe containing all columns from dataframes from list.
+    """
+    return pd.concat(dfs, axis=1)
+
+
 class Git(Git):
     @property
     def git_clone_url(self):

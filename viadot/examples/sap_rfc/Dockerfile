@@ -9,11 +9,20 @@ ENV SAPNWRFC_HOME=/usr/local/sap/nwrfcsdk
 
 RUN ldconfig
 
-COPY requirements.txt .
-RUN xargs -L 1 pip install < requirements.txt
-
 ARG HTTP_PROXY=""
+ARG HTTPS_PROXY=""
+ARG NO_PROXY=""
 ENV HTTP_PROXY=$HTTP_PROXY
+ENV HTTPS_PROXY=$HTTPS_PROXY
+ENV NO_PROXY=$NO_PROXY
 RUN git config --global http.proxy ${HTTP_PROXY:-""}
 
-USER viadot
+RUN pip install pyrfc==2.5.0
+
+ARG VIADOT_USER=viadot_user
+ARG GID=1111
+ARG UID=1111
+RUN groupadd -g $GID -o $VIADOT_USER
+RUN useradd -m -u $UID -g $GID -o -s /bin/bash $VIADOT_USER
+
+USER $VIADOT_USER
