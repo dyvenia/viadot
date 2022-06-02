@@ -14,7 +14,7 @@ def test_df_external():
     data = {
         "Id": ["111"],
         "LastName": ["John Tester-External"],
-        "SAPContactId__c": ["111"],
+        "SAPContactId__c": ["112"],
     }
     df = pd.DataFrame(data=data)
     yield df
@@ -28,36 +28,23 @@ def test_upsert_empty(salesforce):
         assert False, exception
 
 
-def test_upsert(salesforce):
-    new_name = "Test Upsert"
-    correct_row = [salesforce.download(table="Contact", columns=["Id", "LastName"])[0]]
-    to_upsert = pd.DataFrame(correct_row)
-    to_upsert["LastName"] = new_name
-
+def test_upsert_external_id_correct(salesforce, test_df_external):
     try:
         salesforce.upsert(
-            df=to_upsert,
-            table="Contact",
-            raise_on_error=True,
+            df=test_df_external, table="Contact", external_id="SAPContactId__c"
         )
     except Exception as exception:
         assert False, exception
-    result = salesforce.to_df(table="Contact", columns=["Id", "LastName"])
-    assert len(result.loc[result["LastName"] == new_name]) > 0
+    result = salesforce.download(table="Contact")
+    exists = list(
+        filter(lambda contact: contact["LastName"] == "John Tester-External", result)
+    )
+    assert exists != None
 
 
-def test_upsert_external_id(salesforce, test_df_external):
-    try:
-        salesforce.upsert(
-            df=test_df_external,
-            table="Contact",
-            external_id="SAPContactId__c",
-            raise_on_error=True,
-        )
-    except Exception as exception:
-        assert False, exception
-    result = salesforce.to_df(table="Contact", columns=["Id", "LastName"])
-    assert len(result.loc[result["LastName"] == "John Tester-External"]) > 0
+def test_upsert_external_id_wrong(salesforce, test_df_external):
+    with pytest.raises(ValueError):
+        salesforce.upsert(df=test_df_external, table="Contact", external_id="SAPId")
 
 
 def test_download_no_query(salesforce):
