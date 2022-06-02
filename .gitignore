@@ -154,5 +154,5 @@ desktop.ini
 # SAP RFC lib
 sap_netweaver_rfc
 
-#azure devops api
-.azure-devops
+# Databricks-connect
+.databricks-connect
