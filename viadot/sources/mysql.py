@@ -79,7 +79,7 @@ class MySQL(Source):
     ) -> pd.DataFrame:
         """
         Establish connection with database using Secure Shell Protocol (SSH) and
-        get pandas DataFrame by proper SQL query. 
+        get pandas DataFrame by proper SQL query.
 
         Returns:
             pd.DataFrame: Pandas dataframe.

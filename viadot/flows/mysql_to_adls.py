@@ -19,7 +19,7 @@ class MySqlToADLS(Flow):
         sep: str = "\t",
         to_path: str = None,
         if_exists: Literal["replace", "append", "delete"] = "replace",
-        overwrite_adls : bool = True,
+        overwrite_adls: bool = True,
         sp_credentials_secret: str = None,
         credentials_secret: str = None,
         *args: List[any],
@@ -46,13 +46,14 @@ class MySqlToADLS(Flow):
             columns_to_clean (List(str), optional): Select columns to clean, used with remove_special_characters.
             If None whole data frame will be processed. Defaults to None.
         """
-        #Connect to sql
+
+        # Connect to sql
         self.country_short = country_short
         self.query = query
         self.sqldb_credentials_secret = sqldb_credentials_secret
         self.vault_name = vault_name
-        self.overwrite_adls  = overwrite_adls 
-        #Upload to ADLS
+        self.overwrite_adls = overwrite_adls
+        # Upload to ADLS
         self.file_path = file_path
         self.sep = sep
         self.to_path = to_path
@@ -83,7 +84,7 @@ class MySqlToADLS(Flow):
         adls_upload = file_to_adls_task.bind(
             from_path=self.file_path,
             to_path=self.to_path,
-            overwrite_adls =self.overwrite_adls ,
+            overwrite_adls=self.overwrite_adls,
             sp_credentials_secret=self.sp_credentials_secret,
             flow=self,
         )
