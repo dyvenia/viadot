@@ -30,6 +30,12 @@ class OutlookToDF(Task):
         self.limit = limit
         self.credentials = credentials
 
+        # try:
+        #     DEFAULT_CREDENTIALS = local_config["OUTLOOK"]
+        # except KeyError:
+        #     DEFAULT_CREDENTIALS = None
+        # self.credentials = credentials or DEFAULT_CREDENTIALS
+
         super().__init__(
             name="outlook_to_csv",
             *args,
@@ -49,7 +55,7 @@ class OutlookToDF(Task):
         limit: int = 10000,
     ) -> pd.DataFrame:
         """
-        Task for downloading data from the Outlook API to a CSV file.
+        Task for downloading data from the Outlook API to DF.
 
         Args:
             mailbox_name (str): Mailbox name.

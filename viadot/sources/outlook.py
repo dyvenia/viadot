@@ -4,6 +4,7 @@ import pandas as pd
 import datetime
 from typing import Any, Dict, List
 from ..config import local_config
+from ..exceptions import CredentialError
 
 
 class Outlook(Source):
@@ -13,13 +14,15 @@ class Outlook(Source):
         start_date: str = None,
         end_date: str = None,
         credentials: Dict[str, Any] = None,
-        extension_file: str = ".csv",
         limit: int = 10000,
         request_retries: int = 10,
         *args: List[Any],
         **kwargs: Dict[str, Any],
     ):
-        """Outlook connector build for fetching Outlook API source.
+        """
+        Outlook connector build for fetching Outlook API source.
+        Data are fetched from start to end date range. If start or end date are not provided
+        then flow fetched data from yestarday by default.
 
         Args:
             mailbox_name (str): Mailbox name.
@@ -28,23 +31,42 @@ class Outlook(Source):
             credentials (Dict[str, Any], optional): The name of the Azure Key Vault secret containing a dictionary with
             ACCOUNT_NAME and Service Principal credentials (TENANT_ID, CLIENT_ID, CLIENT_SECRET) for the Azure Application.
             Defaults to None.
-            extension_file (str, optional): Output file extension - to allow selection of .csv for data which is not easy
-            to handle with parquet. Defaults to ".csv".
             limit (int, optional): Number of fetched top messages. Defaults to 10000.
         """
-        super().__init__(*args, **kwargs)
-
         try:
             DEFAULT_CREDENTIALS = local_config["OUTLOOK"]
         except KeyError:
             DEFAULT_CREDENTIALS = None
+        self.credentials = credentials or DEFAULT_CREDENTIALS
+        if self.credentials is None:
+            raise CredentialError("You do not provide credentials!")
 
         self.request_retries = request_retries
-        self.credentials = credentials or DEFAULT_CREDENTIALS
-        self.extension_file = extension_file
         self.mailbox_name = mailbox_name
         self.start_date = start_date
         self.end_date = end_date
+        if self.start_date is not None and self.end_date is not None:
+            self.date_range_end_time = datetime.datetime.strptime(
+                self.end_date, "%Y-%m-%d"
+            )
+            self.date_range_start_time = datetime.datetime.strptime(
+                self.start_date, "%Y-%m-%d"
+            )
+        else:
+            self.date_range_end_time = datetime.date.today() - datetime.timedelta(
+                days=1
+            )
+            self.date_range_start_time = datetime.date.today() - datetime.timedelta(
+                days=2
+            )
+            min_time = datetime.datetime.min.time()
+            self.date_range_end_time = datetime.datetime.combine(
+                self.date_range_end_time, min_time
+            )
+            self.date_range_start_time = datetime.datetime.combine(
+                self.date_range_start_time, min_time
+            )
+
         self.account = Account(
             (self.credentials["client_id"], self.credentials["client_secret"]),
             auth_flow_type="credentials",
@@ -61,9 +83,12 @@ class Outlook(Source):
         self.mailbox_messages = self.mailbox_obj.get_messages(limit)
         super().__init__(*args, credentials=self.credentials, **kwargs)
 
-    def to_df(self):
-        date_range_end_time = datetime.datetime.strptime(self.end_date, "%Y-%m-%d")
-        date_range_start_time = datetime.datetime.strptime(self.start_date, "%Y-%m-%d")
+    def to_df(self) -> pd.DataFrame:
+        """Download Outlook data into a pandas DataFrame.
+
+        Returns:
+            pd.DataFrame: the DataFrame with time range
+        """
         data = []
 
         while True:
@@ -71,37 +96,46 @@ class Outlook(Source):
                 message = next(self.mailbox_messages)
                 received_time = message.received
                 date_time_str = str(received_time)
-                dd = date_time_str[0:19]
-                date_obj = datetime.datetime.strptime(dd, "%Y-%m-%d %H:%M:%S")
-                if date_obj < date_range_start_time or date_obj > date_range_end_time:
+                date_time_string = date_time_str[0:19]
+                date_obj = datetime.datetime.strptime(
+                    date_time_string, "%Y-%m-%d %H:%M:%S"
+                )
+                if (
+                    date_obj < self.date_range_start_time
+                    or date_obj > self.date_range_end_time
+                ):
                     continue
                 else:
                     fetched = message.to_api_data()
                     try:
                         sender_mail = fetched["from"]["emailAddress"]["address"]
                         reciver_list = fetched.get("toRecipients")
-                        recivers = ""
+                        recivers = " "
                         if reciver_list is not None:
                             recivers = ", ".join(
-                                r["emailAddress"]["address"] for r in reciver_list
+                                reciver["emailAddress"]["address"]
+                                for reciver in reciver_list
                             )
-                        else:
-                            recivers = ""
-                        categories = ""
-                        if message.categories:
-                            categories = ", ".join(c for c in message.categories)
 
+                        categories = " "
+                        if message.categories is not None:
+                            categories = ", ".join(
+                                categories for categories in message.categories
+                            )
+
+                        conversation_index = " "
+                        if message.conversation_index is not None:
+                            conversation_index = message.conversation_index
                         row = {
-                            "subject": fetched.get("subject"),
                             "conversation ID": fetched.get("conversationId"),
-                            "conversation index": message.conversation_index,
+                            "conversation index": conversation_index,
                             "categories": categories,
                             "sender": sender_mail,
                             "recivers": recivers,
-                            "read": fetched.get("isRead"),
-                            "received time": fetched.get("receivedDateTime"),
+                            "received_time": fetched.get("receivedDateTime"),
                         }
-                        row["mail adress"] = (
+
+                        row["mail_adress"] = (
                             self.mailbox_name.split("@")[0]
                             .replace(".", "_")
                             .replace("-", "_")
@@ -112,8 +146,8 @@ class Outlook(Source):
                             row["Inbox"] = True
 
                         data.append(row)
-                    except KeyError:
-                        print(f"KeyError - nie ma w:")
+                    except KeyError as e:
+                        print("KeyError : " + str(e))
             except StopIteration:
                 break
         df = pd.DataFrame(data=data)
@@ -123,4 +157,4 @@ class Outlook(Source):
     def to_csv(self):
         df = self.to_df()
         file_name = self.mailbox_name.split("@")[0].replace(".", "_").replace("-", "_")
-        df.to_csv(f"{file_name}{self.extension_file}", index=False)
+        df.to_csv(f"{file_name}.csv", index=False)
