@@ -4,13 +4,61 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-
 ## [Unreleased]
 ### Added
+ - Enabled Databricks Connect in the image. To enable, [follow this guide](./README.md#executing-spark-jobs)
+
+### Changed
+- Added `SQLServerToDF` task
+- Added `SQLServerToDuckDB` flow which downloads data from SQLServer table, loads it to parquet file and then uplads it do DuckDB
+- Added complete proxy set up in `SAPRFC` example (`viadot/examples/sap_rfc`)
+- Added Databricks/Spark setup to the image. See README for setup & usage instructions.
+
+
+## [0.4.3] - 2022-04-28
+### Added
+- Added `func` parameter to `SAPRFC` 
+- Added `SAPRFCToADLS` flow which downloads data from SAP Database to to a pandas DataFrame, exports df to csv and uploads it to Azure Data Lake.
+- Added `adls_file_name` in  `SupermetricsToADLS` and `SharepointToADLS` flows
+- Added `BigQueryToADLS` flow class which anables extract data from BigQuery.
+- Added `Salesforce` source
+- Added `SalesforceUpsert` task
+- Added `SalesforceBulkUpsert` task
+- Added C4C secret handling to `CloudForCustomersReportToADLS` flow (`c4c_credentials_secret` parameter)
+
+### Fixed
+- Fixed `get_flow_last_run_date()` incorrectly parsing the date
+- Fixed C4C secret handling (tasks now correctly read the secret as the credentials, rather than assuming the secret is a container for credentials for all environments and trying to access specific key inside it). In other words, tasks now assume the secret holds credentials, rather than a dict of the form `{env: credentials, env2: credentials2}`
+- Fixed `utils.gen_bulk_insert_query_from_df()` failing with > 1000 rows due to INSERT clause limit by chunking the data into multiple INSERTs
+- Fixed `get_flow_last_run_date()` incorrectly parsing the date
+- Fixed `MultipleFlows` when one flow is passed and when last flow fails.
+
+
+## [0.4.2] - 2022-04-08
+### Added
+- Added `AzureDataLakeRemove` task
+
+### Changed
+- Changed name of task file from `prefect` to `prefect_date_range`
+
+### Fixed
+- Fixed out of range issue in `prefect_date_range`
+
+
+## [0.4.1] - 2022-04-07
+### Changed
+- bumped version
+
+
+## [0.4.0] - 2022-04-07
+### Added
+- Added `custom_mail_state_handler` function that sends mail notification using custom smtp server.
+- Added new function `df_clean_column` that cleans data frame columns from special characters
+- Added `df_clean_column` util task that removes special characters from a pandas DataFrame
 - Added `MultipleFlows` flow class which enables running multiple flows in a given order.
-- Added new task `GetFlowNewDateRange` to change date range based on Prefect flows
+- Added `GetFlowNewDateRange` task to change date range based on Prefect flows
 - Added `check_col_order` parameter in `ADLSToAzureSQL`
-- Added `ASEliteToDF` task and `ASEliteToADLS` flow
+- Added new source `ASElite` 
 - Added KeyVault support in `CloudForCustomers` tasks
 - Added `SQLServer` source
 - Added `DuckDBToDF` task
@@ -27,9 +75,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added `chunksize` parameter to `BCPTask` task to allow more control over the load process
 - Added support for SQL Server's custom `datetimeoffset` type
 - Added `AzureSQLToDF` task
+- Added `AzureDataLakeRemove` task
+- Added `AzureSQLUpsert` task
 
 ### Changed
-- Changed task `df_to_csv` to two different tasks `remove_tab` and `df_to_csv_none`
 - Changed the base class of `AzureSQL` to `SQLServer`
 - `df_to_parquet()` task now creates directories if needed
 - Added several more separators to check for automatically in `SAPRFC.to_df()`
