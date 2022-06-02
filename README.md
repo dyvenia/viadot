@@ -82,7 +82,6 @@ Install the library in development mode (repeat for the `viadot_jupyter_lab` con
 docker exec -it viadot_testing pip install -e . --user
 ```
 
-
 ## Running tests
 
 To run tests, log into the container and run pytest:
@@ -100,6 +99,36 @@ FLOW_NAME=hello_world; python -m viadot.examples.$FLOW_NAME
 ```
 
 However, when developing, the easiest way is to use the provided Jupyter Lab container available in the browser at `http://localhost:9000/`.
+
+## Executing Spark jobs
+### Setting up
+To begin using Spark, you must first declare the environmental variables as follows:
+```
+DATABRICKS_HOST = os.getenv("DATABRICKS_HOST")
+DATABRICKS_API_TOKEN = os.getenv("DATABRICKS_API_TOKEN")
+DATABRICKS_ORG_ID = os.getenv("DATABRICKS_ORG_ID")
+DATABRICKS_PORT = os.getenv("DATABRICKS_PORT")
+DATABRICKS_CLUSTER_ID = os.getenv("DATABRICKS_CLUSTER_ID")
+```
+
+Alternatively, you can also create a file called `.databricks-connect` in the root directory of viadot and add the required variables there. It should follow the following format:
+```
+{
+  "host": "",
+  "token": "",
+  "cluster_id": "",
+  "org_id": "",
+  "port": ""
+}
+```
+To retrieve the values, follow step 2 in this [link](https://docs.microsoft.com/en-us/azure/databricks/dev-tools/databricks-connect)
+
+### Executing Spark functions
+To begin using Spark, you must first create a Spark Session: `spark = SparkSession.builder.appName('session_name').getOrCreate()`. `spark` will be used to access all the Spark methods. Here is a list of commonly used Spark methods (WIP):
+* `spark.createDataFrame(df)`: Create a Spark DataFrame from a Pandas DataFrame
+* `sparkdf.write.saveAsTable("schema.table")`: Takes a Spark DataFrame and saves it as a table in Databricks.
+* Ensure to use the correct schema, as it should be created and specified by the administrator
+* `table = spark.sql("select * from schema.table")`: example of a simple query ran through Python
 
 
 ## How to contribute
@@ -146,6 +175,7 @@ git merge <branch_to_merge>
 ```
 
 Please follow the standards and best practices used within the library (eg. when adding tasks, see how other tasks are constructed, etc.). For any questions, please reach out to us here on GitHub.
+
 
 ### Style guidelines
 - the code should be formatted with Black using default settings (easiest way is to use the VSCode extension)
