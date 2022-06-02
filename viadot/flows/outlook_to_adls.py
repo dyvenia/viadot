@@ -5,7 +5,12 @@ import pendulum
 from prefect import Flow, Task, apply_map, task
 import pandas as pd
 from ..utils import slugify
-from ..task_utils import df_to_csv, union_dfs_task
+from ..task_utils import (
+    df_to_csv,
+    union_dfs_task,
+    add_ingestion_metadata_task,
+    df_to_parquet,
+)
 
 from ..tasks import OutlookToDF, AzureDataLakeUpload
 
@@ -21,7 +26,7 @@ class OutlookToADLS(Flow):
         start_date: str = None,
         end_date: str = None,
         local_file_path: str = None,
-        extension_file: str = ".csv",
+        extension_file: str = ".parquet",
         adls_file_path: str = None,
         overwrite_adls: bool = True,
         adls_sp_credentials_secret: str = None,
@@ -30,7 +35,7 @@ class OutlookToADLS(Flow):
         *args: List[Any],
         **kwargs: Dict[str, Any],
     ):
-        """Flow for downloading data from Outlook source to a local CSV
+        """Flow for downloading data from Outlook source to a local file (parquet by default, otherwise csv for example)
         using Outlook API, then uploading it to Azure Data Lake.
 
         Args:
@@ -39,7 +44,7 @@ class OutlookToADLS(Flow):
             start_date (str, optional): A filtering start date parameter e.g. "2022-01-01". Defaults to None.
             end_date (str, optional): A filtering end date parameter e.g. "2022-01-02". Defaults to None.
             local_file_path (str, optional): Local destination path. Defaults to None.
-            extension_file (str, optional): Output file extension. Defaults to ".csv".
+            extension_file (str, optional): Output file extension. Defaults to ".parquet".
             adls_file_path (str, optional): Azure Data Lake destination file path. Defaults to None.
             overwrite_adls (bool, optional): Whether to overwrite the file in ADLS. Defaults to True.
             adls_sp_credentials_secret (str, optional): The name of the Azure Key Vault secret containing a dictionary with
@@ -84,10 +89,22 @@ class OutlookToADLS(Flow):
         dfs = apply_map(self.gen_outlook_df, self.mailbox_list, flow=self)
 
         df = union_dfs_task.bind(dfs, flow=self)
+        df_with_metadata = add_ingestion_metadata_task.bind(df, flow=self)
 
-        df_to_file = df_to_csv.bind(
-            df=df, path=self.local_file_path, if_exists=self.if_exsists, flow=self
-        )
+        if self.extension_file == ".parquet":
+            df_to_file = df_to_parquet.bind(
+                df=df_with_metadata,
+                path=self.local_file_path,
+                if_exists=self.if_exsists,
+                flow=self,
+            )
+        else:
+            df_to_file = df_to_csv.bind(
+                df=df_with_metadata,
+                path=self.local_file_path,
+                if_exists=self.if_exsists,
+                flow=self,
+            )
 
         file_to_adls_task.bind(
             from_path=self.local_file_path,
@@ -97,5 +114,6 @@ class OutlookToADLS(Flow):
             flow=self,
         )
 
-        df_to_file.set_upstream(df, flow=self)
+        df_with_metadata.set_upstream(df, flow=self)
+        df_to_file.set_upstream(df_with_metadata, flow=self)
         file_to_adls_task.set_upstream(df_to_file, flow=self)
