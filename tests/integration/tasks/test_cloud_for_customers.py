@@ -7,7 +7,7 @@ def test_c4c_to_df():
     url = "http://services.odata.org/V2/Northwind/Northwind.svc/"
     endpoint = "Employees"
     c4c_to_df = C4CToDF()
-    df = c4c_to_df.run(url=url, endpoint=endpoint, params={})
+    df = c4c_to_df.run(url=url, endpoint=endpoint)
     answer = df.head()
     assert answer.shape[1] == 23
 
