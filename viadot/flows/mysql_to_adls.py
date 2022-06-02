@@ -11,7 +11,7 @@ class MySqlToADLS(Flow):
     def __init__(
         self,
         name: str,
-        country_short: Literal["AT", "DE", "CH"],
+        country_short: Literal["AT", "DE", "CH", None],
         query: str = None,
         sqldb_credentials_secret: str = None,
         vault_name: str = None,
@@ -19,7 +19,7 @@ class MySqlToADLS(Flow):
         sep: str = "\t",
         to_path: str = None,
         if_exists: Literal["replace", "append", "delete"] = "replace",
-        overwrite: bool = True,
+        overwrite_adls : bool = True,
         sp_credentials_secret: str = None,
         credentials_secret: str = None,
         *args: List[any],
@@ -39,20 +39,20 @@ class MySqlToADLS(Flow):
             sep (str, optional): The delimiter for the output CSV file. Defaults to "\t".
             to_path (str): The path to an ADLS file. Defaults to None.
             if_exists (Literal, optional): What to do if the table exists. Defaults to "replace".
-            overwrite (str, optional): Whether to overwrite the destination file. Defaults to True.
+            overwrite_adls  (str, optional): Whether to overwrite_adls  the destination file. Defaults to True.
             sp_credentials_secret (str, optional): The name of the Azure Key Vault secret containing a dictionary with
             ACCOUNT_NAME and Service Principal credentials (TENANT_ID, CLIENT_ID, CLIENT_SECRET). Defaults to None.
             credentials_secret (str, optional): Key Vault name. Defaults to None.
-            remove_special_characters (str, optional): Call a function that remove special characters like escape symbols. Defaults to None.
             columns_to_clean (List(str), optional): Select columns to clean, used with remove_special_characters.
             If None whole data frame will be processed. Defaults to None.
         """
+        #Connect to sql
         self.country_short = country_short
         self.query = query
         self.sqldb_credentials_secret = sqldb_credentials_secret
         self.vault_name = vault_name
-        self.overwrite = overwrite
-
+        self.overwrite_adls  = overwrite_adls 
+        #Upload to ADLS
         self.file_path = file_path
         self.sep = sep
         self.to_path = to_path
@@ -83,7 +83,7 @@ class MySqlToADLS(Flow):
         adls_upload = file_to_adls_task.bind(
             from_path=self.file_path,
             to_path=self.to_path,
-            overwrite=self.overwrite,
+            overwrite_adls =self.overwrite_adls ,
             sp_credentials_secret=self.sp_credentials_secret,
             flow=self,
         )

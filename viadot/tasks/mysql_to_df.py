@@ -11,7 +11,7 @@ from viadot.sources.mysql import MySQL
 class MySqlToDf(Task):
     def __init__(
         self,
-        country_short: Literal["AT", "DE", "CH"],
+        country_short: Literal["AT", "DE", "CH", None],
         credentials: Dict[str, Any] = None,
         query: str = None,
         *args,
@@ -19,10 +19,12 @@ class MySqlToDf(Task):
     ):
         """
         Task for obtaining data from MySql source.
+
         Args:
             credentials (Dict[str, Any], optional): MySql Database credentials. Defaults to None.
             query(str, optional): Query to perform on a database. Defaults to None.
-            country_short (Dict[str, Any], optional): country short to select proper credential.
+            country_short (Dict[str, Any], optional): Country short to select proper credential.
+
         Returns: Pandas DataFrame
         """
         self.credentials = credentials
@@ -30,7 +32,7 @@ class MySqlToDf(Task):
         self.query = query
 
         super().__init__(
-            name="MySqlToDf",
+            name="MySQLToDF",
             *args,
             **kwargs,
         )
@@ -50,7 +52,7 @@ class MySqlToDf(Task):
         if not credentials_secret:
             try:
                 credentials_secret = PrefectSecret("CONVIDERA").run()
-                logger.info("Loaded credentials from Key Vault")
+                logger.info("Loaded credentials from Key Vault.")
             except ValueError:
                 pass
 
@@ -59,16 +61,16 @@ class MySqlToDf(Task):
                 credentials_secret, vault_name=vault_name
             ).run()
             credentials = json.loads(credentials_str)
-            logger.info("Loaded credentials from Key Vault")
+            logger.info("Loaded credentials from Key Vault.")
         else:
             credentials = local_config.get("CONVIDERA")
-            logger.info("Loaded credentials from local source")
+            logger.info("Loaded credentials from local source.")
 
         country_cred = credentials.get(f"{self.country_short}")
         ssh_creds = credentials.get("SSH_CREDS")
         credentials_country = dict(country_cred, **ssh_creds)
         mysql = MySQL(credentials=credentials_country)
-        logger.info("Connected to MySql Database")
+        logger.info("Connected to MySql Database.")
         df = mysql.connect_sql_ssh(query=query)
         logger.info("Succefully collected data from query")
         return df

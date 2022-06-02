@@ -10,8 +10,6 @@ from viadot.flows.adls_to_azure_sql import df_to_csv_task
 from prefect import Flow, task, unmapped
 from viadot.sources.base import Source
 from viadot.config import local_config
-
-# from ..exceptions import CredentialError
 from viadot.exceptions import CredentialError
 
 
@@ -24,7 +22,8 @@ class MySQL(Source):
         **kwargs,
     ):
 
-        """A class for interacting with DuckDB.
+        """
+        A class for interacting with DuckDB.
 
         Args:
             config_key (str, optional): The key inside local config containing the config.
@@ -44,7 +43,8 @@ class MySQL(Source):
 
     @property
     def con(self) -> pymysql.connect:
-        """Return a new connection to the MySQL database.
+        """
+        Return a new connection to the MySQL database.
 
         Returns:
             pymysql.connect: database connection.
@@ -63,14 +63,27 @@ class MySQL(Source):
         return conn
 
     def to_df(self, query: str) -> pd.DataFrame:
+        """
+        Get DataFrame from MySQL database by pandas and SQL query.
+
+        Returns:
+            pd.DataFrame: Pandas dataframe.
+        """
         data = pd.read_sql_query(query, self.con)
         self.con.close()
         return data
 
     def connect_sql_ssh(
         self,
-        query,
-    ):
+        query: str,
+    ) -> pd.DataFrame:
+        """
+        Establish connection with database using Secure Shell Protocol (SSH) and
+        get pandas DataFrame by proper SQL query. 
+
+        Returns:
+            pd.DataFrame: Pandas dataframe.
+        """
 
         if self.credentials.get("host") is None:
             host = "127.0.0.1"

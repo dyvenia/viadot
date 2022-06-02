@@ -326,8 +326,9 @@ def gen_bulk_insert_query_from_df(
         return _gen_insert_query_from_records(tuples_escaped)
 
 
-def union_credentials_dict(*dicts):
-    """Function that union list of dictionaries
+def union_dict(*dicts):
+    """
+    Function that union list of dictionaries
 
     Args:
         dicts (List[Dict]): list of dictionaries with credentials.
