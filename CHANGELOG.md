@@ -4,18 +4,38 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-
 ## [Unreleased]
 ### Added
-- Added `ADLSContainerToContainer` test
+
+ - Added `ADLSContainerToContainer` test
+ - Enabled Databricks Connect in the image. To enable, [follow this guide](./README.md#executing-spark-jobs)
+ - Added `MySQL` source and `MySqlToADLS` flow
+
+### Changed
+- Added `SQLServerToDF` task
+- Added `SQLServerToDuckDB` flow which downloads data from SQLServer table, loads it to parquet file and then uplads it do DuckDB
+- Added complete proxy set up in `SAPRFC` example (`viadot/examples/sap_rfc`)
+- Added Databricks/Spark setup to the image. See README for setup & usage instructions.
+
+
+## [0.4.3] - 2022-04-28
+### Added
+- Added `func` parameter to `SAPRFC` 
+- Added `SAPRFCToADLS` flow which downloads data from SAP Database to to a pandas DataFrame, exports df to csv and uploads it to Azure Data Lake.
+- Added `adls_file_name` in  `SupermetricsToADLS` and `SharepointToADLS` flows
+- Added `BigQueryToADLS` flow class which anables extract data from BigQuery.
 - Added `Salesforce` source
 - Added `SalesforceUpsert` task
+- Added `SalesforceBulkUpsert` task
 - Added C4C secret handling to `CloudForCustomersReportToADLS` flow (`c4c_credentials_secret` parameter)
 
 ### Fixed
 - Fixed `C4CToDF`, `TEST_TABLE` in AzureSQLTransform tests
 - Fixed `get_flow_last_run_date()` incorrectly parsing the date
 - Fixed C4C secret handling (tasks now correctly read the secret as the credentials, rather than assuming the secret is a container for credentials for all environments and trying to access specific key inside it). In other words, tasks now assume the secret holds credentials, rather than a dict of the form `{env: credentials, env2: credentials2}`
+- Fixed `utils.gen_bulk_insert_query_from_df()` failing with > 1000 rows due to INSERT clause limit by chunking the data into multiple INSERTs
+- Fixed `get_flow_last_run_date()` incorrectly parsing the date
+- Fixed `MultipleFlows` when one flow is passed and when last flow fails.
 
 ### Changed
 - Changed `AzureDataLake` tests

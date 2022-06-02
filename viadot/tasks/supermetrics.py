@@ -236,6 +236,8 @@ class SupermetricsToDF(Task):
             ds_user (str, optional): A Supermetrics query parameter. Defaults to None.
             fields (List[str], optional): A Supermetrics query parameter. Defaults to None.
             date_range_type (str, optional): A Supermetrics query parameter. Defaults to None.
+            start_date (str, optional): A query paramter to pass start date to the date range filter. Defaults to None.
+            end_date (str, optional): A query paramter to pass end date to the date range filter. Defaults to None.
             settings (Dict[str, Any], optional): A Supermetrics query parameter. Defaults to None.
             filter (str, optional): A Supermetrics query parameter. Defaults to None.
             max_rows (int, optional): A Supermetrics query parameter. Defaults to None.

@@ -3,7 +3,7 @@ from typing import Any, Dict, List, OrderedDict, Literal
 import pandas as pd
 from prefect.utilities import logging
 from simple_salesforce import Salesforce as SF
-from simple_salesforce.exceptions import SalesforceMalformedRequest
+from simple_salesforce.exceptions import SalesforceResourceNotFound
 
 from ..config import local_config
 from ..exceptions import CredentialError
@@ -71,7 +71,13 @@ class Salesforce(Source):
         else:
             raise ValueError("The only available environments are DEV, QA, and PROD.")
 
-    def upsert(self, df: pd.DataFrame, table: str, external_id: str = None) -> None:
+    def upsert(
+        self,
+        df: pd.DataFrame,
+        table: str,
+        external_id: str = None,
+        raise_on_error: bool = False,
+    ) -> None:
 
         if df.empty:
             logger.info("No data to upsert.")
@@ -85,7 +91,7 @@ class Salesforce(Source):
         table_to_upsert = getattr(self.salesforce, table)
         records = df.to_dict("records")
         records_cp = records.copy()
-
+        successes = 0
         for record in records_cp:
             if external_id:
                 if record[external_id] is None:
@@ -93,23 +99,73 @@ class Salesforce(Source):
                 else:
                     merge_key = f"{external_id}/{record[external_id]}"
                     record.pop(external_id)
+                    record.pop("Id")
             else:
-                merge_key = record["Id"]
-
-            record.pop("Id")
-
+                merge_key = record.pop("Id")
             try:
                 response = table_to_upsert.upsert(data=record, record_id=merge_key)
-            except SalesforceMalformedRequest as e:
-                raise ValueError(f"Upsert of record {merge_key} failed.") from e
+                codes = {200: "updated", 201: "created", 204: "updated"}
 
-            codes = {200: "updated", 201: "created", 204: "updated"}
-            logger.info(f"Successfully {codes[response]} record {merge_key}.")
+                if response not in codes:
+                    msg = (
+                        f"Upsert failed for record: \n{record} with response {response}"
+                    )
+                    if raise_on_error:
+                        raise ValueError(msg)
+                    else:
+                        self.logger.warning(msg)
+                else:
+                    successes += 1
+                    logger.info(f"Successfully {codes[response]} record {merge_key}.")
+            except SalesforceResourceNotFound as e:
+                if raise_on_error:
+                    raise e
+                else:
+                    self.logger.warning(
+                        f"Upsert failed for record: \n{record} with response {e}"
+                    )
 
-            if response not in list(codes.keys()):
-                raise ValueError(
-                    f"Upsert failed for record: \n{record} with response {response}"
-                )
+        logger.info(f"Successfully upserted {successes} records into table '{table}'.")
+
+    def bulk_upsert(
+        self,
+        df: pd.DataFrame,
+        table: str,
+        external_id: str = None,
+        batch_size: int = 10000,
+        raise_on_error: bool = False,
+    ) -> None:
+
+        if df.empty:
+            logger.info("No data to upsert.")
+            return
+
+        if external_id and external_id not in df.columns:
+            raise ValueError(
+                f"Passed DataFrame does not contain column '{external_id}'."
+            )
+        records = df.to_dict("records")
+        response = 0
+        try:
+            response = self.salesforce.bulk.__getattr__(table).upsert(
+                data=records, external_id_field=external_id, batch_size=batch_size
+            )
+        except SalesforceResourceNotFound as e:
+            # Bulk insert didn't work at all.
+            raise ValueError(f"Upsert of records failed: {e}") from e
+
+        logger.info(f"Successfully upserted bulk records.")
+
+        if any(result.get("success") is not True for result in response):
+            # Upsert of some individual records failed.
+            failed_records = [
+                result for result in response if result.get("success") is not True
+            ]
+            msg = f"Upsert failed for records {failed_records} with response {response}"
+            if raise_on_error:
+                raise ValueError(msg)
+            else:
+                self.logger.warning(msg)
 
         logger.info(
             f"Successfully upserted {len(records)} records into table '{table}'."
