@@ -17,6 +17,7 @@ class SAPToDuckDB(Flow):
         query: str,
         table: str,
         local_file_path: str,
+        func: str = "RFC_READ_TABLE",
         name: str = None,
         sep: str = None,
         schema: str = None,
@@ -34,6 +35,7 @@ class SAPToDuckDB(Flow):
             query (str): The query to be executed on SAP with pyRFC.
             table (str): Destination table in DuckDB.
             local_file_path (str): The path to the source Parquet file.
+            func (str, optional): SAP RFC function to use. Defaults to "RFC_READ_TABLE".
             name (str, optional): The name of the flow. Defaults to None.
             sep (str, optional): The separator to use when reading query results. If not provided,
             multiple options are automatically tried. Defaults to None.
@@ -46,6 +48,7 @@ class SAPToDuckDB(Flow):
 
         # SAPRFCToDF
         self.query = query
+        self.func = func
         self.sep = sep
         self.sap_credentials = sap_credentials
 
@@ -70,6 +73,7 @@ class SAPToDuckDB(Flow):
         df = self.sap_to_df_task.bind(
             query=self.query,
             sep=self.sep,
+            func=self.func,
             flow=self,
         )
 
