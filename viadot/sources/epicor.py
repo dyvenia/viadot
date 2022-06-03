@@ -124,7 +124,7 @@ def parse_orders_xml(xml_data: str) -> pd.DataFrame:
             for shipto in header.findall("ShipToAddress"):
                 for ship_param in ShipToAddress.__dict__.get("__annotations__"):
                     try:
-                        ship_value = shipto.find(f"{ship_param}").text
+                        ship_value = shipto.find(ship_param).text
                     except:
                         ship_value = None
                     ship_parameter = {ship_param: ship_value}
@@ -134,7 +134,7 @@ def parse_orders_xml(xml_data: str) -> pd.DataFrame:
             for invoice in header.findall("InvoiceTotals"):
                 for invoice_param in InvoiceTotals.__dict__.get("__annotations__"):
                     try:
-                        invoice_value = invoice.find(f"{invoice_param}").text
+                        invoice_value = invoice.find(invoice_param).text
                     except:
                         invoice_value = None
                     invoice_parameter = {invoice_param: invoice_value}
@@ -143,7 +143,7 @@ def parse_orders_xml(xml_data: str) -> pd.DataFrame:
 
             for header_param in HeaderInformation.__dict__.get("__annotations__"):
                 try:
-                    header_value = header.find(f"{header_param}").text
+                    header_value = header.find(header_param).text
                 except:
                     header_value = None
                 if header_param == "TrackingNumbers":
@@ -160,7 +160,7 @@ def parse_orders_xml(xml_data: str) -> pd.DataFrame:
             for item in items.findall("LineItemDetail"):
                 for item_param in LineItemDetail.__dict__.get("__annotations__"):
                     try:
-                        item_value = item.find(f"{item_param}").text
+                        item_value = item.find(item_param).text
                     except:
                         item_value = None
                     item_parameter = {item_param: item_value}
@@ -203,7 +203,8 @@ class Epicor(Source):
 
         required_credentials = ["host", "port", "username", "password"]
         if any([cred_key not in credentials for cred_key in required_credentials]):
-            raise CredentialError("Credentials not found.")
+            not_found = [c for c in required_credentials if c not in credentials]
+            raise CredentialError(f"Missing credential(s): '{not_found}'.")
 
         self.credentials = credentials
         self.config_key = config_key
