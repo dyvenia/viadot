@@ -13,8 +13,8 @@ def test_epicor_to_duckdb():
     duckdb_creds = {"database": "/home/viadot/database/test.duckdb"}
     flow = EpicorOrdersToDuckDB(
         name="test",
-        epicor_config_key="Epicor",
-        base_url=local_config.get("Epicor").get("test_url"),
+        epicor_config_key="EPICOR",
+        base_url=local_config.get("EPICOR").get("test_url"),
         filters_xml="""
     <OrderQuery>
         <QueryFields>

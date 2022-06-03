@@ -43,7 +43,7 @@ class EpicorOrdersToDF(Task):
         self.start_date_field = start_date_field
         self.end_date_field = end_date_field
         super().__init__(
-            name="EpicorOrders_to_df",
+            name="epicor_orders_to_df",
             *args,
             **kwargs,
         )

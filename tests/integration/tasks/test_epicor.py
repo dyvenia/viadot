@@ -4,8 +4,8 @@ from viadot.config import local_config
 
 def test_epicor_orders_to_df():
     task = EpicorOrdersToDF(
-        config_key="Epicor",
-        base_url=local_config.get("Epicor").get("test_url"),
+        config_key="EPICOR",
+        base_url=local_config.get("EPICOR").get("test_url"),
         filters_xml="""
 <OrderQuery>
     <QueryFields>

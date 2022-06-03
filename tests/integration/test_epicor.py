@@ -8,8 +8,8 @@ from viadot.exceptions import DataRangeError
 @pytest.fixture(scope="session")
 def epicor():
     epicor = Epicor(
-        base_url=local_config.get("Epicor").get("test_url"),
-        config_key="Epicor",
+        base_url=local_config.get("EPICOR").get("test_url"),
+        config_key="EPICOR",
         filters_xml="""
     <OrderQuery>
         <QueryFields>
@@ -26,8 +26,8 @@ def epicor():
 @pytest.fixture(scope="session")
 def epicor_error():
     epicor_error = Epicor(
-        base_url=local_config.get("Epicor").get("test_url"),
-        config_key="Epicor",
+        base_url=local_config.get("EPICOR").get("test_url"),
+        config_key="EPICOR",
         filters_xml="""
     <OrderQuery>
         <QueryFields>
