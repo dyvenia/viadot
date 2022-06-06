@@ -1,4 +1,5 @@
-FROM prefecthq/prefect:0.15.11-python3.8
+FROM prefecthq/prefect:2.0b5-python3.9
+
 # Add user
 RUN useradd --create-home viadot && \
     chown -R viadot /home/viadot && \
@@ -59,7 +60,7 @@ RUN curl https://adoptopenjdk.jfrog.io/adoptopenjdk/api/gpg/key/public | apt-key
     find /usr/bin/java -type d -exec chmod 777 {} \;
 
 ### Export env variable
-ENV SPARK_HOME /usr/local/lib/python3.8/site-packages/pyspark
+ENV SPARK_HOME /usr/local/lib/python3.9/site-packages/pyspark
 RUN export SPARK_HOME
 
 RUN rm -rf /code

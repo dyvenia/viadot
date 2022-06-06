@@ -8,7 +8,6 @@ mkdocs-material==8.0.1
 mkdocs==1.2.3
 mkdocstrings==0.16.2
 pandas==1.3.4
-prefect[viz]==0.15.11
 pyarrow==6.0.1
 pyodbc==4.0.32
 pytest==6.2.5
@@ -33,3 +32,5 @@ google-auth==2.6.2
 sendgrid==6.9.7
 pandas-gbq==0.17.4
 databricks-connect==10.4.0b0
+dbt-databricks==1.0.3
+prefect-shell==0.1.0
