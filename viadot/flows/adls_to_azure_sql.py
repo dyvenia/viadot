@@ -72,11 +72,11 @@ def map_data_types_task(json_shema_path: str):
 
 
 @task
-def remove_tab(df: pd.DataFrame):
+def remove_tab(df: pd.DataFrame) -> pd.DataFrame:
     """
     Task to remove unnecessary tab in a DataFrame.
     Args:
-        df(pd.DataFrame, optional): Pandas DataFrame to tranform.
+        df(pd.DataFrame): Pandas DataFrame to transform.
     Returns:
         pd.DataFrame: DataFrame without unnecessery tabs.
     """
