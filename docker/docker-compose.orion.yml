@@ -8,8 +8,8 @@ services:
       - 5679:8888
     volumes:
       - ../:/home/viadot
-        # - ../.databricks-connect:/home/viadot/.databricks-connect
-      - ../.databricks-connect-local-hive:/home/viadot/.databricks-connect
+        # - ${HOME}/.databricks-connect-ext-hive:/home/viadot/.databricks-connect
+      - ${HOME}/.databricks-connect:/home/viadot/.databricks-connect
       - ${HOME}/.dbt/profiles.yml:/home/viadot/.dbt/profiles.yml
     shm_size: '4gb'
     command: jupyter lab --no-browser --ip 0.0.0.0 --LabApp.token=''
