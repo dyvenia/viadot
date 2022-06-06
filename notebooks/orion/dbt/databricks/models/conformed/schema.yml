@@ -1,0 +1,14 @@
+version: 2
+
+models:
+  - name: c4c_model_example
+    description: "A sample of data from C4C Account and Contact tables."
+    meta:
+      owner: "@mza.ext"
+    columns:
+      - name: id
+        description: "The primary key of the c4c_contact table."
+      - name: account_id
+        description: "The primary key of the c4c_account table."
+      - name: contact_email
+        description: "The email address of the contact person."

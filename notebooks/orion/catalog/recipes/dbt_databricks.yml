@@ -1,0 +1,14 @@
+source:
+  type: "dbt"
+  config:
+    # Relative to the catalog folder
+    manifest_path: "../dbt/databricks/target/manifest.json"
+    catalog_path: "../dbt/databricks/target/catalog.json"
+    # sources_path: "./path/dbt/sources_file.json"   # created with `dbt source freshness`
+
+    target_platform: "databricks"
+    load_schemas: True
+sink:
+  type: datahub-rest
+  config:
+    server: 'http://162.55.155.138:8080'
