@@ -387,7 +387,7 @@ def custom_mail_state_handler(
 
     if credentials_secret is None:
         try:
-            credentials_secret = PrefectSecret("mail_notifier_api_key").run()
+            credentials_secret = PrefectSecret("SENDGRID_DEFAULT_SECRET").run()
         except ValueError:
             pass
 
