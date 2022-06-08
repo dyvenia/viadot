@@ -4,7 +4,7 @@ import pandas as pd
 from viadot.tasks import BigQueryToDF
 
 logger = logging.getLogger(__name__)
-DATASET_NAME = "official_empty"
+DATASET_NAME = "manigeo"
 TABLE_NAME = "space"
 
 
