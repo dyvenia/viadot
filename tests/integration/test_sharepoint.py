@@ -15,9 +15,7 @@ from prefect.tasks.secrets import PrefectSecret
 
 
 def get_url():
-    with open(".config/credentials.json", "r") as f:
-        config = json.load(f)
-    return config["SHAREPOINT"]["url"]
+    return local_config["SHAREPOINT"]["url"]
 
 
 @pytest.fixture(scope="session")
