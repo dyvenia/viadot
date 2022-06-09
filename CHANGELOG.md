@@ -5,8 +5,23 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Added
+- Added new connector - Outlook. Created `Outlook` source, `OutlookToDF` task and `OutlookToADLS` flow.
+- Added new connector - Epicor. Created `Epicor` source, `EpicorToDF` task and `EpicorToDuckDB` flow.
+- Enabled Databricks Connect in the image. To enable, [follow this guide](./README.md#executing-spark-jobs)
+- Added `MySQL` source and `MySqlToADLS` flow
+- Added `SQLServerToDF` task
+- Added `SQLServerToDuckDB` flow which downloads data from SQLServer table, loads it to parquet file and then uplads it do DuckDB
+- Added complete proxy set up in `SAPRFC` example (`viadot/examples/sap_rfc`)
+
+### Changed
+- Changed default name for the Prefect secret holding the name of the Azure KV secret storing Sendgrid credentials
+
+
 ## [0.4.3] - 2022-04-28
 ### Added
+- Added `func` parameter to `SAPRFC` 
+- Added `SAPRFCToADLS` flow which downloads data from SAP Database to to a pandas DataFrame, exports df to csv and uploads it to Azure Data Lake.
 - Added `adls_file_name` in  `SupermetricsToADLS` and `SharepointToADLS` flows
 - Added `BigQueryToADLS` flow class which anables extract data from BigQuery.
 - Added `Salesforce` source
@@ -20,6 +35,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fixed `utils.gen_bulk_insert_query_from_df()` failing with > 1000 rows due to INSERT clause limit by chunking the data into multiple INSERTs
 - Fixed `get_flow_last_run_date()` incorrectly parsing the date
 - Fixed `MultipleFlows` when one flow is passed and when last flow fails.
+
 
 ## [0.4.2] - 2022-04-08
 ### Added
@@ -39,7 +55,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.4.0] - 2022-04-07
 ### Added
-- Added `custom_mail_state_handler` function that sends mail notification using custom smtp server.
+- Added `custom_mail_state_handler` task that sends email notification using a custom SMTP server.
 - Added new function `df_clean_column` that cleans data frame columns from special characters
 - Added `df_clean_column` util task that removes special characters from a pandas DataFrame
 - Added `MultipleFlows` flow class which enables running multiple flows in a given order.
