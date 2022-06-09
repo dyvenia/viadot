@@ -18,7 +18,7 @@ def test_adls_gen1_to_azure_sql_new_mock(TEST_PARQUET_FILE_PATH):
             file_path=TEST_PARQUET_FILE_PATH,
             to_path=f"raw/examples/{TEST_PARQUET_FILE_PATH}",
             sp_credentials_secret="App-Azure-CR-DatalakeGen2-AIA-DEV",
-            overwrite=True,
+            overwrite_adls=True,
         )
         flow.run()
         mock_method.assert_called_with()
