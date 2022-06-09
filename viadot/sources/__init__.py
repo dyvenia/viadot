@@ -6,7 +6,7 @@ from .cloud_for_customers import CloudForCustomers
 from .sharepoint import Sharepoint
 from .bigquery import BigQuery
 from .salesforce import Salesforce
-
+from .outlook import Outlook
 
 try:
     from .sap_rfc import SAPRFC
@@ -18,3 +18,4 @@ from .uk_carbon_intensity import UKCarbonIntensity
 from .sqlite import SQLite
 from .duckdb import DuckDB
 from .sql_server import SQLServer
+from .epicor import Epicor
