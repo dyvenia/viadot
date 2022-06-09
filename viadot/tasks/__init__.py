@@ -41,3 +41,4 @@ except ImportError:
 
 from .duckdb import DuckDBCreateTableFromParquet, DuckDBQuery, DuckDBToDF
 from .sql_server import SQLServerCreateTable, SQLServerToDF
+from .epicor import EpicorOrdersToDF

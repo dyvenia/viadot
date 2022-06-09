@@ -18,7 +18,7 @@ def test_list_datasets():
 def test_list_tables():
     datasets = BIGQ.list_datasets()
     tables = list(BIGQ.list_tables(datasets[0]))
-    assert tables == ["test_data", "manigeo_tab"]
+    assert tables == ["space", "test_data", "manigeo_tab"]
 
 
 def test_query_is_df():

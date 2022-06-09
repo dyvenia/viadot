@@ -84,7 +84,7 @@ class MySqlToADLS(Flow):
         adls_upload = file_to_adls_task.bind(
             from_path=self.file_path,
             to_path=self.to_path,
-            overwrite_adls=self.overwrite_adls,
+            overwrite=self.overwrite_adls,
             sp_credentials_secret=self.sp_credentials_secret,
             flow=self,
         )
