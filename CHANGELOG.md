@@ -6,12 +6,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 ### Added
+- Added new connector - Epicor. Created `Epicor` source, `EpicorToDF` task and `EpicorToDuckDB` flow.
 - Enabled Databricks Connect in the image. To enable, [follow this guide](./README.md#executing-spark-jobs)
 - Added `MySQL` source and `MySqlToADLS` flow
 - Added `SQLServerToDF` task
 - Added `SQLServerToDuckDB` flow which downloads data from SQLServer table, loads it to parquet file and then uplads it do DuckDB
 - Added complete proxy set up in `SAPRFC` example (`viadot/examples/sap_rfc`)
-- Added Databricks/Spark setup to the image. See README for setup & usage instructions.
 
 ### Changed
 - Changed default name for the Prefect secret holding the name of the Azure KV secret storing Sendgrid credentials
