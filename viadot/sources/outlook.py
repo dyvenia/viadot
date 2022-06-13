@@ -5,6 +5,7 @@ import datetime
 from typing import Any, Dict, List
 from ..config import local_config
 from ..exceptions import CredentialError
+from datetime import datetime, timezone
 
 
 class Outlook(Source):
@@ -144,7 +145,9 @@ class Outlook(Source):
                             row["Inbox"] = False
                         else:
                             row["Inbox"] = True
-
+                        row["_viadot_downloaded_at_utc"] = datetime.now(
+                            timezone.utc
+                        ).replace(microsecond=0)
                         data.append(row)
                     except KeyError as e:
                         print("KeyError : " + str(e))

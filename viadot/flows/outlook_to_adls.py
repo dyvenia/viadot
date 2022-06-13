@@ -84,20 +84,18 @@ class OutlookToADLS(Flow):
     def gen_flow(self) -> Flow:
 
         dfs = apply_map(self.gen_outlook_df, self.mailbox_list, flow=self)
-
         df = union_dfs_task.bind(dfs, flow=self)
-        df_with_metadata = add_ingestion_metadata_task.bind(df, flow=self)
 
         if self.output_file_extension == ".parquet":
             df_to_file = df_to_parquet.bind(
-                df=df_with_metadata,
+                df=df,
                 path=self.local_file_path,
                 if_exists=self.if_exsists,
                 flow=self,
             )
         else:
             df_to_file = df_to_csv.bind(
-                df=df_with_metadata,
+                df=df,
                 path=self.local_file_path,
                 if_exists=self.if_exsists,
                 flow=self,
@@ -111,6 +109,5 @@ class OutlookToADLS(Flow):
             flow=self,
         )
 
-        df_with_metadata.set_upstream(df, flow=self)
-        df_to_file.set_upstream(df_with_metadata, flow=self)
+        df_to_file.set_upstream(df, flow=self)
         file_to_adls_task.set_upstream(df_to_file, flow=self)
