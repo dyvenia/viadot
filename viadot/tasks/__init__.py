@@ -32,6 +32,7 @@ from .prefect_date_range import GetFlowNewDateRange
 from .aselite import ASELiteToDF
 from .bigquery import BigQueryToDF
 from .salesforce import SalesforceUpsert, SalesforceBulkUpsert
+from .outlook import OutlookToDF
 
 try:
     from .sap_rfc import SAPRFCToDF
@@ -40,3 +41,4 @@ except ImportError:
 
 from .duckdb import DuckDBCreateTableFromParquet, DuckDBQuery, DuckDBToDF
 from .sql_server import SQLServerCreateTable, SQLServerToDF
+from .epicor import EpicorOrdersToDF

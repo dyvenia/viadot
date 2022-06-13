@@ -387,7 +387,7 @@ def custom_mail_state_handler(
 
     if credentials_secret is None:
         try:
-            credentials_secret = PrefectSecret("mail_notifier_api_key").run()
+            credentials_secret = PrefectSecret("SENDGRID_DEFAULT_SECRET").run()
         except ValueError:
             pass
 
@@ -460,6 +460,19 @@ def df_clean_column(
                 inplace=True,
             )
     return df
+
+
+@task
+def concat_dfs(dfs: List[pd.DataFrame]):
+    """
+    Task to combine list of data frames into one
+
+    Args:
+        dfs (List[pd.DataFrame]): List of dataframes to concat.
+    Returns:
+        pd.DataFrame(): Pandas dataframe containing all columns from dataframes from list.
+    """
+    return pd.concat(dfs, axis=1)
 
 
 class Git(Git):

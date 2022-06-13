@@ -12,3 +12,7 @@ class CredentialError(Exception):
 
 class DBDataAccessError(Exception):
     pass
+
+
+class DataRangeError(Exception):
+    pass
