@@ -1,5 +1,5 @@
 import re
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Literal
 
 import pandas as pd
 import prefect
@@ -24,6 +24,8 @@ def handle_api_response(
     params: Dict[str, Any] = None,
     headers: Dict[str, Any] = None,
     timeout: tuple = (3.05, 60 * 30),
+    method: Literal["get", "post"] = "get",
+    body: str = None,
 ) -> requests.models.Response:
     """Handle and raise Python exceptions during request with retry strategy for specyfic status.
 
@@ -33,8 +35,11 @@ def handle_api_response(
         params (Dict[str, Any], optional): the request params also includes parameters such as the content type. Defaults to None.
         headers: (Dict[str, Any], optional): the request headers. Defaults to None.
         timeout (tuple, optional): the request times out. Defaults to (3.05, 60 * 30).
+        method (Literal ["get", "post"], optional): REST API medthod to use. Defaults to "get".
+        body (str, optional): Data to send using post method. Defaults to None.
 
     Raises:
+        ValueError: raises when 'method' parameter value is unavailable
         ReadTimeout: stop waiting for a response after a given number of seconds with the timeout parameter.
         HTTPError: exception that indicates when HTTP status codes returned values different than 200.
         ConnectionError: exception that indicates when client is unable to connect to the server.
@@ -43,6 +48,10 @@ def handle_api_response(
     Returns:
         requests.models.Response
     """
+    if method not in ["get", "post"]:
+        raise ValueError(
+            f"Method not found. Please use one of the available methods: 'get', 'post'."
+        )
     try:
         session = requests.Session()
         retry_strategy = Retry(
@@ -54,13 +63,23 @@ def handle_api_response(
 
         session.mount("http://", adapter)
         session.mount("https://", adapter)
-        response = session.get(
-            url,
-            auth=auth,
-            params=params,
-            headers=headers,
-            timeout=timeout,
-        )
+        if method == "get":
+            response = session.get(
+                url,
+                auth=auth,
+                params=params,
+                headers=headers,
+                timeout=timeout,
+            )
+        elif method == "post":
+            response = session.post(
+                url,
+                auth=auth,
+                params=params,
+                headers=headers,
+                timeout=timeout,
+                data=body,
+            )
 
         response.raise_for_status()
 
