@@ -127,3 +127,41 @@ class SQLServerToDF(Task):
             f"Successfully downloaded {nrows} rows and {ncols} columns of data to a DataFrame."
         )
         return df
+
+
+class SQLServerQuery(Task):
+    def __init__(
+        self,
+        config_key: str = None,
+        *args,
+        **kwargs,
+    ):
+        """
+        Task for running query on SQL Server.
+
+        Args:
+            config_key (str, optional): The key inside local config containing the credentials. Defaults to None.
+        """
+        self.config_key = config_key
+
+        super().__init__(name="sql_server_query", *args, **kwargs)
+
+    @defaults_from_attrs("config_key")
+    def run(
+        self,
+        query: str,
+        config_key: str = None,
+    ):
+        """
+        Ran query on SQL Server.
+
+        Args:
+            query (str, required): The query to execute on the SQL Server database.
+            config_key (str, optional): The key inside local config containing the credentials. Defaults to None.
+
+        """
+        sql_server = SQLServer(config_key=config_key)
+        result = sql_server.run(query)
+
+        self.logger.info(f"Successfully ran the query.")
+        return result
