@@ -1,4 +1,4 @@
-FROM prefecthq/prefect:2.0b5-python3.9
+FROM prefecthq/prefect:2.0b6-python3.9
 
 # Add user
 RUN useradd --create-home viadot && \
