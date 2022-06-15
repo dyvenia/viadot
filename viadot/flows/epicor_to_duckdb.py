@@ -19,6 +19,7 @@ class EpicorOrdersToDuckDB(Flow):
         duckdb_table: str = None,
         duckdb_schema: str = None,
         if_exists: Literal["fail", "replace", "append", "skip", "delete"] = "fail",
+        if_empty: Literal["warn", "skip", "fail"] = "skip",
         duckdb_credentials: dict = None,
         *args: List[any],
         **kwargs: Dict[str, Any],
@@ -38,6 +39,7 @@ class EpicorOrdersToDuckDB(Flow):
             duckdb_table (str, optional): Destination table in DuckDB. Defaults to None.
             duckdb_schema (str, optional): Destination schema in DuckDB. Defaults to None.
             if_exists (Literal, optional):  What to do if the table already exists. Defaults to "fail".
+            if_empty (Literal, optional): What to do if Parquet file is empty. Defaults to "skip".
             duckdb_credentials (dict, optional): Credentials for the DuckDB connection. Defaults to None.
         """
         self.base_url = base_url
@@ -50,6 +52,7 @@ class EpicorOrdersToDuckDB(Flow):
         self.duckdb_table = duckdb_table
         self.duckdb_schema = duckdb_schema
         self.if_exists = if_exists
+        self.if_empty = if_empty
         self.duckdb_credentials = duckdb_credentials
 
         super().__init__(*args, name=name, **kwargs)
@@ -85,6 +88,7 @@ class EpicorOrdersToDuckDB(Flow):
             schema=self.duckdb_schema,
             table=self.duckdb_table,
             if_exists=self.if_exists,
+            if_empty=self.if_empty,
             flow=self,
         )
         create_duckdb_table.set_upstream(parquet, flow=self)
