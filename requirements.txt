@@ -34,3 +34,5 @@ pandas-gbq==0.17.4
 databricks-connect==10.4.0b0
 dbt-databricks==1.0.3
 prefect-shell==0.1.0
+Faker==13.12.1
+acryl-datahub==0.8.38
