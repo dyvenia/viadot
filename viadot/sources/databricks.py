@@ -73,7 +73,7 @@ class Databricks(Source):
     def to_json(sparkDf: pyspark.sql.dataframe.DataFrame):
         return sparkDf.toJSON()
     
-    def toSparkDF(self, df: DataFrame):
+    def to_spark_df(self, df: DataFrame):
         """
         Convert Pandas DataFrame to Spark DataFrame
 
@@ -85,7 +85,7 @@ class Databricks(Source):
         from viadot.sources import Databricks
         databricks = Databricks()
         list = [{"some":"data"}]
-        sparkDf = databricks.toSparkDF(list)
+        sparkDf = databricks.to_spark_df(list)
         ```
         Returns:
             pyspark.sql.dataframe.DataFrame: The converted Spark DataFrame
@@ -93,7 +93,7 @@ class Databricks(Source):
         sparkDF = self.spark.createDataFrame(df)
         return sparkDF
     
-    def fromSparkToPandas(self, sparkDf: pyspark.sql.dataframe.DataFrame):
+    def spark_to_pandas(self, sparkDf: pyspark.sql.dataframe.DataFrame):
         """
         Convert Spark DataFrame to Pandas DataFrame
 
@@ -105,8 +105,8 @@ class Databricks(Source):
         from viadot.sources import Databricks
         databricks = Databricks()
         list = [{"some":"data"}]
-        sparkDf = databricks.toSparkDF(df)
-        pandasDf = fromSparkToPandas(sparkDf)
+        sparkDf = databricks.to_spark_df(df)
+        pandasDf = spark_to_pandas(sparkDf)
         ```
         Returns:
             pyspark.sql.dataframe.DataFrame: The converted Spark DataFrame
@@ -130,9 +130,9 @@ class Databricks(Source):
             DataFrame: A Pandas DataFrame containing the query's results (if available)
         """
         result = self.spark.sql(query)
-        return self.fromSparkToPandas(result)
+        return self.spark_to_pandas(result)
     
-    def readTable(self, table_name: str):
+    def read_table(self, table_name: str):
         """
         Read the contents of a given table
 
@@ -143,15 +143,15 @@ class Databricks(Source):
         ```python
         from viadot.sources import Databricks
         databricks = Databricks()
-        tableData = databricks.readTable("schema.table_1")
+        tableData = databricks.read_table("schema.table_1")
         ```
         Returns:
             DataFrame: A Pandas DataFrame containing the requested table's data
         """
         result = self.spark.sql("select * from "+ table_name)
-        return self.fromSparkToPandas(result)
+        return self.spark_to_pandas(result)
 
-    def createTable(self, table_name: str, df: DataFrame):
+    def create_table(self, table_name: str, df: DataFrame):
         """
         Write a new table using a given Pandas DataFrame
 
@@ -164,20 +164,20 @@ class Databricks(Source):
         from viadot.sources import Databricks
         databricks = Databricks()
         df = [{"id":"1", "name":"Joe"}]
-        new_table = databricks.createTable("schema.table_1", df)
+        new_table = databricks.create_table("schema.table_1", df)
         ```
         Returns:
             DataFrame: A Pandas DataFrame containing the newly created table's data
         """
-        data = self.toSparkDF(df)
+        data = self.to_spark_df(df)
         data.createOrReplaceTempView("new_table")
 
         self.query("CREATE TABLE " + table_name +" USING DELTA AS SELECT * FROM new_table;")
 
         print("Table " +table_name+ " created.")
-        return self.readTable(table_name)    
+        return self.read_table(table_name)    
 
-    def deleteTable(self, table_name: str):
+    def delete_table(self, table_name: str):
         """
         Delete an existing table
 
@@ -189,7 +189,7 @@ class Databricks(Source):
         ```python
         from viadot.sources import Databricks
         databricks = Databricks()]
-        databricks.deleteTable("schema.table_1")
+        databricks.delete_table("schema.table_1")
         ```
         """
         self.spark.sql("DROP TABLE "+ table_name)
@@ -213,9 +213,9 @@ class Databricks(Source):
         Returns:
             DataFrame: A Pandas DataFrame containing the new data in the overwitten table
         """
-        data = self.toSparkDF(df)
+        data = self.to_spark_df(df)
         data.write.format("delta").mode("overwrite").saveAsTable(table_name)
-        return self.readTable(table_name)
+        return self.read_table(table_name)
         
     # TODO: add a method for extracting a usable JSON schema for the sets
     # TODO: Parse the matchedSet as a notMatchedSet
@@ -278,9 +278,9 @@ class Databricks(Source):
 
         # Check the column names and types match
         ## Retrieve the table as a Spark DataFrame
-        deltaDf = self.readTable(table_name)
+        deltaDf = self.read_table(table_name)
         upsertData = self.spark.createDataFrame(df)
-        upsertDf = self.fromSparkToPandas(upsertData)
+        upsertDf = self.spark_to_pandas(upsertData)
         ## Sort columns alphabetically
         deltaDf = deltaDf.sort_index(axis=1)
         upsertDf = upsertDf.sort_index(axis=1)
@@ -297,7 +297,7 @@ class Databricks(Source):
         else:
             print("Columns mismatch. Please adhere to the column names and data types used in the source table.")
     
-    def createSchema(self, schemaName: str):
+    def create_schema(self, schemaName: str):
         """
         Create a schema for storing tables
 
@@ -308,13 +308,13 @@ class Databricks(Source):
         ```python
         from viadot.sources import Databricks
         databricks = Databricks()
-        databricks.createSchema("schema_1")
+        databricks.create_schema("schema_1")
         ```
         """
-        self.spark.sql("CREATE SCHEMA " + schemaName)
+        self.spark.sql("CREATE SCHEMA IF NOT EXISTS " + schemaName)
         print("Schema "+ schemaName + " created.")
 
-    def deleteSchema(self, schemaName: str):
+    def delete_schema(self, schemaName: str):
         """
         Delete a schema
 
@@ -325,13 +325,13 @@ class Databricks(Source):
         ```python
         from viadot.sources import Databricks
         databricks = Databricks()
-        databricks.deleteSchema("schema_1")
+        databricks.delete_schema("schema_1")
         ```
         """
         self.spark.sql("DROP SCHEMA " + schemaName)
         print("Schema "+ schemaName + " deleted.")
 
-    def printSchema(self, table_name: str):
+    def print_schema(self, table_name: str):
         """
         Print the details of a table's data schema
 
@@ -342,9 +342,9 @@ class Databricks(Source):
         ```python
         from viadot.sources import Databricks
         databricks = Databricks()
-        databricks.printSchema("table_1")
+        databricks.print_schema("table_1")
         ```
         """
-        table = self.readTable(table_name)
-        table = self.toSparkDF(table)
-        print(table.printSchema())
+        table = self.read_table(table_name)
+        table = self.to_spark_df(table)
+        print(table.print_schema())
