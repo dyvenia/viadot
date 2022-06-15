@@ -1,10 +1,12 @@
 import re
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Literal
 
 import pandas as pd
 import prefect
 import pyodbc
 import requests
+import os
+from prefect.utilities import logging
 from prefect.utilities.graphql import EnumValue, with_args
 from requests.adapters import HTTPAdapter
 from requests.exceptions import ConnectionError, HTTPError, ReadTimeout, Timeout
@@ -12,6 +14,10 @@ from requests.packages.urllib3.util.retry import Retry
 from urllib3.exceptions import ProtocolError
 from itertools import chain
 from .exceptions import APIError
+from .signals import SKIP
+
+
+logger = logging.get_logger(__name__)
 
 
 def slugify(name: str) -> str:
@@ -345,3 +351,31 @@ def union_dict(*dicts):
 
     """
     return dict(chain.from_iterable(dct.items() for dct in dicts))
+
+
+def handle_if_empty_file(if_empty: Literal["warn", "skip", "fail"] = "warn"):
+    if if_empty == "warn":
+        logger.warning("The input file is empty.")
+    elif if_empty == "skip":
+        raise SKIP()
+    elif if_empty == "fail":
+        raise ValueError("The input file is empty.")
+
+
+def check_if_empty_file(
+    path: str,
+    if_empty: Literal["warn", "skip", "fail"] = "warn",
+    file_extension: Literal[".parquet", ".csv"] = None,
+    file_sep: str = "\t",
+):
+    if os.stat(path).st_size == 0:
+        handle_if_empty_file(if_empty)
+
+    elif file_extension == ".parquet":
+        df = pd.read_parquet(path)
+        if "_viadot_downloaded_at_utc" in df.columns and len(df.columns) == 1:
+            handle_if_empty_file(if_empty)
+    elif file_extension == ".csv":
+        df = pd.read_csv(path, sep=file_sep)
+        if "_viadot_downloaded_at_utc" in df.columns and len(df.columns) == 1:
+            handle_if_empty_file(if_empty)
