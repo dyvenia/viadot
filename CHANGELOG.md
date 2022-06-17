@@ -8,6 +8,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.4.4] - 2022-06-09
 ### Added
+- Added `if_empty` parameter in `DuckDBCreateTableFromParquet` task and in `EpicorToDuckDB`, `SAPToDuckDB`,
+`SQLServerToDuckDB` flows to check if output Parquet is empty and handle it properly.
+- Added `check_if_empty_file()` and `handle_if_empty_file()` in `utils.py`
+### Added
 
 - Added new connector - Outlook. Created `Outlook` source, `OutlookToDF` task and `OutlookToADLS` flow.
 - Added new connector - Epicor. Created `Epicor` source, `EpicorToDF` task and `EpicorToDuckDB` flow.
