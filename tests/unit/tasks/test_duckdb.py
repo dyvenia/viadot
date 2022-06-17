@@ -14,7 +14,6 @@ DATABASE_PATH = "test_db_123.duckdb"
 def duckdb():
     duckdb = DuckDB(credentials=dict(database=DATABASE_PATH))
     yield duckdb
-    os.remove(DATABASE_PATH)
 
 
 def test_create_table_empty_file(duckdb):
@@ -35,3 +34,4 @@ def test_create_table(duckdb, TEST_PARQUET_FILE_PATH):
     task.run(schema=SCHEMA, table=TABLE, path=TEST_PARQUET_FILE_PATH, if_empty="skip")
 
     assert duckdb._check_if_table_exists(TABLE, schema=SCHEMA)
+    os.remove(DATABASE_PATH)
