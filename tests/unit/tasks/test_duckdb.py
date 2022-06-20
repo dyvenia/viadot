@@ -1,5 +1,4 @@
 import os
-from pickle import TRUE
 import pytest
 
 from viadot.tasks import DuckDBCreateTableFromParquet
