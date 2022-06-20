@@ -1,6 +1,6 @@
 import pandas as pd
 import pytest
-from viadot.tasks import SalesforceUpsert
+from viadot.tasks import SalesforceUpsert, SalesforceToDF
 
 
 @pytest.fixture(scope="session")
@@ -25,3 +25,12 @@ def test_salesforce_upsert(test_df):
         sf.run(test_df, table="Contact")
     except Exception as exception:
         assert False, exception
+
+
+def test_salesforce_to_df():
+    sf_to_df = SalesforceToDF(
+        query="SELECT IsDeleted, FiscalYear FROM Opportunity LIMIT 50"
+    )
+    df = sf_to_df.run()
+
+    assert isinstance(df, pd.DataFrame)
