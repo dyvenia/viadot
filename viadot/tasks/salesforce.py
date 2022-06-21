@@ -278,11 +278,11 @@ class SalesforceToDF(Task):
         query: str = None,
         table: str = None,
         columns: List[str] = None,
+        env: str = None,
         domain: str = None,
         client_id: str = None,
         credentials_secret: str = None,
         vault_name: str = None,
-        env: str = None,
         **kwargs: Dict[str, Any],
     ) -> None:
         """
@@ -297,6 +297,8 @@ class SalesforceToDF(Task):
             domain (str, optional): Domain of a connection; defaults to 'test' (sandbox).
                 Can only be added if built-in username/password/security token is provided. Defaults to None.
             client_id (str, optional): Client id to keep the track of API calls. Defaults to None.
+            credentials_secret (str, optional): The name of the Azure Key Vault secret. Defaults to None.
+            vault_name (str, optional): The name of the vault from which to obtain the secrets. Defaults to None.
         """
         credentials = get_credentials(credentials_secret, vault_name=vault_name)
         salesforce = Salesforce(
@@ -310,6 +312,5 @@ class SalesforceToDF(Task):
             query=query, table=table, columns=columns, if_empty="replace"
         )
         self.logger.info(f"Successfully downloaded data from Salesforce.")
-        self.logger.info(f"Removing special characters from columns...")
 
         return df
