@@ -24,7 +24,7 @@ def handle_api_response(
     params: Dict[str, Any] = None,
     headers: Dict[str, Any] = None,
     timeout: tuple = (3.05, 60 * 30),
-    method: Literal["get", "post"] = "get",
+    method: Literal["GET", "POST"] = "GET",
     body: str = None,
 ) -> requests.models.Response:
     """Handle and raise Python exceptions during request with retry strategy for specyfic status.
@@ -35,7 +35,7 @@ def handle_api_response(
         params (Dict[str, Any], optional): the request params also includes parameters such as the content type. Defaults to None.
         headers: (Dict[str, Any], optional): the request headers. Defaults to None.
         timeout (tuple, optional): the request times out. Defaults to (3.05, 60 * 30).
-        method (Literal ["get", "post"], optional): REST API medthod to use. Defaults to "get".
+        method (Literal ["GET", "POST"], optional): REST API method to use. Defaults to "GET".
         body (str, optional): Data to send using post method. Defaults to None.
 
     Raises:
@@ -48,9 +48,9 @@ def handle_api_response(
     Returns:
         requests.models.Response
     """
-    if method not in ["get", "post"]:
+    if method not in ["GET", "POST"]:
         raise ValueError(
-            f"Method not found. Please use one of the available methods: 'get', 'post'."
+            f"Method not found. Please use one of the available methods: 'GET', 'POST'."
         )
     try:
         session = requests.Session()
@@ -63,7 +63,7 @@ def handle_api_response(
 
         session.mount("http://", adapter)
         session.mount("https://", adapter)
-        if method == "get":
+        if method == "GET":
             response = session.get(
                 url,
                 auth=auth,
@@ -71,7 +71,7 @@ def handle_api_response(
                 headers=headers,
                 timeout=timeout,
             )
-        elif method == "post":
+        elif method == "POST":
             response = session.post(
                 url,
                 auth=auth,

@@ -234,7 +234,7 @@ class Epicor(Source):
             "password": self.credentials["password"],
         }
 
-        response = handle_api_response(url=url, headers=headers, method="post")
+        response = handle_api_response(url=url, headers=headers, method="POST")
         root = ET.fromstring(response.text)
         token = root.find("AccessToken").text
         return token
