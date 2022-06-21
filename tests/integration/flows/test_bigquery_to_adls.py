@@ -1,10 +1,11 @@
 from viadot.flows import BigQueryToADLS
+from viadot.tasks import AzureDataLakeRemove
 from prefect.tasks.secrets import PrefectSecret
 import pendulum
 import os
 
-ADLS_PATH = "raw/tests"
-FILE_NAME = str(pendulum.now("utc")) + ".parquet"
+ADLS_DIR_PATH = "raw/tests/"
+ADLS_FILE_NAME = str(pendulum.now("utc")) + ".parquet"
 BIGQ_CREDENTIAL_KEY = "BIGQUERY_TESTS"
 ADLS_CREDENTIAL_SECRET = PrefectSecret(
     "AZURE_DEFAULT_ADLS_SERVICE_PRINCIPAL_SECRET"
@@ -16,9 +17,9 @@ def test_bigquery_to_adls():
         name="Test BigQuery to ADLS extract",
         dataset_name="official_empty",
         table_name="space",
-        adls_file_name=FILE_NAME,
+        adls_file_name=ADLS_FILE_NAME,
         credentials_key=BIGQ_CREDENTIAL_KEY,
-        adls_dir_path=ADLS_PATH,
+        adls_dir_path=ADLS_DIR_PATH,
         adls_sp_credentials_secret=ADLS_CREDENTIAL_SECRET,
     )
 
@@ -27,6 +28,7 @@ def test_bigquery_to_adls():
 
     task_results = result.result.values()
     assert all([task_result.is_successful() for task_result in task_results])
+
     os.remove("test_bigquery_to_adls_extract.parquet")
     os.remove("test_bigquery_to_adls_extract.json")
 
@@ -37,9 +39,9 @@ def test_bigquery_to_adls_overwrite_true():
         dataset_name="official_empty",
         table_name="space",
         credentials_key=BIGQ_CREDENTIAL_KEY,
-        adls_file_name=FILE_NAME,
+        adls_file_name=ADLS_FILE_NAME,
         overwrite_adls=True,
-        adls_dir_path=ADLS_PATH,
+        adls_dir_path=ADLS_DIR_PATH,
         adls_sp_credentials_secret=ADLS_CREDENTIAL_SECRET,
     )
 
@@ -57,10 +59,10 @@ def test_bigquery_to_adls_false():
         name="Test BigQuery to ADLS overwrite false",
         dataset_name="official_empty",
         table_name="space",
-        adls_file_name=FILE_NAME,
+        adls_file_name=ADLS_FILE_NAME,
         overwrite_adls=False,
         credentials_key=BIGQ_CREDENTIAL_KEY,
-        adls_dir_path=ADLS_PATH,
+        adls_dir_path=ADLS_DIR_PATH,
         adls_sp_credentials_secret=ADLS_CREDENTIAL_SECRET,
     )
 
@@ -68,3 +70,7 @@ def test_bigquery_to_adls_false():
     assert result.is_failed()
     os.remove("test_bigquery_to_adls_overwrite_false.parquet")
     os.remove("test_bigquery_to_adls_overwrite_false.json")
+    rm = AzureDataLakeRemove(
+        path=ADLS_DIR_PATH + ADLS_FILE_NAME, vault_name="azuwevelcrkeyv001s"
+    )
+    rm.run(sp_credentials_secret=ADLS_CREDENTIAL_SECRET)
