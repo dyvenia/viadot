@@ -70,7 +70,10 @@ class MySqlToADLS(Flow):
         df_task = MySqlToDf(country_short=self.country_short)
 
         df = df_task.bind(
-            credentials_secret=self.credentials_secret, query=self.query, flow=self
+            credentials_secret=self.credentials_secret,
+            query=self.query,
+            vault_name=self.vault_name,
+            flow=self,
         )
 
         create_csv = df_to_csv.bind(

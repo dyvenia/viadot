@@ -52,7 +52,7 @@ class MySqlToDf(Task):
         if not credentials_secret:
             try:
                 credentials_secret = PrefectSecret("CONVIDERA").run()
-                logger.info("Loaded credentials from Key Vault.")
+                logger.info("Loaded credentials from PrefectSecret.")
             except ValueError:
                 pass
 
