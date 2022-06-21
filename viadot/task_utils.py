@@ -475,6 +475,23 @@ def concat_dfs(dfs: List[pd.DataFrame]):
     return pd.concat(dfs, axis=1)
 
 
+@task
+def map_dtypes_to_str(df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Task for mapping dtypes to strings.
+
+    Args:
+        df (pd.DataFrame): input DataFrame.
+
+    Returns:
+        df_mapped (pd.DataFrame): Pandas DataFrame with mapped Data Types.
+    """
+    df_mapped = df.copy()
+    for col in df_mapped.columns:
+        df_mapped[col] = df_mapped[col].astype("string")
+    return df_mapped
+
+
 class Git(Git):
     @property
     def git_clone_url(self):
