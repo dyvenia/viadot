@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.4.4] - 2022-06-09
 ### Added
+- Added `map_dtypes_to_str` task in `utils.py` and added this to `EpicorToDuckDB`, `SAPToDuckDB`, `SQLServerToDuckDB`
 - Added `if_empty` parameter in `DuckDBCreateTableFromParquet` task and in `EpicorToDuckDB`, `SAPToDuckDB`,
 `SQLServerToDuckDB` flows to check if output Parquet is empty and handle it properly.
 - Added `check_if_empty_file()` and `handle_if_empty_file()` in `utils.py`
