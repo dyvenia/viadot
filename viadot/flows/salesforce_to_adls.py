@@ -40,7 +40,7 @@ class SalesforceToADLS(Flow):
         vault_name: str = None,
         credentials_secret: str = None,
         output_file_extension: str = ".parquet",
-        overwrite_adls: bool = None,
+        overwrite_adls: bool = True,
         adls_dir_path: str = None,
         local_file_path: str = None,
         adls_file_name: str = None,
@@ -132,7 +132,9 @@ class SalesforceToADLS(Flow):
             flow=self,
         )
 
+        self.logger.info(f"Removing special characters from columns...")
         df_clean = df_clean_column.bind(df=df, flow=self)
+
         df_with_metadata = add_ingestion_metadata_task.bind(df_clean, flow=self)
         dtypes_dict = df_get_data_types_task.bind(df_with_metadata, flow=self)
         df_to_be_loaded = df_map_mixed_dtypes_for_parquet(
