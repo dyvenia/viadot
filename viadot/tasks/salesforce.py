@@ -9,7 +9,6 @@ from prefect.utilities.tasks import defaults_from_attrs
 
 from ..sources import Salesforce
 from .azure_key_vault import AzureKeyVaultSecret
-from ..task_utils import df_clean_column
 
 
 def get_credentials(credentials_secret: str, vault_name: str = None):
@@ -312,6 +311,5 @@ class SalesforceToDF(Task):
         )
         self.logger.info(f"Successfully downloaded data from Salesforce.")
         self.logger.info(f"Removing special characters from columns...")
-        df = df_clean_column.run(df=df)
 
         return df

@@ -14,6 +14,7 @@ from ..task_utils import (
     dtypes_to_json_task,
     df_map_mixed_dtypes_for_parquet,
     update_dtypes_dict,
+    df_clean_column,
 )
 
 from ..tasks import SalesforceToDF
@@ -131,7 +132,8 @@ class SalesforceToADLS(Flow):
             flow=self,
         )
 
-        df_with_metadata = add_ingestion_metadata_task.bind(df, flow=self)
+        df_clean = df_clean_column.bind(df=df, flow=self)
+        df_with_metadata = add_ingestion_metadata_task.bind(df_clean, flow=self)
         dtypes_dict = df_get_data_types_task.bind(df_with_metadata, flow=self)
         df_to_be_loaded = df_map_mixed_dtypes_for_parquet(
             df_with_metadata, dtypes_dict, flow=self
@@ -173,7 +175,8 @@ class SalesforceToADLS(Flow):
             flow=self,
         )
 
-        df_with_metadata.set_upstream(df, flow=self)
+        df_clean.set_upstream(df, flow=self)
+        df_with_metadata.set_upstream(df_clean, flow=self)
         dtypes_dict.set_upstream(df_with_metadata, flow=self)
         df_to_be_loaded.set_upstream(dtypes_dict, flow=self)
         file_to_adls_task.set_upstream(df_to_file, flow=self)
