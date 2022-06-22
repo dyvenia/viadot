@@ -1,22 +1,23 @@
 from typing import Any, Dict, List, Literal
-from prefect import Flow
+from prefect import Flow, unmapped
 from prefect.utilities import logging
+
 
 logger = logging.get_logger()
 
-from ..task_utils import (
-    add_ingestion_metadata_task,
-    df_to_parquet,
-)
+from ..task_utils import add_ingestion_metadata_task, df_to_parquet, concat_dfs
 from ..tasks import SAPRFCToDF, DuckDBCreateTableFromParquet
+
+sap_to_df_task = SAPRFCToDF()
 
 
 class SAPToDuckDB(Flow):
     def __init__(
         self,
-        query: str,
         table: str,
         local_file_path: str,
+        query: str = None,
+        queries: List[str] = None,
         func: str = "RFC_READ_TABLE",
         name: str = None,
         sep: str = None,
@@ -32,9 +33,10 @@ class SAPToDuckDB(Flow):
         """A flow for moving data from SAP to DuckDB.
 
         Args:
-            query (str): The query to be executed on SAP with pyRFC.
             table (str): Destination table in DuckDB.
             local_file_path (str): The path to the source Parquet file.
+            query (str): The query to be executed on SAP with pyRFC.
+            queries(List[str]) The list of queries to be executed with pyRFC. Defaults to None.
             func (str, optional): SAP RFC function to use. Defaults to "RFC_READ_TABLE".
             name (str, optional): The name of the flow. Defaults to None.
             sep (str, optional): The separator to use when reading query results. If not provided,
@@ -48,6 +50,7 @@ class SAPToDuckDB(Flow):
 
         # SAPRFCToDF
         self.query = query
+        self.queries = queries
         self.func = func
         self.sep = sep
         self.sap_credentials = sap_credentials
@@ -61,7 +64,6 @@ class SAPToDuckDB(Flow):
 
         super().__init__(*args, name=name, **kwargs)
 
-        self.sap_to_df_task = SAPRFCToDF(credentials=sap_credentials)
         self.create_duckdb_table_task = DuckDBCreateTableFromParquet(
             credentials=duckdb_credentials
         )
@@ -70,14 +72,24 @@ class SAPToDuckDB(Flow):
 
     def gen_flow(self) -> Flow:
 
-        df = self.sap_to_df_task.bind(
-            query=self.query,
-            sep=self.sep,
-            func=self.func,
-            flow=self,
-        )
+        if self.queries is not None:
+            df = sap_to_df_task.map(
+                query=self.queries,
+                func=unmapped(self.func),
+                credentials=unmapped(self.sap_credentials),
+                flow=self,
+            )
+            df_final = concat_dfs.bind(df, flow=self)
+            df_final.set_upstream(df, flow=self)
+        else:
+            df_final = sap_to_df_task(
+                query=self.query,
+                func=self.func,
+                credentials=self.sap_credentials,
+                flow=self,
+            )
 
-        df_with_metadata = add_ingestion_metadata_task.bind(df, flow=self)
+        df_with_metadata = add_ingestion_metadata_task.bind(df_final, flow=self)
 
         parquet = df_to_parquet.bind(
             df=df_with_metadata,
