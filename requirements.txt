@@ -36,3 +36,4 @@ dbt-databricks==1.0.3
 prefect-shell==0.1.0
 Faker==13.12.1
 acryl-datahub==0.8.38
+dulwich==0.20.43
