@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 ### Added
 - Added `duckdb_query` parameter to `DuckDBToSQLServer` flow to enable option to create table
-using e.g. WHERE clause
+using outputs of SQL queries 
 ## [0.4.4] - 2022-06-09
 ### Added
 
