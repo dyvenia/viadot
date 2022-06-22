@@ -53,14 +53,15 @@ class DuckDBToSQLServer(Flow):
     ):
         """
         Flow for moving a table from DuckDB to SQL Server. User can specify schema and table to transfer
-        data between databases or use SELECT query instead.
+        data between databases or use a SELECT query instead.
 
         Args:
             name (str): The name of the flow.
             duckdb_schema (str, optional): Destination schema. Defaults to None.
             duckdb_table (str, optional): Destination table. Defaults to None.
             if_empty (str, optional): What to do if the query returns no data. Defaults to "warn".
-            duckdb_query (str, optional): SELECT query to execute on DuckDB to create table. Defaults to None.
+            duckdb_query (str, optional): SELECT query to be executed on DuckDB, its result will be used to
+            create table. Defaults to None.
             duckdb_credentials (dict, optional): The config to use for connecting with DuckDB.
             local_file_path (str, optional): Local destination path. Defaults to None.
             write_sep (str, optional): The delimiter for the output CSV file. Defaults to "\t".
