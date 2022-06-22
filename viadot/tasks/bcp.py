@@ -12,8 +12,8 @@ from .azure_key_vault import AzureKeyVaultSecret
 logger = logging.get_logger()
 
 
-def parse_logs(log_file_name: str):
-    with open(log_file_name) as log_file:
+def parse_logs(log_file_path: str):
+    with open(log_file_path) as log_file:
         log_file = log_file.readlines()
     for line in log_file:
         if "#" in line:
@@ -30,7 +30,7 @@ class BCPTask(ShellTask):
         - schema (str, optional): The destination schema.
         - table (str, optional): The destination table.
         - chunksize (int, optional): The chunk size to use.
-        - error_log_file (string, optional): Full path of an error file. Defaults to "log_file.log".
+        - error_log_file_path (string, optional): Full path of an error file. Defaults to "log_file.log".
         - on_error (Literal["skip", "fail"], optional): What to do if error occurs. Defaults to "skip".
         - credentials (dict, optional): The credentials to use for connecting with the database.
         - vault_name (str): The name of the vault from which to fetch the secret.
@@ -43,7 +43,7 @@ class BCPTask(ShellTask):
         schema: str = None,
         table: str = None,
         chunksize: int = 5000,
-        error_log_file: str = "log_file.log",
+        error_log_file_path: str = "log_file.log",
         on_error: Literal["skip", "fail"] = "skip",
         credentials: dict = None,
         vault_name: str = None,
@@ -56,7 +56,7 @@ class BCPTask(ShellTask):
         self.schema = schema
         self.table = table
         self.chunksize = chunksize
-        self.error_log_file = error_log_file
+        self.error_log_file_path = error_log_file_path
         self.on_error = on_error
         self.credentials = credentials
         self.vault_name = vault_name
@@ -76,7 +76,7 @@ class BCPTask(ShellTask):
         "schema",
         "table",
         "chunksize",
-        "error_log_file",
+        "error_log_file_path",
         "on_error",
         "credentials",
         "vault_name",
@@ -89,7 +89,7 @@ class BCPTask(ShellTask):
         schema: str = None,
         table: str = None,
         chunksize: int = None,
-        error_log_file: str = None,
+        error_log_file_path: str = None,
         on_error: Literal = None,
         credentials: dict = None,
         credentials_secret: str = None,
@@ -105,6 +105,7 @@ class BCPTask(ShellTask):
         - schema (str, optional): The destination schema.
         - table (str, optional): The destination table.
         - chunksize (int, optional): The chunk size to use. By default 5000.
+        - error_log_file_path (string, optional): Full path of an error file. Defaults to "log_file.log".
         - on_error (Literal, optional): What to do if error occur. Defaults to None.
         - credentials (dict, optional): The credentials to use for connecting with SQL Server.
         - credentials_secret (str, optional): The name of the Key Vault secret containing database credentials.
@@ -149,7 +150,7 @@ class BCPTask(ShellTask):
             raise ValueError(
                 "Please provide correct 'on_error' parameter value - 'skip' or 'fail'. "
             )
-        command = f"/opt/mssql-tools/bin/bcp {fqn} in '{path}' -S {server} -d {db_name} -U {uid} -P '{pwd}' -c -F 2 -b {chunksize} -h 'TABLOCK' -e '{error_log_file}' -m {max_error}"
+        command = f"/opt/mssql-tools/bin/bcp {fqn} in '{path}' -S {server} -d {db_name} -U {uid} -P '{pwd}' -c -F 2 -b {chunksize} -h 'TABLOCK' -e '{error_log_file_path}' -m {max_error}"
         run_command = super().run(command=command, **kwargs)
-        parse_logs(error_log_file)
+        parse_logs(error_log_file_path)
         return run_command

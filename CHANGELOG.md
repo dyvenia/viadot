@@ -7,9 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 ### Added
 
-- Added `error_log_file` parameter in `BCPTask` that enables setting name of errors logs file 
+- Added `error_log_file_path` parameter in `BCPTask` that enables setting name of errors logs file 
 - Added `on_error` parameter in `BCPTask` that tells what to do if bcp error occurs. 
-- Added error log file and `on_error` parameter in `ADLSToAzureSQL`
+- Added error log file and `on_bcp_error` parameter in `ADLSToAzureSQL`
  - Enabled Databricks Connect in the image. To enable, [follow this guide](./README.md#executing-spark-jobs)
 
 ### Changed
