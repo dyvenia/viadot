@@ -50,7 +50,7 @@ def test_bcp(TEST_CSV_FILE_PATH, test_table):
             path=TEST_CSV_FILE_PATH,
             schema=SCHEMA,
             table=TABLE,
-            error_log_file=ERROR_LOG_FILE,
+            error_log_file_path=ERROR_LOG_FILE,
         )
     except FAIL:
         result = False
@@ -73,7 +73,7 @@ def test_bcp_log_error(TEST_CSV_FILE_PATH, test_error_table):
         path=TEST_CSV_FILE_PATH,
         schema=SCHEMA,
         table=ERROR_TABLE,
-        error_log_file=ERROR_LOG_FILE,
+        error_log_file_path=ERROR_LOG_FILE,
     )
     assert (
         os.path.exists(ERROR_LOG_FILE) is True and os.path.getsize(ERROR_LOG_FILE) != 0
