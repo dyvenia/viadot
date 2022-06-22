@@ -6,7 +6,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 ### Added
-- Added `queries` patameter as option to run multiple queries in flow `SAPToDuckDB` - it helps with downloading SAP data that has more 
+- Added `queries` parameter as option to run multiple queries in flow `SAPToDuckDB` - it helps with downloading SAP data that has more 
 than 512 characters for column selection 
 ## [0.4.4] - 2022-06-09
 ### Added
