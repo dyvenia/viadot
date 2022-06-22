@@ -478,17 +478,15 @@ def concat_dfs(dfs: List[pd.DataFrame]):
 @task
 def map_dtypes_to_str(df: pd.DataFrame) -> pd.DataFrame:
     """
-    Task for mapping dtypes to strings.
+    Task for casting an entire DataFrame to a string data type.
 
     Args:
-        df (pd.DataFrame): input DataFrame.
+        df (pd.DataFrame): Input DataFrame.
 
     Returns:
         df_mapped (pd.DataFrame): Pandas DataFrame with mapped Data Types.
     """
-    df_mapped = df.copy()
-    for col in df_mapped.columns:
-        df_mapped[col] = df_mapped[col].astype("string")
+    df_mapped = df.astype("string")
     return df_mapped
 
 

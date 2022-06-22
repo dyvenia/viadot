@@ -353,29 +353,58 @@ def union_dict(*dicts):
     return dict(chain.from_iterable(dct.items() for dct in dicts))
 
 
-def handle_if_empty_file(if_empty: Literal["warn", "skip", "fail"] = "warn"):
+def handle_if_empty_file(
+    if_empty: Literal["warn", "skip", "fail"] = "warn",
+    message: str = None,
+):
+    """
+    Task for handling empty file.
+    Args:
+        if_empty (Literal, optional): What to do if file is empty. Defaults to "warn".
+        message (str, optional): Massage to show in warning and error messages. Defaults to None.
+    Raises:
+        ValueError: If `if_empty` is set to `fail`.
+        SKIP: If `if_empty` is set to `skip`.
+    """
     if if_empty == "warn":
-        logger.warning("The input file is empty.")
+        logger.warning(message)
     elif if_empty == "skip":
-        raise SKIP()
+        raise SKIP(message)
     elif if_empty == "fail":
-        raise ValueError("The input file is empty.")
+        raise ValueError(message)
 
 
 def check_if_empty_file(
     path: str,
     if_empty: Literal["warn", "skip", "fail"] = "warn",
-    file_extension: Literal[".parquet", ".csv"] = None,
+    file_extension: Literal[".parquet", ".csv"] = ".parquet",
     file_sep: str = "\t",
 ):
+    """
+    Task for checking if the file is empty and handling it. If there is only one column
+    "_viadot_downloaded_at_utc" in the file it's treated as empty one.
+
+    Args:
+        path (str, required): Path to the local file.
+        if_empty (Literal, optional): What to do if file is empty. Defaults to "warn".
+        file_extension (Literal, optional): File extension. Defaults to ".parquet".
+        file_sep (str, optional): File separator to use while checking .csv file. Defaults to "\t".
+
+    """
     if os.stat(path).st_size == 0:
-        handle_if_empty_file(if_empty)
+        handle_if_empty_file(if_empty, message=f"Input file - '{path}' is empty.")
 
     elif file_extension == ".parquet":
         df = pd.read_parquet(path)
         if "_viadot_downloaded_at_utc" in df.columns and len(df.columns) == 1:
-            handle_if_empty_file(if_empty)
+            handle_if_empty_file(
+                if_empty=if_empty,
+                message=f"Input file - '{path}' has only one column '_viadot_downloaded_at_utc'.",
+            )
     elif file_extension == ".csv":
         df = pd.read_csv(path, sep=file_sep)
         if "_viadot_downloaded_at_utc" in df.columns and len(df.columns) == 1:
-            handle_if_empty_file(if_empty)
+            handle_if_empty_file(
+                if_empty=if_empty,
+                message=f"Input file - '{path}' has only one column '_viadot_downloaded_at_utc'.",
+            )
