@@ -476,15 +476,17 @@ def concat_dfs(dfs: List[pd.DataFrame]):
 
 
 @task
-def map_dtypes_to_str(df: pd.DataFrame) -> pd.DataFrame:
+def cast_df_to_str(df: pd.DataFrame) -> pd.DataFrame:
     """
-    Task for casting an entire DataFrame to a string data type.
+    Task for casting an entire DataFrame to a string data type. Task is needed
+    when data is being uploaded from Parquet file to DuckDB because empty columns
+    can be casted to INT instead of default VARCHAR.
 
     Args:
         df (pd.DataFrame): Input DataFrame.
 
     Returns:
-        df_mapped (pd.DataFrame): Pandas DataFrame with mapped Data Types.
+        df_mapped (pd.DataFrame): Pandas DataFrame casted to string.
     """
     df_mapped = df.astype("string")
     return df_mapped

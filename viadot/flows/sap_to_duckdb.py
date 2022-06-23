@@ -4,7 +4,7 @@ from prefect.utilities import logging
 
 logger = logging.get_logger()
 
-from ..task_utils import add_ingestion_metadata_task, df_to_parquet, map_dtypes_to_str
+from ..task_utils import add_ingestion_metadata_task, df_to_parquet, cast_df_to_str
 from ..tasks import SAPRFCToDF, DuckDBCreateTableFromParquet
 
 
@@ -79,7 +79,7 @@ class SAPToDuckDB(Flow):
 
         df_with_metadata = add_ingestion_metadata_task.bind(df, flow=self)
 
-        df_mapped = map_dtypes_to_str.bind(df_with_metadata, flow=self)
+        df_mapped = cast_df_to_str.bind(df_with_metadata, flow=self)
         parquet = df_to_parquet.bind(
             df=df_mapped,
             path=self.local_file_path,

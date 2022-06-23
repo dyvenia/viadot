@@ -2,7 +2,7 @@ from prefect import Flow
 from typing import Any, Dict, List, Literal
 
 from ..tasks import EpicorOrdersToDF, DuckDBCreateTableFromParquet
-from ..task_utils import df_to_parquet, add_ingestion_metadata_task, map_dtypes_to_str
+from ..task_utils import df_to_parquet, add_ingestion_metadata_task, cast_df_to_str
 
 
 class EpicorOrdersToDuckDB(Flow):
@@ -76,7 +76,7 @@ class EpicorOrdersToDuckDB(Flow):
             start_date_field=self.start_date_field,
         )
         df_with_metadata = add_ingestion_metadata_task.bind(df, flow=self)
-        df_mapped = map_dtypes_to_str.bind(df_with_metadata, flow=self)
+        df_mapped = cast_df_to_str.bind(df_with_metadata, flow=self)
         parquet = df_to_parquet.bind(
             df=df_mapped,
             path=self.local_file_path,
