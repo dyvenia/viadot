@@ -6,18 +6,36 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 ### Added
- - Enabled Databricks Connect in the image. To enable, [follow this guide](./README.md#executing-spark-jobs)
+- Added `SalesforceToDF` task
+- Added `SalesforceToADLS` flow
+- Added `overwrite_adls` option to `BigQueryToADLS` and `SharepointToADLS`
 
-### Changed
+
+## [0.4.4] - 2022-06-09
+### Added
+- Added `cast_df_to_str` task in `utils.py` and added this to `EpicorToDuckDB`, `SAPToDuckDB`, `SQLServerToDuckDB`
+- Added `if_empty` parameter in `DuckDBCreateTableFromParquet` task and in `EpicorToDuckDB`, `SAPToDuckDB`,
+`SQLServerToDuckDB` flows to check if output Parquet is empty and handle it properly.
+- Added `check_if_empty_file()` and `handle_if_empty_file()` in `utils.py`
+### Added
+
+- Added new connector - Outlook. Created `Outlook` source, `OutlookToDF` task and `OutlookToADLS` flow.
+- Added new connector - Epicor. Created `Epicor` source, `EpicorToDF` task and `EpicorToDuckDB` flow.
+- Enabled Databricks Connect in the image. To enable, [follow this guide](./README.md#executing-spark-jobs)
+- Added `MySQL` source and `MySqlToADLS` flow
 - Added `SQLServerToDF` task
 - Added `SQLServerToDuckDB` flow which downloads data from SQLServer table, loads it to parquet file and then uplads it do DuckDB
 - Added complete proxy set up in `SAPRFC` example (`viadot/examples/sap_rfc`)
-- Added Databricks/Spark setup to the image. See README for setup & usage instructions.
-- Added `overwrite_adls` option to `BigQueryToADLS` and `SharepointToADLS`
+
+### Changed
+- Changed default name for the Prefect secret holding the name of the Azure KV secret storing Sendgrid credentials
+
 
 
 ## [0.4.3] - 2022-04-28
 ### Added
+- Added `func` parameter to `SAPRFC` 
+- Added `SAPRFCToADLS` flow which downloads data from SAP Database to to a pandas DataFrame, exports df to csv and uploads it to Azure Data Lake.
 - Added `adls_file_name` in  `SupermetricsToADLS` and `SharepointToADLS` flows
 - Added `BigQueryToADLS` flow class which anables extract data from BigQuery.
 - Added `Salesforce` source
@@ -51,7 +69,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.4.0] - 2022-04-07
 ### Added
-- Added `custom_mail_state_handler` function that sends mail notification using custom smtp server.
+- Added `custom_mail_state_handler` task that sends email notification using a custom SMTP server.
 - Added new function `df_clean_column` that cleans data frame columns from special characters
 - Added `df_clean_column` util task that removes special characters from a pandas DataFrame
 - Added `MultipleFlows` flow class which enables running multiple flows in a given order.

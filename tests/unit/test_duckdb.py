@@ -10,7 +10,7 @@ TABLE_MULTIPLE_PARQUETS = "test_multiple_parquets"
 DATABASE_PATH = "test_db_123.duckdb"
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture(scope="module")
 def duckdb():
     duckdb = DuckDB(credentials=dict(database=DATABASE_PATH))
     yield duckdb

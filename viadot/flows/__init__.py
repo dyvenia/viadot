@@ -11,6 +11,8 @@ from .sharepoint_to_adls import SharepointToADLS
 from .cloud_for_customers_report_to_adls import CloudForCustomersReportToADLS
 from .aselite_to_adls import ASELiteToADLS
 from .bigquery_to_adls import BigQueryToADLS
+from .outlook_to_adls import OutlookToADLS
+from .salesforce_to_adls import SalesforceToADLS
 
 try:
     from .sap_to_duckdb import SAPToDuckDB
@@ -20,4 +22,11 @@ except ImportError:
 from .duckdb_transform import DuckDBTransform
 from .duckdb_to_sql_server import DuckDBToSQLServer
 from .multiple_flows import MultipleFlows
+
+try:
+    from .sap_rfc_to_adls import SAPRFCToADLS
+except ImportError:
+    pass
+
 from .sql_server_to_duckdb import SQLServerToDuckDB
+from .epicor_to_duckdb import EpicorOrdersToDuckDB
