@@ -275,7 +275,7 @@ class Epicor(Source):
             "Authorization": "Bearer " + self.generate_token(),
         }
         response = handle_api_response(
-            url=url, headers=headers, body=payload, method="post"
+            url=url, headers=headers, body=payload, method="POST"
         )
         return response
 
