@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Added `SalesforceToDF` task
 - Added `SalesforceToADLS` flow
+- Added `overwrite_adls` option to `BigQueryToADLS` and `SharepointToADLS`
 
 
 ## [0.4.4] - 2022-06-09
@@ -28,6 +29,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - Changed default name for the Prefect secret holding the name of the Azure KV secret storing Sendgrid credentials
+
 
 
 ## [0.4.3] - 2022-04-28
