@@ -34,3 +34,4 @@ def test_salesforce_to_df():
     df = sf_to_df.run()
 
     assert isinstance(df, pd.DataFrame)
+    assert (50, 2) == df.shape

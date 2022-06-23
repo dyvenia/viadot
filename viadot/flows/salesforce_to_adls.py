@@ -53,18 +53,18 @@ class SalesforceToADLS(Flow):
         Flow for downloading data from Salesforce table to a local CSV or Parquet file, then uploading it to Azure Data Lake.
 
         Args:
-            name (str, optional): _description_. Defaults to None.
+            name (str, optional): Flow name. Defaults to None.
             query (str, optional): Query for download the data if specific download is needed. Defaults to None.
-            table (str, optional): Table name. Can be used instead of Query. Defaults to None.
+            table (str, optional): Table name. Can be used instead of query. Defaults to None.
             columns (List[str], optional): List of columns which are needed - table argument is needed. Defaults to None.
             domain (str, optional): Domain of a connection; defaults to 'test' (sandbox).
                 Can only be added if built-in username/password/security token is provided. Defaults to None.
             client_id (str, optional): Client id to keep the track of API calls. Defaults to None.
             env (str, optional): Environment information, provides information about credential
                 and connection configuration. Defaults to 'DEV'.
-            credentials_secret (str, optional): The name of the Azure Key Vault secret for Bigquery project. Defaults to None.
+            credentials_secret (str, optional): The name of the Azure Key Vault secret for Salesforce. Defaults to None.
             vault_name (str, optional): The name of the vault from which to obtain the secrets. Defaults to None.
-            output_file_extension (str, optional): Output file extension - to allow selection of.csv for data
+            output_file_extension (str, optional): Output file extension - to allow selection of CSV for data
                 which is not easy to handle with parquet. Defaults to ".parquet".
             overwrite_adls (bool, optional): Whether to overwrite the file in ADLS. Defaults to True.
             adls_dir_path (str, optional): Azure Data Lake destination folder/catalog path. Defaults to None.
@@ -132,9 +132,7 @@ class SalesforceToADLS(Flow):
             flow=self,
         )
 
-        self.logger.info(f"Removing special characters from columns...")
         df_clean = df_clean_column.bind(df=df, flow=self)
-
         df_with_metadata = add_ingestion_metadata_task.bind(df_clean, flow=self)
         dtypes_dict = df_get_data_types_task.bind(df_with_metadata, flow=self)
         df_to_be_loaded = df_map_mixed_dtypes_for_parquet(

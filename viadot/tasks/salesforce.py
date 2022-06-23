@@ -235,6 +235,14 @@ class SalesforceToDF(Task):
     The task for querying Salesforce and saving data as the data frame.
 
     Args:
+        query (str, optional): Query for download the data if specific download is needed. Defaults to None.
+        table (str, optional): Table name. Can be used instead of query. Defaults to None.
+        columns (List[str], optional): List of columns which are needed - table argument is needed. Defaults to None.
+        domain (str, optional): Domain of a connection. defaults to 'test' (sandbox).
+            Can only be added if built-in username/password/security token is provided. Defaults to None.
+        client_id (str, optional): Client id to keep the track of API calls. Defaults to None.
+        env (str, optional): Environment information, provides information about credential
+            and connection configuration. Defaults to 'DEV'.
     """
 
     def __init__(
@@ -290,14 +298,14 @@ class SalesforceToDF(Task):
 
         Args:
             query (str, optional): Query for download the data if specific download is needed. Defaults to None.
-            table (str, optional): Table name. Can be used instead of Query. Defaults to None.
+            table (str, optional): Table name. Can be used instead of query. Defaults to None.
             columns (List[str], optional): List of columns which are needed - table argument is needed. Defaults to None.
             env (str, optional): Environment information, provides information about credential
                 and connection configuration. Defaults to 'DEV'.
-            domain (str, optional): Domain of a connection; defaults to 'test' (sandbox).
+            domain (str, optional): Domain of a connection. defaults to 'test' (sandbox).
                 Can only be added if built-in username/password/security token is provided. Defaults to None.
             client_id (str, optional): Client id to keep the track of API calls. Defaults to None.
-            credentials_secret (str, optional): The name of the Azure Key Vault secret. Defaults to None.
+            credentials_secret (str, optional): The name of the Azure Key Vault secret for Salesforce. Defaults to None.
             vault_name (str, optional): The name of the vault from which to obtain the secrets. Defaults to None.
         """
         credentials = get_credentials(credentials_secret, vault_name=vault_name)
