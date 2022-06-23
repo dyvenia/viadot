@@ -1,3 +1,4 @@
+from urllib import response
 import requests
 import pandas as pd
 from typing import Any, Dict, Optional
@@ -5,6 +6,7 @@ import xml.etree.ElementTree as ET
 
 from .base import Source
 from ..config import local_config
+from ..utils import handle_api_response
 from ..exceptions import CredentialError, DataRangeError
 
 from pydantic import BaseModel
@@ -232,7 +234,7 @@ class Epicor(Source):
             "password": self.credentials["password"],
         }
 
-        response = requests.request("POST", url, headers=headers)
+        response = handle_api_response(url=url, headers=headers, method="POST")
         root = ET.fromstring(response.text)
         token = root.find("AccessToken").text
         return token
@@ -272,8 +274,9 @@ class Epicor(Source):
             "Content-Type": "application/xml",
             "Authorization": "Bearer " + self.generate_token(),
         }
-        response = requests.request("POST", url, headers=headers, data=payload)
-
+        response = handle_api_response(
+            url=url, headers=headers, body=payload, method="POST"
+        )
         return response
 
     def to_df(self):

@@ -31,7 +31,7 @@ from .cloud_for_customers import C4CReportToDF, C4CToDF
 from .prefect_date_range import GetFlowNewDateRange
 from .aselite import ASELiteToDF
 from .bigquery import BigQueryToDF
-from .salesforce import SalesforceUpsert, SalesforceBulkUpsert
+from .salesforce import SalesforceUpsert, SalesforceBulkUpsert, SalesforceToDF
 from .outlook import OutlookToDF
 
 try:

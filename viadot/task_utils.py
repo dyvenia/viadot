@@ -439,10 +439,11 @@ def df_clean_column(
     columns_to_clean (List[str]): A list of columns to clean. Defaults is None.
 
     Returns:
-    pd.DataFrame: The cleaned DataFrame
+    pd.DataFrame: The cleaned DataFrame.
     """
 
     df = df.copy()
+    logger.info(f"Removing special characters from dataframe columns...")
 
     if columns_to_clean is None:
         df.replace(
@@ -465,7 +466,7 @@ def df_clean_column(
 @task
 def concat_dfs(dfs: List[pd.DataFrame]):
     """
-    Task to combine list of data frames into one
+    Task to combine list of data frames into one.
 
     Args:
         dfs (List[pd.DataFrame]): List of dataframes to concat.
@@ -475,11 +476,28 @@ def concat_dfs(dfs: List[pd.DataFrame]):
     return pd.concat(dfs, axis=1)
 
 
+@task
+def cast_df_to_str(df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Task for casting an entire DataFrame to a string data type. Task is needed
+    when data is being uploaded from Parquet file to DuckDB because empty columns
+    can be casted to INT instead of default VARCHAR.
+
+    Args:
+        df (pd.DataFrame): Input DataFrame.
+
+    Returns:
+        df_mapped (pd.DataFrame): Pandas DataFrame casted to string.
+    """
+    df_mapped = df.astype("string")
+    return df_mapped
+
+
 class Git(Git):
     @property
     def git_clone_url(self):
         """
-        Build the git url to clone
+        Build the git url to clone.
         """
         if self.use_ssh:
             return f"git@{self.repo_host}:{self.repo}"

@@ -12,6 +12,7 @@ from .cloud_for_customers_report_to_adls import CloudForCustomersReportToADLS
 from .aselite_to_adls import ASELiteToADLS
 from .bigquery_to_adls import BigQueryToADLS
 from .outlook_to_adls import OutlookToADLS
+from .salesforce_to_adls import SalesforceToADLS
 
 try:
     from .sap_to_duckdb import SAPToDuckDB

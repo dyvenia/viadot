@@ -6,9 +6,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.5] - 2022-06-23
+### Added
+- Added `error_log_file_path` parameter in `BCPTask` that enables setting name of errors logs file 
+- Added `on_error` parameter in `BCPTask` that tells what to do if bcp error occurs. 
+- Added error log file and `on_bcp_error` parameter in `ADLSToAzureSQL`
+- Added handling POST requests in `handle_api_response()` add added it to `Epicor` source.
+- Added `SalesforceToDF` task
+- Added `SalesforceToADLS` flow
+- Added `overwrite_adls` option to `BigQueryToADLS` and `SharepointToADLS`
+- Added `cast_df_to_str` task in `utils.py` and added this to `EpicorToDuckDB`, `SAPToDuckDB`, `SQLServerToDuckDB`
+- Added `if_empty` parameter in `DuckDBCreateTableFromParquet` task and in `EpicorToDuckDB`, `SAPToDuckDB`,
+`SQLServerToDuckDB` flows to check if output Parquet is empty and handle it properly.
+- Added `check_if_empty_file()` and `handle_if_empty_file()` in `utils.py`
+
+
 ## [0.4.4] - 2022-06-09
 ### Added
-
 - Added new connector - Outlook. Created `Outlook` source, `OutlookToDF` task and `OutlookToADLS` flow.
 - Added new connector - Epicor. Created `Epicor` source, `EpicorToDF` task and `EpicorToDuckDB` flow.
 - Enabled Databricks Connect in the image. To enable, [follow this guide](./README.md#executing-spark-jobs)
