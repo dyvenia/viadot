@@ -1,18 +1,23 @@
 import re
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Literal
 
 import pandas as pd
 import prefect
 import pyodbc
 import requests
+import os
+from prefect.utilities import logging
 from prefect.utilities.graphql import EnumValue, with_args
 from requests.adapters import HTTPAdapter
-from requests.exceptions import (ConnectionError, HTTPError, ReadTimeout,
-                                 Timeout)
+from requests.exceptions import ConnectionError, HTTPError, ReadTimeout, Timeout
 from requests.packages.urllib3.util.retry import Retry
 from urllib3.exceptions import ProtocolError
-
+from itertools import chain
 from .exceptions import APIError
+from .signals import SKIP
+
+
+logger = logging.get_logger(__name__)
 
 
 def slugify(name: str) -> str:
@@ -25,6 +30,8 @@ def handle_api_response(
     params: Dict[str, Any] = None,
     headers: Dict[str, Any] = None,
     timeout: tuple = (3.05, 60 * 30),
+    method: Literal["GET", "POST"] = "GET",
+    body: str = None,
 ) -> requests.models.Response:
     """Handle and raise Python exceptions during request with retry strategy for specyfic status.
 
@@ -34,8 +41,11 @@ def handle_api_response(
         params (Dict[str, Any], optional): the request params also includes parameters such as the content type. Defaults to None.
         headers: (Dict[str, Any], optional): the request headers. Defaults to None.
         timeout (tuple, optional): the request times out. Defaults to (3.05, 60 * 30).
+        method (Literal ["GET", "POST"], optional): REST API method to use. Defaults to "GET".
+        body (str, optional): Data to send using POST method. Defaults to None.
 
     Raises:
+        ValueError: raises when 'method' parameter value hasn't been specified
         ReadTimeout: stop waiting for a response after a given number of seconds with the timeout parameter.
         HTTPError: exception that indicates when HTTP status codes returned values different than 200.
         ConnectionError: exception that indicates when client is unable to connect to the server.
@@ -44,6 +54,10 @@ def handle_api_response(
     Returns:
         requests.models.Response
     """
+    if method.upper() not in ["GET", "POST"]:
+        raise ValueError(
+            f"Method not found. Please use one of the available methods: 'GET', 'POST'."
+        )
     try:
         session = requests.Session()
         retry_strategy = Retry(
@@ -55,12 +69,15 @@ def handle_api_response(
 
         session.mount("http://", adapter)
         session.mount("https://", adapter)
-        response = session.get(
-            url,
+
+        response = session.request(
+            url=url,
             auth=auth,
             params=params,
             headers=headers,
             timeout=timeout,
+            data=body,
+            method=method,
         )
 
         response.raise_for_status()
@@ -325,3 +342,81 @@ def gen_bulk_insert_query_from_df(
         return insert_query
     else:
         return _gen_insert_query_from_records(tuples_escaped)
+
+
+def union_dict(*dicts):
+    """
+    Function that union list of dictionaries
+
+    Args:
+        dicts (List[Dict]): list of dictionaries with credentials.
+
+    Returns:
+        Dict: A single dictionary createb by union method.
+
+    Examples:
+
+    >>> a = {"a":1}
+    >>> b = {"b":2}
+    >>> union_credentials_dict(a ,b)
+    {'a': 1, 'b': 2}
+
+    """
+    return dict(chain.from_iterable(dct.items() for dct in dicts))
+
+
+def handle_if_empty_file(
+    if_empty: Literal["warn", "skip", "fail"] = "warn",
+    message: str = None,
+):
+    """
+    Task for handling empty file.
+    Args:
+        if_empty (Literal, optional): What to do if file is empty. Defaults to "warn".
+        message (str, optional): Massage to show in warning and error messages. Defaults to None.
+    Raises:
+        ValueError: If `if_empty` is set to `fail`.
+        SKIP: If `if_empty` is set to `skip`.
+    """
+    if if_empty == "warn":
+        logger.warning(message)
+    elif if_empty == "skip":
+        raise SKIP(message)
+    elif if_empty == "fail":
+        raise ValueError(message)
+
+
+def check_if_empty_file(
+    path: str,
+    if_empty: Literal["warn", "skip", "fail"] = "warn",
+    file_extension: Literal[".parquet", ".csv"] = ".parquet",
+    file_sep: str = "\t",
+):
+    """
+    Task for checking if the file is empty and handling it. If there is only one column
+    "_viadot_downloaded_at_utc" in the file it's treated as empty one.
+
+    Args:
+        path (str, required): Path to the local file.
+        if_empty (Literal, optional): What to do if file is empty. Defaults to "warn".
+        file_extension (Literal, optional): File extension. Defaults to ".parquet".
+        file_sep (str, optional): File separator to use while checking .csv file. Defaults to "\t".
+
+    """
+    if os.stat(path).st_size == 0:
+        handle_if_empty_file(if_empty, message=f"Input file - '{path}' is empty.")
+
+    elif file_extension == ".parquet":
+        df = pd.read_parquet(path)
+        if "_viadot_downloaded_at_utc" in df.columns and len(df.columns) == 1:
+            handle_if_empty_file(
+                if_empty=if_empty,
+                message=f"Input file - '{path}' has only one column '_viadot_downloaded_at_utc'.",
+            )
+    elif file_extension == ".csv":
+        df = pd.read_csv(path, sep=file_sep)
+        if "_viadot_downloaded_at_utc" in df.columns and len(df.columns) == 1:
+            handle_if_empty_file(
+                if_empty=if_empty,
+                message=f"Input file - '{path}' has only one column '_viadot_downloaded_at_utc'.",
+            )

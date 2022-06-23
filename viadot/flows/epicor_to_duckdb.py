@@ -1,20 +1,21 @@
 from prefect import Flow
 from typing import Any, Dict, List, Literal
 
-
+from ..tasks import EpicorOrdersToDF, DuckDBCreateTableFromParquet
 from ..task_utils import df_to_parquet, add_ingestion_metadata_task, cast_df_to_str
-from ..tasks import SQLServerToDF, DuckDBCreateTableFromParquet
-
-df_task = SQLServerToDF()
 
 
-class SQLServerToDuckDB(Flow):
+class EpicorOrdersToDuckDB(Flow):
     def __init__(
         self,
-        name,
-        sql_query: str,
+        name: str,
+        base_url: str,
+        filters_xml: str,
         local_file_path: str,
-        sqlserver_config_key: str = None,
+        epicor_credentials: Dict[str, Any] = None,
+        epicor_config_key: str = None,
+        start_date_field: str = "BegInvoiceDate",
+        end_date_field: str = "EndInvoiceDate",
         duckdb_table: str = None,
         duckdb_schema: str = None,
         if_exists: Literal["fail", "replace", "append", "skip", "delete"] = "fail",
@@ -24,26 +25,29 @@ class SQLServerToDuckDB(Flow):
         **kwargs: Dict[str, Any],
     ):
         """
-        Flow for upolading data from SQL Server to DuckDB.
+        Flow for downloading orders data from Epicor API and uploading it to DuckDB using Parquet files.
 
         Args:
-            name (str): The name of the flow.
-            sql_query (str, required): The query to execute on the SQL Server database. If don't start with "SELECT"
-                returns empty DataFrame.
-            local_file_path (str): Path to output parquet file.
-            sqlserver_config_key (str, optional): The key inside local config containing the credentials. Defaults to None.
+            base_url (str, required): Base url to Epicor Orders.
+            filters_xml (str, required): Filters in form of XML. The date filter is required.
+            local_file_path (str): The path to the source Parquet file.
+            epicor_credentials (Dict[str, Any], optional): Credentials to connect with Epicor API containing host, port,
+                username and password. Defaults to None.
+            epicor_config_key (str, optional): Credential key to dictionary where details are stored. Defaults to None.
+            start_date_field (str, optional) The name of filters field containing start date. Defaults to "BegInvoiceDate".
+            end_date_field (str, optional) The name of filters field containing end date. Defaults to "EndInvoiceDate".
             duckdb_table (str, optional): Destination table in DuckDB. Defaults to None.
             duckdb_schema (str, optional): Destination schema in DuckDB. Defaults to None.
             if_exists (Literal, optional):  What to do if the table already exists. Defaults to "fail".
             if_empty (Literal, optional): What to do if Parquet file is empty. Defaults to "skip".
             duckdb_credentials (dict, optional): Credentials for the DuckDB connection. Defaults to None.
-
         """
-        # SQLServerToDF
-        self.sql_query = sql_query
-        self.sqlserver_config_key = sqlserver_config_key
-
-        # DuckDBCreateTableFromParquet
+        self.base_url = base_url
+        self.epicor_credentials = epicor_credentials
+        self.epicor_config_key = epicor_config_key
+        self.filters_xml = filters_xml
+        self.end_date_field = end_date_field
+        self.start_date_field = start_date_field
         self.local_file_path = local_file_path
         self.duckdb_table = duckdb_table
         self.duckdb_schema = duckdb_schema
@@ -53,6 +57,10 @@ class SQLServerToDuckDB(Flow):
 
         super().__init__(*args, name=name, **kwargs)
 
+        self.df_task = EpicorOrdersToDF(
+            base_url=self.base_url,
+            filters_xml=self.filters_xml,
+        )
         self.create_duckdb_table_task = DuckDBCreateTableFromParquet(
             credentials=duckdb_credentials
         )
@@ -60,8 +68,12 @@ class SQLServerToDuckDB(Flow):
         self.gen_flow()
 
     def gen_flow(self) -> Flow:
-        df = df_task.bind(
-            config_key=self.sqlserver_config_key, query=self.sql_query, flow=self
+        df = self.df_task.bind(
+            flow=self,
+            credentials=self.epicor_credentials,
+            config_key=self.epicor_config_key,
+            end_date_field=self.end_date_field,
+            start_date_field=self.start_date_field,
         )
         df_with_metadata = add_ingestion_metadata_task.bind(df, flow=self)
         df_mapped = cast_df_to_str.bind(df_with_metadata, flow=self)

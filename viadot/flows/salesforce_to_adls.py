@@ -14,85 +14,78 @@ from ..task_utils import (
     dtypes_to_json_task,
     df_map_mixed_dtypes_for_parquet,
     update_dtypes_dict,
+    df_clean_column,
 )
 
-from ..tasks import BigQueryToDF
+from ..tasks import SalesforceToDF
 from ..tasks import AzureDataLakeUpload
 
-bigquery_to_df_task = BigQueryToDF()
+salesforce_to_df_task = SalesforceToDF()
 file_to_adls_task = AzureDataLakeUpload()
 json_to_adls_task = AzureDataLakeUpload()
 
 logger = logging.get_logger(__name__)
 
 
-class BigQueryToADLS(Flow):
+class SalesforceToADLS(Flow):
     def __init__(
         self,
         name: str = None,
-        dataset_name: str = None,
-        table_name: str = None,
-        date_column_name: str = "date",
-        start_date: str = None,
-        end_date: str = None,
-        credentials_key: str = "BIGQUERY",
+        query: str = None,
+        table: str = None,
+        columns: List[str] = None,
+        domain: str = "test",
+        client_id: str = "viadot",
+        env: str = "DEV",
         vault_name: str = None,
         credentials_secret: str = None,
         output_file_extension: str = ".parquet",
+        overwrite_adls: bool = True,
         adls_dir_path: str = None,
         local_file_path: str = None,
         adls_file_name: str = None,
         adls_sp_credentials_secret: str = None,
-        overwrite_adls: bool = False,
         if_exists: str = "replace",
         *args: List[Any],
         **kwargs: Dict[str, Any],
     ):
         """
-        Flow for downloading data from BigQuery project to a local CSV or Parquet file
-        using Bigquery API, then uploading it to Azure Data Lake.
-
-        There are 3 cases:
-            If start_date and end_date are not None - all data from the start date to the end date will be retrieved.
-            If start_date and end_date are left as default (None) - the data is pulled till "yesterday" (current date -1)
-            If the column that looks like a date does not exist in the table, get all the data from the table.
+        Flow for downloading data from Salesforce table to a local CSV or Parquet file, then uploading it to Azure Data Lake.
 
         Args:
-            name (str): The name of the flow.
-            dataset_name (str, optional): Dataset name. Defaults to None.
-            table_name (str, optional): Table name. Defaults to None.
-            date_column_name (str, optional): The query is based on a date, the user can provide the name
-            of the date columnn if it is different than "date". If the user-specified column does not exist,
-            all data will be retrieved from the table. Defaults to "date".
-            start_date (str, optional): A query parameter to pass start date e.g. "2022-01-01". Defaults to None.
-            end_date (str, optional): A query parameter to pass end date e.g. "2022-01-01". Defaults to None.
-            credentials_key (str, optional): Credential key to dictionary where details are stored (local config).
-            credentials can be generated as key for User Principal inside a BigQuery project. Defaults to "BIGQUERY".
-            credentials_secret (str, optional): The name of the Azure Key Vault secret for Bigquery project. Defaults to None.
+            name (str, optional): Flow name. Defaults to None.
+            query (str, optional): Query for download the data if specific download is needed. Defaults to None.
+            table (str, optional): Table name. Can be used instead of query. Defaults to None.
+            columns (List[str], optional): List of columns which are needed - table argument is needed. Defaults to None.
+            domain (str, optional): Domain of a connection; defaults to 'test' (sandbox).
+                Can only be added if built-in username/password/security token is provided. Defaults to None.
+            client_id (str, optional): Client id to keep the track of API calls. Defaults to None.
+            env (str, optional): Environment information, provides information about credential
+                and connection configuration. Defaults to 'DEV'.
+            credentials_secret (str, optional): The name of the Azure Key Vault secret for Salesforce. Defaults to None.
             vault_name (str, optional): The name of the vault from which to obtain the secrets. Defaults to None.
-            output_file_extension (str, optional): Output file extension - to allow selection of.csv for data
-            which is not easy to handle with parquet. Defaults to ".parquet".
+            output_file_extension (str, optional): Output file extension - to allow selection of CSV for data
+                which is not easy to handle with parquet. Defaults to ".parquet".
+            overwrite_adls (bool, optional): Whether to overwrite the file in ADLS. Defaults to True.
             adls_dir_path (str, optional): Azure Data Lake destination folder/catalog path. Defaults to None.
             local_file_path (str, optional): Local destination path. Defaults to None.
             adls_file_name (str, optional): Name of file in ADLS. Defaults to None.
             adls_sp_credentials_secret (str, optional): The name of the Azure Key Vault secret containing a dictionary with
-            ACCOUNT_NAME and Service Principal credentials (TENANT_ID, CLIENT_ID, CLIENT_SECRET) for the Azure Data Lake.
-            Defaults to None.
-            overwrite_adls (bool, optional): Whether to overwrite files in the lake. Defaults to False.
+                ACCOUNT_NAME and Service Principal credentials (TENANT_ID, CLIENT_ID, CLIENT_SECRET) for the Azure Data Lake.
+                Defaults to None.
             if_exists (str, optional): What to do if the file exists. Defaults to "replace".
         """
-        # BigQueryToDF
-        self.credentials_key = credentials_key
-        self.dataset_name = dataset_name
-        self.table_name = table_name
-        self.start_date = start_date
-        self.end_date = end_date
-        self.date_column_name = date_column_name
+        # SalesforceToDF
+        self.query = query
+        self.table = table
+        self.columns = columns
+        self.domain = domain
+        self.client_id = client_id
+        self.env = env
         self.vault_name = vault_name
         self.credentials_secret = credentials_secret
 
         # AzureDataLakeUpload
-        self.overwrite = overwrite_adls
         self.adls_sp_credentials_secret = adls_sp_credentials_secret
         self.if_exists = if_exists
         self.output_file_extension = output_file_extension
@@ -116,6 +109,7 @@ class BigQueryToADLS(Flow):
             self.adls_schema_file_dir_file = os.path.join(
                 adls_dir_path, "schema", self.now + ".json"
             )
+        self.overwrite_adls = overwrite_adls
 
         super().__init__(*args, name=name, **kwargs)
 
@@ -126,19 +120,20 @@ class BigQueryToADLS(Flow):
         return name.replace(" ", "_").lower()
 
     def gen_flow(self) -> Flow:
-        df = bigquery_to_df_task.bind(
-            dataset_name=self.dataset_name,
-            table_name=self.table_name,
-            credentials_key=self.credentials_key,
-            start_date=self.start_date,
-            end_date=self.end_date,
-            date_column_name=self.date_column_name,
+        df = salesforce_to_df_task.bind(
+            query=self.query,
+            table=self.table,
+            columns=self.columns,
+            domain=self.domain,
+            client_id=self.client_id,
+            env=self.env,
             vault_name=self.vault_name,
             credentials_secret=self.credentials_secret,
             flow=self,
         )
 
-        df_with_metadata = add_ingestion_metadata_task.bind(df, flow=self)
+        df_clean = df_clean_column.bind(df=df, flow=self)
+        df_with_metadata = add_ingestion_metadata_task.bind(df_clean, flow=self)
         dtypes_dict = df_get_data_types_task.bind(df_with_metadata, flow=self)
         df_to_be_loaded = df_map_mixed_dtypes_for_parquet(
             df_with_metadata, dtypes_dict, flow=self
@@ -162,7 +157,7 @@ class BigQueryToADLS(Flow):
         file_to_adls_task.bind(
             from_path=self.local_file_path,
             to_path=self.adls_file_path,
-            overwrite=self.overwrite,
+            overwrite=self.overwrite_adls,
             sp_credentials_secret=self.adls_sp_credentials_secret,
             flow=self,
         )
@@ -175,12 +170,13 @@ class BigQueryToADLS(Flow):
         json_to_adls_task.bind(
             from_path=self.local_json_path,
             to_path=self.adls_schema_file_dir_file,
-            overwrite=self.overwrite,
+            overwrite=self.overwrite_adls,
             sp_credentials_secret=self.adls_sp_credentials_secret,
             flow=self,
         )
 
-        df_with_metadata.set_upstream(df, flow=self)
+        df_clean.set_upstream(df, flow=self)
+        df_with_metadata.set_upstream(df_clean, flow=self)
         dtypes_dict.set_upstream(df_with_metadata, flow=self)
         df_to_be_loaded.set_upstream(dtypes_dict, flow=self)
         file_to_adls_task.set_upstream(df_to_file, flow=self)
