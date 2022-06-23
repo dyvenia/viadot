@@ -439,10 +439,11 @@ def df_clean_column(
     columns_to_clean (List[str]): A list of columns to clean. Defaults is None.
 
     Returns:
-    pd.DataFrame: The cleaned DataFrame
+    pd.DataFrame: The cleaned DataFrame.
     """
 
     df = df.copy()
+    logger.info(f"Removing special characters from dataframe columns...")
 
     if columns_to_clean is None:
         df.replace(
@@ -465,7 +466,7 @@ def df_clean_column(
 @task
 def concat_dfs(dfs: List[pd.DataFrame]):
     """
-    Task to combine list of data frames into one
+    Task to combine list of data frames into one.
 
     Args:
         dfs (List[pd.DataFrame]): List of dataframes to concat.
@@ -479,7 +480,7 @@ class Git(Git):
     @property
     def git_clone_url(self):
         """
-        Build the git url to clone
+        Build the git url to clone.
         """
         if self.use_ssh:
             return f"git@{self.repo_host}:{self.repo}"
