@@ -6,19 +6,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 ### Added
+- Added handling POST requests in `handle_api_response()` add added it to `Epicor` source.
 - Added `SalesforceToDF` task
 - Added `SalesforceToADLS` flow
 - Added `overwrite_adls` option to `BigQueryToADLS` and `SharepointToADLS`
-
-
-## [0.4.4] - 2022-06-09
-### Added
 - Added `cast_df_to_str` task in `utils.py` and added this to `EpicorToDuckDB`, `SAPToDuckDB`, `SQLServerToDuckDB`
 - Added `if_empty` parameter in `DuckDBCreateTableFromParquet` task and in `EpicorToDuckDB`, `SAPToDuckDB`,
 `SQLServerToDuckDB` flows to check if output Parquet is empty and handle it properly.
 - Added `check_if_empty_file()` and `handle_if_empty_file()` in `utils.py`
-### Added
 
+
+## [0.4.4] - 2022-06-09
+### Added
 - Added new connector - Outlook. Created `Outlook` source, `OutlookToDF` task and `OutlookToADLS` flow.
 - Added new connector - Epicor. Created `Epicor` source, `EpicorToDF` task and `EpicorToDuckDB` flow.
 - Enabled Databricks Connect in the image. To enable, [follow this guide](./README.md#executing-spark-jobs)
@@ -29,7 +28,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - Changed default name for the Prefect secret holding the name of the Azure KV secret storing Sendgrid credentials
-
 
 
 ## [0.4.3] - 2022-04-28
