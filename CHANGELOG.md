@@ -304,6 +304,7 @@ This allows the user to simply pass a dict with their expectations and not worry
 
 ### Fixed
 - Removed the broken version autobump from CI
+- Added proper funcion variables
 
 
 ## [0.2.1] - 2021-07-14
