@@ -6,6 +6,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 ### Added
+- Added `error_log_file_path` parameter in `BCPTask` that enables setting name of errors logs file 
+- Added `on_error` parameter in `BCPTask` that tells what to do if bcp error occurs. 
+- Added error log file and `on_bcp_error` parameter in `ADLSToAzureSQL`
 - Added handling POST requests in `handle_api_response()` add added it to `Epicor` source.
 - Added `SalesforceToDF` task
 - Added `SalesforceToADLS` flow
