@@ -247,7 +247,7 @@ class Databricks(Source):
 
     def build_merge_query(
         self,
-        table: str,
+        table_name: str,
         primary_key: str,
         df: pd.DataFrame,
         match_set: str,
@@ -257,7 +257,7 @@ class Databricks(Source):
         - updating and inserting all fields
         - merging on a single column, which has the same name in both tables
         Args:
-            table (str): The table to merge into.
+            table_name (str): The name of the table to merge into.
             primary_key (str): The column on which to merge.
             df (pd.DataFrame): DataFrame to be used to upsert the table.
             match_set (dict): A dictionary defining the changes that should take place in case a matching record is found.
@@ -277,7 +277,7 @@ class Databricks(Source):
         # Build merge query
 
         merge_query = f"""
-        MERGE INTO {table} AS main
+        MERGE INTO {table_name} AS main
             USING updates
             ON updates.{primary_key} = main.{primary_key}
             WHEN MATCHED
