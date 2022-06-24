@@ -262,8 +262,8 @@ def test_upsert():
     source_data = [
         {
             "Id": "wRACnHTeuw",
-            "AccountId": "Upserted!",
-            "Name": "Upsert-Merritt",
+            "AccountId": "rWFuwDHxfGh",
+            "Name": "Scott-Merritt",
             "FirstName": "Melody",
             "LastName": "Cook",
             "ContactEMail": "Melody.Cook@ScottMerritt.com",
@@ -305,35 +305,40 @@ def test_upsert():
             "ContactEMail": "Alexander.Chambers@KentLyons.com",
             "MailingCity": "New Nicholaschester",
         },
-    ]
-    upsert_data = [
         {
-            "Id": "wRACnHTeuw",
-            "AccountId": "Upserted!",
-            "Name": "Upsert-Merritt",
-            "FirstName": "Melody",
-            "LastName": "Cook",
-            "ContactEMail": "Melody.Cook@ScottMerritt.com",
-            "MailingCity": "Elizabethfurt",
+            "Id": "UpsertTest2",
+            "AccountId": "Updated!EHNYKjSZsiy",
+            "Name": "new upsert-2",
+            "FirstName": "Updated",
+            "LastName": "Carter2",
+            "ContactEMail": "Adam.Carter@TurnerBlack.com",
+            "MailingCity": "Updated!Jamesport",
+        },
+    ]
+
+    data = [
+        {
+            "Id": "UpsertTest2",
+            "AccountId": "Updated!EHNYKjSZsiy",
+            "Name": "new upsert-2",
+            "FirstName": "Updated",
+            "LastName": "Carter2",
+            "ContactEMail": "Adam.Carter@TurnerBlack.com",
+            "MailingCity": "Updated!Jamesport",
         }
     ]
+
     table_name = "raw.test_table"
 
-    match = {
-        "Id": "main.Id",
-        "AccountId": "updates.AccountId",
-        "Name": "updates.Name",
-        "FirstName": "updates.FirstName",
-        "LastName": "updates.LastName",
-        "ContactEMail": "updates.ContactEMail",
-        "MailingCity": "main.MailingCity",
-    }
+    match = "Id= main.Id, AccountId= updates.AccountId, Name= updates.Name, FirstName= updates.FirstName, LastName= updates.LastName, ContactEMail= updates.ContactEMail, MailingCity= main.MailingCity"
+    data = pd.DataFrame(data)
+    query = databricks.build_merge_query(table_name, "Id", data, match)
 
     df = pd.DataFrame(source_data)
     df = df.sort_values(by="Id")
     df = df.reset_index(drop=True)
 
-    databricks.upsert(table_name, upsert_data, match, "Id")
+    databricks.query(query)
 
     result = databricks.to_df(table_name)
     result = result.sort_values(by="Id")

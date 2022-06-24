@@ -245,82 +245,48 @@ class Databricks(Source):
         data.write.format("delta").mode("overwrite").saveAsTable(table_name)
         return self.to_df(table_name)
 
-    # TODO: add a method for extracting a usable JSON schema for the sets
-    # TODO: Parse the matched_set as a not_matched_set
-    def upsert(self, table_name: str, df: pd.DataFrame, matched_set: dict, pk: str):
+    def build_merge_query(
+        self,
+        table: str,
+        primary_key: str,
+        df: pd.DataFrame,
+        match_set: str,
+    ) -> str:
         """
-        Upsert the data to an existing table. If the record exists, the function updates the record in the table.
-        If it doesn't exist, the function creates a new record in the table.
-        Assume that the source table is called "main", and the data to be upserted will use a view called "updates".
-
+        Build a merge query for the simplest possible upsert scenario:
+        - updating and inserting all fields
+        - merging on a single column, which has the same name in both tables
         Args:
-            table_name (str): Name of the table to perform the upsert operation on.
+            table (str): The table to merge into.
+            primary_key (str): The column on which to merge.
             df (pd.DataFrame): DataFrame to be used to upsert the table.
-            matched_set (dict): A dictionary defining the changes that should take place in case a matching record is found.
-            pk (str): The primary key that should be joined on.
-        Example:
-        ```python
-        from viadot.sources import Databricks
-        databricks = Databricks()
-        data = [{"Id": "KVSzUaILfQZXDb", "wrong": "Updated3!EHNYKjSZsiy", "Name": "Upsert-Black", "FirstName": "Updated", "LastName": "Carter2", "ContactEMail": "Adam.Carter@TurnerBlack.com", "MailingCity": "Updated!Jamesport"}]
-        match = {"Id": "main.Id",
-                "AccountId": "updates.AccountId",
-                "Name": "updates.Name",
-                "FirstName": "updates.FirstName",
-                "LastName": "updates.LastName",
-                "ContactEMail": "updates.ContactEMail",
-                "MailingCity": "main.MailingCity"}
-
-        upsert("raw.c4c_test4", data, match, "Id")
-        ```
+            match_set (dict): A dictionary defining the changes that should take place in case a matching record is found.
         """
 
-        # Retrieve columns names and matched set conditions from matched_set
-        match_conditions = ""
-        columns = "("
-        keys_list = list(matched_set.keys())
+        # Get column names
 
-        for k, v in matched_set.items():
-            if k == keys_list[-1]:
-                match_conditions = match_conditions + str(k) + "=" + str(v)
-                columns = columns + str(k) + ")"
-            else:
-                match_conditions = match_conditions + str(k) + "=" + str(v) + ", "
-                columns = columns + str(k) + ","
+        result = self.query("SHOW COLUMNS IN raw.c4c_test4")
+        columns_query_result = result["col_name"].values
 
-        # Check the column names and types match
-        ## Retrieve the table as a sc DataFrame
-        delta_df = self.to_df(table_name)
         upsertData = self._pandas_df_to_spark_df(df)
-        upsert_df = self._spark_df_to_pandas_df(upsertData)
-        ## Sort columns alphabetically
-        delta_df = delta_df.sort_index(axis=1)
-        upsert_df = upsert_df.sort_index(axis=1)
+        upsertData.createOrReplaceTempView("updates")
 
-        if (delta_df.columns == upsert_df.columns).all():
-            # Upserts the values of a given dataframe/Delta table into an existing Delta table
-            upsertData.createOrReplaceTempView("updates")
+        columns = [tup for tup in columns_query_result]
+        columns_stg_fqn = [f"updates.{col}" for col in columns]
 
-            self.query(
-                "MERGE INTO "
-                + table_name
-                + " AS main USING updates ON main."
-                + pk
-                + " = updates."
-                + pk
-                + " WHEN MATCHED THEN UPDATE SET "
-                + match_conditions
-                + " WHEN NOT MATCHED THEN INSERT "
-                + columns
-                + " VALUES "
-                + columns
-            )
+        # Build merge query
 
-            print("Data upserted successfully.")
-        else:
-            print(
-                "Columns mismatch. Please adhere to the column names and data types used in the source table."
-            )
+        merge_query = f"""
+        MERGE INTO {table} AS main
+            USING updates
+            ON updates.{primary_key} = main.{primary_key}
+            WHEN MATCHED
+                THEN UPDATE SET {match_set}
+            WHEN NOT MATCHED
+                THEN INSERT({", ".join(columns)})
+                VALUES({", ".join(columns_stg_fqn)});
+        """
+        return merge_query
 
     def create_schema(self, schema_name: str):
         """
