@@ -131,6 +131,7 @@ dmypy.json
 
 # Linux
 .bash_history
+.bashrc
 
 # VSCode
 .vscode
@@ -145,6 +146,7 @@ dmypy.json
 
 # Prefect
 config.toml
+.prefect
 
 # MKDocs
 desktop.ini
@@ -156,3 +158,7 @@ sap_netweaver_rfc
 
 # Databricks-connect
 .databricks-connect
+
+# dbt
+profiles.yml
+profiles.yaml
