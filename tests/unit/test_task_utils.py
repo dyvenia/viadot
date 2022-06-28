@@ -41,6 +41,12 @@ def test_add_ingestion_metadata_task_empty():
     assert result.empty
 
 
+def test_add_ingestion_metadata_task_no_data():
+    df = pd.DataFrame({"col1": []})
+    result = add_ingestion_metadata_task.run(df)
+    assert "_viadot_downloaded_at_utc" in result.columns
+
+
 def test_map_dtypes_for_parquet():
     df = pd.DataFrame(
         {

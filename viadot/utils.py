@@ -399,6 +399,7 @@ def check_if_empty_file(
         if_empty (Literal, optional): What to do if file is empty. Defaults to "warn".
 
     """
+    if_empty = if_empty or "warn"
     if os.stat(path).st_size == 0:
         handle_if_empty_file(if_empty, message=f"Input file - '{path}' is empty.")
 

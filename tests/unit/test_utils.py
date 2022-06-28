@@ -104,3 +104,11 @@ def test_check_if_empty_file_parquet(caplog):
         check_if_empty_file(path=EMPTY_PARQUET_PATH, if_empty="skip")
 
     os.remove(EMPTY_PARQUET_PATH)
+
+
+def test_check_if_empty_file_no_data(caplog):
+    df = pd.DataFrame({"col1": []})
+    df.to_parquet(EMPTY_PARQUET_PATH)
+    with caplog.at_level(logging.WARNING):
+        check_if_empty_file(path=EMPTY_PARQUET_PATH, if_empty="warn")
+        assert f"Input file - '{EMPTY_PARQUET_PATH}' is empty." not in caplog.text
