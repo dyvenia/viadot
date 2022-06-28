@@ -1,2 +1,0 @@
-dbt-databricks==1.0.3
-dbt-trino==
