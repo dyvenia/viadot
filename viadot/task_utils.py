@@ -37,7 +37,8 @@ def add_ingestion_metadata_task(
     Args:
         df (pd.DataFrame): input DataFrame.
     """
-    if len(df.columns) == 0:
+    # Don't skip when df has columns but has no data
+    if not df.columns:
         return df
     else:
         df2 = df.copy(deep=True)
