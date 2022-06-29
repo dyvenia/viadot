@@ -37,9 +37,15 @@ def add_ingestion_metadata_task(
     Args:
         df (pd.DataFrame): input DataFrame.
     """
-    df2 = df.copy(deep=True)
-    df2["_viadot_downloaded_at_utc"] = datetime.now(timezone.utc).replace(microsecond=0)
-    return df2
+    # Don't skip when df has columns but has no data
+    if len(df.columns) == 0:
+        return df
+    else:
+        df2 = df.copy(deep=True)
+        df2["_viadot_downloaded_at_utc"] = datetime.now(timezone.utc).replace(
+            microsecond=0
+        )
+        return df2
 
 
 @task
