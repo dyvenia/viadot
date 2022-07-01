@@ -358,6 +358,23 @@ class SAPRFC(Source):
         # this has to be called before checking client_side_filters
         where = self.where
         columns = self.select_columns
+        # due to the RFC_READ_TABLE limit of characters per row, colums are splited into smaller lists
+        lists_fo_columns = []
+        cols = []
+        sum = 0
+        for col in columns:
+            info = self.call("DDIF_FIELDINFO_GET", TABNAME=table_name, FIELDNAME=col)
+            len = info["DFIES_TAB"][0]["LENG"]
+            sum = sum + int(len)
+            if sum <= 500:
+                cols.append(col)
+            else:
+                lists_fo_columns.append(cols)
+                cols = [col]
+                sum = 0
+        lists_fo_columns.append(cols)
+
+        columns = lists_fo_columns
         options = [{"TEXT": where}] if where else None
         limit = self._get_limit(sql)
         offset = self._get_offset(sql)
@@ -405,6 +422,7 @@ class SAPRFC(Source):
         params = self._query
         columns = self.select_columns_aliased
         sep = self._query.get("DELIMITER")
+        list_of_fields = self._query.get("FIELDS")
         func = self.func
         if sep is None:
             # automatically find a working separator
@@ -427,18 +445,22 @@ class SAPRFC(Source):
 
         records = None
         for sep in SEPARATORS:
+            df = pd.DataFrame()
             self._query["DELIMITER"] = sep
-            try:
-                response = self.call(func, **params)
-                record_key = "WA"
-                data_raw = response["DATA"]
-                records = [row[record_key].split(sep) for row in data_raw]
-            except ValueError:
-                continue
+            for fields in list_of_fields:
+                try:
+                    self._query["FIELDS"] = fields
+                    response = self.call(func, **params)
+                    record_key = "WA"
+                    data_raw = response["DATA"]
+                    records = [row[record_key].split(sep) for row in data_raw]
+                    df[fields] = records
+                except ValueError:
+                    continue
         if records is None:
             raise ValueError("None of the separators worked.")
 
-        df = pd.DataFrame(records, columns=columns)
+        df.columns = columns
 
         if self.client_side_filters:
             filter_query = self._build_pandas_filter_query(self.client_side_filters)
