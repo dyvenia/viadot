@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Updated `.gitignore` to ignore files with `*.bak` extension and to ignore `credentials.json` in any directory.
 
 ### Changed
+- Changed `SAPRFC` source to process query that exceeds characters per row limit.
 - Changed `add_ingestion_metadata_task()` to not to add metadata column when input DataFrame is empty
 - Changed `check_if_empty_file()` logic according to changes in `add_ingestion_metadata_task()`
 - Changed accepted values of `if_empty` parameter in `DuckDBCreateTableFromParquet`

@@ -1,4 +1,5 @@
 import re
+from prefect.utilities import logging
 from collections import OrderedDict
 from typing import List, Literal
 from typing import OrderedDict as OrderedDictType
@@ -8,13 +9,16 @@ import pandas as pd
 
 try:
     import pyrfc
+    from pyrfc._exception import ABAPApplicationError
 except ModuleNotFoundError:
     raise ImportError("pyfrc is required to use the SAPRFC source.")
 from sql_metadata import Parser
 
 from viadot.config import local_config
-from viadot.exceptions import CredentialError
+from viadot.exceptions import CredentialError, DataBufferExceeded
 from viadot.sources.base import Source
+
+logger = logging.get_logger()
 
 
 def remove_whitespaces(text):
@@ -365,8 +369,9 @@ class SAPRFC(Source):
         for col in columns:
             info = self.call("DDIF_FIELDINFO_GET", TABNAME=table_name, FIELDNAME=col)
             len = info["DFIES_TAB"][0]["LENG"]
-            sum = sum + int(len)
-            if sum <= 500:
+            sum += int(len)
+            # RFC_READ_TABLE limit is 512 characters but sometimes it's too much and call fails
+            if sum <= 400:
                 cols.append(col)
             else:
                 lists_fo_columns.append(cols)
@@ -410,7 +415,8 @@ class SAPRFC(Source):
         characters, we trim whe WHERE clause and perform the rest of the filtering
         on the resulting DataFrame. Eg. if the WHERE clause contains 4 conditions
         and has 80 characters, we only perform 3 filters in the query, and perform
-        the last filter on the DataFrame.
+        the last filter on the DataFrame. Characters per row limit can be exceeded,
+        data will be downloaded in chunks then.
 
         Source: https://success.jitterbit.com/display/DOC/Guide+to+Using+RFC_READ_TABLE+to+Query+SAP+Tables#GuidetoUsingRFC_READ_TABLEtoQuerySAPTables-create-the-operation
         - WHERE clause: 75 character limit
@@ -423,6 +429,8 @@ class SAPRFC(Source):
         columns = self.select_columns_aliased
         sep = self._query.get("DELIMITER")
         list_of_fields = self._query.get("FIELDS")
+        if len(list_of_fields) > 1:
+            logger.info(f"Data will be downloaded in {len(list_of_fields)} chunks.")
         func = self.func
         if sep is None:
             # automatically find a working separator
@@ -447,16 +455,27 @@ class SAPRFC(Source):
         for sep in SEPARATORS:
             df = pd.DataFrame()
             self._query["DELIMITER"] = sep
+            chunk = 1
             for fields in list_of_fields:
+                logger.info(f"Downloading {chunk} data chunk...")
                 try:
                     self._query["FIELDS"] = fields
-                    response = self.call(func, **params)
+                    try:
+                        response = self.call(func, **params)
+                    except ABAPApplicationError as e:
+                        if e.key == "DATA_BUFFER_EXCEEDED":
+                            raise DataBufferExceeded(
+                                "Character limit per row exceeded. Select fewer columns."
+                            )
+                        else:
+                            raise e
                     record_key = "WA"
                     data_raw = response["DATA"]
                     records = [row[record_key].split(sep) for row in data_raw]
                     df[fields] = records
                 except ValueError:
                     continue
+                chunk += 1
         if records is None:
             raise ValueError("None of the separators worked.")
 
