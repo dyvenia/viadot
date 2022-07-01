@@ -1,11 +1,12 @@
 from typing import Any, Dict, List, Literal
+
 from prefect import Flow
 from prefect.utilities import logging
 
 logger = logging.get_logger()
 
-from ..task_utils import add_ingestion_metadata_task, df_to_parquet, cast_df_to_str
-from ..tasks import SAPRFCToDF, DuckDBCreateTableFromParquet
+from ..task_utils import add_ingestion_metadata_task, cast_df_to_str, df_to_parquet
+from ..tasks import DuckDBCreateTableFromParquet, SAPRFCToDF
 
 
 class SAPToDuckDB(Flow):

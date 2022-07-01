@@ -4,8 +4,8 @@ from typing import Literal
 
 from prefect.tasks.secrets import PrefectSecret
 from prefect.tasks.shell import ShellTask
-from prefect.utilities.tasks import defaults_from_attrs
 from prefect.utilities import logging
+from prefect.utilities.tasks import defaults_from_attrs
 
 from .azure_key_vault import AzureKeyVaultSecret
 

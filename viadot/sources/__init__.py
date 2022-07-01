@@ -1,21 +1,22 @@
 from .azure_blob_storage import AzureBlobStorage
 from .azure_data_lake import AzureDataLake
 from .azure_sql import AzureSQL
-from .supermetrics import Supermetrics
-from .cloud_for_customers import CloudForCustomers
-from .sharepoint import Sharepoint
 from .bigquery import BigQuery
-from .salesforce import Salesforce
+from .cloud_for_customers import CloudForCustomers
 from .outlook import Outlook
+from .salesforce import Salesforce
+from .sharepoint import Sharepoint
+from .supermetrics import Supermetrics
 
 try:
     from .sap_rfc import SAPRFC
 except ImportError:
     pass
 
+from .duckdb import DuckDB
+from .epicor import Epicor
+from .sql_server import SQLServer
+from .sqlite import SQLite
+
 # APIS
 from .uk_carbon_intensity import UKCarbonIntensity
-from .sqlite import SQLite
-from .duckdb import DuckDB
-from .sql_server import SQLServer
-from .epicor import Epicor

@@ -1,6 +1,6 @@
-import pytest
 import os
 
+import pytest
 from prefect.engine.signals import FAIL
 
 from viadot.tasks import BCPTask

@@ -1,6 +1,8 @@
 import re
 from collections import OrderedDict
-from typing import List, Literal, Union, Tuple, OrderedDict as OrderedDictType
+from typing import List, Literal
+from typing import OrderedDict as OrderedDictType
+from typing import Tuple, Union
 
 import pandas as pd
 
@@ -9,6 +11,7 @@ try:
 except ModuleNotFoundError:
     raise ImportError("pyfrc is required to use the SAPRFC source.")
 from sql_metadata import Parser
+
 from viadot.config import local_config
 from viadot.exceptions import CredentialError
 from viadot.sources.base import Source

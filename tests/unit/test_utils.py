@@ -1,10 +1,11 @@
-import pandas as pd
-import pytest
 import logging
 import os
 
-from viadot.utils import gen_bulk_insert_query_from_df, check_if_empty_file
+import pandas as pd
+import pytest
+
 from viadot.signals import SKIP
+from viadot.utils import check_if_empty_file, gen_bulk_insert_query_from_df
 
 EMPTY_CSV_PATH = "empty.csv"
 EMPTY_PARQUET_PATH = "empty.parquet"

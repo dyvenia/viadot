@@ -13,10 +13,10 @@ from ..tasks import (
     AzureDataLakeCopy,
     AzureDataLakeToDF,
     AzureSQLCreateTable,
-    BCPTask,
-    DownloadGitHubFile,
     AzureSQLDBQuery,
+    BCPTask,
     CheckColumnOrder,
+    DownloadGitHubFile,
 )
 
 logger = logging.get_logger(__name__)

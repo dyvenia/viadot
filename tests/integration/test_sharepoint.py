@@ -1,17 +1,17 @@
-import pytest
+import configparser
+import json
 import os
 import pathlib
-import json
-import pandas as pd
-import configparser
-from viadot.exceptions import CredentialError
 
-from viadot.sources import Sharepoint
+import pandas as pd
+import pytest
+from prefect.tasks.secrets import PrefectSecret
+
 from viadot.config import local_config
+from viadot.exceptions import CredentialError
+from viadot.sources import Sharepoint
 from viadot.task_utils import df_get_data_types_task
 from viadot.tasks.sharepoint import SharepointToDF
-
-from prefect.tasks.secrets import PrefectSecret
 
 
 def get_url():

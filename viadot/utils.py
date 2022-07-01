@@ -1,22 +1,22 @@
+import os
 import re
+from itertools import chain
 from typing import Any, Dict, List, Literal
 
 import pandas as pd
-import pyarrow.parquet
 import prefect
+import pyarrow.parquet
 import pyodbc
 import requests
-import os
 from prefect.utilities import logging
 from prefect.utilities.graphql import EnumValue, with_args
 from requests.adapters import HTTPAdapter
 from requests.exceptions import ConnectionError, HTTPError, ReadTimeout, Timeout
 from requests.packages.urllib3.util.retry import Retry
 from urllib3.exceptions import ProtocolError
-from itertools import chain
+
 from .exceptions import APIError
 from .signals import SKIP
-
 
 logger = logging.get_logger(__name__)
 

@@ -1,6 +1,7 @@
 import os
 
 import pytest
+
 from viadot.flows import DuckDBTransform
 from viadot.sources import DuckDB
 

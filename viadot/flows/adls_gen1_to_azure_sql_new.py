@@ -10,7 +10,6 @@ from viadot.task_utils import METADATA_COLUMNS, add_ingestion_metadata_task
 
 from ..tasks import AzureDataLakeToDF, AzureDataLakeUpload, AzureSQLCreateTable, BCPTask
 
-
 gen1_to_df_task = AzureDataLakeToDF(gen=1)
 gen2_upload_task = AzureDataLakeUpload(gen=2)
 create_table_task = AzureSQLCreateTable()

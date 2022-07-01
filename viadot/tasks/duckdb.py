@@ -1,12 +1,12 @@
-from typing import Any, List, Literal, Tuple, Union, NoReturn
+from typing import Any, List, Literal, NoReturn, Tuple, Union
 
+import pandas as pd
 from prefect import Task
 from prefect.utilities.tasks import defaults_from_attrs
-import pandas as pd
 
+from ..signals import SKIP
 from ..sources import DuckDB
 from ..utils import check_if_empty_file
-from ..signals import SKIP
 
 Record = Tuple[Any]
 

@@ -1,4 +1,4 @@
-from typing import Any, Dict, List, OrderedDict, Literal
+from typing import Any, Dict, List, Literal, OrderedDict
 
 import pandas as pd
 from prefect.utilities import logging
@@ -111,7 +111,7 @@ class Salesforce(Source):
                     raise ValueError(msg) from e
                 else:
                     self.logger.warning(msg)
-    
+
             codes = {200: "updated", 201: "created", 204: "updated"}
 
             if response not in codes:

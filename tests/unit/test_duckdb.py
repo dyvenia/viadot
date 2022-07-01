@@ -1,8 +1,8 @@
 import os
 
 import pytest
+
 from viadot.sources.duckdb import DuckDB
-import os
 
 TABLE = "test_table"
 SCHEMA = "test_schema"
