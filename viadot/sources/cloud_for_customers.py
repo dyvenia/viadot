@@ -1,13 +1,15 @@
-from .base import Source
-import requests
-import pandas as pd
-from typing import Any, Dict, List
-from urllib.parse import urljoin
-from ..config import local_config
-from ..utils import handle_api_response
-from ..exceptions import CredentialError
 import re
 from copy import deepcopy
+from typing import Any, Dict, List
+from urllib.parse import urljoin
+
+import pandas as pd
+import requests
+
+from ..config import local_config
+from ..exceptions import CredentialError
+from ..utils import handle_api_response
+from .base import Source
 
 
 class CloudForCustomers(Source):

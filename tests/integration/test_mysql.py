@@ -1,6 +1,8 @@
-from viadot.sources.mysql import MySQL
-import pandas as pd
 from unittest import mock
+
+import pandas as pd
+
+from viadot.sources.mysql import MySQL
 
 d = {"country": [1, 2], "sales": [3, 4]}
 df = pd.DataFrame(data=d)

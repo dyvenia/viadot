@@ -1,10 +1,10 @@
 import json
 from typing import Any, Dict, List
+
 import pandas as pd
 from prefect import Task
-from prefect.utilities.tasks import defaults_from_attrs
 from prefect.utilities import logging
-
+from prefect.utilities.tasks import defaults_from_attrs
 
 from ..exceptions import DBDataAccessError
 from ..sources import BigQuery

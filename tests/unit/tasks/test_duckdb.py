@@ -1,8 +1,9 @@
 import os
+
 import pytest
 
-from viadot.tasks import DuckDBCreateTableFromParquet
 from viadot.sources.duckdb import DuckDB
+from viadot.tasks import DuckDBCreateTableFromParquet
 
 TABLE = "test_table"
 SCHEMA = "test_schema"

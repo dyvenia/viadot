@@ -1,8 +1,8 @@
 import os
 
-from viadot.tasks import DuckDBToDF, DuckDBQuery
-from viadot.flows import EpicorOrdersToDuckDB
 from viadot.config import local_config
+from viadot.flows import EpicorOrdersToDuckDB
+from viadot.tasks import DuckDBQuery, DuckDBToDF
 
 TABLE = "test_epicor"
 SCHEMA = "sandbox"

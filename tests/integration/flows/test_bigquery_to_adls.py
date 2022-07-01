@@ -1,8 +1,10 @@
+import os
+
+import pendulum
+from prefect.tasks.secrets import PrefectSecret
+
 from viadot.flows import BigQueryToADLS
 from viadot.tasks import AzureDataLakeRemove
-from prefect.tasks.secrets import PrefectSecret
-import pendulum
-import os
 
 ADLS_DIR_PATH = "raw/tests/"
 ADLS_FILE_NAME = str(pendulum.now("utc")) + ".parquet"

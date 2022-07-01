@@ -2,8 +2,8 @@ from logging import log
 from typing import Any, Dict
 
 import pandas as pd
-from pendulum import instance
 import prefect
+from pendulum import instance
 from prefect import Task
 from prefect.utilities.tasks import defaults_from_attrs
 

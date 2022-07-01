@@ -1,10 +1,12 @@
-from viadot.flows import DuckDBTransform
-from viadot.tasks import DuckDBQuery, DuckDBToDF
-import pytest
-import pandas as pd
-from unittest import mock
-from viadot.sources import DuckDB
 import os
+from unittest import mock
+
+import pandas as pd
+import pytest
+
+from viadot.flows import DuckDBTransform
+from viadot.sources import DuckDB
+from viadot.tasks import DuckDBQuery, DuckDBToDF
 
 TABLE = "test_table"
 SCHEMA = "test_schema"

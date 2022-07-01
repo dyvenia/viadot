@@ -1,15 +1,15 @@
-from typing import Any, Dict, List, Union, Literal
+from typing import Any, Dict, List, Literal, Union
 
-from prefect import Flow, Task, apply_map
 import pandas as pd
-from ..task_utils import (
-    df_to_csv,
-    union_dfs_task,
-    add_ingestion_metadata_task,
-    df_to_parquet,
-)
+from prefect import Flow, Task, apply_map
 
-from ..tasks import OutlookToDF, AzureDataLakeUpload
+from ..task_utils import (
+    add_ingestion_metadata_task,
+    df_to_csv,
+    df_to_parquet,
+    union_dfs_task,
+)
+from ..tasks import AzureDataLakeUpload, OutlookToDF
 
 file_to_adls_task = AzureDataLakeUpload()
 outlook_to_df = OutlookToDF()

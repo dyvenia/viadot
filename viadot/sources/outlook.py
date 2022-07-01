@@ -1,10 +1,12 @@
-from .base import Source
-from O365 import Account
-import pandas as pd
 import datetime
 from typing import Any, Dict, List
+
+import pandas as pd
+from O365 import Account
+
 from ..config import local_config
 from ..exceptions import CredentialError
+from .base import Source
 
 
 class Outlook(Source):

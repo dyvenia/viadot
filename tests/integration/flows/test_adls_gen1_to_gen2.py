@@ -1,5 +1,6 @@
-from viadot.flows import ADLSGen1ToGen2
 from unittest import mock
+
+from viadot.flows import ADLSGen1ToGen2
 
 
 def test_adls_gen1_gen2_init(TEST_PARQUET_FILE_PATH_2):

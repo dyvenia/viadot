@@ -1,5 +1,6 @@
-from viadot.flows import MultipleFlows
 import logging
+
+from viadot.flows import MultipleFlows
 
 
 def test_multiple_flows_working(caplog):
