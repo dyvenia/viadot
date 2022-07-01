@@ -111,9 +111,8 @@ class Salesforce(Source):
                     raise ValueError(msg) from e
                 else:
                     self.logger.warning(msg)
-
+    
             codes = {200: "updated", 201: "created", 204: "updated"}
-            logger.info(f"Successfully {codes[response]} record {merge_key}.")
 
             if response not in codes:
                 raise ValueError(

@@ -9,7 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Changed `add_ingestion_metadata_task()` to not to add metadata column when input DataFrame is empty
 - Changed `check_if_empty_file()` logic according to changes in `add_ingestion_metadata_task()`
 - Changed accepted values of `if_empty` parameter in `DuckDBCreateTableFromParquet`
-- Updated `.gitignore` to ignore files with `*.bak` extension and to ignore `credentials.json` in any directory.
+- Updated `.gitignore` to ignore files with `*.bak` extension and to ignore `credentials.json` in any directory
+
+### Fixed
+- Fixed log being printed too early in `Salesforce` source, which would sometimes cause a `KeyError`
 
 
 ## [0.4.5] - 2022-06-23
