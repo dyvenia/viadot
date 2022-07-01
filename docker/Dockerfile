@@ -51,7 +51,7 @@ RUN curl https://adoptopenjdk.jfrog.io/adoptopenjdk/api/gpg/key/public | apt-key
     find /usr/bin/java -type d -exec chmod 777 {} \;
 
 ### Export env variable
-ENV SPARK_HOME /usr/local/lib/python3.9/site-packages/pyspark
+ENV SPARK_HOME /usr/local/lib/python3.10/site-packages/pyspark
 RUN export SPARK_HOME
 
 RUN rm -rf /code

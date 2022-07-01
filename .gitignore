@@ -132,6 +132,9 @@ dmypy.json
 # Linux
 .bash_history
 .bashrc
+.viminfo
+.netrwhist
+.ssh
 
 # VSCode
 .vscode
@@ -151,8 +154,6 @@ config.toml
 # MKDocs
 desktop.ini
 
-.viminfo
-
 # SAP RFC lib
 sap_netweaver_rfc
 
@@ -162,3 +163,9 @@ sap_netweaver_rfc
 # dbt
 profiles.yml
 profiles.yaml
+
+# DataHub
+.datahub
+
+# Git
+.gitconfig
