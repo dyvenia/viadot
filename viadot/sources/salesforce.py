@@ -115,9 +115,11 @@ class Salesforce(Source):
             codes = {200: "updated", 201: "created", 204: "updated"}
 
             if response not in codes:
-                raise ValueError(
-                    f"Upsert failed for record: \n{record} with response {response}"
-                )
+                msg = f"Upsert failed for record: \n{record} with response {response}"
+                if raise_on_error:
+                    raise ValueError(msg)
+                else:
+                    self.logger.warning(msg)
             else:
                 logger.info(f"Successfully {codes[response]} record {merge_key}.")
 
