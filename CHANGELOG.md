@@ -15,7 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 - Fixed log being printed too early in `Salesforce` source, which would sometimes cause a `KeyError`
-
+- `raise_on_error` now behaves correctly in `upsert()` when receiving incorrect return codes from Salesforce
 
 ## [0.4.5] - 2022-06-23
 ### Added
