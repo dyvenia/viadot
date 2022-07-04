@@ -4,7 +4,7 @@ import os
 import shutil
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Callable, Union, cast, List, Literal
+from typing import Union, cast, List, Literal
 from toolz import curry
 
 import pandas as pd
@@ -12,7 +12,6 @@ import prefect
 import pyarrow as pa
 import pyarrow.dataset as ds
 from prefect import task, Task, Flow
-from prefect.storage import Git
 from prefect.utilities import logging
 from prefect.tasks.secrets import PrefectSecret
 from prefect.engine.state import Failed
@@ -460,14 +459,3 @@ def df_clean_column(
                 inplace=True,
             )
     return df
-
-
-class Git(Git):
-    @property
-    def git_clone_url(self):
-        """
-        Build the git url to clone
-        """
-        if self.use_ssh:
-            return f"git@{self.repo_host}:{self.repo}"
-        return f"https://{self.git_token_secret}@{self.repo_host}/{self.repo}"

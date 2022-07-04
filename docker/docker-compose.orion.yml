@@ -7,7 +7,8 @@ services:
     ports:
       - 5679:8888
     volumes:
-      - ../:/home/viadot
+      - ${INFRA_REPO_HOME}/data_platform:/home/viadot
+      - ${HOME}/dyvenia/viadot:/home/viadot_local
         # - ${HOME}/.databricks-connect-ext-hive:/home/viadot/.databricks-connect
       - ${HOME}/.databricks-connect:/home/viadot/.databricks-connect
       - ${HOME}/.dbt/profiles.yml:/home/viadot/.dbt/profiles.yml

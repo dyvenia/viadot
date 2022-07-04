@@ -31,8 +31,9 @@ duckdb==0.3.2
 google-auth==2.6.2
 sendgrid==6.9.7
 pandas-gbq==0.17.4
-databricks-connect==10.4.0b0
-dbt-databricks==1.0.3
+databricks-connect==10.4.6
+dbt-databricks==1.1.0
 prefect-shell==0.1.0
 Faker==13.12.1
-acryl-datahub==0.8.38
+acryl-datahub==0.8.39
+dulwich==0.20.43

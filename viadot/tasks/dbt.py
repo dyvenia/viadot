@@ -3,18 +3,13 @@ from typing import List, Optional, Union
 import logging
 from prefect import task
 from prefect.logging import get_run_logger
-from pathlib import Path
-
-dir_path = Path(__file__).resolve().parent.parent.parent
-# The path to the dbt "uberproject" (containing all other projects).
-dbt_uberproject_path = dir_path.joinpath("dbt")
 
 
 @task
 async def dbt_task(
     command: str = "run",
+    project_path: str = None,
     env: Optional[dict] = None,
-    dbt_project_name: str = "databricks",
     shell: str = "bash",
     return_all: bool = False,
     stream_level: int = logging.INFO,
@@ -24,9 +19,9 @@ async def dbt_task(
     Args:
         command: dbt command to be executed; can also be
             provided post-initialization by calling this task instance.
+        project_path: The path to the dbt project.
         env: Dictionary of environment variables to use for
             the subprocess; can also be provided at runtime.
-        dbt_project_name: The name of the dbt project to execute the command in.
         shell: Shell to run the command with.
         return_all: Whether this task should return all lines of stdout as a list,
             or just the last line as a string.
@@ -35,24 +30,30 @@ async def dbt_task(
     Returns:
         If return all, returns all lines as a list; else the last line as a string.
     Example:
-        List contents in the current directory.
+
+        Executes `dbt run` on a specified dbt project.
+
         ```python
         from prefect import flow
-        from prefect_shell import shell_run_command
+        from viadot.tasks import dbt_task
+
+        PROJECT_PATH = "/home/viadot/dbt/my_dbt_project"
+
         @flow
-        def example_shell_run_command_flow():
-            return shell_run_command(command="ls .", return_all=True)
-        example_shell_run_command_flow()
+        def example_dbt_task_flow():
+            return dbt_task(
+                command="run", project_path=PROJECT_PATH, return_all=True
+            )
+
+        example_dbt_task_flow()
         ```
     """
     logger = get_run_logger()
-    dbt_project_path = dbt_uberproject_path.joinpath(dbt_project_name)
-    helper_command = f"cd {dbt_project_path}"
 
     result = await shell_run_command(
-        command="dbt " + command,
+        command=f"dbt {command}",
         env=env,
-        helper_command=helper_command,
+        helper_command=f"cd {project_path}",
         shell=shell,
         return_all=return_all,
         stream_level=stream_level,
