@@ -360,23 +360,25 @@ class SAPRFC(Source):
         where = self.where
         columns = self.select_columns
         # due to the RFC_READ_TABLE limit of characters per row, colums are splited into smaller lists
-        lists_fo_columns = []
+        lists_of_columns = []
         cols = []
-        sum = 0
+        col_length_total = 0
         for col in columns:
             info = self.call("DDIF_FIELDINFO_GET", TABNAME=table_name, FIELDNAME=col)
-            len = info["DFIES_TAB"][0]["LENG"]
-            sum += int(len)
-            # RFC_READ_TABLE limit is 512 characters but sometimes it's too much and call fails
-            if sum <= 400:
+            col_length = info["DFIES_TAB"][0]["LENG"]
+            col_length_total += int(col_length)
+            # According to SAP documentation, the limit is 512 characters. However, we observed SAP raising an exception even
+            # on a slightly lower number of characters, so we add a safety margin
+            character_limit = 400
+            if col_length_total <= character_limit:
                 cols.append(col)
             else:
-                lists_fo_columns.append(cols)
+                lists_of_columns.append(cols)
                 cols = [col]
-                sum = 0
-        lists_fo_columns.append(cols)
+                col_length_total = 0
+        lists_of_columns.append(cols)
 
-        columns = lists_fo_columns
+        columns = lists_of_columns
         options = [{"TEXT": where}] if where else None
         limit = self._get_limit(sql)
         offset = self._get_offset(sql)
@@ -412,8 +414,8 @@ class SAPRFC(Source):
         characters, we trim whe WHERE clause and perform the rest of the filtering
         on the resulting DataFrame. Eg. if the WHERE clause contains 4 conditions
         and has 80 characters, we only perform 3 filters in the query, and perform
-        the last filter on the DataFrame. Characters per row limit can be exceeded,
-        data will be downloaded in chunks then.
+        the last filter on the DataFrame. If characters per row limit will be exceeded,
+        data will be downloaded in chunks.
 
         Source: https://success.jitterbit.com/display/DOC/Guide+to+Using+RFC_READ_TABLE+to+Query+SAP+Tables#GuidetoUsingRFC_READ_TABLEtoQuerySAPTables-create-the-operation
         - WHERE clause: 75 character limit
@@ -425,9 +427,9 @@ class SAPRFC(Source):
         params = self._query
         columns = self.select_columns_aliased
         sep = self._query.get("DELIMITER")
-        list_of_fields = self._query.get("FIELDS")
-        if len(list_of_fields) > 1:
-            logger.info(f"Data will be downloaded in {len(list_of_fields)} chunks.")
+        fields_lists = self._query.get("FIELDS")
+        if len(fields_lists) > 1:
+            logger.info(f"Data will be downloaded in {len(fields_lists)} chunks.")
         func = self.func
         if sep is None:
             # automatically find a working separator
@@ -450,10 +452,11 @@ class SAPRFC(Source):
 
         records = None
         for sep in SEPARATORS:
+            logger.info(f"Checking if separator '{sep}' works.")
             df = pd.DataFrame()
             self._query["DELIMITER"] = sep
             chunk = 1
-            for fields in list_of_fields:
+            for fields in fields_lists:
                 logger.info(f"Downloading {chunk} data chunk...")
                 try:
                     self._query["FIELDS"] = fields
@@ -462,7 +465,7 @@ class SAPRFC(Source):
                     except ABAPApplicationError as e:
                         if e.key == "DATA_BUFFER_EXCEEDED":
                             raise DataBufferExceeded(
-                                "Character limit per row exceeded. Select fewer columns."
+                                "Character limit per row exceeded. Please select fewer columns."
                             )
                         else:
                             raise e
@@ -470,9 +473,10 @@ class SAPRFC(Source):
                     data_raw = response["DATA"]
                     records = [row[record_key].split(sep) for row in data_raw]
                     df[fields] = records
+                    chunk += 1
                 except ValueError:
+                    df = pd.DataFrame()
                     continue
-                chunk += 1
         if records is None:
             raise ValueError("None of the separators worked.")
 
