@@ -3,348 +3,132 @@ from viadot.sources import Databricks
 import pandas as pd
 
 databricks = Databricks(env="QA")
+schema = "afraijat_test"
+
+source_data = [
+    {
+        "Id": "wRACnHTeuw",
+        "AccountId": 123,
+        "Name": "Scott-Merritt",
+        "FirstName": "Melody",
+        "LastName": "Cook",
+        "ContactEMail": "Melody.Cook@ScottMerritt.com",
+        "MailingCity": "Elizabethfurt",
+    },
+    {
+        "Id": "CFfTlqagNlpDu",
+        "AccountId": 456,
+        "Name": "Mann-Warren",
+        "FirstName": "Wayne",
+        "LastName": "Morrison",
+        "ContactEMail": "Wayne.Morrison@MannWarren.com",
+        "MailingCity": "Kathrynmouth",
+    },
+]
+df = pd.DataFrame(source_data)
 
 
 def test_to_df():
     # Look up test_query table and check if the type and results returned are correct
-    source_data = [
-        {
-            "Id": "wRACnHTeuw",
-            "AccountId": "rWFuwDHxfGh",
-            "Name": "Scott-Merritt",
-            "FirstName": "Melody",
-            "LastName": "Cook",
-            "ContactEMail": "Melody.Cook@ScottMerritt.com",
-            "MailingCity": "Elizabethfurt",
-        },
-        {
-            "Id": "CFfTlqagNlpDu",
-            "AccountId": "TtGjFbCTWJgdPT",
-            "Name": "Mann-Warren",
-            "FirstName": "Wayne",
-            "LastName": "Morrison",
-            "ContactEMail": "Wayne.Morrison@MannWarren.com",
-            "MailingCity": "Kathrynmouth",
-        },
-        {
-            "Id": "SNaTEOiGfPJ",
-            "AccountId": "KxPqtfmCHA",
-            "Name": "Peters, Perez and Bowman",
-            "FirstName": "James",
-            "LastName": "Ortiz",
-            "ContactEMail": "James.Ortiz@PetersPerezandBowman.com",
-            "MailingCity": "Michaelland",
-        },
-        {
-            "Id": "yzdeNFYNPJWF",
-            "AccountId": "wsmjsVQpKWUbA",
-            "Name": "Estrada-Hayes",
-            "FirstName": "Vanessa",
-            "LastName": "Guzman",
-            "ContactEMail": "Vanessa.Guzman@EstradaHayes.com",
-            "MailingCity": "Barnesport",
-        },
-        {
-            "Id": "kRjBQOQQPw",
-            "AccountId": "BYsCoPKAWIEpRN",
-            "Name": "Kent-Lyons",
-            "FirstName": "Alexander",
-            "LastName": "Chambers",
-            "ContactEMail": "Alexander.Chambers@KentLyons.com",
-            "MailingCity": "New Nicholaschester",
-        },
-    ]
+    table = "test_query"
+    fqn = f"{schema}.{table}"
 
-    table_name = "raw.test_query"
+    result = databricks.to_df(f"select * from {fqn}")
 
-    df = pd.DataFrame(source_data)
-    df = df.sort_values(by="Id")
-    df = df.reset_index(drop=True)
-
-    result = databricks.to_df(f"select * from {table_name}")
-    result = result.sort_values(by="Id")
-    result = result.reset_index(drop=True)
-
-    assert result.equals(df)
+    assert result.shape == df.shape
 
 
 def test_create_table():
-    source_data = [
-        {
-            "Id": "wRACnHTeuw",
-            "AccountId": "rWFuwDHxfGh",
-            "Name": "Scott-Merritt",
-            "FirstName": "Melody",
-            "LastName": "Cook",
-            "ContactEMail": "Melody.Cook@ScottMerritt.com",
-            "MailingCity": "Elizabethfurt",
-        },
-        {
-            "Id": "CFfTlqagNlpDu",
-            "AccountId": "TtGjFbCTWJgdPT",
-            "Name": "Mann-Warren",
-            "FirstName": "Wayne",
-            "LastName": "Morrison",
-            "ContactEMail": "Wayne.Morrison@MannWarren.com",
-            "MailingCity": "Kathrynmouth",
-        },
-        {
-            "Id": "SNaTEOiGfPJ",
-            "AccountId": "KxPqtfmCHA",
-            "Name": "Peters, Perez and Bowman",
-            "FirstName": "James",
-            "LastName": "Ortiz",
-            "ContactEMail": "James.Ortiz@PetersPerezandBowman.com",
-            "MailingCity": "Michaelland",
-        },
-        {
-            "Id": "yzdeNFYNPJWF",
-            "AccountId": "wsmjsVQpKWUbA",
-            "Name": "Estrada-Hayes",
-            "FirstName": "Vanessa",
-            "LastName": "Guzman",
-            "ContactEMail": "Vanessa.Guzman@EstradaHayes.com",
-            "MailingCity": "Barnesport",
-        },
-        {
-            "Id": "kRjBQOQQPw",
-            "AccountId": "BYsCoPKAWIEpRN",
-            "Name": "Kent-Lyons",
-            "FirstName": "Alexander",
-            "LastName": "Chambers",
-            "ContactEMail": "Alexander.Chambers@KentLyons.com",
-            "MailingCity": "New Nicholaschester",
-        },
-    ]
-    table_name = "raw.test_table"
 
-    # Check if the table exists before creating it. If it does, delete it
-    if databricks._check_if_table_exists("raw.test_table"):
-        databricks.drop_table(table_name)
-    df = pd.DataFrame(source_data)
-    df = df.sort_values(by="Id")
-    df = df.reset_index(drop=True)
+    table = "test_create_table"
 
-    databricks.create_table_from_pandas(table_name, df)
+    fqn = f"{schema}.{table}"
 
-    result = databricks.to_df(f"SELECT * FROM {table_name}")
-    result = result.sort_values(by="Id")
-    result = result.reset_index(drop=True)
+    exists = databricks._check_if_table_exists(schema, table)
 
-    assert result.equals(df)
+    assert not exists
+
+    databricks.create_table_from_pandas(schema, table, df)
+
+    result = databricks.to_df(f"SELECT * FROM {fqn}")
+
+    assert result.shape == df.shape
+    databricks.drop_table(schema, table)
 
 
 def test_append():
-    source_data = [
+    append_data = [
         {
-            "Id": "wRACnHTeuw",
-            "AccountId": "rWFuwDHxfGh",
-            "Name": "Scott-Merritt",
-            "FirstName": "Melody",
-            "LastName": "Cook",
-            "ContactEMail": "Melody.Cook@ScottMerritt.com",
-            "MailingCity": "Elizabethfurt",
-        },
-        {
-            "Id": "CFfTlqagNlpDu",
-            "AccountId": "TtGjFbCTWJgdPT",
-            "Name": "Mann-Warren",
-            "FirstName": "Wayne",
-            "LastName": "Morrison",
-            "ContactEMail": "Wayne.Morrison@MannWarren.com",
-            "MailingCity": "Kathrynmouth",
-        },
-        {
-            "Id": "SNaTEOiGfPJ",
-            "AccountId": "KxPqtfmCHA",
-            "Name": "Peters, Perez and Bowman",
-            "FirstName": "James",
-            "LastName": "Ortiz",
-            "ContactEMail": "James.Ortiz@PetersPerezandBowman.com",
-            "MailingCity": "Michaelland",
-        },
-        {
-            "Id": "yzdeNFYNPJWF",
-            "AccountId": "wsmjsVQpKWUbA",
-            "Name": "Estrada-Hayes",
-            "FirstName": "Vanessa",
-            "LastName": "Guzman",
-            "ContactEMail": "Vanessa.Guzman@EstradaHayes.com",
-            "MailingCity": "Barnesport",
-        },
-        {
-            "Id": "kRjBQOQQPw",
-            "AccountId": "BYsCoPKAWIEpRN",
-            "Name": "Kent-Lyons",
-            "FirstName": "Alexander",
-            "LastName": "Chambers",
-            "ContactEMail": "Alexander.Chambers@KentLyons.com",
-            "MailingCity": "New Nicholaschester",
-        },
-        {
-            "Id": "Append Test",
-            "AccountId": "Updated!EHNYKjSZsiy",
-            "Name": "new Append-2",
-            "FirstName": "Appended",
+            "Id": "UpsertTest2",
+            "AccountId": 789,
+            "Name": "new upsert-2",
+            "FirstName": "Updated",
             "LastName": "Carter2",
             "ContactEMail": "Adam.Carter@TurnerBlack.com",
-            "MailingCity": "Append!Jamesport",
-        },
-    ]
-
-    data = [
-        {
-            "Id": "Append Test",
-            "AccountId": "Updated!EHNYKjSZsiy",
-            "Name": "new Append-2",
-            "FirstName": "Appended",
-            "LastName": "Carter2",
-            "ContactEMail": "Adam.Carter@TurnerBlack.com",
-            "MailingCity": "Append!Jamesport",
+            "MailingCity": "Updated!Jamesport",
         }
     ]
 
-    table_name = "raw.test_table"
+    table = "test_append_table"
 
-    source_df = pd.DataFrame(source_data)
-    source_df = source_df.sort_values(by="Id")
-    source_df = source_df.reset_index(drop=True)
+    fqn = f"{schema}.{table}"
 
-    df = pd.DataFrame(data)
+    databricks.create_table_from_pandas(schema, table, df)
 
-    databricks.insert_into(table_name=table_name, df=df, if_exists="append")
+    append_df = pd.DataFrame(append_data)
 
-    result = databricks.to_df(f"SELECT * FROM {table_name}")
-    result = result.sort_values(by="Id")
-    result = result.reset_index(drop=True)
+    did_func_work = databricks.insert_into(
+        schema, table=table, df=append_df, if_exists="append"
+    )
+    assert did_func_work
 
-    assert result.equals(source_df)
+    expected_result = df.append(append_df)
+
+    result = databricks.to_df(f"SELECT * FROM {fqn}")
+
+    assert result.shape == expected_result.shape
+
+    databricks.drop_table(schema, table)
 
 
 def test_full_refresh():
     # Assert type and values returned after full refresh
-    source_data = [
+
+    table = "test_full_refresh_table"
+    fqn = f"{schema}.{table}"
+
+    databricks.create_table_from_pandas(schema, table, df)
+
+    full_refresh_data = [
         {
             "Id": "wRACnHTeuw",
-            "AccountId": "rWFuwDHxfGh",
+            "AccountId": 123,
             "Name": "Scott-Merritt",
             "FirstName": "Melody",
             "LastName": "Cook",
             "ContactEMail": "Melody.Cook@ScottMerritt.com",
             "MailingCity": "Elizabethfurt",
-        },
-        {
-            "Id": "CFfTlqagNlpDu",
-            "AccountId": "TtGjFbCTWJgdPT",
-            "Name": "Mann-Warren",
-            "FirstName": "Wayne",
-            "LastName": "Morrison",
-            "ContactEMail": "Wayne.Morrison@MannWarren.com",
-            "MailingCity": "Kathrynmouth",
-        },
-        {
-            "Id": "SNaTEOiGfPJ",
-            "AccountId": "KxPqtfmCHA",
-            "Name": "Peters, Perez and Bowman",
-            "FirstName": "James",
-            "LastName": "Ortiz",
-            "ContactEMail": "James.Ortiz@PetersPerezandBowman.com",
-            "MailingCity": "Michaelland",
-        },
-        {
-            "Id": "yzdeNFYNPJWF",
-            "AccountId": "wsmjsVQpKWUbA",
-            "Name": "Estrada-Hayes",
-            "FirstName": "Vanessa",
-            "LastName": "Guzman",
-            "ContactEMail": "Vanessa.Guzman@EstradaHayes.com",
-            "MailingCity": "Barnesport",
-        },
-        {
-            "Id": "kRjBQOQQPw",
-            "AccountId": "BYsCoPKAWIEpRN",
-            "Name": "Kent-Lyons",
-            "FirstName": "Alexander",
-            "LastName": "Chambers",
-            "ContactEMail": "Alexander.Chambers@KentLyons.com",
-            "MailingCity": "New Nicholaschester",
-        },
+        }
     ]
-    table_name = "raw.test_table"
 
-    df = pd.DataFrame(source_data)
-    df = df.sort_values(by="Id")
-    df = df.reset_index(drop=True)
+    full_refresh_df = pd.DataFrame(full_refresh_data)
 
-    databricks.insert_into(table_name=table_name, df=df, if_exists="replace")
+    did_func_work = databricks.insert_into(
+        schema=schema, table=table, df=full_refresh_df, if_exists="replace"
+    )
 
-    result = databricks.to_df(f"SELECT * FROM {table_name}")
-    result = result.sort_values(by="Id")
-    result = result.reset_index(drop=True)
+    assert did_func_work
 
-    assert result.equals(df)
+    result = databricks.to_df(f"SELECT * FROM {fqn}")
+
+    assert result.shape == full_refresh_df.shape
+    databricks.drop_table(schema, table)
 
 
 def test_upsert():
     # Upsert and check if the data type and values are correct
-    source_data = [
-        {
-            "Id": "wRACnHTeuw",
-            "AccountId": "rWFuwDHxfGh",
-            "Name": "Scott-Merritt",
-            "FirstName": "Melody",
-            "LastName": "Cook",
-            "ContactEMail": "Melody.Cook@ScottMerritt.com",
-            "MailingCity": "Elizabethfurt",
-        },
-        {
-            "Id": "CFfTlqagNlpDu",
-            "AccountId": "TtGjFbCTWJgdPT",
-            "Name": "Mann-Warren",
-            "FirstName": "Wayne",
-            "LastName": "Morrison",
-            "ContactEMail": "Wayne.Morrison@MannWarren.com",
-            "MailingCity": "Kathrynmouth",
-        },
-        {
-            "Id": "SNaTEOiGfPJ",
-            "AccountId": "KxPqtfmCHA",
-            "Name": "Peters, Perez and Bowman",
-            "FirstName": "James",
-            "LastName": "Ortiz",
-            "ContactEMail": "James.Ortiz@PetersPerezandBowman.com",
-            "MailingCity": "Michaelland",
-        },
-        {
-            "Id": "yzdeNFYNPJWF",
-            "AccountId": "wsmjsVQpKWUbA",
-            "Name": "Estrada-Hayes",
-            "FirstName": "Vanessa",
-            "LastName": "Guzman",
-            "ContactEMail": "Vanessa.Guzman@EstradaHayes.com",
-            "MailingCity": "Barnesport",
-        },
-        {
-            "Id": "kRjBQOQQPw",
-            "AccountId": "BYsCoPKAWIEpRN",
-            "Name": "Kent-Lyons",
-            "FirstName": "Alexander",
-            "LastName": "Chambers",
-            "ContactEMail": "Alexander.Chambers@KentLyons.com",
-            "MailingCity": "New Nicholaschester",
-        },
-        {
-            "Id": "UpsertTest2",
-            "AccountId": "Updated!EHNYKjSZsiy",
-            "Name": "new upsert-2",
-            "FirstName": "Updated",
-            "LastName": "Carter2",
-            "ContactEMail": "Adam.Carter@TurnerBlack.com",
-            "MailingCity": "Updated!Jamesport",
-        },
-    ]
 
-    data = [
+    upsert_data = [
         {
             "Id": "UpsertTest2",
             "AccountId": "Updated!EHNYKjSZsiy",
@@ -356,32 +140,39 @@ def test_upsert():
         }
     ]
 
-    table_name = "raw.test_table"
-    pk = "Id"
+    table = "test_upsert"
+    fqn = f"{schema}.{table}"
+    primary_key = "Id"
 
-    data = pd.DataFrame(data)
+    databricks.create_table_from_pandas(schema, table, df)
 
-    df = pd.DataFrame(source_data)
-    df = df.sort_values(by="Id")
-    df = df.reset_index(drop=True)
+    upsert_df = pd.DataFrame(upsert_data)
 
-    databricks.insert_into(
-        table_name=table_name, df=data, primary_key=pk, if_exists="update"
+    did_func_work = databricks.insert_into(
+        schema=schema,
+        table=table,
+        df=upsert_df,
+        primary_key=primary_key,
+        if_exists="update",
     )
 
-    result = databricks.to_df(f"SELECT * FROM {table_name}")
-    result = result.sort_values(by="Id")
-    result = result.reset_index(drop=True)
+    assert did_func_work
 
-    assert result.equals(df)
+    expected_result = df.append(upsert_df)
+
+    result = databricks.to_df(f"SELECT * FROM {fqn}")
+
+    assert result.shape == expected_result.shape
+
+    databricks.drop_table(schema, table)
 
 
 def test_discover_schema():
-    table_name = "raw.c4c_test4"
-    result = databricks.discover_schema(table_name)
-    expected_result = {
+    table = "test_table"
+    schema_result = databricks.discover_schema(schema, table)
+    expected_schema = {
         "Id": "string",
-        "AccountId": "string",
+        "AccountId": "bigint",
         "Name": "string",
         "FirstName": "string",
         "LastName": "string",
@@ -389,4 +180,4 @@ def test_discover_schema():
         "MailingCity": "string",
     }
 
-    assert result == expected_result
+    assert schema_result == expected_schema
