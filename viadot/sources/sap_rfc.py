@@ -480,9 +480,9 @@ class SAPRFC(Source):
                 except ValueError:
                     df = pd.DataFrame()
                     continue
-        if records is None:
-            raise ValueError("None of the separators worked.")
-
+        if not records:
+            logger.warning("Empty output was generated.")
+            columns = []
         df.columns = columns
 
         if self.client_side_filters:
