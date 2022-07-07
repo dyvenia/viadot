@@ -100,13 +100,24 @@ class SAPRFC(Source):
     - etc.
     """
 
-    def __init__(self, sep: str = None, func: str = "RFC_READ_TABLE", *args, **kwargs):
+    def __init__(
+        self,
+        sep: str = None,
+        func: str = "RFC_READ_TABLE",
+        rfc_character_limit: int = 400,
+        *args,
+        **kwargs,
+    ):
         """Create an instance of the SAPRFC class.
 
         Args:
             sep (str, optional): Which separator to use when querying SAP. If not provided,
             multiple options are automatically tried.
             func (str, optional): SAP RFC function to use. Defaults to "RFC_READ_TABLE".
+            rfc_character_limit (int, optional): Number of characters by which query will be split in chunks
+            in case of too many columns for RFC function. According to SAP documentation, the limit is
+            512 characters. However, we observed SAP raising an exception even on a slightly lower number
+            of characters, so we add a safety margin. Defaults to 400.
 
         Raises:
             CredentialError: If provided credentials are incorrect.
@@ -123,6 +134,7 @@ class SAPRFC(Source):
         self.sep = sep
         self.client_side_filters = None
         self.func = func
+        self.rfc_character_limit = rfc_character_limit
 
     @property
     def con(self) -> pyrfc.Connection:
@@ -362,23 +374,24 @@ class SAPRFC(Source):
         # this has to be called before checking client_side_filters
         where = self.where
         columns = self.select_columns
+        character_limit = self.rfc_character_limit
         # due to the RFC_READ_TABLE limit of characters per row, colums are splited into smaller lists
         lists_of_columns = []
         cols = []
         col_length_total = 0
+        test = 0
         for col in columns:
             info = self.call("DDIF_FIELDINFO_GET", TABNAME=table_name, FIELDNAME=col)
+            test += len(col)
             col_length = info["DFIES_TAB"][0]["LENG"]
             col_length_total += int(col_length)
-            # According to SAP documentation, the limit is 512 characters. However, we observed SAP raising an exception even
-            # on a slightly lower number of characters, so we add a safety margin
-            character_limit = 400
             if col_length_total <= character_limit:
                 cols.append(col)
             else:
                 lists_of_columns.append(cols)
                 cols = [col]
                 col_length_total = 0
+                test = 0
         lists_of_columns.append(cols)
 
         columns = lists_of_columns
