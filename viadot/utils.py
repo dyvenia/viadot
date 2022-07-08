@@ -1,5 +1,5 @@
 import re
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Union
 
 import pandas as pd
 import prefect
@@ -7,10 +7,15 @@ import pyodbc
 import requests
 from prefect.utilities.graphql import EnumValue, with_args
 from requests.adapters import HTTPAdapter
-from requests.exceptions import (ConnectionError, HTTPError, ReadTimeout,
-                                 Timeout)
+from requests.exceptions import ConnectionError, HTTPError, ReadTimeout, Timeout
 from requests.packages.urllib3.util.retry import Retry
 from urllib3.exceptions import ProtocolError
+
+import viadot.sources.databricks as databricks
+import pyspark.sql.session as SparkSession
+import pyspark.sql.dataframe as spark
+from pyspark.sql.dataframe import DataFrame
+from pyspark.sql.types import StructType
 
 from .exceptions import APIError
 
@@ -188,10 +193,11 @@ def _cast_df_cols(df):
 def build_merge_query(
     stg_schema: str,
     stg_table: str,
-    schema: str,
     table: str,
     primary_key: str,
-    con: pyodbc.Connection,
+    source: Union[pyodbc.Connection, databricks.Databricks],
+    schema: str = None,
+    df: spark.DataFrame = None,
 ) -> str:
     """
     Build a merge query for the simplest possible upsert scenario:
@@ -204,33 +210,35 @@ def build_merge_query(
         schema (str): The schema where the table is located.
         table (str): The table to merge into.
         primary_key (str): The column on which to merge.
-        con (pyodbc.Connection) The connection to the database on which the
-        query will be executed.
+        source (pyodbc.Connection OR databricks.Databricks) Either the connection to the database or the Databricks
+        object used to connect to the Spark cluster on which the query will be executed.
+        df (Optional): A Spark DataFrame whose data will be upserted to a table.
     """
+    fqn = f"{schema}.{table}"
+
+    if schema is None:
+        schema = source.DEFAULT_SCHEMA
 
     # Get column names
-    columns_query = f"""
-    SELECT 
-        col.name
-    FROM sys.tables AS tab
-        INNER JOIN sys.columns AS col
-            ON tab.object_id = col.object_id
-    WHERE tab.name = '{table}'
-    AND schema_name(tab.schema_id) = '{schema}'
-    ORDER BY column_id;
-    """
-    cursor = con.cursor()
-    columns_query_result = cursor.execute(columns_query).fetchall()
-    cursor.close()
+    columns_query_result = _get_table_columns(schema, table, source)
 
-    columns = [tup[0] for tup in columns_query_result]
+    # If user is passing a DataFrame and is using Databricks as a source, it means they want to merge the
+    # DataFrame into an existing table. Otherwise, it means they want to merge two existing tables.
+    if isinstance(source, databricks.Databricks) and df:
+        df.createOrReplaceTempView("stg")
+        # Since we're using a temporary view, we cannot/don't need to use a schema name and can just simply use the view's name, stg.
+        stg_fqn = ""
+    else:
+        stg_fqn = f"{stg_schema}.{stg_table}"
+
+    columns = [tup for tup in columns_query_result]
     columns_stg_fqn = [f"stg.{col}" for col in columns]
 
     # Build merge query
     update_pairs = [f"existing.{col} = stg.{col}" for col in columns]
     merge_query = f"""
-    MERGE INTO {schema}.{table} existing
-        USING {stg_schema}.{stg_table} stg
+    MERGE INTO {fqn} existing
+        USING {stg_fqn} stg
         ON stg.{primary_key} = existing.{primary_key}
         WHEN MATCHED
             THEN UPDATE SET {", ".join(update_pairs)}
@@ -239,6 +247,31 @@ def build_merge_query(
             VALUES({", ".join(columns_stg_fqn)});
     """
     return merge_query
+
+
+def _get_table_columns(
+    schema: str, table: str, source: Union[pyodbc.Connection, databricks.Databricks]
+) -> str:
+    if isinstance(source, pyodbc.Connection):
+        columns_query = f"""
+        SELECT 
+            col.name
+        FROM sys.tables AS tab
+            INNER JOIN sys.columns AS col
+                ON tab.object_id = col.object_id
+        WHERE tab.name = '{table}'
+        AND schema_name(tab.schema_id) = '{schema}'
+        ORDER BY column_id;
+        """
+        cursor = source.cursor()
+        columns_query_result = cursor.execute(columns_query).fetchall()
+        cursor.close()
+
+    else:
+        result = source.run(f"SHOW COLUMNS IN {schema}.{table}", "pandas")
+        columns_query_result = result["col_name"].values
+
+    return columns_query_result
 
 
 def gen_bulk_insert_query_from_df(

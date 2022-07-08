@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 ### Added
  - Enabled Databricks Connect in the image. To enable, [follow this guide](./README.md#executing-spark-jobs)
+ - Added `Databricks` source to the library.
 
 ### Changed
 - Added `SQLServerToDF` task
