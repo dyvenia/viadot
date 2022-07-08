@@ -49,7 +49,7 @@ class Databricks(Source):
 
         self.connect()
 
-    def _get_spark_session(self, env: str = "DEV"):
+    def _create_spark_session(self, env: str = "DEV"):
         """
         Create a Spark session to establish a connection to the Databricks cluster and allow the execution of its commands.
 
@@ -61,33 +61,33 @@ class Databricks(Source):
         """
         env = env or self.env
         default_spark = SparkSession.builder.getOrCreate()
-        new_config = SparkConf()
+        config = SparkConf()
 
         # copy all the configuration values from the current Spark Context
         default_config_vals = default_spark.sparkContext.getConf().getAll()
 
-        for (k, v) in default_config_vals:
-            new_config.set(k, v)
+        for (key, value) in default_config_vals:
+            config.set(key, value)
 
-        new_config.set(
+        config.set(
             "spark.databricks.service.clusterId", self.credentials.get("cluster_id")
         )
 
-        new_config.set("spark.databricks.service.port", self.credentials.get("port"))
+        config.set("spark.databricks.service.port", self.credentials.get("port"))
         # stop the spark session context in order to create a new one with the required cluster_id, else we
         # will still use the current cluster_id for execution
 
         default_spark.stop()
-        context = SparkContext(conf=new_config)
+        context = SparkContext(conf=config)
         session = SparkSession(context)
-        new_spark = session.builder.config(conf=new_config).getOrCreate()
+        new_spark = session.builder.config(conf=config).getOrCreate()
         return new_spark
 
     def connect(self):
         if self.env == "QA":
             self.session = SparkSession.builder.getOrCreate()
         else:
-            self.session = self._get_spark_session(self.env)
+            self.session = self._create_spark_session(self.env)
 
     def to_df(self, query: str, if_empty: str = "fail") -> pd.DataFrame:
         """
@@ -179,10 +179,9 @@ class Databricks(Source):
             in case of DDL/DML queries, a boolean describing whether
             the query was excuted successfuly.
         """
-        allowed_fetch_type_values = ["spark", "pandas"]
-        if fetch_type not in allowed_fetch_type_values:
+        if fetch_type not in ["spark", "pandas"]:
             raise ValueError(
-                f"Only the values {allowed_fetch_type_values} are allowed for 'fetch_type'"
+                "Only the values 'spark', 'pandas' are allowed for 'fetch_type'"
             )
 
         query_clean = query.upper().strip()
@@ -191,7 +190,7 @@ class Databricks(Source):
         query_result = self.session.sql(query)
 
         if any(query_clean.startswith(word) for word in query_keywords):
-            if fetch_type == "record":
+            if fetch_type == "spark":
                 result = query_result
             else:
                 result = self._spark_df_to_pandas_df(query_result)
@@ -252,7 +251,7 @@ class Databricks(Source):
         Example:
         ```python
         from viadot.sources import Databricks
-        databricks = Databricks()]
+        databricks = Databricks()
         databricks.drop_table(schema = "schema", table = "table_1")
         ```
         """
@@ -265,12 +264,9 @@ class Databricks(Source):
 
     def _append(self, schema: str, table: str, df: pd.DataFrame):
         fqn = f"{schema}.{table}"
-        if self._check_if_table_exists(schema, table):
-            spark_df = self._pandas_df_to_spark_df(df)
-            spark_df.write.format("delta").mode("append").saveAsTable(fqn)
-            logger.info(f"Table {fqn} appended successfully.")
-        else:
-            logger.info(f"Table {fqn} does not exist.")
+        spark_df = self._pandas_df_to_spark_df(df)
+        spark_df.write.format("delta").mode("append").saveAsTable(fqn)
+        logger.info(f"Table {fqn} appended successfully.")
 
     def _full_refresh(self, schema: str, table: str, df: pd.DataFrame):
         """
@@ -291,12 +287,9 @@ class Databricks(Source):
         ```
         """
         fqn = f"{schema}.{table}"
-        if self._check_if_table_exists(schema, table):
-            data = self._pandas_df_to_spark_df(df)
-            data.write.format("delta").mode("overwrite").saveAsTable(fqn)
-            logger.info(f"Table {fqn} has been full-refreshed successfully")
-        else:
-            logger.info(f"Table {fqn} does not exist")
+        data = self._pandas_df_to_spark_df(df)
+        data.write.format("delta").mode("overwrite").saveAsTable(fqn)
+        logger.info(f"Table {fqn} has been full-refreshed successfully")
 
     def _upsert(
         self,
@@ -306,23 +299,19 @@ class Databricks(Source):
         df: pd.DataFrame,
     ):
         fqn = f"{schema}.{table}"
-        if self._check_if_table_exists(schema, table):
-            spark_df = self._pandas_df_to_spark_df(df)
-            merge_query = viadot.utils.build_merge_query(
-                stg_schema="",
-                stg_table="",
-                schema=schema,
-                table=table,
-                primary_key=primary_key,
-                source=self,
-                df=spark_df,
-            )
-            self.run(merge_query)
-            result = True
-            logger.info("Data upserted successfully.")
-        else:
-            logger.info(f"Table {fqn} does not exist")
-            result = False
+        spark_df = self._pandas_df_to_spark_df(df)
+        merge_query = viadot.utils.build_merge_query(
+            stg_schema="",
+            stg_table="",
+            schema=schema,
+            table=table,
+            primary_key=primary_key,
+            source=self,
+            df=spark_df,
+        )
+        self.run(merge_query)
+        result = True
+        logger.info("Data upserted successfully.")
         return result
 
     def insert_into(
@@ -341,7 +330,7 @@ class Databricks(Source):
             table (str): Name of the new table to be created.
             df (pd.DataFrame): DataFrame with the data to be inserted into the table.
             primary_key (str, Optional): Needed only when updating the data, the primary key on which the data will be joined.
-            if_exists (str, Optional): Which operation to run with the data. Allowed operations are: replace, append and update.
+            if_exists (str, Optional): Which operation to run with the data. Allowed operations are: replace, append, update and fail.
 
         Example:
         ```python
@@ -352,21 +341,27 @@ class Databricks(Source):
         databricks.insert_into(schema="raw", table = "c4c_test4", df=df, primary_key="pk", if_exists="update")
         ```
         """
-        IF_EXISTS_ACCEPTED_VALUES = ["replace", "append", "update", "fail"]
-        fqn = f"{schema}.{table}"
-        if if_exists not in IF_EXISTS_ACCEPTED_VALUES:
-            raise ValueError()
-        if self._check_if_table_exists(schema, table) and if_exists == "fail":
-            raise ValueError()
-        if if_exists == "replace":
-            self._full_refresh(schema, table, df)
-            result = True
-        elif if_exists == "append":
-            self._append(schema, table, df)
-            result = True
+        exists = self._check_if_table_exists(schema=schema, table=table)
+        if exists:
+            if if_exists == "replace":
+                self._full_refresh(schema, table, df)
+                result = True
+            elif if_exists == "append":
+                self._append(schema, table, df)
+                result = True
+            elif if_exists == "update":
+                self._upsert(schema, table, primary_key, df)
+                result = True
+            elif if_exists == "fail":
+                raise ValueError(
+                    "The table already exists and 'if_exists' is set to 'fail'."
+                )
+            else:
+                raise ValueError(
+                    "Only the values 'replace', 'append', 'update', 'fail' are allowed for 'if_exists'"
+                )
         else:
-            self._upsert(schema, table, primary_key, df)
-            result = True
+            raise ValueError("Table does not exist")
         return result
 
     def create_schema(self, schema_name: str):
@@ -403,7 +398,6 @@ class Databricks(Source):
         self.run(f"DROP SCHEMA {schema_name}")
         logger.info(f"Schema {schema_name} deleted.")
 
-    # TODO: Change to return dict of col_name:dtype
     def discover_schema(self, schema: str, table: str) -> dict:
         """
         Return a table's schema.

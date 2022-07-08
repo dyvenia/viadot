@@ -1,6 +1,7 @@
 import pyspark
 from viadot.sources import Databricks
 import pandas as pd
+import pytest
 
 databricks = Databricks(env="QA")
 schema = "afraijat_test"
@@ -77,10 +78,10 @@ def test_append():
 
     append_df = pd.DataFrame(append_data)
 
-    did_func_work = databricks.insert_into(
+    did_insert = databricks.insert_into(
         schema, table=table, df=append_df, if_exists="append"
     )
-    assert did_func_work
+    assert did_insert
 
     expected_result = df.append(append_df)
 
@@ -89,6 +90,54 @@ def test_append():
     assert result.shape == expected_result.shape
 
     databricks.drop_table(schema, table)
+
+
+def test_insert_wrong_schema():
+    append_data = [
+        {
+            "Id": "UpsertTest2",
+            "AccountId": 789,
+            "Name": "new upsert-2",
+            "FirstName": "Updated",
+            "LastName": "Carter2",
+            "ContactEMail": "Adam.Carter@TurnerBlack.com",
+            "MailingCity": "Updated!Jamesport",
+            "WrongField": "Wrong field",
+        }
+    ]
+
+    table = "test_table"
+
+    append_df = pd.DataFrame(append_data)
+
+    with pytest.raises(pyspark.sql.utils.AnalysisException):
+        did_insert = databricks.insert_into(
+            schema, table=table, df=append_df, if_exists="append"
+        )
+
+
+def test_insert_non_existent_table():
+    append_data = [
+        {
+            "Id": "UpsertTest2",
+            "AccountId": 789,
+            "Name": "new upsert-2",
+            "FirstName": "Updated",
+            "LastName": "Carter2",
+            "ContactEMail": "Adam.Carter@TurnerBlack.com",
+            "MailingCity": "Updated!Jamesport",
+            "WrongField": "Wrong field",
+        }
+    ]
+
+    table = "test_non_existent_table"
+
+    append_df = pd.DataFrame(append_data)
+
+    with pytest.raises(ValueError):
+        did_insert = databricks.insert_into(
+            schema, table=table, df=append_df, if_exists="append"
+        )
 
 
 def test_full_refresh():
@@ -113,11 +162,11 @@ def test_full_refresh():
 
     full_refresh_df = pd.DataFrame(full_refresh_data)
 
-    did_func_work = databricks.insert_into(
+    did_insert = databricks.insert_into(
         schema=schema, table=table, df=full_refresh_df, if_exists="replace"
     )
 
-    assert did_func_work
+    assert did_insert
 
     result = databricks.to_df(f"SELECT * FROM {fqn}")
 
@@ -148,7 +197,7 @@ def test_upsert():
 
     upsert_df = pd.DataFrame(upsert_data)
 
-    did_func_work = databricks.insert_into(
+    did_insert = databricks.insert_into(
         schema=schema,
         table=table,
         df=upsert_df,
@@ -156,7 +205,7 @@ def test_upsert():
         if_exists="update",
     )
 
-    assert did_func_work
+    assert did_insert
 
     expected_result = df.append(upsert_df)
 
