@@ -5,8 +5,6 @@ import datetime
 from typing import Any, Dict, List
 from ..config import local_config
 from ..exceptions import CredentialError
-from datetime import datetime, timezone
-
 
 class Outlook(Source):
     def __init__(
@@ -42,6 +40,8 @@ class Outlook(Source):
         if self.credentials is None:
             raise CredentialError("You do not provide credentials!")
 
+        super().__init__(*args, credentials=self.credentials, **kwargs)
+
         self.request_retries = request_retries
         self.mailbox_name = mailbox_name
         self.start_date = start_date
@@ -54,11 +54,9 @@ class Outlook(Source):
                 self.start_date, "%Y-%m-%d"
             )
         else:
-            self.date_range_end_time = datetime.date.today() - datetime.timedelta(
-                days=1
-            )
+            self.date_range_end_time = datetime.date.today()
             self.date_range_start_time = datetime.date.today() - datetime.timedelta(
-                days=2
+                days=1
             )
             min_time = datetime.datetime.min.time()
             self.date_range_end_time = datetime.datetime.combine(
@@ -76,13 +74,12 @@ class Outlook(Source):
             request_retries=self.request_retries,
         )
         if self.account.authenticate():
-            print(f"{self.mailbox_name} Authenticated!")
+            self.logger.info(f"{self.mailbox_name} Authenticated!")
         else:
-            print(f"{self.mailbox_name} NOT Authenticated!")
+            self.logger.info(f"{self.mailbox_name} NOT Authenticated!")
 
         self.mailbox_obj = self.account.mailbox()
         self.mailbox_messages = self.mailbox_obj.get_messages(limit)
-        super().__init__(*args, credentials=self.credentials, **kwargs)
 
     def to_df(self) -> pd.DataFrame:
         """Download Outlook data into a pandas DataFrame.
@@ -145,12 +142,14 @@ class Outlook(Source):
                             row["Inbox"] = False
                         else:
                             row["Inbox"] = True
-                        row["_viadot_downloaded_at_utc"] = datetime.now(
-                            timezone.utc
+                        row["_viadot_downloaded_at_utc"] = datetime.datetime.now(
+                            datetime.timezone.utc
                         ).replace(microsecond=0)
                         data.append(row)
                     except KeyError as e:
-                        print("KeyError : " + str(e))
+                        self.logger.warning(
+                            f"There is missing message filed which you want to retrive \n {e} "
+                        )
             except StopIteration:
                 break
         df = pd.DataFrame(data=data)
