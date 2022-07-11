@@ -1,3 +1,4 @@
+import json
 import pandas as pd
 from viadot.config import local_config
 from typing import Any, Dict, List, Tuple
@@ -6,35 +7,49 @@ from prefect.utilities.tasks import defaults_from_attrs
 from prefect.utilities import logging
 
 from ..sources import Outlook
+from .azure_key_vault import AzureKeyVaultSecret
+from prefect.tasks.secrets import PrefectSecret
 
 logger = logging.get_logger()
 
 
 class OutlookToDF(Task):
+    """
+    The task for fetch Outlook mail and saving data as the data frame.
+    """
+
     def __init__(
         self,
         mailbox_name: str = None,
         start_date: str = None,
         end_date: str = None,
-        credentials: Dict[str, Any] = None,
+        credentials_secret: Dict[str, Any] = None,
+        vault_name: str = None,
         output_file_extension: str = ".csv",
         limit: int = 10000,
         *args: List[Any],
         **kwargs: Dict[str, Any],
     ):
 
+        if not credentials_secret:
+            try:
+                credentials_secret = PrefectSecret("OUTLOOK").run()
+            except ValueError:
+                pass
+
+        if credentials_secret:
+            credentials_str = AzureKeyVaultSecret(
+                credentials_secret, vault_name=vault_name
+            ).run()
+            self.credentials = json.loads(credentials_str)
+        else:
+            self.credentials = local_config.get("OUTLOOK")
+
         self.mailbox_name = mailbox_name
         self.start_date = start_date
         self.end_date = end_date
         self.output_file_extension = output_file_extension
         self.limit = limit
-        self.credentials = credentials
-
-        # try:
-        #     DEFAULT_CREDENTIALS = local_config["OUTLOOK"]
-        # except KeyError:
-        #     DEFAULT_CREDENTIALS = None
-        # self.credentials = credentials or DEFAULT_CREDENTIALS
 
         super().__init__(
             name="outlook_to_csv",
