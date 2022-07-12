@@ -7,6 +7,7 @@ from .outlook import Outlook
 from .salesforce import Salesforce
 from .sharepoint import Sharepoint
 from .supermetrics import Supermetrics
+from .genesys import Genesys
 
 try:
     from .sap_rfc import SAPRFC
