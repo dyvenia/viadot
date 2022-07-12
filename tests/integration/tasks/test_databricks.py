@@ -230,3 +230,39 @@ def test_discover_schema():
     }
 
     assert schema_result == expected_schema
+
+
+def test_rollback():
+    append_data = [
+        {
+            "Id": "UpsertTest2",
+            "AccountId": 789,
+            "Name": "new upsert-2",
+            "FirstName": "Updated",
+            "LastName": "Carter2",
+            "ContactEMail": "Adam.Carter@TurnerBlack.com",
+            "MailingCity": "Updated!Jamesport",
+        }
+    ]
+
+    table = "test_rollback"
+    fqn = f"{schema}.{table}"
+
+    databricks.create_table_from_pandas(schema, table, df)
+
+    # Get the version of the table before applying any changes
+    ver_num = databricks.get_table_ver(schema, table)
+
+    append_df = pd.DataFrame(append_data)
+
+    # Append to the table
+    did_insert = databricks.insert_into(
+        schema, table=table, df=append_df, if_exists="append"
+    )
+    assert did_insert
+
+    # Rollback to the previous table version
+    databricks.rollback(schema, table, ver_num)
+    result = databricks.to_df(f"SELECT * FROM {fqn}")
+
+    assert df.shape == result.shape
