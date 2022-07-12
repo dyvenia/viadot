@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added `SQLServerToDuckDB` flow which downloads data from SQLServer table, loads it to parquet file and then uplads it do DuckDB
 - Added complete proxy set up in `SAPRFC` example (`viadot/examples/sap_rfc`)
 - Added Databricks/Spark setup to the image. See README for setup & usage instructions.
+- Added rollback feature to `Databricks` source.
 
 
 ## [0.4.3] - 2022-04-28

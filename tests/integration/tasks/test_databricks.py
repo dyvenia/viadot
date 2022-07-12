@@ -266,3 +266,5 @@ def test_rollback():
     result = databricks.to_df(f"SELECT * FROM {fqn}")
 
     assert df.shape == result.shape
+
+    databricks.drop_table(schema, table)
