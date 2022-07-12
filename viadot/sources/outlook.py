@@ -31,7 +31,9 @@ class Outlook(Source):
             credentials (Dict[str, Any], optional): credentials (TENANT_ID, CLIENT_ID, CLIENT_SECRET) for the Azure Application
             provided as dictionary.
             limit (int, optional): Number of fetched top messages. Defaults to 10_000.
+            request_retries (int, optional): Number of tries to connect.
         """
+
         try:
             DEFAULT_CREDENTIALS = local_config["OUTLOOK"]
         except KeyError:
@@ -73,6 +75,7 @@ class Outlook(Source):
             main_resource=self.mailbox_name,
             request_retries=self.request_retries,
         )
+
         if self.account.authenticate():
             self.logger.info(f"{self.mailbox_name} Authenticated!")
         else:
