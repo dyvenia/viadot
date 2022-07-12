@@ -6,6 +6,7 @@ from typing import Any, Dict, List
 from ..config import local_config
 from ..exceptions import CredentialError
 
+
 class Outlook(Source):
     def __init__(
         self,
@@ -13,7 +14,7 @@ class Outlook(Source):
         start_date: str = None,
         end_date: str = None,
         credentials: Dict[str, Any] = None,
-        limit: int = 10000,
+        limit: int = 10_000,
         request_retries: int = 10,
         *args: List[Any],
         **kwargs: Dict[str, Any],
@@ -27,10 +28,9 @@ class Outlook(Source):
             mailbox_name (str): Mailbox name.
             start_date (str, optional): A filtering start date parameter e.g. "2022-01-01". Defaults to None.
             end_date (str, optional): A filtering end date parameter e.g. "2022-01-02". Defaults to None.
-            credentials (Dict[str, Any], optional): The name of the Azure Key Vault secret containing a dictionary with
-            ACCOUNT_NAME and Service Principal credentials (TENANT_ID, CLIENT_ID, CLIENT_SECRET) for the Azure Application.
-            Defaults to None.
-            limit (int, optional): Number of fetched top messages. Defaults to 10000.
+            credentials (Dict[str, Any], optional): credentials (TENANT_ID, CLIENT_ID, CLIENT_SECRET) for the Azure Application
+            provided as dictionary.
+            limit (int, optional): Number of fetched top messages. Defaults to 10_000.
         """
         try:
             DEFAULT_CREDENTIALS = local_config["OUTLOOK"]
@@ -38,7 +38,7 @@ class Outlook(Source):
             DEFAULT_CREDENTIALS = None
         self.credentials = credentials or DEFAULT_CREDENTIALS
         if self.credentials is None:
-            raise CredentialError("You do not provide credentials!")
+            raise CredentialError("Credentials not found.")
 
         super().__init__(*args, credentials=self.credentials, **kwargs)
 
