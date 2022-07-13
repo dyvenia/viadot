@@ -1,5 +1,6 @@
 import json
 from datetime import timedelta
+from typing import Any, Dict, List
 
 import pandas as pd
 from prefect import Task
@@ -227,3 +228,97 @@ class SalesforceBulkUpsert(Task):
             raise_on_error=raise_on_error,
         )
         self.logger.info(f"Successfully upserted {df.shape[0]} rows to Salesforce.")
+
+
+class SalesforceToDF(Task):
+    """
+    The task for querying Salesforce and saving data as the data frame.
+
+    Args:
+        query (str, optional): Query for download the data if specific download is needed. Defaults to None.
+        table (str, optional): Table name. Can be used instead of query. Defaults to None.
+        columns (List[str], optional): List of columns which are needed - table argument is needed. Defaults to None.
+        domain (str, optional): Domain of a connection. defaults to 'test' (sandbox).
+            Can only be added if built-in username/password/security token is provided. Defaults to None.
+        client_id (str, optional): Client id to keep the track of API calls. Defaults to None.
+        env (str, optional): Environment information, provides information about credential
+            and connection configuration. Defaults to 'DEV'.
+    """
+
+    def __init__(
+        self,
+        query: str = None,
+        table: str = None,
+        columns: List[str] = None,
+        domain: str = "test",
+        client_id: str = "viadot",
+        env: str = "DEV",
+        *args: List[Any],
+        **kwargs: Dict[str, Any],
+    ):
+        self.query = query
+        self.table = table
+        self.columns = columns
+        self.domain = domain
+        self.client_id = client_id
+        self.env = env
+
+        super().__init__(
+            name="salesforce_to_df",
+            *args,
+            **kwargs,
+        )
+
+    def __call__(self):
+        """Download Salesforce data to a DF"""
+        super().__call__(self)
+
+    @defaults_from_attrs(
+        "query",
+        "table",
+        "columns",
+        "domain",
+        "client_id",
+        "env",
+    )
+    def run(
+        self,
+        query: str = None,
+        table: str = None,
+        columns: List[str] = None,
+        env: str = None,
+        domain: str = None,
+        client_id: str = None,
+        credentials_secret: str = None,
+        vault_name: str = None,
+        **kwargs: Dict[str, Any],
+    ) -> None:
+        """
+        Task run method.
+
+        Args:
+            query (str, optional): Query for download the data if specific download is needed. Defaults to None.
+            table (str, optional): Table name. Can be used instead of query. Defaults to None.
+            columns (List[str], optional): List of columns which are needed - table argument is needed. Defaults to None.
+            env (str, optional): Environment information, provides information about credential
+                and connection configuration. Defaults to 'DEV'.
+            domain (str, optional): Domain of a connection. defaults to 'test' (sandbox).
+                Can only be added if built-in username/password/security token is provided. Defaults to None.
+            client_id (str, optional): Client id to keep the track of API calls. Defaults to None.
+            credentials_secret (str, optional): The name of the Azure Key Vault secret for Salesforce. Defaults to None.
+            vault_name (str, optional): The name of the vault from which to obtain the secrets. Defaults to None.
+        """
+        credentials = get_credentials(credentials_secret, vault_name=vault_name)
+        salesforce = Salesforce(
+            credentials=credentials,
+            env=env,
+            domain=domain,
+            client_id=client_id,
+        )
+        self.logger.info(f"Retreiving the data from Salesforce...")
+        df = salesforce.to_df(
+            query=query, table=table, columns=columns, if_empty="replace"
+        )
+        self.logger.info(f"Successfully downloaded data from Salesforce.")
+
+        return df

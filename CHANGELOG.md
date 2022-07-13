@@ -4,9 +4,54 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-
 ## [Unreleased]
 ### Added
+- Added ability to process queries which result exceed SAP's character per low limit in `SAPRFC` source
+### Changed
+- Changed `add_ingestion_metadata_task()` to not to add metadata column when input DataFrame is empty
+- Changed `check_if_empty_file()` logic according to changes in `add_ingestion_metadata_task()`
+- Changed accepted values of `if_empty` parameter in `DuckDBCreateTableFromParquet`
+- Updated `.gitignore` to ignore files with `*.bak` extension and to ignore `credentials.json` in any directory
+
+### Fixed
+- Fixed log being printed too early in `Salesforce` source, which would sometimes cause a `KeyError`
+- `raise_on_error` now behaves correctly in `upsert()` when receiving incorrect return codes from Salesforce
+
+## [0.4.5] - 2022-06-23
+### Added
+- Added `error_log_file_path` parameter in `BCPTask` that enables setting name of errors logs file 
+- Added `on_error` parameter in `BCPTask` that tells what to do if bcp error occurs. 
+- Added error log file and `on_bcp_error` parameter in `ADLSToAzureSQL`
+- Added handling POST requests in `handle_api_response()` add added it to `Epicor` source.
+- Added `SalesforceToDF` task
+- Added `SalesforceToADLS` flow
+- Added `overwrite_adls` option to `BigQueryToADLS` and `SharepointToADLS`
+- Added `cast_df_to_str` task in `utils.py` and added this to `EpicorToDuckDB`, `SAPToDuckDB`, `SQLServerToDuckDB`
+- Added `if_empty` parameter in `DuckDBCreateTableFromParquet` task and in `EpicorToDuckDB`, `SAPToDuckDB`,
+`SQLServerToDuckDB` flows to check if output Parquet is empty and handle it properly.
+- Added `check_if_empty_file()` and `handle_if_empty_file()` in `utils.py`
+
+
+## [0.4.4] - 2022-06-09
+### Added
+- Added new connector - Outlook. Created `Outlook` source, `OutlookToDF` task and `OutlookToADLS` flow.
+- Added new connector - Epicor. Created `Epicor` source, `EpicorToDF` task and `EpicorToDuckDB` flow.
+- Enabled Databricks Connect in the image. To enable, [follow this guide](./README.md#executing-spark-jobs)
+- Added `MySQL` source and `MySqlToADLS` flow
+- Added `SQLServerToDF` task
+- Added `SQLServerToDuckDB` flow which downloads data from SQLServer table, loads it to parquet file and then uplads it do DuckDB
+- Added complete proxy set up in `SAPRFC` example (`viadot/examples/sap_rfc`)
+
+### Changed
+- Changed default name for the Prefect secret holding the name of the Azure KV secret storing Sendgrid credentials
+
+
+## [0.4.3] - 2022-04-28
+### Added
+- Added `func` parameter to `SAPRFC` 
+- Added `SAPRFCToADLS` flow which downloads data from SAP Database to to a pandas DataFrame, exports df to csv and uploads it to Azure Data Lake.
+- Added `adls_file_name` in  `SupermetricsToADLS` and `SharepointToADLS` flows
+- Added `BigQueryToADLS` flow class which anables extract data from BigQuery.
 - Added `Salesforce` source
 - Added `SalesforceUpsert` task
 - Added `SalesforceBulkUpsert` task
@@ -17,6 +62,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fixed `get_flow_last_run_date()` incorrectly parsing the date
 - Fixed C4C secret handling (tasks now correctly read the secret as the credentials, rather than assuming the secret is a container for credentials for all environments and trying to access specific key inside it). In other words, tasks now assume the secret holds credentials, rather than a dict of the form `{env: credentials, env2: credentials2}`
 - Fixed `utils.gen_bulk_insert_query_from_df()` failing with > 1000 rows due to INSERT clause limit by chunking the data into multiple INSERTs
+- Fixed `get_flow_last_run_date()` incorrectly parsing the date
+- Fixed `MultipleFlows` when one flow is passed and when last flow fails.
+
 
 ## [0.4.2] - 2022-04-08
 ### Added
@@ -36,7 +84,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.4.0] - 2022-04-07
 ### Added
-- Added `custom_mail_state_handler` function that sends mail notification using custom smtp server.
+- Added `custom_mail_state_handler` task that sends email notification using a custom SMTP server.
 - Added new function `df_clean_column` that cleans data frame columns from special characters
 - Added `df_clean_column` util task that removes special characters from a pandas DataFrame
 - Added `MultipleFlows` flow class which enables running multiple flows in a given order.

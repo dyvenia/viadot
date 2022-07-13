@@ -8,3 +8,15 @@ class APIError(Exception):
 
 class CredentialError(Exception):
     pass
+
+
+class DBDataAccessError(Exception):
+    pass
+
+
+class DataRangeError(Exception):
+    pass
+
+
+class DataBufferExceeded(Exception):
+    pass

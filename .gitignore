@@ -139,7 +139,8 @@ dmypy.json
 .azure
 
 # Viadot
-.config/credentials.json
+**/credentials.json
+*.bak
 .local
 *.csv
 
@@ -153,3 +154,7 @@ desktop.ini
 
 # SAP RFC lib
 sap_netweaver_rfc
+
+# Databricks-connect
+.databricks-connect
+

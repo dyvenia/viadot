@@ -1,9 +1,8 @@
 from typing import Any, List, Literal, NoReturn, Tuple, Union
 
+import duckdb
 import pandas as pd
 from prefect.utilities import logging
-
-import duckdb
 
 from ..config import local_config
 from ..exceptions import CredentialError

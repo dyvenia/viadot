@@ -1,10 +1,12 @@
-from typing import Any, List, Literal, Tuple, Union, NoReturn
+from typing import Any, List, Literal, NoReturn, Tuple, Union
 
+import pandas as pd
 from prefect import Task
 from prefect.utilities.tasks import defaults_from_attrs
-import pandas as pd
 
+from ..signals import SKIP
 from ..sources import DuckDB
+from ..utils import check_if_empty_file
 
 Record = Tuple[Any]
 
@@ -65,10 +67,12 @@ class DuckDBCreateTableFromParquet(Task):
         also allowed here (eg. `my_folder/*.parquet`).
         schema (str, optional): Destination schema.
         if_exists (Literal, optional): What to do if the table already exists.
+        if_empty (Literal, optional): What to do if ".parquet" file is emty. Defaults to "skip".
         credentials(dict, optional): The config to use for connecting with the db.
 
     Raises:
-        ValueError: If the table exists and `if_exists` is set to `fail`.
+        ValueError: If the table exists and `if_exists`is set to `fail` or when parquet file
+        is empty and `if_empty` is set to `fail`.
 
     Returns:
         NoReturn: Does not return anything.
@@ -78,12 +82,14 @@ class DuckDBCreateTableFromParquet(Task):
         self,
         schema: str = None,
         if_exists: Literal["fail", "replace", "append", "skip", "delete"] = "fail",
+        if_empty: Literal["skip", "fail"] = "skip",
         credentials: dict = None,
         *args,
         **kwargs,
     ):
         self.schema = schema
         self.if_exists = if_exists
+        self.if_empty = if_empty
         self.credentials = credentials
 
         super().__init__(
@@ -92,13 +98,14 @@ class DuckDBCreateTableFromParquet(Task):
             **kwargs,
         )
 
-    @defaults_from_attrs("schema", "if_exists")
+    @defaults_from_attrs("schema", "if_exists", "if_empty")
     def run(
         self,
         table: str,
         path: str,
         schema: str = None,
         if_exists: Literal["fail", "replace", "append", "skip", "delete"] = None,
+        if_empty: Literal["skip", "fail"] = None,
     ) -> NoReturn:
         """
         Create a DuckDB table with a CTAS from Parquet file(s).
@@ -109,13 +116,20 @@ class DuckDBCreateTableFromParquet(Task):
             also allowed here (eg. `my_folder/*.parquet`).
             schema (str, optional): Destination schema.
             if_exists (Literal, optional): What to do if the table already exists.
+            if_empty (Literal, optional): What to do if Parquet file is empty. Defaults to None.
 
         Raises:
-            ValueError: If the table exists and `if_exists` is set to `fail`.
+            ValueError: If the table exists and `if_exists`is set to `fail` or when parquet file
+            is empty and `if_empty` is set to `fail`.
 
         Returns:
             NoReturn: Does not return anything.
         """
+        try:
+            check_if_empty_file(path=path, if_empty=if_empty)
+        except SKIP:
+            self.logger.info("The input file is empty. Skipping.")
+            return
 
         duckdb = DuckDB(credentials=self.credentials)
 

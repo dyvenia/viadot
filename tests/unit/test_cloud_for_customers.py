@@ -1,8 +1,8 @@
-from viadot.sources import CloudForCustomers
-
 import os
+
 import pytest
 
+from viadot.sources import CloudForCustomers
 
 TEST_FILE_1 = "tests_out.csv"
 
