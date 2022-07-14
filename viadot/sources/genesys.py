@@ -9,6 +9,7 @@ from typing import Any, Dict, List
 from viadot.config import local_config
 from viadot.sources.base import Source
 from ..exceptions import CredentialError
+from ..utils import handle_api_response
 
 warnings.simplefilter("ignore")
 
@@ -17,7 +18,6 @@ class Genesys(Source):
     def __init__(
         self,
         report_name: str = None,
-        queues: List[str] = None,
         credentials: Dict[str, Any] = None,
         environment: str = None,
         schedule_id: str = None,
@@ -40,7 +40,6 @@ class Genesys(Source):
         self.logger = prefect.context.get("logger")
         self.schedule_id = schedule_id
         self.report_name = report_name
-        self.queues = queues
         self.environment = environment
         self.report_url = report_url
         self.report_columns = report_columns
@@ -88,7 +87,7 @@ class Genesys(Source):
             self.logger.info(
                 f"Failure: { str(response.status_code) } - { response.reason }"
             )
-            sys.exit(response.status_code)
+
         response_json = response.json()
 
         request_headers = {
@@ -111,10 +110,11 @@ class Genesys(Source):
 
     def schedule_report(self, data_to_post: Dict[str, Any]):
         payload = json.dumps(data_to_post)
-        new_report = requests.post(
-            f"https://api.{self.environment}/api/v2/analytics/reporting/schedules",
+        new_report = handle_api_response(
+            url=f"https://api.{self.environment}/api/v2/analytics/reporting/schedules",
             headers=self.authorization_token,
-            data=payload,
+            method="POST",
+            body=payload,
         )
         self.logger.info("Loaded credentials from Key Vault.")
         return True
@@ -135,7 +135,7 @@ class Genesys(Source):
         open(f"{path}{final_file_name}", "wb").write(response_file.content)
         response_file.close()
 
-    def fetch_report_to_df(self, report_url: str = None):
+    def to_df(self, report_url: str = None):
         """
         Most important, how to take report number
         """
@@ -143,7 +143,7 @@ class Genesys(Source):
             report_url = self.get_analitics_url_report
         response_file = requests.get(f"{report_url}", headers=self.authorization_token)
 
-        df = pd.read_excel(response_file.content, names=self.columns_names, skiprows=7)
+        df = pd.read_excel(response_file.content, names=self.report_columns, skiprows=7)
         self.logger.info("Successfully downloaded report from genesys api")
         response_file.close()
         return df
