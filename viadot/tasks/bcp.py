@@ -43,7 +43,7 @@ class BCPTask(ShellTask):
         schema: str = None,
         table: str = None,
         chunksize: int = 5000,
-        error_log_file_path: str = "log_file.log",
+        error_log_file_path: str = "./log_file.log",
         on_error: Literal["skip", "fail"] = "skip",
         credentials: dict = None,
         vault_name: str = None,
