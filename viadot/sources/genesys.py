@@ -99,8 +99,8 @@ class Genesys(Source):
 
     @property
     def get_analitics_url_report(self):
-        response = requests.get(
-            f"https://api.{self.environment}/api/v2/analytics/reporting/schedules/{self.schedule_id}",
+        response = handle_api_response(
+            url=f"https://api.{self.environment}/api/v2/analytics/reporting/schedules/{self.schedule_id}",
             headers=self.authorization_token,
         )
         response_json = response.json()
@@ -126,14 +126,15 @@ class Genesys(Source):
         file_extension: str = "xls",
         path: str = "",
     ):
-        response_file = requests.get(f"{report_url}", headers=self.authorization_token)
+        response_file = handle_api_response(
+            url=f"{report_url}", headers=self.authorization_token
+        )
         if output_file_name is None:
             final_file_name = f"Genesys_Queue_Metrics_Interval_Export.{file_extension}"
         else:
             final_file_name = f"{output_file_name}.{file_extension}"
 
         open(f"{path}{final_file_name}", "wb").write(response_file.content)
-        response_file.close()
 
     def to_df(self, report_url: str = None):
         """
@@ -141,15 +142,16 @@ class Genesys(Source):
         """
         if report_url is None:
             report_url = self.get_analitics_url_report
-        response_file = requests.get(f"{report_url}", headers=self.authorization_token)
+        response_file = handle_api_response(
+            url=f"{report_url}", headers=self.authorization_token
+        )
 
         df = pd.read_excel(response_file.content, names=self.report_columns, skiprows=7)
         self.logger.info("Successfully downloaded report from genesys api")
-        response_file.close()
         return df
 
     def delete_report(self, report_id: str):
-        delete = requests.delete(
-            f"https://api.{self.environment}/api/v2/analytics/reporting/schedules/{report_id}",
+        delete = handle_api_response(
+            url=f"https://api.{self.environment}/api/v2/analytics/reporting/schedules/{report_id}",
             headers=self.authorization_token,
         )
