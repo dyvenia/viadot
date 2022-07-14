@@ -35,8 +35,6 @@ class GenesysToDF(Task):
         if self.credentials is None:
             raise CredentialError("Credentials not found.")
 
-        # super().__init__(*args, credentials=self.credentials, **kwargs)
-
         self.logger = prefect.context.get("logger")
         self.schedule_id = schedule_id
         self.report_name = report_name
@@ -58,7 +56,6 @@ class GenesysToDF(Task):
 
         super().__init__(
             name="genesys_to_df",
-            # credentials=self.credentials,
             *args,
             **kwargs,
         )
@@ -73,7 +70,6 @@ class GenesysToDF(Task):
     def run(
         self,
         report_name: str = None,
-        # credentials: Dict[str, Any] = None,
         environment: str = None,
         schedule_id: str = None,
         report_url: str = None,
