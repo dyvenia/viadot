@@ -8,7 +8,7 @@ import warnings
 from typing import Any, Dict, List
 from viadot.config import local_config
 from viadot.sources.base import Source
-
+from ..exceptions import CredentialError
 
 warnings.simplefilter("ignore")
 
@@ -22,6 +22,7 @@ class Genesys(Source):
         environment: str = None,
         schedule_id: str = None,
         report_url: str = None,
+        report_columns: List[str] = None,
         *args: List[Any],
         **kwargs: Dict[str, Any],
     ):
@@ -42,6 +43,7 @@ class Genesys(Source):
         self.queues = queues
         self.environment = environment
         self.report_url = report_url
+        self.report_columns = report_columns
 
         # Get schedule id to retrive report url
         if self.schedule_id is None:
@@ -140,26 +142,8 @@ class Genesys(Source):
         if report_url is None:
             report_url = self.get_analitics_url_report
         response_file = requests.get(f"{report_url}", headers=self.authorization_token)
-        columns_names = [
-            "Date",
-            "Interval",
-            "Queue",
-            "Media Type",
-            "Offered",
-            "Answered",
-            "Abandoned",
-            "Abandon %",
-            "Service Level %",
-            "ASA",
-            "Avg Talk",
-            "Avg ACW",
-            "AHT",
-            "Avg Hold",
-            "Transferred",
-            "Transfer %",
-        ]
 
-        df = pd.read_excel(response_file.content, names=columns_names, skiprows=7)
+        df = pd.read_excel(response_file.content, names=self.columns_names, skiprows=7)
         self.logger.info("Successfully downloaded report from genesys api")
         response_file.close()
         return df
