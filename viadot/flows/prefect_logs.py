@@ -3,11 +3,10 @@ import prefect
 import pandas as pd
 import datetime
 
-from prefect import Flow, task, Task
+from prefect import Flow
 from prefect.utilities import logging
 
 from viadot.tasks.azure_data_lake import AzureDataLakeUpload
-
 from viadot.task_utils import add_ingestion_metadata_task, df_to_parquet
 
 logger = logging.get_logger()
@@ -18,7 +17,7 @@ class PrefectLogs(Flow):
     def __init__(
         self,
         name: str,
-        scheduled_start_time: str = None,
+        scheduled_start_time: str = "yesterday",
         filter_type: Literal["_gte", "_gt", "_lte", "_lt"] = "_gte",
         local_file_path: str = None,
         adls_path: str = None,
@@ -33,8 +32,9 @@ class PrefectLogs(Flow):
 
         Args:
             name (str): The name of the flow.
-            scheduled_start_time (str, optional): A parameter passed to the Prefect API query. Defaults to None.
-            filter_type (Literal, optional): A comparison operator passed to the Prefect API query (_gte >=, _lte <=)  Defaults to _gte.
+            scheduled_start_time (str, optional): A parameter passed to the Prefect API query. Defaults to 'yesterday'.
+            filter_type (Literal, optional): A comparison operator passed to the Prefect API query (_gte >=, _lte <=) that refers to the left or right boundary of date ranges
+                for which flow extracts data. Defaults to _gte.
             local_file_path (str, optional): Local destination path. Defaults to None.
             adls_path (str, optional): Azure Data Lake destination folder/catalog path. Defaults to None.
             adls_sp_credentials_secret (str, optional): The name of the Azure Key Vault secret containing a dictionary with
@@ -42,7 +42,6 @@ class PrefectLogs(Flow):
                 Defaults to None.
             vault_name (str, optional): The name of the vault from which to obtain the secrets. Defaults to None.
             overwrite_adls (bool, optional): Whether to overwrite the file in ADLS. Defaults to True.
-
         """
 
         self.name = name
@@ -54,6 +53,13 @@ class PrefectLogs(Flow):
         self.overwrite_adls = overwrite_adls
         self.adls_sp_credentials_secret = adls_sp_credentials_secret
 
+        if scheduled_start_time == "yesterday":
+            self.scheduled_start_time = datetime.date.today() - datetime.timedelta(
+                days=1
+            )
+        else:
+            self.scheduled_start_time = scheduled_start_time
+
         super().__init__(
             name="prefect_extract_flows_logs",
             *args,
@@ -62,34 +68,47 @@ class PrefectLogs(Flow):
 
         self.gen_flow()
 
-    def get_formatted_date_from_timestamp(self, col_value):
-        if col_value is not None:
-            return col_value.split("T")[0]
+    def get_formatted_date_from_timestamp(self, value) -> str:
+        """
+        Function returns cleaned date from timestamp in string format (ex. "2022-01-01")
+        Args:
+            value (timestamp): Timestamp value from Prefect.
+        """
+
+        if value is not None:
+            return value.split("T")[0]
 
     def gen_flow(self) -> Flow:
 
         query = """
-            {
-                flow{
+                {
+                  project {
+                        id
+                        name
+                      }
+                  flow {  
+                        project_id
                         name
                         version
                         flow_runs(
-                            order_by: {end_time: desc}
-                            where: { _and: [
-                                  {end_time:{ _is_null:false }},
-                                  {scheduled_start_time: {%s: "%s"} }
-                            ] } 
+                          order_by: {end_time: desc}
+                          where: {_and: 
+                            [
+                              {end_time: {_is_null: false}},
+                              {scheduled_start_time:{ %s: "%s" }}
+                            ]
+                          }
                         ) 
-                                {
-                                    id
-                                    end_time
-                                    start_time
-                                    state
-                                    scheduled_start_time
-                                    created_by_user_id
-                                }  
+                        {
+                          id
+                          end_time
+                          start_time
+                          state
+                          scheduled_start_time
+                          created_by_user_id
+                        }
+                  }
                 }
-            }
 
         """ % (
             self.filter_type,
@@ -99,23 +118,28 @@ class PrefectLogs(Flow):
         client = prefect.Client()
         flow_runs = client.graphql(query)
 
+        projects_details = {}
+        for x in flow_runs["data"]["project"]:
+            projects_details[x["id"]] = x["name"]
+
         df = pd.json_normalize(
             data=flow_runs["data"]["flow"],
             record_path=["flow_runs"],
-            meta=["name", "version"],
+            meta=["name", "project_id", "version"],
         )
-
-        df = add_ingestion_metadata_task.run(df)
-        date_column = df["start_time"]
 
         df.insert(
             3,
             "start_date",
             value=[
-                self.get_formatted_date_from_timestamp(date_column[x])
+                self.get_formatted_date_from_timestamp(df["start_time"][x])
                 for x in range(df.shape[0])
             ],
         )
+
+        df["project_name"] = df["project_id"].map(projects_details)
+
+        df = add_ingestion_metadata_task.run(df)
 
         df_to_file = df_to_parquet.bind(
             df,
