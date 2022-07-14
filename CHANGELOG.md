@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Updated `.gitignore` to ignore files with `*.bak` extension and to ignore `credentials.json` in any directory
 
 ### Fixed
+- Fixed issue in `BCPTask` when log file couln't be opened.
 - Fixed log being printed too early in `Salesforce` source, which would sometimes cause a `KeyError`
 - `raise_on_error` now behaves correctly in `upsert()` when receiving incorrect return codes from Salesforce
 

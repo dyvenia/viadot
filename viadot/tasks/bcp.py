@@ -9,7 +9,7 @@ from prefect.utilities.tasks import defaults_from_attrs
 
 from .azure_key_vault import AzureKeyVaultSecret
 
-logger = logging.get_logger()
+logger = logging.get_logger(__name__)
 
 
 def parse_logs(log_file_path: str):
@@ -152,5 +152,8 @@ class BCPTask(ShellTask):
             )
         command = f"/opt/mssql-tools/bin/bcp {fqn} in '{path}' -S {server} -d {db_name} -U {uid} -P '{pwd}' -c -F 2 -b {chunksize} -h 'TABLOCK' -e '{error_log_file_path}' -m {max_error}"
         run_command = super().run(command=command, **kwargs)
-        parse_logs(error_log_file_path)
+        try:
+            parse_logs(error_log_file_path)
+        except:
+            logger.warning("BCP logs couldn't be parsed.")
         return run_command
