@@ -154,4 +154,10 @@ class Genesys(Source):
         delete = handle_api_response(
             url=f"https://api.{self.environment}/api/v2/analytics/reporting/schedules/{report_id}",
             headers=self.authorization_token,
+            method="DELETE",
         )
+
+        if delete.status_code == 200:
+            self.logger.info("Successfully deleted report from genesys api")
+        else:
+            self.logger.info("Failed to deleted report from genesys api")
