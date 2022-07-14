@@ -22,6 +22,7 @@ except ImportError:
 from .duckdb_to_sql_server import DuckDBToSQLServer
 from .duckdb_transform import DuckDBTransform
 from .multiple_flows import MultipleFlows
+from .prefect_logs import PrefectLogs
 
 try:
     from .sap_rfc_to_adls import SAPRFCToADLS
