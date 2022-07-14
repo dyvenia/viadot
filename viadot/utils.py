@@ -31,33 +31,30 @@ def handle_api_response(
     params: Dict[str, Any] = None,
     headers: Dict[str, Any] = None,
     timeout: tuple = (3.05, 60 * 30),
-    method: Literal["GET", "POST"] = "GET",
+    method: Literal["GET", "POST", "DELETE"] = "GET",
     body: str = None,
 ) -> requests.models.Response:
     """Handle and raise Python exceptions during request with retry strategy for specyfic status.
-
     Args:
         url (str): the URL which trying to connect.
         auth (tuple, optional): authorization information. Defaults to None.
         params (Dict[str, Any], optional): the request params also includes parameters such as the content type. Defaults to None.
         headers: (Dict[str, Any], optional): the request headers. Defaults to None.
         timeout (tuple, optional): the request times out. Defaults to (3.05, 60 * 30).
-        method (Literal ["GET", "POST"], optional): REST API method to use. Defaults to "GET".
+        method (Literal ["GET", "POST","DELETE"], optional): REST API method to use. Defaults to "GET".
         body (str, optional): Data to send using POST method. Defaults to None.
-
     Raises:
         ValueError: raises when 'method' parameter value hasn't been specified
         ReadTimeout: stop waiting for a response after a given number of seconds with the timeout parameter.
         HTTPError: exception that indicates when HTTP status codes returned values different than 200.
         ConnectionError: exception that indicates when client is unable to connect to the server.
         APIError: defined by user.
-
     Returns:
         requests.models.Response
     """
-    if method.upper() not in ["GET", "POST"]:
+    if method.upper() not in ["GET", "POST", "DELETE"]:
         raise ValueError(
-            f"Method not found. Please use one of the available methods: 'GET', 'POST'."
+            f"Method not found. Please use one of the available methods: 'GET', 'POST', 'DELETE'."
         )
     try:
         session = requests.Session()
@@ -67,10 +64,8 @@ def handle_api_response(
             backoff_factor=1,
         )
         adapter = HTTPAdapter(max_retries=retry_strategy)
-
         session.mount("http://", adapter)
         session.mount("https://", adapter)
-
         response = session.request(
             url=url,
             auth=auth,
@@ -80,9 +75,7 @@ def handle_api_response(
             data=body,
             method=method,
         )
-
         response.raise_for_status()
-
     except ReadTimeout as e:
         msg = "The connection was successful, "
         msg += f"however the API call to {url} timed out after {timeout[1]}s "

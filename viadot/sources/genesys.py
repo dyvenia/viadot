@@ -76,10 +76,11 @@ class Genesys(Source):
         }
 
         request_body = {"grant_type": "client_credentials"}
-        response = requests.post(
+        response = handle_api_response(
             f"https://login.{self.environment}/oauth/token",
-            data=request_body,
+            body=request_body,
             headers=request_headers,
+            method="POST",
         )
         if response.status_code == 200:
             self.logger.info("Temporary authorization token was generated.")
@@ -116,7 +117,7 @@ class Genesys(Source):
             method="POST",
             body=payload,
         )
-        self.logger.info("Loaded credentials from Key Vault.")
+        self.logger.info("Succesfully scheduled new report.")
         return True
 
     def download_report(
@@ -154,4 +155,9 @@ class Genesys(Source):
         delete = handle_api_response(
             url=f"https://api.{self.environment}/api/v2/analytics/reporting/schedules/{report_id}",
             headers=self.authorization_token,
+            method="DELETE",
         )
+        if delete.status_code == 200:
+            self.logger.info("Successfully deleted report from genesys api")
+        else:
+            self.logger.info("Failed to deleted report from genesys api")
