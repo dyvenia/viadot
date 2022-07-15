@@ -72,7 +72,7 @@ class GenesysToADLS(Flow):
 
     def gen_flow(self) -> Flow:
 
-        df = genesys_report.bind(flow=self)
+        df = genesys_report.bind(report_columns=self.columns, flow=self)
         df_with_metadata = add_ingestion_metadata_task.bind(df, flow=self)
 
         if self.output_file_extension == ".parquet":
