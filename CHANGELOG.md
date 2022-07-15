@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 =======
 ### Added
 - Added ability to process queries which result exceed SAP's character per low limit in `SAPRFC` source
+- Added new flow `PrefectLogs` for extracting all logs from Prefect with details 
 >>>>>>> ccb149d (🎨 Applied changes after review)
 =======
 ### Added
