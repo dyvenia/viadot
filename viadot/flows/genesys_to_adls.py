@@ -26,7 +26,6 @@ class GenesysToADLS(Flow):
         local_file_path: str = None,
         output_file_extension: str = ".csv",
         sep: str = "\t",
-        to_path: str = None,
         adls_file_path: str = None,
         if_exists: Literal["replace", "append", "delete"] = "replace",
         overwrite_adls: bool = True,
