@@ -185,9 +185,13 @@ class Genesys(Source):
         response_file = handle_api_response(
             url=f"{report_url}", headers=self.authorization_token
         )
+        if self.report_columns is None:
+            df = pd.read_excel(response_file.content, header=6)
+        else:
+            df = pd.read_excel(
+                response_file.content, names=self.report_columns, skiprows=6
+            )
 
-        df = pd.read_excel(response_file.content, names=self.report_columns, skiprows=7)
-        self.logger.info("Successfully downloaded report from genesys api")
         return df
 
     def delete_report(self, report_id: str):
