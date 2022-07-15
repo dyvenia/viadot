@@ -26,6 +26,22 @@ class Genesys(Source):
         *args: List[Any],
         **kwargs: Dict[str, Any],
     ):
+        """
+        Genesys connector which allow for reports scheduling, listing and downloading into Data Frame.
+
+        Args:
+            report_name (str, optional): Name of the report. Defaults to None.
+            credentials (Dict[str, Any], optional): Credentials to connect with Genesys API containing CLIENT_ID,
+            CLIENT_SECRET, SCHEDULE_ID and host server. Defaults to None.
+            environment (str, optional): Adress of host server. Defaults to None than will be used enviroment
+            from credentials.
+            schedule_id (str, optional): The ID of report. Defaults to None.
+            report_url (str, optional): The url of report generated in json response. Defaults to None.
+            report_columns (List[str], optional): List of exisiting column in report. Defaults to None.
+
+        Raises:
+            CredentialError: If credentials are not provided in local_config or directly as a parameter.
+        """
 
         try:
             DEFAULT_CREDENTIALS = local_config["GENESYS"]
@@ -100,6 +116,11 @@ class Genesys(Source):
 
     @property
     def get_analitics_url_report(self):
+        """Fetching analytics report url from json response.
+
+        Returns:
+            string: url for analytics report
+        """
         response = handle_api_response(
             url=f"https://api.{self.environment}/api/v2/analytics/reporting/schedules/{self.schedule_id}",
             headers=self.authorization_token,
@@ -110,6 +131,14 @@ class Genesys(Source):
         return report_url
 
     def schedule_report(self, data_to_post: Dict[str, Any]):
+        """POST method for report scheduling.
+
+        Args:
+            data_to_post (Dict[str, Any]): json format of POST body.
+
+        Returns:
+            bool: schedule genesys report
+        """
         payload = json.dumps(data_to_post)
         new_report = handle_api_response(
             url=f"https://api.{self.environment}/api/v2/analytics/reporting/schedules",
@@ -127,6 +156,14 @@ class Genesys(Source):
         file_extension: str = "xls",
         path: str = "",
     ):
+        """Download report to excel file.
+
+        Args:
+            report_url (str): url to report, fetched from json response.
+            output_file_name (str, optional): Output file name. Defaults to None.
+            file_extension (str, optional): Output file extension. Defaults to "xls".
+            path (str, optional): Path to the generated excel file. Defaults to empty string.
+        """
         response_file = handle_api_response(
             url=f"{report_url}", headers=self.authorization_token
         )
@@ -138,8 +175,10 @@ class Genesys(Source):
         open(f"{path}{final_file_name}", "wb").write(response_file.content)
 
     def to_df(self, report_url: str = None):
-        """
-        Most important, how to take report number
+        """Download genesys data into a pandas DataFrame.
+
+        Returns:
+            pd.DataFrame: the DataFrame with time range
         """
         if report_url is None:
             report_url = self.get_analitics_url_report
@@ -152,6 +191,11 @@ class Genesys(Source):
         return df
 
     def delete_report(self, report_id: str):
+        """DELETE method for deleting particular report.
+
+        Args:
+            report_id (str): defined at the end of report url
+        """
         delete = handle_api_response(
             url=f"https://api.{self.environment}/api/v2/analytics/reporting/schedules/{report_id}",
             headers=self.authorization_token,
