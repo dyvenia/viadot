@@ -1,9 +1,9 @@
-from prefect import Flow
 from typing import Any, Dict, List, Literal
 
+from prefect import Flow
 
-from ..task_utils import df_to_parquet, add_ingestion_metadata_task, cast_df_to_str
-from ..tasks import SQLServerToDF, DuckDBCreateTableFromParquet
+from ..task_utils import add_ingestion_metadata_task, cast_df_to_str, df_to_parquet
+from ..tasks import DuckDBCreateTableFromParquet, SQLServerToDF
 
 df_task = SQLServerToDF()
 

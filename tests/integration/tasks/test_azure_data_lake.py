@@ -3,11 +3,11 @@ import uuid
 
 from viadot.sources import AzureDataLake
 from viadot.tasks import (
+    AzureDataLakeCopy,
     AzureDataLakeDownload,
+    AzureDataLakeList,
     AzureDataLakeToDF,
     AzureDataLakeUpload,
-    AzureDataLakeCopy,
-    AzureDataLakeList,
 )
 from viadot.tasks.azure_data_lake import AzureDataLakeRemove
 

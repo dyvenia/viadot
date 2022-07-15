@@ -1,9 +1,10 @@
-import sqlite3
 import os
-import pytest
-import pandas as pd
+import sqlite3
 
-from viadot.tasks.sqlite import SQLiteInsert, SQLiteSQLtoDF, SQLiteQuery
+import pandas as pd
+import pytest
+
+from viadot.tasks.sqlite import SQLiteInsert, SQLiteQuery, SQLiteSQLtoDF
 
 TABLE = "test"
 

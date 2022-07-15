@@ -3,18 +3,15 @@ from typing import Any, Dict, List, Union
 
 import pendulum
 from prefect import Flow, Task, apply_map
-from ..utils import slugify
+
 from ..task_utils import (
     add_ingestion_metadata_task,
     df_to_csv,
     df_to_parquet,
     union_dfs_task,
 )
-from ..tasks import (
-    AzureDataLakeUpload,
-    C4CToDF,
-    C4CReportToDF,
-)
+from ..tasks import AzureDataLakeUpload, C4CReportToDF, C4CToDF
+from ..utils import slugify
 
 file_to_adls_task = AzureDataLakeUpload()
 c4c_report_to_df = C4CReportToDF()

@@ -1,8 +1,9 @@
-from prefect import Flow
 from typing import Any, Dict, List, Literal
 
-from ..tasks import EpicorOrdersToDF, DuckDBCreateTableFromParquet
-from ..task_utils import df_to_parquet, add_ingestion_metadata_task, cast_df_to_str
+from prefect import Flow
+
+from ..task_utils import add_ingestion_metadata_task, cast_df_to_str, df_to_parquet
+from ..tasks import DuckDBCreateTableFromParquet, EpicorOrdersToDF
 
 
 class EpicorOrdersToDuckDB(Flow):

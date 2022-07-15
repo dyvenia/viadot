@@ -1,16 +1,16 @@
-import pytest
-import pandas as pd
 import datetime
 from datetime import date
 
+import pandas as pd
+import pytest
+
 from viadot.tasks import GetFlowNewDateRange
 from viadot.tasks.prefect_date_range import (
-    get_time_from_last_successful_run,
     calculate_difference,
     check_if_scheduled_run,
     get_formatted_date,
+    get_time_from_last_successful_run,
 )
-
 
 PREFECT_TASK = GetFlowNewDateRange()
 DATE_FROM_PREFECT = "2022-01-01T01:30:00+00:00"

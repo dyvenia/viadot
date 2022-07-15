@@ -140,7 +140,8 @@ dmypy.json
 .azure
 
 # Viadot
-.config/credentials.json
+**/credentials.json
+*.bak
 .local
 *.csv
 
@@ -157,4 +158,6 @@ sap_netweaver_rfc
 
 # Databricks-connect
 .databricks-connect
+
+michal
 

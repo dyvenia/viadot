@@ -1,6 +1,7 @@
 import os
-from typing import Any, Dict, List, Union
 from pathlib import Path
+from typing import Any, Dict, List, Union
+
 import pendulum
 from prefect import Flow, Task, apply_map
 from prefect.backend import set_key_value
@@ -22,9 +23,9 @@ from ..task_utils import (
 from ..tasks import (
     AzureDataLakeUpload,
     DownloadGitHubFile,
+    GetFlowNewDateRange,
     RunGreatExpectationsValidation,
     SupermetricsToDF,
-    GetFlowNewDateRange,
 )
 
 logger = logging.get_logger(__name__)

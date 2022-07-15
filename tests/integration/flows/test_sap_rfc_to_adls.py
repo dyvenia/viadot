@@ -1,5 +1,5 @@
-from viadot.flows import SAPRFCToADLS
 from viadot.config import local_config
+from viadot.flows import SAPRFCToADLS
 from viadot.sources import AzureDataLake
 from viadot.tasks import AzureDataLakeRemove
 

@@ -1,5 +1,6 @@
-from viadot.sources import SAPRFC
 from collections import OrderedDict
+
+from viadot.sources import SAPRFC
 
 sap = SAPRFC()
 

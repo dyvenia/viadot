@@ -1,8 +1,8 @@
 import pytest
 
-from viadot.sources import Epicor
 from viadot.config import local_config
 from viadot.exceptions import DataRangeError
+from viadot.sources import Epicor
 
 
 @pytest.fixture(scope="session")

@@ -1,6 +1,7 @@
 import pandas as pd
 import pytest
-from viadot.tasks import SalesforceUpsert, SalesforceToDF
+
+from viadot.tasks import SalesforceToDF, SalesforceUpsert
 
 
 @pytest.fixture(scope="session")

@@ -1,6 +1,7 @@
+from typing import Any, Dict, List
+
 from prefect import Flow, task
 from prefect.tasks.prefect import create_flow_run, wait_for_flow_run
-from typing import Dict, List, Any
 from prefect.utilities import logging
 
 logger = logging.get_logger()

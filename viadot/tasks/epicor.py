@@ -1,10 +1,10 @@
-import pandas as pd
 import xml.etree.ElementTree as ET
+from typing import Any, Dict, List, Optional
 from xml.etree.ElementTree import fromstring
 
+import pandas as pd
 from prefect import Task
 from prefect.utilities.tasks import defaults_from_attrs
-from typing import Any, Dict, List, Optional
 
 from ..sources import Epicor
 
