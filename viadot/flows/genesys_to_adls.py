@@ -27,6 +27,7 @@ class GenesysToADLS(Flow):
         output_file_extension: str = ".csv",
         sep: str = "\t",
         to_path: str = None,
+        adls_file_path: str = None,
         if_exists: Literal["replace", "append", "delete"] = "replace",
         overwrite_adls: bool = True,
         adls_sp_credentials_secret: str = None,
@@ -43,6 +44,7 @@ class GenesysToADLS(Flow):
         self.sep = sep
         self.to_path = to_path
         self.if_exists = if_exists
+        self.adls_file_path = adls_file_path
         self.overwrite_adls = overwrite_adls
         self.adls_sp_credentials_secret = adls_sp_credentials_secret
         self.credentials_secret = credentials_secret
@@ -50,15 +52,13 @@ class GenesysToADLS(Flow):
 
         super().__init__(*args, name=name, **kwargs)
 
-    def gen_genesys_df(self) -> Task:
-
-        return
+        self.gen_flow()
 
     def gen_flow(self) -> Flow:
 
-        df = genesys_report.run()
+        df = genesys_report.bind(flow=self)
         df_with_metadata = add_ingestion_metadata_task.bind(df, flow=self)
-        # print(df_with_metadata)
+
         if self.output_file_extension == ".parquet":
             df_to_file = df_to_parquet.bind(
                 df=df_with_metadata,
@@ -70,18 +70,19 @@ class GenesysToADLS(Flow):
             df_to_file = df_to_csv.bind(
                 df=df_with_metadata,
                 path=self.local_file_path,
+                sep=self.sep,
                 if_exists=self.if_exsists,
                 flow=self,
             )
 
-        # file_to_adls_task.bind(
-        #     from_path=self.local_file_path,
-        #     to_path=self.adls_file_path,
-        #     overwrite=self.overwrite_adls,
-        #     sp_credentials_secret=self.adls_sp_credentials_secret,
-        #     flow=self,
-        # )
+        file_to_adls_task.bind(
+            from_path=self.local_file_path,
+            to_path=self.adls_file_path,
+            overwrite=self.overwrite_adls,
+            sp_credentials_secret=self.adls_sp_credentials_secret,
+            flow=self,
+        )
 
         df_with_metadata.set_upstream(df, flow=self)
         df_to_file.set_upstream(df_with_metadata, flow=self)
-        # file_to_adls_task.set_upstream(df_to_file, flow=self)
+        file_to_adls_task.set_upstream(df_to_file, flow=self)
