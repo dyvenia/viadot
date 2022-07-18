@@ -79,7 +79,12 @@ class GenesysToDF(Task):
         Task for downloading data from the Genesys API to DF.
 
         Args:
-
+            report_name (str, optional): Name of the report. Defaults to None.
+            environment (str, optional): Adress of host server. Defaults to None than will be used enviroment
+            from credentials.
+            schedule_id (str, optional): The ID of report. Defaults to None.
+            report_url (str, optional): The url of report generated in json response. Defaults to None.
+            report_columns (List[str], optional): List of exisiting column in report. Defaults to None.
 
         Returns:
             pd.DataFrame: The API GET as a pandas DataFrames from Genesys.
