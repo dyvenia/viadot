@@ -151,8 +151,12 @@ class Genesys(Source):
             method="POST",
             body=payload,
         )
-        self.logger.info("Succesfully scheduled new report.")
-        return True
+        if new_report.status_code == 200:
+            self.logger.info("Succesfully scheduled new report.")
+        else:
+            self.logger.info("Failed to scheduled new report.")
+
+        return new_report.status_code
 
     def download_report(
         self,
@@ -212,6 +216,9 @@ class Genesys(Source):
             method="DELETE",
         )
         if delete.status_code == 200:
-            self.logger.info("Successfully deleted report from genesys api")
+            self.logger.info("Successfully deleted report from Genesys API.")
+
         else:
-            self.logger.info("Failed to deleted report from genesys api")
+            self.logger.info("Failed to deleted report from Genesys API.")
+
+        return delete.status_code
