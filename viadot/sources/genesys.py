@@ -125,10 +125,15 @@ class Genesys(Source):
             url=f"https://api.{self.environment}/api/v2/analytics/reporting/schedules/{self.schedule_id}",
             headers=self.authorization_token,
         )
-        response_json = response.json()
-        report_url = response_json.get("lastRun", None).get("reportUrl", None)
-        self.logger.info("Successfully downloaded report from genesys api")
-        return report_url
+        try:
+            response_json = response.json()
+            report_url = response_json.get("lastRun", None).get("reportUrl", None)
+            self.logger.info("Successfully downloaded report from genesys api")
+            return report_url
+        except AttributeError as e:
+            self.logger.error(
+                "Output data error: " + str(type(e).__name__) + ": " + str(e)
+            )
 
     def schedule_report(self, data_to_post: Dict[str, Any]):
         """POST method for report scheduling.
