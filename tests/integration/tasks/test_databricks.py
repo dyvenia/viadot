@@ -79,7 +79,7 @@ def test_append():
     append_df = pd.DataFrame(append_data)
 
     did_insert = databricks.insert_into(
-        SCHEMA, table=table, df=append_df, if_exists="append"
+        schema=SCHEMA, table=table, df=append_df, if_exists="append"
     )
     assert did_insert
 
@@ -136,7 +136,7 @@ def test_insert_non_existent_table():
 
     with pytest.raises(ValueError):
         did_insert = databricks.insert_into(
-            SCHEMA, table=table, df=append_df, if_exists="append"
+            schema=SCHEMA, table=table, df=append_df, if_exists="append"
         )
 
 
