@@ -1,6 +1,6 @@
 from typing import Any, Dict, List, Literal
 
-from prefect import Flow, Task
+from prefect import Flow
 
 from viadot.task_utils import df_to_csv
 from viadot.tasks import AzureDataLakeUpload
