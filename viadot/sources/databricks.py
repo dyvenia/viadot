@@ -1,19 +1,20 @@
 from numpy import source
 from viadot.config import local_config
-from viadot.sources.base import Source
 from delta.tables import *
 import pandas as pd
 from pyspark import SparkConf, SparkContext
 import pyspark.sql.dataframe as spark
 from pyspark.sql.dataframe import DataFrame
-from prefect.utilities import logging
 from typing import Literal, Union
 from typing import Any, Dict
-
+import pyarrow as pa
+from ..signals import SKIP
+import logging
+from .base import Source
 import viadot.utils
 
 
-logger = logging.get_logger(__name__)
+logger = logging.getLogger(__name__)
 
 
 class Databricks(Source):
@@ -413,7 +414,7 @@ class Databricks(Source):
         databricks.discover_schema(schema = "schema", table = "table")
         ```
         Returns:
-            dict: A dictionary containing the schema details of the table.
+            schema (dict): A dictionary containing the schema details of the table.
         """
         fqn = f"{schema}.{table}"
         result = self.run(f"DESCRIBE {fqn}", fetch_type="pandas")
@@ -429,16 +430,16 @@ class Databricks(Source):
 
         return schema
 
-    def get_table_ver(self, schema: str, table: str) -> str:
+    def get_table_version(self, schema: str, table: str) -> str:
         """
-        Get the current table's version number.
+        Get the provided table's version number.
 
         Args:
             schema (str): Name of the schema.
             table (str): Name of the table to rollback.
 
         Returns:
-            int: The table's version number
+            version_number (int): The table's version number
         ```
         """
         fqn = f"{schema}.{table}"
@@ -447,17 +448,19 @@ class Databricks(Source):
         history = self.run(f"DESCRIBE HISTORY {fqn}", "pandas")
 
         # Extract the current version number
-        ver_num = history["version"].iat[0]
-        return ver_num
+        version_number = history["version"].iat[0]
+        return version_number
 
-    def rollback(self, schema: str, table: str, ver_num: int):
+    def rollback(
+        self, table: str, version_number: int, schema: str = DEFAULT_SCHEMA
+    ) -> bool:
         """
         Rollback the table to a previous version.
 
         Args:
             schema (str): Name of the schema.
             table (str): Name of the table to rollback.
-            ver_num (int): Number of the table's version to rollback to.
+            version_number (int): Number of the table's version to rollback to.
 
         Example:
         ```python
@@ -467,22 +470,27 @@ class Databricks(Source):
         schema = "test"
         table = "table_1"
 
-        ver_num = databricks.get_table_ver(schema = schema, table = table)
+        version_number = databricks.get_table_version(schema=schema, table=table)
 
         # Perform changes on the table, in this example we are appending to the table
         list = [{"id":"1", "name":"Joe"}]
         df = pd.DataFrame(list)
-        databricks.insert_into(schema = schema, table = table, df = df, if_exists="append")
+        databricks.insert_into(schema=schema, table=table, df=df, if_exists="append")
 
-        databricks.rollback(schema, table, ver_num)
+        databricks.rollback(schema=schema, table=table, version_number=version_number)
         ```
+        Returns:
+            bool: A boolean indicating the success of the rollback.
         """
-        fqn = f"{schema}.{table}"
+        if schema is None:
+            fqn = f"{self.DEFAULT_SCHEMA}.{table}"
 
         # Retrieve the data from the previous table
-        old_table = self.to_df(f"SELECT * FROM {fqn}@v{ver_num}")
+        old_table = self.to_df(f"SELECT * FROM {fqn}@v{version_number}")
 
         # Perform full-refresh and overwrite the table with the new data
         self.insert_into(schema=schema, table=table, df=old_table, if_exists="replace")
 
-        logger.info(f"Rollback for table {fqn} to version #{ver_num} completed.")
+        logger.info(f"Rollback for table {fqn} to version #{version_number} completed.")
+
+        return True
