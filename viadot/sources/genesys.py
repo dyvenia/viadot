@@ -172,7 +172,8 @@ class Genesys(Source):
         else:
             final_file_name = f"{output_file_name}.{file_extension}"
 
-        open(f"{path}{final_file_name}", "wb").write(response_file.content)
+        with open(f"{path}{final_file_name}", "wb") as file:
+            file.write(response_file.content)
 
     def to_df(self, report_url: str = None):
         """Download genesys data into a pandas DataFrame.
