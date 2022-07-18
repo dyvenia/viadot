@@ -66,7 +66,7 @@ def handle_api_response(
         adapter = HTTPAdapter(max_retries=retry_strategy)
         session.mount("http://", adapter)
         session.mount("https://", adapter)
-        response = session.request(
+        with session.request(
             url=url,
             auth=auth,
             params=params,
@@ -74,8 +74,8 @@ def handle_api_response(
             timeout=timeout,
             data=body,
             method=method,
-        )
-        response.raise_for_status()
+        ) as response:
+            response.raise_for_status()
     except ReadTimeout as e:
         msg = "The connection was successful, "
         msg += f"however the API call to {url} timed out after {timeout[1]}s "
