@@ -5,7 +5,6 @@ import pandas as pd
 from ..task_utils import (
     df_to_csv,
     union_dfs_task,
-    add_ingestion_metadata_task,
     df_to_parquet,
 )
 
