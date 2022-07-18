@@ -1,4 +1,5 @@
 from numpy import source
+import numpy
 from viadot.config import local_config
 from delta.tables import *
 import pandas as pd
@@ -430,7 +431,7 @@ class Databricks(Source):
 
         return schema
 
-    def get_table_version(self, schema: str, table: str) -> str:
+    def get_table_version(self, table: str, schema: str = None) -> numpy.int64:
         """
         Get the provided table's version number.
 
@@ -439,9 +440,12 @@ class Databricks(Source):
             table (str): Name of the table to rollback.
 
         Returns:
-            version_number (int): The table's version number
+            version_number (numpy.int64): The table's version number
         ```
         """
+        if schema is None:
+            schema = Databricks.DEFAULT_SCHEMA
+
         fqn = f"{schema}.{table}"
 
         # Get the info regarding the current version of the delta table
@@ -451,9 +455,7 @@ class Databricks(Source):
         version_number = history["version"].iat[0]
         return version_number
 
-    def rollback(
-        self, table: str, version_number: int, schema: str = DEFAULT_SCHEMA
-    ) -> bool:
+    def rollback(self, table: str, version_number: int, schema: str = None) -> bool:
         """
         Rollback the table to a previous version.
 
@@ -480,20 +482,22 @@ class Databricks(Source):
         databricks.rollback(schema=schema, table=table, version_number=version_number)
         ```
         Returns:
-            bool: A boolean indicating the success of the rollback.
+            result (bool): A boolean indicating the success of the rollback.
         """
 
         if schema is None:
-            fqn = f"{self.DEFAULT_SCHEMA}.{table}"
-        else:
-            fqn = f"{schema}.{table}"
+            schema = Databricks.DEFAULT_SCHEMA
+
+        fqn = f"{schema}.{table}"
 
         # Retrieve the data from the previous table
         old_table = self.to_df(f"SELECT * FROM {fqn}@v{version_number}")
 
         # Perform full-refresh and overwrite the table with the new data
-        self.insert_into(schema=schema, table=table, df=old_table, if_exists="replace")
+        result = self.insert_into(
+            schema=schema, table=table, df=old_table, if_exists="replace"
+        )
 
         logger.info(f"Rollback for table {fqn} to version #{version_number} completed.")
 
-        return True
+        return result
