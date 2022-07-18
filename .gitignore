@@ -82,6 +82,7 @@ target/
 profile_default/
 ipython_config.py
 *.Identifier
+.python_history
 
 # pyenv
 .python-version
@@ -159,5 +160,5 @@ sap_netweaver_rfc
 # Databricks-connect
 .databricks-connect
 
-michal
-
+# local directories
+diego
