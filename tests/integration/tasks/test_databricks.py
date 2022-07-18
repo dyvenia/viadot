@@ -112,7 +112,7 @@ def test_insert_wrong_schema():
 
     with pytest.raises(pyspark.sql.utils.AnalysisException):
         did_insert = databricks.insert_into(
-            SCHEMA, table=table, df=append_df, if_exists="append"
+            schema=SCHEMA, table=table, df=append_df, if_exists="append"
         )
 
 
