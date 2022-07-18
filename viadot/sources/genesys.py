@@ -154,7 +154,7 @@ class Genesys(Source):
         if new_report.status_code == 200:
             self.logger.info("Succesfully scheduled new report.")
         else:
-            self.logger.info("Failed to scheduled new report.")
+            self.logger.error("Failed to scheduled new report.")
 
         return new_report.status_code
 
@@ -222,6 +222,6 @@ class Genesys(Source):
             self.logger.info("Successfully deleted report from Genesys API.")
 
         else:
-            self.logger.info("Failed to deleted report from Genesys API.")
+            self.logger.error("Failed to deleted report from Genesys API.")
 
         return delete.status_code
