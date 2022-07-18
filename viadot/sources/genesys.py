@@ -187,6 +187,9 @@ class Genesys(Source):
     def to_df(self, report_url: str = None):
         """Download genesys data into a pandas DataFrame.
 
+        Args:
+            report_url (str): Report url from api response.
+
         Returns:
             pd.DataFrame: the DataFrame with time range
         """
@@ -208,7 +211,7 @@ class Genesys(Source):
         """DELETE method for deleting particular report.
 
         Args:
-            report_id (str): defined at the end of report url
+            report_id (str): defined at the end of report url.
         """
         delete = handle_api_response(
             url=f"https://api.{self.environment}/api/v2/analytics/reporting/schedules/{report_id}",
