@@ -10,7 +10,7 @@ from typing import Any, Dict
 import pyarrow as pa
 from ..signals import SKIP
 import logging
-from .base import Source
+from viadot.sources.base import Source
 import viadot.utils
 
 
@@ -482,8 +482,11 @@ class Databricks(Source):
         Returns:
             bool: A boolean indicating the success of the rollback.
         """
+
         if schema is None:
             fqn = f"{self.DEFAULT_SCHEMA}.{table}"
+        else:
+            fqn = f"{schema}.{table}"
 
         # Retrieve the data from the previous table
         old_table = self.to_df(f"SELECT * FROM {fqn}@v{version_number}")

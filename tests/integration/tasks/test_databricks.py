@@ -92,7 +92,7 @@ def test_append():
     databricks.drop_table(SCHEMA, table)
 
 
-def test_insert_wrong_SCHEMA():
+def test_insert_wrong_schema():
     append_data = [
         {
             "Id": "UpsertTest2",
@@ -163,7 +163,7 @@ def test_full_refresh():
     full_refresh_df = pd.DataFrame(full_refresh_data)
 
     did_insert = databricks.insert_into(
-        SCHEMA=SCHEMA, table=table, df=full_refresh_df, if_exists="replace"
+        schema=SCHEMA, table=table, df=full_refresh_df, if_exists="replace"
     )
 
     assert did_insert
@@ -198,7 +198,7 @@ def test_upsert():
     upsert_df = pd.DataFrame(upsert_data)
 
     did_insert = databricks.insert_into(
-        SCHEMA=SCHEMA,
+        schema=SCHEMA,
         table=table,
         df=upsert_df,
         primary_key=primary_key,
@@ -216,10 +216,10 @@ def test_upsert():
     databricks.drop_table(SCHEMA, table)
 
 
-def test_discover_SCHEMA():
+def test_discover_schema():
     table = "test_table"
-    SCHEMA_result = databricks.discover_SCHEMA(SCHEMA, table)
-    expected_SCHEMA = {
+    schema_result = databricks.discover_schema(SCHEMA, table)
+    expected_schema = {
         "Id": "string",
         "AccountId": "bigint",
         "Name": "string",
@@ -229,7 +229,7 @@ def test_discover_SCHEMA():
         "MailingCity": "string",
     }
 
-    assert SCHEMA_result == expected_SCHEMA
+    assert schema_result == expected_schema
 
 
 def test_rollback():
@@ -248,21 +248,21 @@ def test_rollback():
     table = "test_rollback"
     fqn = f"{SCHEMA}.{table}"
 
-    databricks.create_table_from_pandas(SCHEMA, table, df)
+    databricks.create_table_from_pandas(schema=SCHEMA, table=table, df=df)
 
     # Get the version of the table before applying any changes
-    ver_num = databricks.get_table_ver(SCHEMA, table)
+    version_number = databricks.get_table_version(schema=SCHEMA, table=table)
 
     append_df = pd.DataFrame(append_data)
 
     # Append to the table
     did_insert = databricks.insert_into(
-        SCHEMA, table=table, df=append_df, if_exists="append"
+        schema=SCHEMA, table=table, df=append_df, if_exists="append"
     )
     assert did_insert
 
     # Rollback to the previous table version
-    databricks.rollback(SCHEMA, table, ver_num)
+    databricks.rollback(schema=SCHEMA, table=table, version_number=version_number)
     result = databricks.to_df(f"SELECT * FROM {fqn}")
 
     assert df.shape == result.shape
