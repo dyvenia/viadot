@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 >>>>>>> ccb149d (🎨 Applied changes after review)
 =======
 ### Added
+- Added `on_bcp_error` and `bcp_error_log_path` parameters in `BCPTask`
 - Added ability to process queries which result exceed SAP's character per low limit in `SAPRFC` source
 >>>>>>> 030932d550a975780cc91507ed3abb71662a7f4d
 ### Changed
@@ -25,6 +26,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Updated `.gitignore` to ignore files with `*.bak` extension and to ignore `credentials.json` in any directory
 
 ### Fixed
+- Fixed issue in `BCPTask` when log file couln't be opened.
 - Fixed log being printed too early in `Salesforce` source, which would sometimes cause a `KeyError`
 - `raise_on_error` now behaves correctly in `upsert()` when receiving incorrect return codes from Salesforce
 
