@@ -201,12 +201,15 @@ class Databricks(Source):
 
         return result
 
-    def _check_if_table_exists(self, schema: str, table: str) -> bool:
+    def _check_if_table_exists(self, table: str, schema: str = None) -> bool:
+        if schema is None:
+            schema = Databricks.DEFAULT_SCHEMA
+
         does_exist = self.session._jsparkSession.catalog().tableExists(schema, table)
         return does_exist
 
     def create_table_from_pandas(
-        self, schema: str, table: str, df: pd.DataFrame, if_empty="warn"
+        self, table: str, df: pd.DataFrame, schema: str = None, if_empty="warn"
     ) -> pd.DataFrame:
         """
         Write a new table using a given Pandas DataFrame.
@@ -226,6 +229,9 @@ class Databricks(Source):
         new_table = databricks.create_table_from_pandas(schema = "schema" , table = "table_1", df)
         ```
         """
+        if schema is None:
+            schema = Databricks.DEFAULT_SCHEMA
+
         fqn = f"{schema}.{table}"
         if not self._check_if_table_exists(schema=schema, table=table):
             data = self._pandas_df_to_spark_df(df)
@@ -242,7 +248,7 @@ class Databricks(Source):
         else:
             logger.info(f"Table {fqn} already exists.")
 
-    def drop_table(self, schema: str, table: str):
+    def drop_table(self, table: str, schema: str = None):
         """
         Delete an existing table.
 
@@ -257,6 +263,9 @@ class Databricks(Source):
         databricks.drop_table(schema = "schema", table = "table_1")
         ```
         """
+        if schema is None:
+            schema = Databricks.DEFAULT_SCHEMA
+
         fqn = f"{schema}.{table}"
         if self._check_if_table_exists(schema, table):
             self.run(f"DROP TABLE {fqn}")
@@ -318,9 +327,9 @@ class Databricks(Source):
 
     def insert_into(
         self,
-        schema: str,
         table: str,
         df: pd.DataFrame,
+        schema: str = None,
         primary_key: str = "",
         if_exists: Literal["replace", "append", "update", "fail"] = "fail",
     ):
@@ -343,6 +352,9 @@ class Databricks(Source):
         databricks.insert_into(schema="raw", table = "c4c_test4", df=df, primary_key="pk", if_exists="update")
         ```
         """
+        if schema is None:
+            schema = Databricks.DEFAULT_SCHEMA
+
         exists = self._check_if_table_exists(schema=schema, table=table)
         if exists:
             if if_exists == "replace":
@@ -400,7 +412,7 @@ class Databricks(Source):
         self.run(f"DROP SCHEMA {schema_name}")
         logger.info(f"Schema {schema_name} deleted.")
 
-    def discover_schema(self, schema: str, table: str) -> dict:
+    def discover_schema(self, table: str, schema: str = None) -> dict:
         """
         Return a table's schema.
 
@@ -417,6 +429,9 @@ class Databricks(Source):
         Returns:
             schema (dict): A dictionary containing the schema details of the table.
         """
+        if schema is None:
+            schema = Databricks.DEFAULT_SCHEMA
+
         fqn = f"{schema}.{table}"
         result = self.run(f"DESCRIBE {fqn}", fetch_type="pandas")
 
@@ -431,7 +446,7 @@ class Databricks(Source):
 
         return schema
 
-    def get_table_version(self, table: str, schema: str = None) -> numpy.int64:
+    def get_table_version(self, table: str, schema: str = None) -> int:
         """
         Get the provided table's version number.
 
@@ -440,7 +455,7 @@ class Databricks(Source):
             table (str): Name of the table to rollback.
 
         Returns:
-            version_number (numpy.int64): The table's version number
+            version_number (int): The table's version number
         ```
         """
         if schema is None:
@@ -453,7 +468,7 @@ class Databricks(Source):
 
         # Extract the current version number
         version_number = history["version"].iat[0]
-        return version_number
+        return int(version_number)
 
     def rollback(self, table: str, version_number: int, schema: str = None) -> bool:
         """

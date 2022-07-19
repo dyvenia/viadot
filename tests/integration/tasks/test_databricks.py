@@ -45,16 +45,16 @@ def test_create_table():
 
     fqn = f"{SCHEMA}.{table}"
 
-    exists = databricks._check_if_table_exists(SCHEMA, table)
+    exists = databricks._check_if_table_exists(schema=SCHEMA, table=table)
 
     assert not exists
 
-    databricks.create_table_from_pandas(SCHEMA, table, df)
+    databricks.create_table_from_pandas(schema=SCHEMA, table=table, df=df)
 
     result = databricks.to_df(f"SELECT * FROM {fqn}")
 
     assert result.shape == df.shape
-    databricks.drop_table(SCHEMA, table)
+    databricks.drop_table(schema=SCHEMA, table=table)
 
 
 def test_append():
@@ -74,7 +74,7 @@ def test_append():
 
     fqn = f"{SCHEMA}.{table}"
 
-    databricks.create_table_from_pandas(SCHEMA, table, df)
+    databricks.create_table_from_pandas(schema=SCHEMA, table=table, df=df)
 
     append_df = pd.DataFrame(append_data)
 
@@ -89,7 +89,7 @@ def test_append():
 
     assert result.shape == expected_result.shape
 
-    databricks.drop_table(SCHEMA, table)
+    databricks.drop_table(schema=SCHEMA, table=table)
 
 
 def test_insert_wrong_schema():
@@ -146,7 +146,7 @@ def test_full_refresh():
     table = "test_full_refresh_table"
     fqn = f"{SCHEMA}.{table}"
 
-    databricks.create_table_from_pandas(SCHEMA, table, df)
+    databricks.create_table_from_pandas(schema=SCHEMA, table=table, df=df)
 
     full_refresh_data = [
         {
@@ -171,7 +171,7 @@ def test_full_refresh():
     result = databricks.to_df(f"SELECT * FROM {fqn}")
 
     assert result.shape == full_refresh_df.shape
-    databricks.drop_table(SCHEMA, table)
+    databricks.drop_table(schema=SCHEMA, table=table)
 
 
 def test_upsert():
@@ -193,7 +193,7 @@ def test_upsert():
     fqn = f"{SCHEMA}.{table}"
     primary_key = "Id"
 
-    databricks.create_table_from_pandas(SCHEMA, table, df)
+    databricks.create_table_from_pandas(schema=SCHEMA, table=table, df=df)
 
     upsert_df = pd.DataFrame(upsert_data)
 
@@ -213,12 +213,12 @@ def test_upsert():
 
     assert result.shape == expected_result.shape
 
-    databricks.drop_table(SCHEMA, table)
+    databricks.drop_table(schema=SCHEMA, table=table)
 
 
 def test_discover_schema():
     table = "test_table"
-    schema_result = databricks.discover_schema(SCHEMA, table)
+    schema_result = databricks.discover_schema(schema=SCHEMA, table=table)
     expected_schema = {
         "Id": "string",
         "AccountId": "bigint",
@@ -267,4 +267,4 @@ def test_rollback():
 
     assert df.shape == result.shape
 
-    databricks.drop_table(SCHEMA, table)
+    databricks.drop_table(schema=SCHEMA, table=table)
