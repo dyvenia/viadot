@@ -49,7 +49,7 @@ class GenesysToDF(Task):
                 self.schedule_id = SCHEDULE_ID
                 self.logger.info(f"Successfully imported schedule id - {SCHEDULE_ID}.")
             else:
-                self.logger.info(f"Please provide schedule id.")
+                self.logger.warning(f"Please provide schedule id.")
 
         if self.environment is None:
             self.environment = self.credentials.get("ENVIRONMENT", None)
