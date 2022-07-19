@@ -4,7 +4,7 @@ import pandas as pd
 import pytest
 
 databricks = Databricks(env="QA")
-schema = "afraijat_test"
+SCHEMA = "afraijat_test"
 
 source_data = [
     {
@@ -32,7 +32,7 @@ df = pd.DataFrame(source_data)
 def test_to_df():
     # Look up test_query table and check if the type and results returned are correct
     table = "test_query"
-    fqn = f"{schema}.{table}"
+    fqn = f"{SCHEMA}.{table}"
 
     result = databricks.to_df(f"select * from {fqn}")
 
@@ -43,18 +43,18 @@ def test_create_table():
 
     table = "test_create_table"
 
-    fqn = f"{schema}.{table}"
+    fqn = f"{SCHEMA}.{table}"
 
-    exists = databricks._check_if_table_exists(schema, table)
+    exists = databricks._check_if_table_exists(schema=SCHEMA, table=table)
 
     assert not exists
 
-    databricks.create_table_from_pandas(schema, table, df)
+    databricks.create_table_from_pandas(schema=SCHEMA, table=table, df=df)
 
     result = databricks.to_df(f"SELECT * FROM {fqn}")
 
     assert result.shape == df.shape
-    databricks.drop_table(schema, table)
+    databricks.drop_table(schema=SCHEMA, table=table)
 
 
 def test_append():
@@ -72,14 +72,14 @@ def test_append():
 
     table = "test_append_table"
 
-    fqn = f"{schema}.{table}"
+    fqn = f"{SCHEMA}.{table}"
 
-    databricks.create_table_from_pandas(schema, table, df)
+    databricks.create_table_from_pandas(schema=SCHEMA, table=table, df=df)
 
     append_df = pd.DataFrame(append_data)
 
     did_insert = databricks.insert_into(
-        schema, table=table, df=append_df, if_exists="append"
+        schema=SCHEMA, table=table, df=append_df, if_exists="append"
     )
     assert did_insert
 
@@ -89,7 +89,7 @@ def test_append():
 
     assert result.shape == expected_result.shape
 
-    databricks.drop_table(schema, table)
+    databricks.drop_table(schema=SCHEMA, table=table)
 
 
 def test_insert_wrong_schema():
@@ -112,7 +112,7 @@ def test_insert_wrong_schema():
 
     with pytest.raises(pyspark.sql.utils.AnalysisException):
         did_insert = databricks.insert_into(
-            schema, table=table, df=append_df, if_exists="append"
+            schema=SCHEMA, table=table, df=append_df, if_exists="append"
         )
 
 
@@ -136,7 +136,7 @@ def test_insert_non_existent_table():
 
     with pytest.raises(ValueError):
         did_insert = databricks.insert_into(
-            schema, table=table, df=append_df, if_exists="append"
+            schema=SCHEMA, table=table, df=append_df, if_exists="append"
         )
 
 
@@ -144,9 +144,9 @@ def test_full_refresh():
     # Assert type and values returned after full refresh
 
     table = "test_full_refresh_table"
-    fqn = f"{schema}.{table}"
+    fqn = f"{SCHEMA}.{table}"
 
-    databricks.create_table_from_pandas(schema, table, df)
+    databricks.create_table_from_pandas(schema=SCHEMA, table=table, df=df)
 
     full_refresh_data = [
         {
@@ -163,7 +163,7 @@ def test_full_refresh():
     full_refresh_df = pd.DataFrame(full_refresh_data)
 
     did_insert = databricks.insert_into(
-        schema=schema, table=table, df=full_refresh_df, if_exists="replace"
+        schema=SCHEMA, table=table, df=full_refresh_df, if_exists="replace"
     )
 
     assert did_insert
@@ -171,7 +171,7 @@ def test_full_refresh():
     result = databricks.to_df(f"SELECT * FROM {fqn}")
 
     assert result.shape == full_refresh_df.shape
-    databricks.drop_table(schema, table)
+    databricks.drop_table(schema=SCHEMA, table=table)
 
 
 def test_upsert():
@@ -190,15 +190,15 @@ def test_upsert():
     ]
 
     table = "test_upsert"
-    fqn = f"{schema}.{table}"
+    fqn = f"{SCHEMA}.{table}"
     primary_key = "Id"
 
-    databricks.create_table_from_pandas(schema, table, df)
+    databricks.create_table_from_pandas(schema=SCHEMA, table=table, df=df)
 
     upsert_df = pd.DataFrame(upsert_data)
 
     did_insert = databricks.insert_into(
-        schema=schema,
+        schema=SCHEMA,
         table=table,
         df=upsert_df,
         primary_key=primary_key,
@@ -213,12 +213,12 @@ def test_upsert():
 
     assert result.shape == expected_result.shape
 
-    databricks.drop_table(schema, table)
+    databricks.drop_table(schema=SCHEMA, table=table)
 
 
 def test_discover_schema():
     table = "test_table"
-    schema_result = databricks.discover_schema(schema, table)
+    schema_result = databricks.discover_schema(schema=SCHEMA, table=table)
     expected_schema = {
         "Id": "string",
         "AccountId": "bigint",
@@ -230,3 +230,41 @@ def test_discover_schema():
     }
 
     assert schema_result == expected_schema
+
+
+def test_rollback():
+    append_data = [
+        {
+            "Id": "UpsertTest2",
+            "AccountId": 789,
+            "Name": "new upsert-2",
+            "FirstName": "Updated",
+            "LastName": "Carter2",
+            "ContactEMail": "Adam.Carter@TurnerBlack.com",
+            "MailingCity": "Updated!Jamesport",
+        }
+    ]
+
+    table = "test_rollback"
+    fqn = f"{SCHEMA}.{table}"
+
+    databricks.create_table_from_pandas(schema=SCHEMA, table=table, df=df)
+
+    # Get the version of the table before applying any changes
+    version_number = databricks.get_table_version(schema=SCHEMA, table=table)
+
+    append_df = pd.DataFrame(append_data)
+
+    # Append to the table
+    did_insert = databricks.insert_into(
+        schema=SCHEMA, table=table, df=append_df, if_exists="append"
+    )
+    assert did_insert
+
+    # Rollback to the previous table version
+    databricks.rollback(schema=SCHEMA, table=table, version_number=version_number)
+    result = databricks.to_df(f"SELECT * FROM {fqn}")
+
+    assert df.shape == result.shape
+
+    databricks.drop_table(schema=SCHEMA, table=table)

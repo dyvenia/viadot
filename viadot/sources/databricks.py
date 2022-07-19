@@ -1,19 +1,21 @@
 from numpy import source
+import numpy
 from viadot.config import local_config
-from viadot.sources.base import Source
 from delta.tables import *
 import pandas as pd
 from pyspark import SparkConf, SparkContext
 import pyspark.sql.dataframe as spark
 from pyspark.sql.dataframe import DataFrame
-from prefect.utilities import logging
 from typing import Literal, Union
 from typing import Any, Dict
-
+import pyarrow as pa
+from ..signals import SKIP
+import logging
+from viadot.sources.base import Source
 import viadot.utils
 
 
-logger = logging.get_logger(__name__)
+logger = logging.getLogger(__name__)
 
 
 class Databricks(Source):
@@ -36,16 +38,14 @@ class Databricks(Source):
             - spark.databricks.service.port
     """
 
-    env = "DEV"
-    session = None
     DEFAULT_SCHEMA = "default"
 
     def __init__(
         self, env: str = "DEV", credentials: Dict[str, Any] = None, *args, **kwargs
     ):
         self.env = env
-
         self.credentials = credentials or local_config.get("DATABRICKS", {}).get(env)
+        self.session = None
 
         self.connect()
 
@@ -199,18 +199,21 @@ class Databricks(Source):
 
         return result
 
-    def _check_if_table_exists(self, schema: str, table: str) -> bool:
+    def _check_if_table_exists(self, table: str, schema: str = None) -> bool:
+        if schema is None:
+            schema = Databricks.DEFAULT_SCHEMA
+
         does_exist = self.session._jsparkSession.catalog().tableExists(schema, table)
         return does_exist
 
     def create_table_from_pandas(
-        self, schema: str, table: str, df: pd.DataFrame, if_empty="warn"
+        self, table: str, df: pd.DataFrame, schema: str = None, if_empty="warn"
     ) -> pd.DataFrame:
         """
         Write a new table using a given Pandas DataFrame.
 
         Args:
-            schema (str): Name of the schema
+            schema (str): Name of the schema.
             table (str): Name of the new table to be created.
             df (pd.DataFrame): DataFrame to be written as a table.
             if_empty (str, optional): What to do if the query returns no data. Defaults to "warn".
@@ -224,6 +227,9 @@ class Databricks(Source):
         new_table = databricks.create_table_from_pandas(schema = "schema" , table = "table_1", df)
         ```
         """
+        if schema is None:
+            schema = Databricks.DEFAULT_SCHEMA
+
         fqn = f"{schema}.{table}"
         if not self._check_if_table_exists(schema=schema, table=table):
             data = self._pandas_df_to_spark_df(df)
@@ -240,12 +246,12 @@ class Databricks(Source):
         else:
             logger.info(f"Table {fqn} already exists.")
 
-    def drop_table(self, schema: str, table: str):
+    def drop_table(self, table: str, schema: str = None):
         """
         Delete an existing table.
 
         Args:
-            schema (str): Name of the schema
+            schema (str): Name of the schema.
             table (str): Name of the new table to be created.
 
         Example:
@@ -255,6 +261,9 @@ class Databricks(Source):
         databricks.drop_table(schema = "schema", table = "table_1")
         ```
         """
+        if schema is None:
+            schema = Databricks.DEFAULT_SCHEMA
+
         fqn = f"{schema}.{table}"
         if self._check_if_table_exists(schema, table):
             self.run(f"DROP TABLE {fqn}")
@@ -273,7 +282,7 @@ class Databricks(Source):
         Overwrite an existing table with data from a Pandas DataFrame.
 
         Args:
-            schema (str): Name of the schema
+            schema (str): Name of the schema.
             table (str): Name of the new table to be created.
             df (pd.DataFrame): DataFrame to be used to overwrite the table.
 
@@ -316,9 +325,9 @@ class Databricks(Source):
 
     def insert_into(
         self,
-        schema: str,
         table: str,
         df: pd.DataFrame,
+        schema: str = None,
         primary_key: str = "",
         if_exists: Literal["replace", "append", "update", "fail"] = "fail",
     ):
@@ -326,7 +335,7 @@ class Databricks(Source):
         Insert data into a table.
 
         Args:
-            schema (str): Name of the schema
+            schema (str): Name of the schema.
             table (str): Name of the new table to be created.
             df (pd.DataFrame): DataFrame with the data to be inserted into the table.
             primary_key (str, Optional): Needed only when updating the data, the primary key on which the data will be joined.
@@ -341,6 +350,9 @@ class Databricks(Source):
         databricks.insert_into(schema="raw", table = "c4c_test4", df=df, primary_key="pk", if_exists="update")
         ```
         """
+        if schema is None:
+            schema = Databricks.DEFAULT_SCHEMA
+
         exists = self._check_if_table_exists(schema=schema, table=table)
         if exists:
             if if_exists == "replace":
@@ -398,12 +410,12 @@ class Databricks(Source):
         self.run(f"DROP SCHEMA {schema_name}")
         logger.info(f"Schema {schema_name} deleted.")
 
-    def discover_schema(self, schema: str, table: str) -> dict:
+    def discover_schema(self, table: str, schema: str = None) -> dict:
         """
         Return a table's schema.
 
         Args:
-            schema (str): Name of the schema
+            schema (str): Name of the schema.
             table (str): Name of the new table to be created.
 
         Example:
@@ -413,8 +425,11 @@ class Databricks(Source):
         databricks.discover_schema(schema = "schema", table = "table")
         ```
         Returns:
-            schema: A dictionary containing the schema details of the table.
+            schema (dict): A dictionary containing the schema details of the table.
         """
+        if schema is None:
+            schema = Databricks.DEFAULT_SCHEMA
+
         fqn = f"{schema}.{table}"
         result = self.run(f"DESCRIBE {fqn}", fetch_type="pandas")
 
@@ -428,3 +443,74 @@ class Databricks(Source):
         schema = dict(zip(col_names, data_types))
 
         return schema
+
+    def get_table_version(self, table: str, schema: str = None) -> int:
+        """
+        Get the provided table's version number.
+
+        Args:
+            schema (str): Name of the schema.
+            table (str): Name of the table to rollback.
+
+        Returns:
+            version_number (int): The table's version number
+        ```
+        """
+        if schema is None:
+            schema = Databricks.DEFAULT_SCHEMA
+
+        fqn = f"{schema}.{table}"
+
+        # Get the info regarding the current version of the delta table
+        history = self.run(f"DESCRIBE HISTORY {fqn}", "pandas")
+
+        # Extract the current version number
+        version_number = history["version"].iat[0]
+        return int(version_number)
+
+    def rollback(self, table: str, version_number: int, schema: str = None) -> bool:
+        """
+        Rollback the table to a previous version.
+
+        Args:
+            schema (str): Name of the schema.
+            table (str): Name of the table to rollback.
+            version_number (int): Number of the table's version to rollback to.
+
+        Example:
+        ```python
+        from viadot.sources import Databricks
+        databricks = Databricks()
+
+        schema = "test"
+        table = "table_1"
+
+        version_number = databricks.get_table_version(schema=schema, table=table)
+
+        # Perform changes on the table, in this example we are appending to the table
+        list = [{"id":"1", "name":"Joe"}]
+        df = pd.DataFrame(list)
+        databricks.insert_into(schema=schema, table=table, df=df, if_exists="append")
+
+        databricks.rollback(schema=schema, table=table, version_number=version_number)
+        ```
+        Returns:
+            result (bool): A boolean indicating the success of the rollback.
+        """
+
+        if schema is None:
+            schema = Databricks.DEFAULT_SCHEMA
+
+        fqn = f"{schema}.{table}"
+
+        # Retrieve the data from the previous table
+        old_table = self.to_df(f"SELECT * FROM {fqn}@v{version_number}")
+
+        # Perform full-refresh and overwrite the table with the new data
+        result = self.insert_into(
+            schema=schema, table=table, df=old_table, if_exists="replace"
+        )
+
+        logger.info(f"Rollback for table {fqn} to version #{version_number} completed.")
+
+        return result
