@@ -1,4 +1,4 @@
-from sqlite3 import Timestamp
+from pandas import Timestamp
 from typing import Literal
 import prefect
 import pandas as pd
@@ -69,22 +69,30 @@ class PrefectLogs(Flow):
 
         self.gen_flow()
 
-    def get_formatted_value_from_timestamp(self, value_type, value) -> str:
+    def get_formatted_value_from_timestamp(
+        self, value_type: str, value: Timestamp
+    ) -> str:
         """
         Function returns cleaned date/time from timestamp in string format (ex. "2022-01-01")
         Args:
-            type (str):  Desired part of the Timestamp value, "date" or "time".
+            value_type (str):  Desired part of the Timestamp value, "date" or "time".
             value (timestamp): Timestamp value from Prefect.
-        Return: (str) Date or time from the Timestamp
+        Return:
+            str: date (ex. "2022-01-01") or time (ex. "13:10") from the Timestamp in string format
         """
         if value is not None and value_type == "date":
             return value.split("T")[0]
         elif value is not None and value_type == "time":
             return (value.split("T")[1])[:5]
 
-    def check_if_run_authomatically(self, value) -> bool:
+    def check_if_run_authomatically(self, value: str) -> bool:
         """
         Function checks if flow has been run automatically by scheduler or triggered manually.
+        Args:
+            value (str): User ID created by Prefect.
+            - ID = "09720c91-a99c-4f72-b7b5-3c061c83408b" refers to Prefect scheduler
+            - other IDs  = tells that flow has been run manually
+        Return: (bool) Boolean value True/False.
         """
         if value == "09720c91-a99c-4f72-b7b5-3c061c83408b":  # ID of a Prefect scheduler
             return True
