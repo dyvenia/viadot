@@ -38,16 +38,14 @@ class Databricks(Source):
             - spark.databricks.service.port
     """
 
-    env = "DEV"
-    session = None
     DEFAULT_SCHEMA = "default"
 
     def __init__(
         self, env: str = "DEV", credentials: Dict[str, Any] = None, *args, **kwargs
     ):
         self.env = env
-
         self.credentials = credentials or local_config.get("DATABRICKS", {}).get(env)
+        self.session = None
 
         self.connect()
 
