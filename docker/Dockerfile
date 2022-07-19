@@ -17,6 +17,7 @@ RUN echo "Acquire::Check-Valid-Until \"false\";\nAcquire::Check-Date \"false\";"
 # System packages
 RUN apt update -q && yes | apt install -q gnupg vim unixodbc-dev build-essential \
     curl python3-dev libboost-all-dev libpq-dev graphviz python3-gi sudo git software-properties-common
+ENV PIP_NO_CACHE_DIR=1
 RUN pip install --upgrade cffi
 
 RUN curl http://archive.ubuntu.com/ubuntu/pool/main/g/glibc/multiarch-support_2.27-3ubuntu1_amd64.deb \
