@@ -1,7 +1,7 @@
 from typing import Any, List, Literal, NoReturn, Tuple, Union
 
 import pandas as pd
-from prefect.utilities import logging
+import logging
 
 import duckdb
 
@@ -10,7 +10,7 @@ from ..exceptions import CredentialError
 from ..signals import SKIP
 from .base import Source
 
-logger = logging.get_logger(__name__)
+logger = logging.getLogger(__name__)
 
 Record = Tuple[Any]
 

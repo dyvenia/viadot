@@ -1,16 +1,14 @@
 import os
 from abc import abstractmethod
 from typing import Any, Dict, List, Literal, NoReturn, Tuple, Union
-
 import pandas as pd
 import pyarrow as pa
 import pyodbc
-from prefect.utilities import logging
-
+import logging
 from ..config import local_config
 from ..signals import SKIP
 
-logger = logging.get_logger(__name__)
+logger = logging.getLogger(__name__)
 
 Record = Tuple[Any]
 

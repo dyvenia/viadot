@@ -1,7 +1,7 @@
 from typing import Any, Dict, List, OrderedDict, Literal
 
 import pandas as pd
-from prefect.utilities import logging
+import logging
 from simple_salesforce import Salesforce as SF
 from simple_salesforce.exceptions import SalesforceMalformedRequest
 
@@ -9,7 +9,7 @@ from ..config import local_config
 from ..exceptions import CredentialError
 from .base import Source
 
-logger = logging.get_logger(__name__)
+logger = logging.getLogger(__name__)
 
 
 class Salesforce(Source):
