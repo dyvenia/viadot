@@ -54,6 +54,7 @@ class MySqlToDf(Task):
                 credentials_secret = PrefectSecret("CONVIDERA").run()
                 logger.info("Loaded credentials from PrefectSecret.")
             except ValueError:
+                logger.exception("Credentials not found in PrefectSecret")
                 pass
 
         if credentials_secret:
