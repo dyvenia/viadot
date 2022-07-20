@@ -6,7 +6,7 @@ from typing import Any, Dict, List
 import numpy as np
 import pandas as pd
 import requests
-from prefect.utilities import logging
+import logging
 from requests.adapters import HTTPAdapter
 from requests.exceptions import ConnectionError, HTTPError, ReadTimeout, Timeout
 from requests.packages.urllib3.util.retry import Retry
@@ -17,7 +17,7 @@ from ..config import local_config
 from ..exceptions import APIError, CredentialError
 from .base import Source
 
-logger = logging.get_logger(__name__)
+logger = logging.getLogger(__name__)
 
 
 class Supermetrics(Source):

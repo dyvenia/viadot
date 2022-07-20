@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added complete proxy set up in `SAPRFC` example (`viadot/examples/sap_rfc`)
 - Added Databricks/Spark setup to the image. See README for setup & usage instructions.
 - Added rollback feature to `Databricks` source.
+- Changed all Prefect logging instances in the `sources` directory to native Python logging.
 
 
 ## [0.4.3] - 2022-04-28
