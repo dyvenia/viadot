@@ -2,7 +2,7 @@ from typing import Any, Dict, List, Literal
 from prefect import Flow
 from viadot.task_utils import df_to_csv
 from viadot.tasks import AzureDataLakeUpload
-from viadot.tasks.mysql_to_df import MySqlToDf
+from viadot.tasks.mysql_to_df import MySqlToDF
 
 file_to_adls_task = AzureDataLakeUpload()
 
@@ -22,6 +22,7 @@ class MySqlToADLS(Flow):
         overwrite_adls: bool = True,
         sp_credentials_secret: str = None,
         credentials_secret: str = None,
+        credentials_key: str = "CONVIDERA",
         *args: List[any],
         **kwargs: Dict[str, Any]
     ):
@@ -45,12 +46,14 @@ class MySqlToADLS(Flow):
             credentials_secret (str, optional): Key Vault name. Defaults to None.
             columns_to_clean (List(str), optional): Select columns to clean, used with remove_special_characters.
             If None whole data frame will be processed. Defaults to None.
+            credentials_key (str, optional): Credential key to dictionary where details are stored (local config).
         """
 
         # Connect to sql
         self.country_short = country_short
         self.query = query
         self.sqldb_credentials_secret = sqldb_credentials_secret
+        self.credentials_key = credentials_key
         self.vault_name = vault_name
         self.overwrite_adls = overwrite_adls
         # Upload to ADLS
@@ -67,10 +70,11 @@ class MySqlToADLS(Flow):
 
     def gen_flow(self) -> Flow:
 
-        df_task = MySqlToDf(country_short=self.country_short)
+        df_task = MySqlToDF(country_short=self.country_short)
 
         df = df_task.bind(
             credentials_secret=self.credentials_secret,
+            credentials_key=self.credentials_key,
             query=self.query,
             vault_name=self.vault_name,
             flow=self,

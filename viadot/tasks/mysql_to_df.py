@@ -8,11 +8,12 @@ from viadot.config import local_config
 from viadot.sources.mysql import MySQL
 
 
-class MySqlToDf(Task):
+class MySqlToDF(Task):
     def __init__(
         self,
         country_short: Literal["AT", "DE", "CH", None],
         credentials: Dict[str, Any] = None,
+        credentials_key: str = None,
         query: str = None,
         *args,
         **kwargs,
@@ -22,13 +23,14 @@ class MySqlToDf(Task):
 
         Args:
             credentials (Dict[str, Any], optional): MySql Database credentials. Defaults to None.
-            query(str, optional): Query to perform on a database. Defaults to None.
+            query (str, optional): Query to perform on a database. Defaults to None.
             country_short (Dict[str, Any], optional): Country short to select proper credential.
-
+            credentials_key (str, optional): Credential key to dictionary where details are stored (local config).
         Returns: Pandas DataFrame
         """
         self.credentials = credentials
         self.country_short = country_short
+        self.credentials_key = credentials_key
         self.query = query
 
         super().__init__(
@@ -47,15 +49,16 @@ class MySqlToDf(Task):
         credentials: Dict[str, Any] = None,
         credentials_secret: str = None,
         vault_name: str = None,
+        credentials_key: str = None,
     ):
         logger = prefect.context.get("logger")
         if not credentials_secret:
             try:
-                credentials_secret = PrefectSecret("CONVIDERA").run()
+                credentials_key = credentials_key or self.credentials_key
+                credentials_secret = PrefectSecret(credentials_key).run()
                 logger.info("Loaded credentials from PrefectSecret.")
             except ValueError:
-                logger.exception("Credentials not found in PrefectSecret")
-                pass
+                logger.exception("Credentials not found in PrefectSecret.")
 
         if credentials_secret:
             credentials_str = AzureKeyVaultSecret(
