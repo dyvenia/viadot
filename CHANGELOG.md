@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added `on_bcp_error` and `bcp_error_log_path` parameters in `BCPTask`
 - Added ability to process queries which result exceed SAP's character per low limit in `SAPRFC` source
 ### Changed
+- Cahnged `CheckColumnOrder` and `ADLSToAzureSQL` to handle appending to non existing table
 - Changed `add_ingestion_metadata_task()` to not to add metadata column when input DataFrame is empty
 - Changed `check_if_empty_file()` logic according to changes in `add_ingestion_metadata_task()`
 - Changed accepted values of `if_empty` parameter in `DuckDBCreateTableFromParquet`

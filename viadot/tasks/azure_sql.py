@@ -407,10 +407,12 @@ class CheckColumnOrder(Task):
         query = f"SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = '{schema}' AND TABLE_NAME = '{table}'"
         check_result = azure_sql.run(query=query)
         if if_exists not in ["replace", "fail"]:
-            if if_exists == "append" and not check_result:
+            print(if_exists)
+            print(len(check_result))
+            if if_exists == "append" and len(check_result) == 0:
                 self.logger.warning("Aimed table doesn't exists.")
                 return
-            elif check_result is not []:
+            else:
                 result = azure_sql.run(query=query)
                 sql_column_list = [table for row in result for table in row]
                 df_column_list = list(df.columns)
