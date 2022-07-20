@@ -11,7 +11,6 @@ from viadot.tasks import (
     AzureDataLakeRemove,
 )
 
-# from viadot.tasks.azure_data_lake import AzureDataLakeRemove
 
 uuid_4 = uuid.uuid4()
 uuid_4_2 = uuid.uuid4()
