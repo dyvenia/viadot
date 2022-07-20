@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added ability to process queries which result exceed SAP's character per low limit in `SAPRFC` source
 
 ### Changed
+- Changed `CheckColumnOrder` task and `ADLSToAzureSQL` flow to handle appending to non existing table
 - Changed tasks order in `EpicorOrdersToDuckDB`, `SAPToDuckDB` and `SQLServerToDuckDB` - casting 
 DF to string before adding metadata
 - Changed `add_ingestion_metadata_task()` to not to add metadata column when input DataFrame is empty
