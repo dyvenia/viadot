@@ -16,7 +16,7 @@ class SAPToDuckDB(Flow):
         table: str,
         local_file_path: str,
         func: str = "RFC_READ_TABLE",
-        rfc_character_limit: int = 400,
+        rfc_total_col_width_character_limit: int = 400,
         name: str = None,
         sep: str = None,
         schema: str = None,
@@ -36,7 +36,7 @@ class SAPToDuckDB(Flow):
             table (str): Destination table in DuckDB.
             local_file_path (str): The path to the source Parquet file.
             func (str, optional): SAP RFC function to use. Defaults to "RFC_READ_TABLE".
-            rfc_character_limit (int, optional): Number of characters by which query will be split in
+            rfc_total_col_width_character_limit (int, optional): Number of characters by which query will be split in
             chunks in case of too many columns for RFC function. According to SAP documentation, the
             limit is 512 characters. However, we observed SAP raising an exception even on a slightly
             lower number of characters, so we add a safety margin. Defaults to 400.
@@ -54,7 +54,7 @@ class SAPToDuckDB(Flow):
         # SAPRFCToDF
         self.query = query
         self.func = func
-        self.rfc_character_limit = rfc_character_limit
+        self.rfc_total_col_width_character_limit = rfc_total_col_width_character_limit
         self.sep = sep
         self.sap_credentials = sap_credentials
 
@@ -81,7 +81,7 @@ class SAPToDuckDB(Flow):
             query=self.query,
             sep=self.sep,
             func=self.func,
-            rfc_character_limit=self.rfc_character_limit,
+            rfc_total_col_width_character_limit=self.rfc_total_col_width_character_limit,
             flow=self,
         )
 

@@ -16,7 +16,7 @@ class SAPRFCToDF(Task):
         query: str = None,
         sep: str = None,
         func: str = None,
-        rfc_character_limit: int = 400,
+        rfc_total_col_width_character_limit: int = 400,
         credentials: dict = None,
         max_retries: int = 3,
         retry_delay: timedelta = timedelta(seconds=10),
@@ -42,7 +42,7 @@ class SAPRFCToDF(Task):
             sep (str, optional): The separator to use when reading query results. If not provided,
             multiple options are automatically tried. Defaults to None.
             func (str, optional): SAP RFC function to use. Defaults to None.
-            rfc_character_limit (int, optional): Number of characters by which query will be split in chunks
+            rfc_total_col_width_character_limit (int, optional): Number of characters by which query will be split in chunks
             in case of too many columns for RFC function. According to SAP documentation, the limit is
             512 characters. However, we observed SAP raising an exception even on a slightly lower number
             of characters, so we add a safety margin. Defaults to 400.
@@ -53,7 +53,7 @@ class SAPRFCToDF(Task):
         self.sep = sep
         self.credentials = credentials
         self.func = func
-        self.rfc_character_limit = rfc_character_limit
+        self.rfc_total_col_width_character_limit = rfc_total_col_width_character_limit
 
         super().__init__(
             name="sap_rfc_to_df",
@@ -67,7 +67,7 @@ class SAPRFCToDF(Task):
         "query",
         "sep",
         "func",
-        "rfc_character_limit",
+        "rfc_total_col_width_character_limit",
         "credentials",
         "max_retries",
         "retry_delay",
@@ -78,7 +78,7 @@ class SAPRFCToDF(Task):
         sep: str = None,
         credentials: dict = None,
         func: str = None,
-        rfc_character_limit: int = None,
+        rfc_total_col_width_character_limit: int = None,
         max_retries: int = None,
         retry_delay: timedelta = None,
     ) -> pd.DataFrame:
@@ -89,7 +89,7 @@ class SAPRFCToDF(Task):
             sep (str, optional): The separator to use when reading query results. If not provided,
             multiple options are automatically tried. Defaults to None.
             func (str, optional): SAP RFC function to use. Defaults to None.
-            rfc_character_limit (int, optional): Number of characters by which query will be split in chunks
+            rfc_total_col_width_character_limit (int, optional): Number of characters by which query will be split in chunks
             in case of too many columns for RFC function. According to SAP documentation, the limit is
             512 characters. However, we observed SAP raising an exception even on a slightly lower number
             of characters, so we add a safety margin. Defaults to None.
@@ -100,7 +100,7 @@ class SAPRFCToDF(Task):
             sep=sep,
             credentials=credentials,
             func=func,
-            rfc_character_limit=rfc_character_limit,
+            rfc_total_col_width_character_limit=rfc_total_col_width_character_limit,
         )
         sap.query(query)
         self.logger.info(f"Downloading data from SAP to a DataFrame...")

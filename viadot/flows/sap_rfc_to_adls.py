@@ -17,7 +17,7 @@ class SAPRFCToADLS(Flow):
         query: str = None,
         rfc_sep: str = None,
         func: str = "RFC_READ_TABLE",
-        rfc_character_limit: int = 400,
+        rfc_total_col_width_character_limit: int = 400,
         sap_credentials: dict = None,
         output_file_extension: str = ".parquet",
         local_file_path: str = None,
@@ -49,7 +49,7 @@ class SAPRFCToADLS(Flow):
             query (str): Query to be executed with pyRFC. Defaults to None.
             rfc_sep(str, optional): Which separator to use when querying SAP. If not provided, multiple options are automatically tried.
             func (str, optional): SAP RFC function to use. Defaults to "RFC_READ_TABLE".
-            rfc_character_limit (int, optional): Number of characters by which query will be split in chunks in case of too many columns
+            rfc_total_col_width_character_limit (int, optional): Number of characters by which query will be split in chunks in case of too many columns
             for RFC function. According to SAP documentation, the limit is 512 characters. However, we observed SAP raising an exception
             even on a slightly lower number of characters, so we add a safety margin. Defaults to 400.
             sap_credentials (dict, optional): The credentials to use to authenticate with SAP. By default, they're taken from the local viadot config.
@@ -66,7 +66,7 @@ class SAPRFCToADLS(Flow):
         self.query = query
         self.rfc_sep = rfc_sep
         self.func = func
-        self.rfc_character_limit = rfc_character_limit
+        self.rfc_total_col_width_character_limit = rfc_total_col_width_character_limit
         self.sap_credentials = sap_credentials
         self.output_file_extension = output_file_extension
         self.local_file_path = local_file_path
@@ -87,7 +87,7 @@ class SAPRFCToADLS(Flow):
             query=self.query,
             sep=self.rfc_sep,
             func=self.func,
-            rfc_character_limit=self.rfc_character_limit,
+            rfc_total_col_width_character_limit=self.rfc_total_col_width_character_limit,
             credentials=self.sap_credentials,
             flow=self,
         )
