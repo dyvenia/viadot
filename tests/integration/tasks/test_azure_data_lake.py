@@ -1,5 +1,6 @@
 import os
 import uuid
+import pytest
 
 from viadot.sources import AzureDataLake
 from viadot.tasks import (
@@ -23,10 +24,8 @@ ADLS_PATH_2 = f"raw/supermetrics/{FILE_NAME_2}"
 FILE_NAME_PARQUET = f"test_file_{uuid_4}.parquet"
 ADLS_PATH_PARQUET = f"raw/supermetrics/{FILE_NAME_PARQUET}"
 
-# TODO: add pytest-depends as download tests depend on the upload
-# and can't be ran separately
 
-
+@pytest.mark.dependency()
 def test_azure_data_lake_upload(TEST_CSV_FILE_PATH):
     upload_task = AzureDataLakeUpload()
     upload_task.run(from_path=TEST_CSV_FILE_PATH, to_path=ADLS_PATH)
@@ -34,6 +33,7 @@ def test_azure_data_lake_upload(TEST_CSV_FILE_PATH):
     assert file.exists()
 
 
+@pytest.mark.dependency(depends=["test_azure_data_lake_upload"])
 def test_azure_data_lake_download():
     download_task = AzureDataLakeDownload()
     download_task.run(from_path=ADLS_PATH)
@@ -41,12 +41,16 @@ def test_azure_data_lake_download():
     os.remove(FILE_NAME)
 
 
+@pytest.mark.dependency(depends=["test_azure_data_lake_upload"])
 def test_azure_data_lake_to_df():
     task = AzureDataLakeToDF()
     df = task.run(path=ADLS_PATH, sep="\t")
     assert not df.empty
 
 
+@pytest.mark.dependency(
+    depends=["test_azure_data_lake_upload", "test_azure_data_lake_to_df"]
+)
 def test_azure_data_lake_to_df_parquet(TEST_PARQUET_FILE_PATH):
     upload_task = AzureDataLakeUpload()
     upload_task.run(from_path=TEST_PARQUET_FILE_PATH, to_path=ADLS_PATH_PARQUET)
@@ -56,6 +60,7 @@ def test_azure_data_lake_to_df_parquet(TEST_PARQUET_FILE_PATH):
     assert not df.empty
 
 
+@pytest.mark.dependency(depends=["test_azure_data_lake_upload"])
 def test_azure_data_lake_copy():
     copy_task = AzureDataLakeCopy()
     copy_task.run(from_path=ADLS_PATH, to_path=ADLS_PATH_2)
@@ -69,6 +74,7 @@ def test_azure_data_lake_list():
     assert ADLS_PATH in files
 
 
+@pytest.mark.dependency(depends=["test_azure_data_lake_upload"])
 def test_azure_data_lake_remove():
     file = AzureDataLake(ADLS_PATH)
     assert file.exists()
