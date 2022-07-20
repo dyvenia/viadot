@@ -78,11 +78,10 @@ class SAPToDuckDB(Flow):
             flow=self,
         )
 
-        df_with_metadata = add_ingestion_metadata_task.bind(df, flow=self)
-
-        df_mapped = cast_df_to_str.bind(df_with_metadata, flow=self)
+        df_mapped = cast_df_to_str.bind(df, flow=self)
+        df_with_metadata = add_ingestion_metadata_task.bind(df_mapped, flow=self)
         parquet = df_to_parquet.bind(
-            df=df_mapped,
+            df=df_with_metadata,
             path=self.local_file_path,
             if_exists=self.if_exists,
             flow=self,
