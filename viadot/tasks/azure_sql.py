@@ -420,7 +420,7 @@ class CheckColumnOrder(Task):
                 "The table already exists and 'if_exists' is set to 'fail'."
             )
         if if_exists in ["append", "delete"]:
-            sql_column_list = [col_list for row in result for col_list in row]
+            sql_column_list = [row[0] for row in result]
             df_column_list = list(df.columns)
             if sql_column_list != df_column_list:
                 self.logger.warning(
