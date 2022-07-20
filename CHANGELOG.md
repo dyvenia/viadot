@@ -7,8 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 ### Added
 - Added `rfc_character_limit` parameter in `SAPRFCToDF` task, `SAPRFC` source, `SAPRFCToADLS` and `SAPToDuckDB` flows
+- Added `on_bcp_error` and `bcp_error_log_path` parameters in `BCPTask`
 - Added ability to process queries which result exceed SAP's character per low limit in `SAPRFC` source
+
 ### Changed
+- Changed tasks order in `EpicorOrdersToDuckDB`, `SAPToDuckDB` and `SQLServerToDuckDB` - casting 
+DF to string before adding metadata
 - Changed `add_ingestion_metadata_task()` to not to add metadata column when input DataFrame is empty
 - Changed `check_if_empty_file()` logic according to changes in `add_ingestion_metadata_task()`
 - Changed accepted values of `if_empty` parameter in `DuckDBCreateTableFromParquet`
@@ -16,11 +20,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 - Fixed handling empty response in `SAPRFC` source
+- Fixed issue in `BCPTask` when log file couln't be opened.
 - Fixed log being printed too early in `Salesforce` source, which would sometimes cause a `KeyError`
 - `raise_on_error` now behaves correctly in `upsert()` when receiving incorrect return codes from Salesforce
 
 ### Removed
 - Removed option to run multiple queries in `SAPRFCToADLS`
+
+
 ## [0.4.5] - 2022-06-23
 ### Added
 - Added `error_log_file_path` parameter in `BCPTask` that enables setting name of errors logs file 
