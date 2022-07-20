@@ -1,3 +1,4 @@
+from asyncio.log import logger
 import json
 from datetime import timedelta
 from typing import Any, Dict, List, Literal
@@ -401,27 +402,33 @@ class CheckColumnOrder(Task):
             with SQL db credentials (server, db_name, user, and password). Defaults to None.
             vault_name (str, optional): The name of the vault from which to obtain the secret. Defaults to None.
         """
+        if if_exists not in ["fail", "replace", "append", "delete"]:
+            raise ValueError(
+                f"Please select one of the allowed 'if_exists' values: 'fail', 'replace', 'append', 'delete'."
+            )
         credentials = get_credentials(credentials_secret, vault_name=vault_name)
         azure_sql = AzureSQL(credentials=credentials)
         df = self.sanitize_columns(df)
         query = f"SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = '{schema}' AND TABLE_NAME = '{table}'"
-        check_result = azure_sql.run(query=query)
-        if if_exists not in ["replace", "fail"]:
-            if if_exists == "append" and len(check_result) == 0:
-                self.logger.warning("Aimed table doesn't exists.")
-                return
+        result = azure_sql.run(query=query)
+        table_exists = len(result) != 0
+        if not table_exists:
+            self.logger.warning("Target table doesn't exists.")
+            return
+        if if_exists == "fail":
+            raise ValueError(
+                "The table already exists and 'if_exists' is set to 'fail'."
+            )
+        if if_exists in ["append", "delete"]:
+            sql_column_list = [table for row in result for table in row]
+            df_column_list = list(df.columns)
+            if sql_column_list != df_column_list:
+                self.logger.warning(
+                    "Detected column order difference between the CSV file and the table. Reordering..."
+                )
+                df = self.df_change_order(df=df, sql_column_list=sql_column_list)
             else:
-                result = azure_sql.run(query=query)
-                sql_column_list = [table for row in result for table in row]
-                df_column_list = list(df.columns)
-
-                if sql_column_list != df_column_list:
-                    self.logger.warning(
-                        "Detected column order difference between the CSV file and the table. Reordering..."
-                    )
-                    df = self.df_change_order(df=df, sql_column_list=sql_column_list)
-                else:
-                    return df
+                return df
         else:
             self.logger.info("The table will be replaced.")
             return df
