@@ -341,6 +341,7 @@ This allows the user to simply pass a dict with their expectations and not worry
 
 ### Fixed
 - Removed the broken version autobump from CI
+- Added proper variables in MySqlToDf run method
 
 
 ## [0.2.1] - 2021-07-14
