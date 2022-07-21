@@ -31,6 +31,7 @@ class GenesysToADLS(Flow):
         overwrite_adls: bool = True,
         adls_sp_credentials_secret: str = None,
         credentials_secret: str = None,
+        schedule_id: str = None,
         *args: List[any],
         **kwargs: Dict[str, Any]
     ):
@@ -51,6 +52,8 @@ class GenesysToADLS(Flow):
             ACCOUNT_NAME and Service Principal credentials (TENANT_ID, CLIENT_ID, CLIENT_SECRET) for the Azure Data Lake.
             Defaults to None.
             credentials_secret (str, optional): The name of the Azure Key Vault secret for Bigquery project. Defaults to None.
+            schedule_id (str, optional): ID of the schedule report job. Defaults to None.
+
         """
 
         self.name = name
@@ -65,6 +68,7 @@ class GenesysToADLS(Flow):
         self.adls_sp_credentials_secret = adls_sp_credentials_secret
         self.credentials_secret = credentials_secret
         self.if_exsists = if_exists
+        self.schedule_id = schedule_id
 
         super().__init__(*args, name=name, **kwargs)
 
@@ -72,7 +76,9 @@ class GenesysToADLS(Flow):
 
     def gen_flow(self) -> Flow:
 
-        df = genesys_report.bind(report_columns=self.columns, flow=self)
+        df = genesys_report.bind(
+            report_columns=self.columns, schedule_id=self.schedule_id, flow=self
+        )
         df_with_metadata = add_ingestion_metadata_task.bind(df, flow=self)
 
         if self.output_file_extension == ".parquet":

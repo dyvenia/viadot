@@ -135,6 +135,25 @@ class Genesys(Source):
                 "Output data error: " + str(type(e).__name__) + ": " + str(e)
             )
 
+    def get_all_schedules_job(self):
+        """Fetching analytics report url from json response.
+
+        Returns:
+            string: json body with all schedules jobs.
+        """
+        response = handle_api_response(
+            url=f"https://api.{self.environment}/api/v2/analytics/reporting/schedules",
+            headers=self.authorization_token,
+        )
+        try:
+            response_json = response.json()
+            self.logger.info("Successfully downloaded schedules jobs.")
+            return response_json
+        except AttributeError as e:
+            self.logger.error(
+                "Output data error: " + str(type(e).__name__) + ": " + str(e)
+            )
+
     def schedule_report(self, data_to_post: Dict[str, Any]):
         """POST method for report scheduling.
 
