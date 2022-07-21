@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added `rfc_character_limit` parameter in `SAPRFCToDF` task, `SAPRFC` source, `SAPRFCToADLS` and `SAPToDuckDB` flows
 - Added `on_bcp_error` and `bcp_error_log_path` parameters in `BCPTask`
 - Added ability to process queries which result exceed SAP's character per low limit in `SAPRFC` source
+- Added new flow `PrefectLogs` for extracting all logs from Prefect with details
+- Added `PrefectLogs` flow
 
 ### Changed
 - Changed `CheckColumnOrder` task and `ADLSToAzureSQL` flow to handle appending to non existing table
