@@ -1,21 +1,22 @@
+import os
 import re
+from itertools import chain
 from typing import Any, Dict, List, Literal
 
 import pandas as pd
 import prefect
+import pyarrow.parquet
 import pyodbc
 import requests
-import os
 from prefect.utilities import logging
 from prefect.utilities.graphql import EnumValue, with_args
 from requests.adapters import HTTPAdapter
 from requests.exceptions import ConnectionError, HTTPError, ReadTimeout, Timeout
 from requests.packages.urllib3.util.retry import Retry
 from urllib3.exceptions import ProtocolError
-from itertools import chain
+
 from .exceptions import APIError
 from .signals import SKIP
-
 
 logger = logging.get_logger(__name__)
 
@@ -389,34 +390,20 @@ def handle_if_empty_file(
 def check_if_empty_file(
     path: str,
     if_empty: Literal["warn", "skip", "fail"] = "warn",
-    file_extension: Literal[".parquet", ".csv"] = ".parquet",
-    file_sep: str = "\t",
 ):
     """
-    Task for checking if the file is empty and handling it. If there is only one column
-    "_viadot_downloaded_at_utc" in the file it's treated as empty one.
+    Task for checking if the file is empty and handling it.
 
     Args:
         path (str, required): Path to the local file.
         if_empty (Literal, optional): What to do if file is empty. Defaults to "warn".
-        file_extension (Literal, optional): File extension. Defaults to ".parquet".
-        file_sep (str, optional): File separator to use while checking .csv file. Defaults to "\t".
 
     """
+    if_empty = if_empty or "warn"
     if os.stat(path).st_size == 0:
         handle_if_empty_file(if_empty, message=f"Input file - '{path}' is empty.")
 
-    elif file_extension == ".parquet":
-        df = pd.read_parquet(path)
-        if "_viadot_downloaded_at_utc" in df.columns and len(df.columns) == 1:
-            handle_if_empty_file(
-                if_empty=if_empty,
-                message=f"Input file - '{path}' has only one column '_viadot_downloaded_at_utc'.",
-            )
-    elif file_extension == ".csv":
-        df = pd.read_csv(path, sep=file_sep)
-        if "_viadot_downloaded_at_utc" in df.columns and len(df.columns) == 1:
-            handle_if_empty_file(
-                if_empty=if_empty,
-                message=f"Input file - '{path}' has only one column '_viadot_downloaded_at_utc'.",
-            )
+    # when Parquet file contains only metadata
+    elif os.path.splitext(path)[1] == ".parquet":
+        if pyarrow.parquet.read_metadata(path).num_columns == 0:
+            handle_if_empty_file(if_empty, message=f"Input file - '{path}' is empty.")

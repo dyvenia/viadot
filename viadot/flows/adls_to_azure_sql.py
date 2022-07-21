@@ -13,10 +13,10 @@ from ..tasks import (
     AzureDataLakeCopy,
     AzureDataLakeToDF,
     AzureSQLCreateTable,
-    BCPTask,
-    DownloadGitHubFile,
     AzureSQLDBQuery,
+    BCPTask,
     CheckColumnOrder,
+    DownloadGitHubFile,
 )
 
 logger = logging.get_logger(__name__)
@@ -175,7 +175,7 @@ class ADLSToAzureSQL(Flow):
         # AzureSQLCreateTable
         self.table = table
         self.schema = schema
-        self.if_exists = self._map_if_exists(if_exists)
+        self.if_exists = if_exists
         self.check_col_order = check_col_order
         # Generate CSV
         self.remove_tab = remove_tab
@@ -280,7 +280,7 @@ class ADLSToAzureSQL(Flow):
             schema=self.schema,
             table=self.table,
             dtypes=dtypes,
-            if_exists=self.if_exists,
+            if_exists=self._map_if_exists(self.if_exists),
             credentials_secret=self.sqldb_credentials_secret,
             vault_name=self.vault_name,
             flow=self,

@@ -1,9 +1,9 @@
-from prefect import Flow
 from typing import Any, Dict, List, Literal
 
+from prefect import Flow
 
-from ..task_utils import df_to_parquet, add_ingestion_metadata_task, cast_df_to_str
-from ..tasks import SQLServerToDF, DuckDBCreateTableFromParquet
+from ..task_utils import add_ingestion_metadata_task, cast_df_to_str, df_to_parquet
+from ..tasks import DuckDBCreateTableFromParquet, SQLServerToDF
 
 df_task = SQLServerToDF()
 
@@ -63,10 +63,10 @@ class SQLServerToDuckDB(Flow):
         df = df_task.bind(
             config_key=self.sqlserver_config_key, query=self.sql_query, flow=self
         )
-        df_with_metadata = add_ingestion_metadata_task.bind(df, flow=self)
-        df_mapped = cast_df_to_str.bind(df_with_metadata, flow=self)
+        df_mapped = cast_df_to_str.bind(df, flow=self)
+        df_with_metadata = add_ingestion_metadata_task.bind(df_mapped, flow=self)
         parquet = df_to_parquet.bind(
-            df=df_mapped,
+            df=df_with_metadata,
             path=self.local_file_path,
             if_exists=self.if_exists,
             flow=self,

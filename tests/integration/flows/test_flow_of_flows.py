@@ -1,8 +1,9 @@
-import pytest
 from unittest import mock
+
+import pytest
+from prefect.engine.state import State, Success
+
 from viadot.flows import Pipeline
-from prefect.engine.state import Success
-from prefect.engine.state import State
 
 
 def test_pipeline_init():

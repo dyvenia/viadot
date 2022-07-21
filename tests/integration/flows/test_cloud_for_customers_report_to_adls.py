@@ -1,5 +1,5 @@
-from viadot.flows import CloudForCustomersReportToADLS
 from viadot.config import local_config
+from viadot.flows import CloudForCustomersReportToADLS
 
 
 def test_cloud_for_customers_report_to_adls():

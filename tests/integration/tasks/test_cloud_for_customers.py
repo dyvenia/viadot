@@ -1,6 +1,7 @@
-from viadot.tasks import C4CToDF, C4CReportToDF
-from viadot.config import local_config
 from prefect.tasks.secrets import PrefectSecret
+
+from viadot.config import local_config
+from viadot.tasks import C4CReportToDF, C4CToDF
 
 
 def test_c4c_to_df():

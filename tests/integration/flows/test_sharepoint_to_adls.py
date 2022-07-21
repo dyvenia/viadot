@@ -1,10 +1,12 @@
+import os
+from unittest import mock
+
+import pandas as pd
+import pendulum
+from prefect.tasks.secrets import PrefectSecret
+
 from viadot.flows import SharepointToADLS
 from viadot.tasks import AzureDataLakeRemove
-from prefect.tasks.secrets import PrefectSecret
-from unittest import mock
-import pandas as pd
-import os
-import pendulum
 
 ADLS_FILE_NAME = str(pendulum.now("utc")) + ".csv"
 ADLS_DIR_PATH = "raw/tests/"

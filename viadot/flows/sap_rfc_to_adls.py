@@ -1,10 +1,10 @@
-import pandas as pd
 from typing import Any, Dict, List, Literal
+
+import pandas as pd
 from prefect import Flow, task, unmapped
 
-from viadot.tasks import SAPRFCToDF
-from viadot.tasks import AzureDataLakeUpload
-from viadot.task_utils import df_to_csv, df_to_parquet, concat_dfs
+from viadot.task_utils import concat_dfs, df_to_csv, df_to_parquet
+from viadot.tasks import AzureDataLakeUpload, SAPRFCToDF
 
 download_sap_task = SAPRFCToDF()
 file_to_adls_task = AzureDataLakeUpload()
@@ -15,9 +15,9 @@ class SAPRFCToADLS(Flow):
         self,
         name: str,
         query: str = None,
-        queries: List[str] = None,
         rfc_sep: str = None,
         func: str = "RFC_READ_TABLE",
+        rfc_total_col_width_character_limit: int = 400,
         sap_credentials: dict = None,
         output_file_extension: str = ".parquet",
         local_file_path: str = None,
@@ -46,10 +46,12 @@ class SAPRFCToADLS(Flow):
 
         Args:
             name (str): The name of the flow.
-            query (str): Query to be executed with pyRFC. If multiple queries needed use `queries` parmeter. Defaults to None.
-            queries(List[str]) The list of queries to be executed with pyRFC. Defaults to None.
+            query (str): Query to be executed with pyRFC. Defaults to None.
             rfc_sep(str, optional): Which separator to use when querying SAP. If not provided, multiple options are automatically tried.
             func (str, optional): SAP RFC function to use. Defaults to "RFC_READ_TABLE".
+            rfc_total_col_width_character_limit (int, optional): Number of characters by which query will be split in chunks in case of too many columns
+            for RFC function. According to SAP documentation, the limit is 512 characters. However, we observed SAP raising an exception
+            even on a slightly lower number of characters, so we add a safety margin. Defaults to 400.
             sap_credentials (dict, optional): The credentials to use to authenticate with SAP. By default, they're taken from the local viadot config.
             output_file_extension (str, optional): Output file extension - to allow selection of .csv for data which is not easy to handle with parquet. Defaults to ".parquet".
             local_file_path (str, optional): Local destination path. Defaults to None.
@@ -62,9 +64,9 @@ class SAPRFCToADLS(Flow):
             vault_name(str, optional): The name of the vault from which to obtain the secrets. Defaults to None.
         """
         self.query = query
-        self.queries = queries
         self.rfc_sep = rfc_sep
         self.func = func
+        self.rfc_total_col_width_character_limit = rfc_total_col_width_character_limit
         self.sap_credentials = sap_credentials
         self.output_file_extension = output_file_extension
         self.local_file_path = local_file_path
@@ -81,24 +83,14 @@ class SAPRFCToADLS(Flow):
 
     def gen_flow(self) -> Flow:
 
-        if self.queries is not None:
-            df = download_sap_task.map(
-                query=self.queries,
-                sep=unmapped(self.rfc_sep),
-                func=unmapped(self.func),
-                credentials=unmapped(self.sap_credentials),
-                flow=self,
-            )
-            df_final = concat_dfs.bind(df, flow=self)
-            df_final.set_upstream(df, flow=self)
-        else:
-            df_final = download_sap_task(
-                query=self.query,
-                sep=self.rfc_sep,
-                func=self.func,
-                credentials=self.sap_credentials,
-                flow=self,
-            )
+        df_final = download_sap_task(
+            query=self.query,
+            sep=self.rfc_sep,
+            func=self.func,
+            rfc_total_col_width_character_limit=self.rfc_total_col_width_character_limit,
+            credentials=self.sap_credentials,
+            flow=self,
+        )
 
         if self.output_file_extension == ".parquet":
             df_to_file = df_to_parquet.bind(

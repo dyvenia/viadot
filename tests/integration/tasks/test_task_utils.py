@@ -1,6 +1,7 @@
-from viadot.task_utils import custom_mail_state_handler
-from prefect.tasks.secrets import PrefectSecret
 from prefect.engine.state import Failed, Success
+from prefect.tasks.secrets import PrefectSecret
+
+from viadot.task_utils import custom_mail_state_handler
 
 
 def test_custom_state_handler():

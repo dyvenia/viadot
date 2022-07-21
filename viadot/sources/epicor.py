@@ -1,15 +1,15 @@
-from urllib import response
-import requests
-import pandas as pd
-from typing import Any, Dict, Optional
 import xml.etree.ElementTree as ET
+from typing import Any, Dict, Optional
+from urllib import response
 
-from .base import Source
-from ..config import local_config
-from ..utils import handle_api_response
-from ..exceptions import CredentialError, DataRangeError
-
+import pandas as pd
+import requests
 from pydantic import BaseModel
+
+from ..config import local_config
+from ..exceptions import CredentialError, DataRangeError
+from ..utils import handle_api_response
+from .base import Source
 
 """ 
 The official documentation does not specify the list of required 

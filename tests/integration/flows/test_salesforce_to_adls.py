@@ -1,7 +1,9 @@
+import os
+
+from prefect.tasks.secrets import PrefectSecret
+
 from viadot.flows import SalesforceToADLS
 from viadot.tasks import AzureDataLakeRemove
-from prefect.tasks.secrets import PrefectSecret
-import os
 
 ADLS_FILE_NAME = "test_salesforce.parquet"
 ADLS_DIR_PATH = "raw/tests/"
