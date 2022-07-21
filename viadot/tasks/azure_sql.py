@@ -414,7 +414,7 @@ class CheckColumnOrder(Task):
         table_exists = len(result) != 0
         if not table_exists:
             self.logger.warning("Target table doesn't exists.")
-            return
+            return df
         if if_exists == "fail":
             raise ValueError(
                 "The table already exists and 'if_exists' is set to 'fail'."
