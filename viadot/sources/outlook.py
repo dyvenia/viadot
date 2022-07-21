@@ -14,7 +14,7 @@ class Outlook(Source):
         start_date: str = None,
         end_date: str = None,
         credentials: Dict[str, Any] = None,
-        limit: int = 10000,
+        limit: int = 10_000,
         request_retries: int = 10,
         *args: List[Any],
         **kwargs: Dict[str, Any],
@@ -28,18 +28,21 @@ class Outlook(Source):
             mailbox_name (str): Mailbox name.
             start_date (str, optional): A filtering start date parameter e.g. "2022-01-01". Defaults to None.
             end_date (str, optional): A filtering end date parameter e.g. "2022-01-02". Defaults to None.
-            credentials (Dict[str, Any], optional): The name of the Azure Key Vault secret containing a dictionary with
-            ACCOUNT_NAME and Service Principal credentials (TENANT_ID, CLIENT_ID, CLIENT_SECRET) for the Azure Application.
-            Defaults to None.
-            limit (int, optional): Number of fetched top messages. Defaults to 10000.
+            credentials (Dict[str, Any], optional): credentials (TENANT_ID, CLIENT_ID, CLIENT_SECRET) for the Outlook Azure Application
+            provided as dictionary.
+            limit (int, optional): Number of fetched top messages. Defaults to 10_000.
+            request_retries (int, optional): Number of tries to connect.
         """
+
         try:
             DEFAULT_CREDENTIALS = local_config["OUTLOOK"]
         except KeyError:
             DEFAULT_CREDENTIALS = None
         self.credentials = credentials or DEFAULT_CREDENTIALS
         if self.credentials is None:
-            raise CredentialError("You do not provide credentials!")
+            raise CredentialError("Credentials not found.")
+
+        super().__init__(*args, credentials=self.credentials, **kwargs)
 
         self.request_retries = request_retries
         self.mailbox_name = mailbox_name
@@ -53,11 +56,9 @@ class Outlook(Source):
                 self.start_date, "%Y-%m-%d"
             )
         else:
-            self.date_range_end_time = datetime.date.today() - datetime.timedelta(
-                days=1
-            )
+            self.date_range_end_time = datetime.date.today()
             self.date_range_start_time = datetime.date.today() - datetime.timedelta(
-                days=2
+                days=1
             )
             min_time = datetime.datetime.min.time()
             self.date_range_end_time = datetime.datetime.combine(
@@ -74,14 +75,14 @@ class Outlook(Source):
             main_resource=self.mailbox_name,
             request_retries=self.request_retries,
         )
+
         if self.account.authenticate():
-            print(f"{self.mailbox_name} Authenticated!")
+            self.logger.info(f"{self.mailbox_name} Authenticated!")
         else:
-            print(f"{self.mailbox_name} NOT Authenticated!")
+            self.logger.info(f"{self.mailbox_name} NOT Authenticated!")
 
         self.mailbox_obj = self.account.mailbox()
         self.mailbox_messages = self.mailbox_obj.get_messages(limit)
-        super().__init__(*args, credentials=self.credentials, **kwargs)
 
     def to_df(self) -> pd.DataFrame:
         """Download Outlook data into a pandas DataFrame.
@@ -144,10 +145,14 @@ class Outlook(Source):
                             row["Inbox"] = False
                         else:
                             row["Inbox"] = True
-
+                        row["_viadot_downloaded_at_utc"] = datetime.datetime.now(
+                            datetime.timezone.utc
+                        ).replace(microsecond=0)
                         data.append(row)
                     except KeyError as e:
-                        print("KeyError : " + str(e))
+                        self.logger.warning(
+                            f"There is missing message filed which you want to retrive \n {e} "
+                        )
             except StopIteration:
                 break
         df = pd.DataFrame(data=data)

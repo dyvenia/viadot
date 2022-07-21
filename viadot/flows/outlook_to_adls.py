@@ -5,7 +5,6 @@ import pandas as pd
 from ..task_utils import (
     df_to_csv,
     union_dfs_task,
-    add_ingestion_metadata_task,
     df_to_parquet,
 )
 
@@ -27,6 +26,9 @@ class OutlookToADLS(Flow):
         adls_file_path: str = None,
         overwrite_adls: bool = True,
         adls_sp_credentials_secret: str = None,
+        credentials: Dict[str, Any] = None,
+        credentials_secret: str = None,
+        vault_name: str = None,
         limit: int = 10000,
         if_exists: Literal["append", "replace", "skip"] = "append",
         *args: List[Any],
@@ -46,6 +48,12 @@ class OutlookToADLS(Flow):
             overwrite_adls (bool, optional): Whether to overwrite the file in ADLS. Defaults to True.
             adls_sp_credentials_secret (str, optional): The name of the Azure Key Vault secret containing a dictionary with
             ACCOUNT_NAME and Service Principal credentials (TENANT_ID, CLIENT_ID, CLIENT_SECRET) for the Azure Data Lake. Defaults to None.
+            credentials (Dict[str, Any], optional): credentials (TENANT_ID, CLIENT_ID, CLIENT_SECRET) for the Outlook Azure Application
+            provided as dictionary.
+            credentials_secret (str, optional): The name of the Azure Key Vault secret containing a dictionary with
+            ACCOUNT_NAME and Service Principal credentials (TENANT_ID, CLIENT_ID, CLIENT_SECRET) for the Outlook Azure Application.
+            Defaults to None.
+            vault_name (str, optional): The name of the vault from which to obtain the secrets. Defaults to None.
             limit (int, optional): Number of fetched top messages. Defaults to 10000.
             if_exists (Literal['append', 'replace', 'skip'], optional): What to do if the local file already exists. Defaults to "append".
         """
@@ -56,12 +64,15 @@ class OutlookToADLS(Flow):
         self.limit = limit
         self.local_file_path = local_file_path
         self.if_exsists = if_exists
+        self.credentials_secret = credentials_secret
+        self.credentials = credentials
 
         # AzureDataLakeUpload
         self.adls_file_path = adls_file_path
         self.output_file_extension = output_file_extension
         self.overwrite_adls = overwrite_adls
         self.adls_sp_credentials_secret = adls_sp_credentials_secret
+        self.vault_name = vault_name
 
         super().__init__(*args, name=name, **kwargs)
 
@@ -76,6 +87,9 @@ class OutlookToADLS(Flow):
             start_date=self.start_date,
             end_date=self.end_date,
             limit=self.limit,
+            credentials=self.credentials,
+            credentials_secret=self.credentials_secret,
+            vault_name=self.vault_name,
             flow=flow,
         )
 
@@ -84,20 +98,18 @@ class OutlookToADLS(Flow):
     def gen_flow(self) -> Flow:
 
         dfs = apply_map(self.gen_outlook_df, self.mailbox_list, flow=self)
-
         df = union_dfs_task.bind(dfs, flow=self)
-        df_with_metadata = add_ingestion_metadata_task.bind(df, flow=self)
 
         if self.output_file_extension == ".parquet":
             df_to_file = df_to_parquet.bind(
-                df=df_with_metadata,
+                df=df,
                 path=self.local_file_path,
                 if_exists=self.if_exsists,
                 flow=self,
             )
         else:
             df_to_file = df_to_csv.bind(
-                df=df_with_metadata,
+                df=df,
                 path=self.local_file_path,
                 if_exists=self.if_exsists,
                 flow=self,
@@ -111,6 +123,5 @@ class OutlookToADLS(Flow):
             flow=self,
         )
 
-        df_with_metadata.set_upstream(df, flow=self)
-        df_to_file.set_upstream(df_with_metadata, flow=self)
+        df_to_file.set_upstream(df, flow=self)
         file_to_adls_task.set_upstream(df_to_file, flow=self)
