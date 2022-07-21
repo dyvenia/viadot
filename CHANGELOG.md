@@ -18,6 +18,7 @@ DF to string before adding metadata
 - Changed `check_if_empty_file()` logic according to changes in `add_ingestion_metadata_task()`
 - Changed accepted values of `if_empty` parameter in `DuckDBCreateTableFromParquet`
 - Updated `.gitignore` to ignore files with `*.bak` extension and to ignore `credentials.json` in any directory
+- Changed logger messages in `AzureDataLakeRemove` task
 
 ### Fixed
 - Fixed handling empty response in `SAPRFC` source
