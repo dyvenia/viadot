@@ -70,13 +70,13 @@ class PrefectLogs(Flow):
         self.gen_flow()
 
     def get_formatted_value_from_timestamp(
-        self, value_type: str, value: Timestamp
+        self, value_type: Literal["time", "date"], value: Timestamp
     ) -> str:
         """
-        Function returns cleaned date/time from timestamp in string format (ex. "2022-01-01")
+        Function returns cleaned date/time from timestamp in string format (ex. "2022-01-01").
         Args:
-            value_type (str):  Desired part of the Timestamp value, "date" or "time".
-            value (timestamp): Timestamp value from Prefect.
+            value_type (Literal["time", "date"], optional): "date" or "time" type extracted from Prefect Timestamp
+            value (Timestamp): Timestamp value from Prefect.
         Return:
             str: date (ex. "2022-01-01") or time (ex. "13:10") from the Timestamp in string format
         """
