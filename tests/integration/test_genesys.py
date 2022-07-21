@@ -3,6 +3,7 @@ import pandas as pd
 from typing import List
 from viadot.sources import Genesys
 from viadot.tasks import GenesysToDF
+from unittest import mock
 
 
 @pytest.mark.init
@@ -53,3 +54,31 @@ def test_other_inicial_params(input_name):
 def test_get_all_schedules_job():
     g = Genesys()
     assert type(g.get_all_schedules_job()) == dict
+
+
+@pytest.mark.schedule_job
+def test_schedule_rob():
+    with mock.patch("viadot.sources.genesys.Genesys.schedule_report") as mock_method:
+        mock_method.return_value = 200
+        g = Genesys()
+
+        data_to_post = {
+            "name": "Schedule report job for test",
+            "quartzCronExpression": "0 15 * * * ?",
+            "description": "Export Test",
+            "timeZone": "Europe/Warsaw",
+            "timePeriod": "YESTERDAY",
+            "interval": "2022-07-10T22:00:00.000Z/2022-07-11T22:00:00.000Z",
+            "reportFormat": "XLS",
+            "locale": "en_US",
+            "enabled": True,
+            "reportId": "03bc1eef-082e-46c1-b9a8-fe45fbc3b205",
+            "parameters": {
+                "queueIds": [
+                    "780807e6-83b9-44be-aff0-a41c37fab004",
+                ]
+            },
+        }
+
+        status_code = g.schedule_report(data_to_post=data_to_post)
+        assert status_code == 200
