@@ -8,7 +8,7 @@ import warnings
 from typing import Any, Dict, List
 from viadot.config import local_config
 from viadot.sources.base import Source
-from ..exceptions import CredentialError
+from ..exceptions import CredentialError, APIError
 from ..utils import handle_api_response
 
 warnings.simplefilter("ignore")
@@ -135,6 +135,25 @@ class Genesys(Source):
                 "Output data error: " + str(type(e).__name__) + ": " + str(e)
             )
 
+    def get_all_schedules_job(self):
+        """Fetching analytics report url from json response.
+
+        Returns:
+            string: json body with all schedules jobs.
+        """
+        response = handle_api_response(
+            url=f"https://api.{self.environment}/api/v2/analytics/reporting/schedules",
+            headers=self.authorization_token,
+        )
+        try:
+            response_json = response.json()
+            self.logger.info("Successfully downloaded schedules jobs.")
+            return response_json
+        except AttributeError as e:
+            self.logger.error(
+                "Output data error: " + str(type(e).__name__) + ": " + str(e)
+            )
+
     def schedule_report(self, data_to_post: Dict[str, Any]):
         """POST method for report scheduling.
 
@@ -154,8 +173,8 @@ class Genesys(Source):
         if new_report.status_code == 200:
             self.logger.info("Succesfully scheduled new report.")
         else:
-            self.logger.error("Failed to scheduled new report.")
-
+            self.logger.error(f"Failed to scheduled new report. - {new_report.content}")
+            raise APIError("Failed to scheduled new report.")
         return new_report.status_code
 
     def download_report(
@@ -213,15 +232,18 @@ class Genesys(Source):
         Args:
             report_id (str): defined at the end of report url.
         """
-        delete = handle_api_response(
+        delete_method = handle_api_response(
             url=f"https://api.{self.environment}/api/v2/analytics/reporting/schedules/{report_id}",
             headers=self.authorization_token,
             method="DELETE",
         )
-        if delete.status_code == 200:
+        if delete_method.status_code == 200:
             self.logger.info("Successfully deleted report from Genesys API.")
 
         else:
-            self.logger.error("Failed to deleted report from Genesys API.")
+            self.logger.error(
+                f"Failed to deleted report from Genesys API. - {delete_method.content}"
+            )
+            raise APIError("Failed to deleted report from Genesys API.")
 
-        return delete.status_code
+        return delete_method.status_code
