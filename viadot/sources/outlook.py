@@ -28,7 +28,7 @@ class Outlook(Source):
             mailbox_name (str): Mailbox name.
             start_date (str, optional): A filtering start date parameter e.g. "2022-01-01". Defaults to None.
             end_date (str, optional): A filtering end date parameter e.g. "2022-01-02". Defaults to None.
-            credentials (Dict[str, Any], optional): credentials (TENANT_ID, CLIENT_ID, CLIENT_SECRET) for the Azure Application
+            credentials (Dict[str, Any], optional): credentials (TENANT_ID, CLIENT_ID, CLIENT_SECRET) for the Outlook Azure Application
             provided as dictionary.
             limit (int, optional): Number of fetched top messages. Defaults to 10_000.
             request_retries (int, optional): Number of tries to connect.
