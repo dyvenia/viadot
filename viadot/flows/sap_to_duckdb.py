@@ -58,6 +58,8 @@ class SAPToDuckDB(Flow):
             sap_credentials (dict, optional): The credentials to use to authenticate with SAP.
             By default, they're taken from the local viadot config.
             duckdb_credentials (dict, optional): The config to use for connecting with DuckDB. Defaults to None.
+            update_kv (bool, optional): Whether or not to update key value on Prefect. Defaults to False.
+            field_to_refresh (str, optional): Name of the field based on which key value will be updated. Defaults to None.
         """
 
         # SAPRFCToDF

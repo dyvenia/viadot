@@ -64,6 +64,8 @@ class SAPRFCToADLS(Flow):
             adls_sp_credentials_secret(str, optional): The name of the Azure Key Vault secret containing a dictionary with ACCOUNT_NAME and Service Principal
             credentials (TENANT_ID, CLIENT_ID, CLIENT_SECRET) for the Azure Data Lake.Defaults to None.
             vault_name(str, optional): The name of the vault from which to obtain the secrets. Defaults to None.
+            update_kv (bool, optional): Whether or not to update key value on Prefect. Defaults to False.
+            field_to_refresh (str, optional): Name of the field based on which key value will be updated. Defaults to None.
         """
         self.query = query
         self.rfc_sep = rfc_sep
