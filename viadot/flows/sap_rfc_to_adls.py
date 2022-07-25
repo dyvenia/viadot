@@ -28,7 +28,7 @@ class SAPRFCToADLS(Flow):
         adls_sp_credentials_secret: str = None,
         vault_name: str = None,
         update_kv: bool = False,
-        field_to_refresh: str = None,
+        filter_column: str = None,
         *args: List[any],
         **kwargs: Dict[str, Any],
     ):
@@ -65,7 +65,7 @@ class SAPRFCToADLS(Flow):
             credentials (TENANT_ID, CLIENT_ID, CLIENT_SECRET) for the Azure Data Lake.Defaults to None.
             vault_name(str, optional): The name of the vault from which to obtain the secrets. Defaults to None.
             update_kv (bool, optional): Whether or not to update key value on Prefect. Defaults to False.
-            field_to_refresh (str, optional): Name of the field based on which key value will be updated. Defaults to None.
+            filter_column (str, optional): Name of the field based on which key value will be updated. Defaults to None.
         """
         self.query = query
         self.rfc_sep = rfc_sep
@@ -82,7 +82,7 @@ class SAPRFCToADLS(Flow):
         self.vault_name = vault_name
 
         self.update_kv = update_kv
-        self.field_to_refresh = field_to_refresh
+        self.filter_column = filter_column
 
         super().__init__(*args, name=name, **kwargs)
 
@@ -130,7 +130,7 @@ class SAPRFCToADLS(Flow):
             set_new_kv.bind(
                 kv_name=self.name,
                 df=df,
-                field_to_refresh=self.field_to_refresh,
+                filter_column=self.filter_column,
                 flow=self,
             )
             set_new_kv.set_upstream(adls_upload, flow=self)

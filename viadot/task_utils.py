@@ -501,7 +501,7 @@ def cast_df_to_str(df: pd.DataFrame) -> pd.DataFrame:
 
 
 @task
-def set_new_kv(kv_name: str, df: pd.DataFrame, field_to_refresh: str):
+def set_new_kv(kv_name: str, df: pd.DataFrame, filter_column: str):
     """
     Task for updating/setting key value on Prefect based on the newest
     values in pandas DataFrame.
@@ -509,9 +509,9 @@ def set_new_kv(kv_name: str, df: pd.DataFrame, field_to_refresh: str):
     Args:
         kv_name (str): Name of key value to change.
         df (pd.DataFrame): DataFrame based on which value will be updated.
-        field_to_refresh (str): Field from which obtain new value.
+        filter_column (str): Field from which obtain new value.
     """
-    new_value = str(df[field_to_refresh].max()).strip()
+    new_value = str(df[filter_column].max()).strip()
     set_key_value(key=kv_name, value=new_value)
 
 

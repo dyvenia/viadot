@@ -34,7 +34,7 @@ class SAPToDuckDB(Flow):
         sap_credentials: dict = None,
         duckdb_credentials: dict = None,
         update_kv: bool = False,
-        field_to_refresh: str = None,
+        filter_column: str = None,
         *args: List[any],
         **kwargs: Dict[str, Any],
     ):
@@ -59,7 +59,7 @@ class SAPToDuckDB(Flow):
             By default, they're taken from the local viadot config.
             duckdb_credentials (dict, optional): The config to use for connecting with DuckDB. Defaults to None.
             update_kv (bool, optional): Whether or not to update key value on Prefect. Defaults to False.
-            field_to_refresh (str, optional): Name of the field based on which key value will be updated. Defaults to None.
+            filter_column (str, optional): Name of the field based on which key value will be updated. Defaults to None.
         """
 
         # SAPRFCToDF
@@ -77,7 +77,7 @@ class SAPToDuckDB(Flow):
         self.local_file_path = local_file_path or self.slugify(name) + ".parquet"
         self.duckdb_credentials = duckdb_credentials
         self.update_kv = update_kv
-        self.field_to_refresh = field_to_refresh
+        self.filter_column = filter_column
 
         super().__init__(*args, name=name, **kwargs)
 
@@ -122,7 +122,7 @@ class SAPToDuckDB(Flow):
             set_new_kv.bind(
                 kv_name=self.name,
                 df=df,
-                field_to_refresh=self.field_to_refresh,
+                filter_column=self.filter_column,
                 flow=self,
             )
             set_new_kv.set_upstream(table, flow=self)
