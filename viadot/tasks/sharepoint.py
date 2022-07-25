@@ -193,35 +193,42 @@ class SharepointToDF(Task):
         s.download_file(download_to_path=path_to_file)
 
         self.nrows = nrows
-        excel = pd.ExcelFile(self.path_to_file)
 
-        if self.sheet_number is not None:
-            sheet_names_list = [excel.sheet_names[self.sheet_number]]
+        if "csv" in self.path_to_file:
+            df = pd.read_csv(self.path_to_file)
         else:
-            sheet_names_list = excel.sheet_names
+            excel = pd.ExcelFile(self.path_to_file)
 
-        header_to_compare = None
-        chunks = []
+            if self.sheet_number is not None:
+                sheet_names_list = [excel.sheet_names[self.sheet_number]]
+            else:
+                sheet_names_list = excel.sheet_names
 
-        for sheetname in sheet_names_list:
-            df_header = pd.read_excel(self.path_to_file, sheet_name=sheetname, nrows=0)
+            header_to_compare = None
+            chunks = []
 
-            if validate_excel_file:
-                header_to_compare = self.check_column_names(
-                    df_header, header_to_compare
+            for sheetname in sheet_names_list:
+                df_header = pd.read_excel(
+                    self.path_to_file, sheet_name=sheetname, nrows=0
                 )
 
-            chunks = self.split_sheet(sheetname, self.nrows, chunks)
-            df_chunks = pd.concat(chunks)
+                if validate_excel_file:
+                    header_to_compare = self.check_column_names(
+                        df_header, header_to_compare
+                    )
 
-            # Rename the columns to concatenate the chunks with the header.
-            columns = {i: col for i, col in enumerate(df_header.columns.tolist())}
-            last_column = len(columns)
-            columns[last_column] = "sheet_name"
+                chunks = self.split_sheet(sheetname, self.nrows, chunks)
+                df_chunks = pd.concat(chunks)
 
-            df_chunks.rename(columns=columns, inplace=True)
-            df = pd.concat([df_header, df_chunks])
+                # Rename the columns to concatenate the chunks with the header.
+                columns = {i: col for i, col in enumerate(df_header.columns.tolist())}
+                last_column = len(columns)
+                columns[last_column] = "sheet_name"
 
-        df = self.df_replace_special_chars(df)
+                df_chunks.rename(columns=columns, inplace=True)
+                df = pd.concat([df_header, df_chunks])
+
+            df = self.df_replace_special_chars(df)
+
         self.logger.info(f"Successfully converted data to a DataFrame.")
         return df
