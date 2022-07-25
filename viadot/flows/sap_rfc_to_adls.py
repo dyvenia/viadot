@@ -3,7 +3,7 @@ from typing import Any, Dict, List, Literal
 import pandas as pd
 from prefect import Flow, task, unmapped
 
-from viadot.task_utils import concat_dfs, df_to_csv, df_to_parquet
+from viadot.task_utils import concat_dfs, df_to_csv, df_to_parquet, set_new_kv
 from viadot.tasks import AzureDataLakeUpload, SAPRFCToDF
 
 download_sap_task = SAPRFCToDF()
@@ -27,6 +27,8 @@ class SAPRFCToADLS(Flow):
         overwrite: bool = False,
         adls_sp_credentials_secret: str = None,
         vault_name: str = None,
+        update_kv: bool = False,
+        field_to_refresh: str = None,
         *args: List[any],
         **kwargs: Dict[str, Any],
     ):
@@ -77,13 +79,16 @@ class SAPRFCToADLS(Flow):
         self.adls_sp_credentials_secret = adls_sp_credentials_secret
         self.vault_name = vault_name
 
+        self.update_kv = update_kv
+        self.field_to_refresh = field_to_refresh
+
         super().__init__(*args, name=name, **kwargs)
 
         self.gen_flow()
 
     def gen_flow(self) -> Flow:
 
-        df_final = download_sap_task(
+        df = download_sap_task(
             query=self.query,
             sep=self.rfc_sep,
             func=self.func,
@@ -94,14 +99,14 @@ class SAPRFCToADLS(Flow):
 
         if self.output_file_extension == ".parquet":
             df_to_file = df_to_parquet.bind(
-                df=df_final,
+                df=df,
                 path=self.local_file_path,
                 if_exists=self.if_exists,
                 flow=self,
             )
         else:
             df_to_file = df_to_csv.bind(
-                df=df_final,
+                df=df,
                 sep=self.file_sep,
                 path=self.local_file_path,
                 if_exists=self.if_exists,
@@ -116,5 +121,14 @@ class SAPRFCToADLS(Flow):
             flow=self,
         )
 
-        df_to_file.set_upstream(df_final, flow=self)
+        df_to_file.set_upstream(df, flow=self)
         adls_upload.set_upstream(df_to_file, flow=self)
+
+        if self.update_kv == True:
+            set_new_kv.bind(
+                kv_name=self.name,
+                df=df,
+                field_to_refresh=self.field_to_refresh,
+                flow=self,
+            )
+            set_new_kv.set_upstream(adls_upload, flow=self)

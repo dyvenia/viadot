@@ -15,6 +15,7 @@ from prefect.engine.state import Failed
 from prefect.storage import Git
 from prefect.tasks.secrets import PrefectSecret
 from prefect.utilities import logging
+from prefect.backend import set_key_value
 from sendgrid import SendGridAPIClient
 from sendgrid.helpers.mail import Mail
 from toolz import curry
@@ -497,6 +498,12 @@ def cast_df_to_str(df: pd.DataFrame) -> pd.DataFrame:
     """
     df_mapped = df.astype("string")
     return df_mapped
+
+
+@task
+def set_new_kv(kv_name: str, df: pd.DataFrame, field_to_refresh: str):
+    new_value = str(df[field_to_refresh].max()).strip()
+    set_key_value(key=kv_name, value=new_value)
 
 
 class Git(Git):
