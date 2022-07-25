@@ -200,10 +200,12 @@ class SharepointToDF(Task):
             try:
                 df = pd.read_csv(self.path_to_file)
             except:
-                with open(self.path_to_file, 'rb') as rawdata:
-                    result = chardet.detect(rawdata.read(100000))                 
-                df = pd.read_csv(self.path_to_file, encoding = result['encoding'], sep='\t')
-                
+                with open(self.path_to_file, "rb") as rawdata:
+                    result = chardet.detect(rawdata.read(100000))
+                df = pd.read_csv(
+                    self.path_to_file, encoding=result["encoding"], sep="\t"
+                )
+
         else:
             excel = pd.ExcelFile(self.path_to_file)
 
