@@ -114,7 +114,6 @@ class Genesys(Source):
 
         return request_headers
 
-    @property
     def get_analitics_url_report(self):
         """Fetching analytics report url from json response.
 
@@ -177,6 +176,29 @@ class Genesys(Source):
             raise APIError("Failed to scheduled new report.")
         return new_report.status_code
 
+    def generate_reporting_export(self, data_to_post: Dict[str, Any]):
+        """POST method for reporting export.
+
+        Args:
+            data_to_post (Dict[str, Any]): json format of POST body.
+
+        Returns:
+            bool: schedule genesys report
+        """
+        payload = json.dumps(data_to_post)
+        new_report = handle_api_response(
+            url=f"https://api.{self.environment}/api/v2/analytics/reporting/exports",
+            headers=self.authorization_token,
+            method="POST",
+            body=payload,
+        )
+        if new_report.status_code == 200:
+            self.logger.info("Succesfully generated new export.")
+        else:
+            self.logger.error(f"Failed to generated new export. - {new_report.content}")
+            raise APIError("Failed to generated new export.")
+        return new_report.status_code
+
     def download_report(
         self,
         report_url: str,
@@ -226,8 +248,8 @@ class Genesys(Source):
 
         return df
 
-    def delete_report(self, report_id: str):
-        """DELETE method for deleting particular report.
+    def delete_scheduled_report_job(self, report_id: str):
+        """DELETE method for deleting particular report job.
 
         Args:
             report_id (str): defined at the end of report url.
@@ -238,6 +260,28 @@ class Genesys(Source):
             method="DELETE",
         )
         if delete_method.status_code == 200:
+            self.logger.info("Successfully deleted report from Genesys API.")
+
+        else:
+            self.logger.error(
+                f"Failed to deleted report from Genesys API. - {delete_method.content}"
+            )
+            raise APIError("Failed to deleted report from Genesys API.")
+
+        return delete_method.status_code
+
+    def delete_reporting_exports(self, report_id):
+        """DELETE method for deleting particular reporting exports.
+
+        Args:
+            report_id (str): defined at the end of report url.
+        """
+        delete_method = handle_api_response(
+            url=f"https://api.{self.environment}/api/v2/analytics/reporting/exports/{report_id}",
+            headers=self.authorization_token,
+            method="DELETE",
+        )
+        if delete_method.status_code < 300:
             self.logger.info("Successfully deleted report from Genesys API.")
 
         else:
