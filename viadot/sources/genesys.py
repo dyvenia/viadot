@@ -176,6 +176,27 @@ class Genesys(Source):
             raise APIError("Failed to scheduled new report.")
         return new_report.status_code
 
+    def load_reporting_exports(self, page_size: int = 100):
+        """POST method for reporting export.
+
+        Args:
+            data_to_post (Dict[str, Any]): json format of POST body.
+
+        Returns:
+            bool: schedule genesys report
+        """
+        new_report = handle_api_response(
+            url=f"https://api.{self.environment}/api/v2/analytics/reporting/exports?pageSize={page_size}",
+            headers=self.authorization_token,
+            method="GET",
+        )
+        if new_report.status_code == 200:
+            self.logger.info("Succesfully loaded all exports.")
+            return new_report.json()
+        else:
+            self.logger.error(f"Failed to loaded all exports. - {new_report.content}")
+            raise APIError("Failed to loaded all exports.")
+
     def generate_reporting_export(self, data_to_post: Dict[str, Any]):
         """POST method for reporting export.
 
