@@ -13,6 +13,7 @@ import aiohttp
 import time
 import json
 from aiolimiter import AsyncLimiter
+import pandas as pd
 
 from ..sources import Genesys
 
@@ -158,7 +159,7 @@ class GenesysExportsToCSV(Task):
         return True
 
 
-@task
+@task()
 def genesys_generate_body(
     days_interval=1,
     start_date=None,
@@ -212,13 +213,16 @@ def genesys_generate_body(
 
 
 @task
-def genesys_generate_exports(post_data_list=None, authorization_token=None):
+def genesys_generate_exports(authorization_token=None, post_data_list=None):
     """call a source"""
 
     limiter = AsyncLimiter(2, 15)
     semaphore = asyncio.Semaphore(value=1)
+    # post_data_list = tmp_df_post.to_dict("records")
+    print(post_data_list[:3])
 
     async def generate_post(post_data_list):
+        cnt = 0
         for data_to_post in post_data_list:
             if cnt != 10:
                 payload = json.dumps(data_to_post)
