@@ -65,9 +65,6 @@ class Genesys(Source):
             SCHEDULE_ID = self.credentials.get("SCHEDULE_ID", None)
             if SCHEDULE_ID is not None:
                 self.schedule_id = SCHEDULE_ID
-                self.logger.info(f"Successfully imported schedule id - {SCHEDULE_ID}.")
-            else:
-                self.logger.info(f"Please provide schedule id.")
 
         if self.environment is None:
             self.environment = self.credentials.get("ENVIRONMENT", None)
