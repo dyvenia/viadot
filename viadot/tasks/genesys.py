@@ -65,9 +65,6 @@ class GenesysToDF(Task):
             SCHEDULE_ID = self.credentials.get("SCHEDULE_ID", None)
             if SCHEDULE_ID is not None:
                 self.schedule_id = SCHEDULE_ID
-                self.logger.info(f"Successfully imported schedule id - {SCHEDULE_ID}.")
-            else:
-                self.logger.warning(f"Please provide schedule id.")
 
         if self.environment is None:
             self.environment = self.credentials.get("ENVIRONMENT", None)
@@ -218,8 +215,6 @@ def genesys_generate_exports(authorization_token=None, post_data_list=None):
 
     limiter = AsyncLimiter(2, 15)
     semaphore = asyncio.Semaphore(value=1)
-    # post_data_list = tmp_df_post.to_dict("records")
-    print(post_data_list[:3])
 
     async def generate_post(post_data_list):
         cnt = 0
@@ -235,7 +230,7 @@ def genesys_generate_exports(authorization_token=None, post_data_list=None):
                             data=payload,
                         ) as resp:
                             new_report = await resp.read()
-                            print(f" --- {cnt}--- downloading status: {new_report}")
+                            logger.info(f"--- {cnt} ---  {new_report}.")
                             semaphore.release()
                 cnt += 1
             else:
@@ -245,3 +240,46 @@ def genesys_generate_exports(authorization_token=None, post_data_list=None):
     loop = asyncio.get_event_loop()
     coroutine = generate_post(post_data_list)
     loop.run_until_complete(coroutine)
+
+
+@task
+def get_reporting_exports_data(request_json: Dict[str, Any] = None):
+    exports_data = []
+    if request_json is not None:
+        entities = request_json.get("entities")
+        if len(entities) != 0:
+            for e in entities:
+                tmp = [
+                    e.get("id"),
+                    e.get("downloadUrl"),
+                    e.get("filter").get("queueIds")[0],
+                    e.get("filter").get("mediaTypes")[0],
+                ]
+                exports_data.append(tmp)
+            return exports_data
+
+
+@task
+def download_all_reporting_exports(
+    ids_mapping: Dict[str, Any] = None,
+    report_data: List[str] = None,
+    file_extension="csv",
+    g_instance=None,
+    store_file_names: bool = True,
+) -> None:
+    file_name_list = []
+    for single_report in report_data:
+        file_name = (
+            ids_mapping.get(single_report[2]) + "_" + single_report[-1]
+        ).upper()
+        g_instance.download_report(
+            report_url=single_report[1],
+            output_file_name=file_name,
+            file_extension=file_extension,
+        )
+        if store_file_names is True:
+            file_name_list.append(file_name)
+
+    if store_file_names is True:
+        print(file_name_list)
+        return file_name_list
