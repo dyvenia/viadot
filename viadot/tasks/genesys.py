@@ -1,5 +1,4 @@
-from typing import Any, Dict, List, Tuple
-
+from typing import Any, Dict, List, Tuple, Literal
 import pandas as pd
 from prefect import Task, task
 from prefect.utilities import logging
@@ -14,6 +13,7 @@ import time
 import json
 from aiolimiter import AsyncLimiter
 import pandas as pd
+import numpy as np
 
 from ..sources import Genesys
 
@@ -263,10 +263,20 @@ def get_reporting_exports_data(request_json: Dict[str, Any] = None):
 def download_all_reporting_exports(
     ids_mapping: Dict[str, Any] = None,
     report_data: List[str] = None,
-    file_extension="csv",
+    file_extension: Literal["xls", "xlsx", "csv"] = "csv",
     g_instance=None,
     store_file_names: bool = True,
-) -> None:
+) -> List[str]:
+    """Get information form data report and download all files.
+    Args:
+        g_instance (Genesys): instance of Genesys source
+        ids_mapping (Dict[str, Any], optional): relationship between id and file name. Defaults to None.
+        data_report (List[str], optional): data extracted from genesys. Defaults to None.
+        file_extension (Literal[xls, xlsx, csv;], optional): file extensions for downloaded files. Defaults to "csv".
+        store_file_names (bool, optional): decide whether to store list of names.
+    Returns:
+        List[str]: all file names of downloaded files
+    """
     file_name_list = []
     for single_report in report_data:
         file_name = (
@@ -281,5 +291,15 @@ def download_all_reporting_exports(
             file_name_list.append(file_name)
 
     if store_file_names is True:
-        print(file_name_list)
         return file_name_list
+
+
+@task
+def delete_all_reports(reporting_data: List[str], genesys_instance: str = None):
+
+    ids_list = list(np.array(reporting_data).T[0])
+    try:
+        for id in ids_list:
+            genesys_instance.delete_reporting_exports(id)
+    except Exception as e:
+        logger.error("Output data error: " + str(type(e).__name__) + ": " + str(e))
