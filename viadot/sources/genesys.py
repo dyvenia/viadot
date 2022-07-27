@@ -59,6 +59,7 @@ class Genesys(Source):
         self.environment = environment
         self.report_url = report_url
         self.report_columns = report_columns
+        self.authorization_token = None
 
         # Get schedule id to retrive report url
         if self.schedule_id is None:
@@ -70,7 +71,7 @@ class Genesys(Source):
             self.environment = self.credentials.get("ENVIRONMENT", None)
 
     @property
-    def authorization_token(self):
+    def get_authorization_token(self):
         """
         Get authorization token with request headers.
 
@@ -109,7 +110,7 @@ class Genesys(Source):
             "Content-Type": "application/json",
         }
 
-        return request_headers
+        self.authorization_token = request_headers
 
     def get_analitics_url_report(self):
         """Fetching analytics report url from json response.
@@ -174,7 +175,7 @@ class Genesys(Source):
         return new_report.status_code
 
     def load_reporting_exports(self, page_size: int = 100):
-        """POST method for reporting export.
+        """GET method for reporting export.
 
         Args:
             data_to_post (Dict[str, Any]): json format of POST body.
