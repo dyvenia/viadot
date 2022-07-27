@@ -14,6 +14,8 @@ import json
 from aiolimiter import AsyncLimiter
 import pandas as pd
 import numpy as np
+from viadot.tasks import AzureDataLakeUpload
+
 
 from ..sources import Genesys
 
@@ -288,10 +290,33 @@ def download_all_reporting_exports(
             file_extension=file_extension,
         )
         if store_file_names is True:
-            file_name_list.append(file_name)
+            file_name_list.append(file_name + "." + file_extension)
 
     if store_file_names is True:
         return file_name_list
+
+
+@task
+def genesys_files_uploader(
+    file_names_list: List[str] = None,
+    adls_path: str = None,
+    overwrite: bool = True,
+    sp_credentials_secret: str = None,
+):
+
+    upload_task = AzureDataLakeUpload()
+
+    for file in file_names_list:
+        # ADL Class
+
+        print(adls_path + "/" + f"{file}")
+        # upload data to ADLS
+        upload_task.run(
+            from_path=file,
+            to_path=adls_path + f"{file}",
+            overwrite=overwrite,
+            sp_credentials_secret=sp_credentials_secret,
+        )
 
 
 @task
