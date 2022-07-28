@@ -511,8 +511,11 @@ def set_new_kv(kv_name: str, df: pd.DataFrame, filter_column: str):
         df (pd.DataFrame): DataFrame based on which value will be updated.
         filter_column (str): Field from which obtain new value.
     """
-    new_value = str(df[filter_column].max()).strip()
-    set_key_value(key=kv_name, value=new_value)
+    if df.empty:
+        logger.warning("Input DataFrame is empty. Cannot set a new key value.")
+    else:
+        new_value = str(df[filter_column].max()).strip()
+        set_key_value(key=kv_name, value=new_value)
 
 
 class Git(Git):
