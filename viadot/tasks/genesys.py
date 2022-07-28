@@ -15,7 +15,7 @@ from aiolimiter import AsyncLimiter
 import pandas as pd
 import numpy as np
 from viadot.tasks import AzureDataLakeUpload
-
+import time
 
 from ..sources import Genesys
 
@@ -34,10 +34,13 @@ IDS_MAPPING = {
 }
 
 
-class GenesysToDF(Task):
+class GenesysToCSV(Task):
     def __init__(
         self,
         report_name: str = None,
+        media_type_list: List[str] = None,
+        queueIds_list: List[str] = None,
+        data_to_post_str: str = None,
         credentials: Dict[str, Any] = None,
         environment: str = None,
         schedule_id: str = None,
@@ -61,6 +64,9 @@ class GenesysToDF(Task):
         self.environment = environment
         self.report_url = report_url
         self.report_columns = report_columns
+        self.media_type_list = media_type_list
+        self.queueIds_list = queueIds_list
+        self.data_to_post_str = data_to_post_str
 
         # Get schedule id to retrive report url
         if self.schedule_id is None:
@@ -108,6 +114,9 @@ class GenesysToDF(Task):
         """
         genesys = Genesys(
             report_name=report_name,
+            media_type_list=self.media_type_list,
+            queueIds_list=self.queueIds_list,
+            data_to_post_str=self.data_to_post_str,
             credentials=self.credentials,
             environment=environment,
             schedule_id=schedule_id,
@@ -115,10 +124,16 @@ class GenesysToDF(Task):
             report_columns=report_columns,
         )
 
-        df = genesys.to_df()
+        genesys.genesys_generate_body()
+        genesys.genesys_generate_exports()
+        time.sleep(60)
+        genesys.get_reporting_exports_data()
+        genesys.download_all_reporting_exports()
+        time.sleep(100)
+        genesys.delete_all_reporting_exports()
 
-        logger.info(f"Downloaded the data from the Genesys into the Data Frame.")
-        return df
+        logger.info(f"Downloaded the data from the Genesys into the CSV.")
+        # return df
 
 
 class GenesysExportsToCSV(Task):

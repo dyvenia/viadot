@@ -5,19 +5,41 @@ import sys
 import prefect
 import pandas as pd
 import warnings
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Literal
 from viadot.config import local_config
 from viadot.sources.base import Source
 from ..exceptions import CredentialError, APIError
 from ..utils import handle_api_response
+from datetime import datetime, timedelta
+import asyncio
+import aiohttp
+from aiolimiter import AsyncLimiter
 
 warnings.simplefilter("ignore")
+
+IDS_MAPPING = {
+    "780807e6-83b9-44be-aff0-a41c37fab004": "V_D_PROD_FB_Queue",
+    "383ee5e5-5d8f-406c-ad53-835b69fe82c5": "V_E_PROD_Voice_Dealer_Queue",
+    "d4fa7080-63d3-47ea-bcde-a4f89ae2870c": "V_E_PROD_Voice_Enduser_Queue",
+    "427b6226-cafd-4425-ba20-4e7dd8561088": "V_E_PROD_Voice_Installer_Queue",
+    "e0efef7f-b61a-4caf-b71b-002595c6899e": "V_E_PROD_Voice_Logistics_Queue",
+    "4c757061-b2cd-419e-bae3-4700730df4a6": "V_P_PROD_Voice_Dealer_Queue",
+    "b44af752-2ce4-4810-8b83-6d131f493e23": "V_P_PROD_Voice_Enduser_Queue",
+    "247586a2-986f-4078-b28e-e0a5694ec726": "V_P_PROD_Voice_Installer_Queue",
+}
 
 
 class Genesys(Source):
     def __init__(
         self,
         report_name: str = None,
+        start_date: str = None,
+        end_date: str = None,
+        days_interval: int = 1,
+        media_type_list: List[str] = None,
+        queueIds_list: List[str] = None,
+        data_to_post_str: str = None,
+        file_extension: Literal["xls", "xlsx", "csv"] = "csv",
         credentials: Dict[str, Any] = None,
         environment: str = None,
         schedule_id: str = None,
@@ -61,6 +83,14 @@ class Genesys(Source):
         self.report_columns = report_columns
         self.authorization_token = None
 
+        self.start_date = start_date
+        self.end_date = end_date
+        self.days_interval = days_interval
+        self.media_type_list = media_type_list
+        self.queueIds_list = queueIds_list
+        self.data_to_post_str = data_to_post_str
+        self.file_extension = file_extension
+
         # Get schedule id to retrive report url
         if self.schedule_id is None:
             SCHEDULE_ID = self.credentials.get("SCHEDULE_ID", None)
@@ -70,14 +100,9 @@ class Genesys(Source):
         if self.environment is None:
             self.environment = self.credentials.get("ENVIRONMENT", None)
 
-    @property
-    def get_authorization_token(self):
-        """
-        Get authorization token with request headers.
+        self.post_data_list = []
+        self.report_data = []
 
-        Returns:
-            Dict: request headers with token.
-        """
         CLIENT_ID = self.credentials.get("CLIENT_ID", None)
         CLIENT_SECRET = self.credentials.get("CLIENT_SECRET", None)
 
@@ -105,12 +130,142 @@ class Genesys(Source):
 
         response_json = response.json()
 
-        request_headers = {
+        self.request_headers = {
             "Authorization": f"{ response_json['token_type'] } { response_json['access_token']}",
             "Content-Type": "application/json",
         }
+        print(self.request_headers)
+        # self.authorization_token = request_headers
 
-        self.authorization_token = request_headers
+    def genesys_generate_body(self):
+        """data_to_post
+
+        example string:
+            mystr = '''{
+                "name": f"QUEUE_PERFORMANCE_DETAIL_VIEW_{media}",
+                "timeZone": "UTC",
+                "exportFormat": "CSV",
+                "interval": f"{end_date}T23:00:00/{start_date}T23:00:00",
+                "period": "PT30M",
+                "viewType": f"QUEUE_PERFORMANCE_DETAIL_VIEW",
+                "filter": {"mediaTypes": [f"{media}"], "queueIds": [f"{queueid}"], "directions":["inbound"],},
+                "read": True,
+                "locale": "en-us",
+                "hasFormatDurations": True,
+                "hasSplitFilters": True,
+                "excludeEmptyRows": True,
+                "hasSplitByMedia": True,
+                "hasSummaryRow": True,
+                "csvDelimiter": "COMMA",
+                "hasCustomParticipantAttributes": True,
+                "recipientEmails": [],
+                }'''
+        """
+
+        if self.start_date is None and self.end_date is None:
+            today = datetime.now()
+            yesterday = today - timedelta(days=self.days_interval)
+            start_date = today.strftime("%Y-%m-%d")
+            end_date = yesterday.strftime("%Y-%m-%d")
+        else:
+            start_date = datetime.strptime(start_date, "%Y-%m-%d")
+            end_date = datetime.strptime(end_date, "%Y-%m-%d")
+
+        for media in self.media_type_list:
+            for queueid in self.queueIds_list:
+                data_to_post = eval(self.data_to_post_str)
+
+                self.post_data_list.append(data_to_post)
+
+        return self.post_data_list
+
+    def genesys_generate_exports(self):
+        """call a source"""
+
+        limiter = AsyncLimiter(2, 15)
+        semaphore = asyncio.Semaphore(value=1)
+
+        async def generate_post():
+            cnt = 0
+            for data_to_post in self.post_data_list:
+                if cnt != 10:
+                    payload = json.dumps(data_to_post)
+                    async with aiohttp.ClientSession() as session:
+                        await semaphore.acquire()
+                        async with limiter:
+                            async with session.post(
+                                "https://api.mypurecloud.de/api/v2/analytics/reporting/exports",
+                                headers=self.request_headers,
+                                data=payload,
+                            ) as resp:
+                                new_report = await resp.read()
+                                # logger.info(f"--- {cnt} ---  {new_report}.")
+                                semaphore.release()
+                    cnt += 1
+                else:
+                    await asyncio.sleep(3)
+                    cnt = 0
+
+        loop = asyncio.get_event_loop()
+        coroutine = generate_post()
+        loop.run_until_complete(coroutine)
+
+    def get_reporting_exports_data(self):
+        # exports_data = []
+        request_json = self.load_reporting_exports()
+
+        print(
+            f" ====================== request_json: {request_json} ========================="
+        )
+        if request_json is not None:
+            entities = request_json.get("entities")
+            if len(entities) != 0:
+                for e in entities:
+                    tmp = [
+                        e.get("id"),
+                        e.get("downloadUrl"),
+                        e.get("filter").get("queueIds")[0],
+                        e.get("filter").get("mediaTypes")[0],
+                    ]
+                    self.report_data.append(tmp)
+        print(
+            f"============= self.report_data.len: {len(self.report_data)} \n{self.report_data[0]}"
+        )
+        # return exports_data
+
+    def download_all_reporting_exports(
+        self,
+        # ids_mapping: Dict[str, Any] = None,
+        # report_data: List[str] = None,
+        store_file_names: bool = True,
+    ) -> List[str]:
+        """Get information form data report and download all files.
+        Args:
+            g_instance (Genesys): instance of Genesys source
+            ids_mapping (Dict[str, Any], optional): relationship between id and file name. Defaults to None.
+            data_report (List[str], optional): data extracted from genesys. Defaults to None.
+            file_extension (Literal[xls, xlsx, csv;], optional): file extensions for downloaded files. Defaults to "csv".
+            store_file_names (bool, optional): decide whether to store list of names.
+        Returns:
+            List[str]: all file names of downloaded files
+        """
+        file_name_list = []
+        # report_data = self.get_reporting_exports_data()
+        for single_report in self.report_data:
+            # print(f"=======================     {single_report}       ============")
+            file_name = (
+                IDS_MAPPING.get(single_report[2]) + "_" + single_report[-1]
+            ).upper()
+            self.download_report(
+                report_url=single_report[1],
+                output_file_name=file_name,
+                file_extension=self.file_extension,
+            )
+            if store_file_names is True:
+                file_name_list.append(file_name + "." + self.file_extension)
+
+        if store_file_names is True:
+            return file_name_list
 
     def get_analitics_url_report(self):
         """Fetching analytics report url from json response.
@@ -185,7 +340,7 @@ class Genesys(Source):
         """
         new_report = handle_api_response(
             url=f"https://api.{self.environment}/api/v2/analytics/reporting/exports?pageSize={page_size}",
-            headers=self.authorization_token,
+            headers=self.request_headers,  # .authorization_token,
             method="GET",
         )
         if new_report.status_code == 200:
@@ -310,3 +465,7 @@ class Genesys(Source):
             raise APIError("Failed to deleted report from Genesys API.")
 
         return delete_method.status_code
+
+    def delete_all_reporting_exports(self):
+        for report in self.report_data:
+            self.delete_reporting_exports(report_id=report[0])
