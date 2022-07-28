@@ -123,17 +123,19 @@ class GenesysToCSV(Task):
             report_url=report_url,
             report_columns=report_columns,
         )
-
         genesys.genesys_generate_body()
         genesys.genesys_generate_exports()
+        # in order to wait for API POST request add it
         time.sleep(60)
         genesys.get_reporting_exports_data()
-        genesys.download_all_reporting_exports()
+        file_names = genesys.download_all_reporting_exports()
+        logger.info(f"Downloaded the data from the Genesys into the CSV.")
+        # in order to wait for API GET request call it
         time.sleep(100)
         genesys.delete_all_reporting_exports()
-
-        logger.info(f"Downloaded the data from the Genesys into the CSV.")
-        # return df
+        logger.info(f"DELETE all existing reports")
+        
+        return file_names
 
 
 class GenesysExportsToCSV(Task):

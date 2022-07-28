@@ -81,7 +81,7 @@ class Genesys(Source):
         self.environment = environment
         self.report_url = report_url
         self.report_columns = report_columns
-        self.authorization_token = None
+        # self.authorization_token = None
 
         self.start_date = start_date
         self.end_date = end_date
@@ -103,9 +103,15 @@ class Genesys(Source):
         self.post_data_list = []
         self.report_data = []
 
+    @property
+    def authorization_token(self):
+        """
+        Get authorization token with request headers.
+        Returns:
+            Dict: request headers with token.
+        """
         CLIENT_ID = self.credentials.get("CLIENT_ID", None)
         CLIENT_SECRET = self.credentials.get("CLIENT_SECRET", None)
-
         authorization = base64.b64encode(
             bytes(CLIENT_ID + ":" + CLIENT_SECRET, "ISO-8859-1")
         ).decode("ascii")
@@ -113,7 +119,6 @@ class Genesys(Source):
             "Authorization": f"Basic {authorization}",
             "Content-Type": "application/x-www-form-urlencoded",
         }
-
         request_body = {"grant_type": "client_credentials"}
         response = handle_api_response(
             f"https://login.{self.environment}/oauth/token",
@@ -127,15 +132,13 @@ class Genesys(Source):
             self.logger.info(
                 f"Failure: { str(response.status_code) } - { response.reason }"
             )
-
         response_json = response.json()
-
-        self.request_headers = {
+        request_headers = {
             "Authorization": f"{ response_json['token_type'] } { response_json['access_token']}",
             "Content-Type": "application/json",
         }
-        print(self.request_headers)
-        # self.authorization_token = request_headers
+
+        return request_headers
 
     def genesys_generate_body(self):
         """data_to_post
@@ -195,7 +198,7 @@ class Genesys(Source):
                         async with limiter:
                             async with session.post(
                                 "https://api.mypurecloud.de/api/v2/analytics/reporting/exports",
-                                headers=self.request_headers,
+                                headers=self.authorization_token,
                                 data=payload,
                             ) as resp:
                                 new_report = await resp.read()
@@ -211,12 +214,9 @@ class Genesys(Source):
         loop.run_until_complete(coroutine)
 
     def get_reporting_exports_data(self):
-        # exports_data = []
+
         request_json = self.load_reporting_exports()
 
-        print(
-            f" ====================== request_json: {request_json} ========================="
-        )
         if request_json is not None:
             entities = request_json.get("entities")
             if len(entities) != 0:
@@ -228,15 +228,9 @@ class Genesys(Source):
                         e.get("filter").get("mediaTypes")[0],
                     ]
                     self.report_data.append(tmp)
-        print(
-            f"============= self.report_data.len: {len(self.report_data)} \n{self.report_data[0]}"
-        )
-        # return exports_data
 
     def download_all_reporting_exports(
         self,
-        # ids_mapping: Dict[str, Any] = None,
-        # report_data: List[str] = None,
         store_file_names: bool = True,
     ) -> List[str]:
         """Get information form data report and download all files.
@@ -250,9 +244,7 @@ class Genesys(Source):
             List[str]: all file names of downloaded files
         """
         file_name_list = []
-        # report_data = self.get_reporting_exports_data()
         for single_report in self.report_data:
-            # print(f"=======================     {single_report}       ============")
             file_name = (
                 IDS_MAPPING.get(single_report[2]) + "_" + single_report[-1]
             ).upper()
@@ -340,7 +332,7 @@ class Genesys(Source):
         """
         new_report = handle_api_response(
             url=f"https://api.{self.environment}/api/v2/analytics/reporting/exports?pageSize={page_size}",
-            headers=self.request_headers,  # .authorization_token,
+            headers=self.authorization_token,
             method="GET",
         )
         if new_report.status_code == 200:
