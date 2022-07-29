@@ -202,20 +202,24 @@ class Genesys(Source):
 
         async def generate_post():
             cnt = 0
+
             for data_to_post in self.post_data_list:
+                print("--" * 20)
+                print(data_to_post)
+                print("--" * 20)
                 if cnt != 10:
                     payload = json.dumps(data_to_post)
                     async with aiohttp.ClientSession() as session:
                         await semaphore.acquire()
                         async with limiter:
                             async with session.post(
-                                f"https://{self.environment}/api/v2/analytics/reporting/exports",
+                                f"https://api.{self.environment}/api/v2/analytics/reporting/exports",
                                 headers=self.authorization_token,
                                 data=payload,
                             ) as resp:
                                 new_report = await resp.read()
                                 self.logger.info(
-                                    f"Generated report export --- {[y for x,y in payload.get('filter').items()]}."
+                                    f"Generated report export --- \n {payload}."
                                 )
                                 semaphore.release()
                     cnt += 1
@@ -246,6 +250,7 @@ class Genesys(Source):
                         entity.get("filter").get("mediaTypes")[0],
                     ]
                     self.report_data.append(tmp)
+        self.logger.info("Generated list of reports entities.")
 
     def download_all_reporting_exports(
         self,
@@ -479,7 +484,6 @@ class Genesys(Source):
         return delete_method.status_code
 
     def delete_all_reporting_exports(self):
-        """Function that deletes all reporting from self.reporting_data list.
-        """
+        """Function that deletes all reporting from self.reporting_data list."""
         for report in self.report_data:
             self.delete_reporting_exports(report_id=report[0])
