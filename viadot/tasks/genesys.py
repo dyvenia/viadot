@@ -1,22 +1,15 @@
-from typing import Any, Dict, List, Tuple, Literal
+import time
+from typing import Any, Dict, List
+
 import pandas as pd
-from prefect import Task, task
+import prefect
+from prefect import Task
 from prefect.utilities import logging
 from prefect.utilities.tasks import defaults_from_attrs
-import prefect
-from ..exceptions import CredentialError
-from datetime import datetime, timedelta
-from viadot.config import local_config
-import asyncio
-import aiohttp
-import time
-import json
-from aiolimiter import AsyncLimiter
-import pandas as pd
-import numpy as np
-import time
-from ..sources import Genesys
 
+from viadot.config import local_config
+from ..exceptions import CredentialError
+from ..sources import Genesys
 
 logger = logging.get_logger()
 
@@ -25,6 +18,9 @@ class GenesysToCSV(Task):
     def __init__(
         self,
         report_name: str = None,
+        start_date: str = None,
+        end_date: str = None,
+        days_interval: int = 1,
         media_type_list: List[str] = None,
         queueIds_list: List[str] = None,
         data_to_post_str: str = None,
@@ -36,6 +32,25 @@ class GenesysToCSV(Task):
         *args: List[Any],
         **kwargs: Dict[str, Any],
     ):
+        """_summary_
+
+        Args:
+            report_name (str, optional): _description_. Defaults to None.
+            start_date (str, optional):  ________. Defaults to None.
+            end_date (str, optional):  ________. Defaults to None.
+            days_interval (int, optional):  ________. Defaults to None.
+            media_type_list (List[str], optional):  ________. Defaults to None.
+            queueIds_list (List[str], optional):  ________. Defaults to None.
+            data_to_post_str (str, optional):  ________. Defaults to None.
+            credentials (Dict[str, Any], optional): Credentials to connect with Genesys API containing CLIENT_ID, CLIENT_SECRET, SCHEDULE_ID and host server. Defaults to None.
+            environment (str, optional): Adress of host server. Defaults to None than will be used enviroment from credentials.
+            schedule_id (str, optional): The ID of report. Defaults to None.
+            report_url (str, optional): The url of report generated in json response. Defaults to None.
+            report_columns (List[str], optional): List of exisiting column in report. Defaults to None.
+
+        Raises:
+            CredentialError: If credentials are not provided in local_config or directly as a parameter.
+        """
 
         try:
             DEFAULT_CREDENTIALS = local_config["GENESYS"]
@@ -51,6 +66,9 @@ class GenesysToCSV(Task):
         self.environment = environment
         self.report_url = report_url
         self.report_columns = report_columns
+        self.start_date = start_date
+        self.end_date = end_date
+        self.days_interval = days_interval
         self.media_type_list = media_type_list
         self.queueIds_list = queueIds_list
         self.data_to_post_str = data_to_post_str
@@ -99,8 +117,12 @@ class GenesysToCSV(Task):
         Returns:
             pd.DataFrame: The API GET as a pandas DataFrames from Genesys.
         """
+
         genesys = Genesys(
             report_name=report_name,
+            start_date=self.start_date,
+            end_date=self.end_date,
+            days_interval=self.days_interval,
             media_type_list=self.media_type_list,
             queueIds_list=self.queueIds_list,
             data_to_post_str=self.data_to_post_str,
