@@ -21,18 +21,6 @@ from ..sources import Genesys
 logger = logging.get_logger()
 
 
-IDS_MAPPING = {
-    "V_D_PROD_FB_Queue": "780807e6-83b9-44be-aff0-a41c37fab004",
-    "V_E_PROD_Voice_Dealer_Queue": "383ee5e5-5d8f-406c-ad53-835b69fe82c5",
-    "V_E_PROD_Voice_Enduser_Queue": "d4fa7080-63d3-47ea-bcde-a4f89ae2870c",
-    "V_E_PROD_Voice_Installer_Queue": "427b6226-cafd-4425-ba20-4e7dd8561088",
-    "V_E_PROD_Voice_Logistics_Queue": "e0efef7f-b61a-4caf-b71b-002595c6899e",
-    "V_P_PROD_Voice_Dealer_Queue": "4c757061-b2cd-419e-bae3-4700730df4a6",
-    "V_P_PROD_Voice_Enduser_Queue": "b44af752-2ce4-4810-8b83-6d131f493e23",
-    "V_P_PROD_Voice_Installer_Queue": "247586a2-986f-4078-b28e-e0a5694ec726",
-}
-
-
 class GenesysToCSV(Task):
     def __init__(
         self,

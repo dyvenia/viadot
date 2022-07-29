@@ -15,6 +15,7 @@ import asyncio
 import aiohttp
 from aiolimiter import AsyncLimiter
 
+
 warnings.simplefilter("ignore")
 
 IDS_MAPPING = {
@@ -32,18 +33,19 @@ IDS_MAPPING = {
 class Genesys(Source):
     def __init__(
         self,
-        report_name: str = None,
-        start_date: str = None,
-        end_date: str = None,
-        days_interval: int = 1,
         media_type_list: List[str] = None,
         queueIds_list: List[str] = None,
         data_to_post_str: str = None,
+        ids_mapping: Dict[str, Any] = None,
+        start_date: str = None,
+        end_date: str = None,
+        days_interval: int = 1,
+        report_name: str = None,
         file_extension: Literal["xls", "xlsx", "csv"] = "csv",
         credentials: Dict[str, Any] = None,
         environment: str = None,
-        schedule_id: str = None,
         report_url: str = None,
+        schedule_id: str = None,
         report_columns: List[str] = None,
         *args: List[Any],
         **kwargs: Dict[str, Any],
@@ -93,12 +95,15 @@ class Genesys(Source):
 
         # Get schedule id to retrive report url
         if self.schedule_id is None:
-            SCHEDULE_ID = self.credentials.get("SCHEDULE_ID", None)
-            if SCHEDULE_ID is not None:
-                self.schedule_id = SCHEDULE_ID
+            self.schedule_id = self.credentials.get("SCHEDULE_ID", None)
+            # if SCHEDULE_ID is not None:
+            #     self.schedule_id = SCHEDULE_ID
 
         if self.environment is None:
             self.environment = self.credentials.get("ENVIRONMENT", None)
+
+        if self.ids_mapping is None:
+            self.ids_mapping = self.credentials.get("IDS_MAPPING", None)
 
         self.post_data_list = []
         self.report_data = []
@@ -197,12 +202,14 @@ class Genesys(Source):
                         await semaphore.acquire()
                         async with limiter:
                             async with session.post(
-                                "https://api.mypurecloud.de/api/v2/analytics/reporting/exports",
+                                f"https://{self.environment}/api/v2/analytics/reporting/exports",
                                 headers=self.authorization_token,
                                 data=payload,
                             ) as resp:
                                 new_report = await resp.read()
-                                # logger.info(f"--- {cnt} ---  {new_report}.")
+                                self.logger.info(
+                                    f"Generated report export --- {[y for x,y in payload.get('filter').items()]}."
+                                )
                                 semaphore.release()
                     cnt += 1
                 else:
@@ -220,12 +227,12 @@ class Genesys(Source):
         if request_json is not None:
             entities = request_json.get("entities")
             if len(entities) != 0:
-                for e in entities:
+                for entity in entities:
                     tmp = [
-                        e.get("id"),
-                        e.get("downloadUrl"),
-                        e.get("filter").get("queueIds")[0],
-                        e.get("filter").get("mediaTypes")[0],
+                        entity.get("id"),
+                        entity.get("downloadUrl"),
+                        entity.get("filter").get("queueIds")[0],
+                        entity.get("filter").get("mediaTypes")[0],
                     ]
                     self.report_data.append(tmp)
 
@@ -246,7 +253,7 @@ class Genesys(Source):
         file_name_list = []
         for single_report in self.report_data:
             file_name = (
-                IDS_MAPPING.get(single_report[2]) + "_" + single_report[-1]
+                self.ids_mapping.get(single_report[2]) + "_" + single_report[-1]
             ).upper()
             self.download_report(
                 report_url=single_report[1],
