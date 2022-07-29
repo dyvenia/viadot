@@ -7,7 +7,6 @@ from prefect import Task
 from prefect.utilities import logging
 from prefect.utilities.tasks import defaults_from_attrs
 
-
 from viadot.config import local_config
 from ..exceptions import CredentialError
 from ..sources import Genesys
@@ -136,15 +135,17 @@ class GenesysToCSV(Task):
         )
         genesys.genesys_generate_body()
         genesys.genesys_generate_exports()
+        logger.info(f"Waiting for caching data in Genesys database.")
         # in order to wait for API POST request add it
         time.sleep(60)
         genesys.get_reporting_exports_data()
         file_names = genesys.download_all_reporting_exports()
         logger.info(f"Downloaded the data from the Genesys into the CSV.")
         # in order to wait for API GET request call it
+        logger.info(f"Waiting for caching data in Genesys database.")
         time.sleep(100)
         genesys.delete_all_reporting_exports()
-        logger.info(f"DELETE all existing reports")
+        logger.info(f"All existing reports were delted.")
 
         return file_names
 

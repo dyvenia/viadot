@@ -15,6 +15,7 @@ from viadot.sources.base import Source
 from ..exceptions import CredentialError, APIError
 from ..utils import handle_api_response
 
+
 warnings.simplefilter("ignore")
 
 IDS_MAPPING = {
@@ -32,41 +33,44 @@ IDS_MAPPING = {
 class Genesys(Source):
     def __init__(
         self,
-        report_name: str = None,
-        start_date: str = None,
-        end_date: str = None,
-        days_interval: int = 1,
         media_type_list: List[str] = None,
         queueIds_list: List[str] = None,
         data_to_post_str: str = None,
+        ids_mapping: Dict[str, Any] = None,
+        start_date: str = None,
+        end_date: str = None,
+        days_interval: int = 1,
+        report_name: str = None,
         file_extension: Literal["xls", "xlsx", "csv"] = "csv",
         credentials: Dict[str, Any] = None,
         environment: str = None,
-        schedule_id: str = None,
         report_url: str = None,
+        schedule_id: str = None,
         report_columns: List[str] = None,
         *args: List[Any],
         **kwargs: Dict[str, Any],
     ):
         """
-        Genesys connector which allow for reports scheduling, listing and downloading into Data Frame.
+        Genesys connector which allow for reports scheduling, listing and downloading into Data Frame or Specified fromat output.
 
         Globals:
             IDS_MAPPING (Dict[str, Any], optional): relationship between id and file name. Defaults to None.
 
         Args:
+            media_type_list (List[str], optional):  List of specific media types. Defaults to None.
+            queueIds_list (List[str], optional):  List of specific queues ids. Defaults to None.
+            data_to_post_str (str, optional):  String template to generate json body. Defaults to None.
+            ids_mapping (str, optional): Dictionary mapping for converting IDs to strings. Defaults to None.
+            start_date (str, optional):  Start date of the report. Defaults to None.
+            end_date (str, optional):  End date of the report. Defaults to None.
+            days_interval (int, optional):  How many days report should include. Defaults to None.
             report_name (str, optional): Name of the report. Defaults to None.
-            start_date (str, optional):  ________. Defaults to None.
-            end_date (str, optional):  ________. Defaults to None.
-            days_interval (int, optional):  ________. Defaults to None.
-            media_type_list (List[str], optional):  ________. Defaults to None.
-            queueIds_list (List[str], optional):  ________. Defaults to None.
-            data_to_post_str (str, optional):  ________. Defaults to None.
             file_extension (Literal[xls, xlsx, csv;], optional): file extensions for downloaded files. Defaults to "csv".
-            credentials (Dict[str, Any], optional): Credentials to connect with Genesys API containing CLIENT_ID, CLIENT_SECRET, SCHEDULE_ID and host server. Defaults to None.
-            environment (str, optional): Adress of host server. Defaults to None than will be used enviroment from credentials.
-            schedule_id (str, optional): The ID of report. Defaults to None.
+            credentials (Dict[str, Any], optional): Credentials to connect with Genesys API containing CLIENT_ID,
+            environment (str, optional): Adress of host server. Defaults to None than will be used enviroment
+            from credentials.
             report_url (str, optional): The url of report generated in json response. Defaults to None.
+            schedule_id (str, optional): The ID of report. Defaults to None.
             report_columns (List[str], optional): List of exisiting column in report. Defaults to None.
 
         Raises:
@@ -98,15 +102,19 @@ class Genesys(Source):
         self.queueIds_list = queueIds_list
         self.data_to_post_str = data_to_post_str
         self.file_extension = file_extension
+        self.ids_mapping = ids_mapping
 
         # Get schedule id to retrive report url
         if self.schedule_id is None:
-            SCHEDULE_ID = self.credentials.get("SCHEDULE_ID", None)
-            if SCHEDULE_ID is not None:
-                self.schedule_id = SCHEDULE_ID
+            self.schedule_id = self.credentials.get("SCHEDULE_ID", None)
+            # if SCHEDULE_ID is not None:
+            #     self.schedule_id = SCHEDULE_ID
 
         if self.environment is None:
             self.environment = self.credentials.get("ENVIRONMENT", None)
+
+        if self.ids_mapping is None:
+            self.ids_mapping = self.credentials.get("IDS_MAPPING", None)
 
         self.post_data_list = []
         self.report_data = []
@@ -115,6 +123,9 @@ class Genesys(Source):
     def authorization_token(self):
         """
         Get authorization token with request headers.
+
+        Locals:
+            CLIENT_SECRET, SCHEDULE_ID and host server. Defaults to None.
 
         Returns:
             Dict: request headers with token.
@@ -149,11 +160,12 @@ class Genesys(Source):
 
         return request_headers
 
-    def genesys_generate_body(self) -> List[dict]:
-        """data_to_post
+    def genesys_generate_body(self):
+        """
+        Function that generate json body for Post request method.
 
         example string:
-            mystr = '''{
+            example_raw_json_body_string = '''{
                 "name": f"QUEUE_PERFORMANCE_DETAIL_VIEW_{media}",
                 "timeZone": "UTC",
                 "exportFormat": "CSV",
@@ -172,6 +184,122 @@ class Genesys(Source):
                 "hasCustomParticipantAttributes": True,
                 "recipientEmails": [],
                 }'''
+
+        Returns: self.post_data_list (List[str]): List of formated POST body.
+
+        """
+
+        if self.start_date is None and self.end_date is None:
+            today = datetime.now()
+            yesterday = today - timedelta(days=self.days_interval)
+            start_date = today.strftime("%Y-%m-%d")
+            end_date = yesterday.strftime("%Y-%m-%d")
+        else:
+            start_date = datetime.strptime(start_date, "%Y-%m-%d")
+            end_date = datetime.strptime(end_date, "%Y-%m-%d")
+
+        for media in self.media_type_list:
+            for queueid in self.queueIds_list:
+                data_to_post = eval(self.data_to_post_str)
+
+                self.post_data_list.append(data_to_post)
+
+        return self.post_data_list
+
+    def genesys_generate_exports(self):
+        """
+        Function that make POST request method to generate export reports.
+        """
+
+        limiter = AsyncLimiter(2, 15)
+        semaphore = asyncio.Semaphore(value=1)
+
+        async def generate_post():
+            cnt = 0
+
+            for data_to_post in self.post_data_list:
+                print("--" * 20)
+                print(data_to_post)
+                print("--" * 20)
+                if cnt != 10:
+                    payload = json.dumps(data_to_post)
+                    async with aiohttp.ClientSession() as session:
+                        await semaphore.acquire()
+                        async with limiter:
+                            async with session.post(
+                                f"https://api.{self.environment}/api/v2/analytics/reporting/exports",
+                                headers=self.authorization_token,
+                                data=payload,
+                            ) as resp:
+                                new_report = await resp.read()
+                                self.logger.info(
+                                    f"Generated report export --- \n {payload}."
+                                )
+                                semaphore.release()
+                    cnt += 1
+                else:
+                    await asyncio.sleep(3)
+                    cnt = 0
+
+        loop = asyncio.get_event_loop()
+        coroutine = generate_post()
+        loop.run_until_complete(coroutine)
+
+    def get_reporting_exports_data(self):
+        """
+        Function that generate list of reports metadata for further processing.
+
+
+        """
+        request_json = self.load_reporting_exports()
+
+        if request_json is not None:
+            entities = request_json.get("entities")
+            if len(entities) != 0:
+                for entity in entities:
+                    tmp = [
+                        entity.get("id"),
+                        entity.get("downloadUrl"),
+                        entity.get("filter").get("queueIds")[0],
+                        entity.get("filter").get("mediaTypes")[0],
+                    ]
+                    self.report_data.append(tmp)
+        self.logger.info("Generated list of reports entities.")
+
+    def download_all_reporting_exports(
+        self,
+        store_file_names: bool = True,
+    ) -> List[str]:
+        """
+        Get information form data report and download all files.
+
+        Args:
+            g_instance (Genesys): instance of Genesys source
+            ids_mapping (Dict[str, Any], optional): relationship between id and file name. Defaults to None.
+            data_report (List[str], optional): data extracted from genesys. Defaults to None.
+            file_extension (Literal[xls, xlsx, csv;], optional): file extensions for downloaded files. Defaults to "csv".
+            store_file_names (bool, optional): decide whether to store list of names.
+        Returns:
+            List[str]: all file names of downloaded files
+        """
+        file_name_list = []
+        for single_report in self.report_data:
+            file_name = (
+                self.ids_mapping.get(single_report[2]) + "_" + single_report[-1]
+            ).upper()
+            self.download_report(
+                report_url=single_report[1],
+                output_file_name=file_name,
+                file_extension=self.file_extension,
+            )
+            if store_file_names is True:
+                file_name_list.append(file_name + "." + self.file_extension)
+
+        if store_file_names is True:
+            return file_name_list
+
+    def get_analitics_url_report(self):
+        """Fetching analytics report url from json response.
 
         Returns:
             List of dictionaries with data to post
@@ -482,3 +610,8 @@ class Genesys(Source):
             raise APIError("Failed to deleted report from Genesys API.")
 
         return delete_method.status_code
+
+    def delete_all_reporting_exports(self):
+        """Function that deletes all reporting from self.reporting_data list."""
+        for report in self.report_data:
+            self.delete_reporting_exports(report_id=report[0])
