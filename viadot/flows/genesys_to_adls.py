@@ -4,9 +4,7 @@ from prefect import Flow
 
 from viadot.task_utils import df_to_csv
 from viadot.tasks import AzureDataLakeUpload
-
 from viadot.tasks.genesys import GenesysToDF
-
 from ..task_utils import (
     add_ingestion_metadata_task,
     df_to_csv,
