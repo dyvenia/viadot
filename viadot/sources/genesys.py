@@ -1,33 +1,22 @@
-import base64
 import json
-import requests
-import sys
-import prefect
-import pandas as pd
+import base64
 import warnings
 from typing import Any, Dict, List, Literal
+
+import prefect
+import asyncio
+import aiohttp
+import pandas as pd
+from datetime import datetime, timedelta
+from aiolimiter import AsyncLimiter
+
 from viadot.config import local_config
 from viadot.sources.base import Source
 from ..exceptions import CredentialError, APIError
 from ..utils import handle_api_response
-from datetime import datetime, timedelta
-import asyncio
-import aiohttp
-from aiolimiter import AsyncLimiter
 
 
 warnings.simplefilter("ignore")
-
-IDS_MAPPING = {
-    "780807e6-83b9-44be-aff0-a41c37fab004": "V_D_PROD_FB_Queue",
-    "383ee5e5-5d8f-406c-ad53-835b69fe82c5": "V_E_PROD_Voice_Dealer_Queue",
-    "d4fa7080-63d3-47ea-bcde-a4f89ae2870c": "V_E_PROD_Voice_Enduser_Queue",
-    "427b6226-cafd-4425-ba20-4e7dd8561088": "V_E_PROD_Voice_Installer_Queue",
-    "e0efef7f-b61a-4caf-b71b-002595c6899e": "V_E_PROD_Voice_Logistics_Queue",
-    "4c757061-b2cd-419e-bae3-4700730df4a6": "V_P_PROD_Voice_Dealer_Queue",
-    "b44af752-2ce4-4810-8b83-6d131f493e23": "V_P_PROD_Voice_Enduser_Queue",
-    "247586a2-986f-4078-b28e-e0a5694ec726": "V_P_PROD_Voice_Installer_Queue",
-}
 
 
 class Genesys(Source):
@@ -51,16 +40,23 @@ class Genesys(Source):
         **kwargs: Dict[str, Any],
     ):
         """
-        Genesys connector which allow for reports scheduling, listing and downloading into Data Frame.
+        Genesys connector which allow for reports scheduling, listing and downloading into Data Frame or Specified fromat output.
 
         Args:
+            media_type_list (List[str], optional):  List of specific media types. Defaults to None.
+            queueIds_list (List[str], optional):  List of specific queues ids. Defaults to None.
+            data_to_post_str (str, optional):  String template to generate json body. Defaults to None.
+            ids_mapping (str, optional): Dictionary mapping for converting IDs to strings. Defaults to None.
+            start_date (str, optional):  Start date of the report. Defaults to None.
+            end_date (str, optional):  End date of the report. Defaults to None.
+            days_interval (int, optional):  How many days report should include. Defaults to None.
             report_name (str, optional): Name of the report. Defaults to None.
+            file_extension (Literal[xls, xlsx, csv;], optional): file extensions for downloaded files. Defaults to "csv".
             credentials (Dict[str, Any], optional): Credentials to connect with Genesys API containing CLIENT_ID,
-            CLIENT_SECRET, SCHEDULE_ID and host server. Defaults to None.
             environment (str, optional): Adress of host server. Defaults to None than will be used enviroment
             from credentials.
-            schedule_id (str, optional): The ID of report. Defaults to None.
             report_url (str, optional): The url of report generated in json response. Defaults to None.
+            schedule_id (str, optional): The ID of report. Defaults to None.
             report_columns (List[str], optional): List of exisiting column in report. Defaults to None.
 
         Raises:
@@ -92,6 +88,7 @@ class Genesys(Source):
         self.queueIds_list = queueIds_list
         self.data_to_post_str = data_to_post_str
         self.file_extension = file_extension
+        self.ids_mapping = ids_mapping
 
         # Get schedule id to retrive report url
         if self.schedule_id is None:
@@ -112,6 +109,10 @@ class Genesys(Source):
     def authorization_token(self):
         """
         Get authorization token with request headers.
+
+        Locals:
+            CLIENT_SECRET, SCHEDULE_ID and host server. Defaults to None.
+
         Returns:
             Dict: request headers with token.
         """
@@ -146,10 +147,11 @@ class Genesys(Source):
         return request_headers
 
     def genesys_generate_body(self):
-        """data_to_post
+        """
+        Function that generate json body for Post request method.
 
         example string:
-            mystr = '''{
+            example_raw_json_body_string = '''{
                 "name": f"QUEUE_PERFORMANCE_DETAIL_VIEW_{media}",
                 "timeZone": "UTC",
                 "exportFormat": "CSV",
@@ -168,6 +170,9 @@ class Genesys(Source):
                 "hasCustomParticipantAttributes": True,
                 "recipientEmails": [],
                 }'''
+
+        Returns: self.post_data_list (List[str]): List of formated POST body.
+
         """
 
         if self.start_date is None and self.end_date is None:
@@ -188,7 +193,9 @@ class Genesys(Source):
         return self.post_data_list
 
     def genesys_generate_exports(self):
-        """call a source"""
+        """
+        Function that make POST request method to generate export reports.
+        """
 
         limiter = AsyncLimiter(2, 15)
         semaphore = asyncio.Semaphore(value=1)
@@ -221,7 +228,11 @@ class Genesys(Source):
         loop.run_until_complete(coroutine)
 
     def get_reporting_exports_data(self):
+        """
+        Function that generate list of reports metadata for further processing.
 
+
+        """
         request_json = self.load_reporting_exports()
 
         if request_json is not None:
@@ -240,7 +251,9 @@ class Genesys(Source):
         self,
         store_file_names: bool = True,
     ) -> List[str]:
-        """Get information form data report and download all files.
+        """
+        Get information form data report and download all files.
+
         Args:
             g_instance (Genesys): instance of Genesys source
             ids_mapping (Dict[str, Any], optional): relationship between id and file name. Defaults to None.
@@ -466,5 +479,7 @@ class Genesys(Source):
         return delete_method.status_code
 
     def delete_all_reporting_exports(self):
+        """Function that deletes all reporting from self.reporting_data list.
+        """
         for report in self.report_data:
             self.delete_reporting_exports(report_id=report[0])
