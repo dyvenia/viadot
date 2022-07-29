@@ -231,79 +231,7 @@ class Genesys(Source):
         coroutine = generate_post()
         loop.run_until_complete(coroutine)
 
-    def get_reporting_exports_data(self):
-        """
-        Function that generate list of reports metadata for further processing.
-
-
-        """
-        request_json = self.load_reporting_exports()
-
-        if request_json is not None:
-            entities = request_json.get("entities")
-            if len(entities) != 0:
-                for entity in entities:
-                    tmp = [
-                        entity.get("id"),
-                        entity.get("downloadUrl"),
-                        entity.get("filter").get("queueIds")[0],
-                        entity.get("filter").get("mediaTypes")[0],
-                    ]
-                    self.report_data.append(tmp)
-        self.logger.info("Generated list of reports entities.")
-
-    def download_all_reporting_exports(
-        self,
-        store_file_names: bool = True,
-    ) -> List[str]:
-        """
-        Get information form data report and download all files.
-
-        Args:
-            g_instance (Genesys): instance of Genesys source
-            ids_mapping (Dict[str, Any], optional): relationship between id and file name. Defaults to None.
-            data_report (List[str], optional): data extracted from genesys. Defaults to None.
-            file_extension (Literal[xls, xlsx, csv;], optional): file extensions for downloaded files. Defaults to "csv".
-            store_file_names (bool, optional): decide whether to store list of names.
-        Returns:
-            List[str]: all file names of downloaded files
-        """
-        file_name_list = []
-        for single_report in self.report_data:
-            file_name = (
-                self.ids_mapping.get(single_report[2]) + "_" + single_report[-1]
-            ).upper()
-            self.download_report(
-                report_url=single_report[1],
-                output_file_name=file_name,
-                file_extension=self.file_extension,
-            )
-            if store_file_names is True:
-                file_name_list.append(file_name + "." + self.file_extension)
-
-        if store_file_names is True:
-            return file_name_list
-
-    def get_analitics_url_report(self):
-        """Fetching analytics report url from json response.
-
-        Returns:
-            string: url for analytics report
-        """
-        response = handle_api_response(
-            url=f"https://api.{self.environment}/api/v2/analytics/reporting/schedules/{self.schedule_id}",
-            headers=self.authorization_token,
-        )
-        try:
-            response_json = response.json()
-            report_url = response_json.get("lastRun", None).get("reportUrl", None)
-            self.logger.info("Successfully downloaded report from genesys api")
-            return report_url
-        except AttributeError as e:
-            self.logger.error(
-                "Output data error: " + str(type(e).__name__) + ": " + str(e)
-            )
-
+    # ! old approach or not used yet
     def get_all_schedules_job(self):
         """Fetching analytics report url from json response.
 
@@ -323,6 +251,7 @@ class Genesys(Source):
                 "Output data error: " + str(type(e).__name__) + ": " + str(e)
             )
 
+    # ! old approach or not used yet
     def schedule_report(self, data_to_post: Dict[str, Any]):
         """POST method for report scheduling.
 
@@ -367,28 +296,26 @@ class Genesys(Source):
             self.logger.error(f"Failed to loaded all exports. - {new_report.content}")
             raise APIError("Failed to loaded all exports.")
 
-    def generate_reporting_export(self, data_to_post: Dict[str, Any]):
-        """POST method for reporting export.
-
-        Args:
-            data_to_post (Dict[str, Any]): json format of POST body.
-
-        Returns:
-            bool: schedule genesys report
+    def get_reporting_exports_data(self):
         """
-        payload = json.dumps(data_to_post)
-        new_report = handle_api_response(
-            url=f"https://api.{self.environment}/api/v2/analytics/reporting/exports",
-            headers=self.authorization_token,
-            method="POST",
-            body=payload,
-        )
-        if new_report.status_code == 200:
-            self.logger.info("Succesfully generated new export.")
-        else:
-            self.logger.error(f"Failed to generated new export. - {new_report.content}")
-            raise APIError("Failed to generated new export.")
-        return new_report.status_code
+        Function that generate list of reports metadata for further processing.
+
+
+        """
+        request_json = self.load_reporting_exports()
+
+        if request_json is not None:
+            entities = request_json.get("entities")
+            if len(entities) != 0:
+                for entity in entities:
+                    tmp = [
+                        entity.get("id"),
+                        entity.get("downloadUrl"),
+                        entity.get("filter").get("queueIds")[0],
+                        entity.get("filter").get("mediaTypes")[0],
+                    ]
+                    self.report_data.append(tmp)
+        self.logger.info("Generated list of reports entities.")
 
     def download_report(
         self,
@@ -416,6 +343,82 @@ class Genesys(Source):
         with open(f"{path}{final_file_name}", "wb") as file:
             file.write(response_file.content)
 
+    def download_all_reporting_exports(
+        self,
+        store_file_names: bool = True,
+    ) -> List[str]:
+        """
+        Get information form data report and download all files.
+
+        Args:
+            g_instance (Genesys): instance of Genesys source
+            ids_mapping (Dict[str, Any], optional): relationship between id and file name. Defaults to None.
+            data_report (List[str], optional): data extracted from genesys. Defaults to None.
+            file_extension (Literal[xls, xlsx, csv;], optional): file extensions for downloaded files. Defaults to "csv".
+            store_file_names (bool, optional): decide whether to store list of names.
+        Returns:
+            List[str]: all file names of downloaded files
+        """
+        file_name_list = []
+        for single_report in self.report_data:
+            file_name = (
+                self.ids_mapping.get(single_report[2]) + "_" + single_report[-1]
+            ).upper()
+            self.download_report(
+                report_url=single_report[1],
+                output_file_name=file_name,
+                file_extension=self.file_extension,
+            )
+            if store_file_names is True:
+                file_name_list.append(file_name + "." + self.file_extension)
+
+        if store_file_names is True:
+            return file_name_list
+
+    # ! old approach or not used yet
+    def generate_reporting_export(self, data_to_post: Dict[str, Any]):
+        """POST method for reporting export.
+
+        Args:
+            data_to_post (Dict[str, Any]): json format of POST body.
+
+        Returns:
+            bool: schedule genesys report
+        """
+        payload = json.dumps(data_to_post)
+        new_report = handle_api_response(
+            url=f"https://api.{self.environment}/api/v2/analytics/reporting/exports",
+            headers=self.authorization_token,
+            method="POST",
+            body=payload,
+        )
+        if new_report.status_code == 200:
+            self.logger.info("Succesfully generated new export.")
+        else:
+            self.logger.error(f"Failed to generated new export. - {new_report.content}")
+            raise APIError("Failed to generated new export.")
+        return new_report.status_code
+
+    def get_analitics_url_report(self):
+        """Fetching analytics report url from json response.
+
+        Returns:
+            string: url for analytics report
+        """
+        response = handle_api_response(
+            url=f"https://api.{self.environment}/api/v2/analytics/reporting/schedules/{self.schedule_id}",
+            headers=self.authorization_token,
+        )
+        try:
+            response_json = response.json()
+            report_url = response_json.get("lastRun", None).get("reportUrl", None)
+            self.logger.info("Successfully downloaded report from genesys api")
+            return report_url
+        except AttributeError as e:
+            self.logger.error(
+                "Output data error: " + str(type(e).__name__) + ": " + str(e)
+            )
+
     def to_df(self, report_url: str = None):
         """Download genesys data into a pandas DataFrame.
 
@@ -438,28 +441,6 @@ class Genesys(Source):
             )
 
         return df
-
-    def delete_scheduled_report_job(self, report_id: str):
-        """DELETE method for deleting particular report job.
-
-        Args:
-            report_id (str): defined at the end of report url.
-        """
-        delete_method = handle_api_response(
-            url=f"https://api.{self.environment}/api/v2/analytics/reporting/schedules/{report_id}",
-            headers=self.authorization_token,
-            method="DELETE",
-        )
-        if delete_method.status_code == 200:
-            self.logger.info("Successfully deleted report from Genesys API.")
-
-        else:
-            self.logger.error(
-                f"Failed to deleted report from Genesys API. - {delete_method.content}"
-            )
-            raise APIError("Failed to deleted report from Genesys API.")
-
-        return delete_method.status_code
 
     def delete_reporting_exports(self, report_id):
         """DELETE method for deleting particular reporting exports.
@@ -487,3 +468,26 @@ class Genesys(Source):
         """Function that deletes all reporting from self.reporting_data list."""
         for report in self.report_data:
             self.delete_reporting_exports(report_id=report[0])
+
+    # ! old approach or not used yet
+    def delete_scheduled_report_job(self, report_id: str):
+        """DELETE method for deleting particular report job.
+
+        Args:
+            report_id (str): defined at the end of report url.
+        """
+        delete_method = handle_api_response(
+            url=f"https://api.{self.environment}/api/v2/analytics/reporting/schedules/{report_id}",
+            headers=self.authorization_token,
+            method="DELETE",
+        )
+        if delete_method.status_code == 200:
+            self.logger.info("Successfully deleted report from Genesys API.")
+
+        else:
+            self.logger.error(
+                f"Failed to deleted report from Genesys API. - {delete_method.content}"
+            )
+            raise APIError("Failed to deleted report from Genesys API.")
+
+        return delete_method.status_code
