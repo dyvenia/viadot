@@ -1,10 +1,10 @@
 import json
 import base64
 import warnings
+import asyncio
 from typing import Any, Dict, List, Literal
 
 import prefect
-import asyncio
 import aiohttp
 import pandas as pd
 from datetime import datetime, timedelta
@@ -101,6 +101,13 @@ class Genesys(Source):
 
         if self.ids_mapping is None:
             self.ids_mapping = self.credentials.get("IDS_MAPPING", None)
+
+            if type(self.ids_mapping) is dict and self.ids_mapping is not None:
+                self.logger.info("IDS_MAPPING loaded from local credential.")
+            else:
+                self.logger.warning(
+                    "IDS_MAPPING is not provided in you credentials or is not a dictionary."
+                )
 
         self.post_data_list = []
         self.report_data = []
@@ -270,9 +277,15 @@ class Genesys(Source):
             List[str]: all file names of downloaded files
         """
         file_name_list = []
+        temp_ids_mapping = self.ids_mapping
+        if temp_ids_mapping is None:
+            self.logger.warning("IDS_MAPPING is not provided in you credentials.")
+        else:
+            self.logger.info("IDS_MAPPING loaded from local credential.")
+
         for single_report in self.report_data:
             file_name = (
-                self.ids_mapping.get(single_report[2]) + "_" + single_report[-1]
+                temp_ids_mapping.get(single_report[2]) + "_" + single_report[-1]
             ).upper()
             self.download_report(
                 report_url=single_report[1],
@@ -282,7 +295,10 @@ class Genesys(Source):
             if store_file_names is True:
                 file_name_list.append(file_name + "." + self.file_extension)
 
+        self.logger.info("Al reports were successfully dowonload.")
+
         if store_file_names is True:
+            self.logger.info("Successfully genetared file names list.")
             return file_name_list
 
     def get_analitics_url_report(self):
@@ -488,3 +504,5 @@ class Genesys(Source):
         """Function that deletes all reporting from self.reporting_data list."""
         for report in self.report_data:
             self.delete_reporting_exports(report_id=report[0])
+
+        self.logger.info("Successfully removed all reports.")

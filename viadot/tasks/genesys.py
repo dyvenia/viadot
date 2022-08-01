@@ -25,6 +25,9 @@ class GenesysToCSV(Task):
         queueIds_list: List[str] = None,
         data_to_post_str: str = None,
         credentials: Dict[str, Any] = None,
+        start_date: str = None,
+        end_date: str = None,
+        days_interval: int = 1,
         environment: str = None,
         schedule_id: str = None,
         report_url: str = None,
@@ -50,6 +53,9 @@ class GenesysToCSV(Task):
         self.media_type_list = media_type_list
         self.queueIds_list = queueIds_list
         self.data_to_post_str = data_to_post_str
+        self.start_date = start_date
+        self.end_date = end_date
+        self.days_interval = days_interval
 
         # Get schedule id to retrive report url
         if self.schedule_id is None:
@@ -101,6 +107,9 @@ class GenesysToCSV(Task):
             queueIds_list=self.queueIds_list,
             data_to_post_str=self.data_to_post_str,
             credentials=self.credentials,
+            start_date=self.start_date,
+            end_date=self.end_date,
+            days_interval=self.days_interval,
             environment=environment,
             schedule_id=schedule_id,
             report_url=report_url,
