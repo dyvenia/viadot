@@ -233,7 +233,8 @@ class Genesys(Source):
 
     def get_reporting_exports_data(self):
         """
-        Function that generate list of reports metadata for further processing steps.
+        Function that generate list of reports metadata for further processing steps,
+        like deteling old reports by providing list of them.
 
 
         """
