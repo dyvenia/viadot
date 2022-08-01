@@ -285,7 +285,7 @@ class Genesys(Source):
 
         for single_report in self.report_data:
             file_name = (
-                self.ids_mapping.get(single_report[2]) + "_" + single_report[-1]
+                temp_ids_mapping.get(single_report[2]) + "_" + single_report[-1]
             ).upper()
             self.download_report(
                 report_url=single_report[1],
