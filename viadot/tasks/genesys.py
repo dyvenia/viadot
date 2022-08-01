@@ -5,12 +5,8 @@ from prefect.utilities import logging
 from prefect.utilities.tasks import defaults_from_attrs
 import prefect
 from ..exceptions import CredentialError
-from datetime import datetime, timedelta
 from viadot.config import local_config
-import asyncio
-import aiohttp
 import time
-import json
 from aiolimiter import AsyncLimiter
 import pandas as pd
 import numpy as np
