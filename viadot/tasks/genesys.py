@@ -17,7 +17,7 @@ logger = logging.get_logger()
 class GenesysToCSV(Task):
     def __init__(
         self,
-        report_name: str = None,
+        report_name: str = "genesys_to_csv",
         media_type_list: List[str] = None,
         queueIds_list: List[str] = None,
         data_to_post_str: str = None,
@@ -32,6 +32,26 @@ class GenesysToCSV(Task):
         *args: List[Any],
         **kwargs: Dict[str, Any],
     ):
+        """_summary_
+
+        Args:
+            report_name (str, optional): The name of this task. Defaults to a general name 'genesys_to_csv'.
+            media_type_list (List[str], optional): List of specific media types. Defaults to None.
+            queueIds_list (List[str], optional): List of specific queues ids. Defaults to None.
+            data_to_post_str (str, optional): String template to generate json body. Defaults to None.
+            credentials (Dict[str, Any], optional): Credentials to connect with Genesys API containing CLIENT_ID. Defaults to None.
+            start_date (str, optional): Start date of the report. Defaults to None.
+            end_date (str, optional): End date of the report. Defaults to None.
+            days_interval (int, optional): How many days report should include. Defaults to 1.
+            environment (str, optional): Adress of host server. Defaults to None than will be used enviroment
+            from credentials.
+            schedule_id (str, optional): The ID of report. Defaults to None.
+            report_url (str, optional): The url of report generated in json response. Defaults to None.
+            report_columns (List[str], optional): List of exisiting column in report. Defaults to None.
+
+        Raises:
+            CredentialError: If credentials are not provided in local_config or directly as a parameter.
+        """
 
         try:
             DEFAULT_CREDENTIALS = local_config["GENESYS"]
@@ -64,7 +84,7 @@ class GenesysToCSV(Task):
             self.environment = self.credentials.get("ENVIRONMENT", None)
 
         super().__init__(
-            name="genesys_to_csv",
+            name=self.report_name,
             *args,
             **kwargs,
         )
@@ -129,6 +149,7 @@ class GenesysToCSV(Task):
         return file_names
 
 
+# ! old version
 class GenesysToDF(Task):
     def __init__(
         self,

@@ -1,11 +1,9 @@
 from typing import Any, Dict, List, Literal
 
-from prefect import Flow
+from prefect import Flow, task, unmapped
 
 from viadot.task_utils import df_to_csv
 from viadot.tasks import AzureDataLakeUpload
-
-# from viadot.sources.genesys import Genesys
 from viadot.tasks.genesys import GenesysToDF, GenesysToCSV
 from ..task_utils import (
     add_ingestion_metadata_task,
@@ -15,6 +13,11 @@ from ..task_utils import (
 
 genesys_report = GenesysToDF()
 file_to_adls_task = AzureDataLakeUpload()
+
+
+@task
+def generate_path_list_names(file_names: List[str], adls_file_path: str) -> List[str]:
+    return [adls_file_path + "/" + name for name in file_names]
 
 
 class GenesysToADLS(Flow):
@@ -38,6 +41,27 @@ class GenesysToADLS(Flow):
         *args: List[any],
         **kwargs: Dict[str, Any]
     ):
+        """_summary_
+
+        Args:
+            name (str): The name of the Flow/Tasks.
+            media_type_list (List[str], optional): List of specific media types. Defaults to None.
+            queueIds_list (List[str], optional): List of specific queues ids. Defaults to None.
+            data_to_post_str (str, optional): String template to generate json body. Defaults to None.
+            start_date (str, optional): Start date of the report. Defaults to None.
+            end_date (str, optional): End date of the report. Defaults to None.
+            days_interval (int, optional): How many days report should include. Defaults to 1.
+            environment (str, optional): Adress of host server. Defaults to None than will be used enviroment
+            from credentials.
+            schedule_id (str, optional): The ID of report. Defaults to None.
+            report_url (str, optional): The url of report generated in json response. Defaults to None.
+            report_columns (List[str], optional): List of exisiting column in report. Defaults to None.
+            local_file_path (str, optional): The local path from which to upload the file(s). Defaults to None.
+            adls_file_path (str, optional): The destination path at ADLS. Defaults to None.
+            overwrite_adls (bool, optional): Whether to overwrite files in the data lake. Defaults to True.
+            adls_sp_credentials_secret (str, optional): The name of the Azure Key Vault secret containing a dictionary with
+            ACCOUNT_NAME and Service Principal credentials (TENANT_ID, CLIENT_ID, CLIENT_SECRET). Defaults to None.
+        """
         self.name = name
         self.media_type_list = media_type_list
         self.queueIds_list = queueIds_list
@@ -77,15 +101,19 @@ class GenesysToADLS(Flow):
             report_columns=self.report_columns,
         )
 
-        file_to_adls_task.bind(
-            from_path=self.local_file_path,
-            to_path=self.adls_file_path,
-            overwrite=self.overwrite_adls,
-            sp_credentials_secret=self.adls_sp_credentials_secret,
+        adls_files_path = generate_path_list_names.bind(
+            file_names, self.adls_file_path, flow=self
+        )
+
+        file_to_adls_task.map(
+            from_path=file_names,
+            to_path=adls_files_path,
+            sp_credentials_secret=unmapped(self.adls_sp_credentials_secret),
             flow=self,
         )
 
-        file_to_adls_task.set_upstream(file_names, flow=self)
+        adls_files_path.set_upstream(file_names, flow=self)
+        file_to_adls_task.set_upstream(adls_files_path, flow=self)
 
 
 # ! old version
