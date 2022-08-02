@@ -16,8 +16,29 @@ file_to_adls_task = AzureDataLakeUpload()
 
 
 @task
-def generate_path_list_names(file_names: List[str], adls_file_path: str) -> List[str]:
-    return [adls_file_path + "/" + name for name in file_names]
+def adls_uploader(
+    file_names: List[str] = None,
+    adls_file_path: str = None,
+    adls_sp_credentials_secret: str = None,
+) -> List[str]:
+    """Function that upload files to defined path in ADLS.
+
+    Args:
+        file_names (List[str]): List of file names to generate paths.
+        adls_file_path (str): Azure data lake path.
+
+    Returns:
+        List[str]: List of paths
+    """
+
+    for file in file_names:
+        file_path = str(adls_file_path + "/" + file)
+        file_to_adls_task.run(
+            from_path=file,
+            to_path=file_path,
+            sp_credentials_secret=adls_sp_credentials_secret,
+            overwrite=True,
+        )
 
 
 class GenesysToADLS(Flow):
@@ -41,7 +62,7 @@ class GenesysToADLS(Flow):
         *args: List[any],
         **kwargs: Dict[str, Any]
     ):
-        """_summary_
+        """Genesys flow that generates CSV files and upload them to ADLS.
 
         Args:
             name (str): The name of the Flow/Tasks.
@@ -101,22 +122,16 @@ class GenesysToADLS(Flow):
             report_columns=self.report_columns,
         )
 
-        adls_files_path = generate_path_list_names.bind(
-            file_names, self.adls_file_path, flow=self
+        uploader = adls_uploader(
+            file_names=file_names,
+            adls_file_path=self.adls_file_path,
+            adls_sp_credentials_secret=self.adls_sp_credentials_secret,
+            flow=self
         )
 
-        file_to_adls_task.map(
-            from_path=file_names,
-            to_path=adls_files_path,
-            sp_credentials_secret=unmapped(self.adls_sp_credentials_secret),
-            flow=self,
-        )
-
-        adls_files_path.set_upstream(file_names, flow=self)
-        file_to_adls_task.set_upstream(adls_files_path, flow=self)
+        uploader.set_upstream(file_names, flow=self)
 
 
-# ! old version
 class GenesysToADLSv0(Flow):
     def __init__(
         self,

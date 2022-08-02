@@ -211,9 +211,6 @@ class Genesys(Source):
             cnt = 0
 
             for data_to_post in self.post_data_list:
-                print("--" * 20)
-                print(data_to_post)
-                print("--" * 20)
                 if cnt != 10:
                     payload = json.dumps(data_to_post)
                     async with aiohttp.ClientSession() as session:
