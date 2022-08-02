@@ -93,16 +93,16 @@ class GenesysToCSV(Task):
         """Download Genesys data to DF"""
         return super().__call__(*args, **kwargs)
 
-    @defaults_from_attrs(
-        "report_name", "environment", "schedule_id", "report_url", "report_columns"
-    )
+    # @defaults_from_attrs(
+    #     "report_name", "environment", "schedule_id", "report_url", "report_columns"
+    # )
     def run(
         self,
-        report_name: str = None,
-        environment: str = None,
-        schedule_id: str = None,
-        report_url: str = None,
-        report_columns: List[str] = None,
+        # report_name: str = None,
+        # environment: str = None,
+        # schedule_id: str = None,
+        # report_url: str = None,
+        # report_columns: List[str] = None,
     ) -> pd.DataFrame:
         """
         Task for downloading data from the Genesys API to DF.
@@ -119,7 +119,7 @@ class GenesysToCSV(Task):
             pd.DataFrame: The API GET as a pandas DataFrames from Genesys.
         """
         genesys = Genesys(
-            report_name=report_name,
+            report_name=self.report_name,
             media_type_list=self.media_type_list,
             queueIds_list=self.queueIds_list,
             data_to_post_str=self.data_to_post_str,
@@ -127,10 +127,10 @@ class GenesysToCSV(Task):
             start_date=self.start_date,
             end_date=self.end_date,
             days_interval=self.days_interval,
-            environment=environment,
-            schedule_id=schedule_id,
-            report_url=report_url,
-            report_columns=report_columns,
+            environment=self.environment,
+            schedule_id=self.schedule_id,
+            report_url=self.report_url,
+            report_columns=self.report_columns,
         )
         genesys.genesys_generate_body()
         genesys.genesys_generate_exports()
