@@ -5,8 +5,8 @@ from prefect import Flow
 from viadot.task_utils import df_to_csv
 from viadot.tasks import AzureDataLakeUpload
 
-from viadot.tasks.genesys import GenesysToDF
-
+# from viadot.sources.genesys import Genesys
+from viadot.tasks.genesys import GenesysToDF, GenesysToCSV
 from ..task_utils import (
     add_ingestion_metadata_task,
     df_to_csv,
@@ -18,6 +18,78 @@ file_to_adls_task = AzureDataLakeUpload()
 
 
 class GenesysToADLS(Flow):
+    def __init__(
+        self,
+        name: str,
+        media_type_list: List[str] = None,
+        queueIds_list: List[str] = None,
+        data_to_post_str: str = None,
+        start_date: str = None,
+        end_date: str = None,
+        days_interval: int = 1,
+        environment: str = None,
+        schedule_id: str = None,
+        report_url: str = None,
+        report_columns: List[str] = None,
+        local_file_path: str = None,
+        adls_file_path: str = None,
+        overwrite_adls: bool = True,
+        adls_sp_credentials_secret: str = None,
+        *args: List[any],
+        **kwargs: Dict[str, Any]
+    ):
+        self.name = name
+        self.media_type_list = media_type_list
+        self.queueIds_list = queueIds_list
+        self.data_to_post = data_to_post_str
+        self.environment = environment
+        self.schedule_id = schedule_id
+        self.report_url = report_url
+        self.report_columns = report_columns
+        self.start_date = start_date
+        self.end_date = end_date
+        self.days_interval = days_interval
+        self.local_file_path = local_file_path
+        self.adls_file_path = adls_file_path
+        self.overwrite_adls = overwrite_adls
+        self.adls_sp_credentials_secret = adls_sp_credentials_secret
+
+        super().__init__(*args, name=name, **kwargs)
+
+        self.genesys_task = GenesysToCSV(
+            media_type_list=self.media_type_list,
+            queueIds_list=self.queueIds_list,
+            data_to_post_str=self.data_to_post,
+            start_date=self.start_date,
+            end_date=self.end_date,
+            days_interval=self.days_interval,
+        )
+
+        self.gen_flow()
+
+    def gen_flow(self) -> Flow:
+        file_names = self.genesys_task.bind(
+            flow=self,
+            report_name=self.name,
+            environment=self.environment,
+            schedule_id=self.schedule_id,
+            report_url=self.report_url,
+            report_columns=self.report_columns,
+        )
+
+        file_to_adls_task.bind(
+            from_path=self.local_file_path,
+            to_path=self.adls_file_path,
+            overwrite=self.overwrite_adls,
+            sp_credentials_secret=self.adls_sp_credentials_secret,
+            flow=self,
+        )
+
+        file_to_adls_task.set_upstream(file_names, flow=self)
+
+
+# ! old version
+class GenesysToADLSv0(Flow):
     def __init__(
         self,
         name: str,

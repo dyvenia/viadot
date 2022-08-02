@@ -1,18 +1,15 @@
-from typing import Any, Dict, List, Tuple, Literal
+import time
+from typing import Any, Dict, List
+
 import pandas as pd
-from prefect import Task, task
+import prefect
+from prefect import Task
 from prefect.utilities import logging
 from prefect.utilities.tasks import defaults_from_attrs
-import prefect
-from ..exceptions import CredentialError
-from viadot.config import local_config
-import time
-from aiolimiter import AsyncLimiter
-import pandas as pd
-import numpy as np
-import time
-from ..sources import Genesys
 
+from viadot.config import local_config
+from ..exceptions import CredentialError
+from ..sources import Genesys
 
 logger = logging.get_logger()
 
@@ -67,7 +64,7 @@ class GenesysToCSV(Task):
             self.environment = self.credentials.get("ENVIRONMENT", None)
 
         super().__init__(
-            name="genesys_to_df",
+            name="genesys_to_csv",
             *args,
             **kwargs,
         )
