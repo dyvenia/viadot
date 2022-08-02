@@ -22,7 +22,7 @@ def adls_uploader(
     adls_sp_credentials_secret: str = None,
     adls_overwrite: bool = True,
 ) -> List[str]:
-    """_summary_
+    """Function that upload files to defined path in ADLS.
 
     Args:
         file_names (List[str], optional): List of file names to generate paths. Defaults to None.
