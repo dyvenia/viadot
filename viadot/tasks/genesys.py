@@ -94,7 +94,17 @@ class GenesysToCSV(Task):
         return super().__call__(*args, **kwargs)
 
     @defaults_from_attrs(
-        "report_name", "environment", "schedule_id", "report_url", "report_columns"
+        "report_name",
+        "environment",
+        "schedule_id",
+        "report_url",
+        "media_type_list",
+        "queueIds_list",
+        "data_to_post_str",
+        "start_date",
+        "end_date",
+        "report_columns",
+        "days_interval",
     )
     def run(
         self,
@@ -109,12 +119,19 @@ class GenesysToCSV(Task):
         end_date: str = None,
         report_columns: List[str] = None,
         days_interval: int = None,
-    ) -> pd.DataFrame:
+    ) -> List[str]:
         """
         Task for downloading data from the Genesys API to DF.
 
         Args:
-            report_name (str, optional): Name of the report. Defaults to None.
+            report_name (str, optional): The name of this task. Defaults to a general name 'genesys_to_csv'.
+            media_type_list (List[str], optional): List of specific media types. Defaults to None.
+            queueIds_list (List[str], optional): List of specific queues ids. Defaults to None.
+            data_to_post_str (str, optional): String template to generate json body. Defaults to None.
+            credentials (Dict[str, Any], optional): Credentials to connect with Genesys API containing CLIENT_ID. Defaults to None.
+            start_date (str, optional): Start date of the report. Defaults to None.
+            end_date (str, optional): End date of the report. Defaults to None.
+            days_interval (int, optional): How many days report should include. Defaults to 1.
             environment (str, optional): Adress of host server. Defaults to None than will be used enviroment
             from credentials.
             schedule_id (str, optional): The ID of report. Defaults to None.
@@ -122,7 +139,7 @@ class GenesysToCSV(Task):
             report_columns (List[str], optional): List of exisiting column in report. Defaults to None.
 
         Returns:
-            pd.DataFrame: The API GET as a pandas DataFrames from Genesys.
+            List[str]: List of file names.
         """
         genesys = Genesys(
             report_name=report_name,
@@ -138,6 +155,7 @@ class GenesysToCSV(Task):
             report_url=report_url,
             report_columns=report_columns,
         )
+
         genesys.genesys_generate_body()
         genesys.genesys_generate_exports()
         logger.info(f"Waiting for caching data in Genesys database.")
@@ -155,7 +173,6 @@ class GenesysToCSV(Task):
         return file_names
 
 
-# ! old version
 class GenesysToDF(Task):
     def __init__(
         self,
