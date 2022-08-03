@@ -90,33 +90,15 @@ class GenesysToCSV(Task):
         )
 
     def __call__(self, *args, **kwargs):
-        """Download Genesys data to DF"""
+        """Download Genesys data to CSV"""
         return super().__call__(*args, **kwargs)
 
-    # @defaults_from_attrs(
-    #     "report_name", "environment", "schedule_id", "report_url", "report_columns"
-    # )
-    def run(
-        self,
-        # report_name: str = None,
-        # environment: str = None,
-        # schedule_id: str = None,
-        # report_url: str = None,
-        # report_columns: List[str] = None,
-    ) -> pd.DataFrame:
+    def run(self) -> List[str]:
         """
         Task for downloading data from the Genesys API to DF.
 
-        Args:
-            report_name (str, optional): Name of the report. Defaults to None.
-            environment (str, optional): Adress of host server. Defaults to None than will be used enviroment
-            from credentials.
-            schedule_id (str, optional): The ID of report. Defaults to None.
-            report_url (str, optional): The url of report generated in json response. Defaults to None.
-            report_columns (List[str], optional): List of exisiting column in report. Defaults to None.
-
         Returns:
-            pd.DataFrame: The API GET as a pandas DataFrames from Genesys.
+            List[str]: List of CSV file names generated to save reports from Genesys.
         """
         genesys = Genesys(
             report_name=self.report_name,
