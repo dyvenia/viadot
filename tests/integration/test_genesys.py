@@ -1,18 +1,14 @@
-import os
 import pytest
-import pandas as pd
 
 from unittest import mock
 
 from viadot.sources import Genesys
 
-os.system("clear")
-
 
 @pytest.fixture
 def var_dictionary():
     variables = {
-        "id": "9fb3a99e-aa5b-438b-9047-f4d7fe6d4ff3",
+        "id": "990349a1-81ed-41ac-95e2-f4a1fc6f28d3",
         "data_to_post": {
             "name": "Schedule report job for test",
             "quartzCronExpression": "0 15 * * * ?",
