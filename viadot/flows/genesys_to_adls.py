@@ -1,6 +1,6 @@
 from typing import Any, Dict, List, Literal
 
-from prefect import Flow, task
+from prefect import Flow, task, unmapped
 
 from viadot.task_utils import df_to_csv
 from viadot.tasks import AzureDataLakeUpload
@@ -20,16 +20,13 @@ def adls_uploader(
     file_names: List[str] = None,
     adls_file_path: str = None,
     adls_sp_credentials_secret: str = None,
-    adls_overwrite: bool = True,
 ) -> List[str]:
     """Function that upload files to defined path in ADLS.
 
     Args:
-        file_names (List[str], optional): List of file names to generate paths. Defaults to None.
-        adls_file_path (str, optional): Azure data lake path. Defaults to None.
-        adls_sp_credentials_secret (str, optional): The name of the Azure Key Vault secret containing a dictionary with
-            ACCOUNT_NAME and Service Principal credentials (TENANT_ID, CLIENT_ID, CLIENT_SECRET). Defaults to None.
-        adls_overwrite (bool, optional): Whether to overwrite files in the data lake. Defaults to True.
+        file_names (List[str]): List of file names to generate paths.
+        adls_file_path (str): Azure data lake path.
+
     Returns:
         List[str]: List of paths
     """
@@ -40,7 +37,7 @@ def adls_uploader(
             from_path=file,
             to_path=file_path,
             sp_credentials_secret=adls_sp_credentials_secret,
-            overwrite=adls_overwrite,
+            overwrite=True,
         )
 
 
@@ -86,7 +83,7 @@ class GenesysToADLS(Flow):
             adls_sp_credentials_secret (str, optional): The name of the Azure Key Vault secret containing a dictionary with
             ACCOUNT_NAME and Service Principal credentials (TENANT_ID, CLIENT_ID, CLIENT_SECRET). Defaults to None.
         """
-        self.flow_name = name
+        self.name = name
         self.media_type_list = media_type_list
         self.queueIds_list = queueIds_list
         self.data_to_post = data_to_post_str
@@ -102,7 +99,7 @@ class GenesysToADLS(Flow):
         self.overwrite_adls = overwrite_adls
         self.adls_sp_credentials_secret = adls_sp_credentials_secret
 
-        super().__init__(*args, name=self.flow_name, **kwargs)
+        super().__init__(*args, name=name, **kwargs)
 
         self.genesys_task = GenesysToCSV(
             media_type_list=self.media_type_list,
@@ -111,10 +108,6 @@ class GenesysToADLS(Flow):
             start_date=self.start_date,
             end_date=self.end_date,
             days_interval=self.days_interval,
-            environment=self.environment,
-            schedule_id=self.schedule_id,
-            report_url=self.report_url,
-            report_columns=self.report_columns,
         )
 
         self.gen_flow()
@@ -122,18 +115,18 @@ class GenesysToADLS(Flow):
     def gen_flow(self) -> Flow:
         file_names = self.genesys_task.bind(
             flow=self,
-            # environment=self.environment,
-            # schedule_id=self.schedule_id,
-            # report_url=self.report_url,
-            # report_columns=self.report_columns,
+            report_name=self.name,
+            environment=self.environment,
+            schedule_id=self.schedule_id,
+            report_url=self.report_url,
+            report_columns=self.report_columns,
         )
 
         uploader = adls_uploader(
             file_names=file_names,
             adls_file_path=self.adls_file_path,
             adls_sp_credentials_secret=self.adls_sp_credentials_secret,
-            adls_overwrite=self.overwrite_adls,
-            flow=self,
+            flow=self
         )
 
         uploader.set_upstream(file_names, flow=self)
