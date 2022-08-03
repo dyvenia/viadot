@@ -114,8 +114,6 @@ class OutlookToDF(Task):
                 ).run()
             else:
                 credentials = self.credentials
-        else:
-            credentials_str = credentials
 
         if credentials_str is not None:
             credentials = json.loads(credentials_str)
