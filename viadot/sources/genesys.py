@@ -235,6 +235,27 @@ class Genesys(Source):
         coroutine = generate_post()
         loop.run_until_complete(coroutine)
 
+    def load_reporting_exports(self, page_size: int = 100):
+        """GET method for reporting export.
+
+        Args:
+            data_to_post (Dict[str, Any]): json format of POST body.
+
+        Returns:
+            bool: schedule genesys report
+        """
+        new_report = handle_api_response(
+            url=f"https://api.{self.environment}/api/v2/analytics/reporting/exports?pageSize={page_size}",
+            headers=self.authorization_token,
+            method="GET",
+        )
+        if new_report.status_code == 200:
+            self.logger.info("Succesfully loaded all exports.")
+            return new_report.json()
+        else:
+            self.logger.error(f"Failed to loaded all exports. - {new_report.content}")
+            raise APIError("Failed to loaded all exports.")
+
     def get_reporting_exports_data(self):
         """
         Function that generate list of reports metadata for further processing steps,
@@ -256,6 +277,32 @@ class Genesys(Source):
                     ]
                     self.report_data.append(tmp)
         self.logger.info("Generated list of reports entities.")
+
+    def download_report(
+        self,
+        report_url: str,
+        output_file_name: str = None,
+        file_extension: str = "xls",
+        path: str = "",
+    ):
+        """Download report to excel file.
+
+        Args:
+            report_url (str): url to report, fetched from json response.
+            output_file_name (str, optional): Output file name. Defaults to None.
+            file_extension (str, optional): Output file extension. Defaults to "xls".
+            path (str, optional): Path to the generated excel file. Defaults to empty string.
+        """
+        response_file = handle_api_response(
+            url=f"{report_url}", headers=self.authorization_token
+        )
+        if output_file_name is None:
+            final_file_name = f"Genesys_Queue_Metrics_Interval_Export.{file_extension}"
+        else:
+            final_file_name = f"{output_file_name}.{file_extension}"
+
+        with open(f"{path}{final_file_name}", "wb") as file:
+            file.write(response_file.content)
 
     def download_all_reporting_exports(
         self,
@@ -360,27 +407,6 @@ class Genesys(Source):
             raise APIError("Failed to scheduled new report.")
         return new_report.status_code
 
-    def load_reporting_exports(self, page_size: int = 100):
-        """GET method for reporting export.
-
-        Args:
-            data_to_post (Dict[str, Any]): json format of POST body.
-
-        Returns:
-            bool: schedule genesys report
-        """
-        new_report = handle_api_response(
-            url=f"https://api.{self.environment}/api/v2/analytics/reporting/exports?pageSize={page_size}",
-            headers=self.authorization_token,
-            method="GET",
-        )
-        if new_report.status_code == 200:
-            self.logger.info("Succesfully loaded all exports.")
-            return new_report.json()
-        else:
-            self.logger.error(f"Failed to loaded all exports. - {new_report.content}")
-            raise APIError("Failed to loaded all exports.")
-
     def generate_reporting_export(self, data_to_post: Dict[str, Any]):
         """POST method for reporting export.
 
@@ -403,32 +429,6 @@ class Genesys(Source):
             self.logger.error(f"Failed to generated new export. - {new_report.content}")
             raise APIError("Failed to generated new export.")
         return new_report.status_code
-
-    def download_report(
-        self,
-        report_url: str,
-        output_file_name: str = None,
-        file_extension: str = "xls",
-        path: str = "",
-    ):
-        """Download report to excel file.
-
-        Args:
-            report_url (str): url to report, fetched from json response.
-            output_file_name (str, optional): Output file name. Defaults to None.
-            file_extension (str, optional): Output file extension. Defaults to "xls".
-            path (str, optional): Path to the generated excel file. Defaults to empty string.
-        """
-        response_file = handle_api_response(
-            url=f"{report_url}", headers=self.authorization_token
-        )
-        if output_file_name is None:
-            final_file_name = f"Genesys_Queue_Metrics_Interval_Export.{file_extension}"
-        else:
-            final_file_name = f"{output_file_name}.{file_extension}"
-
-        with open(f"{path}{final_file_name}", "wb") as file:
-            file.write(response_file.content)
 
     def to_df(self, report_url: str = None):
         """Download genesys data into a pandas DataFrame.
