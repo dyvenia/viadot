@@ -5,13 +5,13 @@ from typing import List
 from unittest import mock
 
 from viadot.sources import Genesys
-from viadot.tasks import GenesysToDF
+from viadot.tasks.genesys import GenesysToDF
 
 
 @pytest.fixture
 def var_dictionary():
     variables = {
-        "id": "9fb3a99e-aa5b-438b-9047-f4d7fe6d4ff3",
+        "id": "990349a1-81ed-41ac-95e2-f4a1fc6f28d3",
         "data_to_post": {
             "name": "Schedule report job for test",
             "quartzCronExpression": "0 15 * * * ?",
@@ -80,7 +80,7 @@ def test_connection_with_genesys_api():
 @pytest.mark.proper
 def test_get_analitics_url_report(var_dictionary):
     g = Genesys(schedule_id=var_dictionary["id"])
-    test_url = g.get_analitics_url_report
+    test_url = g.get_analitics_url_report()
     assert type(test_url) == str and test_url.startswith("http")
 
 
