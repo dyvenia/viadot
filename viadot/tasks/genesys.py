@@ -102,7 +102,13 @@ class GenesysToCSV(Task):
         environment: str = None,
         schedule_id: str = None,
         report_url: str = None,
+        media_type_list: List[str] = None,
+        queueIds_list: List[str] = None,
+        data_to_post_str: str = None,
+        start_date: str = None,
+        end_date: str = None,
         report_columns: List[str] = None,
+        days_interval: int = None,
     ) -> pd.DataFrame:
         """
         Task for downloading data from the Genesys API to DF.
@@ -120,13 +126,13 @@ class GenesysToCSV(Task):
         """
         genesys = Genesys(
             report_name=report_name,
-            media_type_list=self.media_type_list,
-            queueIds_list=self.queueIds_list,
-            data_to_post_str=self.data_to_post_str,
+            media_type_list=media_type_list,
+            queueIds_list=queueIds_list,
+            data_to_post_str=data_to_post_str,
             credentials=self.credentials,
-            start_date=self.start_date,
-            end_date=self.end_date,
-            days_interval=self.days_interval,
+            start_date=start_date,
+            end_date=end_date,
+            days_interval=days_interval,
             environment=environment,
             schedule_id=schedule_id,
             report_url=report_url,

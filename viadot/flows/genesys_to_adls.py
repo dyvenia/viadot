@@ -13,6 +13,7 @@ from ..task_utils import (
 
 genesys_report = GenesysToDF()
 file_to_adls_task = AzureDataLakeUpload()
+to_csv = GenesysToCSV()
 
 
 @task
@@ -104,19 +105,19 @@ class GenesysToADLS(Flow):
 
         super().__init__(*args, name=self.flow_name, **kwargs)
 
-        self.genesys_task = GenesysToCSV(
+        self.gen_flow()
+
+    def gen_flow(self) -> Flow:
+        file_names = to_csv.bind(
             media_type_list=self.media_type_list,
             queueIds_list=self.queueIds_list,
             data_to_post_str=self.data_to_post,
             start_date=self.start_date,
             end_date=self.end_date,
             days_interval=self.days_interval,
+            environment=self.environment,
+            flow=self,
         )
-
-        self.gen_flow()
-
-    def gen_flow(self) -> Flow:
-        file_names = self.genesys_task.bind(flow=self)
 
         uploader = adls_uploader(
             file_names=file_names,
@@ -128,7 +129,7 @@ class GenesysToADLS(Flow):
         uploader.set_upstream(file_names, flow=self)
 
 
-class GenesysToADLSv0(Flow):
+class GenesysReportToADLS(Flow):
     def __init__(
         self,
         name: str,
