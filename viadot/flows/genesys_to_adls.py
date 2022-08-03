@@ -116,14 +116,7 @@ class GenesysToADLS(Flow):
         self.gen_flow()
 
     def gen_flow(self) -> Flow:
-        file_names = self.genesys_task.bind(
-            flow=self,
-            report_name=self.name,
-            environment=self.environment,
-            schedule_id=self.schedule_id,
-            report_url=self.report_url,
-            report_columns=self.report_columns,
-        )
+        file_names = self.genesys_task.bind(flow=self)
 
         uploader = adls_uploader(
             file_names=file_names,
