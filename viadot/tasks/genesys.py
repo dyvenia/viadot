@@ -90,18 +90,36 @@ class GenesysToCSV(Task):
         )
 
     def __call__(self, *args, **kwargs):
-        """Download Genesys data to CSV"""
+        """Download Genesys data to DF"""
         return super().__call__(*args, **kwargs)
 
-    def run(self) -> List[str]:
+    @defaults_from_attrs(
+        "report_name", "environment", "schedule_id", "report_url", "report_columns"
+    )
+    def run(
+        self,
+        report_name: str = None,
+        environment: str = None,
+        schedule_id: str = None,
+        report_url: str = None,
+        report_columns: List[str] = None,
+    ) -> pd.DataFrame:
         """
         Task for downloading data from the Genesys API to DF.
 
+        Args:
+            report_name (str, optional): Name of the report. Defaults to None.
+            environment (str, optional): Adress of host server. Defaults to None than will be used enviroment
+            from credentials.
+            schedule_id (str, optional): The ID of report. Defaults to None.
+            report_url (str, optional): The url of report generated in json response. Defaults to None.
+            report_columns (List[str], optional): List of exisiting column in report. Defaults to None.
+
         Returns:
-            List[str]: List of CSV file names generated to save reports from Genesys.
+            pd.DataFrame: The API GET as a pandas DataFrames from Genesys.
         """
         genesys = Genesys(
-            report_name=self.report_name,
+            report_name=report_name,
             media_type_list=self.media_type_list,
             queueIds_list=self.queueIds_list,
             data_to_post_str=self.data_to_post_str,
@@ -109,10 +127,10 @@ class GenesysToCSV(Task):
             start_date=self.start_date,
             end_date=self.end_date,
             days_interval=self.days_interval,
-            environment=self.environment,
-            schedule_id=self.schedule_id,
-            report_url=self.report_url,
-            report_columns=self.report_columns,
+            environment=environment,
+            schedule_id=schedule_id,
+            report_url=report_url,
+            report_columns=report_columns,
         )
         genesys.genesys_generate_body()
         genesys.genesys_generate_exports()
