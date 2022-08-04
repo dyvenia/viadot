@@ -270,6 +270,7 @@ class Genesys(Source):
 
         if request_json is not None:
             entities = request_json.get("entities")
+            assert type(entities) == list
             if len(entities) != 0:
                 for entity in entities:
                     tmp = [
@@ -279,6 +280,7 @@ class Genesys(Source):
                         entity.get("filter").get("mediaTypes")[0],
                     ]
                     self.report_data.append(tmp)
+            assert len(self.report_data) > 0
         self.logger.info("Generated list of reports entities.")
 
     def download_report(
@@ -508,6 +510,7 @@ class Genesys(Source):
     def delete_all_reporting_exports(self):
         """Function that deletes all reporting from self.reporting_data list."""
         for report in self.report_data:
-            self.delete_reporting_exports(report_id=report[0])
+            status_code = self.delete_reporting_exports(report_id=report[0])
+            assert status_code == 200
 
         self.logger.info("Successfully removed all reports.")

@@ -1,39 +1,116 @@
-import os
 import pytest
-import pandas as pd
-from typing import List
+
 from unittest import mock
 
 from viadot.sources import Genesys
-from viadot.tasks.genesys import GenesysToDF
 
 
 @pytest.fixture
 def var_dictionary():
     variables = {
-        "id": "990349a1-81ed-41ac-95e2-f4a1fc6f28d3",
-        "data_to_post": {
-            "name": "Schedule report job for test",
-            "quartzCronExpression": "0 15 * * * ?",
-            "description": "Export Test",
-            "timeZone": "Europe/Warsaw",
-            "timePeriod": "YESTERDAY",
-            "interval": "2022-07-10T22:00:00.000Z/2022-07-11T22:00:00.000Z",
-            "reportFormat": "XLS",
-            "locale": "en_US",
-            "enabled": True,
-            "reportId": "03bc1eef-082e-46c1-b9a8-fe45fbc3b205",
-            "parameters": {
-                "queueIds": [
-                    "780807e6-83b9-44be-aff0-a41c37fab004",
-                ]
-            },
+        "media_type_list": ["callback", "chat"],
+        "queueIds_list": [
+            "1234567890",
+            "1234567890",
+        ],
+        "data_to_post": """{
+                "name": f"QUEUE_PERFORMANCE_DETAIL_VIEW_{media}",
+                "timeZone": "UTC",
+                "exportFormat": "CSV",
+                "interval": f"{end_date}T23:00:00/{start_date}T23:00:00",
+                "period": "PT30M",
+                "viewType": f"QUEUE_PERFORMANCE_DETAIL_VIEW",
+                "filter": {"mediaTypes": [f"{media}"], "queueIds": [f"{queueid}"], "directions":["inbound"],},
+                "read": True,
+                "locale": "en-us",
+                "hasFormatDurations": False,
+                "hasSplitFilters": True,
+                "excludeEmptyRows": True,
+                "hasSplitByMedia": True,
+                "hasSummaryRow": True,
+                "csvDelimiter": "COMMA",
+                "hasCustomParticipantAttributes": True,
+                "recipientEmails": [],
+            }""",
+        "report_data": [
+            [
+                "1234567890qwertyuiopasdfghjklazxcvbn",
+                "https://apps.mypurecloud.de/example/url/test",
+                "1234567890qwertyuiopasdfghjklazxcvbn",
+                "chat",
+            ],
+            [
+                "1234567890qwertyuiopasdfghjklazxcvbn",
+                "https://apps.mypurecloud.de/example/url/test",
+                "1234567890qwertyuiopasdfghjklazxcvbn",
+                "chat",
+            ],
+            [
+                "1234567890qwertyuiopasdfghjklazxcvbn",
+                "https://apps.mypurecloud.de/example/url/test",
+                "1234567890qwertyuiopasdfghjklazxcvbn",
+                "callback",
+            ],
+            [
+                "1234567890qwertyuiopasdfghjklazxcvbn",
+                "https://apps.mypurecloud.de/example/url/test",
+                "1234567890qwertyuiopasdfghjklazxcvbn",
+                "callback",
+            ],
+        ],
+        "entities": {
+            "entities": [
+                {
+                    "id": "1234567890",
+                    "name": "QUEUE_PERFORMANCE_DETAIL_VIEW_chat",
+                    "runId": "1234567890",
+                    "status": "COMPLETED",
+                    "timeZone": "UTC",
+                    "exportFormat": "CSV",
+                    "interval": "2022-08-02T23:00:00.000Z/2022-08-03T23:00:00.000Z",
+                    "downloadUrl": "https://apps.mypurecloud.de/example/url/test",
+                    "viewType": "QUEUE_PERFORMANCE_DETAIL_VIEW",
+                    "period": "PT30M",
+                    "filter": {
+                        "mediaTypes": ["chat"],
+                        "queueIds": ["1234567890"],
+                        "directions": ["inbound"],
+                    },
+                    "read": False,
+                    "createdDateTime": "2022-08-03T11:19:47Z",
+                    "modifiedDateTime": "2022-08-03T11:19:49Z",
+                    "locale": "en-us",
+                    "percentageComplete": 1.0,
+                    "hasFormatDurations": False,
+                    "hasSplitFilters": True,
+                    "excludeEmptyRows": True,
+                    "hasSplitByMedia": True,
+                    "hasSummaryRow": True,
+                    "csvDelimiter": "COMMA",
+                    "hasCustomParticipantAttributes": True,
+                    "dateLastConfirmed": "2022-08-03T11:19:47Z",
+                    "intervalKeyType": "ConversationStart",
+                    "enabled": False,
+                    "selfUri": "/api/v2/example/url/test",
+                },
+            ],
+            "pageSize": 100,
+            "pageNumber": 1,
+            "total": 6,
+            "pageCount": 1,
         },
-        "url": "https://apps.mypurecloud.de/platform/api/v2/downloads/7dca3529280847af",
-        "file_name": "Genesys_Queue_Metrics_Interval_Export.xls",
+        "ids_mapping": {"1234567890qwertyuiopasdfghjklazxcvbn": "TEST"},
     }
 
     return variables
+
+
+class MockClass:
+    status_code = 200
+
+    def json():
+        test = {"token_type": None, "access_token": None}
+        return test
 
 
 @pytest.mark.init
@@ -77,56 +154,72 @@ def test_connection_with_genesys_api():
     )
 
 
-@pytest.mark.proper
-def test_get_analitics_url_report(var_dictionary):
-    g = Genesys(schedule_id=var_dictionary["id"])
-    test_url = g.get_analitics_url_report()
-    assert type(test_url) == str and test_url.startswith("http")
+@pytest.mark.dependency()
+@pytest.mark.reports
+def test_generate_body(var_dictionary):
+    g = Genesys(
+        media_type_list=var_dictionary["media_type_list"],
+        queueIds_list=var_dictionary["queueIds_list"],
+        data_to_post_str=var_dictionary["data_to_post"],
+    )
+    data_list = g.genesys_generate_body()
+    assert type(data_list) == list
 
 
-@mock.patch.object(Genesys, "schedule_report")
+@mock.patch.object(Genesys, "genesys_generate_exports")
+@pytest.mark.dependency(depends=["test_generate_body"])
 @pytest.mark.connection
-def test_scheduling_report(mock_api_response, var_dictionary):
-    mock_api_response.return_value = 200
-
-    g = Genesys()
-    result = g.schedule_report(data_to_post=var_dictionary["data_to_post"])
-    assert result == 200
+def test_generate_exports(mock_api_response, var_dictionary):
+    g = Genesys(
+        media_type_list=var_dictionary["media_type_list"],
+        queueIds_list=var_dictionary["queueIds_list"],
+        data_to_post_str=var_dictionary["data_to_post"],
+    )
+    assert g.genesys_generate_exports()
     mock_api_response.assert_called()
 
 
-@pytest.mark.dependency(name="url")
-@pytest.mark.url
-def test_get_all_schedules_job():
+@mock.patch.object(Genesys, "load_reporting_exports")
+@pytest.mark.dependency(depends=["test_generate_body", "test_generate_exports"])
+@pytest.mark.generate
+def test_generate_reports_list(mock_load_reports, var_dictionary):
+    mock_load_reports.return_value = var_dictionary["entities"]
     g = Genesys()
-    reports = g.get_all_schedules_job()
-    assert (
-        type(reports) == dict
-        and len(reports.keys()) > 0
-        and len(reports.get("entities")[0]["id"]) > 0
-    )
+    g.get_reporting_exports_data()
+    mock_load_reports.assert_called_once()
 
 
-@pytest.mark.dependency(depends=["url"])
-@pytest.mark.url
-def test_report_to_df(var_dictionary):
-    g = Genesys(schedule_id=var_dictionary["id"])
-    df = g.to_df()
-    assert type(df) == pd.DataFrame and df.shape != (0, 0)
-
-
+@mock.patch.object(Genesys, "download_report")
+@pytest.mark.dependency(
+    depends=[
+        "test_generate_body",
+        "test_generate_exports",
+        "test_generate_reports_list",
+    ]
+)
 @pytest.mark.download
-def test_download_report_file(var_dictionary):
+def test_download_reports(mock_download_files, var_dictionary):
     g = Genesys()
-    g.download_report(report_url=var_dictionary["url"])
-    assert os.path.exists(var_dictionary["file_name"]) == True
+    g.ids_mapping = var_dictionary["ids_mapping"]
+    g.report_data = var_dictionary["report_data"]
+    file_name_list = g.download_all_reporting_exports()
 
-    if os.path.exists(var_dictionary["file_name"]):
-        os.remove(var_dictionary["file_name"])
+    assert type(file_name_list) == list and len(file_name_list) > 0
+    mock_download_files.assert_called()
 
 
-@pytest.mark.task
-def test_genesys_to_df_task(var_dictionary):
-    task = GenesysToDF(schedule_id=var_dictionary["id"])
-    result = task.run()
-    assert isinstance(result, pd.DataFrame)
+@mock.patch("viadot.sources.genesys.handle_api_response", return_value=MockClass)
+@pytest.mark.dependency(
+    depends=[
+        "test_generate_body",
+        "test_generate_exports",
+        "test_generate_reports_list",
+        "test_download_reports",
+    ]
+)
+@pytest.mark.delete
+def test_genesys_delete_reports(mock_api_response, var_dictionary):
+    g = Genesys()
+    g.report_data = var_dictionary["report_data"]
+    g.delete_all_reporting_exports()
+    mock_api_response.assert_called()
