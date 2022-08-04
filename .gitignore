@@ -77,6 +77,7 @@ target/
 # Jupyter Notebook
 .ipynb_checkpoints
 .jupyter
+*.ipynb
 
 # IPython
 profile_default/
@@ -158,5 +159,6 @@ sap_netweaver_rfc
 # Databricks-connect
 .databricks-connect
 
+# Personal
 michal
-
+diego
