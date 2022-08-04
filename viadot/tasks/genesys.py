@@ -2,13 +2,14 @@ import time
 from typing import Any, Dict, List
 
 import pandas as pd
+import numpy as np
 import prefect
 from prefect import Task
 from prefect.utilities import logging
 from prefect.utilities.tasks import defaults_from_attrs
 
 from viadot.config import local_config
-from ..exceptions import CredentialError
+from ..exceptions import CredentialError, APIError
 from ..sources import Genesys
 
 logger = logging.get_logger()
@@ -160,12 +161,38 @@ class GenesysToCSV(Task):
         genesys.genesys_generate_exports()
         logger.info(f"Waiting for caching data in Genesys database.")
         # in order to wait for API POST request add it
-        time.sleep(50)
+        timeout_start = time.time()
+        # 30 seconds timeout is minimal but for safety added 60.
+        timeout = timeout_start + 60
+        # while loop with timeout
+        while time.time() < timeout:
+
+            try:
+                genesys.get_reporting_exports_data()
+                urls = [col for col in np.array(genesys.report_data).T][1]
+                if None in urls:
+                    logger.warning("Found None object in list of urls.")
+                else:
+                    break
+            except TypeError:
+                pass
+
+            # There is a need to clear a list before repeating try statement.
+            genesys.report_data.clear()
+
+        if len(genesys.report_data) == 0:
+            raise APIError("No exporting reports were generated.")
+        elif not None in [col for col in np.array(genesys.report_data).T][1]:
+            logger.info("Downloaded the data from the Genesys into the CSV.")
+        else:
+            logger.info("Succesfully loaded all exports.")
+
         genesys.get_reporting_exports_data()
+
         file_names = genesys.download_all_reporting_exports()
-        logger.info(f"Downloaded the data from the Genesys into the CSV.")
+        logger.info("Downloaded the data from the Genesys into the CSV.")
         # in order to wait for API GET request call it
-        logger.info(f"Waiting for caching data in Genesys database.")
+        logger.info("Waiting for caching data in Genesys database.")
         time.sleep(20)
         genesys.delete_all_reporting_exports()
         logger.info(f"All existing reports were delted.")

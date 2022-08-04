@@ -113,7 +113,7 @@ class Genesys(Source):
         self.report_data = []
 
     @property
-    def authorization_token(self):
+    def authorization_token(self, verbose: bool = False):
         """
         Get authorization token with request headers.
 
@@ -139,12 +139,13 @@ class Genesys(Source):
             headers=request_headers,
             method="POST",
         )
-        if response.status_code == 200:
-            self.logger.info("Temporary authorization token was generated.")
-        else:
-            self.logger.info(
-                f"Failure: { str(response.status_code) } - { response.reason }"
-            )
+        if verbose:
+            if response.status_code == 200:
+                self.logger.info("Temporary authorization token was generated.")
+            else:
+                self.logger.info(
+                    f"Failure: { str(response.status_code) } - { response.reason }"
+                )
         response_json = response.json()
         request_headers = {
             "Authorization": f"{ response_json['token_type'] } { response_json['access_token']}",
@@ -235,7 +236,7 @@ class Genesys(Source):
         coroutine = generate_post()
         loop.run_until_complete(coroutine)
 
-    def load_reporting_exports(self, page_size: int = 100):
+    def load_reporting_exports(self, page_size: int = 100, verbose: bool = False):
         """GET method for reporting export.
 
         Args:
@@ -249,8 +250,10 @@ class Genesys(Source):
             headers=self.authorization_token,
             method="GET",
         )
+
         if new_report.status_code == 200:
-            self.logger.info("Succesfully loaded all exports.")
+            if verbose:
+                self.logger.info("Succesfully loaded all exports.")
             return new_report.json()
         else:
             self.logger.error(f"Failed to loaded all exports. - {new_report.content}")
@@ -407,7 +410,9 @@ class Genesys(Source):
             raise APIError("Failed to scheduled new report.")
         return new_report.status_code
 
-    def generate_reporting_export(self, data_to_post: Dict[str, Any]):
+    def generate_reporting_export(
+        self, data_to_post: Dict[str, Any], verbose: bool = False
+    ):
         """POST method for reporting export.
 
         Args:
@@ -423,11 +428,14 @@ class Genesys(Source):
             method="POST",
             body=payload,
         )
-        if new_report.status_code == 200:
-            self.logger.info("Succesfully generated new export.")
-        else:
-            self.logger.error(f"Failed to generated new export. - {new_report.content}")
-            raise APIError("Failed to generated new export.")
+        if verbose:
+            if new_report.status_code == 200:
+                self.logger.info("Succesfully generated new export.")
+            else:
+                self.logger.error(
+                    f"Failed to generated new export. - {new_report.content}"
+                )
+                raise APIError("Failed to generated new export.")
         return new_report.status_code
 
     def to_df(self, report_url: str = None):
