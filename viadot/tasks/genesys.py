@@ -8,7 +8,7 @@ from prefect.utilities import logging
 from prefect.utilities.tasks import defaults_from_attrs
 
 from viadot.config import local_config
-from ..exceptions import CredentialError
+from ..exceptions import APIError, CredentialError
 from ..sources import Genesys
 
 logger = logging.get_logger()
@@ -159,9 +159,27 @@ class GenesysToCSV(Task):
         genesys.genesys_generate_body()
         genesys.genesys_generate_exports()
         logger.info(f"Waiting for caching data in Genesys database.")
+
         # in order to wait for API POST request add it
-        time.sleep(50)
-        genesys.get_reporting_exports_data()
+        timeout_start = time.time()
+        timeout = timeout_start + 50
+
+        while time.time() < timeout:
+            try:
+                genesys.get_reporting_exports_data()
+                list_reports = genesys.report_data
+                if len(list_reports) >= len(media_type_list) * len(queueIds_list):
+                    logger.info("Succestlly reports were generated")
+                    break
+                else:
+                    genesys.report_data = []
+                    time.sleep(5)
+            except TypeError:
+                pass
+
+        if len(genesys.report_data) == 0:
+            raise APIError("No exporting reports were generated")
+
         file_names = genesys.download_all_reporting_exports()
         logger.info(f"Downloaded the data from the Genesys into the CSV.")
         # in order to wait for API GET request call it
