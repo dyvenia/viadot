@@ -4,16 +4,14 @@ from prefect import Flow, task
 
 from viadot.task_utils import df_to_csv
 from viadot.tasks import AzureDataLakeUpload
-from viadot.tasks.genesys import GenesysToDF, GenesysToCSV
+from viadot.tasks.genesys import GenesysToCSV, GenesysToDF
 from ..task_utils import (
     add_ingestion_metadata_task,
     df_to_csv,
     df_to_parquet,
 )
 
-genesys_report = GenesysToDF()
 file_to_adls_task = AzureDataLakeUpload()
-to_csv = GenesysToCSV()
 
 
 @task
@@ -63,6 +61,7 @@ class GenesysToADLS(Flow):
         adls_file_path: str = None,
         overwrite_adls: bool = True,
         adls_sp_credentials_secret: str = None,
+        credentials: Dict[str, Any] = None,
         *args: List[any],
         **kwargs: Dict[str, Any]
     ):
@@ -86,6 +85,7 @@ class GenesysToADLS(Flow):
             overwrite_adls (bool, optional): Whether to overwrite files in the data lake. Defaults to True.
             adls_sp_credentials_secret (str, optional): The name of the Azure Key Vault secret containing a dictionary with
             ACCOUNT_NAME and Service Principal credentials (TENANT_ID, CLIENT_ID, CLIENT_SECRET). Defaults to None.
+            credentials(dict, optional): Credentials for the genesys api. Defaults to None.
         """
         self.flow_name = name
         self.media_type_list = media_type_list
@@ -102,12 +102,16 @@ class GenesysToADLS(Flow):
         self.adls_file_path = adls_file_path
         self.overwrite_adls = overwrite_adls
         self.adls_sp_credentials_secret = adls_sp_credentials_secret
+        self.credentials = credentials
 
         super().__init__(*args, name=self.flow_name, **kwargs)
 
         self.gen_flow()
 
     def gen_flow(self) -> Flow:
+
+        to_csv = GenesysToCSV(credentials=self.credentials)
+
         file_names = to_csv.bind(
             media_type_list=self.media_type_list,
             queueIds_list=self.queueIds_list,
@@ -187,6 +191,8 @@ class GenesysReportToADLS(Flow):
         self.gen_flow()
 
     def gen_flow(self) -> Flow:
+
+        genesys_report = GenesysToDF(credentials=self.credentials_secret)
 
         df = genesys_report.bind(
             report_columns=self.columns, schedule_id=self.schedule_id, flow=self

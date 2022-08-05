@@ -22,7 +22,6 @@ class GenesysToCSV(Task):
         media_type_list: List[str] = None,
         queueIds_list: List[str] = None,
         data_to_post_str: str = None,
-        credentials: Dict[str, Any] = None,
         start_date: str = None,
         end_date: str = None,
         days_interval: int = 1,
@@ -30,6 +29,7 @@ class GenesysToCSV(Task):
         schedule_id: str = None,
         report_url: str = None,
         report_columns: List[str] = None,
+        credentials: Dict[str, Any] = None,
         *args: List[Any],
         **kwargs: Dict[str, Any],
     ):
@@ -138,10 +138,12 @@ class GenesysToCSV(Task):
             schedule_id (str, optional): The ID of report. Defaults to None.
             report_url (str, optional): The url of report generated in json response. Defaults to None.
             report_columns (List[str], optional): List of exisiting column in report. Defaults to None.
+            credentials (Dict[str, Any], optional): Credentials to connect with Genesys API containing CLIENT_ID. Defaults to None.
 
         Returns:
             List[str]: List of file names.
         """
+
         genesys = Genesys(
             report_name=report_name,
             media_type_list=media_type_list,

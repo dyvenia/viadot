@@ -174,26 +174,29 @@ class AzureDataLake(Source):
         return df
 
     def ls(self, path: str = None) -> List[str]:
-        """Returns list of files in a path.
+        """
+        Returns list of files in a path.
 
         Args:
-                path (str, optional): Path to a folder. Defaults to None.
+            path (str, optional): Path to a folder. Defaults to None.
         """
         path = path or self.path
         return self.fs.ls(path)
 
     def rm(self, path: str = None, recursive: bool = False):
-        """Deletes files in a path.
+        """
+        Deletes a file or directory from the path.
 
         Args:
-                path (str, optional): Path to a folder. Defaults to None.
-                recursive (bool, optional): Whether to delete files recursively or not. Defaults to False.
+            path (str, optional): Path to a folder or file. Defaults to None.
+            recursive (bool, optional): Whether to delete files recursively or not. Defaults to False.
         """
         path = path or self.path
         self.fs.rm(path, recursive=recursive)
 
     def cp(self, from_path: str = None, to_path: str = None, recursive: bool = False):
-        """Copies source to a destination.
+        """
+        Copies source to a destination.
 
         Args:
             from_path (str, optional): Path form which to copy file. Defauls to None.

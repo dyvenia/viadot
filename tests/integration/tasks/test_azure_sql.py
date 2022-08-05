@@ -131,7 +131,7 @@ def test_check_column_order_replace(caplog):
 
     check_column_order = CheckColumnOrder()
     with caplog.at_level(logging.INFO):
-        check_column_order.run(table=TABLE, if_exists="replace", df=df)
+        check_column_order.run(table=TABLE, schema=SCHEMA, if_exists="replace", df=df)
     assert "The table will be replaced." in caplog.text
 
 
