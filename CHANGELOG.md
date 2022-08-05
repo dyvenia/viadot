@@ -7,12 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 ### Added
 - Added ability to process queries which result exceed SAP's character per low limit in `SAPRFC` source
+- Added Genesys API source, tasks and flows
 ### Changed
 - Changed `add_ingestion_metadata_task()` to not to add metadata column when input DataFrame is empty
 - Changed `check_if_empty_file()` logic according to changes in `add_ingestion_metadata_task()`
 - Changed accepted values of `if_empty` parameter in `DuckDBCreateTableFromParquet`
 - Updated `.gitignore` to ignore files with `*.bak` extension and to ignore `credentials.json` in any directory
-
+- Updated requirements.txt
+- Changed 'handle_api_response()' method by adding more requests method also added contex menager
 ### Fixed
 - Fixed log being printed too early in `Salesforce` source, which would sometimes cause a `KeyError`
 - `raise_on_error` now behaves correctly in `upsert()` when receiving incorrect return codes from Salesforce

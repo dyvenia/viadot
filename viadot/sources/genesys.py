@@ -511,6 +511,6 @@ class Genesys(Source):
         """Function that deletes all reporting from self.reporting_data list."""
         for report in self.report_data:
             status_code = self.delete_reporting_exports(report_id=report[0])
-            assert status_code == 200
+            assert status_code < 300
 
         self.logger.info("Successfully removed all reports.")
