@@ -632,7 +632,7 @@ class AzureDataLakeRemove(Task):
         """Task run method.
 
         Args:
-            path (str): The path to the directory contents of which you want to delete. Defaults to None.
+            path (str): The path to the directory or file you want to delete. Defaults to None.
             recursive (bool): Set this to True if removing files recursively. Defaults to False.
             gen (int): The generation of the Azure Data Lake. Defaults to None.
             sp_credentials_secret (str, optional): The name of the Azure Key Vault secret containing a dictionary with
@@ -663,8 +663,13 @@ class AzureDataLakeRemove(Task):
                 "AZURE_CLIENT_SECRET": os.environ["AZURE_CLIENT_SECRET"],
             }
         lake = AzureDataLake(gen=gen, credentials=credentials)
-
         full_path = os.path.join(credentials["ACCOUNT_NAME"], path)
-        self.logger.info(f"Deleting files from {full_path}...")
+
+        if full_path.endswith(".csv") or full_path.endswith(".parquet"):
+            logger_details = "file from"
+        else:
+            logger_details = "directory"
+
+        self.logger.info(f"Deleting {logger_details} {full_path}...")
         lake.rm(path, recursive=recursive)
-        self.logger.info(f"Successfully deleted files from {full_path}.")
+        self.logger.info(f"Successfully deleted {logger_details} {full_path}.")
