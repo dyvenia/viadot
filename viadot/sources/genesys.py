@@ -12,8 +12,8 @@ from aiolimiter import AsyncLimiter
 
 from viadot.config import local_config
 from viadot.sources.base import Source
-from ..exceptions import CredentialError, APIError
-from ..utils import handle_api_response
+from viadot.exceptions import CredentialError, APIError
+from viadot.utils import handle_api_response
 
 
 warnings.simplefilter("ignore")
@@ -31,7 +31,7 @@ class Genesys(Source):
         days_interval: int = 1,
         report_name: str = None,
         file_extension: Literal["xls", "xlsx", "csv"] = "csv",
-        credentials: Dict[str, Any] = None,
+        credentials_genesys: Dict[str, Any] = None,
         environment: str = None,
         report_url: str = None,
         schedule_id: str = None,
@@ -40,7 +40,7 @@ class Genesys(Source):
         **kwargs: Dict[str, Any],
     ):
         """
-        Genesys connector which allow for reports scheduling, listing and downloading into Data Frame or Specified fromat output.
+        Genesys connector which allows for reports scheduling, listing and downloading into Data Frame or specified format output.
 
         Args:
             media_type_list (List[str], optional):  List of specific media types. Defaults to None.
@@ -52,7 +52,7 @@ class Genesys(Source):
             days_interval (int, optional):  How many days report should include. Defaults to None.
             report_name (str, optional): Name of the report. Defaults to None.
             file_extension (Literal[xls, xlsx, csv;], optional): file extensions for downloaded files. Defaults to "csv".
-            credentials (Dict[str, Any], optional): Credentials to connect with Genesys API containing CLIENT_ID,
+            credentials_genesys (Dict[str, Any], optional): Credentials to connect with Genesys API containing CLIENT_ID,
             environment (str, optional): Adress of host server. Defaults to None than will be used enviroment
             from credentials.
             report_url (str, optional): The url of report generated in json response. Defaults to None.
@@ -63,23 +63,28 @@ class Genesys(Source):
             CredentialError: If credentials are not provided in local_config or directly as a parameter.
         """
 
-        try:
-            DEFAULT_CREDENTIALS = local_config["GENESYS"]
-        except KeyError:
-            DEFAULT_CREDENTIALS = None
-        self.credentials = credentials or DEFAULT_CREDENTIALS
-        if self.credentials is None:
+        self.logger = prefect.context.get("logger")
+
+        if credentials_genesys is not None:
+            self.credentials_genesys = credentials_genesys
+            self.logger.info("Credentials provided by user")
+        else:
+            try:
+                self.credentials_genesys = local_config["GENESYS"]
+                self.logger.info("Credentials loaded from local config")
+            except KeyError:
+                self.credentials_genesys = None
+
+        if self.credentials_genesys is None:
             raise CredentialError("Credentials not found.")
 
-        super().__init__(*args, credentials=self.credentials, **kwargs)
+        super().__init__(*args, credentials=self.credentials_genesys, **kwargs)
 
-        self.logger = prefect.context.get("logger")
         self.schedule_id = schedule_id
         self.report_name = report_name
         self.environment = environment
         self.report_url = report_url
         self.report_columns = report_columns
-        # self.authorization_token = None
 
         self.start_date = start_date
         self.end_date = end_date
@@ -90,17 +95,14 @@ class Genesys(Source):
         self.file_extension = file_extension
         self.ids_mapping = ids_mapping
 
-        # Get schedule id to retrive report url
         if self.schedule_id is None:
-            self.schedule_id = self.credentials.get("SCHEDULE_ID", None)
-            # if SCHEDULE_ID is not None:
-            #     self.schedule_id = SCHEDULE_ID
+            self.schedule_id = self.credentials_genesys.get("SCHEDULE_ID", None)
 
         if self.environment is None:
-            self.environment = self.credentials.get("ENVIRONMENT", None)
+            self.environment = self.credentials_genesys.get("ENVIRONMENT", None)
 
         if self.ids_mapping is None:
-            self.ids_mapping = self.credentials.get("IDS_MAPPING", None)
+            self.ids_mapping = self.credentials_genesys.get("IDS_MAPPING", None)
 
             if type(self.ids_mapping) is dict and self.ids_mapping is not None:
                 self.logger.info("IDS_MAPPING loaded from local credential.")
@@ -117,14 +119,15 @@ class Genesys(Source):
         """
         Get authorization token with request headers.
 
-        Locals:
+        Args:
             CLIENT_SECRET, SCHEDULE_ID and host server. Defaults to None.
+            verbose (bool, optional): Switch on/off for logging messages. Defaults to False.
 
         Returns:
             Dict: request headers with token.
         """
-        CLIENT_ID = self.credentials.get("CLIENT_ID", None)
-        CLIENT_SECRET = self.credentials.get("CLIENT_SECRET", None)
+        CLIENT_ID = self.credentials_genesys.get("CLIENT_ID", None)
+        CLIENT_SECRET = self.credentials_genesys.get("CLIENT_SECRET", None)
         authorization = base64.b64encode(
             bytes(CLIENT_ID + ":" + CLIENT_SECRET, "ISO-8859-1")
         ).decode("ascii")
@@ -241,9 +244,10 @@ class Genesys(Source):
 
         Args:
             data_to_post (Dict[str, Any]): json format of POST body.
+            verbose (bool, optional): Switch on/off for logging messages. Defaults to False.
 
         Returns:
-            bool: schedule genesys report
+            Dict[str, Any]: schedule genesys report.
         """
         new_report = handle_api_response(
             url=f"https://api.{self.environment}/api/v2/analytics/reporting/exports?pageSize={page_size}",
@@ -263,8 +267,6 @@ class Genesys(Source):
         """
         Function that generate list of reports metadata for further processing steps,
         like deteling old reports by providing list of them.
-
-
         """
         request_json = self.load_reporting_exports()
 
