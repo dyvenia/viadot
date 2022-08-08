@@ -29,18 +29,18 @@ class GenesysToCSV(Task):
         schedule_id: str = None,
         report_url: str = None,
         report_columns: List[str] = None,
-        credentials: Dict[str, Any] = None,
+        credentials_genesys: Dict[str, Any] = None,
         *args: List[Any],
         **kwargs: Dict[str, Any],
     ):
-        """_summary_
+        """Task for downloading data from Genesys API to CSV.
 
         Args:
             report_name (str, optional): The name of this task. Defaults to a general name 'genesys_to_csv'.
             media_type_list (List[str], optional): List of specific media types. Defaults to None.
             queueIds_list (List[str], optional): List of specific queues ids. Defaults to None.
             data_to_post_str (str, optional): String template to generate json body. Defaults to None.
-            credentials (Dict[str, Any], optional): Credentials to connect with Genesys API containing CLIENT_ID. Defaults to None.
+            credentials_genesys (Dict[str, Any], optional): Credentials to connect with Genesys API containing CLIENT_ID. Defaults to None.
             start_date (str, optional): Start date of the report. Defaults to None.
             end_date (str, optional): End date of the report. Defaults to None.
             days_interval (int, optional): How many days report should include. Defaults to 1.
@@ -49,18 +49,7 @@ class GenesysToCSV(Task):
             schedule_id (str, optional): The ID of report. Defaults to None.
             report_url (str, optional): The url of report generated in json response. Defaults to None.
             report_columns (List[str], optional): List of exisiting column in report. Defaults to None.
-
-        Raises:
-            CredentialError: If credentials are not provided in local_config or directly as a parameter.
         """
-
-        try:
-            DEFAULT_CREDENTIALS = local_config["GENESYS"]
-        except KeyError:
-            DEFAULT_CREDENTIALS = None
-        self.credentials = credentials or DEFAULT_CREDENTIALS
-        if self.credentials is None:
-            raise CredentialError("Credentials not found.")
 
         self.logger = prefect.context.get("logger")
         self.schedule_id = schedule_id
@@ -74,15 +63,7 @@ class GenesysToCSV(Task):
         self.start_date = start_date
         self.end_date = end_date
         self.days_interval = days_interval
-
-        # Get schedule id to retrive report url
-        if self.schedule_id is None:
-            SCHEDULE_ID = self.credentials.get("SCHEDULE_ID", None)
-            if SCHEDULE_ID is not None:
-                self.schedule_id = SCHEDULE_ID
-
-        if self.environment is None:
-            self.environment = self.credentials.get("ENVIRONMENT", None)
+        self.credentials_genesys = credentials_genesys
 
         super().__init__(
             name=self.report_name,
@@ -106,6 +87,7 @@ class GenesysToCSV(Task):
         "end_date",
         "report_columns",
         "days_interval",
+        "credentials_genesys",
     )
     def run(
         self,
@@ -120,6 +102,7 @@ class GenesysToCSV(Task):
         end_date: str = None,
         report_columns: List[str] = None,
         days_interval: int = None,
+        credentials_genesys: Dict[str, Any] = None,
     ) -> List[str]:
         """
         Task for downloading data from the Genesys API to DF.
@@ -129,7 +112,7 @@ class GenesysToCSV(Task):
             media_type_list (List[str], optional): List of specific media types. Defaults to None.
             queueIds_list (List[str], optional): List of specific queues ids. Defaults to None.
             data_to_post_str (str, optional): String template to generate json body. Defaults to None.
-            credentials (Dict[str, Any], optional): Credentials to connect with Genesys API containing CLIENT_ID. Defaults to None.
+            credentials_genesys (Dict[str, Any], optional): Credentials to connect with Genesys API containing CLIENT_ID. Defaults to None.
             start_date (str, optional): Start date of the report. Defaults to None.
             end_date (str, optional): End date of the report. Defaults to None.
             days_interval (int, optional): How many days report should include. Defaults to 1.
@@ -149,7 +132,7 @@ class GenesysToCSV(Task):
             media_type_list=media_type_list,
             queueIds_list=queueIds_list,
             data_to_post_str=data_to_post_str,
-            credentials=self.credentials,
+            credentials_genesys=credentials_genesys,
             start_date=start_date,
             end_date=end_date,
             days_interval=days_interval,
@@ -162,6 +145,7 @@ class GenesysToCSV(Task):
         genesys.genesys_generate_body()
         genesys.genesys_generate_exports()
         logger.info(f"Waiting for caching data in Genesys database.")
+
         # in order to wait for API POST request add it
         timeout_start = time.time()
         # 30 seconds timeout is minimal but for safety added 60.
@@ -206,22 +190,14 @@ class GenesysToDF(Task):
     def __init__(
         self,
         report_name: str = None,
-        credentials: Dict[str, Any] = None,
         environment: str = None,
         schedule_id: str = None,
         report_url: str = None,
         report_columns: List[str] = None,
+        credentials_genesys: Dict[str, Any] = None,
         *args: List[Any],
         **kwargs: Dict[str, Any],
     ):
-
-        try:
-            DEFAULT_CREDENTIALS = local_config["GENESYS"]
-        except KeyError:
-            DEFAULT_CREDENTIALS = None
-        self.credentials = credentials or DEFAULT_CREDENTIALS
-        if self.credentials is None:
-            raise CredentialError("Credentials not found.")
 
         self.logger = prefect.context.get("logger")
         self.schedule_id = schedule_id
@@ -229,15 +205,7 @@ class GenesysToDF(Task):
         self.environment = environment
         self.report_url = report_url
         self.report_columns = report_columns
-
-        # Get schedule id to retrive report url
-        if self.schedule_id is None:
-            SCHEDULE_ID = self.credentials.get("SCHEDULE_ID", None)
-            if SCHEDULE_ID is not None:
-                self.schedule_id = SCHEDULE_ID
-
-        if self.environment is None:
-            self.environment = self.credentials.get("ENVIRONMENT", None)
+        self.credentials_genesys = credentials_genesys
 
         super().__init__(
             name="genesys_to_df",
@@ -250,7 +218,12 @@ class GenesysToDF(Task):
         return super().__call__(*args, **kwargs)
 
     @defaults_from_attrs(
-        "report_name", "environment", "schedule_id", "report_url", "report_columns"
+        "report_name",
+        "environment",
+        "schedule_id",
+        "report_url",
+        "report_columns",
+        "credentials_genesys",
     )
     def run(
         self,
@@ -259,6 +232,7 @@ class GenesysToDF(Task):
         schedule_id: str = None,
         report_url: str = None,
         report_columns: List[str] = None,
+        credentials_genesys: Dict[str, Any] = None,
     ) -> pd.DataFrame:
         """
         Task for downloading data from the Genesys API to DF.
@@ -276,7 +250,7 @@ class GenesysToDF(Task):
         """
         genesys = Genesys(
             report_name=report_name,
-            credentials=self.credentials,
+            credentials=credentials_genesys,
             environment=environment,
             schedule_id=schedule_id,
             report_url=report_url,

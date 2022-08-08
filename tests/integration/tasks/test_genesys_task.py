@@ -6,11 +6,11 @@ from unittest import mock
 import pandas as pd
 import pytest
 
-media_type_list = ["callback"]
+MEDIA_TYPE_LIST = ["callback"]
 
-queueIds_list = ["780807e6-83b9-44be-aff0-a41c37fab004"]
+QUEUEIDS_LIST = ["780807e6-83b9-44be-aff0-a41c37fab004"]
 
-data_to_post_str = """{
+DATA_TO_POST_STR = """{
     "name": f"QUEUE_PERFORMANCE_DETAIL_VIEW_{media}",
     "timeZone": "UTC",
     "exportFormat": "CSV",
@@ -45,9 +45,9 @@ def test_genesys_to_csv():
     ) as mock_method:
 
         files_name_list = genesys_to_csv.run(
-            media_type_list=media_type_list,
-            queueIds_list=queueIds_list,
-            data_to_post_str=data_to_post_str,
+            media_type_list=MEDIA_TYPE_LIST,
+            queueIds_list=QUEUEIDS_LIST,
+            data_to_post_str=DATA_TO_POST_STR,
         )
         assert isinstance(files_name_list, list)
 
