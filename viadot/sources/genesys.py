@@ -292,7 +292,7 @@ class Genesys(Source):
         output_file_name: str = None,
         file_extension: str = "csv",
         path: str = "",
-        sep: str = "\t"
+        sep: str = "\t",
         drop_duplicates: bool = True,
     ):
         """Download report to excel file.
