@@ -3,6 +3,7 @@ import base64
 import warnings
 import asyncio
 from typing import Any, Dict, List, Literal
+from io import StringIO
 
 import prefect
 import aiohttp
@@ -192,8 +193,8 @@ class Genesys(Source):
             start_date = today.strftime("%Y-%m-%d")
             end_date = yesterday.strftime("%Y-%m-%d")
         else:
-            start_date = datetime.strptime(start_date, "%Y-%m-%d")
-            end_date = datetime.strptime(end_date, "%Y-%m-%d")
+            start_date = self.start_date
+            end_date = self.end_date
 
         for media in self.media_type_list:
             for queueid in self.queueIds_list:
@@ -289,8 +290,10 @@ class Genesys(Source):
         self,
         report_url: str,
         output_file_name: str = None,
-        file_extension: str = "xls",
+        file_extension: str = "csv",
         path: str = "",
+        sep: str = "\t"
+        drop_duplicates: bool = True,
     ):
         """Download report to excel file.
 
@@ -299,6 +302,8 @@ class Genesys(Source):
             output_file_name (str, optional): Output file name. Defaults to None.
             file_extension (str, optional): Output file extension. Defaults to "xls".
             path (str, optional): Path to the generated excel file. Defaults to empty string.
+            sep (str, optional): Separator in csv file. Defaults to "\t".
+            drop_duplicates (bool, optional): Decide if drop duplicates. Defaults to True.
         """
         response_file = handle_api_response(
             url=f"{report_url}", headers=self.authorization_token
@@ -308,8 +313,11 @@ class Genesys(Source):
         else:
             final_file_name = f"{output_file_name}.{file_extension}"
 
-        with open(f"{path}{final_file_name}", "wb") as file:
-            file.write(response_file.content)
+        response_data = response_file.content
+        df = pd.read_csv(StringIO(response_file.content.decode("utf-8")))
+        if drop_duplicates is True:
+            df.drop_duplicates(inplace=True, ignore_index=True)
+        df.to_csv(f"{path}{final_file_name}", index=False, sep=sep)
 
     def download_all_reporting_exports(
         self,
