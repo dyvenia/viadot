@@ -3,6 +3,7 @@ import os
 from typing import Any, Dict, List, Literal
 
 import pandas as pd
+import numpy as np
 from prefect import Flow, task
 from prefect.backend import get_key_value
 from prefect.utilities import logging
@@ -17,6 +18,7 @@ from ..tasks import (
     BCPTask,
     CheckColumnOrder,
     DownloadGitHubFile,
+    AzureDataLakeList,
 )
 
 logger = logging.get_logger(__name__)
@@ -30,6 +32,7 @@ create_table_task = AzureSQLCreateTable()
 bulk_insert_task = BCPTask()
 azure_query_task = AzureSQLDBQuery()
 check_column_order_task = CheckColumnOrder()
+list_in_adls = AzureDataLakeList()
 
 
 @task
@@ -92,6 +95,7 @@ class ADLSToAzureSQL(Flow):
         self,
         name: str,
         local_file_path: str = None,
+        recurrent_adls_filename: str = None,
         adls_path: str = None,
         read_sep: str = "\t",
         write_sep: str = "\t",
@@ -119,6 +123,7 @@ class ADLSToAzureSQL(Flow):
         Args:
             name (str): The name of the flow.
             local_file_path (str, optional): Local destination path. Defaults to None.
+            recurrent_adls_filename (str, optional):
             adls_path (str): The path to an ADLS folder or file. If you pass a path to a directory,
             the latest file from that directory will be loaded. We assume that the files are named using timestamps.
             read_sep (str, optional): The delimiter for the source file. Defaults to "\t".
@@ -142,57 +147,86 @@ class ADLSToAzureSQL(Flow):
             tags (List[str], optional): Flow tags to use, eg. to control flow concurrency. Defaults to ["promotion"].
             vault_name (str, optional): The name of the vault from which to obtain the secrets. Defaults to None.
         """
+
         adls_path = adls_path.strip("/")
         # Read parquet
         if adls_path.split(".")[-1] in ["csv", "parquet"]:
-            self.adls_path = adls_path
+            adls_paths = [adls_path]
+        elif recurrent_adls_filename:
+            self.list_of_valid_paths = np.array([])
+            adls_paths_list_returned = list_in_adls.run(
+                path=adls_path,
+                recursive=True,
+                sp_credentials_secret=adls_sp_credentials_secret,
+            )
+
+            conditions = [
+                recurrent_adls_filename in item for item in adls_paths_list_returned
+            ]
+            valid_paths = np.array([])
+            if any(conditions):
+                index = np.where(conditions)[0]
+                valid_paths = np.append(
+                    valid_paths,
+                    [adls_paths_list_returned[i] for i in index],
+                )
+                adls_paths_list_returned = list(
+                    np.delete(np.array(adls_paths_list_returned), index)
+                )
+            else:
+                raise FileExistsError(
+                    f"There are no any {recurrent_adls_filename} in all paths founds"
+                )
+
         else:
-            self.adls_path = get_key_value(key=adls_path)
+            adls_paths = [get_key_value(key=adls_path)]
 
-        # Read schema
-        self.dtypes = dtypes
-        self.adls_root_dir_path = os.path.split(self.adls_path)[0]
-        self.adls_file_name = os.path.split(self.adls_path)[-1]
-        extension = os.path.splitext(self.adls_path)[-1]
-        json_schema_file_name = self.adls_file_name.replace(extension, ".json")
-        self.json_shema_path = os.path.join(
-            self.adls_root_dir_path,
-            "schema",
-            json_schema_file_name,
-        )
+        for self.adls_path in adls_paths:
+            self.dtypes = dtypes
+            # Read schema
+            if recurrent_adls_filename is None:
+                self.adls_root_dir_path = os.path.split(self.adls_path)[0]
+                self.adls_file_name = os.path.split(self.adls_path)[-1]
+                extension = os.path.splitext(self.adls_path)[-1]
+                json_schema_file_name = self.adls_file_name.replace(extension, ".json")
+                self.json_shema_path = os.path.join(
+                    self.adls_root_dir_path,
+                    "schema",
+                    json_schema_file_name,
+                )
 
-        # AzureDataLakeUpload
-        self.local_file_path = local_file_path or self.slugify(name) + ".csv"
-        self.local_json_path = self.slugify(name) + ".json"
-        self.read_sep = read_sep
-        self.write_sep = write_sep
-        self.overwrite_adls = overwrite_adls
-        self.if_empty = if_empty
-        self.adls_sp_credentials_secret = adls_sp_credentials_secret
-        self.adls_path_conformed = self.get_promoted_path(env="conformed")
-        self.adls_path_operations = self.get_promoted_path(env="operations")
+            # AzureDataLakeUpload
+            self.local_file_path = local_file_path or self.slugify(name) + ".csv"
+            self.local_json_path = self.slugify(name) + ".json"
+            self.read_sep = read_sep
+            self.write_sep = write_sep
+            self.overwrite_adls = overwrite_adls
+            self.if_empty = if_empty
+            self.adls_sp_credentials_secret = adls_sp_credentials_secret
+            self.adls_path_conformed = self.get_promoted_path(env="conformed")
+            self.adls_path_operations = self.get_promoted_path(env="operations")
 
-        # AzureSQLCreateTable
-        self.table = table
-        self.schema = schema
-        self.if_exists = if_exists
-        self.check_col_order = check_col_order
-        # Generate CSV
-        self.remove_tab = remove_tab
+            # AzureSQLCreateTable
+            self.table = table
+            self.schema = schema
+            self.if_exists = if_exists
+            self.check_col_order = check_col_order
+            # Generate CSV
+            self.remove_tab = remove_tab
 
-        # BCPTask
-        self.sqldb_credentials_secret = sqldb_credentials_secret
-        self.on_bcp_error = on_bcp_error
+            # BCPTask
+            self.sqldb_credentials_secret = sqldb_credentials_secret
+            self.on_bcp_error = on_bcp_error
 
-        # Global
-        self.max_download_retries = max_download_retries
-        self.tags = tags
-        self.vault_name = vault_name
+            # Global
+            self.max_download_retries = max_download_retries
+            self.tags = tags
+            self.vault_name = vault_name
 
-        super().__init__(*args, name=name, **kwargs)
+            super().__init__(*args, name=name, **kwargs)
 
-        # self.dtypes.update(METADATA_COLUMNS)
-        self.gen_flow()
+            # self.dtypes.update(METADATA_COLUMNS)
+            self.gen_flow()
 
     @staticmethod
     def _map_if_exists(if_exists: str) -> str:
@@ -298,7 +332,6 @@ class ADLSToAzureSQL(Flow):
 
         df_reorder.set_upstream(lake_to_df_task, flow=self)
         df_to_csv.set_upstream(df_reorder, flow=self)
-        promote_to_conformed_task.set_upstream(df_to_csv, flow=self)
         promote_to_conformed_task.set_upstream(df_to_csv, flow=self)
         create_table_task.set_upstream(df_to_csv, flow=self)
         promote_to_operations_task.set_upstream(promote_to_conformed_task, flow=self)
