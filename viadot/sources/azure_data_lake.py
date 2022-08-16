@@ -2,10 +2,21 @@ import os
 from typing import Any, Dict, List
 
 import pandas as pd
+import numpy as np
 from adlfs import AzureBlobFileSystem, AzureDatalakeFileSystem
 
 from ..config import local_config
 from .base import Source
+
+
+def delete_files(paths: List[str]) -> List[str]:
+
+    # drop files
+    dot_conditions = ["." in item for item in paths]
+    index = np.where(dot_conditions)[0]
+    paths = list(np.delete(np.array(paths), index))
+
+    return paths
 
 
 class AzureDataLake(Source):
@@ -173,15 +184,34 @@ class AzureDataLake(Source):
 
         return df
 
-    def ls(self, path: str = None) -> List[str]:
+    def ls(self, path: str = None, recursive: bool = False) -> List[str]:
         """
-        Returns list of files in a path.
+        Returns list or recursive list of files in a path.
 
         Args:
             path (str, optional): Path to a folder. Defaults to None.
+            recursive (bool, optional): If True, recursively list all subdirectories and files. Defaults to False.
         """
         path = path or self.path
-        return self.fs.ls(path)
+        if recursive:
+            content = self.fs.ls(path)
+            list_of_paths = np.array([])
+            list_of_paths = np.append(list_of_paths, content)
+            content = delete_files(content)
+
+            while content:
+                for i, line in enumerate(content):
+                    rec_content = self.fs.ls(line)
+                    list_of_paths = np.append(list_of_paths, rec_content)
+                    rec_content = delete_files(rec_content)
+
+                    content.remove(line)
+                    content = list(np.append(np.array([content]), rec_content))
+
+            return list(np.sort(list_of_paths))
+
+        else:
+            return self.fs.ls(path)
 
     def rm(self, path: str = None, recursive: bool = False):
         """
