@@ -1,11 +1,18 @@
+from operator import ne
 from typing import Any, Dict, List, Literal
 
 from prefect import Flow
 from prefect.utilities import logging
+from prefect.backend import set_key_value
 
 logger = logging.get_logger()
 
-from ..task_utils import add_ingestion_metadata_task, cast_df_to_str, df_to_parquet
+from ..task_utils import (
+    add_ingestion_metadata_task,
+    cast_df_to_str,
+    df_to_parquet,
+    set_new_kv,
+)
 from ..tasks import DuckDBCreateTableFromParquet, SAPRFCToDF
 
 
@@ -26,6 +33,8 @@ class SAPToDuckDB(Flow):
         if_empty: Literal["warn", "skip", "fail"] = "skip",
         sap_credentials: dict = None,
         duckdb_credentials: dict = None,
+        update_kv: bool = False,
+        filter_column: str = None,
         *args: List[any],
         **kwargs: Dict[str, Any],
     ):
@@ -49,6 +58,8 @@ class SAPToDuckDB(Flow):
             sap_credentials (dict, optional): The credentials to use to authenticate with SAP.
             By default, they're taken from the local viadot config.
             duckdb_credentials (dict, optional): The config to use for connecting with DuckDB. Defaults to None.
+            update_kv (bool, optional): Whether or not to update key value on Prefect. Defaults to False.
+            filter_column (str, optional): Name of the field based on which key value will be updated. Defaults to None.
         """
 
         # SAPRFCToDF
@@ -65,6 +76,8 @@ class SAPToDuckDB(Flow):
         self.if_empty = if_empty
         self.local_file_path = local_file_path or self.slugify(name) + ".parquet"
         self.duckdb_credentials = duckdb_credentials
+        self.update_kv = update_kv
+        self.filter_column = filter_column
 
         super().__init__(*args, name=name, **kwargs)
 
@@ -104,6 +117,15 @@ class SAPToDuckDB(Flow):
         )
 
         table.set_upstream(parquet, flow=self)
+
+        if self.update_kv == True:
+            set_new_kv.bind(
+                kv_name=self.name,
+                df=df,
+                filter_column=self.filter_column,
+                flow=self,
+            )
+            set_new_kv.set_upstream(table, flow=self)
 
     @staticmethod
     def slugify(name):

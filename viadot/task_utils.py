@@ -15,6 +15,7 @@ from prefect.engine.state import Failed
 from prefect.storage import Git
 from prefect.tasks.secrets import PrefectSecret
 from prefect.utilities import logging
+from prefect.backend import set_key_value
 from sendgrid import SendGridAPIClient
 from sendgrid.helpers.mail import Mail
 from toolz import curry
@@ -497,6 +498,24 @@ def cast_df_to_str(df: pd.DataFrame) -> pd.DataFrame:
     """
     df_mapped = df.astype("string")
     return df_mapped
+
+
+@task
+def set_new_kv(kv_name: str, df: pd.DataFrame, filter_column: str):
+    """
+    Task for updating/setting key value on Prefect based on the newest
+    values in pandas DataFrame.
+
+    Args:
+        kv_name (str): Name of key value to change.
+        df (pd.DataFrame): DataFrame based on which value will be updated.
+        filter_column (str): Field from which obtain new value.
+    """
+    if df.empty:
+        logger.warning("Input DataFrame is empty. Cannot set a new key value.")
+    else:
+        new_value = str(df[filter_column].max()).strip()
+        set_key_value(key=kv_name, value=new_value)
 
 
 class Git(Git):
