@@ -519,6 +519,7 @@ class AzureDataLakeList(Task):
     def run(
         self,
         path: str = None,
+        recursive: bool = False,
         gen: int = None,
         sp_credentials_secret: str = None,
         vault_name: str = None,
@@ -528,7 +529,8 @@ class AzureDataLakeList(Task):
         """Task run method.
 
         Args:
-            from_path (str): The path to the directory which contents you want to list. Defaults to None.
+            path (str): The path to the directory which contents you want to list. Defaults to None.
+            recursive (bool, optional): If True, recursively list all subdirectories and files. Defaults to False.
             gen (int): The generation of the Azure Data Lake. Defaults to None.
             sp_credentials_secret (str, optional): The name of the Azure Key Vault secret containing a dictionary with
             ACCOUNT_NAME and Service Principal credentials (TENANT_ID, CLIENT_ID, CLIENT_SECRET). Defaults to None.
@@ -568,7 +570,9 @@ class AzureDataLakeList(Task):
         full_dl_path = os.path.join(credentials["ACCOUNT_NAME"], path)
 
         self.logger.info(f"Listing files in {full_dl_path}...")
-        files = lake.ls(path)
+        if recursive:
+            self.logger.info("...it could take a while...")
+        files = lake.ls(path, recursive=recursive)
         self.logger.info(f"Successfully listed files in {full_dl_path}.")
 
         return files
