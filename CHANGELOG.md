@@ -6,6 +6,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- Added new source `Outlook`
+- Added new task `OutlookToDF`
+- Added new flow `OutlookToADLS`
+
 ## [0.4.4] - 2022-06-09
 ### Added
 
