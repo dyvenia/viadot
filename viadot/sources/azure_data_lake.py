@@ -9,14 +9,20 @@ from ..config import local_config
 from .base import Source
 
 
-def delete_files(paths: List[str]) -> List[str]:
+def filter_files_paths(paths: List[str]) -> List[str]:
+    """Function that filters out unwanted paths from a list of paths.
 
-    # drop files
+    Args:
+        paths (List[str]): List of paths to filter.
+
+    Returns:
+        List[str]: Filtered list of paths.
+    """
     dot_conditions = ["." in item for item in paths]
     index = np.where(dot_conditions)[0]
-    paths = list(np.delete(np.array(paths), index))
+    filtered_paths = list(np.delete(np.array(paths), index))
 
-    return paths
+    return filtered_paths
 
 
 class AzureDataLake(Source):
@@ -197,13 +203,13 @@ class AzureDataLake(Source):
             content = self.fs.ls(path)
             list_of_paths = np.array([])
             list_of_paths = np.append(list_of_paths, content)
-            content = delete_files(content)
+            content = filter_files_paths(content)
 
             while content:
                 for i, line in enumerate(content):
                     rec_content = self.fs.ls(line)
                     list_of_paths = np.append(list_of_paths, rec_content)
-                    rec_content = delete_files(rec_content)
+                    rec_content = filter_files_paths(rec_content)
 
                     content.remove(line)
                     content = list(np.append(np.array([content]), rec_content))

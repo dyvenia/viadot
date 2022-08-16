@@ -123,7 +123,7 @@ class ADLSToAzureSQL(Flow):
         Args:
             name (str): The name of the flow.
             local_file_path (str, optional): Local destination path. Defaults to None.
-            recurrent_adls_filename (str, optional):
+            recurrent_adls_filename (str, optional): File name to find recursively in Azure Data Lake.
             adls_path (str): The path to an ADLS folder or file. If you pass a path to a directory,
             the latest file from that directory will be loaded. We assume that the files are named using timestamps.
             read_sep (str, optional): The delimiter for the source file. Defaults to "\t".
@@ -175,7 +175,7 @@ class ADLSToAzureSQL(Flow):
                 )
             else:
                 raise FileExistsError(
-                    f"There are no any {recurrent_adls_filename} in all paths founds"
+                    f"There are not any available file like {recurrent_adls_filename} in founded paths."
                 )
 
         else:
