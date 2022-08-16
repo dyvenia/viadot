@@ -74,6 +74,12 @@ def test_azure_data_lake_list():
     assert ADLS_PATH in files
 
 
+def test_azure_data_lake_list_recursive():
+    list_task = AzureDataLakeList()
+    files = list_task.run(path="raw/tests/alds_test_new_fnc/", recursive=True)
+    assert isinstance(files, list)
+
+
 @pytest.mark.dependency(depends=["test_azure_data_lake_upload"])
 def test_azure_data_lake_remove():
     file = AzureDataLake(ADLS_PATH)
