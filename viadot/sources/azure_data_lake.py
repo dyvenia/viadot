@@ -190,34 +190,29 @@ class AzureDataLake(Source):
 
         return df
 
-    def ls(self, path: str = None, recursive: bool = False) -> List[str]:
+    def ls(self, path: str = None) -> List[str]:
         """
-        Returns list or recursive list of files in a path.
+        Returns list of files in a path.
 
         Args:
             path (str, optional): Path to a folder. Defaults to None.
-            recursive (bool, optional): If True, recursively list all subdirectories and files. Defaults to False.
         """
         path = path or self.path
-        if recursive:
-            content = self.fs.ls(path)
-            list_of_paths = np.array([])
-            list_of_paths = np.append(list_of_paths, content)
-            content = filter_files_paths(content)
 
-            while content:
-                for i, line in enumerate(content):
-                    rec_content = self.fs.ls(line)
-                    list_of_paths = np.append(list_of_paths, rec_content)
-                    rec_content = filter_files_paths(rec_content)
+        return self.fs.ls(path)
 
-                    content.remove(line)
-                    content = list(np.append(np.array([content]), rec_content))
+    def find(self, path: str = None) -> List[str]:
+        """
+        Returns list of files in a path using recursive method.
 
-            return list(np.sort(list_of_paths))
+        Args:
+            path (str, optional): Path to a folder. Defaults to None.
+        """
+        path = path or self.path
 
-        else:
-            return self.fs.ls(path)
+        files_path_list_raw = self.fs.find(path)
+        paths_list = [p for p in files_path_list_raw if not p.endswith("/")]
+        return paths_list
 
     def rm(self, path: str = None, recursive: bool = False):
         """

@@ -572,8 +572,9 @@ class AzureDataLakeList(Task):
         self.logger.info(f"Listing files in {full_dl_path}.")
         if recursive:
             self.logger.info("Loading ADLS directories recursively.")
-        files = lake.ls(path, recursive=recursive)
-        self.logger.info(f"Successfully listed files in {full_dl_path}.")
+            files = lake.find(path)
+        else:
+            files = lake.ls(path)
 
         return files
 
