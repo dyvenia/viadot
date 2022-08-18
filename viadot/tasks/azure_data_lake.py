@@ -4,6 +4,7 @@ from datetime import timedelta
 from typing import List
 
 import pandas as pd
+import numpy as np
 from prefect import Task
 from prefect.tasks.secrets import PrefectSecret
 from prefect.utilities.tasks import defaults_from_attrs
@@ -520,6 +521,7 @@ class AzureDataLakeList(Task):
         self,
         path: str = None,
         recursive: bool = False,
+        file_to_match: str = None,
         gen: int = None,
         sp_credentials_secret: str = None,
         vault_name: str = None,
@@ -531,6 +533,7 @@ class AzureDataLakeList(Task):
         Args:
             path (str): The path to the directory which contents you want to list. Defaults to None.
             recursive (bool, optional): If True, recursively list all subdirectories and files. Defaults to False.
+            file_to_match (str, optional): If exist it only returns files with that name. Defaults to None.
             gen (int): The generation of the Azure Data Lake. Defaults to None.
             sp_credentials_secret (str, optional): The name of the Azure Key Vault secret containing a dictionary with
             ACCOUNT_NAME and Service Principal credentials (TENANT_ID, CLIENT_ID, CLIENT_SECRET). Defaults to None.
@@ -573,6 +576,16 @@ class AzureDataLakeList(Task):
         if recursive:
             self.logger.info("Loading ADLS directories recursively.")
             files = lake.find(path)
+            if file_to_match:
+                conditions = [file_to_match in item for item in files]
+                valid_files = np.array([])
+                if any(conditions):
+                    index = np.where(conditions)[0]
+                    files = list(np.append(valid_files, [files[i] for i in index]))
+                else:
+                    raise FileExistsError(
+                        f"There are not any available file named {file_to_match}."
+                    )
         else:
             files = lake.ls(path)
 
