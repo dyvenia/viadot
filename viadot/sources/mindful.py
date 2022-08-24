@@ -1,7 +1,8 @@
-from email import header
+from io import StringIO
 from typing import Any, Dict, Literal
 
 import prefect
+import pandas as pd
 from requests.models import Response
 from pytest import param
 
@@ -89,7 +90,7 @@ class Mindful(Source):
 
         return response
 
-    def mindful_interactions_list(
+    def get_interactions_list(
         self,
         limit: int = 1000,
         **kwargs,
@@ -115,7 +116,7 @@ class Mindful(Source):
 
         return response
 
-    def mindful_responses_list(
+    def get_responses_list(
         self,
         limit: int = 1000,
         **kwargs,
@@ -141,22 +142,21 @@ class Mindful(Source):
 
         return response
 
-    def to_df(self):
-        pass
+    def response_to_file(self, response: Response) -> None:
+        """Save Mindful response data to file.
 
+        Args:
+            response (Response, optional): request object with the response from the Mindful API. Defaults to None.
+        """
 
-if __name__ == "__main__":
-    import os
+        data_frame = pd.read_json(StringIO(response.content.decode("utf-8")))
+        file_name = "pruebas"
 
-    os.system("clear")
-
-    # creed = {"VAULT": "123"}
-    # a = Mindful(credentials_mindful=creed)
-    a = Mindful(
-        # region="eu1",
-        start_date="2022-08-18 23:00:00",
-        end_date="2022-08-19 23:00:00",
-    )
-    res = a.mindful_interactions_list()
-    print(res.status_code)
-    print(res.json())
+        if self.file_extension == "csv":
+            data_frame.to_csv(f"{file_name}.{self.file_extension}", index=False)
+        elif self.file_extension == "parquet":
+            data_frame.to_parquet(f"{file_name}.{self.file_extension}", index=False)
+        else:
+            self.logger.warning(
+                "File extension is not available, please choose file_extension: 'parquet' or 'csv' (def.) at Mindful instance."
+            )
