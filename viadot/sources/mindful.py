@@ -1,3 +1,4 @@
+import os
 from io import StringIO
 from typing import Any, Dict, Literal
 
@@ -103,6 +104,8 @@ class Mindful(Source):
         Returns:
             Response: request object with the response from the Mindful API.
         """
+
+        self.endpoint = "interactions"
         params = {
             "_limit": limit,
             "start_date": f"{self.start_date}",
@@ -110,7 +113,7 @@ class Mindful(Source):
         }
 
         response = self._mindful_api_response(
-            endpoint="interactions",
+            endpoint=self.endpoint,
             params=params,
         )
 
@@ -129,6 +132,8 @@ class Mindful(Source):
         Returns:
             Response: request object with the response from the Mindful API.
         """
+
+        self.endpoint = "responses"
         params = {
             "_limit": limit,
             "start_date": f"{self.start_date}",
@@ -136,26 +141,37 @@ class Mindful(Source):
         }
 
         response = self._mindful_api_response(
-            endpoint="responses",
+            endpoint=self.endpoint,
             params=params,
         )
 
         return response
 
-    def response_to_file(self, response: Response) -> None:
+    def response_to_file(
+        self, response: Response, file_name: str = None, file_path: str = ""
+    ) -> None:
         """Save Mindful response data to file.
 
         Args:
             response (Response, optional): request object with the response from the Mindful API. Defaults to None.
+            file_name (str, optional): Name of the file where saving data. Defaults to None.
+            file_path (str, optional): Path where to save the file. Defaults to ''.
         """
 
         data_frame = pd.read_json(StringIO(response.content.decode("utf-8")))
-        file_name = "pruebas"
+        if not file_name:
+            self._file_name = os.path.join(
+                file_path, f"{self.endpoint}.{self.file_extension}"
+            )
+        else:
+            self._file_name = os.path.join(
+                file_path, f"{file_name}.{self.file_extension}"
+            )
 
         if self.file_extension == "csv":
-            data_frame.to_csv(f"{file_name}.{self.file_extension}", index=False)
+            data_frame.to_csv(self._file_name, index=False)
         elif self.file_extension == "parquet":
-            data_frame.to_parquet(f"{file_name}.{self.file_extension}", index=False)
+            data_frame.to_parquet(self._file_name, index=False)
         else:
             self.logger.warning(
                 "File extension is not available, please choose file_extension: 'parquet' or 'csv' (def.) at Mindful instance."
