@@ -4,13 +4,13 @@ from typing import Any, Dict, Literal
 
 import prefect
 import pandas as pd
+from datetime import datetime, timedelta
 from requests.models import Response
-from pytest import param
 
 from viadot.config import local_config
 from viadot.sources.base import Source
 from viadot.utils import handle_api_response
-from viadot.exceptions import CredentialError
+from viadot.exceptions import CredentialError, APIError
 
 
 class Mindful(Source):
@@ -19,8 +19,8 @@ class Mindful(Source):
         *args,
         credentials_mindful: Dict[str, Any] = None,
         region: Literal["us1", "us2", "us3", "ca1", "eu1", "au1"] = "eu1",
-        start_date: str = None,
-        end_date: str = None,
+        start_date: datetime = None,
+        end_date: datetime = None,
         date_interval: int = 1,
         file_extension: Literal["parquet", "csv"] = "csv",
         **kwargs,
@@ -30,8 +30,8 @@ class Mindful(Source):
         Args:
             credentials_mindful (Dict[str, Any], optional): Credentials to connect with Mindful API. Defaults to None.
             region (Literal[us1, us2, us3, ca1, eu1, au1], optional): SD region from where to interact with the mindful API. Defaults to "eu1".
-            start_date (str, optional): Start date of the request. Defaults to None.
-            end_date (str, optional): End date of the resquest. Defaults to None.
+            start_date (datetime, optional): Start date of the request. Defaults to None.
+            end_date (datetime, optional): End date of the resquest. Defaults to None.
             date_interval (int, optional): How many days are included in the request.
                 If end_date is passed as an argument, date_interval will be invalidated. Defaults to 1.
             file_extension (Literal[parquet, csv;], optional): file extensions for storing responses. Defaults to "csv".
@@ -59,9 +59,30 @@ class Mindful(Source):
             self.region = region + "."
         else:
             self.region = ""
-        self.start_date = start_date
-        self.end_date = end_date
-        # self.date_interval = date_interval
+
+        if not isinstance(start_date, datetime):
+            self.start_date = datetime.now()
+            self.end_date = self.start_date + timedelta(days=date_interval)
+            self.logger.info(
+                f"Mindful start_date variable is None or not in datetime format, it has been taken as: {self.start_date}."
+            )
+            self.logger.info(
+                f"Mindful end_date variable has been also taken as: {self.end_date}."
+            )
+        elif isinstance(start_date, datetime) and not isinstance(end_date, datetime):
+            self.start_date = start_date
+            self.end_date = start_date + timedelta(days=date_interval)
+            self.logger.info(
+                f"Mindful end_date variable is None or not in datetime format, it has been taken as: {self.end_date}."
+            )
+        elif start_date >= end_date:
+            raise ValueError(
+                f"start_date variable must be grater than end_date variable."
+            )
+        else:
+            self.start_date = start_date
+            self.end_date = end_date
+
         self.file_extension = file_extension
         self.header = {
             "Authorization": f"Bearer {self.credentials_mindful.get('VAULT')}",
@@ -82,6 +103,7 @@ class Mindful(Source):
         Returns:
             Response: request object with the response from the Mindful API.
         """
+
         response = handle_api_response(
             url=f"https://{self.region}surveydynamix.com/api/{endpoint}",
             params=params,
@@ -117,6 +139,16 @@ class Mindful(Source):
             params=params,
         )
 
+        if response.status_code == 200:
+            self.logger.info(
+                "Succesfully downloaded interactions data from mindful API."
+            )
+        else:
+            self.logger.error(
+                f"Failed to downloaded interactions data. - {response.content}"
+            )
+            raise APIError("Failed to downloaded interactions data.")
+
         return response
 
     def get_responses_list(
@@ -144,6 +176,14 @@ class Mindful(Source):
             endpoint=self.endpoint,
             params=params,
         )
+
+        if response.status_code == 200:
+            self.logger.info("Succesfully downloaded responses data from mindful API.")
+        else:
+            self.logger.error(
+                f"Failed to downloaded responses data. - {response.content}"
+            )
+            raise APIError("Failed to downloaded responses data.")
 
         return response
 
