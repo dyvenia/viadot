@@ -24,6 +24,23 @@ ADLS_PATH_2 = f"raw/supermetrics/{FILE_NAME_2}"
 FILE_NAME_PARQUET = f"test_file_{uuid_4}.parquet"
 ADLS_PATH_PARQUET = f"raw/supermetrics/{FILE_NAME_PARQUET}"
 
+ADLS_TEST_PATHS = [
+    "raw/tests/alds_test_new_fnc/2020/02/01/final_df2.csv",
+    "raw/tests/alds_test_new_fnc/2020/02/01/test_new_fnc.csv",
+    "raw/tests/alds_test_new_fnc/2020/02/02/final_df2.csv",
+    "raw/tests/alds_test_new_fnc/2020/02/02/test_new_fnc.csv",
+    "raw/tests/alds_test_new_fnc/2021/12/01/final_df2.csv",
+    "raw/tests/alds_test_new_fnc/2021/12/01/test_new_fnc.csv",
+    "raw/tests/alds_test_new_fnc/2022/06/21/final_df2.csv",
+    "raw/tests/alds_test_new_fnc/2022/06/21/test_new_fnc.csv",
+    "raw/tests/alds_test_new_fnc/2022/08/12/final_df2.csv",
+    "raw/tests/alds_test_new_fnc/2022/08/12/test_new_fnc.csv",
+    "raw/tests/alds_test_new_fnc/test_folder/final_df2.csv",
+    "raw/tests/alds_test_new_fnc/test_folder/test_new_fnc.csv",
+    "raw/tests/alds_test_new_fnc/test_folder_2/final_df2.csv",
+    "raw/tests/alds_test_new_fnc/test_folder_2/test_new_fnc.csv",
+]
+
 
 @pytest.mark.dependency()
 def test_azure_data_lake_upload(TEST_CSV_FILE_PATH):
@@ -78,6 +95,12 @@ def test_azure_data_lake_list_recursive():
     list_task = AzureDataLakeList()
     files = list_task.run(path="raw/tests/alds_test_new_fnc/", recursive=True)
     assert isinstance(files, list)
+
+
+def test_azure_data_lake_list_paths():
+    list_task = AzureDataLakeList()
+    files = list_task.run(path="raw/tests/alds_test_new_fnc/", recursive=True)
+    assert files == ADLS_TEST_PATHS
 
 
 @pytest.mark.dependency(depends=["test_azure_data_lake_upload"])

@@ -9,22 +9,6 @@ from ..config import local_config
 from .base import Source
 
 
-def filter_files_paths(paths: List[str]) -> List[str]:
-    """Function that filters out unwanted paths from a list of paths.
-
-    Args:
-        paths (List[str]): List of paths to filter.
-
-    Returns:
-        List[str]: Filtered list of paths.
-    """
-    dot_conditions = ["." in item for item in paths]
-    index = np.where(dot_conditions)[0]
-    filtered_paths = list(np.delete(np.array(paths), index))
-
-    return filtered_paths
-
-
 class AzureDataLake(Source):
     """
     A class for pulling data from the Azure Data Lakes (gen1 and gen2).
@@ -207,6 +191,10 @@ class AzureDataLake(Source):
 
         Args:
             path (str, optional): Path to a folder. Defaults to None.
+        
+        Returns:
+            List[str]: List of paths.
+            
         """
         path = path or self.path
 

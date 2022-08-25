@@ -531,7 +531,7 @@ class AzureDataLakeList(Task):
         """Task run method.
 
         Args:
-            path (str): The path to the directory which contents you want to list. Defaults to None.
+            path (str, optional): The path to the directory which contents you want to list. Defaults to None.
             recursive (bool, optional): If True, recursively list all subdirectories and files. Defaults to False.
             file_to_match (str, optional): If exist it only returns files with that name. Defaults to None.
             gen (int): The generation of the Azure Data Lake. Defaults to None.
@@ -589,6 +589,7 @@ class AzureDataLakeList(Task):
         else:
             files = lake.ls(path)
 
+        self.logger.info(f"Successfully listed files in {full_dl_path}.")
         return files
 
 
