@@ -191,10 +191,10 @@ class AzureDataLake(Source):
 
         Args:
             path (str, optional): Path to a folder. Defaults to None.
-        
+
         Returns:
             List[str]: List of paths.
-            
+
         """
         path = path or self.path
 
