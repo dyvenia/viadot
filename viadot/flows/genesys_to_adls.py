@@ -173,7 +173,7 @@ class GenesysReportToADLS(Flow):
             adls_sp_credentials_secret (str, optional): The name of the Azure Key Vault secret containing a dictionary with
             ACCOUNT_NAME and Service Principal credentials (TENANT_ID, CLIENT_ID, CLIENT_SECRET) for the Azure Data Lake.
             Defaults to None.
-            credentials_secret (str, optional): The name of the Azure Key Vault secret for Bigquery project. Defaults to None.
+            credentials_secret (str, optional): The name of the Azure Key Vault secret for Genesys project. Defaults to None.
             schedule_id (str, optional): ID of the schedule report job. Defaults to None.
 
         """

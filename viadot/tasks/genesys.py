@@ -72,7 +72,7 @@ class GenesysToCSV(Task):
         )
 
     def __call__(self, *args, **kwargs):
-        """Download Genesys data to DF"""
+        """Download Genesys data to CSV"""
         return super().__call__(*args, **kwargs)
 
     @defaults_from_attrs(
@@ -121,7 +121,6 @@ class GenesysToCSV(Task):
             schedule_id (str, optional): The ID of report. Defaults to None.
             report_url (str, optional): The url of report generated in json response. Defaults to None.
             report_columns (List[str], optional): List of exisiting column in report. Defaults to None.
-            credentials (Dict[str, Any], optional): Credentials to connect with Genesys API containing CLIENT_ID. Defaults to None.
 
         Returns:
             List[str]: List of file names.
@@ -244,6 +243,7 @@ class GenesysToDF(Task):
             schedule_id (str, optional): The ID of report. Defaults to None.
             report_url (str, optional): The url of report generated in json response. Defaults to None.
             report_columns (List[str], optional): List of exisiting column in report. Defaults to None.
+            credentials_genesys (Dict[str, Any], optional): Credentials to connect with Genesys API containing CLIENT_ID. Defaults to None.
 
         Returns:
             pd.DataFrame: The API GET as a pandas DataFrames from Genesys.
