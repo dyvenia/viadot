@@ -69,9 +69,14 @@ class MindfulToCSV(Task):
             file_extension="csv",
         )
 
+        file_paths = []
         interactions_response = mindful.get_interactions_list()
-        mindful.response_to_file(interactions_response)
+        interaction_file_path = mindful.response_to_file(interactions_response)
+        file_paths.append(interaction_file_path)
         logger.info("Sleeping 0.5 seconds between GET calls to Mindful API.")
         time.sleep(0.5)
         responses_response = mindful.get_responses_list()
-        mindful.response_to_file(responses_response)
+        response_file_path = mindful.response_to_file(responses_response)
+        file_paths.append(response_file_path)
+
+        return file_paths

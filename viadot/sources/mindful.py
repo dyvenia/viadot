@@ -35,6 +35,7 @@ class Mindful(Source):
             date_interval (int, optional): How many days are included in the request.
                 If end_date is passed as an argument, date_interval will be invalidated. Defaults to 1.
             file_extension (Literal[parquet, csv;], optional): file extensions for storing responses. Defaults to "csv".
+
         Raises:
             CredentialError: If credentials are not provided in local_config or directly as a parameter.
         """
@@ -85,7 +86,7 @@ class Mindful(Source):
 
         self.file_extension = file_extension
         self.header = {
-            "Authorization": f"Bearer {self.credentials_mindful.get('VAULT')}",
+            "Authorization": f"Bearer {self.credentials.get('VAULT')}",
         }
 
     def _mindful_api_response(
@@ -189,30 +190,35 @@ class Mindful(Source):
 
     def response_to_file(
         self, response: Response, file_name: str = None, file_path: str = ""
-    ) -> None:
+    ) -> str:
         """Save Mindful response data to file.
 
         Args:
             response (Response, optional): request object with the response from the Mindful API. Defaults to None.
             file_name (str, optional): Name of the file where saving data. Defaults to None.
             file_path (str, optional): Path where to save the file. Defaults to ''.
+
+        returns
+            str: the absolute path of the downloaded file.
         """
 
         data_frame = pd.read_json(StringIO(response.content.decode("utf-8")))
         if not file_name:
-            self._file_name = os.path.join(
+            absolute_path = os.path.join(
                 file_path, f"{self.endpoint}.{self.file_extension}"
             )
         else:
-            self._file_name = os.path.join(
+            absolute_path = os.path.join(
                 file_path, f"{file_name}.{self.file_extension}"
             )
 
         if self.file_extension == "csv":
-            data_frame.to_csv(self._file_name, index=False)
+            data_frame.to_csv(absolute_path, index=False)
         elif self.file_extension == "parquet":
-            data_frame.to_parquet(self._file_name, index=False)
+            data_frame.to_parquet(absolute_path, index=False)
         else:
             self.logger.warning(
                 "File extension is not available, please choose file_extension: 'parquet' or 'csv' (def.) at Mindful instance."
             )
+
+        return absolute_path
