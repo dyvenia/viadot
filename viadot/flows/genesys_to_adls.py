@@ -21,7 +21,8 @@ def adls_bulk_upload(
     adls_sp_credentials_secret: str = None,
     adls_overwrite: bool = True,
 ) -> List[str]:
-    """Function that upload files to defined path in ADLS.
+    """
+    Function that upload files to defined path in ADLS.
 
     Args:
         file_names (List[str]): List of file names to generate paths.
@@ -65,7 +66,8 @@ class GenesysToADLS(Flow):
         *args: List[any],
         **kwargs: Dict[str, Any]
     ):
-        """Genesys flow that generates CSV files and upload them to ADLS.
+        """
+        Genesys flow that generates CSV files and upload them to ADLS.
 
         Args:
             name (str): The name of the Flow.
@@ -87,6 +89,7 @@ class GenesysToADLS(Flow):
             ACCOUNT_NAME and Service Principal credentials (TENANT_ID, CLIENT_ID, CLIENT_SECRET). Defaults to None.
             credentials(dict, optional): Credentials for the genesys api. Defaults to None.
         """
+        # GenesysToCSV
         self.flow_name = name
         self.media_type_list = media_type_list
         self.queueIds_list = queueIds_list
@@ -98,6 +101,7 @@ class GenesysToADLS(Flow):
         self.start_date = start_date
         self.end_date = end_date
         self.days_interval = days_interval
+        # AzureDataLake
         self.local_file_path = local_file_path
         self.adls_file_path = adls_file_path
         self.overwrite_adls = overwrite_adls
@@ -152,7 +156,8 @@ class GenesysReportToADLS(Flow):
         *args: List[any],
         **kwargs: Dict[str, Any]
     ):
-        """Flow for downloading data from genesys API to Azure Data Lake.
+        """
+        Flow for downloading data from genesys API to Azure Data Lake.
 
         Args:
             name (str): The name of the flow.

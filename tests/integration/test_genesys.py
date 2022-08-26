@@ -141,7 +141,7 @@ def test_schedule_id_param():
 @pytest.mark.init
 def test_other_inicial_params(input_name):
     g = Genesys(report_name=input_name)
-    assert len(g.report_name) > 0 and type(g.report_name) == str
+    assert len(g.report_name) > 0 and isinstance(g.report_name, str)
 
 
 @pytest.mark.proper

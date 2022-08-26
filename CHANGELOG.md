@@ -14,7 +14,9 @@ in `task_utils`
 - Added `rfc_character_limit` parameter in `SAPRFCToDF` task, `SAPRFC` source, `SAPRFCToADLS` and `SAPToDuckDB` flows
 - Added `on_bcp_error` and `bcp_error_log_path` parameters in `BCPTask`
 - Added ability to process queries which result exceed SAP's character per low limit in `SAPRFC` source
-- Added Genesys API source `Genesys`, tasks `GenesysToCSV` and `GenesysToDF` and flows `GenesysToADLS` and `GenesysReportToADLS`
+- Added Genesys API source `Genesys`
+- Added tasks `GenesysToCSV` and `GenesysToDF`
+- Added flows `GenesysToADLS` and `GenesysReportToADLS`
 - Added new flow `PrefectLogs` for extracting all logs from Prefect with details
 - Added `PrefectLogs` flow
 
