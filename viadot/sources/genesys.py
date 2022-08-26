@@ -79,7 +79,7 @@ class Genesys(Source):
         if self.credentials_genesys is None:
             raise CredentialError("Credentials not found.")
 
-        super().__init__(*args, **kwargs)
+        super().__init__(*args, credentials=self.credentials_genesys, **kwargs)
 
         self.schedule_id = schedule_id
         self.report_name = report_name
@@ -97,13 +97,13 @@ class Genesys(Source):
         self.ids_mapping = ids_mapping
 
         if self.schedule_id is None:
-            self.schedule_id = self.credentials_genesys.get("SCHEDULE_ID", None)
+            self.schedule_id = self.credentials.get("SCHEDULE_ID", None)
 
         if self.environment is None:
-            self.environment = self.credentials_genesys.get("ENVIRONMENT", None)
+            self.environment = self.credentials.get("ENVIRONMENT", None)
 
         if self.ids_mapping is None:
-            self.ids_mapping = self.credentials_genesys.get("IDS_MAPPING", None)
+            self.ids_mapping = self.credentials.get("IDS_MAPPING", None)
 
             if type(self.ids_mapping) is dict and self.ids_mapping is not None:
                 self.logger.info("IDS_MAPPING loaded from local credential.")
@@ -127,7 +127,7 @@ class Genesys(Source):
         Returns:
             Dict: request headers with token.
         """
-        CLIENT_ID = self.credentials_genesys.get("CLIENT_ID", None)
+        CLIENT_ID = self.credentials.get("CLIENT_ID", None)
         CLIENT_SECRET = self.credentials_genesys.get("CLIENT_SECRET", None)
         authorization = base64.b64encode(
             bytes(CLIENT_ID + ":" + CLIENT_SECRET, "ISO-8859-1")
