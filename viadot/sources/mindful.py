@@ -76,9 +76,9 @@ class Mindful(Source):
             self.logger.info(
                 f"Mindful end_date variable is None or not in datetime format, it has been taken as: {self.end_date}."
             )
-        elif start_date >= end_date:
+        elif start_date <= end_date:
             raise ValueError(
-                f"start_date variable must be grater than end_date variable."
+                f"start_date variable must be lower than end_date variable."
             )
         else:
             self.start_date = start_date
