@@ -67,3 +67,49 @@ async def datahub_ingest_task(
         logger=logger,
     )
     return result
+
+
+@task
+async def datahub_cleanup_task(
+    env: Optional[dict] = None,
+    shell: str = "bash",
+    return_all: bool = False,
+    stream_level: int = logging.INFO,
+    max_retries: int = 3,
+) -> Union[List, str]:
+    """
+    Remove all metadata from a DataHub instance.
+
+    Args:
+        env: Dictionary of environment variables to use for
+            the subprocess; can also be provided at runtime.
+        shell: Shell to run the command with.
+        return_all: Whether this task should return all lines of stdout as a list,
+            or just the last line as a string.
+        stream_level: The logging level of the stream;
+            defaults to 20 equivalent to `logging.INFO`.
+    Returns:
+        If return_all, returns all lines as a list; else the last line as a string.
+    Example:
+        ```python
+        from prefect import flow
+        from viadot.tasks import datahub_cleanup_task
+
+        @flow
+        def example_datahub_cleanup_flow():
+            return datahub_cleanup_task(return_all=True)
+
+        example_datahub_cleanup_flow()
+        ```
+    """
+    logger = get_run_logger()
+
+    result = await shell_run_command(
+        command="datahub delete -f --hard -e dev && datahub delete -f --hard -p dbt --entity_type assertion",
+        env=env,
+        shell=shell,
+        return_all=return_all,
+        stream_level=stream_level,
+        logger=logger,
+    )
+    return result
