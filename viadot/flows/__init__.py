@@ -31,4 +31,4 @@ except ImportError:
 
 from .epicor_to_duckdb import EpicorOrdersToDuckDB
 from .sql_server_to_duckdb import SQLServerToDuckDB
-from .mindful_to_adls import MindfulToCSV
+from .mindful_to_adls import MindfulToADLS
