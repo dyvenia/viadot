@@ -189,7 +189,11 @@ class Mindful(Source):
         return response
 
     def response_to_file(
-        self, response: Response, file_name: str = None, file_path: str = ""
+        self,
+        response: Response,
+        file_name: str = None,
+        file_path: str = "",
+        sep: str = "\t",
     ) -> str:
         """Save Mindful response data to file.
 
@@ -197,6 +201,7 @@ class Mindful(Source):
             response (Response, optional): request object with the response from the Mindful API. Defaults to None.
             file_name (str, optional): Name of the file where saving data. Defaults to None.
             file_path (str, optional): Path where to save the file. Defaults to ''.
+            sep (str, optional): Separator in csv file. Defaults to "\t".
 
         returns
             str: the absolute path of the downloaded file.
@@ -213,7 +218,7 @@ class Mindful(Source):
             )
 
         if self.file_extension == "csv":
-            data_frame.to_csv(absolute_path, index=False)
+            data_frame.to_csv(absolute_path, index=False, sep=sep)
         elif self.file_extension == "parquet":
             data_frame.to_parquet(absolute_path, index=False)
         else:
