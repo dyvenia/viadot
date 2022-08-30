@@ -16,3 +16,7 @@ class DBDataAccessError(Exception):
 
 class DataRangeError(Exception):
     pass
+
+
+class DataBufferExceeded(Exception):
+    pass

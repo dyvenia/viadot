@@ -1,5 +1,6 @@
-from viadot.flows import ADLSGen1ToAzureSQL
 from unittest import mock
+
+from viadot.flows import ADLSGen1ToAzureSQL
 
 
 def test_adls_gen1_to_azure_sql_new_init(

@@ -1,10 +1,11 @@
 import json
+
 import pytest
+from prefect.tasks.secrets import PrefectSecret
 
 from viadot.flows.sql_server_to_duckdb import SQLServerToDuckDB
-from viadot.tasks import SQLServerCreateTable, DuckDBToDF, DuckDBQuery, AzureSQLDBQuery
+from viadot.tasks import AzureSQLDBQuery, DuckDBQuery, DuckDBToDF, SQLServerCreateTable
 from viadot.tasks.azure_key_vault import AzureKeyVaultSecret
-from prefect.tasks.secrets import PrefectSecret
 
 SCHEMA = "sandbox"
 TABLE = "test"

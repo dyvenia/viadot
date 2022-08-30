@@ -1,6 +1,6 @@
 import pandas as pd
-from viadot.sources import BigQuery
 
+from viadot.sources import BigQuery
 
 BIGQ = BigQuery(credentials_key="BIGQUERY_TESTS")
 

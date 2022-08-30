@@ -1,4 +1,5 @@
 import pytest
+
 from viadot.sources import Supermetrics
 
 RESPONSE_PIVOTED = {

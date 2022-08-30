@@ -3,11 +3,11 @@ from datetime import timedelta
 from typing import Dict, Generator, List
 
 import pandas as pd
-from viadot.config import local_config
-
 from prefect import Task
 from prefect.tasks.secrets import PrefectSecret
 from prefect.utilities.tasks import defaults_from_attrs
+
+from viadot.config import local_config
 
 from ..sources import CloudForCustomers
 from .azure_key_vault import AzureKeyVaultSecret

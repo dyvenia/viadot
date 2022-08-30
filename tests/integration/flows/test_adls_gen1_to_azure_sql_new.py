@@ -1,9 +1,10 @@
 import os
-import pytest
-import pandas as pd
 from unittest import mock
-from viadot.flows import ADLSGen1ToAzureSQLNew
 
+import pandas as pd
+import pytest
+
+from viadot.flows import ADLSGen1ToAzureSQLNew
 
 d = {"country": [1, 2], "sales": [3, 4]}
 df = pd.DataFrame(data=d)

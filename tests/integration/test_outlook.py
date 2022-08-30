@@ -1,5 +1,5 @@
-from viadot.sources import Outlook
 from viadot.config import local_config
+from viadot.sources import Outlook
 
 
 def test_outlook_to_df():

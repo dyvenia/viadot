@@ -1,6 +1,8 @@
-import pytest
 import logging
+
 import pandas as pd
+import pytest
+
 from viadot.tasks import BigQueryToDF
 
 logger = logging.getLogger(__name__)

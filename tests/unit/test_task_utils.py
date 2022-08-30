@@ -1,22 +1,23 @@
-import pytest
-import numpy as np
 import os
-import pandas as pd
-import prefect
 from typing import List
 
+import numpy as np
+import pandas as pd
+import prefect
+import pytest
 
 from viadot.task_utils import (
+    add_ingestion_metadata_task,
     chunk_df,
+    df_clean_column,
+    df_converts_bytes_to_int,
     df_get_data_types_task,
     df_map_mixed_dtypes_for_parquet,
     df_to_csv,
     df_to_parquet,
-    union_dfs_task,
     dtypes_to_json_task,
+    union_dfs_task,
     write_to_json,
-    df_converts_bytes_to_int,
-    df_clean_column,
 )
 
 
@@ -26,6 +27,24 @@ def count_dtypes(dtypes_dict: dict = None, dtypes_to_count: List[str] = None) ->
         if v in dtypes_to_count:
             dtypes_counter += 1
     return dtypes_counter
+
+
+def test_add_ingestion_metadata_task():
+    df = pd.DataFrame({"col1": [1, 2], "col2": [3, 4]})
+    result = add_ingestion_metadata_task.run(df)
+    assert "_viadot_downloaded_at_utc" in result.columns
+
+
+def test_add_ingestion_metadata_task_empty():
+    df = pd.DataFrame()
+    result = add_ingestion_metadata_task.run(df)
+    assert result.empty
+
+
+def test_add_ingestion_metadata_task_no_data():
+    df = pd.DataFrame({"col1": []})
+    result = add_ingestion_metadata_task.run(df)
+    assert "_viadot_downloaded_at_utc" in result.columns
 
 
 def test_map_dtypes_for_parquet():

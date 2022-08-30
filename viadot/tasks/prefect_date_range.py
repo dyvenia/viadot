@@ -1,10 +1,10 @@
-from typing import List, Literal
-import prefect
 from datetime import date, datetime
+from typing import List, Literal
 
+import prefect
 from prefect import Task
-from prefect.utilities.tasks import defaults_from_attrs
 from prefect.utilities import logging
+from prefect.utilities.tasks import defaults_from_attrs
 
 logger = logging.get_logger()
 

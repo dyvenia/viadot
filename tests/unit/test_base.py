@@ -1,9 +1,11 @@
 import os
-import pytest
+
 import pandas as pd
 import pyarrow as pa
-from viadot.sources.base import SQL, Source
+import pytest
+
 from viadot.signals import SKIP
+from viadot.sources.base import SQL, Source
 
 from .test_credentials import get_credentials
 
