@@ -6,7 +6,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 ### Added
-
+- Added new flow - `SQLServerTransform` and new task `SQLServerQuery` to run queries on SQLServer
 - Added handling empty DF in `set_new_kv()` task
 - Added `update_kv` and `filter_column` params to `SAPRFCToADLS` and `SAPToDuckDB` flows and added `set_new_kv()` task
 in `task_utils`
@@ -56,9 +56,6 @@ DF to string before adding metadata
 `SQLServerToDuckDB` flows to check if output Parquet is empty and handle it properly.
 - Added `check_if_empty_file()` and `handle_if_empty_file()` in `utils.py`
 
->>>>>>> 21c833ac5ae24e1806481abbc341e780e5ffc751
-
-- Added new flow - `SQLServerTransform` and new task `SQLServerQuery` to run queries on SQLServer
 ## [0.4.4] - 2022-06-09
 ### Added
 - Added new connector - Outlook. Created `Outlook` source, `OutlookToDF` task and `OutlookToADLS` flow.
