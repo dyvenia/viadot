@@ -118,6 +118,8 @@ class SQLServerToDF(Task):
             config_key (str, optional): The key inside local config containing the credentials. Defaults to None.
 
         """
+        if config_key is None:
+            config_key = "SQL_SERVER"
         sql_server = SQLServer(config_key=config_key)
         df = sql_server.to_df(query=query)
         nrows = df.shape[0]
@@ -137,7 +139,7 @@ class SQLServerQuery(Task):
         **kwargs,
     ):
         """
-        Task for running query on SQL Server.
+        Task for running queries on SQL Server.
 
         Args:
             config_key (str, optional): The key inside local config containing the credentials. Defaults to None.
@@ -160,6 +162,8 @@ class SQLServerQuery(Task):
             config_key (str, optional): The key inside local config containing the credentials. Defaults to None.
 
         """
+        if config_key is None:
+            config_key = "SQL_SERVER"
         sql_server = SQLServer(config_key=config_key)
         result = sql_server.run(query)
 
