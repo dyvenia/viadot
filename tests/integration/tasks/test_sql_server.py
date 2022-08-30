@@ -1,7 +1,7 @@
 import json
 import logging
 import inspect
-from viadot.tasks import SQLServerCreateTable, SQLServerToDF
+from viadot.tasks import SQLServerCreateTable, SQLServerToDF, SQLiteQuery
 from viadot.tasks.azure_key_vault import AzureKeyVaultSecret
 from prefect.tasks.secrets import PrefectSecret
 
