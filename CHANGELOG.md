@@ -18,6 +18,9 @@ and `DuckDBToSQLServer` to `fail`.
 - Added `rfc_character_limit` parameter in `SAPRFCToDF` task, `SAPRFC` source, `SAPRFCToADLS` and `SAPToDuckDB` flows
 - Added `on_bcp_error` and `bcp_error_log_path` parameters in `BCPTask`
 - Added ability to process queries which result exceed SAP's character per low limit in `SAPRFC` source
+- Added Genesys API source `Genesys`
+- Added tasks `GenesysToCSV` and `GenesysToDF`
+- Added flows `GenesysToADLS` and `GenesysReportToADLS`
 - Added new flow `PrefectLogs` for extracting all logs from Prefect with details
 - Added `PrefectLogs` flow
 
@@ -29,7 +32,9 @@ DF to string before adding metadata
 - Changed `check_if_empty_file()` logic according to changes in `add_ingestion_metadata_task()`
 - Changed accepted values of `if_empty` parameter in `DuckDBCreateTableFromParquet`
 - Updated `.gitignore` to ignore files with `*.bak` extension and to ignore `credentials.json` in any directory
-- Changed logger messages in `AzureDataLakeRemove` task
+- Updated requirements.txt
+- Changed 'handle_api_response()' method by adding more requests method also added contex menager
+ Changed logger messages in `AzureDataLakeRemove` task
 
 ### Fixed
 - Fixed handling empty response in `SAPRFC` source
