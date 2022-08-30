@@ -429,8 +429,6 @@ class SAPRFC(Source):
                 response = self.call(func, **params)
                 record_key = "WA"
                 data_raw = response["DATA"]
-                print("****************************")
-                print(response)
                 records = [row[record_key].split(sep) for row in data_raw]
             except ValueError:
                 continue
