@@ -4,25 +4,26 @@ import os
 import shutil
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Callable, Union, cast, List, Literal
-from toolz import curry
+from typing import TYPE_CHECKING, Any, Callable, List, Literal, Union, cast
 
 import pandas as pd
 import prefect
 import pyarrow as pa
 import pyarrow.dataset as ds
-from prefect import task, Task, Flow
-from prefect.storage import Git
-from prefect.utilities import logging
-from prefect.tasks.secrets import PrefectSecret
+from prefect import Flow, Task, task
 from prefect.engine.state import Failed
+from prefect.storage import Git
+from prefect.tasks.secrets import PrefectSecret
+from prefect.utilities import logging
+from prefect.backend import set_key_value
 from sendgrid import SendGridAPIClient
 from sendgrid.helpers.mail import Mail
+from toolz import curry
 from visions.functional import infer_type
 from visions.typesets.complete_set import CompleteSet
-from viadot.tasks import AzureKeyVaultSecret
-from viadot.config import local_config
 
+from viadot.config import local_config
+from viadot.tasks import AzureKeyVaultSecret
 
 logger = logging.get_logger()
 METADATA_COLUMNS = {"_viadot_downloaded_at_utc": "DATETIME"}
@@ -37,9 +38,15 @@ def add_ingestion_metadata_task(
     Args:
         df (pd.DataFrame): input DataFrame.
     """
-    df2 = df.copy(deep=True)
-    df2["_viadot_downloaded_at_utc"] = datetime.now(timezone.utc).replace(microsecond=0)
-    return df2
+    # Don't skip when df has columns but has no data
+    if len(df.columns) == 0:
+        return df
+    else:
+        df2 = df.copy(deep=True)
+        df2["_viadot_downloaded_at_utc"] = datetime.now(timezone.utc).replace(
+            microsecond=0
+        )
+        return df2
 
 
 @task
@@ -439,10 +446,11 @@ def df_clean_column(
     columns_to_clean (List[str]): A list of columns to clean. Defaults is None.
 
     Returns:
-    pd.DataFrame: The cleaned DataFrame
+    pd.DataFrame: The cleaned DataFrame.
     """
 
     df = df.copy()
+    logger.info(f"Removing special characters from dataframe columns...")
 
     if columns_to_clean is None:
         df.replace(
@@ -465,7 +473,7 @@ def df_clean_column(
 @task
 def concat_dfs(dfs: List[pd.DataFrame]):
     """
-    Task to combine list of data frames into one
+    Task to combine list of data frames into one.
 
     Args:
         dfs (List[pd.DataFrame]): List of dataframes to concat.
@@ -475,11 +483,46 @@ def concat_dfs(dfs: List[pd.DataFrame]):
     return pd.concat(dfs, axis=1)
 
 
+@task
+def cast_df_to_str(df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Task for casting an entire DataFrame to a string data type. Task is needed
+    when data is being uploaded from Parquet file to DuckDB because empty columns
+    can be casted to INT instead of default VARCHAR.
+
+    Args:
+        df (pd.DataFrame): Input DataFrame.
+
+    Returns:
+        df_mapped (pd.DataFrame): Pandas DataFrame casted to string.
+    """
+    df_mapped = df.astype("string")
+    return df_mapped
+
+
+@task
+def set_new_kv(kv_name: str, df: pd.DataFrame, filter_column: str):
+    """
+    Task for updating/setting key value on Prefect based on the newest
+    values in pandas DataFrame.
+
+    Args:
+        kv_name (str): Name of key value to change.
+        df (pd.DataFrame): DataFrame based on which value will be updated.
+        filter_column (str): Field from which obtain new value.
+    """
+    if df.empty:
+        logger.warning("Input DataFrame is empty. Cannot set a new key value.")
+    else:
+        new_value = str(df[filter_column].max()).strip()
+        set_key_value(key=kv_name, value=new_value)
+
+
 class Git(Git):
     @property
     def git_clone_url(self):
         """
-        Build the git url to clone
+        Build the git url to clone.
         """
         if self.use_ssh:
             return f"git@{self.repo_host}:{self.repo}"

@@ -1,8 +1,9 @@
 import logging
+
 import pandas as pd
 import pytest
-from viadot.exceptions import ValidationError
 
+from viadot.exceptions import ValidationError
 from viadot.tasks import AzureSQLCreateTable, AzureSQLDBQuery, CheckColumnOrder
 
 logger = logging.getLogger(__name__)
@@ -130,7 +131,7 @@ def test_check_column_order_replace(caplog):
 
     check_column_order = CheckColumnOrder()
     with caplog.at_level(logging.INFO):
-        check_column_order.run(table=TABLE, if_exists="replace", df=df)
+        check_column_order.run(table=TABLE, schema=SCHEMA, if_exists="replace", df=df)
     assert "The table will be replaced." in caplog.text
 
 

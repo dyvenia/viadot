@@ -1,11 +1,13 @@
 import os
-import pandas as pd
-from unittest import mock
-from viadot.flows import SupermetricsToAzureSQL
-from prefect.storage import Local
-from io import StringIO
 from csv import reader
+from io import StringIO
+from unittest import mock
+
+import pandas as pd
+from prefect.storage import Local
+
 from viadot.config import local_config
+from viadot.flows import SupermetricsToAzureSQL
 
 CWD = os.getcwd()
 adls_dir_path = "raw/supermetrics"

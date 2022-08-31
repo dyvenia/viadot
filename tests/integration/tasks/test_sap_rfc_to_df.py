@@ -1,5 +1,5 @@
-from viadot.tasks import SAPRFCToDF
 from viadot.config import local_config
+from viadot.tasks import SAPRFCToDF
 
 
 def test_sap_rfc_to_df_bbp():

@@ -1,23 +1,18 @@
-import pytest
 import os
-import pathlib
-import json
 import pandas as pd
-import configparser
+import pytest
+from prefect.tasks.secrets import PrefectSecret
+
+from viadot.config import local_config
 from viadot.exceptions import CredentialError
 
 from viadot.sources import Sharepoint
-from viadot.config import local_config
 from viadot.task_utils import df_get_data_types_task
 from viadot.tasks.sharepoint import SharepointToDF
 
-from prefect.tasks.secrets import PrefectSecret
-
 
 def get_url():
-    with open(".config/credentials.json", "r") as f:
-        config = json.load(f)
-    return config["SHAREPOINT"]["url"]
+    return local_config["SHAREPOINT"].get("url")
 
 
 @pytest.fixture(scope="session")
@@ -88,5 +83,6 @@ def test_file_to_df(FILE_NAME):
 def test_get_data_types(FILE_NAME):
     df = pd.read_excel(FILE_NAME, sheet_name=0)
     dtypes_map = df_get_data_types_task.run(df)
-    dtypes = [v for k, v in dtypes_map.items()]
+    dtypes = dtypes_map.values()
+
     assert "String" in dtypes

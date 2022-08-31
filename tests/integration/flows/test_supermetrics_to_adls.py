@@ -3,6 +3,7 @@ import os
 
 import pytest
 from prefect.storage import Local
+
 from viadot.flows import SupermetricsToADLS
 
 CWD = os.getcwd()

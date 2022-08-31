@@ -1,5 +1,5 @@
-from viadot.tasks import EpicorOrdersToDF
 from viadot.config import local_config
+from viadot.tasks import EpicorOrdersToDF
 
 
 def test_epicor_orders_to_df():

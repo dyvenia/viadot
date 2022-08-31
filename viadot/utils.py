@@ -1,17 +1,24 @@
+import os
 import re
-from typing import Any, Dict, List
+from itertools import chain
+from typing import Any, Dict, List, Literal
 
 import pandas as pd
 import prefect
+import pyarrow.parquet
 import pyodbc
 import requests
+from prefect.utilities import logging
 from prefect.utilities.graphql import EnumValue, with_args
 from requests.adapters import HTTPAdapter
 from requests.exceptions import ConnectionError, HTTPError, ReadTimeout, Timeout
 from requests.packages.urllib3.util.retry import Retry
 from urllib3.exceptions import ProtocolError
-from itertools import chain
+
 from .exceptions import APIError
+from .signals import SKIP
+
+logger = logging.get_logger(__name__)
 
 
 def slugify(name: str) -> str:
@@ -24,25 +31,31 @@ def handle_api_response(
     params: Dict[str, Any] = None,
     headers: Dict[str, Any] = None,
     timeout: tuple = (3.05, 60 * 30),
+    method: Literal["GET", "POST", "DELETE"] = "GET",
+    body: str = None,
 ) -> requests.models.Response:
     """Handle and raise Python exceptions during request with retry strategy for specyfic status.
-
     Args:
         url (str): the URL which trying to connect.
         auth (tuple, optional): authorization information. Defaults to None.
         params (Dict[str, Any], optional): the request params also includes parameters such as the content type. Defaults to None.
         headers: (Dict[str, Any], optional): the request headers. Defaults to None.
         timeout (tuple, optional): the request times out. Defaults to (3.05, 60 * 30).
-
+        method (Literal ["GET", "POST","DELETE"], optional): REST API method to use. Defaults to "GET".
+        body (str, optional): Data to send using POST method. Defaults to None.
     Raises:
+        ValueError: raises when 'method' parameter value hasn't been specified
         ReadTimeout: stop waiting for a response after a given number of seconds with the timeout parameter.
         HTTPError: exception that indicates when HTTP status codes returned values different than 200.
         ConnectionError: exception that indicates when client is unable to connect to the server.
         APIError: defined by user.
-
     Returns:
         requests.models.Response
     """
+    if method.upper() not in ["GET", "POST", "DELETE"]:
+        raise ValueError(
+            f"Method not found. Please use one of the available methods: 'GET', 'POST', 'DELETE'."
+        )
     try:
         session = requests.Session()
         retry_strategy = Retry(
@@ -51,19 +64,18 @@ def handle_api_response(
             backoff_factor=1,
         )
         adapter = HTTPAdapter(max_retries=retry_strategy)
-
         session.mount("http://", adapter)
         session.mount("https://", adapter)
-        response = session.get(
-            url,
+        with session.request(
+            url=url,
             auth=auth,
             params=params,
             headers=headers,
             timeout=timeout,
-        )
-
-        response.raise_for_status()
-
+            data=body,
+            method=method,
+        ) as response:
+            response.raise_for_status()
     except ReadTimeout as e:
         msg = "The connection was successful, "
         msg += f"however the API call to {url} timed out after {timeout[1]}s "
@@ -345,3 +357,46 @@ def union_dict(*dicts):
 
     """
     return dict(chain.from_iterable(dct.items() for dct in dicts))
+
+
+def handle_if_empty_file(
+    if_empty: Literal["warn", "skip", "fail"] = "warn",
+    message: str = None,
+):
+    """
+    Task for handling empty file.
+    Args:
+        if_empty (Literal, optional): What to do if file is empty. Defaults to "warn".
+        message (str, optional): Massage to show in warning and error messages. Defaults to None.
+    Raises:
+        ValueError: If `if_empty` is set to `fail`.
+        SKIP: If `if_empty` is set to `skip`.
+    """
+    if if_empty == "warn":
+        logger.warning(message)
+    elif if_empty == "skip":
+        raise SKIP(message)
+    elif if_empty == "fail":
+        raise ValueError(message)
+
+
+def check_if_empty_file(
+    path: str,
+    if_empty: Literal["warn", "skip", "fail"] = "warn",
+):
+    """
+    Task for checking if the file is empty and handling it.
+
+    Args:
+        path (str, required): Path to the local file.
+        if_empty (Literal, optional): What to do if file is empty. Defaults to "warn".
+
+    """
+    if_empty = if_empty or "warn"
+    if os.stat(path).st_size == 0:
+        handle_if_empty_file(if_empty, message=f"Input file - '{path}' is empty.")
+
+    # when Parquet file contains only metadata
+    elif os.path.splitext(path)[1] == ".parquet":
+        if pyarrow.parquet.read_metadata(path).num_columns == 0:
+            handle_if_empty_file(if_empty, message=f"Input file - '{path}' is empty.")

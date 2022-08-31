@@ -1,11 +1,14 @@
 import json
-import prefect
 from typing import Any, Dict, Literal
+
+import prefect
 from prefect import Task
 from prefect.tasks.secrets import PrefectSecret
-from .azure_key_vault import AzureKeyVaultSecret
+
 from viadot.config import local_config
 from viadot.sources.mysql import MySQL
+
+from .azure_key_vault import AzureKeyVaultSecret
 
 
 class MySqlToDf(Task):

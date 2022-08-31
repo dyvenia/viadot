@@ -1,5 +1,6 @@
-from viadot.flows.mysql_to_adls import MySqlToADLS
 from unittest import mock
+
+from viadot.flows.mysql_to_adls import MySqlToADLS
 
 query = """SELECT * FROM `example-views`.`sales`"""
 

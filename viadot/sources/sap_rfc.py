@@ -1,17 +1,24 @@
 import re
+from prefect.utilities import logging
 from collections import OrderedDict
-from typing import List, Literal, Union, Tuple, OrderedDict as OrderedDictType
+from typing import List, Literal
+from typing import OrderedDict as OrderedDictType
+from typing import Tuple, Union
 
 import pandas as pd
 
 try:
     import pyrfc
+    from pyrfc._exception import ABAPApplicationError
 except ModuleNotFoundError:
     raise ImportError("pyfrc is required to use the SAPRFC source.")
 from sql_metadata import Parser
+
 from viadot.config import local_config
-from viadot.exceptions import CredentialError
+from viadot.exceptions import CredentialError, DataBufferExceeded
 from viadot.sources.base import Source
+
+logger = logging.get_logger()
 
 
 def remove_whitespaces(text):
@@ -93,13 +100,24 @@ class SAPRFC(Source):
     - etc.
     """
 
-    def __init__(self, sep: str = None, func: str = "RFC_READ_TABLE", *args, **kwargs):
+    def __init__(
+        self,
+        sep: str = None,
+        func: str = "RFC_READ_TABLE",
+        rfc_total_col_width_character_limit: int = 400,
+        *args,
+        **kwargs,
+    ):
         """Create an instance of the SAPRFC class.
 
         Args:
             sep (str, optional): Which separator to use when querying SAP. If not provided,
             multiple options are automatically tried.
             func (str, optional): SAP RFC function to use. Defaults to "RFC_READ_TABLE".
+            rfc_total_col_width_character_limit (int, optional): Number of characters by which query will be split in chunks
+            in case of too many columns for RFC function. According to SAP documentation, the limit is
+            512 characters. However, we observed SAP raising an exception even on a slightly lower number
+            of characters, so we add a safety margin. Defaults to 400.
 
         Raises:
             CredentialError: If provided credentials are incorrect.
@@ -116,6 +134,7 @@ class SAPRFC(Source):
         self.sep = sep
         self.client_side_filters = None
         self.func = func
+        self.rfc_total_col_width_character_limit = rfc_total_col_width_character_limit
 
     @property
     def con(self) -> pyrfc.Connection:
@@ -355,6 +374,24 @@ class SAPRFC(Source):
         # this has to be called before checking client_side_filters
         where = self.where
         columns = self.select_columns
+        character_limit = self.rfc_total_col_width_character_limit
+        # due to the RFC_READ_TABLE limit of characters per row, colums are splited into smaller lists
+        lists_of_columns = []
+        cols = []
+        col_length_total = 0
+        for col in columns:
+            info = self.call("DDIF_FIELDINFO_GET", TABNAME=table_name, FIELDNAME=col)
+            col_length = info["DFIES_TAB"][0]["LENG"]
+            col_length_total += int(col_length)
+            if col_length_total <= character_limit:
+                cols.append(col)
+            else:
+                lists_of_columns.append(cols)
+                cols = [col]
+                col_length_total = 0
+        lists_of_columns.append(cols)
+
+        columns = lists_of_columns
         options = [{"TEXT": where}] if where else None
         limit = self._get_limit(sql)
         offset = self._get_offset(sql)
@@ -390,7 +427,8 @@ class SAPRFC(Source):
         characters, we trim whe WHERE clause and perform the rest of the filtering
         on the resulting DataFrame. Eg. if the WHERE clause contains 4 conditions
         and has 80 characters, we only perform 3 filters in the query, and perform
-        the last filter on the DataFrame.
+        the last filter on the DataFrame. If characters per row limit will be exceeded,
+        data will be downloaded in chunks.
 
         Source: https://success.jitterbit.com/display/DOC/Guide+to+Using+RFC_READ_TABLE+to+Query+SAP+Tables#GuidetoUsingRFC_READ_TABLEtoQuerySAPTables-create-the-operation
         - WHERE clause: 75 character limit
@@ -402,6 +440,9 @@ class SAPRFC(Source):
         params = self._query
         columns = self.select_columns_aliased
         sep = self._query.get("DELIMITER")
+        fields_lists = self._query.get("FIELDS")
+        if len(fields_lists) > 1:
+            logger.info(f"Data will be downloaded in {len(fields_lists)} chunks.")
         func = self.func
         if sep is None:
             # automatically find a working separator
@@ -424,18 +465,35 @@ class SAPRFC(Source):
 
         records = None
         for sep in SEPARATORS:
+            logger.info(f"Checking if separator '{sep}' works.")
+            df = pd.DataFrame()
             self._query["DELIMITER"] = sep
-            try:
-                response = self.call(func, **params)
-                record_key = "WA"
-                data_raw = response["DATA"]
-                records = [row[record_key].split(sep) for row in data_raw]
-            except ValueError:
-                continue
-        if records is None:
-            raise ValueError("None of the separators worked.")
-
-        df = pd.DataFrame(records, columns=columns)
+            chunk = 1
+            for fields in fields_lists:
+                logger.info(f"Downloading {chunk} data chunk...")
+                try:
+                    self._query["FIELDS"] = fields
+                    try:
+                        response = self.call(func, **params)
+                    except ABAPApplicationError as e:
+                        if e.key == "DATA_BUFFER_EXCEEDED":
+                            raise DataBufferExceeded(
+                                "Character limit per row exceeded. Please select fewer columns."
+                            )
+                        else:
+                            raise e
+                    record_key = "WA"
+                    data_raw = response["DATA"]
+                    records = [row[record_key].split(sep) for row in data_raw]
+                    df[fields] = records
+                    chunk += 1
+                except ValueError:
+                    df = pd.DataFrame()
+                    continue
+        if not records:
+            logger.warning("Empty output was generated.")
+            columns = []
+        df.columns = columns
 
         if self.client_side_filters:
             filter_query = self._build_pandas_filter_query(self.client_side_filters)
