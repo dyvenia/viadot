@@ -73,6 +73,8 @@ class Mindful(Source):
         elif isinstance(start_date, datetime) and not isinstance(end_date, datetime):
             self.start_date = start_date
             self.end_date = start_date + timedelta(days=date_interval)
+            if self.end_date > datetime.now():
+                self.end_date = datetime.now()
             self.logger.info(
                 f"Mindful end_date variable is None or not in datetime format, it has been taken as: {self.end_date}."
             )
