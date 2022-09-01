@@ -18,6 +18,7 @@ class PrefectLogs(Flow):
     def __init__(
         self,
         name: str,
+        query: str,
         scheduled_start_time: str = "yesterday",
         filter_type: Literal["_gte", "_gt", "_lte", "_lt"] = "_gte",
         local_file_path: str = None,
@@ -33,6 +34,7 @@ class PrefectLogs(Flow):
 
         Args:
             name (str): The name of the flow.
+            query (str): Query to be executed in Prefect API.
             scheduled_start_time (str, optional): A parameter passed to the Prefect API query. Defaults to 'yesterday'.
             filter_type (Literal, optional): A comparison operator passed to the Prefect API query (_gte >=, _lte <=) that refers to the left or right boundary of date ranges
                 for which flow extracts data. Defaults to _gte.
@@ -46,6 +48,7 @@ class PrefectLogs(Flow):
         """
 
         self.name = name
+        self.query = query
         self.scheduled_start_time = scheduled_start_time
         self.filter_type = filter_type
         self.local_file_path = local_file_path
@@ -80,10 +83,13 @@ class PrefectLogs(Flow):
         Return:
             str: date (ex. "2022-01-01") or time (ex. "13:10") from the Timestamp in string format
         """
-        if value is not None and value_type == "date":
-            return value.split("T")[0]
-        elif value is not None and value_type == "time":
-            return (value.split("T")[1])[:5]
+        try:
+            if value is not None and value_type == "date":
+                return value.split("T")[0]
+            elif value is not None and value_type == "time":
+                return (value.split("T")[1])[:5]
+        except:
+            pass
 
     def check_if_run_authomatically(self, value: str) -> bool:
         """
@@ -101,37 +107,7 @@ class PrefectLogs(Flow):
 
     def gen_flow(self) -> Flow:
 
-        query = """
-                {
-                  project {
-                        id
-                        name
-                      }
-                  flow {  
-                        project_id
-                        name
-                        version
-                        flow_runs(
-                          order_by: {end_time: desc}
-                          where: {_and: 
-                            [
-                              {end_time: {_is_null: false}},
-                              {scheduled_start_time:{ %s: "%s" }}
-                            ]
-                          }
-                        ) 
-                        {
-                          id
-                          end_time
-                          start_time
-                          state
-                          scheduled_start_time
-                          created_by_user_id
-                        }
-                  }
-                }
-
-        """ % (
+        query = self.query % (
             self.filter_type,
             self.scheduled_start_time,
         )
@@ -139,22 +115,34 @@ class PrefectLogs(Flow):
         client = prefect.Client()
         flow_runs = client.graphql(query)
 
-        projects_details = {}
-        for x in flow_runs["data"]["project"]:
-            projects_details[x["id"]] = x["name"]
-
         df = pd.json_normalize(
-            data=flow_runs["data"]["flow"],
-            record_path=["flow_runs"],
-            meta=["name", "project_id", "version"],
+            data=flow_runs["data"]["project"],
+            record_path=["flows"],
+            record_prefix="flow.",
+            meta=["name"],
+            meta_prefix="project.",
         )
 
-        df["start_time_date"] = [
+        df = df.dropna(subset=["flow.flow_runs"])
+        df = df.explode("flow.flow_runs")
+        df = pd.concat(
+            [
+                df.drop(["flow.flow_runs"], axis=1),
+                df["flow.flow_runs"].apply(pd.Series),
+            ],
+            axis=1,
+        )
+        df = df.drop([0], axis=1).reset_index()
+
+        df["start_date"] = [
             self.get_formatted_value_from_timestamp("date", df["start_time"][x])
             for x in range(df.shape[0])
         ]
-        df["start_time_time"] = [
-            self.get_formatted_value_from_timestamp("time", df["start_time"][x])
+
+        df["scheduled_time"] = [
+            self.get_formatted_value_from_timestamp(
+                "time", df["scheduled_start_time"][x]
+            )
             for x in range(df.shape[0])
         ]
         df["is_run_automatically"] = [
@@ -162,27 +150,7 @@ class PrefectLogs(Flow):
             for x in range(df.shape[0])
         ]
 
-        df["project_name"] = df["project_id"].map(projects_details)
-        df = df.loc[
-            :,
-            [
-                "id",
-                "name",
-                "version",
-                "scheduled_start_time",
-                "start_time",
-                "start_time_date",
-                "start_time_time",
-                "end_time",
-                "state",
-                "created_by_user_id",
-                "is_run_automatically",
-                "project_id",
-                "project_name",
-            ],
-        ]
-
-        df = add_ingestion_metadata_task.run(df)
+        df = add_ingestion_metadata_task.run(df.drop(["index"], axis=1))
 
         df_to_file = df_to_parquet.bind(
             df,
