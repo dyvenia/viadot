@@ -12,6 +12,7 @@ using outputs of SQL queries
 - Added handling empty DF in `set_new_kv()` task
 - Added `update_kv` and `filter_column` params to `SAPRFCToADLS` and `SAPToDuckDB` flows and added `set_new_kv()` task
 in `task_utils`
+- Added `query` parameter to  `PrefectLogs` flow
 
 ### Changed
 - Changed default value of `on_error` parameter in `BCPTask` and `on_bcp_error` parameter in `ADLSToAzureSQL` 
