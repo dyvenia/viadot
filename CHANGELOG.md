@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 
 ## [Unreleased]
+### Fixed
+- Fixed `test_duckdb_to_sql_server.py` tests - revert to a previous version
+- Removed `test__check_if_schema_exists()` test
+
 ### Added
 - Added `duckdb_query` parameter to `DuckDBToSQLServer` flow to enable option to create table
 using outputs of SQL queries 
