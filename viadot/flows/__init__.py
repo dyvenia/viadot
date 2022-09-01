@@ -13,6 +13,7 @@ from .salesforce_to_adls import SalesforceToADLS
 from .sharepoint_to_adls import SharepointToADLS
 from .supermetrics_to_adls import SupermetricsToADLS
 from .supermetrics_to_azure_sql import SupermetricsToAzureSQL
+from .genesys_to_adls import GenesysToADLS
 
 try:
     from .sap_to_duckdb import SAPToDuckDB
