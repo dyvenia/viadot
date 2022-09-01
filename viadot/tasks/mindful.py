@@ -73,7 +73,7 @@ class MindfulToCSV(Task):
         interactions_response = mindful.get_interactions_list()
         interaction_file_path = mindful.response_to_file(
             interactions_response,
-            file_name=f"mindful_interactions_{start_date.year}_{start_date.month:02}_{start_date.day:02}",
+            file_name=f"mindful_interactions_{end_date.year}_{end_date.month:02}_{end_date.day:02}",
         )
         file_paths.append(interaction_file_path)
         logger.info("Successfully downloaded interactions data from the Mindful API.")
@@ -82,7 +82,7 @@ class MindfulToCSV(Task):
         responses_response = mindful.get_responses_list()
         response_file_path = mindful.response_to_file(
             responses_response,
-            file_name=f"mindful_responses_{start_date.year}_{start_date.month:02}_{start_date.day:02}",
+            file_name=f"mindful_responses_{end_date.year}_{end_date.month:02}_{end_date.day:02}",
         )
         file_paths.append(response_file_path)
         logger.info("Successfully downloaded responses data from the Mindful API.")

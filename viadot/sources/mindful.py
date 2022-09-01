@@ -78,13 +78,16 @@ class Mindful(Source):
             self.logger.info(
                 f"Mindful end_date variable is None or not in datetime format, it has been taken as: {self.end_date}."
             )
-        elif start_date <= end_date:
+        elif start_date >= end_date:
             raise ValueError(
                 f"start_date variable must be lower than end_date variable."
             )
         else:
             self.start_date = start_date
             self.end_date = end_date
+            self.logger.info(
+                f"Mindful files to download will store data from {self.start_date} to {self.end_date}."
+            )
 
         self.file_extension = file_extension
         self.header = {
