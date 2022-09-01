@@ -13,6 +13,7 @@ in `task_utils`
 - Added a test for `Mindful` source class.
 - Added new task file `mindful` to be called by the Mindful Flow.
 - Added a test for `Mindful` task class.
+- Added new flow file `mindful_to_adls` to upload data from Mindful API tp ADLS.
 ## [0.4.6] - 2022-07-21
 ### Added
 - Added `rfc_character_limit` parameter in `SAPRFCToDF` task, `SAPRFC` source, `SAPRFCToADLS` and `SAPToDuckDB` flows
