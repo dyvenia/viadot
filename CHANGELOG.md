@@ -22,6 +22,7 @@ in `task_utils`
 - Added tasks `GenesysToCSV` and `GenesysToDF`
 - Added flows `GenesysToADLS` and `GenesysReportToADLS`
 - Added `query` parameter to  `PrefectLogs` flow
+- Added `playwright` libraries and dependencies to `Dockerfile`
 
 ### Changed
 - Updated requirements.txt
