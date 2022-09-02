@@ -102,7 +102,6 @@ class MindfulToCSV(Task):
         )
         file_paths.append(interaction_file_path)
         logger.info("Successfully downloaded interactions data from the Mindful API.")
-        logger.info("Sleeping 0.5 seconds between GET calls to Mindful API.")
         time.sleep(0.5)
         responses_response = mindful.get_responses_list()
         response_file_path = mindful.response_to_file(

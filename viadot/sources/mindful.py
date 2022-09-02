@@ -16,13 +16,13 @@ from viadot.exceptions import CredentialError, APIError
 class Mindful(Source):
     def __init__(
         self,
-        *args,
         credentials_mindful: Dict[str, Any] = None,
         region: Literal["us1", "us2", "us3", "ca1", "eu1", "au1"] = "eu1",
         start_date: datetime = None,
         end_date: datetime = None,
         date_interval: int = 1,
         file_extension: Literal["parquet", "csv"] = "csv",
+        *args,
         **kwargs,
     ) -> None:
         """Mindful connector which allows listing and downloading into Data Frame or specified format output.
