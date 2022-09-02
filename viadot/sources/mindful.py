@@ -34,7 +34,7 @@ class Mindful(Source):
             end_date (datetime, optional): End date of the resquest. Defaults to None.
             date_interval (int, optional): How many days are included in the request.
                 If end_date is passed as an argument, date_interval will be invalidated. Defaults to 1.
-            file_extension (Literal[parquet, csv;], optional): file extensions for storing responses. Defaults to "csv".
+            file_extension (Literal[parquet, csv], optional): file extensions for storing responses. Defaults to "csv".
 
         Raises:
             CredentialError: If credentials are not provided in local_config or directly as a parameter.
@@ -100,7 +100,7 @@ class Mindful(Source):
         endpoint: str = "",
         **kwargs,
     ) -> Response:
-        """Basic call to Mindful API given an endpoint
+        """Basic call to Mindful API given an endpoint.
 
         Args:
             params (Dict[str, Any], optional): Parameters to be passed into the request. Defaults to None.
@@ -203,9 +203,9 @@ class Mindful(Source):
         """Save Mindful response data to file.
 
         Args:
-            response (Response, optional): request object with the response from the Mindful API. Defaults to None.
+            response (Response): request object with the response from the Mindful API.
             file_name (str, optional): Name of the file where saving data. Defaults to None.
-            file_path (str, optional): Path where to save the file. Defaults to ''.
+            file_path (str, optional): Path where to save the file locally. Defaults to ''.
             sep (str, optional): Separator in csv file. Defaults to "\t".
 
         returns

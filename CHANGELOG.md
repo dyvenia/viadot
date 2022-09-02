@@ -10,9 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added `update_kv` and `filter_column` params to `SAPRFCToADLS` and `SAPToDuckDB` flows and added `set_new_kv()` task
 in `task_utils`
 - Added new source file `mindful` to connect with mindful API.
-- Added a test for `Mindful` source class.
 - Added new task file `mindful` to be called by the Mindful Flow.
-- Added a test for `Mindful` task class.
 - Added new flow file `mindful_to_adls` to upload data from Mindful API tp ADLS.
 ## [0.4.6] - 2022-07-21
 ### Added

@@ -1,4 +1,4 @@
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Literal
 
 from datetime import datetime
 from prefect import Flow, task
@@ -47,6 +47,8 @@ class MindfulToADLS(Flow):
         start_date: datetime = None,
         end_date: datetime = None,
         date_interval: int = 1,
+        file_extension: Literal["parquet", "csv"] = "csv",
+        file_path: str = "",
         adls_file_path: str = None,
         adls_overwrite: bool = True,
         adls_sp_credentials_secret: str = None,
@@ -56,12 +58,14 @@ class MindfulToADLS(Flow):
         """Mindful flow to download the CSV files and upload them to ADLS.
 
         Args:
-            name (str): The name of the Flow
+            name (str): The name of the Flow.
             credentials_mindful (Dict[str, Any], optional): Credentials to connect with Mindful API. Defaults to None.
             start_date (datetime, optional): Start date of the request. Defaults to None.
             end_date (datetime, optional): End date of the resquest. Defaults to None.
             date_interval (int, optional): How many days are included in the request.
                 If end_date is passed as an argument, date_interval will be invalidated. Defaults to 1.
+            file_extension (Literal[parquet, csv], optional): file extensions for storing responses. Defaults to "csv".
+            file_path (str, optional): Path where to save the file locally. Defaults to ''.
             adls_file_path (str, optional): The destination path at ADLS. Defaults to None.
             adls_overwrite (bool, optional): Whether to overwrite files in the data lake. Defaults to True.
             adls_sp_credentials_secret (str, optional): The name of the Azure Key Vault secret containing a dictionary with
@@ -72,6 +76,8 @@ class MindfulToADLS(Flow):
         self.start_date = start_date
         self.end_date = end_date
         self.date_interval = date_interval
+        self.file_extension = file_extension
+        self.file_path = file_path
 
         self.adls_file_path = adls_file_path
         self.adls_overwrite = adls_overwrite
@@ -89,6 +95,8 @@ class MindfulToADLS(Flow):
             start_date=self.start_date,
             end_date=self.end_date,
             date_interval=self.date_interval,
+            file_extension=self.file_extension,
+            file_path=self.file_path,
             flow=self,
         )
 
