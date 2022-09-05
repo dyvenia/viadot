@@ -31,4 +31,5 @@ except ImportError:
     pass
 
 from .epicor_to_duckdb import EpicorOrdersToDuckDB
+from .sql_server_transform import SQLServerTransform
 from .sql_server_to_duckdb import SQLServerToDuckDB
