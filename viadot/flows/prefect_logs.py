@@ -1,8 +1,9 @@
-from pandas import Timestamp
-from typing import Literal
 import prefect
+import numpy as np
 import pandas as pd
 import datetime
+from pandas import Timestamp
+from typing import Literal
 
 from prefect import Flow
 from prefect.utilities import logging
@@ -35,7 +36,36 @@ class PrefectLogs(Flow):
         Args:
             name (str): The name of the flow.
             query (str): Query to be executed in Prefect API.
-            scheduled_start_time (str, optional): A parameter passed to the Prefect API query. Defaults to 'yesterday'.
+                         Example:
+                            {
+                                    project {
+                                        id
+                                        name
+                                        flows {
+                                                id
+                                                name
+                                                version
+                                                flow_runs(
+                                                    order_by: {end_time: desc}
+                                                    where: {_and:
+                                                        [
+                                                        {scheduled_start_time:{ %s: "%s" }},
+                                                        {state: {_neq: "Scheduled"}}
+                                                        ]
+                                                    }
+                                                    )
+                                                        {
+                                                        id
+                                                        scheduled_start_time
+                                                        start_time
+                                                        end_time
+                                                        state
+                                                        created_by_user_id
+                                                        }
+                                        }
+                                    }
+                                    }
+            scheduled_start_time (str, optional): A parameter passed to the Prefect API query. Set as 'yesterday' or date in format ex. '2022-01-01'. Defaults to 'yesterday'.
             filter_type (Literal, optional): A comparison operator passed to the Prefect API query (_gte >=, _lte <=) that refers to the left or right boundary of date ranges
                 for which flow extracts data. Defaults to _gte.
             local_file_path (str, optional): Local destination path. Defaults to None.
@@ -61,8 +91,11 @@ class PrefectLogs(Flow):
             self.scheduled_start_time = datetime.date.today() - datetime.timedelta(
                 days=1
             )
+
         else:
             self.scheduled_start_time = scheduled_start_time
+
+        print(self.scheduled_start_time, type(self.scheduled_start_time))
 
         super().__init__(
             name="prefect_extract_flow_logs",
@@ -76,18 +109,18 @@ class PrefectLogs(Flow):
         self, value_type: Literal["time", "date"], value: Timestamp
     ) -> str:
         """
-        Function returns cleaned date/time from timestamp in string format (ex. "2022-01-01").
+        Function returns cleaned date/time from timestamp in string format (ex. "2022-01-01" or "01:23:88").
         Args:
             value_type (Literal["time", "date"], optional): "date" or "time" type extracted from Prefect Timestamp
             value (Timestamp): Timestamp value from Prefect.
         Return:
-            str: date (ex. "2022-01-01") or time (ex. "13:10") from the Timestamp in string format
+            str: date (ex. "2022-01-01") or time (ex. "01:23:88") from the Timestamp in string format
         """
         try:
             if value is not None and value_type == "date":
                 return value.split("T")[0]
             elif value is not None and value_type == "time":
-                return (value.split("T")[1])[:5]
+                return (value.split("T")[1])[:8]
         except:
             pass
 
@@ -139,16 +172,73 @@ class PrefectLogs(Flow):
             for x in range(df.shape[0])
         ]
 
-        df["scheduled_time"] = [
-            self.get_formatted_value_from_timestamp(
-                "time", df["scheduled_start_time"][x]
-            )
-            for x in range(df.shape[0])
-        ]
         df["is_run_automatically"] = [
             self.check_if_run_authomatically(df["created_by_user_id"][x])
             for x in range(df.shape[0])
         ]
+
+        df["scheduled_start_time_clean"] = [
+            self.get_formatted_value_from_timestamp(
+                "time", df["scheduled_start_time"][x]
+            )
+            if df["scheduled_start_time"][x] is not None
+            else None
+            for x in range(df.shape[0])
+        ]
+
+        df["start_time_clean"] = [
+            self.get_formatted_value_from_timestamp("time", df["start_time"][x])
+            if df["start_time"][x] is not None
+            else None
+            for x in range(df.shape[0])
+        ]
+
+        df["end_time_clean"] = [
+            self.get_formatted_value_from_timestamp("time", df["end_time"][x])
+            if df["end_time"][x] is not None
+            else None
+            for x in range(df.shape[0])
+        ]
+
+        df["time_delta"] = np.NaN
+
+        for x in range(df.shape[0]):
+            if (
+                df["end_time_clean"][x] is not None
+                and df["start_time_clean"][x] is not None
+            ):
+                df["time_delta"][x] = str(
+                    datetime.timedelta(
+                        seconds=(
+                            datetime.datetime.strptime(
+                                df["end_time_clean"][x], "%H:%M:%S"
+                            )
+                            - datetime.datetime.strptime(
+                                df["start_time_clean"][x], "%H:%M:%S"
+                            )
+                        ).seconds
+                    )
+                )
+
+        df["time_delta_delay"] = np.NaN
+
+        for x in range(df.shape[0]):
+            if (
+                df["scheduled_start_time_clean"][x] is not None
+                and df["end_time_clean"][x] is not None
+            ):
+                df["time_delta_delay"][x] = str(
+                    datetime.timedelta(
+                        seconds=(
+                            datetime.datetime.strptime(
+                                df["end_time_clean"][x], "%H:%M:%S"
+                            )
+                            - datetime.datetime.strptime(
+                                df["scheduled_start_time_clean"][x], "%H:%M:%S"
+                            )
+                        ).seconds
+                    )
+                )
 
         df = add_ingestion_metadata_task.run(df.drop(["index"], axis=1))
 
