@@ -7,7 +7,7 @@ from prefect.utilities import logging
 
 from ..task_utils import df_to_csv as df_to_csv_task
 from ..task_utils import get_sql_dtypes_from_df as get_sql_dtypes_from_df_task
-from ..tasks import BCPTask, DuckDBToDF, SQLServerCreateTable
+from ..tasks import BCPTask, DuckDBToDF, SQLServerCreateTable, DuckDBQuery
 
 logger = logging.get_logger(__name__)
 
@@ -38,6 +38,7 @@ class DuckDBToSQLServer(Flow):
         duckdb_schema: str = None,
         duckdb_table: str = None,
         if_empty: str = "warn",
+        duckdb_query: str = None,
         duckdb_credentials: dict = None,
         local_file_path: str = None,
         write_sep: str = "\t",
@@ -53,13 +54,16 @@ class DuckDBToSQLServer(Flow):
         **kwargs: Dict[str, Any],
     ):
         """
-        Flow for moving a table from DuckDB to SQL Server.
+        Flow for moving a table from DuckDB to SQL Server. User can specify schema and table to transfer
+        data between databases or use a SELECT query instead.
 
         Args:
             name (str): The name of the flow.
             duckdb_schema (str, optional): Destination schema. Defaults to None.
             duckdb_table (str, optional): Destination table. Defaults to None.
             if_empty (str, optional): What to do if the query returns no data. Defaults to "warn".
+            duckdb_query (str, optional): SELECT query to be executed on DuckDB, its result will be used to
+            create table. Defaults to None.
             duckdb_credentials (dict, optional): The config to use for connecting with DuckDB.
             local_file_path (str, optional): Local destination path. Defaults to None.
             write_sep (str, optional): The delimiter for the output CSV file. Defaults to "\t".
@@ -78,6 +82,9 @@ class DuckDBToSQLServer(Flow):
         self.duckdb_schema = duckdb_schema
         self.duckdb_table = duckdb_table
         self.duckdb_credentials = duckdb_credentials
+
+        # DuckDBQuery
+        self.duckdb_query = duckdb_query
 
         # df_to_csv_task
         self.local_file_path = local_file_path or self.slugify(name) + ".csv"
@@ -98,6 +105,8 @@ class DuckDBToSQLServer(Flow):
 
         super().__init__(*args, name=name, **kwargs)
 
+        self.duckdb_run_query_task = DuckDBQuery(credentials=duckdb_credentials)
+
         self.gen_flow()
 
     @staticmethod
@@ -110,13 +119,21 @@ class DuckDBToSQLServer(Flow):
         return name.replace(" ", "_").lower()
 
     def gen_flow(self) -> Flow:
-        df = duckdb_to_df_task.bind(
-            schema=self.duckdb_schema,
-            table=self.duckdb_table,
-            if_empty=self.if_empty,
-            credentials=self.duckdb_credentials,
-            flow=self,
-        )
+        if self.duckdb_query is None:
+            df = duckdb_to_df_task.bind(
+                schema=self.duckdb_schema,
+                table=self.duckdb_table,
+                if_empty=self.if_empty,
+                credentials=self.duckdb_credentials,
+                flow=self,
+            )
+        else:
+            df = self.duckdb_run_query_task.bind(
+                query=self.duckdb_query,
+                credentials=self.duckdb_credentials,
+                fetch_type="dataframe",
+                flow=self,
+            )
 
         df_to_csv = df_to_csv_task.bind(
             df=df,
