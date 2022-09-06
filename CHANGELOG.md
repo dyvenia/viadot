@@ -6,6 +6,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.7] - 2022-09-06
+### Added
+- Added new flow - `SQLServerTransform` and new task `SQLServerQuery` to run queries on SQLServer
+- Added `duckdb_query` parameter to `DuckDBToSQLServer` flow to enable option to create table
+using outputs of SQL queries 
+- Added handling empty DF in `set_new_kv()` task
+- Added `update_kv` and `filter_column` params to `SAPRFCToADLS` and `SAPToDuckDB` flows and added `set_new_kv()` task
+in `task_utils`
+- Added Genesys API source `Genesys`
+- Added tasks `GenesysToCSV` and `GenesysToDF`
+- Added flows `GenesysToADLS` and `GenesysReportToADLS`
+- Added `query` parameter to  `PrefectLogs` flow
+
+### Changed
+- Updated requirements.txt
+- Changed 'handle_api_response()' method by adding more requests method also added contex menager
+
+
 ## [0.4.6] - 2022-07-21
 ### Added
 - Added `rfc_character_limit` parameter in `SAPRFCToDF` task, `SAPRFC` source, `SAPRFCToADLS` and `SAPToDuckDB` flows
@@ -47,7 +65,6 @@ DF to string before adding metadata
 - Added `if_empty` parameter in `DuckDBCreateTableFromParquet` task and in `EpicorToDuckDB`, `SAPToDuckDB`,
 `SQLServerToDuckDB` flows to check if output Parquet is empty and handle it properly.
 - Added `check_if_empty_file()` and `handle_if_empty_file()` in `utils.py`
-
 
 ## [0.4.4] - 2022-06-09
 ### Added
