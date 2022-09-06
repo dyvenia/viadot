@@ -4,7 +4,7 @@ services:
   viadot:
     image: viadot:${IMAGE_TAG:-latest}
     container_name: viadot_testing
-    profiles: [ "dev" ]
+    profiles: ["dev"]
     volumes:
       - ../:/home/viadot
     tty: true
@@ -13,7 +13,7 @@ services:
   viadot_docs:
     image: viadot:${IMAGE_TAG:-latest}
     container_name: viadot_docs
-    profiles: [ "dev" ]
+    profiles: ["dev"]
     volumes:
       - ../:/home/viadot
     working_dir: /home/viadot
@@ -24,7 +24,7 @@ services:
   viadot_jupyter_lab:
     image: viadot:${IMAGE_TAG:-latest}
     container_name: viadot_jupyter_lab
-    profiles: [ "dev", "user" ]
+    profiles: ["dev", "user"]
     ports:
       - 9000:8888
     volumes:
