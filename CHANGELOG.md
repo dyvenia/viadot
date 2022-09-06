@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 
 ## [Unreleased]
+
+## [0.4.7] - 2022-09-06
 ### Added
 - Added new flow - `SQLServerTransform` and new task `SQLServerQuery` to run queries on SQLServer
 - Added `duckdb_query` parameter to `DuckDBToSQLServer` flow to enable option to create table
@@ -13,11 +15,15 @@ using outputs of SQL queries
 - Added handling empty DF in `set_new_kv()` task
 - Added `update_kv` and `filter_column` params to `SAPRFCToADLS` and `SAPToDuckDB` flows and added `set_new_kv()` task
 in `task_utils`
+- Added Genesys API source `Genesys`
+- Added tasks `GenesysToCSV` and `GenesysToDF`
+- Added flows `GenesysToADLS` and `GenesysReportToADLS`
 - Added `query` parameter to  `PrefectLogs` flow
 
 ### Changed
 - Changed default value of `on_error` parameter in `BCPTask` and `on_bcp_error` parameter in `ADLSToAzureSQL` 
 and `DuckDBToSQLServer` to `fail`.
+-  Changed logger messages in `AzureDataLakeRemove` task
 
 
 ## [0.4.6] - 2022-07-21
@@ -25,9 +31,6 @@ and `DuckDBToSQLServer` to `fail`.
 - Added `rfc_character_limit` parameter in `SAPRFCToDF` task, `SAPRFC` source, `SAPRFCToADLS` and `SAPToDuckDB` flows
 - Added `on_bcp_error` and `bcp_error_log_path` parameters in `BCPTask`
 - Added ability to process queries which result exceed SAP's character per low limit in `SAPRFC` source
-- Added Genesys API source `Genesys`
-- Added tasks `GenesysToCSV` and `GenesysToDF`
-- Added flows `GenesysToADLS` and `GenesysReportToADLS`
 - Added new flow `PrefectLogs` for extracting all logs from Prefect with details
 - Added `PrefectLogs` flow
 
@@ -41,7 +44,6 @@ DF to string before adding metadata
 - Updated `.gitignore` to ignore files with `*.bak` extension and to ignore `credentials.json` in any directory
 - Updated requirements.txt
 - Changed 'handle_api_response()' method by adding more requests method also added contex menager
- Changed logger messages in `AzureDataLakeRemove` task
 
 ### Fixed
 - Fixed handling empty response in `SAPRFC` source
