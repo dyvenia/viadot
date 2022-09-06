@@ -36,35 +36,6 @@ class PrefectLogs(Flow):
         Args:
             name (str): The name of the flow.
             query (str): Query to be executed in Prefect API.
-                         Example:
-                            {
-                                    project {
-                                        id
-                                        name
-                                        flows {
-                                                id
-                                                name
-                                                version
-                                                flow_runs(
-                                                    order_by: {end_time: desc}
-                                                    where: {_and:
-                                                        [
-                                                        {scheduled_start_time:{ %s: "%s" }},
-                                                        {state: {_neq: "Scheduled"}}
-                                                        ]
-                                                    }
-                                                    )
-                                                        {
-                                                        id
-                                                        scheduled_start_time
-                                                        start_time
-                                                        end_time
-                                                        state
-                                                        created_by_user_id
-                                                        }
-                                        }
-                                    }
-                                    }
             scheduled_start_time (str, optional): A parameter passed to the Prefect API query. Set as 'yesterday' or date in format ex. '2022-01-01'. Defaults to 'yesterday'.
             filter_type (Literal, optional): A comparison operator passed to the Prefect API query (_gte >=, _lte <=) that refers to the left or right boundary of date ranges
                 for which flow extracts data. Defaults to _gte.
@@ -75,6 +46,36 @@ class PrefectLogs(Flow):
                 Defaults to None.
             vault_name (str, optional): The name of the vault from which to obtain the secrets. Defaults to None.
             overwrite_adls (bool, optional): Whether to overwrite the file in ADLS. Defaults to True.
+
+            Example query:
+                {
+                    project {
+                        id
+                        name
+                        flows {
+                                id
+                                name
+                                version
+                                flow_runs(
+                                    order_by: {end_time: desc}
+                                    where: {_and:
+                                        [
+                                        {scheduled_start_time:{ %s: "%s" }},
+                                        {state: {_neq: "Scheduled"}}
+                                        ]
+                                    }
+                                    )
+                                        {
+                                        id
+                                        scheduled_start_time
+                                        start_time
+                                        end_time
+                                        state
+                                        created_by_user_id
+                                        }
+                        }
+                    }
+                }
         """
 
         self.name = name
@@ -94,8 +95,6 @@ class PrefectLogs(Flow):
 
         else:
             self.scheduled_start_time = scheduled_start_time
-
-        print(self.scheduled_start_time, type(self.scheduled_start_time))
 
         super().__init__(
             name="prefect_extract_flow_logs",
