@@ -2,7 +2,7 @@ version: "3"
 
 services:
   viadot:
-    image: pwt
+    image: viadot:${IMAGE_TAG:-latest}
     container_name: viadot_testing
     profiles: [ "dev" ]
     volumes:
@@ -11,7 +11,7 @@ services:
     stdin_open: true
     restart: "always"
   viadot_docs:
-    image: pwt
+    image: viadot:${IMAGE_TAG:-latest}
     container_name: viadot_docs
     profiles: [ "dev" ]
     volumes:
@@ -22,7 +22,7 @@ services:
     command: "mkdocs serve"
     restart: "always"
   viadot_jupyter_lab:
-    image: pwt
+    image: viadot:${IMAGE_TAG:-latest}
     container_name: viadot_jupyter_lab
     profiles: [ "dev", "user" ]
     ports:
