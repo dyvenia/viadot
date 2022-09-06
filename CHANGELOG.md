@@ -6,6 +6,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.8] - 2022-09-06
+### Added
+- Added `protobuf` library to requirements
 ## [0.4.7] - 2022-09-06
 ### Added
 - Added new flow - `SQLServerTransform` and new task `SQLServerQuery` to run queries on SQLServer
