@@ -51,27 +51,8 @@ RUN pip install -r requirements.txt
 COPY . .
 RUN pip install .
 
-## Install playwright library
-## Install Chromium dependencies.
-# RUN playwright install
-# RUN python -m playwright install
-# RUN python -m playwright install-deps
-# RUN playwright install-deps chromium
-
-# RUN python -m playwright install && python -m playwright install-deps
-# RUN apt-get update && apt-get install -y --no-install-recommends \
-#     libnss3 \
-#     libxss1 \
-#     libasound2 \
-#     fonts-noto-color-emoji \
-#     libxtst6
-# ## Install Firefox dependencies.
-# RUN apt-get update && apt-get install -y --no-install-recommends \
-#     libdbus-glib-1-2 \
-#     libxt6
-# RUN apt-get update && apt-get install -y --no-install-recommends \
-#     xvfb
-
+## Install playwright dependencies
+RUN playwright install-deps
 ## Install Java 11
 RUN curl https://adoptopenjdk.jfrog.io/adoptopenjdk/api/gpg/key/public | apt-key add - && \
     add-apt-repository --yes https://adoptopenjdk.jfrog.io/adoptopenjdk/deb/ && \
