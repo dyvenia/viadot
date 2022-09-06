@@ -23,7 +23,9 @@ in `task_utils`
 ### Changed
 - Changed default value of `on_error` parameter in `BCPTask` and `on_bcp_error` parameter in `ADLSToAzureSQL` 
 and `DuckDBToSQLServer` to `fail`.
--  Changed logger messages in `AzureDataLakeRemove` task
+- Updated requirements.txt
+- Changed 'handle_api_response()' method by adding more requests method also added contex menager
+
 
 
 ## [0.4.6] - 2022-07-21
@@ -42,8 +44,7 @@ DF to string before adding metadata
 - Changed `check_if_empty_file()` logic according to changes in `add_ingestion_metadata_task()`
 - Changed accepted values of `if_empty` parameter in `DuckDBCreateTableFromParquet`
 - Updated `.gitignore` to ignore files with `*.bak` extension and to ignore `credentials.json` in any directory
-- Updated requirements.txt
-- Changed 'handle_api_response()' method by adding more requests method also added contex menager
+- Changed logger messages in `AzureDataLakeRemove` task
 
 ### Fixed
 - Fixed handling empty response in `SAPRFC` source
