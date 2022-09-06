@@ -53,8 +53,6 @@ RUN pip install .
 
 ## Install playwright library
 ## Install Chromium dependencies.
-RUN pip install pytest-playwright
-RUN pip install playwright
 RUN playwright install
 RUN python -m playwright install
 RUN python -m playwright install-deps
