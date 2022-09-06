@@ -20,8 +20,6 @@ in `task_utils`
 - Added `query` parameter to  `PrefectLogs` flow
 
 ### Changed
-- Changed default value of `on_error` parameter in `BCPTask` and `on_bcp_error` parameter in `ADLSToAzureSQL` 
-and `DuckDBToSQLServer` to `fail`.
 - Updated requirements.txt
 - Changed 'handle_api_response()' method by adding more requests method also added contex menager
 
