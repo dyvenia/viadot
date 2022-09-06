@@ -47,7 +47,7 @@ class DuckDBToSQLServer(Flow):
         dtypes: Dict[str, Any] = None,
         if_exists: Literal["fail", "replace", "append", "delete"] = "replace",
         sql_server_credentials: dict = None,
-        on_bcp_error: Literal["skip", "fail"] = "fail",
+        on_bcp_error: Literal["skip", "fail"] = "skip",
         bcp_error_log_path="./log_file.log",
         tags: List[str] = ["load"],
         *args: List[any],
@@ -73,7 +73,7 @@ class DuckDBToSQLServer(Flow):
             we infer them from the DataFrame. Defaults to None.
             if_exists (Literal, optional): What to do if the table exists. Defaults to "replace".
             sql_server_credentials (dict, optional): The credentials to use for connecting with SQL Server.
-            on_bcp_error (Literal["skip", "fail"], optional): What to do if error occurs. Defaults to "fail".
+            on_bcp_error (Literal["skip", "fail"], optional): What to do if error occurs. Defaults to "skip".
             bcp_error_log_path (string, optional): Full path of an error file. Defaults to "./log_file.log".
             tags (List[str], optional): Flow tags to use, eg. to control flow concurrency. Defaults to ["load"].
         """
