@@ -149,6 +149,10 @@ class Mindful(Source):
             self.logger.info(
                 "Succesfully downloaded interactions data from mindful API."
             )
+        elif response.status_code == 204 and not response.content.decode():
+            self.logger.warning(
+                f"Thera are not interactions data to download from {self.start_date} to {self.end_date}."
+            )
         else:
             self.logger.error(
                 f"Failed to downloaded interactions data. - {response.content}"
@@ -185,6 +189,10 @@ class Mindful(Source):
 
         if response.status_code == 200:
             self.logger.info("Succesfully downloaded responses data from mindful API.")
+        elif response.status_code == 204 and not response.content.decode():
+            self.logger.warning(
+                f"Thera are not responses data to download from {self.start_date} to {self.end_date}."
+            )
         else:
             self.logger.error(
                 f"Failed to downloaded responses data. - {response.content}"

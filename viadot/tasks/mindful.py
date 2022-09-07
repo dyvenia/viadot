@@ -83,6 +83,8 @@ class MindfulToCSV(Task):
         start_date: datetime = None,
         end_date: datetime = None,
         date_interval: int = 1,
+        file_extension: Literal["parquet", "csv"] = "csv",
+        file_path: str = "",
     ):
         mindful = Mindful(
             credentials_mindful=credentials_mindful,
@@ -90,26 +92,33 @@ class MindfulToCSV(Task):
             start_date=start_date,
             end_date=end_date,
             date_interval=date_interval,
-            file_extension=self.file_extension,
+            file_extension=file_extension,
         )
 
         file_paths = []
         interactions_response = mindful.get_interactions_list()
-        interaction_file_path = mindful.response_to_file(
-            interactions_response,
-            file_name=f"mindful_interactions_{end_date.year}_{end_date.month:02}_{end_date.day:02}",
-            file_path=self.file_path,
-        )
-        file_paths.append(interaction_file_path)
-        logger.info("Successfully downloaded interactions data from the Mindful API.")
-        time.sleep(0.5)
+        if interactions_response.status_code == 200:
+            interaction_file_path = mindful.response_to_file(
+                interactions_response,
+                file_name=f"mindful_interactions_{end_date.year}_{end_date.month:02}_{end_date.day:02}",
+                file_path=file_path,
+            )
+            file_paths.append(interaction_file_path)
+            logger.info(
+                "Successfully downloaded interactions data from the Mindful API."
+            )
+            time.sleep(0.5)
         responses_response = mindful.get_responses_list()
-        response_file_path = mindful.response_to_file(
-            responses_response,
-            file_name=f"mindful_responses_{end_date.year}_{end_date.month:02}_{end_date.day:02}",
-            file_path=self.file_path,
-        )
-        file_paths.append(response_file_path)
-        logger.info("Successfully downloaded responses data from the Mindful API.")
+        if responses_response.status_code == 200:
+            response_file_path = mindful.response_to_file(
+                responses_response,
+                file_name=f"mindful_responses_{end_date.year}_{end_date.month:02}_{end_date.day:02}",
+                file_path=file_path,
+            )
+            file_paths.append(response_file_path)
+            logger.info("Successfully downloaded responses data from the Mindful API.")
 
-        return file_paths
+        if not file_paths:
+            raise TypeError("Files were not created.")
+        else:
+            return file_paths
