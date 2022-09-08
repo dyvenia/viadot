@@ -100,7 +100,6 @@ class MindfulToCSV(Task):
         if interactions_response.status_code == 200:
             interaction_file_name = mindful.response_to_file(
                 interactions_response,
-                file_name=f"mindful_interactions_{end_date.year}_{end_date.month:02}_{end_date.day:02}",
                 file_path=file_path,
             )
             file_names.append(interaction_file_name)
@@ -112,7 +111,6 @@ class MindfulToCSV(Task):
         if responses_response.status_code == 200:
             response_file_name = mindful.response_to_file(
                 responses_response,
-                file_name=f"mindful_responses_{end_date.year}_{end_date.month:02}_{end_date.day:02}",
                 file_path=file_path,
             )
             file_names.append(response_file_name)
