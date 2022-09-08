@@ -222,13 +222,11 @@ class Mindful(Source):
 
         data_frame = pd.read_json(StringIO(response.content.decode("utf-8")))
         if not file_name:
-            absolute_path = os.path.join(
-                file_path, f"{self.endpoint}.{self.file_extension}"
-            )
+            complete_file_name = f"{self.endpoint}.{self.file_extension}"
+            absolute_path = os.path.join(file_path, complete_file_name)
         else:
-            absolute_path = os.path.join(
-                file_path, f"{file_name}.{self.file_extension}"
-            )
+            complete_file_name = f"{file_name}.{self.file_extension}"
+            absolute_path = os.path.join(file_path, complete_file_name)
 
         if self.file_extension == "csv":
             data_frame.to_csv(absolute_path, index=False, sep=sep)
@@ -239,4 +237,4 @@ class Mindful(Source):
                 "File extension is not available, please choose file_extension: 'parquet' or 'csv' (def.) at Mindful instance."
             )
 
-        return absolute_path
+        return complete_file_name
