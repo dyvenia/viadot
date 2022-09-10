@@ -1,33 +1,25 @@
-from numpy import source
-import numpy
 from viadot.config import local_config
-from delta.tables import *
 import pandas as pd
 from pyspark import SparkConf, SparkContext
+from pyspark.sql import SparkSession
 import pyspark.sql.dataframe as spark
-from pyspark.sql.dataframe import DataFrame
-from typing import Literal, Union
+from typing import Literal, Union, Tuple, List
 from typing import Any, Dict
-import pyarrow as pa
-from ..signals import SKIP
-import logging
 from viadot.sources.base import Source
-import viadot.utils
+from viadot.utils import get_fqn, build_merge_query
 
-
-logger = logging.getLogger(__name__)
+Record = Tuple[Any]
 
 
 class Databricks(Source):
     """
-    A class for pulling and manipulating data on Databricks.
+    Download and manipulate data on Databricks.
 
-    Documentation for Databricks is located at: https://docs.microsoft.com/en-us/azure/databricks/
+    For in-depth information about Azure Databricks, see
+    https://docs.microsoft.com/en-us/azure/databricks/.
 
-    Parameters
-    ----------
-    env : str, optional
-        The name of the Databricks environment to use. by default "DEV"
+    Args:
+        env (str, optional): The name of the Databricks environment to use. By default, "DEV".
 
     credentials : Dict[str, Any], optional
         Credentials containing Databricks connection configuration and the following credentials:
@@ -36,34 +28,65 @@ class Databricks(Source):
             - spark.databricks.service.clusterId
             - spark.databricks.service.orgId
             - spark.databricks.service.port
+
+    Alternatively, the credentials can be specified in the standard `viadot` `credentials.json`.
     """
 
     DEFAULT_SCHEMA = "default"
 
     def __init__(
-        self, env: str = "DEV", credentials: Dict[str, Any] = None, *args, **kwargs
+        self,
+        env: Literal["DEV", "QA", "PROD"],
+        credentials: Dict[str, Any] = None,
+        *args,
+        **kwargs,
     ):
         self.env = env
         self.credentials = credentials or local_config.get("DATABRICKS", {}).get(env)
-        self.session = None
 
         self.connect()
 
-    def _create_spark_session(self, env: str = "DEV"):
+        super().__init__(*args, credentials=credentials, **kwargs)
+
+    def connect(self) -> None:
         """
-        Create a Spark session to establish a connection to the Databricks cluster and allow the execution of its commands.
+        Connect to a Databricks cluster.
+
+        Currently, for optimization purposes, we only use `_create_spark_session()`
+        when needed, and that is when the cluster specified in `credentials.json`
+        does not match the one specified in `.databricks-connect`.
+
+        In other words, below code assumes that the QA cluster specified in `credentials.json`
+        is the same as the one specified in the `.databricks-connect` file.
+        For more information, see the comments in `_create_spark_session()`.
+        """
+        if self.env == "QA":
+            self.session = SparkSession.builder.getOrCreate()
+        else:
+            self.session = self._create_spark_session(self.env)
+
+    def _create_spark_session(self, env: str = "DEV") -> SparkSession:
+        """
+        Create a connection to a Databricks cluster.
+        The logic is quite complicated due to the fact that Dabricks only allows specifying
+        one cluster config, therefore by default, there is no way to eg. handle environments.
+
+        In order to work around this, we utilize the existing config and overwrite required values
+        (such as `cluster_id`) and create the Spark session by hand, rather than depending on the
+        `.databricks-connect` file.
 
         Args:
-            env (str, optional) : The name of the Databricks environment to use. by default "DEV"
+            env (str, optional): The name of the Databricks environment to use. by default "DEV"
 
         Returns:
-            SparkSession: A configured SparkSession object used for connecting to the Databricks cluster.
+            SparkSession: A configured SparkSession object used for connecting to the Databricks
+            cluster.
         """
         env = env or self.env
         default_spark = SparkSession.builder.getOrCreate()
         config = SparkConf()
 
-        # copy all the configuration values from the current Spark Context
+        # Copy all the configuration values from the current Spark Context.
         default_config_vals = default_spark.sparkContext.getConf().getAll()
 
         for (key, value) in default_config_vals:
@@ -72,37 +95,32 @@ class Databricks(Source):
         config.set(
             "spark.databricks.service.clusterId", self.credentials.get("cluster_id")
         )
-
         config.set("spark.databricks.service.port", self.credentials.get("port"))
-        # stop the spark session context in order to create a new one with the required cluster_id, else we
-        # will still use the current cluster_id for execution
 
+        # Stop the Spark session we used to get existing config so that we can
+        # create a new session using the new config.
         default_spark.stop()
         context = SparkContext(conf=config)
         session = SparkSession(context)
         new_spark = session.builder.config(conf=config).getOrCreate()
         return new_spark
 
-    def connect(self):
-        if self.env == "QA":
-            self.session = SparkSession.builder.getOrCreate()
-        else:
-            self.session = self._create_spark_session(self.env)
-
     def to_df(self, query: str, if_empty: str = "fail") -> pd.DataFrame:
         """
         Execute a query and return a Pandas DataFrame.
 
         Args:
-            query (str): The query to execute
+            query (str): The query to execute.
             if_empty (str, optional): What to do if the query returns no data. Defaults to "fail".
 
         Example:
-        ```python
-        from viadot.sources import Databricks
-        databricks = Databricks()
-        table_data = databricks.to_df("SELECT * FROM schema.table_1")
-        ```
+            ```python
+            from viadot.sources import Databricks
+
+            databricks = Databricks()
+
+            table_data = databricks.to_df("SELECT * FROM test_schema.test_table")
+            ```
         Returns:
             pd.DataFrame: A Pandas DataFrame containing the requested table's data.
         """
@@ -119,208 +137,276 @@ class Databricks(Source):
         Convert a Pandas DataFrame to a Spark DataFrame.
 
         Args:
-            df (pd.DataFrame): The Pandas DataFrame to be converted to a Spark DataFrame.
+            df (pd.DataFrame): The Pandas DataFrame to be converted.
 
         Example:
-        ```python
-        from viadot.sources import Databricks
-        import pandas as pd
-        databricks = Databricks()
-        list = [{"id":"1", "name":"Joe"}]
-        df = pd.DataFrame(list)
-        spark_df = databricks._pandas_df_to_spark_df(df)
-        ```
+            ```python
+            from viadot.sources import Databricks
+            import pandas as pd
+
+            databricks = Databricks()
+
+            data = [{"id": "1", "name": "Joe"}]
+            df = pd.DataFrame(data)
+            sdf = databricks._pandas_df_to_spark_df(df)
+            ```
         Returns:
             spark.DataFrame: The resulting Spark DataFrame.
         """
-        spark_df = self.session.createDataFrame(df)
-        return spark_df
+        return self.session.createDataFrame(df)
 
-    def _spark_df_to_pandas_df(self, spark_df: spark.DataFrame) -> pd.DataFrame:
+    def _spark_df_to_pandas_df(self, sdf: spark.DataFrame) -> pd.DataFrame:
         """
         Convert a Spark DataFrame to a Pandas DataFrame.
 
         Args:
-            df (spark.DataFrame): The Spark DataFrame to be converted to a Pandas DataFrame.
+            df (spark.DataFrame): The Spark DataFrame to be converted.
 
         Example:
-        ```python
-        from viadot.sources import Databricks
-        databricks = Databricks()
-        list = [{"id":"1", "name":"Joe"}]
-        df = pd.DataFrame(list)
-        spark_df = databricks._pandas_df_to_spark_df(df)
-        pandas_df = databricks._spark_df_to_pandas_df(spark_df)
-        ```
+            ```python
+            from viadot.sources import Databricks
+
+            databricks = Databricks()
+
+            data = [{"id": "1", "name": "Joe"}]
+            df = pd.DataFrame(data)
+            sdf = databricks._pandas_df_to_spark_df(df)
+            df = databricks._spark_df_to_pandas_df(sdf)
+            ```
+
         Returns:
             pd.DataFrame: The resulting Pandas DataFrame.
         """
-        return spark_df.toPandas()
+        return sdf.toPandas()
 
     def run(
-        self, query: str, fetch_type: Literal["spark", "pandas"] = "spark"
-    ) -> Union[spark.DataFrame, pd.DataFrame, bool]:
+        self, query: str, fetch_type: Literal["spark", "pandas", "records"] = "records"
+    ) -> Union[spark.DataFrame, pd.DataFrame, List[Record], bool]:
         """
-        Execute an SQL query.
+        Execute an SQL query on a Databricks cluster.
 
         Args:
             query (str): The query to execute.
             fetch_type (Literal, optional): How to return the data: either
-            in the default Spark DataFrame format or as a Pandas DataFrame. Defaults to "spark".
+            a Spark DataFrame, a Pandas DataFrame, or records. Defaults to "records".
 
         Example:
-        ```python
-        from viadot.sources import Databricks
-        databricks = Databricks()
-        query_result = databricks.run("SELECT * FROM schema.table_1")
-        ```
+            ```python
+            from viadot.sources import Databricks
+
+            databricks = Databricks()
+
+            records = databricks.run("SELECT * FROM test_schema.test_table")
+            ```
+
         Returns:
-            Union[spark.DataFrame, pd.DataFrame, bool]: Either the result set of a query or,
-            in case of DDL/DML queries, a boolean describing whether
-            the query was excuted successfuly.
+            Union[spark.DataFrame, pd.DataFrame, bool]: Either the result set of the query
+            or, in case of DDL/DML queries, a boolean describing whether the query was
+            excuted successfuly.
         """
-        if fetch_type not in ["spark", "pandas"]:
+        if fetch_type not in ["spark", "pandas", "records"]:
             raise ValueError(
-                "Only the values 'spark', 'pandas' are allowed for 'fetch_type'"
+                "Only the values 'spark', 'pandas', and 'records' are allowed for 'fetch_type'."
             )
 
         query_clean = query.upper().strip()
-        query_keywords = ["SELECT", "SHOW", "PRAGMA", "DESCRIBE"]
+        query_keywords = ["SELECT", "SHOW", "PRAGMA", "DESCRIBE", "ANALYZE"]
 
         query_result = self.session.sql(query)
 
         if any(query_clean.startswith(word) for word in query_keywords):
+
+            sdf = query_result
+
             if fetch_type == "spark":
-                result = query_result
+                result = sdf
+            elif fetch_type == "pandas":
+                result = self._spark_df_to_pandas_df(sdf)
             else:
-                result = self._spark_df_to_pandas_df(query_result)
+                result_numpy = self._spark_df_to_pandas_df(sdf).to_records()
+                result = list(result_numpy)
         else:
             result = True
 
         return result
 
     def _check_if_table_exists(self, table: str, schema: str = None) -> bool:
+
         if schema is None:
             schema = Databricks.DEFAULT_SCHEMA
 
-        does_exist = self.session._jsparkSession.catalog().tableExists(schema, table)
-        return does_exist
+        exists = self.session._jsparkSession.catalog().tableExists(schema, table)
+        return exists
+
+    def _check_if_schema_exists(self, schema: str) -> bool:
+        exists = self.session._jsparkSession.catalog().databaseExists(schema)
+        return exists
 
     def create_table_from_pandas(
-        self, table: str, df: pd.DataFrame, schema: str = None, if_empty="warn"
+        self,
+        table: str,
+        df: pd.DataFrame,
+        schema: str = None,
+        if_exists: Literal["fail", "replace", "append", "skip"] = "fail",
     ) -> pd.DataFrame:
         """
-        Write a new table using a given Pandas DataFrame.
+        Create a Delta table from a Pandas DataFrame.
 
         Args:
-            schema (str): Name of the schema.
-            table (str): Name of the new table to be created.
-            df (pd.DataFrame): DataFrame to be written as a table.
-            if_empty (str, optional): What to do if the query returns no data. Defaults to "warn".
+            table (str): The name of the table to be created.
+            df (pd.DataFrame): The pandas DataFrame to be used to create the table.
+            schema (str, optional): The name of the schema where the table is located.
+            if_exists (Literal, optional): What to do if the table already exists. Defaults to "fail".
 
         Example:
-        ```python
-        from viadot.sources import Databricks
-        databricks = Databricks()
-        list = [{"id":"1", "name":"Joe"}]
-        df = pd.DataFrame(list)
-        new_table = databricks.create_table_from_pandas(schema = "schema" , table = "table_1", df)
-        ```
+            ```python
+            from viadot.sources import Databricks
+
+            databricks = Databricks()
+
+            data = [{"id": "1", "name": "Joe"}]
+            df = pd.DataFrame(data)
+            new_table = databricks.create_table_from_pandas(
+                schema="test_schema", table="test_table", df=df
+                )
+            ```
         """
         if schema is None:
             schema = Databricks.DEFAULT_SCHEMA
 
-        fqn = f"{schema}.{table}"
-        if not self._check_if_table_exists(schema=schema, table=table):
-            data = self._pandas_df_to_spark_df(df)
-            data.createOrReplaceTempView("new_table")
+        fqn = get_fqn(schema=schema, table=table)
 
-            self.run(f"CREATE TABLE {fqn} USING DELTA AS SELECT * FROM new_table;")
+        exists = self._check_if_table_exists(schema=schema, table=table)
 
-            logger.info(f"Table {fqn} created.")
+        if exists:
+            if if_exists == "replace":
+                self.run(f"DROP TABLE {fqn}")
+            elif if_exists == "fail":
+                raise ValueError(
+                    f"Table '{fqn}' already exists and 'if_exists' is set to 'fail'."
+                )
+            elif if_exists == "append":
+                self.insert_into(schema=schema, table=table, df=df)
+                return True
+            elif if_exists == "skip":
+                self.logger.info(f"Table '{fqn}' already exists. Skipping...")
+                return False
 
-            result = self.to_df(f"SELECT * FROM {fqn}")
-            if result.empty:
-                self._handle_if_empty(if_empty)
+        sdf = self._pandas_df_to_spark_df(df)
+        sdf.write.saveAsTable(fqn)
 
-        else:
-            logger.info(f"Table {fqn} already exists.")
+        self.logger.info(f"Table {fqn} has been created successfully.")
 
-    def drop_table(self, table: str, schema: str = None):
+        return True
+
+    def drop_table(self, table: str, schema: str = None, safe: bool = True) -> bool:
         """
         Delete an existing table.
 
         Args:
-            schema (str): Name of the schema.
             table (str): Name of the new table to be created.
+            schema (str, optional): The name of the schema where the table is located.
+            safe (bool): Whether the `IF EXISTS` clause should be added.
 
         Example:
-        ```python
-        from viadot.sources import Databricks
-        databricks = Databricks()
-        databricks.drop_table(schema = "schema", table = "table_1")
-        ```
+            ```python
+            from viadot.sources import Databricks
+
+            databricks = Databricks()
+
+            databricks.drop_table(schema="test_schema", table="test_table")
+            ```
         """
         if schema is None:
             schema = Databricks.DEFAULT_SCHEMA
 
-        fqn = f"{schema}.{table}"
-        if self._check_if_table_exists(schema, table):
-            self.run(f"DROP TABLE {fqn}")
-            logger.info(f"Table {fqn} deleted.")
+        fqn = get_fqn(schema=schema, table=table)
+
+        if safe:
+            query = f"DROP TABLE IF EXISTS {fqn}"
         else:
-            logger.info(f"Table {fqn} does not exist.")
+            query = f"DROP TABLE {fqn}"
 
-    def _append(self, schema: str, table: str, df: pd.DataFrame):
-        fqn = f"{schema}.{table}"
-        spark_df = self._pandas_df_to_spark_df(df)
-        spark_df.write.format("delta").mode("append").saveAsTable(fqn)
-        logger.info(f"Table {fqn} appended successfully.")
+        self.run(query)
 
-    def _full_refresh(self, schema: str, table: str, df: pd.DataFrame):
+        self.logger.info(f"Table {fqn} has been deleted successfully.")
+
+        return True
+
+    def _append(
+        self,
+        table: str,
+        df: pd.DataFrame,
+        schema: str = None,
+    ) -> bool:
+        fqn = get_fqn(schema=schema, table=table)
+        sdf = self._pandas_df_to_spark_df(df)
+        sdf.write.mode("append").saveAsTable(fqn)
+
+        self.logger.info(f"Data has been successfully appended to table {fqn}.")
+
+        return True
+
+    def _full_refresh(
+        self,
+        table: str,
+        df: pd.DataFrame,
+        schema: str = None,
+    ) -> bool:
         """
         Overwrite an existing table with data from a Pandas DataFrame.
 
         Args:
-            schema (str): Name of the schema.
-            table (str): Name of the new table to be created.
+            table (str): The name of the table to be created.
             df (pd.DataFrame): DataFrame to be used to overwrite the table.
+            schema (str, optional): The name of the schema where the table is located.
 
         Example:
-        ```python
-        from viadot.sources import Databricks
-        databricks = Databricks()
-        list = [{"id":"1", "name":"Joe"}]
-        df = pd.DataFrame(list)
-        databricks.insert_into(schema = "raw", table = "c4c_test4", df = df, if_exists = "replace")
-        ```
-        """
-        fqn = f"{schema}.{table}"
-        data = self._pandas_df_to_spark_df(df)
-        data.write.format("delta").mode("overwrite").saveAsTable(fqn)
-        logger.info(f"Table {fqn} has been full-refreshed successfully")
+            ```python
+            from viadot.sources import Databricks
 
-    def _upsert(
+            databricks = Databricks()
+
+            data = [{"id": "1", "name": "Joe"}]
+            df = pd.DataFrame(data)
+            databricks.insert_into(schema="test_schema", table="test_table", df=df, if_exists="replace")
+            ```
+        """
+        fqn = get_fqn(schema=schema, table=table)
+        sdf = self._pandas_df_to_spark_df(df)
+        sdf.write.mode("overwrite").saveAsTable(fqn)
+
+        self.logger.info(f"Table {fqn} has been created successfully.")
+
+        return True
+
+    def upsert(
         self,
-        schema: str,
         table: str,
         primary_key: str,
         df: pd.DataFrame,
-    ):
-        fqn = f"{schema}.{table}"
-        spark_df = self._pandas_df_to_spark_df(df)
-        merge_query = viadot.utils.build_merge_query(
-            stg_schema="",
-            stg_table="",
+        schema: str = None,
+    ) -> bool:
+
+        sdf = self._pandas_df_to_spark_df(df)
+        temp_view_name = "stg"
+        df.createOrReplaceTempView(temp_view_name)
+
+        merge_query = build_merge_query(
+            stg_schema=None,
+            stg_table=temp_view_name,
             schema=schema,
             table=table,
             primary_key=primary_key,
             source=self,
-            df=spark_df,
+            df=sdf,
         )
-        self.run(merge_query)
-        result = True
-        logger.info("Data upserted successfully.")
+        result = self.run(merge_query)
+
+        if result is True:
+            fqn = get_fqn(schema=schema, table=table)
+            self.logger.info(f"Data has been successfully upserted to '{fqn}'.")
+
         return result
 
     def insert_into(
@@ -328,189 +414,215 @@ class Databricks(Source):
         table: str,
         df: pd.DataFrame,
         schema: str = None,
-        primary_key: str = "",
-        if_exists: Literal["replace", "append", "update", "fail"] = "fail",
-    ):
+        mode: Literal["replace", "append"] = "append",
+    ) -> bool:
         """
         Insert data into a table.
 
         Args:
-            schema (str): Name of the schema.
-            table (str): Name of the new table to be created.
+            table (str): The name of the table where the data should be inserted.
             df (pd.DataFrame): DataFrame with the data to be inserted into the table.
-            primary_key (str, Optional): Needed only when updating the data, the primary key on which the data will be joined.
-            if_exists (str, Optional): Which operation to run with the data. Allowed operations are: replace, append, update and fail.
+            schema (str, optional): The name of the schema where the table is located.
+            mode (str, optional): Whether to replace existing data or append to it.
+            Defaults to "append".
 
         Example:
-        ```python
-        from viadot.sources import Databricks
-        databricks = Databricks()
-        list = [{"id":"1", "name":"Joe"}]
-        df = pd.DataFrame(list)
-        databricks.insert_into(schema="raw", table = "c4c_test4", df=df, primary_key="pk", if_exists="update")
-        ```
+            ```python
+            from viadot.sources import Databricks
+
+            databricks = Databricks()
+
+            data = [{"id": "1", "name": "Joe"}]
+            df = pd.DataFrame(data)
+            databricks.insert_into(schema="test_schema", table="test_table", df=df)
+            ```
         """
         if schema is None:
             schema = Databricks.DEFAULT_SCHEMA
 
         exists = self._check_if_table_exists(schema=schema, table=table)
-        if exists:
-            if if_exists == "replace":
-                self._full_refresh(schema, table, df)
-                result = True
-            elif if_exists == "append":
-                self._append(schema, table, df)
-                result = True
-            elif if_exists == "update":
-                self._upsert(schema, table, primary_key, df)
-                result = True
-            elif if_exists == "fail":
-                raise ValueError(
-                    "The table already exists and 'if_exists' is set to 'fail'."
-                )
-            else:
-                raise ValueError(
-                    "Only the values 'replace', 'append', 'update', 'fail' are allowed for 'if_exists'"
-                )
+
+        if not exists:
+            fqn = get_fqn(schema=schema, table=table)
+            raise ValueError(f"Table '{fqn}' does not exist.")
+
+        if mode == "replace":
+            result = self._full_refresh(schema, table, df)
+        elif mode == "append":
+            result = self._append(schema, table, df)
         else:
-            raise ValueError("Table does not exist")
+            raise ValueError("Only 'replace' and 'append' modes are allowed.")
+
         return result
 
-    def create_schema(self, schema_name: str):
+    def create_schema(
+        self, schema: str, if_exists: Literal["skip", "fail"] = "skip"
+    ) -> bool:
         """
-        Create a schema for storing tables.
+        Create a schema.
 
         Args:
-            schema_name (str): Name of the new schema to be created.
+            schema (str): The name of the schema to be created.
+            if_exists (Literal, optional): Whether to fail if the schema exists.
 
         Example:
-        ```python
-        from viadot.sources import Databricks
-        databricks = Databricks()
-        databricks.create_schema("schema_1")
-        ```
-        """
-        self.run(f"CREATE SCHEMA IF NOT EXISTS {schema_name}")
-        logger.info(f"Schema {schema_name} created.")
+            ```python
+            from viadot.sources import Databricks
 
-    def drop_schema(self, schema_name: str):
+            databricks = Databricks()
+
+            databricks.create_schema("test_sEchema")
+            ```
+        """
+        if if_exists not in ["skip", "fail"]:
+            raise ValueError(
+                "Only the values 'skip' and 'fail' are allowed for 'if_exists'."
+            )
+
+        if if_exists == "skip":
+            query = f"CREATE SCHEMA IF NOT EXISTS {schema}"
+        else:
+            query = f"CREATE SCHEMA {schema}"
+
+        result = self.run(query)
+        if result is True:
+            self.logger.info(f"Schema {schema} has been created successfully.")
+        return result
+
+    def drop_schema(
+        self, schema: str, if_does_not_exist: Literal["skip", "fail"] = "skip"
+    ) -> bool:
         """
         Delete a schema.
 
         Args:
-            schema_name (str): Name of the schema to be deleted.
+            schema (str): The name of the schema to be deleted.
+            if_does_not_exist (bool, optional): What to do if the schema does not exist.
+            By default, "skip".
 
         Example:
-        ```python
-        from viadot.sources import Databricks
-        databricks = Databricks()
-        databricks.drop_schema("schema_1")
-        ```
-        """
-        self.run(f"DROP SCHEMA {schema_name}")
-        logger.info(f"Schema {schema_name} deleted.")
+            ```python
+            from viadot.sources import Databricks
 
-    def discover_schema(self, table: str, schema: str = None) -> dict:
+            databricks = Databricks()
+
+            databricks.drop_schema("test_schema")
+            ```
         """
-        Return a table's schema.
+        if if_does_not_exist not in ["skip", "fail"]:
+            raise ValueError(
+                "Only the values 'skip' and 'fail' are allowed for 'if_does_not_exist'."
+            )
+
+        if if_does_not_exist == "skip":
+            query = f"DROP SCHEMA IF EXISTS {schema}"
+        else:
+            query = f"DROP SCHEMA {schema}"
+        result = self.run(query)
+        if result is True:
+            self.logger.info(f"Schema {schema} has been deleted successfully.")
+        return result
+
+    def discover_schema(self, table: str, schema: str = None) -> Dict[str, str]:
+        """
+        Return the table's schema (column names and types).
 
         Args:
-            schema (str): Name of the schema.
             table (str): Name of the new table to be created.
+            schema (str, optional): The name of the schema where the table is located.
 
         Example:
-        ```python
-        from viadot.sources import Databricks
-        databricks = Databricks()
-        databricks.discover_schema(schema = "schema", table = "table")
-        ```
+            ```python
+            from viadot.sources import Databricks
+
+            databricks = Databricks()
+
+            databricks.discover_schema(schema="test_schema", table="test_table")
+            ```
+
         Returns:
-            schema (dict): A dictionary containing the schema details of the table.
+            schema (Dict[str, str]): A dictionary representing the schema of the table.
         """
         if schema is None:
             schema = Databricks.DEFAULT_SCHEMA
 
-        fqn = f"{schema}.{table}"
-        result = self.run(f"DESCRIBE {fqn}", fetch_type="pandas")
-
-        # Delete the last 3 records, which are boilerplate for Delta Tables
-        col_names = result["col_name"].values.tolist()
-        col_names = col_names[:-3]
-
-        data_types = result["data_type"].values.tolist()
-        data_types = data_types[:-3]
-
-        schema = dict(zip(col_names, data_types))
-
+        fqn = get_fqn(schema=schema, table=table)
+        cols_metadata: List[Record] = self.run(f"DESCRIBE {fqn}")
+        schema = {col_metadata[1]: col_metadata[2] for col_metadata in cols_metadata}
         return schema
 
     def get_table_version(self, table: str, schema: str = None) -> int:
         """
-        Get the provided table's version number.
+        Retrieve table's version number.
 
         Args:
-            schema (str): Name of the schema.
-            table (str): Name of the table to rollback.
+            table (str): The name of the table to rollback.
+            schema (str, optional): The name of the schema where the table is located.
 
         Returns:
-            version_number (int): The table's version number
-        ```
+            version_number (int): The table's version number.
         """
         if schema is None:
             schema = Databricks.DEFAULT_SCHEMA
 
-        fqn = f"{schema}.{table}"
+        if not self._check_if_table_exists(schema=schema, table=table):
+            return
 
-        # Get the info regarding the current version of the delta table
-        history = self.run(f"DESCRIBE HISTORY {fqn}", "pandas")
+        fqn = get_fqn(schema=schema, table=table)
+        table_history: List[Tuple] = self.run(f"DESCRIBE HISTORY {fqn}")
+        version_number_numpy = table_history[0][1]
+        version_number = int(version_number_numpy)
 
-        # Extract the current version number
-        version_number = history["version"].iat[0]
-        return int(version_number)
+        return version_number
 
     def rollback(self, table: str, version_number: int, schema: str = None) -> bool:
         """
-        Rollback the table to a previous version.
+        Rollback a table to the previous version.
 
         Args:
-            schema (str): Name of the schema.
-            table (str): Name of the table to rollback.
-            version_number (int): Number of the table's version to rollback to.
+            table (str): The name of the table to rollback.
+            version_number (int): The version to which to roll back.
+            schema (str, optional): The name of the schema where the table is located.
 
         Example:
-        ```python
-        from viadot.sources import Databricks
-        databricks = Databricks()
+            ```python
+            from viadot.sources import Databricks
 
-        schema = "test"
-        table = "table_1"
+            databricks = Databricks()
 
-        version_number = databricks.get_table_version(schema=schema, table=table)
+            schema = "test_schema"
+            table = "test_table"
 
-        # Perform changes on the table, in this example we are appending to the table
-        list = [{"id":"1", "name":"Joe"}]
-        df = pd.DataFrame(list)
-        databricks.insert_into(schema=schema, table=table, df=df, if_exists="append")
+            version_number = databricks.get_table_version(schema=schema, table=table)
 
-        databricks.rollback(schema=schema, table=table, version_number=version_number)
-        ```
+            # Perform changes on the table, in this example we are appending to the table
+            data = [{"id": "1", "name": "Joe"}]
+            df = pd.DataFrame(data)
+            databricks.insert_into(schema=schema, table=table, df=df, if_exists="append")
+
+            databricks.rollback(schema=schema, table=table, version_number=version_number)
+            ```
+
         Returns:
-            result (bool): A boolean indicating the success of the rollback.
+            result (bool): Whether the operation succeeded.
         """
 
         if schema is None:
             schema = Databricks.DEFAULT_SCHEMA
 
-        fqn = f"{schema}.{table}"
+        fqn = get_fqn(schema=schema, table=table)
 
-        # Retrieve the data from the previous table
-        old_table = self.to_df(f"SELECT * FROM {fqn}@v{version_number}")
+        # Retrieve data from the previous table
+        old_table_df = self.to_df(f"SELECT * FROM {fqn}@v{version_number}")
 
-        # Perform full-refresh and overwrite the table with the new data
+        # Overwrite the table with new data
         result = self.insert_into(
-            schema=schema, table=table, df=old_table, if_exists="replace"
+            schema=schema, table=table, df=old_table_df, if_exists="replace"
         )
 
-        logger.info(f"Rollback for table {fqn} to version #{version_number} completed.")
+        if result is True:
+            self.logger.info(
+                f"Rollback for table '{fqn}' to version #{version_number} has been completed successfully."
+            )
 
         return result

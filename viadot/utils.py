@@ -2,23 +2,14 @@ import re
 from typing import Any, Dict, List, Union
 
 import pandas as pd
-import prefect
 import pyodbc
 import requests
 
-# from prefect.utilities.graphql import EnumValue, with_args
 from requests.adapters import HTTPAdapter
 from requests.exceptions import ConnectionError, HTTPError, ReadTimeout, Timeout
 from requests.packages.urllib3.util.retry import Retry
 from urllib3.exceptions import ProtocolError
-
-import viadot.sources.databricks as databricks
-import pyspark.sql.session as SparkSession
-import pyspark.sql.dataframe as spark
-from pyspark.sql.dataframe import DataFrame
-from pyspark.sql.types import StructType
-
-from .exceptions import APIError
+from viadot.exceptions import APIError
 
 
 def slugify(name: str) -> str:
@@ -91,41 +82,6 @@ def handle_api_response(
     return response
 
 
-def get_flow_last_run_date(flow_name: str) -> str:
-    """
-    Retrieve a flow's last run date as an ISO datetime string.
-
-    This function assumes you are already authenticated with Prefect Cloud.
-    """
-    client = prefect.Client()
-    result = client.graphql(
-        {
-            "query": {
-                with_args(
-                    "flow_run",
-                    {
-                        "where": {
-                            "flow": {"name": {"_eq": flow_name}},
-                            "start_time": {"_is_null": False},
-                            "state": {"_eq": "Success"},
-                        },
-                        "order_by": {"start_time": EnumValue("desc")},
-                        "limit": 1,
-                    },
-                ): {"start_time"}
-            }
-        }
-    )
-    flow_run_data = result.get("data", {}).get("flow_run")
-
-    if not flow_run_data:
-        return None
-
-    last_run_date_raw_format = flow_run_data[0]["start_time"]
-    last_run_date = last_run_date_raw_format.split(".")[0] + "Z"
-    return last_run_date
-
-
 def get_sql_server_table_dtypes(
     table, con: pyodbc.Connection, schema: str = None
 ) -> dict:
@@ -192,13 +148,12 @@ def _cast_df_cols(df):
 
 
 def build_merge_query(
-    stg_schema: str,
     stg_table: str,
     table: str,
     primary_key: str,
-    source: Union[pyodbc.Connection, databricks.Databricks],
+    source: Union[pyodbc.Connection, "Databricks"],
     schema: str = None,
-    df: spark.DataFrame = None,
+    stg_schema: str = None,
 ) -> str:
     """
     Build a merge query for the simplest possible upsert scenario:
@@ -206,31 +161,24 @@ def build_merge_query(
     - merging on a single column, which has the same name in both tables
 
     Args:
-        stg_schema (str): The schema where the staging table is located.
         stg_table (str): The table with new/updated data.
-        schema (str): The schema where the table is located.
         table (str): The table to merge into.
         primary_key (str): The column on which to merge.
-        source (pyodbc.Connection OR databricks.Databricks) Either the connection to the database or the Databricks
+        source (pyodbc.Connection OR Databricks) Either the connection to the database or the Databricks
         object used to connect to the Spark cluster on which the query will be executed.
-        df (Optional): A Spark DataFrame whose data will be upserted to a table.
+        schema (str, optional): The schema where the target table is located.
+        stg_schema (str, optional): The schema where the staging table is located.
+        df (spark.DataFrame, optional): A Spark DataFrame whose data will be upserted to a table.
     """
-    fqn = f"{schema}.{table}"
-
-    if schema is None:
-        schema = source.DEFAULT_SCHEMA
+    fqn = get_fqn(schema=schema, table=table)
 
     # Get column names
     columns_query_result = _get_table_columns(schema, table, source)
 
-    # If user is passing a DataFrame and is using Databricks as a source, it means they want to merge the
-    # DataFrame into an existing table. Otherwise, it means they want to merge two existing tables.
-    if isinstance(source, databricks.Databricks) and df:
-        df.createOrReplaceTempView("stg")
-        # Since we're using a temporary view, we cannot/don't need to use a schema name and can just simply use the view's name, stg.
-        stg_fqn = ""
-    else:
+    if stg_schema:
         stg_fqn = f"{stg_schema}.{stg_table}"
+    else:
+        stg_fqn = stg_table
 
     columns = [tup for tup in columns_query_result]
     columns_stg_fqn = [f"stg.{col}" for col in columns]
@@ -251,7 +199,7 @@ def build_merge_query(
 
 
 def _get_table_columns(
-    schema: str, table: str, source: Union[pyodbc.Connection, databricks.Databricks]
+    schema: str, table: str, source: Union[pyodbc.Connection, "Databricks"]
 ) -> str:
     if isinstance(source, pyodbc.Connection):
         columns_query = f"""
@@ -265,14 +213,14 @@ def _get_table_columns(
         ORDER BY column_id;
         """
         cursor = source.cursor()
-        columns_query_result = cursor.execute(columns_query).fetchall()
+        columns = cursor.execute(columns_query).fetchall()
         cursor.close()
 
     else:
         result = source.run(f"SHOW COLUMNS IN {schema}.{table}", "pandas")
-        columns_query_result = result["col_name"].values
+        columns = result["col_name"].values
 
-    return columns_query_result
+    return columns
 
 
 def gen_bulk_insert_query_from_df(
@@ -359,3 +307,7 @@ def gen_bulk_insert_query_from_df(
         return insert_query
     else:
         return _gen_insert_query_from_records(tuples_escaped)
+
+
+def get_fqn(table: str, schema: str = None) -> str:
+    return f"{schema}.{table}" if schema else table
