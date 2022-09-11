@@ -16,7 +16,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added Databricks/Spark setup to the image. See README for setup & usage instructions.
 - Added rollback feature to `Databricks` source.
 - Changed all Prefect logging instances in the `sources` directory to native Python logging.
-
+- Performed a refactoring of the Databricks source:
+  - fixed `test_upsert()` test to actually test upsert, not insert
+  - fixed logging conventions to match rest of `viadot`
+  - fixed incorrect code and doc formatting in docs
+  - removed workaround logic for Databricks from `utils.build_merge_query()` and applied correct solution
+  - added missing typing
+  - added missing return values for methods
+  - added missing comments explaining tricky parts
+  - added more error handling
+  - added a few more tests
+  - made some of the logs more helpful
+  - `Databricks.run()` can now correctly handle ANALYZE queries
+  - changed default return type of `Databricks.run()` to `records` to match standard `viadot` behavior
+  - removed `if_empty` parameter from `create_table_from_pandas()` and replaced it with the correct `if_exists` parameter
 
 ## [0.4.3] - 2022-04-28
 ### Added
