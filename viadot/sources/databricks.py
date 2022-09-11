@@ -286,8 +286,8 @@ class Databricks(Source):
                     f"Table '{fqn}' already exists and 'if_exists' is set to 'fail'."
                 )
             elif if_exists == "append":
-                self.insert_into(schema=schema, table=table, df=df)
-                return True
+                inserted = self.insert_into(schema=schema, table=table, df=df)
+                return inserted
             elif if_exists == "skip":
                 self.logger.info(f"Table '{fqn}' already exists. Skipping...")
                 return False
@@ -447,9 +447,9 @@ class Databricks(Source):
             raise ValueError(f"Table '{fqn}' does not exist.")
 
         if mode == "replace":
-            result = self._full_refresh(schema, table, df)
+            result = self._full_refresh(schema=schema, table=table, df=df)
         elif mode == "append":
-            result = self._append(schema, table, df)
+            result = self._append(schema=schema, table=table, df=df)
         else:
             raise ValueError("Only 'replace' and 'append' modes are allowed.")
 
