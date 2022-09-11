@@ -31,9 +31,10 @@ duckdb==0.3.2
 google-auth==2.6.2
 sendgrid==6.9.7
 pandas-gbq==0.17.4
-databricks-connect==10.4.11
+databricks-connect>=10.4.11,<10.5.0
 dbt-databricks==1.1.0
 prefect-shell==0.1.0
 Faker==13.12.1
 acryl-datahub[dbt]==0.8.41
 dulwich==0.20.43
+pytest-dependency>=0.5.1,<0.6.0
