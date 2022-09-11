@@ -1,14 +1,14 @@
-import pyspark
 from viadot.sources import Databricks
 import pandas as pd
 import pytest
+import copy
 
 TEST_SCHEMA_ONEOFF = "viadot_test_schema_oneoff"
 TEST_SCHEMA = "viadot_test_schema"
 TEST_TABLE = "test_table"
 FQN = f"{TEST_SCHEMA}.{TEST_TABLE}"
 
-source_data = [
+SOURCE_DATA = [
     {
         "Id": "wRACnHTeuw",
         "AccountId": 123,
@@ -28,7 +28,21 @@ source_data = [
         "MailingCity": "Kathrynmouth",
     },
 ]
-TEST_DF = pd.DataFrame(source_data)
+TEST_DF = pd.DataFrame(SOURCE_DATA)
+ADDITIONAL_TEST_DATA = [
+    {
+        "Id": "UpsertTest2",
+        "AccountId": 789,
+        "Name": "new upsert-2",
+        "FirstName": "Updated",
+        "LastName": "Carter2",
+        "ContactEMail": "Adam.Carter@TurnerBlack.com",
+        "MailingCity": "Updated!Jamesport",
+        "NewField": "New field vlaue",
+    }
+]
+ADDITIONAL_DATA_NEW_FIELD_DF = pd.DataFrame(ADDITIONAL_TEST_DATA)
+ADDITIONAL_DATA_DF = ADDITIONAL_DATA_NEW_FIELD_DF.copy().drop("NewField", axis=1)
 
 
 @pytest.fixture(scope="session")
@@ -56,7 +70,7 @@ def test_create_schema(databricks):
     exists = databricks._check_if_schema_exists(TEST_SCHEMA_ONEOFF)
     assert exists is True
 
-    databricks.create_schema(TEST_SCHEMA_ONEOFF)
+    databricks.drop_schema(TEST_SCHEMA_ONEOFF)
 
 
 @pytest.mark.dependency(depends=["test_create_schema"])
@@ -106,7 +120,7 @@ def test_drop_table(databricks):
 def test_to_df(databricks):
 
     databricks.create_table_from_pandas(
-        schema=TEST_SCHEMA, table=TEST_TABLE, df=TEST_DF
+        schema=TEST_SCHEMA, table=TEST_TABLE, df=TEST_DF, if_exists="skip"
     )
 
     df = databricks.to_df(f"SELECT * FROM {FQN}")
@@ -115,87 +129,44 @@ def test_to_df(databricks):
     databricks.drop_table(schema=TEST_SCHEMA, table=TEST_TABLE)
 
 
-# def test_append():
-#     append_data = [
-#         {
-#             "Id": "UpsertTest2",
-#             "AccountId": 789,
-#             "Name": "new upsert-2",
-#             "FirstName": "Updated",
-#             "LastName": "Carter2",
-#             "ContactEMail": "Adam.Carter@TurnerBlack.com",
-#             "MailingCity": "Updated!Jamesport",
-#         }
-#     ]
+@pytest.mark.dependency(depends=["test_create_table", "test_drop_table"])
+def test_append(databricks):
 
-#     table = "test_append_table"
+    databricks.create_table_from_pandas(
+        schema=TEST_SCHEMA, table=TEST_TABLE, df=TEST_DF, if_exists="skip"
+    )
 
-#     fqn = f"{SCHEMA}.{table}"
+    appended = databricks.insert_into(
+        schema=TEST_SCHEMA, table=TEST_TABLE, df=ADDITIONAL_DATA_DF
+    )
+    assert appended is True
 
-#     databricks.create_table_from_pandas(schema=SCHEMA, table=table, df=df)
+    expected_result = TEST_DF.copy().append(ADDITIONAL_DATA_DF)
+    result = databricks.to_df(f"SELECT * FROM {FQN}")
+    assert result.shape == expected_result.shape
 
-#     append_df = pd.DataFrame(append_data)
-
-#     did_insert = databricks.insert_into(
-#         schema=SCHEMA, table=table, df=append_df, if_exists="append"
-#     )
-#     assert did_insert
-
-#     expected_result = df.append(append_df)
-
-#     result = databricks.to_df(f"SELECT * FROM {fqn}")
-
-#     assert result.shape == expected_result.shape
-
-#     databricks.drop_table(schema=SCHEMA, table=table)
+    databricks.drop_table(schema=TEST_SCHEMA, table=TEST_TABLE)
 
 
-# def test_insert_wrong_schema():
-#     append_data = [
-#         {
-#             "Id": "UpsertTest2",
-#             "AccountId": 789,
-#             "Name": "new upsert-2",
-#             "FirstName": "Updated",
-#             "LastName": "Carter2",
-#             "ContactEMail": "Adam.Carter@TurnerBlack.com",
-#             "MailingCity": "Updated!Jamesport",
-#             "WrongField": "Wrong field",
-#         }
-#     ]
-
-#     table = "test_table"
-
-#     append_df = pd.DataFrame(append_data)
-
-#     with pytest.raises(pyspark.sql.utils.AnalysisException):
-#         did_insert = databricks.insert_into(
-#             schema=SCHEMA, table=table, df=append_df, if_exists="append"
-#         )
+@pytest.mark.dependency(depends=["test_append"])
+def test_insert_wrong_schema(databricks):
+    with pytest.raises(ValueError):
+        inserted = databricks.insert_into(
+            schema="test_incorrect_schema",
+            table=TEST_TABLE,
+            df=ADDITIONAL_DATA_DF,
+        )
 
 
-# def test_insert_non_existent_table():
-#     append_data = [
-#         {
-#             "Id": "UpsertTest2",
-#             "AccountId": 789,
-#             "Name": "new upsert-2",
-#             "FirstName": "Updated",
-#             "LastName": "Carter2",
-#             "ContactEMail": "Adam.Carter@TurnerBlack.com",
-#             "MailingCity": "Updated!Jamesport",
-#             "WrongField": "Wrong field",
-#         }
-#     ]
-
-#     table = "test_non_existent_table"
-
-#     append_df = pd.DataFrame(append_data)
-
-#     with pytest.raises(ValueError):
-#         did_insert = databricks.insert_into(
-#             schema=SCHEMA, table=table, df=append_df, if_exists="append"
-#         )
+@pytest.mark.dependency(depends=["test_append"])
+def test_insert_non_existent_table(databricks):
+    with pytest.raises(ValueError):
+        inserted = databricks.insert_into(
+            schema=TEST_SCHEMA,
+            table="test_nonexistent_table",
+            df=ADDITIONAL_DATA_DF,
+            mode="append",
+        )
 
 
 # def test_full_refresh():
@@ -232,59 +203,52 @@ def test_to_df(databricks):
 #     databricks.drop_table(schema=SCHEMA, table=table)
 
 
-# def test_upsert():
-#     # Upsert and check if the data type and values are correct
+def test_upsert(databricks):
 
-#     upsert_data = [
-#         {
-#             "Id": "UpsertTest2",
-#             "AccountId": "Updated!EHNYKjSZsiy",
-#             "Name": "new upsert-2",
-#             "FirstName": "Updated",
-#             "LastName": "Carter2",
-#             "ContactEMail": "Adam.Carter@TurnerBlack.com",
-#             "MailingCity": "Updated!Jamesport",
-#         }
-#     ]
+    databricks.create_table_from_pandas(
+        schema=TEST_SCHEMA, table=TEST_TABLE, df=TEST_DF
+    )
 
-#     table = "test_upsert"
-#     fqn = f"{SCHEMA}.{table}"
-#     primary_key = "Id"
+    changed_record = copy.deepcopy(SOURCE_DATA[0])
+    changed_record["ContactEMail"] = "new_email@new_domain.com"
+    updated_data_df = pd.DataFrame(changed_record)
+    primary_key = "Id"
 
-#     databricks.create_table_from_pandas(schema=SCHEMA, table=table, df=df)
+    upserted = databricks.upsert(
+        schema=TEST_SCHEMA,
+        table=TEST_TABLE,
+        df=updated_data_df,
+        primary_key=primary_key,
+    )
+    assert upserted is True
 
-#     upsert_df = pd.DataFrame(upsert_data)
+    expected_result = df.append(upsert_df)
+    result = databricks.to_df(f"SELECT * FROM {fqn}")
+    assert result.shape == expected_result.shape
 
-#     inserted = databricks.insert_into(
-#         schema=SCHEMA,
-#         table=table,
-#         df=upsert_df,
-#         primary_key=primary_key,
-#         if_exists="update",
-#     )
-#     assert inserted is True
-
-#     expected_result = df.append(upsert_df)
-#     result = databricks.to_df(f"SELECT * FROM {fqn}")
-#     assert result.shape == expected_result.shape
-
-#     databricks.drop_table(schema=SCHEMA, table=table)
+    databricks.drop_table(schema=SCHEMA, table=table)
 
 
-# def test_discover_schema():
-#     table = "test_table"
-#     schema_result = databricks.discover_schema(schema=SCHEMA, table=table)
-#     expected_schema = {
-#         "Id": "string",
-#         "AccountId": "bigint",
-#         "Name": "string",
-#         "FirstName": "string",
-#         "LastName": "string",
-#         "ContactEMail": "string",
-#         "MailingCity": "string",
-#     }
+@pytest.mark.dependency(depends=["test_create_table", "test_drop_table"])
+def test_discover_schema(databricks):
 
-#     assert schema_result == expected_schema
+    databricks.create_table_from_pandas(
+        schema=TEST_SCHEMA, table=TEST_TABLE, df=TEST_DF, if_exists="skip"
+    )
+
+    expected_schema = {
+        "Id": "string",
+        "AccountId": "bigint",
+        "Name": "string",
+        "FirstName": "string",
+        "LastName": "string",
+        "ContactEMail": "string",
+        "MailingCity": "string",
+    }
+    schema = databricks.discover_schema(schema=TEST_SCHEMA, table=TEST_TABLE)
+    assert schema == expected_schema
+
+    databricks.drop_table(schema=TEST_SCHEMA, table=TEST_TABLE)
 
 
 # def test_rollback():
