@@ -34,7 +34,7 @@ class Mindful(Source):
             end_date (datetime, optional): End date of the resquest. Defaults to None.
             date_interval (int, optional): How many days are included in the request.
                 If end_date is passed as an argument, date_interval will be invalidated. Defaults to 1.
-            file_extension (Literal[parquet, csv], optional): file extensions for storing responses. Defaults to "csv".
+            file_extension (Literal[parquet, csv], optional): File extensions for storing responses. Defaults to "csv".
 
         Raises:
             CredentialError: If credentials are not provided in local_config or directly as a parameter.
@@ -62,7 +62,7 @@ class Mindful(Source):
             self.region = ""
 
         if not isinstance(start_date, datetime):
-            self.start_date = datetime.now()
+            self.start_date = datetime.now() - timedelta(days=date_interval)
             self.end_date = self.start_date + timedelta(days=date_interval)
             self.logger.info(
                 f"Mindful start_date variable is None or not in datetime format, it has been taken as: {self.start_date}."
@@ -211,7 +211,7 @@ class Mindful(Source):
         """Save Mindful response data to file.
 
         Args:
-            response (Response): request object with the response from the Mindful API.
+            response (Response): Request object with the response from the Mindful API.
             file_name (str, optional): Name of the file where saving data. Defaults to None.
             file_path (str, optional): Path where to save the file locally. Defaults to ''.
             sep (str, optional): Separator in csv file. Defaults to "\t".
@@ -221,7 +221,7 @@ class Mindful(Source):
         """
 
         data_frame = pd.read_json(StringIO(response.content.decode("utf-8")))
-        if not file_name:
+        if file_name is None:
             complete_file_name = f"{self.endpoint}.{self.file_extension}"
             absolute_path = os.path.join(file_path, complete_file_name)
         else:

@@ -33,7 +33,7 @@ class MindfulToCSV(Task):
             end_date (datetime, optional): End date of the resquest. Defaults to None.
             date_interval (int, optional): How many days are included in the request.
                 If end_date is passed as an argument, date_interval will be invalidated. Defaults to 1.
-            file_extension (Literal[parquet, csv], optional): file extensions for storing responses. Defaults to "csv".
+            file_extension (Literal[parquet, csv], optional): File extensions for storing responses. Defaults to "csv".
             file_path (str, optional): Path where to save the file locally. Defaults to ''.
         """
         self.credentials_mindful = credentials_mindful
@@ -50,7 +50,7 @@ class MindfulToCSV(Task):
         )
 
         if not isinstance(start_date, datetime):
-            self.start_date = datetime.now()
+            self.start_date = datetime.now() - timedelta(days=date_interval)
             self.end_date = self.start_date + timedelta(days=date_interval)
         elif isinstance(start_date, datetime) and not isinstance(end_date, datetime):
             self.start_date = start_date
