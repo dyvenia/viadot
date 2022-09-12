@@ -67,7 +67,7 @@ class MindfulToADLS(Flow):
             end_date (datetime, optional): End date of the resquest. Defaults to None.
             date_interval (int, optional): How many days are included in the request.
                 If end_date is passed as an argument, date_interval will be invalidated. Defaults to 1.
-            file_extension (Literal[parquet, csv], optional): file extensions for storing responses. Defaults to "csv".
+            file_extension (Literal[parquet, csv], optional): File extensions for storing responses. Defaults to "csv".
             file_path (str, optional): Path where to save the file locally. Defaults to ''.
             adls_file_path (str, optional): The destination path at ADLS. Defaults to None.
             adls_overwrite (bool, optional): Whether to overwrite files in the data lake. Defaults to True.
