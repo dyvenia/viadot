@@ -1,34 +1,29 @@
-import json
-import base64
-import warnings
 import paramiko
-import re
 import prefect
 from typing import Any, Dict, List, Literal
 from io import StringIO, BytesIO
 import prefect
 import pandas as pd
-from datetime import datetime, timedelta
 from viadot.sources.base import Source
 from pathlib import Path
 import time
 import os
-from stat import S_ISDIR, S_ISREG
+from stat import S_ISDIR
 from collections import defaultdict
+from ..exceptions import CredentialError
+import itertools
 
 
-class SFTP(Source):
+class SftpConnector(Source):
     def __init__(
         self,
         only_export_files: str = True,
         file_name: str = None,
-        file_extension: Literal["xls", "xlsx", "csv"] = "csv",
         credentials_sftp: Dict[str, Any] = None,
         *args: List[Any],
         **kwargs: Dict[str, Any],
     ):
-        """
-        STFP connector which allows for download data files, listing and downloading into Data Frame.
+        """STFP connector which allows for download data files, listing and downloading into Data Frame.
 
         Args:
             only_export_files (str, optional):
@@ -47,7 +42,6 @@ class SFTP(Source):
 
         self.only_export_files = only_export_files
         self.file_name = file_name
-        self.file_extension = file_extension
 
         self.conn = None
         self.hostname = self.credentials_sftp.get("HOSTNAME")
@@ -58,10 +52,12 @@ class SFTP(Source):
 
         self.recursive_files_list = {}
         self.file_name_list = []
+        self.recursive_files = []
 
     def get_conn(self):
-        """
-        Returns an SFTP connection object
+        """Returns a SFTP connection object
+
+        Returns: paramiko.SFTPClient
         """
 
         ssh = paramiko.SSHClient()
@@ -83,9 +79,19 @@ class SFTP(Source):
             return self.conn
 
     def get_cwd(self):
+        """Return the current working directory for SFTP session.
+
+        Returns:
+            str: current working directory
+        """
         return self.conn.getcwd()
 
     def getfo_file(self, file_name: str):
+        """Copy a remote file from the SFTP server and write to a file-like object.
+
+        Returns:
+            BytesIO: file-like object
+        """
         flo = BytesIO()
         try:
             self.conn.getfo(file_name, flo)
@@ -94,7 +100,11 @@ class SFTP(Source):
             print(e)
 
     def to_df(self, file_name: str, sep: str = "\t", columns: List[str] = None):
+        """Copy a remote file from the SFTP server and write it to Pandas dataframe.
 
+        Returns:
+            pd.DataFrame: Pandas dataframe.
+        """
         byte_file = self.getfo_file(file_name=file_name)
         byte_file.seek(0)
         if columns is None:
@@ -112,8 +122,13 @@ class SFTP(Source):
 
         return df
 
-    def get_exported_files(self, return_data: bool = False):
+    def get_exported_files(self):
+        """
+        List only exported files in current working directory.
 
+        Returns:
+            List: List of exported files
+        """
         self.file_name_list.clear()
 
         directory_structure = self.conn.listdir()
@@ -124,21 +139,33 @@ class SFTP(Source):
         return self.file_name_list
 
     def list_directory(self, path: str = None) -> List[str]:
-        """
-        Returns a list of files on the remote system.
+        """Returns a list of files on the remote system.
 
         Args:
             path (str, optional): full path to the remote directory to list. Defaults to None.
 
+        Returns:
+            List: List of files
+
         """
-        # conn = self.get_conn()
+
         if path is None:
             files = self.conn.listdir()
         else:
             files = self.conn.listdir(path)
         return files
 
-    def recursive_ftp(self, path=".", files=None):
+    def recursive_listdir(self, path=".", files=None):
+        """Recursively returns a defaultdict of files on the remote system.
+
+        Args:
+            path (str, optional): full path to the remote directory to list. Defaults to None.
+            files (any, optional): parameter for calling function recursively.
+        Returns:
+            defaultdict(list): List of files
+
+        """
+
         if files is None:
             files = defaultdict(list)
 
@@ -147,18 +174,37 @@ class SFTP(Source):
 
             if S_ISDIR(attr.st_mode):
                 # If the file is a directory, recurse it
-                self.recursive_ftp(os.path.join(path, attr.filename), files)
+                self.recursive_listdir(os.path.join(path, attr.filename), files)
 
             else:
                 #  if the file is a file, add it to our dict
                 files[path].append(attr.filename)
 
+        self.recursive_files = files
         return files
 
+    def process_defaultdict(self, defaultdict: any = None):
+        """Process defaultdict to list of files.
+
+        Args:
+            defaultdict (any): defaultdict of recursive files.
+
+        Returns:
+            List: list of files
+        """
+        path_list = []
+        if defaultdict is None:
+            defaultdict = self.recursive_files
+
+        for item in list(defaultdict.items()):
+            tuple_list_path = list(itertools.product([item[0]], item[1]))
+            path_list.extend(
+                [os.path.join(*tuple_path) for tuple_path in tuple_list_path]
+            )
+        return path_list
+
     def close_conn(self) -> None:
-        """
-        Closes the connection
-        """
+        """Closes the connection"""
         if self.conn is not None:
             self.conn.close()
             self.conn = None
