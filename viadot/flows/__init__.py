@@ -32,3 +32,4 @@ except ImportError:
 
 from .epicor_to_duckdb import EpicorOrdersToDuckDB
 from .sql_server_to_duckdb import SQLServerToDuckDB
+from .sftp_operations import SftpToAzureSQL
