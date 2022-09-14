@@ -12,7 +12,7 @@ from ..task_utils import (
 from ..tasks import AzureDataLakeUpload, OutlookToDF
 
 file_to_adls_task = AzureDataLakeUpload()
-outlook_to_df = OutlookToDF()
+outlook_to_df = OutlookToDF(timeout=1200)
 
 
 class OutlookToADLS(Flow):
