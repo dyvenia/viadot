@@ -12,6 +12,11 @@ in `task_utils`
 - Added new source file `mindful` to connect with mindful API.
 - Added new task file `mindful` to be called by the Mindful Flow.
 - Added new flow file `mindful_to_adls` to upload data from Mindful API tp ADLS.
+
+
+### Changed
+- Changed default value of `on_error` parameter in `BCPTask` and `on_bcp_error` parameter in `ADLSToAzureSQL` 
+and `DuckDBToSQLServer` to `fail`. 
 ## [0.4.6] - 2022-07-21
 ### Added
 - Added `rfc_character_limit` parameter in `SAPRFCToDF` task, `SAPRFC` source, `SAPRFCToADLS` and `SAPToDuckDB` flows

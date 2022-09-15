@@ -105,7 +105,7 @@ class ADLSToAzureSQL(Flow):
         if_exists: Literal["fail", "replace", "append", "delete"] = "replace",
         check_col_order: bool = True,
         sqldb_credentials_secret: str = None,
-        on_bcp_error: Literal["skip", "fail"] = "skip",
+        on_bcp_error: Literal["skip", "fail"] = "fail",
         max_download_retries: int = 5,
         tags: List[str] = ["promotion"],
         vault_name: str = None,
@@ -137,7 +137,7 @@ class ADLSToAzureSQL(Flow):
             check_col_order (bool, optional): Whether to check column order. Defaults to True.
             sqldb_credentials_secret (str, optional): The name of the Azure Key Vault secret containing a dictionary with
             Azure SQL Database credentials. Defaults to None.
-            on_bcp_error (Literal["skip", "fail"], optional): What to do if error occurs. Defaults to "skip".
+            on_bcp_error (Literal["skip", "fail"], optional): What to do if error occurs. Defaults to "fail".
             max_download_retries (int, optional): How many times to retry the download. Defaults to 5.
             tags (List[str], optional): Flow tags to use, eg. to control flow concurrency. Defaults to ["promotion"].
             vault_name (str, optional): The name of the vault from which to obtain the secrets. Defaults to None.
