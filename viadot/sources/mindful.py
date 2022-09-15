@@ -7,10 +7,9 @@ import pandas as pd
 from datetime import datetime, timedelta
 from requests.models import Response
 
-from viadot.config import local_config
 from viadot.sources.base import Source
 from viadot.utils import handle_api_response
-from viadot.exceptions import CredentialError, APIError
+from viadot.exceptions import APIError
 
 
 class Mindful(Source):
@@ -35,24 +34,10 @@ class Mindful(Source):
             date_interval (int, optional): How many days are included in the request.
                 If end_date is passed as an argument, date_interval will be invalidated. Defaults to 1.
             file_extension (Literal[parquet, csv], optional): File extensions for storing responses. Defaults to "csv".
-
-        Raises:
-            CredentialError: If credentials are not provided in local_config or directly as a parameter.
         """
         self.logger = prefect.context.get("logger")
 
         self.credentials_mindful = credentials_mindful
-
-        if credentials_mindful is not None:
-            self.credentials_mindful = credentials_mindful
-            self.logger.info("Mindful credentials provided by user")
-        else:
-            try:
-                self.credentials_mindful = local_config["MINDFUL"]
-                self.logger.info("Mindful credentials loaded from local config")
-            except KeyError:
-                self.credentials_mindful = None
-                raise CredentialError("Credentials not found.")
 
         super().__init__(*args, credentials=self.credentials_mindful, **kwargs)
 
@@ -208,7 +193,7 @@ class Mindful(Source):
         file_path: str = "",
         sep: str = "\t",
     ) -> str:
-        """Save Mindful response data to file.
+        """Save Mindful response data to file and return filename.
 
         Args:
             response (Response): Request object with the response from the Mindful API.

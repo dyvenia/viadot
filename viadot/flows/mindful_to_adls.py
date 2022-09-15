@@ -47,6 +47,7 @@ class MindfulToADLS(Flow):
         self,
         name: str,
         credentials_mindful: Dict[str, Any] = None,
+        credentials_secret: str = None,
         start_date: datetime = None,
         end_date: datetime = None,
         date_interval: int = 1,
@@ -63,6 +64,7 @@ class MindfulToADLS(Flow):
         Args:
             name (str): The name of the Flow.
             credentials_mindful (Dict[str, Any], optional): Credentials to connect with Mindful API. Defaults to None.
+            credentials_secret (str, optional): Name of the credential secret to retreave the credentials. Defaults to None.
             start_date (datetime, optional): Start date of the request. Defaults to None.
             end_date (datetime, optional): End date of the resquest. Defaults to None.
             date_interval (int, optional): How many days are included in the request.
@@ -76,6 +78,7 @@ class MindfulToADLS(Flow):
         """
 
         self.credentials_mindful = credentials_mindful
+        self.credentials_secret = credentials_secret
         self.start_date = start_date
         self.end_date = end_date
         self.date_interval = date_interval
@@ -95,6 +98,7 @@ class MindfulToADLS(Flow):
 
         file_names = to_csv.bind(
             credentials_mindful=self.credentials_mindful,
+            credentials_secret=self.credentials_secret,
             start_date=self.start_date,
             end_date=self.end_date,
             date_interval=self.date_interval,
@@ -103,13 +107,13 @@ class MindfulToADLS(Flow):
             flow=self,
         )
 
-        uploader = adls_bulk_upload(
-            file_names=file_names,
-            file_name_relative_path=self.file_path,
-            adls_file_path=self.adls_file_path,
-            adls_sp_credentials_secret=self.adls_sp_credentials_secret,
-            adls_overwrite=self.adls_overwrite,
-            flow=self,
-        )
+        # uploader = adls_bulk_upload(
+        #     file_names=file_names,
+        #     file_name_relative_path=self.file_path,
+        #     adls_file_path=self.adls_file_path,
+        #     adls_sp_credentials_secret=self.adls_sp_credentials_secret,
+        #     adls_overwrite=self.adls_overwrite,
+        #     flow=self,
+        # )
 
-        uploader.set_upstream(file_names, flow=self)
+        # uploader.set_upstream(file_names, flow=self)
