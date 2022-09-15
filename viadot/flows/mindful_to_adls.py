@@ -107,13 +107,13 @@ class MindfulToADLS(Flow):
             flow=self,
         )
 
-        # uploader = adls_bulk_upload(
-        #     file_names=file_names,
-        #     file_name_relative_path=self.file_path,
-        #     adls_file_path=self.adls_file_path,
-        #     adls_sp_credentials_secret=self.adls_sp_credentials_secret,
-        #     adls_overwrite=self.adls_overwrite,
-        #     flow=self,
-        # )
+        uploader = adls_bulk_upload(
+            file_names=file_names,
+            file_name_relative_path=self.file_path,
+            adls_file_path=self.adls_file_path,
+            adls_sp_credentials_secret=self.adls_sp_credentials_secret,
+            adls_overwrite=self.adls_overwrite,
+            flow=self,
+        )
 
-        # uploader.set_upstream(file_names, flow=self)
+        uploader.set_upstream(file_names, flow=self)
