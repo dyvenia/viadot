@@ -172,6 +172,9 @@ class DuckDB(Source):
                 return True
             elif if_exists == "delete":
                 self.run(f"DELETE FROM {fqn}")
+                self.logger.info(f"Successfully deleted data from table '{fqn}'.")
+                self.run(f"INSERT INTO {fqn} SELECT * FROM read_parquet('{path}')")
+                self.logger.info(f"Successfully inserted data into table '{fqn}'.")
                 return True
             elif if_exists == "fail":
                 raise ValueError(
