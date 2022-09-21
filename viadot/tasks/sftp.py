@@ -20,11 +20,10 @@ class SftpToDF(Task):
         *args,
         **kwargs,
     ):
-        """
-        Task for downloading data from SFTP server to pandas DataFrame.
+        """Task for downloading data from SFTP server to pandas DataFrame.
 
         Args:
-            credentials (Dict[str, Any], optional): MySql Database credentials. Defaults to None.
+            credentials (Dict[str, Any], optional): SFTP credentials. Defaults to None.
             sftp_credentials_secret (str, optional): The name of the Azure Key Vault secret containing a dictionary credentials for SFTP connection. Defaults to None.
             vault_name (str, optional): The name of the vault from which to obtain the secret. Defaults to None.
 
@@ -88,11 +87,10 @@ class SftpList(Task):
         *args,
         **kwargs,
     ):
-        """
-        Task for listing files in SFTP server.
+        """Task for listing files in SFTP server.
 
         Args:
-            credentials (Dict[str, Any], optional): MySql Database credentials. Defaults to None.
+            credentials (Dict[str, Any], optional): SFTP credentials. Defaults to None.
             sftp_credentials_secret (str, optional): The name of the Azure Key Vault secret containing a dictionary credentials for SFTP connection. Defaults to None.
             vault_name (str, optional): The name of the vault from which to obtain the secret. Defaults to None.
 

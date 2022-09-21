@@ -1,6 +1,6 @@
 import paramiko
 import prefect
-from typing import Any, Dict, List, Literal
+from typing import Any, Dict, List
 from io import StringIO, BytesIO
 import prefect
 import pandas as pd
@@ -17,7 +17,6 @@ import itertools
 class SftpConnector(Source):
     def __init__(
         self,
-        only_export_files: str = True,
         file_name: str = None,
         credentials_sftp: Dict[str, Any] = None,
         *args: List[Any],
@@ -26,7 +25,7 @@ class SftpConnector(Source):
         """STFP connector which allows for download data files, listing and downloading into Data Frame.
 
         Args:
-            only_export_files (str, optional):
+            file_name (str, optional): File name to download. Defaults to None.
             credentials_sftp (Dict[str, Any], optional): Credentials to connect with Genesys API containing CLIENT_ID,
 
         Raises:
@@ -40,7 +39,6 @@ class SftpConnector(Source):
         if self.credentials_sftp is None:
             raise CredentialError("Credentials not found.")
 
-        self.only_export_files = only_export_files
         self.file_name = file_name
 
         self.conn = None
@@ -55,7 +53,7 @@ class SftpConnector(Source):
         self.recursive_files = []
 
     def get_conn(self):
-        """Returns a SFTP connection object
+        """Returns a SFTP connection object.
 
         Returns: paramiko.SFTPClient
         """
@@ -89,6 +87,9 @@ class SftpConnector(Source):
     def getfo_file(self, file_name: str):
         """Copy a remote file from the SFTP server and write to a file-like object.
 
+        Args:
+            file_name (str, optional): File name to copy.
+
         Returns:
             BytesIO: file-like object
         """
@@ -101,6 +102,11 @@ class SftpConnector(Source):
 
     def to_df(self, file_name: str, sep: str = "\t", columns: List[str] = None):
         """Copy a remote file from the SFTP server and write it to Pandas dataframe.
+
+        Args:
+            file_name (str, optional): File name to download.
+            sep (str, optional): The delimiter for the source file. Defaults to "\t".
+            columns (List[str], optional): List of columns to select from file. Defaults to None.
 
         Returns:
             pd.DataFrame: Pandas dataframe.
@@ -123,8 +129,7 @@ class SftpConnector(Source):
         return df
 
     def get_exported_files(self):
-        """
-        List only exported files in current working directory.
+        """List only exported files in current working directory.
 
         Returns:
             List: List of exported files
