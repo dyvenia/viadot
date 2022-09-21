@@ -25,7 +25,7 @@ class SftpToAzureSQL(Flow):
         from_path: str = None,
         file_name: str = None,
         columns: List[str] = None,
-        sep="\t",
+        sep: str = "\t",
         remove_tab: bool = True,
         dtypes: Dict[str, Any] = None,
         table: str = None,
@@ -46,20 +46,20 @@ class SftpToAzureSQL(Flow):
 
         Args:
             name (str): The name of the flow.
-            from_path (str): Path to the file in SFTP server.
-            file_name (str): File name for local file. Defaults to None.
+            from_path (str, optional): Path to the file in SFTP server. Defaults to None.
+            file_name (str, optional): File name for local file. Defaults to None.
             columns (List[str], optional): Columns to read from the file. Defaults to None.
-            sep (str): The separator to use to read the CSV file.
+            sep (str, optional): The separator to use to read the CSV file. Defaults to "\t".
             remove_tab (bool, optional): Whether to remove tab delimiters from the data. Defaults to False.
             dtypes (dict, optional): Which custom data types should be used for SQL table creation task.
-            table (str): Destination table. Defaults to None.
-            schema (str): Destination schema. Defaults to None.
+            table (str, optional): Destination table. Defaults to None.
+            schema (str, optional): Destination schema. Defaults to None.
             if_exists (Literal, optional): What to do if the table already exists. Defaults to "replace".
             sftp_credentials_secret (str, optional): The name of the Azure Key Vault secret containing a dictionary credentials for SFTP connection. Defaults to None.
             sftp_credentials (Dict[str, Any], optional): SFTP server credentials. Defaults to None.
             sqldb_credentials_secret (str, optional): The name of the Azure Key Vault secret containing a dictionary with
             on_bcp_error (Literal["skip", "fail"], optional): What to do if error occurs. Defaults to "fail".
-            bcp_error_log_path (string, optional): Full path of an error file. Defaults to "./log_file.log".
+            error_log_file_path (string, optional): Full path of an error file. Defaults to "./log_file.log".
             vault_name (str, optional): The name of the vault from which to obtain the secret. Defaults to None.
         """
         # SFTP
@@ -160,7 +160,7 @@ class SftpToADLS(Flow):
         name: str,
         from_path: str = None,
         file_name: str = None,
-        sep="\t",
+        sep: str = "\t",
         remove_tab: bool = True,
         overwrite: bool = True,
         to_path: str = None,
@@ -178,9 +178,9 @@ class SftpToADLS(Flow):
 
         Args:
             name (str): The name of the flow.
-            from_path (str): Path to the file in SFTP server.
-            file_name (str): File name for local file.
-            sep (str): The separator to use to read the CSV file.
+            from_path (str, optional): Path to the file in SFTP server. Defaults to False.
+            file_name (str, optional): File name for local file. Defaults to False.
+            sep (str, optional): The separator to use to read the CSV file. Defaults to "\t".
             remove_tab (bool, optional): Whether to remove tab delimiters from the data. Defaults to False.
             overwrite (bool, optional): Whether to overwrite files in the lake. Defaults to False.
             to_path (str, optional): The destination path in ADLS. Defaults to None.

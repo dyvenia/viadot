@@ -22,11 +22,12 @@ class SftpConnector(Source):
         *args: List[Any],
         **kwargs: Dict[str, Any],
     ):
-        """STFP connector which allows for download data files, listing and downloading into Data Frame.
+        """
+        STFP connector which allows for download data files, listing and downloading into Data Frame.
 
         Args:
             file_name (str, optional): File name to download. Defaults to None.
-            credentials_sftp (Dict[str, Any], optional): Credentials to connect with Genesys API containing CLIENT_ID,
+            credentials_sftp (Dict[str, Any], optional): SFTP server credentials. Defaults to None.
 
         Raises:
             CredentialError: If credentials are not provided in local_config or directly as a parameter.
@@ -188,11 +189,11 @@ class SftpConnector(Source):
         self.recursive_files = files
         return files
 
-    def process_defaultdict(self, defaultdict: any = None):
+    def process_defaultdict(self, defaultdict: any = None) -> list:
         """Process defaultdict to list of files.
 
         Args:
-            defaultdict (any): defaultdict of recursive files.
+            defaultdict (any, optional): defaultdict of recursive files. Defaults to None.
 
         Returns:
             List: list of files
