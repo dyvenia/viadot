@@ -3,6 +3,7 @@ import os
 from typing import Any, Dict, List, Literal
 
 import pandas as pd
+import numpy as np
 from prefect import Flow, task
 from prefect.backend import get_key_value
 from prefect.utilities import logging
@@ -105,7 +106,7 @@ class ADLSToAzureSQL(Flow):
         if_exists: Literal["fail", "replace", "append", "delete"] = "replace",
         check_col_order: bool = True,
         sqldb_credentials_secret: str = None,
-        on_bcp_error: Literal["skip", "fail"] = "fail",
+        on_bcp_error: Literal["skip", "fail"] = "skip",
         max_download_retries: int = 5,
         tags: List[str] = ["promotion"],
         vault_name: str = None,
@@ -137,11 +138,12 @@ class ADLSToAzureSQL(Flow):
             check_col_order (bool, optional): Whether to check column order. Defaults to True.
             sqldb_credentials_secret (str, optional): The name of the Azure Key Vault secret containing a dictionary with
             Azure SQL Database credentials. Defaults to None.
-            on_bcp_error (Literal["skip", "fail"], optional): What to do if error occurs. Defaults to "fail".
+            on_bcp_error (Literal["skip", "fail"], optional): What to do if error occurs. Defaults to "skip".
             max_download_retries (int, optional): How many times to retry the download. Defaults to 5.
             tags (List[str], optional): Flow tags to use, eg. to control flow concurrency. Defaults to ["promotion"].
             vault_name (str, optional): The name of the vault from which to obtain the secrets. Defaults to None.
         """
+
         adls_path = adls_path.strip("/")
         # Read parquet
         if adls_path.split(".")[-1] in ["csv", "parquet"]:
@@ -298,7 +300,6 @@ class ADLSToAzureSQL(Flow):
 
         df_reorder.set_upstream(lake_to_df_task, flow=self)
         df_to_csv.set_upstream(df_reorder, flow=self)
-        promote_to_conformed_task.set_upstream(df_to_csv, flow=self)
         promote_to_conformed_task.set_upstream(df_to_csv, flow=self)
         create_table_task.set_upstream(df_to_csv, flow=self)
         promote_to_operations_task.set_upstream(promote_to_conformed_task, flow=self)

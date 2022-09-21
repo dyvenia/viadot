@@ -12,7 +12,6 @@ from ..task_utils import (
 from ..tasks import AzureDataLakeUpload, OutlookToDF
 
 file_to_adls_task = AzureDataLakeUpload()
-outlook_to_df = OutlookToDF()
 
 
 class OutlookToADLS(Flow):
@@ -28,6 +27,7 @@ class OutlookToADLS(Flow):
         overwrite_adls: bool = True,
         adls_sp_credentials_secret: str = None,
         limit: int = 10000,
+        timeout: int = 1200,
         if_exists: Literal["append", "replace", "skip"] = "append",
         *args: List[Any],
         **kwargs: Dict[str, Any],
@@ -47,6 +47,7 @@ class OutlookToADLS(Flow):
             adls_sp_credentials_secret (str, optional): The name of the Azure Key Vault secret containing a dictionary with
             ACCOUNT_NAME and Service Principal credentials (TENANT_ID, CLIENT_ID, CLIENT_SECRET) for the Azure Data Lake. Defaults to None.
             limit (int, optional): Number of fetched top messages. Defaults to 10000.
+            timeout (int, optional): The amount of time (in seconds) to wait while running this task before a timeout occurs. Defaults to 1200.
             if_exists (Literal['append', 'replace', 'skip'], optional): What to do if the local file already exists. Defaults to "append".
         """
 
@@ -54,6 +55,7 @@ class OutlookToADLS(Flow):
         self.start_date = start_date
         self.end_date = end_date
         self.limit = limit
+        self.timeout = timeout
         self.local_file_path = local_file_path
         self.if_exsists = if_exists
 
@@ -70,6 +72,8 @@ class OutlookToADLS(Flow):
     def gen_outlook_df(
         self, mailbox_list: Union[str, List[str]], flow: Flow = None
     ) -> Task:
+
+        outlook_to_df = OutlookToDF(timeout=self.timeout)
 
         df = outlook_to_df.bind(
             mailbox_name=mailbox_list,
