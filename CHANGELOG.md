@@ -4,20 +4,31 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-
 ## [Unreleased]
+
+## [0.4.8] - 2022-09-06
 ### Added
+- Added `protobuf` library to requirements
+## [0.4.7] - 2022-09-06
+### Added
+- Added new flow - `SQLServerTransform` and new task `SQLServerQuery` to run queries on SQLServer
 - Added `duckdb_query` parameter to `DuckDBToSQLServer` flow to enable option to create table
 using outputs of SQL queries 
 - Added handling empty DF in `set_new_kv()` task
 - Added `update_kv` and `filter_column` params to `SAPRFCToADLS` and `SAPToDuckDB` flows and added `set_new_kv()` task
+- Added `recursive` parameter to `AzureDataLakeList` task
 in `task_utils`
 - Added sftp source class `SftpConnector`
 - Added sftp tasks `SftpToDF` and `SftpList` 
 
+- Added Genesys API source `Genesys`
+- Added tasks `GenesysToCSV` and `GenesysToDF`
+- Added flows `GenesysToADLS` and `GenesysReportToADLS`
+- Added `query` parameter to  `PrefectLogs` flow
+
 ### Changed
-- Changed default value of `on_error` parameter in `BCPTask` and `on_bcp_error` parameter in `ADLSToAzureSQL` 
-and `DuckDBToSQLServer` to `fail`.
+- Updated requirements.txt
+- Changed 'handle_api_response()' method by adding more requests method also added contex menager
 
 
 ## [0.4.6] - 2022-07-21
@@ -25,9 +36,6 @@ and `DuckDBToSQLServer` to `fail`.
 - Added `rfc_character_limit` parameter in `SAPRFCToDF` task, `SAPRFC` source, `SAPRFCToADLS` and `SAPToDuckDB` flows
 - Added `on_bcp_error` and `bcp_error_log_path` parameters in `BCPTask`
 - Added ability to process queries which result exceed SAP's character per low limit in `SAPRFC` source
-- Added Genesys API source `Genesys`
-- Added tasks `GenesysToCSV` and `GenesysToDF`
-- Added flows `GenesysToADLS` and `GenesysReportToADLS`
 - Added new flow `PrefectLogs` for extracting all logs from Prefect with details
 - Added `PrefectLogs` flow
 
@@ -39,9 +47,7 @@ DF to string before adding metadata
 - Changed `check_if_empty_file()` logic according to changes in `add_ingestion_metadata_task()`
 - Changed accepted values of `if_empty` parameter in `DuckDBCreateTableFromParquet`
 - Updated `.gitignore` to ignore files with `*.bak` extension and to ignore `credentials.json` in any directory
-- Updated requirements.txt
-- Changed 'handle_api_response()' method by adding more requests method also added contex menager
- Changed logger messages in `AzureDataLakeRemove` task
+- Changed logger messages in `AzureDataLakeRemove` task
 
 ### Fixed
 - Fixed handling empty response in `SAPRFC` source
@@ -66,7 +72,6 @@ DF to string before adding metadata
 - Added `if_empty` parameter in `DuckDBCreateTableFromParquet` task and in `EpicorToDuckDB`, `SAPToDuckDB`,
 `SQLServerToDuckDB` flows to check if output Parquet is empty and handle it properly.
 - Added `check_if_empty_file()` and `handle_if_empty_file()` in `utils.py`
-
 
 ## [0.4.4] - 2022-06-09
 ### Added

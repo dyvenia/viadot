@@ -2,6 +2,7 @@ import os
 from typing import Any, Dict, List
 
 import pandas as pd
+import numpy as np
 from adlfs import AzureBlobFileSystem, AzureDatalakeFileSystem
 
 from ..config import local_config
@@ -181,7 +182,25 @@ class AzureDataLake(Source):
             path (str, optional): Path to a folder. Defaults to None.
         """
         path = path or self.path
+
         return self.fs.ls(path)
+
+    def find(self, path: str = None) -> List[str]:
+        """
+        Returns list of files in a path using recursive method.
+
+        Args:
+            path (str, optional): Path to a folder. Defaults to None.
+
+        Returns:
+            List[str]: List of paths.
+
+        """
+        path = path or self.path
+
+        files_path_list_raw = self.fs.find(path)
+        paths_list = [p for p in files_path_list_raw if not p.endswith("/")]
+        return paths_list
 
     def rm(self, path: str = None, recursive: bool = False):
         """
