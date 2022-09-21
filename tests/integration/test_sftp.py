@@ -3,10 +3,6 @@ from viadot.tasks.sftp import SftpToDF, SftpList
 import pytest
 import pandas as pd
 from unittest import mock
-import errno
-import py.path
-from paramiko import SFTPAttributes
-import paramiko
 from pytest import fixture, raises
 import io
 
@@ -118,3 +114,10 @@ def test_task_sftplist(list_of_paths):
         list_directory = task.run()
 
         assert isinstance(list_directory, list)
+
+
+def test_example():
+    with mock.patch("viadot.sources.sftp.SftpConnector.to_df") as mock_method:
+        mock_method.return_value = tmp_df
+        t = SftpToDF()
+        t.run()
