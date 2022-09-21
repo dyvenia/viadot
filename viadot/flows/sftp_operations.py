@@ -8,7 +8,7 @@ from viadot.flows.adls_to_azure_sql import df_to_csv_task
 
 from viadot.config import local_config
 from viadot.sources.sftp import SftpConnector
-from viadot.tasks.sftp_to_df import SftpToDF
+from viadot.tasks.sftp import SftpToDF
 from viadot.tasks import AzureDataLakeUpload, AzureSQLCreateTable, BCPTask
 from viadot.task_utils import add_ingestion_metadata_task
 
@@ -16,7 +16,6 @@ from viadot.task_utils import add_ingestion_metadata_task
 upload_to_adls = AzureDataLakeUpload()
 create_table_task = AzureSQLCreateTable()
 bulk_insert_task = BCPTask()
-ftp = SftpToDF()
 
 
 class SftpToAzureSQL(Flow):
@@ -25,6 +24,7 @@ class SftpToAzureSQL(Flow):
         name: str,
         from_path: str = None,
         file_name: str = None,
+        columns: List[str] = None,
         sep="\t",
         remove_tab: bool = True,
         dtypes: Dict[str, Any] = None,
@@ -48,6 +48,7 @@ class SftpToAzureSQL(Flow):
             name (str): The name of the flow.
             from_path (str): Path to the file in SFTP server.
             file_name (str): File name for local file. Defaults to None.
+            columns (List[str], optional): Columns to read from the file. Defaults to None.
             sep (str): The separator to use to read the CSV file.
             remove_tab (bool, optional): Whether to remove tab delimiters from the data. Defaults to False.
             dtypes (dict, optional): Which custom data types should be used for SQL table creation task.
@@ -65,6 +66,7 @@ class SftpToAzureSQL(Flow):
         self.from_path = from_path
         self.sftp_credentials_secret = sftp_credentials_secret
         self.sftp_credentials = sftp_credentials
+        self.columns = columns
         # File args
         if file_name is None:
             self.file_name = from_path.split("/")[-1]
@@ -109,11 +111,13 @@ class SftpToAzureSQL(Flow):
         return super().__call__(*args, **kwargs)
 
     def gen_flow(self) -> Flow:
-
+        ftp = SftpToDF(
+            sftp_credentials_secret=self.sftp_credentials_secret,
+            credentials=self.sftp_credentials,
+        )
         df = ftp.bind(
             from_path=self.from_path,
-            credentials_secret=self.sftp_credentials_secret,
-            credentials=self.sftp_credentials,
+            columns=self.columns,
             flow=self,
         )
         df_with_metadata = add_ingestion_metadata_task.bind(df, flow=self)
@@ -160,6 +164,7 @@ class SftpToADLS(Flow):
         remove_tab: bool = True,
         overwrite: bool = True,
         to_path: str = None,
+        columns: List[str] = None,
         sftp_credentials_secret: Dict[str, Any] = None,
         sftp_credentials: Dict[str, Any] = None,
         sp_credentials_secret: str = None,
@@ -179,16 +184,16 @@ class SftpToADLS(Flow):
             remove_tab (bool, optional): Whether to remove tab delimiters from the data. Defaults to False.
             overwrite (bool, optional): Whether to overwrite files in the lake. Defaults to False.
             to_path (str, optional): The destination path in ADLS. Defaults to None.
+            columns (List[str], optional): Columns to read from the file. Defaults to None.
+            sp_credentials_secret (str, optional): The name of the Azure Key Vault secret containing a dictionary.
             sftp_credentials (Dict[str, Any], optional): SFTP server credentials. Defaults to None.
-            sp_credentials_secret (str, optional): The name of the Azure Key Vault secret containing a dictionary with
-            on_bcp_error (Literal["skip", "fail"], optional): What to do if error occurs. Defaults to "fail".
-            bcp_error_log_path (string, optional): Full path of an error file. Defaults to "./log_file.log".
             vault_name (str, optional): The name of the vault from which to obtain the secret. Defaults to None.
         """
         # SFTP
         self.from_path = from_path
         self.sftp_credentials_secret = sftp_credentials_secret
         self.sftp_credentials = sftp_credentials
+        self.columns = columns
         # File args
         if file_name is None:
             self.file_name = from_path.split("/")[-1]
@@ -218,11 +223,13 @@ class SftpToADLS(Flow):
         return super().__call__(*args, **kwargs)
 
     def gen_flow(self) -> Flow:
-
+        ftp = SftpToDF(
+            sftp_credentials_secret=self.sftp_credentials_secret,
+            credentials=self.sftp_credentials,
+        )
         df = ftp.bind(
             from_path=self.from_path,
-            credentials_secret=self.sftp_credentials_secret,
-            credentials=self.sftp_credentials,
+            columns=self.columns,
             flow=self,
         )
         df_to_csv_task.bind(
