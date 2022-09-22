@@ -1,5 +1,6 @@
 from typing import Any, Dict, List, Literal
 
+import pandas as pd
 from prefect import Flow, task
 
 from viadot.task_utils import df_to_csv
@@ -44,6 +45,20 @@ def adls_bulk_upload(
         )
 
 
+@task
+def add_timestamp(files_names: List = None, sep: str = "\t"):
+    """Add new column _viadot_downloaded_at_utc into every genesys file.
+
+    Args:
+        files_names (List, optional): All file names of downloaded files. Defaults to None.
+        sep (str, optional): Separator in csv file. Defaults to \t.
+    """
+    for file in files_names:
+        df = pd.read_csv(file)
+        df_updated = add_ingestion_metadata_task.run(df)
+        df_updated.to_csv(file, index=False, sep=sep)
+
+
 class GenesysToADLS(Flow):
     def __init__(
         self,
@@ -54,6 +69,7 @@ class GenesysToADLS(Flow):
         start_date: str = None,
         end_date: str = None,
         days_interval: int = 1,
+        sep: str = "\t",
         environment: str = None,
         schedule_id: str = None,
         report_url: str = None,
@@ -77,6 +93,7 @@ class GenesysToADLS(Flow):
             start_date (str, optional): Start date of the report. Defaults to None.
             end_date (str, optional): End date of the report. Defaults to None.
             days_interval (int, optional): How many days report should include. Defaults to 1.
+            sep (str, optional): Separator in csv file. Defaults to "\t".
             environment (str, optional): Adress of host server. Defaults to None than will be used enviroment
             from credentials.
             schedule_id (str, optional): The ID of report. Defaults to None.
@@ -101,6 +118,7 @@ class GenesysToADLS(Flow):
         self.start_date = start_date
         self.end_date = end_date
         self.days_interval = days_interval
+        self.sep = sep
         # AzureDataLake
         self.local_file_path = local_file_path
         self.adls_file_path = adls_file_path
@@ -128,6 +146,8 @@ class GenesysToADLS(Flow):
             flow=self,
         )
 
+        add_timestamp.bind(file_names, sep=self.sep, flow=self)
+
         uploader = adls_bulk_upload(
             file_names=file_names,
             adls_file_path=self.adls_file_path,
@@ -135,7 +155,8 @@ class GenesysToADLS(Flow):
             flow=self,
         )
 
-        uploader.set_upstream(file_names, flow=self)
+        add_timestamp.set_upstream(file_names, flow=self)
+        uploader.set_upstream(add_timestamp, flow=self)
 
 
 class GenesysReportToADLS(Flow):
