@@ -5,6 +5,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Added
+- Added new source file `mindful` to connect with mindful API.
+- Added new task file `mindful` to be called by the Mindful Flow.
+- Added new flow file `mindful_to_adls` to upload data from Mindful API tp ADLS.
 
 ## [0.4.8] - 2022-09-06
 ### Added
