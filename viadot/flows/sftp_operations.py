@@ -178,8 +178,8 @@ class SftpToADLS(Flow):
 
         Args:
             name (str): The name of the flow.
-            from_path (str, optional): Path to the file in SFTP server. Defaults to False.
-            file_name (str, optional): File name for local file. Defaults to False.
+            from_path (str, optional): Path to the file in SFTP server. Defaults to None.
+            file_name (str, optional): File name for local file. Defaults to None.
             sep (str, optional): The separator to use to read the CSV file. Defaults to "\t".
             remove_tab (bool, optional): Whether to remove tab delimiters from the data. Defaults to False.
             overwrite (bool, optional): Whether to overwrite files in the lake. Defaults to False.
