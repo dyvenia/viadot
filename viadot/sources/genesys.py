@@ -8,13 +8,14 @@ from io import StringIO
 import prefect
 import aiohttp
 import pandas as pd
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from aiolimiter import AsyncLimiter
 
 from viadot.config import local_config
 from viadot.sources.base import Source
 from viadot.exceptions import CredentialError, APIError
 from viadot.utils import handle_api_response
+from viadot.task_utils import add_ingestion_metadata_task
 
 
 warnings.simplefilter("ignore")
@@ -319,7 +320,9 @@ class Genesys(Source):
         df = pd.read_csv(StringIO(response_file.content.decode("utf-8")))
         if drop_duplicates is True:
             df.drop_duplicates(inplace=True, ignore_index=True)
-        df["_viadot_downloaded_at_utc"] = f"{datetime.now()}"
+        df[
+            "_viadot_downloaded_at_utc"
+        ] = f"{datetime.now(timezone.utc).replace(microsecond=0)}"
         df.to_csv(f"{path}{final_file_name}", index=False, sep=sep)
 
     def download_all_reporting_exports(
