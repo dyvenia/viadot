@@ -15,7 +15,6 @@ from viadot.config import local_config
 from viadot.sources.base import Source
 from viadot.exceptions import CredentialError, APIError
 from viadot.utils import handle_api_response
-from viadot.task_utils import add_ingestion_metadata_task
 
 
 warnings.simplefilter("ignore")
