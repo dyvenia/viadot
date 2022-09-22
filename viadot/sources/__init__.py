@@ -18,6 +18,7 @@ from .duckdb import DuckDB
 from .epicor import Epicor
 from .sql_server import SQLServer
 from .sqlite import SQLite
+from .mindful import Mindful
 
 # APIS
 from .uk_carbon_intensity import UKCarbonIntensity
