@@ -319,6 +319,7 @@ class Genesys(Source):
         df = pd.read_csv(StringIO(response_file.content.decode("utf-8")))
         if drop_duplicates is True:
             df.drop_duplicates(inplace=True, ignore_index=True)
+        df["_viadot_downloaded_at_utc"] = f"{datetime.now()}"
         df.to_csv(f"{path}{final_file_name}", index=False, sep=sep)
 
     def download_all_reporting_exports(
