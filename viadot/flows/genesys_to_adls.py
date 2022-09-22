@@ -46,15 +46,15 @@ def adls_bulk_upload(
 
 
 @task
-def add_timestamp(files_names: List = None, sep: str = "\t"):
+def add_timestamp(files_names: List = None, sep: str = None):
     """Add new column _viadot_downloaded_at_utc into every genesys file.
 
     Args:
         files_names (List, optional): All file names of downloaded files. Defaults to None.
-        sep (str, optional): Separator in csv file. Defaults to \t.
+        sep (str, optional): Separator in csv file. Defaults to None.
     """
     for file in files_names:
-        df = pd.read_csv(file)
+        df = pd.read_csv(file, sep=sep)
         df_updated = add_ingestion_metadata_task.run(df)
         df_updated.to_csv(file, index=False, sep=sep)
 
@@ -148,15 +148,15 @@ class GenesysToADLS(Flow):
 
         add_timestamp.bind(file_names, sep=self.sep, flow=self)
 
-        uploader = adls_bulk_upload(
-            file_names=file_names,
-            adls_file_path=self.adls_file_path,
-            adls_sp_credentials_secret=self.adls_sp_credentials_secret,
-            flow=self,
-        )
+        # uploader = adls_bulk_upload(
+        #     file_names=file_names,
+        #     adls_file_path=self.adls_file_path,
+        #     adls_sp_credentials_secret=self.adls_sp_credentials_secret,
+        #     flow=self,
+        # )
 
         add_timestamp.set_upstream(file_names, flow=self)
-        uploader.set_upstream(add_timestamp, flow=self)
+        # uploader.set_upstream(add_timestamp, flow=self)
 
 
 class GenesysReportToADLS(Flow):
