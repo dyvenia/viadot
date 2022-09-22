@@ -44,7 +44,7 @@ class BCPTask(ShellTask):
         table: str = None,
         chunksize: int = 5000,
         error_log_file_path: str = "./log_file.log",
-        on_error: Literal["skip", "fail"] = "fail",
+        on_error: Literal["skip", "fail"] = "skip",
         credentials: dict = None,
         vault_name: str = None,
         max_retries: int = 3,

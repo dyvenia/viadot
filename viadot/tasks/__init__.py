@@ -33,6 +33,7 @@ from .salesforce import SalesforceBulkUpsert, SalesforceToDF, SalesforceUpsert
 from .sharepoint import SharepointToDF
 from .sqlite import SQLiteInsert, SQLiteQuery, SQLiteSQLtoDF
 from .supermetrics import SupermetricsToCSV, SupermetricsToDF
+from .genesys import GenesysToCSV, GenesysToDF
 
 try:
     from .sap_rfc import SAPRFCToDF
@@ -40,6 +41,7 @@ except ImportError:
     pass
 
 from .duckdb import DuckDBCreateTableFromParquet, DuckDBQuery, DuckDBToDF
+from .sql_server import SQLServerCreateTable, SQLServerToDF, SQLServerQuery
+
 from .epicor import EpicorOrdersToDF
-from .sql_server import SQLServerCreateTable, SQLServerToDF
 from .mindful import MindfulToCSV
