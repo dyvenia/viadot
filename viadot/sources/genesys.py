@@ -8,7 +8,7 @@ from io import StringIO
 import prefect
 import aiohttp
 import pandas as pd
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta
 from aiolimiter import AsyncLimiter
 
 from viadot.config import local_config
