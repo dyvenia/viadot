@@ -46,7 +46,7 @@ def adls_bulk_upload(
 
 
 @task
-def add_timestamp(files_names: List = None, sep: str = None):
+def add_timestamp(files_names: List = None, sep: str = None) -> None:
     """Add new column _viadot_downloaded_at_utc into every genesys file.
 
     Args:
