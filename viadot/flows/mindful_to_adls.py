@@ -51,6 +51,7 @@ class MindfulToADLS(Flow):
         start_date: datetime = None,
         end_date: datetime = None,
         date_interval: int = 1,
+        region: Literal["us1", "us2", "us3", "ca1", "eu1", "au1"] = "eu1",
         file_extension: Literal["parquet", "csv"] = "csv",
         file_path: str = "",
         adls_file_path: str = None,
@@ -69,6 +70,7 @@ class MindfulToADLS(Flow):
             end_date (datetime, optional): End date of the resquest. Defaults to None.
             date_interval (int, optional): How many days are included in the request.
                 If end_date is passed as an argument, date_interval will be invalidated. Defaults to 1.
+            region (Literal[us1, us2, us3, ca1, eu1, au1], optional): SD region from where to interact with the mindful API. Defaults to "eu1".
             file_extension (Literal[parquet, csv], optional): File extensions for storing responses. Defaults to "csv".
             file_path (str, optional): Path where to save the file locally. Defaults to ''.
             adls_file_path (str, optional): The destination path at ADLS. Defaults to None.
@@ -82,6 +84,7 @@ class MindfulToADLS(Flow):
         self.start_date = start_date
         self.end_date = end_date
         self.date_interval = date_interval
+        self.region = region
         self.file_extension = file_extension
         self.file_path = file_path
 
@@ -102,6 +105,7 @@ class MindfulToADLS(Flow):
             start_date=self.start_date,
             end_date=self.end_date,
             date_interval=self.date_interval,
+            region=self.region,
             file_extension=self.file_extension,
             file_path=self.file_path,
             flow=self,
