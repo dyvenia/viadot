@@ -2,7 +2,6 @@ import os
 from typing import Any, Dict, List
 
 import pandas as pd
-import numpy as np
 from adlfs import AzureBlobFileSystem, AzureDatalakeFileSystem
 
 from ..config import local_config
