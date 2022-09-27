@@ -16,7 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added new source file `mindful` to connect with mindful API.
 - Added new task file `mindful` to be called by the Mindful Flow.
 - Added new flow file `mindful_to_adls` to upload data from Mindful API tp ADLS.
-
+- Added `recursive` parameter to `AzureDataLakeList` task
 
 ## [0.4.8] - 2022-09-06
 ### Added
@@ -29,7 +29,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 using outputs of SQL queries 
 - Added handling empty DF in `set_new_kv()` task
 - Added `update_kv` and `filter_column` params to `SAPRFCToADLS` and `SAPToDuckDB` flows and added `set_new_kv()` task
-- Added `recursive` parameter to `AzureDataLakeList` task
 in `task_utils`
 - Added Genesys API source `Genesys`
 - Added tasks `GenesysToCSV` and `GenesysToDF`
