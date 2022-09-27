@@ -142,6 +142,7 @@ class ADLSToAzureSQL(Flow):
             tags (List[str], optional): Flow tags to use, eg. to control flow concurrency. Defaults to ["promotion"].
             vault_name (str, optional): The name of the vault from which to obtain the secrets. Defaults to None.
         """
+
         adls_path = adls_path.strip("/")
         # Read parquet
         if adls_path.split(".")[-1] in ["csv", "parquet"]:
@@ -298,7 +299,6 @@ class ADLSToAzureSQL(Flow):
 
         df_reorder.set_upstream(lake_to_df_task, flow=self)
         df_to_csv.set_upstream(df_reorder, flow=self)
-        promote_to_conformed_task.set_upstream(df_to_csv, flow=self)
         promote_to_conformed_task.set_upstream(df_to_csv, flow=self)
         create_table_task.set_upstream(df_to_csv, flow=self)
         promote_to_operations_task.set_upstream(promote_to_conformed_task, flow=self)

@@ -6,9 +6,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+
+## [0.4.9] - 2022-09-27
+### Added
+- Added new column named `_viadot_downloaded_at_utc` in genesys files with the datetime when it is created.
+- Added sftp source class `SftpConnector`
+- Added sftp tasks `SftpToDF` and `SftpList` 
+- Added sftp flows `SftpToAzureSQL` and `SftpToADLS`
+- Added new source file `mindful` to connect with mindful API.
+- Added new task file `mindful` to be called by the Mindful Flow.
+- Added new flow file `mindful_to_adls` to upload data from Mindful API tp ADLS.
+- Added `recursive` parameter to `AzureDataLakeList` task
+
 ## [0.4.8] - 2022-09-06
 ### Added
 - Added `protobuf` library to requirements
+
 ## [0.4.7] - 2022-09-06
 ### Added
 - Added new flow - `SQLServerTransform` and new task `SQLServerQuery` to run queries on SQLServer

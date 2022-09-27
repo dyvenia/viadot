@@ -83,8 +83,3 @@ def test_sharepoint_to_adls_run_flow_overwrite_false():
         assert result.is_failed()
         os.remove("test_sharepoint_to_adls_run_flow_overwrite_false.csv")
         os.remove("test_sharepoint_to_adls_run_flow_overwrite_false.json")
-
-    rm = AzureDataLakeRemove(
-        path=ADLS_DIR_PATH + ADLS_FILE_NAME, vault_name="azuwevelcrkeyv001s"
-    )
-    rm.run(sp_credentials_secret=CREDENTIALS_SECRET)
