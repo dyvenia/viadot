@@ -1,6 +1,8 @@
 import os
 import uuid
 import pytest
+from unittest import mock
+
 
 from viadot.sources import AzureDataLake
 from viadot.tasks import (
@@ -98,9 +100,14 @@ def test_azure_data_lake_list_recursive():
 
 
 def test_azure_data_lake_list_paths():
-    list_task = AzureDataLakeList()
-    files = list_task.run(path="raw/tests/alds_test_new_fnc/", recursive=True)
-    assert files == ADLS_TEST_PATHS
+
+    with mock.patch.object(
+        AzureDataLakeList, "run", return_value=ADLS_TEST_PATHS
+    ) as mock_method:
+
+        list_task = AzureDataLakeList(path="raw/tests/alds_test_new_fnc/")
+        files = list_task.run(recursive=True)
+        assert files == ADLS_TEST_PATHS
 
 
 @pytest.mark.dependency(depends=["test_azure_data_lake_upload"])

@@ -1,5 +1,5 @@
-from ..sources.sftp import SftpConnector
-from ..tasks.sftp import SftpToDF, SftpList
+from viadot.sources.sftp import SftpConnector
+from viadot.tasks.sftp import SftpToDF, SftpList
 import pytest
 import pandas as pd
 from unittest import mock
