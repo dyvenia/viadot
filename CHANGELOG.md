@@ -5,7 +5,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
-
+### Added
+- Added removing comments from SQL query in `DuckDB` source
+- Added "WITH" to query keywords in `DuckDB` source
 
 ## [0.4.9] - 2022-09-27
 ### Added

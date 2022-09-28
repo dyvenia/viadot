@@ -1,6 +1,7 @@
 from typing import Any, List, Literal, NoReturn, Tuple, Union
 
 import duckdb
+import re
 import pandas as pd
 from prefect.utilities import logging
 
@@ -114,9 +115,17 @@ class DuckDB(Source):
         cursor = self.con.cursor()
         cursor.execute(query)
 
-        query_clean = query.upper().strip()
-        query_keywords = ["SELECT", "SHOW", "PRAGMA"]
-        if any(query_clean.startswith(word) for word in query_keywords):
+        # remove comments
+        regex = r"^[--;].*"
+        lines = query.strip().splitlines()
+        final_query = ""
+        for line in lines:
+            match_object = re.search(regex, line, flags=re.IGNORECASE)
+        if not match_object:
+            final_query += " " + line
+        clean_query = final_query.upper().strip()
+        query_keywords = ["SELECT", "SHOW", "PRAGMA", "WITH"]
+        if any(clean_query.startswith(word) for word in query_keywords):
             if fetch_type == "record":
                 result = cursor.fetchall()
             else:
