@@ -1,7 +1,8 @@
 import os
 
 import pytest
-
+import pandas as pd
+from duckdb import BinderException
 from viadot.sources.duckdb import DuckDB
 
 TABLE = "test_table"
@@ -64,15 +65,23 @@ def test_create_table_from_parquet_delete(duckdb, TEST_PARQUET_FILE_PATH):
     assert df.shape[0] == 3
 
     # if exists = 'delete' deletes data and then inserts new one
-
-    duckdb.create_table_from_parquet(
-        schema=SCHEMA, table=TABLE, path=TEST_PARQUET_FILE_PATH, if_exists="delete"
+    df = pd.DataFrame.from_dict(
+        data={
+            "country": ["italy", "germany", "spain"],
+            "sales": [100, 50, 80],
+            "color": ["red", "blue", "grren"],
+        }
     )
-    df = duckdb.to_df(f"SELECT * FROM {SCHEMA}.{TABLE}")
-    assert df.shape[0] == 3
+
+    df.to_parquet("test_parquet.parquet")
+    with pytest.raises(BinderException):
+        duckdb.create_table_from_parquet(
+            schema=SCHEMA, table=TABLE, path="test_parquet.parquet", if_exists="delete"
+        )
 
     duckdb.drop_table(TABLE, schema=SCHEMA)
     duckdb.run(f"DROP SCHEMA {SCHEMA}")
+    os.remove("test_parquet.parquet")
 
 
 def test_create_table_from_multiple_parquet(duckdb):
