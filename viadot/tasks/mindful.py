@@ -123,6 +123,10 @@ class MindfulToCSV(Task):
             file_extension=file_extension,
         )
 
+        mindful.header = {
+            "Authorization": f"Bearer {mindful.credentials.get('VAULT')}",
+        }
+
         file_names = []
         interactions_response = mindful.get_interactions_list()
         if interactions_response.status_code == 200:

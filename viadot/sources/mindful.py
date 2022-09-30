@@ -75,9 +75,10 @@ class Mindful(Source):
             )
 
         self.file_extension = file_extension
-        self.header = {
-            "Authorization": f"Bearer {self.credentials.get('VAULT')}",
-        }
+        self.header = None
+        # self.header = {
+        #     "Authorization": f"Bearer {self.credentials.get('VAULT')}",
+        # }
 
     def _mindful_api_response(
         self,
