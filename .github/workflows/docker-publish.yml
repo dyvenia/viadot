@@ -23,7 +23,6 @@ jobs:
           platforms: all
 
       - name: Set up Docker Buildx
-        id: buildx
         uses: docker/setup-buildx-action@v2
 
       - name: Log into GitHub Container Registry
@@ -36,9 +35,8 @@ jobs:
       - name: Build
         uses: docker/build-push-action@v3
         with:
-          builder: ${{ steps.buildx.outputs.name }}
           context: .
           file: docker/Dockerfile
           platforms: linux/amd64,linux/arm64
           push: true
-          tags: ${{ env.REGISTRY }}/${{ github.repository }}/viadot:${{ github.event.inputs.tag }}
+          tags: ghcr.io/${{ github.repository }}/viadot:${{ github.event.inputs.tag }}
