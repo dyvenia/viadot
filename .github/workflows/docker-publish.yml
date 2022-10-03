@@ -1,6 +1,6 @@
 name: "Publish Docker image"
 # Publish the viadot Docker image with specified tags.
-run-name: "Deploy viadot Docker image with tags: '${{ github.event.inputs.tags }}' by @${{ github.actor }}"
+run-name: "Deploy viadot:${{ github.event.inputs.tag }} image (@${{ github.actor }})"
 
 on:
   workflow_dispatch:
