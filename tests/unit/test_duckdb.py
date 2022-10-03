@@ -17,17 +17,6 @@ def duckdb():
     os.remove(DATABASE_PATH)
 
 
-def test__check_if_schema_exists(duckdb):
-
-    duckdb.run(f"DROP SCHEMA IF EXISTS {SCHEMA}")
-    assert not duckdb._check_if_schema_exists(SCHEMA)
-
-    duckdb.run(f"CREATE SCHEMA {SCHEMA}")
-    assert not duckdb._check_if_schema_exists(SCHEMA)
-
-    duckdb.run(f"DROP SCHEMA {SCHEMA}")
-
-
 def test_create_table_from_parquet(duckdb, TEST_PARQUET_FILE_PATH):
     duckdb.create_table_from_parquet(
         schema=SCHEMA, table=TABLE, path=TEST_PARQUET_FILE_PATH
