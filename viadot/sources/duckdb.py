@@ -125,7 +125,6 @@ class DuckDB(Source):
             if not match_object:
                 final_query += " " + line
         final_query = final_query.strip()
-        print(final_query)
         query_keywords = ["SELECT", "SHOW", "PRAGMA", "WITH"]
         if any(final_query.startswith(word) for word in query_keywords):
             if fetch_type == "record":
