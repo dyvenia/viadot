@@ -41,5 +41,10 @@ except ImportError:
     pass
 
 from .duckdb import DuckDBCreateTableFromParquet, DuckDBQuery, DuckDBToDF
+from .sql_server import SQLServerCreateTable, SQLServerToDF, SQLServerQuery
+
 from .epicor import EpicorOrdersToDF
-from .sql_server import SQLServerCreateTable, SQLServerToDF
+
+from .sftp import SftpToDF, SftpList
+from .mindful import MindfulToCSV
+

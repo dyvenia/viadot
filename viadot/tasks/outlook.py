@@ -21,6 +21,7 @@ class OutlookToDF(Task):
         credentials: Dict[str, Any] = None,
         output_file_extension: str = ".csv",
         limit: int = 10000,
+        timeout: int = 1200,
         *args: List[Any],
         **kwargs: Dict[str, Any],
     ):
@@ -40,6 +41,7 @@ class OutlookToDF(Task):
 
         super().__init__(
             name="outlook_to_csv",
+            timeout=timeout,
             *args,
             **kwargs,
         )
