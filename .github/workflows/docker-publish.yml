@@ -5,8 +5,8 @@ run-name: "Deploy viadot Docker image with tags: '${{ github.event.inputs.tags }
 on:
   workflow_dispatch:
     inputs:
-      tags:
-        description: "The tags to use for the image."     
+      tag:
+        description: "The tag to use for the image."     
         required: true
         default: "dev"
 
@@ -41,4 +41,4 @@ jobs:
           file: docker/Dockerfile
           platforms: linux/amd64,linux/arm64
           push: true
-          tags: ${{ github.event.inputs.tags }}
+          tags: ${{ env.REGISTRY }}/${{ github.repository }}/viadot:${{ github.event.inputs.tag }}
