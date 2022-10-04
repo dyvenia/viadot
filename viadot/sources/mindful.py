@@ -28,7 +28,6 @@ class Mindful(Source):
 
         Args:
             header (str): Header with credentials for calling Mindful API.
-            credentials_mindful (Dict[str, Any], optional): Credentials to connect with Mindful API. Defaults to None.
             region (Literal[us1, us2, us3, ca1, eu1, au1], optional): SD region from where to interact with the mindful API. Defaults to "eu1".
             start_date (datetime, optional): Start date of the request. Defaults to None.
             end_date (datetime, optional): End date of the resquest. Defaults to None.
