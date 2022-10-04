@@ -59,7 +59,7 @@ class MindfulToCSV(Task):
 
         if not isinstance(start_date, datetime):
             self.start_date = datetime.now() - timedelta(days=date_interval)
-            self.end_date = datetime.now()
+            self.end_date = self.start_date + timedelta(days=date_interval)
         elif isinstance(start_date, datetime) and not isinstance(end_date, datetime):
             self.start_date = start_date
             self.end_date = start_date + timedelta(days=date_interval)
@@ -114,18 +114,18 @@ class MindfulToCSV(Task):
                 credentials_mindful = None
                 raise CredentialError("Credentials not found.")
 
+        header = {
+            "Authorization": f"Bearer {credentials_mindful.get('VAULT')}",
+        }
+
         mindful = Mindful(
-            credentials_mindful=credentials_mindful,
+            header=header,
             region=region,
             start_date=start_date,
             end_date=end_date,
             date_interval=date_interval,
             file_extension=file_extension,
         )
-
-        mindful.header = {
-            "Authorization": f"Bearer {mindful.credentials.get('VAULT')}",
-        }
 
         file_names = []
         interactions_response = mindful.get_interactions_list()
