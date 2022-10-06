@@ -1,7 +1,7 @@
 import os
 
 import pytest
-
+import pandas as pd
 from viadot.sources.duckdb import DuckDB
 
 TABLE = "test_table"
@@ -15,17 +15,6 @@ def duckdb():
     duckdb = DuckDB(credentials=dict(database=DATABASE_PATH))
     yield duckdb
     os.remove(DATABASE_PATH)
-
-
-def test__check_if_schema_exists(duckdb):
-
-    duckdb.run(f"DROP SCHEMA IF EXISTS {SCHEMA}")
-    assert not duckdb._check_if_schema_exists(SCHEMA)
-
-    duckdb.run(f"CREATE SCHEMA {SCHEMA}")
-    assert not duckdb._check_if_schema_exists(SCHEMA)
-
-    duckdb.run(f"DROP SCHEMA {SCHEMA}")
 
 
 def test_create_table_from_parquet(duckdb, TEST_PARQUET_FILE_PATH):
@@ -74,4 +63,38 @@ def test__check_if_table_exists(duckdb, TEST_PARQUET_FILE_PATH):
         schema=SCHEMA, table=TABLE, path=TEST_PARQUET_FILE_PATH
     )
     assert duckdb._check_if_table_exists(TABLE, schema=SCHEMA)
+    duckdb.drop_table(TABLE, schema=SCHEMA)
+
+
+def test_run_query_with_comments(duckdb, TEST_PARQUET_FILE_PATH):
+    duckdb.create_table_from_parquet(
+        schema=SCHEMA, table=TABLE, path=TEST_PARQUET_FILE_PATH
+    )
+    output1 = duckdb.run(
+        query=f""" 
+        --test 
+    SELECT * FROM {SCHEMA}.{TABLE}
+    """,
+        fetch_type="dataframe",
+    )
+    assert isinstance(output1, pd.DataFrame)
+
+    output2 = duckdb.run(
+        query=f""" 
+    SELECT * FROM {SCHEMA}.{TABLE}
+    WHERE country = 'italy'
+    """,
+        fetch_type="dataframe",
+    )
+    assert isinstance(output2, pd.DataFrame)
+
+    output3 = duckdb.run(
+        query=f""" 
+    SELECT * FROM {SCHEMA}.{TABLE}
+        ---test
+    """,
+        fetch_type="dataframe",
+    )
+    assert isinstance(output3, pd.DataFrame)
+
     duckdb.drop_table(TABLE, schema=SCHEMA)
