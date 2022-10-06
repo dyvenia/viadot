@@ -218,4 +218,4 @@ class Mindful(Source):
                 "File extension is not available, please choose file_extension: 'parquet' or 'csv' (def.) at Mindful instance."
             )
 
-        return complete_file_name
+        return absolute_path
