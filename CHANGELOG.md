@@ -8,6 +8,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Added support for SQL queries with comments to `DuckDB` source
 - Added "WITH" to query keywords in `DuckDB` source
+- Added `exchange_rates.py` file with the `ExchangeRates()` class inheriting the credentials attribute from `base.py` from the `Source()` class 
+- Added `test_exchange_rates.py` with tests up to `exchange_rates.py`
 
 ### Changed
 - Changed `duckdb` version to `0.5.1`

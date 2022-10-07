@@ -8,6 +8,12 @@ from typing import Dict, Any
 
 
 class ExchangeRates(Source):
+    """_summary_
+
+    Args:
+        Source (_type_): retrieves cridentials from the Source class
+    """
+
     def __init__(self, *args, credentials: Dict[str, Any] = None, **kwargs):
         credentials = credentials or local_config.get("EXCHANGE_RATES")
         super().__init__(*args, credentials=credentials, **kwargs)
@@ -16,10 +22,10 @@ class ExchangeRates(Source):
         url = self.credentials["url"]
         headers = {"apikey": self.credentials["apikey"]}
         payload = {
-            "start_date": "2022-10-05",
-            "end_date": "2022-10-06",
-            "base": "PLN",
-            "symbols": "EUR,GBP,CHF,PLN,DKK,COP,CZK,SEK,NOK,ISK",
+            "start_date": (datetime.today() - timedelta(days=6)).strftime("%Y-%m-%d"),
+            "end_date": datetime.today().strftime("%Y-%m-%d"),
+            "base": "USD",
+            "symbols": "USD,EUR,GBP,CHF,PLN,DKK,COP,CZK,SEK,NOK,ISK",
         }
         response = requests.request(
             "GET", self.credentials["url"], headers=headers, data={}, params=payload
@@ -27,16 +33,10 @@ class ExchangeRates(Source):
 
         return json.loads(response.text)
 
-
-""" To change
     def to_df(self) -> pd.DataFrame:
-        df = pd.json_normalize(self.to_json())
-        df.drop(df.columns[[0, 1]], axis=1, inplace=True)
+        df = pd.DataFrame(self.to_json())
+        df2 = pd.json_normalize(df["rates"])
+        df.reset_index(inplace=True)
+        df = df[["index", "base"]].join(df2)
 
         return df
-
-    def get_rates(currency: str):
-        return
-        do_func_here()
-        filter_data(currency)
-"""
