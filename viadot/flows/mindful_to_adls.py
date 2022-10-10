@@ -45,12 +45,12 @@ def adls_bulk_upload(
 
 
 @task
-def add_timestamp(files_names: List = None, sep: str = None) -> None:
-    """Add new column _viadot_downloaded_at_utc into every mindful file.
+def add_timestamp(files_names: List = None, sep: str = "\t") -> None:
+    """Add new column _viadot_downloaded_at_utc into each file given in the function.
 
     Args:
-        files_names (List, optional): All file names of downloaded files. Defaults to None.
-        sep (str, optional): Separator in csv file. Defaults to None.
+        files_names (List, optional): File names where to add the new column. Defaults to None.
+        sep (str, optional): Separator type to load and to save data. Defaults to "\t".
     """
     for file in files_names:
         df = pd.read_csv(file, sep=sep)
