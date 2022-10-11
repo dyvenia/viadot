@@ -98,7 +98,7 @@ class Sharepoint(Source):
             `nrows` is not supported.
 
         Returns:
-            pd.DataFrame: _description_
+            pd.DataFrame: The resulting data as a pandas DataFrame.
         """
 
         if "xls" not in url.split(".")[-1]:
