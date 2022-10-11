@@ -1,11 +1,13 @@
+import logging
 import os
 from abc import abstractmethod
 from typing import Any, Dict, List, Literal, NoReturn, Tuple, Union
+
 import pandas as pd
 import pyarrow as pa
 import pyodbc
-import logging
-from ..config import local_config
+
+from ..config import get_source_credentials
 from ..signals import SKIP
 
 logger = logging.getLogger(__name__)
@@ -156,7 +158,7 @@ class SQL(Source):
         self.query_timeout = query_timeout
 
         if config_key:
-            config_credentials = local_config.get(config_key)
+            config_credentials = get_source_credentials(config_key)
         else:
             config_credentials = None
 

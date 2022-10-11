@@ -1,33 +1,19 @@
 version: "3"
 
 services:
-  viadot:
-    image: viadot:${IMAGE_TAG:-latest}
-    container_name: viadot_testing
-    profiles: ["dev"]
+  viadot_2:
+    image: viadot:2.0a1
+    container_name: viadot_2
+    # ports:
+    #   - 5679:8888
     volumes:
+      # - ${HOME}/dyvenia/viadot:/home/viadot_local
+      # - ${HOME}/.databricks-connect-ext-hive:/home/viadot/.databricks-connect
+      # - ${HOME}/.databricks-connect:/home/viadot/.databricks-connect
+      # - ${HOME}/.dbt/profiles.yml:/home/viadot/.dbt/profiles.yml
+      - ${HOME}/.config/viadot/config.yaml:/home/viadot/.config/viadot/config.yaml
       - ../:/home/viadot
-    tty: true
-    stdin_open: true
-    restart: "always"
-  viadot_docs:
-    image: viadot:${IMAGE_TAG:-latest}
-    container_name: viadot_docs
-    profiles: ["dev"]
-    volumes:
-      - ../:/home/viadot
-    working_dir: /home/viadot
-    ports: 
-      - 8000:8000
-    command: "mkdocs serve"
-    restart: "always"
-  viadot_jupyter_lab:
-    image: viadot:${IMAGE_TAG:-latest}
-    container_name: viadot_jupyter_lab
-    profiles: ["dev", "user"]
-    ports:
-      - 9000:8888
-    volumes:
-      - ../:/home/viadot
-    command: jupyter lab --no-browser --ip 0.0.0.0 --LabApp.token=''
-    restart: "always"
+    shm_size: '4gb'
+    # command: jupyter lab --no-browser --ip 0.0.0.0 --LabApp.token=''
+    command: sleep infinity
+    restart: "unless-stopped"

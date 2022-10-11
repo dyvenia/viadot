@@ -1,21 +1,13 @@
-from numpy import source
-import numpy
-from viadot.config import local_config
-from delta.tables import *
+from typing import Any, Dict, Literal, Union
+
 import pandas as pd
-from pyspark import SparkConf, SparkContext
 import pyspark.sql.dataframe as spark
-from pyspark.sql.dataframe import DataFrame
-from typing import Literal, Union
-from typing import Any, Dict
-import pyarrow as pa
-from ..signals import SKIP
-import logging
-from viadot.sources.base import Source
-import viadot.utils
+from delta.tables import *
+from pyspark import SparkConf, SparkContext
 
-
-logger = logging.getLogger(__name__)
+from ..config import get_source_credentials
+from ..utils import build_merge_query
+from .base import Source
 
 
 class Databricks(Source):
@@ -41,10 +33,13 @@ class Databricks(Source):
     DEFAULT_SCHEMA = "default"
 
     def __init__(
-        self, env: str = "DEV", credentials: Dict[str, Any] = None, *args, **kwargs
+        self,
+        credentials: Dict[str, Any] = None,
+        config_key: str = None,
+        *args,
+        **kwargs,
     ):
-        self.env = env
-        self.credentials = credentials or local_config.get("DATABRICKS", {}).get(env)
+        self.credentials = credentials or get_source_credentials(config_key)
         self.session = None
 
         self.connect()
@@ -237,14 +232,14 @@ class Databricks(Source):
 
             self.run(f"CREATE TABLE {fqn} USING DELTA AS SELECT * FROM new_table;")
 
-            logger.info(f"Table {fqn} created.")
+            self.logger.info(f"Table {fqn} created.")
 
             result = self.to_df(f"SELECT * FROM {fqn}")
             if result.empty:
                 self._handle_if_empty(if_empty)
 
         else:
-            logger.info(f"Table {fqn} already exists.")
+            self.logger.info(f"Table {fqn} already exists.")
 
     def drop_table(self, table: str, schema: str = None):
         """
@@ -267,15 +262,15 @@ class Databricks(Source):
         fqn = f"{schema}.{table}"
         if self._check_if_table_exists(schema, table):
             self.run(f"DROP TABLE {fqn}")
-            logger.info(f"Table {fqn} deleted.")
+            self.logger.info(f"Table {fqn} deleted.")
         else:
-            logger.info(f"Table {fqn} does not exist.")
+            self.logger.info(f"Table {fqn} does not exist.")
 
     def _append(self, schema: str, table: str, df: pd.DataFrame):
         fqn = f"{schema}.{table}"
         spark_df = self._pandas_df_to_spark_df(df)
         spark_df.write.format("delta").mode("append").saveAsTable(fqn)
-        logger.info(f"Table {fqn} appended successfully.")
+        self.logger.info(f"Table {fqn} appended successfully.")
 
     def _full_refresh(self, schema: str, table: str, df: pd.DataFrame):
         """
@@ -298,7 +293,7 @@ class Databricks(Source):
         fqn = f"{schema}.{table}"
         data = self._pandas_df_to_spark_df(df)
         data.write.format("delta").mode("overwrite").saveAsTable(fqn)
-        logger.info(f"Table {fqn} has been full-refreshed successfully")
+        self.logger.info(f"Table {fqn} has been full-refreshed successfully")
 
     def _upsert(
         self,
@@ -307,9 +302,8 @@ class Databricks(Source):
         primary_key: str,
         df: pd.DataFrame,
     ):
-        fqn = f"{schema}.{table}"
         spark_df = self._pandas_df_to_spark_df(df)
-        merge_query = viadot.utils.build_merge_query(
+        merge_query = build_merge_query(
             stg_schema="",
             stg_table="",
             schema=schema,
@@ -318,9 +312,10 @@ class Databricks(Source):
             source=self,
             df=spark_df,
         )
-        self.run(merge_query)
-        result = True
-        logger.info("Data upserted successfully.")
+        result = self.run(merge_query)
+
+        self.logger.info("Data upserted successfully.")
+
         return result
 
     def insert_into(
@@ -391,7 +386,7 @@ class Databricks(Source):
         ```
         """
         self.run(f"CREATE SCHEMA IF NOT EXISTS {schema_name}")
-        logger.info(f"Schema {schema_name} created.")
+        self.logger.info(f"Schema {schema_name} created.")
 
     def drop_schema(self, schema_name: str):
         """
@@ -408,7 +403,7 @@ class Databricks(Source):
         ```
         """
         self.run(f"DROP SCHEMA {schema_name}")
-        logger.info(f"Schema {schema_name} deleted.")
+        self.logger.info(f"Schema {schema_name} deleted.")
 
     def discover_schema(self, table: str, schema: str = None) -> dict:
         """
@@ -511,6 +506,8 @@ class Databricks(Source):
             schema=schema, table=table, df=old_table, if_exists="replace"
         )
 
-        logger.info(f"Rollback for table {fqn} to version #{version_number} completed.")
+        self.logger.info(
+            f"Rollback for table {fqn} to version #{version_number} completed."
+        )
 
         return result

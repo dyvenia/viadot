@@ -1,9 +1,10 @@
+import logging
 import re
-from typing import Any, Dict, List, Union
+from typing import Any, Dict, List, Literal, Union
 
 import pandas as pd
-import prefect
 import pyodbc
+import pyspark.sql.dataframe as spark
 import requests
 
 # from prefect.utilities.graphql import EnumValue, with_args
@@ -12,17 +13,62 @@ from requests.exceptions import ConnectionError, HTTPError, ReadTimeout, Timeout
 from requests.packages.urllib3.util.retry import Retry
 from urllib3.exceptions import ProtocolError
 
-import viadot.sources.databricks as databricks
-import pyspark.sql.session as SparkSession
-import pyspark.sql.dataframe as spark
-from pyspark.sql.dataframe import DataFrame
-from pyspark.sql.types import StructType
-
 from .exceptions import APIError
+from .signals import SKIP
 
 
 def slugify(name: str) -> str:
     return name.replace(" ", "_").lower()
+
+
+def get_response(
+    url: str,
+    auth: tuple = None,
+    params: Dict[str, Any] = None,
+    headers: Dict[str, Any] = None,
+    timeout: tuple = (3.05, 60 * 30),
+):
+    session = requests.Session()
+    retry_strategy = Retry(
+        total=3,
+        status_forcelist=[429, 500, 502, 503, 504],
+        backoff_factor=1,
+    )
+    adapter = HTTPAdapter(max_retries=retry_strategy)
+
+    session.mount("http://", adapter)
+    session.mount("https://", adapter)
+    response = session.get(
+        url,
+        auth=auth,
+        params=params,
+        headers=headers,
+        timeout=timeout,
+    )
+    return response
+
+
+def handle_response(
+    response: requests.Response, url: str, timeout: tuple = (3.05, 60 * 30)
+) -> requests.Response:
+    try:
+        response.raise_for_status()
+    except ReadTimeout as e:
+        msg = "The connection was successful, "
+        msg += f"however the API call to {url} timed out after {timeout[1]}s "
+        msg += "while waiting for the server to return data."
+        raise APIError(msg)
+    except HTTPError as e:
+        raise APIError(
+            f"The API call to {url} failed. "
+            "Perhaps your account credentials need to be refreshed?",
+        ) from e
+    except (ConnectionError, Timeout) as e:
+        raise APIError(f"The API call to {url} failed due to connection issues.") from e
+    except ProtocolError as e:
+        raise APIError(f"Did not receive any reponse for the API call to {url}.")
+    except Exception as e:
+        raise APIError("Unknown error.") from e
 
 
 def handle_api_response(
@@ -50,80 +96,12 @@ def handle_api_response(
     Returns:
         requests.models.Response
     """
-    try:
-        session = requests.Session()
-        retry_strategy = Retry(
-            total=3,
-            status_forcelist=[429, 500, 502, 503, 504],
-            backoff_factor=1,
-        )
-        adapter = HTTPAdapter(max_retries=retry_strategy)
-
-        session.mount("http://", adapter)
-        session.mount("https://", adapter)
-        response = session.get(
-            url,
-            auth=auth,
-            params=params,
-            headers=headers,
-            timeout=timeout,
-        )
-
-        response.raise_for_status()
-
-    except ReadTimeout as e:
-        msg = "The connection was successful, "
-        msg += f"however the API call to {url} timed out after {timeout[1]}s "
-        msg += "while waiting for the server to return data."
-        raise APIError(msg)
-    except HTTPError as e:
-        raise APIError(
-            f"The API call to {url} failed. "
-            "Perhaps your account credentials need to be refreshed?",
-        ) from e
-    except (ConnectionError, Timeout) as e:
-        raise APIError(f"The API call to {url} failed due to connection issues.") from e
-    except ProtocolError as e:
-        raise APIError(f"Did not receive any reponse for the API call to {url}.")
-    except Exception as e:
-        raise APIError("Unknown error.") from e
-
-    return response
-
-
-def get_flow_last_run_date(flow_name: str) -> str:
-    """
-    Retrieve a flow's last run date as an ISO datetime string.
-
-    This function assumes you are already authenticated with Prefect Cloud.
-    """
-    client = prefect.Client()
-    result = client.graphql(
-        {
-            "query": {
-                with_args(
-                    "flow_run",
-                    {
-                        "where": {
-                            "flow": {"name": {"_eq": flow_name}},
-                            "start_time": {"_is_null": False},
-                            "state": {"_eq": "Success"},
-                        },
-                        "order_by": {"start_time": EnumValue("desc")},
-                        "limit": 1,
-                    },
-                ): {"start_time"}
-            }
-        }
+    response = get_response(
+        url=url, auth=auth, params=params, headers=headers, timeout=timeout
     )
-    flow_run_data = result.get("data", {}).get("flow_run")
+    response_handled = handle_response(response)
 
-    if not flow_run_data:
-        return None
-
-    last_run_date_raw_format = flow_run_data[0]["start_time"]
-    last_run_date = last_run_date_raw_format.split(".")[0] + "Z"
-    return last_run_date
+    return response_handled
 
 
 def get_sql_server_table_dtypes(
@@ -196,7 +174,7 @@ def build_merge_query(
     stg_table: str,
     table: str,
     primary_key: str,
-    source: Union[pyodbc.Connection, databricks.Databricks],
+    source: Union[pyodbc.Connection, "Databricks"],
     schema: str = None,
     df: spark.DataFrame = None,
 ) -> str:
@@ -211,7 +189,7 @@ def build_merge_query(
         schema (str): The schema where the table is located.
         table (str): The table to merge into.
         primary_key (str): The column on which to merge.
-        source (pyodbc.Connection OR databricks.Databricks) Either the connection to the database or the Databricks
+        source (pyodbc.Connection or Databricks): Either the connection to the database or the Databricks
         object used to connect to the Spark cluster on which the query will be executed.
         df (Optional): A Spark DataFrame whose data will be upserted to a table.
     """
@@ -225,7 +203,7 @@ def build_merge_query(
 
     # If user is passing a DataFrame and is using Databricks as a source, it means they want to merge the
     # DataFrame into an existing table. Otherwise, it means they want to merge two existing tables.
-    if isinstance(source, databricks.Databricks) and df:
+    if df:
         df.createOrReplaceTempView("stg")
         # Since we're using a temporary view, we cannot/don't need to use a schema name and can just simply use the view's name, stg.
         stg_fqn = ""
@@ -251,7 +229,7 @@ def build_merge_query(
 
 
 def _get_table_columns(
-    schema: str, table: str, source: Union[pyodbc.Connection, databricks.Databricks]
+    schema: str, table: str, source: Union[pyodbc.Connection, "Databricks"]
 ) -> str:
     if isinstance(source, pyodbc.Connection):
         columns_query = f"""
@@ -359,3 +337,25 @@ def gen_bulk_insert_query_from_df(
         return insert_query
     else:
         return _gen_insert_query_from_records(tuples_escaped)
+
+
+def handle_if_empty(
+    if_empty: Literal["warn", "skip", "fail"] = "warn",
+    message: str = None,
+    logger: logging.Logger = logging.getLogger(__name__),
+):
+    """
+    Task for handling empty file.
+    Args:
+        if_empty (Literal, optional): What to do if file is empty. Defaults to "warn".
+        message (str, optional): Massage to show in warning and error messages. Defaults to None.
+    Raises:
+        ValueError: If `if_empty` is set to `fail`.
+        SKIP: If `if_empty` is set to `skip`.
+    """
+    if if_empty == "warn":
+        logger.warning(message)
+    elif if_empty == "skip":
+        raise SKIP(message)
+    elif if_empty == "fail":
+        raise ValueError(message)
