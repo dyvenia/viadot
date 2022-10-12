@@ -8,7 +8,8 @@ from sharepy.errors import AuthError
 from viadot.exceptions import CredentialError
 
 from ..config import get_source_credentials
-from ..utils import handle_if_empty
+from ..signals import SKIP
+from ..utils import cleanup_df
 from .base import Source
 
 
@@ -117,6 +118,7 @@ class Sharepoint(Source):
 
         if sheet_name:
             df = excel_file.parse(sheet_name, **kwargs)
+            df["sheet_name"] = sheet_name
         else:
             sheets: list[pd.DataFrame] = []
             for sheet_name in excel_file.sheet_names:
@@ -125,9 +127,12 @@ class Sharepoint(Source):
                 sheets.append(sheet)
             df = pd.concat(sheets)
 
-        self.logger.info(f"Successfully downloaded {len(df)} of data.")
-
         if df.empty:
-            handle_if_empty(if_empty)
+            try:
+                self._handle_if_empty(if_empty)
+            except SKIP:
+                return pd.DataFrame()
+        else:
+            self.logger.info(f"Successfully downloaded {len(df)} of data.")
 
-        return df
+        return cleanup_df(df)

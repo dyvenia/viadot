@@ -359,3 +359,16 @@ def handle_if_empty(
         raise SKIP(message)
     elif if_empty == "fail":
         raise ValueError(message)
+
+
+def cleanup_df(df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Remove some common data corruption from a pandas DataFrame.
+
+    Args:
+        df (pd.DataFrame): The pandas DataFrame to be cleaned up.
+
+    Returns:
+        pd.DataFrame: The cleaned up DataFrame
+    """
+    return df.replace(r"\n|\t", "", regex=True)
