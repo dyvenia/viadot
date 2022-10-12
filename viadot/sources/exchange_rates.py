@@ -1,4 +1,4 @@
-from ..config import local_config
+from ..config import DEFAULT_CONFIG
 from .base import Source
 import pandas as pd
 import requests
@@ -13,6 +13,9 @@ Currency = Literal[
 
 
 class ExchangeRates(Source):
+
+    URL = "https://api.apilayer.com/exchangerates_data/timeseries?"
+
     def __init__(
         self,
         currency: Currency = "USD",
@@ -35,17 +38,20 @@ class ExchangeRates(Source):
         credentials: Dict[str, Any] = None,
         **kwargs,
     ):
-        """_summary_
+        """
+        Class for pulling data from https://api.apilayer.com/exchangerates_data/timeseries
 
         Args:
-            currency (Currency, optional): _description_. Defaults to "USD".
-            start_date (str, optional): _description_. Defaults to datetime.today().strftime("%Y-%m-%d").
-            end_date (str, optional): _description_. Defaults to datetime.today().strftime("%Y-%m-%d").
-            symbols (list, optional): _description_. Defaults to [ "USD", "EUR", "GBP", "CHF", "PLN", "DKK", "COP", "CZK", "SEK", "NOK", "ISK" ], Only ISO codes.
-            credentials (Dict[str, Any], optional): _description_. Defaults to None.
+            currency (Currency, optional): Base currency to which prices of searched currencies are related. Defaults to "USD".
+            start_date (str, optional): Initial date for data search. Data range is start_date ->
+                end_date, supported format 'yyyy-mm-dd'. Defaults to datetime.today().strftime("%Y-%m-%d").
+            end_date (str, optional): See above. Defaults to datetime.today().strftime("%Y-%m-%d").
+            symbols (list, optional): List of currencies for which exchange rates from base currency will be fetch.
+                Defaults to [ "USD", "EUR", "GBP", "CHF", "PLN", "DKK", "COP", "CZK", "SEK", "NOK", "ISK" ], Only ISO codes.
+            credentials (Dict[str, Any], optional): 'api_key'. Defaults to None.
         """
 
-        credentials = credentials or local_config.get("EXCHANGE_RATES")
+        credentials = credentials or DEFAULT_CONFIG.get("EXCHANGE_RATES")
         super().__init__(*args, credentials=credentials, **kwargs)
         self.currency = currency
         self.start_date = start_date
@@ -79,9 +85,8 @@ class ExchangeRates(Source):
                     f"The specified currency list item does not exist or is not supported: {i}"
                 )
 
-    def APIconnection(self) -> Dict[str, Any]:
-        url = self.credentials["url"]
-        headers = {"apikey": self.credentials["apikey"]}
+    def get_data(self) -> Dict[str, Any]:
+        headers = {"apikey": self.credentials["api_key"]}
         payload = {
             "start_date": self.start_date,
             "end_date": self.end_date,
@@ -90,16 +95,16 @@ class ExchangeRates(Source):
         }
         try:
             response = requests.request(
-                "GET", self.credentials["url"], headers=headers, data={}, params=payload
+                "GET", ExchangeRates.URL, headers=headers, params=payload
             )
         except ConnectionError as e:
-            print(e)
+            raise e
 
         return json.loads(response.text)
 
     def to_records(self) -> List[tuple]:
 
-        data = self.APIconnection()
+        data = self.get_data()
         records = []
 
         for j in data["rates"]:

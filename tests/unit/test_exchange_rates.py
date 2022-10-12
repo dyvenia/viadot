@@ -2,7 +2,7 @@ from viadot.sources import ExchangeRates
 import pandas as pd
 
 
-TEST_DTA = {
+TEST_DATA = {
     "currencies": [
         {
             "Date": "2022-10-09",
@@ -37,7 +37,7 @@ TEST_DTA = {
     ]
 }
 
-TEST_DF = pd.json_normalize(TEST_DTA["currencies"])
+TEST_DF = pd.json_normalize(TEST_DATA["currencies"])
 
 
 def test_credentials():
@@ -52,7 +52,7 @@ def test_to_json_values():
         end_date="2022-10-11",
         symbols=["USD", "EUR", "GBP", "CHF", "PLN", "DKK"],
     )
-    expected_value = TEST_DTA.items()
+    expected_value = TEST_DATA.items()
     retrieved_value = source.to_json().items()
 
     assert retrieved_value == expected_value
