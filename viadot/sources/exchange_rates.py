@@ -1,11 +1,12 @@
-from ..config import DEFAULT_CONFIG
-from .base import Source
+import json
+from datetime import datetime
+from typing import Any, Dict, List, Literal
+
 import pandas as pd
 import requests
-import json
 
-from typing import Dict, Any, Literal, List
-from datetime import datetime
+from ..config import get_source_credentials
+from .base import Source
 
 Currency = Literal[
     "USD", "EUR", "GBP", "CHF", "PLN", "DKK", "COP", "CZK", "SEK", "NOK", "ISK"
@@ -14,7 +15,7 @@ Currency = Literal[
 
 class ExchangeRates(Source):
 
-    URL = "https://api.apilayer.com/exchangerates_data/timeseries?"
+    URL = "https://api.apilayer.com/exchangerates_data/timeseries"
 
     def __init__(
         self,
@@ -34,8 +35,9 @@ class ExchangeRates(Source):
             "NOK",
             "ISK",
         ],
-        *args,
         credentials: Dict[str, Any] = None,
+        config_key: str = None,
+        *args,
         **kwargs,
     ):
         """
@@ -49,9 +51,10 @@ class ExchangeRates(Source):
             symbols (list, optional): List of currencies for which exchange rates from base currency will be fetch.
                 Defaults to [ "USD", "EUR", "GBP", "CHF", "PLN", "DKK", "COP", "CZK", "SEK", "NOK", "ISK" ], Only ISO codes.
             credentials (Dict[str, Any], optional): 'api_key'. Defaults to None.
+            config_key (str, optional): The key in the viadot config holding relevant credentials.
         """
 
-        credentials = credentials or DEFAULT_CONFIG.get("EXCHANGE_RATES")
+        credentials = credentials or get_source_credentials(config_key)
         super().__init__(*args, credentials=credentials, **kwargs)
         self.currency = currency
         self.start_date = start_date
