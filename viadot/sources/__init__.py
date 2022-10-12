@@ -19,3 +19,4 @@ from .uk_carbon_intensity import UKCarbonIntensity
 from .sqlite import SQLite
 from .duckdb import DuckDB
 from .sql_server import SQLServer
+from .exchange_rates import ExchangeRates
