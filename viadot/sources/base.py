@@ -1,11 +1,13 @@
+import logging
 import os
 from abc import abstractmethod
 from typing import Any, Dict, List, Literal, NoReturn, Tuple, Union
+
 import pandas as pd
 import pyarrow as pa
 import pyodbc
-import logging
-from ..config import local_config
+
+from ..config import get_source_credentials
 from ..signals import SKIP
 
 logger = logging.getLogger(__name__)
@@ -24,18 +26,19 @@ class Source:
         pass
 
     @abstractmethod
-    def to_df(self, if_empty: str = None):
+    def to_df(self, if_empty: Literal["warn", "skip", "fail"] = "warn"):
         pass
 
     @abstractmethod
     def query():
         pass
 
-    def to_arrow(self, if_empty: str = "warn") -> pa.Table:
+    def to_arrow(self, if_empty: Literal["warn", "skip", "fail"] = "warn") -> pa.Table:
         """
         Creates a pyarrow table from source.
+
         Args:
-            if_empty (str, optional): : What to do if data sourse contains no data. Defaults to "warn".
+            if_empty (Literal["warn", "skip", "fail"], optional): : What to do if data sourse contains no data. Defaults to "warn".
         """
 
         try:
@@ -50,7 +53,7 @@ class Source:
         self,
         path: str,
         if_exists: Literal["append", "replace"] = "replace",
-        if_empty: str = "warn",
+        if_empty: Literal["warn", "skip", "fail"] = "warn",
         sep="\t",
         **kwargs,
     ) -> bool:
@@ -65,7 +68,7 @@ class Source:
             path (str): The destination path.
             if_exists (Literal[, optional): What to do if the file exists.
             Defaults to "replace".
-            if_empty (str, optional): What to do if the source contains no data.
+            if_empty (Literal["warn", "skip", "fail"], optional): What to do if the source contains no data.
             Defaults to "warn".
             sep (str, optional): The separator to use in the CSV. Defaults to "\t".
 
@@ -95,14 +98,17 @@ class Source:
         return True
 
     def to_excel(
-        self, path: str, if_exists: str = "replace", if_empty: str = "warn"
+        self,
+        path: str,
+        if_exists: str = "replace",
+        if_empty: Literal["warn", "skip", "fail"] = "warn",
     ) -> bool:
         """
         Write from source to a excel file.
         Args:
             path (str): The destination path.
             if_exists (str, optional): What to do if the file exists. Defaults to "replace".
-            if_empty (str, optional): What to do if the source contains no data.
+            if_empty (Literal["warn", "skip", "fail"], optional): What to do if the source contains no data.
 
         """
 
@@ -122,14 +128,18 @@ class Source:
         out_df.to_excel(path, index=False, encoding="utf8")
         return True
 
-    def _handle_if_empty(self, if_empty: str = None) -> NoReturn:
-        """What to do if empty."""
+    def _handle_if_empty(
+        self,
+        if_empty: Literal["warn", "skip", "fail"] = "warn",
+        message: str = "The query produced no data.",
+    ) -> NoReturn:
+        """What to do if a fetch (database query, API request, etc.) produced no data."""
         if if_empty == "warn":
-            logger.warning("The query produced no data.")
+            self.logger.warning(message)
         elif if_empty == "skip":
-            raise SKIP("The query produced no data. Skipping...")
+            raise SKIP(message)
         elif if_empty == "fail":
-            raise ValueError("The query produced no data.")
+            raise ValueError(message)
 
 
 class SQL(Source):
@@ -156,7 +166,7 @@ class SQL(Source):
         self.query_timeout = query_timeout
 
         if config_key:
-            config_credentials = local_config.get(config_key)
+            config_credentials = get_source_credentials(config_key)
         else:
             config_credentials = None
 
@@ -218,13 +228,16 @@ class SQL(Source):
         return result
 
     def to_df(
-        self, query: str, con: pyodbc.Connection = None, if_empty: str = None
+        self,
+        query: str,
+        con: pyodbc.Connection = None,
+        if_empty: Literal["warn", "skip", "fail"] = "warn",
     ) -> pd.DataFrame:
         """Creates DataFrame form SQL query.
         Args:
             query (str): SQL query. If don't start with "SELECT" returns empty DataFrame.
             con (pyodbc.Connection, optional): The connection to use to pull the data.
-            if_empty (str, optional): What to do if the query returns no data. Defaults to None.
+            if_empty (Literal["warn", "skip", "fail"], optional): What to do if the query returns no data. Defaults to None.
         """
         conn = con or self.con
 

@@ -28,13 +28,23 @@ class Config(dict):
 
 
 try:
-    DEFAULT_CONFIG = Config.from_yaml(
-        join(USER_HOME, ".config", "viadot", "config.yaml"), key="sources"
-    )
+    CONFIG = Config.from_yaml(join(USER_HOME, ".config", "viadot", "config.yaml"))
 except FileNotFoundError:
     try:
-        DEFAULT_CONFIG = Config.from_json(
-            join(USER_HOME, ".config", "viadot", "config.json")
-        )
+        CONFIG = Config.from_json(join(USER_HOME, ".config", "viadot", "config.json"))
     except FileNotFoundError:
-        DEFAULT_CONFIG = Config()
+        CONFIG = Config()
+
+
+def get_source_config(key):
+    source_configs = CONFIG.get("sources")
+    if source_configs is not None:
+        for source_config in source_configs:
+            if key in source_config.keys():
+                return source_configs[source_configs.index(source_config)][key]
+
+
+def get_source_credentials(key):
+    config = get_source_config(key)
+    if config is not None:
+        return config.get("credentials")

@@ -1,0 +1,16 @@
+version: 1
+
+sources:
+
+  - sharepoint_dev:
+      class: Sharepoint
+      credentials:
+        site: "<TENANT_NAME>.sharepoint.com"
+        username: "<USERNAME>"
+        password: "<PASSWORD>"
+
+  - supermetrics:
+    class: Supermetricks
+    credentials:
+      api_key: "<API_KEY>",
+      user: "<USER>",
