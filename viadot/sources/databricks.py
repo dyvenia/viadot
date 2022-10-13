@@ -18,16 +18,10 @@ class Databricks(Source):
 
     Parameters
     ----------
-    env : str, optional
-        The name of the Databricks environment to use. by default "DEV"
-
     credentials : Dict[str, Any], optional
-        Credentials containing Databricks connection configuration and the following credentials:
-            - spark.databricks.service.address
-            - spark.databricks.service.token
-            - spark.databricks.service.clusterId
-            - spark.databricks.service.orgId
-            - spark.databricks.service.port
+        Credentials containing Databricks connection configuration
+        (`host`, `token`, and `cluster_id`).
+    config_key (str, optional): The key in the viadot config holding relevant credentials.
     """
 
     DEFAULT_SCHEMA = "default"
@@ -40,25 +34,19 @@ class Databricks(Source):
         **kwargs,
     ):
         self.credentials = credentials or get_source_credentials(config_key)
-        self.session = None
+        self._session = None
 
-        self.connect()
-
-    def _create_spark_session(self, env: str = "DEV"):
+    def _create_spark_session(self):
         """
-        Create a Spark session to establish a connection to the Databricks cluster and allow the execution of its commands.
-
-        Args:
-            env (str, optional) : The name of the Databricks environment to use. by default "DEV"
+        Establish a connection to the Databricks cluster.
 
         Returns:
-            SparkSession: A configured SparkSession object used for connecting to the Databricks cluster.
+            SparkSession: A configured SparkSession object.
         """
-        env = env or self.env
         default_spark = SparkSession.builder.getOrCreate()
         config = SparkConf()
 
-        # copy all the configuration values from the current Spark Context
+        # Copy all the configuration values from the current Spark Context.
         default_config_vals = default_spark.sparkContext.getConf().getAll()
 
         for (key, value) in default_config_vals:
@@ -67,7 +55,6 @@ class Databricks(Source):
         config.set(
             "spark.databricks.service.clusterId", self.credentials.get("cluster_id")
         )
-
         config.set("spark.databricks.service.port", self.credentials.get("port"))
         # stop the spark session context in order to create a new one with the required cluster_id, else we
         # will still use the current cluster_id for execution
@@ -78,11 +65,13 @@ class Databricks(Source):
         new_spark = session.builder.config(conf=config).getOrCreate()
         return new_spark
 
-    def connect(self):
-        if self.env == "QA":
-            self.session = SparkSession.builder.getOrCreate()
-        else:
-            self.session = self._create_spark_session(self.env)
+    @property
+    def session(self) -> SparkSession:
+        if self._session is None:
+            session = self._create_spark_session()
+            self._session = session
+            return session
+        return self._session
 
     def to_df(self, query: str, if_empty: str = "fail") -> pd.DataFrame:
         """
