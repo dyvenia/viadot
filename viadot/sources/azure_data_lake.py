@@ -25,6 +25,7 @@ class AzureDataLake(Source):
             - AZURE_TENANT_ID
             - AZURE_CLIENT_ID
             - AZURE_CLIENT_SECRET
+    config_key (str, optional): The key in the viadot config holding relevant credentials.
     """
 
     def __init__(
@@ -32,12 +33,12 @@ class AzureDataLake(Source):
         path: str = None,
         gen: int = 2,
         credentials: Dict[str, Any] = None,
-        credentials_key: str = None,
+        config_key: str = None,
         *args,
         **kwargs,
     ):
 
-        credentials = credentials or get_source_credentials(credentials_key)
+        credentials = credentials or get_source_credentials(config_key)
 
         super().__init__(*args, credentials=credentials, **kwargs)
 
