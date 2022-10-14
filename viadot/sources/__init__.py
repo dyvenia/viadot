@@ -1,6 +1,6 @@
 from .sharepoint import Sharepoint
 
-# from .azure_data_lake import AzureDataLake
+from .azure_data_lake import AzureDataLake
 from .databricks import Databricks
 
 # APIS
