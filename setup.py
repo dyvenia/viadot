@@ -22,6 +22,8 @@ setuptools.setup(
     name="viadot",
     version=get_version("viadot"),
     author="Alessio Civitillo",
+    maintainer="Michal Zawadzki",
+    maintainer_email="mzawadzki@dyvenia.com",
     description="A simple data ingestion library to guide data flows from some places to other places",
     long_description=long_description,
     long_description_content_type="text/markdown",
