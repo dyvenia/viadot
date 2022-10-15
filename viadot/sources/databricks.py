@@ -20,7 +20,7 @@ class Databricks(Source):
     ----------
     credentials : Dict[str, Any], optional
         Credentials containing Databricks connection configuration
-        (`host`, `token`, and `cluster_id`).
+        (`host`, `token`, `org_id`, and `cluster_id`).
     config_key (str, optional): The key in the viadot config holding relevant credentials.
     """
 
