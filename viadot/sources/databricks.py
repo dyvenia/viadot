@@ -6,6 +6,7 @@ from delta.tables import *
 from pyspark import SparkConf, SparkContext
 
 from ..config import get_source_credentials
+from ..exceptions import TableDoesNotExist
 from ..utils import build_merge_query
 from .base import Source
 
@@ -212,7 +213,7 @@ class Databricks(Source):
         databricks = Databricks()
         list = [{"id":"1", "name":"Joe"}]
         df = pd.DataFrame(list)
-        new_table = databricks.create_table_from_pandas(schema = "schema" , table = "table_1", df)
+        new_table = databricks.create_table_from_pandas(schema="schema", table="table_1", df=df)
         ```
         """
         if schema is None:
@@ -234,7 +235,7 @@ class Databricks(Source):
         else:
             self.logger.info(f"Table {fqn} already exists.")
 
-    def drop_table(self, table: str, schema: str = None):
+    def drop_table(self, table: str, schema: str = None) -> None:
         """
         Delete an existing table.
 
@@ -242,11 +243,14 @@ class Databricks(Source):
             schema (str): Name of the schema.
             table (str): Name of the new table to be created.
 
+        Raises:
+            TableDoesNotExist: If the table does not exist.
+
         Example:
         ```python
         from viadot.sources import Databricks
         databricks = Databricks()
-        databricks.drop_table(schema = "schema", table = "table_1")
+        databricks.drop_table(schema="schema", table="table_1")
         ```
         """
         if schema is None:
@@ -255,15 +259,15 @@ class Databricks(Source):
         fqn = f"{schema}.{table}"
         if self._check_if_table_exists(schema, table):
             self.run(f"DROP TABLE {fqn}")
-            self.logger.info(f"Table {fqn} deleted.")
+            self.logger.info(f"Table {fqn} has been deleted successfully.")
         else:
-            self.logger.info(f"Table {fqn} does not exist.")
+            raise TableDoesNotExist(fqn=fqn)
 
     def _append(self, schema: str, table: str, df: pd.DataFrame):
         fqn = f"{schema}.{table}"
         spark_df = self._pandas_df_to_spark_df(df)
         spark_df.write.format("delta").mode("append").saveAsTable(fqn)
-        self.logger.info(f"Table {fqn} appended successfully.")
+        self.logger.info(f"Table {fqn} has been appended successfully.")
 
     def _full_refresh(self, schema: str, table: str, df: pd.DataFrame):
         """
@@ -280,7 +284,7 @@ class Databricks(Source):
         databricks = Databricks()
         list = [{"id":"1", "name":"Joe"}]
         df = pd.DataFrame(list)
-        databricks.insert_into(schema = "raw", table = "c4c_test4", df = df, if_exists = "replace")
+        databricks.insert_into(schema="raw", table="c4c_test4", df=df, if_exists="replace")
         ```
         """
         fqn = f"{schema}.{table}"
@@ -335,7 +339,7 @@ class Databricks(Source):
         databricks = Databricks()
         list = [{"id":"1", "name":"Joe"}]
         df = pd.DataFrame(list)
-        databricks.insert_into(schema="raw", table = "c4c_test4", df=df, primary_key="pk", if_exists="update")
+        databricks.insert_into(schema="raw", table="c4c_test4", df=df, primary_key="pk", if_exists="update")
         ```
         """
         if schema is None:
@@ -410,7 +414,7 @@ class Databricks(Source):
         ```python
         from viadot.sources import Databricks
         databricks = Databricks()
-        databricks.discover_schema(schema = "schema", table = "table")
+        databricks.discover_schema(schema="schema", table="table")
         ```
         Returns:
             schema (dict): A dictionary containing the schema details of the table.
