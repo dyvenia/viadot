@@ -25,6 +25,7 @@ class Databricks(Source):
     """
 
     DEFAULT_SCHEMA = "default"
+    DEFAULT_CLUSTER_PORT = "15001"
 
     def __init__(
         self,
@@ -55,7 +56,10 @@ class Databricks(Source):
         config.set(
             "spark.databricks.service.clusterId", self.credentials.get("cluster_id")
         )
-        config.set("spark.databricks.service.port", self.credentials.get("port"))
+        config.set(
+            "spark.databricks.service.port",
+            self.credentials.get("port", Databricks.DEFAULT_CLUSTER_PORT),
+        )
         # stop the spark session context in order to create a new one with the required cluster_id, else we
         # will still use the current cluster_id for execution
 
