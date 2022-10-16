@@ -34,6 +34,7 @@ setuptools.setup(
         "pyodbc>=4.0.32,<5.0.0",
         "databricks-connect>=10.4.6,<11.0.0",
         "adlfs>=2022.9.1",
+        "pyarrow>=6.0.1,<7.0.0",
     ],
     extras=extras,
     classifiers=[
