@@ -32,7 +32,6 @@ google-auth==2.6.2
 sendgrid==6.9.7
 pandas-gbq==0.17.4
 databricks-connect==10.4.6
-dbt-databricks==1.1.0
 Faker==13.12.1
 dulwich==0.20.43
 python-dotenv==0.21.0
