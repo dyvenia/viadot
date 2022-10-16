@@ -29,7 +29,7 @@ setuptools.setup(
     long_description_content_type="text/markdown",
     url="https://github.com/dyvenia/viadot",
     packages=setuptools.find_packages(),
-    install_requires=["sharepy>=2.0.0,<3.0.0"],
+    install_requires=["sharepy>=2.0.0,<3.0.0", "pyodbc>=4.0.32,<5.0.0"],
     extras=extras,
     classifiers=[
         "Programming Language :: Python :: 3",
