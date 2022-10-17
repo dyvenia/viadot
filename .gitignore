@@ -171,3 +171,6 @@ profiles.yaml
 .gitconfig
 
 *.config/
+
+# act
+*.secret
