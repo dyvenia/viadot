@@ -5,27 +5,24 @@ import pandas as pd
 from adlfs import AzureBlobFileSystem, AzureDatalakeFileSystem
 
 from ..config import get_source_credentials
+from ..exceptions import CredentialError
 from .base import Source
 
 
 class AzureDataLake(Source):
     """
     A class for pulling data from the Azure Data Lakes (gen1 and gen2).
-    You can either connect to the lake in general or to a particular path,
-    eg.
-    lake = AzureDataLake(); lake.exists("a/b/c.csv")
-    vs
-    lake = AzureDataLake(path="a/b/c.csv"); lake.exists()
 
-    Parameters
-    ----------
-    credentials : Dict[str, Any], optional
-        A dictionary containing ACCOUNT_NAME and the following
-        Service Principal credentials:
-            - AZURE_TENANT_ID
-            - AZURE_CLIENT_ID
-            - AZURE_CLIENT_SECRET
-    config_key (str, optional): The key in the viadot config holding relevant credentials.
+    You can either connect to the lake in general
+    (`lake = AzureDataLake(); lake.exists("a/b/c.csv")`),
+    or to a particular path (`lake = AzureDataLake(path="a/b/c.csv"); lake.exists()`)
+
+    Args:
+        credentials (Dict[str, Any], optional): A dictionary containing
+            the following credentials: `account_name`, `tenant_id`,
+            `client_id`, and `client_secret`.
+        config_key (str, optional): The key in the viadot config holding
+            relevant credentials.
     """
 
     def __init__(
@@ -39,6 +36,20 @@ class AzureDataLake(Source):
     ):
 
         credentials = credentials or get_source_credentials(config_key)
+        required_credentials = (
+            "account_name",
+            "tenant_id",
+            "client_id",
+            "client_secret",
+        )
+        required_credentials_are_provided = all(
+            [rc in credentials for rc in required_credentials]
+        )
+
+        if credentials is None:
+            raise CredentialError("Please provide the credentials.")
+        elif not required_credentials_are_provided:
+            raise CredentialError("Please provide all required credentials.")
 
         super().__init__(*args, credentials=credentials, **kwargs)
 
@@ -91,6 +102,7 @@ class AzureDataLake(Source):
         Example:
         ```python
         from viadot.sources import AzureDataLake
+
         lake = AzureDataLake()
         lake.upload(from_path='tests/test.csv', to_path="sandbox/test.csv")
         ```
@@ -102,11 +114,26 @@ class AzureDataLake(Source):
             )
 
         to_path = to_path or self.path
-        self.fs.upload(
-            lpath=from_path,
-            rpath=to_path,
-            recursive=recursive,
-            overwrite=overwrite,
+
+        self.logger.info(f"Uploading file(s) from '{from_path}' to '{to_path}'...")
+
+        try:
+            self.fs.upload(
+                lpath=from_path,
+                rpath=to_path,
+                recursive=recursive,
+                overwrite=overwrite,
+            )
+        except FileExistsError:
+            # Show a useful error message.
+            if recursive:
+                msg = f"At least one file in '{to_path}' already exists. Specify `overwrite=True` to overwrite."  # noqa
+            else:
+                msg = f"The file '{to_path}' already exists. Specify `overwrite=True` to overwrite."
+            raise FileExistsError(msg)
+
+        self.logger.info(
+            f"Successfully uploaded file(s) from '{from_path}' to '{to_path}'."
         )
 
     def exists(self, path: str = None) -> bool:
@@ -137,6 +164,7 @@ class AzureDataLake(Source):
         recursive: bool = False,
         overwrite: bool = True,
     ) -> None:
+
         if overwrite is False:
             raise NotImplemented(
                 "Currently, only the default behavior (overwrite) is available."
@@ -176,31 +204,38 @@ class AzureDataLake(Source):
         return df
 
     def ls(self, path: str = None) -> List[str]:
-        """Returns list of files in a path.
+        """
+        Returns a list of files in a path.
 
         Args:
-                path (str, optional): Path to a folder. Defaults to None.
+            path (str, optional): Path to a folder. Defaults to None.
         """
         path = path or self.path
         return self.fs.ls(path)
 
     def rm(self, path: str = None, recursive: bool = False):
-        """Deletes files in a path.
+        """
+        Deletes files in a path.
 
         Args:
-                path (str, optional): Path to a folder. Defaults to None.
-                recursive (bool, optional): Whether to delete files recursively or not. Defaults to False.
+            path (str, optional): Path to a folder. Defaults to None.
+            recursive (bool, optional): Whether to delete files recursively.
+                Defaults to False.
         """
         path = path or self.path
         self.fs.rm(path, recursive=recursive)
 
     def cp(self, from_path: str = None, to_path: str = None, recursive: bool = False):
-        """Copies source to a destination.
+        """
+        Copies the contents of `from_path` to `to_path`.
 
         Args:
-            from_path (str, optional): Path form which to copy file. Defauls to None.
-            to_path (str, optional): Path where to copy files. Defaults to None.
-            recursive (bool, optional): Whether to copy files recursively or not. Defaults to False.
+            from_path (str, optional): Path from which to copy file(s).
+                Defauls to None.
+            to_path (str, optional): Path where to copy file(s). Defaults
+                to None.
+            recursive (bool, optional): Whether to copy file(s) recursively.
+                Defaults to False.
         """
         from_path = from_path or self.path
         to_path = to_path
@@ -210,11 +245,12 @@ class AzureDataLake(Source):
         self, df: pd.DataFrame, path: str = None, overwrite: bool = False
     ) -> None:
         """
-        Upload a pandas DataFrame to a file on Azure Data Lake.
+        Upload a pandas `DataFrame` to a file on Azure Data Lake.
 
         Args:
-            df (pd.DataFrame): The pandas DataFrame to upload.
+            df (pd.DataFrame): The pandas `DataFrame` to upload.
             path (str, optional): The destination path. Defaults to None.
+            overwrite (bool): Whether to overwrite the file if it exist.
         """
 
         path = path or self.path
