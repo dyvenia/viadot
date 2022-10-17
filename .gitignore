@@ -169,3 +169,5 @@ profiles.yaml
 
 # Git
 .gitconfig
+
+*.config/
