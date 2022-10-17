@@ -42,10 +42,10 @@ class AzureDataLake(Source):
 
         super().__init__(*args, credentials=credentials, **kwargs)
 
-        storage_account_name = self.credentials["ACCOUNT_NAME"]
-        tenant_id = self.credentials["AZURE_TENANT_ID"]
-        client_id = self.credentials["AZURE_CLIENT_ID"]
-        client_secret = self.credentials["AZURE_CLIENT_SECRET"]
+        storage_account_name = self.credentials["account_name"]
+        tenant_id = self.credentials["tenant_id"]
+        client_id = self.credentials["client_id"]
+        client_secret = self.credentials["client_secret"]
 
         self.path = path
         self.gen = gen
@@ -205,3 +205,37 @@ class AzureDataLake(Source):
         from_path = from_path or self.path
         to_path = to_path
         self.fs.cp(from_path, to_path, recursive=recursive)
+
+    def from_df(
+        self, df: pd.DataFrame, path: str = None, overwrite: bool = False
+    ) -> None:
+        """
+        Upload a pandas DataFrame to a file on Azure Data Lake.
+
+        Args:
+            df (pd.DataFrame): The pandas DataFrame to upload.
+            path (str, optional): The destination path. Defaults to None.
+        """
+
+        path = path or self.path
+
+        extension = path.split(".")[-1]
+        if extension not in ("csv", "parquet"):
+            if "." not in path:
+                msg = "Please provide the full path to the file."
+            else:
+                msg = "Accepted file formats are 'csv' and 'parquet'."
+            raise ValueError(msg)
+
+        file_name = path.split("/")[-1]
+        if extension == "csv":
+            # Can do it simply like this if ADLS accesses are set up correctly
+            # url = os.path.join(self.base_url, path)
+            # df.to_csv(url, storage_options=self.storage_options)
+            df.to_csv(file_name)
+        else:
+            df.to_parquet(file_name)
+
+        self.upload(from_path=file_name, to_path=path, overwrite=overwrite)
+
+        os.remove(file_name)
