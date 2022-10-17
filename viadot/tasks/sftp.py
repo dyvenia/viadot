@@ -1,5 +1,5 @@
 import json
-from typing import Any, Dict, List, Literal
+from typing import Any, Dict, List
 
 import prefect
 from prefect import Task
@@ -118,6 +118,7 @@ class SftpList(Task):
         matching_path: str = None,
     ):
         logger = prefect.context.get("logger")
+
         if not self.credentials:
             if not self.sftp_credentials_secret:
                 try:
@@ -151,4 +152,9 @@ class SftpList(Task):
             files_list = [f for f in files_list if matching_path in f]
 
         logger.info("Succefully loaded file list from SFTP server.")
+        print("QWERT" * 10)
+        print("QWERT" * 10)
+        print("QWERT" * 10)
+        print("QWERT" * 10)
+
         return files_list

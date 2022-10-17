@@ -75,6 +75,7 @@ class SftpConnector(Source):
                 ssh.connect(self.hostname, username=self.username, pkey=mykey)
                 time.sleep(1)
                 self.conn = ssh.open_sftp()
+
             return self.conn
 
     def get_cwd(self):
@@ -85,7 +86,7 @@ class SftpConnector(Source):
         """
         return self.conn.getcwd()
 
-    def getfo_file(self, file_name: str):
+    def getfo_file(self, file_name: str) -> BytesIO:
         """Copy a remote file from the SFTP server and write to a file-like object.
 
         Args:
@@ -99,9 +100,11 @@ class SftpConnector(Source):
             self.conn.getfo(file_name, flo)
             return flo
         except Exception as e:
-            print(e)
+            self.logger.info(e)
 
-    def to_df(self, file_name: str, sep: str = "\t", columns: List[str] = None):
+    def to_df(
+        self, file_name: str, sep: str = "\t", columns: List[str] = None
+    ) -> pd.DataFrame:
         """Copy a remote file from the SFTP server and write it to Pandas dataframe.
 
         Args:
@@ -129,7 +132,7 @@ class SftpConnector(Source):
 
         return df
 
-    def get_exported_files(self):
+    def get_exported_files(self) -> List[str]:
         """List only exported files in current working directory.
 
         Returns:
@@ -161,7 +164,7 @@ class SftpConnector(Source):
             files = self.conn.listdir(path)
         return files
 
-    def recursive_listdir(self, path=".", files=None):
+    def recursive_listdir(self, path=".", files=None) -> defaultdict(list):
         """Recursively returns a defaultdict of files on the remote system.
 
         Args:
