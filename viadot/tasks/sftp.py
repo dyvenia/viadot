@@ -152,9 +152,5 @@ class SftpList(Task):
             files_list = [f for f in files_list if matching_path in f]
 
         logger.info("Succefully loaded file list from SFTP server.")
-        print("QWERT" * 10)
-        print("QWERT" * 10)
-        print("QWERT" * 10)
-        print("QWERT" * 10)
 
         return files_list
