@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Enabled Databricks Connect in the image. To enable, [follow this guide](./README.md#executing-spark-jobs)
 - Added `Databricks` source to the library.
 - Added `ExchangeRates` source to the library.
+- Added `from_df()` method to `Azure Data Lake` source
 
 ### Changed
 - Added `SQLServerToDF` task

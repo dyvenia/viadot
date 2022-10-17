@@ -65,3 +65,13 @@ def create_test_parquet_file_2(DF, TEST_PARQUET_FILE_PATH_2):
 @pytest.fixture(scope="session", autouse=True)
 def sharepoint_url():
     return os.environ.get("SHAREPOINT_URL")
+
+
+@pytest.fixture(scope="session", autouse=True)
+def TEST_ADLS_FILE_PATH_PARQUET():
+    return os.environ.get("TEST_ADLS_FILE_PATH_PARQUET")
+
+
+@pytest.fixture(scope="session", autouse=True)
+def TEST_ADLS_FILE_PATH_CSV():
+    return os.environ.get("TEST_ADLS_FILE_PATH_CSV")
