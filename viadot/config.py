@@ -36,15 +36,15 @@ except FileNotFoundError:
         CONFIG = Config()
 
 
-def get_source_config(key):
-    source_configs = CONFIG.get("sources")
+def get_source_config(key, config):
+    source_configs = config.get("sources")
     if source_configs is not None:
         for source_config in source_configs:
             if key in source_config.keys():
                 return source_configs[source_configs.index(source_config)][key]
 
 
-def get_source_credentials(key):
-    config = get_source_config(key)
+def get_source_credentials(key, config):
+    config = get_source_config(key, config)
     if config is not None:
         return config.get("credentials")
