@@ -41,7 +41,6 @@ class SftpConnector(Source):
             raise CredentialError("Credentials not found.")
 
         self.file_name = file_name
-
         self.conn = None
         self.hostname = self.credentials_sftp.get("HOSTNAME")
         self.username = self.credentials_sftp.get("USERNAME")
@@ -53,7 +52,7 @@ class SftpConnector(Source):
         self.file_name_list = []
         self.recursive_files = []
 
-    def get_conn(self)-> paramiko.SFTPClient:
+    def get_conn(self) -> paramiko.SFTPClient:
         """Returns a SFTP connection object.
 
         Returns: paramiko.SFTPClient.
@@ -78,7 +77,7 @@ class SftpConnector(Source):
 
             return self.conn
 
-    def get_cwd(self)-> str:
+    def get_cwd(self) -> str:
         """Return the current working directory for SFTP session.
 
         Returns:

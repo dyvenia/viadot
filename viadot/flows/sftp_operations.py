@@ -1,5 +1,4 @@
 from typing import Any, Dict, List, Literal
-
 from prefect import Flow
 from viadot.flows.adls_to_azure_sql import df_to_csv_task
 
