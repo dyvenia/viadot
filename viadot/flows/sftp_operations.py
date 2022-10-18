@@ -3,7 +3,7 @@ from typing import Any, Dict, List, Literal
 from prefect import Flow
 from viadot.flows.adls_to_azure_sql import df_to_csv_task
 
-from viadot.tasks.sftp import SftpToDF
+from viadot.tasks import SftpToDF
 from viadot.tasks import AzureDataLakeUpload, AzureSQLCreateTable, BCPTask
 from viadot.task_utils import add_ingestion_metadata_task
 

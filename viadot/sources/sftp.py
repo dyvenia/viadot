@@ -53,10 +53,10 @@ class SftpConnector(Source):
         self.file_name_list = []
         self.recursive_files = []
 
-    def get_conn(self):
+    def get_conn(self)-> paramiko.SFTPClient:
         """Returns a SFTP connection object.
 
-        Returns: paramiko.SFTPClient
+        Returns: paramiko.SFTPClient.
         """
 
         ssh = paramiko.SSHClient()
@@ -78,11 +78,11 @@ class SftpConnector(Source):
 
             return self.conn
 
-    def get_cwd(self):
+    def get_cwd(self)-> str:
         """Return the current working directory for SFTP session.
 
         Returns:
-            str: current working directory
+            str: current working directory.
         """
         return self.conn.getcwd()
 
@@ -93,7 +93,7 @@ class SftpConnector(Source):
             file_name (str, optional): File name to copy.
 
         Returns:
-            BytesIO: file-like object
+            BytesIO: file-like object.
         """
         flo = BytesIO()
         try:
@@ -136,7 +136,7 @@ class SftpConnector(Source):
         """List only exported files in current working directory.
 
         Returns:
-            List: List of exported files
+            List: List of exported files.
         """
         self.file_name_list.clear()
 
@@ -154,7 +154,7 @@ class SftpConnector(Source):
             path (str, optional): full path to the remote directory to list. Defaults to None.
 
         Returns:
-            List: List of files
+            List: List of files.
 
         """
 
@@ -171,7 +171,7 @@ class SftpConnector(Source):
             path (str, optional): full path to the remote directory to list. Defaults to None.
             files (any, optional): parameter for calling function recursively.
         Returns:
-            defaultdict(list): List of files
+            defaultdict(list): List of files.
 
         """
 
@@ -199,7 +199,7 @@ class SftpConnector(Source):
             defaultdict (any, optional): defaultdict of recursive files. Defaults to None.
 
         Returns:
-            List: list of files
+            List: list of files.
         """
         path_list = []
         if defaultdict is None:
