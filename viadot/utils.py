@@ -1,5 +1,6 @@
 import logging
 import re
+from datetime import datetime, timezone
 from typing import Any, Dict, List, Literal, Union
 
 import pandas as pd
@@ -372,3 +373,8 @@ def cleanup_df(df: pd.DataFrame) -> pd.DataFrame:
         pd.DataFrame: The cleaned up DataFrame
     """
     return df.replace(r"\n|\t", "", regex=True)
+
+
+def add_metadata_columns(df: pd.DataFrame) -> pd.DataFrame:
+    df["_viadot_downloaded_at_utc"] = datetime.now(timezone.utc).replace(microsecond=0)
+    return df
