@@ -1,6 +1,6 @@
 import logging
 
-__version__ = "2.0a9"
+__version__ = "2.0a10"
 
 # Remove trash Azure INFO logs which contain low-level debugging information
 # but keep WARNING and higher ones in case something actually important happens.
