@@ -268,9 +268,9 @@ class AzureDataLake(Source):
             # Can do it simply like this if ADLS accesses are set up correctly
             # url = os.path.join(self.base_url, path)
             # df.to_csv(url, storage_options=self.storage_options)
-            df.to_csv(file_name)
+            df.to_csv(file_name, index=False)
         else:
-            df.to_parquet(file_name)
+            df.to_parquet(file_name, index=False)
 
         self.upload(from_path=file_name, to_path=path, overwrite=overwrite)
 
