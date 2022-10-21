@@ -1,52 +1,60 @@
 import re
-from copy import deepcopy
-from typing import Any, Dict, List
-from urllib.parse import urljoin
-
-import pandas as pd
 import requests
+import pandas as pd
 
-from ..config import local_config
-from ..exceptions import CredentialError
+from copy import deepcopy
+from typing import Any, Dict, List, Optional
+from pydantic import BaseModel
+from urllib.parse import urljoin
+from viadot.exceptions import CredentialError
+
 from ..utils import handle_api_response
+from ..config import get_source_credentials
 from .base import Source
 
 
+class CloudForCustomersCredentials(BaseModel):
+    site: str  # Path to cloud for customers website (e.g : {tenant_name}.cloudforcustomers.com)
+    username: str  # CloudForCustomers username (e.g username@{tenant_name}.com)
+    password: str  # CloudForCustomers password
+
+
 class CloudForCustomers(Source):
+    """Cloud for Customers connector build for fetching Odata source.
+    See [pyodata docs](https://pyodata.readthedocs.io/en/latest/index.html) for an explanation
+    how Odata works.
+
+    Args:
+        url (str, optional): The API url.
+        endpoint (str, optional): The API endpoint.
+        report_url (str, optional): The API url in case of prepared report.
+        params (Dict[str, Any]): Query parameters.
+        credentials (CloudForCustomersCredentials): Cloud for Customers credentials.
+        config_key (str, optional): The key in the viadot config holding relevant credentials.
+    """
+
     DEFAULT_PARAMS = {"$format": "json"}
 
     def __init__(
         self,
-        *args,
-        report_url: str = None,
         url: str = None,
         endpoint: str = None,
+        report_url: str = None,
         params: Dict[str, Any] = None,
-        env: str = "QA",
-        credentials: Dict[str, Any] = None,
+        credentials: CloudForCustomersCredentials = None,
+        config_key: Optional[str] = None,
+        *args,
         **kwargs,
     ):
-        """Cloud for Customers connector build for fetching Odata source.
-        See [pyodata docs](https://pyodata.readthedocs.io/en/latest/index.html) for an explanation
-        how Odata works.
 
-        Parameters
-        ----------
-            report_url (str, optional): The url to the API in case of prepared report. Defaults to None.
-            url (str, optional): The url to the API. Defaults to None.
-            endpoint (str, optional): The endpoint of the API. Defaults to None.
-            params (Dict[str, Any]): The query parameters like filter by creation date time. Defaults to json format.
-            env (str, optional): The development environments. Defaults to 'QA'.
-            credentials (Dict[str, Any], optional): The credentials are populated with values from config file or this
-            parameter. Defaults to None than use credentials from local_config.
-        """
-        super().__init__(*args, **kwargs)
-
-        try:
-            DEFAULT_CREDENTIALS = local_config["CLOUD_FOR_CUSTOMERS"].get(env)
-        except KeyError:
-            DEFAULT_CREDENTIALS = None
-        self.credentials = credentials or DEFAULT_CREDENTIALS or {}
+        ## Credentials logic
+        credentials = credentials or get_source_credentials(config_key)
+        if credentials is None:
+            raise CredentialError("Please specify the credentials.")
+        CloudForCustomersCredentials(**credentials)  # validate the credentials schema
+        super().__init__(*args, credentials=credentials, **kwargs)
+        self.logger.info(credentials)
+        ## End Credentials logic
 
         self.url = url or self.credentials.get("server")
         self.report_url = report_url
@@ -67,8 +75,6 @@ class CloudForCustomers(Source):
 
         if self.url:
             self.full_url = urljoin(self.url, self.query_endpoint)
-
-        super().__init__(*args, credentials=self.credentials, **kwargs)
 
     @staticmethod
     def change_to_meta_url(url: str) -> str:
@@ -132,11 +138,9 @@ class CloudForCustomers(Source):
     def response_to_entity_list(self, dirty_json: Dict[str, Any], url: str) -> List:
 
         """Changing request json response to list.
-
         Args:
             dirty_json (Dict[str, Any]): json from response.
             url (str): the URL which trying to fetch metadata.
-
         Returns:
             List: List of dictionaries.
         """
@@ -160,10 +164,8 @@ class CloudForCustomers(Source):
     def map_columns(self, url: str = None) -> Dict[str, str]:
 
         """Fetch metadata from url used to column name map.
-
         Args:
             url (str, optional): the URL which trying to fetch metadata. Defaults to None.
-
         Returns:
             Dict[str, str]: Property Name as key mapped to the value of sap label.
         """
@@ -188,13 +190,11 @@ class CloudForCustomers(Source):
         """Handle and raise Python exceptions during request. Using of url and service endpoint needs additional parameters
            stores in params. report_url contain additional params in their structure.
            In report_url scenario it can not contain params parameter.
-
         Args:
             url (str): the URL which trying to connect.
             params (Dict[str, Any], optional): Additional parameters like filter, used in case of normal url.
             Defaults to None used in case of report_url, which can not contain params.
             timeout (tuple, optional): the request times out. Defaults to (3.05, 60 * 30).
-
         Returns:
             requests.models.Response
         """
