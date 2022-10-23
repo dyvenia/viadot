@@ -214,20 +214,23 @@ class Databricks(Source):
 
     def create_table_from_pandas(
         self,
-        table: str,
         df: pd.DataFrame,
+        table: str,
         schema: str = None,
-        if_empty="warn",
+        if_empty: str = "warn",
         if_exists: Literal["replace", "skip", "fail"] = "fail",
     ) -> bool:
         """
-        Write a new table using a given Pandas DataFrame.
+        Create a table using a pandas `DataFrame`.
 
         Args:
-            schema (str): Name of the schema.
-            table (str): Name of the new table to be created.
-            df (pd.DataFrame): DataFrame to be written as a table.
-            if_empty (str, optional): What to do if the query returns no data. Defaults to "warn".
+            df (pd.DataFrame): The `DataFrame` to be written as a table.
+            table (str): Name of the table to be created.
+            schema (str, optional): Name of the schema.
+            if_empty (str, optional): What to do if the query returns no data. Defaults
+                to 'warn'.
+            if_exists (Literal, optional): What to do if the table already exists.
+                Defaults to 'fail'.
 
         Example:
         ```python
@@ -237,7 +240,9 @@ class Databricks(Source):
         list = [{"id":"1", "name":"Joe"}]
         df = pd.DataFrame(list)
 
-        new_table = databricks.create_table_from_pandas(schema="schema", table="table_1", df=df)
+        new_table = databricks.create_table_from_pandas(
+            df=df, schema="viadot_test", table="test"
+        )
         ```
         """
         if df.empty:
@@ -285,7 +290,7 @@ class Databricks(Source):
 
         databricks = Databricks()
 
-        databricks.drop_table(schema="schema", table="table_1")
+        databricks.drop_table(schema="viadot_test", table="test")
         ```
         """
         if schema is None:
@@ -325,7 +330,7 @@ class Databricks(Source):
         list = [{"id":"1", "name":"Joe"}]
         df = pd.DataFrame(list)
 
-        databricks.insert_into(schema="raw", table="c4c_test4", df=df, if_exists="replace")
+        databricks.insert_into( df=df, schema="viadot_test", table="test", mode="replace")
         ```
         """
         fqn = f"{schema}.{table}"
@@ -361,7 +366,7 @@ class Databricks(Source):
         table: str,
         schema: str = None,
         primary_key: str = None,
-        if_exists: Literal["replace", "append", "update", "fail"] = "fail",
+        mode: Literal["replace", "append", "update"] = "append",
     ) -> None:
         """
         Insert data from a pandas `DataFrame` into a Delta table.
@@ -372,9 +377,8 @@ class Databricks(Source):
             schema (str, Optional): Name of the schema.
             primary_key (str, Optional): The primary key on which the data will be joined.
                 Required only when updating existing data.
-            if_exists (str, Optional): Which operation to run with the data.
-                Allowed operations are: 'replace', 'append', 'update', and 'fail'.
-                By default, fail.
+            mode (str, Optional): Which operation to run with the data. Allowed operations
+                are: 'replace', 'append', and 'update'. By default, 'append'.
 
         Example:
         ```python
@@ -384,7 +388,9 @@ class Databricks(Source):
         list = [{"id":"1", "name":"Joe"}]
         df = pd.DataFrame(list)
 
-        databricks.insert_into(schema="raw", table="c4c_test4", df=df, primary_key="pk", if_exists="update")
+        databricks.insert_into(
+            df=df, schema="viadot_test", table="test", primary_key="pk", mode="update"
+        )
         ```
         """
         if schema is None:
@@ -394,19 +400,15 @@ class Databricks(Source):
 
         exists = self._check_if_table_exists(schema=schema, table=table)
         if exists:
-            if if_exists == "replace":
-                self._full_refresh(schema, table, df)
-            elif if_exists == "append":
-                self._append(schema, table, df)
-            elif if_exists == "update":
+            if mode == "replace":
+                self._full_refresh(df=df, schema=schema, table=table)
+            elif mode == "append":
+                self._append(df=df, schema=schema, table=table)
+            elif mode == "update":
                 self._upsert(df=df, schema=schema, table=table, primary_key=primary_key)
-            elif if_exists == "fail":
-                raise ValueError(
-                    f"Table {fqn} already exists and 'if_exists' is set to 'fail'."
-                )
             else:
                 raise ValueError(
-                    "'if_exists' must be one of: 'replace', 'append', 'update', or 'fail'."
+                    "`mode` must be one of: 'replace', 'append', or 'update'."
                 )
         else:
             raise ValueError(f"Table {fqn} does not exist.")
@@ -465,7 +467,7 @@ class Databricks(Source):
 
         databricks = Databricks()
 
-        databricks.discover_schema(schema="schema", table="table")
+        databricks.discover_schema(schema="viadot_test", table="test")
         ```
         Returns:
             schema (dict): A dictionary containing the schema details of the table.
@@ -525,7 +527,7 @@ class Databricks(Source):
         from viadot.sources import Databricks
         databricks = Databricks()
 
-        schema = "test"
+        schema = "viadot_test"
         table = "table_1"
 
         version_number = databricks.get_table_version(schema=schema, table=table)
@@ -533,7 +535,7 @@ class Databricks(Source):
         # Perform changes on the table, in this example we are appending to the table
         list = [{"id":"1", "name":"Joe"}]
         df = pd.DataFrame(list)
-        databricks.insert_into(schema=schema, table=table, df=df, if_exists="append")
+        databricks.insert_into(df=df, schema=schema, table=table)
 
         databricks.rollback(schema=schema, table=table, version_number=version_number)
         ```
@@ -551,7 +553,7 @@ class Databricks(Source):
 
         # Perform full-refresh and overwrite the table with the new data
         result = self.insert_into(
-            schema=schema, table=table, df=old_table, if_exists="replace"
+            df=old_table, schema=schema, table=table, mode="replace"
         )
 
         self.logger.info(
