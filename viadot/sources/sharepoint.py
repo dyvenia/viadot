@@ -40,7 +40,6 @@ class Sharepoint(Source):
             raise CredentialError("Please specify the credentials.")
         SharepointCredentials(**credentials)  # validate the credentials schema
         super().__init__(*args, credentials=credentials, **kwargs)
-        self.logger.info(credentials)
 
     def get_connection(self) -> sharepy.session.SharePointSession:
         try:

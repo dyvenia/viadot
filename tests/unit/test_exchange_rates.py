@@ -1,6 +1,5 @@
-from viadot.sources import ExchangeRates
 import pandas as pd
-
+from viadot.sources import ExchangeRates
 
 TEST_DATA = {
     "currencies": [

@@ -56,6 +56,7 @@ class ExchangeRates(Source):
 
         credentials = credentials or get_source_credentials(config_key)
         super().__init__(*args, credentials=credentials, **kwargs)
+
         self.currency = currency
         self.start_date = start_date
         self.end_date = end_date
