@@ -88,13 +88,18 @@ class Databricks(Source):
             return session
         return self._session
 
-    def to_df(self, query: str, if_empty: str = "fail") -> pd.DataFrame:
+    def to_df(
+        self,
+        query: str,
+        if_empty: Literal["warn", "skip", "fail"] = "warn",
+    ) -> pd.DataFrame:
         """
         Execute a query and return a Pandas DataFrame.
 
         Args:
             query (str): The query to execute
-            if_empty (str, optional): What to do if the query returns no data. Defaults to "fail".
+            if_empty (str, optional): What to do if the query returns no data.
+                Defaults to 'warn'.
 
         Example:
         ```python
@@ -217,7 +222,7 @@ class Databricks(Source):
         df: pd.DataFrame,
         table: str,
         schema: str = None,
-        if_empty: str = "warn",
+        if_empty: Literal["warn", "skip", "fail"] = "warn",
         if_exists: Literal["replace", "skip", "fail"] = "fail",
     ) -> bool:
         """
@@ -227,8 +232,8 @@ class Databricks(Source):
             df (pd.DataFrame): The `DataFrame` to be written as a table.
             table (str): Name of the table to be created.
             schema (str, optional): Name of the schema.
-            if_empty (str, optional): What to do if the query returns no data. Defaults
-                to 'warn'.
+            if_empty (str, optional): What to do if the input `DataFrame` is empty.
+                Defaults to 'warn'.
             if_exists (Literal, optional): What to do if the table already exists.
                 Defaults to 'fail'.
 
