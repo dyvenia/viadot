@@ -393,3 +393,8 @@ def call_shell(command):
         # TODO: read the error message fro mstdout and pass here
         raise ValueError("Generating the file failed.") from e
     return result
+
+
+def df_snakecase_column_names(df: pd.DataFrame) -> pd.DataFrame:
+    df.columns = df.columns.str.strip().str.replace(" ", "_").str.lower()
+    return df

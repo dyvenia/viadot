@@ -10,7 +10,7 @@ from viadot.exceptions import CredentialError
 
 from ..config import get_source_credentials
 from ..exceptions import TableAlreadyExists, TableDoesNotExist
-from ..utils import build_merge_query
+from ..utils import build_merge_query, df_snakecase_column_names
 from .base import Source
 
 
@@ -268,6 +268,7 @@ class Databricks(Source):
             else:
                 success_message = f"Table {fqn} has been overwritten successfully."
 
+        df = df_snakecase_column_names(df)
         sdf = self._pandas_df_to_spark_df(df)
         sdf.createOrReplaceTempView("tmp_view")
 
