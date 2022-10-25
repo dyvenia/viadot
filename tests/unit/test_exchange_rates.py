@@ -66,11 +66,14 @@ def test_to_df_values():
     )
     expected_value = TEST_DF
     retrieved_value = source.to_df()
+    retrieved_value.drop(["_viadot_downloaded_at_utc"], axis=1, inplace=True)
     assert retrieved_value.iloc[0].equals(expected_value.iloc[0])
 
 
 def test_get_columns():
-    source = ExchangeRates(symbols=["USD", "EUR", "GBP", "CZK", "SEK", "NOK", "ISK"])
+    source = ExchangeRates(
+        symbols=["USD", "EUR", "GBP", "CZK", "SEK", "NOK", "ISK"],
+    )
     expected_columns = ["Date", "Base", "USD", "EUR", "GBP", "CZK", "SEK", "NOK", "ISK"]
     retrieved_columns = source.get_columns()
     assert retrieved_columns == expected_columns

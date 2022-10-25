@@ -1,12 +1,12 @@
 import json
-from datetime import datetime
-from typing import Any, Dict, List, Literal
-
 import pandas as pd
 import requests
-
+from datetime import datetime
+from typing import Any, Dict, List, Literal
 from ..config import get_source_credentials
 from .base import Source
+from viadot.utils import cleanup_df, add_metadata_columns
+from viadot.exceptions import CredentialError
 
 Currency = Literal[
     "USD", "EUR", "GBP", "CHF", "PLN", "DKK", "COP", "CZK", "SEK", "NOK", "ISK"
@@ -55,6 +55,8 @@ class ExchangeRates(Source):
         """
 
         credentials = credentials or get_source_credentials(config_key)
+        if credentials is None:
+            raise CredentialError("Please specify the credentials.")
         super().__init__(*args, credentials=credentials, **kwargs)
 
         self.currency = currency
@@ -141,5 +143,7 @@ class ExchangeRates(Source):
     def to_df(self) -> pd.DataFrame:
         json = self.to_json()
         df = pd.json_normalize(json["currencies"])
+        df_clean = cleanup_df(df)
+        df_with_metadata = add_metadata_columns(df_clean)
 
-        return df
+        return df_with_metadata
