@@ -29,6 +29,15 @@ class SftpConnector(Source):
             file_name (str, optional): File name to download. Defaults to None.
             credentials_sftp (Dict[str, Any], optional): SFTP server credentials. Defaults to None.
 
+        Notes:
+            self.conn is paramiko.SFTPClient.from_transport method that contains additional methods like
+            get, put, open etc. Some of them were not implemented in that class.
+            For more check documentation (https://docs.paramiko.org/en/stable/api/sftp.html)
+
+            sftp = SftpConnector()
+            sftp.conn.open(filename='folder_a/my_file.zip', mode='r')
+
+
         Raises:
             CredentialError: If credentials are not provided in local_config or directly as a parameter.
         """
@@ -102,7 +111,7 @@ class SftpConnector(Source):
             self.logger.info(e)
 
     def to_df(
-        self, file_name: str, sep: str = "\t", columns: List[str] = None
+        self, file_name: str, sep: str = "\t", columns: List[str] = None, **kwargs
     ) -> pd.DataFrame:
         """Copy a remote file from the SFTP server and write it to Pandas dataframe.
 
@@ -116,18 +125,33 @@ class SftpConnector(Source):
         """
         byte_file = self.getfo_file(file_name=file_name)
         byte_file.seek(0)
-        if columns is None:
-            if Path(file_name).suffix == ".csv":
-                df = pd.read_csv(byte_file, sep=sep)
 
-            elif Path(file_name).suffix == ".parquet":
-                df = pd.read_parquet(byte_file)
-        if columns is not None:
-            if Path(file_name).suffix == ".csv":
-                df = pd.read_csv(byte_file, sep=sep, usecols=columns)
+        if Path(file_name).suffix == ".csv":
+            df = pd.read_csv(byte_file, sep=sep, usecols=columns, **kwargs)
 
-            elif Path(file_name).suffix == ".parquet":
-                df = pd.read_parquet(byte_file, usecols=columns)
+        elif Path(file_name).suffix == ".parquet":
+            df = pd.read_parquet(byte_file, usecols=columns, **kwargs)
+
+        elif Path(file_name).suffix == ".tsv":
+            df = pd.read_csv(byte_file, sep="\t", usecols=columns, **kwargs)
+
+        elif Path(file_name).suffix == ".xls" or Path(file_name).suffix == ".xlsx":
+            df = pd.read_excel(byte_file, usecols=columns, **kwargs)
+
+        elif Path(file_name).suffix == ".json":
+            df = pd.read_json(byte_file, **kwargs)
+
+        elif Path(file_name).suffix == ".pkl":
+            df = pd.read_pickle(byte_file, **kwargs)
+
+        elif Path(file_name).suffix == ".sql":
+            df = pd.read_sql(byte_file, **kwargs)
+
+        elif Path(file_name).suffix == ".hdf":
+            df = pd.read_hdf(byte_file, **kwargs)
+
+        else:
+            raise ValueError(f"Unsupported filetype: {file_name}")
 
         return df
 
