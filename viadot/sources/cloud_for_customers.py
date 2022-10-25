@@ -20,16 +20,14 @@ class CloudForCustomersCredentials(BaseModel):
 
 
 class CloudForCustomers(Source):
-    """Cloud for Customers connector build for fetching Odata source.
-    See [pyodata docs](https://pyodata.readthedocs.io/en/latest/index.html) for an explanation
-    how Odata works.
+    """Cloud for Customers connector to fetch Odata source.
 
     Args:
         url (str, optional): The API url.
         endpoint (str, optional): The API endpoint.
         report_url (str, optional): The API url in case of prepared report.
-        params (Dict[str, Any]): Query parameters.
-        credentials (CloudForCustomersCredentials): Cloud for Customers credentials.
+        params (Dict[str, Any], optional): Query parameters.
+        credentials (CloudForCustomersCredentials, optional): Cloud for Customers credentials.
         config_key (str, optional): The key in the viadot config holding relevant credentials.
     """
 
@@ -77,32 +75,49 @@ class CloudForCustomers(Source):
             self.full_url = urljoin(self.url, self.query_endpoint)
 
     @staticmethod
-    def change_to_meta_url(url: str) -> str:
+    def create_metadata_url(url: str) -> str:
+        """Creates url to fetch metadata to.
+
+        Args:
+            url (str): The url to transform to metadata url.
+
+        Returns:
+            meta_url (str): The url to fetch metadata with.
+        """
         start = url.split(".svc")[0]
         url_raw = url.split("?")[0]
         end = url_raw.split("/")[-1]
         meta_url = start + ".svc/$metadata?entityset=" + end
         return meta_url
 
-    def _to_records_report(self, url: str) -> List[Dict[str, Any]]:
-        """Fetches the data from source with report_url.
-        At first enter url is from function parameter. At next is generated automaticaly.
+    def _extract_records_from_report_url(self, report_url: str) -> List[Dict[str, Any]]:
+        """Fetches report_url to exctract records.
+
+        Args:
+            report_url (str): The url to extract records from.
+
+        Returns:
+            records (List[Dict[str, Any]]): The records extracted from url.
         """
         records = []
-        while url:
-            response = self.get_response(url, params=self.params)
+        while report_url:
+            response = self.get_response(report_url, params=self.params)
             response_json = response.json()
-            new_records = self.response_to_entity_list(response_json, url)
+            new_records = self.get_entities(response_json, report_url)
             records.extend(new_records)
 
-            url = response_json["d"].get("__next")
+            report_url = response_json["d"].get("__next")
 
         return records
 
-    def _to_records_other(self, url: str) -> List[Dict[str, Any]]:
-        """Fetches the data from source with url.
-        At first enter url is a join of url and endpoint passed into this function.
-        At any other entering it bring `__next_url` adress, generated automatically, but without params.
+    def _extract_records_from_url(self, url: str) -> List[Dict[str, Any]]:
+        """Fetches url to exctract records.
+
+        Args:
+            url (str): The url to extract records from.
+
+        Returns:
+            records (List[Dict[str, Any]]): The records extracted from url.
         """
         tmp_full_url = deepcopy(url)
         tmp_params = deepcopy(self.params)
@@ -124,30 +139,33 @@ class CloudForCustomers(Source):
             records.extend(new_records)
         return records
 
-    def to_records(self) -> List[Dict[str, Any]]:
-        """
-        Download a list of entities in the records format
+    def extract_records(self) -> List[Dict[str, Any]]:
+        """Downloads records from url or report_url if present.
+
+        Returns:
+            records (List[Dict[str, Any]]): The records extracted from url.
         """
         if self.is_report:
-            url = self.report_url
-            return self._to_records_report(url=url)
+            return self._extract_records_from_report_url(url=self.report_url)
         else:
-            url = self.full_url
-            return self._to_records_other(url=url)
+            return self._extract_records_from_url(url=self.full_url)
 
-    def response_to_entity_list(self, dirty_json: Dict[str, Any], url: str) -> List:
+    def get_entities(
+        self, dirty_json: Dict[str, Any], url: str
+    ) -> List[Dict[str, Any]]:
+        """Extracts entities from request.json().
 
-        """Changing request json response to list.
         Args:
-            dirty_json (Dict[str, Any]): json from response.
-            url (str): the URL which trying to fetch metadata.
+            dirty_json (Dict[str, Any]): request.json() dict from response to API.
+            url (str): The url to fetch metadata from.
+
         Returns:
-            List: List of dictionaries.
+            entities (List[Dict[str, Any]]): list filled with entities.
         """
 
-        metadata_url = self.change_to_meta_url(url)
-        column_maper_dict = self.map_columns(metadata_url)
-        entity_list = []
+        metadata_url = self.create_metadata_url(url)
+        column_maper_dict = self.get_mapping_property_to_sap_level(metadata_url)
+        entities = []
         for element in dirty_json["d"]["results"]:
             new_entity = {}
             for key, object_of_interest in element.items():
@@ -158,17 +176,19 @@ class CloudForCustomers(Source):
                             new_entity[new_key] = object_of_interest
                         else:
                             new_entity[key] = object_of_interest
-            entity_list.append(new_entity)
-        return entity_list
+            entities.append(new_entity)
+        return entities
 
-    def map_columns(self, url: str = None) -> Dict[str, str]:
+    def get_mapping_property_to_sap_level(self, url: str = None) -> Dict[str, str]:
+        """Creates Dict mapping property Name to value of sap label.
 
-        """Fetch metadata from url used to column name map.
         Args:
-            url (str, optional): the URL which trying to fetch metadata. Defaults to None.
+            url (str, optional): The url to fetch metadata from.
+
         Returns:
-            Dict[str, str]: Property Name as key mapped to the value of sap label.
+            Dict[str, str]: Property Name to value of sap label Dict.
         """
+
         column_mapping = {}
         if url:
             username = self.credentials.get("username")
@@ -187,14 +207,13 @@ class CloudForCustomers(Source):
     def get_response(
         self, url: str, params: Dict[str, Any] = None, timeout: tuple = (3.05, 60 * 30)
     ) -> requests.models.Response:
-        """Handle and raise Python exceptions during request. Using of url and service endpoint needs additional parameters
-           stores in params. report_url contain additional params in their structure.
-           In report_url scenario it can not contain params parameter.
+        """Handles requests.
+
         Args:
-            url (str): the URL which trying to connect.
+            url (str): The url to request to.
             params (Dict[str, Any], optional): Additional parameters like filter, used in case of normal url.
-            Defaults to None used in case of report_url, which can not contain params.
-            timeout (tuple, optional): the request times out. Defaults to (3.05, 60 * 30).
+            timeout (tuple, optional): the request time-out. Default is (3.05, 60 * 30).
+
         Returns:
             requests.models.Response
         """
@@ -208,21 +227,23 @@ class CloudForCustomers(Source):
         )
         return response
 
-    def to_df(
+    def records_to_df(
         self,
         fields: List[str] = None,
-        if_empty: str = "warn",
         dtype: dict = None,
         **kwargs,
     ) -> pd.DataFrame:
         """Returns records in a pandas DataFrame.
+
         Args:
-            fields (List[str], optional): List of fields to put in DataFrame. Defaults to None.
-            dtype (dict, optional): The dtypes to use in the DataFrame. We catch this parameter here since
-            pandas doesn't support passing dtypes (eg. as a dict) to the constructor.
+            fields (List[str], optional): List of fields to put in DataFrame.
+            dtype (dict, optional): The dtypes to use in the DataFrame.
             kwargs: The parameters to pass to DataFrame constructor.
+
+        Returns:
+            df (pandas.DataFrmae): All records.
         """
-        records = self.to_records()
+        records = self.extract_records()
         df = pd.DataFrame(data=records, **kwargs)
         if dtype:
             df = df.astype(dtype)
