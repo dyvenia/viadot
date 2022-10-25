@@ -14,9 +14,9 @@ from .base import Source
 
 
 class CloudForCustomersCredentials(BaseModel):
-    site: str  # Path to cloud for customers website (e.g : {tenant_name}.cloudforcustomers.com)
-    username: str  # CloudForCustomers username (e.g username@{tenant_name}.com)
-    password: str  # CloudForCustomers password
+    site: str  # Path to cloud for customers website (e.g : {tenant_name}.cloudforcustomers.com).
+    username: str  # CloudForCustomers username (e.g username@{tenant_name}.com).
+    password: str  # CloudForCustomers password.
 
 
 class CloudForCustomers(Source):
@@ -212,10 +212,10 @@ class CloudForCustomers(Source):
         Args:
             url (str): The url to request to.
             params (Dict[str, Any], optional): Additional parameters like filter, used in case of normal url.
-            timeout (tuple, optional): the request time-out. Default is (3.05, 60 * 30).
+            timeout (tuple, optional): The request time-out. Default is (3.05, 60 * 30).
 
         Returns:
-            requests.models.Response
+            requests.models.Response.
         """
         username = self.credentials.get("username")
         pw = self.credentials.get("password")
@@ -241,7 +241,7 @@ class CloudForCustomers(Source):
             kwargs: The parameters to pass to DataFrame constructor.
 
         Returns:
-            df (pandas.DataFrmae): All records.
+            df (pandas.DataFrmae): DataFrame containing all records.
         """
         records = self.extract_records()
         df = pd.DataFrame(data=records, **kwargs)
