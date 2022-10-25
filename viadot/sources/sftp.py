@@ -135,7 +135,7 @@ class SftpConnector(Source):
         elif Path(file_name).suffix == ".tsv":
             df = pd.read_csv(byte_file, sep="\t", usecols=columns, **kwargs)
 
-        elif Path(file_name).suffix == ".xls" or Path(file_name).suffix == ".xlsx":
+        elif Path(file_name).suffix in [".xls", ".xlsx", ".xlsm"]:
             df = pd.read_excel(byte_file, usecols=columns, **kwargs)
 
         elif Path(file_name).suffix == ".json":
@@ -151,7 +151,9 @@ class SftpConnector(Source):
             df = pd.read_hdf(byte_file, **kwargs)
 
         else:
-            raise ValueError(f"Unsupported filetype: {file_name}")
+            raise ValueError(
+                f"Not able to read the file {Path(file_name).name}, unsupported filetype: {Path(file_name).suffix}"
+            )
 
         return df
 
