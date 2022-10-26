@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Changed `duckdb` version to `0.5.1`
 
 ### Fixed
+- Fixed incorrect `if_exists="delete"` handling in `DuckDB.create_table_from_parquet()`
 - Fixed `test_duckdb_to_sql_server.py` tests - revert to a previous version
 - Removed `test__check_if_schema_exists()` test
 
