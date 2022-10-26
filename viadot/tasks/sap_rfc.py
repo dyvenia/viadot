@@ -20,6 +20,7 @@ class SAPRFCToDF(Task):
         credentials: dict = None,
         max_retries: int = 3,
         retry_delay: timedelta = timedelta(seconds=10),
+        timeout: int = 3600,
         *args,
         **kwargs,
     ):
@@ -59,6 +60,7 @@ class SAPRFCToDF(Task):
             name="sap_rfc_to_df",
             max_retries=max_retries,
             retry_delay=retry_delay,
+            timeout=timeout,
             *args,
             **kwargs,
         )
