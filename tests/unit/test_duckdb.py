@@ -2,6 +2,7 @@ import os
 
 import pytest
 import pandas as pd
+
 from duckdb import BinderException
 from viadot.sources.duckdb import DuckDB
 
@@ -91,4 +92,38 @@ def test__check_if_table_exists(duckdb, TEST_PARQUET_FILE_PATH):
         schema=SCHEMA, table=TABLE, path=TEST_PARQUET_FILE_PATH
     )
     assert duckdb._check_if_table_exists(TABLE, schema=SCHEMA)
+    duckdb.drop_table(TABLE, schema=SCHEMA)
+
+
+def test_run_query_with_comments(duckdb, TEST_PARQUET_FILE_PATH):
+    duckdb.create_table_from_parquet(
+        schema=SCHEMA, table=TABLE, path=TEST_PARQUET_FILE_PATH
+    )
+    output1 = duckdb.run(
+        query=f""" 
+        --test 
+    SELECT * FROM {SCHEMA}.{TABLE}
+    """,
+        fetch_type="dataframe",
+    )
+    assert isinstance(output1, pd.DataFrame)
+
+    output2 = duckdb.run(
+        query=f""" 
+    SELECT * FROM {SCHEMA}.{TABLE}
+    WHERE country = 'italy'
+    """,
+        fetch_type="dataframe",
+    )
+    assert isinstance(output2, pd.DataFrame)
+
+    output3 = duckdb.run(
+        query=f""" 
+    SELECT * FROM {SCHEMA}.{TABLE}
+        ---test
+    """,
+        fetch_type="dataframe",
+    )
+    assert isinstance(output3, pd.DataFrame)
+
     duckdb.drop_table(TABLE, schema=SCHEMA)

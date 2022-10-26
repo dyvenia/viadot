@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 ### Added
+- Added support for SQL queries with comments to `DuckDB` source
+- Added "WITH" to query keywords in `DuckDB` source
 
 ### Changed
 - Changed `duckdb` version to `0.5.1`
