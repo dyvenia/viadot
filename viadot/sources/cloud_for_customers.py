@@ -227,7 +227,7 @@ class CloudForCustomers(Source):
         )
         return response
 
-    def records_to_df(
+    def to_df(
         self,
         fields: List[str] = None,
         dtype: dict = None,
