@@ -1,5 +1,6 @@
 import logging
 import re
+import subprocess
 from datetime import datetime, timezone
 from typing import Any, Dict, List, Literal, Union
 
@@ -16,6 +17,42 @@ from urllib3.exceptions import ProtocolError
 
 from .exceptions import APIError
 from .signals import SKIP
+
+import json
+
+from prefect_azure import AzureKeyVaultSecretReference
+
+
+def get_credentials(credentials_block_name: str) -> dict:
+    """
+    Retrieve credentials from Azure Key Vault.
+
+    Args:
+        credentials_block_name (str): The name of the Prefect
+            `AzureKeyVaultSecretReference` block document, which will
+            fetch the secret from Azure Key Vault.
+
+    Returns:
+        dict: A dictionary containing the credentials.
+    """
+
+    if credentials_block_name is None:
+        return
+
+    try:
+        credentials = json.loads(
+            AzureKeyVaultSecretReference.load(credentials_block_name).get_secret()
+        )
+    except ValueError:
+        # Prefect does not allow upper case letters for blocks,
+        # so some names might be lowercased versions of the original
+        credentials_block_name_lowercase = credentials_block_name.lower()
+        credentials = json.loads(
+            AzureKeyVaultSecretReference.load(
+                credentials_block_name_lowercase
+            ).get_secret()
+        )
+    return credentials
 
 
 def slugify(name: str) -> str:
@@ -71,6 +108,8 @@ def handle_response(
     except Exception as e:
         raise APIError("Unknown error.") from e
 
+    return response
+
 
 def handle_api_response(
     url: str,
@@ -79,20 +118,22 @@ def handle_api_response(
     headers: Dict[str, Any] = None,
     timeout: tuple = (3.05, 60 * 30),
 ) -> requests.models.Response:
-    """Handle and raise Python exceptions during request with retry strategy for specyfic status.
+    """
+    Handle an HTTP response by applying retries and handling some common response
+    codes.
 
     Args:
         url (str): the URL which trying to connect.
         auth (tuple, optional): authorization information. Defaults to None.
-        params (Dict[str, Any], optional): the request params also includes parameters such as the content type. Defaults to None.
+        params (Dict[str, Any], optional): the request parameters. Defaults to None.
         headers: (Dict[str, Any], optional): the request headers. Defaults to None.
         timeout (tuple, optional): the request times out. Defaults to (3.05, 60 * 30).
 
     Raises:
-        ReadTimeout: stop waiting for a response after a given number of seconds with the timeout parameter.
-        HTTPError: exception that indicates when HTTP status codes returned values different than 200.
-        ConnectionError: exception that indicates when client is unable to connect to the server.
-        APIError: defined by user.
+        ReadTimeout: stop waiting for a response after `timeout` seconds.
+        HTTPError: The raised HTTP error.
+        ConnectionError: Raised when the client is unable to connect to the server.
+        APIError: viadot's generic API error.
 
     Returns:
         requests.models.Response
@@ -100,23 +141,26 @@ def handle_api_response(
     response = get_response(
         url=url, auth=auth, params=params, headers=headers, timeout=timeout
     )
-    response_handled = handle_response(response)
 
+    response_handled = handle_response(response, url)
     return response_handled
 
 
 def get_sql_server_table_dtypes(
-    table, con: pyodbc.Connection, schema: str = None
+    table: str, con: pyodbc.Connection, schema: str = None
 ) -> dict:
-    """Get column names and types from a SQL Server database table.
+    """
+    Get column names and types from a SQL Server database table.
 
     Args:
-        table (_type_): The table for which to fetch dtypes.
-        con (pyodbc.Connection): The connection to the database where the table is located.
-        schema (str, optional): The schema where the table is located. Defaults to None.
+        table (str): The table for which to fetch dtypes.
+        con (pyodbc.Connection): The connection to the database where the table
+            is located.
+        schema (str, optional): The schema where the table is located. Defaults
+            to None.
 
     Returns:
-        dict: A dictionary of the form {column_name: dtype, column_name2: dtype2, ...}.
+        dict: A dictionary of the form {column_name: dtype, ...}.
     """
 
     query = f"""
@@ -171,11 +215,11 @@ def _cast_df_cols(df):
 
 
 def build_merge_query(
-    stg_schema: str,
-    stg_table: str,
     table: str,
     primary_key: str,
     source: Union[pyodbc.Connection, "Databricks"],
+    stg_schema: str = None,
+    stg_table: str = "stg",
     schema: str = None,
     df: spark.DataFrame = None,
 ) -> str:
@@ -185,41 +229,39 @@ def build_merge_query(
     - merging on a single column, which has the same name in both tables
 
     Args:
-        stg_schema (str): The schema where the staging table is located.
-        stg_table (str): The table with new/updated data.
-        schema (str): The schema where the table is located.
         table (str): The table to merge into.
         primary_key (str): The column on which to merge.
-        source (pyodbc.Connection or Databricks): Either the connection to the database or the Databricks
-        object used to connect to the Spark cluster on which the query will be executed.
-        df (Optional): A Spark DataFrame whose data will be upserted to a table.
+        source (pyodbc.Connection or Databricks): Either the connection to the database
+            or the Databricks object used to connect to the Spark cluster on which
+            the query will be executed.
+        stg_schema (str, Optional): The schema where the staging table is located.
+        stg_table (str, Optional): The table with new/updated data.
+        schema (str, Optional): The schema where the table is located.
+        df (spark.DataFrame, Optional): A Spark DataFrame whose data will be upserted
+            to a table.
     """
     fqn = f"{schema}.{table}"
+    stg_fqn = f"{stg_schema}.{stg_table}" if stg_schema else {stg_table}
 
     if schema is None:
         schema = source.DEFAULT_SCHEMA
 
-    # Get column names
-    columns_query_result = _get_table_columns(schema, table, source)
-
-    # If user is passing a DataFrame and is using Databricks as a source, it means they want to merge the
-    # DataFrame into an existing table. Otherwise, it means they want to merge two existing tables.
+    # The `DataFrame` *is* the staging table.
     if df:
-        df.createOrReplaceTempView("stg")
-        # Since we're using a temporary view, we cannot/don't need to use a schema name and can just simply use the view's name, stg.
-        stg_fqn = ""
-    else:
-        stg_fqn = f"{stg_schema}.{stg_table}"
+        df.createOrReplaceTempView(stg_fqn)
 
+    # Get column names
+    columns_query_result = _get_table_columns(schema=schema, table=table, source=source)
     columns = [tup for tup in columns_query_result]
-    columns_stg_fqn = [f"stg.{col}" for col in columns]
+
+    columns_stg_fqn = [f"{stg_table}.{col}" for col in columns]
 
     # Build merge query
-    update_pairs = [f"existing.{col} = stg.{col}" for col in columns]
+    update_pairs = [f"existing.{col} = {stg_table}.{col}" for col in columns]
     merge_query = f"""
     MERGE INTO {fqn} existing
-        USING {stg_fqn} stg
-        ON stg.{primary_key} = existing.{primary_key}
+        USING {stg_fqn} {stg_table}
+        ON {stg_table}.{primary_key} = existing.{primary_key}
         WHEN MATCHED
             THEN UPDATE SET {", ".join(update_pairs)}
         WHEN NOT MATCHED
@@ -262,7 +304,8 @@ def gen_bulk_insert_query_from_df(
 
     Args:
         df (pd.DataFrame): The DataFrame which data should be put into the INSERT query.
-        table_fqn (str): The fully qualified name (schema.table) of the table to be inserted into.
+        table_fqn (str): The fully qualified name (schema.table) of the table
+            to be inserted into.
 
     Returns:
         str: A bulk insert query that will insert all data from `df` into `table_fqn`.
@@ -349,7 +392,8 @@ def handle_if_empty(
     Task for handling empty file.
     Args:
         if_empty (Literal, optional): What to do if file is empty. Defaults to "warn".
-        message (str, optional): Massage to show in warning and error messages. Defaults to None.
+        message (str, optional): Massage to show in warning and error messages.
+            Defaults to None.
     Raises:
         ValueError: If `if_empty` is set to `fail`.
         SKIP: If `if_empty` is set to `skip`.
@@ -377,4 +421,18 @@ def cleanup_df(df: pd.DataFrame) -> pd.DataFrame:
 
 def add_metadata_columns(df: pd.DataFrame) -> pd.DataFrame:
     df["_viadot_downloaded_at_utc"] = datetime.now(timezone.utc).replace(microsecond=0)
+    return df
+
+
+def call_shell(command):
+    try:
+        result = subprocess.check_output(command, shell=True)
+    except subprocess.CalledProcessError as e:
+        # TODO: read the error message fro mstdout and pass here
+        raise ValueError("Generating the file failed.") from e
+    return result
+
+
+def df_snakecase_column_names(df: pd.DataFrame) -> pd.DataFrame:
+    df.columns = df.columns.str.strip().str.replace(" ", "_").str.lower()
     return df
