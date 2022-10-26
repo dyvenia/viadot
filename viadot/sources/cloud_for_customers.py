@@ -14,7 +14,6 @@ from .base import Source
 
 
 class CloudForCustomersCredentials(BaseModel):
-    site: str  # Path to cloud for customers website (e.g : {tenant_name}.cloudforcustomers.com).
     username: str  # CloudForCustomers username (e.g username@{tenant_name}.com).
     password: str  # CloudForCustomers password.
 
@@ -51,7 +50,6 @@ class CloudForCustomers(Source):
             raise CredentialError("Please specify the credentials.")
         CloudForCustomersCredentials(**credentials)  # validate the credentials schema
         super().__init__(*args, credentials=credentials, **kwargs)
-        self.logger.info(credentials)
         ## End Credentials logic
 
         self.url = url or self.credentials.get("server")
@@ -127,7 +125,7 @@ class CloudForCustomers(Source):
             response_json = response.json()
             if isinstance(response_json["d"], dict):
                 # ODATA v2+ API
-                new_records = response_json["d"].get("results")
+                new_records = response_json["d"].get("EntitySets")
                 url = response_json["d"].get("__next", None)
             else:
                 # ODATA v1
@@ -227,7 +225,7 @@ class CloudForCustomers(Source):
         )
         return response
 
-    def records_to_df(
+    def to_df(
         self,
         fields: List[str] = None,
         dtype: dict = None,
