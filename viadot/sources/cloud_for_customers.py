@@ -227,7 +227,11 @@ class CloudForCustomers(Source):
         )
         return response
 
+<<<<<<< HEAD
     def to_df(
+=======
+    def records_to_df(
+>>>>>>> 75b99d5440c999756a1c49a3447e3dd4aee17ea8
         self,
         fields: List[str] = None,
         dtype: dict = None,
