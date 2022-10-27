@@ -396,5 +396,5 @@ def call_shell(command):
 
 
 def df_snakecase_column_names(df: pd.DataFrame) -> pd.DataFrame:
-    df.columns = df.columns.str.strip().str.replace(" ", "_").str.lower()
+    df.columns = df.columns.str.strip().str.replace(" ", "_").str.replace("-", "_").str.lower()
     return df
