@@ -18,6 +18,15 @@ from urllib3.exceptions import ProtocolError
 from .exceptions import APIError
 from .signals import SKIP
 
+from prefect.tasks.secrets import PrefectSecret
+from viadot.config import local_config
+from prefect.utilities import logging
+
+import prefect
+import json
+from .exceptions import CredentialError
+
+
 logger = logging.get_logger(__name__)
 
 
@@ -400,3 +409,38 @@ def check_if_empty_file(
     elif os.path.splitext(path)[1] == ".parquet":
         if pyarrow.parquet.read_metadata(path).num_columns == 0:
             handle_if_empty_file(if_empty, message=f"Input file - '{path}' is empty.")
+
+
+def credentials_loader(credentials_secret: str, vault_name: str = None) -> dict:
+    """
+    Function that gets credentials from azure Key Vault or PrefectSecret or from prefect local config.
+    Args:
+        credentials_secret (str): The name of the Azure Key Vault secret containing a dictionary
+        with credentials.
+        vault_name (str, optional): The name of the vault from which to obtain the secret. Defaults to None.
+    Returns: Credentials
+    """
+    if credentials_secret:
+        try:
+            credentials = local_config[credentials_secret]
+            logger.info("Successfully loaded credentials from local config.")
+        except (ValueError, KeyError):
+            try:
+                azure_secret_task = AzureKeyVaultSecret()
+                credentials_str = azure_secret_task.run(
+                    secret=credentials_secret, vault_name=vault_name
+                )
+                credentials = json.loads(credentials_str)
+                logger.info("Successfully loaded credentials from Azure Key Vault.")
+            except Exception:
+                try:
+                    credentials = PrefectSecret(credentials_secret).run()
+                    logger.info("Successfully loaded credentials from PrefectSecret.")
+                except Exception:
+                    raise CredentialError(
+                        "Provided credentials secret not found in resources."
+                    )
+    else:
+        raise CredentialError("Credentials secret not provided.")
+
+    return credentials
