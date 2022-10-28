@@ -604,9 +604,10 @@ class SAPRFC(Source):
         else:
             SEPARATORS = [sep]
 
-        records = None
+        # emptiness = False
         for sep in SEPARATORS:
             logger.info(f"Checking if separator '{sep}' works.")
+            df = pd.DataFrame(columns=columns)
             df = pd.DataFrame(columns=columns)
             self._query["DELIMITER"] = sep
             chunk = 1
@@ -614,28 +615,70 @@ class SAPRFC(Source):
                 logger.info(f"Downloading {chunk} data chunk...")
                 self._query["FIELDS"] = fields
                 try:
-                    self._query["FIELDS"] = fields
-                    try:
-                        response = self.call(func, **params)
-                    except ABAPApplicationError as e:
-                        if e.key == "DATA_BUFFER_EXCEEDED":
-                            raise DataBufferExceeded(
-                                "Character limit per row exceeded. Please select fewer columns."
-                            )
-                        else:
-                            raise e
-                    record_key = "WA"
-                    data_raw = response["DATA"]
-                    records = [row[record_key].split(sep) for row in data_raw]
-                    df[fields] = records
-                    chunk += 1
-                except ValueError:
-                    df = pd.DataFrame()
-                    continue
-        if not records:
-            logger.warning("Empty output was generated.")
-            columns = []
-        df.columns = columns
+                    response = self.call(func, **params)
+                except ABAPApplicationError as e:
+                    if e.key == "DATA_BUFFER_EXCEEDED":
+                        raise DataBufferExceeded(
+                            "Character limit per row exceeded. Please select fewer columns."
+                        )
+                    else:
+                        raise e
+                record_key = "WA"
+                data_raw = np.array(response["DATA"])
+
+                if i == 0:
+                    row_index = data_raw.shape[0]
+                    if row_index == 0:
+                        logger.warning(
+                            f"Empty output was generated for chunk {chunk} in columns {fields}."
+                        )
+                        df[fields] = []
+                        continue
+                elif data_raw.shape[0] != row_index:
+                    data_raw = data_raw[:row_index]
+                    logger.warning(
+                        f"New rows were generated during the execution of the script. The table is truncated to the number of rows for the first chunk"
+                    )
+
+                # first we identify where the data has an extra sep due to text
+                sep_counts = np.array([], dtype=int)
+                for row in data_raw:
+                    sep_counts = np.append(sep_counts, row[record_key].count(f"{sep}"))
+
+                no_sep_index = np.argwhere(sep_counts != len(fields) - 1)
+                no_sep_index = no_sep_index.reshape(
+                    len(no_sep_index),
+                )
+                sep_index = np.argwhere(sep_counts == len(fields) - 1)
+                sep_index = sep_index.reshape(
+                    len(sep_index),
+                )
+
+                # with good rows we obtain the positions where the "sep"s of columns are placed in the string
+                sep_index = np.array([], dtype=int)
+                for data in data_raw[sep_index]:
+                    sep_index = np.append(
+                        sep_index, np.where(np.array([*data[record_key]]) == f"{sep}")
+                    )
+                sep_index = np.unique(sep_index)
+
+                # now we replace bad "sep" by another character "-"
+                for no_sep in no_sep_index:
+                    print(data_raw[no_sep][record_key])
+                    split_array = np.array([*data_raw[no_sep][record_key]])
+                    position = np.where(split_array == f"{sep}")[0]
+                    index_sep_index = np.argwhere(np.in1d(position, sep_index) == False)
+                    index_sep_index = index_sep_index.reshape(
+                        len(index_sep_index),
+                    )
+                    split_array[position[index_sep_index]] = "-"
+                    data_raw[no_sep][record_key] = "".join(split_array)
+                    print(data_raw[no_sep][record_key])
+
+                records = np.array([row[record_key].split(sep) for row in data_raw])
+
+                df[fields] = records
+                chunk += 1
 
         if self.client_side_filters:
             filter_query = self._build_pandas_filter_query(self.client_side_filters)
