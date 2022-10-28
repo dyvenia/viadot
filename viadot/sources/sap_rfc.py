@@ -1,4 +1,4 @@
-import re
+import re, sys
 from prefect.utilities import logging
 from collections import OrderedDict
 from typing import List, Literal, Union
@@ -609,6 +609,7 @@ class SAPRFC(Source):
         else:
             SEPARATORS = [sep]
 
+        emptiness = False
         for sep in SEPARATORS:
             logger.info(f"Checking if separator '{sep}' works.")
             if isinstance(self.rfc_reference_column[0], str):
@@ -618,8 +619,7 @@ class SAPRFC(Source):
                 df = pd.DataFrame()
             self._query["DELIMITER"] = sep
             chunk = 1
-            row_index = 0
-            for fields in fields_lists:
+            for i, fields in enumerate(fields_lists):
                 logger.info(f"Downloading {chunk} data chunk...")
                 self._query["FIELDS"] = fields
                 try:
@@ -634,30 +634,63 @@ class SAPRFC(Source):
                 record_key = "WA"
                 data_raw = np.array(response["DATA"])
 
-                # if the reference columns are provided not necessary to remove any extra row.
-                if not isinstance(self.rfc_reference_column[0], str):
-                    row_index, data_raw, cont = detect_extra_rows(
-                        row_index, data_raw, chunk, fields
+                # check the numbers of rows for the new chunk
+                if i == 0:
+                    index = data_raw.shape[0]
+                    if index > 0:
+                        emptiness = True
+                    else:
+                        logger.warning(f"Empty output was generated for chunk {chunk}.")
+                else:
+                    data_raw = data_raw[:index]
+                    logger.warning(
+                        f"New rows were generated during the execution of the script. The table is truncated to the number of rows for the first chunk"
                     )
-                    if cont:
-                        continue
 
-                data_raw = catch_extra_separators(
-                    data_raw, record_key, sep, fields, self.replacement
+                # first we identify where the data has an extra sep due to text
+                counts = np.array([], dtype=int)
+                for row in data_raw:
+                    counts = np.append(counts, row[record_key].count(f"{sep}"))
+
+                bad_index = np.argwhere(counts != len(fields) - 1)
+                bad_index = bad_index.reshape(
+                    len(bad_index),
                 )
+                good_index = np.argwhere(counts == len(fields) - 1)
+                good_index = good_index.reshape(
+                    len(good_index),
+                )
+
+                # with good rows we obtain the positions where the "sep"s of columns are placed in the string
+                sep_index = np.array([], dtype=int)
+                for dat in data_raw[good_index]:
+                    sep_index = np.append(
+                        sep_index, np.where(np.array([*dat[record_key]]) == f"{sep}")
+                    )
+                sep_index = np.unique(sep_index)
+
+                # now we replace bad "sep" by another character "-"
+                for b_index in bad_index:
+                    print(data_raw[b_index][record_key])
+                    split_array = np.array([*data_raw[b_index][record_key]])
+                    bad_pos = np.where(split_array == f"{sep}")[0]
+                    inde = np.argwhere(np.in1d(bad_pos, sep_index) == False)
+                    inde = inde.reshape(
+                        len(inde),
+                    )
+                    split_array[bad_pos[inde]] = "-"
+                    data_raw[b_index][record_key] = "".join(split_array)
+                    print(data_raw[b_index][record_key])
 
                 records = np.array([row[record_key].split(sep) for row in data_raw])
 
-                if (
-                    isinstance(self.rfc_reference_column[0], str)
-                    and not list(df.columns) == fields
-                ):
-                    df_tmp = pd.DataFrame(columns=fields)
-                    df_tmp[fields] = records
-                    df = pd.merge(df, df_tmp, on=self.rfc_reference_column, how="outer")
-                else:
-                    df[fields] = records
+                df[fields] = records
                 chunk += 1
+
+        if not emptiness:
+            logger.warning("Some empty output was generated.")
+            columns = []
+        df.columns = columns
 
         if self.client_side_filters:
             filter_query = self._build_pandas_filter_query(self.client_side_filters)
