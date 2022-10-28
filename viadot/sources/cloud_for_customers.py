@@ -22,7 +22,7 @@ class CloudForCustomers(Source):
     """Cloud for Customers connector to fetch Odata source.
 
     Args:
-        url (str, optional): The API url.
+        url (str, optional): The URL to the C4C API. E.g 'https://my336539.crm.ondemand.com/sap/c4c/odata/v1/c4codataapi/'.
         endpoint (str, optional): The API endpoint.
         report_url (str, optional): The API url in case of prepared report.
         params (Dict[str, Any], optional): Query parameters.
@@ -125,16 +125,19 @@ class CloudForCustomers(Source):
             response_json = response.json()
             if isinstance(response_json["d"], dict):
                 # ODATA v2+ API
-                new_records = response_json["d"].get("EntitySets")
+                new_records = response_json["d"].get("results")
                 url = response_json["d"].get("__next", None)
             else:
                 # ODATA v1
                 new_records = response_json["d"]
                 url = response_json.get("__next", None)
+
             # prevents concatenation of previous url's with params with the same params
             tmp_params = None
             tmp_full_url = url
-            records.extend(new_records)
+
+            if hasattr(new_records, "__iter__"):
+                records.extend(new_records)
         return records
 
     def extract_records(self) -> List[Dict[str, Any]]:
