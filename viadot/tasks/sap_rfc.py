@@ -15,6 +15,7 @@ class SAPRFCToDF(Task):
         self,
         query: str = None,
         sep: str = None,
+        replacement: str = "-",
         func: str = None,
         rfc_total_col_width_character_limit: int = 400,
         credentials: dict = None,
@@ -42,6 +43,8 @@ class SAPRFCToDF(Task):
             query (str, optional): The query to be executed with pyRFC.
             sep (str, optional): The separator to use when reading query results. If not provided,
             multiple options are automatically tried. Defaults to None.
+            replacement (str, optional): In case of sep is on a columns, set up a new character to replace
+                inside the string to avoid flow breakdowns. Defaults to "-".
             func (str, optional): SAP RFC function to use. Defaults to None.
             rfc_total_col_width_character_limit (int, optional): Number of characters by which query will be split in chunks
             in case of too many columns for RFC function. According to SAP documentation, the limit is
@@ -52,6 +55,7 @@ class SAPRFCToDF(Task):
         """
         self.query = query
         self.sep = sep
+        self.replacement = replacement
         self.credentials = credentials
         self.func = func
         self.rfc_total_col_width_character_limit = rfc_total_col_width_character_limit
@@ -68,6 +72,7 @@ class SAPRFCToDF(Task):
     @defaults_from_attrs(
         "query",
         "sep",
+        "replacement",
         "func",
         "rfc_total_col_width_character_limit",
         "credentials",
@@ -78,6 +83,7 @@ class SAPRFCToDF(Task):
         self,
         query: str = None,
         sep: str = None,
+        replacement: str = "-",
         credentials: dict = None,
         func: str = None,
         rfc_total_col_width_character_limit: int = None,
@@ -90,6 +96,8 @@ class SAPRFCToDF(Task):
             query (str, optional): The query to be executed with pyRFC.
             sep (str, optional): The separator to use when reading query results. If not provided,
             multiple options are automatically tried. Defaults to None.
+            replacement (str, optional): In case of sep is on a columns, set up a new character to replace
+                inside the string to avoid flow breakdowns. Defaults to "-".
             func (str, optional): SAP RFC function to use. Defaults to None.
             rfc_total_col_width_character_limit (int, optional): Number of characters by which query will be split in chunks
                 in case of too many columns for RFC function. According to SAP documentation, the limit is
@@ -100,6 +108,7 @@ class SAPRFCToDF(Task):
             raise ValueError("Please provide the query.")
         sap = SAPRFC(
             sep=sep,
+            replacement=replacement,
             credentials=credentials,
             func=func,
             rfc_total_col_width_character_limit=rfc_total_col_width_character_limit,

@@ -1,4 +1,4 @@
-import re, sys
+import re
 from prefect.utilities import logging
 from collections import OrderedDict
 from typing import List, Literal
@@ -104,6 +104,7 @@ class SAPRFC(Source):
     def __init__(
         self,
         sep: str = None,
+        replacement: str = "-",
         func: str = "RFC_READ_TABLE",
         rfc_total_col_width_character_limit: int = 400,
         *args,
@@ -114,6 +115,8 @@ class SAPRFC(Source):
         Args:
             sep (str, optional): Which separator to use when querying SAP. If not provided,
             multiple options are automatically tried.
+            replacement (str, optional): In case of sep is on a columns, set up a new character to replace
+                inside the string to avoid flow breakdowns. Defaults to "-".
             func (str, optional): SAP RFC function to use. Defaults to "RFC_READ_TABLE".
             rfc_total_col_width_character_limit (int, optional): Number of characters by which query will be split in chunks
             in case of too many columns for RFC function. According to SAP documentation, the limit is
@@ -133,6 +136,7 @@ class SAPRFC(Source):
         super().__init__(*args, credentials=credentials, **kwargs)
 
         self.sep = sep
+        self.replacement = replacement
         self.client_side_filters = None
         self.func = func
         self.rfc_total_col_width_character_limit = rfc_total_col_width_character_limit
@@ -519,25 +523,31 @@ class SAPRFC(Source):
                 )
 
                 # with good rows we obtain the positions where the "sep"s of columns are placed in the string
-                sep_index = np.array([], dtype=int)
+                pos_sep_index = np.array([], dtype=int)
                 for data in data_raw[sep_index]:
-                    sep_index = np.append(
-                        sep_index, np.where(np.array([*data[record_key]]) == f"{sep}")
+                    pos_sep_index = np.append(
+                        pos_sep_index,
+                        np.where(np.array([*data[record_key]]) == f"{sep}"),
                     )
-                sep_index = np.unique(sep_index)
+                pos_sep_index = np.unique(pos_sep_index)
 
-                # now we replace bad "sep" by another character "-"
+                # now we replace bad "sep" by another character "-" (self.replacement, by default)
                 for no_sep in no_sep_index:
-                    print(data_raw[no_sep][record_key])
+                    logger.warning(
+                        "A separator character was found and replaced inside a string text that could produce future errors:"
+                    )
+                    logger.warning("\n" + data_raw[no_sep][record_key])
                     split_array = np.array([*data_raw[no_sep][record_key]])
                     position = np.where(split_array == f"{sep}")[0]
-                    index_sep_index = np.argwhere(np.in1d(position, sep_index) == False)
+                    index_sep_index = np.argwhere(
+                        np.in1d(position, pos_sep_index) == False
+                    )
                     index_sep_index = index_sep_index.reshape(
                         len(index_sep_index),
                     )
-                    split_array[position[index_sep_index]] = "-"
+                    split_array[position[index_sep_index]] = self.replacement
                     data_raw[no_sep][record_key] = "".join(split_array)
-                    print(data_raw[no_sep][record_key])
+                    logger.warning("\n" + data_raw[no_sep][record_key])
 
                 records = np.array([row[record_key].split(sep) for row in data_raw])
 

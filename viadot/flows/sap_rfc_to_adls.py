@@ -13,6 +13,7 @@ class SAPRFCToADLS(Flow):
         name: str,
         query: str = None,
         rfc_sep: str = None,
+        rfc_replacement: str = "-",
         func: str = "RFC_READ_TABLE",
         rfc_total_col_width_character_limit: int = 400,
         sap_credentials: dict = None,
@@ -48,6 +49,8 @@ class SAPRFCToADLS(Flow):
             name (str): The name of the flow.
             query (str): Query to be executed with pyRFC. Defaults to None.
             rfc_sep(str, optional): Which separator to use when querying SAP. If not provided, multiple options are automatically tried.
+            rfc_replacement (str, optional): In case of sep is on a columns, set up a new character to replace
+                inside the string to avoid flow breakdowns. Defaults to "-".
             func (str, optional): SAP RFC function to use. Defaults to "RFC_READ_TABLE".
             rfc_total_col_width_character_limit (int, optional): Number of characters by which query will be split in chunks in case of too many columns
             for RFC function. According to SAP documentation, the limit is 512 characters. However, we observed SAP raising an exception
@@ -69,6 +72,7 @@ class SAPRFCToADLS(Flow):
         """
         self.query = query
         self.rfc_sep = rfc_sep
+        self.rfc_replacement = rfc_replacement
         self.func = func
         self.rfc_total_col_width_character_limit = rfc_total_col_width_character_limit
         self.sap_credentials = sap_credentials
@@ -94,6 +98,7 @@ class SAPRFCToADLS(Flow):
         df = download_sap_task(
             query=self.query,
             sep=self.rfc_sep,
+            replacement=self.rfc_replacement,
             func=self.func,
             rfc_total_col_width_character_limit=self.rfc_total_col_width_character_limit,
             credentials=self.sap_credentials,
