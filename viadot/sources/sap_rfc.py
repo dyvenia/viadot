@@ -565,41 +565,38 @@ class SAPRFC(Source):
         else:
             SEPARATORS = [sep]
 
+        records = None
         for sep in SEPARATORS:
             logger.info(f"Checking if separator '{sep}' works.")
             df = pd.DataFrame(columns=columns)
             self._query["DELIMITER"] = sep
             chunk = 1
-            row_index = 0
             for fields in fields_lists:
                 logger.info(f"Downloading {chunk} data chunk...")
                 self._query["FIELDS"] = fields
                 try:
-                    response = self.call(func, **params)
-                except ABAPApplicationError as e:
-                    if e.key == "DATA_BUFFER_EXCEEDED":
-                        raise DataBufferExceeded(
-                            "Character limit per row exceeded. Please select fewer columns."
-                        )
-                    else:
-                        raise e
-                record_key = "WA"
-                data_raw = np.array(response["DATA"])
-
-                row_index, data_raw, cont = detect_extra_rows(
-                    row_index, data_raw, chunk, fields
-                )
-                if cont:
+                    self._query["FIELDS"] = fields
+                    try:
+                        response = self.call(func, **params)
+                    except ABAPApplicationError as e:
+                        if e.key == "DATA_BUFFER_EXCEEDED":
+                            raise DataBufferExceeded(
+                                "Character limit per row exceeded. Please select fewer columns."
+                            )
+                        else:
+                            raise e
+                    record_key = "WA"
+                    data_raw = response["DATA"]
+                    records = [row[record_key].split(sep) for row in data_raw]
+                    df[fields] = records
+                    chunk += 1
+                except ValueError:
+                    df = pd.DataFrame()
                     continue
-
-                data_raw = catch_extra_separators(
-                    data_raw, record_key, sep, fields, self.replacement
-                )
-
-                records = np.array([row[record_key].split(sep) for row in data_raw])
-
-                df[fields] = records
-                chunk += 1
+        if not records:
+            logger.warning("Empty output was generated.")
+            columns = []
+        df.columns = columns
 
         if self.client_side_filters:
             filter_query = self._build_pandas_filter_query(self.client_side_filters)
