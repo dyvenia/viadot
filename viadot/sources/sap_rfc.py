@@ -1,4 +1,4 @@
-import re
+import re, sys
 from prefect.utilities import logging
 from collections import OrderedDict
 from typing import List, Literal
@@ -6,6 +6,7 @@ from typing import OrderedDict as OrderedDictType
 from typing import Tuple, Union
 
 import pandas as pd
+import numpy as np
 
 try:
     import pyrfc
@@ -468,35 +469,82 @@ class SAPRFC(Source):
         else:
             SEPARATORS = [sep]
 
-        records = None
+        emptiness = False
         for sep in SEPARATORS:
             logger.info(f"Checking if separator '{sep}' works.")
             df = pd.DataFrame()
             self._query["DELIMITER"] = sep
             chunk = 1
-            for fields in fields_lists:
+            for i, fields in enumerate(fields_lists):
                 logger.info(f"Downloading {chunk} data chunk...")
+                self._query["FIELDS"] = fields
                 try:
-                    self._query["FIELDS"] = fields
-                    try:
-                        response = self.call(func, **params)
-                    except ABAPApplicationError as e:
-                        if e.key == "DATA_BUFFER_EXCEEDED":
-                            raise DataBufferExceeded(
-                                "Character limit per row exceeded. Please select fewer columns."
-                            )
-                        else:
-                            raise e
-                    record_key = "WA"
-                    data_raw = response["DATA"]
-                    records = [row[record_key].split(sep) for row in data_raw]
-                    df[fields] = records
-                    chunk += 1
-                except ValueError:
-                    df = pd.DataFrame()
-                    continue
-        if not records:
-            logger.warning("Empty output was generated.")
+                    response = self.call(func, **params)
+                except ABAPApplicationError as e:
+                    if e.key == "DATA_BUFFER_EXCEEDED":
+                        raise DataBufferExceeded(
+                            "Character limit per row exceeded. Please select fewer columns."
+                        )
+                    else:
+                        raise e
+                record_key = "WA"
+                data_raw = np.array(response["DATA"])
+
+                # check the numbers of rows for the new chunk
+                if i == 0:
+                    index = data_raw.shape[0]
+                    if index > 0:
+                        emptiness = True
+                    else:
+                        logger.warning(f"Empty output was generated for chunk {chunk}.")
+                else:
+                    data_raw = data_raw[:index]
+                    logger.warning(
+                        f"New rows were generated during the execution of the script. The table is truncated to the number of rows for the first chunk"
+                    )
+
+                # first we identify where the data has an extra sep due to text
+                counts = np.array([], dtype=int)
+                for row in data_raw:
+                    counts = np.append(counts, row[record_key].count(f"{sep}"))
+
+                bad_index = np.argwhere(counts != len(fields) - 1)
+                bad_index = bad_index.reshape(
+                    len(bad_index),
+                )
+                good_index = np.argwhere(counts == len(fields) - 1)
+                good_index = good_index.reshape(
+                    len(good_index),
+                )
+
+                # with good rows we obtain the positions where the "sep"s of columns are placed in the string
+                sep_index = np.array([], dtype=int)
+                for dat in data_raw[good_index]:
+                    sep_index = np.append(
+                        sep_index, np.where(np.array([*dat[record_key]]) == f"{sep}")
+                    )
+                sep_index = np.unique(sep_index)
+
+                # now we replace bad "sep" by another character "-"
+                for b_index in bad_index:
+                    print(data_raw[b_index][record_key])
+                    split_array = np.array([*data_raw[b_index][record_key]])
+                    bad_pos = np.where(split_array == f"{sep}")[0]
+                    inde = np.argwhere(np.in1d(bad_pos, sep_index) == False)
+                    inde = inde.reshape(
+                        len(inde),
+                    )
+                    split_array[bad_pos[inde]] = "-"
+                    data_raw[b_index][record_key] = "".join(split_array)
+                    print(data_raw[b_index][record_key])
+
+                records = np.array([row[record_key].split(sep) for row in data_raw])
+
+                df[fields] = records
+                chunk += 1
+
+        if not emptiness:
+            logger.warning("Some empty output was generated.")
             columns = []
         df.columns = columns
 
