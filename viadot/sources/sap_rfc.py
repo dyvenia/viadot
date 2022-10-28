@@ -604,7 +604,6 @@ class SAPRFC(Source):
         else:
             SEPARATORS = [sep]
 
-        # emptiness = False
         for sep in SEPARATORS:
             logger.info(f"Checking if separator '{sep}' works.")
             df = pd.DataFrame(columns=columns)
