@@ -6,6 +6,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 ### Added
+- Added timeout to `DuckDBQuery` and `SAPRFCToDF`
 - Added support for SQL queries with comments to `DuckDB` source
 - Added "WITH" to query keywords in `DuckDB` source
 
@@ -13,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Changed `duckdb` version to `0.5.1`
 
 ### Fixed
+- Fixed incorrect `if_exists="delete"` handling in `DuckDB.create_table_from_parquet()`
 - Fixed `test_duckdb_to_sql_server.py` tests - revert to a previous version
 - Removed `test__check_if_schema_exists()` test
 
