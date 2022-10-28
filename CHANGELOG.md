@@ -462,3 +462,6 @@ specified in the `SUPERMETRICS_DEFAULT_USER` secret
 
 ### Fixed
 - Fix `AzureBlobStorage`'s `to_storage()` method is missing the final upload blob part
+
+## [Unreleased]
+- Added `avro-python3` library to `requirements`
