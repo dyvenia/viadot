@@ -75,7 +75,12 @@ This parameter enables user to decide whether or not filter should be validated.
 - Added timeout to `DuckDBQuery` and `SAPRFCToDF`
 - Added support for SQL queries with comments to `DuckDB` source
 - Added "WITH" to query keywords in `DuckDB` source
+<<<<<<< HEAD
 - Added `avro-python3` library to `requirements`
+=======
+- Added new parameter to `sap_rfc_to_adls.py` to replace a separator character 
+inside a string variable by defined character.
+>>>>>>> 📝 Added comments in CHANGELOG.md
 
 ### Changed
 - Changed `duckdb` version to `0.5.1`
