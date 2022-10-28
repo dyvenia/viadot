@@ -124,7 +124,6 @@ class SAPRFCToADLS(Flow):
                 flow=self,
             )
 
-        file_to_adls_task = AzureDataLakeUpload(timeout=self.timeout)
         adls_upload = file_to_adls_task.bind(
             from_path=self.local_file_path,
             to_path=self.adls_path,
