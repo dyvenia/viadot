@@ -1,5 +1,5 @@
 import json
-from typing import Any, Dict, List, Literal
+from typing import Any, Dict, List
 
 import prefect
 from prefect import Task
