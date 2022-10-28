@@ -1,4 +1,4 @@
-import re, sys
+import re
 from prefect.utilities import logging
 from collections import OrderedDict
 from typing import List, Literal, Union
@@ -615,24 +615,24 @@ class SAPRFC(Source):
 
                 # with good rows we obtain the positions where the "sep"s of columns are placed in the string
                 sep_index = np.array([], dtype=int)
-                for dat in data_raw[good_index]:
+                for data in data_raw[sep_index]:
                     sep_index = np.append(
-                        sep_index, np.where(np.array([*dat[record_key]]) == f"{sep}")
+                        sep_index, np.where(np.array([*data[record_key]]) == f"{sep}")
                     )
-                sep_index = np.unique(sep_index)
+                pos_sep_index = np.unique(pos_sep_index)
 
                 # now we replace bad "sep" by another character "-"
-                for b_index in bad_index:
-                    print(data_raw[b_index][record_key])
-                    split_array = np.array([*data_raw[b_index][record_key]])
-                    bad_pos = np.where(split_array == f"{sep}")[0]
-                    inde = np.argwhere(np.in1d(bad_pos, sep_index) == False)
-                    inde = inde.reshape(
-                        len(inde),
+                for no_sep in no_sep_index:
+                    print(data_raw[no_sep][record_key])
+                    split_array = np.array([*data_raw[no_sep][record_key]])
+                    position = np.where(split_array == f"{sep}")[0]
+                    index_sep_index = np.argwhere(np.in1d(position, sep_index) == False)
+                    index_sep_index = index_sep_index.reshape(
+                        len(index_sep_index),
                     )
-                    split_array[bad_pos[inde]] = "-"
-                    data_raw[b_index][record_key] = "".join(split_array)
-                    print(data_raw[b_index][record_key])
+                    split_array[position[index_sep_index]] = "-"
+                    data_raw[no_sep][record_key] = "".join(split_array)
+                    print(data_raw[no_sep][record_key])
 
                 records = np.array([row[record_key].split(sep) for row in data_raw])
 
