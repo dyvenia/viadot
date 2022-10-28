@@ -17,6 +17,11 @@ in `task_utils`
 ### Changed
 - Changed default value of `on_error` parameter in `BCPTask` and `on_bcp_error` parameter in `ADLSToAzureSQL` 
 and `DuckDBToSQLServer` to `fail`. 
+- Added new column into Data Frames created with `Mindful`.
+- Added region parameter as an entry argument in `MindfulToADLS`
+- Changed `test_minful` file to be able to work with new characteristics.
+
+
 ## [0.4.6] - 2022-07-21
 ### Added
 - Added `rfc_character_limit` parameter in `SAPRFCToDF` task, `SAPRFC` source, `SAPRFCToADLS` and `SAPToDuckDB` flows
