@@ -1,4 +1,4 @@
-import re
+import re, sys
 from prefect.utilities import logging
 from collections import OrderedDict
 from typing import List, Literal, Union
@@ -610,6 +610,7 @@ class SAPRFC(Source):
             df = pd.DataFrame(columns=columns)
             self._query["DELIMITER"] = sep
             chunk = 1
+            row_index = 0
             for i, fields in enumerate(fields_lists):
                 logger.info(f"Downloading {chunk} data chunk...")
                 self._query["FIELDS"] = fields
@@ -625,13 +626,13 @@ class SAPRFC(Source):
                 record_key = "WA"
                 data_raw = np.array(response["DATA"])
 
-                if i == 0:
+                if row_index == 0:
                     row_index = data_raw.shape[0]
                     if row_index == 0:
                         logger.warning(
                             f"Empty output was generated for chunk {chunk} in columns {fields}."
                         )
-                        df[fields] = []
+                        chunk += 1
                         continue
                 elif data_raw.shape[0] != row_index:
                     data_raw = data_raw[:row_index]
