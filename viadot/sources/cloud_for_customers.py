@@ -25,7 +25,7 @@ class CloudForCustomers(Source):
         url (str, optional): The URL to the C4C API. E.g 'https://my336539.crm.ondemand.com/sap/c4c/odata/v1/c4codataapi/'.
         endpoint (str, optional): The API endpoint.
         report_url (str, optional): The API url in case of prepared report.
-        params (Dict[str, Any], optional): Query parameters.
+        filter_params (Dict[str, Any], optional): Filtering parameters passed to the request. E.g {"$filter": "AccountID eq '1234'"}. More info: https://userapps.support.sap.com/sap/support/knowledge/en/2330688
         credentials (CloudForCustomersCredentials, optional): Cloud for Customers credentials.
         config_key (str, optional): The key in the viadot config holding relevant credentials.
     """
@@ -37,7 +37,7 @@ class CloudForCustomers(Source):
         url: str = None,
         endpoint: str = None,
         report_url: str = None,
-        params: Dict[str, Any] = None,
+        filter_params: Dict[str, Any] = None,
         credentials: CloudForCustomersCredentials = None,
         config_key: Optional[str] = None,
         *args,
@@ -61,13 +61,13 @@ class CloudForCustomers(Source):
         self.is_report = bool(report_url)
         self.query_endpoint = endpoint
 
-        if params:
-            params_merged = self.DEFAULT_PARAMS.copy()
-            params_merged.update(params)
+        if filter_params:
+            filter_params_merged = self.DEFAULT_PARAMS.copy()
+            filter_params_merged.update(filter_params)
 
-            self.params = params_merged
+            self.filter_params = filter_params_merged
         else:
-            self.params = self.DEFAULT_PARAMS
+            self.filter_params = self.DEFAULT_PARAMS
 
         if self.url:
             self.full_url = urljoin(self.url, self.query_endpoint)
@@ -99,7 +99,7 @@ class CloudForCustomers(Source):
         """
         records = []
         while report_url:
-            response = self.get_response(report_url, params=self.params)
+            response = self.get_response(report_url, filter_params=self.filter_params)
             response_json = response.json()
             new_records = self.get_entities(response_json, report_url)
             records.extend(new_records)
@@ -118,10 +118,10 @@ class CloudForCustomers(Source):
             records (List[Dict[str, Any]]): The records extracted from url.
         """
         tmp_full_url = deepcopy(url)
-        tmp_params = deepcopy(self.params)
+        tmp_filter_params = deepcopy(self.filter_params)
         records = []
         while url:
-            response = self.get_response(tmp_full_url, params=tmp_params)
+            response = self.get_response(tmp_full_url, filter_params=tmp_filter_params)
             response_json = response.json()
             if isinstance(response_json["d"], dict):
                 # ODATA v2+ API
@@ -132,8 +132,8 @@ class CloudForCustomers(Source):
                 new_records = response_json["d"]
                 url = response_json.get("__next", None)
 
-            # prevents concatenation of previous url's with params with the same params
-            tmp_params = None
+            # prevents concatenation of previous url's with filter_params with the same filter_params
+            tmp_filter_params = None
             tmp_full_url = url
 
             if hasattr(new_records, "__iter__"):
@@ -206,13 +206,16 @@ class CloudForCustomers(Source):
         return column_mapping
 
     def get_response(
-        self, url: str, params: Dict[str, Any] = None, timeout: tuple = (3.05, 60 * 30)
+        self,
+        url: str,
+        filter_params: Dict[str, Any] = None,
+        timeout: tuple = (3.05, 60 * 30),
     ) -> requests.models.Response:
         """Handles requests.
 
         Args:
             url (str): The url to request to.
-            params (Dict[str, Any], optional): Additional parameters like filter, used in case of normal url.
+            filter_params (Dict[str, Any], optional): Additional parameters like filter, used in case of normal url.
             timeout (tuple, optional): The request time-out. Default is (3.05, 60 * 30).
 
         Returns:
@@ -222,7 +225,7 @@ class CloudForCustomers(Source):
         pw = self.credentials.get("password")
         response = handle_api_response(
             url=url,
-            params=params,
+            params=filter_params,
             auth=(username, pw),
             timeout=timeout,
         )
