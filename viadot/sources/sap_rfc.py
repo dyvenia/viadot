@@ -615,7 +615,7 @@ class SAPRFC(Source):
             self._query["DELIMITER"] = sep
             chunk = 1
             row_index = 0
-            for i, fields in enumerate(fields_lists):
+            for fields in fields_lists:
                 logger.info(f"Downloading {chunk} data chunk...")
                 self._query["FIELDS"] = fields
                 try:
