@@ -571,7 +571,8 @@ class SAPRFC(Source):
             df = pd.DataFrame(columns=columns)
             self._query["DELIMITER"] = sep
             chunk = 1
-            for i, fields in enumerate(fields_lists):
+            row_index = 0
+            for fields in fields_lists:
                 logger.info(f"Downloading {chunk} data chunk...")
                 self._query["FIELDS"] = fields
                 try:
