@@ -1,4 +1,4 @@
-import re
+import re, sys
 from prefect.utilities import logging
 from collections import OrderedDict
 from typing import List, Literal, Union
@@ -571,7 +571,7 @@ class SAPRFC(Source):
             df = pd.DataFrame(columns=columns)
             self._query["DELIMITER"] = sep
             chunk = 1
-            for fields in fields_lists:
+            for i, fields in enumerate(fields_lists):
                 logger.info(f"Downloading {chunk} data chunk...")
                 self._query["FIELDS"] = fields
                 try:
@@ -586,15 +586,16 @@ class SAPRFC(Source):
                 record_key = "WA"
                 data_raw = np.array(response["DATA"])
 
-                # check the numbers of rows for the new chunk
                 if i == 0:
-                    index = data_raw.shape[0]
-                    if index > 0:
-                        emptiness = True
-                    else:
-                        logger.warning(f"Empty output was generated for chunk {chunk}.")
-                else:
-                    data_raw = data_raw[:index]
+                    row_index = data_raw.shape[0]
+                    if row_index == 0:
+                        logger.warning(
+                            f"Empty output was generated for chunk {chunk} in columns {fields}."
+                        )
+                        df[fields] = []
+                        continue
+                elif data_raw.shape[0] != row_index:
+                    data_raw = data_raw[:row_index]
                     logger.warning(
                         f"New rows were generated during the execution of the script. The table is truncated to the number of rows for the first chunk"
                     )
