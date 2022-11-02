@@ -1,10 +1,7 @@
-from token import OP
 import xml.etree.ElementTree as ET
 from typing import Any, Dict, Optional
-from urllib import response
 
 import pandas as pd
-import requests
 from pydantic import BaseModel
 
 from ..config import local_config
