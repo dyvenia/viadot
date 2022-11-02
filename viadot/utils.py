@@ -299,7 +299,10 @@ def gen_bulk_insert_query_from_df(
         values_clean = re.sub(double_quotes_pattern, r"'\2'\4", values)
         # Hacky - replaces starting and ending double quotes.
         values_clean = (
-            values.replace('",', "',").replace(', "', ", '").replace('("', "('")
+            values.replace('",', "',")
+            .replace(', "', ", '")
+            .replace('("', "('")
+            .replace("\\'", "")
         )
 
         return f"INSERT INTO {table_fqn} ({columns})\n\nVALUES {values_clean}"
