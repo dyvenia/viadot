@@ -1,3 +1,4 @@
+from token import OP
 import xml.etree.ElementTree as ET
 from typing import Any, Dict, Optional
 from urllib import response
@@ -91,6 +92,8 @@ class LineItemDetail(BaseModel):
     ExtendedPrice: Optional[str]
     QuantityShippedExtension: Optional[str]
     LineItemShipWarehouse: Optional[str]
+    RequiredDate: Optional[str]
+    CopperWeight: Optional[str]
 
 
 class Order(BaseModel):
