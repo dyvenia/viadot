@@ -1,5 +1,5 @@
 import json
-from typing import Any, Dict, List, Literal
+from typing import Any, Dict, List
 
 import prefect
 from prefect import Task
@@ -9,6 +9,7 @@ from viadot.config import local_config
 from viadot.sources.sftp import SftpConnector
 
 from .azure_key_vault import AzureKeyVaultSecret
+import time
 
 
 class SftpToDF(Task):
@@ -48,6 +49,7 @@ class SftpToDF(Task):
         from_path: str = None,
         sep: str = "\t",
         columns: List[str] = None,
+        **kwargs,
     ):
         logger = prefect.context.get("logger")
         if not self.credentials:
@@ -73,7 +75,8 @@ class SftpToDF(Task):
         sftp = SftpConnector(credentials_sftp=credentials_sftp)
         sftp.get_conn()
         logger.info("Connected to SFTP server.")
-        df = sftp.to_df(file_name=from_path, sep=sep, columns=columns)
+        time.sleep(1)
+        df = sftp.to_df(file_name=from_path, sep=sep, columns=columns, **kwargs)
         logger.info("Succefully downloaded file from SFTP server.")
         return df
 
@@ -118,6 +121,7 @@ class SftpList(Task):
         matching_path: str = None,
     ):
         logger = prefect.context.get("logger")
+
         if not self.credentials:
             if not self.sftp_credentials_secret:
                 try:
@@ -151,4 +155,5 @@ class SftpList(Task):
             files_list = [f for f in files_list if matching_path in f]
 
         logger.info("Succefully loaded file list from SFTP server.")
+
         return files_list
