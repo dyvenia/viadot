@@ -19,7 +19,6 @@ in `task_utils`
 and `DuckDBToSQLServer` to `fail`. 
 - Added new column into Data Frames created with `Mindful`.
 - Added region parameter as an entry argument in `MindfulToADLS`
-- Changed `test_minful` file to be able to work with new characteristics.
 
 
 ## [0.4.6] - 2022-07-21
