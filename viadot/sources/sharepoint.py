@@ -92,7 +92,10 @@ class Sharepoint(Source):
 
         Args:
             url (str): The URL of the file to be downloaded.
-            sheet_name (Optional[Union[str, list, int]], optional): The name of the sheet to download. Defaults to None.
+            sheet_name (Optional[Union[str, list, int]], optional): Strings are used for sheet names.
+                Integers are used in zero-indexed sheet positions (chart sheets do not count
+                as a sheet position). Lists of strings/integers are used to request multiple sheets.
+                Specify None to get all worksheets. Defaults to None.
             if_empty (str, optional): What to do if the file is empty. Defaults to "warn".
             kwargs (dict[str, Any], optional): Keyword arguments to pass to pd.ExcelFile.parse(). Note that
             `nrows` is not supported.
