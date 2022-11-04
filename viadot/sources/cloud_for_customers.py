@@ -14,18 +14,19 @@ from .base import Source
 
 
 class CloudForCustomersCredentials(BaseModel):
-    username: str  # CloudForCustomers username (e.g username@{tenant_name}.com).
-    password: str  # CloudForCustomers password.
+    username: str  # eg. username@{tenant_name}.com
+    password: str
 
 
 class CloudForCustomers(Source):
     """Cloud for Customers connector to fetch Odata source.
 
     Args:
-        url (str, optional): The URL to the C4C API. E.g 'https://my336539.crm.ondemand.com/sap/c4c/odata/v1/c4codataapi/'.
+        url (str, optional): The URL to the C4C API. E.g 'https://my396876543.jrt.ondemand.com/c4c/v1/'.
         endpoint (str, optional): The API endpoint.
-        report_url (str, optional): The API url in case of prepared report.
-        filter_params (Dict[str, Any], optional): Filtering parameters passed to the request. E.g {"$filter": "AccountID eq '1234'"}. More info: https://userapps.support.sap.com/sap/support/knowledge/en/2330688
+        report_url (str, optional): The API URL in case of prepared report.
+        filter_params (Dict[str, Any], optional): Filtering parameters passed to the request. E.g {"$filter": "AccountID eq '1234'"}.
+        More info on: https://userapps.support.sap.com/sap/support/knowledge/en/2330688
         credentials (CloudForCustomersCredentials, optional): Cloud for Customers credentials.
         config_key (str, optional): The key in the viadot config holding relevant credentials.
     """
@@ -52,7 +53,7 @@ class CloudForCustomers(Source):
         super().__init__(*args, credentials=credentials, **kwargs)
         ## End Credentials logic
 
-        self.url = url or self.credentials.get("server")
+        self.url = url or self.credentials.get("url")
         self.report_url = report_url
 
         if self.url is None and report_url is None:
@@ -74,13 +75,13 @@ class CloudForCustomers(Source):
 
     @staticmethod
     def create_metadata_url(url: str) -> str:
-        """Creates url to fetch metadata to.
+        """Creates url to fetch metadata from.
 
         Args:
-            url (str): The url to transform to metadata url.
+            url (str): The URL to transform to metadata URL.
 
         Returns:
-            meta_url (str): The url to fetch metadata with.
+            meta_url (str): The URL to fetch metadata from.
         """
         start = url.split(".svc")[0]
         url_raw = url.split("?")[0]
@@ -89,13 +90,13 @@ class CloudForCustomers(Source):
         return meta_url
 
     def _extract_records_from_report_url(self, report_url: str) -> List[Dict[str, Any]]:
-        """Fetches report_url to exctract records.
+        """Fetches report_url to extract records.
 
         Args:
             report_url (str): The url to extract records from.
 
         Returns:
-            records (List[Dict[str, Any]]): The records extracted from url.
+            records (List[Dict[str, Any]]): The records extracted from report_url.
         """
         records = []
         while report_url:
@@ -109,13 +110,13 @@ class CloudForCustomers(Source):
         return records
 
     def _extract_records_from_url(self, url: str) -> List[Dict[str, Any]]:
-        """Fetches url to exctract records.
+        """Fetches URL to extract records.
 
         Args:
-            url (str): The url to extract records from.
+            url (str): The URL to extract records from.
 
         Returns:
-            records (List[Dict[str, Any]]): The records extracted from url.
+            records (List[Dict[str, Any]]): The records extracted from URL.
         """
         tmp_full_url = deepcopy(url)
         tmp_filter_params = deepcopy(self.filter_params)
@@ -132,7 +133,7 @@ class CloudForCustomers(Source):
                 new_records = response_json["d"]
                 url = response_json.get("__next", None)
 
-            # prevents concatenation of previous url's with filter_params with the same filter_params
+            # prevents concatenation of previous urls with filter_params with the same filter_params
             tmp_filter_params = None
             tmp_full_url = url
 
@@ -141,10 +142,10 @@ class CloudForCustomers(Source):
         return records
 
     def extract_records(self) -> List[Dict[str, Any]]:
-        """Downloads records from url or report_url if present.
+        """Downloads records from `url` or `report_url` if present.
 
         Returns:
-            records (List[Dict[str, Any]]): The records extracted from url.
+            records (List[Dict[str, Any]]): The records extracted from URL.
         """
         if self.is_report:
             return self._extract_records_from_report_url(url=self.report_url)
@@ -158,7 +159,7 @@ class CloudForCustomers(Source):
 
         Args:
             dirty_json (Dict[str, Any]): request.json() dict from response to API.
-            url (str): The url to fetch metadata from.
+            url (str): The URL to fetch metadata from.
 
         Returns:
             entities (List[Dict[str, Any]]): list filled with entities.
@@ -184,10 +185,10 @@ class CloudForCustomers(Source):
         """Creates Dict mapping property Name to value of sap label.
 
         Args:
-            url (str, optional): The url to fetch metadata from.
+            url (str, optional): The URL to fetch metadata from.
 
         Returns:
-            Dict[str, str]: Property Name to value of sap label Dict.
+            Dict[str, str]: Property Name to value of sap label.
         """
 
         column_mapping = {}

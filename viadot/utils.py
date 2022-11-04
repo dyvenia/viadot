@@ -20,40 +20,6 @@ from .signals import SKIP
 
 import json
 
-from prefect_azure import AzureKeyVaultSecretReference
-
-
-def get_credentials(credentials_block_name: str) -> dict:
-    """
-    Retrieve credentials from Azure Key Vault.
-
-    Args:
-        credentials_block_name (str): The name of the Prefect
-            `AzureKeyVaultSecretReference` block document, which will
-            fetch the secret from Azure Key Vault.
-
-    Returns:
-        dict: A dictionary containing the credentials.
-    """
-
-    if credentials_block_name is None:
-        return
-
-    try:
-        credentials = json.loads(
-            AzureKeyVaultSecretReference.load(credentials_block_name).get_secret()
-        )
-    except ValueError:
-        # Prefect does not allow upper case letters for blocks,
-        # so some names might be lowercased versions of the original
-        credentials_block_name_lowercase = credentials_block_name.lower()
-        credentials = json.loads(
-            AzureKeyVaultSecretReference.load(
-                credentials_block_name_lowercase
-            ).get_secret()
-        )
-    return credentials
-
 
 def slugify(name: str) -> str:
     return name.replace(" ", "_").lower()
@@ -87,8 +53,9 @@ def get_response(
 
 
 def handle_response(
-    response: requests.Response, url: str, timeout: tuple = (3.05, 60 * 30)
+    response: requests.Response, timeout: tuple = (3.05, 60 * 30)
 ) -> requests.Response:
+    url = response.url
     try:
         response.raise_for_status()
     except ReadTimeout as e:
@@ -142,7 +109,7 @@ def handle_api_response(
         url=url, auth=auth, params=params, headers=headers, timeout=timeout
     )
 
-    response_handled = handle_response(response, url)
+    response_handled = handle_response(response)
     return response_handled
 
 

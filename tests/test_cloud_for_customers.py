@@ -1,24 +1,24 @@
 """Tests for CloudForCustomers source class"""
 
-from viadot.utils import get_credentials
+from viadot.config import get_source_credentials as get_credentials
 from viadot.sources.cloud_for_customers import CloudForCustomers
 import pandas as pd
 
 
-url = "https://my336539.crm.ondemand.com/sap/c4c/odata/v1/c4codataapi/"
 CONTACT_ENDPOINT = "ContactCollection"
-
 cursor_field = "EntityLastChangedOn"
 cursor_value = "2022-10-30T00:00:00Z"
 cursor_filter = f"{cursor_field} ge datetimeoffset'{cursor_value}'"
 filter_params = {"$filter": cursor_filter}
 
 
-def test_cloud_for_customers_to_df():
+def test_cloud_for_customers_to_df(TEST_C4C_API_URL):
     credentials_secret = "aia-c4c-qa"
+    print(credentials_secret)
     credentials = get_credentials(credentials_secret)
+    print(credentials)
     c4c = CloudForCustomers(
-        url=url,
+        url=TEST_C4C_API_URL,
         endpoint=CONTACT_ENDPOINT,
         filter_params=filter_params,
         credentials=credentials,
