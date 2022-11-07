@@ -1,5 +1,5 @@
 import time
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Literal
 
 import pandas as pd
 import numpy as np
@@ -18,6 +18,9 @@ class GenesysToCSV(Task):
     def __init__(
         self,
         report_name: str = "genesys_to_csv",
+        view_type: Literal[
+            "queue_performance_detail", "agent_performance_summery_view"
+        ] = "queue_performance_detail",
         media_type_list: List[str] = None,
         queueIds_list: List[str] = None,
         data_to_post_str: str = None,
@@ -36,6 +39,8 @@ class GenesysToCSV(Task):
 
         Args:
             report_name (str, optional): The name of this task. Defaults to a general name 'genesys_to_csv'.
+            view_type (Literal[queue_performance_detail, agent_performance_summery_view], optional):
+                The type of view export job to be created. Defaults to "queue_performance_detail".
             media_type_list (List[str], optional): List of specific media types. Defaults to None.
             queueIds_list (List[str], optional): List of specific queues ids. Defaults to None.
             data_to_post_str (str, optional): String template to generate json body. Defaults to None.
@@ -53,6 +58,7 @@ class GenesysToCSV(Task):
         self.logger = prefect.context.get("logger")
         self.schedule_id = schedule_id
         self.report_name = report_name
+        self.view_type = view_type
         self.environment = environment
         self.report_url = report_url
         self.report_columns = report_columns
@@ -76,6 +82,7 @@ class GenesysToCSV(Task):
 
     @defaults_from_attrs(
         "report_name",
+        "view_type",
         "environment",
         "schedule_id",
         "report_url",
@@ -91,6 +98,10 @@ class GenesysToCSV(Task):
     def run(
         self,
         report_name: str = None,
+        view_type: Literal[
+            "queue_performance_detail", "agent_performance_summery_view"
+        ] = "queue_performance_detail",
+        view_type_time_sleep: int = 80,
         environment: str = None,
         schedule_id: str = None,
         report_url: str = None,
@@ -108,6 +119,8 @@ class GenesysToCSV(Task):
 
         Args:
             report_name (str, optional): The name of this task. Defaults to a general name 'genesys_to_csv'.
+            view_type (Literal[queue_performance_detail, agent_performance_summery_view], optional):
+                The type of view export job to be created. Defaults to "queue_performance_detail".
             media_type_list (List[str], optional): List of specific media types. Defaults to None.
             queueIds_list (List[str], optional): List of specific queues ids. Defaults to None.
             data_to_post_str (str, optional): String template to generate json body. Defaults to None.
@@ -127,6 +140,7 @@ class GenesysToCSV(Task):
 
         genesys = Genesys(
             report_name=report_name,
+            view_type=view_type,
             media_type_list=media_type_list,
             queueIds_list=queueIds_list,
             data_to_post_str=data_to_post_str,
@@ -142,29 +156,46 @@ class GenesysToCSV(Task):
 
         genesys.genesys_generate_body()
         genesys.genesys_generate_exports()
-        logger.info(f"Waiting for caching data in Genesys database.")
 
-        # in order to wait for API POST request add it
-        timeout_start = time.time()
-        # 30 seconds timeout is minimal but for safety added 60.
-        timeout = timeout_start + 60
-        # while loop with timeout
-        while time.time() < timeout:
+        if view_type == "queue_performance_detail":
+            logger.info(f"Waiting for caching data in Genesys database.")
+            # in order to wait for API POST request add it
+            timeout_start = time.time()
+            # 30 seconds timeout is minimal but for safety added 60.
+            timeout = timeout_start + 60
+            # while loop with timeout
+            while time.time() < timeout:
 
-            try:
-                genesys.get_reporting_exports_data()
-                urls = [col for col in np.array(genesys.report_data).T][1]
-                if None in urls:
-                    logger.warning("Found None object in list of urls.")
-                else:
-                    break
-            except TypeError:
-                pass
+                try:
+                    genesys.get_reporting_exports_data()
+                    urls = [col for col in np.array(genesys.report_data).T][1]
+                    if None in urls:
+                        logger.warning("Found None object in list of urls.")
+                    else:
+                        break
+                except TypeError:
+                    pass
 
-            # There is a need to clear a list before repeating try statement.
-            genesys.report_data.clear()
+                # There is a need to clear a list before repeating try statement.
+                genesys.report_data.clear()
+
+        elif view_type == "agent_performance_summery_view":
+            logger.info(
+                f"Waiting for caching data in Genesys database ({view_type_time_sleep} seconds)."
+            )
+            time.sleep(view_type_time_sleep)
+
+            genesys.get_reporting_exports_data()
+            failed = [col for col in np.array(genesys.report_data).T][-1]
+            print(failed)
+            if "FAILED" in failed and "COMPLETED" in failed:
+                logger.warning("Some reports failed.")
+            elif np.unique(failed)[0] == "FAILED":
+                genesys.report_data.clear()
 
         if len(genesys.report_data) == 0:
+            genesys.delete_all_reporting_exports()
+            logger.warning(f"All existing reports were delted.")
             raise APIError("No exporting reports were generated.")
         elif not None in [col for col in np.array(genesys.report_data).T][1]:
             logger.info("Downloaded the data from the Genesys into the CSV.")
