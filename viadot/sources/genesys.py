@@ -294,8 +294,6 @@ class Genesys(Source):
             assert len(self.report_data) > 0
         self.logger.info("Generated list of reports entities.")
 
-        print(self.report_data)
-
     def download_report(
         self,
         report_url: str,
@@ -367,7 +365,8 @@ class Genesys(Source):
                     temp_ids_mapping.get(single_report[2]) + "_" + single_report[-1]
                 ).upper()
             elif self.view_type == "agent_performance_summery_view":
-                file_name = self.view_type.upper() + "_" + f"{single_report[0][:8]}"
+                date = self.start_date.replace("-", "")
+                file_name = self.view_type.upper() + "_" + f"{date}"
             else:
                 self.logger.error(
                     f"View type {self.view_type} not defined in viador, yet..."

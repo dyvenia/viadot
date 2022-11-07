@@ -66,6 +66,7 @@ class GenesysToADLS(Flow):
         view_type: Literal[
             "queue_performance_detail", "agent_performance_summery_view"
         ] = "queue_performance_detail",
+        view_type_time_sleep: int = 80,
         media_type_list: List[str] = None,
         queueIds_list: List[str] = None,
         data_to_post_str: str = None,
@@ -92,6 +93,7 @@ class GenesysToADLS(Flow):
             name (str): The name of the Flow.
             view_type (Literal[queue_performance_detail, agent_performance_summery_view], optional):
                 The type of view export job to be created. Defaults to "queue_performance_detail".
+            view_type_time_sleep (int, optional): Waiting time to retrieve data from Genesys API. Defaults to 80.
             media_type_list (List[str], optional): List of specific media types. Defaults to None.
             queueIds_list (List[str], optional): List of specific queues ids. Defaults to None.
             data_to_post_str (str, optional): String template to generate json body. Defaults to None.
@@ -114,6 +116,7 @@ class GenesysToADLS(Flow):
         # GenesysToCSV
         self.flow_name = name
         self.view_type = view_type
+        self.view_type_time_sleep = view_type_time_sleep
         self.media_type_list = media_type_list
         self.queueIds_list = queueIds_list
         self.data_to_post = data_to_post_str
@@ -156,6 +159,7 @@ class GenesysToADLS(Flow):
         elif self.view_type == "agent_performance_summery_view":
             file_names = to_csv.bind(
                 view_type=self.view_type,
+                view_type_time_sleep=self.view_type_time_sleep,
                 media_type_list=self.media_type_list,
                 queueIds_list=[""],
                 data_to_post_str=self.data_to_post,
@@ -167,15 +171,15 @@ class GenesysToADLS(Flow):
 
         add_timestamp.bind(file_names, sep=self.sep, flow=self)
 
-        # uploader = adls_bulk_upload(
-        #     file_names=file_names,
-        #     adls_file_path=self.adls_file_path,
-        #     adls_sp_credentials_secret=self.adls_sp_credentials_secret,
-        #     flow=self,
-        # )
+        uploader = adls_bulk_upload(
+            file_names=file_names,
+            adls_file_path=self.adls_file_path,
+            adls_sp_credentials_secret=self.adls_sp_credentials_secret,
+            flow=self,
+        )
 
         add_timestamp.set_upstream(file_names, flow=self)
-        # uploader.set_upstream(add_timestamp, flow=self)
+        uploader.set_upstream(add_timestamp, flow=self)
 
 
 class GenesysReportToADLS(Flow):
