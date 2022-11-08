@@ -19,8 +19,8 @@ class GenesysToCSV(Task):
         self,
         report_name: str = "genesys_to_csv",
         view_type: Literal[
-            "queue_performance_detail", "agent_performance_summery_view"
-        ] = "queue_performance_detail",
+            "queue_performance_detail_view", "agent_performance_summery_view"
+        ] = "queue_performance_detail_view",
         media_type_list: List[str] = None,
         queueIds_list: List[str] = None,
         data_to_post_str: str = None,
@@ -39,8 +39,8 @@ class GenesysToCSV(Task):
 
         Args:
             report_name (str, optional): The name of this task. Defaults to a general name 'genesys_to_csv'.
-            view_type (Literal[queue_performance_detail, agent_performance_summery_view], optional):
-                The type of view export job to be created. Defaults to "queue_performance_detail".
+            view_type (Literal[queue_performance_detail_view, agent_performance_summery_view], optional):
+                The type of view export job to be created. Defaults to "queue_performance_detail_view".
             media_type_list (List[str], optional): List of specific media types. Defaults to None.
             queueIds_list (List[str], optional): List of specific queues ids. Defaults to None.
             data_to_post_str (str, optional): String template to generate json body. Defaults to None.
@@ -99,8 +99,8 @@ class GenesysToCSV(Task):
         self,
         report_name: str = None,
         view_type: Literal[
-            "queue_performance_detail", "agent_performance_summery_view"
-        ] = "queue_performance_detail",
+            "queue_performance_detail_view", "agent_performance_summery_view"
+        ] = "queue_performance_detail_view",
         view_type_time_sleep: int = 80,
         environment: str = None,
         schedule_id: str = None,
@@ -119,8 +119,8 @@ class GenesysToCSV(Task):
 
         Args:
             report_name (str, optional): The name of this task. Defaults to a general name 'genesys_to_csv'.
-            view_type (Literal[queue_performance_detail, agent_performance_summery_view], optional):
-                The type of view export job to be created. Defaults to "queue_performance_detail".
+            view_type (Literal[queue_performance_detail_view, agent_performance_summery_view], optional):
+                The type of view export job to be created. Defaults to "queue_performance_detail_view".
             view_type_time_sleep (int, optional): Waiting time to retrieve data from Genesys API. Defaults to 80.
             media_type_list (List[str], optional): List of specific media types. Defaults to None.
             queueIds_list (List[str], optional): List of specific queues ids. Defaults to None.
@@ -158,7 +158,7 @@ class GenesysToCSV(Task):
         genesys.genesys_generate_body()
         genesys.genesys_generate_exports()
 
-        if view_type == "queue_performance_detail":
+        if view_type == "queue_performance_detail_view":
             logger.info(f"Waiting for caching data in Genesys database.")
             # in order to wait for API POST request add it
             timeout_start = time.time()
@@ -187,10 +187,11 @@ class GenesysToCSV(Task):
             time.sleep(view_type_time_sleep)
 
             genesys.get_reporting_exports_data()
-            failed = [col for col in np.array(genesys.report_data).T][-1]
 
-            if "FAILED" in failed and "COMPLETED" in failed:
-                logger.warning("Some reports failed.")
+        failed = [col for col in np.array(genesys.report_data).T][-1]
+
+        if "FAILED" in failed and "COMPLETED" in failed:
+            logger.warning("Some reports failed.")
 
         if len(genesys.report_data) == 0 or np.unique(failed)[0] == "FAILED":
             genesys.delete_all_reporting_exports()
