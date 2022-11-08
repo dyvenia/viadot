@@ -277,7 +277,7 @@ class Genesys(Source):
         Function that generate list of reports metadata for further processing steps.
         """
         request_json = self.load_reporting_exports()
-        print(request_json)
+
         if request_json is not None:
             entities = request_json.get("entities")
             assert type(entities) == list
@@ -289,6 +289,7 @@ class Genesys(Source):
                         entity.get("filter").get("queueIds", [-1])[0],
                         entity.get("filter").get("mediaTypes", [-1])[0],
                         entity.get("viewType"),
+                        entity.get("interval"),
                         entity.get("status"),
                     ]
                     self.report_data.append(tmp)
@@ -351,7 +352,9 @@ class Genesys(Source):
             self.logger.info("IDS_MAPPING loaded from local credential.")
 
         for single_report in self.report_data:
-            print(single_report)
+            self.logger.info(single_report)
+            print(self.start_date, type(self.start_date))
+            print(self.end_date, type(self.end_date))
             if single_report[-1] == "RUNNING":
                 self.logger.warning(
                     "The request is still in progress, consider add more seconds to `view_type_time_sleep` parameter."
@@ -362,6 +365,16 @@ class Genesys(Source):
                     "This message 'FAILED_GETTING_DATA_FROM_SERVICE' raised during script execution."
                 )
                 continue
+            elif (
+                self.start_date not in single_report[5]
+                or self.end_date not in single_report[5]
+            ):
+                self.logger.warning(
+                    f"The report with ID {single_report[0]} doesn't match with the interval date that you have already defined. \
+                        The report won't be downloaded but will be deleted."
+                )
+                continue
+
             if single_report[4].lower() == "queue_performance_detail_view":
                 file_name = (
                     temp_ids_mapping.get(single_report[2]) + "_" + single_report[-1]
