@@ -1,9 +1,7 @@
 import xml.etree.ElementTree as ET
 from typing import Any, Dict, Optional
-from urllib import response
 
 import pandas as pd
-import requests
 from pydantic import BaseModel
 
 from ..config import local_config
@@ -91,6 +89,8 @@ class LineItemDetail(BaseModel):
     ExtendedPrice: Optional[str]
     QuantityShippedExtension: Optional[str]
     LineItemShipWarehouse: Optional[str]
+    RequiredDate: Optional[str]
+    CopperWeight: Optional[str]
 
 
 class Order(BaseModel):

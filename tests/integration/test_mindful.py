@@ -47,6 +47,7 @@ def test_mindful_api_response(mock_connection):
 @pytest.mark.connect
 def test_mindful_api_response2(mock_api_response):
     mf = Mindful(header=header)
+
     response = mf.get_interactions_list()
 
     assert response.status_code == 200 and isinstance(response.json(), list)
@@ -57,6 +58,7 @@ def test_mindful_api_response2(mock_api_response):
 @pytest.mark.connect
 def test_mindful_api_response3(mock_api_response):
     mf = Mindful(header=header)
+
     response = mf.get_responses_list()
 
     assert response.status_code == 200 and isinstance(response.json(), list)
@@ -70,6 +72,7 @@ def test_mindful_interactions(mock_connection):
     response = mf.get_interactions_list()
     mf.response_to_file(response)
     assert mf.endpoint == "interactions" and isinstance(mf.endpoint, str)
+
     assert os.path.exists("interactions.csv")
     os.remove("interactions.csv")
 
@@ -80,6 +83,7 @@ def test_mindful_responses(mock_connection):
     mf = Mindful(header=header)
     response = mf.get_responses_list()
     mf.response_to_file(response)
+    
     assert mf.endpoint == "responses" and isinstance(mf.endpoint, str)
     assert os.path.exists("responses.csv")
     os.remove("responses.csv")

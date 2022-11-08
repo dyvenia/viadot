@@ -13,6 +13,7 @@ from .salesforce_to_adls import SalesforceToADLS
 from .sharepoint_to_adls import SharepointToADLS
 from .supermetrics_to_adls import SupermetricsToADLS
 from .supermetrics_to_azure_sql import SupermetricsToAzureSQL
+from .genesys_to_adls import GenesysToADLS
 
 try:
     from .sap_to_duckdb import SAPToDuckDB
@@ -30,5 +31,8 @@ except ImportError:
     pass
 
 from .epicor_to_duckdb import EpicorOrdersToDuckDB
+from .sql_server_transform import SQLServerTransform
 from .sql_server_to_duckdb import SQLServerToDuckDB
+
+from .sftp_operations import SftpToAzureSQL, SftpToADLS
 from .mindful_to_adls import MindfulToADLS

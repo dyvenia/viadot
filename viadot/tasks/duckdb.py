@@ -22,11 +22,12 @@ class DuckDBQuery(Task):
     def __init__(
         self,
         credentials: dict = None,
+        timeout=600,
         *args,
         **kwargs,
     ):
         self.credentials = credentials
-        super().__init__(name="run_duckdb_query", *args, **kwargs)
+        super().__init__(name="run_duckdb_query", timeout=timeout, *args, **kwargs)
 
     @defaults_from_attrs("credentials")
     def run(

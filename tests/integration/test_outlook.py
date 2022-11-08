@@ -1,5 +1,6 @@
 from viadot.config import local_config
 from viadot.sources import Outlook
+import pandas as pd
 
 
 def test_outlook_to_df():
@@ -10,5 +11,4 @@ def test_outlook_to_df():
         end_date="2022-04-29",
     )
     df = outlook.to_df()
-    assert df.shape[1] == 10
-    assert df.empty == False
+    assert isinstance(df, pd.DataFrame)

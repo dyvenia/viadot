@@ -10,9 +10,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added timeout to `DuckDBQuery` and `SAPRFCToDF`
 - Added support for SQL queries with comments to `DuckDB` source
 - Added "WITH" to query keywords in `DuckDB` source
-- Added new source file `mindful` to connect with mindful API.
-- Added new task file `mindful` to be called by the Mindful Flow.
-- Added new flow file `mindful_to_adls` to upload data from Mindful API tp ADLS.
 
 ### Changed
 - Changed `duckdb` version to `0.5.1`
@@ -35,6 +32,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added new task file `mindful` to be called by the Mindful Flow.
 - Added new flow file `mindful_to_adls` to upload data from Mindful API tp ADLS.
 - Added `recursive` parameter to `AzureDataLakeList` task
+
+
+## [0.4.8] - 2022-09-06
+### Added
+- Added `protobuf` library to requirements
+
+
+## [0.4.7] - 2022-09-06
+### Added
+- Added new flow - `SQLServerTransform` and new task `SQLServerQuery` to run queries on SQLServer
+- Added `duckdb_query` parameter to `DuckDBToSQLServer` flow to enable option to create table
+using outputs of SQL queries 
+- Added handling empty DF in `set_new_kv()` task
+- Added `update_kv` and `filter_column` params to `SAPRFCToADLS` and `SAPToDuckDB` flows and added `set_new_kv()` task
+in `task_utils`
+- Added Genesys API source `Genesys`
+- Added tasks `GenesysToCSV` and `GenesysToDF`
+- Added flows `GenesysToADLS` and `GenesysReportToADLS`
+- Added `query` parameter to  `PrefectLogs` flow
 
 
 ## [0.4.8] - 2022-09-06
