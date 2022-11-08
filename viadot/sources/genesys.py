@@ -24,8 +24,8 @@ class Genesys(Source):
     def __init__(
         self,
         view_type: Literal[
-            "queue_performance_detail", "agent_performance_summery_view"
-        ] = "queue_performance_detail",
+            "queue_performance_detail_view", "agent_performance_summery_view"
+        ] = "queue_performance_detail_view",
         media_type_list: List[str] = None,
         queueIds_list: List[str] = None,
         data_to_post_str: str = None,
@@ -47,8 +47,8 @@ class Genesys(Source):
         Genesys connector which allows for reports scheduling, listing and downloading into Data Frame or specified format output.
 
         Args:
-            view_type (Literal[queue_performance_detail, agent_performance_summery_view], optional):
-                The type of view export job to be created. Defaults to "queue_performance_detail".
+            view_type (Literal[queue_performance_detail_view, agent_performance_summery_view], optional):
+                The type of view export job to be created. Defaults to "queue_performance_detail_view".
             media_type_list (List[str], optional):  List of specific media types. Defaults to None.
             queueIds_list (List[str], optional):  List of specific queues ids. Defaults to None.
             data_to_post_str (str, optional):  String template to generate json body. Defaults to None.
@@ -277,7 +277,7 @@ class Genesys(Source):
         Function that generate list of reports metadata for further processing steps.
         """
         request_json = self.load_reporting_exports()
-
+        print(request_json)
         if request_json is not None:
             entities = request_json.get("entities")
             assert type(entities) == list
@@ -288,6 +288,7 @@ class Genesys(Source):
                         entity.get("downloadUrl"),
                         entity.get("filter").get("queueIds", [-1])[0],
                         entity.get("filter").get("mediaTypes", [-1])[0],
+                        entity.get("viewType"),
                         entity.get("status"),
                     ]
                     self.report_data.append(tmp)
@@ -350,6 +351,7 @@ class Genesys(Source):
             self.logger.info("IDS_MAPPING loaded from local credential.")
 
         for single_report in self.report_data:
+            print(single_report)
             if single_report[-1] == "RUNNING":
                 self.logger.warning(
                     "The request is still in progress, consider add more seconds to `view_type_time_sleep` parameter."
@@ -360,11 +362,11 @@ class Genesys(Source):
                     "This message 'FAILED_GETTING_DATA_FROM_SERVICE' raised during script execution."
                 )
                 continue
-            if self.view_type == "queue_performance_detail":
+            if single_report[4].lower() == "queue_performance_detail_view":
                 file_name = (
                     temp_ids_mapping.get(single_report[2]) + "_" + single_report[-1]
                 ).upper()
-            elif self.view_type == "agent_performance_summery_view":
+            elif single_report[4].lower() == "agent_performance_summery_view":
                 date = self.start_date.replace("-", "")
                 file_name = self.view_type.upper() + "_" + f"{date}"
             else:
