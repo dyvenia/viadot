@@ -353,11 +353,9 @@ class Genesys(Source):
 
         for single_report in self.report_data:
             self.logger.info(single_report)
-            print(self.start_date, type(self.start_date))
-            print(self.end_date, type(self.end_date))
             if single_report[-1] == "RUNNING":
                 self.logger.warning(
-                    "The request is still in progress, consider add more seconds to `view_type_time_sleep` parameter."
+                    "The request is still in progress and will be deleted, consider add more seconds in `view_type_time_sleep` parameter."
                 )
                 continue
             elif single_report[-1] == "FAILED":
@@ -365,10 +363,7 @@ class Genesys(Source):
                     "This message 'FAILED_GETTING_DATA_FROM_SERVICE' raised during script execution."
                 )
                 continue
-            elif (
-                self.start_date not in single_report[5]
-                or self.end_date not in single_report[5]
-            ):
+            elif self.start_date not in single_report[5]:
                 self.logger.warning(
                     f"The report with ID {single_report[0]} doesn't match with the interval date that you have already defined. \
                         The report won't be downloaded but will be deleted."
@@ -379,12 +374,12 @@ class Genesys(Source):
                 file_name = (
                     temp_ids_mapping.get(single_report[2]) + "_" + single_report[-1]
                 ).upper()
-            elif single_report[4].lower() == "agent_performance_summery_view":
+            elif single_report[4].lower() == "agent_performance_summary_view":
                 date = self.start_date.replace("-", "")
                 file_name = self.view_type.upper() + "_" + f"{date}"
             else:
                 self.logger.error(
-                    f"View type {self.view_type} not defined in viador, yet..."
+                    f"View type {self.view_type} not defined in viadot, yet..."
                 )
 
             self.download_report(
