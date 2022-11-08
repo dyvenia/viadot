@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 ### Added
 - Added `credentials_loader` function in utils
+- Added new columns to `Epicor` source - `RequiredDate` and `CopperWeight`
 - Added timeout to `DuckDBQuery` and `SAPRFCToDF`
 - Added support for SQL queries with comments to `DuckDB` source
 - Added "WITH" to query keywords in `DuckDB` source
