@@ -10,7 +10,7 @@ load_dotenv()
 
 @pytest.fixture(scope="session")
 def TEST_C4C_API_URL():
-    return "https://my336539.crm.ondemand.com/sap/c4c/odata/v1/c4codataapi/"
+    return os.environ.get("C4C_API_URL")
 
 
 @pytest.fixture(scope="session")

@@ -4,7 +4,7 @@ import pandas as pd
 
 from copy import deepcopy
 from typing import Any, Dict, List, Optional
-from pydantic import BaseModel
+from pydantic import BaseModel, SecretStr
 from urllib.parse import urljoin
 from viadot.exceptions import CredentialError
 
@@ -15,7 +15,7 @@ from .base import Source
 
 class CloudForCustomersCredentials(BaseModel):
     username: str  # eg. username@{tenant_name}.com
-    password: str
+    password: SecretStr
 
 
 class CloudForCustomers(Source):
@@ -26,7 +26,7 @@ class CloudForCustomers(Source):
         endpoint (str, optional): The API endpoint.
         report_url (str, optional): The API URL in case of prepared report.
         filter_params (Dict[str, Any], optional): Filtering parameters passed to the request. E.g {"$filter": "AccountID eq '1234'"}.
-        More info on: https://userapps.support.sap.com/sap/support/knowledge/en/2330688
+        More info on:   https://userapps.support.sap.com/sap/support/knowledge/en/2330688
         credentials (CloudForCustomersCredentials, optional): Cloud for Customers credentials.
         config_key (str, optional): The key in the viadot config holding relevant credentials.
     """
@@ -75,7 +75,7 @@ class CloudForCustomers(Source):
 
     @staticmethod
     def create_metadata_url(url: str) -> str:
-        """Creates url to fetch metadata from.
+        """Creates URL to fetch metadata from.
 
         Args:
             url (str): The URL to transform to metadata URL.
