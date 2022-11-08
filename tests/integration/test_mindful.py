@@ -5,6 +5,8 @@ from viadot.sources import Mindful
 from viadot.tasks import MindfulToCSV
 from viadot.config import local_config
 
+os.system("clear")
+
 credentials_mindful = local_config["MINDFUL"]
 header = {
     "Authorization": f"Bearer {credentials_mindful.get('VAULT')}",
@@ -83,7 +85,7 @@ def test_mindful_responses(mock_connection):
     mf = Mindful(header=header)
     response = mf.get_responses_list()
     mf.response_to_file(response)
-    
+
     assert mf.endpoint == "responses" and isinstance(mf.endpoint, str)
     assert os.path.exists("responses.csv")
     os.remove("responses.csv")
