@@ -535,14 +535,15 @@ class Git(Git):
 @task
 def credentials_loader(credentials_secret: str, vault_name: str = None) -> dict:
     """
-    Function that gets credentials from azure Key Vault or PrefectSecret or from prefect local config.
+    Function that gets credentials from azure Key Vault or PrefectSecret or from local config.
+
     Args:
         credentials_secret (str): The name of the Azure Key Vault secret containing a dictionary
         with credentials.
         vault_name (str, optional): The name of the vault from which to obtain the secret. Defaults to None.
+
     Returns: Credentials
     """
-    from viadot.tasks.azure_key_vault import AzureKeyVaultSecret
 
     if credentials_secret:
         try:
