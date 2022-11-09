@@ -19,7 +19,7 @@ class GenesysToCSV(Task):
         self,
         report_name: str = "genesys_to_csv",
         view_type: Literal[
-            "queue_performance_detail_view", "agent_performance_summery_view"
+            "queue_performance_detail_view", "agent_performance_summary_view"
         ] = "queue_performance_detail_view",
         media_type_list: List[str] = None,
         queueIds_list: List[str] = None,
@@ -39,7 +39,7 @@ class GenesysToCSV(Task):
 
         Args:
             report_name (str, optional): The name of this task. Defaults to a general name 'genesys_to_csv'.
-            view_type (Literal[queue_performance_detail_view, agent_performance_summery_view], optional):
+            view_type (Literal[queue_performance_detail_view, agent_performance_summary_view], optional):
                 The type of view export job to be created. Defaults to "queue_performance_detail_view".
             media_type_list (List[str], optional): List of specific media types. Defaults to None.
             queueIds_list (List[str], optional): List of specific queues ids. Defaults to None.
@@ -99,7 +99,7 @@ class GenesysToCSV(Task):
         self,
         report_name: str = None,
         view_type: Literal[
-            "queue_performance_detail_view", "agent_performance_summery_view"
+            "queue_performance_detail_view", "agent_performance_summary_view"
         ] = "queue_performance_detail_view",
         view_type_time_sleep: int = 80,
         environment: str = None,
@@ -119,7 +119,7 @@ class GenesysToCSV(Task):
 
         Args:
             report_name (str, optional): The name of this task. Defaults to a general name 'genesys_to_csv'.
-            view_type (Literal[queue_performance_detail_view, agent_performance_summery_view], optional):
+            view_type (Literal[queue_performance_detail_view, agent_performance_summary_view], optional):
                 The type of view export job to be created. Defaults to "queue_performance_detail_view".
             view_type_time_sleep (int, optional): Waiting time to retrieve data from Genesys API. Defaults to 80.
             media_type_list (List[str], optional): List of specific media types. Defaults to None.
@@ -180,7 +180,7 @@ class GenesysToCSV(Task):
                 # There is a need to clear a list before repeating try statement.
                 genesys.report_data.clear()
 
-        elif view_type == "agent_performance_summery_view":
+        elif view_type == "agent_performance_summary_view":
             logger.info(
                 f"Waiting for getting data in Genesys database ({view_type_time_sleep} seconds)."
             )

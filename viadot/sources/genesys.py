@@ -24,7 +24,7 @@ class Genesys(Source):
     def __init__(
         self,
         view_type: Literal[
-            "queue_performance_detail_view", "agent_performance_summery_view"
+            "queue_performance_detail_view", "agent_performance_summary_view"
         ] = "queue_performance_detail_view",
         media_type_list: List[str] = None,
         queueIds_list: List[str] = None,
@@ -47,7 +47,7 @@ class Genesys(Source):
         Genesys connector which allows for reports scheduling, listing and downloading into Data Frame or specified format output.
 
         Args:
-            view_type (Literal[queue_performance_detail_view, agent_performance_summery_view], optional):
+            view_type (Literal[queue_performance_detail_view, agent_performance_summary_view], optional):
                 The type of view export job to be created. Defaults to "queue_performance_detail_view".
             media_type_list (List[str], optional):  List of specific media types. Defaults to None.
             queueIds_list (List[str], optional):  List of specific queues ids. Defaults to None.
@@ -372,7 +372,7 @@ class Genesys(Source):
 
             if single_report[4].lower() == "queue_performance_detail_view":
                 file_name = (
-                    temp_ids_mapping.get(single_report[2]) + "_" + single_report[-1]
+                    temp_ids_mapping.get(single_report[2]) + "_" + single_report[3]
                 ).upper()
             elif single_report[4].lower() == "agent_performance_summary_view":
                 date = self.start_date.replace("-", "")
