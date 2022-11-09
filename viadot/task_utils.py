@@ -542,7 +542,8 @@ def credentials_loader(credentials_secret: str, vault_name: str = None) -> dict:
         with credentials.
         vault_name (str, optional): The name of the vault from which to obtain the secret. Defaults to None.
 
-    Returns: Credentials
+    Returns:
+        credentials (dict): Credentials as dictionary.
     """
 
     if credentials_secret:
