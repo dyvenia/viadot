@@ -64,7 +64,7 @@ class GenesysToADLS(Flow):
         self,
         name: str,
         view_type: Literal[
-            "queue_performance_detail_view", "agent_performance_summery_view"
+            "queue_performance_detail_view", "agent_performance_summary_view"
         ] = "queue_performance_detail_view",
         view_type_time_sleep: int = 80,
         media_type_list: List[str] = None,
@@ -91,7 +91,7 @@ class GenesysToADLS(Flow):
 
         Args:
             name (str): The name of the Flow.
-            view_type (Literal[queue_performance_detail_view, agent_performance_summery_view], optional):
+            view_type (Literal[queue_performance_detail_view, agent_performance_summary_view], optional):
                 The type of view export job to be created. Defaults to "queue_performance_detail_view".
             view_type_time_sleep (int, optional): Waiting time to retrieve data from Genesys API. Defaults to 80.
             media_type_list (List[str], optional): List of specific media types. Defaults to None.
@@ -156,7 +156,7 @@ class GenesysToADLS(Flow):
                 credentials_genesys=self.credentials_genesys,
                 flow=self,
             )
-        elif self.view_type == "agent_performance_summery_view":
+        elif self.view_type == "agent_performance_summary_view":
             file_names = to_csv.bind(
                 view_type=self.view_type,
                 view_type_time_sleep=self.view_type_time_sleep,
