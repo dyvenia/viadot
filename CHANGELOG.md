@@ -52,25 +52,6 @@ in `task_utils`
 - Added flows `GenesysToADLS` and `GenesysReportToADLS`
 - Added `query` parameter to  `PrefectLogs` flow
 
-
-## [0.4.8] - 2022-09-06
-### Added
-- Added `protobuf` library to requirements
-
-
-## [0.4.7] - 2022-09-06
-### Added
-- Added new flow - `SQLServerTransform` and new task `SQLServerQuery` to run queries on SQLServer
-- Added `duckdb_query` parameter to `DuckDBToSQLServer` flow to enable option to create table
-using outputs of SQL queries 
-- Added handling empty DF in `set_new_kv()` task
-- Added `update_kv` and `filter_column` params to `SAPRFCToADLS` and `SAPToDuckDB` flows and added `set_new_kv()` task
-in `task_utils`
-- Added Genesys API source `Genesys`
-- Added tasks `GenesysToCSV` and `GenesysToDF`
-- Added flows `GenesysToADLS` and `GenesysReportToADLS`
-- Added `query` parameter to  `PrefectLogs` flow
-
 ### Changed
 - Updated requirements.txt
 - Changed 'handle_api_response()' method by adding more requests method also added contex menager
