@@ -13,6 +13,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - Changed `duckdb` version to `0.5.1`
+- Added new column into Data Frames created with `Mindful`.
+- Added region parameter as an entry argument in `MindfulToADLS`.
 
 ### Fixed
 - Fixed incorrect `if_exists="delete"` handling in `DuckDB.create_table_from_parquet()`
