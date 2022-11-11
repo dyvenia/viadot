@@ -1,5 +1,5 @@
 """Tests for CloudForCustomers source class"""
-from viadot.config import get_source_credentials as get_credentials
+from viadot.config import get_source_credentials
 from viadot.sources.cloud_for_customers import CloudForCustomers
 import pandas as pd
 
@@ -13,7 +13,7 @@ filter_params = {"$filter": cursor_filter}
 
 def test_cloud_for_customers_to_df(TEST_C4C_API_URL):
     credentials_secret = "aia-c4c-qa"
-    credentials = get_credentials(credentials_secret)
+    credentials = get_source_credentials(credentials_secret)
     c4c = CloudForCustomers(
         url=TEST_C4C_API_URL,
         endpoint=CONTACT_ENDPOINT,
@@ -24,4 +24,4 @@ def test_cloud_for_customers_to_df(TEST_C4C_API_URL):
     df = c4c.to_df(fields=None, dtype=None)
 
     assert isinstance(df, pd.core.frame.DataFrame)
-    assert len(df) > 0
+    assert not df.empty

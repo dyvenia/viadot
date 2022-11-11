@@ -155,7 +155,8 @@ class CloudForCustomers(Source):
     def get_entities(
         self, dirty_json: Dict[str, Any], url: str
     ) -> List[Dict[str, Any]]:
-        """Extracts entities from request.json().
+        """Extracts entities from request.json(). Entities represents objects that store information.
+           More info on: https://help.sap.com/docs/EAD_HANA/0e60f05842fd41078917822867220c78/0bd1db568fa546d6823d4c19a6b609ab.html
 
         Args:
             dirty_json (Dict[str, Any]): request.json() dict from response to API.
