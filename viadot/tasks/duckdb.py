@@ -50,6 +50,7 @@ class DuckDBQuery(Task):
             in case of DDL/DML queries, a boolean describing whether
             the query was excuted successfuly.
         """
+
         duckdb = DuckDB(credentials=credentials)
 
         # run the query and fetch the results if it's a select
