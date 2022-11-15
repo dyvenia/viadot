@@ -167,7 +167,7 @@ class CloudForCustomers(Source):
         """
 
         metadata_url = self.create_metadata_url(url)
-        column_maper_dict = self.get_mapping_property_to_sap_level(metadata_url)
+        column_maper_dict = self.get_property_to_sap_label_dict(metadata_url)
         entities = []
         for element in dirty_json["d"]["results"]:
             new_entity = {}
@@ -182,14 +182,16 @@ class CloudForCustomers(Source):
             entities.append(new_entity)
         return entities
 
-    def get_mapping_property_to_sap_level(self, url: str = None) -> Dict[str, str]:
-        """Creates Dict mapping property Name to value of sap label.
+    def get_property_to_sap_label_dict(self, url: str = None) -> Dict[str, str]:
+        """Creates Dict that maps Property Name to value of SAP label.
+           Property: Properties define the characteristics of the data.
+           SAP label: Labels are used for identification and for provision of content information.
 
         Args:
             url (str, optional): The URL to fetch metadata from.
 
         Returns:
-            Dict[str, str]: Property Name to value of sap label.
+            Dict[str, str]: Property Name to value of SAP label.
         """
 
         column_mapping = {}
