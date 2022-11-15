@@ -22,19 +22,20 @@ class DuckDBQuery(Task):
     def __init__(
         self,
         credentials: dict = None,
-        timeout=600,
+        timeout: int = 600,
         *args,
         **kwargs,
     ):
         self.credentials = credentials
         super().__init__(name="run_duckdb_query", timeout=timeout, *args, **kwargs)
 
-    @defaults_from_attrs("credentials")
+    @defaults_from_attrs("credentials", "timeout")
     def run(
         self,
         query: str,
         fetch_type: Literal["record", "dataframe"] = "record",
         credentials: dict = None,
+        timeout: int = None,
     ) -> Union[List[Record], bool]:
         """Run a query on DuckDB.
 

@@ -73,6 +73,7 @@ class SAPRFCToDF(Task):
         "credentials",
         "max_retries",
         "retry_delay",
+        "timeout",
     )
     def run(
         self,
@@ -83,6 +84,7 @@ class SAPRFCToDF(Task):
         rfc_total_col_width_character_limit: int = None,
         max_retries: int = None,
         retry_delay: timedelta = None,
+        timeout: int = None,
     ) -> pd.DataFrame:
         """Task run method.
 
