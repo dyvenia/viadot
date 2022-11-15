@@ -6,13 +6,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 ### Added
+- Added `credentials_loader` function in utils
 - Added new columns to `Epicor` source - `RequiredDate` and `CopperWeight`
 - Added timeout to `DuckDBQuery` and `SAPRFCToDF`
 - Added support for SQL queries with comments to `DuckDB` source
 - Added "WITH" to query keywords in `DuckDB` source
+- Added `avro-python3` library to `requirements`
 
 ### Changed
 - Changed `duckdb` version to `0.5.1`
+- Added new column into Data Frames created with `Mindful`.
+- Added region parameter as an entry argument in `MindfulToADLS`.
 
 ### Fixed
 - Fixed incorrect `if_exists="delete"` handling in `DuckDB.create_table_from_parquet()`

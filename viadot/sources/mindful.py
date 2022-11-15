@@ -15,7 +15,7 @@ from viadot.exceptions import APIError
 class Mindful(Source):
     def __init__(
         self,
-        credentials_mindful: Dict[str, Any] = None,
+        header: str,
         region: Literal["us1", "us2", "us3", "ca1", "eu1", "au1"] = "eu1",
         start_date: datetime = None,
         end_date: datetime = None,
@@ -27,7 +27,7 @@ class Mindful(Source):
         """Mindful connector which allows listing and downloading into Data Frame or specified format output.
 
         Args:
-            credentials_mindful (Dict[str, Any], optional): Credentials to connect with Mindful API. Defaults to None.
+            header (str): Header with credentials for calling Mindful API.
             region (Literal[us1, us2, us3, ca1, eu1, au1], optional): SD region from where to interact with the mindful API. Defaults to "eu1".
             start_date (datetime, optional): Start date of the request. Defaults to None.
             end_date (datetime, optional): End date of the resquest. Defaults to None.
@@ -37,9 +37,7 @@ class Mindful(Source):
         """
         self.logger = prefect.context.get("logger")
 
-        self.credentials_mindful = credentials_mindful
-
-        super().__init__(*args, credentials=self.credentials_mindful, **kwargs)
+        super().__init__(*args, **kwargs)
 
         if region != "us1":
             self.region = region + "."
@@ -75,9 +73,7 @@ class Mindful(Source):
             )
 
         self.file_extension = file_extension
-        self.header = {
-            "Authorization": f"Bearer {self.credentials.get('VAULT')}",
-        }
+        self.header = header
 
     def _mindful_api_response(
         self,
@@ -208,18 +204,18 @@ class Mindful(Source):
         data_frame = pd.read_json(StringIO(response.content.decode("utf-8")))
         if file_name is None:
             complete_file_name = f"{self.endpoint}.{self.file_extension}"
-            absolute_path = os.path.join(file_path, complete_file_name)
+            relative_path = os.path.join(file_path, complete_file_name)
         else:
             complete_file_name = f"{file_name}.{self.file_extension}"
-            absolute_path = os.path.join(file_path, complete_file_name)
+            relative_path = os.path.join(file_path, complete_file_name)
 
         if self.file_extension == "csv":
-            data_frame.to_csv(absolute_path, index=False, sep=sep)
+            data_frame.to_csv(relative_path, index=False, sep=sep)
         elif self.file_extension == "parquet":
-            data_frame.to_parquet(absolute_path, index=False)
+            data_frame.to_parquet(relative_path, index=False)
         else:
             self.logger.warning(
                 "File extension is not available, please choose file_extension: 'parquet' or 'csv' (def.) at Mindful instance."
             )
 
-        return complete_file_name
+        return relative_path
