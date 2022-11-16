@@ -1,4 +1,4 @@
-from viadot.utils import gen_bulk_insert_query_from_df
+from viadot.utils import gen_bulk_insert_query_from_df, add_viadot_source_column
 import pandas as pd
 
 
@@ -66,3 +66,16 @@ def test_double_quotes_inside():
 
 VALUES ({TEST_VALUE_ESCAPED}, 'c')"""
     ), test_insert_query
+
+
+def test_add_viadot_source_column():
+    class Testing_class:
+        @add_viadot_source_column
+        def to_df(self):
+            my_dict = {"AA": [1, 1], "BB": [2, 2]}
+            df = pd.DataFrame(my_dict)
+            return df
+
+    testing_class = Testing_class()
+    df = testing_class.to_df()
+    assert "_viadot_source" in df.columns
