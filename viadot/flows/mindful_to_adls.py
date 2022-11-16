@@ -4,7 +4,7 @@ import pandas as pd
 
 from datetime import datetime
 from prefect import Flow, task
-from viadot.tasks import Mindful
+from viadot.tasks import MindfulToCSV
 from viadot.tasks import AzureDataLakeUpload
 from viadot.task_utils import add_ingestion_metadata_task
 
