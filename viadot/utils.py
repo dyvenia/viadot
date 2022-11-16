@@ -404,6 +404,10 @@ def df_snakecase_column_names(df: pd.DataFrame) -> pd.DataFrame:
 
 
 def add_viadot_source_column(func):
+    """Decorator to be added to 'to_df' methods of sources.
+    Adds new '_viadot_source' column to the resulting df
+    indicating the name of the souce the df is coming from"""
+
     @functools.wraps(func)
     def wrapper(*args, **kwargs):
         df = func(*args, **kwargs)
