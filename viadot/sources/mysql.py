@@ -1,18 +1,13 @@
 import io
-from os.path import expanduser
 
 import pandas as pd
 import paramiko
 import pymysql
-from paramiko import SSHClient
-from prefect import Flow, task, unmapped
 from sshtunnel import SSHTunnelForwarder
 
 from viadot.config import local_config
 from viadot.exceptions import CredentialError
-from viadot.flows.adls_to_azure_sql import df_to_csv_task
 from viadot.sources.base import Source
-from viadot.tasks import AzureDataLakeToDF, AzureDataLakeUpload
 
 
 class MySQL(Source):

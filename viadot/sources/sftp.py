@@ -29,6 +29,15 @@ class SftpConnector(Source):
             file_name (str, optional): File name to download. Defaults to None.
             credentials_sftp (Dict[str, Any], optional): SFTP server credentials. Defaults to None.
 
+        Notes:
+            self.conn is paramiko.SFTPClient.from_transport method that contains additional methods like
+            get, put, open etc. Some of them were not implemented in that class.
+            For more check documentation (https://docs.paramiko.org/en/stable/api/sftp.html)
+
+            sftp = SftpConnector()
+            sftp.conn.open(filename='folder_a/my_file.zip', mode='r')
+
+
         Raises:
             CredentialError: If credentials are not provided in local_config or directly as a parameter.
         """
@@ -41,7 +50,6 @@ class SftpConnector(Source):
             raise CredentialError("Credentials not found.")
 
         self.file_name = file_name
-
         self.conn = None
         self.hostname = self.credentials_sftp.get("HOSTNAME")
         self.username = self.credentials_sftp.get("USERNAME")
@@ -53,10 +61,10 @@ class SftpConnector(Source):
         self.file_name_list = []
         self.recursive_files = []
 
-    def get_conn(self):
+    def get_conn(self) -> paramiko.SFTPClient:
         """Returns a SFTP connection object.
 
-        Returns: paramiko.SFTPClient
+        Returns: paramiko.SFTPClient.
         """
 
         ssh = paramiko.SSHClient()
@@ -75,33 +83,36 @@ class SftpConnector(Source):
                 ssh.connect(self.hostname, username=self.username, pkey=mykey)
                 time.sleep(1)
                 self.conn = ssh.open_sftp()
+
             return self.conn
 
-    def get_cwd(self):
+    def get_cwd(self) -> str:
         """Return the current working directory for SFTP session.
 
         Returns:
-            str: current working directory
+            str: current working directory.
         """
         return self.conn.getcwd()
 
-    def getfo_file(self, file_name: str):
+    def getfo_file(self, file_name: str) -> BytesIO:
         """Copy a remote file from the SFTP server and write to a file-like object.
 
         Args:
             file_name (str, optional): File name to copy.
 
         Returns:
-            BytesIO: file-like object
+            BytesIO: file-like object.
         """
         flo = BytesIO()
         try:
             self.conn.getfo(file_name, flo)
             return flo
         except Exception as e:
-            print(e)
+            self.logger.info(e)
 
-    def to_df(self, file_name: str, sep: str = "\t", columns: List[str] = None):
+    def to_df(
+        self, file_name: str, sep: str = "\t", columns: List[str] = None, **kwargs
+    ) -> pd.DataFrame:
         """Copy a remote file from the SFTP server and write it to Pandas dataframe.
 
         Args:
@@ -114,26 +125,43 @@ class SftpConnector(Source):
         """
         byte_file = self.getfo_file(file_name=file_name)
         byte_file.seek(0)
-        if columns is None:
-            if Path(file_name).suffix == ".csv":
-                df = pd.read_csv(byte_file, sep=sep)
 
-            elif Path(file_name).suffix == ".parquet":
-                df = pd.read_parquet(byte_file)
-        if columns is not None:
-            if Path(file_name).suffix == ".csv":
-                df = pd.read_csv(byte_file, sep=sep, usecols=columns)
+        if Path(file_name).suffix == ".csv":
+            df = pd.read_csv(byte_file, sep=sep, usecols=columns, **kwargs)
 
-            elif Path(file_name).suffix == ".parquet":
-                df = pd.read_parquet(byte_file, usecols=columns)
+        elif Path(file_name).suffix == ".parquet":
+            df = pd.read_parquet(byte_file, usecols=columns, **kwargs)
+
+        elif Path(file_name).suffix == ".tsv":
+            df = pd.read_csv(byte_file, sep="\t", usecols=columns, **kwargs)
+
+        elif Path(file_name).suffix in [".xls", ".xlsx", ".xlsm"]:
+            df = pd.read_excel(byte_file, usecols=columns, **kwargs)
+
+        elif Path(file_name).suffix == ".json":
+            df = pd.read_json(byte_file, **kwargs)
+
+        elif Path(file_name).suffix == ".pkl":
+            df = pd.read_pickle(byte_file, **kwargs)
+
+        elif Path(file_name).suffix == ".sql":
+            df = pd.read_sql(byte_file, **kwargs)
+
+        elif Path(file_name).suffix == ".hdf":
+            df = pd.read_hdf(byte_file, **kwargs)
+
+        else:
+            raise ValueError(
+                f"Not able to read the file {Path(file_name).name}, unsupported filetype: {Path(file_name).suffix}"
+            )
 
         return df
 
-    def get_exported_files(self):
+    def get_exported_files(self) -> List[str]:
         """List only exported files in current working directory.
 
         Returns:
-            List: List of exported files
+            List: List of exported files.
         """
         self.file_name_list.clear()
 
@@ -151,7 +179,7 @@ class SftpConnector(Source):
             path (str, optional): full path to the remote directory to list. Defaults to None.
 
         Returns:
-            List: List of files
+            List: List of files.
 
         """
 
@@ -161,14 +189,14 @@ class SftpConnector(Source):
             files = self.conn.listdir(path)
         return files
 
-    def recursive_listdir(self, path=".", files=None):
+    def recursive_listdir(self, path=".", files=None) -> defaultdict(list):
         """Recursively returns a defaultdict of files on the remote system.
 
         Args:
             path (str, optional): full path to the remote directory to list. Defaults to None.
             files (any, optional): parameter for calling function recursively.
         Returns:
-            defaultdict(list): List of files
+            defaultdict(list): List of files.
 
         """
 
@@ -196,7 +224,7 @@ class SftpConnector(Source):
             defaultdict (any, optional): defaultdict of recursive files. Defaults to None.
 
         Returns:
-            List: list of files
+            List: list of files.
         """
         path_list = []
         if defaultdict is None:

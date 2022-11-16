@@ -1,14 +1,8 @@
-import json
 from typing import Any, Dict, List, Literal
-
-import prefect
-from prefect import Task, Flow
-from prefect.tasks.secrets import PrefectSecret
+from prefect import Flow
 from viadot.flows.adls_to_azure_sql import df_to_csv_task
 
-from viadot.config import local_config
-from viadot.sources.sftp import SftpConnector
-from viadot.tasks.sftp import SftpToDF
+from viadot.tasks import SftpToDF
 from viadot.tasks import AzureDataLakeUpload, AzureSQLCreateTable, BCPTask
 from viadot.task_utils import add_ingestion_metadata_task
 
@@ -111,11 +105,11 @@ class SftpToAzureSQL(Flow):
         return super().__call__(*args, **kwargs)
 
     def gen_flow(self) -> Flow:
-        ftp = SftpToDF(
+        sftp = SftpToDF(
             sftp_credentials_secret=self.sftp_credentials_secret,
             credentials=self.sftp_credentials,
         )
-        df = ftp.bind(
+        df = sftp.bind(
             from_path=self.from_path,
             columns=self.columns,
             flow=self,
@@ -185,8 +179,9 @@ class SftpToADLS(Flow):
             overwrite (bool, optional): Whether to overwrite files in the lake. Defaults to False.
             to_path (str, optional): The destination path in ADLS. Defaults to None.
             columns (List[str], optional): Columns to read from the file. Defaults to None.
-            sp_credentials_secret (str, optional): The name of the Azure Key Vault secret containing a dictionary.
+            sftp_credentials_secret (str, optional): The name of the Azure Key Vault secret containing a dictionary credentials for SFTP connection. Defaults to None.
             sftp_credentials (Dict[str, Any], optional): SFTP server credentials. Defaults to None.
+            sp_credentials_secret (str, optional): The name of the Azure Key Vault secret containing a dictionary.
             vault_name (str, optional): The name of the vault from which to obtain the secret. Defaults to None.
         """
         # SFTP
