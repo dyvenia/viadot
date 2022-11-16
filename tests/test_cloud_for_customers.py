@@ -23,5 +23,5 @@ def test_cloud_for_customers_to_df(TEST_C4C_API_URL):
 
     df = c4c.to_df(fields=None, dtype=None)
 
-    assert isinstance(df, pd.core.frame.DataFrame)
+    assert isinstance(df, pd.DataFrame)
     assert not df.empty

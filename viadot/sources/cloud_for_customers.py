@@ -22,7 +22,7 @@ class CloudForCustomers(Source):
     """Cloud for Customers connector to fetch Odata source.
 
     Args:
-        url (str, optional): The URL to the C4C API. E.g 'https://my396876543.jrt.ondemand.com/c4c/v1/'.
+        url (str, optional): The URL to the C4C API. E.g 'https://myNNNNNN.crm.ondemand.com/c4c/v1/'.
         endpoint (str, optional): The API endpoint.
         report_url (str, optional): The API URL in case of prepared report.
         filter_params (Dict[str, Any], optional): Filtering parameters passed to the request. E.g {"$filter": "AccountID eq '1234'"}.
