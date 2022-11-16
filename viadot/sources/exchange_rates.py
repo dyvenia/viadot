@@ -3,7 +3,7 @@ import pandas as pd
 import requests
 from datetime import datetime
 from typing import Any, Dict, List, Literal
-from ..config import get_source_credentials
+from ..config import get_source_credentials, add_viadot_source_column
 from .base import Source
 from viadot.utils import cleanup_df, add_metadata_columns
 from viadot.exceptions import CredentialError
@@ -140,6 +140,7 @@ class ExchangeRates(Source):
 
         return json
 
+    @add_viadot_source_column
     def to_df(self) -> pd.DataFrame:
         json = self.to_json()
         df = pd.json_normalize(json["currencies"])

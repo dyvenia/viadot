@@ -7,7 +7,7 @@ from pydantic import BaseModel
 from sharepy.errors import AuthError
 from viadot.exceptions import CredentialError
 
-from ..config import get_source_credentials
+from ..config import get_source_credentials, add_viadot_source_column
 from ..signals import SKIP
 from ..utils import add_metadata_columns, cleanup_df
 from .base import Source
@@ -80,6 +80,7 @@ class Sharepoint(Source):
         )
         conn.close()
 
+    @add_viadot_source_column
     def to_df(
         self,
         url: str,

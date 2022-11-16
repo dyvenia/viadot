@@ -1,6 +1,7 @@
 import logging
 import re
 import subprocess
+import functools
 from datetime import datetime, timezone
 from typing import Any, Dict, List, Literal, Union
 
@@ -396,5 +397,21 @@ def call_shell(command):
 
 
 def df_snakecase_column_names(df: pd.DataFrame) -> pd.DataFrame:
-    df.columns = df.columns.str.strip().str.replace(" ", "_").str.replace("-", "_").str.lower()
+    df.columns = (
+        df.columns.str.strip().str.replace(" ", "_").str.replace("-", "_").str.lower()
+    )
     return df
+
+
+def add_viadot_source_column(func):
+    @functools.wraps(func)
+    def wrapper(*args, **kwargs):
+        df = func(*args, **kwargs)
+
+        # Accessing instance
+        instance = args[0]
+        _viadot_source = instance.__class__.__name__
+        df["_viadot_source"] = _viadot_source
+        return df
+
+    return wrapper
