@@ -2,7 +2,7 @@ import pandas as pd
 import requests
 
 from .base import Source
-from ..config import add_viadot_source_column
+from ..utils import add_viadot_metadata_columns
 
 
 class UKCarbonIntensity(Source):
@@ -32,7 +32,7 @@ class UKCarbonIntensity(Source):
         else:
             raise f"Error {response.json()}"
 
-    @add_viadot_source_column
+    @add_viadot_metadata_columns
     def to_df(self, if_empty: str = "warn"):
         """Returns a pandas DataFrame with flattened data
 

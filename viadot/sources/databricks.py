@@ -8,9 +8,9 @@ from delta.tables import *
 from pydantic import BaseModel
 from viadot.exceptions import CredentialError
 
-from ..config import get_source_credentials, add_viadot_source_column
+from ..config import get_source_credentials
 from ..exceptions import TableAlreadyExists, TableDoesNotExist
-from ..utils import build_merge_query, df_snakecase_column_names
+from ..utils import build_merge_query, df_snakecase_column_names, add_viadot_metadata_columns
 from .base import Source
 
 
@@ -88,7 +88,7 @@ class Databricks(Source):
             return session
         return self._session
 
-    @add_viadot_source_column
+    @add_viadot_metadata_columns
     def to_df(
         self,
         query: str,
