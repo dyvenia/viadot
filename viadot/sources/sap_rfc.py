@@ -122,7 +122,7 @@ def detect_extra_rows(
 def catch_extra_separators(
     data_raw: np.array, record_key: str, sep: str, fields: List[str], replacement: str
 ) -> np.array:
-    """Function to replace extra separators in rows of the SAP table.
+    """Function to replace extra separators in every row of the
 
     Args:
         data_raw (np.array): Array with the data retrieve from SAP table.
@@ -587,13 +587,15 @@ class SAPRFC(Source):
                 record_key = "WA"
                 data_raw = np.array(response["DATA"])
 
+                # check if in between calls to the URL, the number of rows have increased,
+                # if so, remove the last rows added to fit the size of the previous columns.
                 if row_index == 0:
                     row_index = data_raw.shape[0]
                     if row_index == 0:
                         logger.warning(
                             f"Empty output was generated for chunk {chunk} in columns {fields}."
                         )
-                        df[fields] = []
+                        chunk += 1
                         continue
                 elif data_raw.shape[0] != row_index:
                     data_raw = data_raw[:row_index]
@@ -601,40 +603,46 @@ class SAPRFC(Source):
                         f"New rows were generated during the execution of the script. The table is truncated to the number of rows for the first chunk"
                     )
 
-                # first we identify where the data has an extra sep due to text
+                # first we identify where the data has an extra separator in text columns.
                 sep_counts = np.array([], dtype=int)
                 for row in data_raw:
-                    counts = np.append(counts, row[record_key].count(f"{sep}"))
+                    sep_counts = np.append(sep_counts, row[record_key].count(f"{sep}"))
 
-                bad_index = np.argwhere(counts != len(fields) - 1)
-                bad_index = bad_index.reshape(
-                    len(bad_index),
+                no_sep_index = np.argwhere(sep_counts != len(fields) - 1)
+                no_sep_index = no_sep_index.reshape(
+                    len(no_sep_index),
                 )
-                good_index = np.argwhere(counts == len(fields) - 1)
-                good_index = good_index.reshape(
-                    len(good_index),
+                sep_index = np.argwhere(sep_counts == len(fields) - 1)
+                sep_index = sep_index.reshape(
+                    len(sep_index),
                 )
 
-                # with good rows we obtain the positions where the "sep"s of columns are placed in the string
+                # indentifying good rows we obtain the index of separatos positions.
                 pos_sep_index = np.array([], dtype=int)
                 for data in data_raw[sep_index]:
-                    sep_index = np.append(
-                        sep_index, np.where(np.array([*data[record_key]]) == f"{sep}")
+                    pos_sep_index = np.append(
+                        pos_sep_index,
+                        np.where(np.array([*data[record_key]]) == f"{sep}"),
                     )
                 pos_sep_index = np.unique(pos_sep_index)
 
-                # now we replace bad "sep" by another character "-" (self.replacement, by default)
+                # in rows with an extra separator, we replace them by another character: "/" by default
                 for no_sep in no_sep_index:
-                    print(data_raw[no_sep][record_key])
+                    logger.warning(
+                        "A separator character was found and replaced inside a string text that could produce future errors:"
+                    )
+                    logger.warning("\n" + data_raw[no_sep][record_key])
                     split_array = np.array([*data_raw[no_sep][record_key]])
                     position = np.where(split_array == f"{sep}")[0]
-                    index_sep_index = np.argwhere(np.in1d(position, sep_index) == False)
+                    index_sep_index = np.argwhere(
+                        np.in1d(position, pos_sep_index) == False
+                    )
                     index_sep_index = index_sep_index.reshape(
                         len(index_sep_index),
                     )
-                    split_array[position[index_sep_index]] = "-"
+                    split_array[position[index_sep_index]] = self.replacement
                     data_raw[no_sep][record_key] = "".join(split_array)
-                    print(data_raw[no_sep][record_key])
+                    logger.warning("\n" + data_raw[no_sep][record_key])
 
                 records = np.array([row[record_key].split(sep) for row in data_raw])
 
