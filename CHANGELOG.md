@@ -17,6 +17,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added `CustomerGauge` source class
 - Added `CustomerGaugeToDF` task class
 - Added `CustomerGaugeToADLS` flow class
+- Added new parameter `rfc_replacement` to `sap_rfc_to_adls.py` to replace 
+an extra separator character within a string column to avoid conflicts.
 
 ## [0.4.13] - 2023-03-15
 ### Added
@@ -65,12 +67,7 @@ This parameter enables user to decide whether or not filter should be validated.
 - Added timeout to `DuckDBQuery` and `SAPRFCToDF`
 - Added support for SQL queries with comments to `DuckDB` source
 - Added "WITH" to query keywords in `DuckDB` source
-<<<<<<< HEAD
 - Added `avro-python3` library to `requirements`
-=======
-- Added new parameter to `sap_rfc_to_adls.py` to replace a separator character 
-inside a string variable by defined character.
->>>>>>> 📝 Added comments in CHANGELOG.md
 
 ### Changed
 - Changed `duckdb` version to `0.5.1`
