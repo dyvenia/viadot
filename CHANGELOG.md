@@ -67,17 +67,14 @@ This parameter enables user to decide whether or not filter should be validated.
 
 ## [0.4.10] - 2022-11-16
 ### Added
-- Added `credentials_loader` function in utils
-- Added new columns to `Epicor` source - `RequiredDate` and `CopperWeight`
 - Added timeout to `DuckDBQuery` and `SAPRFCToDF`
 - Added support for SQL queries with comments to `DuckDB` source
 - Added "WITH" to query keywords in `DuckDB` source
-- Added `avro-python3` library to `requirements`
+- Added new parameter to `sap_rfc_to_adls.py` to replace a separator character 
+inside a string variable by defined character.
 
 ### Changed
 - Changed `duckdb` version to `0.5.1`
-- Added new column into Data Frames created with `Mindful`.
-- Added region parameter as an entry argument in `MindfulToADLS`.
 
 ### Fixed
 - Fixed incorrect `if_exists="delete"` handling in `DuckDB.create_table_from_parquet()`
