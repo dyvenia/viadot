@@ -2,4 +2,4 @@ from viadot import __version__
 
 
 def test_version():
-    assert __version__ == "0.4.10"
+    assert __version__ == "0.4.11"
