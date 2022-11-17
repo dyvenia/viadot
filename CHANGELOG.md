@@ -70,6 +70,9 @@ This parameter enables user to decide whether or not filter should be validated.
 ### Changed
 - Changed data extraction logic for `Outlook` data.
 
+### Fixed
+- Removed `try-except` sentence and added a new logic to remove extra separators in `sap_rfc.py` 
+source file, to vaoid a mismatch in columns lenght between iterative connections to SAP tables.
 
 ## [0.4.10] - 2022-11-16
 ### Added
