@@ -1,7 +1,7 @@
 import re, sys
 from prefect.utilities import logging
 from collections import OrderedDict
-from typing import List, Literal
+from typing import List, Literal, Union
 from typing import OrderedDict as OrderedDictType
 from typing import Tuple, Union
 
@@ -83,6 +83,98 @@ def trim_where(where: str) -> Tuple[str, OrderedDictType[str, str]]:
     wheres_to_add = OrderedDict(wheres_to_add_sorted)
 
     return where_trimmed, wheres_to_add
+
+
+def detect_extra_rows(
+    row_index: int, data_raw: np.array, chunk: int, fields: List[str]
+) -> Union[int, np.array, bool]:
+    """check if, in between calls to the SAP table, the number of rows have increased.
+        If so, remove the last rows added, to fit the size of the previous columns.
+
+    Args:
+        row_index (int): Number of rows set it down in he first iteration with the SAP table.
+        data_raw (np.array): Array with the data retrieve from SAP table.
+        chunk (int): The part number in which a number of SAP table columns have been split.
+        fields (List[str]): A list with the names of the columns in a chunk.
+
+    Returns:
+        Union[int, np.array, bool]: A tuple with the parameters "row_index", "data_raw", and a new
+            boolean variable "cont" to indicate when the for loop has to be restarted.
+    """
+    cont = False
+    if row_index == 0:
+        row_index = data_raw.shape[0]
+        if row_index == 0:
+            logger.warning(
+                f"Empty output was generated for chunk {chunk} in columns {fields}."
+            )
+            chunk += 1
+            cont = True
+    elif data_raw.shape[0] != row_index:
+        data_raw = data_raw[:row_index]
+        logger.warning(
+            f"New rows were generated during the execution of the script. The table is truncated to the number of rows for the first chunk"
+        )
+
+    return row_index, data_raw, cont
+
+
+def catch_extra_separators(
+    data_raw: np.array, record_key: str, sep: str, fields: List[str], replacement: str
+) -> np.array:
+    """Function to replace extra separators in rows of the SAP table.
+
+    Args:
+        data_raw (np.array): Array with the data retrieve from SAP table.
+        record_key (str): Key word to extract the data from the numpy array "data_raw".
+        sep (str): Which separator to use when querying SAP.
+        fields (List[str]): A list with the names of the columns in a chunk.
+        replacement (str): In case of sep is on a columns, set up a new character to replace
+            inside the string to avoid flow breakdowns.
+
+    Returns:
+        np.array: The argument "data_raw" with no extra delimiters.
+    """
+
+    # first we identify where the data has an extra separator in text columns.
+    sep_counts = np.array([], dtype=int)
+    for row in data_raw:
+        sep_counts = np.append(sep_counts, row[record_key].count(f"{sep}"))
+
+    no_sep_index = np.argwhere(sep_counts != len(fields) - 1)
+    no_sep_index = no_sep_index.reshape(
+        len(no_sep_index),
+    )
+    sep_index = np.argwhere(sep_counts == len(fields) - 1)
+    sep_index = sep_index.reshape(
+        len(sep_index),
+    )
+    # indentifying "good" rows we obtain the index of separatos positions.
+    pos_sep_index = np.array([], dtype=int)
+    for data in data_raw[sep_index]:
+        pos_sep_index = np.append(
+            pos_sep_index,
+            np.where(np.array([*data[record_key]]) == f"{sep}"),
+        )
+    pos_sep_index = np.unique(pos_sep_index)
+
+    # in rows with an extra separator, we replace them by another character: "-" by default
+    for no_sep in no_sep_index:
+        logger.warning(
+            "A separator character was found and replaced inside a string text that could produce future errors:"
+        )
+        logger.warning("\n" + data_raw[no_sep][record_key])
+        split_array = np.array([*data_raw[no_sep][record_key]])
+        position = np.where(split_array == f"{sep}")[0]
+        index_sep_index = np.argwhere(np.in1d(position, pos_sep_index) == False)
+        index_sep_index = index_sep_index.reshape(
+            len(index_sep_index),
+        )
+        split_array[position[index_sep_index]] = replacement
+        data_raw[no_sep][record_key] = "".join(split_array)
+        logger.warning("\n" + data_raw[no_sep][record_key])
+
+    return data_raw
 
 
 class SAPRFC(Source):
@@ -494,62 +586,15 @@ class SAPRFC(Source):
                 record_key = "WA"
                 data_raw = np.array(response["DATA"])
 
-                # check if in between calls to the URL, the number of rows have increased,
-                # if so, remove the last rows added to fit the size of the previous columns.
-                if row_index == 0:
-                    row_index = data_raw.shape[0]
-                    if row_index == 0:
-                        logger.warning(
-                            f"Empty output was generated for chunk {chunk} in columns {fields}."
-                        )
-                        chunk += 1
-                        continue
-                elif data_raw.shape[0] != row_index:
-                    data_raw = data_raw[:row_index]
-                    logger.warning(
-                        f"New rows were generated during the execution of the script. The table is truncated to the number of rows for the first chunk"
-                    )
-
-                # first we identify where the data has an extra separator in text columns.
-                sep_counts = np.array([], dtype=int)
-                for row in data_raw:
-                    sep_counts = np.append(sep_counts, row[record_key].count(f"{sep}"))
-
-                no_sep_index = np.argwhere(sep_counts != len(fields) - 1)
-                no_sep_index = no_sep_index.reshape(
-                    len(no_sep_index),
+                row_index, data_raw, cont = detect_extra_rows(
+                    row_index, data_raw, chunk, fields
                 )
-                sep_index = np.argwhere(sep_counts == len(fields) - 1)
-                sep_index = sep_index.reshape(
-                    len(sep_index),
+                if cont:
+                    continue
+
+                data_raw = catch_extra_separators(
+                    data_raw, record_key, sep, fields, self.replacement
                 )
-
-                # indentifying good rows we obtain the index of separatos positions.
-                pos_sep_index = np.array([], dtype=int)
-                for data in data_raw[sep_index]:
-                    pos_sep_index = np.append(
-                        pos_sep_index,
-                        np.where(np.array([*data[record_key]]) == f"{sep}"),
-                    )
-                pos_sep_index = np.unique(pos_sep_index)
-
-                # in rows with an extra separator, we replace them by another character: "/" by default
-                for no_sep in no_sep_index:
-                    logger.warning(
-                        "A separator character was found and replaced inside a string text that could produce future errors:"
-                    )
-                    logger.warning("\n" + data_raw[no_sep][record_key])
-                    split_array = np.array([*data_raw[no_sep][record_key]])
-                    position = np.where(split_array == f"{sep}")[0]
-                    index_sep_index = np.argwhere(
-                        np.in1d(position, pos_sep_index) == False
-                    )
-                    index_sep_index = index_sep_index.reshape(
-                        len(index_sep_index),
-                    )
-                    split_array[position[index_sep_index]] = self.replacement
-                    data_raw[no_sep][record_key] = "".join(split_array)
-                    logger.warning("\n" + data_raw[no_sep][record_key])
 
                 records = np.array([row[record_key].split(sep) for row in data_raw])
 
