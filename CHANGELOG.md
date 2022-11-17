@@ -5,6 +5,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Added
+- Added new parameter `rfc_replacement` to `sap_rfc_to_adls.py` to replace 
+an extra separator character within a string column to avoid conflicts.
 
 ### Added
 - Added `close_connection()` in `sap_rfc`
@@ -75,12 +78,7 @@ This parameter enables user to decide whether or not filter should be validated.
 - Added timeout to `DuckDBQuery` and `SAPRFCToDF`
 - Added support for SQL queries with comments to `DuckDB` source
 - Added "WITH" to query keywords in `DuckDB` source
-<<<<<<< HEAD
 - Added `avro-python3` library to `requirements`
-=======
-- Added new parameter to `sap_rfc_to_adls.py` to replace a separator character 
-inside a string variable by defined character.
->>>>>>> 📝 Added comments in CHANGELOG.md
 
 ### Changed
 - Changed `duckdb` version to `0.5.1`
