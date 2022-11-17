@@ -587,7 +587,7 @@ class SAPRFC(Source):
                 record_key = "WA"
                 data_raw = np.array(response["DATA"])
 
-                if i == 0:
+                if row_index == 0:
                     row_index = data_raw.shape[0]
                     if row_index == 0:
                         logger.warning(
@@ -602,7 +602,7 @@ class SAPRFC(Source):
                     )
 
                 # first we identify where the data has an extra sep due to text
-                counts = np.array([], dtype=int)
+                sep_counts = np.array([], dtype=int)
                 for row in data_raw:
                     counts = np.append(counts, row[record_key].count(f"{sep}"))
 
@@ -616,14 +616,14 @@ class SAPRFC(Source):
                 )
 
                 # with good rows we obtain the positions where the "sep"s of columns are placed in the string
-                sep_index = np.array([], dtype=int)
+                pos_sep_index = np.array([], dtype=int)
                 for data in data_raw[sep_index]:
                     sep_index = np.append(
                         sep_index, np.where(np.array([*data[record_key]]) == f"{sep}")
                     )
                 pos_sep_index = np.unique(pos_sep_index)
 
-                # now we replace bad "sep" by another character "-"
+                # now we replace bad "sep" by another character "-" (self.replacement, by default)
                 for no_sep in no_sep_index:
                     print(data_raw[no_sep][record_key])
                     split_array = np.array([*data_raw[no_sep][record_key]])
