@@ -5,89 +5,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
-
 ### Added
-- Added new parameter `rfc_replacement` to `sap_rfc_to_adls.py` to replace 
-an extra separator character within a string column to avoid conflicts.
-
-### Added
-- Added `close_connection()` in `sap_rfc`
-
-## [0.4.14] - 2023-04-13
-### Added
-- Added `anonymize_df` task function to `task_utils.py` to anonymize data in the dataframe in selected columns.
-- Added `Hubspot` source class
-- Added `HubspotToDF` task class
-- Added `HubspotToADLS` flow class
-- Added `CustomerGauge` source class
-- Added `CustomerGaugeToDF` task class
-- Added `CustomerGaugeToADLS` flow class
-- Added new parameter `rfc_replacement` to `sap_rfc_to_adls.py` to replace 
-an extra separator character within a string column to avoid conflicts.
-- Added `rfc_reference_column` in `sap_frc.py` to merge chunks on this column.
-
-### Fixed
-- Removed `try-except` sentence and added a new logic to remove extra separators in `sap_rfc.py` 
-source file, to vaoid a mismatch in columns lenght between iterative connections to SAP tables.
-- When `SAP` tables are updated during `sap_rfc.py` scrip running, if there are chunks, the
-columns in the next chunk are unrealted rows.
-
-## [0.4.13] - 2023-03-15
-### Added
-- Added `validate_date_filter` parameter to `Epicor` source, `EpicorOrdersToDF` task and `EpicorOrdersToDuckDB` flow.
-This parameter enables user to decide whether or not filter should be validated.
-- Added `Mediatool` source class
-- Added `MediatoolToDF` task class
-- Added `MediatoolToADLS` flow class
-- Added option to disable `check_dtypes_sort` in `ADLSToAzureSQL` flow.
-- Added `query` parameter to `BigQueryToADLS` flow and `BigqueryToDF` task to be able to enter custom SQL query.
-- Added new end point `conversations/details/query` connection to `Genesys` task.
-- Added new task `filter_userid` in `GenesysToADLS` flow to filter out by user Ids list, previously passed by the user.
-
-### Changed
-- Changed parameter name in `BigQueryToADLS` flow - from `credentials_secret` to `credentials_key`
-
-
-## [0.4.12] - 2023-01-31
-### Added
-- Added `view_type_time_sleep` to the Genesys `queue_performance_detail_view`.
-- Added `FileNotFoundError` to catch up failures in `MindfulToCSV` and when creating SQL tables.
-- Added `check_dtypes_sort` task into `ADLSToAzureSQL` to check if dtypes is properly sorted.
-- Added `timeout` parameter to all `Task`s where it can be added.
-- Added `timeout` parameter to all `Flow`s where it can be added.
-- Added `adls_bulk_upload` task function to `task_utils.py`
-- Added `get_survey_list` into `Mindful` Source file.
-
-### Changed
-- Updated `genesys_to_adls.py` flow with the `adls_bulk_upload` task
-- Updated `mindful_to_adls.py` flow with the `adls_bulk_upload` task
-- Changed `MindfulToCSV` task to download surveys info.
-
-
-## [0.4.11] - 2022-12-15
-### Added
-- Added into `Genesys` the new view type `AGENT`. 
-
-### Changed
-- Changed data extraction logic for `Outlook` data.
-
-### Fixed
-- Removed `try-except` sentence and added a new logic to remove extra separators in `sap_rfc.py` 
-source file, to vaoid a mismatch in columns lenght between iterative connections to SAP tables.
-
-## [0.4.10] - 2022-11-16
-### Added
-- Added `credentials_loader` function in utils
-- Added new columns to `Epicor` source - `RequiredDate` and `CopperWeight`
 - Added timeout to `DuckDBQuery` and `SAPRFCToDF`
 - Added support for SQL queries with comments to `DuckDB` source
 - Added "WITH" to query keywords in `DuckDB` source
-- Added `avro-python3` library to `requirements`
+- Added new parameter to `sap_rfc_to_adls.py` to replace a separator character 
+inside a string variable by defined character.
 
 ### Changed
 - Changed `duckdb` version to `0.5.1`
-- Added new column into Data Frames created with `Mindful`.
-- Added region parameter as an entry argument in `MindfulToADLS`.
 
 ### Fixed
 - Fixed incorrect `if_exists="delete"` handling in `DuckDB.create_table_from_parquet()`
