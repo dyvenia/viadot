@@ -494,6 +494,8 @@ class SAPRFC(Source):
                 record_key = "WA"
                 data_raw = np.array(response["DATA"])
 
+                # check if in between calls to the URL, the number of rows have increased,
+                # if so, remove the last rows added to fit the size of the previous columns.
                 if row_index == 0:
                     row_index = data_raw.shape[0]
                     if row_index == 0:
@@ -508,7 +510,7 @@ class SAPRFC(Source):
                         f"New rows were generated during the execution of the script. The table is truncated to the number of rows for the first chunk"
                     )
 
-                # first we identify where the data has an extra sep due to text
+                # first we identify where the data has an extra separator in text columns.
                 sep_counts = np.array([], dtype=int)
                 for row in data_raw:
                     sep_counts = np.append(sep_counts, row[record_key].count(f"{sep}"))
@@ -522,7 +524,7 @@ class SAPRFC(Source):
                     len(sep_index),
                 )
 
-                # with good rows we obtain the positions where the "sep"s of columns are placed in the string
+                # indentifying good rows we obtain the index of separatos positions.
                 pos_sep_index = np.array([], dtype=int)
                 for data in data_raw[sep_index]:
                     pos_sep_index = np.append(
@@ -531,7 +533,7 @@ class SAPRFC(Source):
                     )
                 pos_sep_index = np.unique(pos_sep_index)
 
-                # now we replace bad "sep" by another character "-" (self.replacement, by default)
+                # in rows with an extra separator, we replace them by another character: "/" by default
                 for no_sep in no_sep_index:
                     logger.warning(
                         "A separator character was found and replaced inside a string text that could produce future errors:"
