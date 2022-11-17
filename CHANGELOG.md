@@ -20,6 +20,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added new parameter `rfc_replacement` to `sap_rfc_to_adls.py` to replace 
 an extra separator character within a string column to avoid conflicts.
 
+### Fixed
+- Removed `try-except` sentence and added a new logic to remove extra separators in `sap_rfc.py` 
+source file, to vaoid a mismatch in columns lenght between iterative connections to SAP tables.
+
 ## [0.4.13] - 2023-03-15
 ### Added
 - Added `validate_date_filter` parameter to `Epicor` source, `EpicorOrdersToDF` task and `EpicorOrdersToDuckDB` flow.
