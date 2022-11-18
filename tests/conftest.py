@@ -9,6 +9,11 @@ load_dotenv()
 
 
 @pytest.fixture(scope="session")
+def TEST_C4C_API_URL():
+    return os.environ.get("C4C_API_URL")
+
+
+@pytest.fixture(scope="session")
 def TEST_SUPERMETRICS_FILE_PATH():
     return "test_supermetrics.csv"
 

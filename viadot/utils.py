@@ -19,6 +19,8 @@ from urllib3.exceptions import ProtocolError
 from .exceptions import APIError
 from .signals import SKIP
 
+import json
+
 
 def slugify(name: str) -> str:
     return name.replace(" ", "_").lower()
@@ -52,8 +54,9 @@ def get_response(
 
 
 def handle_response(
-    response: requests.Response, url: str, timeout: tuple = (3.05, 60 * 30)
+    response: requests.Response, timeout: tuple = (3.05, 60 * 30)
 ) -> requests.Response:
+    url = response.url
     try:
         response.raise_for_status()
     except ReadTimeout as e:
@@ -72,6 +75,8 @@ def handle_response(
         raise APIError(f"Did not receive any reponse for the API call to {url}.")
     except Exception as e:
         raise APIError("Unknown error.") from e
+
+    return response
 
 
 def handle_api_response(
@@ -104,8 +109,8 @@ def handle_api_response(
     response = get_response(
         url=url, auth=auth, params=params, headers=headers, timeout=timeout
     )
-    response_handled = handle_response(response)
 
+    response_handled = handle_response(response)
     return response_handled
 
 
