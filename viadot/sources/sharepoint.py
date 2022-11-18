@@ -9,7 +9,7 @@ from viadot.exceptions import CredentialError
 
 from ..config import get_source_credentials
 from ..signals import SKIP
-from ..utils import add_metadata_columns, cleanup_df
+from ..utils import cleanup_df, add_viadot_metadata_columns
 from .base import Source
 
 
@@ -80,6 +80,7 @@ class Sharepoint(Source):
         )
         conn.close()
 
+    @add_viadot_metadata_columns
     def to_df(
         self,
         url: str,
@@ -138,5 +139,4 @@ class Sharepoint(Source):
             self.logger.info(f"Successfully downloaded {len(df)} of data.")
 
         df_clean = cleanup_df(df)
-        df_with_metadata = add_metadata_columns(df_clean)
-        return df_with_metadata
+        return df_clean

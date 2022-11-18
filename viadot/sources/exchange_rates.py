@@ -5,7 +5,7 @@ from datetime import datetime
 from typing import Any, Dict, List, Literal
 from ..config import get_source_credentials
 from .base import Source
-from viadot.utils import cleanup_df, add_metadata_columns
+from viadot.utils import cleanup_df, add_viadot_metadata_columns
 from viadot.exceptions import CredentialError
 
 Currency = Literal[
@@ -140,10 +140,10 @@ class ExchangeRates(Source):
 
         return json
 
+    @add_viadot_metadata_columns
     def to_df(self) -> pd.DataFrame:
         json = self.to_json()
         df = pd.json_normalize(json["currencies"])
         df_clean = cleanup_df(df)
-        df_with_metadata = add_metadata_columns(df_clean)
 
-        return df_with_metadata
+        return df_clean

@@ -1,8 +1,9 @@
 import logging
 import re
 import subprocess
+import functools
 from datetime import datetime, timezone
-from typing import Any, Dict, List, Literal, Union
+from typing import Any, Dict, List, Literal, Union, Callable
 
 import pandas as pd
 import pyodbc
@@ -381,11 +382,6 @@ def cleanup_df(df: pd.DataFrame) -> pd.DataFrame:
     return df.replace(r"\n|\t", "", regex=True)
 
 
-def add_metadata_columns(df: pd.DataFrame) -> pd.DataFrame:
-    df["_viadot_downloaded_at_utc"] = datetime.now(timezone.utc).replace(microsecond=0)
-    return df
-
-
 def call_shell(command):
     try:
         result = subprocess.check_output(command, shell=True)
@@ -396,5 +392,26 @@ def call_shell(command):
 
 
 def df_snakecase_column_names(df: pd.DataFrame) -> pd.DataFrame:
-    df.columns = df.columns.str.strip().str.replace(" ", "_").str.replace("-", "_").str.lower()
+    df.columns = (
+        df.columns.str.strip().str.replace(" ", "_").str.replace("-", "_").str.lower()
+    )
     return df
+
+
+def add_viadot_metadata_columns(func: Callable) -> Callable:
+    "Decorator that adds metadata columns to df in 'to_df' method"
+
+    @functools.wraps(func)
+    def wrapper(*args, **kwargs) -> pd.DataFrame:
+        df = func(*args, **kwargs)
+
+        # Accessing instance
+        instance = args[0]
+        _viadot_source = instance.__class__.__name__
+        df["_viadot_source"] = _viadot_source
+        df["_viadot_downloaded_at_utc"] = datetime.now(timezone.utc).replace(
+            microsecond=0
+        )
+        return df
+
+    return wrapper

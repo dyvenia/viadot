@@ -7,6 +7,7 @@ from adlfs import AzureBlobFileSystem, AzureDatalakeFileSystem
 from ..config import get_source_credentials
 from ..exceptions import CredentialError
 from .base import Source
+from ..utils import add_viadot_metadata_columns
 
 
 class AzureDataLake(Source):
@@ -173,6 +174,7 @@ class AzureDataLake(Source):
         from_path = from_path or self.path
         self.fs.download(rpath=from_path, lpath=to_path, recursive=recursive)
 
+    @add_viadot_metadata_columns
     def to_df(
         self,
         path: str = None,
