@@ -99,7 +99,9 @@ class GenesysToCSV(Task):
         self,
         report_name: str = None,
         view_type: Literal[
-            "queue_performance_detail_view", "agent_performance_summary_view"
+            "queue_performance_detail_view",
+            "agent_performance_summary_view",
+            "agent_status_summary_view",
         ] = "queue_performance_detail_view",
         view_type_time_sleep: int = 80,
         environment: str = None,
@@ -180,14 +182,17 @@ class GenesysToCSV(Task):
                 # There is a need to clear a list before repeating try statement.
                 genesys.report_data.clear()
 
-        elif view_type == "agent_performance_summary_view":
+        elif view_type in [
+            "agent_performance_summary_view",
+            "agent_status_summary_view",
+        ]:
             logger.info(
                 f"Waiting for getting data in Genesys database ({view_type_time_sleep} seconds)."
             )
             time.sleep(view_type_time_sleep)
 
             genesys.get_reporting_exports_data()
-
+        # print(genesys.report_data)
         failed = [col for col in np.array(genesys.report_data).T][-1]
 
         if "FAILED" in failed and "COMPLETED" in failed:

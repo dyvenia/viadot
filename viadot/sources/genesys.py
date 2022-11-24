@@ -24,7 +24,9 @@ class Genesys(Source):
     def __init__(
         self,
         view_type: Literal[
-            "queue_performance_detail_view", "agent_performance_summary_view"
+            "queue_performance_detail_view",
+            "agent_performance_summary_view",
+            "agent_status_summary_view",
         ] = "queue_performance_detail_view",
         media_type_list: List[str] = None,
         queueIds_list: List[str] = None,
@@ -374,7 +376,10 @@ class Genesys(Source):
                 file_name = (
                     temp_ids_mapping.get(single_report[2]) + "_" + single_report[3]
                 ).upper()
-            elif single_report[4].lower() == "agent_performance_summary_view":
+            elif single_report[4].lower() in [
+                "agent_performance_summary_view",
+                "agent_status_summary_view",
+            ]:
                 date = self.start_date.replace("-", "")
                 file_name = self.view_type.upper() + "_" + f"{date}"
             else:

@@ -64,7 +64,9 @@ class GenesysToADLS(Flow):
         self,
         name: str,
         view_type: Literal[
-            "queue_performance_detail_view", "agent_performance_summary_view"
+            "queue_performance_detail_view",
+            "agent_performance_summary_view",
+            "agent_status_summary_view",
         ] = "queue_performance_detail_view",
         view_type_time_sleep: int = 80,
         media_type_list: List[str] = None,
@@ -156,7 +158,10 @@ class GenesysToADLS(Flow):
                 credentials_genesys=self.credentials_genesys,
                 flow=self,
             )
-        elif self.view_type == "agent_performance_summary_view":
+        elif self.view_type in [
+            "agent_performance_summary_view",
+            "agent_status_summary_view",
+        ]:
             file_names = to_csv.bind(
                 view_type=self.view_type,
                 view_type_time_sleep=self.view_type_time_sleep,
