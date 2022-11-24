@@ -136,6 +136,11 @@ def catch_extra_separators(
         np.array: The argument "data_raw" with no extra delimiters.
     """
 
+    # remove scape characters from data_raw ("\t")
+    for n, r in enumerate(data_raw):
+        if "\t" in r[record_key]:
+            data_raw[n][record_key] = r[record_key].replace("\t", " ")
+
     # first we identify where the data has an extra separator in text columns.
     sep_counts = np.array([], dtype=int)
     for row in data_raw:
