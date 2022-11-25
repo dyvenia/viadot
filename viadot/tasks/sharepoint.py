@@ -1,6 +1,8 @@
 import copy
 import json
 import os
+import chardet
+
 from typing import List
 
 import pandas as pd
@@ -149,6 +151,7 @@ class SharepointToDF(Task):
         self,
         path_to_file: str = None,
         url_to_file: str = None,
+        nrows: int = 50000,
         validate_excel_file: bool = False,
         sheet_number: int = None,
         credentials_secret: str = None,
@@ -193,18 +196,21 @@ class SharepointToDF(Task):
         s = Sharepoint(download_from_path=self.url_to_file, credentials=credentials)
         s.download_file(download_to_path=path_to_file)
 
-        if self.path_to_file.endswith(".csv"):
+        self.nrows = nrows
+
+        if "csv" in self.path_to_file:
             try:
                 df = pd.read_csv(self.path_to_file)
             except:
                 with open(self.path_to_file, "rb") as rawdata:
                     result = chardet.detect(rawdata.read(100000))
-                    df = pd.read_csv(
-                        self.path_to_file, encoding=result["encoding"], sep="\t"
-                    )
+                df = pd.read_csv(
+                    self.path_to_file, encoding=result["encoding"], sep="\t"
+                )
 
-        elif self.path_to_file.endswith(".xlsx") or self.path_to_file.endswith(".xlsm"):
+        else:
             excel = pd.ExcelFile(self.path_to_file)
+
             if self.sheet_number is not None:
                 sheet_names_list = [excel.sheet_names[self.sheet_number]]
             else:
@@ -235,8 +241,6 @@ class SharepointToDF(Task):
                 df = pd.concat([df_header, df_chunks])
 
             df = self.df_replace_special_chars(df)
-        else:
-            logger.warning("Invalid file, only CSV and EXCEL files are supported")
 
         self.logger.info(f"Successfully converted data to a DataFrame.")
         return df
