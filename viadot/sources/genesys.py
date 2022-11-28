@@ -23,11 +23,7 @@ warnings.simplefilter("ignore")
 class Genesys(Source):
     def __init__(
         self,
-        view_type: Literal[
-            "queue_performance_detail_view",
-            "agent_performance_summary_view",
-            "agent_status_summary_view",
-        ] = "queue_performance_detail_view",
+        view_type: str = "queue_performance_detail_view",
         media_type_list: List[str] = None,
         queueIds_list: List[str] = None,
         data_to_post_str: str = None,
@@ -49,8 +45,7 @@ class Genesys(Source):
         Genesys connector which allows for reports scheduling, listing and downloading into Data Frame or specified format output.
 
         Args:
-            view_type (Literal[queue_performance_detail_view, agent_performance_summary_view], optional):
-                The type of view export job to be created. Defaults to "queue_performance_detail_view".
+            view_type (str, optional): The type of view export job to be created. Defaults to "queue_performance_detail_view".
             media_type_list (List[str], optional):  List of specific media types. Defaults to None.
             queueIds_list (List[str], optional):  List of specific queues ids. Defaults to None.
             data_to_post_str (str, optional):  String template to generate json body. Defaults to None.
@@ -89,6 +84,15 @@ class Genesys(Source):
         super().__init__(*args, credentials=self.credentials_genesys, **kwargs)
 
         self.view_type = view_type
+        if self.view_type not in [
+            "queue_performance_detail_view",
+            "agent_performance_summary_view",
+            "agent_status_summary_view",
+        ]:
+            raise Exception(
+                f"View type {self.view_type} still is not implemented in viadot."
+            )
+
         self.schedule_id = schedule_id
         self.report_name = report_name
         self.environment = environment

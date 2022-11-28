@@ -63,11 +63,7 @@ class GenesysToADLS(Flow):
     def __init__(
         self,
         name: str,
-        view_type: Literal[
-            "queue_performance_detail_view",
-            "agent_performance_summary_view",
-            "agent_status_summary_view",
-        ] = "queue_performance_detail_view",
+        view_type: str = "queue_performance_detail_view",
         view_type_time_sleep: int = 80,
         media_type_list: List[str] = None,
         queueIds_list: List[str] = None,
@@ -93,8 +89,7 @@ class GenesysToADLS(Flow):
 
         Args:
             name (str): The name of the Flow.
-            view_type (Literal[queue_performance_detail_view, agent_performance_summary_view], optional):
-                The type of view export job to be created. Defaults to "queue_performance_detail_view".
+            view_type (str, optional): The type of view export job to be created. Defaults to "queue_performance_detail_view".
             view_type_time_sleep (int, optional): Waiting time to retrieve data from Genesys API. Defaults to 80.
             media_type_list (List[str], optional): List of specific media types. Defaults to None.
             queueIds_list (List[str], optional): List of specific queues ids. Defaults to None.

@@ -18,9 +18,7 @@ class GenesysToCSV(Task):
     def __init__(
         self,
         report_name: str = "genesys_to_csv",
-        view_type: Literal[
-            "queue_performance_detail_view", "agent_performance_summary_view"
-        ] = "queue_performance_detail_view",
+        view_type: str = "queue_performance_detail_view",
         media_type_list: List[str] = None,
         queueIds_list: List[str] = None,
         data_to_post_str: str = None,
@@ -39,8 +37,7 @@ class GenesysToCSV(Task):
 
         Args:
             report_name (str, optional): The name of this task. Defaults to a general name 'genesys_to_csv'.
-            view_type (Literal[queue_performance_detail_view, agent_performance_summary_view], optional):
-                The type of view export job to be created. Defaults to "queue_performance_detail_view".
+            view_type (str, optional): The type of view export job to be created. Defaults to "queue_performance_detail_view".
             media_type_list (List[str], optional): List of specific media types. Defaults to None.
             queueIds_list (List[str], optional): List of specific queues ids. Defaults to None.
             data_to_post_str (str, optional): String template to generate json body. Defaults to None.
@@ -98,11 +95,7 @@ class GenesysToCSV(Task):
     def run(
         self,
         report_name: str = None,
-        view_type: Literal[
-            "queue_performance_detail_view",
-            "agent_performance_summary_view",
-            "agent_status_summary_view",
-        ] = "queue_performance_detail_view",
+        view_type: str = "queue_performance_detail_view",
         view_type_time_sleep: int = 80,
         environment: str = None,
         schedule_id: str = None,
@@ -121,8 +114,7 @@ class GenesysToCSV(Task):
 
         Args:
             report_name (str, optional): The name of this task. Defaults to a general name 'genesys_to_csv'.
-            view_type (Literal[queue_performance_detail_view, agent_performance_summary_view], optional):
-                The type of view export job to be created. Defaults to "queue_performance_detail_view".
+            view_type (str, optional): The type of view export job to be created. Defaults to "queue_performance_detail_view".
             view_type_time_sleep (int, optional): Waiting time to retrieve data from Genesys API. Defaults to 80.
             media_type_list (List[str], optional): List of specific media types. Defaults to None.
             queueIds_list (List[str], optional): List of specific queues ids. Defaults to None.
