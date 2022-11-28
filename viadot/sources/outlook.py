@@ -82,7 +82,7 @@ class Outlook(Source):
             print(f"{self.mailbox_name} NOT Authenticated!")
 
         self.mailbox_obj = self.account.mailbox()
-        self.mailbox_messages = self.mailbox_obj.get_messages(limit)
+        self.limit = limit
         super().__init__(*args, credentials=self.credentials, **kwargs)
 
     def to_df(self) -> pd.DataFrame:
@@ -92,66 +92,82 @@ class Outlook(Source):
             pd.DataFrame: the DataFrame with time range
         """
         data = []
+        sent_folder = self.mailbox_obj.sent_folder()
+        inbox_folder = self.mailbox_obj.inbox_folder()
+        junk_folder = self.mailbox_obj.junk_folder()
+        deleted_folder = self.mailbox_obj.deleted_folder()
+        drafts_folder = self.mailbox_obj.drafts_folder()
+        outbox_folder = self.mailbox_obj.outbox_folder()
+        archive_folder = self.mailbox_obj.archive_folder()
 
-        while True:
-            try:
-                message = next(self.mailbox_messages)
-                received_time = message.received
-                date_time_str = str(received_time)
-                date_time_string = date_time_str[0:19]
-                date_obj = datetime.datetime.strptime(
-                    date_time_string, "%Y-%m-%d %H:%M:%S"
-                )
-                if (
-                    date_obj < self.date_range_start_time
-                    or date_obj > self.date_range_end_time
-                ):
-                    continue
-                else:
-                    fetched = message.to_api_data()
-                    try:
-                        sender_mail = fetched["from"]["emailAddress"]["address"]
-                        reciver_list = fetched.get("toRecipients")
-                        recivers = " "
-                        if reciver_list is not None:
-                            recivers = ", ".join(
-                                reciver["emailAddress"]["address"]
-                                for reciver in reciver_list
+        for mailbox_generator in [
+            sent_folder.get_messages(self.limit),
+            inbox_folder.get_messages(self.limit),
+            junk_folder.get_messages(self.limit),
+            deleted_folder.get_messages(self.limit),
+            drafts_folder.get_messages(self.limit),
+            outbox_folder.get_messages(self.limit),
+            archive_folder.get_messages(self.limit),
+        ]:
+            while True:
+                try:
+                    message = next(mailbox_generator)
+                    received_time = message.received
+                    date_time_str = str(received_time)
+                    date_time_string = date_time_str[0:19]
+                    date_obj = datetime.datetime.strptime(
+                        date_time_string, "%Y-%m-%d %H:%M:%S"
+                    )
+                    if (
+                        date_obj < self.date_range_start_time
+                        or date_obj > self.date_range_end_time
+                    ):
+                        continue
+                    else:
+                        fetched = message.to_api_data()
+                        try:
+                            sender_mail = fetched["from"]["emailAddress"]["address"]
+                            reciver_list = fetched.get("toRecipients")
+                            recivers = " "
+                            if reciver_list is not None:
+                                recivers = ", ".join(
+                                    reciver["emailAddress"]["address"]
+                                    for reciver in reciver_list
+                                )
+
+                            categories = " "
+                            if message.categories is not None:
+                                categories = ", ".join(
+                                    categories for categories in message.categories
+                                )
+
+                            conversation_index = " "
+                            if message.conversation_index is not None:
+                                conversation_index = message.conversation_index
+                            row = {
+                                "conversation ID": fetched.get("conversationId"),
+                                "conversation index": conversation_index,
+                                "categories": categories,
+                                "sender": sender_mail,
+                                "recivers": recivers,
+                                "received_time": fetched.get("receivedDateTime"),
+                            }
+
+                            row["mail_adress"] = (
+                                self.mailbox_name.split("@")[0]
+                                .replace(".", "_")
+                                .replace("-", "_")
                             )
+                            if sender_mail == self.mailbox_name:
+                                row["Inbox"] = False
+                            else:
+                                row["Inbox"] = True
 
-                        categories = " "
-                        if message.categories is not None:
-                            categories = ", ".join(
-                                categories for categories in message.categories
-                            )
-
-                        conversation_index = " "
-                        if message.conversation_index is not None:
-                            conversation_index = message.conversation_index
-                        row = {
-                            "conversation ID": fetched.get("conversationId"),
-                            "conversation index": conversation_index,
-                            "categories": categories,
-                            "sender": sender_mail,
-                            "recivers": recivers,
-                            "received_time": fetched.get("receivedDateTime"),
-                        }
-
-                        row["mail_adress"] = (
-                            self.mailbox_name.split("@")[0]
-                            .replace(".", "_")
-                            .replace("-", "_")
-                        )
-                        if sender_mail == self.mailbox_name:
-                            row["Inbox"] = False
-                        else:
-                            row["Inbox"] = True
-
-                        data.append(row)
-                    except KeyError as e:
-                        print("KeyError : " + str(e))
-            except StopIteration:
-                break
+                            data.append(row)
+                        except KeyError as e:
+                            print("KeyError : " + str(e))
+                except StopIteration:
+                    break
         df = pd.DataFrame(data=data)
 
         return df
