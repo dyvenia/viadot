@@ -1,5 +1,5 @@
 import datetime
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Literal
 
 import pandas as pd
 from O365 import Account
@@ -17,6 +17,9 @@ class Outlook(Source):
         end_date: str = None,
         credentials: Dict[str, Any] = None,
         limit: int = 10000,
+        mailbox_folders: Literal[
+            "sent", "inbox", "junk", "deleted", "drafts", "outbox", "archive"
+        ] = ["sent", "inbox", "junk", "deleted", "drafts", "outbox", "archive"],
         request_retries: int = 10,
         *args: List[Any],
         **kwargs: Dict[str, Any],
@@ -34,6 +37,9 @@ class Outlook(Source):
             ACCOUNT_NAME and Service Principal credentials (TENANT_ID, CLIENT_ID, CLIENT_SECRET) for the Azure Application.
             Defaults to None.
             limit (int, optional): Number of fetched top messages. Defaults to 10000.
+            mailbox_folders (Literal["sent", "inbox", "junk", "deleted", "drafts", "outbox", "archive"]):
+                List of folders to select from the mailbox.  Defaults to ["sent", "inbox", "junk", "deleted", "drafts", "outbox", "archive"]
+            request_retries (int): How many times retries to authorizate. Defaults to 10.
         """
         try:
             DEFAULT_CREDENTIALS = local_config["OUTLOOK"]
@@ -82,6 +88,7 @@ class Outlook(Source):
             print(f"{self.mailbox_name} NOT Authenticated!")
 
         self.mailbox_obj = self.account.mailbox()
+        self.mailbox_folders = mailbox_folders
         self.limit = limit
         super().__init__(*args, credentials=self.credentials, **kwargs)
 
@@ -92,23 +99,12 @@ class Outlook(Source):
             pd.DataFrame: the DataFrame with time range
         """
         data = []
-        sent_folder = self.mailbox_obj.sent_folder()
-        inbox_folder = self.mailbox_obj.inbox_folder()
-        junk_folder = self.mailbox_obj.junk_folder()
-        deleted_folder = self.mailbox_obj.deleted_folder()
-        drafts_folder = self.mailbox_obj.drafts_folder()
-        outbox_folder = self.mailbox_obj.outbox_folder()
-        archive_folder = self.mailbox_obj.archive_folder()
+        mailbox_generators_list = []
+        for m in self.mailbox_folders:
+            base_str = f"self.mailbox_obj.{m}_folder().get_messages({self.limit})"
+            mailbox_generators_list.append(eval(base_str))
 
-        for mailbox_generator in [
-            sent_folder.get_messages(self.limit),
-            inbox_folder.get_messages(self.limit),
-            junk_folder.get_messages(self.limit),
-            deleted_folder.get_messages(self.limit),
-            drafts_folder.get_messages(self.limit),
-            outbox_folder.get_messages(self.limit),
-            archive_folder.get_messages(self.limit),
-        ]:
+        for mailbox_generator in mailbox_generators_list:
             while True:
                 try:
                     message = next(mailbox_generator)
