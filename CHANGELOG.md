@@ -18,6 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added Databricks/Spark setup to the image. See README for setup & usage instructions.
 - Added rollback feature to `Databricks` source.
 - Changed all Prefect logging instances in the `sources` directory to native Python logging.
+- Fixed bug in the `create_table_from_pandas` method in `Databricks` source where `if_exists="replace"` did not work.
 
 ### Removed
 - Removed the `env` param from `Databricks` source, as user can now store multiple configs for the same source using different config keys.
