@@ -250,6 +250,7 @@ class Databricks(Source):
         )
         ```
         """
+
         if df.empty:
             self._handle_if_empty(if_empty)
 
@@ -262,19 +263,24 @@ class Databricks(Source):
         if self._check_if_table_exists(schema=schema, table=table):
             if if_exists == "skip":
                 self.logger.warning(f"Table {fqn} already exists.")
-                return False
+                result = False
             elif if_exists == "fail":
                 raise TableAlreadyExists(fqn)
+            elif if_exists == "replace":
+                result = self._full_refresh(schema=schema, table=table, df=df)
             else:
                 success_message = f"Table {fqn} has been overwritten successfully."
+                result = True
+        else:
+            df = df_snakecase_column_names(df)
+            sdf = self._pandas_df_to_spark_df(df)
+            sdf.createOrReplaceTempView("tmp_view")
 
-        df = df_snakecase_column_names(df)
-        sdf = self._pandas_df_to_spark_df(df)
-        sdf.createOrReplaceTempView("tmp_view")
+            result = self.run(
+                f"CREATE TABLE {fqn} USING DELTA AS SELECT * FROM tmp_view;"
+            )
 
-        result = self.run(f"CREATE TABLE {fqn} USING DELTA AS SELECT * FROM tmp_view;")
-
-        if result is True:
+        if result:
             self.logger.info(success_message)
 
         return result
