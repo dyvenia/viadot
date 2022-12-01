@@ -88,15 +88,29 @@ class Outlook(Source):
             print(f"{self.mailbox_name} NOT Authenticated!")
 
         self.mailbox_obj = self.account.mailbox()
-        self.mailbox_folders = mailbox_folders
+
+        allowed_mailbox_folders = [
+            "sent",
+            "inbox",
+            "junk",
+            "deleted",
+            "drafts",
+            "outbox",
+            "archive",
+        ]
+        if all(x in allowed_mailbox_folders for x in mailbox_folders):
+            self.mailbox_folders = mailbox_folders
+        else:
+            raise Exception("Provided mailbox folders are not correct.")
         self.limit = limit
+
         super().__init__(*args, credentials=self.credentials, **kwargs)
 
     def to_df(self) -> pd.DataFrame:
         """Download Outlook data into a pandas DataFrame.
 
         Returns:
-            pd.DataFrame: the DataFrame with time range
+            pd.DataFrame: the DataFrame with time range.
         """
         data = []
         mailbox_generators_list = []
@@ -110,9 +124,9 @@ class Outlook(Source):
                     message = next(mailbox_generator)
                     received_time = message.received
                     date_time_str = str(received_time)
-                    date_time_string = date_time_str[0:19]
+                    date_time_stripped = date_time_str[0:19]
                     date_obj = datetime.datetime.strptime(
-                        date_time_string, "%Y-%m-%d %H:%M:%S"
+                        date_time_stripped, "%Y-%m-%d %H:%M:%S"
                     )
                     if (
                         date_obj < self.date_range_start_time
@@ -123,12 +137,12 @@ class Outlook(Source):
                         fetched = message.to_api_data()
                         try:
                             sender_mail = fetched["from"]["emailAddress"]["address"]
-                            reciver_list = fetched.get("toRecipients")
+                            recivers_list = fetched.get("toRecipients")
                             recivers = " "
-                            if reciver_list is not None:
+                            if recivers_list is not None:
                                 recivers = ", ".join(
                                     reciver["emailAddress"]["address"]
-                                    for reciver in reciver_list
+                                    for reciver in recivers_list
                                 )
 
                             categories = " "
