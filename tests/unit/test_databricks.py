@@ -167,7 +167,6 @@ def test_create_table_replace(databricks):
     replaced = databricks.create_table_from_pandas(
         schema=TEST_SCHEMA, table=TEST_TABLE, df=TEST_DF, if_exists="replace"
     )
-    print(replaced)
     assert replaced is True
 
 
