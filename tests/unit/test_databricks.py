@@ -51,13 +51,6 @@ ADDITIONAL_DATA_DF = ADDITIONAL_DATA_NEW_FIELD_DF.copy().drop("NewField", axis=1
 def databricks():
 
     databricks = Databricks(
-        credentials={
-            "host": "https://adb-1930462786844525.5.azuredatabricks.net",
-            "token": "dapic368839ef25987e36fb727353912854c",
-            "cluster_id": "0427-122644-45iadnd",
-            "org_id": "1930462786844525",
-            "port": "15001",
-        },
         config_key="databricks-qa-elt",
     )
     databricks.create_schema(TEST_SCHEMA)
