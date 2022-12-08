@@ -351,6 +351,8 @@ class Databricks(Source):
 
         self.logger.info(f"Table {fqn} has been refreshed successfully.")
 
+        return True
+
     def _upsert(
         self,
         df: pd.DataFrame,
