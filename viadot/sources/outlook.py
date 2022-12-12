@@ -7,6 +7,7 @@ from O365 import Account
 from ..config import local_config
 from ..exceptions import CredentialError
 from .base import Source
+import prefect
 
 
 class Outlook(Source):
@@ -39,13 +40,13 @@ class Outlook(Source):
             limit (int, optional): Number of fetched top messages. Defaults to 10000.
             mailbox_folders (Literal["sent", "inbox", "junk", "deleted", "drafts", "outbox", "archive"]):
                 List of folders to select from the mailbox.  Defaults to ["sent", "inbox", "junk", "deleted", "drafts", "outbox", "archive"]
-            request_retries (int): How many times retries to authorizate. Defaults to 10.
+            request_retries (int, optional): How many times retries to authorizate. Defaults to 10.
         """
-        try:
-            DEFAULT_CREDENTIALS = local_config["OUTLOOK"]
-        except KeyError:
-            DEFAULT_CREDENTIALS = None
-        self.credentials = credentials or DEFAULT_CREDENTIALS
+
+        self.logger = prefect.context.get("logger")
+
+        self.credentials = credentials
+
         if self.credentials is None:
             raise CredentialError("You do not provide credentials!")
 
@@ -83,9 +84,9 @@ class Outlook(Source):
             request_retries=self.request_retries,
         )
         if self.account.authenticate():
-            print(f"{self.mailbox_name} Authenticated!")
+            self.logger.info(f"{self.mailbox_name} Authenticated!")
         else:
-            print(f"{self.mailbox_name} NOT Authenticated!")
+            self.logger.info(f"{self.mailbox_name} NOT Authenticated!")
 
         self.mailbox_obj = self.account.mailbox()
 
@@ -175,7 +176,7 @@ class Outlook(Source):
 
                             data.append(row)
                         except KeyError as e:
-                            print("KeyError : " + str(e))
+                            self.logger.info("KeyError : " + str(e))
                 except StopIteration:
                     break
         df = pd.DataFrame(data=data)
