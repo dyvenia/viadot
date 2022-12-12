@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Dict, Literal
 import boto3
 
 import pandas as pd
@@ -9,41 +9,32 @@ class S3:
     """
     A class for pulling data from and uploading to S3.
 
-    You can either connect to the lake in general
-    (`lake = S3(); lake.exists("a/b/c.csv")`),
-    or to a particular path (`lake = S3(path="a/b/c.csv"); lake.exists()`)
-
     Args:
-        profile_name (str, optional): The name of the profile. Defaults to 'default'.
+        profile_name (str, optional): The name of the profile.
         aws_secret_access_key (str, optional): AWS secret access key
         aws_session_token (str, optional): AWS temporary session token
     """
 
+    # add env var
     def __init__(
         self,
-        profile_name: str = "default",
+        profile_name: str = None,
         aws_access_key_id: str = None,
         aws_secret_access_key: str = None,
     ):
-
         if profile_name:
             self.session = boto3.session.Session(profile_name=profile_name)
-        elif aws_access_key_id & aws_secret_access_key:
+        elif aws_access_key_id and aws_secret_access_key:
             self.session = boto3.session.Session(
                 aws_access_key_id=aws_access_key_id,
                 aws_secret_access_key=aws_secret_access_key,
             )
-
-        # self.fs = S3FileSystem(
-        #     profile=profile_name,
-        #     key=aws_access_key_id,
-        #     secret=aws_secret_access_key,
-        # )
+        else:
+            self.session = boto3.session.Session()
 
     def ls(self, path: str, suffix: str = None) -> List[str]:
         """
-        Returns a list of files in a path.
-
+        Returns a list of files in a S3.
         Args:
             path (str): Path to a folder.
             suffix (Union[str, List[str], None]) - Suffix or List of suffixes for filtering S3 keys.
@@ -54,10 +45,8 @@ class S3:
     def exists(self, path: str) -> bool:
         """
         Check if a location exists in S3.
-
         Args:
             path (str): The path to check. Can be a file or a directory.
-
         Returns:
             bool: Whether the paths exists.
         """
@@ -70,16 +59,11 @@ class S3:
     ) -> None:
         """
         Upload file(s) to the S3.
-
         Args:
-            from_path (str): Path to the local file(s) to be uploaded.
+            from_path (str): Path to the local file to be uploaded.
             to_path (str): Path to the destination S3 file/folder.
         """
-        try:
-            wr.s3.upload(boto3_session=self.session, local_file=from_path, path=to_path)
-        except FileExistsError:
-            msg = f"The file '{to_path}' already exists. Specify `overwrite=True` to overwrite."
-            raise FileExistsError(msg)
+        wr.s3.upload(boto3_session=self.session, local_file=from_path, path=to_path)
 
     def download(
         self,
@@ -104,7 +88,6 @@ class S3:
             paths (List[str]): List of S3 objects paths (e.g. [s3://bucket/dir0/key0, s3://bucket/dir0/key1]).
             from_path (str, optional): S3 Path for the source directory.
             to_path (str, optional): S3 Path for the target directory.
-
         """
 
         wr.s3.copy_objects(
@@ -117,7 +100,6 @@ class S3:
     def rm(self, path: str):
         """
         Deletes files in a path.
-
         Args:
             path (str): Path to a folder.
         """
@@ -134,7 +116,6 @@ class S3:
     ):
         """
         Upload a pandas `DataFrame` to a csv or parquet file. You can choose different file backends, and have the option of compression.
-
         Args:
             df (pd.DataFrame, optional): Pandas DataFrame
             to_path (str, optional): Path to a S3 folder. Defaults to None.
@@ -167,7 +148,6 @@ class S3:
     def to_df(self, from_path: str = None):
         """
         Reads a csv or parquet file to dataframe.
-
         Args:
             from_path (str, optional): Path to a S3 folder. Defaults to None.
         """
@@ -182,3 +162,41 @@ class S3:
         else:
             raise ValueError("Only CSV and parquet formats are supported.")
         return df
+
+
+# s3_session = S3()
+# print("Before upload:")
+# print(s3_session.ls(path="s3://annger-bucket"))
+# s3_session.upload(
+#     from_path="test_final.parquet",
+#     to_path="s3://annger-bucket/test_folder/test_file.parquet",
+# )
+# print("After upload:")
+# print(s3_session.ls(path="s3://annger-bucket"))
+# s3_session.download(
+#     from_path="s3://annger-bucket/test_folder/test_file.parquet",
+#     to_path="test_final_download.parquet",
+# )
+# s3_session.cp(
+#     paths=["s3://annger-bucket/test_folder/test_file.parquet"],
+#     from_path="s3://annger-bucket/test_folder/",
+#     to_path="s3://annger-bucket/test_folder2",
+# )
+# print("After copy:")
+# print(s3_session.ls(path="s3://annger-bucket"))
+
+# print("Dataframe from to_df:")
+# df = s3_session.to_df(from_path="s3://annger-bucket/test_folder2/test_file.parquet")
+# print(df)
+
+# s3_session.from_df(df=df, to_path="s3://annger-bucket/test_folder3/test_file.parquet")
+# s3_session.from_df(df=df, to_path="s3://annger-bucket/test_folder4/test_file.csv")
+
+# print("After from_df:")
+# print(s3_session.ls(path="s3://annger-bucket"))
+# s3_session.rm(path="s3://annger-bucket/test_folder/test_file.parquet")
+# s3_session.rm(path="s3://annger-bucket/test_folder2/test_file.parquet")
+# s3_session.rm(path="s3://annger-bucket/test_folder3/test_file.parquet")
+# s3_session.rm(path="s3://annger-bucket/test_folder4/test_file.csv")
+# print("After cleanup:")
+# print(s3_session.ls(path="s3://annger-bucket"))
