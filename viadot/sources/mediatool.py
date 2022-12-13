@@ -8,29 +8,63 @@ import pandas as pd
 
 
 class Mediatool(Source):
-    """ """
+    """
+    Class for downloading data from Mediatool platform. Using Mediatool class user is able to download
+    organizations, media entries, campaigns, vehicles, and media types data.
+    """
 
     def __init__(
-        self, credentials: dict = None, organization_id: str = None, *args, **kwargs
+        self,
+        credentials: dict,
+        organization_id: str = None,
+        user_id: str = None,
+        *args,
+        **kwargs,
     ):
-        """ """
+        """
+        Create an instance of the Mediatool class.
+
+        Args:
+            credentials (dict): Mediatool credentials. Credentials have to contain authorization 'TOKEN'.
+            organization_id (str, optional): Organization ID. Defaults to None.
+            user_id (str, optional): User ID. Defaults to None.
+        """
         if credentials is not None:
             try:
                 self.header = {"Authorization": f"Bearer {credentials.get('TOKEN')}"}
             except:
-                print("Credentials not found.")
-        self.organization_id = organization_id
+                self.logger("Credentials not found.")
 
         super().__init__(*args, credentials=credentials, **kwargs)
+
+        self.organization_id = organization_id or self.credentials.get(
+            "ORGANIZATION_ID"
+        )
+        self.user_id = user_id or self.credentials.get("USER_ID")
 
     def get_media_entries(
         self,
         organization_id: str,
+        columns: str = None,
         start_date: str = None,
         end_date: str = None,
         time_delta: int = 360,
         return_dataframe: bool = True,
-    ):
+    ) -> pd.DataFrame:
+        """
+        Get data for media antries. This is a main function. Media entries have IDs for most of the fields from other endpoints.
+
+        Args:
+            organization_id (str): Organization ID.
+            columns (str, optional): What columns should be extracted. Defaults to None.
+            start_date (str, optional): Start date e.g '2022-01-01'. Defaults to None.
+            end_date (str, optional): End date e.g '2022-01-01'. Defaults to None.
+            time_delta (int, optional): The number of days to retrieve from 'today' (today - time_delta). Defaults to 360.
+            return_dataframe (bool, optional): Return a dataframe if True. If set to False, get data as dict. Defaults to True.
+
+        Returns:
+            pd.DataFrame: Default return dataframe If 'return_daframe=False' then return list of dicts.
+        """
         today = date.today()
 
         if start_date is None:
@@ -48,11 +82,30 @@ class Mediatool(Source):
         response_dict = json.loads(response.text)
 
         if return_dataframe is True:
-            return pd.DataFrame.from_dict(response_dict["mediaEntries"])
+            df = pd.DataFrame.from_dict(response_dict["mediaEntries"])
+            if columns is None:
+                columns = df.columns
+            try:
+                df_filtered = df[columns]
+            except KeyError as e:
+                self.logger(e)
+            return df_filtered
 
         return response_dict["mediaEntries"]
 
-    def get_campaigns(self, organization_id, return_dataframe: bool = True):
+    def get_campaigns(
+        self, organization_id: str, return_dataframe: bool = True
+    ) -> pd.DataFrame:
+        """
+        Get campaign data based on the organization ID.
+
+        Args:
+            organization_id (str): Organization ID.
+            return_dataframe (bool, optional): Return a dataframe if True. If set to False, get data as dict. Defaults to True.
+
+        Returns:
+            pd.DataFrame: Default return dataframe If 'return_daframe=False' then return list of dicts.
+        """
         url_campaigns = (
             f"https://api.mediatool.com/organizations/{organization_id}/campaigns"
         )
@@ -69,7 +122,19 @@ class Mediatool(Source):
 
         return response_dict["campaigns"]
 
-    def get_vehicles(self, organization_id, return_dataframe: bool = True):
+    def get_vehicles(
+        self, organization_id: str, return_dataframe: bool = True
+    ) -> pd.DataFrame:
+        """
+        Get vehicles data based on the organization ID.
+
+        Args:
+            organization_id (str): Organization ID.
+            return_dataframe (bool, optional): Return a dataframe if True. If set to False, get data as dict. Defaults to True.
+
+        Returns:
+            pd.DataFrame: Default return dataframe. If 'return_daframe=False' then return list of dicts.
+        """
         url = f"https://api.mediatool.com/organizations/{organization_id}/vehicles"
 
         response = handle_api_response(
@@ -86,8 +151,18 @@ class Mediatool(Source):
 
     def get_organizations(
         self, user_id: str, return_dataframe: bool = True
-    ) -> List[dict]:
-        """ """
+    ) -> pd.DataFrame:
+        """
+        Get organizations data based on the user ID.
+
+        Args:
+            user_id (str): User ID.
+            return_dataframe (bool, optional): Return a dataframe if True. If set to False, get data as dict. Defaults to True.
+
+        Returns:
+            pd.DataFrame: Default return dataframe. If 'return_daframe=False' then return list of dicts.
+        """
+        user_id = user_id or self.user_id
         url_organizations = f"https://api.mediatool.com/users/{user_id}/organizations"
 
         response = handle_api_response(
@@ -110,8 +185,18 @@ class Mediatool(Source):
         return list_organizations
 
     def get_media_types(
-        self, media_type_ids: List, return_dataframe: bool = True
-    ) -> List[dict]:
+        self, media_type_ids: List[str], return_dataframe: bool = True
+    ) -> pd.DataFrame:
+        """
+        Get media types data based on the media types ID. User have to provide list of media type IDs.
+
+        Args:
+            media_type_ids (List[str]): Media type IDs.
+            return_dataframe (bool, optional): Return a dataframe if True. If set to False, get data as dict. Defaults to True.
+
+        Returns:
+            pd.DataFrame: Default return dataframe. If 'return_daframe=False' then return list of dicts.
+        """
         list_media_types = []
 
         for id_media_type in media_type_ids:
