@@ -1,37 +1,43 @@
-import time
-import json
 from typing import Any, Dict, List, Literal
 import pandas as pd
 
-from datetime import datetime, timedelta
 from prefect import Task
 from prefect.utilities import logging
 from prefect.utilities.tasks import defaults_from_attrs
 
 from viadot.sources import Mediatool
-from viadot.config import local_config
-from viadot.tasks import AzureKeyVaultSecret
-from viadot.exceptions import CredentialError
-from ..task_utils import credentials_loader, concat_dfs, union_dfs_task
+from ..task_utils import credentials_loader
 
 logger = logging.get_logger()
 
 
 class MediatoolToDF(Task):
+    """
+    The MediatoolToDF task fetches data for media entries, combines them with other data from Mediatool endpoints,
+    and returns data with names instead of IDs.
+    """
+
     def __init__(
         self,
         organization_id: List[str] = None,
+        media_entries_columns: List[str] = None,
         mediatool_credentials: str = None,
         mediatool_credentials_secret: str = None,
-        file_extension: Literal["parquet", "csv"] = "csv",
-        file_path: str = "",
         *args: List[Any],
         **kwargs: Dict[str, Any],
     ):
-        """ """
+        """
+        Task MediatoolToDF for joining all of the data for media_entries and return as dataframe.
 
-        self.file_extension = file_extension
-        self.file_path = file_path
+        Args:
+            organization_id (List[str], optional): Organization ID. Defaults to None.
+            media_entries_columns (List[str], optional): List of media entries fields to download. Defaults to None.
+            mediatool_credentials (str, optional): Mediatool credentials. Defaults to None.
+            mediatool_credentials_secret (str, optional): Key for Mediatool credentials. Defaults to None.
+        """
+
+        self.media_entries_columns = media_entries_columns
+
         if mediatool_credentials is None:
             try:
                 self.mediatool_credentials = credentials_loader(
@@ -55,9 +61,23 @@ class MediatoolToDF(Task):
         left_on: str,
         right_on: str,
         get_columns_from_right_df: List[str] = None,
-        how: str = "left",
+        how: Literal["left", "right", "outer", "inner", "cross"] = "left",
         column_name_to_replace=None,
-    ):
+    ) -> pd.DataFrame:
+        """
+        Combine the dataframes according to the chosen method.
+
+        Args:
+            df_left (pd.DataFrame): Left dataframe.
+            df_right (pd.DataFrame): Right dataframe.
+            left_on (str): Column or index level names to join on in the left DataFrame.
+            right_on (str): Column or index level names to join on in the right DataFrame.
+            get_columns_from_right_df (List[str], optional): List of column to get from right dataframe. Defaults to None.
+            how (Literal["left", "right", "outer", "inner", "cross"], optional): Type of merge to be performed. Defaults to "left".
+
+        Returns:
+            pd.DataFrame: Final dataframe after merging.
+        """
         if get_columns_from_right_df is None:
             get_columns_from_right_df = df_right.columns
 
@@ -74,7 +94,7 @@ class MediatoolToDF(Task):
         """Download Mediatool data to DF"""
         return super().__call__(*args, **kwargs)
 
-    @defaults_from_attrs()
+    @defaults_from_attrs("organization_id", "media_entries_columns")
     def run(self, organization_ids: List[str] = None):
         """Return DF from source"""
 
@@ -83,7 +103,9 @@ class MediatoolToDF(Task):
 
         for organization_id in organization_ids:
             print(f"for: {organization_id}")
-            df_m_entries = mediatool.get_media_entries(organization_id=organization_id)
+            df_m_entries = mediatool.get_media_entries(
+                organization_id=organization_id, columns=self.media_entries_columns
+            )
             df_veh = mediatool.get_vehicles(organization_id=organization_id)
             df_camp = mediatool.get_campaigns(organization_id=organization_id)
 
@@ -131,9 +153,5 @@ class MediatoolToDF(Task):
                 get_columns_from_right_df=["id", "media_type_name"],
                 how="left",
             )
-
-        # columns_to_exclude = [
-        #     column for column in df_merged_media_types if "_id_" in column
-        # ]
 
         return df_merged_media_types
