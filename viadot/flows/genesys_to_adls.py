@@ -63,6 +63,8 @@ class GenesysToADLS(Flow):
     def __init__(
         self,
         name: str,
+        view_type: str = "queue_performance_detail_view",
+        view_type_time_sleep: int = 80,
         media_type_list: List[str] = None,
         queueIds_list: List[str] = None,
         data_to_post_str: str = None,
@@ -87,6 +89,8 @@ class GenesysToADLS(Flow):
 
         Args:
             name (str): The name of the Flow.
+            view_type (str, optional): The type of view export job to be created. Defaults to "queue_performance_detail_view".
+            view_type_time_sleep (int, optional): Waiting time to retrieve data from Genesys API. Defaults to 80.
             media_type_list (List[str], optional): List of specific media types. Defaults to None.
             queueIds_list (List[str], optional): List of specific queues ids. Defaults to None.
             data_to_post_str (str, optional): String template to generate json body. Defaults to None.
@@ -108,6 +112,8 @@ class GenesysToADLS(Flow):
         """
         # GenesysToCSV
         self.flow_name = name
+        self.view_type = view_type
+        self.view_type_time_sleep = view_type_time_sleep
         self.media_type_list = media_type_list
         self.queueIds_list = queueIds_list
         self.data_to_post = data_to_post_str
@@ -134,17 +140,34 @@ class GenesysToADLS(Flow):
 
         to_csv = GenesysToCSV()
 
-        file_names = to_csv.bind(
-            media_type_list=self.media_type_list,
-            queueIds_list=self.queueIds_list,
-            data_to_post_str=self.data_to_post,
-            start_date=self.start_date,
-            end_date=self.end_date,
-            days_interval=self.days_interval,
-            environment=self.environment,
-            credentials_genesys=self.credentials_genesys,
-            flow=self,
-        )
+        if self.view_type == "queue_performance_detail_view":
+            file_names = to_csv.bind(
+                view_type=self.view_type,
+                media_type_list=self.media_type_list,
+                queueIds_list=self.queueIds_list,
+                data_to_post_str=self.data_to_post,
+                start_date=self.start_date,
+                end_date=self.end_date,
+                days_interval=self.days_interval,
+                environment=self.environment,
+                credentials_genesys=self.credentials_genesys,
+                flow=self,
+            )
+        elif self.view_type in [
+            "agent_performance_summary_view",
+            "agent_status_summary_view",
+        ]:
+            file_names = to_csv.bind(
+                view_type=self.view_type,
+                view_type_time_sleep=self.view_type_time_sleep,
+                media_type_list=self.media_type_list,
+                queueIds_list=[""],
+                data_to_post_str=self.data_to_post,
+                start_date=self.start_date,
+                environment=self.environment,
+                credentials_genesys=self.credentials_genesys,
+                flow=self,
+            )
 
         add_timestamp.bind(file_names, sep=self.sep, flow=self)
 

@@ -5,6 +5,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Added
+- Added into `Genesys` the new view type `AGENT`. 
+
 
 ## [0.4.10] - 2022-11-16
 ### Added

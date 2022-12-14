@@ -8,6 +8,7 @@ from viadot.sources import Genesys
 @pytest.fixture
 def var_dictionary():
     variables = {
+        "start_date": "2022-08-12",
         "media_type_list": ["callback", "chat"],
         "queueIds_list": [
             "1234567890",
@@ -38,24 +39,36 @@ def var_dictionary():
                 "https://apps.mypurecloud.de/example/url/test",
                 "1234567890qwertyuiopasdfghjklazxcvbn",
                 "chat",
+                "QUEUE_PERFORMANCE_DETAIL_VIEW",
+                "2022-08-12T23:00:00.000Z/2022-08-13T23:00:00.000Z",
+                "COMPLETED",
             ],
             [
                 "1234567890qwertyuiopasdfghjklazxcvbn",
                 "https://apps.mypurecloud.de/example/url/test",
                 "1234567890qwertyuiopasdfghjklazxcvbn",
                 "chat",
+                "QUEUE_PERFORMANCE_DETAIL_VIEW",
+                "2022-08-12T23:00:00.000Z/2022-08-13T23:00:00.000Z",
+                "COMPLETED",
             ],
             [
                 "1234567890qwertyuiopasdfghjklazxcvbn",
                 "https://apps.mypurecloud.de/example/url/test",
                 "1234567890qwertyuiopasdfghjklazxcvbn",
                 "callback",
+                "QUEUE_PERFORMANCE_DETAIL_VIEW",
+                "2022-08-12T23:00:00.000Z/2022-08-13T23:00:00.000Z",
+                "COMPLETED",
             ],
             [
                 "1234567890qwertyuiopasdfghjklazxcvbn",
                 "https://apps.mypurecloud.de/example/url/test",
                 "1234567890qwertyuiopasdfghjklazxcvbn",
                 "callback",
+                "QUEUE_PERFORMANCE_DETAIL_VIEW",
+                "2022-08-12T23:00:00.000Z/2022-08-13T23:00:00.000Z",
+                "COMPLETED",
             ],
         ],
         "entities": {
@@ -202,6 +215,7 @@ def test_download_reports(mock_download_files, var_dictionary):
     g = Genesys()
     g.ids_mapping = var_dictionary["ids_mapping"]
     g.report_data = var_dictionary["report_data"]
+    g.start_date = var_dictionary["start_date"]
     file_name_list = g.download_all_reporting_exports()
 
     assert type(file_name_list) == list and len(file_name_list) > 0
