@@ -60,9 +60,8 @@ class MediatoolToDF(Task):
         df_right: pd.DataFrame,
         left_on: str,
         right_on: str,
-        get_columns_from_right_df: List[str] = None,
+        columns_from_right_df: List[str] = None,
         how: Literal["left", "right", "outer", "inner", "cross"] = "left",
-        column_name_to_replace=None,
     ) -> pd.DataFrame:
         """
         Combine the dataframes according to the chosen method.
@@ -78,16 +77,15 @@ class MediatoolToDF(Task):
         Returns:
             pd.DataFrame: Final dataframe after merging.
         """
-        if get_columns_from_right_df is None:
-            get_columns_from_right_df = df_right.columns
+        if columns_from_right_df is None:
+            columns_from_right_df = df_right.columns
 
         df_merged = df_left.merge(
-            df_right[get_columns_from_right_df],
+            df_right[columns_from_right_df],
             left_on=left_on,
             right_on=right_on,
             how=how,
         )
-        # columns = [column for column in df_merged.columns if column not in ('organizationId','_id_y')]
         return df_merged
 
     def __call__(self, *args, **kwargs):
@@ -97,7 +95,6 @@ class MediatoolToDF(Task):
     @defaults_from_attrs("organization_id", "media_entries_columns")
     def run(self, organization_ids: List[str] = None):
         """Return DF from source"""
-
         mediatool = Mediatool(credentials=self.mediatool_credentials)
         df_orgs = mediatool.get_organizations(self.mediatool_credentials["USER_ID"])
 
@@ -122,8 +119,8 @@ class MediatoolToDF(Task):
                 df_left=df_m_entries,
                 df_right=df_orgs,
                 left_on="organizationId",
-                right_on="id_org",
-                get_columns_from_right_df=["id_org", "organization_name"],
+                right_on="id_organizations",
+                get_columns_from_right_df=["id_organizations", "name_organizations"],
                 how="left",
             )
 
