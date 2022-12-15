@@ -42,6 +42,30 @@ class Mediatool(Source):
         )
         self.user_id = user_id or self.credentials.get("USER_ID")
 
+    def rename_columns(self, func) -> pd.DataFrame:
+        """
+        Function for renaming column names. Using as decorator in
+
+        Args:
+            func (Any): Decorated function.
+
+        Returns:
+            pd.DataFrame: Final dataframe with changed column names.
+        """
+        df = func()
+        if isinstance(df, pd.DataFrame):
+            func_name = func.__name__
+            source_name = func_name.split("get_")[-1]
+
+            dict_mapped_names = {
+                column: f"{column}_{source_name}" for column in df.columns
+            }
+            df_updated = df.rename(columns=dict_mapped_names)
+            return df_updated
+        else:
+            return df
+
+    # @rename_columns
     def get_media_entries(
         self,
         organization_id: str,
@@ -93,6 +117,7 @@ class Mediatool(Source):
 
         return response_dict["mediaEntries"]
 
+    # @rename_columns
     def get_campaigns(
         self, organization_id: str, return_dataframe: bool = True
     ) -> pd.DataFrame:
@@ -122,6 +147,7 @@ class Mediatool(Source):
 
         return response_dict["campaigns"]
 
+    @rename_columns()
     def get_vehicles(
         self, organization_id: str, return_dataframe: bool = True
     ) -> pd.DataFrame:
@@ -149,6 +175,7 @@ class Mediatool(Source):
 
         return response_dict["vehicles"]
 
+    # @rename_columns
     def get_organizations(
         self, user_id: str, return_dataframe: bool = True
     ) -> pd.DataFrame:
@@ -184,6 +211,7 @@ class Mediatool(Source):
 
         return list_organizations
 
+    # @rename_columns
     def get_media_types(
         self, media_type_ids: List[str], return_dataframe: bool = True
     ) -> pd.DataFrame:
