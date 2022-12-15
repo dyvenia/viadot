@@ -8,6 +8,7 @@ from ..task_utils import (
     df_to_csv,
     df_to_parquet,
     union_dfs_task,
+    credentials_loader,
 )
 from ..tasks import AzureDataLakeUpload, OutlookToDF
 
@@ -29,6 +30,7 @@ class OutlookToADLS(Flow):
         limit: int = 10000,
         timeout: int = 1200,
         if_exists: Literal["append", "replace", "skip"] = "append",
+        outlook_credentials_secret: str = "OUTLOOK",
         *args: List[Any],
         **kwargs: Dict[str, Any],
     ):
@@ -46,6 +48,7 @@ class OutlookToADLS(Flow):
             overwrite_adls (bool, optional): Whether to overwrite the file in ADLS. Defaults to True.
             adls_sp_credentials_secret (str, optional): The name of the Azure Key Vault secret containing a dictionary with
             ACCOUNT_NAME and Service Principal credentials (TENANT_ID, CLIENT_ID, CLIENT_SECRET) for the Azure Data Lake. Defaults to None.
+            outlook_credentials_secret (str, optional): The name of the Azure Key Vault secret containing a dictionary with outlook credentials.
             limit (int, optional): Number of fetched top messages. Defaults to 10000.
             timeout (int, optional): The amount of time (in seconds) to wait while running this task before a timeout occurs. Defaults to 1200.
             if_exists (Literal['append', 'replace', 'skip'], optional): What to do if the local file already exists. Defaults to "append".
@@ -64,6 +67,7 @@ class OutlookToADLS(Flow):
         self.output_file_extension = output_file_extension
         self.overwrite_adls = overwrite_adls
         self.adls_sp_credentials_secret = adls_sp_credentials_secret
+        self.outlook_credentials_secret = outlook_credentials_secret
 
         super().__init__(*args, name=name, **kwargs)
 
@@ -72,8 +76,10 @@ class OutlookToADLS(Flow):
     def gen_outlook_df(
         self, mailbox_list: Union[str, List[str]], flow: Flow = None
     ) -> Task:
-
-        outlook_to_df = OutlookToDF(timeout=self.timeout)
+        credentials = credentials_loader.run(
+            credentials_secret=self.outlook_credentials_secret
+        )
+        outlook_to_df = OutlookToDF(timeout=self.timeout, credentials=credentials)
 
         df = outlook_to_df.bind(
             mailbox_name=mailbox_list,

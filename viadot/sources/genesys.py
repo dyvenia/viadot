@@ -1,4 +1,4 @@
-import json
+import json, sys
 import base64
 import warnings
 import asyncio
@@ -23,6 +23,7 @@ warnings.simplefilter("ignore")
 class Genesys(Source):
     def __init__(
         self,
+        view_type: str = "queue_performance_detail_view",
         media_type_list: List[str] = None,
         queueIds_list: List[str] = None,
         data_to_post_str: str = None,
@@ -44,6 +45,7 @@ class Genesys(Source):
         Genesys connector which allows for reports scheduling, listing and downloading into Data Frame or specified format output.
 
         Args:
+            view_type (str, optional): The type of view export job to be created. Defaults to "queue_performance_detail_view".
             media_type_list (List[str], optional):  List of specific media types. Defaults to None.
             queueIds_list (List[str], optional):  List of specific queues ids. Defaults to None.
             data_to_post_str (str, optional):  String template to generate json body. Defaults to None.
@@ -80,6 +82,16 @@ class Genesys(Source):
             raise CredentialError("Credentials not found.")
 
         super().__init__(*args, credentials=self.credentials_genesys, **kwargs)
+
+        self.view_type = view_type
+        if self.view_type not in [
+            "queue_performance_detail_view",
+            "agent_performance_summary_view",
+            "agent_status_summary_view",
+        ]:
+            raise Exception(
+                f"View type {self.view_type} still is not implemented in viadot."
+            )
 
         self.schedule_id = schedule_id
         self.report_name = report_name
@@ -280,8 +292,11 @@ class Genesys(Source):
                     tmp = [
                         entity.get("id"),
                         entity.get("downloadUrl"),
-                        entity.get("filter").get("queueIds")[0],
-                        entity.get("filter").get("mediaTypes")[0],
+                        entity.get("filter").get("queueIds", [-1])[0],
+                        entity.get("filter").get("mediaTypes", [-1])[0],
+                        entity.get("viewType"),
+                        entity.get("interval"),
+                        entity.get("status"),
                     ]
                     self.report_data.append(tmp)
             assert len(self.report_data) > 0
@@ -343,9 +358,39 @@ class Genesys(Source):
             self.logger.info("IDS_MAPPING loaded from local credential.")
 
         for single_report in self.report_data:
-            file_name = (
-                temp_ids_mapping.get(single_report[2]) + "_" + single_report[-1]
-            ).upper()
+            self.logger.info(single_report)
+            if single_report[-1] == "RUNNING":
+                self.logger.warning(
+                    "The request is still in progress and will be deleted, consider add more seconds in `view_type_time_sleep` parameter."
+                )
+                continue
+            elif single_report[-1] == "FAILED":
+                self.logger.warning(
+                    "This message 'FAILED_GETTING_DATA_FROM_SERVICE' raised during script execution."
+                )
+                continue
+            elif self.start_date not in single_report[5]:
+                self.logger.warning(
+                    f"The report with ID {single_report[0]} doesn't match with the interval date that you have already defined. \
+                        The report won't be downloaded but will be deleted."
+                )
+                continue
+
+            if single_report[4].lower() == "queue_performance_detail_view":
+                file_name = (
+                    temp_ids_mapping.get(single_report[2]) + "_" + single_report[3]
+                ).upper()
+            elif single_report[4].lower() in [
+                "agent_performance_summary_view",
+                "agent_status_summary_view",
+            ]:
+                date = self.start_date.replace("-", "")
+                file_name = self.view_type.upper() + "_" + f"{date}"
+            else:
+                self.logger.error(
+                    f"View type {self.view_type} not defined in viadot, yet..."
+                )
+
             self.download_report(
                 report_url=single_report[1],
                 output_file_name=file_name,
