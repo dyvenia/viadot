@@ -6,6 +6,7 @@ from prefect.utilities import logging
 from prefect.utilities.tasks import defaults_from_attrs
 
 from viadot.sources import Mediatool
+from ..exceptions import CredentialError
 from ..task_utils import credentials_loader
 
 logger = logging.get_logger()
@@ -15,14 +16,16 @@ class MediatoolToDF(Task):
     """
     The MediatoolToDF task fetches data for media entries, combines them with other data from Mediatool endpoints,
     and returns data with names instead of IDs.
+
+    !! Note that for now user can provide only 1 Organization ID. Will be extended in the future.
     """
 
     def __init__(
         self,
-        organization_id: List[str] = None,
+        organization_ids: List[str] = None,
         media_entries_columns: List[str] = None,
-        mediatool_credentials: str = None,
-        mediatool_credentials_secret: str = None,
+        mediatool_credentials: dict = None,
+        mediatool_credentials_key: str = None,
         *args: List[Any],
         **kwargs: Dict[str, Any],
     ):
@@ -30,21 +33,24 @@ class MediatoolToDF(Task):
         Task MediatoolToDF for joining all of the data for media_entries and return as dataframe.
 
         Args:
-            organization_id (List[str], optional): Organization ID. Defaults to None.
+            organization_ids (List[str]): List of organization IDs.
             media_entries_columns (List[str], optional): List of media entries fields to download. Defaults to None.
-            mediatool_credentials (str, optional): Mediatool credentials. Defaults to None.
-            mediatool_credentials_secret (str, optional): Key for Mediatool credentials. Defaults to None.
+            mediatool_credentials (dict, optional): Dictionary containing Mediatool credentials. Defaults to None.
+            mediatool_credentials_key (str, optional): Key for Mediatool credentials. Defaults to None.
         """
 
         self.media_entries_columns = media_entries_columns
+        self.organization_ids = organization_ids
 
         if mediatool_credentials is None:
             try:
-                self.mediatool_credentials = credentials_loader(
-                    credentials_secret=mediatool_credentials_secret
+                self.mediatool_credentials = credentials_loader.run(
+                    credentials_secret=mediatool_credentials_key,
                 )
             except:
-                print("Credentials no provided! / or secret_name")
+                raise CredentialError(
+                    "Credentials and credentials_secret are not provided."
+                )
         else:
             self.mediatool_credentials = mediatool_credentials
 
@@ -71,7 +77,7 @@ class MediatoolToDF(Task):
             df_right (pd.DataFrame): Right dataframe.
             left_on (str): Column or index level names to join on in the left DataFrame.
             right_on (str): Column or index level names to join on in the right DataFrame.
-            get_columns_from_right_df (List[str], optional): List of column to get from right dataframe. Defaults to None.
+            columns_from_right_df (List[str], optional): List of column to get from right dataframe. Defaults to None.
             how (Literal["left", "right", "outer", "inner", "cross"], optional): Type of merge to be performed. Defaults to "left".
 
         Returns:
@@ -89,66 +95,75 @@ class MediatoolToDF(Task):
         return df_merged
 
     def __call__(self, *args, **kwargs):
-        """Download Mediatool data to DF"""
+        """Download Mediatool data to DF."""
         return super().__call__(*args, **kwargs)
 
-    @defaults_from_attrs("organization_id", "media_entries_columns")
-    def run(self, organization_ids: List[str] = None):
+    @defaults_from_attrs("organization_ids", "media_entries_columns")
+    def run(self, organization_ids: List[str] = None, media_entries_columns=None):
         """Return DF from source"""
         mediatool = Mediatool(credentials=self.mediatool_credentials)
         df_orgs = mediatool.get_organizations(self.mediatool_credentials["USER_ID"])
 
         for organization_id in organization_ids:
-            print(f"for: {organization_id}")
-            df_m_entries = mediatool.get_media_entries(
-                organization_id=organization_id, columns=self.media_entries_columns
-            )
-            df_veh = mediatool.get_vehicles(organization_id=organization_id)
-            df_camp = mediatool.get_campaigns(organization_id=organization_id)
+            if organization_id in df_orgs["_id_organizations"].unique():
+                logger.info(f"Downloading data for: {organization_id}")
 
-            media_entries = mediatool.get_media_entries(
-                organization_id=organization_id, return_dataframe=False
-            )
-            media_type_ids = [
-                media_entry["mediaTypeId"] for media_entry in media_entries
-            ]
-            unique_media_type_ids = set(media_type_ids)
-            df_m_types = mediatool.get_media_types(unique_media_type_ids)
+                df_m_entries = mediatool.get_media_entries(
+                    organization_id=organization_id,
+                    columns=media_entries_columns,
+                )
+                df_veh = mediatool.get_vehicles(organization_id=organization_id)
+                df_camp = mediatool.get_campaigns(organization_id=organization_id)
 
-            df_merged_entries_orgs = self.join_dfs(
-                df_left=df_m_entries,
-                df_right=df_orgs,
-                left_on="organizationId",
-                right_on="id_organizations",
-                get_columns_from_right_df=["id_organizations", "name_organizations"],
-                how="left",
-            )
+                unique_media_type_ids = df_m_entries["mediaTypeId"].unique()
+                df_m_types = mediatool.get_media_types(unique_media_type_ids)
 
-            df_merged_campaigns = self.join_dfs(
-                df_left=df_merged_entries_orgs,
-                df_right=df_camp,
-                left_on="campaignId",
-                right_on="_id",
-                get_columns_from_right_df=["_id", "name", "conventionalName"],
-                how="left",
-            )
+                df_merged_entries_orgs = self.join_dfs(
+                    df_left=df_m_entries,
+                    df_right=df_orgs,
+                    left_on="organizationId",
+                    right_on="_id_organizations",
+                    columns_from_right_df=[
+                        "_id_organizations",
+                        "name_organizations",
+                    ],
+                    how="left",
+                )
 
-            df_merged_vehicles = self.join_dfs(
-                df_left=df_merged_campaigns,
-                df_right=df_veh,
-                left_on="vehicleId",
-                right_on="_id",
-                get_columns_from_right_df=["_id", "name"],
-                how="left",
-            )
+                df_merged_campaigns = self.join_dfs(
+                    df_left=df_merged_entries_orgs,
+                    df_right=df_camp,
+                    left_on="campaignId",
+                    right_on="_id_campaigns",
+                    columns_from_right_df=[
+                        "_id_campaigns",
+                        "name_campaigns",
+                        "conventionalName_campaigns",
+                    ],
+                    how="left",
+                )
 
-            df_merged_media_types = self.join_dfs(
-                df_left=df_merged_vehicles,
-                df_right=df_m_types,
-                left_on="mediaTypeId",
-                right_on="id",
-                get_columns_from_right_df=["id", "media_type_name"],
-                how="left",
-            )
+                df_merged_vehicles = self.join_dfs(
+                    df_left=df_merged_campaigns,
+                    df_right=df_veh,
+                    left_on="vehicleId",
+                    right_on="_id_vehicles",
+                    columns_from_right_df=["_id_vehicles", "name_vehicles"],
+                    how="left",
+                )
+
+                df_merged_media_types = self.join_dfs(
+                    df_left=df_merged_vehicles,
+                    df_right=df_m_types,
+                    left_on="mediaTypeId",
+                    right_on="_id_media_types",
+                    columns_from_right_df=["_id_media_types", "name_media_types"],
+                    how="left",
+                )
+
+            else:
+                raise ValueError(
+                    f"Organization - {organization_id} not found in organizations list."
+                )
 
         return df_merged_media_types
