@@ -5,6 +5,7 @@ from .base import Source
 from ..utils import handle_api_response
 import json
 import pandas as pd
+import inspect
 
 
 class Mediatool(Source):
@@ -42,30 +43,30 @@ class Mediatool(Source):
         )
         self.user_id = user_id or self.credentials.get("USER_ID")
 
-    def rename_columns(self, func) -> pd.DataFrame:
+    def rename_columns(
+        self, df: pd.DataFrame = None, source_name: str = None
+    ) -> pd.DataFrame:
         """
-        Function for renaming column names. Using as decorator in
+        Function for renaming columns. Source name is added to the end of the column name to make it unique.
 
         Args:
-            func (Any): Decorated function.
+            df (pd.DataFrame, optional): Data frame. Defaults to None.
+            source_name (str, optional): Name of data source. Source name is adding to dataframe column names.
+                Defaults to None.
 
         Returns:
-            pd.DataFrame: Final dataframe with changed column names.
+            pd.DataFrame: Final dataframe after changes.
         """
-        df = func()
         if isinstance(df, pd.DataFrame):
-            func_name = func.__name__
-            source_name = func_name.split("get_")[-1]
-
+            source_name = source_name.split("get_")[-1]
             dict_mapped_names = {
                 column: f"{column}_{source_name}" for column in df.columns
             }
             df_updated = df.rename(columns=dict_mapped_names)
             return df_updated
         else:
-            return df
+            raise TypeError("df object given to the function is not a data frame.")
 
-    # @rename_columns
     def get_media_entries(
         self,
         organization_id: str,
@@ -76,7 +77,8 @@ class Mediatool(Source):
         return_dataframe: bool = True,
     ) -> pd.DataFrame:
         """
-        Get data for media antries. This is a main function. Media entries have IDs for most of the fields from other endpoints.
+        Get data for media entries. This is a main function. Media entries contain IDs for most of the fields
+        for other endpoints.Returns DF or dict.
 
         Args:
             organization_id (str): Organization ID.
@@ -84,7 +86,8 @@ class Mediatool(Source):
             start_date (str, optional): Start date e.g '2022-01-01'. Defaults to None.
             end_date (str, optional): End date e.g '2022-01-01'. Defaults to None.
             time_delta (int, optional): The number of days to retrieve from 'today' (today - time_delta). Defaults to 360.
-            return_dataframe (bool, optional): Return a dataframe if True. If set to False, get data as dict. Defaults to True.
+            return_dataframe (bool, optional): Return a dataframe if True. If set to False, return the data as a dict.
+                Defaults to True.
 
         Returns:
             pd.DataFrame: Default return dataframe If 'return_daframe=False' then return list of dicts.
@@ -117,16 +120,16 @@ class Mediatool(Source):
 
         return response_dict["mediaEntries"]
 
-    # @rename_columns
     def get_campaigns(
         self, organization_id: str, return_dataframe: bool = True
     ) -> pd.DataFrame:
         """
-        Get campaign data based on the organization ID.
+        Get campaign data based on the organization ID. Returns DF or dict.
 
         Args:
             organization_id (str): Organization ID.
-            return_dataframe (bool, optional): Return a dataframe if True. If set to False, get data as dict. Defaults to True.
+            return_dataframe (bool, optional): Return a dataframe if True. If set to False, return the data as a dict.
+                Defaults to True.
 
         Returns:
             pd.DataFrame: Default return dataframe If 'return_daframe=False' then return list of dicts.
@@ -143,20 +146,23 @@ class Mediatool(Source):
         response_dict = json.loads(response.text)
 
         if return_dataframe is True:
-            return pd.DataFrame.from_dict(response_dict["campaigns"])
+            df = pd.DataFrame.from_dict(response_dict["campaigns"])
+            function_name = inspect.stack()[0][3]
+            df_updated = self.rename_columns(df=df, source_name=function_name)
+            return df_updated
 
         return response_dict["campaigns"]
 
-    @rename_columns()
     def get_vehicles(
         self, organization_id: str, return_dataframe: bool = True
     ) -> pd.DataFrame:
         """
-        Get vehicles data based on the organization ID.
+        Get vehicles data based on the organization ID. Returns DF or dict.
 
         Args:
             organization_id (str): Organization ID.
-            return_dataframe (bool, optional): Return a dataframe if True. If set to False, get data as dict. Defaults to True.
+            return_dataframe (bool, optional): Return a dataframe if True. If set to False, return the data as a dict.
+            Defaults to True.
 
         Returns:
             pd.DataFrame: Default return dataframe. If 'return_daframe=False' then return list of dicts.
@@ -168,23 +174,27 @@ class Mediatool(Source):
             headers=self.header,
             method="GET",
         )
+
         response_dict = json.loads(response.text)
 
         if return_dataframe is True:
-            return pd.DataFrame.from_dict(response_dict["vehicles"])
+            df = pd.DataFrame.from_dict(response_dict["vehicles"])
+            function_name = inspect.stack()[0][3]
+            df_updated = self.rename_columns(df=df, source_name=function_name)
+            return df_updated
 
         return response_dict["vehicles"]
 
-    # @rename_columns
     def get_organizations(
-        self, user_id: str, return_dataframe: bool = True
+        self, user_id: str = None, return_dataframe: bool = True
     ) -> pd.DataFrame:
         """
-        Get organizations data based on the user ID.
+        Get organizations data based on the user ID. Returns DF or dict.
 
         Args:
             user_id (str): User ID.
-            return_dataframe (bool, optional): Return a dataframe if True. If set to False, get data as dict. Defaults to True.
+            return_dataframe (bool, optional): Return a dataframe if True. If set to False, return the data as a dict.
+            Defaults to True.
 
         Returns:
             pd.DataFrame: Default return dataframe. If 'return_daframe=False' then return list of dicts.
@@ -202,25 +212,27 @@ class Mediatool(Source):
 
         list_organizations = []
         for org in organizations:
-            list_organizations.append(
-                {"id_org": org["_id"], "organization_name": org["name"]}
-            )
+            list_organizations.append({"_id": org["_id"], "name": org["name"]})
 
         if return_dataframe is True:
-            return pd.DataFrame.from_dict(list_organizations)
+            df = pd.DataFrame.from_dict(list_organizations)
+            function_name = inspect.stack()[0][3]
+            df_updated = self.rename_columns(df=df, source_name=function_name)
+            return df_updated
 
         return list_organizations
 
-    # @rename_columns
     def get_media_types(
         self, media_type_ids: List[str], return_dataframe: bool = True
     ) -> pd.DataFrame:
         """
         Get media types data based on the media types ID. User have to provide list of media type IDs.
+        Returns DF or dict.
 
         Args:
-            media_type_ids (List[str]): Media type IDs.
-            return_dataframe (bool, optional): Return a dataframe if True. If set to False, get data as dict. Defaults to True.
+            media_type_ids (List[str]): List of media type IDs.
+            return_dataframe (bool, optional): Return a dataframe if True. If set to False, return the data as a dict.
+                Defaults to True.
 
         Returns:
             pd.DataFrame: Default return dataframe. If 'return_daframe=False' then return list of dicts.
@@ -237,21 +249,24 @@ class Mediatool(Source):
                 response_dict = json.loads(response.text)
                 list_media_types.append(
                     {
-                        "id": response_dict["mediaType"]["_id"],
-                        "media_type_name": response_dict["mediaType"]["name"],
+                        "_id": response_dict["mediaType"]["_id"],
+                        "name": response_dict["mediaType"]["name"],
                         "type": response_dict["mediaType"]["type"],
                     }
                 )
             except (APIError, KeyError):
                 list_media_types.append(
                     {
-                        "id": response_dict["mediaType"]["_id"],
-                        "media_type_name": response_dict["mediaType"]["name"],
+                        "_id": response_dict["mediaType"]["_id"],
+                        "name": response_dict["mediaType"]["name"],
                         "type": None,  # response_dict["mediaType"]["type"],
                     }
                 )
 
         if return_dataframe is True:
-            return pd.DataFrame.from_dict(list_media_types)
+            df = pd.DataFrame.from_dict(list_media_types)
+            function_name = inspect.stack()[0][3]
+            df_updated = self.rename_columns(df=df, source_name=function_name)
+            return df_updated
 
         return list_media_types
