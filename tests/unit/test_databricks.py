@@ -50,7 +50,9 @@ ADDITIONAL_DATA_DF = ADDITIONAL_DATA_NEW_FIELD_DF.copy().drop("NewField", axis=1
 @pytest.fixture(scope="session")
 def databricks():
 
-    databricks = Databricks(config_key="databricks-qa-elt")
+    databricks = Databricks(
+        config_key="databricks-qa-elt",
+    )
     databricks.create_schema(TEST_SCHEMA)
 
     yield databricks
@@ -140,6 +142,25 @@ def test_to_df(databricks):
     assert df.shape == TEST_DF.shape
 
     databricks.drop_table(schema=TEST_SCHEMA, table=TEST_TABLE)
+
+
+@pytest.mark.dependency()
+def test_create_table_replace(databricks):
+    exists = databricks._check_if_table_exists(schema=TEST_SCHEMA, table=TEST_TABLE)
+    assert exists is False
+
+    created = databricks.create_table_from_pandas(
+        schema=TEST_SCHEMA, table=TEST_TABLE, df=TEST_DF
+    )
+    assert created is True
+
+    exists = databricks._check_if_table_exists(schema=TEST_SCHEMA, table=TEST_TABLE)
+    assert exists is True
+
+    replaced = databricks.create_table_from_pandas(
+        schema=TEST_SCHEMA, table=TEST_TABLE, df=TEST_DF, if_exists="replace"
+    )
+    assert replaced is True
 
 
 # @pytest.mark.dependency(depends=["test_create_table", "test_drop_table", "test_to_df"])
