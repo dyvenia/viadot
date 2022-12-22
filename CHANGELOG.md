@@ -5,6 +5,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Added
+- Added `check_dtypes_sort` task into `ADLSToAzureSQL` to check if dtypes is properly sorted.
 
 
 # [0.4.11] - 2022-12-15
