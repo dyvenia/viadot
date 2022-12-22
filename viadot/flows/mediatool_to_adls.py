@@ -18,7 +18,6 @@ from ..task_utils import (
 )
 from ..tasks import AzureDataLakeUpload, MediatoolToDF
 
-mediatool_to_df_task = MediatoolToDF()
 file_to_adls_task = AzureDataLakeUpload()
 json_to_adls_task = AzureDataLakeUpload()
 
@@ -29,15 +28,10 @@ class MediatoolToADLS(Flow):
     def __init__(
         self,
         name: str = None,
-        organization_id: List[str] = None,
+        organization_ids: List[str] = None,
         media_entries_columns: List[str] = None,
-        # organizations_columns: List[str] = None,
-        # campaigns_columns: List[str] = None,
-        # vehicles_columns: List[str] = None,
-        # media_types_columns: List[str] = None,
-        # start_date: str = None,
-        # end_date: str = None,
-        credentials_key: str = "MEDIATOOL",
+        mediatool_credentials: dict = None,
+        mediatool_credentials_key: str = "MEDIATOOL",
         vault_name: str = None,
         credentials_secret: str = None,
         output_file_extension: str = ".parquet",
@@ -58,7 +52,9 @@ class MediatoolToADLS(Flow):
             name (str): The name of the flow.
             organization_id (List[str], optional): Organization ID. Defaults to None.
             media_entries_columns (List[str], optional): Columns to get from media entries.  Defaults to None.
-            credentials_key (str, optional): Credential key to dictionary where details are stored (e.g. in local config). Defaults to "MEDIATOOL".
+            mediatool_credentials (dict, optional): Dictionary containing Mediatool credentials. Defaults to None.
+            mediatool_credentials_key (str, optional): Credential key to dictionary where credentials are stored (e.g. in local config).
+                Defaults to "MEDIATOOL".
             credentials_secret (str, optional): The name of the Azure Key Vault secret for Mediatool project. Defaults to None.
             vault_name (str, optional): The name of the vault from which to obtain the secrets. Defaults to None.
             output_file_extension (str, optional): Output file extension - to allow selection of .csv for data
@@ -67,17 +63,16 @@ class MediatoolToADLS(Flow):
             local_file_path (str, optional): Local destination path. Defaults to None.
             adls_file_name (str, optional): Name of file in ADLS. Defaults to None.
             adls_sp_credentials_secret (str, optional): The name of the Azure Key Vault secret containing a dictionary with
-            ACCOUNT_NAME and Service Principal credentials (TENANT_ID, CLIENT_ID, CLIENT_SECRET) for the Azure Data Lake.
+                ACCOUNT_NAME and Service Principal credentials (TENANT_ID, CLIENT_ID, CLIENT_SECRET) for the Azure Data Lake.
                 Defaults to None.
             overwrite_adls (bool, optional): Whether to overwrite files in the lake. Defaults to False.
             if_exists (str, optional): What to do if the file exists. Defaults to "replace".
         """
         # MediatoolToDF
-        self.organization_id = organization_id
-        self.credentials_key = credentials_key
+        self.organization_ids = organization_ids
+        self.mediatool_credentials = mediatool_credentials
+        self.mediatool_credentials_key = mediatool_credentials_key
         self.media_entries_columns = media_entries_columns
-        # self.start_date = start_date
-        # self.end_date = end_date
         self.vault_name = vault_name
         self.credentials_secret = credentials_secret
 
@@ -116,13 +111,14 @@ class MediatoolToADLS(Flow):
         return name.replace(" ", "_").lower()
 
     def gen_flow(self) -> Flow:
+        mediatool_to_df_task = MediatoolToDF(
+            mediatool_credentials=self.mediatool_credentials,
+            mediatool_credentials_key=self.mediatool_credentials_key,
+        )
+
         df = mediatool_to_df_task.bind(
-            organization_id=self.organization_id,
-            credentials_key=self.credentials_key,
-            # start_date=self.start_date,
-            # end_date=self.end_date,
-            vault_name=self.vault_name,
-            credentials_secret=self.credentials_secret,
+            organization_ids=self.organization_ids,
+            media_entries_columns=self.media_entries_columns,
             flow=self,
         )
 
