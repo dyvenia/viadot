@@ -6,6 +6,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added 
+- Added Mediatool source class
+- Added MediatoolToDF task class
+- Added MediatoolToADLS flow class
+
 ## [0.4.10] - 2022-11-16
 ### Added
 - Added `credentials_loader` function in utils
