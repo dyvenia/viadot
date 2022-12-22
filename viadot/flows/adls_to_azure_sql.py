@@ -87,6 +87,46 @@ def df_to_csv_task(df, remove_tab, path: str, sep: str = "\t"):
             df.to_csv(path, sep=sep, index=False)
 
 
+@task
+def check_dtypes_sort(
+    df: pd.DataFrame,
+    dtypes: Dict[str, Any] = None,
+) -> Dict[str, Any]:
+    """Check dtype column order to avoid malformation SQL table.
+
+    Args:
+        df (pd.DataFrame): Data Frame from original ADLS file.
+        dtypes (Dict[str, Any], optional): Dictionary of columns and data type to apply
+            to the Data Frame downloaded. Defaults to None.
+
+    Returns:
+        Dict[str, Any]: Sorted dtype.
+    """
+    if df is None:
+        logger.warning("DataFrame is None")
+    else:
+        # first check if all dtypes keys are in df.columns
+        if all(d in df.columns for d in list(dtypes.keys())) and len(df.columns) == len(
+            list(dtypes.keys())
+        ):
+            # check if have the same sort
+            matches = list(map(lambda x, y: x == y, df.columns, dtypes.keys()))
+            if not all(matches):
+                logger.warning(
+                    "Some keys are not sorted in dtypes. Repositioning the key:value..."
+                )
+                # re-sort in a new dtype
+                new_dtypes = dict()
+                for key in df.columns:
+                    new_dtypes.update([(key, dtypes[key])])
+        else:
+            logger.warning(
+                "dtype dictionary contains key(s) that not matching with the ADLS file columns name, or they have different length."
+            )
+
+    return new_dtypes
+
+
 class ADLSToAzureSQL(Flow):
     def __init__(
         self,
@@ -236,7 +276,11 @@ class ADLSToAzureSQL(Flow):
             dtypes = map_data_types_task.bind(self.local_json_path, flow=self)
             map_data_types_task.set_upstream(download_json_file_task, flow=self)
         else:
-            dtypes = self.dtypes
+            dtypes = check_dtypes_sort.bind(
+                df,
+                dtypes=self.dtypes,
+                flow=self,
+            )
 
         df_reorder = check_column_order_task.bind(
             table=self.table,
