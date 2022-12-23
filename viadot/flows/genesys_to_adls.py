@@ -6,43 +6,12 @@ from prefect import Flow, task
 from viadot.task_utils import df_to_csv
 from viadot.tasks import AzureDataLakeUpload
 from viadot.tasks.genesys import GenesysToCSV, GenesysToDF
-from ..task_utils import (
+from viadot.task_utils import (
     add_ingestion_metadata_task,
     df_to_csv,
     df_to_parquet,
+    adls_bulk_upload,
 )
-
-file_to_adls_task = AzureDataLakeUpload()
-
-
-@task
-def adls_bulk_upload(
-    file_names: List[str],
-    adls_file_path: str = None,
-    adls_sp_credentials_secret: str = None,
-    adls_overwrite: bool = True,
-) -> List[str]:
-    """
-    Function that upload files to defined path in ADLS.
-
-    Args:
-        file_names (List[str]): List of file names to generate paths.
-        adls_file_path (str, optional): Azure Data Lake path. Defaults to None.
-        adls_sp_credentials_secret (str, optional): The name of the Azure Key Vault secret containing a dictionary with
-            ACCOUNT_NAME and Service Principal credentials (TENANT_ID, CLIENT_ID, CLIENT_SECRET). Defaults to None.
-        adls_overwrite (bool, optional): Whether to overwrite files in the data lake. Defaults to True.
-    Returns:
-        List[str]: List of paths
-    """
-
-    for file in file_names:
-        file_path = str(adls_file_path + "/" + file)
-        file_to_adls_task.run(
-            from_path=file,
-            to_path=file_path,
-            sp_credentials_secret=adls_sp_credentials_secret,
-            overwrite=adls_overwrite,
-        )
 
 
 @task
