@@ -13,6 +13,8 @@ from viadot.task_utils import (
     adls_bulk_upload,
 )
 
+file_to_adls_task = AzureDataLakeUpload()
+
 
 @task
 def add_timestamp(files_names: List = None, sep: str = None) -> None:
