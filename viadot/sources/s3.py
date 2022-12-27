@@ -1,4 +1,4 @@
-from typing import List, Dict, Literal
+from typing import List
 import boto3
 
 import pandas as pd
@@ -15,7 +15,6 @@ class S3:
         aws_session_token (str, optional): AWS temporary session token
     """
 
-    # add env var
     def __init__(
         self,
         profile_name: str = None,
@@ -52,34 +51,6 @@ class S3:
         """
         return wr.s3.does_object_exist(boto3_session=self.session, path=path)
 
-    def upload(
-        self,
-        from_path: str,
-        to_path: str,
-    ) -> None:
-        """
-        Upload file(s) to the S3.
-        Args:
-            from_path (str): Path to the local file to be uploaded.
-            to_path (str): Path to the destination S3 file/folder.
-        """
-        wr.s3.upload(boto3_session=self.session, local_file=from_path, path=to_path)
-
-    def download(
-        self,
-        from_path: str,
-        to_path: str,
-    ) -> None:
-        """
-        Download file(s) from S3.
-
-        Args:
-            from_path (str): Path to a S3 folder.
-            to_path (str): Path to a local folder.
-        """
-
-        wr.s3.download(boto3_session=self.session, path=from_path, local_file=to_path)
-
     def cp(self, paths: List[str], from_path: str, to_path: str):
         """
         Copies the contents of `from_path` to `to_path`.
@@ -110,18 +81,13 @@ class S3:
         self,
         df: pd.DataFrame = None,
         to_path: str = None,
-        sep: str = ",",
-        index: bool = False,
-        compression: str = None,
+        **kwargs,
     ):
         """
         Upload a pandas `DataFrame` to a csv or parquet file. You can choose different file backends, and have the option of compression.
         Args:
             df (pd.DataFrame, optional): Pandas DataFrame
             to_path (str, optional): Path to a S3 folder. Defaults to None.
-            index (bool): Write row names (index).
-            sep (str): Field delimiter for the output file.
-            compression (str, optional): Compression style (None, snappy, gzip, zstd).
         """
 
         if to_path.endswith(".csv"):
@@ -129,23 +95,25 @@ class S3:
                 boto3_session=self.session,
                 df=df,
                 path=to_path,
-                dataset=False,
-                index=index,
-                sep=sep,
+                dataset=True,
+                **kwargs,
             )
         elif to_path.endswith(".parquet"):
             wr.s3.to_parquet(
                 boto3_session=self.session,
                 df=df,
                 path=to_path,
-                dataset=False,
-                index=index,
-                compression=compression,
+                dataset=True,
+                **kwargs,
             )
         else:
             raise ValueError("Only CSV and parquet formats are supported.")
 
-    def to_df(self, from_path: str = None):
+    def to_df(
+        self,
+        from_path: str = None,
+        **kwargs,
+    ):
         """
         Reads a csv or parquet file to dataframe.
         Args:
@@ -153,50 +121,12 @@ class S3:
         """
         if from_path.endswith(".csv"):
             df = wr.s3.read_csv(
-                boto3_session=self.session, path=from_path, dataset=False
+                boto3_session=self.session, path=from_path, dataset=True, **kwargs
             )
         elif from_path.endswith(".parquet"):
             df = wr.s3.read_parquet(
-                boto3_session=self.session, path=from_path, dataset=False
+                boto3_session=self.session, path=from_path, dataset=True, **kwargs
             )
         else:
             raise ValueError("Only CSV and parquet formats are supported.")
         return df
-
-
-# s3_session = S3()
-# print("Before upload:")
-# print(s3_session.ls(path="s3://annger-bucket"))
-# s3_session.upload(
-#     from_path="test_final.parquet",
-#     to_path="s3://annger-bucket/test_folder/test_file.parquet",
-# )
-# print("After upload:")
-# print(s3_session.ls(path="s3://annger-bucket"))
-# s3_session.download(
-#     from_path="s3://annger-bucket/test_folder/test_file.parquet",
-#     to_path="test_final_download.parquet",
-# )
-# s3_session.cp(
-#     paths=["s3://annger-bucket/test_folder/test_file.parquet"],
-#     from_path="s3://annger-bucket/test_folder/",
-#     to_path="s3://annger-bucket/test_folder2",
-# )
-# print("After copy:")
-# print(s3_session.ls(path="s3://annger-bucket"))
-
-# print("Dataframe from to_df:")
-# df = s3_session.to_df(from_path="s3://annger-bucket/test_folder2/test_file.parquet")
-# print(df)
-
-# s3_session.from_df(df=df, to_path="s3://annger-bucket/test_folder3/test_file.parquet")
-# s3_session.from_df(df=df, to_path="s3://annger-bucket/test_folder4/test_file.csv")
-
-# print("After from_df:")
-# print(s3_session.ls(path="s3://annger-bucket"))
-# s3_session.rm(path="s3://annger-bucket/test_folder/test_file.parquet")
-# s3_session.rm(path="s3://annger-bucket/test_folder2/test_file.parquet")
-# s3_session.rm(path="s3://annger-bucket/test_folder3/test_file.parquet")
-# s3_session.rm(path="s3://annger-bucket/test_folder4/test_file.csv")
-# print("After cleanup:")
-# print(s3_session.ls(path="s3://annger-bucket"))
