@@ -21,6 +21,8 @@ from .azure_key_vault import AzureKeyVaultSecret
 def get_credentials(credentials_secret: str, vault_name: str = None):
     """
     Get Azure credentials.
+    If the credential secret is not provided it will be taken from Prefect Secrets. If Prefect Secrets does not
+        contain the credential, it will be taken from the local credential file.
 
     Args:
         credentials_secret (str): The name of the Azure Key Vault secret containing a dictionary
