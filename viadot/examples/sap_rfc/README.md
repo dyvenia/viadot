@@ -21,7 +21,7 @@ docker-compose up -d
 You can now open up Jupyter Lab at `localhost:5678`. 
 
 ## Config File
-Credentials and other settings are stored as `/home/viadot/.config/viadot/config.yaml`. A config file needs to be written in yaml format. A typical config file looks like so:
+Credentials and other settings are stored as `~/.config/viadot/config.yaml`. A config file needs to be written in yaml format. A typical config file looks like so:
 
 ```
 version: 1
