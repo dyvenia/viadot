@@ -1,4 +1,4 @@
-FROM viadot:dev
+FROM viadot:2.0a11
 
 USER root
 
