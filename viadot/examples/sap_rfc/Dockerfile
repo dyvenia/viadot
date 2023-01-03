@@ -1,4 +1,4 @@
-FROM viadot:2.0a11
+FROM viadot:2.0a12
 
 USER root
 
