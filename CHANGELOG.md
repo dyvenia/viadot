@@ -10,7 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added `Databricks` source to the library.
 - Added `ExchangeRates` source to the library.
 - Added `from_df()` method to `Azure Data Lake` source
-- Added `sap_rfc` source to the library.
+- Added `SAPRFC` source to the library.
 
 ### Changed
 - Added `SQLServerToDF` task
