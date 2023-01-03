@@ -1,7 +1,7 @@
 import re
 import logging
 from collections import OrderedDict
-from typing import List, Literal
+from typing import List, Literal, Dict, Any
 from typing import OrderedDict as OrderedDictType
 from typing import Tuple, Union
 
@@ -14,7 +14,7 @@ except ModuleNotFoundError:
     raise ImportError("pyfrc is required to use the SAPRFC source.")
 from sql_metadata import Parser
 
-from viadot.config import CONFIG
+from viadot.config import get_source_credentials
 from viadot.exceptions import CredentialError, DataBufferExceeded
 from viadot.sources.base import Source
 
@@ -105,6 +105,8 @@ class SAPRFC(Source):
         sep: str = None,
         func: str = "RFC_READ_TABLE",
         rfc_total_col_width_character_limit: int = 400,
+        credentials: Dict[str, Any] = None,
+        config_key: str = None,
         *args,
         **kwargs,
     ):
@@ -115,19 +117,21 @@ class SAPRFC(Source):
             multiple options are automatically tried.
             func (str, optional): SAP RFC function to use. Defaults to "RFC_READ_TABLE".
             rfc_total_col_width_character_limit (int, optional): Number of characters by which query will be split in chunks
-            in case of too many columns for RFC function. According to SAP documentation, the limit is
-            512 characters. However, we observed SAP raising an exception even on a slightly lower number
-            of characters, so we add a safety margin. Defaults to 400.
+                in case of too many columns for RFC function. According to SAP documentation, the limit is
+                512 characters. However, we observed SAP raising an exception even on a slightly lower number
+                of characters, so we add a safety margin. Defaults to 400.
+            credentials (Dict[str, Any], optional): 'api_key'. Defaults to None.
+            config_key (str, optional): The key in the viadot config holding relevant credentials.
 
         Raises:
             CredentialError: If provided credentials are incorrect.
         """
 
         self._con = None
-        DEFAULT_CREDENTIALS = CONFIG.get("SAP").get("WERFEN")
-        credentials = kwargs.pop("credentials", None) or DEFAULT_CREDENTIALS
+
+        credentials = credentials or get_source_credentials(config_key)
         if credentials is None:
-            raise CredentialError("Missing credentials.")
+            raise CredentialError("Please specify the credentials.")
 
         super().__init__(*args, credentials=credentials, **kwargs)
 

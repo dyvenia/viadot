@@ -21,25 +21,19 @@ docker-compose up -d
 You can now open up Jupyter Lab at `localhost:5678`. 
 
 ## Config File
-Credentials and other settings are stored as `/home/viadot/.config/viadot/credentials.json`. A credential file needs to be written in json format. A typical credentials file looks like so:
+Credentials and other settings are stored as `/home/viadot/.config/viadot/config.yaml`. A config file needs to be written in yaml format. A typical config file looks like so:
 
 ```
-{
-    "SAP": {
-        "PROD": {
-            "sysnr": "system_number_prod",
-            "user": "user_name_prod",
-            "passwd": "password_prod",
-            "ashost": "host_name_prod"
-        },
-        "DEV": {
-            "sysnr": "system_number_dev",
-            "user": "user_name_dev",
-            "passwd": "password_dev",
-            "ashost": "host_name_dev"
-        }
-    }
-}
+version: 1
+
+sources:
+
+  - sharepoint_prod:
+      class: Sharepoint
+      credentials:
+        site: "my_company.sharepoint.com"
+        username: "my_user"
+        password: "my_pw"
 ```
 
 ## Running tests
