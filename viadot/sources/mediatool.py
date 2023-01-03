@@ -34,7 +34,8 @@ class Mediatool(Source):
             try:
                 self.header = {"Authorization": f"Bearer {credentials.get('TOKEN')}"}
             except:
-                self.logger("Credentials not found.")
+
+                self.logger.error("Credentials not found.")
 
         super().__init__(*args, credentials=credentials, **kwargs)
 
@@ -115,7 +116,7 @@ class Mediatool(Source):
             try:
                 df_filtered = df[columns]
             except KeyError as e:
-                self.logger(e)
+                self.logger.error(e)
             return df_filtered
 
         return response_dict["mediaEntries"]
@@ -212,7 +213,22 @@ class Mediatool(Source):
 
         list_organizations = []
         for org in organizations:
-            list_organizations.append({"_id": org["_id"], "name": org["name"]})
+            try:
+                list_organizations.append(
+                    {
+                        "_id": org["_id"],
+                        "name": org["name"],
+                        "abbreviation": org["abbreviation"],
+                    }
+                )
+            except KeyError:
+                list_organizations.append(
+                    {
+                        "_id": org["_id"],
+                        "name": org["name"],
+                        "abbreviation": None,
+                    }
+                )
 
         if return_dataframe is True:
             df = pd.DataFrame.from_dict(list_organizations)

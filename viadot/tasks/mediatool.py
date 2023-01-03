@@ -15,9 +15,7 @@ logger = logging.get_logger()
 class MediatoolToDF(Task):
     """
     The MediatoolToDF task fetches data for media entries, combines them with other data from Mediatool endpoints,
-    and returns data with names instead of IDs.
-
-    !! Note that for now user can provide only 1 Organization ID. Will be extended in the future.
+    and returns data with names instead of IDs. User can provide list of organization IDs.
     """
 
     def __init__(
@@ -77,8 +75,10 @@ class MediatoolToDF(Task):
             df_right (pd.DataFrame): Right dataframe.
             left_on (str): Column or index level names to join on in the left DataFrame.
             right_on (str): Column or index level names to join on in the right DataFrame.
-            columns_from_right_df (List[str], optional): List of column to get from right dataframe. Defaults to None.
-            how (Literal["left", "right", "outer", "inner", "cross"], optional): Type of merge to be performed. Defaults to "left".
+            columns_from_right_df (List[str], optional): List of column to get from right dataframe.
+                Defaults to None.
+            how (Literal["left", "right", "outer", "inner", "cross"], optional): Type of merge to be performed.
+                Defaults to "left".
 
         Returns:
             pd.DataFrame: Final dataframe after merging.
@@ -99,11 +99,27 @@ class MediatoolToDF(Task):
         return super().__call__(*args, **kwargs)
 
     @defaults_from_attrs("organization_ids", "media_entries_columns")
-    def run(self, organization_ids: List[str] = None, media_entries_columns=None):
-        """Return DF from source"""
+    def run(
+        self, organization_ids: List[str] = None, media_entries_columns=None
+    ) -> pd.DataFrame:
+        """
+        Run method. Data for different endpoints are retrieved and combined.
+        Finally, a final data frame is created containing data for all organizations from the list.
+
+        Args:
+            organization_ids (List[str], optional): List of organization IDs. Defaults to None.
+            media_entries_columns (List[str], optional): Columns to get from media entries. Defaults to None.
+
+        Raises:
+            ValueError: Value is raised if organization_id is not recognized.
+
+        Returns:
+            pd.DataFrame: Data frame containing all of the information for organization or list of organizations.
+        """
         mediatool = Mediatool(credentials=self.mediatool_credentials)
         df_orgs = mediatool.get_organizations(self.mediatool_credentials["USER_ID"])
 
+        chunks = []
         for organization_id in organization_ids:
             if organization_id in df_orgs["_id_organizations"].unique():
                 logger.info(f"Downloading data for: {organization_id}")
@@ -126,6 +142,7 @@ class MediatoolToDF(Task):
                     columns_from_right_df=[
                         "_id_organizations",
                         "name_organizations",
+                        "abbreviation_organizations",
                     ],
                     how="left",
                 )
@@ -160,10 +177,13 @@ class MediatoolToDF(Task):
                     columns_from_right_df=["_id_media_types", "name_media_types"],
                     how="left",
                 )
+                chunks.append(df_merged_media_types)
 
             else:
                 raise ValueError(
                     f"Organization - {organization_id} not found in organizations list."
                 )
 
-        return df_merged_media_types
+            df_final = pd.concat(chunks)
+
+        return df_final
