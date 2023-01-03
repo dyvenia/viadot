@@ -45,13 +45,13 @@ class MediatoolToADLS(Flow):
         **kwargs: Dict[str, Any],
     ):
         """
-        Flow for downloading data from Mediatool platform CSV or Parquet file using Mediatool API,
+        Flow for downloading data from Mediatool platform to CSV or parquet file using Mediatool API,
         then uploading it to Azure Data Lake.
 
         Args:
             name (str): The name of the flow.
-            organization_id (List[str], optional): Organization ID. Defaults to None.
-            media_entries_columns (List[str], optional): Columns to get from media entries.  Defaults to None.
+            organization_ids (List[str], optional): List of organization IDs. Defaults to None.
+            media_entries_columns (List[str], optional): Columns to get from media entries. Defaults to None.
             mediatool_credentials (dict, optional): Dictionary containing Mediatool credentials. Defaults to None.
             mediatool_credentials_key (str, optional): Credential key to dictionary where credentials are stored (e.g. in local config).
                 Defaults to "MEDIATOOL".
@@ -124,11 +124,11 @@ class MediatoolToADLS(Flow):
 
         df_with_metadata = add_ingestion_metadata_task.bind(df, flow=self)
         dtypes_dict = df_get_data_types_task.bind(df_with_metadata, flow=self)
-        df_to_be_loaded = df_map_mixed_dtypes_for_parquet(
-            df_with_metadata, dtypes_dict, flow=self
-        )
 
         if self.output_file_extension == ".parquet":
+            df_to_be_loaded = df_map_mixed_dtypes_for_parquet(
+                df_with_metadata, dtypes_dict, flow=self
+            )
             df_to_file = df_to_parquet.bind(
                 df=df_to_be_loaded,
                 path=self.local_file_path,
@@ -166,7 +166,6 @@ class MediatoolToADLS(Flow):
 
         df_with_metadata.set_upstream(df, flow=self)
         dtypes_dict.set_upstream(df_with_metadata, flow=self)
-        df_to_be_loaded.set_upstream(dtypes_dict, flow=self)
         file_to_adls_task.set_upstream(df_to_file, flow=self)
         json_to_adls_task.set_upstream(dtypes_to_json_task, flow=self)
         set_key_value(key=self.adls_dir_path, value=self.adls_file_path)
