@@ -22,7 +22,7 @@ class DuckDBQuery(Task):
     def __init__(
         self,
         credentials: dict = None,
-        timeout: int = 600,
+        timeout: int = 3600,
         *args,
         **kwargs,
     ):
