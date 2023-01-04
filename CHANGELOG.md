@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 ### Added
 - Added `timeout` parameter to all `Task`s where it can be added.
+- Added `timeout` parameter to all `Flow`s where it can be added.
 
 
 # [0.4.11] - 2022-12-15
