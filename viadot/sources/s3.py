@@ -3,6 +3,7 @@ import boto3
 
 import pandas as pd
 import awswrangler as wr
+from viadot.sources.base import Source
 
 
 class S3(Source):
