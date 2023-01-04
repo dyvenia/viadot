@@ -579,6 +579,7 @@ def adls_bulk_upload(
     adls_file_path: str = None,
     adls_sp_credentials_secret: str = None,
     adls_overwrite: bool = True,
+    timeout: int = 3600,
 ) -> List[str]:
     """Function that upload files to defined path in ADLS.
 
@@ -589,12 +590,13 @@ def adls_bulk_upload(
         adls_sp_credentials_secret (str, optional): The name of the Azure Key Vault secret containing a dictionary with
             ACCOUNT_NAME and Service Principal credentials (TENANT_ID, CLIENT_ID, CLIENT_SECRET). Defaults to None.
         adls_overwrite (bool, optional): Whether to overwrite files in the data lake. Defaults to True.
-
+        timeout (int, optional): The amount of time (in seconds) to wait while running this task before
+            a timeout occurs. Defaults to 3600.
     Returns:
         List[str]: List of paths.
     """
 
-    file_to_adls_task = AzureDataLakeUpload()
+    file_to_adls_task = AzureDataLakeUpload(timeout=timeout)
 
     for file in file_names:
         file_to_adls_task.run(
