@@ -31,7 +31,7 @@ class DuckDBQuery(Task):
         self.credentials = credentials
         super().__init__(name="run_duckdb_query", timeout=timeout, *args, **kwargs)
 
-    @defaults_from_attrs("credentials", "timeout")
+    @defaults_from_attrs("credentials")
     def run(
         self,
         query: str,
