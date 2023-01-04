@@ -42,6 +42,7 @@ class SQLServerToDuckDB(Flow):
         # SQLServerToDF
         self.sql_query = sql_query
         self.sqlserver_config_key = sqlserver_config_key
+        self.timeout = timeout
 
         # DuckDBCreateTableFromParquet
         self.local_file_path = local_file_path
@@ -60,7 +61,7 @@ class SQLServerToDuckDB(Flow):
         self.gen_flow()
 
     def gen_flow(self) -> Flow:
-        df_task = SQLServerToDF()
+        df_task = SQLServerToDF(timeout=self.timeout)
         df = df_task.bind(
             config_key=self.sqlserver_config_key, query=self.sql_query, flow=self
         )
