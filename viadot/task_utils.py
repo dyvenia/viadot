@@ -591,7 +591,7 @@ def adls_bulk_upload(
         adls_overwrite (bool, optional): Whether to overwrite files in the data lake. Defaults to True.
 
     Returns:
-        List[str]: List of paths
+        List[str]: List of paths.
     """
 
     file_to_adls_task = AzureDataLakeUpload()
