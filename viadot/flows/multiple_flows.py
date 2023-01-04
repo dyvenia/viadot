@@ -7,7 +7,7 @@ from prefect.utilities import logging
 logger = logging.get_logger()
 
 
-@task
+@task(timeout=3600)
 def run_flows_list(flow_name: str, flows_list: List[List] = [List[None]]):
     """
     Task for running multiple flows in the given order. Task will create flow of flows.
@@ -40,20 +40,16 @@ class MultipleFlows(Flow):
         flow_name(str): Name of a new flow.
         flows_list(List[List]): List containing lists of flow names and project names - [["flow1_name" , "project_name"], ["flow2_name" , "project_name"]].
             Flows have to be in the correct oreder. Defaults to [List[None]].
-        timeout(int, optional): The amount of time (in seconds) to wait while running this task before
-            a timeout occurs. Defaults to 3600.
     """
 
     def __init__(
         self,
         name: str,
         flows_list: List[List] = [List[None]],
-        timeout: int = 3600,
         *args: List[any],
         **kwargs: Dict[str, Any],
     ):
         self.flows_list = flows_list
-        self.timeout = timeout
         super().__init__(*args, name=name, **kwargs)
         self.gen_flow()
 
@@ -61,6 +57,5 @@ class MultipleFlows(Flow):
         run_flows_list.bind(
             flow_name=self.name,
             flows_list=self.flows_list,
-            timeout=self.timeout,
             flow=self,
         )
