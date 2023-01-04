@@ -10,9 +10,7 @@ from ..task_utils import (
     union_dfs_task,
     credentials_loader,
 )
-from ..tasks import AzureDataLakeUpload, OutlookToDF
-
-file_to_adls_task = AzureDataLakeUpload()
+from viadot.tasks import AzureDataLakeUpload, OutlookToDF
 
 
 class OutlookToADLS(Flow):
@@ -28,7 +26,7 @@ class OutlookToADLS(Flow):
         overwrite_adls: bool = True,
         adls_sp_credentials_secret: str = None,
         limit: int = 10000,
-        timeout: int = 1200,
+        timeout: int = 3600,
         if_exists: Literal["append", "replace", "skip"] = "append",
         outlook_credentials_secret: str = "OUTLOOK",
         *args: List[Any],
@@ -50,7 +48,8 @@ class OutlookToADLS(Flow):
             ACCOUNT_NAME and Service Principal credentials (TENANT_ID, CLIENT_ID, CLIENT_SECRET) for the Azure Data Lake. Defaults to None.
             outlook_credentials_secret (str, optional): The name of the Azure Key Vault secret containing a dictionary with outlook credentials.
             limit (int, optional): Number of fetched top messages. Defaults to 10000.
-            timeout (int, optional): The amount of time (in seconds) to wait while running this task before a timeout occurs. Defaults to 1200.
+            timeout(int, optional): The amount of time (in seconds) to wait while running this task before
+                a timeout occurs. Defaults to 3600.
             if_exists (Literal['append', 'replace', 'skip'], optional): What to do if the local file already exists. Defaults to "append".
         """
 
@@ -80,7 +79,6 @@ class OutlookToADLS(Flow):
             credentials_secret=self.outlook_credentials_secret
         )
         outlook_to_df = OutlookToDF(timeout=self.timeout, credentials=credentials)
-
         df = outlook_to_df.bind(
             mailbox_name=mailbox_list,
             start_date=self.start_date,
@@ -113,6 +111,7 @@ class OutlookToADLS(Flow):
                 flow=self,
             )
 
+        file_to_adls_task = AzureDataLakeUpload(timeout=self.timeout)
         file_to_adls_task.bind(
             from_path=self.local_file_path,
             to_path=self.adls_file_path,
