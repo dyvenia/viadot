@@ -5,7 +5,9 @@ from typing import Any, Dict, List, Literal
 import pandas as pd
 from prefect import Flow, task
 from prefect.backend import get_key_value
+from prefect.engine import signals
 from prefect.utilities import logging
+
 
 from viadot.tasks.azure_data_lake import AzureDataLakeDownload
 
@@ -89,13 +91,13 @@ def df_to_csv_task(df, remove_tab, path: str, sep: str = "\t"):
 
 @task
 def check_dtypes_sort(
-    df: pd.DataFrame,
+    df: pd.DataFrame = None,
     dtypes: Dict[str, Any] = None,
 ) -> Dict[str, Any]:
     """Check dtype column order to avoid malformation SQL table.
 
     Args:
-        df (pd.DataFrame): Data Frame from original ADLS file.
+        df (pd.DataFrame, optional): Data Frame from original ADLS file. Defaults to None.
         dtypes (Dict[str, Any], optional): Dictionary of columns and data type to apply
             to the Data Frame downloaded. Defaults to None.
 
@@ -103,7 +105,8 @@ def check_dtypes_sort(
         Dict[str, Any]: Sorted dtype.
     """
     if df is None:
-        logger.warning("DataFrame is None")
+        logger.error("DataFrame argument is mandatory")
+        raise signals.FAIL("DataFrame is None.")
     else:
         # first check if all dtypes keys are in df.columns
         if all(d in df.columns for d in list(dtypes.keys())) and len(df.columns) == len(
@@ -120,7 +123,8 @@ def check_dtypes_sort(
                 for key in df.columns:
                     new_dtypes.update([(key, dtypes[key])])
         else:
-            logger.warning(
+            logger.error("There is a discrepancy with any of the columns.")
+            raise signals.FAIL(
                 "dtype dictionary contains key(s) that not matching with the ADLS file columns name, or they have different length."
             )
 
