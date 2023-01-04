@@ -5,7 +5,7 @@ import pandas as pd
 import awswrangler as wr
 
 
-class S3:
+class S3(Source):
     """
     A class for pulling data from and uploading to S3.
 
