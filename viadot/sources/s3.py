@@ -73,7 +73,7 @@ class S3(Source):
         """
         Deletes files in a path.
         Args:
-            path (str): Path to a folder.
+            path (str): Path to a file or folder to be removed. If the path refers to a folder, it will be removed recursively.
         """
 
         wr.s3.delete_objects(boto3_session=self.session, path=path)
