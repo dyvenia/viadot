@@ -32,7 +32,10 @@ class Spectrum:
             self.session = boto3.session.Session()
 
     def ls(
-        self, database: str = None, name_contains: str = None, search_text: str = None
+        self,
+        database: str = None,
+        name_contains: str = None,
+        search_text: str = None,
     ) -> List[str]:
         """
         Returns a list of tables in a Glue database.
@@ -76,7 +79,7 @@ class Spectrum:
 
         Args:
             path (str): Path to a folder.
-            database (str): AWS Glue  catalog database name.
+            database (str): AWS Glue catalog database name.
             table (str): AWS Glue catalog table name.
         """
         table_location = wr.catalog.get_table_location(
@@ -108,15 +111,15 @@ class Spectrum:
             df (pd.DataFrame): Pandas DataFrame
             to_path (str): Path to a S3 folder. Defaults to None.
             extention (str): Required file type.
-            database (str): AWS Glue  catalog database name.
+            database (str): AWS Glue catalog database name.
             table (str): AWS Glue catalog table name.
-            partition_cols (List[str]):
+            partition_cols (List[str]): List of column names that will be used to create partitions. Only takes effect if dataset=True.
             if_exists (str, optional): 'overwrite' to recreate any possible existing table or 'append' to keep any possible existing table. Defaults to overwrite.
             index (bool, optional): Write row names (index). Defaults to False.
             compression (str, optional): Compression style (None, snappy, gzip, zstd).
             sep (str, optional): Field delimiter for the output file. Defaults to ','.
             description (str, optional): Glue catalog table description.
-            columns_comments (Dict[str,str], optional) - Glue catalog columns names and the related comments.
+            columns_comments (Dict[str,str], optional) - Glue catalog column names and the related comments.
         """
 
         if extention == ".parquet":
@@ -148,9 +151,9 @@ class Spectrum:
         else:
             raise ValueError("Only CSV and parquet formats are supported.")
 
-    def to_df(self, database: str = None, table: str = None):
+    def to_df(self, database: str = None, table: str = None) -> pd.DataFrame:
         """
-        Reads a parquet file to dataframe.
+        Reads a Spectrum table to a pandas `DataFrame`.
 
         Args:
             database (str): AWS Glue catalog database name.
