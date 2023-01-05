@@ -1,8 +1,9 @@
 from typing import List
-import boto3
 
-import pandas as pd
 import awswrangler as wr
+import boto3
+import pandas as pd
+
 from viadot.sources.base import Source
 
 
@@ -35,9 +36,11 @@ class S3(Source):
     def ls(self, path: str, suffix: str = None) -> List[str]:
         """
         Returns a list of files in a S3.
+
         Args:
             path (str): Path to a folder.
-            suffix (Union[str, List[str], None]) - Suffix or List of suffixes for filtering S3 keys.
+            suffix (Union[str, List[str], None]) - Suffix or List of suffixes for
+                filtering S3 keys.
         """
 
         return wr.s3.list_objects(boto3_session=self.session, path=path, suffix=suffix)
@@ -45,6 +48,7 @@ class S3(Source):
     def exists(self, path: str) -> bool:
         """
         Check if a location exists in S3.
+
         Args:
             path (str): The path to check. Can be a file or a directory.
         Returns:
@@ -57,7 +61,8 @@ class S3(Source):
         Copies the contents of `from_path` to `to_path`.
 
         Args:
-            paths (List[str]): List of S3 objects paths (e.g. [s3://bucket/dir0/key0, s3://bucket/dir0/key1]).
+            paths (List[str]): List of S3 objects paths,
+                e.g. [s3://bucket/dir0/key0, s3://bucket/dir0/key1].
             from_path (str, optional): S3 Path for the source directory.
             to_path (str, optional): S3 Path for the target directory.
         """
@@ -72,8 +77,10 @@ class S3(Source):
     def rm(self, path: str):
         """
         Deletes files in a path.
+
         Args:
-            path (str): Path to a file or folder to be removed. If the path refers to a folder, it will be removed recursively.
+            path (str): Path to a file or folder to be removed. If the path refers to
+                a folder, it will be removed recursively.
         """
 
         wr.s3.delete_objects(boto3_session=self.session, path=path)
@@ -85,7 +92,9 @@ class S3(Source):
         **kwargs,
     ):
         """
-        Upload a pandas `DataFrame` to a csv or parquet file. You can choose different file backends, and have the option of compression.
+        Upload a pandas `DataFrame` to a csv or parquet file. You can choose different
+            file backends, and have the option of compression.
+
         Args:
             df (pd.DataFrame, optional): Pandas DataFrame
             path (str, optional): Path to a S3 folder. Defaults to None.
@@ -117,6 +126,7 @@ class S3(Source):
     ):
         """
         Reads a csv or parquet file to dataframe.
+
         Args:
             path (str, optional): Path to a S3 folder. Defaults to None.
         """

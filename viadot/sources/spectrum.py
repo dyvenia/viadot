@@ -1,8 +1,8 @@
-from typing import List, Dict, Literal
-import boto3
+from typing import Dict, List, Literal
 
-import pandas as pd
 import awswrangler as wr
+import boto3
+import pandas as pd
 
 
 class Spectrum:
@@ -43,7 +43,8 @@ class Spectrum:
         Args:
             database (str, optional): Database name.
             name_contains (str, optional): Select by a specific string on table name.
-            search_text (str, optional): Select only tables with the given string in table's properties.
+            search_text (str, optional): Select only tables with the given string in
+                table's properties.
         """
         df = wr.catalog.tables(
             boto3_session=self.session,
@@ -66,7 +67,9 @@ class Spectrum:
             bool: Whether the paths exists.
         """
         return wr.s3.does_table_exist(
-            boto3_session=self.session, database=database, table=table
+            boto3_session=self.session,
+            database=database,
+            table=table,
         )
 
     def rm(
@@ -83,7 +86,9 @@ class Spectrum:
             table (str): AWS Glue catalog table name.
         """
         table_location = wr.catalog.get_table_location(
-            boto3_session=self.session, database=database, table=table
+            boto3_session=self.session,
+            database=database,
+            table=table,
         )
         wr.catalog.delete_table_if_exists(database=database, table=table)
 
@@ -113,13 +118,17 @@ class Spectrum:
             extention (str): Required file type.
             database (str): AWS Glue catalog database name.
             table (str): AWS Glue catalog table name.
-            partition_cols (List[str]): List of column names that will be used to create partitions. Only takes effect if dataset=True.
-            if_exists (str, optional): 'overwrite' to recreate any possible existing table or 'append' to keep any possible existing table. Defaults to overwrite.
+            partition_cols (List[str]): List of column names that will be used to
+                create partitions. Only takes effect if dataset=True.
+            if_exists (str, optional): 'overwrite' to recreate any possible existing
+                table or 'append' to keep any possible existing table. Defaults to
+                overwrite.
             index (bool, optional): Write row names (index). Defaults to False.
             compression (str, optional): Compression style (None, snappy, gzip, zstd).
             sep (str, optional): Field delimiter for the output file. Defaults to ','.
             description (str, optional): Glue catalog table description.
-            columns_comments (Dict[str,str], optional) - Glue catalog column names and the related comments.
+            columns_comments (Dict[str,str], optional) - Glue catalog column names and
+                the related comments.
         """
 
         if extention == ".parquet":
@@ -151,7 +160,11 @@ class Spectrum:
         else:
             raise ValueError("Only CSV and parquet formats are supported.")
 
-    def to_df(self, database: str = None, table: str = None) -> pd.DataFrame:
+    def to_df(
+        self,
+        database: str = None,
+        table: str = None,
+    ) -> pd.DataFrame:
         """
         Reads a Spectrum table to a pandas `DataFrame`.
 
