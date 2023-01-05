@@ -2,6 +2,10 @@ from typing import Any, Dict
 
 import sharepy
 
+import os
+from office365.sharepoint.files.file import File
+from office365.runtime.auth.user_credential import UserCredential
+
 from ..config import local_config
 from ..exceptions import CredentialError
 from .base import Source
@@ -65,3 +69,29 @@ class Sharepoint(Source):
             url=download_from_path,
             filename=download_to_path,
         )
+
+    def download_file_from_url(self, rel_file_url, download_folder: str = "./") -> None:
+        """Function to download a file from sharepoint, given its URL
+        Args:
+            abs_url (str): URL to sharepoint website (e.g.: {tenant_name}.sharepoint.com)
+            rel_file_url (str): Relative URL to the file (e.g.: /sites/{directory}/Shared%20Documents/Downloads/)
+            credentials (str,str): Tuple with user and password (for now)
+            download_folder (str): Path where the file will be downloaded to
+
+        """
+        abs_url = self.credentials["site"]
+        rel_file_url = rel_file_url or self.url
+        user_name = self.credentials["username"]
+        user_password = self.credentials["password"]
+
+        abs_file_url = str(abs_url + rel_file_url)
+
+        file_name = os.path.basename(abs_file_url)
+
+        with open(os.path.join(download_folder, file_name), "wb") as local_file:
+            file = (
+                File.from_url(abs_file_url)
+                .with_credentials(UserCredential(user_name, user_password))
+                .download(local_file)
+                .execute_query()
+            )
