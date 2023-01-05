@@ -81,29 +81,29 @@ class S3(Source):
     def from_df(
         self,
         df: pd.DataFrame = None,
-        to_path: str = None,
+        path: str = None,
         **kwargs,
     ):
         """
         Upload a pandas `DataFrame` to a csv or parquet file. You can choose different file backends, and have the option of compression.
         Args:
             df (pd.DataFrame, optional): Pandas DataFrame
-            to_path (str, optional): Path to a S3 folder. Defaults to None.
+            path (str, optional): Path to a S3 folder. Defaults to None.
         """
 
-        if to_path.endswith(".csv"):
+        if path.endswith(".csv"):
             wr.s3.to_csv(
                 boto3_session=self.session,
                 df=df,
-                path=to_path,
+                path=path,
                 dataset=True,
                 **kwargs,
             )
-        elif to_path.endswith(".parquet"):
+        elif path.endswith(".parquet"):
             wr.s3.to_parquet(
                 boto3_session=self.session,
                 df=df,
-                path=to_path,
+                path=path,
                 dataset=True,
                 **kwargs,
             )
@@ -112,21 +112,21 @@ class S3(Source):
 
     def to_df(
         self,
-        from_path: str = None,
+        path: str = None,
         **kwargs,
     ):
         """
         Reads a csv or parquet file to dataframe.
         Args:
-            from_path (str, optional): Path to a S3 folder. Defaults to None.
+            path (str, optional): Path to a S3 folder. Defaults to None.
         """
-        if from_path.endswith(".csv"):
+        if path.endswith(".csv"):
             df = wr.s3.read_csv(
-                boto3_session=self.session, path=from_path, dataset=True, **kwargs
+                boto3_session=self.session, path=path, dataset=True, **kwargs
             )
-        elif from_path.endswith(".parquet"):
+        elif path.endswith(".parquet"):
             df = wr.s3.read_parquet(
-                boto3_session=self.session, path=from_path, dataset=True, **kwargs
+                boto3_session=self.session, path=path, dataset=True, **kwargs
             )
         else:
             raise ValueError("Only CSV and parquet formats are supported.")
