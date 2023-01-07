@@ -204,7 +204,7 @@ class SAPRFC(Source):
         replacement: str = "-",
         func: str = "RFC_READ_TABLE",
         rfc_total_col_width_character_limit: int = 400,
-        rfc_reference_column: List[str] = None,
+        rfc_reference_column: str = None,
         *args,
         **kwargs,
     ):
@@ -220,7 +220,7 @@ class SAPRFC(Source):
             in case of too many columns for RFC function. According to SAP documentation, the limit is
             512 characters. However, we observed SAP raising an exception even on a slightly lower number
             of characters, so we add a safety margin. Defaults to 400.
-            rfc_reference_column (List[str], optional): Reference columns to merge chunks Data Frames. These columns must to be unique. Defaults to None.
+            rfc_reference_column (str, optional): Reference column to merge chunks Data Frames. This column must to be unique. Defaults to None.
 
         Raises:
             CredentialError: If provided credentials are incorrect.
@@ -239,8 +239,7 @@ class SAPRFC(Source):
         self.client_side_filters = None
         self.func = func
         self.rfc_total_col_width_character_limit = rfc_total_col_width_character_limit
-        # remove repeated reference columns
-        self.rfc_reference_column = list(np.unique(np.array(rfc_reference_column)))
+        self.rfc_reference_column = rfc_reference_column
 
     @property
     def con(self) -> pyrfc.Connection:
@@ -488,28 +487,17 @@ class SAPRFC(Source):
         lists_of_columns = []
         cols = []
         col_length_total = 0
-        if isinstance(self.rfc_reference_column[0], str):
-            character_limit = self.rfc_total_col_width_character_limit
-            for ref_column in self.rfc_reference_column:
-                col_length_reference_column = int(
-                    self.call(
-                        "DDIF_FIELDINFO_GET",
-                        TABNAME=table_name,
-                        FIELDNAME=ref_column,
-                    )["DFIES_TAB"][0]["LENG"]
-                )
-                if col_length_reference_column > int(
-                    self.rfc_total_col_width_character_limit / 4
-                ):
-                    raise ValueError(
-                        f"{ref_column} can't be used as unique column, too large."
-                    )
-                local_limit = (
-                    self.rfc_total_col_width_character_limit
-                    - col_length_reference_column
-                )
-                if local_limit < character_limit:
-                    character_limit = local_limit
+        if self.rfc_reference_column:
+            col_length_reference_column = int(
+                self.call(
+                    "DDIF_FIELDINFO_GET",
+                    TABNAME=table_name,
+                    FIELDNAME=self.rfc_reference_column,
+                )["DFIES_TAB"][0]["LENG"]
+            )
+            character_limit = (
+                self.rfc_total_col_width_character_limit - col_length_reference_column
+            )
         else:
             character_limit = self.rfc_total_col_width_character_limit
 
@@ -520,22 +508,14 @@ class SAPRFC(Source):
             if col_length_total <= character_limit:
                 cols.append(col)
             else:
-                if isinstance(self.rfc_reference_column[0], str) and all(
-                    [rfc_col not in cols for rfc_col in self.rfc_reference_column]
-                ):
-                    for rfc_col in self.rfc_reference_column:
-                        if rfc_col not in cols:
-                            cols.append(rfc_col)
+                if self.rfc_reference_column and self.rfc_reference_column not in cols:
+                    cols.append(self.rfc_reference_column)
                 lists_of_columns.append(cols)
                 cols = [col]
                 col_length_total = int(col_length)
         else:
-            if isinstance(self.rfc_reference_column[0], str) and all(
-                [rfc_col not in cols for rfc_col in self.rfc_reference_column]
-            ):
-                for rfc_col in self.rfc_reference_column:
-                    if rfc_col not in cols:
-                        cols.append(rfc_col)
+            if self.rfc_reference_column and self.rfc_reference_column not in cols:
+                cols.append(self.rfc_reference_column)
             lists_of_columns.append(cols)
 
         columns = lists_of_columns
@@ -611,8 +591,8 @@ class SAPRFC(Source):
 
         for sep in SEPARATORS:
             logger.info(f"Checking if separator '{sep}' works.")
-            df = pd.DataFrame(columns=columns)
-            df = pd.DataFrame(columns=columns)
+            # columns only for the first chunk and we add the rest later to avoid name conflicts
+            df = pd.DataFrame(columns=fields_lists[0])
             self._query["DELIMITER"] = sep
             chunk = 1
             row_index = 0
@@ -631,11 +611,13 @@ class SAPRFC(Source):
                 record_key = "WA"
                 data_raw = np.array(response["DATA"])
 
-                row_index, data_raw, cont = detect_extra_rows(
-                    row_index, data_raw, chunk, fields
-                )
-                if cont:
-                    continue
+                # if the reference column is provided not necessary to remove any extra row.
+                if not self.rfc_reference_column:
+                    row_index, data_raw, cont = detect_extra_rows(
+                        row_index, data_raw, chunk, fields
+                    )
+                    if cont:
+                        continue
 
                 data_raw = catch_extra_separators(
                     data_raw, record_key, sep, fields, self.replacement
@@ -643,7 +625,12 @@ class SAPRFC(Source):
 
                 records = np.array([row[record_key].split(sep) for row in data_raw])
 
-                df[fields] = records
+                if self.rfc_reference_column and not list(df.columns) == fields:
+                    df_tmp = pd.DataFrame(columns=fields)
+                    df_tmp[fields] = records
+                    df = pd.merge(df, df_tmp, on=self.rfc_reference_column, how="outer")
+                else:
+                    df[fields] = records
                 chunk += 1
 
         if self.client_side_filters:

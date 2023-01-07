@@ -86,7 +86,10 @@ class SAPRFCToDF(Task):
         credentials: dict = None,
         func: str = None,
         rfc_total_col_width_character_limit: int = None,
-        rfc_reference_column: List[str] = None,
+        rfc_reference_column: str = None,
+        max_retries: int = None,
+        retry_delay: timedelta = None,
+        timeout: int = None,
     ) -> pd.DataFrame:
         """Task run method.
 
@@ -98,16 +101,16 @@ class SAPRFCToDF(Task):
                 inside the string to avoid flow breakdowns. Defaults to "-".
             func (str, optional): SAP RFC function to use. Defaults to None.
             rfc_total_col_width_character_limit (int, optional): Number of characters by which query will be split in chunks
-                in case of too many columns for RFC function. According to SAP documentation, the limit is
-                512 characters. However, we observed SAP raising an exception even on a slightly lower number
-                of characters, so we add a safety margin. Defaults to None.
-            rfc_reference_column (List[str], optional): Reference columns to merge chunks Data Frames. These columns must to be unique. Defaults to None.
+            rfc_reference_column (str, optional): Reference column to merge chunks Data Frames. This column must to be unique. Defaults to None.
+            in case of too many columns for RFC function. According to SAP documentation, the limit is
+            512 characters. However, we observed SAP raising an exception even on a slightly lower number
+            of characters, so we add a safety margin. Defaults to None.
         """
         if query is None:
             raise ValueError("Please provide the query.")
         if rfc_reference_column:
             self.logger.warning(
-                "Reference column added. Remember, these columns MUST BE UNIQUE or the table will be malformed."
+                "Reference column added. Remember, this column MUST BE UNIQUE or the table will be malformed."
             )
         sap = SAPRFC(
             sep=sep,
