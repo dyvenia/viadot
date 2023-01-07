@@ -87,6 +87,7 @@ class SAPRFCToDF(Task):
         credentials: dict = None,
         func: str = None,
         rfc_total_col_width_character_limit: int = None,
+        rfc_reference_column: str = None,
         max_retries: int = None,
         retry_delay: timedelta = None,
     ) -> pd.DataFrame:
@@ -106,12 +107,17 @@ class SAPRFCToDF(Task):
         """
         if query is None:
             raise ValueError("Please provide the query.")
+        if rfc_reference_column:
+            self.logger.warning(
+                "Reference column added. Remember, this column MUST BE UNIQUE or the table will be malformed."
+            )
         sap = SAPRFC(
             sep=sep,
             replacement=replacement,
             credentials=credentials,
             func=func,
             rfc_total_col_width_character_limit=rfc_total_col_width_character_limit,
+            rfc_reference_column=rfc_reference_column,
         )
         sap.query(query)
         self.logger.info(f"Downloading data from SAP to a DataFrame...")
