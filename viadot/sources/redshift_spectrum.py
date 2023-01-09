@@ -79,23 +79,26 @@ class AWSRedshiftSpectrum(Source):
         self,
         database: str,
         table: str,
+        file_rm: bool = True,
     ):
         """
-        Deletes table from AWS Glue database and related file from AWS S3.
+        Deletes table from AWS Glue database and related file from AWS S3, if needed.
 
         Args:
             path (str): Path to a folder.
             database (str): AWS Glue catalog database name.
             table (str): AWS Glue catalog table name.
+            file_rm (bool): If True, AWS S3 file related to the table will be removed.
         """
-        table_location = wr.catalog.get_table_location(
-            boto3_session=self.session,
-            database=database,
-            table=table,
-        )
-        wr.catalog.delete_table_if_exists(database=database, table=table)
+        if file_rm:
+            table_location = wr.catalog.get_table_location(
+                boto3_session=self.session,
+                database=database,
+                table=table,
+            )
+            wr.s3.delete_objects(path=table_location)
 
-        wr.s3.delete_objects(path=table_location)
+        wr.catalog.delete_table_if_exists(database=database, table=table)
 
     def from_df(
         self,
