@@ -12,9 +12,9 @@ class S3(Source):
     A class for pulling data from and uploading to S3.
 
     Args:
-        profile_name (str, optional): The name of the AWS profile.
-        aws_secret_access_key (str, optional): AWS secret access key
-        aws_session_token (str, optional): AWS temporary session token
+        profile_name (str, optional): The name of the AWS profile. Defaults to None.
+        aws_access_key_id (str, optional): AWS access key id. Defaults to None.
+        aws_secret_access_key (str, optional): AWS secret access key. Defaults to None.
     """
 
     def __init__(
@@ -40,7 +40,7 @@ class S3(Source):
         Args:
             path (str): Path to a folder.
             suffix (Union[str, List[str], None]) - Suffix or List of suffixes for
-                filtering S3 keys.
+                filtering S3 keys. Defaults to None.
         """
 
         return wr.s3.list_objects(boto3_session=self.session, path=path, suffix=suffix)
@@ -68,7 +68,7 @@ class S3(Source):
             to_path (str, optional): S3 Path for the target directory.
 
         Example:
-            Copy files from an S3 bucket:
+            Copy files within two S3 locations:
 
             ```python
 
@@ -80,8 +80,8 @@ class S3(Source):
                     's3://bucket-name/folder_a/cat=1/file1.parquet',
                     's3://bucket-name/folder_a/cat=2/file2.parquet'
                 ],
-            from_path='s3://bucket-name/folder_a/',
-            to_path='s3://bucket-name/folder_b/'
+                from_path='s3://bucket-name/folder_a/',
+                to_path='s3://bucket-name/folder_b/'
             )
         """
 
@@ -114,7 +114,7 @@ class S3(Source):
             file backends, and have the option of compression.
 
         Args:
-            df (pd.DataFrame, optional): Pandas DataFrame
+            df (pd.DataFrame, optional): Pandas DataFrame. Defaults to None.
             path (str, optional): Path to a S3 folder. Defaults to None.
         """
 
