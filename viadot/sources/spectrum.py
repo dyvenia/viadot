@@ -7,7 +7,7 @@ import pandas as pd
 from viadot.sources.base import Source
 
 
-class Spectrum(Source):
+class AWSRedshiftSpectrum(Source):
     """
     A class for pulling data from and uploading to Spectrum.
 
