@@ -3,6 +3,7 @@ from typing import List
 import awswrangler as wr
 import boto3
 import pandas as pd
+import s3fs
 
 from viadot.sources.base import Source
 
@@ -24,14 +25,20 @@ class S3(Source):
         aws_secret_access_key: str = None,
     ):
         if profile_name:
-            self.session = boto3.session.Session(profile_name=profile_name)
+            self.wr_session = boto3.session.Session(profile_name=profile_name)
+            self.s3fs_session = s3fs.S3FileSystem(profile=profile_name)
         elif aws_access_key_id and aws_secret_access_key:
-            self.session = boto3.session.Session(
+            self.wr_session = boto3.session.Session(
                 aws_access_key_id=aws_access_key_id,
                 aws_secret_access_key=aws_secret_access_key,
             )
+            self.s3fs_session = s3fs.S3FileSystem(
+                key=aws_access_key_id,
+                secret=aws_secret_access_key,
+            )
         else:
-            self.session = boto3.session.Session()
+            self.wr_session = boto3.session.Session()
+            self.s3fs_session = s3fs.S3FileSystem()
 
     def ls(self, path: str, suffix: str = None) -> List[str]:
         """
@@ -43,7 +50,9 @@ class S3(Source):
                 filtering S3 keys. Defaults to None.
         """
 
-        return wr.s3.list_objects(boto3_session=self.session, path=path, suffix=suffix)
+        return wr.s3.list_objects(
+            boto3_session=self.wr_session, path=path, suffix=suffix
+        )
 
     def exists(self, path: str) -> bool:
         """
@@ -54,18 +63,17 @@ class S3(Source):
         Returns:
             bool: Whether the paths exists.
         """
-        return wr.s3.does_object_exist(boto3_session=self.session, path=path)
+        return wr.s3.does_object_exist(boto3_session=self.wr_session, path=path)
 
-    def cp(self, paths: List[str], from_path: str, to_path: str):
+    def cp(self, from_path: str, to_path: str, recursive: bool = False):
         """
-        Copies the contents of `from_path` to `to_path`. It allows to copy files keeping
-        the subfolder structure.
+        Copies the contents of `from_path` to `to_path`.
 
         Args:
-            paths (List[str]): List of S3 objects paths,
-                e.g. [s3://bucket/dir0/key0, s3://bucket/dir0/key1].
             from_path (str, optional): S3 Path for the source directory.
             to_path (str, optional): S3 Path for the target directory.
+            recursive (bool): Set this to true if working with directories.
+                Defaults to False.
 
         Example:
             Copy files within two S3 locations:
@@ -76,21 +84,12 @@ class S3(Source):
 
             s3_session = S3()
             s3_session.cp(
-                paths=[
-                    's3://bucket-name/folder_a/cat=1/file1.parquet',
-                    's3://bucket-name/folder_a/cat=2/file2.parquet'
-                ],
                 from_path='s3://bucket-name/folder_a/',
-                to_path='s3://bucket-name/folder_b/'
+                to_path='s3://bucket-name/folder_b/',
+                recursive=True
             )
         """
-
-        wr.s3.copy_objects(
-            boto3_session=self.session,
-            paths=paths,
-            source_path=from_path,
-            target_path=to_path,
-        )
+        self.s3fs_session.copy(path1=from_path, path2=to_path, recursive=recursive)
 
     def rm(self, path: str):
         """
@@ -101,7 +100,7 @@ class S3(Source):
                 a folder, it will be removed recursively.
         """
 
-        wr.s3.delete_objects(boto3_session=self.session, path=path)
+        wr.s3.delete_objects(boto3_session=self.wr_session, path=path)
 
     def from_df(
         self,
@@ -120,7 +119,7 @@ class S3(Source):
 
         if path.endswith(".csv"):
             wr.s3.to_csv(
-                boto3_session=self.session,
+                boto3_session=self.wr_session,
                 df=df,
                 path=path,
                 dataset=True,
@@ -128,7 +127,7 @@ class S3(Source):
             )
         elif path.endswith(".parquet"):
             wr.s3.to_parquet(
-                boto3_session=self.session,
+                boto3_session=self.wr_session,
                 df=df,
                 path=path,
                 dataset=True,
@@ -150,11 +149,11 @@ class S3(Source):
         """
         if path.endswith(".csv"):
             df = wr.s3.read_csv(
-                boto3_session=self.session, path=path, dataset=True, **kwargs
+                boto3_session=self.wr_session, path=path, dataset=True, **kwargs
             )
         elif path.endswith(".parquet"):
             df = wr.s3.read_parquet(
-                boto3_session=self.session, path=path, dataset=True, **kwargs
+                boto3_session=self.wr_session, path=path, dataset=True, **kwargs
             )
         else:
             raise ValueError("Only CSV and parquet formats are supported.")
