@@ -12,7 +12,7 @@ class S3(Source):
     A class for pulling data from and uploading to S3.
 
     Args:
-        profile_name (str, optional): The name of the profile.
+        profile_name (str, optional): The name of the AWS profile.
         aws_secret_access_key (str, optional): AWS secret access key
         aws_session_token (str, optional): AWS temporary session token
     """
