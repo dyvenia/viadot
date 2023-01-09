@@ -125,7 +125,7 @@ class S3(Source):
         **kwargs,
     ):
         """
-        Reads a csv or parquet file to dataframe.
+        Reads a csv or parquet file to a pd.DataFrame.
 
         Args:
             path (str, optional): Path to a S3 folder. Defaults to None.

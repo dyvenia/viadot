@@ -12,7 +12,7 @@ class Spectrum(Source):
     A class for pulling data from and uploading to Spectrum.
 
     Args:
-        profile_name (str, optional): The name of the profile.
+        profile_name (str, optional): The name of the AWS profile.
         aws_secret_access_key (str, optional): AWS secret access key
         aws_session_token (str, optional): AWS temporary session token
     """
@@ -44,7 +44,8 @@ class Spectrum(Source):
 
         Args:
             database (str, optional): Database name.
-            name_contains (str, optional): Select by a specific string on table name.
+            name_contains (str, optional): Match by a specific substring of the table
+                name.
             search_text (str, optional): Select only tables with the given string in
                 table's properties.
         """
@@ -102,7 +103,7 @@ class Spectrum(Source):
         to_path: str,
         database: str,
         table: str,
-        extention: str = ".parquet",
+        extension: str = ".parquet",
         if_exists: Literal["overwrite", "append"] = "overwrite",
         partition_cols: List[str] = None,
         index: bool = False,
@@ -117,7 +118,7 @@ class Spectrum(Source):
         Args:
             df (pd.DataFrame): Pandas DataFrame
             to_path (str): Path to a S3 folder. Defaults to None.
-            extention (str): Required file type.
+            extension (str): Required file type.
             database (str): AWS Glue catalog database name.
             table (str): AWS Glue catalog table name.
             partition_cols (List[str]): List of column names that will be used to
@@ -133,7 +134,7 @@ class Spectrum(Source):
                 the related comments.
         """
 
-        if extention == ".parquet":
+        if extension == ".parquet":
             wr.s3.to_parquet(
                 boto3_session=self.session,
                 df=df,
@@ -148,7 +149,7 @@ class Spectrum(Source):
                 description=description,
                 columns_comments=columns_comments,
             )
-        elif extention == ".csv":
+        elif extension == ".csv":
             wr.s3.to_csv(
                 boto3_session=self.session,
                 df=df,
