@@ -592,8 +592,11 @@ class SAPRFC(Source):
         # emptiness = False
         for sep in SEPARATORS:
             logger.info(f"Checking if separator '{sep}' works.")
-            # columns only for the first chunk and we add the rest later to avoid name conflicts
-            df = pd.DataFrame(columns=fields_lists[0])
+            if self.rfc_reference_column:
+                # columns only for the first chunk and we add the rest later to avoid name conflicts
+                df = pd.DataFrame(columns=fields_lists[0])
+            else:
+                df = pd.DataFrame()
             self._query["DELIMITER"] = sep
             chunk = 1
             row_index = 0
