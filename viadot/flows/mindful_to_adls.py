@@ -4,16 +4,20 @@ import pandas as pd
 
 from datetime import datetime
 from prefect import Flow, task
+from prefect.utilities import logging
+from prefect.engine.signals import FAIL
+from prefect.triggers import all_successful
 from viadot.tasks import MindfulToCSV
 from viadot.tasks import AzureDataLakeUpload
 from viadot.task_utils import add_ingestion_metadata_task
 
+logger = logging.get_logger()
 file_to_adls_task = AzureDataLakeUpload()
 
 
 @task
 def adls_bulk_upload(
-    file_names: List[str],
+    file_names: List[str] = None,
     file_name_relative_path: str = "",
     adls_file_path: str = None,
     adls_sp_credentials_secret: str = None,
@@ -33,14 +37,17 @@ def adls_bulk_upload(
         List[str]: List of paths
     """
 
-    for file in file_names:
-        file_path = str(adls_file_path + "/" + file)
-        file_to_adls_task.run(
-            from_path=os.path.join(file_name_relative_path, file),
-            to_path=file_path,
-            sp_credentials_secret=adls_sp_credentials_secret,
-            overwrite=adls_overwrite,
-        )
+    if not file_names:
+        logger.warning("Avoided uploading any file to ADLS. No files were reported.")
+    else:
+        for file in file_names:
+            file_path = str(adls_file_path + "/" + file)
+            file_to_adls_task.run(
+                from_path=os.path.join(file_name_relative_path, file),
+                to_path=file_path,
+                sp_credentials_secret=adls_sp_credentials_secret,
+                overwrite=adls_overwrite,
+            )
 
 
 @task
@@ -51,10 +58,13 @@ def add_timestamp(files_names: List = None, sep: str = "\t") -> None:
         files_names (List, optional): File names where to add the new column. Defaults to None.
         sep (str, optional): Separator type to load and to save data. Defaults to "\t".
     """
-    for file in files_names:
-        df = pd.read_csv(file, sep=sep)
-        df_updated = add_ingestion_metadata_task.run(df)
-        df_updated.to_csv(file, index=False, sep=sep)
+    if not files_names:
+        logger.warning("Avoided adding a timestamp. No files were reported.")
+    else:
+        for file in files_names:
+            df = pd.read_csv(file, sep=sep)
+            df_updated = add_ingestion_metadata_task.run(df)
+            df_updated.to_csv(file, index=False, sep=sep)
 
 
 class MindfulToADLS(Flow):

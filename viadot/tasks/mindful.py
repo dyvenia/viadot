@@ -99,7 +99,7 @@ class MindfulToCSV(Task):
     ):
 
         if credentials_mindful is not None:
-            self.logger.info("Mindful credentials provided by user")
+            logger.info("Mindful credentials provided by user")
         elif credentials_mindful is None and credentials_secret is not None:
             credentials_str = AzureKeyVaultSecret(
                 credentials_secret, vault_name=vault_name
@@ -109,7 +109,7 @@ class MindfulToCSV(Task):
         else:
             try:
                 credentials_mindful = local_config["MINDFUL"]
-                self.logger.info("Mindful credentials loaded from local config")
+                logger.info("Mindful credentials loaded from local config")
             except KeyError:
                 credentials_mindful = None
                 raise CredentialError("Credentials not found.")
@@ -149,6 +149,6 @@ class MindfulToCSV(Task):
             logger.info("Successfully downloaded responses data from the Mindful API.")
 
         if not file_names:
-            raise TypeError("Files were not created.")
+            return None
         else:
             return file_names
