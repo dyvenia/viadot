@@ -4,8 +4,10 @@ import awswrangler as wr
 import boto3
 import pandas as pd
 
+from viadot.sources.base import Source
 
-class Spectrum:
+
+class Spectrum(Source):
     """
     A class for pulling data from and uploading to Spectrum.
 
