@@ -81,7 +81,7 @@ class AWSRedshiftSpectrum(Source):
         table: str,
     ):
         """
-        Deletes table from Glue database.
+        Deletes table from AWS Glue database and related file from AWS S3.
 
         Args:
             path (str): Path to a folder.
@@ -117,8 +117,10 @@ class AWSRedshiftSpectrum(Source):
 
         Args:
             df (pd.DataFrame): Pandas DataFrame
-            to_path (str): Path to a S3 folder where the table will be located. Defaults to None.
-            extension (str): Required file type. Accepted file formats are 'csv' and 'parquet'.
+            to_path (str): Path to a S3 folder where the table will be located.
+                Defaults to None.
+            extension (str): Required file type. Accepted file formats are 'csv'
+                and 'parquet'.
             database (str): AWS Glue catalog database name.
             table (str): AWS Glue catalog table name.
             partition_cols (List[str]): List of column names that will be used to
@@ -129,9 +131,9 @@ class AWSRedshiftSpectrum(Source):
             index (bool, optional): Write row names (index). Defaults to False.
             compression (str, optional): Compression style (None, snappy, gzip, zstd).
             sep (str, optional): Field delimiter for the output file. Defaults to ','.
-            description (str, optional): Glue catalog table description.
-            columns_comments (Dict[str,str], optional) - Glue catalog column names and
-                the related comments.
+            description (str, optional): AWS Glue catalog table description.
+            columns_comments (Dict[str,str], optional) - AWS Glue catalog column names
+                and the related comments.
         """
 
         if extension == ".parquet":
