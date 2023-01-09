@@ -69,7 +69,7 @@ class AWSRedshiftSpectrum(Source):
         Returns:
             bool: Whether the paths exists.
         """
-        return wr.s3.does_table_exist(
+        return wr.catalog.does_table_exist(
             boto3_session=self.session,
             database=database,
             table=table,
