@@ -117,8 +117,8 @@ class Spectrum(Source):
 
         Args:
             df (pd.DataFrame): Pandas DataFrame
-            to_path (str): Path to a S3 folder. Defaults to None.
-            extension (str): Required file type.
+            to_path (str): Path to a S3 folder where the table will be located. Defaults to None.
+            extension (str): Required file type. Accepted file formats are 'csv' and 'parquet'.
             database (str): AWS Glue catalog database name.
             table (str): AWS Glue catalog table name.
             partition_cols (List[str]): List of column names that will be used to
