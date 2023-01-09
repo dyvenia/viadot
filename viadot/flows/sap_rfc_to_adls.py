@@ -124,16 +124,16 @@ class SAPRFCToADLS(Flow):
                 flow=self,
             )
 
-        # adls_upload = file_to_adls_task.bind(
-        #     from_path=self.local_file_path,
-        #     to_path=self.adls_path,
-        #     overwrite=self.overwrite,
-        #     sp_credentials_secret=self.adls_sp_credentials_secret,
-        #     flow=self,
-        # )
+        adls_upload = file_to_adls_task.bind(
+            from_path=self.local_file_path,
+            to_path=self.adls_path,
+            overwrite=self.overwrite,
+            sp_credentials_secret=self.adls_sp_credentials_secret,
+            flow=self,
+        )
 
         df_to_file.set_upstream(df, flow=self)
-        # adls_upload.set_upstream(df_to_file, flow=self)
+        adls_upload.set_upstream(df_to_file, flow=self)
 
         if self.update_kv == True:
             set_new_kv.bind(
@@ -142,4 +142,4 @@ class SAPRFCToADLS(Flow):
                 filter_column=self.filter_column,
                 flow=self,
             )
-            # set_new_kv.set_upstream(adls_upload, flow=self)
+            set_new_kv.set_upstream(adls_upload, flow=self)
