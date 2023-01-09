@@ -58,13 +58,31 @@ class S3(Source):
 
     def cp(self, paths: List[str], from_path: str, to_path: str):
         """
-        Copies the contents of `from_path` to `to_path`.
+        Copies the contents of `from_path` to `to_path`. It allows to copy files keeping
+        the subfolder structure.
 
         Args:
             paths (List[str]): List of S3 objects paths,
                 e.g. [s3://bucket/dir0/key0, s3://bucket/dir0/key1].
             from_path (str, optional): S3 Path for the source directory.
             to_path (str, optional): S3 Path for the target directory.
+
+        Example:
+            Copy files from an S3 bucket:
+
+            ```python
+
+            from viadot.sources.s3 import S3
+
+            s3_session = S3()
+            s3_session.cp(
+                paths=[
+                    's3://bucket-name/folder_a/cat=1/file1.parquet',
+                    's3://bucket-name/folder_a/cat=2/file2.parquet'
+                ],
+            from_path='s3://bucket-name/folder_a/',
+            to_path='s3://bucket-name/folder_b/'
+            )
         """
 
         wr.s3.copy_objects(
