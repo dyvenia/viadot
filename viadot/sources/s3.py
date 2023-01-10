@@ -24,21 +24,43 @@ class S3(Source):
         aws_access_key_id: str = None,
         aws_secret_access_key: str = None,
     ):
-        if profile_name:
-            self.wr_session = boto3.session.Session(profile_name=profile_name)
-            self.s3fs_session = s3fs.S3FileSystem(profile=profile_name)
-        elif aws_access_key_id and aws_secret_access_key:
-            self.wr_session = boto3.session.Session(
-                aws_access_key_id=aws_access_key_id,
-                aws_secret_access_key=aws_secret_access_key,
-            )
-            self.s3fs_session = s3fs.S3FileSystem(
-                key=aws_access_key_id,
-                secret=aws_secret_access_key,
-            )
-        else:
-            self.wr_session = boto3.session.Session()
-            self.s3fs_session = s3fs.S3FileSystem()
+
+        self.profile_name = profile_name
+        self.aws_access_key_id = aws_access_key_id
+        self.aws_secret_access_key = aws_secret_access_key
+
+        self._con = None
+        self._session = None
+
+    @property
+    def session(self):
+        """A singleton-like property for initiating a session to the AWS."""
+        if not self._session:
+            if self.profile_name:
+                self._session = boto3.session.Session(profile_name=self.profile_name)
+            elif self.aws_access_key_id and self.aws_secret_access_key:
+                self._session = boto3.session.Session(
+                    aws_access_key_id=self.aws_access_key_id,
+                    aws_secret_access_key=self.aws_secret_access_key,
+                )
+            else:
+                self._session = boto3.session.Session()
+        return self._session
+
+    @property
+    def con(self):
+        """A singleton-like property for initiating a connection to the AWS S3."""
+        if not self._con:
+            if self.profile_name:
+                self._con = s3fs.S3FileSystem(profile=self.profile_name)
+            elif self.aws_access_key_id and self.aws_secret_access_key:
+                self._con = s3fs.S3FileSystem(
+                    key=self.aws_access_key_id,
+                    secret=self.aws_secret_access_key,
+                )
+            else:
+                self._con = s3fs.S3FileSystem()
+        return self._con
 
     def ls(self, path: str, suffix: str = None) -> List[str]:
         """
@@ -50,9 +72,7 @@ class S3(Source):
                 filtering S3 keys. Defaults to None.
         """
 
-        return wr.s3.list_objects(
-            boto3_session=self.wr_session, path=path, suffix=suffix
-        )
+        return wr.s3.list_objects(boto3_session=self.session, path=path, suffix=suffix)
 
     def exists(self, path: str) -> bool:
         """
@@ -63,7 +83,7 @@ class S3(Source):
         Returns:
             bool: Whether the paths exists.
         """
-        return wr.s3.does_object_exist(boto3_session=self.wr_session, path=path)
+        return wr.s3.does_object_exist(boto3_session=self.session, path=path)
 
     def cp(self, from_path: str, to_path: str, recursive: bool = False):
         """
@@ -89,7 +109,7 @@ class S3(Source):
                 recursive=True
             )
         """
-        self.s3fs_session.copy(path1=from_path, path2=to_path, recursive=recursive)
+        self.con.copy(path1=from_path, path2=to_path, recursive=recursive)
 
     def rm(self, path: str):
         """
@@ -100,7 +120,7 @@ class S3(Source):
                 a folder, it will be removed recursively.
         """
 
-        wr.s3.delete_objects(boto3_session=self.wr_session, path=path)
+        wr.s3.delete_objects(boto3_session=self.session, path=path)
 
     def from_df(
         self,
@@ -119,7 +139,7 @@ class S3(Source):
 
         if path.endswith(".csv"):
             wr.s3.to_csv(
-                boto3_session=self.wr_session,
+                boto3_session=self.session,
                 df=df,
                 path=path,
                 dataset=True,
@@ -127,7 +147,7 @@ class S3(Source):
             )
         elif path.endswith(".parquet"):
             wr.s3.to_parquet(
-                boto3_session=self.wr_session,
+                boto3_session=self.session,
                 df=df,
                 path=path,
                 dataset=True,
@@ -149,11 +169,11 @@ class S3(Source):
         """
         if path.endswith(".csv"):
             df = wr.s3.read_csv(
-                boto3_session=self.wr_session, path=path, dataset=True, **kwargs
+                boto3_session=self.session, path=path, dataset=True, **kwargs
             )
         elif path.endswith(".parquet"):
             df = wr.s3.read_parquet(
-                boto3_session=self.wr_session, path=path, dataset=True, **kwargs
+                boto3_session=self.session, path=path, dataset=True, **kwargs
             )
         else:
             raise ValueError("Only CSV and parquet formats are supported.")
