@@ -130,7 +130,6 @@ class RedshiftSpectrum(Source):
         compression: str = None,
         sep: str = ",",
         description: str = "test",
-        columns_comments: Dict[str, str] = None,
     ) -> None:
         """
         Upload a pandas `DataFrame` to a csv or parquet file.
@@ -152,8 +151,6 @@ class RedshiftSpectrum(Source):
             compression (str, optional): Compression style (None, snappy, gzip, zstd).
             sep (str, optional): Field delimiter for the output file. Defaults to ','.
             description (str, optional): AWS Glue catalog table description.
-            columns_comments (Dict[str,str], optional) - AWS Glue catalog column names
-                and the related comments.
         """
 
         if extension == ".parquet":
@@ -169,7 +166,6 @@ class RedshiftSpectrum(Source):
                 table=table,
                 partition_cols=partition_cols,
                 description=description,
-                columns_comments=columns_comments,
             )
         elif extension == ".csv":
             wr.s3.to_csv(
