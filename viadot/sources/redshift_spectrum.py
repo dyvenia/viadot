@@ -9,12 +9,12 @@ from viadot.sources.base import Source
 
 class RedshiftSpectrum(Source):
     """
-    A class for pulling data from and uploading to Spectrum.
+    A class for pulling data from and uploading to Redshift Spectrum.
 
     Args:
         profile_name (str, optional): The name of the AWS profile.
-        aws_secret_access_key (str, optional): AWS secret access key
-        aws_session_token (str, optional): AWS temporary session token
+        aws_secret_access_key (str, optional): AWS secret access key.
+        aws_session_token (str, optional): AWS temporary session token.
     """
 
     def __init__(
@@ -31,7 +31,7 @@ class RedshiftSpectrum(Source):
         self._session = None
 
     @property
-    def session(self):
+    def session(self) -> boto3.session.Session:
         """A singleton-like property for initiating a session to the AWS."""
         if not self._session:
             self._session = boto3.session.Session(
@@ -88,15 +88,15 @@ class RedshiftSpectrum(Source):
         database: str,
         table: str,
         remove_files: bool = True,
-    ):
+    ) -> None:
         """
         Deletes table from AWS Glue database and related file from AWS S3, if specified.
 
         Args:
-            path (str): Path to a folder.
             database (str): AWS Glue catalog database name.
             table (str): AWS Glue catalog table name.
-            remove_files (bool): If True, AWS S3 file related to the table will be removed.
+            remove_files (bool, optional): If True, AWS S3 file related to the table
+                will be removed. Defaults to True.
         """
         if remove_files:
             table_location = wr.catalog.get_table_location(
@@ -122,12 +122,12 @@ class RedshiftSpectrum(Source):
         sep: str = ",",
         description: str = "test",
         columns_comments: Dict[str, str] = None,
-    ):
+    ) -> None:
         """
         Upload a pandas `DataFrame` to a csv or parquet file.
 
         Args:
-            df (pd.DataFrame): Pandas DataFrame
+            df (pd.DataFrame): Pandas DataFrame.
             to_path (str): Path to a S3 folder where the table will be located.
                 Defaults to None.
             extension (str): Required file type. Accepted file formats are 'csv'

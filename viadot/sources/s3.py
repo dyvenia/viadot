@@ -77,7 +77,7 @@ class S3(Source):
         Args:
             from_path (str, optional): S3 Path for the source directory.
             to_path (str, optional): S3 Path for the target directory.
-            recursive (bool): Set this to true if working with directories.
+            recursive (bool, optional): Set this to true if working with directories.
                 Defaults to False.
 
         Example:
