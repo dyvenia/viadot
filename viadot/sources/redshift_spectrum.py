@@ -178,8 +178,8 @@ class RedshiftSpectrum(Source):
 
     def to_df(
         self,
-        database: str = None,
-        table: str = None,
+        database: str,
+        table: str,
     ) -> pd.DataFrame:
         """
         Reads a Spectrum table to a pandas `DataFrame`.

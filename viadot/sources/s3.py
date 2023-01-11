@@ -109,8 +109,8 @@ class S3(Source):
 
     def from_df(
         self,
-        df: pd.DataFrame = None,
-        path: str = None,
+        df: pd.DataFrame,
+        path: str,
         **kwargs,
     ):
         """
@@ -118,8 +118,8 @@ class S3(Source):
             file backends, and have the option of compression.
 
         Args:
-            df (pd.DataFrame, optional): Pandas DataFrame. Defaults to None.
-            path (str, optional): Path to a S3 folder. Defaults to None.
+            df (pd.DataFrame): Pandas DataFrame.
+            path (str): Path to a S3 folder.
         """
 
         if path.endswith(".csv"):
@@ -143,14 +143,14 @@ class S3(Source):
 
     def to_df(
         self,
-        path: str = None,
+        path: str,
         **kwargs,
     ):
         """
         Reads a csv or parquet file to a pd.DataFrame.
 
         Args:
-            path (str, optional): Path to a S3 folder. Defaults to None.
+            path (str): Path to a S3 folder.
         """
         if path.endswith(".csv"):
             df = wr.s3.read_csv(
