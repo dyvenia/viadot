@@ -1,32 +1,41 @@
-from typing import Dict, List, Literal
+from typing import Any, Dict, List, Literal
 
 import awswrangler as wr
 import boto3
 import pandas as pd
 
+from viadot.config import get_source_credentials
+from viadot.exceptions import CredentialError
 from viadot.sources.base import Source
 
 
 class RedshiftSpectrum(Source):
     """
-    A class for pulling data from and uploading to Redshift Spectrum.
+    A class for pulling data from and uploading to the Redshift Spectrum.
 
     Args:
-        profile_name (str, optional): The name of the AWS profile.
-        aws_secret_access_key (str, optional): AWS secret access key.
-        aws_session_token (str, optional): AWS temporary session token.
+        credentials (Dict[str, Any], optional): Credentials to the AWS Redshift
+            Spectrum. Defaults to None.
+        config_key (str, optional): The key in the viadot config holding relevant
+            credentials. Defaults to None.
     """
 
     def __init__(
         self,
-        profile_name: str = None,
-        aws_access_key_id: str = None,
-        aws_secret_access_key: str = None,
+        credentials: Dict[str, Any] = None,
+        config_key: str = None,
+        *args,
+        **kwargs,
     ):
+        credentials = credentials or get_source_credentials(config_key)
+        if credentials is None:
+            raise CredentialError("Please specify the credentials.")
 
-        self.profile_name = profile_name
-        self.aws_access_key_id = aws_access_key_id
-        self.aws_secret_access_key = aws_secret_access_key
+        super().__init__(*args, credentials=credentials, **kwargs)
+
+        self.profile_name = credentials.profile_name
+        self.aws_access_key_id = credentials.aws_access_key_id
+        self.aws_secret_access_key = credentials.aws_secret_access_key
 
         self._session = None
 
