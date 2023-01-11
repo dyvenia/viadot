@@ -87,8 +87,8 @@ class S3(Source):
 
             from viadot.sources.s3 import S3
 
-            s3_session = S3()
-            s3_session.cp(
+            s3 = S3()
+            s3.cp(
                 from_path='s3://bucket-name/folder_a/',
                 to_path='s3://bucket-name/folder_b/',
                 recursive=True
