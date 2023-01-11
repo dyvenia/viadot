@@ -23,15 +23,23 @@ class RedshiftSpectrum(Source):
         aws_access_key_id: str = None,
         aws_secret_access_key: str = None,
     ):
-        if profile_name:
-            self.session = boto3.session.Session(profile_name=profile_name)
-        elif aws_access_key_id and aws_secret_access_key:
-            self.session = boto3.session.Session(
-                aws_access_key_id=aws_access_key_id,
-                aws_secret_access_key=aws_secret_access_key,
+
+        self.profile_name = profile_name
+        self.aws_access_key_id = aws_access_key_id
+        self.aws_secret_access_key = aws_secret_access_key
+
+        self._session = None
+
+    @property
+    def session(self):
+        """A singleton-like property for initiating a session to the AWS."""
+        if not self._session:
+            self._session = boto3.session.Session(
+                profile_name=self.profile_name,
+                aws_access_key_id=self.aws_access_key_id,
+                aws_secret_access_key=self.aws_secret_access_key,
             )
-        else:
-            self.session = boto3.session.Session()
+        return self._session
 
     def ls(
         self,

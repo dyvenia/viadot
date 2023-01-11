@@ -24,43 +24,28 @@ class S3(Source):
         aws_access_key_id: str = None,
         aws_secret_access_key: str = None,
     ):
+        self.fs = s3fs.S3FileSystem(
+            profile=profile_name,
+            key=aws_access_key_id,
+            secret=aws_secret_access_key,
+        )
 
         self.profile_name = profile_name
         self.aws_access_key_id = aws_access_key_id
         self.aws_secret_access_key = aws_secret_access_key
 
-        self._con = None
         self._session = None
 
     @property
     def session(self):
         """A singleton-like property for initiating a session to the AWS."""
         if not self._session:
-            if self.profile_name:
-                self._session = boto3.session.Session(profile_name=self.profile_name)
-            elif self.aws_access_key_id and self.aws_secret_access_key:
-                self._session = boto3.session.Session(
-                    aws_access_key_id=self.aws_access_key_id,
-                    aws_secret_access_key=self.aws_secret_access_key,
-                )
-            else:
-                self._session = boto3.session.Session()
+            self._session = boto3.session.Session(
+                profile_name=self.profile_name,
+                aws_access_key_id=self.aws_access_key_id,
+                aws_secret_access_key=self.aws_secret_access_key,
+            )
         return self._session
-
-    @property
-    def con(self):
-        """A singleton-like property for initiating a connection to the AWS S3."""
-        if not self._con:
-            if self.profile_name:
-                self._con = s3fs.S3FileSystem(profile=self.profile_name)
-            elif self.aws_access_key_id and self.aws_secret_access_key:
-                self._con = s3fs.S3FileSystem(
-                    key=self.aws_access_key_id,
-                    secret=self.aws_secret_access_key,
-                )
-            else:
-                self._con = s3fs.S3FileSystem()
-        return self._con
 
     def ls(self, path: str, suffix: str = None) -> List[str]:
         """
@@ -109,7 +94,7 @@ class S3(Source):
                 recursive=True
             )
         """
-        self.con.copy(path1=from_path, path2=to_path, recursive=recursive)
+        self.fs.copy(path1=from_path, path2=to_path, recursive=recursive)
 
     def rm(self, path: str):
         """
