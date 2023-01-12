@@ -3,7 +3,6 @@ from typing import Any, Dict, List, Literal
 import pandas as pd
 from prefect import Flow, task
 
-from viadot.task_utils import df_to_csv
 from viadot.tasks import AzureDataLakeUpload
 from viadot.tasks.genesys import GenesysToCSV, GenesysToDF
 from viadot.task_utils import (
@@ -142,7 +141,7 @@ class GenesysToADLS(Flow):
 
         add_timestamp.bind(file_names, sep=self.sep, flow=self)
 
-        uploader = adls_bulk_upload(
+        adls_bulk_upload(
             file_names=file_names,
             adls_file_path=self.adls_file_path,
             adls_sp_credentials_secret=self.adls_sp_credentials_secret,
@@ -150,7 +149,7 @@ class GenesysToADLS(Flow):
         )
 
         add_timestamp.set_upstream(file_names, flow=self)
-        uploader.set_upstream(add_timestamp, flow=self)
+        adls_bulk_upload.set_upstream(add_timestamp, flow=self)
 
 
 class GenesysReportToADLS(Flow):

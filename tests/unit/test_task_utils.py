@@ -5,6 +5,7 @@ import numpy as np
 import pandas as pd
 import prefect
 import pytest
+from unittest import mock
 
 from viadot.task_utils import (
     add_ingestion_metadata_task,
@@ -18,7 +19,18 @@ from viadot.task_utils import (
     dtypes_to_json_task,
     union_dfs_task,
     write_to_json,
+    adls_bulk_upload,
 )
+
+
+class MockClass:
+    def run(
+        from_path: str = "",
+        to_path: str = "",
+        sp_credentials_secret: str = "",
+        overwrite: bool = False,
+    ) -> None:
+        pass
 
 
 def count_dtypes(dtypes_dict: dict = None, dtypes_to_count: List[str] = None) -> int:
@@ -221,3 +233,12 @@ def test_df_clean_column_defined():
     df = pd.DataFrame.from_dict(data)
     output = df_clean_column.run(df, ["col_2"]).to_dict()
     assert output == expected_output
+
+
+@mock.patch("viadot.task_utils.AzureDataLakeUpload", return_value=MockClass)
+@pytest.mark.bulk
+def test_adls_bulk_upload(mock_upload):
+    file_names = ["random_1.csv", "random_2.csv"]
+
+    adls_bulk_upload.run(file_names=file_names, adls_file_path="any/at/random")
+    mock_upload.assert_called_once()

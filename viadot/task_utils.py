@@ -580,7 +580,7 @@ def adls_bulk_upload(
     adls_sp_credentials_secret: str = None,
     adls_overwrite: bool = True,
     timeout: int = 3600,
-) -> List[str]:
+) -> None:
     """Function that upload files to defined path in ADLS.
 
     Args:
@@ -592,8 +592,6 @@ def adls_bulk_upload(
         adls_overwrite (bool, optional): Whether to overwrite files in the data lake. Defaults to True.
         timeout (int, optional): The amount of time (in seconds) to wait while running this task before
             a timeout occurs. Defaults to 3600.
-    Returns:
-        List[str]: List of paths.
     """
 
     file_to_adls_task = AzureDataLakeUpload(timeout=timeout)

@@ -95,7 +95,7 @@ class MindfulToADLS(Flow):
 
         add_timestamp.bind(file_names, sep=self.sep, flow=self)
 
-        uploader = adls_bulk_upload(
+        adls_bulk_upload(
             file_names=file_names,
             file_name_relative_path=self.file_path,
             adls_file_path=self.adls_file_path,
@@ -105,4 +105,4 @@ class MindfulToADLS(Flow):
         )
 
         add_timestamp.set_upstream(file_names, flow=self)
-        uploader.set_upstream(add_timestamp, flow=self)
+        adls_bulk_upload.set_upstream(add_timestamp, flow=self)
