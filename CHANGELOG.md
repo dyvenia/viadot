@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 ### Added
 - Added `adls_bulk_upload` task function to `task_utils.py`
+- Added `test_adls_bulk_upload` test function to `test_task_utils.py`
 
 ### Changed
 - Updated `genesys_to_adls.py` flow with the `adls_bulk_upload` task
