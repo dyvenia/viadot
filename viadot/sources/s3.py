@@ -1,38 +1,48 @@
-from typing import List
+from typing import Any, Dict, List
 
 import awswrangler as wr
 import boto3
 import pandas as pd
 import s3fs
 
+from viadot.config import get_source_credentials
+from viadot.exceptions import CredentialError
 from viadot.sources.base import Source
 
 
 class S3(Source):
     """
-    A class for pulling data from and uploading to S3.
+    A class for pulling data from and uploading to the S3.
 
     Args:
-        profile_name (str, optional): The name of the AWS profile. Defaults to None.
-        aws_access_key_id (str, optional): AWS access key id. Defaults to None.
-        aws_secret_access_key (str, optional): AWS secret access key. Defaults to None.
+        credentials (Dict[str, Any], optional): Credentials to the AWS S3.
+            Defaults to None.
+        config_key (str, optional): The key in the viadot config holding relevant
+            credentials. Defaults to None.
     """
 
     def __init__(
         self,
-        profile_name: str = None,
-        aws_access_key_id: str = None,
-        aws_secret_access_key: str = None,
+        credentials: Dict[str, Any] = None,
+        config_key: str = None,
+        *args,
+        **kwargs,
     ):
+        credentials = credentials or get_source_credentials(config_key)
+        if credentials is None:
+            raise CredentialError("Please specify the credentials.")
+
+        super().__init__(*args, credentials=credentials, **kwargs)
+
         self.fs = s3fs.S3FileSystem(
-            profile=profile_name,
-            key=aws_access_key_id,
-            secret=aws_secret_access_key,
+            profile=credentials.profile_name,
+            key=credentials.aws_access_key_id,
+            secret=credentials.aws_secret_access_key,
         )
 
-        self.profile_name = profile_name
-        self.aws_access_key_id = aws_access_key_id
-        self.aws_secret_access_key = aws_secret_access_key
+        self.profile_name = credentials.profile_name
+        self.aws_access_key_id = credentials.aws_access_key_id
+        self.aws_secret_access_key = credentials.aws_secret_access_key
 
         self._session = None
 
