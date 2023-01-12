@@ -33,10 +33,6 @@ class RedshiftSpectrum(Source):
 
         super().__init__(*args, credentials=credentials, **kwargs)
 
-        self.profile_name = credentials.profile_name
-        self.aws_access_key_id = credentials.aws_access_key_id
-        self.aws_secret_access_key = credentials.aws_secret_access_key
-
         self._session = None
 
     @property
@@ -44,9 +40,9 @@ class RedshiftSpectrum(Source):
         """A singleton-like property for initiating a session to the AWS."""
         if not self._session:
             self._session = boto3.session.Session(
-                profile_name=self.profile_name,
-                aws_access_key_id=self.aws_access_key_id,
-                aws_secret_access_key=self.aws_secret_access_key,
+                profile_name=self.credentials["profile_name"],
+                aws_access_key_id=self.credentials["aws_access_key_id"],
+                aws_secret_access_key=self.credentials["aws_secret_access_key"],
             )
         return self._session
 
