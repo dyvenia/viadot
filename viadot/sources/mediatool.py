@@ -1,6 +1,6 @@
 from datetime import date, timedelta
 from typing import List
-from ..exceptions import APIError
+from ..exceptions import CredentialError
 from .base import Source
 from ..utils import handle_api_response
 import json
@@ -34,8 +34,7 @@ class Mediatool(Source):
             try:
                 self.header = {"Authorization": f"Bearer {credentials.get('TOKEN')}"}
             except:
-
-                self.logger.error("Credentials not found.")
+                raise CredentialError("Credentials not found.")
 
         super().__init__(*args, credentials=credentials, **kwargs)
 
@@ -45,23 +44,23 @@ class Mediatool(Source):
         self.user_id = user_id or self.credentials.get("USER_ID")
 
     def rename_columns(
-        self, df: pd.DataFrame = None, source_name: str = None
+        self, df: pd.DataFrame = None, column_suffix: str = "rename"
     ) -> pd.DataFrame:
         """
         Function for renaming columns. Source name is added to the end of the column name to make it unique.
 
         Args:
             df (pd.DataFrame, optional): Data frame. Defaults to None.
-            source_name (str, optional): Name of data source. Source name is adding to dataframe column names.
-                Defaults to None.
+            column_suffix (str, optional): String to be added at the end of column name. Defaults to "rename".
 
         Returns:
             pd.DataFrame: Final dataframe after changes.
         """
         if isinstance(df, pd.DataFrame):
-            source_name = source_name.split("get_")[-1]
+            column_suffix = column_suffix.split("get_")[-1]
             dict_mapped_names = {
-                column: f"{column}_{source_name}" for column in df.columns
+                column_name: f"{column_name}_{column_suffix}"
+                for column_name in df.columns
             }
             df_updated = df.rename(columns=dict_mapped_names)
             return df_updated
@@ -116,7 +115,7 @@ class Mediatool(Source):
             try:
                 df_filtered = df[columns]
             except KeyError as e:
-                self.logger.error(e)
+                print(e)
             return df_filtered
 
         return response_dict["mediaEntries"]
@@ -149,7 +148,7 @@ class Mediatool(Source):
         if return_dataframe is True:
             df = pd.DataFrame.from_dict(response_dict["campaigns"])
             function_name = inspect.stack()[0][3]
-            df_updated = self.rename_columns(df=df, source_name=function_name)
+            df_updated = self.rename_columns(df=df, column_suffix=function_name)
             return df_updated
 
         return response_dict["campaigns"]
@@ -181,7 +180,7 @@ class Mediatool(Source):
         if return_dataframe is True:
             df = pd.DataFrame.from_dict(response_dict["vehicles"])
             function_name = inspect.stack()[0][3]
-            df_updated = self.rename_columns(df=df, source_name=function_name)
+            df_updated = self.rename_columns(df=df, column_suffix=function_name)
             return df_updated
 
         return response_dict["vehicles"]
@@ -233,7 +232,7 @@ class Mediatool(Source):
         if return_dataframe is True:
             df = pd.DataFrame.from_dict(list_organizations)
             function_name = inspect.stack()[0][3]
-            df_updated = self.rename_columns(df=df, source_name=function_name)
+            df_updated = self.rename_columns(df=df, column_suffix=function_name)
             return df_updated
 
         return list_organizations
@@ -254,7 +253,6 @@ class Mediatool(Source):
             pd.DataFrame: Default return dataframe. If 'return_daframe=False' then return list of dicts.
         """
         list_media_types = []
-
         for id_media_type in media_type_ids:
             try:
                 response = handle_api_response(
@@ -270,7 +268,7 @@ class Mediatool(Source):
                         "type": response_dict["mediaType"]["type"],
                     }
                 )
-            except (APIError, KeyError):
+            except (KeyError):
                 list_media_types.append(
                     {
                         "_id": response_dict["mediaType"]["_id"],
@@ -282,7 +280,7 @@ class Mediatool(Source):
         if return_dataframe is True:
             df = pd.DataFrame.from_dict(list_media_types)
             function_name = inspect.stack()[0][3]
-            df_updated = self.rename_columns(df=df, source_name=function_name)
+            df_updated = self.rename_columns(df=df, column_suffix=function_name)
             return df_updated
 
         return list_media_types
