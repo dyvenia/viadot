@@ -28,12 +28,13 @@ class S3(Source):
         **kwargs,
     ):
         credentials = credentials or get_source_credentials(config_key)
+
+        super().__init__(*args, credentials=credentials, **kwargs)
+
         if credentials is None:
             self.logger.debug(
                 "Credentials not specified. Falling back to `boto3` default credentials."
             )
-
-        super().__init__(*args, credentials=credentials, **kwargs)
 
         self.fs = s3fs.S3FileSystem(
             region_name=self.credentials.get("region_name"),
