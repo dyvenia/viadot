@@ -64,3 +64,7 @@ class TableAlreadyExists(Exception):
         message = message or f"Table {fqn} already exists."
 
         super().__init__(message)
+
+
+class DataBufferExceeded(Exception):
+    pass
