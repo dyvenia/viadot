@@ -26,11 +26,11 @@ class RedshiftSpectrum(Source):
         *args,
         **kwargs,
     ):
-        credentials = credentials or get_source_credentials(config_key)
+        credentials = credentials or get_source_credentials(config_key) or {}
 
         super().__init__(*args, credentials=credentials, **kwargs)
 
-        if credentials is None:
+        if not self.credentials:
             self.logger.debug(
                 "Credentials not specified. Falling back to `boto3` default credentials."
             )
