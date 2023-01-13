@@ -1,266 +1,171 @@
-import os
 from typing import Any, Dict, List
 
+import awswrangler as wr
+import boto3
 import pandas as pd
+import s3fs
 
-from ..config import get_source_credentials
-from ..exceptions import CredentialError
-from .base import Source
-from ..utils import add_viadot_metadata_columns
+from viadot.config import get_source_credentials
+from viadot.exceptions import CredentialError
+from viadot.sources.base import Source
 
 
 class S3(Source):
     """
-    A class for pulling data from and uploading to S3.
-
-    You can either connect to the lake in general
-    (`lake = S3(); lake.exists("a/b/c.csv")`),
-    or to a particular path (`lake = S3(path="a/b/c.csv"); lake.exists()`)
+    A class for pulling data from and uploading to the S3.
 
     Args:
-        credentials (Dict[str, Any], optional): A dictionary containing
-            the following credentials: `account_name`, `tenant_id`,
-            `client_id`, and `client_secret`.
-        config_key (str, optional): The key in the viadot config holding
-            relevant credentials.
+        credentials (Dict[str, Any], optional): Credentials to the AWS S3.
+            Defaults to None.
+        config_key (str, optional): The key in the viadot config holding relevant
+            credentials. Defaults to None.
     """
 
     def __init__(
         self,
-        path: str = None,
         credentials: Dict[str, Any] = None,
         config_key: str = None,
         *args,
         **kwargs,
     ):
-
         credentials = credentials or get_source_credentials(config_key)
-        required_credentials = (
-            "account_name",
-            "tenant_id",
-            "client_id",
-            "client_secret",
-        )
-        required_credentials_are_provided = all(
-            [rc in credentials for rc in required_credentials]
-        )
-
         if credentials is None:
-            raise CredentialError("Please provide the credentials.")
-        elif not required_credentials_are_provided:
-            raise CredentialError("Please provide all required credentials.")
+            raise CredentialError("Please specify the credentials.")
 
         super().__init__(*args, credentials=credentials, **kwargs)
 
-        storage_account_name = self.credentials["account_name"]
-        tenant_id = self.credentials["tenant_id"]
-        client_id = self.credentials["client_id"]
-        client_secret = self.credentials["client_secret"]
-
-        self.path = path
-        self.storage_options = {
-            "tenant_id": tenant_id,
-            "client_id": client_id,
-            "client_secret": client_secret,
-        }
-        self.fs = AzureDatalakeFileSystem(
-            store_name=storage_account_name,
-            tenant_id=tenant_id,
-            client_id=client_id,
-            client_secret=client_secret,
+        self.fs = s3fs.S3FileSystem(
+            profile=self.credentials["profile_name"],
+            key=self.credentials["aws_access_key_id"],
+            secret=self.credentials["aws_secret_access_key"],
         )
-        self.base_url = f"adl://{storage_account_name}"
 
-    def upload(
-        self,
-        from_path: str,
-        to_path: str = None,
-        recursive: bool = False,
-        overwrite: bool = False,
-    ) -> None:
+        self._session = None
+
+    @property
+    def session(self):
+        """A singleton-like property for initiating a session to the AWS."""
+        if not self._session:
+            self._session = boto3.session.Session(
+                profile_name=self.credentials["profile_name"],
+                aws_access_key_id=self.credentials["aws_access_key_id"],
+                aws_secret_access_key=self.credentials["aws_secret_access_key"],
+            )
+        return self._session
+
+    def ls(self, path: str, suffix: str = None) -> List[str]:
         """
-        Upload file(s) to the lake.
+        Returns a list of files in a S3.
 
         Args:
-            from_path (str): Path to the local file(s) to be uploaded.
-            to_path (str): Path to the destination file/folder
-            recursive (bool): Set this to true if working with directories.
-            overwrite (bool): Whether to overwrite the file(s) if they exist.
-
-        Example:
-        ```python
-        from viadot.sources import AzureDataLake
-
-        lake = AzureDataLake()
-        lake.upload(from_path='tests/test.csv', to_path="sandbox/test.csv")
-        ```
+            path (str): Path to a folder.
+            suffix (Union[str, List[str], None]) - Suffix or List of suffixes for
+                filtering S3 keys. Defaults to None.
         """
 
-        if self.gen == 1:
-            raise NotImplemented(
-                "Azure Data Lake Gen1 does not support simple file upload."
-            )
+        return wr.s3.list_objects(boto3_session=self.session, path=path, suffix=suffix)
 
-        to_path = to_path or self.path
-
-        self.logger.info(f"Uploading file(s) from '{from_path}' to '{to_path}'...")
-
-        try:
-            self.fs.upload(
-                lpath=from_path,
-                rpath=to_path,
-                recursive=recursive,
-                overwrite=overwrite,
-            )
-        except FileExistsError:
-            # Show a useful error message.
-            if recursive:
-                msg = f"At least one file in '{to_path}' already exists. Specify `overwrite=True` to overwrite."  # noqa
-            else:
-                msg = f"The file '{to_path}' already exists. Specify `overwrite=True` to overwrite."
-            raise FileExistsError(msg)
-
-        self.logger.info(
-            f"Successfully uploaded file(s) from '{from_path}' to '{to_path}'."
-        )
-
-    def exists(self, path: str = None) -> bool:
+    def exists(self, path: str) -> bool:
         """
-        Check if a location exists in Azure Data Lake.
+        Check if a location exists in S3.
 
         Args:
             path (str): The path to check. Can be a file or a directory.
-
-        Example:
-        ```python
-        from viadot.sources import AzureDataLake
-
-        lake = AzureDataLake(gen=1)
-        lake.exists("tests/test.csv")
-        ```
-
         Returns:
             bool: Whether the paths exists.
         """
-        path = path or self.path
-        return self.fs.exists(path)
+        return wr.s3.does_object_exist(boto3_session=self.session, path=path)
 
-    def download(
-        self,
-        to_path: str,
-        from_path: str = None,
-        recursive: bool = False,
-        overwrite: bool = True,
-    ) -> None:
-
-        if overwrite is False:
-            raise NotImplemented(
-                "Currently, only the default behavior (overwrite) is available."
-            )
-
-        from_path = from_path or self.path
-        self.fs.download(rpath=from_path, lpath=to_path, recursive=recursive)
-
-    @add_viadot_metadata_columns
-    def to_df(
-        self,
-        path: str = None,
-        sep: str = "\t",
-        quoting: int = 0,
-        lineterminator: str = None,
-        error_bad_lines: bool = None,
-    ):
-        if quoting is None:
-            quoting = 0
-
-        path = path or self.path
-        url = os.path.join(self.base_url, path)
-
-        if url.endswith(".csv"):
-            df = pd.read_csv(
-                url,
-                storage_options=self.storage_options,
-                sep=sep,
-                quoting=quoting,
-                lineterminator=lineterminator,
-                error_bad_lines=error_bad_lines,
-            )
-        elif url.endswith(".parquet"):
-            df = pd.read_parquet(url, storage_options=self.storage_options)
-        else:
-            raise ValueError("Only CSV and parquet formats are supported.")
-
-        return df
-
-    def ls(self, path: str = None) -> List[str]:
-        """
-        Returns a list of files in a path.
-
-        Args:
-            path (str, optional): Path to a folder. Defaults to None.
-        """
-        path = path or self.path
-        return self.fs.ls(path)
-
-    def rm(self, path: str = None, recursive: bool = False):
-        """
-        Deletes files in a path.
-
-        Args:
-            path (str, optional): Path to a folder. Defaults to None.
-            recursive (bool, optional): Whether to delete files recursively.
-                Defaults to False.
-        """
-        path = path or self.path
-        self.fs.rm(path, recursive=recursive)
-
-    def cp(self, from_path: str = None, to_path: str = None, recursive: bool = False):
+    def cp(self, from_path: str, to_path: str, recursive: bool = False):
         """
         Copies the contents of `from_path` to `to_path`.
 
         Args:
-            from_path (str, optional): Path from which to copy file(s).
-                Defauls to None.
-            to_path (str, optional): Path where to copy file(s). Defaults
-                to None.
-            recursive (bool, optional): Whether to copy file(s) recursively.
+            from_path (str, optional): S3 Path for the source directory.
+            to_path (str, optional): S3 Path for the target directory.
+            recursive (bool, optional): Set this to true if working with directories.
                 Defaults to False.
-        """
-        from_path = from_path or self.path
-        to_path = to_path
-        self.fs.cp(from_path, to_path, recursive=recursive)
 
-    def from_df(
-        self, df: pd.DataFrame, path: str = None, overwrite: bool = False
-    ) -> None:
+        Example:
+            Copy files within two S3 locations:
+
+            ```python
+
+            from viadot.sources.s3 import S3
+
+            s3 = S3()
+            s3.cp(
+                from_path='s3://bucket-name/folder_a/',
+                to_path='s3://bucket-name/folder_b/',
+                recursive=True
+            )
         """
-        Upload a pandas `DataFrame` to a file on Azure Data Lake.
+        self.fs.copy(path1=from_path, path2=to_path, recursive=recursive)
+
+    def rm(self, path: str):
+        """
+        Deletes files in a path.
 
         Args:
-            df (pd.DataFrame): The pandas `DataFrame` to upload.
-            path (str, optional): The destination path. Defaults to None.
-            overwrite (bool): Whether to overwrite the file if it exist.
+            path (str): Path to a file or folder to be removed. If the path refers to
+                a folder, it will be removed recursively.
         """
 
-        path = path or self.path
+        wr.s3.delete_objects(boto3_session=self.session, path=path)
 
-        extension = path.split(".")[-1]
-        if extension not in ("csv", "parquet"):
-            if "." not in path:
-                msg = "Please provide the full path to the file."
-            else:
-                msg = "Accepted file formats are 'csv' and 'parquet'."
-            raise ValueError(msg)
+    def from_df(
+        self,
+        df: pd.DataFrame,
+        path: str,
+        **kwargs,
+    ):
+        """
+        Upload a pandas `DataFrame` to a csv or parquet file. You can choose different
+            file backends, and have the option of compression.
 
-        file_name = path.split("/")[-1]
-        if extension == "csv":
-            # Can do it simply like this if ADLS accesses are set up correctly
-            # url = os.path.join(self.base_url, path)
-            # df.to_csv(url, storage_options=self.storage_options)
-            df.to_csv(file_name, index=False)
+        Args:
+            df (pd.DataFrame): Pandas DataFrame.
+            path (str): Path to a S3 folder.
+        """
+
+        if path.endswith(".csv"):
+            wr.s3.to_csv(
+                boto3_session=self.session,
+                df=df,
+                path=path,
+                dataset=True,
+                **kwargs,
+            )
+        elif path.endswith(".parquet"):
+            wr.s3.to_parquet(
+                boto3_session=self.session,
+                df=df,
+                path=path,
+                dataset=True,
+                **kwargs,
+            )
         else:
-            df.to_parquet(file_name, index=False)
+            raise ValueError("Only CSV and parquet formats are supported.")
 
-        self.upload(from_path=file_name, to_path=path, overwrite=overwrite)
+    def to_df(
+        self,
+        path: str,
+        **kwargs,
+    ):
+        """
+        Reads a csv or parquet file to a pd.DataFrame.
 
-        os.remove(file_name)
+        Args:
+            path (str): Path to a S3 folder.
+        """
+        if path.endswith(".csv"):
+            df = wr.s3.read_csv(
+                boto3_session=self.session, path=path, dataset=True, **kwargs
+            )
+        elif path.endswith(".parquet"):
+            df = wr.s3.read_parquet(
+                boto3_session=self.session, path=path, dataset=True, **kwargs
+            )
+        else:
+            raise ValueError("Only CSV and parquet formats are supported.")
+        return df
