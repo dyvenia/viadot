@@ -6,7 +6,6 @@ import pandas as pd
 import s3fs
 
 from viadot.config import get_source_credentials
-from viadot.exceptions import CredentialError
 from viadot.sources.base import Source
 
 
@@ -30,14 +29,17 @@ class S3(Source):
     ):
         credentials = credentials or get_source_credentials(config_key)
         if credentials is None:
-            raise CredentialError("Please specify the credentials.")
+            self.logger.debug(
+                "Credentials not specified. Falling back to `boto3` default credentials."
+            )
 
         super().__init__(*args, credentials=credentials, **kwargs)
 
         self.fs = s3fs.S3FileSystem(
-            profile=self.credentials["profile_name"],
-            key=self.credentials["aws_access_key_id"],
-            secret=self.credentials["aws_secret_access_key"],
+            region_name=self.credentials.get("region_name"),
+            profile=self.credentials.get("profile_name"),
+            key=self.credentials.get("aws_access_key_id"),
+            secret=self.credentials.get("aws_secret_access_key"),
         )
 
         self._session = None
@@ -47,9 +49,10 @@ class S3(Source):
         """A singleton-like property for initiating a session to the AWS."""
         if not self._session:
             self._session = boto3.session.Session(
-                profile_name=self.credentials["profile_name"],
-                aws_access_key_id=self.credentials["aws_access_key_id"],
-                aws_secret_access_key=self.credentials["aws_secret_access_key"],
+                region_name=self.credentials.get("region_name"),
+                profile_name=self.credentials.get("profile_name"),
+                aws_access_key_id=self.credentials.get("aws_access_key_id"),
+                aws_secret_access_key=self.credentials.get("aws_secret_access_key"),
             )
         return self._session
 
