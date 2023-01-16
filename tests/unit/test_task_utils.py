@@ -23,7 +23,7 @@ from viadot.task_utils import (
 )
 
 
-class MockClass:
+class MockAzureUploadClass:
     def run(
         from_path: str = "",
         to_path: str = "",
@@ -235,7 +235,7 @@ def test_df_clean_column_defined():
     assert output == expected_output
 
 
-@mock.patch("viadot.task_utils.AzureDataLakeUpload", return_value=MockClass)
+@mock.patch("viadot.task_utils.AzureDataLakeUpload", return_value=MockAzureUploadClass)
 @pytest.mark.bulk
 def test_adls_bulk_upload(mock_upload):
     file_names = ["random_1.csv", "random_2.csv"]
