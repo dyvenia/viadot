@@ -80,7 +80,6 @@ class Sharepoint(Source):
         Args:
             abs_url (str): URL to sharepoint website (e.g.: {tenant_name}.sharepoint.com)
             rel_file_url (str): Relative URL to the file (e.g.: /sites/{directory}/Shared%20Documents/Downloads/)
-            credentials (str,str): Tuple with user and password (for now)
             download_folder (str): Path where the file will be downloaded to
 
         """
