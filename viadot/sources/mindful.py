@@ -1,4 +1,4 @@
-import os, sys
+import os
 from io import StringIO
 from typing import Any, Dict, Literal
 
