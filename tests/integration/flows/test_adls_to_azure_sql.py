@@ -1,9 +1,12 @@
 import os
+import pytest
+from unittest import mock
 
 import pandas as pd
+from prefect.engine import signals
 
 from viadot.flows import ADLSToAzureSQL
-from viadot.flows.adls_to_azure_sql import df_to_csv_task
+from viadot.flows.adls_to_azure_sql import df_to_csv_task, check_dtypes_sort
 
 
 def test_get_promoted_adls_path_csv_file():
@@ -67,3 +70,35 @@ def test_df_to_csv_task_none(caplog):
     task.run(df, path=path, remove_tab=False)
     assert "DataFrame is None" in caplog.text
     assert os.path.isfile(path) == False
+
+
+@pytest.mark.dtypes
+def test_check_dtypes_sort():
+    d = {"col1": ["rat", "cat"], "col2": [3, 4]}
+    df = pd.DataFrame(data=d)
+    dtypes = {
+        "col1": "varchar(6)",
+        "col2": "varchar(6)",
+    }
+    task = check_dtypes_sort
+    n_dtypes = task.run(df=df, dtypes=dtypes)
+    assert list(dtypes.keys()) == list(n_dtypes.keys())
+
+    dtypes = {
+        "col2": "varchar(6)",
+        "col1": "varchar(6)",
+    }
+    task = check_dtypes_sort
+    n_dtypes = task.run(df=df, dtypes=dtypes)
+    assert list(dtypes.keys()) != list(n_dtypes.keys())
+
+    dtypes = {
+        "col1": "varchar(6)",
+        "col3": "varchar(6)",
+    }
+    task = check_dtypes_sort
+    try:
+        n_dtypes = task.run(df=df, dtypes=dtypes)
+        assert False
+    except signals.FAIL:
+        assert True
