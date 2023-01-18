@@ -8,7 +8,6 @@ from prefect.backend import get_key_value
 from prefect.engine import signals
 from prefect.utilities import logging
 
-
 from viadot.tasks.azure_data_lake import AzureDataLakeDownload
 
 from ..tasks import (
@@ -95,6 +94,8 @@ def check_dtypes_sort(
     dtypes: Dict[str, Any] = None,
 ) -> Dict[str, Any]:
     """Check dtype column order to avoid malformation SQL table.
+    When data is loaded by the user, a data frame is passed to this task
+    to check the column sort with dtypes and re-sort if neccessary.
 
     Args:
         df (pd.DataFrame, optional): Data Frame from original ADLS file. Defaults to None.
@@ -122,6 +123,8 @@ def check_dtypes_sort(
                 new_dtypes = dict()
                 for key in df.columns:
                     new_dtypes.update([(key, dtypes[key])])
+            else:
+                new_dtypes = dtypes.copy()
         else:
             logger.error("There is a discrepancy with any of the columns.")
             raise signals.FAIL(
