@@ -498,9 +498,11 @@ class SAPRFC(Source):
                         FIELDNAME=ref_column,
                     )["DFIES_TAB"][0]["LENG"]
                 )
-                if col_length_reference_column > 100:
+                if col_length_reference_column > int(
+                    self.rfc_total_col_width_character_limit / 4
+                ):
                     raise ValueError(
-                        f"{rfc_col} can't be used as unique column, too large."
+                        f"{ref_column} can't be used as unique column, too large."
                     )
                 local_limit = (
                     self.rfc_total_col_width_character_limit
