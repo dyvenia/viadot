@@ -1,6 +1,5 @@
 from typing import Any, Dict, List, Literal
 
-import pandas as pd
 from prefect import Flow, task, unmapped
 
 from viadot.task_utils import concat_dfs, df_to_csv, df_to_parquet, set_new_kv
@@ -16,7 +15,7 @@ class SAPRFCToADLS(Flow):
         rfc_replacement: str = "-",
         func: str = "RFC_READ_TABLE",
         rfc_total_col_width_character_limit: int = 400,
-        rfc_reference_column: str = None,
+        rfc_reference_column: List[str] = None,
         sap_credentials: dict = None,
         output_file_extension: str = ".parquet",
         local_file_path: str = None,
@@ -54,7 +53,7 @@ class SAPRFCToADLS(Flow):
                 inside the string to avoid flow breakdowns. Defaults to "-".
             func (str, optional): SAP RFC function to use. Defaults to "RFC_READ_TABLE".
             rfc_total_col_width_character_limit (int, optional): Number of characters by which query will be split in chunks in case of too many columns
-            rfc_reference_column (str, optional): Reference column to merge chunks Data Frames. This column must to be unique. Defaults to None.
+            rfc_reference_column (List[str], optional): Reference columns to merge chunks Data Frames. These columns must to be unique. Defaults to None.
             for RFC function. According to SAP documentation, the limit is 512 characters. However, we observed SAP raising an exception
             even on a slightly lower number of characters, so we add a safety margin. Defaults to 400.
             sap_credentials (dict, optional): The credentials to use to authenticate with SAP. By default, they're taken from the local viadot config.
