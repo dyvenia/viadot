@@ -147,6 +147,12 @@ class Mediatool(Source):
 
         if return_dataframe is True:
             df = pd.DataFrame.from_dict(response_dict["campaigns"])
+            df.replace(
+                to_replace=[r"\\t|\\n|\\r", "\t|\n|\r"],
+                value=["", ""],
+                regex=True,
+                inplace=True,
+            )
             function_name = inspect.stack()[0][3]
             df_updated = self.rename_columns(df=df, column_suffix=function_name)
             return df_updated
