@@ -8,7 +8,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Added `timeout` parameter to all `Task`s where it can be added.
 - Added `timeout` parameter to all `Flow`s where it can be added.
+- Added `adls_bulk_upload` task function to `task_utils.py`
 
+
+### Changed
+- Updated `genesys_to_adls.py` flow with the `adls_bulk_upload` task
+- Updated `mindful_to_adls.py` flow with the `adls_bulk_upload` task
 
 # [0.4.11] - 2022-12-15
 ### Added

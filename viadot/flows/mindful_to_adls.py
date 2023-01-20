@@ -1,46 +1,10 @@
-import os
 from typing import Any, Dict, List, Literal
 import pandas as pd
 
 from datetime import datetime
 from prefect import Flow, task
 from viadot.tasks import MindfulToCSV
-from viadot.tasks import AzureDataLakeUpload
-from viadot.task_utils import add_ingestion_metadata_task
-
-
-@task
-def adls_bulk_upload(
-    file_names: List[str],
-    file_name_relative_path: str = "",
-    adls_file_path: str = None,
-    adls_sp_credentials_secret: str = None,
-    adls_overwrite: bool = True,
-    task_timeout: int = 3600,
-) -> List[str]:
-    """Function that upload files to defined path in ADLS.
-
-    Args:
-        file_names (List[str]): List of file names to generate paths.
-        file_name_relative_path (str, optional): Path where to save the file locally. Defaults to ''.
-        adls_file_path (str, optional): Azure Data Lake path. Defaults to None.
-        adls_sp_credentials_secret (str, optional): The name of the Azure Key Vault secret containing a dictionary with
-            ACCOUNT_NAME and Service Principal credentials (TENANT_ID, CLIENT_ID, CLIENT_SECRET). Defaults to None.
-        adls_overwrite (bool, optional): Whether to overwrite files in the data lake. Defaults to True.
-
-    Returns:
-        List[str]: List of paths
-    """
-
-    for file in file_names:
-        file_path = str(adls_file_path + "/" + file)
-        file_to_adls_task = AzureDataLakeUpload(timeout=task_timeout)
-        file_to_adls_task.run(
-            from_path=os.path.join(file_name_relative_path, file),
-            to_path=file_path,
-            sp_credentials_secret=adls_sp_credentials_secret,
-            overwrite=adls_overwrite,
-        )
+from viadot.task_utils import add_ingestion_metadata_task, adls_bulk_upload
 
 
 @task
@@ -135,7 +99,7 @@ class MindfulToADLS(Flow):
 
         add_timestamp.bind(file_names, sep=self.sep, flow=self)
 
-        uploader = adls_bulk_upload(
+        adls_bulk_upload(
             file_names=file_names,
             file_name_relative_path=self.file_path,
             adls_file_path=self.adls_file_path,
@@ -146,4 +110,4 @@ class MindfulToADLS(Flow):
         )
 
         add_timestamp.set_upstream(file_names, flow=self)
-        uploader.set_upstream(add_timestamp, flow=self)
+        adls_bulk_upload.set_upstream(add_timestamp, flow=self)

@@ -23,7 +23,7 @@ from visions.functional import infer_type
 from visions.typesets.complete_set import CompleteSet
 
 from viadot.config import local_config
-from viadot.tasks import AzureKeyVaultSecret
+from viadot.tasks import AzureKeyVaultSecret, AzureDataLakeUpload
 
 from viadot.exceptions import CredentialError
 
@@ -567,3 +567,36 @@ def credentials_loader(credentials_secret: str, vault_name: str = None) -> dict:
         raise CredentialError("Credentials secret not provided.")
 
     return credentials
+
+
+@task
+def adls_bulk_upload(
+    file_names: List[str],
+    file_name_relative_path: str = "",
+    adls_file_path: str = None,
+    adls_sp_credentials_secret: str = None,
+    adls_overwrite: bool = True,
+    timeout: int = 3600,
+) -> None:
+    """Function that upload files to defined path in ADLS.
+
+    Args:
+        file_names (List[str]): List of file names to generate paths.
+        file_name_relative_path (str, optional): Path where to save the file locally. Defaults to ''.
+        adls_file_path (str, optional): Azure Data Lake path. Defaults to None.
+        adls_sp_credentials_secret (str, optional): The name of the Azure Key Vault secret containing a dictionary with
+            ACCOUNT_NAME and Service Principal credentials (TENANT_ID, CLIENT_ID, CLIENT_SECRET). Defaults to None.
+        adls_overwrite (bool, optional): Whether to overwrite files in the data lake. Defaults to True.
+        timeout (int, optional): The amount of time (in seconds) to wait while running this task before
+            a timeout occurs. Defaults to 3600.
+    """
+
+    file_to_adls_task = AzureDataLakeUpload(timeout=timeout)
+
+    for file in file_names:
+        file_to_adls_task.run(
+            from_path=os.path.join(file_name_relative_path, file),
+            to_path=os.path.join(adls_file_path, file),
+            sp_credentials_secret=adls_sp_credentials_secret,
+            overwrite=adls_overwrite,
+        )
