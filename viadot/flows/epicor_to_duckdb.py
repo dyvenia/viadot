@@ -2,8 +2,8 @@ from typing import Any, Dict, List, Literal
 
 from prefect import Flow
 
-from ..task_utils import add_ingestion_metadata_task, cast_df_to_str, df_to_parquet
-from ..tasks import DuckDBCreateTableFromParquet, EpicorOrdersToDF
+from viadot.task_utils import add_ingestion_metadata_task, cast_df_to_str, df_to_parquet
+from viadot.tasks import DuckDBCreateTableFromParquet, EpicorOrdersToDF
 
 
 class EpicorOrdersToDuckDB(Flow):
@@ -22,6 +22,7 @@ class EpicorOrdersToDuckDB(Flow):
         if_exists: Literal["fail", "replace", "append", "skip", "delete"] = "fail",
         if_empty: Literal["warn", "skip", "fail"] = "skip",
         duckdb_credentials: dict = None,
+        timeout: int = 3600,
         *args: List[any],
         **kwargs: Dict[str, Any],
     ):
@@ -42,6 +43,8 @@ class EpicorOrdersToDuckDB(Flow):
             if_exists (Literal, optional):  What to do if the table already exists. Defaults to "fail".
             if_empty (Literal, optional): What to do if Parquet file is empty. Defaults to "skip".
             duckdb_credentials (dict, optional): Credentials for the DuckDB connection. Defaults to None.
+            timeout(int, optional): The amount of time (in seconds) to wait while running this task before
+                a timeout occurs. Defaults to 3600.
         """
         self.base_url = base_url
         self.epicor_credentials = epicor_credentials
@@ -61,9 +64,11 @@ class EpicorOrdersToDuckDB(Flow):
         self.df_task = EpicorOrdersToDF(
             base_url=self.base_url,
             filters_xml=self.filters_xml,
+            timeout=timeout,
         )
         self.create_duckdb_table_task = DuckDBCreateTableFromParquet(
-            credentials=duckdb_credentials
+            credentials=duckdb_credentials,
+            timeout=timeout,
         )
 
         self.gen_flow()

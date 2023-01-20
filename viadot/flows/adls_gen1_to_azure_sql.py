@@ -5,10 +5,6 @@ from prefect.utilities import logging
 
 from ..tasks import AzureDataLakeDownload, BlobFromCSV, CreateTableFromBlob
 
-gen1_download_task = AzureDataLakeDownload(gen=1)
-csv_to_blob_storage_task = BlobFromCSV()
-blob_to_azure_sql_task = CreateTableFromBlob()
-
 
 logger = logging.get_logger(__name__)
 
@@ -24,6 +20,8 @@ class ADLSGen1ToAzureSQL(Flow):
         local_file_path (str): Where the gen1 file should be downloaded.
         sp_credentials_secret (str): The Key Vault secret holding Service Pricipal credentials
         vault_name (str): The name of the vault from which to retrieve `sp_credentials_secret`
+        timeout(int, optional): The amount of time (in seconds) to wait while running this task before
+            a timeout occurs. Defaults to 3600.
     """
 
     def __init__(
@@ -40,6 +38,7 @@ class ADLSGen1ToAzureSQL(Flow):
         if_exists: str = "replace",
         sp_credentials_secret: str = None,
         vault_name: str = None,
+        timeout: int = 3600,
         *args: List[any],
         **kwargs: Dict[str, Any]
     ):
@@ -55,6 +54,7 @@ class ADLSGen1ToAzureSQL(Flow):
         self.if_exists = if_exists
         self.sp_credentials_secret = sp_credentials_secret
         self.vault_name = vault_name
+        self.timeout = timeout
         super().__init__(*args, name=name, **kwargs)
         self.gen_flow()
 
@@ -63,6 +63,7 @@ class ADLSGen1ToAzureSQL(Flow):
         return name.replace(" ", "_").lower()
 
     def gen_flow(self) -> Flow:
+        gen1_download_task = AzureDataLakeDownload(gen=1, timeout=self.timeout)
         gen1_download_task.bind(
             from_path=self.path,
             to_path=self.local_file_path,
@@ -71,12 +72,14 @@ class ADLSGen1ToAzureSQL(Flow):
             vault_name=self.vault_name,
             flow=self,
         )
+        csv_to_blob_storage_task = BlobFromCSV(timeout=self.timeout)
         csv_to_blob_storage_task.bind(
             from_path=self.local_file_path,
             to_path=self.blob_path,
             overwrite=self.overwrite_blob,
             flow=self,
         )
+        blob_to_azure_sql_task = CreateTableFromBlob(timeout=self.timeout)
         blob_to_azure_sql_task.bind(
             blob_path=self.blob_path,
             schema=self.schema,

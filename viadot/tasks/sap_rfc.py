@@ -73,7 +73,6 @@ class SAPRFCToDF(Task):
         "credentials",
         "max_retries",
         "retry_delay",
-        "timeout",
     )
     def run(
         self,
@@ -84,7 +83,6 @@ class SAPRFCToDF(Task):
         rfc_total_col_width_character_limit: int = None,
         max_retries: int = None,
         retry_delay: timedelta = None,
-        timeout: int = None,
     ) -> pd.DataFrame:
         """Task run method.
 
@@ -94,9 +92,9 @@ class SAPRFCToDF(Task):
             multiple options are automatically tried. Defaults to None.
             func (str, optional): SAP RFC function to use. Defaults to None.
             rfc_total_col_width_character_limit (int, optional): Number of characters by which query will be split in chunks
-            in case of too many columns for RFC function. According to SAP documentation, the limit is
-            512 characters. However, we observed SAP raising an exception even on a slightly lower number
-            of characters, so we add a safety margin. Defaults to None.
+                in case of too many columns for RFC function. According to SAP documentation, the limit is
+                512 characters. However, we observed SAP raising an exception even on a slightly lower number
+                of characters, so we add a safety margin. Defaults to None.
         """
         if query is None:
             raise ValueError("Please provide the query.")

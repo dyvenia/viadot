@@ -10,10 +10,6 @@ from viadot.task_utils import METADATA_COLUMNS, add_ingestion_metadata_task
 
 from ..tasks import AzureDataLakeToDF, AzureDataLakeUpload, AzureSQLCreateTable, BCPTask
 
-gen1_to_df_task = AzureDataLakeToDF(gen=1)
-gen2_upload_task = AzureDataLakeUpload(gen=2)
-create_table_task = AzureSQLCreateTable()
-bulk_insert_task = BCPTask()
 
 logger = logging.get_logger(__name__)
 
@@ -47,6 +43,8 @@ class ADLSGen1ToAzureSQLNew(Flow):
         gen2_sp_credentials_secret (str): The Key Vault secret holding Service Pricipal credentials for gen2 lake
         sqldb_credentials_secret (str): The Key Vault secret holding Azure SQL Database credentials
         vault_name (str): The name of the vault from which to retrieve `sp_credentials_secret`
+        timeout(int, optional): The amount of time (in seconds) to wait while running this task before
+            a timeout occurs. Defaults to 3600.
     """
 
     def __init__(
@@ -69,6 +67,7 @@ class ADLSGen1ToAzureSQLNew(Flow):
         gen2_sp_credentials_secret: str = None,
         sqldb_credentials_secret: str = None,
         vault_name: str = None,
+        timeout: int = 3600,
         *args: List[any],
         **kwargs: Dict[str, Any]
     ):
@@ -90,6 +89,7 @@ class ADLSGen1ToAzureSQLNew(Flow):
         self.gen2_sp_credentials_secret = gen2_sp_credentials_secret
         self.sqldb_credentials_secret = sqldb_credentials_secret
         self.vault_name = vault_name
+        self.timeout = timeout
         super().__init__(*args, name=name, **kwargs)
         self.dtypes.update(METADATA_COLUMNS)
         self.gen_flow()
@@ -99,6 +99,7 @@ class ADLSGen1ToAzureSQLNew(Flow):
         return name.replace(" ", "_").lower()
 
     def gen_flow(self) -> Flow:
+        gen1_to_df_task = AzureDataLakeToDF(gen=1, timeout=self.timeout)
         df = gen1_to_df_task.bind(
             path=self.gen1_path,
             gen=1,
@@ -118,6 +119,7 @@ class ADLSGen1ToAzureSQLNew(Flow):
             sep=self.write_sep,
             flow=self,
         )
+        gen2_upload_task = AzureDataLakeUpload(gen=2, timeout=self.timeout)
         gen2_upload_task.bind(
             from_path=self.local_file_path,
             to_path=self.gen2_path,
@@ -126,6 +128,7 @@ class ADLSGen1ToAzureSQLNew(Flow):
             vault_name=self.vault_name,
             flow=self,
         )
+        create_table_task = AzureSQLCreateTable(timeout=self.timeout)
         create_table_task.bind(
             schema=self.schema,
             table=self.table,
@@ -135,6 +138,7 @@ class ADLSGen1ToAzureSQLNew(Flow):
             vault_name=self.vault_name,
             flow=self,
         )
+        bulk_insert_task = BCPTask(timeout=self.timeout)
         bulk_insert_task.bind(
             path=self.local_file_path,
             schema=self.schema,

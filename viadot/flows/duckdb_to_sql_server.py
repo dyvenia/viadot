@@ -5,18 +5,14 @@ import prefect
 from prefect import Flow, task
 from prefect.utilities import logging
 
-from ..task_utils import df_to_csv as df_to_csv_task
-from ..task_utils import get_sql_dtypes_from_df as get_sql_dtypes_from_df_task
-from ..tasks import BCPTask, DuckDBToDF, SQLServerCreateTable, DuckDBQuery
+from viadot.task_utils import df_to_csv as df_to_csv_task
+from viadot.task_utils import get_sql_dtypes_from_df as get_sql_dtypes_from_df_task
+from viadot.tasks import BCPTask, DuckDBToDF, SQLServerCreateTable, DuckDBQuery
 
 logger = logging.get_logger(__name__)
 
-duckdb_to_df_task = DuckDBToDF()
-create_table_task = SQLServerCreateTable()
-bulk_insert_task = BCPTask()
 
-
-@task
+@task(timeout=3600)
 def cleanup_csv_task(path: str):
 
     logger = prefect.context.get("logger")
@@ -50,6 +46,7 @@ class DuckDBToSQLServer(Flow):
         on_bcp_error: Literal["skip", "fail"] = "skip",
         bcp_error_log_path="./log_file.log",
         tags: List[str] = ["load"],
+        timeout: int = 3600,
         *args: List[any],
         **kwargs: Dict[str, Any],
     ):
@@ -76,6 +73,8 @@ class DuckDBToSQLServer(Flow):
             on_bcp_error (Literal["skip", "fail"], optional): What to do if error occurs. Defaults to "skip".
             bcp_error_log_path (string, optional): Full path of an error file. Defaults to "./log_file.log".
             tags (List[str], optional): Flow tags to use, eg. to control flow concurrency. Defaults to ["load"].
+            timeout(int, optional): The amount of time (in seconds) to wait while running this task before
+                a timeout occurs. Defaults to 3600.
         """
 
         # DuckDBToDF
@@ -102,6 +101,7 @@ class DuckDBToSQLServer(Flow):
 
         # Global
         self.tags = tags
+        self.timeout = timeout
 
         super().__init__(*args, name=name, **kwargs)
 
@@ -120,6 +120,7 @@ class DuckDBToSQLServer(Flow):
 
     def gen_flow(self) -> Flow:
         if self.duckdb_query is None:
+            duckdb_to_df_task = DuckDBToDF(timeout=self.timeout)
             df = duckdb_to_df_task.bind(
                 schema=self.duckdb_schema,
                 table=self.duckdb_table,
@@ -147,6 +148,7 @@ class DuckDBToSQLServer(Flow):
         else:
             dtypes = get_sql_dtypes_from_df_task.bind(df=df, flow=self)
 
+        create_table_task = SQLServerCreateTable(timeout=self.timeout)
         create_table_task.bind(
             schema=self.sql_server_schema,
             table=self.sql_server_table,
@@ -155,6 +157,8 @@ class DuckDBToSQLServer(Flow):
             credentials=self.sql_server_credentials,
             flow=self,
         )
+
+        bulk_insert_task = BCPTask(timeout=self.timeout)
         bulk_insert_task.bind(
             path=self.local_file_path,
             schema=self.sql_server_schema,

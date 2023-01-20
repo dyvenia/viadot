@@ -12,7 +12,6 @@ from viadot.tasks.azure_data_lake import AzureDataLakeUpload
 from viadot.task_utils import add_ingestion_metadata_task, df_to_parquet
 
 logger = logging.get_logger()
-azure_dl_upload_task = AzureDataLakeUpload()
 
 
 class PrefectLogs(Flow):
@@ -27,6 +26,7 @@ class PrefectLogs(Flow):
         adls_sp_credentials_secret: str = None,
         vault_name: str = None,
         overwrite_adls: bool = True,
+        timeout: int = 3600,
         *args,
         **kwargs,
     ):
@@ -46,6 +46,8 @@ class PrefectLogs(Flow):
                 Defaults to None.
             vault_name (str, optional): The name of the vault from which to obtain the secrets. Defaults to None.
             overwrite_adls (bool, optional): Whether to overwrite the file in ADLS. Defaults to True.
+            timeout(int, optional): The amount of time (in seconds) to wait while running this task before
+                a timeout occurs. Defaults to 3600.
 
             Example query:
                 {
@@ -86,6 +88,7 @@ class PrefectLogs(Flow):
         self.adls_path = adls_path
         self.vault_name = vault_name
         self.overwrite_adls = overwrite_adls
+        self.timeout = timeout
         self.adls_sp_credentials_secret = adls_sp_credentials_secret
 
         if scheduled_start_time == "yesterday":
@@ -247,6 +250,7 @@ class PrefectLogs(Flow):
             flow=self,
         )
 
+        azure_dl_upload_task = AzureDataLakeUpload(timeout=self.timeout)
         adls_upload = azure_dl_upload_task.bind(
             from_path=self.local_file_path,
             to_path=self.adls_path,

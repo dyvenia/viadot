@@ -7,13 +7,13 @@ from prefect.backend import set_key_value
 
 logger = logging.get_logger()
 
-from ..task_utils import (
+from viadot.task_utils import (
     add_ingestion_metadata_task,
     cast_df_to_str,
     df_to_parquet,
     set_new_kv,
 )
-from ..tasks import DuckDBCreateTableFromParquet, SAPRFCToDF
+from viadot.tasks import DuckDBCreateTableFromParquet, SAPRFCToDF
 
 
 class SAPToDuckDB(Flow):
@@ -35,6 +35,7 @@ class SAPToDuckDB(Flow):
         duckdb_credentials: dict = None,
         update_kv: bool = False,
         filter_column: str = None,
+        timeout: int = 3600,
         *args: List[any],
         **kwargs: Dict[str, Any],
     ):
@@ -60,6 +61,8 @@ class SAPToDuckDB(Flow):
             duckdb_credentials (dict, optional): The config to use for connecting with DuckDB. Defaults to None.
             update_kv (bool, optional): Whether or not to update key value on Prefect. Defaults to False.
             filter_column (str, optional): Name of the field based on which key value will be updated. Defaults to None.
+            timeout(int, optional): The amount of time (in seconds) to wait while running this task before
+                a timeout occurs. Defaults to 3600.
         """
 
         # SAPRFCToDF
@@ -81,9 +84,9 @@ class SAPToDuckDB(Flow):
 
         super().__init__(*args, name=name, **kwargs)
 
-        self.sap_to_df_task = SAPRFCToDF(credentials=sap_credentials)
+        self.sap_to_df_task = SAPRFCToDF(credentials=sap_credentials, timeout=timeout)
         self.create_duckdb_table_task = DuckDBCreateTableFromParquet(
-            credentials=duckdb_credentials
+            credentials=duckdb_credentials, timeout=timeout
         )
 
         self.gen_flow()

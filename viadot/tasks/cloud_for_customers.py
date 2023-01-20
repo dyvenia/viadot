@@ -23,6 +23,7 @@ class C4CReportToDF(Task):
         env: str = "QA",
         max_retries: int = 3,
         retry_delay: timedelta = timedelta(seconds=10),
+        timeout: int = 3600,
         **kwargs,
     ):
 
@@ -35,6 +36,7 @@ class C4CReportToDF(Task):
             name="c4c_report_to_df",
             max_retries=max_retries,
             retry_delay=retry_delay,
+            timeout=timeout,
             *args,
             **kwargs,
         )
@@ -122,6 +124,7 @@ class C4CToDF(Task):
         if_empty: str = "warn",
         max_retries: int = 3,
         retry_delay: timedelta = timedelta(seconds=10),
+        timeout: int = 3600,
         **kwargs,
     ):
 
@@ -137,6 +140,7 @@ class C4CToDF(Task):
             name="c4c_to_df",
             max_retries=max_retries,
             retry_delay=retry_delay,
+            timeout=timeout,
             *args,
             **kwargs,
         )

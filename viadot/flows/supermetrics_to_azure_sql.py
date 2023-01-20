@@ -7,10 +7,6 @@ from ..tasks import BlobFromCSV, CreateTableFromBlob, SupermetricsToCSV
 
 logger = logging.get_logger(__name__)
 
-supermetrics_to_csv_task = SupermetricsToCSV()
-csv_to_blob_storage_task = BlobFromCSV()
-blob_to_azure_sql_task = CreateTableFromBlob()
-
 
 class SupermetricsToAzureSQL(Flow):
     def __init__(
@@ -42,6 +38,7 @@ class SupermetricsToAzureSQL(Flow):
         parallel: bool = True,
         tags: List[str] = ["extract"],
         sep: str = "\t",
+        timeout: int = 3600,
         *args: List[any],
         **kwargs: Dict[str, Any]
     ):
@@ -71,11 +68,7 @@ class SupermetricsToAzureSQL(Flow):
         self.parallel = parallel
         self.tags = tags
         self.sep = sep
-        self.tasks = [
-            supermetrics_to_csv_task,
-            csv_to_blob_storage_task,
-            blob_to_azure_sql_task,
-        ]
+        self.timeout = timeout
         super().__init__(*args, name=name, **kwargs)
         self.gen_flow()
 
@@ -86,6 +79,7 @@ class SupermetricsToAzureSQL(Flow):
     def gen_supermetrics_task(
         self, ds_accounts: Union[str, List[str]], flow: Flow = None
     ) -> Task:
+        supermetrics_to_csv_task = SupermetricsToCSV(timeout=self.timeout)
         t = supermetrics_to_csv_task.bind(
             ds_id=self.ds_id,
             ds_accounts=ds_accounts,
@@ -121,12 +115,14 @@ class SupermetricsToAzureSQL(Flow):
                 ds_accounts=self.ds_accounts, flow=self
             )
 
+        csv_to_blob_storage_task = BlobFromCSV(timeout=self.timeout)
         csv_to_blob_storage_task.bind(
             from_path=self.local_file_path,
             to_path=self.blob_path,
             overwrite=self.overwrite_blob,
             flow=self,
         )
+        blob_to_azure_sql_task = CreateTableFromBlob(timeout=self.timeout)
         blob_to_azure_sql_task.bind(
             blob_path=self.blob_path,
             schema=self.schema,

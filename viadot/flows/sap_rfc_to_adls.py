@@ -6,9 +6,6 @@ from prefect import Flow, task, unmapped
 from viadot.task_utils import concat_dfs, df_to_csv, df_to_parquet, set_new_kv
 from viadot.tasks import AzureDataLakeUpload, SAPRFCToDF
 
-download_sap_task = SAPRFCToDF()
-file_to_adls_task = AzureDataLakeUpload()
-
 
 class SAPRFCToADLS(Flow):
     def __init__(
@@ -29,6 +26,7 @@ class SAPRFCToADLS(Flow):
         vault_name: str = None,
         update_kv: bool = False,
         filter_column: str = None,
+        timeout: int = 3600,
         *args: List[any],
         **kwargs: Dict[str, Any],
     ):
@@ -66,6 +64,8 @@ class SAPRFCToADLS(Flow):
             vault_name(str, optional): The name of the vault from which to obtain the secrets. Defaults to None.
             update_kv (bool, optional): Whether or not to update key value on Prefect. Defaults to False.
             filter_column (str, optional): Name of the field based on which key value will be updated. Defaults to None.
+            timeout(int, optional): The amount of time (in seconds) to wait while running this task before
+                a timeout occurs. Defaults to 3600.
         """
         self.query = query
         self.rfc_sep = rfc_sep
@@ -80,6 +80,7 @@ class SAPRFCToADLS(Flow):
         self.overwrite = overwrite
         self.adls_sp_credentials_secret = adls_sp_credentials_secret
         self.vault_name = vault_name
+        self.timeout = timeout
 
         self.update_kv = update_kv
         self.filter_column = filter_column
@@ -89,7 +90,7 @@ class SAPRFCToADLS(Flow):
         self.gen_flow()
 
     def gen_flow(self) -> Flow:
-
+        download_sap_task = SAPRFCToDF(timeout=self.timeout)
         df = download_sap_task(
             query=self.query,
             sep=self.rfc_sep,
@@ -115,6 +116,7 @@ class SAPRFCToADLS(Flow):
                 flow=self,
             )
 
+        file_to_adls_task = AzureDataLakeUpload(timeout=self.timeout)
         adls_upload = file_to_adls_task.bind(
             from_path=self.local_file_path,
             to_path=self.adls_path,
