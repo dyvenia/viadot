@@ -81,6 +81,7 @@ def test_check_dtypes_sort():
         "col2": "varchar(6)",
     }
     task = check_dtypes_sort
+
     n_dtypes = task.run(df=df, dtypes=dtypes)
     assert list(dtypes.keys()) == list(n_dtypes.keys())
 
@@ -88,7 +89,6 @@ def test_check_dtypes_sort():
         "col2": "varchar(6)",
         "col1": "varchar(6)",
     }
-    task = check_dtypes_sort
     n_dtypes = task.run(df=df, dtypes=dtypes)
     assert list(dtypes.keys()) != list(n_dtypes.keys())
 
@@ -96,7 +96,6 @@ def test_check_dtypes_sort():
         "col1": "varchar(6)",
         "col3": "varchar(6)",
     }
-    task = check_dtypes_sort
     try:
         n_dtypes = task.run(df=df, dtypes=dtypes)
         assert False
