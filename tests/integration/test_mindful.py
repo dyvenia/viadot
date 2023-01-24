@@ -1,5 +1,4 @@
 import os
-import ast
 import pytest
 from unittest import mock
 from viadot.sources import Mindful
@@ -102,7 +101,7 @@ def test_mindful_responses(mock_connection):
 
 @mock.patch("viadot.sources.Mindful._mindful_api_response", return_value=MockClass2)
 @pytest.mark.exception
-def test_file_exception(mock_nindful_1):
+def test_file_exception(mock_mindful):
     mf = MindfulToCSV()
     response = mf.run(credentials_mindful=credentials_mindful)
     assert response == None
