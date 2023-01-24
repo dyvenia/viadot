@@ -23,7 +23,7 @@ from visions.functional import infer_type
 from visions.typesets.complete_set import CompleteSet
 
 from viadot.config import local_config
-from viadot.tasks import AzureKeyVaultSecret
+from viadot.tasks import AzureKeyVaultSecret, AzureDataLakeUpload
 
 from viadot.exceptions import CredentialError
 
@@ -32,7 +32,7 @@ logger = logging.get_logger()
 METADATA_COLUMNS = {"_viadot_downloaded_at_utc": "DATETIME"}
 
 
-@task
+@task(timeout=3600)
 def add_ingestion_metadata_task(
     df: pd.DataFrame,
 ):
@@ -52,7 +52,7 @@ def add_ingestion_metadata_task(
         return df2
 
 
-@task
+@task(timeout=3600)
 def get_latest_timestamp_file_path(files: List[str]) -> str:
     """
     Return the name of the latest file in a given data lake directory,
@@ -75,7 +75,7 @@ def get_latest_timestamp_file_path(files: List[str]) -> str:
     return latest_file
 
 
-@task
+@task(timeout=3600)
 def dtypes_to_json_task(dtypes_dict, local_json_path: str):
     """
     Creates json file from a dictionary.
@@ -87,7 +87,7 @@ def dtypes_to_json_task(dtypes_dict, local_json_path: str):
         json.dump(dtypes_dict, fp)
 
 
-@task
+@task(timeout=3600)
 def chunk_df(df: pd.DataFrame, size: int = 10_000) -> List[pd.DataFrame]:
     """
     Creates pandas Dataframes list of chunks with a given size.
@@ -100,7 +100,7 @@ def chunk_df(df: pd.DataFrame, size: int = 10_000) -> List[pd.DataFrame]:
     return chunks
 
 
-@task
+@task(timeout=3600)
 def df_get_data_types_task(df: pd.DataFrame) -> dict:
     """
     Returns dictionary containing datatypes of pandas DataFrame columns.
@@ -113,7 +113,7 @@ def df_get_data_types_task(df: pd.DataFrame) -> dict:
     return dtypes_dict
 
 
-@task
+@task(timeout=3600)
 def get_sql_dtypes_from_df(df: pd.DataFrame) -> dict:
     """Obtain SQL data types from a pandas DataFrame"""
     typeset = CompleteSet()
@@ -156,14 +156,14 @@ def get_sql_dtypes_from_df(df: pd.DataFrame) -> dict:
     return dtypes_dict_fixed
 
 
-@task
+@task(timeout=3600)
 def update_dict(d: dict, d_new: dict) -> dict:
     d_copy = copy.deepcopy(d)
     d_copy.update(d_new)
     return d_copy
 
 
-@task
+@task(timeout=3600)
 def df_map_mixed_dtypes_for_parquet(
     df: pd.DataFrame, dtypes_dict: dict
 ) -> pd.DataFrame:
@@ -185,7 +185,7 @@ def df_map_mixed_dtypes_for_parquet(
     return df_mapped
 
 
-@task
+@task(timeout=3600)
 def update_dtypes_dict(dtypes_dict: dict) -> dict:
     """
     Task to update dtypes_dictionary that will be stored in the schema. It's required due to workaround Pandas to_parquet bug connected with mixed dtypes in object
@@ -203,7 +203,7 @@ def update_dtypes_dict(dtypes_dict: dict) -> dict:
     return dtypes_dict_updated
 
 
-@task
+@task(timeout=3600)
 def df_to_csv(
     df: pd.DataFrame,
     path: str,
@@ -243,7 +243,7 @@ def df_to_csv(
     out_df.to_csv(path, index=False, sep=sep)
 
 
-@task
+@task(timeout=3600)
 def df_to_parquet(
     df: pd.DataFrame,
     path: str,
@@ -279,7 +279,7 @@ def df_to_parquet(
     out_df.to_parquet(path, index=False, **kwargs)
 
 
-@task
+@task(timeout=3600)
 def union_dfs_task(dfs: List[pd.DataFrame]):
     """
     Create one DataFrame from a list of pandas DataFrames.
@@ -289,7 +289,7 @@ def union_dfs_task(dfs: List[pd.DataFrame]):
     return pd.concat(dfs, ignore_index=True)
 
 
-@task
+@task(timeout=3600)
 def write_to_json(dict_, path):
     """
     Creates json file from a dictionary. Log record informs about the writing file proccess.
@@ -312,23 +312,20 @@ def write_to_json(dict_, path):
     logger.debug(f"Successfully wrote to {path}.")
 
 
-@task
+@task(timeout=3600)
 def cleanup_validation_clutter(expectations_path):
     ge_project_path = Path(expectations_path).parent
     shutil.rmtree(ge_project_path)
 
 
-@task
+@task(timeout=3600)
 def df_converts_bytes_to_int(df: pd.DataFrame) -> pd.DataFrame:
     logger = prefect.context.get("logger")
     logger.info("Converting bytes in dataframe columns to list of integers")
     return df.applymap(lambda x: list(map(int, x)) if isinstance(x, bytes) else x)
 
 
-@task(
-    max_retries=3,
-    retry_delay=timedelta(seconds=10),
-)
+@task(max_retries=3, retry_delay=timedelta(seconds=10), timeout=3600)
 def df_to_dataset(
     df: pd.DataFrame, partitioning_flavor="hive", format="parquet", **kwargs
 ) -> None:
@@ -436,7 +433,7 @@ def custom_mail_state_handler(
     return new_state
 
 
-@task
+@task(timeout=3600)
 def df_clean_column(
     df: pd.DataFrame, columns_to_clean: List[str] = None
 ) -> pd.DataFrame:
@@ -473,7 +470,7 @@ def df_clean_column(
     return df
 
 
-@task
+@task(timeout=3600)
 def concat_dfs(dfs: List[pd.DataFrame]):
     """
     Task to combine list of data frames into one.
@@ -486,7 +483,7 @@ def concat_dfs(dfs: List[pd.DataFrame]):
     return pd.concat(dfs, axis=1)
 
 
-@task
+@task(timeout=3600)
 def cast_df_to_str(df: pd.DataFrame) -> pd.DataFrame:
     """
     Task for casting an entire DataFrame to a string data type. Task is needed
@@ -503,7 +500,7 @@ def cast_df_to_str(df: pd.DataFrame) -> pd.DataFrame:
     return df_mapped
 
 
-@task
+@task(timeout=3600)
 def set_new_kv(kv_name: str, df: pd.DataFrame, filter_column: str):
     """
     Task for updating/setting key value on Prefect based on the newest
@@ -532,7 +529,7 @@ class Git(Git):
         return f"https://{self.git_token_secret}@{self.repo_host}/{self.repo}"
 
 
-@task
+@task(timeout=3600)
 def credentials_loader(credentials_secret: str, vault_name: str = None) -> dict:
     """
     Function that gets credentials from azure Key Vault or PrefectSecret or from local config.
@@ -570,3 +567,36 @@ def credentials_loader(credentials_secret: str, vault_name: str = None) -> dict:
         raise CredentialError("Credentials secret not provided.")
 
     return credentials
+
+
+@task
+def adls_bulk_upload(
+    file_names: List[str],
+    file_name_relative_path: str = "",
+    adls_file_path: str = None,
+    adls_sp_credentials_secret: str = None,
+    adls_overwrite: bool = True,
+    timeout: int = 3600,
+) -> None:
+    """Function that upload files to defined path in ADLS.
+
+    Args:
+        file_names (List[str]): List of file names to generate paths.
+        file_name_relative_path (str, optional): Path where to save the file locally. Defaults to ''.
+        adls_file_path (str, optional): Azure Data Lake path. Defaults to None.
+        adls_sp_credentials_secret (str, optional): The name of the Azure Key Vault secret containing a dictionary with
+            ACCOUNT_NAME and Service Principal credentials (TENANT_ID, CLIENT_ID, CLIENT_SECRET). Defaults to None.
+        adls_overwrite (bool, optional): Whether to overwrite files in the data lake. Defaults to True.
+        timeout (int, optional): The amount of time (in seconds) to wait while running this task before
+            a timeout occurs. Defaults to 3600.
+    """
+
+    file_to_adls_task = AzureDataLakeUpload(timeout=timeout)
+
+    for file in file_names:
+        file_to_adls_task.run(
+            from_path=os.path.join(file_name_relative_path, file),
+            to_path=os.path.join(adls_file_path, file),
+            sp_credentials_secret=adls_sp_credentials_secret,
+            overwrite=adls_overwrite,
+        )

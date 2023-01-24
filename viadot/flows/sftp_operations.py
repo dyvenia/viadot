@@ -7,11 +7,6 @@ from viadot.tasks import AzureDataLakeUpload, AzureSQLCreateTable, BCPTask
 from viadot.task_utils import add_ingestion_metadata_task
 
 
-upload_to_adls = AzureDataLakeUpload()
-create_table_task = AzureSQLCreateTable()
-bulk_insert_task = BCPTask()
-
-
 class SftpToAzureSQL(Flow):
     def __init__(
         self,
@@ -31,6 +26,7 @@ class SftpToAzureSQL(Flow):
         on_bcp_error: Literal["skip", "fail"] = "fail",
         error_log_file_path: str = "SFTP_logs.log",
         vault_name: str = None,
+        timeout: int = 3600,
         *args,
         **kwargs,
     ):
@@ -55,6 +51,8 @@ class SftpToAzureSQL(Flow):
             on_bcp_error (Literal["skip", "fail"], optional): What to do if error occurs. Defaults to "fail".
             error_log_file_path (string, optional): Full path of an error file. Defaults to "./log_file.log".
             vault_name (str, optional): The name of the vault from which to obtain the secret. Defaults to None.
+            timeout(int, optional): The amount of time (in seconds) to wait while running this task before
+                a timeout occurs. Defaults to 3600.
         """
         # SFTP
         self.from_path = from_path
@@ -70,6 +68,7 @@ class SftpToAzureSQL(Flow):
 
         self.sep = sep
         self.remove_tab = remove_tab
+        self.timeout = timeout
 
         # Read schema
         self.schema = schema
@@ -108,6 +107,7 @@ class SftpToAzureSQL(Flow):
         sftp = SftpToDF(
             sftp_credentials_secret=self.sftp_credentials_secret,
             credentials=self.sftp_credentials,
+            timeout=self.timeout,
         )
         df = sftp.bind(
             from_path=self.from_path,
@@ -122,6 +122,7 @@ class SftpToAzureSQL(Flow):
             flow=self,
         )
 
+        create_table_task = AzureSQLCreateTable(timeout=self.timeout)
         create_table_task.bind(
             schema=self.schema,
             table=self.table,
@@ -132,6 +133,7 @@ class SftpToAzureSQL(Flow):
             flow=self,
         )
 
+        bulk_insert_task = BCPTask(timeout=self.timeout)
         bulk_insert_task.bind(
             path=self.file_name,
             schema=self.schema,
@@ -163,6 +165,7 @@ class SftpToADLS(Flow):
         sftp_credentials: Dict[str, Any] = None,
         sp_credentials_secret: str = None,
         vault_name: str = None,
+        timeout: int = 3600,
         *args,
         **kwargs,
     ):
@@ -183,12 +186,16 @@ class SftpToADLS(Flow):
             sftp_credentials (Dict[str, Any], optional): SFTP server credentials. Defaults to None.
             sp_credentials_secret (str, optional): The name of the Azure Key Vault secret containing a dictionary.
             vault_name (str, optional): The name of the vault from which to obtain the secret. Defaults to None.
+            timeout(int, optional): The amount of time (in seconds) to wait while running this task before
+                a timeout occurs. Defaults to 3600.
         """
         # SFTP
         self.from_path = from_path
         self.sftp_credentials_secret = sftp_credentials_secret
         self.sftp_credentials = sftp_credentials
         self.columns = columns
+        self.timeout = timeout
+
         # File args
         if file_name is None:
             self.file_name = from_path.split("/")[-1]
@@ -221,6 +228,7 @@ class SftpToADLS(Flow):
         ftp = SftpToDF(
             sftp_credentials_secret=self.sftp_credentials_secret,
             credentials=self.sftp_credentials,
+            timeout=self.timeout,
         )
         df = ftp.bind(
             from_path=self.from_path,
@@ -231,6 +239,7 @@ class SftpToADLS(Flow):
             df=df, remove_tab=self.remove_tab, path=self.file_name, flow=self
         )
 
+        upload_to_adls = AzureDataLakeUpload(timeout=self.timeout)
         upload_df = upload_to_adls.bind(
             from_path=self.file_name,
             to_path=self.to_path,

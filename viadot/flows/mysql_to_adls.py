@@ -6,8 +6,6 @@ from viadot.task_utils import df_to_csv
 from viadot.tasks import AzureDataLakeUpload
 from viadot.tasks.mysql_to_df import MySqlToDf
 
-file_to_adls_task = AzureDataLakeUpload()
-
 
 class MySqlToADLS(Flow):
     def __init__(
@@ -24,6 +22,7 @@ class MySqlToADLS(Flow):
         overwrite_adls: bool = True,
         sp_credentials_secret: str = None,
         credentials_secret: str = None,
+        timeout: int = 3600,
         *args: List[any],
         **kwargs: Dict[str, Any]
     ):
@@ -47,6 +46,8 @@ class MySqlToADLS(Flow):
             credentials_secret (str, optional): Key Vault name. Defaults to None.
             columns_to_clean (List(str), optional): Select columns to clean, used with remove_special_characters.
             If None whole data frame will be processed. Defaults to None.
+            timeout(int, optional): The amount of time (in seconds) to wait while running this task before
+                a timeout occurs. Defaults to 3600.
         """
 
         # Connect to sql
@@ -55,6 +56,7 @@ class MySqlToADLS(Flow):
         self.sqldb_credentials_secret = sqldb_credentials_secret
         self.vault_name = vault_name
         self.overwrite_adls = overwrite_adls
+
         # Upload to ADLS
         self.file_path = file_path
         self.sep = sep
@@ -62,6 +64,7 @@ class MySqlToADLS(Flow):
         self.if_exists = if_exists
         self.sp_credentials_secret = sp_credentials_secret
         self.credentials_secret = credentials_secret
+        self.timeout = timeout
 
         super().__init__(*args, name=name, **kwargs)
 
@@ -69,8 +72,7 @@ class MySqlToADLS(Flow):
 
     def gen_flow(self) -> Flow:
 
-        df_task = MySqlToDf(country_short=self.country_short)
-
+        df_task = MySqlToDf(country_short=self.country_short, timeout=self.timeout)
         df = df_task.bind(
             credentials_secret=self.credentials_secret, query=self.query, flow=self
         )
@@ -83,6 +85,7 @@ class MySqlToADLS(Flow):
             flow=self,
         )
 
+        file_to_adls_task = AzureDataLakeUpload(timeout=self.timeout)
         adls_upload = file_to_adls_task.bind(
             from_path=self.file_path,
             to_path=self.to_path,

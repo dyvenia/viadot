@@ -23,6 +23,8 @@ class AzureDataLakeDownload(Task):
         recursive (bool, optional): Set this to true if downloading entire directories.
         gen (int, optional): The generation of the Azure Data Lake. Defaults to 2.
         vault_name (str, optional): The name of the vault from which to fetch the secret. Defaults to None.
+        timeout(int, optional): The amount of time (in seconds) to wait while running this task before
+            a timeout occurs. Defaults to 3600.
         max_retries (int, optional): [description]. Defaults to 3.
         retry_delay (timedelta, optional): [description]. Defaults to timedelta(seconds=10).
     """
@@ -34,6 +36,7 @@ class AzureDataLakeDownload(Task):
         recursive: bool = False,
         gen: int = 2,
         vault_name: str = None,
+        timeout: int = 3600,
         max_retries: int = 3,
         retry_delay: timedelta = timedelta(seconds=10),
         *args,
@@ -49,6 +52,7 @@ class AzureDataLakeDownload(Task):
             name="adls_download",
             max_retries=max_retries,
             retry_delay=retry_delay,
+            timeout=timeout,
             *args,
             **kwargs,
         )
@@ -131,6 +135,8 @@ class AzureDataLakeUpload(Task):
         overwrite (bool, optional): Whether to overwrite files in the lake. Defaults to False.
         gen (int, optional): The generation of the Azure Data Lake. Defaults to 2.
         vault_name (str, optional): The name of the vault from which to obtain the secret. Defaults to None.
+        timeout(int, optional): The amount of time (in seconds) to wait while running this task before
+            a timeout occurs. Defaults to 3600.
     """
 
     def __init__(
@@ -141,6 +147,7 @@ class AzureDataLakeUpload(Task):
         overwrite: bool = False,
         gen: int = 2,
         vault_name: str = None,
+        timeout: int = 3600,
         max_retries: int = 3,
         retry_delay: timedelta = timedelta(seconds=10),
         *args,
@@ -157,6 +164,7 @@ class AzureDataLakeUpload(Task):
             name="adls_upload",
             max_retries=max_retries,
             retry_delay=retry_delay,
+            timeout=timeout,
             *args,
             **kwargs,
         )
@@ -245,6 +253,7 @@ class AzureDataLakeToDF(Task):
         error_bad_lines: bool = None,
         gen: int = 2,
         vault_name: str = None,
+        timeout: int = 3600,
         max_retries: int = 3,
         retry_delay: timedelta = timedelta(seconds=10),
         *args,
@@ -261,6 +270,8 @@ class AzureDataLakeToDF(Task):
             error_bad_lines (bool, optional): Whether to raise an exception on bad lines. Defaults to None.
             gen (int, optional): The generation of the Azure Data Lake. Defaults to 2.
             vault_name (str, optional): The name of the vault from which to obtain the secret. Defaults to None.
+            timeout(int, optional): The amount of time (in seconds) to wait while running this task before
+                a timeout occurs. Defaults to 3600.
         """
         self.path = path
         self.sep = sep
@@ -274,6 +285,7 @@ class AzureDataLakeToDF(Task):
             name="adls_to_df",
             max_retries=max_retries,
             retry_delay=retry_delay,
+            timeout=timeout,
             *args,
             **kwargs,
         )
@@ -372,6 +384,8 @@ class AzureDataLakeCopy(Task):
         recursive (bool, optional): Set this to true if copy entire directories.
         gen (int, optional): The generation of the Azure Data Lake. Defaults to 2.
         vault_name (str, optional): The name of the vault from which to fetch the secret. Defaults to None.
+        timeout(int, optional): The amount of time (in seconds) to wait while running this task before
+            a timeout occurs. Defaults to 3600.
         max_retries (int, optional): [description]. Defaults to 3.
         retry_delay (timedelta, optional): [description]. Defaults to timedelta(seconds=10).
     """
@@ -383,6 +397,7 @@ class AzureDataLakeCopy(Task):
         recursive: bool = False,
         gen: int = 2,
         vault_name: str = None,
+        timeout: int = 3600,
         max_retries: int = 3,
         retry_delay: timedelta = timedelta(seconds=10),
         *args,
@@ -398,6 +413,7 @@ class AzureDataLakeCopy(Task):
             name="adls_copy",
             max_retries=max_retries,
             retry_delay=retry_delay,
+            timeout=timeout,
             *args,
             **kwargs,
         )
@@ -478,6 +494,8 @@ class AzureDataLakeList(Task):
         path (str, optional): The path to the directory which contents you want to list. Defaults to None.
         gen (int, optional): The generation of the Azure Data Lake. Defaults to 2.
         vault_name (str, optional): The name of the vault from which to fetch the secret. Defaults to None.
+        timeout(int, optional): The amount of time (in seconds) to wait while running this task before
+            a timeout occurs. Defaults to 3600.
         max_retries (int, optional): [description]. Defaults to 3.
         retry_delay (timedelta, optional): [description]. Defaults to timedelta(seconds=10).
 
@@ -493,6 +511,7 @@ class AzureDataLakeList(Task):
         path: str = None,
         gen: int = 2,
         vault_name: str = None,
+        timeout: int = 3600,
         max_retries: int = 3,
         retry_delay: timedelta = timedelta(seconds=10),
         *args,
@@ -506,6 +525,7 @@ class AzureDataLakeList(Task):
             name="adls_list",
             max_retries=max_retries,
             retry_delay=retry_delay,
+            timeout=timeout,
             *args,
             **kwargs,
         )
@@ -602,6 +622,8 @@ class AzureDataLakeRemove(Task):
         recursive (bool): Set this to true if removing entire directories.
         gen (int, optional): The generation of the Azure Data Lake. Defaults to 2.
         vault_name (str, optional): The name of the vault from which to fetch the secret. Defaults to None.
+        timeout(int, optional): The amount of time (in seconds) to wait while running this task before
+            a timeout occurs. Defaults to 3600.
         max_retries (int, optional): Maximum number of retries before failing. Defaults to 3.
         retry_delay (timedelta, optional): Time to wait before the next retry attempt. Defaults to timedelta(seconds=10).
     """
@@ -612,6 +634,7 @@ class AzureDataLakeRemove(Task):
         recursive: bool = False,
         gen: int = 2,
         vault_name: str = None,
+        timeout: int = 3600,
         max_retries: int = 3,
         retry_delay: timedelta = timedelta(seconds=10),
         *args,
@@ -626,6 +649,7 @@ class AzureDataLakeRemove(Task):
             name="adls_rm",
             max_retries=max_retries,
             retry_delay=retry_delay,
+            timeout=timeout,
             *args,
             **kwargs,
         )

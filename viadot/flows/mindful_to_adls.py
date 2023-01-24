@@ -1,4 +1,3 @@
-import os
 from typing import Any, Dict, List, Literal
 import pandas as pd
 
@@ -8,46 +7,8 @@ from prefect.utilities import logging
 from prefect.engine.signals import FAIL
 from prefect.triggers import all_successful
 from viadot.tasks import MindfulToCSV
-from viadot.tasks import AzureDataLakeUpload
-from viadot.task_utils import add_ingestion_metadata_task
+from viadot.task_utils import add_ingestion_metadata_task, adls_bulk_upload
 
-logger = logging.get_logger()
-file_to_adls_task = AzureDataLakeUpload()
-
-
-@task
-def adls_bulk_upload(
-    file_names: List[str] = None,
-    file_name_relative_path: str = "",
-    adls_file_path: str = None,
-    adls_sp_credentials_secret: str = None,
-    adls_overwrite: bool = True,
-) -> List[str]:
-    """Function that upload files to defined path in ADLS.
-
-    Args:
-        file_names (List[str]): List of file names to generate paths.
-        file_name_relative_path (str, optional): Path where to save the file locally. Defaults to ''.
-        adls_file_path (str, optional): Azure Data Lake path. Defaults to None.
-        adls_sp_credentials_secret (str, optional): The name of the Azure Key Vault secret containing a dictionary with
-            ACCOUNT_NAME and Service Principal credentials (TENANT_ID, CLIENT_ID, CLIENT_SECRET). Defaults to None.
-        adls_overwrite (bool, optional): Whether to overwrite files in the data lake. Defaults to True.
-
-    Returns:
-        List[str]: List of paths
-    """
-
-    if not file_names:
-        logger.warning("Avoided uploading any file to ADLS. No files were reported.")
-    else:
-        for file in file_names:
-            file_path = str(adls_file_path + "/" + file)
-            file_to_adls_task.run(
-                from_path=os.path.join(file_name_relative_path, file),
-                to_path=file_path,
-                sp_credentials_secret=adls_sp_credentials_secret,
-                overwrite=adls_overwrite,
-            )
 
 
 @task
@@ -79,6 +40,7 @@ class MindfulToADLS(Flow):
         region: Literal["us1", "us2", "us3", "ca1", "eu1", "au1"] = "eu1",
         file_extension: Literal["parquet", "csv"] = "csv",
         sep: str = "\t",
+        timeout: int = 3600,
         file_path: str = "",
         adls_file_path: str = None,
         adls_overwrite: bool = True,
@@ -99,6 +61,8 @@ class MindfulToADLS(Flow):
             region (Literal[us1, us2, us3, ca1, eu1, au1], optional): SD region from where to interact with the mindful API. Defaults to "eu1".
             file_extension (Literal[parquet, csv], optional): File extensions for storing responses. Defaults to "csv".
             sep (str, optional): Separator in csv file. Defaults to "\t".
+            timeout(int, optional): The amount of time (in seconds) to wait while running this task before
+                a timeout occurs. Defaults to 3600.
             file_path (str, optional): Path where to save the file locally. Defaults to ''.
             adls_file_path (str, optional): The destination path at ADLS. Defaults to None.
             adls_overwrite (bool, optional): Whether to overwrite files in the data lake. Defaults to True.
@@ -115,6 +79,7 @@ class MindfulToADLS(Flow):
         self.file_extension = file_extension
         self.sep = sep
         self.file_path = file_path
+        self.timeout = timeout
 
         self.adls_file_path = adls_file_path
         self.adls_overwrite = adls_overwrite
@@ -125,7 +90,7 @@ class MindfulToADLS(Flow):
         self.mind_flow()
 
     def mind_flow(self) -> Flow:
-        to_csv = MindfulToCSV()
+        to_csv = MindfulToCSV(timeout=self.timeout)
 
         file_names = to_csv.bind(
             credentials_mindful=self.credentials_mindful,
@@ -141,14 +106,15 @@ class MindfulToADLS(Flow):
 
         add_timestamp.bind(file_names, sep=self.sep, flow=self)
 
-        uploader = adls_bulk_upload(
+        adls_bulk_upload(
             file_names=file_names,
             file_name_relative_path=self.file_path,
             adls_file_path=self.adls_file_path,
             adls_sp_credentials_secret=self.adls_sp_credentials_secret,
             adls_overwrite=self.adls_overwrite,
+            task_timeout=self.timeout,
             flow=self,
         )
 
         add_timestamp.set_upstream(file_names, flow=self)
-        uploader.set_upstream(add_timestamp, flow=self)
+        adls_bulk_upload.set_upstream(add_timestamp, flow=self)

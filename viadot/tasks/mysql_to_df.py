@@ -17,6 +17,7 @@ class MySqlToDf(Task):
         country_short: Literal["AT", "DE", "CH", None],
         credentials: Dict[str, Any] = None,
         query: str = None,
+        timeout: int = 3600,
         *args,
         **kwargs,
     ):
@@ -27,6 +28,8 @@ class MySqlToDf(Task):
             credentials (Dict[str, Any], optional): MySql Database credentials. Defaults to None.
             query(str, optional): Query to perform on a database. Defaults to None.
             country_short (Dict[str, Any], optional): Country short to select proper credential.
+            timeout(int, optional): The amount of time (in seconds) to wait while running this task before
+                a timeout occurs. Defaults to 3600.
 
         Returns: Pandas DataFrame
         """
@@ -36,6 +39,7 @@ class MySqlToDf(Task):
 
         super().__init__(
             name="MySQLToDF",
+            timeout=timeout,
             *args,
             **kwargs,
         )

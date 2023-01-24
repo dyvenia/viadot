@@ -6,9 +6,6 @@ from viadot.task_utils import df_clean_column, df_converts_bytes_to_int, df_to_c
 from viadot.tasks import AzureDataLakeUpload
 from viadot.tasks.aselite import ASELiteToDF
 
-df_task = ASELiteToDF()
-file_to_adls_task = AzureDataLakeUpload()
-
 
 class ASELiteToADLS(Flow):
     def __init__(
@@ -26,6 +23,7 @@ class ASELiteToADLS(Flow):
         sp_credentials_secret: str = None,
         remove_special_characters: bool = None,
         columns_to_clean: List[str] = None,
+        timeout: int = 3600,
         *args: List[any],
         **kwargs: Dict[str, Any]
     ):
@@ -48,6 +46,8 @@ class ASELiteToADLS(Flow):
             remove_special_characters (str, optional): Call a function that remove special characters like escape symbols. Defaults to None.
             columns_to_clean (List(str), optional): Select columns to clean, used with remove_special_characters.
             If None whole data frame will be processed. Defaults to None.
+            timeout(int, optional): The amount of time (in seconds) to wait while running this task before
+                a timeout occurs. Defaults to 3600.
         """
         self.query = query
         self.sqldb_credentials_secret = sqldb_credentials_secret
@@ -62,12 +62,14 @@ class ASELiteToADLS(Flow):
         self.sp_credentials_secret = sp_credentials_secret
         self.remove_special_characters = remove_special_characters
         self.columns_to_clean = columns_to_clean
+        self.timeout = timeout
 
         super().__init__(*args, name=name, **kwargs)
 
         self.gen_flow()
 
     def gen_flow(self) -> Flow:
+        df_task = ASELiteToDF(timeout=self.timeout)
         df = df_task.bind(
             query=self.query,
             credentials_secret=self.sqldb_credentials_secret,
@@ -89,6 +91,7 @@ class ASELiteToADLS(Flow):
             flow=self,
         )
 
+        file_to_adls_task = AzureDataLakeUpload(timeout=self.timeout)
         adls_upload = file_to_adls_task.bind(
             from_path=self.file_path,
             to_path=self.to_path,

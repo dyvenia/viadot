@@ -9,7 +9,7 @@ from prefect.utilities import logging
 
 logger = logging.get_logger()
 
-from ..task_utils import (
+from viadot.task_utils import (
     add_ingestion_metadata_task,
     df_get_data_types_task,
     df_map_mixed_dtypes_for_parquet,
@@ -17,12 +17,8 @@ from ..task_utils import (
     df_to_parquet,
     dtypes_to_json_task,
 )
-from ..tasks import AzureDataLakeUpload
-from ..tasks.sharepoint import SharepointToDF
-
-excel_to_df_task = SharepointToDF()
-file_to_adls_task = AzureDataLakeUpload()
-json_to_adls_task = AzureDataLakeUpload()
+from viadot.tasks import AzureDataLakeUpload
+from viadot.tasks.sharepoint import SharepointToDF
 
 
 class SharepointToADLS(Flow):
@@ -42,6 +38,7 @@ class SharepointToADLS(Flow):
         overwrite_adls: bool = False,
         if_empty: str = "warn",
         if_exists: str = "replace",
+        timeout: int = 3600,
         *args: List[any],
         **kwargs: Dict[str, Any],
     ):
@@ -65,6 +62,8 @@ class SharepointToADLS(Flow):
             Defaults to None.
             overwrite_adls (bool, optional): Whether to overwrite files in the lake. Defaults to False.
             if_empty (str, optional): What to do if query returns no data. Defaults to "warn".
+            timeout(int, optional): The amount of time (in seconds) to wait while running this task before
+                a timeout occurs. Defaults to 3600.
         """
         # SharepointToDF
         self.if_empty = if_empty
@@ -74,6 +73,7 @@ class SharepointToADLS(Flow):
         self.local_dir_path = local_dir_path
         self.sheet_number = sheet_number
         self.validate_excel_file = validate_excel_file
+        self.timeout = timeout
 
         # AzureDataLakeUpload
         self.overwrite = overwrite_adls
@@ -107,6 +107,7 @@ class SharepointToADLS(Flow):
         self.gen_flow()
 
     def gen_flow(self) -> Flow:
+        excel_to_df_task = SharepointToDF(timeout=self.timeout)
         df = excel_to_df_task.bind(
             path_to_file=self.path_to_file,
             url_to_file=self.url_to_file,
@@ -137,6 +138,7 @@ class SharepointToADLS(Flow):
                 flow=self,
             )
 
+        file_to_adls_task = AzureDataLakeUpload(timeout=self.timeout)
         file_to_adls_task.bind(
             from_path=self.local_file_path,
             to_path=self.adls_file_path,
@@ -148,6 +150,7 @@ class SharepointToADLS(Flow):
         dtypes_to_json_task.bind(
             dtypes_dict=dtypes_dict, local_json_path=self.local_json_path, flow=self
         )
+        json_to_adls_task = AzureDataLakeUpload(timeout=self.timeout)
         json_to_adls_task.bind(
             from_path=self.local_json_path,
             to_path=self.adls_schema_file_dir_file,

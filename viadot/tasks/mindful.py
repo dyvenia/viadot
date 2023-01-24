@@ -25,6 +25,7 @@ class MindfulToCSV(Task):
         region: Literal["us1", "us2", "us3", "ca1", "eu1", "au1"] = "eu1",
         file_extension: Literal["parquet", "csv"] = "csv",
         file_path: str = "",
+        timeout: int = 3600,
         *args: List[Any],
         **kwargs: Dict[str, Any],
     ):
@@ -39,6 +40,8 @@ class MindfulToCSV(Task):
             region (Literal[us1, us2, us3, ca1, eu1, au1], optional): SD region from where to interact with the mindful API. Defaults to "eu1".
             file_extension (Literal[parquet, csv], optional): File extensions for storing responses. Defaults to "csv".
             file_path (str, optional): Path where to save the file locally. Defaults to ''.
+            timeout(int, optional): The amount of time (in seconds) to wait while running this task before
+                a timeout occurs. Defaults to 3600.
 
         Raises:
             CredentialError: If credentials are not provided in local_config or directly as a parameter inside run method.
@@ -53,6 +56,7 @@ class MindfulToCSV(Task):
 
         super().__init__(
             name=report_name,
+            timeout=timeout,
             *args,
             **kwargs,
         )
@@ -128,6 +132,7 @@ class MindfulToCSV(Task):
         )
 
         file_names = []
+        # interactions
         interactions_response = mindful.get_interactions_list()
         if interactions_response.status_code == 200:
             interaction_file_name = mindful.response_to_file(
@@ -139,6 +144,8 @@ class MindfulToCSV(Task):
                 "Successfully downloaded interactions data from the Mindful API."
             )
             time.sleep(0.5)
+
+        # responses
         responses_response = mindful.get_responses_list()
         if responses_response.status_code == 200:
             response_file_name = mindful.response_to_file(
@@ -147,6 +154,17 @@ class MindfulToCSV(Task):
             )
             file_names.append(response_file_name)
             logger.info("Successfully downloaded responses data from the Mindful API.")
+            time.sleep(0.5)
+
+        # surveys
+        surveys_response = mindful.get_survey_list()
+        if surveys_response.status_code == 200:
+            surveys_file_name = mindful.response_to_file(
+                surveys_response,
+                file_path=file_path,
+            )
+            file_names.append(surveys_file_name)
+            logger.info("Successfully downloaded surveys data from the Mindful API.")
 
         if not file_names:
             return None
