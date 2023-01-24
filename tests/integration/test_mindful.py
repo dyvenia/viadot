@@ -1,4 +1,5 @@
 import os
+import ast
 import pytest
 from unittest import mock
 from viadot.sources import Mindful
@@ -28,6 +29,14 @@ class MockClass:
             {"id": 7277294, "survey_id": 504, "phone_number": "", "survey_type": "web"},
         ]
         return test
+
+
+class MockClass2:
+    status_code = 204
+    content = b""
+
+    def json():
+        return None
 
 
 @pytest.mark.init
@@ -89,3 +98,11 @@ def test_mindful_responses(mock_connection):
     assert mf.endpoint == "responses" and isinstance(mf.endpoint, str)
     assert os.path.exists("responses.csv")
     os.remove("responses.csv")
+
+
+@mock.patch("viadot.sources.Mindful._mindful_api_response", return_value=MockClass2)
+@pytest.mark.exception
+def test_file_exception(mock_nindful_1):
+    mf = MindfulToCSV()
+    response = mf.run(credentials_mindful=credentials_mindful)
+    assert response == None
