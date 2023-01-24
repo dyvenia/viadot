@@ -34,6 +34,8 @@ class BCPTask(ShellTask):
         - on_error (Literal["skip", "fail"], optional): What to do if error occurs. Defaults to "skip".
         - credentials (dict, optional): The credentials to use for connecting with the database.
         - vault_name (str): The name of the vault from which to fetch the secret.
+        - timeout(int, optional): The amount of time (in seconds) to wait while running this task before
+            a timeout occurs. Defaults to 3600.
         - **kwargs (dict, optional): Additional keyword arguments to pass to the Task constructor.
     """
 
@@ -49,6 +51,7 @@ class BCPTask(ShellTask):
         vault_name: str = None,
         max_retries: int = 3,
         retry_delay: timedelta = timedelta(seconds=10),
+        timeout: int = 3600,
         *args,
         **kwargs,
     ):
@@ -67,6 +70,7 @@ class BCPTask(ShellTask):
             return_all=True,
             max_retries=max_retries,
             retry_delay=retry_delay,
+            timeout=timeout,
             *args,
             **kwargs,
         )

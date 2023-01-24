@@ -18,6 +18,7 @@ class SftpToDF(Task):
         credentials: Dict[str, Any] = None,
         sftp_credentials_secret: str = None,
         vault_name: str = None,
+        timeout: int = 3600,
         *args,
         **kwargs,
     ):
@@ -27,6 +28,8 @@ class SftpToDF(Task):
             credentials (Dict[str, Any], optional): SFTP credentials. Defaults to None.
             sftp_credentials_secret (str, optional): The name of the Azure Key Vault secret containing a dictionary credentials for SFTP connection. Defaults to None.
             vault_name (str, optional): The name of the vault from which to obtain the secret. Defaults to None.
+            timeout(int, optional): The amount of time (in seconds) to wait while running this task before
+                a timeout occurs. Defaults to 3600.
 
         Returns: Pandas DataFrame
         """
@@ -36,6 +39,7 @@ class SftpToDF(Task):
 
         super().__init__(
             name="SftpToDF",
+            timeout=timeout,
             *args,
             **kwargs,
         )
@@ -87,6 +91,7 @@ class SftpList(Task):
         credentials: Dict[str, Any] = None,
         sftp_credentials_secret: str = None,
         vault_name: str = None,
+        timeout: int = 3600,
         *args,
         **kwargs,
     ):
@@ -96,6 +101,8 @@ class SftpList(Task):
             credentials (Dict[str, Any], optional): SFTP credentials. Defaults to None.
             sftp_credentials_secret (str, optional): The name of the Azure Key Vault secret containing a dictionary credentials for SFTP connection. Defaults to None.
             vault_name (str, optional): The name of the vault from which to obtain the secret. Defaults to None.
+            timeout(int, optional): The amount of time (in seconds) to wait while running this task before
+                a timeout occurs. Defaults to 3600.
 
         Returns:
             files_list (List): List of files in SFTP server.
@@ -106,6 +113,7 @@ class SftpList(Task):
 
         super().__init__(
             name="SftpList",
+            timeout=timeout,
             *args,
             **kwargs,
         )

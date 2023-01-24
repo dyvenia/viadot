@@ -17,25 +17,26 @@ class DuckDBQuery(Task):
 
     Args:
         credentials (dict, optional): The config to use for connecting with the db.
+        timeout(int, optional): The amount of time (in seconds) to wait while running this task before
+            a timeout occurs. Defaults to 3600.
     """
 
     def __init__(
         self,
         credentials: dict = None,
-        timeout: int = 600,
+        timeout: int = 3600,
         *args,
         **kwargs,
     ):
         self.credentials = credentials
         super().__init__(name="run_duckdb_query", timeout=timeout, *args, **kwargs)
 
-    @defaults_from_attrs("credentials", "timeout")
+    @defaults_from_attrs("credentials")
     def run(
         self,
         query: str,
         fetch_type: Literal["record", "dataframe"] = "record",
         credentials: dict = None,
-        timeout: int = None,
     ) -> Union[List[Record], bool]:
         """Run a query on DuckDB.
 
@@ -71,6 +72,8 @@ class DuckDBCreateTableFromParquet(Task):
         if_exists (Literal, optional): What to do if the table already exists.
         if_empty (Literal, optional): What to do if ".parquet" file is emty. Defaults to "skip".
         credentials(dict, optional): The config to use for connecting with the db.
+        timeout(int, optional): The amount of time (in seconds) to wait while running this task before
+            a timeout occurs. Defaults to 3600.
 
     Raises:
         ValueError: If the table exists and `if_exists`is set to `fail` or when parquet file
@@ -86,6 +89,7 @@ class DuckDBCreateTableFromParquet(Task):
         if_exists: Literal["fail", "replace", "append", "skip", "delete"] = "fail",
         if_empty: Literal["skip", "fail"] = "skip",
         credentials: dict = None,
+        timeout: int = 3600,
         *args,
         **kwargs,
     ):
@@ -96,6 +100,7 @@ class DuckDBCreateTableFromParquet(Task):
 
         super().__init__(
             name="duckdb_create_table",
+            timeout=timeout,
             *args,
             **kwargs,
         )
@@ -157,6 +162,8 @@ class DuckDBToDF(Task):
         if_empty (Literal[, optional): What to do if the query returns no data.
         Defaults to "warn".
         credentials (dict, optional): The config to use for connecting with the db.
+        timeout(int, optional): The amount of time (in seconds) to wait while running this task before
+            a timeout occurs. Defaults to 3600.
 
     Returns:
         pd.DataFrame: a pandas DataFrame containing the table data.
@@ -168,6 +175,7 @@ class DuckDBToDF(Task):
         table: str = None,
         if_empty: Literal["warn", "skip", "fail"] = "warn",
         credentials: dict = None,
+        timeout: int = 3600,
         *args,
         **kwargs,
     ):
@@ -177,7 +185,7 @@ class DuckDBToDF(Task):
         self.if_empty = if_empty
         self.credentials = credentials
 
-        super().__init__(name="duckdb_to_df", *args, **kwargs)
+        super().__init__(name="duckdb_to_df", timeout=timeout, *args, **kwargs)
 
     @defaults_from_attrs("schema", "table", "if_empty", "credentials")
     def run(

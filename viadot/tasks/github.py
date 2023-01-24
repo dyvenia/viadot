@@ -90,6 +90,8 @@ class DownloadGitHubFile(Task):
         to_path (str, optional): The destination path. Defaults to None.
         access_token_secret (str, optional): The Prefect secret containing GitHub token. Defaults to "github_token".
         branch (str, optional): The GitHub branch to use. Defaults to "main".
+        timeout(int, optional): The amount of time (in seconds) to wait while running this task before
+            a timeout occurs. Defaults to 3600.
     """
 
     def __init__(
@@ -99,6 +101,7 @@ class DownloadGitHubFile(Task):
         to_path: str = None,
         access_token_secret: str = "github_token",
         branch: str = "main",
+        timeout: int = 3600,
         **kwargs,
     ):
         self.repo = repo
@@ -106,7 +109,7 @@ class DownloadGitHubFile(Task):
         self.to_path = to_path
         self.access_token_secret = access_token_secret
         self.branch = branch
-        super().__init__(name="download_github_file", **kwargs)
+        super().__init__(name="download_github_file", timeout=timeout, **kwargs)
 
     @defaults_from_attrs(
         "repo", "from_path", "to_path", "access_token_secret", "branch"

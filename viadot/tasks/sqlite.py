@@ -17,6 +17,8 @@ class SQLiteInsert(Task):
     Args:
         db_path (str, optional): The path to the database to be used. Defaults to None.
         sql_path (str, optional): The path to the text file containing the query. Defaults to None.
+        timeout(int, optional): The amount of time (in seconds) to wait while running this task before
+            a timeout occurs. Defaults to 3600.
 
     """
 
@@ -28,6 +30,7 @@ class SQLiteInsert(Task):
         table_name: str = None,
         if_exists: str = "fail",
         dtypes: Dict[str, Any] = None,
+        timeout: int = 3600,
         *args,
         **kwargs,
     ):
@@ -38,7 +41,7 @@ class SQLiteInsert(Task):
         self.schema = schema
         self.if_exists = if_exists
 
-        super().__init__(name="sqlite_insert", *args, **kwargs)
+        super().__init__(name="sqlite_insert", timeout=timeout, *args, **kwargs)
 
     @defaults_from_attrs("df", "db_path", "schema", "table_name", "if_exists", "dtypes")
     def run(
@@ -75,14 +78,23 @@ class SQLiteSQLtoDF(Task):
     Args:
         db_path (str, optional): The path to the database to be used. Defaults to None.
         sql_path (str, optional): The path to the text file containing the query. Defaults to None.
+        timeout(int, optional): The amount of time (in seconds) to wait while running this task before
+            a timeout occurs. Defaults to 3600.
 
     """
 
-    def __init__(self, db_path: str = None, sql_path: str = None, *args, **kwargs):
+    def __init__(
+        self,
+        db_path: str = None,
+        sql_path: str = None,
+        timeout: int = 3600,
+        *args,
+        **kwargs,
+    ):
         self.db_path = db_path
         self.sql_path = sql_path
 
-        super().__init__(name="sqlite_sql_to_df", *args, **kwargs)
+        super().__init__(name="sqlite_sql_to_df", timeout=timeout, *args, **kwargs)
 
     def __call__(self):
         """Generate a DataFrame from a SQLite SQL query"""
@@ -111,12 +123,22 @@ class SQLiteQuery(Task):
     Args:
         query (str, optional): The query to execute on the database. Defaults to None.
         db_path (str, optional): The path to the database to be used. Defaults to None.
+        timeout(int, optional): The amount of time (in seconds) to wait while running this task before
+            a timeout occurs. Defaults to 3600.
+
     """
 
-    def __init__(self, query: str = None, db_path: str = None, *args, **kwargs):
+    def __init__(
+        self,
+        query: str = None,
+        db_path: str = None,
+        timeout: int = 3600,
+        *args,
+        **kwargs,
+    ):
         self.query = query
         self.db_path = db_path
-        super().__init__(name="sqlite_query", *args, **kwargs)
+        super().__init__(name="sqlite_query", timeout=timeout, *args, **kwargs)
 
     def __call__(self):
         """Run an SQL query on SQLite"""

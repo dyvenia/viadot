@@ -17,7 +17,7 @@ class OutlookToDF(Task):
         credentials: Dict[str, Any] = None,
         output_file_extension: str = ".csv",
         limit: int = 10000,
-        timeout: int = 1200,
+        timeout: int = 3600,
         *args: List[Any],
         **kwargs: Dict[str, Any],
     ):
