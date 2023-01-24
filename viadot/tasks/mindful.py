@@ -163,6 +163,6 @@ class MindfulToCSV(Task):
             logger.info("Successfully downloaded surveys data from the Mindful API.")
 
         if not file_names:
-            raise TypeError("Files were not created.")
+            return None
         else:
             return file_names
