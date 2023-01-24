@@ -7,7 +7,7 @@ from prefect.utilities import logging
 logger = logging.get_logger()
 
 
-@task
+@task(timeout=3600)
 def run_flows_list(flow_name: str, flows_list: List[List] = [List[None]]):
     """
     Task for running multiple flows in the given order. Task will create flow of flows.
@@ -54,4 +54,8 @@ class MultipleFlows(Flow):
         self.gen_flow()
 
     def gen_flow(self) -> Flow:
-        run_flows_list.bind(flow_name=self.name, flows_list=self.flows_list, flow=self)
+        run_flows_list.bind(
+            flow_name=self.name,
+            flows_list=self.flows_list,
+            flow=self,
+        )

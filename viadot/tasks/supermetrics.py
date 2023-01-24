@@ -16,7 +16,8 @@ class SupermetricsToCSV(Task):
         path (str, optional): The destination path. Defaults to "supermetrics_extract.csv".
         max_retries (int, optional): The maximum number of retries. Defaults to 5.
         retry_delay (timedelta, optional): The delay between task retries. Defaults to 10 seconds.
-        timeout (int, optional): Task timeout. Defaults to 30 minuntes.
+        timeout (int, optional): The amount of time (in seconds) to wait while running this task before
+            a timeout occurs. Defaults to 3600.
         max_rows (int, optional): Maximum number of rows the query results should contain. Defaults to 1 000 000.
         max_cols (int, optional): Maximum number of columns the query results should contain. Defaults to None.
         if_exists (str, optional): What to do if file already exists. Defaults to "replace".
@@ -31,7 +32,7 @@ class SupermetricsToCSV(Task):
         path: str = "supermetrics_extract.csv",
         max_retries: int = 5,
         retry_delay: timedelta = timedelta(seconds=10),
-        timeout: int = 60 * 30,
+        timeout: int = 3600,
         max_rows: int = 1_000_000,
         if_exists: str = "replace",
         if_empty: str = "warn",
@@ -173,7 +174,8 @@ class SupermetricsToDF(Task):
         if_empty (str, optional): What to do if query returns no data. Defaults to "warn".
         max_retries (int, optional): The maximum number of retries. Defaults to 5.
         retry_delay (timedelta, optional): The delay between task retries. Defaults to 10 seconds.
-        timeout (int, optional): Task timeout. Defaults to 30 minuntes.
+        timeout (int, optional): The amount of time (in seconds) to wait while running this task before
+            a timeout occurs. Defaults to 3600.
     """
 
     def __init__(
@@ -183,7 +185,7 @@ class SupermetricsToDF(Task):
         max_rows: int = 1_000_000,
         max_retries: int = 5,
         retry_delay: timedelta = timedelta(seconds=10),
-        timeout: int = 60 * 30,
+        timeout: int = 3600,
         **kwargs,
     ):
 

@@ -18,6 +18,7 @@ class EpicorOrdersToDF(Task):
         config_key: str = None,
         start_date_field: str = "BegInvoiceDate",
         end_date_field: str = "EndInvoiceDate",
+        timeout: int = 3600,
         *args,
         **kwargs,
     ) -> pd.DataFrame:
@@ -32,6 +33,8 @@ class EpicorOrdersToDF(Task):
             config_key (str, optional): Credential key to dictionary where details are stored. Defauls to None.
             start_date_field (str, optional) The name of filters filed containing start date. Defaults to "BegInvoiceDate".
             end_date_field (str, optional) The name of filters filed containing end date. Defaults to "EndInvoiceDate".
+            timeout(int, optional): The amount of time (in seconds) to wait while running this task before
+                a timeout occurs. Defaults to 3600.
 
         Returns:
             pd.DataFrame: DataFrame with parsed API output
@@ -44,6 +47,7 @@ class EpicorOrdersToDF(Task):
         self.end_date_field = end_date_field
         super().__init__(
             name="epicor_orders_to_df",
+            timeout=timeout,
             *args,
             **kwargs,
         )

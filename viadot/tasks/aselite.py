@@ -13,13 +13,20 @@ from .azure_key_vault import AzureKeyVaultSecret
 
 class ASELiteToDF(Task):
     def __init__(
-        self, credentials: Dict[str, Any] = None, query: str = None, *args, **kwargs
+        self,
+        credentials: Dict[str, Any] = None,
+        query: str = None,
+        timeout: int = 3600,
+        *args,
+        **kwargs
     ):
         """
         Task for obtaining data from ASElite source.
         Args:
             credentials (Dict[str, Any], optional): ASElite SQL Database credentials. Defaults to None.
             query(str, optional): Query to perform on a database. Defaults to None.
+            timeout(int, optional): The amount of time (in seconds) to wait while running this task before
+                a timeout occurs. Defaults to 3600.
         Returns: Pandas DataFrame
         """
         self.credentials = credentials
@@ -27,6 +34,7 @@ class ASELiteToDF(Task):
 
         super().__init__(
             name="ASElite_to_df",
+            timeout=timeout,
             *args,
             **kwargs,
         )

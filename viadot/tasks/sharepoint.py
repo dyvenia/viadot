@@ -28,6 +28,8 @@ class SharepointToDF(Task):
         sheet_number (int): Sheet number to be extracted from file. Counting from 0, if None all sheets are axtracted. Defaults to None.
         validate_excel_file (bool, optional): Check if columns in separate sheets are the same. Defaults to False.
         if_empty (str, optional): What to do if query returns no data. Defaults to "warn".
+        timeout(int, optional): The amount of time (in seconds) to wait while running this task before
+            a timeout occurs. Defaults to 3600.
 
     Returns:
         pd.DataFrame: Pandas data frame
@@ -41,6 +43,7 @@ class SharepointToDF(Task):
         sheet_number: int = None,
         validate_excel_file: bool = False,
         if_empty: str = "warn",
+        timeout: int = 3600,
         *args,
         **kwargs,
     ):
@@ -54,6 +57,7 @@ class SharepointToDF(Task):
 
         super().__init__(
             name="sharepoint_to_df",
+            timeout=timeout,
             *args,
             **kwargs,
         )

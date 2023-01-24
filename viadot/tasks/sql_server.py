@@ -20,6 +20,8 @@ class SQLServerCreateTable(Task):
         dtypes (Dict[str, Any], optional): Data types to enforce.
         if_exists (Literal, optional): What to do if the table already exists.
         credentials (dict, optional): Credentials for the connection.
+        timeout(int, optional): The amount of time (in seconds) to wait while running this task before
+            a timeout occurs. Defaults to 3600.
     """
 
     def __init__(
@@ -31,6 +33,7 @@ class SQLServerCreateTable(Task):
         credentials: dict = None,
         max_retries: int = 3,
         retry_delay: timedelta = timedelta(seconds=10),
+        timeout: int = 3600,
         *args,
         **kwargs,
     ):
@@ -43,6 +46,7 @@ class SQLServerCreateTable(Task):
             name="sql_server_create_table",
             max_retries=max_retries,
             retry_delay=retry_delay,
+            timeout=timeout,
             *args,
             **kwargs,
         )
@@ -89,6 +93,7 @@ class SQLServerToDF(Task):
     def __init__(
         self,
         config_key: str = None,
+        timeout: int = 3600,
         *args,
         **kwargs,
     ):
@@ -97,11 +102,13 @@ class SQLServerToDF(Task):
 
         Args:
             config_key (str, optional): The key inside local config containing the credentials. Defaults to None.
+            timeout(int, optional): The amount of time (in seconds) to wait while running this task before
+                a timeout occurs. Defaults to 3600.
 
         """
         self.config_key = config_key
 
-        super().__init__(name="sql_server_to_df", *args, **kwargs)
+        super().__init__(name="sql_server_to_df", timeout=timeout, *args, **kwargs)
 
     @defaults_from_attrs("config_key")
     def run(
@@ -135,6 +142,7 @@ class SQLServerQuery(Task):
     def __init__(
         self,
         config_key: str = None,
+        timeout: int = 3600,
         *args,
         **kwargs,
     ):
@@ -143,10 +151,12 @@ class SQLServerQuery(Task):
 
         Args:
             config_key (str, optional): The key inside local config containing the credentials. Defaults to None.
+            timeout(int, optional): The amount of time (in seconds) to wait while running this task before
+                a timeout occurs. Defaults to 3600.
         """
         self.config_key = config_key
 
-        super().__init__(name="sql_server_query", *args, **kwargs)
+        super().__init__(name="sql_server_query", timeout=timeout, *args, **kwargs)
 
     @defaults_from_attrs("config_key")
     def run(
