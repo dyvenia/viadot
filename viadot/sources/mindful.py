@@ -189,12 +189,15 @@ class Mindful(Source):
     ) -> Response:
         """Gets a list of survey resources associated with the authenticated customer.
 
+        Args:
+            limit (int, optional): The number of matching interactions to return. Defaults to 1000.
+
         Returns:
-            Response: request object with the response from the Mindful API.
+            Response: Request object with the response from the Mindful API.
         """
         self.endpoint = "surveys"
         params = {
-            "_limit": 1000,
+            "_limit": limit,
         }
 
         response = self._mindful_api_response(
@@ -210,7 +213,7 @@ class Mindful(Source):
             )
         else:
             self.logger.error(
-                f"Failed to downloaded responses data. - {response.content}"
+                f"Failed to download responses data. - {response.content}"
             )
             raise APIError("Failed to downloaded responses data.")
 
