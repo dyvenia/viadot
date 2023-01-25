@@ -569,7 +569,7 @@ def credentials_loader(credentials_secret: str, vault_name: str = None) -> dict:
     return credentials
 
 
-@task
+@task(timeout=3600)
 def adls_bulk_upload(
     file_names: List[str],
     file_name_relative_path: str = "",
@@ -579,7 +579,6 @@ def adls_bulk_upload(
     timeout: int = 3600,
 ) -> None:
     """Function that upload files to defined path in ADLS.
-
     Args:
         file_names (List[str]): List of file names to generate paths.
         file_name_relative_path (str, optional): Path where to save the file locally. Defaults to ''.

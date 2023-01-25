@@ -10,7 +10,7 @@ from prefect.utilities import logging
 
 from viadot.tasks.azure_data_lake import AzureDataLakeDownload
 
-from ..tasks import (
+from viadot.tasks import (
     AzureDataLakeCopy,
     AzureDataLakeToDF,
     AzureSQLCreateTable,
@@ -78,7 +78,7 @@ def df_to_csv_task(df, remove_tab, path: str, sep: str = "\t"):
             df.to_csv(path, sep=sep, index=False)
 
 
-@task
+@task(timeout=3600)
 def check_dtypes_sort(
     df: pd.DataFrame = None,
     dtypes: Dict[str, Any] = None,
@@ -86,12 +86,10 @@ def check_dtypes_sort(
     """Check dtype column order to avoid malformation SQL table.
     When data is loaded by the user, a data frame is passed to this task
     to check the column sort with dtypes and re-sort if neccessary.
-
     Args:
         df (pd.DataFrame, optional): Data Frame from original ADLS file. Defaults to None.
         dtypes (Dict[str, Any], optional): Dictionary of columns and data type to apply
             to the Data Frame downloaded. Defaults to None.
-
     Returns:
         Dict[str, Any]: Sorted dtype.
     """
