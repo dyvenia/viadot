@@ -7,7 +7,8 @@ from prefect.utilities.tasks import defaults_from_attrs
 
 from viadot.sources import Mediatool
 from ..exceptions import CredentialError
-from ..task_utils import credentials_loader
+
+from viadot.task_utils import credentials_loader
 
 logger = logging.get_logger()
 
@@ -45,7 +46,8 @@ class MediatoolToDF(Task):
                 self.mediatool_credentials = credentials_loader.run(
                     credentials_secret=mediatool_credentials_key,
                 )
-            except:
+            except Exception as e:
+                print(e)
                 raise CredentialError(
                     "Credentials and credentials_secret are not provided."
                 )
