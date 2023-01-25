@@ -9,6 +9,8 @@ ENV SAPNWRFC_HOME=/usr/local/sap/nwrfcsdk
 
 RUN ldconfig
 
+USER ${USER}
+
 ARG HTTP_PROXY=""
 ARG HTTPS_PROXY=""
 ARG NO_PROXY=""
