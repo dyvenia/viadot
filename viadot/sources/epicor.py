@@ -272,7 +272,7 @@ class Epicor(Source):
         if self.validate_date_filter == True:
             self.validate_filter()
         payload = self.filters_xml
-        url = .selfgenerate_url()
+        url = self.generate_url()
         headers = {
             "Content-Type": "application/xml",
             "Authorization": "Bearer " + self.generate_token(),
