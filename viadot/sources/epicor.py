@@ -270,7 +270,7 @@ class Epicor(Source):
     def get_xml_response(self):
         "Function for getting response from Epicor API"
         if self.validate_date_filter == True:
-            self.validate_filter
+            self.validate_filter()
         payload = self.filters_xml
         url = self.generate_url()
         headers = {
