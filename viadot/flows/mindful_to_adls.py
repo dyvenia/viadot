@@ -26,7 +26,7 @@ def adls_bulk_upload(
     """Function that upload files to defined path in ADLS.
 
     Args:
-        file_names (List[str]): List of file names to generate paths.
+        file_names (List[str]): List of file names to generate its paths.
         file_name_relative_path (str, optional): Path where to save the file locally. Defaults to ''.
         adls_file_path (str, optional): Azure Data Lake path. Defaults to None.
         adls_sp_credentials_secret (str, optional): The name of the Azure Key Vault secret containing a dictionary with
