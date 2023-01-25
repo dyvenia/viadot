@@ -144,6 +144,7 @@ class GetFlowNewDateRange(Task):
         self,
         flow_name: str = None,
         date_range_type: str = None,
+        timeout: int = 3600,
         *args,
         **kwargs,
     ):
@@ -153,7 +154,9 @@ class GetFlowNewDateRange(Task):
         Args:
             flow_name (str, optional): Prefect flow name. Defaults to None.
             date_range_type (str, optional): String argument that should look like this: 'last_X_days' -
-            X is a number of days. Defaults to None.
+                X is a number of days. Defaults to None.
+            timeout(int, optional): The amount of time (in seconds) to wait while running this task before
+                a timeout occurs. Defaults to 3600.
         """
 
         self.flow_name = flow_name
@@ -161,6 +164,7 @@ class GetFlowNewDateRange(Task):
 
         super().__init__(
             name="prefect_extract_details",
+            timeout=timeout,
             *args,
             **kwargs,
         )

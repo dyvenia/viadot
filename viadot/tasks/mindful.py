@@ -25,6 +25,7 @@ class MindfulToCSV(Task):
         region: Literal["us1", "us2", "us3", "ca1", "eu1", "au1"] = "eu1",
         file_extension: Literal["parquet", "csv"] = "csv",
         file_path: str = "",
+        timeout: int = 3600,
         *args: List[Any],
         **kwargs: Dict[str, Any],
     ):
@@ -39,6 +40,8 @@ class MindfulToCSV(Task):
             region (Literal[us1, us2, us3, ca1, eu1, au1], optional): SD region from where to interact with the mindful API. Defaults to "eu1".
             file_extension (Literal[parquet, csv], optional): File extensions for storing responses. Defaults to "csv".
             file_path (str, optional): Path where to save the file locally. Defaults to ''.
+            timeout(int, optional): The amount of time (in seconds) to wait while running this task before
+                a timeout occurs. Defaults to 3600.
 
         Raises:
             CredentialError: If credentials are not provided in local_config or directly as a parameter inside run method.
@@ -53,6 +56,7 @@ class MindfulToCSV(Task):
 
         super().__init__(
             name=report_name,
+            timeout=timeout,
             *args,
             **kwargs,
         )
@@ -99,7 +103,7 @@ class MindfulToCSV(Task):
     ):
 
         if credentials_mindful is not None:
-            logger.info("Mindful credentials provided by user")
+            self.logger.info("Mindful credentials provided by user")
         elif credentials_mindful is None and credentials_secret is not None:
             credentials_str = AzureKeyVaultSecret(
                 credentials_secret, vault_name=vault_name
@@ -109,7 +113,7 @@ class MindfulToCSV(Task):
         else:
             try:
                 credentials_mindful = local_config["MINDFUL"]
-                logger.info("Mindful credentials loaded from local config")
+                self.logger.info("Mindful credentials loaded from local config")
             except KeyError:
                 credentials_mindful = None
                 raise CredentialError("Credentials not found.")
@@ -149,6 +153,6 @@ class MindfulToCSV(Task):
             logger.info("Successfully downloaded responses data from the Mindful API.")
 
         if not file_names:
-            return None
+            raise TypeError("Files were not created.")
         else:
             return file_names

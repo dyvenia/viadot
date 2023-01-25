@@ -28,6 +28,7 @@ class BigQueryToDF(Task):
         credentials_key: str = None,
         credentials_secret: str = None,
         vault_name: str = None,
+        timeout: int = 3600,
         *args: List[Any],
         **kwargs: Dict[str, Any],
     ):
@@ -52,6 +53,8 @@ class BigQueryToDF(Task):
             credentials can be generated as key for User Principal inside a BigQuery project. Defaults to None.
             credentials_secret (str, optional): The name of the Azure Key Vault secret for Bigquery project. Defaults to None.
             vault_name (str, optional): The name of the vault from which to obtain the secrets. Defaults to None.
+            timeout(int, optional): The amount of time (in seconds) to wait while running this task before
+                a timeout occurs. Defaults to 3600.
         """
         self.dataset_name = dataset_name
         self.table_name = table_name
@@ -64,6 +67,7 @@ class BigQueryToDF(Task):
 
         super().__init__(
             name="bigquery_to_df",
+            timeout=timeout,
             *args,
             **kwargs,
         )
