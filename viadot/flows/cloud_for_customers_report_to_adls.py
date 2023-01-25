@@ -4,18 +4,14 @@ from typing import Any, Dict, List, Union
 import pendulum
 from prefect import Flow, Task, apply_map
 
-from ..task_utils import (
+from viadot.task_utils import (
     add_ingestion_metadata_task,
     df_to_csv,
     df_to_parquet,
     union_dfs_task,
 )
-from ..tasks import AzureDataLakeUpload, C4CReportToDF, C4CToDF
-from ..utils import slugify
-
-file_to_adls_task = AzureDataLakeUpload()
-c4c_report_to_df = C4CReportToDF()
-c4c_to_df = C4CToDF()
+from viadot.tasks import AzureDataLakeUpload, C4CReportToDF, C4CToDF
+from viadot.utils import slugify
 
 
 class CloudForCustomersReportToADLS(Flow):
@@ -42,6 +38,7 @@ class CloudForCustomersReportToADLS(Flow):
         adls_sp_credentials_secret: str = None,
         if_empty: str = "warn",
         if_exists: str = "replace",
+        timeout: int = 3600,
         *args: List[any],
         **kwargs: Dict[str, Any],
     ):
@@ -75,6 +72,8 @@ class CloudForCustomersReportToADLS(Flow):
             Defaults to None.
             if_empty (str, optional): What to do if the Supermetrics query returns no data. Defaults to "warn".
             if_exists (str, optional): What to do if the local file already exists. Defaults to "replace".
+            timeout(int, optional): The amount of time (in seconds) to wait while running this task before
+                a timeout occurs. Defaults to 3600.
         """
 
         self.report_url = report_url
@@ -83,6 +82,7 @@ class CloudForCustomersReportToADLS(Flow):
         self.if_empty = if_empty
         self.env = env
         self.c4c_credentials_secret = c4c_credentials_secret
+        self.timeout = timeout
 
         # AzureDataLakeUpload
         self.adls_sp_credentials_secret = adls_sp_credentials_secret
@@ -155,6 +155,7 @@ class CloudForCustomersReportToADLS(Flow):
         flow: Flow = None,
     ) -> Task:
 
+        c4c_to_df = C4CToDF(timeout=self.timeout)
         df = c4c_to_df.bind(
             url=url,
             endpoint=endpoint,
@@ -170,6 +171,7 @@ class CloudForCustomersReportToADLS(Flow):
         self, report_urls_with_filters: Union[str, List[str]], flow: Flow = None
     ) -> Task:
 
+        c4c_report_to_df = C4CReportToDF(timeout=self.timeout)
         report = c4c_report_to_df.bind(
             report_url=report_urls_with_filters,
             skip=self.skip,
@@ -214,6 +216,7 @@ class CloudForCustomersReportToADLS(Flow):
                 flow=self,
             )
 
+        file_to_adls_task = AzureDataLakeUpload(timeout=self.timeout)
         file_to_adls_task.bind(
             from_path=self.local_file_path,
             to_path=self.adls_file_path,
