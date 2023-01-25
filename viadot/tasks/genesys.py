@@ -156,8 +156,8 @@ class GenesysToCSV(Task):
             logger.info(f"Waiting for caching data in Genesys database.")
             # in order to wait for API POST request add it
             timeout_start = time.time()
-            # 30 seconds timeout is minimal but for safety added 60.
-            timeout = timeout_start + 60
+            # 30 seconds timeout is minimal but for safety added 300.
+            timeout = timeout_start + 300
             # while loop with timeout
             while time.time() < timeout:
 
