@@ -1,4 +1,4 @@
-FROM viadot:dev
+FROM ghcr.io/dyvenia/viadot/viadot:dev
 
 USER root
 
