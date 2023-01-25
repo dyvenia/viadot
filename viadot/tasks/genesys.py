@@ -153,11 +153,15 @@ class GenesysToCSV(Task):
         genesys.genesys_generate_exports()
 
         if view_type == "queue_performance_detail_view":
-            logger.info(f"Waiting for caching data in Genesys database.")
+            logger.info(
+                f"Waiting {view_type_time_sleep} seconds for caching data in Genesys database."
+            )
+            # sleep time to allow Genesys generate all exports
+            time.sleep(view_type_time_sleep)
             # in order to wait for API POST request add it
             timeout_start = time.time()
-            # 30 seconds timeout is minimal but for safety added 300.
-            timeout = timeout_start + 300
+            # 30 seconds timeout is minimal but for safety added 60.
+            timeout = timeout_start + 60
             # while loop with timeout
             while time.time() < timeout:
 

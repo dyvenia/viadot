@@ -143,6 +143,7 @@ class GenesysToADLS(Flow):
         if self.view_type == "queue_performance_detail_view":
             file_names = to_csv.bind(
                 view_type=self.view_type,
+                view_type_time_sleep=self.view_type_time_sleep,
                 media_type_list=self.media_type_list,
                 queueIds_list=self.queueIds_list,
                 data_to_post_str=self.data_to_post,
