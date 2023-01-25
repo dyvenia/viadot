@@ -16,7 +16,6 @@ class EpicorOrdersToDF(Task):
         filters_xml: str,
         credentials: Dict[str, Any] = None,
         config_key: str = None,
-        validate_date_filter: bool = True,
         start_date_field: str = "BegInvoiceDate",
         end_date_field: str = "EndInvoiceDate",
         timeout: int = 3600,
@@ -32,7 +31,6 @@ class EpicorOrdersToDF(Task):
             filters_xml (str, required): Filters in form of XML. The date filter is necessary.
             credentials (Dict[str, Any], optional): Credentials to connect with Epicor Api containing host, port, username and password. Defaults to None.
             config_key (str, optional): Credential key to dictionary where details are stored. Defauls to None.
-            validate_date_filter (bool, optional): Whether or not validate xml date filters. Defaults to True.
             start_date_field (str, optional) The name of filters filed containing start date. Defaults to "BegInvoiceDate".
             end_date_field (str, optional) The name of filters filed containing end date. Defaults to "EndInvoiceDate".
             timeout(int, optional): The amount of time (in seconds) to wait while running this task before
@@ -45,7 +43,6 @@ class EpicorOrdersToDF(Task):
         self.config_key = config_key
         self.base_url = base_url
         self.filters_xml = filters_xml
-        self.validate_date_filter = validate_date_filter
         self.start_date_field = start_date_field
         self.end_date_field = end_date_field
         super().__init__(
@@ -64,7 +61,6 @@ class EpicorOrdersToDF(Task):
         "config_key",
         "base_url",
         "filters_xml",
-        "validate_date_filter",
         "start_date_field",
         "end_date_field",
     )
@@ -74,7 +70,6 @@ class EpicorOrdersToDF(Task):
         config_key: str = None,
         base_url: str = None,
         filters_xml: str = None,
-        validate_date_filter: bool = True,
         start_date_field: str = None,
         end_date_field: str = None,
     ):
@@ -83,7 +78,6 @@ class EpicorOrdersToDF(Task):
             config_key=config_key,
             base_url=base_url,
             filters_xml=filters_xml,
-            validate_date_filter=validate_date_filter,
             start_date_field=start_date_field,
             end_date_field=end_date_field,
         )

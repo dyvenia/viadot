@@ -15,7 +15,6 @@ class EpicorOrdersToDuckDB(Flow):
         local_file_path: str,
         epicor_credentials: Dict[str, Any] = None,
         epicor_config_key: str = None,
-        validate_date_filter: bool = True,
         start_date_field: str = "BegInvoiceDate",
         end_date_field: str = "EndInvoiceDate",
         duckdb_table: str = None,
@@ -37,7 +36,6 @@ class EpicorOrdersToDuckDB(Flow):
             epicor_credentials (Dict[str, Any], optional): Credentials to connect with Epicor API containing host, port,
                 username and password. Defaults to None.
             epicor_config_key (str, optional): Credential key to dictionary where details are stored. Defaults to None.
-            validate_date_filter (bool, optional): Whether or not validate xml date filters. Defaults to True.
             start_date_field (str, optional) The name of filters field containing start date. Defaults to "BegInvoiceDate".
             end_date_field (str, optional) The name of filters field containing end date. Defaults to "EndInvoiceDate".
             duckdb_table (str, optional): Destination table in DuckDB. Defaults to None.
@@ -51,7 +49,6 @@ class EpicorOrdersToDuckDB(Flow):
         self.base_url = base_url
         self.epicor_credentials = epicor_credentials
         self.epicor_config_key = epicor_config_key
-        self.validate_date_filter = validate_date_filter
         self.filters_xml = filters_xml
         self.end_date_field = end_date_field
         self.start_date_field = start_date_field
@@ -81,7 +78,6 @@ class EpicorOrdersToDuckDB(Flow):
             flow=self,
             credentials=self.epicor_credentials,
             config_key=self.epicor_config_key,
-            validate_date_filter=self.validate_date_filter,
             end_date_field=self.end_date_field,
             start_date_field=self.start_date_field,
         )
