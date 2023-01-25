@@ -3,7 +3,6 @@ from typing import Any, Dict, List, Literal
 import pandas as pd
 from prefect import Flow, task
 
-from viadot.task_utils import df_to_csv
 from viadot.tasks import AzureDataLakeUpload
 from viadot.tasks.genesys import GenesysToCSV, GenesysToDF
 from viadot.task_utils import (

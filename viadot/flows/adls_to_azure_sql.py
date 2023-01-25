@@ -5,11 +5,12 @@ from typing import Any, Dict, List, Literal
 import pandas as pd
 from prefect import Flow, task
 from prefect.backend import get_key_value
+from prefect.engine import signals
 from prefect.utilities import logging
 
 from viadot.tasks.azure_data_lake import AzureDataLakeDownload
 
-from ..tasks import (
+from viadot.tasks import (
     AzureDataLakeCopy,
     AzureDataLakeToDF,
     AzureSQLCreateTable,
@@ -75,6 +76,50 @@ def df_to_csv_task(df, remove_tab, path: str, sep: str = "\t"):
             df.to_csv(path, sep=sep, index=False)
         else:
             df.to_csv(path, sep=sep, index=False)
+
+
+@task(timeout=3600)
+def check_dtypes_sort(
+    df: pd.DataFrame = None,
+    dtypes: Dict[str, Any] = None,
+) -> Dict[str, Any]:
+    """Check dtype column order to avoid malformation SQL table.
+    When data is loaded by the user, a data frame is passed to this task
+    to check the column sort with dtypes and re-sort if neccessary.
+    Args:
+        df (pd.DataFrame, optional): Data Frame from original ADLS file. Defaults to None.
+        dtypes (Dict[str, Any], optional): Dictionary of columns and data type to apply
+            to the Data Frame downloaded. Defaults to None.
+    Returns:
+        Dict[str, Any]: Sorted dtype.
+    """
+    if df is None:
+        logger.error("DataFrame argument is mandatory")
+        raise signals.FAIL("DataFrame is None.")
+    else:
+        # first check if all dtypes keys are in df.columns
+        if all(d in df.columns for d in list(dtypes.keys())) and len(df.columns) == len(
+            list(dtypes.keys())
+        ):
+            # check if have the same sort
+            matches = list(map(lambda x, y: x == y, df.columns, dtypes.keys()))
+            if not all(matches):
+                logger.warning(
+                    "Some keys are not sorted in dtypes. Repositioning the key:value..."
+                )
+                # re-sort in a new dtype
+                new_dtypes = dict()
+                for key in df.columns:
+                    new_dtypes.update([(key, dtypes[key])])
+            else:
+                new_dtypes = dtypes.copy()
+        else:
+            logger.error("There is a discrepancy with any of the columns.")
+            raise signals.FAIL(
+                "dtype dictionary contains key(s) that not matching with the ADLS file columns name, or they have different length."
+            )
+
+    return new_dtypes
 
 
 class ADLSToAzureSQL(Flow):
@@ -232,7 +277,11 @@ class ADLSToAzureSQL(Flow):
             dtypes = map_data_types_task.bind(self.local_json_path, flow=self)
             map_data_types_task.set_upstream(download_json_file_task, flow=self)
         else:
-            dtypes = self.dtypes
+            dtypes = check_dtypes_sort.bind(
+                df,
+                dtypes=self.dtypes,
+                flow=self,
+            )
 
         check_column_order_task = CheckColumnOrder(timeout=self.timeout)
         df_reorder = check_column_order_task.bind(
