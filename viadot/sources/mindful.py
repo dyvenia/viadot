@@ -188,8 +188,10 @@ class Mindful(Source):
         **kwargs,
     ) -> Response:
         """Gets a list of survey resources associated with the authenticated customer.
+
         Args:
             limit (int, optional): The number of matching interactions to return. Defaults to 1000.
+
         Returns:
             Response: Request object with the response from the Mindful API.
         """

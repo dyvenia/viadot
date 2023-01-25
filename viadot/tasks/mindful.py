@@ -132,6 +132,7 @@ class MindfulToCSV(Task):
         )
 
         file_names = []
+        # interactions
         interactions_response = mindful.get_interactions_list()
         if interactions_response.status_code == 200:
             interaction_file_name = mindful.response_to_file(
@@ -143,6 +144,8 @@ class MindfulToCSV(Task):
                 "Successfully downloaded interactions data from the Mindful API."
             )
             time.sleep(0.5)
+
+        # responses
         responses_response = mindful.get_responses_list()
         if responses_response.status_code == 200:
             response_file_name = mindful.response_to_file(
@@ -151,8 +154,19 @@ class MindfulToCSV(Task):
             )
             file_names.append(response_file_name)
             logger.info("Successfully downloaded responses data from the Mindful API.")
+            time.sleep(0.5)
+
+        # surveys
+        surveys_response = mindful.get_survey_list()
+        if surveys_response.status_code == 200:
+            surveys_file_name = mindful.response_to_file(
+                surveys_response,
+                file_path=file_path,
+            )
+            file_names.append(surveys_file_name)
+            logger.info("Successfully downloaded surveys data from the Mindful API.")
 
         if not file_names:
-            raise TypeError("Files were not created.")
+            return None
         else:
             return file_names
