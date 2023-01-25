@@ -30,6 +30,14 @@ class MockClass:
         return test
 
 
+class MockClass2:
+    status_code = 204
+    content = b""
+
+    def json():
+        return None
+
+
 @pytest.mark.init
 def test_instance_mindful():
     mf = Mindful(header=header)
@@ -112,3 +120,11 @@ def test_mindful_surveys(mock_connection):
     assert mf.endpoint == "surveys" and isinstance(mf.endpoint, str)
     assert os.path.exists("surveys.csv")
     os.remove("surveys.csv")
+
+
+@mock.patch("viadot.sources.Mindful._mindful_api_response", return_value=MockClass2)
+@pytest.mark.exception
+def test_file_exception(mock_mindful):
+    mf = MindfulToCSV()
+    response = mf.run(credentials_mindful=credentials_mindful)
+    assert response == None

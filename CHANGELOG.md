@@ -6,8 +6,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 ### Added
-- Added `validate_date_filter` parameter to `Epicor` source, `EpicorOrdersToDF` task and `EpicorOrdersToDuckDB` flow.
-This parameter enables user to decide whether or not filter should be validated.
+- Added `FileNotFoundError` to catch up failures in `MindfulToCSV` and when creating SQL tables.
 - Added `check_dtypes_sort` task into `ADLSToAzureSQL` to check if dtypes is properly sorted.
 - Added `timeout` parameter to all `Task`s where it can be added.
 - Added `timeout` parameter to all `Flow`s where it can be added.
@@ -19,8 +18,7 @@ This parameter enables user to decide whether or not filter should be validated.
 - Updated `mindful_to_adls.py` flow with the `adls_bulk_upload` task
 - Changed `MindfulToCSV` task to download surveys info.
 
-
-# [0.4.11] - 2022-12-15
+## [0.4.11] - 2022-12-15
 ### Added
 - Added into `Genesys` the new view type `AGENT`. 
 
