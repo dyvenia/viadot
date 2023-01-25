@@ -9,45 +9,10 @@ from prefect.engine.signals import FAIL
 from prefect.triggers import all_successful
 from viadot.tasks import MindfulToCSV
 from viadot.tasks import AzureDataLakeUpload
-from viadot.task_utils import add_ingestion_metadata_task
+from viadot.task_utils import add_ingestion_metadata_task, adls_bulk_upload
 
 logger = logging.get_logger()
 file_to_adls_task = AzureDataLakeUpload()
-
-
-@task
-def adls_bulk_upload(
-    file_names: List[str] = None,
-    file_name_relative_path: str = "",
-    adls_file_path: str = None,
-    adls_sp_credentials_secret: str = None,
-    adls_overwrite: bool = True,
-) -> List[str]:
-    """Function that upload files to defined path in ADLS.
-
-    Args:
-        file_names (List[str]): List of file names to generate its paths.
-        file_name_relative_path (str, optional): Path where to save the file locally. Defaults to ''.
-        adls_file_path (str, optional): Azure Data Lake path. Defaults to None.
-        adls_sp_credentials_secret (str, optional): The name of the Azure Key Vault secret containing a dictionary with
-            ACCOUNT_NAME and Service Principal credentials (TENANT_ID, CLIENT_ID, CLIENT_SECRET). Defaults to None.
-        adls_overwrite (bool, optional): Whether to overwrite files in the data lake. Defaults to True.
-
-    Returns:
-        List[str]: List of paths
-    """
-
-    if not file_names:
-        logger.warning("Avoided uploading any file to ADLS. No files were reported.")
-    else:
-        for file in file_names:
-            file_path = str(adls_file_path + "/" + file)
-            file_to_adls_task.run(
-                from_path=os.path.join(file_name_relative_path, file),
-                to_path=file_path,
-                sp_credentials_secret=adls_sp_credentials_secret,
-                overwrite=adls_overwrite,
-            )
 
 
 @task

@@ -1,4 +1,4 @@
-## SAP RFC example
+# SAP RFC example
 
 This is an example environment for running the `SAPRFC` connector. 
 

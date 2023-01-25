@@ -20,11 +20,3 @@ ENV NO_PROXY=$NO_PROXY
 RUN git config --global http.proxy ${HTTP_PROXY:-""}
 
 RUN pip install pyrfc==2.5.0
-
-ARG VIADOT_USER=viadot_user
-ARG GID=1111
-ARG UID=1111
-RUN groupadd -g $GID -o $VIADOT_USER
-RUN useradd -m -u $UID -g $GID -o -s /bin/bash $VIADOT_USER
-
-USER $VIADOT_USER

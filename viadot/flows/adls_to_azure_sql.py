@@ -21,23 +21,13 @@ from ..tasks import (
 
 logger = logging.get_logger(__name__)
 
-lake_to_df_task = AzureDataLakeToDF()
-download_json_file_task = AzureDataLakeDownload()
-download_github_file_task = DownloadGitHubFile()
-promote_to_conformed_task = AzureDataLakeCopy()
-promote_to_operations_task = AzureDataLakeCopy()
-create_table_task = AzureSQLCreateTable()
-bulk_insert_task = BCPTask()
-azure_query_task = AzureSQLDBQuery()
-check_column_order_task = CheckColumnOrder()
 
-
-@task
+@task(timeout=3600)
 def union_dfs_task(dfs: List[pd.DataFrame]):
     return pd.concat(dfs, ignore_index=True)
 
 
-@task
+@task(timeout=3600)
 def map_data_types_task(json_shema_path: str):
     file_dtypes = open(json_shema_path)
     dict_dtypes = json.load(file_dtypes)
@@ -71,7 +61,7 @@ def map_data_types_task(json_shema_path: str):
     return dict_dtypes_mapped
 
 
-@task
+@task(timeout=3600)
 def df_to_csv_task(df, remove_tab, path: str, sep: str = "\t"):
     # if table doesn't exist it will be created later -  df equals None
     if df is None:
@@ -109,6 +99,7 @@ class ADLSToAzureSQL(Flow):
         max_download_retries: int = 5,
         tags: List[str] = ["promotion"],
         vault_name: str = None,
+        timeout: int = 3600,
         *args: List[any],
         **kwargs: Dict[str, Any],
     ):
@@ -141,6 +132,8 @@ class ADLSToAzureSQL(Flow):
             max_download_retries (int, optional): How many times to retry the download. Defaults to 5.
             tags (List[str], optional): Flow tags to use, eg. to control flow concurrency. Defaults to ["promotion"].
             vault_name (str, optional): The name of the vault from which to obtain the secrets. Defaults to None.
+            timeout(int, optional): The amount of time (in seconds) to wait while running this task before
+                a timeout occurs. Defaults to 3600.
         """
 
         adls_path = adls_path.strip("/")
@@ -189,6 +182,7 @@ class ADLSToAzureSQL(Flow):
         self.max_download_retries = max_download_retries
         self.tags = tags
         self.vault_name = vault_name
+        self.timeout = timeout
 
         super().__init__(*args, name=name, **kwargs)
 
@@ -219,6 +213,7 @@ class ADLSToAzureSQL(Flow):
         return promoted_path
 
     def gen_flow(self) -> Flow:
+        lake_to_df_task = AzureDataLakeToDF(timeout=self.timeout)
         df = lake_to_df_task.bind(
             path=self.adls_path,
             sp_credentials_secret=self.adls_sp_credentials_secret,
@@ -227,6 +222,7 @@ class ADLSToAzureSQL(Flow):
         )
 
         if not self.dtypes:
+            download_json_file_task = AzureDataLakeDownload(timeout=self.timeout)
             download_json_file_task.bind(
                 from_path=self.json_shema_path,
                 to_path=self.local_json_path,
@@ -238,6 +234,7 @@ class ADLSToAzureSQL(Flow):
         else:
             dtypes = self.dtypes
 
+        check_column_order_task = CheckColumnOrder(timeout=self.timeout)
         df_reorder = check_column_order_task.bind(
             table=self.table,
             schema=self.schema,
@@ -263,6 +260,7 @@ class ADLSToAzureSQL(Flow):
                 flow=self,
             )
 
+        promote_to_conformed_task = AzureDataLakeCopy(timeout=self.timeout)
         promote_to_conformed_task.bind(
             from_path=self.adls_path,
             to_path=self.adls_path_conformed,
@@ -270,6 +268,7 @@ class ADLSToAzureSQL(Flow):
             vault_name=self.vault_name,
             flow=self,
         )
+        promote_to_operations_task = AzureDataLakeCopy(timeout=self.timeout)
         promote_to_operations_task.bind(
             from_path=self.adls_path_conformed,
             to_path=self.adls_path_operations,
@@ -277,6 +276,7 @@ class ADLSToAzureSQL(Flow):
             vault_name=self.vault_name,
             flow=self,
         )
+        create_table_task = AzureSQLCreateTable(timeout=self.timeout)
         create_table_task.bind(
             schema=self.schema,
             table=self.table,
@@ -286,6 +286,7 @@ class ADLSToAzureSQL(Flow):
             vault_name=self.vault_name,
             flow=self,
         )
+        bulk_insert_task = BCPTask(timeout=self.timeout)
         bulk_insert_task.bind(
             path=self.local_file_path,
             schema=self.schema,
