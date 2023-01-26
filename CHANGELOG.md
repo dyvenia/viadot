@@ -6,12 +6,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 ### Added
-- Added `FileNotFoundError` to catch up failures in `MindfulToCSV` and when creating SQL tables.
-- Added `check_dtypes_sort` task into `ADLSToAzureSQL` to check if dtypes is properly sorted.
-- Added `timeout` parameter to all `Task`s where it can be added.
-- Added `timeout` parameter to all `Flow`s where it can be added.
-- Added `adls_bulk_upload` task function to `task_utils.py`
-- Added `get_survey_list` into `Mindful` Source file.
+- Added `view_type_time_sleep` to the Genesys `queue_performance_detail_view`.
+
 
 ### Changed
 - Updated `genesys_to_adls.py` flow with the `adls_bulk_upload` task
