@@ -145,11 +145,11 @@ class GenesysToADLS(Flow):
 
         add_timestamp.bind(file_names, sep=self.sep, flow=self)
 
-        adls_bulk_upload(
+        adls_bulk_upload.bind(
             file_names=file_names,
             adls_file_path=self.adls_file_path,
             adls_sp_credentials_secret=self.adls_sp_credentials_secret,
-            task_timeout=self.timeout,
+            timeout=self.timeout,
             flow=self,
         )
 
