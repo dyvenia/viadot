@@ -9,7 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added `view_type_time_sleep` to the Genesys `queue_performance_detail_view`.
 
 
-# [0.4.11] - 2022-12-15
+### Changed
+- Updated `genesys_to_adls.py` flow with the `adls_bulk_upload` task
+- Updated `mindful_to_adls.py` flow with the `adls_bulk_upload` task
+- Changed `MindfulToCSV` task to download surveys info.
+
+## [0.4.11] - 2022-12-15
 ### Added
 - Added into `Genesys` the new view type `AGENT`. 
 

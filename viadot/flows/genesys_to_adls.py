@@ -3,46 +3,14 @@ from typing import Any, Dict, List, Literal
 import pandas as pd
 from prefect import Flow, task
 
-from viadot.task_utils import df_to_csv
 from viadot.tasks import AzureDataLakeUpload
 from viadot.tasks.genesys import GenesysToCSV, GenesysToDF
-from ..task_utils import (
+from viadot.task_utils import (
     add_ingestion_metadata_task,
     df_to_csv,
     df_to_parquet,
+    adls_bulk_upload,
 )
-
-file_to_adls_task = AzureDataLakeUpload()
-
-
-@task
-def adls_bulk_upload(
-    file_names: List[str],
-    adls_file_path: str = None,
-    adls_sp_credentials_secret: str = None,
-    adls_overwrite: bool = True,
-) -> List[str]:
-    """
-    Function that upload files to defined path in ADLS.
-
-    Args:
-        file_names (List[str]): List of file names to generate paths.
-        adls_file_path (str, optional): Azure Data Lake path. Defaults to None.
-        adls_sp_credentials_secret (str, optional): The name of the Azure Key Vault secret containing a dictionary with
-            ACCOUNT_NAME and Service Principal credentials (TENANT_ID, CLIENT_ID, CLIENT_SECRET). Defaults to None.
-        adls_overwrite (bool, optional): Whether to overwrite files in the data lake. Defaults to True.
-    Returns:
-        List[str]: List of paths
-    """
-
-    for file in file_names:
-        file_path = str(adls_file_path + "/" + file)
-        file_to_adls_task.run(
-            from_path=file,
-            to_path=file_path,
-            sp_credentials_secret=adls_sp_credentials_secret,
-            overwrite=adls_overwrite,
-        )
 
 
 @task
@@ -81,6 +49,7 @@ class GenesysToADLS(Flow):
         overwrite_adls: bool = True,
         adls_sp_credentials_secret: str = None,
         credentials_genesys: Dict[str, Any] = None,
+        timeout: int = 3600,
         *args: List[any],
         **kwargs: Dict[str, Any]
     ):
@@ -109,6 +78,8 @@ class GenesysToADLS(Flow):
             adls_sp_credentials_secret (str, optional): The name of the Azure Key Vault secret containing a dictionary with
             ACCOUNT_NAME and Service Principal credentials (TENANT_ID, CLIENT_ID, CLIENT_SECRET). Defaults to None.
             credentials(dict, optional): Credentials for the genesys api. Defaults to None.
+            timeout(int, optional): The amount of time (in seconds) to wait while running this task before
+                a timeout occurs. Defaults to 3600.
         """
         # GenesysToCSV
         self.flow_name = name
@@ -125,6 +96,8 @@ class GenesysToADLS(Flow):
         self.end_date = end_date
         self.days_interval = days_interval
         self.sep = sep
+        self.timeout = timeout
+
         # AzureDataLake
         self.local_file_path = local_file_path
         self.adls_file_path = adls_file_path
@@ -138,7 +111,7 @@ class GenesysToADLS(Flow):
 
     def gen_flow(self) -> Flow:
 
-        to_csv = GenesysToCSV()
+        to_csv = GenesysToCSV(timeout=self.timeout)
 
         if self.view_type == "queue_performance_detail_view":
             file_names = to_csv.bind(
@@ -172,15 +145,16 @@ class GenesysToADLS(Flow):
 
         add_timestamp.bind(file_names, sep=self.sep, flow=self)
 
-        uploader = adls_bulk_upload(
+        adls_bulk_upload(
             file_names=file_names,
             adls_file_path=self.adls_file_path,
             adls_sp_credentials_secret=self.adls_sp_credentials_secret,
+            task_timeout=self.timeout,
             flow=self,
         )
 
         add_timestamp.set_upstream(file_names, flow=self)
-        uploader.set_upstream(add_timestamp, flow=self)
+        adls_bulk_upload.set_upstream(add_timestamp, flow=self)
 
 
 class GenesysReportToADLS(Flow):
@@ -198,6 +172,7 @@ class GenesysReportToADLS(Flow):
         adls_sp_credentials_secret: str = None,
         credentials_secret: str = None,
         schedule_id: str = None,
+        timeout: int = 3600,
         *args: List[any],
         **kwargs: Dict[str, Any]
     ):
@@ -220,7 +195,8 @@ class GenesysReportToADLS(Flow):
             Defaults to None.
             credentials_secret (str, optional): The name of the Azure Key Vault secret for Genesys project. Defaults to None.
             schedule_id (str, optional): ID of the schedule report job. Defaults to None.
-
+            timeout(int, optional): The amount of time (in seconds) to wait while running this task before
+                a timeout occurs. Defaults to 3600.
         """
 
         self.name = name
@@ -236,6 +212,7 @@ class GenesysReportToADLS(Flow):
         self.credentials_secret = credentials_secret
         self.if_exsists = if_exists
         self.schedule_id = schedule_id
+        self.timeout = timeout
 
         super().__init__(*args, name=name, **kwargs)
 
@@ -243,7 +220,7 @@ class GenesysReportToADLS(Flow):
 
     def gen_flow(self) -> Flow:
 
-        genesys_report = GenesysToDF()
+        genesys_report = GenesysToDF(timeout=self.timeout)
 
         df = genesys_report.bind(
             report_columns=self.columns,
@@ -269,6 +246,7 @@ class GenesysReportToADLS(Flow):
                 flow=self,
             )
 
+        file_to_adls_task = AzureDataLakeUpload(timeout=self.timeout)
         file_to_adls_task.bind(
             from_path=self.local_file_path,
             to_path=self.adls_file_path,

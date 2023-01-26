@@ -6,12 +6,11 @@ from prefect.utilities import logging
 
 from ..tasks import AzureDataLakeCopy
 
-copy_task = AzureDataLakeCopy()
 
 logger = logging.get_logger(__name__)
 
 
-@task
+@task(timeout=3600)
 def is_stored_locally(f: Flow):
     return f.storage is None or isinstance(f.storage, Local)
 
@@ -27,6 +26,8 @@ class ADLSContainerToContainer(Flow):
             ACCOUNT_NAME and Service Principal credentials (TENANT_ID, CLIENT_ID, CLIENT_SECRET) for the Azure Data Lake.
             Defaults to None.
         vault_name (str): The name of the vault from which to retrieve the secrets.
+        timeout(int, optional): The amount of time (in seconds) to wait while running this task before
+            a timeout occurs. Defaults to 3600.
     """
 
     def __init__(
@@ -36,6 +37,7 @@ class ADLSContainerToContainer(Flow):
         to_path: str,
         adls_sp_credentials_secret: str = None,
         vault_name: str = None,
+        timeout: int = 3600,
         *args: List[any],
         **kwargs: Dict[str, Any]
     ):
@@ -45,6 +47,7 @@ class ADLSContainerToContainer(Flow):
         self.to_path = to_path
         self.adls_sp_credentials_secret = adls_sp_credentials_secret
         self.vault_name = vault_name
+        self.timeout = timeout
         super().__init__(*args, name=name, **kwargs)
         self.gen_flow()
 
@@ -53,6 +56,7 @@ class ADLSContainerToContainer(Flow):
         return name.replace(" ", "_").lower()
 
     def gen_flow(self) -> Flow:
+        copy_task = AzureDataLakeCopy(timeout=self.timeout)
         copy_task.bind(
             from_path=self.from_path,
             to_path=self.to_path,
