@@ -206,16 +206,14 @@ class Mindful(Source):
         )
 
         if response.status_code == 200:
-            self.logger.info("Succesfully downloaded responses data from mindful API.")
+            self.logger.info("Succesfully downloaded surveys data from mindful API.")
         elif response.status_code == 204 and not response.content.decode():
             self.logger.warning(
-                f"Thera are not responses data to download from {self.start_date} to {self.end_date}."
+                f"Thera are not surveys data to download from {self.start_date} to {self.end_date}."
             )
         else:
-            self.logger.error(
-                f"Failed to download responses data. - {response.content}"
-            )
-            raise APIError("Failed to downloaded responses data.")
+            self.logger.error(f"Failed to download surveys data. - {response.content}")
+            raise APIError("Failed to downloaded surveys data.")
 
         return response
 
