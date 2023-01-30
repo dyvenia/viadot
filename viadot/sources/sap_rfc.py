@@ -488,7 +488,7 @@ class SAPRFC(Source):
         lists_of_columns = []
         cols = []
         col_length_total = 0
-        if self.rfc_reference_column:
+        if isinstance(self.rfc_reference_column[0], str):
             character_limit = self.rfc_total_col_width_character_limit
             for ref_column in self.rfc_reference_column:
                 col_length_reference_column = int(
@@ -520,7 +520,7 @@ class SAPRFC(Source):
             if col_length_total <= character_limit:
                 cols.append(col)
             else:
-                if self.rfc_reference_column and all(
+                if isinstance(self.rfc_reference_column[0], str) and all(
                     [rfc_col not in cols for rfc_col in self.rfc_reference_column]
                 ):
                     for rfc_col in self.rfc_reference_column:
@@ -530,7 +530,7 @@ class SAPRFC(Source):
                 cols = [col]
                 col_length_total = int(col_length)
         else:
-            if self.rfc_reference_column and all(
+            if isinstance(self.rfc_reference_column[0], str) and all(
                 [rfc_col not in cols for rfc_col in self.rfc_reference_column]
             ):
                 for rfc_col in self.rfc_reference_column:
@@ -611,7 +611,7 @@ class SAPRFC(Source):
 
         for sep in SEPARATORS:
             logger.info(f"Checking if separator '{sep}' works.")
-            if self.rfc_reference_column:
+            if isinstance(self.rfc_reference_column[0], str):
                 # columns only for the first chunk and we add the rest later to avoid name conflicts
                 df = pd.DataFrame(columns=fields_lists[0])
             else:
@@ -635,7 +635,7 @@ class SAPRFC(Source):
                 data_raw = np.array(response["DATA"])
 
                 # if the reference columns are provided not necessary to remove any extra row.
-                if not self.rfc_reference_column:
+                if not isinstance(self.rfc_reference_column[0], str):
                     row_index, data_raw, cont = detect_extra_rows(
                         row_index, data_raw, chunk, fields
                     )
@@ -648,7 +648,10 @@ class SAPRFC(Source):
 
                 records = np.array([row[record_key].split(sep) for row in data_raw])
 
-                if self.rfc_reference_column and not list(df.columns) == fields:
+                if (
+                    isinstance(self.rfc_reference_column[0], str)
+                    and not list(df.columns) == fields
+                ):
                     df_tmp = pd.DataFrame(columns=fields)
                     df_tmp[fields] = records
                     df = pd.merge(df, df_tmp, on=self.rfc_reference_column, how="outer")
