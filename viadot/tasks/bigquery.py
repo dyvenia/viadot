@@ -119,7 +119,7 @@ class BigQueryToDF(Task):
                 df = bigquery.query_to_df(query)
             else:
                 if start_date is not None and end_date is not None:
-                    query = f"""SELECT * FROM `{dataset_name}.{table_name}` 
+                    query = f"""SELECT * FROM `{project}.{dataset_name}.{table_name}` 
                     where {date_column_name} between PARSE_DATE("%Y-%m-%d", "{start_date}") and PARSE_DATE("%Y-%m-%d", "{end_date}") 
                     order by {date_column_name} desc"""
                 else:
