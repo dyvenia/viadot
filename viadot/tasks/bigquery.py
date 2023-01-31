@@ -28,6 +28,7 @@ class BigQueryToDF(Task):
         credentials_key: str = None,
         credentials_secret: str = None,
         vault_name: str = None,
+        timeout: int = 3600,
         *args: List[Any],
         **kwargs: Dict[str, Any],
     ):
@@ -52,6 +53,8 @@ class BigQueryToDF(Task):
             credentials can be generated as key for User Principal inside a BigQuery project. Defaults to None.
             credentials_secret (str, optional): The name of the Azure Key Vault secret for Bigquery project. Defaults to None.
             vault_name (str, optional): The name of the vault from which to obtain the secrets. Defaults to None.
+            timeout(int, optional): The amount of time (in seconds) to wait while running this task before
+                a timeout occurs. Defaults to 3600.
         """
         self.dataset_name = dataset_name
         self.table_name = table_name
@@ -64,6 +67,7 @@ class BigQueryToDF(Task):
 
         super().__init__(
             name="bigquery_to_df",
+            timeout=timeout,
             *args,
             **kwargs,
         )
@@ -115,7 +119,7 @@ class BigQueryToDF(Task):
                 df = bigquery.query_to_df(query)
             else:
                 if start_date is not None and end_date is not None:
-                    query = f"""SELECT * FROM `{dataset_name}.{table_name}` 
+                    query = f"""SELECT * FROM `{project}.{dataset_name}.{table_name}` 
                     where {date_column_name} between PARSE_DATE("%Y-%m-%d", "{start_date}") and PARSE_DATE("%Y-%m-%d", "{end_date}") 
                     order by {date_column_name} desc"""
                 else:

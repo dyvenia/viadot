@@ -56,6 +56,7 @@ class SalesforceUpsert(Task):
         raise_on_error: bool = False,
         max_retries: int = 3,
         retry_delay: timedelta = timedelta(seconds=10),
+        timeout: int = 3600,
         *args,
         **kwargs,
     ):
@@ -70,6 +71,7 @@ class SalesforceUpsert(Task):
             name="salesforce_upsert",
             max_retries=max_retries,
             retry_delay=retry_delay,
+            timeout=timeout,
             *args,
             **kwargs,
         )
@@ -149,6 +151,7 @@ class SalesforceBulkUpsert(Task):
         raise_on_error: bool = False,
         max_retries: int = 3,
         retry_delay: timedelta = timedelta(seconds=10),
+        timeout: int = 3600,
         *args,
         **kwargs,
     ):
@@ -163,6 +166,7 @@ class SalesforceBulkUpsert(Task):
             name="salesforce_bulk_upsert",
             max_retries=max_retries,
             retry_delay=retry_delay,
+            timeout=timeout,
             *args,
             **kwargs,
         )
@@ -253,6 +257,7 @@ class SalesforceToDF(Task):
         domain: str = "test",
         client_id: str = "viadot",
         env: str = "DEV",
+        timeout: int = 3600,
         *args: List[Any],
         **kwargs: Dict[str, Any],
     ):
@@ -265,6 +270,7 @@ class SalesforceToDF(Task):
 
         super().__init__(
             name="salesforce_to_df",
+            timeout=timeout,
             *args,
             **kwargs,
         )

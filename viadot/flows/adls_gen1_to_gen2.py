@@ -7,9 +7,6 @@ from prefect.utilities import logging
 
 from ..tasks import AzureDataLakeDownload, AzureDataLakeUpload
 
-gen1_download_task = AzureDataLakeDownload(gen=1)
-gen2_upload_task = AzureDataLakeUpload(gen=2)
-
 
 logger = logging.get_logger(__name__)
 
@@ -37,6 +34,8 @@ class ADLSGen1ToGen2(Flow):
         gen1_sp_credentials_secret (str): The Key Vault secret holding Service Pricipal credentials for gen1 lake
         gen2_sp_credentials_secret (str): The Key Vault secret holding Service Pricipal credentials for gen2 lake
         vault_name (str): The name of the vault from which to retrieve the secrets.
+        timeout(int, optional): The amount of time (in seconds) to wait while running this task before
+            a timeout occurs. Defaults to 3600.
     """
 
     def __init__(
@@ -50,6 +49,7 @@ class ADLSGen1ToGen2(Flow):
         gen1_sp_credentials_secret: str = None,
         gen2_sp_credentials_secret: str = None,
         vault_name: str = None,
+        timeout: int = 3600,
         *args: List[any],
         **kwargs: Dict[str, Any]
     ):
@@ -62,6 +62,7 @@ class ADLSGen1ToGen2(Flow):
         self.gen1_sp_credentials_secret = gen1_sp_credentials_secret
         self.gen2_sp_credentials_secret = gen2_sp_credentials_secret
         self.vault_name = vault_name
+        self.timeout = timeout
         super().__init__(*args, name=name, **kwargs)
         self.gen_flow()
 
@@ -70,6 +71,7 @@ class ADLSGen1ToGen2(Flow):
         return name.replace(" ", "_").lower()
 
     def gen_flow(self) -> Flow:
+        gen1_download_task = AzureDataLakeDownload(gen=1, timeout=self.timeout)
         gen1_download_task.bind(
             from_path=self.gen1_path,
             to_path=self.local_file_path,
@@ -79,6 +81,7 @@ class ADLSGen1ToGen2(Flow):
             flow=self,
         )
         add_ingestion_metadata.bind(path=self.local_file_path, sep=self.sep, flow=self)
+        gen2_upload_task = AzureDataLakeUpload(gen=2, timeout=self.timeout)
         gen2_upload_task.bind(
             from_path=self.local_file_path,
             to_path=self.gen2_path,

@@ -266,7 +266,6 @@ class Epicor(Source):
 
     def get_xml_response(self):
         "Function for getting response from Epicor API"
-
         self.validate_filter()
         payload = self.filters_xml
         url = self.generate_url()

@@ -7,7 +7,7 @@ from prefect import Flow
 from prefect.backend import set_key_value
 from prefect.utilities import logging
 
-from ..task_utils import (
+from viadot.task_utils import (
     add_ingestion_metadata_task,
     df_get_data_types_task,
     df_map_mixed_dtypes_for_parquet,
@@ -16,11 +16,8 @@ from ..task_utils import (
     dtypes_to_json_task,
     update_dtypes_dict,
 )
-from ..tasks import AzureDataLakeUpload, BigQueryToDF
+from viadot.tasks import AzureDataLakeUpload, BigQueryToDF
 
-bigquery_to_df_task = BigQueryToDF()
-file_to_adls_task = AzureDataLakeUpload()
-json_to_adls_task = AzureDataLakeUpload()
 
 logger = logging.get_logger(__name__)
 
@@ -44,6 +41,7 @@ class BigQueryToADLS(Flow):
         adls_sp_credentials_secret: str = None,
         overwrite_adls: bool = False,
         if_exists: str = "replace",
+        timeout: int = 3600,
         *args: List[Any],
         **kwargs: Dict[str, Any],
     ):
@@ -79,6 +77,8 @@ class BigQueryToADLS(Flow):
             Defaults to None.
             overwrite_adls (bool, optional): Whether to overwrite files in the lake. Defaults to False.
             if_exists (str, optional): What to do if the file exists. Defaults to "replace".
+            timeout(int, optional): The amount of time (in seconds) to wait while running this task before
+                a timeout occurs. Defaults to 3600.
         """
         # BigQueryToDF
         self.credentials_key = credentials_key
@@ -96,6 +96,7 @@ class BigQueryToADLS(Flow):
         self.if_exists = if_exists
         self.output_file_extension = output_file_extension
         self.now = str(pendulum.now("utc"))
+        self.timeout = timeout
 
         self.local_file_path = (
             local_file_path or self.slugify(name) + self.output_file_extension
@@ -125,6 +126,7 @@ class BigQueryToADLS(Flow):
         return name.replace(" ", "_").lower()
 
     def gen_flow(self) -> Flow:
+        bigquery_to_df_task = BigQueryToDF(timeout=self.timeout)
         df = bigquery_to_df_task.bind(
             dataset_name=self.dataset_name,
             table_name=self.table_name,
@@ -158,6 +160,7 @@ class BigQueryToADLS(Flow):
                 flow=self,
             )
 
+        file_to_adls_task = AzureDataLakeUpload(timeout=self.timeout)
         file_to_adls_task.bind(
             from_path=self.local_file_path,
             to_path=self.adls_file_path,
@@ -171,6 +174,7 @@ class BigQueryToADLS(Flow):
             dtypes_dict=dtypes_updated, local_json_path=self.local_json_path, flow=self
         )
 
+        json_to_adls_task = AzureDataLakeUpload(timeout=self.timeout)
         json_to_adls_task.bind(
             from_path=self.local_json_path,
             to_path=self.adls_schema_file_dir_file,

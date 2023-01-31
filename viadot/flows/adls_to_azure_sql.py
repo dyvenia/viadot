@@ -5,11 +5,12 @@ from typing import Any, Dict, List, Literal
 import pandas as pd
 from prefect import Flow, task
 from prefect.backend import get_key_value
+from prefect.engine import signals
 from prefect.utilities import logging
 
 from viadot.tasks.azure_data_lake import AzureDataLakeDownload
 
-from ..tasks import (
+from viadot.tasks import (
     AzureDataLakeCopy,
     AzureDataLakeToDF,
     AzureSQLCreateTable,
@@ -21,23 +22,13 @@ from ..tasks import (
 
 logger = logging.get_logger(__name__)
 
-lake_to_df_task = AzureDataLakeToDF()
-download_json_file_task = AzureDataLakeDownload()
-download_github_file_task = DownloadGitHubFile()
-promote_to_conformed_task = AzureDataLakeCopy()
-promote_to_operations_task = AzureDataLakeCopy()
-create_table_task = AzureSQLCreateTable()
-bulk_insert_task = BCPTask()
-azure_query_task = AzureSQLDBQuery()
-check_column_order_task = CheckColumnOrder()
 
-
-@task
+@task(timeout=3600)
 def union_dfs_task(dfs: List[pd.DataFrame]):
     return pd.concat(dfs, ignore_index=True)
 
 
-@task
+@task(timeout=3600)
 def map_data_types_task(json_shema_path: str):
     file_dtypes = open(json_shema_path)
     dict_dtypes = json.load(file_dtypes)
@@ -71,7 +62,7 @@ def map_data_types_task(json_shema_path: str):
     return dict_dtypes_mapped
 
 
-@task
+@task(timeout=3600)
 def df_to_csv_task(df, remove_tab, path: str, sep: str = "\t"):
     # if table doesn't exist it will be created later -  df equals None
     if df is None:
@@ -85,6 +76,50 @@ def df_to_csv_task(df, remove_tab, path: str, sep: str = "\t"):
             df.to_csv(path, sep=sep, index=False)
         else:
             df.to_csv(path, sep=sep, index=False)
+
+
+@task(timeout=3600)
+def check_dtypes_sort(
+    df: pd.DataFrame = None,
+    dtypes: Dict[str, Any] = None,
+) -> Dict[str, Any]:
+    """Check dtype column order to avoid malformation SQL table.
+    When data is loaded by the user, a data frame is passed to this task
+    to check the column sort with dtypes and re-sort if neccessary.
+    Args:
+        df (pd.DataFrame, optional): Data Frame from original ADLS file. Defaults to None.
+        dtypes (Dict[str, Any], optional): Dictionary of columns and data type to apply
+            to the Data Frame downloaded. Defaults to None.
+    Returns:
+        Dict[str, Any]: Sorted dtype.
+    """
+    if df is None:
+        logger.error("DataFrame argument is mandatory")
+        raise signals.FAIL("DataFrame is None.")
+    else:
+        # first check if all dtypes keys are in df.columns
+        if all(d in df.columns for d in list(dtypes.keys())) and len(df.columns) == len(
+            list(dtypes.keys())
+        ):
+            # check if have the same sort
+            matches = list(map(lambda x, y: x == y, df.columns, dtypes.keys()))
+            if not all(matches):
+                logger.warning(
+                    "Some keys are not sorted in dtypes. Repositioning the key:value..."
+                )
+                # re-sort in a new dtype
+                new_dtypes = dict()
+                for key in df.columns:
+                    new_dtypes.update([(key, dtypes[key])])
+            else:
+                new_dtypes = dtypes.copy()
+        else:
+            logger.error("There is a discrepancy with any of the columns.")
+            raise signals.FAIL(
+                "dtype dictionary contains key(s) that not matching with the ADLS file columns name, or they have different length."
+            )
+
+    return new_dtypes
 
 
 class ADLSToAzureSQL(Flow):
@@ -109,6 +144,7 @@ class ADLSToAzureSQL(Flow):
         max_download_retries: int = 5,
         tags: List[str] = ["promotion"],
         vault_name: str = None,
+        timeout: int = 3600,
         *args: List[any],
         **kwargs: Dict[str, Any],
     ):
@@ -141,6 +177,8 @@ class ADLSToAzureSQL(Flow):
             max_download_retries (int, optional): How many times to retry the download. Defaults to 5.
             tags (List[str], optional): Flow tags to use, eg. to control flow concurrency. Defaults to ["promotion"].
             vault_name (str, optional): The name of the vault from which to obtain the secrets. Defaults to None.
+            timeout(int, optional): The amount of time (in seconds) to wait while running this task before
+                a timeout occurs. Defaults to 3600.
         """
 
         adls_path = adls_path.strip("/")
@@ -189,6 +227,7 @@ class ADLSToAzureSQL(Flow):
         self.max_download_retries = max_download_retries
         self.tags = tags
         self.vault_name = vault_name
+        self.timeout = timeout
 
         super().__init__(*args, name=name, **kwargs)
 
@@ -219,6 +258,7 @@ class ADLSToAzureSQL(Flow):
         return promoted_path
 
     def gen_flow(self) -> Flow:
+        lake_to_df_task = AzureDataLakeToDF(timeout=self.timeout)
         df = lake_to_df_task.bind(
             path=self.adls_path,
             sp_credentials_secret=self.adls_sp_credentials_secret,
@@ -227,6 +267,7 @@ class ADLSToAzureSQL(Flow):
         )
 
         if not self.dtypes:
+            download_json_file_task = AzureDataLakeDownload(timeout=self.timeout)
             download_json_file_task.bind(
                 from_path=self.json_shema_path,
                 to_path=self.local_json_path,
@@ -236,8 +277,13 @@ class ADLSToAzureSQL(Flow):
             dtypes = map_data_types_task.bind(self.local_json_path, flow=self)
             map_data_types_task.set_upstream(download_json_file_task, flow=self)
         else:
-            dtypes = self.dtypes
+            dtypes = check_dtypes_sort.bind(
+                df,
+                dtypes=self.dtypes,
+                flow=self,
+            )
 
+        check_column_order_task = CheckColumnOrder(timeout=self.timeout)
         df_reorder = check_column_order_task.bind(
             table=self.table,
             schema=self.schema,
@@ -263,6 +309,7 @@ class ADLSToAzureSQL(Flow):
                 flow=self,
             )
 
+        promote_to_conformed_task = AzureDataLakeCopy(timeout=self.timeout)
         promote_to_conformed_task.bind(
             from_path=self.adls_path,
             to_path=self.adls_path_conformed,
@@ -270,6 +317,7 @@ class ADLSToAzureSQL(Flow):
             vault_name=self.vault_name,
             flow=self,
         )
+        promote_to_operations_task = AzureDataLakeCopy(timeout=self.timeout)
         promote_to_operations_task.bind(
             from_path=self.adls_path_conformed,
             to_path=self.adls_path_operations,
@@ -277,6 +325,7 @@ class ADLSToAzureSQL(Flow):
             vault_name=self.vault_name,
             flow=self,
         )
+        create_table_task = AzureSQLCreateTable(timeout=self.timeout)
         create_table_task.bind(
             schema=self.schema,
             table=self.table,
@@ -286,6 +335,7 @@ class ADLSToAzureSQL(Flow):
             vault_name=self.vault_name,
             flow=self,
         )
+        bulk_insert_task = BCPTask(timeout=self.timeout)
         bulk_insert_task.bind(
             path=self.local_file_path,
             schema=self.schema,

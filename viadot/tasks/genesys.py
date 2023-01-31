@@ -30,6 +30,7 @@ class GenesysToCSV(Task):
         report_url: str = None,
         report_columns: List[str] = None,
         credentials_genesys: Dict[str, Any] = None,
+        timeout: int = 3600,
         *args: List[Any],
         **kwargs: Dict[str, Any],
     ):
@@ -50,6 +51,8 @@ class GenesysToCSV(Task):
             schedule_id (str, optional): The ID of report. Defaults to None.
             report_url (str, optional): The url of report generated in json response. Defaults to None.
             report_columns (List[str], optional): List of exisiting column in report. Defaults to None.
+            timeout(int, optional): The amount of time (in seconds) to wait while running this task before
+                a timeout occurs. Defaults to 3600.
         """
 
         self.logger = prefect.context.get("logger")
@@ -69,6 +72,7 @@ class GenesysToCSV(Task):
 
         super().__init__(
             name=self.report_name,
+            timeout=timeout,
             *args,
             **kwargs,
         )
@@ -153,7 +157,11 @@ class GenesysToCSV(Task):
         genesys.genesys_generate_exports()
 
         if view_type == "queue_performance_detail_view":
-            logger.info(f"Waiting for caching data in Genesys database.")
+            logger.info(
+                f"Waiting {view_type_time_sleep} seconds for caching data in Genesys database."
+            )
+            # sleep time to allow Genesys generate all exports
+            time.sleep(view_type_time_sleep)
             # in order to wait for API POST request add it
             timeout_start = time.time()
             # 30 seconds timeout is minimal but for safety added 60.
@@ -219,6 +227,7 @@ class GenesysToDF(Task):
         report_url: str = None,
         report_columns: List[str] = None,
         credentials_genesys: Dict[str, Any] = None,
+        timeout: int = 3600,
         *args: List[Any],
         **kwargs: Dict[str, Any],
     ):
@@ -233,6 +242,7 @@ class GenesysToDF(Task):
 
         super().__init__(
             name="genesys_to_df",
+            timeout=timeout,
             *args,
             **kwargs,
         )

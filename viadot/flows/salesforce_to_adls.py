@@ -7,7 +7,7 @@ from prefect import Flow
 from prefect.backend import set_key_value
 from prefect.utilities import logging
 
-from ..task_utils import (
+from viadot.task_utils import (
     add_ingestion_metadata_task,
     df_clean_column,
     df_get_data_types_task,
@@ -17,11 +17,8 @@ from ..task_utils import (
     dtypes_to_json_task,
     update_dtypes_dict,
 )
-from ..tasks import AzureDataLakeUpload, SalesforceToDF
+from viadot.tasks import AzureDataLakeUpload, SalesforceToDF
 
-salesforce_to_df_task = SalesforceToDF()
-file_to_adls_task = AzureDataLakeUpload()
-json_to_adls_task = AzureDataLakeUpload()
 
 logger = logging.get_logger(__name__)
 
@@ -45,6 +42,7 @@ class SalesforceToADLS(Flow):
         adls_file_name: str = None,
         adls_sp_credentials_secret: str = None,
         if_exists: str = "replace",
+        timeout: int = 3600,
         *args: List[Any],
         **kwargs: Dict[str, Any],
     ):
@@ -73,6 +71,8 @@ class SalesforceToADLS(Flow):
                 ACCOUNT_NAME and Service Principal credentials (TENANT_ID, CLIENT_ID, CLIENT_SECRET) for the Azure Data Lake.
                 Defaults to None.
             if_exists (str, optional): What to do if the file exists. Defaults to "replace".
+            timeout(int, optional): The amount of time (in seconds) to wait while running this task before
+                a timeout occurs. Defaults to 3600.
         """
         # SalesforceToDF
         self.query = query
@@ -89,6 +89,7 @@ class SalesforceToADLS(Flow):
         self.if_exists = if_exists
         self.output_file_extension = output_file_extension
         self.now = str(pendulum.now("utc"))
+        self.timeout = timeout
 
         self.local_file_path = (
             local_file_path or self.slugify(name) + self.output_file_extension
@@ -119,6 +120,7 @@ class SalesforceToADLS(Flow):
         return name.replace(" ", "_").lower()
 
     def gen_flow(self) -> Flow:
+        salesforce_to_df_task = SalesforceToDF(timeout=self.timeout)
         df = salesforce_to_df_task.bind(
             query=self.query,
             table=self.table,
@@ -153,6 +155,7 @@ class SalesforceToADLS(Flow):
                 flow=self,
             )
 
+        file_to_adls_task = AzureDataLakeUpload(timeout=self.timeout)
         file_to_adls_task.bind(
             from_path=self.local_file_path,
             to_path=self.adls_file_path,
@@ -166,6 +169,7 @@ class SalesforceToADLS(Flow):
             dtypes_dict=dtypes_updated, local_json_path=self.local_json_path, flow=self
         )
 
+        json_to_adls_task = AzureDataLakeUpload(timeout=self.timeout)
         json_to_adls_task.bind(
             from_path=self.local_json_path,
             to_path=self.adls_schema_file_dir_file,

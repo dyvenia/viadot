@@ -13,7 +13,6 @@ TABLE = "test_bcp"
 
 
 def test_adls_gen1_to_azure_sql_new_init_args():
-
     flow = ADLSGen1ToAzureSQLNew(
         name="test_adls_gen1_gen2_flow",
         gen1_path="test_file_1.csv",
@@ -44,27 +43,23 @@ def test_adls_gen1_to_azure_sql_new_mock():
         mock_method.assert_called_with()
 
 
-def test_adls_gen1_to_azure_sql_new_flow_run_mock():
+@mock.patch(
+    "viadot.tasks.AzureDataLakeToDF.run",
+    return_value=pd.DataFrame(data={"country": [1, 2], "sales": [3, 4]}),
+)
+@pytest.mark.run
+def test_adls_gen1_to_azure_sql_new_flow_run_mock(mocked_class):
+    flow = ADLSGen1ToAzureSQLNew(
+        name="test_adls_g1g2",
+        gen1_path="example_path",
+        gen2_path="raw/test/test.csv",
+        dtypes={"country": "VARCHAR(25)", "sales": "INT"},
+        if_exists="replace",
+        table="test",
+        schema="sandbox",
+    )
 
-    d = {"country": [1, 2], "sales": [3, 4]}
-    df = pd.DataFrame(data=d)
+    result = flow.run()
 
-    with mock.patch(
-        "viadot.flows.adls_gen1_to_azure_sql_new.gen1_to_df_task.bind"
-    ) as gen1_to_df_task_mock_bind_method_mock:
-        gen1_to_df_task_mock_bind_method_mock.return_value = df
-
-        flow = ADLSGen1ToAzureSQLNew(
-            name="test_adls_g1g2",
-            gen1_path="example_path",
-            gen2_path="raw/test/test.csv",
-            dtypes={"country": "VARCHAR(25)", "sales": "INT"},
-            if_exists="replace",
-            table="test",
-            schema="sandbox",
-        )
-
-        result = flow.run()
-
-        assert result.is_successful()
-        os.remove("test_adls_g1g2.csv")
+    assert result.is_successful()
+    os.remove("test_adls_g1g2.csv")

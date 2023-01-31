@@ -21,6 +21,8 @@ from .azure_key_vault import AzureKeyVaultSecret
 def get_credentials(credentials_secret: str, vault_name: str = None):
     """
     Get Azure credentials.
+    If the credential secret is not provided it will be taken from Prefect Secrets. If Prefect Secrets does not
+        contain the credential, it will be taken from the local credential file.
 
     Args:
         credentials_secret (str): The name of the Azure Key Vault secret containing a dictionary
@@ -50,9 +52,9 @@ def get_credentials(credentials_secret: str, vault_name: str = None):
 
 
 class CreateTableFromBlob(Task):
-    def __init__(self, sep="\t", *args, **kwargs):
+    def __init__(self, sep="\t", timeout: int = 3600, *args, **kwargs):
         self.sep = sep
-        super().__init__(name="blob_to_azure_sql", *args, **kwargs)
+        super().__init__(name="blob_to_azure_sql", timeout=timeout, *args, **kwargs)
 
     @defaults_from_attrs("sep")
     def run(
@@ -107,6 +109,7 @@ class AzureSQLBulkInsert(Task):
         sep="\t",
         if_exists: Literal["fail", "replace", "append", "delete"] = "fail",
         credentials_secret: str = None,
+        timeout: int = 3600,
         *args,
         **kwargs,
     ):
@@ -117,7 +120,7 @@ class AzureSQLBulkInsert(Task):
         self.sep = sep
         self.if_exists = if_exists
         self.credentials_secret = credentials_secret
-        super().__init__(name="azure_sql_bulk_insert", *args, **kwargs)
+        super().__init__(name="azure_sql_bulk_insert", timeout=timeout, *args, **kwargs)
 
     @defaults_from_attrs("sep", "if_exists", "credentials_secret")
     def run(
@@ -178,6 +181,7 @@ class AzureSQLCreateTable(Task):
         if_exists: Literal["fail", "replace", "skip", "delete"] = "fail",
         credentials_secret: str = None,
         vault_name: str = None,
+        timeout: int = 3600,
         max_retries: int = 3,
         retry_delay: timedelta = timedelta(seconds=10),
         *args,
@@ -193,6 +197,7 @@ class AzureSQLCreateTable(Task):
             name="azure_sql_create_table",
             max_retries=max_retries,
             retry_delay=retry_delay,
+            timeout=timeout,
             *args,
             **kwargs,
         )
@@ -246,19 +251,22 @@ class AzureSQLDBQuery(Task):
         credentials_secret (str, optional): The name of the Azure Key Vault secret containing a dictionary
         with SQL db credentials (server, db_name, user, and password).
         vault_name (str, optional): The name of the vault from which to obtain the secret. Defaults to None.
+        timeout(int, optional): The amount of time (in seconds) to wait while running this task before
+            a timeout occurs. Defaults to 3600.
     """
 
     def __init__(
         self,
         credentials_secret: str = None,
         vault_name: str = None,
+        timeout: int = 3600,
         *args,
         **kwargs,
     ):
         self.credentials_secret = credentials_secret
         self.vault_name = vault_name
 
-        super().__init__(name="azure_sql_db_query", *args, **kwargs)
+        super().__init__(name="azure_sql_db_query", timeout=timeout, *args, **kwargs)
 
     def run(
         self,
@@ -294,19 +302,22 @@ class AzureSQLToDF(Task):
         credentials_secret (str, optional): The name of the Azure Key Vault secret containing a dictionary
         with SQL db credentials (server, db_name, user, and password).
         vault_name (str, optional): The name of the vault from which to obtain the secret. Defaults to None.
+        timeout(int, optional): The amount of time (in seconds) to wait while running this task before
+            a timeout occurs. Defaults to 3600.
     """
 
     def __init__(
         self,
         credentials_secret: str = None,
         vault_name: str = None,
+        timeout: int = 3600,
         *args,
         **kwargs,
     ):
         self.credentials_secret = credentials_secret
         self.vault_name = vault_name
 
-        super().__init__(name="azure_sql_to_df", *args, **kwargs)
+        super().__init__(name="azure_sql_to_df", timeout=timeout, *args, **kwargs)
 
     def run(
         self,
@@ -350,13 +361,16 @@ class CheckColumnOrder(Task):
         df: pd.DataFrame = None,
         credentials_secret: str = None,
         vault_name: str = None,
+        timeout: int = 3600,
         *args,
         **kwargs,
     ):
         self.credentials_secret = credentials_secret
         self.vault_name = vault_name
 
-        super().__init__(name="run_check_column_order", *args, **kwargs)
+        super().__init__(
+            name="run_check_column_order", timeout=timeout, *args, **kwargs
+        )
 
     def df_change_order(
         self, df: pd.DataFrame = None, sql_column_list: List[str] = None
@@ -443,6 +457,8 @@ class AzureSQLUpsert(Task):
         on (str, optional): The field on which to merge (upsert). Defaults to None.
         credentials_secret (str, optional): The name of the Azure Key Vault secret containing a dictionary
         vault_name (str, optional): The name of the vault from which to obtain the secret. Defaults to None.
+        timeout(int, optional): The amount of time (in seconds) to wait while running this task before
+            a timeout occurs. Defaults to 3600.
     """
 
     def __init__(
@@ -451,6 +467,7 @@ class AzureSQLUpsert(Task):
         table: str = None,
         on: str = None,
         credentials_secret: str = None,
+        timeout: int = 3600,
         *args,
         **kwargs,
     ):
@@ -458,7 +475,7 @@ class AzureSQLUpsert(Task):
         self.table = table
         self.on = on
         self.credentials_secret = credentials_secret
-        super().__init__(name="azure_sql_upsert", *args, **kwargs)
+        super().__init__(name="azure_sql_upsert", timeout=timeout, *args, **kwargs)
 
     @defaults_from_attrs(
         "schema",

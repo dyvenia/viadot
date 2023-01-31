@@ -10,8 +10,8 @@ class BlobFromCSV(Task):
     Task for generating Azure Blob Storage from CSV file
     """
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(name="csv_to_blob_storage", *args, **kwargs)
+    def __init__(self, timeout: int = 3600, *args, **kwargs):
+        super().__init__(name="csv_to_blob_storage", timeout=timeout, *args, **kwargs)
 
     def __call__(self):
         """Generate a blob from a local CSV file"""

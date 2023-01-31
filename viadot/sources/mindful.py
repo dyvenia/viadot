@@ -182,6 +182,41 @@ class Mindful(Source):
 
         return response
 
+    def get_survey_list(
+        self,
+        limit: int = 1000,
+        **kwargs,
+    ) -> Response:
+        """Gets a list of survey resources associated with the authenticated customer.
+
+        Args:
+            limit (int, optional): The number of matching interactions to return. Defaults to 1000.
+
+        Returns:
+            Response: Request object with the response from the Mindful API.
+        """
+        self.endpoint = "surveys"
+        params = {
+            "_limit": limit,
+        }
+
+        response = self._mindful_api_response(
+            endpoint=self.endpoint,
+            params=params,
+        )
+
+        if response.status_code == 200:
+            self.logger.info("Succesfully downloaded surveys data from mindful API.")
+        elif response.status_code == 204 and not response.content.decode():
+            self.logger.warning(
+                f"Thera are not surveys data to download from {self.start_date} to {self.end_date}."
+            )
+        else:
+            self.logger.error(f"Failed to download surveys data. - {response.content}")
+            raise APIError("Failed to downloaded surveys data.")
+
+        return response
+
     def response_to_file(
         self,
         response: Response,

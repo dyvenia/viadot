@@ -8,7 +8,7 @@ from prefect.backend import set_key_value
 from prefect.tasks.secrets import PrefectSecret
 from prefect.utilities import logging
 
-from ..task_utils import (
+from viadot.task_utils import (
     add_ingestion_metadata_task,
     cleanup_validation_clutter,
     df_get_data_types_task,
@@ -20,7 +20,7 @@ from ..task_utils import (
     update_dtypes_dict,
     write_to_json,
 )
-from ..tasks import (
+from viadot.tasks import (
     AzureDataLakeUpload,
     DownloadGitHubFile,
     GetFlowNewDateRange,
@@ -30,12 +30,7 @@ from ..tasks import (
 
 logger = logging.get_logger(__name__)
 
-supermetrics_to_df_task = SupermetricsToDF()
-download_github_file_task = DownloadGitHubFile()
 validation_task = RunGreatExpectationsValidation()
-file_to_adls_task = AzureDataLakeUpload()
-json_to_adls_task = AzureDataLakeUpload()
-prefect_get_new_date_range = GetFlowNewDateRange()
 
 
 class SupermetricsToADLS(Flow):
@@ -72,6 +67,7 @@ class SupermetricsToADLS(Flow):
         tags: List[str] = ["extract"],
         vault_name: str = None,
         check_missing_data: bool = True,
+        timeout: int = 3600,
         *args: List[any],
         **kwargs: Dict[str, Any],
     ):
@@ -114,6 +110,8 @@ class SupermetricsToADLS(Flow):
             tags (List[str], optional): Flow tags to use, eg. to control flow concurrency. Defaults to ["extract"].
             vault_name (str, optional): The name of the vault from which to obtain the secrets. Defaults to None.
             check_missing_data (bool, optional): Whether to check missing data. Defaults to True.
+            timeout(int, optional): The amount of time (in seconds) to wait while running this task before
+                a timeout occurs. Defaults to 3600.
         """
         if not ds_user:
             try:
@@ -124,6 +122,7 @@ class SupermetricsToADLS(Flow):
 
         self.flow_name = name
         self.check_missing_data = check_missing_data
+        self.timeout = timeout
         # SupermetricsToDF
         self.ds_id = ds_id
         self.ds_accounts = ds_accounts
@@ -191,6 +190,7 @@ class SupermetricsToADLS(Flow):
     def gen_supermetrics_task(
         self, ds_accounts: Union[str, List[str]], flow: Flow = None
     ) -> Task:
+        supermetrics_to_df_task = SupermetricsToDF(timeout=self.timeout)
         t = supermetrics_to_df_task.bind(
             ds_id=self.ds_id,
             ds_accounts=ds_accounts,
@@ -215,6 +215,7 @@ class SupermetricsToADLS(Flow):
     def gen_flow(self) -> Flow:
         if self.check_missing_data is True:
             if self.date_range_type is not None and "days" in self.date_range_type:
+                prefect_get_new_date_range = GetFlowNewDateRange(timeout=self.timeout)
                 self.date_range_type = prefect_get_new_date_range.run(
                     flow_name=self.flow_name,
                     date_range_type=self.date_range_type,
@@ -276,6 +277,7 @@ class SupermetricsToADLS(Flow):
                 flow=self,
             )
 
+        file_to_adls_task = AzureDataLakeUpload(timeout=self.timeout)
         file_to_adls_task.bind(
             from_path=self.local_file_path,
             to_path=self.adls_file_path,
@@ -289,6 +291,7 @@ class SupermetricsToADLS(Flow):
         dtypes_to_json_task.bind(
             dtypes_dict=dtypes_updated, local_json_path=self.local_json_path, flow=self
         )
+        json_to_adls_task = AzureDataLakeUpload(timeout=self.timeout)
         json_to_adls_task.bind(
             from_path=self.local_json_path,
             to_path=self.adls_schema_file_dir_file,
