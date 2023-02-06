@@ -6,12 +6,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 ### Added
-- Added `view_type_time_sleep` to the Genesys `queue_performance_detail_view`.
+- Added `validate_date_filter` parameter to `Epicor` source, `EpicorOrdersToDF` task and `EpicorOrdersToDuckDB` flow.
+This parameter enables user to decide whether or not filter should be validated.
 
 ## [0.4.12] - 2023-01-31
 ### Added
-- Added `validate_date_filter` parameter to `Epicor` source, `EpicorOrdersToDF` task and `EpicorOrdersToDuckDB` flow.
-This parameter enables user to decide whether or not filter should be validated.
+- Added `view_type_time_sleep` to the Genesys `queue_performance_detail_view`.
 - Added `FileNotFoundError` to catch up failures in `MindfulToCSV` and when creating SQL tables.
 - Added `check_dtypes_sort` task into `ADLSToAzureSQL` to check if dtypes is properly sorted.
 - Added `timeout` parameter to all `Task`s where it can be added.
