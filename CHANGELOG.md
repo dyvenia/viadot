@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 ### Added
+- Added `view_type_time_sleep` to the Genesys `queue_performance_detail_view`.
+
+## [0.4.12] - 2023-01-31
+### Added
 - Added `validate_date_filter` parameter to `Epicor` source, `EpicorOrdersToDF` task and `EpicorOrdersToDuckDB` flow.
 This parameter enables user to decide whether or not filter should be validated.
 - Added `FileNotFoundError` to catch up failures in `MindfulToCSV` and when creating SQL tables.
@@ -15,10 +19,12 @@ This parameter enables user to decide whether or not filter should be validated.
 - Added `adls_bulk_upload` task function to `task_utils.py`
 - Added `get_survey_list` into `Mindful` Source file.
 
+
 ### Changed
 - Updated `genesys_to_adls.py` flow with the `adls_bulk_upload` task
 - Updated `mindful_to_adls.py` flow with the `adls_bulk_upload` task
 - Changed `MindfulToCSV` task to download surveys info.
+
 
 ## [0.4.11] - 2022-12-15
 ### Added

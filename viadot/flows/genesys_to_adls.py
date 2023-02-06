@@ -116,6 +116,7 @@ class GenesysToADLS(Flow):
         if self.view_type == "queue_performance_detail_view":
             file_names = to_csv.bind(
                 view_type=self.view_type,
+                view_type_time_sleep=self.view_type_time_sleep,
                 media_type_list=self.media_type_list,
                 queueIds_list=self.queueIds_list,
                 data_to_post_str=self.data_to_post,
@@ -144,11 +145,11 @@ class GenesysToADLS(Flow):
 
         add_timestamp.bind(file_names, sep=self.sep, flow=self)
 
-        adls_bulk_upload(
+        adls_bulk_upload.bind(
             file_names=file_names,
             adls_file_path=self.adls_file_path,
             adls_sp_credentials_secret=self.adls_sp_credentials_secret,
-            task_timeout=self.timeout,
+            timeout=self.timeout,
             flow=self,
         )
 

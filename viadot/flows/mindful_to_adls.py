@@ -110,13 +110,13 @@ class MindfulToADLS(Flow):
 
         add_timestamp.bind(file_names, sep=self.sep, flow=self)
 
-        adls_bulk_upload(
+        adls_bulk_upload.bind(
             file_names=file_names,
             file_name_relative_path=self.file_path,
             adls_file_path=self.adls_file_path,
             adls_sp_credentials_secret=self.adls_sp_credentials_secret,
             adls_overwrite=self.adls_overwrite,
-            task_timeout=self.timeout,
+            timeout=self.timeout,
             flow=self,
         )
 
