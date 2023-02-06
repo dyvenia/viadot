@@ -14,7 +14,7 @@ pyodbc==4.0.32
 pytest==6.2.5
 pytest-cov==3.0.0
 requests==2.25.0
-openpyxl==3.0.9
+openpyxl==3.1.0
 jupyterlab==3.4.5
 azure-keyvault==4.1.0
 azure-identity==1.7.1
