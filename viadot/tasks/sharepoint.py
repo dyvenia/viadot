@@ -1,9 +1,12 @@
 import copy
 import json
 import os
+import chardet
+
 from typing import List
 
 import pandas as pd
+import chardet
 from prefect import Task
 from prefect.tasks.secrets import PrefectSecret
 from prefect.utilities import logging
@@ -189,6 +192,7 @@ class SharepointToDF(Task):
             credentials = json.loads(credentials_str)
 
         self.path_to_file = path_to_file
+
         self.url_to_file = url_to_file
         path_to_file = os.path.basename(self.path_to_file)
         self.sheet_number = sheet_number
@@ -197,35 +201,50 @@ class SharepointToDF(Task):
         s.download_file(download_to_path=path_to_file)
 
         self.nrows = nrows
-        excel = pd.ExcelFile(self.path_to_file)
 
-        if self.sheet_number is not None:
-            sheet_names_list = [excel.sheet_names[self.sheet_number]]
-        else:
-            sheet_names_list = excel.sheet_names
-
-        header_to_compare = None
-        chunks = []
-
-        for sheetname in sheet_names_list:
-            df_header = pd.read_excel(self.path_to_file, sheet_name=sheetname, nrows=0)
-
-            if validate_excel_file:
-                header_to_compare = self.check_column_names(
-                    df_header, header_to_compare
+        if "csv" in self.path_to_file:
+            try:
+                df = pd.read_csv(self.path_to_file)
+            except:
+                with open(self.path_to_file, "rb") as rawdata:
+                    result = chardet.detect(rawdata.read(100000))
+                df = pd.read_csv(
+                    self.path_to_file, encoding=result["encoding"], sep="\t"
                 )
 
-            chunks = self.split_sheet(sheetname, self.nrows, chunks)
-            df_chunks = pd.concat(chunks)
+        else:
+            excel = pd.ExcelFile(self.path_to_file)
 
-            # Rename the columns to concatenate the chunks with the header.
-            columns = {i: col for i, col in enumerate(df_header.columns.tolist())}
-            last_column = len(columns)
-            columns[last_column] = "sheet_name"
+            if self.sheet_number is not None:
+                sheet_names_list = [excel.sheet_names[self.sheet_number]]
+            else:
+                sheet_names_list = excel.sheet_names
 
-            df_chunks.rename(columns=columns, inplace=True)
-            df = pd.concat([df_header, df_chunks])
+            header_to_compare = None
+            chunks = []
 
-        df = self.df_replace_special_chars(df)
+            for sheetname in sheet_names_list:
+                df_header = pd.read_excel(
+                    self.path_to_file, sheet_name=sheetname, nrows=0
+                )
+
+                if validate_excel_file:
+                    header_to_compare = self.check_column_names(
+                        df_header, header_to_compare
+                    )
+
+                chunks = self.split_sheet(sheetname, self.nrows, chunks)
+                df_chunks = pd.concat(chunks)
+
+                # Rename the columns to concatenate the chunks with the header.
+                columns = {i: col for i, col in enumerate(df_header.columns.tolist())}
+                last_column = len(columns)
+                columns[last_column] = "sheet_name"
+
+                df_chunks.rename(columns=columns, inplace=True)
+                df = pd.concat([df_header, df_chunks])
+
+            df = self.df_replace_special_chars(df)
+
         self.logger.info(f"Successfully converted data to a DataFrame.")
         return df
