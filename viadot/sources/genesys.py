@@ -113,7 +113,7 @@ class Genesys(Source):
         self.variable_to_post = variable_to_post
         self.file_extension = file_extension
         self.ids_mapping = ids_mapping
-        self._internal_counter = self.__internal_counter(999999)
+        self._internal_counter = iter(range(999999))
 
         if self.schedule_id is None:
             self.schedule_id = self.credentials.get("SCHEDULE_ID", None)
@@ -217,10 +217,10 @@ class Genesys(Source):
 
         for media in self.media_type_list:
             for queueid in self.queueIds_list:
-                for variable_to_post in self.variable_to_post:
-                    data_to_post = eval(self.data_to_post_str)
+                # for variable_to_post in self.variable_to_post:
+                data_to_post = eval(self.data_to_post_str)
 
-                    self.post_data_list.append(data_to_post)
+                self.post_data_list.append(data_to_post)
 
         return self.post_data_list
 
@@ -601,16 +601,16 @@ class Genesys(Source):
 
         self.logger.info("Successfully removed all reports.")
 
-    def __internal_counter(self, count: int = 999999) -> int:
-        """Method to generate a sequence of numbers
+    # def __internal_counter(self, count: int = 999999) -> int:
+    #     """Method to generate a sequence of numbers
 
-        Args:
-            count (int, optional): Counts to crete the generator length. Defaults to 999999.
+    #     Args:
+    #         count (int, optional): Counts to crete the generator length. Defaults to 999999.
 
-        Yields:
-            Iterator[int]: Returns the value plus one for every time this method is called.
-        """
-        value = 1
-        for i in range(count):
-            yield value
-            value += 1
+    #     Yields:
+    #         Iterator[int]: Returns the value plus one for every time this method is called.
+    #     """
+    #     value = 1
+    #     for i in range(count):
+    #         yield value
+    #         value += 1

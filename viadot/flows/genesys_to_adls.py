@@ -144,7 +144,7 @@ class GenesysToADLS(Flow):
                 media_type_list=self.media_type_list,
                 queueIds_list=self.queueIds_list,
                 data_to_post_str=self.data_to_post,
-                variable_to_post=self.variable_to_post,
+                variable_to_post=[""],
                 start_date=self.start_date,
                 end_date=self.end_date,
                 days_interval=self.days_interval,

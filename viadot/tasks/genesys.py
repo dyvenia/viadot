@@ -218,7 +218,9 @@ class GenesysToCSV(Task):
         else:
             logger.info("Succesfully loaded all exports.")
 
-        file_names = genesys.download_all_reporting_exports(path=self.local_file_path)
+        file_names = genesys.download_all_reporting_exports(
+            path=self.local_file_path, page_size=1000
+        )
         logger.info("Downloaded the data from the Genesys into the CSV.")
         # in order to wait for API GET request call it
         logger.info("Waiting for caching data in Genesys database.")
