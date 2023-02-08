@@ -8,7 +8,7 @@ from prefect.utilities.tasks import defaults_from_attrs
 from viadot.sources import Mediatool
 from ..exceptions import CredentialError
 
-from viadot.task_utils import credentials_loader
+from viadot.task_utils import *
 
 logger = logging.get_logger()
 
@@ -126,16 +126,20 @@ class MediatoolToDF(Task):
             if organization_id in df_orgs["_id_organizations"].unique():
                 logger.info(f"Downloading data for: {organization_id}")
 
+                # extract data
                 df_m_entries = mediatool.get_media_entries(
                     organization_id=organization_id,
                     columns=media_entries_columns,
                 )
-                df_veh = mediatool.get_vehicles(organization_id=organization_id)
                 df_camp = mediatool.get_campaigns(organization_id=organization_id)
+
+                unique_vehicle_ids = df_m_entries["vehicleId"].unique()
+                df_veh = mediatool.get_vehicles(veh_id=unique_vehicle_ids)
 
                 unique_media_type_ids = df_m_entries["mediaTypeId"].unique()
                 df_m_types = mediatool.get_media_types(unique_media_type_ids)
 
+                # join DFs
                 df_merged_entries_orgs = self.join_dfs(
                     df_left=df_m_entries,
                     df_right=df_orgs,
@@ -179,6 +183,7 @@ class MediatoolToDF(Task):
                     columns_from_right_df=["_id_media_types", "name_media_types"],
                     how="left",
                 )
+
                 chunks.append(df_merged_media_types)
 
             else:

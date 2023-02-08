@@ -160,31 +160,41 @@ class Mediatool(Source):
         return response_dict["campaigns"]
 
     def get_vehicles(
-        self, organization_id: str, return_dataframe: bool = True
+        self,
+        vehicle_ids: List[str],
+        return_dataframe: bool = True,
     ) -> pd.DataFrame:
         """
-        Get vehicles data based on the organization ID. Returns DF or dict.
+        Get vehicles data based on the organization IDs. Returns DF or dict.
 
         Args:
-            organization_id (str): Organization ID.
+            vehicle_ids (List[str]): List of organization IDs.
             return_dataframe (bool, optional): Return a dataframe if True. If set to False, return the data as a dict.
-            Defaults to True.
+                Defaults to True.
 
         Returns:
             pd.DataFrame: Default return dataframe. If 'return_daframe=False' then return list of dicts.
         """
-        url = f"https://api.mediatool.com/organizations/{organization_id}/vehicles"
+        response_dict = {}
+        dfs = []
+        for id in vehicle_ids:
+            url = f"https://api.mediatool.com/vehicles/{id}"
 
-        response = handle_api_response(
-            url=url,
-            headers=self.header,
-            method="GET",
-        )
+            try:
+                response = handle_api_response(
+                    url=url,
+                    headers=self.header,
+                    method="GET",
+                )
+            except Exception:
+                raise NameError(f"No vehicle with id {id} was found")
 
-        response_dict = json.loads(response.text)
+            response_dict = json.loads(response.text)
+            df_single = pd.DataFrame(response_dict["vehicle"], index=[0])
+            dfs.append(df_single)
 
         if return_dataframe is True:
-            df = pd.DataFrame.from_dict(response_dict["vehicles"])
+            df = pd.concat(dfs)
             function_name = inspect.stack()[0][3]
             df_updated = self.rename_columns(df=df, column_suffix=function_name)
             return df_updated

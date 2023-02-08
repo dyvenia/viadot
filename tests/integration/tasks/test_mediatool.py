@@ -1,4 +1,4 @@
-from viadot.tasks import MediatoolToDF
+from viadot.tasks.mediatool import MediatoolToDF
 import pandas as pd
 
 

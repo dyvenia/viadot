@@ -1,6 +1,7 @@
 import pytest
 from viadot.sources import Mediatool
-from viadot.tasks import AzureKeyVaultSecret
+
+from viadot.task_utils import credentials_loader
 from viadot.exceptions import APIError
 from prefect.tasks.secrets import PrefectSecret
 
@@ -9,8 +10,7 @@ import json
 import pandas as pd
 
 
-credentials_str = AzureKeyVaultSecret("MEDIATOOL-TESTS", vault_name=None).run()
-CREDENTIALS = json.loads(credentials_str)
+CREDENTIALS = credentials_loader.run(credentials_secret="MEDIATOOL-TESTS")
 MTOOL = Mediatool(credentials=CREDENTIALS)
 
 
@@ -50,8 +50,8 @@ def test_get_media_types_wrong_id():
 
 
 def test_get_vehicles():
-    vehicles = MTOOL.get_vehicles(organization_id=CREDENTIALS["ORG"])
-    assert isinstance(vehicles, pd.DataFrame)
+    with pytest.raises(NameError, match=r"No vehicle with id"):
+        _ = MTOOL.get_vehicles(vehicle_ids=["100000", "200000"])
 
 
 def test_rename_columns_correct():
