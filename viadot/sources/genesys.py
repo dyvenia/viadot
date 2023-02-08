@@ -1,3 +1,4 @@
+import os
 import json, sys
 import base64
 import warnings
@@ -10,6 +11,7 @@ import aiohttp
 import pandas as pd
 from datetime import datetime, timedelta
 from aiolimiter import AsyncLimiter
+from prefect.engine import signals
 
 from viadot.config import local_config
 from viadot.sources.base import Source
@@ -27,6 +29,7 @@ class Genesys(Source):
         media_type_list: List[str] = None,
         queueIds_list: List[str] = None,
         data_to_post_str: str = None,
+        variable_to_post: List[Any] = None,
         ids_mapping: Dict[str, Any] = None,
         start_date: str = None,
         end_date: str = None,
@@ -49,6 +52,7 @@ class Genesys(Source):
             media_type_list (List[str], optional):  List of specific media types. Defaults to None.
             queueIds_list (List[str], optional):  List of specific queues ids. Defaults to None.
             data_to_post_str (str, optional):  String template to generate json body. Defaults to None.
+            variable_to_post (List[Any], optional): Any kind of variable that data_to_post_str could need during its evaluation. Defaults to None.
             ids_mapping (str, optional): Dictionary mapping for converting IDs to strings. Defaults to None.
             start_date (str, optional):  Start date of the report. Defaults to None.
             end_date (str, optional):  End date of the report. Defaults to None.
@@ -88,6 +92,7 @@ class Genesys(Source):
             "queue_performance_detail_view",
             "agent_performance_summary_view",
             "agent_status_summary_view",
+            "agent_status_detail_view",
         ]:
             raise Exception(
                 f"View type {self.view_type} still is not implemented in viadot."
@@ -105,8 +110,10 @@ class Genesys(Source):
         self.media_type_list = media_type_list
         self.queueIds_list = queueIds_list
         self.data_to_post_str = data_to_post_str
+        self.variable_to_post = variable_to_post
         self.file_extension = file_extension
         self.ids_mapping = ids_mapping
+        self._internal_counter = self.__internal_counter(999999)
 
         if self.schedule_id is None:
             self.schedule_id = self.credentials.get("SCHEDULE_ID", None)
@@ -210,9 +217,10 @@ class Genesys(Source):
 
         for media in self.media_type_list:
             for queueid in self.queueIds_list:
-                data_to_post = eval(self.data_to_post_str)
+                for variable_to_post in self.variable_to_post:
+                    data_to_post = eval(self.data_to_post_str)
 
-                self.post_data_list.append(data_to_post)
+                    self.post_data_list.append(data_to_post)
 
         return self.post_data_list
 
@@ -334,11 +342,10 @@ class Genesys(Source):
         df = pd.read_csv(StringIO(response_file.content.decode("utf-8")))
         if drop_duplicates is True:
             df.drop_duplicates(inplace=True, ignore_index=True)
-        df.to_csv(f"{path}{final_file_name}", index=False, sep=sep)
+        df.to_csv(os.path.join(path, final_file_name), index=False, sep=sep)
 
     def download_all_reporting_exports(
-        self,
-        store_file_names: bool = True,
+        self, store_file_names: bool = True, path: str = ""
     ) -> List[str]:
         """
         Get information form data report and download all files.
@@ -386,13 +393,21 @@ class Genesys(Source):
             ]:
                 date = self.start_date.replace("-", "")
                 file_name = self.view_type.upper() + "_" + f"{date}"
+            elif single_report[4].lower() in [
+                "agent_status_detail_view",
+            ]:
+                date = self.start_date.replace("-", "")
+                file_name = (
+                    self.view_type.upper() + f"_{next(self._internal_counter)}_{date}"
+                )
             else:
-                self.logger.error(
-                    f"View type {self.view_type} not defined in viadot, yet..."
+                raise signals.SKIP(
+                    message=f"View type {self.view_type} not defined in viadot, yet..."
                 )
 
             self.download_report(
                 report_url=single_report[1],
+                path=path,
                 output_file_name=file_name,
                 file_extension=self.file_extension,
             )
@@ -585,3 +600,17 @@ class Genesys(Source):
             assert status_code < 300
 
         self.logger.info("Successfully removed all reports.")
+
+    def __internal_counter(self, count: int = 999999) -> int:
+        """Method to generate a sequence of numbers
+
+        Args:
+            count (int, optional): Counts to crete the generator length. Defaults to 999999.
+
+        Yields:
+            Iterator[int]: Returns the value plus one for every time this method is called.
+        """
+        value = 1
+        for i in range(count):
+            yield value
+            value += 1

@@ -1,4 +1,5 @@
-from typing import Any, Dict, List, Literal
+import os
+from typing import Any, Dict, List, Literal, Any
 
 import pandas as pd
 from prefect import Flow, task
@@ -13,18 +14,36 @@ from viadot.task_utils import (
 )
 
 
-@task
-def add_timestamp(files_names: List = None, sep: str = None) -> None:
+@task(timeout=3600)
+def add_timestamp(files_names: List = None, path: str = "", sep: str = None) -> None:
     """Add new column _viadot_downloaded_at_utc into every genesys file.
 
     Args:
         files_names (List, optional): All file names of downloaded files. Defaults to None.
+        path (str, optional): Relative path to the file. Defaults to empty string.
         sep (str, optional): Separator in csv file. Defaults to None.
     """
     for file in files_names:
-        df = pd.read_csv(file, sep=sep)
+        df = pd.read_csv(os.path.join(path, file), sep=sep)
         df_updated = add_ingestion_metadata_task.run(df)
-        df_updated.to_csv(file, index=False, sep=sep)
+        df_updated.to_csv(os.path.join(path, file), index=False, sep=sep)
+
+
+@task(timeout=3600)
+def concat_df_locally(
+    file_names=List[str],
+    path: str = "",
+    new_file: str = "new_file.csv",
+    sep: str = "\t",
+) -> List[str]:
+    df_iterator = iter([pd.read_csv(os.path.join(path, file)) for file in file_names])
+    df0 = next(df_iterator)
+    for df in df_iterator:
+        df0 = pd.concat([df0, df])
+
+    df0.to_csv(os.path.join(path, new_file), index=False, sep=sep)
+
+    return [new_file]
 
 
 class GenesysToADLS(Flow):
@@ -36,6 +55,7 @@ class GenesysToADLS(Flow):
         media_type_list: List[str] = None,
         queueIds_list: List[str] = None,
         data_to_post_str: str = None,
+        variable_to_post: List[Any] = None,
         start_date: str = None,
         end_date: str = None,
         days_interval: int = 1,
@@ -44,14 +64,14 @@ class GenesysToADLS(Flow):
         schedule_id: str = None,
         report_url: str = None,
         report_columns: List[str] = None,
-        local_file_path: str = None,
+        local_file_path: str = "",
         adls_file_path: str = None,
         overwrite_adls: bool = True,
         adls_sp_credentials_secret: str = None,
         credentials_genesys: Dict[str, Any] = None,
         timeout: int = 3600,
         *args: List[any],
-        **kwargs: Dict[str, Any]
+        **kwargs: Dict[str, Any],
     ):
         """
         Genesys flow that generates CSV files and upload them to ADLS.
@@ -63,6 +83,7 @@ class GenesysToADLS(Flow):
             media_type_list (List[str], optional): List of specific media types. Defaults to None.
             queueIds_list (List[str], optional): List of specific queues ids. Defaults to None.
             data_to_post_str (str, optional): String template to generate json body. Defaults to None.
+            variable_to_post (List[Any], optional): Any kind of variable that data_to_post_str could need during its evaluation. Defaults to None.
             start_date (str, optional): Start date of the report. Defaults to None.
             end_date (str, optional): End date of the report. Defaults to None.
             days_interval (int, optional): How many days report should include. Defaults to 1.
@@ -72,7 +93,7 @@ class GenesysToADLS(Flow):
             schedule_id (str, optional): The ID of report. Defaults to None.
             report_url (str, optional): The url of report generated in json response. Defaults to None.
             report_columns (List[str], optional): List of exisiting column in report. Defaults to None.
-            local_file_path (str, optional): The local path from which to upload the file(s). Defaults to None.
+            local_file_path (str, optional): The local path from which to upload the file(s). Defaults to "".
             adls_file_path (str, optional): The destination path at ADLS. Defaults to None.
             overwrite_adls (bool, optional): Whether to overwrite files in the data lake. Defaults to True.
             adls_sp_credentials_secret (str, optional): The name of the Azure Key Vault secret containing a dictionary with
@@ -88,6 +109,7 @@ class GenesysToADLS(Flow):
         self.media_type_list = media_type_list
         self.queueIds_list = queueIds_list
         self.data_to_post = data_to_post_str
+        self.variable_to_post = variable_to_post
         self.environment = environment
         self.schedule_id = schedule_id
         self.report_url = report_url
@@ -111,7 +133,9 @@ class GenesysToADLS(Flow):
 
     def gen_flow(self) -> Flow:
 
-        to_csv = GenesysToCSV(timeout=self.timeout)
+        to_csv = GenesysToCSV(
+            timeout=self.timeout, local_file_path=self.local_file_path
+        )
 
         if self.view_type == "queue_performance_detail_view":
             file_names = to_csv.bind(
@@ -120,6 +144,7 @@ class GenesysToADLS(Flow):
                 media_type_list=self.media_type_list,
                 queueIds_list=self.queueIds_list,
                 data_to_post_str=self.data_to_post,
+                variable_to_post=self.variable_to_post,
                 start_date=self.start_date,
                 end_date=self.end_date,
                 days_interval=self.days_interval,
@@ -137,24 +162,52 @@ class GenesysToADLS(Flow):
                 media_type_list=self.media_type_list,
                 queueIds_list=[""],
                 data_to_post_str=self.data_to_post,
+                variable_to_post=[""],
+                start_date=self.start_date,
+                environment=self.environment,
+                credentials_genesys=self.credentials_genesys,
+                flow=self,
+            )
+        elif self.view_type in [
+            "agent_status_detail_view",
+        ]:
+            file_names = to_csv.bind(
+                view_type=self.view_type,
+                view_type_time_sleep=self.view_type_time_sleep,
+                media_type_list=self.media_type_list,
+                queueIds_list=[""],
+                data_to_post_str=self.data_to_post,
+                variable_to_post=self.variable_to_post,
                 start_date=self.start_date,
                 environment=self.environment,
                 credentials_genesys=self.credentials_genesys,
                 flow=self,
             )
 
-        add_timestamp.bind(file_names, sep=self.sep, flow=self)
+            file_names = concat_df_locally.bind(
+                file_names,
+                path=self.local_file_path,
+                new_file=f'AGENT_STATUS_DETAIL_VIEW_{self.start_date.replace("-", "")}.csv',
+                sep=self.sep,
+                flow=self,
+            )
+            concat_df_locally.set_upstream(to_csv, flow=self)
 
-        adls_bulk_upload.bind(
-            file_names=file_names,
-            adls_file_path=self.adls_file_path,
-            adls_sp_credentials_secret=self.adls_sp_credentials_secret,
-            timeout=self.timeout,
-            flow=self,
+        add_timestamp.bind(
+            file_names, path=self.local_file_path, sep=self.sep, flow=self
         )
 
+        # adls_bulk_upload.bind(
+        #     file_names=file_names,
+        #     file_name_relative_path=self.local_file_path,
+        #     adls_file_path=self.adls_file_path,
+        #     adls_sp_credentials_secret=self.adls_sp_credentials_secret,
+        #     timeout=self.timeout,
+        #     flow=self,
+        # )
+
         add_timestamp.set_upstream(file_names, flow=self)
-        adls_bulk_upload.set_upstream(add_timestamp, flow=self)
+        # adls_bulk_upload.set_upstream(add_timestamp, flow=self)
 
 
 class GenesysReportToADLS(Flow):
@@ -174,7 +227,7 @@ class GenesysReportToADLS(Flow):
         schedule_id: str = None,
         timeout: int = 3600,
         *args: List[any],
-        **kwargs: Dict[str, Any]
+        **kwargs: Dict[str, Any],
     ):
         """
         Flow for downloading data from genesys API to Azure Data Lake.
