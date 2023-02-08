@@ -5,11 +5,20 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
-
+### Added
+- Added `validate_date_filter` parameter to `Epicor` source, `EpicorOrdersToDF` task and `EpicorOrdersToDuckDB` flow.
+This parameter enables user to decide whether or not filter should be validated.
 
 ## [0.4.12] - 2023-01-31
 ### Added
 - Added `view_type_time_sleep` to the Genesys `queue_performance_detail_view`.
+- Added `FileNotFoundError` to catch up failures in `MindfulToCSV` and when creating SQL tables.
+- Added `check_dtypes_sort` task into `ADLSToAzureSQL` to check if dtypes is properly sorted.
+- Added `timeout` parameter to all `Task`s where it can be added.
+- Added `timeout` parameter to all `Flow`s where it can be added.
+- Added `adls_bulk_upload` task function to `task_utils.py`
+- Added `get_survey_list` into `Mindful` Source file.
+
 
 ### Changed
 - Updated `genesys_to_adls.py` flow with the `adls_bulk_upload` task
