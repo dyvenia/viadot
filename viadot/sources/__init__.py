@@ -4,7 +4,7 @@ from .databricks import Databricks
 from .exchange_rates import ExchangeRates
 from .redshift_spectrum import RedshiftSpectrum
 from .s3 import S3
-from .sharepoint import Sharepoint
+from .sharepoint import Sharepoint, SharepointCredentials
 
 try:
     from .sap_rfc import SAPRFC
