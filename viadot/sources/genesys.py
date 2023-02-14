@@ -26,14 +26,9 @@ class Genesys(Source):
     def __init__(
         self,
         view_type: str = "queue_performance_detail_view",
-        media_type_list: List[str] = None,
-        queueIds_list: List[str] = None,
-        data_to_post_str: str = None,
-        variable_to_post: List[Any] = None,
         ids_mapping: Dict[str, Any] = None,
         start_date: str = None,
         end_date: str = None,
-        days_interval: int = 1,
         report_name: str = None,
         file_extension: Literal["xls", "xlsx", "csv"] = "csv",
         credentials_genesys: Dict[str, Any] = None,
@@ -49,14 +44,9 @@ class Genesys(Source):
 
         Args:
             view_type (str, optional): The type of view export job to be created. Defaults to "queue_performance_detail_view".
-            media_type_list (List[str], optional):  List of specific media types. Defaults to None.
-            queueIds_list (List[str], optional):  List of specific queues ids. Defaults to None.
-            data_to_post_str (str, optional):  String template to generate json body. Defaults to None.
-            variable_to_post (List[Any], optional): Any kind of variable that data_to_post_str could need during its evaluation. Defaults to None.
             ids_mapping (str, optional): Dictionary mapping for converting IDs to strings. Defaults to None.
             start_date (str, optional):  Start date of the report. Defaults to None.
             end_date (str, optional):  End date of the report. Defaults to None.
-            days_interval (int, optional):  How many days report should include. Defaults to None.
             report_name (str, optional): Name of the report. Defaults to None.
             file_extension (Literal[xls, xlsx, csv;], optional): file extensions for downloaded files. Defaults to "csv".
             credentials_genesys (Dict[str, Any], optional): Credentials to connect with Genesys API containing CLIENT_ID,
@@ -88,16 +78,6 @@ class Genesys(Source):
         super().__init__(*args, credentials=self.credentials_genesys, **kwargs)
 
         self.view_type = view_type
-        if self.view_type not in [
-            "queue_performance_detail_view",
-            "agent_performance_summary_view",
-            "agent_status_summary_view",
-            "agent_status_detail_view",
-        ]:
-            raise Exception(
-                f"View type {self.view_type} still is not implemented in viadot."
-            )
-
         self.schedule_id = schedule_id
         self.report_name = report_name
         self.environment = environment
@@ -106,11 +86,6 @@ class Genesys(Source):
 
         self.start_date = start_date
         self.end_date = end_date
-        self.days_interval = days_interval
-        self.media_type_list = media_type_list
-        self.queueIds_list = queueIds_list
-        self.data_to_post_str = data_to_post_str
-        self.variable_to_post = variable_to_post
         self.file_extension = file_extension
         self.ids_mapping = ids_mapping
         self._internal_counter = iter(range(999999))
@@ -131,7 +106,6 @@ class Genesys(Source):
                     "IDS_MAPPING is not provided in you credentials or is not a dictionary."
                 )
 
-        self.post_data_list = []
         self.report_data = []
 
     @property
@@ -177,54 +151,7 @@ class Genesys(Source):
 
         return request_headers
 
-    def genesys_generate_body(self):
-        """
-        Function that generate json body for Post request method.
-
-        example string:
-            example_raw_json_body_string = '''{
-                "name": f"QUEUE_PERFORMANCE_DETAIL_VIEW_{media}",
-                "timeZone": "UTC",
-                "exportFormat": "CSV",
-                "interval": f"{end_date}T23:00:00/{start_date}T23:00:00",
-                "period": "PT30M",
-                "viewType": f"QUEUE_PERFORMANCE_DETAIL_VIEW",
-                "filter": {"mediaTypes": [f"{media}"], "queueIds": [f"{queueid}"], "directions":["inbound"],},
-                "read": True,
-                "locale": "en-us",
-                "hasFormatDurations": True,
-                "hasSplitFilters": True,
-                "excludeEmptyRows": True,
-                "hasSplitByMedia": True,
-                "hasSummaryRow": True,
-                "csvDelimiter": "COMMA",
-                "hasCustomParticipantAttributes": True,
-                "recipientEmails": [],
-                }'''
-
-        Returns: self.post_data_list (List[str]): List of formated POST body.
-
-        """
-
-        if self.start_date is None and self.end_date is None:
-            today = datetime.now()
-            yesterday = today - timedelta(days=self.days_interval)
-            start_date = today.strftime("%Y-%m-%d")
-            end_date = yesterday.strftime("%Y-%m-%d")
-        else:
-            start_date = self.start_date
-            end_date = self.end_date
-
-        for media in self.media_type_list:
-            for queueid in self.queueIds_list:
-                # for variable_to_post in self.variable_to_post:
-                data_to_post = eval(self.data_to_post_str)
-
-                self.post_data_list.append(data_to_post)
-
-        return self.post_data_list
-
-    def genesys_generate_exports(self):
+    def genesys_generate_exports(self, post_data_list: List[str]):
         """
         Function that make POST request method to generate export reports.
         """
@@ -235,7 +162,7 @@ class Genesys(Source):
         async def generate_post():
             cnt = 0
 
-            for data_to_post in self.post_data_list:
+            for data_to_post in post_data_list:
                 if cnt < 10:
                     payload = json.dumps(data_to_post)
                     async with aiohttp.ClientSession() as session:
@@ -420,6 +347,78 @@ class Genesys(Source):
             self.logger.info("Successfully genetared file names list.")
             return file_name_list
 
+    def generate_reporting_export(
+        self, data_to_post: Dict[str, Any], verbose: bool = False
+    ) -> int:
+        """
+        POST method for reporting export.
+
+        Args:
+            data_to_post (Dict[str, Any]): json format of POST body.
+            verbose (bool, optional): Decide if enable logging.
+
+        Returns:
+            new_report.status_code: status code
+        """
+        payload = json.dumps(data_to_post)
+        new_report = handle_api_response(
+            url=f"https://api.{self.environment}/api/v2/analytics/reporting/exports",
+            headers=self.authorization_token,
+            method="POST",
+            body=payload,
+        )
+        if verbose:
+            if new_report.status_code == 200:
+                self.logger.info("Succesfully generated new export.")
+            else:
+                self.logger.error(
+                    f"Failed to generated new export. - {new_report.content}"
+                )
+                raise APIError("Failed to generated new export.")
+        return new_report.status_code
+
+    def delete_reporting_exports(self, report_id):
+        """DELETE method for deleting particular reporting exports.
+
+        Args:
+            report_id (str): defined at the end of report url.
+
+        Returns:
+            delete_method.status_code: status code
+        """
+        delete_method = handle_api_response(
+            url=f"https://api.{self.environment}/api/v2/analytics/reporting/exports/{report_id}",
+            headers=self.authorization_token,
+            method="DELETE",
+        )
+        if delete_method.status_code < 300:
+            self.logger.info("Successfully deleted report from Genesys API.")
+
+        else:
+            self.logger.error(
+                f"Failed to deleted report from Genesys API. - {delete_method.content}"
+            )
+            raise APIError("Failed to deleted report from Genesys API.")
+
+        return delete_method.status_code
+
+    def delete_all_reporting_exports(self):
+        """
+        Function that deletes all reporting from self.reporting_data list.
+
+        Returns:
+            delete_method.status_code: status code
+        """
+        for report in self.report_data:
+            status_code = self.delete_reporting_exports(report_id=report[0])
+            assert status_code < 300
+
+        self.logger.info("Successfully removed all reports.")
+
+    # *****************************************************
+    #                 WE DON'T USE IT
+    # *****************************************************
+
     def get_analitics_url_report(self):
         """
         Fetching analytics report url from json response.
@@ -485,36 +484,6 @@ class Genesys(Source):
             raise APIError("Failed to scheduled new report.")
         return new_report.status_code
 
-    def generate_reporting_export(
-        self, data_to_post: Dict[str, Any], verbose: bool = False
-    ) -> int:
-        """
-        POST method for reporting export.
-
-        Args:
-            data_to_post (Dict[str, Any]): json format of POST body.
-            verbose (bool, optional): Decide if enable logging.
-
-        Returns:
-            new_report.status_code: status code
-        """
-        payload = json.dumps(data_to_post)
-        new_report = handle_api_response(
-            url=f"https://api.{self.environment}/api/v2/analytics/reporting/exports",
-            headers=self.authorization_token,
-            method="POST",
-            body=payload,
-        )
-        if verbose:
-            if new_report.status_code == 200:
-                self.logger.info("Succesfully generated new export.")
-            else:
-                self.logger.error(
-                    f"Failed to generated new export. - {new_report.content}"
-                )
-                raise APIError("Failed to generated new export.")
-        return new_report.status_code
-
     def to_df(self, report_url: str = None):
         """Download genesys data into a pandas DataFrame.
 
@@ -562,55 +531,3 @@ class Genesys(Source):
             raise APIError("Failed to deleted report from Genesys API.")
 
         return delete_method.status_code
-
-    def delete_reporting_exports(self, report_id):
-        """DELETE method for deleting particular reporting exports.
-
-        Args:
-            report_id (str): defined at the end of report url.
-
-        Returns:
-            delete_method.status_code: status code
-        """
-        delete_method = handle_api_response(
-            url=f"https://api.{self.environment}/api/v2/analytics/reporting/exports/{report_id}",
-            headers=self.authorization_token,
-            method="DELETE",
-        )
-        if delete_method.status_code < 300:
-            self.logger.info("Successfully deleted report from Genesys API.")
-
-        else:
-            self.logger.error(
-                f"Failed to deleted report from Genesys API. - {delete_method.content}"
-            )
-            raise APIError("Failed to deleted report from Genesys API.")
-
-        return delete_method.status_code
-
-    def delete_all_reporting_exports(self):
-        """
-        Function that deletes all reporting from self.reporting_data list.
-
-        Returns:
-            delete_method.status_code: status code
-        """
-        for report in self.report_data:
-            status_code = self.delete_reporting_exports(report_id=report[0])
-            assert status_code < 300
-
-        self.logger.info("Successfully removed all reports.")
-
-    # def __internal_counter(self, count: int = 999999) -> int:
-    #     """Method to generate a sequence of numbers
-
-    #     Args:
-    #         count (int, optional): Counts to crete the generator length. Defaults to 999999.
-
-    #     Yields:
-    #         Iterator[int]: Returns the value plus one for every time this method is called.
-    #     """
-    #     value = 1
-    #     for i in range(count):
-    #         yield value
-    #         value += 1

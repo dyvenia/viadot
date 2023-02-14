@@ -1,15 +1,14 @@
 import time
 from typing import Any, Dict, List
 
-import pandas as pd
 import numpy as np
 import prefect
 from prefect import Task
 from prefect.utilities import logging
 from prefect.utilities.tasks import defaults_from_attrs
 
-from ..exceptions import APIError
-from ..sources import Genesys
+from viadot.exceptions import APIError
+from viadot.sources import Genesys
 
 logger = logging.get_logger()
 
@@ -19,13 +18,9 @@ class GenesysToCSV(Task):
         self,
         report_name: str = "genesys_to_csv",
         view_type: str = "queue_performance_detail_view",
-        media_type_list: List[str] = None,
-        queueIds_list: List[str] = None,
-        data_to_post_str: str = None,
-        variable_to_post: List[Any] = None,
+        post_data_list: List[str] = None,
         start_date: str = None,
         end_date: str = None,
-        days_interval: int = 1,
         environment: str = None,
         schedule_id: str = None,
         report_url: str = None,
@@ -41,14 +36,10 @@ class GenesysToCSV(Task):
         Args:
             report_name (str, optional): The name of this task. Defaults to a general name 'genesys_to_csv'.
             view_type (str, optional): The type of view export job to be created. Defaults to "queue_performance_detail_view".
-            media_type_list (List[str], optional): List of specific media types. Defaults to None.
-            queueIds_list (List[str], optional): List of specific queues ids. Defaults to None.
-            data_to_post_str (str, optional): String template to generate json body. Defaults to None.
-            variable_to_post (List[Any], optional): Any kind of variable that data_to_post_str could need during its evaluation. Defaults to None.
+            post_data_list (List[str], optional): List of string templates to generate json body. Defaults to None.
             credentials_genesys (Dict[str, Any], optional): Credentials to connect with Genesys API containing CLIENT_ID. Defaults to None.
             start_date (str, optional): Start date of the report. Defaults to None.
             end_date (str, optional): End date of the report. Defaults to None.
-            days_interval (int, optional): How many days report should include. Defaults to 1.
             environment (str, optional): Adress of host server. Defaults to None than will be used enviroment
             from credentials.
             schedule_id (str, optional): The ID of report. Defaults to None.
@@ -66,13 +57,9 @@ class GenesysToCSV(Task):
         self.environment = environment
         self.report_url = report_url
         self.report_columns = report_columns
-        self.media_type_list = media_type_list
-        self.queueIds_list = queueIds_list
-        self.data_to_post_str = data_to_post_str
-        self.variable_to_post = variable_to_post
+        self.post_data_list = post_data_list
         self.start_date = start_date
         self.end_date = end_date
-        self.days_interval = days_interval
         self.credentials_genesys = credentials_genesys
         self.local_file_path = local_file_path
 
@@ -93,14 +80,10 @@ class GenesysToCSV(Task):
         "environment",
         "schedule_id",
         "report_url",
-        "media_type_list",
-        "queueIds_list",
-        "data_to_post_str",
-        "variable_to_post",
+        "post_data_list",
         "start_date",
         "end_date",
         "report_columns",
-        "days_interval",
         "credentials_genesys",
     )
     def run(
@@ -111,14 +94,10 @@ class GenesysToCSV(Task):
         environment: str = None,
         schedule_id: str = None,
         report_url: str = None,
-        media_type_list: List[str] = None,
-        queueIds_list: List[str] = None,
-        data_to_post_str: str = None,
-        variable_to_post: List[Any] = None,
+        post_data_list: List[str] = None,
         start_date: str = None,
         end_date: str = None,
         report_columns: List[str] = None,
-        days_interval: int = None,
         credentials_genesys: Dict[str, Any] = None,
     ) -> List[str]:
         """
@@ -128,14 +107,10 @@ class GenesysToCSV(Task):
             report_name (str, optional): The name of this task. Defaults to a general name 'genesys_to_csv'.
             view_type (str, optional): The type of view export job to be created. Defaults to "queue_performance_detail_view".
             view_type_time_sleep (int, optional): Waiting time to retrieve data from Genesys API. Defaults to 80.
-            media_type_list (List[str], optional): List of specific media types. Defaults to None.
-            queueIds_list (List[str], optional): List of specific queues ids. Defaults to None.
-            data_to_post_str (str, optional): String template to generate json body. Defaults to None.
-            variable_to_post (List[Any], optional): Any kind of variable that data_to_post_str could need during its evaluation. Defaults to None.
+            post_data_list (List[str], optional): List of string templates to generate json body. Defaults to None.
             credentials_genesys (Dict[str, Any], optional): Credentials to connect with Genesys API containing CLIENT_ID. Defaults to None.
             start_date (str, optional): Start date of the report. Defaults to None.
             end_date (str, optional): End date of the report. Defaults to None.
-            days_interval (int, optional): How many days report should include. Defaults to 1.
             environment (str, optional): Adress of host server. Defaults to None than will be used enviroment
             from credentials.
             schedule_id (str, optional): The ID of report. Defaults to None.
@@ -149,22 +124,16 @@ class GenesysToCSV(Task):
         genesys = Genesys(
             report_name=report_name,
             view_type=view_type,
-            media_type_list=media_type_list,
-            queueIds_list=queueIds_list,
-            data_to_post_str=data_to_post_str,
-            variable_to_post=variable_to_post,
             credentials_genesys=credentials_genesys,
             start_date=start_date,
             end_date=end_date,
-            days_interval=days_interval,
             environment=environment,
             schedule_id=schedule_id,
             report_url=report_url,
             report_columns=report_columns,
         )
 
-        genesys.genesys_generate_body()
-        genesys.genesys_generate_exports()
+        genesys.genesys_generate_exports(post_data_list=post_data_list)
 
         if view_type == "queue_performance_detail_view":
             logger.info(
@@ -218,9 +187,7 @@ class GenesysToCSV(Task):
         else:
             logger.info("Succesfully loaded all exports.")
 
-        file_names = genesys.download_all_reporting_exports(
-            path=self.local_file_path, page_size=1000
-        )
+        file_names = genesys.download_all_reporting_exports(path=self.local_file_path)
         logger.info("Downloaded the data from the Genesys into the CSV.")
         # in order to wait for API GET request call it
         logger.info("Waiting for caching data in Genesys database.")
@@ -229,83 +196,3 @@ class GenesysToCSV(Task):
         logger.info(f"All existing reports were delted.")
 
         return file_names
-
-
-class GenesysToDF(Task):
-    def __init__(
-        self,
-        report_name: str = None,
-        environment: str = None,
-        schedule_id: str = None,
-        report_url: str = None,
-        report_columns: List[str] = None,
-        credentials_genesys: Dict[str, Any] = None,
-        timeout: int = 3600,
-        *args: List[Any],
-        **kwargs: Dict[str, Any],
-    ):
-
-        self.logger = prefect.context.get("logger")
-        self.schedule_id = schedule_id
-        self.report_name = report_name
-        self.environment = environment
-        self.report_url = report_url
-        self.report_columns = report_columns
-        self.credentials_genesys = credentials_genesys
-
-        super().__init__(
-            name="genesys_to_df",
-            timeout=timeout,
-            *args,
-            **kwargs,
-        )
-
-    def __call__(self, *args, **kwargs):
-        """Download Genesys data to DF"""
-        return super().__call__(*args, **kwargs)
-
-    @defaults_from_attrs(
-        "report_name",
-        "environment",
-        "schedule_id",
-        "report_url",
-        "report_columns",
-        "credentials_genesys",
-    )
-    def run(
-        self,
-        report_name: str = None,
-        environment: str = None,
-        schedule_id: str = None,
-        report_url: str = None,
-        report_columns: List[str] = None,
-        credentials_genesys: Dict[str, Any] = None,
-    ) -> pd.DataFrame:
-        """
-        Task for downloading data from the Genesys API to DF.
-
-        Args:
-            report_name (str, optional): Name of the report. Defaults to None.
-            environment (str, optional): Adress of host server. Defaults to None than will be used enviroment
-            from credentials.
-            schedule_id (str, optional): The ID of report. Defaults to None.
-            report_url (str, optional): The url of report generated in json response. Defaults to None.
-            report_columns (List[str], optional): List of exisiting column in report. Defaults to None.
-            credentials_genesys (Dict[str, Any], optional): Credentials to connect with Genesys API containing CLIENT_ID. Defaults to None.
-
-        Returns:
-            pd.DataFrame: The API GET as a pandas DataFrames from Genesys.
-        """
-        genesys = Genesys(
-            report_name=report_name,
-            credentials=credentials_genesys,
-            environment=environment,
-            schedule_id=schedule_id,
-            report_url=report_url,
-            report_columns=report_columns,
-        )
-
-        df = genesys.to_df()
-
-        logger.info(f"Downloaded the data from the Genesys into the Data Frame.")
-        return df
