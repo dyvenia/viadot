@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added `ExchangeRates` source to the library.
 - Added `from_df()` method to `Azure Data Lake` source
 - Added `SAPRFC` source to the library.
+- Added `Salesforce` source to the library.
 
 ### Changed
 - Added `SQLServerToDF` task

@@ -11,3 +11,4 @@ from .exchange_rates import ExchangeRates
 from .s3 import S3
 from .sharepoint import Sharepoint
 from .redshift_spectrum import RedshiftSpectrum
+from .salesforce import Salesforce
