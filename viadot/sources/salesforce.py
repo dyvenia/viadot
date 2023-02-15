@@ -30,6 +30,7 @@ class Salesforce(Source):
         config_key: str = None,
         **kwargs,
     ):
+
         credentials = credentials or get_source_credentials(config_key) or {}
 
         if credentials is None:
@@ -192,6 +193,3 @@ class Salesforce(Source):
             raise ValueError(f"Query produced no data.")
 
         return pd.DataFrame(records)
-
-
-Salesforce()
