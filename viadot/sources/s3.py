@@ -106,24 +106,24 @@ class S3(Source):
         """
         self.fs.copy(path1=from_path, path2=to_path, recursive=recursive)
 
-    def rm(self, path: Union[List[str], str]):
+    def rm(self, paths: list[str]):
         """
         Deletes files in a path.
 
         Args:
-            path (Union[List[str], str]): Path to a file or folder to be removed. If the path refers to
+            path (list[str]): Path to a file or folder to be removed. If the path refers to
                 a folder, it will be removed recursively. Also the possibilty to delete multiple files at once by
-                passing the individual paths as string within a list.
+                passing the individual paths as a list of strings.
         ```python
-        from viadot.sources.s3 import S3
+        from viadot.sources import S3
         s3 = S3()
         s3.rm(
-            path = ['path_first_file', 'path_second_file']
+            paths = ['path_first_file', 'path_second_file']
         )
         ```
         """
 
-        wr.s3.delete_objects(boto3_session=self.session, path=path)
+        wr.s3.delete_objects(boto3_session=self.session, path=paths)
 
     def from_df(
         self,
@@ -157,13 +157,13 @@ class S3(Source):
                 boto3_session=self.session,
                 df=df,
                 path=path,
-                ax_rows_by_file=max_rows_by_file,
+                max_rows_by_file=max_rows_by_file,
                 **kwargs,
             )
 
     def to_df(
         self,
-        path: Union[List[str], str],
+        paths: list[str],
         chunked: Union[int, bool] = False,
         **kwargs,
     ):
@@ -171,36 +171,57 @@ class S3(Source):
         Reads a csv or parquet file to a pd.DataFrame.
 
         Args:
-            path (Union[List[str], str]): Individual or list of paths to S3 files.
+            paths (list[str]): A list of paths to S3 files.
             chunked (Union[int, bool], optional): If True data will be split in a Iterable of DataFrames (Memory friendly).
-                                                  If an INTEGER is passed awswrangler will iterate on the data by number of rows equal to the received INTEGER.
-        Example:
-         ```python
-        from viadot.sources.s3 import S3
+                If Integer data will be intereated by number of rows equal to the received Integer.
+
+        Example 1:
+        ```python
+        from viadot.sources import S3
         s3 = S3()
-        # for chunked = False
-        s3.to_df(path='s3://{bucket}/path.parquet')
-        s3.to_df(path=['s3://{bucket}/pathfirstfile.parquet', 's3://{bucket}/pathsecondfile.parquet'])
-        # for chunked = True/Integer
-        dfs = s3.to_df(path=['s3://{bucket}/pathfirstfile.parquet', 's3://{bucket}/pathsecondfile.parquet'], chunked = True/Integer)
+        s3.to_df(paths=['s3://{bucket}/pathfirstfile.parquet', 's3://{bucket}/pathsecondfile.parquet'])
+        ```
+
+        Example 2:
+        ```python
+        from viadot.sources import S3
+        s3 = S3()
+        dfs = s3.to_df(paths=['s3://{bucket}/pathfirstfile.parquet', 's3://{bucket}/pathsecondfile.parquet'], chunked = True/Integer)
         for df in dfs:
             print(df)
         ```
-
         """
-        path_first_entry = path
 
-        if type(path_first_entry) is list:
-            path_first_entry = path_first_entry[0]
-
-        if path_first_entry.endswith(".csv"):
+        if paths[0].endswith(".csv"):
             df = wr.s3.read_csv(
-                boto3_session=self.session, path=path, chunked=chunked, **kwargs
+                boto3_session=self.session, path=paths, chunked=chunked, **kwargs
             )
-        elif path_first_entry.endswith(".parquet"):
+        elif paths[0].endswith(".parquet"):
             df = wr.s3.read_parquet(
-                boto3_session=self.session, path=path, chunked=chunked, **kwargs
+                boto3_session=self.session, path=paths, chunked=chunked, **kwargs
             )
         else:
             raise ValueError("Only CSV and parquet formats are supported.")
         return df
+
+    def upload(self, from_path: str, to_path: str):
+        """
+        Upload file(s) to S3.
+
+        Args:
+            from_path (str): Path to local file(s) to be uploaded.
+            to_path (str): Path to the destination file/folder.
+        """
+
+        wr.s3.upload(boto3_session=self.session, local_file=from_path, path=to_path)
+
+    def download(self, to_path: str, from_path: str):
+        """
+        Download file(s) from S3.
+
+        Args:
+            to_path (str): Path to local file(s) to be stored.
+            from_path (str): Path to file in S3.
+        """
+
+        wr.s3.download(boto3_session=self.session, local_file=to_path, path=from_path)

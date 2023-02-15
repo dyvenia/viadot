@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added `SAPRFC` source to the library.
 - Added `S3` source to the library.
 - Added `RedshiftSpectrum` source to the library.
+- Added `upload(), download()` method to `S3` source.
 
 ### Changed
 - Added `SQLServerToDF` task
