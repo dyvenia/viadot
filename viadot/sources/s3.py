@@ -168,10 +168,10 @@ class S3(Source):
         **kwargs,
     ):
         """
-        Reads a csv or parquet file to a pd.DataFrame.
+        Reads a csv or parquet file to a pd.DataFrame. Possibility of reading in several files in one or multiple pd.DataFrames.
 
         Args:
-            paths (list[str]): A list of paths to S3 files.
+            paths (list[str]): A list of paths to S3 files. List must contain a uniform file format.
             chunked (Union[int, bool], optional): If True data will be split in a Iterable of DataFrames (Memory friendly).
                 If Integer data will be intereated by number of rows equal to the received Integer.
 
