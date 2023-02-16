@@ -118,7 +118,7 @@ class S3(Source):
         from viadot.sources import S3
         s3 = S3()
         s3.rm(
-            paths = ['path_first_file', 'path_second_file']
+            paths = ['path_first_file','path_second_file']
         )
         ```
         """
