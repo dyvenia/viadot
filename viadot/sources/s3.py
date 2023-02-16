@@ -1,4 +1,4 @@
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Union, Literal
 
 import awswrangler as wr
 import boto3
@@ -106,21 +106,31 @@ class S3(Source):
         """
         self.fs.copy(path1=from_path, path2=to_path, recursive=recursive)
 
-    def rm(self, path: str):
+    def rm(self, paths: list[str]):
         """
-        Deletes files in a path.
+        Deletes files in S3.
 
         Args:
-            path (str): Path to a file or folder to be removed. If the path refers to
-                a folder, it will be removed recursively.
+            paths (list[str]): Paths to files or folders to be removed. If the path refers to
+                a folder, it will be removed recursively. Also the possibilty to delete multiple files at once by
+                passing the individual paths as a list of strings.
+        ```python
+        from viadot.sources import S3
+        s3 = S3()
+        s3.rm(
+            paths=['path_first_file', 'path_second_file']
+        )
+        ```
         """
 
-        wr.s3.delete_objects(boto3_session=self.session, path=path)
+        wr.s3.delete_objects(boto3_session=self.session, path=paths)
 
     def from_df(
         self,
         df: pd.DataFrame,
         path: str,
+        extension: Literal[".csv", ".parquet"] = ".parquet",
+        max_rows_by_file: int = None,
         **kwargs,
     ):
         """
@@ -130,46 +140,88 @@ class S3(Source):
         Args:
             df (pd.DataFrame): Pandas DataFrame.
             path (str): Path to a S3 folder.
+            extension (Literal[".csv", ".parquet"]): Required file type. Accepted file formats are 'csv'
+                and 'parquet'. Defaults to '.parquet'.
+            max_rows_by_file (int): Max number of rows in each file (only works for read_parquet). Default to None.
         """
 
-        if path.endswith(".csv"):
+        if extension == ".csv":
             wr.s3.to_csv(
                 boto3_session=self.session,
                 df=df,
                 path=path,
-                dataset=True,
                 **kwargs,
             )
-        elif path.endswith(".parquet"):
+        else:
             wr.s3.to_parquet(
                 boto3_session=self.session,
                 df=df,
                 path=path,
-                dataset=True,
+                max_rows_by_file=max_rows_by_file,
                 **kwargs,
             )
-        else:
-            raise ValueError("Only CSV and parquet formats are supported.")
 
     def to_df(
         self,
-        path: str,
+        paths: list[str],
+        chunked: Union[int, bool] = False,
         **kwargs,
     ):
         """
-        Reads a csv or parquet file to a pd.DataFrame.
+        Reads a csv or parquet file to a pd.DataFrame. Possibility of reading in several files in one or multiple pd.DataFrames.
 
         Args:
-            path (str): Path to a S3 folder.
+            paths (list[str]): A list of paths to S3 files. List must contain a uniform file format.
+            chunked (Union[int, bool], optional): If True data will be split in a Iterable of DataFrames (Memory friendly).
+                If Integer data will be intereated by number of rows equal to the received Integer.
+
+        Example 1:
+        ```python
+        from viadot.sources import S3
+        s3 = S3()
+        s3.to_df(paths=['s3://{bucket}/pathfirstfile.parquet', 's3://{bucket}/pathsecondfile.parquet'])
+        ```
+
+        Example 2:
+        ```python
+        from viadot.sources import S3
+        s3 = S3()
+        dfs = s3.to_df(paths=['s3://{bucket}/pathfirstfile.parquet', 's3://{bucket}/pathsecondfile.parquet'], chunked=True)
+        for df in dfs:
+            print(df)
+        ```
         """
-        if path.endswith(".csv"):
+
+        if paths[0].endswith(".csv"):
             df = wr.s3.read_csv(
-                boto3_session=self.session, path=path, dataset=True, **kwargs
+                boto3_session=self.session, path=paths, chunked=chunked, **kwargs
             )
-        elif path.endswith(".parquet"):
+        elif paths[0].endswith(".parquet"):
             df = wr.s3.read_parquet(
-                boto3_session=self.session, path=path, dataset=True, **kwargs
+                boto3_session=self.session, path=paths, chunked=chunked, **kwargs
             )
         else:
             raise ValueError("Only CSV and parquet formats are supported.")
         return df
+
+    def upload(self, from_path: str, to_path: str):
+        """
+        Upload file(s) to S3.
+
+        Args:
+            from_path (str): Path to local file(s) to be uploaded.
+            to_path (str): Path to the destination file/folder.
+        """
+
+        wr.s3.upload(boto3_session=self.session, local_file=from_path, path=to_path)
+
+    def download(self, from_path: str, to_path: str):
+        """
+        Download file(s) from S3.
+
+        Args:
+            from_path (str): Path to file in S3.
+            to_path (str): Path to local file(s) to be stored.
+        """
+
+        wr.s3.download(boto3_session=self.session, path=from_path, local_file=to_path)
