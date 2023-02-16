@@ -80,3 +80,8 @@ def TEST_ADLS_FILE_PATH_PARQUET():
 @pytest.fixture(scope="session", autouse=True)
 def TEST_ADLS_FILE_PATH_CSV():
     return os.environ.get("TEST_ADLS_FILE_PATH_CSV")
+
+
+@pytest.fixture(scope="session", autouse=True)
+def s3_config_key():
+    return os.environ.get("S3_CONFIG_KEY")

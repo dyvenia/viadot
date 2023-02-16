@@ -22,17 +22,15 @@ SOURCE_DATA = [
 ]
 TEST_DF = pd.DataFrame(SOURCE_DATA)
 
-S3_BUCKET = "datawerfen-159170848751291"
+S3_BUCKET = os.environ.get("S3_BUCKET")
 TEST_SCHEMA = "raw_test"
 TEST_TABLE = "test"
 
 
 @pytest.fixture(scope="session")
-def s3():
+def s3(s3_config_key):
 
-    credentials = {"profile_name": "werfen-dev"}
-
-    s3 = S3(credentials=credentials)
+    s3 = S3(config_key=s3_config_key)
 
     yield s3
 
