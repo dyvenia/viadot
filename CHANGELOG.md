@@ -13,7 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added `SAPRFC` source to the library.
 - Added `S3` source to the library.
 - Added `RedshiftSpectrum` source to the library.
-- Added `upload(), download()` method to `S3` source.
+- Added `upload()` and `download()` methods to `S3` source.
 
 ### Changed
 - Added `SQLServerToDF` task
@@ -22,7 +22,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added Databricks/Spark setup to the image. See README for setup & usage instructions.
 - Added rollback feature to `Databricks` source.
 - Changed all Prefect logging instances in the `sources` directory to native Python logging.
-- Changed `rm , from_df , to_df` methods in `S3` Source
+- Changed `rm()`, `from_df()`, `to_df()` methods in `S3` Source
 
 ### Removed
 - Removed the `env` param from `Databricks` source, as user can now store multiple configs for the same source using different config keys.
