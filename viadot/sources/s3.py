@@ -118,7 +118,7 @@ class S3(Source):
         from viadot.sources import S3
         s3 = S3()
         s3.rm(
-            paths = ['path_first_file','path_second_file']
+            paths=['path_first_file', 'path_second_file']
         )
         ```
         """
@@ -186,7 +186,7 @@ class S3(Source):
         ```python
         from viadot.sources import S3
         s3 = S3()
-        dfs = s3.to_df(paths=['s3://{bucket}/pathfirstfile.parquet', 's3://{bucket}/pathsecondfile.parquet'], chunked = True/Integer)
+        dfs = s3.to_df(paths=['s3://{bucket}/pathfirstfile.parquet', 's3://{bucket}/pathsecondfile.parquet'], chunked=True)
         for df in dfs:
             print(df)
         ```
