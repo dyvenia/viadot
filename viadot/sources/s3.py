@@ -111,7 +111,7 @@ class S3(Source):
         Deletes files in a path.
 
         Args:
-            path (list[str]): Path to a file or folder to be removed. If the path refers to
+            paths (list[str]): Path to a file or folder to be removed. If the path refers to
                 a folder, it will be removed recursively. Also the possibilty to delete multiple files at once by
                 passing the individual paths as a list of strings.
         ```python
