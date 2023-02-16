@@ -108,10 +108,10 @@ class S3(Source):
 
     def rm(self, paths: list[str]):
         """
-        Deletes files in a path.
+        Deletes files in S3.
 
         Args:
-            paths (list[str]): Path to a file or folder to be removed. If the path refers to
+            paths (list[str]): Paths to files or folders to be removed. If the path refers to
                 a folder, it will be removed recursively. Also the possibilty to delete multiple files at once by
                 passing the individual paths as a list of strings.
         ```python
