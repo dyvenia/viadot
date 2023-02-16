@@ -215,13 +215,13 @@ class S3(Source):
 
         wr.s3.upload(boto3_session=self.session, local_file=from_path, path=to_path)
 
-    def download(self, to_path: str, from_path: str):
+    def download(self, from_path: str, to_path: str):
         """
         Download file(s) from S3.
 
         Args:
-            to_path (str): Path to local file(s) to be stored.
             from_path (str): Path to file in S3.
+            to_path (str): Path to local file(s) to be stored.
         """
 
-        wr.s3.download(boto3_session=self.session, local_file=to_path, path=from_path)
+        wr.s3.download(boto3_session=self.session, path=from_path, local_file=to_path)
