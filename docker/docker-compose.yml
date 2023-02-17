@@ -2,18 +2,13 @@ version: "3"
 
 services:
   viadot_2:
-    image: viadot:2.0a7
+    image: ghcr.io/dyvenia/viadot/viadot:2.0a14
     container_name: viadot_2
-    # ports:
-    #   - 5679:8888
     volumes:
-      # - ${HOME}/dyvenia/viadot:/home/viadot_local
-      # - ${HOME}/.databricks-connect-ext-hive:/home/viadot/.databricks-connect
       # - ${HOME}/.databricks-connect:/home/viadot/.databricks-connect
       # - ${HOME}/.dbt/profiles.yml:/home/viadot/.dbt/profiles.yml
-      - ${HOME}/.config/viadot/config.yaml:/home/viadot/.config/viadot/config.yaml
+      # - ${HOME}/.config/viadot/config.yaml:/home/viadot/.config/viadot/config.yaml
       - ../:/home/viadot
     shm_size: '4gb'
-    # command: jupyter lab --no-browser --ip 0.0.0.0 --LabApp.token=''
     command: sleep infinity
     restart: "unless-stopped"
