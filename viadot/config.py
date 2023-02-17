@@ -14,20 +14,34 @@ USER_HOME = expanduser("~")
 
 class Config(dict):
     @classmethod
+    def _get_configuration(
+        cls, config: dict, key: Optional[str] = None
+    ) -> Optional[dict]:
+
+        # Empty config.
+        if not config:
+            return
+
+        # Config key does not exist or has no values.
+        if key:
+            config = config.get(key)
+            if not config:
+                logger.warning(f"No configuration found under the '{key}' config key.")
+                return
+
+        return cls(**config)
+
+    @classmethod
     def from_json(cls, path: str, key: Optional[str] = None) -> Config:
         with open(path) as f:
             config = json.load(f)
-            if key:
-                config = config[key]
-            return cls(**config)
+            return cls._get_configuration(config, key=key)
 
     @classmethod
     def from_yaml(cls, path: str, key: Optional[str] = None) -> Config:
         with open(path) as f:
             config = safe_load(stream=f)
-            if key:
-                config = config[key]
-            return cls(**config)
+            return cls._get_configuration(config, key=key)
 
 
 config_dir = join(USER_HOME, ".config", "viadot")
