@@ -8,13 +8,18 @@
     "python.linting.enabled": true,
     "editor.formatOnSave": true,
     "editor.formatOnSaveTimeout": 3000,
-    "cSpell.userWords": [
+    "git.autofetch": true,
+    "cSpell.words": [
+        "ADLS",
+        "autouse",
         "azstorage",
         "azuresql",
         "conda",
         "config",
         "dask",
         "data",
+        "Databricks",
+        "datetimeoffset",
         "distributed",
         "dotenv",
         "dtype",
@@ -45,8 +50,8 @@
         "traefik",
         "users",
         "var",
+        "viadot",
         "work",
         "zfill"
-    ],
-    "git.autofetch": true
+    ]
 }
