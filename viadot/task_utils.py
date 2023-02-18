@@ -4,24 +4,24 @@ import os
 import shutil
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
-from typing import Union, cast, List, Literal
-from toolz import curry
+from typing import List, Literal, Union, cast
 
 import pandas as pd
 import prefect
 import pyarrow as pa
 import pyarrow.dataset as ds
-from prefect import task, Task, Flow
-from prefect.utilities import logging
-from prefect.tasks.secrets import PrefectSecret
+from prefect import Flow, Task, task
 from prefect.engine.state import Failed
+from prefect.tasks.secrets import PrefectSecret
+from prefect.utilities import logging
 from sendgrid import SendGridAPIClient
 from sendgrid.helpers.mail import Mail
+from toolz import curry
 from visions.functional import infer_type
 from visions.typesets.complete_set import CompleteSet
-from viadot.tasks import AzureKeyVaultSecret
-from viadot.config import local_config
 
+from viadot.config import local_config
+from viadot.tasks import AzureKeyVaultSecret
 
 logger = logging.get_logger()
 METADATA_COLUMNS = {"_viadot_downloaded_at_utc": "DATETIME"}
