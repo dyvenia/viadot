@@ -22,3 +22,4 @@ def test_join_df():
 
     assert isinstance(df, pd.DataFrame)
     assert "prize" in df.columns
+    assert not df.empty
