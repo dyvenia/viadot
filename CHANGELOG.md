@@ -5,7 +5,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
-### Added 
+### Added
 - Added `validate_date_filter` parameter to `Epicor` source, `EpicorOrdersToDF` task and `EpicorOrdersToDuckDB` flow.
 This parameter enables user to decide whether or not filter should be validated.
 - Added `Mediatool` source class
@@ -23,6 +23,11 @@ This parameter enables user to decide whether or not filter should be validated.
 - Added `adls_bulk_upload` task function to `task_utils.py`
 - Added `get_survey_list` into `Mindful` Source file.
 
+### Changed
+- Updated `genesys_to_adls.py` flow with the `adls_bulk_upload` task
+- Updated `mindful_to_adls.py` flow with the `adls_bulk_upload` task
+- Changed `MindfulToCSV` task to download surveys info.
+
 
 ## [0.4.11] - 2022-12-15
 ### Added
@@ -30,11 +35,6 @@ This parameter enables user to decide whether or not filter should be validated.
 
 ### Changed
 - Changed data extraction logic for `Outlook` data.
-
-### Added 
-- Added Mediatool source class
-- Added MediatoolToDF task class
-- Added MediatoolToADLS flow class
 
 
 ## [0.4.10] - 2022-11-16
