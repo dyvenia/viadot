@@ -135,6 +135,7 @@ class Genesys(Source):
             body=request_body,
             headers=request_headers,
             method="POST",
+            timeout=3600,
         )
         if verbose:
             if response.status_code == 200:
