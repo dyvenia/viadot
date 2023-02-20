@@ -172,7 +172,7 @@ class GenesysToCSV(Task):
             time.sleep(view_type_time_sleep)
 
             genesys.get_reporting_exports_data()
-        # print(genesys.report_data)
+
         failed = [col for col in np.array(genesys.report_data).T][-1]
 
         if "FAILED" in failed and "COMPLETED" in failed:
