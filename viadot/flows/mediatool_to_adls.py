@@ -27,13 +27,12 @@ logger = logging.get_logger(__name__)
 class MediatoolToADLS(Flow):
     def __init__(
         self,
-        name: str = None,
+        name: str,
         organization_ids: List[str] = None,
         media_entries_columns: List[str] = None,
         mediatool_credentials: dict = None,
         mediatool_credentials_key: str = "MEDIATOOL",
         vault_name: str = None,
-        credentials_secret: str = None,
         output_file_extension: str = ".parquet",
         adls_dir_path: str = None,
         local_file_path: str = None,
@@ -45,8 +44,8 @@ class MediatoolToADLS(Flow):
         **kwargs: Dict[str, Any],
     ):
         """
-        Flow for downloading data from Mediatool platform to CSV or parquet file using Mediatool API,
-        then uploading it to Azure Data Lake.
+        Flow for downloading data from the Mediatool platform via API to a CSV or Parquet file.
+        Then upload it to Azure Data Lake.
 
         Args:
             name (str): The name of the flow.
@@ -55,7 +54,6 @@ class MediatoolToADLS(Flow):
             mediatool_credentials (dict, optional): Dictionary containing Mediatool credentials. Defaults to None.
             mediatool_credentials_key (str, optional): Credential key to dictionary where credentials are stored (e.g. in local config).
                 Defaults to "MEDIATOOL".
-            credentials_secret (str, optional): The name of the Azure Key Vault secret for Mediatool project. Defaults to None.
             vault_name (str, optional): The name of the vault from which to obtain the secrets. Defaults to None.
             output_file_extension (str, optional): Output file extension - to allow selection of .csv for data
                 which is not easy to handle with parquet. Defaults to ".parquet".
@@ -74,7 +72,6 @@ class MediatoolToADLS(Flow):
         self.mediatool_credentials_key = mediatool_credentials_key
         self.media_entries_columns = media_entries_columns
         self.vault_name = vault_name
-        self.credentials_secret = credentials_secret
 
         # AzureDataLakeUpload
         self.overwrite = overwrite_adls

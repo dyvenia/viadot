@@ -6,6 +6,9 @@ from ..utils import handle_api_response
 import json
 import pandas as pd
 import inspect
+from prefect.utilities import logging
+
+logger = logging.get_logger(__name__)
 
 
 class Mediatool(Source):
@@ -78,7 +81,7 @@ class Mediatool(Source):
     ) -> pd.DataFrame:
         """
         Get data for media entries. This is a main function. Media entries contain IDs for most of the fields
-        for other endpoints.Returns DF or dict.
+        for other endpoints.Returns DataFrame or Dict.
 
         Args:
             organization_id (str): Organization ID.
@@ -115,7 +118,7 @@ class Mediatool(Source):
             try:
                 df_filtered = df[columns]
             except KeyError as e:
-                print(e)
+                logger.info(e)
             return df_filtered
 
         return response_dict["mediaEntries"]
@@ -124,7 +127,7 @@ class Mediatool(Source):
         self, organization_id: str, return_dataframe: bool = True
     ) -> pd.DataFrame:
         """
-        Get campaign data based on the organization ID. Returns DF or dict.
+        Get campaign data based on the organization ID. Returns DataFrame or Dict.
 
         Args:
             organization_id (str): Organization ID.
@@ -165,7 +168,7 @@ class Mediatool(Source):
         return_dataframe: bool = True,
     ) -> pd.DataFrame:
         """
-        Get vehicles data based on the organization IDs. Returns DF or dict.
+        Get vehicles data based on the organization IDs. Returns DataFrame or Dict.
 
         Args:
             vehicle_ids (List[str]): List of organization IDs.
@@ -205,7 +208,7 @@ class Mediatool(Source):
         self, user_id: str = None, return_dataframe: bool = True
     ) -> pd.DataFrame:
         """
-        Get organizations data based on the user ID. Returns DF or dict.
+        Get organizations data based on the user ID. Returns DataFrame or Dict.
 
         Args:
             user_id (str): User ID.
@@ -258,7 +261,7 @@ class Mediatool(Source):
     ) -> pd.DataFrame:
         """
         Get media types data based on the media types ID. User have to provide list of media type IDs.
-        Returns DF or dict.
+        Returns DataFrame or Dict.
 
         Args:
             media_type_ids (List[str]): List of media type IDs.
