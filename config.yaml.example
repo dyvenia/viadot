@@ -14,3 +14,8 @@ sources:
     credentials:
       api_key: "<API_KEY>",
       user: "<USER>",
+  
+  - exchange_rates_dev:
+      class: ExchangeRates
+      credentials:
+        api_key: "<API_KEY>"

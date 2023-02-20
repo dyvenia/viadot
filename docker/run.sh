@@ -12,7 +12,7 @@ do
     esac
 done
 
-IMAGE_TAG=$IMAGE_TAG docker-compose --profile $PROFILE up -d --force-recreate
+IMAGE_TAG=$IMAGE_TAG docker-compose up -d --force-recreate # --profile $PROFILE
 
 echo ""
 echo "Press Enter to exit."
