@@ -5,11 +5,12 @@ import pandas as pd
 import sharepy
 from pydantic import BaseModel
 from sharepy.errors import AuthError
+
 from viadot.exceptions import CredentialError
 
 from ..config import get_source_credentials
 from ..signals import SKIP
-from ..utils import cleanup_df, add_viadot_metadata_columns
+from ..utils import add_viadot_metadata_columns, cleanup_df
 from .base import Source
 
 
@@ -49,10 +50,10 @@ class Sharepoint(Source):
                 password=self.credentials["password"],
             )
         except AuthError:
+            site = self.credentials.get("site")
             raise CredentialError(
-                f"Could not authenticate to {self.credentials.site} with provided credentials."
+                f"Could not authenticate to {site} with provided credentials."
             )
-
         return connection
 
     def download_file(
