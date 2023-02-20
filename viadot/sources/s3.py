@@ -1,12 +1,20 @@
-from typing import Any, Dict, List, Union, Literal
+from typing import Iterable, List, Literal, Union
 
 import awswrangler as wr
 import boto3
 import pandas as pd
 import s3fs
+from pydantic import BaseModel
 
 from viadot.config import get_source_credentials
 from viadot.sources.base import Source
+
+
+class S3Credentials(BaseModel):
+    profile_name: str  # The name of the IAM profile to use.
+    region_name: str  # The name of the AWS region.
+    aws_access_key_id: str
+    aws_secret_access_key: str
 
 
 class S3(Source):
@@ -14,7 +22,7 @@ class S3(Source):
     A class for pulling data from and uploading to the S3.
 
     Args:
-        credentials (Dict[str, Any], optional): Credentials to the AWS S3.
+        credentials (S3Credentials, optional): S3 credentials.
             Defaults to None.
         config_key (str, optional): The key in the viadot config holding relevant
             credentials. Defaults to None.
@@ -22,7 +30,7 @@ class S3(Source):
 
     def __init__(
         self,
-        credentials: Dict[str, Any] = None,
+        credentials: S3Credentials = None,
         config_key: str = None,
         *args,
         **kwargs,
@@ -37,8 +45,8 @@ class S3(Source):
             )
 
         self.fs = s3fs.S3FileSystem(
-            region_name=self.credentials.get("region_name"),
             profile=self.credentials.get("profile_name"),
+            region_name=self.credentials.get("region_name"),
             key=self.credentials.get("aws_access_key_id"),
             secret=self.credentials.get("aws_secret_access_key"),
         )
@@ -46,7 +54,7 @@ class S3(Source):
         self._session = None
 
     @property
-    def session(self):
+    def session(self) -> boto3.session.Session:
         """A singleton-like property for initiating a session to the AWS."""
         if not self._session:
             self._session = boto3.session.Session(
@@ -59,7 +67,7 @@ class S3(Source):
 
     def ls(self, path: str, suffix: str = None) -> List[str]:
         """
-        Returns a list of files in a S3.
+        Returns the contents of `path`.
 
         Args:
             path (str): Path to a folder.
@@ -80,13 +88,13 @@ class S3(Source):
         """
         return wr.s3.does_object_exist(boto3_session=self.session, path=path)
 
-    def cp(self, from_path: str, to_path: str, recursive: bool = False):
+    def cp(self, from_path: str, to_path: str, recursive: bool = False) -> None:
         """
         Copies the contents of `from_path` to `to_path`.
 
         Args:
-            from_path (str, optional): S3 Path for the source directory.
-            to_path (str, optional): S3 Path for the target directory.
+            from_path (str, optional): The path (S3 URL) of the source directory.
+            to_path (str, optional): The path (S3 URL) of the target directory.
             recursive (bool, optional): Set this to true if working with directories.
                 Defaults to False.
 
@@ -94,32 +102,29 @@ class S3(Source):
             Copy files within two S3 locations:
 
             ```python
-
             from viadot.sources.s3 import S3
 
             s3 = S3()
             s3.cp(
-                from_path='s3://bucket-name/folder_a/',
-                to_path='s3://bucket-name/folder_b/',
+                from_path="s3://bucket-name/folder_a/",
+                to_path="s3://bucket-name/folder_b/",
                 recursive=True
             )
         """
         self.fs.copy(path1=from_path, path2=to_path, recursive=recursive)
 
-    def rm(self, paths: list[str]):
+    def rm(self, paths: list[str]) -> None:
         """
-        Deletes files in S3.
+        Delete files under `paths`.
 
         Args:
-            paths (list[str]): Paths to files or folders to be removed. If the path refers to
-                a folder, it will be removed recursively. Also the possibilty to delete multiple files at once by
-                passing the individual paths as a list of strings.
+            paths (list[str]): Paths to files or folders to be removed. If the path
+                is a directory, it will be removed recursively.
         ```python
         from viadot.sources import S3
+
         s3 = S3()
-        s3.rm(
-            paths=['path_first_file', 'path_second_file']
-        )
+        s3.rm(paths=["file1.parquet"])
         ```
         """
 
@@ -132,17 +137,17 @@ class S3(Source):
         extension: Literal[".csv", ".parquet"] = ".parquet",
         max_rows_by_file: int = None,
         **kwargs,
-    ):
+    ) -> None:
         """
-        Upload a pandas `DataFrame` to a csv or parquet file. You can choose different
-            file backends, and have the option of compression.
+        Upload a pandas `DataFrame` into S3 as a CSV or Parquet file.
 
         Args:
-            df (pd.DataFrame): Pandas DataFrame.
-            path (str): Path to a S3 folder.
-            extension (Literal[".csv", ".parquet"]): Required file type. Accepted file formats are 'csv'
-                and 'parquet'. Defaults to '.parquet'.
-            max_rows_by_file (int): Max number of rows in each file (only works for read_parquet). Default to None.
+            df (pd.DataFrame): The pandas DataFrame to upload.
+            path (str): The destination path.
+            extension (Literal[".csv", ".parquet"]): The file extension. Either ".csv"
+                or ".parquet". Defaults to ".parquet".
+            max_rows_by_file (int, optional): Maximum number of rows in each file.
+                Only available for ".parquet" extension. Defaults to None.
         """
 
         if extension == ".csv":
@@ -164,47 +169,61 @@ class S3(Source):
     def to_df(
         self,
         paths: list[str],
-        chunked: Union[int, bool] = False,
+        chunk_size: int = None,
         **kwargs,
-    ):
+    ) -> Union[pd.DataFrame, Iterable[pd.DataFrame]]:
         """
-        Reads a csv or parquet file to a pd.DataFrame. Possibility of reading in several files in one or multiple pd.DataFrames.
+        Reads a CSV or Parquet file into a pandas `DataFrame`.
 
         Args:
-            paths (list[str]): A list of paths to S3 files. List must contain a uniform file format.
-            chunked (Union[int, bool], optional): If True data will be split in a Iterable of DataFrames (Memory friendly).
-                If Integer data will be intereated by number of rows equal to the received Integer.
+            paths (list[str]): A list of paths to S3 files. All files under the path
+                must be of the same type.
+            chunk_size (int, optional): Number of rows to include in each chunk.
+                Defaults to None, ie. return all data as a single `DataFrame`.
+
+        Returns:
+            Union[pd.DataFrame, Iterable[pd.DataFrame]]: A pandas DataFrame
+                or an iterable of pandas DataFrames.
 
         Example 1:
         ```python
         from viadot.sources import S3
+
         s3 = S3()
-        s3.to_df(paths=['s3://{bucket}/pathfirstfile.parquet', 's3://{bucket}/pathsecondfile.parquet'])
+        paths = ["s3://{bucket}/file1.parquet", "s3://{bucket}/file2.parquet"]
+        s3.to_df(paths=paths)
         ```
 
         Example 2:
         ```python
         from viadot.sources import S3
+
         s3 = S3()
-        dfs = s3.to_df(paths=['s3://{bucket}/pathfirstfile.parquet', 's3://{bucket}/pathsecondfile.parquet'], chunked=True)
+        paths = ["s3://{bucket}/file1.parquet", "s3://{bucket}/file2.parquet"]
+        dfs = s3.to_df(paths=paths, chunk_size=2)
+
         for df in dfs:
             print(df)
         ```
         """
 
+        if chunk_size is None:
+            # `chunked` expects either an integer or a boolean.
+            chunk_size = False
+
         if paths[0].endswith(".csv"):
             df = wr.s3.read_csv(
-                boto3_session=self.session, path=paths, chunked=chunked, **kwargs
+                boto3_session=self.session, path=paths, chunked=chunk_size, **kwargs
             )
         elif paths[0].endswith(".parquet"):
             df = wr.s3.read_parquet(
-                boto3_session=self.session, path=paths, chunked=chunked, **kwargs
+                boto3_session=self.session, path=paths, chunked=chunk_size, **kwargs
             )
         else:
             raise ValueError("Only CSV and parquet formats are supported.")
         return df
 
-    def upload(self, from_path: str, to_path: str):
+    def upload(self, from_path: str, to_path: str) -> None:
         """
         Upload file(s) to S3.
 
@@ -215,7 +234,7 @@ class S3(Source):
 
         wr.s3.upload(boto3_session=self.session, local_file=from_path, path=to_path)
 
-    def download(self, from_path: str, to_path: str):
+    def download(self, from_path: str, to_path: str) -> None:
         """
         Download file(s) from S3.
 

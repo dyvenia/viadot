@@ -1,8 +1,9 @@
 import os
+
 import pandas as pd
 import pytest
-from viadot.sources import S3
 
+from viadot.sources import S3
 
 SOURCE_DATA = [
     {
@@ -78,9 +79,28 @@ def test_to_df(s3):
         paths=[f"s3://{S3_BUCKET}/nesso/{TEST_SCHEMA}/{TEST_TABLE}.parquet"]
     )
 
+    assert len(result) == len(TEST_DF)
+
+    # Cleanup.
     s3.rm(paths=[f"s3://{S3_BUCKET}/nesso/{TEST_SCHEMA}/{TEST_TABLE}.parquet"])
 
-    assert (len(result) == len(TEST_DF)) is True
+
+def test_to_df_chunk_size(s3):
+
+    s3.from_df(
+        df=TEST_DF, path=f"s3://{S3_BUCKET}/nesso/{TEST_SCHEMA}/{TEST_TABLE}.parquet"
+    )
+
+    dfs = s3.to_df(
+        paths=[f"s3://{S3_BUCKET}/nesso/{TEST_SCHEMA}/{TEST_TABLE}.parquet"],
+        chunk_size=1,
+    )
+
+    result = pd.concat(dfs, ignore_index=True)
+    assert len(result) == len(TEST_DF)
+
+    # Cleanup.
+    s3.rm(paths=[f"s3://{S3_BUCKET}/nesso/{TEST_SCHEMA}/{TEST_TABLE}.parquet"])
 
 
 def test_upload(s3):
