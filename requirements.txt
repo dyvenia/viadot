@@ -24,3 +24,4 @@ google-auth==2.6.2
 sendgrid==6.9.7
 pandas-gbq==0.17.4
 databricks-connect==10.4.18
+pyyaml==6.0
