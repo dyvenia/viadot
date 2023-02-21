@@ -7,3 +7,4 @@ __pycache__
 .local
 .vscode
 .pytest_cache
+.venv
