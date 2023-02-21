@@ -19,7 +19,7 @@ visions==0.7.5
 sharepy>=2.0.0,<2.1.0
 simple_salesforce==1.11.5
 sql-metadata==2.3.0
-duckdb==0.3.2
+duckdb==0.5.1
 google-auth==2.6.2
 sendgrid==6.9.7
 pandas-gbq==0.17.4
