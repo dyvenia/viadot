@@ -1,12 +1,13 @@
-import copy
-
 import pandas as pd
 import pytest
+from pyspark.sql.utils import AnalysisException
+
 from viadot.exceptions import TableDoesNotExist
 from viadot.sources import Databricks
+from viadot.utils import add_viadot_metadata_columns
 
-TEST_SCHEMA_ONEOFF = "viadot_test_schema_oneoff"
 TEST_SCHEMA = "viadot_test_schema"
+TEST_SCHEMA_2 = "viadot_test_schema_2"
 TEST_TABLE = "test_table"
 FQN = f"{TEST_SCHEMA}.{TEST_TABLE}"
 
@@ -18,7 +19,7 @@ SOURCE_DATA = [
         "FirstName": "Melody",
         "LastName": "Cook",
         "ContactEmail": "Melody.Cook@ScottMerritt.com",
-        "MailingCity": "Elizabethfurt",
+        "MailingCity": "Palo Alto",
     },
     {
         "Id": "CFfTlqagNlpDu",
@@ -27,7 +28,7 @@ SOURCE_DATA = [
         "FirstName": "Wayne",
         "LastName": "Morrison",
         "ContactEmail": "Wayne.Morrison@MannWarren.com",
-        "MailingCity": "Kathrynmouth",
+        "MailingCity": "Bournemouth",
     },
 ]
 TEST_DF = pd.DataFrame(SOURCE_DATA)
@@ -39,8 +40,8 @@ ADDITIONAL_TEST_DATA = [
         "FirstName": "Updated",
         "LastName": "Carter2",
         "ContactEmail": "Adam.Carter@TurnerBlack.com",
-        "MailingCity": "Updated!Jamesport",
-        "NewField": "New field vlaue",
+        "MailingCity": "Updated!Jamestown",
+        "NewField": "New field value",
     }
 ]
 ADDITIONAL_DATA_NEW_FIELD_DF = pd.DataFrame(ADDITIONAL_TEST_DATA)
@@ -53,6 +54,13 @@ def databricks():
     databricks = Databricks(
         config_key="databricks-qa-elt",
     )
+
+    try:
+        databricks.drop_schema(TEST_SCHEMA)
+        databricks.drop_table(TEST_TABLE)
+    except:
+        pass
+
     databricks.create_schema(TEST_SCHEMA)
 
     yield databricks
@@ -71,19 +79,22 @@ def databricks():
 @pytest.mark.dependency()
 def test_create_schema(databricks):
 
-    # databricks.drop_schema(TEST_SCHEMA_ONEOFF)
+    try:
+        databricks.drop_schema(TEST_SCHEMA_2)
+    except AnalysisException:
+        pass
 
-    exists = databricks._check_if_schema_exists(TEST_SCHEMA_ONEOFF)
+    exists = databricks._check_if_schema_exists(TEST_SCHEMA_2)
     assert exists is False
 
-    created = databricks.create_schema(TEST_SCHEMA_ONEOFF)
+    created = databricks.create_schema(TEST_SCHEMA_2)
     assert created is True
 
-    exists = databricks._check_if_schema_exists(TEST_SCHEMA_ONEOFF)
+    exists = databricks._check_if_schema_exists(TEST_SCHEMA_2)
     assert exists is True
 
     try:
-        databricks.drop_schema(TEST_SCHEMA_ONEOFF)
+        databricks.drop_schema(TEST_SCHEMA_2)
     except:
         pass
 
@@ -117,12 +128,23 @@ def test_create_table(databricks):
     exists = databricks._check_if_table_exists(schema=TEST_SCHEMA, table=TEST_TABLE)
     assert exists is True
 
+    # Cleanup.
+    try:
+        databricks.drop_table(schema=TEST_SCHEMA, table=TEST_TABLE)
+    except:
+        pass
+
 
 @pytest.mark.dependency(depends=["test_create_table"])
 def test_drop_table(databricks):
 
     exists = databricks._check_if_table_exists(schema=TEST_SCHEMA, table=TEST_TABLE)
-    assert exists is True
+    assert exists is False
+
+    created = databricks.create_table_from_pandas(
+        schema=TEST_SCHEMA, table=TEST_TABLE, df=TEST_DF
+    )
+    assert created is True
 
     dropped = databricks.drop_table(schema=TEST_SCHEMA, table=TEST_TABLE)
     assert dropped is True
@@ -131,21 +153,46 @@ def test_drop_table(databricks):
     assert exists is False
 
 
-@pytest.mark.dependency(depends=["test_create_table", "test_drop_table"])
+# @pytest.mark.dependency(depends=["test_create_table", "test_drop_table"])
 def test_to_df(databricks):
+
+    # Assumptions.
+    exists = databricks._check_if_table_exists(schema=TEST_SCHEMA, table=TEST_TABLE)
+    assert exists is False
 
     databricks.create_table_from_pandas(
         schema=TEST_SCHEMA, table=TEST_TABLE, df=TEST_DF, if_exists="skip"
     )
 
     df = databricks.to_df(f"SELECT * FROM {FQN}")
-    assert df.shape == TEST_DF.shape
+
+    # Note that all `to_df()` methods are decorated with `@add_viadot_metadata_columns`.
+    # This means that we need to add the metadata columns to the test DataFrame as well
+    # before comparing the two.
+    def fake_test_df_to_df():
+        class Fake:
+            @add_viadot_metadata_columns
+            def to_df(self):
+                return TEST_DF
+
+        test_df = Fake().to_df()
+        return test_df
+
+    test_df = fake_test_df_to_df()
+    assert df.shape == test_df.shape
 
     databricks.drop_table(schema=TEST_SCHEMA, table=TEST_TABLE)
 
 
 @pytest.mark.dependency()
 def test_create_table_replace(databricks):
+
+    # Setup.
+    try:
+        databricks.drop_table(schema=TEST_SCHEMA, table=TEST_TABLE)
+    except:
+        pass
+
     exists = databricks._check_if_table_exists(schema=TEST_SCHEMA, table=TEST_TABLE)
     assert exists is False
 

@@ -6,11 +6,16 @@ import pandas as pd
 import pyspark.sql.dataframe as spark
 from delta.tables import *
 from pydantic import BaseModel
+
 from viadot.exceptions import CredentialError
 
 from ..config import get_source_credentials
 from ..exceptions import TableAlreadyExists, TableDoesNotExist
-from ..utils import build_merge_query, df_snakecase_column_names, add_viadot_metadata_columns
+from ..utils import (
+    add_viadot_metadata_columns,
+    build_merge_query,
+    df_snakecase_column_names,
+)
 from .base import Source
 
 
@@ -18,7 +23,7 @@ class DatabricksCredentials(BaseModel):
     org_id: str  # Databricks Organization ID
     host: str  # The host address of the Databricks cluster.
     cluster_id: str  # The ID of the Databricks cluster to which to connect.
-    port: str = 15001  # The port on which the cluster is exposed. By default '15001'.
+    port: str = "15001"  # The port on which the cluster is exposed. By default '15001'.
     token: str  # The access token which will be used to connect to the cluster.
 
 
@@ -188,7 +193,7 @@ class Databricks(Source):
         Returns:
             Union[spark.DataFrame, pd.DataFrame, bool]: Either the result set of a query or,
             in case of DDL/DML queries, a boolean describing whether
-            the query was excuted successfuly.
+            the query was executed successfully.
         """
         if fetch_type not in ["spark", "pandas"]:
             raise ValueError(
