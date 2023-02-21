@@ -1,50 +1,89 @@
 import json
 from pathlib import Path
 
-import yaml
+import pytest
 
-from viadot.config import Config
+from viadot.config import Config, get_source_config, get_source_credentials
 
-TEST_CONFIG_PATH = Path("config.yml")
+FAKE_SOURCE_CONFIG = {"fake_source": {"credentials": {"api_key": "test"}}}
 
 
-def test_config_from_yaml():
-    # Assumptions.
-    assert not TEST_CONFIG_PATH.exists()
+@pytest.fixture(scope="function")
+def TEST_CONFIG_PATH():
+    """Creates and deletes a test config file for each test.
 
-    # Create fake config.
-    fake_source_config = {"fake_surce": {"credentials": {}}}
-    test_config = {"sources": [fake_source_config]}
-    with open(TEST_CONFIG_PATH, "w") as f:
-        yaml.dump(test_config, f)
+    Yields:
+        config_path: The path to the test config file.
+    """
+
+    # Make sure we always create it from scratch.
+    config_path = Path("config.yml")
+    config_path.unlink(missing_ok=True)
+
+    test_config = {"sources": [FAKE_SOURCE_CONFIG]}
+    with open(config_path, "w") as f:
+        json.dump(test_config, f)
+
+    yield config_path
+
+    # Cleanup after each test.
+    config_path.unlink()
+
+
+@pytest.fixture(scope="function")
+def TEST_CONFIG_PATH_JSON():
+    """Creates and deletes a test config file for each test.
+
+    Yields:
+        config_path: The path to the test config file.
+    """
+
+    # Make sure we always create it from scratch.
+    config_path = Path("config.json")
+    config_path.unlink(missing_ok=True)
+
+    test_config = {"sources": [FAKE_SOURCE_CONFIG]}
+    with open(config_path, "w") as f:
+        json.dump(test_config, f)
+
+    yield config_path
+
+    # Cleanup after each test.
+    config_path.unlink()
+
+
+def test_config_from_yaml(TEST_CONFIG_PATH):
 
     config = Config.from_yaml(TEST_CONFIG_PATH)
 
     # Validate
     assert config is not None
     source_config = config.get("sources")[0]
-    assert source_config == fake_source_config
-
-    # Cleaup.
-    TEST_CONFIG_PATH.unlink()
+    assert source_config == FAKE_SOURCE_CONFIG
 
 
-def test_config_from_json():
-    # Assumptions.
-    assert not TEST_CONFIG_PATH.exists()
+def test_config_from_json(TEST_CONFIG_PATH_JSON):
 
-    # Create fake config.
-    fake_source_config = {"fake_surce": {"credentials": {}}}
-    test_config = {"sources": [fake_source_config]}
-    with open(TEST_CONFIG_PATH, "w") as f:
-        json.dump(test_config, f)
-
-    config = Config.from_json(TEST_CONFIG_PATH)
+    config = Config.from_json(TEST_CONFIG_PATH_JSON)
 
     # Validate
     assert config is not None
     source_config = config.get("sources")[0]
-    assert source_config == fake_source_config
+    assert source_config == FAKE_SOURCE_CONFIG
 
-    # Cleaup.
-    TEST_CONFIG_PATH.unlink()
+
+def test_get_source_config(TEST_CONFIG_PATH):
+
+    config = Config.from_yaml(TEST_CONFIG_PATH)
+
+    # Validate
+    source_config = get_source_config("fake_source", config=config)
+    assert source_config == FAKE_SOURCE_CONFIG["fake_source"]
+
+
+def test_get_source_credentials(TEST_CONFIG_PATH):
+    config = Config.from_yaml(TEST_CONFIG_PATH)
+
+    # Validate
+    credentials = get_source_credentials("fake_source", config=config)
+    assert credentials == FAKE_SOURCE_CONFIG["fake_source"]["credentials"]

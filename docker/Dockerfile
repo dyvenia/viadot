@@ -1,4 +1,4 @@
-FROM prefecthq/prefect:2.5.0-python3.10
+FROM python:3.10-slim-bullseye
 
 # Add user
 RUN useradd --create-home viadot && \
@@ -16,13 +16,9 @@ RUN echo "Acquire::Check-Valid-Until \"false\";\nAcquire::Check-Date \"false\";"
 
 # System packages
 RUN apt update -q && yes | apt install -q gnupg vim unixodbc-dev build-essential \
-    curl python3-dev libboost-all-dev libpq-dev graphviz python3-gi sudo git software-properties-common
+    curl python3-dev libboost-all-dev libpq-dev python3-gi sudo git software-properties-common
 ENV PIP_NO_CACHE_DIR=1
 RUN pip install --upgrade cffi
-
-RUN curl http://archive.ubuntu.com/ubuntu/pool/main/g/glibc/multiarch-support_2.27-3ubuntu1_amd64.deb \
-    -o multiarch-support_2.27-3ubuntu1_amd64.deb && \
-    apt install -q ./multiarch-support_2.27-3ubuntu1_amd64.deb
 
 # Fix for old SQL Servers still using TLS < 1.2
 RUN chmod +rwx /usr/lib/ssl/openssl.cnf && \
@@ -44,16 +40,16 @@ RUN pip install -r requirements.txt
 COPY . .
 RUN pip install .
 
-## Install Java 11
+# BEGIN Databricks source setup
 RUN curl https://adoptopenjdk.jfrog.io/adoptopenjdk/api/gpg/key/public | apt-key add - && \
     add-apt-repository --yes https://adoptopenjdk.jfrog.io/adoptopenjdk/deb/ && \
     apt update -q && \
     apt install -q adoptopenjdk-11-hotspot -y && \
     find /usr/bin/java -type d -exec chmod 777 {} \;
 
-### Export env variable
 ENV SPARK_HOME /usr/local/lib/python3.10/site-packages/pyspark
 RUN export SPARK_HOME
+# END Databricks source setup
 
 RUN rm -rf /code
 
@@ -64,5 +60,3 @@ ENV HOME="/home/$USER"
 WORKDIR ${HOME}
 
 USER ${USER}
-
-EXPOSE 8000

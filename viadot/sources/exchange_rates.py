@@ -1,12 +1,15 @@
 import json
-import pandas as pd
-import requests
 from datetime import datetime
 from typing import Any, Dict, List, Literal
+
+import pandas as pd
+import requests
+
+from viadot.exceptions import CredentialError
+from viadot.utils import add_viadot_metadata_columns, cleanup_df
+
 from ..config import get_source_credentials
 from .base import Source
-from viadot.utils import cleanup_df, add_viadot_metadata_columns
-from viadot.exceptions import CredentialError
 
 Currency = Literal[
     "USD", "EUR", "GBP", "CHF", "PLN", "DKK", "COP", "CZK", "SEK", "NOK", "ISK"

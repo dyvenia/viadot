@@ -1,8 +1,8 @@
 """Tests for CloudForCustomers source class"""
-from viadot.config import get_source_credentials
-from viadot.sources.cloud_for_customers import CloudForCustomers
 import pandas as pd
 
+from viadot.config import get_source_credentials
+from viadot.sources.cloud_for_customers import CloudForCustomers
 
 CONTACT_ENDPOINT = "ContactCollection"
 cursor_field = "EntityLastChangedOn"

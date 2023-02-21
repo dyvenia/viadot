@@ -1,25 +1,23 @@
+import functools
 import logging
 import re
 import subprocess
-import functools
 from datetime import datetime, timezone
-from typing import Any, Dict, List, Literal, Union, Callable
+from typing import Any, Callable, Dict, List, Literal, Union
 
 import pandas as pd
 import pyodbc
 import pyspark.sql.dataframe as spark
 import requests
-
 # from prefect.utilities.graphql import EnumValue, with_args
 from requests.adapters import HTTPAdapter
-from requests.exceptions import ConnectionError, HTTPError, ReadTimeout, Timeout
+from requests.exceptions import (ConnectionError, HTTPError, ReadTimeout,
+                                 Timeout)
 from requests.packages.urllib3.util.retry import Retry
 from urllib3.exceptions import ProtocolError
 
 from .exceptions import APIError
 from .signals import SKIP
-
-import json
 
 
 def slugify(name: str) -> str:

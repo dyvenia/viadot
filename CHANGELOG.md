@@ -26,6 +26,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Removed
 - Removed the `env` param from `Databricks` source, as user can now store multiple configs for the same source using different config keys.
+- Removed Prefect dependency from the library (Python library, Docker base image)
 
 ## [0.4.3] - 2022-04-28
 ### Added

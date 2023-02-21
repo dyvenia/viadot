@@ -15,7 +15,7 @@ We provide the extensions, settings, and tasks for VSCode in the `.vscode` folde
 In VSCode, run `Ctrl+Shift+B` to open two terminal windows: a local `bash` one and a `viadot_2` container one.
 
 ### Environment variables
-To run tests, you may need to set up some environment variables. You can find all the required values in the [tests' dotenv file](./tests/.env.example).
+To run tests, you may need to set up some environment variables or the viadot config. You can find all the required environment variables in the [tests' dotenv file](./tests/.env.example), and all the required viadot config settings in the [config file](./config.yaml.example). We're working on making this process easier, so only one of these can be used.
 
 
 ## Style guidelines
