@@ -32,9 +32,9 @@ setuptools.setup(
     install_requires=[
         "sharepy>=2.0.0,<3.0.0",
         "pyodbc>=4.0.32,<5.0.0",
-        "databricks-connect>=10.4.6,<11.0.0",
+        "databricks-connect>=10.4.18,<11.0.0",
         "adlfs>=2022.9.1",
-        "pyarrow>=6.0.1,<7.0.0",
+        "pyarrow>=7.0.0, <12.0.0",
         "openpyxl>=3.0.10,<4.0.0"
     ],
     extras=extras,
