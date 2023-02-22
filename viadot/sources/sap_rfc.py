@@ -423,6 +423,16 @@ class SAPRFC(Source):
     def _get_client_side_filter_cols(self):
         return [f[1].split()[0] for f in self.client_side_filters.items()]
 
+    def _exclude_whitespaces(self, df: pd.DataFrame()):
+        """
+        Method to exclude all the spaces in the beginning and ending of a string caused
+        by the functionality of SAP to fill missing characters with whitespaces to reach
+        defined character length.
+        """
+        for column in df.columns:
+            df[column] = df[column].str.strip()
+        return df
+
     def to_df(self):
         """
         Load the results of a query into a pandas DataFrame.
@@ -511,5 +521,7 @@ class SAPRFC(Source):
                 if col not in self.select_columns_aliased
             ]
             df.drop(cols_to_drop, axis=1, inplace=True)
+
+        df = self._exclude_whitespaces(df)
 
         return df
