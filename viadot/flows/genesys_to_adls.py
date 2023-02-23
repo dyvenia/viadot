@@ -126,14 +126,14 @@ class GenesysToADLS(Flow):
             file_names, path=self.local_file_path, sep=self.sep, flow=self
         )
 
-        # adls_bulk_upload.bind(
-        #     file_names=file_names,
-        #     file_name_relative_path=self.local_file_path,
-        #     adls_file_path=self.adls_file_path,
-        #     adls_sp_credentials_secret=self.adls_sp_credentials_secret,
-        #     timeout=self.timeout,
-        #     flow=self,
-        # )
+        adls_bulk_upload.bind(
+            file_names=file_names,
+            file_name_relative_path=self.local_file_path,
+            adls_file_path=self.adls_file_path,
+            adls_sp_credentials_secret=self.adls_sp_credentials_secret,
+            timeout=self.timeout,
+            flow=self,
+        )
 
         add_timestamp.set_upstream(file_names, flow=self)
-        # adls_bulk_upload.set_upstream(add_timestamp, flow=self)
+        adls_bulk_upload.set_upstream(add_timestamp, flow=self)

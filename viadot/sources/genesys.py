@@ -88,6 +88,7 @@ class Genesys(Source):
         self.end_date = end_date
         self.file_extension = file_extension
         self.ids_mapping = ids_mapping
+        self.count = iter(range(99999))
 
         if self.schedule_id is None:
             self.schedule_id = self.credentials.get("SCHEDULE_ID", None)
@@ -317,10 +318,14 @@ class Genesys(Source):
             elif single_report[4].lower() in [
                 "agent_performance_summary_view",
                 "agent_status_summary_view",
-                "agent_status_detail_view",
             ]:
                 date = self.start_date.replace("-", "")
                 file_name = self.view_type.upper() + "_" + f"{date}"
+            elif single_report[4].lower() in [
+                "agent_status_detail_view",
+            ]:
+                date = self.start_date.replace("-", "")
+                file_name = self.view_type.upper() + f"_{next(self.count)}_" + f"{date}"
             else:
                 raise signals.SKIP(
                     message=f"View type {self.view_type} not defined in viadot, yet..."
