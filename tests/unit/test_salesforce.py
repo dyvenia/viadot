@@ -6,7 +6,7 @@ from viadot.sources import Salesforce
 
 @pytest.fixture(scope="session")
 def salesforce():
-    s = Salesforce(config_key="sales-force")
+    s = Salesforce(config_key="sales_force_dev")
     yield s
 
 
