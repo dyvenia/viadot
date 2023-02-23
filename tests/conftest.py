@@ -84,3 +84,8 @@ def TEST_ADLS_FILE_PATH_CSV():
 @pytest.fixture(scope="session", autouse=True)
 def s3_config_key():
     return os.environ.get("S3_CONFIG_KEY")
+
+
+@pytest.fixture(scope="session", autouse=True)
+def sharepoint_config_key():
+    return os.environ.get("VIADOT_TEST_SHAREPOINT_CONFIG_KEY")
