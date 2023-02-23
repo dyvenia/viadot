@@ -121,7 +121,7 @@ class MediatoolToDF(Task):
         mediatool = Mediatool(credentials=self.mediatool_credentials)
         df_orgs = mediatool.get_organizations(self.mediatool_credentials["USER_ID"])
 
-        chunks = []
+        list_of_dfs = []
         for organization_id in organization_ids:
             if organization_id in df_orgs["_id_organizations"].unique():
                 logger.info(f"Downloading data for: {organization_id}")
@@ -134,7 +134,7 @@ class MediatoolToDF(Task):
                 df_camp = mediatool.get_campaigns(organization_id=organization_id)
 
                 unique_vehicle_ids = df_m_entries["vehicleId"].unique()
-                df_veh = mediatool.get_vehicles(veh_id=unique_vehicle_ids)
+                df_veh = mediatool.get_vehicles(vehicle_ids=unique_vehicle_ids)
 
                 unique_media_type_ids = df_m_entries["mediaTypeId"].unique()
                 df_m_types = mediatool.get_media_types(unique_media_type_ids)
@@ -184,13 +184,13 @@ class MediatoolToDF(Task):
                     how="left",
                 )
 
-                chunks.append(df_merged_media_types)
+                list_of_dfs.append(df_merged_media_types)
 
             else:
                 raise ValueError(
                     f"Organization - {organization_id} not found in organizations list."
                 )
 
-            df_final = pd.concat(chunks)
+            df_final = pd.concat(list_of_dfs)
 
         return df_final
