@@ -9,6 +9,7 @@ from prefect.utilities import logging
 
 from ..task_utils import (
     add_ingestion_metadata_task,
+    cast_df_to_str,
     df_get_data_types_task,
     df_map_mixed_dtypes_for_parquet,
     df_to_csv,
@@ -120,11 +121,12 @@ class MediatoolToADLS(Flow):
         )
 
         df_with_metadata = add_ingestion_metadata_task.bind(df, flow=self)
-        dtypes_dict = df_get_data_types_task.bind(df_with_metadata, flow=self)
+        df_casted_to_str = cast_df_to_str(df_with_metadata, flow=self)
+        dtypes_dict = df_get_data_types_task.bind(df_casted_to_str, flow=self)
 
         if self.output_file_extension == ".parquet":
             df_to_be_loaded = df_map_mixed_dtypes_for_parquet(
-                df_with_metadata, dtypes_dict, flow=self
+                df_casted_to_str, dtypes_dict, flow=self
             )
             df_to_file = df_to_parquet.bind(
                 df=df_to_be_loaded,
@@ -134,7 +136,7 @@ class MediatoolToADLS(Flow):
             )
         else:
             df_to_file = df_to_csv.bind(
-                df=df_with_metadata,
+                df=df_casted_to_str,
                 path=self.local_file_path,
                 if_exists=self.if_exists,
                 flow=self,
@@ -161,8 +163,6 @@ class MediatoolToADLS(Flow):
             flow=self,
         )
 
-        df_with_metadata.set_upstream(df, flow=self)
-        dtypes_dict.set_upstream(df_with_metadata, flow=self)
         file_to_adls_task.set_upstream(df_to_file, flow=self)
         json_to_adls_task.set_upstream(dtypes_to_json_task, flow=self)
         set_key_value(key=self.adls_dir_path, value=self.adls_file_path)
