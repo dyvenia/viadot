@@ -125,6 +125,7 @@ def check_dtypes_sort(
         logger.warning(
             "You are not making use of 'check_dtypes_sort' task to check dtype column order."
         )
+        new_dtypes = dtypes.copy()
 
     return new_dtypes
 
