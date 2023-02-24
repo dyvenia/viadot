@@ -82,6 +82,7 @@ def df_to_csv_task(df, remove_tab, path: str, sep: str = "\t"):
 def check_dtypes_sort(
     df: pd.DataFrame = None,
     dtypes: Dict[str, Any] = None,
+    apply: bool = True,
 ) -> Dict[str, Any]:
     """Check dtype column order to avoid malformation SQL table.
     When data is loaded by the user, a data frame is passed to this task
@@ -90,13 +91,15 @@ def check_dtypes_sort(
         df (pd.DataFrame, optional): Data Frame from original ADLS file. Defaults to None.
         dtypes (Dict[str, Any], optional): Dictionary of columns and data type to apply
             to the Data Frame downloaded. Defaults to None.
+        apply (bool, optiona): By default, this task will be used by all the flows. You can
+            prevent making use of it to avoid any conflict. Defaults to True.
     Returns:
         Dict[str, Any]: Sorted dtype.
     """
     if df is None:
         logger.error("DataFrame argument is mandatory")
         raise signals.FAIL("DataFrame is None.")
-    else:
+    elif apply:
         # first check if all dtypes keys are in df.columns
         if all(d in df.columns for d in list(dtypes.keys())) and len(df.columns) == len(
             list(dtypes.keys())
@@ -118,6 +121,10 @@ def check_dtypes_sort(
             raise signals.FAIL(
                 "dtype dictionary contains key(s) that not matching with the ADLS file columns name, or they have different length."
             )
+    else:
+        logger.warning(
+            "You are not making use of 'check_dtypes_sort' task to check dtype column order."
+        )
 
     return new_dtypes
 
