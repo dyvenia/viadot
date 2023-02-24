@@ -105,22 +105,16 @@ class GenesysToADLS(Flow):
             timeout=self.timeout, local_file_path=self.local_file_path
         )
 
-        if self.view_type in [
-            "queue_performance_detail_view",
-            "agent_performance_summary_view",
-            "agent_status_summary_view",
-            "agent_status_detail_view",
-        ]:
-            file_names = to_csv.bind(
-                view_type=self.view_type,
-                view_type_time_sleep=self.view_type_time_sleep,
-                post_data_list=self.post_data_list,
-                start_date=self.start_date,
-                end_date=self.end_date,
-                environment=self.environment,
-                credentials_genesys=self.credentials_genesys,
-                flow=self,
-            )
+        file_names = to_csv.bind(
+            view_type=self.view_type,
+            view_type_time_sleep=self.view_type_time_sleep,
+            post_data_list=self.post_data_list,
+            start_date=self.start_date,
+            end_date=self.end_date,
+            environment=self.environment,
+            credentials_genesys=self.credentials_genesys,
+            flow=self,
+        )
 
         add_timestamp.bind(
             file_names, path=self.local_file_path, sep=self.sep, flow=self
