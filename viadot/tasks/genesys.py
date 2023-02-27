@@ -8,8 +8,7 @@ from prefect import Task
 from prefect.utilities import logging
 from prefect.utilities.tasks import defaults_from_attrs
 
-from viadot.config import local_config
-from ..exceptions import CredentialError, APIError
+from ..exceptions import APIError
 from ..sources import Genesys
 
 logger = logging.get_logger()
@@ -171,8 +170,6 @@ class GenesysToCSV(Task):
             logger.info("Downloaded the data from the Genesys into the CSV.")
         else:
             logger.info("Succesfully loaded all exports.")
-
-        genesys.get_reporting_exports_data()
 
         file_names = genesys.download_all_reporting_exports()
         logger.info("Downloaded the data from the Genesys into the CSV.")

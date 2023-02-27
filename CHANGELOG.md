@@ -7,9 +7,43 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 - Added `playwright` libraries and dependencies to `Dockerfile` and `requirements`
 
+## [0.4.10] - 2022-11-16
+### Added
+- Added `credentials_loader` function in utils
+- Added new columns to `Epicor` source - `RequiredDate` and `CopperWeight`
+- Added timeout to `DuckDBQuery` and `SAPRFCToDF`
+- Added support for SQL queries with comments to `DuckDB` source
+- Added "WITH" to query keywords in `DuckDB` source
+- Added `avro-python3` library to `requirements`
+
+### Changed
+- Changed `duckdb` version to `0.5.1`
+- Added new column into Data Frames created with `Mindful`.
+- Added region parameter as an entry argument in `MindfulToADLS`.
+
+### Fixed
+- Fixed incorrect `if_exists="delete"` handling in `DuckDB.create_table_from_parquet()`
+- Fixed `test_duckdb_to_sql_server.py` tests - revert to a previous version
+- Removed `test__check_if_schema_exists()` test
+
+
+## [0.4.9] - 2022-09-27
+### Added
+- Added new column named `_viadot_downloaded_at_utc` in genesys files with the datetime when it is created.
+- Added sftp source class `SftpConnector`
+- Added sftp tasks `SftpToDF` and `SftpList` 
+- Added sftp flows `SftpToAzureSQL` and `SftpToADLS`
+- Added new source file `mindful` to connect with mindful API.
+- Added new task file `mindful` to be called by the Mindful Flow.
+- Added new flow file `mindful_to_adls` to upload data from Mindful API tp ADLS.
+- Added `recursive` parameter to `AzureDataLakeList` task
+
+
 ## [0.4.8] - 2022-09-06
 ### Added
 - Added `protobuf` library to requirements
+
+
 ## [0.4.7] - 2022-09-06
 ### Added
 - Added new flow - `SQLServerTransform` and new task `SQLServerQuery` to run queries on SQLServer
@@ -17,7 +51,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 using outputs of SQL queries 
 - Added handling empty DF in `set_new_kv()` task
 - Added `update_kv` and `filter_column` params to `SAPRFCToADLS` and `SAPToDuckDB` flows and added `set_new_kv()` task
-- Added `recursive` parameter to `AzureDataLakeList` task
 in `task_utils`
 - Added Genesys API source `Genesys`
 - Added tasks `GenesysToCSV` and `GenesysToDF`
@@ -71,6 +104,7 @@ DF to string before adding metadata
 - Added `if_empty` parameter in `DuckDBCreateTableFromParquet` task and in `EpicorToDuckDB`, `SAPToDuckDB`,
 `SQLServerToDuckDB` flows to check if output Parquet is empty and handle it properly.
 - Added `check_if_empty_file()` and `handle_if_empty_file()` in `utils.py`
+
 
 ## [0.4.4] - 2022-06-09
 ### Added

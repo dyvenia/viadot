@@ -25,6 +25,9 @@ from visions.typesets.complete_set import CompleteSet
 from viadot.config import local_config
 from viadot.tasks import AzureKeyVaultSecret
 
+from viadot.exceptions import CredentialError
+
+
 logger = logging.get_logger()
 METADATA_COLUMNS = {"_viadot_downloaded_at_utc": "DATETIME"}
 
@@ -527,3 +530,43 @@ class Git(Git):
         if self.use_ssh:
             return f"git@{self.repo_host}:{self.repo}"
         return f"https://{self.git_token_secret}@{self.repo_host}/{self.repo}"
+
+
+@task
+def credentials_loader(credentials_secret: str, vault_name: str = None) -> dict:
+    """
+    Function that gets credentials from azure Key Vault or PrefectSecret or from local config.
+
+    Args:
+        credentials_secret (str): The name of the Azure Key Vault secret containing a dictionary
+        with credentials.
+        vault_name (str, optional): The name of the vault from which to obtain the secret. Defaults to None.
+
+    Returns:
+        credentials (dict): Credentials as dictionary.
+    """
+
+    if credentials_secret:
+        try:
+            credentials = local_config[credentials_secret]
+            logger.info("Successfully loaded credentials from local config.")
+        except (ValueError, KeyError):
+            try:
+                azure_secret_task = AzureKeyVaultSecret()
+                credentials_str = azure_secret_task.run(
+                    secret=credentials_secret, vault_name=vault_name
+                )
+                credentials = json.loads(credentials_str)
+                logger.info("Successfully loaded credentials from Azure Key Vault.")
+            except Exception:
+                try:
+                    credentials = PrefectSecret(credentials_secret).run()
+                    logger.info("Successfully loaded credentials from PrefectSecret.")
+                except Exception:
+                    raise CredentialError(
+                        "Provided credentials secret not found in resources."
+                    )
+    else:
+        raise CredentialError("Credentials secret not provided.")
+
+    return credentials

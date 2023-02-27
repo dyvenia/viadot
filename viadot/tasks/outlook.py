@@ -1,12 +1,8 @@
-from typing import Any, Dict, List, Tuple
-
+from typing import Any, Dict, List
 import pandas as pd
 from prefect import Task
 from prefect.utilities import logging
 from prefect.utilities.tasks import defaults_from_attrs
-
-from viadot.config import local_config
-
 from ..sources import Outlook
 
 logger = logging.get_logger()
@@ -32,12 +28,6 @@ class OutlookToDF(Task):
         self.output_file_extension = output_file_extension
         self.limit = limit
         self.credentials = credentials
-
-        # try:
-        #     DEFAULT_CREDENTIALS = local_config["OUTLOOK"]
-        # except KeyError:
-        #     DEFAULT_CREDENTIALS = None
-        # self.credentials = credentials or DEFAULT_CREDENTIALS
 
         super().__init__(
             name="outlook_to_csv",

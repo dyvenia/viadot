@@ -5,15 +5,10 @@ from typing import Any, Dict, List
 
 import numpy as np
 import pandas as pd
-import requests
 from prefect.utilities import logging
-from requests.adapters import HTTPAdapter
-from requests.exceptions import ConnectionError, HTTPError, ReadTimeout, Timeout
-from requests.packages.urllib3.util.retry import Retry
-from urllib3.exceptions import ProtocolError
 
 from ..config import local_config
-from ..exceptions import APIError, CredentialError
+from ..exceptions import CredentialError
 from ..utils import handle_api_response
 from .base import Source
 
