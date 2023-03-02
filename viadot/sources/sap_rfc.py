@@ -425,9 +425,13 @@ class SAPRFC(Source):
 
     def _exclude_whitespaces(self, df: pd.DataFrame()):
         """
-        Method to exclude all the spaces in the beginning and ending of a string caused
-        by the functionality of SAP to fill missing characters with whitespaces to reach
-        defined character length.
+        SAP RFC has a special-case handling of VARCHAR columns, wherein for a column of type VARCHAR(n),
+        each row of that column will be returned as a string of length n, no matter the length of the actual string.
+        If the string is smaller than n, SAP fills in the rest of the string with whitespace.
+
+        For example, if the column is of type VARCHAR(10), and the value is "abc", SAP RFC will return the value "abc       ".
+
+        Since this behavior is unexpected for virtually all users, we use this helper function to remove the extra whitespace.
         """
         for column in df.columns:
             df[column] = df[column].str.strip()
