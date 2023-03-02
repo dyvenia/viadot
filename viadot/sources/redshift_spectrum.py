@@ -3,9 +3,17 @@ from typing import Any, Dict, List, Literal
 import awswrangler as wr
 import boto3
 import pandas as pd
+from pydantic import BaseModel
 
 from viadot.config import get_source_credentials
 from viadot.sources.base import Source
+
+
+class RedshiftSpectrumCredentials(BaseModel):
+    profile_name: str  # The name of the IAM profile to use.
+    region_name: str  # The name of the AWS region.
+    aws_access_key_id: str
+    aws_secret_access_key: str
 
 
 class RedshiftSpectrum(Source):
@@ -13,15 +21,15 @@ class RedshiftSpectrum(Source):
     A class for pulling data from and uploading to the Redshift Spectrum.
 
     Args:
-        credentials (Dict[str, Any], optional): Credentials to the AWS Redshift
-            Spectrum. Defaults to None.
+        credentials (RedshiftSpectrumCredentials, optional): RedshiftSpectrumCredentials credentials.
+            Defaults to None.
         config_key (str, optional): The key in the viadot config holding relevant
             credentials. Defaults to None.
     """
 
     def __init__(
         self,
-        credentials: Dict[str, Any] = None,
+        credentials: RedshiftSpectrumCredentials = None,
         config_key: str = None,
         *args,
         **kwargs,
