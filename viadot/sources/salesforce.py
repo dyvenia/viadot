@@ -120,16 +120,18 @@ class Salesforce(Source):
                 else:
                     self.logger.warning(msg)
 
-            codes = {200: "updated", 201: "created", 204: "updated"}
+            valid_response_codes = {200: "updated", 201: "created", 204: "updated"}
 
-            if response not in codes:
+            if response not in valid_response_codes:
                 msg = f"Upsert failed for record: \n{record} with response {response}"
                 if raise_on_error:
                     raise ValueError(msg)
                 else:
                     self.logger.warning(msg)
             else:
-                self.logger.info(f"Successfully {codes[response]} record {merge_key}.")
+                self.logger.info(
+                    f"Successfully {valid_response_codes[response]} record {merge_key}."
+                )
 
         self.logger.info(
             f"Successfully upserted {len(records)} records into table '{table}'."
