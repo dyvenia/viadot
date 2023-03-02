@@ -77,7 +77,16 @@ class Salesforce(Source):
         external_id: str = None,
         raise_on_error: bool = False,
     ) -> None:
+        """
+        Performs upsert operations on the selected row in the table.
 
+        Args:
+            df (pd.DataFrame): The DataFrame to upsert. Only a single row can be upserted with this function.
+            table (str): The table where the data should be upserted.
+            external_id (str, optional): The external ID to use for the upsert. Defaults to None.
+            raise_on_error (bool, optional): Whether to raise an exception if a row upsert fails.
+                If False, we only display a warning. Defaults to False.
+        """
         if df.empty:
             self.logger.info("No data to upsert.")
             return
@@ -134,7 +143,18 @@ class Salesforce(Source):
         batch_size: int = 10000,
         raise_on_error: bool = False,
     ) -> None:
+        """
+        Performs upsert operations on multiple rows in a table.
 
+        Args:
+            df (pd.DataFrame): The DataFrame to upsert.
+            table (str): The table where the data should be upserted.
+            external_id (str, optional): The external ID to use for the upsert. Defaults to None.
+            batch_size (int, optional): Number of records to be included in each batch of records
+                that are sent to the Salesforce API for processing. Defaults to 10000.
+            raise_on_error (bool, optional): Whether to raise an exception if a row upsert fails.
+                If False, we only display a warning. Defaults to False.
+        """
         if df.empty:
             self.logger.info("No data to upsert.")
             return
@@ -173,6 +193,18 @@ class Salesforce(Source):
     def download(
         self, query: str = None, table: str = None, columns: List[str] = None
     ) -> List[OrderedDict]:
+        """
+        Dowload all data from the indicated table or the result of the specified query.
+
+        Args:
+            query (str, optional): Query for download the specific data. Defaults to None.
+            table (str, optional): Table name. Defaults to None.
+            columns (List[str], optional): List of columns which are needed,
+                requires table argument. Defaults to None.
+
+        Returns:
+            List[OrderedDict]: Selected rows from Salesforce.
+        """
         if not query:
             if columns:
                 columns_str = ", ".join(columns)
@@ -190,7 +222,18 @@ class Salesforce(Source):
         table: str = None,
         columns: List[str] = None,
     ) -> pd.DataFrame:
+        """
+        Converts the List returned by the download functions to a DataFrame.
 
+        Args:
+            query (str, optional): Query for download the specific data. Defaults to None.
+            table (str, optional): Table name. Defaults to None.
+            columns (List[str], optional): List of columns which are needed,
+                requires table argument. Defaults to None.
+
+        Returns:
+            pd.DataFrame: Selected rows from Salesforce.
+        """
         records = self.download(query=query, table=table, columns=columns)
 
         return pd.DataFrame(records)
