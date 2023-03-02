@@ -216,7 +216,7 @@ class Genesys(Source):
             self.logger.error(f"Failed to loaded all exports. - {new_report.content}")
             raise APIError("Failed to loaded all exports.")
 
-    def get_reporting_exports_data(self):
+    def get_reporting_exports_data(self) -> None:
         """
         Function that generate list of reports metadata for further processing steps.
         """
