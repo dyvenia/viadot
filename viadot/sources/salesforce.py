@@ -185,12 +185,8 @@ class Salesforce(Source):
         query: str = None,
         table: str = None,
         columns: List[str] = None,
-        if_empty: str = None,
     ) -> pd.DataFrame:
-        # TODO: handle if_empty, add typing (should be Literal)
-        records = self.download(query=query, table=table, columns=columns)
 
-        if not records:
-            raise ValueError(f"Query produced no data.")
+        records = self.download(query=query, table=table, columns=columns)
 
         return pd.DataFrame(records)
