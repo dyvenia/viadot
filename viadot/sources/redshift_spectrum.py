@@ -120,9 +120,11 @@ class RedshiftSpectrum(Source):
                 database=database,
                 table=table,
             )
-            wr.s3.delete_objects(path=table_location)
+            wr.s3.delete_objects(boto3_session=self.session, path=table_location)
 
-        wr.catalog.delete_table_if_exists(database=database, table=table)
+        wr.catalog.delete_table_if_exists(
+            boto3_session=self.session, database=database, table=table
+        )
 
     def from_df(
         self,
