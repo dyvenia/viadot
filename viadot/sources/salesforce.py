@@ -101,7 +101,7 @@ class Salesforce(Source):
         records_cp = records.copy()
 
         for record in records_cp:
-            response = 0
+            response_code = 0
             if external_id:
                 if record[external_id] is None:
                     continue
@@ -112,7 +112,7 @@ class Salesforce(Source):
                 merge_key = record.pop("Id")
 
             try:
-                response = table_to_upsert.upsert(data=record, record_id=merge_key)
+                response_code = table_to_upsert.upsert(data=record, record_id=merge_key)
             except SalesforceMalformedRequest as e:
                 msg = f"Upsert of record {merge_key} failed."
                 if raise_on_error:
@@ -122,15 +122,15 @@ class Salesforce(Source):
 
             valid_response_codes = {200: "updated", 201: "created", 204: "updated"}
 
-            if response not in valid_response_codes:
-                msg = f"Upsert failed for record: \n{record} with response {response}"
+            if response_code not in valid_response_codes:
+                msg = f"Upsert failed for record: \n{record} with response code {response_code }"
                 if raise_on_error:
                     raise ValueError(msg)
                 else:
                     self.logger.warning(msg)
             else:
                 self.logger.info(
-                    f"Successfully {valid_response_codes[response]} record {merge_key}."
+                    f"Successfully {valid_response_codes[response_code]} record {merge_key}."
                 )
 
         self.logger.info(
@@ -166,9 +166,9 @@ class Salesforce(Source):
                 f"Passed DataFrame does not contain column '{external_id}'."
             )
         records = df.to_dict("records")
-        response = 0
+        response_code = 0
         try:
-            response = self.salesforce.bulk.__getattr__(table).upsert(
+            response_code = self.salesforce.bulk.__getattr__(table).upsert(
                 data=records, external_id_field=external_id, batch_size=batch_size
             )
         except SalesforceMalformedRequest as e:
@@ -177,12 +177,12 @@ class Salesforce(Source):
 
         self.logger.info(f"Successfully upserted bulk records.")
 
-        if any(result.get("success") is not True for result in response):
+        if any(result.get("success") is not True for result in response_code):
             # Upsert of some individual records failed.
             failed_records = [
-                result for result in response if result.get("success") is not True
+                result for result in response_code if result.get("success") is not True
             ]
-            msg = f"Upsert failed for records {failed_records} with response {response}"
+            msg = f"Upsert failed for records {failed_records} with response code {response_code}"
             if raise_on_error:
                 raise ValueError(msg)
             else:
