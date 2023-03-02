@@ -2,7 +2,7 @@ version: "3"
 
 services:
   viadot_2:
-    image: ghcr.io/dyvenia/viadot/viadot:2.0a14
+    image: ghcr.io/dyvenia/viadot/viadot:2.0-latest
     container_name: viadot_2
     volumes:
       # - ${HOME}/.databricks-connect:/home/viadot/.databricks-connect

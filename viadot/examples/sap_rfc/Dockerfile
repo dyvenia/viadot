@@ -1,4 +1,4 @@
-FROM ghcr.io/dyvenia/viadot/viadot:2.0a13
+FROM ghcr.io/dyvenia/viadot/viadot:2.0-latest
 
 USER root
 
