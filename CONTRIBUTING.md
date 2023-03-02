@@ -1,4 +1,4 @@
-# How to contribute
+# How to contribute to `viadot`
 
 ## Setting up the environment
 ### VSCode
