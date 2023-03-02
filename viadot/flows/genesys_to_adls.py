@@ -12,11 +12,11 @@ from viadot.task_utils import (
 
 
 @task(timeout=3600)
-def add_timestamp(files_names: List = None, path: str = "", sep: str = None) -> None:
+def add_timestamp(files_names: List = None, path: str = "", sep: str = "\t") -> None:
     """Add new column _viadot_downloaded_at_utc into every genesys file.
 
     Args:
-        files_names (List, optional): All file names of downloaded files. Defaults to None.
+        files_names (List, optional): All file names of downloaded files. Defaults to "\t".
         path (str, optional): Relative path to the file. Defaults to empty string.
         sep (str, optional): Separator in csv file. Defaults to None.
     """
@@ -57,6 +57,25 @@ class GenesysToADLS(Flow):
             view_type (str, optional): The type of view export job to be created. Defaults to "queue_performance_detail_view".
             view_type_time_sleep (int, optional): Waiting time to retrieve data from Genesys API. Defaults to 80.
             post_data_list (List[str], optional): List of string templates to generate json body. Defaults to None.
+                Example for only one POST:
+                >>> post_data_list = '''[{
+                >>>         "name": "AGENT_STATUS_DETAIL_VIEW",
+                >>>         "timeZone": "UTC",
+                >>>         "exportFormat": "CSV",
+                >>>         "interval": ""2022-06-09T00:00:00/2022-06-10T00:00:00",
+                >>>         "period": "PT30M",
+                >>>         "viewType": "AGENT_STATUS_DETAIL_VIEW",
+                >>>         "filter": {"userIds": ["aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"],},
+                >>>         "read": True,
+                >>>         "locale": "en-us",
+                >>>         "hasFormatDurations": False,
+                >>>         "hasSplitFilters": True,
+                >>>         "excludeEmptyRows": True,
+                >>>         "hasSummaryRow": False,
+                >>>         "csvDelimiter": "COMMA",
+                >>>         "hasCustomParticipantAttributes": True,
+                >>>     }]'''
+                If you need to add more POSTs in the same call, just add them to the list separated by a comma.
             start_date (str, optional): Start date of the report. Defaults to None.
             end_date (str, optional): End date of the report. Defaults to None.
             sep (str, optional): Separator in csv file. Defaults to "\t".
