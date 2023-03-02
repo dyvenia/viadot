@@ -3,6 +3,11 @@ import pytest
 
 from viadot.sources import Salesforce
 
+TABLE_TO_DOWNLOAD = "Account"
+TABLE_TO_UPSERT = "Contact"
+TEST_LAST_NAME = "prefect-viadot-test"
+ID_TO_UPSERT = "0035E00001YGWK3QAP"
+
 
 @pytest.fixture(scope="session")
 def salesforce():
@@ -11,20 +16,44 @@ def salesforce():
 
 
 @pytest.fixture(scope="session")
-def test_df_external():
+def test_df_data(salesforce):
     data = {
-        "Id": ["111"],
-        "LastName": ["John Tester-External"],
-        "SAPContactId__c": ["112"],
+        "Id": [ID_TO_UPSERT],
+        "LastName": [TEST_LAST_NAME],
+    }
+    df = pd.DataFrame(data=data)
+
+    yield df
+
+    data_restored = {
+        "Id": [ID_TO_UPSERT],
+        "LastName": ["LastName"],
+    }
+    df_restored = pd.DataFrame(data=data_restored)
+    salesforce.upsert(df=df_restored, table=TABLE_TO_UPSERT)
+
+
+@pytest.fixture(scope="session")
+def test_df_external(salesforce):
+    data = {
+        "LastName": [TEST_LAST_NAME],
+        "SAPContactId__c": ["111"],
     }
     df = pd.DataFrame(data=data)
     yield df
+
+    data_restored = {
+        "Id": [ID_TO_UPSERT],
+        "LastName": ["LastName"],
+    }
+    df_restored = pd.DataFrame(data=data_restored)
+    salesforce.upsert(df=df_restored, table=TABLE_TO_UPSERT)
 
 
 def test_upsert_empty(salesforce):
     try:
         df = pd.DataFrame()
-        salesforce.upsert(df=df, table="Contact")
+        salesforce.upsert(df=df, table=TABLE_TO_UPSERT)
     except Exception as exception:
         assert False, exception
 
@@ -32,33 +61,41 @@ def test_upsert_empty(salesforce):
 def test_upsert_external_id_correct(salesforce, test_df_external):
     try:
         salesforce.upsert(
-            df=test_df_external, table="Contact", external_id="SAPContactId__c"
+            df=test_df_external, table=TABLE_TO_UPSERT, external_id="SAPContactId__c"
         )
     except Exception as exception:
         assert False, exception
-    result = salesforce.download(table="Contact")
-    exists = list(
-        filter(lambda contact: contact["LastName"] == "John Tester-External", result)
+    df = salesforce.to_df(
+        query=f"SELECT ID, LastName FROM {TABLE_TO_UPSERT} WHERE LastName='{TEST_LAST_NAME}'"
     )
-    assert exists != None
+
+    result = df.values
+    assert result[0][0] == ID_TO_UPSERT
+    assert result[0][1] == TEST_LAST_NAME
 
 
 def test_upsert_external_id_wrong(salesforce, test_df_external):
     with pytest.raises(ValueError):
-        salesforce.upsert(df=test_df_external, table="Contact", external_id="SAPId")
+        salesforce.upsert(
+            df=test_df_external, table=TABLE_TO_UPSERT, external_id="SAPId"
+        )
 
 
 def test_download_no_query(salesforce):
-    ordered_dict = salesforce.download(table="Account")
+    ordered_dict = salesforce.download(table=TABLE_TO_DOWNLOAD)
     assert len(ordered_dict) > 0
 
 
 def test_download_with_query(salesforce):
-    query = "SELECT Id, Name FROM Account"
+    query = f"SELECT Id, Name FROM {TABLE_TO_DOWNLOAD}"
     ordered_dict = salesforce.download(query=query)
     assert len(ordered_dict) > 0
 
 
 def test_to_df(salesforce):
-    df = salesforce.to_df(table="Account")
+    df = salesforce.to_df(table=TABLE_TO_DOWNLOAD)
     assert df.empty == False
+
+
+def test_upsert(salesforce, test_df_data):
+    salesforce.upsert(df=test_df_data, table=TABLE_TO_UPSERT)
