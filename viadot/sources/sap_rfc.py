@@ -442,8 +442,7 @@ class SAPRFC(Source):
         on the resulting DataFrame. Eg. if the WHERE clause contains 4 conditions
         and has 80 characters, we only perform 3 filters in the query, and perform
         the last filter on the DataFrame. If characters per row limit will be exceeded,
-        data will be downloaded in chunks. Downloaded SAP data will be stripped to exclude
-        the whitespaces added by SAP default functionality.
+        data will be downloaded in chunks.
 
         Source: https://success.jitterbit.com/display/DOC/Guide+to+Using+RFC_READ_TABLE+to+Query+SAP+Tables#GuidetoUsingRFC_READ_TABLEtoQuerySAPTables-create-the-operation
         - WHERE clause: 75 character limit
