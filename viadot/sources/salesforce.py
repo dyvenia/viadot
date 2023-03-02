@@ -10,15 +10,19 @@ from viadot.sources.base import Source
 
 class Salesforce(Source):
     """
-    A class for pulling data from theSalesforce.
+    A class for downloading and upserting data from Salesforce.
 
     Args:
-        domain (str): domain of a connection; defaults to 'test' (sandbox). Can be added only if built-in username/password/security token is provided.
-        client_id (str): client id to keep the track of API calls.
-        credentials (dict): credentials to connect with. If not provided, will read from local config file.
-        env (Literal): environment information, provides information about credential and connection configuration; defaults to 'DEV'.
-        config_key (str, optional): The key in the viadot config holding relevant credentials. Defaults to None.
-
+        domain (str, optional): Domain of a connection. Defaults to 'test' (sandbox).
+            Can be added only if built-in username/password/security token is provided.
+        client_id (str, optional): Client id to keep the track of API calls.
+            Defaults to 'viadot'.
+        credentials (Dict[str, Any], optional): Credentials to connect with Salesforce.
+            If not provided, will read from local config file. Defaults to None.
+        env (Literal["DEV", "QA", "PROD"], optional): Environment information, provides information
+            about credential and connection configuration. Defaults to 'DEV'.
+        config_key (str, optional): The key in the viadot config holding relevant credentials.
+            Defaults to None.
     """
 
     def __init__(
