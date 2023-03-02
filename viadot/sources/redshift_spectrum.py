@@ -99,7 +99,7 @@ class RedshiftSpectrum(Source):
             table=table,
         )
 
-    def rm(
+    def drop_table(
         self,
         database: str,
         table: str,
