@@ -152,9 +152,11 @@ class Genesys(Source):
 
         return request_headers
 
-    def genesys_generate_exports(self, post_data_list: List[str]):
-        """
-        Function that make POST request method to generate export reports.
+    def genesys_generate_exports(self, post_data_list: List[str]) -> None:
+        """Function that make POST request method to generate export reports.
+
+        Args:
+            post_data_list (List[str], optional): List of string templates to generate json body. Defaults to None.
         """
 
         limiter = AsyncLimiter(2, 15)
@@ -376,7 +378,7 @@ class Genesys(Source):
                 raise APIError("Failed to generated new export.")
         return new_report.status_code
 
-    def delete_reporting_exports(self, report_id):
+    def delete_reporting_exports(self, report_id) -> int:
         """DELETE method for deleting particular reporting exports.
 
         Args:
@@ -401,12 +403,9 @@ class Genesys(Source):
 
         return delete_method.status_code
 
-    def delete_all_reporting_exports(self):
+    def delete_all_reporting_exports(self) -> None:
         """
         Function that deletes all reporting from self.reporting_data list.
-
-        Returns:
-            delete_method.status_code: status code
         """
         for report in self.report_data:
             status_code = self.delete_reporting_exports(report_id=report[0])
@@ -414,7 +413,7 @@ class Genesys(Source):
 
         self.logger.info("Successfully removed all reports.")
 
-    def get_analitics_url_report(self):
+    def get_analitics_url_report(self) -> str:
         """
         Fetching analytics report url from json response.
 
