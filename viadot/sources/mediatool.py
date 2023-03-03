@@ -180,9 +180,10 @@ class Mediatool(Source):
         """
         response_dict = {}
         dfs = []
+        missing_vehicles = []
+
         for id in vehicle_ids:
             url = f"https://api.mediatool.com/vehicles/{id}"
-
             try:
                 response = handle_api_response(
                     url=url,
@@ -190,17 +191,23 @@ class Mediatool(Source):
                     method="GET",
                 )
             except Exception:
-                raise NameError(f"No vehicle with id {id} was found")
+                missing_vehicles.append(id)
 
-            response_dict = json.loads(response.text)
-            df_single = pd.DataFrame(response_dict["vehicle"], index=[0])
-            dfs.append(df_single)
+            else:
+                response_dict = json.loads(response.text)
+                df_single = pd.DataFrame(response_dict["vehicle"], index=[0])
+                dfs.append(df_single)
+
+        if missing_vehicles:
+            logger.error(f"Vehicle were not found for: {missing_vehicles}.")
 
         if return_dataframe is True:
-            df = pd.concat(dfs)
-            function_name = inspect.stack()[0][3]
-            df_updated = self.rename_columns(df=df, column_suffix=function_name)
-            return df_updated
+            if len(dfs) > 0:
+                df = pd.concat(dfs)
+                function_name = inspect.stack()[0][3]
+                df_updated = self.rename_columns(df=df, column_suffix=function_name)
+                return df_updated
+            return None
 
         return response_dict["vehicles"]
 
@@ -231,22 +238,13 @@ class Mediatool(Source):
 
         list_organizations = []
         for org in organizations:
-            try:
-                list_organizations.append(
-                    {
-                        "_id": org["_id"],
-                        "name": org["name"],
-                        "abbreviation": org["abbreviation"],
-                    }
-                )
-            except KeyError:
-                list_organizations.append(
-                    {
-                        "_id": org["_id"],
-                        "name": org["name"],
-                        "abbreviation": None,
-                    }
-                )
+            list_organizations.append(
+                {
+                    "_id": org.get("_id"),
+                    "name": org.get("name"),
+                    "abbreviation": org.get("abbreviation"),
+                }
+            )
 
         if return_dataframe is True:
             df = pd.DataFrame.from_dict(list_organizations)
@@ -273,28 +271,19 @@ class Mediatool(Source):
         """
         list_media_types = []
         for id_media_type in media_type_ids:
-            try:
-                response = handle_api_response(
-                    url=f"https://api.mediatool.com/mediatypes/{id_media_type}",
-                    headers=self.header,
-                    method="GET",
-                )
-                response_dict = json.loads(response.text)
-                list_media_types.append(
-                    {
-                        "_id": response_dict["mediaType"]["_id"],
-                        "name": response_dict["mediaType"]["name"],
-                        "type": response_dict["mediaType"]["type"],
-                    }
-                )
-            except (KeyError):
-                list_media_types.append(
-                    {
-                        "_id": response_dict["mediaType"]["_id"],
-                        "name": response_dict["mediaType"]["name"],
-                        "type": None,  # response_dict["mediaType"]["type"],
-                    }
-                )
+            response = handle_api_response(
+                url=f"https://api.mediatool.com/mediatypes/{id_media_type}",
+                headers=self.header,
+                method="GET",
+            )
+            response_dict = json.loads(response.text)
+            list_media_types.append(
+                {
+                    "_id": response_dict.get("mediaType").get("_id"),
+                    "name": response_dict.get("mediaType").get("name"),
+                    "type": response_dict.get("mediaType").get("type"),
+                }
+            )
 
         if return_dataframe is True:
             df = pd.DataFrame.from_dict(list_media_types)

@@ -6,7 +6,7 @@ from prefect.utilities import logging
 from prefect.utilities.tasks import defaults_from_attrs
 
 from ..sources import Mediatool
-from viadot.task_utils import credentials_loader
+from viadot.task_utils import *
 
 logger = logging.get_logger()
 

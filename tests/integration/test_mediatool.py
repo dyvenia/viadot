@@ -49,9 +49,9 @@ def test_get_media_types_wrong_id():
         _ = MTOOL.get_media_types(["040404"])
 
 
-def test_get_vehicles():
-    with pytest.raises(NameError, match=r"No vehicle with id"):
-        _ = MTOOL.get_vehicles(vehicle_ids=["100000", "200000"])
+def test_get_vehicles(caplog):
+    _ = MTOOL.get_vehicles(vehicle_ids=["100000", "200000"])
+    assert "Vehicle were not found for: ['100000', '200000']" in caplog.text
 
 
 def test_rename_columns_correct():
