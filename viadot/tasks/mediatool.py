@@ -6,9 +6,7 @@ from prefect.utilities import logging
 from prefect.utilities.tasks import defaults_from_attrs
 
 from ..sources import Mediatool
-from ..exceptions import CredentialError
-
-from viadot.task_utils import *
+from viadot.task_utils import credentials_loader
 
 logger = logging.get_logger()
 
@@ -42,15 +40,10 @@ class MediatoolToDF(Task):
         self.organization_ids = organization_ids
 
         if mediatool_credentials is None:
-            try:
-                self.mediatool_credentials = credentials_loader.run(
-                    credentials_secret=mediatool_credentials_key,
-                )
-            except Exception as e:
-                logger.error(e)
-                raise CredentialError(
-                    "Credentials and credentials_key are not provided."
-                )
+            self.mediatool_credentials = credentials_loader.run(
+                credentials_secret=mediatool_credentials_key,
+            )
+
         else:
             self.mediatool_credentials = mediatool_credentials
 
@@ -124,24 +117,24 @@ class MediatoolToDF(Task):
         list_of_dfs = []
         for organization_id in organization_ids:
             if organization_id in df_orgs["_id_organizations"].unique():
-                logger.info(f"Downloading data for: {organization_id}")
+                logger.info(f"Downloading data for: {organization_id} ...")
 
                 # extract data
-                df_m_entries = mediatool.get_media_entries(
+                df_media_entries = mediatool.get_media_entries(
                     organization_id=organization_id,
                     columns=media_entries_columns,
                 )
                 df_camp = mediatool.get_campaigns(organization_id=organization_id)
 
-                unique_vehicle_ids = df_m_entries["vehicleId"].unique()
+                unique_vehicle_ids = df_media_entries["vehicleId"].unique()
                 df_veh = mediatool.get_vehicles(vehicle_ids=unique_vehicle_ids)
 
-                unique_media_type_ids = df_m_entries["mediaTypeId"].unique()
+                unique_media_type_ids = df_media_entries["mediaTypeId"].unique()
                 df_m_types = mediatool.get_media_types(unique_media_type_ids)
 
                 # join DFs
                 df_merged_entries_orgs = self.join_dfs(
-                    df_left=df_m_entries,
+                    df_left=df_media_entries,
                     df_right=df_orgs,
                     left_on="organizationId",
                     right_on="_id_organizations",
