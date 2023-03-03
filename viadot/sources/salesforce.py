@@ -101,7 +101,7 @@ class Salesforce(Source):
         records_cp = records.copy()
 
         for record in records_cp:
-            response_code = 0
+
             if external_id:
                 if record[external_id] is None:
                     continue
@@ -166,7 +166,7 @@ class Salesforce(Source):
                 f"Passed DataFrame does not contain column '{external_id}'."
             )
         records = df.to_dict("records")
-        response_code = 0
+
         try:
             response_code = self.salesforce.bulk.__getattr__(table).upsert(
                 data=records, external_id_field=external_id, batch_size=batch_size
