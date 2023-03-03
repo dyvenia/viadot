@@ -50,7 +50,7 @@ def test_outlook_credentials():
 @mock.patch("O365.Account.mailbox", return_value="trial2")
 @mock.patch("viadot.sources.Outlook.to_df", return_calue=to_df)
 @pytest.mark.task
-def test_outlook_tas(mock_account, mock_auth, mock_mail, mock_to_df):
+def test_outlook_task(mock_account, mock_auth, mock_mail, mock_to_df):
     outlook_to_df = OutlookToDF(credentials=outlook_env_vars)
     df = outlook_to_df.run(
         mailbox_name=outlook_env_vars["mail_example"],
