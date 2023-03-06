@@ -206,7 +206,7 @@ class Salesforce(Source):
                 columns_str = "FIELDS(STANDARD)"
             query = f"SELECT {columns_str} FROM {table}"
         records = self.salesforce.query(query).get("records")
-        # Take trash out.
+        # Remove metadata from the data
         _ = [record.pop("attributes") for record in records]
         return records
 
