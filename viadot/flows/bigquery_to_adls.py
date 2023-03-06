@@ -26,6 +26,7 @@ class BigQueryToADLS(Flow):
     def __init__(
         self,
         name: str = None,
+        query: str = None,
         dataset_name: str = None,
         table_name: str = None,
         date_column_name: str = "date",
@@ -46,16 +47,19 @@ class BigQueryToADLS(Flow):
         **kwargs: Dict[str, Any],
     ):
         """
-        Flow for downloading data from BigQuery project to a local CSV or Parquet file
-        using Bigquery API, then uploading it to Azure Data Lake.
+        Flow for downloading data from BigQuery project to a local CSV or Parquet file using
+        Bigquery API, then uploading it to Azure Data Lake.
+        For querying on database user have to provide `query` parameter OR `dataset` and `table_name`.
 
-        There are 3 cases:
+        If user does not provide `query` there are 3 cases:
             If start_date and end_date are not None - all data from the start date to the end date will be retrieved.
             If start_date and end_date are left as default (None) - the data is pulled till "yesterday" (current date -1)
             If the column that looks like a date does not exist in the table, get all the data from the table.
 
         Args:
             name (str): The name of the flow.
+            query(str, optional): SQL query to querying data in BigQuery. Format of basic query: (SELECT * FROM `{project}.{dataset_name}.{table_name}`)
+                Defaults to None.
             dataset_name (str, optional): Dataset name. Defaults to None.
             table_name (str, optional): Table name. Defaults to None.
             date_column_name (str, optional): The query is based on a date, the user can provide the name
@@ -81,13 +85,14 @@ class BigQueryToADLS(Flow):
                 a timeout occurs. Defaults to 3600.
         """
         # BigQueryToDF
-        self.credentials_key = credentials_key
+        self.query = query
         self.dataset_name = dataset_name
         self.table_name = table_name
         self.start_date = start_date
         self.end_date = end_date
         self.date_column_name = date_column_name
         self.vault_name = vault_name
+        self.credentials_key = credentials_key
         self.credentials_secret = credentials_secret
 
         # AzureDataLakeUpload
@@ -128,6 +133,7 @@ class BigQueryToADLS(Flow):
     def gen_flow(self) -> Flow:
         bigquery_to_df_task = BigQueryToDF(timeout=self.timeout)
         df = bigquery_to_df_task.bind(
+            query=self.query,
             dataset_name=self.dataset_name,
             table_name=self.table_name,
             credentials_key=self.credentials_key,
