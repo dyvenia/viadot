@@ -17,10 +17,10 @@ class Salesforce(Source):
             Can be added only if built-in username/password/security token is provided.
         client_id (str, optional): Client id to keep the track of API calls.
             Defaults to 'viadot'.
-        credentials (Dict[str, Any], optional): Credentials to connect with Salesforce.
-            If not provided, will read from local config file. Defaults to None.
         env (Literal["DEV", "QA", "PROD"], optional): Environment information, provides information
             about credential and connection configuration. Defaults to 'DEV'.
+        credentials (Dict[str, Any], optional): Credentials to connect with Salesforce.
+            If not provided, will read from local config file. Defaults to None.
         config_key (str, optional): The key in the viadot config holding relevant credentials.
             Defaults to None.
     """
@@ -30,8 +30,8 @@ class Salesforce(Source):
         *args,
         domain: str = "test",
         client_id: str = "viadot",
-        credentials: Dict[str, Any] = None,
         env: Literal["DEV", "QA", "PROD"] = "DEV",
+        credentials: Dict[str, Any] = None,
         config_key: str = None,
         **kwargs,
     ):
@@ -43,7 +43,7 @@ class Salesforce(Source):
 
         super().__init__(*args, credentials=credentials, **kwargs)
 
-        if env.upper() == "DEV":
+        if env.upper() == "DEV" or env.upper() == "QA":
             self.salesforce = SF(
                 username=self.credentials.get("username"),
                 password=self.credentials.get("password"),
@@ -51,22 +51,14 @@ class Salesforce(Source):
                 domain=domain,
                 client_id=client_id,
             )
-        elif env.upper() == "QA":
-            self.salesforce = SF(
-                username=self.credentials.get("username"),
-                password=self.credentials.get("password"),
-                security_token=self.credentials.get("token"),
-                domain=domain,
-                client_id=client_id,
-            )
+
         elif env.upper() == "PROD":
             self.salesforce = SF(
                 username=self.credentials.get("username"),
                 password=self.credentials.get("password"),
                 security_token=self.credentials.get("token"),
-                domain=domain,
-                client_id=client_id,
             )
+
         else:
             raise ValueError("The only available environments are DEV, QA, and PROD.")
 
