@@ -65,14 +65,14 @@ def test_upsert_external_id_wrong(salesforce, test_df_external):
 
 
 def test_download_no_query(salesforce):
-    ordered_dict = salesforce.download(table=TABLE_TO_DOWNLOAD)
-    assert len(ordered_dict) > 0
+    records = salesforce.download(table=TABLE_TO_DOWNLOAD)
+    assert len(records) > 0
 
 
 def test_download_with_query(salesforce):
     query = f"SELECT Id, Name FROM {TABLE_TO_DOWNLOAD}"
-    ordered_dict = salesforce.download(query=query)
-    assert len(ordered_dict) > 0
+    records = salesforce.download(query=query)
+    assert len(records) > 0
 
 
 def test_to_df(salesforce):
