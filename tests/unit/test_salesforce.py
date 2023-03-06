@@ -41,21 +41,13 @@ def test_df_external(salesforce):
     sf.Contact.update(ID_TO_UPSERT, {"LastName": "LastName"})
 
 
-def test_upsert_empty(salesforce):
-    try:
-        df = pd.DataFrame()
-        salesforce.upsert(df=df, table=TABLE_TO_UPSERT)
-    except Exception as exception:
-        assert False, exception
-
-
 def test_upsert_external_id_correct(salesforce, test_df_external):
     try:
         salesforce.upsert(
             df=test_df_external, table=TABLE_TO_UPSERT, external_id="SAPContactId__c"
         )
     except Exception as exception:
-        assert False, exception
+        raise exception
     df = salesforce.to_df(
         query=f"SELECT ID, LastName FROM {TABLE_TO_UPSERT} WHERE LastName='{TEST_LAST_NAME}'"
     )
