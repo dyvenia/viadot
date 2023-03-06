@@ -1,6 +1,5 @@
 import pandas as pd
 import pytest
-
 from viadot.sources import Salesforce
 
 TABLE_TO_DOWNLOAD = "Account"
@@ -25,12 +24,8 @@ def test_df_data(salesforce):
 
     yield df
 
-    data_restored = {
-        "Id": [ID_TO_UPSERT],
-        "LastName": ["LastName"],
-    }
-    df_restored = pd.DataFrame(data=data_restored)
-    salesforce.upsert(df=df_restored, table=TABLE_TO_UPSERT)
+    sf = salesforce.salesforce
+    sf.Contact.update(ID_TO_UPSERT, {"LastName": "LastName"})
 
 
 @pytest.fixture(scope="session")
@@ -42,12 +37,8 @@ def test_df_external(salesforce):
     df = pd.DataFrame(data=data)
     yield df
 
-    data_restored = {
-        "Id": [ID_TO_UPSERT],
-        "LastName": ["LastName"],
-    }
-    df_restored = pd.DataFrame(data=data_restored)
-    salesforce.upsert(df=df_restored, table=TABLE_TO_UPSERT)
+    sf = salesforce.salesforce
+    sf.Contact.update(ID_TO_UPSERT, {"LastName": "LastName"})
 
 
 def test_upsert_empty(salesforce):
