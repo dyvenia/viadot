@@ -59,25 +59,26 @@ def test_to_json_values():
     assert retrieved_value == expected_value
 
 
-# def test_to_df_values():
-#     source = ExchangeRates(
-#         currency="PLN",
-#         start_date="2022-10-09",
-#         end_date="2022-10-11",
-#         symbols=["USD", "EUR", "GBP", "CHF", "PLN", "DKK"],
-#         config_key="exchange_rates_dev",
-#     )
-#     expected_value = TEST_DF
-#     retrieved_value = source.to_df()
-#     retrieved_value.drop(["_viadot_downloaded_at_utc"], axis=1, inplace=True)
-#     assert retrieved_value.iloc[0].equals(expected_value.iloc[0])
+def test_to_df_values():
+    source = ExchangeRates(
+        currency="PLN",
+        start_date="2022-10-09",
+        end_date="2022-10-11",
+        symbols=["USD", "EUR", "GBP", "CHF", "PLN", "DKK"],
+        config_key="exchange_rates_dev",
+    )
+    expected_value = TEST_DF
+    retrieved_value = source.to_df()
+    retrieved_value.drop(["_viadot_source"], axis=1, inplace=True)
+    retrieved_value.drop(["_viadot_downloaded_at_utc"], axis=1, inplace=True)
+    assert retrieved_value.iloc[0].equals(expected_value.iloc[0])
 
 
-# def test_get_columns():
-#     source = ExchangeRates(
-#         symbols=["USD", "EUR", "GBP", "CZK", "SEK", "NOK", "ISK"],
-#         config_key="exchange_rates_dev",
-#     )
-#     expected_columns = ["Date", "Base", "USD", "EUR", "GBP", "CZK", "SEK", "NOK", "ISK"]
-#     retrieved_columns = source.get_columns()
-#     assert retrieved_columns == expected_columns
+def test_get_columns():
+    source = ExchangeRates(
+        symbols=["USD", "EUR", "GBP", "CZK", "SEK", "NOK", "ISK"],
+        config_key="exchange_rates_dev",
+    )
+    expected_columns = ["Date", "Base", "USD", "EUR", "GBP", "CZK", "SEK", "NOK", "ISK"]
+    retrieved_columns = source.get_columns()
+    assert retrieved_columns == expected_columns
