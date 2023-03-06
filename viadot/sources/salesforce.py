@@ -95,9 +95,8 @@ class Salesforce(Source):
         for record in records_cp:
 
             if external_id:
-                if record[external_id] is None:
-                    continue
-                else:
+                # If the specified external ID is on the upsert line and has a value, it will be used as merge_key
+                if record[external_id] is not None:
                     merge_key = f"{external_id}/{record[external_id]}"
                     record.pop(external_id)
             else:
@@ -231,3 +230,25 @@ class Salesforce(Source):
         records = self.download(query=query, table=table, columns=columns)
 
         return pd.DataFrame(records)
+
+
+TABLE_TO_DOWNLOAD = "Account"
+TABLE_TO_UPSERT = "Contact"
+TEST_LAST_NAME = "viadot-test"
+ID_TO_UPSERT = "0035E00001YGWK3QAP"
+
+s = Salesforce(config_key="salesforce_dev")
+data = {
+    "LastName": [TEST_LAST_NAME],
+    "SAPContactId__c": ["111"],
+}
+df = pd.DataFrame(data=data)
+import pdb
+
+pdb.set_trace()
+s.upsert(df=df, table=TABLE_TO_UPSERT, external_id="SAPContactId__c")
+
+# df = s.to_df(query=f"SELECT ID, LastName FROM Contact WHERE ID='0035E00001YGWK3QAP'")
+
+# Print the object names
+print(df)
