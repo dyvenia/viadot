@@ -11,7 +11,7 @@ ID_TO_UPSERT = "0035E00001YGWK3QAP"
 
 @pytest.fixture(scope="session")
 def salesforce():
-    s = Salesforce(config_key="sales_force_dev")
+    s = Salesforce(config_key="salesforce_dev")
     yield s
 
 
