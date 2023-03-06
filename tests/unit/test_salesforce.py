@@ -48,13 +48,13 @@ def test_upsert_external_id_correct(salesforce, test_df_external):
         )
     except Exception as exception:
         raise exception
-    df = salesforce.to_df(
-        query=f"SELECT ID, LastName FROM {TABLE_TO_UPSERT} WHERE LastName='{TEST_LAST_NAME}'"
+
+    sf = salesforce.salesforce
+    result = sf.query(
+        f"SELECT ID, LastName FROM {TABLE_TO_UPSERT} WHERE ID='{ID_TO_UPSERT}'"
     )
 
-    result = df.values
-    assert result[0][0] == ID_TO_UPSERT
-    assert result[0][1] == TEST_LAST_NAME
+    assert result["records"][0]["LastName"] == TEST_LAST_NAME
 
 
 def test_upsert_external_id_wrong(salesforce, test_df_external):
