@@ -4,7 +4,7 @@ from viadot.sources import Salesforce
 
 TABLE_TO_DOWNLOAD = "Account"
 TABLE_TO_UPSERT = "Contact"
-TEST_LAST_NAME = "prefect-viadot-test"
+TEST_LAST_NAME = "viadot-test"
 ID_TO_UPSERT = "0035E00001YGWK3QAP"
 
 
@@ -83,5 +83,15 @@ def test_to_df(salesforce):
     assert len(df.values) >= 1000
 
 
-def test_upsert(salesforce, test_df_data):
-    salesforce.upsert(df=test_df_data, table=TABLE_TO_UPSERT)
+def test_upsert_row_id(salesforce, test_df_data):
+    try:
+        salesforce.upsert(df=test_df_data, table=TABLE_TO_UPSERT)
+    except Exception as exception:
+        raise exception
+
+    sf = salesforce.salesforce
+    result = sf.query(
+        f"SELECT ID, LastName FROM {TABLE_TO_UPSERT} WHERE ID='{ID_TO_UPSERT}'"
+    )
+
+    assert result["records"][0]["LastName"] == TEST_LAST_NAME
