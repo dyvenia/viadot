@@ -11,7 +11,7 @@ ID_TO_UPSERT = "0035E00001YGWK3QAP"
 
 @pytest.fixture(scope="session")
 def salesforce():
-    s = Salesforce(config_key="sales_force_dev")
+    s = Salesforce(config_key="salesforce_dev")
     yield s
 
 
@@ -99,3 +99,12 @@ def test_to_df(salesforce):
 
 def test_upsert(salesforce, test_df_data):
     salesforce.upsert(df=test_df_data, table=TABLE_TO_UPSERT)
+
+
+import pdb
+
+# pdb.set_trace()
+sf = Salesforce(config_key="salesforce_qa")
+print(sf.salesforce)
+df = sf.to_df(table="Contact")
+print(df)
