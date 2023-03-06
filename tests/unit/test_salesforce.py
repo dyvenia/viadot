@@ -77,7 +77,10 @@ def test_download_with_query(salesforce):
 
 def test_to_df(salesforce):
     df = salesforce.to_df(table=TABLE_TO_DOWNLOAD)
+    print(len(df.values))
     assert df.empty == False
+    assert len(df.columns) == 98
+    assert len(df.values) >= 1000
 
 
 def test_upsert(salesforce, test_df_data):
