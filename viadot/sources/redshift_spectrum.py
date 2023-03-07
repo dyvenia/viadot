@@ -18,7 +18,7 @@ class RedshiftSpectrumCredentials(BaseModel):
 
 class RedshiftSpectrum(Source):
     """
-    A class for pulling data from and uploading to the Redshift Spectrum.
+    A class for pulling data from and uploading to the Amazon Redshift Spectrum.
 
     Args:
         credentials (RedshiftSpectrumCredentials, optional): RedshiftSpectrumCredentials credentials.
@@ -106,12 +106,12 @@ class RedshiftSpectrum(Source):
         remove_files: bool = True,
     ) -> None:
         """
-        Deletes table from AWS Glue database and related file from AWS S3, if specified.
+        Deletes table from AWS Glue database and related file from Amazon S3, if specified.
 
         Args:
             database (str): AWS Glue catalog database name.
             table (str): AWS Glue catalog table name.
-            remove_files (bool, optional): If True, AWS S3 file related to the table
+            remove_files (bool, optional): If True, Amazon S3 file related to the table
                 will be removed. Defaults to True.
         """
         if remove_files:
