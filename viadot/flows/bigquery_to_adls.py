@@ -34,7 +34,6 @@ class BigQueryToADLS(Flow):
         end_date: str = None,
         credentials_key: str = "BIGQUERY",
         vault_name: str = None,
-        credentials_secret: str = None,
         output_file_extension: str = ".parquet",
         adls_dir_path: str = None,
         local_file_path: str = None,
@@ -67,9 +66,8 @@ class BigQueryToADLS(Flow):
             all data will be retrieved from the table. Defaults to "date".
             start_date (str, optional): A query parameter to pass start date e.g. "2022-01-01". Defaults to None.
             end_date (str, optional): A query parameter to pass end date e.g. "2022-01-01". Defaults to None.
-            credentials_key (str, optional): Credential key to dictionary where details are stored (local config).
-            credentials can be generated as key for User Principal inside a BigQuery project. Defaults to "BIGQUERY".
-            credentials_secret (str, optional): The name of the Azure Key Vault secret for Bigquery project. Defaults to None.
+            credentials_key (str, optional): Credential key to dictionary where details are stored - Azure Key Vault or local config.
+                credentials can be generated as key for User Principal inside a BigQuery project. Defaults to "BIGQUERY".
             vault_name (str, optional): The name of the vault from which to obtain the secrets. Defaults to None.
             output_file_extension (str, optional): Output file extension - to allow selection of.csv for data
             which is not easy to handle with parquet. Defaults to ".parquet".
@@ -93,7 +91,6 @@ class BigQueryToADLS(Flow):
         self.date_column_name = date_column_name
         self.vault_name = vault_name
         self.credentials_key = credentials_key
-        self.credentials_secret = credentials_secret
 
         # AzureDataLakeUpload
         self.overwrite = overwrite_adls
@@ -141,7 +138,6 @@ class BigQueryToADLS(Flow):
             end_date=self.end_date,
             date_column_name=self.date_column_name,
             vault_name=self.vault_name,
-            credentials_secret=self.credentials_secret,
             flow=self,
         )
 

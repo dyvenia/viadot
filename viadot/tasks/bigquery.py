@@ -27,7 +27,6 @@ class BigQueryToDF(Task):
         end_date: str = None,
         date_column_name: str = "date",
         credentials_key: str = None,
-        credentials_secret: str = None,
         vault_name: str = None,
         timeout: int = 3600,
         *args: List[Any],
@@ -52,9 +51,8 @@ class BigQueryToDF(Task):
                 all data will be retrieved from the table. Defaults to "date".
             start_date (str, optional): A query parameter to pass start date e.g. "2022-01-01". Defaults to None.
             end_date (str, optional): A query parameter to pass end date e.g. "2022-01-01". Defaults to None.
-            credentials_key (str, optional): Credential key to dictionary where details are stored (local config).
-            credentials can be generated as key for User Principal inside a BigQuery project. Defaults to None.
-            credentials_secret (str, optional): The name of the Azure Key Vault secret for Bigquery project. Defaults to None.
+            credentials_key (str, optional): Credential key to dictionary where details are stored - Azure Key Vault or local config.
+                credentials can be generated as key for User Principal inside a BigQuery project. Defaults to None.
             vault_name (str, optional): The name of the vault from which to obtain the secrets. Defaults to None.
             timeout(int, optional): The amount of time (in seconds) to wait while running this task before
                 a timeout occurs. Defaults to 3600.
@@ -66,7 +64,6 @@ class BigQueryToDF(Task):
         self.end_date = end_date
         self.date_column_name = date_column_name
         self.credentials_key = credentials_key
-        self.credentials_secret = credentials_secret
         self.vault_name = vault_name
 
         super().__init__(
@@ -88,7 +85,6 @@ class BigQueryToDF(Task):
         "start_date",
         "end_date",
         "credentials_key",
-        "credentials_secret",
         "vault_name",
     )
     def run(
@@ -100,14 +96,13 @@ class BigQueryToDF(Task):
         start_date: str = None,
         end_date: str = None,
         credentials_key: str = None,
-        credentials_secret: str = None,
         vault_name: str = None,
         **kwargs: Dict[str, Any],
     ) -> None:
         credentials = None
-        if credentials_secret:
+        if credentials_key:
             credentials_str = AzureKeyVaultSecret(
-                credentials_secret, vault_name=vault_name
+                secret=credentials_key, vault_name=vault_name
             ).run()
             credentials = json.loads(credentials_str)
 
