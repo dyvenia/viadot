@@ -18,7 +18,7 @@ class RedshiftSpectrumCredentials(BaseModel):
 
 class RedshiftSpectrum(Source):
     """
-    A class for pulling data from and uploading to the Amazon Redshift Spectrum.
+    A class for pulling data from and uploading to the Redshift Spectrum.
 
     Args:
         credentials (RedshiftSpectrumCredentials, optional): RedshiftSpectrumCredentials credentials.
@@ -87,8 +87,8 @@ class RedshiftSpectrum(Source):
         Check if a table exists in Glue database.
 
         Args:
-            database (str): Amazon Glue catalog database name.
-            table (str): Amazon Glue catalog table name.
+            database (str): AWS Glue catalog database name.
+            table (str): AWS Glue catalog table name.
 
         Returns:
             bool: Whether the paths exists.
@@ -106,12 +106,12 @@ class RedshiftSpectrum(Source):
         remove_files: bool = True,
     ) -> None:
         """
-        Delete table from Amazon Glue database and related file from Amazon S3, if specified.
+        Deletes table from AWS Glue database and related file from AWS S3, if specified.
 
         Args:
-            database (str): Amazon Glue catalog database name.
-            table (str): Amazon Glue catalog table name.
-            remove_files (bool, optional): If True, Amazon S3 file related to the table
+            database (str): AWS Glue catalog database name.
+            table (str): AWS Glue catalog table name.
+            remove_files (bool, optional): If True, AWS S3 file related to the table
                 will be removed. Defaults to True.
         """
         if remove_files:
@@ -138,7 +138,7 @@ class RedshiftSpectrum(Source):
         index: bool = False,
         compression: str = None,
         sep: str = ",",
-        description: str = None,
+        description: str = "test",
     ) -> None:
         """
         Upload a pandas `DataFrame` to a csv or parquet file.
@@ -149,8 +149,8 @@ class RedshiftSpectrum(Source):
                 Defaults to None.
             extension (str): Required file type. Accepted file formats are 'csv'
                 and 'parquet'.
-            database (str): Amazon Glue catalog database name.
-            table (str): Amazon Glue catalog table name.
+            database (str): AWS Glue catalog database name.
+            table (str): AWS Glue catalog table name.
             partition_cols (List[str]): List of column names that will be used to
                 create partitions. Only takes effect if dataset=True.
             if_exists (str, optional): 'overwrite' to recreate any possible existing
@@ -159,7 +159,7 @@ class RedshiftSpectrum(Source):
             index (bool, optional): Write row names (index). Defaults to False.
             compression (str, optional): Compression style (None, snappy, gzip, zstd).
             sep (str, optional): Field delimiter for the output file. Defaults to ','.
-            description (str, optional): Amazon Glue catalog table description.
+            description (str, optional): AWS Glue catalog table description.
         """
 
         if extension == ".parquet":
@@ -199,8 +199,8 @@ class RedshiftSpectrum(Source):
         Reads a Spectrum table to a pandas `DataFrame`.
 
         Args:
-            database (str): Amazon Glue catalog database name.
-            table (str): Amazon Glue catalog table name.
+            database (str): AWS Glue catalog database name.
+            table (str): AWS Glue catalog table name.
         """
 
         df = wr.s3.read_parquet_table(
