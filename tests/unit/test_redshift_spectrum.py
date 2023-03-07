@@ -63,6 +63,6 @@ def test_to_df(redshift):
         table=TEST_TABLE,
     )
 
-    assert len(result) == len(TEST_DF)
+    assert result.equals(TEST_DF)
 
     redshift.drop_table(database=TEST_SCHEMA, table=TEST_TABLE, remove_files=True)
