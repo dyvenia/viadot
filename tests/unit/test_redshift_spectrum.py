@@ -36,7 +36,7 @@ def s3(aws_config_key):
 def test_from_df(redshift):
     redshift.from_df(
         df=TEST_DF,
-        to_path=f"s3://datawerfen-159170848751291/nesso/{TEST_SCHEMA}/{TEST_TABLE}",
+        to_path=f"s3://{S3_BUCKET}/nesso/{TEST_SCHEMA}/{TEST_TABLE}",
         database=TEST_SCHEMA,
         table=TEST_TABLE,
     )
@@ -53,7 +53,7 @@ def test_from_df(redshift):
 def test_to_df(redshift):
     redshift.from_df(
         df=TEST_DF,
-        to_path=f"s3://datawerfen-159170848751291/nesso/{TEST_SCHEMA}/{TEST_TABLE}",
+        to_path=f"s3://{S3_BUCKET}/nesso/{TEST_SCHEMA}/{TEST_TABLE}",
         database=TEST_SCHEMA,
         table=TEST_TABLE,
     )
