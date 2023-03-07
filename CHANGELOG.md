@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Added `validate_date_filter` parameter to `Epicor` source, `EpicorOrdersToDF` task and `EpicorOrdersToDuckDB` flow.
 This parameter enables user to decide whether or not filter should be validated.
+- Added option to disable `check_dtypes_sort` in class/flow_name.
 
 ## [0.4.12] - 2023-01-31
 ### Added
