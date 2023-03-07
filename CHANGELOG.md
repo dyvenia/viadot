@@ -377,3 +377,6 @@ specified in the `SUPERMETRICS_DEFAULT_USER` secret
 
 ### Fixed
 - Fix `AzureBlobStorage`'s `to_storage()` method is missing the final upload blob part
+
+### Added
+- Added CI for branch 2.0 that runs tests on PR and push, and releases docker img on push
