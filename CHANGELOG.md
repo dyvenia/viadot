@@ -11,6 +11,7 @@ This parameter enables user to decide whether or not filter should be validated.
 - Added `Mediatool` source class
 - Added `MediatoolToDF` task class
 - Added `MediatoolToADLS` flow class
+- Added option to disable `check_dtypes_sort` in class/flow_name.
 
 
 ## [0.4.12] - 2023-01-31

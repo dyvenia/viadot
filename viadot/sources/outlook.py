@@ -4,9 +4,9 @@ from typing import Any, Dict, List, Literal
 import pandas as pd
 from O365 import Account
 
-from ..config import local_config
-from ..exceptions import CredentialError
-from .base import Source
+from viadot.config import local_config
+from viadot.exceptions import CredentialError
+from viadot.sources.base import Source
 import prefect
 
 
