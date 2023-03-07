@@ -6,7 +6,9 @@ from viadot.tasks import GenesysToCSV
 
 
 @pytest.fixture
-def var_dictionary():
+def var_dictionary() -> None:
+    """Function where variables are stored."""
+
     variables = {
         "post_data_list": [
             {
