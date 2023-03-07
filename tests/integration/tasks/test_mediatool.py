@@ -18,7 +18,6 @@ def test_join_df():
         columns_from_right_df=["id_r", "prize"],
         how="left",
     )
-    print(df)
 
     assert isinstance(df, pd.DataFrame)
     assert "prize" in df.columns
