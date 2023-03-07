@@ -3,7 +3,7 @@ import json, sys
 import base64
 import warnings
 import asyncio
-from typing import Any, Dict, List, Literal
+from typing import Any, Dict, List, Literal, Union
 from io import StringIO
 
 import prefect
@@ -152,11 +152,14 @@ class Genesys(Source):
 
         return request_headers
 
-    def genesys_generate_exports(self, post_data_list: List[str]) -> None:
+    def genesys_generate_exports(
+        self, post_data_list: List[str], end_point: str = "reporting/exports"
+    ) -> Union[None, dict]:
         """Function that make POST request method to generate export reports.
 
         Args:
             post_data_list (List[str], optional): List of string templates to generate json body. Defaults to None.
+            end_point (str, optional): Final end point for Genesys connection. Defaults to "reporting/exports".
         """
 
         limiter = AsyncLimiter(2, 15)
@@ -172,10 +175,11 @@ class Genesys(Source):
                         await semaphore.acquire()
                         async with limiter:
                             async with session.post(
-                                f"https://api.{self.environment}/api/v2/analytics/reporting/exports",
+                                f"https://api.{self.environment}/api/v2/analytics/{end_point}",
                                 headers=self.authorization_token,
                                 data=payload,
                             ) as resp:
+                                global new_report
                                 new_report = await resp.read()
                                 self.logger.info(
                                     f"Generated report export --- \n {payload}."
@@ -189,6 +193,9 @@ class Genesys(Source):
         loop = asyncio.get_event_loop()
         coroutine = generate_post()
         loop.run_until_complete(coroutine)
+
+        if end_point == "conversations/details/query":
+            return json.loads(new_report.decode("utf-8"))
 
     def load_reporting_exports(self, page_size: int = 100, verbose: bool = False):
         """
