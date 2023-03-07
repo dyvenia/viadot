@@ -183,6 +183,7 @@ class Epicor(Source):
         filters_xml: str,
         credentials: Dict[str, Any] = None,
         config_key: str = None,
+        validate_date_filter: bool = True,
         start_date_field: str = "BegInvoiceDate",
         end_date_field: str = "EndInvoiceDate",
         *args,
@@ -197,6 +198,7 @@ class Epicor(Source):
             credentials (Dict[str, Any], optional): Credentials to connect with Epicor API containing host, port, username and password.
                 Defaults to None.
             config_key (str, optional): Credential key to dictionary where details are stored.
+            validate_date_filter (bool, optional): Whether or not validate xml date filters. Defaults to True.
             start_date_field (str, optional) The name of filters field containing start date. Defaults to "BegInvoiceDate".
             end_date_field (str, optional) The name of filters field containing end date. Defaults to "EndInvoiceDate".
         """
@@ -212,6 +214,7 @@ class Epicor(Source):
         self.config_key = config_key
         self.base_url = base_url
         self.filters_xml = filters_xml
+        self.validate_date_filter = validate_date_filter
         self.start_date_field = start_date_field
         self.end_date_field = end_date_field
 
@@ -266,7 +269,8 @@ class Epicor(Source):
 
     def get_xml_response(self):
         "Function for getting response from Epicor API"
-        self.validate_filter()
+        if self.validate_date_filter == True:
+            self.validate_filter()
         payload = self.filters_xml
         url = self.generate_url()
         headers = {
