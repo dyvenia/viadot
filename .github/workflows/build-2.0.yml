@@ -4,10 +4,27 @@ on:
   push:
     branches:
       - "2.0"
+  pull_request:
+    branches:
+      - "2.0"
 
 jobs:
+  run-tests:
+    runs-on: ubuntu-latest
+    if: always()
+    steps:
+      - name: Test with pytest
+        if: always()
+        env:
+          VIADOT_CONFIG_PATH: .config/credentials.json.template
+        run: |
+          pip install pytest
+          sudo apt install libsqliteodbc
+          pytest tests/unit
+
   publish-docker-image:
     runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/dev' && github.event_name == 'push'
     steps:
       - name: Checkout
         uses: actions/checkout@v3
