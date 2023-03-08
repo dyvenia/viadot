@@ -34,6 +34,15 @@ def s3(aws_config_key):
     yield s3
 
 
+def test_exists(redshift):
+    result = redshift.exists(
+        database=TEST_SCHEMA,
+        table="nesso_test_table",
+    )
+
+    assert result is True
+
+
 def test_from_df(redshift):
     redshift.from_df(
         df=TEST_DF,
