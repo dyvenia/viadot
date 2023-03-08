@@ -44,6 +44,12 @@ def test_exists(redshift):
 
 
 def test_from_df(redshift):
+    result_before = redshift.exists(
+        database=TEST_SCHEMA,
+        table=TEST_TABLE,
+    )
+    assert result_before is False
+
     redshift.from_df(
         df=TEST_DF,
         to_path=f"s3://{S3_BUCKET}/nesso/{TEST_SCHEMA}/{TEST_TABLE}",
@@ -51,13 +57,13 @@ def test_from_df(redshift):
         table=TEST_TABLE,
     )
 
-    result = redshift.exists(
+    result_after = redshift.exists(
         database=TEST_SCHEMA,
         table=TEST_TABLE,
     )
     redshift.drop_table(database=TEST_SCHEMA, table=TEST_TABLE, remove_files=True)
 
-    assert result is True
+    assert result_after is True
 
 
 def test_to_df(redshift):
