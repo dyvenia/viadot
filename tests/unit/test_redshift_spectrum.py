@@ -13,6 +13,7 @@ TEST_DF = pd.DataFrame(
     ],
     columns=["col1", "col2"],
 )
+TEST_DF = TEST_DF.astype({"col1": "Int32", "col2": "string"})
 
 S3_BUCKET = os.environ.get("S3_BUCKET")
 TEST_SCHEMA = "raw_test"
