@@ -28,7 +28,7 @@ def test_row_creation(salesforce):
     sf.Contact.delete(result["records"][0]["Id"])
 
 
-def test_upsert_external_id_correct(salesforce, test_row_creation):
+def test_upsert_external_id_column(salesforce, test_row_creation):
 
     data = {
         "LastName": [TEST_LAST_NAME],
@@ -37,7 +37,9 @@ def test_upsert_external_id_correct(salesforce, test_row_creation):
     df = pd.DataFrame(data=data)
 
     try:
-        salesforce.upsert(df=df, table=TABLE_TO_UPSERT, external_id="SAPContactId__c")
+        salesforce.upsert(
+            df=df, table=TABLE_TO_UPSERT, external_id_column="SAPContactId__c"
+        )
     except Exception as exception:
         raise exception
 
@@ -76,14 +78,39 @@ def test_upsert_row_id(salesforce, test_row_creation):
     assert result["records"][0]["LastName"] == TEST_LAST_NAME
 
 
-def test_upsert_external_id_wrong(salesforce, test_row_creation):
+def test_upsert_non_existent_row(salesforce):
+
+    data = {
+        "LastName": ["viadot-insert-1", "viadot-insert-2"],
+        "SAPContactId__c": ["88120", "88121"],
+    }
+    df = pd.DataFrame(data=data)
+
+    try:
+        salesforce.upsert(df=df, table="Contact", external_id_column="SAPContactId__c")
+    except Exception as exception:
+        raise exception
+
+    sf = salesforce.salesforce
+    created_rows = sf.query(
+        f"SELECT Id, LastName FROM {TABLE_TO_UPSERT} WHERE SAPContactId__c in ('88120','88121')"
+    )
+
+    assert created_rows["records"][0]["LastName"] == "viadot-insert-1"
+    assert created_rows["records"][1]["LastName"] == "viadot-insert-2"
+
+    sf.Contact.delete(created_rows["records"][0]["Id"])
+    sf.Contact.delete(created_rows["records"][1]["Id"])
+
+
+def test_upsert_external_id_column_wrong(salesforce, test_row_creation):
     data = {
         "LastName": [TEST_LAST_NAME],
         "SAPContactId__c": ["88111"],
     }
     df = pd.DataFrame(data=data)
     with pytest.raises(ValueError):
-        salesforce.upsert(df=df, table=TABLE_TO_UPSERT, external_id="SAPId")
+        salesforce.upsert(df=df, table=TABLE_TO_UPSERT, external_id_column="SAPId")
 
 
 def test_download_no_query(salesforce):
