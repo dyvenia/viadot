@@ -1,6 +1,7 @@
+import os
 import time
 import sys
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Literal
 
 import numpy as np
 import pandas as pd
@@ -30,6 +31,7 @@ class GenesysToCSV(Task):
         report_url: str = None,
         report_columns: List[str] = None,
         local_file_path: str = "",
+        sep: str = "\t",
         credentials_genesys: Dict[str, Any] = None,
         timeout: int = 3600,
         *args: List[Any],
@@ -50,6 +52,7 @@ class GenesysToCSV(Task):
             report_url (str, optional): The url of report generated in json response. Defaults to None.
             report_columns (List[str], optional): List of exisiting column in report. Defaults to None.
             local_file_path (str, optional): The local path from which to upload the file(s). Defaults to "".
+            sep (str, optional): Separator in csv file. Defaults to "\t".
             timeout(int, optional): The amount of time (in seconds) to wait while running this task before
                 a timeout occurs. Defaults to 3600.
         """
@@ -66,6 +69,7 @@ class GenesysToCSV(Task):
         self.end_date = end_date
         self.credentials_genesys = credentials_genesys
         self.local_file_path = local_file_path
+        self.sep = sep
 
         super().__init__(
             name=self.report_name,
@@ -78,23 +82,26 @@ class GenesysToCSV(Task):
         """Download Genesys data to CSV"""
         return super().__call__(*args, **kwargs)
 
-    def merge_nested_df(self, data_to_merge: list) -> DataFrame:
+    def merge_conversations_dfs(self, data_to_merge: list) -> DataFrame:
+        """Method to merge all the conversations data into a single data frame.
+
+        Args:
+            data_to_merge (list): List with all the conversations in json format.
+
+        Returns:
+            DataFrame: A single data frame with all the content.
+        """
+        # LEVEL 0
+        df0 = pd.json_normalize(data_to_merge)
+        df0.drop(["participants"], axis=1, inplace=True)
+
         # LEVEL 1
         df1 = pd.json_normalize(
             data_to_merge,
             record_path=["participants"],
-            meta=[
-                "conversationStart",
-                "conversationEnd",
-                "conversationId",
-                "divisionIds",
-                "mediaStatsMinConversationMos",
-                "mediaStatsMinConversationRFactor",
-                "originatingDirection",
-            ],
-            errors="ignore",
+            meta=["conversationId"],
         )
-        df1 = df1.drop(["sessions"], axis=1)
+        df1.drop(["sessions"], axis=1, inplace=True)
 
         # LEVEL 2
         df2 = pd.json_normalize(
@@ -105,50 +112,96 @@ class GenesysToCSV(Task):
                 ["participants", "participantId"],
             ],
             errors="ignore",
+            sep="_",
         )
-        df2 = df2.rename(
+        df2.rename(
             columns={
-                "participants.externalContactId": "externalContactId",
-                "participants.participantId": "participantId",
-            }
+                "participants_externalContactId": "externalContactId",
+                "participants_participantId": "participantId",
+            },
+            inplace=True,
         )
-        df2 = df2.drop(["metrics", "segments"], axis=1)
+        df2.drop(["metrics", "segments", "mediaEndpointStats"], axis=1, inplace=True)
 
-        # LEVEL 3
-        df3_1 = pd.json_normalize(
-            data_to_merge,
-            record_path=["participants", "sessions", "metrics"],
-            meta=[
-                ["participants", "sessions", "sessionId"],
-            ],
-            errors="ignore",
-        )
-        df3_1 = df3_1.rename(columns={"participants.sessions.sessionId": "sessionId"})
-        df3_2 = pd.json_normalize(
-            data_to_merge,
-            record_path=["participants", "sessions", "segments"],
-            meta=[
-                ["participants", "sessions", "sessionId"],
-            ],
-            errors="ignore",
-        )
-        df3_2 = df3_2.rename(columns={"participants.sessions.sessionId": "sessionId"})
-        df3_3 = pd.json_normalize(
-            data_to_merge,
-            record_path=["participants", "sessions", "mediaEndpointStats"],
-            meta=[
-                ["participants", "sessions", "sessionId"],
-            ],
-            errors="ignore",
-        )
-        df3_3 = df3_3.rename(columns={"participants.sessions.sessionId": "sessionId"})
+        conversations_df = {}
+        for i, conversation in enumerate(data_to_merge):
+            for j, entry_0 in enumerate(conversation["participants"]):
+                for key in list(entry_0.keys()):
+                    if key == "sessions":
+                        for k, entry_1 in enumerate(entry_0[key]):
+                            if "metrics" not in list(entry_1.keys()):
+                                conversation["participants"][j][key][k]["metrics"] = []
+                            if "segments" not in list(entry_1.keys()):
+                                conversation["participants"][j][key][k]["segments"] = []
+                            if "mediaEndpointStats" not in list(entry_1.keys()):
+                                conversation["participants"][j][key][k][
+                                    "mediaEndpointStats"
+                                ] = []
 
-        # merging all the levels in a single data frame
-        dff3 = pd.merge(df3_1, df3_2, df3_3, how="outer", on=["sessionId"])
-        dff2 = pd.merge(df2, dff3, how="outer", on=["sessionId"])
-        dff = pd.merge(
+            df3_1 = pd.json_normalize(
+                conversation,
+                record_path=["participants", "sessions", "metrics"],
+                meta=[
+                    ["participants", "sessions", "sessionId"],
+                ],
+                errors="ignore",
+                record_prefix="metrics_",
+                sep="_",
+            )
+            df3_1.rename(
+                columns={"participants_sessions_sessionId": "sessionId"}, inplace=True
+            )
+            df3_2 = pd.json_normalize(
+                conversation,
+                record_path=["participants", "sessions", "segments"],
+                meta=[
+                    ["participants", "sessions", "sessionId"],
+                ],
+                errors="ignore",
+                record_prefix="segments_",
+                sep="_",
+            )
+            df3_2.rename(
+                columns={"participants_sessions_sessionId": "sessionId"}, inplace=True
+            )
+            df3_3 = pd.json_normalize(
+                conversation,
+                record_path=["participants", "sessions", "mediaEndpointStats"],
+                meta=[
+                    ["participants", "sessions", "sessionId"],
+                ],
+                errors="ignore",
+                record_prefix="mediaEndpointStats_",
+                sep="_",
+            )
+            df3_3.rename(
+                columns={"participants_sessions_sessionId": "sessionId"}, inplace=True
+            )
+
+            # merging all LEVELs 3 from the same conversation
+            dff3_tmp = pd.concat([df3_1, df3_2])
+            dff3 = pd.concat([dff3_tmp, df3_3])
+
+            conversations_df.update({i: dff3})
+
+        # NERGING ALL LEVELS
+        # LEVELS 3
+        for l, key in enumerate(list(conversations_df.keys())):
+            if l == 0:
+                dff3_f = conversations_df[key]
+            else:
+                dff3_f = pd.concat([dff3_f, conversations_df[key]])
+
+        # LEVEL 3 with LEVEL 2
+        dff2 = pd.merge(dff3_f, df2, how="outer", on=["sessionId"])
+
+        # LEVEL 2 with LEVEL 1
+        dff1 = pd.merge(
             df1, dff2, how="outer", on=["externalContactId", "participantId"]
         )
+
+        # LEVEL 1 with LEVEL 0
+        dff = pd.merge(df0, dff1, how="outer", on=["conversationId"])
 
         return dff
 
@@ -297,7 +350,9 @@ class GenesysToCSV(Task):
                 report = genesys.genesys_generate_exports(
                     post_data_list=post_data_list, end_point=end_point
                 )
-                merged_data_frame = self.merge_nested_df(report["conversations"])
+                merged_data_frame = self.merge_conversations_dfs(
+                    report["conversations"]
+                )
 
                 merged_data.update(
                     {post_data_list[0]["paging"]["pageNumber"]: merged_data_frame}
@@ -309,8 +364,28 @@ class GenesysToCSV(Task):
                     stop_loop = True
 
                 post_data_list[0]["paging"]["pageNumber"] += 1
+                page_counter += 1
 
-                if post_data_list[0]["paging"]["pageNumber"] == 3:
-                    break
+                # if post_data_list[0]["paging"]["pageNumber"] == 3:
+                #     break
 
-            sys.exit()
+            for i, key in enumerate(list(merged_data.keys())):
+                if i == 0:
+                    final_df = merged_data[key]
+                else:
+                    final_df = pd.concat([final_df, merged_data[key]])
+
+            date = start_date.replace("-", "")
+            file_name = (
+                f"conversations_detail_{date}".upper() + f".{self.file_extension}"
+            )
+
+            final_df.to_csv(
+                os.path.join(self.local_file_path, file_name),
+                index=False,
+                sep="\t",
+            )
+
+            logger.info("Downloaded the data from the Genesys into the CSV.")
+
+            return [file_name]
