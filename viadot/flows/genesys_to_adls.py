@@ -1,5 +1,5 @@
 import os
-from typing import Any, Dict, List, Any
+from typing import Any, Dict, List, Any, Literal
 
 import pandas as pd
 from prefect import Flow, task
@@ -12,7 +12,11 @@ from viadot.task_utils import (
 
 
 @task(timeout=3600)
-def add_timestamp(files_names: List = None, path: str = "", sep: str = "\t") -> None:
+def add_timestamp(
+    files_names: List = None,
+    path: str = "",
+    sep: str = "\t",
+) -> None:
     """Add new column _viadot_downloaded_at_utc into every genesys file.
 
     Args:
@@ -24,6 +28,11 @@ def add_timestamp(files_names: List = None, path: str = "", sep: str = "\t") -> 
         df = pd.read_csv(os.path.join(path, file), sep=sep)
         df_updated = add_ingestion_metadata_task.run(df)
         df_updated.to_csv(os.path.join(path, file), index=False, sep=sep)
+
+
+@task(timeout=3600)
+def filter_userid():
+    pass
 
 
 class GenesysToADLS(Flow):
@@ -124,7 +133,9 @@ class GenesysToADLS(Flow):
     def gen_flow(self) -> Flow:
 
         to_csv = GenesysToCSV(
-            timeout=self.timeout, local_file_path=self.local_file_path
+            timeout=self.timeout,
+            local_file_path=self.local_file_path,
+            sep=self.sep,
         )
 
         file_names = to_csv.bind(
@@ -140,17 +151,20 @@ class GenesysToADLS(Flow):
         )
 
         add_timestamp.bind(
-            file_names, path=self.local_file_path, sep=self.sep, flow=self
+            file_names,
+            path=self.local_file_path,
+            sep=self.sep,
+            flow=self,
         )
 
-        # adls_bulk_upload.bind(
-        #     file_names=file_names,
-        #     file_name_relative_path=self.local_file_path,
-        #     adls_file_path=self.adls_file_path,
-        #     adls_sp_credentials_secret=self.adls_sp_credentials_secret,
-        #     timeout=self.timeout,
-        #     flow=self,
-        # )
+        adls_bulk_upload.bind(
+            file_names=file_names,
+            file_name_relative_path=self.local_file_path,
+            adls_file_path=self.adls_file_path,
+            adls_sp_credentials_secret=self.adls_sp_credentials_secret,
+            timeout=self.timeout,
+            flow=self,
+        )
 
         add_timestamp.set_upstream(file_names, flow=self)
-        # adls_bulk_upload.set_upstream(add_timestamp, flow=self)
+        adls_bulk_upload.set_upstream(add_timestamp, flow=self)
