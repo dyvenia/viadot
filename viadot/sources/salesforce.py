@@ -66,7 +66,7 @@ class Salesforce(Source):
         self,
         df: pd.DataFrame,
         table: str,
-        external_id: str = None,
+        external_id_column: str = None,
         raise_on_error: bool = False,
     ) -> None:
         """
@@ -75,7 +75,7 @@ class Salesforce(Source):
         Args:
             df (pd.DataFrame): The DataFrame to upsert. Only a single row can be upserted with this function.
             table (str): The table where the data should be upserted.
-            external_id (str, optional): The external ID to use for the upsert. Defaults to None.
+            external_id_column (str, optional): The external ID to use for the upsert. Defaults to None.
             raise_on_error (bool, optional): Whether to raise an exception if a row upsert fails.
                 If False, we only display a warning. Defaults to False.
         """
@@ -83,9 +83,9 @@ class Salesforce(Source):
             self.logger.info("No data to upsert.")
             return
 
-        if external_id and external_id not in df.columns:
+        if external_id_column and external_id_column not in df.columns:
             raise ValueError(
-                f"Passed DataFrame does not contain column '{external_id}'."
+                f"Passed DataFrame does not contain column '{external_id_column}'."
             )
 
         table_to_upsert = getattr(self.salesforce, table)
@@ -94,11 +94,11 @@ class Salesforce(Source):
 
         for record in records_cp:
 
-            if external_id:
+            if external_id_column:
                 # If the specified external ID is on the upsert line and has a value, it will be used as merge_key
-                if record[external_id] is not None:
-                    merge_key = f"{external_id}/{record[external_id]}"
-                    record.pop(external_id)
+                if record[external_id_column] is not None:
+                    merge_key = f"{external_id_column}/{record[external_id_column]}"
+                    record.pop(external_id_column)
             else:
                 merge_key = record.pop("Id")
 
@@ -132,7 +132,7 @@ class Salesforce(Source):
         self,
         df: pd.DataFrame,
         table: str,
-        external_id: str = None,
+        external_id_column: str = None,
         batch_size: int = 10000,
         raise_on_error: bool = False,
     ) -> None:
@@ -142,7 +142,7 @@ class Salesforce(Source):
         Args:
             df (pd.DataFrame): The DataFrame to upsert.
             table (str): The table where the data should be upserted.
-            external_id (str, optional): The external ID to use for the upsert. Defaults to None.
+            external_id_column (str, optional): The external ID to use for the upsert. Defaults to None.
             batch_size (int, optional): Number of records to be included in each batch of records
                 that are sent to the Salesforce API for processing. Defaults to 10000.
             raise_on_error (bool, optional): Whether to raise an exception if a row upsert fails.
@@ -152,15 +152,17 @@ class Salesforce(Source):
             self.logger.info("No data to upsert.")
             return
 
-        if external_id and external_id not in df.columns:
+        if external_id_column and external_id_column not in df.columns:
             raise ValueError(
-                f"Passed DataFrame does not contain column '{external_id}'."
+                f"Passed DataFrame does not contain column '{external_id_column}'."
             )
         records = df.to_dict("records")
 
         try:
             response_code = self.salesforce.bulk.__getattr__(table).upsert(
-                data=records, external_id_field=external_id, batch_size=batch_size
+                data=records,
+                external_id_column_field=external_id_column,
+                batch_size=batch_size,
             )
         except SalesforceMalformedRequest as e:
             # Bulk insert didn't work at all.
