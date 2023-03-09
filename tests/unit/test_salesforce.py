@@ -6,6 +6,10 @@ TABLE_TO_DOWNLOAD = "Account"
 TABLE_TO_UPSERT = "Contact"
 TEST_LAST_NAME = "viadot-test"
 
+EXPECTED_VALUE = pd.DataFrame(
+    {"LastName": ["salesforce-test"], "SAPContactId__c": ["88111"]}
+)
+
 
 @pytest.fixture(scope="session")
 def salesforce():
@@ -124,9 +128,8 @@ def test_download_with_query(salesforce):
     assert len(records) > 0
 
 
-def test_to_df(salesforce):
-    df = salesforce.to_df(table=TABLE_TO_DOWNLOAD)
-    print(len(df.values))
-    assert df.empty == False
-    assert len(df.columns) == 98
-    assert len(df.values) >= 1000
+def test_to_df(salesforce, test_row_creation):
+    df = salesforce.to_df(
+        query=f"SELECT LastName, SAPContactId__c FROM {TABLE_TO_UPSERT} WHERE SAPContactId__c='88111'"
+    )
+    assert df.equals(EXPECTED_VALUE)
