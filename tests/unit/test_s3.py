@@ -29,15 +29,13 @@ TEST_TABLE = "test"
 
 
 @pytest.fixture(scope="session")
-def s3(s3_config_key):
-
-    s3 = S3(config_key=s3_config_key)
+def s3(aws_config_key):
+    s3 = S3(config_key=aws_config_key)
 
     yield s3
 
 
 def test_from_df(s3):
-
     s3.from_df(df=TEST_DF, path=f"s3://{S3_BUCKET}/nesso/{TEST_SCHEMA}/{TEST_TABLE}")
 
     result = s3.exists(path=f"s3://{S3_BUCKET}/nesso/{TEST_SCHEMA}/{TEST_TABLE}")
@@ -48,7 +46,6 @@ def test_from_df(s3):
 
 
 def test_from_df_max_rows(s3):
-
     rows_per_file = 1
     size_df = len(TEST_DF)
     amount_of_expected_files = int(size_df / rows_per_file)
@@ -70,7 +67,6 @@ def test_from_df_max_rows(s3):
 
 
 def test_to_df(s3):
-
     s3.from_df(
         df=TEST_DF, path=f"s3://{S3_BUCKET}/nesso/{TEST_SCHEMA}/{TEST_TABLE}.parquet"
     )
@@ -86,7 +82,6 @@ def test_to_df(s3):
 
 
 def test_to_df_chunk_size(s3):
-
     s3.from_df(
         df=TEST_DF, path=f"s3://{S3_BUCKET}/nesso/{TEST_SCHEMA}/{TEST_TABLE}.parquet"
     )
@@ -104,7 +99,6 @@ def test_to_df_chunk_size(s3):
 
 
 def test_upload(s3):
-
     TEST_DF.to_csv("test.csv")
 
     s3.upload(
@@ -120,7 +114,6 @@ def test_upload(s3):
 
 
 def test_download(s3):
-
     s3.download(
         to_path="test.csv",
         from_path=f"s3://{S3_BUCKET}/nesso/{TEST_SCHEMA}/{TEST_TABLE}.csv",

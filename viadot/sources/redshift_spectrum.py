@@ -3,25 +3,33 @@ from typing import Any, Dict, List, Literal
 import awswrangler as wr
 import boto3
 import pandas as pd
+from pydantic import BaseModel
 
 from viadot.config import get_source_credentials
 from viadot.sources.base import Source
 
 
+class RedshiftSpectrumCredentials(BaseModel):
+    profile_name: str  # The name of the IAM profile to use.
+    region_name: str  # The name of the AWS region.
+    aws_access_key_id: str
+    aws_secret_access_key: str
+
+
 class RedshiftSpectrum(Source):
     """
-    A class for pulling data from and uploading to the Redshift Spectrum.
+    A class for pulling data from and uploading to the Amazon Redshift Spectrum.
 
     Args:
-        credentials (Dict[str, Any], optional): Credentials to the AWS Redshift
-            Spectrum. Defaults to None.
+        credentials (RedshiftSpectrumCredentials, optional): RedshiftSpectrumCredentials credentials.
+            Defaults to None.
         config_key (str, optional): The key in the viadot config holding relevant
             credentials. Defaults to None.
     """
 
     def __init__(
         self,
-        credentials: Dict[str, Any] = None,
+        credentials: RedshiftSpectrumCredentials = None,
         config_key: str = None,
         *args,
         **kwargs,
@@ -91,19 +99,19 @@ class RedshiftSpectrum(Source):
             table=table,
         )
 
-    def rm(
+    def drop_table(
         self,
         database: str,
         table: str,
         remove_files: bool = True,
     ) -> None:
         """
-        Deletes table from AWS Glue database and related file from AWS S3, if specified.
+        Deletes table from AWS Glue database and related file from Amazon S3, if specified.
 
         Args:
             database (str): AWS Glue catalog database name.
             table (str): AWS Glue catalog table name.
-            remove_files (bool, optional): If True, AWS S3 file related to the table
+            remove_files (bool, optional): If True, Amazon S3 file related to the table
                 will be removed. Defaults to True.
         """
         if remove_files:
@@ -112,9 +120,11 @@ class RedshiftSpectrum(Source):
                 database=database,
                 table=table,
             )
-            wr.s3.delete_objects(path=table_location)
+            wr.s3.delete_objects(boto3_session=self.session, path=table_location)
 
-        wr.catalog.delete_table_if_exists(database=database, table=table)
+        wr.catalog.delete_table_if_exists(
+            boto3_session=self.session, database=database, table=table
+        )
 
     def from_df(
         self,
