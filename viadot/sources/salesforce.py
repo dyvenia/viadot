@@ -70,10 +70,11 @@ class Salesforce(Source):
         raise_on_error: bool = False,
     ) -> None:
         """
-        Performs upsert operations on the selected row in the table.
+        Upsert the DataFrame to Salesforce. The upsert is performed on a single record at a time.
+        Using an upsert operation gives you more control over logging and error handling than using Bulk upsert.
 
         Args:
-            df (pd.DataFrame): The DataFrame to upsert. Only a single row can be upserted with this function.
+            df (pd.DataFrame): Dataframe containing the rows to upsert.
             table (str): The table where the data should be upserted.
             external_id_column (str, optional): The external ID to use for the upsert. Defaults to None.
             raise_on_error (bool, optional): Whether to raise an exception if a row upsert fails.
@@ -137,10 +138,13 @@ class Salesforce(Source):
         raise_on_error: bool = False,
     ) -> None:
         """
-        Performs upsert operations on multiple rows in a table.
+        Performs a Bulk upsert to Salesforce of the data given in the Dataframe.
+        Bulk upsert is performed on multiple records simultaneously, it is usually used when
+        there is a need to insert or update multiple records in a single transaction,
+        which can be more efficient and reduce the number of API calls required.
 
         Args:
-            df (pd.DataFrame): The DataFrame to upsert.
+            df (pd.DataFrame): Dataframe containing the rows to Bulk upsert.
             table (str): The table where the data should be upserted.
             external_id_column (str, optional): The external ID to use for the upsert. Defaults to None.
             batch_size (int, optional): Number of records to be included in each batch of records
@@ -189,7 +193,7 @@ class Salesforce(Source):
         self, query: str = None, table: str = None, columns: List[str] = None
     ) -> List[OrderedDict]:
         """
-        Dowload all data from the indicated table or the result of the specified query.
+        Download all data from the indicated table or the result of the specified query.
 
         Args:
             query (str, optional): Query for download the specific data. Defaults to None.
@@ -218,7 +222,7 @@ class Salesforce(Source):
         columns: List[str] = None,
     ) -> pd.DataFrame:
         """
-        Converts the List returned by the download functions to a DataFrame.
+        Downloads the indicated data and returns the Dataframe.
 
         Args:
             query (str, optional): Query for download the specific data. Defaults to None.
