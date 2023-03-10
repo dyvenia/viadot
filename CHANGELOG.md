@@ -13,7 +13,8 @@ This parameter enables user to decide whether or not filter should be validated.
 - Added `MediatoolToADLS` flow class
 - Added option to disable `check_dtypes_sort` in class/flow_name.
 - Added `query` parameter to `BigQueryToADLS` flow and `BigqueryToDF` task to be able to enter custom SQL query.
-
+- Added new end point `conversations/details/query` connection to `Genesys` task.
+- Added new task `filter_userid` in `GenesysToADLS` flow to filter out by user Ids list, previously passed by the user.
 
 ## [0.4.12] - 2023-01-31
 ### Added
