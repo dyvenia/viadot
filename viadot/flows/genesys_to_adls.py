@@ -1,7 +1,8 @@
 import os
-from typing import Any, Dict, List, Any, Literal
+from typing import Any, Dict, List, Any
 
 import pandas as pd
+import numpy as np
 from prefect import Flow, task
 
 from viadot.tasks.genesys import GenesysToCSV
@@ -31,8 +32,37 @@ def add_timestamp(
 
 
 @task(timeout=3600)
-def filter_userid():
-    pass
+def filter_userid(
+    files_names: list = None, path: str = "", sep: str = "\t", userids: list = None
+) -> None:
+    """filter out the data frame by user ID.
+
+    Args:
+        files_names (list, optional): All file names of downloaded files. Defaults to "\t".
+        path (str, optional): Relative path to the file. Defaults to empty string.
+        userids (list, optional): List of all user IDs to select in the data frame. Defaults to None.
+        sep (str, optional): Separator in csv file. Defaults to None.
+    """
+
+    for file in files_names:
+        df = pd.read_csv(os.path.join(path, file), sep=sep)
+
+        # first: it gets all the conversations ID where an agent is present.
+        conversations_id = np.array([])
+        for user in userids:
+            user_filter = df["userId"] == user
+            if any(user_filter):
+                ndf = df[user_filter]
+                conversations_id = np.append(conversations_id, ndf["conversationId"])
+        conversations_id = np.unique(conversations_id)
+
+        # second: filter data frame out by the convesation id
+        df2 = pd.DataFrame(columns=df.columns)
+        for conversation in conversations_id:
+            df_tmp = df[df["conversationId"] == conversation]
+            df2 = pd.concat([df2, df_tmp])
+
+        df2.to_csv(os.path.join(path, file), index=False, sep=sep)
 
 
 class GenesysToADLS(Flow):
@@ -43,6 +73,7 @@ class GenesysToADLS(Flow):
         view_type_time_sleep: int = 80,
         post_data_list: List[str] = None,
         end_point: str = "reporting/exports",
+        list_of_userids: list = None,
         start_date: str = None,
         end_date: str = None,
         sep: str = "\t",
@@ -86,7 +117,8 @@ class GenesysToADLS(Flow):
                 >>>         "hasCustomParticipantAttributes": True,
                 >>>     }]'''
                 If you need to add more POSTs in the same call, just add them to the list separated by a comma.
-            end_point (str, optional): Final end point for Genesys connection. Defaults to "reporting/exports".
+            endpoint (str, optional): Final end point for Genesys connection. Defaults to "reporting/exports".
+            list_of_userids (list, optional): List of all user IDs to select in the data frame. Defaults to None.
             start_date (str, optional): Start date of the report. Defaults to None.
             end_date (str, optional): End date of the report. Defaults to None.
             sep (str, optional): Separator in csv file. Defaults to "\t".
@@ -110,6 +142,7 @@ class GenesysToADLS(Flow):
         self.view_type_time_sleep = view_type_time_sleep
         self.post_data_list = post_data_list
         self.end_point = end_point
+        self.list_of_userids = list_of_userids
         self.environment = environment
         self.schedule_id = schedule_id
         self.report_url = report_url
@@ -150,6 +183,15 @@ class GenesysToADLS(Flow):
             flow=self,
         )
 
+        if self.end_point == "conversations/details/query":
+            filter_userid.bind(
+                file_names,
+                path=self.local_file_path,
+                sep=self.sep,
+                userids=self.list_of_userids,
+                flow=self,
+            )
+
         add_timestamp.bind(
             file_names,
             path=self.local_file_path,
@@ -166,5 +208,6 @@ class GenesysToADLS(Flow):
             flow=self,
         )
 
-        add_timestamp.set_upstream(file_names, flow=self)
+        filter_userid.set_upstream(file_names, flow=self)
+        add_timestamp.set_upstream(filter_userid, flow=self)
         adls_bulk_upload.set_upstream(add_timestamp, flow=self)

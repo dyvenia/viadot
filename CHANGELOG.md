@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added `validate_date_filter` parameter to `Epicor` source, `EpicorOrdersToDF` task and `EpicorOrdersToDuckDB` flow.
 This parameter enables user to decide whether or not filter should be validated.
 - Added option to disable `check_dtypes_sort` in class/flow_name.
+- Added new end point `conversations/details/query` connection to `Genesys` task.
+- Added new task `filter_userid` in `GenesysToADLS` flow to filter out by user Ids list, previously passed by the user.
 
 ## [0.4.12] - 2023-01-31
 ### Added
