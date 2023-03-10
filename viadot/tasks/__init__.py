@@ -33,7 +33,7 @@ from .salesforce import SalesforceBulkUpsert, SalesforceToDF, SalesforceUpsert
 from .sharepoint import SharepointToDF
 from .sqlite import SQLiteInsert, SQLiteQuery, SQLiteSQLtoDF
 from .supermetrics import SupermetricsToCSV, SupermetricsToDF
-from .genesys import GenesysToCSV, GenesysToDF
+from .genesys import GenesysToCSV
 
 try:
     from .sap_rfc import SAPRFCToDF
@@ -48,3 +48,5 @@ from .epicor import EpicorOrdersToDF
 from .sftp import SftpToDF, SftpList
 from .mindful import MindfulToCSV
 from .hubspot import HubspotToDF
+from .mediatool import MediatoolToDF
+
