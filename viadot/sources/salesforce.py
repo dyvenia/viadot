@@ -165,7 +165,7 @@ class Salesforce(Source):
         try:
             response_code = self.salesforce.bulk.__getattr__(table).upsert(
                 data=records,
-                external_id_column_field=external_id_column,
+                external_id_field=external_id_column,
                 batch_size=batch_size,
             )
         except SalesforceMalformedRequest as e:
