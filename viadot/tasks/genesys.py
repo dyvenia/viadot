@@ -366,9 +366,6 @@ class GenesysToCSV(Task):
                 post_data_list[0]["paging"]["pageNumber"] += 1
                 page_counter += 1
 
-                # if post_data_list[0]["paging"]["pageNumber"] == 3:
-                #     break
-
             for i, key in enumerate(list(merged_data.keys())):
                 if i == 0:
                     final_df = merged_data[key]
@@ -376,9 +373,7 @@ class GenesysToCSV(Task):
                     final_df = pd.concat([final_df, merged_data[key]])
 
             date = start_date.replace("-", "")
-            file_name = (
-                f"conversations_detail_{date}".upper() + f".{self.file_extension}"
-            )
+            file_name = f"conversations_detail_{date}".upper() + f".csv"
 
             final_df.to_csv(
                 os.path.join(self.local_file_path, file_name),
