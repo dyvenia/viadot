@@ -121,7 +121,11 @@ class GenesysToCSV(Task):
             },
             inplace=True,
         )
-        df2.drop(["metrics", "segments", "mediaEndpointStats"], axis=1, inplace=True)
+        for key in ["metrics", "segments", "mediaEndpointStats"]:
+            try:
+                df2.drop([key], axis=1, inplace=True)
+            except KeyError as e:
+                logger.info(f"Key {e} not appearing in the response.")
 
         conversations_df = {}
         for i, conversation in enumerate(data_to_merge):
