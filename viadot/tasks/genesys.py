@@ -315,7 +315,7 @@ class GenesysToCSV(Task):
 
             genesys.get_reporting_exports_data()
 
-        if view_type is not None:
+        if view_type is not None and end_point == "reporting/exports":
             failed = [col for col in np.array(genesys.report_data).T][-1]
 
             if "FAILED" in failed and "COMPLETED" in failed:
@@ -364,7 +364,7 @@ class GenesysToCSV(Task):
 
                 if page_counter == 1:
                     max_calls = int(np.ceil(report["totalHits"] / 100))
-                elif page_counter == max_calls:
+                if page_counter == max_calls:
                     stop_loop = True
 
                 post_data_list[0]["paging"]["pageNumber"] += 1
@@ -377,7 +377,7 @@ class GenesysToCSV(Task):
                     final_df = pd.concat([final_df, merged_data[key]])
 
             date = start_date.replace("-", "")
-            file_name = f"conversations_detail_{date}".upper() + f".csv"
+            file_name = f"conversations_detail_{date}".upper() + ".csv"
 
             final_df.to_csv(
                 os.path.join(self.local_file_path, file_name),
