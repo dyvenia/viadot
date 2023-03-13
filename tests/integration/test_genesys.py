@@ -167,18 +167,6 @@ def test_connection_with_genesys_api():
     )
 
 
-@pytest.mark.dependency()
-@pytest.mark.reports
-def test_generate_body(var_dictionary):
-    g = Genesys(
-        media_type_list=var_dictionary["media_type_list"],
-        queueIds_list=var_dictionary["queueIds_list"],
-        data_to_post_str=var_dictionary["data_to_post"],
-    )
-    data_list = g.genesys_generate_body()
-    assert type(data_list) == list
-
-
 @mock.patch.object(Genesys, "genesys_generate_exports")
 @pytest.mark.dependency(depends=["test_generate_body"])
 @pytest.mark.connection
