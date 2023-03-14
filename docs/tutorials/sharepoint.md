@@ -5,4 +5,3 @@ With Viadot you can download Excel file from Sharepoint and then upload it to Az
 ## Pull data from Sharepoint and save output as a csv file on Azure Data Lake
 
 To pull Excel file from Sharepint we create flow basing on `SharepointToADLS`
-:::viadot.flows.SharepointToADLS 
