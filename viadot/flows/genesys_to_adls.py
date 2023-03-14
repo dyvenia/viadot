@@ -33,7 +33,11 @@ def add_timestamp(
 
 @task(timeout=3600)
 def filter_userid(
-    files_names: list = None, path: str = "", sep: str = "\t", userids: list = None
+    files_names: list = None,
+    path: str = "",
+    sep: str = "\t",
+    userids: list = None,
+    apply_method: bool = False,
 ) -> None:
     """filter out the data frame by user ID.
 
@@ -42,27 +46,31 @@ def filter_userid(
         path (str, optional): Relative path to the file. Defaults to empty string.
         userids (list, optional): List of all user IDs to select in the data frame. Defaults to None.
         sep (str, optional): Separator in csv file. Defaults to None.
+        apply_method (bool, optional): Use this method or avoid its execution. Defaults to False.
     """
 
-    for file in files_names:
-        df = pd.read_csv(os.path.join(path, file), sep=sep)
+    if apply_method:
+        for file in files_names:
+            df = pd.read_csv(os.path.join(path, file), sep=sep)
 
-        # first: it gets all the conversations ID where an agent is present.
-        conversations_id = np.array([])
-        for user in userids:
-            user_filter = df["userId"] == user
-            if any(user_filter):
-                ndf = df[user_filter]
-                conversations_id = np.append(conversations_id, ndf["conversationId"])
-        conversations_id = np.unique(conversations_id)
+            # first: it gets all the conversations ID where an agent is present.
+            conversations_id = np.array([])
+            for user in userids:
+                user_filter = df["userId"] == user
+                if any(user_filter):
+                    ndf = df[user_filter]
+                    conversations_id = np.append(
+                        conversations_id, ndf["conversationId"]
+                    )
+            conversations_id = np.unique(conversations_id)
 
-        # second: filter data frame out by the convesation id
-        df2 = pd.DataFrame(columns=df.columns)
-        for conversation in conversations_id:
-            df_tmp = df[df["conversationId"] == conversation]
-            df2 = pd.concat([df2, df_tmp])
+            # second: filter data frame out by the convesation id
+            df2 = pd.DataFrame(columns=df.columns)
+            for conversation in conversations_id:
+                df_tmp = df[df["conversationId"] == conversation]
+                df2 = pd.concat([df2, df_tmp])
 
-        df2.to_csv(os.path.join(path, file), index=False, sep=sep)
+            df2.to_csv(os.path.join(path, file), index=False, sep=sep)
 
 
 class GenesysToADLS(Flow):
@@ -142,6 +150,10 @@ class GenesysToADLS(Flow):
         self.view_type_time_sleep = view_type_time_sleep
         self.post_data_list = post_data_list
         self.end_point = end_point
+        if self.end_point == "conversations/details/query":
+            self.apply_method = True
+        else:
+            self.apply_method = False
         self.list_of_userids = list_of_userids
         self.environment = environment
         self.schedule_id = schedule_id
@@ -183,14 +195,14 @@ class GenesysToADLS(Flow):
             flow=self,
         )
 
-        if self.end_point == "conversations/details/query":
-            filter_userid.bind(
-                file_names,
-                path=self.local_file_path,
-                sep=self.sep,
-                userids=self.list_of_userids,
-                flow=self,
-            )
+        filter_userid.bind(
+            file_names,
+            path=self.local_file_path,
+            sep=self.sep,
+            userids=self.list_of_userids,
+            apply_method=self.apply_method,
+            flow=self,
+        )
 
         add_timestamp.bind(
             file_names,
