@@ -1,6 +1,6 @@
 import pytest
 from unittest import mock
-from datetime import datetime, timedelta
+from datetime import datetime
 
 from viadot.tasks import GenesysToCSV
 
@@ -10,6 +10,7 @@ def var_dictionary() -> None:
     """Function where variables are stored."""
 
     variables = {
+        "start_date": datetime.now().strftime("%Y-%m-%d"),
         "post_data_list": [
             {
                 "name": "AGENT_STATUS_DETAIL_VIEW",
@@ -28,7 +29,13 @@ def var_dictionary() -> None:
                 "csvDelimiter": "COMMA",
                 "hasCustomParticipantAttributes": True,
             }
-        ]
+        ],
+        "post_data_list_2": [
+            {
+                "interval": "2023-03-09T00:00:00/2023-03-10T00:00:00",
+                "paging": {"pageSize": 100, "pageNumber": 1},
+            }
+        ],
     }
     return variables
 
@@ -36,8 +43,145 @@ def var_dictionary() -> None:
 class MockGenesysTask:
     report_data = [[None, "COMPLETED"], [None, "COMPLETED"]]
 
-    def genesys_generate_exports(post_data_list):
-        pass
+    def genesys_generate_exports(post_data_list, end_point):
+        report = {
+            "conversations": [
+                {
+                    "conversationEnd": "2020-01-01T00:00:00.00Z",
+                    "conversationId": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
+                    "conversationStart": "2020-01-01T00:00:00.00Z",
+                    "divisionIds": [
+                        "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
+                        "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
+                    ],
+                    "mediaStatsMinConversationMos": 4.379712366260067,
+                    "mediaStatsMinConversationRFactor": 79.03050231933594,
+                    "originatingDirection": "inbound",
+                    "participants": [
+                        {
+                            "externalContactId": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
+                            "participantId": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
+                            "participantName": "Mobile Number, Country",
+                            "purpose": "customer",
+                            "sessions": [
+                                {
+                                    "agentBullseyeRing": 1,
+                                    "ani": "tel:+xxxxxxxxxxx",
+                                    "direction": "inbound",
+                                    "dnis": "tel:+xxxxxxxxxxx",
+                                    "edgeId": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
+                                    "mediaType": "voice",
+                                    "protocolCallId": "xxxxxxxxxxxxxxxxxxx@xx.xxx.xxx.xxx",
+                                    "provider": "Edge",
+                                    "remoteNameDisplayable": "Mobile Number, Country",
+                                    "requestedRoutings": ["Standard"],
+                                    "routingRing": 1,
+                                    "selectedAgentId": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
+                                    "sessionDnis": "tel:+xxxxxxxxxxx",
+                                    "sessionId": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
+                                    "usedRouting": "Standard",
+                                    "mediaEndpointStats": [
+                                        {
+                                            "codecs": ["audio/opus"],
+                                            "eventTime": "2020-01-01T00:00:00.00Z",
+                                            "maxLatencyMs": 30,
+                                            "minMos": 4.882504366160681,
+                                            "minRFactor": 92.44775390625,
+                                            "receivedPackets": 229,
+                                        },
+                                    ],
+                                    "metrics": [
+                                        {
+                                            "emitDate": "2020-01-01T00:00:00.00Z",
+                                            "name": "nConnected",
+                                            "value": 1,
+                                        },
+                                    ],
+                                    "segments": [
+                                        {
+                                            "conference": False,
+                                            "segmentEnd": "2020-01-01T00:00:00.00Z",
+                                            "segmentStart": "2020-01-01T00:00:00.00Z",
+                                            "segmentType": "system",
+                                        },
+                                        {
+                                            "conference": False,
+                                            "disconnectType": "peer",
+                                            "queueId": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
+                                            "segmentEnd": "2020-01-01T00:00:00.00Z",
+                                            "segmentStart": "2020-01-01T00:00:00.00Z",
+                                            "segmentType": "interact",
+                                        },
+                                    ],
+                                }
+                            ],
+                        },
+                        {
+                            "participantId": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
+                            "participantName": "xxxxxxxxxxxxxxxxxxxxx",
+                            "purpose": "ivr",
+                            "sessions": [
+                                {
+                                    "ani": "tel:+xxxxxxxxxxx",
+                                    "direction": "inbound",
+                                    "dnis": "tel:+xxxxxxxxxxx",
+                                    "edgeId": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
+                                    "mediaType": "voice",
+                                    "peerId": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
+                                    "protocolCallId": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
+                                    "provider": "Edge",
+                                    "remote": "Mobile Number, Country",
+                                    "remoteNameDisplayable": "xxxxxxxx, Country",
+                                    "sessionDnis": "tel:+xxxxxxxxxxx",
+                                    "sessionId": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
+                                    "mediaEndpointStats": [
+                                        {
+                                            "codecs": ["audio/opus"],
+                                            "eventTime": "2020-01-01T00:00:00.00Z",
+                                            "maxLatencyMs": 30,
+                                            "minMos": 4.429814389713434,
+                                            "minRFactor": 79.03050231933594,
+                                            "receivedPackets": 229,
+                                        }
+                                    ],
+                                    "flow": {
+                                        "endingLanguage": "lt-lt",
+                                        "entryReason": "tel:+xxxxxxxxxxx",
+                                        "entryType": "dnis",
+                                        "exitReason": "TRANSFER",
+                                        "flowId": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
+                                        "flowName": "xxxxxxxxxxxxxxxxxxxxx",
+                                        "flowType": "INBOUNDCALL",
+                                        "flowVersion": "22.0",
+                                        "startingLanguage": "en-us",
+                                        "transferTargetAddress": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
+                                        "transferTargetName": "xxxxxxxxxxxxxxxxxxxxx",
+                                        "transferType": "ACD",
+                                    },
+                                    "metrics": [
+                                        {
+                                            "emitDate": "2020-01-01T00:00:00.00Z",
+                                            "name": "nFlow",
+                                            "value": 1,
+                                        },
+                                    ],
+                                    "segments": [
+                                        {
+                                            "conference": False,
+                                            "segmentEnd": "2020-01-01T00:00:00.00Z",
+                                            "segmentStart": "2020-01-01T00:00:00.00Z",
+                                            "segmentType": "system",
+                                        },
+                                    ],
+                                }
+                            ],
+                        },
+                    ],
+                }
+            ],
+            "totalHits": 100,
+        }
+        return report
 
     def get_reporting_exports_data():
         pass
@@ -75,7 +219,23 @@ def test_genesys_files_type(mock_genesys, var_dictionary):
         view_type="agent_status_detail_view",
         view_type_time_sleep=5,
         post_data_list=var_dictionary["post_data_list"],
-        start_date=datetime.now().strftime("%Y-%m-%d"),
+        start_date=var_dictionary["start_date"],
     )
     mock_genesys.assert_called_once()
     assert len(file_name) > 1
+
+
+@mock.patch("viadot.tasks.genesys.Genesys", return_value=MockGenesysTask)
+@pytest.mark.conv
+def test_genesys_conversations(mock_genesys, var_dictionary):
+    to_csv = GenesysToCSV()
+    file_name = to_csv.run(
+        view_type=None,
+        end_point="conversations/details/query",
+        post_data_list=var_dictionary["post_data_list_2"],
+        start_date=var_dictionary["start_date"],
+    )
+    date = var_dictionary["start_date"].replace("-", "")
+
+    mock_genesys.assert_called_once()
+    assert file_name[0] == f"conversations_detail_{date}".upper() + ".csv"
