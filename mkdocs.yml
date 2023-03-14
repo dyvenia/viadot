@@ -1,5 +1,5 @@
 site_name: Viadot Docs
-site_url: "https://dyvenia.github.io/viadot/"
+site_url: "https://djagoda881.github.io/viadot/"
 nav:
   - Home: index.md
   - Howtos:
@@ -19,7 +19,6 @@ theme:
 
 extra:
   version:
-    default: stable
     provider: mike
     
 plugins:
