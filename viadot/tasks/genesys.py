@@ -87,6 +87,71 @@ class GenesysToCSV(Task):
 
         Args:
             data_to_merge (list): List with all the conversations in json format.
+            Example for all levels data to merge:
+                {
+                "conversations": [
+                    {
+                        **** LEVEL 0 data ****
+                        "participants": [
+                            {
+                                **** LEVEL 1 data ****
+                                "sessions": [
+                                    {
+                                        "agentBullseyeRing": 1,
+                                        **** LEVEL 2 data ****
+                                        "mediaEndpointStats": [
+                                            {
+                                                **** LEVEL 3 data ****
+                                            },
+                                        ],
+                                        "metrics": [
+                                            {
+                                                **** LEVEL 3 data ****
+                                            },
+                                        ],
+                                        "segments": [
+                                            {
+                                                **** LEVEL 3 data ****
+                                            },
+                                            {
+                                                **** LEVEL 3 data ****
+                                            },
+                                        ],
+                                    }
+                                ],
+                            },
+                            {
+                                "participantId": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
+                                **** LEVEL 1 data ****
+                                "sessions": [
+                                    {
+                                        **** LEVEL 2 data ****
+                                        "mediaEndpointStats": [
+                                            {
+                                                **** LEVEL 3 data ****
+                                            }
+                                        ],
+                                        "flow": {
+                                            **** LEVEL 2 data ****
+                                        },
+                                        "metrics": [
+                                            {
+                                                **** LEVEL 3 data ****
+                                            },
+                                        ],
+                                        "segments": [
+                                            {
+                                                **** LEVEL 3 data ****
+                                            },
+                                        ],
+                                    }
+                                ],
+                            },
+                        ],
+                    }
+                ],
+                "totalHits": 100,
+            }
 
         Returns:
             DataFrame: A single data frame with all the content.
@@ -127,6 +192,9 @@ class GenesysToCSV(Task):
             except KeyError as e:
                 logger.info(f"Key {e} not appearing in the response.")
 
+        # LEVEL 3
+        # not all levels 3 have the same data, and that creates problems of standardization
+        # so I add empty data where it is not available to avoid future errors
         conversations_df = {}
         for i, conversation in enumerate(data_to_merge):
             for j, entry_0 in enumerate(conversation["participants"]):
@@ -141,7 +209,7 @@ class GenesysToCSV(Task):
                                 conversation["participants"][j][key][k][
                                     "mediaEndpointStats"
                                 ] = []
-
+            # LEVEL 3 metrics
             df3_1 = pd.json_normalize(
                 conversation,
                 record_path=["participants", "sessions", "metrics"],
@@ -155,6 +223,7 @@ class GenesysToCSV(Task):
             df3_1.rename(
                 columns={"participants_sessions_sessionId": "sessionId"}, inplace=True
             )
+            # LEVEL 3 segments
             df3_2 = pd.json_normalize(
                 conversation,
                 record_path=["participants", "sessions", "segments"],
@@ -168,6 +237,7 @@ class GenesysToCSV(Task):
             df3_2.rename(
                 columns={"participants_sessions_sessionId": "sessionId"}, inplace=True
             )
+            # LEVEL 3 mediaEndpointStats
             df3_3 = pd.json_normalize(
                 conversation,
                 record_path=["participants", "sessions", "mediaEndpointStats"],
@@ -323,7 +393,7 @@ class GenesysToCSV(Task):
 
             if len(genesys.report_data) == 0 or np.unique(failed)[0] == "FAILED":
                 genesys.delete_all_reporting_exports()
-                logger.warning(f"All existing reports were delted.")
+                logger.warning(f"All existing reports were deleted.")
                 raise APIError("No exporting reports were generated.")
             elif not None in [col for col in np.array(genesys.report_data).T][1]:
                 logger.info("Downloaded the data from the Genesys into the CSV.")
@@ -338,7 +408,7 @@ class GenesysToCSV(Task):
             logger.info("Waiting for caching data in Genesys database.")
             time.sleep(20)
             genesys.delete_all_reporting_exports()
-            logger.info(f"All existing reports were delted.")
+            logger.info(f"All existing reports were deleted.")
 
             return file_names
 

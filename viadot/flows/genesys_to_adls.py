@@ -14,18 +14,18 @@ from viadot.task_utils import (
 
 @task(timeout=3600)
 def add_timestamp(
-    files_names: List = None,
+    file_names: List = None,
     path: str = "",
     sep: str = "\t",
 ) -> None:
     """Add new column _viadot_downloaded_at_utc into every genesys file.
 
     Args:
-        files_names (List, optional): All file names of downloaded files. Defaults to "\t".
+        file_names (List, optional): All file names of downloaded files. Defaults to "\t".
         path (str, optional): Relative path to the file. Defaults to empty string.
         sep (str, optional): Separator in csv file. Defaults to None.
     """
-    for file in files_names:
+    for file in file_names:
         df = pd.read_csv(os.path.join(path, file), sep=sep)
         df_updated = add_ingestion_metadata_task.run(df)
         df_updated.to_csv(os.path.join(path, file), index=False, sep=sep)
@@ -33,29 +33,29 @@ def add_timestamp(
 
 @task(timeout=3600)
 def filter_userid(
-    files_names: list = None,
+    file_names: list = None,
     path: str = "",
     sep: str = "\t",
-    userids: list = None,
+    user_ids: list = None,
     apply_method: bool = False,
 ) -> None:
-    """filter out the data frame by user ID.
+    """Filter out the data frame by user ID.
 
     Args:
-        files_names (list, optional): All file names of downloaded files. Defaults to "\t".
+        file_names (list, optional): All file names of downloaded files. Defaults to "\t".
         path (str, optional): Relative path to the file. Defaults to empty string.
-        userids (list, optional): List of all user IDs to select in the data frame. Defaults to None.
+        user_ids (list, optional): List of all user IDs to select in the data frame. Defaults to None.
         sep (str, optional): Separator in csv file. Defaults to None.
         apply_method (bool, optional): Use this method or avoid its execution. Defaults to False.
     """
 
     if apply_method:
-        for file in files_names:
+        for file in file_names:
             df = pd.read_csv(os.path.join(path, file), sep=sep)
 
             # first: it gets all the conversations ID where an agent is present.
             conversations_id = np.array([])
-            for user in userids:
+            for user in user_ids:
                 user_filter = df["userId"] == user
                 if any(user_filter):
                     ndf = df[user_filter]
@@ -199,7 +199,7 @@ class GenesysToADLS(Flow):
             file_names,
             path=self.local_file_path,
             sep=self.sep,
-            userids=self.list_of_userids,
+            user_ids=self.list_of_userids,
             apply_method=self.apply_method,
             flow=self,
         )

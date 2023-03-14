@@ -1,6 +1,6 @@
 import pytest
 from unittest import mock
-from datetime import datetime, timedelta
+from datetime import datetime
 
 from viadot.tasks import GenesysToCSV
 
