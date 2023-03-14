@@ -49,6 +49,9 @@ def filter_userid(
         apply_method (bool, optional): Use this method or avoid its execution. Defaults to False.
     """
 
+    if not file_names or not user_ids:
+        apply_method = False
+
     if apply_method:
         for file in file_names:
             df = pd.read_csv(os.path.join(path, file), sep=sep)
