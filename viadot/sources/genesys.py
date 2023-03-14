@@ -1,5 +1,5 @@
 import os
-import json, sys
+import json
 import base64
 import warnings
 import asyncio
