@@ -3,7 +3,7 @@ import json
 import base64
 import warnings
 import asyncio
-from typing import Any, Dict, List, Literal, Union
+from typing import Any, Dict, List, Literal, Optional
 from io import StringIO
 
 import prefect
@@ -154,7 +154,7 @@ class Genesys(Source):
 
     def genesys_generate_exports(
         self, post_data_list: List[str], end_point: str = "reporting/exports"
-    ) -> Union[None, dict]:
+    ) -> Optional[dict]:
         """Function that make POST request method to generate export reports.
 
         Args:
@@ -162,7 +162,7 @@ class Genesys(Source):
             end_point (str, optional): Final end point for Genesys connection. Defaults to "reporting/exports".
 
         Returns:
-            Union[None, dict]: Dict when the "conversations" endpoint is called, otherwise returns None.
+            Optional[dict]: Dict when the "conversations" endpoint is called, otherwise returns None.
         """
 
         limiter = AsyncLimiter(2, 15)
