@@ -10,13 +10,18 @@ nav:
   - References:
       - "SQL Sources": references/sql_sources.md
       - "API Sources": references/api_sources.md
-      - "Flows library": references/flows_library.md
-  - Task library: references/task_library.md
+
 
 theme:
   name: "material"
   features:
     - navigation.tabs
+
+extra:
+  version:
+    default: stable
+    provider: mike
+    
 plugins:
   - search
   - mkdocstrings:

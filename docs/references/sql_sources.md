@@ -1,10 +1,14 @@
 # SQL Sources
 
 ::: viadot.sources.base.Source
+
 ::: viadot.sources.base.SQL
 
 ::: viadot.sources.azure_data_lake.AzureDataLake
 
-::: viadot.sources.azure_sql.AzureSQL
+::: viadot.sources.redshift_spectrum.RedshiftSpectrum
+
+::: viadot.sources.s3.S3
 
 ::: viadot.sources.sqlite.SQLite
+
