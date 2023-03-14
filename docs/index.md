@@ -12,9 +12,6 @@
 
 A simple data ingestion library to guide data flows from some places to other places.
 
-## Structure
-This documentation is following the diátaxis framework.
-
 ## Getting Data from a Source
 
 Viadot supports several API and RDBMS sources, private and public. Currently, we support the UK Carbon Intensity public API and base the examples on it.
@@ -25,65 +22,37 @@ from viadot.sources.uk_carbon_intensity import UKCarbonIntensity
 ukci = UKCarbonIntensity()
 ukci.query("/intensity")
 df = ukci.to_df()
-df
+
+print(df)
 ```
 
-**Output:**  
+**Output:**
 
-|      | from              | to                |   forecast |   actual | index    |
-| ---: | ------------------|:------------------|-----------:|---------:|:---------|
-| 0    | 2021-08-10T11:00Z | 2021-08-10T11:30Z |        211 |      216 | moderate |
+|      | from              | to                | forecast | actual | index    |
+| ---: | :---------------- | :---------------- | -------: | -----: | :------- |
+|    0 | 2021-08-10T11:00Z | 2021-08-10T11:30Z |      211 |    216 | moderate |
 
-
-The above `df` is a python pandas `DataFrame` object. The above df contains data downloaded from viadot from the Carbon Intensity UK API.
+The above `df` is a pandas `DataFrame` object. It contains data downloaded by `viadot` from the Carbon Intensity UK API.
 
 ## Loading Data to a Source
-Depending on the source, viadot provides different methods of uploading data. For instance, for SQL sources, this would be bulk inserts. For data lake sources, it would be a file upload. We also provide ready-made pipelines including data validation steps using Great Expectations.
-
-An example of loading data into SQLite from a pandas `DataFrame` using the `SQLiteInsert` Prefect task:
-
-```python
-from viadot.tasks import SQLiteInsert
-
-insert_task = SQLiteInsert()
-insert_task.run(table_name=TABLE_NAME, dtypes=dtypes, db_path=database_path, df=df, if_exists="replace")
-```
+Depending on the source, `viadot` provides different methods of uploading data. For instance, for SQL sources, this would be bulk inserts. For data lake sources, it would be a file upload. For ready-made pipelines including data validation steps using `dbt`, see [prefect-viadot](https://github.com/dyvenia/prefect-viadot).
 
 
-## Running tests
-To run tests, log into the container and run pytest:
-```
-cd viadot/docker
-run.sh
-docker exec -it viadot_testing bash
-pytest
-```
+## Getting started
+### Prerequisites
+We assume that you have [Docker](https://www.docker.com/) installed.
 
-## Running flows locally
-You can run the example flows from the terminal:
-```
-run.sh
-docker exec -it viadot_testing bash
-FLOW_NAME=hello_world; python -m viadot.examples.$FLOW_NAME
-```
+### Installation
+Clone the `2.0` branch, and set up and run the environment:
+  ```sh
+  git clone https://github.com/dyvenia/viadot.git -b 2.0 && \
+    cd viadot/docker && \
+    sh update.sh  && \
+    sh run.sh && \
+    cd ../
+  ```
 
-However, when developing, the easiest way is to use the provided Jupyter Lab container available at `http://localhost:9000/`.
+### Configuration
+In order to start using sources, you must configure them with required credentials. Credentials can be specified either in the viadot config file (by default, `$HOME/.config/viadot/config.yaml`), or passed directly to each source's `credentials` parameter.
 
-
-## How to contribute
-1. Clone the release branch 
-2. Pull the docker env by running `viadot/docker/update.sh -t dev`
-3. Run the env with `viadot/docker/run.sh`
-4. Log into the dev container and install in development mode so that viadot will auto-install at each code change: 
-```
-docker exec -it viadot_testing bash
-pip install -e .
-```
-5. Edit and test your changes with `pytest`
-6. Submit a PR. The PR should contain the following:
-- new/changed functionality
-- tests for the changes
-- changes added to `CHANGELOG.md`
-- any other relevant resources updated (esp. `viadot/docs`)
-
-Please follow the standards and best practices used within the library (eg. when adding tasks, see how other tasks are constructed, etc.). For any questions, please reach out to us here on GitHub.
+You can find specific information about each source's credentials in [the documentation](https://dyvenia.github.io/viadot/references/sql_sources/).
