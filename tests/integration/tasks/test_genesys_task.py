@@ -1,65 +1,241 @@
-from viadot.tasks import GenesysToCSV, GenesysToDF
-
-import os
-from unittest import mock
-
-import pandas as pd
 import pytest
+from unittest import mock
+from datetime import datetime
 
-MEDIA_TYPE_LIST = ["callback"]
-
-QUEUEIDS_LIST = ["780807e6-83b9-44be-aff0-a41c37fab004"]
-
-DATA_TO_POST_STR = """{
-    "name": f"QUEUE_PERFORMANCE_DETAIL_VIEW_{media}",
-    "timeZone": "UTC",
-    "exportFormat": "CSV",
-    "interval": f"{end_date}T23:00:00/{start_date}T23:00:00",
-    "period": "PT30M",
-    "viewType": f"QUEUE_PERFORMANCE_DETAIL_VIEW",
-    "filter": {"mediaTypes": [f"{media}"], "queueIds": [f"{queueid}"], "directions":["inbound"],},
-    "read": True,
-    "locale": "en-us",
-    "hasFormatDurations": False,
-    "hasSplitFilters": True,
-    "excludeEmptyRows": True,
-    "hasSplitByMedia": True,
-    "hasSummaryRow": True,
-    "csvDelimiter": "COMMA",
-    "hasCustomParticipantAttributes": True,
-    "recipientEmails": [],
-    }"""
-
-d = {"country": [1, 2], "sales": [3, 4]}
-df = pd.DataFrame(data=d)
-
-genesys_to_csv = GenesysToCSV()
-genests_to_df = GenesysToDF()
+from viadot.tasks import GenesysToCSV
 
 
-def test_genesys_to_csv():
-    with mock.patch.object(
-        genesys_to_csv,
-        "run",
-        return_value=["V_D_PROD_FB_QUEUE_CALLBACK.csv", "V_D_PROD_FB_QUEUE_CHAT.csv"],
-    ) as mock_method:
+@pytest.fixture
+def var_dictionary() -> None:
+    """Function where variables are stored."""
 
-        files_name_list = genesys_to_csv.run(
-            media_type_list=MEDIA_TYPE_LIST,
-            queueIds_list=QUEUEIDS_LIST,
-            data_to_post_str=DATA_TO_POST_STR,
-        )
-        assert isinstance(files_name_list, list)
+    variables = {
+        "start_date": datetime.now().strftime("%Y-%m-%d"),
+        "post_data_list": [
+            {
+                "name": "AGENT_STATUS_DETAIL_VIEW",
+                "timeZone": "UTC",
+                "exportFormat": "CSV",
+                "interval": "2023-03-01T00:00:00/2023-03-02T00:00:00",
+                "period": "PT30M",
+                "viewType": "AGENT_STATUS_DETAIL_VIEW",
+                "filter": {"userIds": ["9eb0fe4e-937e-4443-a5a4-d1b5dbd76520"]},
+                "read": True,
+                "locale": "en-us",
+                "hasFormatDurations": False,
+                "hasSplitFilters": True,
+                "excludeEmptyRows": True,
+                "hasSummaryRow": False,
+                "csvDelimiter": "COMMA",
+                "hasCustomParticipantAttributes": True,
+            }
+        ],
+        "post_data_list_2": [
+            {
+                "interval": "2023-03-09T00:00:00/2023-03-10T00:00:00",
+                "paging": {"pageSize": 100, "pageNumber": 1},
+            }
+        ],
+    }
+    return variables
 
 
-def test_genests_to_df():
-    with mock.patch.object(
-        genests_to_df,
-        "run",
-        return_value=df,
-    ) as mock_method:
+class MockGenesysTask:
+    report_data = [[None, "COMPLETED"], [None, "COMPLETED"]]
 
-        final_df = genests_to_df.run(
-            report_url="https://apps.mypurecloud.de/platform/api/v2/downloads/62631b245c69f0c8",
-        )
-        assert isinstance(final_df, pd.DataFrame)
+    def genesys_generate_exports(post_data_list, end_point):
+        report = {
+            "conversations": [
+                {
+                    "conversationEnd": "2020-01-01T00:00:00.00Z",
+                    "conversationId": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
+                    "conversationStart": "2020-01-01T00:00:00.00Z",
+                    "divisionIds": [
+                        "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
+                        "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
+                    ],
+                    "mediaStatsMinConversationMos": 4.379712366260067,
+                    "mediaStatsMinConversationRFactor": 79.03050231933594,
+                    "originatingDirection": "inbound",
+                    "participants": [
+                        {
+                            "externalContactId": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
+                            "participantId": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
+                            "participantName": "Mobile Number, Country",
+                            "purpose": "customer",
+                            "sessions": [
+                                {
+                                    "agentBullseyeRing": 1,
+                                    "ani": "tel:+xxxxxxxxxxx",
+                                    "direction": "inbound",
+                                    "dnis": "tel:+xxxxxxxxxxx",
+                                    "edgeId": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
+                                    "mediaType": "voice",
+                                    "protocolCallId": "xxxxxxxxxxxxxxxxxxx@xx.xxx.xxx.xxx",
+                                    "provider": "Edge",
+                                    "remoteNameDisplayable": "Mobile Number, Country",
+                                    "requestedRoutings": ["Standard"],
+                                    "routingRing": 1,
+                                    "selectedAgentId": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
+                                    "sessionDnis": "tel:+xxxxxxxxxxx",
+                                    "sessionId": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
+                                    "usedRouting": "Standard",
+                                    "mediaEndpointStats": [
+                                        {
+                                            "codecs": ["audio/opus"],
+                                            "eventTime": "2020-01-01T00:00:00.00Z",
+                                            "maxLatencyMs": 30,
+                                            "minMos": 4.882504366160681,
+                                            "minRFactor": 92.44775390625,
+                                            "receivedPackets": 229,
+                                        },
+                                    ],
+                                    "metrics": [
+                                        {
+                                            "emitDate": "2020-01-01T00:00:00.00Z",
+                                            "name": "nConnected",
+                                            "value": 1,
+                                        },
+                                    ],
+                                    "segments": [
+                                        {
+                                            "conference": False,
+                                            "segmentEnd": "2020-01-01T00:00:00.00Z",
+                                            "segmentStart": "2020-01-01T00:00:00.00Z",
+                                            "segmentType": "system",
+                                        },
+                                        {
+                                            "conference": False,
+                                            "disconnectType": "peer",
+                                            "queueId": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
+                                            "segmentEnd": "2020-01-01T00:00:00.00Z",
+                                            "segmentStart": "2020-01-01T00:00:00.00Z",
+                                            "segmentType": "interact",
+                                        },
+                                    ],
+                                }
+                            ],
+                        },
+                        {
+                            "participantId": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
+                            "participantName": "xxxxxxxxxxxxxxxxxxxxx",
+                            "purpose": "ivr",
+                            "sessions": [
+                                {
+                                    "ani": "tel:+xxxxxxxxxxx",
+                                    "direction": "inbound",
+                                    "dnis": "tel:+xxxxxxxxxxx",
+                                    "edgeId": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
+                                    "mediaType": "voice",
+                                    "peerId": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
+                                    "protocolCallId": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
+                                    "provider": "Edge",
+                                    "remote": "Mobile Number, Country",
+                                    "remoteNameDisplayable": "xxxxxxxx, Country",
+                                    "sessionDnis": "tel:+xxxxxxxxxxx",
+                                    "sessionId": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
+                                    "mediaEndpointStats": [
+                                        {
+                                            "codecs": ["audio/opus"],
+                                            "eventTime": "2020-01-01T00:00:00.00Z",
+                                            "maxLatencyMs": 30,
+                                            "minMos": 4.429814389713434,
+                                            "minRFactor": 79.03050231933594,
+                                            "receivedPackets": 229,
+                                        }
+                                    ],
+                                    "flow": {
+                                        "endingLanguage": "lt-lt",
+                                        "entryReason": "tel:+xxxxxxxxxxx",
+                                        "entryType": "dnis",
+                                        "exitReason": "TRANSFER",
+                                        "flowId": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
+                                        "flowName": "xxxxxxxxxxxxxxxxxxxxx",
+                                        "flowType": "INBOUNDCALL",
+                                        "flowVersion": "22.0",
+                                        "startingLanguage": "en-us",
+                                        "transferTargetAddress": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
+                                        "transferTargetName": "xxxxxxxxxxxxxxxxxxxxx",
+                                        "transferType": "ACD",
+                                    },
+                                    "metrics": [
+                                        {
+                                            "emitDate": "2020-01-01T00:00:00.00Z",
+                                            "name": "nFlow",
+                                            "value": 1,
+                                        },
+                                    ],
+                                    "segments": [
+                                        {
+                                            "conference": False,
+                                            "segmentEnd": "2020-01-01T00:00:00.00Z",
+                                            "segmentStart": "2020-01-01T00:00:00.00Z",
+                                            "segmentType": "system",
+                                        },
+                                    ],
+                                }
+                            ],
+                        },
+                    ],
+                }
+            ],
+            "totalHits": 100,
+        }
+        return report
+
+    def get_reporting_exports_data():
+        pass
+
+    def delete_all_reporting_exports():
+        pass
+
+    def download_all_reporting_exports(path):
+        return [
+            "V_D_PROD_FB_QUEUE_CALLBACK.csv",
+            "V_D_PROD_FB_QUEUE_CHAT.csv",
+        ]
+
+    def delete_all_reporting_exports():
+        pass
+
+
+@mock.patch.object(GenesysToCSV, "run")
+@pytest.mark.to_csv
+def test_genesys_to_csv(mock_reuturn):
+    mock_reuturn.return_value = [
+        "V_D_PROD_FB_QUEUE_CALLBACK.csv",
+        "V_D_PROD_FB_QUEUE_CHAT.csv",
+    ]
+    genesys_to_csv = GenesysToCSV()
+    files_name_list = genesys_to_csv.run()
+    assert isinstance(files_name_list, list)
+
+
+@mock.patch("viadot.tasks.genesys.Genesys", return_value=MockGenesysTask)
+@pytest.mark.files
+def test_genesys_files_type(mock_genesys, var_dictionary):
+    to_csv = GenesysToCSV()
+    file_name = to_csv.run(
+        view_type="agent_status_detail_view",
+        view_type_time_sleep=5,
+        post_data_list=var_dictionary["post_data_list"],
+        start_date=var_dictionary["start_date"],
+    )
+    mock_genesys.assert_called_once()
+    assert len(file_name) > 1
+
+
+@mock.patch("viadot.tasks.genesys.Genesys", return_value=MockGenesysTask)
+@pytest.mark.conv
+def test_genesys_conversations(mock_genesys, var_dictionary):
+    to_csv = GenesysToCSV()
+    file_name = to_csv.run(
+        view_type=None,
+        end_point="conversations/details/query",
+        post_data_list=var_dictionary["post_data_list_2"],
+        start_date=var_dictionary["start_date"],
+    )
+    date = var_dictionary["start_date"].replace("-", "")
+
+    mock_genesys.assert_called_once()
+    assert file_name[0] == f"conversations_detail_{date}".upper() + ".csv"

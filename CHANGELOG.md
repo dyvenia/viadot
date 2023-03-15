@@ -7,9 +7,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 
+## [0.4.13] - 2023-03-15
+### Added
+- Added `validate_date_filter` parameter to `Epicor` source, `EpicorOrdersToDF` task and `EpicorOrdersToDuckDB` flow.
+This parameter enables user to decide whether or not filter should be validated.
+- Added `Mediatool` source class
+- Added `MediatoolToDF` task class
+- Added `MediatoolToADLS` flow class
+- Added option to disable `check_dtypes_sort` in `ADLSToAzureSQL` flow.
+- Added `query` parameter to `BigQueryToADLS` flow and `BigqueryToDF` task to be able to enter custom SQL query.
+- Added new end point `conversations/details/query` connection to `Genesys` task.
+- Added new task `filter_userid` in `GenesysToADLS` flow to filter out by user Ids list, previously passed by the user.
+
+### Changed
+- Changed parameter name in `BigQueryToADLS` flow - from `credentials_secret` to `credentials_key`
+
+
 ## [0.4.12] - 2023-01-31
 ### Added
 - Added `view_type_time_sleep` to the Genesys `queue_performance_detail_view`.
+- Added `FileNotFoundError` to catch up failures in `MindfulToCSV` and when creating SQL tables.
+- Added `check_dtypes_sort` task into `ADLSToAzureSQL` to check if dtypes is properly sorted.
+- Added `timeout` parameter to all `Task`s where it can be added.
+- Added `timeout` parameter to all `Flow`s where it can be added.
+- Added `adls_bulk_upload` task function to `task_utils.py`
+- Added `get_survey_list` into `Mindful` Source file.
 
 ### Changed
 - Updated `genesys_to_adls.py` flow with the `adls_bulk_upload` task

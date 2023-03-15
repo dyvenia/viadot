@@ -8,7 +8,7 @@ from viadot.tasks import AzureDataLakeRemove
 
 ADLS_DIR_PATH = "raw/tests/"
 ADLS_FILE_NAME = str(pendulum.now("utc")) + ".parquet"
-BIGQ_CREDENTIAL_KEY = "BIGQUERY_TESTS"
+BIGQ_CREDENTIAL_KEY = "BIGQUERY-TESTS"
 ADLS_CREDENTIAL_SECRET = PrefectSecret(
     "AZURE_DEFAULT_ADLS_SERVICE_PRINCIPAL_SECRET"
 ).run()
