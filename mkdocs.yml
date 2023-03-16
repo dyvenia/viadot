@@ -3,7 +3,8 @@ site_url: "https://djagoda881.github.io/viadot/"
 nav:
   - Home: index.md
   - Howtos:
-      - "Config File": howtos/config_file.md
+      - "Configuration steps": howtos/config_steps.md
+
   - Tutorials: tutorials/adding_source.md
   - References:
       - "SQL Sources": references/sql_sources.md
