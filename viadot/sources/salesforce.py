@@ -14,8 +14,8 @@ class Salesforce(Source):
 
     Args:
         domain (str, optional): Domain of a connection. Defaults to 'test' (sandbox).
-            Can be added only if built-in username/password/security token is provided.
-        client_id (str, optional): Client id to keep the track of API calls.
+            Can only be added if a username/password/security token is provided.
+        client_id (str, optional): Client id, keep track of API calls.
             Defaults to 'viadot'.
         env (Literal["DEV", "QA", "PROD"], optional): Environment information, provides information
             about credential and connection configuration. Defaults to 'DEV'.
@@ -71,10 +71,10 @@ class Salesforce(Source):
     ) -> None:
         """
         Upsert the DataFrame to Salesforce. The upsert is performed on a single record at a time.
-        Using an upsert operation gives you more control over logging and error handling than using Bulk upsert.
+        Using an upsert operation gives you more control over logging and error handling than using bulk upsert.
 
         Args:
-            df (pd.DataFrame): Dataframe containing the rows to upsert.
+            df (pd.DataFrame): Pandas DataFrame specified the rows to upsert.
             table (str): The table where the data should be upserted.
             external_id_column (str, optional): The external ID to use for the upsert. Defaults to None.
             raise_on_error (bool, optional): Whether to raise an exception if a row upsert fails.
@@ -138,13 +138,13 @@ class Salesforce(Source):
         raise_on_error: bool = False,
     ) -> None:
         """
-        Performs a Bulk upsert to Salesforce of the data given in the Dataframe.
+        Performs a bulk upsert to Salesforce of the data given in the DataFrame.
         Bulk upsert is performed on multiple records simultaneously, it is usually used when
         there is a need to insert or update multiple records in a single transaction,
         which can be more efficient and reduce the number of API calls required.
 
         Args:
-            df (pd.DataFrame): Dataframe containing the rows to Bulk upsert.
+            df (pd.DataFrame): Pandas DataFrame specified the rows to bulk upsert.
             table (str): The table where the data should be upserted.
             external_id_column (str, optional): The external ID to use for the upsert. Defaults to None.
             batch_size (int, optional): Number of records to be included in each batch of records
@@ -169,7 +169,7 @@ class Salesforce(Source):
                 batch_size=batch_size,
             )
         except SalesforceMalformedRequest as e:
-            # Bulk insert didn't work at all.
+            # Bulk upsert didn't work at all.
             raise ValueError(f"Upsert of records failed: {e}") from e
 
         self.logger.info(f"Successfully upserted bulk records.")
@@ -196,10 +196,10 @@ class Salesforce(Source):
         Download all data from the indicated table or the result of the specified query.
 
         Args:
-            query (str, optional): Query for download the specific data. Defaults to None.
+            query (str, optional): The query to be used to download the data. Defaults to None.
             table (str, optional): Table name. Defaults to None.
-            columns (List[str], optional): List of columns which are needed,
-                requires table argument. Defaults to None.
+            columns (List[str], optional): List of required columns. Requires `table` to be specified.
+                Defaults to None.
 
         Returns:
             List[OrderedDict]: Selected rows from Salesforce.
@@ -222,13 +222,13 @@ class Salesforce(Source):
         columns: List[str] = None,
     ) -> pd.DataFrame:
         """
-        Downloads the indicated data and returns the Dataframe.
+        Downloads the indicated data and returns the DataFrame.
 
         Args:
-            query (str, optional): Query for download the specific data. Defaults to None.
+            query (str, optional): The query to be used to download the data. Defaults to None.
             table (str, optional): Table name. Defaults to None.
-            columns (List[str], optional): List of columns which are needed,
-                requires table argument. Defaults to None.
+            columns (List[str], optional): List of required columns. Requires `table` to be specified.
+                Defaults to None.
 
         Returns:
             pd.DataFrame: Selected rows from Salesforce.
