@@ -68,10 +68,7 @@ def test_upsert_row_id(salesforce):
     }
     df = pd.DataFrame(data=data)
 
-    try:
-        salesforce.upsert(df=df, table=TABLE_TO_UPSERT)
-    except Exception as exception:
-        raise exception
+    salesforce.upsert(df=df, table=TABLE_TO_UPSERT)
 
     updated_row = get_tested_records(salesforce)
 
@@ -86,10 +83,7 @@ def test_upsert(salesforce):
 
     df = pd.DataFrame(data=TWO_TEST_ROWS_INSERT)
 
-    try:
-        salesforce.upsert(df=df, table="Contact", external_id_column="SAPContactId__c")
-    except Exception as exception:
-        raise exception
+    salesforce.upsert(df=df, table="Contact", external_id_column="SAPContactId__c")
 
     inserted_rows = get_tested_records(salesforce, multiple_rows=True)
     assert inserted_rows[0]["LastName"] == "viadot-insert-1"
@@ -97,10 +91,7 @@ def test_upsert(salesforce):
 
     df = pd.DataFrame(data=TWO_TEST_ROWS_UPDATE)
 
-    try:
-        salesforce.upsert(df=df, table="Contact", external_id_column="SAPContactId__c")
-    except Exception as exception:
-        raise exception
+    salesforce.upsert(df=df, table="Contact", external_id_column="SAPContactId__c")
 
     updated_rows = get_tested_records(salesforce, multiple_rows=True)
     assert updated_rows[0]["LastName"] == "viadot-update-1"
@@ -117,12 +108,9 @@ def test_bulk_upsert(salesforce):
 
     df_insert = pd.DataFrame(data=TWO_TEST_ROWS_INSERT)
 
-    try:
-        salesforce.bulk_upsert(
-            df=df_insert, table="Contact", external_id_column="SAPContactId__c"
-        )
-    except Exception as exception:
-        raise exception
+    salesforce.bulk_upsert(
+        df=df_insert, table="Contact", external_id_column="SAPContactId__c"
+    )
 
     inserted_rows = get_tested_records(salesforce, multiple_rows=True)
 
@@ -131,12 +119,9 @@ def test_bulk_upsert(salesforce):
 
     df_update = pd.DataFrame(data=TWO_TEST_ROWS_UPDATE)
 
-    try:
-        salesforce.bulk_upsert(
-            df=df_update, table="Contact", external_id_column="SAPContactId__c"
-        )
-    except Exception as exception:
-        raise exception
+    salesforce.bulk_upsert(
+        df=df_update, table="Contact", external_id_column="SAPContactId__c"
+    )
 
     updated_rows = get_tested_records(salesforce, multiple_rows=True)
     assert updated_rows[0]["LastName"] == "viadot-update-1"
