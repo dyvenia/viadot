@@ -81,17 +81,22 @@ def test_upsert(salesforce):
 
     assert not get_tested_records(salesforce, multiple_rows=True)
 
-    df = pd.DataFrame(data=TWO_TEST_ROWS_INSERT)
+    df_insert = pd.DataFrame(data=TWO_TEST_ROWS_INSERT)
 
-    salesforce.upsert(df=df, table="Contact", external_id_column="SAPContactId__c")
+    salesforce.upsert(
+        df=df_insert, table="Contact", external_id_column="SAPContactId__c"
+    )
 
     inserted_rows = get_tested_records(salesforce, multiple_rows=True)
+
     assert inserted_rows[0]["LastName"] == "viadot-insert-1"
     assert inserted_rows[1]["LastName"] == "viadot-insert-2"
 
-    df = pd.DataFrame(data=TWO_TEST_ROWS_UPDATE)
+    df_update = pd.DataFrame(data=TWO_TEST_ROWS_UPDATE)
 
-    salesforce.upsert(df=df, table="Contact", external_id_column="SAPContactId__c")
+    salesforce.upsert(
+        df=df_update, table="Contact", external_id_column="SAPContactId__c"
+    )
 
     updated_rows = get_tested_records(salesforce, multiple_rows=True)
     assert updated_rows[0]["LastName"] == "viadot-update-1"
@@ -132,7 +137,7 @@ def test_bulk_upsert(salesforce):
     sf.Contact.delete(updated_rows[1]["Id"])
 
 
-def test_upsert_external_id_column_wrong(salesforce):
+def test_upsert_incorrect_external_id_column(salesforce):
     data = {
         "LastName": [TEST_LAST_NAME],
         "SAPContactId__c": ["8811111"],
@@ -148,9 +153,9 @@ def test_download_no_query(salesforce):
 
 
 def test_download_with_query(salesforce):
-    query = f"SELECT Id, Name FROM {TABLE_TO_DOWNLOAD}"
+    query = f"SELECT Id, Name FROM {TABLE_TO_DOWNLOAD} LIMIT 10"
     records = salesforce.download(query=query)
-    assert len(records) > 0
+    assert len(records) == 10
 
 
 def test_to_df(salesforce):
