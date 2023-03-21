@@ -1,7 +1,6 @@
 import pandas as pd
 import pytest
 from viadot.sources import ExchangeRates
-from viadot.utils import add_viadot_metadata_columns
 
 TEST_DATA = {
     "currencies": [
@@ -66,10 +65,12 @@ def test_to_df_values(exchange_rates):
     expected_value = TEST_DF
     retrieved_value = exchange_rates.to_df()
     retrieved_value.drop(METADATA_COLUMNS, axis=1, inplace=True)
+
     assert retrieved_value.iloc[0].equals(expected_value.iloc[0])
 
 
 def test_get_columns(exchange_rates):
     expected_columns = ["Date", "Base", "USD", "EUR", "GBP", "CHF", "PLN", "DKK"]
     retrieved_columns = exchange_rates.get_columns()
+
     assert retrieved_columns == expected_columns
