@@ -82,6 +82,7 @@ def df_to_csv_task(df, remove_tab, path: str, sep: str = "\t"):
 def check_dtypes_sort(
     df: pd.DataFrame = None,
     dtypes: Dict[str, Any] = None,
+    apply: bool = True,
 ) -> Dict[str, Any]:
     """Check dtype column order to avoid malformation SQL table.
     When data is loaded by the user, a data frame is passed to this task
@@ -90,13 +91,15 @@ def check_dtypes_sort(
         df (pd.DataFrame, optional): Data Frame from original ADLS file. Defaults to None.
         dtypes (Dict[str, Any], optional): Dictionary of columns and data type to apply
             to the Data Frame downloaded. Defaults to None.
+        apply (bool, optiona): By default, this task will be used by all the flows. It can
+            be set up to False for avoiding its application. Defaults to True.
     Returns:
         Dict[str, Any]: Sorted dtype.
     """
     if df is None:
         logger.error("DataFrame argument is mandatory")
         raise signals.FAIL("DataFrame is None.")
-    else:
+    elif apply:
         # first check if all dtypes keys are in df.columns
         if all(d in df.columns for d in list(dtypes.keys())) and len(df.columns) == len(
             list(dtypes.keys())
@@ -118,6 +121,8 @@ def check_dtypes_sort(
             raise signals.FAIL(
                 "dtype dictionary contains key(s) that not matching with the ADLS file columns name, or they have different length."
             )
+    else:
+        new_dtypes = dtypes.copy()
 
     return new_dtypes
 
@@ -135,6 +140,7 @@ class ADLSToAzureSQL(Flow):
         if_empty: str = "warn",
         adls_sp_credentials_secret: str = None,
         dtypes: Dict[str, Any] = None,
+        check_dtypes_order: bool = True,
         table: str = None,
         schema: str = None,
         if_exists: Literal["fail", "replace", "append", "delete"] = "replace",
@@ -167,6 +173,8 @@ class ADLSToAzureSQL(Flow):
             Defaults to None.
             dtypes (dict, optional): Which custom data types should be used for SQL table creation task.
             To be used only in case that dtypes need to be manually mapped - dtypes from raw schema file in use by default. Defaults to None.
+            check_dtypes_order (bool, optiona): By default, this task will be used by all the flows. It can
+                be set up to False for avoiding its application. Defaults to True.
             table (str, optional): Destination table. Defaults to None.
             schema (str, optional): Destination schema. Defaults to None.
             if_exists (Literal, optional): What to do if the table exists. Defaults to "replace".
@@ -190,6 +198,7 @@ class ADLSToAzureSQL(Flow):
 
         # Read schema
         self.dtypes = dtypes
+        self.check_dtypes_order = check_dtypes_order
         self.adls_root_dir_path = os.path.split(self.adls_path)[0]
         self.adls_file_name = os.path.split(self.adls_path)[-1]
         extension = os.path.splitext(self.adls_path)[-1]
@@ -280,6 +289,7 @@ class ADLSToAzureSQL(Flow):
             dtypes = check_dtypes_sort.bind(
                 df,
                 dtypes=self.dtypes,
+                apply=self.check_dtypes_order,
                 flow=self,
             )
 

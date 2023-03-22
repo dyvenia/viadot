@@ -167,33 +167,16 @@ def test_connection_with_genesys_api():
     )
 
 
-@pytest.mark.dependency()
-@pytest.mark.reports
-def test_generate_body(var_dictionary):
-    g = Genesys(
-        media_type_list=var_dictionary["media_type_list"],
-        queueIds_list=var_dictionary["queueIds_list"],
-        data_to_post_str=var_dictionary["data_to_post"],
-    )
-    data_list = g.genesys_generate_body()
-    assert type(data_list) == list
-
-
 @mock.patch.object(Genesys, "genesys_generate_exports")
-@pytest.mark.dependency(depends=["test_generate_body"])
 @pytest.mark.connection
 def test_generate_exports(mock_api_response, var_dictionary):
-    g = Genesys(
-        media_type_list=var_dictionary["media_type_list"],
-        queueIds_list=var_dictionary["queueIds_list"],
-        data_to_post_str=var_dictionary["data_to_post"],
-    )
+    g = Genesys()
     assert g.genesys_generate_exports()
     mock_api_response.assert_called()
 
 
 @mock.patch.object(Genesys, "load_reporting_exports")
-@pytest.mark.dependency(depends=["test_generate_body", "test_generate_exports"])
+@pytest.mark.dependency(["test_generate_exports"])
 @pytest.mark.generate
 def test_generate_reports_list(mock_load_reports, var_dictionary):
     mock_load_reports.return_value = var_dictionary["entities"]
@@ -205,7 +188,6 @@ def test_generate_reports_list(mock_load_reports, var_dictionary):
 @mock.patch.object(Genesys, "download_report")
 @pytest.mark.dependency(
     depends=[
-        "test_generate_body",
         "test_generate_exports",
         "test_generate_reports_list",
     ]
@@ -225,7 +207,6 @@ def test_download_reports(mock_download_files, var_dictionary):
 @mock.patch("viadot.sources.genesys.handle_api_response", return_value=MockClass)
 @pytest.mark.dependency(
     depends=[
-        "test_generate_body",
         "test_generate_exports",
         "test_generate_reports_list",
         "test_download_reports",

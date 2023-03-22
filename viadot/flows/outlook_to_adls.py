@@ -3,7 +3,7 @@ from typing import Any, Dict, List, Literal, Union
 import pandas as pd
 from prefect import Flow, Task, apply_map
 
-from ..task_utils import (
+from viadot.task_utils import (
     add_ingestion_metadata_task,
     df_to_csv,
     df_to_parquet,
