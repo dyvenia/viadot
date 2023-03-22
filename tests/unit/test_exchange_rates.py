@@ -38,7 +38,6 @@ TEST_DATA = {
 }
 
 TEST_DF = pd.json_normalize(TEST_DATA["currencies"])
-METADATA_COLUMNS = ["_viadot_source", "_viadot_downloaded_at_utc"]
 
 
 @pytest.fixture(scope="session")
@@ -63,10 +62,12 @@ def test_to_json_values(exchange_rates):
 
 def test_to_df_values(exchange_rates):
     expected_value = TEST_DF
-    retrieved_value = exchange_rates.to_df()
-    retrieved_value.drop(METADATA_COLUMNS, axis=1, inplace=True)
 
-    assert retrieved_value.iloc[0].equals(expected_value.iloc[0])
+    # Running the to_df function without the wrapper adding metadata columns
+    origin_to_df = exchange_rates.to_df.__wrapped__
+    retrieved_value = origin_to_df(exchange_rates)
+
+    assert retrieved_value.equals(expected_value)
 
 
 def test_get_columns(exchange_rates):
