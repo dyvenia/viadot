@@ -5,7 +5,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
-
+- Added `anonymize_df` task function to `task_utils.py` to anonymize data in the dataframe in selected columns.
 
 ## [0.4.13] - 2023-03-15
 ### Added
