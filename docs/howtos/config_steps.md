@@ -18,7 +18,7 @@ sources:
         password: "password"
 ```
 
-In the above Exchange Rates and Sharepoint are config_keys. These config settings are fed to the `ExchangeRates()` or `Sharepoint()` Sources.
+In the above Exchange Rates and Sharepoint are `config_keys`. These config settings are fed to the `ExchangeRates()` or `Sharepoint()` Sources.
 
 For example, this is how to use the `ExchangeRates()` configuration stanza from the config file.
 
