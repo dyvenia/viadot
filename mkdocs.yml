@@ -4,6 +4,7 @@ nav:
   - Home: index.md
   - Howtos:
       - "Configuration steps": howtos/config_steps.md
+      - "Runing unit tests": howtos/tests.md
 
   - Tutorials: tutorials/adding_source.md
   - References:
