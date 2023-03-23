@@ -4,9 +4,9 @@
 [![codecov](https://codecov.io/gh/Trymzet/dyvenia/branch/main/graph/badge.svg?token=k40ALkXbNq)](https://codecov.io/gh/Trymzet/dyvenia)
 ---
 
-**Documentation**: <a href="https://dyvenia.github.io/viadot/" target="_blank">https://dyvenia.github.io/viadot/</a>
+**Documentation**: <a href="https://dyvenia.github.io/viadot/tree/2.0" target="_blank">https://dyvenia.github.io/viadot/tree/2.0</a>
 
-**Source Code**: <a href="https://github.com/dyvenia/viadot" target="_blank">https://github.com/dyvenia/viadot</a>
+**Source Code**: <a href="https://github.com/dyvenia/viadot/tree/2.0" target="_blank">https://github.com/dyvenia/viadot/tree/2.0</a>
 
 ---
 
@@ -14,7 +14,7 @@ A simple data ingestion library to guide data flows from some places to other pl
 
 ## Getting Data from a Source
 
-Viadot supports several API and RDBMS sources, private and public. Currently, we support the UK Carbon Intensity public API and base the examples on it.
+Viadot supports several API and RDBMS sources, private and public. An example of the use of the UK Carbon Intensity API.
 
 ```python
 from viadot.sources.uk_carbon_intensity import UKCarbonIntensity

@@ -4,7 +4,7 @@ Unit tests were created for each source in the viadot repository. It is very imp
 
 ### Installation of packages
 
-Running unit tests requires the installation of several necessary packages. These can be found in the file `requirements-dev.txt`
+Running unit tests requires the installation of several necessary packages. These can be found in the file `requirements-dev.txt`.
 
 ### Installation of packages inside an existing container
 
