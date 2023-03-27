@@ -209,6 +209,29 @@ def test_create_table_replace(databricks):
     )
     assert replaced is True
 
+    databricks.drop_table(schema=TEST_SCHEMA, table=TEST_TABLE)
+    databricks.drop_schema(TEST_SCHEMA)
+
+
+def test_replace_not_the_same_column_schema(databricks):
+
+    assert not databricks._check_if_table_exists(schema=TEST_SCHEMA, table=TEST_TABLE)
+
+    databricks.create_schema(TEST_SCHEMA)
+    databricks.create_table_from_pandas(
+        schema=TEST_SCHEMA, table=TEST_TABLE, df=TEST_DF
+    )
+
+    # Adds one additional column so that the table to be overwritten differs from our new table in the number of columns.
+    TEST_DF["extra_column"] = "test"
+    replaced = databricks.create_table_from_pandas(
+        schema=TEST_SCHEMA, table=TEST_TABLE, df=TEST_DF, if_exists="replace"
+    )
+    assert replaced is True
+
+    databricks.drop_table(schema=TEST_SCHEMA, table=TEST_TABLE)
+    databricks.drop_schema(TEST_SCHEMA)
+
 
 # @pytest.mark.dependency(depends=["test_create_table", "test_drop_table", "test_to_df"])
 # def test_insert_into_append(databricks):
