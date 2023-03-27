@@ -353,7 +353,9 @@ class Databricks(Source):
         """
         fqn = f"{schema}.{table}"
         data = self._pandas_df_to_spark_df(df)
-        data.write.format("delta").mode("overwrite").saveAsTable(fqn)
+        data.write.format("delta").mode("overwrite").option(
+            "overwriteSchema", "true"
+        ).saveAsTable(fqn)
 
         self.logger.info(f"Table {fqn} has been refreshed successfully.")
 
