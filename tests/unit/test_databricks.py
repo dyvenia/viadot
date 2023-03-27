@@ -213,7 +213,7 @@ def test_create_table_replace(databricks):
     databricks.drop_schema(TEST_SCHEMA)
 
 
-def test_replace_not_the_same_column_schema(databricks):
+def test_replace_different_column_schema(databricks):
 
     assert not databricks._check_if_table_exists(schema=TEST_SCHEMA, table=TEST_TABLE)
 
@@ -222,7 +222,7 @@ def test_replace_not_the_same_column_schema(databricks):
         schema=TEST_SCHEMA, table=TEST_TABLE, df=TEST_DF
     )
 
-    # Adds one additional column so that the table to be overwritten differs from our new table in the number of columns.
+    # Adds an additional column causing differences
     TEST_DF["extra_column"] = "test"
     replaced = databricks.create_table_from_pandas(
         schema=TEST_SCHEMA, table=TEST_TABLE, df=TEST_DF, if_exists="replace"
