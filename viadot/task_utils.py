@@ -627,11 +627,9 @@ def anonymize_df(
     Returns:
         pd.DataFrame: Operational dataframe with anonymized data.
     """
-    if type(columns) is not list:
-        columns = columns.split(",")
     if all(col in df.columns for col in columns) == False:
         raise ValueError(
-            f"{columns} not found in dataframe. Provide proper column names."
+            f"At least one of the following columns is not found in dataframe: {columns} or argument is not list. Provide list with proper column names."
         )
 
     if days and date_column:
