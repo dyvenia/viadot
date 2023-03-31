@@ -621,6 +621,14 @@ def anonymize_df(
         date_column (str, optional): Name of the date column used to identify rows that are older than a specified number of days. Defaults to None.
         days (int, optional): The number of days beyond which we want to anonymize the data, e.g. older that 2 years can be: 2*365. Defaults to None.
 
+    Examples:
+        1. Implement "mask" method with "***" for all data in columns: ["email", "last_name", "phone"]:
+            >>> anonymize_df(df=df, columns=["email", "last_name", "phone"])
+        2. Implement "hash" method with in columns: ["email", "last_name", "phone"]:
+            >>> anonymize_df(df=df, columns=["email", "last_name", "phone"], method = "hash")
+        3. Implement "mask" method with "***" for data in columns: ["email", "last_name", "phone"], that is older than two years in "submission_date" column:
+            >>> anonymize_df(df=df, columns=["email", "last_name", "phone"], date_column="submission_date", days=2*365)
+
     Raises:
         ValueError: If method or columns not found.
 
