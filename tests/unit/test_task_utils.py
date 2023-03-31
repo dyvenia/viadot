@@ -318,6 +318,17 @@ def test_anonymize_df_various_date_formats():
                 "2023-01-03 12:45:00",
             ],
             "date_col3": ["01/01/2021", "02/01/2022", "03/01/2023"],
+            "date_col4": ["20210101", "20220102", "20230103"],
+            "date_col5": [
+                "2021-01-01T20:17:46.384Z",
+                "2022-01-02T20:17:46.384Z",
+                "2023-01-03T20:17:46.384Z",
+            ],
+            "date_col6": [
+                "2021-01-01T20:17:46.384",
+                "2022-01-02T20:17:46.384",
+                "2023-01-03T20:17:46.384",
+            ],
             "email": [
                 "john.malkovich@bing.com",
                 "hannah.montana@disney.com",
@@ -328,12 +339,21 @@ def test_anonymize_df_various_date_formats():
     )
 
     output1 = anonymize_df.run(
-        data, "email", value=None, date_column="date_col1", days=2 * 365
+        data, ["email"], value=None, date_column="date_col1", days=2 * 365
     ).to_dict()
     output2 = anonymize_df.run(
-        data, "email", value=None, date_column="date_col2", days=2 * 365
+        data, ["email"], value=None, date_column="date_col2", days=2 * 365
     ).to_dict()
     output3 = anonymize_df.run(
-        data, "email", value=None, date_column="date_col3", days=2 * 365
+        data, ["email"], value=None, date_column="date_col3", days=2 * 365
     ).to_dict()
-    assert output1 == output2 == output3
+    output4 = anonymize_df.run(
+        data, ["email"], value=None, date_column="date_col4", days=2 * 365
+    ).to_dict()
+    output5 = anonymize_df.run(
+        data, ["email"], value=None, date_column="date_col5", days=2 * 365
+    ).to_dict()
+    output6 = anonymize_df.run(
+        data, ["email"], value=None, date_column="date_col6", days=2 * 365
+    ).to_dict()
+    assert output1 == output2 == output3 == output4 == output5 == output6
