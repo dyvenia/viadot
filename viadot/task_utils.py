@@ -615,10 +615,10 @@ def anonymize_df(
     Args:
         df (pd.DataFrame): Dataframe with data to anonymize.
         columns (List[str]): List of columns to anonymize.
-        method (Literal["mask", "hash"]): Method of anonymizing data. "mask" -> replace the data with "value" arg.
+        method (Literal["mask", "hash"], optional): Method of anonymizing data. "mask" -> replace the data with "value" arg.
             "hash" -> replace the data with the hash value of an object (using `hash()` method). Defaults to "mask".
         value (str, optional): Value to replace the data. Defaults to "***".
-        date_column (str, optional): _description_. Defaults to None.
+        date_column (str, optional): Name of the date column used to identify rows that are older than a specified number of days. Defaults to None.
         days (int, optional): The number of days beyond which we want to anonymize the data, e.g. older that 2 years can be: 2*365. Defaults to None.
 
     Raises:
