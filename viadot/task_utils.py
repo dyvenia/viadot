@@ -639,8 +639,15 @@ def anonymize_df(
         to_hash = df["temp_date_col"] < days_ago
         if any(to_hash) == False:
             logger.warning(f"No data that is older than {days} days.")
+        else:
+            logger.info(
+                f"Data older than {days} days in {columns} columns will be anonymized."
+            )
     else:
         to_hash = len(df.index) * [True]
+        logger.info(
+            f"The 'days' and 'date_column' arguments were not specified. All data in {columns} columns will be anonymized."
+        )
 
     if method == "mask":
         df.loc[to_hash, columns] = value
