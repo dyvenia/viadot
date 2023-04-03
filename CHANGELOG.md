@@ -6,6 +6,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 ### Added
+- Fixed `Databricks.create_table_from_pandas()` failing to overwrite a table in some cases even with `replace="True"`.
 - Enabled Databricks Connect in the image. To enable, [follow this guide](./README.md#executing-spark-jobs)
 - Added `Databricks` source to the library.
 - Added `ExchangeRates` source to the library.
