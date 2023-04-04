@@ -615,11 +615,19 @@ def anonymize_df(
     Args:
         df (pd.DataFrame): Dataframe with data to anonymize.
         columns (List[str]): List of columns to anonymize.
-        method (Literal["mask", "hash"]): Method of anonymizing data. "mask" -> replace the data with "value" arg.
+        method (Literal["mask", "hash"], optional): Method of anonymizing data. "mask" -> replace the data with "value" arg.
             "hash" -> replace the data with the hash value of an object (using `hash()` method). Defaults to "mask".
         value (str, optional): Value to replace the data. Defaults to "***".
-        date_column (str, optional): _description_. Defaults to None.
+        date_column (str, optional): Name of the date column used to identify rows that are older than a specified number of days. Defaults to None.
         days (int, optional): The number of days beyond which we want to anonymize the data, e.g. older that 2 years can be: 2*365. Defaults to None.
+
+    Examples:
+        1. Implement "mask" method with "***" for all data in columns: ["email", "last_name", "phone"]:
+            >>> anonymize_df(df=df, columns=["email", "last_name", "phone"])
+        2. Implement "hash" method with in columns: ["email", "last_name", "phone"]:
+            >>> anonymize_df(df=df, columns=["email", "last_name", "phone"], method = "hash")
+        3. Implement "mask" method with "***" for data in columns: ["email", "last_name", "phone"], that is older than two years in "submission_date" column:
+            >>> anonymize_df(df=df, columns=["email", "last_name", "phone"], date_column="submission_date", days=2*365)
 
     Raises:
         ValueError: If method or columns not found.
@@ -627,11 +635,9 @@ def anonymize_df(
     Returns:
         pd.DataFrame: Operational dataframe with anonymized data.
     """
-    if type(columns) is not list:
-        columns = columns.split(",")
     if all(col in df.columns for col in columns) == False:
         raise ValueError(
-            f"{columns} not found in dataframe. Provide proper column names."
+            f"At least one of the following columns is not found in dataframe: {columns} or argument is not list. Provide list with proper column names."
         )
 
     if days and date_column:
@@ -641,8 +647,15 @@ def anonymize_df(
         to_hash = df["temp_date_col"] < days_ago
         if any(to_hash) == False:
             logger.warning(f"No data that is older than {days} days.")
+        else:
+            logger.info(
+                f"Data older than {days} days in {columns} columns will be anonymized."
+            )
     else:
         to_hash = len(df.index) * [True]
+        logger.info(
+            f"The 'days' and 'date_column' arguments were not specified. All data in {columns} columns will be anonymized."
+        )
 
     if method == "mask":
         df.loc[to_hash, columns] = value
