@@ -1,17 +1,12 @@
-name: "Publish Docker image"
-# Publish the viadot Docker image with specified tags.
-run-name: "Deploy viadot:${{ github.event.inputs.tag }} image (@${{ github.actor }})"
+name: build-2.0
 
 on:
-  workflow_dispatch:
-    inputs:
-      tag:
-        description: "The tag to use for the image."
-        required: true
-        default: "dev"
+  push:
+    branches:
+      - "2.0"
 
 jobs:
-  docker:
+  publish-docker-image:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -39,4 +34,4 @@ jobs:
           file: docker/Dockerfile
           platforms: linux/amd64
           push: true
-          tags: ghcr.io/${{ github.repository }}/viadot:${{ github.event.inputs.tag }}
+          tags: ghcr.io/${{ github.repository }}/viadot:2.0-latest
