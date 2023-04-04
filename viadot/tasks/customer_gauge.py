@@ -34,7 +34,7 @@ class CustomerGaugeToDF(Task):
         Task CustomerGaugeToDF for downloading the selected range of data from Customer Gauge endpoint and return as one pandas DataFrame.
 
         Args:
-            endpoint (Literal["responses", "non-responses"]): Indicate which endpoint to connect. Defaults to None.
+            endpoint (Literal["responses", "non-responses"], optional): Indicate which endpoint to connect. Defaults to None.
             total_load (bool, optional): Indicate whether to download the data to the latest. If 'False', only one API call is executed (up to 1000 records). Defaults to True.
             cursor (int, optional): Cursor value to navigate to the page. Defaults to None.
             pagesize (int, optional): Number of responses (records) returned per page, max value = 1000. Defaults to 1000.
