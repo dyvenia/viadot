@@ -89,3 +89,13 @@ def aws_config_key():
 @pytest.fixture(scope="session", autouse=True)
 def sharepoint_config_key():
     return os.environ.get("VIADOT_TEST_SHAREPOINT_CONFIG_KEY")
+
+
+@pytest.fixture(scope="session", autouse=True)
+def launchpad_url():
+    return os.environ.get("VIADOT_TEST_LAUNCHPAD_URL")
+
+
+@pytest.fixture(scope="session", autouse=True)
+def launchpad_config_key():
+    return os.environ.get("VIADOT_TEST_LAUNCHPAD_CONFIG_KEY")

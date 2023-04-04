@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added `S3` source to the library.
 - Added `RedshiftSpectrum` source to the library.
 - Added `upload()` and `download()` methods to `S3` source.
+-Added `Launchpad()` source
 
 ### Changed
 - Added `SQLServerToDF` task
