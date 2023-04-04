@@ -5,6 +5,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+- Added `playwright` libraries and dependencies to `Dockerfile` and `requirements`
 
 
 ## [0.4.13] - 2023-03-15
@@ -96,6 +97,7 @@ in `task_utils`
 - Added tasks `GenesysToCSV` and `GenesysToDF`
 - Added flows `GenesysToADLS` and `GenesysReportToADLS`
 - Added `query` parameter to  `PrefectLogs` flow
+- Added `playwright` libraries and dependencies to `Dockerfile`
 
 ### Changed
 - Updated requirements.txt

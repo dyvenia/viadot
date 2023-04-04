@@ -51,6 +51,8 @@ RUN pip install -r requirements.txt
 COPY . .
 RUN pip install .
 
+## Install playwright dependencies
+RUN playwright install-deps
 ## Install Java 11
 RUN curl https://adoptopenjdk.jfrog.io/adoptopenjdk/api/gpg/key/public | apt-key add - && \
     add-apt-repository --yes https://adoptopenjdk.jfrog.io/adoptopenjdk/deb/ && \
