@@ -24,6 +24,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added rollback feature to `Databricks` source.
 - Changed all Prefect logging instances in the `sources` directory to native Python logging.
 - Changed `rm()`, `from_df()`, `to_df()` methods in `S3` Source
+- Changed `get_request function` to `handle_api_request`. 
 
 ### Removed
 - Removed the `env` param from `Databricks` source, as user can now store multiple configs for the same source using different config keys.
