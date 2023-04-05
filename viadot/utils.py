@@ -9,10 +9,10 @@ import pandas as pd
 import pyodbc
 import pyspark.sql.dataframe as spark
 import requests
+
 # from prefect.utilities.graphql import EnumValue, with_args
 from requests.adapters import HTTPAdapter
-from requests.exceptions import (ConnectionError, HTTPError, ReadTimeout,
-                                 Timeout)
+from requests.exceptions import ConnectionError, HTTPError, ReadTimeout, Timeout
 from requests.packages.urllib3.util.retry import Retry
 from urllib3.exceptions import ProtocolError
 
@@ -24,13 +24,35 @@ def slugify(name: str) -> str:
     return name.replace(" ", "_").lower()
 
 
-def get_response(
+def handle_api_request(
     url: str,
     auth: tuple = None,
     params: Dict[str, Any] = None,
     headers: Dict[str, Any] = None,
     timeout: tuple = (3.05, 60 * 30),
-):
+    method: Literal["GET", "POST", "DELETE"] = "GET",
+    data: str = None,
+) -> requests.Response:
+    """
+    Send an HTTP request to the specified URL using the provided parameters.
+
+    Args:
+        url (str): The URL to send the request to.
+        auth (tuple, optional): A tuple of (username, password) for basic authentication.
+            Defaults to None.
+        params (Dict[str, Any], optional): A dictionary of query string parameters.
+            Defaults to None.
+        headers (Dict[str, Any], optional): A dictionary of HTTP headers to include with the request.
+            Defaults to None.
+        timeout (tuple, optional): A tuple of (connect_timeout, read_timeout) in seconds.
+            Defaults to (3.05, 60 * 30).
+        method (Literal["GET", "POST", "DELETE"], optional): The HTTP method to use for the request.
+            Defaults to "GET".
+        data (str, optional): The request body data as a string. Defaults to None.
+
+    Returns:
+        requests.Response: The HTTP response object.
+    """
     session = requests.Session()
     retry_strategy = Retry(
         total=3,
@@ -41,13 +63,17 @@ def get_response(
 
     session.mount("http://", adapter)
     session.mount("https://", adapter)
-    response = session.get(
-        url,
+
+    response = session.request(
+        method=method,
+        url=url,
         auth=auth,
         params=params,
         headers=headers,
         timeout=timeout,
+        data=data,
     )
+
     return response
 
 
@@ -83,29 +109,37 @@ def handle_api_response(
     params: Dict[str, Any] = None,
     headers: Dict[str, Any] = None,
     timeout: tuple = (3.05, 60 * 30),
+    method: Literal["GET", "POST", "DELETE"] = "GET",
+    data: str = None,
 ) -> requests.models.Response:
     """
     Handle an HTTP response by applying retries and handling some common response
     codes.
 
     Args:
-        url (str): the URL which trying to connect.
-        auth (tuple, optional): authorization information. Defaults to None.
-        params (Dict[str, Any], optional): the request parameters. Defaults to None.
-        headers: (Dict[str, Any], optional): the request headers. Defaults to None.
-        timeout (tuple, optional): the request times out. Defaults to (3.05, 60 * 30).
+        url (str): The URL which trying to connect.
+        auth (tuple, optional): Authorization information. Defaults to None.
+        params (Dict[str, Any], optional): The request parameters. Defaults to None.
+        headers: (Dict[str, Any], optional): The request headers. Defaults to None.
+        timeout (tuple, optional): The request times out. Defaults to (3.05, 60 * 30).
 
     Raises:
-        ReadTimeout: stop waiting for a response after `timeout` seconds.
+        ReadTimeout: Stop waiting for a response after `timeout` seconds.
         HTTPError: The raised HTTP error.
         ConnectionError: Raised when the client is unable to connect to the server.
-        APIError: viadot's generic API error.
+        APIError: Viadot's generic API error.
 
     Returns:
         requests.models.Response
     """
-    response = get_response(
-        url=url, auth=auth, params=params, headers=headers, timeout=timeout
+    response = handle_api_request(
+        url=url,
+        auth=auth,
+        params=params,
+        headers=headers,
+        timeout=timeout,
+        method=method,
+        data=data,
     )
 
     response_handled = handle_response(response)
