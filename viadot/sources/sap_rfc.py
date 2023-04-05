@@ -609,7 +609,6 @@ class SAPRFC(Source):
         else:
             SEPARATORS = [sep]
 
-        # emptiness = False
         for sep in SEPARATORS:
             logger.info(f"Checking if separator '{sep}' works.")
             if isinstance(self.rfc_reference_column[0], str):
@@ -647,33 +646,6 @@ class SAPRFC(Source):
                     data_raw, record_key, sep, fields, self.replacement
                 )
 
-                # indentifying good rows we obtain the index of separatos positions.
-                pos_sep_index = np.array([], dtype=int)
-                for data in data_raw[sep_index]:
-                    pos_sep_index = np.append(
-                        pos_sep_index,
-                        np.where(np.array([*data[record_key]]) == f"{sep}"),
-                    )
-                pos_sep_index = np.unique(pos_sep_index)
-
-                # in rows with an extra separator, we replace them by another character: "/" by default
-                for no_sep in no_sep_index:
-                    logger.warning(
-                        "A separator character was found and replaced inside a string text that could produce future errors:"
-                    )
-                    logger.warning("\n" + data_raw[no_sep][record_key])
-                    split_array = np.array([*data_raw[no_sep][record_key]])
-                    position = np.where(split_array == f"{sep}")[0]
-                    index_sep_index = np.argwhere(
-                        np.in1d(position, pos_sep_index) == False
-                    )
-                    index_sep_index = index_sep_index.reshape(
-                        len(index_sep_index),
-                    )
-                    split_array[position[index_sep_index]] = self.replacement
-                    data_raw[no_sep][record_key] = "".join(split_array)
-                    logger.warning("\n" + data_raw[no_sep][record_key])
-
                 records = np.array([row[record_key].split(sep) for row in data_raw])
 
                 if (
@@ -686,11 +658,6 @@ class SAPRFC(Source):
                 else:
                     df[fields] = records
                 chunk += 1
-
-        if not emptiness:
-            logger.warning("Some empty output was generated.")
-            columns = []
-        df.columns = columns
 
         if self.client_side_filters:
             filter_query = self._build_pandas_filter_query(self.client_side_filters)
