@@ -158,12 +158,3 @@ sap_netweaver_rfc
 # Databricks-connect
 
 .databricks-connect
-copy_config.toml
-
-# locals
-diego
-pyproject.toml
-develop
-=1.23
-=1.26
-=2.25
