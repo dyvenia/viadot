@@ -1,4 +1,4 @@
-import re, sys
+import re
 from prefect.utilities import logging
 from collections import OrderedDict
 from typing import List, Literal, Union

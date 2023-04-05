@@ -6,7 +6,7 @@ from prefect import Task
 from prefect.utilities.tasks import defaults_from_attrs
 
 try:
-    from ..sources import SAPRFC
+    from viadot.sources import SAPRFC
 except ImportError:
     raise
 
