@@ -101,10 +101,10 @@ class SAPRFCToDF(Task):
                 inside the string to avoid flow breakdowns. Defaults to "-".
             func (str, optional): SAP RFC function to use. Defaults to None.
             rfc_total_col_width_character_limit (int, optional): Number of characters by which query will be split in chunks
+                in case of too many columns for RFC function. According to SAP documentation, the limit is
+                512 characters. However, we observed SAP raising an exception even on a slightly lower number
+                of characters, so we add a safety margin. Defaults to None.
             rfc_reference_column (List[str], optional): Reference columns to merge chunks Data Frames. These columns must to be unique. Defaults to None.
-            in case of too many columns for RFC function. According to SAP documentation, the limit is
-            512 characters. However, we observed SAP raising an exception even on a slightly lower number
-            of characters, so we add a safety margin. Defaults to None.
         """
         if query is None:
             raise ValueError("Please provide the query.")
