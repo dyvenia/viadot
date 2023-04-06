@@ -140,6 +140,5 @@ class CustomerGaugeToDF(Task):
                 df_list.append(df)
 
         df_total = pd.concat(df_list, ignore_index=True)
-        logger.info(f"Downloading finished.")
 
         return df_total
