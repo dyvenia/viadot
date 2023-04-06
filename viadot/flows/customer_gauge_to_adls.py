@@ -69,8 +69,8 @@ class CustomerGaugeToADLS(Flow):
             pagesize (int, optional): Number of responses (records) returned per page, max value = 1000. Defaults to 1000.
             date_field (Literal["date_creation", "date_order", "date_sent", "date_survey_response"], optional): Specifies the date type which filter date range.
                 Defaults to None.
-            start_date (datetime, optional): Defines the period end date in yyyy-mm-dd format. Defaults to None.
-            end_date (datetime, optional): Defines the period start date in yyyy-mm-dd format. Defaults to None.
+            start_date (datetime, optional): Defines the period start date in yyyy-mm-dd format. Defaults to None.
+            end_date (datetime, optional): Defines the period end date in yyyy-mm-dd format. Defaults to None.
             customer_gauge_credentials_secret (str, optional): The name of the Azure Key Vault secret containing a dictionary with ['client_id', 'client_secret'].
                 Defaults to "CUSTOMER-GAUGE".
             vault_name (str, optional): The name of the vault from which to obtain the secret. Defaults to None.
@@ -93,6 +93,7 @@ class CustomerGaugeToADLS(Flow):
             if_exists (str, optional): What to do if the file exists. Defaults to "replace".
             timeout (int, optional): The time (in seconds) to wait while running this task before a timeout occurs. Defaults to 3600.
         """
+        # CustomerGaugeToDF
         self.endpoint = endpoint
         self.total_load = total_load
         self.cursor = cursor
@@ -102,6 +103,7 @@ class CustomerGaugeToADLS(Flow):
         self.end_date = end_date
         self.customer_gauge_credentials_secret = customer_gauge_credentials_secret
 
+        # anonymize_df
         self.anonymize = anonymize
         self.columns_to_anonymize = columns_to_anonymize
         self.anonymize_method = anonymize_method
@@ -109,6 +111,7 @@ class CustomerGaugeToADLS(Flow):
         self.date_column = date_column
         self.days = days
 
+        # AzureDataLakeUpload
         self.adls_file_name = adls_file_name
         self.adls_dir_path = adls_dir_path
         self.local_file_path = local_file_path
