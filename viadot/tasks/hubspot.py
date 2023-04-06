@@ -10,16 +10,17 @@ from viadot.exceptions import ValidationError
 from viadot.sources import Hubspot
 
 logger = logging.get_logger()
-hubspot = Hubspot()
 
 
 class HubspotToDF(Task):
     def __init__(
         self,
+        hubspot_credentials: dict,
         *args,
         **kwargs,
     ):
 
+        self.credentials = hubspot_credentials
         super().__init__(
             name="hubspot_to_df",
             *args,
@@ -106,6 +107,8 @@ class HubspotToDF(Task):
         filters: Dict[str, Any] = {},
         nrows: int = None,
     ):
+
+        hubspot = Hubspot(credentials=self.credentials)
 
         url = hubspot.get_api_url(
             endpoint=endpoint,

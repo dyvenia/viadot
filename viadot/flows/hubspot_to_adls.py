@@ -14,13 +14,13 @@ class HubspotToADLS(Flow):
         properties: List[Any] = [],
         filters: Dict[str, Any] = {},
         nrows: int = 1000,
+        hubspot_credentials: dict = None,
         file_path: str = None,
         adls_path: str = None,
         if_exists: Literal["replace", "append", "delete"] = "replace",
         overwrite: bool = True,
         vault_name: str = None,
         sp_credentials_secret: str = None,
-        timeout: int = 3600,
         *args: List[any],
         **kwargs: Dict[str, Any],
     ):
@@ -53,40 +53,39 @@ class HubspotToADLS(Flow):
                                             ]
 
             nrows (int): Maximum number of rows to be pulled. Defaults to 1000.
+            hubspot_credentials (dict): Credentials to Hubspot API. Defaults to None.
             file_path (str, optional): Local destination path. Defaults to None.
             adls_path (str): The path to an ADLS file. Defaults to None.
             if_exists (Literal, optional): What to do if the table exists. Defaults to "replace".
             overwrite (str, optional): Whether to overwrite the destination file. Defaults to True.
             vault_name (str, optional): The name of the vault from which to obtain the secrets. Defaults to None.
             sp_credentials_secret (str, optional): The name of the Azure Key Vault secret containing a dictionary with ACCOUNT_NAME and Service Principal credentials (TENANT_ID, CLIENT_ID, CLIENT_SECRET). Defaults to None.
-            timeout(int, optional): The amount of time (in seconds) to wait while running this task before a timeout occurs. Defaults to 3600.
         """
 
         self.endpoint = endpoint
         self.properties = properties
         self.filters = filters
         self.nrows = nrows
+        self.hubspot_credentials = hubspot_credentials
         self.file_path = file_path
         self.adls_path = adls_path
         self.if_exists = if_exists
         self.overwrite = overwrite
         self.vault_name = vault_name
         self.sp_credentials_secret = sp_credentials_secret
-        self.timeout = timeout
 
         super().__init__(*args, name=name, **kwargs)
         self.gen_flow()
 
     def gen_flow(self) -> Flow:
 
-        hubspot_to_df_task = HubspotToDF(timeout=self.timeout)
+        hubspot_to_df_task = HubspotToDF(hubspot_credentials=self.hubspot_credentials)
 
         df = hubspot_to_df_task.bind(
             endpoint=self.endpoint,
             properties=self.properties,
             filters=self.filters,
             nrows=self.nrows,
-            # vault_name=self.vault_name,
             flow=self,
         )
 
@@ -96,7 +95,7 @@ class HubspotToADLS(Flow):
             df=df_viadot_downloaded, path=self.file_path, if_exists="replace", flow=self
         )
 
-        file_to_adls_task = AzureDataLakeUpload(timeout=self.timeout)
+        file_to_adls_task = AzureDataLakeUpload()
         adls_upload = file_to_adls_task.bind(
             from_path=self.file_path,
             to_path=self.adls_path,
