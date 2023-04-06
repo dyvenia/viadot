@@ -1,16 +1,11 @@
 import pytest
 from viadot.sources import CustomerGauge
 
-from viadot.task_utils import credentials_loader
-from viadot.exceptions import APIError
-
-# from prefect.tasks.secrets import PrefectSecret
 import random
 import pandas as pd
 
-CREDENTIALS = credentials_loader.run(credentials_secret="CUSTOMER-GAUGE")
 ENDPOINT = random.choice(["responses", "non-responses"])
-CG = CustomerGauge(credentials=CREDENTIALS, endpoint=ENDPOINT)
+CG = CustomerGauge(endpoint=ENDPOINT)
 
 
 def test_get_json_content():
