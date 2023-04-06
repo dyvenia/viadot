@@ -46,7 +46,7 @@ class Genesys(Source):
             start_date (str, optional):  Start date of the report. Defaults to None.
             end_date (str, optional):  End date of the report. Defaults to None.
             report_name (str, optional): Name of the report. Defaults to None.
-            file_extension (Literal[xls, xlsx, csv;], optional): file extensions for downloaded files. Defaults to "csv".
+            file_extension (Literal[xls, xlsx, csv], optional): File extensions for downloaded files. Defaults to "csv".
             credentials (Dict[str, Any], optional): Credentials to connect with Genesys API containing CLIENT_ID,
             environment (str, optional): Adress of host server. Defaults to None than will be used enviroment
             from credentials.
@@ -99,7 +99,7 @@ class Genesys(Source):
         self.report_data = []
 
     @property
-    def authorization_token(self, verbose: bool = False) -> dict:
+    def authorization_token(self, verbose: bool = False) -> Dict[str, Any]:
         """
         Get authorization token with request headers.
 
@@ -107,7 +107,7 @@ class Genesys(Source):
             verbose (bool, optional): Switch on/off for logging messages. Defaults to False.
 
         Returns:
-            Dict: request headers with token.
+            Dict[str, Any]: Request headers with token.
         """
         CLIENT_ID = self.credentials.get("CLIENT_ID", None)
         CLIENT_SECRET = self.credentials.get("CLIENT_SECRET", None)
@@ -189,13 +189,14 @@ class Genesys(Source):
         if end_point == "conversations/details/query":
             return json.loads(new_report.decode("utf-8"))
 
-    def load_reporting_exports(self, page_size: int = 100, verbose: bool = False):
+    def load_reporting_exports(
+        self, page_size: int = 100, verbose: bool = False
+    ) -> Dict[str, Any]:
         """
         GET method for reporting export.
 
         Args:
-            page_size (int, optional): The number of items on page to print.
-            data_to_post (Dict[str, Any]): json format of POST body.
+            page_size (int, optional): The number of items on page to print. Defaults to 100.
             verbose (bool, optional): Switch on/off for logging messages. Defaults to False.
 
         Returns:
@@ -218,6 +219,9 @@ class Genesys(Source):
     def get_reporting_exports_data(self) -> None:
         """
         Function that generate list of reports metadata for further processing steps.
+
+        Returns:
+            None
         """
         request_json = self.load_reporting_exports()
 
@@ -247,7 +251,7 @@ class Genesys(Source):
         path: str = "",
         sep: str = "\t",
         drop_duplicates: bool = True,
-    ):
+    ) -> None:
         """
         Download report to excel file.
 
@@ -258,6 +262,9 @@ class Genesys(Source):
             path (str, optional): Path to the generated excel file. Defaults to empty string.
             sep (str, optional): Separator in csv file. Defaults to "\t".
             drop_duplicates (bool, optional): Decide if drop duplicates. Defaults to True.
+
+        Returns:
+            None
         """
         response_file = handle_api_response(
             url=f"{report_url}", headers=self.authorization_token
@@ -280,11 +287,11 @@ class Genesys(Source):
         Get information form data report and download all files.
 
         Args:
-            ids_mapping (Dict[str, Any], optional): relationship between id and file name. Defaults to None.
-            file_extension (Literal[xls, xlsx, csv;], optional): file extensions for downloaded files. Defaults to "csv".
-            store_file_names (bool, optional): decide whether to store list of names.
+            store_file_names (bool, optional): decide whether to store list of names. Defaults to True.
+            path (str, optional): Path to the generated excel file. Defaults to empty string.
+
         Returns:
-            List[str]: all file names of downloaded files
+            List[str]: All file names of downloaded files.
         """
         file_name_list = []
         temp_ids_mapping = self.ids_mapping
@@ -354,11 +361,11 @@ class Genesys(Source):
         POST method for reporting export.
 
         Args:
-            data_to_post (Dict[str, Any]): json format of POST body.
-            verbose (bool, optional): Decide if enable logging.
+            data_to_post (Dict[str, Any]): Json format of POST body.
+            verbose (bool, optional): Decide if enable logging. Defaults to True.
 
         Returns:
-            new_report.status_code: status code
+            int: Status code.
         """
         payload = json.dumps(data_to_post)
         new_report = handle_api_response(
@@ -377,14 +384,14 @@ class Genesys(Source):
                 raise APIError("Failed to generated new export.")
         return new_report.status_code
 
-    def delete_reporting_exports(self, report_id) -> int:
+    def delete_reporting_exports(self, report_id: str) -> int:
         """DELETE method for deleting particular reporting exports.
 
         Args:
-            report_id (str): defined at the end of report url.
+            report_id (str): Defined at the end of report url.
 
         Returns:
-            delete_method.status_code: status code
+            int: Status code.
         """
         delete_method = handle_api_response(
             url=f"https://api.{self.environment}/api/v2/analytics/reporting/exports/{report_id}",
@@ -405,6 +412,9 @@ class Genesys(Source):
     def delete_all_reporting_exports(self) -> None:
         """
         Function that deletes all reporting from self.reporting_data list.
+
+        Returns:
+            None
         """
         for report in self.report_data:
             status_code = self.delete_reporting_exports(report_id=report[0])
@@ -417,7 +427,7 @@ class Genesys(Source):
         Fetching analytics report url from json response.
 
         Returns:
-            string: url for analytics report
+            str: Url for analytics report
         """
         response = handle_api_response(
             url=f"https://api.{self.environment}/api/v2/analytics/reporting/schedules/{self.schedule_id}",
@@ -433,12 +443,12 @@ class Genesys(Source):
                 "Output data error: " + str(type(e).__name__) + ": " + str(e)
             )
 
-    def get_all_schedules_job(self) -> json:
+    def get_all_schedules_job(self) -> Dict[str, Any]:
         """
         Fetching analytics report url from json response.
 
         Returns:
-            string: json body with all schedules jobs.
+            Dict[str, Any]: Json body with all schedules jobs.
         """
         response = handle_api_response(
             url=f"https://api.{self.environment}/api/v2/analytics/reporting/schedules",
@@ -453,15 +463,15 @@ class Genesys(Source):
                 "Output data error: " + str(type(e).__name__) + ": " + str(e)
             )
 
-    def schedule_report(self, data_to_post: Dict[str, Any]) -> json:
+    def schedule_report(self, data_to_post: Dict[str, Any]) -> int:
         """
         POST method for report scheduling.
 
         Args:
-            data_to_post (Dict[str, Any]): json format of POST body.
+            data_to_post (Dict[str, Any]): Json format of POST body.
 
         Returns:
-            new_report.status_code: status code
+            int: status code
         """
         payload = json.dumps(data_to_post)
         new_report = handle_api_response(
@@ -477,14 +487,15 @@ class Genesys(Source):
             raise APIError("Failed to scheduled new report.")
         return new_report.status_code
 
-    def to_df(self, report_url: str = None):
-        """Download genesys data into a pandas DataFrame.
+    def to_df(self, report_url: str = None) -> pd.DataFrame:
+        """
+        Download genesys data into a pandas DataFrame.
 
         Args:
             report_url (str): Report url from api response.
 
         Returns:
-            pd.DataFrame: the DataFrame with time range
+            pd.DataFrame: The DataFrame with time range.
         """
         if report_url is None:
             report_url = self.get_analitics_url_report
@@ -500,14 +511,15 @@ class Genesys(Source):
 
         return df
 
-    def delete_scheduled_report_job(self, report_id: str):
-        """DELETE method for deleting particular report job.
+    def delete_scheduled_report_job(self, report_id: str) -> int:
+        """
+        DELETE method for deleting particular report job.
 
         Args:
-            report_id (str): defined at the end of report url.
+            report_id (str): Defined at the end of report url.
 
         Returns:
-            delete_method.status_code: status code
+            int: Status code.
         """
         delete_method = handle_api_response(
             url=f"https://api.{self.environment}/api/v2/analytics/reporting/schedules/{report_id}",
