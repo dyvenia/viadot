@@ -20,6 +20,7 @@ from viadot.task_utils import (
     union_dfs_task,
     write_to_json,
     adls_bulk_upload,
+    anonymize_df,
 )
 
 
@@ -242,3 +243,153 @@ def test_adls_bulk_upload(mock_upload):
 
     adls_bulk_upload.run(file_names=file_names, adls_file_path="any/at/random")
     mock_upload.assert_called_once()
+
+
+def test_anonymize_df_all():
+    data = pd.DataFrame(
+        {
+            "date_col": ["2005-01-01", "2010-01-02", "2023-01-03"],
+            "email": [
+                "john.malkovich@bing.com",
+                "hannah.montana@disney.com",
+                "ilovedogs33@dyvenia.com",
+            ],
+            "name": ["John", "Hannah", "Patryk"],
+            "last_name": ["Malkovich", "Montana", "Dyvenian"],
+            "active": [1, 0, 0],
+        }
+    )
+
+    expected_output = {
+        "date_col": {0: "2005-01-01", 1: "2010-01-02", 2: "2023-01-03"},
+        "email": {0: "***", 1: "***", 2: "***"},
+        "name": {0: "***", 1: "***", 2: "***"},
+        "last_name": {0: "***", 1: "***", 2: "***"},
+        "active": {0: 1, 1: 0, 2: 0},
+    }
+    output = anonymize_df.run(data, ["email", "name", "last_name"]).to_dict()
+    assert output == expected_output
+
+
+def test_anonymize_df_hash_defined_threshold_date():
+    data = pd.DataFrame(
+        {
+            "date_col": ["2005-01-01", "2010-01-02", "2023-01-03"],
+            "email": [
+                "john.malkovich@bing.com",
+                "hannah.montana@disney.com",
+                "ilovedogs33@dyvenia.com",
+            ],
+            "name": ["John", "Hannah", "Patryk"],
+            "last_name": ["Malkovich", "Montana", "Dyvenian"],
+            "active": [1, 0, 0],
+        }
+    )
+
+    expected_output = {
+        "date_col": {0: "2005-01-01", 1: "2010-01-02", 2: "2023-01-03"},
+        "email": {
+            0: hash("john.malkovich@bing.com"),
+            1: hash("hannah.montana@disney.com"),
+            2: "ilovedogs33@dyvenia.com",
+        },
+        "name": {0: hash("John"), 1: hash("Hannah"), 2: "Patryk"},
+        "last_name": {0: hash("Malkovich"), 1: hash("Montana"), 2: "Dyvenian"},
+        "active": {0: 1, 1: 0, 2: 0},
+    }
+
+    output = anonymize_df.run(
+        data,
+        ["email", "name", "last_name"],
+        method="hash",
+        date_column="date_col",
+        days=2 * 365,
+    ).to_dict()
+    assert output == expected_output
+
+
+def test_anonymize_df_various_date_formats():
+    data = pd.DataFrame(
+        {
+            "date_col1": ["2021-01-01", "2022-01-02", "2023-01-03"],
+            "date_col2": [
+                "2021-01-01 10:00:00",
+                "2022-01-02 11:30:00",
+                "2023-01-03 12:45:00",
+            ],
+            "date_col3": ["01/01/2021", "02/01/2022", "03/01/2023"],
+            "date_col4": ["20210101", "20220102", "20230103"],
+            "date_col5": [
+                "2021-01-01T20:17:46.384Z",
+                "2022-01-02T20:17:46.384Z",
+                "2023-01-03T20:17:46.384Z",
+            ],
+            "date_col6": [
+                "2021-01-01T20:17:46.384",
+                "2022-01-02T20:17:46.384",
+                "2023-01-03T20:17:46.384",
+            ],
+            "email": [
+                "john.malkovich@bing.com",
+                "hannah.montana@disney.com",
+                "ilovedogs33@dyvenia.com",
+            ],
+            "active": [1, 0, 0],
+        }
+    )
+
+    output1 = anonymize_df.run(
+        data, ["email"], value=None, date_column="date_col1", days=2 * 365
+    ).to_dict()
+    output2 = anonymize_df.run(
+        data, ["email"], value=None, date_column="date_col2", days=2 * 365
+    ).to_dict()
+    output3 = anonymize_df.run(
+        data, ["email"], value=None, date_column="date_col3", days=2 * 365
+    ).to_dict()
+    output4 = anonymize_df.run(
+        data, ["email"], value=None, date_column="date_col4", days=2 * 365
+    ).to_dict()
+    output5 = anonymize_df.run(
+        data, ["email"], value=None, date_column="date_col5", days=2 * 365
+    ).to_dict()
+    output6 = anonymize_df.run(
+        data, ["email"], value=None, date_column="date_col6", days=2 * 365
+    ).to_dict()
+    assert output1 == output2 == output3 == output4 == output5 == output6
+
+
+def test_wrong_column():
+    data = pd.DataFrame(
+        {
+            "date_col": ["2005-01-01", "2010-01-02", "2023-01-03"],
+            "email": [
+                "john.malkovich@bing.com",
+                "hannah.montana@disney.com",
+                "ilovedogs33@dyvenia.com",
+            ],
+            "name": ["John", "Hannah", "Patryk"],
+            "last_name": ["Malkovich", "Montana", "Dyvenian"],
+            "active": [1, 0, 0],
+        }
+    )
+    with pytest.raises(ValueError, match="column names"):
+        anonymize_df.run(data, ["first_name", "last_name", "email"])
+
+
+def test_wrong_method():
+    data = pd.DataFrame(
+        {
+            "date_col": ["2005-01-01", "2010-01-02", "2023-01-03"],
+            "email": [
+                "john.malkovich@bing.com",
+                "hannah.montana@disney.com",
+                "ilovedogs33@dyvenia.com",
+            ],
+            "name": ["John", "Hannah", "Patryk"],
+            "last_name": ["Malkovich", "Montana", "Dyvenian"],
+            "active": [1, 0, 0],
+        }
+    )
+    with pytest.raises(ValueError, match="Method not found"):
+        anonymize_df.run(data, ["name", "last_name", "email"], method="anonymize")
