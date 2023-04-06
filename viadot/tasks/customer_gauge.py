@@ -1,4 +1,3 @@
-from ..sources import CustomerGauge
 from prefect.utilities import logging
 from prefect import Task
 from prefect.utilities.tasks import defaults_from_attrs
