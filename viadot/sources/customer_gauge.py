@@ -61,7 +61,7 @@ class CustomerGauge:
             APIError: If token is not returned.
 
         Returns:
-            str: Bearer Token value
+            str: Bearer Token value.
         """
         url = "https://auth.EU.customergauge.com/oauth2/token"
         client_id = self.credentials.get("client_id", None)
@@ -103,7 +103,7 @@ class CustomerGauge:
             pagesize (int, optional): Number of responses (records) returned per page, max value = 1000. Defaults to 1000. Defaults to 1000.
             date_field (Literal["date_creation", "date_order", "date_sent", "date_survey_response"], optional): Specifies the date type which filter date range. Defaults to None.
             start_date (datetime, optional): Defines the period start date in yyyy-mm-dd format. Defaults to None.
-            end_date (datetime, optional): Defines the period end date in yyyy-mm-dd format.. Defaults to None.
+            end_date (datetime, optional): Defines the period end date in yyyy-mm-dd format. Defaults to None.
 
         Raises:
             ValueError: If at least one date argument were provided and the rest is missing. Needed all 3 or skip them.
@@ -226,10 +226,10 @@ class CustomerGauge:
 
     def to_df(self, json_response: Dict[str, Any] = None) -> pd.DataFrame:
         """
-        Flatten dictionary structure and convert it into pandas DataFrame. Clean column names
+        Flatten dictionary structure and convert it into pandas DataFrame. Cleans column names.
 
         Args:
-            json_response (Dict[str, Any], optional): JSON object represented as a nested dictionary that contains data and cursor parameter value.. Defaults to None.
+            json_response (Dict[str, Any], optional): JSON object represented as a nested dictionary that contains data and cursor parameter value. Defaults to None.
 
         Raises:
             ValueError: If data value not found.
