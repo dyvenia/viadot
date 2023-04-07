@@ -105,10 +105,9 @@ class CustomerGaugeToDF(Task):
             credentials_str = AzureKeyVaultSecret(
                 credentials_secret, vault_name=vault_name
             ).run()
+            credentials = json.loads(credentials_str)
         except ValueError:
             pass
-
-        credentials = json.loads(credentials_str)
 
         df_list = []
 
