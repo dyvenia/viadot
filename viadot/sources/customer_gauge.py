@@ -5,13 +5,14 @@ from datetime import datetime
 from viadot.utils import handle_api_response
 from viadot.config import local_config
 from viadot.exceptions import CredentialError, APIError
+from viadot.sources.base import Source
 
 from prefect.utilities import logging
 
 logger = logging.get_logger()
 
 
-class CustomerGauge:
+class CustomerGauge(Source):
     API_URL = "https://api.eu.customergauge.com/v7/rest/sync/"
 
     def __init__(
@@ -52,6 +53,8 @@ class CustomerGauge:
             self.credentials = local_config.get("CustomerGauge")
             if self.credentials is None:
                 raise CredentialError("Credentials not provided.")
+
+        super().__init__(credentials=credentials)
 
     def get_token(self) -> str:
         """
