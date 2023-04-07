@@ -82,7 +82,7 @@ class CustomerGauge(Source):
         token = api_response.json().get("access_token")
 
         if token is None:
-            raise APIError("Token is None. Check your credentials.")
+            raise APIError("The token could not be generated. Check your credentials.")
 
         return token
 
