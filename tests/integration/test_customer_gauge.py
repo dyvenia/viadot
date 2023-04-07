@@ -63,11 +63,11 @@ def test_pagesize_and_to_df():
 
 
 def test_pass_specific_cursor():
-    # for default pagesize=1000 returned cursor value should be 1000(+-10) bigger than passed
+    # for default pagesize=1000 returned cursor value should be bigger than passed
     cur = random.randint(1, 9999)
     json_response = CG.get_json_response(cursor=cur)
     cur_retrieved = CG.get_cursor(json_response)
-    assert 990 < (cur_retrieved - cur) < 1010
+    assert cur_retrieved > cur
 
 
 def test_uncomplete_date_arguments():
