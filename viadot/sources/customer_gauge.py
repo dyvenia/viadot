@@ -54,7 +54,7 @@ class CustomerGauge(Source):
             if self.credentials is None:
                 raise CredentialError("Credentials not provided.")
 
-        super().__init__(credentials=credentials)
+        super().__init__(credentials=self.credentials)
 
     def get_token(self) -> str:
         """
