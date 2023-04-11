@@ -24,3 +24,4 @@ from .mindful import Mindful
 
 # APIS
 from .uk_carbon_intensity import UKCarbonIntensity
+from .eurostat import Eurostat
