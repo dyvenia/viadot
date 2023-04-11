@@ -106,8 +106,8 @@ class CustomerGaugeToDF(Task):
                 credentials_secret, vault_name=vault_name
             ).run()
             credentials = json.loads(credentials_str)
-        except ValueError:
-            pass
+        except (ValueError, TypeError) as e:
+            logger.error(e)
 
         df_list = []
 
