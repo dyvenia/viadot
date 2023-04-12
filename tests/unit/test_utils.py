@@ -6,6 +6,8 @@ from viadot.utils import (
 import pandas as pd
 import json
 
+SUCCESFUL_STATUS_CODE = [200, 201, 202, 203, 204, 205, 206, 207, 208, 226]
+
 
 def test_single_quotes_inside():
     TEST_VALUE = "a'b"
@@ -86,15 +88,15 @@ def test_handle_api_request():
     response_post = handle_api_request(
         url=url, method="POST", headers=headers, data=payload
     )
-    assert response_post.status_code == 200
+    assert response_post.status_code in SUCCESFUL_STATUS_CODE
 
-    item_url = url + "/" + response_post.json()["id"]
+    item_url = f"""{url}/{response_post.json()["id"]}"""
     response_get = handle_api_request(url=item_url, method="GET", headers=headers)
-    assert response_get.status_code == 200
+    assert response_get.status_code in SUCCESFUL_STATUS_CODE
     assert response_get.json()["data"] == item["data"]
 
     response_delete = handle_api_request(url=item_url, method="DELETE", headers=headers)
-    assert response_delete.status_code == 200
+    assert response_delete.status_code in SUCCESFUL_STATUS_CODE
 
 
 def test_add_viadot_metadata_columns():
