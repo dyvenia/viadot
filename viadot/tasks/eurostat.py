@@ -17,7 +17,6 @@ class EurostatToDF(Task):
             Both parameter and code has to provided as a string!
             Defaults to None.
         needed_columns (list, optional): list of needed names of columns. Names should be given as str's into the list.
-        url (str, optional): If we would like to provide whole url with all parameters instead of generating one. Defaults to None.
     """
 
     def __init__(
@@ -25,16 +24,14 @@ class EurostatToDF(Task):
         dataset_code: str,
         params: dict = None,
         needed_columns: list = None,
-        url: str = None,
         *args,
         **kwargs,
     ):
         self.dataset_code = dataset_code
-        self.needed_columns = needed_columns
-        self.url = url
         self.params = params
+        self.needed_columns = needed_columns
 
-        super().__init__(name="eurostat_to_df", *args, **kwargs)
+        super().__init__(name="EurostatToDF", *args, **kwargs)
 
     def run(self):
         """Run function for returning dataset if user want raw data, or modify and returning if user need some changes.
@@ -44,9 +41,7 @@ class EurostatToDF(Task):
         """
         try:
             data_frame = eurostat.Eurostat(
-                self.dataset_code,
-                self.params,
-                self.url,
+                self.dataset_code, self.params
             ).get_data_frame_from_response()
 
             if self.needed_columns is None:
@@ -76,8 +71,8 @@ class EurostatToDF(Task):
 
                 if new_df.empty:
                     return None
-
-                return new_df
+                else:
+                    return new_df
         except:
             self.logger.error(
                 "EurostatToDF.run() method failed. Please, check your parameters."
