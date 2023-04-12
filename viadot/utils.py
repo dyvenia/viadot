@@ -118,16 +118,21 @@ def handle_api_response(
 
     Args:
         url (str): The URL which trying to connect.
-        auth (tuple, optional): Authorization information. Defaults to None.
+        auth (tuple, optional): A tuple of (username, password) for basic authentication.
+            Defaults to None.
         params (Dict[str, Any], optional): The request parameters. Defaults to None.
-        headers: (Dict[str, Any], optional): The request headers. Defaults to None.
-        timeout (tuple, optional): The request times out. Defaults to (3.05, 60 * 30).
+        headers (Dict[str, Any], optional): The request headers. Defaults to None.
+        method (Literal["GET", "POST", "DELETE"], optional): The HTTP method to use for the request.
+            Defaults to "GET".
+        timeout (tuple, optional): A tuple of (connect_timeout, read_timeout) in seconds.
+            Defaults to (3.05, 60 * 30).
+        data (str, optional): The request body data as a string. Defaults to None.
 
     Raises:
         ReadTimeout: Stop waiting for a response after `timeout` seconds.
         HTTPError: The raised HTTP error.
         ConnectionError: Raised when the client is unable to connect to the server.
-        APIError: Viadot's generic API error.
+        APIError: viadot's generic API error.
 
     Returns:
         requests.models.Response
