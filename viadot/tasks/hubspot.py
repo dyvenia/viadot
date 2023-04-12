@@ -31,21 +31,28 @@ class HubspotToDF(Task):
         """Download Hubspot data to a DF"""
         super().__call__(self)
 
-    def to_df(self, result: list = None) -> pd.DataFrame:
+    def to_df(self, result: dict) -> pd.DataFrame:
         """
         Args:
-            result (list, optional): API response in JSON format. Defaults to None.
+            result (dict): API response in JSON format.
 
         Returns:
-            pd.DataFrame: DF from JSON
+            pd.DataFrame: Output table generated from JSON dictionary.
         """
         return pd.json_normalize(result)
 
-    def date_to_unixtimestamp(self, date: str = None):
+    def date_to_unixtimestamp(self, date: str = None) -> int:
         """
         Function for date conversion from user defined "yyyy-mm-dd" to Unix Timestamp (SECONDS SINCE JAN 01 1970. (UTC)).
         For example: 1680774921 SECONDS SINCE JAN 01 1970. (UTC) -> 11:55:49 AM 2023-04-06.
+
+        Args:
+            date (str, optional): Input date in format "yyyy-mm-dd". Defaults to None.
+
+        Returns:
+            int: Number of seconds that passed since 1970-01-01 until "date".
         """
+
         clean_date = int(
             datetime.datetime.timestamp(datetime.datetime.strptime(date, "%Y-%m-%d"))
             * 1000
@@ -60,7 +67,7 @@ class HubspotToDF(Task):
             filters (Dict[str, Any], optional): Filters in JSON format. Defaults to {}.
 
         Returns:
-            Dict[str, Any]: Filters in JSON format after data cleaning
+            Dict[str, Any]: Filters in JSON format after data cleaning.
         """
         for item in filters:
             for iterator in range(len(item["filters"])):
@@ -105,8 +112,20 @@ class HubspotToDF(Task):
         endpoint: str,
         properties: List[Any] = [],
         filters: Dict[str, Any] = {},
-        nrows: int = None,
-    ):
+        nrows: int = 1000,
+    ) -> pd.DataFrame:
+        """
+        Run method for extraction of defined varieties of endpints for Hubspot API.
+
+        Args:
+            endpoint (str): Hubspot endpoint - full url or schema name (contacts/line_items/,...).
+            properties (List[Any], optional): List of columns for the extraction. Defaults to [].
+            filters (Dict[str, Any], optional): Filters in JSON format that will be passed to API body. Defaults to {}.
+            nrows (int, optional): Max number of rows to pull during execution. Defaults to 1000.
+
+        Returns:
+            pd.DataFrame: Output dataframe.
+        """
 
         hubspot = Hubspot(credentials=self.credentials)
 

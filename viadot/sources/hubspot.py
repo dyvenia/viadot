@@ -1,8 +1,5 @@
 import json
 from typing import Any, Dict, List
-
-from prefect.utilities import logging
-from viadot.config import local_config
 from viadot.sources.base import Source
 from viadot.utils import handle_api_response
 from viadot.exceptions import CredentialError
@@ -10,21 +7,33 @@ from viadot.exceptions import CredentialError
 
 class Hubspot(Source):
     """
-    A class that connects and extracts data from Hubspot API. Documentation is available under https://developers.hubspot.com/docs/api/crm/understanding-the-crm
-    Connector allows to pull data in three ways
-        - using base API for crm schemas as an endpoint (eg. "contacts", ""line_items", "deals", ...)
-        - using full url as endpoint
+    A class that connects and extracts data from Hubspot API. Documentation is available under https://developers.hubspot.com/docs/api/crm/understanding-the-crm.
+    Connector allows to pull data in three ways:
+        - using base API for crm schemas as an endpoint (eg. "contacts", ""line_items", "deals", ...),
+        - using full url as endpoint.
     """
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, credentials: dict, *args, **kwargs):
+        """
+        Create an instance of Hubspot.
 
-        DEFAULT_CREDENTIALS = local_config.get("HUBSPOT")
-        self.credentials = kwargs.pop("credentials", DEFAULT_CREDENTIALS)
-        if self.credentials is None:
-            raise CredentialError("Missing credentials.")
+        Args:
+            credentials (dict): Credentials to Hubspot API.
+        """
+
+        self.credentials = credentials
+        if credentials is not None:
+            try:
+                self.headers = {
+                    "Authorization": f'Bearer {self.credentials["TOKEN"]}',
+                    "Content-Type": "application/json",
+                }
+            except:
+                raise CredentialError("Credentials not found.")
+
         super().__init__(*args, credentials=self.credentials, **kwargs)
 
-        self.API_ENDPOINT = self.credentials.get("URL")
+        self.base_url = self.credentials.get("URL")
 
     def clean_special_characters(self, value: str = None) -> str:
         """
@@ -68,7 +77,7 @@ class Hubspot(Source):
             str: Url with properties for defined endpoint.
         """
 
-        url = f"{self.API_ENDPOINT}/properties/v2/{endpoint}/properties"
+        url = f"{self.base_url}/properties/v2/{endpoint}/properties"
         return url
 
     def get_api_url(
@@ -77,35 +86,41 @@ class Hubspot(Source):
         filters: Dict[str, Any] = None,
         properties: List[Any] = None,
     ) -> str:
-
         """
         Function that generates full url for Hubspot API with defined parametrs.
+
         Args:
             endpoint (str, optional): Schema or full url. Defaults to None.
             filters (Dict[str, Any], optional): Filters defined for the API body in specific order. Defaults to None.
             properties (List[Any], optional): List of user-defined columns to be pulled from the API. Defaults to None.
 
         Returns:
-            str: Generated url passed to Hubspot API
+            str: Generated url passed to Hubspot API.
         """
 
-        if self.API_ENDPOINT in endpoint:
+        if self.base_url in endpoint:
             url = endpoint
         else:
-            if filters:
-                url = (
-                    f"{self.API_ENDPOINT}/crm/v3/objects/{endpoint}/search/?limit=100&"
-                )
+            if endpoint.startswith("/"):
+                endpoint = endpoint[1:]
+            if endpoint.startswith("hubdb"):
+                url = f"{self.base_url}/{endpoint}"
             else:
-                url = f"{self.API_ENDPOINT}/crm/v3/objects/{endpoint}/?limit=100&"
+                if filters:
+                    url = (
+                        f"{self.base_url}/crm/v3/objects/{endpoint}/search/?limit=100&"
+                    )
+                else:
+                    url = f"{self.base_url}/crm/v3/objects/{endpoint}/?limit=100&"
 
-            if len(properties) > 0:
-                url += f'properties={",".join(properties)}&'
+                if len(properties) > 0:
+                    url += f'properties={",".join(properties)}&'
 
         return url
 
     def get_api_body(self, filters: Dict[str, Any] = {}) -> Dict:
-        """Function that cleans the filters body and converts to a JSON formatted value.
+        """
+        Function that cleans the filters body and converts to a JSON formatted value.
 
         Args:
             filters (Dict[str, Any], optional): Filters dictionary that will be passed to Hubspot API. Defaults to {}.
@@ -143,14 +158,15 @@ class Hubspot(Source):
                     NOT_CONTAINS_TOKEN  -Doesn't contain a token
 
         Returns:
-            Dict: Filters with a JSON format
+            Dict: Filters with a JSON format.
         """
         payload = json.dumps({"filterGroups": filters, "limit": 100})
 
         return payload
 
     def to_json(self, url: str = None, body: str = None, method: str = None) -> Dict:
-        """function that converts API response to a JSON formatted data.
+        """
+        Function that converts API response to a JSON formatted data.
 
         Args:
             url (str, optional): Hubspot API url. Defaults to None.
@@ -158,14 +174,11 @@ class Hubspot(Source):
             method (str, optional): Method of the API call ("GET"/"POST"). Defaults to None.
 
         Returns:
-            Dict: API response in JSON format
+            Dict: API response in JSON format.
         """
-        headers = {
-            "Authorization": f'Bearer {self.credentials["TOKEN"]}',
-            "Content-Type": "application/json",
-        }
+
         response = handle_api_response(
-            url=url, headers=headers, body=body, method=method
+            url=url, headers=self.headers, body=body, method=method
         )
 
         return response.json()
