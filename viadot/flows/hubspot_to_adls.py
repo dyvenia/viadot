@@ -21,7 +21,8 @@ class HubspotToADLS(Flow):
         self,
         name: str,
         endpoint: str,
-        hubspot_credentials: dict,
+        hubspot_credentials: dict = None,
+        hubspot_credentials_key: str = "HUBSPOT",
         properties: List[Any] = [],
         filters: Dict[str, Any] = {},
         nrows: int = 1000,
@@ -42,7 +43,8 @@ class HubspotToADLS(Flow):
         Args:
             name (str): The name of the flow.
             endpoint (str): Full Hubspot endpoint ID (name) or type of schema that will be passed to the url.
-            hubspot_credentials (dict): Credentials to Hubspot API.
+            hubspot_credentials (dict): Credentials to Hubspot API. Defaults to None.
+            hubspot_credentials_key (str, optional): Credential key to dictionary where credentials are stored (e.g. in local config). Defaults to "HUBSPOT".
             properties (List, optional): List of properties/columns that will be passed to the url. Defaults to [].
             filters (Dict, optional): Filters for the Hubspot API body in JSON format. Defaults to {}.
                                         - propertyName: columns for filtering
@@ -81,6 +83,7 @@ class HubspotToADLS(Flow):
         self.filters = filters
         self.nrows = nrows
         self.hubspot_credentials = hubspot_credentials
+        self.hubspot_credentials_key = hubspot_credentials_key
         self.output_file_extension = output_file_extension
 
         self.local_file_path = (
@@ -118,7 +121,10 @@ class HubspotToADLS(Flow):
 
     def gen_flow(self) -> Flow:
 
-        hubspot_to_df_task = HubspotToDF(hubspot_credentials=self.hubspot_credentials)
+        hubspot_to_df_task = HubspotToDF(
+            hubspot_credentials=self.hubspot_credentials,
+            hubspot_credentials_key=self.hubspot_credentials_key,
+        )
 
         df = hubspot_to_df_task.bind(
             endpoint=self.endpoint,

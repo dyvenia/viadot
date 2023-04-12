@@ -1,6 +1,5 @@
 import json
 import pandas as pd
-import datetime
 
 from typing import List, Dict, Any, Literal
 from prefect import Task
@@ -8,6 +7,7 @@ from prefect.tasks.secrets import PrefectSecret
 from prefect.utilities import logging
 from viadot.exceptions import ValidationError
 from viadot.sources import Hubspot
+from viadot.task_utils import *
 
 logger = logging.get_logger()
 
@@ -15,12 +15,28 @@ logger = logging.get_logger()
 class HubspotToDF(Task):
     def __init__(
         self,
-        hubspot_credentials: dict,
+        hubspot_credentials: dict = None,
+        hubspot_credentials_key: str = "HUBSPOT",
         *args,
         **kwargs,
     ):
+        """
+        Class for generating dataframe from Hubspot API endpoint.
 
-        self.credentials = hubspot_credentials
+        Args:
+            hubspot_credentials (dict): Credentials to Hubspot API. Defaults to None.
+            hubspot_credentials_key (str, optional): Credential key to dictionary where credentials are stored (e.g. in local config). Defaults to "HUBSPOT".
+
+        """
+
+        if hubspot_credentials is None:
+            self.hubspot_credentials = credentials_loader.run(
+                credentials_secret=hubspot_credentials_key,
+            )
+
+        else:
+            self.hubspot_credentials = hubspot_credentials
+
         super().__init__(
             name="hubspot_to_df",
             *args,
@@ -53,10 +69,7 @@ class HubspotToDF(Task):
             int: Number of seconds that passed since 1970-01-01 until "date".
         """
 
-        clean_date = int(
-            datetime.datetime.timestamp(datetime.datetime.strptime(date, "%Y-%m-%d"))
-            * 1000
-        )
+        clean_date = int(datetime.timestamp(datetime.strptime(date, "%Y-%m-%d")) * 1000)
         return clean_date
 
     def format_filters(self, filters: Dict[str, Any] = {}) -> Dict[str, Any]:
@@ -74,9 +87,7 @@ class HubspotToDF(Task):
                 for subitem in item["filters"][iterator]:
                     lookup = item["filters"][iterator][subitem]
                     try:
-                        datetime.date.fromisoformat(lookup)
-                        date_to_format = item["filters"][iterator][subitem]
-                        date_after_format = self.date_to_unixtimestamp(date_to_format)
+                        date_after_format = self.date_to_unixtimestamp(lookup)
                         filters[filters.index(item)]["filters"][iterator][
                             subitem
                         ] = date_after_format
@@ -127,7 +138,7 @@ class HubspotToDF(Task):
             pd.DataFrame: Output dataframe.
         """
 
-        hubspot = Hubspot(credentials=self.credentials)
+        hubspot = Hubspot(credentials=self.hubspot_credentials)
 
         url = hubspot.get_api_url(
             endpoint=endpoint,
@@ -136,7 +147,6 @@ class HubspotToDF(Task):
         )
 
         if filters:
-
             filters_formatted = self.format_filters(filters=filters)
             body = hubspot.get_api_body(filters=filters_formatted)
             self.method = "POST"
@@ -153,7 +163,6 @@ class HubspotToDF(Task):
 
         else:
             self.method = "GET"
-
             partition = hubspot.to_json(url=url, method=self.method)
             full_dataset = partition[list(partition.keys())[0]]
 

@@ -1,9 +1,6 @@
 import pytest
 import pandas as pd
 from viadot.tasks.hubspot import HubspotToDF
-from viadot.task_utils import credentials_loader
-
-CREDENTIALS = credentials_loader.run(credentials_secret="HUBSPOT")
 
 
 @pytest.fixture(scope="session")
@@ -42,7 +39,7 @@ def test_hubspot_to_df(var_dictionary):
     filters = var_dictionary["filters"]
     nrows = 150
 
-    hubspot_to_df_task = HubspotToDF(hubspot_credentials=CREDENTIALS)
+    hubspot_to_df_task = HubspotToDF(hubspot_credentials_key="HUBSPOT")
 
     df = hubspot_to_df_task.run(
         endpoint=endpoint, properties=properties, filters=filters, nrows=nrows

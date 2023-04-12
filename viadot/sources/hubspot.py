@@ -101,8 +101,6 @@ class Hubspot(Source):
         if self.base_url in endpoint:
             url = endpoint
         else:
-            if endpoint.startswith("/"):
-                endpoint = endpoint[1:]
             if endpoint.startswith("hubdb"):
                 url = f"{self.base_url}/{endpoint}"
             else:
@@ -113,7 +111,7 @@ class Hubspot(Source):
                 else:
                     url = f"{self.base_url}/crm/v3/objects/{endpoint}/?limit=100&"
 
-                if len(properties) > 0:
+                if properties and len(properties) > 0:
                     url += f'properties={",".join(properties)}&'
 
         return url
@@ -127,8 +125,7 @@ class Hubspot(Source):
 
                     Example below:
 
-                        filters = [
-                            {
+                        filters = {
                                 "filters": [
                                     {
                                     "propertyName": "createdate",
@@ -138,7 +135,6 @@ class Hubspot(Source):
                                     }
                                 ]
                                 }
-                            ],
 
                     Operators between the min and max value are listed below:
                     [IN, NOT_HAS_PROPERTY, LT, EQ, GT, NOT_IN, GTE, CONTAINS_TOKEN, HAS_PROPERTY, LTE, NOT_CONTAINS_TOKEN, BETWEEN, NEQ]
