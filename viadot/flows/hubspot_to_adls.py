@@ -1,7 +1,9 @@
 import os
 import pendulum
+from pathlib import Path
 from typing import Any, Dict, List, Literal
 from prefect import Flow
+from prefect.backend import set_key_value
 
 from viadot.task_utils import (
     df_to_parquet,
@@ -25,7 +27,8 @@ class HubspotToADLS(Flow):
         nrows: int = 1000,
         output_file_extension: str = ".parquet",
         local_file_path: str = None,
-        adls_path: str = None,
+        adls_file_name: str = None,
+        adls_dir_path: str = None,
         if_exists: Literal["replace", "append", "delete"] = "replace",
         overwrite_adls: bool = True,
         vault_name: str = None,
@@ -64,8 +67,9 @@ class HubspotToADLS(Flow):
 
             nrows (int, optional): Maximum number of rows to be pulled. Defaults to 1000.
             local_file_path (str, optional): Local destination path. Defaults to None.
+            adls_file_name (str, optional): Name of file in ADLS. Defaults to None.
+            adls_dir_path (str, optional): Azure Data Lake destination folder/catalog path. Defaults to None.
             output_file_extension (str, optional): Output file extension. Defaults to ".parquet".
-            adls_path (str): The path to an ADLS file. Defaults to None.
             if_exists (Literal, optional): What to do if the table exists. Defaults to "replace".
             overwrite_adls (str, optional): Whether to overwrite the destination file in ADLS. Defaults to True.
             vault_name (str, optional): The name of the vault from which to obtain the secrets. Defaults to None.
@@ -83,13 +87,22 @@ class HubspotToADLS(Flow):
             local_file_path or self.slugify(name) + self.output_file_extension
         )
         self.local_json_path = self.slugify(name) + ".json"
-
         self.now = str(pendulum.now("utc"))
+        self.adls_dir_path = adls_dir_path
 
-        self.adls_path = os.path.join(adls_path, self.now + self.output_file_extension)
-        self.adls_schema_file_dir_file = os.path.join(
-            adls_path, "schema", self.now + ".json"
-        )
+        if adls_file_name is not None:
+            self.adls_file_path = os.path.join(adls_dir_path, adls_file_name)
+            self.adls_schema_file_dir_file = os.path.join(
+                adls_dir_path, "schema", Path(adls_file_name).stem + ".json"
+            )
+
+        else:
+            self.adls_file_path = os.path.join(
+                adls_dir_path, self.now + self.output_file_extension
+            )
+            self.adls_schema_file_dir_file = os.path.join(
+                adls_dir_path, "schema", self.now + ".json"
+            )
 
         self.if_exists = if_exists
         self.overwrite_adls = overwrite_adls
@@ -122,24 +135,25 @@ class HubspotToADLS(Flow):
             df_viadot_downloaded, dtypes_dict, flow=self
         )
 
-        dtypes_updated = update_dtypes_dict(dtypes_dict, flow=self)
-        dtypes_to_json_task.bind(
-            dtypes_dict=dtypes_updated, local_json_path=self.local_json_path, flow=self
-        )
         df_to_parquet_task = df_to_parquet.bind(
-            df=df_viadot_downloaded,
+            df=df_to_be_loaded,
             path=self.local_file_path,
-            if_exists="replace",
+            if_exists=self.if_exists,
             flow=self,
         )
 
         file_to_adls_task = AzureDataLakeUpload()
         adls_upload = file_to_adls_task.bind(
-            from_path=self.local_json_path,
-            to_path=self.adls_path,
+            from_path=self.local_file_path,
+            to_path=self.adls_file_path,
             overwrite=self.overwrite_adls,
             sp_credentials_secret=self.sp_credentials_secret,
             flow=self,
+        )
+
+        dtypes_updated = update_dtypes_dict(dtypes_dict, flow=self)
+        dtypes_to_json_task.bind(
+            dtypes_dict=dtypes_updated, local_json_path=self.local_json_path, flow=self
         )
 
         json_to_adls_task = AzureDataLakeUpload()
@@ -155,7 +169,9 @@ class HubspotToADLS(Flow):
         df_viadot_downloaded.set_upstream(df, flow=self)
         dtypes_dict.set_upstream(df_viadot_downloaded, flow=self)
         df_to_be_loaded.set_upstream(dtypes_dict, flow=self)
-        df_to_parquet_task.set_upstream(df_to_be_loaded, flow=self)
-        dtypes_to_json_task.set_upstream(df_to_parquet_task, flow=self)
-        adls_upload.set_upstream(dtypes_to_json_task, flow=self)
-        adls_upload.set_upstream(dtypes_to_json_task, flow=self)
+        adls_upload.set_upstream(df_to_parquet_task, flow=self)
+
+        dtypes_to_json_task.set_upstream(dtypes_updated, flow=self)
+        json_to_adls_task.set_upstream(dtypes_to_json_task, flow=self)
+
+        set_key_value(key=self.adls_dir_path, value=self.adls_file_path)
