@@ -10,6 +10,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added `Hubspot` source class
 - Added `HubspotToDF` task class
 - Added `HubspotToADLS` flow class
+- Added `CustomerGauge` source class
+- Added `CustomerGaugeToDF` task class
+- Added `CustomerGaugeToADLS` flow class
 
 ## [0.4.13] - 2023-03-15
 ### Added
