@@ -99,9 +99,9 @@ def detect_extra_rows(
 
     Returns:
         Union[int, np.array, bool]: A tuple with the parameters "row_index", "data_raw", and a new
-            boolean variable "cont" to indicate when the for loop has to be restarted.
+            boolean variable "start" to indicate when the for loop has to be restarted.
     """
-    cont = False
+    start = False
     if row_index == 0:
         row_index = data_raw.shape[0]
         if row_index == 0:
@@ -109,14 +109,14 @@ def detect_extra_rows(
                 f"Empty output was generated for chunk {chunk} in columns {fields}."
             )
             chunk += 1
-            cont = True
+            start = True
     elif data_raw.shape[0] != row_index:
         data_raw = data_raw[:row_index]
         logger.warning(
             f"New rows were generated during the execution of the script. The table is truncated to the number of rows for the first chunk"
         )
 
-    return row_index, data_raw, cont
+    return row_index, data_raw, start
 
 
 def catch_extra_separators(
@@ -141,7 +141,7 @@ def catch_extra_separators(
         if "\t" in r[record_key]:
             data_raw[n][record_key] = r[record_key].replace("\t", " ")
 
-    # first we identify where the data has an extra separator in text columns.
+    # first it is identified where the data has an extra separator in text columns.
     sep_counts = np.array([], dtype=int)
     for row in data_raw:
         sep_counts = np.append(sep_counts, row[record_key].count(f"{sep}"))
@@ -154,7 +154,7 @@ def catch_extra_separators(
     sep_index = sep_index.reshape(
         len(sep_index),
     )
-    # indentifying "good" rows we obtain the index of separatos positions.
+    # indentifying "good" rows we obtain the index of separator positions.
     pos_sep_index = np.array([], dtype=int)
     for data in data_raw[sep_index]:
         pos_sep_index = np.append(
@@ -213,7 +213,7 @@ class SAPRFC(Source):
         Args:
             sep (str, optional): Which separator to use when querying SAP. If not provided,
             multiple options are automatically tried.
-            replacement (str, optional): In case of sep is on a columns, set up a new character to replace
+            replacement (str, optional): In case of separator is on a columns, set up a new character to replace
                 inside the string to avoid flow breakdowns. Defaults to "-".
             func (str, optional): SAP RFC function to use. Defaults to "RFC_READ_TABLE".
             rfc_total_col_width_character_limit (int, optional): Number of characters by which query will be split in chunks
@@ -635,11 +635,11 @@ class SAPRFC(Source):
                 data_raw = np.array(response["DATA"])
 
                 # if the reference columns are provided not necessary to remove any extra row.
-                if not isinstance(self.rfc_reference_column[0], str):
-                    row_index, data_raw, cont = detect_extra_rows(
+                if not isinstance(self.rfc_unique_id[0], str):
+                    row_index, data_raw, start = detect_extra_rows(
                         row_index, data_raw, chunk, fields
                     )
-                    if cont:
+                    if start:
                         continue
 
                 data_raw = catch_extra_separators(
