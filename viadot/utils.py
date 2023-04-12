@@ -58,6 +58,7 @@ def handle_api_request(
         total=3,
         status_forcelist=[429, 500, 502, 503, 504],
         backoff_factor=1,
+        allowed_methods=["GET", "POST", "DELETE"],
     )
     adapter = HTTPAdapter(max_retries=retry_strategy)
 
