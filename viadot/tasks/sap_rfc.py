@@ -104,7 +104,15 @@ class SAPRFCToDF(Task):
                 in case of too many columns for RFC function. According to SAP documentation, the limit is
                 512 characters. However, we observed SAP raising an exception even on a slightly lower number
                 of characters, so we add a safety margin. Defaults to None.
-            rfc_reference_column (List[str], optional): Reference columns to merge chunks Data Frames. These columns must to be unique. Defaults to None.
+            rfc_unique_id  (List[str], optional): Reference columns to merge chunks Data Frames. These columns must to be unique. If no columns are provided
+                in this parameter, all data frame columns will by concatenated. Defaults to None.
+                Example:
+                --------
+                SAPRFCToADLS(
+                    ...
+                    rfc_unique_id=["VBELN", "LPRIO"],
+                    ...
+                    )
         """
         if query is None:
             raise ValueError("Please provide the query.")
