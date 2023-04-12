@@ -49,4 +49,4 @@ from .sftp import SftpToDF, SftpList
 from .mindful import MindfulToCSV
 from .hubspot import HubspotToDF
 from .mediatool import MediatoolToDF
-
+from .customer_gauge import CustomerGaugeToDF
