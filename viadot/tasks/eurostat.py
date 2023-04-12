@@ -1,5 +1,5 @@
 from prefect import Task
-from ..sources import eurostat
+from ..sources import Eurostat
 
 
 class EurostatToDF(Task):
@@ -40,7 +40,7 @@ class EurostatToDF(Task):
             pd.DataFrame: raw DataFrame or DataFrame with choosen columns.
         """
         try:
-            data_frame = eurostat.Eurostat(
+            data_frame = Eurostat(
                 self.dataset_code, self.params
             ).get_data_frame_from_response()
 
