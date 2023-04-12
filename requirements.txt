@@ -24,3 +24,4 @@ pandas-gbq==0.19.1
 databricks-connect==10.4.18
 pyyaml==6.0
 pydantic==1.10.5
+aiolimiter==1.0.0
