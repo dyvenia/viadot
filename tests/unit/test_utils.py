@@ -1,5 +1,10 @@
-from viadot.utils import gen_bulk_insert_query_from_df, add_viadot_metadata_columns
+from viadot.utils import (
+    gen_bulk_insert_query_from_df,
+    add_viadot_metadata_columns,
+    handle_api_request,
+)
 import pandas as pd
+import json
 
 
 def test_single_quotes_inside():
@@ -66,6 +71,30 @@ def test_double_quotes_inside():
 
 VALUES ({TEST_VALUE_ESCAPED}, 'c')"""
     ), test_insert_query
+
+
+def test_handle_api_request():
+
+    url = "https://api.restful-api.dev/objects"
+    headers = {"content-type": "application/json"}
+    item = {
+        "name": "test_item",
+        "data": {"color": "blue", "price": 135},
+    }
+    payload = json.dumps(item)
+
+    response_post = handle_api_request(
+        url=url, method="POST", headers=headers, data=payload
+    )
+    assert response_post.ok
+
+    item_url = f"""{url}/{response_post.json()["id"]}"""
+    response_get = handle_api_request(url=item_url, method="GET", headers=headers)
+    assert response_get.ok
+    assert response_get.json()["data"] == item["data"]
+
+    response_delete = handle_api_request(url=item_url, method="DELETE", headers=headers)
+    assert response_delete.ok
 
 
 def test_add_viadot_metadata_columns():
