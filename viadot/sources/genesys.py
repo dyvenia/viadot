@@ -498,7 +498,7 @@ class Genesys(Source):
             pd.DataFrame: The DataFrame with time range.
         """
         if report_url is None:
-            report_url = self.get_analitics_url_report
+            report_url = self.get_analitics_url_report()
         response_file = handle_api_response(
             url=f"{report_url}", headers=self.authorization_token
         )
