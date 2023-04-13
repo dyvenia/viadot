@@ -25,3 +25,4 @@ from .customer_gauge import CustomerGauge
 
 # APIS
 from .uk_carbon_intensity import UKCarbonIntensity
+from .hubspot import Hubspot

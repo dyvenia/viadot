@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 ### Added
 - Added `anonymize_df` task function to `task_utils.py` to anonymize data in the dataframe in selected columns.
+- Added `Hubspot` source class
+- Added `HubspotToDF` task class
+- Added `HubspotToADLS` flow class
 - Added `CustomerGauge` source class
 - Added `CustomerGaugeToDF` task class
 - Added `CustomerGaugeToADLS` flow class
