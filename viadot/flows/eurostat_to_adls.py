@@ -142,6 +142,14 @@ class EurostatToADLS(Flow):
                 flow=self,
             )
 
+        file_to_adls_task.bind(
+            from_path=self.local_file_path,
+            to_path=self.adls_file_path,
+            overwrite=self.overwrite,
+            sp_credentials_secret=self.adls_sp_credentials_secret,
+            flow=self,
+        )
+
         dtypes_updated = update_dtypes_dict(dtypes_dict, flow=self)
         dtypes_to_json_task.bind(
             dtypes_dict=dtypes_updated, local_json_path=self.local_json_path, flow=self
