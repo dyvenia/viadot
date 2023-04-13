@@ -103,7 +103,7 @@ class SAPRFCToADLS(Flow):
             replacement=self.rfc_replacement,
             func=self.func,
             rfc_total_col_width_character_limit=self.rfc_total_col_width_character_limit,
-            rfc_reference_column=self.rfc_reference_column,
+            rfc_unique_id=self.rfc_unique_id,
             credentials=self.sap_credentials,
             flow=self,
         )

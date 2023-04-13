@@ -585,6 +585,7 @@ class SAPRFC(Source):
             pd.DataFrame: A DataFrame representing the result of the query provided in `PyRFC.query()`.
         """
         params = self._query
+        columns = self.select_columns_aliased
         sep = self._query.get("DELIMITER")
         fields_lists = self._query.get("FIELDS")
         if len(fields_lists) > 1:
@@ -658,6 +659,8 @@ class SAPRFC(Source):
                 else:
                     df[fields] = records
                 chunk += 1
+
+        df.columns = columns
 
         if self.client_side_filters:
             filter_query = self._build_pandas_filter_query(self.client_side_filters)
