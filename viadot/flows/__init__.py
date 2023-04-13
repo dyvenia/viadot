@@ -37,3 +37,5 @@ from .sql_server_to_duckdb import SQLServerToDuckDB
 from .sftp_operations import SftpToAzureSQL, SftpToADLS
 from .mindful_to_adls import MindfulToADLS
 from .mediatool_to_adls import MediatoolToADLS
+from .hubspot_to_adls import HubspotToADLS
+from .customer_gauge_to_adls import CustomerGaugeToADLS
