@@ -98,8 +98,9 @@ def detect_extra_rows(
         fields (List[str]): A list with the names of the columns in a chunk.
 
     Returns:
-        Union[int, np.array, bool]: A tuple with the parameters "row_index", "data_raw", and a new
-            boolean variable "start" to indicate when the for loop has to be restarted.
+        Union[int, np.array, bool]: A tuple with the parameters "row_index", "data_raw", a new
+            boolean variable "start" to indicate when the for loop has to be restarted,
+            and "chunk" variable.
     """
     start = False
     if row_index == 0:
@@ -108,7 +109,6 @@ def detect_extra_rows(
             logger.warning(
                 f"Empty output was generated for chunk {chunk} in columns {fields}."
             )
-            chunk += 1
             start = True
     elif data_raw.shape[0] != row_index:
         data_raw = data_raw[:row_index]
@@ -117,6 +117,46 @@ def detect_extra_rows(
         )
 
     return row_index, data_raw, start
+
+
+def replace_separator_in_data(
+    data_raw: np.array,
+    no_sep_index: np.array,
+    record_key: str,
+    pos_sep_index: np.array,
+    sep: str,
+    replacement: str,
+) -> np.array:
+    """Fundtion to replace the extra separator in every row of the data_raw numpy array.
+
+    Args:
+        data_raw (np.array): Array with the data retrieve from SAP table.
+        no_sep_index (np.array): Array with indexes where are extra separators characters in rows.
+        record_key (str): Key word to extract the data from the numpy array "data_raw".
+        pos_sep_index (np.array): Array with indexes where are placed real separators.
+        sep (str): Which separator to use when querying SAP.
+        replacement (str): In case of sep is on a columns, set up a new character to replace
+            inside the string to avoid flow breakdowns.
+
+    Returns:
+        np.array: the same data_raw numpy array with the "replacement" separator instead.
+    """
+    for no_sep in no_sep_index:
+        logger.warning(
+            "A separator character was found and replaced inside a string text that could produce future errors:"
+        )
+        logger.warning("\n" + data_raw[no_sep][record_key])
+        split_array = np.array([*data_raw[no_sep][record_key]])
+        position = np.where(split_array == f"{sep}")[0]
+        index_sep_index = np.argwhere(np.in1d(position, pos_sep_index) == False)
+        index_sep_index = index_sep_index.reshape(
+            len(index_sep_index),
+        )
+        split_array[position[index_sep_index]] = replacement
+        data_raw[no_sep][record_key] = "".join(split_array)
+        logger.warning("\n" + data_raw[no_sep][record_key])
+
+    return data_raw
 
 
 def catch_extra_separators(
@@ -164,20 +204,14 @@ def catch_extra_separators(
     pos_sep_index = np.unique(pos_sep_index)
 
     # in rows with an extra separator, we replace them by another character: "-" by default
-    for no_sep in no_sep_index:
-        logger.warning(
-            "A separator character was found and replaced inside a string text that could produce future errors:"
-        )
-        logger.warning("\n" + data_raw[no_sep][record_key])
-        split_array = np.array([*data_raw[no_sep][record_key]])
-        position = np.where(split_array == f"{sep}")[0]
-        index_sep_index = np.argwhere(np.in1d(position, pos_sep_index) == False)
-        index_sep_index = index_sep_index.reshape(
-            len(index_sep_index),
-        )
-        split_array[position[index_sep_index]] = replacement
-        data_raw[no_sep][record_key] = "".join(split_array)
-        logger.warning("\n" + data_raw[no_sep][record_key])
+    data_raw = replace_separator_in_data(
+        data_raw,
+        no_sep_index,
+        record_key,
+        pos_sep_index,
+        sep,
+        replacement,
+    )
 
     return data_raw
 
@@ -640,8 +674,6 @@ class SAPRFC(Source):
                     row_index, data_raw, start = detect_extra_rows(
                         row_index, data_raw, chunk, fields
                     )
-                    if start:
-                        continue
 
                 data_raw = catch_extra_separators(
                     data_raw, record_key, sep, fields, self.replacement
@@ -657,9 +689,11 @@ class SAPRFC(Source):
                     df_tmp[fields] = records
                     df = pd.merge(df, df_tmp, on=self.rfc_reference_column, how="outer")
                 else:
-                    df[fields] = records
+                    if not start:
+                        df[fields] = records
+                    else:
+                        df[fields] = np.nan
                 chunk += 1
-
         df.columns = columns
 
         if self.client_side_filters:
