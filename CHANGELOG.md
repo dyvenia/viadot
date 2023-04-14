@@ -46,6 +46,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fixed `utils.gen_bulk_insert_query_from_df()` failing with > 1000 rows due to INSERT clause limit by chunking the data into multiple INSERTs
 - Fixed `get_flow_last_run_date()` incorrectly parsing the date
 - Fixed `MultipleFlows` when one flow is passed and when last flow fails.
+- Fixed issue with async usage in `Genesys.genesys_generate_exports()` (#669).
 
 
 ## [0.4.2] - 2022-04-08
