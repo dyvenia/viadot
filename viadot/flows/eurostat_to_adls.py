@@ -112,15 +112,15 @@ class EurostatToADLS(Flow):
         return name.replace(" ", "_").lower()
 
     def gen_flow(self) -> Flow:
-        data_frame = EurostatToDF(
+        df = EurostatToDF(
             dataset_code=self.dataset_code,
             params=self.params,
             needed_columns=self.needed_columns,
         )
 
-        data_frame = data_frame.bind(flow=self)
+        df = df.bind(flow=self)
 
-        df_with_metadata = add_ingestion_metadata_task.bind(data_frame, flow=self)
+        df_with_metadata = add_ingestion_metadata_task.bind(df, flow=self)
         dtypes_dict = df_get_data_types_task.bind(df_with_metadata, flow=self)
 
         if self.output_file_extension == ".parquet":

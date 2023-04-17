@@ -104,7 +104,7 @@ class Eurostat(Source):
                 k.casefold(): v.casefold() for k, v in self.params.items()
             }
 
-            # commpering keys and values
+            # comparing keys and values
             non_available_keys = [
                 key
                 for key in params_after_conversion.keys()

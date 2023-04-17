@@ -1,5 +1,6 @@
 from prefect import Task
 from ..sources import Eurostat
+import pandas as pd
 
 
 class EurostatToDF(Task):
@@ -32,9 +33,9 @@ class EurostatToDF(Task):
         self.params = params
         self.needed_columns = needed_columns
 
-        super().__init__(name="EurostatToDF", *args, **kwargs)
+        super().__init__(name="eurostat_to_df", *args, **kwargs)
 
-    def run(self):
+    def run(self) -> pd.DataFrame:
         """Run function for returning unchanged DataFrame, or modify DataFrame and returning if user need specific columns.
 
         Returns:
