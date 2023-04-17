@@ -3,12 +3,12 @@ from ..sources import Eurostat
 
 
 class EurostatToDF(Task):
-    """Task for creating pandas data frame from Eurostat API with optional change of columns.
+    """Task for creating pandas data frame from Eurostat HTTPS REST API (no credentials required)
+    with optional change of columns.
 
     Args:
-        dataset_code (str): The code of eurostat dataset that we would like to upload - ALWAYS REQUIRED
-        time (str): optional url parameter that works as filter - only one year can be given
-        params (dict, optional):
+        dataset_code (str): The code of eurostat dataset that we would like to upload.
+        params (Dict[str], optional):
             A dictionary with optional URL parameters. The key represents the parameter id, while the value is the code
             for a specific parameter, for example 'params = {'unit': 'EUR'}' where "unit" is the parameter that you would like to set
             and "EUR" is the code of the specific parameter. You can add more than one parameter, but only one code per parameter!
@@ -16,7 +16,8 @@ class EurostatToDF(Task):
             This parameter is REQUIRED in most cases to pull a specific dataset from the API.
             Both parameter and code has to provided as a string!
             Defaults to None.
-        needed_columns (list, optional): list of needed names of columns. Names should be given as str's into the list.
+        needed_columns (List[str], optional): list of needed names of columns. Names should be given as str's into the list.
+            Defaults to None.
     """
 
     def __init__(
@@ -34,10 +35,10 @@ class EurostatToDF(Task):
         super().__init__(name="EurostatToDF", *args, **kwargs)
 
     def run(self):
-        """Run function for returning dataset if user want raw data, or modify and returning if user need some changes.
+        """Run function for returning unchanged DataFrame, or modify DataFrame and returning if user need specific columns.
 
         Returns:
-            pd.DataFrame: raw DataFrame or DataFrame with choosen columns.
+            pd.DataFrame: Unchanged DataFrame or DataFrame with only choosen columns.
         """
         try:
             data_frame = Eurostat(

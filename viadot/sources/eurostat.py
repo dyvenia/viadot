@@ -29,8 +29,8 @@ class Eurostat(Source):
         In order to retrive data that you are interested in you have to provide parameters with codes into 'params'.
 
         Args:
-            dataset_code (str): The code of eurostat dataset that we would like to upload - ALWAYS REQUIRED
-            params (dict, optional):
+            dataset_code (str): The code of eurostat dataset that we would like to upload.
+            params (Dict[str], optional):
                 A dictionary with optional URL parameters. The key represents the parameter id, while the value is the code
                 for a specific parameter, for example: params = {'unit': 'EUR'} where "unit" is the parameter that you would like to set
                 and "EUR" is the code of the specific parameter. You can add more than one parameter, but only one code per parameter!
@@ -49,10 +49,10 @@ class Eurostat(Source):
         super().__init__(*args, **kwargs)
 
     def get_parameters_codes(self) -> dict:
-        """Function for getting available parameters with codes from dataset
+        """Function for getting available parameters with codes from dataset.
 
         Returns:
-            dict: key is parameter and value is a list of available codes for specific parameter
+            Dict: Key is parameter and value is a list of available codes for specific parameter.
         """
         try:
             # get JSON
@@ -132,10 +132,10 @@ class Eurostat(Source):
             self.logger.error(f"Failed to make parameters validation.")
 
     def eurostat_dictionary_to_df(self, *signals: list) -> pd.DataFrame:
-        """Function for creating DataFrame from json pulled from Eurostat
+        """Function for creating DataFrame from json pulled from Eurostat.
 
         Returns:
-            pd.DataFrame: with 4 coumns: index, geo, time, indicator
+            pd.DataFrame: With 4 columns: index, geo, time, indicator.
         """
 
         class T_SIGNAL:
@@ -200,7 +200,7 @@ class Eurostat(Source):
            with validation of provided parameters and their codes if needed.
 
         Returns:
-            pd.DataFrame: final DataFrame or raise prefect.logger.error, if issues occur.
+            pd.DataFrame: Final DataFrame or raise prefect.logger.error, if issues occur.
         """
         if self.params is not None:
             try:

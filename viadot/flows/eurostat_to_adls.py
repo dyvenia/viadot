@@ -26,8 +26,8 @@ logger = logging.get_logger(__name__)
 
 
 class EurostatToADLS(Flow):
-    """Flow for downloading data from the Eurostat platform via HTTPS REST to a CSV or Parquet file.
-    Then upload it to Azure Data Lake.
+    """Flow for downloading data from the Eurostat platform via HTTPS REST API (no credentials required)
+    to a CSV or Parquet file. Then upload it to Azure Data Lake.
     """
 
     def __init__(
@@ -49,8 +49,8 @@ class EurostatToADLS(Flow):
         """
         Args:
             name (str): The name of the flow.
-            dataset_code(str): The code of eurostat dataset that has to be upload - REQUIRED
-            params (dict, optional):
+            dataset_code(str): The code of eurostat dataset that has to be upload.
+            params (Dict[str], optional):
                 A dictionary with optional URL parameters. The key represents the parameter id, while the value is the code
                 for a specific parameter, for example 'params = {'unit': 'EUR'}' where "unit" is the parameter that you would like to set
                 and "EUR" is the code of the specific parameter. You can add more than one parameter, but only one code per parameter!
@@ -58,9 +58,8 @@ class EurostatToADLS(Flow):
                 This parameter is REQUIRED in most cases to pull a specific dataset from the API.
                 Both parameter and code has to provided as a string!
                 Defaults to None.
-            nedeed_columns (list): List of columns that are needed from DataFrame - works as filter,
-                because we are pulling data frame with most of the colums.
-
+            nedeed_columns (List[str], optional): List of columns that are needed from DataFrame - works as filter,
+                because we are pulling data frame with most of the columns. Defaults to None.
             output_file_extension (str, optional): Output file extension - to allow selection of .csv for data
                     which is not easy to handle with parquet. Defaults to ".parquet".
             adls_dir_path (str, optional): Azure Data Lake destination folder/catalog path. Defaults to None.
