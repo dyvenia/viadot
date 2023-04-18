@@ -54,11 +54,18 @@ class Eurostat(Source):
         Returns:
             Dict: Key is parameter and value is a list of available codes for specific parameter.
         """
+        data = None
+
         try:
             # get JSON
             response = handle_api_response(self.url)
             data = response.json()
+        except:
+            self.logger.error(
+                f"Failed to fetch data for {self.dataset_code}, please check correctness of dataset code!"
+            )
 
+        if data is not None:
             # getting list of available parameters
             available_params = data["id"]
 
@@ -71,30 +78,28 @@ class Eurostat(Source):
                 if key in dimension:
                     codes = list(dimension[key]["category"]["index"].keys())
                     params_and_codes[key] = codes
-                else:
-                    pass
             return params_and_codes
-
-        except:
-            self.logger.error(
-                f"Failed to fetch data for {self.dataset_code}, please check correctness of dataset code!"
-            )
+        else:
+            return None
 
     def make_params_validation(self):
         """Function for validation of given parameters in comparison
         to parameteres and their codes from JSON.
         """
+
+        # Validation of type of values
         try:
-            # Validation of type of values
-            if not all(isinstance(val, str) for val in self.params.values()):
-                self.logger.error(
-                    "You can provide only one code per one parameter as 'str' in params!\n"
-                    "CORRECT: params = {'unit': 'EUR'} | INCORRECT params = {'unit': ['EUR', 'USD', 'PLN']}"
-                )
-                raise
+            if all(isinstance(val, str) for val in self.params.values()):
+                pass
+        except:
+            self.logger.error(
+                "You can provide only one code per one parameter as 'str' in params!\n"
+                "CORRECT: params = {'unit': 'EUR'} | INCORRECT: params = {'unit': ['EUR', 'USD', 'PLN']}"
+            )
 
-            key_codes = self.get_parameters_codes()
+        key_codes = self.get_parameters_codes()
 
+        if key_codes is not None:
             # Conversion keys and values on lowwer cases by using casefold
             key_codes_after_conversion = {
                 k.casefold(): [v_elem.casefold() for v_elem in v]
@@ -128,8 +133,6 @@ class Eurostat(Source):
                     f"Parameters codes: '{' | '.join(non_available_codes)}' are not available. Please check your spelling!\n"
                     f"You can find everything via link: https://ec.europa.eu/eurostat/databrowser/view/{self.dataset_code}/default/table?lang=en"
                 )
-        except:
-            self.logger.error(f"Failed to make parameters validation.")
 
     def eurostat_dictionary_to_df(self, *signals: list) -> pd.DataFrame:
         """Function for creating DataFrame from json pulled from Eurostat.
@@ -202,22 +205,26 @@ class Eurostat(Source):
         Returns:
             pd.DataFrame: Final DataFrame or raise prefect.logger.error, if issues occur.
         """
+        data = None
+
         if self.params is not None:
             try:
                 response = handle_api_response(self.url, params=self.params)
-                data_dictionary = response.json()
-                data_frame = self.eurostat_dictionary_to_df(
-                    ["geo", "time"], data_dictionary
-                )
-                if data_frame.empty:
-                    raise
+                data = response.json()
+                data_frame = self.eurostat_dictionary_to_df(["geo", "time"], data)
 
+                if data_frame.empty:
+                    self.make_params_validation()
+            except:
+                self.make_params_validation()
+
+            if data is not None and not data_frame.empty:
                 # merging data_frame with label and last updated date
                 label_col = pd.Series(
-                    str(data_dictionary["label"]), index=data_frame.index, name="label"
+                    str(data["label"]), index=data_frame.index, name="label"
                 )
                 last_updated__col = pd.Series(
-                    str(data_dictionary["updated"]),
+                    str(data["updated"]),
                     index=data_frame.index,
                     name="updated",
                 )
@@ -225,32 +232,30 @@ class Eurostat(Source):
                     [data_frame, label_col, last_updated__col], axis=1
                 )
                 return data_frame
-
-            except:
-                self.make_params_validation()
+            else:
+                raise ValueError("DataFrame is empty!")
         else:
             try:
                 response = handle_api_response(self.url)
-                data_dictionary = response.json()
-                data_frame = self.eurostat_dictionary_to_df(
-                    ["geo", "time"], data_dictionary
-                )
-
-                # merging data_frame with label and last updated date
-                label_col = pd.Series(
-                    str(data_dictionary["label"]), index=data_frame.index, name="label"
-                )
-                last_updated__col = pd.Series(
-                    str(data_dictionary["updated"]),
-                    index=data_frame.index,
-                    name="updated",
-                )
-                data_frame = pd.concat(
-                    [data_frame, label_col, last_updated__col], axis=1
-                )
-
-                return data_frame
+                data = response.json()
+                data_frame = self.eurostat_dictionary_to_df(["geo", "time"], data)
             except:
                 self.logger.error(
                     f"Failed to fetch data for {self.dataset_code}, please check correctness of dataset code!"
                 )
+
+            if data is not None:
+                # merging data_frame with label and last updated date
+                label_col = pd.Series(
+                    str(data["label"]), index=data_frame.index, name="label"
+                )
+                last_updated__col = pd.Series(
+                    str(data["updated"]),
+                    index=data_frame.index,
+                    name="updated",
+                )
+                data_frame = pd.concat(
+                    [data_frame, label_col, last_updated__col], axis=1
+                )
+
+                return data_frame

@@ -41,41 +41,37 @@ class EurostatToDF(Task):
         Returns:
             pd.DataFrame: Unchanged DataFrame or DataFrame with only choosen columns.
         """
-        try:
-            data_frame = Eurostat(
-                self.dataset_code, self.params
-            ).get_data_frame_from_response()
 
-            if self.needed_columns is None:
-                return data_frame
-            else:
-                columns_list = data_frame.columns.tolist()
-                columns_list = [str(column).casefold() for column in columns_list]
-                needed_column_after_validation = []
-                non_available_columns = []
+        data_frame = Eurostat(
+            self.dataset_code, self.params
+        ).get_data_frame_from_response()
 
-                for column in self.needed_columns:
-                    # Checking if user column is in our dataframe column list
-                    column = str(column).casefold()
+        if self.needed_columns is None:
+            return data_frame
+        else:
+            columns_list = data_frame.columns.tolist()
+            columns_list = [str(column).casefold() for column in columns_list]
+            needed_column_after_validation = []
+            non_available_columns = []
 
-                    if column in columns_list:
-                        needed_column_after_validation.append(column)
-                    else:
-                        non_available_columns.append(column)
+            for column in self.needed_columns:
+                # Checking if user column is in our dataframe column list
+                column = str(column).casefold()
 
-                # Error logger
-                if non_available_columns:
-                    self.logger.error(
-                        f"Name of the columns: '{' | '.join(non_available_columns)}' are not in DataFrame. Please check spelling!\n"
-                        f"Available columns: {' | '.join(columns_list)}"
-                    )
-                new_df = data_frame.loc[:, needed_column_after_validation]
-
-                if new_df.empty:
-                    return None
+                if column in columns_list:
+                    needed_column_after_validation.append(column)
                 else:
-                    return new_df
-        except:
-            self.logger.error(
-                "EurostatToDF.run() method failed. Please, check your parameters."
-            )
+                    non_available_columns.append(column)
+
+            # Error logger
+            if non_available_columns:
+                self.logger.error(
+                    f"Name of the columns: '{' | '.join(non_available_columns)}' are not in DataFrame. Please check spelling!\n"
+                    f"Available columns: {' | '.join(columns_list)}"
+                )
+            new_df = data_frame.loc[:, needed_column_after_validation]
+
+            if new_df.empty:
+                raise ValueError("DataFrame is empty")
+            else:
+                return new_df
