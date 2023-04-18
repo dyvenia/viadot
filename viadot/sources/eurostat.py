@@ -9,6 +9,8 @@ class Eurostat(Source):
     Class for creating instance of Eurostat connector to REST API by HTTPS response (no credentials required).
     """
 
+    base_url = "https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/"
+
     def __init__(
         self,
         dataset_code: str,
@@ -42,10 +44,7 @@ class Eurostat(Source):
 
         self.dataset_code = dataset_code
         self.params = params
-        self.url = (
-            f"https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/"
-            f"{self.dataset_code}?format=JSON&lang=EN"
-        )
+        self.url = f"{self.base_url}{self.dataset_code}?format=JSON&lang=EN"
         super().__init__(*args, **kwargs)
 
     def get_parameters_codes(self) -> dict:
@@ -138,7 +137,7 @@ class Eurostat(Source):
         """Function for creating DataFrame from json pulled from Eurostat.
 
         Returns:
-            pd.DataFrame: With 4 columns: index, geo, time, indicator.
+            pd.DataFrame: DF with 4 columns: index, geo, time, indicator.
         """
 
         class T_SIGNAL:

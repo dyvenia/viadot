@@ -55,7 +55,7 @@ class EurostatToDF(Task):
             non_available_columns = []
 
             for column in self.needed_columns:
-                # Checking if user column is in our dataframe column list
+                # Checking if user columns are in our dataframe columns list
                 column = str(column).casefold()
 
                 if column in columns_list:
