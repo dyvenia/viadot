@@ -85,16 +85,17 @@ class Eurostat(Source):
         """Function for validation of given parameters in comparison
         to parameteres and their codes from JSON.
         """
-
         # Validation of type of values
-        try:
-            if all(isinstance(val, str) for val in self.params.values()):
-                pass
-        except:
-            self.logger.error(
-                "You can provide only one code per one parameter as 'str' in params!\n"
-                "CORRECT: params = {'unit': 'EUR'} | INCORRECT: params = {'unit': ['EUR', 'USD', 'PLN']}"
-            )
+        if self.params is not None:
+            try:
+                if all(isinstance(val, str) for val in self.params.values()):
+                    pass
+            except:
+                self.logger.error(
+                    "You can provide only one code per one parameter as 'str' in params!\n"
+                    "CORRECT: params = {'unit': 'EUR'} | INCORRECT: params = {'unit': ['EUR', 'USD', 'PLN']}"
+                )
+                raise ValueError("Wrong structure of params!")
 
         key_codes = self.get_parameters_codes()
 
@@ -137,7 +138,7 @@ class Eurostat(Source):
         """Function for creating DataFrame from json pulled from Eurostat.
 
         Returns:
-            pd.DataFrame: DF with 4 columns: index, geo, time, indicator.
+            pd.DataFrame: With 4 columns: index, geo, time, indicator.
         """
 
         class T_SIGNAL:
@@ -204,6 +205,7 @@ class Eurostat(Source):
         Returns:
             pd.DataFrame: Final DataFrame or raise prefect.logger.error, if issues occur.
         """
+
         data = None
 
         if self.params is not None:
@@ -242,6 +244,7 @@ class Eurostat(Source):
                 self.logger.error(
                     f"Failed to fetch data for {self.dataset_code}, please check correctness of dataset code!"
                 )
+                raise ValueError("DataFrame is empty!")
 
             if data is not None:
                 # merging data_frame with label and last updated date
@@ -256,5 +259,4 @@ class Eurostat(Source):
                 data_frame = pd.concat(
                     [data_frame, label_col, last_updated__col], axis=1
                 )
-
                 return data_frame

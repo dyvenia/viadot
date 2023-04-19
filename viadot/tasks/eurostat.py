@@ -55,7 +55,7 @@ class EurostatToDF(Task):
             non_available_columns = []
 
             for column in self.needed_columns:
-                # Checking if user columns are in our dataframe columns list
+                # Checking if user column is in our dataframe column list
                 column = str(column).casefold()
 
                 if column in columns_list:
@@ -69,9 +69,7 @@ class EurostatToDF(Task):
                     f"Name of the columns: '{' | '.join(non_available_columns)}' are not in DataFrame. Please check spelling!\n"
                     f"Available columns: {' | '.join(columns_list)}"
                 )
-            new_df = data_frame.loc[:, needed_column_after_validation]
+                raise ValueError("Provided columns are not available!")
 
-            if new_df.empty:
-                raise ValueError("DataFrame is empty")
-            else:
-                return new_df
+            new_df = data_frame.loc[:, needed_column_after_validation]
+            return new_df
