@@ -674,6 +674,8 @@ class SAPRFC(Source):
                     row_index, data_raw, start = detect_extra_rows(
                         row_index, data_raw, chunk, fields
                     )
+                else:
+                    start = False
 
                 data_raw = catch_extra_separators(
                     data_raw, record_key, sep, fields, self.replacement
