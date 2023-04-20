@@ -381,3 +381,14 @@ specified in the `SUPERMETRICS_DEFAULT_USER` secret
 
 ### Fixed
 - Fix `AzureBlobStorage`'s `to_storage()` method is missing the final upload blob part
+
+## [Unreleased] - 2023-04-20
+### Added
+- Sources:
+  - `Supermetrics` 
+- Tests:
+  - unit
+    - `test_supermetrics`
+### Changed 
+  - config.py
+  - Issue detected: Config.py/get_source_config within Viadot2 possible bug #670
