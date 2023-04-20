@@ -520,3 +520,6 @@ specified in the `SUPERMETRICS_DEFAULT_USER` secret
 
 ### Fixed
 - Fix `AzureBlobStorage`'s `to_storage()` method is missing the final upload blob part
+
+### Added
+- added pre-commit action and hook
