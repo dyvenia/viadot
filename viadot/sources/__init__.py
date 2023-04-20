@@ -6,6 +6,7 @@ from .redshift_spectrum import RedshiftSpectrum
 from .s3 import S3
 from .sharepoint import Sharepoint
 from .genesys import Genesys
+from .outlook import Outlook
 
 try:
     from .sap_rfc import SAPRFC
