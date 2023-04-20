@@ -44,6 +44,8 @@ class Eurostat(Source):
 
         self.dataset_code = dataset_code
         self.params = params
+        if not isinstance(self.params, dict) and self.params is not None:
+            raise TypeError("Params should be a dictionary.")
         self.url = f"{self.base_url}{self.dataset_code}?format=JSON&lang=EN"
         super().__init__(*args, **kwargs)
 
@@ -86,16 +88,16 @@ class Eurostat(Source):
         to parameteres and their codes from JSON.
         """
         # Validation of type of values
-        if self.params is not None:
-            try:
-                if all(isinstance(val, str) for val in self.params.values()):
-                    pass
-            except:
-                self.logger.error(
-                    "You can provide only one code per one parameter as 'str' in params!\n"
-                    "CORRECT: params = {'unit': 'EUR'} | INCORRECT: params = {'unit': ['EUR', 'USD', 'PLN']}"
-                )
-                raise ValueError("Wrong structure of params!")
+        try:
+            for key, val in self.params.items():
+                if not isinstance(key, str) or not isinstance(val, str):
+                    self.logger.error(
+                        "You can provide only one code per one parameter as 'str' in params!\n"
+                        "CORRECT: params = {'unit': 'EUR'} | INCORRECT: params = {'unit': ['EUR', 'USD', 'PLN']}"
+                    )
+                    raise ValueError("Wrong structure of params!")
+        except ValueError as e:
+            raise e
 
         key_codes = self.get_parameters_codes()
 
@@ -215,8 +217,8 @@ class Eurostat(Source):
                 data_frame = self.eurostat_dictionary_to_df(["geo", "time"], data)
 
                 if data_frame.empty:
-                    self.make_params_validation()
-            except:
+                    raise Exception
+            except Exception:
                 self.make_params_validation()
 
             if data is not None and not data_frame.empty:
