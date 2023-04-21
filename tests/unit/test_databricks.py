@@ -233,6 +233,44 @@ def test_replace_different_column_schema(databricks):
     databricks.drop_schema(TEST_SCHEMA)
 
 
+def test_snakecase_column_names(databricks):
+
+    assert not databricks._check_if_table_exists(schema=TEST_SCHEMA, table=TEST_TABLE)
+
+    origin_to_df = databricks.to_df.__wrapped__
+
+    databricks.create_schema(TEST_SCHEMA)
+
+    TEST_DF["Column TO   SNake   case"] = "test"
+
+    # Creating a table, testing the case when the table does not exist.
+    created = databricks.create_table_from_pandas(
+        schema=TEST_SCHEMA, table=TEST_TABLE, df=TEST_DF, if_exists="replace"
+    )
+
+    assert created is True
+    retrieved_value = origin_to_df(
+        databricks, query=f"SELECT column_to___snake___case FROM {FQN}"
+    )
+    assert list(retrieved_value) == ["column_to___snake___case"]
+
+    TEST_DF["Column TO   SNake   case 22"] = "test22"
+
+    # Overwriting a table, testing the case when the table already exists.
+    updated = databricks.create_table_from_pandas(
+        schema=TEST_SCHEMA, table=TEST_TABLE, df=TEST_DF, if_exists="replace"
+    )
+    assert updated is True
+
+    retrieved_value_update = origin_to_df(
+        databricks, query=f"SELECT column_to___snake___case_22 FROM {FQN}"
+    )
+    assert list(retrieved_value_update) == ["column_to___snake___case_22"]
+
+    databricks.drop_table(schema=TEST_SCHEMA, table=TEST_TABLE)
+    databricks.drop_schema(TEST_SCHEMA)
+
+
 # @pytest.mark.dependency(depends=["test_create_table", "test_drop_table", "test_to_df"])
 # def test_insert_into_append(databricks):
 
