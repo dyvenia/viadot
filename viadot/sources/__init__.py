@@ -21,7 +21,9 @@ from .epicor import Epicor
 from .sql_server import SQLServer
 from .sqlite import SQLite
 from .mindful import Mindful
+from .customer_gauge import CustomerGauge
 
 # APIS
 from .uk_carbon_intensity import UKCarbonIntensity
 from .eurostat import Eurostat
+from .hubspot import Hubspot
