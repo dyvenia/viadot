@@ -331,7 +331,7 @@ class Databricks(Source):
 
         self.logger.info(f"Table {fqn} has been appended successfully.")
 
-    def _full_refresh(self, schema: str, table: str, df: pd.DataFrame):
+    def _full_refresh(self, schema: str, table: str, df: pd.DataFrame) -> bool:
         """
         Overwrite an existing table with data from a Pandas DataFrame.
 
@@ -350,8 +350,11 @@ class Databricks(Source):
 
         databricks.insert_into( df=df, schema="viadot_test", table="test", mode="replace")
         ```
+        Returns:
+            bool: True if the table has been refreshed successfully, False otherwise.
         """
         fqn = f"{schema}.{table}"
+        df = df_snakecase_column_names(df)
         data = self._pandas_df_to_spark_df(df)
         data.write.format("delta").mode("overwrite").option(
             "overwriteSchema", "true"
