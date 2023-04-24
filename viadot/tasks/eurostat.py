@@ -17,7 +17,7 @@ class EurostatToDF(Task):
             This parameter is REQUIRED in most cases to pull a specific dataset from the API.
             Both parameter and code has to provided as a string!
             Defaults to None.
-        needed_columns (List[str], optional): list of needed names of columns. Names should be given as str's into the list.
+        requested_columns (List[str], optional): list of needed names of columns. Names should be given as str's into the list.
             Defaults to None.
     """
 
@@ -25,13 +25,18 @@ class EurostatToDF(Task):
         self,
         dataset_code: str,
         params: dict = None,
-        needed_columns: list = None,
+        requested_columns: list = None,
         *args,
         **kwargs,
     ):
         self.dataset_code = dataset_code
         self.params = params
-        self.needed_columns = needed_columns
+        self.requested_columns = requested_columns
+        if (
+            not isinstance(self.requested_columns, list)
+            and self.requested_columns is not None
+        ):
+            raise TypeError("Requested columns should be provided as list of strings.")
 
         super().__init__(name="eurostat_to_df", *args, **kwargs)
 
@@ -46,7 +51,7 @@ class EurostatToDF(Task):
             self.dataset_code, self.params
         ).get_data_frame_from_response()
 
-        if self.needed_columns is None:
+        if self.requested_columns is None:
             return data_frame
         else:
             columns_list = data_frame.columns.tolist()
@@ -54,7 +59,7 @@ class EurostatToDF(Task):
             needed_column_after_validation = []
             non_available_columns = []
 
-            for column in self.needed_columns:
+            for column in self.requested_columns:
                 # Checking if user column is in our dataframe column list
                 column = str(column).casefold()
 

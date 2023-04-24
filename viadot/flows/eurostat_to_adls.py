@@ -35,7 +35,7 @@ class EurostatToADLS(Flow):
         name: str,
         dataset_code: str,
         params: dict = None,
-        needed_columns: list = None,
+        requested_columns: list = None,
         output_file_extension: str = ".parquet",
         adls_dir_path: str = None,
         local_file_path: str = None,
@@ -58,7 +58,7 @@ class EurostatToADLS(Flow):
                 This parameter is REQUIRED in most cases to pull a specific dataset from the API.
                 Both parameter and code has to provided as a string!
                 Defaults to None.
-            nedeed_columns (List[str], optional): List of columns that are needed from DataFrame - works as filter,
+            requested_columns (List[str], optional): List of columns that are needed from DataFrame - works as filter,
                 because we are pulling data frame with most of the columns. Defaults to None.
             output_file_extension (str, optional): Output file extension - to allow selection of .csv for data
                     which is not easy to handle with parquet. Defaults to ".parquet".
@@ -75,7 +75,7 @@ class EurostatToADLS(Flow):
         # EurostatToDF
         self.dataset_code = dataset_code
         self.params = params
-        self.needed_columns = needed_columns
+        self.requested_columns = requested_columns
 
         # AzureDataLakeUpload
         self.overwrite = overwrite_adls
@@ -115,7 +115,7 @@ class EurostatToADLS(Flow):
         df = EurostatToDF(
             dataset_code=self.dataset_code,
             params=self.params,
-            needed_columns=self.needed_columns,
+            requested_columns=self.requested_columns,
         )
 
         df = df.bind(flow=self)
