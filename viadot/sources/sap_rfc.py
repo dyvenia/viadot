@@ -274,7 +274,7 @@ class SAPRFC(Source):
         self.func = func
         self.rfc_total_col_width_character_limit = rfc_total_col_width_character_limit
         # remove repeated reference columns
-        self.rfc_reference_column = list(np.unique(np.array(rfc_reference_column)))
+        self.rfc_unique_id = list(set(rfc_unique_id))
 
     @property
     def con(self) -> pyrfc.Connection:
