@@ -113,7 +113,7 @@ def detect_extra_rows(
     elif data_raw.shape[0] != row_index:
         data_raw = data_raw[:row_index]
         logger.warning(
-            f"New rows were generated during the execution of the script. The table is truncated to the number of rows for the first chunk"
+            f"New rows were generated during the execution of the script. The table is truncated to the number of rows for the first chunk."
         )
 
     return row_index, data_raw, start
@@ -162,7 +162,7 @@ def replace_separator_in_data(
 def catch_extra_separators(
     data_raw: np.array, record_key: str, sep: str, fields: List[str], replacement: str
 ) -> np.array:
-    """Function to replace extra separators in every row of the
+    """Function to replace extra separators in every row of the table.
 
     Args:
         data_raw (np.array): Array with the data retrieve from SAP table.

@@ -118,7 +118,7 @@ class SAPRFCToDF(Task):
             raise ValueError("Please provide the query.")
         if rfc_reference_column:
             self.logger.warning(
-                "Reference column added. Remember, these columns MUST BE UNIQUE or the table will be malformed."
+                "If the column/set of columns are not unique the table will be malformed."
             )
         sap = SAPRFC(
             sep=sep,
