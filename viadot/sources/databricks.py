@@ -230,6 +230,7 @@ class Databricks(Source):
         schema: str = None,
         if_empty: Literal["warn", "skip", "fail"] = "warn",
         if_exists: Literal["replace", "skip", "fail"] = "fail",
+        snakecase_column_names: bool = True,
     ) -> bool:
         """
         Create a table using a pandas `DataFrame`.
@@ -242,6 +243,8 @@ class Databricks(Source):
                 Defaults to 'warn'.
             if_exists (Literal, optional): What to do if the table already exists.
                 Defaults to 'fail'.
+            snakecase_column_names (bool, optional): Whether to convert column names to snake case.
+                Defaults to True.
 
         Example:
         ```python
@@ -255,6 +258,8 @@ class Databricks(Source):
             df=df, schema="viadot_test", table="test"
         )
         ```
+        Returns:
+            bool: True if the table was created successfully, False otherwise.
         """
 
         if df.empty:
@@ -262,6 +267,9 @@ class Databricks(Source):
 
         if schema is None:
             schema = Databricks.DEFAULT_SCHEMA
+
+        if snakecase_column_names:
+            df = df_snakecase_column_names(df)
 
         fqn = f"{schema}.{table}"
         success_message = f"Table {fqn} has been created successfully."
@@ -278,7 +286,6 @@ class Databricks(Source):
                 success_message = f"Table {fqn} has been overwritten successfully."
                 result = True
         else:
-            df = df_snakecase_column_names(df)
             sdf = self._pandas_df_to_spark_df(df)
             sdf.createOrReplaceTempView("tmp_view")
 
@@ -331,7 +338,7 @@ class Databricks(Source):
 
         self.logger.info(f"Table {fqn} has been appended successfully.")
 
-    def _full_refresh(self, schema: str, table: str, df: pd.DataFrame):
+    def _full_refresh(self, schema: str, table: str, df: pd.DataFrame) -> bool:
         """
         Overwrite an existing table with data from a Pandas DataFrame.
 
@@ -350,6 +357,8 @@ class Databricks(Source):
 
         databricks.insert_into( df=df, schema="viadot_test", table="test", mode="replace")
         ```
+        Returns:
+            bool: True if the table has been refreshed successfully, False otherwise.
         """
         fqn = f"{schema}.{table}"
         data = self._pandas_df_to_spark_df(df)

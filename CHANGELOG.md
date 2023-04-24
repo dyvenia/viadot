@@ -16,6 +16,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added `RedshiftSpectrum` source to the library.
 - Added `upload()` and `download()` methods to `S3` source.
 - Added `Genesys` source to library.
+- Fixed a bug in `Databricks.create_table_from_pandas()`. The function that converts column names to snake_case was not used in every case. (#672)
+
 
 ### Changed
 - Added `SQLServerToDF` task
@@ -25,7 +27,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added rollback feature to `Databricks` source.
 - Changed all Prefect logging instances in the `sources` directory to native Python logging.
 - Changed `rm()`, `from_df()`, `to_df()` methods in `S3` Source
-- Changed `get_request()` to `handle_api_request()` in `utils.py`. 
+- Changed `get_request()` to `handle_api_request()` in `utils.py`.
 
 ### Removed
 - Removed the `env` param from `Databricks` source, as user can now store multiple configs for the same source using different config keys.
