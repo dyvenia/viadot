@@ -127,7 +127,7 @@ def replace_separator_in_data(
     sep: str,
     replacement: str,
 ) -> np.array:
-    """Fundtion to replace the extra separator in every row of the data_raw numpy array.
+    """Function to replace the extra separator in every row of the data_raw numpy array.
 
     Args:
         data_raw (np.array): Array with the data retrieve from SAP table.
