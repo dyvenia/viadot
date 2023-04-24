@@ -237,7 +237,7 @@ def test_snakecase_column_names(databricks):
 
     assert not databricks._check_if_table_exists(schema=TEST_SCHEMA, table=TEST_TABLE)
 
-    origin_to_df = databricks.to_df.__wrapped__
+    to_df_no_metadata_cols = databricks.to_df.__wrapped__
 
     databricks.create_schema(TEST_SCHEMA)
 
@@ -249,7 +249,7 @@ def test_snakecase_column_names(databricks):
     )
 
     assert created is True
-    retrieved_value = origin_to_df(
+    retrieved_value = to_df_no_metadata_cols(
         databricks, query=f"SELECT column_to___snake___case FROM {FQN}"
     )
     assert list(retrieved_value) == ["column_to___snake___case"]
@@ -262,7 +262,7 @@ def test_snakecase_column_names(databricks):
     )
     assert updated is True
 
-    retrieved_value_update = origin_to_df(
+    retrieved_value_update = to_df_no_metadata_cols(
         databricks, query=f"SELECT column_to___snake___case_22 FROM {FQN}"
     )
     assert list(retrieved_value_update) == ["column_to___snake___case_22"]
