@@ -16,7 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added `RedshiftSpectrum` source to the library.
 - Added `upload()` and `download()` methods to `S3` source.
 - Added `Genesys` source to library.
-- Fixed bug in `Databricks._full_refresh()`.The function replacing column names with snake_case was not used. (#672)
+- Fixed a bug in `Databricks.create_table_from_pandas()`. The function that converts column names to snake_case was not used in every case. (#672)
 
 
 ### Changed
