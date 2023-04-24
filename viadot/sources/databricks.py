@@ -244,6 +244,7 @@ class Databricks(Source):
             if_exists (Literal, optional): What to do if the table already exists.
                 Defaults to 'fail'.
             snakecase_column_names (bool, optional): Whether to convert column names to snake case.
+                Defaults to True.
 
         Example:
         ```python
