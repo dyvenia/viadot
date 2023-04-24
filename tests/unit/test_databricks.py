@@ -237,6 +237,7 @@ def test_snakecase_column_names(databricks):
 
     assert not databricks._check_if_table_exists(schema=TEST_SCHEMA, table=TEST_TABLE)
 
+    # Calling the to_df() method without the wrapper adding metadata.
     to_df_no_metadata_cols = databricks.to_df.__wrapped__
 
     databricks.create_schema(TEST_SCHEMA)
