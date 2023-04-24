@@ -33,16 +33,18 @@ def handle_api_response(
     timeout: tuple = (3.05, 60 * 30),
     method: Literal["GET", "POST", "DELETE"] = "GET",
     body: str = None,
+    verify: bool = True,
 ) -> requests.models.Response:
     """Handle and raise Python exceptions during request with retry strategy for specyfic status.
     Args:
-        url (str): the URL which trying to connect.
-        auth (tuple, optional): authorization information. Defaults to None.
-        params (Dict[str, Any], optional): the request params also includes parameters such as the content type. Defaults to None.
-        headers: (Dict[str, Any], optional): the request headers. Defaults to None.
-        timeout (tuple, optional): the request times out. Defaults to (3.05, 60 * 30).
+        url (str): The URL which trying to connect.
+        auth (tuple, optional): Authorization information. Defaults to None.
+        params (Dict[str, Any], optional): The request params also includes parameters such as the content type. Defaults to None.
+        headers: (Dict[str, Any], optional): The request headers. Defaults to None.
+        timeout (tuple, optional): The request times out. Defaults to (3.05, 60 * 30).
         method (Literal ["GET", "POST","DELETE"], optional): REST API method to use. Defaults to "GET".
         body (str, optional): Data to send using POST method. Defaults to None.
+        verify (bool, optional): Whether to verify cerificates. Defaults to True.
     Raises:
         ValueError: raises when 'method' parameter value hasn't been specified
         ReadTimeout: stop waiting for a response after a given number of seconds with the timeout parameter.
@@ -74,6 +76,7 @@ def handle_api_response(
             timeout=timeout,
             data=body,
             method=method,
+            verify=verify,
         ) as response:
             response.raise_for_status()
     except ReadTimeout as e:
@@ -83,7 +86,7 @@ def handle_api_response(
         raise APIError(msg)
     except HTTPError as e:
         raise APIError(
-            f"The API call to {url} failed. "
+            f"The API call to {url} failed. {e} "
             "Perhaps your account credentials need to be refreshed?",
         ) from e
     except (ConnectionError, Timeout) as e:
