@@ -88,7 +88,7 @@ def trim_where(where: str) -> Tuple[str, OrderedDictType[str, str]]:
 def detect_extra_rows(
     row_index: int, data_raw: np.array, chunk: int, fields: List[str]
 ) -> Union[int, np.array, bool]:
-    """check if, in between calls to the SAP table, the number of rows have increased.
+    """Check if, in between calls to the SAP table, the number of rows have increased.
         If so, remove the last rows added, to fit the size of the previous columns.
 
     Args:
