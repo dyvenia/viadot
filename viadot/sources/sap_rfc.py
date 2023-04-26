@@ -507,5 +507,5 @@ class SAPRFC(Source):
                 if col not in self.select_columns_aliased
             ]
             df.drop(cols_to_drop, axis=1, inplace=True)
-
+        self.con.close()
         return df
