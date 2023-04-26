@@ -23,8 +23,8 @@ class ExchangeRates(Source):
     def __init__(
         self,
         currency: Currency = "USD",
-        start_date: str = datetime.today().strftime("%Y-%m-%d"),
-        end_date: str = datetime.today().strftime("%Y-%m-%d"),
+        start_date: str = None,
+        end_date: str = None,
         symbols=[
             "USD",
             "EUR",
@@ -63,8 +63,12 @@ class ExchangeRates(Source):
         super().__init__(*args, credentials=credentials, **kwargs)
 
         self.currency = currency
-        self.start_date = start_date
-        self.end_date = end_date
+        self.start_date = (
+            datetime.today().strftime("%Y-%m-%d") if start_date is None else start_date
+        )
+        self.end_date = (
+            datetime.today().strftime("%Y-%m-%d") if end_date is None else end_date
+        )
         self.symbols = symbols
         self._validate_symbols(self.symbols, self.currency)
 
