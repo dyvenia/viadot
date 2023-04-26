@@ -49,8 +49,8 @@ class ExchangeRates(Source):
         Args:
             currency (Currency, optional): Base currency to which prices of searched currencies are related. Defaults to "USD".
             start_date (str, optional): Initial date for data search. Data range is start_date ->
-                end_date, supported format 'yyyy-mm-dd'. Defaults to datetime.today().strftime("%Y-%m-%d").
-            end_date (str, optional): See above. Defaults to datetime.today().strftime("%Y-%m-%d").
+                end_date, supported format 'yyyy-mm-dd'. If None, defaults to the current date.
+            end_date (str, optional): See above. If None, defaults to the current date.
             symbols (list, optional): List of currencies for which exchange rates from base currency will be fetch.
                 Defaults to [ "USD", "EUR", "GBP", "CHF", "PLN", "DKK", "COP", "CZK", "SEK", "NOK", "ISK" ], Only ISO codes.
             credentials (Dict[str, Any], optional): 'api_key'. Defaults to None.
