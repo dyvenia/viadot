@@ -64,7 +64,7 @@ class RedshiftSpectrum(Source):
         search_text: str = None,
     ) -> List[str]:
         """
-        Returns a list of tables in a Glue database.
+        Returns a list of tables in Amazon Redshift Spectrum database.
 
         Args:
             database (str, optional): Database name.
@@ -106,11 +106,11 @@ class RedshiftSpectrum(Source):
         remove_files: bool = True,
     ) -> None:
         """
-        Deletes table from AWS Glue database and related file from Amazon S3, if specified.
+        Deletes table from Amazon Redshift Spectrum database, including related file from Amazon S3, if specified.
 
         Args:
-            database (str): AWS Glue catalog database name.
-            table (str): AWS Glue catalog table name.
+            database (str): Amazon Redshift Spectrum catalog name.
+            table (str): Amazon Redshift Spectrum table name.
             remove_files (bool, optional): If True, Amazon S3 file related to the table
                 will be removed. Defaults to True.
         """
@@ -133,28 +133,28 @@ class RedshiftSpectrum(Source):
         database: str,
         table: str,
         extension: str = ".parquet",
-        if_exists: Literal["overwrite", "append"] = "overwrite",
+        if_exists: Literal["overwrite", "overwrite_partitions", "append"] = "overwrite",
         partition_cols: List[str] = None,
         index: bool = False,
         compression: str = None,
         sep: str = ",",
-        description: str = "test",
+        description: str = None,
     ) -> None:
         """
-        Upload a pandas `DataFrame` to a csv or parquet file.
+        Upload a pandas `DataFrame` to a csv or parquet file in Amazon Redshift Spectrum.
 
         Args:
-            df (pd.DataFrame): Pandas DataFrame.
-            to_path (str): Path to a S3 folder where the table will be located.
+            df (pd.DataFrame): Pandas `DataFrame`.
+            to_path (str): Path to Amazon S3 folder where the table will be located.
                 Defaults to None.
             extension (str): Required file type. Accepted file formats are 'csv'
                 and 'parquet'.
-            database (str): AWS Glue catalog database name.
-            table (str): AWS Glue catalog table name.
+            database (str): Amazon Redshift Spectrum catalog name.
+            table (str): Amazon Redshift Spectrum table name.
             partition_cols (List[str]): List of column names that will be used to
                 create partitions. Only takes effect if dataset=True.
             if_exists (str, optional): 'overwrite' to recreate any possible existing
-                table or 'append' to keep any possible existing table. Defaults to
+                table, 'overwrite_partitions'  or 'append' to keep any possible existing table. Defaults to
                 overwrite.
             index (bool, optional): Write row names (index). Defaults to False.
             compression (str, optional): Compression style (None, snappy, gzip, zstd).
@@ -196,11 +196,11 @@ class RedshiftSpectrum(Source):
         table: str,
     ) -> pd.DataFrame:
         """
-        Reads a Spectrum table to a pandas `DataFrame`.
+        Reads Amazon Redshift Spectrum table to a pandas `DataFrame`.
 
         Args:
-            database (str): AWS Glue catalog database name.
-            table (str): AWS Glue catalog table name.
+            database (str): Amazon Redshift Spectrum catalog name.
+            table (str): Amazon Redshift Spectrum table name.
         """
 
         df = wr.s3.read_parquet_table(
