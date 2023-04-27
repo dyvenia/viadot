@@ -61,7 +61,6 @@ class RedshiftSpectrum(Source):
         self,
         database: str,
         name_contains: str = None,
-        search_text: str = None,
     ) -> List[str]:
         """
         Returns a list of tables in Amazon Redshift Spectrum database.
@@ -70,14 +69,11 @@ class RedshiftSpectrum(Source):
             database (str): Database name.
             name_contains (str, optional): Match by a specific substring of the table
                 name. Defaults to None.
-            search_text (str, optional): Select only tables with the given string in
-                table's properties. Defaults to None.
         """
-        df = wr.catalog.tables(
+        df = wr.catalog.get_tables(
             boto3_session=self.session,
             database=database,
             name_contains=name_contains,
-            search_text=search_text,
         )
 
         return df
