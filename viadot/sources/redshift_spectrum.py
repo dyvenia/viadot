@@ -59,7 +59,7 @@ class RedshiftSpectrum(Source):
 
     def ls(
         self,
-        database: str = None,
+        database: str,
         name_contains: str = None,
         search_text: str = None,
     ) -> List[str]:
@@ -67,11 +67,11 @@ class RedshiftSpectrum(Source):
         Returns a list of tables in Amazon Redshift Spectrum database.
 
         Args:
-            database (str, optional): Database name.
+            database (str): Database name.
             name_contains (str, optional): Match by a specific substring of the table
-                name.
+                name. Defaults to None.
             search_text (str, optional): Select only tables with the given string in
-                table's properties.
+                table's properties. Defaults to None.
         """
         df = wr.catalog.tables(
             boto3_session=self.session,
@@ -84,11 +84,11 @@ class RedshiftSpectrum(Source):
 
     def exists(self, database: str, table: str) -> bool:
         """
-        Check if a table exists in Glue database.
+        Check if a table exists in Amazon Redshift Spectrum database.
 
         Args:
-            database (str): AWS Glue catalog database name.
-            table (str): AWS Glue catalog table name.
+            database (str): Amazon Redshift Spectrum catalog database name.
+            table (str): Amazon Redshift Spectrum table name.
 
         Returns:
             bool: Whether the paths exists.
@@ -132,7 +132,7 @@ class RedshiftSpectrum(Source):
         to_path: str,
         database: str,
         table: str,
-        extension: str = ".parquet",
+        extension: Literal[".parquet", ".csv"] = ".parquet",
         if_exists: Literal["overwrite", "overwrite_partitions", "append"] = "overwrite",
         partition_cols: List[str] = None,
         sep: str = ",",
@@ -151,15 +151,14 @@ class RedshiftSpectrum(Source):
                 Defaults to None.
             database (str): Amazon Redshift Spectrum catalog name.
             table (str): Amazon Redshift Spectrum table name.
-            extension (str): Required file type. Accepted file formats are 'csv'
-                and 'parquet'.
-            if_exists (str, optional): 'overwrite' to recreate any possible existing
-                table, 'overwrite_partitions'  or 'append' to keep any possible existing table. Defaults to
-                overwrite.
-            partition_cols (List[str]): List of column names that will be used to
-                create partitions. Only takes effect if dataset=True.
+            extension (Literal[".parquet", ".csv"], optional): Required file type. Defaults to '.parquet'.
+            if_exists (Literal["overwrite", "overwrite_partitions", "append"], optional):
+                'overwrite' to recreate table, 'overwrite_partitions' to recreate only partitions of the table,
+                'append' to add data to the table. Defaults to 'overwrite'.
+            partition_cols (List[str], optional): List of column names that will be used to
+                create partitions. Only takes effect if dataset=True. Defaults to None.
             sep (str, optional): Field delimiter for the output file. Defaults to ','.
-            description (str, optional): Amazon Redshift Spectrum table description.
+            description (str, optional): Amazon Redshift Spectrum table description. Defaults to None.
         """
 
         if extension == ".parquet":

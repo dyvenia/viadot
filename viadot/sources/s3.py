@@ -94,8 +94,8 @@ class S3(Source):
         Copies the contents of `from_path` to `to_path`.
 
         Args:
-            from_path (str, optional): The path (S3 URL) of the source directory.
-            to_path (str, optional): The path (S3 URL) of the target directory.
+            from_path (str): The path (S3 URL) of the source directory.
+            to_path (str): The path (S3 URL) of the target directory.
             recursive (bool, optional): Set this to true if working with directories.
                 Defaults to False.
 
@@ -147,8 +147,7 @@ class S3(Source):
         Args:
             df (pd.DataFrame): The pandas DataFrame to upload.
             path (str): The destination path.
-            extension (Literal[".csv", ".parquet"]): The file extension. Either ".csv"
-                or ".parquet". Defaults to ".parquet".
+            extension (Literal[".csv", ".parquet"], optional): The file extension. Defaults to ".parquet".
         """
 
         if extension == ".parquet":
