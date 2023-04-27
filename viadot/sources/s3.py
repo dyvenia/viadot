@@ -136,19 +136,19 @@ class S3(Source):
         df: pd.DataFrame,
         path: str,
         extension: Literal[".csv", ".parquet"] = ".parquet",
-        max_rows_by_file: int = None,
         **kwargs,
     ) -> None:
         """
         Upload a pandas `DataFrame` into Amazon S3 as a CSV or Parquet file.
+        For full list of available parameters please refer to the official documentation:
+        https://aws-sdk-pandas.readthedocs.io/en/3.0.0/stubs/awswrangler.s3.to_parquet.html
+        https://aws-sdk-pandas.readthedocs.io/en/3.0.0/stubs/awswrangler.s3.to_csv.html
 
         Args:
             df (pd.DataFrame): The pandas DataFrame to upload.
             path (str): The destination path.
             extension (Literal[".csv", ".parquet"]): The file extension. Either ".csv"
                 or ".parquet". Defaults to ".parquet".
-            max_rows_by_file (int, optional): Maximum number of rows in each file.
-                Only available for ".parquet" extension. Defaults to None.
         """
 
         if extension == ".parquet":
@@ -156,7 +156,6 @@ class S3(Source):
                 boto3_session=self.session,
                 df=df,
                 path=path,
-                max_rows_by_file=max_rows_by_file,
                 **kwargs,
             )
         elif extension == ".csv":

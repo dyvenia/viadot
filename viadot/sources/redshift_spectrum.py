@@ -135,31 +135,31 @@ class RedshiftSpectrum(Source):
         extension: str = ".parquet",
         if_exists: Literal["overwrite", "overwrite_partitions", "append"] = "overwrite",
         partition_cols: List[str] = None,
-        index: bool = False,
-        compression: str = None,
         sep: str = ",",
         description: str = None,
+        **kwargs,
     ) -> None:
         """
         Upload a pandas `DataFrame` to a csv or parquet file in Amazon Redshift Spectrum.
+            For full list of available parameters please refer to the official documentation:
+            https://aws-sdk-pandas.readthedocs.io/en/3.0.0/stubs/awswrangler.s3.to_parquet.html
+            https://aws-sdk-pandas.readthedocs.io/en/3.0.0/stubs/awswrangler.s3.to_csv.html
 
         Args:
             df (pd.DataFrame): Pandas `DataFrame`.
             to_path (str): Path to Amazon S3 folder where the table will be located.
                 Defaults to None.
-            extension (str): Required file type. Accepted file formats are 'csv'
-                and 'parquet'.
             database (str): Amazon Redshift Spectrum catalog name.
             table (str): Amazon Redshift Spectrum table name.
-            partition_cols (List[str]): List of column names that will be used to
-                create partitions. Only takes effect if dataset=True.
+            extension (str): Required file type. Accepted file formats are 'csv'
+                and 'parquet'.
             if_exists (str, optional): 'overwrite' to recreate any possible existing
                 table, 'overwrite_partitions'  or 'append' to keep any possible existing table. Defaults to
                 overwrite.
-            index (bool, optional): Write row names (index). Defaults to False.
-            compression (str, optional): Compression style (None, snappy, gzip, zstd).
+            partition_cols (List[str]): List of column names that will be used to
+                create partitions. Only takes effect if dataset=True.
             sep (str, optional): Field delimiter for the output file. Defaults to ','.
-            description (str, optional): AWS Glue catalog table description.
+            description (str, optional): Amazon Redshift Spectrum table description.
         """
 
         if extension == ".parquet":
@@ -168,13 +168,12 @@ class RedshiftSpectrum(Source):
                 df=df,
                 path=to_path,
                 mode=if_exists,
-                index=index,
-                compression=compression,
                 dataset=True,
                 database=database,
                 table=table,
                 partition_cols=partition_cols,
                 description=description,
+                **kwargs,
             )
         elif extension == ".csv":
             wr.s3.to_csv(
@@ -184,8 +183,8 @@ class RedshiftSpectrum(Source):
                 dataset=True,
                 database=database,
                 table=table,
-                index=index,
                 sep=sep,
+                **kwargs,
             )
         else:
             raise ValueError("Only CSV and parquet formats are supported.")
@@ -194,9 +193,12 @@ class RedshiftSpectrum(Source):
         self,
         database: str,
         table: str,
+        **kwargs,
     ) -> pd.DataFrame:
         """
         Reads Amazon Redshift Spectrum table to a pandas `DataFrame`.
+            For full list of available parameters please refer to the official documentation:
+            https://aws-sdk-pandas.readthedocs.io/en/3.0.0/stubs/awswrangler.s3.read_parquet_table.html
 
         Args:
             database (str): Amazon Redshift Spectrum catalog name.
@@ -207,6 +209,7 @@ class RedshiftSpectrum(Source):
             boto3_session=self.session,
             database=database,
             table=table,
+            **kwargs,
         )
 
         return df
