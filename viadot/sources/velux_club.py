@@ -32,50 +32,47 @@ class VeluxClub(Source):
 
     API_URL = "https://api.club.velux.com/api/v1/datalake/"
 
-    def __init__(self, *args, credentials: Dict[str, Any] = None, **kwargs):
+    def __init__(self, *args, source, credentials: Dict[str, Any] = None, from_date: str = '', to_date: str  = '', **kwargs):
         DEFAULT_CREDENTIALS = local_config.get("VELUX_CLUB")
         credentials = kwargs.pop("credentials", DEFAULT_CREDENTIALS)
         if credentials is None:
             raise CredentialError("Missing credentials.")
-        super().__init__(*args, credentials=credentials, **kwargs)
-
-    # Split this function into Download info and df creation!
-    def velux_club_to_df(
-        self, source: list, from_date: str = "", to_date: str = "", region="null"
-    ) -> tuple:
-        """Function to download a file from sharepoint, given its URL
-        Args:
-            source (str):
-            from_date (str):
-            to_date (str,str):
-            region (str):
-        Returns:
-            str: filename
-
-        """
-        df = pd.DataFrame()
-
-        if self.source in ["jobs", "product", "company"]:
-            # check if date filter was passed!
-            if from_date == "" or to_date == "":
-                return (df, "Introduce a 'FROM Date' and 'To Date'")
-            url = (
-                f"{self.API_URL}{source}?from={from_date}&to={to_date}&region&limit=100"
-            )
-        elif source in "survey":
-            url = f"{self.API_URL}{source}?language=en&type=question"
-        else:
-            return (df, "pick one these sources: jobs, product, company, survey")
-
-        headers = {
-            "Authorization": "Bearer " + self.credentials["TOKEN"],
+        
+        self.headers = {
+            "Authorization": "Bearer " + credentials["TOKEN"],
             "Content-Type": "application/json",
         }
+        self.source = source
+        self.from_date = from_date
+        self.to_date = to_date
 
-        r = requests.request("GET", url, headers=headers)
+        super().__init__(*args, credentials=credentials, **kwargs)
+        
 
-        response = r.json()
+    def get_api_body(
+        self, region="null"
+    ) -> Dict:  ## Returns the response 
+        if self.source in ["jobs", "product", "company"]:
+            # check if date filter was passed!
+            if self.from_date == "" or self.to_date == "":
+                return "Introduce a 'FROM Date' and 'To Date'"
+            url = (
+                f"{self.API_URL}{self.source}?from={self.from_date}&to={self.to_date}&region&limit=100"
+            )
+        elif self.source in "survey":
+            url = f"{self.API_URL}{self.source}?language=en&type=question"
+        else:
+            return "pick one these sources: jobs, product, company, survey"
 
+        headers = self.headers
+
+        response = requests.request("GET", url, headers=headers)
+
+        return response
+
+    def to_df(self, response) -> pd.DataFrame:
+        response = response.json()
+        
         if isinstance(response, dict):
             keys_list = list(response.keys())
         elif isinstance(response, list):
@@ -83,22 +80,30 @@ class VeluxClub(Source):
         else:
             keys_list = []
 
+        
+
         if "data" in keys_list:
             # first page content
             df = pd.DataFrame(response["data"])
             # next pages
             while response["next_page_url"] != None:
-                url = f"{response['next_page_url']}&from={from_date}&to={to_date}&region&limit=100"
-                r = requests.request("GET", url, headers=headers)
+                url = f"{response['next_page_url']}&from={self.from_date}&to={self.to_date}&region&limit=100"
+                r = requests.request("GET", url, headers=self.headers)
                 response = r.json()
                 df_page = pd.DataFrame(response["data"])
-                df_page_transpose = df_page.T
-                df = df.append(df_page_transpose, ignore_index=True)
+                if self.source == 'product':
+                    df_page = df_page.T
+                
+                df = df.append(df_page, ignore_index=True)
 
         else:
             df = pd.DataFrame(response)
+        
+        return df
 
-        return (df, f"Source {source}")
+    def to_parquet(self):
+        return
+
 
     def print_df(df: pd.DataFrame, service_name: str):
         print(f"{service_name} Dataframe Columns")
