@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 ### Added
 - Added `close_connection()` in `sap_rfc`
+- Added `url` parameter to `CustomerGauge` source, and `endpoint_url` parameter to `CustomerGaugeToDF` task and `CustomerGaugeToADLS` flow. This parameter enables to pass the endpoint URL by user.
 
 ## [0.4.14] - 2023-04-13
 ### Added
