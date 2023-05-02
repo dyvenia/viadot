@@ -7,7 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
-- Added new parameter `rfc_replacement` to `sap_rfc_to_adls.py` to replace 
+- Added new source class `SAPRFCV2` in `sap_rfc.py` with new approximation.
+- Added new parameter `rfc_replacement` to `sap_rfc_to_adls.py` to replace
 an extra separator character within a string column to avoid conflicts.
 - Added `rfc_reference_column` in `sap_frc.py` to merge chunks on this column.
 
