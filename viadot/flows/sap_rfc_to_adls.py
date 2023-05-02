@@ -28,6 +28,7 @@ class SAPRFCToADLS(Flow):
         update_kv: bool = False,
         filter_column: str = None,
         timeout: int = 3600,
+        new_approx: bool = False,
         *args: List[any],
         **kwargs: Dict[str, Any],
     ):
@@ -70,6 +71,7 @@ class SAPRFCToADLS(Flow):
             filter_column (str, optional): Name of the field based on which key value will be updated. Defaults to None.
             timeout(int, optional): The amount of time (in seconds) to wait while running this task before
                 a timeout occurs. Defaults to 3600.
+            new_approx (bool, optional): Enable the use of the new approximation. Defaults to False.
         """
         self.query = query
         self.rfc_sep = rfc_sep
@@ -87,6 +89,7 @@ class SAPRFCToADLS(Flow):
         self.adls_sp_credentials_secret = adls_sp_credentials_secret
         self.vault_name = vault_name
         self.timeout = timeout
+        self.new_approx = new_approx
 
         self.update_kv = update_kv
         self.filter_column = filter_column
@@ -104,6 +107,7 @@ class SAPRFCToADLS(Flow):
             func=self.func,
             rfc_total_col_width_character_limit=self.rfc_total_col_width_character_limit,
             rfc_unique_id=self.rfc_unique_id,
+            new_approx=self.new_approx,
             credentials=self.sap_credentials,
             flow=self,
         )
