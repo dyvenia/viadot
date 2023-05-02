@@ -6,7 +6,7 @@ from prefect import Task
 from prefect.utilities.tasks import defaults_from_attrs
 
 try:
-    from viadot.sources import SAPRFC
+    from viadot.sources import SAPRFC, SAPRFCV2
 except ImportError:
     raise
 
@@ -86,10 +86,8 @@ class SAPRFCToDF(Task):
         credentials: dict = None,
         func: str = None,
         rfc_total_col_width_character_limit: int = None,
-        rfc_reference_column: List[str] = None,
-        max_retries: int = None,
-        retry_delay: timedelta = None,
-        timeout: int = None,
+        rfc_unique_id: List[str] = None,
+        new_approx: bool = False,
     ) -> pd.DataFrame:
         """Task run method.
 
@@ -113,21 +111,31 @@ class SAPRFCToDF(Task):
                     rfc_unique_id=["VBELN", "LPRIO"],
                     ...
                     )
+            new_approx (bool, optional): Enable the use of the new approximation. Defaults to False.
         """
         if query is None:
             raise ValueError("Please provide the query.")
-        if rfc_reference_column:
-            self.logger.warning(
-                "If the column/set of columns are not unique the table will be malformed."
+
+        if new_approx:
+            if rfc_unique_id:
+                self.logger.warning(
+                    "If the column/set of columns are not unique the table will be malformed."
+                )
+            sap = SAPRFCV2(
+                sep=sep,
+                replacement=replacement,
+                credentials=credentials,
+                func=func,
+                rfc_total_col_width_character_limit=rfc_total_col_width_character_limit,
+                rfc_unique_id=rfc_unique_id,
             )
-        sap = SAPRFC(
-            sep=sep,
-            replacement=replacement,
-            credentials=credentials,
-            func=func,
-            rfc_total_col_width_character_limit=rfc_total_col_width_character_limit,
-            rfc_reference_column=rfc_reference_column,
-        )
+        else:
+            sap = SAPRFC(
+                sep=sep,
+                credentials=credentials,
+                func=func,
+                rfc_total_col_width_character_limit=rfc_total_col_width_character_limit,
+            )
         sap.query(query)
         self.logger.info(f"Downloading data from SAP to a DataFrame...")
         self.logger.debug(f"Running query: \n{query}.")
