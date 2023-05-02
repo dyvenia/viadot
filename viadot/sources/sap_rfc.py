@@ -235,7 +235,6 @@ class SAPRFC(Source):
     def __init__(
         self,
         sep: str = None,
-        replacement: str = "-",
         func: str = "RFC_READ_TABLE",
         rfc_total_col_width_character_limit: int = 400,
         *args,
@@ -246,8 +245,6 @@ class SAPRFC(Source):
         Args:
             sep (str, optional): Which separator to use when querying SAP. If not provided,
             multiple options are automatically tried.
-            replacement (str, optional): In case of separator is on a columns, set up a new character to replace
-                inside the string to avoid flow breakdowns. Defaults to "-".
             func (str, optional): SAP RFC function to use. Defaults to "RFC_READ_TABLE".
             rfc_total_col_width_character_limit (int, optional): Number of characters by which query will be split in chunks
             in case of too many columns for RFC function. According to SAP documentation, the limit is
@@ -618,7 +615,7 @@ class SAPRFC(Source):
                         else:
                             raise e
                     record_key = "WA"
-                    data_raw = np.array(response["DATA"])
+                    data_raw = response["DATA"]
                     records = [row[record_key].split(sep) for row in data_raw]
                     df[fields] = records
                     chunk += 1
