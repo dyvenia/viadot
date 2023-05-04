@@ -17,6 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added `upload()` and `download()` methods to `S3` source.
 - Added `Genesys` source to library.
 - Fixed a bug in `Databricks.create_table_from_pandas()`. The function that converts column names to snake_case was not used in every case. (#672)
+- Added `howto_migrate_sources_tasks_and_flows.md` document. This document will assist the DEs with the viadot 1 -> viadot 2 migration process.
 
 
 ### Changed
