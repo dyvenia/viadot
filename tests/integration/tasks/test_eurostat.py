@@ -5,9 +5,11 @@ import logging
 from viadot.tasks import eurostat
 
 
-def test_correct_dataset_code_no_params(caplog):
-    """Test for checking if program for correct dataset_code
-    and no parameters is returning non empty DataFrame
+def test_and_validate_dataset_code_without_params(caplog):
+    """This function is designed to test the accuracy of the data retrieval feature in a program.
+    Specifically, it tests to ensure that the program returns a non-empty DataFrame when a correct
+    dataset code is provided without any parameters. The function is intended to be used in software
+    development to verify that the program is correctly retrieving data from the appropriate dataset.
     """
     task = eurostat.EurostatToDF(dataset_code="ILC_DI04").run()
     assert isinstance(task, pd.DataFrame)
@@ -16,8 +18,11 @@ def test_correct_dataset_code_no_params(caplog):
 
 
 def test_wrong_dataset_code_logger(caplog):
-    """Test for checking if program for incorrect dataset_code
-    is logging correct error
+    """This function is designed to test the accuracy of the error logging feature in a program.
+    Specifically, it tests to ensure that the program is able to correctly identify and log errors
+    when provided with only incorrect dataset code.
+    The function is intended to be used in software development to identify correct type errors
+    and messages in the program's handling of codes.
     """
     task = eurostat.EurostatToDF(dataset_code="ILC_DI04E")
 
@@ -31,9 +36,11 @@ def test_wrong_dataset_code_logger(caplog):
 
 
 def test_wrong_parameters_codes_logger(caplog):
-    """Test for checking if program for correct dataset_code
-    and correct parameters, but incorrect parameters codes
-    is logging correct error
+    """This function is designed to test the accuracy of the error logging feature in a program.
+    Specifically, it tests to ensure that the program is able to correctly identify and log errors
+    when provided with a correct dataset_code and correct parameters are provided, but both parameters codes are incorrect.
+    The function is intended to be used in software development to identify correct type errors
+    and messages in the program's handling of codes.
     """
     task = eurostat.EurostatToDF(
         dataset_code="ILC_DI04",
@@ -53,10 +60,13 @@ def test_wrong_parameters_codes_logger(caplog):
     )
 
 
-def test_parameter_codes_as_list_loggere(caplog):
-    """Test for checking if program for correct dataset_code,
-    correct parameters, but incorrect codes provided as list
-    is logging correct error
+def test_parameter_codes_as_list_logger(caplog):
+    """This function is designed to test the accuracy of the error logging feature in a program.
+    Specifically, it tests to ensure that the program is able to correctly identify and log errors
+    when provided with a correct dataset code, correct parameters, but incorrect parameters codes structure
+    (as a list with strings, instead of single string).
+    The function is intended to be used in software development to identify correct type errors
+    and messages in the program's handling of codes.
     """
 
     task = eurostat.EurostatToDF(
@@ -77,10 +87,13 @@ def test_parameter_codes_as_list_loggere(caplog):
 
 
 def test_wrong_parameters(caplog):
-    """Test for checking if program for correct dataset_code,
-    incorrect parameters and correct codes
-    is logging correct error
+    """This function is designed to test the accuracy of the error logging feature in a program.
+    Specifically, it tests to ensure that the program is able to correctly identify and log errors
+    when provided with a correct dataset_code, but incorrect parameters keys.
+    The function is intended to be used in software development to identify correct type errors
+    and messages in the program's handling of codes.
     """
+
     task = eurostat.EurostatToDF(
         dataset_code="ILC_DI04", params={"hhhtyp": "total", "indic_ilx": "med_e"}
     )
@@ -98,19 +111,23 @@ def test_wrong_parameters(caplog):
 
 
 def test_params_as_list():
-    """Test for checking if program for correct dataset_code,
-    incorrect parameters structure (as list, not dict)
-    is logging correct error
+    """This function is designed to test the accuracy of the error logging feature in a program.
+    Specifically, it tests to ensure that the program is able to correctly identify and log error
+    when provided with a correct dataset_code, but incorrect params structure (as list instead of dict).
+    The function is intended to be used in software development to identify correct type errors
+    and messages in the program's handling of codes.
     """
     with pytest.raises(TypeError, match="Params should be a dictionary."):
         eurostat.EurostatToDF(dataset_code="ILC_DI04", params=["total", "med_e"]).run()
 
 
 def test_correct_params_and_dataset_code(caplog):
-    """Test for checking if program for correct dataset_code
-    and correct parameters and correct codes
-    is returning non empty DataFrame or logging error
+    """This function is designed to test the accuracy of the data retrieval feature in a program.
+    Specifically, it tests to ensure that the program returns a non-empty DataFrame when a correct
+    dataset code is provided with correct params. The function is intended to be used in software
+    development to verify that the program is correctly retrieving data from the appropriate dataset.
     """
+
     task = eurostat.EurostatToDF(
         dataset_code="ILC_DI04", params={"hhtyp": "total", "indic_il": "med_e"}
     ).run()
@@ -120,12 +137,12 @@ def test_correct_params_and_dataset_code(caplog):
     assert caplog.text == ""
 
 
-def task_correct_needed_columns(caplog):
-    """Test for checking if program for correct dataset_code,
-    correct parameters, correct codes
-    and correct names of needed columns
-    is returning none empty DataFrame
-    with expected columns
+def task_correct_requested_columns(caplog):
+    """This function is designed to test the accuracy of the data retrieval feature in a program.
+    Specifically, it tests to ensure that the program is able to correctly identify and log error
+    when provided with a correct dataset_code, correct params and correct requested_columns.
+    The function is intended to be used in software development to verify that the program is correctly
+    retrieving data from the appropriate dataset.
     """
     task = eurostat.EurostatToDF(
         dataset_code="ILC_DI04",
@@ -141,10 +158,11 @@ def task_correct_needed_columns(caplog):
 
 
 def test_wrong_needed_columns_names(caplog):
-    """Test for checking if program for correct dataset_code,
-    correct parameters, correct codes
-    but incorrect names of needed columns
-    is logging correct error
+    """This function is designed to test the accuracy of the error logging feature in a program.
+    Specifically, it tests to ensure that the program is able to correctly identify and log error
+    when provided with a correct dataset_code, correct parameters, but incorrect names of requested columns.
+    The function is intended to be used in software development to identify correct type errors
+    and messages in the program's handling of codes.
     """
     task = eurostat.EurostatToDF(
         dataset_code="ILC_DI04",
@@ -161,11 +179,13 @@ def test_wrong_needed_columns_names(caplog):
     assert f"Available columns: geo | time | indicator | label | updated" in caplog.text
 
 
-def test_wrong_params_and_wrong_needed_columns_names(caplog):
-    """Test for checking if program for correct dataset_code,
-    incorrect parameters, correct codes
-    and incorrect names of needed columns
-    is logging correct error
+def test_wrong_params_and_wrong_requested_columns_names(caplog):
+    """This function is designed to test the accuracy of the error logging feature in a program.
+    Specifically, it tests to ensure that the program is able to correctly identify and log error
+    when provided with a correct dataset_code, incorrect parameters and incorrect names of requested columns.
+    Test should log errors only related with wrong params - we are trying to check if program will stop after
+    params validation. The function is intended to be used in software development to identify correct type errors
+    and messages in the program's handling of codes.
     """
     task = eurostat.EurostatToDF(
         dataset_code="ILC_DI04",
@@ -186,10 +206,12 @@ def test_wrong_params_and_wrong_needed_columns_names(caplog):
 
 
 def test_requested_columns_not_in_list():
-    """Test for checking if program for correct dataset_code,
-    correct parameters, correct codes
-    and requested_columns as single string (not in list)
-    is logging correct error
+    """This function is designed to test the accuracy of the error logging feature in a program.
+    Specifically, it tests to ensure that the program is able to correctly identify and log error
+    when provided with a correct dataset_code, correct params but incorrect requested_columns structure
+    (as single string instead of list with strings).
+    The function is intended to be used in software development to identify correct type errors
+    and messages in the program's handling of codes.
     """
     with pytest.raises(
         TypeError, match="Requested columns should be provided as list of strings."
