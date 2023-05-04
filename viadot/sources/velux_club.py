@@ -1,7 +1,9 @@
 import json
 import urllib
+import os
+
 from copy import deepcopy
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Literal
 import requests
 
 import numpy as np
@@ -101,8 +103,32 @@ class VeluxClub(Source):
         
         return df
 
-    def to_parquet(self):
-        return
+    def to_parquet(
+            self, response, path='', 
+            if_exists: Literal["append", "replace", "skip"] = "replace",
+            **kwargs,
+        ) -> None:
+        if path == '':
+            raise ValueError('Missing path for the file') 
+
+        df = self.to_df(response)
+
+        if if_exists == "append" and os.path.isfile(path):
+            parquet_df = pd.read_parquet(path)
+            out_df = pd.concat([parquet_df, df])
+        elif if_exists == "replace":
+            out_df = df
+        else:
+            out_df = df
+
+        try:
+            if not os.path.isfile(path):
+                directory = os.path.dirname(path)
+                os.makedirs(directory, exist_ok=True)
+        except:
+            pass    
+
+        out_df.to_parquet(path, index=False, **kwargs)
 
 
     def print_df(df: pd.DataFrame, service_name: str):
