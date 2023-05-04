@@ -34,7 +34,7 @@ class VeluxClub(Source):
 
     API_URL = "https://api.club.velux.com/api/v1/datalake/"
 
-    def __init__(self, *args, source, credentials: Dict[str, Any] = None, from_date: str = '', to_date: str  = '', **kwargs):
+    def __init__(self, *args, source, credentials: Dict[str, Any] = None, from_date: str = '2022-03-22', to_date: str  = '', **kwargs):
         DEFAULT_CREDENTIALS = local_config.get("VELUX_CLUB")
         credentials = kwargs.pop("credentials", DEFAULT_CREDENTIALS)
         if credentials is None:
