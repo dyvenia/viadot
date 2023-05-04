@@ -4,8 +4,7 @@ import pandas as pd
 
 
 class EurostatToDF(Task):
-    """Task for creating pandas data frame from Eurostat HTTPS REST API (no credentials required)
-    with optional change of columns.
+    """Task for creating pandas data frame from Eurostat HTTPS REST API (no credentials required).
 
     Args:
         dataset_code (str): The code of eurostat dataset that we would like to upload.
@@ -15,22 +14,25 @@ class EurostatToDF(Task):
             and "EUR" is the code of the specific parameter. You can add more than one parameter, but only one code per parameter!
             So you CAN NOT provide list of codes as in example 'params = {'unit': ['EUR', 'USD', 'PLN']}'
             This parameter is REQUIRED in most cases to pull a specific dataset from the API.
-            Both parameter and code has to provided as a string!
-            Defaults to None.
+            Both parameter and code has to provided as a string! Defaults to None.
         requested_columns (List[str], optional): list of needed names of columns. Names should be given as str's into the list.
             Defaults to None.
+    Raises:
+        TypeError: If self.requested_columns have different type than a list.
     """
 
     def __init__(
         self,
         dataset_code: str,
         params: dict = None,
+        base_url: str = None,
         requested_columns: list = None,
         *args,
         **kwargs,
     ):
         self.dataset_code = dataset_code
         self.params = params
+        self.base_url = base_url
         self.requested_columns = requested_columns
         if (
             not isinstance(self.requested_columns, list)
@@ -42,6 +44,9 @@ class EurostatToDF(Task):
 
     def run(self) -> pd.DataFrame:
         """Run function for returning unchanged DataFrame, or modify DataFrame and returning if user need specific columns.
+
+        Raises:
+            ValueError: If self.requested_columns contains columns names that do not exist in the DataFrame.
 
         Returns:
             pd.DataFrame: Unchanged DataFrame or DataFrame with only choosen columns.

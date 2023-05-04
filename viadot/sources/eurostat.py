@@ -1,7 +1,7 @@
 import pandas as pd
 
 from .base import Source
-from viadot.utils import handle_api_response
+from viadot.utils import handle_api_response, APIError
 
 
 class Eurostat(Source):
@@ -9,12 +9,13 @@ class Eurostat(Source):
     Class for creating instance of Eurostat connector to REST API by HTTPS response (no credentials required).
     """
 
-    base_url = "https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/"
+    BASE_URL = "https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/"
 
     def __init__(
         self,
         dataset_code: str,
         params: dict = None,
+        base_url: str = None,
         *args,
         **kwargs,
     ):
@@ -38,68 +39,73 @@ class Eurostat(Source):
                 and "EUR" is the code of the specific parameter. You can add more than one parameter, but only one code per parameter!
                 So you CAN NOT provide list of codes as in example 'params = {'unit': ['EUR', 'USD', 'PLN']}'
                 These parameters are REQUIRED in most cases to pull a specific dataset from the API.
-                Both parameter and code has to be provided as a string!
-                Defaults to None.
+                Both parameter and code has to be provided as a string! Defaults to None.
+        Raises:
+            TypeError: If self.params is different type than a dictionary.
         """
 
         self.dataset_code = dataset_code
         self.params = params
         if not isinstance(self.params, dict) and self.params is not None:
             raise TypeError("Params should be a dictionary.")
-        self.url = f"{self.base_url}{self.dataset_code}?format=JSON&lang=EN"
+        self.base_url = (
+            base_url or f"{self.BASE_URL}{self.dataset_code}?format=JSON&lang=EN"
+        )
         super().__init__(*args, **kwargs)
 
     def get_parameters_codes(self) -> dict:
         """Function for getting available parameters with codes from dataset.
 
+        Raises:
+            ValueError: If the response from the API is empty or invalid.
+
         Returns:
             Dict: Key is parameter and value is a list of available codes for specific parameter.
         """
-        data = None
 
         try:
-            # get JSON
-            response = handle_api_response(self.url)
+            response = handle_api_response(self.base_url)
             data = response.json()
-        except:
+        except APIError:
             self.logger.error(
                 f"Failed to fetch data for {self.dataset_code}, please check correctness of dataset code!"
             )
+            raise ValueError("DataFrame is empty!")
 
-        if data is not None:
-            # getting list of available parameters
-            available_params = data["id"]
+        # getting list of available parameters
+        available_params = data["id"]
 
-            # dictionary from JSON with keys and reletad codes values
-            dimension = data["dimension"]
+        # dictionary from JSON with keys and reletad codes values
+        dimension = data["dimension"]
 
-            # Assigning list of available codes to specific parameters
-            params_and_codes = {}
-            for key in available_params:
-                if key in dimension:
-                    codes = list(dimension[key]["category"]["index"].keys())
-                    params_and_codes[key] = codes
-            return params_and_codes
-        else:
-            return None
+        # Assigning list of available codes to specific parameters
+        params_and_codes = {}
+        for key in available_params:
+            if key in dimension:
+                codes = list(dimension[key]["category"]["index"].keys())
+                params_and_codes[key] = codes
+        return params_and_codes
 
     def make_params_validation(self):
         """Function for validation of given parameters in comparison
         to parameteres and their codes from JSON.
-        """
-        # Validation of type of values
-        try:
-            for key, val in self.params.items():
-                if not isinstance(key, str) or not isinstance(val, str):
-                    self.logger.error(
-                        "You can provide only one code per one parameter as 'str' in params!\n"
-                        "CORRECT: params = {'unit': 'EUR'} | INCORRECT: params = {'unit': ['EUR', 'USD', 'PLN']}"
-                    )
-                    raise ValueError("Wrong structure of params!")
-        except ValueError as e:
-            raise e
 
+        Raises:
+            ValueError: If any of the self.params keys or values is not a string or
+            any of them is not available for specific dataset.
+        """
+
+        # In order to make params validation, first we need to get params_and_codes.
         key_codes = self.get_parameters_codes()
+
+        # Validation of type of values
+        for key, val in self.params.items():
+            if not isinstance(key, str) or not isinstance(val, str):
+                self.logger.error(
+                    "You can provide only one code per one parameter as 'str' in params!\n"
+                    "CORRECT: params = {'unit': 'EUR'} | INCORRECT: params = {'unit': ['EUR', 'USD', 'PLN']}"
+                )
+                raise ValueError("Wrong structure of params!")
 
         if key_codes is not None:
             # Conversion keys and values on lowwer cases by using casefold
@@ -135,9 +141,10 @@ class Eurostat(Source):
                     f"Parameters codes: '{' | '.join(non_available_codes)}' are not available. Please check your spelling!\n"
                     f"You can find everything via link: https://ec.europa.eu/eurostat/databrowser/view/{self.dataset_code}/default/table?lang=en"
                 )
+            raise ValueError("DataFrame is empty!")
 
     def eurostat_dictionary_to_df(self, *signals: list) -> pd.DataFrame:
-        """Function for creating DataFrame from json pulled from Eurostat.
+        """Function for creating DataFrame from JSON pulled from Eurostat.
 
         Returns:
             pd.DataFrame: With 4 columns: index, geo, time, indicator.
@@ -204,61 +211,30 @@ class Eurostat(Source):
         """Function responsible for getting response, creating DataFrame using method 'eurostat_dictionary_to_df'
            with validation of provided parameters and their codes if needed.
 
+        Raises:
+            APIError: If there is an error with the API request.
+            ValueError: If the resulting DataFrame is empty.
+
         Returns:
             pd.DataFrame: Final DataFrame or raise prefect.logger.error, if issues occur.
         """
 
-        data = None
+        try:
+            response = handle_api_response(self.base_url, params=self.params)
+            data = response.json()
+            data_frame = self.eurostat_dictionary_to_df(["geo", "time"], data)
 
-        if self.params is not None:
-            try:
-                response = handle_api_response(self.url, params=self.params)
-                data = response.json()
-                data_frame = self.eurostat_dictionary_to_df(["geo", "time"], data)
+            if data_frame.empty:
+                raise ValueError
+        except (APIError, ValueError):
+            self.make_params_validation()
 
-                if data_frame.empty:
-                    raise Exception
-            except Exception:
-                self.make_params_validation()
-
-            if data is not None and not data_frame.empty:
-                # merging data_frame with label and last updated date
-                label_col = pd.Series(
-                    str(data["label"]), index=data_frame.index, name="label"
-                )
-                last_updated__col = pd.Series(
-                    str(data["updated"]),
-                    index=data_frame.index,
-                    name="updated",
-                )
-                data_frame = pd.concat(
-                    [data_frame, label_col, last_updated__col], axis=1
-                )
-                return data_frame
-            else:
-                raise ValueError("DataFrame is empty!")
-        else:
-            try:
-                response = handle_api_response(self.url)
-                data = response.json()
-                data_frame = self.eurostat_dictionary_to_df(["geo", "time"], data)
-            except:
-                self.logger.error(
-                    f"Failed to fetch data for {self.dataset_code}, please check correctness of dataset code!"
-                )
-                raise ValueError("DataFrame is empty!")
-
-            if data is not None:
-                # merging data_frame with label and last updated date
-                label_col = pd.Series(
-                    str(data["label"]), index=data_frame.index, name="label"
-                )
-                last_updated__col = pd.Series(
-                    str(data["updated"]),
-                    index=data_frame.index,
-                    name="updated",
-                )
-                data_frame = pd.concat(
-                    [data_frame, label_col, last_updated__col], axis=1
-                )
-                return data_frame
+        # merging data_frame with label and last updated date
+        label_col = pd.Series(str(data["label"]), index=data_frame.index, name="label")
+        last_updated__col = pd.Series(
+            str(data["updated"]),
+            index=data_frame.index,
+            name="updated",
+        )
+        data_frame = pd.concat([data_frame, label_col, last_updated__col], axis=1)
+        return data_frame

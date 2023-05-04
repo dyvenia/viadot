@@ -22,8 +22,6 @@ from ..tasks import AzureDataLakeUpload, EurostatToDF
 file_to_adls_task = AzureDataLakeUpload()
 json_to_adls_task = AzureDataLakeUpload()
 
-logger = logging.get_logger(__name__)
-
 
 class EurostatToADLS(Flow):
     """Flow for downloading data from the Eurostat platform via HTTPS REST API (no credentials required)
@@ -35,6 +33,7 @@ class EurostatToADLS(Flow):
         name: str,
         dataset_code: str,
         params: dict = None,
+        base_url: str = None,
         requested_columns: list = None,
         output_file_extension: str = ".parquet",
         adls_dir_path: str = None,
@@ -58,8 +57,8 @@ class EurostatToADLS(Flow):
                 This parameter is REQUIRED in most cases to pull a specific dataset from the API.
                 Both parameter and code has to provided as a string!
                 Defaults to None.
-            requested_columns (List[str], optional): List of columns that are needed from DataFrame - works as filter,
-                because we are pulling data frame with most of the columns. Defaults to None.
+            requested_columns (List[str], optional): List of columns that are needed from DataFrame - works as filter.
+                The data are downloaded from Eurostat is the same structure every time. The filter is applied after the data is fetched.
             output_file_extension (str, optional): Output file extension - to allow selection of .csv for data
                     which is not easy to handle with parquet. Defaults to ".parquet".
             adls_dir_path (str, optional): Azure Data Lake destination folder/catalog path. Defaults to None.
@@ -75,6 +74,7 @@ class EurostatToADLS(Flow):
         # EurostatToDF
         self.dataset_code = dataset_code
         self.params = params
+        self.base_url = base_url
         self.requested_columns = requested_columns
 
         # AzureDataLakeUpload
@@ -115,6 +115,7 @@ class EurostatToADLS(Flow):
         df = EurostatToDF(
             dataset_code=self.dataset_code,
             params=self.params,
+            base_url=self.base_url,
             requested_columns=self.requested_columns,
         )
 
