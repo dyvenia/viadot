@@ -15,6 +15,9 @@ class EurostatToDF(Task):
             So you CAN NOT provide list of codes as in example 'params = {'unit': ['EUR', 'USD', 'PLN']}'
             This parameter is REQUIRED in most cases to pull a specific dataset from the API.
             Both parameter and code has to provided as a string! Defaults to None.
+        base_url (str): The base URL used to access the Eurostat API. This parameter specifies the root URL for all requests made to the API.
+            It should not be modified unless the API changes its URL scheme.
+            Defaults to "https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/"
         requested_columns (List[str], optional): list of needed names of columns. Names should be given as str's into the list.
             Defaults to None.
     Raises:
@@ -25,7 +28,7 @@ class EurostatToDF(Task):
         self,
         dataset_code: str,
         params: dict = None,
-        base_url: str = None,
+        base_url: str = "https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/",
         requested_columns: list = None,
         *args,
         **kwargs,

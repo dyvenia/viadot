@@ -33,7 +33,7 @@ class EurostatToADLS(Flow):
         name: str,
         dataset_code: str,
         params: dict = None,
-        base_url: str = None,
+        base_url: str = "https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/",
         requested_columns: list = None,
         output_file_extension: str = ".parquet",
         adls_dir_path: str = None,
@@ -57,6 +57,9 @@ class EurostatToADLS(Flow):
                 This parameter is REQUIRED in most cases to pull a specific dataset from the API.
                 Both parameter and code has to provided as a string!
                 Defaults to None.
+            base_url (str): The base URL used to access the Eurostat API. This parameter specifies the root URL for all requests made to the API.
+                It should not be modified unless the API changes its URL scheme.
+                Defaults to "https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/"
             requested_columns (List[str], optional): List of columns that are needed from DataFrame - works as filter.
                 The data are downloaded from Eurostat is the same structure every time. The filter is applied after the data is fetched.
             output_file_extension (str, optional): Output file extension - to allow selection of .csv for data

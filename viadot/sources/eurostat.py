@@ -9,13 +9,11 @@ class Eurostat(Source):
     Class for creating instance of Eurostat connector to REST API by HTTPS response (no credentials required).
     """
 
-    BASE_URL = "https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/"
-
     def __init__(
         self,
         dataset_code: str,
         params: dict = None,
-        base_url: str = None,
+        base_url: str = "https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/",
         *args,
         **kwargs,
     ):
@@ -40,6 +38,9 @@ class Eurostat(Source):
                 So you CAN NOT provide list of codes as in example 'params = {'unit': ['EUR', 'USD', 'PLN']}'
                 These parameters are REQUIRED in most cases to pull a specific dataset from the API.
                 Both parameter and code has to be provided as a string! Defaults to None.
+            base_url (str): The base URL used to access the Eurostat API. This parameter specifies the root URL for all requests made to the API.
+                It should not be modified unless the API changes its URL scheme.
+                Defaults to "https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/"
         Raises:
             TypeError: If self.params is different type than a dictionary.
         """
@@ -48,9 +49,8 @@ class Eurostat(Source):
         self.params = params
         if not isinstance(self.params, dict) and self.params is not None:
             raise TypeError("Params should be a dictionary.")
-        self.base_url = (
-            base_url or f"{self.BASE_URL}{self.dataset_code}?format=JSON&lang=EN"
-        )
+        self.base_url = f"{base_url}{self.dataset_code}?format=JSON&lang=EN"
+
         super().__init__(*args, **kwargs)
 
     def get_parameters_codes(self) -> dict:
