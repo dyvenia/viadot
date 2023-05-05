@@ -18,46 +18,56 @@ from .base import Source
 
 class VeluxClub(Source):
 
-    """
-    A class implementing the Velux Club API.
-
-    Documentation for this API is located at: https://api.club.velux.com/api/v1/datalake/
-    There are 4 endpoints where to get the data!
-
-    Parameters
-    ----------
-    query_params : Dict[str, Any], optional
-        The parameters to pass to the GET query.
-        See https://supermetrics.com/docs/product-api-get-data/ for full specification,
-        by default None
-    """
-
     API_URL = "https://api.club.velux.com/api/v1/datalake/"
 
-    def __init__(self, *args, source, credentials: Dict[str, Any] = None, from_date: str = '2022-03-22', to_date: str  = '', **kwargs):
-        DEFAULT_CREDENTIALS = local_config.get("VELUX_CLUB")
-        credentials = kwargs.pop("credentials", DEFAULT_CREDENTIALS)
-        if credentials is None:
-            raise CredentialError("Missing credentials.")
-        
-        self.headers = {
-            "Authorization": "Bearer " + credentials["TOKEN"],
-            "Content-Type": "application/json",
-        }
-        self.source = source
-        self.from_date = from_date
-        self.to_date = to_date
+    def __init__(
+            self, 
+            *args, 
+            source: Literal['jobs', 'product', 'company', 'survey'], 
+            credentials: Dict[str, Any] = None, 
+            from_date: str = '2022-03-22', 
+            to_date: str  = '', 
+            **kwargs
+        ):
+            """
+            A class implementing the Velux Club API.
 
-        super().__init__(*args, credentials=credentials, **kwargs)
+            Documentation for this API is located at: https://api.club.velux.com/api/v1/datalake/
+            There are 4 endpoints where to get the data
+
+            Parameters
+            ----------
+            source (str): The endpoint source to be accessed, has to be among these:
+                ['jobs', 'product', 'company', 'survey'].
+            from_date (str, optional): Start date for the query, by default is the oldest date in the data.
+            to_date (str, optional): End date for the query, if empty, datetime.today() will be used.
+            
+            """
+
+            DEFAULT_CREDENTIALS = local_config.get("VELUX_CLUB")
+            credentials = kwargs.pop("credentials", DEFAULT_CREDENTIALS)
+            if credentials is None:
+                raise CredentialError("Missing credentials.")
+            
+            self.headers = {
+                "Authorization": "Bearer " + credentials["TOKEN"],
+                "Content-Type": "application/json",
+            }
+            self.source = source
+            self.from_date = from_date
+            self.to_date = to_date
+
+            super().__init__(*args, credentials=credentials, **kwargs)
         
 
     def get_api_body(
-        self, region="null"
+        self, 
+        region="null"
     ) -> Dict:  ## Returns the response 
         if self.source in ["jobs", "product", "company"]:
             # check if date filter was passed!
             if self.from_date == "" or self.to_date == "":
-                return "Introduce a 'FROM Date' and 'To Date'"
+                return "Introduce a 'FROM Date' and 'TO Date'"
             url = (
                 f"{self.API_URL}{self.source}?from={self.from_date}&to={self.to_date}&region&limit=100"
             )
