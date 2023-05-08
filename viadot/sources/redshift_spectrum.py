@@ -18,7 +18,7 @@ class RedshiftSpectrumCredentials(BaseModel):
 
 class RedshiftSpectrum(Source):
     """
-    A class for pulling data from and uploading to the Amazon Redshift Spectrum.
+    A class for pulling data from and uploading to a specified external database of Amazon Redshift Spectrum.
 
     Args:
         credentials (RedshiftSpectrumCredentials, optional): RedshiftSpectrumCredentials credentials.
@@ -63,10 +63,10 @@ class RedshiftSpectrum(Source):
         name_contains: str = None,
     ) -> List[str]:
         """
-        Returns a list of tables in Amazon Redshift Spectrum database.
+        Returns a list of tables in a specified external database of Amazon Redshift Spectrum.
 
         Args:
-            database (str): Database name.
+            database (str): Catalog name in a specified external database of Amazon Redshift Spectrum.
             name_contains (str, optional): Match by a specific substring of the table
                 name. Defaults to None.
         """
@@ -80,11 +80,11 @@ class RedshiftSpectrum(Source):
 
     def exists(self, database: str, table: str) -> bool:
         """
-        Check if a table exists in Amazon Redshift Spectrum database.
+        Check if a table exists in a specified external database of Amazon Redshift Spectrum.
 
         Args:
-            database (str): Amazon Redshift Spectrum catalog database name.
-            table (str): Amazon Redshift Spectrum table name.
+            database (str): Catalog name in a specified external database of Amazon Redshift Spectrum.
+            table (str): Table name in a specified external database of Amazon Redshift Spectrum.
 
         Returns:
             bool: Whether the paths exists.
@@ -102,11 +102,11 @@ class RedshiftSpectrum(Source):
         remove_files: bool = True,
     ) -> None:
         """
-        Deletes table from Amazon Redshift Spectrum database, including related file from Amazon S3, if specified.
+        Deletes table from a specified external database of Amazon Redshift Spectrum database, including related file from Amazon S3, if specified.
 
         Args:
-            database (str): Amazon Redshift Spectrum catalog name.
-            table (str): Amazon Redshift Spectrum table name.
+            database (str): Catalog name in a specified external database of Amazon Redshift Spectrum.
+            table (str): Table name in a specified external database of Amazon Redshift Spectrum.
             remove_files (bool, optional): If True, Amazon S3 file related to the table
                 will be removed. Defaults to True.
         """
@@ -136,7 +136,7 @@ class RedshiftSpectrum(Source):
         **kwargs,
     ) -> None:
         """
-        Upload a pandas `DataFrame` to a csv or parquet file in Amazon Redshift Spectrum.
+        Upload a pandas `DataFrame` to a csv or parquet file in a specified external database of Amazon Redshift Spectrum.
             For full list of available parameters please refer to the official documentation:
             https://aws-sdk-pandas.readthedocs.io/en/3.0.0/stubs/awswrangler.s3.to_parquet.html
             https://aws-sdk-pandas.readthedocs.io/en/3.0.0/stubs/awswrangler.s3.to_csv.html
@@ -145,8 +145,8 @@ class RedshiftSpectrum(Source):
             df (pd.DataFrame): Pandas `DataFrame`.
             to_path (str): Path to Amazon S3 folder where the table will be located.
                 Defaults to None.
-            database (str): Amazon Redshift Spectrum catalog name.
-            table (str): Amazon Redshift Spectrum table name.
+            database (str): Catalog name in a specified external database of Amazon Redshift Spectrum.
+            table (str): Table name in a specified external database of Amazon Redshift Spectrum.
             extension (Literal[".parquet", ".csv"], optional): Required file type. Defaults to '.parquet'.
             if_exists (Literal["overwrite", "overwrite_partitions", "append"], optional):
                 'overwrite' to recreate table, 'overwrite_partitions' to recreate only partitions of the table,
@@ -191,13 +191,13 @@ class RedshiftSpectrum(Source):
         **kwargs,
     ) -> pd.DataFrame:
         """
-        Reads Amazon Redshift Spectrum table to a pandas `DataFrame`.
+        Reads table from a specified external database of Amazon Redshift Spectrum to a pandas `DataFrame`.
             For full list of available parameters please refer to the official documentation:
             https://aws-sdk-pandas.readthedocs.io/en/3.0.0/stubs/awswrangler.s3.read_parquet_table.html
 
         Args:
-            database (str): Amazon Redshift Spectrum catalog name.
-            table (str): Amazon Redshift Spectrum table name.
+            database (str): Catalog name in a specified external database of Amazon Redshift Spectrum.
+            table (str): Table name in a specified external database of Amazon Redshift Spectrum.
         """
 
         df = wr.s3.read_parquet_table(
