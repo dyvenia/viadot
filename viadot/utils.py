@@ -35,7 +35,7 @@ def handle_api_response(
     body: str = None,
     verify: bool = True,
 ) -> requests.models.Response:
-    """Handle and raise Python exceptions during request with retry strategy for specyfic status.
+    """Handle and raise Python exceptions during request with retry strategy for specific status.
     Args:
         url (str): The URL which trying to connect.
         auth (tuple, optional): Authorization information. Defaults to None.
@@ -46,10 +46,11 @@ def handle_api_response(
         body (str, optional): Data to send using POST method. Defaults to None.
         verify (bool, optional): Whether to verify cerificates. Defaults to True.
     Raises:
-        ValueError: raises when 'method' parameter value hasn't been specified
-        ReadTimeout: stop waiting for a response after a given number of seconds with the timeout parameter.
-        HTTPError: exception that indicates when HTTP status codes returned values different than 200.
-        ConnectionError: exception that indicates when client is unable to connect to the server.
+        ValueError: Raises when 'method' parameter value hasn't been specified
+        ReadTimeout: Stop waiting for a response after a given number of seconds with the timeout parameter.
+        HTTPError: Exception that indicates when HTTP status codes returned values different than 200.
+        ConnectionError: Exception that indicates when client is unable to connect to the server.
+        ProtocolError: Raised when something unexpected happens mid-request/response.
         APIError: defined by user.
     Returns:
         requests.models.Response
