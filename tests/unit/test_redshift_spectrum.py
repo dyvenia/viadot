@@ -16,7 +16,7 @@ TEST_DF = pd.DataFrame(
 TEST_DF = TEST_DF.astype({"col1": "Int32", "col2": "string"})
 
 S3_BUCKET = os.environ.get("S3_BUCKET")
-TEST_SCHEMA = "raw_test"
+TEST_SCHEMA = "staging_dev"
 TEST_TABLE = "test_redshift_spectrum"
 
 

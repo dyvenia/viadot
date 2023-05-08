@@ -19,10 +19,10 @@ class S3Credentials(BaseModel):
 
 class S3(Source):
     """
-    A class for pulling data from and uploading to the S3.
+    A class for pulling data from and uploading to the Amazon S3.
 
     Args:
-        credentials (S3Credentials, optional): S3 credentials.
+        credentials (S3Credentials, optional): Amazon S3 credentials.
             Defaults to None.
         config_key (str, optional): The key in the viadot config holding relevant
             credentials. Defaults to None.
@@ -67,24 +67,25 @@ class S3(Source):
 
     def ls(self, path: str, suffix: str = None) -> List[str]:
         """
-        Returns the contents of `path`.
+        Returns a list of objects in a provided path.
 
         Args:
             path (str): Path to a folder.
             suffix (Union[str, List[str], None]) - Suffix or List of suffixes for
-                filtering S3 keys. Defaults to None.
+                filtering Amazon S3 keys. Defaults to None.
         """
 
         return wr.s3.list_objects(boto3_session=self.session, path=path, suffix=suffix)
 
     def exists(self, path: str) -> bool:
         """
-        Check if a location exists in S3.
+        Check if an object exists in the Amazon S3.
 
         Args:
-            path (str): The path to check. Can be a file or a directory.
+            path (str): The path to an object to check.
+
         Returns:
-            bool: Whether the paths exists.
+            bool: Whether the object exists.
         """
         return wr.s3.does_object_exist(boto3_session=self.session, path=path)
 
@@ -93,8 +94,8 @@ class S3(Source):
         Copies the contents of `from_path` to `to_path`.
 
         Args:
-            from_path (str, optional): The path (S3 URL) of the source directory.
-            to_path (str, optional): The path (S3 URL) of the target directory.
+            from_path (str): The path (S3 URL) of the source directory.
+            to_path (str): The path (S3 URL) of the target directory.
             recursive (bool, optional): Set this to true if working with directories.
                 Defaults to False.
 
@@ -135,22 +136,28 @@ class S3(Source):
         df: pd.DataFrame,
         path: str,
         extension: Literal[".csv", ".parquet"] = ".parquet",
-        max_rows_by_file: int = None,
         **kwargs,
     ) -> None:
         """
-        Upload a pandas `DataFrame` into S3 as a CSV or Parquet file.
+        Upload a pandas `DataFrame` into Amazon S3 as a CSV or Parquet file.
+        For full list of available parameters please refer to the official documentation:
+        https://aws-sdk-pandas.readthedocs.io/en/3.0.0/stubs/awswrangler.s3.to_parquet.html
+        https://aws-sdk-pandas.readthedocs.io/en/3.0.0/stubs/awswrangler.s3.to_csv.html
 
         Args:
             df (pd.DataFrame): The pandas DataFrame to upload.
             path (str): The destination path.
-            extension (Literal[".csv", ".parquet"]): The file extension. Either ".csv"
-                or ".parquet". Defaults to ".parquet".
-            max_rows_by_file (int, optional): Maximum number of rows in each file.
-                Only available for ".parquet" extension. Defaults to None.
+            extension (Literal[".csv", ".parquet"], optional): The file extension. Defaults to ".parquet".
         """
 
-        if extension == ".csv":
+        if extension == ".parquet":
+            wr.s3.to_parquet(
+                boto3_session=self.session,
+                df=df,
+                path=path,
+                **kwargs,
+            )
+        elif extension == ".csv":
             wr.s3.to_csv(
                 boto3_session=self.session,
                 df=df,
@@ -158,13 +165,7 @@ class S3(Source):
                 **kwargs,
             )
         else:
-            wr.s3.to_parquet(
-                boto3_session=self.session,
-                df=df,
-                path=path,
-                max_rows_by_file=max_rows_by_file,
-                **kwargs,
-            )
+            raise ValueError("Only parquet and CSV formats are supported.")
 
     def to_df(
         self,
@@ -176,7 +177,7 @@ class S3(Source):
         Reads a CSV or Parquet file into a pandas `DataFrame`.
 
         Args:
-            paths (list[str]): A list of paths to S3 files. All files under the path
+            paths (list[str]): A list of paths to Amazon S3 files. All files under the path
                 must be of the same type.
             chunk_size (int, optional): Number of rows to include in each chunk.
                 Defaults to None, ie. return all data as a single `DataFrame`.
@@ -236,10 +237,10 @@ class S3(Source):
 
     def download(self, from_path: str, to_path: str) -> None:
         """
-        Download file(s) from S3.
+        Download file(s) from Amazon S3.
 
         Args:
-            from_path (str): Path to file in S3.
+            from_path (str): Path to file in Amazon S3.
             to_path (str): Path to local file(s) to be stored.
         """
 
