@@ -1,11 +1,11 @@
 # nesso sources, tasks & flows migration workflow
 This guide aims to assist the Data Engineers in migrating the sources, tasks and flows from viadot 1.0 to their respective new repos/branches. Here is the general diagram for viadot's architectrure and the whole migration process:  
 
-Migration process overview:  
+<!-- Migration process overview:  
 ![Migration overview](./viadot_source_migration.png)  
 
 Step-by-step DE migration flowchart:  
-![Step-by-step migration flowchart](./step_by_step_migration_flowchart)  
+![Step-by-step migration flowchart](./step_by_step_migration_flowchart)   -->
 ## 1. Migrating a source from viadot 1.0 to viadot 2.0
 The process involves refactoring and modifying the existing sources in viadot 1.0 to work properly on viadot 2.0. This process include but are not limited to the following steps:
 ### a. Decoupling Prefect from the source
