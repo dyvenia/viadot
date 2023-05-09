@@ -87,7 +87,7 @@ class SAPRFCToDF(Task):
         func: str = None,
         rfc_total_col_width_character_limit: int = None,
         rfc_unique_id: List[str] = None,
-        new_approx: bool = False,
+        alternative_version: bool = False,
     ) -> pd.DataFrame:
         """Task run method.
 
@@ -111,12 +111,12 @@ class SAPRFCToDF(Task):
                     rfc_unique_id=["VBELN", "LPRIO"],
                     ...
                     )
-            new_approx (bool, optional): Enable the use of the new approximation. Defaults to False.
+            alternative_version (bool, optional): Enable the use version 2 in source. Defaults to False.
         """
         if query is None:
             raise ValueError("Please provide the query.")
 
-        if new_approx:
+        if alternative_version is True:
             if rfc_unique_id:
                 self.logger.warning(
                     "If the column/set of columns are not unique the table will be malformed."

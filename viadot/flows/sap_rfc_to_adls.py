@@ -28,7 +28,7 @@ class SAPRFCToADLS(Flow):
         update_kv: bool = False,
         filter_column: str = None,
         timeout: int = 3600,
-        new_approx: bool = False,
+        alternative_version: bool = False,
         *args: List[any],
         **kwargs: Dict[str, Any],
     ):
@@ -79,7 +79,7 @@ class SAPRFCToADLS(Flow):
             filter_column (str, optional): Name of the field based on which key value will be updated. Defaults to None.
             timeout(int, optional): The amount of time (in seconds) to wait while running this task before
                 a timeout occurs. Defaults to 3600.
-            new_approx (bool, optional): Enable the use of the new approximation. Defaults to False.
+            alternative_version (bool, optional): Enable the use version 2 in source. Defaults to False.
         """
         self.query = query
         self.rfc_sep = rfc_sep
@@ -97,7 +97,7 @@ class SAPRFCToADLS(Flow):
         self.adls_sp_credentials_secret = adls_sp_credentials_secret
         self.vault_name = vault_name
         self.timeout = timeout
-        self.new_approx = new_approx
+        self.alternative_version = alternative_version
 
         self.update_kv = update_kv
         self.filter_column = filter_column
@@ -115,7 +115,7 @@ class SAPRFCToADLS(Flow):
             func=self.func,
             rfc_total_col_width_character_limit=self.rfc_total_col_width_character_limit,
             rfc_unique_id=self.rfc_unique_id,
-            new_approx=self.new_approx,
+            alternative_version=self.alternative_version,
             credentials=self.sap_credentials,
             flow=self,
         )
@@ -136,17 +136,17 @@ class SAPRFCToADLS(Flow):
                 flow=self,
             )
 
-        # file_to_adls_task = AzureDataLakeUpload(timeout=self.timeout)
-        # adls_upload = file_to_adls_task.bind(
-        #     from_path=self.local_file_path,
-        #     to_path=self.adls_path,
-        #     overwrite=self.overwrite,
-        #     sp_credentials_secret=self.adls_sp_credentials_secret,
-        #     flow=self,
-        # )
+        file_to_adls_task = AzureDataLakeUpload(timeout=self.timeout)
+        adls_upload = file_to_adls_task.bind(
+            from_path=self.local_file_path,
+            to_path=self.adls_path,
+            overwrite=self.overwrite,
+            sp_credentials_secret=self.adls_sp_credentials_secret,
+            flow=self,
+        )
 
         df_to_file.set_upstream(df, flow=self)
-        # adls_upload.set_upstream(df_to_file, flow=self)
+        adls_upload.set_upstream(df_to_file, flow=self)
 
         if self.update_kv == True:
             set_new_kv.bind(
@@ -155,4 +155,4 @@ class SAPRFCToADLS(Flow):
                 filter_column=self.filter_column,
                 flow=self,
             )
-            # set_new_kv.set_upstream(adls_upload, flow=self)
+            set_new_kv.set_upstream(adls_upload, flow=self)
