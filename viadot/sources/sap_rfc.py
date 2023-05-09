@@ -701,7 +701,10 @@ class SAPRFCV2(Source):
         self.func = func
         self.rfc_total_col_width_character_limit = rfc_total_col_width_character_limit
         # remove repeated reference columns
-        self.rfc_unique_id = list(set(rfc_unique_id))
+        if rfc_unique_id is not None:
+            self.rfc_unique_id = list(set(rfc_unique_id))
+        else:
+            self.rfc_unique_id = rfc_unique_id
 
     @property
     def con(self) -> pyrfc.Connection:
