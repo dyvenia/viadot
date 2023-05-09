@@ -40,15 +40,16 @@ class VeluxClub(Source):
     """
     A class implementing the Velux Club API.
 
-    Documentation for this API is located at: https://api.club.velux.com/api/v1/datalake/
+    Documentation for this API is located at: https://evps01.envoo.net/vipapi/
     There are 4 endpoints where to get the data!
 
     Parameters
     ----------
     query_params : Dict[str, Any], optional
         The parameters to pass to the GET query.
-        See https://supermetrics.com/docs/product-api-get-data/ for full specification,
         by default None
+    config_key (str, optional): The key in the viadot config holding relevant
+        credentials. Defaults to None.
     """
 
     API_URL = "https://api.club.velux.com/api/v1/datalake/"
@@ -57,10 +58,11 @@ class VeluxClub(Source):
         self,
         *args,
         credentials: Dict[str, Any] = None,
+        config_key: str = None,
         **kwargs,
     ):
-        DEFAULT_CREDENTIALS = get_source_credentials("velux_club")
-        credentials = kwargs.pop("credentials", DEFAULT_CREDENTIALS)
+        # Credentials Management
+        credentials = credentials or get_source_credentials(config_key)
         if credentials is None:
             raise CredentialError("Missing credentials.")
 
@@ -74,6 +76,7 @@ class VeluxClub(Source):
     def build_query(
         self, source: str, from_date: str, to_date: str, api_url: str, region: str
     ) -> str:
+        
         if source in ["jobs", "product", "company"]:
             # check if date filter was passed!
             if from_date == "" or to_date == "":
@@ -93,7 +96,17 @@ class VeluxClub(Source):
         region="null",
     ) -> pd.DataFrame:  ## Returns the response
         # DocString
-
+        """
+            Description:
+                Collect Table info from VELUX API and store it on pandas `DataFrame`.
+            Args:
+                source (str, optional): Values could take: [jobs, product, company or survey] types of tables.
+                from_date (str, optional, Default Value: "2022-03-22"): Starting date to filter 
+                to_date (str, optional): Ending date to filter
+                region (str, optional):
+            Returns:
+                pd.Dataframe: The pandas `DataFrame` containing data from the Velux Club Table.
+            """
         # Dealing with bad arguments
         if (source not in ["jobs", "product", "company", "survey"]):
             raise Source_NOK("The source has to be: jobs, product, company or survey")
@@ -111,7 +124,6 @@ class VeluxClub(Source):
         if (delta.days <0 ):
             raise Dates_NOK("to_date has to be earlier than from_date!")
         
-
         # Prepering the Query
         url = self.build_query(source, from_date, to_date, self.API_URL, region)
         headers = self.headers
@@ -146,41 +158,3 @@ class VeluxClub(Source):
             df = pd.DataFrame(response)
 
         return df
-
-    def to_parquet(
-        self,
-        response,
-        path="",
-        if_exists: Literal["append", "replace", "skip"] = "replace",
-        **kwargs,
-    ) -> None:
-        # DocString
-        if path == "":
-            raise SourceNOK_Error
-
-        df = self.to_df(response)
-
-        if if_exists == "append" and os.path.isfile(path):
-            parquet_df = pd.read_parquet(path)
-            out_df = pd.concat([parquet_df, df])
-        elif if_exists == "replace":
-            out_df = df
-        else:
-            out_df = df
-
-        try:
-            if not os.path.isfile(path):
-                directory = os.path.dirname(path)
-                os.makedirs(directory, exist_ok=True)
-        except:
-            pass
-
-        out_df.to_parquet(path, index=False, **kwargs)
-
-    def print_df(df: pd.DataFrame, service_name: str):
-        print(f"{service_name} Dataframe Columns")
-        print(list(df.columns))
-        print(f"{service_name} Number of Columns")
-        print(len(list(df.columns)))
-        print(f"{service_name} Dataframe Number Of Samples")
-        print(str(len(df.index)))
