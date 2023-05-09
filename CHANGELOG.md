@@ -18,6 +18,8 @@ an extra separator character within a string column to avoid conflicts.
 source file, to vaoid a mismatch in columns lenght between iterative connections to SAP tables.
 - When `SAP` tables are updated during `sap_rfc.py` scrip running, if there are chunks, the
 columns in the next chunk are unrealted rows.
+- Fixed `sap_rfc.py` source file to not breakdown by both, 
+and extra separator in a row and adding new rows in SAP table between iterations.
 
 ## [0.4.14] - 2023-04-13
 ### Added
@@ -86,8 +88,6 @@ This parameter enables user to decide whether or not filter should be validated.
 - Fixed incorrect `if_exists="delete"` handling in `DuckDB.create_table_from_parquet()`
 - Fixed `test_duckdb_to_sql_server.py` tests - revert to a previous version
 - Removed `test__check_if_schema_exists()` test
-- Fixed `sap_rfc.py` source file to not breakdown by both, 
-and extra separator in a row and adding new rows in SAP table between iterations.
 
 
 ## [0.4.9] - 2022-09-27
