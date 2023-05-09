@@ -46,23 +46,21 @@ class VeluxClub(Source):
     """
     A class implementing the Velux Club API.
 
-    Documentation for this API is located at: https://api.club.velux.com/api/v1/datalake/
+    Documentation for this API is located at: https://evps01.envoo.net/vipapi/
     There are 4 endpoints where to get the data
 
-    Args:
-        Source (_type_): _description_
-
-    Raises:
-        CredentialError: _description_
-        ValueError: _description_
-
-    Returns:
-        _type_: _description_
     """
 
     API_URL = "https://api.club.velux.com/api/v1/datalake/"
 
     def __init__(self, *args, credentials: Dict[str, Any] = None, **kwargs):
+        """
+        Create an instance of VeluxClub.
+
+        Args:
+            credentials (dict): Credentials to Velux Club APIs.
+        """
+
         DEFAULT_CREDENTIALS = local_config.get("VELUX_CLUB")
         credentials = kwargs.pop("credentials", DEFAULT_CREDENTIALS)
         if credentials is None:
@@ -78,6 +76,20 @@ class VeluxClub(Source):
     def build_query(
         self, source: str, from_date: str, to_date: str, api_url: str, region: str
     ) -> str:
+        """
+        Builds the query from the inputs
+
+        Args:
+            source (str): The endpoint source to be accessed, has to be among these:
+                ['jobs', 'product', 'company', 'survey'].
+            from_date (str): Start date for the query, by default is the oldest date in the data.
+            to_date (str): End date for the query, if empty, datetime.today() will be used.
+            api_url (str): Generic part of the URL
+            region (str): Region filter for the query
+
+        Returns:
+            str: Final query with all filters added
+        """
         if source in ["jobs", "product", "company"]:
             # check if date filter was passed!
             if from_date == "" or to_date == "":
@@ -93,10 +105,27 @@ class VeluxClub(Source):
         self,
         source: str = "",
         from_date: str = "2022-03-22",
-        to_date: str = "",
+        to_date: str = datetime.today().strftime("%Y-%m-%d"),
         region="null",
     ) -> pd.DataFrame:  ## Returns the response
-        # DocString
+        """
+        Gets the response from the API queried and transforms it into DataFrame
+
+        Args:
+            source (str): The endpoint source to be accessed, has to be among these:
+                ['jobs', 'product', 'company', 'survey'].
+            from_date (str): Start date for the query, by default is the oldest date in the data.
+            to_date (str): End date for the query, if empty, datetime.today() will be used.
+            region (str): Region filter for the query
+
+        Raises:
+            Source_NOK: The 'source' setting is not within the allowed list.
+            Historical_Too_Old: 'from_date' input is older than the origin of data.
+            Dates_NOK: 'to_date' is set before 'from_date'
+
+        Returns:
+            pd.DataFrame: Table of the data carried in the response
+        """
 
         # Dealing with bad arguments
         if source not in ["jobs", "product", "company", "survey"]:
