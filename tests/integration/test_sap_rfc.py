@@ -1,8 +1,9 @@
 from collections import OrderedDict
 
-from viadot.sources import SAPRFC
+from viadot.sources import SAPRFC, SAPRFCV2
 
 sap = SAPRFC()
+sap2 = SAPRFCV2()
 
 sql1 = "SELECT a AS a_renamed, b FROM table1 WHERE table1.c = 1"
 sql2 = "SELECT a FROM fake_schema.fake_table WHERE a=1 AND b=2 OR c LIKE 'a%' AND d IN (1, 2) LIMIT 5 OFFSET 3"
@@ -103,3 +104,11 @@ def test___build_pandas_filter_query():
         sap._build_pandas_filter_query(sap.client_side_filters)
         == "thirdlongcolname == 01234"
     ), sap._build_pandas_filter_query(sap.client_side_filters)
+
+
+def test__get_table_name_v2():
+    assert sap2._get_table_name(sql1) == "table1"
+    assert sap2._get_table_name(sql2) == "fake_schema.fake_table", sap2._get_table_name(
+        sql2
+    )
+    assert sap2._get_table_name(sql7) == "b"
