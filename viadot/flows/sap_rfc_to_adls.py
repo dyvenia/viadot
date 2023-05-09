@@ -15,7 +15,7 @@ class SAPRFCToADLS(Flow):
         rfc_replacement: str = "-",
         func: str = "RFC_READ_TABLE",
         rfc_total_col_width_character_limit: int = 400,
-        rfc_reference_column: List[str] = None,
+        rfc_unique_id: List[str] = None,
         sap_credentials: dict = None,
         output_file_extension: str = ".parquet",
         local_file_path: str = None,
@@ -54,9 +54,17 @@ class SAPRFCToADLS(Flow):
                 inside the string to avoid flow breakdowns. Defaults to "-".
             func (str, optional): SAP RFC function to use. Defaults to "RFC_READ_TABLE".
             rfc_total_col_width_character_limit (int, optional): Number of characters by which query will be split in chunks in case of too many columns
-            rfc_reference_column (List[str], optional): Reference columns to merge chunks Data Frames. These columns must to be unique. Defaults to None.
-            for RFC function. According to SAP documentation, the limit is 512 characters. However, we observed SAP raising an exception
-            even on a slightly lower number of characters, so we add a safety margin. Defaults to 400.
+                for RFC function. According to SAP documentation, the limit is 512 characters. However, we observed SAP raising an exception
+                even on a slightly lower number of characters, so we add a safety margin. Defaults to 400.
+            rfc_unique_id  (List[str], optional): Reference columns to merge chunks Data Frames. These columns must to be unique. If no columns are provided
+                in this parameter, all data frame columns will by concatenated. Defaults to None.
+                Example:
+                --------
+                SAPRFCToADLS(
+                    ...
+                    rfc_unique_id=["VBELN", "LPRIO"],
+                    ...
+                    )
             sap_credentials (dict, optional): The credentials to use to authenticate with SAP. By default, they're taken from the local viadot config.
             output_file_extension (str, optional): Output file extension - to allow selection of .csv for data which is not easy to handle with parquet. Defaults to ".parquet".
             local_file_path (str, optional): Local destination path. Defaults to None.
@@ -78,7 +86,7 @@ class SAPRFCToADLS(Flow):
         self.rfc_replacement = rfc_replacement
         self.func = func
         self.rfc_total_col_width_character_limit = rfc_total_col_width_character_limit
-        self.rfc_reference_column = rfc_reference_column
+        self.rfc_unique_id = rfc_unique_id
         self.sap_credentials = sap_credentials
         self.output_file_extension = output_file_extension
         self.local_file_path = local_file_path
@@ -128,16 +136,17 @@ class SAPRFCToADLS(Flow):
                 flow=self,
             )
 
-        adls_upload = file_to_adls_task.bind(
-            from_path=self.local_file_path,
-            to_path=self.adls_path,
-            overwrite=self.overwrite,
-            sp_credentials_secret=self.adls_sp_credentials_secret,
-            flow=self,
-        )
+        # file_to_adls_task = AzureDataLakeUpload(timeout=self.timeout)
+        # adls_upload = file_to_adls_task.bind(
+        #     from_path=self.local_file_path,
+        #     to_path=self.adls_path,
+        #     overwrite=self.overwrite,
+        #     sp_credentials_secret=self.adls_sp_credentials_secret,
+        #     flow=self,
+        # )
 
         df_to_file.set_upstream(df, flow=self)
-        adls_upload.set_upstream(df_to_file, flow=self)
+        # adls_upload.set_upstream(df_to_file, flow=self)
 
         if self.update_kv == True:
             set_new_kv.bind(
@@ -146,4 +155,4 @@ class SAPRFCToADLS(Flow):
                 filter_column=self.filter_column,
                 flow=self,
             )
-            set_new_kv.set_upstream(adls_upload, flow=self)
+            # set_new_kv.set_upstream(adls_upload, flow=self)

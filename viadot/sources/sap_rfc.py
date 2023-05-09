@@ -665,7 +665,7 @@ class SAPRFCV2(Source):
         replacement: str = "-",
         func: str = "RFC_READ_TABLE",
         rfc_total_col_width_character_limit: int = 400,
-        rfc_reference_column: List[str] = None,
+        rfc_unique_id: List[str] = None,
         *args,
         **kwargs,
     ):
@@ -681,7 +681,7 @@ class SAPRFCV2(Source):
             in case of too many columns for RFC function. According to SAP documentation, the limit is
             512 characters. However, we observed SAP raising an exception even on a slightly lower number
             of characters, so we add a safety margin. Defaults to 400.
-            rfc_reference_column (List[str], optional): Reference columns to merge chunks Data Frames. These columns must to be unique. Defaults to None.
+            rfc_unique_id  (List[str], optional): Reference columns to merge chunks Data Frames. These columns must to be unique. Defaults to None.
 
         Raises:
             CredentialError: If provided credentials are incorrect.
@@ -949,9 +949,9 @@ class SAPRFCV2(Source):
         lists_of_columns = []
         cols = []
         col_length_total = 0
-        if isinstance(self.rfc_reference_column[0], str):
+        if isinstance(self.rfc_unique_id[0], str):
             character_limit = self.rfc_total_col_width_character_limit
-            for ref_column in self.rfc_reference_column:
+            for ref_column in self.rfc_unique_id:
                 col_length_reference_column = int(
                     self.call(
                         "DDIF_FIELDINFO_GET",
@@ -981,20 +981,20 @@ class SAPRFCV2(Source):
             if col_length_total <= character_limit:
                 cols.append(col)
             else:
-                if isinstance(self.rfc_reference_column[0], str) and all(
-                    [rfc_col not in cols for rfc_col in self.rfc_reference_column]
+                if isinstance(self.rfc_unique_id[0], str) and all(
+                    [rfc_col not in cols for rfc_col in self.rfc_unique_id]
                 ):
-                    for rfc_col in self.rfc_reference_column:
+                    for rfc_col in self.rfc_unique_id:
                         if rfc_col not in cols:
                             cols.append(rfc_col)
                 lists_of_columns.append(cols)
                 cols = [col]
                 col_length_total = int(col_length)
         else:
-            if isinstance(self.rfc_reference_column[0], str) and all(
-                [rfc_col not in cols for rfc_col in self.rfc_reference_column]
+            if isinstance(self.rfc_unique_id[0], str) and all(
+                [rfc_col not in cols for rfc_col in self.rfc_unique_id]
             ):
-                for rfc_col in self.rfc_reference_column:
+                for rfc_col in self.rfc_unique_id:
                     if rfc_col not in cols:
                         cols.append(rfc_col)
             lists_of_columns.append(cols)
@@ -1073,7 +1073,7 @@ class SAPRFCV2(Source):
 
         for sep in SEPARATORS:
             logger.info(f"Checking if separator '{sep}' works.")
-            if isinstance(self.rfc_reference_column[0], str):
+            if isinstance(self.rfc_unique_id[0], str):
                 # columns only for the first chunk and we add the rest later to avoid name conflicts
                 df = pd.DataFrame(columns=fields_lists[0])
             else:
@@ -1111,12 +1111,12 @@ class SAPRFCV2(Source):
                 records = np.array([row[record_key].split(sep) for row in data_raw])
 
                 if (
-                    isinstance(self.rfc_reference_column[0], str)
+                    isinstance(self.rfc_unique_id[0], str)
                     and not list(df.columns) == fields
                 ):
                     df_tmp = pd.DataFrame(columns=fields)
                     df_tmp[fields] = records
-                    df = pd.merge(df, df_tmp, on=self.rfc_reference_column, how="outer")
+                    df = pd.merge(df, df_tmp, on=self.rfc_unique_id, how="outer")
                 else:
                     if not start:
                         df[fields] = records
