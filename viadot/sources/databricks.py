@@ -8,6 +8,7 @@ from delta.tables import *
 from pydantic import BaseModel, root_validator
 
 from viadot.exceptions import CredentialError
+from viadot.sources.sharepoint import Sharepoint
 
 from ..config import get_source_credentials
 from ..exceptions import TableAlreadyExists, TableDoesNotExist
@@ -305,6 +306,10 @@ class Databricks(Source):
 
         if snakecase_column_names:
             df = df_snakecase_column_names(df)
+
+        # Change the types of compactness of columns of type object to str
+        object_types = df.select_dtypes(include=["object"])
+        df[object_types.columns] = object_types.astype(str)
 
         fqn = f"{schema}.{table}"
         success_message = f"Table {fqn} has been created successfully."
