@@ -22,6 +22,7 @@ class BusinessCore(Source):
             "FromDate": None,
             "ToDate": None,
         },
+        verify: bool = True,
         credentials: Dict[str, Any] = None,
         config_key: str = "BusinessCore",
         *args,
@@ -39,6 +40,7 @@ class BusinessCore(Source):
         self.config_key = config_key
         self.url = url
         self.filters_dict = filters_dict
+        self.verify = verify
 
         super().__init__(*args, credentials=credentials, **kwargs)
 
@@ -48,7 +50,7 @@ class BusinessCore(Source):
         payload = f'grant_type=password&username={self.credentials.get("username")}&password={self.credentials.get("password")}&scope='
         headers = {"Content-Type": "application/x-www-form-urlencoded"}
         response = handle_api_response(
-            url=url, headers=headers, method="GET", body=payload, verify=False
+            url=url, headers=headers, method="GET", body=payload, verify=self.verify
         )
         token = json.loads(response.text).get("access_token")
         self.token = token
@@ -78,12 +80,16 @@ class BusinessCore(Source):
         }
         logger.info("Downloading the data...")
         response = handle_api_response(
-            url=self.url, headers=headers, method="GET", body=payload, verify=False
+            url=self.url,
+            headers=headers,
+            method="GET",
+            body=payload,
+            verify=self.verify,
         )
         logger.info("Data was downloaded successfully.")
         return json.loads(response.text)
 
-    def to_df(self):
+    def to_df(self, if_empty: str = "skip") -> pd.DataFrame:
         view = self.url.split("/")[-1]
         if view not in ["GetCustomerData", "GetItemMaster", "GetPendingSalesOrderData"]:
             raise APIError(f"View {view} currently not available.")
@@ -93,7 +99,10 @@ class BusinessCore(Source):
             logger.info(
                 f"Data was successfully transformed into DataFrame: {len(df.columns)} columns and {len(df)} rows."
             )
+            if df.empty:
+                self._handle_if_empty(if_empty)
             return df
+
         if view == "GetPendingSalesOrderData":
             # todo waiting for schema
             raise APIError(f"View {view} currently not available.")
