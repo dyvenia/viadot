@@ -307,7 +307,7 @@ class Databricks(Source):
         if snakecase_column_names:
             df = df_snakecase_column_names(df)
 
-        # Change the types of compactness of columns of type object to str
+        # Change the data types in rows of pandas.object columns to string.
         object_types = df.select_dtypes(include=["object"])
         df[object_types.columns] = object_types.astype(str)
 
