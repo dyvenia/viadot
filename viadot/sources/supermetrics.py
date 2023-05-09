@@ -34,14 +34,21 @@ class Supermetrics(Source):
 
     API_ENDPOINT = "https://api.supermetrics.com/enterprise/v2/query/data/json"
 
-    def __init__(self, *args, credentials: Dict[str, Any] = None, config_key: str = None, query_params: Dict[str, Any] = None, **kwargs):
+    def __init__(
+        self,
+        *args,
+        credentials: Dict[str, Any] = None,
+        config_key: str = None,
+        query_params: Dict[str, Any] = None,
+        **kwargs,
+    ):
         # Credentials Management
         credentials = credentials or get_source_credentials(config_key)
 
         if credentials is None:
-            #credentials = get_source_credentials("supermetrics")
+            # credentials = get_source_credentials("supermetrics")
             raise CredentialError("Please provide the credentials.")
-        
+
         required_credentials = (
             "api_key",
             "user",
@@ -63,27 +70,27 @@ class Supermetrics(Source):
 
     def to_json(self, timeout=(3.05, 60 * 30)) -> Dict[str, Any]:
         """
-            Description:
-                Download query results to a dictionary.
-                Note that Supermetrics API will sometimes hang and not return any error message,
-                so we're adding a timeout to GET.
+        Description:
+            Download query results to a dictionary.
+            Note that Supermetrics API will sometimes hang and not return any error message,
+            so we're adding a timeout to GET.
 
-                See [requests docs](https://docs.python-requests.org/en/master/user/advanced/#timeouts)
-                for an explanation of why this timeout value will work on long-running queries but fail fast
-                on connection issues.
+            See [requests docs](https://docs.python-requests.org/en/master/user/advanced/#timeouts)
+            for an explanation of why this timeout value will work on long-running queries but fail fast
+            on connection issues.
 
-            Args:
-                timeout (int, optional):  Defaults to 30 minuntes.
+        Args:
+            timeout (int, optional):  Defaults to 30 minuntes.
 
-            Returns:
-                Ditionary with the response.        
+        Returns:
+            Ditionary with the response.
         """
 
         if not self.query_params:
             raise ValueError("Please build the query first")
 
         params = {"json": json.dumps(self.query_params)}
-        headers = {"Authorization": f'Bearer {self.api_key}'}
+        headers = {"Authorization": f"Bearer {self.api_key}"}
 
         response = handle_api_response(
             url=self.API_ENDPOINT, params=params, headers=headers, timeout=timeout
@@ -96,12 +103,12 @@ class Supermetrics(Source):
         response: dict,
     ) -> List[str]:
         """
-            Description:
-                Get cols name.            
-            Args:
-                response (dict):  Dictionary with the json response from API call.
-            Returns:
-                columns (list): List of Google Analytics columns names.
+        Description:
+            Get cols name.
+        Args:
+            response (dict):  Dictionary with the json response from API call.
+        Returns:
+            columns (list): List of Google Analytics columns names.
         """
         # Supermetrics allows pivoting GA data, in which case it generates additional columns,
         # which are not enlisted in response's query metadata but are instead added as the first row of data.
@@ -126,7 +133,7 @@ class Supermetrics(Source):
     def _get_col_names_other(cls, response: dict) -> List[str]:
         """
         Description:
-            Get cols name.    
+            Get cols name.
         Args:
             response (dict):  Dictionary with the json response from API call.
         Returns:
@@ -140,7 +147,7 @@ class Supermetrics(Source):
     def _get_col_names(self) -> List[str]:
         """
         Description:
-            Get cols name.  
+            Get cols name.
         Args:
             None.
         Returns:
@@ -158,17 +165,17 @@ class Supermetrics(Source):
 
     def to_df(self, if_empty: str = "warn") -> pd.DataFrame:
         """
-            Description:
-                Download data into a pandas DataFrame.
+        Description:
+            Download data into a pandas DataFrame.
 
-                Note that Supermetric can calculate some fields on the fly and alias them in the
-                returned result. For example, if the query requests the `position` field,
-                Supermetric may return an `Average position` caclulated field.
-                For this reason we take columns names from the actual results rather than from input fields.
-            Args:
-                if_empty (str, optional): What to do if query returned no data. Defaults to "warn".
-            Return:
-                Panda DataFrame with json information !  
+            Note that Supermetric can calculate some fields on the fly and alias them in the
+            returned result. For example, if the query requests the `position` field,
+            Supermetric may return an `Average position` caclulated field.
+            For this reason we take columns names from the actual results rather than from input fields.
+        Args:
+            if_empty (str, optional): What to do if query returned no data. Defaults to "warn".
+        Return:
+            Panda DataFrame with json information !
         """
         try:
             columns = self._get_col_names()
@@ -189,12 +196,12 @@ class Supermetrics(Source):
 
     def query(self, params: Dict[str, Any]):
         """
-            Description:
-                Create the Query
-            Args:
-                params (dict): Query parameters {param:value, }!
-            Return:
-                Object updated
+        Description:
+            Create the Query
+        Args:
+            params (dict): Query parameters {param:value, }!
+        Return:
+            Object updated
         """
 
         self.query_params = params
