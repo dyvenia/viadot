@@ -116,7 +116,7 @@ class VeluxClub(Source):
         delta = from_date_obj - oldest_date_obj  
         
         if (delta.days <0 ):
-            raise Historical_Too_Old("from_date has to be earlier than 2023-03-22!!")
+            raise Historical_Too_Old("from_date cannot be earlier than 2023-03-22!!")
 
         to_date_obj = datetime.strptime(to_date, '%Y-%m-%d')  
         delta = to_date_obj - from_date_obj  
