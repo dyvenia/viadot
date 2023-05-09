@@ -124,6 +124,39 @@ class Source:
         out_df.to_excel(path, index=False, encoding="utf8")
         return True
 
+    def to_parquet(
+        self,
+        path: str,
+        if_exists: Literal["append", "replace", "skip"] = "replace",
+        if_empty: str = "warn",
+        **kwargs,
+    ) -> None:
+        """ """
+        try:
+            df = self.to_df(if_empty=if_empty)
+        except SKIP:
+            return False
+        if if_exists == "append" and os.path.isfile(path):
+            parquet_df = pd.read_parquet(path)
+            out_df = pd.concat([parquet_df, df])
+        elif if_exists == "replace":
+            out_df = df
+        elif if_exists == "skip":
+            logger.info("Skipped.")
+            return
+        else:
+            out_df = df
+
+        # create directories if they don't exist
+        try:
+            if not os.path.isfile(path):
+                directory = os.path.dirname(path)
+                os.makedirs(directory, exist_ok=True)
+        except:
+            pass
+
+        out_df.to_parquet(path, index=False, **kwargs)
+
     def _handle_if_empty(self, if_empty: str = None) -> NoReturn:
         """What to do if empty."""
         if if_empty == "warn":
