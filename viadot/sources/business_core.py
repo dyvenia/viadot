@@ -13,6 +13,11 @@ logger = logging.get_logger(__name__)
 
 
 class BusinessCore(Source):
+    """
+    Source for getting data from Bussines Core ERP API.
+
+    """
+
     def __init__(
         self,
         url: str = None,
@@ -28,6 +33,21 @@ class BusinessCore(Source):
         *args,
         **kwargs,
     ):
+        """
+        Creating an instance of BusinessCore source class.
+
+        Args:
+            url (str, optional): Base url to a view in Business Core API. Defaults to None.
+            filters_dict (Dict[str, Any], optional): Filters in form of dictionary. Available filters: 'BucketCount',
+                'BucketNo', 'FromDate', 'ToDate'.  Defaults to None.
+            verify (bool, optional): Whether or not verify certificates while connecting to an API. Defaults to True.
+            credentials (Dict[str, Any], optional): Credentials stored in a dictionary. Required credentials: username,
+                password. Defaults to None.
+            config_key (str, optional): Credential key to dictionary where details are stored. Defaults to "BusinessCore".
+
+        Raises:
+            CredentialError: When credentials are not found.
+        """
         DEFAULT_CREDENTIALS = local_config.get(config_key)
         credentials = credentials or DEFAULT_CREDENTIALS
 
@@ -45,6 +65,7 @@ class BusinessCore(Source):
         super().__init__(*args, credentials=credentials, **kwargs)
 
     def generate_token(self) -> str:
+        """Function for generating Business Core API token based on username and password."""
         url = "https://api.businesscore.ae/api/user/Login"
 
         payload = f'grant_type=password&username={self.credentials.get("username")}&password={self.credentials.get("password")}&scope='
@@ -57,22 +78,24 @@ class BusinessCore(Source):
         return token
 
     def clean_filters_dict(self) -> Dict:
+        """Function for replacing 'None' with '&' in a dictionary. Needed for payload in 'x-www-form-urlencoded' from."""
         return {
             key: ("&" if val is None else val) for key, val in self.filters_dict.items()
         }
 
     def get_data(self) -> Dict:
+        """Function for obtaining data in dictionary format from Business Core API."""
         filters = self.clean_filters_dict()
 
         payload = (
             "BucketCount="
-            + filters.get("BucketCount")
+            + str(filters.get("BucketCount"))
             + "BucketNo="
-            + filters.get("BucketNo")
+            + str(filters.get("BucketNo"))
             + "FromDate="
-            + filters.get("FromDate")
+            + str(filters.get("FromDate"))
             + "ToDate"
-            + filters.get("ToDate")
+            + str(filters.get("ToDate"))
         )
         headers = {
             "Content-Type": "application/x-www-form-urlencoded",
@@ -90,6 +113,17 @@ class BusinessCore(Source):
         return json.loads(response.text)
 
     def to_df(self, if_empty: str = "skip") -> pd.DataFrame:
+        """
+        Function for transforming data from dictionary to pd.DataFrame.
+
+        Args:
+            if_empty (str, optional): What to do if output DataFrame is empty. Defaults to "skip".
+
+        Returns:
+            pd.DataFrame: DataFrame with data downloaded from Business Core API view.
+        Raises:
+            APIError: When selected API view is not available.
+        """
         view = self.url.split("/")[-1]
         if view not in ["GetCustomerData", "GetItemMaster", "GetPendingSalesOrderData"]:
             raise APIError(f"View {view} currently not available.")

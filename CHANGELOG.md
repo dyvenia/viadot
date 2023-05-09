@@ -6,6 +6,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 ### Added
+- Added `BusinessCore` source class
+- Added `BusinessCoreToParquet` task class
+- Added `to_parquet()` in ``base.py`
 - Added `close_connection()` in `sap_rfc`
 
 ## [0.4.14] - 2023-04-13

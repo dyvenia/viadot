@@ -131,7 +131,15 @@ class Source:
         if_empty: str = "warn",
         **kwargs,
     ) -> None:
-        """ """
+        """
+        Write from source to a Parquet file.
+
+        Args:
+            path (str): The destination path.
+            if_exists (str, optional): What to do if the file exists. Defaults to "replace".
+            if_empty (str, optional): What to do if the source contains no data. Defaults to "warn".
+
+        """
         try:
             df = self.to_df(if_empty=if_empty)
         except SKIP:
