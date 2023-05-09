@@ -25,4 +25,5 @@ from .customer_gauge import CustomerGauge
 
 # APIS
 from .uk_carbon_intensity import UKCarbonIntensity
+from .eurostat import Eurostat
 from .hubspot import Hubspot
