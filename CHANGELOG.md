@@ -18,6 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added `Genesys` source to library.
 - Fixed a bug in `Databricks.create_table_from_pandas()`. The function that converts column names to snake_case was not used in every case. (#672)
 - Added `howto_migrate_sources_tasks_and_flows.md` document. This document will assist the DEs with the viadot 1 -> viadot 2 migration process.
+- Fixed a bug in `Databricks.create_table_from_pandas()`. The `object` type in the DataFrame allows to store mixed values in the column which was causing the error. Added changing type of cloumn content to string. (#681)
 - `RedshiftSpectrum.from_df()` now automatically creates a folder for the table if not specified in `to_path`
 
 
