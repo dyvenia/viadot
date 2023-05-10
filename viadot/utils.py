@@ -207,15 +207,19 @@ def _cast_df_cols(df):
     datetime_cols = (col for col, dtype in df.dtypes.items() if dtype.kind == "M")
     bool_cols = (col for col, dtype in df.dtypes.items() if dtype.kind == "b")
     int_cols = (col for col, dtype in df.dtypes.items() if dtype.kind == "i")
+    object_cols = (col for col, dtype in df.dtypes.items() if dtype.kind == "O")
 
     for col in datetime_cols:
         df[col] = df[col].dt.strftime("%Y-%m-%d %H:%M:%S+00:00")
 
     for col in bool_cols:
-        df[col] = df[col].astype(pd.Int64Dtype())
+        df[col] = df[col].astype(int)
 
     for col in int_cols:
-        df[col] = df[col].astype(pd.Int64Dtype())
+        df[col] = df[col].astype(int)
+
+    for col in object_cols:
+        df[col] = df[col].astype(str)
 
     return df
 
