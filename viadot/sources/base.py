@@ -136,8 +136,8 @@ class Source:
 
         Args:
             path (str): The destination path.
-            if_exists (str, optional): What to do if the file exists. Defaults to "replace".
-            if_empty (str, optional): What to do if the source contains no data. Defaults to "warn".
+            if_exists (Literal["append", "replace", "skip"], optional): What to do if the file exists. Defaults to "replace".
+            if_empty (Literal["warn", "fail", "skip"], optional): What to do if the source contains no data. Defaults to "warn".
 
         """
         try:
