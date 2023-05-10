@@ -50,4 +50,4 @@ from .mindful import MindfulToCSV
 from .hubspot import HubspotToDF
 from .mediatool import MediatoolToDF
 from .customer_gauge import CustomerGaugeToDF
-from .velux_club import VeluxClubToDF, VeluxClubToParquet
+from .velux_club import VeluxClubToDF
