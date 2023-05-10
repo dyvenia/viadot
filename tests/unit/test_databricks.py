@@ -275,11 +275,12 @@ def test_snakecase_column_names(databricks):
     databricks.drop_schema(TEST_SCHEMA)
 
 
-def test_mixed_values_df(databricks):
+def test_create_table_from_pandas_handles_mixed_types(databricks):
 
     assert not databricks._check_if_table_exists(schema=TEST_SCHEMA, table=TEST_TABLE)
 
     databricks.create_schema(TEST_SCHEMA)
+
     created = databricks.create_table_from_pandas(
         schema=TEST_SCHEMA, table=TEST_TABLE, df=MIXED_TYPES_DATA
     )
