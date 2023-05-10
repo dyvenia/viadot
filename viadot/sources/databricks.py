@@ -16,6 +16,7 @@ from ..utils import (
     add_viadot_metadata_columns,
     build_merge_query,
     df_snakecase_column_names,
+    _cast_df_cols,
 )
 from .base import Source
 
@@ -232,6 +233,7 @@ class Databricks(Source):
         if_empty: Literal["warn", "skip", "fail"] = "warn",
         if_exists: Literal["replace", "skip", "fail"] = "fail",
         snakecase_column_names: bool = True,
+        cast_df_columns: bool = True,
     ) -> bool:
         """
         Create a table using a pandas `DataFrame`.
@@ -245,6 +247,8 @@ class Databricks(Source):
             if_exists (Literal, optional): What to do if the table already exists.
                 Defaults to 'fail'.
             snakecase_column_names (bool, optional): Whether to convert column names to snake case.
+                Defaults to True.
+            cast_df_columns (bool, optional): Whether to cast columns dtypes.
                 Defaults to True.
 
         Example:
@@ -272,9 +276,8 @@ class Databricks(Source):
         if snakecase_column_names:
             df = df_snakecase_column_names(df)
 
-        # Change the data types in rows of pandas.object columns to string.
-        object_types = df.select_dtypes(include=["object"])
-        df[object_types.columns] = object_types.astype(str)
+        if cast_df_columns:
+            df = _cast_df_cols(df)
 
         fqn = f"{schema}.{table}"
         success_message = f"Table {fqn} has been created successfully."
