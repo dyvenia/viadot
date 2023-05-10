@@ -21,6 +21,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fixed a bug in `Databricks.create_table_from_pandas()`. The `object` type in the DataFrame allows to store mixed values in the column which was causing the error. Added changing type of cloumn content to string. (#681)
 - `RedshiftSpectrum.from_df()` now automatically creates a folder for the table if not specified in `to_path`
 
+- Fixed a bug in `Databricks.create_table_from_pandas()`. DataFrame columns are now automatically converted using the `utils._cast_df_cols`. (#681)
 
 ### Changed
 - Added `SQLServerToDF` task
