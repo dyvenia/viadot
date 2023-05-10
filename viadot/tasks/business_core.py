@@ -27,7 +27,7 @@ class BusinessCoreToParquet(Task):
         timeout=3600,
         *args,
         **kwargs,
-    ) -> pd.DataFrame:
+    ):
 
         """Task for downloading  data from Business Core API to a Parquet file.
 
@@ -35,7 +35,8 @@ class BusinessCoreToParquet(Task):
             path (str, required): Path where to save a Parquet file.
             url (str, required): Base url to a view in Business Core API.
             filters_dict (Dict[str, Any], optional): Filters in form of dictionary. Available filters: 'BucketCount',
-                'BucketNo', 'FromDate', 'ToDate'.  Defaults to None.
+                'BucketNo', 'FromDate', 'ToDate'.  Defaults to {"BucketCount": None,"BucketNo": None,"FromDate": None,
+                "ToDate": None,}.
             verify (bool, optional): Whether or not verify certificates while connecting to an API. Defaults to True.
             credentials (Dict[str, Any], optional): Credentials stored in a dictionary. Required credentials: username,
                 password. Defaults to None.
@@ -77,7 +78,7 @@ class BusinessCoreToParquet(Task):
         verify: bool = True,
         if_empty: str = None,
     ):
-        """Run method for BusinessCoreToParquet task. Saves data from Business Core API to Parquet file,
+        """Run method for BusinessCoreToParquet task. Saves data from Business Core API to Parquet file.
 
         Args:
             path (str, optional): Path where to save a Parquet file. Defaults to None.

@@ -128,7 +128,7 @@ class Source:
         self,
         path: str,
         if_exists: Literal["append", "replace", "skip"] = "replace",
-        if_empty: str = "warn",
+        if_empty: Literal["warn", "fail", "skip"] = "warn",
         **kwargs,
     ) -> None:
         """
