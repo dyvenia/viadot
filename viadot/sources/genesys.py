@@ -169,29 +169,23 @@ class Genesys(Source):
         semaphore = asyncio.Semaphore(value=1)
 
         async def generate_post():
-            cnt = 0
-
             for data_to_post in post_data_list:
-                if cnt < 10:
-                    payload = json.dumps(data_to_post)
-                    async with aiohttp.ClientSession() as session:
-                        await semaphore.acquire()
-                        async with limiter:
-                            async with session.post(
-                                f"https://api.{self.environment}/api/v2/analytics/{end_point}",
-                                headers=self.authorization_token,
-                                data=payload,
-                            ) as resp:
-                                global new_report
-                                new_report = await resp.read()
-                                self.logger.info(
-                                    f"Generated report export --- \n {payload}."
-                                )
-                                semaphore.release()
-                    cnt += 1
-                else:
-                    await asyncio.sleep(3)
-                    cnt = 0
+                payload = json.dumps(data_to_post)
+                async with aiohttp.ClientSession() as session:
+                    await semaphore.acquire()
+                    async with limiter:
+                        async with session.post(
+                            f"https://api.{self.environment}/api/v2/analytics/{end_point}",
+                            headers=self.authorization_token,
+                            data=payload,
+                        ) as resp:
+                            global new_report
+                            new_report = await resp.read()
+                            self.logger.info(
+                                f"Generated report export --- \n {payload}."
+                            )
+                            semaphore.release()
+                await asyncio.sleep(0.5)
 
         loop = asyncio.get_event_loop()
         coroutine = generate_post()
@@ -323,21 +317,17 @@ class Genesys(Source):
                 )
                 continue
 
-            if single_report[4].lower() == "queue_performance_detail_view":
-                file_name = (
-                    temp_ids_mapping.get(single_report[2]) + "_" + single_report[3]
-                ).upper()
+            date = self.start_date.replace("-", "")
+            if single_report[4].lower() in [
+                "queue_performance_detail_view",
+                "agent_status_detail_view",
+            ]:
+                file_name = self.view_type.upper() + f"_{next(self.count)}_" + f"{date}"
             elif single_report[4].lower() in [
                 "agent_performance_summary_view",
                 "agent_status_summary_view",
             ]:
-                date = self.start_date.replace("-", "")
                 file_name = self.view_type.upper() + "_" + f"{date}"
-            elif single_report[4].lower() in [
-                "agent_status_detail_view",
-            ]:
-                date = self.start_date.replace("-", "")
-                file_name = self.view_type.upper() + f"_{next(self.count)}_" + f"{date}"
             else:
                 raise signals.SKIP(
                     message=f"View type {self.view_type} not defined in viadot, yet..."
