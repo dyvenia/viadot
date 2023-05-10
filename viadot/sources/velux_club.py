@@ -18,7 +18,7 @@ from .base import Source
 
 
 # Custom Errors!
-class Source_NOK(Exception):
+class sourceNOK(Exception):
     def __init__(self, message):
         self.message = message
 
@@ -26,7 +26,7 @@ class Source_NOK(Exception):
         return self.message
 
 
-class Dates_NOK(Exception):
+class datesNOK(Exception):
     def __init__(self, message):
         self.message = message
 
@@ -34,7 +34,7 @@ class Dates_NOK(Exception):
         return self.message
 
 
-class Historical_Too_Old(Exception):
+class historicalTooOld(Exception):
     def __init__(self, message):
         self.message = message
 
@@ -119,9 +119,9 @@ class VeluxClub(Source):
             region (str): Region filter for the query
 
         Raises:
-            Source_NOK: The 'source' setting is not within the allowed list.
-            Historical_Too_Old: 'from_date' input is older than the origin of data.
-            Dates_NOK: 'to_date' is set before 'from_date'
+            sourceNOK: The 'source' setting is not within the allowed list.
+            datesNOK: 'to_date' is set before 'from_date'
+            historicalTooOld: 'from_date' input is older than the origin of data.
 
         Returns:
             pd.DataFrame: Table of the data carried in the response
@@ -129,20 +129,20 @@ class VeluxClub(Source):
 
         # Dealing with bad arguments
         if source not in ["jobs", "product", "company", "survey"]:
-            raise Source_NOK("The source has to be: jobs, product, company or survey")
+            raise sourceNOK("The source has to be: jobs, product, company or survey")
 
         from_date_obj = datetime.strptime(from_date, "%Y-%m-%d")
         oldest_date_obj = datetime.strptime("2022-03-22", "%Y-%m-%d")
         delta = from_date_obj - oldest_date_obj
 
         if delta.days < 0:
-            raise Historical_Too_Old("from_date cannot be earlier than 2023-03-22!!")
+            raise historicalTooOld("from_date cannot be earlier than 2023-03-22!!")
 
         to_date_obj = datetime.strptime(to_date, "%Y-%m-%d")
         delta = to_date_obj - from_date_obj
 
         if delta.days < 0:
-            raise Dates_NOK("to_date cannot be earlier than from_date!")
+            raise datesNOK("to_date cannot be earlier than from_date!")
 
         # Preparing the Query
         url = self.build_query(source, from_date, to_date, self.API_URL, region)
@@ -165,7 +165,7 @@ class VeluxClub(Source):
             # first page content
             df = pd.DataFrame(response["data"])
             # next pages
-            while response["next_page_url"] != None:
+            while response["next_page_url"] is not None:
                 url = f"{response['next_page_url']}&from={from_date}&to={to_date}&region&limit=100"
                 r = requests.request("GET", url, headers=self.headers)
                 response = r.json()
@@ -179,10 +179,10 @@ class VeluxClub(Source):
 
         return df
 
-    def print_df(df: pd.DataFrame, service_name: str):
-        print(f"{service_name} Dataframe Columns")
+    def print_df(df: pd.DataFrame, source: str):
+        print(f"{source} Dataframe Columns")
         print(list(df.columns))
-        print(f"{service_name} Number of Columns")
+        print(f"{source} Number of Columns")
         print(len(list(df.columns)))
-        print(f"{service_name} Dataframe Number Of Samples")
+        print(f"{source} Dataframe Number Of Samples")
         print(str(len(df.index)))
