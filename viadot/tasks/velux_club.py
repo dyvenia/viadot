@@ -19,10 +19,20 @@ logger = logging.get_logger()
 
 
 class VeluxClubToDF(Task):
-    """_summary_
+    """
+    Task to downloading data from Velux Club APIs to Pandas DataFrame.
 
     Args:
-        Task (_type_): _description_
+        source (str): The endpoint source to be accessed, has to be among these:
+            ['jobs', 'product', 'company', 'survey'].
+        credentials (Dict[str, Any], optional): Stores the credentials information. Defaults to None.
+        from_date (str): Start date for the query, by default is the oldest date in the data.
+        to_date (str): End date for the query, if empty, datetime.today() will be used.
+        if_empty (str, optional): What to do if query returns no data. Defaults to "warn".
+        retry_delay (timedelta, optional): The delay between task retries. Defaults to 10 seconds.
+        timeout (int, optional): The amount of time (in seconds) to wait while running this task before
+            a timeout occurs. Defaults to 3600.
+        report_name (str, optional): Stores the report name. Defaults to "velux_club_to_df".
     """
 
     def __init__(
@@ -38,19 +48,6 @@ class VeluxClubToDF(Task):
         *args: List[Any],
         **kwargs: Dict[str, Any],
     ):
-        """_summary_
-
-        Args:
-            source (Literal["jobs", "product", "company", "survey"]): _description_
-            credentials (Dict[str, Any], optional): _description_. Defaults to None.
-            from_date (str, optional): _description_. Defaults to '2022-03-22'.
-            to_date (str, optional): _description_. Defaults to ''.
-            if_empty (str, optional): _description_. Defaults to "warn".
-            retry_delay (timedelta, optional): _description_. Defaults to timedelta(seconds=10).
-            timeout (int, optional): _description_. Defaults to 3600.
-            report_name (str, optional): _description_. Defaults to 'velux_club_to_df'.
-        """
-
         self.logger = prefect.context.get("logger")
         self.source = source
         self.credentials = credentials
@@ -68,15 +65,21 @@ class VeluxClubToDF(Task):
         )
 
     def __call__(self, *args, **kwargs):
+        """Download Velux Club data to Pandas DataFrame"""
         return super().__call__(*args, **kwargs)
 
-    def run(self):
-        vc_obj = VeluxClub(
+    def run(self) -> pd.DataFrame:
+        """
+        Task run method.
+
+        Returns:
+            pd.DataFrame: The query result as a pandas DataFrame.
+        """
+
+        vc_obj = VeluxClub()
+
+        r = vc_obj.get_response(
             source=self.source, from_date=self.from_date, to_date=self.to_date
         )
 
-        r = vc_obj.get_api_body()
-
-        vc_df = vc_obj.to_df(r)
-
-        return vc_df
+        return r
