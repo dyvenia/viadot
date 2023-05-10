@@ -178,11 +178,3 @@ class VeluxClub(Source):
             df = pd.DataFrame(response)
 
         return df
-
-    def print_df(df: pd.DataFrame, source: str):
-        print(f"{source} Dataframe Columns")
-        print(list(df.columns))
-        print(f"{source} Number of Columns")
-        print(len(list(df.columns)))
-        print(f"{source} Dataframe Number Of Samples")
-        print(str(len(df.index)))
