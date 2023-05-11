@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- Added `verify` parameter to `handle_api_response()`.
 - Added `BusinessCore` source class
 - Added `BusinessCoreToParquet` task class
 - Added `to_parquet()` in `base.py`
@@ -23,6 +24,7 @@ source file, to vaoid a mismatch in columns lenght between iterative connections
 columns in the next chunk are unrealted rows.
 - Fixed `sap_rfc.py` source file to not breakdown by both, 
 and extra separator in a row and adding new rows in SAP table between iterations.
+
 
 ## [0.4.14] - 2023-04-13
 ### Added
