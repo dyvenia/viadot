@@ -112,6 +112,9 @@ class SAPRFCToDF(Task):
                     ...
                     )
             alternative_version (bool, optional): Enable the use version 2 in source. Defaults to False.
+
+        Returns:
+            pd.DataFrame: DataFrame with SAP data.
         """
         if query is None:
             raise ValueError("Please provide the query.")
