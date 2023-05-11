@@ -5,8 +5,26 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+
 ### Added
 - Added `verify` parameter to `handle_api_response()`.
+- Added `BusinessCore` source class
+- Added `BusinessCoreToParquet` task class
+- Added `to_parquet()` in `base.py`
+- Added `close_connection()` in `sap_rfc`
+- Added new source class `SAPRFCV2` in `sap_rfc.py` with new approximation.
+- Added new parameter `rfc_replacement` to `sap_rfc_to_adls.py` to replace
+an extra separator character within a string column to avoid conflicts.
+- Added `rfc_reference_column` in `sap_frc.py` to merge chunks on this column.
+
+### Fixed
+- Removed `try-except` sentence and added a new logic to remove extra separators in `sap_rfc.py` 
+source file, to vaoid a mismatch in columns lenght between iterative connections to SAP tables.
+- When `SAP` tables are updated during `sap_rfc.py` scrip running, if there are chunks, the
+columns in the next chunk are unrealted rows.
+- Fixed `sap_rfc.py` source file to not breakdown by both, 
+and extra separator in a row and adding new rows in SAP table between iterations.
+
 
 ## [0.4.14] - 2023-04-13
 ### Added
@@ -56,7 +74,6 @@ This parameter enables user to decide whether or not filter should be validated.
 
 ### Changed
 - Changed data extraction logic for `Outlook` data.
-
 
 ## [0.4.10] - 2022-11-16
 ### Added
