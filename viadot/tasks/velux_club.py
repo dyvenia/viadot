@@ -78,8 +78,8 @@ class VeluxClubToDF(Task):
 
         vc_obj = VeluxClub()
 
-        r = vc_obj.get_response(
+        vc_dataframe = vc_obj.get_response(
             source=self.source, from_date=self.from_date, to_date=self.to_date
         )
 
-        return r
+        return vc_dataframe
