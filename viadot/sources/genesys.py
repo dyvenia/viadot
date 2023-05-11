@@ -78,7 +78,7 @@ class Genesys(Source):
         super().__init__(*args, credentials=self.credentials_genesys, **kwargs)
 
         self.view_type = view_type
-        self.schedule_id = schedule_id
+        # self.schedule_id = schedule_id
         self.report_name = report_name
         self.environment = environment
         self.report_url = report_url
@@ -90,21 +90,21 @@ class Genesys(Source):
         self.ids_mapping = ids_mapping
         self.count = iter(range(99999))
 
-        if self.schedule_id is None:
-            self.schedule_id = self.credentials.get("SCHEDULE_ID", None)
+        # if self.schedule_id is None:
+        #     self.schedule_id = self.credentials.get("SCHEDULE_ID", None)
 
         if self.environment is None:
             self.environment = self.credentials.get("ENVIRONMENT", None)
 
-        if self.ids_mapping is None:
-            self.ids_mapping = self.credentials.get("IDS_MAPPING", None)
+        # if self.ids_mapping is None:
+        #     self.ids_mapping = self.credentials.get("IDS_MAPPING", None)
 
-            if type(self.ids_mapping) is dict and self.ids_mapping is not None:
-                self.logger.info("IDS_MAPPING loaded from local credential.")
-            else:
-                self.logger.warning(
-                    "IDS_MAPPING is not provided in you credentials or is not a dictionary."
-                )
+        #     if type(self.ids_mapping) is dict and self.ids_mapping is not None:
+        #         self.logger.info("IDS_MAPPING loaded from local credential.")
+        #     else:
+        #         self.logger.warning(
+        #             "IDS_MAPPING is not provided in you credentials or is not a dictionary."
+        #         )
 
         self.report_data = []
 
@@ -152,14 +152,20 @@ class Genesys(Source):
 
         return request_headers
 
-    def genesys_generate_exports(
-        self, post_data_list: List[str], end_point: str = "reporting/exports"
+    def genesys_api_connection(
+        self,
+        post_data_list: List[str],
+        end_point: str = "analytics/reporting/exports",
+        params: Dict[str, Any] = None,
+        method: str = "POST",
     ) -> Optional[dict]:
-        """Function that make POST request method to generate export reports.
+        """Function that make POST request method to Genesys API given and endpoint.
 
         Args:
             post_data_list (List[str], optional): List of string templates to generate json body. Defaults to None.
-            end_point (str, optional): Final end point for Genesys connection. Defaults to "reporting/exports".
+            end_point (str, optional): Final end point for Genesys connection. Defaults to "analytics/reporting/exports".
+            params (Dict[str, Any], optional): Parameters to be passed into the POST call. Defaults to None.
+            method (str, optional): Type of connection to the API. Defaults to "POST".
 
         Returns:
             Optional[dict]: Dict when the "conversations" endpoint is called, otherwise returns None.
@@ -174,25 +180,33 @@ class Genesys(Source):
                 async with aiohttp.ClientSession() as session:
                     await semaphore.acquire()
                     async with limiter:
-                        async with session.post(
-                            f"https://api.{self.environment}/api/v2/analytics/{end_point}",
-                            headers=self.authorization_token,
-                            data=payload,
-                        ) as resp:
-                            global new_report
-                            new_report = await resp.read()
-                            self.logger.info(
-                                f"Generated report export --- \n {payload}."
-                            )
-                            semaphore.release()
+                        if method == "POST":
+                            async with session.post(
+                                f"https://api.{self.environment}/api/v2/{end_point}",
+                                headers=self.authorization_token,
+                                data=payload,
+                            ) as resp:
+                                global new_report
+                                new_report = await resp.read()
+                                self.logger.info(
+                                    f"Generated report export --- \n {payload}."
+                                )
+                                semaphore.release()
+                        elif method == "GET":
+                            async with session.get(
+                                f"https://api.{self.environment}/api/v2/{end_point}",
+                                headers=self.authorization_token,
+                                params=params,
+                            ) as resp:
+                                new_report = await resp.read()
+                                semaphore.release()
                 await asyncio.sleep(0.5)
 
         loop = asyncio.get_event_loop()
         coroutine = generate_post()
         loop.run_until_complete(coroutine)
 
-        if end_point == "conversations/details/query":
-            return json.loads(new_report.decode("utf-8"))
+        return json.loads(new_report.decode("utf-8"))
 
     def load_reporting_exports(self, page_size: int = 100, verbose: bool = False):
         """
