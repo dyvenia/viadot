@@ -3,8 +3,7 @@ import urllib
 import os
 
 from typing import Any, Dict, List, Literal
-from datetime import datetime, timedelta
-import requests
+from datetime import datetime
 
 import pandas as pd
 
