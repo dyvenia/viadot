@@ -300,7 +300,7 @@ class GenesysToCSV(Task):
         schedule_id: str = None,
         report_url: str = None,
         post_data_list: List[str] = None,
-        end_point: str = "reporting/exports",
+        end_point: str = "analytics/reporting/exports",
         start_date: str = None,
         end_date: str = None,
         report_columns: List[str] = None,
@@ -314,7 +314,7 @@ class GenesysToCSV(Task):
             view_type (str, optional): The type of view export job to be created. Defaults to None.
             view_type_time_sleep (int, optional): Waiting time to retrieve data from Genesys API. Defaults to 80.
             post_data_list (List[str], optional): List of string templates to generate json body. Defaults to None.
-            end_point (str, optional): Final end point for Genesys connection. Defaults to "reporting/exports".
+            end_point (str, optional): Final end point for Genesys connection. Defaults to "analytics/reporting/exports".
             credentials_genesys (Dict[str, Any], optional): Credentials to connect with Genesys API containing CLIENT_ID. Defaults to None.
             start_date (str, optional): Start date of the report. Defaults to None.
             end_date (str, optional): End date of the report. Defaults to None.
@@ -341,7 +341,7 @@ class GenesysToCSV(Task):
         )
 
         if view_type == "queue_performance_detail_view":
-            genesys.genesys_generate_exports(
+            genesys.genesys_api_connection(
                 post_data_list=post_data_list, end_point=end_point
             )
 
@@ -375,7 +375,7 @@ class GenesysToCSV(Task):
             "agent_status_summary_view",
             "agent_status_detail_view",
         ]:
-            genesys.genesys_generate_exports(
+            genesys.genesys_api_connection(
                 post_data_list=post_data_list, end_point=end_point
             )
             logger.info(
@@ -385,7 +385,7 @@ class GenesysToCSV(Task):
 
             genesys.get_reporting_exports_data()
 
-        if view_type is not None and end_point == "reporting/exports":
+        if view_type is not None and end_point == "analytics/reporting/exports":
             failed = [col for col in np.array(genesys.report_data).T][-1]
 
             if "FAILED" in failed and "COMPLETED" in failed:
@@ -412,7 +412,7 @@ class GenesysToCSV(Task):
 
             return file_names
 
-        elif view_type is None and end_point == "conversations/details/query":
+        elif view_type is None and end_point == "analytics/conversations/details/query":
             if len(post_data_list) > 1:
                 logger.error("Not available more than one body for this end-point.")
                 raise signals.FAIL(message="Stopping the flow.")
@@ -421,7 +421,7 @@ class GenesysToCSV(Task):
             page_counter = post_data_list[0]["paging"]["pageNumber"]
             merged_data = {}
             while not stop_loop:
-                report = genesys.genesys_generate_exports(
+                report = genesys.genesys_api_connection(
                     post_data_list=post_data_list, end_point=end_point
                 )
                 merged_data_frame = self.merge_conversations_dfs(

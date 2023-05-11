@@ -83,7 +83,7 @@ class GenesysToADLS(Flow):
         view_type: str = None,
         view_type_time_sleep: int = 80,
         post_data_list: List[str] = None,
-        end_point: str = "reporting/exports",
+        end_point: str = "analytics/reporting/exports",
         list_of_userids: list = None,
         start_date: str = None,
         end_date: str = None,
@@ -128,7 +128,7 @@ class GenesysToADLS(Flow):
                 >>>         "hasCustomParticipantAttributes": True,
                 >>>     }]'''
                 If you need to add more POSTs in the same call, just add them to the list separated by a comma.
-            endpoint (str, optional): Final end point for Genesys connection. Defaults to "reporting/exports".
+            end_point (str, optional): Final end point for Genesys connection. Defaults to "analytics/reporting/exports".
             list_of_userids (list, optional): List of all user IDs to select in the data frame. Defaults to None.
             start_date (str, optional): Start date of the report. Defaults to None.
             end_date (str, optional): End date of the report. Defaults to None.
@@ -153,7 +153,7 @@ class GenesysToADLS(Flow):
         self.view_type_time_sleep = view_type_time_sleep
         self.post_data_list = post_data_list
         self.end_point = end_point
-        if self.end_point == "conversations/details/query":
+        if self.end_point == "analytics/conversations/details/query":
             self.apply_method = True
         else:
             self.apply_method = False
@@ -214,15 +214,15 @@ class GenesysToADLS(Flow):
             flow=self,
         )
 
-        adls_bulk_upload.bind(
-            file_names=file_names,
-            file_name_relative_path=self.local_file_path,
-            adls_file_path=self.adls_file_path,
-            adls_sp_credentials_secret=self.adls_sp_credentials_secret,
-            timeout=self.timeout,
-            flow=self,
-        )
+        # adls_bulk_upload.bind(
+        #     file_names=file_names,
+        #     file_name_relative_path=self.local_file_path,
+        #     adls_file_path=self.adls_file_path,
+        #     adls_sp_credentials_secret=self.adls_sp_credentials_secret,
+        #     timeout=self.timeout,
+        #     flow=self,
+        # )
 
         filter_userid.set_upstream(file_names, flow=self)
         add_timestamp.set_upstream(filter_userid, flow=self)
-        adls_bulk_upload.set_upstream(add_timestamp, flow=self)
+        # adls_bulk_upload.set_upstream(add_timestamp, flow=self)
