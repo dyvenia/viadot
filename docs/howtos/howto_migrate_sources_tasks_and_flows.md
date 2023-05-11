@@ -1,4 +1,4 @@
-# nesso sources, tasks & flows migration workflow
+# viadot sources, tasks & flows migration workflow
 This guide aims to assist the developers in migrating the sources, tasks and flows from viadot 1.0 to their respective new repos/branches.
 
 ## 1. Migrating a source from viadot 1.0 to viadot 2.0
