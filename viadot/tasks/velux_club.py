@@ -19,22 +19,6 @@ logger = logging.get_logger()
 
 
 class VeluxClubToDF(Task):
-    """
-    Task to downloading data from Velux Club APIs to Pandas DataFrame.
-
-    Args:
-        source (str): The endpoint source to be accessed, has to be among these:
-            ['jobs', 'product', 'company', 'survey'].
-        credentials (Dict[str, Any], optional): Stores the credentials information. Defaults to None.
-        from_date (str): Start date for the query, by default is the oldest date in the data.
-        to_date (str): End date for the query, if empty, datetime.today() will be used.
-        if_empty (str, optional): What to do if query returns no data. Defaults to "warn".
-        retry_delay (timedelta, optional): The delay between task retries. Defaults to 10 seconds.
-        timeout (int, optional): The amount of time (in seconds) to wait while running this task before
-            a timeout occurs. Defaults to 3600.
-        report_name (str, optional): Stores the report name. Defaults to "velux_club_to_df".
-    """
-
     def __init__(
         self,
         source: Literal["jobs", "product", "company", "survey"],
@@ -48,6 +32,23 @@ class VeluxClubToDF(Task):
         *args: List[Any],
         **kwargs: Dict[str, Any],
     ):
+        """
+        Task to downloading data from Velux Club APIs to Pandas DataFrame.
+
+        Args:
+            source (str): The endpoint source to be accessed, has to be among these:
+                ['jobs', 'product', 'company', 'survey'].
+            credentials (Dict[str, Any], optional): Stores the credentials information. Defaults to None.
+            from_date (str): Start date for the query, by default is the oldest date in the data, '2022-03-22'.
+            to_date (str): End date for the query, if empty, datetime.today() will be used.
+            if_empty (str, optional): What to do if query returns no data. Defaults to "warn".
+            retry_delay (timedelta, optional): The delay between task retries. Defaults to 10 seconds.
+            timeout (int, optional): The amount of time (in seconds) to wait while running this task before
+                a timeout occurs. Defaults to 3600.
+            report_name (str, optional): Stores the report name. Defaults to "velux_club_to_df".
+
+        Returns: Pandas DataFrame
+        """
         self.logger = prefect.context.get("logger")
         self.source = source
         self.credentials = credentials
