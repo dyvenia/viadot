@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- Fixed `to_parquet()` from `base.py` when there is no directory specified in path 
 
 ## [0.4.15] - 2023-05-11
 ### Added
