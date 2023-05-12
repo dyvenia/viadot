@@ -73,5 +73,5 @@ class OutlookToDF(Task):
         logger.info(
             f"Downloaded the data from the '{outlook.mailbox_name}' into the Data Frame."
         )
-        # return None
+
         return df

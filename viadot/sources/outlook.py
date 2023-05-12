@@ -159,12 +159,7 @@ class Outlook(Source):
                 # print(key)
                 tmp_dict_folders = self._get_subfolders({}, value)
                 if tmp_dict_folders:
-                    # print(tmp_dict_folders)
-                    # print(len(tmp_dict_folders))
-
                     final_dict_folders.update(tmp_dict_folders)
-                    # print(len(final_dict_folders))
-
                     while_dict_folders.update(tmp_dict_folders)
 
             dict_folders = while_dict_folders.copy()
@@ -218,8 +213,6 @@ class Outlook(Source):
                         row["Inbox"] = True
 
                     data.append(row)
-
-            # break
 
         df = pd.DataFrame(data=data)
 
