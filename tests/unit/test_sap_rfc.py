@@ -31,7 +31,7 @@ OFFSET 10
 customer_name_insert_sql = "INSERT INTO customers name VALUES 'John Doe'"
 all_rows_sql = " SELECT * FROM table1"
 too_long_sql_OR_statment = "SELECT a FROM fake_schema.fake_table WHERE a=1 AND b=2 OR c LIKE 'a%' AND d IN (1, 2) AND longcolname=3 OR otherlongcolname=5 LIMIT 5 OFFSET 3"
-multiple_table_sql = "SELECT col FROM table1, table2"
+multiple_tables_sql = "SELECT col FROM table1, table2"
 
 
 # Testing "get_function_parameters" function which returns SAP RFC functions parameters
