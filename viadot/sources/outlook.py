@@ -201,6 +201,7 @@ class Outlook(Source):
                     if message.conversation_index is not None:
                         conversation_index = message.conversation_index
                     row = {
+                        "(sub)folder": value.name,
                         "conversation ID": fetched.get("conversationId"),
                         "conversation index": conversation_index,
                         "categories": categories,
