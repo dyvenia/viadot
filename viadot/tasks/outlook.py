@@ -67,9 +67,11 @@ class OutlookToDF(Task):
             end_date=end_date,
             limit=limit,
         )
-        df = outlook.to_df()
+        df = outlook.get_all_mails_to_df()
+        outlook.to_csv(df)
 
         logger.info(
             f"Downloaded the data from the '{outlook.mailbox_name}' into the Data Frame."
         )
+        # return None
         return df

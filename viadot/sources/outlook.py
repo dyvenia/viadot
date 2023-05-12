@@ -1,8 +1,12 @@
-import datetime
-from typing import Any, Dict, List, Literal
+import sys
+
+import pytz
+from datetime import date, datetime, timedelta
+from typing import Any, Dict, List, Literal, Union
 
 import pandas as pd
 from O365 import Account
+from O365.mailbox import MailBox
 
 from viadot.config import local_config
 from viadot.exceptions import CredentialError
@@ -11,6 +15,8 @@ import prefect
 
 
 class Outlook(Source):
+    utc = pytz.UTC
+
     def __init__(
         self,
         mailbox_name: str,
@@ -46,33 +52,26 @@ class Outlook(Source):
         self.logger = prefect.context.get("logger")
 
         self.credentials = credentials
-
         if self.credentials is None:
             raise CredentialError("You do not provide credentials!")
 
         self.request_retries = request_retries
         self.mailbox_name = mailbox_name
+
         self.start_date = start_date
         self.end_date = end_date
         if self.start_date is not None and self.end_date is not None:
-            self.date_range_end_time = datetime.datetime.strptime(
-                self.end_date, "%Y-%m-%d"
-            )
-            self.date_range_start_time = datetime.datetime.strptime(
-                self.start_date, "%Y-%m-%d"
-            )
+            self.date_range_end_time = datetime.strptime(self.end_date, "%Y-%m-%d")
+            self.date_range_start_time = datetime.strptime(self.start_date, "%Y-%m-%d")
         else:
-            self.date_range_end_time = datetime.date.today() - datetime.timedelta(
-                days=1
-            )
-            self.date_range_start_time = datetime.date.today() - datetime.timedelta(
-                days=2
-            )
-            min_time = datetime.datetime.min.time()
-            self.date_range_end_time = datetime.datetime.combine(
+            self.date_range_start_time = date.today() - timedelta(days=1)
+            self.date_range_end_time = date.today()
+
+            min_time = datetime.min.time()
+            self.date_range_end_time = datetime.combine(
                 self.date_range_end_time, min_time
             )
-            self.date_range_start_time = datetime.datetime.combine(
+            self.date_range_start_time = datetime.combine(
                 self.date_range_start_time, min_time
             )
 
@@ -90,22 +89,140 @@ class Outlook(Source):
 
         self.mailbox_obj = self.account.mailbox()
 
-        allowed_mailbox_folders = [
-            "sent",
-            "inbox",
-            "junk",
-            "deleted",
-            "drafts",
-            "outbox",
-            "archive",
-        ]
-        if all(x in allowed_mailbox_folders for x in mailbox_folders):
-            self.mailbox_folders = mailbox_folders
-        else:
-            raise Exception("Provided mailbox folders are not correct.")
+        # print(type(self.mailbox_obj))
+        # print(dir(self.mailbox_obj))
+        # print()
+        # l = []
+        # for folder in self.mailbox_obj.get_folders():
+        #     print(folder, type(folder))
+        #     l.append(folder)
+        #     for subfolder in folder.get_folders():
+        #         if subfolder:
+        #             print("\t", subfolder, type(subfolder))
+        #             l.append(subfolder)
+        #             for subsubfolder in subfolder.get_folders():
+        #                 if subsubfolder:
+        #                     print("\t\t", subsubfolder)
+        #                     l.append(subsubfolder)
+        #                     for subsubsubfolder in subsubfolder.get_folders():
+        #                         if subsubsubfolder:
+        #                             print("\t\t\t", subsubsubfolder)
+        #                             l.append(subsubsubfolder)
+        #                             for (
+        #                                 subsubsubsubfolder
+        #                             ) in subsubsubfolder.get_folders():
+        #                                 if subsubsubsubfolder:
+        #                                     print("\t\t\t\t", subsubsubsubfolder)
+        #                                     l.append(subsubsubsubfolder)
+        # print(len(l))
+        # sys.exit()
+
         self.limit = limit
 
         super().__init__(*args, credentials=self.credentials, **kwargs)
+
+    @staticmethod
+    def _get_subfolders(folder_structure: dict, folder: MailBox) -> Dict[str, List]:
+        """Retrieve all the subfolder in a MailBox folder.
+
+        Args:
+            folder_structure (dict): Dictionary where to save the data.
+            folder (MailBox): The MailBox folder from where to extract the subfolders.
+
+        Returns:
+            Dict[str, List]: `folder_structure` dictionary is returned once it is updated.
+        """
+        for subfolder in folder.get_folders():
+            if subfolder:
+                # print(subfolder.name)
+                folder_structure.update({f"{folder.name}|{subfolder.name}": subfolder})
+                # list_of_folders.append(subfolder)
+                # sys.exit()
+
+        if folder_structure:
+            return folder_structure
+
+    def get_all_mails_to_df(self) -> pd.DataFrame:
+        """Download all the messages stored in a MailBox folder and subfolders.
+
+        Returns:
+            pd.DataFrame: All messages are stored in a pandas framwork.
+        """
+        dict_folders = self._get_subfolders({}, self.mailbox_obj)
+
+        final_dict_folders = dict_folders.copy()
+
+        # loop to get all subfolders
+        while True:
+            while_dict_folders = {}
+            for key, value in list(dict_folders.items()):
+                # print(key)
+                tmp_dict_folders = self._get_subfolders({}, value)
+                if tmp_dict_folders:
+                    # print(tmp_dict_folders)
+                    # print(len(tmp_dict_folders))
+
+                    final_dict_folders.update(tmp_dict_folders)
+                    # print(len(final_dict_folders))
+
+                    while_dict_folders.update(tmp_dict_folders)
+
+            dict_folders = while_dict_folders.copy()
+
+            if len(while_dict_folders) == 0:
+                break
+
+        data = []
+        for key, value in list(final_dict_folders.items()):
+            print(key)
+            for message in value.get_messages():
+                received_time = message.received
+                date_obj = datetime.fromisoformat(str(received_time))
+                if (
+                    self.date_range_start_time.replace(tzinfo=self.utc)
+                    < date_obj
+                    < self.date_range_end_time.replace(tzinfo=self.utc)
+                ):
+                    fetched = message.to_api_data()
+                    sender_mail = fetched["from"]["emailAddress"]["address"]
+                    recivers_list = fetched.get("toRecipients")
+                    recivers = " "
+                    if recivers_list is not None:
+                        recivers = ", ".join(
+                            reciver["emailAddress"]["address"]
+                            for reciver in recivers_list
+                        )
+                    categories = " "
+                    if message.categories is not None:
+                        categories = ", ".join(
+                            categories for categories in message.categories
+                        )
+                    conversation_index = " "
+                    if message.conversation_index is not None:
+                        conversation_index = message.conversation_index
+                    row = {
+                        "conversation ID": fetched.get("conversationId"),
+                        "conversation index": conversation_index,
+                        "categories": categories,
+                        "sender": sender_mail,
+                        "recivers": recivers,
+                        "received_time": fetched.get("receivedDateTime"),
+                        "mail_adress": self.mailbox_name.split("@")[0]
+                        .replace(".", "_")
+                        .replace("-", "_"),
+                    }
+                    if sender_mail == self.mailbox_name:
+                        row["Inbox"] = False
+                    else:
+                        row["Inbox"] = True
+
+                    data.append(row)
+
+            # break
+
+        df = pd.DataFrame(data=data)
+
+        return df
 
     def to_df(self) -> pd.DataFrame:
         """Download Outlook data into a pandas DataFrame.
@@ -183,7 +300,6 @@ class Outlook(Source):
 
         return df
 
-    def to_csv(self):
-        df = self.to_df()
+    def to_csv(self, df: pd.DataFrame) -> None:
         file_name = self.mailbox_name.split("@")[0].replace(".", "_").replace("-", "_")
         df.to_csv(f"{file_name}.csv", index=False)
