@@ -141,18 +141,16 @@ class BusinessCore(Source):
             APIError: When selected API view is not available.
         """
         view = self.url.split("/")[-1]
+
         if view not in ["GetCustomerData", "GetItemMaster", "GetPendingSalesOrderData"]:
             raise APIError(f"View {view} currently not available.")
-        if view in ("GetCustomerData", "GetItemMaster"):
-            data = self.get_data().get("MasterDataList")
-            df = pd.DataFrame.from_dict(data)
-            logger.info(
-                f"Data was successfully transformed into DataFrame: {len(df.columns)} columns and {len(df)} rows."
-            )
-            if df.empty:
-                self._handle_if_empty(if_empty)
-            return df
 
-        if view == "GetPendingSalesOrderData":
-            # todo waiting for schema
-            raise APIError(f"View {view} currently not available.")
+        data = self.get_data().get("MasterDataList")
+        df = pd.DataFrame.from_dict(data)
+        logger.info(
+            f"Data was successfully transformed into DataFrame: {len(df.columns)} columns and {len(df)} rows."
+        )
+        if df.empty:
+            self._handle_if_empty(if_empty)
+
+        return df
