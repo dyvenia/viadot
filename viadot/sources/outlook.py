@@ -2,7 +2,7 @@ import sys
 
 import pytz
 from datetime import date, datetime, timedelta
-from typing import Any, Dict, List, Literal, Union
+from typing import Any, Dict, List, Literal
 
 import pandas as pd
 from O365 import Account
@@ -24,9 +24,6 @@ class Outlook(Source):
         end_date: str = None,
         credentials: Dict[str, Any] = None,
         limit: int = 10000,
-        mailbox_folders: Literal[
-            "sent", "inbox", "junk", "deleted", "drafts", "outbox", "archive"
-        ] = ["sent", "inbox", "junk", "deleted", "drafts", "outbox", "archive"],
         request_retries: int = 10,
         *args: List[Any],
         **kwargs: Dict[str, Any],
@@ -89,34 +86,6 @@ class Outlook(Source):
 
         self.mailbox_obj = self.account.mailbox()
 
-        # print(type(self.mailbox_obj))
-        # print(dir(self.mailbox_obj))
-        # print()
-        # l = []
-        # for folder in self.mailbox_obj.get_folders():
-        #     print(folder, type(folder))
-        #     l.append(folder)
-        #     for subfolder in folder.get_folders():
-        #         if subfolder:
-        #             print("\t", subfolder, type(subfolder))
-        #             l.append(subfolder)
-        #             for subsubfolder in subfolder.get_folders():
-        #                 if subsubfolder:
-        #                     print("\t\t", subsubfolder)
-        #                     l.append(subsubfolder)
-        #                     for subsubsubfolder in subsubfolder.get_folders():
-        #                         if subsubsubfolder:
-        #                             print("\t\t\t", subsubsubfolder)
-        #                             l.append(subsubsubfolder)
-        #                             for (
-        #                                 subsubsubsubfolder
-        #                             ) in subsubsubfolder.get_folders():
-        #                                 if subsubsubsubfolder:
-        #                                     print("\t\t\t\t", subsubsubsubfolder)
-        #                                     l.append(subsubsubsubfolder)
-        # print(len(l))
-        # sys.exit()
-
         self.limit = limit
 
         super().__init__(*args, credentials=self.credentials, **kwargs)
@@ -156,7 +125,6 @@ class Outlook(Source):
         while True:
             while_dict_folders = {}
             for key, value in list(dict_folders.items()):
-                # print(key)
                 tmp_dict_folders = self._get_subfolders({}, value)
                 if tmp_dict_folders:
                     final_dict_folders.update(tmp_dict_folders)
@@ -169,7 +137,7 @@ class Outlook(Source):
 
         data = []
         for key, value in list(final_dict_folders.items()):
-            print(key)
+            count = 0
             for message in value.get_messages():
                 received_time = message.received
                 date_obj = datetime.fromisoformat(str(received_time))
@@ -178,6 +146,7 @@ class Outlook(Source):
                     < date_obj
                     < self.date_range_end_time.replace(tzinfo=self.utc)
                 ):
+                    count += 1
                     fetched = message.to_api_data()
                     sender_mail = fetched["from"]["emailAddress"]["address"]
                     recivers_list = fetched.get("toRecipients")
@@ -213,83 +182,8 @@ class Outlook(Source):
                         row["Inbox"] = True
 
                     data.append(row)
+            self.logger.info(f"folder: {key.center(50, '-')}  messages: {count}")
 
-        df = pd.DataFrame(data=data)
-
-        return df
-
-    def to_df(self) -> pd.DataFrame:
-        """Download Outlook data into a pandas DataFrame.
-
-        Returns:
-            pd.DataFrame: the DataFrame with time range.
-        """
-        data = []
-        mailbox_generators_list = []
-        for m in self.mailbox_folders:
-            base_str = f"self.mailbox_obj.{m}_folder().get_messages({self.limit})"
-            mailbox_generators_list.append(eval(base_str))
-
-        for mailbox_generator in mailbox_generators_list:
-            while True:
-                try:
-                    message = next(mailbox_generator)
-                    received_time = message.received
-                    date_time_str = str(received_time)
-                    date_time_stripped = date_time_str[0:19]
-                    date_obj = datetime.datetime.strptime(
-                        date_time_stripped, "%Y-%m-%d %H:%M:%S"
-                    )
-                    if (
-                        date_obj < self.date_range_start_time
-                        or date_obj > self.date_range_end_time
-                    ):
-                        continue
-                    else:
-                        fetched = message.to_api_data()
-                        try:
-                            sender_mail = fetched["from"]["emailAddress"]["address"]
-                            recivers_list = fetched.get("toRecipients")
-                            recivers = " "
-                            if recivers_list is not None:
-                                recivers = ", ".join(
-                                    reciver["emailAddress"]["address"]
-                                    for reciver in recivers_list
-                                )
-
-                            categories = " "
-                            if message.categories is not None:
-                                categories = ", ".join(
-                                    categories for categories in message.categories
-                                )
-
-                            conversation_index = " "
-                            if message.conversation_index is not None:
-                                conversation_index = message.conversation_index
-                            row = {
-                                "conversation ID": fetched.get("conversationId"),
-                                "conversation index": conversation_index,
-                                "categories": categories,
-                                "sender": sender_mail,
-                                "recivers": recivers,
-                                "received_time": fetched.get("receivedDateTime"),
-                            }
-
-                            row["mail_adress"] = (
-                                self.mailbox_name.split("@")[0]
-                                .replace(".", "_")
-                                .replace("-", "_")
-                            )
-                            if sender_mail == self.mailbox_name:
-                                row["Inbox"] = False
-                            else:
-                                row["Inbox"] = True
-
-                            data.append(row)
-                        except KeyError as e:
-                            self.logger.info("KeyError : " + str(e))
-                except StopIteration:
-                    break
         df = pd.DataFrame(data=data)
 
         return df
