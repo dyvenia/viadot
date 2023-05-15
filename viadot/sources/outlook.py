@@ -1,17 +1,14 @@
-import sys
-
 import pytz
 from datetime import date, datetime, timedelta
-from typing import Any, Dict, List, Literal
+from typing import Any, Dict, List
 
+import prefect
 import pandas as pd
 from O365 import Account
 from O365.mailbox import MailBox
 
-from viadot.config import local_config
 from viadot.exceptions import CredentialError
 from viadot.sources.base import Source
-import prefect
 
 
 class Outlook(Source):
@@ -41,8 +38,6 @@ class Outlook(Source):
             ACCOUNT_NAME and Service Principal credentials (TENANT_ID, CLIENT_ID, CLIENT_SECRET) for the Azure Application.
             Defaults to None.
             limit (int, optional): Number of fetched top messages. Defaults to 10000.
-            mailbox_folders (Literal["sent", "inbox", "junk", "deleted", "drafts", "outbox", "archive"]):
-                List of folders to select from the mailbox.  Defaults to ["sent", "inbox", "junk", "deleted", "drafts", "outbox", "archive"]
             request_retries (int, optional): How many times retries to authorizate. Defaults to 10.
         """
 
