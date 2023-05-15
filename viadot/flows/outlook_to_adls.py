@@ -87,7 +87,7 @@ class OutlookToADLS(Flow):
             flow=flow,
         )
 
-        # return df
+        return df
 
     def gen_flow(self) -> Flow:
 
