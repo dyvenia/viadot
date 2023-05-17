@@ -27,7 +27,6 @@ class GenesysToCSV(Task):
         start_date: str = None,
         end_date: str = None,
         environment: str = None,
-        schedule_id: str = None,
         report_url: str = None,
         report_columns: List[str] = None,
         local_file_path: str = "",
@@ -48,7 +47,6 @@ class GenesysToCSV(Task):
             end_date (str, optional): End date of the report. Defaults to None.
             environment (str, optional): Adress of host server. Defaults to None than will be used enviroment
             from credentials.
-            schedule_id (str, optional): The ID of report. Defaults to None.
             report_url (str, optional): The url of report generated in json response. Defaults to None.
             report_columns (List[str], optional): List of exisiting column in report. Defaults to None.
             local_file_path (str, optional): The local path from which to upload the file(s). Defaults to "".
@@ -58,7 +56,6 @@ class GenesysToCSV(Task):
         """
 
         self.logger = prefect.context.get("logger")
-        self.schedule_id = schedule_id
         self.report_name = report_name
         self.view_type = view_type
         self.environment = environment
@@ -283,7 +280,6 @@ class GenesysToCSV(Task):
         "report_name",
         "view_type",
         "environment",
-        "schedule_id",
         "report_url",
         "post_data_list",
         "start_date",
@@ -297,7 +293,6 @@ class GenesysToCSV(Task):
         view_type: str = None,
         view_type_time_sleep: int = 80,
         environment: str = None,
-        schedule_id: str = None,
         report_url: str = None,
         post_data_list: List[str] = None,
         end_point: str = "analytics/reporting/exports",
@@ -320,7 +315,6 @@ class GenesysToCSV(Task):
             end_date (str, optional): End date of the report. Defaults to None.
             environment (str, optional): Adress of host server. Defaults to None than will be used enviroment
             from credentials.
-            schedule_id (str, optional): The ID of report. Defaults to None.
             report_url (str, optional): The url of report generated in json response. Defaults to None.
             report_columns (List[str], optional): List of exisiting column in report. Defaults to None.
 
@@ -335,7 +329,6 @@ class GenesysToCSV(Task):
             start_date=start_date,
             end_date=end_date,
             environment=environment,
-            schedule_id=schedule_id,
             report_url=report_url,
             report_columns=report_columns,
         )
