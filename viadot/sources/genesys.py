@@ -346,3 +346,36 @@ class Genesys(Source):
         if store_file_names is True:
             self.logger.info("Successfully genetared file names list.")
             return file_name_list
+
+    def delete_reporting_exports(self, report_id) -> int:
+        """DELETE method for deleting particular reporting exports.
+        Args:
+            report_id (str): defined at the end of report url.
+        Returns:
+            delete_method.status_code: status code
+        """
+        delete_method = handle_api_response(
+            url=f"https://api.{self.environment}/api/v2/analytics/reporting/exports/{report_id}",
+            headers=self.authorization_token,
+            method="DELETE",
+        )
+        if delete_method.status_code < 300:
+            self.logger.info("Successfully deleted report from Genesys API.")
+
+        else:
+            self.logger.error(
+                f"Failed to deleted report from Genesys API. - {delete_method.content}"
+            )
+            raise APIError("Failed to deleted report from Genesys API.")
+
+        return delete_method.status_code
+
+    def delete_all_reporting_exports(self) -> None:
+        """
+        Function that deletes all reporting from self.reporting_data list.
+        """
+        for report in self.report_data:
+            status_code = self.delete_reporting_exports(report_id=report[0])
+            assert status_code < 300
+
+        self.logger.info("Successfully removed all reports.")
