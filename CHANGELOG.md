@@ -36,7 +36,11 @@ and extra separator in a row and adding new rows in SAP table between iterations
 - Added `GET` connection inside the method `genesys_api_connection`.
 
 ### Changed
-- Changed the method to call Genesys API, providing a new paremeter `end_point` to be more general.
+- Changed the method to call Genesys API and its name, providing a new paremeter `end_point` to be more general.
+Name changed from `genesys_generate_exports` to `genesys_api_connection`.
+- Changed Genesys source file, deleting methods for testing purposes but never used in production.
+Those methods are: `get_analitics_url_report`, `get_all_schedules_job`, `schedule_report`, `to_df`
+and `delete_scheduled_report_job`.
 
 ## [0.4.13] - 2023-03-15
 ### Added
