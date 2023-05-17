@@ -89,7 +89,6 @@ class GenesysToADLS(Flow):
         end_date: str = None,
         sep: str = "\t",
         environment: str = None,
-        schedule_id: str = None,
         report_url: str = None,
         report_columns: List[str] = None,
         local_file_path: str = "",
@@ -135,7 +134,6 @@ class GenesysToADLS(Flow):
             sep (str, optional): Separator in csv file. Defaults to "\t".
             environment (str, optional): Adress of host server. Defaults to None than will be used enviroment
                 from credentials.
-            schedule_id (str, optional): The ID of report. Defaults to None.
             report_url (str, optional): The url of report generated in json response. Defaults to None.
             report_columns (List[str], optional): List of exisiting column in report. Defaults to None.
             local_file_path (str, optional): The local path from which to upload the file(s). Defaults to "".
@@ -159,7 +157,6 @@ class GenesysToADLS(Flow):
             self.apply_method = False
         self.list_of_userids = list_of_userids
         self.environment = environment
-        self.schedule_id = schedule_id
         self.report_url = report_url
         self.report_columns = report_columns
         self.start_date = start_date
