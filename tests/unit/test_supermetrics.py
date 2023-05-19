@@ -130,13 +130,12 @@ def test___get_col_names_google_analytics_pivoted_no_data():
 
 
 def test__query() -> bool:
-    config_key = "supermetrics"
-    s = Supermetrics(config_key=config_key)
-
+    credentials = get_source_credentials("supermetrics")
+    s = Supermetrics()
     google_ads_params = {
         "ds_id": "AW",
         "ds_accounts": ["1007802423"],
-        "ds_user": "google@velux.com",
+        "ds_user": credentials.get("user"),
         "date_range_type": "last_month",
         "fields": [
             "Date",
@@ -145,21 +144,17 @@ def test__query() -> bool:
         ],
         "max_rows": 1,
     }
-
-    # Expected Value
-    credentials = get_source_credentials(config_key)
-
     assert s.query(google_ads_params).credentials == credentials
 
 
 def test__to_json():
     # Create the query
-    config_key = "supermetrics"
-    s = Supermetrics(config_key=config_key)
+    credentials = get_source_credentials("supermetrics")
+    s = Supermetrics()
     google_ads_params = {
         "ds_id": "AW",
         "ds_accounts": ["1007802423"],
-        "ds_user": "google@velux.com",
+        "ds_user": credentials.get("user"),
         "date_range_type": "last_month",
         "fields": [
             "Date",
@@ -174,12 +169,12 @@ def test__to_json():
 
 def test__to_df():
     # Create the query
-    config_key = "supermetrics"
-    s = Supermetrics(config_key=config_key)
+    credentials = get_source_credentials("supermetrics")
+    s = Supermetrics()
     google_ads_params = {
         "ds_id": "AW",
         "ds_accounts": ["1007802423"],
-        "ds_user": "google@velux.com",
+        "ds_user": credentials.get("user"),
         "date_range_type": "last_month",
         "fields": [
             "Date",
@@ -191,9 +186,9 @@ def test__to_df():
     df = s.query(google_ads_params).to_df()
     df_expected = pd.DataFrame(
         {
-            "Date": "2023-03-01",
+            "Date": "2023-04-01",
             "Campaign name": "FR : Brand VELUX (Exact)",
-            "Clicks": 749,
+            "Clicks": 501,
         },
         index=[0],
     )
@@ -202,12 +197,12 @@ def test__to_df():
 
 def test___get_col_names():
     # Create the query
-    config_key = "supermetrics"
-    s = Supermetrics(config_key=config_key)
+    credentials = get_source_credentials("supermetrics")
+    s = Supermetrics()
     google_ads_params = {
         "ds_id": "AW",
         "ds_accounts": ["1007802423"],
-        "ds_user": "google@velux.com",
+        "ds_user": credentials.get("user"),
         "date_range_type": "last_month",
         "fields": [
             "Date",
