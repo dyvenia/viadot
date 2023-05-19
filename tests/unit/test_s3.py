@@ -23,14 +23,14 @@ SOURCE_DATA = [
 ]
 TEST_DF = pd.DataFrame(SOURCE_DATA)
 
-S3_BUCKET = os.environ.get("S3_BUCKET")
+S3_BUCKET = os.environ.get("VIADOT_S3_BUCKET")
 TEST_SCHEMA = "raw_test"
 TEST_TABLE = "test"
 
 
 @pytest.fixture(scope="session")
-def s3(aws_config_key):
-    s3 = S3(config_key=aws_config_key)
+def s3(s3_config_key):
+    s3 = S3(config_key=s3_config_key)
 
     yield s3
 
