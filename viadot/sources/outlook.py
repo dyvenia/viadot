@@ -165,6 +165,7 @@ class Outlook(Source):
                         "conversation index": conversation_index,
                         "categories": categories,
                         "sender": sender_mail,
+                        "subject": message.subject,
                         "recivers": recivers,
                         "received_time": fetched.get("receivedDateTime"),
                         "mail_adress": self.mailbox_name.split("@")[0]
