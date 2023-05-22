@@ -1,3 +1,4 @@
+import os
 from typing import Iterable, List, Literal, Union
 
 import awswrangler as wr
@@ -87,7 +88,31 @@ class S3(Source):
         Returns:
             bool: Whether the object exists.
         """
-        return wr.s3.does_object_exist(boto3_session=self.session, path=path)
+        if not path.startswith("s3://"):
+            raise ValueError("Path must be an AWS S3 URL ('s3://my/path').")
+
+        # Note this only checks for files.
+        file_exists = wr.s3.does_object_exist(boto3_session=self.session, path=path)
+
+        if file_exists:
+            return True
+        else:
+            # Use another method in case the path is a folder.
+            client = self.session.client("s3")
+            bucket = path.split("/")[2]
+            path = os.path.join(*path.rstrip("/").split("/")[3:])
+            response = client.list_objects_v2(Bucket=bucket, Prefix=path, Delimiter="/")
+
+            # This is because list_objects takes in `Prefix`, so eg. if there exists
+            #  a path `a/b/abc` and we run `list_objects_v2(path=`a/b/a`)`,
+            #  it would enlist `a/b/abc` as well.
+            folders_with_prefix: list[dict] = response.get("CommonPrefixes")
+            if folders_with_prefix is None:
+                folder_exists = False
+            else:
+                paths = [path["Prefix"].rstrip("/") for path in folders_with_prefix]
+                folder_exists = path in paths
+            return folder_exists
 
     def cp(self, from_path: str, to_path: str, recursive: bool = False) -> None:
         """
@@ -114,22 +139,25 @@ class S3(Source):
         """
         self.fs.copy(path1=from_path, path2=to_path, recursive=recursive)
 
-    def rm(self, paths: list[str]) -> None:
+    def rm(self, path: Union[str, list[str]]) -> None:
         """
-        Delete files under `paths`.
+        Delete files under `path`.
 
         Args:
-            paths (list[str]): Paths to files or folders to be removed. If the path
-                is a directory, it will be removed recursively.
+            path (list[str]): Path to a list of files or a directory
+                to be removed. If the path is a directory, it will
+                be removed recursively.
+
+        Example:
         ```python
         from viadot.sources import S3
 
         s3 = S3()
-        s3.rm(paths=["file1.parquet"])
+        s3.rm(path=["file1.parquet"])
         ```
         """
 
-        wr.s3.delete_objects(boto3_session=self.session, path=paths)
+        wr.s3.delete_objects(boto3_session=self.session, path=path)
 
     def from_df(
         self,
