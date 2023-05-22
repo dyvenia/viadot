@@ -52,7 +52,7 @@ class VeluxClub(Source):
         from_date: str,
         to_date: str,
         api_url: str,
-        region: str,
+        items_per_page: int,
     ) -> str:
         """
         Builds the query from the inputs.
@@ -63,13 +63,13 @@ class VeluxClub(Source):
             from_date (str): Start date for the query.
             to_date (str): End date for the query, if empty, datetime.today() will be used.
             api_url (str): Generic part of the URL.
-            region (str): Region filter for the query.
+            items_per_page (int): number of entries per page.
 
         Returns:
             str: Final query with all filters added.
         """
         if source in ["jobs", "product", "company"]:
-            url = f"{api_url}{source}?from={from_date}&to={to_date}&region&limit=100"
+            url = f"{api_url}{source}?from={from_date}&to={to_date}&limit={items_per_page}"
         elif source in "survey":
             url = f"{api_url}{source}?language=en&type=question"
         else:
@@ -83,6 +83,7 @@ class VeluxClub(Source):
         source: Literal["jobs", "product", "company", "survey"],
         from_date: str = "2022-03-22",
         to_date: str = None,
+        items_per_page: int = 100,
         region="null",
     ) -> pd.DataFrame:
         """
@@ -93,6 +94,7 @@ class VeluxClub(Source):
                 ['jobs', 'product', 'company', 'survey'].
             from_date (str, optional): Start date for the query, by default is the oldest date in the data 2022-03-22.
             to_date (str, optional): End date for the query. By default, datetime.today() will be used.
+            items_per_page (int, optional): Number of entries per page. 100 entries by default.
             region (str, optinal): Region filter for the query. By default, it is empty.
 
         Returns:
@@ -121,11 +123,13 @@ class VeluxClub(Source):
             raise ValidationError("to_date cannot be earlier than from_date!")
 
         # Preparing the Query
-        url = self.build_query(source, from_date, to_date, self.API_URL, region)
+        first_url = self.build_query(
+            source, from_date, to_date, self.API_URL, items_per_page=items_per_page
+        )
         headers = self.headers
 
         # Getting first page
-        response = handle_api_response(url=url, headers=headers, method="GET")
+        response = handle_api_response(url=first_url, headers=headers, method="GET")
 
         # Next Pages
         response = response.json()
@@ -140,17 +144,27 @@ class VeluxClub(Source):
         if "data" in keys_list:
             # first page content
             df = pd.DataFrame(response["data"])
-            # next pages
-            while response["next_page_url"] is not None:
-                url = f"{response['next_page_url']}&from={from_date}&to={to_date}&region&limit=100"
+            print("primero")
+            print(df.shape)
+            if source == "product":
+                df = df.transpose()
+            length = df.shape[0]
+            page = 1
+
+            while length == items_per_page:
+                url = f"{first_url}&page={page}"
                 r = handle_api_response(url=url, headers=headers, method="GET")
                 response = r.json()
                 df_page = pd.DataFrame(response["data"])
-                if source == "product":
-                    df_page = df_page.T
-
+                # if source == "product":
+                #     df_page = df_page.transpose()
+                length = df_page.shape[0]
                 df = pd.concat((df, df_page), axis=0)
+                page += 1
+
         else:
             df = pd.DataFrame(response)
+        print("final")
+        print(df.shape)
 
         return df
