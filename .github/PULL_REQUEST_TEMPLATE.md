@@ -12,7 +12,7 @@
 <!-- PRs will not be reviewed unless these boxes are checked -->
 
 This PR:
-
+- [ ] follows the guidelines laid out in `CONTRIBUTING.md`
 - [ ] links relevant issue(s)
 - [ ] adds/updates tests (if appropriate)
 - [ ] adds/updates docstrings (if appropriate)
