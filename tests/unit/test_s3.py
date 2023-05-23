@@ -167,11 +167,11 @@ def test_if_exists(s3, TEST_CSV_FILE_PATH):
     exists = s3.exists(path=TEST_TABLE_PATH_CSV)
     assert exists is False
 
+    # Test.
     s3.upload(
         from_path=TEST_CSV_FILE_PATH,
         to_path=TEST_TABLE_PATH_CSV,
     )
-
     exists = s3.exists(path=TEST_TABLE_PATH_CSV)
     assert exists is True
 
@@ -190,7 +190,6 @@ def test_if_exists_folder(s3, TEST_CSV_FILE_PATH):
         from_path=TEST_CSV_FILE_PATH,
         to_path=TEST_TABLE_PATH_CSV,
     )
-
     exists = s3.exists(TEST_TABLE_PATH)
     assert exists is True
 
