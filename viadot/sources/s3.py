@@ -101,15 +101,16 @@ class S3(Source):
             client = self.session.client("s3")
             bucket = path.split("/")[2]
             path = os.path.join(*path.rstrip("/").split("/")[3:])
+
             response = client.list_objects_v2(Bucket=bucket, Prefix=path, Delimiter="/")
 
-            # This is because list_objects takes in `Prefix`, so eg. if there exists
-            #  a path `a/b/abc` and we run `list_objects_v2(path=`a/b/a`)`,
-            #  it would enlist `a/b/abc` as well.
             folders_with_prefix: list[dict] = response.get("CommonPrefixes")
             if folders_with_prefix is None:
                 folder_exists = False
             else:
+                # This is because list_objects takes in `Prefix`, so eg. if there exists
+                #  a path `a/b/abc` and we run `list_objects_v2(path=`a/b/a`)`,
+                #  it would enlist `a/b/abc` as well.
                 paths = [path["Prefix"].rstrip("/") for path in folders_with_prefix]
                 folder_exists = path in paths
             return folder_exists
