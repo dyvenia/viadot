@@ -1,6 +1,4 @@
 import json
-import urllib
-from copy import deepcopy
 from typing import Any, Dict, List
 
 import numpy as np
@@ -42,17 +40,16 @@ class Supermetrics(Source):
         query_params: Dict[str, Any] = None,
         **kwargs,
     ):
-        # Credentials Management
         credentials = credentials or get_source_credentials(config_key)
 
         if credentials is None:
-            # credentials = get_source_credentials("supermetrics")
             raise CredentialError("Please provide the credentials.")
 
         required_credentials = (
             "api_key",
             "user",
         )
+
         required_credentials_are_provided = all(
             [rc in credentials for rc in required_credentials]
         )
@@ -64,7 +61,6 @@ class Supermetrics(Source):
 
         self.api_key = self.credentials["api_key"]
         self.user = self.credentials["user"]
-        ######
 
         self.query_params = query_params
 
@@ -83,7 +79,7 @@ class Supermetrics(Source):
             timeout (int, optional):  Defaults to 30 minuntes.
 
         Returns:
-            Ditionary with the response.
+            Returning object himself transformed into JSON.
         """
 
         if not self.query_params:
@@ -110,6 +106,7 @@ class Supermetrics(Source):
         Returns:
             columns (list): List of Google Analytics columns names.
         """
+
         # Supermetrics allows pivoting GA data, in which case it generates additional columns,
         # which are not enlisted in response's query metadata but are instead added as the first row of data.
         is_pivoted = any(
@@ -138,8 +135,8 @@ class Supermetrics(Source):
             response (dict):  Dictionary with the json response from API call.
         Returns:
             columns (list): List of columns names (to Google Analytics use  _get_col_names_google_analytics().
-
         """
+
         cols_meta = response["meta"]["query"]["fields"]
         columns = [col_meta["field_name"] for col_meta in cols_meta]
         return columns
@@ -153,9 +150,6 @@ class Supermetrics(Source):
         Returns:
            list of columns names.
         """
-        # query_params_cp = deepcopy(self.query_params)
-        # query_params_cp["offset_start"] = 0
-        # query_params_cp["offset_end"] = 0
 
         response: dict = self.to_json()
         if self.query_params["ds_id"] == "GA":
@@ -175,8 +169,9 @@ class Supermetrics(Source):
         Args:
             if_empty (str, optional): What to do if query returned no data. Defaults to "warn".
         Return:
-            Panda DataFrame with json information !
+            Pandas DataFrame with json information.
         """
+
         try:
             columns = self._get_col_names()
         except ValueError:
@@ -197,11 +192,11 @@ class Supermetrics(Source):
     def query(self, params: Dict[str, Any]):
         """
         Description:
-            Create the Query
+            Create the Query.
         Args:
-            params (dict): Query parameters {param:value, }!
+            params (dict): Query parameters {param:value, }
         Return:
-            Object updated
+            Object updated.
         """
 
         self.query_params = params
