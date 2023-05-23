@@ -285,16 +285,6 @@ class RedshiftSpectrum(Source):
         Returns:
             bool: Whether the table exists.
         """
-
-        """
-        Check if a schema exists in Amazon Redshift Spectrum.
-
-        Args:
-            schema (str): The name of the schema.
-
-        Returns:
-            bool: Whether the schema exists.
-        """
         return table in self.get_tables(schema=schema)
 
     def create_schema(
