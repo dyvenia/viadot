@@ -210,8 +210,7 @@ def test_get_tables(redshift):
         table=TEST_TABLE,
     )
     tables = redshift.get_tables(schema=TEST_SCHEMA)
-    assert "public" not in tables
-    assert TEST_TABLE in tables
+    assert tables == [TEST_TABLE]
 
     # Cleanup.
     redshift.drop_table(schema=TEST_SCHEMA, table=TEST_TABLE, remove_files=True)
