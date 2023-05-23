@@ -88,7 +88,6 @@ class Outlook(Source):
         #         for c in b.get_folders():
         #             print("\t\t", c.name)
         # print(dir(self.mailbox_obj))
-        # print(self.mailbox_obj.archive_folder().get_messages())
         # sys.exit()
 
         self.limit = limit
@@ -142,10 +141,18 @@ class Outlook(Source):
         return final_dict_folders
 
     def _get_messages_from_mailbox(self, dict_folder: dict) -> list:
+        """_summary_
+
+        Args:
+            dict_folder (dict): _description_
+
+        Returns:
+            list: _description_
+        """
         data = []
         for key, value in list(dict_folder.items()):
             count = 0
-            for message in value.get_messages():
+            for message in value.get_messages(limit=10000):
                 received_time = message.received
                 date_obj = datetime.fromisoformat(str(received_time))
                 if (
