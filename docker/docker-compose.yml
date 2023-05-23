@@ -11,5 +11,6 @@ services:
       # - ${HOME}/.aws/credentials:/home/viadot/.aws/credentials  # for S3 tests
       - ../:/home/viadot
     shm_size: '4gb'
+    env_file: .env
     command: sleep infinity
     restart: "unless-stopped"
