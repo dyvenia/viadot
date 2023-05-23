@@ -1,3 +1,4 @@
+import sys
 import pytz
 from datetime import date, datetime, timedelta
 from typing import Any, Dict, List
@@ -80,6 +81,15 @@ class Outlook(Source):
             self.logger.info(f"{self.mailbox_name} NOT Authenticated!")
 
         self.mailbox_obj = self.account.mailbox()
+        # for a in self.mailbox_obj.get_folders():
+        #     print(a.name)
+        #     for b in a.get_folders():
+        #         print("\t", b.name)
+        #         for c in b.get_folders():
+        #             print("\t\t", c.name)
+        # print(dir(self.mailbox_obj))
+        # print(self.mailbox_obj.archive_folder().get_messages())
+        # sys.exit()
 
         self.limit = limit
 
@@ -98,22 +108,21 @@ class Outlook(Source):
         """
         for subfolder in folder.get_folders():
             if subfolder:
-                # print(subfolder.name)
                 folder_structure.update({f"{folder.name}|{subfolder.name}": subfolder})
-                # list_of_folders.append(subfolder)
-                # sys.exit()
 
         if folder_structure:
             return folder_structure
 
-    def get_all_mails_to_df(self) -> pd.DataFrame:
-        """Download all the messages stored in a MailBox folder and subfolders.
+    def _get_all_folders(self, mailbox: MailBox) -> dict:
+        """Retrieve all folders from a Mailbox object.
+
+        Args:
+            mailbox (MailBox): Outlook Mailbox object from where to extract all folder structure.
 
         Returns:
-            pd.DataFrame: All messages are stored in a pandas framwork.
+            dict: Every single folder and subfolder is returned as "parent (sub)folder|(sub)folder": Mailbox
         """
-        dict_folders = self._get_subfolders({}, self.mailbox_obj)
-
+        dict_folders = self._get_subfolders({}, mailbox)
         final_dict_folders = dict_folders.copy()
 
         # loop to get all subfolders
@@ -130,8 +139,11 @@ class Outlook(Source):
             if len(while_dict_folders) == 0:
                 break
 
+        return final_dict_folders
+
+    def _get_messages_from_mailbox(self, dict_folder: dict) -> list:
         data = []
-        for key, value in list(final_dict_folders.items()):
+        for key, value in list(dict_folder.items()):
             count = 0
             for message in value.get_messages():
                 received_time = message.received
@@ -178,7 +190,19 @@ class Outlook(Source):
                         row["Inbox"] = True
 
                     data.append(row)
-            self.logger.info(f"folder: {key.center(50, '-')}  messages: {count}")
+            self.logger.info(f"folder: {key.center(56, '-')}  messages: {count}")
+
+        return data
+
+    def get_all_mails_to_df(self) -> pd.DataFrame:
+        """Download all the messages stored in a MailBox folder and subfolders.
+
+        Returns:
+            pd.DataFrame: All messages are stored in a pandas framwork.
+        """
+        final_dict_folders = self._get_all_folders(self.mailbox_obj)
+
+        data = self._get_messages_from_mailbox(final_dict_folders)
 
         df = pd.DataFrame(data=data)
 
