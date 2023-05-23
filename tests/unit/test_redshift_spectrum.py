@@ -217,6 +217,42 @@ def test_get_tables(redshift):
     redshift.drop_schema(TEST_SCHEMA, drop_glue_database=True)
 
 
+def test_get_tables_incorrect_schema(redshift):
+    """Verify that `get_tables()` returns an empty list if the schema doesn't exist."""
+    # Assumptions.
+    schema_exists = redshift._check_if_schema_exists("test_schema2")
+    assert schema_exists is False
+
+    # Test.
+    tables = redshift.get_tables(schema="test_schema2")
+    assert tables == []
+
+
+def test_drop_table(redshift):
+    # Assumptions.
+    redshift.create_schema(TEST_SCHEMA)
+    schema_exists = redshift._check_if_schema_exists(schema=TEST_SCHEMA)
+    assert schema_exists is True
+
+    redshift.from_df(
+        df=TEST_DF,
+        to_path=f"s3://{S3_BUCKET}/viadot/{TEST_SCHEMA}/{TEST_TABLE}",
+        schema=TEST_SCHEMA,
+        table=TEST_TABLE,
+    )
+    table_exists = redshift._check_if_table_exists(schema=TEST_SCHEMA, table=TEST_TABLE)
+    assert table_exists is True
+
+    # Test.
+    redshift.drop_table(schema=TEST_SCHEMA, table=TEST_TABLE, remove_files=True)
+
+    table_exists = redshift._check_if_table_exists(schema=TEST_SCHEMA, table=TEST_TABLE)
+    assert table_exists is False
+
+    # Cleanup.
+    redshift.drop_schema(TEST_SCHEMA, drop_glue_database=True)
+
+
 def test__is_spectrum_schema(redshift):
     # Prerequisite.
     redshift.create_schema(TEST_SCHEMA)

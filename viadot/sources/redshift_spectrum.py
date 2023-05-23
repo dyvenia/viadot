@@ -236,11 +236,6 @@ class RedshiftSpectrum(Source):
         Drops a table from a specified Amazon Redshift Spectrum external schema,
         including related files from Amazon S3, if specified.
 
-        Note that this is a proxy way of doing this, because we're only dropping
-        the table in the Glue database. In other words, this method can drop a Glue
-        table even if the schema of this table is not added as an external schema
-        in Spectrum.
-
         Args:
             schema (str): The name of the schema.
             table (str): The name of the table to drop.
