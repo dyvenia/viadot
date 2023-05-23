@@ -23,7 +23,8 @@ sources:
   - redshift_dev:
       class: RedshiftSpectrum
       credentials:
-        profile_name: "dev"
+        aws_access_key_id: "my_aws_access_key"
+        aws_secret_access_key: "my_aws_secret_access_key"
         region_name: "eu-west-1"
         credentials_secret: "my_aws_secret_with_redshift_creds"
         iam_role: "arn:aws:iam::12345678910:role/my_redshift_role"
@@ -31,5 +32,6 @@ sources:
   - s3_dev:
       class: S3
       credentials:
-        profile_name: "dev"
+        aws_access_key_id: "my_aws_access_key"
+        aws_secret_access_key: "my_aws_secret_access_key"
         region_name: "eu-west-1"
