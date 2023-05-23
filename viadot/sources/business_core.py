@@ -143,7 +143,13 @@ class BusinessCore(Source):
         """
         view = self.url.split("/")[-1]
 
-        if view not in ["GetCustomerData", "GetItemMaster", "GetPendingSalesOrderData"]:
+        if view not in [
+            "GetCustomerData",
+            "GetItemMaster",
+            "GetPendingSalesOrderData",
+            "GetSalesInvoiceData",
+            "GetSalesReturnDetailData",
+        ]:
             raise APIError(f"View {view} currently not available.")
 
         data = self.get_data().get("MasterDataList")
