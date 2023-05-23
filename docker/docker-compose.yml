@@ -9,6 +9,5 @@ services:
       # - ${HOME}/.config/viadot/config.yaml:/home/viadot/.config/viadot/config.yaml
       - ../:/home/viadot
     shm_size: '4gb'
-    env_file: .env
     command: sleep infinity
     restart: "unless-stopped"
