@@ -156,7 +156,9 @@ class Outlook(Source):
                 ):
                     count += 1
                     fetched = message.to_api_data()
-                    sender_mail = fetched["from"]["emailAddress"]["address"]
+                    sender_mail = fetched.get("from", None)
+                    if sender_mail is not None:
+                        sender_mail = fetched["from"]["emailAddress"]["address"]
                     recivers_list = fetched.get("toRecipients")
                     recivers = " "
                     if recivers_list is not None:
