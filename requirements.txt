@@ -6,7 +6,6 @@ boto3==1.24.59
 pandas==1.4.4
 pyarrow==10.0.1
 pyodbc>=4.0.34,<4.1.0
-requests==2.25.0
 openpyxl==3.0.10
 jupyterlab==3.2.4
 azure-identity==1.7.1
