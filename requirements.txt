@@ -15,13 +15,13 @@ adlfs==2022.9.1
 Shapely==1.8.0
 imagehash==4.2.1
 visions==0.7.5
-sharepy>=2.0.0,<2.1.0
+sharepy>=2.0.0, <2.1.0
 simple_salesforce==1.11.5
 sql-metadata==2.3.0
 duckdb==0.5.1
 sendgrid==6.9.7
 pandas-gbq==0.19.1
-databricks-connect==10.4.18
+databricks-connect==11.3.*
 pyyaml==6.0
 pydantic==1.10.5
 aiolimiter==1.0.0
