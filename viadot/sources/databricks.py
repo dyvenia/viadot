@@ -1,48 +1,59 @@
 import json
 import os
-from typing import Literal, Union
+from typing import Literal, Optional, Union
 
 import pandas as pd
 import pyspark.sql.dataframe as spark
 from delta.tables import *
-from pydantic import BaseModel
+from pydantic import BaseModel, root_validator
 
 from viadot.exceptions import CredentialError
 
 from ..config import get_source_credentials
 from ..exceptions import TableAlreadyExists, TableDoesNotExist
-from ..utils import (
-    add_viadot_metadata_columns,
-    build_merge_query,
-    df_snakecase_column_names,
-)
+from ..utils import (add_viadot_metadata_columns, build_merge_query,
+                     df_snakecase_column_names)
 from .base import Source
 
 
 class DatabricksCredentials(BaseModel):
-    org_id: str  # Databricks Organization ID
     host: str  # The host address of the Databricks cluster.
+    port: str = "15001"  # The port on which the cluster is exposed. By default '15001'. For Spark Connect, use the port 443 by default.
     cluster_id: str  # The ID of the Databricks cluster to which to connect.
-    port: str = "15001"  # The port on which the cluster is exposed. By default '15001'.
+    org_id: Optional[
+        str
+    ]  # The ID of the Databricks organization to which the cluster belongs. Not required when using Spark Connect.
     token: str  # The access token which will be used to connect to the cluster.
+
+    @root_validator(pre=True)
+    def is_configured(cls, credentials):
+        host = credentials.get("host")
+        cluster_id = credentials.get("cluster_id")
+        token = credentials.get("token")
+
+        if not (host and cluster_id and token):
+            raise CredentialError(
+                "Databricks credentials are not configured correctly."
+            )
+        return credentials
 
 
 class Databricks(Source):
     """
     A class for pulling and manipulating data on Databricks.
 
-    Documentation for Databricks is located at: https://docs.microsoft.com/en-us/azure/databricks/
+    Documentation for Databricks is located at:
+    https://docs.microsoft.com/en-us/azure/databricks/
 
     Parameters
     ----------
-    credentials : Dict[str, Any], optional
-        Credentials containing Databricks connection configuration
-        (`host`, `token`, `org_id`, and `cluster_id`).
-    config_key (str, optional): The key in the viadot config holding relevant credentials.
+    credentials : DatabricksCredentials, optional
+        Databricks connection configuration.
+    config_key (str, optional): The key in the viadot config holding relevant
+        credentials.
     """
 
     DEFAULT_SCHEMA = "default"
-    DEFAULT_CLUSTER_PORT = "15001"
 
     def __init__(
         self,
@@ -51,17 +62,30 @@ class Databricks(Source):
         *args,
         **kwargs,
     ):
-        credentials = credentials or get_source_credentials(config_key)
-        if credentials is None:
-            raise CredentialError("Please specify the credentials.")
-        DatabricksCredentials(**credentials)  # validate the credentials schema
+        raw_creds = credentials or get_source_credentials(config_key)
+        validated_creds = dict(
+            DatabricksCredentials(**raw_creds)
+        )  # validate the credentials
 
-        if not credentials.get("port"):
-            credentials["port"] = Databricks.DEFAULT_CLUSTER_PORT
-
-        super().__init__(*args, credentials=credentials, **kwargs)
+        super().__init__(*args, credentials=validated_creds, **kwargs)
 
         self._session = None
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        if self._session:
+            self._session.stop()
+            self._session = None
+
+    @property
+    def session(self) -> Union[SparkSession, "DatabricksSession"]:
+        if self._session is None:
+            session = self._create_spark_session()
+            self._session = session
+            return session
+        return self._session
 
     def _create_spark_session(self):
         """
@@ -85,13 +109,24 @@ class Databricks(Source):
         spark = SparkSession.builder.getOrCreate()
         return spark
 
-    @property
-    def session(self) -> SparkSession:
-        if self._session is None:
-            session = self._create_spark_session()
-            self._session = session
-            return session
-        return self._session
+    def _create_spark_connect_session(self):
+        """
+        Establish a connection to a Databricks cluster.
+
+        Returns:
+            SparkSession: A configured SparkSession object.
+        """
+        from databricks.connect import DatabricksSession
+
+        workspace_instance_name = self.credentials.get("host").split("/")[2]
+        port = self.credentials.get("port")
+        token = self.credentials.get("token")
+        cluster_id = self.credentials.get("cluster_id")
+
+        conn_str = f"sc://{workspace_instance_name}:{port}/;token={token};x-databricks-cluster-id={cluster_id}"
+        spark = DatabricksSession.builder.remote(conn_str).getOrCreate()
+
+        return spark
 
     @add_viadot_metadata_columns
     def to_df(
@@ -218,10 +253,10 @@ class Databricks(Source):
     def _check_if_table_exists(self, table: str, schema: str = None) -> bool:
         if schema is None:
             schema = Databricks.DEFAULT_SCHEMA
-        return self.session._jsparkSession.catalog().tableExists(schema, table)
+        return self.session.catalog.tableExists(dbName=schema, tableName=table)
 
     def _check_if_schema_exists(self, schema: str) -> bool:
-        return self.session._jsparkSession.catalog().databaseExists(schema)
+        return self.session.catalog.databaseExists(schema)
 
     def create_table_from_pandas(
         self,

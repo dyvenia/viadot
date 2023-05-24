@@ -48,7 +48,6 @@ RUN curl https://adoptopenjdk.jfrog.io/adoptopenjdk/api/gpg/key/public | apt-key
     find /usr/bin/java -type d -exec chmod 777 {} \;
 
 ENV SPARK_HOME /usr/local/lib/python3.10/site-packages/pyspark
-RUN export SPARK_HOME
 # END Databricks source setup
 
 RUN rm -rf /code

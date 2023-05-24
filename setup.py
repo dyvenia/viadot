@@ -30,12 +30,12 @@ setuptools.setup(
     url="https://github.com/dyvenia/viadot",
     packages=setuptools.find_packages(),
     install_requires=[
-        "sharepy>=2.0.0,<3.0.0",
-        "pyodbc>=4.0.32,<5.0.0",
-        "databricks-connect>=10.4.18,<11.0.0",
+        "sharepy>=2.0.0, <3.0.0",
+        "pyodbc>=4.0.32, <5.0.0",
+        "databricks-connect>=11.3.0, <11.4.0",
         "adlfs>=2022.9.1",
         "pyarrow>=7.0.0, <12.0.0",
-        "openpyxl>=3.0.10,<4.0.0"
+        "openpyxl>=3.0.10, <4.0.0",
     ],
     extras=extras,
     classifiers=[
