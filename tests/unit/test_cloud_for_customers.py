@@ -1,24 +1,20 @@
 """Tests for CloudForCustomers source class"""
 import pandas as pd
 
-from viadot.config import get_source_credentials
 from viadot.sources.cloud_for_customers import CloudForCustomers
 
 CONTACT_ENDPOINT = "ContactCollection"
 cursor_field = "EntityLastChangedOn"
-cursor_value = "2022-10-30T00:00:00Z"
+cursor_value = "2023-04-30T00:00:00Z"
 cursor_filter = f"{cursor_field} ge datetimeoffset'{cursor_value}'"
 filter_params = {"$filter": cursor_filter}
 
 
-def test_cloud_for_customers_to_df(TEST_C4C_API_URL):
-    credentials_secret = "aia-c4c-qa"
-    credentials = get_source_credentials(credentials_secret)
+def test_cloud_for_customers_to_df(c4c_config_key):
     c4c = CloudForCustomers(
-        url=TEST_C4C_API_URL,
+        config_key=c4c_config_key,
         endpoint=CONTACT_ENDPOINT,
         filter_params=filter_params,
-        credentials=credentials,
     )
 
     df = c4c.to_df(fields=None, dtype=None)

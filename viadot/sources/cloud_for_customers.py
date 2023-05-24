@@ -1,21 +1,34 @@
 import re
-import requests
-import pandas as pd
-
 from copy import deepcopy
 from typing import Any, Dict, List, Optional
-from pydantic import BaseModel, SecretStr
 from urllib.parse import urljoin
+
+import pandas as pd
+import requests
+from pydantic import BaseModel, SecretStr, root_validator
+
 from viadot.exceptions import CredentialError
 
-from ..utils import handle_api_response
 from ..config import get_source_credentials
+from ..utils import handle_api_response
 from .base import Source
 
 
 class CloudForCustomersCredentials(BaseModel):
     username: str  # eg. username@{tenant_name}.com
     password: SecretStr
+    url: Optional[str] = None
+    report_url: Optional[str] = None
+
+    @root_validator(pre=True)
+    def is_configured(cls, credentials):
+        username = credentials.get("username")
+        password = credentials.get("password")
+
+        if not (username and password):
+            raise CredentialError("`username` and `password` credentials are required.")
+
+        return credentials
 
 
 class CloudForCustomers(Source):
@@ -44,23 +57,21 @@ class CloudForCustomers(Source):
         *args,
         **kwargs,
     ):
-
         ## Credentials logic
-        credentials = credentials or get_source_credentials(config_key)
-        if credentials is None:
-            raise CredentialError("Please specify the credentials.")
-        CloudForCustomersCredentials(**credentials)  # validate the credentials schema
-        super().__init__(*args, credentials=credentials, **kwargs)
-        ## End Credentials logic
+        raw_creds = credentials or get_source_credentials(config_key) or {}
+        validated_creds = dict(
+            CloudForCustomersCredentials(**raw_creds)
+        )  # validate the credentials
+        super().__init__(*args, credentials=validated_creds, **kwargs)
 
         self.url = url or self.credentials.get("url")
-        self.report_url = report_url
+        self.report_url = report_url or self.credentials.get("report_url")
 
-        if self.url is None and report_url is None:
-            raise CredentialError("One of: ('url', 'report_url') is required.")
-
-        self.is_report = bool(report_url)
+        self.is_report = bool(self.report_url)
         self.query_endpoint = endpoint
+
+        if self.url:
+            self.full_url = urljoin(self.url, self.query_endpoint)
 
         if filter_params:
             filter_params_merged = self.DEFAULT_PARAMS.copy()
@@ -69,9 +80,6 @@ class CloudForCustomers(Source):
             self.filter_params = filter_params_merged
         else:
             self.filter_params = self.DEFAULT_PARAMS
-
-        if self.url:
-            self.full_url = urljoin(self.url, self.query_endpoint)
 
     @staticmethod
     def create_metadata_url(url: str) -> str:
@@ -141,16 +149,22 @@ class CloudForCustomers(Source):
                 records.extend(new_records)
         return records
 
-    def extract_records(self) -> List[Dict[str, Any]]:
+    def extract_records(
+        self, url: Optional[str], report_url: Optional[str]
+    ) -> List[Dict[str, Any]]:
         """Downloads records from `url` or `report_url` if present.
 
         Returns:
             records (List[Dict[str, Any]]): The records extracted from URL.
         """
         if self.is_report:
-            return self._extract_records_from_report_url(url=self.report_url)
+            return self._extract_records_from_report_url(url=report_url)
         else:
-            return self._extract_records_from_url(url=self.full_url)
+            if url:
+                full_url = urljoin(url, self.query_endpoint)
+            else:
+                full_url = self.full_url
+            return self._extract_records_from_url(url=full_url)
 
     def get_entities(
         self, dirty_json: Dict[str, Any], url: str
@@ -237,24 +251,30 @@ class CloudForCustomers(Source):
 
     def to_df(
         self,
+        url: str = None,
         fields: List[str] = None,
         dtype: dict = None,
         **kwargs,
     ) -> pd.DataFrame:
-        """Returns records in a pandas DataFrame.
+        """Download a table or report into a pandas DataFrame.
 
         Args:
+            url (str): The URL to extract records from.
             fields (List[str], optional): List of fields to put in DataFrame.
             dtype (dict, optional): The dtypes to use in the DataFrame.
             kwargs: The parameters to pass to DataFrame constructor.
 
         Returns:
-            df (pandas.DataFrmae): DataFrame containing all records.
+            df (pandas.DataFrame): DataFrame containing the records.
         """
-        records = self.extract_records()
+        url = url or self.url
+        records = self.extract_records(url=url)
         df = pd.DataFrame(data=records, **kwargs)
+
         if dtype:
             df = df.astype(dtype)
+
         if fields:
             return df[fields]
+
         return df
