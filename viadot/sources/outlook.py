@@ -81,14 +81,6 @@ class Outlook(Source):
             self.logger.info(f"{self.mailbox_name} NOT Authenticated!")
 
         self.mailbox_obj = self.account.mailbox()
-        # for a in self.mailbox_obj.get_folders():
-        #     print(a.name)
-        #     for b in a.get_folders():
-        #         print("\t", b.name)
-        #         for c in b.get_folders():
-        #             print("\t\t", c.name)
-        # print(dir(self.mailbox_obj))
-        # sys.exit()
 
         self.limit = limit
 
@@ -96,7 +88,7 @@ class Outlook(Source):
 
     @staticmethod
     def _get_subfolders(folder_structure: dict, folder: MailBox) -> Dict[str, List]:
-        """Retrieve all the subfolder in a MailBox folder.
+        """To retrieve all the subfolder in a MailBox folder.
 
         Args:
             folder_structure (dict): Dictionary where to save the data.
@@ -113,13 +105,13 @@ class Outlook(Source):
             return folder_structure
 
     def _get_all_folders(self, mailbox: MailBox) -> dict:
-        """Retrieve all folders from a Mailbox object.
+        """To retrieve all folders from a Mailbox object.
 
         Args:
             mailbox (MailBox): Outlook Mailbox object from where to extract all folder structure.
 
         Returns:
-            dict: Every single folder and subfolder is returned as "parent (sub)folder|(sub)folder": Mailbox
+            dict: Every single folder and subfolder is returned as "parent (sub)folder|(sub)folder": Mailbox.
         """
         dict_folders = self._get_subfolders({}, mailbox)
         final_dict_folders = dict_folders.copy()
@@ -140,19 +132,21 @@ class Outlook(Source):
 
         return final_dict_folders
 
-    def _get_messages_from_mailbox(self, dict_folder: dict) -> list:
-        """_summary_
+    def _get_messages_from_mailbox(self, dict_folder: dict, limit: int = 10000) -> list:
+        """to retrieve all messages from all the mailboxes passed in the dictionary.
 
         Args:
-            dict_folder (dict): _description_
+            dict_folder (dict): Mailboxes dictionary holder, with the following structure:
+                "parent (sub)folder|(sub)folder": Mailbox.
+            limit (int, optional): Number of fetched top messages. Defaults to 10000.
 
         Returns:
-            list: _description_
+            list: A list with all messages from all Mailboxes.
         """
         data = []
         for key, value in list(dict_folder.items()):
             count = 0
-            for message in value.get_messages(limit=10000):
+            for message in value.get_messages(limit=limit):
                 received_time = message.received
                 date_obj = datetime.fromisoformat(str(received_time))
                 if (
@@ -209,7 +203,7 @@ class Outlook(Source):
         """
         final_dict_folders = self._get_all_folders(self.mailbox_obj)
 
-        data = self._get_messages_from_mailbox(final_dict_folders)
+        data = self._get_messages_from_mailbox(final_dict_folders, limit=self.limit)
 
         df = pd.DataFrame(data=data)
 
