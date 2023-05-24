@@ -49,10 +49,10 @@ ADDITIONAL_DATA_DF = ADDITIONAL_DATA_NEW_FIELD_DF.copy().drop("NewField", axis=1
 
 
 @pytest.fixture(scope="session")
-def databricks():
+def databricks(databricks_config_key):
 
     databricks = Databricks(
-        config_key="databricks-qa-elt",
+        config_key=databricks_config_key,
     )
 
     try:
