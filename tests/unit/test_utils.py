@@ -126,7 +126,10 @@ def test___cast_df_cols():
         }
     )
     TEST_DF["datetime_column"] = pd.to_datetime(TEST_DF["datetime_column"])
-    result_df = _cast_df_cols(TEST_DF)
+    result_df = _cast_df_cols(
+        TEST_DF, types_to_convert=["datetime", "bool", "int", "object"]
+    )
+
     assert result_df["bool_column"].dtype == pd.Int64Dtype()
     assert result_df["datetime_column"].dtype == pd.StringDtype()
     assert result_df["int_column"].dtype == pd.Int64Dtype()

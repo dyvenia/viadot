@@ -200,12 +200,21 @@ def get_sql_server_table_dtypes(
     return dtypes
 
 
-def _cast_df_cols(df):
+def _cast_df_cols(
+    df: pd.DataFrame,
+    types_to_convert: List[Literal["datetime", "bool", "int", "object"]] = [
+        "datetime",
+        "bool",
+        "int",
+    ],
+) -> pd.DataFrame:
     """
     Cast the data types of columns in a DataFrame.
 
     Args:
         df (pd.DataFrame): The input DataFrame.
+        types_to_convert (Literal[datetime, bool, int, object], optional): List of types to be converted.
+        Defaults to ["datetime", "bool", "int"].
 
     Returns:
         pd.DataFrame: A DataFrame with modified data types.
@@ -217,17 +226,18 @@ def _cast_df_cols(df):
     int_cols = (col for col, dtype in df.dtypes.items() if dtype.kind == "i")
     object_cols = (col for col, dtype in df.dtypes.items() if dtype.kind == "O")
 
-    for col in datetime_cols:
-        df[col] = df[col].dt.strftime("%Y-%m-%d %H:%M:%S+00:00")
-
-    for col in bool_cols:
-        df[col] = df[col].astype(pd.Int64Dtype())
-
-    for col in int_cols:
-        df[col] = df[col].astype(pd.Int64Dtype())
-
-    for col in object_cols:
-        df[col] = df[col].astype(pd.StringDtype())
+    if "datetime" in types_to_convert:
+        for col in datetime_cols:
+            df[col] = df[col].dt.strftime("%Y-%m-%d %H:%M:%S+00:00")
+    if "bool" in types_to_convert:
+        for col in bool_cols:
+            df[col] = df[col].astype(pd.Int64Dtype())
+    if "int" in types_to_convert:
+        for col in int_cols:
+            df[col] = df[col].astype(pd.Int64Dtype())
+    if "object" in types_to_convert:
+        for col in object_cols:
+            df[col] = df[col].astype(pd.StringDtype())
 
     return df
 

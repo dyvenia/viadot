@@ -316,7 +316,7 @@ class Databricks(Source):
             df = df_snakecase_column_names(df)
 
         if cast_df_columns:
-            df = _cast_df_cols(df)
+            df = _cast_df_cols(df, types_to_convert=["object"])
 
         fqn = f"{schema}.{table}"
         success_message = f"Table {fqn} has been created successfully."
