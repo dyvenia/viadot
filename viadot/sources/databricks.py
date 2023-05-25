@@ -286,9 +286,7 @@ class Databricks(Source):
             snakecase_column_names (bool, optional): Whether to convert column names to snake case.
                 Defaults to True.
             cast_df_columns (bool, optional): Converts column types in DataFrame using utils._cast_df_cols().
-                Object -> string, bool -> Int64 and standardizes the date using the format "%Y-%m-%d %H:%M:%S+00:00".
-                The object type can contain int, string, bool, etc. values, which can cause errors when sending data to Databricks.
-                Defaults to True.
+                This param exists because of possible errors with object cols. Defaults to True.
 
         Example:
         ```python

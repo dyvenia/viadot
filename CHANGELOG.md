@@ -19,9 +19,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fixed a bug in `Databricks.create_table_from_pandas()`. The function that converts column names to snake_case was not used in every case. (#672)
 - Added `howto_migrate_sources_tasks_and_flows.md` document. This document will assist the DEs with the viadot 1 -> viadot 2 migration process.
 - `RedshiftSpectrum.from_df()` now automatically creates a folder for the table if not specified in `to_path`
-- Fixed a bug in `Databricks.create_table_from_pandas()`. DataFrame columns are now automatically converted using the `utils._cast_df_cols()`. 
-  `Object` type to `string`, `bool` to `Int64` and date is standardized using the format `%Y-%m-%d %H:%M:%S+00:00`. 
-  The reason was that The `object` type can contain `int`, `string`, `bool`, etc. values, which can cause errors when sending data to `Databricks`. (#681)
+- Fixed a bug in `Databricks.create_table_from_pandas()`. The function now automatically casts DataFrame types. (#681)
+
 
 ### Changed
 - Added `SQLServerToDF` task
