@@ -1,4 +1,6 @@
 """Tests for CloudForCustomers source class"""
+from datetime import datetime, timedelta
+
 import pandas as pd
 import pytest
 
@@ -7,7 +9,8 @@ from viadot.sources.cloud_for_customers import CloudForCustomers
 
 CONTACT_ENDPOINT = "ContactCollection"
 cursor_field = "EntityLastChangedOn"
-cursor_value = "2023-04-30T00:00:00Z"
+yesterday = datetime.utcnow() - timedelta(days=10)
+cursor_value = yesterday.isoformat(timespec="seconds") + "Z"
 cursor_filter = f"{cursor_field} ge datetimeoffset'{cursor_value}'"
 filter_params = {"$filter": cursor_filter}
 
