@@ -63,7 +63,7 @@ def create_test_parquet_file_2(DF, TEST_PARQUET_FILE_PATH_2):
 
 @pytest.fixture(scope="session", autouse=True)
 def sharepoint_url():
-    return os.environ.get("SHAREPOINT_URL")
+    return os.environ.get("VIADOT_SHAREPOINT_URL")
 
 
 @pytest.fixture(scope="session", autouse=True)
@@ -88,7 +88,7 @@ def s3_config_key():
 
 @pytest.fixture(scope="session", autouse=True)
 def sharepoint_config_key():
-    return os.environ.get("VIADOT_TEST_SHAREPOINT_CONFIG_KEY")
+    return os.environ.get("VIADOT_SHAREPOINT_CONFIG_KEY")
 
 
 @pytest.fixture(scope="session", autouse=True)

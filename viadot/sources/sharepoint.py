@@ -21,9 +21,9 @@ class SharepointCredentials(BaseModel):
 
     @root_validator(pre=True)
     def is_configured(cls, credentials):
-        site = credentials.get("host")
-        username = credentials.get("cluster_id")
-        password = credentials.get("token")
+        site = credentials.get("site")
+        username = credentials.get("username")
+        password = credentials.get("password")
 
         if not (site and username and password):
             raise CredentialError(
@@ -57,9 +57,9 @@ class Sharepoint(Source):
     def get_connection(self) -> sharepy.session.SharePointSession:
         try:
             connection = sharepy.connect(
-                site=self.credentials["site"],
-                username=self.credentials["username"],
-                password=self.credentials["password"],
+                site=self.credentials.get("site"),
+                username=self.credentials.get("username"),
+                password=self.credentials.get("password"),
             )
         except AuthError:
             site = self.credentials.get("site")
