@@ -201,12 +201,21 @@ def get_sql_server_table_dtypes(
 
 
 def _cast_df_cols(df):
+    """
+    Cast the data types of columns in a DataFrame.
 
+    Args:
+        df (pd.DataFrame): The input DataFrame.
+
+    Returns:
+        pd.DataFrame: A DataFrame with modified data types.
+    """
     df = df.replace({"False": False, "True": True})
 
     datetime_cols = (col for col, dtype in df.dtypes.items() if dtype.kind == "M")
     bool_cols = (col for col, dtype in df.dtypes.items() if dtype.kind == "b")
     int_cols = (col for col, dtype in df.dtypes.items() if dtype.kind == "i")
+    object_cols = (col for col, dtype in df.dtypes.items() if dtype.kind == "O")
 
     for col in datetime_cols:
         df[col] = df[col].dt.strftime("%Y-%m-%d %H:%M:%S+00:00")
@@ -216,6 +225,9 @@ def _cast_df_cols(df):
 
     for col in int_cols:
         df[col] = df[col].astype(pd.Int64Dtype())
+
+    for col in object_cols:
+        df[col] = df[col].astype(pd.StringDtype())
 
     return df
 
