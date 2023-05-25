@@ -17,8 +17,8 @@ from .base import Source
 class CloudForCustomersCredentials(BaseModel):
     username: str  # eg. username@{tenant_name}.com
     password: SecretStr
-    url: Optional[str] = None
-    report_url: Optional[str] = None
+    url: Optional[str] = None  # The URL to extract records from.
+    report_url: Optional[str] = None  # The URL of a prepared report.
 
     @root_validator(pre=True)
     def is_configured(cls, credentials):
@@ -37,7 +37,7 @@ class CloudForCustomers(Source):
     Args:
         url (str, optional): The URL to the C4C API. E.g 'https://myNNNNNN.crm.ondemand.com/c4c/v1/'.
         endpoint (str, optional): The API endpoint.
-        report_url (str, optional): The API URL in case of prepared report.
+        report_url (str, optional): The URL of a prepared report.
         filter_params (Dict[str, Any], optional): Filtering parameters passed to the request. E.g {"$filter": "AccountID eq '1234'"}.
         More info on:   https://userapps.support.sap.com/sap/support/knowledge/en/2330688
         credentials (CloudForCustomersCredentials, optional): Cloud for Customers credentials.
@@ -68,10 +68,10 @@ class CloudForCustomers(Source):
         self.report_url = report_url or self.credentials.get("report_url")
 
         self.is_report = bool(self.report_url)
-        self.query_endpoint = endpoint
+        self.endpoint = endpoint
 
         if self.url:
-            self.full_url = urljoin(self.url, self.query_endpoint)
+            self.full_url = urljoin(self.url, self.endpoint)
 
         if filter_params:
             filter_params_merged = self.DEFAULT_PARAMS.copy()
@@ -161,7 +161,7 @@ class CloudForCustomers(Source):
             return self._extract_records_from_report_url(url=report_url)
         else:
             if url:
-                full_url = urljoin(url, self.query_endpoint)
+                full_url = urljoin(url, self.endpoint)
             else:
                 full_url = self.full_url
             return self._extract_records_from_url(url=full_url)
