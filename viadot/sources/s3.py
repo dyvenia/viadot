@@ -5,9 +5,10 @@ import awswrangler as wr
 import boto3
 import pandas as pd
 import s3fs
-from pydantic import BaseModel
+from pydantic import BaseModel, root_validator
 
 from viadot.config import get_source_credentials
+from viadot.exceptions import CredentialError
 from viadot.sources.base import Source
 
 
@@ -16,6 +17,23 @@ class S3Credentials(BaseModel):
     region_name: str  # The name of the AWS region.
     aws_access_key_id: str
     aws_secret_access_key: str
+
+    @root_validator(pre=True)
+    def is_configured(cls, credentials):
+        profile_name = credentials.get("profile_name")
+        region_name = credentials.get("region_name")
+        aws_access_key_id = credentials.get("aws_access_key_id")
+        aws_secret_access_key = credentials.get("aws_secret_access_key")
+
+        profile_credential = profile_name and region_name
+        direct_credential = aws_access_key_id and aws_secret_access_key and region_name
+
+        if not (profile_credential or direct_credential):
+            raise CredentialError(
+                "Either `profile_name` and `region_name`, or `aws_access_key_id`, "
+                "`aws_secret_access_key`, and `region_name` must be specified."
+            )
+        return credentials
 
 
 class S3(Source):
@@ -36,9 +54,10 @@ class S3(Source):
         *args,
         **kwargs,
     ):
-        credentials = credentials or get_source_credentials(config_key) or {}
+        raw_creds = credentials or get_source_credentials(config_key) or {}
+        validated_creds = dict(S3Credentials(**raw_creds))  # validate the credentials
 
-        super().__init__(*args, credentials=credentials, **kwargs)
+        super().__init__(*args, credentials=validated_creds, **kwargs)
 
         if not self.credentials:
             self.logger.debug(

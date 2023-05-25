@@ -1,14 +1,14 @@
 import os
-from pathlib import Path
 from typing import List, Literal, Optional, Tuple
 
 import awswrangler as wr
 import boto3
 import pandas as pd
 import redshift_connector
-from pydantic import BaseModel, ValidationError, root_validator
+from pydantic import BaseModel, root_validator
 
 from viadot.config import get_source_credentials
+from viadot.exceptions import CredentialError
 from viadot.sources.base import Source
 
 
@@ -42,10 +42,11 @@ class RedshiftSpectrumCredentials(BaseModel):
         direct_credential = aws_access_key_id and aws_secret_access_key and region_name
 
         if not (profile_credential or direct_credential):
-            raise ValueError(
+            raise CredentialError(
                 "Either `profile_name` and `region_name`, or `aws_access_key_id`, "
                 "`aws_secret_access_key`, and `region_name` must be specified."
             )
+        return credentials
 
 
 class RedshiftSpectrum(Source):
@@ -79,9 +80,12 @@ class RedshiftSpectrum(Source):
         *args,
         **kwargs,
     ):
-        credentials = credentials or get_source_credentials(config_key) or {}
+        raw_creds = credentials or get_source_credentials(config_key) or {}
+        validated_creds = dict(
+            RedshiftSpectrumCredentials(**raw_creds)
+        )  # validate the credentials
 
-        super().__init__(*args, credentials=credentials, **kwargs)
+        super().__init__(*args, credentials=validated_creds, **kwargs)
 
         if not self.credentials:
             self.logger.debug(
