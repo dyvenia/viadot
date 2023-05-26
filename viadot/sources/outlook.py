@@ -1,9 +1,10 @@
 import pytz
-import datetime
-from typing import Any, Dict, List, Literal
+from datetime import date, datetime, timedelta
+from typing import Any, Dict, List
 
 import pandas as pd
 from O365 import Account
+from O365.mailbox import MailBox
 
 from viadot.exceptions import CredentialError
 from viadot.sources.base import Source
@@ -20,9 +21,6 @@ class Outlook(Source):
         end_date: str = None,
         credentials: Dict[str, Any] = None,
         limit: int = 10000,
-        mailbox_folders: Literal[
-            "sent", "inbox", "junk", "deleted", "drafts", "outbox", "archive"
-        ] = ["sent", "inbox", "junk", "deleted", "drafts", "outbox", "archive"],
         request_retries: int = 10,
         *args: List[Any],
         **kwargs: Dict[str, Any],
@@ -37,11 +35,9 @@ class Outlook(Source):
             start_date (str, optional): A filtering start date parameter e.g. "2022-01-01". Defaults to None.
             end_date (str, optional): A filtering end date parameter e.g. "2022-01-02". Defaults to None.
             credentials (Dict[str, Any], optional): The name of the Azure Key Vault secret containing a dictionary with
-            ACCOUNT_NAME and Service Principal credentials (TENANT_ID, CLIENT_ID, CLIENT_SECRET) for the Azure Application.
-            Defaults to None.
+                ACCOUNT_NAME and Service Principal credentials (TENANT_ID, CLIENT_ID, CLIENT_SECRET) for the Azure Application.
+                Defaults to None.
             limit (int, optional): Number of fetched top messages. Defaults to 10000.
-            mailbox_folders (Literal["sent", "inbox", "junk", "deleted", "drafts", "outbox", "archive"]):
-                List of folders to select from the mailbox.  Defaults to ["sent", "inbox", "junk", "deleted", "drafts", "outbox", "archive"]
             request_retries (int, optional): How many times retries to authorizate. Defaults to 10.
         """
 
@@ -52,27 +48,21 @@ class Outlook(Source):
 
         self.request_retries = request_retries
         self.mailbox_name = mailbox_name
+
         self.start_date = start_date
         self.end_date = end_date
         if self.start_date is not None and self.end_date is not None:
-            self.date_range_end_time = datetime.datetime.strptime(
-                self.end_date, "%Y-%m-%d"
-            )
-            self.date_range_start_time = datetime.datetime.strptime(
-                self.start_date, "%Y-%m-%d"
-            )
+            self.date_range_end_time = datetime.strptime(self.end_date, "%Y-%m-%d")
+            self.date_range_start_time = datetime.strptime(self.start_date, "%Y-%m-%d")
         else:
-            self.date_range_end_time = datetime.date.today() - datetime.timedelta(
-                days=1
-            )
-            self.date_range_start_time = datetime.date.today() - datetime.timedelta(
-                days=2
-            )
-            min_time = datetime.datetime.min.time()
-            self.date_range_end_time = datetime.datetime.combine(
+            self.date_range_start_time = date.today() - timedelta(days=1)
+            self.date_range_end_time = date.today()
+
+            min_time = datetime.min.time()
+            self.date_range_end_time = datetime.combine(
                 self.date_range_end_time, min_time
             )
-            self.date_range_start_time = datetime.datetime.combine(
+            self.date_range_start_time = datetime.combine(
                 self.date_range_start_time, min_time
             )
 
@@ -92,99 +82,133 @@ class Outlook(Source):
             self.logger.info(f"{self.mailbox_name} NOT Authenticated!")
 
         self.mailbox_obj = self.account.mailbox()
-
-        allowed_mailbox_folders = [
-            "sent",
-            "inbox",
-            "junk",
-            "deleted",
-            "drafts",
-            "outbox",
-            "archive",
-        ]
-        if all(x in allowed_mailbox_folders for x in mailbox_folders):
-            self.mailbox_folders = mailbox_folders
-        else:
-            raise Exception("Provided mailbox folders are not correct.")
         self.limit = limit
 
-    def to_df(self) -> pd.DataFrame:
-        """Download Outlook data into a pandas DataFrame.
+    @staticmethod
+    def _get_subfolders(folder_structure: dict, folder: MailBox) -> Dict[str, List]:
+        """To retrieve all the subfolder in a MailBox folder.
+
+        Args:
+            folder_structure (dict): Dictionary where to save the data.
+            folder (MailBox): The MailBox folder from where to extract the subfolders.
 
         Returns:
-            pd.DataFrame: the DataFrame with time range.
+            Dict[str, List]: `folder_structure` dictionary is returned once it is updated.
+        """
+        for subfolder in folder.get_folders():
+            if subfolder:
+                folder_structure.update({f"{folder.name}|{subfolder.name}": subfolder})
+
+        if folder_structure:
+            return folder_structure
+
+    @staticmethod
+    def _get_all_folders(self, mailbox: MailBox) -> dict:
+        """To retrieve all folders from a Mailbox object.
+
+        Args:
+            mailbox (MailBox): Outlook Mailbox object from where to extract all folder structure.
+
+        Returns:
+            dict: Every single folder and subfolder is returned as "parent (sub)folder|(sub)folder": Mailbox.
+        """
+        dict_folders = self._get_subfolders({}, mailbox)
+        final_dict_folders = dict_folders.copy()
+
+        # loop to get all subfolders
+        while True:
+            while_dict_folders = {}
+            for key, value in list(dict_folders.items()):
+                tmp_dict_folders = self._get_subfolders({}, value)
+                if tmp_dict_folders:
+                    final_dict_folders.update(tmp_dict_folders)
+                    while_dict_folders.update(tmp_dict_folders)
+
+            dict_folders = while_dict_folders.copy()
+
+            if len(while_dict_folders) == 0:
+                break
+
+        return final_dict_folders
+
+    def _get_messages_from_mailbox(self, dict_folder: dict) -> list:
+        """to retrieve all messages from all the mailboxes passed in the dictionary.
+
+        Args:
+            dict_folder (dict): Mailboxes dictionary holder, with the following structure:
+                "parent (sub)folder|(sub)folder": Mailbox.
+
+        Returns:
+            list: A list with all messages from all Mailboxes.
         """
         data = []
-
-        mailbox_generators_list = []
-        for m in self.mailbox_folders:
-            base_str = f"self.mailbox_obj.{m}_folder().get_messages({self.limit})"
-            mailbox_generators_list.append(eval(base_str))
-
-        for mailbox_generator in mailbox_generators_list:
-            while True:
-                try:
-                    message = next(mailbox_generator)
-                    received_time = message.received
-                    date_obj = datetime.datetime.fromisoformat(str(received_time))
-                    if (
-                        self.date_range_start_time.replace(tzinfo=self.utc)
-                        < date_obj
-                        < self.date_range_end_time.replace(tzinfo=self.utc)
-                    ):
-                        fetched = message.to_api_data()
-
-                        try:
-                            sender_mail = fetched["from"]["emailAddress"]["address"]
-                            recivers_list = fetched.get("toRecipients")
-                            recivers = " "
-                            if recivers_list is not None:
-                                recivers = ", ".join(
-                                    reciver["emailAddress"]["address"]
-                                    for reciver in recivers_list
-                                )
-
-                            categories = " "
-                            if message.categories is not None:
-                                categories = ", ".join(
-                                    categories for categories in message.categories
-                                )
-
-                            conversation_index = " "
-                            if message.conversation_index is not None:
-                                conversation_index = message.conversation_index
-
-                            row = {
-                                "conversation ID": fetched.get("conversationId"),
-                                "conversation index": conversation_index,
-                                "categories": categories,
-                                "sender": sender_mail,
-                                "recivers": recivers,
-                                "received_time": fetched.get("receivedDateTime"),
-                                "mail_adress": self.mailbox_name.split("@")[0]
-                                .replace(".", "_")
-                                .replace("-", "_"),
-                            }
-
-                            if sender_mail == self.mailbox_name:
-                                row["Inbox"] = False
-                            else:
-                                row["Inbox"] = True
-
-                            data.append(row)
-
-                        except KeyError as e:
-                            self.logger.info("KeyError : " + str(e))
+        for key, value in list(dict_folder.items()):
+            count = 0
+            for message in value.get_messages(limit=self.limit):
+                received_time = message.received
+                date_obj = datetime.fromisoformat(str(received_time))
+                if (
+                    self.date_range_start_time.replace(tzinfo=self.utc)
+                    < date_obj
+                    < self.date_range_end_time.replace(tzinfo=self.utc)
+                ):
+                    count += 1
+                    fetched = message.to_api_data()
+                    sender_mail = fetched.get("from", None)
+                    if sender_mail is not None:
+                        sender_mail = fetched["from"]["emailAddress"]["address"]
+                    recivers_list = fetched.get("toRecipients")
+                    recivers = " "
+                    if recivers_list is not None:
+                        recivers = ", ".join(
+                            reciver["emailAddress"]["address"]
+                            for reciver in recivers_list
+                        )
+                    categories = " "
+                    if message.categories is not None:
+                        categories = ", ".join(
+                            categories for categories in message.categories
+                        )
+                    conversation_index = " "
+                    if message.conversation_index is not None:
+                        conversation_index = message.conversation_index
+                    row = {
+                        "(sub)folder": value.name,
+                        "conversation ID": fetched.get("conversationId"),
+                        "conversation index": conversation_index,
+                        "categories": categories,
+                        "sender": sender_mail,
+                        "subject": message.subject,
+                        "recivers": recivers,
+                        "received_time": fetched.get("receivedDateTime"),
+                        "mail_adress": self.mailbox_name.split("@")[0]
+                        .replace(".", "_")
+                        .replace("-", "_"),
+                    }
+                    if sender_mail == self.mailbox_name:
+                        row["Inbox"] = False
                     else:
-                        continue
-                except StopIteration:
-                    break
+                        row["Inbox"] = True
+
+                    data.append(row)
+            self.logger.info(f"folder: {key.center(56, '-')}  messages: {count}")
+
+        return data
+
+    def get_all_mails_to_df(self) -> pd.DataFrame:
+        """Download all the messages stored in a MailBox folder and subfolders.
+
+        Returns:
+            pd.DataFrame: All messages are stored in a pandas framwork.
+        """
+        final_dict_folders = self._get_all_folders(self.mailbox_obj)
+
+        data = self._get_messages_from_mailbox(final_dict_folders)
 
         df = pd.DataFrame(data=data)
 
         return df
 
-    def to_csv(self):
-        df = self.to_df()
+    def to_csv(self, df: pd.DataFrame) -> None:
         file_name = self.mailbox_name.split("@")[0].replace(".", "_").replace("-", "_")
         df.to_csv(f"{file_name}.csv", index=False)
