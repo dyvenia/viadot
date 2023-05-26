@@ -144,27 +144,21 @@ class VeluxClub(Source):
         if "data" in keys_list:
             # first page content
             df = pd.DataFrame(response["data"])
-            print("primero")
-            print(df.shape)
-            if source == "product":
-                df = df.transpose()
             length = df.shape[0]
-            page = 1
+            page = 2
 
             while length == items_per_page:
                 url = f"{first_url}&page={page}"
                 r = handle_api_response(url=url, headers=headers, method="GET")
                 response = r.json()
                 df_page = pd.DataFrame(response["data"])
-                # if source == "product":
-                #     df_page = df_page.transpose()
+                if source == "product":
+                    df_page = df_page.transpose()
                 length = df_page.shape[0]
                 df = pd.concat((df, df_page), axis=0)
                 page += 1
 
         else:
             df = pd.DataFrame(response)
-        print("final")
-        print(df.shape)
 
         return df
