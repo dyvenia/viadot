@@ -5,23 +5,7 @@ from viadot.tasks.velux_club import VeluxClubToDF
 
 @pytest.fixture(scope="session")
 def var_dictionary():
-    variables = {
-        "source": "jobs",
-        "from_date": "2022-03-23",
-        # {
-        #     "propertyName": "from_date",
-        #     "operator": "BETWEEN",
-        #     "highValue": "YYYY-MM-DD",
-        #     "value": "YYYY-MM-DD",
-        # },
-        "to_date": "2022-03-24"
-        # {
-        #     "propertyName": "to_date",
-        #     "operator": "BETWEEN",
-        #     "highValue": "YYYY-MM-DD",
-        #     "value": "YYYY-MM-DD",
-        # },
-    }
+    variables = {"source": "jobs", "from_date": "2022-03-23", "to_date": "2022-03-24"}
     yield variables
 
 
