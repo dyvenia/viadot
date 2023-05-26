@@ -102,7 +102,6 @@ class Outlook(Source):
         if folder_structure:
             return folder_structure
 
-    @staticmethod
     def _get_all_folders(self, mailbox: MailBox) -> dict:
         """To retrieve all folders from a Mailbox object.
 
