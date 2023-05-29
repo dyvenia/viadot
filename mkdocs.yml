@@ -1,21 +1,34 @@
 site_name: Viadot Docs
-site_url: "https://djagoda881.github.io/viadot/"
+site_url: "https://dyvenia.github.io/viadot/"
 nav:
   - Home: index.md
-  - Howtos:
-      - "Configuration steps": howtos/config_steps.md
-      - "Runing unit tests": howtos/tests.md
+  - Getting Started:
+    - Configuration steps: howtos/config_steps.md
+  - User Guide:
+    - Runing unit tests: howtos/tests.md
 
   - Tutorials: tutorials/adding_source.md
   - References:
-      - "SQL Sources": references/sql_sources.md
-      - "API Sources": references/api_sources.md
+    - SQL Sources: references/sql_sources.md
+    - API Sources: references/api_sources.md
 
 
 theme:
   name: "material"
   features:
     - navigation.tabs
+    - navigation.top
+    - content.code.copy
+    - navigation.tracking
+    - toc.follow
+    - toc.integrate
+    - content.action.view
+    - content.action.edit
+  
+  icon:
+    repo: fontawesome/brands/github
+    edit: material/pencil
+    view: material/eye
 
 extra:
   version:
@@ -23,6 +36,7 @@ extra:
     
 plugins:
   - search
+  - mermaid2:
   - mkdocstrings:
       watch:
         - viadot
@@ -30,7 +44,22 @@ plugins:
         python:
           rendering:
             show_root_heading: yes
+  - neoteroi.mkdocsoad:
+      use_pymdownx: true
+
+extra_javascript:
+  - https://unpkg.com/mermaid/dist/mermaid.min.js
+
 markdown_extensions:
   - pymdownx.highlight
-  - pymdownx.superfences
-
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+  - pymdownx.inlinehilite
+  - admonition
+  - pymdownx.details
+  - pymdownx.tasklist:
+      custom_checkbox: true
+  - def_list
