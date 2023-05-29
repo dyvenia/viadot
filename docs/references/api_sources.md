@@ -11,3 +11,5 @@
 ::: viadot.sources.uk_carbon_intensity.UKCarbonIntensity
 
 ::: viadot.sources.databricks.Databricks
+
+::: viadot.sources.genesys.Genesys
