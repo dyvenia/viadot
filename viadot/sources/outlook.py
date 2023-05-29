@@ -5,11 +5,17 @@ from typing import Any, Dict, List
 import pandas as pd
 from O365 import Account
 from O365.mailbox import MailBox
+from pydantic import BaseModel
 
 from viadot.exceptions import CredentialError
 from viadot.sources.base import Source
 from viadot.config import get_source_credentials
 
+class OutlookCredentials(BaseModel):
+    client_id: str
+    client_secret: str
+    tenant_id: str
+    mail_example: str
 
 class Outlook(Source):
     utc = pytz.UTC
@@ -41,12 +47,12 @@ class Outlook(Source):
             request_retries (int, optional): How many times retries to authorizate. Defaults to 10.
         """
 
-        self.credentials = credentials or get_source_credentials("outlook") or {}
+        credentials = credentials or get_source_credentials("outlook") or {}
 
-        if self.credentials is None or not isinstance(self.credentials, dict):
+        if credentials is None or not isinstance(credentials, dict):
             raise CredentialError("Please specify the credentials.")
 
-        self.request_retries = request_retries
+        request_retries = request_retries
         self.mailbox_name = mailbox_name
 
         self.start_date = start_date
@@ -66,15 +72,16 @@ class Outlook(Source):
                 self.date_range_start_time, min_time
             )
 
+        OutlookCredentials(**credentials)
         self.account = Account(
-            (self.credentials["client_id"], self.credentials["client_secret"]),
+            (credentials["client_id"], credentials["client_secret"]),
             auth_flow_type="credentials",
-            tenant_id=self.credentials["tenant_id"],
+            tenant_id=credentials["tenant_id"],
             main_resource=self.mailbox_name,
-            request_retries=self.request_retries,
+            request_retries=request_retries,
         )
 
-        super().__init__(*args, credentials=self.credentials, **kwargs)
+        super().__init__(*args, credentials=credentials, **kwargs)
 
         if self.account.authenticate():
             self.logger.info(f"{self.mailbox_name} Authenticated!")
