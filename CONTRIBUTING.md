@@ -1,5 +1,4 @@
 # How to contribute to `viadot`
-
 ## Setting up the environment
 ### VSCode
 We provide the extensions, settings, and tasks for VSCode in the `.vscode` folder.
@@ -17,6 +16,16 @@ In VSCode, run `Ctrl+Shift+B` to open two terminal windows: a local `bash` one a
 ### Environment variables
 To run tests, you may need to set up some environment variables or the viadot config. You can find all the required environment variables in the [tests' dotenv file](./tests/.env.example), and all the required viadot config settings in the [config file](./config.yaml.example). We're working on making this process easier, so only one of these can be used.
 
+### Run mkdocs locally
+
+To run the docs locally, run the following:
+
+```bash
+python -m venv .venv
+source .venv/bin/activate
+cd docs/ && pip install -r requirements.txt && cd ..
+mkdocs serve
+```
 
 ## Style guidelines
 - code should be formatted with `black` using default settings (easiest way is to use the VSCode extension)
