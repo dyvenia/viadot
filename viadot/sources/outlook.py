@@ -1,4 +1,5 @@
 import pytz
+import logging
 from datetime import date, datetime, timedelta
 from typing import Any, Dict, List
 
@@ -11,11 +12,13 @@ from viadot.exceptions import CredentialError
 from viadot.sources.base import Source
 from viadot.config import get_source_credentials
 
+
 class OutlookCredentials(BaseModel):
     client_id: str
     client_secret: str
     tenant_id: str
     mail_example: str
+
 
 class Outlook(Source):
     utc = pytz.UTC
@@ -81,7 +84,9 @@ class Outlook(Source):
             request_retries=request_retries,
         )
 
+        logging.basicConfig()
         super().__init__(*args, credentials=credentials, **kwargs)
+        self.logger.setLevel(logging.INFO)
 
         if self.account.authenticate():
             self.logger.info(f"{self.mailbox_name} Authenticated!")
