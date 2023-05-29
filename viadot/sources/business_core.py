@@ -149,6 +149,7 @@ class BusinessCore(Source):
             "GetPendingSalesOrderData",
             "GetSalesInvoiceData",
             "GetSalesReturnDetailData",
+            "GetSalesOrderData",
         ]:
             raise APIError(f"View {view} currently not available.")
 
