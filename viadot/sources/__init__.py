@@ -12,7 +12,7 @@ from .sftp import SftpConnector
 from .mediatool import Mediatool
 
 try:
-    from .sap_rfc import SAPRFC
+    from .sap_rfc import SAPRFC, SAPRFCV2
 except ImportError:
     pass
 
@@ -27,4 +27,6 @@ from .velux_club import VeluxClub
 
 # APIS
 from .uk_carbon_intensity import UKCarbonIntensity
+from .eurostat import Eurostat
 from .hubspot import Hubspot
+from .business_core import BusinessCore

@@ -44,6 +44,7 @@ from .duckdb import DuckDBCreateTableFromParquet, DuckDBQuery, DuckDBToDF
 from .sql_server import SQLServerCreateTable, SQLServerToDF, SQLServerQuery
 
 from .epicor import EpicorOrdersToDF
+from .eurostat import EurostatToDF
 
 from .sftp import SftpToDF, SftpList
 from .mindful import MindfulToCSV
@@ -51,3 +52,5 @@ from .hubspot import HubspotToDF
 from .mediatool import MediatoolToDF
 from .customer_gauge import CustomerGaugeToDF
 from .velux_club import VeluxClubToDF
+from .business_core import BusinessCoreToParquet
+
