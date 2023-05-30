@@ -46,7 +46,9 @@ Clone the `2.0` branch, and set up and run the environment:
   ```sh
   git clone https://github.com/dyvenia/viadot.git -b 2.0 && \
   cd viadot/docker && \
-  sh run.sh 
+  sh update.sh -t 2.0-latest && \
+  sh run.sh && \
+  cd ../
   ```
 
 ### Configuration
