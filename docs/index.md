@@ -35,8 +35,7 @@ print(df)
 The above `df` is a pandas `DataFrame` object. It contains data downloaded by `viadot` from the Carbon Intensity UK API.
 
 ## Loading Data to a Source
-Depending on the source, `viadot` provides different methods of uploading data. For instance, for SQL sources, this would be bulk inserts. For data lake sources, it would be a file upload. For ready-made pipelines including data validation steps using `dbt`, see [prefect-viadot](https://github.com/dyvenia/prefect-viadot).
-
+Depending on the source, `viadot` provides different methods of uploading data. For instance, for SQL sources, this would be bulk inserts. For data lake sources, it would be a file upload and many others.
 
 ## Getting started
 ### Prerequisites
@@ -46,10 +45,8 @@ We assume that you have [Docker](https://www.docker.com/) installed.
 Clone the `2.0` branch, and set up and run the environment:
   ```sh
   git clone https://github.com/dyvenia/viadot.git -b 2.0 && \
-    cd viadot/docker && \
-    sh update.sh  && \
-    sh run.sh && \
-    cd ../
+  cd viadot/docker && \
+  sh run.sh 
   ```
 
 ### Configuration
