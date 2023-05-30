@@ -7,7 +7,6 @@ from datetime import datetime
 
 import pandas as pd
 
-
 from ..config import local_config
 from ..exceptions import CredentialError, ValidationError
 from ..utils import handle_api_response
