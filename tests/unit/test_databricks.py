@@ -46,6 +46,7 @@ ADDITIONAL_TEST_DATA = [
 ]
 ADDITIONAL_DATA_NEW_FIELD_DF = pd.DataFrame(ADDITIONAL_TEST_DATA)
 ADDITIONAL_DATA_DF = ADDITIONAL_DATA_NEW_FIELD_DF.copy().drop("NewField", axis=1)
+MIXED_TYPES_DATA = pd.DataFrame({"test": ["a", "b", 1.1, 1, True]})
 
 
 @pytest.fixture(scope="session")
@@ -267,6 +268,20 @@ def test_snakecase_column_names(databricks):
         databricks, query=f"SELECT column_to___snake___case_22 FROM {FQN}"
     )
     assert list(retrieved_value_update) == ["column_to___snake___case_22"]
+
+    databricks.drop_table(schema=TEST_SCHEMA, table=TEST_TABLE)
+    databricks.drop_schema(TEST_SCHEMA)
+
+
+def test_create_table_from_pandas_handles_mixed_types(databricks):
+
+    assert not databricks._check_if_table_exists(schema=TEST_SCHEMA, table=TEST_TABLE)
+
+    databricks.create_schema(TEST_SCHEMA)
+    created = databricks.create_table_from_pandas(
+        schema=TEST_SCHEMA, table=TEST_TABLE, df=MIXED_TYPES_DATA
+    )
+    assert created
 
     databricks.drop_table(schema=TEST_SCHEMA, table=TEST_TABLE)
     databricks.drop_schema(TEST_SCHEMA)
