@@ -3,9 +3,10 @@ site_url: "https://dyvenia.github.io/viadot/"
 nav:
   - Home: index.md
   - Getting Started:
-    - Configuration steps: howtos/config_steps.md
+    - Configuration steps: getting_started/config_steps.md
   - User Guide:
-    - Runing unit tests: howtos/tests.md
+    - Runing unit tests: user_guide/tests.md
+    - Migration guide: user_guide/migration_guide.md
 
   - Tutorials: tutorials/adding_source.md
   - References:
