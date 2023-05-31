@@ -7,6 +7,7 @@ from .s3 import S3
 from .sharepoint import Sharepoint
 from .supermetrics import Supermetrics
 from .velux_club import VeluxClub, Historical_Too_Old, Dates_NOK, Source_NOK
+from .bigquery import BigQuery
 
 try:
     from .sap_rfc import SAPRFC
