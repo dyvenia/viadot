@@ -28,9 +28,10 @@ class Outlook(Source):
         mailbox_name: str,
         start_date: str = None,
         end_date: str = None,
-        credentials: Dict[str, Any] = None,
         limit: int = 10000,
         request_retries: int = 10,
+        credentials: Dict[str, Any] = None,
+        credentials_secret: str = "outlook",
         *args: List[Any],
         **kwargs: Dict[str, Any],
     ):
@@ -43,14 +44,15 @@ class Outlook(Source):
             mailbox_name (str): Mailbox name.
             start_date (str, optional): A filtering start date parameter e.g. "2022-01-01". Defaults to None.
             end_date (str, optional): A filtering end date parameter e.g. "2022-01-02". Defaults to None.
-            credentials (Dict[str, Any], optional): The name of the Azure Key Vault secret containing a dictionary with
-                ACCOUNT_NAME and Service Principal credentials (TENANT_ID, CLIENT_ID, CLIENT_SECRET) for the Azure Application.
-                Defaults to None.
             limit (int, optional): Number of fetched top messages. Defaults to 10000.
             request_retries (int, optional): How many times retries to authorizate. Defaults to 10.
+            credentials (Dict[str, Any], optional): The dictionary with outlook credentials. Default to None.
+            credentials_secret (str, optional): The name of the Azure Key Vault secret containing a dictionary with
+                ACCOUNT_NAME and Service Principal credentials (TENANT_ID, CLIENT_ID, CLIENT_SECRET) for the Azure Application.
+                Defaults to None.
         """
 
-        credentials = credentials or get_source_credentials("outlook") or {}
+        credentials = credentials or get_source_credentials(credentials_secret) or {}
 
         if credentials is None or not isinstance(credentials, dict):
             raise CredentialError("Please specify the credentials.")
