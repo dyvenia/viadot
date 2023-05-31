@@ -1,6 +1,5 @@
-import pytz
 import logging
-from datetime import date, datetime, timedelta
+from datetime import date, datetime, timedelta, timezone
 from typing import Any, Dict, List
 
 import pandas as pd
@@ -21,7 +20,7 @@ class OutlookCredentials(BaseModel):
 
 
 class Outlook(Source):
-    utc = pytz.UTC
+    utc = timezone.utc
 
     def __init__(
         self,
@@ -145,7 +144,7 @@ class Outlook(Source):
         return final_dict_folders
 
     def _get_messages_from_mailbox(self, dict_folder: dict) -> list:
-        """to retrieve all messages from all the mailboxes passed in the dictionary.
+        """To retrieve all messages from all the mailboxes passed in the dictionary.
 
         Args:
             dict_folder (dict): Mailboxes dictionary holder, with the following structure:
