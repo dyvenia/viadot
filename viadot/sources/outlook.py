@@ -133,7 +133,7 @@ class Outlook(Source):
         return final_dict_folders
 
     def _get_messages_from_mailbox(self, dict_folder: dict, limit: int = 10000) -> list:
-        """to retrieve all messages from all the mailboxes passed in the dictionary.
+        """To retrieve all messages from all the mailboxes passed in the dictionary.
 
         Args:
             dict_folder (dict): Mailboxes dictionary holder, with the following structure:
