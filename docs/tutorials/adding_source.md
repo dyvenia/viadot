@@ -40,5 +40,5 @@ from .postgresql import PostgreSQL
 And that's all you need to know to create your own sources in the viadot repository. You can also take a look at any existing source like [Databricks](https://github.com/dyvenia/viadot/blob/2.0/viadot/sources/databricks.py) as a reference. 
 
 ## Add unit tests
-To add a unit tests, create a new file in `viadot/tests/unit`. The tests should cover each of the functionalities of the source.
+To add a unit tests, create a new file in `viadot/tests/unit`. All tests for a given source should be in one file and use the [pytest](https://docs.pytest.org/en/7.3.x/) framework. Your PR will be accepted only if the test coverage is greater than or equal to 80%.
 
