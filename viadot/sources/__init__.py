@@ -5,7 +5,7 @@ from .exchange_rates import ExchangeRates
 from .redshift_spectrum import RedshiftSpectrum
 from .s3 import S3
 from .sharepoint import Sharepoint
-from .genesys import Genesys
+from .bigquery import BigQuery
 
 try:
     from .sap_rfc import SAPRFC
