@@ -8,12 +8,13 @@ from O365.account import Account
 
 from viadot.sources import Outlook
 from viadot.exceptions import CredentialError
+from viadot.task_utils import credentials_loader
 
-
+credentials = credentials_loader.run(credentials_secret="OUTLOOK")
 @pytest.fixture
 def var_dictionary():
     variables = {
-        "mailbox_name": "vevoszolgalat@velux.com",
+        "mailbox_name": credentials["mail_example"],
         "start_date": "2023-04-12",
         "end_date": "2023-04-13",
         "credentials": {
