@@ -1,6 +1,6 @@
 import pytest
 import pandas as pd
-from viadot.tasks.velux_club import VeluxClubToDF
+from viadot.tasks.vid_club import VeluxClubToDF
 
 
 @pytest.fixture(scope="session")
@@ -9,7 +9,7 @@ def var_dictionary():
     yield variables
 
 
-def test_velux_club_to_df(var_dictionary):
+def test_vid_club_to_df(var_dictionary):
     source = var_dictionary["source"]
     from_date = var_dictionary["from_date"]
     to_date = var_dictionary["to_date"]

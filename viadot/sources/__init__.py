@@ -23,7 +23,7 @@ from .sqlite import SQLite
 from .mindful import Mindful
 from .customer_gauge import CustomerGauge
 
-from .velux_club import VeluxClub
+from .vid_club import VidClub
 
 # APIS
 from .uk_carbon_intensity import UKCarbonIntensity

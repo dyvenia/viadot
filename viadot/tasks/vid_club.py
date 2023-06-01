@@ -12,13 +12,13 @@ from prefect.utilities import logging
 from prefect.utilities.tasks import defaults_from_attrs
 
 from ..exceptions import ValidationError
-from ..sources import VeluxClub
+from ..sources import VidClub
 from .azure_key_vault import AzureKeyVaultSecret
 
 logger = logging.get_logger()
 
 
-class VeluxClubToDF(Task):
+class VidClubToDF(Task):
     def __init__(
         self,
         source: Literal["jobs", "product", "company", "survey"],
@@ -28,12 +28,12 @@ class VeluxClubToDF(Task):
         if_empty: str = "warn",
         retry_delay: timedelta = timedelta(seconds=10),
         timeout: int = 3600,
-        report_name: str = "velux_club_to_df",
+        report_name: str = "vid_club_to_df",
         *args: List[Any],
         **kwargs: Dict[str, Any],
     ):
         """
-        Task to downloading data from Velux Club APIs to Pandas DataFrame.
+        Task to downloading data from Vid Club APIs to Pandas DataFrame.
 
         Args:
             source (str): The endpoint source to be accessed, has to be among these:
@@ -45,7 +45,7 @@ class VeluxClubToDF(Task):
             retry_delay (timedelta, optional): The delay between task retries. Defaults to 10 seconds.
             timeout (int, optional): The amount of time (in seconds) to wait while running this task before
                 a timeout occurs. Defaults to 3600.
-            report_name (str, optional): Stores the report name. Defaults to "velux_club_to_df".
+            report_name (str, optional): Stores the report name. Defaults to "vid_club_to_df".
 
         Returns: Pandas DataFrame
         """
@@ -66,7 +66,7 @@ class VeluxClubToDF(Task):
         )
 
     def __call__(self, *args, **kwargs):
-        """Download Velux Club data to Pandas DataFrame"""
+        """Download Vid Club data to Pandas DataFrame"""
         return super().__call__(*args, **kwargs)
 
     def run(self) -> pd.DataFrame:
@@ -77,7 +77,7 @@ class VeluxClubToDF(Task):
             pd.DataFrame: The query result as a pandas DataFrame.
         """
 
-        vc_obj = VeluxClub()
+        vc_obj = VidClub()
 
         vc_dataframe = vc_obj.get_response(
             source=self.source, from_date=self.from_date, to_date=self.to_date

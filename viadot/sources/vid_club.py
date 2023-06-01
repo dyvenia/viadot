@@ -13,33 +13,31 @@ from ..utils import handle_api_response
 from .base import Source
 
 
-class VeluxClub(Source):
+class VidClub(Source):
     """
-    A class implementing the Velux Club API.
+    A class implementing the Vid Club API.
 
     Documentation for this API is located at: https://evps01.envoo.net/vipapi/
     There are 4 endpoints where to get the data.
 
     """
 
-    API_URL = "https://api.club.velux.com/api/v1/datalake/"
-
     def __init__(self, *args, credentials: Dict[str, Any] = None, **kwargs):
         """
-        Create an instance of VeluxClub.
+        Create an instance of VidClub.
 
         Args:
-            credentials (dict, optional): Credentials to Velux Club APIs.
+            credentials (dict, optional): Credentials to Vid Club APIs.
                 Defaults to dictionary.
         """
 
-        DEFAULT_CREDENTIALS = local_config.get("VELUX_CLUB")
+        DEFAULT_CREDENTIALS = local_config.get("VIDCLUB")
         credentials = kwargs.pop("credentials", DEFAULT_CREDENTIALS)
         if credentials is None:
             raise CredentialError("Missing credentials.")
 
         self.headers = {
-            "Authorization": "Bearer " + credentials["TOKEN"],
+            "Authorization": "Bearer " + credentials["token"],
             "Content-Type": "application/json",
         }
 
@@ -123,7 +121,11 @@ class VeluxClub(Source):
 
         # Preparing the Query
         first_url = self.build_query(
-            source, from_date, to_date, self.API_URL, items_per_page=items_per_page
+            source,
+            from_date,
+            to_date,
+            self.credentials["url"],
+            items_per_page=items_per_page,
         )
         headers = self.headers
 
