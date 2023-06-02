@@ -23,7 +23,7 @@ os.system("clear")
 @pytest.fixture
 def var_dictionary():
     variables = {
-        "mailbox_name": "vevoszolgalat@velux.com",
+        "mailbox_name": "random@random.com",
         "start_date": "2023-01-12",
         "end_date": "2023-01-13",
     }
