@@ -58,6 +58,13 @@ def test_to_excel():
     os.remove("testbase.xlsx")
 
 
+def test_to_parquet():
+    src = NotEmptySource()
+    src.to_parquet(path="testbase.parquet")
+    assert os.path.isfile("testbase.parquet") == True
+    os.remove("testbase.parquet")
+
+
 def test_handle_if_empty(caplog):
     src = EmptySource()
     src._handle_if_empty(if_empty="warn")
