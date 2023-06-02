@@ -64,7 +64,7 @@ class CustomerGaugeToADLS(Flow):
         Args:
             name (str): The name of the flow.
             endpoint (Literal["responses", "non-responses"], optional): Indicate which endpoint to connect. Defaults to None.
-            endpoint_url (str, optional): Endpoint URL. Defaults to None.
+            endpoint_url (str, optional): Full URL for pointing to specific endpoint. Defaults to None.
             total_load (bool, optional): Indicate whether to download the data to the latest. If 'False', only one API call is executed (up to 1000 records).
                 Defaults to True.
             cursor (int, optional): Cursor value to navigate to the page. Defaults to None.
