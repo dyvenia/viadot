@@ -44,13 +44,12 @@ class CustomerGauge(Source):
                 raise ValueError(
                     "Incorrect endpoint name. Choose: 'responses' or 'non-responses'"
                 )
+        elif url is not None:
+            self.url = url
         else:
-            try:
-                self.url = url
-            except:
-                raise ValueError(
-                    "Provide endpoint name. Choose: 'responses' or 'non-responses'. Otherwise, provide URL"
-                )
+            raise ValueError(
+                "Provide endpoint name. Choose: 'responses' or 'non-responses'. Otherwise, provide URL"
+            )
 
         if credentials is not None:
             self.credentials = credentials
