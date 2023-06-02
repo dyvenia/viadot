@@ -64,6 +64,27 @@ class BigQuery(Source):
         super().__init__(*args, credentials=credentials, **kwargs)
         pandas_gbq.context.project = self.credentials["project_id"]
 
+    def get_df(self, query: str) -> pd.DataFrame:
+        """
+        Description:
+            Get the response from the API queried BigQuery table and transforms it
+            into DataFrame.
+
+        Args:
+            query (str): SQL-Like Query to return data values.
+
+        Raises:
+            DBDataAccessError: When dataset name or table name are incorrect.
+
+        Returns:
+            pd.DataFrame: Table of the data carried in the response.
+        """
+
+        try:
+            return pandas_gbq.read_gbq(query)
+        except:
+            raise DBDataAccessError
+
     def get_project_id(self) -> str:
         """
         Description:
@@ -93,7 +114,7 @@ class BigQuery(Source):
         query = f"""SELECT schema_name 
                 FROM {self.get_project_id()}.INFORMATION_SCHEMA.SCHEMATA
                 """
-        df = self.get_response(query)
+        df = self.get_df(query)
         return df["schema_name"].values
 
     def list_tables(self, dataset_name: str) -> List[str]:
@@ -111,7 +132,7 @@ class BigQuery(Source):
         query = f"""SELECT table_name 
                 FROM {self.get_project_id()}.{dataset_name}.INFORMATION_SCHEMA.TABLES
                 """
-        df = self.get_response(query)
+        df = self.get_df(query)
         return df["table_name"].values
 
     def list_columns(self, dataset_name: str, table_name: str) -> List[str]:
@@ -122,6 +143,7 @@ class BigQuery(Source):
         Args:
             dataset_name (str): Dataset from Bigquery project.
             table_name (str): Table name from given dataset.
+
         Returns:
             List[str]: List of table names from the BigQuery dataset.
         """
@@ -130,26 +152,34 @@ class BigQuery(Source):
                 FROM {self.get_project_id()}.{dataset_name}.INFORMATION_SCHEMA.COLUMNS
                 WHERE table_name="{table_name}"
                 """
-        df = self.get_response(query)
+        df = self.get_df(query)
         return df["column_name"].values
 
-    def get_response(self, query: str) -> pd.DataFrame:
+    def get_response(
+        self,
+        dataset_name: str,
+        table_name: str,
+        list_columns: str = "*",
+        query: str = None,
+    ) -> pd.DataFrame:
         """
         Description:
-            Get the response from the API queried BigQuery table and transforms it
-            into DataFrame.
+        Gets response from BigQuery table. Dataset name and Table name are required.
 
         Args:
-            query (str): SQL-Like Query to return data values.
-
-        Raises:
-            DBDataAccessError: When dataset name or table name are incorrect.
+            dataset_name (str): Dataset from Bigquery project.
+            table_name (str): Table name from given dataset.
+            list_columns (str, optional): List of columns from given table name.
+                Defaults to "*".
+            query (str, optional): SQL-Like Query to return data values.
 
         Returns:
             pd.DataFrame: Table of the data carried in the response.
         """
 
-        try:
-            return pandas_gbq.read_gbq(query)
-        except:
-            raise DBDataAccessError
+        query = f"""
+                SELECT {list_columns}
+                FROM {dataset_name}.{table_name}
+                """
+        df = self.get_df(query)
+        return df

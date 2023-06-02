@@ -25,15 +25,15 @@ RESPONSE_PIVOTED = {
 }
 
 
-def test_get_response(BIGQ):
+def test_get_df(BIGQ):
     # Testing function which returns a DataFrame provided by query from BigQuery API.
-    df_expected = BIGQ.get_response(query=QUERY_PIVOTED)
+    df_expected = BIGQ.get_df(query=QUERY_PIVOTED)
     assert df_expected.to_dict() == RESPONSE_PIVOTED
 
 
 def test_query_is_df(BIGQ):
     # Checking if the output of the function get_response is pd.DataFrame object
-    df = BIGQ.get_response(QUERY_PIVOTED)
+    df = BIGQ.get_df(QUERY_PIVOTED)
     assert isinstance(df, pd.DataFrame)
 
 
@@ -63,3 +63,20 @@ def test_list_tables(BIGQ):
     datasets = BIGQ.list_datasets()
     tables = list(BIGQ.list_tables(datasets[0]))
     assert tables == ["space", "manigeo_tab1", "manigeo_tab", "manigeo_tab2"]
+
+
+def test_list_columns(BIGQ):
+    # Testing function which returns columns names from project table
+    datasets = BIGQ.list_datasets()
+    tables = list(BIGQ.list_tables(datasets[0]))
+    col_name = BIGQ.list_columns(datasets[0], tables[0])
+    assert col_name == ["my_value"]
+
+
+def test_get_response(BIGQ):
+    # Testing function which returns pd.DataFrame from get_response function 
+    # which requires dataset_name: & table_name
+    datasets = BIGQ.list_datasets()
+    tables = list(BIGQ.list_tables(datasets[0]))
+    df_expected = BIGQ.get_response(datasets[0], tables[0])
+    assert df_expected.to_dict() == {'my_value': {0: 'val1', 1: 'val2', 2: 'val3'}}
