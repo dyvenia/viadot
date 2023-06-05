@@ -1,4 +1,5 @@
 import pytest
+import pandas as pd
 
 from unittest import mock
 
@@ -33,10 +34,27 @@ def test_default_credential_param():
 
 
 @pytest.mark.proper
-def test_build_query():
-    return
+def test_build_query_wrong_source():
+    with pytest.raises(Exception):
+        vc = VidClub()
+        query = vc.build_query(source='test')
 
+@pytest.mark.parametrize("source", ['jobs','company','product','survey'])
+@pytest.mark.proper
+def test_get_response_sources(source):
+    vc = VidClub()
+    query = vc.get_response(source=source, to_date='2022-03-24')
+
+    assert isinstance(query,pd.DataFrame)
 
 @pytest.mark.proper
-def test_get_response():
-    return
+def test_get_response_wrong_date():
+    with pytest.raises(Exception):
+        vc = VidClub()
+        query = vc.get_response(source='jobs', to_date='2021-05-09')
+
+@pytest.mark.proper
+def test_get_response_wrong_date_range():
+    with pytest.raises(Exception):
+        vc = VidClub()
+        query = vc.get_response(source='jobs', to_date='2022-05-04', from_date='2022-05-05')
