@@ -39,6 +39,12 @@ def test_build_query_wrong_source():
         vc = VidClub()
         query = vc.build_query(source='test')
 
+@pytest.mark.proper
+def test_get_response_wrong_source():
+    with pytest.raises(Exception):
+        vc = VidClub()
+        query = vc.get_response(source='test')
+
 @pytest.mark.parametrize("source", ['jobs','company','product','survey'])
 @pytest.mark.proper
 def test_get_response_sources(source):
