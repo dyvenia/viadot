@@ -166,17 +166,7 @@ class Source:
     def _handle_if_empty(
         self, if_empty: Literal["warn", "fail", "skip"] = "warn"
     ) -> NoReturn:
-        """
-        What to do if DataFrame is empty.
-
-        Args:
-            if_empty (Literal["warn", "fail", "skip"], optional): What to do if the source contains no data. Defaults to "warn".
-
-        Raises:
-            ValueError: When DataFrame is empty and if_empty is set to "fail".
-            SKIP: When DataFrame is empty and if_empty is set to "skip".
-
-        """
+        """What to do if empty."""
         if if_empty == "warn":
             logger.warning("The query produced no data.")
         elif if_empty == "skip":
