@@ -9,6 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added `GetPendingSalesOrderData`, `GetSalesInvoiceData`, `GetSalesReturnDetailData` 
  `GetSalesOrderData` endpoints in `BusinessCore()` source.
 
+ ### Changed
+- Genesys API call method and the name changed from `genesys_generate_exports` to `genesys_api_connection`. 
+Introduced a new `end_point` parameter to make it more generic.
+- Removed methods never used in production: `get_analitics_url_report`, `get_all_schedules_job`, `schedule_report`, `to_df`
+and `delete_scheduled_report_job`.
+
 ## [0.4.15] - 2023-05-11
 ### Added
 - Added `BusinessCore` source class
@@ -34,12 +40,6 @@ and extra separator in a row and adding new rows in SAP table between iterations
 ### Added
 - Added `anonymize_df` task function to `task_utils.py` to anonymize data in the dataframe in selected columns.
 - Added `GET` connection inside the method `genesys_api_connection`.
-
-### Changed
-- Genesys API call method and the name changed from `genesys_generate_exports` to `genesys_api_connection`. 
-Introduced a new `end_point` parameter to make it more generic.
-- Removed methods never used in production: `get_analitics_url_report`, `get_all_schedules_job`, `schedule_report`, `to_df`
-and `delete_scheduled_report_job`.
 
 ## [0.4.13] - 2023-03-15
 ### Added
