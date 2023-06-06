@@ -39,7 +39,12 @@ and extra separator in a row and adding new rows in SAP table between iterations
 ## [0.4.14] - 2023-04-13
 ### Added
 - Added `anonymize_df` task function to `task_utils.py` to anonymize data in the dataframe in selected columns.
-- Added `GET` connection inside the method `genesys_api_connection`.
+- Added `Hubspot` source class
+- Added `HubspotToDF` task class
+- Added `HubspotToADLS` flow class
+- Added `CustomerGauge` source class
+- Added `CustomerGaugeToDF` task class
+- Added `CustomerGaugeToADLS` flow class
 
 ### Changed
 - Genesys API call method and the name changed from `genesys_generate_exports` to `genesys_api_connection`. 
