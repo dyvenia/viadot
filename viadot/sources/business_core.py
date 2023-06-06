@@ -137,7 +137,6 @@ class BusinessCore(Source):
 
         Returns:
             pd.DataFrame: DataFrame with data downloaded from Business Core API view.
-
         Raises:
             APIError: When selected API view is not available.
         """
@@ -157,13 +156,3 @@ class BusinessCore(Source):
         if view == "GetPendingSalesOrderData":
             # todo waiting for schema
             raise APIError(f"View {view} currently not available.")
-
-        data = self.get_data().get("MasterDataList")
-        df = pd.DataFrame.from_dict(data)
-        logger.info(
-            f"Data was successfully transformed into DataFrame: {len(df.columns)} columns and {len(df)} rows."
-        )
-        if df.empty is True:
-            self._handle_if_empty(if_empty)
-
-        return df

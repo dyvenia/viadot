@@ -163,9 +163,7 @@ class Source:
 
         out_df.to_parquet(path, index=False, **kwargs)
 
-    def _handle_if_empty(
-        self, if_empty: Literal["warn", "fail", "skip"] = "warn"
-    ) -> NoReturn:
+    def _handle_if_empty(self, if_empty: str = None) -> NoReturn:
         """What to do if empty."""
         if if_empty == "warn":
             logger.warning("The query produced no data.")
