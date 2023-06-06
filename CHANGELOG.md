@@ -41,6 +41,13 @@ and extra separator in a row and adding new rows in SAP table between iterations
 - Added `anonymize_df` task function to `task_utils.py` to anonymize data in the dataframe in selected columns.
 - Added `GET` connection inside the method `genesys_api_connection`.
 
+### Changed
+- Genesys API call method and the name changed from `genesys_generate_exports` to `genesys_api_connection`. 
+Introduced a new `end_point` parameter to make it more generic.
+- Removed methods never used in production: `get_analitics_url_report`, `get_all_schedules_job`, `schedule_report`, `to_df`
+and `delete_scheduled_report_job`.
+- Added `GET` connection inside the method `genesys_api_connection`.
+
 ## [0.4.13] - 2023-03-15
 ### Added
 - Added `validate_date_filter` parameter to `Epicor` source, `EpicorOrdersToDF` task and `EpicorOrdersToDuckDB` flow.
