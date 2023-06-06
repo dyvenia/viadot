@@ -140,7 +140,7 @@ class Genesys(Source):
         post_data_list: List[str],
         end_point: str = "analytics/reporting/exports",
         params: Dict[str, Any] = None,
-        method: str = "POST",
+        method: Literal["POST", "GET"] = "POST",
     ) -> Optional[dict]:
         """Function that make POST request method to Genesys API given and endpoint.
 
@@ -148,7 +148,7 @@ class Genesys(Source):
             post_data_list (List[str], optional): List of string templates to generate json body. Defaults to None.
             end_point (str, optional): Final end point for Genesys connection. Defaults to "analytics/reporting/exports".
             params (Dict[str, Any], optional): Parameters to be passed into the POST call. Defaults to None.
-            method (str, optional): Type of connection to the API. Defaults to "POST".
+            method (Literal["POST", "GET"], optional): Type of connection to the API. Defaults to "POST".
 
         Returns:
             Optional[dict]: Dict when the "conversations" endpoint is called, otherwise returns None.
