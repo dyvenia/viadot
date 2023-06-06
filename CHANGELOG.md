@@ -10,10 +10,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added `GET` connection inside the method `genesys_api_connection`.
 
 ### Changed
-- Changed the method to call Genesys API and its name, providing a new paremeter `end_point` to be more general.
-Name changed from `genesys_generate_exports` to `genesys_api_connection`.
-- Changed Genesys source file, deleting methods for testing purposes but never used in production.
-Those methods are: `get_analitics_url_report`, `get_all_schedules_job`, `schedule_report`, `to_df`
+- Genesys API call method and the name changed from `genesys_generate_exports` to `genesys_api_connection`. 
+Introduced a new `end_point` parameter to make it more generic.
+- Removed methods never used in production: `get_analitics_url_report`, `get_all_schedules_job`, `schedule_report`, `to_df`
 and `delete_scheduled_report_job`.
 
 ## [0.4.13] - 2023-03-15
