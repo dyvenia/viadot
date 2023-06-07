@@ -117,7 +117,8 @@ class Outlook(Source):
         final_dict_folders = dict_folders.copy()
 
         # loop to get all subfolders
-        while True:
+        while_dict_folders = {}
+        while len(while_dict_folders) != 0:
             while_dict_folders = {}
             for key, value in list(dict_folders.items()):
                 tmp_dict_folders = self._get_subfolders({}, value)
@@ -126,9 +127,6 @@ class Outlook(Source):
                     while_dict_folders.update(tmp_dict_folders)
 
             dict_folders = while_dict_folders.copy()
-
-            if len(while_dict_folders) == 0:
-                break
 
         return final_dict_folders
 
