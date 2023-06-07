@@ -8,6 +8,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Added `GetPendingSalesOrderData`, `GetSalesInvoiceData`, `GetSalesReturnDetailData` 
  `GetSalesOrderData` endpoints in `BusinessCore()` source.
+- Added `url` parameter to `CustomerGauge` source, and `endpoint_url` parameter to `CustomerGaugeToDF` task 
+and `CustomerGaugeToADLS` flow. This parameter enables to pass the endpoint URL by user.
 
 ## [0.4.15] - 2023-05-11
 ### Added

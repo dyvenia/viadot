@@ -18,6 +18,7 @@ class CustomerGaugeToDF(Task):
         self,
         endpoint: Literal["responses", "non-responses"] = None,
         total_load: bool = True,
+        endpoint_url: str = None,
         cursor: int = None,
         pagesize: int = 1000,
         date_field: Literal[
@@ -35,6 +36,7 @@ class CustomerGaugeToDF(Task):
         Args:
             endpoint (Literal["responses", "non-responses"], optional): Indicate which endpoint to connect. Defaults to None.
             total_load (bool, optional): Indicate whether to download the data to the latest. If 'False', only one API call is executed (up to 1000 records). Defaults to True.
+            endpoint_url (str, optional): Endpoint URL. Defaults to None.
             cursor (int, optional): Cursor value to navigate to the page. Defaults to None.
             pagesize (int, optional): Number of responses (records) returned per page, max value = 1000. Defaults to 1000.
             date_field (Literal["date_creation", "date_order", "date_sent", "date_survey_response"], optional): Specifies the date type which filter date range. Defaults to None.
@@ -44,6 +46,7 @@ class CustomerGaugeToDF(Task):
         """
         self.endpoint = endpoint
         self.total_load = total_load
+        self.endpoint_url = endpoint_url
         self.cursor = cursor
         self.pagesize = pagesize
         self.date_field = date_field
@@ -64,6 +67,7 @@ class CustomerGaugeToDF(Task):
     @defaults_from_attrs(
         "endpoint",
         "total_load",
+        "endpoint_url",
         "cursor",
         "pagesize",
         "date_field",
@@ -74,6 +78,7 @@ class CustomerGaugeToDF(Task):
         self,
         endpoint: Literal["responses", "non-responses"] = None,
         total_load: bool = True,
+        endpoint_url: str = None,
         cursor: int = None,
         pagesize: int = 1000,
         date_field: Literal[
@@ -90,6 +95,7 @@ class CustomerGaugeToDF(Task):
         Args:
             endpoint (Literal["responses", "non-responses"]): Indicate which endpoint to connect. Defaults to None.
             total_load (bool, optional): Indicate whether to download the data to the latest. If 'False', only one API call is executed (up to 1000 records). Defaults to True.
+            endpoint_url (str, optional): Endpoint URL. Defaults to None.
             cursor (int, optional): Cursor value to navigate to the page. Defaults to None.
             pagesize (int, optional): Number of responses (records) returned per page, max value = 1000. Defaults to 1000.
             date_field (Literal["date_creation", "date_order", "date_sent", "date_survey_response"], optional): Specifies the date type which filter date range. Defaults to None.
@@ -111,8 +117,12 @@ class CustomerGaugeToDF(Task):
 
         df_list = []
 
-        customer_gauge = CustomerGauge(endpoint=endpoint, credentials=credentials)
-        logger.info(f"Starting downloading data from {self.endpoint} endpoint...")
+        customer_gauge = CustomerGauge(
+            endpoint=endpoint, url=endpoint_url, credentials=credentials
+        )
+        logger.info(
+            f"Starting downloading data from {self.endpoint or self.endpoint_url} endpoint..."
+        )
         json_data = customer_gauge.get_json_response(
             cursor=cursor,
             pagesize=pagesize,
@@ -126,7 +136,7 @@ class CustomerGaugeToDF(Task):
         if total_load == True:
             if cursor is None:
                 logger.info(
-                    f"Downloading all the data from the {self.endpoint} endpoint. Process might take a few minutes..."
+                    f"Downloading all the data from the {self.endpoint or self.endpoint_url} endpoint. Process might take a few minutes..."
                 )
             else:
                 logger.info(

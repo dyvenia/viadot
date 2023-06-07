@@ -29,6 +29,7 @@ class CustomerGaugeToADLS(Flow):
         self,
         name: str,
         endpoint: Literal["responses", "non-responses"] = None,
+        endpoint_url: str = None,
         total_load: bool = True,
         cursor: int = None,
         pagesize: int = 1000,
@@ -63,6 +64,7 @@ class CustomerGaugeToADLS(Flow):
         Args:
             name (str): The name of the flow.
             endpoint (Literal["responses", "non-responses"], optional): Indicate which endpoint to connect. Defaults to None.
+            endpoint_url (str, optional): Full URL for pointing to specific endpoint. Defaults to None.
             total_load (bool, optional): Indicate whether to download the data to the latest. If 'False', only one API call is executed (up to 1000 records).
                 Defaults to True.
             cursor (int, optional): Cursor value to navigate to the page. Defaults to None.
@@ -95,6 +97,7 @@ class CustomerGaugeToADLS(Flow):
         """
         # CustomerGaugeToDF
         self.endpoint = endpoint
+        self.endpoint_url = endpoint_url
         self.total_load = total_load
         self.cursor = cursor
         self.pagesize = pagesize
@@ -152,7 +155,7 @@ class CustomerGaugeToADLS(Flow):
 
     def gen_flow(self) -> Flow:
         customer_gauge_df_task = CustomerGaugeToDF(
-            timeout=self.timeout, endpoint=self.endpoint
+            timeout=self.timeout, endpoint=self.endpoint, endpoint_url=self.endpoint_url
         )
 
         customerg_df = customer_gauge_df_task.bind(
