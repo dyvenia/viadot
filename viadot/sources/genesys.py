@@ -320,7 +320,7 @@ class Genesys(Source):
                 "queue_performance_detail_view",
                 "agent_status_detail_view",
             ]:
-                file_name = self.view_type.upper() + f"_{next(self.count)}_" + f"{date}"
+                file_name = f"{self.view_type.upper()}_{next(self.count)}_{date}"
             elif single_report[4].lower() in [
                 "agent_performance_summary_view",
                 "agent_status_summary_view",
