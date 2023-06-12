@@ -118,7 +118,7 @@ class Outlook(Source):
 
         # loop to get all subfolders
         while_dict_folders = {}
-        while len(while_dict_folders) != 0:
+        while len(while_dict_folders) == 0:
             while_dict_folders = {}
             for key, value in list(dict_folders.items()):
                 tmp_dict_folders = self._get_subfolders({}, value)
