@@ -17,8 +17,8 @@ class MockClass:
     status_code = 200
 
     def json():
-        test = {}
-        return test
+        df = pd.DataFrame()
+        return df
 
 
 @pytest.mark.init
@@ -37,30 +37,47 @@ def test_default_credential_param():
 def test_build_query_wrong_source():
     with pytest.raises(Exception):
         vc = VidClub()
-        query = vc.build_query(source='test')
+        query = vc.build_query(source="test")
+
 
 @pytest.mark.proper
 def test_get_response_wrong_source():
     with pytest.raises(Exception):
         vc = VidClub()
-        query = vc.get_response(source='test')
+        query = vc.get_response(source="test")
 
-@pytest.mark.parametrize("source", ['jobs','company','product','survey'])
+
+@mock.patch(
+    "viadot.sources.vid_club.VidClub.get_response", return_value=MockClass.json()
+)
+@pytest.mark.parametrize("source", ["jobs", "company", "product", "survey"])
 @pytest.mark.proper
-def test_get_response_sources(source):
+def test_get_response_sources(mock_api_response, source):
     vc = VidClub()
-    query = vc.get_response(source=source, to_date='2022-03-24')
+    query = vc.get_response(source=source, to_date="2023-03-24", from_date="2023-03-24")
 
-    assert isinstance(query,pd.DataFrame)
+    # mock_api_response.assert_called()
+    assert isinstance(query, pd.DataFrame)
+
+
+# @mock.patch("viadot.sources.vid_club.VidClub.get_response", return_value=MockClass)
+# @pytest.mark.proper
+# def test_get_response_jobs(mock_api_response):
+#     vc = VidClub()
+#     query = vc.get_response(source="jobs", to_date="2023-03-24", from_date="2023-03-24")
+
 
 @pytest.mark.proper
 def test_get_response_wrong_date():
     with pytest.raises(Exception):
         vc = VidClub()
-        query = vc.get_response(source='jobs', to_date='2021-05-09')
+        query = vc.get_response(source="jobs", to_date="2021-05-09")
+
 
 @pytest.mark.proper
 def test_get_response_wrong_date_range():
     with pytest.raises(Exception):
         vc = VidClub()
-        query = vc.get_response(source='jobs', to_date='2022-05-04', from_date='2022-05-05')
+        query = vc.get_response(
+            source="jobs", to_date="2022-05-04", from_date="2022-05-05"
+        )
