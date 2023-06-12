@@ -117,8 +117,8 @@ class Outlook(Source):
         final_dict_folders = dict_folders.copy()
 
         # loop to get all subfolders
-        while_dict_folders = {}
-        while len(while_dict_folders) == 0:
+        while_dict_folders = {"key": "value"}
+        while len(while_dict_folders) != 0:
             while_dict_folders = {}
             for key, value in list(dict_folders.items()):
                 tmp_dict_folders = self._get_subfolders({}, value)
@@ -210,6 +210,11 @@ class Outlook(Source):
             pd.DataFrame: All messages are stored in a pandas framwork.
         """
         final_dict_folders = self._get_all_folders(self.mailbox_obj)
+        with open(f"{self.mailbox_name}.txt", "w") as outfile:
+            for key in final_dict_folders.keys():
+                outfile.write(key + "\n")
+
+        sys.exit()
 
         data = self._get_messages_from_mailbox(
             final_dict_folders, limit=self.limit, outbox_list=outbox_list
