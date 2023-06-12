@@ -130,13 +130,17 @@ class Outlook(Source):
 
         return final_dict_folders
 
-    def _get_messages_from_mailbox(self, dict_folder: dict, limit: int = 10000) -> list:
+    def _get_messages_from_mailbox(
+        self, dict_folder: dict, limit: int = 10000, outbox_list: List[str] = ["Sent"]
+    ) -> list:
         """To retrieve all messages from all the mailboxes passed in the dictionary.
 
         Args:
             dict_folder (dict): Mailboxes dictionary holder, with the following structure:
                 "parent (sub)folder|(sub)folder": Mailbox.
             limit (int, optional): Number of fetched top messages. Defaults to 10000.
+            outbox_list (List[str], optional) List of outbox folders to differenciate between
+                Inboxes and Outboxes. Defaults to ["Sent"]
 
         Returns:
             list: A list with all messages from all Mailboxes.
@@ -185,7 +189,7 @@ class Outlook(Source):
                         .replace(".", "_")
                         .replace("-", "_"),
                     }
-                    if sender_mail == self.mailbox_name:
+                    if value.name.lower() in [x.lower() for x in outbox_list]:
                         row["Inbox"] = False
                     else:
                         row["Inbox"] = True
@@ -195,15 +199,21 @@ class Outlook(Source):
 
         return data
 
-    def get_all_mails_to_df(self) -> pd.DataFrame:
+    def get_all_mails_to_df(self, outbox_list: List[str] = ["Sent"]) -> pd.DataFrame:
         """Download all the messages stored in a MailBox folder and subfolders.
+
+        Args:
+            outbox_list (List[str], optional) List of outbox folders to differenciate between
+                Inboxes and Outboxes. Defaults to ["Sent"]
 
         Returns:
             pd.DataFrame: All messages are stored in a pandas framwork.
         """
         final_dict_folders = self._get_all_folders(self.mailbox_obj)
 
-        data = self._get_messages_from_mailbox(final_dict_folders, limit=self.limit)
+        data = self._get_messages_from_mailbox(
+            final_dict_folders, limit=self.limit, outbox_list=outbox_list
+        )
 
         df = pd.DataFrame(data=data)
 
