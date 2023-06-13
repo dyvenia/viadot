@@ -20,7 +20,7 @@ class OutlookToADLS(Flow):
         name: str = None,
         start_date: str = None,
         end_date: str = None,
-        outbox_list: List[str] = ["Sent"],
+        outbox_list: List[str] = ["Sent Item"],
         local_file_path: str = None,
         output_file_extension: str = ".parquet",
         adls_file_path: str = None,
@@ -42,7 +42,7 @@ class OutlookToADLS(Flow):
             start_date (str, optional): A filtering start date parameter e.g. "2022-01-01". Defaults to None.
             end_date (str, optional): A filtering end date parameter e.g. "2022-01-02". Defaults to None.
             outbox_list (List[str], optional): List of outbox folders to differenciate between
-                Inboxes and Outboxes. Defaults to ["Sent"].
+                Inboxes and Outboxes. Defaults to ["Sent Item"].
             local_file_path (str, optional): Local destination path. Defaults to None.
             output_file_extension (str, optional): Output file extension. Defaults to ".parquet".
             adls_file_path (str, optional): Azure Data Lake destination file path. Defaults to None.
