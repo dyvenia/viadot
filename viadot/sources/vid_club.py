@@ -64,6 +64,9 @@ class VidClub(Source):
 
         Returns:
             str: Final query with all filters added.
+
+        Raises:
+            ValidationError: If any source different than the ones in the list are used.
         """
         if source in ["jobs", "product", "company"]:
             url = f"{api_url}{source}?from={from_date}&to={to_date}&limit={items_per_page}"
@@ -96,6 +99,11 @@ class VidClub(Source):
 
         Returns:
             pd.DataFrame: Table of the data carried in the response.
+
+        Raises:
+            ValidationError: If any source different than the ones in the list are used.
+            ValidationError: If the initial date of the query is before the oldest date in the data (2023-03-22).
+            ValidationError: If the final date of the query is before the start date.
         """
 
         # Dealing with bad arguments
