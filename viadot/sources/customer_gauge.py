@@ -18,6 +18,7 @@ class CustomerGauge(Source):
     def __init__(
         self,
         endpoint: Literal["responses", "non-responses"] = None,
+        url: str = None,
         credentials: Dict[str, Any] = None,
     ):
         """
@@ -28,6 +29,7 @@ class CustomerGauge(Source):
 
         Args:
             endpoint (Literal["responses", "non-responses"]): Indicate which endpoint to connect. Defaults to None.
+            url (str, optional): Endpoint URL. Defaults to None.
             credentials (Dict[str, Any], optional): Credentials to connect with API containing client_id, client_secret. Defaults to None.
 
         Raises:
@@ -42,9 +44,11 @@ class CustomerGauge(Source):
                 raise ValueError(
                     "Incorrect endpoint name. Choose: 'responses' or 'non-responses'"
                 )
+        elif url is not None:
+            self.url = url
         else:
             raise ValueError(
-                "Provide endpoint name. Choose: 'responses' or 'non-responses'"
+                "Provide endpoint name. Choose: 'responses' or 'non-responses'. Otherwise, provide URL"
             )
 
         if credentials is not None:
@@ -88,7 +92,6 @@ class CustomerGauge(Source):
 
     def get_json_response(
         self,
-        url: str = None,
         cursor: int = None,
         pagesize: int = 1000,
         date_field: Literal[
@@ -101,7 +104,6 @@ class CustomerGauge(Source):
         Gets JSON with nested structure that contains data and cursor parameter value using GET request method.
 
         Args:
-            url (str, optional): Endpoint URL. Defaults to None.
             cursor (int, optional): Cursor value to navigate to the page. Defaults to None.
             pagesize (int, optional): Number of responses (records) returned per page, max value = 1000. Defaults to 1000. Defaults to 1000.
             date_field (Literal["date_creation", "date_order", "date_sent", "date_survey_response"], optional): Specifies the date type which filter date range. Defaults to None.
@@ -115,8 +117,7 @@ class CustomerGauge(Source):
         Returns:
             Dict[str, Any]: JSON with data and cursor parameter value.
         """
-        if url is None:
-            url = self.url
+        url = self.url
 
         params = {
             "per_page": pagesize,
