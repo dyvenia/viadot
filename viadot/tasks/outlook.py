@@ -55,8 +55,8 @@ class OutlookToDF(Task):
             mailbox_name (str): Mailbox name.
             start_date (str, optional): A filtering start date parameter e.g. "2022-01-01". Defaults to None.
             end_date (str, optional): A filtering end date parameter e.g. "2022-01-02". Defaults to None.
-            outbox_list (List[str], optional) List of outbox folders to differenciate between
-                Inboxes and Outboxes. Defaults to ["Sent"]
+            outbox_list (List[str], optional): List of outbox folders to differenciate between
+                Inboxes and Outboxes. Defaults to ["Sent"].
             limit (str, optional): A limit to access last top messages. Defaults to 10_000.
 
         Returns:
