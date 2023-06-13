@@ -9,7 +9,6 @@ from io import StringIO
 import prefect
 import aiohttp
 import pandas as pd
-from datetime import datetime, timedelta
 from aiolimiter import AsyncLimiter
 from prefect.engine import signals
 
@@ -34,7 +33,6 @@ class Genesys(Source):
         credentials_genesys: Dict[str, Any] = None,
         environment: str = None,
         report_url: str = None,
-        schedule_id: str = None,
         report_columns: List[str] = None,
         *args: List[Any],
         **kwargs: Dict[str, Any],
@@ -53,7 +51,6 @@ class Genesys(Source):
             environment (str, optional): Adress of host server. Defaults to None than will be used enviroment
             from credentials.
             report_url (str, optional): The url of report generated in json response. Defaults to None.
-            schedule_id (str, optional): The ID of report. Defaults to None.
             report_columns (List[str], optional): List of exisiting column in report. Defaults to None.
 
         Raises:
@@ -78,7 +75,6 @@ class Genesys(Source):
         super().__init__(*args, credentials=self.credentials_genesys, **kwargs)
 
         self.view_type = view_type
-        self.schedule_id = schedule_id
         self.report_name = report_name
         self.environment = environment
         self.report_url = report_url
@@ -90,21 +86,8 @@ class Genesys(Source):
         self.ids_mapping = ids_mapping
         self.count = iter(range(99999))
 
-        if self.schedule_id is None:
-            self.schedule_id = self.credentials.get("SCHEDULE_ID", None)
-
         if self.environment is None:
             self.environment = self.credentials.get("ENVIRONMENT", None)
-
-        if self.ids_mapping is None:
-            self.ids_mapping = self.credentials.get("IDS_MAPPING", None)
-
-            if type(self.ids_mapping) is dict and self.ids_mapping is not None:
-                self.logger.info("IDS_MAPPING loaded from local credential.")
-            else:
-                self.logger.warning(
-                    "IDS_MAPPING is not provided in you credentials or is not a dictionary."
-                )
 
         self.report_data = []
 
@@ -152,14 +135,20 @@ class Genesys(Source):
 
         return request_headers
 
-    def genesys_generate_exports(
-        self, post_data_list: List[str], end_point: str = "reporting/exports"
+    def genesys_api_connection(
+        self,
+        post_data_list: List[str],
+        end_point: str = "analytics/reporting/exports",
+        params: Dict[str, Any] = None,
+        method: Literal["POST", "GET"] = "POST",
     ) -> Optional[dict]:
-        """Function that make POST request method to generate export reports.
+        """Function that make POST request method to Genesys API given and endpoint.
 
         Args:
             post_data_list (List[str], optional): List of string templates to generate json body. Defaults to None.
-            end_point (str, optional): Final end point for Genesys connection. Defaults to "reporting/exports".
+            end_point (str, optional): Final end point for Genesys connection. Defaults to "analytics/reporting/exports".
+            params (Dict[str, Any], optional): Parameters to be passed into the POST call. Defaults to None.
+            method (Literal["POST", "GET"], optional): Type of connection to the API. Defaults to "POST".
 
         Returns:
             Optional[dict]: Dict when the "conversations" endpoint is called, otherwise returns None.
@@ -167,18 +156,17 @@ class Genesys(Source):
 
         limiter = AsyncLimiter(2, 15)
         semaphore = asyncio.Semaphore(value=1)
+        url = f"https://api.{self.environment}/api/v2/{end_point}"
 
         async def generate_post():
-            cnt = 0
-
             for data_to_post in post_data_list:
-                if cnt < 10:
-                    payload = json.dumps(data_to_post)
-                    async with aiohttp.ClientSession() as session:
-                        await semaphore.acquire()
-                        async with limiter:
+                payload = json.dumps(data_to_post)
+                async with aiohttp.ClientSession() as session:
+                    await semaphore.acquire()
+                    async with limiter:
+                        if method == "POST":
                             async with session.post(
-                                f"https://api.{self.environment}/api/v2/analytics/{end_point}",
+                                url,
                                 headers=self.authorization_token,
                                 data=payload,
                             ) as resp:
@@ -188,17 +176,21 @@ class Genesys(Source):
                                     f"Generated report export --- \n {payload}."
                                 )
                                 semaphore.release()
-                    cnt += 1
-                else:
-                    await asyncio.sleep(3)
-                    cnt = 0
+                        elif method == "GET":
+                            async with session.get(
+                                url,
+                                headers=self.authorization_token,
+                                params=params,
+                            ) as resp:
+                                new_report = await resp.read()
+                                semaphore.release()
+                await asyncio.sleep(0.5)
 
         loop = asyncio.get_event_loop()
         coroutine = generate_post()
         loop.run_until_complete(coroutine)
 
-        if end_point == "conversations/details/query":
-            return json.loads(new_report.decode("utf-8"))
+        return json.loads(new_report.decode("utf-8"))
 
     def load_reporting_exports(self, page_size: int = 100, verbose: bool = False):
         """
@@ -323,21 +315,17 @@ class Genesys(Source):
                 )
                 continue
 
-            if single_report[4].lower() == "queue_performance_detail_view":
-                file_name = (
-                    temp_ids_mapping.get(single_report[2]) + "_" + single_report[3]
-                ).upper()
+            date = self.start_date.replace("-", "")
+            if single_report[4].lower() in [
+                "queue_performance_detail_view",
+                "agent_status_detail_view",
+            ]:
+                file_name = f"{self.view_type.upper()}_{next(self.count)}_{date}"
             elif single_report[4].lower() in [
                 "agent_performance_summary_view",
                 "agent_status_summary_view",
             ]:
-                date = self.start_date.replace("-", "")
                 file_name = self.view_type.upper() + "_" + f"{date}"
-            elif single_report[4].lower() in [
-                "agent_status_detail_view",
-            ]:
-                date = self.start_date.replace("-", "")
-                file_name = self.view_type.upper() + f"_{next(self.count)}_" + f"{date}"
             else:
                 raise signals.SKIP(
                     message=f"View type {self.view_type} not defined in viadot, yet..."
@@ -358,42 +346,10 @@ class Genesys(Source):
             self.logger.info("Successfully genetared file names list.")
             return file_name_list
 
-    def generate_reporting_export(
-        self, data_to_post: Dict[str, Any], verbose: bool = False
-    ) -> int:
-        """
-        POST method for reporting export.
-
-        Args:
-            data_to_post (Dict[str, Any]): json format of POST body.
-            verbose (bool, optional): Decide if enable logging.
-
-        Returns:
-            new_report.status_code: status code
-        """
-        payload = json.dumps(data_to_post)
-        new_report = handle_api_response(
-            url=f"https://api.{self.environment}/api/v2/analytics/reporting/exports",
-            headers=self.authorization_token,
-            method="POST",
-            body=payload,
-        )
-        if verbose:
-            if new_report.status_code == 200:
-                self.logger.info("Succesfully generated new export.")
-            else:
-                self.logger.error(
-                    f"Failed to generated new export. - {new_report.content}"
-                )
-                raise APIError("Failed to generated new export.")
-        return new_report.status_code
-
     def delete_reporting_exports(self, report_id) -> int:
         """DELETE method for deleting particular reporting exports.
-
         Args:
             report_id (str): defined at the end of report url.
-
         Returns:
             delete_method.status_code: status code
         """
@@ -422,116 +378,3 @@ class Genesys(Source):
             assert status_code < 300
 
         self.logger.info("Successfully removed all reports.")
-
-    def get_analitics_url_report(self) -> str:
-        """
-        Fetching analytics report url from json response.
-
-        Returns:
-            string: url for analytics report
-        """
-        response = handle_api_response(
-            url=f"https://api.{self.environment}/api/v2/analytics/reporting/schedules/{self.schedule_id}",
-            headers=self.authorization_token,
-        )
-        try:
-            response_json = response.json()
-            report_url = response_json.get("lastRun", None).get("reportUrl", None)
-            self.logger.info("Successfully downloaded report from genesys api")
-            return report_url
-        except AttributeError as e:
-            self.logger.error(
-                "Output data error: " + str(type(e).__name__) + ": " + str(e)
-            )
-
-    def get_all_schedules_job(self) -> json:
-        """
-        Fetching analytics report url from json response.
-
-        Returns:
-            string: json body with all schedules jobs.
-        """
-        response = handle_api_response(
-            url=f"https://api.{self.environment}/api/v2/analytics/reporting/schedules",
-            headers=self.authorization_token,
-        )
-        try:
-            response_json = response.json()
-            self.logger.info("Successfully downloaded schedules jobs.")
-            return response_json
-        except AttributeError as e:
-            self.logger.error(
-                "Output data error: " + str(type(e).__name__) + ": " + str(e)
-            )
-
-    def schedule_report(self, data_to_post: Dict[str, Any]) -> json:
-        """
-        POST method for report scheduling.
-
-        Args:
-            data_to_post (Dict[str, Any]): json format of POST body.
-
-        Returns:
-            new_report.status_code: status code
-        """
-        payload = json.dumps(data_to_post)
-        new_report = handle_api_response(
-            url=f"https://api.{self.environment}/api/v2/analytics/reporting/schedules",
-            headers=self.authorization_token,
-            method="POST",
-            body=payload,
-        )
-        if new_report.status_code == 200:
-            self.logger.info("Succesfully scheduled new report.")
-        else:
-            self.logger.error(f"Failed to scheduled new report. - {new_report.content}")
-            raise APIError("Failed to scheduled new report.")
-        return new_report.status_code
-
-    def to_df(self, report_url: str = None):
-        """Download genesys data into a pandas DataFrame.
-
-        Args:
-            report_url (str): Report url from api response.
-
-        Returns:
-            pd.DataFrame: the DataFrame with time range
-        """
-        if report_url is None:
-            report_url = self.get_analitics_url_report
-        response_file = handle_api_response(
-            url=f"{report_url}", headers=self.authorization_token
-        )
-        if self.report_columns is None:
-            df = pd.read_excel(response_file.content, header=6)
-        else:
-            df = pd.read_excel(
-                response_file.content, names=self.report_columns, skiprows=6
-            )
-
-        return df
-
-    def delete_scheduled_report_job(self, report_id: str):
-        """DELETE method for deleting particular report job.
-
-        Args:
-            report_id (str): defined at the end of report url.
-
-        Returns:
-            delete_method.status_code: status code
-        """
-        delete_method = handle_api_response(
-            url=f"https://api.{self.environment}/api/v2/analytics/reporting/schedules/{report_id}",
-            headers=self.authorization_token,
-            method="DELETE",
-        )
-        if delete_method.status_code == 200:
-            self.logger.info("Successfully deleted report from Genesys API.")
-
-        else:
-            self.logger.error(
-                f"Failed to deleted report from Genesys API. - {delete_method.content}"
-            )
-            raise APIError("Failed to deleted report from Genesys API.")
-
-        return delete_method.status_code
