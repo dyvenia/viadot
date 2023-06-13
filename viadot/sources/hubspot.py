@@ -1,8 +1,9 @@
 import json
 from typing import Any, Dict, List
+
+from viadot.exceptions import CredentialError
 from viadot.sources.base import Source
 from viadot.utils import handle_api_response
-from viadot.exceptions import CredentialError
 
 
 class Hubspot(Source):

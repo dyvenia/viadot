@@ -1,12 +1,13 @@
 from typing import Any, Dict, List, Literal
-import pandas as pd
 
+import pandas as pd
 from prefect import Task
 from prefect.utilities import logging
 from prefect.utilities.tasks import defaults_from_attrs
 
-from ..sources import Mediatool
 from viadot.task_utils import *
+
+from ..sources import Mediatool
 
 logger = logging.get_logger()
 

@@ -1,8 +1,9 @@
-import pytest
-from viadot.sources import CustomerGauge
-
 import random
+
 import pandas as pd
+import pytest
+
+from viadot.sources import CustomerGauge
 
 ENDPOINT = random.choice(["responses", "non-responses"])
 CG = CustomerGauge(endpoint=ENDPOINT)

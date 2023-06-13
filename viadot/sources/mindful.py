@@ -1,15 +1,15 @@
 import os
+from datetime import datetime, timedelta
 from io import StringIO
 from typing import Any, Dict, Literal
 
-import prefect
 import pandas as pd
-from datetime import datetime, timedelta
+import prefect
 from requests.models import Response
 
+from viadot.exceptions import APIError
 from viadot.sources.base import Source
 from viadot.utils import handle_api_response
-from viadot.exceptions import APIError
 
 
 class Mindful(Source):

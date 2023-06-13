@@ -1,12 +1,12 @@
 import re
-from prefect.utilities import logging
 from collections import OrderedDict
-from typing import List, Literal, Union
+from typing import List, Literal
 from typing import OrderedDict as OrderedDictType
 from typing import Tuple, Union
 
-import pandas as pd
 import numpy as np
+import pandas as pd
+from prefect.utilities import logging
 
 try:
     import pyrfc

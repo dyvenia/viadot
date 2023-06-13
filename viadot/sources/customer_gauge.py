@@ -1,13 +1,13 @@
-import pandas as pd
-from typing import Any, Dict, Literal
 from datetime import datetime
+from typing import Any, Dict, Literal
 
-from viadot.utils import handle_api_response
-from viadot.config import local_config
-from viadot.exceptions import CredentialError, APIError
-from viadot.sources.base import Source
-
+import pandas as pd
 from prefect.utilities import logging
+
+from viadot.config import local_config
+from viadot.exceptions import APIError, CredentialError
+from viadot.sources.base import Source
+from viadot.utils import handle_api_response
 
 logger = logging.get_logger()
 

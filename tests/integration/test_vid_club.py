@@ -1,10 +1,10 @@
-import pytest
-import pandas as pd
-
 from unittest import mock
 
-from viadot.sources import VidClub
+import pandas as pd
+import pytest
+
 from viadot.exceptions import ValidationError
+from viadot.sources import VidClub
 
 
 @pytest.fixture

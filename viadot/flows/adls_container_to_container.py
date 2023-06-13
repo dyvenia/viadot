@@ -6,7 +6,6 @@ from prefect.utilities import logging
 
 from ..tasks import AzureDataLakeCopy
 
-
 logger = logging.get_logger(__name__)
 
 

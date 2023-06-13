@@ -1,6 +1,6 @@
-import pytest
-
 from unittest import mock
+
+import pytest
 
 from viadot.sources import Genesys
 

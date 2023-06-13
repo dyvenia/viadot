@@ -1,5 +1,6 @@
-from prefect import Flow, config
 from typing import Any, Dict, List, Literal
+
+from prefect import Flow, config
 
 from viadot.tasks import SQLServerQuery
 

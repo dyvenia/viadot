@@ -11,11 +11,11 @@ import prefect
 import pyarrow as pa
 import pyarrow.dataset as ds
 from prefect import Flow, Task, task
+from prefect.backend import set_key_value
 from prefect.engine.state import Failed
 from prefect.storage import Git
 from prefect.tasks.secrets import PrefectSecret
 from prefect.utilities import logging
-from prefect.backend import set_key_value
 from sendgrid import SendGridAPIClient
 from sendgrid.helpers.mail import Mail
 from toolz import curry
@@ -23,10 +23,8 @@ from visions.functional import infer_type
 from visions.typesets.complete_set import CompleteSet
 
 from viadot.config import local_config
-from viadot.tasks import AzureKeyVaultSecret, AzureDataLakeUpload
-
 from viadot.exceptions import CredentialError
-
+from viadot.tasks import AzureDataLakeUpload, AzureKeyVaultSecret
 
 logger = logging.get_logger()
 METADATA_COLUMNS = {"_viadot_downloaded_at_utc": "DATETIME"}

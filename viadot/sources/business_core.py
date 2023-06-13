@@ -1,13 +1,13 @@
-import pandas as pd
 import json
-from prefect.utilities import logging
 from typing import Any, Dict
 
-from ..exceptions import CredentialError, APIError
-from .base import Source
-from ..config import local_config
-from ..utils import handle_api_response
+import pandas as pd
+from prefect.utilities import logging
 
+from ..config import local_config
+from ..exceptions import APIError, CredentialError
+from ..utils import handle_api_response
+from .base import Source
 
 logger = logging.get_logger(__name__)
 

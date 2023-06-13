@@ -1,7 +1,8 @@
 import pandas as pd
 
+from viadot.utils import APIError, handle_api_response
+
 from .base import Source
-from viadot.utils import handle_api_response, APIError
 
 
 class Eurostat(Source):

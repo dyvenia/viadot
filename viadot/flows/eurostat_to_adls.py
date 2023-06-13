@@ -16,7 +16,6 @@ from ..task_utils import (
     dtypes_to_json_task,
     update_dtypes_dict,
 )
-
 from ..tasks import AzureDataLakeUpload, EurostatToDF
 
 file_to_adls_task = AzureDataLakeUpload()

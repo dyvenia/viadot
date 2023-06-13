@@ -1,14 +1,14 @@
-from prefect.utilities import logging
-from prefect import Task
-from prefect.utilities.tasks import defaults_from_attrs
+import json
+from datetime import datetime
 from typing import Literal
 
 import pandas as pd
-import json
-from datetime import datetime
+from prefect import Task
+from prefect.utilities import logging
+from prefect.utilities.tasks import defaults_from_attrs
 
-from viadot.tasks.azure_key_vault import AzureKeyVaultSecret
 from viadot.sources.customer_gauge import CustomerGauge
+from viadot.tasks.azure_key_vault import AzureKeyVaultSecret
 
 logger = logging.get_logger()
 

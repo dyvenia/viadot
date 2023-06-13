@@ -18,7 +18,6 @@ from viadot.task_utils import (
 )
 from viadot.tasks import AzureDataLakeUpload, BigQueryToDF
 
-
 logger = logging.get_logger(__name__)
 
 

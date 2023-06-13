@@ -1,4 +1,5 @@
 import pytest
+
 from viadot.flows.sql_server_transform import SQLServerTransform
 from viadot.tasks.sql_server import SQLServerQuery
 
