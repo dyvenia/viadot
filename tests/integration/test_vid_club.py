@@ -56,15 +56,7 @@ def test_get_response_sources(mock_api_response, source):
     vc = VidClub()
     query = vc.get_response(source=source, to_date="2023-03-24", from_date="2023-03-24")
 
-    # mock_api_response.assert_called()
     assert isinstance(query, pd.DataFrame)
-
-
-# @mock.patch("viadot.sources.vid_club.VidClub.get_response", return_value=MockClass)
-# @pytest.mark.proper
-# def test_get_response_jobs(mock_api_response):
-#     vc = VidClub()
-#     query = vc.get_response(source="jobs", to_date="2023-03-24", from_date="2023-03-24")
 
 
 @pytest.mark.proper
