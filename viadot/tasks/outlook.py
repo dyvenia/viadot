@@ -45,7 +45,7 @@ class OutlookToDF(Task):
         mailbox_name: str,
         start_date: str = None,
         end_date: str = None,
-        outbox_list: List[str] = ["Sent Item"],
+        outbox_list: List[str] = ["Sent Items"],
         limit: int = 10000,
     ) -> pd.DataFrame:
         """
@@ -56,7 +56,7 @@ class OutlookToDF(Task):
             start_date (str, optional): A filtering start date parameter e.g. "2022-01-01". Defaults to None.
             end_date (str, optional): A filtering end date parameter e.g. "2022-01-02". Defaults to None.
             outbox_list (List[str], optional): List of outbox folders to differenciate between
-                Inboxes and Outboxes. Defaults to ["Sent Item"].
+                Inboxes and Outboxes. Defaults to ["Sent Items"].
             limit (str, optional): A limit to access last top messages. Defaults to 10_000.
 
         Returns:

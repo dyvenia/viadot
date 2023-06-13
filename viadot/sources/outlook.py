@@ -134,7 +134,7 @@ class Outlook(Source):
         self,
         dict_folder: dict,
         limit: int = 10000,
-        outbox_list: List[str] = ["Sent Item"],
+        outbox_list: List[str] = ["Sent Items"],
     ) -> list:
         """To retrieve all messages from all the mailboxes passed in the dictionary.
 
@@ -143,7 +143,7 @@ class Outlook(Source):
                 "parent (sub)folder|(sub)folder": Mailbox.
             limit (int, optional): Number of fetched top messages. Defaults to 10000.
             outbox_list (List[str], optional): List of outbox folders to differenciate between
-                Inboxes and Outboxes. Defaults to ["Sent Item"].
+                Inboxes and Outboxes. Defaults to ["Sent Items"].
 
         Returns:
             list: A list with all messages from all Mailboxes.
@@ -203,13 +203,13 @@ class Outlook(Source):
         return data
 
     def get_all_mails_to_df(
-        self, outbox_list: List[str] = ["Sent Item"]
+        self, outbox_list: List[str] = ["Sent Items"]
     ) -> pd.DataFrame:
         """Download all the messages stored in a MailBox folder and subfolders.
 
         Args:
             outbox_list (List[str], optional): List of outbox folders to differenciate between
-                Inboxes and Outboxes. Defaults to ["Sent Item"].
+                Inboxes and Outboxes. Defaults to ["Sent Items"].
 
         Returns:
             pd.DataFrame: All messages are stored in a pandas framwork.
