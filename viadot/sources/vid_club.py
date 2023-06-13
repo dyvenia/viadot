@@ -29,6 +29,9 @@ class VidClub(Source):
         Args:
             credentials (dict, optional): Credentials to Vid Club APIs.
                 Defaults to dictionary.
+
+        Raises:
+            CredentialError: If credentials are not provided in local_config or directly as a parameter.
         """
 
         DEFAULT_CREDENTIALS = local_config.get("VIDCLUB")
