@@ -9,11 +9,8 @@ import prefect
 from prefect import Task
 from prefect.tasks.secrets import PrefectSecret
 from prefect.utilities import logging
-from prefect.utilities.tasks import defaults_from_attrs
 
-from ..exceptions import ValidationError
 from ..sources import VidClub
-from .azure_key_vault import AzureKeyVaultSecret
 
 logger = logging.get_logger()
 
