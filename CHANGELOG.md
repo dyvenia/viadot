@@ -5,7 +5,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+
 ### Added
+- Added `VidClub` source class
+- Added `VidClubToDF` task class
 - Added `GetPendingSalesOrderData`, `GetSalesInvoiceData`, `GetSalesReturnDetailData` 
  `GetSalesOrderData` endpoints in `BusinessCore()` source.
 - Added `url` parameter to `CustomerGauge` source, and `endpoint_url` parameter to `CustomerGaugeToDF` task 
@@ -17,6 +20,7 @@ Introduced a new `end_point` parameter to make it more generic.
 - Removed methods never used in production: `get_analitics_url_report`, `get_all_schedules_job`, `schedule_report`, `to_df`
 and `delete_scheduled_report_job`.
 - Added `GET` connection inside the method `genesys_api_connection`.
+
 
 ## [0.4.15] - 2023-05-11
 ### Added

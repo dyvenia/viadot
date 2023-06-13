@@ -51,4 +51,5 @@ from .mindful import MindfulToCSV
 from .hubspot import HubspotToDF
 from .mediatool import MediatoolToDF
 from .customer_gauge import CustomerGaugeToDF
+from .vid_club import VidClubToDF
 from .business_core import BusinessCoreToParquet
