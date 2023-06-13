@@ -4,6 +4,7 @@ import pandas as pd
 from unittest import mock
 
 from viadot.sources import VidClub
+from viadot.exceptions import ValidationError
 
 
 @pytest.fixture
@@ -35,14 +36,24 @@ def test_default_credential_param():
 
 @pytest.mark.proper
 def test_build_query_wrong_source():
-    with pytest.raises(Exception):
+    with pytest.raises(
+        ValidationError, match=r"Pick one these sources: jobs, product, company, survey"
+    ):
         vc = VidClub()
-        query = vc.build_query(source="test")
+        query = vc.build_query(
+            source="test",
+            from_date="2023-03-24",
+            to_date="2023-03-24",
+            api_url="test",
+            items_per_page=1,
+        )
 
 
 @pytest.mark.proper
 def test_get_response_wrong_source():
-    with pytest.raises(Exception):
+    with pytest.raises(
+        ValidationError, match=r"The source has to be: jobs, product, company or survey"
+    ):
         vc = VidClub()
         query = vc.get_response(source="test")
 
@@ -61,14 +72,18 @@ def test_get_response_sources(mock_api_response, source):
 
 @pytest.mark.proper
 def test_get_response_wrong_date():
-    with pytest.raises(Exception):
+    with pytest.raises(
+        ValidationError, match=r"from_date cannot be earlier than 2023-03-22!!"
+    ):
         vc = VidClub()
-        query = vc.get_response(source="jobs", to_date="2021-05-09")
+        query = vc.get_response(source="jobs", from_date="2021-05-09")
 
 
 @pytest.mark.proper
 def test_get_response_wrong_date_range():
-    with pytest.raises(Exception):
+    with pytest.raises(
+        ValidationError, match=r"to_date cannot be earlier than from_date!"
+    ):
         vc = VidClub()
         query = vc.get_response(
             source="jobs", to_date="2022-05-04", from_date="2022-05-05"
