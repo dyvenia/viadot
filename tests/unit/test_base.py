@@ -65,6 +65,12 @@ def test_to_parquet():
     os.remove("testbase.parquet")
 
 
+def test_to_parquet(caplog):
+    src = NotEmptySource()
+    src.to_parquet(path="/test/testbase.parquet")
+    assert "File not found." in caplog.text
+
+
 def test_handle_if_empty(caplog):
     src = EmptySource()
     src._handle_if_empty(if_empty="warn")
