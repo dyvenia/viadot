@@ -144,6 +144,12 @@ def test_environment_param():
     assert g.environment != None and type(g.environment) == str
 
 
+@pytest.mark.init
+def test_schedule_id_param():
+    g = Genesys()
+    assert g.schedule_id != None and type(g.schedule_id) == str
+
+
 @pytest.mark.parametrize("input_name", ["test_name", "12345", ".##@@"])
 @pytest.mark.init
 def test_other_inicial_params(input_name):
@@ -161,16 +167,31 @@ def test_connection_with_genesys_api():
     )
 
 
-@mock.patch.object(Genesys, "genesys_api_connection")
+@mock.patch.object(Genesys, "genesys_generate_exports")
 @pytest.mark.connection
-def test_generate_api_connection(mock_api_response, var_dictionary):
+def test_generate_exports(mock_api_response, var_dictionary):
     g = Genesys()
-    assert g.genesys_api_connection()
+    assert g.genesys_generate_exports()
     mock_api_response.assert_called()
 
 
+@mock.patch.object(Genesys, "load_reporting_exports")
+@pytest.mark.dependency(["test_generate_exports"])
+@pytest.mark.generate
+def test_generate_reports_list(mock_load_reports, var_dictionary):
+    mock_load_reports.return_value = var_dictionary["entities"]
+    g = Genesys()
+    g.get_reporting_exports_data()
+    mock_load_reports.assert_called_once()
+
+
 @mock.patch.object(Genesys, "download_report")
-@pytest.mark.dependency(depends=["test_generate_api_connection"])
+@pytest.mark.dependency(
+    depends=[
+        "test_generate_exports",
+        "test_generate_reports_list",
+    ]
+)
 @pytest.mark.download
 def test_download_reports(mock_download_files, var_dictionary):
     g = Genesys()
@@ -186,7 +207,8 @@ def test_download_reports(mock_download_files, var_dictionary):
 @mock.patch("viadot.sources.genesys.handle_api_response", return_value=MockClass)
 @pytest.mark.dependency(
     depends=[
-        "test_generate_api_connection",
+        "test_generate_exports",
+        "test_generate_reports_list",
         "test_download_reports",
     ]
 )
