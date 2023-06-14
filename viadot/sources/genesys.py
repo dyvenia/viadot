@@ -10,6 +10,7 @@ import aiohttp
 import pandas as pd
 from datetime import datetime, timedelta
 from aiolimiter import AsyncLimiter
+import prefect
 from prefect.engine import signals
 
 from viadot.config import local_config
