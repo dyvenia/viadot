@@ -10,7 +10,6 @@ from viadot.task_utils import METADATA_COLUMNS, add_ingestion_metadata_task
 
 from ..tasks import AzureDataLakeToDF, AzureDataLakeUpload, AzureSQLCreateTable, BCPTask
 
-
 logger = logging.get_logger(__name__)
 
 

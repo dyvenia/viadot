@@ -1,6 +1,7 @@
-import pytest
-import pandas as pd
 import logging
+
+import pandas as pd
+import pytest
 
 from viadot.tasks import eurostat
 

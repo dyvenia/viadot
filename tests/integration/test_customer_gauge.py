@@ -1,8 +1,9 @@
-import pytest
-from viadot.sources import CustomerGauge
-
 import random
+
 import pandas as pd
+import pytest
+
+from viadot.sources import CustomerGauge
 
 ENDPOINT = random.choice(["responses", "non-responses"])
 CG = CustomerGauge(endpoint=ENDPOINT)
@@ -75,3 +76,11 @@ def test_uncomplete_date_arguments():
         json_response = CG.get_json_response(
             date_field="date_sent", start_date="2012-01-03"
         )
+
+
+def test_endpoint_url_argument():
+    ENDPOINT = random.choice(["responses", "non-responses"])
+    ENDPOINT_URL = f"https://api.eu.customergauge.com/v7/rest/sync/{ENDPOINT}"
+    CG = CustomerGauge(url=ENDPOINT_URL)
+    json_response = CG.get_json_response()
+    assert isinstance(json_response, dict)

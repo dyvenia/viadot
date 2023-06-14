@@ -1,16 +1,16 @@
-import time
 import json
+import time
+from datetime import datetime, timedelta
 from typing import Any, Dict, List, Literal
 
-from datetime import datetime, timedelta
 from prefect import Task
 from prefect.utilities import logging
 from prefect.utilities.tasks import defaults_from_attrs
 
-from viadot.sources import Mindful
 from viadot.config import local_config
-from viadot.tasks import AzureKeyVaultSecret
 from viadot.exceptions import CredentialError
+from viadot.sources import Mindful
+from viadot.tasks import AzureKeyVaultSecret
 
 logger = logging.get_logger()
 

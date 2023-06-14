@@ -1,23 +1,22 @@
-import os
-import json
-import base64
-import warnings
 import asyncio
-from typing import Any, Dict, List, Literal, Optional
+import base64
+import json
+import os
+import warnings
 from io import StringIO
+from typing import Any, Dict, List, Literal, Optional
 
-import prefect
 import aiohttp
 import pandas as pd
 from datetime import datetime, timedelta
 from aiolimiter import AsyncLimiter
+import prefect
 from prefect.engine import signals
 
 from viadot.config import local_config
+from viadot.exceptions import APIError, CredentialError
 from viadot.sources.base import Source
-from viadot.exceptions import CredentialError, APIError
 from viadot.utils import handle_api_response
-
 
 warnings.simplefilter("ignore")
 

@@ -1,10 +1,12 @@
-from viadot.sources.sftp import SftpConnector
-from viadot.tasks.sftp import SftpToDF, SftpList
-import pytest
-import pandas as pd
-from unittest import mock
-from pytest import fixture, raises
 import io
+from unittest import mock
+
+import pandas as pd
+import pytest
+from pytest import fixture, raises
+
+from viadot.sources.sftp import SftpConnector
+from viadot.tasks.sftp import SftpList, SftpToDF
 
 
 @pytest.fixture

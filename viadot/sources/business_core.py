@@ -1,13 +1,13 @@
 import pandas as pd
 import json
 from prefect.utilities import logging
-from typing import Any, Dict
+from typing import Any, Dict, Literal
 
-from ..exceptions import CredentialError, APIError
-from .base import Source
+
 from ..config import local_config
+from ..exceptions import APIError, CredentialError
 from ..utils import handle_api_response
-
+from .base import Source
 
 logger = logging.get_logger(__name__)
 
@@ -128,31 +128,37 @@ class BusinessCore(Source):
         logger.info("Data was downloaded successfully.")
         return json.loads(response.text)
 
-    def to_df(self, if_empty: str = "skip") -> pd.DataFrame:
+    def to_df(self, if_empty: Literal["warn", "fail", "skip"] = "skip") -> pd.DataFrame:
         """
         Function for transforming data from dictionary to pd.DataFrame.
 
         Args:
-            if_empty (str, optional): What to do if output DataFrame is empty. Defaults to "skip".
+            if_empty (Literal["warn", "fail", "skip"], optional): What to do if output DataFrame is empty. Defaults to "skip".
 
         Returns:
             pd.DataFrame: DataFrame with data downloaded from Business Core API view.
+
         Raises:
             APIError: When selected API view is not available.
         """
         view = self.url.split("/")[-1]
-        if view not in ["GetCustomerData", "GetItemMaster", "GetPendingSalesOrderData"]:
-            raise APIError(f"View {view} currently not available.")
-        if view in ("GetCustomerData", "GetItemMaster"):
-            data = self.get_data().get("MasterDataList")
-            df = pd.DataFrame.from_dict(data)
-            logger.info(
-                f"Data was successfully transformed into DataFrame: {len(df.columns)} columns and {len(df)} rows."
-            )
-            if df.empty:
-                self._handle_if_empty(if_empty)
-            return df
 
-        if view == "GetPendingSalesOrderData":
-            # todo waiting for schema
+        if view not in [
+            "GetCustomerData",
+            "GetItemMaster",
+            "GetPendingSalesOrderData",
+            "GetSalesInvoiceData",
+            "GetSalesReturnDetailData",
+            "GetSalesOrderData",
+        ]:
             raise APIError(f"View {view} currently not available.")
+
+        data = self.get_data().get("MasterDataList")
+        df = pd.DataFrame.from_dict(data)
+        logger.info(
+            f"Data was successfully transformed into DataFrame: {len(df.columns)} columns and {len(df)} rows."
+        )
+        if df.empty is True:
+            self._handle_if_empty(if_empty)
+
+        return df

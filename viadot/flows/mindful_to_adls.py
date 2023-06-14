@@ -1,15 +1,15 @@
 import os
-from typing import Any, Dict, List, Literal
-import pandas as pd
-
 from datetime import datetime
+from typing import Any, Dict, List, Literal
+
+import pandas as pd
 from prefect import Flow, task
-from prefect.utilities import logging
 from prefect.engine.signals import FAIL
 from prefect.triggers import all_successful
-from viadot.tasks import MindfulToCSV
-from viadot.tasks import AzureDataLakeUpload
+from prefect.utilities import logging
+
 from viadot.task_utils import add_ingestion_metadata_task, adls_bulk_upload
+from viadot.tasks import AzureDataLakeUpload, MindfulToCSV
 
 logger = logging.get_logger()
 file_to_adls_task = AzureDataLakeUpload()

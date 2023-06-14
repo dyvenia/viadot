@@ -1,6 +1,7 @@
-from prefect import Task
-from ..sources import Eurostat
 import pandas as pd
+from prefect import Task
+
+from ..sources import Eurostat
 
 
 class EurostatToDF(Task):

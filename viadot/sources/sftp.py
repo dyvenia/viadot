@@ -1,17 +1,19 @@
+import itertools
+import os
+import time
+from collections import defaultdict
+from io import BytesIO, StringIO
+from pathlib import Path
+from stat import S_ISDIR
+from typing import Any, Dict, List
+
+import pandas as pd
 import paramiko
 import prefect
-from typing import Any, Dict, List
-from io import StringIO, BytesIO
-import prefect
-import pandas as pd
+
 from viadot.sources.base import Source
-from pathlib import Path
-import time
-import os
-from stat import S_ISDIR
-from collections import defaultdict
+
 from ..exceptions import CredentialError
-import itertools
 
 
 class SftpConnector(Source):

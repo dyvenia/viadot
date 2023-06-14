@@ -8,8 +8,6 @@ from prefect.backend import get_key_value
 from prefect.engine import signals
 from prefect.utilities import logging
 
-from viadot.tasks.azure_data_lake import AzureDataLakeDownload
-
 from viadot.tasks import (
     AzureDataLakeCopy,
     AzureDataLakeToDF,
@@ -19,6 +17,7 @@ from viadot.tasks import (
     CheckColumnOrder,
     DownloadGitHubFile,
 )
+from viadot.tasks.azure_data_lake import AzureDataLakeDownload
 
 logger = logging.get_logger(__name__)
 

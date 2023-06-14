@@ -1,14 +1,13 @@
-import pytest
-from viadot.sources import Mediatool
+import json
+from typing import List
 
-from viadot.task_utils import credentials_loader
-from viadot.exceptions import APIError
+import pandas as pd
+import pytest
 from prefect.tasks.secrets import PrefectSecret
 
-from typing import List
-import json
-import pandas as pd
-
+from viadot.exceptions import APIError
+from viadot.sources import Mediatool
+from viadot.task_utils import credentials_loader
 
 CREDENTIALS = credentials_loader.run(credentials_secret="MEDIATOOL-TESTS")
 MTOOL = Mediatool(credentials=CREDENTIALS)

@@ -7,7 +7,6 @@ from prefect.utilities import logging
 
 from ..tasks import AzureDataLakeDownload, AzureDataLakeUpload
 
-
 logger = logging.get_logger(__name__)
 
 

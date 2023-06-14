@@ -2,12 +2,12 @@ import datetime
 from typing import Any, Dict, List, Literal
 
 import pandas as pd
+import prefect
 from O365 import Account
 
 from viadot.config import local_config
 from viadot.exceptions import CredentialError
 from viadot.sources.base import Source
-import prefect
 
 
 class Outlook(Source):

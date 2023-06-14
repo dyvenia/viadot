@@ -1,6 +1,7 @@
-import pytest
-from unittest import mock
 from datetime import datetime
+from unittest import mock
+
+import pytest
 
 from viadot.tasks import GenesysToCSV
 

@@ -5,7 +5,6 @@ from prefect.utilities import logging
 
 from ..tasks import AzureDataLakeDownload, BlobFromCSV, CreateTableFromBlob
 
-
 logger = logging.get_logger(__name__)
 
 

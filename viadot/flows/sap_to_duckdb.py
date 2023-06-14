@@ -2,8 +2,8 @@ from operator import ne
 from typing import Any, Dict, List, Literal
 
 from prefect import Flow
-from prefect.utilities import logging
 from prefect.backend import set_key_value
+from prefect.utilities import logging
 
 logger = logging.get_logger()
 
