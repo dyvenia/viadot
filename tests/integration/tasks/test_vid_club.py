@@ -3,7 +3,7 @@ from unittest import mock
 import pandas as pd
 import pytest
 
-from viadot.tasks.vid_club import VidClubToDF
+from viadot.tasks import VidClubToDF
 
 
 class MockVidClubResponse:
@@ -16,8 +16,10 @@ def var_dictionary():
     yield variables
 
 
-@mock.patch.object("VidClubToDF.run", mock_run=MockVidClubResponse.response_data)
-def test_vid_club_to_df(mock_run, var_dictionary):
+@mock.patch(
+    "viadot.tasks.VidClubToDF.run", return_value=MockVidClubResponse.response_data
+)
+def test_vid_club_to_df(var_dictionary):
     source = var_dictionary["source"]
     from_date = var_dictionary["from_date"]
     to_date = var_dictionary["to_date"]
