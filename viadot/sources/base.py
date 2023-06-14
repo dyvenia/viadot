@@ -161,6 +161,7 @@ class Source:
                 directory = os.path.dirname(path)
                 os.makedirs(directory, exist_ok=True)
         except FileNotFoundError:
+            logger.info("File not found.")
             pass
 
         out_df.to_parquet(path, index=False, **kwargs)
