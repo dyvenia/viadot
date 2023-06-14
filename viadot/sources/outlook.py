@@ -87,19 +87,33 @@ class Outlook(Source):
         super().__init__(*args, credentials=self.credentials, **kwargs)
 
     @staticmethod
-    def _get_subfolders(folder_structure: dict, folder: MailBox) -> Dict[str, List]:
+    def _get_subfolders(
+        folder_structure: dict, folder: MailBox, key_concat: str = ""
+    ) -> Dict[str, List]:
         """To retrieve all the subfolder in a MailBox folder.
 
         Args:
             folder_structure (dict): Dictionary where to save the data.
             folder (MailBox): The MailBox folder from where to extract the subfolders.
+            key_concat (str, optional) Previous Mailbox folder structure to add to
+                the actual subfolder. Defaults to "".
 
         Returns:
             Dict[str, List]: `folder_structure` dictionary is returned once it is updated.
         """
+        if key_concat:
+            tmp_key = key_concat.split("|")
+            key_concat = key_concat.replace(f"|{tmp_key[-1]}", "")
+
         for subfolder in folder.get_folders():
             if subfolder:
-                folder_structure.update({f"{folder.name}|{subfolder.name}": subfolder})
+                folder_structure.update(
+                    {
+                        "|".join([key_concat, folder.name, subfolder.name]).lstrip(
+                            "|"
+                        ): subfolder
+                    }
+                )
 
         if folder_structure:
             return folder_structure
@@ -121,7 +135,7 @@ class Outlook(Source):
         while len(while_dict_folders) != 0:
             while_dict_folders = {}
             for key, value in list(dict_folders.items()):
-                tmp_dict_folders = self._get_subfolders({}, value)
+                tmp_dict_folders = self._get_subfolders({}, value, key_concat=key)
                 if tmp_dict_folders:
                     final_dict_folders.update(tmp_dict_folders)
                     while_dict_folders.update(tmp_dict_folders)
@@ -192,13 +206,13 @@ class Outlook(Source):
                         .replace(".", "_")
                         .replace("-", "_"),
                     }
-                    if value.name.lower() in [x.lower() for x in outbox_list]:
+                    if any([x.lower() in key.lower() for x in outbox_list]):
                         row["Inbox"] = False
                     else:
                         row["Inbox"] = True
 
                     data.append(row)
-            self.logger.info(f"folder: {key.center(56, '-')}  messages: {count}")
+            self.logger.info(f"folder: {key.ljust(76, '-')}  messages: {count}")
 
         return data
 
