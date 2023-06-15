@@ -3,12 +3,15 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
-
 ## [Unreleased]
+### Added
 
 ### Fixed
-- Fixed `to_parquet()` from `base.py` when there is no directory specified in path 
 
+### Changed
+
+
+## [0.4.16] - 2023-06-15
 ### Added
 - Added `VidClub` source class
 - Added `VidClubToDF` task class
@@ -18,6 +21,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 and `CustomerGaugeToADLS` flow. This parameter enables to pass the endpoint URL by user.
 - Added new parameter `outbox_list` at all leves in `Outlook` connector to tag mailbox folders.
 
+### Fixed
+- Fixed `to_parquet()` from `base.py` when there is no directory specified in path 
+
 ### Changed
 - Changed loop when retrieving email in `Outlook` source file, to cover all possible folders and subfolders.
 
@@ -26,6 +32,7 @@ and `CustomerGaugeToADLS` flow. This parameter enables to pass the endpoint URL 
 ### Added
 - Added `BusinessCore` source class
 - Added `BusinessCoreToParquet` task class
+- Added `Eurostat` source, task and flow classes
 - Added `verify` parameter to `handle_api_response()`.
 - Added `to_parquet()` in `base.py`
 - Added new source class `SAPRFCV2` in `sap_rfc.py` with new approximation.
