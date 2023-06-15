@@ -1,7 +1,8 @@
+import re
 from typing import Any, List, Literal, NoReturn, Tuple, Union
+
 import duckdb
 import pandas as pd
-import re
 from prefect.utilities import logging
 
 from ..config import local_config

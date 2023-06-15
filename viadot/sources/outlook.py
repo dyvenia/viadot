@@ -5,6 +5,7 @@ from typing import Any, Dict, List
 
 import prefect
 import pandas as pd
+import prefect
 from O365 import Account
 from O365.mailbox import MailBox
 

@@ -1,4 +1,5 @@
 import json
+import time
 from typing import Any, Dict, List
 
 import prefect
@@ -9,7 +10,6 @@ from viadot.config import local_config
 from viadot.sources.sftp import SftpConnector
 
 from .azure_key_vault import AzureKeyVaultSecret
-import time
 
 
 class SftpToDF(Task):

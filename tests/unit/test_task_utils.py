@@ -1,14 +1,16 @@
 import os
 from typing import List
+from unittest import mock
 
 import numpy as np
 import pandas as pd
 import prefect
 import pytest
-from unittest import mock
 
 from viadot.task_utils import (
     add_ingestion_metadata_task,
+    adls_bulk_upload,
+    anonymize_df,
     chunk_df,
     df_clean_column,
     df_converts_bytes_to_int,
@@ -19,8 +21,6 @@ from viadot.task_utils import (
     dtypes_to_json_task,
     union_dfs_task,
     write_to_json,
-    adls_bulk_upload,
-    anonymize_df,
 )
 
 

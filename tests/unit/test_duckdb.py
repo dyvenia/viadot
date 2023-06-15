@@ -1,9 +1,9 @@
 import os
 
-import pytest
 import pandas as pd
-
+import pytest
 from duckdb import BinderException
+
 from viadot.sources.duckdb import DuckDB
 
 TABLE = "test_table"

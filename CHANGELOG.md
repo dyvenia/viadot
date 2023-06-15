@@ -16,7 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
  `GetSalesOrderData` endpoints in `BusinessCore()` source.
 - Added `url` parameter to `CustomerGauge` source, and `endpoint_url` parameter to `CustomerGaugeToDF` task 
 and `CustomerGaugeToADLS` flow. This parameter enables to pass the endpoint URL by user.
-- Added new parameter `outbox_list` at all leves in Outlook connector to tag mailbox folders.
+- Added new parameter `outbox_list` at all leves in `Outlook` connector to tag mailbox folders.
 
 ### Changed
 - Changed loop when retrieving email in `Outlook` source file, to cover all possible folders and subfolders.
@@ -91,7 +91,6 @@ This parameter enables user to decide whether or not filter should be validated.
 
 ### Changed
 - Changed data extraction logic for `Outlook` data.
-
 
 ## [0.4.10] - 2022-11-16
 ### Added

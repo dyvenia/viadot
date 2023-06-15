@@ -5,10 +5,10 @@ from prefect import Flow, Task, apply_map
 
 from viadot.task_utils import (
     add_ingestion_metadata_task,
+    credentials_loader,
     df_to_csv,
     df_to_parquet,
     union_dfs_task,
-    credentials_loader,
 )
 from viadot.tasks import AzureDataLakeUpload, OutlookToDF
 

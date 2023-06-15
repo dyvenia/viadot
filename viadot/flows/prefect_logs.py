@@ -1,15 +1,15 @@
-import prefect
-import numpy as np
-import pandas as pd
 import datetime
-from pandas import Timestamp
 from typing import Literal
 
+import numpy as np
+import pandas as pd
+import prefect
+from pandas import Timestamp
 from prefect import Flow
 from prefect.utilities import logging
 
-from viadot.tasks.azure_data_lake import AzureDataLakeUpload
 from viadot.task_utils import add_ingestion_metadata_task, df_to_parquet
+from viadot.tasks.azure_data_lake import AzureDataLakeUpload
 
 logger = logging.get_logger()
 

@@ -1,6 +1,5 @@
 from typing import Any, Dict, List, Literal
 
-import pandas as pd
 from prefect import Flow, task, unmapped
 
 from viadot.task_utils import concat_dfs, df_to_csv, df_to_parquet, set_new_kv
@@ -13,8 +12,10 @@ class SAPRFCToADLS(Flow):
         name: str,
         query: str = None,
         rfc_sep: str = None,
+        rfc_replacement: str = "-",
         func: str = "RFC_READ_TABLE",
         rfc_total_col_width_character_limit: int = 400,
+        rfc_unique_id: List[str] = None,
         sap_credentials: dict = None,
         output_file_extension: str = ".parquet",
         local_file_path: str = None,
@@ -27,6 +28,7 @@ class SAPRFCToADLS(Flow):
         update_kv: bool = False,
         filter_column: str = None,
         timeout: int = 3600,
+        alternative_version: bool = False,
         *args: List[any],
         **kwargs: Dict[str, Any],
     ):
@@ -48,10 +50,21 @@ class SAPRFCToADLS(Flow):
             name (str): The name of the flow.
             query (str): Query to be executed with pyRFC. Defaults to None.
             rfc_sep(str, optional): Which separator to use when querying SAP. If not provided, multiple options are automatically tried.
+            rfc_replacement (str, optional): In case of sep is on a columns, set up a new character to replace
+                inside the string to avoid flow breakdowns. Defaults to "-".
             func (str, optional): SAP RFC function to use. Defaults to "RFC_READ_TABLE".
             rfc_total_col_width_character_limit (int, optional): Number of characters by which query will be split in chunks in case of too many columns
-            for RFC function. According to SAP documentation, the limit is 512 characters. However, we observed SAP raising an exception
-            even on a slightly lower number of characters, so we add a safety margin. Defaults to 400.
+                for RFC function. According to SAP documentation, the limit is 512 characters. However, we observed SAP raising an exception
+                even on a slightly lower number of characters, so we add a safety margin. Defaults to 400.
+            rfc_unique_id  (List[str], optional): Reference columns to merge chunks Data Frames. These columns must to be unique. If no columns are provided
+                in this parameter, all data frame columns will by concatenated. Defaults to None.
+                Example:
+                --------
+                SAPRFCToADLS(
+                    ...
+                    rfc_unique_id=["VBELN", "LPRIO"],
+                    ...
+                    )
             sap_credentials (dict, optional): The credentials to use to authenticate with SAP. By default, they're taken from the local viadot config.
             output_file_extension (str, optional): Output file extension - to allow selection of .csv for data which is not easy to handle with parquet. Defaults to ".parquet".
             local_file_path (str, optional): Local destination path. Defaults to None.
@@ -66,11 +79,14 @@ class SAPRFCToADLS(Flow):
             filter_column (str, optional): Name of the field based on which key value will be updated. Defaults to None.
             timeout(int, optional): The amount of time (in seconds) to wait while running this task before
                 a timeout occurs. Defaults to 3600.
+            alternative_version (bool, optional): Enable the use version 2 in source. Defaults to False.
         """
         self.query = query
         self.rfc_sep = rfc_sep
+        self.rfc_replacement = rfc_replacement
         self.func = func
         self.rfc_total_col_width_character_limit = rfc_total_col_width_character_limit
+        self.rfc_unique_id = rfc_unique_id
         self.sap_credentials = sap_credentials
         self.output_file_extension = output_file_extension
         self.local_file_path = local_file_path
@@ -81,6 +97,7 @@ class SAPRFCToADLS(Flow):
         self.adls_sp_credentials_secret = adls_sp_credentials_secret
         self.vault_name = vault_name
         self.timeout = timeout
+        self.alternative_version = alternative_version
 
         self.update_kv = update_kv
         self.filter_column = filter_column
@@ -94,8 +111,11 @@ class SAPRFCToADLS(Flow):
         df = download_sap_task(
             query=self.query,
             sep=self.rfc_sep,
+            replacement=self.rfc_replacement,
             func=self.func,
             rfc_total_col_width_character_limit=self.rfc_total_col_width_character_limit,
+            rfc_unique_id=self.rfc_unique_id,
+            alternative_version=self.alternative_version,
             credentials=self.sap_credentials,
             flow=self,
         )
