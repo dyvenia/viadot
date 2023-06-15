@@ -5,8 +5,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+
+### Fixed
+- Fixed `to_parquet()` from `base.py` when there is no directory specified in path 
+
 ### Added
-- Added `anonymize_df` task function to `task_utils.py` to anonymize data in the dataframe in selected columns.
+- Added `VidClub` source class
+- Added `VidClubToDF` task class
+- Added `GetPendingSalesOrderData`, `GetSalesInvoiceData`, `GetSalesReturnDetailData` 
+ `GetSalesOrderData` endpoints in `BusinessCore()` source.
+- Added `url` parameter to `CustomerGauge` source, and `endpoint_url` parameter to `CustomerGaugeToDF` task 
+and `CustomerGaugeToADLS` flow. This parameter enables to pass the endpoint URL by user.
+- Added new parameter `outbox_list` at all leves in Outlook connector to tag mailbox folders.
 
 ### Changed
 - Changed loop when retrieving email in `Outlook` source file, to cover all possible folders and subfolders.
