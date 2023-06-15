@@ -1,7 +1,7 @@
-import pytest
-from viadot.tasks import CustomerGaugeToDF
-
 import pandas as pd
+import pytest
+
+from viadot.tasks import CustomerGaugeToDF
 
 ENDPOINT = "responses"
 CG = CustomerGaugeToDF(endpoint=ENDPOINT)

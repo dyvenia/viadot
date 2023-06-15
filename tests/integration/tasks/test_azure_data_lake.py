@@ -1,19 +1,18 @@
 import os
 import uuid
-import pytest
 from unittest import mock
 
+import pytest
 
 from viadot.sources import AzureDataLake
 from viadot.tasks import (
     AzureDataLakeCopy,
     AzureDataLakeDownload,
     AzureDataLakeList,
+    AzureDataLakeRemove,
     AzureDataLakeToDF,
     AzureDataLakeUpload,
-    AzureDataLakeRemove,
 )
-
 
 uuid_4 = uuid.uuid4()
 uuid_4_2 = uuid.uuid4()

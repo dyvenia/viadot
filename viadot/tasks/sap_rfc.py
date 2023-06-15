@@ -1,5 +1,5 @@
-from typing import List
 from datetime import timedelta
+from typing import List
 
 import pandas as pd
 from prefect import Task

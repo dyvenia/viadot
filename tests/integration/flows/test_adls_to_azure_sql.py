@@ -1,12 +1,12 @@
 import os
-import pytest
 from unittest import mock
 
 import pandas as pd
+import pytest
 from prefect.engine import signals
 
 from viadot.flows import ADLSToAzureSQL
-from viadot.flows.adls_to_azure_sql import df_to_csv_task, check_dtypes_sort
+from viadot.flows.adls_to_azure_sql import check_dtypes_sort, df_to_csv_task
 
 
 def test_get_promoted_adls_path_csv_file():

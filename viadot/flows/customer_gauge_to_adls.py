@@ -1,7 +1,7 @@
 import os
+from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Literal
-from datetime import datetime
 
 import pendulum
 from prefect import Flow
@@ -10,16 +10,15 @@ from prefect.utilities import logging
 
 from viadot.task_utils import (
     add_ingestion_metadata_task,
+    anonymize_df,
     df_get_data_types_task,
     df_map_mixed_dtypes_for_parquet,
     df_to_csv,
     df_to_parquet,
     dtypes_to_json_task,
     update_dtypes_dict,
-    anonymize_df,
 )
 from viadot.tasks import AzureDataLakeUpload, CustomerGaugeToDF
-
 
 logger = logging.get_logger(__name__)
 
@@ -29,6 +28,7 @@ class CustomerGaugeToADLS(Flow):
         self,
         name: str,
         endpoint: Literal["responses", "non-responses"] = None,
+        endpoint_url: str = None,
         total_load: bool = True,
         cursor: int = None,
         pagesize: int = 1000,
@@ -63,6 +63,7 @@ class CustomerGaugeToADLS(Flow):
         Args:
             name (str): The name of the flow.
             endpoint (Literal["responses", "non-responses"], optional): Indicate which endpoint to connect. Defaults to None.
+            endpoint_url (str, optional): Full URL for pointing to specific endpoint. Defaults to None.
             total_load (bool, optional): Indicate whether to download the data to the latest. If 'False', only one API call is executed (up to 1000 records).
                 Defaults to True.
             cursor (int, optional): Cursor value to navigate to the page. Defaults to None.
@@ -95,6 +96,7 @@ class CustomerGaugeToADLS(Flow):
         """
         # CustomerGaugeToDF
         self.endpoint = endpoint
+        self.endpoint_url = endpoint_url
         self.total_load = total_load
         self.cursor = cursor
         self.pagesize = pagesize
@@ -152,7 +154,7 @@ class CustomerGaugeToADLS(Flow):
 
     def gen_flow(self) -> Flow:
         customer_gauge_df_task = CustomerGaugeToDF(
-            timeout=self.timeout, endpoint=self.endpoint
+            timeout=self.timeout, endpoint=self.endpoint, endpoint_url=self.endpoint_url
         )
 
         customerg_df = customer_gauge_df_task.bind(

@@ -3,8 +3,8 @@ import os
 from datetime import timedelta
 from typing import List
 
-import pandas as pd
 import numpy as np
+import pandas as pd
 from prefect import Task
 from prefect.tasks.secrets import PrefectSecret
 from prefect.utilities.tasks import defaults_from_attrs

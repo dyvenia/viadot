@@ -7,7 +7,7 @@ from prefect.utilities import logging
 
 from viadot.task_utils import df_to_csv as df_to_csv_task
 from viadot.task_utils import get_sql_dtypes_from_df as get_sql_dtypes_from_df_task
-from viadot.tasks import BCPTask, DuckDBToDF, SQLServerCreateTable, DuckDBQuery
+from viadot.tasks import BCPTask, DuckDBQuery, DuckDBToDF, SQLServerCreateTable
 
 logger = logging.get_logger(__name__)
 

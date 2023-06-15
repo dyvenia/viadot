@@ -5,10 +5,10 @@ from prefect import Flow, Task, apply_map
 
 from viadot.task_utils import (
     add_ingestion_metadata_task,
+    credentials_loader,
     df_to_csv,
     df_to_parquet,
     union_dfs_task,
-    credentials_loader,
 )
 from viadot.tasks import AzureDataLakeUpload, OutlookToDF
 
@@ -20,6 +20,7 @@ class OutlookToADLS(Flow):
         name: str = None,
         start_date: str = None,
         end_date: str = None,
+        outbox_list: List[str] = ["Sent Items"],
         local_file_path: str = None,
         output_file_extension: str = ".parquet",
         adls_file_path: str = None,
@@ -40,6 +41,8 @@ class OutlookToADLS(Flow):
             name (str, optional): The name of the flow. Defaults to None.
             start_date (str, optional): A filtering start date parameter e.g. "2022-01-01". Defaults to None.
             end_date (str, optional): A filtering end date parameter e.g. "2022-01-02". Defaults to None.
+            outbox_list (List[str], optional): List of outbox folders to differenciate between
+                Inboxes and Outboxes. Defaults to ["Sent Items"].
             local_file_path (str, optional): Local destination path. Defaults to None.
             output_file_extension (str, optional): Output file extension. Defaults to ".parquet".
             adls_file_path (str, optional): Azure Data Lake destination file path. Defaults to None.
@@ -56,6 +59,7 @@ class OutlookToADLS(Flow):
         self.mailbox_list = mailbox_list
         self.start_date = start_date
         self.end_date = end_date
+        self.outbox_list = outbox_list
         self.limit = limit
         self.timeout = timeout
         self.local_file_path = local_file_path
@@ -83,6 +87,7 @@ class OutlookToADLS(Flow):
             mailbox_name=mailbox_list,
             start_date=self.start_date,
             end_date=self.end_date,
+            outbox_list=self.outbox_list,
             limit=self.limit,
             flow=flow,
         )
@@ -90,7 +95,6 @@ class OutlookToADLS(Flow):
         return df
 
     def gen_flow(self) -> Flow:
-
         dfs = apply_map(self.gen_outlook_df, self.mailbox_list, flow=self)
 
         df = union_dfs_task.bind(dfs, flow=self)

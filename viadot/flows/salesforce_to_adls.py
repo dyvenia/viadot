@@ -19,7 +19,6 @@ from viadot.task_utils import (
 )
 from viadot.tasks import AzureDataLakeUpload, SalesforceToDF
 
-
 logger = logging.get_logger(__name__)
 
 
