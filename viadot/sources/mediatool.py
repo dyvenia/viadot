@@ -1,12 +1,14 @@
+import inspect
+import json
 from datetime import date, timedelta
 from typing import List
-from ..exceptions import CredentialError
-from .base import Source
-from ..utils import handle_api_response
-import json
+
 import pandas as pd
-import inspect
 from prefect.utilities import logging
+
+from ..exceptions import CredentialError
+from ..utils import handle_api_response
+from .base import Source
 
 logger = logging.get_logger(__name__)
 

@@ -1,9 +1,11 @@
+import inspect
 import json
 import logging
-import inspect
-from viadot.tasks import SQLServerCreateTable, SQLServerToDF, SQLServerQuery
-from viadot.tasks.azure_key_vault import AzureKeyVaultSecret
+
 from prefect.tasks.secrets import PrefectSecret
+
+from viadot.tasks import SQLServerCreateTable, SQLServerQuery, SQLServerToDF
+from viadot.tasks.azure_key_vault import AzureKeyVaultSecret
 
 SCHEMA = "sandbox"
 TABLE = "test"

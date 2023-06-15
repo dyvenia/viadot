@@ -1,9 +1,11 @@
 import os
-import pytest
 from unittest import mock
+
+import pytest
+
+from viadot.config import local_config
 from viadot.sources import Mindful
 from viadot.tasks import MindfulToCSV
-from viadot.config import local_config
 
 os.system("clear")
 

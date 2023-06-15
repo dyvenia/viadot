@@ -9,6 +9,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 - Fixed `to_parquet()` from `base.py` when there is no directory specified in path 
 
+### Added
+- Added `VidClub` source class
+- Added `VidClubToDF` task class
+- Added `GetPendingSalesOrderData`, `GetSalesInvoiceData`, `GetSalesReturnDetailData` 
+ `GetSalesOrderData` endpoints in `BusinessCore()` source.
+- Added `url` parameter to `CustomerGauge` source, and `endpoint_url` parameter to `CustomerGaugeToDF` task 
+and `CustomerGaugeToADLS` flow. This parameter enables to pass the endpoint URL by user.
+
+
 ## [0.4.15] - 2023-05-11
 ### Added
 - Added `BusinessCore` source class

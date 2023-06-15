@@ -1,5 +1,6 @@
-from viadot.tasks.mediatool import MediatoolToDF
 import pandas as pd
+
+from viadot.tasks.mediatool import MediatoolToDF
 
 
 def test_join_df():

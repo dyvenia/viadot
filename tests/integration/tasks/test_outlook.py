@@ -1,7 +1,7 @@
-import pytest
+from unittest import mock
 
 import pandas as pd
-from unittest import mock
+import pytest
 
 from viadot.config import local_config
 from viadot.sources import Outlook

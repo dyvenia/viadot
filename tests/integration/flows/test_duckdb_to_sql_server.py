@@ -1,12 +1,13 @@
 import json
-import pytest
-import os
 import logging
+import os
+
+import pytest
 from prefect.tasks.secrets import PrefectSecret
 
-from viadot.tasks.azure_key_vault import AzureKeyVaultSecret
 from viadot.flows import DuckDBToSQLServer
 from viadot.sources import DuckDB
+from viadot.tasks.azure_key_vault import AzureKeyVaultSecret
 
 TABLE = "test_table"
 DUCKDB_SCHEMA = "test_schema"
