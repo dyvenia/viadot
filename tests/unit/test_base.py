@@ -1,5 +1,5 @@
 import os
-
+import logging
 import pandas as pd
 import pyarrow as pa
 import pytest
@@ -8,6 +8,9 @@ from viadot.signals import SKIP
 from viadot.sources.base import SQL, Source
 
 from .test_credentials import get_credentials
+
+logger = logging.getLogger(__name__)
+
 
 CREDENTIALS = get_credentials("SQL_SOURCE_TEST")
 TABLE = "test"
@@ -56,6 +59,17 @@ def test_to_excel():
     assert res == True
     assert os.path.isfile("testbase.xlsx") == True
     os.remove("testbase.xlsx")
+
+
+def test_to_parquet(caplog):
+    src = NotEmptySource()
+    if os.path.isfile("testbase.parquet") == True:
+        os.remove("testbase.parquet")
+    with caplog.at_level(logging.INFO):
+        src.to_parquet(path="testbase.parquet")
+        assert "File not found." in caplog.text
+    assert os.path.isfile("testbase.parquet") == True
+    os.remove("testbase.parquet")
 
 
 def test_handle_if_empty(caplog):

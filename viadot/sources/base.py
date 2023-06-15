@@ -156,10 +156,13 @@ class Source:
             out_df = df
 
         # create directories if they don't exist
-
-        if not os.path.isfile(path):
-            directory = os.path.dirname(path)
-            os.makedirs(directory, exist_ok=True)
+        try:
+            if not os.path.isfile(path):
+                directory = os.path.dirname(path)
+                os.makedirs(directory, exist_ok=True)
+        except FileNotFoundError:
+            logger.info("File not found.")
+            pass
 
         out_df.to_parquet(path, index=False, **kwargs)
 
