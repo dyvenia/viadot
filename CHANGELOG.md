@@ -10,6 +10,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+## [0.4.17] - 2023-06-15
+### Fixed
+- Fixed issue with `tzlocal` for O365 package
+
 
 ## [0.4.16] - 2023-06-15
 ### Added
