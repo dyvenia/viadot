@@ -41,9 +41,6 @@ class BigQuery(Source):
 
     Raises:
         CredentialError: In case credentials cannot be found.
-
-    Return:
-        pd.DataFrame: Table of the data carried in the response.
     """
 
     def __init__(
@@ -54,14 +51,32 @@ class BigQuery(Source):
         **kwargs,
     ):
         credentials = credentials or get_source_credentials(config_key)
-        if credentials is None:
-            raise CredentialError("Please specify the credentials.")
-        BigQueryCredentials(**credentials)  # validate the credentials schema
+        if not (
+            credentials.get("type")
+            and credentials.get("project_id")
+            and credentials.get("private_key_id")
+            and credentials.get("private_key")
+            and credentials.get("client_email")
+            and credentials.get("client_id")
+            and credentials.get("auth_uri")
+            and credentials.get("token_uri")
+            and credentials.get("auth_provider_x509_cert_url")
+            and credentials.get("client_x509_cert_url")
+        ):
+            raise CredentialError(
+                """'type', 'project_id', 'private_key_id', 'private_key',
+                    'client_email', 'client_id', 'auth_uri', 'token_uri',
+                    'auth_provider_x509_cert_url', 'client_x509_cert_url'
+                    credentials are required."""
+            )
+        validated_creds = dict(BigQueryCredentials(**credentials))
+        super().__init__(*args, credentials=validated_creds, **kwargs)
+
         credentials_service_account = (
             service_account.Credentials.from_service_account_info(credentials)
         )
         pandas_gbq.context.credentials = credentials_service_account
-        super().__init__(*args, credentials=credentials, **kwargs)
+
         pandas_gbq.context.project = self.credentials["project_id"]
 
     def get_df(self, query: str) -> pd.DataFrame:
@@ -182,4 +197,8 @@ class BigQuery(Source):
                 FROM {dataset_name}.{table_name}
                 """
         df = self.get_df(query)
+
+        if df.empty:
+            self._handle_if_empty("fail")
+
         return df

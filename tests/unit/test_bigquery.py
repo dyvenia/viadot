@@ -7,7 +7,7 @@ from viadot.sources import BigQuery
 
 @pytest.fixture(scope="function")
 def BIGQ():
-    BQ = BigQuery(config_key="BIGQUERY_TESTS")
+    BQ = BigQuery(config_key="bigquery")
     yield BQ
 
 
