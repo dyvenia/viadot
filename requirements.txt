@@ -37,6 +37,7 @@ PyMySQL==1.0.2
 paramiko==2.11.0
 sshtunnel==0.4.0
 databricks-connect==10.4.0b0
+tzlocal==4.3
 O365==2.0.18.1
 aiohttp==3.8.1
 aiolimiter==1.0.0
