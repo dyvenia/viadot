@@ -9,12 +9,20 @@ from ..exceptions import CredentialError
 from ..utils import handle_api_response
 from .base import Source
 
+from pydantic import BaseModel
+
+
+class SupermetricsCredentials(BaseModel):
+    user: str  # Supermetrics user mail account
+    api_key: str  # The Supermetrics acces api_key
+
 
 class Supermetrics(Source):
     """
     A class implementing the Supermetrics API.
 
-    Documentation for this API is located at: https://supermetrics.com/docs/product-api-getting-started/
+    Documentation for this API is located at:
+    https://supermetrics.com/docs/product-api-getting-started/
     Usage limits: https://supermetrics.com/docs/product-api-usage-limits/.
 
     Parameters
@@ -35,27 +43,16 @@ class Supermetrics(Source):
     def __init__(
         self,
         *args,
-        credentials: Dict[str, Any] = None,
+        credentials: SupermetricsCredentials = None,
         config_key: str = None,
         query_params: Dict[str, Any] = None,
         **kwargs,
     ):
         credentials = credentials or get_source_credentials(config_key)
 
+        SupermetricsCredentials(**credentials)  # validate the credentials schema
         if credentials is None:
             raise CredentialError("Please provide the credentials.")
-
-        required_credentials = (
-            "api_key",
-            "user",
-        )
-
-        required_credentials_are_provided = all(
-            [rc in credentials for rc in required_credentials]
-        )
-
-        if not required_credentials_are_provided:
-            raise CredentialError("Please provide all required credentials.")
 
         super().__init__(*args, credentials=credentials, **kwargs)
 
@@ -68,12 +65,13 @@ class Supermetrics(Source):
         """
         Description:
             Download query results to a dictionary.
-            Note that Supermetrics API will sometimes hang and not return any error message,
-            so we're adding a timeout to GET.
+            Note that Supermetrics API will sometimes hang and not return any error
+            message, so we're adding a timeout to GET.
 
-            See [requests docs](https://docs.python-requests.org/en/master/user/advanced/#timeouts)
-            for an explanation of why this timeout value will work on long-running queries but fail fast
-            on connection issues.
+            See [requests docs]
+            (https://docs.python-requests.org/en/master/user/advanced/#timeouts)
+            for an explanation of why this timeout value will work on long-running
+            queries but fail fast on connection issues.
 
         Args:
             timeout (int, optional):  Defaults to 30 minuntes.
@@ -101,14 +99,17 @@ class Supermetrics(Source):
         """
         Description:
             Get cols name.
+
         Args:
             response (dict):  Dictionary with the json response from API call.
+
         Returns:
             columns (list): List of Google Analytics columns names.
         """
 
-        # Supermetrics allows pivoting GA data, in which case it generates additional columns,
-        # which are not enlisted in response's query metadata but are instead added as the first row of data.
+        # Supermetrics allows pivoting GA data, in which case it generates
+        # additional columns, which are not enlisted in response's query metadata
+        # but are instead added as the first row of data.
         is_pivoted = any(
             field["field_split"] == "column"
             for field in response["meta"]["query"]["fields"]
@@ -131,10 +132,13 @@ class Supermetrics(Source):
         """
         Description:
             Get cols name.
+
         Args:
             response (dict):  Dictionary with the json response from API call.
+
         Returns:
-            columns (list): List of columns names (to Google Analytics use  _get_col_names_google_analytics().
+            columns (list): List of columns names (to Google Analytics use
+            _get_col_names_google_analytics().
         """
 
         cols_meta = response["meta"]["query"]["fields"]
@@ -145,8 +149,10 @@ class Supermetrics(Source):
         """
         Description:
             Get cols name.
+
         Args:
             None.
+
         Returns:
            list of columns names.
         """
@@ -162,12 +168,16 @@ class Supermetrics(Source):
         Description:
             Download data into a pandas DataFrame.
 
-            Note that Supermetric can calculate some fields on the fly and alias them in the
-            returned result. For example, if the query requests the `position` field,
-            Supermetric may return an `Average position` caclulated field.
-            For this reason we take columns names from the actual results rather than from input fields.
+            Note that Supermetric can calculate some fields on the fly and alias them
+            in the returned result. For example, if the query requests the `position`
+            field, Supermetric may return an `Average position` caclulated field.
+            For this reason we take columns names from the actual results rather than
+            from input fields.
+
         Args:
-            if_empty (str, optional): What to do if query returned no data. Defaults to "warn".
+            if_empty (str, optional): What to do if query returned no data. Defaults
+            to "warn".
+
         Return:
             Pandas DataFrame with json information.
         """
@@ -193,8 +203,10 @@ class Supermetrics(Source):
         """
         Description:
             Create the Query.
+
         Args:
             params (dict): Query parameters {param:value, }
+
         Return:
             Object updated.
         """
