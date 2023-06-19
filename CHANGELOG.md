@@ -386,9 +386,6 @@ specified in the `SUPERMETRICS_DEFAULT_USER` secret
 ### Added
 - Sources:
   - `Supermetrics` 
-- Tests:
-  - unit
-    - `test_supermetrics`
 ### Changed 
   - config.py
   - Issue detected: Config.py/get_source_config within Viadot2 possible bug #670
