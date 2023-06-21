@@ -174,7 +174,7 @@ class BigQuery(Source):
         self,
         dataset_name: str,
         table_name: str,
-        list_columns: str = "*",
+        columns: List[str] = "*",
         query: str = None,
     ) -> pd.DataFrame:
         """
@@ -184,7 +184,7 @@ class BigQuery(Source):
         Args:
             dataset_name (str): Dataset from Bigquery project.
             table_name (str): Table name from given dataset.
-            list_columns (str, optional): List of columns from given table name.
+            columns (List[str], optional): List of columns from given table name.
                 Defaults to "*".
             query (str, optional): SQL-Like Query to return data values.
 
@@ -193,7 +193,7 @@ class BigQuery(Source):
         """
 
         query = f"""
-                SELECT {list_columns}
+                SELECT {columns}
                 FROM {dataset_name}.{table_name}
                 """
         df = self.get_df(query)
