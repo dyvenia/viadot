@@ -182,10 +182,13 @@ class Outlook(Source):
                     recivers_list = fetched.get("toRecipients")
                     recivers = " "
                     if recivers_list is not None:
-                        recivers = ", ".join(
-                            reciver["emailAddress"]["address"]
-                            for reciver in recivers_list
-                        )
+                        for reciver in recivers_list:
+                            add_string = f", {reciver['emailAddress']['address']}"
+                            if sum(list(map(len, [recivers, add_string]))) >= 8000:
+                                break
+                            else:
+                                recivers += add_string
+
                     categories = " "
                     if message.categories is not None:
                         categories = ", ".join(
@@ -194,14 +197,18 @@ class Outlook(Source):
                     conversation_index = " "
                     if message.conversation_index is not None:
                         conversation_index = message.conversation_index
+                    if isinstance(message.subject, str):
+                        subject = message.subject.replace("\t", " ")
+                    else:
+                        subject = message.subject
                     row = {
                         "(sub)folder": value.name,
                         "conversation ID": fetched.get("conversationId"),
                         "conversation index": conversation_index,
                         "categories": categories,
                         "sender": sender_mail,
-                        "subject": message.subject,
-                        "recivers": recivers,
+                        "subject": subject,
+                        "recivers": recivers.strip(", "),
                         "received_time": fetched.get("receivedDateTime"),
                         "mail_adress": self.mailbox_name.split("@")[0]
                         .replace(".", "_")
