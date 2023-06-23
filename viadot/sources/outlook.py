@@ -108,9 +108,19 @@ class Outlook(Source):
         Returns:
             Dict[str, List]: `folder_structure` dictionary is returned once it is updated.
         """
+        if key_concat:
+            tmp_key = key_concat.split("|")
+            key_concat = key_concat.replace(f"|{tmp_key[-1]}", "")
+
         for subfolder in folder.get_folders():
             if subfolder:
-                folder_structure.update({f"{folder.name}|{subfolder.name}": subfolder})
+                folder_structure.update(
+                    {
+                        "|".join([key_concat, folder.name, subfolder.name]).lstrip(
+                            "|"
+                        ): subfolder
+                    }
+                )
 
         if folder_structure:
             return folder_structure
@@ -128,18 +138,16 @@ class Outlook(Source):
         final_dict_folders = dict_folders.copy()
 
         # loop to get all subfolders
-        while True:
+        while_dict_folders = {"key": "value"}
+        while len(while_dict_folders) != 0:
             while_dict_folders = {}
             for key, value in list(dict_folders.items()):
-                tmp_dict_folders = self._get_subfolders({}, value)
+                tmp_dict_folders = self._get_subfolders({}, value, key_concat=key)
                 if tmp_dict_folders:
                     final_dict_folders.update(tmp_dict_folders)
                     while_dict_folders.update(tmp_dict_folders)
 
             dict_folders = while_dict_folders.copy()
-
-            if len(while_dict_folders) == 0:
-                break
 
         return final_dict_folders
 
@@ -171,27 +179,37 @@ class Outlook(Source):
                         sender_mail = fetched["from"]["emailAddress"]["address"]
                     recivers_list = fetched.get("toRecipients")
                     recivers = " "
+
                     if recivers_list is not None:
-                        recivers = ", ".join(
-                            reciver["emailAddress"]["address"]
-                            for reciver in recivers_list
-                        )
+                        for reciver in recivers_list:
+                            add_string = f", {reciver['emailAddress']['address']}"
+                            if sum(list(map(len, [recivers, add_string]))) >= 8000:
+                                break
+                            else:
+                                recivers += add_string
+
                     categories = " "
                     if message.categories is not None:
                         categories = ", ".join(
                             categories for categories in message.categories
                         )
                     conversation_index = " "
+
                     if message.conversation_index is not None:
                         conversation_index = message.conversation_index
+                    if isinstance(message.subject, str):
+                        subject = message.subject.replace("\t", " ")
+                    else:
+                        subject = message.subject
+
                     row = {
                         "(sub)folder": value.name,
                         "conversation ID": fetched.get("conversationId"),
                         "conversation index": conversation_index,
                         "categories": categories,
                         "sender": sender_mail,
-                        "subject": message.subject,
-                        "recivers": recivers,
+                        "subject": subject,
+                        "recivers": recivers.strip(", "),
                         "received_time": fetched.get("receivedDateTime"),
                         "mail_adress": self.mailbox_name.split("@")[0]
                         .replace(".", "_")
@@ -203,7 +221,7 @@ class Outlook(Source):
                         row["Inbox"] = True
 
                     data.append(row)
-            self.logger.info(f"folder: {key.center(56, '-')}  messages: {count}")
+            self.logger.info(f"folder: {key.center(76, '-')}  messages: {count}")
 
         return data
 
