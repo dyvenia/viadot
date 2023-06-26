@@ -98,12 +98,16 @@ class Outlook(Source):
         self.limit = limit
 
     @staticmethod
-    def _get_subfolders(folder_structure: dict, folder: MailBox) -> Dict[str, List]:
+    def _get_subfolders(
+        folder_structure: dict, folder: MailBox, key_concat: str = ""
+    ) -> Dict[str, List]:
         """To retrieve all the subfolder in a MailBox folder.
 
         Args:
             folder_structure (dict): Dictionary where to save the data.
             folder (MailBox): The MailBox folder from where to extract the subfolders.
+            key_concat (str, optional) Previous Mailbox folder structure to add to
+                the actual subfolder. Defaults to "".
 
         Returns:
             Dict[str, List]: `folder_structure` dictionary is returned once it is updated.
