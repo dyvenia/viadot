@@ -9,107 +9,57 @@ sapbw_task = SAPBWToDF(sapbw_credentials=CREDENTIALS.get("BW"))
 
 @pytest.fixture(scope="session")
 def output_variable():
-    output = (
-        {
-            "RETURN": {
-                "TYPE": "",
-                "ID": "",
-                "NUMBER": "000",
-                "MESSAGE": "",
-                "LOG_NO": "",
-                "LOG_MSG_NO": "000000",
-                "MESSAGE_V1": "",
-                "MESSAGE_V2": "",
-                "MESSAGE_V3": "",
-                "MESSAGE_V4": "",
-                "PARAMETER": "",
-                "ROW": 0,
-                "FIELD": "",
-                "SYSTEM": "",
-            },
-            "STATISTIC": {"STEP": "003YPR44RQTVS3BSMZTKDYBMD"},
-            "DATA": [
-                {
-                    "COLUMN": 0,
-                    "ROW": 0,
-                    "DATA": "January 2023",
-                    "VALUE_DATA_TYPE": "CHAR",
-                    "CELL_STATUS": "",
-                },
-                {
-                    "COLUMN": 1,
-                    "ROW": 0,
-                    "DATA": "202301",
-                    "VALUE_DATA_TYPE": "NUMC",
-                    "CELL_STATUS": "",
-                },
-            ],
-            "HEADER": [
-                {
-                    "COLUMN": 0,
-                    "ROW": 0,
-                    "DATA": "[0CALMONTH].[LEVEL01].[DESCRIPTION]",
-                    "VALUE_DATA_TYPE": "CHAR",
-                    "CELL_STATUS": "",
-                },
-                {
-                    "COLUMN": 1,
-                    "ROW": 0,
-                    "DATA": "[0CALMONTH].[LEVEL01].[MEMBER_NAME]",
-                    "VALUE_DATA_TYPE": "CHAR",
-                    "CELL_STATUS": "",
-                },
-            ],
+    output = {
+        "RETURN": {
+            "TYPE": "",
+            "ID": "",
+            "NUMBER": "000",
+            "MESSAGE": "",
+            "LOG_NO": "",
+            "LOG_MSG_NO": "000000",
+            "MESSAGE_V1": "",
+            "MESSAGE_V2": "",
+            "MESSAGE_V3": "",
+            "MESSAGE_V4": "",
+            "PARAMETER": "",
+            "ROW": 0,
+            "FIELD": "",
+            "SYSTEM": "",
         },
-        {
-            "RETURN": {
-                "TYPE": "",
-                "ID": "",
-                "NUMBER": "000",
-                "MESSAGE": "",
-                "LOG_NO": "",
-                "LOG_MSG_NO": "000000",
-                "MESSAGE_V1": "",
-                "MESSAGE_V2": "",
-                "MESSAGE_V3": "",
-                "MESSAGE_V4": "",
-                "PARAMETER": "",
+        "STATISTIC": {"STEP": "003YPR44RQTVS3BSMZTKDYBMD"},
+        "DATA": [
+            {
+                "COLUMN": 0,
                 "ROW": 0,
-                "FIELD": "",
-                "SYSTEM": "",
+                "DATA": "January 2023",
+                "VALUE_DATA_TYPE": "CHAR",
+                "CELL_STATUS": "",
             },
-            "ROWS": 1,
-            "STATISTIC": {"STEP": "003YPR44RQTVS3BSMZTKE0FH1"},
-            "DATA_INFO": [
-                {
-                    "COLUMN_ORDINAL": 1,
-                    "FIELD_NAME": "DIM1",
-                    "DATA_TYPE": "CHAR",
-                    "LENGTH": "000060",
-                    "DECIMALS": 0,
-                },
-                {
-                    "COLUMN_ORDINAL": 2,
-                    "FIELD_NAME": "DIM2",
-                    "DATA_TYPE": "NUMC",
-                    "LENGTH": "000006",
-                    "DECIMALS": 0,
-                },
-            ],
-            "HEADER": [
-                {
-                    "COLUMN_ORDINAL": 1,
-                    "ROW_ORDINAL": 1,
-                    "DATA": "[0CALMONTH].[LEVEL01].[DESCRIPTION]",
-                },
-                {
-                    "COLUMN_ORDINAL": 2,
-                    "ROW_ORDINAL": 1,
-                    "DATA": "[0CALMONTH].[LEVEL01].[MEMBER_NAME]",
-                },
-            ],
-        },
-    )
+            {
+                "COLUMN": 1,
+                "ROW": 0,
+                "DATA": "202301",
+                "VALUE_DATA_TYPE": "NUMC",
+                "CELL_STATUS": "",
+            },
+        ],
+        "HEADER": [
+            {
+                "COLUMN": 0,
+                "ROW": 0,
+                "DATA": "[0CALMONTH].[LEVEL01].[DESCRIPTION]",
+                "VALUE_DATA_TYPE": "CHAR",
+                "CELL_STATUS": "",
+            },
+            {
+                "COLUMN": 1,
+                "ROW": 0,
+                "DATA": "[0CALMONTH].[LEVEL01].[MEMBER_NAME]",
+                "VALUE_DATA_TYPE": "CHAR",
+                "CELL_STATUS": "",
+            },
+        ],
+    }
     yield output
 
 
@@ -151,11 +101,6 @@ df_to_test = pd.DataFrame(
         "date": ["2023-06-19 11:12:43+00:00"],
     },
 )
-
-
-def test_get_columns(output_variable):
-    df_cols = sapbw_task.get_columns(output_variable)
-    assert isinstance(df_cols, list)
 
 
 def test_apply_user_mapping(user_mapping):

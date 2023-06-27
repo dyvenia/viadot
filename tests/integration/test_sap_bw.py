@@ -35,5 +35,5 @@ def test_get_all_available_columns(mdx_query_variable):
 
 
 def test_get_output_data(mdx_query_variable):
-    columns = SAPBW.get_output_data(mdx_query_variable)
-    assert isinstance(columns, list)
+    query_output = SAPBW.get_output_data(mdx_query_variable)
+    assert isinstance(query_output, dict)
