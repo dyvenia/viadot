@@ -48,20 +48,6 @@ class SAPBWToDF(Task):
         """Download SAP BW data to a DF"""
         super().__call__(self)
 
-    def get_columns(self, json_data: List = []) -> List:
-        """
-        Function to generate the column list to be passed as DataFrame headers.
-
-        Args:
-            json_data (List, optional): Input DataFrame and column list as list. Defaults to [].
-
-        Returns:
-            List: Columns list.
-        """
-        columns = json_data[1]
-        df_cols = [x["DATA"] for x in columns["HEADER"]]
-        return df_cols
-
     def apply_user_mapping(
         self, df: pd.DataFrame, mapping_dict: dict = {}
     ) -> pd.DataFrame:
@@ -77,7 +63,7 @@ class SAPBWToDF(Task):
         Returns:
             pd.DataFrame: Output DataFrame with mapped columns.
         """
-        self.logger.info("Applying user defined mapping for columns. Starting task...")
+        self.logger.info("Applying user defined mapping for columns...")
         df = df[mapping_dict.keys()]
         df.columns = mapping_dict.values()
 
@@ -85,35 +71,33 @@ class SAPBWToDF(Task):
 
         return df
 
-    def to_df(self, json_data: dict = {}) -> pd.DataFrame:
+    def to_df(self, query_output: dict = {}) -> pd.DataFrame:
         """
-        Function to convert the SAP output into a dataframe.
+        Function to convert the SAP output in JSON format into a dataframe.
 
         Args:
-            json_data (dict, optional): Output from teh SAP in json format. Defaults to {}.
+            query_output: SAP output dictionary in JSON format that contains data rows and column headers. Defaults to {}.
 
         Returns:
             pd.DataFrame: Output dataframe.
         """
         rows = {}
-        if "DATA" in json_data[0]:
-            if len(json_data[0]["DATA"]) > 0:
-                results = json_data[0]["DATA"]
-                for cell in results:
-                    if cell["ROW"] not in rows:
-                        rows[cell["ROW"]] = {}
-                    if "].[" not in cell["DATA"]:
-                        rows[cell["ROW"]][cell["COLUMN"]] = cell["DATA"]
 
-            else:
-                issue_value = str(json_data[0]["RETURN"]["MESSAGE"])
-                self.logger.warning(f"---------- {issue_value} --------")
+        if query_output["RETURN"]["MESSAGE"] == "":
+            results = query_output["DATA"]
+            for cell in results:
+                if cell["ROW"] not in rows:
+                    rows[cell["ROW"]] = {}
+                if "].[" not in cell["DATA"]:
+                    rows[cell["ROW"]][cell["COLUMN"]] = cell["DATA"]
+            df_rows = [rows[row] for row in rows]
+            df_cols = [x["DATA"] for x in query_output["HEADER"]]
+            df = pd.DataFrame(data=df_rows)
+            df.columns = df_cols
         else:
-            self.logger.warning("No data produced by the query.")
+            df = pd.DataFrame()
+            raise ValidationError(query_output["RETURN"]["MESSAGE"])
 
-        rows = [rows[row] for row in rows]
-        df = pd.DataFrame(rows)
-        df.columns = self.get_columns(json_data)
         return df
 
     def run(self, mdx_query: str = None, mapping_dict: dict = {}) -> pd.DataFrame:

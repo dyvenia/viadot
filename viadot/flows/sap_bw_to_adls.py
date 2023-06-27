@@ -7,6 +7,7 @@ from prefect.backend import set_key_value
 
 from viadot.task_utils import (
     df_to_parquet,
+    df_to_csv,
     add_ingestion_metadata_task,
     df_get_data_types_task,
     df_map_mixed_dtypes_for_parquet,
@@ -42,11 +43,11 @@ class SAPBWToADLS(Flow):
         Args:
             name (str): Name of the flow.
             mdx_query (str, optional): MDX query to be passed to SAP BW server. Defaults to None.
-            mapping_dict (dict, optional): Dictionary with original column names and the mapping for them. If not None then flows is generating mapping automatically with mapping applied by user, if not - it generates automaticaly the json file with columns.
+            mapping_dict (dict, optional): Dictionary with original column names and the mapping for them. If not None then flows is generating mapping automatically with mapping applied by user, if not - it generates automatically the json file with columns.
             sapbw_credentials (dict, optional): Credentials to SAP in dictionary format. Defaults to None.
             sapbw_credentials_key (str, optional): Azure KV secret. Defaults to "SAP".
             env (str, optional): SAP environment. Defaults to "BW".
-            output_file_extension (str, optional): Output file extension - to allow selection of .csv for data which is not easy to handle with parquet. Defaults to ".parquet".
+            output_file_extension (str, optional): Output file extension - to allow selection between .csv and .parquet. Defaults to ".parquet".
             local_file_path (str, optional): Local destination path. Defaults to None.
             adls_file_name (str, optional): Azure Data Lake file name. Defaults to None.
             adls_dir_path(str, optional): Azure Data Lake destination file path. Defaults to None.
@@ -111,16 +112,24 @@ class SAPBWToADLS(Flow):
         df_viadot_downloaded = add_ingestion_metadata_task.bind(df=df, flow=self)
         dtypes_dict = df_get_data_types_task.bind(df_viadot_downloaded, flow=self)
 
-        df_to_be_loaded = df_map_mixed_dtypes_for_parquet(
+        df_to_be_loaded = df_map_mixed_dtypes_for_parquet.bind(
             df_viadot_downloaded, dtypes_dict, flow=self
         )
 
-        df_to_parquet_task = df_to_parquet.bind(
-            df=df_to_be_loaded,
-            path=self.local_file_path,
-            if_exists=self.if_exists,
-            flow=self,
-        )
+        if self.output_file_extension == ".parquet":
+            df_to_file = df_to_parquet.bind(
+                df=df_to_be_loaded,
+                path=self.local_file_path,
+                if_exists=self.if_exists,
+                flow=self,
+            )
+        else:
+            df_to_file = df_to_csv.bind(
+                df=df_to_be_loaded,
+                path=self.local_file_path,
+                if_exists=self.if_exists,
+                flow=self,
+            )
 
         file_to_adls_task = AzureDataLakeUpload()
         adls_upload = file_to_adls_task.bind(
@@ -149,9 +158,9 @@ class SAPBWToADLS(Flow):
         df_viadot_downloaded.set_upstream(df, flow=self)
         dtypes_dict.set_upstream(df_viadot_downloaded, flow=self)
         df_to_be_loaded.set_upstream(dtypes_dict, flow=self)
-        adls_upload.set_upstream(df_to_parquet_task, flow=self)
+        adls_upload.set_upstream(df_to_file, flow=self)
 
-        dtypes_to_json_task.set_upstream(dtypes_updated, flow=self)
+        df_to_file.set_upstream(dtypes_updated, flow=self)
         json_to_adls_task.set_upstream(dtypes_to_json_task, flow=self)
 
         set_key_value(key=self.adls_dir_path, value=self.adls_file_path)
