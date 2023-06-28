@@ -1,6 +1,6 @@
 from typing import List
 from viadot.sources.base import Source
-from viadot.exceptions import CredentialError
+from viadot.exceptions import CredentialError, ValidationError
 from pyrfc import Connection
 import textwrap
 
@@ -49,15 +49,20 @@ class SAPBW(Source):
             mdx_query, width=75
         )  # width = 75, to properly split mdx query into substrings passed to SAP object creation function
 
-        properties = conn.call("RSR_MDX_CREATE_OBJECT", COMMAND_TEXT=query)
+        properties = conn.call("RSR_MDX_CREATE_STORED_OBJECT", COMMAND_TEXT=query)
         datasetid = properties["DATASETID"]
 
-        get_axis_info = conn.call(
-            "RSR_MDX_GET_AXIS_INFO", DATASETID=datasetid
-        )  # listing all of available columns and metrics
-        cols = get_axis_info["AXIS_DIMENSIONS"]
+        if properties["RETURN"]["MESSAGE"] == "":
+            get_axis_info = conn.call(
+                "RSR_MDX_GET_AXIS_INFO", DATASETID=datasetid
+            )  # listing all of available columns and metrics
+            cols = get_axis_info["AXIS_DIMENSIONS"]
 
-        all_available_columns = [x["DIM_UNAM"] for x in cols]
+            all_available_columns = [x["DIM_UNAM"] for x in cols]
+        else:
+            all_available_columns = []
+            self.logger.error(properties["RETURN"]["MESSAGE"])
+
         return all_available_columns
 
     def get_output_data(self, mdx_query: str = None) -> dict:
@@ -105,7 +110,11 @@ class SAPBW(Source):
             mdx_query, 75
         )  # width = 75, to properly split mdx query into substrings passed to SAP object creation function
         properties = conn.call("RSR_MDX_CREATE_OBJECT", COMMAND_TEXT=query)
+
         datasetid = properties["DATASETID"]
         query_output = conn.call("RSR_MDX_GET_FLAT_DATA", DATASETID=datasetid)
+
+        # if properties["RETURN"]["MESSAGE"] != "":
+        #     self.logger.error(properties["RETURN"]["MESSAGE"])
 
         return query_output
