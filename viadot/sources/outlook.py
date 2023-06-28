@@ -1,15 +1,15 @@
 import logging
 from datetime import date, datetime, timedelta, timezone
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
 import pandas as pd
 from O365 import Account
 from O365.mailbox import MailBox
 from pydantic import BaseModel
 
-from viadot.exceptions import CredentialError
-from viadot.sources.base import Source
-from viadot.config import get_source_credentials
+from ..config import get_source_credentials
+from ..exceptions import CredentialError
+from .base import Source
 
 
 class OutlookCredentials(BaseModel):
@@ -25,12 +25,9 @@ class Outlook(Source):
     def __init__(
         self,
         mailbox_name: str,
-        start_date: str = None,
-        end_date: str = None,
-        limit: int = 10000,
         request_retries: int = 10,
         credentials: Dict[str, Any] = None,
-        credentials_secret: str = "outlook",
+        config_key: str = "outlook",
         *args: List[Any],
         **kwargs: Dict[str, Any],
     ):
@@ -41,40 +38,19 @@ class Outlook(Source):
 
         Args:
             mailbox_name (str): Mailbox name.
-            start_date (str, optional): A filtering start date parameter e.g. "2022-01-01". Defaults to None.
-            end_date (str, optional): A filtering end date parameter e.g. "2022-01-02". Defaults to None.
-            limit (int, optional): Number of fetched top messages. Defaults to 10000.
             request_retries (int, optional): How many times retries to authorizate. Defaults to 10.
             credentials (Dict[str, Any], optional): The dictionary with outlook credentials. Default to None.
-            credentials_secret (str, optional): The name of the Azure Key Vault secret containing a dictionary with
-                ACCOUNT_NAME and Service Principal credentials (TENANT_ID, CLIENT_ID, CLIENT_SECRET) for the Azure Application.
-                Defaults to None.
+            config_key (str, optional): The key in the viadot config holding relevant credentials. Defaults to "outlook".
         """
 
-        credentials = credentials or get_source_credentials(credentials_secret) or {}
+        credentials = credentials or get_source_credentials(config_key)
 
         if credentials is None or not isinstance(credentials, dict):
-            raise CredentialError("Please specify the credentials.")
+            raise CredentialError("Missing credentials.")
+        validated_creds = dict(OutlookCredentials(**credentials))
 
-        request_retries = request_retries
+        # request_retries = request_retries
         self.mailbox_name = mailbox_name
-
-        self.start_date = start_date
-        self.end_date = end_date
-        if self.start_date is not None and self.end_date is not None:
-            self.date_range_end_time = datetime.strptime(self.end_date, "%Y-%m-%d")
-            self.date_range_start_time = datetime.strptime(self.start_date, "%Y-%m-%d")
-        else:
-            self.date_range_start_time = date.today() - timedelta(days=1)
-            self.date_range_end_time = date.today()
-
-            min_time = datetime.min.time()
-            self.date_range_end_time = datetime.combine(
-                self.date_range_end_time, min_time
-            )
-            self.date_range_start_time = datetime.combine(
-                self.date_range_start_time, min_time
-            )
 
         OutlookCredentials(**credentials)
         self.account = Account(
@@ -86,7 +62,7 @@ class Outlook(Source):
         )
 
         logging.basicConfig()
-        super().__init__(*args, credentials=credentials, **kwargs)
+        super().__init__(*args, credentials=validated_creds, **kwargs)
         self.logger.setLevel(logging.INFO)
 
         if self.account.authenticate():
@@ -95,7 +71,6 @@ class Outlook(Source):
             self.logger.info(f"{self.mailbox_name} NOT Authenticated!")
 
         self.mailbox_obj = self.account.mailbox()
-        self.limit = limit
 
     @staticmethod
     def _get_subfolders(
@@ -229,17 +204,48 @@ class Outlook(Source):
 
         return data
 
-    def get_all_mails_to_df(self) -> pd.DataFrame:
+    def get_all_mails_to_df(
+        self,
+        start_date: Optional[str] = None,
+        end_date: Optional[str] = None,
+        limit: int = 10000,
+    ) -> pd.DataFrame:
         """Download all the messages stored in a MailBox folder and subfolders.
+
+        Args:
+            start_date (str, optional): A filtering start date parameter e.g. "2022-01-01". Defaults to None.
+            end_date (str, optional): A filtering end date parameter e.g. "2022-01-02". Defaults to None.
+            limit (int, optional): Number of fetched top messages. Defaults to 10000.
 
         Returns:
             pd.DataFrame: All messages are stored in a pandas framwork.
         """
+        self.start_date = start_date
+        self.end_date = end_date
+        if self.start_date is not None and self.end_date is not None:
+            self.date_range_end_time = datetime.strptime(self.end_date, "%Y-%m-%d")
+            self.date_range_start_time = datetime.strptime(self.start_date, "%Y-%m-%d")
+        else:
+            self.date_range_start_time = date.today() - timedelta(days=1)
+            self.date_range_end_time = date.today()
+
+            min_time = datetime.min.time()
+            self.date_range_end_time = datetime.combine(
+                self.date_range_end_time, min_time
+            )
+            self.date_range_start_time = datetime.combine(
+                self.date_range_start_time, min_time
+            )
+        self.limit = limit
+
         final_dict_folders = self._get_all_folders(self.mailbox_obj)
 
         data = self._get_messages_from_mailbox(final_dict_folders)
 
         df = pd.DataFrame(data=data)
+
+        if df.empty:
+            self._handle_if_empty("fail")
 
         return df
 
