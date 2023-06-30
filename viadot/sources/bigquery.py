@@ -8,6 +8,7 @@ from typing import List
 from ..config import get_source_credentials
 from ..exceptions import CredentialError, DBDataAccessError
 from .base import Source
+from ..utils import add_viadot_metadata_columns
 
 
 class BigQueryCredentials(BaseModel):
@@ -40,7 +41,7 @@ class BigQuery(Source):
         (`api_key` and `user`).
 
     Raises:
-        CredentialError: In case credentials cannot be found.
+        CredentialError: In case the credentials cannot be found/ inncorect credentials.
     """
 
     def __init__(
@@ -51,6 +52,10 @@ class BigQuery(Source):
         **kwargs,
     ):
         credentials = credentials or get_source_credentials(config_key)
+
+        if credentials == None:
+            raise CredentialError("Credentials not found.")
+        
         if not (
             credentials.get("type")
             and credentials.get("project_id")
@@ -79,26 +84,6 @@ class BigQuery(Source):
 
         pandas_gbq.context.project = self.credentials["project_id"]
 
-    def get_df(self, query: str) -> pd.DataFrame:
-        """
-        Description:
-            Get the response from the API queried BigQuery table and transforms it
-            into DataFrame.
-
-        Args:
-            query (str): SQL-Like Query to return data values.
-
-        Raises:
-            DBDataAccessError: When dataset name or table name are incorrect.
-
-        Returns:
-            pd.DataFrame: Table of the data carried in the response.
-        """
-
-        try:
-            return pandas_gbq.read_gbq(query)
-        except:
-            raise DBDataAccessError
 
     def get_project_id(self) -> str:
         """
@@ -129,7 +114,7 @@ class BigQuery(Source):
         query = f"""SELECT schema_name 
                 FROM {self.get_project_id()}.INFORMATION_SCHEMA.SCHEMATA
                 """
-        df = self.get_df(query)
+        df = self.to_df(query)
         return df["schema_name"].values
 
     def list_tables(self, dataset_name: str) -> List[str]:
@@ -147,7 +132,7 @@ class BigQuery(Source):
         query = f"""SELECT table_name 
                 FROM {self.get_project_id()}.{dataset_name}.INFORMATION_SCHEMA.TABLES
                 """
-        df = self.get_df(query)
+        df = self.to_df(query)
         return df["table_name"].values
 
     def list_columns(self, dataset_name: str, table_name: str) -> List[str]:
@@ -167,38 +152,55 @@ class BigQuery(Source):
                 FROM {self.get_project_id()}.{dataset_name}.INFORMATION_SCHEMA.COLUMNS
                 WHERE table_name="{table_name}"
                 """
-        df = self.get_df(query)
+        df = self.to_df(query)
         return df["column_name"].values
 
-    def get_response(
+    @add_viadot_metadata_columns
+    def to_df(
         self,
-        dataset_name: str,
-        table_name: str,
-        columns: List[str] = "*",
         query: str = None,
+        dataset_name: str = None,
+        table_name: str = None,
+        columns: List[str] = None,
+        if_empty: str = "fail",
     ) -> pd.DataFrame:
         """
         Description:
-        Gets response from BigQuery table. Dataset name and Table name are required.
+           Get the response from the API queried BigQuery table and transforms it 
+           into DataFrame.
 
         Args:
-            dataset_name (str): Dataset from Bigquery project.
-            table_name (str): Table name from given dataset.
+            query (str, optional): SQL-Like Query to return data values. 
+                Defaults to None.
+            dataset_name (str): Dataset from Bigquery project. Defaults to None.
+            table_name (str): Table name from given dataset. Defaults to None.
             columns (List[str], optional): List of columns from given table name.
-                Defaults to "*".
-            query (str, optional): SQL-Like Query to return data values.
-
+                Defaults to None.
+            if_empty (str, optional): if_empty param is checking params passed to
+                the function. Defaults to "fail".
+            
         Returns:
             pd.DataFrame: Table of the data carried in the response.
+
+        Raises:
+            DBDataAccessError: When dataset_name, table_name, columns 
+                or query params are incorrect.
         """
 
-        query = f"""
+        if columns is None: columns = "*"
+        
+        query_custom = f"""
                 SELECT {columns}
                 FROM {dataset_name}.{table_name}
                 """
-        df = self.get_df(query)
-
+        
+        query = query or query_custom
+        
+        try:
+            df = pandas_gbq.read_gbq(query)
+        except:
+            raise DBDataAccessError
         if df.empty:
-            self._handle_if_empty("fail")
+            self._handle_if_empty(if_empty)
 
         return df
