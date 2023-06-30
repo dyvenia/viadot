@@ -5,10 +5,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ## [Unreleased]
 ### Added
+- Added a new `end_point` parameter in `genesys_api_connection` to make it more generic.
 
 ### Fixed
 
 ### Changed
+- Genesys API call method and the name changed from `genesys_generate_exports` to `genesys_api_connection`. 
+- Removed methods never used in production: `get_analitics_url_report`, `get_all_schedules_job`, `schedule_report`, `to_df`
+and `delete_scheduled_report_job`.
+- Added `GET` connection inside the method `genesys_api_connection`.
 
 ## [0.4.17] - 2023-06-15
 ### Fixed
