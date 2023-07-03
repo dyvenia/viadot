@@ -21,6 +21,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `RedshiftSpectrum.from_df()` now automatically creates a folder for the table if not specified in `to_path`
 - Fixed a bug in `Databricks.create_table_from_pandas()`. The function now automatically casts DataFrame types. (#681)
 - Added `BigQuery` source to library.
+- Added `close_connection()` to `SAPRFC`
 
 
 ### Changed

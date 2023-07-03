@@ -1,7 +1,7 @@
-import re
 import logging
+import re
 from collections import OrderedDict
-from typing import List, Literal, Dict, Any
+from typing import Any, Dict, List, Literal
 from typing import OrderedDict as OrderedDictType
 from typing import Tuple, Union
 
@@ -152,6 +152,11 @@ class SAPRFC(Source):
         self.logger.info("Checking the connection...")
         self.con.ping()
         self.logger.info("Connection has been validated successfully.")
+
+    def close_connection(self) -> None:
+        """Closing RFC connection."""
+        self.con.close()
+        self.logger.info("Connection has been closed successfully.")
 
     def get_function_parameters(
         self,
@@ -511,5 +516,6 @@ class SAPRFC(Source):
                 if col not in self.select_columns_aliased
             ]
             df.drop(cols_to_drop, axis=1, inplace=True)
+        self.close_connection()
 
         return df
