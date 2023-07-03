@@ -19,6 +19,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fixed a bug in `Databricks.create_table_from_pandas()`. The function that converts column names to snake_case was not used in every case. (#672)
 - Added `howto_migrate_sources_tasks_and_flows.md` document. This document will assist the DEs with the viadot 1 -> viadot 2 migration process.
 - `RedshiftSpectrum.from_df()` now automatically creates a folder for the table if not specified in `to_path`
+- Fixed a bug in `Databricks.create_table_from_pandas()`. The function now automatically casts DataFrame types. (#681)
+- Added `close_connection()` to `SAPRFC`
 
 
 ### Changed

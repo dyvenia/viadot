@@ -1,22 +1,22 @@
 import os
-from pathlib import Path
 from typing import List, Literal, Optional, Tuple
 
 import awswrangler as wr
 import boto3
 import pandas as pd
 import redshift_connector
-from pydantic import BaseModel, ValidationError, root_validator
+from pydantic import BaseModel, root_validator
 
 from viadot.config import get_source_credentials
+from viadot.exceptions import CredentialError
 from viadot.sources.base import Source
 
 
 class RedshiftSpectrumCredentials(BaseModel):
-    profile_name: str  # The name of the IAM profile to use.
     region_name: str  # The name of the AWS region.
     aws_access_key_id: str  # The AWS access key ID.
     aws_secret_access_key: str  # The AWS secret access key.
+    profile_name: str = None  # The name of the IAM profile to use.
 
     # Below credentials are required only by some methods.
     #
@@ -42,10 +42,11 @@ class RedshiftSpectrumCredentials(BaseModel):
         direct_credential = aws_access_key_id and aws_secret_access_key and region_name
 
         if not (profile_credential or direct_credential):
-            raise ValueError(
+            raise CredentialError(
                 "Either `profile_name` and `region_name`, or `aws_access_key_id`, "
                 "`aws_secret_access_key`, and `region_name` must be specified."
             )
+        return credentials
 
 
 class RedshiftSpectrum(Source):
@@ -79,9 +80,16 @@ class RedshiftSpectrum(Source):
         *args,
         **kwargs,
     ):
-        credentials = credentials or get_source_credentials(config_key) or {}
+        raw_creds = (
+            credentials
+            or get_source_credentials(config_key)
+            or self._get_env_credentials()
+        )
+        validated_creds = dict(
+            RedshiftSpectrumCredentials(**raw_creds)
+        )  # validate the credentials
 
-        super().__init__(*args, credentials=credentials, **kwargs)
+        super().__init__(*args, credentials=validated_creds, **kwargs)
 
         if not self.credentials:
             self.logger.debug(
@@ -129,6 +137,14 @@ class RedshiftSpectrum(Source):
                     "`credentials_secret` config is required to connect to Redshift."
                 )
         return self._con
+
+    def _get_env_credentials(self):
+        credentials = {
+            "region_name": os.environ.get("AWS_DEFAULT_REGION"),
+            "aws_access_key_id": os.environ.get("AWS_ACCESS_KEY_ID"),
+            "aws_secret_access_key": os.environ.get("AWS_SECRET_ACCESS_KEY"),
+        }
+        return credentials
 
     def from_df(
         self,

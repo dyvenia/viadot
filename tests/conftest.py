@@ -8,11 +8,6 @@ load_dotenv()
 
 
 @pytest.fixture(scope="session")
-def TEST_C4C_API_URL():
-    return os.environ.get("C4C_API_URL")
-
-
-@pytest.fixture(scope="session")
 def TEST_SUPERMETRICS_FILE_PATH():
     return "test_supermetrics.csv"
 
@@ -68,7 +63,7 @@ def create_test_parquet_file_2(DF, TEST_PARQUET_FILE_PATH_2):
 
 @pytest.fixture(scope="session", autouse=True)
 def sharepoint_url():
-    return os.environ.get("SHAREPOINT_URL")
+    return os.environ.get("VIADOT_SHAREPOINT_URL")
 
 
 @pytest.fixture(scope="session", autouse=True)
@@ -93,9 +88,14 @@ def s3_config_key():
 
 @pytest.fixture(scope="session", autouse=True)
 def sharepoint_config_key():
-    return os.environ.get("VIADOT_TEST_SHAREPOINT_CONFIG_KEY")
+    return os.environ.get("VIADOT_SHAREPOINT_CONFIG_KEY")
 
 
 @pytest.fixture(scope="session", autouse=True)
 def databricks_config_key():
     return os.environ.get("VIADOT_DATABRICKS_CONFIG_KEY")
+
+
+@pytest.fixture(scope="session", autouse=True)
+def c4c_config_key():
+    return os.environ.get("VIADOT_C4C_CONFIG_KEY")

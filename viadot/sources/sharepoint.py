@@ -3,7 +3,7 @@ from typing import Optional, Union
 
 import pandas as pd
 import sharepy
-from pydantic import BaseModel
+from pydantic import BaseModel, root_validator
 from sharepy.errors import AuthError
 
 from viadot.exceptions import CredentialError
@@ -18,6 +18,18 @@ class SharepointCredentials(BaseModel):
     site: str  # Path to sharepoint website (e.g : {tenant_name}.sharepoint.com)
     username: str  # Sharepoint username (e.g username@{tenant_name}.com)
     password: str  # Sharepoint password
+
+    @root_validator(pre=True)
+    def is_configured(cls, credentials):
+        site = credentials.get("site")
+        username = credentials.get("username")
+        password = credentials.get("password")
+
+        if not (site and username and password):
+            raise CredentialError(
+                "'site', 'username', and 'password' credentials are required."
+            )
+        return credentials
 
 
 class Sharepoint(Source):
@@ -36,18 +48,18 @@ class Sharepoint(Source):
         *args,
         **kwargs,
     ):
-        credentials = credentials or get_source_credentials(config_key)
-        if credentials is None:
-            raise CredentialError("Please specify the credentials.")
-        SharepointCredentials(**credentials)  # validate the credentials schema
-        super().__init__(*args, credentials=credentials, **kwargs)
+        raw_creds = credentials or get_source_credentials(config_key) or {}
+        validated_creds = dict(
+            SharepointCredentials(**raw_creds)
+        )  # validate the credentials
+        super().__init__(*args, credentials=validated_creds, **kwargs)
 
     def get_connection(self) -> sharepy.session.SharePointSession:
         try:
             connection = sharepy.connect(
-                site=self.credentials["site"],
-                username=self.credentials["username"],
-                password=self.credentials["password"],
+                site=self.credentials.get("site"),
+                username=self.credentials.get("username"),
+                password=self.credentials.get("password"),
             )
         except AuthError:
             site = self.credentials.get("site")

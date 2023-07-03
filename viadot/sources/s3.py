@@ -5,17 +5,35 @@ import awswrangler as wr
 import boto3
 import pandas as pd
 import s3fs
-from pydantic import BaseModel
+from pydantic import BaseModel, root_validator
 
 from viadot.config import get_source_credentials
+from viadot.exceptions import CredentialError
 from viadot.sources.base import Source
 
 
 class S3Credentials(BaseModel):
-    profile_name: str  # The name of the IAM profile to use.
     region_name: str  # The name of the AWS region.
-    aws_access_key_id: str
-    aws_secret_access_key: str
+    aws_access_key_id: str  # The AWS access key ID.
+    aws_secret_access_key: str  # The AWS secret access key.
+    profile_name: str = None  # The name of the IAM profile to use.
+
+    @root_validator(pre=True)
+    def is_configured(cls, credentials):
+        profile_name = credentials.get("profile_name")
+        region_name = credentials.get("region_name")
+        aws_access_key_id = credentials.get("aws_access_key_id")
+        aws_secret_access_key = credentials.get("aws_secret_access_key")
+
+        profile_credential = profile_name and region_name
+        direct_credential = aws_access_key_id and aws_secret_access_key and region_name
+
+        if not (profile_credential or direct_credential):
+            raise CredentialError(
+                "Either `profile_name` and `region_name`, or `aws_access_key_id`, "
+                "`aws_secret_access_key`, and `region_name` must be specified."
+            )
+        return credentials
 
 
 class S3(Source):
@@ -36,9 +54,14 @@ class S3(Source):
         *args,
         **kwargs,
     ):
-        credentials = credentials or get_source_credentials(config_key) or {}
+        raw_creds = (
+            credentials
+            or get_source_credentials(config_key)
+            or self._get_env_credentials()
+        )
+        validated_creds = dict(S3Credentials(**raw_creds))  # validate the credentials
 
-        super().__init__(*args, credentials=credentials, **kwargs)
+        super().__init__(*args, credentials=validated_creds, **kwargs)
 
         if not self.credentials:
             self.logger.debug(
@@ -65,6 +88,14 @@ class S3(Source):
                 aws_secret_access_key=self.credentials.get("aws_secret_access_key"),
             )
         return self._session
+
+    def _get_env_credentials(self):
+        credentials = {
+            "region_name": os.environ.get("AWS_DEFAULT_REGION"),
+            "aws_access_key_id": os.environ.get("AWS_ACCESS_KEY_ID"),
+            "aws_secret_access_key": os.environ.get("AWS_SECRET_ACCESS_KEY"),
+        }
+        return credentials
 
     def ls(self, path: str, suffix: str = None) -> List[str]:
         """
