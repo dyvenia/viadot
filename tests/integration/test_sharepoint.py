@@ -29,7 +29,13 @@ def FILE_NAME(sharepoint):
     os.remove(path)
 
 
-def test_credentials():
+def test_credentials_not_found():
+    none_credentials = None
+    with pytest.raises(CredentialError, match=r"Credentials not found."):
+        Sharepoint(credentials=none_credentials)
+
+
+def test_get_connection_credentials():
     credentials = {"site": "tenant.sharepoint.com", "username": "User"}
     s = Sharepoint(credentials=credentials)
     with pytest.raises(CredentialError, match="Missing credentials."):
@@ -55,6 +61,11 @@ def test_sharepoint_to_df_task():
     )
     assert isinstance(res, pd.DataFrame)
     os.remove("Questionnaires.xlsx")
+
+
+def test_download_file(sharepoint):
+    with pytest.raises(ValueError, match=r"Missing required parameter"):
+        sharepoint.download_file(download_to_path=None, download_from_path=None)
 
 
 def test_file_download(FILE_NAME):
