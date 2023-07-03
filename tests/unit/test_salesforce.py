@@ -5,9 +5,7 @@ from viadot.sources import SalesForce
 
 @pytest.fixture(scope="session")
 def salesforce():
-
     s = SalesForce(config_key="salesforce")
-
     yield s
 
     sf = s.salesforce
@@ -163,7 +161,7 @@ def test_download_with_query(salesforce):
     assert len(records) == 10
 
 
-def test_get_response(salesforce):
+def test_to_df(salesforce):
     # Testing function which returns pd.DataFrame from SalesForce depended
     # on provided query.
     assert not get_tested_records(salesforce)
@@ -171,7 +169,10 @@ def test_get_response(salesforce):
     sf = salesforce.salesforce
     sf.Contact.create(TEST_ROW)
 
-    df = salesforce.get_response(
+    # Access the original class function 
+    original_to_df = salesforce.to_df.__wrapped__  
+
+    df = original_to_df(salesforce,
         query=f"SELECT LastName, SAPContactId__c FROM {TABLE_TO_UPSERT} WHERE SAPContactId__c='8811111'"
     )
 

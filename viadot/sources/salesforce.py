@@ -6,6 +6,7 @@ from simple_salesforce.exceptions import SalesforceMalformedRequest
 from viadot.config import get_source_credentials
 from viadot.exceptions import CredentialError
 from viadot.sources.base import Source
+from ..utils import add_viadot_metadata_columns
 
 from pydantic import BaseModel
 
@@ -45,12 +46,17 @@ class SalesForce(Source):
     ):
 
         credentials = credentials or get_source_credentials(config_key)
-
-        if credentials is None:
-            raise CredentialError("Please specify the credentials.")
-        
-        SalesForceCredentials(**credentials) # validate the credentials schema
-        super().__init__(*args, credentials=credentials, **kwargs)
+        if not (
+            credentials.get("username")
+            and credentials.get("password")
+            and credentials.get("token")
+        ):
+            raise CredentialError(
+                "'username', 'password' and 'token' credentials are required."
+            )
+							   
+        validated_creds = dict(SalesForceCredentials(**credentials))
+        super().__init__(*args, credentials=validated_creds, **kwargs)
 
         if env.upper() == "DEV" or env.upper() == "QA":
             self.salesforce = SF(
@@ -91,6 +97,7 @@ class SalesForce(Source):
             raise_on_error (bool, optional): Whether to raise an exception if a row upsert fails.
                 If False, we only display a warning. Defaults to False.
         """
+
         if df.empty:
             self.logger.info("No data to upsert.")
             return
@@ -167,6 +174,7 @@ class SalesForce(Source):
             raise_on_error (bool, optional): Whether to raise an exception if a row 
                 upsert fails. If False, we only display a warning. Defaults to False.
         """
+
         if df.empty:
             self.logger.info("No data to upsert.")
             return
@@ -220,6 +228,7 @@ class SalesForce(Source):
         Returns:
             List[OrderedDict]: Selected rows from Salesforce.
         """
+
         if not query:
             if columns:
                 columns_str = ", ".join(columns)
@@ -231,25 +240,29 @@ class SalesForce(Source):
         _ = [record.pop("attributes") for record in records]
         return records
     
-    def get_response(
+    @add_viadot_metadata_columns
+    def to_df(
         self,
         query: str = None,
         table: str = None,
         columns: List[str] = None,
+        if_empty: str = "fail",
     ) -> pd.DataFrame:
         """
-        Download the indicate data and return the DataFrame.
+        Downloads the indicated data and returns the DataFrame.
 
         Args:
-            query (str, optional): The query to be used to download the data. 
-                Defaults to None.
+            query (str, optional): The query to be used to download the data. Defaults to None.
             table (str, optional): Table name. Defaults to None.
-            columns (List[str], optional): List of required columns. 
-                Requires `table` to be specified. Defaults to None.
+            columns (List[str], optional): List of required columns. Requires `table` to be specified.
+                Defaults to None.
 
         Returns:
             pd.DataFrame: Selected rows from Salesforce.
         """
         records = self.download(query=query, table=table, columns=columns)
+        df = pd.DataFrame(records)
+        if df.empty:
+            self._handle_if_empty(if_empty)
 
-        return pd.DataFrame(records)
+        return df
