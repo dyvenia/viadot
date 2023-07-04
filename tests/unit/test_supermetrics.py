@@ -194,7 +194,7 @@ def test__to_df(s):
     }
     df = s.query(google_ads_params).to_df()
 
-    assert len(df)>0
+    assert len(df) > 0
 
 
 def test___get_col_names(s):

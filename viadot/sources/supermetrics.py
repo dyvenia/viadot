@@ -8,6 +8,7 @@ from ..config import get_source_credentials
 from ..exceptions import CredentialError
 from ..utils import handle_api_response
 from .base import Source
+from ..utils import add_viadot_metadata_columns
 
 from pydantic import BaseModel
 
@@ -50,11 +51,13 @@ class Supermetrics(Source):
     ):
         credentials = credentials or get_source_credentials(config_key)
 
-        SupermetricsCredentials(**credentials)  # validate the credentials schema
-        if credentials is None:
-            raise CredentialError("Please provide the credentials.")
+        if not (credentials.get("user") and credentials.get("api_key")):
+            raise CredentialError("'user' and 'api_key' credentials are required.")
 
-        super().__init__(*args, credentials=credentials, **kwargs)
+        validated_creds = dict(
+            SupermetricsCredentials(**credentials)
+        )  # validate the credentials schema
+        super().__init__(*args, credentials=validated_creds, **kwargs)
 
         self.api_key = self.credentials["api_key"]
         self.user = self.credentials["user"]
@@ -163,7 +166,8 @@ class Supermetrics(Source):
         else:
             return Supermetrics._get_col_names_other(response)
 
-    def to_df(self, if_empty: str = "warn") -> pd.DataFrame:
+    @add_viadot_metadata_columns
+    def to_df(self, if_empty: str = "fail") -> pd.DataFrame:
         """
         Description:
             Download data into a pandas DataFrame.
@@ -176,7 +180,7 @@ class Supermetrics(Source):
 
         Args:
             if_empty (str, optional): What to do if query returned no data. Defaults
-            to "warn".
+            to "fail".
 
         Return:
             Pandas DataFrame with json information.
