@@ -21,7 +21,7 @@ class SAPBWToADLS(Flow):
     def __init__(
         self,
         name: str,
-        mdx_query: str = None,
+        mdx_query: str,
         mapping_dict: dict = None,
         sapbw_credentials: dict = None,
         sapbw_credentials_key: str = "SAP",
@@ -42,7 +42,7 @@ class SAPBWToADLS(Flow):
 
         Args:
             name (str): Name of the flow.
-            mdx_query (str, optional): MDX query to be passed to SAP BW server. Defaults to None.
+            mdx_query (str): MDX query to be passed to SAP BW server.
             mapping_dict (dict, optional): Dictionary with original column names and the mapping for them. If not None then flows is generating mapping automatically with mapping applied by user, if not - it generates automatically the json file with columns.
             sapbw_credentials (dict, optional): Credentials to SAP in dictionary format. Defaults to None.
             sapbw_credentials_key (str, optional): Azure KV secret. Defaults to "SAP".

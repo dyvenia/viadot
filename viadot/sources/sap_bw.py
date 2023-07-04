@@ -14,6 +14,15 @@ class SAPBW(Source):
     """
 
     def __init__(self, credentials: dict, *args, **kwargs):
+        """
+        Create an instance of the SAPBW class.
+
+        Args:
+            credentials (dict): Credentials to connect with SAP BW containing ashost, sysnr, user, passwd, client.
+
+        Raises:
+            CredentialError: If provided credentials are incorrect.
+        """
         if credentials is None:
             raise CredentialError("Missing credentials.")
 
@@ -34,16 +43,17 @@ class SAPBW(Source):
             client=self.credentials.get("client"),
         )
 
-    def get_all_available_columns(self, mdx_query: str = None) -> List:
+    def get_all_available_columns(self, mdx_query: str) -> List:
         """
         Function to generate list of all available columns in the SAP table based on passed MDX query.
 
         Args:
-            mdx_query (str, optional): The MDX query to be passed to connection. Defaults to None.
+            mdx_query (str): The MDX query to be passed to connection.
 
         Returns:
             all_available_columns: List of all available columns in the source table.
         """
+
         conn = self.get_connection()
         query = textwrap.wrap(
             mdx_query, width=75
@@ -65,44 +75,44 @@ class SAPBW(Source):
 
         return all_available_columns
 
-    def get_output_data(self, mdx_query: str = None) -> dict:
+    def get_output_data(self, mdx_query: str) -> dict:
         """
         Function to generate the SAP output dataset from MDX query.
 
         Args:
-            mdx_query (str, optional): The MDX query to be passed to connection. Defaults to None.
+            mdx_query (str): The MDX query to be passed to connection.
 
         Returns:
             query_output: SAP output dictionary in JSON format that contains data rows and column headers.
 
-                Example output:
+            Example output:
 
+                {
+                "RETURN": {
+                    "TYPE": "",
+                    "ID": "",
+                    "NUMBER": "000",
+                    "MESSAGE": "",...
+                },...
+                "DATA": [
                     {
-                    "RETURN": {
-                        "TYPE": "",
-                        "ID": "",
-                        "NUMBER": "000",
-                        "MESSAGE": "",...
+                    "COLUMN": 0,
+                    "ROW": 0,
+                    "DATA": "VELUX Deutschland GmbH",
+                    "VALUE_DATA_TYPE": "CHAR",
+                    "CELL_STATUS": ""
                     },...
-                    "DATA": [
-                        {
-                        "COLUMN": 0,
-                        "ROW": 0,
-                        "DATA": "VELUX Deutschland GmbH",
-                        "VALUE_DATA_TYPE": "CHAR",
-                        "CELL_STATUS": ""
-                        },...
-                    ],
-                    "HEADER": [
-                        {
-                        "COLUMN": 0,
-                        "ROW": 0,
-                        "DATA": "[0COMP_CODE].[LEVEL01].[DESCRIPTION]",
-                        "VALUE_DATA_TYPE": "CHAR",
-                        "CELL_STATUS": ""
-                        },...
-                    ]
-                    }
+                ],
+                "HEADER": [
+                    {
+                    "COLUMN": 0,
+                    "ROW": 0,
+                    "DATA": "[0COMP_CODE].[LEVEL01].[DESCRIPTION]",
+                    "VALUE_DATA_TYPE": "CHAR",
+                    "CELL_STATUS": ""
+                    },...
+                ]
+                }
 
         """
         conn = self.get_connection()
@@ -113,8 +123,5 @@ class SAPBW(Source):
 
         datasetid = properties["DATASETID"]
         query_output = conn.call("RSR_MDX_GET_FLAT_DATA", DATASETID=datasetid)
-
-        # if properties["RETURN"]["MESSAGE"] != "":
-        #     self.logger.error(properties["RETURN"]["MESSAGE"])
 
         return query_output

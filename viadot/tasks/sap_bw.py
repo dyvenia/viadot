@@ -1,7 +1,4 @@
 import pandas as pd
-
-
-from typing import List, Dict, Any, Literal
 from prefect import Task
 from prefect.tasks.secrets import PrefectSecret
 from prefect.utilities import logging
@@ -32,8 +29,7 @@ class SAPBWToDF(Task):
         if sapbw_credentials is None:
             self.sapbw_credentials = credentials_loader.run(
                 credentials_secret=sapbw_credentials_key
-            )
-            self.sapbw_credentials = self.sapbw_credentials[env]
+            ).get(env)
 
         else:
             self.sapbw_credentials = sapbw_credentials
@@ -71,41 +67,44 @@ class SAPBWToDF(Task):
 
         return df
 
-    def to_df(self, query_output: dict = {}) -> pd.DataFrame:
+    def to_df(self, query_output: dict) -> pd.DataFrame:
         """
         Function to convert the SAP output in JSON format into a dataframe.
 
         Args:
-            query_output: SAP output dictionary in JSON format that contains data rows and column headers. Defaults to {}.
+            query_output (dict): SAP output dictionary in JSON format that contains data rows and column headers.
+
+        Raises:
+            ValidationError: Prints the original SAP error message in case of issues with MDX execution.
 
         Returns:
             pd.DataFrame: Output dataframe.
         """
-        rows = {}
+        raw_data = {}
 
         if query_output["RETURN"]["MESSAGE"] == "":
             results = query_output["DATA"]
             for cell in results:
-                if cell["ROW"] not in rows:
-                    rows[cell["ROW"]] = {}
+                if cell["ROW"] not in raw_data:
+                    raw_data[cell["ROW"]] = {}
                 if "].[" not in cell["DATA"]:
-                    rows[cell["ROW"]][cell["COLUMN"]] = cell["DATA"]
-            df_rows = [rows[row] for row in rows]
-            df_cols = [x["DATA"] for x in query_output["HEADER"]]
-            df = pd.DataFrame(data=df_rows)
-            df.columns = df_cols
+                    raw_data[cell["ROW"]][cell["COLUMN"]] = cell["DATA"]
+            rows = [raw_data[row] for row in raw_data]
+            cols = [x["DATA"] for x in query_output["HEADER"]]
+            df = pd.DataFrame(data=rows)
+            df.columns = cols
         else:
             df = pd.DataFrame()
             raise ValidationError(query_output["RETURN"]["MESSAGE"])
 
         return df
 
-    def run(self, mdx_query: str = None, mapping_dict: dict = {}) -> pd.DataFrame:
+    def run(self, mdx_query: str, mapping_dict: dict = {}) -> pd.DataFrame:
         """
         Task run method.
 
         Args:
-            mdx_query (str, optional): MDX query to be passed to SAP BW. Defaults to None.
+            mdx_query (str): MDX query to be passed to SAP BW.
             mapping_dict (dict, optional): Mapping dictionary from user in json format. Defaults to {}.
 
         Returns:
