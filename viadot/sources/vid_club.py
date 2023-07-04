@@ -26,17 +26,18 @@ class VidClub(Source):
         Create an instance of VidClub.
 
         Args:
-            credentials (dict, optional): Credentials to Vid Club APIs.
+            credentials (Dict[str, Any], optional): Credentials to Vid Club APIs containing token.
                 Defaults to dictionary.
 
         Raises:
             CredentialError: If credentials are not provided in local_config or directly as a parameter.
         """
-
-        DEFAULT_CREDENTIALS = local_config.get("VIDCLUB")
-        credentials = kwargs.pop("credentials", DEFAULT_CREDENTIALS)
-        if credentials is None:
-            raise CredentialError("Missing credentials.")
+        if credentials is not None:
+            self.credentials = credentials
+        else:
+            self.credentials = local_config.get("VIDCLUB")
+            if self.credentials is None:
+                raise CredentialError("Credentials not provided.")
 
         self.headers = {
             "Authorization": "Bearer " + credentials["token"],
