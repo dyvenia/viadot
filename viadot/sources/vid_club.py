@@ -35,9 +35,7 @@ class VidClub(Source):
         if credentials is not None:
             self.credentials = credentials
         else:
-            self.credentials = local_config.get("VIDCLUB")
-            if self.credentials is None:
-                raise CredentialError("Credentials not provided.")
+            raise CredentialError("Credentials not provided.")
 
         self.headers = {
             "Authorization": "Bearer " + credentials["token"],
