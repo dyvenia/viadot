@@ -18,10 +18,13 @@ class VidClub(Source):
 
     Documentation for this API is located at: https://evps01.envoo.net/vipapi/
     There are 4 endpoints where to get the data.
-
     """
 
-    def __init__(self, *args, credentials: Dict[str, Any] = None, **kwargs):
+    def __init__(
+        self, 
+        *args, 
+        credentials: Dict[str, Any] = None, 
+        **kwargs):
         """
         Create an instance of VidClub.
 
@@ -103,11 +106,10 @@ class VidClub(Source):
 
         Raises:
             ValidationError: If any source different than the ones in the list are used.
-            ValidationError: If the initial date of the query is before the oldest date in the data (2023-03-22).
+            ValidationError: If the initial date of the query is before the oldest date in the data (2022-03-22).
             ValidationError: If the final date of the query is before the start date.
         """
 
-        # Dealing with bad arguments
         if source not in ["jobs", "product", "company", "survey"]:
             raise ValidationError(
                 "The source has to be: jobs, product, company or survey"
@@ -120,15 +122,14 @@ class VidClub(Source):
         delta = from_date_obj - oldest_date_obj
 
         if delta.days < 0:
-            raise ValidationError("from_date cannot be earlier than 2023-03-22!!")
+            raise ValidationError("from_date cannot be earlier than 2022-03-22.")
 
         to_date_obj = datetime.strptime(to_date, "%Y-%m-%d")
         delta = to_date_obj - from_date_obj
 
         if delta.days < 0:
-            raise ValidationError("to_date cannot be earlier than from_date!")
+            raise ValidationError("to_date cannot be earlier than from_date.")
 
-        # Preparing the Query
         first_url = self.build_query(
             source,
             from_date,
@@ -138,10 +139,8 @@ class VidClub(Source):
         )
         headers = self.headers
 
-        # Getting first page
         response = handle_api_response(url=first_url, headers=headers, method="GET")
 
-        # Next Pages
         response = response.json()
 
         if isinstance(response, dict):
@@ -152,7 +151,6 @@ class VidClub(Source):
             keys_list = []
 
         if "data" in keys_list:
-            # first page content
             df = pd.DataFrame(response["data"])
             length = df.shape[0]
             page = 2
