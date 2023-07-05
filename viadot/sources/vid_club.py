@@ -6,7 +6,6 @@ from typing import Any, Dict, List, Literal
 
 import pandas as pd
 
-from ..config import local_config
 from ..exceptions import CredentialError, ValidationError
 from ..utils import handle_api_response
 from .base import Source
@@ -33,7 +32,7 @@ class VidClub(Source):
                 Defaults to dictionary.
 
         Raises:
-            CredentialError: If credentials are not provided in local_config or directly as a parameter.
+            CredentialError: If credentials are not provided as a parameter.
         """
         if credentials is not None:
             self.credentials = credentials
