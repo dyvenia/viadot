@@ -10,6 +10,8 @@ from prefect import Task
 from prefect.tasks.secrets import PrefectSecret
 from prefect.utilities import logging
 
+from viadot.task_utils import credentials_loader
+
 from ..sources import VidClub
 
 logger = logging.get_logger()
@@ -20,6 +22,8 @@ class VidClubToDF(Task):
         self,
         source: Literal["jobs", "product", "company", "survey"],
         credentials: Dict[str, Any] = None,
+        credentials_secret: str = "VIDCLUB",
+        vault_name: str = None,
         from_date: str = "2022-03-22",
         to_date: str = "",
         if_empty: str = "warn",
@@ -36,6 +40,8 @@ class VidClubToDF(Task):
             source (str): The endpoint source to be accessed, has to be among these:
                 ['jobs', 'product', 'company', 'survey'].
             credentials (Dict[str, Any], optional): Stores the credentials information. Defaults to None.
+            credentials_secret (str, optional): The name of the Azure Key Vault or Prefect or local_config secret containing a dictionary with ['client_id', 'client_secret']. Defaults to "VIDCLUB".
+            vault_name (str, optional): For credentials stored in Azure Key Vault. The name of the vault from which to obtain the secret. Defaults to None.
             from_date (str): Start date for the query, by default is the oldest date in the data, '2022-03-22'.
             to_date (str): End date for the query, if empty, datetime.today() will be used.
             if_empty (str, optional): What to do if query returns no data. Defaults to "warn".
@@ -48,12 +54,20 @@ class VidClubToDF(Task):
         """
         self.logger = prefect.context.get("logger")
         self.source = source
-        self.credentials = credentials
         self.from_date = from_date
         self.to_date = to_date
         self.if_empty = if_empty
         self.retry_delay = retry_delay
         self.report_name = report_name
+        self.credentials_secret = credentials_secret
+        self.vault_name = vault_name
+        
+        if credentials is None:
+            self.credentials = credentials_loader.run(
+                credentials_secret = credentials_secret, vault_name = vault_name
+            )
+        else:
+            self.credentials = credentials
 
         super().__init__(
             name=self.report_name,
@@ -74,7 +88,7 @@ class VidClubToDF(Task):
             pd.DataFrame: The query result as a pandas DataFrame.
         """
 
-        vc_obj = VidClub()
+        vc_obj = VidClub(credentials = self.credentials)
 
         vc_dataframe = vc_obj.get_response(
             source=self.source, from_date=self.from_date, to_date=self.to_date
