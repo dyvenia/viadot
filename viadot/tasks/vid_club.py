@@ -26,8 +26,6 @@ class VidClubToDF(Task):
         vault_name: str = None,
         from_date: str = "2022-03-22",
         to_date: str = "",
-        if_empty: str = "warn",
-        retry_delay: timedelta = timedelta(seconds=10),
         timeout: int = 3600,
         report_name: str = "vid_club_to_df",
         *args: List[Any],
@@ -44,8 +42,6 @@ class VidClubToDF(Task):
             vault_name (str, optional): For credentials stored in Azure Key Vault. The name of the vault from which to obtain the secret. Defaults to None.
             from_date (str): Start date for the query, by default is the oldest date in the data, '2022-03-22'.
             to_date (str): End date for the query, if empty, datetime.today() will be used.
-            if_empty (str, optional): What to do if query returns no data. Defaults to "warn".
-            retry_delay (timedelta, optional): The delay between task retries. Defaults to 10 seconds.
             timeout (int, optional): The amount of time (in seconds) to wait while running this task before
                 a timeout occurs. Defaults to 3600.
             report_name (str, optional): Stores the report name. Defaults to "vid_club_to_df".
@@ -56,8 +52,6 @@ class VidClubToDF(Task):
         self.source = source
         self.from_date = from_date
         self.to_date = to_date
-        self.if_empty = if_empty
-        self.retry_delay = retry_delay
         self.report_name = report_name
         self.credentials_secret = credentials_secret
         self.vault_name = vault_name
