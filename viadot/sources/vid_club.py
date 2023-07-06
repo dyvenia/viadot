@@ -48,22 +48,21 @@ class VidClub(Source):
 
     def build_query(
         self,
-        source: Literal["jobs", "product", "company", "survey"],
         from_date: str,
         to_date: str,
         api_url: str,
         items_per_page: int,
+        source: Literal["jobs", "product", "company", "survey"] = None,
     ) -> str:
         """
         Builds the query from the inputs.
 
         Args:
-            source (str): The endpoint source to be accessed, has to be among these:
-                ['jobs', 'product', 'company', 'survey'].
             from_date (str): Start date for the query.
             to_date (str): End date for the query, if empty, datetime.today() will be used.
             api_url (str): Generic part of the URL.
             items_per_page (int): number of entries per page.
+            source (Literal["jobs", "product", "company", "survey"], optional): The endpoint source to be accessed. Defaults to None.
 
         Returns:
             str: Final query with all filters added.
@@ -83,7 +82,7 @@ class VidClub(Source):
 
     def get_response(
         self,
-        source: Literal["jobs", "product", "company", "survey"],
+        source: Literal["jobs", "product", "company", "survey"] = None,
         from_date: str = "2022-03-22",
         to_date: str = None,
         items_per_page: int = 100,
@@ -93,8 +92,7 @@ class VidClub(Source):
         Gets the response from the API queried and transforms it into DataFrame.
 
         Args:
-            source (str): The endpoint source to be accessed, has to be among these:
-                ['jobs', 'product', 'company', 'survey'].
+            source (Literal["jobs", "product", "company", "survey"], optional): The endpoint source to be accessed. Defaults to None.
             from_date (str, optional): Start date for the query, by default is the oldest date in the data 2022-03-22.
             to_date (str, optional): End date for the query. By default, datetime.today() will be used.
             items_per_page (int, optional): Number of entries per page. 100 entries by default.
