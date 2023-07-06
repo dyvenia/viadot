@@ -9,6 +9,7 @@ import prefect
 from prefect import Task
 from prefect.tasks.secrets import PrefectSecret
 from prefect.utilities import logging
+from prefect.utilities.tasks import defaults_from_attrs
 
 from viadot.task_utils import credentials_loader
 
@@ -20,7 +21,7 @@ logger = logging.get_logger()
 class VidClubToDF(Task):
     def __init__(
         self,
-        source: Literal["jobs", "product", "company", "survey"],
+        source: Literal["jobs", "product", "company", "survey"] = None,
         credentials: Dict[str, Any] = None,
         credentials_secret: str = "VIDCLUB",
         vault_name: str = None,
@@ -35,10 +36,9 @@ class VidClubToDF(Task):
         Task to downloading data from Vid Club APIs to Pandas DataFrame.
 
         Args:
-            source (str): The endpoint source to be accessed, has to be among these:
-                ['jobs', 'product', 'company', 'survey'].
+            source (Literal["jobs", "product", "company", "survey"], optional): The endpoint source to be accessed. Defaults to None.
             credentials (Dict[str, Any], optional): Stores the credentials information. Defaults to None.
-            credentials_secret (str, optional): The name of the Azure Key Vault or Prefect or local_config secret containing a dictionary with ['client_id', 'client_secret']. Defaults to "VIDCLUB".
+            credentials_secret (str, optional): The name of the secret in Azure Key Vault or Prefect or local_config file. Defaults to "VIDCLUB".
             vault_name (str, optional): For credentials stored in Azure Key Vault. The name of the vault from which to obtain the secret. Defaults to None.
             from_date (str): Start date for the query, by default is the oldest date in the data, '2022-03-22'.
             to_date (str): End date for the query, if empty, datetime.today() will be used.
@@ -74,18 +74,35 @@ class VidClubToDF(Task):
         """Download Vid Club data to Pandas DataFrame"""
         return super().__call__(*args, **kwargs)
 
-    def run(self) -> pd.DataFrame:
+    @defaults_from_attrs("source", "credentials", "credentials_secret", "vault_name", "from_date", "to_date")
+    def run(
+        self,
+        source: Literal["jobs", "product", "company", "survey"] = None,
+        credentials: Dict[str, Any] = None,
+        credentials_secret: str = "VIDCLUB",
+        vault_name: str = None,
+        from_date: str = "2022-03-22",
+        to_date: str = "",
+        ) -> pd.DataFrame:
         """
         Task run method.
+
+        Args:
+            source (Literal["jobs", "product", "company", "survey"], optional): The endpoint source to be accessed. Defaults to None.
+            credentials (Dict[str, Any], optional): Stores the credentials information. Defaults to None.
+            credentials_secret (str, optional): The name of the secret in Azure Key Vault or Prefect or local_config file. Defaults to "VIDCLUB".
+            vault_name (str, optional): For credentials stored in Azure Key Vault. The name of the vault from which to obtain the secret. Defaults to None.
+            from_date (str, optional): Start date for the query, by default is the oldest date in the data, '2022-03-22'.
+            to_date (str, optional): End date for the query, if empty, datetime.today() will be used.
 
         Returns:
             pd.DataFrame: The query result as a pandas DataFrame.
         """
 
-        vc_obj = VidClub(credentials = self.credentials)
+        vc_obj = VidClub(credentials = credentials)
 
         vc_dataframe = vc_obj.get_response(
-            source=self.source, from_date=self.from_date, to_date=self.to_date
+            source=source, from_date=from_date, to_date=to_date
         )
 
         return vc_dataframe
