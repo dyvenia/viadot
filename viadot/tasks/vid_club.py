@@ -48,7 +48,6 @@ class VidClubToDF(Task):
 
         Returns: Pandas DataFrame
         """
-        self.logger = prefect.context.get("logger")
         self.source = source
         self.from_date = from_date
         self.to_date = to_date
