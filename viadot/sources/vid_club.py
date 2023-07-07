@@ -128,10 +128,10 @@ class VidClub(Source):
             raise ValidationError("to_date cannot be earlier than from_date.")
 
         first_url = self.build_query(
-            source,
-            from_date,
-            to_date,
-            self.credentials["url"],
+            source = source,
+            from_date = from_date,
+            to_date = to_date,
+            api_url = self.credentials["url"],
             items_per_page=items_per_page,
         )
         headers = self.headers
