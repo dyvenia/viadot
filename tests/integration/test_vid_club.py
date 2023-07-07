@@ -73,7 +73,7 @@ def test_get_response_sources(mock_api_response, source):
 @pytest.mark.proper
 def test_get_response_wrong_date():
     with pytest.raises(
-        ValidationError, match=r"from_date cannot be earlier than 2023-03-22!!"
+        ValidationError, match=r"from_date cannot be earlier than 2022-03-22"
     ):
         vc = VidClub(credentials = CREDENTIALS)
         query = vc.get_response(source="jobs", from_date="2021-05-09")
@@ -82,7 +82,7 @@ def test_get_response_wrong_date():
 @pytest.mark.proper
 def test_get_response_wrong_date_range():
     with pytest.raises(
-        ValidationError, match=r"to_date cannot be earlier than from_date!"
+        ValidationError, match=r"to_date cannot be earlier than from_date"
     ):
         vc = VidClub(credentials = CREDENTIALS)
         query = vc.get_response(
