@@ -11,7 +11,7 @@ from prefect.tasks.secrets import PrefectSecret
 from prefect.utilities import logging
 from prefect.utilities.tasks import defaults_from_attrs
 
-from viadot.task_utils import credentials_loader
+from viadot.task_utils import *
 
 from ..sources import VidClub
 
