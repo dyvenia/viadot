@@ -171,7 +171,6 @@ class Outlook(Source):
             count = 0
             for message in value.get_messages(limit=limit):
                 received_time = message.received
-                print("*" * 20)
                 date_obj = datetime.fromisoformat(str(received_time))
                 if (
                     self.date_range_start_time.replace(tzinfo=self.utc)
