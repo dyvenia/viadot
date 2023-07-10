@@ -1,15 +1,17 @@
 import json
 import os
 import urllib
-from datetime import datetime
+from datetime import datetime, date, timedelta
 from typing import Any, Dict, List, Literal
-
 import pandas as pd
+
+from prefect.utilities import logging
 
 from ..exceptions import CredentialError, ValidationError
 from ..utils import handle_api_response
 from .base import Source
 
+logger = logging.get_logger()
 
 class VidClub(Source):
     """
@@ -129,6 +131,7 @@ class VidClub(Source):
 
         first_url = self.build_query(
             source = source,
+
             from_date = from_date,
             to_date = to_date,
             api_url = self.credentials["url"],
@@ -166,4 +169,60 @@ class VidClub(Source):
         else:
             df = pd.DataFrame(response)
 
+        return df
+
+    def total_load(
+        self,
+        source: Literal["jobs", "product", "company", "survey"] = None,
+        from_date: str = "2022-03-22",
+        to_date: str = None,
+        items_per_page: int = 100,
+        region: str = "null",
+        days_interval: int = 30
+    ) -> pd.DataFrame:
+
+
+        if to_date == None:
+            end_date = datetime.today().date()
+        else:
+            end_date = datetime.strptime(to_date, "%Y-%m-%d").date()
+        start_date = datetime.strptime(from_date, "%Y-%m-%d").date()
+        interval = timedelta(days=days_interval)
+        starts = []
+        ends = []
+        period_start = start_date
+        while period_start < end_date:
+            period_end = min(period_start + interval, end_date)
+            starts.append(period_start.strftime("%Y-%m-%d"))
+            ends.append(period_end.strftime("%Y-%m-%d"))
+            period_start = period_end
+        
+        dfs_list = []
+        if len(starts) > 0 and len(ends) > 0: 
+            for start, end in zip(starts, ends):
+                df = self.get_response(
+                    source = source,
+                    from_date = start,
+                    to_date = end,
+                    items_per_page = items_per_page,
+                    region = region,
+                )
+                dfs_list.append(df)
+                if len(dfs_list) > 1:
+                    df = pd.concat(dfs_list, axis=0, ignore_index=True)
+                else:
+                    df = pd.DataFrame(dfs_list[0])              
+        else:
+            df = self.get_response(
+                    source = source,
+                    from_date = from_date,
+                    to_date = to_date,
+                    items_per_page = items_per_page,
+                    region = region,
+                )
+        df.drop_duplicates(inplace = True)
+        
+        if df.empty:
+            logger.error("No data for this date range")
+            
         return df
