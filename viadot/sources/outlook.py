@@ -149,6 +149,7 @@ class Outlook(Source):
         self,
         dict_folder: dict,
         limit: int = 10000,
+        address_limit: int = 8000,
         outbox_list: List[str] = ["Sent Items"],
     ) -> list:
         """To retrieve all messages from all the mailboxes passed in the dictionary.
@@ -157,6 +158,8 @@ class Outlook(Source):
             dict_folder (dict): Mailboxes dictionary holder, with the following structure:
                 "parent (sub)folder|(sub)folder": Mailbox.
             limit (int, optional): Number of fetched top messages. Defaults to 10000.
+            address_limit (int, optional): The maximum number of accepted characters in the sum
+                of all email names. Defaults to 8000.
             outbox_list (List[str], optional): List of outbox folders to differenciate between
                 Inboxes and Outboxes. Defaults to ["Sent Items"].
 
@@ -168,6 +171,7 @@ class Outlook(Source):
             count = 0
             for message in value.get_messages(limit=limit):
                 received_time = message.received
+                print("*" * 20)
                 date_obj = datetime.fromisoformat(str(received_time))
                 if (
                     self.date_range_start_time.replace(tzinfo=self.utc)
@@ -184,7 +188,10 @@ class Outlook(Source):
                     if recivers_list is not None:
                         for reciver in recivers_list:
                             add_string = f", {reciver['emailAddress']['address']}"
-                            if sum(list(map(len, [recivers, add_string]))) >= 8000:
+                            if (
+                                sum(list(map(len, [recivers, add_string])))
+                                >= address_limit
+                            ):
                                 break
                             else:
                                 recivers += add_string
