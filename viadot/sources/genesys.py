@@ -141,6 +141,7 @@ class Genesys(Source):
         end_point: str = "analytics/reporting/exports",
         params: Dict[str, Any] = None,
         method: Literal["POST", "GET"] = "POST",
+        sleep_time: int = 0.5,
     ) -> Optional[dict]:
         """Function that make POST request method to Genesys API given and endpoint.
 
@@ -149,6 +150,7 @@ class Genesys(Source):
             end_point (str, optional): Final end point for Genesys connection. Defaults to "analytics/reporting/exports".
             params (Dict[str, Any], optional): Parameters to be passed into the POST call. Defaults to None.
             method (Literal["POST", "GET"], optional): Type of connection to the API. Defaults to "POST".
+            sleep_time (int, optional): The time, in seconds, to sleep the script between calls to the API. Defaults to 0.5
 
         Returns:
             Optional[dict]: Dict when the "conversations" endpoint is called, otherwise returns None.
@@ -184,7 +186,7 @@ class Genesys(Source):
                             ) as resp:
                                 new_report = await resp.read()
                                 semaphore.release()
-                await asyncio.sleep(0.5)
+                await asyncio.sleep(sleep_time)
 
         loop = asyncio.get_event_loop()
         coroutine = generate_post()
