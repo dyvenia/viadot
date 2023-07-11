@@ -274,7 +274,7 @@ class S3(Source):
 
         if paths[0].endswith(".csv"):
             df = wr.s3.read_csv(
-                boto3_session=self.session, path=paths, chunked=chunk_size, **kwargs
+                boto3_session=self.session, path=paths, chunksize=chunk_size, **kwargs
             )
         elif paths[0].endswith(".parquet"):
             df = wr.s3.read_parquet(
