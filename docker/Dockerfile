@@ -24,6 +24,15 @@ RUN pip install --upgrade cffi
 RUN chmod +rwx /usr/lib/ssl/openssl.cnf && \
     sed -i 's/SECLEVEL=2/SECLEVEL=1/g' /usr/lib/ssl/openssl.cnf
 
+# ODBC -- make sure to pin driver version as it's reflected in odbcinst.ini
+RUN curl https://packages.microsoft.com/keys/microsoft.asc | apt-key add - && \
+    curl https://packages.microsoft.com/config/debian/10/prod.list > /etc/apt/sources.list.d/mssql-release.list && \
+    apt update -q && \
+    apt install -q libsqliteodbc && \
+    ACCEPT_EULA=Y apt install -q -y msodbcsql17=17.8.1.1-1 && \
+    ACCEPT_EULA=Y apt install -q -y mssql-tools && \
+    echo 'export PATH="$PATH:/opt/mssql-tools/bin"' >> ~/.bashrc
+
 COPY docker/odbcinst.ini /etc
 
 # This one's needed for the SAP RFC connector. 
