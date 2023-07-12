@@ -114,7 +114,7 @@ class VidClub(Source):
                 "The source has to be: jobs, product, company or survey"
             )
         if to_date == None:
-            datetime.today().strftime("%Y-%m-%d")
+            to_date = datetime.today().strftime("%Y-%m-%d")
 
         from_date_obj = datetime.strptime(from_date, "%Y-%m-%d")
         oldest_date_obj = datetime.strptime("2022-03-22", "%Y-%m-%d")
@@ -180,6 +180,19 @@ class VidClub(Source):
         region: str = "null",
         days_interval: int = 30
     ) -> pd.DataFrame:
+        """_summary_
+
+        Args:
+            source (Literal["jobs", "product", "company", "survey"], optional): The endpoint source to be accessed. Defaults to None.
+            from_date (str, optional): Start date for the query, by default is the oldest date in the data 2022-03-22.
+            to_date (str, optional): End date for the query. By default, datetime.today() will be used.
+            items_per_page (int, optional): Number of entries per page. 100 entries by default.
+            region (str, optinal): Region filter for the query. By default, it is empty.
+            days_interval (int, optional): Days specified in date range per api call (test showed that 30-40 is optimal for performance). Defaults to 30.
+
+        Returns:
+            pd.DataFrame: Dataframe of the concatanated data carried in the responses.
+        """
 
 
         if to_date == None:
