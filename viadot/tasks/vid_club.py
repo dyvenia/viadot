@@ -96,6 +96,9 @@ class VidClubToDF(Task):
             vault_name (str, optional): For credentials stored in Azure Key Vault. The name of the vault from which to obtain the secret. Defaults to None.
             from_date (str, optional): Start date for the query, by default is the oldest date in the data, '2022-03-22'.
             to_date (str, optional): End date for the query, if empty, datetime.today() will be used.
+            items_per_page (int, optional): Number of entries per page. 100 entries by default.
+            region (str, optinal): Region filter for the query. By default, it is empty.
+            days_interval (int, optional): Days specified in date range per api call (test showed that 30-40 is optimal for performance). Defaults to 30.
 
         Returns:
             pd.DataFrame: The query result as a pandas DataFrame.
