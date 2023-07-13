@@ -82,6 +82,9 @@ class VidClubToDF(Task):
         vault_name: str = None,
         from_date: str = "2022-03-22",
         to_date: str = "",
+        items_per_page: int = 100,
+        region: str = "null",
+        days_interval: int = 30
         ) -> pd.DataFrame:
         """
         Task run method.
@@ -100,8 +103,13 @@ class VidClubToDF(Task):
 
         vc_obj = VidClub(credentials = credentials)
 
-        vc_dataframe = vc_obj.get_response(
-            source=source, from_date=from_date, to_date=to_date
+        vc_dataframe = vc_obj.total_load(
+            source=source, 
+            from_date=from_date, 
+            to_date=to_date, 
+            items_per_page=items_per_page, 
+            region=region, 
+            days_interval=days_interval
         )
 
         return vc_dataframe
