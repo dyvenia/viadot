@@ -2,7 +2,7 @@ import json
 import os
 import urllib
 from datetime import datetime, date, timedelta
-from typing import Any, Dict, List, Literal
+from typing import Any, Dict, List, Literal, Tuple
 import pandas as pd
 
 from prefect.utilities import logging
@@ -55,6 +55,7 @@ class VidClub(Source):
         api_url: str,
         items_per_page: int,
         source: Literal["jobs", "product", "company", "survey"] = None,
+        page_param: bool = True
     ) -> str:
         """
         Builds the query from the inputs.
@@ -65,6 +66,7 @@ class VidClub(Source):
             api_url (str): Generic part of the URL.
             items_per_page (int): number of entries per page.
             source (Literal["jobs", "product", "company", "survey"], optional): The endpoint source to be accessed. Defaults to None.
+            page_param (bool, optional): 
 
         Returns:
             str: Final query with all filters added.
@@ -81,6 +83,40 @@ class VidClub(Source):
                 "Pick one these sources: jobs, product, company, survey"
             )
         return url
+
+    def intervals(
+        self,
+        from_date: str,
+        to_date: str,
+        days_interval: int
+    ) -> Tuple[List[str], List[str]]:
+        """Breaks dates range into smaller by provided days interval.
+
+        Args:
+            from_date (str): Start date for the query.
+            to_date (str): End date for the query. By default, datetime.today() will be used.
+            days_interval (int): Days specified in date range per api call (test showed that 30-40 is optimal for performance).
+
+        Returns:
+            List[str], List[str]: Starts abd Ends lists that contains information about date ranges for specific period and time interval.
+        """
+
+        if to_date == None:
+            end_date = datetime.today().date()
+        else:
+            end_date = datetime.strptime(to_date, "%Y-%m-%d").date()
+        start_date = datetime.strptime(from_date, "%Y-%m-%d").date()
+        interval = timedelta(days=days_interval)
+        starts = []
+        ends = []
+        period_start = start_date
+        while period_start < end_date:
+            period_end = min(period_start + interval, end_date)
+            starts.append(period_start.strftime("%Y-%m-%d"))
+            ends.append(period_end.strftime("%Y-%m-%d"))
+            period_start = period_end
+
+        return starts, ends
 
     def get_response(
         self,
@@ -180,7 +216,7 @@ class VidClub(Source):
         region: str = "null",
         days_interval: int = 30
     ) -> pd.DataFrame:
-        """_summary_
+        """Creating date ranges for provided time interval by which get_response is looped and stores dataframes in a list. 
 
         Args:
             source (Literal["jobs", "product", "company", "survey"], optional): The endpoint source to be accessed. Defaults to None.
@@ -194,22 +230,12 @@ class VidClub(Source):
             pd.DataFrame: Dataframe of the concatanated data carried in the responses.
         """
 
+        starts, ends = self.intervals(
+            from_date = from_date,
+            to_date = to_date,
+            days_interval = days_interval
+        )
 
-        if to_date == None:
-            end_date = datetime.today().date()
-        else:
-            end_date = datetime.strptime(to_date, "%Y-%m-%d").date()
-        start_date = datetime.strptime(from_date, "%Y-%m-%d").date()
-        interval = timedelta(days=days_interval)
-        starts = []
-        ends = []
-        period_start = start_date
-        while period_start < end_date:
-            period_end = min(period_start + interval, end_date)
-            starts.append(period_start.strftime("%Y-%m-%d"))
-            ends.append(period_end.strftime("%Y-%m-%d"))
-            period_start = period_end
-        
         dfs_list = []
         if len(starts) > 0 and len(ends) > 0: 
             for start, end in zip(starts, ends):
