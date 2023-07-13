@@ -242,7 +242,7 @@ class VidClub(Source):
         dfs_list = []
         if len(starts) > 0 and len(ends) > 0: 
             for start, end in zip(starts, ends):
-                logger.info(f"ingesting data for dates {start}-{end}...")
+                logger.info(f"ingesting data for dates [{start}]-[{end}]...")
                 df = self.get_response(
                     source = source,
                     from_date = start,
@@ -252,7 +252,7 @@ class VidClub(Source):
                 )
                 dfs_list.append(df)
                 if len(dfs_list) > 1:
-                    logger.info("Concatanating tables into one dataframe...")
+                    logger.info("Concatenating tables into one dataframe...")
                     df = pd.concat(dfs_list, axis=0, ignore_index=True)
                 else:
                     df = pd.DataFrame(dfs_list[0])              
