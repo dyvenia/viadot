@@ -90,7 +90,8 @@ class VidClub(Source):
         to_date: str,
         days_interval: int
     ) -> Tuple[List[str], List[str]]:
-        """Breaks dates range into smaller by provided days interval.
+        """
+        Breaks dates range into smaller by provided days interval.
 
         Args:
             from_date (str): Start date for the query.
@@ -216,7 +217,9 @@ class VidClub(Source):
         region: str = "null",
         days_interval: int = 30
     ) -> pd.DataFrame:
-        """Creating date ranges for provided time interval by which get_response is looped and stores dataframes in a list. 
+        """
+        Looping get_response and iterating by date ranges defined in intervals. Stores outputs as DataFrames in a list. 
+        At the end, daframes are concatenated in one and dropped duplicates that would appear when quering.
 
         Args:
             source (Literal["jobs", "product", "company", "survey"], optional): The endpoint source to be accessed. Defaults to None.
