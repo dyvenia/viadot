@@ -2,6 +2,7 @@ from unittest import mock
 
 import pandas as pd
 import pytest
+from datetime import datetime, timedelta
 
 from viadot.exceptions import ValidationError
 from viadot.task_utils import credentials_loader
@@ -9,6 +10,7 @@ from viadot.sources import VidClub
 
 
 CREDENTIALS = credentials_loader.run(credentials_secret="VIDCLUB")
+vc = VidClub(credentials = CREDENTIALS)
 
 @pytest.fixture
 def var_dictionary():
@@ -26,12 +28,10 @@ class MockClass:
 
 @pytest.mark.init
 def test_default_credential_param():
-    vc = VidClub(credentials = CREDENTIALS)
     assert vc.credentials != None and type(vc.credentials) == dict
 
 @pytest.mark.init
 def test_create_club_class():
-    vc = VidClub(credentials = CREDENTIALS)
     assert vc
 
 @pytest.mark.proper
@@ -39,7 +39,6 @@ def test_build_query_wrong_source():
     with pytest.raises(
         ValidationError, match=r"Pick one these sources: jobs, product, company, survey"
     ):
-        vc = VidClub(credentials = CREDENTIALS)
         query = vc.build_query(
             source="test",
             from_date="2023-03-24",
@@ -54,7 +53,6 @@ def test_get_response_wrong_source():
     with pytest.raises(
         ValidationError, match=r"The source has to be: jobs, product, company or survey"
     ):
-        vc = VidClub(credentials = CREDENTIALS)
         query = vc.get_response(source="test")
 
 
@@ -64,7 +62,6 @@ def test_get_response_wrong_source():
 @pytest.mark.parametrize("source", ["jobs", "company", "product", "survey"])
 @pytest.mark.proper
 def test_get_response_sources(mock_api_response, source):
-    vc = VidClub(credentials = CREDENTIALS)
     query = vc.get_response(source=source, to_date="2023-03-24", from_date="2023-03-24")
 
     assert isinstance(query, pd.DataFrame)
@@ -75,7 +72,6 @@ def test_get_response_wrong_date():
     with pytest.raises(
         ValidationError, match=r"from_date cannot be earlier than 2022-03-22"
     ):
-        vc = VidClub(credentials = CREDENTIALS)
         query = vc.get_response(source="jobs", from_date="2021-05-09")
 
 
@@ -84,7 +80,57 @@ def test_get_response_wrong_date_range():
     with pytest.raises(
         ValidationError, match=r"to_date cannot be earlier than from_date"
     ):
-        vc = VidClub(credentials = CREDENTIALS)
         query = vc.get_response(
             source="jobs", to_date="2022-05-04", from_date="2022-05-05"
         )
+
+@pytest.mark.test_intervals_split
+def test_intervals_split():
+    from_date = "2022-01-01"
+    to_date = "2022-01-19"
+    days_interval = 5
+    expected_starts = ["2022-01-01", "2022-01-06", "2022-01-11", "2022-01-16"]
+    expected_ends = ["2022-01-06", "2022-01-11", "2022-01-16", "2022-01-19"]
+    starts, ends = vc.intervals(from_date = from_date, to_date = to_date, days_interval = days_interval)
+
+    assert starts == expected_starts
+    assert ends == expected_ends
+
+@pytest.mark.test_total_load_for_the_same_dates
+def test_total_load_for_the_same_dates():
+    from_date = "2022-04-01"
+    to_date = "2022-04-01"
+    days_interval = 10
+    source = "jobs"
+    df = vc.total_load(from_date=from_date, to_date=to_date, days_interval = days_interval, source=source)
+
+    assert isinstance(df, pd.DataFrame)
+
+@pytest.mark.test_total_load_for_intervals
+def test_total_load_for_intervals():
+    from_date = "2022-04-01"
+    to_date = "2022-04-12"
+    days_interval = 2
+    source = "jobs"
+    
+    date_object = datetime.strptime(from_date, "%Y-%m-%d") + timedelta(days=days_interval)
+    one_interval = date_object.strftime("%Y-%m-%d")
+    
+    df = vc.total_load(from_date=from_date, to_date=to_date, days_interval = days_interval, source=source)
+    df_one_interval = vc.total_load(from_date=from_date, to_date=one_interval, days_interval = days_interval, source=source)
+
+    assert isinstance(df, pd.DataFrame)
+    assert len(df) > len(df_one_interval)
+
+@pytest.mark.test_drop_duplicates
+def test_drop_duplicates():
+    from_date = "2022-04-01"
+    to_date = "2022-04-12"
+    days_interval = 2
+    source = "jobs"
+
+    df = vc.total_load(from_date=from_date, to_date=to_date, days_interval = days_interval, source=source)
+    dups_mask = df.duplicated()
+    df_check = df[dups_mask]
+
+    assert len(df_check) == 0
