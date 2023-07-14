@@ -1,10 +1,11 @@
 import os
+from pathlib import Path
 import shutil
-from typing import Dict, List
+from typing import Dict, List, Union
 
 from prefect import Flow, task
 
-from viadot.tasks import CloneRepo, DBTTask, AzureKeyVaultSecret
+from viadot.tasks import CloneRepo, DBTTask, LumaIngest, AzureKeyVaultSecret
 
 
 @task
@@ -16,12 +17,6 @@ def _cleanup_repo(dbt_repo_dir_name: str) -> None:
         dbt_repo_dir_name (str): The name of the temporary folder.
     """
     shutil.rmtree(dbt_repo_dir_name, ignore_errors=True)  # Delete folder on run
-
-
-@task
-def upload_metadata_draft(recipe_path: str = None) -> None:
-    """Upload metadata do choosen destination (placeholder)."""
-    return recipe_path
 
 
 class TransformAndCatalog(Flow):
@@ -40,6 +35,8 @@ class TransformAndCatalog(Flow):
         dbt_selects: Dict[str, str] = None,
         dbt_target: str = None,
         stateful: bool = False,
+        metadata_dir_path: Union[str, Path] = None,
+        luma_endpoint: str = "http://localhost/api/v1/dbt",
         *args,
         **kwargs,
     ) -> List[str]:
@@ -64,6 +61,10 @@ class TransformAndCatalog(Flow):
                 will be used. Defaults to None.
             stateful (bool, optional): Whether only the models should be rebuilt only if modified.
                 See [dbt docs](https://docs.getdbt.com/guides/legacy/understanding-state). Defaults to False.
+            metadata_dir_path (Union[str, Path]): The path to the directory containing metadata files.
+                In the case of dbt, it's dbt project's `target` directory, which contains dbt artifacts
+                (`sources.json`, `catalog.json`, `manifest.json`, and `run_results.json`). Defaults to None.
+            luma_endpoint (str, optional): The endpoint of the Luma ingestion API. Defaults to "http://localhost/api/v1/dbt".
 
         Returns:
             List[str]: Lines from stdout of the `upload_metadata` task as a list.
@@ -93,16 +94,24 @@ class TransformAndCatalog(Flow):
             - build all models in a directory: `dbt_select="models/my_project"`
             ```
         """
+        # DBTTask
         self.dbt_project_path = dbt_project_path
+        self.dbt_target = dbt_target
+        self.dbt_selects = dbt_selects
+
+        self.stateful = stateful
+
+        # CloneRepo
         self.dbt_repo_url = dbt_repo_url
         self.dbt_repo_url_secret = dbt_repo_url_secret
         self.dbt_repo_branch = dbt_repo_branch
         self.token = token
         self.token_secret = token_secret
         self.local_dbt_repo_path = local_dbt_repo_path
-        self.dbt_selects = dbt_selects
-        self.dbt_target = dbt_target
-        self.stateful = stateful
+
+        # LumaIngest
+        self.metadata_dir_path = metadata_dir_path
+        self.luma_endpoint = luma_endpoint
 
         super().__init__(*args, name=name, **kwargs)
         self.gen_flow()
@@ -135,8 +144,6 @@ class TransformAndCatalog(Flow):
         dbt_target_option = (
             f"-t {self.dbt_target}" if self.dbt_target is not None else ""
         )
-
-        # dbt_task = DBTTask(name="dbt_task_clean")
 
         if self.stateful:
             source_freshness_upstream = clone
@@ -191,7 +198,13 @@ class TransformAndCatalog(Flow):
         )
 
         # Upload build metadata to DataHub
-        upload_metadata_draft.bind(recipe_path="self.datahub_recipe_path", flow=self)
+        upload_metadata_luma = LumaIngest(
+            metadata_dir_path=self.metadata_dir_path,
+        )
+        upload_metadata_luma.bind(
+            endpoint=self.luma_endpoint,
+            flow=self,
+        )
 
         _cleanup_repo.bind(local_dbt_repo_path, flow=self)
 
@@ -201,5 +214,5 @@ class TransformAndCatalog(Flow):
         run.set_upstream(source_freshness, flow=self)
         generate_catalog_json.set_upstream(run, flow=self)
         test.set_upstream(generate_catalog_json, flow=self)
-        upload_metadata_draft.set_upstream(test, flow=self)
-        _cleanup_repo.set_upstream(upload_metadata_draft, flow=self)
+        upload_metadata_luma.set_upstream(test, flow=self)
+        _cleanup_repo.set_upstream(upload_metadata_luma, flow=self)
