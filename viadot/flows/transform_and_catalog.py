@@ -117,7 +117,7 @@ class TransformAndCatalog(Flow):
             self.dbt_repo_url_secret
         )
         local_dbt_repo_path = (
-            os.path.expandvars(local_dbt_repo_path)
+            os.path.expandvars(self.local_dbt_repo_path)
             if self.local_dbt_repo_path is not None
             else "tmp_dbt_repo_dir"
         )
