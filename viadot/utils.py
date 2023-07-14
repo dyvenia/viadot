@@ -425,23 +425,27 @@ async def shell_run_command(
 ) -> Union[list, str]:
     """
     Runs arbitrary shell commands as a util.
+
     Args:
-        command: Shell command to be executed; can also be
-            provided post-initialization by calling this task instance.
-        env: Dictionary of environment variables to use for
-            the subprocess; can also be provided at runtime.
-        helper_command: String representing a shell command, which
-            will be executed prior to the `command` in the same process.
-            Can be used to change directories, define helper functions, etc.
-            for different commands in a flow.
-        shell: Shell to run the command with; defaults to "bash".
-        return_all: Whether this task should return all lines of stdout as a list,
-            or just the last line as a string; defaults to `False`.
-        stream_level: The logging level of the stream.
-        logger: Can pass a desired logger; if not passed, will automatically
-            gets a run logger from Prefect.
+        command (str): Shell command to be executed; can also be provided post-initialization by calling this task instance.
+            Defaults to None.
+        env (Optional[dict], optional): Dictionary of environment variables to use forthe subprocess;
+            can also be provided at runtime. Defaults to None.
+        helper_command (Optional[dict], optional): String representing a shell command, which will be executed prior to the `command`
+            in the same process. Can be used to change directories, define helper functions, etc. for different commands in a flow.
+            Defaults to None.
+        shell (str, optional): Shell to run the command with. Defaults to "bash".
+        return_all (bool, optional): Whether this task should return all lines of stdout as a list, or just the last line as a string.
+            Defaults to `False`.
+        stream_level (int, optional): The logging level of the stream. Defaults to logging.INFO.
+        logger: Can pass a desired logger; if not passed, will automatically gets a run logger from Prefect. Defaults to None.
+
+    Raises:
+        RuntimeError: Runtime error message.
+
     Returns:
-        If return all, returns all lines as a list; else the last line as a string.
+        Union[list, str]: If return all, returns all lines as a list; else the last line as a string.
+
     Example:
         Echo "hey it works".
         ```python
