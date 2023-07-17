@@ -226,7 +226,8 @@ class Outlook(Source):
                         row["Inbox"] = True
 
                     data.append(row)
-            self.logger.info(f"folder: {key.ljust(76, '-')}  messages: {count}")
+            if count > 0:
+                self.logger.info(f"folder: {key.ljust(76, '-')}  messages: {count}")
 
         return data
 
