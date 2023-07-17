@@ -1,7 +1,6 @@
 import os
-import sys
 import time
-from typing import Any, Dict, List, Literal
+from typing import Any, Dict, List
 
 import numpy as np
 import pandas as pd
@@ -31,6 +30,8 @@ class GenesysToCSV(Task):
         report_columns: List[str] = None,
         local_file_path: str = "",
         sep: str = "\t",
+        conversationId_list: List[str] = None,
+        key_list: List[str] = None,
         credentials_genesys: Dict[str, Any] = None,
         timeout: int = 3600,
         *args: List[Any],
@@ -51,6 +52,8 @@ class GenesysToCSV(Task):
             report_columns (List[str], optional): List of exisiting column in report. Defaults to None.
             local_file_path (str, optional): The local path from which to upload the file(s). Defaults to "".
             sep (str, optional): Separator in csv file. Defaults to "\t".
+            key_list (List[str], optional): List of keys needed to specify the columns in the GET request method. Defaults to None.
+            conversationId_list (List[str], optional): List of conversationId passed as attribute of GET method. Defaults to None.
             timeout(int, optional): The amount of time (in seconds) to wait while running this task before
                 a timeout occurs. Defaults to 3600.
         """
@@ -67,6 +70,8 @@ class GenesysToCSV(Task):
         self.credentials_genesys = credentials_genesys
         self.local_file_path = local_file_path
         self.sep = sep
+        self.conversationId_list = conversationId_list
+        self.key_list = key_list
 
         super().__init__(
             name=self.report_name,
@@ -286,6 +291,8 @@ class GenesysToCSV(Task):
         "end_date",
         "report_columns",
         "credentials_genesys",
+        "key_list",
+        "conversationId_list",
     )
     def run(
         self,
@@ -299,6 +306,8 @@ class GenesysToCSV(Task):
         start_date: str = None,
         end_date: str = None,
         report_columns: List[str] = None,
+        conversationId_list: List[str] = None,
+        key_list: List[str] = None,
         credentials_genesys: Dict[str, Any] = None,
     ) -> List[str]:
         """
@@ -316,6 +325,8 @@ class GenesysToCSV(Task):
             environment (str, optional): Adress of host server. Defaults to None than will be used enviroment from credentials.
             report_url (str, optional): The url of report generated in json response. Defaults to None.
             report_columns (List[str], optional): List of exisiting column in report. Defaults to None.
+            key_list (List[str], optional): List of keys needed to specify the columns in the GET request method. Defaults to None.
+            conversationId_list (List[str], optional): List of conversationId passed as attribute of GET method. Defaults to None.
 
         Returns:
             List[str]: List of file names.
@@ -442,6 +453,41 @@ class GenesysToCSV(Task):
 
             final_df.to_csv(
                 os.path.join(self.local_file_path, file_name),
+                index=False,
+                sep="\t",
+            )
+
+            logger.info("Downloaded the data from the Genesys into the CSV.")
+
+            return [file_name]
+
+        elif view_type is None and end_point == "conversations":
+            data_list = []
+
+            for Id in conversationId_list:
+                json_file = genesys.genesys_api_connection(
+                    post_data_list=post_data_list,
+                    end_point=f"{end_point}/{Id}",
+                    method="GET",
+                )
+                logger.info(f"Generated webmsg_response for {Id}")
+
+                attributes = json_file["participants"][0]["attributes"]
+                temp_dict = {
+                    key: value for (key, value) in attributes.items() if key in key_list
+                }
+                temp_dict["conversationId"] = json_file["id"]
+                data_list.append(temp_dict)
+
+            df = pd.DataFrame(data_list)
+            df = df[df.columns[-1:]].join(df[df.columns[:-1]])
+
+            start = start_date.replace("-", "")
+            end = end_date.replace("-", "")
+
+            file_name = f"WebMessage_{start}-{end}".upper() + ".csv"
+            df.to_csv(
+                os.path.join(file_name),
                 index=False,
                 sep="\t",
             )
