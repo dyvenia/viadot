@@ -5,11 +5,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ## [Unreleased]
 ### Added
+- Added a new `end_point` parameter in `genesys_api_connection` to make it more generic.
 
 ### Fixed
 - Fixed a bug in `subject` (extra separator) and in `receivers` (long strings) parameters in Outlook connector. 
 
 ### Changed
+- Genesys API call method and the name changed from `genesys_generate_exports` to `genesys_api_connection`. 
+- Added `GET` connection inside the method `genesys_api_connection`.
+
+### Removed
+- Removed methods never used in production: `get_analitics_url_report`, `get_all_schedules_job`, `schedule_report`,
+`to_df`, `delete_scheduled_report_job` and `generate_reporting_export`.
 
 ## [0.4.17] - 2023-06-15
 ### Fixed
