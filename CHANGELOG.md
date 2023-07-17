@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 ### Fixed
+- Fixed a bug in `subject` (extra separator) and in `receivers` (long strings) parameters in Outlook connector. 
 
 ### Changed
 
