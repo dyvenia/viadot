@@ -186,7 +186,6 @@ WITH (
         return query
 
     def run(self, query: str) -> Union[list[str], None]:
-        
         self.logger.debug("Executing query:\n" + query)
 
         try:
@@ -203,15 +202,21 @@ WITH (
 
     @staticmethod
     def pyarrow_to_trino_type(pyarrow_type: str) -> str:
-        # TODO: add remaining types
         mapping = {
             "string": "VARCHAR",
+            "large_string": "VARCHAR",
+            "int8": "TINYINT",
+            "int16": "SMALLINT",
+            "int32": "INTEGER",
             "int64": "BIGINT",
+            "float": "REAL",
             "double": "DOUBLE",
             "bool": "BOOLEAN",
+            "date32[day]": "DATE",
             "timestamp[ns]": "TIMESTAMP(6)",
         }
-        return mapping[pyarrow_type]
+        mapped_type = mapping.get(pyarrow_type) or "VARCHAR"
+        return mapped_type
 
     def _check_connection(self):
         try:
