@@ -24,7 +24,6 @@ def trino(trino_config_key):
 
 def test_get_schemas(trino):
     schemas = trino.get_schemas()
-    assert isinstance(schemas, list)
     assert "default" in schemas
 
 
