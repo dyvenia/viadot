@@ -35,3 +35,14 @@ sources:
         aws_access_key_id: "my_aws_access_key"
         aws_secret_access_key: "my_aws_secret_access_key"
         region_name: "eu-west-1"
+
+  - trino_dev:
+    class: Trino
+    credentials:
+      host: localhost
+      port: 8080
+      user: "<USERNAME>"
+      password: "<PASSWORD>"
+      catalog: "<CATALOG>"
+      http_scheme: "http"
+      verify: False
