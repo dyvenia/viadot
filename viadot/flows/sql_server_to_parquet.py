@@ -14,7 +14,6 @@ class SQLServerToParquet(Flow):
         local_file_path: str,
         sqlserver_config_key: str = None,
         if_exists: Literal["fail", "replace", "append", "skip", "delete"] = "fail",
-        if_empty: Literal["warn", "skip", "fail"] = "skip",
         timeout: int = 3600,
         *args: List[any],
         **kwargs: Dict[str, Any],
@@ -28,8 +27,7 @@ class SQLServerToParquet(Flow):
                 returns empty DataFrame.
             local_file_path (str): Path to output parquet file.
             sqlserver_config_key (str, optional): The key inside local config containing the credentials. Defaults to None.
-            if_exists (Literal, optional):  What to do if the table already exists. Defaults to "fail".
-            if_empty (Literal, optional): What to do if Parquet file is empty. Defaults to "skip".
+            if_exists (Literal, optional):  What to do if the file already exists. Defaults to "fail".
             timeout(int, optional): The amount of time (in seconds) to wait while running this task before
                 a timeout occurs. Defaults to 3600.
         """
@@ -38,10 +36,8 @@ class SQLServerToParquet(Flow):
         self.sqlserver_config_key = sqlserver_config_key
         self.timeout = timeout
 
-        # DuckDBCreateTableFromParquet
         self.local_file_path = local_file_path
         self.if_exists = if_exists
-        self.if_empty = if_empty
 
         super().__init__(*args, name=name, **kwargs)
 

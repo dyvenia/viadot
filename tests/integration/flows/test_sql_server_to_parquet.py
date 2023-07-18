@@ -10,7 +10,6 @@ def test_sql_server_to_parquet_flow():
         sql_query="SELECT * FROM your_table",
         local_file_path="test.parquet",
         if_exists="fail",
-        if_empty="skip",
         timeout=3600,
     )
     flow.gen_flow()
