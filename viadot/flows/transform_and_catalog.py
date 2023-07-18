@@ -4,8 +4,9 @@ import shutil
 from typing import Dict, List, Union
 
 from prefect import Flow, task
+from prefect.tasks.shell import ShellTask
 
-from viadot.tasks import CloneRepo, DBTTask, LumaIngest, AzureKeyVaultSecret
+from viadot.tasks import CloneRepo, AzureKeyVaultSecret
 
 
 @task
@@ -130,6 +131,7 @@ class TransformAndCatalog(Flow):
             if self.local_dbt_repo_path is not None
             else "tmp_dbt_repo_dir"
         )
+
         clone_repo = CloneRepo(url=dbt_repo_url)
         clone = clone_repo.bind(
             url=dbt_repo_url,
@@ -149,69 +151,96 @@ class TransformAndCatalog(Flow):
             source_freshness_upstream = clone
         else:
             # Clean up artifacts from previous runs (`target/` dir and packages)
-            dbt_clean_up = DBTTask(name="dbt_task_clean").bind(
-                project_path=self.dbt_project_path, command="clean", flow=self
-            )
 
-            pull_dbt_deps = DBTTask(name="dbt_task_deps").bind(
-                project_path=self.dbt_project_path, command="deps", flow=self
-            )
-            source_freshness_upstream = pull_dbt_deps
+            dbt_clean_up = ShellTask(
+                name="dbt_task_clean",
+                command=f"dbt clean",
+                helper_script=f"cd {self.dbt_project_path}",
+                return_all=True,
+                stream_output=True,
+            ).bind(flow=self)
+
+            pull_dbt_deps = ShellTask(
+                name="dbt_task_deps",
+                command=f"dbt deps",
+                helper_script=f"cd {self.dbt_project_path}",
+                return_all=True,
+                stream_output=True,
+            ).bind(flow=self)
+            # source_freshness_upstream = pull_dbt_deps
 
         # Source freshness
         # Produces `sources.json`
-        source_freshness_select = self.dbt_selects.get("source_freshness")
-        source_freshness_select_safe = (
-            f"-s {source_freshness_select}"
-            if source_freshness_select is not None
-            else ""
-        )
+        # source_freshness_select = self.dbt_selects.get("source_freshness")
+        # source_freshness_select_safe = (
+        #     f"-s {source_freshness_select}"
+        #     if source_freshness_select is not None
+        #     else ""
+        # )
 
-        source_freshness = DBTTask(name="dbt_task_source_freshness").bind(
-            project_path=self.dbt_project_path,
-            command=f"source freshness {source_freshness_select_safe} {dbt_target_option}",
-            flow=self,
-        )
+        # source_freshness = DBTTask(name="dbt_task_source_freshness").bind(
+        #     project_path=self.dbt_project_path,
+        #     command=f"source freshness {source_freshness_select_safe} {dbt_target_option}",
+        #     flow=self,
+        # )
+        # source_freshness = ShellTask(
+        #     name="dbt_task_source_freshness",
+        #     command=f"dbt source freshness {source_freshness_select_safe} {dbt_target_option}",
+        #     helper_script=f"cd {self.dbt_project_path}",
+        #     return_all=True,
+        #     stream_output=True,
+        # ).bind(flow=self)
 
         run_select = self.dbt_selects.get("run")
         run_select_safe = f"-s {run_select}" if run_select is not None else ""
-        run = DBTTask(name="dbt_task_run").bind(
-            project_path=self.dbt_project_path,
-            command=f"run {run_select_safe} {dbt_target_option}",
-            flow=self,
-        )
+
+        run = ShellTask(
+            name="dbt_task_run",
+            command=f"dbt run {run_select_safe} {dbt_target_option}",
+            helper_script=f"cd {self.dbt_project_path}",
+            return_all=True,
+            stream_output=True,
+        ).bind(flow=self)
 
         # Generate docs
         # Produces `catalog.json`, `run-results.json`, and `manifest.json`
-        generate_catalog_json = DBTTask(name="dbt_task_docs_generate").bind(
-            project_path=self.dbt_project_path,
-            command=f"docs generate {dbt_target_option} --no-compile",
-            flow=self,
-        )
+        generate_catalog_json = ShellTask(
+            name="dbt_task_docs_generate",
+            command=f"dbt docs generate {dbt_target_option} --no-compile",
+            helper_script=f"cd {self.dbt_project_path}",
+            return_all=True,
+            stream_output=True,
+        ).bind(flow=self)
 
         test_select = self.dbt_selects.get("test", run_select)
         test_select_safe = f"-s {test_select}" if test_select is not None else ""
-        test = DBTTask(name="dbt_task_test").bind(
-            project_path=self.dbt_project_path,
-            command=f"test {test_select_safe} {dbt_target_option}",
-            flow=self,
-        )
 
-        # Upload build metadata to DataHub
-        upload_metadata_luma = LumaIngest(
-            metadata_dir_path=self.metadata_dir_path,
-        )
-        upload_metadata_luma.bind(
-            endpoint=self.luma_endpoint,
-            flow=self,
-        )
+        test = ShellTask(
+            name="dbt_task_test",
+            command=f"dbt test {test_select_safe} {dbt_target_option}",
+            helper_script=f"cd {self.dbt_project_path}",
+            return_all=True,
+            stream_output=True,
+        ).bind(flow=self)
+
+        # Upload build metadata to Luma
+        path_expanded = os.path.expandvars(self.metadata_dir_path)
+        metadata_dir_path = Path(path_expanded)
+
+        upload_metadata_luma = ShellTask(
+            name="luma_task_ingest",
+            command=f"luma dbt ingest {metadata_dir_path} -e {self.luma_endpoint}",
+            helper_script=f"cd {self.dbt_project_path}",
+            return_all=True,
+            stream_output=True,
+        ).bind(flow=self)
 
         _cleanup_repo.bind(local_dbt_repo_path, flow=self)
 
         dbt_clean_up.set_upstream(clone, flow=self)
         pull_dbt_deps.set_upstream(dbt_clean_up, flow=self)
-        source_freshness.set_upstream(source_freshness_upstream, flow=self)
-        run.set_upstream(source_freshness, flow=self)
+        # source_freshness.set_upstream(pull_dbt_deps, flow=self)
+        run.set_upstream(pull_dbt_deps, flow=self)
         generate_catalog_json.set_upstream(run, flow=self)
         test.set_upstream(generate_catalog_json, flow=self)
         upload_metadata_luma.set_upstream(test, flow=self)
