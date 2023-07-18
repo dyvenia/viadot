@@ -13,9 +13,6 @@ from viadot.config import get_source_credentials
 from viadot.sources.base import Source
 from viadot.utils import get_fqn
 
-# TODO: remove this and verify=False in Trino.con()
-urllib3.disable_warnings()
-
 # Triggered by trino lib
 warnings.filterwarnings("ignore", category=SADeprecationWarning)
 
