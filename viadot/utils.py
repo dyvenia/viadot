@@ -480,3 +480,7 @@ def add_viadot_metadata_columns(func: Callable) -> Callable:
         return df
 
     return wrapper
+
+
+def get_fqn(table_name: str, schema_name: str = None) -> str:
+    return f"{schema_name}.{table_name}" if schema_name else table_name
