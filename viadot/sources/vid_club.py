@@ -55,7 +55,7 @@ class VidClub(Source):
         api_url: str,
         items_per_page: int,
         source: Literal["jobs", "product", "company", "survey"] = None,
-        page_param: bool = True
+        region: str = "all",
     ) -> str:
         """
         Builds the query from the inputs.
@@ -66,7 +66,7 @@ class VidClub(Source):
             api_url (str): Generic part of the URL.
             items_per_page (int): number of entries per page.
             source (Literal["jobs", "product", "company", "survey"], optional): The endpoint source to be accessed. Defaults to None.
-            page_param (bool, optional): 
+            region (str, optional): Region filter for the query. Defaults to "all".
 
         Returns:
             str: Final query with all filters added.
@@ -75,7 +75,7 @@ class VidClub(Source):
             ValidationError: If any source different than the ones in the list are used.
         """
         if source in ["jobs", "product", "company"]:
-            url = f"{api_url}{source}?from={from_date}&to={to_date}&limit={items_per_page}"
+            url = f"{api_url}{source}?from={from_date}&to={to_date}&region={region}&limit={items_per_page}"
         elif source in "survey":
             url = f"{api_url}{source}?language=en&type=question"
         else:
@@ -118,6 +118,43 @@ class VidClub(Source):
             period_start = period_end
 
         return starts, ends
+    
+    def check_connection(
+        self,
+        source: Literal["jobs", "product", "company", "survey"] = None,
+        from_date: str = "2022-03-22",
+        to_date: str = None,
+        items_per_page: int = 100,
+        region: str = "all"
+
+    ) -> Tuple[Dict[str, Any], str]:
+        """
+        Initiate first connection to API to retrieve piece of data with information about type of pagination in API URL. 
+        This option is added because type of pagination for endpoints is being changed in the future from page number to 'next' id.
+
+        Args:
+            source (Literal["jobs", "product", "company", "survey"], optional): The endpoint source to be accessed. Defaults to None.
+            from_date (str, optional): Start date for the query, by default is the oldest date in the data 2022-03-22.
+            to_date (str, optional): End date for the query. By default, datetime.today() will be used.
+            items_per_page (int, optional): Number of entries per page. 100 entries by default.
+            region (str, optional): Region filter for the query. Defaults to "all".
+
+        Returns:
+            Dict[str, Any], str: First response from API with JSON containing data and used URL string
+        """
+        first_url = self.build_query(
+        source = source,
+        from_date = from_date,
+        to_date = to_date,
+        api_url = self.credentials["url"],
+        items_per_page=items_per_page,
+        region = region
+        )
+        headers = self.headers
+        response = handle_api_response(url=first_url, headers=headers, method="GET", verify=False)
+        response = response.json()
+        
+        return response, first_url
 
     def get_response(
         self,
@@ -125,17 +162,17 @@ class VidClub(Source):
         from_date: str = "2022-03-22",
         to_date: str = None,
         items_per_page: int = 100,
-        region="null",
+        region: str = "all"
     ) -> pd.DataFrame:
         """
-        Gets the response from the API queried and transforms it into DataFrame.
+        Basing on the pagination type retrieved using check_connection function, gets the response from the API queried and transforms it into DataFrame.
 
         Args:
             source (Literal["jobs", "product", "company", "survey"], optional): The endpoint source to be accessed. Defaults to None.
             from_date (str, optional): Start date for the query, by default is the oldest date in the data 2022-03-22.
             to_date (str, optional): End date for the query. By default, datetime.today() will be used.
             items_per_page (int, optional): Number of entries per page. 100 entries by default.
-            region (str, optinal): Region filter for the query. By default, it is empty.
+            region (str, optional): Region filter for the query. Defaults to "all".
 
         Returns:
             pd.DataFrame: Table of the data carried in the response.
@@ -145,7 +182,7 @@ class VidClub(Source):
             ValidationError: If the initial date of the query is before the oldest date in the data (2022-03-22).
             ValidationError: If the final date of the query is before the start date.
         """
-
+        headers = self.headers
         if source not in ["jobs", "product", "company", "survey"]:
             raise ValidationError(
                 "The source has to be: jobs, product, company or survey"
@@ -166,19 +203,13 @@ class VidClub(Source):
         if delta.days < 0:
             raise ValidationError("to_date cannot be earlier than from_date.")
 
-        first_url = self.build_query(
+        response, first_url = self.check_connection(
             source = source,
-
             from_date = from_date,
             to_date = to_date,
-            api_url = self.credentials["url"],
-            items_per_page=items_per_page,
+            items_per_page = items_per_page,
+            region = region
         )
-        headers = self.headers
-
-        response = handle_api_response(url=first_url, headers=headers, method="GET")
-
-        response = response.json()
 
         if isinstance(response, dict):
             keys_list = list(response.keys())
@@ -187,22 +218,32 @@ class VidClub(Source):
         else:
             keys_list = []
 
+        if "next" in keys_list:
+            ind = True
+            logger.info("Endpoint pagination with 'next' id")
+        else:
+            ind = False
+            logger.info("Endpoint pagination with 'page' number")
+
         if "data" in keys_list:
             df = pd.DataFrame(response["data"])
             length = df.shape[0]
-            page = 2
+            page = 1
 
             while length == items_per_page:
-                url = f"{first_url}&page={page}"
-                r = handle_api_response(url=url, headers=headers, method="GET")
+                if ind == True:
+                    next = response["next"]
+                    url = f"{first_url}&next={next}"
+                else:
+                    page += 1
+                    url = f"{first_url}&page={page}"
+                r = handle_api_response(url=url, headers=headers, method="GET", verify=False)
                 response = r.json()
                 df_page = pd.DataFrame(response["data"])
                 if source == "product":
                     df_page = df_page.transpose()
                 length = df_page.shape[0]
                 df = pd.concat((df, df_page), axis=0)
-                page += 1
-
         else:
             df = pd.DataFrame(response)
 
@@ -214,7 +255,7 @@ class VidClub(Source):
         from_date: str = "2022-03-22",
         to_date: str = None,
         items_per_page: int = 100,
-        region: str = "null",
+        region: str = "all",
         days_interval: int = 30
     ) -> pd.DataFrame:
         """
@@ -226,7 +267,7 @@ class VidClub(Source):
             from_date (str, optional): Start date for the query, by default is the oldest date in the data 2022-03-22.
             to_date (str, optional): End date for the query. By default, datetime.today() will be used.
             items_per_page (int, optional): Number of entries per page. 100 entries by default.
-            region (str, optinal): Region filter for the query. By default, it is empty.
+            region (str, optional): Region filter for the query. Defaults to "all".
             days_interval (int, optional): Days specified in date range per api call (test showed that 30-40 is optimal for performance). Defaults to 30.
 
         Returns:
