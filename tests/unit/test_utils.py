@@ -1,11 +1,10 @@
-from viadot.utils import (
-    gen_bulk_insert_query_from_df,
-    add_viadot_metadata_columns,
-    handle_api_request,
-    _cast_df_cols,
-)
-import pandas as pd
 import json
+
+import pandas as pd
+
+from viadot.utils import (_cast_df_cols, add_viadot_metadata_columns,
+                          gen_bulk_insert_query_from_df, get_fqn,
+                          handle_api_request)
 
 
 def test_single_quotes_inside():
@@ -75,7 +74,6 @@ VALUES ({TEST_VALUE_ESCAPED}, 'c')"""
 
 
 def test_handle_api_request():
-
     url = "https://api.restful-api.dev/objects"
     headers = {"content-type": "application/json"}
     item = {
@@ -134,3 +132,13 @@ def test___cast_df_cols():
     assert result_df["datetime_column"].dtype == pd.StringDtype()
     assert result_df["int_column"].dtype == pd.Int64Dtype()
     assert result_df["object_column"].dtype == pd.StringDtype()
+
+
+def test_get_fqn():
+    # Test with schema name.
+    fqn = get_fqn(table_name="my_table", schema_name="my_schema")
+    assert fqn == "my_schema.my_table"
+
+    # Test without schema name.
+    fqn = get_fqn(table_name="my_table")
+    assert fqn == "my_table"
