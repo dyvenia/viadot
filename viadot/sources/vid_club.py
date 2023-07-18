@@ -13,6 +13,7 @@ from .base import Source
 
 logger = logging.get_logger()
 
+
 class VidClub(Source):
     """
     A class implementing the Vid Club API.
@@ -21,11 +22,7 @@ class VidClub(Source):
     There are 4 endpoints where to get the data.
     """
 
-    def __init__(
-        self, 
-        *args, 
-        credentials: Dict[str, Any] = None, 
-        **kwargs):
+    def __init__(self, *args, credentials: Dict[str, Any] = None, **kwargs):
         """
         Create an instance of VidClub.
 
@@ -66,7 +63,7 @@ class VidClub(Source):
             api_url (str): Generic part of the URL.
             items_per_page (int): number of entries per page.
             source (Literal["jobs", "product", "company", "survey"], optional): The endpoint source to be accessed. Defaults to None.
-            region (str, optional): Region filter for the query. Defaults to "all".
+            region (str, optional): Region filter for the query. Valid inputs: ["bg", "hu", "hr", "pl", "ro", "si", "all"]. Defaults to "all".
 
         Returns:
             str: Final query with all filters added.
@@ -85,10 +82,7 @@ class VidClub(Source):
         return url
 
     def intervals(
-        self,
-        from_date: str,
-        to_date: str,
-        days_interval: int
+        self, from_date: str, to_date: str, days_interval: int
     ) -> Tuple[List[str], List[str]]:
         """
         Breaks dates range into smaller by provided days interval.
@@ -118,18 +112,17 @@ class VidClub(Source):
             period_start = period_end
 
         return starts, ends
-    
+
     def check_connection(
         self,
         source: Literal["jobs", "product", "company", "survey"] = None,
         from_date: str = "2022-03-22",
         to_date: str = None,
         items_per_page: int = 100,
-        region: str = "all"
-
+        region: str = "all",
     ) -> Tuple[Dict[str, Any], str]:
         """
-        Initiate first connection to API to retrieve piece of data with information about type of pagination in API URL. 
+        Initiate first connection to API to retrieve piece of data with information about type of pagination in API URL.
         This option is added because type of pagination for endpoints is being changed in the future from page number to 'next' id.
 
         Args:
@@ -137,23 +130,25 @@ class VidClub(Source):
             from_date (str, optional): Start date for the query, by default is the oldest date in the data 2022-03-22.
             to_date (str, optional): End date for the query. By default, datetime.today() will be used.
             items_per_page (int, optional): Number of entries per page. 100 entries by default.
-            region (str, optional): Region filter for the query. Defaults to "all".
+            region (str, optional): Region filter for the query. Valid inputs: ["bg", "hu", "hr", "pl", "ro", "si", "all"]. Defaults to "all".
 
         Returns:
             Dict[str, Any], str: First response from API with JSON containing data and used URL string
         """
         first_url = self.build_query(
-        source = source,
-        from_date = from_date,
-        to_date = to_date,
-        api_url = self.credentials["url"],
-        items_per_page=items_per_page,
-        region = region
+            source=source,
+            from_date=from_date,
+            to_date=to_date,
+            api_url=self.credentials["url"],
+            items_per_page=items_per_page,
+            region=region,
         )
         headers = self.headers
-        response = handle_api_response(url=first_url, headers=headers, method="GET", verify=False)
+        response = handle_api_response(
+            url=first_url, headers=headers, method="GET", verify=False
+        )
         response = response.json()
-        
+
         return response, first_url
 
     def get_response(
@@ -162,7 +157,7 @@ class VidClub(Source):
         from_date: str = "2022-03-22",
         to_date: str = None,
         items_per_page: int = 100,
-        region: str = "all"
+        region: str = "all",
     ) -> pd.DataFrame:
         """
         Basing on the pagination type retrieved using check_connection function, gets the response from the API queried and transforms it into DataFrame.
@@ -172,7 +167,7 @@ class VidClub(Source):
             from_date (str, optional): Start date for the query, by default is the oldest date in the data 2022-03-22.
             to_date (str, optional): End date for the query. By default, datetime.today() will be used.
             items_per_page (int, optional): Number of entries per page. 100 entries by default.
-            region (str, optional): Region filter for the query. Defaults to "all".
+            region (str, optional): Region filter for the query. Valid inputs: ["bg", "hu", "hr", "pl", "ro", "si", "all"]. Defaults to "all".
 
         Returns:
             pd.DataFrame: Table of the data carried in the response.
@@ -204,11 +199,11 @@ class VidClub(Source):
             raise ValidationError("to_date cannot be earlier than from_date.")
 
         response, first_url = self.check_connection(
-            source = source,
-            from_date = from_date,
-            to_date = to_date,
-            items_per_page = items_per_page,
-            region = region
+            source=source,
+            from_date=from_date,
+            to_date=to_date,
+            items_per_page=items_per_page,
+            region=region,
         )
 
         if isinstance(response, dict):
@@ -237,7 +232,9 @@ class VidClub(Source):
                 else:
                     page += 1
                     url = f"{first_url}&page={page}"
-                r = handle_api_response(url=url, headers=headers, method="GET", verify=False)
+                r = handle_api_response(
+                    url=url, headers=headers, method="GET", verify=False
+                )
                 response = r.json()
                 df_page = pd.DataFrame(response["data"])
                 if source == "product":
@@ -256,10 +253,10 @@ class VidClub(Source):
         to_date: str = None,
         items_per_page: int = 100,
         region: str = "all",
-        days_interval: int = 30
+        days_interval: int = 30,
     ) -> pd.DataFrame:
         """
-        Looping get_response and iterating by date ranges defined in intervals. Stores outputs as DataFrames in a list. 
+        Looping get_response and iterating by date ranges defined in intervals. Stores outputs as DataFrames in a list.
         At the end, daframes are concatenated in one and dropped duplicates that would appear when quering.
 
         Args:
@@ -267,7 +264,7 @@ class VidClub(Source):
             from_date (str, optional): Start date for the query, by default is the oldest date in the data 2022-03-22.
             to_date (str, optional): End date for the query. By default, datetime.today() will be used.
             items_per_page (int, optional): Number of entries per page. 100 entries by default.
-            region (str, optional): Region filter for the query. Defaults to "all".
+            region (str, optional): Region filter for the query. Valid inputs: ["bg", "hu", "hr", "pl", "ro", "si", "all"]. Defaults to "all".
             days_interval (int, optional): Days specified in date range per api call (test showed that 30-40 is optimal for performance). Defaults to 30.
 
         Returns:
@@ -275,39 +272,37 @@ class VidClub(Source):
         """
 
         starts, ends = self.intervals(
-            from_date = from_date,
-            to_date = to_date,
-            days_interval = days_interval
+            from_date=from_date, to_date=to_date, days_interval=days_interval
         )
 
         dfs_list = []
-        if len(starts) > 0 and len(ends) > 0: 
+        if len(starts) > 0 and len(ends) > 0:
             for start, end in zip(starts, ends):
                 logger.info(f"ingesting data for dates [{start}]-[{end}]...")
                 df = self.get_response(
-                    source = source,
-                    from_date = start,
-                    to_date = end,
-                    items_per_page = items_per_page,
-                    region = region,
+                    source=source,
+                    from_date=start,
+                    to_date=end,
+                    items_per_page=items_per_page,
+                    region=region,
                 )
                 dfs_list.append(df)
                 if len(dfs_list) > 1:
                     logger.info("Concatenating tables into one dataframe...")
                     df = pd.concat(dfs_list, axis=0, ignore_index=True)
                 else:
-                    df = pd.DataFrame(dfs_list[0])              
+                    df = pd.DataFrame(dfs_list[0])
         else:
             df = self.get_response(
-                    source = source,
-                    from_date = from_date,
-                    to_date = to_date,
-                    items_per_page = items_per_page,
-                    region = region,
-                )
-        df.drop_duplicates(inplace = True)
-        
+                source=source,
+                from_date=from_date,
+                to_date=to_date,
+                items_per_page=items_per_page,
+                region=region,
+            )
+        df.drop_duplicates(inplace=True)
+
         if df.empty:
             logger.error("No data for this date range")
-            
+
         return df
