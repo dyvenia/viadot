@@ -16,6 +16,11 @@ try:
 except ImportError:
     pass
 
+try:
+    from .sap_bw import SAPBW
+except ImportError:
+    pass
+
 from .business_core import BusinessCore
 from .customer_gauge import CustomerGauge
 from .duckdb import DuckDB
