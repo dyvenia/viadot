@@ -130,12 +130,23 @@ class Outlook(Source):
 
         return final_dict_folders
 
-    def _get_messages_from_mailbox(self, dict_folder: dict) -> list:
+    def _get_messages_from_mailbox(
+        self,
+        dict_folder: dict,
+        limit: int = 10000,
+        address_limit: int = 8000,
+        outbox_list: List[str] = ["Sent Items"],
+    ) -> list:
         """To retrieve all messages from all the mailboxes passed in the dictionary.
 
         Args:
             dict_folder (dict): Mailboxes dictionary holder, with the following structure:
                 "parent (sub)folder|(sub)folder": Mailbox.
+            limit (int, optional): Number of fetched top messages. Defaults to 10000.
+            address_limit (int, optional): The maximum number of accepted characters in the sum
+                of all email names. Defaults to 8000.
+            outbox_list (List[str], optional): List of outbox folders to differenciate between
+                Inboxes and Outboxes. Defaults to ["Sent Items"].
 
         Returns:
             list: A list with all messages from all Mailboxes.
@@ -143,7 +154,7 @@ class Outlook(Source):
         data = []
         for key, value in list(dict_folder.items()):
             count = 0
-            for message in value.get_messages(limit=self.limit):
+            for message in value.get_messages(limit=limit):
                 received_time = message.received
                 date_obj = datetime.fromisoformat(str(received_time))
                 if (
@@ -162,7 +173,10 @@ class Outlook(Source):
                     if recivers_list is not None:
                         for reciver in recivers_list:
                             add_string = f", {reciver['emailAddress']['address']}"
-                            if sum(list(map(len, [recivers, add_string]))) >= 8000:
+                            if (
+                                sum(list(map(len, [recivers, add_string])))
+                                >= address_limit
+                            ):
                                 break
                             else:
                                 recivers += add_string
@@ -172,10 +186,11 @@ class Outlook(Source):
                         categories = ", ".join(
                             categories for categories in message.categories
                         )
-                    conversation_index = " "
 
+                    conversation_index = " "
                     if message.conversation_index is not None:
                         conversation_index = message.conversation_index
+
                     if isinstance(message.subject, str):
                         subject = message.subject.replace("\t", " ")
                     else:
@@ -194,13 +209,15 @@ class Outlook(Source):
                         .replace(".", "_")
                         .replace("-", "_"),
                     }
-                    if sender_mail == self.mailbox_name:
+                    if any([x.lower() in key.lower() for x in outbox_list]):
                         row["Inbox"] = False
                     else:
                         row["Inbox"] = True
 
                     data.append(row)
-            self.logger.info(f"folder: {key.ljust(76, '-')}  messages: {count}")
+
+            if count > 0:
+                self.logger.info(f"folder: {key.ljust(76, '-')}  messages: {count}")
 
         return data
 
@@ -209,6 +226,8 @@ class Outlook(Source):
         start_date: Optional[str] = None,
         end_date: Optional[str] = None,
         limit: int = 10000,
+        address_limit: int = 8000,
+        outbox_list: List[str] = ["Sent Items"],
     ) -> pd.DataFrame:
         """Download all the messages stored in a MailBox folder and subfolders.
 
@@ -216,6 +235,10 @@ class Outlook(Source):
             start_date (Optional[str], optional): A filtering start date parameter e.g. "2022-01-01". Defaults to None.
             end_date (Optional[str], optional): A filtering end date parameter e.g. "2022-01-02". Defaults to None.
             limit (int, optional): Number of fetched top messages. Defaults to 10000.
+            address_limit (int, optional): The maximum number of accepted characters in the sum
+                of all email names. Defaults to 8000.
+            outbox_list (List[str], optional): List of outbox folders to differenciate between
+                Inboxes and Outboxes. Defaults to ["Sent Items"].
 
         Returns:
             pd.DataFrame: All messages are stored in a pandas framwork.
@@ -236,16 +259,24 @@ class Outlook(Source):
             self.date_range_start_time = datetime.combine(
                 self.date_range_start_time, min_time
             )
-        self.limit = limit
+            self.outbox_list = outbox_list
 
         final_dict_folders = self._get_all_folders(self.mailbox_obj)
 
-        data = self._get_messages_from_mailbox(final_dict_folders)
+        data = self._get_messages_from_mailbox(
+            final_dict_folders,
+            limit=limit,
+            address_limit=address_limit,
+            outbox_list=outbox_list,
+        )
 
         df = pd.DataFrame(data=data)
 
         if df.empty:
-            self._handle_if_empty("fail")
+            self._handle_if_empty(
+                if_empty="warn",
+                message=f"No data was got from {self.mailbox_name}, days from {self.date_range_start_time} to {self.date_range_end_time}",
+            )
 
         return df
 
