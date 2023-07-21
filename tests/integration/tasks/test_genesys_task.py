@@ -44,7 +44,7 @@ def var_dictionary() -> None:
 class MockGenesysTask:
     report_data = [[None, "COMPLETED"], [None, "COMPLETED"]]
 
-    def genesys_generate_exports(post_data_list, end_point):
+    def genesys_api_connection(post_data_list, end_point):
         report = {
             "conversations": [
                 {
@@ -232,7 +232,7 @@ def test_genesys_conversations(mock_genesys, var_dictionary):
     to_csv = GenesysToCSV()
     file_name = to_csv.run(
         view_type=None,
-        end_point="conversations/details/query",
+        end_point="analytics/conversations/details/query",
         post_data_list=var_dictionary["post_data_list_2"],
         start_date=var_dictionary["start_date"],
     )

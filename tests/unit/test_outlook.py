@@ -21,6 +21,7 @@ def var_dictionary():
             "client_secret": "abcdefghijklmnopqrstuvwxyz",
             "tenant_id": "abcdefghijklmnopqrstuvwxyz",
         },
+        "final_dict_folders": {"Mailbox": MockValue},
     }
 
     return variables
@@ -34,6 +35,42 @@ class MockClass:
 
     def mailbox():
         return None
+
+
+class MockValue:
+    name = "mailbox"
+
+    def get_messages(limit=1):
+        return [MockMessage]
+
+
+class MockMessage:
+    subject = "subject"
+    received = "2023-04-12T06:09:59+00:00"
+    categories = ["categories"]
+    conversation_index = "aaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+
+    def to_api_data():
+        data = {
+            "toRecipients": [
+                {
+                    "emailAddress": {
+                        "address": "random@random.com",
+                        "name": "random",
+                    }
+                },
+                {
+                    "emailAddress": {
+                        "address": "random@random2.com",
+                        "name": "random",
+                    }
+                },
+            ],
+            "from": {"emailAddress": {"address": "random@random.ee", "name": "name"}},
+            "receivedDateTime": "2022-04-01T06:09:59+00:00",
+            "conversationId": "bbbb",
+        }
+        return data
 
 
 @pytest.mark.basics
@@ -51,6 +88,36 @@ def test_outlook_credentials(var_dictionary):
             isinstance(o.account, Account),
         ]
     )
+
+
+@pytest.mark.basics
+@mock.patch("viadot.sources.outlook.Account", return_value=MockClass)
+def test_outlook_mailbox_limit(mock_api_Account, var_dictionary):
+    o = Outlook(
+        mailbox_name=var_dictionary["mailbox_name"],
+        credentials=var_dictionary["credentials"],
+        start_date=var_dictionary["start_date"],
+        end_date=var_dictionary["end_date"],
+    )
+    data = o._get_messages_from_mailbox(
+        var_dictionary["final_dict_folders"], address_limit=20
+    )
+    assert len(data[0]["recivers"]) <= 20
+
+
+@pytest.mark.basics
+@mock.patch("viadot.sources.outlook.Account", return_value=MockClass)
+def test_outlook_mailbox_space(mock_api_Account, var_dictionary):
+    o = Outlook(
+        mailbox_name=var_dictionary["mailbox_name"],
+        credentials=var_dictionary["credentials"],
+        start_date=var_dictionary["start_date"],
+        end_date=var_dictionary["end_date"],
+    )
+    data = o._get_messages_from_mailbox(
+        var_dictionary["final_dict_folders"], address_limit=5
+    )
+    assert len(data[0]["recivers"]) == 0
 
 
 @pytest.mark.exceptions

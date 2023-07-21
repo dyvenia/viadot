@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fixed issue with credentials handling in `VidClub` source class
 - Fixed issue with missing arguments in `VidClubToDF` task class
 
+
 ### Changed
 - Genesys API call method and the name changed from `genesys_generate_exports` to `genesys_api_connection`. 
 - Added `GET` connection inside the method `genesys_api_connection`.
