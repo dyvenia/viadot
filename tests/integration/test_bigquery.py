@@ -12,8 +12,8 @@ from viadot.sources import BigQuery
 def BIGQ():
     """
     Fixture for creating a BigQuery class instance. This fixture initializes a BigQuery client
-    using the provided credentials key and yieldsthe instance. 
-    The client instance can be used within a test function to interact with BigQuery.
+    using the provided credentials key and yields the class instance. 
+    The class instance can be used within a test function to interact with BigQuery.
 
     Yields:
         BigQuery: A BigQuery client instance.
