@@ -88,7 +88,7 @@ class VidClubToDF(Task):
         from_date: str = "2022-03-22",
         to_date: str = "",
         items_per_page: int = 100,
-        region: str = "null",
+        region: str = "all",
         days_interval: int = 30,
     ) -> pd.DataFrame:
         """
@@ -100,7 +100,7 @@ class VidClubToDF(Task):
             from_date (str, optional): Start date for the query, by default is the oldest date in the data, '2022-03-22'.
             to_date (str, optional): End date for the query, if empty, datetime.today() will be used.
             items_per_page (int, optional): Number of entries per page. 100 entries by default.
-            region (str, optinal): Region filter for the query. By default, it is empty.
+            region (str, optional): Region filter for the query. Valid inputs: ["bg", "hu", "hr", "pl", "ro", "si", "all"]. Defaults to "all".
             days_interval (int, optional): Days specified in date range per api call (test showed that 30-40 is optimal for performance). Defaults to 30.
 
         Returns:
