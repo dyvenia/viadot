@@ -7,9 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 ### Fixed
-
+- Fixed issue with credentials handling in `VidClub` source class
+- Fixed issue with missing arguments in `VidClubToDF` task class
 ### Changed
-
+- Changed looping structure for API calls in `VidClub` source class to use time intervals
+- Changed `VidClubToDF` task class to use total_load function from source
 ## [0.4.17] - 2023-06-15
 ### Fixed
 - Fixed issue with `tzlocal` for O365 package
