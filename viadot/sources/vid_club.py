@@ -219,10 +219,8 @@ class VidClub(Source):
 
         if "next" in keys_list:
             ind = True
-            logger.info("Endpoint pagination with 'next' id")
         else:
             ind = False
-            logger.info("Endpoint pagination with 'page' number")
 
         if "data" in keys_list:
             df = pd.DataFrame(response["data"])
@@ -292,7 +290,6 @@ class VidClub(Source):
                 )
                 dfs_list.append(df)
                 if len(dfs_list) > 1:
-                    logger.info("Concatenating tables into one dataframe...")
                     df = pd.concat(dfs_list, axis=0, ignore_index=True)
                 else:
                     df = pd.DataFrame(dfs_list[0])
