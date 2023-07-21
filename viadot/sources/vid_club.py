@@ -120,6 +120,7 @@ class VidClub(Source):
         to_date: str = None,
         items_per_page: int = 100,
         region: str = "all",
+        url: str = None,
     ) -> Tuple[Dict[str, Any], str]:
         """
         Initiate first connection to API to retrieve piece of data with information about type of pagination in API URL.
@@ -135,11 +136,14 @@ class VidClub(Source):
         Returns:
             Dict[str, Any], str: First response from API with JSON containing data and used URL string
         """
+        if url is None:
+            url = self.credentials["url"]
+
         first_url = self.build_query(
             source=source,
             from_date=from_date,
             to_date=to_date,
-            api_url=self.credentials["url"],
+            api_url=url,
             items_per_page=items_per_page,
             region=region,
         )
