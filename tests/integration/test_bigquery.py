@@ -34,7 +34,7 @@ def insert_into_tables() -> None:
     pandas_gbq.to_gbq(df, table_id1, if_exists="replace")
     pandas_gbq.to_gbq(df, table_id2, if_exists="replace")
 
-
+# SQL query for public dataset - user with access to Bigquery can also use public tables.
 QUERY = """
         SELECT name, SUM(number) AS total
         FROM `bigquery-public-data.usa_names.usa_1910_2013`
@@ -47,7 +47,7 @@ QUERY = """
 def test_credentials():
     """Test to see if an exception is thrown if credentials are not provided."""
     with pytest.raises(CredentialError, match=r"Credentials not found."):
-        _ = BigQuery(credentials_key="BIGQUERY_TESTS_FAKE")
+        BigQuery(credentials_key="BIGQUERY_TESTS_FAKE")
 
 
 def test_list_project(BIGQ):
