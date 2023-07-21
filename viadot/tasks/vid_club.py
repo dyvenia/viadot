@@ -76,8 +76,6 @@ class VidClubToDF(Task):
     @defaults_from_attrs(
         "source",
         "credentials",
-        "credentials_secret",
-        "vault_name",
         "from_date",
         "to_date",
     )
