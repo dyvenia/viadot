@@ -3,7 +3,6 @@ from typing import Literal, Optional, Union
 
 import pandas as pd
 import pyarrow as pa
-import urllib3
 from pydantic import BaseModel, Field
 from sqlalchemy import create_engine, text
 from sqlalchemy.exc import SADeprecationWarning
@@ -29,6 +28,15 @@ class TrinoCredentials(BaseModel):
 
 
 class Trino(Source):
+    """
+    A class for interacting with Trino as a database. Currently supports only generic
+    and Iceberg operations.
+
+    Args:
+        credentials (TrinoCredentials): Trino credentials.
+        config_key (str, optional): The key in the viadot config holding relevant credentials.
+    """
+
     def __init__(
         self,
         credentials: TrinoCredentials = None,
