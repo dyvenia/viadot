@@ -22,7 +22,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fixed a bug in `Databricks.create_table_from_pandas()`. The function now automatically casts DataFrame types. (#681)
 - Added `close_connection()` to `SAPRFC`
 - Added `Trino` source
-
+- Added `MinIO` source
 
 ### Changed
 - Added `SQLServerToDF` task
