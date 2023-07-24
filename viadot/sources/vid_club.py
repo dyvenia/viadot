@@ -48,7 +48,7 @@ class VidClub(Source):
         api_url: str,
         items_per_page: int,
         source: Literal["jobs", "product", "company", "survey"] = None,
-        region: str = "all",
+        region: Literal["bg", "hu", "hr", "pl", "ro", "si", "all"] = "all",
     ) -> str:
         """
         Builds the query from the inputs.
@@ -59,7 +59,7 @@ class VidClub(Source):
             api_url (str): Generic part of the URL.
             items_per_page (int): number of entries per page.
             source (Literal["jobs", "product", "company", "survey"], optional): The endpoint source to be accessed. Defaults to None.
-            region (str, optional): Region filter for the query. Valid inputs: ["bg", "hu", "hr", "pl", "ro", "si", "all"]. Defaults to "all".
+            region (Literal["bg", "hu", "hr", "pl", "ro", "si", "all"] = "all", optional): Region filter for the query. Valid inputs: ["bg", "hu", "hr", "pl", "ro", "si", "all"]. Defaults to "all".
 
         Returns:
             str: Final query with all filters added.
