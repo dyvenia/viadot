@@ -5,7 +5,6 @@ from datetime import timedelta
 from typing import Any, Dict, List, Literal
 
 import pandas as pd
-import prefect
 from prefect import Task
 from prefect.tasks.secrets import PrefectSecret
 from prefect.utilities import logging
@@ -88,6 +87,7 @@ class VidClubToDF(Task):
         items_per_page: int = 100,
         region: str = "all",
         days_interval: int = 30,
+        cols_to_drop: List[str] = None,
     ) -> pd.DataFrame:
         """
         Task run method.
@@ -100,6 +100,11 @@ class VidClubToDF(Task):
             items_per_page (int, optional): Number of entries per page. 100 entries by default.
             region (str, optional): Region filter for the query. Valid inputs: ["bg", "hu", "hr", "pl", "ro", "si", "all"]. Defaults to "all".
             days_interval (int, optional): Days specified in date range per api call (test showed that 30-40 is optimal for performance). Defaults to 30.
+            cols_to_drop (List[str], optional): List of columns to drop. Defaults to None.
+
+        Raises:
+            ke: When DataFrame doesn't contain columns provided in the list of columns to drop.
+            TypeError: When cols_to_drop is not a list type.
 
         Returns:
             pd.DataFrame: The query result as a pandas DataFrame.
@@ -115,5 +120,17 @@ class VidClubToDF(Task):
             region=region,
             days_interval=days_interval,
         )
+        if cols_to_drop is not None:
+            if type(cols_to_drop) is list:
+                try:
+                    vc_dataframe.drop(
+                        columns=cols_to_drop, inplace=True, errors="raise"
+                    )
+                except KeyError as ke:
+                    raise ke
+            else:
+                raise TypeError("Provide columns to drop in a List.")
+        else:
+            pass
 
         return vc_dataframe
