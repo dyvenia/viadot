@@ -78,14 +78,15 @@ class TransformAndCatalog(Flow):
 
             my_dbt_project_path = os.path.expanduser("~/dbt/my_dbt_project")
             my_datahub_recipe_path = os.path.expanduser("~/dbt/catalog/recipe.yaml")
-            my_dbt_repo_url = "[repo_url]"
 
             flow = TransformAndCatalog(
                 name="DBT flow",
                 dbt_project_path=my_dbt_project_path,
-                # datahub_recipe_path=my_datahub_recipe_path,
                 dbt_repo_url=my_dbt_repo_url,
+                token=my_token,
                 dbt_selects={"run": "my_model"}
+                metadata_dir_path="target",
+                luma_endpoint="https://luma.dyvenia.lan/api/v1/dbt"
             )
             flow.run()
             ```
