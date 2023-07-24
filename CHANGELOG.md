@@ -6,6 +6,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 ### Added
 - Added `SQLServerToParquet` flow.
+- Added `SAPBW` source class
+- Added `SAPBWToDF` task class
+- Added `SAPBWToADLS` flow class
 - Added a new `end_point` parameter in `genesys_api_connection` to make it more generic.
 
 ### Fixed

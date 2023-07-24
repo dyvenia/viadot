@@ -30,6 +30,11 @@ try:
 except ImportError:
     pass
 
+try:
+    from .sap_bw_to_adls import SAPBWToADLS
+except ImportError:
+    pass
+
 from .customer_gauge_to_adls import CustomerGaugeToADLS
 from .epicor_to_duckdb import EpicorOrdersToDuckDB
 from .eurostat_to_adls import EurostatToADLS
