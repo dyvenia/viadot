@@ -26,3 +26,4 @@ pydantic==1.10.11
 aiolimiter==1.0.0
 trino==0.326.*
 sqlalchemy==2.0.*
+minio>=7.0, <8.0

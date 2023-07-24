@@ -31,7 +31,7 @@ To run tests, you may need to set up some environment variables or the viadot co
 ## Submitting a PR
 1. [Fork the repo](https://github.com/dyvenia/viadot/fork)
 2. [Install](./README.md#installation) and [configure](./README.md#configuration) `viadot`  
-    __Note__: In order to run tests, you will also need to install dev dependencies in the `viadot_2` container with `pip install -r requirements-dev.txt --user`
+    __Note__: In order to run tests, you will also need to install dev dependencies in the `viadot_2` container with `docker exec -u root -it viadot_2 sh -c "pip install -r requirements-dev.txt"`
 3. Checkout a new branch
     ```sh
     git checkout -b <name>
