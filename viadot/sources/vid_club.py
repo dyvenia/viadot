@@ -84,12 +84,16 @@ class VidClub(Source):
         Breaks dates range into smaller by provided days interval.
 
         Args:
-            from_date (str): Start date for the query.
-            to_date (str): End date for the query. By default, datetime.today() will be used.
+            from_date (str): Start date for the query in "%Y-%m-%d" format.
+            to_date (str): End date for the query in "%Y-%m-%d" format. By default, datetime.today() will be used.
             days_interval (int): Days specified in date range per api call (test showed that 30-40 is optimal for performance).
 
         Returns:
             List[str], List[str]: Starts and Ends lists that contains information about date ranges for specific period and time interval.
+
+        Raises:
+            ValidationError: If the initial date of the query is before the oldest date in the data (2022-03-22).
+            ValidationError: If the final date of the query is before the start date.
         """
 
         if to_date == None:
@@ -97,16 +101,32 @@ class VidClub(Source):
         else:
             end_date = datetime.strptime(to_date, "%Y-%m-%d").date()
         start_date = datetime.strptime(from_date, "%Y-%m-%d").date()
+
+        from_date_obj = datetime.strptime(from_date, "%Y-%m-%d")
+        oldest_date_obj = datetime.strptime("2022-03-22", "%Y-%m-%d")
+        delta = from_date_obj - oldest_date_obj
+
+        if delta.days < 0:
+            raise ValidationError("from_date cannot be earlier than 2022-03-22.")
+
+        to_date_obj = datetime.strptime(to_date, "%Y-%m-%d")
+        delta = to_date_obj - from_date_obj
+
+        if delta.days < 0:
+            raise ValidationError("to_date cannot be earlier than from_date.")
         interval = timedelta(days=days_interval)
         starts = []
         ends = []
+
         period_start = start_date
         while period_start < end_date:
             period_end = min(period_start + interval, end_date)
             starts.append(period_start.strftime("%Y-%m-%d"))
             ends.append(period_end.strftime("%Y-%m-%d"))
             period_start = period_end
-
+        if len(starts) == 0 and len(ends) == 0:
+            starts.append(from_date)
+            ends.append(to_date)
         return starts, ends
 
     def check_connection(
@@ -175,8 +195,6 @@ class VidClub(Source):
 
         Raises:
             ValidationError: If any source different than the ones in the list are used.
-            ValidationError: If the initial date of the query is before the oldest date in the data (2022-03-22).
-            ValidationError: If the final date of the query is before the start date.
         """
         headers = self.headers
         if source not in ["jobs", "product", "company", "survey"]:
@@ -185,19 +203,6 @@ class VidClub(Source):
             )
         if to_date == None:
             to_date = datetime.today().strftime("%Y-%m-%d")
-
-        from_date_obj = datetime.strptime(from_date, "%Y-%m-%d")
-        oldest_date_obj = datetime.strptime("2022-03-22", "%Y-%m-%d")
-        delta = from_date_obj - oldest_date_obj
-
-        if delta.days < 0:
-            raise ValidationError("from_date cannot be earlier than 2022-03-22.")
-
-        to_date_obj = datetime.strptime(to_date, "%Y-%m-%d")
-        delta = to_date_obj - from_date_obj
-
-        if delta.days < 0:
-            raise ValidationError("to_date cannot be earlier than from_date.")
 
         response, first_url = self.check_connection(
             source=source,
