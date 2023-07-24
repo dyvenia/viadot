@@ -56,7 +56,7 @@ class VidClub(Source):
         Args:
             from_date (str): Start date for the query.
             to_date (str): End date for the query, if empty, datetime.today() will be used.
-            api_url (str): Generic part of the URL.
+            api_url (str): Generic part of the URL to Vid Club API.
             items_per_page (int): number of entries per page.
             source (Literal["jobs", "product", "company", "survey"], optional): The endpoint source to be accessed. Defaults to None.
             region (Literal["bg", "hu", "hr", "pl", "ro", "si", "all"] = "all", optional): Region filter for the query. Valid inputs: ["bg", "hu", "hr", "pl", "ro", "si", "all"]. Defaults to "all".
@@ -89,7 +89,7 @@ class VidClub(Source):
             days_interval (int): Days specified in date range per api call (test showed that 30-40 is optimal for performance).
 
         Returns:
-            List[str], List[str]: Starts abd Ends lists that contains information about date ranges for specific period and time interval.
+            List[str], List[str]: Starts and Ends lists that contains information about date ranges for specific period and time interval.
         """
 
         if to_date == None:
@@ -128,6 +128,7 @@ class VidClub(Source):
             to_date (str, optional): End date for the query. By default, datetime.today() will be used.
             items_per_page (int, optional): Number of entries per page. 100 entries by default.
             region (str, optional): Region filter for the query. Valid inputs: ["bg", "hu", "hr", "pl", "ro", "si", "all"]. Defaults to "all".
+            url (str, optional): Generic part of the URL to Vid Club API. Defaults to None.
 
         Returns:
             Dict[str, Any], str: First response from API with JSON containing data and used URL string
