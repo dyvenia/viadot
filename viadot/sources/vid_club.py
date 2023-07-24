@@ -22,21 +22,17 @@ class VidClub(Source):
     There are 4 endpoints where to get the data.
     """
 
-    def __init__(self, *args, credentials: Dict[str, Any] = None, **kwargs):
+    def __init__(self, credentials: Dict[str, Any], *args, **kwargs):
         """
         Create an instance of VidClub.
 
         Args:
-            credentials (Dict[str, Any], optional): Credentials to Vid Club APIs containing token.
-                Defaults to dictionary.
+            credentials (Dict[str, Any]): Credentials to Vid Club APIs containing token.
 
         Raises:
             CredentialError: If credentials are not provided as a parameter.
         """
-        if credentials is not None:
-            self.credentials = credentials
-        else:
-            raise CredentialError("Credentials not provided.")
+        self.credentials = credentials
 
         self.headers = {
             "Authorization": "Bearer " + credentials["token"],
