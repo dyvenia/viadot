@@ -19,13 +19,13 @@ class SQLServerToParquet(Flow):
         **kwargs: Dict[str, Any],
     ):
         """
-        Flow for upolading data from SQL Server to Parquet file.
+        Flow for uploading data from SQL Server to Parquet file.
 
         Args:
-            name (str): The name of the flow.
+            name (str, required): The name of the flow.
             sql_query (str, required): The query to execute on the SQL Server database. If don't start with "SELECT"
                 returns empty DataFrame.
-            local_file_path (str): Path to output parquet file.
+            local_file_path (str, required): Path to output parquet file.
             sqlserver_config_key (str, optional): The key inside local config containing the credentials. Defaults to None.
             if_exists (Literal, optional):  What to do if the file already exists. Defaults to "fail".
             timeout(int, optional): The amount of time (in seconds) to wait while running this task before
