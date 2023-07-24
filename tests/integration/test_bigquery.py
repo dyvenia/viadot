@@ -12,7 +12,7 @@ from viadot.sources import BigQuery
 def BIGQ():
     """
     Fixture for creating a BigQuery class instance. This fixture initializes a BigQuery client
-    using the provided credentials key and yields the class instance. 
+    using the provided credentials key and yields the class instance.
     The class instance can be used within a test function to interact with BigQuery.
 
     Yields:
@@ -25,7 +25,7 @@ def BIGQ():
 @pytest.fixture(scope="session")
 def insert_into_tables() -> None:
     """
-    A function to insert data into a BigQuery table. In the current version, tables are deleted 
+    A function to insert data into a BigQuery table. In the current version, tables are deleted
     after 60 days. This operation is used to secure tests and structure in a BigQuery project.
     """
     table_id1 = "manigeo.manigeo_tab"
@@ -34,7 +34,8 @@ def insert_into_tables() -> None:
     pandas_gbq.to_gbq(df, table_id1, if_exists="replace")
     pandas_gbq.to_gbq(df, table_id2, if_exists="replace")
 
-# SQL query for public dataset - user with access to Bigquery can also use public tables.
+
+# SQL query for public dataset - user with access to Bigquery can also use public datasets and tables.
 QUERY = """
         SELECT name, SUM(number) AS total
         FROM `bigquery-public-data.usa_names.usa_1910_2013`
