@@ -92,7 +92,6 @@ class VidClub(Source):
             List[str], List[str]: Starts and Ends lists that contains information about date ranges for specific period and time interval.
 
         Raises:
-            ValidationError: If the initial date of the query is before the oldest date in the data (2022-03-22).
             ValidationError: If the final date of the query is before the start date.
         """
 
@@ -103,17 +102,13 @@ class VidClub(Source):
         start_date = datetime.strptime(from_date, "%Y-%m-%d").date()
 
         from_date_obj = datetime.strptime(from_date, "%Y-%m-%d")
-        oldest_date_obj = datetime.strptime("2022-03-22", "%Y-%m-%d")
-        delta = from_date_obj - oldest_date_obj
-
-        if delta.days < 0:
-            raise ValidationError("from_date cannot be earlier than 2022-03-22.")
 
         to_date_obj = datetime.strptime(to_date, "%Y-%m-%d")
         delta = to_date_obj - from_date_obj
 
         if delta.days < 0:
             raise ValidationError("to_date cannot be earlier than from_date.")
+
         interval = timedelta(days=days_interval)
         starts = []
         ends = []
@@ -152,7 +147,18 @@ class VidClub(Source):
 
         Returns:
             Tuple[Dict[str, Any], str]: Dictionary with first response from API with JSON containing data and used URL string.
+
+        Raises:
+            ValidationError: If from_date is earlier than 2022-03-22.
+            ValidationError: If to_date is earlier than from_date.
         """
+
+        if from_date < "2022-03-22":
+            raise ValidationError("from_date cannot be earlier than 2022-03-22.")
+
+        if to_date < from_date:
+            raise ValidationError("to_date cannot be earlier than from_date.")
+
         if url is None:
             url = self.credentials["url"]
 
@@ -195,7 +201,6 @@ class VidClub(Source):
 
         Raises:
             ValidationError: If any source different than the ones in the list are used.
-            ValidationError: If from_date is earlier than 2022-03-22.
         """
         headers = self.headers
         if source not in ["jobs", "product", "company", "survey"]:
@@ -204,9 +209,6 @@ class VidClub(Source):
             )
         if to_date == None:
             to_date = datetime.today().strftime("%Y-%m-%d")
-
-        if from_date < "2022-03-22":
-            raise ValidationError("from_date cannot be earlier than 2022-03-22.")
 
         response, first_url = self.check_connection(
             source=source,
