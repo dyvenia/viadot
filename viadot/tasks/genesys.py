@@ -52,8 +52,8 @@ class GenesysToCSV(Task):
             report_columns (List[str], optional): List of exisiting column in report. Defaults to None.
             local_file_path (str, optional): The local path from which to upload the file(s). Defaults to "".
             sep (str, optional): Separator in csv file. Defaults to "\t".
-            key_list (List[str], optional): List of keys needed to specify the columns in the GET request method. Defaults to None.
             conversationId_list (List[str], optional): List of conversationId passed as attribute of GET method. Defaults to None.
+            key_list (List[str], optional): List of keys needed to specify the columns in the GET request method. Defaults to None.
             timeout(int, optional): The amount of time (in seconds) to wait while running this task before
                 a timeout occurs. Defaults to 3600.
         """
@@ -291,8 +291,8 @@ class GenesysToCSV(Task):
         "end_date",
         "report_columns",
         "credentials_genesys",
-        "key_list",
         "conversationId_list",
+        "key_list",
     )
     def run(
         self,
@@ -325,8 +325,8 @@ class GenesysToCSV(Task):
             environment (str, optional): Adress of host server. Defaults to None than will be used enviroment from credentials.
             report_url (str, optional): The url of report generated in json response. Defaults to None.
             report_columns (List[str], optional): List of exisiting column in report. Defaults to None.
-            key_list (List[str], optional): List of keys needed to specify the columns in the GET request method. Defaults to None.
             conversationId_list (List[str], optional): List of conversationId passed as attribute of GET method. Defaults to None.
+            key_list (List[str], optional): List of keys needed to specify the columns in the GET request method. Defaults to None.
 
         Returns:
             List[str]: List of file names.

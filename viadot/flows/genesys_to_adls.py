@@ -138,8 +138,8 @@ class GenesysToADLS(Flow):
                 from credentials.
             report_url (str, optional): The url of report generated in json response. Defaults to None.
             report_columns (List[str], optional): List of exisiting column in report. Defaults to None.
-            key_list (List[str], optional): List of keys needed to specify the columns in the GET request method. Defaults to None.
             conversationId_list (List[str], optional): List of conversationId passed as attribute of GET method. Defaults to None.
+            key_list (List[str], optional): List of keys needed to specify the columns in the GET request method. Defaults to None.
             local_file_path (str, optional): The local path from which to upload the file(s). Defaults to "".
             adls_file_path (str, optional): The destination path at ADLS. Defaults to None.
             overwrite_adls (bool, optional): Whether to overwrite files in the data lake. Defaults to True.
