@@ -69,7 +69,7 @@ class VidClub(Source):
         """
         if source in ["jobs", "product", "company"]:
             url = f"{api_url}{source}?from={from_date}&to={to_date}&region={region}&limit={items_per_page}"
-        elif source in ["survey"]:
+        elif source == "survey":
             url = f"{api_url}{source}?language=en&type=question"
         else:
             raise ValidationError(
