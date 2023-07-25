@@ -25,7 +25,7 @@ class VidClubToDF(Task):
         credentials_secret: str = "VIDCLUB",
         vault_name: str = None,
         from_date: str = "2022-03-22",
-        to_date: str = None,
+        to_date: str = datetime.today(),
         timeout: int = 3600,
         report_name: str = "vid_club_to_df",
         *args: List[Any],
@@ -40,7 +40,7 @@ class VidClubToDF(Task):
             credentials_secret (str, optional): The name of the secret in Azure Key Vault or Prefect or local_config file. Defaults to "VIDCLUB".
             vault_name (str, optional): For credentials stored in Azure Key Vault. The name of the vault from which to obtain the secret. Defaults to None.
             from_date (str): Start date for the query, by default is the oldest date in the data, '2022-03-22'.
-            to_date (str, optional): End date for the query. By default, datetime.today() will be used.
+            to_date (str, optional): End date for the query. Defaults to datetime.today().
             timeout (int, optional): The amount of time (in seconds) to wait while running this task before
                 a timeout occurs. Defaults to 3600.
             report_name (str, optional): Stores the report name. Defaults to "vid_club_to_df".
@@ -103,7 +103,7 @@ class VidClubToDF(Task):
             cols_to_drop (List[str], optional): List of columns to drop. Defaults to None.
 
         Raises:
-            ke: When DataFrame doesn't contain columns provided in the list of columns to drop.
+            KeyError: When DataFrame doesn't contain columns provided in the list of columns to drop.
             TypeError: When cols_to_drop is not a list type.
 
         Returns:
