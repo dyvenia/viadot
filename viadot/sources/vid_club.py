@@ -59,7 +59,7 @@ class VidClub(Source):
             api_url (str): Generic part of the URL to Vid Club API.
             items_per_page (int): number of entries per page.
             source (Literal["jobs", "product", "company", "survey"], optional): The endpoint source to be accessed. Defaults to None.
-            region (Literal["bg", "hu", "hr", "pl", "ro", "si", "all"], optional): Region filter for the query. Defaults to "all". [July 2022 status: parameter works only for 'all' on API]
+            region (Literal["bg", "hu", "hr", "pl", "ro", "si", "all"], optional): Region filter for the query. Defaults to "all". [July 2023 status: parameter works only for 'all' on API]
 
         Returns:
             str: Final query with all filters added.
