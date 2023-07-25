@@ -195,6 +195,7 @@ class VidClub(Source):
 
         Raises:
             ValidationError: If any source different than the ones in the list are used.
+            ValidationError: If from_date is earlier than 2022-03-22.
         """
         headers = self.headers
         if source not in ["jobs", "product", "company", "survey"]:
@@ -203,6 +204,9 @@ class VidClub(Source):
             )
         if to_date == None:
             to_date = datetime.today().strftime("%Y-%m-%d")
+
+        if from_date < "2022-03-22":
+            raise ValidationError("from_date cannot be earlier than 2022-03-22.")
 
         response, first_url = self.check_connection(
             source=source,
