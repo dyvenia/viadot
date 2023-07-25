@@ -29,19 +29,103 @@ def var_dictionary():
     "viadot.tasks.VidClubToDF.run", return_value=MockVidClubResponse.response_data
 )
 def test_vid_club_to_df(var_dictionary):
-    source = var_dictionary["source"]
-    from_date = var_dictionary["from_date"]
-    to_date = var_dictionary["to_date"]
-    items_per_page = var_dictionary["items_per_page"]
-    days_interval = var_dictionary["days_interval"]
+    """
+    Checks if run method returns DataFrame.
 
+    Args:
+        var_dictionary: Dictionary with example arguments for run method.
+    """
     vc_to_df = VidClubToDF(credentials=CREDENTIALS)
+
     df = vc_to_df.run(
-        source=source,
-        to_date=to_date,
-        from_date=from_date,
-        items_per_page=items_per_page,
-        days_interval=days_interval,
+        source=var_dictionary["source"],
+        to_date=var_dictionary["to_date"],
+        from_date=var_dictionary["from_date"],
+        items_per_page=var_dictionary["items_per_page"],
+        days_interval=var_dictionary["days_interval"],
     )
 
     assert isinstance(df, pd.DataFrame)
+
+
+@pytest.mark.drop_cols
+def test_drop_columns(var_dictionary):
+    """
+    Tests cols_to_drop argument in function.
+
+    Args:
+        var_dictionary: Dictionary with example arguments for run method.
+    """
+    cols_to_drop = ["regionID", "submissionDate"]
+    vc_to_df = VidClubToDF(credentials=CREDENTIALS)
+
+    output_with_all = vc_to_df.run(
+        source=var_dictionary["source"],
+        to_date=var_dictionary["to_date"],
+        from_date=var_dictionary["from_date"],
+        items_per_page=var_dictionary["items_per_page"],
+        days_interval=var_dictionary["days_interval"],
+    )
+    output_with_dropped = vc_to_df.run(
+        source=var_dictionary["source"],
+        to_date=var_dictionary["to_date"],
+        from_date=var_dictionary["from_date"],
+        items_per_page=var_dictionary["items_per_page"],
+        days_interval=var_dictionary["days_interval"],
+        cols_to_drop=cols_to_drop,
+    )
+
+    assert set(list(output_with_all.columns)) - set(
+        list(output_with_dropped.columns)
+    ) == set(cols_to_drop)
+
+
+@pytest.mark.drop_cols
+def test_drop_columns_KeyError(var_dictionary, caplog):
+    """
+    Tests if in case of KeyError (when passed columns in cols_to_drop are not included in DataFrame), there is returned error logger..
+
+    Args:
+        var_dictionary: Dictionary with example arguments for run method.
+    """
+    cols_to_drop = ["Test", "submissionDate"]
+    vc_to_df = VidClubToDF(credentials=CREDENTIALS)
+
+    vc_to_df.run(
+        source=var_dictionary["source"],
+        to_date=var_dictionary["to_date"],
+        from_date=var_dictionary["from_date"],
+        items_per_page=var_dictionary["items_per_page"],
+        days_interval=var_dictionary["days_interval"],
+        cols_to_drop=cols_to_drop,
+    )
+    assert len(caplog.records) == 1
+    assert caplog.records[0].levelname == "ERROR"
+    assert (
+        f"Column(s): {cols_to_drop} don't exist in the DataFrame"
+        in caplog.records[0].message
+    )
+    # assert caplog.records[1].levelname == "INFO"
+    # assert "Existing columns:" in caplog.records[1].message
+
+
+@pytest.mark.drop_cols
+def test_drop_columns_TypeError(var_dictionary):
+    """
+    Tests raising TypeError if passed columns in cols_to_drop is not a List.
+
+    Args:
+        var_dictionary: Dictionary with example arguments for run method.
+    """
+    with pytest.raises(TypeError, match="Provide columns to drop in a List."):
+        cols_to_drop = "Test"
+        vc_to_df = VidClubToDF(credentials=CREDENTIALS)
+
+        output_with_dropped = vc_to_df.run(
+            source=var_dictionary["source"],
+            to_date=var_dictionary["to_date"],
+            from_date=var_dictionary["from_date"],
+            items_per_page=var_dictionary["items_per_page"],
+            days_interval=var_dictionary["days_interval"],
+            cols_to_drop=cols_to_drop,
+        )
