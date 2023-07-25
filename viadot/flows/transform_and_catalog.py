@@ -6,7 +6,7 @@ from typing import Dict, List, Union
 from prefect import Flow, task
 from prefect.tasks.shell import ShellTask
 
-from viadot.tasks import CloneRepo, AzureKeyVaultSecret
+from viadot.tasks import CloneRepo, AzureKeyVaultSecret, LumaIngest
 
 
 @task
@@ -38,6 +38,8 @@ class TransformAndCatalog(Flow):
         stateful: bool = False,
         metadata_dir_path: Union[str, Path] = None,
         luma_endpoint: str = "http://localhost/api/v1/dbt",
+        luma_endpoint_secret: str = None,
+        vault_name: str = None,
         *args,
         **kwargs,
     ) -> List[str]:
@@ -66,6 +68,8 @@ class TransformAndCatalog(Flow):
                 In the case of dbt, it's dbt project's `target` directory, which contains dbt artifacts
                 (`sources.json`, `catalog.json`, `manifest.json`, and `run_results.json`). Defaults to None.
             luma_endpoint (str, optional): The endpoint of the Luma ingestion API. Defaults to "http://localhost/api/v1/dbt".
+            luma_endpoint_secret (str, optional): The name of the secret storing the luma_endpoint. Defaults to None.
+            vault_name (str, optional): The name of the vault from which to obtain the secrets. Defaults to None.
 
         Returns:
             List[str]: Lines from stdout of the `upload_metadata` task as a list.
@@ -114,6 +118,8 @@ class TransformAndCatalog(Flow):
         # LumaIngest
         self.metadata_dir_path = metadata_dir_path
         self.luma_endpoint = luma_endpoint
+        self.luma_endpoint_secret = luma_endpoint_secret
+        self.vault_name = vault_name
 
         super().__init__(*args, name=name, **kwargs)
         self.gen_flow()
@@ -228,12 +234,12 @@ class TransformAndCatalog(Flow):
         path_expanded = os.path.expandvars(self.metadata_dir_path)
         metadata_dir_path = Path(path_expanded)
 
-        upload_metadata_luma = ShellTask(
-            name="luma_task_ingest",
-            command=f"luma dbt ingest {metadata_dir_path} -e {self.luma_endpoint}",
-            helper_script=f"cd {self.dbt_project_path}",
-            return_all=True,
-            stream_output=True,
+        upload_metadata_luma = LumaIngest(
+            name="luma_ingest_task",
+            metadata_dir_path=metadata_dir_path,
+            endpoint=self.luma_endpoint,
+            credentials_secret=self.luma_endpoint_secret,
+            vault_name=self.vault_name,
         ).bind(flow=self)
 
         _cleanup_repo.bind(local_dbt_repo_path, flow=self)
