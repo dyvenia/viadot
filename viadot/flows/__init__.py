@@ -44,4 +44,3 @@ from .mindful_to_adls import MindfulToADLS
 from .sftp_operations import SftpToADLS, SftpToAzureSQL
 from .sql_server_to_duckdb import SQLServerToDuckDB
 from .sql_server_transform import SQLServerTransform
-from .vid_club_to_adls import VidClubToADLS

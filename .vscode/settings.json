@@ -1,6 +1,6 @@
 {
     "autoDocstring.docstringFormat": "google",
-    "python.formatting.provider": "none",
+    "python.formatting.provider": "black",
     "python.formatting.blackArgs": [
         "--line-length",
         "88"
@@ -48,8 +48,5 @@
         "work",
         "zfill"
     ],
-    "git.autofetch": true,
-    "[python]": {
-        "editor.defaultFormatter": "ms-python.black-formatter"
-    }
+    "git.autofetch": true
 }
