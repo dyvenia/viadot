@@ -32,8 +32,6 @@ class VidClub(Source):
         Raises:
             CredentialError: If credentials are not provided as a parameter.
         """
-        self.credentials = credentials
-
         self.headers = {
             "Authorization": "Bearer " + credentials["token"],
             "Content-Type": "application/json",
