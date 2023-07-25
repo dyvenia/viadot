@@ -59,7 +59,7 @@ class VidClub(Source):
             api_url (str): Generic part of the URL to Vid Club API.
             items_per_page (int): number of entries per page.
             source (Literal["jobs", "product", "company", "survey"], optional): The endpoint source to be accessed. Defaults to None.
-            region (Literal["bg", "hu", "hr", "pl", "ro", "si", "all"] = "all", optional): Region filter for the query. Valid inputs: ["bg", "hu", "hr", "pl", "ro", "si", "all"]. Defaults to "all".
+            region (Literal["bg", "hu", "hr", "pl", "ro", "si", "all"], optional): Region filter for the query. Valid inputs: ["bg", "hu", "hr", "pl", "ro", "si", "all"]. Defaults to "all".
 
         Returns:
             str: Final query with all filters added.
@@ -151,7 +151,7 @@ class VidClub(Source):
             url (str, optional): Generic part of the URL to Vid Club API. Defaults to None.
 
         Returns:
-            Dict[str, Any], str: First response from API with JSON containing data and used URL string
+            Tuple[Dict[str, Any], str]: Dictionary with first response from API with JSON containing data and used URL string.
         """
         if url is None:
             url = self.credentials["url"]
@@ -170,7 +170,7 @@ class VidClub(Source):
         )
         response = response.json()
 
-        return response, first_url
+        return (response, first_url)
 
     def get_response(
         self,
