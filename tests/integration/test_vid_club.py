@@ -30,16 +30,18 @@ class MockClass:
 
 @pytest.mark.init
 def test_default_credential_param():
+    """
+    Checks if credentials are loaded from Azure Key Vault or PrefectSecret or from local config ursing credentials_loader and if it's dictionary type.
+
+    """
     assert vc.credentials != None and type(vc.credentials) == dict
 
 
-@pytest.mark.init
-def test_create_club_class():
-    assert vc
-
-
-@pytest.mark.proper
+@pytest.mark.build_query
 def test_build_query_wrong_source():
+    """
+    Checks if passing different source than Literal["jobs", "product", "company", "survey"] is catched and returns error.
+    """
     with pytest.raises(
         ValidationError, match=r"Pick one these sources: jobs, product, company, survey"
     ):
@@ -52,8 +54,42 @@ def test_build_query_wrong_source():
         )
 
 
+@pytest.mark.build_query
+def test_url_string():
+    """
+    Checks if fucntion generates URL with needed parameters.
+    """
+    source = "jobs"
+    from_date = "2023-03-24"
+    to_date = "2023-03-24"
+    api_url = "https://api/test/"
+    items_per_page = 1
+
+    expected_elements = [
+        f"from={from_date}",
+        f"to={to_date}",
+        "region=all",
+        f"limit={items_per_page}",
+        api_url,
+    ]
+
+    query = vc.build_query(
+        source=source,
+        from_date=from_date,
+        to_date=to_date,
+        api_url=api_url,
+        items_per_page=items_per_page,
+    )
+
+    for ex in expected_elements:
+        assert ex in query
+
+
 @pytest.mark.intervals
 def test_intervals_split():
+    """
+    Checks if prrovided date range with days_interval creates list with expected split.
+    """
     from_date = "2022-01-01"
     to_date = "2022-01-19"
     days_interval = 5
@@ -67,28 +103,35 @@ def test_intervals_split():
     assert ends == expected_ends
 
 
-@mock.patch("viadot.sources.vid_club.VidClub.check_connection")
 @pytest.mark.connection_check
-def test_check_connection(mock_function):
-    mock_first_output = "Mocked Output"
-    mock_second_output = "Mocked Output"
-    mock_function.return_value = mock_first_output, mock_function.return_value[1]
+def test_check_connection():
+    """
+    Checks if check_connection method returns tuple with dictionary and string.
+    """
+    output = vc.check_connection(
+        source="jobs",
+        from_date="2023-03-24",
+        to_date="2023-03-24",
+        items_per_page=1,
+    )
 
     response, first_url = vc.check_connection(
         source="jobs",
         from_date="2023-03-24",
         to_date="2023-03-24",
-        url="test",
         items_per_page=1,
     )
-    print(response)
-    print(first_url)
+
+    assert isinstance(output, tuple)
+    assert isinstance(response, dict)
     assert isinstance(first_url, str)
-    assert len(first_url) > len(mock_second_output)
 
 
 @pytest.mark.proper
 def test_get_response_wrong_source():
+    """
+    Checks if ValidationError is returned when passing wrong source name.
+    """
     with pytest.raises(
         ValidationError, match=r"The source has to be: jobs, product, company or survey"
     ):
@@ -101,6 +144,14 @@ def test_get_response_wrong_source():
 @pytest.mark.parametrize("source", ["jobs", "company", "product", "survey"])
 @pytest.mark.proper
 def test_get_response_sources(mock_api_response, source):
+    """
+    Checks if get_response method returnes DataFrame for each of the 4 possible sources.
+    Test assert that the mock was called exactly once.
+
+    Args:
+        mock_api_response: Mocked return_value for get_response method.
+        source: The endpoint source to be accessed.
+    """
     query = vc.get_response(source=source, to_date="2023-03-24", from_date="2023-03-24")
 
     assert isinstance(query, pd.DataFrame)
@@ -109,24 +160,32 @@ def test_get_response_sources(mock_api_response, source):
 
 @pytest.mark.proper
 def test_get_response_wrong_date():
+    """
+    Checks if ValidationError is returned when passing from_date earlier than 2022-03-22.
+    """
     with pytest.raises(
         ValidationError, match=r"from_date cannot be earlier than 2022-03-22"
     ):
-        query = vc.get_response(source="jobs", from_date="2021-05-09")
+        vc.get_response(source="jobs", from_date="2021-05-09")
 
 
 @pytest.mark.proper
 def test_get_response_wrong_date_range():
+    """
+    Checks if ValidationError is returned when passing to_date earlier than from_date.
+    """
     with pytest.raises(
         ValidationError, match=r"to_date cannot be earlier than from_date"
     ):
-        query = vc.get_response(
-            source="jobs", to_date="2022-05-04", from_date="2022-05-05"
-        )
+        vc.get_response(source="jobs", to_date="2022-05-04", from_date="2022-05-05")
 
 
 @pytest.mark.total_load
 def test_total_load_for_the_same_dates():
+    """
+    total_load method includes logic for situation when from_date == to_date. In this scenario interval split is skipped and used just get_response method.
+    This test checks if this logic is executed without error and returned object if DataFrame.
+    """
     from_date = "2022-04-01"
     to_date = "2022-04-01"
     days_interval = 10
@@ -140,6 +199,10 @@ def test_total_load_for_the_same_dates():
 
 @pytest.mark.total_load
 def test_total_load_for_intervals():
+    """
+    Checks if interval function is properly looped in the total_load method. At first we check if returned object is DataFrame,
+    then we check if returned DataFrame for smaller date range contains less rows than DataFrame returned for bigger date range.
+    """
     from_date = "2022-04-01"
     to_date = "2022-04-12"
     days_interval = 2
@@ -166,6 +229,10 @@ def test_total_load_for_intervals():
 
 @pytest.mark.total_load
 def test_drop_duplicates():
+    """
+    Checks logic for dropping duplicated rows, that is included in total_load method.
+    Test checks if returned DataFrame has duplicates.
+    """
     from_date = "2022-04-01"
     to_date = "2022-04-12"
     days_interval = 2
