@@ -13,11 +13,19 @@ def var_dictionary() -> None:
     variables = {
         "start_date": datetime.now().strftime("%Y-%m-%d"),
         "end_date": datetime.now().strftime("%Y-%m-%d"),
-        "v_list": ["xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxx1", 
-                   "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxx2", 
-                   "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxx3"],
-        "key_list": ["MainIntent", "SubIntent", "Final Sub Intent", 
-                     "CustomerOutcomeTrack", "LastUtterance", "Final Main Intent"],
+        "v_list": [
+            "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxx1",
+            "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxx2",
+            "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxx3",
+        ],
+        "key_list": [
+            "MainIntent",
+            "SubIntent",
+            "Final Sub Intent",
+            "CustomerOutcomeTrack",
+            "LastUtterance",
+            "Final Main Intent",
+        ],
         "post_data_list": [
             {
                 "name": "AGENT_STATUS_DETAIL_VIEW",
@@ -46,8 +54,9 @@ def var_dictionary() -> None:
     }
     return variables
 
+
 class MockGenesysTask:
-    report_data = [[None, "COMPLETED"], [None, "COMPLETED"]],
+    report_data = ([[None, "COMPLETED"], [None, "COMPLETED"]],)
 
     def genesys_api_connection(post_data_list, end_point, method="POST"):
         if method == "GET":
@@ -64,9 +73,7 @@ class MockGenesysTask:
                         "queueName": "dev_name",
                         "purpose": "customer",
                         "wrapupRequired": None,
-                        "mediaRoles": [
-                            "full"
-                        ],
+                        "mediaRoles": ["full"],
                         "attributes": {
                             "MainIntent3": "mainintent3",
                             "SubIntent3": "subintent3",
@@ -89,7 +96,7 @@ class MockGenesysTask:
                             "LastUtterance4": "lastutterance4",
                             "LastUtterance3": "lastutterance3",
                             "LOB": "lob",
-                            "memberId": "123456789"
+                            "memberId": "123456789",
                         },
                         "calls": [],
                         "callbacks": [],
@@ -98,9 +105,9 @@ class MockGenesysTask:
                         "emails": [],
                         "messages": [],
                     }
-                ]
+                ],
             }
-        else:   
+        else:
             report = {
                 "conversations": [
                     {
@@ -309,11 +316,11 @@ def test_genesys_webmsg(mock_genesys, var_dictionary):
         post_data_list=[""],
         key_list=var_dictionary["key_list"],
         start_date=var_dictionary["start_date"],
-        end_date=var_dictionary["end_date"]
+        end_date=var_dictionary["end_date"],
     )
 
     start = var_dictionary["start_date"].replace("-", "")
     end = var_dictionary["end_date"].replace("-", "")
 
     mock_genesys.assert_called_once()
-    assert file_name[0] ==  f"WEBMESSAGE_{start}-{end}.csv"
+    assert file_name[0] == f"WEBMESSAGE_{start}-{end}.csv"

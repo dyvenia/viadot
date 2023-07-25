@@ -1,13 +1,13 @@
 import os
-import pytest
-from unittest import mock
 from datetime import datetime
+from unittest import mock
 
 import pandas as pd
+import pytest
 from O365.account import Account
 
-from viadot.sources import Outlook
 from viadot.exceptions import CredentialError
+from viadot.sources import Outlook
 
 
 @pytest.fixture

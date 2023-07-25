@@ -5,11 +5,8 @@ import numpy as np
 import pandas as pd
 from prefect import Flow, task
 
+from viadot.task_utils import add_ingestion_metadata_task, adls_bulk_upload
 from viadot.tasks.genesys import GenesysToCSV
-from viadot.task_utils import (
-    add_ingestion_metadata_task,
-    adls_bulk_upload,
-)
 
 
 @task(timeout=3600)

@@ -1,7 +1,8 @@
-import pytest
 import pandas as pd
-from viadot.tasks import SAPBWToDF
+import pytest
+
 from viadot.task_utils import credentials_loader
+from viadot.tasks import SAPBWToDF
 
 CREDENTIALS = credentials_loader.run(credentials_secret="SAP")
 sapbw_task = SAPBWToDF(sapbw_credentials=CREDENTIALS.get("BW"))

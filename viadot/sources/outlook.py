@@ -1,11 +1,10 @@
 import sys
-import pytz
 from datetime import date, datetime, timedelta
 from typing import Any, Dict, List
 
-import prefect
 import pandas as pd
 import prefect
+import pytz
 from O365 import Account
 from O365.mailbox import MailBox
 

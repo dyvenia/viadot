@@ -1,8 +1,10 @@
-from typing import List
-from viadot.sources.base import Source
-from viadot.exceptions import CredentialError, ValidationError
-from pyrfc import Connection
 import textwrap
+from typing import List
+
+from pyrfc import Connection
+
+from viadot.exceptions import CredentialError, ValidationError
+from viadot.sources.base import Source
 
 
 class SAPBW(Source):

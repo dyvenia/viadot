@@ -1,9 +1,10 @@
-import pytest
 import os
+
+import pytest
 from prefect import Flow
 
-from viadot.tasks import SQLServerToDF
 from viadot.flows import SQLServerToParquet
+from viadot.tasks import SQLServerToDF
 from viadot.tasks.sql_server import SQLServerQuery
 
 SCHEMA = "sandbox"

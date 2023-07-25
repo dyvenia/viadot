@@ -1,8 +1,9 @@
 import os
+from unittest import mock
+
 import pandas as pd
 import pytest
 
-from unittest import mock
 from viadot.flows import SAPBWToADLS
 
 DATA = {

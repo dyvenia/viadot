@@ -2,6 +2,7 @@ import pandas as pd
 from prefect import Task
 from prefect.tasks.secrets import PrefectSecret
 from prefect.utilities import logging
+
 from viadot.exceptions import ValidationError
 from viadot.sources import SAPBW
 from viadot.task_utils import *

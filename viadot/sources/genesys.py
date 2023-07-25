@@ -8,8 +8,8 @@ from typing import Any, Dict, List, Literal, Optional
 
 import aiohttp
 import pandas as pd
-from aiolimiter import AsyncLimiter
 import prefect
+from aiolimiter import AsyncLimiter
 from prefect.engine import signals
 
 from viadot.config import local_config

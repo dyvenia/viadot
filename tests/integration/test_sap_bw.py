@@ -1,8 +1,8 @@
 import pytest
-from viadot.sources import SAPBW
-from viadot.task_utils import credentials_loader
 from pyrfc import Connection
 
+from viadot.sources import SAPBW
+from viadot.task_utils import credentials_loader
 
 CREDENTIALS = credentials_loader.run(credentials_secret="SAP")
 SAPBW = SAPBW(credentials=CREDENTIALS.get("BW"))
