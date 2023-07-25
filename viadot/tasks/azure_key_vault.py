@@ -43,7 +43,7 @@ def get_key_vault(
         except ValueError as e:
             # go to step 3 (attempt to read from env)
             pass
-    credentials = EnvironmentCredential()
+    credentials = EnvironmentCredential(additionally_allowed_tenants=["*"])
     vault_url = f"https://{vault_name}.vault.azure.net"
     key_vault = SecretClient(
         vault_url=vault_url, credential=credentials, **secret_client_kwargs
