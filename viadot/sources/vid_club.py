@@ -140,7 +140,7 @@ class VidClub(Source):
             from_date (str, optional): Start date for the query, by default is the oldest date in the data 2022-03-22.
             to_date (str, optional): End date for the query. By default, datetime.today() will be used.
             items_per_page (int, optional): Number of entries per page. 100 entries by default.
-            region (Literal["bg", "hu", "hr", "pl", "ro", "si", "all"], optional): Region filter for the query. Defaults to "all". [July 2022 status: parameter works only for 'all' on API]
+            region (Literal["bg", "hu", "hr", "pl", "ro", "si", "all"], optional): Region filter for the query. Defaults to "all". [July 2023 status: parameter works only for 'all' on API]
             url (str, optional): Generic part of the URL to Vid Club API. Defaults to None.
 
         Returns:
@@ -192,7 +192,7 @@ class VidClub(Source):
             from_date (str, optional): Start date for the query, by default is the oldest date in the data 2022-03-22.
             to_date (str, optional): End date for the query. By default, datetime.today() will be used.
             items_per_page (int, optional): Number of entries per page. 100 entries by default.
-            region (Literal["bg", "hu", "hr", "pl", "ro", "si", "all"], optional): Region filter for the query. Defaults to "all". [July 2022 status: parameter works only for 'all' on API]
+            region (Literal["bg", "hu", "hr", "pl", "ro", "si", "all"], optional): Region filter for the query. Defaults to "all". [July 2023 status: parameter works only for 'all' on API]
 
         Returns:
             pd.DataFrame: Table of the data carried in the response.
@@ -272,7 +272,7 @@ class VidClub(Source):
             from_date (str, optional): Start date for the query, by default is the oldest date in the data 2022-03-22.
             to_date (str, optional): End date for the query. By default, datetime.today() will be used.
             items_per_page (int, optional): Number of entries per page. 100 entries by default.
-            region (Literal["bg", "hu", "hr", "pl", "ro", "si", "all"], optional): Region filter for the query. Defaults to "all". [July 2022 status: parameter works only for 'all' on API]
+            region (Literal["bg", "hu", "hr", "pl", "ro", "si", "all"], optional): Region filter for the query. Defaults to "all". [July 2023 status: parameter works only for 'all' on API]
             days_interval (int, optional): Days specified in date range per api call (test showed that 30-40 is optimal for performance). Defaults to 30.
 
         Returns:
