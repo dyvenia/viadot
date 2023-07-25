@@ -59,7 +59,7 @@ class VidClub(Source):
             api_url (str): Generic part of the URL to Vid Club API.
             items_per_page (int): number of entries per page.
             source (Literal["jobs", "product", "company", "survey"], optional): The endpoint source to be accessed. Defaults to None.
-            region (Literal["bg", "hu", "hr", "pl", "ro", "si", "all"], optional): Region filter for the query. Valid inputs: ["bg", "hu", "hr", "pl", "ro", "si", "all"]. Defaults to "all".
+            region (Literal["bg", "hu", "hr", "pl", "ro", "si", "all"], optional): Region filter for the query. Defaults to "all". [July 2022 status: parameter works only for 'all' on API]
 
         Returns:
             str: Final query with all filters added.
@@ -135,7 +135,7 @@ class VidClub(Source):
         from_date: str = "2022-03-22",
         to_date: str = None,
         items_per_page: int = 100,
-        region: str = "all",
+        region: Literal["bg", "hu", "hr", "pl", "ro", "si", "all"] = "all",
         url: str = None,
     ) -> Tuple[Dict[str, Any], str]:
         """
@@ -147,7 +147,7 @@ class VidClub(Source):
             from_date (str, optional): Start date for the query, by default is the oldest date in the data 2022-03-22.
             to_date (str, optional): End date for the query. By default, datetime.today() will be used.
             items_per_page (int, optional): Number of entries per page. 100 entries by default.
-            region (str, optional): Region filter for the query. Valid inputs: ["bg", "hu", "hr", "pl", "ro", "si", "all"]. Defaults to "all".
+            region (Literal["bg", "hu", "hr", "pl", "ro", "si", "all"], optional): Region filter for the query. Defaults to "all". [July 2022 status: parameter works only for 'all' on API]
             url (str, optional): Generic part of the URL to Vid Club API. Defaults to None.
 
         Returns:
@@ -178,7 +178,7 @@ class VidClub(Source):
         from_date: str = "2022-03-22",
         to_date: str = None,
         items_per_page: int = 100,
-        region: str = "all",
+        region: Literal["bg", "hu", "hr", "pl", "ro", "si", "all"] = "all",
     ) -> pd.DataFrame:
         """
         Basing on the pagination type retrieved using check_connection function, gets the response from the API queried and transforms it into DataFrame.
@@ -188,7 +188,7 @@ class VidClub(Source):
             from_date (str, optional): Start date for the query, by default is the oldest date in the data 2022-03-22.
             to_date (str, optional): End date for the query. By default, datetime.today() will be used.
             items_per_page (int, optional): Number of entries per page. 100 entries by default.
-            region (str, optional): Region filter for the query. Valid inputs: ["bg", "hu", "hr", "pl", "ro", "si", "all"]. Defaults to "all".
+            region (Literal["bg", "hu", "hr", "pl", "ro", "si", "all"], optional): Region filter for the query. Defaults to "all". [July 2022 status: parameter works only for 'all' on API]
 
         Returns:
             pd.DataFrame: Table of the data carried in the response.
@@ -256,7 +256,7 @@ class VidClub(Source):
         from_date: str = "2022-03-22",
         to_date: str = None,
         items_per_page: int = 100,
-        region: str = "all",
+        region: Literal["bg", "hu", "hr", "pl", "ro", "si", "all"] = "all",
         days_interval: int = 30,
     ) -> pd.DataFrame:
         """
@@ -268,7 +268,7 @@ class VidClub(Source):
             from_date (str, optional): Start date for the query, by default is the oldest date in the data 2022-03-22.
             to_date (str, optional): End date for the query. By default, datetime.today() will be used.
             items_per_page (int, optional): Number of entries per page. 100 entries by default.
-            region (str, optional): Region filter for the query. Valid inputs: ["bg", "hu", "hr", "pl", "ro", "si", "all"]. Defaults to "all".
+            region (Literal["bg", "hu", "hr", "pl", "ro", "si", "all"], optional): Region filter for the query. Defaults to "all". [July 2022 status: parameter works only for 'all' on API]
             days_interval (int, optional): Days specified in date range per api call (test showed that 30-40 is optimal for performance). Defaults to 30.
 
         Returns:
