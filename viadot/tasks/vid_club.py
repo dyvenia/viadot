@@ -123,11 +123,15 @@ class VidClubToDF(Task):
         if cols_to_drop is not None:
             if isinstance(cols_to_drop, list):
                 try:
+                    logger.info(f"Dropping following columns: {cols_to_drop}...")
                     vc_dataframe.drop(
                         columns=cols_to_drop, inplace=True, errors="raise"
                     )
                 except KeyError as ke:
-                    raise ke
+                    logger.error(
+                        f"Column(s): {cols_to_drop} don't exist in the DataFrame. No columns were dropped. Returning full DataFrame..."
+                    )
+                    logger.info(f"Existing columns: {vc_dataframe.columns}")
             else:
                 raise TypeError("Provide columns to drop in a List.")
 
