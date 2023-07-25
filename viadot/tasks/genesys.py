@@ -464,13 +464,13 @@ class GenesysToCSV(Task):
         elif view_type is None and end_point == "conversations":
             data_list = []
 
-            for Id in conversationId_list:
+            for id in conversationId_list:
                 json_file = genesys.genesys_api_connection(
                     post_data_list=post_data_list,
-                    end_point=f"{end_point}/{Id}",
+                    end_point=f"{end_point}/{id}",
                     method="GET",
                 )
-                logger.info(f"Generated webmsg_response for {Id}")
+                logger.info(f"Generated webmsg_response for {id}")
 
                 attributes = json_file["participants"][0]["attributes"]
                 temp_dict = {
@@ -485,7 +485,7 @@ class GenesysToCSV(Task):
             start = start_date.replace("-", "")
             end = end_date.replace("-", "")
 
-            file_name = f"WebMessage_{start}-{end}".upper() + ".csv"
+            file_name = f"WEBMESSAGE_{start}-{end}.csv"
             df.to_csv(
                 os.path.join(file_name),
                 index=False,
