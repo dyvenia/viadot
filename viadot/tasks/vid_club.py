@@ -121,7 +121,7 @@ class VidClubToDF(Task):
             days_interval=days_interval,
         )
         if cols_to_drop is not None:
-            if type(cols_to_drop) is list:
+            if isinstance(cols_to_drop, list):
                 try:
                     vc_dataframe.drop(
                         columns=cols_to_drop, inplace=True, errors="raise"
@@ -130,7 +130,5 @@ class VidClubToDF(Task):
                     raise ke
             else:
                 raise TypeError("Provide columns to drop in a List.")
-        else:
-            pass
 
         return vc_dataframe
