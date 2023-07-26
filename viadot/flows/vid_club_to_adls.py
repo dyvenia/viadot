@@ -59,7 +59,7 @@ class VidClubToADLS(Flow):
             to_date (str, optional): End date for the query. Defaults to None.
             items_per_page (int, optional): Number of entries per page. Defaults to 100.
             region (Literal["bg", "hu", "hr", "pl", "ro", "si", "all"], optional): Region filter for the query. Defaults to "all". [July 2023 status: parameter works only for 'all' on API]
-            days_interval (int, optional): Days specified in date range per api call (test showed that 30-40 is optimal for performance). Defaults to 30.
+            days_interval (int, optional): Days specified in date range per API call (test showed that 30-40 is optimal for performance). Defaults to 30.
             cols_to_drop (List[str], optional): List of columns to drop. Defaults to None.
             vid_club_credentials (Dict[str, Any], optional): Stores the credentials information. Defaults to None.
             vidclub_credentials_secret (str, optional): The name of the secret in Azure Key Vault or Prefect or local_config file. Defaults to "VIDCLUB".
