@@ -21,9 +21,9 @@ To run tests, you may need to set up some environment variables or the viadot co
 To run the docs locally, run the following:
 
 ```bash
-python -m venv .venv
-source .venv/bin/activate
-cd docs/ && pip install -r requirements.txt && cd ..
+python -m venv .venv &&
+source .venv/bin/activate &&
+pip install -r requirements-dev.txt &&
 mkdocs serve
 ```
 
