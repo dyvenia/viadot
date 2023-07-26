@@ -5,7 +5,7 @@ This guide aims to assist the developers in migrating the sources, tasks and flo
 The process involves refactoring and modifying the existing sources in viadot 1.0 to work properly on [viadot 2.0](https://github.com/dyvenia/viadot/tree/2.0). This process include but are not limited to the following steps:
 ### Decoupling Prefect from the source
 One of the aims of the migration is to completely decouple viadot 2.0 from prefect.
-This includes to the following actions:
+This includes the following actions:
 
 - Removing `prefect` imports and replacing them if needed
 
