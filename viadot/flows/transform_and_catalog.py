@@ -154,49 +154,40 @@ class TransformAndCatalog(Flow):
             f"-t {self.dbt_target}" if self.dbt_target is not None else ""
         )
 
-        if self.stateful:
-            source_freshness_upstream = clone
-        else:
-            # Clean up artifacts from previous runs (`target/` dir and packages)
+        # Clean up artifacts from previous runs (`target/` dir and packages)
 
-            dbt_clean_up = ShellTask(
-                name="dbt_task_clean",
-                command=f"dbt clean",
-                helper_script=f"cd {self.dbt_project_path}",
-                return_all=True,
-                stream_output=True,
-            ).bind(flow=self)
+        dbt_clean_up = ShellTask(
+            name="dbt_task_clean",
+            command=f"dbt clean",
+            helper_script=f"cd {self.dbt_project_path}",
+            return_all=True,
+            stream_output=True,
+        ).bind(flow=self)
 
-            pull_dbt_deps = ShellTask(
-                name="dbt_task_deps",
-                command=f"dbt deps",
-                helper_script=f"cd {self.dbt_project_path}",
-                return_all=True,
-                stream_output=True,
-            ).bind(flow=self)
-            # source_freshness_upstream = pull_dbt_deps
+        pull_dbt_deps = ShellTask(
+            name="dbt_task_deps",
+            command=f"dbt deps",
+            helper_script=f"cd {self.dbt_project_path}",
+            return_all=True,
+            stream_output=True,
+        ).bind(flow=self)
 
         # Source freshness
         # Produces `sources.json`
-        # source_freshness_select = self.dbt_selects.get("source_freshness")
-        # source_freshness_select_safe = (
-        #     f"-s {source_freshness_select}"
-        #     if source_freshness_select is not None
-        #     else ""
-        # )
+        source_freshness_select = self.dbt_selects.get("source_freshness")
+        source_freshness_select_safe = (
+            f"-s {source_freshness_select}"
+            if source_freshness_select is not None
+            else ""
+        )
 
-        # source_freshness = DBTTask(name="dbt_task_source_freshness").bind(
-        #     project_path=self.dbt_project_path,
-        #     command=f"source freshness {source_freshness_select_safe} {dbt_target_option}",
-        #     flow=self,
-        # )
-        # source_freshness = ShellTask(
-        #     name="dbt_task_source_freshness",
-        #     command=f"dbt source freshness {source_freshness_select_safe} {dbt_target_option}",
-        #     helper_script=f"cd {self.dbt_project_path}",
-        #     return_all=True,
-        #     stream_output=True,
-        # ).bind(flow=self)
+        source_freshness = ShellTask(
+            name="dbt_task_source_freshness",
+            command=f"dbt source freshness {source_freshness_select_safe} {dbt_target_option}",
+            helper_script=f"cd {self.dbt_project_path}",
+            return_all=True,
+            stream_output=True,
+        ).bind(flow=self)
 
         run_select = self.dbt_selects.get("run")
         run_select_safe = f"-s {run_select}" if run_select is not None else ""
@@ -246,7 +237,7 @@ class TransformAndCatalog(Flow):
 
         dbt_clean_up.set_upstream(clone, flow=self)
         pull_dbt_deps.set_upstream(dbt_clean_up, flow=self)
-        # source_freshness.set_upstream(pull_dbt_deps, flow=self)
+        source_freshness.set_upstream(pull_dbt_deps, flow=self)
         run.set_upstream(pull_dbt_deps, flow=self)
         generate_catalog_json.set_upstream(run, flow=self)
         test.set_upstream(generate_catalog_json, flow=self)
