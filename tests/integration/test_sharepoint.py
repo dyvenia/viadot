@@ -32,7 +32,7 @@ def sharepoint():
 
 
 @pytest.fixture(scope="session")
-def FILE_NAME(sharepoint):
+def file_name(sharepoint):
     """
     A function built to get the path to a file.
 
@@ -109,28 +109,28 @@ def test_download_file_missing_patameters(sharepoint):
         sharepoint.download_file(download_to_path=None, download_from_path=None)
 
 
-def test_file_download(FILE_NAME):
+def test_file_download(file_name):
     """
     Testing if file is downloaded.
 
     Args:
-        FILE_NAME (str): File name.
+        file_name (str): File name.
     """
     files = []
     for file in os.listdir():
         if os.path.isfile(os.path.join(file)):
             files.append(file)
-    assert FILE_NAME in files
+    assert file_name in files
 
 
-def test_autopopulating_download_from(FILE_NAME):
+def test_autopopulating_download_from(file_name):
     """
     Testing if file name is correct.
 
     Args:
-        FILE_NAME (str): File name.
+        file_name (str): File name.
     """
-    assert os.path.basename(get_url()) == FILE_NAME
+    assert os.path.basename(get_url()) == file_name
 
 
 def test_file_extension():
@@ -139,26 +139,26 @@ def test_file_extension():
     assert get_url().endswith(file_ext)
 
 
-def test_file_to_df(FILE_NAME):
+def test_file_to_df(file_name):
     """
     Testing if downloaded file contains data and if first sheet can be build as a Data frame.
 
     Args:
-        FILE_NAME (str): File name.
+        file_name (str): File name.
     """
-    df = pd.read_excel(FILE_NAME, sheet_name=0)
+    df = pd.read_excel(file_name, sheet_name=0)
     df_test = pd.DataFrame(data={"col1": [1, 2]})
     assert type(df) == type(df_test)
 
 
-def test_get_data_types(FILE_NAME):
+def test_get_data_types(file_name):
     """
     Testing if downloaded file contains data and columns have `String` type.
 
     Args:
-        FILE_NAME (str): File name.
+        file_name (str): File name.
     """
-    df = pd.read_excel(FILE_NAME, sheet_name=0)
+    df = pd.read_excel(file_name, sheet_name=0)
     dtypes_map = df_get_data_types_task.run(df)
     dtypes = dtypes_map.values()
 
