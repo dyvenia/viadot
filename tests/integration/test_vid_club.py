@@ -32,9 +32,8 @@ class MockClass:
 def test_default_credential_param():
     """
     Checks if credentials are loaded from Azure Key Vault or PrefectSecret or from local config ursing credentials_loader and if it's dictionary type.
-
     """
-    assert vc.credentials != None and type(vc.credentials) == dict
+    assert vc.credentials is not None and isinstance(vc.credentials, dict)
 
 
 @pytest.mark.build_query
@@ -81,8 +80,7 @@ def test_url_string():
         items_per_page=items_per_page,
     )
 
-    for ex in expected_elements:
-        assert ex in query
+    assert all(ex in query for ex in expected_elements)
 
 
 @pytest.mark.intervals
