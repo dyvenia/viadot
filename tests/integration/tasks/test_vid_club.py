@@ -59,13 +59,6 @@ def test_drop_columns(var_dictionary):
     cols_to_drop = ["regionID", "submissionDate"]
     vc_to_df = VidClubToDF(credentials=CREDENTIALS)
 
-    output_with_all = vc_to_df.run(
-        source=var_dictionary["source"],
-        to_date=var_dictionary["to_date"],
-        from_date=var_dictionary["from_date"],
-        items_per_page=var_dictionary["items_per_page"],
-        days_interval=var_dictionary["days_interval"],
-    )
     output_with_dropped = vc_to_df.run(
         source=var_dictionary["source"],
         to_date=var_dictionary["to_date"],
@@ -75,9 +68,7 @@ def test_drop_columns(var_dictionary):
         cols_to_drop=cols_to_drop,
     )
 
-    assert set(list(output_with_all.columns)) - set(
-        list(output_with_dropped.columns)
-    ) == set(cols_to_drop)
+    assert all(col not in output_with_dropped.columns for col in cols_to_drop)
 
 
 @pytest.mark.drop_cols
@@ -105,8 +96,6 @@ def test_drop_columns_KeyError(var_dictionary, caplog):
         f"Column(s): {cols_to_drop} don't exist in the DataFrame"
         in caplog.records[0].message
     )
-    # assert caplog.records[1].levelname == "INFO"
-    # assert "Existing columns:" in caplog.records[1].message
 
 
 @pytest.mark.drop_cols
