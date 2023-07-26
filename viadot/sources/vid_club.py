@@ -94,9 +94,9 @@ class VidClub(Source):
         """
 
         if to_date == None:
-            end_date = datetime.today().date()
-        else:
-            end_date = datetime.strptime(to_date, "%Y-%m-%d").date()
+            to_date = datetime.today().strftime("%Y-%m-%d")
+
+        end_date = datetime.strptime(to_date, "%Y-%m-%d").date()
         start_date = datetime.strptime(from_date, "%Y-%m-%d").date()
 
         from_date_obj = datetime.strptime(from_date, "%Y-%m-%d")
