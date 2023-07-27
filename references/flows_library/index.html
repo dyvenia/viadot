@@ -1,0 +1,2560 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+        <link rel="canonical" href="https://dyvenia.github.io/viadot/references/flows_library/">
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.2.3, mkdocs-material-8.0.1">
+    
+    
+      
+        <title>Flows library - Viadot Docs</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.816931ca.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.9204c3b2.min.css">
+        
+      
+    
+    
+    
+      
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,400i,700%7CRoboto+Mono&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/_mkdocstrings.css">
+    
+    <script>function __md_scope(e,t,_){return new URL(_||(t===localStorage?"../..":"../.."),location).pathname+"."+e}function __md_get(e,t=localStorage,_){return JSON.parse(t.getItem(__md_scope(e,t,_)))}function __md_set(e,t,_=localStorage,o){try{_.setItem(__md_scope(e,_,o),JSON.stringify(t))}catch(e){}}</script>
+    
+      
+
+
+    
+    
+  </head>
+  
+  
+    
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="" data-md-color-primary="none" data-md-color-accent="none">
+  
+    
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#flows-library" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="Viadot Docs" class="md-header__button md-logo" aria-label="Viadot Docs" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54z"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3V6m0 5h18v2H3v-2m0 5h18v2H3v-2z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Viadot Docs
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Flows library
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+    
+    
+      <label class="md-header__button md-icon" for="__search">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5z"/></svg>
+      </label>
+      <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5z"/></svg>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" aria-label="Clear" tabindex="-1">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-tabs__inner md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+
+
+  <li class="md-tabs__item">
+    <a href="../.." class="md-tabs__link">
+      Home
+    </a>
+  </li>
+
+      
+        
+  
+  
+
+
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../howtos/config_file/" class="md-tabs__link">
+        Howtos
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+
+
+  <li class="md-tabs__item">
+    <a href="../../tutorials/adding_source/" class="md-tabs__link">
+      Tutorials
+    </a>
+  </li>
+
+      
+        
+  
+  
+    
+  
+
+
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../sql_sources/" class="md-tabs__link md-tabs__link--active">
+        References
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+
+
+  <li class="md-tabs__item">
+    <a href="../task_library/" class="md-tabs__link">
+      Task library
+    </a>
+  </li>
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="Viadot Docs" class="md-nav__button md-logo" aria-label="Viadot Docs" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54z"/></svg>
+
+    </a>
+    Viadot Docs
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        Home
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_2" type="checkbox" id="__nav_2" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_2">
+          Howtos
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Howtos" data-md-level="1">
+        <label class="md-nav__title" for="__nav_2">
+          <span class="md-nav__icon md-icon"></span>
+          Howtos
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../howtos/config_file/" class="md-nav__link">
+        Config File
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../howtos/running_tasks/" class="md-nav__link">
+        Running a task
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../howtos/flows/" class="md-nav__link">
+        Flows
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tutorials/adding_source/" class="md-nav__link">
+        Tutorials
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+    
+  
+  
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_4" type="checkbox" id="__nav_4" checked>
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_4">
+          References
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="References" data-md-level="1">
+        <label class="md-nav__title" for="__nav_4">
+          <span class="md-nav__icon md-icon"></span>
+          References
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../sql_sources/" class="md-nav__link">
+        SQL Sources
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api_sources/" class="md-nav__link">
+        API Sources
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+    
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" data-md-toggle="toc" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          Flows library
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        Flows library
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#viadot.flows.adls_container_to_container.ADLSContainerToContainer" class="md-nav__link">
+    ADLSContainerToContainer
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#viadot.flows.adls_gen1_to_azure_sql_new.ADLSGen1ToAzureSQLNew" class="md-nav__link">
+    ADLSGen1ToAzureSQLNew
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#viadot.flows.adls_gen1_to_azure_sql.ADLSGen1ToAzureSQL" class="md-nav__link">
+    ADLSGen1ToAzureSQL
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#viadot.flows.adls_gen1_to_gen2.ADLSGen1ToGen2" class="md-nav__link">
+    ADLSGen1ToGen2
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#viadot.flows.adls_to_azure_sql.ADLSToAzureSQL" class="md-nav__link">
+    ADLSToAzureSQL
+  </a>
+  
+    <nav class="md-nav" aria-label="ADLSToAzureSQL">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#viadot.flows.adls_to_azure_sql.ADLSToAzureSQL.__init__" class="md-nav__link">
+    __init__()
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#viadot.flows.azure_sql_transform.AzureSQLTransform" class="md-nav__link">
+    AzureSQLTransform
+  </a>
+  
+    <nav class="md-nav" aria-label="AzureSQLTransform">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#viadot.flows.azure_sql_transform.AzureSQLTransform.__init__" class="md-nav__link">
+    __init__()
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#viadot.flows.supermetrics_to_adls.SupermetricsToADLS" class="md-nav__link">
+    SupermetricsToADLS
+  </a>
+  
+    <nav class="md-nav" aria-label="SupermetricsToADLS">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#viadot.flows.supermetrics_to_adls.SupermetricsToADLS.__init__" class="md-nav__link">
+    __init__()
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#viadot.flows.supermetrics_to_azure_sql.SupermetricsToAzureSQL" class="md-nav__link">
+    SupermetricsToAzureSQL
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#viadot.flows.cloud_for_customers_report_to_adls.CloudForCustomersReportToADLS" class="md-nav__link">
+    CloudForCustomersReportToADLS
+  </a>
+  
+    <nav class="md-nav" aria-label="CloudForCustomersReportToADLS">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#viadot.flows.cloud_for_customers_report_to_adls.CloudForCustomersReportToADLS.__init__" class="md-nav__link">
+    __init__()
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../task_library/" class="md-nav__link">
+        Task library
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#viadot.flows.adls_container_to_container.ADLSContainerToContainer" class="md-nav__link">
+    ADLSContainerToContainer
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#viadot.flows.adls_gen1_to_azure_sql_new.ADLSGen1ToAzureSQLNew" class="md-nav__link">
+    ADLSGen1ToAzureSQLNew
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#viadot.flows.adls_gen1_to_azure_sql.ADLSGen1ToAzureSQL" class="md-nav__link">
+    ADLSGen1ToAzureSQL
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#viadot.flows.adls_gen1_to_gen2.ADLSGen1ToGen2" class="md-nav__link">
+    ADLSGen1ToGen2
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#viadot.flows.adls_to_azure_sql.ADLSToAzureSQL" class="md-nav__link">
+    ADLSToAzureSQL
+  </a>
+  
+    <nav class="md-nav" aria-label="ADLSToAzureSQL">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#viadot.flows.adls_to_azure_sql.ADLSToAzureSQL.__init__" class="md-nav__link">
+    __init__()
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#viadot.flows.azure_sql_transform.AzureSQLTransform" class="md-nav__link">
+    AzureSQLTransform
+  </a>
+  
+    <nav class="md-nav" aria-label="AzureSQLTransform">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#viadot.flows.azure_sql_transform.AzureSQLTransform.__init__" class="md-nav__link">
+    __init__()
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#viadot.flows.supermetrics_to_adls.SupermetricsToADLS" class="md-nav__link">
+    SupermetricsToADLS
+  </a>
+  
+    <nav class="md-nav" aria-label="SupermetricsToADLS">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#viadot.flows.supermetrics_to_adls.SupermetricsToADLS.__init__" class="md-nav__link">
+    __init__()
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#viadot.flows.supermetrics_to_azure_sql.SupermetricsToAzureSQL" class="md-nav__link">
+    SupermetricsToAzureSQL
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#viadot.flows.cloud_for_customers_report_to_adls.CloudForCustomersReportToADLS" class="md-nav__link">
+    CloudForCustomersReportToADLS
+  </a>
+  
+    <nav class="md-nav" aria-label="CloudForCustomersReportToADLS">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#viadot.flows.cloud_for_customers_report_to_adls.CloudForCustomersReportToADLS.__init__" class="md-nav__link">
+    __init__()
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          <div class="md-content" data-md-component="content">
+            <article class="md-content__inner md-typeset">
+              
+                
+
+<h1 id="flows-library">Flows library</h1>
+
+
+  <div class="doc doc-object doc-class">
+
+
+
+<h2 id="viadot.flows.adls_container_to_container.ADLSContainerToContainer" class="doc doc-heading">
+        <code>
+viadot.flows.adls_container_to_container.ADLSContainerToContainer            (<span title="prefect.core.flow.Flow">Flow</span>)
+        </code>
+
+
+
+</h2>
+
+    <div class="doc doc-contents first">
+
+      <p>Copy file(s) between containers.</p>
+
+<p><strong>Parameters:</strong></p>
+<table>
+  <thead>
+    <tr>
+      <th>Name</th>
+      <th>Type</th>
+      <th>Description</th>
+      <th>Default</th>
+    </tr>
+  </thead>
+  <tbody>
+      <tr>
+        <td><code>name</code></td>
+        <td><code>str</code></td>
+        <td><p>The name of the flow.</p></td>
+        <td><em>required</em></td>
+      </tr>
+      <tr>
+        <td><code>from_path</code></td>
+        <td><code>str</code></td>
+        <td><p>The path to the Data Lake file.</p></td>
+        <td><em>required</em></td>
+      </tr>
+      <tr>
+        <td><code>to_path</code></td>
+        <td><code>str</code></td>
+        <td><p>The path of the final file location a/a/filename.extension.</p></td>
+        <td><em>required</em></td>
+      </tr>
+      <tr>
+        <td><code>adls_sp_credentials_secret</code></td>
+        <td><code>str</code></td>
+        <td><p>The name of the Azure Key Vault secret containing a dictionary with
+ACCOUNT_NAME and Service Principal credentials (TENANT_ID, CLIENT_ID, CLIENT_SECRET) for the Azure Data Lake.
+Defaults to None.</p></td>
+        <td><em>required</em></td>
+      </tr>
+      <tr>
+        <td><code>vault_name</code></td>
+        <td><code>str</code></td>
+        <td><p>The name of the vault from which to retrieve the secrets.</p></td>
+        <td><em>required</em></td>
+      </tr>
+      <tr>
+        <td><code>timeout(int,</code></td>
+        <td><code>optional</code></td>
+        <td><p>The amount of time (in seconds) to wait while running this task before
+a timeout occurs. Defaults to 3600.</p></td>
+        <td><em>required</em></td>
+      </tr>
+  </tbody>
+</table>
+
+
+
+  <div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  </div>
+
+    </div>
+
+  </div>
+
+
+
+  <div class="doc doc-object doc-class">
+
+
+
+<h2 id="viadot.flows.adls_gen1_to_azure_sql_new.ADLSGen1ToAzureSQLNew" class="doc doc-heading">
+        <code>
+viadot.flows.adls_gen1_to_azure_sql_new.ADLSGen1ToAzureSQLNew            (<span title="prefect.core.flow.Flow">Flow</span>)
+        </code>
+
+
+
+</h2>
+
+    <div class="doc doc-contents first">
+
+      <p>Move file(s) from Azure Data Lake gen1 to gen2.</p>
+
+<p><strong>Parameters:</strong></p>
+<table>
+  <thead>
+    <tr>
+      <th>Name</th>
+      <th>Type</th>
+      <th>Description</th>
+      <th>Default</th>
+    </tr>
+  </thead>
+  <tbody>
+      <tr>
+        <td><code>name</code></td>
+        <td><code>str</code></td>
+        <td><p>The name of the flow.</p></td>
+        <td><em>required</em></td>
+      </tr>
+      <tr>
+        <td><code>gen1_path</code></td>
+        <td><code>str</code></td>
+        <td><p>The path to the gen1 Data Lake file/folder.</p></td>
+        <td><em>required</em></td>
+      </tr>
+      <tr>
+        <td><code>gen2_path</code></td>
+        <td><code>str</code></td>
+        <td><p>The path of the final gen2 file/folder.</p></td>
+        <td><em>required</em></td>
+      </tr>
+      <tr>
+        <td><code>local_file_path</code></td>
+        <td><code>str</code></td>
+        <td><p>Where the gen1 file should be downloaded.</p></td>
+        <td><em>required</em></td>
+      </tr>
+      <tr>
+        <td><code>overwrite</code></td>
+        <td><code>str</code></td>
+        <td><p>Whether to overwrite the destination file(s).</p></td>
+        <td><em>required</em></td>
+      </tr>
+      <tr>
+        <td><code>read_sep</code></td>
+        <td><code>str</code></td>
+        <td><p>The delimiter for the gen1 file.</p></td>
+        <td><em>required</em></td>
+      </tr>
+      <tr>
+        <td><code>write_sep</code></td>
+        <td><code>str</code></td>
+        <td><p>The delimiter for the output file.</p></td>
+        <td><em>required</em></td>
+      </tr>
+      <tr>
+        <td><code>read_quoting</code></td>
+        <td><code>str</code></td>
+        <td><p>The quoting option for the input file.</p></td>
+        <td><em>required</em></td>
+      </tr>
+      <tr>
+        <td><code>read_lineterminator</code></td>
+        <td><code>str</code></td>
+        <td><p>The line terminator for the input file.</p></td>
+        <td><em>required</em></td>
+      </tr>
+      <tr>
+        <td><code>read_error_bad_lines</code></td>
+        <td><code>bool</code></td>
+        <td><p>Whether to raise an exception on bad lines.</p></td>
+        <td><em>required</em></td>
+      </tr>
+      <tr>
+        <td><code>gen1_sp_credentials_secret</code></td>
+        <td><code>str</code></td>
+        <td><p>The Key Vault secret holding Service Pricipal credentials for gen1 lake</p></td>
+        <td><em>required</em></td>
+      </tr>
+      <tr>
+        <td><code>gen2_sp_credentials_secret</code></td>
+        <td><code>str</code></td>
+        <td><p>The Key Vault secret holding Service Pricipal credentials for gen2 lake</p></td>
+        <td><em>required</em></td>
+      </tr>
+      <tr>
+        <td><code>sqldb_credentials_secret</code></td>
+        <td><code>str</code></td>
+        <td><p>The Key Vault secret holding Azure SQL Database credentials</p></td>
+        <td><em>required</em></td>
+      </tr>
+      <tr>
+        <td><code>vault_name</code></td>
+        <td><code>str</code></td>
+        <td><p>The name of the vault from which to retrieve <code>sp_credentials_secret</code></p></td>
+        <td><em>required</em></td>
+      </tr>
+      <tr>
+        <td><code>timeout(int,</code></td>
+        <td><code>optional</code></td>
+        <td><p>The amount of time (in seconds) to wait while running this task before
+a timeout occurs. Defaults to 3600.</p></td>
+        <td><em>required</em></td>
+      </tr>
+  </tbody>
+</table>
+
+
+
+  <div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  </div>
+
+    </div>
+
+  </div>
+
+
+
+  <div class="doc doc-object doc-class">
+
+
+
+<h2 id="viadot.flows.adls_gen1_to_azure_sql.ADLSGen1ToAzureSQL" class="doc doc-heading">
+        <code>
+viadot.flows.adls_gen1_to_azure_sql.ADLSGen1ToAzureSQL            (<span title="prefect.core.flow.Flow">Flow</span>)
+        </code>
+
+
+
+</h2>
+
+    <div class="doc doc-contents first">
+
+      <p>Bulk insert a file from an Azure Data Lake gen1 to Azure SQL Database.</p>
+
+<p><strong>Parameters:</strong></p>
+<table>
+  <thead>
+    <tr>
+      <th>Name</th>
+      <th>Type</th>
+      <th>Description</th>
+      <th>Default</th>
+    </tr>
+  </thead>
+  <tbody>
+      <tr>
+        <td><code>name</code></td>
+        <td><code>str</code></td>
+        <td><p>The name of the flow.</p></td>
+        <td><em>required</em></td>
+      </tr>
+      <tr>
+        <td><code>path</code></td>
+        <td><code>str</code></td>
+        <td><p>The path to the Data Lake file/folder.</p></td>
+        <td><em>required</em></td>
+      </tr>
+      <tr>
+        <td><code>blob_path</code></td>
+        <td><code>str</code></td>
+        <td><p>The path of the generated blob.</p></td>
+        <td><em>required</em></td>
+      </tr>
+      <tr>
+        <td><code>dtypes</code></td>
+        <td><code>dict</code></td>
+        <td><p>Which dtypes to use when creating the table in Azure SQL Database.</p></td>
+        <td><em>required</em></td>
+      </tr>
+      <tr>
+        <td><code>local_file_path</code></td>
+        <td><code>str</code></td>
+        <td><p>Where the gen1 file should be downloaded.</p></td>
+        <td><em>required</em></td>
+      </tr>
+      <tr>
+        <td><code>sp_credentials_secret</code></td>
+        <td><code>str</code></td>
+        <td><p>The Key Vault secret holding Service Pricipal credentials</p></td>
+        <td><em>required</em></td>
+      </tr>
+      <tr>
+        <td><code>vault_name</code></td>
+        <td><code>str</code></td>
+        <td><p>The name of the vault from which to retrieve <code>sp_credentials_secret</code></p></td>
+        <td><em>required</em></td>
+      </tr>
+      <tr>
+        <td><code>timeout(int,</code></td>
+        <td><code>optional</code></td>
+        <td><p>The amount of time (in seconds) to wait while running this task before
+a timeout occurs. Defaults to 3600.</p></td>
+        <td><em>required</em></td>
+      </tr>
+  </tbody>
+</table>
+
+
+
+  <div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  </div>
+
+    </div>
+
+  </div>
+
+
+
+  <div class="doc doc-object doc-class">
+
+
+
+<h2 id="viadot.flows.adls_gen1_to_gen2.ADLSGen1ToGen2" class="doc doc-heading">
+        <code>
+viadot.flows.adls_gen1_to_gen2.ADLSGen1ToGen2            (<span title="prefect.core.flow.Flow">Flow</span>)
+        </code>
+
+
+
+</h2>
+
+    <div class="doc doc-contents first">
+
+      <p>Move file(s) from Azure Data Lake gen1 to gen2.</p>
+
+<p><strong>Parameters:</strong></p>
+<table>
+  <thead>
+    <tr>
+      <th>Name</th>
+      <th>Type</th>
+      <th>Description</th>
+      <th>Default</th>
+    </tr>
+  </thead>
+  <tbody>
+      <tr>
+        <td><code>name</code></td>
+        <td><code>str</code></td>
+        <td><p>The name of the flow.</p></td>
+        <td><em>required</em></td>
+      </tr>
+      <tr>
+        <td><code>gen1_path</code></td>
+        <td><code>str</code></td>
+        <td><p>The path to the gen1 Data Lake file/folder.</p></td>
+        <td><em>required</em></td>
+      </tr>
+      <tr>
+        <td><code>gen2_path</code></td>
+        <td><code>str</code></td>
+        <td><p>The path of the final gen2 file/folder.</p></td>
+        <td><em>required</em></td>
+      </tr>
+      <tr>
+        <td><code>local_file_path</code></td>
+        <td><code>str</code></td>
+        <td><p>Where the gen1 file should be downloaded.</p></td>
+        <td><em>required</em></td>
+      </tr>
+      <tr>
+        <td><code>overwrite</code></td>
+        <td><code>str</code></td>
+        <td><p>Whether to overwrite the destination file(s).</p></td>
+        <td><em>required</em></td>
+      </tr>
+      <tr>
+        <td><code>gen1_sp_credentials_secret</code></td>
+        <td><code>str</code></td>
+        <td><p>The Key Vault secret holding Service Pricipal credentials for gen1 lake</p></td>
+        <td><em>required</em></td>
+      </tr>
+      <tr>
+        <td><code>gen2_sp_credentials_secret</code></td>
+        <td><code>str</code></td>
+        <td><p>The Key Vault secret holding Service Pricipal credentials for gen2 lake</p></td>
+        <td><em>required</em></td>
+      </tr>
+      <tr>
+        <td><code>vault_name</code></td>
+        <td><code>str</code></td>
+        <td><p>The name of the vault from which to retrieve the secrets.</p></td>
+        <td><em>required</em></td>
+      </tr>
+      <tr>
+        <td><code>timeout(int,</code></td>
+        <td><code>optional</code></td>
+        <td><p>The amount of time (in seconds) to wait while running this task before
+a timeout occurs. Defaults to 3600.</p></td>
+        <td><em>required</em></td>
+      </tr>
+  </tbody>
+</table>
+
+
+
+  <div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  </div>
+
+    </div>
+
+  </div>
+
+
+
+  <div class="doc doc-object doc-class">
+
+
+
+<h2 id="viadot.flows.adls_to_azure_sql.ADLSToAzureSQL" class="doc doc-heading">
+        <code>
+viadot.flows.adls_to_azure_sql.ADLSToAzureSQL            (<span title="prefect.core.flow.Flow">Flow</span>)
+        </code>
+
+
+
+</h2>
+
+    <div class="doc doc-contents first">
+
+
+
+
+
+  <div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+  <div class="doc doc-object doc-method">
+
+
+
+<h3 id="viadot.flows.adls_to_azure_sql.ADLSToAzureSQL.__init__" class="doc doc-heading">
+<code class="highlight language-python"><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">local_file_path</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">adls_path</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">read_sep</span><span class="o">=</span><span class="s1">&#39;</span><span class="se">\t</span><span class="s1">&#39;</span><span class="p">,</span> <span class="n">write_sep</span><span class="o">=</span><span class="s1">&#39;</span><span class="se">\t</span><span class="s1">&#39;</span><span class="p">,</span> <span class="n">remove_tab</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">overwrite_adls</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">if_empty</span><span class="o">=</span><span class="s1">&#39;warn&#39;</span><span class="p">,</span> <span class="n">adls_sp_credentials_secret</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">dtypes</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">check_dtypes_order</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">table</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">schema</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">if_exists</span><span class="o">=</span><span class="s1">&#39;replace&#39;</span><span class="p">,</span> <span class="n">check_col_order</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">sqldb_credentials_secret</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">on_bcp_error</span><span class="o">=</span><span class="s1">&#39;skip&#39;</span><span class="p">,</span> <span class="n">max_download_retries</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">tags</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;promotion&#39;</span><span class="p">],</span> <span class="n">vault_name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="mi">3600</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></code>
+
+  <span class="doc doc-properties">
+      <small class="doc doc-property doc-property-special"><code>special</code></small>
+  </span>
+
+</h3>
+
+    <div class="doc doc-contents ">
+
+      <p>Flow for downloading data from different marketing APIs to a local CSV
+using Supermetrics API, then uploading it to Azure Data Lake,
+and finally inserting into Azure SQL Database.</p>
+
+<p><strong>Parameters:</strong></p>
+<table>
+  <thead>
+    <tr>
+      <th>Name</th>
+      <th>Type</th>
+      <th>Description</th>
+      <th>Default</th>
+    </tr>
+  </thead>
+  <tbody>
+      <tr>
+        <td><code>name</code></td>
+        <td><code>str</code></td>
+        <td><p>The name of the flow.</p></td>
+        <td><em>required</em></td>
+      </tr>
+      <tr>
+        <td><code>local_file_path</code></td>
+        <td><code>str</code></td>
+        <td><p>Local destination path. Defaults to None.</p></td>
+        <td><code>None</code></td>
+      </tr>
+      <tr>
+        <td><code>adls_path</code></td>
+        <td><code>str</code></td>
+        <td><p>The path to an ADLS folder or file. If you pass a path to a directory,</p></td>
+        <td><code>None</code></td>
+      </tr>
+      <tr>
+        <td><code>read_sep</code></td>
+        <td><code>str</code></td>
+        <td><p>The delimiter for the source file. Defaults to "  ".</p></td>
+        <td><code>&#39;\t&#39;</code></td>
+      </tr>
+      <tr>
+        <td><code>write_sep</code></td>
+        <td><code>str</code></td>
+        <td><p>The delimiter for the output CSV file. Defaults to "     ".</p></td>
+        <td><code>&#39;\t&#39;</code></td>
+      </tr>
+      <tr>
+        <td><code>remove_tab</code></td>
+        <td><code>bool</code></td>
+        <td><p>Whether to remove tab delimiters from the data. Defaults to False.</p></td>
+        <td><code>False</code></td>
+      </tr>
+      <tr>
+        <td><code>overwrite_adls</code></td>
+        <td><code>bool</code></td>
+        <td><p>Whether to overwrite the file in ADLS. Defaults to True.</p></td>
+        <td><code>True</code></td>
+      </tr>
+      <tr>
+        <td><code>if_empty</code></td>
+        <td><code>str</code></td>
+        <td><p>What to do if the Supermetrics query returns no data. Defaults to "warn".</p></td>
+        <td><code>&#39;warn&#39;</code></td>
+      </tr>
+      <tr>
+        <td><code>adls_sp_credentials_secret</code></td>
+        <td><code>str</code></td>
+        <td><p>The name of the Azure Key Vault secret containing a dictionary with</p></td>
+        <td><code>None</code></td>
+      </tr>
+      <tr>
+        <td><code>dtypes</code></td>
+        <td><code>dict</code></td>
+        <td><p>Which custom data types should be used for SQL table creation task.</p></td>
+        <td><code>None</code></td>
+      </tr>
+      <tr>
+        <td><code>check_dtypes_order</code></td>
+        <td><code>bool, optiona</code></td>
+        <td><p>By default, this task will be used by all the flows. It can
+be set up to False for avoiding its application. Defaults to True.</p></td>
+        <td><code>True</code></td>
+      </tr>
+      <tr>
+        <td><code>table</code></td>
+        <td><code>str</code></td>
+        <td><p>Destination table. Defaults to None.</p></td>
+        <td><code>None</code></td>
+      </tr>
+      <tr>
+        <td><code>schema</code></td>
+        <td><code>str</code></td>
+        <td><p>Destination schema. Defaults to None.</p></td>
+        <td><code>None</code></td>
+      </tr>
+      <tr>
+        <td><code>if_exists</code></td>
+        <td><code>Literal</code></td>
+        <td><p>What to do if the table exists. Defaults to "replace".</p></td>
+        <td><code>&#39;replace&#39;</code></td>
+      </tr>
+      <tr>
+        <td><code>check_col_order</code></td>
+        <td><code>bool</code></td>
+        <td><p>Whether to check column order. Defaults to True.</p></td>
+        <td><code>True</code></td>
+      </tr>
+      <tr>
+        <td><code>sqldb_credentials_secret</code></td>
+        <td><code>str</code></td>
+        <td><p>The name of the Azure Key Vault secret containing a dictionary with</p></td>
+        <td><code>None</code></td>
+      </tr>
+      <tr>
+        <td><code>on_bcp_error</code></td>
+        <td><code>Literal[&#34;skip&#34;, &#34;fail&#34;]</code></td>
+        <td><p>What to do if error occurs. Defaults to "skip".</p></td>
+        <td><code>&#39;skip&#39;</code></td>
+      </tr>
+      <tr>
+        <td><code>max_download_retries</code></td>
+        <td><code>int</code></td>
+        <td><p>How many times to retry the download. Defaults to 5.</p></td>
+        <td><code>5</code></td>
+      </tr>
+      <tr>
+        <td><code>tags</code></td>
+        <td><code>List[str]</code></td>
+        <td><p>Flow tags to use, eg. to control flow concurrency. Defaults to ["promotion"].</p></td>
+        <td><code>[&#39;promotion&#39;]</code></td>
+      </tr>
+      <tr>
+        <td><code>vault_name</code></td>
+        <td><code>str</code></td>
+        <td><p>The name of the vault from which to obtain the secrets. Defaults to None.</p></td>
+        <td><code>None</code></td>
+      </tr>
+      <tr>
+        <td><code>timeout(int,</code></td>
+        <td><code>optional</code></td>
+        <td><p>The amount of time (in seconds) to wait while running this task before
+a timeout occurs. Defaults to 3600.</p></td>
+        <td><em>required</em></td>
+      </tr>
+  </tbody>
+</table>
+        <details class="quote">
+          <summary>Source code in <code>viadot/flows/adls_to_azure_sql.py</code></summary>
+          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+    <span class="bp">self</span><span class="p">,</span>
+    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">local_file_path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">adls_path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">read_sep</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="se">\t</span><span class="s2">&quot;</span><span class="p">,</span>
+    <span class="n">write_sep</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="se">\t</span><span class="s2">&quot;</span><span class="p">,</span>
+    <span class="n">remove_tab</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="n">overwrite_adls</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+    <span class="n">if_empty</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;warn&quot;</span><span class="p">,</span>
+    <span class="n">adls_sp_credentials_secret</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">dtypes</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">check_dtypes_order</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+    <span class="n">table</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">schema</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">if_exists</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;fail&quot;</span><span class="p">,</span> <span class="s2">&quot;replace&quot;</span><span class="p">,</span> <span class="s2">&quot;append&quot;</span><span class="p">,</span> <span class="s2">&quot;delete&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;replace&quot;</span><span class="p">,</span>
+    <span class="n">check_col_order</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+    <span class="n">sqldb_credentials_secret</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">on_bcp_error</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;skip&quot;</span><span class="p">,</span> <span class="s2">&quot;fail&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;skip&quot;</span><span class="p">,</span>
+    <span class="n">max_download_retries</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">5</span><span class="p">,</span>
+    <span class="n">tags</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;promotion&quot;</span><span class="p">],</span>
+    <span class="n">vault_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">timeout</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">3600</span><span class="p">,</span>
+    <span class="o">*</span><span class="n">args</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">any</span><span class="p">],</span>
+    <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Flow for downloading data from different marketing APIs to a local CSV</span>
+<span class="sd">    using Supermetrics API, then uploading it to Azure Data Lake,</span>
+<span class="sd">    and finally inserting into Azure SQL Database.</span>
+<span class="sd">    Args:</span>
+<span class="sd">        name (str): The name of the flow.</span>
+<span class="sd">        local_file_path (str, optional): Local destination path. Defaults to None.</span>
+<span class="sd">        adls_path (str): The path to an ADLS folder or file. If you pass a path to a directory,</span>
+<span class="sd">        the latest file from that directory will be loaded. We assume that the files are named using timestamps.</span>
+<span class="sd">        read_sep (str, optional): The delimiter for the source file. Defaults to &quot;\t&quot;.</span>
+<span class="sd">        write_sep (str, optional): The delimiter for the output CSV file. Defaults to &quot;\t&quot;.</span>
+<span class="sd">        remove_tab (bool, optional): Whether to remove tab delimiters from the data. Defaults to False.</span>
+<span class="sd">        overwrite_adls (bool, optional): Whether to overwrite the file in ADLS. Defaults to True.</span>
+<span class="sd">        if_empty (str, optional): What to do if the Supermetrics query returns no data. Defaults to &quot;warn&quot;.</span>
+<span class="sd">        adls_sp_credentials_secret (str, optional): The name of the Azure Key Vault secret containing a dictionary with</span>
+<span class="sd">        ACCOUNT_NAME and Service Principal credentials (TENANT_ID, CLIENT_ID, CLIENT_SECRET) for the Azure Data Lake.</span>
+<span class="sd">        Defaults to None.</span>
+<span class="sd">        dtypes (dict, optional): Which custom data types should be used for SQL table creation task.</span>
+<span class="sd">        To be used only in case that dtypes need to be manually mapped - dtypes from raw schema file in use by default. Defaults to None.</span>
+<span class="sd">        check_dtypes_order (bool, optiona): By default, this task will be used by all the flows. It can</span>
+<span class="sd">            be set up to False for avoiding its application. Defaults to True.</span>
+<span class="sd">        table (str, optional): Destination table. Defaults to None.</span>
+<span class="sd">        schema (str, optional): Destination schema. Defaults to None.</span>
+<span class="sd">        if_exists (Literal, optional): What to do if the table exists. Defaults to &quot;replace&quot;.</span>
+<span class="sd">        check_col_order (bool, optional): Whether to check column order. Defaults to True.</span>
+<span class="sd">        sqldb_credentials_secret (str, optional): The name of the Azure Key Vault secret containing a dictionary with</span>
+<span class="sd">        Azure SQL Database credentials. Defaults to None.</span>
+<span class="sd">        on_bcp_error (Literal[&quot;skip&quot;, &quot;fail&quot;], optional): What to do if error occurs. Defaults to &quot;skip&quot;.</span>
+<span class="sd">        max_download_retries (int, optional): How many times to retry the download. Defaults to 5.</span>
+<span class="sd">        tags (List[str], optional): Flow tags to use, eg. to control flow concurrency. Defaults to [&quot;promotion&quot;].</span>
+<span class="sd">        vault_name (str, optional): The name of the vault from which to obtain the secrets. Defaults to None.</span>
+<span class="sd">        timeout(int, optional): The amount of time (in seconds) to wait while running this task before</span>
+<span class="sd">            a timeout occurs. Defaults to 3600.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">adls_path</span> <span class="o">=</span> <span class="n">adls_path</span><span class="o">.</span><span class="n">strip</span><span class="p">(</span><span class="s2">&quot;/&quot;</span><span class="p">)</span>
+    <span class="c1"># Read parquet</span>
+    <span class="k">if</span> <span class="n">adls_path</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;.&quot;</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;csv&quot;</span><span class="p">,</span> <span class="s2">&quot;parquet&quot;</span><span class="p">]:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">adls_path</span> <span class="o">=</span> <span class="n">adls_path</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">adls_path</span> <span class="o">=</span> <span class="n">get_key_value</span><span class="p">(</span><span class="n">key</span><span class="o">=</span><span class="n">adls_path</span><span class="p">)</span>
+
+    <span class="c1"># Read schema</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">dtypes</span> <span class="o">=</span> <span class="n">dtypes</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">check_dtypes_order</span> <span class="o">=</span> <span class="n">check_dtypes_order</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">adls_root_dir_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">adls_path</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">adls_file_name</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">adls_path</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+    <span class="n">extension</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">splitext</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">adls_path</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+    <span class="n">json_schema_file_name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">adls_file_name</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="n">extension</span><span class="p">,</span> <span class="s2">&quot;.json&quot;</span><span class="p">)</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">json_shema_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">adls_root_dir_path</span><span class="p">,</span>
+        <span class="s2">&quot;schema&quot;</span><span class="p">,</span>
+        <span class="n">json_schema_file_name</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="c1"># AzureDataLakeUpload</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">local_file_path</span> <span class="o">=</span> <span class="n">local_file_path</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">slugify</span><span class="p">(</span><span class="n">name</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot;.csv&quot;</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">local_json_path</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">slugify</span><span class="p">(</span><span class="n">name</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot;.json&quot;</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">read_sep</span> <span class="o">=</span> <span class="n">read_sep</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">write_sep</span> <span class="o">=</span> <span class="n">write_sep</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">overwrite_adls</span> <span class="o">=</span> <span class="n">overwrite_adls</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">if_empty</span> <span class="o">=</span> <span class="n">if_empty</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">adls_sp_credentials_secret</span> <span class="o">=</span> <span class="n">adls_sp_credentials_secret</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">adls_path_conformed</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_promoted_path</span><span class="p">(</span><span class="n">env</span><span class="o">=</span><span class="s2">&quot;conformed&quot;</span><span class="p">)</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">adls_path_operations</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_promoted_path</span><span class="p">(</span><span class="n">env</span><span class="o">=</span><span class="s2">&quot;operations&quot;</span><span class="p">)</span>
+
+    <span class="c1"># AzureSQLCreateTable</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">table</span> <span class="o">=</span> <span class="n">table</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">schema</span> <span class="o">=</span> <span class="n">schema</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">if_exists</span> <span class="o">=</span> <span class="n">if_exists</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">check_col_order</span> <span class="o">=</span> <span class="n">check_col_order</span>
+    <span class="c1"># Generate CSV</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">remove_tab</span> <span class="o">=</span> <span class="n">remove_tab</span>
+
+    <span class="c1"># BCPTask</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">sqldb_credentials_secret</span> <span class="o">=</span> <span class="n">sqldb_credentials_secret</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">on_bcp_error</span> <span class="o">=</span> <span class="n">on_bcp_error</span>
+
+    <span class="c1"># Global</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">max_download_retries</span> <span class="o">=</span> <span class="n">max_download_retries</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">tags</span> <span class="o">=</span> <span class="n">tags</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">vault_name</span> <span class="o">=</span> <span class="n">vault_name</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">timeout</span> <span class="o">=</span> <span class="n">timeout</span>
+
+    <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+    <span class="c1"># self.dtypes.update(METADATA_COLUMNS)</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">gen_flow</span><span class="p">()</span>
+</code></pre></div>
+        </details>
+    </div>
+
+  </div>
+
+
+
+
+
+
+
+
+  </div>
+
+    </div>
+
+  </div>
+
+
+
+  <div class="doc doc-object doc-class">
+
+
+
+<h2 id="viadot.flows.azure_sql_transform.AzureSQLTransform" class="doc doc-heading">
+        <code>
+viadot.flows.azure_sql_transform.AzureSQLTransform            (<span title="prefect.core.flow.Flow">Flow</span>)
+        </code>
+
+
+
+</h2>
+
+    <div class="doc doc-contents first">
+
+
+
+
+
+  <div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+  <div class="doc doc-object doc-method">
+
+
+
+<h3 id="viadot.flows.azure_sql_transform.AzureSQLTransform.__init__" class="doc doc-heading">
+<code class="highlight language-python"><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">query</span><span class="p">,</span> <span class="n">sqldb_credentials_secret</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">vault_name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">tags</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;transform&#39;</span><span class="p">],</span> <span class="n">timeout</span><span class="o">=</span><span class="mi">3600</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></code>
+
+  <span class="doc doc-properties">
+      <small class="doc doc-property doc-property-special"><code>special</code></small>
+  </span>
+
+</h3>
+
+    <div class="doc doc-contents ">
+
+      <p>Flow for running SQL queries on top of Azure SQL Database.</p>
+
+<p><strong>Parameters:</strong></p>
+<table>
+  <thead>
+    <tr>
+      <th>Name</th>
+      <th>Type</th>
+      <th>Description</th>
+      <th>Default</th>
+    </tr>
+  </thead>
+  <tbody>
+      <tr>
+        <td><code>name</code></td>
+        <td><code>str</code></td>
+        <td><p>The name of the flow.</p></td>
+        <td><em>required</em></td>
+      </tr>
+      <tr>
+        <td><code>query</code></td>
+        <td><code>str, required</code></td>
+        <td><p>The query to execute on the database.</p></td>
+        <td><em>required</em></td>
+      </tr>
+      <tr>
+        <td><code>credentials_secret</code></td>
+        <td><code>str</code></td>
+        <td><p>The name of the Azure Key Vault secret containing a dictionary</p></td>
+        <td><em>required</em></td>
+      </tr>
+      <tr>
+        <td><code>vault_name</code></td>
+        <td><code>str</code></td>
+        <td><p>The name of the vault from which to obtain the secret. Defaults to None.</p></td>
+        <td><code>None</code></td>
+      </tr>
+      <tr>
+        <td><code>tags</code></td>
+        <td><code>list</code></td>
+        <td><p>Tag for marking flow. Defaults to "transform".</p></td>
+        <td><code>[&#39;transform&#39;]</code></td>
+      </tr>
+      <tr>
+        <td><code>timeout(int,</code></td>
+        <td><code>optional</code></td>
+        <td><p>The amount of time (in seconds) to wait while running this task before
+a timeout occurs. Defaults to 3600.</p></td>
+        <td><em>required</em></td>
+      </tr>
+  </tbody>
+</table>
+        <details class="quote">
+          <summary>Source code in <code>viadot/flows/azure_sql_transform.py</code></summary>
+          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+    <span class="bp">self</span><span class="p">,</span>
+    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">query</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">sqldb_credentials_secret</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">vault_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">tags</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;transform&quot;</span><span class="p">],</span>
+    <span class="n">timeout</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">3600</span><span class="p">,</span>
+    <span class="o">*</span><span class="n">args</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">any</span><span class="p">],</span>
+    <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Flow for running SQL queries on top of Azure SQL Database.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        name (str): The name of the flow.</span>
+<span class="sd">        query (str, required): The query to execute on the database.</span>
+<span class="sd">        credentials_secret (str, optional): The name of the Azure Key Vault secret containing a dictionary</span>
+<span class="sd">        with SQL db credentials (server, db_name, user, and password).</span>
+<span class="sd">        vault_name (str, optional): The name of the vault from which to obtain the secret. Defaults to None.</span>
+<span class="sd">        tags (list, optional): Tag for marking flow. Defaults to &quot;transform&quot;.</span>
+<span class="sd">        timeout(int, optional): The amount of time (in seconds) to wait while running this task before</span>
+<span class="sd">            a timeout occurs. Defaults to 3600.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">query</span> <span class="o">=</span> <span class="n">query</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">tags</span> <span class="o">=</span> <span class="n">tags</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">sqldb_credentials_secret</span> <span class="o">=</span> <span class="n">sqldb_credentials_secret</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">vault_name</span> <span class="o">=</span> <span class="n">vault_name</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">timeout</span> <span class="o">=</span> <span class="n">timeout</span>
+
+    <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">gen_flow</span><span class="p">()</span>
+</code></pre></div>
+        </details>
+    </div>
+
+  </div>
+
+
+
+
+
+
+  </div>
+
+    </div>
+
+  </div>
+
+
+
+  <div class="doc doc-object doc-class">
+
+
+
+<h2 id="viadot.flows.supermetrics_to_adls.SupermetricsToADLS" class="doc doc-heading">
+        <code>
+viadot.flows.supermetrics_to_adls.SupermetricsToADLS            (<span title="prefect.core.flow.Flow">Flow</span>)
+        </code>
+
+
+
+</h2>
+
+    <div class="doc doc-contents first">
+
+
+
+
+
+  <div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+  <div class="doc doc-object doc-method">
+
+
+
+<h3 id="viadot.flows.supermetrics_to_adls.SupermetricsToADLS.__init__" class="doc doc-heading">
+<code class="highlight language-python"><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">ds_id</span><span class="p">,</span> <span class="n">ds_accounts</span><span class="p">,</span> <span class="n">fields</span><span class="p">,</span> <span class="n">ds_user</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">ds_segments</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">date_range_type</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">start_date</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">end_date</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">settings</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="nb">filter</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">max_rows</span><span class="o">=</span><span class="mi">1000000</span><span class="p">,</span> <span class="n">max_columns</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">order_columns</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">expectation_suite</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">evaluation_parameters</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">keep_validation_output</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">output_file_extension</span><span class="o">=</span><span class="s1">&#39;.parquet&#39;</span><span class="p">,</span> <span class="n">local_file_path</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">adls_file_name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">adls_dir_path</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">overwrite_adls</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">if_empty</span><span class="o">=</span><span class="s1">&#39;warn&#39;</span><span class="p">,</span> <span class="n">if_exists</span><span class="o">=</span><span class="s1">&#39;replace&#39;</span><span class="p">,</span> <span class="n">adls_sp_credentials_secret</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">max_download_retries</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">supermetrics_task_timeout</span><span class="o">=</span><span class="mi">1800</span><span class="p">,</span> <span class="n">parallel</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">tags</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;extract&#39;</span><span class="p">],</span> <span class="n">vault_name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">check_missing_data</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="mi">3600</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></code>
+
+  <span class="doc doc-properties">
+      <small class="doc doc-property doc-property-special"><code>special</code></small>
+  </span>
+
+</h3>
+
+    <div class="doc doc-contents ">
+
+      <p>Flow for downloading data from different marketing APIs to a local CSV
+using Supermetrics API, then uploading it to Azure Data Lake.</p>
+
+<p><strong>Parameters:</strong></p>
+<table>
+  <thead>
+    <tr>
+      <th>Name</th>
+      <th>Type</th>
+      <th>Description</th>
+      <th>Default</th>
+    </tr>
+  </thead>
+  <tbody>
+      <tr>
+        <td><code>name</code></td>
+        <td><code>str</code></td>
+        <td><p>The name of the flow.</p></td>
+        <td><em>required</em></td>
+      </tr>
+      <tr>
+        <td><code>ds_id</code></td>
+        <td><code>str</code></td>
+        <td><p>A query parameter passed to the SupermetricsToCSV task</p></td>
+        <td><em>required</em></td>
+      </tr>
+      <tr>
+        <td><code>ds_accounts</code></td>
+        <td><code>List[str]</code></td>
+        <td><p>A query parameter passed to the SupermetricsToCSV task</p></td>
+        <td><em>required</em></td>
+      </tr>
+      <tr>
+        <td><code>ds_user</code></td>
+        <td><code>str</code></td>
+        <td><p>A query parameter passed to the SupermetricsToCSV task</p></td>
+        <td><code>None</code></td>
+      </tr>
+      <tr>
+        <td><code>fields</code></td>
+        <td><code>List[str]</code></td>
+        <td><p>A query parameter passed to the SupermetricsToCSV task</p></td>
+        <td><em>required</em></td>
+      </tr>
+      <tr>
+        <td><code>ds_segments</code></td>
+        <td><code>List[str]</code></td>
+        <td><p>A query parameter passed to the SupermetricsToCSV task. Defaults to None.</p></td>
+        <td><code>None</code></td>
+      </tr>
+      <tr>
+        <td><code>date_range_type</code></td>
+        <td><code>str</code></td>
+        <td><p>A query parameter passed to the SupermetricsToCSV task. Defaults to None.</p></td>
+        <td><code>None</code></td>
+      </tr>
+      <tr>
+        <td><code>start_date</code></td>
+        <td><code>str</code></td>
+        <td><p>A query parameter to pass start date to the date range filter. Defaults to None.</p></td>
+        <td><code>None</code></td>
+      </tr>
+      <tr>
+        <td><code>end_date</code></td>
+        <td><code>str</code></td>
+        <td><p>A query parameter to pass end date to the date range filter. Defaults to None.</p></td>
+        <td><code>None</code></td>
+      </tr>
+      <tr>
+        <td><code>settings</code></td>
+        <td><code>Dict[str, Any]</code></td>
+        <td><p>A query parameter passed to the SupermetricsToCSV task. Defaults to None.</p></td>
+        <td><code>None</code></td>
+      </tr>
+      <tr>
+        <td><code>filter</code></td>
+        <td><code>str</code></td>
+        <td><p>A query parameter passed to the SupermetricsToCSV task. Defaults to None.</p></td>
+        <td><code>None</code></td>
+      </tr>
+      <tr>
+        <td><code>max_rows</code></td>
+        <td><code>int</code></td>
+        <td><p>A query parameter passed to the SupermetricsToCSV task. Defaults to 1000000.</p></td>
+        <td><code>1000000</code></td>
+      </tr>
+      <tr>
+        <td><code>max_columns</code></td>
+        <td><code>int</code></td>
+        <td><p>A query parameter passed to the SupermetricsToCSV task. Defaults to None.</p></td>
+        <td><code>None</code></td>
+      </tr>
+      <tr>
+        <td><code>order_columns</code></td>
+        <td><code>str</code></td>
+        <td><p>A query parameter passed to the SupermetricsToCSV task. Defaults to None.</p></td>
+        <td><code>None</code></td>
+      </tr>
+      <tr>
+        <td><code>expectation_suite</code></td>
+        <td><code>dict</code></td>
+        <td><p>The Great Expectations suite used to valiaate the data. Defaults to None.</p></td>
+        <td><code>None</code></td>
+      </tr>
+      <tr>
+        <td><code>evaluation_parameters</code></td>
+        <td><code>str</code></td>
+        <td><p>A dictionary containing evaluation parameters for the validation. Defaults to None.</p></td>
+        <td><code>None</code></td>
+      </tr>
+      <tr>
+        <td><code>keep_validation_output</code></td>
+        <td><code>bool</code></td>
+        <td><p>Whether to keep the output files generated by the Great Expectations task. Defaults to False.</p></td>
+        <td><code>False</code></td>
+      </tr>
+      <tr>
+        <td><code>local_file_path</code></td>
+        <td><code>str</code></td>
+        <td><p>Local destination path. Defaults to None.</p></td>
+        <td><code>None</code></td>
+      </tr>
+      <tr>
+        <td><code>adls_file_name</code></td>
+        <td><code>str</code></td>
+        <td><p>Name of file in ADLS. Defaults to None.</p></td>
+        <td><code>None</code></td>
+      </tr>
+      <tr>
+        <td><code>output_file_extension</code></td>
+        <td><code>str</code></td>
+        <td><p>Output file extension - to allow selection of .csv for data which is not easy to handle with parquet. Defaults to ".parquet"..</p></td>
+        <td><code>&#39;.parquet&#39;</code></td>
+      </tr>
+      <tr>
+        <td><code>adls_dir_path</code></td>
+        <td><code>str</code></td>
+        <td><p>Azure Data Lake destination folder/catalog path. Defaults to None.</p></td>
+        <td><code>None</code></td>
+      </tr>
+      <tr>
+        <td><code>sep</code></td>
+        <td><code>str</code></td>
+        <td><p>The separator to use in the CSV. Defaults to " ".</p></td>
+        <td><em>required</em></td>
+      </tr>
+      <tr>
+        <td><code>overwrite_adls</code></td>
+        <td><code>bool</code></td>
+        <td><p>Whether to overwrite the file in ADLS. Defaults to True.</p></td>
+        <td><code>True</code></td>
+      </tr>
+      <tr>
+        <td><code>if_empty</code></td>
+        <td><code>str</code></td>
+        <td><p>What to do if the Supermetrics query returns no data. Defaults to "warn".</p></td>
+        <td><code>&#39;warn&#39;</code></td>
+      </tr>
+      <tr>
+        <td><code>adls_sp_credentials_secret</code></td>
+        <td><code>str</code></td>
+        <td><p>The name of the Azure Key Vault secret containing a dictionary with</p></td>
+        <td><code>None</code></td>
+      </tr>
+      <tr>
+        <td><code>max_download_retries</code></td>
+        <td><code>int</code></td>
+        <td><p>How many times to retry the download. Defaults to 5.</p></td>
+        <td><code>5</code></td>
+      </tr>
+      <tr>
+        <td><code>supermetrics_task_timeout</code></td>
+        <td><code>int</code></td>
+        <td><p>The timeout for the download task. Defaults to 60*30.</p></td>
+        <td><code>1800</code></td>
+      </tr>
+      <tr>
+        <td><code>parallel</code></td>
+        <td><code>bool</code></td>
+        <td><p>Whether to parallelize the downloads. Defaults to True.</p></td>
+        <td><code>True</code></td>
+      </tr>
+      <tr>
+        <td><code>tags</code></td>
+        <td><code>List[str]</code></td>
+        <td><p>Flow tags to use, eg. to control flow concurrency. Defaults to ["extract"].</p></td>
+        <td><code>[&#39;extract&#39;]</code></td>
+      </tr>
+      <tr>
+        <td><code>vault_name</code></td>
+        <td><code>str</code></td>
+        <td><p>The name of the vault from which to obtain the secrets. Defaults to None.</p></td>
+        <td><code>None</code></td>
+      </tr>
+      <tr>
+        <td><code>check_missing_data</code></td>
+        <td><code>bool</code></td>
+        <td><p>Whether to check missing data. Defaults to True.</p></td>
+        <td><code>True</code></td>
+      </tr>
+      <tr>
+        <td><code>timeout(int,</code></td>
+        <td><code>optional</code></td>
+        <td><p>The amount of time (in seconds) to wait while running this task before
+a timeout occurs. Defaults to 3600.</p></td>
+        <td><em>required</em></td>
+      </tr>
+  </tbody>
+</table>
+        <details class="quote">
+          <summary>Source code in <code>viadot/flows/supermetrics_to_adls.py</code></summary>
+          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+    <span class="bp">self</span><span class="p">,</span>
+    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">ds_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">ds_accounts</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
+    <span class="n">fields</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
+    <span class="n">ds_user</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">ds_segments</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">date_range_type</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">start_date</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">end_date</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">settings</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="nb">filter</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">max_rows</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1000000</span><span class="p">,</span>
+    <span class="n">max_columns</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">order_columns</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">expectation_suite</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">evaluation_parameters</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">keep_validation_output</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="n">output_file_extension</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;.parquet&quot;</span><span class="p">,</span>
+    <span class="n">local_file_path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">adls_file_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">adls_dir_path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">overwrite_adls</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+    <span class="n">if_empty</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;warn&quot;</span><span class="p">,</span>
+    <span class="n">if_exists</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;replace&quot;</span><span class="p">,</span>
+    <span class="n">adls_sp_credentials_secret</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">max_download_retries</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">5</span><span class="p">,</span>
+    <span class="n">supermetrics_task_timeout</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">60</span> <span class="o">*</span> <span class="mi">30</span><span class="p">,</span>
+    <span class="n">parallel</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+    <span class="n">tags</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;extract&quot;</span><span class="p">],</span>
+    <span class="n">vault_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">check_missing_data</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+    <span class="n">timeout</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">3600</span><span class="p">,</span>
+    <span class="o">*</span><span class="n">args</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">any</span><span class="p">],</span>
+    <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Flow for downloading data from different marketing APIs to a local CSV</span>
+<span class="sd">    using Supermetrics API, then uploading it to Azure Data Lake.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        name (str): The name of the flow.</span>
+<span class="sd">        ds_id (str): A query parameter passed to the SupermetricsToCSV task</span>
+<span class="sd">        ds_accounts (List[str]): A query parameter passed to the SupermetricsToCSV task</span>
+<span class="sd">        ds_user (str): A query parameter passed to the SupermetricsToCSV task</span>
+<span class="sd">        fields (List[str]): A query parameter passed to the SupermetricsToCSV task</span>
+<span class="sd">        ds_segments (List[str], optional): A query parameter passed to the SupermetricsToCSV task. Defaults to None.</span>
+<span class="sd">        date_range_type (str, optional): A query parameter passed to the SupermetricsToCSV task. Defaults to None.</span>
+<span class="sd">        start_date (str, optional): A query parameter to pass start date to the date range filter. Defaults to None.</span>
+<span class="sd">        end_date (str, optional): A query parameter to pass end date to the date range filter. Defaults to None.</span>
+<span class="sd">        settings (Dict[str, Any], optional): A query parameter passed to the SupermetricsToCSV task. Defaults to None.</span>
+<span class="sd">        filter (str, optional): A query parameter passed to the SupermetricsToCSV task. Defaults to None.</span>
+<span class="sd">        max_rows (int, optional): A query parameter passed to the SupermetricsToCSV task. Defaults to 1000000.</span>
+<span class="sd">        max_columns (int, optional): A query parameter passed to the SupermetricsToCSV task. Defaults to None.</span>
+<span class="sd">        order_columns (str, optional): A query parameter passed to the SupermetricsToCSV task. Defaults to None.</span>
+<span class="sd">        expectation_suite (dict, optional): The Great Expectations suite used to valiaate the data. Defaults to None.</span>
+<span class="sd">        evaluation_parameters (str, optional): A dictionary containing evaluation parameters for the validation. Defaults to None.</span>
+<span class="sd">        keep_validation_output (bool, optional): Whether to keep the output files generated by the Great Expectations task. Defaults to False.</span>
+<span class="sd">        Currently, only GitHub URLs are supported. Defaults to None.</span>
+<span class="sd">        local_file_path (str, optional): Local destination path. Defaults to None.</span>
+<span class="sd">        adls_file_name (str, optional): Name of file in ADLS. Defaults to None.</span>
+<span class="sd">        output_file_extension (str, optional): Output file extension - to allow selection of .csv for data which is not easy to handle with parquet. Defaults to &quot;.parquet&quot;..</span>
+<span class="sd">        adls_dir_path (str, optional): Azure Data Lake destination folder/catalog path. Defaults to None.</span>
+<span class="sd">        sep (str, optional): The separator to use in the CSV. Defaults to &quot;\t&quot;.</span>
+<span class="sd">        overwrite_adls (bool, optional): Whether to overwrite the file in ADLS. Defaults to True.</span>
+<span class="sd">        if_empty (str, optional): What to do if the Supermetrics query returns no data. Defaults to &quot;warn&quot;.</span>
+<span class="sd">        adls_sp_credentials_secret (str, optional): The name of the Azure Key Vault secret containing a dictionary with</span>
+<span class="sd">        ACCOUNT_NAME and Service Principal credentials (TENANT_ID, CLIENT_ID, CLIENT_SECRET) for the Azure Data Lake.</span>
+<span class="sd">        Defaults to None.</span>
+<span class="sd">        max_download_retries (int, optional): How many times to retry the download. Defaults to 5.</span>
+<span class="sd">        supermetrics_task_timeout (int, optional): The timeout for the download task. Defaults to 60*30.</span>
+<span class="sd">        parallel (bool, optional): Whether to parallelize the downloads. Defaults to True.</span>
+<span class="sd">        tags (List[str], optional): Flow tags to use, eg. to control flow concurrency. Defaults to [&quot;extract&quot;].</span>
+<span class="sd">        vault_name (str, optional): The name of the vault from which to obtain the secrets. Defaults to None.</span>
+<span class="sd">        check_missing_data (bool, optional): Whether to check missing data. Defaults to True.</span>
+<span class="sd">        timeout(int, optional): The amount of time (in seconds) to wait while running this task before</span>
+<span class="sd">            a timeout occurs. Defaults to 3600.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">ds_user</span><span class="p">:</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">ds_user</span> <span class="o">=</span> <span class="n">PrefectSecret</span><span class="p">(</span><span class="s2">&quot;SUPERMETRICS_DEFAULT_USER&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">run</span><span class="p">()</span>
+        <span class="k">except</span> <span class="ne">ValueError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="s2">&quot;Neither &#39;ds_user&#39; parameter nor &#39;SUPERMETRICS_DEFAULT_USER&#39; secret were not specified&quot;</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span> <span class="kn">from</span> <span class="nn">e</span>
+
+    <span class="bp">self</span><span class="o">.</span><span class="n">flow_name</span> <span class="o">=</span> <span class="n">name</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">check_missing_data</span> <span class="o">=</span> <span class="n">check_missing_data</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">timeout</span> <span class="o">=</span> <span class="n">timeout</span>
+    <span class="c1"># SupermetricsToDF</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">ds_id</span> <span class="o">=</span> <span class="n">ds_id</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">ds_accounts</span> <span class="o">=</span> <span class="n">ds_accounts</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">ds_segments</span> <span class="o">=</span> <span class="n">ds_segments</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">ds_user</span> <span class="o">=</span> <span class="n">ds_user</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">fields</span> <span class="o">=</span> <span class="n">fields</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">date_range_type</span> <span class="o">=</span> <span class="n">date_range_type</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">start_date</span> <span class="o">=</span> <span class="n">start_date</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">end_date</span> <span class="o">=</span> <span class="n">end_date</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">settings</span> <span class="o">=</span> <span class="n">settings</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">filter</span> <span class="o">=</span> <span class="nb">filter</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">max_rows</span> <span class="o">=</span> <span class="n">max_rows</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">max_columns</span> <span class="o">=</span> <span class="n">max_columns</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">order_columns</span> <span class="o">=</span> <span class="n">order_columns</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">if_exists</span> <span class="o">=</span> <span class="n">if_exists</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">output_file_extension</span> <span class="o">=</span> <span class="n">output_file_extension</span>
+
+    <span class="c1"># RunGreatExpectationsValidation</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">expectation_suite</span> <span class="o">=</span> <span class="n">expectation_suite</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">expectations_path</span> <span class="o">=</span> <span class="s2">&quot;/home/viadot/tmp/expectations&quot;</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">expectation_suite_name</span> <span class="o">=</span> <span class="n">expectation_suite</span><span class="p">[</span><span class="s2">&quot;expectation_suite_name&quot;</span><span class="p">]</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">evaluation_parameters</span> <span class="o">=</span> <span class="n">evaluation_parameters</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">keep_validation_output</span> <span class="o">=</span> <span class="n">keep_validation_output</span>
+
+    <span class="c1"># AzureDataLakeUpload</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">local_file_path</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">local_file_path</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">slugify</span><span class="p">(</span><span class="n">name</span><span class="p">)</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">output_file_extension</span>
+    <span class="p">)</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">local_json_path</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">slugify</span><span class="p">(</span><span class="n">name</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot;.json&quot;</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">now</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">pendulum</span><span class="o">.</span><span class="n">now</span><span class="p">(</span><span class="s2">&quot;utc&quot;</span><span class="p">))</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">adls_dir_path</span> <span class="o">=</span> <span class="n">adls_dir_path</span>
+
+    <span class="k">if</span> <span class="n">adls_file_name</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">adls_file_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">adls_dir_path</span><span class="p">,</span> <span class="n">adls_file_name</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">adls_schema_file_dir_file</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
+            <span class="n">adls_dir_path</span><span class="p">,</span> <span class="s2">&quot;schema&quot;</span><span class="p">,</span> <span class="n">Path</span><span class="p">(</span><span class="n">adls_file_name</span><span class="p">)</span><span class="o">.</span><span class="n">stem</span> <span class="o">+</span> <span class="s2">&quot;.json&quot;</span>
+        <span class="p">)</span>
+
+    <span class="k">else</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">adls_file_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
+            <span class="n">adls_dir_path</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">now</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">output_file_extension</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">adls_schema_file_dir_file</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
+            <span class="n">adls_dir_path</span><span class="p">,</span> <span class="s2">&quot;schema&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">now</span> <span class="o">+</span> <span class="s2">&quot;.json&quot;</span>
+        <span class="p">)</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">overwrite_adls</span> <span class="o">=</span> <span class="n">overwrite_adls</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">if_empty</span> <span class="o">=</span> <span class="n">if_empty</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">adls_sp_credentials_secret</span> <span class="o">=</span> <span class="n">adls_sp_credentials_secret</span>
+
+    <span class="c1"># Global</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">max_download_retries</span> <span class="o">=</span> <span class="n">max_download_retries</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">supermetrics_task_timeout</span> <span class="o">=</span> <span class="n">supermetrics_task_timeout</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">parallel</span> <span class="o">=</span> <span class="n">parallel</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">tags</span> <span class="o">=</span> <span class="n">tags</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">vault_name</span> <span class="o">=</span> <span class="n">vault_name</span>
+
+    <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+    <span class="bp">self</span><span class="o">.</span><span class="n">gen_flow</span><span class="p">()</span>
+</code></pre></div>
+        </details>
+    </div>
+
+  </div>
+
+
+
+
+
+
+
+
+  </div>
+
+    </div>
+
+  </div>
+
+
+
+  <div class="doc doc-object doc-class">
+
+
+
+<h2 id="viadot.flows.supermetrics_to_azure_sql.SupermetricsToAzureSQL" class="doc doc-heading">
+        <code>
+viadot.flows.supermetrics_to_azure_sql.SupermetricsToAzureSQL            (<span title="prefect.core.flow.Flow">Flow</span>)
+        </code>
+
+
+
+</h2>
+
+    <div class="doc doc-contents first">
+
+
+
+
+
+  <div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  </div>
+
+    </div>
+
+  </div>
+
+
+
+  <div class="doc doc-object doc-class">
+
+
+
+<h2 id="viadot.flows.cloud_for_customers_report_to_adls.CloudForCustomersReportToADLS" class="doc doc-heading">
+        <code>
+viadot.flows.cloud_for_customers_report_to_adls.CloudForCustomersReportToADLS            (<span title="prefect.core.flow.Flow">Flow</span>)
+        </code>
+
+
+
+</h2>
+
+    <div class="doc doc-contents first">
+
+
+
+
+
+  <div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+  <div class="doc doc-object doc-method">
+
+
+
+<h3 id="viadot.flows.cloud_for_customers_report_to_adls.CloudForCustomersReportToADLS.__init__" class="doc doc-heading">
+<code class="highlight language-python"><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">report_url</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">url</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">endpoint</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">params</span><span class="o">=</span><span class="p">{},</span> <span class="n">fields</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">skip</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">top</span><span class="o">=</span><span class="mi">1000</span><span class="p">,</span> <span class="n">channels</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">months</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">years</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">env</span><span class="o">=</span><span class="s1">&#39;QA&#39;</span><span class="p">,</span> <span class="n">c4c_credentials_secret</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">local_file_path</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">output_file_extension</span><span class="o">=</span><span class="s1">&#39;.csv&#39;</span><span class="p">,</span> <span class="n">adls_dir_path</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">adls_file_path</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">overwrite_adls</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">adls_sp_credentials_secret</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">if_empty</span><span class="o">=</span><span class="s1">&#39;warn&#39;</span><span class="p">,</span> <span class="n">if_exists</span><span class="o">=</span><span class="s1">&#39;replace&#39;</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="mi">3600</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></code>
+
+  <span class="doc doc-properties">
+      <small class="doc doc-property doc-property-special"><code>special</code></small>
+  </span>
+
+</h3>
+
+    <div class="doc doc-contents ">
+
+      <p>Flow for downloading data from different marketing APIs to a local CSV
+using Cloud for Customers API, then uploading it to Azure Data Lake.</p>
+
+<p><strong>Parameters:</strong></p>
+<table>
+  <thead>
+    <tr>
+      <th>Name</th>
+      <th>Type</th>
+      <th>Description</th>
+      <th>Default</th>
+    </tr>
+  </thead>
+  <tbody>
+      <tr>
+        <td><code>name</code></td>
+        <td><code>str</code></td>
+        <td><p>The name of the flow.</p></td>
+        <td><code>None</code></td>
+      </tr>
+      <tr>
+        <td><code>report_url</code></td>
+        <td><code>str</code></td>
+        <td><p>The url to the API. Defaults to None.</p></td>
+        <td><code>None</code></td>
+      </tr>
+      <tr>
+        <td><code>url</code></td>
+        <td><code>str</code></td>
+        <td><p>???</p></td>
+        <td><code>None</code></td>
+      </tr>
+      <tr>
+        <td><code>endpoint</code></td>
+        <td><code>str</code></td>
+        <td><p>???</p></td>
+        <td><code>None</code></td>
+      </tr>
+      <tr>
+        <td><code>params</code></td>
+        <td><code>dict</code></td>
+        <td><p>???</p></td>
+        <td><code>{}</code></td>
+      </tr>
+      <tr>
+        <td><code>fields</code></td>
+        <td><code>list</code></td>
+        <td><p>???</p></td>
+        <td><code>None</code></td>
+      </tr>
+      <tr>
+        <td><code>skip</code></td>
+        <td><code>int</code></td>
+        <td><p>Initial index value of reading row. Defaults to 0.</p></td>
+        <td><code>0</code></td>
+      </tr>
+      <tr>
+        <td><code>top</code></td>
+        <td><code>int</code></td>
+        <td><p>The value of top reading row. Defaults to 1000.</p></td>
+        <td><code>1000</code></td>
+      </tr>
+      <tr>
+        <td><code>channels</code></td>
+        <td><code>List[str]</code></td>
+        <td><p>Filtering parameters passed to the url. Defaults to None.</p></td>
+        <td><code>None</code></td>
+      </tr>
+      <tr>
+        <td><code>months</code></td>
+        <td><code>List[str]</code></td>
+        <td><p>Filtering parameters passed to the url. Defaults to None.</p></td>
+        <td><code>None</code></td>
+      </tr>
+      <tr>
+        <td><code>years</code></td>
+        <td><code>List[str]</code></td>
+        <td><p>Filtering parameters passed to the url. Defaults to None.</p></td>
+        <td><code>None</code></td>
+      </tr>
+      <tr>
+        <td><code>env</code></td>
+        <td><code>str</code></td>
+        <td><p>???</p></td>
+        <td><code>&#39;QA&#39;</code></td>
+      </tr>
+      <tr>
+        <td><code>c4c_credentials_secret</code></td>
+        <td><code>str</code></td>
+        <td><p>The name of the Azure Key Vault secret containing a dictionary with</p></td>
+        <td><code>None</code></td>
+      </tr>
+      <tr>
+        <td><code>local_file_path</code></td>
+        <td><code>str</code></td>
+        <td><p>Local destination path. Defaults to None.</p></td>
+        <td><code>None</code></td>
+      </tr>
+      <tr>
+        <td><code>output_file_extension</code></td>
+        <td><code>str</code></td>
+        <td><p>Output file extension - to allow selection of .csv for data which is not easy</p></td>
+        <td><code>&#39;.csv&#39;</code></td>
+      </tr>
+      <tr>
+        <td><code>adls_dir_path</code></td>
+        <td><code>str</code></td>
+        <td><p>Azure Data Lake destination folder/catalog path. Defaults to None.</p></td>
+        <td><code>None</code></td>
+      </tr>
+      <tr>
+        <td><code>adls_file_path</code></td>
+        <td><code>str</code></td>
+        <td><p>Azure Data Lake destination file path. Defaults to None.</p></td>
+        <td><code>None</code></td>
+      </tr>
+      <tr>
+        <td><code>overwrite_adls</code></td>
+        <td><code>bool</code></td>
+        <td><p>Whether to overwrite the file in ADLS. Defaults to False.</p></td>
+        <td><code>False</code></td>
+      </tr>
+      <tr>
+        <td><code>adls_sp_credentials_secret</code></td>
+        <td><code>str</code></td>
+        <td><p>The name of the Azure Key Vault secret containing a dictionary with</p></td>
+        <td><code>None</code></td>
+      </tr>
+      <tr>
+        <td><code>if_empty</code></td>
+        <td><code>str</code></td>
+        <td><p>What to do if the Supermetrics query returns no data. Defaults to "warn".</p></td>
+        <td><code>&#39;warn&#39;</code></td>
+      </tr>
+      <tr>
+        <td><code>if_exists</code></td>
+        <td><code>str</code></td>
+        <td><p>What to do if the local file already exists. Defaults to "replace".</p></td>
+        <td><code>&#39;replace&#39;</code></td>
+      </tr>
+      <tr>
+        <td><code>timeout(int,</code></td>
+        <td><code>optional</code></td>
+        <td><p>The amount of time (in seconds) to wait while running this task before
+a timeout occurs. Defaults to 3600.</p></td>
+        <td><em>required</em></td>
+      </tr>
+  </tbody>
+</table>
+        <details class="quote">
+          <summary>Source code in <code>viadot/flows/cloud_for_customers_report_to_adls.py</code></summary>
+          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+    <span class="bp">self</span><span class="p">,</span>
+    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">report_url</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">url</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">endpoint</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">params</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">{},</span>
+    <span class="n">fields</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">skip</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
+    <span class="n">top</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1000</span><span class="p">,</span>
+    <span class="n">channels</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">months</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">years</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">env</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;QA&quot;</span><span class="p">,</span>
+    <span class="n">c4c_credentials_secret</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">local_file_path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">output_file_extension</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;.csv&quot;</span><span class="p">,</span>
+    <span class="n">adls_dir_path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">adls_file_path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">overwrite_adls</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="n">adls_sp_credentials_secret</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">if_empty</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;warn&quot;</span><span class="p">,</span>
+    <span class="n">if_exists</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;replace&quot;</span><span class="p">,</span>
+    <span class="n">timeout</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">3600</span><span class="p">,</span>
+    <span class="o">*</span><span class="n">args</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">any</span><span class="p">],</span>
+    <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Flow for downloading data from different marketing APIs to a local CSV</span>
+<span class="sd">    using Cloud for Customers API, then uploading it to Azure Data Lake.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        name (str): The name of the flow.</span>
+<span class="sd">        report_url (str, optional): The url to the API. Defaults to None.</span>
+<span class="sd">        url (str, optional): ???</span>
+<span class="sd">        endpoint (str, optional): ???</span>
+<span class="sd">        params (dict, optional): ???</span>
+<span class="sd">        fields (list, optional): ???</span>
+<span class="sd">        skip (int, optional): Initial index value of reading row. Defaults to 0.</span>
+<span class="sd">        top (int, optional): The value of top reading row. Defaults to 1000.</span>
+<span class="sd">        channels (List[str], optional): Filtering parameters passed to the url. Defaults to None.</span>
+<span class="sd">        months (List[str], optional): Filtering parameters passed to the url. Defaults to None.</span>
+<span class="sd">        years (List[str], optional): Filtering parameters passed to the url. Defaults to None.</span>
+<span class="sd">        env (str, optional): ???</span>
+<span class="sd">        c4c_credentials_secret (str, optional): The name of the Azure Key Vault secret containing a dictionary with</span>
+<span class="sd">        username and password for the Cloud for Customers instance.</span>
+<span class="sd">        local_file_path (str, optional): Local destination path. Defaults to None.</span>
+<span class="sd">        output_file_extension (str, optional): Output file extension - to allow selection of .csv for data which is not easy</span>
+<span class="sd">        to handle with parquet. Defaults to &quot;.csv&quot;.</span>
+<span class="sd">        adls_dir_path (str, optional): Azure Data Lake destination folder/catalog path. Defaults to None.</span>
+<span class="sd">        adls_file_path (str, optional): Azure Data Lake destination file path. Defaults to None.</span>
+<span class="sd">        overwrite_adls (bool, optional): Whether to overwrite the file in ADLS. Defaults to False.</span>
+<span class="sd">        adls_sp_credentials_secret (str, optional): The name of the Azure Key Vault secret containing a dictionary with</span>
+<span class="sd">        ACCOUNT_NAME and Service Principal credentials (TENANT_ID, CLIENT_ID, CLIENT_SECRET) for the Azure Data Lake.</span>
+<span class="sd">        Defaults to None.</span>
+<span class="sd">        if_empty (str, optional): What to do if the Supermetrics query returns no data. Defaults to &quot;warn&quot;.</span>
+<span class="sd">        if_exists (str, optional): What to do if the local file already exists. Defaults to &quot;replace&quot;.</span>
+<span class="sd">        timeout(int, optional): The amount of time (in seconds) to wait while running this task before</span>
+<span class="sd">            a timeout occurs. Defaults to 3600.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="bp">self</span><span class="o">.</span><span class="n">report_url</span> <span class="o">=</span> <span class="n">report_url</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">skip</span> <span class="o">=</span> <span class="n">skip</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">top</span> <span class="o">=</span> <span class="n">top</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">if_empty</span> <span class="o">=</span> <span class="n">if_empty</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">env</span> <span class="o">=</span> <span class="n">env</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">c4c_credentials_secret</span> <span class="o">=</span> <span class="n">c4c_credentials_secret</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">timeout</span> <span class="o">=</span> <span class="n">timeout</span>
+
+    <span class="c1"># AzureDataLakeUpload</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">adls_sp_credentials_secret</span> <span class="o">=</span> <span class="n">adls_sp_credentials_secret</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">if_exists</span> <span class="o">=</span> <span class="n">if_exists</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">overwrite_adls</span> <span class="o">=</span> <span class="n">overwrite_adls</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">output_file_extension</span> <span class="o">=</span> <span class="n">output_file_extension</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">local_file_path</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">local_file_path</span> <span class="ow">or</span> <span class="n">slugify</span><span class="p">(</span><span class="n">name</span><span class="p">)</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">output_file_extension</span>
+    <span class="p">)</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">now</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">pendulum</span><span class="o">.</span><span class="n">now</span><span class="p">(</span><span class="s2">&quot;utc&quot;</span><span class="p">))</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">adls_dir_path</span> <span class="o">=</span> <span class="n">adls_dir_path</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">adls_file_path</span> <span class="o">=</span> <span class="n">adls_file_path</span> <span class="ow">or</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
+        <span class="n">adls_dir_path</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">now</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">output_file_extension</span>
+    <span class="p">)</span>
+
+    <span class="c1"># in case of non-report invoking</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">url</span> <span class="o">=</span> <span class="n">url</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">endpoint</span> <span class="o">=</span> <span class="n">endpoint</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">params</span> <span class="o">=</span> <span class="n">params</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">fields</span> <span class="o">=</span> <span class="n">fields</span>
+
+    <span class="c1"># filtering report_url for reports</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">channels</span> <span class="o">=</span> <span class="n">channels</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">months</span> <span class="o">=</span> <span class="n">months</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">years</span> <span class="o">=</span> <span class="n">years</span>
+
+    <span class="bp">self</span><span class="o">.</span><span class="n">report_urls_with_filters</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">report_url</span><span class="p">]</span>
+
+    <span class="bp">self</span><span class="o">.</span><span class="n">report_urls_with_filters</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">create_url_with_fields</span><span class="p">(</span>
+        <span class="n">fields_list</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">channels</span><span class="p">,</span> <span class="n">filter_code</span><span class="o">=</span><span class="s2">&quot;CCHANNETZTEXT12CE6C2FA0D77995&quot;</span>
+    <span class="p">)</span>
+
+    <span class="bp">self</span><span class="o">.</span><span class="n">report_urls_with_filters</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">create_url_with_fields</span><span class="p">(</span>
+        <span class="n">fields_list</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">months</span><span class="p">,</span> <span class="n">filter_code</span><span class="o">=</span><span class="s2">&quot;CMONTH_ID&quot;</span>
+    <span class="p">)</span>
+
+    <span class="bp">self</span><span class="o">.</span><span class="n">report_urls_with_filters</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">create_url_with_fields</span><span class="p">(</span>
+        <span class="n">fields_list</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">years</span><span class="p">,</span> <span class="n">filter_code</span><span class="o">=</span><span class="s2">&quot;CYEAR_ID&quot;</span>
+    <span class="p">)</span>
+
+    <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+    <span class="bp">self</span><span class="o">.</span><span class="n">gen_flow</span><span class="p">()</span>
+</code></pre></div>
+        </details>
+    </div>
+
+  </div>
+
+
+
+
+
+
+
+
+
+  </div>
+
+    </div>
+
+  </div>
+
+              
+            </article>
+          </div>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+    <nav class="md-footer__inner md-grid" aria-label="Footer">
+      
+        
+        <a href="../api_sources/" class="md-footer__link md-footer__link--prev" aria-label="Previous: API Sources" rel="prev">
+          <div class="md-footer__button md-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"/></svg>
+          </div>
+          <div class="md-footer__title">
+            <div class="md-ellipsis">
+              <span class="md-footer__direction">
+                Previous
+              </span>
+              API Sources
+            </div>
+          </div>
+        </a>
+      
+      
+        
+        <a href="../task_library/" class="md-footer__link md-footer__link--next" aria-label="Next: Task library" rel="next">
+          <div class="md-footer__title">
+            <div class="md-ellipsis">
+              <span class="md-footer__direction">
+                Next
+              </span>
+              Task library
+            </div>
+          </div>
+          <div class="md-footer__button md-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11H4z"/></svg>
+          </div>
+        </a>
+      
+    </nav>
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    <script id="__config" type="application/json">{"base": "../..", "features": ["navigation.tabs"], "translations": {"clipboard.copy": "Copy to clipboard", "clipboard.copied": "Copied to clipboard", "search.config.lang": "en", "search.config.pipeline": "trimmer, stopWordFilter", "search.config.separator": "[\\s\\-]+", "search.placeholder": "Search", "search.result.placeholder": "Type to start searching", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.term.missing": "Missing", "select.version.title": "Select version"}, "search": "../../assets/javascripts/workers/search.01824240.min.js"}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.a87c2adc.min.js"></script>
+      
+    
+  </body>
+</html>

@@ -1,0 +1,2807 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+        <link rel="canonical" href="https://dyvenia.github.io/viadot/references/sql_sources/">
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.2.3, mkdocs-material-8.0.1">
+    
+    
+      
+        <title>SQL Sources - Viadot Docs</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.816931ca.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.9204c3b2.min.css">
+        
+      
+    
+    
+    
+      
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,400i,700%7CRoboto+Mono&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/_mkdocstrings.css">
+    
+    <script>function __md_scope(e,t,_){return new URL(_||(t===localStorage?"../..":"../.."),location).pathname+"."+e}function __md_get(e,t=localStorage,_){return JSON.parse(t.getItem(__md_scope(e,t,_)))}function __md_set(e,t,_=localStorage,o){try{_.setItem(__md_scope(e,_,o),JSON.stringify(t))}catch(e){}}</script>
+    
+      
+
+
+    
+    
+  </head>
+  
+  
+    
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="" data-md-color-primary="none" data-md-color-accent="none">
+  
+    
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#sql-sources" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="Viadot Docs" class="md-header__button md-logo" aria-label="Viadot Docs" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54z"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3V6m0 5h18v2H3v-2m0 5h18v2H3v-2z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Viadot Docs
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              SQL Sources
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+    
+    
+      <label class="md-header__button md-icon" for="__search">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5z"/></svg>
+      </label>
+      <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5z"/></svg>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" aria-label="Clear" tabindex="-1">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-tabs__inner md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+
+
+  <li class="md-tabs__item">
+    <a href="../.." class="md-tabs__link">
+      Home
+    </a>
+  </li>
+
+      
+        
+  
+  
+
+
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../howtos/config_file/" class="md-tabs__link">
+        Howtos
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+
+
+  <li class="md-tabs__item">
+    <a href="../../tutorials/adding_source/" class="md-tabs__link">
+      Tutorials
+    </a>
+  </li>
+
+      
+        
+  
+  
+    
+  
+
+
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="./" class="md-tabs__link md-tabs__link--active">
+        References
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+
+
+  <li class="md-tabs__item">
+    <a href="../task_library/" class="md-tabs__link">
+      Task library
+    </a>
+  </li>
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="Viadot Docs" class="md-nav__button md-logo" aria-label="Viadot Docs" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54z"/></svg>
+
+    </a>
+    Viadot Docs
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        Home
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_2" type="checkbox" id="__nav_2" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_2">
+          Howtos
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Howtos" data-md-level="1">
+        <label class="md-nav__title" for="__nav_2">
+          <span class="md-nav__icon md-icon"></span>
+          Howtos
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../howtos/config_file/" class="md-nav__link">
+        Config File
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../howtos/running_tasks/" class="md-nav__link">
+        Running a task
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../howtos/flows/" class="md-nav__link">
+        Flows
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tutorials/adding_source/" class="md-nav__link">
+        Tutorials
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+    
+  
+  
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_4" type="checkbox" id="__nav_4" checked>
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_4">
+          References
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="References" data-md-level="1">
+        <label class="md-nav__title" for="__nav_4">
+          <span class="md-nav__icon md-icon"></span>
+          References
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+    
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" data-md-toggle="toc" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          SQL Sources
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        SQL Sources
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#viadot.sources.base.Source" class="md-nav__link">
+    Source
+  </a>
+  
+    <nav class="md-nav" aria-label="Source">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#viadot.sources.base.Source.to_arrow" class="md-nav__link">
+    to_arrow()
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#viadot.sources.base.Source.to_csv" class="md-nav__link">
+    to_csv()
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#viadot.sources.base.Source.to_excel" class="md-nav__link">
+    to_excel()
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#viadot.sources.base.Source.to_parquet" class="md-nav__link">
+    to_parquet()
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#viadot.sources.base.SQL" class="md-nav__link">
+    SQL
+  </a>
+  
+    <nav class="md-nav" aria-label="SQL">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#viadot.sources.base.SQL.con" class="md-nav__link">
+    con
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#viadot.sources.base.SQL.conn_str" class="md-nav__link">
+    conn_str
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#viadot.sources.base.SQL.__init__" class="md-nav__link">
+    __init__()
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#viadot.sources.base.SQL.create_table" class="md-nav__link">
+    create_table()
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#viadot.sources.base.SQL.insert_into" class="md-nav__link">
+    insert_into()
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#viadot.sources.base.SQL.to_df" class="md-nav__link">
+    to_df()
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#viadot.sources.azure_data_lake.AzureDataLake" class="md-nav__link">
+    AzureDataLake
+  </a>
+  
+    <nav class="md-nav" aria-label="AzureDataLake">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#viadot.sources.azure_data_lake.AzureDataLake--parameters" class="md-nav__link">
+    Parameters
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#viadot.sources.azure_data_lake.AzureDataLake.cp" class="md-nav__link">
+    cp()
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#viadot.sources.azure_data_lake.AzureDataLake.exists" class="md-nav__link">
+    exists()
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#viadot.sources.azure_data_lake.AzureDataLake.find" class="md-nav__link">
+    find()
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#viadot.sources.azure_data_lake.AzureDataLake.ls" class="md-nav__link">
+    ls()
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#viadot.sources.azure_data_lake.AzureDataLake.rm" class="md-nav__link">
+    rm()
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#viadot.sources.azure_data_lake.AzureDataLake.upload" class="md-nav__link">
+    upload()
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#viadot.sources.azure_sql.AzureSQL" class="md-nav__link">
+    AzureSQL
+  </a>
+  
+    <nav class="md-nav" aria-label="AzureSQL">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#viadot.sources.azure_sql.AzureSQL.bulk_insert" class="md-nav__link">
+    bulk_insert()
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#viadot.sources.azure_sql.AzureSQL.create_external_database" class="md-nav__link">
+    create_external_database()
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#viadot.sources.sqlite.SQLite" class="md-nav__link">
+    SQLite
+  </a>
+  
+    <nav class="md-nav" aria-label="SQLite">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#viadot.sources.sqlite.SQLite.conn_str" class="md-nav__link">
+    conn_str
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api_sources/" class="md-nav__link">
+        API Sources
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../flows_library/" class="md-nav__link">
+        Flows library
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../task_library/" class="md-nav__link">
+        Task library
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#viadot.sources.base.Source" class="md-nav__link">
+    Source
+  </a>
+  
+    <nav class="md-nav" aria-label="Source">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#viadot.sources.base.Source.to_arrow" class="md-nav__link">
+    to_arrow()
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#viadot.sources.base.Source.to_csv" class="md-nav__link">
+    to_csv()
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#viadot.sources.base.Source.to_excel" class="md-nav__link">
+    to_excel()
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#viadot.sources.base.Source.to_parquet" class="md-nav__link">
+    to_parquet()
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#viadot.sources.base.SQL" class="md-nav__link">
+    SQL
+  </a>
+  
+    <nav class="md-nav" aria-label="SQL">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#viadot.sources.base.SQL.con" class="md-nav__link">
+    con
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#viadot.sources.base.SQL.conn_str" class="md-nav__link">
+    conn_str
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#viadot.sources.base.SQL.__init__" class="md-nav__link">
+    __init__()
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#viadot.sources.base.SQL.create_table" class="md-nav__link">
+    create_table()
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#viadot.sources.base.SQL.insert_into" class="md-nav__link">
+    insert_into()
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#viadot.sources.base.SQL.to_df" class="md-nav__link">
+    to_df()
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#viadot.sources.azure_data_lake.AzureDataLake" class="md-nav__link">
+    AzureDataLake
+  </a>
+  
+    <nav class="md-nav" aria-label="AzureDataLake">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#viadot.sources.azure_data_lake.AzureDataLake--parameters" class="md-nav__link">
+    Parameters
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#viadot.sources.azure_data_lake.AzureDataLake.cp" class="md-nav__link">
+    cp()
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#viadot.sources.azure_data_lake.AzureDataLake.exists" class="md-nav__link">
+    exists()
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#viadot.sources.azure_data_lake.AzureDataLake.find" class="md-nav__link">
+    find()
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#viadot.sources.azure_data_lake.AzureDataLake.ls" class="md-nav__link">
+    ls()
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#viadot.sources.azure_data_lake.AzureDataLake.rm" class="md-nav__link">
+    rm()
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#viadot.sources.azure_data_lake.AzureDataLake.upload" class="md-nav__link">
+    upload()
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#viadot.sources.azure_sql.AzureSQL" class="md-nav__link">
+    AzureSQL
+  </a>
+  
+    <nav class="md-nav" aria-label="AzureSQL">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#viadot.sources.azure_sql.AzureSQL.bulk_insert" class="md-nav__link">
+    bulk_insert()
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#viadot.sources.azure_sql.AzureSQL.create_external_database" class="md-nav__link">
+    create_external_database()
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#viadot.sources.sqlite.SQLite" class="md-nav__link">
+    SQLite
+  </a>
+  
+    <nav class="md-nav" aria-label="SQLite">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#viadot.sources.sqlite.SQLite.conn_str" class="md-nav__link">
+    conn_str
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          <div class="md-content" data-md-component="content">
+            <article class="md-content__inner md-typeset">
+              
+                
+
+<h1 id="sql-sources">SQL Sources</h1>
+
+
+  <div class="doc doc-object doc-class">
+
+
+
+<h2 id="viadot.sources.base.Source" class="doc doc-heading">
+        <code>
+viadot.sources.base.Source        </code>
+
+
+
+</h2>
+
+    <div class="doc doc-contents first">
+
+
+
+
+
+  <div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+
+  <div class="doc doc-object doc-method">
+
+
+
+<h3 id="viadot.sources.base.Source.to_arrow" class="doc doc-heading">
+<code class="highlight language-python"><span class="n">to_arrow</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">if_empty</span><span class="o">=</span><span class="s1">&#39;warn&#39;</span><span class="p">)</span></code>
+
+
+</h3>
+
+    <div class="doc doc-contents ">
+
+      <p>Creates a pyarrow table from source.</p>
+
+<p><strong>Parameters:</strong></p>
+<table>
+  <thead>
+    <tr>
+      <th>Name</th>
+      <th>Type</th>
+      <th>Description</th>
+      <th>Default</th>
+    </tr>
+  </thead>
+  <tbody>
+      <tr>
+        <td><code>if_empty</code></td>
+        <td><code>str</code></td>
+        <td><p>: What to do if data sourse contains no data. Defaults to "warn".</p></td>
+        <td><code>&#39;warn&#39;</code></td>
+      </tr>
+  </tbody>
+</table>
+        <details class="quote">
+          <summary>Source code in <code>viadot/sources/base.py</code></summary>
+          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">to_arrow</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">if_empty</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;warn&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pa</span><span class="o">.</span><span class="n">Table</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Creates a pyarrow table from source.</span>
+<span class="sd">    Args:</span>
+<span class="sd">        if_empty (str, optional): : What to do if data sourse contains no data. Defaults to &quot;warn&quot;.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">df</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">to_df</span><span class="p">(</span><span class="n">if_empty</span><span class="o">=</span><span class="n">if_empty</span><span class="p">)</span>
+    <span class="k">except</span> <span class="n">SKIP</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">False</span>
+
+    <span class="n">table</span> <span class="o">=</span> <span class="n">pa</span><span class="o">.</span><span class="n">Table</span><span class="o">.</span><span class="n">from_pandas</span><span class="p">(</span><span class="n">df</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">table</span>
+</code></pre></div>
+        </details>
+    </div>
+
+  </div>
+
+
+
+  <div class="doc doc-object doc-method">
+
+
+
+<h3 id="viadot.sources.base.Source.to_csv" class="doc doc-heading">
+<code class="highlight language-python"><span class="n">to_csv</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">,</span> <span class="n">if_exists</span><span class="o">=</span><span class="s1">&#39;replace&#39;</span><span class="p">,</span> <span class="n">if_empty</span><span class="o">=</span><span class="s1">&#39;warn&#39;</span><span class="p">,</span> <span class="n">sep</span><span class="o">=</span><span class="s1">&#39;</span><span class="se">\t</span><span class="s1">&#39;</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></code>
+
+
+</h3>
+
+    <div class="doc doc-contents ">
+
+      <p>Write from source to a CSV file.
+Note that the source can be a particular file or table,
+but also a database in general. Therefore, some sources may require
+additional parameters to pull the right resource. Hence this method
+passes kwargs to the <code>to_df()</code> method implemented by the concrete source.</p>
+
+<p><strong>Parameters:</strong></p>
+<table>
+  <thead>
+    <tr>
+      <th>Name</th>
+      <th>Type</th>
+      <th>Description</th>
+      <th>Default</th>
+    </tr>
+  </thead>
+  <tbody>
+      <tr>
+        <td><code>path</code></td>
+        <td><code>str</code></td>
+        <td><p>The destination path.</p></td>
+        <td><em>required</em></td>
+      </tr>
+      <tr>
+        <td><code>if_exists</code></td>
+        <td><code>Literal[</code></td>
+        <td><p>What to do if the file exists.</p></td>
+        <td><code>&#39;replace&#39;</code></td>
+      </tr>
+      <tr>
+        <td><code>if_empty</code></td>
+        <td><code>str</code></td>
+        <td><p>What to do if the source contains no data.</p></td>
+        <td><code>&#39;warn&#39;</code></td>
+      </tr>
+      <tr>
+        <td><code>sep</code></td>
+        <td><code>str</code></td>
+        <td><p>The separator to use in the CSV. Defaults to " ".</p></td>
+        <td><code>&#39;\t&#39;</code></td>
+      </tr>
+  </tbody>
+</table>
+<p><strong>Exceptions:</strong></p>
+<table>
+  <thead>
+    <tr>
+      <th>Type</th>
+      <th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+      <tr>
+        <td><code>ValueError</code></td>
+        <td><p>If the <code>if_exists</code> argument is incorrect.</p></td>
+      </tr>
+  </tbody>
+</table>
+<p><strong>Returns:</strong></p>
+<table>
+  <thead>
+    <tr>
+      <th>Type</th>
+      <th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code>bool</code></td>
+      <td><p>Whether the operation was successful.</p></td>
+    </tr>
+  </tbody>
+</table>
+        <details class="quote">
+          <summary>Source code in <code>viadot/sources/base.py</code></summary>
+          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">to_csv</span><span class="p">(</span>
+    <span class="bp">self</span><span class="p">,</span>
+    <span class="n">path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">if_exists</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;append&quot;</span><span class="p">,</span> <span class="s2">&quot;replace&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;replace&quot;</span><span class="p">,</span>
+    <span class="n">if_empty</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;warn&quot;</span><span class="p">,</span>
+    <span class="n">sep</span><span class="o">=</span><span class="s2">&quot;</span><span class="se">\t</span><span class="s2">&quot;</span><span class="p">,</span>
+    <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Write from source to a CSV file.</span>
+<span class="sd">    Note that the source can be a particular file or table,</span>
+<span class="sd">    but also a database in general. Therefore, some sources may require</span>
+<span class="sd">    additional parameters to pull the right resource. Hence this method</span>
+<span class="sd">    passes kwargs to the `to_df()` method implemented by the concrete source.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        path (str): The destination path.</span>
+<span class="sd">        if_exists (Literal[, optional): What to do if the file exists.</span>
+<span class="sd">        Defaults to &quot;replace&quot;.</span>
+<span class="sd">        if_empty (str, optional): What to do if the source contains no data.</span>
+<span class="sd">        Defaults to &quot;warn&quot;.</span>
+<span class="sd">        sep (str, optional): The separator to use in the CSV. Defaults to &quot;\t&quot;.</span>
+
+<span class="sd">    Raises:</span>
+<span class="sd">        ValueError: If the `if_exists` argument is incorrect.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        bool: Whether the operation was successful.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">df</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">to_df</span><span class="p">(</span><span class="n">if_empty</span><span class="o">=</span><span class="n">if_empty</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+    <span class="k">except</span> <span class="n">SKIP</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">False</span>
+
+    <span class="k">if</span> <span class="n">if_exists</span> <span class="o">==</span> <span class="s2">&quot;append&quot;</span><span class="p">:</span>
+        <span class="n">mode</span> <span class="o">=</span> <span class="s2">&quot;a&quot;</span>
+    <span class="k">elif</span> <span class="n">if_exists</span> <span class="o">==</span> <span class="s2">&quot;replace&quot;</span><span class="p">:</span>
+        <span class="n">mode</span> <span class="o">=</span> <span class="s2">&quot;w&quot;</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;&#39;if_exists&#39; must be one of [&#39;append&#39;, &#39;replace&#39;]&quot;</span><span class="p">)</span>
+
+    <span class="n">df</span><span class="o">.</span><span class="n">to_csv</span><span class="p">(</span>
+        <span class="n">path</span><span class="p">,</span> <span class="n">sep</span><span class="o">=</span><span class="n">sep</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="n">mode</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">header</span><span class="o">=</span><span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+    <span class="p">)</span>
+
+    <span class="k">return</span> <span class="kc">True</span>
+</code></pre></div>
+        </details>
+    </div>
+
+  </div>
+
+
+
+
+  <div class="doc doc-object doc-method">
+
+
+
+<h3 id="viadot.sources.base.Source.to_excel" class="doc doc-heading">
+<code class="highlight language-python"><span class="n">to_excel</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">,</span> <span class="n">if_exists</span><span class="o">=</span><span class="s1">&#39;replace&#39;</span><span class="p">,</span> <span class="n">if_empty</span><span class="o">=</span><span class="s1">&#39;warn&#39;</span><span class="p">)</span></code>
+
+
+</h3>
+
+    <div class="doc doc-contents ">
+
+      <p>Write from source to a excel file.</p>
+
+<p><strong>Parameters:</strong></p>
+<table>
+  <thead>
+    <tr>
+      <th>Name</th>
+      <th>Type</th>
+      <th>Description</th>
+      <th>Default</th>
+    </tr>
+  </thead>
+  <tbody>
+      <tr>
+        <td><code>path</code></td>
+        <td><code>str</code></td>
+        <td><p>The destination path.</p></td>
+        <td><em>required</em></td>
+      </tr>
+      <tr>
+        <td><code>if_exists</code></td>
+        <td><code>str</code></td>
+        <td><p>What to do if the file exists. Defaults to "replace".</p></td>
+        <td><code>&#39;replace&#39;</code></td>
+      </tr>
+      <tr>
+        <td><code>if_empty</code></td>
+        <td><code>str</code></td>
+        <td><p>What to do if the source contains no data.</p></td>
+        <td><code>&#39;warn&#39;</code></td>
+      </tr>
+  </tbody>
+</table>
+        <details class="quote">
+          <summary>Source code in <code>viadot/sources/base.py</code></summary>
+          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">to_excel</span><span class="p">(</span>
+    <span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">if_exists</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;replace&quot;</span><span class="p">,</span> <span class="n">if_empty</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;warn&quot;</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Write from source to a excel file.</span>
+<span class="sd">    Args:</span>
+<span class="sd">        path (str): The destination path.</span>
+<span class="sd">        if_exists (str, optional): What to do if the file exists. Defaults to &quot;replace&quot;.</span>
+<span class="sd">        if_empty (str, optional): What to do if the source contains no data.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">df</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">to_df</span><span class="p">(</span><span class="n">if_empty</span><span class="o">=</span><span class="n">if_empty</span><span class="p">)</span>
+    <span class="k">except</span> <span class="n">SKIP</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">False</span>
+
+    <span class="k">if</span> <span class="n">if_exists</span> <span class="o">==</span> <span class="s2">&quot;append&quot;</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span><span class="n">path</span><span class="p">):</span>
+            <span class="n">excel_df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_excel</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+            <span class="n">out_df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">([</span><span class="n">excel_df</span><span class="p">,</span> <span class="n">df</span><span class="p">])</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">out_df</span> <span class="o">=</span> <span class="n">df</span>
+    <span class="k">elif</span> <span class="n">if_exists</span> <span class="o">==</span> <span class="s2">&quot;replace&quot;</span><span class="p">:</span>
+        <span class="n">out_df</span> <span class="o">=</span> <span class="n">df</span>
+    <span class="n">out_df</span><span class="o">.</span><span class="n">to_excel</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s2">&quot;utf8&quot;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="kc">True</span>
+</code></pre></div>
+        </details>
+    </div>
+
+  </div>
+
+
+
+
+  <div class="doc doc-object doc-method">
+
+
+
+<h3 id="viadot.sources.base.Source.to_parquet" class="doc doc-heading">
+<code class="highlight language-python"><span class="n">to_parquet</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">,</span> <span class="n">if_exists</span><span class="o">=</span><span class="s1">&#39;replace&#39;</span><span class="p">,</span> <span class="n">if_empty</span><span class="o">=</span><span class="s1">&#39;warn&#39;</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></code>
+
+
+</h3>
+
+    <div class="doc doc-contents ">
+
+      <p>Write from source to a Parquet file.</p>
+
+<p><strong>Parameters:</strong></p>
+<table>
+  <thead>
+    <tr>
+      <th>Name</th>
+      <th>Type</th>
+      <th>Description</th>
+      <th>Default</th>
+    </tr>
+  </thead>
+  <tbody>
+      <tr>
+        <td><code>path</code></td>
+        <td><code>str</code></td>
+        <td><p>The destination path.</p></td>
+        <td><em>required</em></td>
+      </tr>
+      <tr>
+        <td><code>if_exists</code></td>
+        <td><code>Literal[&#34;append&#34;, &#34;replace&#34;, &#34;skip&#34;]</code></td>
+        <td><p>What to do if the file exists. Defaults to "replace".</p></td>
+        <td><code>&#39;replace&#39;</code></td>
+      </tr>
+      <tr>
+        <td><code>if_empty</code></td>
+        <td><code>Literal[&#34;warn&#34;, &#34;fail&#34;, &#34;skip&#34;]</code></td>
+        <td><p>What to do if the source contains no data. Defaults to "warn".</p></td>
+        <td><code>&#39;warn&#39;</code></td>
+      </tr>
+  </tbody>
+</table>
+        <details class="quote">
+          <summary>Source code in <code>viadot/sources/base.py</code></summary>
+          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">to_parquet</span><span class="p">(</span>
+    <span class="bp">self</span><span class="p">,</span>
+    <span class="n">path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">if_exists</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;append&quot;</span><span class="p">,</span> <span class="s2">&quot;replace&quot;</span><span class="p">,</span> <span class="s2">&quot;skip&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;replace&quot;</span><span class="p">,</span>
+    <span class="n">if_empty</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;warn&quot;</span><span class="p">,</span> <span class="s2">&quot;fail&quot;</span><span class="p">,</span> <span class="s2">&quot;skip&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;warn&quot;</span><span class="p">,</span>
+    <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Write from source to a Parquet file.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        path (str): The destination path.</span>
+<span class="sd">        if_exists (Literal[&quot;append&quot;, &quot;replace&quot;, &quot;skip&quot;], optional): What to do if the file exists. Defaults to &quot;replace&quot;.</span>
+<span class="sd">        if_empty (Literal[&quot;warn&quot;, &quot;fail&quot;, &quot;skip&quot;], optional): What to do if the source contains no data. Defaults to &quot;warn&quot;.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">df</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">to_df</span><span class="p">(</span><span class="n">if_empty</span><span class="o">=</span><span class="n">if_empty</span><span class="p">)</span>
+    <span class="k">except</span> <span class="n">SKIP</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">False</span>
+    <span class="k">if</span> <span class="n">if_exists</span> <span class="o">==</span> <span class="s2">&quot;append&quot;</span> <span class="ow">and</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span><span class="n">path</span><span class="p">):</span>
+        <span class="n">parquet_df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_parquet</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+        <span class="n">out_df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">([</span><span class="n">parquet_df</span><span class="p">,</span> <span class="n">df</span><span class="p">])</span>
+    <span class="k">elif</span> <span class="n">if_exists</span> <span class="o">==</span> <span class="s2">&quot;replace&quot;</span><span class="p">:</span>
+        <span class="n">out_df</span> <span class="o">=</span> <span class="n">df</span>
+    <span class="k">elif</span> <span class="n">if_exists</span> <span class="o">==</span> <span class="s2">&quot;skip&quot;</span><span class="p">:</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Skipped.&quot;</span><span class="p">)</span>
+        <span class="k">return</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">out_df</span> <span class="o">=</span> <span class="n">df</span>
+
+    <span class="c1"># create directories if they don&#39;t exist</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span><span class="n">path</span><span class="p">):</span>
+            <span class="n">directory</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+            <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">directory</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">FileNotFoundError</span><span class="p">:</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;File not found.&quot;</span><span class="p">)</span>
+        <span class="k">pass</span>
+
+    <span class="n">out_df</span><span class="o">.</span><span class="n">to_parquet</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+</code></pre></div>
+        </details>
+    </div>
+
+  </div>
+
+
+
+
+
+  </div>
+
+    </div>
+
+  </div>
+
+
+
+  <div class="doc doc-object doc-class">
+
+
+
+<h2 id="viadot.sources.base.SQL" class="doc doc-heading">
+        <code>
+viadot.sources.base.SQL            (<a title="viadot.sources.base.Source" href="#viadot.sources.base.Source">Source</a>)
+        </code>
+
+
+
+</h2>
+
+    <div class="doc doc-contents first">
+
+
+
+
+
+  <div class="doc doc-children">
+
+
+
+
+
+
+  <div class="doc doc-object doc-attribute">
+
+
+
+<h3 id="viadot.sources.base.SQL.con" class="doc doc-heading">
+<code class="highlight language-python"><span class="n">con</span><span class="p">:</span> <span class="n">Connection</span></code>
+
+  <span class="doc doc-properties">
+      <small class="doc doc-property doc-property-property"><code>property</code></small>
+      <small class="doc doc-property doc-property-readonly"><code>readonly</code></small>
+  </span>
+
+</h3>
+
+    <div class="doc doc-contents ">
+
+      <p>A singleton-like property for initiating a connection to the database.</p>
+
+<p><strong>Returns:</strong></p>
+<table>
+  <thead>
+    <tr>
+      <th>Type</th>
+      <th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code>pyodbc.Connection</code></td>
+      <td><p>database connection.</p></td>
+    </tr>
+  </tbody>
+</table>    </div>
+
+  </div>
+
+
+
+  <div class="doc doc-object doc-attribute">
+
+
+
+<h3 id="viadot.sources.base.SQL.conn_str" class="doc doc-heading">
+<code class="highlight language-python"><span class="n">conn_str</span><span class="p">:</span> <span class="nb">str</span></code>
+
+  <span class="doc doc-properties">
+      <small class="doc doc-property doc-property-property"><code>property</code></small>
+      <small class="doc doc-property doc-property-readonly"><code>readonly</code></small>
+  </span>
+
+</h3>
+
+    <div class="doc doc-contents ">
+
+      <p>Generate a connection string from params or config.
+Note that the user and password are escaped with '{}' characters.</p>
+
+<p><strong>Returns:</strong></p>
+<table>
+  <thead>
+    <tr>
+      <th>Type</th>
+      <th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code>str</code></td>
+      <td><p>The ODBC connection string.</p></td>
+    </tr>
+  </tbody>
+</table>    </div>
+
+  </div>
+
+
+
+
+
+
+  <div class="doc doc-object doc-method">
+
+
+
+<h3 id="viadot.sources.base.SQL.__init__" class="doc doc-heading">
+<code class="highlight language-python"><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">driver</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">config_key</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">credentials</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">query_timeout</span><span class="o">=</span><span class="mi">3600</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></code>
+
+  <span class="doc doc-properties">
+      <small class="doc doc-property doc-property-special"><code>special</code></small>
+  </span>
+
+</h3>
+
+    <div class="doc doc-contents ">
+
+      <p>A base SQL source class.</p>
+
+<p><strong>Parameters:</strong></p>
+<table>
+  <thead>
+    <tr>
+      <th>Name</th>
+      <th>Type</th>
+      <th>Description</th>
+      <th>Default</th>
+    </tr>
+  </thead>
+  <tbody>
+      <tr>
+        <td><code>driver</code></td>
+        <td><code>str</code></td>
+        <td><p>The SQL driver to use. Defaults to None.</p></td>
+        <td><code>None</code></td>
+      </tr>
+      <tr>
+        <td><code>config_key</code></td>
+        <td><code>str</code></td>
+        <td><p>The key inside local config containing the config.</p></td>
+        <td><code>None</code></td>
+      </tr>
+      <tr>
+        <td><code>credentials</code></td>
+        <td><code>str</code></td>
+        <td><p>Credentials for the connection. Defaults to None.</p></td>
+        <td><code>None</code></td>
+      </tr>
+      <tr>
+        <td><code>query_timeout</code></td>
+        <td><code>int</code></td>
+        <td><p>The timeout for executed queries. Defaults to 1 hour.</p></td>
+        <td><code>3600</code></td>
+      </tr>
+  </tbody>
+</table>
+        <details class="quote">
+          <summary>Source code in <code>viadot/sources/base.py</code></summary>
+          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+    <span class="bp">self</span><span class="p">,</span>
+    <span class="n">driver</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">config_key</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">credentials</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">query_timeout</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">60</span> <span class="o">*</span> <span class="mi">60</span><span class="p">,</span>
+    <span class="o">*</span><span class="n">args</span><span class="p">,</span>
+    <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;A base SQL source class.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        driver (str, optional): The SQL driver to use. Defaults to None.</span>
+<span class="sd">        config_key (str, optional): The key inside local config containing the config.</span>
+<span class="sd">        User can choose to use this or pass credentials directly to the `credentials`</span>
+<span class="sd">        parameter. Defaults to None.</span>
+<span class="sd">        credentials (str, optional): Credentials for the connection. Defaults to None.</span>
+<span class="sd">        query_timeout (int, optional): The timeout for executed queries. Defaults to 1 hour.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="bp">self</span><span class="o">.</span><span class="n">query_timeout</span> <span class="o">=</span> <span class="n">query_timeout</span>
+
+    <span class="k">if</span> <span class="n">config_key</span><span class="p">:</span>
+        <span class="n">config_credentials</span> <span class="o">=</span> <span class="n">local_config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">config_key</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">config_credentials</span> <span class="o">=</span> <span class="kc">None</span>
+
+    <span class="n">credentials</span> <span class="o">=</span> <span class="n">credentials</span> <span class="ow">or</span> <span class="n">config_credentials</span> <span class="ow">or</span> <span class="p">{}</span>
+
+    <span class="k">if</span> <span class="n">driver</span><span class="p">:</span>
+        <span class="n">credentials</span><span class="p">[</span><span class="s2">&quot;driver&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">driver</span>
+
+    <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="n">credentials</span><span class="o">=</span><span class="n">credentials</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+    <span class="bp">self</span><span class="o">.</span><span class="n">_con</span> <span class="o">=</span> <span class="kc">None</span>
+</code></pre></div>
+        </details>
+    </div>
+
+  </div>
+
+
+
+  <div class="doc doc-object doc-method">
+
+
+
+<h3 id="viadot.sources.base.SQL.create_table" class="doc doc-heading">
+<code class="highlight language-python"><span class="n">create_table</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">table</span><span class="p">,</span> <span class="n">schema</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">dtypes</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">if_exists</span><span class="o">=</span><span class="s1">&#39;fail&#39;</span><span class="p">)</span></code>
+
+
+</h3>
+
+    <div class="doc doc-contents ">
+
+      <p>Create a table.</p>
+
+<p><strong>Parameters:</strong></p>
+<table>
+  <thead>
+    <tr>
+      <th>Name</th>
+      <th>Type</th>
+      <th>Description</th>
+      <th>Default</th>
+    </tr>
+  </thead>
+  <tbody>
+      <tr>
+        <td><code>table</code></td>
+        <td><code>str</code></td>
+        <td><p>The destination table. Defaults to None.</p></td>
+        <td><em>required</em></td>
+      </tr>
+      <tr>
+        <td><code>schema</code></td>
+        <td><code>str</code></td>
+        <td><p>The destination schema. Defaults to None.</p></td>
+        <td><code>None</code></td>
+      </tr>
+      <tr>
+        <td><code>dtypes</code></td>
+        <td><code>Dict[str, Any]</code></td>
+        <td><p>The data types to use for the table. Defaults to None.</p></td>
+        <td><code>None</code></td>
+      </tr>
+      <tr>
+        <td><code>if_exists</code></td>
+        <td><code>Literal</code></td>
+        <td><p>What to do if the table already exists. Defaults to "fail".</p></td>
+        <td><code>&#39;fail&#39;</code></td>
+      </tr>
+  </tbody>
+</table>
+<p><strong>Returns:</strong></p>
+<table>
+  <thead>
+    <tr>
+      <th>Type</th>
+      <th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code>bool</code></td>
+      <td><p>Whether the operation was successful.</p></td>
+    </tr>
+  </tbody>
+</table>
+        <details class="quote">
+          <summary>Source code in <code>viadot/sources/base.py</code></summary>
+          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">create_table</span><span class="p">(</span>
+    <span class="bp">self</span><span class="p">,</span>
+    <span class="n">table</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">schema</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">dtypes</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">if_exists</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;fail&quot;</span><span class="p">,</span> <span class="s2">&quot;replace&quot;</span><span class="p">,</span> <span class="s2">&quot;skip&quot;</span><span class="p">,</span> <span class="s2">&quot;delete&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;fail&quot;</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Create a table.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        table (str): The destination table. Defaults to None.</span>
+<span class="sd">        schema (str, optional): The destination schema. Defaults to None.</span>
+<span class="sd">        dtypes (Dict[str, Any], optional): The data types to use for the table. Defaults to None.</span>
+<span class="sd">        if_exists (Literal, optional): What to do if the table already exists. Defaults to &quot;fail&quot;.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        bool: Whether the operation was successful.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">fqn</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">schema</span><span class="si">}</span><span class="s2">.</span><span class="si">{</span><span class="n">table</span><span class="si">}</span><span class="s2">&quot;</span> <span class="k">if</span> <span class="n">schema</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">table</span>
+    <span class="n">exists</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_check_if_table_exists</span><span class="p">(</span><span class="n">schema</span><span class="o">=</span><span class="n">schema</span><span class="p">,</span> <span class="n">table</span><span class="o">=</span><span class="n">table</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">exists</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">if_exists</span> <span class="o">==</span> <span class="s2">&quot;replace&quot;</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;DROP TABLE </span><span class="si">{</span><span class="n">fqn</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">if_exists</span> <span class="o">==</span> <span class="s2">&quot;delete&quot;</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;DELETE FROM </span><span class="si">{</span><span class="n">fqn</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="k">return</span> <span class="kc">True</span>
+        <span class="k">elif</span> <span class="n">if_exists</span> <span class="o">==</span> <span class="s2">&quot;fail&quot;</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">&quot;The table already exists and &#39;if_exists&#39; is set to &#39;fail&#39;.&quot;</span>
+            <span class="p">)</span>
+        <span class="k">elif</span> <span class="n">if_exists</span> <span class="o">==</span> <span class="s2">&quot;skip&quot;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">False</span>
+
+    <span class="n">indent</span> <span class="o">=</span> <span class="s2">&quot;  &quot;</span>
+    <span class="n">dtypes_rows</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="n">indent</span> <span class="o">+</span> <span class="sa">f</span><span class="s1">&#39;&quot;</span><span class="si">{</span><span class="n">col</span><span class="si">}</span><span class="s1">&quot;&#39;</span> <span class="o">+</span> <span class="s2">&quot; &quot;</span> <span class="o">+</span> <span class="n">dtype</span> <span class="k">for</span> <span class="n">col</span><span class="p">,</span> <span class="n">dtype</span> <span class="ow">in</span> <span class="n">dtypes</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+    <span class="p">]</span>
+    <span class="n">dtypes_formatted</span> <span class="o">=</span> <span class="s2">&quot;,</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">dtypes_rows</span><span class="p">)</span>
+    <span class="n">create_table_sql</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;CREATE TABLE </span><span class="si">{</span><span class="n">fqn</span><span class="si">}</span><span class="s2">(</span><span class="se">\n</span><span class="si">{</span><span class="n">dtypes_formatted</span><span class="si">}</span><span class="se">\n</span><span class="s2">)&quot;</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">create_table_sql</span><span class="p">)</span>
+    <span class="k">return</span> <span class="kc">True</span>
+</code></pre></div>
+        </details>
+    </div>
+
+  </div>
+
+
+
+  <div class="doc doc-object doc-method">
+
+
+
+<h3 id="viadot.sources.base.SQL.insert_into" class="doc doc-heading">
+<code class="highlight language-python"><span class="n">insert_into</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">table</span><span class="p">,</span> <span class="n">df</span><span class="p">)</span></code>
+
+
+</h3>
+
+    <div class="doc doc-contents ">
+
+      <p>Insert values from a pandas DataFrame into an existing
+database table.</p>
+
+<p><strong>Parameters:</strong></p>
+<table>
+  <thead>
+    <tr>
+      <th>Name</th>
+      <th>Type</th>
+      <th>Description</th>
+      <th>Default</th>
+    </tr>
+  </thead>
+  <tbody>
+      <tr>
+        <td><code>table</code></td>
+        <td><code>str</code></td>
+        <td><p>table name</p></td>
+        <td><em>required</em></td>
+      </tr>
+      <tr>
+        <td><code>df</code></td>
+        <td><code>pd.DataFrame</code></td>
+        <td><p>pandas dataframe</p></td>
+        <td><em>required</em></td>
+      </tr>
+  </tbody>
+</table>
+<p><strong>Returns:</strong></p>
+<table>
+  <thead>
+    <tr>
+      <th>Type</th>
+      <th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code>str</code></td>
+      <td><p>The executed SQL insert query.</p></td>
+    </tr>
+  </tbody>
+</table>
+        <details class="quote">
+          <summary>Source code in <code>viadot/sources/base.py</code></summary>
+          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">insert_into</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">table</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">df</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Insert values from a pandas DataFrame into an existing</span>
+<span class="sd">    database table.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        table (str): table name</span>
+<span class="sd">        df (pd.DataFrame): pandas dataframe</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        str: The executed SQL insert query.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">values</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+    <span class="n">rows_count</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">counter</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">df</span><span class="o">.</span><span class="n">values</span><span class="p">:</span>
+        <span class="n">counter</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="n">out_row</span> <span class="o">=</span> <span class="s2">&quot;, &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_sql_column</span><span class="p">,</span> <span class="n">row</span><span class="p">))</span>
+        <span class="n">comma</span> <span class="o">=</span> <span class="s2">&quot;,</span><span class="se">\n</span><span class="s2">&quot;</span>
+        <span class="k">if</span> <span class="n">counter</span> <span class="o">==</span> <span class="n">rows_count</span><span class="p">:</span>
+            <span class="n">comma</span> <span class="o">=</span> <span class="s2">&quot;;&quot;</span>
+        <span class="n">out_row</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;(</span><span class="si">{</span><span class="n">out_row</span><span class="si">}</span><span class="s2">)</span><span class="si">{</span><span class="n">comma</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="n">values</span> <span class="o">+=</span> <span class="n">out_row</span>
+
+    <span class="n">columns</span> <span class="o">=</span> <span class="s2">&quot;, &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">df</span><span class="o">.</span><span class="n">columns</span><span class="p">)</span>
+
+    <span class="n">sql</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;INSERT INTO </span><span class="si">{</span><span class="n">table</span><span class="si">}</span><span class="s2"> (</span><span class="si">{</span><span class="n">columns</span><span class="si">}</span><span class="s2">)</span><span class="se">\n</span><span class="s2"> VALUES </span><span class="si">{</span><span class="n">values</span><span class="si">}</span><span class="s2">&quot;</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">sql</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">sql</span>
+</code></pre></div>
+        </details>
+    </div>
+
+  </div>
+
+
+
+
+  <div class="doc doc-object doc-method">
+
+
+
+<h3 id="viadot.sources.base.SQL.to_df" class="doc doc-heading">
+<code class="highlight language-python"><span class="n">to_df</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">query</span><span class="p">,</span> <span class="n">con</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">if_empty</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
+
+
+</h3>
+
+    <div class="doc doc-contents ">
+
+      <p>Creates DataFrame form SQL query.</p>
+
+<p><strong>Parameters:</strong></p>
+<table>
+  <thead>
+    <tr>
+      <th>Name</th>
+      <th>Type</th>
+      <th>Description</th>
+      <th>Default</th>
+    </tr>
+  </thead>
+  <tbody>
+      <tr>
+        <td><code>query</code></td>
+        <td><code>str</code></td>
+        <td><p>SQL query. If don't start with "SELECT" returns empty DataFrame.</p></td>
+        <td><em>required</em></td>
+      </tr>
+      <tr>
+        <td><code>con</code></td>
+        <td><code>pyodbc.Connection</code></td>
+        <td><p>The connection to use to pull the data.</p></td>
+        <td><code>None</code></td>
+      </tr>
+      <tr>
+        <td><code>if_empty</code></td>
+        <td><code>str</code></td>
+        <td><p>What to do if the query returns no data. Defaults to None.</p></td>
+        <td><code>None</code></td>
+      </tr>
+  </tbody>
+</table>
+        <details class="quote">
+          <summary>Source code in <code>viadot/sources/base.py</code></summary>
+          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">to_df</span><span class="p">(</span>
+    <span class="bp">self</span><span class="p">,</span> <span class="n">query</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">con</span><span class="p">:</span> <span class="n">pyodbc</span><span class="o">.</span><span class="n">Connection</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">if_empty</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Creates DataFrame form SQL query.</span>
+<span class="sd">    Args:</span>
+<span class="sd">        query (str): SQL query. If don&#39;t start with &quot;SELECT&quot; returns empty DataFrame.</span>
+<span class="sd">        con (pyodbc.Connection, optional): The connection to use to pull the data.</span>
+<span class="sd">        if_empty (str, optional): What to do if the query returns no data. Defaults to None.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">conn</span> <span class="o">=</span> <span class="n">con</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">con</span>
+
+    <span class="n">query_sanitized</span> <span class="o">=</span> <span class="n">query</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">query_sanitized</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;SELECT&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="n">query_sanitized</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;WITH&quot;</span><span class="p">):</span>
+        <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_sql_query</span><span class="p">(</span><span class="n">query</span><span class="p">,</span> <span class="n">conn</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">df</span><span class="o">.</span><span class="n">empty</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_handle_if_empty</span><span class="p">(</span><span class="n">if_empty</span><span class="o">=</span><span class="n">if_empty</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">df</span>
+</code></pre></div>
+        </details>
+    </div>
+
+  </div>
+
+
+
+
+
+  </div>
+
+    </div>
+
+  </div>
+
+
+
+  <div class="doc doc-object doc-class">
+
+
+
+<h2 id="viadot.sources.azure_data_lake.AzureDataLake" class="doc doc-heading">
+        <code>
+viadot.sources.azure_data_lake.AzureDataLake            (<a title="viadot.sources.base.Source" href="#viadot.sources.base.Source">Source</a>)
+        </code>
+
+
+
+</h2>
+
+    <div class="doc doc-contents first">
+
+      <p>A class for pulling data from the Azure Data Lakes (gen1 and gen2).
+You can either connect to the lake in general or to a particular path,
+eg.
+lake = AzureDataLake(); lake.exists("a/b/c.csv")
+vs
+lake = AzureDataLake(path="a/b/c.csv"); lake.exists()</p>
+<h4 id="viadot.sources.azure_data_lake.AzureDataLake--parameters">Parameters</h4>
+<p>credentials : Dict[str, Any], optional
+    A dictionary containing ACCOUNT_NAME and the following
+    Service Principal credentials:
+        - AZURE_TENANT_ID
+        - AZURE_CLIENT_ID
+        - AZURE_CLIENT_SECRET</p>
+
+
+
+
+  <div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+  <div class="doc doc-object doc-method">
+
+
+
+<h3 id="viadot.sources.azure_data_lake.AzureDataLake.cp" class="doc doc-heading">
+<code class="highlight language-python"><span class="n">cp</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">from_path</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">to_path</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">recursive</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span></code>
+
+
+</h3>
+
+    <div class="doc doc-contents ">
+
+      <p>Copies source to a destination.</p>
+
+<p><strong>Parameters:</strong></p>
+<table>
+  <thead>
+    <tr>
+      <th>Name</th>
+      <th>Type</th>
+      <th>Description</th>
+      <th>Default</th>
+    </tr>
+  </thead>
+  <tbody>
+      <tr>
+        <td><code>from_path</code></td>
+        <td><code>str</code></td>
+        <td><p>Path form which to copy file. Defauls to None.</p></td>
+        <td><code>None</code></td>
+      </tr>
+      <tr>
+        <td><code>to_path</code></td>
+        <td><code>str</code></td>
+        <td><p>Path where to copy files. Defaults to None.</p></td>
+        <td><code>None</code></td>
+      </tr>
+      <tr>
+        <td><code>recursive</code></td>
+        <td><code>bool</code></td>
+        <td><p>Whether to copy files recursively or not. Defaults to False.</p></td>
+        <td><code>False</code></td>
+      </tr>
+  </tbody>
+</table>
+        <details class="quote">
+          <summary>Source code in <code>viadot/sources/azure_data_lake.py</code></summary>
+          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">cp</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">from_path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">to_path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">recursive</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Copies source to a destination.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        from_path (str, optional): Path form which to copy file. Defauls to None.</span>
+<span class="sd">        to_path (str, optional): Path where to copy files. Defaults to None.</span>
+<span class="sd">        recursive (bool, optional): Whether to copy files recursively or not. Defaults to False.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">from_path</span> <span class="o">=</span> <span class="n">from_path</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">path</span>
+    <span class="n">to_path</span> <span class="o">=</span> <span class="n">to_path</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">cp</span><span class="p">(</span><span class="n">from_path</span><span class="p">,</span> <span class="n">to_path</span><span class="p">,</span> <span class="n">recursive</span><span class="o">=</span><span class="n">recursive</span><span class="p">)</span>
+</code></pre></div>
+        </details>
+    </div>
+
+  </div>
+
+
+
+
+  <div class="doc doc-object doc-method">
+
+
+
+<h3 id="viadot.sources.azure_data_lake.AzureDataLake.exists" class="doc doc-heading">
+<code class="highlight language-python"><span class="n">exists</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
+
+
+</h3>
+
+    <div class="doc doc-contents ">
+
+      <p>Check if a location exists in Azure Data Lake.</p>
+
+<p><strong>Parameters:</strong></p>
+<table>
+  <thead>
+    <tr>
+      <th>Name</th>
+      <th>Type</th>
+      <th>Description</th>
+      <th>Default</th>
+    </tr>
+  </thead>
+  <tbody>
+      <tr>
+        <td><code>path</code></td>
+        <td><code>str</code></td>
+        <td><p>The path to check. Can be a file or a directory.</p></td>
+        <td><code>None</code></td>
+      </tr>
+  </tbody>
+</table>
+<p><strong>Examples:</strong></p>
+    
+      <div class="highlight"><pre><span></span><code><span class="kn">from</span> <span class="nn">viadot.sources</span> <span class="kn">import</span> <span class="n">AzureDataLake</span>
+
+<span class="n">lake</span> <span class="o">=</span> <span class="n">AzureDataLake</span><span class="p">(</span><span class="n">gen</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+<span class="n">lake</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="s2">&quot;tests/test.csv&quot;</span><span class="p">)</span>
+</code></pre></div>
+
+<p><strong>Returns:</strong></p>
+<table>
+  <thead>
+    <tr>
+      <th>Type</th>
+      <th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code>bool</code></td>
+      <td><p>Whether the paths exists.</p></td>
+    </tr>
+  </tbody>
+</table>
+        <details class="quote">
+          <summary>Source code in <code>viadot/sources/azure_data_lake.py</code></summary>
+          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">exists</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Check if a location exists in Azure Data Lake.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        path (str): The path to check. Can be a file or a directory.</span>
+
+<span class="sd">    Example:</span>
+<span class="sd">    ```python</span>
+<span class="sd">    from viadot.sources import AzureDataLake</span>
+
+<span class="sd">    lake = AzureDataLake(gen=1)</span>
+<span class="sd">    lake.exists(&quot;tests/test.csv&quot;)</span>
+<span class="sd">    ```</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        bool: Whether the paths exists.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">path</span> <span class="o">=</span> <span class="n">path</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">path</span>
+    <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+</code></pre></div>
+        </details>
+    </div>
+
+  </div>
+
+
+
+  <div class="doc doc-object doc-method">
+
+
+
+<h3 id="viadot.sources.azure_data_lake.AzureDataLake.find" class="doc doc-heading">
+<code class="highlight language-python"><span class="n">find</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
+
+
+</h3>
+
+    <div class="doc doc-contents ">
+
+      <p>Returns list of files in a path using recursive method.</p>
+
+<p><strong>Parameters:</strong></p>
+<table>
+  <thead>
+    <tr>
+      <th>Name</th>
+      <th>Type</th>
+      <th>Description</th>
+      <th>Default</th>
+    </tr>
+  </thead>
+  <tbody>
+      <tr>
+        <td><code>path</code></td>
+        <td><code>str</code></td>
+        <td><p>Path to a folder. Defaults to None.</p></td>
+        <td><code>None</code></td>
+      </tr>
+  </tbody>
+</table>
+<p><strong>Returns:</strong></p>
+<table>
+  <thead>
+    <tr>
+      <th>Type</th>
+      <th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code>List[str]</code></td>
+      <td><p>List of paths.</p></td>
+    </tr>
+  </tbody>
+</table>
+        <details class="quote">
+          <summary>Source code in <code>viadot/sources/azure_data_lake.py</code></summary>
+          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">find</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Returns list of files in a path using recursive method.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        path (str, optional): Path to a folder. Defaults to None.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        List[str]: List of paths.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">path</span> <span class="o">=</span> <span class="n">path</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">path</span>
+
+    <span class="n">files_path_list_raw</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+    <span class="n">paths_list</span> <span class="o">=</span> <span class="p">[</span><span class="n">p</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">files_path_list_raw</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">p</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s2">&quot;/&quot;</span><span class="p">)]</span>
+    <span class="k">return</span> <span class="n">paths_list</span>
+</code></pre></div>
+        </details>
+    </div>
+
+  </div>
+
+
+
+  <div class="doc doc-object doc-method">
+
+
+
+<h3 id="viadot.sources.azure_data_lake.AzureDataLake.ls" class="doc doc-heading">
+<code class="highlight language-python"><span class="n">ls</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
+
+
+</h3>
+
+    <div class="doc doc-contents ">
+
+      <p>Returns list of files in a path.</p>
+
+<p><strong>Parameters:</strong></p>
+<table>
+  <thead>
+    <tr>
+      <th>Name</th>
+      <th>Type</th>
+      <th>Description</th>
+      <th>Default</th>
+    </tr>
+  </thead>
+  <tbody>
+      <tr>
+        <td><code>path</code></td>
+        <td><code>str</code></td>
+        <td><p>Path to a folder. Defaults to None.</p></td>
+        <td><code>None</code></td>
+      </tr>
+  </tbody>
+</table>
+        <details class="quote">
+          <summary>Source code in <code>viadot/sources/azure_data_lake.py</code></summary>
+          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">ls</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Returns list of files in a path.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        path (str, optional): Path to a folder. Defaults to None.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">path</span> <span class="o">=</span> <span class="n">path</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">path</span>
+
+    <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">ls</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+</code></pre></div>
+        </details>
+    </div>
+
+  </div>
+
+
+
+  <div class="doc doc-object doc-method">
+
+
+
+<h3 id="viadot.sources.azure_data_lake.AzureDataLake.rm" class="doc doc-heading">
+<code class="highlight language-python"><span class="n">rm</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">recursive</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span></code>
+
+
+</h3>
+
+    <div class="doc doc-contents ">
+
+      <p>Deletes a file or directory from the path.</p>
+
+<p><strong>Parameters:</strong></p>
+<table>
+  <thead>
+    <tr>
+      <th>Name</th>
+      <th>Type</th>
+      <th>Description</th>
+      <th>Default</th>
+    </tr>
+  </thead>
+  <tbody>
+      <tr>
+        <td><code>path</code></td>
+        <td><code>str</code></td>
+        <td><p>Path to a folder or file. Defaults to None.</p></td>
+        <td><code>None</code></td>
+      </tr>
+      <tr>
+        <td><code>recursive</code></td>
+        <td><code>bool</code></td>
+        <td><p>Whether to delete files recursively or not. Defaults to False.</p></td>
+        <td><code>False</code></td>
+      </tr>
+  </tbody>
+</table>
+        <details class="quote">
+          <summary>Source code in <code>viadot/sources/azure_data_lake.py</code></summary>
+          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">rm</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">recursive</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Deletes a file or directory from the path.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        path (str, optional): Path to a folder or file. Defaults to None.</span>
+<span class="sd">        recursive (bool, optional): Whether to delete files recursively or not. Defaults to False.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">path</span> <span class="o">=</span> <span class="n">path</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">path</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">rm</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">recursive</span><span class="o">=</span><span class="n">recursive</span><span class="p">)</span>
+</code></pre></div>
+        </details>
+    </div>
+
+  </div>
+
+
+
+
+  <div class="doc doc-object doc-method">
+
+
+
+<h3 id="viadot.sources.azure_data_lake.AzureDataLake.upload" class="doc doc-heading">
+<code class="highlight language-python"><span class="n">upload</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">from_path</span><span class="p">,</span> <span class="n">to_path</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">recursive</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">overwrite</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span></code>
+
+
+</h3>
+
+    <div class="doc doc-contents ">
+
+      <p>Upload file(s) to the lake.</p>
+
+<p><strong>Parameters:</strong></p>
+<table>
+  <thead>
+    <tr>
+      <th>Name</th>
+      <th>Type</th>
+      <th>Description</th>
+      <th>Default</th>
+    </tr>
+  </thead>
+  <tbody>
+      <tr>
+        <td><code>from_path</code></td>
+        <td><code>str</code></td>
+        <td><p>Path to the local file(s) to be uploaded.</p></td>
+        <td><em>required</em></td>
+      </tr>
+      <tr>
+        <td><code>to_path</code></td>
+        <td><code>str</code></td>
+        <td><p>Path to the destination file/folder</p></td>
+        <td><code>None</code></td>
+      </tr>
+      <tr>
+        <td><code>recursive</code></td>
+        <td><code>bool</code></td>
+        <td><p>Set this to true if working with directories.</p></td>
+        <td><code>False</code></td>
+      </tr>
+      <tr>
+        <td><code>overwrite</code></td>
+        <td><code>bool</code></td>
+        <td><p>Whether to overwrite the file(s) if they exist.</p></td>
+        <td><code>False</code></td>
+      </tr>
+  </tbody>
+</table>
+<p><strong>Examples:</strong></p>
+    
+      <div class="highlight"><pre><span></span><code><span class="kn">from</span> <span class="nn">viadot.sources</span> <span class="kn">import</span> <span class="n">AzureDataLake</span>
+<span class="n">lake</span> <span class="o">=</span> <span class="n">AzureDataLake</span><span class="p">()</span>
+<span class="n">lake</span><span class="o">.</span><span class="n">upload</span><span class="p">(</span><span class="n">from_path</span><span class="o">=</span><span class="s1">&#39;tests/test.csv&#39;</span><span class="p">,</span> <span class="n">to_path</span><span class="o">=</span><span class="s2">&quot;sandbox/test.csv&quot;</span><span class="p">)</span>
+</code></pre></div>
+
+        <details class="quote">
+          <summary>Source code in <code>viadot/sources/azure_data_lake.py</code></summary>
+          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">upload</span><span class="p">(</span>
+    <span class="bp">self</span><span class="p">,</span>
+    <span class="n">from_path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">to_path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">recursive</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="n">overwrite</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Upload file(s) to the lake.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        from_path (str): Path to the local file(s) to be uploaded.</span>
+<span class="sd">        to_path (str): Path to the destination file/folder</span>
+<span class="sd">        recursive (bool): Set this to true if working with directories.</span>
+<span class="sd">        overwrite (bool): Whether to overwrite the file(s) if they exist.</span>
+
+<span class="sd">    Example:</span>
+<span class="sd">    ```python</span>
+<span class="sd">    from viadot.sources import AzureDataLake</span>
+<span class="sd">    lake = AzureDataLake()</span>
+<span class="sd">    lake.upload(from_path=&#39;tests/test.csv&#39;, to_path=&quot;sandbox/test.csv&quot;)</span>
+<span class="sd">    ```</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">gen</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="bp">NotImplemented</span><span class="p">(</span>
+            <span class="s2">&quot;Azure Data Lake Gen1 does not support simple file upload.&quot;</span>
+        <span class="p">)</span>
+
+    <span class="n">to_path</span> <span class="o">=</span> <span class="n">to_path</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">path</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">fs</span><span class="o">.</span><span class="n">upload</span><span class="p">(</span>
+        <span class="n">lpath</span><span class="o">=</span><span class="n">from_path</span><span class="p">,</span>
+        <span class="n">rpath</span><span class="o">=</span><span class="n">to_path</span><span class="p">,</span>
+        <span class="n">recursive</span><span class="o">=</span><span class="n">recursive</span><span class="p">,</span>
+        <span class="n">overwrite</span><span class="o">=</span><span class="n">overwrite</span><span class="p">,</span>
+    <span class="p">)</span>
+</code></pre></div>
+        </details>
+    </div>
+
+  </div>
+
+
+
+
+
+  </div>
+
+    </div>
+
+  </div>
+
+
+
+  <div class="doc doc-object doc-class">
+
+
+
+<h2 id="viadot.sources.azure_sql.AzureSQL" class="doc doc-heading">
+        <code>
+viadot.sources.azure_sql.AzureSQL            (<span title="viadot.sources.sql_server.SQLServer">SQLServer</span>)
+        </code>
+
+
+
+</h2>
+
+    <div class="doc doc-contents first">
+
+
+
+
+
+  <div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+  <div class="doc doc-object doc-method">
+
+
+
+<h3 id="viadot.sources.azure_sql.AzureSQL.bulk_insert" class="doc doc-heading">
+<code class="highlight language-python"><span class="n">bulk_insert</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">table</span><span class="p">,</span> <span class="n">schema</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">source_path</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">sep</span><span class="o">=</span><span class="s1">&#39;</span><span class="se">\t</span><span class="s1">&#39;</span><span class="p">,</span> <span class="n">if_exists</span><span class="o">=</span><span class="s1">&#39;append&#39;</span><span class="p">)</span></code>
+
+
+</h3>
+
+    <div class="doc doc-contents ">
+
+      <p>Fuction to bulk insert.</p>
+
+<p><strong>Parameters:</strong></p>
+<table>
+  <thead>
+    <tr>
+      <th>Name</th>
+      <th>Type</th>
+      <th>Description</th>
+      <th>Default</th>
+    </tr>
+  </thead>
+  <tbody>
+      <tr>
+        <td><code>table</code></td>
+        <td><code>str</code></td>
+        <td><p>Table name.</p></td>
+        <td><em>required</em></td>
+      </tr>
+      <tr>
+        <td><code>schema</code></td>
+        <td><code>str</code></td>
+        <td><p>Schema name. Defaults to None.</p></td>
+        <td><code>None</code></td>
+      </tr>
+      <tr>
+        <td><code>source_path</code></td>
+        <td><code>str</code></td>
+        <td><p>Full path to a data file. Defaults to one.</p></td>
+        <td><code>None</code></td>
+      </tr>
+      <tr>
+        <td><code>sep</code></td>
+        <td><code>str</code></td>
+        <td><p>field terminator to be used for char and widechar data files. Defaults to "   ".</p></td>
+        <td><code>&#39;\t&#39;</code></td>
+      </tr>
+      <tr>
+        <td><code>if_exists</code></td>
+        <td><code>Literal</code></td>
+        <td><p>What to do if the table already exists. Defaults to "append".</p></td>
+        <td><code>&#39;append&#39;</code></td>
+      </tr>
+  </tbody>
+</table>
+        <details class="quote">
+          <summary>Source code in <code>viadot/sources/azure_sql.py</code></summary>
+          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">bulk_insert</span><span class="p">(</span>
+    <span class="bp">self</span><span class="p">,</span>
+    <span class="n">table</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">schema</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">source_path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">sep</span><span class="o">=</span><span class="s2">&quot;</span><span class="se">\t</span><span class="s2">&quot;</span><span class="p">,</span>
+    <span class="n">if_exists</span><span class="p">:</span> <span class="n">Literal</span> <span class="o">=</span> <span class="s2">&quot;append&quot;</span><span class="p">,</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Fuction to bulk insert.</span>
+<span class="sd">    Args:</span>
+<span class="sd">        table (str): Table name.</span>
+<span class="sd">        schema (str, optional): Schema name. Defaults to None.</span>
+<span class="sd">        source_path (str, optional): Full path to a data file. Defaults to one.</span>
+<span class="sd">        sep (str, optional):  field terminator to be used for char and widechar data files. Defaults to &quot;\t&quot;.</span>
+<span class="sd">        if_exists (Literal, optional): What to do if the table already exists. Defaults to &quot;append&quot;.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">schema</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">schema</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">DEFAULT_SCHEMA</span>
+    <span class="n">fqn</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">schema</span><span class="si">}</span><span class="s2">.</span><span class="si">{</span><span class="n">table</span><span class="si">}</span><span class="s2">&quot;</span>
+    <span class="n">insert_sql</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;&quot;&quot;</span>
+<span class="s2">        BULK INSERT </span><span class="si">{</span><span class="n">fqn</span><span class="si">}</span><span class="s2"> FROM &#39;</span><span class="si">{</span><span class="n">source_path</span><span class="si">}</span><span class="s2">&#39;</span>
+<span class="s2">        WITH (</span>
+<span class="s2">            CHECK_CONSTRAINTS,</span>
+<span class="s2">            DATA_SOURCE=&#39;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">credentials</span><span class="p">[</span><span class="s1">&#39;data_source&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&#39;,</span>
+<span class="s2">            DATAFILETYPE=&#39;char&#39;,</span>
+<span class="s2">            FIELDTERMINATOR=&#39;</span><span class="si">{</span><span class="n">sep</span><span class="si">}</span><span class="s2">&#39;,</span>
+<span class="s2">            ROWTERMINATOR=&#39;0x0a&#39;,</span>
+<span class="s2">            FIRSTROW=2,</span>
+<span class="s2">            KEEPIDENTITY,</span>
+<span class="s2">            TABLOCK,</span>
+<span class="s2">            CODEPAGE=&#39;65001&#39;</span>
+<span class="s2">        );</span>
+<span class="s2">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">if_exists</span> <span class="o">==</span> <span class="s2">&quot;replace&quot;</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;DELETE FROM </span><span class="si">{</span><span class="n">schema</span><span class="si">}</span><span class="s2">.</span><span class="si">{</span><span class="n">table</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">insert_sql</span><span class="p">)</span>
+    <span class="k">return</span> <span class="kc">True</span>
+</code></pre></div>
+        </details>
+    </div>
+
+  </div>
+
+
+
+  <div class="doc doc-object doc-method">
+
+
+
+<h3 id="viadot.sources.azure_sql.AzureSQL.create_external_database" class="doc doc-heading">
+<code class="highlight language-python"><span class="n">create_external_database</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">external_database_name</span><span class="p">,</span> <span class="n">storage_account_name</span><span class="p">,</span> <span class="n">container_name</span><span class="p">,</span> <span class="n">sas_token</span><span class="p">,</span> <span class="n">master_key_password</span><span class="p">,</span> <span class="n">credential_name</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
+
+
+</h3>
+
+    <div class="doc doc-contents ">
+
+      <p>Create an external database. Used to eg. execute BULK INSERT or OPENROWSET
+queries.</p>
+
+<p><strong>Parameters:</strong></p>
+<table>
+  <thead>
+    <tr>
+      <th>Name</th>
+      <th>Type</th>
+      <th>Description</th>
+      <th>Default</th>
+    </tr>
+  </thead>
+  <tbody>
+      <tr>
+        <td><code>external_database_name</code></td>
+        <td><code>str</code></td>
+        <td><p>The name of the extrnal source (db) to be created.</p></td>
+        <td><em>required</em></td>
+      </tr>
+      <tr>
+        <td><code>storage_account_name</code></td>
+        <td><code>str</code></td>
+        <td><p>The name of the Azure storage account.</p></td>
+        <td><em>required</em></td>
+      </tr>
+      <tr>
+        <td><code>container_name</code></td>
+        <td><code>str</code></td>
+        <td><p>The name of the container which should become the "database".</p></td>
+        <td><em>required</em></td>
+      </tr>
+      <tr>
+        <td><code>sas_token</code></td>
+        <td><code>str</code></td>
+        <td><p>The SAS token to be used as the credential. Note that the auth</p></td>
+        <td><em>required</em></td>
+      </tr>
+      <tr>
+        <td><code>master_key_password</code></td>
+        <td><code>str</code></td>
+        <td><p>The password for the database master key of your</p></td>
+        <td><em>required</em></td>
+      </tr>
+      <tr>
+        <td><code>credential_name</code></td>
+        <td><code>str</code></td>
+        <td><p>How to name the SAS credential. This is really an Azure</p></td>
+        <td><code>None</code></td>
+      </tr>
+  </tbody>
+</table>
+        <details class="quote">
+          <summary>Source code in <code>viadot/sources/azure_sql.py</code></summary>
+          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">create_external_database</span><span class="p">(</span>
+    <span class="bp">self</span><span class="p">,</span>
+    <span class="n">external_database_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">storage_account_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">container_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">sas_token</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">master_key_password</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">credential_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Create an external database. Used to eg. execute BULK INSERT or OPENROWSET</span>
+<span class="sd">    queries.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        external_database_name (str): The name of the extrnal source (db) to be created.</span>
+<span class="sd">        storage_account_name (str): The name of the Azure storage account.</span>
+<span class="sd">        container_name (str): The name of the container which should become the &quot;database&quot;.</span>
+<span class="sd">        sas_token (str): The SAS token to be used as the credential. Note that the auth</span>
+<span class="sd">        system in Azure is pretty broken and you might need to paste here your storage</span>
+<span class="sd">        account&#39;s account key instead.</span>
+<span class="sd">        master_key_password (str): The password for the database master key of your</span>
+<span class="sd">        Azure SQL Database.</span>
+<span class="sd">        credential_name (str): How to name the SAS credential. This is really an Azure</span>
+<span class="sd">        internal thing and can be anything. By default &#39;{external_database_name}_credential`.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="c1"># stupid Microsoft thing</span>
+    <span class="k">if</span> <span class="n">sas_token</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;?&quot;</span><span class="p">):</span>
+        <span class="n">sas_token</span> <span class="o">=</span> <span class="n">sas_token</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span>
+
+    <span class="k">if</span> <span class="n">credential_name</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">credential_name</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">external_database_name</span><span class="si">}</span><span class="s2">_credential&quot;</span>
+
+    <span class="n">create_master_key_sql</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="sa">f</span><span class="s2">&quot;CREATE MASTER KEY ENCRYPTION BY PASSWORD = </span><span class="si">{</span><span class="n">master_key_password</span><span class="si">}</span><span class="s2">&quot;</span>
+    <span class="p">)</span>
+
+    <span class="n">create_external_db_credential_sql</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;&quot;&quot;</span>
+<span class="s2">    CREATE DATABASE SCOPED CREDENTIAL </span><span class="si">{</span><span class="n">credential_name</span><span class="si">}</span>
+<span class="s2">    WITH IDENTITY = &#39;SHARED ACCESS SIGNATURE&#39;</span>
+<span class="s2">    SECRET = &#39;</span><span class="si">{</span><span class="n">sas_token</span><span class="si">}</span><span class="s2">&#39;;</span>
+<span class="s2">    &quot;&quot;&quot;</span>
+
+    <span class="n">create_external_db_sql</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;&quot;&quot;</span>
+<span class="s2">    CREATE EXTERNAL DATA SOURCE </span><span class="si">{</span><span class="n">external_database_name</span><span class="si">}</span><span class="s2"> WITH (</span>
+<span class="s2">    LOCATION = f&#39;https://</span><span class="si">{</span><span class="n">storage_account_name</span><span class="si">}</span><span class="s2">.blob.core.windows.net/</span><span class="si">{</span><span class="n">container_name</span><span class="si">}</span><span class="s2">&#39;,</span>
+<span class="s2">    CREDENTIAL = </span><span class="si">{</span><span class="n">credential_name</span><span class="si">}</span>
+<span class="s2">    );</span>
+<span class="s2">    &quot;&quot;&quot;</span>
+
+    <span class="bp">self</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">create_master_key_sql</span><span class="p">)</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">create_external_db_credential_sql</span><span class="p">)</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">create_external_db_sql</span><span class="p">)</span>
+</code></pre></div>
+        </details>
+    </div>
+
+  </div>
+
+
+
+
+
+  </div>
+
+    </div>
+
+  </div>
+
+
+
+  <div class="doc doc-object doc-class">
+
+
+
+<h2 id="viadot.sources.sqlite.SQLite" class="doc doc-heading">
+        <code>
+viadot.sources.sqlite.SQLite            (<a title="viadot.sources.base.SQL" href="#viadot.sources.base.SQL">SQL</a>)
+        </code>
+
+
+
+</h2>
+
+    <div class="doc doc-contents first">
+
+      <p>A SQLite source</p>
+
+<p><strong>Parameters:</strong></p>
+<table>
+  <thead>
+    <tr>
+      <th>Name</th>
+      <th>Type</th>
+      <th>Description</th>
+      <th>Default</th>
+    </tr>
+  </thead>
+  <tbody>
+      <tr>
+        <td><code>server</code></td>
+        <td><code>str</code></td>
+        <td><p>server string, usually localhost</p></td>
+        <td><em>required</em></td>
+      </tr>
+      <tr>
+        <td><code>db</code></td>
+        <td><code>str</code></td>
+        <td><p>the file path to the db e.g. /home/somedb.sqlite</p></td>
+        <td><em>required</em></td>
+      </tr>
+  </tbody>
+</table>
+
+
+
+  <div class="doc doc-children">
+
+
+
+
+
+
+  <div class="doc doc-object doc-attribute">
+
+
+
+<h3 id="viadot.sources.sqlite.SQLite.conn_str" class="doc doc-heading">
+<code class="highlight language-python"><span class="n">conn_str</span></code>
+
+  <span class="doc doc-properties">
+      <small class="doc doc-property doc-property-property"><code>property</code></small>
+      <small class="doc doc-property doc-property-readonly"><code>readonly</code></small>
+  </span>
+
+</h3>
+
+    <div class="doc doc-contents ">
+
+      <p>Generate a connection string from params or config.
+Note that the user and password are escapedd with '{}' characters.</p>
+
+<p><strong>Returns:</strong></p>
+<table>
+  <thead>
+    <tr>
+      <th>Type</th>
+      <th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code>str</code></td>
+      <td><p>The ODBC connection string.</p></td>
+    </tr>
+  </tbody>
+</table>    </div>
+
+  </div>
+
+
+
+
+
+
+
+
+
+  </div>
+
+    </div>
+
+  </div>
+
+              
+            </article>
+          </div>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+    <nav class="md-footer__inner md-grid" aria-label="Footer">
+      
+        
+        <a href="../../tutorials/adding_source/" class="md-footer__link md-footer__link--prev" aria-label="Previous: Tutorials" rel="prev">
+          <div class="md-footer__button md-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"/></svg>
+          </div>
+          <div class="md-footer__title">
+            <div class="md-ellipsis">
+              <span class="md-footer__direction">
+                Previous
+              </span>
+              Tutorials
+            </div>
+          </div>
+        </a>
+      
+      
+        
+        <a href="../api_sources/" class="md-footer__link md-footer__link--next" aria-label="Next: API Sources" rel="next">
+          <div class="md-footer__title">
+            <div class="md-ellipsis">
+              <span class="md-footer__direction">
+                Next
+              </span>
+              API Sources
+            </div>
+          </div>
+          <div class="md-footer__button md-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11H4z"/></svg>
+          </div>
+        </a>
+      
+    </nav>
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    <script id="__config" type="application/json">{"base": "../..", "features": ["navigation.tabs"], "translations": {"clipboard.copy": "Copy to clipboard", "clipboard.copied": "Copied to clipboard", "search.config.lang": "en", "search.config.pipeline": "trimmer, stopWordFilter", "search.config.separator": "[\\s\\-]+", "search.placeholder": "Search", "search.result.placeholder": "Type to start searching", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.term.missing": "Missing", "select.version.title": "Select version"}, "search": "../../assets/javascripts/workers/search.01824240.min.js"}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.a87c2adc.min.js"></script>
+      
+    
+  </body>
+</html>
