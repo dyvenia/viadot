@@ -25,7 +25,7 @@ class VidClubToDF(Task):
         credentials_secret: str = "VIDCLUB",
         vault_name: str = None,
         from_date: str = "2022-03-22",
-        to_date: str = datetime.today(),
+        to_date: str = None,
         timeout: int = 3600,
         report_name: str = "vid_club_to_df",
         *args: List[Any],
@@ -40,7 +40,7 @@ class VidClubToDF(Task):
             credentials_secret (str, optional): The name of the secret in Azure Key Vault or Prefect or local_config file. Defaults to "VIDCLUB".
             vault_name (str, optional): For credentials stored in Azure Key Vault. The name of the vault from which to obtain the secret. Defaults to None.
             from_date (str): Start date for the query, by default is the oldest date in the data, '2022-03-22'.
-            to_date (str, optional): End date for the query. Defaults to datetime.today().
+            to_date (str, optional): End date for the query. By default None, which will be executed as datetime.today().strftime("%Y-%m-%d") in code.
             timeout (int, optional): The amount of time (in seconds) to wait while running this task before
                 a timeout occurs. Defaults to 3600.
             report_name (str, optional): Stores the report name. Defaults to "vid_club_to_df".
@@ -96,7 +96,7 @@ class VidClubToDF(Task):
             source (Literal["jobs", "product", "company", "survey"], optional): The endpoint source to be accessed. Defaults to None.
             credentials (Dict[str, Any], optional): Stores the credentials information. Defaults to None.
             from_date (str, optional): Start date for the query, by default is the oldest date in the data, '2022-03-22'.
-            to_date (str, optional): End date for the query. By default, datetime.today() will be used.
+            to_date (str, optional): End date for the query. By default None, which will be executed as datetime.today().strftime("%Y-%m-%d") in code.
             items_per_page (int, optional): Number of entries per page. 100 entries by default.
             region (str, optional): Region filter for the query. Valid inputs: ["bg", "hu", "hr", "pl", "ro", "si", "all"]. Defaults to "all".
             days_interval (int, optional): Days specified in date range per api call (test showed that 30-40 is optimal for performance). Defaults to 30.
