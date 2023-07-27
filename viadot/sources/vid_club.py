@@ -53,7 +53,7 @@ class VidClub(Source):
 
         Args:
             from_date (str): Start date for the query.
-            to_date (str): End date for the query, if empty, datetime.today() will be used.
+            to_date (str): End date for the query, if empty, will be executed as datetime.today().strftime("%Y-%m-%d").
             api_url (str): Generic part of the URL to Vid Club API.
             items_per_page (int): number of entries per page.
             source (Literal["jobs", "product", "company", "survey"], optional): The endpoint source to be accessed. Defaults to None.
@@ -83,7 +83,7 @@ class VidClub(Source):
 
         Args:
             from_date (str): Start date for the query in "%Y-%m-%d" format.
-            to_date (str): End date for the query in "%Y-%m-%d" format. By default, datetime.today() will be used.
+            to_date (str): End date for the query, if empty, will be executed as datetime.today().strftime("%Y-%m-%d").
             days_interval (int): Days specified in date range per api call (test showed that 30-40 is optimal for performance).
 
         Returns:
@@ -138,7 +138,7 @@ class VidClub(Source):
         Args:
             source (Literal["jobs", "product", "company", "survey"], optional): The endpoint source to be accessed. Defaults to None.
             from_date (str, optional): Start date for the query, by default is the oldest date in the data 2022-03-22.
-            to_date (str, optional): End date for the query. By default, datetime.today() will be used.
+            to_date (str, optional): End date for the query. By default None, which will be executed as datetime.today().strftime("%Y-%m-%d") in code.
             items_per_page (int, optional): Number of entries per page. 100 entries by default.
             region (Literal["bg", "hu", "hr", "pl", "ro", "si", "all"], optional): Region filter for the query. Defaults to "all". [July 2023 status: parameter works only for 'all' on API]
             url (str, optional): Generic part of the URL to Vid Club API. Defaults to None.
@@ -190,7 +190,7 @@ class VidClub(Source):
         Args:
             source (Literal["jobs", "product", "company", "survey"], optional): The endpoint source to be accessed. Defaults to None.
             from_date (str, optional): Start date for the query, by default is the oldest date in the data 2022-03-22.
-            to_date (str, optional): End date for the query. By default, datetime.today() will be used.
+            to_date (str, optional): End date for the query. By default None, which will be executed as datetime.today().strftime("%Y-%m-%d") in code.
             items_per_page (int, optional): Number of entries per page. 100 entries by default.
             region (Literal["bg", "hu", "hr", "pl", "ro", "si", "all"], optional): Region filter for the query. Defaults to "all". [July 2023 status: parameter works only for 'all' on API]
 
@@ -270,7 +270,7 @@ class VidClub(Source):
         Args:
             source (Literal["jobs", "product", "company", "survey"], optional): The endpoint source to be accessed. Defaults to None.
             from_date (str, optional): Start date for the query, by default is the oldest date in the data 2022-03-22.
-            to_date (str, optional): End date for the query. By default, datetime.today() will be used.
+            to_date (str, optional): End date for the query. By default None, which will be executed as datetime.today().strftime("%Y-%m-%d") in code.
             items_per_page (int, optional): Number of entries per page. 100 entries by default.
             region (Literal["bg", "hu", "hr", "pl", "ro", "si", "all"], optional): Region filter for the query. Defaults to "all". [July 2023 status: parameter works only for 'all' on API]
             days_interval (int, optional): Days specified in date range per api call (test showed that 30-40 is optimal for performance). Defaults to 30.

@@ -56,7 +56,7 @@ class VidClubToADLS(Flow):
             name (str): The name of the flow.
             source (Literal["jobs", "product", "company", "survey"], optional): The endpoint source to be accessed. Defaults to None.
             from_date (str, optional): Start date for the query, by default is the oldest date in the data 2022-03-22.
-            to_date (str, optional): End date for the query. Defaults to None.
+            to_date (str, optional): End date for the query. By default None, which will be executed as datetime.today().strftime("%Y-%m-%d") in code.
             items_per_page (int, optional): Number of entries per page. Defaults to 100.
             region (Literal["bg", "hu", "hr", "pl", "ro", "si", "all"], optional): Region filter for the query. Defaults to "all". [July 2023 status: parameter works only for 'all' on API]
             days_interval (int, optional): Days specified in date range per API call (test showed that 30-40 is optimal for performance). Defaults to 30.
