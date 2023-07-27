@@ -20,7 +20,7 @@ def test_vidclub_to_adls_run_flow(mocked_class):
     flow = VidClubToADLS(
         "test_vidclub_to_adls_flow_run",
         source=["test"],
-        from_date = "2023-06-05",
+        from_date="2023-06-05",
         overwrite_adls=True,
         adls_dir_path=ADLS_DIR_PATH,
         adls_file_name=ADLS_FILE_NAME,

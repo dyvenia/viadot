@@ -3,8 +3,8 @@ from unittest import mock
 import pandas as pd
 import pytest
 
-from viadot.tasks import VidClubToDF
 from viadot.task_utils import credentials_loader
+from viadot.tasks import VidClubToDF
 
 CREDENTIALS = credentials_loader.run(credentials_secret="VIDCLUB")
 

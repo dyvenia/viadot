@@ -1,8 +1,8 @@
 import os
 from pathlib import Path
 from typing import Any, Dict, List, Literal
-import pandas as pd
 
+import pandas as pd
 import pendulum
 from prefect import Flow
 from prefect.backend import set_key_value
@@ -143,7 +143,7 @@ class VidClubToADLS(Flow):
             items_per_page=self.items_per_page,
             region=self.region,
             days_interval=self.days_interval,
-            cols_to_drop = self.cols_to_drop,            
+            cols_to_drop=self.cols_to_drop,
             flow=self,
         )
 

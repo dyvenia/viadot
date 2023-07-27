@@ -1,4 +1,5 @@
 from typing import List
+
 import pandas as pd
 import pandas_gbq
 import pytest

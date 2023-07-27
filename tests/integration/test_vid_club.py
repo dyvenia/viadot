@@ -1,13 +1,12 @@
+from datetime import datetime, timedelta
 from unittest import mock
 
 import pandas as pd
 import pytest
-from datetime import datetime, timedelta
 
 from viadot.exceptions import ValidationError
-from viadot.task_utils import credentials_loader
 from viadot.sources import VidClub
-
+from viadot.task_utils import credentials_loader
 
 CREDENTIALS = credentials_loader.run(credentials_secret="VIDCLUB")
 vc = VidClub(credentials=CREDENTIALS)
