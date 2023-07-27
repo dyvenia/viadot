@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added `SAPBWToDF` task class
 - Added `SAPBWToADLS` flow class
 - Added a new `end_point` parameter in `genesys_api_connection` to make it more generic.
+- Added `VidClubToADLS` flow class.
 
 ### Fixed
 - Fixed a bug in `subject` (extra separator) and in `receivers` (long strings) parameters in Outlook connector. 
