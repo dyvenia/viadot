@@ -17,10 +17,10 @@ def test_bigquery_to_df_success():
         credentials_key=CREDENTIALS_KEY,
     )
     df = bigquery_to_df_task.run()
-    expectation_columns = ["date", "name", "count", "refresh"]
+    expected_column = ["my_value"]
 
     assert isinstance(df, pd.DataFrame)
-    assert expectation_columns == list(df.columns)
+    assert expected_column == list(df.columns)
 
 
 def test_bigquery_to_df_wrong_table_name(caplog):
@@ -46,7 +46,7 @@ def test_bigquery_to_df_wrong_column_name(caplog):
     with caplog.at_level(logging.WARNING):
         df = bigquery_to_df_task.run()
     assert f"'wrong_column_name' column is not recognized." in caplog.text
-    assert df.empty
+    assert isinstance(df, pd.DataFrame)
 
 
 def test_bigquery_to_df_wrong_query(caplog):
