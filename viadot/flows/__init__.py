@@ -30,6 +30,11 @@ try:
 except ImportError:
     pass
 
+try:
+    from .sap_bw_to_adls import SAPBWToADLS
+except ImportError:
+    pass
+
 from .customer_gauge_to_adls import CustomerGaugeToADLS
 from .epicor_to_duckdb import EpicorOrdersToDuckDB
 from .eurostat_to_adls import EurostatToADLS
@@ -38,4 +43,6 @@ from .mediatool_to_adls import MediatoolToADLS
 from .mindful_to_adls import MindfulToADLS
 from .sftp_operations import SftpToADLS, SftpToAzureSQL
 from .sql_server_to_duckdb import SQLServerToDuckDB
+from .sql_server_to_parquet import SQLServerToParquet
 from .sql_server_transform import SQLServerTransform
+from .vid_club_to_adls import VidClubToADLS

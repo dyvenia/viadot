@@ -1,11 +1,10 @@
 import sys
-import pytz
 from datetime import date, datetime, timedelta
 from typing import Any, Dict, List
 
-import prefect
 import pandas as pd
 import prefect
+import pytz
 from O365 import Account
 from O365.mailbox import MailBox
 
@@ -149,6 +148,7 @@ class Outlook(Source):
         self,
         dict_folder: dict,
         limit: int = 10000,
+        address_limit: int = 8000,
         outbox_list: List[str] = ["Sent Items"],
     ) -> list:
         """To retrieve all messages from all the mailboxes passed in the dictionary.
@@ -157,6 +157,8 @@ class Outlook(Source):
             dict_folder (dict): Mailboxes dictionary holder, with the following structure:
                 "parent (sub)folder|(sub)folder": Mailbox.
             limit (int, optional): Number of fetched top messages. Defaults to 10000.
+            address_limit (int, optional): The maximum number of accepted characters in the sum
+                of all email names. Defaults to 8000.
             outbox_list (List[str], optional): List of outbox folders to differenciate between
                 Inboxes and Outboxes. Defaults to ["Sent Items"].
 
@@ -182,10 +184,16 @@ class Outlook(Source):
                     recivers_list = fetched.get("toRecipients")
                     recivers = " "
                     if recivers_list is not None:
-                        recivers = ", ".join(
-                            reciver["emailAddress"]["address"]
-                            for reciver in recivers_list
-                        )
+                        for reciver in recivers_list:
+                            add_string = f", {reciver['emailAddress']['address']}"
+                            if (
+                                sum(list(map(len, [recivers, add_string])))
+                                >= address_limit
+                            ):
+                                break
+                            else:
+                                recivers += add_string
+
                     categories = " "
                     if message.categories is not None:
                         categories = ", ".join(
@@ -194,14 +202,18 @@ class Outlook(Source):
                     conversation_index = " "
                     if message.conversation_index is not None:
                         conversation_index = message.conversation_index
+                    if isinstance(message.subject, str):
+                        subject = message.subject.replace("\t", " ")
+                    else:
+                        subject = message.subject
                     row = {
                         "(sub)folder": value.name,
                         "conversation ID": fetched.get("conversationId"),
                         "conversation index": conversation_index,
                         "categories": categories,
                         "sender": sender_mail,
-                        "subject": message.subject,
-                        "recivers": recivers,
+                        "subject": subject,
+                        "recivers": recivers.strip(", "),
                         "received_time": fetched.get("receivedDateTime"),
                         "mail_adress": self.mailbox_name.split("@")[0]
                         .replace(".", "_")
@@ -213,7 +225,8 @@ class Outlook(Source):
                         row["Inbox"] = True
 
                     data.append(row)
-            self.logger.info(f"folder: {key.ljust(76, '-')}  messages: {count}")
+            if count > 0:
+                self.logger.info(f"folder: {key.ljust(76, '-')}  messages: {count}")
 
         return data
 

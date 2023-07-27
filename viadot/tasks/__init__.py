@@ -40,6 +40,11 @@ try:
 except ImportError:
     pass
 
+try:
+    from .sap_bw import SAPBWToDF
+except ImportError:
+    pass
+
 from .business_core import BusinessCoreToParquet
 from .customer_gauge import CustomerGaugeToDF
 from .duckdb import DuckDBCreateTableFromParquet, DuckDBQuery, DuckDBToDF

@@ -1,7 +1,6 @@
 import os
-import sys
 import time
-from typing import Any, Dict, List, Literal
+from typing import Any, Dict, List
 
 import numpy as np
 import pandas as pd
@@ -27,11 +26,12 @@ class GenesysToCSV(Task):
         start_date: str = None,
         end_date: str = None,
         environment: str = None,
-        schedule_id: str = None,
         report_url: str = None,
         report_columns: List[str] = None,
         local_file_path: str = "",
         sep: str = "\t",
+        conversationId_list: List[str] = None,
+        key_list: List[str] = None,
         credentials_genesys: Dict[str, Any] = None,
         timeout: int = 3600,
         *args: List[Any],
@@ -48,17 +48,17 @@ class GenesysToCSV(Task):
             end_date (str, optional): End date of the report. Defaults to None.
             environment (str, optional): Adress of host server. Defaults to None than will be used enviroment
             from credentials.
-            schedule_id (str, optional): The ID of report. Defaults to None.
             report_url (str, optional): The url of report generated in json response. Defaults to None.
             report_columns (List[str], optional): List of exisiting column in report. Defaults to None.
             local_file_path (str, optional): The local path from which to upload the file(s). Defaults to "".
             sep (str, optional): Separator in csv file. Defaults to "\t".
+            conversationId_list (List[str], optional): List of conversationId passed as attribute of GET method. Defaults to None.
+            key_list (List[str], optional): List of keys needed to specify the columns in the GET request method. Defaults to None.
             timeout(int, optional): The amount of time (in seconds) to wait while running this task before
                 a timeout occurs. Defaults to 3600.
         """
 
         self.logger = prefect.context.get("logger")
-        self.schedule_id = schedule_id
         self.report_name = report_name
         self.view_type = view_type
         self.environment = environment
@@ -70,6 +70,8 @@ class GenesysToCSV(Task):
         self.credentials_genesys = credentials_genesys
         self.local_file_path = local_file_path
         self.sep = sep
+        self.conversationId_list = conversationId_list
+        self.key_list = key_list
 
         super().__init__(
             name=self.report_name,
@@ -283,13 +285,14 @@ class GenesysToCSV(Task):
         "report_name",
         "view_type",
         "environment",
-        "schedule_id",
         "report_url",
         "post_data_list",
         "start_date",
         "end_date",
         "report_columns",
         "credentials_genesys",
+        "conversationId_list",
+        "key_list",
     )
     def run(
         self,
@@ -297,13 +300,14 @@ class GenesysToCSV(Task):
         view_type: str = None,
         view_type_time_sleep: int = 80,
         environment: str = None,
-        schedule_id: str = None,
         report_url: str = None,
         post_data_list: List[str] = None,
-        end_point: str = "reporting/exports",
+        end_point: str = "analytics/reporting/exports",
         start_date: str = None,
         end_date: str = None,
         report_columns: List[str] = None,
+        conversationId_list: List[str] = None,
+        key_list: List[str] = None,
         credentials_genesys: Dict[str, Any] = None,
     ) -> List[str]:
         """
@@ -314,15 +318,15 @@ class GenesysToCSV(Task):
             view_type (str, optional): The type of view export job to be created. Defaults to None.
             view_type_time_sleep (int, optional): Waiting time to retrieve data from Genesys API. Defaults to 80.
             post_data_list (List[str], optional): List of string templates to generate json body. Defaults to None.
-            end_point (str, optional): Final end point for Genesys connection. Defaults to "reporting/exports".
+            end_point (str, optional): Final end point for Genesys connection. Defaults to "analytics/reporting/exports".
             credentials_genesys (Dict[str, Any], optional): Credentials to connect with Genesys API containing CLIENT_ID. Defaults to None.
             start_date (str, optional): Start date of the report. Defaults to None.
             end_date (str, optional): End date of the report. Defaults to None.
-            environment (str, optional): Adress of host server. Defaults to None than will be used enviroment
-            from credentials.
-            schedule_id (str, optional): The ID of report. Defaults to None.
+            environment (str, optional): Adress of host server. Defaults to None than will be used enviroment from credentials.
             report_url (str, optional): The url of report generated in json response. Defaults to None.
             report_columns (List[str], optional): List of exisiting column in report. Defaults to None.
+            conversationId_list (List[str], optional): List of conversationId passed as attribute of GET method. Defaults to None.
+            key_list (List[str], optional): List of keys needed to specify the columns in the GET request method. Defaults to None.
 
         Returns:
             List[str]: List of file names.
@@ -335,13 +339,12 @@ class GenesysToCSV(Task):
             start_date=start_date,
             end_date=end_date,
             environment=environment,
-            schedule_id=schedule_id,
             report_url=report_url,
             report_columns=report_columns,
         )
 
         if view_type == "queue_performance_detail_view":
-            genesys.genesys_generate_exports(
+            genesys.genesys_api_connection(
                 post_data_list=post_data_list, end_point=end_point
             )
 
@@ -356,7 +359,6 @@ class GenesysToCSV(Task):
             timeout = timeout_start + 60
             # while loop with timeout
             while time.time() < timeout:
-
                 try:
                     genesys.get_reporting_exports_data()
                     urls = [col for col in np.array(genesys.report_data).T][1]
@@ -375,7 +377,7 @@ class GenesysToCSV(Task):
             "agent_status_summary_view",
             "agent_status_detail_view",
         ]:
-            genesys.genesys_generate_exports(
+            genesys.genesys_api_connection(
                 post_data_list=post_data_list, end_point=end_point
             )
             logger.info(
@@ -385,7 +387,7 @@ class GenesysToCSV(Task):
 
             genesys.get_reporting_exports_data()
 
-        if view_type is not None and end_point == "reporting/exports":
+        if view_type is not None and end_point == "analytics/reporting/exports":
             failed = [col for col in np.array(genesys.report_data).T][-1]
 
             if "FAILED" in failed and "COMPLETED" in failed:
@@ -412,7 +414,7 @@ class GenesysToCSV(Task):
 
             return file_names
 
-        elif view_type is None and end_point == "conversations/details/query":
+        elif view_type is None and end_point == "analytics/conversations/details/query":
             if len(post_data_list) > 1:
                 logger.error("Not available more than one body for this end-point.")
                 raise signals.FAIL(message="Stopping the flow.")
@@ -421,7 +423,7 @@ class GenesysToCSV(Task):
             page_counter = post_data_list[0]["paging"]["pageNumber"]
             merged_data = {}
             while not stop_loop:
-                report = genesys.genesys_generate_exports(
+                report = genesys.genesys_api_connection(
                     post_data_list=post_data_list, end_point=end_point
                 )
                 merged_data_frame = self.merge_conversations_dfs(
@@ -451,6 +453,41 @@ class GenesysToCSV(Task):
 
             final_df.to_csv(
                 os.path.join(self.local_file_path, file_name),
+                index=False,
+                sep="\t",
+            )
+
+            logger.info("Downloaded the data from the Genesys into the CSV.")
+
+            return [file_name]
+
+        elif view_type is None and end_point == "conversations":
+            data_list = []
+
+            for id in conversationId_list:
+                json_file = genesys.genesys_api_connection(
+                    post_data_list=post_data_list,
+                    end_point=f"{end_point}/{id}",
+                    method="GET",
+                )
+                logger.info(f"Generated webmsg_response for {id}")
+
+                attributes = json_file["participants"][0]["attributes"]
+                temp_dict = {
+                    key: value for (key, value) in attributes.items() if key in key_list
+                }
+                temp_dict["conversationId"] = json_file["id"]
+                data_list.append(temp_dict)
+
+            df = pd.DataFrame(data_list)
+            df = df[df.columns[-1:]].join(df[df.columns[:-1]])
+
+            start = start_date.replace("-", "")
+            end = end_date.replace("-", "")
+
+            file_name = f"WEBMESSAGE_{start}-{end}.csv"
+            df.to_csv(
+                os.path.join(file_name),
                 index=False,
                 sep="\t",
             )

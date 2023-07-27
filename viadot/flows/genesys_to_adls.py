@@ -80,15 +80,16 @@ class GenesysToADLS(Flow):
         view_type: str = None,
         view_type_time_sleep: int = 80,
         post_data_list: List[str] = None,
-        end_point: str = "reporting/exports",
+        end_point: str = "analytics/reporting/exports",
         list_of_userids: list = None,
         start_date: str = None,
         end_date: str = None,
         sep: str = "\t",
         environment: str = None,
-        schedule_id: str = None,
         report_url: str = None,
         report_columns: List[str] = None,
+        conversationId_list: List[str] = None,
+        key_list: List[str] = None,
         local_file_path: str = "",
         adls_file_path: str = None,
         overwrite_adls: bool = True,
@@ -125,16 +126,17 @@ class GenesysToADLS(Flow):
                 >>>         "hasCustomParticipantAttributes": True,
                 >>>     }]'''
                 If you need to add more POSTs in the same call, just add them to the list separated by a comma.
-            endpoint (str, optional): Final end point for Genesys connection. Defaults to "reporting/exports".
+            end_point (str, optional): Final end point for Genesys connection. Defaults to "analytics/reporting/exports".
             list_of_userids (list, optional): List of all user IDs to select in the data frame. Defaults to None.
             start_date (str, optional): Start date of the report. Defaults to None.
             end_date (str, optional): End date of the report. Defaults to None.
             sep (str, optional): Separator in csv file. Defaults to "\t".
             environment (str, optional): Adress of host server. Defaults to None than will be used enviroment
                 from credentials.
-            schedule_id (str, optional): The ID of report. Defaults to None.
             report_url (str, optional): The url of report generated in json response. Defaults to None.
             report_columns (List[str], optional): List of exisiting column in report. Defaults to None.
+            conversationId_list (List[str], optional): List of conversationId passed as attribute of GET method. Defaults to None.
+            key_list (List[str], optional): List of keys needed to specify the columns in the GET request method. Defaults to None.
             local_file_path (str, optional): The local path from which to upload the file(s). Defaults to "".
             adls_file_path (str, optional): The destination path at ADLS. Defaults to None.
             overwrite_adls (bool, optional): Whether to overwrite files in the data lake. Defaults to True.
@@ -150,15 +152,16 @@ class GenesysToADLS(Flow):
         self.view_type_time_sleep = view_type_time_sleep
         self.post_data_list = post_data_list
         self.end_point = end_point
-        if self.end_point == "conversations/details/query":
+        if self.end_point == "analytics/conversations/details/query":
             self.apply_method = True
         else:
             self.apply_method = False
         self.list_of_userids = list_of_userids
         self.environment = environment
-        self.schedule_id = schedule_id
         self.report_url = report_url
         self.report_columns = report_columns
+        self.conversationId_list = conversationId_list
+        self.key_list = key_list
         self.start_date = start_date
         self.end_date = end_date
         self.sep = sep
@@ -176,7 +179,6 @@ class GenesysToADLS(Flow):
         self.gen_flow()
 
     def gen_flow(self) -> Flow:
-
         to_csv = GenesysToCSV(
             timeout=self.timeout,
             local_file_path=self.local_file_path,
@@ -191,6 +193,8 @@ class GenesysToADLS(Flow):
             start_date=self.start_date,
             end_date=self.end_date,
             environment=self.environment,
+            conversationId_list=self.conversationId_list,
+            key_list=self.key_list,
             credentials_genesys=self.credentials_genesys,
             flow=self,
         )
