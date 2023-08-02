@@ -11,3 +11,5 @@ try:
     from .sap_rfc import SAPRFC
 except ImportError:
     pass
+
+from .mindful import Mindful
