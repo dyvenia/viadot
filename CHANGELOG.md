@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added `RedshiftSpectrum` source to the library.
 - Added `upload()` and `download()` methods to `S3` source.
 - Added `Genesys` source to library.
+- Added `Mindful` source to library its `test` file non-existing previously.
 
 ### Changed
 - Added `SQLServerToDF` task
