@@ -226,7 +226,7 @@ class Mindful(Source):
         Args:
             data_frame (pd.DataFrame):
             file_path (str, optional): Path where to save the file locally. Defaults to ''.
-            file_name (str, optional): Name of the file where saving data. Defaults to None.
+            file_name (str, optional): Name of the file without extension. Defaults to None.
             file_extension (Literal[parquet, csv], optional): File extensions for storing responses. Defaults to "csv".
             sep (str, optional): Separator in csv file. Defaults to "\t".
 
