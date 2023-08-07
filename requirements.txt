@@ -13,7 +13,7 @@ openpyxl==3.0.9
 jupyterlab==3.4.5
 azure-keyvault==4.1.0
 azure-identity>=1.10.0, <2.0.0
-great-expectations>=0.15.50, <0.16.0
+great-expectations==0.15.50
 matplotlib
 adlfs==2021.10.0
 PyGithub==1.55
@@ -27,7 +27,7 @@ duckdb==0.5.1
 google-auth==2.6.2
 sendgrid==6.9.7
 pandas-gbq==0.17.4
-pydantic>=1.10.4, <2.0
+pydantic==1.10.12
 PyMySQL==1.0.2
 paramiko==2.11.0
 sshtunnel==0.4.0
@@ -40,5 +40,5 @@ protobuf>=3.19.0, <3.20
 avro-python3==1.10.2
 pygit2>=1.10.1, <1.11.0
 dbt-core==1.3.2
-dbt-sqlserver>=1.3.1, <1.4.0
+dbt-sqlserver==1.3.1
 lumaCLI>=0.0.3,<1.0

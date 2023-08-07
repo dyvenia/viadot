@@ -44,7 +44,7 @@ class TransformAndCatalog(Flow):
         **kwargs,
     ) -> List[str]:
         """
-        Build specified dbt model(s) and upload the generated metadata to DataHub or other destination.
+        Build specified dbt model(s) and upload the generated metadata to Luma or other destination.
 
         Args:
             dbt_project_path (str): The path to the dbt project (the directory containing
@@ -155,7 +155,6 @@ class TransformAndCatalog(Flow):
         )
 
         # Clean up artifacts from previous runs (`target/` dir and packages)
-
         dbt_clean_up = ShellTask(
             name="dbt_task_clean",
             command=f"dbt clean",
