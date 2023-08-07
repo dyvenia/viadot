@@ -1,8 +1,5 @@
 import os
-
-# import json
-# import urllib
-# import requests
+import json
 import logging
 from io import StringIO
 from pydantic import BaseModel
@@ -11,7 +8,6 @@ from datetime import datetime, timedelta
 from typing import Any, Dict, Tuple, Literal, Optional
 
 
-# import numpy as np
 import pandas as pd
 
 from ..config import get_source_credentials
@@ -194,17 +190,19 @@ class Mindful(Source):
             self.logger.info(
                 f"Succesfully downloaded {endpoint} data from mindful API."
             )
+            data = StringIO(response.content.decode("utf-8"))
         elif response.status_code == 204 and not response.content.decode():
             self.logger.warning(
                 f"Thera are not {endpoint} data to download from {start_date or ' --- '} to {end_date  or ' --- '}."
             )
+            data = json.dumps({})
         else:
             self.logger.error(
                 f"Failed to downloaded {endpoint} data. - {response.content}"
             )
             raise APIError(f"Failed to downloaded {endpoint} data.")
 
-        data_frame = pd.read_json(StringIO(response.content.decode("utf-8")))
+        data_frame = pd.read_json(data)
         if data_frame.empty:
             self._handle_if_empty(
                 if_empty="warn",
