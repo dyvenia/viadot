@@ -1,5 +1,6 @@
-import os
 import logging
+import os
+
 import pandas as pd
 import pyarrow as pa
 import pytest
