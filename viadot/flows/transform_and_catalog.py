@@ -25,8 +25,8 @@ class TransformAndCatalog(Flow):
 
     def __init__(
         self,
+        name: str,
         dbt_project_path: str,
-        name: str = "Transform and Catalog",
         dbt_repo_url: str = None,
         dbt_repo_url_secret: str = None,
         dbt_repo_branch: str = None,
@@ -47,9 +47,9 @@ class TransformAndCatalog(Flow):
         Build specified dbt model(s) and upload the generated metadata to Luma or other destination.
 
         Args:
+            name (str): The name of the Flow.
             dbt_project_path (str): The path to the dbt project (the directory containing
                 the `dbt_project.yml` file).
-            name (str): The name of the Flow. Defaults to "Transform and Catalog".
             dbt_repo_url (str, optional): The URL for cloning the dbt repo with relevant dbt project. Defaults to None.
             dbt_repo_url_secret (str, optional): Alternatively to above, the secret containing `dbt_repo_url`.
                 Defaults to None.
@@ -84,7 +84,7 @@ class TransformAndCatalog(Flow):
             my_datahub_recipe_path = os.path.expanduser("~/dbt/catalog/recipe.yaml")
 
             flow = TransformAndCatalog(
-                name="DBT flow",
+                name="Transform and Catalog",
                 dbt_project_path=my_dbt_project_path,
                 dbt_repo_url=my_dbt_repo_url,
                 token=my_token,
