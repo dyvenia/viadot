@@ -12,6 +12,7 @@ class LumaIngest(ShellTask):
         self,
         metadata_dir_path: str,
         endpoint: str = None,
+        dbt_project_path: str = None,
         credentials_secret: str = None,
         vault_name: str = None,
         *args,
@@ -37,10 +38,11 @@ class LumaIngest(ShellTask):
                 secret=credentials_secret, vault_name=vault_name
             )
             endpoint = json.loads(credentials_str).get("endpoint")
+        self.helper_script = dbt_project_path
         self.endpoint = endpoint
         self.metadata_dir_path = metadata_dir_path
         self.command = (
-            f"luma dbt ingest --metadata-dir {metadata_dir_path} --luma-url {endpoint}"
+            f"luma dbt ingest --luma-url {endpoint} --metadata-dir {metadata_dir_path} "
         )
         self.return_all = True
         self.stream_output = True
