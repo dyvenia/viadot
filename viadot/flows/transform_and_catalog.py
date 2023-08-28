@@ -58,7 +58,7 @@ class TransformAndCatalog(Flow):
             token_secret (str, optional): The name of the secret storing the token. Defaults to None.
             local_dbt_repo_path (str, optional): The path where to clone the repo to. Defaults to None.
             dbt_selects (dict, optional): Valid [dbt node selection](https://docs.getdbt.com/reference/node-selection/syntax)
-                expressions. Valid keys are `run`, `test`, and `source_freshness`. The testselect expression is taken
+                expressions. Valid keys are `run`, `test`, and `source_freshness`. The test select expression is taken
                 from run's, as long as run select is provided. Defaults to None.
             dbt_target (str): The dbt target to use. If not specified, the default dbt target (as specified in `profiles.yaml`)
                 will be used. Defaults to None.
@@ -81,14 +81,15 @@ class TransformAndCatalog(Flow):
             from viadot.flows import TransformAndCatalog
 
             my_dbt_project_path = os.path.expanduser("~/dbt/my_dbt_project")
-            my_datahub_recipe_path = os.path.expanduser("~/dbt/catalog/recipe.yaml")
 
             flow = TransformAndCatalog(
                 name="Transform and Catalog",
                 dbt_project_path=my_dbt_project_path,
                 dbt_repo_url=my_dbt_repo_url,
                 token=my_token,
-                dbt_selects={"run": "my_model"}
+                dbt_selects={"run": "my_model",
+                "source_freshness": "source:schema.table",
+                "test": "my_model"},
                 metadata_dir_path="target",
                 luma_endpoint="https://luma.dyvenia.lan/api/v1/dbt"
             )
@@ -173,20 +174,20 @@ class TransformAndCatalog(Flow):
 
         # Source freshness
         # Produces `sources.json`
-        source_freshness_select = self.dbt_selects.get("source_freshness")
-        source_freshness_select_safe = (
-            f"-s {source_freshness_select}"
-            if source_freshness_select is not None
-            else ""
-        )
+        # source_freshness_select = self.dbt_selects.get("source_freshness")
+        # source_freshness_select_safe = (
+        #     f"-s {source_freshness_select}"
+        #     if source_freshness_select is not None
+        #     else ""
+        # )
 
-        source_freshness = ShellTask(
-            name="dbt_task_source_freshness",
-            command=f"dbt source freshness {source_freshness_select_safe} {dbt_target_option}",
-            helper_script=f"cd {self.dbt_project_path}",
-            return_all=True,
-            stream_output=True,
-        ).bind(flow=self)
+        # source_freshness = ShellTask(
+        #     name="dbt_task_source_freshness",
+        #     command=f"dbt source freshness {source_freshness_select_safe} {dbt_target_option}",
+        #     helper_script=f"cd {self.dbt_project_path}",
+        #     return_all=True,
+        #     stream_output=True,
+        # ).bind(flow=self)
 
         run_select = self.dbt_selects.get("run")
         run_select_safe = f"-s {run_select}" if run_select is not None else ""
@@ -228,6 +229,7 @@ class TransformAndCatalog(Flow):
             name="luma_ingest_task",
             metadata_dir_path=metadata_dir_path,
             endpoint=self.luma_endpoint,
+            dbt_project_path=self.dbt_project_path,
             credentials_secret=self.luma_endpoint_secret,
             vault_name=self.vault_name,
         ).bind(flow=self)
@@ -236,7 +238,6 @@ class TransformAndCatalog(Flow):
 
         dbt_clean_up.set_upstream(clone, flow=self)
         pull_dbt_deps.set_upstream(dbt_clean_up, flow=self)
-        source_freshness.set_upstream(pull_dbt_deps, flow=self)
         run.set_upstream(pull_dbt_deps, flow=self)
         generate_catalog_json.set_upstream(run, flow=self)
         test.set_upstream(generate_catalog_json, flow=self)
