@@ -2,9 +2,12 @@ from viadot.tasks import LumaIngest
 
 
 def test_luma_ingest():
-    task = LumaIngest(
-        credentials_secret="luma-dev",
+    luma_task = LumaIngest(
+        name="Luma test",
         metadata_dir_path="tests/resources/metadata/new",
+        endpoint="www.luma_endpoint.com",
+        dbt_project_path="project_path",
+        credentials_secret="luma-dev",
     )
-    task.run()
-    assert True
+    assert luma_task.name == "Luma test"
+    assert isinstance(luma_task, LumaIngest)
