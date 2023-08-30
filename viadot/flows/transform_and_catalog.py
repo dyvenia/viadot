@@ -172,6 +172,28 @@ class TransformAndCatalog(Flow):
             stream_output=True,
         ).bind(flow=self)
 
+        run_select = self.dbt_selects.get("run")
+        run_select_safe = f"-s {run_select}" if run_select is not None else ""
+
+        run = ShellTask(
+            name="dbt_task_run",
+            command=f"dbt run {run_select_safe} {dbt_target_option}",
+            helper_script=f"cd {self.dbt_project_path}",
+            return_all=True,
+            stream_output=True,
+        ).bind(flow=self)
+
+        test_select = self.dbt_selects.get("test", run_select)
+        test_select_safe = f"-s {test_select}" if test_select is not None else ""
+
+        test = ShellTask(
+            name="dbt_task_test",
+            command=f"dbt test {test_select_safe} {dbt_target_option}",
+            helper_script=f"cd {self.dbt_project_path}",
+            return_all=True,
+            stream_output=True,
+        ).bind(flow=self)
+
         # Source freshness
         # Produces `sources.json`
         # source_freshness_select = self.dbt_selects.get("source_freshness")
@@ -189,33 +211,11 @@ class TransformAndCatalog(Flow):
         #     stream_output=True,
         # ).bind(flow=self)
 
-        run_select = self.dbt_selects.get("run")
-        run_select_safe = f"-s {run_select}" if run_select is not None else ""
-
-        run = ShellTask(
-            name="dbt_task_run",
-            command=f"dbt run {run_select_safe} {dbt_target_option}",
-            helper_script=f"cd {self.dbt_project_path}",
-            return_all=True,
-            stream_output=True,
-        ).bind(flow=self)
-
         # Generate docs
         # Produces `catalog.json`, `run-results.json`, and `manifest.json`
         generate_catalog_json = ShellTask(
             name="dbt_task_docs_generate",
             command=f"dbt docs generate {dbt_target_option} --no-compile",
-            helper_script=f"cd {self.dbt_project_path}",
-            return_all=True,
-            stream_output=True,
-        ).bind(flow=self)
-
-        test_select = self.dbt_selects.get("test", run_select)
-        test_select_safe = f"-s {test_select}" if test_select is not None else ""
-
-        test = ShellTask(
-            name="dbt_task_test",
-            command=f"dbt test {test_select_safe} {dbt_target_option}",
             helper_script=f"cd {self.dbt_project_path}",
             return_all=True,
             stream_output=True,
@@ -239,7 +239,7 @@ class TransformAndCatalog(Flow):
         dbt_clean_up.set_upstream(clone, flow=self)
         pull_dbt_deps.set_upstream(dbt_clean_up, flow=self)
         run.set_upstream(pull_dbt_deps, flow=self)
-        generate_catalog_json.set_upstream(run, flow=self)
-        test.set_upstream(generate_catalog_json, flow=self)
-        upload_metadata_luma.set_upstream(test, flow=self)
+        test.set_upstream(run, flow=self)
+        generate_catalog_json.set_upstream(test, flow=self)
+        upload_metadata_luma.set_upstream(generate_catalog_json, flow=self)
         _cleanup_repo.set_upstream(upload_metadata_luma, flow=self)
