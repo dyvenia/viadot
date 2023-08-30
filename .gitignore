@@ -134,6 +134,7 @@ dmypy.json
 
 # VSCode
 .vscode
+.vscode-server
 
 # Azure
 .azure
@@ -158,3 +159,4 @@ sap_netweaver_rfc
 # Databricks-connect
 
 .databricks-connect
+.dotnet
