@@ -1,16 +1,14 @@
 import os
 import re
 from itertools import chain
-
 from typing import Any, Dict, List, Literal
-import pandas as pd
 
+import pandas as pd
 import prefect
 import pyarrow.parquet
 import pyodbc
 import requests
-import logging
-from prefect.utilities.logging import get_logger
+from prefect.utilities import logging
 from prefect.utilities.graphql import EnumValue, with_args
 from requests.adapters import HTTPAdapter
 from requests.exceptions import ConnectionError, HTTPError, ReadTimeout, Timeout
@@ -20,7 +18,7 @@ from urllib3.exceptions import ProtocolError
 from .exceptions import APIError
 from .signals import SKIP
 
-logger = get_logger(__name__)
+logger = logging.get_logger(__name__)
 
 
 def slugify(name: str) -> str:
@@ -183,7 +181,6 @@ def get_sql_server_table_dtypes(
 
 
 def _cast_df_cols(df):
-
     df = df.replace({"False": False, "True": True})
 
     datetime_cols = (col for col, dtype in df.dtypes.items() if dtype.kind == "M")
@@ -292,7 +289,6 @@ def gen_bulk_insert_query_from_df(
         )
 
     def _gen_insert_query_from_records(records: List[tuple]) -> str:
-
         tuples = map(str, tuple(records))
 
         # Change Nones to NULLs
