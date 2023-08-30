@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 ### Added
 - Added `add_viadot_metadata_columns` function that will be used as a decorator for `to_df` class methods.
+- Added `TransformAndCatalog` flow.
+- Added `CloneRepo` task.
+- Added `LumaIngest` task.
+
 ### Fixed
 
 ### Changed

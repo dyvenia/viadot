@@ -26,7 +26,6 @@ class C4CReportToDF(Task):
         timeout: int = 3600,
         **kwargs,
     ):
-
         self.report_url = report_url
         self.env = env
         self.skip = skip
@@ -127,7 +126,6 @@ class C4CToDF(Task):
         timeout: int = 3600,
         **kwargs,
     ):
-
         self.url = url
         self.endpoint = endpoint
         self.fields = fields

@@ -130,7 +130,6 @@ class CloudForCustomers(Source):
             return self._to_records_other(url=url)
 
     def response_to_entity_list(self, dirty_json: Dict[str, Any], url: str) -> List:
-
         """Changing request json response to list.
 
         Args:
@@ -158,7 +157,6 @@ class CloudForCustomers(Source):
         return entity_list
 
     def map_columns(self, url: str = None) -> Dict[str, str]:
-
         """Fetch metadata from url used to column name map.
 
         Args:

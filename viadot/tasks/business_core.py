@@ -28,7 +28,6 @@ class BusinessCoreToParquet(Task):
         *args,
         **kwargs,
     ):
-
         """Task for downloading  data from Business Core API to a Parquet file.
 
         Args:

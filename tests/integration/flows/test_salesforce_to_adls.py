@@ -10,7 +10,6 @@ ADLS_DIR_PATH = "raw/tests/"
 
 
 def test_salesforce_to_adls():
-
     credentials_secret = PrefectSecret(
         "AZURE_DEFAULT_ADLS_SERVICE_PRINCIPAL_SECRET"
     ).run()

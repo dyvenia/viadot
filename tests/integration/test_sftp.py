@@ -18,7 +18,6 @@ def tmp_df():
 
 @pytest.fixture
 def list_of_paths():
-
     list_of_paths = [
         "Country__Context30##exported.tsv",
         "Country__Context31##exported.tsv",
@@ -93,7 +92,6 @@ def test_get_exported_files(list_of_paths):
     with mock.patch.object(
         SftpConnector, "get_exported_files", return_value=list_of_paths
     ) as mock_method:
-
         s = SftpConnector(
             credentials_sftp={"HOSTNAME": 1, "USERNAME": 2, "PASSWORD": 3, "PORT": 4}
         )

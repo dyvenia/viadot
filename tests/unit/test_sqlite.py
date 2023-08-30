@@ -8,7 +8,6 @@ TABLE = "test"
 
 @pytest.fixture(scope="session")
 def sqlite():
-
     sqlite = SQLite(credentials=dict(db_name="testfile.sqlite"), query_timeout=5)
 
     yield sqlite
@@ -31,7 +30,6 @@ def test_create_table(sqlite):
 
 
 def test_insert_into_sql(sqlite, DF):
-
     sql = sqlite.insert_into(TABLE, DF)
 
     assert "('italy', 100)" in sql

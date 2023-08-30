@@ -141,7 +141,6 @@ class PrefectLogs(Flow):
             return False
 
     def gen_flow(self) -> Flow:
-
         query = self.query % (
             self.filter_type,
             self.scheduled_start_time,

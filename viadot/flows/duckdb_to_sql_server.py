@@ -14,7 +14,6 @@ logger = logging.get_logger(__name__)
 
 @task(timeout=3600)
 def cleanup_csv_task(path: str):
-
     logger = prefect.context.get("logger")
 
     logger.info(f"Removing file {path}...")

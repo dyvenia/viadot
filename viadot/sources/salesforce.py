@@ -78,7 +78,6 @@ class Salesforce(Source):
         external_id: str = None,
         raise_on_error: bool = False,
     ) -> None:
-
         if df.empty:
             logger.info("No data to upsert.")
             return
@@ -135,7 +134,6 @@ class Salesforce(Source):
         batch_size: int = 10000,
         raise_on_error: bool = False,
     ) -> None:
-
         if df.empty:
             logger.info("No data to upsert.")
             return

@@ -11,7 +11,6 @@ TABLE_2 = "test_azure_sql_2"
 
 @pytest.fixture(scope="session")
 def azure_sql(TEST_CSV_FILE_PATH, TEST_CSV_FILE_BLOB_PATH):
-
     # Upload the test file to Blob Storage.
     azstorage = AzureBlobStorage()
     azstorage.to_storage(
@@ -101,7 +100,6 @@ def test_create_table_skip_2(azure_sql):
 
 
 def test_bulk_insert(azure_sql, TEST_CSV_FILE_BLOB_PATH):
-
     azstorage = AzureBlobStorage()
     assert azstorage.exists(TEST_CSV_FILE_BLOB_PATH)
 
