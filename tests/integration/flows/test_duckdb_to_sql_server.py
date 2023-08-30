@@ -33,7 +33,6 @@ def test_create_table_from_parquet(duckdb, TEST_PARQUET_FILE_PATH, caplog):
 
 
 def test_duckdb_sql_server_flow():
-
     credentials_secret = PrefectSecret(
         "AZURE_DEFAULT_SQLDB_SERVICE_PRINCIPAL_SECRET"
     ).run()

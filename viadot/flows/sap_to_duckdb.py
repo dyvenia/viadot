@@ -92,7 +92,6 @@ class SAPToDuckDB(Flow):
         self.gen_flow()
 
     def gen_flow(self) -> Flow:
-
         df = self.sap_to_df_task.bind(
             query=self.query,
             sep=self.sep,

@@ -121,7 +121,6 @@ class HubspotToADLS(Flow):
         return name.replace(" ", "_").lower()
 
     def gen_flow(self) -> Flow:
-
         hubspot_to_df_task = HubspotToDF(
             hubspot_credentials=self.hubspot_credentials,
             hubspot_credentials_key=self.hubspot_credentials_key,

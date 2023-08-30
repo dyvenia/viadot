@@ -70,7 +70,6 @@ class ADLSGen1ToAzureSQLNew(Flow):
         *args: List[any],
         **kwargs: Dict[str, Any]
     ):
-
         self.gen1_path = gen1_path
         self.local_file_path = local_file_path or self.slugify(name) + ".csv"
         self.gen2_path = gen2_path

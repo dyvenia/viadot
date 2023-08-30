@@ -35,7 +35,6 @@ class AzureDataLake(Source):
         *args,
         **kwargs,
     ):
-
         credentials = credentials or local_config.get("AZURE_ADLS")
 
         super().__init__(*args, credentials=credentials, **kwargs)

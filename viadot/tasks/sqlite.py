@@ -53,7 +53,6 @@ class SQLiteInsert(Task):
         df: pd.DataFrame = None,
         if_exists: str = "skip",
     ):
-
         sqlite = SQLite(credentials=dict(db_name=db_path))
         sqlite.create_table(
             table=table_name, schema=schema, dtypes=dtypes, if_exists=if_exists
@@ -101,7 +100,6 @@ class SQLiteSQLtoDF(Task):
 
     @defaults_from_attrs("db_path", "sql_path")
     def run(self, sql_path: str = None, db_path: str = None) -> pd.DataFrame:
-
         sqlite = SQLite(credentials=dict(db_name=db_path))
 
         logger = prefect.context.get("logger")

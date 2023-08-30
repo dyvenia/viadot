@@ -181,7 +181,6 @@ def get_sql_server_table_dtypes(
 
 
 def _cast_df_cols(df):
-
     df = df.replace({"False": False, "True": True})
 
     datetime_cols = (col for col, dtype in df.dtypes.items() if dtype.kind == "M")
@@ -290,7 +289,6 @@ def gen_bulk_insert_query_from_df(
         )
 
     def _gen_insert_query_from_records(records: List[tuple]) -> str:
-
         tuples = map(str, tuple(records))
 
         # Change Nones to NULLs

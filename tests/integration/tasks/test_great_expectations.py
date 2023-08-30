@@ -14,7 +14,6 @@ EXPECTATIONS_PATH = os.path.join(GE_PROJECT_PATH, "expectations")
 
 @pytest.fixture(scope="function")
 def expectation_suite_pass():
-
     expectation_suite = {
         "data_asset_type": "Dataset",
         "expectation_suite_name": "failure",
@@ -53,7 +52,6 @@ def expectation_suite_pass():
 
 @pytest.fixture(scope="function")
 def expectation_suite_fail():
-
     expectation_suite = {
         "data_asset_type": "Dataset",
         "expectation_suite_name": "failure",
@@ -96,7 +94,6 @@ def expectation_suite_fail():
 
 
 def test_great_expectations_pass(expectation_suite_pass, DF):
-
     great_expectations_task = RunGreatExpectationsValidation()
 
     try:
@@ -108,7 +105,6 @@ def test_great_expectations_pass(expectation_suite_pass, DF):
 
 
 def test_great_expectations_fail(expectation_suite_fail, DF):
-
     great_expectations_task = RunGreatExpectationsValidation()
 
     with pytest.raises(signals.FAIL):

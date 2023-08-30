@@ -20,7 +20,6 @@ file_to_adls_task = AzureDataLakeUpload()
 
 
 def test_aselite_to_adls():
-
     credentials_secret = PrefectSecret("aselite").run()
     vault_name = PrefectSecret("AZURE_DEFAULT_KEYVAULT").run()
 
