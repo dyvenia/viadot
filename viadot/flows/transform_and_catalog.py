@@ -37,8 +37,8 @@ class TransformAndCatalog(Flow):
         dbt_target: str = None,
         stateful: bool = False,
         metadata_dir_path: Union[str, Path] = None,
-        luma_endpoint: str = "http://localhost",
-        luma_endpoint_secret: str = None,
+        luma_url: str = "http://localhost",
+        luma_url_secret: str = None,
         vault_name: str = None,
         *args,
         **kwargs,
@@ -67,8 +67,8 @@ class TransformAndCatalog(Flow):
             metadata_dir_path (Union[str, Path]): The path to the directory containing metadata files.
                 In the case of dbt, it's dbt project's `target` directory, which contains dbt artifacts
                 (`sources.json`, `catalog.json`, `manifest.json`, and `run_results.json`). Defaults to None.
-            luma_endpoint (str, optional): The endpoint of the Luma ingestion API. Defaults to "http://localhost".
-            luma_endpoint_secret (str, optional): The name of the secret storing the luma_endpoint. Defaults to None.
+            luma_url (str, optional): The url of the Luma ingestion API. Defaults to "http://localhost".
+            luma_url_secret (str, optional): The name of the secret storing the luma_url. Defaults to None.
             vault_name (str, optional): The name of the vault from which to obtain the secrets. Defaults to None.
 
         Returns:
@@ -91,7 +91,7 @@ class TransformAndCatalog(Flow):
                 "source_freshness": "source:schema.table",
                 "test": "my_model"},
                 metadata_dir_path="target",
-                luma_endpoint="http://localhost"
+                luma_url="http://localhost"
             )
             flow.run()
             ```
@@ -118,8 +118,8 @@ class TransformAndCatalog(Flow):
 
         # LumaIngest
         self.metadata_dir_path = metadata_dir_path
-        self.luma_endpoint = luma_endpoint
-        self.luma_endpoint_secret = luma_endpoint_secret
+        self.luma_url = luma_url
+        self.luma_url_secret = luma_url_secret
         self.vault_name = vault_name
 
         super().__init__(*args, name=name, **kwargs)
@@ -228,9 +228,9 @@ class TransformAndCatalog(Flow):
         upload_metadata_luma = LumaIngest(
             name="luma_ingest_task",
             metadata_dir_path=metadata_dir_path,
-            endpoint=self.luma_endpoint,
+            url=self.luma_url,
             dbt_project_path=self.dbt_project_path,
-            credentials_secret=self.luma_endpoint_secret,
+            credentials_secret=self.luma_url_secret,
             vault_name=self.vault_name,
         ).bind(flow=self)
 
