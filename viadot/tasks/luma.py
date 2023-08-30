@@ -6,7 +6,7 @@ from .azure_key_vault import AzureKeyVaultSecret
 
 
 class LumaIngest(ShellTask):
-    """Tasks for interacting with [Luma](https://github.com/dyvenia/luma)."""
+    """Ingest metadata into [Luma](https://github.com/dyvenia/luma)."""
 
     def __init__(
         self,
@@ -26,7 +26,7 @@ class LumaIngest(ShellTask):
                 In the case of dbt, it's dbt project's `target` directory, which contains dbt artifacts
                 (`sources.json`, `catalog.json`, `manifest.json`, and `run_results.json`).
             endpoint (str, optional): The endpoint of the Luma ingestion API. Defaults to None.
-            credentials_secret (str, optional): The name of the Azure Key Vault secret containing a Luma credentials.
+            credentials_secret (str, optional): The name of the Azure Key Vault secret containing Luma credentials.
                 Defaults to None.
             vault_name (str, optional): The name of the vault from which to obtain the secrets. Defaults to None.
         """

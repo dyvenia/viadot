@@ -21,7 +21,7 @@ def _cleanup_repo(dbt_repo_dir_name: str) -> None:
 
 
 class TransformAndCatalog(Flow):
-    """Build specified dbt model(s) and upload the generated metadata to DataHub or other destination."""
+    """Build specified dbt model(s) and upload the generated metadata to Luma catalog."""
 
     def __init__(
         self,
@@ -37,14 +37,14 @@ class TransformAndCatalog(Flow):
         dbt_target: str = None,
         stateful: bool = False,
         metadata_dir_path: Union[str, Path] = None,
-        luma_endpoint: str = "http://localhost/api/v1/dbt",
+        luma_endpoint: str = "http://localhost",
         luma_endpoint_secret: str = None,
         vault_name: str = None,
         *args,
         **kwargs,
     ) -> List[str]:
         """
-        Build specified dbt model(s) and upload the generated metadata to Luma or other destination.
+        Build specified dbt model(s) and upload the generated metadata to Luma catalog.
 
         Args:
             name (str): The name of the Flow.
@@ -67,7 +67,7 @@ class TransformAndCatalog(Flow):
             metadata_dir_path (Union[str, Path]): The path to the directory containing metadata files.
                 In the case of dbt, it's dbt project's `target` directory, which contains dbt artifacts
                 (`sources.json`, `catalog.json`, `manifest.json`, and `run_results.json`). Defaults to None.
-            luma_endpoint (str, optional): The endpoint of the Luma ingestion API. Defaults to "http://localhost/api/v1/dbt".
+            luma_endpoint (str, optional): The endpoint of the Luma ingestion API. Defaults to "http://localhost".
             luma_endpoint_secret (str, optional): The name of the secret storing the luma_endpoint. Defaults to None.
             vault_name (str, optional): The name of the vault from which to obtain the secrets. Defaults to None.
 
@@ -91,7 +91,7 @@ class TransformAndCatalog(Flow):
                 "source_freshness": "source:schema.table",
                 "test": "my_model"},
                 metadata_dir_path="target",
-                luma_endpoint="https://luma.dyvenia.lan/api/v1/dbt"
+                luma_endpoint="http://localhost"
             )
             flow.run()
             ```
