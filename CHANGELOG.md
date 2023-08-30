@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added `LumaIngest` task.
 
 ### Fixed
+- Updated Dockerfile - Changed Linux (RPM/DEB/APK) installer packages.
 
 ### Changed
 
