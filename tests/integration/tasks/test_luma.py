@@ -5,7 +5,7 @@ def test_luma_ingest():
     luma_task = LumaIngest(
         name="Luma test",
         metadata_dir_path="tests/resources/metadata/new",
-        endpoint="www.luma_endpoint.com",
+        url="www.luma_url.com",
         dbt_project_path="project_path",
         credentials_secret="luma-dev",
     )
