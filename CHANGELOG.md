@@ -5,6 +5,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ## [Unreleased]
 ### Added
+
+### Fixed
+
+### Changed
+
+## [0.4.19] - 2023-08-31
+### Added
 - Added `add_viadot_metadata_columns` function that will be used as a decorator for `to_df` class methods.
 - Added `TransformAndCatalog` flow.
 - Added `CloneRepo` task.
@@ -12,8 +19,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 - Updated Dockerfile - Changed Linux (RPM/DEB/APK) installer packages.
-
-### Changed
 
 
 ## [0.4.18] - 2023-07-27
