@@ -28,7 +28,6 @@ def test_create_table_from_parquet(duckdb, TEST_PARQUET_FILE_PATH):
 
 
 def test_duckdb_query():
-
     db_query = DuckDBQuery(credentials=dict(database=DATABASE_PATH))
 
     result = db_query.run(f"select * from {SCHEMA}.{TABLE}")
@@ -37,7 +36,6 @@ def test_duckdb_query():
 
 
 def test_duckdb_to_df():
-
     instance = DuckDBToDF(
         schema=SCHEMA, table=TABLE, credentials=dict(database=DATABASE_PATH)
     )

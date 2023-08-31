@@ -10,6 +10,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+## [0.4.19] - 2023-08-31
+### Added
+- Added `add_viadot_metadata_columns` function that will be used as a decorator for `to_df` class methods.
+- Added `TransformAndCatalog` flow.
+- Added `CloneRepo` task.
+- Added `LumaIngest` task.
+
+### Fixed
+- Updated Dockerfile - Changed Linux (RPM/DEB/APK) installer packages.
+
 
 ## [0.4.18] - 2023-07-27
 ### Added

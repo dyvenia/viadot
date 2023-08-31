@@ -17,7 +17,6 @@ TABLE = "test_supermetrics"
 
 
 def test_supermetrics_to_azure_sql_init():
-
     instance = SupermetricsToAzureSQL(
         "test_name",
         ds_id="example_id",
@@ -31,11 +30,9 @@ def test_supermetrics_to_azure_sql_init():
 
 
 def test_supermetrics_to_azure_sql_run_flow_mock():
-
     with mock.patch.object(
         SupermetricsToAzureSQL, "run", return_value=True
     ) as mock_method:
-
         credentials = local_config.get("SUPERMETRICS")
 
         flow = SupermetricsToAzureSQL(

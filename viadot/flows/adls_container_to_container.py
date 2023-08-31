@@ -40,7 +40,6 @@ class ADLSContainerToContainer(Flow):
         *args: List[any],
         **kwargs: Dict[str, Any]
     ):
-
         from_path = from_path.strip("/")
         self.from_path = from_path
         self.to_path = to_path

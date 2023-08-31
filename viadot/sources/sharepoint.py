@@ -27,7 +27,6 @@ class Sharepoint(Source):
         *args,
         **kwargs,
     ):
-
         DEFAULT_CREDENTIALS = local_config.get("SHAREPOINT")
         credentials = credentials or DEFAULT_CREDENTIALS
         if credentials is None:

@@ -109,7 +109,6 @@ class RunGreatExpectationsValidation(RunGreatExpectationsValidation):
         keep_output: bool = None,
         **kwargs,
     ):
-
         ge_project_path = str(Path(expectations_path).parent)
 
         batch_kwargs = self._get_batch_kwargs(df)

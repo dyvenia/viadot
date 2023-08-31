@@ -42,7 +42,6 @@ def test_error_table():
 
 
 def test_bcp(TEST_CSV_FILE_PATH, test_table):
-
     bcp_task = BCPTask()
 
     try:
@@ -60,7 +59,6 @@ def test_bcp(TEST_CSV_FILE_PATH, test_table):
 
 
 def test_bcp_fail(TEST_CSV_FILE_PATH, test_table):
-
     bcp_task = BCPTask()
 
     with pytest.raises(FAIL):

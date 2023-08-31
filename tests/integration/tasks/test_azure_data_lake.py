@@ -99,11 +99,9 @@ def test_azure_data_lake_list_recursive():
 
 
 def test_azure_data_lake_list_paths():
-
     with mock.patch.object(
         AzureDataLakeList, "run", return_value=ADLS_TEST_PATHS
     ) as mock_method:
-
         list_task = AzureDataLakeList(path="raw/tests/alds_test_new_fnc/")
         files = list_task.run(recursive=True)
         assert files == ADLS_TEST_PATHS

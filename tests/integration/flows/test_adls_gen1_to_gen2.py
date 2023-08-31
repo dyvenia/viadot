@@ -4,7 +4,6 @@ from viadot.flows import ADLSGen1ToGen2
 
 
 def test_adls_gen1_gen2_init(TEST_PARQUET_FILE_PATH_2):
-
     flow = ADLSGen1ToGen2(
         "test_adls_gen1_gen2_init",
         gen1_path=TEST_PARQUET_FILE_PATH_2,
