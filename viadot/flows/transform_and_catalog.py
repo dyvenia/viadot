@@ -194,23 +194,6 @@ class TransformAndCatalog(Flow):
             stream_output=True,
         ).bind(flow=self)
 
-        # Source freshness
-        # Produces `sources.json`
-        # source_freshness_select = self.dbt_selects.get("source_freshness")
-        # source_freshness_select_safe = (
-        #     f"-s {source_freshness_select}"
-        #     if source_freshness_select is not None
-        #     else ""
-        # )
-
-        # source_freshness = ShellTask(
-        #     name="dbt_task_source_freshness",
-        #     command=f"dbt source freshness {source_freshness_select_safe} {dbt_target_option}",
-        #     helper_script=f"cd {self.dbt_project_path}",
-        #     return_all=True,
-        #     stream_output=True,
-        # ).bind(flow=self)
-
         # Generate docs
         # Produces `catalog.json`, `run-results.json`, and `manifest.json`
         generate_catalog_json = ShellTask(
