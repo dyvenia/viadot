@@ -20,7 +20,7 @@ def _cleanup_repo(dbt_repo_dir_name: str) -> None:
     shutil.rmtree(dbt_repo_dir_name, ignore_errors=True)  # Delete folder on run
 
 
-class TransformAndCatalog(Flow):
+class TransformAndCatalogToLuma(Flow):
     """Build specified dbt model(s) and upload the generated metadata to Luma catalog."""
 
     def __init__(
@@ -48,8 +48,8 @@ class TransformAndCatalog(Flow):
 
         Args:
             name (str): The name of the Flow.
-            dbt_project_path (str): The path to the dbt project (the directory containing
-                the `dbt_project.yml` file).
+            dbt_project_path (str, optional): The path to the dbt project (the directory containing
+                the `dbt_project.yml` file). Defaults to 'tmp_dbt_repo_dir'.
             dbt_repo_url (str, optional): The URL for cloning the dbt repo with relevant dbt project. Defaults to None.
             dbt_repo_url_secret (str, optional): Alternatively to above, the secret containing `dbt_repo_url`.
                 Defaults to None.
@@ -78,12 +78,12 @@ class TransformAndCatalog(Flow):
             # Build a single model
             ```python
             import os
-            from viadot.flows import TransformAndCatalog
+            from viadot.flows import TransformAndCatalogToLuma
 
             my_dbt_project_path = os.path.expanduser("~/dbt/my_dbt_project")
 
-            flow = TransformAndCatalog(
-                name="Transform and Catalog",
+            flow = TransformAndCatalogToLuma(
+                name="Transform and Catalog to Luma",
                 dbt_project_path=my_dbt_project_path,
                 dbt_repo_url=my_dbt_repo_url,
                 token=my_token,
