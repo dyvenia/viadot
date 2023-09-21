@@ -207,7 +207,6 @@ class SftpConnector(Source):
 
         # loop over list of SFTPAttributes (files with modes)
         for attr in self.conn.listdir_attr(path):
-
             if S_ISDIR(attr.st_mode):
                 # If the file is a directory, recurse it
                 self.recursive_listdir(os.path.join(path, attr.filename), files)

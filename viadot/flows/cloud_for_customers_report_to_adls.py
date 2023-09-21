@@ -154,7 +154,6 @@ class CloudForCustomersReportToADLS(Flow):
         credentials_secret: str = None,
         flow: Flow = None,
     ) -> Task:
-
         c4c_to_df = C4CToDF(timeout=self.timeout)
         df = c4c_to_df.bind(
             url=url,
@@ -170,7 +169,6 @@ class CloudForCustomersReportToADLS(Flow):
     def gen_c4c_report_months(
         self, report_urls_with_filters: Union[str, List[str]], flow: Flow = None
     ) -> Task:
-
         c4c_report_to_df = C4CReportToDF(timeout=self.timeout)
         report = c4c_report_to_df.bind(
             report_url=report_urls_with_filters,

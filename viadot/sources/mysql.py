@@ -18,7 +18,6 @@ class MySQL(Source):
         *args,
         **kwargs,
     ):
-
         """
         A class for interacting with DuckDB.
 
@@ -105,7 +104,6 @@ class MySQL(Source):
             ssh_pkey=ssh_pkey,
             remote_bind_address=(sql_hostname, sql_port),
         ) as ssh_tunnel:
-
             conn = pymysql.connect(
                 host=host,
                 user=sql_username,

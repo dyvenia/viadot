@@ -101,7 +101,6 @@ class MindfulToCSV(Task):
         region: Literal["us1", "us2", "us3", "ca1", "eu1", "au1"] = "eu1",
         file_path: str = "",
     ):
-
         if credentials_mindful is not None:
             self.logger.info("Mindful credentials provided by user")
         elif credentials_mindful is None and credentials_secret is not None:

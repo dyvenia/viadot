@@ -13,7 +13,6 @@ TABLE = "test"
 
 
 def test_azure_sql_create_table():
-
     create_table_task = AzureSQLCreateTable()
 
     create_table_task.run(
@@ -25,7 +24,6 @@ def test_azure_sql_create_table():
 
 
 def test_azure_sql_run_sqldb_query_empty_result():
-
     sql_query_task = AzureSQLDBQuery()
 
     list_table_info_query = f"""
@@ -43,7 +41,6 @@ def test_azure_sql_run_sqldb_query_empty_result():
 
 
 def test_azure_sql_run_insert_query():
-
     sql_query_task = AzureSQLDBQuery()
 
     sql_query_task.run(f"INSERT INTO {SCHEMA}.{TABLE} VALUES (1, 'Mike')")
@@ -52,7 +49,6 @@ def test_azure_sql_run_insert_query():
 
 
 def test_azure_sql_run_drop_query():
-
     sql_query_task = AzureSQLDBQuery()
 
     result = sql_query_task.run(f"DROP TABLE {SCHEMA}.{TABLE}")

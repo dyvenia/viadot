@@ -119,7 +119,6 @@ def expectation_suite():
 
 
 def test_prefect_logs(expectation_suite):
-
     flow = PrefectLogs(
         name="Extract prefect data test",
         query="""

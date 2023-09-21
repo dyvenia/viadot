@@ -18,7 +18,6 @@ def test_pipeline_init():
 
 def test_pipeline_flow_run_mock():
     with mock.patch.object(Pipeline, "run", return_value=Success) as mock_method:
-
         instance = Pipeline(
             "test_pipeline_flow",
             project_name="example_project",

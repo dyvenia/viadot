@@ -123,7 +123,6 @@ class SharepointToADLS(Flow):
             df_with_metadata, dtypes_dict, flow=self
         )
         if self.output_file_extension == ".parquet":
-
             df_to_file = df_to_parquet.bind(
                 df=df_mapped,
                 path=self.local_file_path,

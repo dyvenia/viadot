@@ -71,7 +71,6 @@ class MySqlToADLS(Flow):
         self.gen_flow()
 
     def gen_flow(self) -> Flow:
-
         df_task = MySqlToDf(country_short=self.country_short, timeout=self.timeout)
         df = df_task.bind(
             credentials_secret=self.credentials_secret, query=self.query, flow=self
