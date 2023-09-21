@@ -26,7 +26,7 @@ class TransformAndCatalog(Flow):
     def __init__(
         self,
         name: str,
-        dbt_project_path: str,
+        dbt_project_path: str = "tmp_dbt_repo_dir",
         dbt_repo_url: str = None,
         dbt_repo_url_secret: str = None,
         dbt_repo_branch: str = None,
@@ -137,7 +137,7 @@ class TransformAndCatalog(Flow):
         local_dbt_repo_path = (
             os.path.expandvars(self.local_dbt_repo_path)
             if self.local_dbt_repo_path is not None
-            else "tmp_dbt_repo_dir"
+            else f"{self.dbt_project_path}"
         )
 
         clone_repo = CloneRepo(url=dbt_repo_url)
@@ -159,7 +159,7 @@ class TransformAndCatalog(Flow):
         dbt_clean_up = ShellTask(
             name="dbt_task_clean",
             command=f"dbt clean",
-            helper_script=f"cd {self.dbt_project_path}",
+            helper_script=f"cd {local_dbt_repo_path}",
             return_all=True,
             stream_output=True,
         ).bind(flow=self)
@@ -167,7 +167,7 @@ class TransformAndCatalog(Flow):
         pull_dbt_deps = ShellTask(
             name="dbt_task_deps",
             command=f"dbt deps",
-            helper_script=f"cd {self.dbt_project_path}",
+            helper_script=f"cd {local_dbt_repo_path}",
             return_all=True,
             stream_output=True,
         ).bind(flow=self)
@@ -178,7 +178,7 @@ class TransformAndCatalog(Flow):
         run = ShellTask(
             name="dbt_task_run",
             command=f"dbt run {run_select_safe} {dbt_target_option}",
-            helper_script=f"cd {self.dbt_project_path}",
+            helper_script=f"cd {local_dbt_repo_path}",
             return_all=True,
             stream_output=True,
         ).bind(flow=self)
@@ -189,7 +189,7 @@ class TransformAndCatalog(Flow):
         test = ShellTask(
             name="dbt_task_test",
             command=f"dbt test {test_select_safe} {dbt_target_option}",
-            helper_script=f"cd {self.dbt_project_path}",
+            helper_script=f"cd {local_dbt_repo_path}",
             return_all=True,
             stream_output=True,
         ).bind(flow=self)
