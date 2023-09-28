@@ -179,7 +179,6 @@ class DuckDBToDF(Task):
         *args,
         **kwargs,
     ):
-
         self.schema = schema
         self.table = table
         self.if_empty = if_empty

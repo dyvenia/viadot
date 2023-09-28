@@ -91,7 +91,6 @@ class SupermetricsToCSV(Task):
         timeout: int = None,
         sep: str = None,
     ):
-
         """
         Task run method.
 
@@ -188,7 +187,6 @@ class SupermetricsToDF(Task):
         timeout: int = 3600,
         **kwargs,
     ):
-
         self.if_empty = if_empty
         self.max_rows = max_rows
 

@@ -5,10 +5,26 @@ import pandas as pd
 import pytest
 
 from viadot.signals import SKIP
-from viadot.utils import check_if_empty_file, gen_bulk_insert_query_from_df
+from viadot.utils import (
+    check_if_empty_file,
+    gen_bulk_insert_query_from_df,
+    add_viadot_metadata_columns,
+)
 
 EMPTY_CSV_PATH = "empty.csv"
 EMPTY_PARQUET_PATH = "empty.parquet"
+
+
+class ClassForDecorator:
+    def __init__(self):
+        self.df = pd.DataFrame({"a": [123], "b": ["abc"]})
+
+    def to_df(self):
+        return self.df
+
+    @add_viadot_metadata_columns
+    def to_df_decorated(self):
+        return self.df
 
 
 def test_single_quotes_inside():
@@ -113,3 +129,12 @@ def test_check_if_empty_file_no_data(caplog):
     with caplog.at_level(logging.WARNING):
         check_if_empty_file(path=EMPTY_PARQUET_PATH, if_empty="warn")
         assert f"Input file - '{EMPTY_PARQUET_PATH}' is empty." not in caplog.text
+
+
+def test_add_viadot_metadata_columns_base():
+    df_base = ClassForDecorator().to_df()
+    df_decorated = ClassForDecorator().to_df_decorated()
+
+    assert df_base.columns.to_list() == ["a", "b"]
+    assert df_decorated.columns.to_list() == ["a", "b", "_viadot_source"]
+    assert df_decorated["_viadot_source"][0] == "ClassForDecorator"

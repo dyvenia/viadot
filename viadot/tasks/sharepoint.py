@@ -47,7 +47,6 @@ class SharepointToDF(Task):
         *args,
         **kwargs,
     ):
-
         self.if_empty = if_empty
         self.path_to_file = path_to_file
         self.url_to_file = url_to_file
