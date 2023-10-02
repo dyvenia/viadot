@@ -11,6 +11,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Changed, `Mindful` credentials passed by the `auth` parameter, instead of by the `header`.
+
 ## [0.4.19] - 2023-08-31
 ### Added
 - Added `add_viadot_metadata_columns` function that will be used as a decorator for `to_df` class methods.
