@@ -93,7 +93,7 @@ class Sharepoint(Source):
         )
         conn.close()
 
-    @add_viadot_metadata_columns
+    @add_viadot_metadata_columns()
     def to_df(
         self,
         url: str,
