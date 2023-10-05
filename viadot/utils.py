@@ -408,21 +408,25 @@ def check_if_empty_file(
             handle_if_empty_file(if_empty, message=f"Input file - '{path}' is empty.")
 
 
-def add_viadot_metadata_columns(func: Callable) -> Callable:
+def add_viadot_metadata_columns(source_name=None):
     """
     Decorator that adds metadata columns to df in 'to_df' method.
     For now only _viadot_source is available because _viadot_downloaded_at_utc is added on the Flow level.
     """
 
-    @functools.wraps(func)
-    def wrapper(*args, **kwargs) -> pd.DataFrame:
-        df = func(*args, **kwargs)
+    def decorator(func):
+        @functools.wraps(func)
+        def wrapper(*args, **kwargs):
+            df = func(*args, **kwargs)
 
-        # Accessing instance
-        instance = args[0]
-        _viadot_source = kwargs.get("source_name") or instance.__class__.__name__
-        df["_viadot_source"] = _viadot_source
-        # df["_viadot_downloaded_at_utc"] = datetime.now(timezone.utc).replace(microsecond=0)
-        return df
+            if source_name is not None:
+                df["_viadot_source"] = source_name
+            else:
+                instance = args[0]
+                df["_viadot_source"] = instance.__class__.__name__
 
-    return wrapper
+            return df
+
+        return wrapper
+
+    return decorator
