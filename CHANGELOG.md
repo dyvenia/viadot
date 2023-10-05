@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 ### Changed
-- Changed `add_viadot_metadata_columns` decorator that will be used as a decorator for `to_df` class methods (in source or task).
+- Modified `add_viadot_metadata_columns` to be able to apply a parameter source_name to the decorator  for to_df funtion or function where the DataFrame is generated.
 - Changed `sharepoint` task in order to implement add_viadot_metadata_columns after changes.
 
 ## [0.4.19] - 2023-08-31

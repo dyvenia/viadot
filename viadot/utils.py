@@ -408,22 +408,41 @@ def check_if_empty_file(
             handle_if_empty_file(if_empty, message=f"Input file - '{path}' is empty.")
 
 
-def add_viadot_metadata_columns(source_name=None):
+def add_viadot_metadata_columns(source_name: str = None) -> Callable:
     """
     Decorator that adds metadata columns to df in 'to_df' method.
     For now only _viadot_source is available because _viadot_downloaded_at_utc is added on the Flow level.
+
+    Args:
+        source_name (str, optional): The name of the source to be included in the DataFrame.
+        This should be provided when creating a DataFrame in a Task, rather than in a Source.
+        Defaults to None.
+
+    Warning: Please remember to include brackets when applying a decorator, even if you are not passing the 'source_name' parameter.
+
+    Example:
+
+        In task:
+
+        @add_viadot_metadata_columns(source_name="Sharepoint")
+        def to_df(self):
+            ...
+
+        In source:
+
+        @add_viadot_metadata_columns()
+        def to_df(self):
+            ...
     """
 
-    def decorator(func):
+    def decorator(func) -> Callable:
         @functools.wraps(func)
-        def wrapper(*args, **kwargs):
+        def wrapper(*args, **kwargs) -> pd.DataFrame:
             df = func(*args, **kwargs)
 
-            if source_name is not None:
-                df["_viadot_source"] = source_name
-            else:
-                instance = args[0]
-                df["_viadot_source"] = instance.__class__.__name__
+            df["_viadot_source"] = (
+                source_name if source_name is not None else args[0].__class__.__name__
+            )
 
             return df
 
