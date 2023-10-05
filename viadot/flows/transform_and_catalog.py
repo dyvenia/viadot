@@ -5,11 +5,12 @@ from typing import Dict, List, Union
 
 from prefect import Flow, task
 from prefect.tasks.shell import ShellTask
+from prefect.triggers import any_successful
 
 from viadot.tasks import CloneRepo, AzureKeyVaultSecret, LumaIngest
 
 
-@task
+@task()
 def _cleanup_repo(dbt_repo_dir_name: str) -> None:
     """
     Remove a repo folder.
@@ -18,6 +19,25 @@ def _cleanup_repo(dbt_repo_dir_name: str) -> None:
         dbt_repo_dir_name (str): The name of the temporary folder.
     """
     shutil.rmtree(dbt_repo_dir_name, ignore_errors=True)  # Delete folder on run
+
+
+@task(trigger=any_successful)
+def custom_shell_task(name: str, command: str, helper_script: str = None) -> None:
+    """_
+    Task created to run ShellTask and apply `trigger` on it. For regular ShellTask it is not possible.
+
+    Args:
+        name (str): The name of the flow.
+        command (str): Shell command to run.
+        helper_script (str, optional): Path to local path repo. Defaults to None.
+    """
+    ShellTask(
+        name=name,
+        command=command,
+        helper_script=helper_script,
+        return_all=True,
+        stream_output=True,
+    ).run()
 
 
 class TransformAndCatalogToLuma(Flow):
@@ -35,7 +55,6 @@ class TransformAndCatalogToLuma(Flow):
         local_dbt_repo_path: str = None,
         dbt_selects: Dict[str, str] = None,
         dbt_target: str = None,
-        stateful: bool = False,
         metadata_dir_path: Union[str, Path] = None,
         luma_url: str = "http://localhost",
         luma_url_secret: str = None,
@@ -62,8 +81,6 @@ class TransformAndCatalogToLuma(Flow):
                 from run's, as long as run select is provided. Defaults to None.
             dbt_target (str): The dbt target to use. If not specified, the default dbt target (as specified in `profiles.yaml`)
                 will be used. Defaults to None.
-            stateful (bool, optional): Whether only the models should be rebuilt only if modified.
-                See [dbt docs](https://docs.getdbt.com/guides/legacy/understanding-state). Defaults to False.
             metadata_dir_path (Union[str, Path]): The path to the directory containing metadata files.
                 In the case of dbt, it's dbt project's `target` directory, which contains dbt artifacts
                 (`sources.json`, `catalog.json`, `manifest.json`, and `run_results.json`). Defaults to None.
@@ -87,10 +104,11 @@ class TransformAndCatalogToLuma(Flow):
                 dbt_project_path=my_dbt_project_path,
                 dbt_repo_url=my_dbt_repo_url,
                 token=my_token,
-                dbt_selects={"run": "my_model",
-                "source_freshness": "source:schema.table",
-                "test": "my_model"},
-                metadata_dir_path="target",
+                dbt_selects={
+                    "run": "my_model",
+                    "source_freshness": "source:schema.table",
+                    "test": "my_model"},
+                metadata_dir_path=f"{my_dbt_project_path}/target",
                 luma_url="http://localhost"
             )
             flow.run()
@@ -105,8 +123,6 @@ class TransformAndCatalogToLuma(Flow):
         self.dbt_project_path = dbt_project_path
         self.dbt_target = dbt_target
         self.dbt_selects = dbt_selects
-
-        self.stateful = stateful
 
         # CloneRepo
         self.dbt_repo_url = dbt_repo_url
@@ -196,13 +212,13 @@ class TransformAndCatalogToLuma(Flow):
 
         # Generate docs
         # Produces `catalog.json`, `run-results.json`, and `manifest.json`
-        generate_catalog_json = ShellTask(
+
+        generate_catalog_json = custom_shell_task.bind(
             name="dbt_task_docs_generate",
             command=f"dbt docs generate {dbt_target_option} --no-compile",
             helper_script=f"cd {self.dbt_project_path}",
-            return_all=True,
-            stream_output=True,
-        ).bind(flow=self)
+            flow=self,
+        )
 
         # Upload build metadata to Luma
         path_expanded = os.path.expandvars(self.metadata_dir_path)
