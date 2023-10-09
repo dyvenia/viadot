@@ -8,7 +8,7 @@ from prefect.engine import signals
 from viadot.flows import ADLSToAzureSQL
 from viadot.flows.adls_to_azure_sql import check_dtypes_sort, df_to_csv_task, len_from_dtypes, check_hardcoded_dtypes_len, get_real_sql_dtypes_from_df
 
-test_df = pd.DataFrame(
+TEST_DF = pd.DataFrame(
     {
         "Date": ["2023-01-01", "2023-01-02", "2023-01-03", "2023-01-04", "2023-01-05"],
         "User ID": ["1a34", "1d34$56", "1a3456&8", "1d3456789!", "1s3"],  # max length = 10
@@ -20,7 +20,7 @@ test_df = pd.DataFrame(
         "Last varchar": ["Last", " ", "varchar", "of this ", "df"],  # max length =8
     }
 )
-Real_Sql_Dtypes = {
+REAL_SQL_DTYPES = {
     "Date": "DATE",
     "User ID": "VARCHAR(10)",
     "Web ID": "VARCHAR(7)",
@@ -126,7 +126,7 @@ def test_check_dtypes_sort():
 
 
 def test_get_real_sql_dtypes_from_df():
-    assert get_real_sql_dtypes_from_df(test_df) == Real_Sql_Dtypes
+    assert get_real_sql_dtypes_from_df(TEST_DF) == REAL_SQL_DTYPES
 
 
 def test_len_from_dtypes():
@@ -140,7 +140,7 @@ def test_len_from_dtypes():
         "Age": "INT",
         "Last varchar": 8,
     }
-    assert len_from_dtypes(Real_Sql_Dtypes) == real_df_lengths
+    assert len_from_dtypes(REAL_SQL_DTYPES) == real_df_lengths
 
 
 def test_check_hardcoded_dtypes_len_userid(caplog):
@@ -155,7 +155,7 @@ def test_check_hardcoded_dtypes_len_userid(caplog):
         "Last varchar": "varchar(10)",
     }
     with pytest.raises(ValueError):
-        check_hardcoded_dtypes_len(test_df, smaller_dtype_userid)
+        check_hardcoded_dtypes_len(TEST_DF, smaller_dtype_userid)
         assert (
             "The length of the column User ID is too big, some data could be lost. Please change the length of the provided dtypes to 10"
             in caplog.text
@@ -174,7 +174,7 @@ def test_check_hardcoded_dtypes_len_usercountry(caplog):
         "Last varchar": "varchar(10)",
     }
     with pytest.raises(ValueError):
-        check_hardcoded_dtypes_len(test_df, smaller_dtype_usercountry)
+        check_hardcoded_dtypes_len(TEST_DF, smaller_dtype_usercountry)
         assert (
             "The length of the column User country is too big, some data could be lost. Please change the length of the provided dtypes to 6"
             in caplog.text
@@ -192,4 +192,4 @@ def test_check_hardcoded_dtypes_len():
         "Age": "int",
         "Last varchar": "varchar(10)",
     }
-    assert check_hardcoded_dtypes_len(test_df, good_dtypes) == None
+    assert check_hardcoded_dtypes_len(TEST_DF, good_dtypes) == None

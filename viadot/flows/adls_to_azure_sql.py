@@ -31,8 +31,10 @@ def union_dfs_task(dfs: List[pd.DataFrame]):
 def get_real_sql_dtypes_from_df(df: pd.DataFrame) -> Dict[str, Any]:
     """Obtain SQL data types from a pandas DataFrame
     and the lengths of the columns based on the real maximum lengths of the data in them.
+
     Args:
         df (pd.DataFrame): Data Frame from original ADLS file.
+        
     Returns:
         Dict[str, Any]: Dictionary with data types of columns and their real maximum length. 
     """
