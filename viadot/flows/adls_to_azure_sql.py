@@ -29,7 +29,14 @@ def union_dfs_task(dfs: List[pd.DataFrame]):
     return pd.concat(dfs, ignore_index=True)
 
 def get_real_sql_dtypes_from_df(df: pd.DataFrame) -> Dict[str, Any]:
-    """Obtain SQL data types from a pandas DataFrame"""
+    """Obtain SQL data types from a pandas DataFrame
+    and the lengths of the columns based on the real maximum lengths of the data in them.
+    Args:
+        df (pd.DataFrame): Data Frame from original ADLS file.
+    Returns:
+        Dict[str, Any]: Dictionary with data types of columns and their real maximum length. 
+    """
+    
     typeset = CompleteSet()
     dtypes = infer_type(df.head(10000), typeset)
     dtypes_dict = {k: str(v) for k, v in dtypes.items()}
@@ -58,10 +65,9 @@ def get_real_sql_dtypes_from_df(df: pd.DataFrame) -> Dict[str, Any]:
 
     return dict_dtypes_mapped
 
-def len_from_dtypes(dtypes) -> Dict[str, Any]:
+def len_from_dtypes(dtypes: Dict[str, Any]) -> Dict[str, Any]:
     """Function that turns a dictionary of column names and their dtypes into a dictionary
-    of column names and either the lengths of the varchars or the dtypes.
-
+    of column names and either the lengths of the varchars (of 'int' type) or the dtypes (of 'string' type).
 
     Args:
         dtypes (Dict[str, Any], optional): Dictionary of columns and data type to apply
@@ -69,7 +75,7 @@ def len_from_dtypes(dtypes) -> Dict[str, Any]:
 
     Returns:
         Dict[str, Any]: Dictionary of the columns and their dtypes as strings
-            or the lengths of their varchars, as ints
+            or the lengths of their varchars, as ints.
     """
     dtypes_lens = {}
     for k, v in dtypes.items():
@@ -80,7 +86,7 @@ def len_from_dtypes(dtypes) -> Dict[str, Any]:
             dtypes_lens[k] = str(v)
     return dtypes_lens
 
-def check_hardcoded_dtypes_len(real_data_df, given_dtypes):
+def check_hardcoded_dtypes_len(real_data_df: pd.DataFrame, given_dtypes: Dict[str, Any]) -> None:
     """Function to check if the length of columns provided by the hard-coded dtypes are not too small
         compared to the real columns of the df.
 
@@ -91,17 +97,19 @@ def check_hardcoded_dtypes_len(real_data_df, given_dtypes):
 
     Raises:
         ValueError: Raised whenever the length of the hardcoded dtypes is too small to contain the full data.
+    
+    Returns:
+        None
     """
-    real_data_len = len_from_dtypes( get_real_sql_dtypes_from_df(real_data_df) )
-    given_data_len = len_from_dtypes(given_dtypes)
+    real_column_lengths = len_from_dtypes( get_real_sql_dtypes_from_df(real_data_df) )
+    given_column_lengths = len_from_dtypes(given_dtypes)
 
-    for (column_given, len_given), (column_real, len_real) in zip(given_data_len.items(), real_data_len.items()):
-        #check if both of them are varchars
-        if isinstance(given_data_len[column_real], int) and isinstance(real_data_len[column_real], int):
+    for (column_given, len_given), (column_real, len_real) in zip(given_column_lengths.items(), real_column_lengths.items()):
+        #checking only the columns with lengths of varchars
+        if isinstance(given_column_lengths[column_real], int) and isinstance(real_column_lengths[column_real], int):
             if len_real > len_given:
                 logger.error(f"The length of the column {column_real} is too big, some data could be lost. Please change the length of the provided dtypes to {len_real}")
-                raise ValueError("Dtype length is incorrect!")
-            
+                raise ValueError("Datatype length is incorrect!")         
 
 @task(timeout=3600)
 def map_data_types_task(json_shema_path: str):
@@ -189,13 +197,8 @@ def check_dtypes_sort(
                 new_dtypes = dict()
                 for key in df.columns:
                     new_dtypes.update([(key, dtypes[key])])
-
-                check_hardcoded_dtypes_len(df, new_dtypes)
-
             else:
                 new_dtypes = dtypes.copy()
-                check_hardcoded_dtypes_len(df, new_dtypes)
-
         else:
             logger.error("There is a discrepancy with any of the columns.")
             raise signals.FAIL(
@@ -203,8 +206,8 @@ def check_dtypes_sort(
             )
     else:
         new_dtypes = dtypes.copy()
-        check_hardcoded_dtypes_len(df, new_dtypes)
-
+    
+    check_hardcoded_dtypes_len(df, new_dtypes)
     return new_dtypes
 
 
