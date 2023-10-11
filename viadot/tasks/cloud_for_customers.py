@@ -174,7 +174,7 @@ class C4CToDF(Task):
             endpoint (str, optional): The endpoint of the API. Defaults to None.
             fields (List[str], optional): The C4C Table fields. Defaults to None.
             params (Dict[str, str]): Query parameters. Defaults to None.
-            chunksize (int, optional): How many rows to retrieve from C4C at a time. Uses a server-side cursor.
+            chunksize (int, optional): How many rows to retrieve from C4C at a time. Uses a server-side cursor. Defaults to None.
             if_empty (str, optional): What to do if query returns no data. Defaults to "warn".
             credentials_secret (str, optional): The name of the Azure Key Vault secret containing a dictionary
             with C4C credentials. Defaults to None.
