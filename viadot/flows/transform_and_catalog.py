@@ -10,7 +10,7 @@ from prefect.triggers import any_successful
 from viadot.tasks import CloneRepo, AzureKeyVaultSecret, LumaIngest
 
 
-@task()
+@task(trigger=any_successful)
 def _cleanup_repo(dbt_repo_dir_name: str) -> None:
     """
     Remove a repo folder.
@@ -23,7 +23,7 @@ def _cleanup_repo(dbt_repo_dir_name: str) -> None:
 
 @task(trigger=any_successful)
 def custom_shell_task(name: str, command: str, helper_script: str = None) -> None:
-    """_
+    """
     Task created to run ShellTask and apply `trigger` on it. For regular ShellTask it is not possible.
 
     Args:
