@@ -117,12 +117,13 @@ class MindfulToCSV(Task):
                 credentials_mindful = None
                 raise CredentialError("Credentials not found.")
 
-        header = {
-            "Authorization": f"Bearer {credentials_mindful.get('VAULT')}",
-        }
+        auth = (
+            credentials_mindful["CUSTOMER_UUID"],
+            credentials_mindful["AUTH_TOKEN"],
+        )
 
         mindful = Mindful(
-            header=header,
+            auth=auth,
             region=region,
             start_date=start_date,
             end_date=end_date,

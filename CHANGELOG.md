@@ -5,10 +5,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ## [Unreleased]
 ### Added
+- Added `GetSalesQuotationData` view in `BusinessCore` source.
 
 ### Fixed
 
 ### Changed
+- Modified `add_viadot_metadata_columns` to be able to apply a parameter source_name to the decorator  for to_df funtion or function where the DataFrame is generated.
+- Changed `SharepointToDF` task in order to implement add_viadot_metadata_columns with value `source_name="Sharepoint"` after changes.
+
+- Changed, `Mindful` credentials passed by the `auth` parameter, instead of by the `header`.
 
 ## [0.4.19] - 2023-08-31
 ### Added
