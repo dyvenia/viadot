@@ -159,9 +159,9 @@ class C4CToDF(Task):
         vault_name: str = None,
     ):
         """
-        Task for downloading data from the Cloud for Customers to a pandas DataFrame using normal URL (with query parameters).
-        This task grab data from table from 'scratch' with passing table name in url or endpoint. It is rocommended to add
-        some filters parameters in this case.
+        Task for downloading data from the Cloud for Customers to a pandas DataFrame using URL (with query parameters).
+        Data is obtained from table by passing table name in the url or endpoint. It is recommended to add filters
+        parameters in this case.
 
         Example:
             url = "https://mysource.com/sap/c4c/odata/v1/c4codataapi"
@@ -169,12 +169,12 @@ class C4CToDF(Task):
             params = {"$filter": "CreationDateTime ge 2021-12-21T00:00:00Z"}
 
         Args:
-            url (str, optional): The url to the API in case of prepared report. Defaults to None.
-            env (str, optional): The environment to use. Defaults to 'QA'.
+            url (str, optional): The url to the API used in case of prepared report. Defaults to None.
+            env (str, optional): The environment to use to obtain credentials. Defaults to 'QA'.
             endpoint (str, optional): The endpoint of the API. Defaults to None.
             fields (List[str], optional): The C4C Table fields. Defaults to None.
-            params (Dict[str, str]): Query parameters. Defaults to $format=json.
-            chunksize (int, optional): How many rows to retrieve from C4C at a time. Uses a server-side cursor.
+            params (Dict[str, str]): Query parameters. Defaults to None.
+            chunksize (int, optional): How many rows to retrieve from C4C at a time. Uses a server-side cursor. Defaults to None.
             if_empty (str, optional): What to do if query returns no data. Defaults to "warn".
             credentials_secret (str, optional): The name of the Azure Key Vault secret containing a dictionary
             with C4C credentials. Defaults to None.
@@ -211,7 +211,9 @@ class C4CToDF(Task):
 
         def _generate_chunks() -> Generator[pd.DataFrame, None, None]:
             """
-            Util returning chunks as a generator to save memory.
+            Util function returning chunks.
+
+            Returns: Generator[pd.DataFrame, None, None]
             """
             offset = 0
             total_record_count = 0
