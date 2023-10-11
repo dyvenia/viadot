@@ -320,6 +320,7 @@ class Genesys(Source):
             date = self.start_date.replace("-", "")
             if single_report[4].lower() in [
                 "queue_performance_detail_view",
+                "queue_interaction_detail_view",
                 "agent_status_detail_view",
             ]:
                 file_name = f"{self.view_type.upper()}_{next(self.count)}_{date}"
