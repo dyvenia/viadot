@@ -6,6 +6,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 ### Added
 - Added `GetSalesQuotationData` view in `BusinessCore` source.
+- Added new ViewType `queue_interaction_detail_view` to Genesys.
 
 ### Fixed
 
