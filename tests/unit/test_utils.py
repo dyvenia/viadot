@@ -22,7 +22,7 @@ class ClassForDecorator:
     def to_df(self):
         return self.df
 
-    @add_viadot_metadata_columns
+    @add_viadot_metadata_columns()
     def to_df_decorated(self):
         return self.df
 
