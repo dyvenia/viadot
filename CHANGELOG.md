@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added `Office365-REST-Python-Client` library to `requirements`
 - Added `GetSalesQuotationData` view in `BusinessCore` source.
 - Added new ViewType `queue_interaction_detail_view` to Genesys.
+- Added new column `_viadot_source` to BigQuery extraction.
 
 ### Fixed
 
