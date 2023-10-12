@@ -10,9 +10,10 @@ from viadot.tasks import MindfulToCSV
 os.system("clear")
 
 credentials_mindful = local_config["MINDFUL"]
-header = {
-    "Authorization": f"Bearer {credentials_mindful.get('VAULT')}",
-}
+auth = (
+    credentials_mindful["CUSTOMER_UUID"],
+    credentials_mindful["AUTH_TOKEN"],
+)
 
 
 class MockClass:
@@ -42,14 +43,14 @@ class MockClass2:
 
 @pytest.mark.init
 def test_instance_mindful():
-    mf = Mindful(header=header)
+    mf = Mindful(auth=auth)
     assert isinstance(mf, Mindful)
 
 
 @mock.patch("viadot.sources.mindful.handle_api_response", return_value=MockClass)
 @pytest.mark.connect
 def test_mindful_api_response(mock_connection):
-    mf = Mindful(header=header)
+    mf = Mindful(auth=auth)
     mf.get_interactions_list()
     mf.get_responses_list()
     mock_connection.call_count == 2
@@ -58,7 +59,7 @@ def test_mindful_api_response(mock_connection):
 @mock.patch("viadot.sources.mindful.handle_api_response", return_value=MockClass)
 @pytest.mark.connect
 def test_mindful_api_response2(mock_api_response):
-    mf = Mindful(header=header)
+    mf = Mindful(auth=auth)
 
     response = mf.get_interactions_list()
 
@@ -69,7 +70,7 @@ def test_mindful_api_response2(mock_api_response):
 @mock.patch("viadot.sources.mindful.handle_api_response", return_value=MockClass)
 @pytest.mark.connect
 def test_mindful_api_response3(mock_api_response):
-    mf = Mindful(header=header)
+    mf = Mindful(auth=auth)
 
     response = mf.get_responses_list()
 
@@ -80,7 +81,7 @@ def test_mindful_api_response3(mock_api_response):
 @mock.patch("viadot.sources.mindful.handle_api_response", return_value=MockClass)
 @pytest.mark.connect
 def test_mindful_api_response4(mock_api_response):
-    mf = Mindful(header=header)
+    mf = Mindful(auth=auth)
 
     response = mf.get_survey_list()
 
@@ -91,7 +92,7 @@ def test_mindful_api_response4(mock_api_response):
 @mock.patch("viadot.sources.Mindful._mindful_api_response", return_value=MockClass)
 @pytest.mark.save
 def test_mindful_interactions(mock_connection):
-    mf = Mindful(header=header)
+    mf = Mindful(auth=auth)
     response = mf.get_interactions_list()
     mf.response_to_file(response)
     assert mf.endpoint == "interactions" and isinstance(mf.endpoint, str)
@@ -103,7 +104,7 @@ def test_mindful_interactions(mock_connection):
 @mock.patch("viadot.sources.Mindful._mindful_api_response", return_value=MockClass)
 @pytest.mark.save
 def test_mindful_responses(mock_connection):
-    mf = Mindful(header=header)
+    mf = Mindful(auth=auth)
     response = mf.get_responses_list()
     mf.response_to_file(response)
 
@@ -115,7 +116,7 @@ def test_mindful_responses(mock_connection):
 @mock.patch("viadot.sources.Mindful._mindful_api_response", return_value=MockClass)
 @pytest.mark.save
 def test_mindful_surveys(mock_connection):
-    mf = Mindful(header=header)
+    mf = Mindful(auth=auth)
     response = mf.get_survey_list()
     mf.response_to_file(response)
 

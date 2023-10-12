@@ -3,12 +3,28 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
 ## [Unreleased]
 ### Added
 
 ### Fixed
 
 ### Changed
+
+
+## [0.4.20] - 2023-10-12
+### Added
+- Added `Office365-REST-Python-Client` library to `requirements`.
+- Added `GetSalesQuotationData` view in `BusinessCore` source.
+- Added new ViewType `queue_interaction_detail_view` to Genesys.
+- Added new column `_viadot_source` to BigQuery extraction.
+
+### Changed
+- Changed the flow name from `TransformAndCatalog` to `TransformAndCatalogToLuma`. 
+- Modified `add_viadot_metadata_columns` to be able to apply a parameter source_name to the decorator for `to_df` function or function where the DataFrame is generated.
+- Changed `SharepointToDF` task in order to implement `add_viadot_metadata_columns` with value `source_name="Sharepoint"` after changes.
+- Changed `Mindful` credentials passed by the `auth` parameter, instead of the `header`.
+
 
 ## [0.4.19] - 2023-08-31
 ### Added
