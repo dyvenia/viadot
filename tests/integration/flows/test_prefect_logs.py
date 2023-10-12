@@ -9,17 +9,12 @@ def expectation_suite():
         "data": {
             "project": [
                 {
-                    "id": "6f413380-e228-4d64-8e1b-41c6cd434a2a",
-                    "name": "Installer Engagement",
-                    "flows": [],
-                },
-                {
                     "id": "223a8acf-4cf0-4cf7-ae1f-b66f78e28813",
-                    "name": "oso_reporting",
+                    "name": "Admin",
                     "flows": [
                         {
                             "id": "b13dcc6d-b621-4acd-88be-2cf28715a7c5",
-                            "name": "1-raw dakvenster_order_prod_info extract",
+                            "name": "1-raw table_catalog extract",
                             "version": 3,
                             "flow_runs": [
                                 {
@@ -34,22 +29,17 @@ def expectation_suite():
                         },
                         {
                             "id": "14b1a89e-f902-48a1-b6df-43cacdb91e1a",
-                            "name": "1-raw dakvenster_order_prod_info extract",
+                            "name": "1-raw table_catalog extract",
                             "version": 2,
                             "flow_runs": [],
                         },
                         {
                             "id": "a1eace09-38b4-46bf-bacf-a5d29bdbb633",
-                            "name": "1-raw dakvenster_order_prod_info extract",
+                            "name": "1-raw table_catalog extract",
                             "version": 1,
                             "flow_runs": [],
                         },
                     ],
-                },
-                {
-                    "id": "844372db-2d22-495d-a343-b8f8cbcf8963",
-                    "name": "sap",
-                    "flows": [],
                 },
                 {
                     "id": "512d0f29-2ceb-4177-b7d8-c5908da666ef",
@@ -59,16 +49,6 @@ def expectation_suite():
                 {
                     "id": "1d3c5246-61e5-4aff-a07b-4b74959a46e4",
                     "name": "dev_cdl",
-                    "flows": [],
-                },
-                {
-                    "id": "e2a926e2-ec86-4900-a24e-330a44b6cb19",
-                    "name": "cic_test",
-                    "flows": [],
-                },
-                {
-                    "id": "667d5026-2f01-452a-b6fe-5437ca833066",
-                    "name": "cic_dev",
                     "flows": [],
                 },
                 {
@@ -87,28 +67,8 @@ def expectation_suite():
                     "flows": [],
                 },
                 {
-                    "id": "dd2ccc32-2163-4f55-a746-1dbc6b28aaa4",
-                    "name": "Hyperlocal",
-                    "flows": [],
-                },
-                {
-                    "id": "7131c357-bad7-43cf-aabc-87f9cf045384",
-                    "name": "Installer Segmentation",
-                    "flows": [],
-                },
-                {
-                    "id": "94a8b8bf-14fa-4b64-ab78-af1d332dedd4",
-                    "name": "Marketing KPI",
-                    "flows": [],
-                },
-                {
                     "id": "ebe0e5aa-4add-4440-8c1a-6f9c74eb29fe",
                     "name": "dev",
-                    "flows": [],
-                },
-                {
-                    "id": "b5d924b0-4116-479f-a8f5-e28f9a9051ca",
-                    "name": "velux",
                     "flows": [],
                 },
             ]
@@ -127,7 +87,7 @@ def test_prefect_logs(expectation_suite):
                             id
                             name
                             flows (
-                                where : {name: {_eq: "1-raw google_analytics_oso_sps_gb extract"}}
+                                where : {name: {_eq: "1-raw table_catalog extract"}}
                             ) {
                                     id
                                     name
@@ -156,7 +116,7 @@ def test_prefect_logs(expectation_suite):
         scheduled_start_time="2022-09-05",
         filter_type="_gte",
         local_file_path=f"prefect_extract_logs.parquet",
-        adls_path=f"raw/supermetrics/mp/prefect_extract_logs.parquet",
+        adls_path=f"raw/tests/prefect_extract_logs.parquet",
     )
 
     results = flow.run()
