@@ -1,6 +1,5 @@
 import json
 from prefect.tasks.shell import ShellTask
-from prefect.triggers import any_successful
 from .azure_key_vault import AzureKeyVaultSecret
 
 
