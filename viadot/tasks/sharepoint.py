@@ -12,6 +12,7 @@ from prefect.utilities.tasks import defaults_from_attrs
 from ..exceptions import ValidationError
 from ..sources import Sharepoint
 from .azure_key_vault import AzureKeyVaultSecret
+from ..utils import add_viadot_metadata_columns
 
 logger = logging.get_logger()
 
@@ -147,6 +148,7 @@ class SharepointToDF(Task):
         "sheet_number",
         "validate_excel_file",
     )
+    @add_viadot_metadata_columns(source_name="Sharepoint")
     def run(
         self,
         path_to_file: str = None,
