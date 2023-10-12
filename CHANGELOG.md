@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 ### Changed
+- Changed the flow name from `TransformAndCatalog` to `TransformAndCatalogToLuma`. 
 
 ## [0.4.19] - 2023-08-31
 ### Added
