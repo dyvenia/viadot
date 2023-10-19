@@ -2,6 +2,7 @@ import copy
 import json
 import os
 import shutil
+import re 
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Callable, List, Literal, Union, cast
@@ -668,9 +669,6 @@ def anonymize_df(
 
     df.drop(columns=["temp_date_col"], inplace=True, errors="ignore")
     return df
-
-
-import re
 
 
 @task(timeout=3600)
