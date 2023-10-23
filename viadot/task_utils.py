@@ -2,6 +2,7 @@ import copy
 import json
 import os
 import shutil
+import re 
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Callable, List, Literal, Union, cast
@@ -23,7 +24,7 @@ from visions.functional import infer_type
 from visions.typesets.complete_set import CompleteSet
 
 from viadot.config import local_config
-from viadot.exceptions import CredentialError
+from viadot.exceptions import CredentialError, ValidationError
 from viadot.tasks import AzureDataLakeUpload, AzureKeyVaultSecret
 
 logger = logging.get_logger()
@@ -668,3 +669,98 @@ def anonymize_df(
 
     df.drop(columns=["temp_date_col"], inplace=True, errors="ignore")
     return df
+
+
+@task(timeout=3600)
+def validate_df(df: pd.DataFrame, tests: dict = None) -> None:
+    """
+    Task to validate the data on DataFrame level.
+    tests:
+        - `column_size`: dict{column: size}
+        - `column_unique_values`: list[columns]
+        - `column_list_to_match`: list[columns]
+        - `dataset_row_count`: dict: {'min': number, 'max', number}
+        - `column_match_regex`: dict: {column: 'regex'}
+
+    Args:
+        df (pd.DataFrame): The data frame for validation.
+        tests (dict, optional): Tests to apply on the data frame. Defaults to None.
+
+    Raises:
+        ValidationError: If validation failed for at least one test.
+    """
+    failed_tests = 0
+    if tests is not None:
+        # column_row_count
+        if "column_size" in tests:
+            try:
+                for k, v in tests["column_size"].items():
+                    column_max_length = (
+                        df.astype(str).apply(lambda s: s.str.len()).max().to_dict()
+                    )
+                    try:
+                        if v == column_max_length[k]:
+                            logger.info(f"[column_size] for {k} passed.")
+                        else:
+                            logger.error(
+                                f"[column_size] test for {k} failed. field lenght is different than {v}"
+                            )
+                            failed_tests += 1
+                    except Exception as e:
+                        logger.error(f"{e}")
+            except TypeError as e:
+                logger.error(
+                    "Please provide `column_size` parameter as dictionary {'columns': value}."
+                )
+
+        # column_unique_values
+        if "column_unique_values" in tests:
+            for column in tests["column_unique_values"]:
+                df_size = df.shape[0]
+                if df[column].nunique() == df_size:
+                    logger.info(
+                        f"[column_unique_values] Values are unique for {column} column."
+                    )
+                else:
+                    failed_tests += 1
+                    logger.error(
+                        f"[column_unique_values] Values for {column} are not unique."
+                    )
+
+        # list_column_to_match
+        if "column_list_to_match" in tests:
+            if set(tests["column_list_to_match"]) == set(df.columns):
+                logger.info(f"[column_list_to_match] passed.")
+            else:
+                failed_tests += 1
+                logger.error(
+                    "[column_list_to_match] failed. Columns are different than expected."
+                )
+
+        # dataset_row_count
+        if "dataset_row_count" in tests:
+            row_count = len(df.iloc[:, 0])
+            max_value = tests["dataset_row_count"]["max"] or 10_000_000
+            min_value = tests["dataset_row_count"]["min"] or 0
+
+            if (row_count > min_value) and (row_count < max_value):
+                print("[dataset_row_count] passed.")
+            else:
+                failed_tests += 1
+                logging.error(
+                    f"[dataset_row_count] Row count is not between {min_value} and {max_value}"
+                )
+        # to improve
+        if "column_match_regex" in tests:
+            for k, v in tests["column_match_regex"].items():
+                if df[k].apply(lambda x: re.match("(g\w+)\W(g\w+)", x)):
+                    print(f"[column_match_regex] on {k} column passed.")
+                else:
+                    failed_tests += 1
+                    logging.error(f"[column_match_regex] on {k} column filed!")
+
+    else:
+        return "No tests to run."
+
+    if failed_tests > 0:
+        raise ValidationError(f"Validation failed for {failed_tests} test/tests.")
