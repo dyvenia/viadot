@@ -477,6 +477,8 @@ class GenesysToCSV(Task):
                     key: value for (key, value) in attributes.items() if key in key_list
                 }
                 temp_dict["conversationId"] = json_file["id"]
+                temp_dict["startTime"] = json_file["startTime"]
+                temp_dict["endTime"] = json_file["endTime"]
                 data_list.append(temp_dict)
 
             df = pd.DataFrame(data_list)
