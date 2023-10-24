@@ -215,19 +215,25 @@ class CustomerGauge(Source):
         Returns:
             Dict[str, Any]: The flattened dictionary.
         """
-        out = {}
+        result = {}
 
-        def flattify(x, key=""):
-            if type(x) is dict:
+        if not isinstance(json_response, dict):
+            raise TypeError("Input must be a dictionary.")
+
+        def flattify(x, key="", out = None):
+            if out is None:
+                out = result
+
+            if isinstance(x, dict):
                 for a in x:
-                    flattify(x[a], key + a + "_")
+                    flattify(x[a], key + a + "_", out)
             else:
                 out[key[:-1]] = x
 
         flattify(json_response)
 
-        return out
-
+        return result
+        
     def to_df(self, json_response: Dict[str, Any] = None) -> pd.DataFrame:
         """
         Flatten dictionary structure and convert it into pandas DataFrame. Cleans column names.
