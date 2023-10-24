@@ -746,7 +746,7 @@ def validate_df(df: pd.DataFrame, tests: dict = None) -> None:
             min_value = tests["dataset_row_count"]["min"] or 0
 
             if (row_count > min_value) and (row_count < max_value):
-                print("[dataset_row_count] passed.")
+                logger.info(f"[dataset_row_count] passed.")
             else:
                 failed_tests += 1
                 failed_tests_list.append("dataset_row_count error")

@@ -2,9 +2,7 @@ import os
 from typing import List
 from unittest import mock
 
-import numpy as np
 import pandas as pd
-import prefect
 import pytest
 
 from viadot.exceptions import ValidationError
