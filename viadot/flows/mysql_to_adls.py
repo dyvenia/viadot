@@ -2,7 +2,7 @@ from typing import Any, Dict, List, Literal
 
 from prefect import Flow
 
-from viadot.task_utils import df_to_csv
+from viadot.task_utils import df_to_csv, validate_df
 from viadot.tasks import AzureDataLakeUpload
 from viadot.tasks.mysql_to_df import MySqlToDf
 
@@ -20,6 +20,7 @@ class MySqlToADLS(Flow):
         to_path: str = None,
         if_exists: Literal["replace", "append", "delete"] = "replace",
         overwrite_adls: bool = True,
+        validate_df_dict: dict = None,
         sp_credentials_secret: str = None,
         credentials_secret: str = None,
         timeout: int = 3600,
@@ -41,6 +42,8 @@ class MySqlToADLS(Flow):
             to_path (str): The path to an ADLS file. Defaults to None.
             if_exists (Literal, optional): What to do if the table exists. Defaults to "replace".
             overwrite_adls  (str, optional): Whether to overwrite_adls  the destination file. Defaults to True.
+            validate_df_dict (Dict[str], optional): A dictionary with optional list of tests to verify the output dataframe.
+                If defined, triggers the `validate_df` task from task_utils. Defaults to None.
             sp_credentials_secret (str, optional): The name of the Azure Key Vault secret containing a dictionary with
             ACCOUNT_NAME and Service Principal credentials (TENANT_ID, CLIENT_ID, CLIENT_SECRET). Defaults to None.
             credentials_secret (str, optional): Key Vault name. Defaults to None.
@@ -56,6 +59,9 @@ class MySqlToADLS(Flow):
         self.sqldb_credentials_secret = sqldb_credentials_secret
         self.vault_name = vault_name
         self.overwrite_adls = overwrite_adls
+
+        # validate df
+        self.validate_df_dict = validate_df_dict
 
         # Upload to ADLS
         self.file_path = file_path
@@ -75,6 +81,12 @@ class MySqlToADLS(Flow):
         df = df_task.bind(
             credentials_secret=self.credentials_secret, query=self.query, flow=self
         )
+
+        if self.validate_df_dict:
+            validation_task = validate_df.bind(
+                df, tests=self.validate_df_dict, flow=self
+            )
+            validation_task.set_upstream(df, flow=self)
 
         create_csv = df_to_csv.bind(
             df,
