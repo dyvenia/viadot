@@ -1,7 +1,5 @@
 from viadot.config import local_config
 from viadot.flows import CloudForCustomersReportToADLS
-import pytest
-
 from viadot.exceptions import ValidationError
 
 
