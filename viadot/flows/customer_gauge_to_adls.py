@@ -17,6 +17,7 @@ from viadot.task_utils import (
     df_to_parquet,
     dtypes_to_json_task,
     update_dtypes_dict,
+    validate_df,
 )
 from viadot.tasks import AzureDataLakeUpload, CustomerGaugeToDF
 
@@ -52,6 +53,7 @@ class CustomerGaugeToADLS(Flow):
         adls_sp_credentials_secret: str = None,
         overwrite_adls: bool = False,
         if_exists: str = "replace",
+        validate_df_dict: dict = None, 
         timeout: int = 3600,
         *args: List[Any],
         **kwargs: Dict[str, Any]
@@ -91,6 +93,7 @@ class CustomerGaugeToADLS(Flow):
                 ACCOUNT_NAME and Service Principal credentials (TENANT_ID, CLIENT_ID, CLIENT_SECRET) for the Azure Data Lake.
                 Defaults to None.
             overwrite_adls (bool, optional): Whether to overwrite files in the lake. Defaults to False.
+            validate_df_dict (Dict[str], optional): A dictionary with optional list of tests to verify the output dataframe. If defined, triggers the `validate_df` task from task_utils. Defaults to None.
             if_exists (str, optional): What to do if the file exists. Defaults to "replace".
             timeout (int, optional): The time (in seconds) to wait while running this task before a timeout occurs. Defaults to 3600.
         """
@@ -104,6 +107,9 @@ class CustomerGaugeToADLS(Flow):
         self.start_date = start_date
         self.end_date = end_date
         self.customer_gauge_credentials_secret = customer_gauge_credentials_secret
+
+        #validate_df
+        self.validate_df_dict = validate_df_dict
 
         # anonymize_df
         self.anonymize = anonymize
@@ -168,6 +174,12 @@ class CustomerGaugeToADLS(Flow):
             credentials_secret=self.customer_gauge_credentials_secret,
             flow=self,
         )
+
+        if self.validate_df_dict:
+            validation_task = validate_df.bind(
+                df=customerg_df, tests=self.validate_df_dict, flow=self
+            )
+            validation_task.set_upstream(df=customerg_df, flow=self)
 
         if self.anonymize == True:
             anonymized_df = anonymize_df.bind(

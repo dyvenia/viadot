@@ -5,6 +5,7 @@ import pandas as pd
 import pytest
 
 from viadot.flows import CustomerGaugeToADLS
+from viadot.exceptions import ValidationError
 
 DATA = {
     "user_name": ["Jane", "Bob"],
@@ -38,5 +39,53 @@ def test_customer_gauge_to_adls_run_flow(mocked_class):
     )
     result = flow.run()
     assert result.is_successful()
+    assert len(flow.tasks) == 5
     os.remove("test_customer_gauge_to_adls_flow_run.parquet")
     os.remove("test_customer_gauge_to_adls_flow_run.json")
+
+@mock.patch(
+    "viadot.tasks.CustomerGaugeToDF.run",
+    return_value=pd.DataFrame(data=DATA),
+)
+@pytest.mark.run
+def test_customer_gauge_to_adls_run_flow_validation_success(mocked_class):
+    flow = CustomerGaugeToADLS(
+        "test_customer_gauge_to_adls_flow_run",
+        endpoint="responses",
+        total_load=False,
+        anonymize=True,
+        columns_to_anonymize=COLUMNS,
+        adls_dir_path=ADLS_DIR_PATH,
+        adls_file_name=ADLS_FILE_NAME,
+        overwrite_adls=True,
+        validate_df_dict={"column_size":{"user_name":2}},
+    )
+    result = flow.run()
+    assert result.is_successful()
+    assert len(flow.tasks) == 6
+
+    os.remove("test_customer_gauge_to_adls_flow_run.parquet")
+    os.remove("test_customer_gauge_to_adls_flow_run.json")
+
+@mock.patch(
+    "viadot.tasks.CustomerGaugeToDF.run",
+    return_value=pd.DataFrame(data=DATA),
+)
+@pytest.mark.run
+def test_customer_gauge_to_adls_run_flow_validation_failure(mocked_class):
+    flow = CustomerGaugeToADLS(
+        "test_customer_gauge_to_adls_flow_run",
+        endpoint="responses",
+        total_load=False,
+        anonymize=True,
+        columns_to_anonymize=COLUMNS,
+        adls_dir_path=ADLS_DIR_PATH,
+        adls_file_name=ADLS_FILE_NAME,
+        overwrite_adls=True,
+        validate_df_dict={"column_size":{"user_name":5}},
+    )
+    try:
+        flow.run()
+    except ValidationError:
+        pass
+    
