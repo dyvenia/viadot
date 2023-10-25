@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Any, Dict, Literal
+from typing import Any, Dict, Literal, List
 
 import pandas as pd
 from prefect.utilities import logging
