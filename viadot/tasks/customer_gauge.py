@@ -236,6 +236,24 @@ class CustomerGaugeToDF(Task):
 
         return result
       
+    def square_brackets_remover(
+        self, 
+        df: pd.DataFrame = None
+    ) -> pd.DataFrame:
+        """
+        Replace square brackets "[]" with an empty string in a pandas DataFrame.
+
+        Args:
+            df (pd.DataFrame, optional): Replace square brackets "[]" with an empty string 
+            in a pandas DataFrame. Defaults to None.
+
+        Returns:
+            pd.DataFrame: The modified DataFrame with square brackets replaced by an empty string.
+        """
+
+        df = df.astype(str)
+        df = df.applymap(lambda x: x.strip("[]"))
+        return df
 
     def __call__(self):
         """Download Customer Gauge data to a DF"""
@@ -331,6 +349,7 @@ class CustomerGaugeToDF(Task):
 
         clean_json = self.column_unpacker(json_list = total_json, method1_cols = method1_cols, method2_cols = method2_cols)
         df = pd.DataFrame(list(map(self.flatten_json, clean_json)))
+        df = self.square_brackets_remover(df)
         df.columns = df.columns.str.lower().str.replace(" ", "_")
 
         return df
