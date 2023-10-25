@@ -9,6 +9,7 @@ from viadot.task_utils import (
     df_to_csv,
     df_to_parquet,
     union_dfs_task,
+    validate_df,
 )
 from viadot.tasks import AzureDataLakeUpload, C4CReportToDF, C4CToDF
 from viadot.utils import slugify
@@ -38,6 +39,7 @@ class CloudForCustomersReportToADLS(Flow):
         adls_sp_credentials_secret: str = None,
         if_empty: str = "warn",
         if_exists: str = "replace",
+        validate_df_dict: dict = None,
         timeout: int = 3600,
         *args: List[any],
         **kwargs: Dict[str, Any],
@@ -49,16 +51,16 @@ class CloudForCustomersReportToADLS(Flow):
         Args:
             name (str): The name of the flow.
             report_url (str, optional): The url to the API. Defaults to None.
-            url (str, optional): ???
-            endpoint (str, optional): ???
-            params (dict, optional): ???
-            fields (list, optional): ???
+            url (str, optional): The url to the C4C API. Defaults to None.
+            endpoint (str, optional): The C4C API endpoint. Defaults to None.
+            params (dict, optional): The query parameters like filter by creation date time. Defaults to None.
+            fields (list, optional): List of columns to put in DataFrame. Defaults to None.
             skip (int, optional): Initial index value of reading row. Defaults to 0.
             top (int, optional): The value of top reading row. Defaults to 1000.
             channels (List[str], optional): Filtering parameters passed to the url. Defaults to None.
             months (List[str], optional): Filtering parameters passed to the url. Defaults to None.
             years (List[str], optional): Filtering parameters passed to the url. Defaults to None.
-            env (str, optional): ???
+            env (str, optional): The credentials environments. Defaults to 'QA'.
             c4c_credentials_secret (str, optional): The name of the Azure Key Vault secret containing a dictionary with
             username and password for the Cloud for Customers instance.
             local_file_path (str, optional): Local destination path. Defaults to None.
@@ -72,6 +74,8 @@ class CloudForCustomersReportToADLS(Flow):
             Defaults to None.
             if_empty (str, optional): What to do if the Supermetrics query returns no data. Defaults to "warn".
             if_exists (str, optional): What to do if the local file already exists. Defaults to "replace".
+            validate_df_dict (dict, optional): A dictionary with optional list of tests to verify the output
+            dataframe. If defined, triggers the `validate_df` task from task_utils. Defaults to None.
             timeout(int, optional): The amount of time (in seconds) to wait while running this task before
                 a timeout occurs. Defaults to 3600.
         """
@@ -82,6 +86,7 @@ class CloudForCustomersReportToADLS(Flow):
         self.if_empty = if_empty
         self.env = env
         self.c4c_credentials_secret = c4c_credentials_secret
+        self.validate_df_dict = validate_df_dict
         self.timeout = timeout
 
         # AzureDataLakeUpload
@@ -196,6 +201,10 @@ class CloudForCustomersReportToADLS(Flow):
                 credentials_secret=self.c4c_credentials_secret,
                 flow=self,
             )
+
+        if self.validate_df_dict:
+            validation = validate_df(df=df, tests=self.validate_df_dict, flow=self)
+            validation.set_upstream(df, flow=self)
 
         df_with_metadata = add_ingestion_metadata_task.bind(df, flow=self)
 
