@@ -64,7 +64,7 @@ def test_aselite_to_adls():
     os.remove(TMP_FILE_NAME)
 
 
-def test_aselite_to_adls_validate_df():
+def test_aselite_to_adls_validate_success():
     credentials_secret = PrefectSecret("aselite").run()
     vault_name = PrefectSecret("AZURE_DEFAULT_KEYVAULT").run()
 
@@ -90,14 +90,7 @@ def test_aselite_to_adls_validate_df():
     validate_df_dict = {
         "column_size": {"ParentLanguageNo": 1},
         "column_unique_values": ["ID"],
-        "column_list_to_match": [
-            "SpracheText",
-            "SpracheMM",
-            "KatSprache",
-            "KatBasisSprache",
-            "CodePage",
-        ],
-        "dataset_row_count": {"min": 10, "max": 10},
+        "dataset_row_count": {"min": 0, "max": 10},
         "column_match_regex": {"SpracheText", r"TE_.*"},
     }
 

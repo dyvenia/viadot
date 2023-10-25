@@ -24,7 +24,7 @@ class ASELiteToADLS(Flow):
         to_path: str = None,
         if_exists: Literal["replace", "append", "delete"] = "replace",
         overwrite: bool = True,
-        validate_df_dict: dict = None,
+        validate_df_dict: Dict[str, Any] = None,
         convert_bytes: bool = False,
         sp_credentials_secret: str = None,
         remove_special_characters: bool = None,
@@ -47,7 +47,8 @@ class ASELiteToADLS(Flow):
             to_path (str): The path to an ADLS file. Defaults to None.
             if_exists (Literal, optional): What to do if the table exists. Defaults to "replace".
             overwrite (str, optional): Whether to overwrite the destination file. Defaults to True.
-            validate_df_dict (Dict[str], optional): A dictionary with optional list of tests to verify the output dataframe. If defined, triggers the `validate_df` task from task_utils. Defaults to None.
+            validate_df_dict (Dict[str], optional): A dictionary with optional list of tests to verify the output
+                dataframe. If defined, triggers the `validate_df` task from task_utils. Defaults to None.
             sp_credentials_secret (str, optional): The name of the Azure Key Vault secret containing a dictionary with
             ACCOUNT_NAME and Service Principal credentials (TENANT_ID, CLIENT_ID, CLIENT_SECRET). Defaults to None.
             remove_special_characters (str, optional): Call a function that remove special characters like escape symbols. Defaults to None.
@@ -95,6 +96,7 @@ class ASELiteToADLS(Flow):
             validation_task = validate_df.bind(
                 df, tests=self.validate_df_dict, flow=self
             )
+            validation_task.set_upstream(df, flow=self)
 
         create_csv = df_to_csv.bind(
             df,
@@ -113,6 +115,5 @@ class ASELiteToADLS(Flow):
             flow=self,
         )
 
-        # validation_task.set_upstream(df, flow=self)
         create_csv.set_upstream(df, flow=self)
         adls_upload.set_upstream(create_csv, flow=self)
