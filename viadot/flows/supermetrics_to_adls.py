@@ -19,6 +19,7 @@ from viadot.task_utils import (
     union_dfs_task,
     update_dtypes_dict,
     write_to_json,
+    validate_df,
 )
 from viadot.tasks import (
     AzureDataLakeUpload,
@@ -68,6 +69,7 @@ class SupermetricsToADLS(Flow):
         vault_name: str = None,
         check_missing_data: bool = True,
         timeout: int = 3600,
+        validate_df_dict: dict = None,
         *args: List[any],
         **kwargs: Dict[str, Any],
     ):
@@ -112,6 +114,8 @@ class SupermetricsToADLS(Flow):
             check_missing_data (bool, optional): Whether to check missing data. Defaults to True.
             timeout(int, optional): The amount of time (in seconds) to wait while running this task before
                 a timeout occurs. Defaults to 3600.
+            validate_df_dict (Dict[str], optional): A dictionary with optional list of tests to verify the output dataframe.
+                If defined, triggers the `validate_df` task from task_utils. Defaults to None.
         """
         if not ds_user:
             try:
@@ -139,6 +143,9 @@ class SupermetricsToADLS(Flow):
         self.order_columns = order_columns
         self.if_exists = if_exists
         self.output_file_extension = output_file_extension
+
+        # validate_df
+        self.validate_df_dict = validate_df_dict
 
         # RunGreatExpectationsValidation
         self.expectation_suite = expectation_suite
@@ -228,6 +235,13 @@ class SupermetricsToADLS(Flow):
             df = union_dfs_task.bind(dfs, flow=self)
         else:
             df = self.gen_supermetrics_task(ds_accounts=self.ds_accounts, flow=self)
+
+        # run validate_df task from task_utils
+        if self.validate_df_dict:
+            validation_df_task = validate_df.bind(
+                df, tests=self.validate_df_dict, flow=self
+            )
+            validation_df_task.set_upstream(df, flow=self)
 
         write_json = write_to_json.bind(
             dict_=self.expectation_suite,
