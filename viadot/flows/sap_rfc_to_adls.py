@@ -1,8 +1,8 @@
 from typing import Any, Dict, List, Literal
 
-from prefect import Flow, task, unmapped
+from prefect import Flow
 
-from viadot.task_utils import concat_dfs, df_to_csv, df_to_parquet, set_new_kv
+from viadot.task_utils import df_to_csv, df_to_parquet, set_new_kv, validate_df
 from viadot.tasks import AzureDataLakeUpload, SAPRFCToDF
 
 
@@ -27,8 +27,9 @@ class SAPRFCToADLS(Flow):
         vault_name: str = None,
         update_kv: bool = False,
         filter_column: str = None,
-        timeout: int = 3600,
         alternative_version: bool = False,
+        validate_df_dict: Dict[str, Any] = None,
+        timeout: int = 3600,
         *args: List[any],
         **kwargs: Dict[str, Any],
     ):
@@ -77,9 +78,11 @@ class SAPRFCToADLS(Flow):
             vault_name(str, optional): The name of the vault from which to obtain the secrets. Defaults to None.
             update_kv (bool, optional): Whether or not to update key value on Prefect. Defaults to False.
             filter_column (str, optional): Name of the field based on which key value will be updated. Defaults to None.
+            alternative_version (bool, optional): Enable the use version 2 in source. Defaults to False.
+            validate_df_dict (Dict[str,Any], optional): A dictionary with optional list of tests to verify the output dataframe. If defined, triggers
+                the `validate_df` task from task_utils. Defaults to None.
             timeout(int, optional): The amount of time (in seconds) to wait while running this task before
                 a timeout occurs. Defaults to 3600.
-            alternative_version (bool, optional): Enable the use version 2 in source. Defaults to False.
         """
         self.query = query
         self.rfc_sep = rfc_sep
@@ -96,8 +99,9 @@ class SAPRFCToADLS(Flow):
         self.overwrite = overwrite
         self.adls_sp_credentials_secret = adls_sp_credentials_secret
         self.vault_name = vault_name
-        self.timeout = timeout
         self.alternative_version = alternative_version
+        self.validate_df_dict = validate_df_dict
+        self.timeout = timeout
 
         self.update_kv = update_kv
         self.filter_column = filter_column
@@ -119,6 +123,11 @@ class SAPRFCToADLS(Flow):
             credentials=self.sap_credentials,
             flow=self,
         )
+        if self.validate_df_dict:
+            validation_task = validate_df.bind(
+                df, tests=self.validate_df_dict, flow=self
+            )
+            validation_task.set_upstream(df, flow=self)
 
         if self.output_file_extension == ".parquet":
             df_to_file = df_to_parquet.bind(
