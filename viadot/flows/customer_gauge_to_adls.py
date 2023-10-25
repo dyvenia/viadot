@@ -177,9 +177,9 @@ class CustomerGaugeToADLS(Flow):
 
         if self.validate_df_dict:
             validation_task = validate_df.bind(
-                df=customerg_df, tests=self.validate_df_dict, flow=self
+                customerg_df, tests=self.validate_df_dict, flow=self
             )
-            validation_task.set_upstream(df=customerg_df, flow=self)
+            validation_task.set_upstream(customerg_df, flow=self)
 
         if self.anonymize == True:
             anonymized_df = anonymize_df.bind(
@@ -191,6 +191,12 @@ class CustomerGaugeToADLS(Flow):
                 days=self.days,
                 flow=self,
             )
+        
+        if self.validate_df_dict:
+            validation_task = validate_df.bind(
+                anonymized_df, tests=self.validate_df_dict, flow=self
+            )
+            validation_task.set_upstream(anonymized_df, flow=self)
 
             df_with_metadata = add_ingestion_metadata_task.bind(
                 anonymized_df, flow=self

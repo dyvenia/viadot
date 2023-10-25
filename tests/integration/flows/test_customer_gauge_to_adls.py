@@ -39,7 +39,7 @@ def test_customer_gauge_to_adls_run_flow(mocked_class):
     )
     result = flow.run()
     assert result.is_successful()
-    assert len(flow.tasks) == 5
+    assert len(flow.tasks) == 10
     os.remove("test_customer_gauge_to_adls_flow_run.parquet")
     os.remove("test_customer_gauge_to_adls_flow_run.json")
 
@@ -58,11 +58,11 @@ def test_customer_gauge_to_adls_run_flow_validation_success(mocked_class):
         adls_dir_path=ADLS_DIR_PATH,
         adls_file_name=ADLS_FILE_NAME,
         overwrite_adls=True,
-        validate_df_dict={"column_size":{"user_name":2}},
+        validate_df_dict={"column_size": {"user_address_state": 2}},
     )
     result = flow.run()
     assert result.is_successful()
-    assert len(flow.tasks) == 6
+    assert len(flow.tasks) == 11
 
     os.remove("test_customer_gauge_to_adls_flow_run.parquet")
     os.remove("test_customer_gauge_to_adls_flow_run.json")
