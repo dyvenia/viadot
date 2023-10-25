@@ -10,7 +10,7 @@ from prefect import Task
 from prefect.engine import signals
 from prefect.utilities import logging
 from prefect.utilities.tasks import defaults_from_attrs
-from viadot.task_utils import validate_df
+from viadot.task_utils import *
 
 from viadot.exceptions import APIError
 from viadot.sources import Genesys
