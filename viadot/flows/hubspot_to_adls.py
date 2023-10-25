@@ -13,6 +13,7 @@ from viadot.task_utils import (
     df_to_parquet,
     dtypes_to_json_task,
     update_dtypes_dict,
+    validate_df,
 )
 from viadot.tasks import AzureDataLakeUpload, HubspotToDF
 
@@ -33,6 +34,7 @@ class HubspotToADLS(Flow):
         adls_dir_path: str = None,
         if_exists: Literal["replace", "append", "delete"] = "replace",
         overwrite_adls: bool = True,
+        validate_df_dict: Dict[str, Any] = None,
         vault_name: str = None,
         sp_credentials_secret: str = None,
         *args: List[any],
@@ -75,6 +77,8 @@ class HubspotToADLS(Flow):
             output_file_extension (str, optional): Output file extension. Defaults to ".parquet".
             if_exists (Literal, optional): What to do if the table exists. Defaults to "replace".
             overwrite_adls (str, optional): Whether to overwrite the destination file in ADLS. Defaults to True.
+            validate_df_dict (Dict[str], optional): A dictionary with optional list of tests to verify the output
+                dataframe. If defined, triggers the `validate_df` task from task_utils. Defaults to None.
             vault_name (str, optional): The name of the vault from which to obtain the secrets. Defaults to None.
             sp_credentials_secret (str, optional): The name of the Azure Key Vault secret containing a dictionary with ACCOUNT_NAME and Service Principal credentials (TENANT_ID, CLIENT_ID, CLIENT_SECRET). Defaults to None.
         """
@@ -86,6 +90,7 @@ class HubspotToADLS(Flow):
         self.hubspot_credentials = hubspot_credentials
         self.hubspot_credentials_key = hubspot_credentials_key
         self.output_file_extension = output_file_extension
+        self.validate_df_dict = validate_df_dict
 
         self.local_file_path = (
             local_file_path or self.slugify(name) + self.output_file_extension
@@ -136,6 +141,12 @@ class HubspotToADLS(Flow):
 
         df_viadot_downloaded = add_ingestion_metadata_task.bind(df=df, flow=self)
         dtypes_dict = df_get_data_types_task.bind(df_viadot_downloaded, flow=self)
+
+        if self.validate_df_dict:
+            validation_task = validate_df.bind(
+                df, tests=self.validate_df_dict, flow=self
+            )
+            validation_task.set_upstream(df, flow=self)
 
         df_to_be_loaded = df_map_mixed_dtypes_for_parquet(
             df_viadot_downloaded, dtypes_dict, flow=self
