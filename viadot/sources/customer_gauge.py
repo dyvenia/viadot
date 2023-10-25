@@ -166,7 +166,7 @@ class CustomerGauge(Source):
 
         return cur
         
-    def to_df(self, 
+    def to_list_of_jsons(self, 
     json_response: Dict[str, Any] = None,
     ) -> List[Dict[str, Any]]:
         """
