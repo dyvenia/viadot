@@ -48,7 +48,7 @@ def test_cloud_for_customers_report_to_adls_validation_fail(caplog):
         local_file_path=f"test_c4c_report_to_adls.csv",
         adls_sp_credentials_secret=credentials["adls_sp_credentials_secret"],
         adls_dir_path=credentials["adls_dir_path"],
-        validation_df_dict={"column_size": {"ChannelName ID": 10}},
+        validate_df_dict={"column_size": {"ChannelName ID": 10}},
     )
     try:
         result = flow.run()
@@ -72,7 +72,7 @@ def test_cloud_for_customers_report_to_adls_validation_success():
         local_file_path=f"test_c4c_report_to_adls.csv",
         adls_sp_credentials_secret=credentials["adls_sp_credentials_secret"],
         adls_dir_path=credentials["adls_dir_path"],
-        validation_df_dict={"column_size": {"ChannelName ID": 13}},
+        validate_df_dict={"column_size": {"ChannelName ID": 13}},
     )
 
     try:

@@ -39,7 +39,7 @@ class CloudForCustomersReportToADLS(Flow):
         adls_sp_credentials_secret: str = None,
         if_empty: str = "warn",
         if_exists: str = "replace",
-        validation_df_dict: dict = None,
+        validate_df_dict: dict = None,
         timeout: int = 3600,
         *args: List[any],
         **kwargs: Dict[str, Any],
@@ -74,7 +74,7 @@ class CloudForCustomersReportToADLS(Flow):
             Defaults to None.
             if_empty (str, optional): What to do if the Supermetrics query returns no data. Defaults to "warn".
             if_exists (str, optional): What to do if the local file already exists. Defaults to "replace".
-            validation_df_dict (dict, optional): A dictionary with optional list of tests to verify the output
+            validate_df_dict (dict, optional): A dictionary with optional list of tests to verify the output
             dataframe. If defined, triggers the `validate_df` task from task_utils. Defaults to None.
             timeout(int, optional): The amount of time (in seconds) to wait while running this task before
                 a timeout occurs. Defaults to 3600.
@@ -86,7 +86,7 @@ class CloudForCustomersReportToADLS(Flow):
         self.if_empty = if_empty
         self.env = env
         self.c4c_credentials_secret = c4c_credentials_secret
-        self.validation_df_dict = validation_df_dict
+        self.validate_df_dict = validate_df_dict
         self.timeout = timeout
 
         # AzureDataLakeUpload
@@ -202,8 +202,8 @@ class CloudForCustomersReportToADLS(Flow):
                 flow=self,
             )
 
-        if self.validation_df_dict:
-            validation = validate_df(df=df, tests=self.validation_df_dict, flow=self)
+        if self.validate_df_dict:
+            validation = validate_df(df=df, tests=self.validate_df_dict, flow=self)
             validation.set_upstream(df, flow=self)
 
         df_with_metadata = add_ingestion_metadata_task.bind(df, flow=self)
