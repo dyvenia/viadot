@@ -88,4 +88,7 @@ def test_customer_gauge_to_adls_run_flow_validation_failure(mocked_class):
         flow.run()
     except ValidationError:
         pass
+
+    os.remove("test_customer_gauge_to_adls_flow_run.parquet")
+    os.remove("test_customer_gauge_to_adls_flow_run.json")
     

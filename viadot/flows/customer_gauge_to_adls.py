@@ -191,12 +191,6 @@ class CustomerGaugeToADLS(Flow):
                 days=self.days,
                 flow=self,
             )
-        
-        if self.validate_df_dict:
-            validation_task = validate_df.bind(
-                anonymized_df, tests=self.validate_df_dict, flow=self
-            )
-            validation_task.set_upstream(anonymized_df, flow=self)
 
             df_with_metadata = add_ingestion_metadata_task.bind(
                 anonymized_df, flow=self
