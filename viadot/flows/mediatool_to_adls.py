@@ -16,6 +16,7 @@ from ..task_utils import (
     df_to_parquet,
     dtypes_to_json_task,
     update_dtypes_dict,
+    validate_df,
 )
 from ..tasks import AzureDataLakeUpload, MediatoolToDF
 
@@ -41,6 +42,7 @@ class MediatoolToADLS(Flow):
         adls_sp_credentials_secret: str = None,
         overwrite_adls: bool = False,
         if_exists: str = "replace",
+        validate_df_dict: Dict[str, Any] = None,
         *args: List[Any],
         **kwargs: Dict[str, Any],
     ):
@@ -66,6 +68,8 @@ class MediatoolToADLS(Flow):
                 Defaults to None.
             overwrite_adls (bool, optional): Whether to overwrite files in the lake. Defaults to False.
             if_exists (str, optional): What to do if the file exists. Defaults to "replace".
+            validate_df_dict (Dict[str,Any], optional): A dictionary with optional list of tests to verify the output
+                dataframe. If defined, triggers the `validate_df` task from task_utils. Defaults to None.
         """
         # MediatoolToDF
         self.organization_ids = organization_ids
@@ -73,6 +77,7 @@ class MediatoolToADLS(Flow):
         self.mediatool_credentials_key = mediatool_credentials_key
         self.media_entries_columns = media_entries_columns
         self.vault_name = vault_name
+        self.validate_df_dict = validate_df_dict
 
         # AzureDataLakeUpload
         self.overwrite = overwrite_adls
@@ -119,6 +124,11 @@ class MediatoolToADLS(Flow):
             media_entries_columns=self.media_entries_columns,
             flow=self,
         )
+        if self.validate_df_dict:
+            validation_task = validate_df.bind(
+                df, tests=self.validate_df_dict, flow=self
+            )
+            validation_task.set_upstream(df, flow=self)
 
         df_with_metadata = add_ingestion_metadata_task.bind(df, flow=self)
         df_casted_to_str = cast_df_to_str(df_with_metadata, flow=self)
