@@ -53,7 +53,7 @@ class CustomerGaugeToADLS(Flow):
         adls_sp_credentials_secret: str = None,
         overwrite_adls: bool = False,
         if_exists: str = "replace",
-        validate_df_dict: dict = None, 
+        validate_df_dict: dict = None,
         timeout: int = 3600,
         *args: List[Any],
         **kwargs: Dict[str, Any]
@@ -108,7 +108,7 @@ class CustomerGaugeToADLS(Flow):
         self.end_date = end_date
         self.customer_gauge_credentials_secret = customer_gauge_credentials_secret
 
-        #validate_df
+        # validate_df
         self.validate_df_dict = validate_df_dict
 
         # anonymize_df
