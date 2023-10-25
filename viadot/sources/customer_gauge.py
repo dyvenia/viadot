@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Any, Dict, Literal, List
+from typing import Any, Dict, Literal
 
 import pandas as pd
 from prefect.utilities import logging
@@ -165,27 +165,3 @@ class CustomerGauge(Source):
             )
 
         return cur
-        
-    def to_list_of_jsons(self, 
-    json_response: Dict[str, Any] = None,
-    ) -> List[Dict[str, Any]]:
-        """
-        Extract and return the 'data' part of a JSON response as a list of dictionaries. 
-
-        Args:
-            json_response (Dict[str, Any], optional): JSON object represented as a nested dictionary that contains data and cursor parameter value. Defaults to None.
-
-        Raises:
-            ValueError: If the 'data' key is not present in the provided JSON response.
-
-        Returns:
-            List[Dict[str, Any]]: A list of dictionaries containing data from the 'data' part of the JSON response.
-        """
-        try:
-            response_json = json_response["data"]
-        except:
-            raise ValueError(
-                "Provided argument doesn't contain 'data' value. Pass json returned from the endpoint."
-            )
-
-        return response_json
