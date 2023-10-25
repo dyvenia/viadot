@@ -15,6 +15,7 @@ from viadot.task_utils import (
     df_to_parquet,
     dtypes_to_json_task,
     update_dtypes_dict,
+    validate_df,
 )
 from viadot.tasks import AzureDataLakeUpload, BigQueryToDF
 
@@ -40,6 +41,7 @@ class BigQueryToADLS(Flow):
         adls_sp_credentials_secret: str = None,
         overwrite_adls: bool = False,
         if_exists: str = "replace",
+        validation_df_dict: dict = None,
         timeout: int = 3600,
         *args: List[Any],
         **kwargs: Dict[str, Any],
@@ -78,6 +80,8 @@ class BigQueryToADLS(Flow):
             Defaults to None.
             overwrite_adls (bool, optional): Whether to overwrite files in the lake. Defaults to False.
             if_exists (str, optional): What to do if the file exists. Defaults to "replace".
+            validation_df_dict (dict, optional): An optional dictionary to verify the received dataframe.
+            When passed, `validate_df` task validation tests are triggered. Defaults to None.
             timeout(int, optional): The amount of time (in seconds) to wait while running this task before
                 a timeout occurs. Defaults to 3600.
         """
@@ -90,6 +94,9 @@ class BigQueryToADLS(Flow):
         self.date_column_name = date_column_name
         self.vault_name = vault_name
         self.credentials_key = credentials_key
+
+        # Validate DataFrame
+        self.validation_df_dict = validation_df_dict
 
         # AzureDataLakeUpload
         self.overwrite = overwrite_adls
@@ -139,6 +146,10 @@ class BigQueryToADLS(Flow):
             vault_name=self.vault_name,
             flow=self,
         )
+
+        if self.validation_df_dict:
+            validation = validate_df(df=df, tests=self.validation_df_dict, flow=self)
+            validation.set_upstream(df, flow=self)
 
         df_with_metadata = add_ingestion_metadata_task.bind(df, flow=self)
         dtypes_dict = df_get_data_types_task.bind(df_with_metadata, flow=self)
