@@ -26,6 +26,8 @@ class CustomerGaugeToDF(Task):
         ] = None,
         start_date: datetime = None,
         end_date: datetime = None,
+        method1_cols: List[str] = None,
+        method2_cols: List[str] = None,
         timeout: int = 3600,
         *args,
         **kwargs,
@@ -49,6 +51,8 @@ class CustomerGaugeToDF(Task):
             Defaults to None.
             end_date (datetime, optional): Defines the period start date in yyyy-mm-dd format. 
             Defaults to None.
+            method1_cols (List[str]): Columns to unpack and modify using `_field_reference_unpacker`.
+            method2_cols (List[str]): Columns to unpack and modify using `_nested_dict_transformer`.
             timeout (int, optional): The time (in seconds) to wait while running this task before 
             a timeout occurs. Defaults to 3600.
         """
@@ -60,6 +64,8 @@ class CustomerGaugeToDF(Task):
         self.date_field = date_field
         self.start_date = start_date
         self.end_date = end_date
+        self.method1_cols = method1_cols
+        self.method2_cols = method2_cols
 
         super().__init__(
             name="customer_gauge_to_df",
@@ -168,8 +174,8 @@ class CustomerGaugeToDF(Task):
 
         Args:
             json_list (List[Dict[str, Any]): A list of dictionaries containing the data.
-            method1_cols (List[str]): Columns to unpack and modify using field_reference_unpacker.
-            method2_cols (List[str]): Columns to unpack and modify using nested_dict_transformer.
+            method1_cols (List[str]): Columns to unpack and modify using `_field_reference_unpacker`.
+            method2_cols (List[str]): Columns to unpack and modify using `_nested_dict_transformer`.
 
         Raises:
             ValueError: _description_
@@ -267,6 +273,8 @@ class CustomerGaugeToDF(Task):
         "date_field",
         "start_date",
         "end_date",
+        "method1_cols",
+        "method2_cols",
     )
     def run(
         self,
@@ -297,6 +305,8 @@ class CustomerGaugeToDF(Task):
             date_field (Literal["date_creation", "date_order", "date_sent", "date_survey_response"], optional): Specifies the date type which filter date range. Defaults to None.
             start_date (datetime, optional): Defines the period end date in yyyy-mm-dd format. Defaults to None.
             end_date (datetime, optional): Defines the period start date in yyyy-mm-dd format. Defaults to None.
+            method1_cols (List[str]): Columns to unpack and modify using `_field_reference_unpacker`.
+            method2_cols (List[str]): Columns to unpack and modify using `_nested_dict_transformer`.            
             credentials_secret (str, optional): The name of the Azure Key Vault secret containing a dictionary with ['client_id', 'client_secret']. Defaults to "CUSTOMER-GAUGE".
             vault_name (str, optional): The name of the vault from which to obtain the secret. Defaults to None.
 
