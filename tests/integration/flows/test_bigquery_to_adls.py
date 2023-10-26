@@ -100,9 +100,8 @@ def test_bigquery_to_adls_validate_df_fail(mocked_data):
         overwrite_adls=True,
         adls_dir_path=ADLS_DIR_PATH,
         adls_sp_credentials_secret=ADLS_CREDENTIAL_SECRET,
-        validation_df_dict={"column_list_to_match": ["type", "country", "test"]},
+        validate_df_dict={"column_list_to_match": ["type", "country", "test"]},
     )
-
     try:
         result = flow_bigquery.run()
     except ValidationError:
@@ -127,7 +126,7 @@ def test_bigquery_to_adls_validate_df_success(mocked_data):
         overwrite_adls=True,
         adls_dir_path=ADLS_DIR_PATH,
         adls_sp_credentials_secret=ADLS_CREDENTIAL_SECRET,
-        validation_df_dict={"column_list_to_match": ["type", "country"]},
+        validate_df_dict={"column_list_to_match": ["type", "country"]},
     )
     result = flow_bigquery.run()
 
