@@ -37,6 +37,8 @@ class CustomerGaugeToADLS(Flow):
         ] = None,
         start_date: datetime = None,
         end_date: datetime = None,
+        method1_cols: List[str] = None,
+        method2_cols: List[str] = None,
         customer_gauge_credentials_secret: str = "CUSTOMER-GAUGE",
         anonymize: bool = False,
         columns_to_anonymize: List[str] = None,
@@ -57,42 +59,50 @@ class CustomerGaugeToADLS(Flow):
         **kwargs: Dict[str, Any]
     ):
         """
-        Flow for downloading data from the Customer Gauge's endpoints (Responses and Non-Responses) via API to a CSV or Parquet file.
-        The data anonimization is optional.Then upload it to Azure Data Lake.
+        Flow for downloading data from the Customer Gauge's endpoints (Responses and Non-Responses) via API
+        to a CSV or Parquet file.The data anonimization is optional.Then upload it to Azure Data Lake.
 
         Args:
             name (str): The name of the flow.
-            endpoint (Literal["responses", "non-responses"], optional): Indicate which endpoint to connect. Defaults to None.
-            endpoint_url (str, optional): Full URL for pointing to specific endpoint. Defaults to None.
-            total_load (bool, optional): Indicate whether to download the data to the latest. If 'False', only one API call is executed (up to 1000 records).
-                Defaults to True.
-            cursor (int, optional): Cursor value to navigate to the page. Defaults to None.
-            pagesize (int, optional): Number of responses (records) returned per page, max value = 1000. Defaults to 1000.
-            date_field (Literal["date_creation", "date_order", "date_sent", "date_survey_response"], optional): Specifies the date type which filter date range.
+            endpoint (Literal["responses", "non-responses"], optional): Indicate which endpoint to connect. 
                 Defaults to None.
+            endpoint_url (str, optional): Full URL for pointing to specific endpoint. Defaults to None.
+            total_load (bool, optional): Indicate whether to download the data to the latest. If 'False', 
+                only one API call is executed (up to 1000 records). Defaults to True.
+            cursor (int, optional): Cursor value to navigate to the page. Defaults to None.
+            pagesize (int, optional): Number of responses (records) returned per page, max value = 1000. 
+                Defaults to 1000.
+            date_field (Literal["date_creation", "date_order", "date_sent", "date_survey_response"], optional): 
+                Specifies the date type which filter date range. Defaults to None.
             start_date (datetime, optional): Defines the period start date in yyyy-mm-dd format. Defaults to None.
             end_date (datetime, optional): Defines the period end date in yyyy-mm-dd format. Defaults to None.
-            customer_gauge_credentials_secret (str, optional): The name of the Azure Key Vault secret containing a dictionary with ['client_id', 'client_secret'].
-                Defaults to "CUSTOMER-GAUGE".
+            method1_cols (List[str]): Columns to unpack and modify using `_field_reference_unpacker`. Defaults to None.
+            method2_cols (List[str]): Columns to unpack and modify using `_nested_dict_transformer`. Defaults to None.            
+            customer_gauge_credentials_secret (str, optional): The name of the Azure Key Vault secret containing 
+                a dictionary with ['client_id', 'client_secret']. Defaults to "CUSTOMER-GAUGE".
             vault_name (str, optional): The name of the vault from which to obtain the secret. Defaults to None.
             anonymize (bool, optional): Indicates if anonymize selected columns. Defaults to False.
             columns_to_anonymize (List[str], optional): List of columns to anonymize. Defaults to None.
-            anonymize_method  (Literal["mask", "hash"], optional): Method of anonymizing data. "mask" -> replace the data with "value" arg.
-                "hash" -> replace the data with the hash value of an object (using `hash()` method). Defaults to "mask".
+            anonymize_method  (Literal["mask", "hash"], optional): Method of anonymizing data. "mask" -> replace the 
+                data with "value" arg. "hash" -> replace the data with the hash value of an object (using `hash()` 
+                method). Defaults to "mask".
             anonymize_value (str, optional): Value to replace the data. Defaults to "***".
-            date_column (str, optional): Name of the date column used to identify rows that are older than a specified number of days. Defaults to None.
-            days (int, optional): The number of days beyond which we want to anonymize the data, e.g. older that 2 years can be: 2*365. Defaults to None.
+            date_column (str, optional): Name of the date column used to identify rows that are older than a specified 
+                number of days. Defaults to None.
+            days (int, optional): The number of days beyond which we want to anonymize the data, e.g. older than 
+                2 years can be: 2*365. Defaults to None.
             output_file_extension (str, optional): Output file extension - to allow selection of .csv for data
                 which is not easy to handle with parquet. Defaults to ".parquet".
             adls_dir_path (str, optional): Azure Data Lake destination folder/catalog path. Defaults to None.
             local_file_path (str, optional): Local destination path. Defaults to None.
             adls_file_name (str, optional): Name of file in ADLS. Defaults to None.
-            adls_sp_credentials_secret (str, optional): The name of the Azure Key Vault secret containing a dictionary with
-                ACCOUNT_NAME and Service Principal credentials (TENANT_ID, CLIENT_ID, CLIENT_SECRET) for the Azure Data Lake.
-                Defaults to None.
+            adls_sp_credentials_secret (str, optional): The name of the Azure Key Vault secret containing a dictionary 
+                with ACCOUNT_NAME and Service Principal credentials (TENANT_ID, CLIENT_ID, CLIENT_SECRET) for the Azure 
+                Data Lake. Defaults to None.
             overwrite_adls (bool, optional): Whether to overwrite files in the lake. Defaults to False.
             if_exists (str, optional): What to do if the file exists. Defaults to "replace".
-            timeout (int, optional): The time (in seconds) to wait while running this task before a timeout occurs. Defaults to 3600.
+            timeout (int, optional): The time (in seconds) to wait while running this task before a timeout occurs. 
+                Defaults to 3600.
         """
         # CustomerGaugeToDF
         self.endpoint = endpoint
@@ -103,6 +113,8 @@ class CustomerGaugeToADLS(Flow):
         self.date_field = date_field
         self.start_date = start_date
         self.end_date = end_date
+        self.method1_cols = method1_cols
+        self.method2_cols = method2_cols
         self.customer_gauge_credentials_secret = customer_gauge_credentials_secret
 
         # anonymize_df
