@@ -460,7 +460,7 @@ class GenesysToCSV(Task):
             date = start_date.replace("-", "")
             file_name = f"conversations_detail_{date}".upper() + ".csv"
             if validate_df_dict:
-                validate_df(df=final_df, tests=validate_df_dict)
+                validate_df.run(df=final_df, tests=validate_df_dict)
             final_df.to_csv(
                 os.path.join(self.local_file_path, file_name),
                 index=False,
@@ -499,7 +499,7 @@ class GenesysToCSV(Task):
 
             file_name = f"WEBMESSAGE_{start}-{end}.csv"
             if validate_df_dict:
-                validate_df(df=df, tests=validate_df_dict)
+                validate_df.run(df=df, tests=validate_df_dict)
             df.to_csv(
                 os.path.join(file_name),
                 index=False,
