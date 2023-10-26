@@ -107,8 +107,10 @@ class OutlookToADLS(Flow):
         df = union_dfs_task.bind(dfs, flow=self)
 
         if self.validate_df_dict:
-            validation = validate_df(df=df, tests=self.validate_df_dict, flow=self)
-            validation.set_upstream(df, flow=self)
+            validation_task = validate_df.bind(
+                df, tests=self.validate_df_dict, flow=self
+            )
+            validation_task.set_upstream(df, flow=self)
 
         df_with_metadata = add_ingestion_metadata_task.bind(df, flow=self)
 
