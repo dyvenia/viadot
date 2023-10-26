@@ -315,6 +315,9 @@ class SupermetricsToADLS(Flow):
             flow=self,
         )
 
+        if self.validate_df_dict:
+            df_with_metadata.set_upstream(validation_task, flow=self)
+
         write_json.set_upstream(df, flow=self)
         validation.set_upstream(write_json, flow=self)
         df_with_metadata.set_upstream(validation_upstream, flow=self)

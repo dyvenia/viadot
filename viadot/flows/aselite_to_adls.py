@@ -115,5 +115,8 @@ class ASELiteToADLS(Flow):
             flow=self,
         )
 
+        if self.validate_df_dict:
+            create_csv.set_upstream(validation_task, flow=self)
+
         create_csv.set_upstream(df, flow=self)
         adls_upload.set_upstream(create_csv, flow=self)

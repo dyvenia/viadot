@@ -197,6 +197,9 @@ class BigQueryToADLS(Flow):
             flow=self,
         )
 
+        if self.validate_df_dict:
+            df_with_metadata.set_upstream(validation_task, flow=self)
+
         df_with_metadata.set_upstream(df, flow=self)
         dtypes_dict.set_upstream(df_with_metadata, flow=self)
         df_to_be_loaded.set_upstream(dtypes_dict, flow=self)
