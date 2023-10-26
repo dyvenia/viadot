@@ -7,8 +7,11 @@ import pandas as pd
 import pytest
 
 from viadot.flows import OutlookToADLS
+from viadot.tasks import AzureDataLakeRemove
 
-
+ADLS_CREDENTIAL_SECRET = PrefectSecret(
+    "AZURE_DEFAULT_ADLS_SERVICE_PRINCIPAL_SECRET"
+).run()
 ADLS_FILE_NAME = "test_outlook_to_adls.parquet"
 ADLS_DIR_PATH = "raw/tests/"
 
@@ -35,7 +38,7 @@ def test_outlook_to_adls_flow_run():
         end_date=end_date,
         local_file_path=ADLS_FILE_NAME,
         adls_file_path=ADLS_DIR_PATH + ADLS_FILE_NAME,
-        adls_sp_credentials_secret="App-Azure-CR-DatalakeGen2-AIA",
+        adls_sp_credentials_secret=ADLS_CREDENTIAL_SECRET,
         if_exists="replace",
         timeout=4400,
     )
@@ -53,7 +56,7 @@ def test_outlook_to_adls_run_flow_validate_fail():
         end_date=end_date,
         local_file_path=ADLS_FILE_NAME,
         adls_file_path=ADLS_DIR_PATH + ADLS_FILE_NAME,
-        adls_sp_credentials_secret="App-Azure-CR-DatalakeGen2-AIA",
+        adls_sp_credentials_secret=ADLS_CREDENTIAL_SECRET,
         if_exists="replace",
         validation_df_dict={"column_list_to_match": ["test", "wrong", "columns"]},
         timeout=4400,
@@ -77,7 +80,7 @@ def test_outlook_to_adls_run_flow_validate_success(mocked_task):
         end_date=end_date,
         local_file_path=ADLS_FILE_NAME,
         adls_file_path=ADLS_DIR_PATH + ADLS_FILE_NAME,
-        adls_sp_credentials_secret="App-Azure-CR-DatalakeGen2-AIA",
+        adls_sp_credentials_secret=ADLS_CREDENTIAL_SECRET,
         if_exists="replace",
         validation_df_dict={"column_list_to_match": ["sender", "receivers"]},
         timeout=4400,
@@ -89,3 +92,7 @@ def test_outlook_to_adls_run_flow_validate_success(mocked_task):
     os.remove("test_outlook_to_adls.parquet")
     os.remove("romania_tehnic.csv")
     os.remove("o365_token.txt")
+    rm = AzureDataLakeRemove(
+        path=ADLS_DIR_PATH + ADLS_FILE_NAME, vault_name="azuwevelcrkeyv001s"
+    )
+    rm.run(sp_credentials_secret=ADLS_CREDENTIAL_SECRET)
