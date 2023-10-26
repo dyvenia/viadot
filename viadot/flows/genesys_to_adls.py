@@ -5,7 +5,7 @@ import numpy as np
 import pandas as pd
 from prefect import Flow, task
 
-from viadot.task_utils import add_ingestion_metadata_task, adls_bulk_upload
+from viadot.task_utils import add_ingestion_metadata_task, adls_bulk_upload, validate_df
 from viadot.tasks.genesys import GenesysToCSV
 
 
@@ -95,6 +95,7 @@ class GenesysToADLS(Flow):
         overwrite_adls: bool = True,
         adls_sp_credentials_secret: str = None,
         credentials_genesys: Dict[str, Any] = None,
+        validate_df_dict: Dict[str, Any] = None,
         timeout: int = 3600,
         *args: List[any],
         **kwargs: Dict[str, Any],
@@ -143,6 +144,8 @@ class GenesysToADLS(Flow):
             adls_sp_credentials_secret (str, optional): The name of the Azure Key Vault secret containing a dictionary with
             ACCOUNT_NAME and Service Principal credentials (TENANT_ID, CLIENT_ID, CLIENT_SECRET). Defaults to None.
             credentials(dict, optional): Credentials for the genesys api. Defaults to None.
+            validate_df_dict (Dict[str,Any], optional): A dictionary with optional list of tests to verify the output dataframe. If defined, triggers
+                the `validate_df` task from task_utils. Defaults to None.
             timeout(int, optional): The amount of time (in seconds) to wait while running this task before
                 a timeout occurs. Defaults to 3600.
         """
@@ -165,6 +168,7 @@ class GenesysToADLS(Flow):
         self.start_date = start_date
         self.end_date = end_date
         self.sep = sep
+        self.validate_df_dict = validate_df_dict
         self.timeout = timeout
 
         # AzureDataLake
@@ -183,6 +187,7 @@ class GenesysToADLS(Flow):
             timeout=self.timeout,
             local_file_path=self.local_file_path,
             sep=self.sep,
+            validate_df_dict=self.validate_df_dict,
         )
 
         file_names = to_csv.bind(
