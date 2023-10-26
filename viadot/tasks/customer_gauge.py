@@ -199,16 +199,23 @@ class CustomerGaugeToDF(Task):
                         json_list_clean = list(map(lambda x: unpack_function(x, field), json_list))
                         logger.info(f"All elements in '{field}' are unpacked successfully.")
                     except:
-                        logger.info(f"No transformation were made in '{field}', because didn't contain list of key-value data.")
+                        logger.info(f"No transformation were made in '{field}', 
+                        because didn't contain list of key-value data.")
                 else:
                     logger.info(f"Column '{field}' not found.")
             return json_list_clean
 
         if method1_cols is not None:
-            json_list = unpack_columns(columns = method1_cols, unpack_function = self._field_reference_unpacker)
+            json_list = unpack_columns(
+                columns = method1_cols, 
+                unpack_function = self._field_reference_unpacker
+                )
 
         if method2_cols is not None:
-            json_list = unpack_columns(columns = method2_cols, unpack_function = self._nested_dict_transformer)
+            json_list = unpack_columns(
+                columns = method2_cols, 
+                unpack_function = self._nested_dict_transformer
+                )
         
         return json_list
 
@@ -359,7 +366,8 @@ class CustomerGaugeToDF(Task):
         if total_load == True:
             if cursor is None:
                 logger.info(
-                    f"Downloading all the data from the {self.endpoint or self.endpoint_url} endpoint. Process might take a few minutes..."
+                    f"Downloading all the data from the {self.endpoint or self.endpoint_url} endpoint. 
+                    Process might take a few minutes..."
                 )
             else:
                 logger.info(
@@ -371,7 +379,10 @@ class CustomerGaugeToDF(Task):
                 jsn = self.get_data(json_data)
                 total_json += jsn
 
-        clean_json = self.column_unpacker(json_list = total_json, method1_cols = method1_cols, method2_cols = method2_cols)
+        clean_json = self.column_unpacker(
+            json_list = total_json, 
+            method1_cols = method1_cols, 
+            method2_cols = method2_cols)
         logger.info("Inserting data into the DataFrame...")
         df = pd.DataFrame(list(map(self.flatten_json, clean_json)))
         df = self.square_brackets_remover(df)
