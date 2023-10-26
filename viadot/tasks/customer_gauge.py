@@ -357,8 +357,10 @@ class CustomerGaugeToDF(Task):
                 total_json += jsn
 
         clean_json = self.column_unpacker(json_list = total_json, method1_cols = method1_cols, method2_cols = method2_cols)
+        logger.info("Inserting data into the DataFrame...")
         df = pd.DataFrame(list(map(self.flatten_json, clean_json)))
         df = self.square_brackets_remover(df)
         df.columns = df.columns.str.lower().str.replace(" ", "_")
+        logger.info("DataFrame: Ready. Data: Inserted. Let the magic happen!")
 
         return df
