@@ -9,6 +9,7 @@ from viadot.task_utils import (
     df_to_csv,
     df_to_parquet,
     union_dfs_task,
+    validate_df,
 )
 from viadot.tasks import AzureDataLakeUpload, OutlookToDF
 
@@ -29,6 +30,7 @@ class OutlookToADLS(Flow):
         limit: int = 10000,
         timeout: int = 3600,
         if_exists: Literal["append", "replace", "skip"] = "append",
+        validate_df_dict: dict = None,
         outlook_credentials_secret: str = "OUTLOOK",
         *args: List[Any],
         **kwargs: Dict[str, Any],
@@ -54,6 +56,8 @@ class OutlookToADLS(Flow):
             timeout(int, optional): The amount of time (in seconds) to wait while running this task before
                 a timeout occurs. Defaults to 3600.
             if_exists (Literal['append', 'replace', 'skip'], optional): What to do if the local file already exists. Defaults to "append".
+            validate_df_dict (dict, optional): An optional dictionary to verify the received dataframe.
+                When passed, `validate_df` task validation tests are triggered. Defaults to None.
         """
 
         self.mailbox_list = mailbox_list
@@ -64,6 +68,9 @@ class OutlookToADLS(Flow):
         self.timeout = timeout
         self.local_file_path = local_file_path
         self.if_exsists = if_exists
+
+        # Validate DataFrame
+        self.validate_df_dict = validate_df_dict
 
         # AzureDataLakeUpload
         self.adls_file_path = adls_file_path
@@ -98,6 +105,13 @@ class OutlookToADLS(Flow):
         dfs = apply_map(self.gen_outlook_df, self.mailbox_list, flow=self)
 
         df = union_dfs_task.bind(dfs, flow=self)
+
+        if self.validate_df_dict:
+            validation_task = validate_df.bind(
+                df, tests=self.validate_df_dict, flow=self
+            )
+            validation_task.set_upstream(df, flow=self)
+
         df_with_metadata = add_ingestion_metadata_task.bind(df, flow=self)
 
         if self.output_file_extension == ".parquet":
@@ -123,6 +137,9 @@ class OutlookToADLS(Flow):
             sp_credentials_secret=self.adls_sp_credentials_secret,
             flow=self,
         )
+
+        if self.validate_df_dict:
+            df_with_metadata.set_upstream(validation_task, flow=self)
 
         df_with_metadata.set_upstream(df, flow=self)
         df_to_file.set_upstream(df_with_metadata, flow=self)

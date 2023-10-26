@@ -5,12 +5,20 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+
+## [0.4.21] - 2023-10-26
 ### Added
+- Added `validate_df` task to task_utils.
+- Added `SharepointList` source class.
+- Added `SharepointListToDF` task class.
+- Added `SharepointListToADLS` flow class.
+- Added tests for `SharepointList`.
+- Added `get_nested_dict` to untils.py.
 
 ### Fixed
 
 ### Changed
-
+- Changed `GenesysToCSV` logic for end_point == "conversations". Added new fields to extraction.
 
 ## [0.4.20] - 2023-10-12
 ### Added

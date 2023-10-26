@@ -6,6 +6,7 @@ import pandas as pd
 import pytest
 
 from viadot.flows import HubspotToADLS
+from viadot.exceptions import ValidationError
 
 DATA = {
     "id": {"0": "820306930"},
@@ -55,6 +56,84 @@ def test_hubspot_to_adls_flow_run(mocked_class):
         overwrite_adls=True,
         adls_dir_path=ADLS_DIR_PATH,
         adls_file_name=ADLS_FILE_NAME,
+    )
+    result = flow.run()
+    assert result.is_successful()
+    os.remove("test_hubspot_to_adls_flow_run.parquet")
+    os.remove("test_hubspot_to_adls_flow_run.json")
+
+
+@mock.patch(
+    "viadot.tasks.HubspotToDF.run",
+    return_value=pd.DataFrame(data=DATA),
+)
+@pytest.mark.run
+def test_hubspot_to_adls_flow_run_validate_fail(mocked_class):
+    flow = HubspotToADLS(
+        "test_hubspot_to_adls_flow_run",
+        hubspot_credentials_key="HUBSPOT",
+        endpoint="line_items",
+        filters=[
+            {
+                "filters": [
+                    {
+                        "propertyName": "createdate",
+                        "operator": "BETWEEN",
+                        "highValue": "2021-01-01",
+                        "value": "2021-01-01",
+                    },
+                    {"propertyName": "quantity", "operator": "EQ", "value": "2"},
+                ]
+            },
+            {
+                "filters": [
+                    {"propertyName": "amount", "operator": "EQ", "value": "3744.000"}
+                ]
+            },
+        ],
+        overwrite_adls=True,
+        adls_dir_path=ADLS_DIR_PATH,
+        adls_file_name=ADLS_FILE_NAME,
+        validate_df_dict={"column_size": {"id": 0}},
+    )
+    try:
+        flow.run()
+    except ValidationError:
+        pass
+
+
+@mock.patch(
+    "viadot.tasks.HubspotToDF.run",
+    return_value=pd.DataFrame(data=DATA),
+)
+@pytest.mark.run
+def test_hubspot_to_adls_flow_run_validate_success(mocked_class):
+    flow = HubspotToADLS(
+        "test_hubspot_to_adls_flow_run",
+        hubspot_credentials_key="HUBSPOT",
+        endpoint="line_items",
+        filters=[
+            {
+                "filters": [
+                    {
+                        "propertyName": "createdate",
+                        "operator": "BETWEEN",
+                        "highValue": "2021-01-01",
+                        "value": "2021-01-01",
+                    },
+                    {"propertyName": "quantity", "operator": "EQ", "value": "2"},
+                ]
+            },
+            {
+                "filters": [
+                    {"propertyName": "amount", "operator": "EQ", "value": "3744.000"}
+                ]
+            },
+        ],
+        overwrite_adls=True,
+        adls_dir_path=ADLS_DIR_PATH,
+        adls_file_name=ADLS_FILE_NAME,
+        validate_df_dict={"column_unique_values": ["id"]},
     )
     result = flow.run()
     assert result.is_successful()

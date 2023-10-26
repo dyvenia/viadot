@@ -10,6 +10,7 @@ from prefect import Task
 from prefect.engine import signals
 from prefect.utilities import logging
 from prefect.utilities.tasks import defaults_from_attrs
+from viadot.task_utils import *
 
 from viadot.exceptions import APIError
 from viadot.sources import Genesys
@@ -33,6 +34,7 @@ class GenesysToCSV(Task):
         conversationId_list: List[str] = None,
         key_list: List[str] = None,
         credentials_genesys: Dict[str, Any] = None,
+        validate_df_dict: Dict[str, Any] = None,
         timeout: int = 3600,
         *args: List[Any],
         **kwargs: Dict[str, Any],
@@ -54,6 +56,8 @@ class GenesysToCSV(Task):
             sep (str, optional): Separator in csv file. Defaults to "\t".
             conversationId_list (List[str], optional): List of conversationId passed as attribute of GET method. Defaults to None.
             key_list (List[str], optional): List of keys needed to specify the columns in the GET request method. Defaults to None.
+            validate_df_dict (Dict[str,Any], optional): A dictionary with optional list of tests to verify the output dataframe. If defined, triggers
+                the `validate_df` task from task_utils. Defaults to None.
             timeout(int, optional): The amount of time (in seconds) to wait while running this task before
                 a timeout occurs. Defaults to 3600.
         """
@@ -72,6 +76,7 @@ class GenesysToCSV(Task):
         self.sep = sep
         self.conversationId_list = conversationId_list
         self.key_list = key_list
+        self.validate_df_dict = validate_df_dict
 
         super().__init__(
             name=self.report_name,
@@ -293,6 +298,7 @@ class GenesysToCSV(Task):
         "credentials_genesys",
         "conversationId_list",
         "key_list",
+        "validate_df_dict",
     )
     def run(
         self,
@@ -309,6 +315,7 @@ class GenesysToCSV(Task):
         conversationId_list: List[str] = None,
         key_list: List[str] = None,
         credentials_genesys: Dict[str, Any] = None,
+        validate_df_dict: Dict[str, Any] = None,
     ) -> List[str]:
         """
         Task for downloading data from the Genesys API to DF.
@@ -327,6 +334,8 @@ class GenesysToCSV(Task):
             report_columns (List[str], optional): List of exisiting column in report. Defaults to None.
             conversationId_list (List[str], optional): List of conversationId passed as attribute of GET method. Defaults to None.
             key_list (List[str], optional): List of keys needed to specify the columns in the GET request method. Defaults to None.
+            validate_df_dict (Dict[str,Any], optional): A dictionary with optional list of tests to verify the output dataframe. If defined, triggers
+                the `validate_df` task from task_utils. Defaults to None.
 
         Returns:
             List[str]: List of file names.
@@ -450,7 +459,8 @@ class GenesysToCSV(Task):
 
             date = start_date.replace("-", "")
             file_name = f"conversations_detail_{date}".upper() + ".csv"
-
+            if validate_df_dict:
+                validate_df.run(df=final_df, tests=validate_df_dict)
             final_df.to_csv(
                 os.path.join(self.local_file_path, file_name),
                 index=False,
@@ -477,6 +487,8 @@ class GenesysToCSV(Task):
                     key: value for (key, value) in attributes.items() if key in key_list
                 }
                 temp_dict["conversationId"] = json_file["id"]
+                temp_dict["startTime"] = json_file["startTime"]
+                temp_dict["endTime"] = json_file["endTime"]
                 data_list.append(temp_dict)
 
             df = pd.DataFrame(data_list)
@@ -486,6 +498,8 @@ class GenesysToCSV(Task):
             end = end_date.replace("-", "")
 
             file_name = f"WEBMESSAGE_{start}-{end}.csv"
+            if validate_df_dict:
+                validate_df.run(df=df, tests=validate_df_dict)
             df.to_csv(
                 os.path.join(file_name),
                 index=False,

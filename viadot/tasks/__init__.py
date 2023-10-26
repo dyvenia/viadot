@@ -31,7 +31,7 @@ from .great_expectations import RunGreatExpectationsValidation
 from .outlook import OutlookToDF
 from .prefect_date_range import GetFlowNewDateRange
 from .salesforce import SalesforceBulkUpsert, SalesforceToDF, SalesforceUpsert
-from .sharepoint import SharepointToDF
+from .sharepoint import SharepointToDF, SharepointListToDF
 from .sqlite import SQLiteInsert, SQLiteQuery, SQLiteSQLtoDF
 from .supermetrics import SupermetricsToCSV, SupermetricsToDF
 

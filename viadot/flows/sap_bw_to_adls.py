@@ -14,6 +14,7 @@ from viadot.task_utils import (
     df_to_parquet,
     dtypes_to_json_task,
     update_dtypes_dict,
+    validate_df,
 )
 from viadot.tasks import AzureDataLakeUpload, SAPBWToDF
 
@@ -35,6 +36,7 @@ class SAPBWToADLS(Flow):
         overwrite_adls: bool = True,
         vault_name: str = None,
         sp_credentials_secret: str = None,
+        validate_df_dict: dict = None,
         *args: List[any],
         **kwargs: Dict[str, Any],
     ):
@@ -56,6 +58,7 @@ class SAPBWToADLS(Flow):
             overwrite_adls (bool, optional): Whether to overwrite the file in ADLS. Defaults to True.
             vault_name (str, optional): The name of the vault from which to obtain the secrets.. Defaults to None.
             sp_credentials_secret (str, optional): The name of the Azure Key Vault secret containing a dictionary with ACCOUNT_NAME and Service Principal credentials (TENANT_ID, CLIENT_ID, CLIENT_SECRET). Defaults to None.
+            validate_df_dict (Dict[str], optional): A dictionary with optional list of tests to verify the output dataframe. If defined, triggers the `validate_df` task from task_utils. Defaults to None.
         """
         self.sapbw_credentials = sapbw_credentials
         self.sapbw_credentials_key = sapbw_credentials_key
@@ -89,6 +92,7 @@ class SAPBWToADLS(Flow):
         self.overwrite_adls = overwrite_adls
         self.vault_name = vault_name
         self.sp_credentials_secret = sp_credentials_secret
+        self.validate_df_dict = validate_df_dict
 
         super().__init__(*args, name=name, **kwargs)
         self.gen_flow()
@@ -109,6 +113,12 @@ class SAPBWToADLS(Flow):
             mapping_dict=self.mapping_dict,
             flow=self,
         )
+
+        if self.validate_df_dict:
+            validation_task = validate_df.bind(
+                df, tests=self.validate_df_dict, flow=self
+            )
+            validation_task.set_upstream(df, flow=self)
 
         df_viadot_downloaded = add_ingestion_metadata_task.bind(df=df, flow=self)
         dtypes_dict = df_get_data_types_task.bind(df_viadot_downloaded, flow=self)
@@ -155,6 +165,9 @@ class SAPBWToADLS(Flow):
             vault_name=self.vault_name,
             flow=self,
         )
+
+        if self.validate_df_dict:
+            df_viadot_downloaded.set_upstream(validation_task, flow=self)
 
         df_viadot_downloaded.set_upstream(df, flow=self)
         dtypes_dict.set_upstream(df_viadot_downloaded, flow=self)
