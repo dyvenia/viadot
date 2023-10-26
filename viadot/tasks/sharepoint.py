@@ -233,7 +233,6 @@ class SharepointToDF(Task):
         return df
 
 
-
 class SharepointListToDF(Task):
     """
     Task to extract data from Sharepoint List into DataFrame.
@@ -263,7 +262,7 @@ class SharepointListToDF(Task):
                                 'filters_conjuction':'&',
                                 }
                                 ,
-                        'Column_name_2' : 
+                        'Column_name_2' :
                                 {
                                 'dtype': 'str',
                                 'value1':'NM-PL',
@@ -279,18 +278,18 @@ class SharepointListToDF(Task):
     def __init__(
         self,
         path: str = None,
-        list_title: str = None, 
+        list_title: str = None,
         site_url: str = None,
         required_fields: List[str] = None,
         field_property: str = "Title",
-        filters:  dict = None,
+        filters: dict = None,
         row_count: int = 5000,
         credentials_secret: str = None,
         vault_name: str = None,
         *args,
         **kwargs,
     ):
-        
+
         self.path = path
         self.list_title = list_title
         self.site_url = site_url
@@ -300,7 +299,7 @@ class SharepointListToDF(Task):
         self.row_count = row_count
         self.vault_name = vault_name
         self.credentials_secret = credentials_secret
-        
+
         if not credentials_secret:
             # Attempt to read a default for the service principal secret name
             try:
@@ -310,50 +309,44 @@ class SharepointListToDF(Task):
 
         if credentials_secret:
             credentials_str = AzureKeyVaultSecret(
-                secret = self.credentials_secret, vault_name=self.vault_name
+                secret=self.credentials_secret, vault_name=self.vault_name
             ).run()
             self.credentials = json.loads(credentials_str)
-
 
         super().__init__(
             *args,
             **kwargs,
         )
 
-
     def __call__(self):
         """Download Sharepoint_List data to a .parquet file"""
         super().__call__(self)
 
-    
-    def _convert_camel_case_to_words(
-            self,
-            input_str: str) -> str:
-        
+    def _convert_camel_case_to_words(self, input_str: str) -> str:
+
         self.input_str = input_str
 
-        words = re.findall(r'[A-Z][a-z]*|[0-9]+', self.input_str)
-        converted = ' '.join(words)
+        words = re.findall(r"[A-Z][a-z]*|[0-9]+", self.input_str)
+        converted = " ".join(words)
 
-        return converted 
-        
-    
+        return converted
+
     def change_column_name(
         self,
         df: pd.DataFrame = None,
     ):
         s = SharepointList()
         list_fields = s.get_fields(
-            list_title= self.list_title,
-            site_url= self.site_url, 
-            required_fields= self.required_fields,
-            )
-        
+            list_title=self.list_title,
+            site_url=self.site_url,
+            required_fields=self.required_fields,
+        )
+
         self.logger.info("Changing columns names")
-        column_names_correct = [field.properties['Title'] for field in list_fields]
-        column_names_code = [field.properties['InternalName'] for field in list_fields]
-        dictionary = dict(zip(column_names_code, column_names_correct)) 
-        
+        column_names_correct = [field.properties["Title"] for field in list_fields]
+        column_names_code = [field.properties["InternalName"] for field in list_fields]
+        dictionary = dict(zip(column_names_code, column_names_correct))
+
         # If duplicates in names from "Title" take "InternalName"
         value_count = {}
         duplicates = []
@@ -365,19 +358,18 @@ class SharepointListToDF(Task):
                 duplicates.append(key)
             else:
                 value_count[value] = key
-        
+
         for key in duplicates:
             dictionary[key] = self._convert_camel_case_to_words(key)
-            
+
         # Rename columns names inside DataFrame
         df = df.rename(columns=dictionary)
 
         return df
-    
 
     def run(
         self,
-        ) -> None:
+    ) -> None:
         """
         Run Task SharepointListToDF.
 
@@ -385,16 +377,18 @@ class SharepointListToDF(Task):
             pd.DataFrame
         """
 
-        s = SharepointList(credentials=self.credentials,)
+        s = SharepointList(
+            credentials=self.credentials,
+        )
         df_raw = s.list_item_to_df(
-            list_title = self.list_title,
-            site_url = self.site_url,
-            required_fields = self.required_fields,
-            field_property = self.field_property,
-            filters = self.filters,
-            row_count = self.row_count,
-            )
-        
+            list_title=self.list_title,
+            site_url=self.site_url,
+            required_fields=self.required_fields,
+            field_property=self.field_property,
+            filters=self.filters,
+            row_count=self.row_count,
+        )
+
         df = self.change_column_name(df=df_raw)
         self.logger.info("Successfully changed structure of the DataFrame")
 
