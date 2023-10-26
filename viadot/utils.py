@@ -449,3 +449,14 @@ def add_viadot_metadata_columns(source_name: str = None) -> Callable:
         return wrapper
 
     return decorator
+
+
+def get_nested_dict(d):
+    if isinstance(d, dict):
+        for lvl in d.values():
+            if isinstance(lvl, dict):
+                return get_nested_dict(lvl)
+            else:
+                return d
+    else:
+        return None

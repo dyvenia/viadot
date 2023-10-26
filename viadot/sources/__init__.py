@@ -8,7 +8,7 @@ from .mediatool import Mediatool
 from .outlook import Outlook
 from .salesforce import Salesforce
 from .sftp import SftpConnector
-from .sharepoint import Sharepoint
+from .sharepoint import Sharepoint, SharepointList
 from .supermetrics import Supermetrics
 
 try:
