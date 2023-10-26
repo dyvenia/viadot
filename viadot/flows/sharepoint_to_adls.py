@@ -229,8 +229,8 @@ class SharepointListToADLS(Flow):
                                 'value2':'YYYY-MM-DD',
                                 'operator1':'>=',
                                 'operator2':'<=',
-                                'operators_conjuction':'&',
-                                'filters_conjuction':'&',
+                                'operators_conjuction':'&', # conjuction operators allowed only when 2 values passed
+                                'filters_conjuction':'&', # conjuction filters allowed only when 2 columns passed
                                 }
                                 ,
                         'Column_name_2' : 

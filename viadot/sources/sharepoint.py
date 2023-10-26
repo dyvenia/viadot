@@ -245,6 +245,8 @@ class SharepointList(Source):
                     if not parameters.get('value1'):
                         raise ValueError('Value for operator1 is missing!')
                 elif not parameters.get('operator1') : raise ValueError('Operator1 is missing!')
+                if not parameters.get('operator2') and parameters.get('operators_conjuction') is not None:
+                    raise ValueError(f"Operator conjuction allowed only with more than one filter operator!")
                 if parameters.get('operator2'):
                     if parameters.get('operator2') not in allowed_operators:
                         raise ValueError(f"Operator type not allowed! Expected {allowed_operators} got: {parameters.get('operator2')}.")
@@ -255,9 +257,11 @@ class SharepointList(Source):
                     if parameters.get('operators_conjuction') not in allowed_conjuction:
                         raise ValueError(f"Operators for conjuction not allowed! Expected {allowed_conjuction} got {parameters.get('operators_conjuction')}.") 
                 if parameters.get('filters_conjuction'):
+                    if len(filters.keys()) == 1 and parameters.get('filters_conjuction') is not None:
+                        raise ValueError(f"Filters conjuction allowed only with more than one filter column!")
                     if parameters.get('filters_conjuction') not in allowed_conjuction:
                         raise ValueError(f"Filters operators for conjuction not allowed! Expected {allowed_conjuction} got {parameters.get('filters_conjuction')}.")
-                    
+
         return True
 
 
