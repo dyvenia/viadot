@@ -190,7 +190,7 @@ class CustomerGaugeToDF(Task):
         def unpack_columns(columns, unpack_function):
             for field in columns:
                 if field in json_list[0]:
-                    logger.info(f"Unpacking column '{field}'...")
+                    logger.info(f"Unpacking column '{field}' with {unpack_function.__name__} method...")
                     try:
                         json_list_clean = list(map(lambda x: unpack_function(x, field), json_list))
                         logger.info(f"All elements in '{field}' are unpacked successfully.")
