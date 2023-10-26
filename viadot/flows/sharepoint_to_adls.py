@@ -124,8 +124,8 @@ class SharepointToADLS(Flow):
         )
 
         if self.validate_df_dict:
-            validation = validate_df(df=df, tests=self.validate_df_dict, flow=self)
-            validation.set_upstream(df, flow=self)
+            validation_task = validate_df(df=df, tests=self.validate_df_dict, flow=self)
+            validation_task.set_upstream(df, flow=self)
 
         df_with_metadata = add_ingestion_metadata_task.bind(df, flow=self)
         dtypes_dict = df_get_data_types_task.bind(df_with_metadata, flow=self)
@@ -167,6 +167,9 @@ class SharepointToADLS(Flow):
             sp_credentials_secret=self.adls_sp_credentials_secret,
             flow=self,
         )
+
+        if self.validate_df_dict:
+            df_with_metadata.set_upstream(validation_task, flow=self)
 
         df_mapped.set_upstream(df_with_metadata, flow=self)
         dtypes_to_json_task.set_upstream(df_mapped, flow=self)
@@ -316,8 +319,8 @@ class SharepointListToADLS(Flow):
         df = s.run()
 
         if self.validate_df_dict:
-            validation = validate_df(df=df, tests=self.validate_df_dict, flow=self)
-            validation.set_upstream(df, flow=self)
+            validation_task = validate_df(df=df, tests=self.validate_df_dict, flow=self)
+            validation_task.set_upstream(df, flow=self)
 
         df_with_metadata = add_ingestion_metadata_task.bind(df, flow=self)
         dtypes_dict = df_get_data_types_task.bind(df_with_metadata, flow=self)
@@ -352,6 +355,9 @@ class SharepointListToADLS(Flow):
             sp_credentials_secret=self.adls_sp_credentials_secret,
             flow=self,
         )
+
+        if self.validate_df_dict:
+            df_with_metadata.set_upstream(validation_task, flow=self)
 
         df_mapped.set_upstream(df_with_metadata, flow=self)
         dtypes_to_json_task.set_upstream(df_mapped, flow=self)

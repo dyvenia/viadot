@@ -178,6 +178,9 @@ class EurostatToADLS(Flow):
             flow=self,
         )
 
+        if self.validate_df_dict:
+            df_with_metadata.set_upstream(validation_task, flow=self)
+
         file_to_adls_task.set_upstream(df_to_file, flow=self)
         json_to_adls_task.set_upstream(dtypes_to_json_task, flow=self)
         set_key_value(key=self.adls_dir_path, value=self.adls_file_path)

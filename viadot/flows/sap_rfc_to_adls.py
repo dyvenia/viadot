@@ -154,6 +154,9 @@ class SAPRFCToADLS(Flow):
             flow=self,
         )
 
+        if self.validate_df_dict:
+            df_to_file.set_upstream(validation_task, flow=self)
+
         df_to_file.set_upstream(df, flow=self)
         adls_upload.set_upstream(df_to_file, flow=self)
 

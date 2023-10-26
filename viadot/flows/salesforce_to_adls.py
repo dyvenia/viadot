@@ -189,6 +189,9 @@ class SalesforceToADLS(Flow):
             flow=self,
         )
 
+        if self.validate_df_dict:
+            df_clean.set_upstream(validation_task, flow=self)
+
         df_clean.set_upstream(df, flow=self)
         df_with_metadata.set_upstream(df_clean, flow=self)
         dtypes_dict.set_upstream(df_with_metadata, flow=self)

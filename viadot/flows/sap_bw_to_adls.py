@@ -166,6 +166,9 @@ class SAPBWToADLS(Flow):
             flow=self,
         )
 
+        if self.validate_df_dict:
+            df_viadot_downloaded.set_upstream(validation_task, flow=self)
+
         df_viadot_downloaded.set_upstream(df, flow=self)
         dtypes_dict.set_upstream(df_viadot_downloaded, flow=self)
         df_to_be_loaded.set_upstream(dtypes_dict, flow=self)

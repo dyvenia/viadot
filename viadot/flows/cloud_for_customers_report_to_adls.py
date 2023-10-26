@@ -203,8 +203,8 @@ class CloudForCustomersReportToADLS(Flow):
             )
 
         if self.validate_df_dict:
-            validation = validate_df(df=df, tests=self.validate_df_dict, flow=self)
-            validation.set_upstream(df, flow=self)
+            validation_task = validate_df(df=df, tests=self.validate_df_dict, flow=self)
+            validation_task.set_upstream(df, flow=self)
 
         df_with_metadata = add_ingestion_metadata_task.bind(df, flow=self)
 
@@ -231,6 +231,9 @@ class CloudForCustomersReportToADLS(Flow):
             sp_credentials_secret=self.adls_sp_credentials_secret,
             flow=self,
         )
+
+        if self.validate_df_dict:
+            df_with_metadata.set_upstream(validation_task, flow=self)
 
         df_with_metadata.set_upstream(df, flow=self)
         df_to_file.set_upstream(df_with_metadata, flow=self)
