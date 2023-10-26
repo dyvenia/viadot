@@ -18,8 +18,8 @@ from viadot.task_utils import (
     dtypes_to_json_task,
     union_dfs_task,
     update_dtypes_dict,
-    write_to_json,
     validate_df,
+    write_to_json,
 )
 from viadot.tasks import (
     AzureDataLakeUpload,
