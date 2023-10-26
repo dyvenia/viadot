@@ -199,8 +199,8 @@ class CustomerGaugeToDF(Task):
                         json_list_clean = list(map(lambda x: unpack_function(x, field), json_list))
                         logger.info(f"All elements in '{field}' are unpacked successfully.")
                     except:
-                        logger.info(f"No transformation were made in '{field}', 
-                        because didn't contain list of key-value data.")
+                        logger.info(f"No transformation were made in '{field}'," 
+                        "because didn't contain list of key-value data.")
                 else:
                     logger.info(f"Column '{field}' not found.")
             return json_list_clean
@@ -366,8 +366,8 @@ class CustomerGaugeToDF(Task):
         if total_load == True:
             if cursor is None:
                 logger.info(
-                    f"Downloading all the data from the {self.endpoint or self.endpoint_url} endpoint. 
-                    Process might take a few minutes..."
+                    f"Downloading all the data from the {self.endpoint or self.endpoint_url} endpoint." 
+                    "Process might take a few minutes..."
                 )
             else:
                 logger.info(
