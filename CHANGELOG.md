@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 ### Added
 - Added `validate_df` task to task_utils.
+- Added `SharepointList` source class.
+- Added `SharepointListToDF` task class.
+- Added `SharepointListToADLS` flow class.
+- Added tests for `SharepointList`.
+- Added `get_nested_dict` to untils.py.
+- Added `validate_df` task to `SharepointToADLS` class.
+
 ### Fixed
 
 ### Changed
