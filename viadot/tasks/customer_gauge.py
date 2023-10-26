@@ -121,7 +121,6 @@ class CustomerGaugeToDF(Task):
                 list_properties = list(dictionary.values())
                 result[list_properties[0]] = list_properties[1]
         if result:
-            # print(f"All elements in '{field}' are unpacked successfully.")
             json_response[field] = result
 
         return json_response
@@ -185,14 +184,14 @@ class CustomerGaugeToDF(Task):
         def unpack_columns(columns, unpack_function):
             for field in columns:
                 if field in json_list[0]:
-                    print(f"Unpacking column '{field}'...")
+                    logger.info(f"Unpacking column '{field}'...")
                     try:
                         json_list_clean = list(map(lambda x: unpack_function(x, field), json_list))
-                        print(f"All elements in '{field}' are unpacked successfully.")
+                        logger.info(f"All elements in '{field}' are unpacked successfully.")
                     except:
-                        print(f"No transformation were made in '{field}', because didn't contain list of key-value data.")
+                        logger.info(f"No transformation were made in '{field}', because didn't contain list of key-value data.")
                 else:
-                    print(f"Column '{field}' not found.")
+                    logger.info(f"Column '{field}' not found.")
             return json_list_clean
 
         if method1_cols is not None:
