@@ -4,8 +4,8 @@ import os
 import pytest
 from prefect.storage import Local
 
-from viadot.flows import SupermetricsToADLS
 from viadot.exceptions import ValidationError
+from viadot.flows import SupermetricsToADLS
 
 CWD = os.getcwd()
 adls_dir_path = "raw/tests/supermetrics"

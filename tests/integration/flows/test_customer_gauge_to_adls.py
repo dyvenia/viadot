@@ -4,8 +4,8 @@ from unittest import mock
 import pandas as pd
 import pytest
 
-from viadot.flows import CustomerGaugeToADLS
 from viadot.exceptions import ValidationError
+from viadot.flows import CustomerGaugeToADLS
 
 DATA = {
     "user_name": ["Jane", "Bob"],

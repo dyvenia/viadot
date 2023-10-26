@@ -17,8 +17,7 @@ from viadot.task_utils import (
     validate_df,
 )
 from viadot.tasks import AzureDataLakeUpload
-from viadot.tasks.sharepoint import SharepointToDF, SharepointListToDF
-
+from viadot.tasks.sharepoint import SharepointListToDF, SharepointToDF
 
 logger = logging.get_logger()
 
@@ -181,16 +180,15 @@ class SharepointToADLS(Flow):
         return name.replace(" ", "_").lower()
 
 
-
 class SharepointListToADLS(Flow):
     def __init__(
         self,
         name: str,
-        list_title: str = None, 
+        list_title: str = None,
         site_url: str = None,
         required_fields: List[str] = None,
         field_property: str = "Title",
-        filters:  dict = None,
+        filters: dict = None,
         row_count: int = 5000,
         sp_cert_credentials_secret: str = None,
         vault_name: str = None,
@@ -202,7 +200,7 @@ class SharepointListToADLS(Flow):
         output_file_extension: str = ".parquet",
         validate_df_dict: dict = None,
         *args: List[any],
-        **kwargs: Dict[str, Any],                    
+        **kwargs: Dict[str, Any],
     ):
         """
         Run Flow SharepointListToADLS.
@@ -233,7 +231,7 @@ class SharepointListToADLS(Flow):
                                 'filters_conjuction':'&', # conjuction filters allowed only when 2 columns passed
                                 }
                                 ,
-                        'Column_name_2' : 
+                        'Column_name_2' :
                                 {
                                 'dtype': 'str',
                                 'value1':'NM-PL',
@@ -247,10 +245,10 @@ class SharepointListToADLS(Flow):
         adls_dir_path (str): Azure Data Lake destination folder/catalog path. Defaults to None.
         adls_file_name (str, optional): Name of file in ADLS. Defaults to None.
         adls_sp_credentials_secret (str, optional): The name of the Azure Key Vault secret containing a dictionary with
-                                                    ACCOUNT_NAME and Service Principal credentials (TENANT_ID, CLIENT_ID, 
+                                                    ACCOUNT_NAME and Service Principal credentials (TENANT_ID, CLIENT_ID,
                                                     CLIENT_SECRET) for the Azure Data Lake. Defaults to None.
         overwrite_adls (bool, optional): Whether to overwrite files in the lake. Defaults to True.
-        
+
         Returns:
             .parquet file inside ADLS.
         """
@@ -266,7 +264,6 @@ class SharepointListToADLS(Flow):
         self.vault_name = vault_name
         self.row_count = row_count
         self.validate_df_dict = validate_df_dict
-
 
         # AzureDataLakeUpload
         self.adls_dir_path = adls_dir_path
@@ -296,26 +293,25 @@ class SharepointListToADLS(Flow):
                 adls_dir_path, "schema", self.now + ".json"
             )
 
-
         super().__init__(
             name=name,
-            *args, 
+            *args,
             **kwargs,
-            )
+        )
 
         self.gen_flow()
 
     def gen_flow(self) -> Flow:
-        s = SharepointListToDF(                    
-                    path = self.path,
-                    list_title = self.list_title,
-                    site_url = self.site_url,
-                    required_fields = self.required_fields,
-                    field_property = self.field_property,
-                    filters = self.filters,  
-                    row_count = self.row_count,
-                    credentials_secret=self.sp_cert_credentials_secret,
-                    )
+        s = SharepointListToDF(
+            path=self.path,
+            list_title=self.list_title,
+            site_url=self.site_url,
+            required_fields=self.required_fields,
+            field_property=self.field_property,
+            filters=self.filters,
+            row_count=self.row_count,
+            credentials_secret=self.sp_cert_credentials_secret,
+        )
         df = s.run()
 
         if self.validate_df_dict:
@@ -327,7 +323,7 @@ class SharepointListToADLS(Flow):
         df_mapped = df_map_mixed_dtypes_for_parquet.bind(
             df_with_metadata, dtypes_dict, flow=self
         )
-        
+
         df_to_file = df_to_parquet.bind(
             df=df_mapped,
             path=self.path,
@@ -347,7 +343,6 @@ class SharepointListToADLS(Flow):
             dtypes_dict=dtypes_dict, local_json_path=self.local_json_path, flow=self
         )
 
-        
         json_to_adls_task = AzureDataLakeUpload()
         json_to_adls_task.bind(
             from_path=self.local_json_path,
