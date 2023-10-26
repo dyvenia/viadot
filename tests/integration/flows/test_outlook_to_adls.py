@@ -58,7 +58,7 @@ def test_outlook_to_adls_run_flow_validate_fail():
         adls_file_path=ADLS_DIR_PATH + ADLS_FILE_NAME,
         adls_sp_credentials_secret=ADLS_CREDENTIAL_SECRET,
         if_exists="replace",
-        validation_df_dict={"column_list_to_match": ["test", "wrong", "columns"]},
+        validate_df_dict={"column_list_to_match": ["test", "wrong", "columns"]},
         timeout=4400,
     )
 
@@ -82,7 +82,7 @@ def test_outlook_to_adls_run_flow_validate_success(mocked_task):
         adls_file_path=ADLS_DIR_PATH + ADLS_FILE_NAME,
         adls_sp_credentials_secret=ADLS_CREDENTIAL_SECRET,
         if_exists="replace",
-        validation_df_dict={"column_list_to_match": ["sender", "receivers"]},
+        validate_df_dict={"column_list_to_match": ["sender", "receivers"]},
         timeout=4400,
     )
 
