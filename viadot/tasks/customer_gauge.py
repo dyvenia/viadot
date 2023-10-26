@@ -38,23 +38,25 @@ class CustomerGaugeToDF(Task):
 
         Args:
             endpoint (Literal["responses", "non-responses"], optional): Indicate which endpoint 
-            to connect. Defaults to None.
+                to connect. Defaults to None.
             total_load (bool, optional): Indicate whether to download the data to the latest. 
-            If 'False', only one API call is executed (up to 1000 records). Defaults to True.
+                If 'False', only one API call is executed (up to 1000 records). Defaults to True.
             endpoint_url (str, optional): Endpoint URL. Defaults to None.
             cursor (int, optional): Cursor value to navigate to the page. Defaults to None.
             pagesize (int, optional): Number of responses (records) returned per page, max value = 1000. 
-            Defaults to 1000.
+                Defaults to 1000.
             date_field (Literal["date_creation", "date_order", "date_sent", "date_survey_response"], 
-            optional): Specifies the date type which filter date range. Defaults to None.
+                optional): Specifies the date type which filter date range. Defaults to None.
             start_date (datetime, optional): Defines the period end date in yyyy-mm-dd format. 
-            Defaults to None.
+                Defaults to None.
             end_date (datetime, optional): Defines the period start date in yyyy-mm-dd format. 
-            Defaults to None.
+                Defaults to None.
             method1_cols (List[str]): Columns to unpack and modify using `_field_reference_unpacker`.
+                Defaults to None.
             method2_cols (List[str]): Columns to unpack and modify using `_nested_dict_transformer`.
+                Defaults to None.
             timeout (int, optional): The time (in seconds) to wait while running this task before 
-            a timeout occurs. Defaults to 3600.
+                a timeout occurs. Defaults to 3600.
         """
         self.endpoint = endpoint
         self.total_load = total_load
@@ -174,8 +176,10 @@ class CustomerGaugeToDF(Task):
 
         Args:
             json_list (List[Dict[str, Any]): A list of dictionaries containing the data.
-            method1_cols (List[str]): Columns to unpack and modify using `_field_reference_unpacker`.
-            method2_cols (List[str]): Columns to unpack and modify using `_nested_dict_transformer`.
+            method1_cols (List[str]): Columns to unpack and modify using `_field_reference_unpacker`. 
+                Defaults to None.
+            method2_cols (List[str]): Columns to unpack and modify using `_nested_dict_transformer`. 
+                Defaults to None.
 
         Raises:
             ValueError: _description_
@@ -294,21 +298,32 @@ class CustomerGaugeToDF(Task):
         vault_name: str = None,
     ) -> pd.DataFrame:
         """
-        Run method. Downloading the selected range of data from Customer Gauge endpoint and return as one pandas DataFrame.
+        Run method. Downloading the selected range of data from Customer Gauge endpoint and return 
+        as one pandas DataFrame.
 
         Args:
-            endpoint (Literal["responses", "non-responses"]): Indicate which endpoint to connect. Defaults to None.
-            total_load (bool, optional): Indicate whether to download the data to the latest. If 'False', only one API call is executed (up to 1000 records). Defaults to True.
+            endpoint (Literal["responses", "non-responses"]): Indicate which endpoint to connect. 
+                Defaults to None.
+            total_load (bool, optional): Indicate whether to download the data to the latest. If 
+                'False', only one API call is executed (up to 1000 records). Defaults to True.
             endpoint_url (str, optional): Endpoint URL. Defaults to None.
             cursor (int, optional): Cursor value to navigate to the page. Defaults to None.
-            pagesize (int, optional): Number of responses (records) returned per page, max value = 1000. Defaults to 1000.
-            date_field (Literal["date_creation", "date_order", "date_sent", "date_survey_response"], optional): Specifies the date type which filter date range. Defaults to None.
-            start_date (datetime, optional): Defines the period end date in yyyy-mm-dd format. Defaults to None.
-            end_date (datetime, optional): Defines the period start date in yyyy-mm-dd format. Defaults to None.
-            method1_cols (List[str]): Columns to unpack and modify using `_field_reference_unpacker`.
-            method2_cols (List[str]): Columns to unpack and modify using `_nested_dict_transformer`.            
-            credentials_secret (str, optional): The name of the Azure Key Vault secret containing a dictionary with ['client_id', 'client_secret']. Defaults to "CUSTOMER-GAUGE".
-            vault_name (str, optional): The name of the vault from which to obtain the secret. Defaults to None.
+            pagesize (int, optional): Number of responses (records) returned per page, max value = 1000. 
+                Defaults to 1000.
+            date_field (Literal["date_creation", "date_order", "date_sent", "date_survey_response"], 
+                optional): Specifies the date type which filter date range. Defaults to None.
+            start_date (datetime, optional): Defines the period end date in yyyy-mm-dd format. 
+                Defaults to None.
+            end_date (datetime, optional): Defines the period start date in yyyy-mm-dd format. 
+                Defaults to None.
+            method1_cols (List[str]): Columns to unpack and modify using `_field_reference_unpacker`. 
+                Defaults to None.
+            method2_cols (List[str]): Columns to unpack and modify using `_nested_dict_transformer`. 
+                Defaults to None.       
+            credentials_secret (str, optional): The name of the Azure Key Vault secret containing a 
+                dictionary with ['client_id', 'client_secret']. Defaults to "CUSTOMER-GAUGE".
+            vault_name (str, optional): The name of the vault from which to obtain the secret. 
+                Defaults to None.
 
         Returns:
             pd.DataFrame: Final pandas DataFrame.
