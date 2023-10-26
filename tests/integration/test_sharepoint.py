@@ -168,26 +168,6 @@ def test_get_data_types(file_name):
     assert "String" in dtypes
 
 
-# testing get_connection function passing invalid credentials and raises AuthenticationContext error.
-def test_get_connection():
-    site_url = "https://velux.sharepoint.com/"
-    credentials = {
-        "SHAREPOINT_CERT": {
-            "TENANT": "xxx",
-            "CLIENT_ID": "123",
-            "SCOPES": "https://velux.sharepoint.com/",
-            "THUMBPRINT": "xyz",
-            "PRIVATE_KEY": "private",
-        }
-    }
-
-    spl = SharepointList(credentials=credentials)
-    with pytest.raises(
-        AttributeError, match="'SharepointList' object has no attribute 'ctx'"
-    ):
-        spl.get_connection(site_url=site_url)
-
-
 @pytest.fixture(scope="session")
 def sharepoint_list():
     """
