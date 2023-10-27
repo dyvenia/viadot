@@ -13,7 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added `SharepointListToDF` task class.
 - Added `SharepointListToADLS` flow class.
 - Added tests for `SharepointList`.
-- Added `get_nested_dict` to untils.py.
+- Added `get_nested_dict` to utils.py.
 
 ### Fixed
 
