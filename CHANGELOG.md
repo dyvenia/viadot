@@ -5,6 +5,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Added
+
+### Fixed
+
+### Changed
+- Modified `CustomerGauge` source class with simplified logic to return json structure.
+- Expand `CustomerGaugeToDF` task class with separate cleaning functions and handling nested json structure flattening with two new methods `_field_reference_unpacker` and `_nested_dict_transformer`.
+- Change `CustomerGaugeToADLS` to containg new arguments.
 
 ## [0.4.21] - 2023-10-26
 ### Added
