@@ -121,6 +121,9 @@ class CustomerGaugeToDF(Task):
         Returns:
             Dict[str, Any]: The JSON response with modified nested dictionaries
             within the specified field.
+            
+        Raises:
+            ValueError: If a dictionary within the specified field doesn't contain exactly two items.
         """
 
         result = {}
@@ -128,6 +131,8 @@ class CustomerGaugeToDF(Task):
             if isinstance(dictionary, dict) and len(dictionary.items()) == 2:
                 list_properties = list(dictionary.values())
                 result[list_properties[0]] = list_properties[1]
+            else:
+                raise ValueError()
         if result:
             json_response[field] = result
 
@@ -154,11 +159,11 @@ class CustomerGaugeToDF(Task):
         within the specified field.
         """
         d={}
-        for i, dictionary in enumerate(json_response[field], start=1): 
+        for i, dictionary in enumerate(json_response[field], start=1):
             for key, value in dictionary.items():
                 d[f'{i}_{key}'] = value
-
-        json_response[field] = d
+        if d:
+            json_response[field] = d
 
         return json_response
     
@@ -192,11 +197,12 @@ class CustomerGaugeToDF(Task):
             raise ValueError("Input 'json_list' is required.")
 
         def unpack_columns(columns, unpack_function):
+            json_list_clean = json_list.copy()
             for field in columns:
-                if field in json_list[0]:
+                if field in json_list_clean[0]:
                     logger.info(f"Unpacking column '{field}' with {unpack_function.__name__} method...")
                     try:
-                        json_list_clean = list(map(lambda x: unpack_function(x, field), json_list))
+                        json_list_clean = list(map(lambda x: unpack_function(x, field), json_list_clean))
                         logger.info(f"All elements in '{field}' are unpacked successfully.")
                     except:
                         logger.info(f"No transformation were made in '{field}'," 
@@ -270,6 +276,28 @@ class CustomerGaugeToDF(Task):
         df = df.astype(str)
         df = df.applymap(lambda x: x.strip("[]"))
         return df
+    
+    def _drivers_cleaner(
+        self,
+        drivers: str = None
+    ) -> str:
+        """
+        Clean and format the 'drivers' data.
+
+        Args:
+            drivers (str, optional): Column name of the data to be cleaned. Defaults to None.
+
+        Returns:
+            str: A cleaned and formatted string of driver data.
+        """
+
+        drivers = drivers.split("}, {")
+        cleaned_drivers = []
+        for driver in drivers:
+            driver = driver.replace("{", "").replace("}", "")
+            driver = driver.replace("'", "").replace("label: ", "")
+            cleaned_drivers.append(driver)
+        return ', '.join(cleaned_drivers)  
 
     def __call__(self):
         """Download Customer Gauge data to a DF"""
@@ -386,6 +414,8 @@ class CustomerGaugeToDF(Task):
         logger.info("Inserting data into the DataFrame...")
         df = pd.DataFrame(list(map(self.flatten_json, clean_json)))
         df = self.square_brackets_remover(df)
+        if endpoint == "responses":
+            df["drivers"] = df["drivers"].apply(self._drivers_cleaner)
         df.columns = df.columns.str.lower().str.replace(" ", "_")
         logger.info("DataFrame: Ready. Data: Inserted. Let the magic happen!")
 
