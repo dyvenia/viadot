@@ -25,6 +25,7 @@ class SAPBW(Source):
         Raises:
             CredentialError: If provided credentials are incorrect.
         """
+        self.credentials = credentials
         if credentials is None:
             raise CredentialError("Missing credentials.")
 
@@ -100,7 +101,7 @@ class SAPBW(Source):
                     {
                     "COLUMN": 0,
                     "ROW": 0,
-                    "DATA": "VELUX Deutschland GmbH",
+                    "DATA": "DATA",
                     "VALUE_DATA_TYPE": "CHAR",
                     "CELL_STATUS": ""
                     },...

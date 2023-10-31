@@ -35,8 +35,8 @@ class CloudForCustomers(Source):
             report_url (str, optional): The url to the API in case of prepared report. Defaults to None.
             url (str, optional): The url to the API. Defaults to None.
             endpoint (str, optional): The endpoint of the API. Defaults to None.
-            params (Dict[str, Any]): The query parameters like filter by creation date time. Defaults to json format.
-            env (str, optional): The development environments. Defaults to 'QA'.
+            params (Dict[str, Any]): The query parameters like filter by creation date time. Defaults to None.
+            env (str, optional): The credentials environments. Defaults to 'QA'.
             credentials (Dict[str, Any], optional): The credentials are populated with values from config file or this
             parameter. Defaults to None than use credentials from local_config.
         """

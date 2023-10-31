@@ -16,6 +16,7 @@ from viadot.task_utils import (
     df_to_parquet,
     dtypes_to_json_task,
     update_dtypes_dict,
+    validate_df,
 )
 from viadot.tasks import AzureDataLakeUpload, SalesforceToDF
 
@@ -41,6 +42,7 @@ class SalesforceToADLS(Flow):
         adls_file_name: str = None,
         adls_sp_credentials_secret: str = None,
         if_exists: str = "replace",
+        validate_df_dict: Dict[str, Any] = None,
         timeout: int = 3600,
         *args: List[Any],
         **kwargs: Dict[str, Any],
@@ -70,6 +72,8 @@ class SalesforceToADLS(Flow):
                 ACCOUNT_NAME and Service Principal credentials (TENANT_ID, CLIENT_ID, CLIENT_SECRET) for the Azure Data Lake.
                 Defaults to None.
             if_exists (str, optional): What to do if the file exists. Defaults to "replace".
+            validate_df_dict (Dict[str,Any], optional): A dictionary with optional list of tests to verify the output
+                dataframe. If defined, triggers the `validate_df` task from task_utils. Defaults to None.
             timeout(int, optional): The amount of time (in seconds) to wait while running this task before
                 a timeout occurs. Defaults to 3600.
         """
@@ -82,6 +86,7 @@ class SalesforceToADLS(Flow):
         self.env = env
         self.vault_name = vault_name
         self.credentials_secret = credentials_secret
+        self.validate_df_dict = validate_df_dict
 
         # AzureDataLakeUpload
         self.adls_sp_credentials_secret = adls_sp_credentials_secret
@@ -135,6 +140,13 @@ class SalesforceToADLS(Flow):
         df_clean = df_clean_column.bind(df=df, flow=self)
         df_with_metadata = add_ingestion_metadata_task.bind(df_clean, flow=self)
         dtypes_dict = df_get_data_types_task.bind(df_with_metadata, flow=self)
+
+        if self.validate_df_dict:
+            validation_task = validate_df.bind(
+                df, tests=self.validate_df_dict, flow=self
+            )
+            validation_task.set_upstream(df, flow=self)
+
         df_to_be_loaded = df_map_mixed_dtypes_for_parquet(
             df_with_metadata, dtypes_dict, flow=self
         )
@@ -176,6 +188,9 @@ class SalesforceToADLS(Flow):
             sp_credentials_secret=self.adls_sp_credentials_secret,
             flow=self,
         )
+
+        if self.validate_df_dict:
+            df_clean.set_upstream(validation_task, flow=self)
 
         df_clean.set_upstream(df, flow=self)
         df_with_metadata.set_upstream(df_clean, flow=self)
