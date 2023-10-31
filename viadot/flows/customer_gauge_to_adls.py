@@ -176,6 +176,8 @@ class CustomerGaugeToADLS(Flow):
             date_field=self.date_field,
             start_date=self.start_date,
             end_date=self.end_date,
+            method1_cols=self.method1_cols,
+            method2_cols=self.method2_cols,
             vault_name=self.vault_name,
             credentials_secret=self.customer_gauge_credentials_secret,
             flow=self,
