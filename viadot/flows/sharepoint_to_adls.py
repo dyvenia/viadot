@@ -215,8 +215,13 @@ class SharepointListToADLS(Flow):
         site_url (str): URL to set of Sharepoint Lists. Default to None.
         required_fields (List[str]): Required fields(columns) need to be extracted from
                                      Sharepoint List. Default to None.
-        field_property (List[str]): Property to expand with expand query method.
-                                    All propertys can be found under list.item.properties.
+        field_property (List[str]): Property to expand fields with expand query method.
+                                    For example: User fields could be expanded and "Title"
+                                    or "ID" could be extracted
+                                    -> usefull to get user name instead of ID
+                                    All properties can be found under list.item.properties.
+                                    WARNING! Field types and properties might change which could
+                                    lead to errors - extension of sp connector would be required.
                                     Default to ["Title"]
         filters (dict): Dictionary with operators which filters the SharepointList output.
                         allowed dtypes: ('datetime','date','bool','int', 'float', 'complex', 'str')

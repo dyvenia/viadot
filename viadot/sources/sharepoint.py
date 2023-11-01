@@ -18,6 +18,7 @@ from prefect.utilities import logging
 
 logger = logging.get_logger()
 
+
 # Print out how many rows was extracted in specific iteration
 def log_of_progress(items):
     logger.info("Items read: {0}".format(len(items)))
@@ -112,7 +113,6 @@ class SharepointList(Source):
         self,
         site_url: str = None,
     ):
-
         # Connecting into Sharepoint with AuthenticationContext
         try:
             auth_context = AuthenticationContext(site_url)
@@ -137,24 +137,33 @@ class SharepointList(Source):
         self,
         list_item,
         selected_fields: dict = None,
-    ):
-
+    ) -> dict:
         # Creating the body of dictionary
         new_dict = dict()
-
         # For loop scanning the propertys of searching fields
         item_values_dict = list_item.properties
         for field, val in item_values_dict.items():
             nested_dict = get_nested_dict(val)
-            # Check if the dictionary is nested
-            if nested_dict != None:
-                # It might be that there are different field properties than expected
-                nested_value = nested_dict.get(selected_fields["FieldProperty"])
-                if nested_value != None:
-                    new_dict[field] = nested_value
+            # Check if field has expandable type
+            if field in selected_fields["FieldToExpand"]:
+                # Check if the values are nested
+                if nested_dict != None:
+                    # It might be that there are different field properties than expected
+                    nested_value = nested_dict.get(
+                        selected_fields["FieldExpandProperty"]
+                    )
+                    if nested_value != None:
+                        new_dict[field] = nested_value
+                    else:
+                        logger.info("Property of the extandable field not recognized!")
+                        raise ValueError("Check if given field property is valid!")
+                elif field in selected_fields["MultiChoiceField"]:
+                    # Field type of multi choice could have more than 1 selection.
+                    new_dict[field] = ";".join(nested_dict.values())
                 else:
-                    logger.info("I'm not the right value")
-                    raise ValueError
+                    raise ValueError(
+                        "Get nested dict for not recognized type of field! Check field types in the source"
+                    )
             else:
                 new_dict[field] = val
 
@@ -166,7 +175,6 @@ class SharepointList(Source):
         site_url: str = None,
         required_fields: List[str] = None,
     ):
-
         ctx = self.get_connection(site_url=site_url)
 
         # Get list of lists object by List Title
@@ -182,22 +190,25 @@ class SharepointList(Source):
 
         else:
             list_fields_required = [
-                list_fields_all.get_by_internal_name_or_title(field).get()
+                list_fields_all.get_by_internal_name_or_title(field)
+                .get()
+                .execute_query()
                 for field in required_fields
             ]
-            ctx.execute_batch()
 
             return list_fields_required
 
-    def select_expandable_user_fields(
+    def select_fields(
         self,
         list_title: str = None,
         site_url: str = None,
         required_fields: List[str] = None,
         field_property: str = "Title",
-    ):
+    ) -> dict:
         """
-        Method to expand fields and get more informations.
+        Method to create a data structure for handling info about
+            selection of fields with details about possible expansion for more data or details.
+        Field types to extract more values can be: "User*", "MultiChoice"
         field_property to expand can be: ID, Title, FieldTypeKind, TypeAsString and many more.
             -> more properties can be discovered by getting list.item.properties.
             Default to "Title"
@@ -220,12 +231,17 @@ class SharepointList(Source):
             for field in list_fields
             if fnmatch(field.properties["TypeAsString"], f"User*")
         ]
-
+        multi_choice_fields = [
+            field.properties["InternalName"]
+            for field in list_fields
+            if fnmatch(field.properties["TypeAsString"], "MultiChoice")
+        ]
         # Creating the body of the function output
         selected_fields = {
             "FieldInternalNames": fields_to_select,
             "FieldToExpand": fields_to_expand,
-            "FieldProperty": field_property,
+            "FieldExpandProperty": field_property,
+            "MultiChoiceField": multi_choice_fields,
         }
 
         return selected_fields
@@ -508,7 +524,7 @@ class SharepointList(Source):
         download_all = False
 
         # extracting requeird_fields SP_List objects
-        selected_fields = self.select_expandable_user_fields(
+        selected_fields = self.select_fields(
             list_title=list_title,
             site_url=site_url,
             required_fields=required_fields,
