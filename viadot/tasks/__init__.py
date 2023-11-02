@@ -58,3 +58,4 @@ from .sql_server import SQLServerCreateTable, SQLServerQuery, SQLServerToDF
 from .vid_club import VidClubToDF
 from .git import CloneRepo
 from .luma import LumaIngest
+from .tm1 import TM1ToParquet
