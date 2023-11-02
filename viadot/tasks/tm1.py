@@ -1,3 +1,5 @@
+import pandas as pd
+
 from prefect import Task
 from typing import Any, Dict
 from prefect.utilities.tasks import defaults_from_attrs
@@ -20,6 +22,22 @@ class TM1ToDF(Task):
         *args,
         **kwargs,
     ):
+        """
+        Task for downloading data from TM1 view to pandas DataFrame.
+
+        Args:
+            credentials (Dict[str, Any], optional): Credentials stored in a dictionary. Required credentials: username,
+                password, address, port. Defaults to None.
+            config_key (str, optional): Credential key to dictionary where credentials are stored. Defaults to "TM1".
+            cube (str, optional): Cube name from which data will be downloaded. Defaults to None.
+            view (str, optional): View name from which data will be downloaded. Defaults to None.
+            limit (str, optional): How many rows should be extracted. If None all the avaiable rows will
+                be downloaded. Defaults to None.
+            private (bool, optional): Whether or not data download shoulb be private. Defaults to False.
+            verify (bool, optional): Whether or not verify SSL certificates while. Defaults to False.
+            if_empty (Literal["warn", "fail", "skip"], optional): What to do if output DataFrame is empty. Defaults to "skip".
+
+        """
         self.credentials = credentials
         self.config_key = config_key
         self.cube = cube
@@ -60,7 +78,26 @@ class TM1ToDF(Task):
         private: bool = None,
         verify: bool = None,
         if_empty: str = None,
-    ):
+    ) -> pd.DataFrame:
+        """
+        Run method for TM1ToDF class.
+
+        Args:
+            credentials (Dict[str, Any], optional): Credentials stored in a dictionary. Required credentials: username,
+                password, address, port. Defaults to None.
+            config_key (str, optional): Credential key to dictionary where credentials are stored. Defaults to None.
+            cube (str, optional): Cube name from which data will be downloaded. Defaults to None.
+            view (str, optional): View name from which data will be downloaded. Defaults to None.
+            limit (str, optional): How many rows should be extracted. If None all the avaiable rows will
+                be downloaded. Defaults to None.
+            private (bool, optional): Whether or not data download shoulb be private. Defaults to None.
+            verify (bool, optional): Whether or not verify SSL certificates while. Defaults to None.
+            if_empty (Literal["warn", "fail", "skip"], optional): What to do if output DataFrame is empty. Defaults to None.
+
+        Returns:
+            pd.DataFrame: DataFrame with data downloaded from TM1 view.
+
+        """
         tm1 = TM1(
             credentials=credentials,
             config_key=config_key,
