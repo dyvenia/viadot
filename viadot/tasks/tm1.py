@@ -5,7 +5,7 @@ from prefect.utilities.tasks import defaults_from_attrs
 from ..sources import TM1
 
 
-class TM1ToParquet(Task):
+class TM1ToDF(Task):
     def __init__(
         self,
         credentials: Dict[str, Any] = None,
@@ -15,7 +15,6 @@ class TM1ToParquet(Task):
         limit: int = None,
         private: bool = False,
         verify: bool = False,
-        path: str = None,
         if_empty: str = "skip",
         timeout=3600,
         *args,
@@ -28,18 +27,17 @@ class TM1ToParquet(Task):
         self.limit = limit
         self.private = private
         self.verify = verify
-        self.path = path
         self.if_empty = if_empty
 
         super().__init__(
-            name="tm1_to_parquet",
+            name="tm1_to_df",
             timeout=timeout,
             *args,
             **kwargs,
         )
 
     def __call__(self, *args, **kwargs):
-        """Load TM1 data to Parquet"""
+        """Load TM1 data to pandas DataFrame"""
         return super().__call__(*args, **kwargs)
 
     @defaults_from_attrs(
@@ -51,7 +49,6 @@ class TM1ToParquet(Task):
         "private",
         "verify",
         "if_empty",
-        "path",
     )
     def run(
         self,
@@ -62,7 +59,6 @@ class TM1ToParquet(Task):
         limit: int = None,
         private: bool = None,
         verify: bool = None,
-        path: str = None,
         if_empty: str = None,
     ):
         tm1 = TM1(
@@ -74,5 +70,4 @@ class TM1ToParquet(Task):
             private=private,
             verify=verify,
         )
-        df = tm1.to_df()
-        return df.to_parquet(path=path, if_empty=if_empty)
+        return tm1.to_df(if_empty=if_empty)
