@@ -87,7 +87,7 @@ class TM1(Source):
             list: List containing avaiable cubes names.
 
         """
-        conn = self.get_connection
+        conn = self.get_connection()
         return conn.cubes.get_all_names()
 
     def get_views_names(self) -> list:
@@ -98,7 +98,7 @@ class TM1(Source):
             list: List containing avaiable views names.
 
         """
-        conn = self.get_connection
+        conn = self.get_connection()
         return conn.views.get_all_names(self.cube)
 
     def to_df(self, if_empty: Literal["warn", "fail", "skip"] = "skip") -> pd.DataFrame:
