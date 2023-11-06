@@ -175,9 +175,11 @@ class CustomerGaugeToDF(Task):
         ) -> List[Dict[str, Any]]:
 
         """
-        Unpack and modify specific columns in a list of dictionaries using two methods, chosen by the user. 
-        If user wants to use field_reference_unpacker, he needs to provide list of fields in `method1_cols` 
-        argument, if user wants to use nested_dict_transformer - uses 'method2_cols' argument.
+        Function to unpack and modify specific columns in a list of dictionaries by using one of two methods, 
+        chosen by the user. 
+        If user would like to use field_reference_unpacker, he/she needs to provide list of fields as strings in 
+        `method1_cols`  parameter,  if user would like to use nested_dict_transformer he/she needs to provide list of 
+         fields as strings in method2_cols parameter.  
 
         Args:
             json_list (List[Dict[str, Any]): A list of dictionaries containing the data.
