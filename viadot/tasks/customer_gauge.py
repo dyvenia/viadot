@@ -158,12 +158,12 @@ class CustomerGaugeToDF(Task):
             Dict[str, Any]: The JSON response with modified nested dictionaries
         within the specified field.
         """
-        d={}
+        result={}
         for i, dictionary in enumerate(json_response[field], start=1):
             for key, value in dictionary.items():
-                d[f'{i}_{key}'] = value
-        if d:
-            json_response[field] = d
+                result[f'{i}_{key}'] = value
+        if result:
+            json_response[field] = result
 
         return json_response
     
