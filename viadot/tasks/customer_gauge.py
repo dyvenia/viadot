@@ -132,7 +132,7 @@ class CustomerGaugeToDF(Task):
                 list_properties = list(dictionary.values())
                 result[list_properties[0]] = list_properties[1]
             else:
-                raise ValueError()
+                raise ValueError(f"Dictionary within the specified field doesn't contain exactly two items.")
         if result:
             json_response[field] = result
 
