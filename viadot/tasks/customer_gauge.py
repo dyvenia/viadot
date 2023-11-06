@@ -189,7 +189,7 @@ class CustomerGaugeToDF(Task):
                 Defaults to None.
 
         Raises:
-            ValueError: _description_
+            ValueError: Input 'json_list' is required.
 
         Returns:
             List[Dict[str, Any]]: The updated list of dictionaries after column unpacking and modification.
@@ -237,6 +237,9 @@ class CustomerGaugeToDF(Task):
         Args:
             json_response (Dict[str, Any], optional): JSON object represented as 
             a nested dictionary. Defaults to None.
+
+        Raises:
+            TypeError: If the 'json_response' not a dictionary.
 
         Returns:
             Dict[str, Any]: The flattened dictionary.
