@@ -94,8 +94,8 @@ class CustomerGaugeToDF(Task):
         """
         try:
             jsons_list = json_response["data"]
-        except:
-            raise ValueError(
+        except KeyError:
+            logger.info(
                 "Provided argument doesn't contain 'data' value. Pass json returned from the endpoint."
             )
 
