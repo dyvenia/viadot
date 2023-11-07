@@ -242,7 +242,7 @@ class CustomerGaugeToDF(Task):
     def flatten_json(self, json_response: Dict[str, Any] = None) -> Dict[str, Any]:
         """
         Function that flattens a nested structure of the JSON object into 
-        a single-level dictionary.Uses a nested `flatten()` function to recursively 
+        a single-level dictionary. It uses a nested `flattify()` function to recursively 
         combine nested keys in the JSON object with '_' to create the flattened keys.
 
         Args:
@@ -260,15 +260,15 @@ class CustomerGaugeToDF(Task):
         if not isinstance(json_response, dict):
             raise TypeError("Input must be a dictionary.")
 
-        def flattify(x, key="", out = None):
+        def flattify(field, key="", out = None):
             if out is None:
                 out = result
 
-            if isinstance(x, dict):
-                for a in x:
-                    flattify(x[a], key + a + "_", out)
+            if isinstance(field, dict):
+                for item in field.keys():
+                    flattify(field[item], key + item + "_", out)
             else:
-                out[key[:-1]] = x
+                out[key[:-1]] = field
 
         flattify(json_response)
 
