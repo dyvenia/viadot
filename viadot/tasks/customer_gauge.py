@@ -161,11 +161,14 @@ class CustomerGaugeToDF(Task):
         within the specified field.
         """
         result={}
-        for i, dictionary in enumerate(json_response[field], start=1):
-            for key, value in dictionary.items():
-                result[f'{i}_{key}'] = value
-        if result:
-            json_response[field] = result
+        try:
+            for i, dictionary in enumerate(json_response[field], start=1):
+                for key, value in dictionary.items():
+                    result[f'{i}_{key}'] = value
+            if result:
+                json_response[field] = result
+        except TypeError as te:
+            logger.error(te)
 
         return json_response
     
@@ -198,7 +201,8 @@ class CustomerGaugeToDF(Task):
         Returns:
             List[Dict[str, Any]]: The updated list of dictionaries after column unpacking and modification.
         """
-
+        duplicated_cols = []
+        
         if json_list is None:
             raise ValueError("Input 'json_list' is required.")
 
