@@ -12,6 +12,7 @@ class TM1ToDF(Task):
         self,
         credentials: Dict[str, Any] = None,
         config_key: str = "TM1",
+        mdx_query: str = None,
         cube: str = None,
         view: str = None,
         limit: int = None,
@@ -29,6 +30,7 @@ class TM1ToDF(Task):
             credentials (Dict[str, Any], optional): Credentials stored in a dictionary. Required credentials: username,
                 password, address, port. Defaults to None.
             config_key (str, optional): Credential key to dictionary where credentials are stored. Defaults to "TM1".
+            mdx_query (str, optional): MDX select query needed to download the data. Defaults to None.
             cube (str, optional): Cube name from which data will be downloaded. Defaults to None.
             view (str, optional): View name from which data will be downloaded. Defaults to None.
             limit (str, optional): How many rows should be extracted. If None all the avaiable rows will
@@ -40,6 +42,7 @@ class TM1ToDF(Task):
         """
         self.credentials = credentials
         self.config_key = config_key
+        self.mdx_query = mdx_query
         self.cube = cube
         self.view = view
         self.limit = limit
@@ -61,6 +64,7 @@ class TM1ToDF(Task):
     @defaults_from_attrs(
         "credentials",
         "config_key",
+        "mdx_query",
         "cube",
         "view",
         "limit",
@@ -72,6 +76,7 @@ class TM1ToDF(Task):
         self,
         credentials: Dict[str, Any] = None,
         config_key: str = None,
+        mdx_query: str = None,
         cube: str = None,
         view: str = None,
         limit: int = None,
@@ -86,6 +91,7 @@ class TM1ToDF(Task):
             credentials (Dict[str, Any], optional): Credentials stored in a dictionary. Required credentials: username,
                 password, address, port. Defaults to None.
             config_key (str, optional): Credential key to dictionary where credentials are stored. Defaults to None.
+            mdx_query (str, optional): MDX select query needed to download the data. Defaults to None.
             cube (str, optional): Cube name from which data will be downloaded. Defaults to None.
             view (str, optional): View name from which data will be downloaded. Defaults to None.
             limit (str, optional): How many rows should be extracted. If None all the avaiable rows will
@@ -101,6 +107,7 @@ class TM1ToDF(Task):
         tm1 = TM1(
             credentials=credentials,
             config_key=config_key,
+            mdx_query=mdx_query,
             cube=cube,
             view=view,
             limit=limit,

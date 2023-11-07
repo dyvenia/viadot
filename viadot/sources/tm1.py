@@ -6,7 +6,7 @@ from prefect.utilities import logging
 
 
 from ..config import local_config
-from ..exceptions import CredentialError
+from ..exceptions import CredentialError,ValidationError
 from .base import Source
 
 logger = logging.get_logger(__name__)
@@ -21,6 +21,7 @@ class TM1(Source):
         self,
         credentials: Dict[str, Any] = None,
         config_key: str = "TM1",
+        mdx_query: str = None,
         cube: str = None,
         view: str = None,
         limit: int = None,
@@ -36,6 +37,7 @@ class TM1(Source):
             credentials (Dict[str, Any], optional): Credentials stored in a dictionary. Required credentials: username,
                 password, address, port. Defaults to None.
             config_key (str, optional): Credential key to dictionary where credentials are stored. Defaults to "TM1".
+            mdx_query (str, optional): MDX select query needed to download the data. Defaults to None.
             cube (str, optional): Cube name from which data will be downloaded. Defaults to None.
             view (str, optional): View name from which data will be downloaded. Defaults to None.
             limit (str, optional): How many rows should be extracted. If None all the avaiable rows will
@@ -56,6 +58,7 @@ class TM1(Source):
             raise CredentialError(f"Missing credential(s): '{not_found}'.")
 
         self.config_key = config_key
+        self.mdx_query = mdx_query
         self.cube = cube
         self.view = view
         self.limit = limit
@@ -110,14 +113,26 @@ class TM1(Source):
 
         Returns:
             pd.DataFrame: DataFrame with data downloaded from TM1 view.
+        
+        Raises:
+            ValidationError: When mdx and cube + view are not specified or when combination of both is specified.
         """
         conn = self.get_connection()
-        df = conn.cubes.cells.execute_view_dataframe(
-            cube_name=self.cube,
-            view_name=self.view,
-            private=self.private,
-            top=self.limit,
-        )
+
+        if self.mdx_query is None and (self.cube is None or self.view is None):
+            raise ValidationError("MDX query or cube and view are required.")
+        if self.cube is not None and self.view is not None:
+            df = conn.cubes.cells.execute_view_dataframe(
+                cube_name=self.cube,
+                view_name=self.view,
+                private=self.private,
+                top=self.limit,
+            )
+        elif self.mdx_query is not None:
+            df = conn.cubes.cells.execute_mdx_dataframe(self.mdx_query)
+        else:
+            raise ValidationError("Specify only one: MDX query or cube and view.")
+
         logger.info(
             f"Data was successfully transformed into DataFrame: {len(df.columns)} columns and {len(df)} rows."
         )
