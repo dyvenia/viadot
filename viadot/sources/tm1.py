@@ -24,6 +24,8 @@ class TM1(Source):
         mdx_query: str = None,
         cube: str = None,
         view: str = None,
+        dimension: str = None,
+        hierarchy: str =None,
         limit: int = None,
         private: bool = False,
         verify: bool = False,
@@ -40,6 +42,8 @@ class TM1(Source):
             mdx_query (str, optional): MDX select query needed to download the data. Defaults to None.
             cube (str, optional): Cube name from which data will be downloaded. Defaults to None.
             view (str, optional): View name from which data will be downloaded. Defaults to None.
+            dimension (str, optional): Diemension name. Defaults to None.
+            hierarchy (str, optional): Hierarchy name. Defaults to None.
             limit (str, optional): How many rows should be extracted. If None all the avaiable rows will
                 be downloaded. Defaults to None.
             private (bool, optional): Whether or not data download shoulb be private. Defaults to False.
@@ -61,6 +65,8 @@ class TM1(Source):
         self.mdx_query = mdx_query
         self.cube = cube
         self.view = view
+        self.dimension = dimension
+        self.hierarchy = hierarchy
         self.limit = limit
         self.private = private
         self.verify = verify
@@ -95,7 +101,7 @@ class TM1(Source):
 
     def get_views_names(self) -> list:
         """
-        Get list of avaiable views in TM1 instance.
+        Get list of avaiable views in TM1 cube instance.
 
         Returns:
             list: List containing avaiable views names.
@@ -103,6 +109,39 @@ class TM1(Source):
         """
         conn = self.get_connection()
         return conn.views.get_all_names(self.cube)
+    
+    def get_diemensions_names(self) -> list:
+        """
+        Get list of avaiable dimensions in TM1 instance.
+
+        Returns:
+            list: List containing avaiable dimensions names.
+
+        """
+        conn = self.get_connection()
+        return conn.dimensions.get_all_names()
+    
+    def get_hierarchies_names(self) -> list:
+        """
+        Get list of avaiable hierarchies in TM1 dimension instance.
+
+        Returns:
+            list: List containing avaiable hierarchies names.
+
+        """
+        conn = self.get_connection()
+        return conn.hierarchies.get_all_names(self.dimension)
+    
+    def get_available_elements(self) -> list:
+        """
+        Get list of avaiable elements in TM1 instance based on hierarchy and diemension.
+
+        Returns:
+            list: List containing avaiable elements names.
+
+        """
+        conn = self.get_connection()
+        return conn.elements.get_element_names(dimension_name= self.dimension, hierarchy_name = self.hierarchy)
 
     def to_df(self, if_empty: Literal["warn", "fail", "skip"] = "skip") -> pd.DataFrame:
         """
