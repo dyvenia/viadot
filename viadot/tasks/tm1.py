@@ -6,7 +6,6 @@ from prefect.utilities.tasks import defaults_from_attrs
 
 from ..sources import TM1
 
-
 class TM1ToDF(Task):
     def __init__(
         self,

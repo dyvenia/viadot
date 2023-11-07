@@ -11,7 +11,6 @@ from .base import Source
 
 logger = logging.get_logger(__name__)
 
-
 class TM1(Source):
     """
     Class for downloading data from TM1 Software using TM1py library
