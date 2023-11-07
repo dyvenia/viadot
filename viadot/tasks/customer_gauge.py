@@ -430,7 +430,7 @@ class CustomerGaugeToDF(Task):
         logger.info("Inserting data into the DataFrame...")
         df = pd.DataFrame(list(map(self.flatten_json, clean_json)))
         df = self.square_brackets_remover(df)
-        if endpoint == "responses":
+        if "drivers" in list(df.columns):
             df["drivers"] = df["drivers"].apply(self._drivers_cleaner)
         df.columns = df.columns.str.lower().str.replace(" ", "_")
         logger.info("DataFrame: Ready. Data: Inserted. Let the magic happen!")
