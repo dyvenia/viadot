@@ -189,7 +189,9 @@ class CustomerGaugeToDF(Task):
                 Defaults to None.
 
         Raises:
-            ValueError: Input 'json_list' is required.
+            ValueError: If 'json_list' is not provided.
+            ValueError: If specified columns do not exist in the JSON data.
+            ValueError: If columns are mentioned in both 'method1_cols' and 'method2_cols'. 
 
         Returns:
             List[Dict[str, Any]]: The updated list of dictionaries after column unpacking and modification.
@@ -215,17 +217,24 @@ class CustomerGaugeToDF(Task):
                     logger.info(f"Column '{field}' not found.")
             return json_list_clean
 
-        if method1_cols is not None:
-            json_list = unpack_columns(
-                columns = method1_cols, 
-                unpack_function = self._field_reference_unpacker
+        duplicated_cols = set(method1_cols).intersection(set(method2_cols))
+        if duplicated_cols:
+            raise ValueError(
+                f"{duplicated_cols} were mentioned in both method1_cols and method2_cols." 
+                " It's not possible to apply two methods to the same field."
                 )
+        else:
+            if method1_cols is not None:
+                json_list = unpack_columns(
+                    columns = method1_cols, 
+                    unpack_function = self._field_reference_unpacker
+                    )
 
-        if method2_cols is not None:
-            json_list = unpack_columns(
-                columns = method2_cols, 
-                unpack_function = self._nested_dict_transformer
-                )
+            if method2_cols is not None:
+                json_list = unpack_columns(
+                    columns = method2_cols, 
+                    unpack_function = self._nested_dict_transformer
+                    )
         
         return json_list
 
