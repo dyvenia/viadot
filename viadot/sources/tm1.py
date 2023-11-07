@@ -6,10 +6,11 @@ from prefect.utilities import logging
 
 
 from ..config import local_config
-from ..exceptions import CredentialError,ValidationError
+from ..exceptions import CredentialError, ValidationError
 from .base import Source
 
 logger = logging.get_logger(__name__)
+
 
 class TM1(Source):
     """
@@ -24,7 +25,7 @@ class TM1(Source):
         cube: str = None,
         view: str = None,
         dimension: str = None,
-        hierarchy: str =None,
+        hierarchy: str = None,
         limit: int = None,
         private: bool = False,
         verify: bool = False,
@@ -108,7 +109,7 @@ class TM1(Source):
         """
         conn = self.get_connection()
         return conn.views.get_all_names(self.cube)
-    
+
     def get_diemensions_names(self) -> list:
         """
         Get list of avaiable dimensions in TM1 instance.
@@ -119,7 +120,7 @@ class TM1(Source):
         """
         conn = self.get_connection()
         return conn.dimensions.get_all_names()
-    
+
     def get_hierarchies_names(self) -> list:
         """
         Get list of avaiable hierarchies in TM1 dimension instance.
@@ -130,7 +131,7 @@ class TM1(Source):
         """
         conn = self.get_connection()
         return conn.hierarchies.get_all_names(self.dimension)
-    
+
     def get_available_elements(self) -> list:
         """
         Get list of avaiable elements in TM1 instance based on hierarchy and diemension.
@@ -140,7 +141,9 @@ class TM1(Source):
 
         """
         conn = self.get_connection()
-        return conn.elements.get_element_names(dimension_name= self.dimension, hierarchy_name = self.hierarchy)
+        return conn.elements.get_element_names(
+            dimension_name=self.dimension, hierarchy_name=self.hierarchy
+        )
 
     def to_df(self, if_empty: Literal["warn", "fail", "skip"] = "skip") -> pd.DataFrame:
         """
@@ -151,7 +154,7 @@ class TM1(Source):
 
         Returns:
             pd.DataFrame: DataFrame with data downloaded from TM1 view.
-        
+
         Raises:
             ValidationError: When mdx and cube + view are not specified or when combination of both is specified.
         """
