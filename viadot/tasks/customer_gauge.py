@@ -206,9 +206,11 @@ class CustomerGaugeToDF(Task):
                     try:
                         json_list_clean = list(map(lambda x: unpack_function(x, field), json_list_clean))
                         logger.info(f"All elements in '{field}' are unpacked successfully.")
-                    except:
+                    except ValueError as ve:
                         logger.info(f"No transformation were made in '{field}'," 
                         "because didn't contain list of key-value data.")
+                    except Exception as e:
+                        logger.info(f"Error while unpacking {field}: {e}")
                 else:
                     logger.info(f"Column '{field}' not found.")
             return json_list_clean
