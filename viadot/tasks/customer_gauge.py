@@ -86,18 +86,20 @@ class CustomerGaugeToDF(Task):
             dictionary that contains data and cursor parameter value. Defaults to None.
 
         Raises:
-            ValueError: If the 'data' key is not present in the provided JSON response.
+            KeyError: If the 'data' key is not present in the provided JSON response.
 
         Returns:
             List[Dict[str, Any]]: A list of dictionaries containing data from the 'data' 
             part of the JSON response.
         """
+        jsons_list=[]
         try:
             jsons_list = json_response["data"]
         except KeyError:
-            logger.info(
+            logger.error(
                 "Provided argument doesn't contain 'data' value. Pass json returned from the endpoint."
             )
+            raise
 
         return jsons_list
 
@@ -216,8 +218,8 @@ class CustomerGaugeToDF(Task):
                 else:
                     logger.info(f"Column '{field}' not found.")
             return json_list_clean
-
-        duplicated_cols = set(method1_cols).intersection(set(method2_cols))
+        if method1_cols and method2_cols:
+            duplicated_cols = set(method1_cols).intersection(set(method2_cols))
         if duplicated_cols:
             raise ValueError(
                 f"{duplicated_cols} were mentioned in both method1_cols and method2_cols." 
