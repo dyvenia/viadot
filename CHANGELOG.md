@@ -6,6 +6,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- Added new view type `agent_interaction_view_type` in `Genesys`source.
+
 ## [0.4.21] - 2023-10-26
 ### Added
 - Added `validate_df` task to task_utils.
