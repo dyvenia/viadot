@@ -11,8 +11,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - Modified `CustomerGauge` source class with simplified logic to return json structure.
-- Expand `CustomerGaugeToDF` task class with separate cleaning functions and handling nested json structure flattening with two new methods `_field_reference_unpacker` and `_nested_dict_transformer`.
-- Change `CustomerGaugeToADLS` to containg new arguments.
+- Expanded `CustomerGaugeToDF` task class with separate cleaning functions and handling nested json structure flattening with two new methods `_field_reference_unpacker` and `_nested_dict_transformer`.
+- Changed `CustomerGaugeToADLS` to containing new arguments.
 
 ## [0.4.21] - 2023-10-26
 ### Added
