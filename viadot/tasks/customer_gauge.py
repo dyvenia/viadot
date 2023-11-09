@@ -313,13 +313,9 @@ class CustomerGaugeToDF(Task):
             str: A cleaned and formatted string of driver data.
         """
 
-        drivers = drivers.split("}, {")
-        cleaned_drivers = []
-        for driver in drivers:
-            driver = driver.replace("{", "").replace("}", "")
-            driver = driver.replace("'", "").replace("label: ", "")
-            cleaned_drivers.append(driver)
-        return ', '.join(cleaned_drivers)  
+        cleaned_drivers = drivers.replace("{", "").replace("}", "").replace("'", "").replace("label: ", "")
+        
+        return cleaned_drivers
 
     def __call__(self):
         """Download Customer Gauge data to a DF"""
