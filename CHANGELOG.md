@@ -6,6 +6,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- Splitted test for Eurostat on source tests and task tests
+
 ## [0.4.21] - 2023-10-26
 ### Added
 - Added `validate_df` task to task_utils.
