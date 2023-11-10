@@ -5,6 +5,25 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+- Modified `SharepointList` source class: 
+  -> docstrings update
+- Modified `SharepointToADLS` flow class:
+  -> docstrings update
+  -> changed key_value_param: bool = False to prevent forced KV store append
+- Modified `SharepointListToADLS` flow class:
+  -> changed key_value_param: bool = False to prevent forced KV store append
+- Modified `SharepointList` source class:
+  -> docstrings update
+  -> Changed `_unpack_fields` method to handle Sharepoint MultiChoiceField type + small improvements
+  -> Changed `get_fields` method to handle special characters - different approach to call get() and execute_query()
+  -> Renamed method from `select_expandable_user_fields` to `select_fields` + update for MultiChoiceField type
+  -> Changed `check_filters` method errors messages and more checks added
+  -> Changed `operators_mapping` method errors messages
+  -> Changed `make_filter_for_df` method errors messages
+- Modified `SharepointListToDF` task class:
+  -> docstrings update
+  -> Added `_rename_duplicated_fields` method to find and rename duplicated columns
+
 
 ## [0.4.21] - 2023-10-26
 ### Added
