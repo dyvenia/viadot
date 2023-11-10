@@ -335,7 +335,9 @@ class SharepointListToDF(Task):
         self,
         df: pd.DataFrame = None,
     ):
-        s = SharepointList()
+        s = SharepointList(
+            credentials=self.credentials,
+        )
         list_fields = s.get_fields(
             list_title=self.list_title,
             site_url=self.site_url,
