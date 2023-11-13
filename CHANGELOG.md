@@ -9,8 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added `TM1` source class.
 - Added `TM1ToDF` task class.
 
+### Changed
+- Splitted test for Eurostat on source tests and task tests
+
 ### Added
 - Added new view type `agent_interaction_view_type` in `Genesys`source.
+
 
 ## [0.4.21] - 2023-10-26
 ### Added
