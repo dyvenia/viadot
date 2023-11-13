@@ -23,7 +23,7 @@ def task_correct_requested_columns(caplog):
     assert isinstance(task, pd.DataFrame)
     assert not task.empty
     assert caplog.text == ""
-    assert list(task.columns) == task.needed_columns
+    assert list(task.columns) == task.requested_columns
 
 
 def test_wrong_needed_columns_names(caplog):
@@ -90,3 +90,27 @@ def test_requested_columns_not_in_list():
             params={"hhtyp": "total", "indic_il": "med_e"},
             requested_columns="updated",
         ).run()
+
+
+def test_requested_columns_not_provided(caplog):
+    """Test the behavior when 'requested_columns' are not provided to EurostatToDF.
+
+    This test checks the behavior of the EurostatToDF class when 'requested_columns' are not provided.
+    It ensures that the resulting DataFrame is of the correct type, not empty, and that no error
+    messages are logged using the 'caplog' fixture.
+
+    Parameters:
+    - caplog: pytest fixture for capturing log messages.
+
+    Usage:
+    - Invoke this test function to check the behavior of EurostatToDF when 'requested_columns' are not provided.
+    """
+    task = eurostat.EurostatToDF(
+        dataset_code="ILC_DI04",
+        params={"hhtyp": "total", "indic_il": "med_e"},
+    )
+    task.run()
+
+    assert isinstance(task, pd.DataFrame)
+    assert not task.empty
+    assert caplog.text == ""
