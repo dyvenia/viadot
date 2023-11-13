@@ -3,7 +3,7 @@ import logging
 import pandas as pd
 import pytest
 
-from viadot.tasks import eurostat
+from viadot.tasks import EurostatToDF
 
 
 def task_correct_requested_columns(caplog):
@@ -13,7 +13,7 @@ def task_correct_requested_columns(caplog):
     The function is intended to be used in software development to verify that the program is correctly
     retrieving data from the appropriate dataset.
     """
-    task = eurostat.EurostatToDF(
+    task = EurostatToDF(
         dataset_code="ILC_DI04",
         params={"hhtyp": "total", "indic_il": "med_e"},
         requested_columns=["updated", "geo", "indicator"],
@@ -33,7 +33,7 @@ def test_wrong_needed_columns_names(caplog):
     The function is intended to be used in software development to identify correct type errors
     and messages in the program's handling of codes.
     """
-    task = eurostat.EurostatToDF(
+    task = EurostatToDF(
         dataset_code="ILC_DI04",
         params={"hhtyp": "total", "indic_il": "med_e"},
         requested_columns=["updated1", "geo1", "indicator1"],
@@ -56,7 +56,7 @@ def test_wrong_params_and_wrong_requested_columns_names(caplog):
     params validation. The function is intended to be used in software development to identify correct type errors
     and messages in the program's handling of codes.
     """
-    task = eurostat.EurostatToDF(
+    task = EurostatToDF(
         dataset_code="ILC_DI04",
         params={"hhhtyp": "total", "indic_ilx": "med_e"},
         requested_columns=["updated1", "geo1", "indicator1"],
@@ -85,7 +85,7 @@ def test_requested_columns_not_in_list():
     with pytest.raises(
         TypeError, match="Requested columns should be provided as list of strings."
     ):
-        eurostat.EurostatToDF(
+        EurostatToDF(
             dataset_code="ILC_DI04",
             params={"hhtyp": "total", "indic_il": "med_e"},
             requested_columns="updated",
@@ -105,12 +105,12 @@ def test_requested_columns_not_provided(caplog):
     Usage:
     - Invoke this test function to check the behavior of EurostatToDF when 'requested_columns' are not provided.
     """
-    task = eurostat.EurostatToDF(
+    task = EurostatToDF(
         dataset_code="ILC_DI04",
         params={"hhtyp": "total", "indic_il": "med_e"},
     )
-    task.run()
+    df = task.run()
 
-    assert isinstance(task, pd.DataFrame)
-    assert not task.empty
+    assert isinstance(df, pd.DataFrame)
+    assert not df.empty
     assert caplog.text == ""
