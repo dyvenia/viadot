@@ -5,6 +5,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Added
+- Added `TM1` source class.
+- Added `TM1ToDF` task class.
 
 ### Added
 - Added new view type `agent_interaction_view_type` in `Genesys`source.
