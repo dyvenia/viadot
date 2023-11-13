@@ -33,7 +33,8 @@ class TM1(Source):
         **kwargs,
     ):
         """
-        Creating an instance of TM1 source class.
+        Creating an instance of TM1 source class. To download the data to the dataframe user needs to specify MDX query or
+            combination of cube and view.
 
         Args:
             credentials (Dict[str, Any], optional): Credentials stored in a dictionary. Required credentials: username,
@@ -42,7 +43,7 @@ class TM1(Source):
             mdx_query (str, optional): MDX select query needed to download the data. Defaults to None.
             cube (str, optional): Cube name from which data will be downloaded. Defaults to None.
             view (str, optional): View name from which data will be downloaded. Defaults to None.
-            dimension (str, optional): Diemension name. Defaults to None.
+            dimension (str, optional): Dimension name. Defaults to None.
             hierarchy (str, optional): Hierarchy name. Defaults to None.
             limit (str, optional): How many rows should be extracted. If None all the avaiable rows will
                 be downloaded. Defaults to None.
@@ -147,7 +148,8 @@ class TM1(Source):
 
     def to_df(self, if_empty: Literal["warn", "fail", "skip"] = "skip") -> pd.DataFrame:
         """
-        Function for downloading data from TM1 to pd.DataFrame.
+        Function for downloading data from TM1 to pd.DataFrame. To download the data to the dataframe user needs to specify MDX query or
+            combination of cube and view.
 
         Args:
             if_empty (Literal["warn", "fail", "skip"], optional): What to do if output DataFrame is empty. Defaults to "skip".
@@ -162,7 +164,9 @@ class TM1(Source):
 
         if self.mdx_query is None and (self.cube is None or self.view is None):
             raise ValidationError("MDX query or cube and view are required.")
-        elif self.mdx_query is not None and (self.cube is not None or self.view is not None):
+        elif self.mdx_query is not None and (
+            self.cube is not None or self.view is not None
+        ):
             raise ValidationError("Specify only one: MDX query or cube and view.")
         elif self.cube is not None and self.view is not None:
             df = conn.cubes.cells.execute_view_dataframe(
