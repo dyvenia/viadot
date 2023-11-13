@@ -110,7 +110,7 @@ class TM1(Source):
         conn = self.get_connection()
         return conn.views.get_all_names(self.cube)
 
-    def get_diemensions_names(self) -> list:
+    def get_dimensions_names(self) -> list:
         """
         Get list of avaiable dimensions in TM1 instance.
 
@@ -162,7 +162,9 @@ class TM1(Source):
 
         if self.mdx_query is None and (self.cube is None or self.view is None):
             raise ValidationError("MDX query or cube and view are required.")
-        if self.cube is not None and self.view is not None:
+        elif self.mdx_query is not None and (self.cube is not None or self.view is not None):
+            raise ValidationError("Specify only one: MDX query or cube and view.")
+        elif self.cube is not None and self.view is not None:
             df = conn.cubes.cells.execute_view_dataframe(
                 cube_name=self.cube,
                 view_name=self.view,
@@ -171,8 +173,6 @@ class TM1(Source):
             )
         elif self.mdx_query is not None:
             df = conn.cubes.cells.execute_mdx_dataframe(self.mdx_query)
-        else:
-            raise ValidationError("Specify only one: MDX query or cube and view.")
 
         logger.info(
             f"Data was successfully transformed into DataFrame: {len(df.columns)} columns and {len(df)} rows."
