@@ -4,6 +4,7 @@ import pandas as pd
 import pytest
 
 from viadot.sources import CustomerGauge
+from viadot.exceptions import CredentialError
 
 ENDPOINT = random.choice(["responses", "non-responses"])
 CG = CustomerGauge(endpoint=ENDPOINT)
@@ -38,3 +39,27 @@ def test_endpoint_url_argument():
     CG = CustomerGauge(url=ENDPOINT_URL)
     json_response = CG.get_json_response()
     assert isinstance(json_response, dict)
+
+@pytest.mark.endpoint_valueerror
+def test_wrong_endpoint_valueerror_raising():
+    with pytest.raises(ValueError, match=r"Incorrect endpoint name. Choose: 'responses' or 'non-responses'"):
+        wrong_endpoint_name = "wrong-endpoint"
+        CG = CustomerGauge(endpoint = wrong_endpoint_name)
+
+@pytest.mark.endpoint_valueerror
+def test_no_endpoint_valueerror_raising():
+    with pytest.raises(ValueError, match=r"Provide endpoint name. Choose: 'responses' or 'non-responses'. Otherwise, provide URL"):
+        CG = CustomerGauge()
+
+@pytest.mark.endpoint_credentialserror
+def test_credentialserror_raising():
+    wrong_secret="wrong"
+    with pytest.raises(CredentialError, match=r"Credentials not provided."):
+        CG = CustomerGauge(endpoint=ENDPOINT, credentials_secret=wrong_secret)
+
+@pytest.mark.get_cursor_valueerror
+def test_get_cursor_valueerror_raising():
+    wrong_json = {}
+    with pytest.raises(ValueError, match=r"Provided argument doesn't contain 'cursor' value. Pass json returned from the endpoint."):
+        CG = CustomerGauge(endpoint=ENDPOINT)
+        CG.get_cursor(json_response=wrong_json)
