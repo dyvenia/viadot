@@ -344,7 +344,7 @@ class Genesys(Source):
             if store_file_names is True:
                 file_name_list.append(file_name + "." + self.file_extension)
 
-        self.logger.info("Al reports were successfully dowonload.")
+        self.logger.info("All reports were successfully downloaded.")
 
         if store_file_names is True:
             self.logger.info("Successfully genetared file names list.")
