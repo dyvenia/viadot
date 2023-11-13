@@ -26,8 +26,8 @@ class CustomerGaugeToDF(Task):
         ] = None,
         start_date: datetime = None,
         end_date: datetime = None,
-        method1_cols: List[str] = None,
-        method2_cols: List[str] = None,
+        unpack_by_field_reference_cols: List[str] = None,
+        unpack_by_nested_dict_transformer: List[str] = None,
         timeout: int = 3600,
         *args,
         **kwargs,
@@ -51,9 +51,9 @@ class CustomerGaugeToDF(Task):
                 Defaults to None.
             end_date (datetime, optional): Defines the period start date in yyyy-mm-dd format. 
                 Defaults to None.
-            method1_cols (List[str]): Columns to unpack and modify using `_field_reference_unpacker`.
+            unpack_by_field_reference_cols (List[str]): Columns to unpack and modify using `_field_reference_unpacker`.
                 Defaults to None.
-            method2_cols (List[str]): Columns to unpack and modify using `_nested_dict_transformer`.
+            unpack_by_nested_dict_transformer (List[str]): Columns to unpack and modify using `_nested_dict_transformer`.
                 Defaults to None.
             timeout (int, optional): The time (in seconds) to wait while running this task before 
                 a timeout occurs. Defaults to 3600.
@@ -66,8 +66,8 @@ class CustomerGaugeToDF(Task):
         self.date_field = date_field
         self.start_date = start_date
         self.end_date = end_date
-        self.method1_cols = method1_cols
-        self.method2_cols = method2_cols
+        self.unpack_by_field_reference_cols = unpack_by_field_reference_cols
+        self.unpack_by_nested_dict_transformer = unpack_by_nested_dict_transformer
 
         super().__init__(
             name="customer_gauge_to_df",
@@ -175,28 +175,28 @@ class CustomerGaugeToDF(Task):
     def column_unpacker(
         self, 
         json_list: List[Dict[str, Any]] = None,
-        method1_cols: List[str] = None,
-        method2_cols: List[str] = None,
+        unpack_by_field_reference_cols: List[str] = None,
+        unpack_by_nested_dict_transformer: List[str] = None,
         ) -> List[Dict[str, Any]]:
 
         """
         Function to unpack and modify specific columns in a list of dictionaries by using one of two methods, 
         chosen by the user. 
         If user would like to use field_reference_unpacker, he/she needs to provide list of fields as strings in 
-        `method1_cols`  parameter,  if user would like to use nested_dict_transformer he/she needs to provide list of 
-         fields as strings in method2_cols parameter.  
+        `unpack_by_field_reference_cols`  parameter,  if user would like to use nested_dict_transformer he/she needs to provide list of 
+         fields as strings in unpack_by_nested_dict_transformer parameter.  
 
         Args:
             json_list (List[Dict[str, Any]): A list of dictionaries containing the data.
-            method1_cols (List[str]): Columns to unpack and modify using `_field_reference_unpacker`. 
+            unpack_by_field_reference_cols (List[str]): Columns to unpack and modify using `_field_reference_unpacker`. 
                 Defaults to None.
-            method2_cols (List[str]): Columns to unpack and modify using `_nested_dict_transformer`. 
+            unpack_by_nested_dict_transformer (List[str]): Columns to unpack and modify using `_nested_dict_transformer`. 
                 Defaults to None.
 
         Raises:
             ValueError: If 'json_list' is not provided.
             ValueError: If specified columns do not exist in the JSON data.
-            ValueError: If columns are mentioned in both 'method1_cols' and 'method2_cols'. 
+            ValueError: If columns are mentioned in both 'unpack_by_field_reference_cols' and 'unpack_by_nested_dict_transformer'. 
 
         Returns:
             List[Dict[str, Any]]: The updated list of dictionaries after column unpacking and modification.
@@ -222,23 +222,23 @@ class CustomerGaugeToDF(Task):
                 else:
                     logger.info(f"Column '{field}' not found.")
             return json_list_clean
-        if method1_cols and method2_cols:
-            duplicated_cols = set(method1_cols).intersection(set(method2_cols))
+        if unpack_by_field_reference_cols and unpack_by_nested_dict_transformer:
+            duplicated_cols = set(unpack_by_field_reference_cols).intersection(set(unpack_by_nested_dict_transformer))
         if duplicated_cols:
             raise ValueError(
-                f"{duplicated_cols} were mentioned in both method1_cols and method2_cols." 
+                f"{duplicated_cols} were mentioned in both unpack_by_field_reference_cols and unpack_by_nested_dict_transformer." 
                 " It's not possible to apply two methods to the same field."
                 )
         else:
-            if method1_cols is not None:
+            if unpack_by_field_reference_cols is not None:
                 json_list = unpack_columns(
-                    columns = method1_cols, 
+                    columns = unpack_by_field_reference_cols, 
                     unpack_function = self._field_reference_unpacker
                     )
 
-            if method2_cols is not None:
+            if unpack_by_nested_dict_transformer is not None:
                 json_list = unpack_columns(
-                    columns = method2_cols, 
+                    columns = unpack_by_nested_dict_transformer, 
                     unpack_function = self._nested_dict_transformer
                     )
         
@@ -330,8 +330,8 @@ class CustomerGaugeToDF(Task):
         "date_field",
         "start_date",
         "end_date",
-        "method1_cols",
-        "method2_cols",
+        "unpack_by_field_reference_cols",
+        "unpack_by_nested_dict_transformer",
     )
     def run(
         self,
@@ -345,8 +345,8 @@ class CustomerGaugeToDF(Task):
         ] = None,
         start_date: datetime = None,
         end_date: datetime = None,
-        method1_cols: List[str] = None,
-        method2_cols: List[str] = None,
+        unpack_by_field_reference_cols: List[str] = None,
+        unpack_by_nested_dict_transformer: List[str] = None,
         credentials_secret: str = "CUSTOMER-GAUGE",
         vault_name: str = None,
     ) -> pd.DataFrame:
@@ -369,9 +369,9 @@ class CustomerGaugeToDF(Task):
                 Defaults to None.
             end_date (datetime, optional): Defines the period start date in yyyy-mm-dd format. 
                 Defaults to None.
-            method1_cols (List[str]): Columns to unpack and modify using `_field_reference_unpacker`. 
+            unpack_by_field_reference_cols (List[str]): Columns to unpack and modify using `_field_reference_unpacker`. 
                 Defaults to None.
-            method2_cols (List[str]): Columns to unpack and modify using `_nested_dict_transformer`. 
+            unpack_by_nested_dict_transformer (List[str]): Columns to unpack and modify using `_nested_dict_transformer`. 
                 Defaults to None.       
             credentials_secret (str, optional): The name of the Azure Key Vault secret containing a 
                 dictionary with ['client_id', 'client_secret']. Defaults to "CUSTOMER-GAUGE".
@@ -427,8 +427,8 @@ class CustomerGaugeToDF(Task):
 
         clean_json = self.column_unpacker(
             json_list = total_json, 
-            method1_cols = method1_cols, 
-            method2_cols = method2_cols)
+            unpack_by_field_reference_cols = unpack_by_field_reference_cols, 
+            unpack_by_nested_dict_transformer = unpack_by_nested_dict_transformer)
         logger.info("Inserting data into the DataFrame...")
         df = pd.DataFrame(list(map(self.flatten_json, clean_json)))
         df = self.square_brackets_remover(df)

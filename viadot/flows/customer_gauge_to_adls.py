@@ -38,8 +38,8 @@ class CustomerGaugeToADLS(Flow):
         ] = None,
         start_date: datetime = None,
         end_date: datetime = None,
-        method1_cols: List[str] = None,
-        method2_cols: List[str] = None,
+        unpack_by_field_reference_cols: List[str] = None,
+        unpack_by_nested_dict_transformer: List[str] = None,
         customer_gauge_credentials_secret: str = "CUSTOMER-GAUGE",
         anonymize: bool = False,
         columns_to_anonymize: List[str] = None,
@@ -78,8 +78,8 @@ class CustomerGaugeToADLS(Flow):
                 Specifies the date type which filter date range. Defaults to None.
             start_date (datetime, optional): Defines the period start date in yyyy-mm-dd format. Defaults to None.
             end_date (datetime, optional): Defines the period end date in yyyy-mm-dd format. Defaults to None.
-            method1_cols (List[str]): Columns to unpack and modify using `_field_reference_unpacker`. Defaults to None.
-            method2_cols (List[str]): Columns to unpack and modify using `_nested_dict_transformer`. Defaults to None.            
+            unpack_by_field_reference_cols (List[str]): Columns to unpack and modify using `_field_reference_unpacker`. Defaults to None.
+            unpack_by_nested_dict_transformer (List[str]): Columns to unpack and modify using `_nested_dict_transformer`. Defaults to None.            
             customer_gauge_credentials_secret (str, optional): The name of the Azure Key Vault secret containing 
                 a dictionary with ['client_id', 'client_secret']. Defaults to "CUSTOMER-GAUGE".
             vault_name (str, optional): The name of the vault from which to obtain the secret. Defaults to None.
@@ -116,8 +116,8 @@ class CustomerGaugeToADLS(Flow):
         self.date_field = date_field
         self.start_date = start_date
         self.end_date = end_date
-        self.method1_cols = method1_cols
-        self.method2_cols = method2_cols
+        self.unpack_by_field_reference_cols = unpack_by_field_reference_cols
+        self.unpack_by_nested_dict_transformer = unpack_by_nested_dict_transformer
         self.customer_gauge_credentials_secret = customer_gauge_credentials_secret
 
         # validate_df
@@ -182,8 +182,8 @@ class CustomerGaugeToADLS(Flow):
             date_field=self.date_field,
             start_date=self.start_date,
             end_date=self.end_date,
-            method1_cols=self.method1_cols,
-            method2_cols=self.method2_cols,
+            unpack_by_field_reference_cols=self.unpack_by_field_reference_cols,
+            unpack_by_nested_dict_transformer=self.unpack_by_nested_dict_transformer,
             vault_name=self.vault_name,
             credentials_secret=self.customer_gauge_credentials_secret,
             flow=self,

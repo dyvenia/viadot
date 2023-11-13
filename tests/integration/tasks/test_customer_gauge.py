@@ -187,8 +187,8 @@ def test_column_unpacker_success_method1_and_method2():
     Test the 'column_unpacker' method with valid data and both Method 1 and Method 2 columns specified. It should return the expected result.
     """
     data = RAW_JSON['data'].copy()
-    method1_cols = ['properties']
-    method2_cols = ['drivers']
+    unpack_by_field_reference_cols = ['properties']
+    unpack_by_nested_dict_transformer = ['drivers']
 
     expected_result = [
         {'contact': {'first_name': '***', 'last_name': '***'},
@@ -221,7 +221,7 @@ def test_column_unpacker_success_method1_and_method2():
         '2_label': 'Waiting period'}}
     ]
 
-    result = CG.column_unpacker(json_list=data, method1_cols=method1_cols, method2_cols=method2_cols)
+    result = CG.column_unpacker(json_list=data, unpack_by_field_reference_cols=unpack_by_field_reference_cols, unpack_by_nested_dict_transformer=unpack_by_nested_dict_transformer)
 
     assert result == expected_result
 
@@ -231,10 +231,10 @@ def test_column_unpacker_missing_json_list():
     """
     Test the 'column_unpacker' method with missing 'json_list' argument. It should raise a ValueError.
     """
-    method1_cols = ['properties']
-    method2_cols = ['drivers']
+    unpack_by_field_reference_cols = ['properties']
+    unpack_by_nested_dict_transformer = ['drivers']
     with pytest.raises(ValueError, match="Input 'json_list' is required."):
-        CG.column_unpacker(json_list=None, method1_cols=method1_cols, method2_cols=method2_cols)
+        CG.column_unpacker(json_list=None, unpack_by_field_reference_cols=unpack_by_field_reference_cols, unpack_by_nested_dict_transformer=unpack_by_nested_dict_transformer)
 
 
 @pytest.mark.test_column_unpacker_duplicate_columns
@@ -243,10 +243,10 @@ def test_column_unpacker_duplicate_columns():
     Test the 'column_unpacker' method with duplicate columns specified in both Method 1 and Method 2. It should raise a ValueError.
     """
     data = RAW_JSON['data'].copy()
-    method1_cols = ['properties']
-    method2_cols = ['properties']
-    with pytest.raises(ValueError, match="{'properties'} were mentioned in both method1_cols and method2_cols. It's not possible to apply two methods to the same field."):
-        CG.column_unpacker(json_list=data, method1_cols=method1_cols, method2_cols=method2_cols)
+    unpack_by_field_reference_cols = ['properties']
+    unpack_by_nested_dict_transformer = ['properties']
+    with pytest.raises(ValueError, match="{'properties'} were mentioned in both unpack_by_field_reference_cols and unpack_by_nested_dict_transformer. It's not possible to apply two methods to the same field."):
+        CG.column_unpacker(json_list=data, unpack_by_field_reference_cols=unpack_by_field_reference_cols, unpack_by_nested_dict_transformer=unpack_by_nested_dict_transformer)
 
 
 @pytest.mark.test_flatten_json
