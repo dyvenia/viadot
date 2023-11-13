@@ -20,6 +20,7 @@ class CustomerGauge(Source):
         endpoint: Literal["responses", "non-responses"] = None,
         url: str = None,
         credentials: Dict[str, Any] = None,
+        credentials_secret: str = "CUSTOMER-GAUGE",
     ):
         """
         A class to connect and download data using Customer Gauge API.
@@ -31,7 +32,8 @@ class CustomerGauge(Source):
             endpoint (Literal["responses", "non-responses"]): Indicate which endpoint to connect. Defaults to None.
             url (str, optional): Endpoint URL. Defaults to None.
             credentials (Dict[str, Any], optional): Credentials to connect with API containing client_id, client_secret. Defaults to None.
-
+            credentials_secret (str, optional): The name of the secret stored in local_config containing a 
+                dictionary with ['client_id', 'client_secret']. Defaults to "CUSTOMER-GAUGE".
         Raises:
             ValueError: If endpoint is not provided or incorect.
             CredentialError: If credentials are not provided in local_config or directly as a parameter
@@ -50,11 +52,12 @@ class CustomerGauge(Source):
             raise ValueError(
                 "Provide endpoint name. Choose: 'responses' or 'non-responses'. Otherwise, provide URL"
             )
+        self.credentials_secret = credentials_secret
 
         if credentials is not None:
             self.credentials = credentials
         else:
-            self.credentials = local_config.get("CustomerGauge")
+            self.credentials = local_config.get(credentials_secret)
             if self.credentials is None:
                 raise CredentialError("Credentials not provided.")
 
