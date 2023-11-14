@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - Splitted test for Eurostat on source tests and task tests
+- Fixed bug for endpoint `conversations` in GET method in `Genesys` Task.
 
 ### Added
 - Added new view type `agent_interaction_view_type` in `Genesys`source.
