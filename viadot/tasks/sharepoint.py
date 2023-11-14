@@ -429,7 +429,6 @@ class SharepointListToDF(Task):
 
         # Rename columns names inside DataFrame
         df = df.rename(columns=dictionary)
-        # Check again for duplicates
         return df
 
     def run(
