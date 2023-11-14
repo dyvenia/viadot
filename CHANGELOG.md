@@ -5,6 +5,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+
+### Added
+- Added `TM1` source class.
+- Added `TM1ToDF` task class.
+- Added `set_prefect_kv` parameter to `BigQueryToADLS` with `False` as a default. If there is a need to create new pair in KV Store the parameter can be changed to `True`.
+- Added `_rename_duplicated_fields` method to `SharepointListToDF` task class for finding and rename duplicated columns
+- Added new view type `agent_interaction_view_type` in `Genesys`source.
+### Changed
+- Splitted test for Eurostat on source tests and task tests
 - Modified `SharepointList` source class: 
   -> docstrings update
 - Modified `SharepointToADLS` flow class:
@@ -22,7 +31,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   -> Changed `make_filter_for_df` method errors messages
 - Modified `SharepointListToDF` task class:
   -> docstrings update
-  -> Added `_rename_duplicated_fields` method to find and rename duplicated columns
 
 
 ## [0.4.21] - 2023-10-26

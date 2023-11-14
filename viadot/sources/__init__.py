@@ -30,6 +30,7 @@ from .hubspot import Hubspot
 from .mindful import Mindful
 from .sql_server import SQLServer
 from .sqlite import SQLite
+from .tm1 import TM1
 
 # APIS
 from .uk_carbon_intensity import UKCarbonIntensity

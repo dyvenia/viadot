@@ -2,6 +2,7 @@ import json
 
 import pandas as pd
 import pytest
+from viadot.exceptions import CredentialError
 
 from viadot.sources import Hubspot
 from viadot.task_utils import credentials_loader
@@ -38,6 +39,11 @@ def var_dictionary():
         ],
     }
     yield variables
+
+
+def test_credentials_not_provided():
+    with pytest.raises(CredentialError, match="Credentials not found."):
+        Hubspot(credentials={})
 
 
 def test_clean_special_characters():
@@ -79,3 +85,8 @@ def test_to_json(var_dictionary):
     trigger = HUBSPOT.to_json(url=api_url, body=api_body, method="POST")
 
     assert isinstance(trigger, dict)
+
+
+def test_get_properties_url(var_dictionary):
+    url = HUBSPOT.get_properties_url(endpoint=var_dictionary["endpoint"])
+    assert isinstance(url, str)
