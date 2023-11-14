@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - Added new view type `agent_interaction_view_type` in `Genesys`source.
+- Added new logic for endpoint `users` in `Genesys`task.
 
 
 ## [0.4.21] - 2023-10-26
