@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Added `TM1` source class.
 - Added `TM1ToDF` task class.
+- Added `set_prefect_kv` parameter to `BigQueryToADLS` with `False` as a default. If there is a need to create new pair in KV Store the parameter can be changed to `True`.
 
 ### Changed
 - Splitted test for Eurostat on source tests and task tests
