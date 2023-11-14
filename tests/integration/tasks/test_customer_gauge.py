@@ -8,51 +8,77 @@ CG = CustomerGaugeToDF(endpoint=ENDPOINT)
 CUR = 185000
 PAGESIZE = 1000
 
-DATA_JSON = {'contact': {'first_name': '***', 'last_name': '***'},
-   'number_customer': 266,
-   'date_email_sent': '2018-02-05 10:42:28',
-   'properties': [{'field': 'Postal Code', 'reference': '999'},
-    {'field': 'City', 'reference': 'Eldorado'},
-    {'field': 'Currency', 'reference': None},
-    {'field': 'Item Quantity', 'reference': '7'},
-    {'field': 'PostingDate', 'reference': '2018-01-10 00:00:00'}],
-   'custom_fields': [{'field': 'Assignment_ID', 'reference': None}],
-   'drivers': [{'label': 'Product Quality and Product Performance'},
-    {'label': 'Function and Design'},
-    {'label': 'Value for Money'},
-    {'label': 'Packaging'}]}
+DATA_JSON = {
+    "contact": {"first_name": "***", "last_name": "***"},
+    "number_customer": 266,
+    "date_email_sent": "2018-02-05 10:42:28",
+    "properties": [
+        {"field": "Postal Code", "reference": "999"},
+        {"field": "City", "reference": "Eldorado"},
+        {"field": "Currency", "reference": None},
+        {"field": "Item Quantity", "reference": "7"},
+        {"field": "PostingDate", "reference": "2018-01-10 00:00:00"},
+    ],
+    "custom_fields": [{"field": "Assignment_ID", "reference": None}],
+    "drivers": [
+        {"label": "Product Quality and Product Performance"},
+        {"label": "Function and Design"},
+        {"label": "Value for Money"},
+        {"label": "Packaging"},
+    ],
+}
 
-RAW_JSON  = {'data': [{'contact': {'first_name': '***', 'last_name': '***'},
-   'number_customer': 266,
-   'date_email_sent': '2018-02-05 10:42:28',
-   'properties': [{'field': 'Postal Code', 'reference': '999'},
-    {'field': 'City', 'reference': 'Eldorado'},
-    {'field': 'Currency', 'reference': None},
-    {'field': 'Item Quantity', 'reference': '7'},
-    {'field': 'PostingDate', 'reference': '2018-01-10 00:00:00'}],
-   'custom_fields': [{'field': 'Assignment_ID', 'reference': None}],
-   'drivers': [{'label': 'Product Quality and Product Performance'},
-    {'label': 'Function and Design'},
-    {'label': 'Value for Money'},
-    {'label': 'Packaging'}]},
-  {'contact': {'first_name': '***', 'last_name': '***'},
-   'number_customer': 206,
-   'date_email_sent': '2018-02-05 10:41:01',
-   'properties': [{'field': 'Postal Code', 'reference': '0000'},
-    {'field': 'City', 'reference': 'Neverland'},
-    {'field': 'Currency', 'reference': None},
-    {'field': 'Item Quantity', 'reference': '1'},
-    {'field': 'PostingDate', 'reference': '2018-01-26 00:00:00'}],
-   'custom_fields': [{'field': 'Assignment_ID', 'reference': None}],
-   'drivers': [{'label': 'The website of the online shop (overall impression)'},
-    {'label': 'Waiting period'}]}],
- 'cursor': {'next': 37}}
+RAW_JSON = {
+    "data": [
+        {
+            "contact": {"first_name": "***", "last_name": "***"},
+            "number_customer": 266,
+            "date_email_sent": "2018-02-05 10:42:28",
+            "properties": [
+                {"field": "Postal Code", "reference": "999"},
+                {"field": "City", "reference": "Eldorado"},
+                {"field": "Currency", "reference": None},
+                {"field": "Item Quantity", "reference": "7"},
+                {"field": "PostingDate", "reference": "2018-01-10 00:00:00"},
+            ],
+            "custom_fields": [{"field": "Assignment_ID", "reference": None}],
+            "drivers": [
+                {"label": "Product Quality and Product Performance"},
+                {"label": "Function and Design"},
+                {"label": "Value for Money"},
+                {"label": "Packaging"},
+            ],
+        },
+        {
+            "contact": {"first_name": "***", "last_name": "***"},
+            "number_customer": 206,
+            "date_email_sent": "2018-02-05 10:41:01",
+            "properties": [
+                {"field": "Postal Code", "reference": "0000"},
+                {"field": "City", "reference": "Neverland"},
+                {"field": "Currency", "reference": None},
+                {"field": "Item Quantity", "reference": "1"},
+                {"field": "PostingDate", "reference": "2018-01-26 00:00:00"},
+            ],
+            "custom_fields": [{"field": "Assignment_ID", "reference": None}],
+            "drivers": [
+                {"label": "The website of the online shop (overall impression)"},
+                {"label": "Waiting period"},
+            ],
+        },
+    ],
+    "cursor": {"next": 37},
+}
 
-WRONG_DATA  = {'cols':[
-    {'field': 'City', 'reference': 'Eldorado'},
-    {'field': 'Currency', 'reference': None},
-    {'field': 'Item Quantity', 'reference': '7'},
-    {'field': 'PostingDate', 'reference': '2018-01-10 00:00:00'}]}
+WRONG_DATA = {
+    "cols": [
+        {"field": "City", "reference": "Eldorado"},
+        {"field": "Currency", "reference": None},
+        {"field": "Item Quantity", "reference": "7"},
+        {"field": "PostingDate", "reference": "2018-01-10 00:00:00"},
+    ]
+}
+
 
 @pytest.mark.looping_api_calls
 def test_customer_gauge_to_df_loop():
@@ -87,28 +113,33 @@ def test_get_data_error_raising():
 def test_field_reference_unpacker():
     """
     Test the '_field_reference_unpacker' method with valid data. It should unpack and modify dictionaries within the specified field and return the expected result.
-    """ 
+    """
     data = DATA_JSON.copy()
-    field = 'properties'
+    field = "properties"
     expected_result = {
-        'contact': {'first_name': '***', 'last_name': '***'},
-        'number_customer': 266,
-        'date_email_sent': '2018-02-05 10:42:28',
-        'properties': {'Postal Code': '999',
-        'City': 'Eldorado',
-        'Currency': None,
-        'Item Quantity': '7',
-        'PostingDate': '2018-01-10 00:00:00'},
-        'custom_fields': [{'field': 'Assignment_ID', 'reference': None}],
-        'drivers': [{'label': 'Product Quality and Product Performance'},
-        {'label': 'Function and Design'},
-        {'label': 'Value for Money'},
-        {'label': 'Packaging'}]
+        "contact": {"first_name": "***", "last_name": "***"},
+        "number_customer": 266,
+        "date_email_sent": "2018-02-05 10:42:28",
+        "properties": {
+            "Postal Code": "999",
+            "City": "Eldorado",
+            "Currency": None,
+            "Item Quantity": "7",
+            "PostingDate": "2018-01-10 00:00:00",
+        },
+        "custom_fields": [{"field": "Assignment_ID", "reference": None}],
+        "drivers": [
+            {"label": "Product Quality and Product Performance"},
+            {"label": "Function and Design"},
+            {"label": "Value for Money"},
+            {"label": "Packaging"},
+        ],
     }
 
     result = CG._field_reference_unpacker(json_response=data, field=field)
 
     assert result == expected_result
+
 
 @pytest.mark.field_reference_unpacker_value_error
 def test_field_reference_unpacker_invalid_data_format():
@@ -116,10 +147,13 @@ def test_field_reference_unpacker_invalid_data_format():
     Test the '_field_reference_unpacker' method with invalid data format that should raise a ValueError. It should raise a ValueError exception.
     """
     data = DATA_JSON.copy()
-    field='contact'
-    with pytest.raises(ValueError, match=r"Dictionary within the specified field doesn't contain exactly two items."):
+    field = "contact"
+    with pytest.raises(
+        ValueError,
+        match=r"Dictionary within the specified field doesn't contain exactly two items.",
+    ):
         CG._field_reference_unpacker(json_response=data, field=field)
- 
+
 
 @pytest.mark.field_reference_unpacker_key_error
 def test_field_reference_unpacker_missing_field():
@@ -138,20 +172,26 @@ def test_nested_dict_transformer():
     Test the '_nested_dict_transformer' method with valid data. It should modify nested dictionaries within the specified field and return the expected result.
     """
     data = DATA_JSON.copy()
-    field = 'drivers'
-    expected_result = {'contact': {'first_name': '***', 'last_name': '***'},
-        'number_customer': 266,
-        'date_email_sent': '2018-02-05 10:42:28',
-        'properties': [{'field': 'Postal Code', 'reference': '999'},
-        {'field': 'City', 'reference': 'Eldorado'},
-        {'field': 'Currency', 'reference': None},
-        {'field': 'Item Quantity', 'reference': '7'},
-        {'field': 'PostingDate', 'reference': '2018-01-10 00:00:00'}],
-        'custom_fields': [{'field': 'Assignment_ID', 'reference': None}],
-        'drivers': {'1_label': 'Product Quality and Product Performance',
-        '2_label': 'Function and Design',
-        '3_label': 'Value for Money',
-        '4_label': 'Packaging'}}
+    field = "drivers"
+    expected_result = {
+        "contact": {"first_name": "***", "last_name": "***"},
+        "number_customer": 266,
+        "date_email_sent": "2018-02-05 10:42:28",
+        "properties": [
+            {"field": "Postal Code", "reference": "999"},
+            {"field": "City", "reference": "Eldorado"},
+            {"field": "Currency", "reference": None},
+            {"field": "Item Quantity", "reference": "7"},
+            {"field": "PostingDate", "reference": "2018-01-10 00:00:00"},
+        ],
+        "custom_fields": [{"field": "Assignment_ID", "reference": None}],
+        "drivers": {
+            "1_label": "Product Quality and Product Performance",
+            "2_label": "Function and Design",
+            "3_label": "Value for Money",
+            "4_label": "Packaging",
+        },
+    }
 
     result = CG._nested_dict_transformer(json_response=data, field=field)
 
@@ -164,7 +204,7 @@ def test_nested_dict_transformer_invalid_data_format():
     Test the '_nested_dict_transformer' method with invalid data format. It should return the same data without modification.
     """
     data = DATA_JSON.copy()
-    field='number_customer'
+    field = "number_customer"
     result = CG._nested_dict_transformer(json_response=data, field=field)
 
     assert result == data
@@ -186,42 +226,54 @@ def test_column_unpacker_success_method1_and_method2():
     """
     Test the 'column_unpacker' method with valid data and both Method 1 and Method 2 columns specified. It should return the expected result.
     """
-    data = RAW_JSON['data'].copy()
-    unpack_by_field_reference_cols = ['properties']
-    unpack_by_nested_dict_transformer = ['drivers']
+    data = RAW_JSON["data"].copy()
+    unpack_by_field_reference_cols = ["properties"]
+    unpack_by_nested_dict_transformer = ["drivers"]
 
     expected_result = [
-        {'contact': {'first_name': '***', 'last_name': '***'},
-        'number_customer': 266,
-        'date_email_sent': '2018-02-05 10:42:28',
-        'properties': {
-            'Postal Code': '999',
-            'City': 'Eldorado',
-            'Currency': None,
-            'Item Quantity': '7',
-            'PostingDate': '2018-01-10 00:00:00'
+        {
+            "contact": {"first_name": "***", "last_name": "***"},
+            "number_customer": 266,
+            "date_email_sent": "2018-02-05 10:42:28",
+            "properties": {
+                "Postal Code": "999",
+                "City": "Eldorado",
+                "Currency": None,
+                "Item Quantity": "7",
+                "PostingDate": "2018-01-10 00:00:00",
             },
-        'custom_fields': [{'field': 'Assignment_ID', 'reference': None}],
-        'drivers': {'1_label': 'Product Quality and Product Performance',
-        '2_label': 'Function and Design',
-        '3_label': 'Value for Money',
-        '4_label': 'Packaging'}},
-        {'contact': {'first_name': '***', 'last_name': '***'},
-        'number_customer': 206,
-        'date_email_sent': '2018-02-05 10:41:01',
-        'properties': {
-            'Postal Code': '0000',
-            'City': 'Neverland',
-            'Currency': None,
-            'Item Quantity': '1',
-            'PostingDate': '2018-01-26 00:00:00'
+            "custom_fields": [{"field": "Assignment_ID", "reference": None}],
+            "drivers": {
+                "1_label": "Product Quality and Product Performance",
+                "2_label": "Function and Design",
+                "3_label": "Value for Money",
+                "4_label": "Packaging",
             },
-        'custom_fields': [{'field': 'Assignment_ID', 'reference': None}],
-        'drivers': {'1_label': 'The website of the online shop (overall impression)',
-        '2_label': 'Waiting period'}}
+        },
+        {
+            "contact": {"first_name": "***", "last_name": "***"},
+            "number_customer": 206,
+            "date_email_sent": "2018-02-05 10:41:01",
+            "properties": {
+                "Postal Code": "0000",
+                "City": "Neverland",
+                "Currency": None,
+                "Item Quantity": "1",
+                "PostingDate": "2018-01-26 00:00:00",
+            },
+            "custom_fields": [{"field": "Assignment_ID", "reference": None}],
+            "drivers": {
+                "1_label": "The website of the online shop (overall impression)",
+                "2_label": "Waiting period",
+            },
+        },
     ]
 
-    result = CG.column_unpacker(json_list=data, unpack_by_field_reference_cols=unpack_by_field_reference_cols, unpack_by_nested_dict_transformer=unpack_by_nested_dict_transformer)
+    result = CG.column_unpacker(
+        json_list=data,
+        unpack_by_field_reference_cols=unpack_by_field_reference_cols,
+        unpack_by_nested_dict_transformer=unpack_by_nested_dict_transformer,
+    )
 
     assert result == expected_result
 
@@ -231,10 +283,14 @@ def test_column_unpacker_missing_json_list():
     """
     Test the 'column_unpacker' method with missing 'json_list' argument. It should raise a ValueError.
     """
-    unpack_by_field_reference_cols = ['properties']
-    unpack_by_nested_dict_transformer = ['drivers']
+    unpack_by_field_reference_cols = ["properties"]
+    unpack_by_nested_dict_transformer = ["drivers"]
     with pytest.raises(ValueError, match="Input 'json_list' is required."):
-        CG.column_unpacker(json_list=None, unpack_by_field_reference_cols=unpack_by_field_reference_cols, unpack_by_nested_dict_transformer=unpack_by_nested_dict_transformer)
+        CG.column_unpacker(
+            json_list=None,
+            unpack_by_field_reference_cols=unpack_by_field_reference_cols,
+            unpack_by_nested_dict_transformer=unpack_by_nested_dict_transformer,
+        )
 
 
 @pytest.mark.test_column_unpacker_duplicate_columns
@@ -242,11 +298,18 @@ def test_column_unpacker_duplicate_columns():
     """
     Test the 'column_unpacker' method with duplicate columns specified in both Method 1 and Method 2. It should raise a ValueError.
     """
-    data = RAW_JSON['data'].copy()
-    unpack_by_field_reference_cols = ['properties']
-    unpack_by_nested_dict_transformer = ['properties']
-    with pytest.raises(ValueError, match="{'properties'} were mentioned in both unpack_by_field_reference_cols and unpack_by_nested_dict_transformer. It's not possible to apply two methods to the same field."):
-        CG.column_unpacker(json_list=data, unpack_by_field_reference_cols=unpack_by_field_reference_cols, unpack_by_nested_dict_transformer=unpack_by_nested_dict_transformer)
+    data = RAW_JSON["data"].copy()
+    unpack_by_field_reference_cols = ["properties"]
+    unpack_by_nested_dict_transformer = ["properties"]
+    with pytest.raises(
+        ValueError,
+        match="{'properties'} were mentioned in both unpack_by_field_reference_cols and unpack_by_nested_dict_transformer. It's not possible to apply two methods to the same field.",
+    ):
+        CG.column_unpacker(
+            json_list=data,
+            unpack_by_field_reference_cols=unpack_by_field_reference_cols,
+            unpack_by_nested_dict_transformer=unpack_by_nested_dict_transformer,
+        )
 
 
 @pytest.mark.test_flatten_json

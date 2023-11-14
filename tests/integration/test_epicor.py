@@ -1,5 +1,5 @@
-import pytest
 import pandas as pd
+import pytest
 
 from viadot.config import local_config
 from viadot.exceptions import CredentialError, DataRangeError

@@ -1,13 +1,13 @@
 import os
-from pathlib import Path
 import shutil
+from pathlib import Path
 from typing import Dict, List, Union
 
 from prefect import Flow, task
 from prefect.tasks.shell import ShellTask
 from prefect.triggers import any_successful
 
-from viadot.tasks import CloneRepo, AzureKeyVaultSecret, LumaIngest
+from viadot.tasks import AzureKeyVaultSecret, CloneRepo, LumaIngest
 
 
 @task(trigger=any_successful)

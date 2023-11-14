@@ -32,7 +32,7 @@ class CustomerGauge(Source):
             endpoint (Literal["responses", "non-responses"]): Indicate which endpoint to connect. Defaults to None.
             url (str, optional): Endpoint URL. Defaults to None.
             credentials (Dict[str, Any], optional): Credentials to connect with API containing client_id, client_secret. Defaults to None.
-            credentials_secret (str, optional): The name of the secret stored in local_config containing a 
+            credentials_secret (str, optional): The name of the secret stored in local_config containing a
                 dictionary with ['client_id', 'client_secret']. Defaults to "CUSTOMER-GAUGE".
         Raises:
             ValueError: If endpoint is not provided or incorect.

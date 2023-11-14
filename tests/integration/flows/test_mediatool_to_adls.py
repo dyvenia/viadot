@@ -4,8 +4,8 @@ from unittest import mock
 import pandas as pd
 import pytest
 
-from viadot.flows import MediatoolToADLS
 from viadot.exceptions import ValidationError
+from viadot.flows import MediatoolToADLS
 
 DATA = {"country": ["DK", "DE"], "sales": [3, 4]}
 ADLS_FILE_NAME = "test_mediatool.parquet"
