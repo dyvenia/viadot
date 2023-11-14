@@ -10,6 +10,16 @@ ENDPOINT = random.choice(["responses", "non-responses"])
 CG = CustomerGauge(endpoint=ENDPOINT)
 
 
+def test_wrong_endpoint():
+    with pytest.raises(ValueError, match="Incorrect endpoint name"):
+        CustomerGauge(endpoint=["wrong_endpoint"])
+
+
+def test_endpoint_and_url_not_provided():
+    with pytest.raises(ValueError, match="Provide endpoint name"):
+        CustomerGauge()
+
+
 def test_get_json_content():
     json_response = CG.get_json_response()
     assert isinstance(json_response, dict)
@@ -26,11 +36,16 @@ def test_pass_specific_cursor():
     assert cur_retrieved > cur
 
 
+def test_cursor_is_not_provided():
+    with pytest.raises(
+        ValueError, match="Provided argument doesn't contain 'cursor' value"
+    ):
+        CG.get_cursor(json_response={})
+
+
 def test_uncomplete_date_arguments():
     with pytest.raises(ValueError, match="Missing date arguments"):
-        json_response = CG.get_json_response(
-            date_field="date_sent", start_date="2012-01-03"
-        )
+        CG.get_json_response(date_field="date_sent", start_date="2012-01-03")
 
 
 def test_endpoint_url_argument():

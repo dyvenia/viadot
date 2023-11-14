@@ -6,13 +6,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 ### Added
+- Added new view type `agent_interaction_view_type` in `Genesys`source.
+- Added `TM1` source class.
+- Added `TM1ToDF` task class.
+- Added `set_prefect_kv` parameter to `BigQueryToADLS` with `False` as a default. If there is a need to create new pair in KV Store the parameter can be changed to `True`.
 
 ### Fixed
 
 ### Changed
+- Splitted test for Eurostat on source tests and task tests.
 - Modified `CustomerGauge` source class with simplified logic to return json structure.
 - Expanded `CustomerGaugeToDF` task class with separate cleaning functions and handling nested json structure flattening with two new methods `_field_reference_unpacker` and `_nested_dict_transformer`.
 - Changed `CustomerGaugeToADLS` to containing new arguments.
+
 
 ## [0.4.21] - 2023-10-26
 ### Added

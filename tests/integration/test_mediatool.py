@@ -5,12 +5,17 @@ import pandas as pd
 import pytest
 from prefect.tasks.secrets import PrefectSecret
 
-from viadot.exceptions import APIError
+from viadot.exceptions import APIError, CredentialError
 from viadot.sources import Mediatool
 from viadot.task_utils import credentials_loader
 
 CREDENTIALS = credentials_loader.run(credentials_secret="MEDIATOOL-TESTS")
 MTOOL = Mediatool(credentials=CREDENTIALS)
+
+
+def test_init_empty_credentials():
+    with pytest.raises(CredentialError, match=r"Missing credentials."):
+        Mediatool(credentials={})
 
 
 def test_get_campaigns_df():
@@ -29,11 +34,25 @@ def test_get_organizations():
     assert isinstance(orgs, pd.DataFrame)
 
 
+def test_get_organizations_return_list():
+    orgs = MTOOL.get_organizations(
+        user_id=CREDENTIALS["USER_ID"], return_dataframe=False
+    )
+    assert isinstance(orgs, list)
+
+
 def test_get_media_entries():
     media_entries = MTOOL.get_media_entries(
         organization_id=CREDENTIALS["ORG"], columns=["_id"]
     )
     assert isinstance(media_entries, pd.DataFrame)
+
+
+def test_get_media_entries_wrong_columns(caplog):
+    MTOOL.get_media_entries(
+        organization_id=CREDENTIALS["ORG"], columns=["wrong_column", "random_column"]
+    )
+    assert "Columns ['wrong_column', 'random_column'] are incorrect." in caplog.text
 
 
 def test_get_media_types_correct_id():
@@ -48,9 +67,23 @@ def test_get_media_types_wrong_id():
         _ = MTOOL.get_media_types(["040404"])
 
 
-def test_get_vehicles(caplog):
+def test_get_media_types_return_list():
+    media_types = MTOOL.get_media_types(
+        media_type_ids=[CREDENTIALS["MEDIA_TYPE_ID"]], return_dataframe=False
+    )
+    assert isinstance(media_types, list)
+
+
+def test_get_vehicles_wrong_ids(caplog):
     _ = MTOOL.get_vehicles(vehicle_ids=["100000", "200000"])
     assert "Vehicle were not found for: ['100000', '200000']" in caplog.text
+
+
+def test_get_vehicles_return_dict():
+    vehicles = MTOOL.get_vehicles(
+        vehicle_ids=[CREDENTIALS["VEHICLE_ID"]], return_dataframe=False
+    )
+    assert isinstance(vehicles, dict)
 
 
 def test_rename_columns_correct():
