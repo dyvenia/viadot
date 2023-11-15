@@ -84,27 +84,17 @@ class Sharepoint(Source):
 
 
 class SharepointList(Source):
-    """
-    A Sharepoint_List class to connect and download data from Sharepoint lists.
-    Warning!
-        Please be carefull with selection of the column names because once sharepoint list is opened inside a browser it may display columns in different languages.
-        Because of that the resulting file or output might have different column names then the one which u see in the browser.
-    Args:
-        credentials (dict): Credentials should include:
-           - "tenant"
-           - "client_id"
-           - "scopes"
-           - "thumbprint"
-           - "private_key"
-    """
-
     def __init__(
         self,
         credentials: Dict[str, Any] = None,
         *args,
         **kwargs,
     ):
-        """_summary_
+        """
+        A Sharepoint_List class to connect and download data from Sharepoint lists.
+        Warning!
+            Please be careful with selection of the column names because once sharepoint list is opened inside a browser it may display columns in different languages.
+            Because of that the resulting file or output might have different column names then the one which u see in the browser.
 
         Args:
             credentials (Dict[str, Any], optional): Credentials should include:
@@ -115,8 +105,8 @@ class SharepointList(Source):
            - "private_key"
 
         Raises:
-            CredentialError: If no credentials are pased
-            and local config doesn't contain them neiter
+            CredentialError: If no credentials are passed
+            and local config doesn't contain them neither
         """
         DEFAULT_CREDENTIALS = local_config.get("SHAREPOINT_CERT")
         credentials = credentials or DEFAULT_CREDENTIALS
@@ -126,15 +116,15 @@ class SharepointList(Source):
         super().__init__(*args, credentials=credentials, **kwargs)
 
     def get_connection(self, site_url: str):
-        """Function for connecting into Sharepoint with AuthenticationContext
+        """Function for connecting into Sharepoint with AuthenticationContext.
 
         Args:
-            site_url (str): url of the sharepoint list
+            site_url (str): URL of the sharepoint list.
 
         Returns:
-            ctx: authentication context
+            ctx: Authentication context.
         """
-        logger.info("Connecting into Sharepoint with AuthenticationContexts")
+        logger.info("Connecting into Sharepoint with AuthenticationContexts.")
         try:
             auth_context = AuthenticationContext(site_url)
             auth_context.with_client_certificate(
@@ -158,7 +148,7 @@ class SharepointList(Source):
         list_item,
         selected_fields: dict,
     ) -> dict:
-        """Function for extracting and unpacking list items from the search fields
+        """Function for extracting and unpacking list items from the search fields.
 
         Args:
             list_items (office365 list item): A list with office365 list item objects (rows)
@@ -166,15 +156,15 @@ class SharepointList(Source):
 
         Raises:
             ValueError: "Check if given field property is valid!"
-            ValueError: "Get nested dict for not recognized type of field! Check field types in the source"
-            ValueError: "Get empty properties for list items"
+            ValueError: "Get nested dict for not recognized type of field! Check field types in the source."
+            ValueError: "Get empty properties for list items."
 
         Returns:
-            dict: A dictionary with Column: Value pairs for each row from the list
+            dict: A dictionary with Column: Value pairs for each row from the list.
         """
         # Creating the body of dictionary
         new_dict = dict()
-        # For loop scanning the propertys of searching fields
+        # For loop scanning the properties of searching fields
         item_values_dict = list_item.properties
         if item_values_dict:
             for field, val in item_values_dict.items():
@@ -196,13 +186,13 @@ class SharepointList(Source):
                         new_dict[field] = ";".join(nested_dict.values())
                     else:
                         raise ValueError(
-                            "Get nested dict for not recognized type of field! Check field types in the source"
+                            "Get nested dict for not recognized type of field! Check field types in the source."
                         )
                 else:
                     new_dict[field] = val
         else:
             raise ValueError(
-                "Get empty properties for list items. Check if parameter list_item collection containes any data -> item objects."
+                "Get empty properties for list items. Check if parameter list_item collection contains any data -> item objects."
             )
         return new_dict
 
@@ -213,17 +203,17 @@ class SharepointList(Source):
         required_fields: List[str] = None,
     ) -> List:
         """
-        Function for geting list of fields objects from the sharepoint list.
+        Function for getting list of fields objects from the sharepoint list.
         It can get all fields available if required_fields not passed
         or just the one which are in the list required_fields.
 
         Args:
-            list_title (str): name of the sharepoint list
-            site_url (str): url to the sharepoint list with "/" at the end
+            list_title (str): Name of the sharepoint list.
+            site_url (str): URL to the sharepoint list with "/" at the end.
             required_fields (List[str], optional ): List of required fields to ingest. It will get all fields if not passed.
 
         Returns:
-            List: list with office365 sharepoint list field objects
+            List: List with office365 sharepoint list field objects.
         """
 
         ctx = self.get_connection(site_url=site_url)
@@ -263,9 +253,9 @@ class SharepointList(Source):
             -> more properties can be discovered by getting list.item.properties.
 
         Args:
-            list_title (str): _description_. Defaults to None.
-            site_url (str): _description_. Defaults to None.
-            required_fields (List[str], optional): _description_. Defaults to None.
+            list_title (str): A title of the sharepoint list. Defaults to None.
+            site_url (str): A sharepoint list URL. Defaults to None.
+            required_fields (List[str], optional): List of fields(columns) to be ingested. Defaults to None.
             field_property (str, optional): Property to extract from nested fields
                 like column with type User*. Defaults to "Title".
 
@@ -318,10 +308,10 @@ class SharepointList(Source):
         Function to check if filters dict is valid.
         Please check and apply only allowed filter settings:
             allowed_dtypes = ["datetime", "date", "bool", "int", "float", "complex", "str"]
-            allowed_conjuction = ["&", "|"]
+            allowed_conjunction = ["&", "|"]
             allowed_operators = ["<", ">", "<=", ">=", "==", "!="]
-        Operator conjuction is only possible if there are 2 values like: value <= 1 | value == 5
-        Filter conjuction is only possible if there are more then 1 filters for ex. date and creator
+        Operator conjunction is only possible if there are 2 values like: value <= 1 | value == 5
+        Filter conjunction is only possible if there are more then 1 filters for ex. date and creator
 
         Args:
             filters (dict): A dictionary containing filter settings
@@ -333,8 +323,8 @@ class SharepointList(Source):
                                             "value2": today_date,
                                             "operator1": ">=",
                                             "operator2": "<=",
-                                            "operators_conjuction": "&",
-                                            "filters_conjuction": "&",
+                                            "operators_conjunction": "&",
+                                            "filters_conjunction": "&",
                                             },
                                     "Factory": {
                                         "dtype": "str",
@@ -344,25 +334,25 @@ class SharepointList(Source):
                                     }
 
         Raises:
-            ValueError: If dtype not in allowed list
-            ValueError: If comparison operator1 not in allowed list
-            ValueError: If value for operator1 is missing
-            ValueError: If comparison operator1 for the first value is missing
-            ValueError: If comparison operator2 not in allowed list
-            ValueError: If value for operator2 is missing
-            ValueError: If comparison operator2 for the first value is missing
-            ValueError: If operator conjuction is missing while there are 2 values and 2 operators passed
-            ValueError: If operator conjuction is not in the allowed list
-            ValueError: If operator conjuction provided why only one filter value is given
-            ValueError: If filter conjuction provided without 2nd filter
-            ValueError: If filter conjuction not in the allowed list
+            ValueError: If dtype not in allowed list.
+            ValueError: If comparison operator1 not in allowed list.
+            ValueError: If value for operator1 is missing.
+            ValueError: If comparison operator1 for the first value is missing.
+            ValueError: If comparison operator2 not in allowed list.
+            ValueError: If value for operator2 is missing.
+            ValueError: If comparison operator2 for the first value is missing.
+            ValueError: If operator conjunction is missing while there are 2 values and 2 operators passed.
+            ValueError: If operator conjunction is not in the allowed list.
+            ValueError: If operator conjunction provided why only one filter value is given.
+            ValueError: If filter conjunction provided without 2nd filter.
+            ValueError: If filter conjunction not in the allowed list.
 
         Returns:
-            bool: True if all checks passed
+            bool: True if all checks passed.
         """
 
         allowed_dtypes = ["datetime", "date", "bool", "int", "float", "complex", "str"]
-        allowed_conjuction = ["&", "|"]
+        allowed_conjunction = ["&", "|"]
         allowed_operators = ["<", ">", "<=", ">=", "==", "!="]
 
         for filter_name, parameters in filters.items():
@@ -383,10 +373,10 @@ class SharepointList(Source):
                 raise ValueError("Operator1 is missing!")
             if (
                 not parameters.get("operator2")
-                and parameters.get("operators_conjuction") is not None
+                and parameters.get("operators_conjunction") is not None
             ):
                 raise ValueError(
-                    f"Operator conjuction allowed only with more then one filter operator!"
+                    f"Operator conjunction allowed only with more then one filter operator!"
                 )
             if parameters.get("operator2"):
                 if parameters.get("operator2") not in allowed_operators:
@@ -395,25 +385,25 @@ class SharepointList(Source):
                     )
                 if not parameters.get("value2"):
                     raise ValueError("Value2 for operator2 is missing!")
-                if not parameters.get("operators_conjuction"):
+                if not parameters.get("operators_conjunction"):
                     raise ValueError(
-                        f"Operator for conjuction is missing! Expected: {allowed_conjuction} got empty."
+                        f"Operator for conjunction is missing! Expected: {allowed_conjunction} got empty."
                     )
-                if parameters.get("operators_conjuction") not in allowed_conjuction:
+                if parameters.get("operators_conjunction") not in allowed_conjunction:
                     raise ValueError(
-                        f"Operator for conjuction not allowed! Expected: {allowed_conjuction} got {parameters.get('operators_conjuction')} ."
+                        f"Operator for conjunction not allowed! Expected: {allowed_conjunction} got {parameters.get('operators_conjunction')} ."
                     )
-            if parameters.get("filters_conjuction"):
+            if parameters.get("filters_conjunction"):
                 if (
                     len(filters.keys()) == 1
-                    and parameters.get("filters_conjuction") is not None
+                    and parameters.get("filters_conjunction") is not None
                 ):
                     raise ValueError(
-                        f"Filters conjuction allowed only when more then one filter provided!"
+                        f"Filters conjunction allowed only when more then one filter provided!"
                     )
-                if parameters.get("filters_conjuction") not in allowed_conjuction:
+                if parameters.get("filters_conjunction") not in allowed_conjunction:
                     raise ValueError(
-                        f"Filter operator for conjuction not allowed! Expected: {allowed_conjuction} got {parameters.get('filters_conjuction')} ."
+                        f"Filter operator for conjunction not allowed! Expected: {allowed_conjunction} got {parameters.get('filters_conjunction')} ."
                     )
 
         return True
@@ -423,7 +413,7 @@ class SharepointList(Source):
         filters: dict,
     ) -> dict:
         """
-        Function for mapping comparison and conjuction(logical) operators of filters to the format which is recognized by Microsoft API.
+        Function for mapping comparison and conjunction(logical) operators of filters to the format which is recognized by Microsoft API.
         Allowed operators:
             <
             >
@@ -438,10 +428,10 @@ class SharepointList(Source):
             filters (dict): A dictionary which contains operators.
 
         Raises:
-            ValueError: If operator1 not allowed
-            ValueError: If operator2 not allowed
-            ValueError: If operators conjuction not allowed
-            ValueError: If filters conjuction not allowed
+            ValueError: If operator1 not allowed.
+            ValueError: If operator2 not allowed.
+            ValueError: If operators conjunction not allowed.
+            ValueError: If filters conjunction not allowed.
 
         Returns:
             dict: New modified dict with mapped operators.
@@ -475,23 +465,23 @@ class SharepointList(Source):
                     raise ValueError(
                         f"This comparison operator: {operator2_to_change} is not allowed. Please read the function documentation for details!"
                     )
-            if parameters.get("operators_conjuction"):
-                logical_op_to_change = parameters.get("operators_conjuction")
+            if parameters.get("operators_conjunction"):
+                logical_op_to_change = parameters.get("operators_conjunction")
                 if logical_op_to_change in logical_op.keys():
-                    parameters["operators_conjuction"] = logical_op[
+                    parameters["operators_conjunction"] = logical_op[
                         logical_op_to_change
                     ]
                 else:
                     raise ValueError(
-                        f"This conjuction (logical) operator: {logical_op_to_change} is not allowed. Please read the function documentation for details!"
+                        f"This conjunction (logical) operator: {logical_op_to_change} is not allowed. Please read the function documentation for details!"
                     )
-            if parameters.get("filters_conjuction"):
-                logical_fl_to_change = parameters.get("filters_conjuction")
+            if parameters.get("filters_conjunction"):
+                logical_fl_to_change = parameters.get("filters_conjunction")
                 if logical_fl_to_change in logical_op.keys():
-                    parameters["filters_conjuction"] = logical_op[logical_fl_to_change]
+                    parameters["filters_conjunction"] = logical_op[logical_fl_to_change]
                 else:
                     raise ValueError(
-                        f"This filters conjuction (logical) operator: {logical_fl_to_change} is not allowed. Please read the function documentation for details!"
+                        f"This filters conjunction (logical) operator: {logical_fl_to_change} is not allowed. Please read the function documentation for details!"
                     )
 
         return filters_dict
@@ -501,7 +491,7 @@ class SharepointList(Source):
         Function changing type of operators to match MS API style as 'str' passing to URL call.
 
         Args:
-            filters (dict): A dictionar which contains operators.
+            filters (dict): A dictionary which contains operators.
 
         Returns:
             str: Output as filtering string to pass as filter parameter to API.
@@ -525,7 +515,7 @@ class SharepointList(Source):
                     ).isoformat()
                     filter_text = (
                         filter_text
-                        + f" {parameters.get('operators_conjuction')} {column} {parameters.get('operator2')} datetime'{from_date2}' "
+                        + f" {parameters.get('operators_conjunction')} {column} {parameters.get('operator2')} datetime'{from_date2}' "
                     )
             elif parameters.get("dtype") not in ["datetime", "date"]:
                 filter_text = (
@@ -537,8 +527,8 @@ class SharepointList(Source):
                         filter_text
                         + f"{column} {parameters.get('operator2')} '{parameters.get('value2')}'"
                     )
-            if parameters.get("filters_conjuction"):
-                filter_text = filter_text + f"{parameters.get('filters_conjuction')} "
+            if parameters.get("filters_conjunction"):
+                filter_text = filter_text + f"{parameters.get('filters_conjunction')} "
 
         return filter_text
 
@@ -567,11 +557,13 @@ class SharepointList(Source):
             if parameters.get("operator2"):
                 filter_in_df = (
                     filter_in_df
-                    + f") {parameters.get('operators_conjuction')} (df.{column} {parameters.get('operator2', '')} '{parameters.get('value2', '')}'"
+                    + f") {parameters.get('operators_conjunction')} (df.{column} {parameters.get('operator2', '')} '{parameters.get('value2', '')}'"
                 )
 
-            if parameters.get("filters_conjuction"):
-                filter_in_df = filter_in_df + ")" + parameters.get("filters_conjuction")
+            if parameters.get("filters_conjunction"):
+                filter_in_df = (
+                    filter_in_df + ")" + parameters.get("filters_conjunction")
+                )
 
             else:
                 filter_in_df = filter_in_df + ")"
@@ -601,11 +593,11 @@ class SharepointList(Source):
             required_fields (List[str]): Required fields(columns) need to be extracted from
                                          Sharepoint List. Default to None.
             field_property (List[str]): Property to expand with expand query method.
-                                        All propertys can be found under list.item.properties.
+                                        All properties can be found under list.item.properties.
                                         Default to ["Title"]
             filters (dict): Dictionary with operators which filters the SharepointList output.
                             allowed dtypes: ('datetime','date','bool','int', 'float', 'complex', 'str')
-                            allowed conjuction: ('&','|')
+                            allowed conjunction: ('&','|')
                             allowed operators: ('<','>','<=','>=','==','!=')
                             Example how to build the dict:
                             filters = {
@@ -616,8 +608,8 @@ class SharepointList(Source):
                                     'value2':'YYYY-MM-DD',
                                     'operator1':'>=',
                                     'operator2':'<=',
-                                    'operators_conjuction':'&',
-                                    'filters_conjuction':'&',
+                                    'operators_conjunction':'&',
+                                    'filters_conjunction':'&',
                                     }
                                     ,
                             'Column_name_2' :
@@ -675,7 +667,7 @@ class SharepointList(Source):
             self.ctx.execute_query()
 
         except (ClientRequestException, ValueError) as e:
-            # Extract all data from specific SP List without basic filtering. Additional logic for filtering applied on DataFreame level.
+            # Extract all data from specific SP List without basic filtering. Additional logic for filtering applied on DataFrame level.
             logger.info(f"Exception SPQueryThrottledException occurred: {e}")
             list_items = (
                 self.list_object.items.get_all(row_count, log_of_progress)
@@ -691,7 +683,7 @@ class SharepointList(Source):
         )
 
         if download_all == True and filters is not None:
-            # Filter for desired range of created date  and for factory Namyslow PL
+            # Apply filters to the data frame -> accordingly to the filter dict passed as na parameter
             self.logger.info("Filtering df with all data output")
             filter_for_df = self.make_filter_for_df(filters)
             df = eval(filter_for_df)

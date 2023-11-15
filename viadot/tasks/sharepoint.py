@@ -243,11 +243,11 @@ class SharepointListToDF(Task):
         required_fields (List[str]): Required fields(columns) need to be extracted from
                                         Sharepoint List. Default to None.
         field_property (List[str]): Property to expand with expand query method.
-                                    All propertys can be found under list.item.properties.
+                                    All properties can be found under list.item.properties.
                                     Default to ["Title"]
-        filters (dict, optional): Dictionary with operators which filters the SharepointList output.
+        filters (dict, optional): Dictionary with operators which filters the SharepointList output. Default to None.
                         allowed dtypes: ('datetime','date','bool','int', 'float', 'complex', 'str')
-                        allowed conjuction: ('&','|')
+                        allowed conjunction: ('&','|')
                         allowed operators: ('<','>','<=','>=','==','!=')
                         Example how to build the dict:
                         filters = {
@@ -258,8 +258,8 @@ class SharepointListToDF(Task):
                                 'value2':'YYYY-MM-DD',
                                 'operator1':'>=',
                                 'operator2':'<=',
-                                'operators_conjuction':'&',
-                                'filters_conjuction':'&',
+                                'operators_conjunction':'&',
+                                'filters_conjunction':'&',
                                 }
                                 ,
                         'Column_name_2' :
@@ -329,7 +329,7 @@ class SharepointListToDF(Task):
         It might happen that fields returned by get_fields() will be different
         than actual list items fields ( from it's properties)
         It is specific to sharepoint lists.
-        MS allowed users to create fields with simillar names (but with different letters style)
+        MS allowed users to create fields with similar names (but with different letters style)
         fields with same values. For example Id and ID - > office select function doesn't
         recognize upper/lower cases.
 
@@ -368,13 +368,13 @@ class SharepointListToDF(Task):
 
     def _convert_camel_case_to_words(self, input_str: str) -> str:
         """
-        Function for converting internal names joined as camelCase column names  to regular words
+        Function for converting internal names joined as camelCase column names  to regular words.
 
         Args:
-            input_str (str): Column name
+            input_str (str): Column name.
 
         Returns:
-            str: Converted column name
+            str: Converted column name.
         """
 
         self.input_str = input_str
@@ -396,7 +396,7 @@ class SharepointListToDF(Task):
             credentials (str): Credentials str for sharepoint connection establishing. Defaults to None.
 
         Returns:
-            pd.DataFrame: Data frame with changed column names
+            pd.DataFrame: Data frame with changed column names.
         """
         s = SharepointList(
             credentials=self.credentials,

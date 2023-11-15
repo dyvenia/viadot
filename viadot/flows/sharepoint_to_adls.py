@@ -42,7 +42,7 @@ class SharepointToADLS(Flow):
         if_exists: str = "replace",
         validate_df_dict: dict = None,
         timeout: int = 3600,
-        key_value_param: bool = False,
+        set_prefect_kv: bool = False,
         *args: List[any],
         **kwargs: Dict[str, Any],
     ):
@@ -70,7 +70,7 @@ class SharepointToADLS(Flow):
             dataframe. If defined, triggers the `validate_df` task from task_utils. Defaults to None.
             timeout(int, optional): The amount of time (in seconds) to wait while running this task before
                 a timeout occurs. Defaults to 3600.
-            key_value_param (bool, optional): Wheter to do key-value parameters in KV Store or not. Defaults to False.
+            set_prefect_kv (bool, optional): Whether to do key-value parameters in KV Store or not. Defaults to False.
         """
         # SharepointToDF
         self.if_empty = if_empty
@@ -88,7 +88,7 @@ class SharepointToADLS(Flow):
         self.adls_sp_credentials_secret = adls_sp_credentials_secret
         self.if_exists = if_exists
         self.output_file_extension = output_file_extension
-        self.key_value_param = key_value_param
+        self.set_prefect_kv = set_prefect_kv
         self.now = str(pendulum.now("utc"))
         if self.local_dir_path is not None:
             self.local_file_path = (
@@ -180,7 +180,7 @@ class SharepointToADLS(Flow):
 
         file_to_adls_task.set_upstream(df_to_file, flow=self)
         json_to_adls_task.set_upstream(dtypes_to_json_task, flow=self)
-        if self.key_value_param == True:
+        if self.set_prefect_kv == True:
             set_key_value(key=self.adls_dir_path, value=self.adls_file_path)
 
     @staticmethod
@@ -207,11 +207,14 @@ class SharepointListToADLS(Flow):
         overwrite_adls: bool = True,
         output_file_extension: str = ".parquet",
         validate_df_dict: dict = None,
-        key_value_param: bool = False,
+        set_prefect_kv: bool = False,
         *args: List[any],
         **kwargs: Dict[str, Any],
     ):
-        """_summary_
+        """
+        Flow for ingesting sharepoint list items(rows) with a given (or all) columns.
+        It allows to filter the output by column values.
+        Data is ingested from MS Sharepoint list (with given name and url ) and stored in MS Azure ADLS.
 
         Args:
             name (str): Prefect flow name.
@@ -220,9 +223,9 @@ class SharepointListToADLS(Flow):
             path (str): Local file path. Default to None.
             adls_dir_path (str): Azure Data Lake destination folder/catalog path. Defaults to None.
             adls_file_name (str): Name of file in ADLS. Defaults to None.
-            filters (dict, optional): Dictionary with operators which filters the SharepointList output.
+            filters (dict, optional): Dictionary with operators which filters the SharepointList output. Defaults to None.
                         allowed dtypes: ('datetime','date','bool','int', 'float', 'complex', 'str')
-                        allowed conjuction: ('&','|')
+                        allowed conjunction: ('&','|')
                         allowed operators: ('<','>','<=','>=','==','!=')
                         Example how to build the dict:
                         filters = {
@@ -233,8 +236,8 @@ class SharepointListToADLS(Flow):
                                 'value2':'YYYY-MM-DD',
                                 'operator1':'>=',
                                 'operator2':'<=',
-                                'operators_conjuction':'&', # conjuction operators allowed only when 2 values passed
-                                'filters_conjuction':'&', # conjuction filters allowed only when 2 columns passed
+                                'operators_conjunction':'&', # conjunction operators allowed only when 2 values passed
+                                'filters_conjunction':'&', # conjunction filters allowed only when 2 columns passed
                                 }
                                 ,
                         'Column_name_2' :
@@ -244,13 +247,12 @@ class SharepointListToADLS(Flow):
                                 'operator1':'==',
                                 },
                         }
-                        Defaults to None.
             required_fields (List[str], optional): Required fields(columns) need to be extracted from
                                      Sharepoint List. Defaults to None.
             field_property (str, optional): Property to expand fields with expand query method.
                                     For example: User fields could be expanded and "Title"
                                     or "ID" could be extracted
-                                    -> usefull to get user name instead of ID
+                                    -> useful to get user name instead of ID
                                     All properties can be found under list.item.properties.
                                     WARNING! Field types and properties might change which could
                                     lead to errors - extension of sp connector would be required.
@@ -262,9 +264,9 @@ class SharepointListToADLS(Flow):
                                     If not passed it will take cred's from your .config/credentials.json Default to None.
             vault_name (str, optional): KeyVaultSecret name. Default to None.
             overwrite_adls (bool, optional): Whether to overwrite files in the lake. Defaults to True.
-            output_file_extension (str, optional): _description_. Defaults to ".parquet".
-            validate_df_dict (dict, optional): Wheter to do an extra df validation before ADLS upload or not to do. Defaults to None.
-            key_value_param (bool, optional): Wheter to do key-value parameters in KV Store or not. Defaults to False.
+            output_file_extension (str, optional): Extension of the resulting file to be stored. Defaults to ".parquet".
+            validate_df_dict (dict, optional): Whether to do an extra df validation before ADLS upload or not to do. Defaults to None.
+            set_prefect_kv (bool, optional): Whether to do key-value parameters in KV Store or not. Defaults to False.
 
         Returns:
             .parquet file inside ADLS.
@@ -288,7 +290,7 @@ class SharepointListToADLS(Flow):
         self.overwrite = overwrite_adls
         self.adls_sp_credentials_secret = adls_sp_credentials_secret
         self.output_file_extension = output_file_extension
-        self.key_value_param = key_value_param
+        self.set_prefect_kv = set_prefect_kv
         self.now = str(pendulum.now("utc"))
         if self.path is not None:
             self.local_file_path = (
@@ -379,7 +381,7 @@ class SharepointListToADLS(Flow):
 
         file_to_adls_task.set_upstream(df_to_file, flow=self)
         json_to_adls_task.set_upstream(dtypes_to_json_task, flow=self)
-        if self.key_value_param == True:
+        if self.set_prefect_kv == True:
             set_key_value(key=self.adls_dir_path, value=self.adls_file_path)
 
     @staticmethod
