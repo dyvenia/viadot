@@ -792,28 +792,3 @@ def validate_df(df: pd.DataFrame, tests: dict = None) -> None:
         raise ValidationError(
             f"Validation failed for {failed_tests} test/tests: {failed_tests_msg}"
         )
-
-
-def check_value(base, lvls: List):
-    """
-            Task to extract data from nested json file if there is any under passed parameters.
-            Otherwise return None.
-
-    Args:
-        base: variable with base lvl of the json, fo example:
-                json_file["first_known_lvl"]["second_known_lvl"]["third_known_lvl"]
-        lvls (List): List of potential lower levels of nested json for data retrieval. For example:
-                ["first_lvl_below_base", "second_lvl_below_base", "searched_phrase"]
-
-    Return:
-        Searched value for the lowest level, in example data under "searched_phrase" key.
-    """
-
-    for lvl in lvls:
-        if isinstance(base, dict):
-            base = base.get(lvl)
-            if base is None:
-                return None
-        else:
-            return base
-    return base

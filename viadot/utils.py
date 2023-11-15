@@ -2,7 +2,7 @@ import functools
 import os
 import re
 from itertools import chain
-from typing import Any, Callable, Dict, List, Literal
+from typing import Union, Any, Callable, Dict, List, Literal
 
 import pandas as pd
 import prefect
@@ -460,3 +460,28 @@ def get_nested_dict(d):
                 return d
     else:
         return None
+    
+
+def check_value(base: Union[Dict, Any], levels: List) -> Union[None, Any]:
+    """        
+    Task to extract data from nested json file if there is any under passed parameters.
+    Otherwise return None.
+
+    Args:
+        base (Dict, Any): variable with base lvl of the json, for example:
+                          json_file["first_known_lvl"]["second_known_lvl"]["third_known_lvl"]
+        levels (List): List of potential lower levels of nested json for data retrieval. For example:
+                       ["first_lvl_below_base", "second_lvl_below_base", "searched_phrase"]
+
+    Returns:
+        Union[None, Any]: Searched value for the lowest level, in example data under "searched_phrase" key.
+    """
+
+    for lvl in levels:
+        if isinstance(base, dict):
+            base = base.get(lvl)
+            if base is None:
+                return None
+        else:
+            return base
+    return base
