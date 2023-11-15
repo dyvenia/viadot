@@ -19,9 +19,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   -> docstrings update
 - Modified `SharepointToADLS` flow class:
   -> docstrings update
-  -> changed key_value_param: bool = False to prevent forced KV store append
+  -> changed set_prefect_kv: bool = False to prevent forced KV store append
 - Modified `SharepointListToADLS` flow class:
-  -> changed key_value_param: bool = False to prevent forced KV store append
+  -> changed set_prefect_kv: bool = False to prevent forced KV store append
 - Modified `SharepointList` source class:
   -> docstrings update
   -> Changed `_unpack_fields` method to handle Sharepoint MultiChoiceField type + small improvements
