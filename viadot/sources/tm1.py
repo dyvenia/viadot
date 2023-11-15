@@ -1,9 +1,8 @@
-import pandas as pd
-
 from typing import Any, Dict, Literal
-from TM1py.Services import TM1Service
-from prefect.utilities import logging
 
+import pandas as pd
+from prefect.utilities import logging
+from TM1py.Services import TM1Service
 
 from ..config import local_config
 from ..exceptions import CredentialError, ValidationError

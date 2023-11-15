@@ -5,8 +5,8 @@ from unittest import mock
 import pandas as pd
 import pytest
 
-from viadot.flows import HubspotToADLS
 from viadot.exceptions import ValidationError
+from viadot.flows import HubspotToADLS
 
 DATA = {
     "id": {"0": "820306930"},

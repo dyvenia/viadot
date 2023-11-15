@@ -1,8 +1,9 @@
 import pandas as pd
 import pytest
-from viadot.sources import TM1
+
 from viadot.config import local_config
 from viadot.exceptions import CredentialError, ValidationError
+from viadot.sources import TM1
 
 CUBE = local_config.get("TM1").get("test_cube")
 VIEW = local_config.get("TM1").get("test_view")

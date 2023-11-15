@@ -1,7 +1,7 @@
 import pandas as pd
 
-from viadot.tasks import TM1ToDF
 from viadot.config import local_config
+from viadot.tasks import TM1ToDF
 
 CUBE = local_config.get("test_cube")
 VIEW = local_config.get("test_view")
