@@ -240,7 +240,7 @@ def test_filters_missing_value1(sharepoint_list):
         sharepoint_list.check_filters(filters)
 
 
-def test_filters_missing_operators_conjuction(sharepoint_list):
+def test_filters_missing_operators_conjunction(sharepoint_list):
     filters = {
         "filter1": {
             "dtype": "int",
@@ -253,13 +253,13 @@ def test_filters_missing_operators_conjuction(sharepoint_list):
     with pytest.raises(
         ValueError,
         match=re.escape(
-            "Operator for conjuction is missing! Expected: ['&', '|'] got empty."
+            "Operator for conjunction is missing! Expected: ['&', '|'] got empty."
         ),
     ):
         sharepoint_list.check_filters(filters)
 
 
-def test_filters_invalid_operators_conjuction(sharepoint_list):
+def test_filters_invalid_operators_conjunction(sharepoint_list):
     filters = {
         "filter1": {
             "dtype": "int",
@@ -267,43 +267,43 @@ def test_filters_invalid_operators_conjuction(sharepoint_list):
             "value1": 10,
             "operator2": "<",
             "value2": 20,
-            "operators_conjuction": "!",
+            "operators_conjunction": "!",
         },
     }
     with pytest.raises(
         ValueError,
         match=re.escape(
-            "Operator for conjuction not allowed! Expected: ['&', '|'] got ! ."
+            "Operator for conjunction not allowed! Expected: ['&', '|'] got ! ."
         ),
     ):
         sharepoint_list.check_filters(filters)
 
 
-def test_filters_conjuction_not_allowed(sharepoint_list):
+def test_filters_conjunction_not_allowed(sharepoint_list):
     filters = {
         "filter1": {
             "dtype": "int",
             "operator1": ">",
             "value1": 10,
-            "filters_conjuction": "!",
+            "filters_conjunction": "!",
         },
     }
     with pytest.raises(
         ValueError,
         match=re.escape(
-            "Filters conjuction allowed only when more then one filter provided!"
+            "Filters conjunction allowed only when more then one filter provided!"
         ),
     ):
         sharepoint_list.check_filters(filters)
 
 
-def test_filters_invalid_conjuction(sharepoint_list):
+def test_filters_invalid_conjunction(sharepoint_list):
     filters = {
         "filter1": {
             "dtype": "int",
             "value1": 10,
             "operator1": ">",
-            "filters_conjuction": "!",
+            "filters_conjunction": "!",
         },
         "filter2": {
             "dtype": "int",
@@ -313,7 +313,7 @@ def test_filters_invalid_conjuction(sharepoint_list):
     with pytest.raises(
         ValueError,
         match=re.escape(
-            "Filter operator for conjuction not allowed! Expected: ['&', '|'] got ! ."
+            "Filter operator for conjunction not allowed! Expected: ['&', '|'] got ! ."
         ),
     ):
         sharepoint_list.check_filters(filters)
@@ -327,8 +327,8 @@ def test_valid_mapping(sharepoint_list):
             "value2": 20,
             "operator1": ">",
             "operator2": "<=",
-            "operators_conjuction": "&",
-            "filters_conjuction": "|",
+            "operators_conjunction": "&",
+            "filters_conjunction": "|",
         },
         "filter2": {
             "dtype": "int",
@@ -336,7 +336,7 @@ def test_valid_mapping(sharepoint_list):
             "value2": 0,
             "operator1": "==",
             "operator2": "!=",
-            "operators_conjuction": "|",
+            "operators_conjunction": "|",
         },
     }
     expected_result = {
@@ -346,8 +346,8 @@ def test_valid_mapping(sharepoint_list):
             "value2": 20,
             "operator1": "gt",
             "operator2": "le",
-            "operators_conjuction": "and",
-            "filters_conjuction": "or",
+            "operators_conjunction": "and",
+            "filters_conjunction": "or",
         },
         "filter2": {
             "dtype": "int",
@@ -355,7 +355,7 @@ def test_valid_mapping(sharepoint_list):
             "value2": 0,
             "operator1": "eq",
             "operator2": "ne",
-            "operators_conjuction": "or",
+            "operators_conjunction": "or",
         },
     }
     result = sharepoint_list.operators_mapping(filters)
@@ -367,8 +367,8 @@ def test_operators_mapping_invalid_comparison_operator(sharepoint_list):
         "filter1": {
             "operator1": "*",
             "operator2": "<=",
-            "operators_conjuction": "&",
-            "filters_conjuction": "|",
+            "operators_conjunction": "&",
+            "filters_conjunction": "|",
         },
     }
     error_message = "This comparison operator: * is not allowed. Please read the function documentation for details!"
@@ -381,11 +381,11 @@ def test_operators_mapping_invalid_logical_operator(sharepoint_list):
         "filter1": {
             "operator1": ">",
             "operator2": "<=",
-            "operators_conjuction": "!",
-            "filters_conjuction": "|",
+            "operators_conjunction": "!",
+            "filters_conjunction": "|",
         },
     }
-    error_message = "This conjuction (logical) operator: ! is not allowed. Please read the function documentation for details!"
+    error_message = "This conjunction (logical) operator: ! is not allowed. Please read the function documentation for details!"
     with pytest.raises(ValueError, match=re.escape(error_message)):
         sharepoint_list.operators_mapping(filters)
 
@@ -395,11 +395,11 @@ def test_operators_mapping_invalid_filters_logical_operator(sharepoint_list):
         "filter1": {
             "operator1": ">",
             "operator2": "<=",
-            "operators_conjuction": "&",
-            "filters_conjuction": "!",
+            "operators_conjunction": "&",
+            "filters_conjunction": "!",
         },
     }
-    error_message = "This filters conjuction (logical) operator: ! is not allowed. Please read the function documentation for details!"
+    error_message = "This filters conjunction (logical) operator: ! is not allowed. Please read the function documentation for details!"
     with pytest.raises(ValueError, match=re.escape(error_message)):
         sharepoint_list.operators_mapping(filters)
 
@@ -438,7 +438,7 @@ def test_single_df_filter(sharepoint_list):
 
 def test_multiple_df_filters(sharepoint_list):
     filters = {
-        "column1": {"operator1": ">", "value1": 10, "filters_conjuction": "&"},
+        "column1": {"operator1": ">", "value1": 10, "filters_conjunction": "&"},
         "column2": {"operator1": "<", "value1": 20},
     }
     result = sharepoint_list.make_filter_for_df(filters)
