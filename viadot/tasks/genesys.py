@@ -520,20 +520,9 @@ class GenesysToCSV(Task):
             )
             last_page = temp_json["pageCount"] + 1
 
-            # Function to extract nested data from json file
-            def check_value(base, lvls):
-                for lvl in lvls:
-                    if isinstance(base, dict):
-                        base = base.get(lvl)
-                        if base is None:
-                            return None
-                    else:
-                        return base
-                return base
-
             data_list = []
 
-            # For loop to donwload all pages from Genesys GET API
+            # For loop to download all pages from Genesys GET API
             for n in range(1, last_page):
                 json_file = genesys.genesys_api_connection(
                     post_data_list=post_data_list,
