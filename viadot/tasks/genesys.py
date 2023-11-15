@@ -493,22 +493,8 @@ class GenesysToCSV(Task):
                 temp_dict["endTime"] = json_file.get("endTime")
                 data_list.append(temp_dict)
 
-            desired_order = [
-                "startTime",
-                "endTime",
-                "LOB",
-                "CustomerOutcomeResult",
-                "CustomerOutcomeTrack",
-                "LastUtterance",
-                "Final Sub Intent",
-                "SubIntent",
-                "Final Main Intent",
-                "conversationId",
-            ]
-
             df = pd.DataFrame(data_list)
-            df = df[desired_order]
-            df.rename(columns={"LastUtterance": "CustomerTextInput"}, inplace=True)
+            df = df[df.columns[-1:]].join(df[df.columns[:-1]])
 
             start = start_date.replace("-", "")
             end = end_date.replace("-", "")
