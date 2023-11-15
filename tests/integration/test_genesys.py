@@ -1,7 +1,7 @@
+import logging
 from unittest import mock
 
 import pytest
-import logging
 
 from viadot.sources import Genesys
 

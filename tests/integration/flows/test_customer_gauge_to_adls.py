@@ -4,8 +4,8 @@ from unittest import mock
 import pandas as pd
 import pytest
 
-from viadot.flows import CustomerGaugeToADLS
 from viadot.exceptions import ValidationError
+from viadot.flows import CustomerGaugeToADLS
 
 DATA = {
     "user_name": ["Jane", "Bob"],
@@ -90,6 +90,3 @@ def test_customer_gauge_to_adls_run_flow_validation_failure(mocked_class):
         flow.run()
     except ValidationError:
         pass
-
-    os.remove("test_customer_gauge_to_adls_run_flow_validation_failure.parquet")
-    os.remove("test_customer_gauge_to_adls_run_flow_validation_failure.json")

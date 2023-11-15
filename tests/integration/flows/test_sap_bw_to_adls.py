@@ -4,8 +4,8 @@ from unittest import mock
 import pandas as pd
 import pytest
 
-from viadot.flows import SAPBWToADLS
 from viadot.exceptions import ValidationError
+from viadot.flows import SAPBWToADLS
 
 DATA = {
     "[0CALMONTH].[LEVEL01].[DESCRIPTION]": ["January 2023"],

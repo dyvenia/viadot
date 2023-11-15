@@ -19,8 +19,8 @@ from viadot.task_utils import (
     df_to_parquet,
     dtypes_to_json_task,
     union_dfs_task,
-    write_to_json,
     validate_df,
+    write_to_json,
 )
 
 
