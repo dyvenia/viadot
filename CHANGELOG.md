@@ -5,6 +5,50 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Added
+
+### Fixed
+
+### Changed
+
+
+## [0.4.22] - 2023-11-15
+### Added
+- Added `TM1` source class.
+- Added `TM1ToDF` task class.
+- Added `set_prefect_kv` parameter to `BigQueryToADLS` with `False` as a default. If there is a need to create new pair in KV Store the parameter can be changed to `True`.
+- Added `_rename_duplicated_fields` method to `SharepointListToDF` task class for finding and rename duplicated columns.
+- Added new view type `agent_interaction_view_type` in `Genesys`source.
+- Added new logic for endpoint `users` in `Genesys`task.
+- Added libraries `nltk` and `sklearn` to `requirements`.
+
+### Fixed
+- Fixed bug for endpoint `conversations` in GET method in `Genesys` Task.
+
+### Changed
+- Splitted test for `Eurostat` on source tests and task tests.
+- Modified `SharepointList` source class: 
+  -> docstrings update.
+- Modified `SharepointToADLS` flow class:
+  -> docstrings update.
+  -> changed set_prefect_kv: bool = False to prevent forced KV store append.
+- Modified `SharepointListToADLS` flow class:
+  -> changed set_prefect_kv: bool = False to prevent forced KV store append.
+- Modified `SharepointList` source class:
+  -> docstrings update.
+  -> Changed `_unpack_fields` method to handle Sharepoint MultiChoiceField type + small improvements.
+  -> Changed `get_fields` method to handle special characters - different approach to call get() and execute_query().
+  -> Renamed method from `select_expandable_user_fields` to `select_fields` + update for MultiChoiceField type.
+  -> Changed `check_filters` method errors messages and more checks added.
+  -> Changed `operators_mapping` method errors messages.
+  -> Changed `make_filter_for_df` method errors messages.
+- Modified `SharepointListToDF` task class:
+  -> docstrings update
+- Splitted test for Eurostat on source tests and task tests.
+- Modified `CustomerGauge` source class with simplified logic to return json structure.
+- Expanded `CustomerGaugeToDF` task class with separate cleaning functions and handling nested json structure flattening with two new methods `_field_reference_unpacker` and `_nested_dict_transformer`.
+- Changed `CustomerGaugeToADLS` to containing new arguments.
+
 
 ## [0.4.21] - 2023-10-26
 ### Added
@@ -13,12 +57,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added `SharepointListToDF` task class.
 - Added `SharepointListToADLS` flow class.
 - Added tests for `SharepointList`.
-- Added `get_nested_dict` to untils.py.
+- Added `get_nested_dict` to utils.py.
 
 ### Fixed
 
 ### Changed
 - Changed `GenesysToCSV` logic for end_point == "conversations". Added new fields to extraction.
+
 
 ## [0.4.20] - 2023-10-12
 ### Added

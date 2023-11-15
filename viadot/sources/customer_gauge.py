@@ -20,6 +20,7 @@ class CustomerGauge(Source):
         endpoint: Literal["responses", "non-responses"] = None,
         url: str = None,
         credentials: Dict[str, Any] = None,
+        credentials_secret: str = "CUSTOMER-GAUGE",
     ):
         """
         A class to connect and download data using Customer Gauge API.
@@ -31,7 +32,8 @@ class CustomerGauge(Source):
             endpoint (Literal["responses", "non-responses"]): Indicate which endpoint to connect. Defaults to None.
             url (str, optional): Endpoint URL. Defaults to None.
             credentials (Dict[str, Any], optional): Credentials to connect with API containing client_id, client_secret. Defaults to None.
-
+            credentials_secret (str, optional): The name of the secret stored in local_config containing a
+                dictionary with ['client_id', 'client_secret']. Defaults to "CUSTOMER-GAUGE".
         Raises:
             ValueError: If endpoint is not provided or incorect.
             CredentialError: If credentials are not provided in local_config or directly as a parameter
@@ -50,11 +52,12 @@ class CustomerGauge(Source):
             raise ValueError(
                 "Provide endpoint name. Choose: 'responses' or 'non-responses'. Otherwise, provide URL"
             )
+        self.credentials_secret = credentials_secret
 
         if credentials is not None:
             self.credentials = credentials
         else:
-            self.credentials = local_config.get("CustomerGauge")
+            self.credentials = local_config.get(credentials_secret)
             if self.credentials is None:
                 raise CredentialError("Credentials not provided.")
 
@@ -165,90 +168,3 @@ class CustomerGauge(Source):
             )
 
         return cur
-
-    def properties_cleaning(
-        self, json_response: Dict[str, Any] = None
-    ) -> Dict[str, Any]:
-        """
-        Returns initialy cleaned data. The cleaning of the additional params is depend on the endpoint.
-
-        Args:
-            json_response (Dict[str, Any], optional): Dictionary with nested structure that contains data and cursor parameter value. Defaults to None.
-
-        Returns:
-            Dict[str, Any]: Dictionary that contains cleaned data corresponding to one record.
-        """
-        clean_properties = {
-            d["field"]: d["reference"] for d in json_response["properties"]
-        }
-        json_response["properties"] = clean_properties
-
-        if self.endpoint == "responses":
-            json_response["drivers"] = (
-                " ".join(map(str, json_response["drivers"]))
-                .replace("label", ",")
-                .replace(r"{',':", " ")
-                .replace(r"'", "")
-                .replace("}", "")
-                .strip()
-                .replace("  ", ",")
-            )
-            json_response["tags"] = " ".join(map(str, json_response["tags"])).replace(
-                "[]", ""
-            )
-            json_response["questions"] = " ".join(
-                map(str, json_response["questions"])
-            ).replace("[]", "")
-        else:
-            pass
-
-        return json_response
-
-    def flatten_json(self, json_response: Dict[str, Any] = None) -> Dict[str, Any]:
-        """
-        Function that flattens a nested structure of the JSON object into a single-level dictionary.
-        Uses a nested `flatten()` function to recursively combine nested keys in the JSON object with '_' to create the flattened keys.
-
-        Args:
-            json_response (Dict[str, Any], optional): JSON object represented as a nested dictionary. Defaults to None.
-
-        Returns:
-            Dict[str, Any]: The flattened dictionary.
-        """
-        out = {}
-
-        def flattify(x, key=""):
-            if type(x) is dict:
-                for a in x:
-                    flattify(x[a], key + a + "_")
-            else:
-                out[key[:-1]] = x
-
-        flattify(json_response)
-
-        return out
-
-    def to_df(self, json_response: Dict[str, Any] = None) -> pd.DataFrame:
-        """
-        Flatten dictionary structure and convert it into pandas DataFrame. Cleans column names.
-
-        Args:
-            json_response (Dict[str, Any], optional): JSON object represented as a nested dictionary that contains data and cursor parameter value. Defaults to None.
-
-        Raises:
-            ValueError: If data value not found.
-
-        Returns:
-            pd.DataFrame: pandas.DataFrame
-        """
-        try:
-            response_json = json_response["data"]
-        except:
-            raise ValueError(
-                "Provided argument doesn't contain 'data' value. Pass json returned from the endpoint."
-            )
-        clean_json = list(map(self.properties_cleaning, response_json))
-        df = pd.DataFrame(list(map(self.flatten_json, clean_json)))
-        df.columns = df.columns.str.lower().str.replace(" ", "_")
-
-        return df

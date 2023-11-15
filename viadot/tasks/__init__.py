@@ -31,7 +31,7 @@ from .great_expectations import RunGreatExpectationsValidation
 from .outlook import OutlookToDF
 from .prefect_date_range import GetFlowNewDateRange
 from .salesforce import SalesforceBulkUpsert, SalesforceToDF, SalesforceUpsert
-from .sharepoint import SharepointToDF, SharepointListToDF
+from .sharepoint import SharepointListToDF, SharepointToDF
 from .sqlite import SQLiteInsert, SQLiteQuery, SQLiteSQLtoDF
 from .supermetrics import SupermetricsToCSV, SupermetricsToDF
 
@@ -50,11 +50,12 @@ from .customer_gauge import CustomerGaugeToDF
 from .duckdb import DuckDBCreateTableFromParquet, DuckDBQuery, DuckDBToDF
 from .epicor import EpicorOrdersToDF
 from .eurostat import EurostatToDF
+from .git import CloneRepo
 from .hubspot import HubspotToDF
+from .luma import LumaIngest
 from .mediatool import MediatoolToDF
 from .mindful import MindfulToCSV
 from .sftp import SftpList, SftpToDF
 from .sql_server import SQLServerCreateTable, SQLServerQuery, SQLServerToDF
+from .tm1 import TM1ToDF
 from .vid_club import VidClubToDF
-from .git import CloneRepo
-from .luma import LumaIngest

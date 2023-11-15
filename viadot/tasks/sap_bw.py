@@ -1,12 +1,12 @@
 import pandas as pd
 from prefect import Task
 from prefect.tasks.secrets import PrefectSecret
-from viadot.tasks import AzureKeyVaultSecret
 from prefect.utilities import logging
 
 from viadot.exceptions import ValidationError
 from viadot.sources import SAPBW
 from viadot.task_utils import *
+from viadot.tasks import AzureKeyVaultSecret
 
 logger = logging.get_logger()
 

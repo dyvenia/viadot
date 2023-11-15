@@ -1,3 +1,4 @@
+import logging
 from unittest import mock
 
 import pytest
@@ -139,6 +140,13 @@ def test_default_credential_param():
 
 
 @pytest.mark.init
+def test_default_credentials_provided(caplog):
+    with caplog.at_level(logging.INFO):
+        Genesys(credentials_genesys={"CREDENTIALS_KEY": "value"})
+    assert "Credentials provided by user" in caplog.text
+
+
+@pytest.mark.init
 def test_environment_param():
     g = Genesys()
     assert g.environment != None and type(g.environment) == str
@@ -169,15 +177,35 @@ def test_generate_api_connection(mock_api_response, var_dictionary):
     mock_api_response.assert_called()
 
 
+def test_api_connection_return_type():
+    conn_dict = Genesys().genesys_api_connection(post_data_list=["test_value_to_post"])
+    assert isinstance(conn_dict, dict)
+
+
+def test_load_reporting_exports_return_type(caplog):
+    with caplog.at_level(logging.INFO):
+        load_return = Genesys().load_reporting_exports()
+    assert isinstance(load_return, dict)
+
+    assert "loaded" in caplog.text
+
+
 @mock.patch.object(Genesys, "download_report")
 @pytest.mark.dependency(depends=["test_generate_api_connection"])
 @pytest.mark.download
-def test_download_reports(mock_download_files, var_dictionary):
+def test_download_reports(mock_download_files, var_dictionary, caplog):
     g = Genesys()
     g.ids_mapping = var_dictionary["ids_mapping"]
     g.report_data = var_dictionary["report_data"]
     g.start_date = var_dictionary["start_date"]
-    file_name_list = g.download_all_reporting_exports()
+    with caplog.at_level(logging.INFO):
+        file_name_list = g.download_all_reporting_exports()
+    assert "IDS_MAPPING loaded" in caplog.text
+
+    g.ids_mapping = None
+    with caplog.at_level(logging.WARNING):
+        file_name_list = g.download_all_reporting_exports()
+    assert "IDS_MAPPING is not provided" in caplog.text
 
     assert type(file_name_list) == list and len(file_name_list) > 0
     mock_download_files.assert_called()

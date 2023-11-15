@@ -1,10 +1,10 @@
-from typing import List
-import pandas as pd
 import copy
 import json
 import os
 import re
+from typing import List
 
+import pandas as pd
 from prefect import Task
 from prefect.tasks.secrets import PrefectSecret
 from prefect.utilities import logging
@@ -12,8 +12,8 @@ from prefect.utilities.tasks import defaults_from_attrs
 
 from ..exceptions import ValidationError
 from ..sources import Sharepoint, SharepointList
-from .azure_key_vault import AzureKeyVaultSecret
 from ..utils import add_viadot_metadata_columns
+from .azure_key_vault import AzureKeyVaultSecret
 
 logger = logging.get_logger()
 
@@ -243,11 +243,11 @@ class SharepointListToDF(Task):
         required_fields (List[str]): Required fields(columns) need to be extracted from
                                         Sharepoint List. Default to None.
         field_property (List[str]): Property to expand with expand query method.
-                                    All propertys can be found under list.item.properties.
+                                    All properties can be found under list.item.properties.
                                     Default to ["Title"]
-        filters (dict): Dictionary with operators which filters the SharepointList output.
+        filters (dict, optional): Dictionary with operators which filters the SharepointList output. Default to None.
                         allowed dtypes: ('datetime','date','bool','int', 'float', 'complex', 'str')
-                        allowed conjuction: ('&','|')
+                        allowed conjunction: ('&','|')
                         allowed operators: ('<','>','<=','>=','==','!=')
                         Example how to build the dict:
                         filters = {
@@ -258,8 +258,8 @@ class SharepointListToDF(Task):
                                 'value2':'YYYY-MM-DD',
                                 'operator1':'>=',
                                 'operator2':'<=',
-                                'operators_conjuction':'&',
-                                'filters_conjuction':'&',
+                                'operators_conjunction':'&',
+                                'filters_conjunction':'&',
                                 }
                                 ,
                         'Column_name_2' :
@@ -277,9 +277,9 @@ class SharepointListToDF(Task):
 
     def __init__(
         self,
-        path: str = None,
-        list_title: str = None,
-        site_url: str = None,
+        path: str,
+        list_title: str,
+        site_url: str,
         required_fields: List[str] = None,
         field_property: str = "Title",
         filters: dict = None,
@@ -289,7 +289,6 @@ class SharepointListToDF(Task):
         *args,
         **kwargs,
     ):
-
         self.path = path
         self.list_title = list_title
         self.site_url = site_url
@@ -299,6 +298,11 @@ class SharepointListToDF(Task):
         self.row_count = row_count
         self.vault_name = vault_name
         self.credentials_secret = credentials_secret
+
+        super().__init__(
+            *args,
+            **kwargs,
+        )
 
         if not credentials_secret:
             # Attempt to read a default for the service principal secret name
@@ -313,16 +317,65 @@ class SharepointListToDF(Task):
             ).run()
             self.credentials = json.loads(credentials_str)
 
-        super().__init__(
-            *args,
-            **kwargs,
-        )
-
     def __call__(self):
         """Download Sharepoint_List data to a .parquet file"""
         super().__call__(self)
 
+    def _rename_duplicated_fields(self, df):
+        """
+        Renames duplicated columns in a DataFrame by appending a numerical suffix.
+        Function to check if there are fields with
+        the same name but in different style (lower, upper)
+        It might happen that fields returned by get_fields() will be different
+        than actual list items fields ( from it's properties)
+        It is specific to sharepoint lists.
+        MS allowed users to create fields with similar names (but with different letters style)
+        fields with same values. For example Id and ID - > office select function doesn't
+        recognize upper/lower cases.
+
+        Args:
+            df (pd.DataFrame): The input DataFrame with potentially duplicated columns.
+            required_fields (list): List of fields that should not be considered for renaming.
+
+        Returns:
+            pd.DataFrame: DataFrame with duplicated columns renamed to ensure uniqueness.
+
+        Example:
+            Given DataFrame df:
+            ```
+            A  B  C  B  D
+            0  1  2  3  4  5
+            ```
+
+            Required fields = ['A', 'B']
+            After calling _rename_duplicated_fields(df, required_fields):
+            ```
+            A  B  C  B2  D
+            0  1  2  3   4  5
+            ```
+        """
+        col_to_compare = df.columns.tolist()
+        i = 1
+        for column in df.columns.tolist():
+            if not column in self.required_fields:
+                col_to_compare.remove(column)
+                if column.lower() in [to_cmp.lower() for to_cmp in col_to_compare]:
+                    i += 1
+                    logger.info(f"Found duplicated column: {column} !")
+                    logger.info(f"Renaming from {column} to {column}{i}")
+                    df = df.rename(columns={f"{column}": f"{column}{i}"})
+        return df
+
     def _convert_camel_case_to_words(self, input_str: str) -> str:
+        """
+        Function for converting internal names joined as camelCase column names  to regular words.
+
+        Args:
+            input_str (str): Column name.
+
+        Returns:
+            str: Converted column name.
+        """
 
         self.input_str = input_str
 
@@ -331,11 +384,23 @@ class SharepointListToDF(Task):
 
         return converted
 
-    def change_column_name(
-        self,
-        df: pd.DataFrame = None,
-    ):
-        s = SharepointList()
+    def change_column_name(self, df: pd.DataFrame, credentials: str = None):
+        """
+        Function for changing coded internal column names (Unicode style) to human readable names.
+        !Warning!
+            Names are taken from field properties Title!
+            Because of that the resulting column name might have different then initial name.
+
+        Args:
+            df (pd.DataFrame): A data frame with loaded column names from sharepoint list.
+            credentials (str): Credentials str for sharepoint connection establishing. Defaults to None.
+
+        Returns:
+            pd.DataFrame: Data frame with changed column names.
+        """
+        s = SharepointList(
+            credentials=self.credentials,
+        )
         list_fields = s.get_fields(
             list_title=self.list_title,
             site_url=self.site_url,
@@ -364,7 +429,6 @@ class SharepointListToDF(Task):
 
         # Rename columns names inside DataFrame
         df = df.rename(columns=dictionary)
-
         return df
 
     def run(
@@ -389,7 +453,8 @@ class SharepointListToDF(Task):
             row_count=self.row_count,
         )
 
-        df = self.change_column_name(df=df_raw)
+        df_col_changed = self.change_column_name(df=df_raw)
+        df = self._rename_duplicated_fields(df=df_col_changed)
         self.logger.info("Successfully changed structure of the DataFrame")
 
         return df
