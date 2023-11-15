@@ -9,6 +9,7 @@ from viadot.utils import (
     add_viadot_metadata_columns,
     check_if_empty_file,
     gen_bulk_insert_query_from_df,
+    check_value,
 )
 
 EMPTY_CSV_PATH = "empty.csv"
@@ -153,3 +154,51 @@ def test_add_viadot_metadata_columns_with_parameter():
     assert df_base.columns.to_list() == ["a", "b"]
     assert df_decorated.columns.to_list() == ["a", "b", "_viadot_source"]
     assert df_decorated["_viadot_source"][0] == "Source_name"
+
+
+# Sample test checking the correctness of the function when the key is found
+def test_check_value_found():
+    json_data = {
+        "first_known_lvl": {
+            "second_known_lvl": {"third_known_lvl": {"searched_phrase": "phrase"}}
+        }
+    }
+    result = check_value(
+        json_data["first_known_lvl"]["second_known_lvl"]["third_known_lvl"],
+        ["searched_phrase"],
+    )
+    assert result == "phrase"
+
+
+# Sample test checking the correctness of the function when the key is not found
+def test_check_value_not_found():
+    json_data = {
+        "first_known_lvl": {
+            "second_known_lvl": {
+                "third_known_lvl": {"other_phrase": "This won't be found"}
+            }
+        }
+    }
+    result = check_value(
+        json_data["first_known_lvl"]["second_known_lvl"]["third_known_lvl"],
+        ["searched_phrase"],
+    )
+    assert result is None
+
+
+# Sample test checking the correctness of the function with an empty dictionary
+def test_check_value_empty_dict():
+    json_data = {}
+    result = check_value(json_data, ["searched_phrase"])
+    assert result is None
+
+
+# Sample test checking the correctness of the function with a nonexistent key
+def test_check_value_nonexistent_key():
+    json_data = {
+        "first_known_lvl": {
+            "second_known_lvl": {"third_known_lvl": {"searched_phrase": "phrase"}}
+        }
+    }
+    result = check_value(json_data, ["nonexistent_key"])
+    assert result is None
