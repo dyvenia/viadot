@@ -385,6 +385,7 @@ class GenesysToCSV(Task):
             "agent_performance_summary_view",
             "agent_status_summary_view",
             "agent_status_detail_view",
+            "agent_interaction_detail_view",
         ]:
             genesys.genesys_api_connection(
                 post_data_list=post_data_list, end_point=end_point
