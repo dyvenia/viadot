@@ -6,9 +6,9 @@ import pytest
 
 from viadot.signals import SKIP
 from viadot.utils import (
+    add_viadot_metadata_columns,
     check_if_empty_file,
     gen_bulk_insert_query_from_df,
-    add_viadot_metadata_columns,
 )
 
 EMPTY_CSV_PATH = "empty.csv"

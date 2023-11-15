@@ -1,8 +1,8 @@
 from viadot.config import local_config
+from viadot.exceptions import ValidationError
 from viadot.flows import SAPRFCToADLS
 from viadot.sources import AzureDataLake
 from viadot.tasks import AzureDataLakeRemove
-from viadot.exceptions import ValidationError
 
 try:
     import pyrfc

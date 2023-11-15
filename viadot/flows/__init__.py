@@ -11,7 +11,7 @@ from .flow_of_flows import Pipeline
 from .genesys_to_adls import GenesysToADLS
 from .outlook_to_adls import OutlookToADLS
 from .salesforce_to_adls import SalesforceToADLS
-from .sharepoint_to_adls import SharepointToADLS, SharepointListToADLS
+from .sharepoint_to_adls import SharepointListToADLS, SharepointToADLS
 from .supermetrics_to_adls import SupermetricsToADLS
 from .supermetrics_to_azure_sql import SupermetricsToAzureSQL
 

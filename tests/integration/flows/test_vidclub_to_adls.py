@@ -4,8 +4,8 @@ from unittest import mock
 import pandas as pd
 import pytest
 
-from viadot.flows import VidClubToADLS
 from viadot.exceptions import ValidationError
+from viadot.flows import VidClubToADLS
 
 DATA = {"col1": ["aaa", "bbb", "ccc"], "col2": [11, 22, 33]}
 ADLS_FILE_NAME = "test_vid_club.parquet"

@@ -6,8 +6,8 @@ from google.oauth2 import service_account
 
 from ..config import local_config
 from ..exceptions import CredentialError, DBDataAccessError
-from .base import Source
 from ..utils import add_viadot_metadata_columns
+from .base import Source
 
 
 class BigQuery(Source):

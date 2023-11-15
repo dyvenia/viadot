@@ -1,20 +1,20 @@
+from copy import deepcopy
+from datetime import datetime
+from fnmatch import fnmatch
+from typing import Any, Dict, List
+
+import pandas as pd
+import sharepy
+from office365.runtime.auth.authentication_context import AuthenticationContext
+from office365.runtime.client_request_exception import ClientRequestException
+from office365.sharepoint.client_context import ClientContext
+from prefect.utilities import logging
+
+from viadot.utils import get_nested_dict
+
 from ..config import local_config
 from ..exceptions import CredentialError
 from .base import Source
-from viadot.utils import get_nested_dict
-
-from typing import Any, Dict, List
-from fnmatch import fnmatch
-from datetime import datetime
-from copy import deepcopy
-import pandas as pd
-
-import sharepy
-from office365.runtime.auth.authentication_context import AuthenticationContext
-from office365.sharepoint.client_context import ClientContext
-from office365.runtime.client_request_exception import ClientRequestException
-from prefect.utilities import logging
-
 
 logger = logging.get_logger()
 

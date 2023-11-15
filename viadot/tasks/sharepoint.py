@@ -1,10 +1,10 @@
-from typing import List
-import pandas as pd
 import copy
 import json
 import os
 import re
+from typing import List
 
+import pandas as pd
 from prefect import Task
 from prefect.tasks.secrets import PrefectSecret
 from prefect.utilities import logging
@@ -12,8 +12,8 @@ from prefect.utilities.tasks import defaults_from_attrs
 
 from ..exceptions import ValidationError
 from ..sources import Sharepoint, SharepointList
-from .azure_key_vault import AzureKeyVaultSecret
 from ..utils import add_viadot_metadata_columns
+from .azure_key_vault import AzureKeyVaultSecret
 
 logger = logging.get_logger()
 
