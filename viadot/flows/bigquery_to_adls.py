@@ -43,6 +43,7 @@ class BigQueryToADLS(Flow):
         if_exists: str = "replace",
         validate_df_dict: dict = None,
         timeout: int = 3600,
+        set_prefect_kv: bool = False,
         *args: List[Any],
         **kwargs: Dict[str, Any],
     ):
@@ -84,6 +85,7 @@ class BigQueryToADLS(Flow):
             When passed, `validate_df` task validation tests are triggered. Defaults to None.
             timeout(int, optional): The amount of time (in seconds) to wait while running this task before
                 a timeout occurs. Defaults to 3600.
+            set_prefect_kv(int, optional): Specifies whether to set a key-value pair in the Prefect KV Store. Defaults to False.
         """
         # BigQueryToDF
         self.query = query
@@ -124,6 +126,8 @@ class BigQueryToADLS(Flow):
             self.adls_schema_file_dir_file = os.path.join(
                 adls_dir_path, "schema", self.now + ".json"
             )
+
+        self.set_prefect_kv = set_prefect_kv
 
         super().__init__(*args, name=name, **kwargs)
 
@@ -205,4 +209,5 @@ class BigQueryToADLS(Flow):
         df_to_be_loaded.set_upstream(dtypes_dict, flow=self)
         file_to_adls_task.set_upstream(df_to_file, flow=self)
         json_to_adls_task.set_upstream(dtypes_to_json_task, flow=self)
-        set_key_value(key=self.adls_dir_path, value=self.adls_file_path)
+        if self.set_prefect_kv is True:
+            set_key_value(key=self.adls_dir_path, value=self.adls_file_path)

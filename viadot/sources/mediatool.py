@@ -1,7 +1,7 @@
 import inspect
 import json
 from datetime import date, timedelta
-from typing import List
+from typing import List, Union
 
 import pandas as pd
 from prefect.utilities import logging
@@ -35,14 +35,14 @@ class Mediatool(Source):
             organization_id (str, optional): Organization ID. Defaults to None.
             user_id (str, optional): User ID. Defaults to None.
         """
-        if credentials is not None:
-            try:
-                self.header = {"Authorization": f"Bearer {credentials.get('TOKEN')}"}
-            except:
-                raise CredentialError("Credentials not found.")
+        if any([rq not in credentials for rq in ["TOKEN", "USER_ID"]]):
+            raise CredentialError(
+                "Missing credentials. 'TOKEN' and 'USER_ID' are required."
+            )
 
         super().__init__(*args, credentials=credentials, **kwargs)
 
+        self.header = {"Authorization": f"Bearer {self.credentials.get('TOKEN')}"}
         self.organization_id = organization_id or self.credentials.get(
             "ORGANIZATION_ID"
         )
@@ -80,7 +80,7 @@ class Mediatool(Source):
         end_date: str = None,
         time_delta: int = 360,
         return_dataframe: bool = True,
-    ) -> pd.DataFrame:
+    ) -> Union[pd.DataFrame, dict]:
         """
         Get data for media entries. This is a main function. Media entries contain IDs for most of the fields
         for other endpoints.Returns DataFrame or Dict.
@@ -95,7 +95,7 @@ class Mediatool(Source):
                 Defaults to True.
 
         Returns:
-            pd.DataFrame: Default return dataframe If 'return_daframe=False' then return list of dicts.
+            Union[pd.DataFrame, dict]: Default return dataframe If 'return_daframe=False' then return list of dicts.
         """
         today = date.today()
 
@@ -119,9 +119,11 @@ class Mediatool(Source):
                 columns = df.columns
             try:
                 df_filtered = df[columns]
-            except KeyError as e:
-                logger.info(e)
-            return df_filtered
+                return df_filtered
+            except KeyError:
+                logger.error(
+                    f"Columns {columns} are incorrect. Whole dictionary for 'mediaEntries' will be returned."
+                )
 
         return response_dict["mediaEntries"]
 
@@ -137,7 +139,7 @@ class Mediatool(Source):
                 Defaults to True.
 
         Returns:
-            pd.DataFrame: Default return dataframe If 'return_daframe=False' then return list of dicts.
+            pd.DataFrame: Default return dataframe If 'return_daframe=False' then return dictionary.
         """
         url_campaigns = (
             f"https://api.mediatool.com/organizations/{organization_id}/campaigns"
@@ -168,7 +170,7 @@ class Mediatool(Source):
         self,
         vehicle_ids: List[str],
         return_dataframe: bool = True,
-    ) -> pd.DataFrame:
+    ) -> Union[pd.DataFrame, dict]:
         """
         Get vehicles data based on the organization IDs. Returns DataFrame or Dict.
 
@@ -178,7 +180,7 @@ class Mediatool(Source):
                 Defaults to True.
 
         Returns:
-            pd.DataFrame: Default return dataframe. If 'return_daframe=False' then return list of dicts.
+            Union[pd.DataFrame, dict]: Default return dataframe. If 'return_daframe=False' then return dictionary.
         """
         response_dict = {}
         dfs = []
@@ -211,11 +213,11 @@ class Mediatool(Source):
                 return df_updated
             return None
 
-        return response_dict["vehicles"]
+        return response_dict["vehicle"]
 
     def get_organizations(
         self, user_id: str = None, return_dataframe: bool = True
-    ) -> pd.DataFrame:
+    ) -> Union[pd.DataFrame, List[dict]]:
         """
         Get organizations data based on the user ID. Returns DataFrame or Dict.
 
@@ -225,7 +227,7 @@ class Mediatool(Source):
             Defaults to True.
 
         Returns:
-            pd.DataFrame: Default return dataframe. If 'return_daframe=False' then return list of dicts.
+            Union[pd.DataFrame, List[dict]]: Default return dataframe. If 'return_daframe=False' then return list of dicts.
         """
         user_id = user_id or self.user_id
         url_organizations = f"https://api.mediatool.com/users/{user_id}/organizations"
@@ -258,7 +260,7 @@ class Mediatool(Source):
 
     def get_media_types(
         self, media_type_ids: List[str], return_dataframe: bool = True
-    ) -> pd.DataFrame:
+    ) -> Union[pd.DataFrame, List[dict]]:
         """
         Get media types data based on the media types ID. User have to provide list of media type IDs.
         Returns DataFrame or Dict.
@@ -269,7 +271,7 @@ class Mediatool(Source):
                 Defaults to True.
 
         Returns:
-            pd.DataFrame: Default return dataframe. If 'return_daframe=False' then return list of dicts.
+            Union[pd.DataFrame, List[dict]]: Default return dataframe. If 'return_daframe=False' then return list of dicts.
         """
         list_media_types = []
         for id_media_type in media_type_ids:

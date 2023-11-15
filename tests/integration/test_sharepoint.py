@@ -9,7 +9,7 @@ from viadot.config import local_config
 from viadot.exceptions import CredentialError
 from viadot.sources import Sharepoint
 from viadot.task_utils import df_get_data_types_task
-from viadot.tasks.sharepoint import SharepointToDF, SharepointListToDF
+from viadot.tasks.sharepoint import SharepointToDF
 from viadot.sources import SharepointList
 
 
