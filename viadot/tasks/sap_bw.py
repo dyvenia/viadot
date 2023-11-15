@@ -6,6 +6,7 @@ from prefect.utilities import logging
 from viadot.exceptions import ValidationError
 from viadot.sources import SAPBW
 from viadot.task_utils import *
+from viadot.tasks import AzureKeyVaultSecret
 
 logger = logging.get_logger()
 
@@ -27,13 +28,14 @@ class SAPBWToDF(Task):
             sapbw_credentials_key (str, optional): Azure KV secret. Defaults to "SAP".
             env (str, optional): SAP environment. Defaults to "BW".
         """
-        if sapbw_credentials is None:
-            self.sapbw_credentials = credentials_loader.run(
-                credentials_secret=sapbw_credentials_key
-            ).get(env)
+        if not sapbw_credentials:
+            credentials_str = AzureKeyVaultSecret(
+                sapbw_credentials_key,
+            ).run()
+            self.sapbw_credentials = json.loads(credentials_str).get(env)
 
         else:
-            self.sapbw_credentials = sapbw_credentials
+            self.sapbw_credentials = PrefectSecret("SAP_BW").run()
 
         super().__init__(
             name="sapbw_to_df",

@@ -8,7 +8,7 @@ from .mediatool import Mediatool
 from .outlook import Outlook
 from .salesforce import Salesforce
 from .sftp import SftpConnector
-from .sharepoint import Sharepoint
+from .sharepoint import Sharepoint, SharepointList
 from .supermetrics import Supermetrics
 
 try:
@@ -30,6 +30,7 @@ from .hubspot import Hubspot
 from .mindful import Mindful
 from .sql_server import SQLServer
 from .sqlite import SQLite
+from .tm1 import TM1
 
 # APIS
 from .uk_carbon_intensity import UKCarbonIntensity

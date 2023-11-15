@@ -4,10 +4,11 @@ import os
 import pytest
 from prefect.storage import Local
 
+from viadot.exceptions import ValidationError
 from viadot.flows import SupermetricsToADLS
 
 CWD = os.getcwd()
-adls_dir_path = "raw/supermetrics"
+adls_dir_path = "raw/tests/supermetrics"
 STORAGE = Local(path=CWD)
 
 logger = logging.getLogger(__name__)
@@ -110,3 +111,91 @@ def test_supermetrics_to_adls_file_name(expectation_suite):
     )
     result = flow.run()
     assert result.is_successful()
+
+
+def test_supermetrics_to_adls_validate_df_success(expectation_suite):
+    flow = SupermetricsToADLS(
+        "test_supermetrics_to_adls_validate_df_success",
+        ds_id="GA",
+        ds_segments=[
+            "R1fbzFNQQ3q_GYvdpRr42w",
+            "I8lnFFvdSFKc50lP7mBKNA",
+            "Lg7jR0VWS5OqGPARtGYKrw",
+            "h8ViuGLfRX-cCL4XKk6yfQ",
+            "-1",
+        ],
+        ds_accounts=["8326007", "58338899"],
+        date_range_type="last_year_inc",
+        fields=[
+            {"id": "Date"},
+            {"id": "segment", "split": "column"},
+            {"id": "AvgPageLoadTime_calc"},
+        ],
+        settings={"avoid_sampling": "true"},
+        order_columns="alphabetic",
+        max_columns=100,
+        max_rows=10,
+        expectation_suite=expectation_suite,
+        evaluation_parameters=dict(previous_run_row_count=9),
+        adls_dir_path=adls_dir_path,
+        parallel=False,
+        validate_df_dict={
+            "column_size": {"Date": 10},
+            "column_list_to_match": [
+                "Date",
+                "All Users",
+                "M-Site_Better Space: All Landing Page Sessions",
+                "M-site_Accessories: All Landing Page Sessions",
+                "M-site_More Space: All Landing Page Sessions",
+                "M-site_Replacement: All Landing Page Sessions",
+            ],
+        },
+    )
+    result = flow.run()
+    assert result.is_successful()
+
+    task_results = result.result.values()
+    assert all([task_result.is_successful() for task_result in task_results])
+
+
+def test_supermetrics_to_adls_validate_df_fail(expectation_suite):
+    flow = SupermetricsToADLS(
+        "test_supermetrics_to_adls_validate_df_fail",
+        ds_id="GA",
+        ds_segments=[
+            "R1fbzFNQQ3q_GYvdpRr42w",
+            "I8lnFFvdSFKc50lP7mBKNA",
+            "Lg7jR0VWS5OqGPARtGYKrw",
+            "h8ViuGLfRX-cCL4XKk6yfQ",
+            "-1",
+        ],
+        ds_accounts=["8326007", "58338899"],
+        date_range_type="last_year_inc",
+        fields=[
+            {"id": "Date"},
+            {"id": "segment", "split": "column"},
+            {"id": "AvgPageLoadTime_calc"},
+        ],
+        settings={"avoid_sampling": "true"},
+        order_columns="alphabetic",
+        max_columns=100,
+        max_rows=10,
+        expectation_suite=expectation_suite,
+        evaluation_parameters=dict(previous_run_row_count=9),
+        adls_dir_path=adls_dir_path,
+        parallel=False,
+        validate_df_dict={
+            "column_list_to_match": [
+                "All Users",
+                "All Landing Page Sessions",
+                "All Landing Page Sessions",
+                "All Landing Page Sessions",
+                "All Landing Page Sessions",
+            ],
+        },
+    )
+
+    try:
+        flow.run()
+    except ValidationError:
+        pass

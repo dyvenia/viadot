@@ -104,6 +104,7 @@ def parse_orders_xml(xml_data: str) -> pd.DataFrame:
 
     Args:
         xml_data (str, required): Response from Epicor API in form of xml
+
     Returns:
         pd.DataFrame: DataFrame containing parsed orders data.
     """
@@ -221,7 +222,11 @@ class Epicor(Source):
         super().__init__(*args, credentials=credentials, **kwargs)
 
     def generate_token(self) -> str:
-        "Function to generate API access token that is valid for 24 hours"
+        """Function to generate API access token that is valid for 24 hours.
+
+        Returns:
+            str: Generated token.
+        """
 
         url = (
             "http://"
@@ -243,7 +248,11 @@ class Epicor(Source):
         return token
 
     def generate_url(self) -> str:
-        "Function to generate url to download data"
+        """Function to generate url to download data
+
+        Returns:
+            str: Output url string.
+        """
 
         return (
             "http://"
@@ -282,8 +291,12 @@ class Epicor(Source):
         )
         return response
 
-    def to_df(self):
-        "Function for creating pandas DataFrame from Epicor API response"
+    def to_df(self) -> pd.DataFrame:
+        """Function for creating pandas DataFrame from Epicor API response
+
+        Returns:
+            pd.DataFrame: Output DataFrame.
+        """
         data = self.get_xml_response()
         df = parse_orders_xml(data)
         return df

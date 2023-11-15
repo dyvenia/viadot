@@ -15,6 +15,7 @@ from ..task_utils import (
     df_to_parquet,
     dtypes_to_json_task,
     update_dtypes_dict,
+    validate_df,
 )
 from ..tasks import AzureDataLakeUpload, EurostatToDF
 
@@ -40,6 +41,7 @@ class EurostatToADLS(Flow):
         adls_file_name: str = None,
         adls_sp_credentials_secret: str = None,
         overwrite_adls: bool = False,
+        validate_df_dict: dict = None,
         if_exists: str = "replace",
         *args: List[Any],
         **kwargs: Dict[str, Any],
@@ -70,6 +72,8 @@ class EurostatToADLS(Flow):
                 ACCOUNT_NAME and Service Principal credentials (TENANT_ID, CLIENT_ID, CLIENT_SECRET) for the Azure Data Lake.
                 Defaults to None.
             overwrite_adls (bool, optional): Whether to overwrite files in the lake. Defaults to False.
+            validate_df_dict (Dict[str], optional): A dictionary with optional list of tests to verify the output dataframe.
+                If defined, triggers the `validate_df` task from task_utils. Defaults to None
             if_exists (str, optional): What to do if the file exists. Defaults to "replace".
         """
 
@@ -78,6 +82,9 @@ class EurostatToADLS(Flow):
         self.params = params
         self.base_url = base_url
         self.requested_columns = requested_columns
+
+        # validate df
+        self.validate_df_dict = validate_df_dict
 
         # AzureDataLakeUpload
         self.overwrite = overwrite_adls
@@ -123,6 +130,12 @@ class EurostatToADLS(Flow):
 
         df = df.bind(flow=self)
 
+        if self.validate_df_dict:
+            validation_task = validate_df.bind(
+                df, tests=self.validate_df_dict, flow=self
+            )
+            validation_task.set_upstream(df, flow=self)
+
         df_with_metadata = add_ingestion_metadata_task.bind(df, flow=self)
         dtypes_dict = df_get_data_types_task.bind(df_with_metadata, flow=self)
 
@@ -164,6 +177,9 @@ class EurostatToADLS(Flow):
             sp_credentials_secret=self.adls_sp_credentials_secret,
             flow=self,
         )
+
+        if self.validate_df_dict:
+            df_with_metadata.set_upstream(validation_task, flow=self)
 
         file_to_adls_task.set_upstream(df_to_file, flow=self)
         json_to_adls_task.set_upstream(dtypes_to_json_task, flow=self)

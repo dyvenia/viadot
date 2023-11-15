@@ -17,7 +17,7 @@ def test_bigquery_to_df_success():
         credentials_key=CREDENTIALS_KEY,
     )
     df = bigquery_to_df_task.run()
-    expected_column = ["my_value"]
+    expected_column = ["my_value", "_viadot_source"]
 
     assert isinstance(df, pd.DataFrame)
     assert expected_column == list(df.columns)

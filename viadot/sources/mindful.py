@@ -1,10 +1,11 @@
 import os
 from datetime import datetime, timedelta
 from io import StringIO
-from typing import Any, Dict, Literal
+from typing import Any, Dict, Literal, Tuple
 
 import pandas as pd
 import prefect
+from requests.auth import HTTPBasicAuth
 from requests.models import Response
 
 from viadot.exceptions import APIError
@@ -15,7 +16,7 @@ from viadot.utils import handle_api_response
 class Mindful(Source):
     def __init__(
         self,
-        header: str,
+        auth: Tuple[str],
         region: Literal["us1", "us2", "us3", "ca1", "eu1", "au1"] = "eu1",
         start_date: datetime = None,
         end_date: datetime = None,
@@ -27,7 +28,7 @@ class Mindful(Source):
         """Mindful connector which allows listing and downloading into Data Frame or specified format output.
 
         Args:
-            header (str): Header with credentials for calling Mindful API.
+            auth (Tuple[str]): Authentication credentials for calling Mindful API. The structure is user and password.
             region (Literal[us1, us2, us3, ca1, eu1, au1], optional): SD region from where to interact with the mindful API. Defaults to "eu1".
             start_date (datetime, optional): Start date of the request. Defaults to None.
             end_date (datetime, optional): End date of the resquest. Defaults to None.
@@ -73,7 +74,7 @@ class Mindful(Source):
             )
 
         self.file_extension = file_extension
-        self.header = header
+        self.auth = auth
 
     def _mindful_api_response(
         self,
@@ -94,8 +95,8 @@ class Mindful(Source):
         response = handle_api_response(
             url=f"https://{self.region}surveydynamix.com/api/{endpoint}",
             params=params,
-            headers=self.header,
             method="GET",
+            auth=HTTPBasicAuth(*self.auth),
         )
 
         return response

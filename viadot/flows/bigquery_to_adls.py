@@ -15,6 +15,7 @@ from viadot.task_utils import (
     df_to_parquet,
     dtypes_to_json_task,
     update_dtypes_dict,
+    validate_df,
 )
 from viadot.tasks import AzureDataLakeUpload, BigQueryToDF
 
@@ -40,7 +41,9 @@ class BigQueryToADLS(Flow):
         adls_sp_credentials_secret: str = None,
         overwrite_adls: bool = False,
         if_exists: str = "replace",
+        validate_df_dict: dict = None,
         timeout: int = 3600,
+        set_prefect_kv: bool = False,
         *args: List[Any],
         **kwargs: Dict[str, Any],
     ):
@@ -78,8 +81,11 @@ class BigQueryToADLS(Flow):
             Defaults to None.
             overwrite_adls (bool, optional): Whether to overwrite files in the lake. Defaults to False.
             if_exists (str, optional): What to do if the file exists. Defaults to "replace".
+            validate_df_dict (dict, optional): An optional dictionary to verify the received dataframe.
+            When passed, `validate_df` task validation tests are triggered. Defaults to None.
             timeout(int, optional): The amount of time (in seconds) to wait while running this task before
                 a timeout occurs. Defaults to 3600.
+            set_prefect_kv(int, optional): Specifies whether to set a key-value pair in the Prefect KV Store. Defaults to False.
         """
         # BigQueryToDF
         self.query = query
@@ -90,6 +96,9 @@ class BigQueryToADLS(Flow):
         self.date_column_name = date_column_name
         self.vault_name = vault_name
         self.credentials_key = credentials_key
+
+        # Validate DataFrame
+        self.validate_df_dict = validate_df_dict
 
         # AzureDataLakeUpload
         self.overwrite = overwrite_adls
@@ -118,6 +127,8 @@ class BigQueryToADLS(Flow):
                 adls_dir_path, "schema", self.now + ".json"
             )
 
+        self.set_prefect_kv = set_prefect_kv
+
         super().__init__(*args, name=name, **kwargs)
 
         self.gen_flow()
@@ -139,6 +150,12 @@ class BigQueryToADLS(Flow):
             vault_name=self.vault_name,
             flow=self,
         )
+
+        if self.validate_df_dict:
+            validation_task = validate_df.bind(
+                df, tests=self.validate_df_dict, flow=self
+            )
+            validation_task.set_upstream(df, flow=self)
 
         df_with_metadata = add_ingestion_metadata_task.bind(df, flow=self)
         dtypes_dict = df_get_data_types_task.bind(df_with_metadata, flow=self)
@@ -184,9 +201,13 @@ class BigQueryToADLS(Flow):
             flow=self,
         )
 
+        if self.validate_df_dict:
+            df_with_metadata.set_upstream(validation_task, flow=self)
+
         df_with_metadata.set_upstream(df, flow=self)
         dtypes_dict.set_upstream(df_with_metadata, flow=self)
         df_to_be_loaded.set_upstream(dtypes_dict, flow=self)
         file_to_adls_task.set_upstream(df_to_file, flow=self)
         json_to_adls_task.set_upstream(dtypes_to_json_task, flow=self)
-        set_key_value(key=self.adls_dir_path, value=self.adls_file_path)
+        if self.set_prefect_kv is True:
+            set_key_value(key=self.adls_dir_path, value=self.adls_file_path)

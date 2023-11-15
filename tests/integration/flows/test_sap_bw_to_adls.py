@@ -4,6 +4,7 @@ from unittest import mock
 import pandas as pd
 import pytest
 
+from viadot.exceptions import ValidationError
 from viadot.flows import SAPBWToADLS
 
 DATA = {
@@ -51,3 +52,74 @@ def test_sap_bw_to_adls_flow_run(mocked_class):
     assert result.is_successful()
     os.remove("test_sap_bw_to_adls_flow_run.parquet")
     os.remove("test_sap_bw_to_adls_flow_run.json")
+
+
+def test_sap_bw_validate_df_task_success(caplog):
+    flow = SAPBWToADLS(
+        "test_sap_bw_validate_df_task_success",
+        mdx_query="""
+            SELECT
+            { [Measures].[003YPR4ERQZRMSMFEQ8123HRR] } ON COLUMNS,
+            NON EMPTY
+            { 
+                { [0CALDAY].[20230102] } *
+                            { 
+                    [0COMP_CODE].[1120] 
+                    }  
+            } 
+            ON ROWS
+        FROM ZCSALBIL1/ZBW4_ZCSALBIL1_002_BOA
+        """,
+        overwrite_adls=True,
+        adls_dir_path=ADLS_DIR_PATH,
+        adls_file_name=ADLS_FILE_NAME,
+        validate_df_dict={
+            "column_size": {"[0CALDAY].[LEVEL01].[MEMBER_CAPTION]": 10},
+            "column_list_to_match": [
+                "[0CALDAY].[LEVEL01].[MEMBER_CAPTION]",
+                "[0COMP_CODE].[LEVEL01].[MEMBER_CAPTION]",
+                "[Measures].[003YPR4ERQZRMSMFEQ8123HRR]",
+            ],
+        },
+    )
+    result = flow.run()
+    assert result.is_successful()
+    os.remove("test_sap_bw_validate_df_task_success.parquet")
+    os.remove("test_sap_bw_validate_df_task_success.json")
+
+
+def test_sap_bw_validate_df_task_fail(caplog):
+    flow = SAPBWToADLS(
+        "test_sap_bw_validate_df_task_fail",
+        mdx_query="""
+            SELECT
+            { [Measures].[003YPR4ERQZRMSMFEQ8123HRR] } ON COLUMNS,
+            NON EMPTY
+            { 
+                { [0CALDAY].[20230102] } *
+                            { 
+                    [0COMP_CODE].[1120] 
+                    }  
+            } 
+            ON ROWS
+        FROM ZCSALBIL1/ZBW4_ZCSALBIL1_002_BOA
+        """,
+        overwrite_adls=True,
+        adls_dir_path=ADLS_DIR_PATH,
+        adls_file_name=ADLS_FILE_NAME,
+        validate_df_dict={
+            "column_size": {"[0CALDAY].[LEVEL01].[MEMBER_CAPTION]": 8},
+            "column_list_to_match": [
+                "[0CALDAY].[LEVEL01].[MEMBER_CAPTION]",
+                "[0COMP_CODE].[LEVEL01].[MEMBER_CAPTION]",
+            ],
+        },
+    )
+
+    try:
+        flow.run()
+    except ValidationError:
+        pass
+
+    os.remove("test_sap_bw_validate_df_task_fail.parquet")
+    os.remove("test_sap_bw_validate_df_task_fail.json")

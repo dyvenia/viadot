@@ -320,7 +320,9 @@ class Genesys(Source):
             date = self.start_date.replace("-", "")
             if single_report[4].lower() in [
                 "queue_performance_detail_view",
+                "queue_interaction_detail_view",
                 "agent_status_detail_view",
+                "agent_interaction_detail_view",
             ]:
                 file_name = f"{self.view_type.upper()}_{next(self.count)}_{date}"
             elif single_report[4].lower() in [
@@ -342,7 +344,7 @@ class Genesys(Source):
             if store_file_names is True:
                 file_name_list.append(file_name + "." + self.file_extension)
 
-        self.logger.info("Al reports were successfully dowonload.")
+        self.logger.info("All reports were successfully downloaded.")
 
         if store_file_names is True:
             self.logger.info("Successfully genetared file names list.")

@@ -6,6 +6,7 @@ from google.oauth2 import service_account
 
 from ..config import local_config
 from ..exceptions import CredentialError, DBDataAccessError
+from ..utils import add_viadot_metadata_columns
 from .base import Source
 
 
@@ -100,9 +101,11 @@ class BigQuery(Source):
         """
         return self.credentials["project_id"]
 
+    @add_viadot_metadata_columns()
     def query_to_df(self, query: str) -> pd.DataFrame:
         """
         Query throught Bigquery table.
+        `add_viadot_metadata_columns` adds one column to the DF - `_viadot_source`.
 
         Args:
             query (str): SQL-Like Query to return data values.

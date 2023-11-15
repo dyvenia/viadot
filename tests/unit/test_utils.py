@@ -6,9 +6,9 @@ import pytest
 
 from viadot.signals import SKIP
 from viadot.utils import (
+    add_viadot_metadata_columns,
     check_if_empty_file,
     gen_bulk_insert_query_from_df,
-    add_viadot_metadata_columns,
 )
 
 EMPTY_CSV_PATH = "empty.csv"
@@ -16,14 +16,20 @@ EMPTY_PARQUET_PATH = "empty.parquet"
 
 
 class ClassForDecorator:
+    source = "Source_name"
+
     def __init__(self):
         self.df = pd.DataFrame({"a": [123], "b": ["abc"]})
 
     def to_df(self):
         return self.df
 
-    @add_viadot_metadata_columns
+    @add_viadot_metadata_columns()
     def to_df_decorated(self):
+        return self.df
+
+    @add_viadot_metadata_columns(source)
+    def to_df_decorated_parameter(self):
         return self.df
 
 
@@ -138,3 +144,12 @@ def test_add_viadot_metadata_columns_base():
     assert df_base.columns.to_list() == ["a", "b"]
     assert df_decorated.columns.to_list() == ["a", "b", "_viadot_source"]
     assert df_decorated["_viadot_source"][0] == "ClassForDecorator"
+
+
+def test_add_viadot_metadata_columns_with_parameter():
+    df_base = ClassForDecorator().to_df()
+    df_decorated = ClassForDecorator().to_df_decorated_parameter()
+
+    assert df_base.columns.to_list() == ["a", "b"]
+    assert df_decorated.columns.to_list() == ["a", "b", "_viadot_source"]
+    assert df_decorated["_viadot_source"][0] == "Source_name"
