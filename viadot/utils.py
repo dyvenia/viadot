@@ -460,10 +460,10 @@ def get_nested_dict(d):
                 return d
     else:
         return None
-    
+
 
 def check_value(base: Union[Dict, Any], levels: List) -> Union[None, Any]:
-    """        
+    """
     Task to extract data from nested json file if there is any under passed parameters.
     Otherwise return None.
 
