@@ -167,8 +167,8 @@ def test_add_viadot_metadata_columns_with_parameter():
     assert df_decorated["_viadot_source"][0] == "Source_name"
 
 
-# Sample test checking the correctness of the function when the key is found
 def test_check_value_found():
+    """Sample test checking the correctness of the function when the key is found."""
     json_data = {
         "first_known_lvl": {
             "second_known_lvl": {"third_known_lvl": {"searched_phrase": "phrase"}}
@@ -181,8 +181,8 @@ def test_check_value_found():
     assert result == "phrase"
 
 
-# Sample test checking the correctness of the function when the key is not found
 def test_check_value_not_found():
+    """Sample test checking the correctness of the function when the key is not found."""
     json_data = {
         "first_known_lvl": {
             "second_known_lvl": {
@@ -197,15 +197,16 @@ def test_check_value_not_found():
     assert result is None
 
 
-# Sample test checking the correctness of the function with an empty dictionary
 def test_check_value_empty_dict():
+    """Sample test checking the correctness of the function with an empty dictionary."""
     json_data = {}
     result = check_value(json_data, ["searched_phrase"])
     assert result is None
 
 
-# Sample test checking the correctness of the function with a nonexistent key
 def test_check_value_nonexistent_key():
+    """Sample test checking the correctness of the function with a nonexistent key."""
+
     json_data = {
         "first_known_lvl": {
             "second_known_lvl": {"third_known_lvl": {"searched_phrase": "phrase"}}
@@ -213,6 +214,14 @@ def test_check_value_nonexistent_key():
     }
     result = check_value(json_data, ["nonexistent_key"])
     assert result is None
+
+
+def test_check_value_base_is_not_dict():
+    result = check_value(
+        base="this_is_not_dict",
+        levels=["searched_phrase"],
+    )
+    assert result == "this_is_not_dict"
 
 
 def test_handle_api_response_wrong_method():
