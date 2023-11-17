@@ -1,8 +1,10 @@
+import json
 import logging
 import os
 
 import pandas as pd
 import pytest
+from viadot.exceptions import APIError
 
 from viadot.signals import SKIP
 from viadot.utils import (
@@ -10,13 +12,15 @@ from viadot.utils import (
     check_if_empty_file,
     gen_bulk_insert_query_from_df,
     check_value,
+    slugify,
+    handle_api_response,
 )
 
 EMPTY_CSV_PATH = "empty.csv"
 EMPTY_PARQUET_PATH = "empty.parquet"
 
 
-class ClassForDecorator:
+class ClassForMetadataDecorator:
     source = "Source_name"
 
     def __init__(self):
@@ -32,6 +36,13 @@ class ClassForDecorator:
     @add_viadot_metadata_columns(source)
     def to_df_decorated_parameter(self):
         return self.df
+
+
+def test_slugify():
+    """To test slugify() function functionalities work"""
+    test_string = "Text With Spaces Before Changes"
+    string_after_changes = slugify(test_string)
+    assert string_after_changes == "text_with_spaces_before_changes"
 
 
 def test_single_quotes_inside():
@@ -139,17 +150,17 @@ def test_check_if_empty_file_no_data(caplog):
 
 
 def test_add_viadot_metadata_columns_base():
-    df_base = ClassForDecorator().to_df()
-    df_decorated = ClassForDecorator().to_df_decorated()
+    df_base = ClassForMetadataDecorator().to_df()
+    df_decorated = ClassForMetadataDecorator().to_df_decorated()
 
     assert df_base.columns.to_list() == ["a", "b"]
     assert df_decorated.columns.to_list() == ["a", "b", "_viadot_source"]
-    assert df_decorated["_viadot_source"][0] == "ClassForDecorator"
+    assert df_decorated["_viadot_source"][0] == "ClassForMetadataDecorator"
 
 
 def test_add_viadot_metadata_columns_with_parameter():
-    df_base = ClassForDecorator().to_df()
-    df_decorated = ClassForDecorator().to_df_decorated_parameter()
+    df_base = ClassForMetadataDecorator().to_df()
+    df_decorated = ClassForMetadataDecorator().to_df_decorated_parameter()
 
     assert df_base.columns.to_list() == ["a", "b"]
     assert df_decorated.columns.to_list() == ["a", "b", "_viadot_source"]
@@ -202,3 +213,45 @@ def test_check_value_nonexistent_key():
     }
     result = check_value(json_data, ["nonexistent_key"])
     assert result is None
+
+
+def test_handle_api_response_wrong_method():
+    """Test to check if ValueError is thrown when wrong method is used."""
+
+    api_url = "https://api.api-ninjas.com/v1/randomuser"
+    with pytest.raises(ValueError, match="Method not found."):
+        handle_api_response(url=api_url, method="WRONG_METHOD")
+
+
+def test_handle_api_response_credentials_not_provided():
+    """Test to check if APIError is thrown when credentials are not provided."""
+
+    api_url = "https://api.api-ninjas.com/v1/randomuser"
+    with pytest.raises(
+        APIError, match="Perhaps your account credentials need to be refreshed?"
+    ):
+        handle_api_response(url=api_url)
+
+
+def test_handle_api_response_wrong_url():
+    """Test to check if APIError is thrown when api_url is wrong."""
+
+    api_url = "https://test.com/"
+    with pytest.raises(APIError, match="failed due to connection issues."):
+        handle_api_response(url=api_url)
+
+
+def test_handle_api_response_unknown_error():
+    """Test to check if APIError is thrown when there is something other than "url" under api_url."""
+
+    api_url = "test_string"
+    with pytest.raises(APIError, match="Unknown error"):
+        handle_api_response(url=api_url)
+
+
+def test_handle_api_response_return_type():
+    """Test to check if the connection is successful."""
+
+    api_url = "https://jsonplaceholder.typicode.com/posts"
+    response = handle_api_response(url=api_url)
+    assert response.status_code == 200
