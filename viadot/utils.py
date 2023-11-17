@@ -23,6 +23,14 @@ logger = logging.get_logger(__name__)
 
 
 def slugify(name: str) -> str:
+    """Function to change spaces to underscores and convert all characters to lowercase.
+
+    Args:
+        name (str): String to convert.
+
+    Returns:
+        str: Output text after conversion.
+    """
     return name.replace(" ", "_").lower()
 
 
