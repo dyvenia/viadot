@@ -2,8 +2,8 @@ import json
 
 import pandas as pd
 import pytest
-from viadot.exceptions import CredentialError
 
+from viadot.exceptions import CredentialError
 from viadot.sources import Hubspot
 from viadot.task_utils import credentials_loader
 

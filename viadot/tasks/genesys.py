@@ -11,9 +11,10 @@ from prefect.engine import signals
 from prefect.utilities import logging
 from prefect.utilities.tasks import defaults_from_attrs
 
-from viadot.task_utils import *
 from viadot.exceptions import APIError
 from viadot.sources import Genesys
+from viadot.utils import check_value
+from viadot.task_utils import *
 
 logger = logging.get_logger()
 
@@ -487,9 +488,9 @@ class GenesysToCSV(Task):
                 temp_dict = {
                     key: value for (key, value) in attributes.items() if key in key_list
                 }
-                temp_dict["conversationId"] = json_file["id"]
-                temp_dict["startTime"] = json_file["startTime"]
-                temp_dict["endTime"] = json_file["endTime"]
+                temp_dict["conversationId"] = json_file.get("id")
+                temp_dict["startTime"] = json_file.get("startTime")
+                temp_dict["endTime"] = json_file.get("endTime")
                 data_list.append(temp_dict)
 
             df = pd.DataFrame(data_list)
@@ -508,5 +509,74 @@ class GenesysToCSV(Task):
             )
 
             logger.info("Downloaded the data from the Genesys into the CSV.")
+
+            return [file_name]
+
+        elif view_type is None and end_point == "users":
+            # First call to API to get information about amount of pages to extract
+            temp_json = genesys.genesys_api_connection(
+                post_data_list=post_data_list,
+                end_point=f"{end_point}/?pageSize=500&pageNumber=1&expand=presence,dateLastLogin,groups,employerInfo,lasttokenissued&state=any",
+                method="GET",
+            )
+            last_page = temp_json["pageCount"] + 1
+
+            data_list = []
+
+            # For loop to download all pages from Genesys GET API
+            for n in range(1, last_page):
+                json_file = genesys.genesys_api_connection(
+                    post_data_list=post_data_list,
+                    end_point=f"{end_point}/?pageSize=500&pageNumber={n}&expand=presence,dateLastLogin,groups,employerInfo,lasttokenissued&state=any",
+                    method="GET",
+                )
+                logger.info(f"Downloaded: {n} page")
+
+                num_ids = len(json_file["entities"])
+
+                # For loop to extract data from specific page
+                for id in range(0, num_ids):
+                    record_dict = {}
+                    record_dict["Id"] = check_value(json_file["entities"][id], ["id"])
+                    record_dict["Name"] = check_value(
+                        json_file["entities"][id], ["name"]
+                    )
+                    record_dict["DivisionName"] = check_value(
+                        json_file["entities"][id], ["division", "name"]
+                    )
+                    record_dict["Email"] = check_value(
+                        json_file["entities"][id], ["email"]
+                    )
+                    record_dict["State"] = check_value(
+                        json_file["entities"][id], ["state"]
+                    )
+                    record_dict["Title"] = check_value(
+                        json_file["entities"][id], ["title"]
+                    )
+                    record_dict["Username"] = check_value(
+                        json_file["entities"][id], ["username"]
+                    )
+                    record_dict["SystemPresence"] = check_value(
+                        json_file["entities"][id],
+                        ["presence", "presenceDefinition", "systemPresence"],
+                    )
+                    record_dict["DateLastLogin"] = check_value(
+                        json_file["entities"][id], ["dateLastLogin"]
+                    )
+
+                    data_list.append(record_dict)
+
+            df = pd.DataFrame(data_list)
+
+            # data validation function (optional)
+            if validate_df_dict:
+                validate_df.run(df=df, tests=validate_df_dict)
+
+            file_name = "All_Genesys_Users.csv"
+            df.to_csv(
+                os.path.join(file_name),
+                index=False,
+                sep="\t",
+            )
 
             return [file_name]

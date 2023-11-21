@@ -1,7 +1,7 @@
-import pandas as pd
-
-from prefect import Task
 from typing import Any, Dict
+
+import pandas as pd
+from prefect import Task
 from prefect.utilities.tasks import defaults_from_attrs
 
 from ..sources import TM1

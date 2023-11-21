@@ -1,5 +1,6 @@
 import os
 import re
+from copy import deepcopy
 
 import pandas as pd
 import pytest
@@ -7,10 +8,9 @@ from prefect.tasks.secrets import PrefectSecret
 
 from viadot.config import local_config
 from viadot.exceptions import CredentialError
-from viadot.sources import Sharepoint
+from viadot.sources import Sharepoint, SharepointList
 from viadot.task_utils import df_get_data_types_task
 from viadot.tasks.sharepoint import SharepointToDF
-from viadot.sources import SharepointList
 
 
 def get_url() -> str:

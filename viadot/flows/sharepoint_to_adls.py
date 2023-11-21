@@ -19,8 +19,7 @@ from viadot.task_utils import (
     validate_df,
 )
 from viadot.tasks import AzureDataLakeUpload
-from viadot.tasks.sharepoint import SharepointToDF, SharepointListToDF
-
+from viadot.tasks.sharepoint import SharepointListToDF, SharepointToDF
 
 logger = logging.get_logger()
 

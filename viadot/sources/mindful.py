@@ -1,12 +1,12 @@
 import os
-from io import StringIO
 from datetime import datetime, timedelta
+from io import StringIO
 from typing import Any, Dict, Literal, Tuple
 
 import pandas as pd
 import prefect
-from requests.models import Response
 from requests.auth import HTTPBasicAuth
+from requests.models import Response
 
 from viadot.exceptions import APIError
 from viadot.sources.base import Source

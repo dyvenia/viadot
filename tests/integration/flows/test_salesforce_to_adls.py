@@ -2,9 +2,9 @@ import os
 
 from prefect.tasks.secrets import PrefectSecret
 
+from viadot.exceptions import ValidationError
 from viadot.flows import SalesforceToADLS
 from viadot.tasks import AzureDataLakeRemove
-from viadot.exceptions import ValidationError
 
 ADLS_FILE_NAME = "test_salesforce.parquet"
 ADLS_DIR_PATH = "raw/tests/"
