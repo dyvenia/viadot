@@ -195,8 +195,8 @@ def check_if_df_empty(df):
     if len(df.index) == 0:
         logger.info("No data in the response. Df empty")
 
-        raise ENDRUN(state=Failed())
-        # raise FAIL("DF IS EMPTY!")
+        # raise ENDRUN(state=Failed())
+        raise FAIL("DF IS EMPTY!")
 
 
 class SharepointListToADLS(Flow):
