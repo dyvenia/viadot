@@ -6,6 +6,8 @@ import pendulum
 from prefect import Flow
 from prefect.backend import set_key_value
 from prefect.utilities import logging
+from prefect.engine.state import Failed, State, Success, Skipped
+from prefect.engine.signals import FAIL
 
 from viadot.task_utils import (
     add_ingestion_metadata_task,
@@ -333,7 +335,13 @@ class SharepointListToADLS(Flow):
             credentials_secret=self.sp_cert_credentials_secret,
         )
         df = s.run()
+        logger.info("New changes")
+        if len(df.index) == 0:
+            logger.info("No data in the response. Df empty")
+            from prefect.engine.runner import ENDRUN
 
+            raise ENDRUN(state=Failed())
+            raise FAIL("DF IS EMPTY!")
         if self.validate_df_dict:
             validation_task = validate_df(df=df, tests=self.validate_df_dict, flow=self)
             validation_task.set_upstream(df, flow=self)
