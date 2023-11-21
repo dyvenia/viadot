@@ -3,7 +3,7 @@ from pathlib import Path
 from typing import Any, Dict, List
 
 import pendulum
-from prefect import Flow
+from prefect import Flow, task
 from prefect.backend import set_key_value
 from prefect.utilities import logging
 from prefect.engine.state import Failed, State, Success, Skipped
@@ -19,7 +19,8 @@ from viadot.task_utils import (
     validate_df,
 )
 from viadot.tasks import AzureDataLakeUpload
-from viadot.tasks.sharepoint import SharepointListToDF, SharepointToDF
+from viadot.tasks.sharepoint import SharepointToDF, SharepointListToDF
+from prefect.engine.runner import ENDRUN
 
 logger = logging.get_logger()
 
@@ -189,6 +190,15 @@ class SharepointToADLS(Flow):
         return name.replace(" ", "_").lower()
 
 
+@task
+def check_if_df_empty(df):
+    if len(df.index) == 0:
+        logger.info("No data in the response. Df empty")
+
+        raise ENDRUN(state=Failed())
+        # raise FAIL("DF IS EMPTY!")
+
+
 class SharepointListToADLS(Flow):
     def __init__(
         self,
@@ -323,7 +333,7 @@ class SharepointListToADLS(Flow):
         self.gen_flow()
 
     def gen_flow(self) -> Flow:
-        s = SharepointListToDF(
+        df = SharepointListToDF(
             path=self.path,
             list_title=self.list_title,
             site_url=self.site_url,
@@ -333,18 +343,13 @@ class SharepointListToADLS(Flow):
             row_count=self.row_count,
             credentials_secret=self.sp_cert_credentials_secret,
         )
-        df = s.run()
+        # df = s.run()
         logger.info("New changes")
-        if len(df.index) == 0:
-            logger.info("No data in the response. Df empty")
-            from prefect.engine.runner import ENDRUN
 
-            raise ENDRUN(state=Failed())
-            raise FAIL("DF IS EMPTY!")
         if self.validate_df_dict:
             validation_task = validate_df(df=df, tests=self.validate_df_dict, flow=self)
             validation_task.set_upstream(df, flow=self)
-
+        check_if_df_empty.bind(df, flow=self)
         df_with_metadata = add_ingestion_metadata_task.bind(df, flow=self)
         dtypes_dict = df_get_data_types_task.bind(df_with_metadata, flow=self)
         df_mapped = df_map_mixed_dtypes_for_parquet.bind(
