@@ -354,21 +354,21 @@ def gen_bulk_insert_query_from_df(
         return _gen_insert_query_from_records(tuples_escaped)
 
 
-def union_dict(*dicts):
+def union_dict(*dicts) -> dict:
     """
-    Function that union list of dictionaries
+    Function that union list of dictionaries into a singe dictionary.
 
     Args:
-        dicts (List[Dict]): list of dictionaries with credentials.
+        *dicts: Variable number of dictionaries to be unioned.
 
     Returns:
-        Dict: A single dictionary createb by union method.
+        dict: A single dictionary containing the combined key-value pairs from all input dictionaries.
 
     Examples:
 
     >>> a = {"a":1}
     >>> b = {"b":2}
-    >>> union_credentials_dict(a ,b)
+    >>> union_dict(a ,b)
     {'a': 1, 'b': 2}
 
     """

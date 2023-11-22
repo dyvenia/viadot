@@ -15,6 +15,7 @@ from viadot.utils import (
     get_sql_server_table_dtypes,
     slugify,
     handle_api_response,
+    union_dict,
 )
 
 EMPTY_CSV_PATH = "empty.csv"
@@ -322,3 +323,12 @@ def test_get_sql_server_table_dtypes(azure_sql):
     assert isinstance(dtypes, dict)
     assert list(dtypes.keys()) == ["country", "sales"]
     assert list(dtypes.values()) == ["varchar(100)", "int"]
+
+
+def test_union_dict_return():
+    """Check if dictionaries are unioned in the correct way."""
+    a = {"a": 1}
+    b = {"b": 2}
+    unioned_dict = union_dict(a, b)
+    assert isinstance(unioned_dict, dict)
+    assert unioned_dict == {"a": 1, "b": 2}
