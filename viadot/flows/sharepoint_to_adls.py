@@ -8,7 +8,7 @@ from prefect.backend import set_key_value
 from prefect.utilities import logging
 from prefect.engine.state import Failed, State, Success, Skipped
 from prefect.engine.signals import FAIL
-
+from typing import Literal
 from viadot.task_utils import (
     add_ingestion_metadata_task,
     df_get_data_types_task,
@@ -197,6 +197,7 @@ def check_if_df_empty(df):
 
         # raise ENDRUN(state=Failed())
         raise FAIL("DF IS EMPTY!")
+        # raise ValueError("DF IS EMPTY!")
 
 
 class SharepointListToADLS(Flow):
@@ -219,6 +220,7 @@ class SharepointListToADLS(Flow):
         output_file_extension: str = ".parquet",
         validate_df_dict: dict = None,
         set_prefect_kv: bool = False,
+        if_no_data_returned: Literal["continue", "warn", "fail"] = "continue",
         *args: List[any],
         **kwargs: Dict[str, Any],
     ):
@@ -343,9 +345,6 @@ class SharepointListToADLS(Flow):
             row_count=self.row_count,
             credentials_secret=self.sp_cert_credentials_secret,
         )
-        # df = s.run()
-        logger.info("New changes")
-
         if self.validate_df_dict:
             validation_task = validate_df(df=df, tests=self.validate_df_dict, flow=self)
             validation_task.set_upstream(df, flow=self)
