@@ -1,4 +1,3 @@
-import json
 import logging
 import os
 
@@ -41,7 +40,13 @@ class ClassForMetadataDecorator:
 
 
 @pytest.fixture(scope="function")
-def azure_sql(TEST_CSV_FILE_PATH, TEST_CSV_FILE_BLOB_PATH):
+def example_dataframe():
+    data = [(1, "_suffixnan", 1), (2, "Noneprefix", 0), (3, "fooNULLbar", 1, 2.34)]
+    return pd.DataFrame(data, columns=["id", "name", "is_deleted", "balance"])
+
+
+@pytest.fixture(scope="function")
+def azure_sql():
     azure_sql = AzureSQL(config_key="AZURE_SQL")
     yield azure_sql
 
@@ -127,6 +132,24 @@ def test_bulk_insert_query_from_df_not_implemeted():
         match="this function only handles DataFrames with at least two columns.",
     ):
         gen_bulk_insert_query_from_df(df1, table_fqn="test_schema.test_table")
+
+
+def test_bulk_insert_query_from_df_full_return(example_dataframe):
+    result = gen_bulk_insert_query_from_df(
+        example_dataframe,
+        table_fqn="users",
+        chunksize=1000,
+        status="APPROVED",
+        address=None,
+    )
+
+    expected_result = """INSERT INTO users (id, name, is_deleted, balance, status, address)
+
+VALUES (1, '_suffixnan', 1, NULL, 'APPROVED', NULL),
+       (2, 'Noneprefix', 0, NULL, 'APPROVED', NULL),
+       (3, 'fooNULLbar', 1, 2.34, 'APPROVED', NULL)"""
+
+    assert result == expected_result
 
 
 def test_check_if_empty_file_csv(caplog):

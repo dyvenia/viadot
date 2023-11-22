@@ -145,12 +145,12 @@ def get_flow_last_run_date(flow_name: str) -> str:
 
 
 def get_sql_server_table_dtypes(
-    table, con: pyodbc.Connection, schema: str = None
+    table: str, con: pyodbc.Connection, schema: str = None
 ) -> dict:
     """Get column names and types from a SQL Server database table.
 
     Args:
-        table (_type_): The table for which to fetch dtypes.
+        table (str): The table for which to fetch dtypes.
         con (pyodbc.Connection): The connection to the database where the table is located.
         schema (str, optional): The schema where the table is located. Defaults to None.
 
@@ -265,7 +265,7 @@ def build_merge_query(
 
 
 def gen_bulk_insert_query_from_df(
-    df: pd.DataFrame, table_fqn: str, chunksize=1000, **kwargs
+    df: pd.DataFrame, table_fqn: str, chunksize: int = 1000, **kwargs
 ) -> str:
     """
     Converts a DataFrame to a bulk INSERT query.
@@ -273,6 +273,7 @@ def gen_bulk_insert_query_from_df(
     Args:
         df (pd.DataFrame): The DataFrame which data should be put into the INSERT query.
         table_fqn (str): The fully qualified name (schema.table) of the table to be inserted into.
+        chunksize (int, optional): The size of chunk. Defaults to 1000.
 
     Returns:
         str: A bulk insert query that will insert all data from `df` into `table_fqn`.
@@ -288,6 +289,7 @@ def gen_bulk_insert_query_from_df(
     >>> query = gen_bulk_insert_query_from_df(df, "users", status="APPROVED", address=None)
     >>> print(query)
     INSERT INTO users (id, name, is_deleted, balance, status, address)
+
     VALUES (1, '_suffixnan', 1, NULL, 'APPROVED', NULL),
            (2, 'Noneprefix', 0, NULL, 'APPROVED', NULL),
            (3, 'fooNULLbar', 1, 2.34, 'APPROVED', NULL);
