@@ -7,11 +7,13 @@ import pytest
 from viadot.exceptions import APIError
 
 from viadot.signals import SKIP
+from viadot.sources import AzureSQL
 from viadot.utils import (
     add_viadot_metadata_columns,
     check_if_empty_file,
     gen_bulk_insert_query_from_df,
     check_value,
+    get_sql_server_table_dtypes,
     slugify,
     handle_api_response,
 )
@@ -38,6 +40,12 @@ class ClassForMetadataDecorator:
         return self.df
 
 
+@pytest.fixture(scope="function")
+def azure_sql(TEST_CSV_FILE_PATH, TEST_CSV_FILE_BLOB_PATH):
+    azure_sql = AzureSQL(config_key="AZURE_SQL")
+    yield azure_sql
+
+
 def test_slugify():
     """To test slugify() function functionalities work"""
     test_string = "Text With Spaces Before Changes"
@@ -45,7 +53,7 @@ def test_slugify():
     assert string_after_changes == "text_with_spaces_before_changes"
 
 
-def test_single_quotes_inside():
+def test_bulk_insert_query_from_df_single_quotes_inside():
     TEST_VALUE = "a'b"
     df1 = pd.DataFrame(
         {
@@ -67,7 +75,7 @@ VALUES ({TEST_VALUE_ESCAPED}, 'a')"""
     ), test_insert_query
 
 
-def test_single_quotes_outside():
+def test_bulk_insert_query_from_df_single_quotes_outside():
     TEST_VALUE = "'a'"
     df1 = pd.DataFrame(
         {
@@ -89,7 +97,7 @@ VALUES ({TEST_VALUE_ESCAPED}, 'b')"""
     ), test_insert_query
 
 
-def test_double_quotes_inside():
+def test_bulk_insert_query_from_df_double_quotes_inside():
     TEST_VALUE = 'a "b"'
     df1 = pd.DataFrame(
         {
@@ -109,6 +117,16 @@ def test_double_quotes_inside():
 
 VALUES ({TEST_VALUE_ESCAPED}, 'c')"""
     ), test_insert_query
+
+
+def test_bulk_insert_query_from_df_not_implemeted():
+    TEST_VALUE = 'a "b"'
+    df1 = pd.DataFrame({"a": [TEST_VALUE]})
+    with pytest.raises(
+        NotImplementedError,
+        match="this function only handles DataFrames with at least two columns.",
+    ):
+        gen_bulk_insert_query_from_df(df1, table_fqn="test_schema.test_table")
 
 
 def test_check_if_empty_file_csv(caplog):
@@ -264,3 +282,20 @@ def test_handle_api_response_return_type():
     api_url = "https://jsonplaceholder.typicode.com/posts"
     response = handle_api_response(url=api_url)
     assert response.status_code == 200
+
+
+def test_get_sql_server_table_dtypes(azure_sql):
+    """Checks if dtypes is generated in a good way using `get_sql_server_table_dtypes` function."""
+
+    SCHEMA = "sandbox"
+    TABLE = "test_table_dtypes"
+    dtypes = {"country": "VARCHAR(100)", "sales": "INT"}
+
+    azure_sql.create_table(
+        schema=SCHEMA, table=TABLE, dtypes=dtypes, if_exists="replace"
+    )
+
+    dtypes = get_sql_server_table_dtypes(schema=SCHEMA, table=TABLE, con=azure_sql.con)
+    assert isinstance(dtypes, dict)
+    assert list(dtypes.keys()) == ["country", "sales"]
+    assert list(dtypes.values()) == ["varchar(100)", "int"]
