@@ -1,6 +1,7 @@
 import json
 import os
 import urllib
+from pandas.io.json import json_normalize
 from datetime import date, datetime, timedelta
 from typing import Any, Dict, List, Literal, Tuple
 
@@ -46,7 +47,7 @@ class VidClub(Source):
         api_url: str,
         items_per_page: int,
         source: Literal["jobs", "product", "company", "survey"] = None,
-        region: Literal["bg", "hu", "hr", "pl", "ro", "si", "all"] = "all",
+        region: Literal["bg", "hu", "hr", "pl", "ro", "si", "all"] = None,
     ) -> str:
         """
         Builds the query from the inputs.
@@ -128,7 +129,7 @@ class VidClub(Source):
         from_date: str = "2022-03-22",
         to_date: str = None,
         items_per_page: int = 100,
-        region: Literal["bg", "hu", "hr", "pl", "ro", "si", "all"] = "all",
+        region: Literal["bg", "hu", "hr", "pl", "ro", "si", "all"] = None,
         url: str = None,
     ) -> Tuple[Dict[str, Any], str]:
         """
@@ -160,20 +161,37 @@ class VidClub(Source):
         if url is None:
             url = self.credentials["url"]
 
-        first_url = self.build_query(
-            source=source,
-            from_date=from_date,
-            to_date=to_date,
-            api_url=url,
-            items_per_page=items_per_page,
-            region=region,
-        )
-        headers = self.headers
-        response = handle_api_response(
-            url=first_url, headers=headers, method="GET", verify=False
-        )
-        response = response.json()
-
+        if source in ["jobs", "product", "company"]:
+            first_url = self.build_query(
+                source=source,
+                from_date=from_date,
+                to_date=to_date,
+                api_url=url,
+                items_per_page=items_per_page,
+            )
+            headers = self.headers
+            response = handle_api_response(
+                url=first_url, headers=headers, method="GET", verify=False
+            )
+            response = response.json()
+        elif source == "survey":
+            first_url = self.build_query(
+                source=source,
+                from_date=from_date,
+                to_date=to_date,
+                api_url=url,
+                items_per_page=items_per_page,
+                region=region,
+            )
+            headers = self.headers
+            response = handle_api_response(
+                url=first_url, headers=headers, method="GET", verify=False
+            )
+            response = response.json()
+        else:
+            raise ValidationError(
+                "Pick one these sources: jobs, product, company, survey"
+            )
         return (response, first_url)
 
     def get_response(
@@ -182,7 +200,7 @@ class VidClub(Source):
         from_date: str = "2022-03-22",
         to_date: str = None,
         items_per_page: int = 100,
-        region: Literal["bg", "hu", "hr", "pl", "ro", "si", "all"] = "all",
+        region: Literal["bg", "hu", "hr", "pl", "ro", "si", "all"] = None,
     ) -> pd.DataFrame:
         """
         Basing on the pagination type retrieved using check_connection function, gets the response from the API queried and transforms it into DataFrame.
@@ -207,14 +225,26 @@ class VidClub(Source):
             )
         if to_date == None:
             to_date = datetime.today().strftime("%Y-%m-%d")
+        if source in ["jobs", "product", "company"]:
+            response, first_url = self.check_connection(
+                source=source,
+                from_date=from_date,
+                to_date=to_date,
+                items_per_page=items_per_page,
+            )
 
-        response, first_url = self.check_connection(
-            source=source,
-            from_date=from_date,
-            to_date=to_date,
-            items_per_page=items_per_page,
-            region=region,
-        )
+        elif source == "survey":
+            response, first_url = self.check_connection(
+                source=source,
+                from_date=from_date,
+                to_date=to_date,
+                items_per_page=items_per_page,
+                region=region,
+            )
+        else:
+            raise ValidationError(
+                "Pick one these sources: jobs, product, company, survey"
+            )
 
         if isinstance(response, dict):
             keys_list = list(response.keys())
@@ -229,7 +259,8 @@ class VidClub(Source):
             ind = False
 
         if "data" in keys_list:
-            df = pd.DataFrame(response["data"])
+            df = json_normalize(response["data"])
+            df = pd.DataFrame(df)
             length = df.shape[0]
             page = 1
 
@@ -244,7 +275,8 @@ class VidClub(Source):
                     url=url, headers=headers, method="GET", verify=False
                 )
                 response = r.json()
-                df_page = pd.DataFrame(response["data"])
+                df_page = json_normalize(response["data"])
+                df_page = pd.DataFrame(df_page)
                 if source == "product":
                     df_page = df_page.transpose()
                 length = df_page.shape[0]
