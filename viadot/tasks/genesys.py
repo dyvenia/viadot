@@ -33,6 +33,8 @@ class GenesysToCSV(Task):
         local_file_path: str = "",
         sep: str = "\t",
         conversationId_list: List[str] = None,
+        mapping_dict: Dict[str, Any] = None,
+        columns_order: List[str] = None,
         key_list: List[str] = None,
         credentials_genesys: Dict[str, Any] = None,
         validate_df_dict: Dict[str, Any] = None,
@@ -56,6 +58,8 @@ class GenesysToCSV(Task):
             local_file_path (str, optional): The local path from which to upload the file(s). Defaults to "".
             sep (str, optional): Separator in csv file. Defaults to "\t".
             conversationId_list (List[str], optional): List of conversationId passed as attribute of GET method. Defaults to None.
+            mapping_dict (dict, optional): Mapping dictionary from user in json format. Defaults to None.
+            columns_order (List, optional): Columns order list to change column order inside pd.DataFrame. Defaults to None.
             key_list (List[str], optional): List of keys needed to specify the columns in the GET request method. Defaults to None.
             validate_df_dict (Dict[str,Any], optional): A dictionary with optional list of tests to verify the output dataframe. If defined, triggers
                 the `validate_df` task from task_utils. Defaults to None.
@@ -76,6 +80,8 @@ class GenesysToCSV(Task):
         self.local_file_path = local_file_path
         self.sep = sep
         self.conversationId_list = conversationId_list
+        self.mapping_dict = mapping_dict
+        self.columns_order = columns_order
         self.key_list = key_list
         self.validate_df_dict = validate_df_dict
 
@@ -298,6 +304,8 @@ class GenesysToCSV(Task):
         "report_columns",
         "credentials_genesys",
         "conversationId_list",
+        "mapping_dict",
+        "columns_order",
         "key_list",
         "validate_df_dict",
     )
@@ -314,6 +322,8 @@ class GenesysToCSV(Task):
         end_date: str = None,
         report_columns: List[str] = None,
         conversationId_list: List[str] = None,
+        mapping_dict: Dict[str, Any] = None,
+        columns_order: List[str] = None,
         key_list: List[str] = None,
         credentials_genesys: Dict[str, Any] = None,
         validate_df_dict: Dict[str, Any] = None,
@@ -334,6 +344,8 @@ class GenesysToCSV(Task):
             report_url (str, optional): The url of report generated in json response. Defaults to None.
             report_columns (List[str], optional): List of exisiting column in report. Defaults to None.
             conversationId_list (List[str], optional): List of conversationId passed as attribute of GET method. Defaults to None.
+            mapping_dict (dict, optional): Mapping dictionary from user in json format. Defaults to None.
+            columns_order (List, optional): Columns order list to change column order inside pd.DataFrame. Defaults to None.
             key_list (List[str], optional): List of keys needed to specify the columns in the GET request method. Defaults to None.
             validate_df_dict (Dict[str,Any], optional): A dictionary with optional list of tests to verify the output dataframe. If defined, triggers
                 the `validate_df` task from task_utils. Defaults to None.
@@ -461,8 +473,16 @@ class GenesysToCSV(Task):
 
             date = start_date.replace("-", "")
             file_name = f"conversations_detail_{date}".upper() + ".csv"
+
+            # Possible transformation of DataFrame
+            if mapping_dict:
+                final_df.rename(columns=mapping_dict, inplace=True)
+            if columns_order:
+                final_df = df[columns_order]
+
             if validate_df_dict:
                 validate_df.run(df=final_df, tests=validate_df_dict)
+
             final_df.to_csv(
                 os.path.join(self.local_file_path, file_name),
                 index=False,
@@ -494,14 +514,21 @@ class GenesysToCSV(Task):
                 data_list.append(temp_dict)
 
             df = pd.DataFrame(data_list)
-            df = df[df.columns[-1:]].join(df[df.columns[:-1]])
+
+            # Possible transformation of DataFrame
+            if mapping_dict:
+                df.rename(columns=mapping_dict, inplace=True)
+            if columns_order:
+                df = df[columns_order]
+
+            if validate_df_dict:
+                validate_df.run(df=df, tests=validate_df_dict)
 
             start = start_date.replace("-", "")
             end = end_date.replace("-", "")
 
             file_name = f"WEBMESSAGE_{start}-{end}.csv"
-            if validate_df_dict:
-                validate_df.run(df=df, tests=validate_df_dict)
+
             df.to_csv(
                 os.path.join(file_name),
                 index=False,
@@ -567,6 +594,12 @@ class GenesysToCSV(Task):
                     data_list.append(record_dict)
 
             df = pd.DataFrame(data_list)
+
+            # Possible transformation of DataFrame
+            if mapping_dict:
+                df.rename(columns=mapping_dict, inplace=True)
+            if columns_order:
+                df = df[columns_order]
 
             # data validation function (optional)
             if validate_df_dict:
