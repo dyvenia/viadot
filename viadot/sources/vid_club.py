@@ -243,7 +243,7 @@ class VidClub(Source):
             )
         else:
             raise ValidationError(
-                "Pick one these sources: jobs, product, company, survey"
+                "Pick one of these sources: jobs, product, company, survey"
             )
 
         if isinstance(response, dict):
