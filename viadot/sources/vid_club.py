@@ -190,7 +190,7 @@ class VidClub(Source):
             response = response.json()
         else:
             raise ValidationError(
-                "Pick one these sources: jobs, product, company, survey"
+                "Pick one of these sources: jobs, product, company, survey"
             )
         return (response, first_url)
 
