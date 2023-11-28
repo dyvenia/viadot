@@ -187,10 +187,11 @@ class SharepointToADLS(Flow):
     def slugify(name):
         return name.replace(" ", "_").lower()
 
-    @task(slug="check_df")
-    def check_if_df_empty(df):
-        if len(df.index) == 0:
-            logger.info("No data in the response. Df empty")
+
+@task(slug="check_df")
+def check_if_df_empty(df):
+    if len(df.index) == 0:
+        logger.info("No data in the response. Df empty.")
 
 
 class SharepointListToADLS(Flow):
