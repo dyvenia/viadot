@@ -193,9 +193,10 @@ class SharepointListToADLS(Flow):
         name: str,
         list_title: str,
         site_url: str,
-        path: str,
+        file_name: str,
+        # path: str,
         adls_dir_path: str,
-        adls_file_name: str,
+        # adls_file_name: str,
         filters: dict = None,
         required_fields: List[str] = None,
         field_property: str = "Title",
@@ -219,6 +220,7 @@ class SharepointListToADLS(Flow):
             name (str): Prefect flow name.
             list_title (str): Title of Sharepoint List.
             site_url (str): URL to set of Sharepoint Lists.
+            file_name (str): PENDING
             path (str): Local file path. Default to None.
             adls_dir_path (str): Azure Data Lake destination folder/catalog path. Defaults to None.
             adls_file_name (str): Name of file in ADLS. Defaults to None.
@@ -272,7 +274,7 @@ class SharepointListToADLS(Flow):
         """
 
         # SharepointListToDF
-        self.path = path
+        self.file_name = file_name
         self.list_title = list_title
         self.site_url = site_url
         self.required_fields = required_fields
@@ -285,32 +287,29 @@ class SharepointListToADLS(Flow):
 
         # AzureDataLakeUpload
         self.adls_dir_path = adls_dir_path
-        self.adls_file_name = adls_file_name
         self.overwrite = overwrite_adls
         self.adls_sp_credentials_secret = adls_sp_credentials_secret
         self.output_file_extension = output_file_extension
         self.set_prefect_kv = set_prefect_kv
         self.now = str(pendulum.now("utc"))
-        if self.path is not None:
+        if self.file_name is not None:
             self.local_file_path = (
-                self.path + self.slugify(name) + self.output_file_extension
+                self.file_name + self.slugify(name) + self.output_file_extension
+            )
+            self.adls_file_path = os.path.join(adls_dir_path, file_name)
+            self.adls_schema_file_dir_file = os.path.join(
+                adls_dir_path, "schema", Path(file_name).stem + ".json"
             )
         else:
             self.local_file_path = self.slugify(name) + self.output_file_extension
-        self.local_json_path = self.slugify(name) + ".json"
-        self.adls_dir_path = adls_dir_path
-        if adls_file_name is not None:
-            self.adls_file_path = os.path.join(adls_dir_path, adls_file_name)
-            self.adls_schema_file_dir_file = os.path.join(
-                adls_dir_path, "schema", Path(adls_file_name).stem + ".json"
-            )
-        else:
             self.adls_file_path = os.path.join(
                 adls_dir_path, self.now + self.output_file_extension
             )
             self.adls_schema_file_dir_file = os.path.join(
                 adls_dir_path, "schema", self.now + ".json"
             )
+        self.local_json_path = self.slugify(name) + ".json"
+        self.adls_dir_path = adls_dir_path
 
         super().__init__(
             name=name,
@@ -322,7 +321,7 @@ class SharepointListToADLS(Flow):
 
     def gen_flow(self) -> Flow:
         s = SharepointListToDF(
-            path=self.path,
+            path=self.file_name,
             list_title=self.list_title,
             site_url=self.site_url,
             required_fields=self.required_fields,
@@ -345,13 +344,13 @@ class SharepointListToADLS(Flow):
 
         df_to_file = df_to_parquet.bind(
             df=df_mapped,
-            path=self.path,
+            path=self.file_name,
             flow=self,
         )
 
         file_to_adls_task = AzureDataLakeUpload()
         file_to_adls_task.bind(
-            from_path=self.path,
+            from_path=self.file_name,
             to_path=self.adls_dir_path,
             overwrite=self.overwrite,
             sp_credentials_secret=self.adls_sp_credentials_secret,
