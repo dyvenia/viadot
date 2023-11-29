@@ -65,6 +65,7 @@ class SharepointToADLS(Flow):
             Defaults to None.
             overwrite_adls (bool, optional): Whether to overwrite files in the lake. Defaults to False.
             if_empty (str, optional): What to do if query returns no data. Defaults to "warn".
+            if_exists (str, optional): What to do if the file already exists. Defaults to "replace".
             validate_df_dict (dict, optional): A dictionary with optional list of tests to verify the output
             dataframe. If defined, triggers the `validate_df` task from task_utils. Defaults to None.
             timeout(int, optional): The amount of time (in seconds) to wait while running this task before
@@ -206,6 +207,7 @@ class SharepointListToADLS(Flow):
         output_file_extension: str = ".parquet",
         validate_df_dict: dict = None,
         set_prefect_kv: bool = False,
+        if_exists: str = "replace",
         *args: List[any],
         **kwargs: Dict[str, Any],
     ):
@@ -264,6 +266,7 @@ class SharepointListToADLS(Flow):
             output_file_extension (str, optional): Extension of the resulting file to be stored. Defaults to ".parquet".
             validate_df_dict (dict, optional): Whether to do an extra df validation before ADLS upload or not to do. Defaults to None.
             set_prefect_kv (bool, optional): Whether to do key-value parameters in KV Store or not. Defaults to False.
+            if_exists (str, optional): What to do if the file already exists. Defaults to "replace".
 
         Returns:
             .parquet file inside ADLS.
@@ -280,6 +283,7 @@ class SharepointListToADLS(Flow):
         self.vault_name = vault_name
         self.row_count = row_count
         self.validate_df_dict = validate_df_dict
+        self.if_exists = if_exists
 
         # AzureDataLakeUpload
         self.adls_dir_path = adls_dir_path
@@ -290,7 +294,8 @@ class SharepointListToADLS(Flow):
         self.now = str(pendulum.now("utc"))
         if self.file_name is not None:
             self.local_file_path = (
-                self.file_name + self.slugify(name) + self.output_file_extension
+                self.file_name.split('.')[0] + self.output_file_extension
+                # self.file_name + self.slugify(name) + self.output_file_extension
             )
             self.adls_file_path = os.path.join(adls_dir_path, file_name)
             self.adls_schema_file_dir_file = os.path.join(
@@ -338,15 +343,30 @@ class SharepointListToADLS(Flow):
             df_with_metadata, dtypes_dict, flow=self
         )
 
-        df_to_file = df_to_parquet.bind(
-            df=df_mapped,
-            path=self.file_name,
-            flow=self,
-        )
+        # df_to_file = df_to_parquet.bind(
+        #     df=df_mapped,
+        #     path=self.file_name,
+        #     flow=self,
+        # )
+        
+        if self.output_file_extension == ".csv":
+            df_to_file = df_to_csv.bind(
+                df=df_with_metadata,
+                path=self.local_file_path,
+                if_exists=self.if_exists,
+                flow=self,
+            )
+        else:
+            df_to_file = df_to_parquet.bind(
+                df=df_mapped,
+                path=self.local_file_path,
+                if_exists=self.if_exists,
+                flow=self,
+            )
 
         file_to_adls_task = AzureDataLakeUpload()
         file_to_adls_task.bind(
-            from_path=self.file_name,
+            from_path=self.local_file_path,
             to_path=self.adls_dir_path,
             overwrite=self.overwrite,
             sp_credentials_secret=self.adls_sp_credentials_secret,
