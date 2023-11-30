@@ -10,7 +10,7 @@ from office365.runtime.client_request_exception import ClientRequestException
 from office365.sharepoint.client_context import ClientContext
 from prefect.utilities import logging
 
-from viadot.utils import get_nested_dict
+from viadot.utils import get_nested_value
 
 from ..config import local_config
 from ..exceptions import CredentialError
@@ -168,7 +168,7 @@ class SharepointList(Source):
         item_values_dict = list_item.properties
         if item_values_dict:
             for field, val in item_values_dict.items():
-                nested_dict = get_nested_dict(val)
+                nested_dict = get_nested_value(val)
                 # Check if the values are nested
                 if nested_dict != None:
                     # Check if field has expandable type
