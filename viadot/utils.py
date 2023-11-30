@@ -461,37 +461,43 @@ def add_viadot_metadata_columns(source_name: str = None) -> Callable:
     return decorator
 
 
-def get_nested_dict(d):
-    if isinstance(d, dict):
-        for lvl in d.values():
-            if isinstance(lvl, dict):
-                return get_nested_dict(lvl)
-            else:
-                return d
-    else:
-        return None
-
-
-def check_value(base: Union[Dict, Any], levels: List) -> Union[None, Any]:
+def get_nested_value(
+    nested_dict: dict,
+    levels_to_search: List[str] = None,
+) -> Union[None, Any]:
     """
-    Task to extract data from nested json file if there is any under passed parameters.
-    Otherwise return None.
+    Retrieve a value from a nested dictionary based on specified levels if the `levels_to_search` are provided.
+    Retrieve a key:value pair of the first deepest pair if `levels_to_search` is not provided.
 
     Args:
-        base (Dict, Any): variable with base lvl of the json, for example:
-                          json_file["first_known_lvl"]["second_known_lvl"]["third_known_lvl"]
-        levels (List): List of potential lower levels of nested json for data retrieval. For example:
-                       ["first_lvl_below_base", "second_lvl_below_base", "searched_phrase"]
+        nested_dict (dict): The nested dictionary to search for the value.
+        levels_to_search (List[str], optional): List of keys representing the levels to search. Defaults to None.
+            If provided, the function will attempt to retrieve the value at the specified levels.
+            If not provided, the function will recursively search for the first non-dictionary value.
 
     Returns:
-        Union[None, Any]: Searched value for the lowest level, in example data under "searched_phrase" key.
+        Union[None, Any]: The searched value for the specified level or the first key:value pair when
+            first non-dictionary value found during recursive search.
+            Returns None if the nested_dict is not a dictionary or if the specified levels are not found.
     """
-
-    for lvl in levels:
-        if isinstance(base, dict):
-            base = base.get(lvl)
-            if base is None:
-                return None
+    try:
+        if levels_to_search is not None:
+            for lvl in levels_to_search:
+                if isinstance(nested_dict[lvl], dict):
+                    return get_nested_value(
+                        nested_dict=nested_dict[levels_to_search.pop(0)],
+                        levels_to_search=levels_to_search,
+                    )
+                else:
+                    return nested_dict[lvl]
         else:
-            return base
-    return base
+            for lvl in nested_dict.values():
+                if isinstance(lvl, dict):
+                    return get_nested_value(nested_dict=lvl)
+                else:
+                    return nested_dict
+    except KeyError as e:
+        return None
+    except TypeError as e:
+        logger.error(f"The 'nested_dict' must be a dictionary. {e}")
+        return None
