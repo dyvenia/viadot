@@ -11,7 +11,8 @@ from viadot.utils import (
     add_viadot_metadata_columns,
     check_if_empty_file,
     gen_bulk_insert_query_from_df,
-    check_value,
+    get_flow_last_run_date,
+    get_nested_value,
     get_sql_server_table_dtypes,
     slugify,
     handle_api_response,
@@ -50,6 +51,27 @@ def example_dataframe():
 def azure_sql():
     azure_sql = AzureSQL(config_key="AZURE_SQL")
     yield azure_sql
+
+
+@pytest.fixture(scope="function")
+def nested_dict():
+    nested_dict = {
+        "first_known_lvl": {
+            "second_known_lvl": {
+                "third_known_lvl": {
+                    "searched_lvl": {
+                        "searched_phrase_1": "First value",
+                        "searched_phrase_2": None,
+                        "searched_phrase_3": "Found it!",
+                    }
+                }
+            }
+        },
+        "first_known_lvl_2": {
+            "second_known_lvl_2": {"searched_phrase_2": "Found it_2!"}
+        },
+    }
+    return nested_dict
 
 
 def test_slugify():
@@ -209,63 +231,6 @@ def test_add_viadot_metadata_columns_with_parameter():
     assert df_decorated["_viadot_source"][0] == "Source_name"
 
 
-def test_check_value_found():
-    """Sample test checking the correctness of the function when the key is found."""
-    json_data = {
-        "first_known_lvl": {
-            "second_known_lvl": {"third_known_lvl": {"searched_phrase": "phrase"}}
-        }
-    }
-    result = check_value(
-        json_data["first_known_lvl"]["second_known_lvl"]["third_known_lvl"],
-        ["searched_phrase"],
-    )
-    assert result == "phrase"
-
-
-def test_check_value_not_found():
-    """Sample test checking the correctness of the function when the key is not found."""
-    json_data = {
-        "first_known_lvl": {
-            "second_known_lvl": {
-                "third_known_lvl": {"other_phrase": "This won't be found"}
-            }
-        }
-    }
-    result = check_value(
-        json_data["first_known_lvl"]["second_known_lvl"]["third_known_lvl"],
-        ["searched_phrase"],
-    )
-    assert result is None
-
-
-def test_check_value_empty_dict():
-    """Sample test checking the correctness of the function with an empty dictionary."""
-    json_data = {}
-    result = check_value(json_data, ["searched_phrase"])
-    assert result is None
-
-
-def test_check_value_nonexistent_key():
-    """Sample test checking the correctness of the function with a nonexistent key."""
-
-    json_data = {
-        "first_known_lvl": {
-            "second_known_lvl": {"third_known_lvl": {"searched_phrase": "phrase"}}
-        }
-    }
-    result = check_value(json_data, ["nonexistent_key"])
-    assert result is None
-
-
-def test_check_value_base_is_not_dict():
-    result = check_value(
-        base="this_is_not_dict",
-        levels=["searched_phrase"],
-    )
-    assert result == "this_is_not_dict"
-
-
 def test_handle_api_response_wrong_method():
     """Test to check if ValueError is thrown when wrong method is used."""
 
@@ -332,3 +297,46 @@ def test_union_dict_return():
     unioned_dict = union_dict(a, b)
     assert isinstance(unioned_dict, dict)
     assert unioned_dict == {"a": 1, "b": 2}
+
+
+def test_get_nested_value_found(nested_dict):
+    """Sample test checking the correctness of the function when the key is found."""
+    result = get_nested_value(
+        nested_dict=nested_dict["first_known_lvl"]["second_known_lvl"][
+            "third_known_lvl"
+        ],
+        levels_to_search=["searched_lvl", "searched_phrase_3"],
+    )
+    assert result == "Found it!"
+
+
+def test_get_nested_value_not_found(nested_dict):
+    """Sample test checking the correctness of the function when the key is not found."""
+    result = get_nested_value(
+        nested_dict["first_known_lvl"]["second_known_lvl"]["third_known_lvl"],
+        levels_to_search=["searched_wrong_lvl"],
+    )
+    assert result is None
+
+
+def test_get_nested_value_nested_dict_is_string(caplog):
+    """Sample test checking the correctness of the function when non-dictionary value is provided as nested_dict."""
+    with caplog.at_level(logging.WARNING):
+        get_nested_value(
+            nested_dict="this_is_not_dict",
+            levels_to_search=["searched_phrase"],
+        )
+        assert "The 'nested_dict' must be a dictionary." in caplog.text
+
+
+def test_get_nested_value_without_levels(nested_dict):
+    """Sample test checking the correctness of the function when only `nested_value` is provided."""
+    result_1 = get_nested_value(nested_dict=nested_dict)
+    result_2 = get_nested_value(nested_dict=nested_dict["first_known_lvl_2"])
+
+    assert result_1 == {
+        "searched_phrase_1": "First value",
+        "searched_phrase_2": None,
+        "searched_phrase_3": "Found it!",
+    }
+    assert result_2 == {"searched_phrase_2": "Found it_2!"}
