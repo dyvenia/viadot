@@ -13,7 +13,7 @@ from prefect.utilities.tasks import defaults_from_attrs
 
 from viadot.exceptions import APIError
 from viadot.sources import Genesys
-from viadot.utils import check_value
+from viadot.utils import get_nested_value
 from viadot.task_utils import *
 
 logger = logging.get_logger()
@@ -537,31 +537,43 @@ class GenesysToCSV(Task):
                 # For loop to extract data from specific page
                 for id in range(0, num_ids):
                     record_dict = {}
-                    record_dict["Id"] = check_value(json_file["entities"][id], ["id"])
-                    record_dict["Name"] = check_value(
-                        json_file["entities"][id], ["name"]
+                    record_dict["Id"] = get_nested_value(
+                        nested_dict=json_file["entities"][id], levels_to_search=["id"]
                     )
-                    record_dict["DivisionName"] = check_value(
-                        json_file["entities"][id], ["division", "name"]
+                    record_dict["Name"] = get_nested_value(
+                        nested_dict=json_file["entities"][id], levels_to_search=["name"]
                     )
-                    record_dict["Email"] = check_value(
-                        json_file["entities"][id], ["email"]
+                    record_dict["DivisionName"] = get_nested_value(
+                        nested_dict=json_file["entities"][id],
+                        levels_to_search=["division", "name"],
                     )
-                    record_dict["State"] = check_value(
-                        json_file["entities"][id], ["state"]
+                    record_dict["Email"] = get_nested_value(
+                        nested_dict=json_file["entities"][id],
+                        levels_to_search=["email"],
                     )
-                    record_dict["Title"] = check_value(
-                        json_file["entities"][id], ["title"]
+                    record_dict["State"] = get_nested_value(
+                        nested_dict=json_file["entities"][id],
+                        levels_to_search=["state"],
                     )
-                    record_dict["Username"] = check_value(
-                        json_file["entities"][id], ["username"]
+                    record_dict["Title"] = get_nested_value(
+                        nested_dict=json_file["entities"][id],
+                        levels_to_search=["title"],
                     )
-                    record_dict["SystemPresence"] = check_value(
-                        json_file["entities"][id],
-                        ["presence", "presenceDefinition", "systemPresence"],
+                    record_dict["Username"] = get_nested_value(
+                        nested_dict=json_file["entities"][id],
+                        levels_to_search=["username"],
                     )
-                    record_dict["DateLastLogin"] = check_value(
-                        json_file["entities"][id], ["dateLastLogin"]
+                    record_dict["SystemPresence"] = get_nested_value(
+                        nested_dict=json_file["entities"][id],
+                        levels_to_search=[
+                            "presence",
+                            "presenceDefinition",
+                            "systemPresence",
+                        ],
+                    )
+                    record_dict["DateLastLogin"] = get_nested_value(
+                        nested_dict=json_file["entities"][id],
+                        levels_to_search=["dateLastLogin"],
                     )
 
                     data_list.append(record_dict)
