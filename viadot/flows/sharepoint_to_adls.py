@@ -205,6 +205,7 @@ class SharepointListToADLS(Flow):
         vault_name: str = None,
         overwrite_adls: bool = True,
         output_file_extension: str = ".parquet",
+        sep: str = "\t",
         validate_df_dict: dict = None,
         set_prefect_kv: bool = False,
         *args: List[any],
@@ -263,6 +264,7 @@ class SharepointListToADLS(Flow):
             vault_name (str, optional): KeyVaultSecret name. Default to None.
             overwrite_adls (bool, optional): Whether to overwrite files in the lake. Defaults to True.
             output_file_extension (str, optional): Extension of the resulting file to be stored. Defaults to ".parquet".
+            sep (str, optional): The separator to use in the CSV. Defaults to "\t".
             validate_df_dict (dict, optional): Whether to do an extra df validation before ADLS upload or not to do. Defaults to None.
             set_prefect_kv (bool, optional): Whether to do key-value parameters in KV Store or not. Defaults to False.
 
@@ -287,11 +289,12 @@ class SharepointListToADLS(Flow):
         self.overwrite = overwrite_adls
         self.adls_sp_credentials_secret = adls_sp_credentials_secret
         self.output_file_extension = output_file_extension
+        self.sep = sep
         self.set_prefect_kv = set_prefect_kv
         self.now = str(pendulum.now("utc"))
         if self.file_name is not None:
             self.local_file_path = (
-                self.file_name.split('.')[0] + self.output_file_extension
+                self.file_name.split(".")[0] + self.output_file_extension
             )
             self.adls_file_path = os.path.join(adls_dir_path, file_name)
             self.adls_schema_file_dir_file = os.path.join(
@@ -317,7 +320,7 @@ class SharepointListToADLS(Flow):
         self.gen_flow()
 
     def gen_flow(self) -> Flow:
-        s = SharepointListToDF(
+        df = SharepointListToDF(
             path=self.file_name,
             list_title=self.list_title,
             site_url=self.site_url,
@@ -329,19 +332,20 @@ class SharepointListToADLS(Flow):
         )
 
         if self.validate_df_dict:
-            validation_task = validate_df(df=s, tests=self.validate_df_dict, flow=self)
-            validation_task.set_upstream(s, flow=self)
+            validation_task = validate_df(df=df, tests=self.validate_df_dict, flow=self)
+            validation_task.set_upstream(df, flow=self)
 
-        df_with_metadata = add_ingestion_metadata_task.bind(s, flow=self)
+        df_with_metadata = add_ingestion_metadata_task.bind(df, flow=self)
         dtypes_dict = df_get_data_types_task.bind(df_with_metadata, flow=self)
         df_mapped = df_map_mixed_dtypes_for_parquet.bind(
             df_with_metadata, dtypes_dict, flow=self
         )
-        
+
         if self.output_file_extension == ".csv":
             df_to_file = df_to_csv.bind(
                 df=df_with_metadata,
                 path=self.local_file_path,
+                sep=self.sep,
                 flow=self,
             )
         else:
