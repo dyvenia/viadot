@@ -106,7 +106,10 @@ class MockGenesysTask:
                         "messages": [],
                     }
                 ],
+                "pageCount": 2,
+                "entities": [{"id": "xxx"}],
             }
+
         else:
             report = {
                 "conversations": [
@@ -307,7 +310,7 @@ def test_genesys_conversations(mock_genesys, var_dictionary):
 
 @mock.patch("viadot.tasks.genesys.Genesys", return_value=MockGenesysTask)
 @pytest.mark.conv
-def test_genesys_webmsg(mock_genesys, var_dictionary):
+def test_genesys_webmsg_conversations(mock_genesys, var_dictionary):
     to_csv = GenesysToCSV()
     file_name = to_csv.run(
         view_type=None,
@@ -324,3 +327,37 @@ def test_genesys_webmsg(mock_genesys, var_dictionary):
 
     mock_genesys.assert_called_once()
     assert file_name[0] == f"WEBMESSAGE_{start}-{end}.csv"
+
+
+@mock.patch("viadot.tasks.genesys.Genesys", return_value=MockGenesysTask)
+@pytest.mark.conv
+def test_genesys_users(mock_genesys, var_dictionary):
+    to_csv = GenesysToCSV()
+    file_name = to_csv.run(
+        view_type=None,
+        end_point="users",
+        conversationId_list=var_dictionary["v_list"],
+        post_data_list=[""],
+        key_list=var_dictionary["key_list"],
+        start_date=var_dictionary["start_date"],
+        end_date=var_dictionary["end_date"],
+    )
+
+    mock_genesys.assert_called_once()
+    assert file_name[0] == f"All_Genesys_Users.csv"
+
+
+@mock.patch("viadot.tasks.genesys.Genesys", return_value=MockGenesysTask)
+@pytest.mark.conv
+def test_genesys_queue_performance_detail_view(mock_genesys, var_dictionary):
+    genesys = GenesysToCSV()
+    output = genesys.run(
+        view_type="queue_performance_detail_view",
+        end_point=None,
+        conversationId_list=var_dictionary["v_list"],
+        post_data_list=[""],
+        key_list=var_dictionary["key_list"],
+        start_date=var_dictionary["start_date"],
+        end_date=var_dictionary["end_date"],
+    )
+    assert output is None
