@@ -140,7 +140,20 @@ class GenesysToADLS(Flow):
             report_columns (List[str], optional): List of exisiting column in report. Defaults to None.
             conversationId_list (List[str], optional): List of conversationId passed as attribute of GET method. Defaults to None.
             mapping_dict (dict, optional): Mapping dictionary from user in json format. Defaults to None.
+                Example of mapping_dict:
+                mapping_dict = {
+                    "col1": "column1",
+                    "col_3": "column3",
+                    "colum2": "column2",
+                }
+                where keys in dictionary mapping_dict are current DataFrame columns names.
             columns_order (List, optional): Columns order list to change column order inside pd.DataFrame. Defaults to None.
+                Example of columns_order:
+                columns_order = [
+                    "column1",
+                    "column2",
+                    "column3",
+                ]
             key_list (List[str], optional): List of keys needed to specify the columns in the GET request method. Defaults to None.
             local_file_path (str, optional): The local path from which to upload the file(s). Defaults to "".
             adls_file_path (str, optional): The destination path at ADLS. Defaults to None.

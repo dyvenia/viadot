@@ -59,7 +59,20 @@ class GenesysToCSV(Task):
             sep (str, optional): Separator in csv file. Defaults to "\t".
             conversationId_list (List[str], optional): List of conversationId passed as attribute of GET method. Defaults to None.
             mapping_dict (dict, optional): Mapping dictionary from user in json format. Defaults to None.
+                Example of mapping_dict:
+                mapping_dict = {
+                    "col1": "column1",
+                    "col_3": "column3",
+                    "colum2": "column2",
+                }
+                where keys in dictionary mapping_dict are current DataFrame columns names.
             columns_order (List, optional): Columns order list to change column order inside pd.DataFrame. Defaults to None.
+                Example of columns_order:
+                columns_order = [
+                    "column1",
+                    "column2",
+                    "column3",
+                ]
             key_list (List[str], optional): List of keys needed to specify the columns in the GET request method. Defaults to None.
             validate_df_dict (Dict[str,Any], optional): A dictionary with optional list of tests to verify the output dataframe. If defined, triggers
                 the `validate_df` task from task_utils. Defaults to None.
@@ -345,7 +358,20 @@ class GenesysToCSV(Task):
             report_columns (List[str], optional): List of exisiting column in report. Defaults to None.
             conversationId_list (List[str], optional): List of conversationId passed as attribute of GET method. Defaults to None.
             mapping_dict (dict, optional): Mapping dictionary from user in json format. Defaults to None.
+                Example of mapping_dict:
+                mapping_dict = {
+                    "col1": "column1",
+                    "col_3": "column3",
+                    "colum2": "column2",
+                }
+                where keys in dictionary mapping_dict are current DataFrame columns names.
             columns_order (List, optional): Columns order list to change column order inside pd.DataFrame. Defaults to None.
+                Example of columns_order:
+                columns_order = [
+                    "column1",
+                    "column2",
+                    "column3",
+                ]
             key_list (List[str], optional): List of keys needed to specify the columns in the GET request method. Defaults to None.
             validate_df_dict (Dict[str,Any], optional): A dictionary with optional list of tests to verify the output dataframe. If defined, triggers
                 the `validate_df` task from task_utils. Defaults to None.
