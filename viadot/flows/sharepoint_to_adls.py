@@ -204,6 +204,10 @@ def check_if_df_empty(df, if_no_data_returned: str = "fail"):
             # raise ENDRUN(state=Failed("Failed task raised"))
         elif if_no_data_returned == "fail":
             raise NoDataReturnedError("No data in the source response. Df empty...")
+        elif if_no_data_returned == "skip":
+            return False
+    else:
+        return False
 
 
 class SharepointListToADLS(Flow):
@@ -353,11 +357,7 @@ class SharepointListToADLS(Flow):
             credentials_secret=self.sp_cert_credentials_secret,
         )
 
-        if self.if_no_data_returned != "skip":
-            df_empty = check_if_df_empty.bind(df, self.if_no_data_returned, flow=self)
-            # If df empty there is no reason to run other tasks
-        else:
-            df_empty = False
+        df_empty = check_if_df_empty.bind(df, self.if_no_data_returned, flow=self)
 
         with case(df_empty, False):
             if self.validate_df_dict:
