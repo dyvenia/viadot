@@ -263,7 +263,7 @@ class SAPRFC(Source):
         if credentials is None:
             credentials = DEFAULT_CREDENTIALS
             logger.warning(
-                "WARNING!!! Your credentials will use DEV environment. If you would like to use different one - please specified it in 'sap_credentials' variable inside the flow."
+                "Your credentials will use DEV environment. If you would like to use different one - please specified it in 'sap_credentials' variable inside the flow."
             )
 
         if credentials is None:
