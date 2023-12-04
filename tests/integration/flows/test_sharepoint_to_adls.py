@@ -6,13 +6,16 @@ import pendulum
 import pytest
 from prefect.tasks.secrets import PrefectSecret
 
-from viadot.flows import SharepointToADLS
+from viadot.flows import SharepointToADLS, SharepointListToADLS
 from viadot.tasks import AzureDataLakeRemove
 
-ADLS_FILE_NAME = str(pendulum.now("utc")) + ".csv"
+ADLS_FILE_NAME = pendulum.now("utc").strftime("%Y-%m-%d_%H:%M:%S_%Z%z")
 ADLS_DIR_PATH = "raw/tests/"
 CREDENTIALS_SECRET = PrefectSecret("AZURE_DEFAULT_ADLS_SERVICE_PRINCIPAL_SECRET").run()
 DATA = {"country": [1, 2], "sales": [3, 4]}
+
+
+SharepointToADLS
 
 
 @mock.patch(
@@ -73,3 +76,68 @@ def test_sharepoint_to_adls_run_flow_overwrite_false(mocked_class):
     assert result.is_failed()
     os.remove("test_sharepoint_to_adls_run_flow_overwrite_false.csv")
     os.remove("test_sharepoint_to_adls_run_flow_overwrite_false.json")
+
+
+# SharepointListToADLS
+@mock.patch(
+    "viadot.tasks.SharepointListToDF.run",
+    return_value=pd.DataFrame(data=DATA),
+)
+@pytest.mark.run
+def test_sharepoint_list_to_adls_run_flow_csv(mocked_class):
+    flow = SharepointListToADLS(
+        "test_sharepoint_to_adls_run_flow",
+        output_file_extension=".csv",
+        adls_sp_credentials_secret=CREDENTIALS_SECRET,
+        adls_dir_path=ADLS_DIR_PATH,
+        file_name=ADLS_FILE_NAME,
+        list_title="",
+        site_url="",
+    )
+    result = flow.run()
+    assert result.is_successful()
+    os.remove(ADLS_FILE_NAME + ".csv")
+    os.remove("test_sharepoint_to_adls_run_flow.json")
+
+
+@mock.patch(
+    "viadot.tasks.SharepointListToDF.run",
+    return_value=pd.DataFrame(data=DATA),
+)
+@pytest.mark.run
+def test_sharepoint_list_to_adls_run_flow_parquet(mocked_class):
+    flow = SharepointListToADLS(
+        "test_sharepoint_to_adls_run_flow",
+        output_file_extension=".parquet",
+        adls_sp_credentials_secret=CREDENTIALS_SECRET,
+        adls_dir_path=ADLS_DIR_PATH,
+        file_name=ADLS_FILE_NAME,
+        list_title="",
+        site_url="",
+    )
+    result = flow.run()
+    assert result.is_successful()
+    os.remove(ADLS_FILE_NAME + ".parquet")
+    os.remove("test_sharepoint_to_adls_run_flow.json")
+
+
+@mock.patch(
+    "viadot.tasks.SharepointListToDF.run",
+    return_value=pd.DataFrame(data=DATA),
+)
+@pytest.mark.run
+def test_sharepoint_list_to_adls_run_flow_overwrite_true(mocked_class):
+    flow = SharepointListToADLS(
+        "test_sharepoint_to_adls_run_flow_overwrite_true",
+        output_file_extension=".csv",
+        adls_sp_credentials_secret=CREDENTIALS_SECRET,
+        adls_dir_path=ADLS_DIR_PATH,
+        file_name=ADLS_FILE_NAME,
+        overwrite_adls=True,
+        list_title="",
+        site_url="",
+    )
+    result = flow.run()
+    assert result.is_successful()
+    os.remove(ADLS_FILE_NAME + ".csv")
+    os.remove("test_sharepoint_to_adls_run_flow_overwrite_true.json")
