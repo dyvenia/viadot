@@ -10,7 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 ### Changed
-
+- Changed __init__ in SAPRFC class in source in order to raise warning in prefect when credentials will be taken from DEV.
 
 ## [0.4.22] - 2023-11-15
 ### Added
