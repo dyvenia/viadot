@@ -1,6 +1,6 @@
 import os
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Literal
 
 import pendulum
 from prefect import Flow
@@ -65,7 +65,6 @@ class SharepointToADLS(Flow):
             Defaults to None.
             overwrite_adls (bool, optional): Whether to overwrite files in the lake. Defaults to False.
             if_empty (str, optional): What to do if query returns no data. Defaults to "warn".
-            if_exists (str, optional): What to do if the file already exists. Defaults to "replace".
             validate_df_dict (dict, optional): A dictionary with optional list of tests to verify the output
             dataframe. If defined, triggers the `validate_df` task from task_utils. Defaults to None.
             timeout(int, optional): The amount of time (in seconds) to wait while running this task before
@@ -204,7 +203,7 @@ class SharepointListToADLS(Flow):
         sp_cert_credentials_secret: str = None,
         vault_name: str = None,
         overwrite_adls: bool = True,
-        output_file_extension: str = ".parquet",
+        output_file_extension: Literal[".parquet", ".csv"] = ".parquet",
         sep: str = "\t",
         validate_df_dict: dict = None,
         set_prefect_kv: bool = False,
@@ -263,7 +262,7 @@ class SharepointListToADLS(Flow):
                                     If not passed it will take cred's from your .config/credentials.json Default to None.
             vault_name (str, optional): KeyVaultSecret name. Default to None.
             overwrite_adls (bool, optional): Whether to overwrite files in the lake. Defaults to True.
-            output_file_extension (str, optional): Extension of the resulting file to be stored. Defaults to ".parquet".
+            output_file_extension (str, optional): Extension of the resulting file to be stored, either ".csv" or ".parquet". Defaults to ".parquet".
             sep (str, optional): The separator to use in the CSV. Defaults to "\t".
             validate_df_dict (dict, optional): Whether to do an extra df validation before ADLS upload or not to do. Defaults to None.
             set_prefect_kv (bool, optional): Whether to do key-value parameters in KV Store or not. Defaults to False.
@@ -348,12 +347,14 @@ class SharepointListToADLS(Flow):
                 sep=self.sep,
                 flow=self,
             )
-        else:
+        elif self.output_file_extension == ".parquet":
             df_to_file = df_to_parquet.bind(
                 df=df_mapped,
                 path=self.local_file_path,
                 flow=self,
             )
+        else:
+            raise ValueError("Output file extension can only be '.csv' or '.parquet'")
 
         file_to_adls_task = AzureDataLakeUpload()
         file_to_adls_task.bind(
