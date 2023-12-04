@@ -7,6 +7,7 @@ from typing import Tuple, Union
 import numpy as np
 import pandas as pd
 from prefect.utilities import logging
+from prefect.engine.state import Failed
 
 try:
     import pyrfc
@@ -257,7 +258,14 @@ class SAPRFC(Source):
 
         self._con = None
         DEFAULT_CREDENTIALS = local_config.get("SAP").get("DEV")
-        credentials = kwargs.pop("credentials", None) or DEFAULT_CREDENTIALS
+
+        credentials = kwargs.pop("credentials", None)
+        if credentials is None:
+            credentials = DEFAULT_CREDENTIALS
+            logger.warning(
+                "WARNING!!! Your credentials will use DEV environment. If you would like to use different one - please specified it in 'sap_credentials' variable inside the flow."
+            )
+
         if credentials is None:
             raise CredentialError("Missing credentials.")
 
