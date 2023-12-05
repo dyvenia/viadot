@@ -263,7 +263,7 @@ class VidClub(Source):
         from_date: str = "2022-03-22",
         to_date: str = None,
         items_per_page: int = 100,
-        region: Literal["bg", "hu", "hr", "pl", "ro", "si", "all"] = "all",
+        region: Literal["bg", "hu", "hr", "pl", "ro", "si", "all"] = None,
         days_interval: int = 30,
     ) -> pd.DataFrame:
         """

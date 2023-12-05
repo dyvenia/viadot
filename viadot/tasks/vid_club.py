@@ -85,7 +85,7 @@ class VidClubToDF(Task):
         from_date: str = "2022-03-22",
         to_date: str = None,
         items_per_page: int = 100,
-        region: str = None,
+        region: Literal["bg", "hu", "hr", "pl", "ro", "si", "all"] = None,
         days_interval: int = 30,
         cols_to_drop: List[str] = None,
     ) -> pd.DataFrame:
