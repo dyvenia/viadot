@@ -193,17 +193,13 @@ class SharepointToADLS(Flow):
 @task(slug="check_df")
 def check_if_df_empty(df, if_no_data_returned: str = "fail"):
     # -> to task.utils
-    class NoDataReturnedError(BaseException):
-        def __init__(self, message):
-            self.message = message
 
     if df.empty:
         if if_no_data_returned == "warn":
             logger.warning("No data in the source response. Df empty.")
             return True
-            # raise ENDRUN(state=Failed("Failed task raised"))
         elif if_no_data_returned == "fail":
-            raise NoDataReturnedError("No data in the source response. Df empty...")
+            raise ENDRUN(state=Failed("No data in the source response. Df empty..."))
         elif if_no_data_returned == "skip":
             return False
     else:
