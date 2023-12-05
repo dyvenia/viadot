@@ -21,6 +21,7 @@ from viadot.task_utils import (
 )
 from viadot.tasks import AzureDataLakeUpload
 from viadot.tasks.sharepoint import SharepointListToDF, SharepointToDF
+from viadot.task_utils import check_if_df_empty
 
 logger = logging.get_logger()
 
@@ -188,22 +189,6 @@ class SharepointToADLS(Flow):
     @staticmethod
     def slugify(name):
         return name.replace(" ", "_").lower()
-
-
-@task(slug="check_df")
-def check_if_df_empty(df, if_no_data_returned: str = "fail"):
-    # -> to task.utils
-
-    if df.empty:
-        if if_no_data_returned == "warn":
-            logger.warning("No data in the source response. Df empty.")
-            return True
-        elif if_no_data_returned == "fail":
-            raise ENDRUN(state=Failed("No data in the source response. Df empty..."))
-        elif if_no_data_returned == "skip":
-            return False
-    else:
-        return False
 
 
 class SharepointListToADLS(Flow):
