@@ -58,7 +58,7 @@ class VidClub(Source):
             api_url (str): Generic part of the URL to Vid Club API.
             items_per_page (int): number of entries per page.
             source (Literal["jobs", "product", "company", "survey"], optional): The endpoint source to be accessed. Defaults to None.
-            region (Literal["bg", "hu", "hr", "pl", "ro", "si", "all"], optional): Region filter for the query. Defaults to "all". [July 2023 status: parameter works only for 'all' on API]
+            region (Literal["bg", "hu", "hr", "pl", "ro", "si", "all"], optional): Region filter for the query. Defaults to None (parameter is not used in url). [December 2023 status: value 'all' does not work for company and jobs]
 
         Returns:
             str: Final query with all filters added.
@@ -67,7 +67,8 @@ class VidClub(Source):
             ValidationError: If any source different than the ones in the list are used.
         """
         if source in ["jobs", "product", "company"]:
-            url = f"{api_url}{source}?from={from_date}&to={to_date}&region={region}&limit={items_per_page}"
+            region_url_string = f"&region={region}" if region else ""
+            url = f"{api_url}{source}?from={from_date}&to={to_date}{region_url_string}&limit={items_per_page}"
         elif source == "survey":
             url = f"{api_url}{source}?language=en&type=question"
         else:
@@ -141,7 +142,7 @@ class VidClub(Source):
             from_date (str, optional): Start date for the query, by default is the oldest date in the data 2022-03-22.
             to_date (str, optional): End date for the query. By default None, which will be executed as datetime.today().strftime("%Y-%m-%d") in code.
             items_per_page (int, optional): Number of entries per page. 100 entries by default.
-            region (Literal["bg", "hu", "hr", "pl", "ro", "si", "all"], optional): Region filter for the query. Defaults to "all". [July 2023 status: parameter works only for 'all' on API]
+            region (Literal["bg", "hu", "hr", "pl", "ro", "si", "all"], optional): Region filter for the query. Defaults to None (parameter is not used in url). [December 2023 status: value 'all' does not work for company and jobs]
             url (str, optional): Generic part of the URL to Vid Club API. Defaults to None.
 
         Returns:
@@ -161,37 +162,19 @@ class VidClub(Source):
         if url is None:
             url = self.credentials["url"]
 
-        if source in ["jobs", "product", "company"]:
-            first_url = self.build_query(
-                source=source,
-                from_date=from_date,
-                to_date=to_date,
-                api_url=url,
-                items_per_page=items_per_page,
-            )
-            headers = self.headers
-            response = handle_api_response(
-                url=first_url, headers=headers, method="GET", verify=False
-            )
-            response = response.json()
-        elif source == "survey":
-            first_url = self.build_query(
-                source=source,
-                from_date=from_date,
-                to_date=to_date,
-                api_url=url,
-                items_per_page=items_per_page,
-                region=region,
-            )
-            headers = self.headers
-            response = handle_api_response(
-                url=first_url, headers=headers, method="GET", verify=False
-            )
-            response = response.json()
-        else:
-            raise ValidationError(
-                "Pick one these sources: jobs, product, company, survey"
-            )
+        first_url = self.build_query(
+            source=source,
+            from_date=from_date,
+            to_date=to_date,
+            api_url=url,
+            items_per_page=items_per_page,
+            region=region,
+        )
+        headers = self.headers
+        response = handle_api_response(
+            url=first_url, headers=headers, method="GET", verify=False
+        )
+        response = response.json()
         return (response, first_url)
 
     def get_response(
@@ -210,7 +193,7 @@ class VidClub(Source):
             from_date (str, optional): Start date for the query, by default is the oldest date in the data 2022-03-22.
             to_date (str, optional): End date for the query. By default None, which will be executed as datetime.today().strftime("%Y-%m-%d") in code.
             items_per_page (int, optional): Number of entries per page. 100 entries by default.
-            region (Literal["bg", "hu", "hr", "pl", "ro", "si", "all"], optional): Region filter for the query. Defaults to "all". [July 2023 status: parameter works only for 'all' on API]
+            region (Literal["bg", "hu", "hr", "pl", "ro", "si", "all"], optional): Region filter for the query. Defaults to None (parameter is not used in url). [December 2023 status: value 'all' does not work for company and jobs]
 
         Returns:
             pd.DataFrame: Table of the data carried in the response.
@@ -225,26 +208,14 @@ class VidClub(Source):
             )
         if to_date == None:
             to_date = datetime.today().strftime("%Y-%m-%d")
-        if source in ["jobs", "product", "company"]:
-            response, first_url = self.check_connection(
-                source=source,
-                from_date=from_date,
-                to_date=to_date,
-                items_per_page=items_per_page,
-            )
 
-        elif source == "survey":
-            response, first_url = self.check_connection(
-                source=source,
-                from_date=from_date,
-                to_date=to_date,
-                items_per_page=items_per_page,
-                region=region,
-            )
-        else:
-            raise ValidationError(
-                "Pick one these sources: jobs, product, company, survey"
-            )
+        response, first_url = self.check_connection(
+            source=source,
+            from_date=from_date,
+            to_date=to_date,
+            items_per_page=items_per_page,
+            region=region,
+        )
 
         if isinstance(response, dict):
             keys_list = list(response.keys())
@@ -304,7 +275,7 @@ class VidClub(Source):
             from_date (str, optional): Start date for the query, by default is the oldest date in the data 2022-03-22.
             to_date (str, optional): End date for the query. By default None, which will be executed as datetime.today().strftime("%Y-%m-%d") in code.
             items_per_page (int, optional): Number of entries per page. 100 entries by default.
-            region (Literal["bg", "hu", "hr", "pl", "ro", "si", "all"], optional): Region filter for the query. Defaults to "all". [July 2023 status: parameter works only for 'all' on API]
+            region (Literal["bg", "hu", "hr", "pl", "ro", "si", "all"], optional): Region filter for the query. Defaults to None (parameter is not used in url). [December 2023 status: value 'all' does not work for company and jobs]
             days_interval (int, optional): Days specified in date range per api call (test showed that 30-40 is optimal for performance). Defaults to 30.
 
         Returns:
