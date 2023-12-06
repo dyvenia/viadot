@@ -257,9 +257,15 @@ class SAPRFC(Source):
 
         self._con = None
         DEFAULT_CREDENTIALS = local_config.get("SAP").get("DEV")
-        credentials = kwargs.pop("credentials", None) or DEFAULT_CREDENTIALS
+
+        credentials = kwargs.pop("credentials", None)
         if credentials is None:
-            raise CredentialError("Missing credentials.")
+            credentials = DEFAULT_CREDENTIALS
+            if credentials is None:
+                raise CredentialError("Missing credentials.")
+            logger.warning(
+                "Your credentials will use DEV environment. If you would like to use different one - please specified it in 'sap_credentials' variable inside the flow."
+            )
 
         super().__init__(*args, credentials=credentials, **kwargs)
 
@@ -694,9 +700,15 @@ class SAPRFCV2(Source):
 
         self._con = None
         DEFAULT_CREDENTIALS = local_config.get("SAP").get("DEV")
-        credentials = kwargs.pop("credentials", None) or DEFAULT_CREDENTIALS
+
+        credentials = kwargs.pop("credentials", None)
         if credentials is None:
-            raise CredentialError("Missing credentials.")
+            credentials = DEFAULT_CREDENTIALS
+            if credentials is None:
+                raise CredentialError("Missing credentials.")
+            logger.warning(
+                "Your credentials will use DEV environment. If you would like to use different one - please specified it in 'sap_credentials' variable inside the flow."
+            )
 
         super().__init__(*args, credentials=credentials, **kwargs)
 
