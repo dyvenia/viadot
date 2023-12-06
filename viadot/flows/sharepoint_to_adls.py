@@ -224,7 +224,7 @@ class SharepointListToADLS(Flow):
             name (str): Prefect flow name.
             list_title (str): Title of Sharepoint List.
             site_url (str): URL to set of Sharepoint Lists.
-            file_name (str): Name of file(without extension) in ADLS . Defaults to None.
+            file_name (str): Name of file (without extension) in ADLS. Defaults to None.
             adls_dir_path (str): Azure Data Lake destination folder/catalog path. Defaults to None.
             filters (dict, optional): Dictionary with operators which filters the SharepointList output. Defaults to None.
                         allowed dtypes: ('datetime','date','bool','int', 'float', 'complex', 'str')
