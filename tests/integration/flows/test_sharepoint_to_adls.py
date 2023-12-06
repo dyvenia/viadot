@@ -6,6 +6,7 @@ import pendulum
 import pytest
 from prefect.tasks.secrets import PrefectSecret
 from viadot.flows import SharepointToADLS, SharepointListToADLS
+
 from viadot.tasks import AzureDataLakeRemove
 
 ADLS_FILE_NAME = str(pendulum.now("utc")) + ".csv"
