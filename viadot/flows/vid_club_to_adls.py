@@ -31,7 +31,7 @@ class VidClubToADLS(Flow):
         from_date: str = "2022-03-22",
         to_date: str = None,
         items_per_page: int = 100,
-        region: Literal["bg", "hu", "hr", "pl", "ro", "si", "all"] = "all",
+        region: Literal["bg", "hu", "hr", "pl", "ro", "si", "all"] = None,
         days_interval: int = 30,
         cols_to_drop: List[str] = None,
         vid_club_credentials: Dict[str, Any] = None,
@@ -60,7 +60,7 @@ class VidClubToADLS(Flow):
             from_date (str, optional): Start date for the query, by default is the oldest date in the data 2022-03-22.
             to_date (str, optional): End date for the query. By default None, which will be executed as datetime.today().strftime("%Y-%m-%d") in code.
             items_per_page (int, optional): Number of entries per page. Defaults to 100.
-            region (Literal["bg", "hu", "hr", "pl", "ro", "si", "all"], optional): Region filter for the query. Defaults to "all". [July 2023 status: parameter works only for 'all' on API]
+            region (Literal["bg", "hu", "hr", "pl", "ro", "si", "all"], optional): Region filter for the query. Defaults to None (parameter is not used in url). [December 2023 status: value 'all' does not work for company and jobs]
             days_interval (int, optional): Days specified in date range per API call (test showed that 30-40 is optimal for performance). Defaults to 30.
             cols_to_drop (List[str], optional): List of columns to drop. Defaults to None.
             vid_club_credentials (Dict[str, Any], optional): Stores the credentials information. Defaults to None.

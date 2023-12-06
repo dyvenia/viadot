@@ -17,6 +17,7 @@ from viadot.utils import (
     slugify,
     handle_api_response,
     union_dict,
+    gen_bulk_insert_query_from_df,
 )
 
 EMPTY_CSV_PATH = "empty.csv"

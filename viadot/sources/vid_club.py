@@ -1,6 +1,7 @@
 import json
 import os
 import urllib
+from pandas.io.json import json_normalize
 from datetime import date, datetime, timedelta
 from typing import Any, Dict, List, Literal, Tuple
 
@@ -46,7 +47,7 @@ class VidClub(Source):
         api_url: str,
         items_per_page: int,
         source: Literal["jobs", "product", "company", "survey"] = None,
-        region: Literal["bg", "hu", "hr", "pl", "ro", "si", "all"] = "all",
+        region: Literal["bg", "hu", "hr", "pl", "ro", "si", "all"] = None,
     ) -> str:
         """
         Builds the query from the inputs.
@@ -57,7 +58,7 @@ class VidClub(Source):
             api_url (str): Generic part of the URL to Vid Club API.
             items_per_page (int): number of entries per page.
             source (Literal["jobs", "product", "company", "survey"], optional): The endpoint source to be accessed. Defaults to None.
-            region (Literal["bg", "hu", "hr", "pl", "ro", "si", "all"], optional): Region filter for the query. Defaults to "all". [July 2023 status: parameter works only for 'all' on API]
+            region (Literal["bg", "hu", "hr", "pl", "ro", "si", "all"], optional): Region filter for the query. Defaults to None (parameter is not used in url). [December 2023 status: value 'all' does not work for company and jobs]
 
         Returns:
             str: Final query with all filters added.
@@ -66,7 +67,8 @@ class VidClub(Source):
             ValidationError: If any source different than the ones in the list are used.
         """
         if source in ["jobs", "product", "company"]:
-            url = f"{api_url}{source}?from={from_date}&to={to_date}&region={region}&limit={items_per_page}"
+            region_url_string = f"&region={region}" if region else ""
+            url = f"{api_url}{source}?from={from_date}&to={to_date}{region_url_string}&limit={items_per_page}"
         elif source == "survey":
             url = f"{api_url}{source}?language=en&type=question"
         else:
@@ -128,7 +130,7 @@ class VidClub(Source):
         from_date: str = "2022-03-22",
         to_date: str = None,
         items_per_page: int = 100,
-        region: Literal["bg", "hu", "hr", "pl", "ro", "si", "all"] = "all",
+        region: Literal["bg", "hu", "hr", "pl", "ro", "si", "all"] = None,
         url: str = None,
     ) -> Tuple[Dict[str, Any], str]:
         """
@@ -140,7 +142,7 @@ class VidClub(Source):
             from_date (str, optional): Start date for the query, by default is the oldest date in the data 2022-03-22.
             to_date (str, optional): End date for the query. By default None, which will be executed as datetime.today().strftime("%Y-%m-%d") in code.
             items_per_page (int, optional): Number of entries per page. 100 entries by default.
-            region (Literal["bg", "hu", "hr", "pl", "ro", "si", "all"], optional): Region filter for the query. Defaults to "all". [July 2023 status: parameter works only for 'all' on API]
+            region (Literal["bg", "hu", "hr", "pl", "ro", "si", "all"], optional): Region filter for the query. Defaults to None (parameter is not used in url). [December 2023 status: value 'all' does not work for company and jobs]
             url (str, optional): Generic part of the URL to Vid Club API. Defaults to None.
 
         Returns:
@@ -173,7 +175,6 @@ class VidClub(Source):
             url=first_url, headers=headers, method="GET", verify=False
         )
         response = response.json()
-
         return (response, first_url)
 
     def get_response(
@@ -182,7 +183,7 @@ class VidClub(Source):
         from_date: str = "2022-03-22",
         to_date: str = None,
         items_per_page: int = 100,
-        region: Literal["bg", "hu", "hr", "pl", "ro", "si", "all"] = "all",
+        region: Literal["bg", "hu", "hr", "pl", "ro", "si", "all"] = None,
     ) -> pd.DataFrame:
         """
         Basing on the pagination type retrieved using check_connection function, gets the response from the API queried and transforms it into DataFrame.
@@ -192,7 +193,7 @@ class VidClub(Source):
             from_date (str, optional): Start date for the query, by default is the oldest date in the data 2022-03-22.
             to_date (str, optional): End date for the query. By default None, which will be executed as datetime.today().strftime("%Y-%m-%d") in code.
             items_per_page (int, optional): Number of entries per page. 100 entries by default.
-            region (Literal["bg", "hu", "hr", "pl", "ro", "si", "all"], optional): Region filter for the query. Defaults to "all". [July 2023 status: parameter works only for 'all' on API]
+            region (Literal["bg", "hu", "hr", "pl", "ro", "si", "all"], optional): Region filter for the query. Defaults to None (parameter is not used in url). [December 2023 status: value 'all' does not work for company and jobs]
 
         Returns:
             pd.DataFrame: Table of the data carried in the response.
@@ -229,7 +230,8 @@ class VidClub(Source):
             ind = False
 
         if "data" in keys_list:
-            df = pd.DataFrame(response["data"])
+            df = json_normalize(response["data"])
+            df = pd.DataFrame(df)
             length = df.shape[0]
             page = 1
 
@@ -244,7 +246,8 @@ class VidClub(Source):
                     url=url, headers=headers, method="GET", verify=False
                 )
                 response = r.json()
-                df_page = pd.DataFrame(response["data"])
+                df_page = json_normalize(response["data"])
+                df_page = pd.DataFrame(df_page)
                 if source == "product":
                     df_page = df_page.transpose()
                 length = df_page.shape[0]
@@ -260,7 +263,7 @@ class VidClub(Source):
         from_date: str = "2022-03-22",
         to_date: str = None,
         items_per_page: int = 100,
-        region: Literal["bg", "hu", "hr", "pl", "ro", "si", "all"] = "all",
+        region: Literal["bg", "hu", "hr", "pl", "ro", "si", "all"] = None,
         days_interval: int = 30,
     ) -> pd.DataFrame:
         """
@@ -272,7 +275,7 @@ class VidClub(Source):
             from_date (str, optional): Start date for the query, by default is the oldest date in the data 2022-03-22.
             to_date (str, optional): End date for the query. By default None, which will be executed as datetime.today().strftime("%Y-%m-%d") in code.
             items_per_page (int, optional): Number of entries per page. 100 entries by default.
-            region (Literal["bg", "hu", "hr", "pl", "ro", "si", "all"], optional): Region filter for the query. Defaults to "all". [July 2023 status: parameter works only for 'all' on API]
+            region (Literal["bg", "hu", "hr", "pl", "ro", "si", "all"], optional): Region filter for the query. Defaults to None (parameter is not used in url). [December 2023 status: value 'all' does not work for company and jobs]
             days_interval (int, optional): Days specified in date range per api call (test showed that 30-40 is optimal for performance). Defaults to 30.
 
         Returns:
@@ -307,6 +310,11 @@ class VidClub(Source):
                 items_per_page=items_per_page,
                 region=region,
             )
+        list_columns = df.columns[
+            df.applymap(lambda x: isinstance(x, list)).any()
+        ].tolist()
+        for i in list_columns:
+            df[i] = df[i].apply(lambda x: tuple(x) if isinstance(x, list) else x)
         df.drop_duplicates(inplace=True)
 
         if df.empty:

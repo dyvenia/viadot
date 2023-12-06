@@ -6,10 +6,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 ### Added
-
+- Added tests for new functionalities in SAPRFC and SAPRFCV2 regarding passing credentials
+- Added new params for mapping and reordering DataFrame for `Genesys` task and flow.
+- Tasks to search for logs in the flow
+- Tasks to find flow ID
+- Tasks used to control flows in multiflows by searching for a given log from a given task
 ### Fixed
 
 ### Changed
+- if_no_data_returned added for sharepoint list flow which can fail,warn in case of no data returend or skip (continue) execution in the old way
+- Changed __init__ in SAPRFC and SAPRFCV2 class in source in order to raise warning in prefect when credentials will be taken from DEV.
 
 
 ## [0.4.22] - 2023-11-15

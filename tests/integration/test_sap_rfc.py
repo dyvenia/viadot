@@ -187,3 +187,19 @@ def test___build_pandas_filter_query_v2():
         sap2._build_pandas_filter_query(sap2.client_side_filters)
         == "thirdlongcolname == 01234"
     ), sap2._build_pandas_filter_query(sap2.client_side_filters)
+
+
+def test_default_credentials_warning_SAPRFC(caplog):
+    _ = SAPRFC()
+    assert (
+        "Your credentials will use DEV environment. If you would like to use different one - please specified it."
+        in caplog.text
+    )
+
+
+def test_default_credentials_warning_SAPRFCV2(caplog):
+    _ = SAPRFCV2()
+    assert (
+        "Your credentials will use DEV environment. If you would like to use different one - please specified it."
+        in caplog.text
+    )
