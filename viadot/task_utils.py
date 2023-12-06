@@ -798,14 +798,14 @@ def validate_df(df: pd.DataFrame, tests: dict = None) -> None:
 
 
 @task(timeout=3600, slug="check_df")
-def check_if_df_empty(df, if_no_data_returned: str = "fail") -> bool:
+def check_if_df_empty(df, if_no_data_returned: Literal["fail", "warn", "skip"] = "fail") -> bool:
     """
     Check if a DataFrame received as a data source response is empty.
     If fail is expected , this task will finish with ENDRUN(Failed()) state.
 
     Args:
         df (pandas.DataFrame): The DataFrame to check.
-        if_no_data_returned (str, optional): The action to take if no data is returned in the DataFrame.
+        if_no_data_returned (Literal["fail", "warn", "skip"], optional): The action to take if no data is returned in the DataFrame. Defaults to "fail".
             Options are "fail" (default), "warn", or "skip".
 
     Returns:
@@ -833,7 +833,7 @@ def check_if_df_empty(df, if_no_data_returned: str = "fail") -> bool:
 
 @task(timeout=3600)
 def get_flow_run_id(client: prefect.Client, flow_name: str, state: str) -> str:
-    """Gets the last flow run ID based on the name of the flow and time of its run in descending order of th flows runs
+    """Gets the last flow run ID based on the name of the flow and time of its run in descending order of the flow runs.
 
     Args:
         client (prefect.Client): The Prefect client used to execute the GraphQL query.
@@ -922,7 +922,7 @@ def get_task_logs(client: prefect.Client, flow_run_id: str, task_slug: str) -> L
         }}
     """
     # Execute the GraphQL query
-    logger.info("Executing GraphQL query to get task logs")
+    logger.info("Executing GraphQL query to get task logs.")
     response = client.graphql(query)
     result_data = response.get("data").get("task_run")
     # Extract task logs
@@ -930,7 +930,7 @@ def get_task_logs(client: prefect.Client, flow_run_id: str, task_slug: str) -> L
         logs = result_data[0].get("logs")
         return logs
     else:
-        raise ValueError("No data available for the given task slug")
+        raise ValueError("No data available for the given task slug.")
 
 
 @task(timeout=3600)
