@@ -29,6 +29,7 @@ from viadot.config import local_config
 from viadot.exceptions import CredentialError, ValidationError
 from viadot.tasks import AzureDataLakeUpload, AzureKeyVaultSecret
 
+
 logger = logging.get_logger()
 METADATA_COLUMNS = {"_viadot_downloaded_at_utc": "DATETIME"}
 

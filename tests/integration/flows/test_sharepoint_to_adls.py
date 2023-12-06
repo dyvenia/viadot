@@ -171,6 +171,11 @@ def test_sharepoint_list_to_adls_run_flow_overwrite_true(mocked_class):
 )
 @pytest.mark.run
 def test_sharepoint_list_to_adls_run_flow_fail_on_no_data_returned(mocked_class):
+    """
+    Test will check if flow is failing when empty DF is passed
+    with the given parameter if_no_data_returned = "fail"
+    CSV file should not be generated!
+    """
     flow = SharepointListToADLS(
         "test_sharepoint_to_adls_run_flow",
         output_file_extension=".csv",
@@ -183,8 +188,6 @@ def test_sharepoint_list_to_adls_run_flow_fail_on_no_data_returned(mocked_class)
     )
     result = flow.run()
     assert result.is_failed()
-    os.remove(ADLS_FILE_NAME_LIST + ".csv")
-    os.remove("test_sharepoint_to_adls_run_flow.json")
 
 
 @mock.patch(
@@ -193,6 +196,11 @@ def test_sharepoint_list_to_adls_run_flow_fail_on_no_data_returned(mocked_class)
 )
 @pytest.mark.run
 def test_sharepoint_list_to_adls_run_flow_success_on_no_data_returned(mocked_class):
+    """
+    Test will check if flow will succeed when empty DF is passed
+    with the given parameter if_no_data_returned = "skip"
+    Empty csv should be generated!
+    """
     flow = SharepointListToADLS(
         "test_sharepoint_to_adls_run_flow",
         output_file_extension=".csv",
@@ -217,6 +225,11 @@ def test_sharepoint_list_to_adls_run_flow_success_on_no_data_returned(mocked_cla
 def test_sharepoint_list_to_adls_run_flow_success_warn_on_no_data_returned(
     mocked_class,
 ):
+    """
+    Test will check if flow is failing when empty DF is passed
+    with the given parameter if_no_data_returned = "warn"
+    CSV file should not be generated!
+    """
     # Get prefect client instance
     flow = SharepointListToADLS(
         "test_sharepoint_to_adls_run_flow",
@@ -230,5 +243,3 @@ def test_sharepoint_list_to_adls_run_flow_success_warn_on_no_data_returned(
     )
     result = flow.run()
     assert result.is_successful()
-    os.remove(ADLS_FILE_NAME_LIST + ".csv")
-    os.remove("test_sharepoint_to_adls_run_flow.json")

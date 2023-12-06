@@ -224,7 +224,7 @@ class SharepointListToADLS(Flow):
             name (str): Prefect flow name.
             list_title (str): Title of Sharepoint List.
             site_url (str): URL to set of Sharepoint Lists.
-            file_name (str): Name of file in ADLS. Defaults to None.
+            file_name (str): Name of file(without extension) in ADLS . Defaults to None.
             adls_dir_path (str): Azure Data Lake destination folder/catalog path. Defaults to None.
             filters (dict, optional): Dictionary with operators which filters the SharepointList output. Defaults to None.
                         allowed dtypes: ('datetime','date','bool','int', 'float', 'complex', 'str')
@@ -371,7 +371,7 @@ class SharepointListToADLS(Flow):
 
             file_to_adls_task = AzureDataLakeUpload()
             file_to_adls_task.bind(
-                from_path=self.path,
+                from_path=self.local_file_path,
                 to_path=self.adls_dir_path,
                 overwrite=self.overwrite,
                 sp_credentials_secret=self.adls_sp_credentials_secret,
