@@ -1,7 +1,6 @@
 import textwrap
 from typing import List
-
-from pyrfc import Connection
+import pyrfc
 
 from viadot.exceptions import CredentialError, ValidationError
 from viadot.sources.base import Source
@@ -31,14 +30,15 @@ class SAPBW(Source):
 
         super().__init__(*args, credentials=credentials, **kwargs)
 
-    def get_connection(self) -> Connection:
+    def get_connection(self) -> pyrfc.Connection:
         """
         Function to create the connection with SAP BW.
 
         Returns:
             Connection: Connection to SAP.
         """
-        return Connection(
+
+        return pyrfc.Connection(
             ashost=self.credentials.get("ashost"),
             sysnr=self.credentials.get("sysnr"),
             user=self.credentials.get("user"),
@@ -126,5 +126,6 @@ class SAPBW(Source):
 
         datasetid = properties["DATASETID"]
         query_output = conn.call("RSR_MDX_GET_FLAT_DATA", DATASETID=datasetid)
+        conn.close()  # close connection after full session
 
         return query_output

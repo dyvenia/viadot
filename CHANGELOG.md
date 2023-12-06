@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 ### Added
 - Added tests for new functionalities in SAPRFC and SAPRFCV2 regarding passing credentials
+- Added new params for mapping and reordering DataFrame for `Genesys` task and flow.
+
 ### Fixed
 
 ### Changed
