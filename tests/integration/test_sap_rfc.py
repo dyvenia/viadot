@@ -187,8 +187,8 @@ def test___build_pandas_filter_query_v2():
         sap2._build_pandas_filter_query(sap2.client_side_filters)
         == "thirdlongcolname == 01234"
     ), sap2._build_pandas_filter_query(sap2.client_side_filters)
-    
-    
+
+
 def test_default_credentials_warning_SAPRFC(caplog):
     _ = SAPRFC()
     assert (

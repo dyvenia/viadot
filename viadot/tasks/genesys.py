@@ -13,8 +13,8 @@ from prefect.utilities.tasks import defaults_from_attrs
 
 from viadot.exceptions import APIError
 from viadot.sources import Genesys
-from viadot.utils import check_value
 from viadot.task_utils import *
+from viadot.utils import check_value
 
 logger = logging.get_logger()
 

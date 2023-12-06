@@ -2,7 +2,7 @@ import functools
 import os
 import re
 from itertools import chain
-from typing import Union, Any, Callable, Dict, List, Literal
+from typing import Any, Callable, Dict, List, Literal, Union
 
 import pandas as pd
 import prefect
