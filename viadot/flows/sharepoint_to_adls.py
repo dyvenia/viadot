@@ -3,7 +3,10 @@ from pathlib import Path
 from typing import Any, Dict, List, Literal
 
 import pendulum
-from prefect import Flow
+from prefect import Flow, task, case
+from prefect.engine.state import Failed
+from prefect.engine.runner import ENDRUN
+from typing import Literal
 from prefect.backend import set_key_value
 from prefect.utilities import logging
 
@@ -18,6 +21,7 @@ from viadot.task_utils import (
 )
 from viadot.tasks import AzureDataLakeUpload
 from viadot.tasks.sharepoint import SharepointListToDF, SharepointToDF
+from viadot.task_utils import check_if_df_empty
 
 logger = logging.get_logger()
 
@@ -207,6 +211,7 @@ class SharepointListToADLS(Flow):
         sep: str = "\t",
         validate_df_dict: dict = None,
         set_prefect_kv: bool = False,
+        if_no_data_returned: Literal["skip", "warn", "fail"] = "skip",
         *args: List[any],
         **kwargs: Dict[str, Any],
     ):
@@ -219,7 +224,7 @@ class SharepointListToADLS(Flow):
             name (str): Prefect flow name.
             list_title (str): Title of Sharepoint List.
             site_url (str): URL to set of Sharepoint Lists.
-            file_name (str): Name of file in ADLS. Defaults to None.
+            file_name (str): Name of file (without extension) in ADLS. Defaults to None.
             adls_dir_path (str): Azure Data Lake destination folder/catalog path. Defaults to None.
             filters (dict, optional): Dictionary with operators which filters the SharepointList output. Defaults to None.
                         allowed dtypes: ('datetime','date','bool','int', 'float', 'complex', 'str')
@@ -282,6 +287,7 @@ class SharepointListToADLS(Flow):
         self.vault_name = vault_name
         self.row_count = row_count
         self.validate_df_dict = validate_df_dict
+        self.if_no_data_returned = if_no_data_returned
 
         # AzureDataLakeUpload
         self.adls_dir_path = adls_dir_path
@@ -330,65 +336,71 @@ class SharepointListToADLS(Flow):
             credentials_secret=self.sp_cert_credentials_secret,
         )
 
-        if self.validate_df_dict:
-            validation_task = validate_df(df=df, tests=self.validate_df_dict, flow=self)
-            validation_task.set_upstream(df, flow=self)
+        df_empty = check_if_df_empty.bind(df, self.if_no_data_returned, flow=self)
 
-        df_with_metadata = add_ingestion_metadata_task.bind(df, flow=self)
-        dtypes_dict = df_get_data_types_task.bind(df_with_metadata, flow=self)
-        df_mapped = df_map_mixed_dtypes_for_parquet.bind(
-            df_with_metadata, dtypes_dict, flow=self
-        )
+        with case(df_empty, False):
+            if self.validate_df_dict:
+                validation_task = validate_df(
+                    df=df, tests=self.validate_df_dict, flow=self
+                )
+                validation_task.set_upstream(df, flow=self)
 
-        if self.output_file_extension == ".csv":
-            df_to_file = df_to_csv.bind(
-                df=df_with_metadata,
-                path=self.local_file_path,
-                sep=self.sep,
+            df_with_metadata = add_ingestion_metadata_task.bind(df, flow=self)
+            dtypes_dict = df_get_data_types_task.bind(df_with_metadata, flow=self)
+            df_mapped = df_map_mixed_dtypes_for_parquet.bind(
+                df_with_metadata, dtypes_dict, flow=self
+            )
+
+            if self.output_file_extension == ".csv":
+                df_to_file = df_to_csv.bind(
+                    df=df_with_metadata,
+                    path=self.local_file_path,
+                    sep=self.sep,
+                    flow=self,
+                )
+            elif self.output_file_extension == ".parquet":
+                df_to_file = df_to_parquet.bind(
+                    df=df_mapped,
+                    path=self.local_file_path,
+                    flow=self,
+                )
+            else:
+                raise ValueError(
+                    "Output file extension can only be '.csv' or '.parquet'"
+                )
+
+            file_to_adls_task = AzureDataLakeUpload()
+            file_to_adls_task.bind(
+                from_path=self.local_file_path,
+                to_path=self.adls_dir_path,
+                overwrite=self.overwrite,
+                sp_credentials_secret=self.adls_sp_credentials_secret,
                 flow=self,
             )
-        elif self.output_file_extension == ".parquet":
-            df_to_file = df_to_parquet.bind(
-                df=df_mapped,
-                path=self.local_file_path,
+
+            dtypes_to_json_task.bind(
+                dtypes_dict=dtypes_dict, local_json_path=self.local_json_path, flow=self
+            )
+
+            json_to_adls_task = AzureDataLakeUpload()
+            json_to_adls_task.bind(
+                from_path=self.local_json_path,
+                to_path=self.adls_schema_file_dir_file,
+                overwrite=self.overwrite,
+                sp_credentials_secret=self.adls_sp_credentials_secret,
                 flow=self,
             )
-        else:
-            raise ValueError("Output file extension can only be '.csv' or '.parquet'")
 
-        file_to_adls_task = AzureDataLakeUpload()
-        file_to_adls_task.bind(
-            from_path=self.local_file_path,
-            to_path=self.adls_dir_path,
-            overwrite=self.overwrite,
-            sp_credentials_secret=self.adls_sp_credentials_secret,
-            flow=self,
-        )
-
-        dtypes_to_json_task.bind(
-            dtypes_dict=dtypes_dict, local_json_path=self.local_json_path, flow=self
-        )
-
-        json_to_adls_task = AzureDataLakeUpload()
-        json_to_adls_task.bind(
-            from_path=self.local_json_path,
-            to_path=self.adls_schema_file_dir_file,
-            overwrite=self.overwrite,
-            sp_credentials_secret=self.adls_sp_credentials_secret,
-            flow=self,
-        )
-
-        if self.validate_df_dict:
-            df_with_metadata.set_upstream(validation_task, flow=self)
-
-        df_mapped.set_upstream(df_with_metadata, flow=self)
-        dtypes_to_json_task.set_upstream(df_mapped, flow=self)
-        df_to_file.set_upstream(dtypes_to_json_task, flow=self)
-
-        file_to_adls_task.set_upstream(df_to_file, flow=self)
-        json_to_adls_task.set_upstream(dtypes_to_json_task, flow=self)
-        if self.set_prefect_kv == True:
-            set_key_value(key=self.adls_dir_path, value=self.adls_file_path)
+            if self.validate_df_dict:
+                df_with_metadata.set_upstream(validation_task, flow=self)
+            dtypes_dict.set_upstream(df_with_metadata, flow=self)
+            df_mapped.set_upstream(df_with_metadata, flow=self)
+            dtypes_to_json_task.set_upstream(df_mapped, flow=self)
+            df_to_file.set_upstream(dtypes_to_json_task, flow=self)
+            file_to_adls_task.set_upstream(df_to_file, flow=self)
+            json_to_adls_task.set_upstream(dtypes_to_json_task, flow=self)
+            if self.set_prefect_kv == True:
+                set_key_value(key=self.adls_dir_path, value=self.adls_file_path)
 
     @staticmethod
     def slugify(name):
