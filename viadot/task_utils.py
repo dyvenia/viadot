@@ -798,7 +798,9 @@ def validate_df(df: pd.DataFrame, tests: dict = None) -> None:
 
 
 @task(timeout=3600, slug="check_df")
-def check_if_df_empty(df, if_no_data_returned: Literal["fail", "warn", "skip"] = "fail") -> bool:
+def check_if_df_empty(
+    df, if_no_data_returned: Literal["fail", "warn", "skip"] = "fail"
+) -> bool:
     """
     Check if a DataFrame received as a data source response is empty.
     If fail is expected , this task will finish with ENDRUN(Failed()) state.
