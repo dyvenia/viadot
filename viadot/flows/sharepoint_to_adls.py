@@ -1,6 +1,6 @@
 import os
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Literal
 
 import pendulum
 from prefect import Flow, task, case
@@ -197,9 +197,8 @@ class SharepointListToADLS(Flow):
         name: str,
         list_title: str,
         site_url: str,
-        path: str,
+        file_name: str,
         adls_dir_path: str,
-        adls_file_name: str,
         filters: dict = None,
         required_fields: List[str] = None,
         field_property: str = "Title",
@@ -208,7 +207,8 @@ class SharepointListToADLS(Flow):
         sp_cert_credentials_secret: str = None,
         vault_name: str = None,
         overwrite_adls: bool = True,
-        output_file_extension: str = ".parquet",
+        output_file_extension: Literal[".parquet", ".csv"] = ".parquet",
+        sep: str = "\t",
         validate_df_dict: dict = None,
         set_prefect_kv: bool = False,
         if_no_data_returned: Literal["skip", "warn", "fail"] = "skip",
@@ -224,9 +224,8 @@ class SharepointListToADLS(Flow):
             name (str): Prefect flow name.
             list_title (str): Title of Sharepoint List.
             site_url (str): URL to set of Sharepoint Lists.
-            path (str): Local file path. Default to None.
+            file_name (str): Name of file in ADLS. Defaults to None.
             adls_dir_path (str): Azure Data Lake destination folder/catalog path. Defaults to None.
-            adls_file_name (str): Name of file in ADLS. Defaults to None.
             filters (dict, optional): Dictionary with operators which filters the SharepointList output. Defaults to None.
                         allowed dtypes: ('datetime','date','bool','int', 'float', 'complex', 'str')
                         allowed conjunction: ('&','|')
@@ -268,7 +267,8 @@ class SharepointListToADLS(Flow):
                                     If not passed it will take cred's from your .config/credentials.json Default to None.
             vault_name (str, optional): KeyVaultSecret name. Default to None.
             overwrite_adls (bool, optional): Whether to overwrite files in the lake. Defaults to True.
-            output_file_extension (str, optional): Extension of the resulting file to be stored. Defaults to ".parquet".
+            output_file_extension (str, optional): Extension of the resulting file to be stored, either ".csv" or ".parquet". Defaults to ".parquet".
+            sep (str, optional): The separator to use in the CSV. Defaults to "\t".
             validate_df_dict (dict, optional): Whether to do an extra df validation before ADLS upload or not to do. Defaults to None.
             set_prefect_kv (bool, optional): Whether to do key-value parameters in KV Store or not. Defaults to False.
 
@@ -277,7 +277,7 @@ class SharepointListToADLS(Flow):
         """
 
         # SharepointListToDF
-        self.path = path
+        self.file_name = file_name
         self.list_title = list_title
         self.site_url = site_url
         self.required_fields = required_fields
@@ -291,32 +291,30 @@ class SharepointListToADLS(Flow):
 
         # AzureDataLakeUpload
         self.adls_dir_path = adls_dir_path
-        self.adls_file_name = adls_file_name
         self.overwrite = overwrite_adls
         self.adls_sp_credentials_secret = adls_sp_credentials_secret
         self.output_file_extension = output_file_extension
+        self.sep = sep
         self.set_prefect_kv = set_prefect_kv
         self.now = str(pendulum.now("utc"))
-        if self.path is not None:
+        if self.file_name is not None:
             self.local_file_path = (
-                self.path + self.slugify(name) + self.output_file_extension
+                self.file_name.split(".")[0] + self.output_file_extension
+            )
+            self.adls_file_path = os.path.join(adls_dir_path, file_name)
+            self.adls_schema_file_dir_file = os.path.join(
+                adls_dir_path, "schema", Path(file_name).stem + ".json"
             )
         else:
             self.local_file_path = self.slugify(name) + self.output_file_extension
-        self.local_json_path = self.slugify(name) + ".json"
-        self.adls_dir_path = adls_dir_path
-        if adls_file_name is not None:
-            self.adls_file_path = os.path.join(adls_dir_path, adls_file_name)
-            self.adls_schema_file_dir_file = os.path.join(
-                adls_dir_path, "schema", Path(adls_file_name).stem + ".json"
-            )
-        else:
             self.adls_file_path = os.path.join(
                 adls_dir_path, self.now + self.output_file_extension
             )
             self.adls_schema_file_dir_file = os.path.join(
                 adls_dir_path, "schema", self.now + ".json"
             )
+        self.local_json_path = self.slugify(name) + ".json"
+        self.adls_dir_path = adls_dir_path
 
         super().__init__(
             name=name,
@@ -328,7 +326,7 @@ class SharepointListToADLS(Flow):
 
     def gen_flow(self) -> Flow:
         df = SharepointListToDF(
-            path=self.path,
+            path=self.file_name,
             list_title=self.list_title,
             site_url=self.site_url,
             required_fields=self.required_fields,
@@ -353,11 +351,23 @@ class SharepointListToADLS(Flow):
                 df_with_metadata, dtypes_dict, flow=self
             )
 
-            df_to_file = df_to_parquet.bind(
-                df=df_mapped,
-                path=self.path,
-                flow=self,
-            )
+            if self.output_file_extension == ".csv":
+                df_to_file = df_to_csv.bind(
+                    df=df_with_metadata,
+                    path=self.local_file_path,
+                    sep=self.sep,
+                    flow=self,
+                )
+            elif self.output_file_extension == ".parquet":
+                df_to_file = df_to_parquet.bind(
+                    df=df_mapped,
+                    path=self.local_file_path,
+                    flow=self,
+                )
+            else:
+                raise ValueError(
+                    "Output file extension can only be '.csv' or '.parquet'"
+                )
 
             file_to_adls_task = AzureDataLakeUpload()
             file_to_adls_task.bind(
