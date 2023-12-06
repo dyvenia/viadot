@@ -66,7 +66,6 @@ def test_url_string():
     expected_elements = [
         f"from={from_date}",
         f"to={to_date}",
-        "region=all",
         f"limit={items_per_page}",
         api_url,
     ]

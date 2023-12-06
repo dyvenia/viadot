@@ -310,6 +310,11 @@ class VidClub(Source):
                 items_per_page=items_per_page,
                 region=region,
             )
+        list_columns = df.columns[
+            df.applymap(lambda x: isinstance(x, list)).any()
+        ].tolist()
+        for i in list_columns:
+            df[i] = df[i].apply(lambda x: tuple(x) if isinstance(x, list) else x)
         df.drop_duplicates(inplace=True)
 
         if df.empty:
