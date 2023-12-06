@@ -264,7 +264,7 @@ class SAPRFC(Source):
             if credentials is None:
                 raise CredentialError("Missing credentials.")
             logger.warning(
-                "Your credentials will use DEV environment. If you would like to use different one - please specified it in 'sap_credentials' variable inside the flow."
+                "Your credentials will use DEV environment. If you would like to use different one - please specified it."
             )
 
         super().__init__(*args, credentials=credentials, **kwargs)
