@@ -18,7 +18,6 @@ def test_adls_gen1_to_azure_sql_new_mock(TEST_PARQUET_FILE_PATH):
             query=query,
             file_path=TEST_PARQUET_FILE_PATH,
             to_path=f"raw/examples/{TEST_PARQUET_FILE_PATH}",
-            sp_credentials_secret="App-Azure-CR-DatalakeGen2-AIA-DEV",
             overwrite_adls=True,
         )
         flow.run()
@@ -32,7 +31,6 @@ def test_validate_df(TEST_PARQUET_FILE_PATH):
             country_short="DE",
             query=query,
             file_path=TEST_PARQUET_FILE_PATH,
-            sp_credentials_secret="App-Azure-CR-DatalakeGen2-AIA",
             to_path=f"raw/examples/{TEST_PARQUET_FILE_PATH}",
             validate_df_dict={"column_size": {"sales_org": 3}},
         )
