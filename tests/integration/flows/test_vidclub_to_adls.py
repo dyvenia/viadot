@@ -47,7 +47,6 @@ def test_vidclub_validate_df_task_success(caplog):
         to_date="2023-10-25",
         adls_dir_path="raw/tests",
         adls_file_name="test.parquet",
-        adls_sp_credentials_secret="App-Azure-CR-DatalakeGen2-AIA",
         overwrite_adls=True,
         validate_df_dict={
             "column_size": {"submissionID": 5},
@@ -78,7 +77,6 @@ def test_vidclub_validate_df_task_fail(caplog):
         to_date="2023-10-25",
         adls_dir_path="raw/tests",
         adls_file_name="test.parquet",
-        adls_sp_credentials_secret="App-Azure-CR-DatalakeGen2-AIA",
         overwrite_adls=True,
         validate_df_dict={
             "column_size": {"submissionID": 5},

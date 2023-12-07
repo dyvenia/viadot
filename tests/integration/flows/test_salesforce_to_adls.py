@@ -30,7 +30,6 @@ def test_salesforce_to_adls():
     os.remove("test_salesforce_to_adls_run_flow.json")
     rm = AzureDataLakeRemove(
         path=ADLS_DIR_PATH + ADLS_FILE_NAME,
-        vault_name="azuwevelcrkeyv001s",
     )
     rm.run(sp_credentials_secret=credentials_secret)
 
@@ -56,6 +55,5 @@ def test_salesforce_to_adls_validate_success():
     os.remove("test_salesforce_to_adls_run_flow.json")
     rm = AzureDataLakeRemove(
         path=ADLS_DIR_PATH + ADLS_FILE_NAME,
-        vault_name="azuwevelcrkeyv001s",
     )
     rm.run(sp_credentials_secret=credentials_secret)

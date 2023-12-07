@@ -101,13 +101,9 @@ def test_bigquery_to_adls_validate_df_fail(mocked_data):
         adls_sp_credentials_secret=ADLS_CREDENTIAL_SECRET,
         validate_df_dict={"column_list_to_match": ["type", "country", "test"]},
     )
-    try:
-        result = flow_bigquery.run()
-    except ValidationError:
-        pass
 
-    os.remove("test_bigquery_to_adls_validate_df_fail.parquet")
-    os.remove("test_bigquery_to_adls_validate_df_fail.json")
+    result = flow_bigquery.run()
+    assert result.is_failed()
 
 
 @mock.patch(
@@ -138,7 +134,5 @@ def test_bigquery_to_adls_validate_df_success(mocked_data):
     os.remove("test_bigquery_to_adls_validate_df_success.parquet")
     os.remove("test_bigquery_to_adls_validate_df_success.json")
 
-    rm = AzureDataLakeRemove(
-        path=ADLS_DIR_PATH + ADLS_FILE_NAME, vault_name="azuwevelcrkeyv001s"
-    )
+    rm = AzureDataLakeRemove(path=ADLS_DIR_PATH + ADLS_FILE_NAME)
     rm.run(sp_credentials_secret=ADLS_CREDENTIAL_SECRET)
