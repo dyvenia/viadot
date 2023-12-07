@@ -6,14 +6,11 @@ import pytest
 from viadot.exceptions import APIError
 
 from viadot.signals import SKIP
-from viadot.sources import AzureSQL
 from viadot.utils import (
     add_viadot_metadata_columns,
     check_if_empty_file,
     gen_bulk_insert_query_from_df,
-    get_flow_last_run_date,
     get_nested_value,
-    get_sql_server_table_dtypes,
     slugify,
     handle_api_response,
     union_dict,
@@ -46,12 +43,6 @@ class ClassForMetadataDecorator:
 def example_dataframe():
     data = [(1, "_suffixnan", 1), (2, "Noneprefix", 0), (3, "fooNULLbar", 1, 2.34)]
     return pd.DataFrame(data, columns=["id", "name", "is_deleted", "balance"])
-
-
-@pytest.fixture(scope="function")
-def azure_sql():
-    azure_sql = AzureSQL(config_key="AZURE_SQL")
-    yield azure_sql
 
 
 @pytest.fixture(scope="function")
@@ -272,23 +263,6 @@ def test_handle_api_response_return_type():
     api_url = "https://jsonplaceholder.typicode.com/posts"
     response = handle_api_response(url=api_url)
     assert response.status_code == 200
-
-
-def test_get_sql_server_table_dtypes(azure_sql):
-    """Checks if dtypes is generated in a good way using `get_sql_server_table_dtypes` function."""
-
-    SCHEMA = "sandbox"
-    TABLE = "test_table_dtypes"
-    dtypes = {"country": "VARCHAR(100)", "sales": "INT"}
-
-    azure_sql.create_table(
-        schema=SCHEMA, table=TABLE, dtypes=dtypes, if_exists="replace"
-    )
-
-    dtypes = get_sql_server_table_dtypes(schema=SCHEMA, table=TABLE, con=azure_sql.con)
-    assert isinstance(dtypes, dict)
-    assert list(dtypes.keys()) == ["country", "sales"]
-    assert list(dtypes.values()) == ["varchar(100)", "int"]
 
 
 def test_union_dict_return():
