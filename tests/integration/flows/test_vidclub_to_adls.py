@@ -82,11 +82,9 @@ def test_vidclub_validate_df_task_fail(caplog):
         overwrite_adls=True,
         validate_df_dict={
             "column_size": {"submissionID": 5},
-            "column_unique_values": ["regionID"],
+            "column_unique_values": ["id"],
         },
     )
 
-    try:
-        flow.run()
-    except ValidationError:
-        pass
+    result = flow.run()
+    assert result.is_failed()
