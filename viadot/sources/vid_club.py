@@ -230,7 +230,7 @@ class VidClub(Source):
             ind = False
 
         if "data" in keys_list:
-            df = json_normalize(response["data"])
+            df = pd.json_normalize(response["data"])
             df = pd.DataFrame(df)
             length = df.shape[0]
             page = 1
@@ -246,7 +246,7 @@ class VidClub(Source):
                     url=url, headers=headers, method="GET", verify=False
                 )
                 response = r.json()
-                df_page = json_normalize(response["data"])
+                df_page = pd.json_normalize(response["data"])
                 df_page = pd.DataFrame(df_page)
                 if source == "product":
                     df_page = df_page.transpose()
