@@ -56,7 +56,7 @@ def test_drop_columns(var_dictionary):
     Args:
         var_dictionary: Dictionary with example arguments for run method.
     """
-    cols_to_drop = ["regionID", "submissionDate"]
+    cols_to_drop = ["__v", "status"]
     vc_to_df = VidClubToDF(credentials=CREDENTIALS)
 
     output_with_dropped = vc_to_df.run(
