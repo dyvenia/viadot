@@ -11,6 +11,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+## [0.4.23] - 2023-12-07
+### Added
+- Added tests for new functionalities in SAPRFC and SAPRFCV2 regarding passing credentials.
+- Added new params for mapping and reordering DataFrame for `Genesys` task and flow.
+- Added `get_task_logs` task to search for logs in the flow
+- Added `get_flow_run_id` task to find flow ID.
+- Added `search_for_msg_in_logs` task used to control flows in multiflows by searching for a given log message from a given task.
+- Added closing session to `SAPBW`.
+- Added `CSV` as a new output extension to `SharepointListToADLS` flow.
+
+### Fixed
+- Fixed creation of URL in `VidClub` source class. When the `region=None` the region parameter will not be included in the URL.
+
+### Changed
+- `if_no_data_returned` added for sharepoint list flow which can fail, warn in case of no data returend or skip (continue) execution in the old way.
+- Changed `__init__` in `SAPRFC` and `SAPRFCV2` class in source in order to raise warning in prefect when credentials will be taken from DEV.
+
 
 ## [0.4.22] - 2023-11-15
 ### Added

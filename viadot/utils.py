@@ -2,7 +2,7 @@ import functools
 import os
 import re
 from itertools import chain
-from typing import Union, Any, Callable, Dict, List, Literal
+from typing import Any, Callable, Dict, List, Literal, Union
 
 import pandas as pd
 import prefect
@@ -23,6 +23,14 @@ logger = logging.get_logger(__name__)
 
 
 def slugify(name: str) -> str:
+    """Function to change spaces to underscores and convert all characters to lowercase.
+
+    Args:
+        name (str): String to convert.
+
+    Returns:
+        str: Output text after conversion.
+    """
     return name.replace(" ", "_").lower()
 
 
@@ -137,12 +145,12 @@ def get_flow_last_run_date(flow_name: str) -> str:
 
 
 def get_sql_server_table_dtypes(
-    table, con: pyodbc.Connection, schema: str = None
+    table: str, con: pyodbc.Connection, schema: str = None
 ) -> dict:
     """Get column names and types from a SQL Server database table.
 
     Args:
-        table (_type_): The table for which to fetch dtypes.
+        table (str): The table for which to fetch dtypes.
         con (pyodbc.Connection): The connection to the database where the table is located.
         schema (str, optional): The schema where the table is located. Defaults to None.
 
@@ -257,7 +265,7 @@ def build_merge_query(
 
 
 def gen_bulk_insert_query_from_df(
-    df: pd.DataFrame, table_fqn: str, chunksize=1000, **kwargs
+    df: pd.DataFrame, table_fqn: str, chunksize: int = 1000, **kwargs
 ) -> str:
     """
     Converts a DataFrame to a bulk INSERT query.
@@ -265,6 +273,7 @@ def gen_bulk_insert_query_from_df(
     Args:
         df (pd.DataFrame): The DataFrame which data should be put into the INSERT query.
         table_fqn (str): The fully qualified name (schema.table) of the table to be inserted into.
+        chunksize (int, optional): The size of chunk. Defaults to 1000.
 
     Returns:
         str: A bulk insert query that will insert all data from `df` into `table_fqn`.
@@ -280,6 +289,7 @@ def gen_bulk_insert_query_from_df(
     >>> query = gen_bulk_insert_query_from_df(df, "users", status="APPROVED", address=None)
     >>> print(query)
     INSERT INTO users (id, name, is_deleted, balance, status, address)
+
     VALUES (1, '_suffixnan', 1, NULL, 'APPROVED', NULL),
            (2, 'Noneprefix', 0, NULL, 'APPROVED', NULL),
            (3, 'fooNULLbar', 1, 2.34, 'APPROVED', NULL);
@@ -344,21 +354,21 @@ def gen_bulk_insert_query_from_df(
         return _gen_insert_query_from_records(tuples_escaped)
 
 
-def union_dict(*dicts):
+def union_dict(*dicts) -> dict:
     """
-    Function that union list of dictionaries
+    Function that union list of dictionaries into a singe dictionary.
 
     Args:
-        dicts (List[Dict]): list of dictionaries with credentials.
+        *dicts: Variable number of dictionaries to be unioned.
 
     Returns:
-        Dict: A single dictionary createb by union method.
+        dict: A single dictionary containing the combined key-value pairs from all input dictionaries.
 
     Examples:
 
     >>> a = {"a":1}
     >>> b = {"b":2}
-    >>> union_credentials_dict(a ,b)
+    >>> union_dict(a ,b)
     {'a': 1, 'b': 2}
 
     """
@@ -451,37 +461,43 @@ def add_viadot_metadata_columns(source_name: str = None) -> Callable:
     return decorator
 
 
-def get_nested_dict(d):
-    if isinstance(d, dict):
-        for lvl in d.values():
-            if isinstance(lvl, dict):
-                return get_nested_dict(lvl)
-            else:
-                return d
-    else:
-        return None
-
-
-def check_value(base: Union[Dict, Any], levels: List) -> Union[None, Any]:
+def get_nested_value(
+    nested_dict: dict,
+    levels_to_search: List[str] = None,
+) -> Union[None, Any]:
     """
-    Task to extract data from nested json file if there is any under passed parameters.
-    Otherwise return None.
+    Retrieve a value from a nested dictionary based on specified levels if the `levels_to_search` are provided.
+    Retrieve a key:value pair of the first deepest pair if `levels_to_search` is not provided.
 
     Args:
-        base (Dict, Any): variable with base lvl of the json, for example:
-                          json_file["first_known_lvl"]["second_known_lvl"]["third_known_lvl"]
-        levels (List): List of potential lower levels of nested json for data retrieval. For example:
-                       ["first_lvl_below_base", "second_lvl_below_base", "searched_phrase"]
+        nested_dict (dict): The nested dictionary to search for the value.
+        levels_to_search (List[str], optional): List of keys representing the levels to search. Defaults to None.
+            If provided, the function will attempt to retrieve the value at the specified levels.
+            If not provided, the function will recursively search for the first non-dictionary value.
 
     Returns:
-        Union[None, Any]: Searched value for the lowest level, in example data under "searched_phrase" key.
+        Union[None, Any]: The searched value for the specified level or the first key:value pair when
+            first non-dictionary value found during recursive search.
+            Returns None if the nested_dict is not a dictionary or if the specified levels are not found.
     """
-
-    for lvl in levels:
-        if isinstance(base, dict):
-            base = base.get(lvl)
-            if base is None:
-                return None
+    try:
+        if levels_to_search is not None:
+            for lvl in levels_to_search:
+                if isinstance(nested_dict[lvl], dict):
+                    return get_nested_value(
+                        nested_dict=nested_dict[levels_to_search.pop(0)],
+                        levels_to_search=levels_to_search,
+                    )
+                else:
+                    return nested_dict[lvl]
         else:
-            return base
-    return base
+            for lvl in nested_dict.values():
+                if isinstance(lvl, dict):
+                    return get_nested_value(nested_dict=lvl)
+                else:
+                    return nested_dict
+    except KeyError as e:
+        return None
+    except TypeError as e:
+        logger.error(f"The 'nested_dict' must be a dictionary. {e}")
+        return None
