@@ -225,7 +225,7 @@ def test_sharepoint_list_to_adls_run_flow_success_on_no_data_returned(mocked_cla
 )
 @pytest.mark.run
 def test_sharepoint_list_to_adls_run_flow_success_warn_on_no_data_returned(
-    mocked_class,
+    mocked_class, caplog
 ):
     """
     Test will check if flow is failing when empty DF is passed
