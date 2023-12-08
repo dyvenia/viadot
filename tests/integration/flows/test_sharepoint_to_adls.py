@@ -1,6 +1,7 @@
 import os
 from unittest import mock
 
+import logging
 import pandas as pd
 import pendulum
 import pytest
@@ -224,7 +225,7 @@ def test_sharepoint_list_to_adls_run_flow_success_on_no_data_returned(mocked_cla
 )
 @pytest.mark.run
 def test_sharepoint_list_to_adls_run_flow_success_warn_on_no_data_returned(
-    mocked_class,
+    mocked_class, caplog
 ):
     """
     Test will check if flow is failing when empty DF is passed
@@ -232,15 +233,17 @@ def test_sharepoint_list_to_adls_run_flow_success_warn_on_no_data_returned(
     CSV file should not be generated!
     """
     # Get prefect client instance
-    flow = SharepointListToADLS(
-        "test_sharepoint_to_adls_run_flow",
-        output_file_extension=".csv",
-        adls_sp_credentials_secret=CREDENTIALS_SECRET,
-        adls_dir_path=ADLS_DIR_PATH,
-        file_name=ADLS_FILE_NAME_LIST,
-        list_title="",
-        site_url="",
-        if_no_data_returned="warn",
-    )
-    result = flow.run()
+    with caplog.at_level(logging.WARNING):
+        flow = SharepointListToADLS(
+            "test_sharepoint_to_adls_run_flow",
+            output_file_extension=".csv",
+            adls_sp_credentials_secret=CREDENTIALS_SECRET,
+            adls_dir_path=ADLS_DIR_PATH,
+            file_name=ADLS_FILE_NAME_LIST,
+            list_title="",
+            site_url="",
+            if_no_data_returned="warn",
+        )
+        result = flow.run()
+    assert "No data in the source response. Df empty." in caplog.text
     assert result.is_successful()

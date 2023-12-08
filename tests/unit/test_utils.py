@@ -315,3 +315,9 @@ def test_get_nested_value_without_levels(nested_dict):
         "searched_phrase_3": "Found it!",
     }
     assert result_2 == {"searched_phrase_2": "Found it_2!"}
+
+
+def test_get_nested_value_non_dict_passed():
+    """Sample test checking the correctness of the function when non dict value (int) is provided."""
+
+    assert get_nested_value(nested_dict=5) == None
