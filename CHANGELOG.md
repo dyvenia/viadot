@@ -8,7 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 ### Fixed
-
+- `task_utils/get_nested_value` fixed issue with non dict parameter passed without level(1st workflow)
 ### Changed
 
 ## [0.4.23] - 2023-12-07

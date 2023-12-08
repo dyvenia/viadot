@@ -491,13 +491,16 @@ def get_nested_value(
                 else:
                     return nested_dict[lvl]
         else:
-            for lvl in nested_dict.values():
-                if isinstance(lvl, dict):
-                    return get_nested_value(nested_dict=lvl)
-                else:
-                    return nested_dict
+            if isinstance(nested_dict, dict):
+                for lvl in nested_dict.values():
+                    if isinstance(lvl, dict):
+                        return get_nested_value(nested_dict=lvl)
+                    else:
+                        return nested_dict
+            else:
+                return None
     except KeyError as e:
         return None
-    except TypeError as e:
+    except (TypeError, AttributeError) as e:
         logger.error(f"The 'nested_dict' must be a dictionary. {e}")
         return None
