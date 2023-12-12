@@ -6,6 +6,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 ### Added
+- Added logic for if_empty param: `check_if_df_empty` task to `ADLSToAzureSQL` flow
 
 ### Fixed
 
