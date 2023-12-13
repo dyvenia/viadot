@@ -167,7 +167,7 @@ class ADLSToAzureSQL(Flow):
             write_sep (str, optional): The delimiter for the output CSV file. Defaults to "\t".
             remove_tab (bool, optional): Whether to remove tab delimiters from the data. Defaults to False.
             overwrite_adls (bool, optional): Whether to overwrite the file in ADLS. Defaults to True.
-            if_empty (str, optional): What to do if the loaded DataFrame is empty. Defaults to "skip".
+            if_empty (str, optional): What to do if the loaded DataFrame is empty. Defaults to "skip" which acts like ignore this setting.
             adls_sp_credentials_secret (str, optional): The name of the Azure Key Vault secret containing a dictionary with
             ACCOUNT_NAME and Service Principal credentials (TENANT_ID, CLIENT_ID, CLIENT_SECRET) for the Azure Data Lake.
             Defaults to None.
