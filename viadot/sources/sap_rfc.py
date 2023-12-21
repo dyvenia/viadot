@@ -1133,7 +1133,8 @@ class SAPRFCV2(Source):
                 ):
                     df_tmp = pd.DataFrame(columns=fields)
                     df_tmp[fields] = records
-                    # SAP adds whitespaces to the first extracted column value and it must be removed to make a proper merge
+                    # SAP adds whitespaces to the first extracted column value 
+                    # If whitespace is in unique column it must be removed to make a proper merge
                     for col in self.rfc_unique_id:
                         df_tmp[col] = df_tmp[col].str.strip()
                         df[col] = df[col].str.strip() 
