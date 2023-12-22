@@ -10,6 +10,6 @@ from .sharepoint import Sharepoint
 from .trino import Trino
 
 try:
-    from .sap_rfc import SAPRFC
+    from .sap_rfc import SAPRFC, SAPRFCV2
 except ImportError:
     pass
