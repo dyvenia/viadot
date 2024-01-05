@@ -64,18 +64,6 @@ jobs:
         run: |
           pip install black
           black --check .
-        continue-on-error: true
-
-      - name: Commit Black changes to the pull request
-        if: ${{ always() && steps.blackCheck.outcome == 'failure' }}
-        run: |
-          git config --global user.name 'github-actions[bot]'
-          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
-          git remote set-url origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/$GITHUB_REPOSITORY
-          black .
-          git checkout $GITHUB_HEAD_REF
-          git commit -am "🎨 Format Python code with Black"
-          git push
 
       - name: Test with pytest
         if: always()
