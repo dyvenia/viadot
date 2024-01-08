@@ -88,6 +88,7 @@ class MinIO(Source):
         schema_name: str = None,
         table_name: str = None,
         path: str | Path = None,
+        partition_cols: list[str] = None,
     ) -> None:
         """
         Create a Parquet file on MinIO from a pandas DataFrame.
@@ -106,6 +107,8 @@ class MinIO(Source):
                 None.
             path (str | Path, optional): The path to the destination file. Defaults to
                 None.
+            partition_cols (list[str], optional): The columns to partition by. Defaults
+                to None.
         """
 
         assert (schema_name and table_name) or (
@@ -115,6 +118,7 @@ class MinIO(Source):
         path = path or f"{schema_name}/{table_name}/{table_name}.parquet"
         df.to_parquet(
             f"s3a://{self.bucket}/{path}",
+            partition_cols=partition_cols,
             storage_options=self.storage_options,
         )
 
