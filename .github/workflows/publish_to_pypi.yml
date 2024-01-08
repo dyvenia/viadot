@@ -8,27 +8,45 @@ on:
   workflow_dispatch:
 
 jobs:
-  publish_pypi:
+
+  build:
+    name: Build distribution 📦
     runs-on: ubuntu-latest
     steps:
+    - uses: actions/checkout@v4
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: "3.10"
+    - name: Install pypa/build
+      run: >-
+        python3 -m
+        pip install
+        build
+        --user
+    - name: Build a binary wheel and a source tarball
+      run: python3 -m build
+    - name: Store the distribution packages
+      uses: actions/upload-artifact@v3
+      with:
+        name: python-package-distributions
+        path: dist/
 
-      # Set up git & Python
-      - uses: actions/checkout@v3
-      - uses: actions/setup-python@v4
+  publish:
+    name: Publish to PyPI 🚀
+    needs:
+    - build
+    runs-on: ubuntu-latest
+    environment:
+      name: release
+      url: https://pypi.org/p/viadot2
+    permissions:
+      id-token: write  # IMPORTANT: this permission is mandatory for trusted publishing
+    steps:
+      - name: Download all the dists
+        uses: actions/download-artifact@v3
         with:
-          python-version: "3.10"
-
-      # Install dependencies
-      - name: "Installs dependencies"
-        run: |
-          python3 -m pip install --upgrade pip
-          python3 -m pip install setuptools wheel twine
-
-      # Build and upload to PyPI
-      - name: "Builds and uploads to PyPI"
-        run: |
-          python3 setup.py sdist bdist_wheel
-          python3 -m twine upload dist/*
-        env:
-          TWINE_USERNAME: ${{ secrets.TWINE_USERNAME }}
-          TWINE_PASSWORD: ${{ secrets.TWINE_TOKEN }}
+          name: python-package-distributions
+          path: dist/
+      - name: Publish package distributions to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
