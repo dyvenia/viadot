@@ -130,3 +130,19 @@ def test_adls_to_azure_sql_mocked_validate_df_param(TEST_CSV_FILE_PATH):
         )
         instance.run()
         mock_method.assert_called_with()
+
+
+def test_adls_to_azure_sql_mocked_wrong_param(TEST_CSV_FILE_PATH):
+    with pytest.raises(TypeError) as excinfo:
+        instance = ADLSToAzureSQL(
+            name="test_adls_to_azure_sql_flow",
+            adls_path=TEST_CSV_FILE_PATH,
+            schema="sandbox",
+            table="test_bcp",
+            dtypes={"test_str": "VARCHAR(25)", "test_int": "INT"},
+            if_exists="replace",
+            validate_df_dit={"column_list_to_match": ["test_str", "test_int"]},
+        )
+        instance.run()
+
+    assert "validate_df_dit" in str(excinfo)
