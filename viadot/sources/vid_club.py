@@ -1,14 +1,10 @@
-import json
-import os
-import urllib
-from pandas.io.json import json_normalize
-from datetime import date, datetime, timedelta
+from datetime import datetime, timedelta
 from typing import Any, Dict, List, Literal, Tuple
 
 import pandas as pd
 from prefect.utilities import logging
 
-from ..exceptions import CredentialError, ValidationError
+from ..exceptions import ValidationError
 from ..utils import handle_api_response
 from .base import Source
 
@@ -230,7 +226,7 @@ class VidClub(Source):
             ind = False
 
         if "data" in keys_list:
-            df = json_normalize(response["data"])
+            df = pd.json_normalize(response["data"])
             df = pd.DataFrame(df)
             length = df.shape[0]
             page = 1
@@ -246,7 +242,7 @@ class VidClub(Source):
                     url=url, headers=headers, method="GET", verify=False
                 )
                 response = r.json()
-                df_page = json_normalize(response["data"])
+                df_page = pd.json_normalize(response["data"])
                 df_page = pd.DataFrame(df_page)
                 if source == "product":
                     df_page = df_page.transpose()
