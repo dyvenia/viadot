@@ -1,14 +1,10 @@
-import json
-import os
-import urllib
-from pandas.io.json import json_normalize
-from datetime import date, datetime, timedelta
+from datetime import datetime, timedelta
 from typing import Any, Dict, List, Literal, Tuple
 
 import pandas as pd
 from prefect.utilities import logging
 
-from ..exceptions import CredentialError, ValidationError
+from ..exceptions import ValidationError
 from ..utils import handle_api_response
 from .base import Source
 
