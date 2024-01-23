@@ -95,10 +95,10 @@ class MinIO(Source):
     def from_arrow(
         self,
         table: pa.Table,
-        schema_name: str = None,
-        table_name: str = None,
-        path: str | Path = None,
-        partition_cols: list[str] = None,
+        schema_name: str | None = None,
+        table_name: str | None = None,
+        path: str | Path | None = None,
+        partition_cols: list[str] | None = None,
         if_exists: Literal["error", "delete_matching", "overwrite_or_ignore"] = "error",
     ):
         """
@@ -126,6 +126,8 @@ class MinIO(Source):
                 None.
             partition_cols (list[str], optional): The columns to partition by. Defaults
                 to None.
+            if_exists (Literal["error", "delete_matching", "overwrite_or_ignore"],
+                optional). What to do if the dataset already exists.
         """
         fqn_or_path = (schema_name and table_name) or (
             path and not (schema_name or table_name)
@@ -156,10 +158,10 @@ class MinIO(Source):
     def from_df(
         self,
         df: pd.DataFrame,
-        schema_name: str = None,
-        table_name: str = None,
-        path: str | Path = None,
-        partition_cols: list[str] = None,
+        schema_name: str | None = None,
+        table_name: str | None = None,
+        path: str | Path | None = None,
+        partition_cols: list[str] | None = None,
         if_exists: Literal["error", "delete_matching", "overwrite_or_ignore"] = "error",
     ) -> None:
         """
@@ -187,6 +189,8 @@ class MinIO(Source):
                 None.
             partition_cols (list[str], optional): The columns to partition by. Defaults
                 to None.
+            if_exists (Literal["error", "delete_matching", "overwrite_or_ignore"],
+                optional). What to do if the dataset already exists.
         """
         table = pa.Table.from_pandas(df)
 
