@@ -8,6 +8,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Added logic for if_empty param: `check_if_df_empty` task to `ADLSToAzureSQL` flow.
 - Added `geopy` library to `requirements`.
+- Added logic for if_empty param: `check_if_df_empty` task to `ADLSToAzureSQL` flow
+- Added new parameter `validate_df_dict` to `ADLSToAzureSQL` class
+
 
 ### Fixed
 

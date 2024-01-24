@@ -105,7 +105,7 @@ RESPONSE_PIVOTED_NO_DATA = {
 }
 
 
-def test___get_col_names_google_analytics_pivoted():
+def test_get_col_names_google_analytics_pivoted():
     columns = Supermetrics._get_col_names_google_analytics(response=RESPONSE_PIVOTED)
     assert columns == [
         "Date",
@@ -117,6 +117,6 @@ def test___get_col_names_google_analytics_pivoted():
     ]
 
 
-def test___get_col_names_google_analytics_pivoted_no_data():
+def test_get_col_names_google_analytics_pivoted_no_data():
     with pytest.raises(ValueError):
         Supermetrics._get_col_names_google_analytics(response=RESPONSE_PIVOTED_NO_DATA)

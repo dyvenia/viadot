@@ -85,7 +85,7 @@ def test_create_table_from_multiple_parquet(duckdb):
     duckdb.run(f"DROP SCHEMA {SCHEMA}")
 
 
-def test__check_if_table_exists(duckdb, TEST_PARQUET_FILE_PATH):
+def test_check_if_table_exists(duckdb, TEST_PARQUET_FILE_PATH):
     assert not duckdb._check_if_table_exists(table=TABLE, schema=SCHEMA)
     duckdb.create_table_from_parquet(
         schema=SCHEMA, table=TABLE, path=TEST_PARQUET_FILE_PATH

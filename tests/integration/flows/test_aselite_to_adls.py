@@ -15,9 +15,6 @@ from viadot.tasks.aselite import ASELiteToDF
 TMP_FILE_NAME = "test_flow.csv"
 MAIN_DF = None
 
-df_task = ASELiteToDF()
-file_to_adls_task = AzureDataLakeUpload()
-
 
 def test_aselite_to_adls():
     credentials_secret = PrefectSecret("aselite").run()
