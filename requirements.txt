@@ -46,3 +46,4 @@ Office365-REST-Python-Client==2.4.4
 TM1py==1.11.3
 nltk==3.8.1
 scikit-learn==1.3.2
+geopy==2.4.1
