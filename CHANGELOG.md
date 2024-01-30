@@ -6,16 +6,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 ### Added
-- Added logic for if_empty param: `check_if_df_empty` task to `ADLSToAzureSQL` flow.
-- Added `geopy` library to `requirements`.
-- Added logic for if_empty param: `check_if_df_empty` task to `ADLSToAzureSQL` flow
-- Added new parameter `validate_df_dict` to `ADLSToAzureSQL` class
-- Added new ViewType `agent_timeline_summary_view` to Genesys.
-
 
 ### Fixed
 
 ### Changed
+
+
+## [0.4.25] - 2024-01-30
+### Added
+- Added logic for if_empty param: `check_if_df_empty` task to `ADLSToAzureSQL` flow.
+- Added `geopy` library to `requirements`.
+- Added new parameter `validate_df_dict` to `ADLSToAzureSQL` class.
+- Added new ViewType `agent_timeline_summary_view` to Genesys.
+
 
 ## [0.4.24] - 2023-12-08
 ### Fixed
