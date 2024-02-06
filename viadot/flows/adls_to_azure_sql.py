@@ -327,22 +327,6 @@ class ADLSToAzureSQL(Flow):
                     flow=self,
                 )
 
-            promote_to_conformed_task = AzureDataLakeCopy(timeout=self.timeout)
-            promote_to_conformed_task.bind(
-                from_path=self.adls_path,
-                to_path=self.adls_path_conformed,
-                sp_credentials_secret=self.adls_sp_credentials_secret,
-                vault_name=self.vault_name,
-                flow=self,
-            )
-            promote_to_operations_task = AzureDataLakeCopy(timeout=self.timeout)
-            promote_to_operations_task.bind(
-                from_path=self.adls_path_conformed,
-                to_path=self.adls_path_operations,
-                sp_credentials_secret=self.adls_sp_credentials_secret,
-                vault_name=self.vault_name,
-                flow=self,
-            )
             create_table_task = AzureSQLCreateTable(timeout=self.timeout)
             create_table_task.bind(
                 schema=self.schema,
@@ -372,9 +356,5 @@ class ADLSToAzureSQL(Flow):
 
             df_reorder.set_upstream(lake_to_df_task, flow=self)
             df_to_csv.set_upstream(df_reorder, flow=self)
-            promote_to_conformed_task.set_upstream(df_to_csv, flow=self)
             create_table_task.set_upstream(df_to_csv, flow=self)
-            promote_to_operations_task.set_upstream(
-                promote_to_conformed_task, flow=self
-            )
             bulk_insert_task.set_upstream(create_table_task, flow=self)
