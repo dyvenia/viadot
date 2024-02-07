@@ -26,7 +26,7 @@ sql-metadata==2.3.0
 duckdb==0.5.1
 google-auth==2.6.2
 sendgrid==6.9.7
-pandas-gbq==0.17.4
+pandas-gbq==0.21.0
 pydantic==1.10.12
 PyMySQL==1.0.2
 paramiko==2.11.0
