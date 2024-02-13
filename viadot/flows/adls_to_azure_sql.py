@@ -221,8 +221,6 @@ class ADLSToAzureSQL(Flow):
         self.overwrite_adls = overwrite_adls
         self.if_empty = if_empty
         self.adls_sp_credentials_secret = adls_sp_credentials_secret
-        self.adls_path_conformed = self.get_promoted_path(env="conformed")
-        self.adls_path_operations = self.get_promoted_path(env="operations")
 
         # AzureSQLCreateTable
         self.table = table
@@ -256,20 +254,6 @@ class ADLSToAzureSQL(Flow):
     @staticmethod
     def slugify(name):
         return name.replace(" ", "_").lower()
-
-    def get_promoted_path(self, env: str) -> str:
-        adls_path_clean = self.adls_path.strip("/")
-        extension = adls_path_clean.split(".")[-1].strip()
-        if extension == "parquet":
-            file_name = adls_path_clean.split("/")[-2] + ".csv"
-            common_path = "/".join(adls_path_clean.split("/")[1:-2])
-        else:
-            file_name = adls_path_clean.split("/")[-1]
-            common_path = "/".join(adls_path_clean.split("/")[1:-1])
-
-        promoted_path = os.path.join(env, common_path, file_name)
-
-        return promoted_path
 
     def gen_flow(self) -> Flow:
         lake_to_df_task = AzureDataLakeToDF(timeout=self.timeout)
