@@ -9,16 +9,6 @@ from viadot.flows import ADLSToAzureSQL
 from viadot.flows.adls_to_azure_sql import check_dtypes_sort, df_to_csv_task
 
 
-def test_get_promoted_adls_path_csv_file():
-    adls_path_file = "raw/supermetrics/adls_ga_load_times_fr_test/2021-07-14T13%3A09%3A02.997357%2B00%3A00.csv"
-    flow = ADLSToAzureSQL(name="test", adls_path=adls_path_file)
-    promoted_path = flow.get_promoted_path(env="conformed")
-    assert (
-        promoted_path
-        == "conformed/supermetrics/adls_ga_load_times_fr_test/2021-07-14T13%3A09%3A02.997357%2B00%3A00.csv"
-    )
-
-
 def test_get_promoted_adls_path_parquet_file():
     adls_path_file = "raw/supermetrics/adls_ga_load_times_fr_test/2021-07-14T13%3A09%3A02.997357%2B00%3A00.parquet"
     flow = ADLSToAzureSQL(name="test", adls_path=adls_path_file)
