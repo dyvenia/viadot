@@ -10,7 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 ### Changed
-
+- Changed requirements.txt to level up version of dbt-sqlserver in order to fix bug with `MAXRECURSION` error in dbt_run
 
 ## [0.4.25] - 2024-01-30
 ### Added
