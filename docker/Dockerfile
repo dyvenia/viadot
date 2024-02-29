@@ -53,7 +53,7 @@ RUN pip install .
 RUN curl https://adoptopenjdk.jfrog.io/adoptopenjdk/api/gpg/key/public | apt-key add - && \
     add-apt-repository --yes https://adoptopenjdk.jfrog.io/adoptopenjdk/deb/ && \
     apt update -q && \
-    apt install -q adoptopenjdk-11-hotspot -y && \
+    apt install -q temurin-11-jdk -y && \
     find /usr/bin/java -type d -exec chmod 777 {} \;
 
 ENV SPARK_HOME /usr/local/lib/python3.10/site-packages/pyspark
