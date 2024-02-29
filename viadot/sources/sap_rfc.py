@@ -204,7 +204,7 @@ def catch_extra_separators(
     sep_index = sep_index.reshape(
         len(sep_index),
     )
-    # indentifying "good" rows we obtain the index of separator positions.
+    # identifying "good" rows we obtain the index of separator positions.
     pos_sep_index = np.array([], dtype=int)
     for data in data_raw[sep_index]:
         pos_sep_index = np.append(
@@ -226,7 +226,7 @@ def catch_extra_separators(
     return data_raw
 
 
-def gen_strip(data: Iterable[str], sep: str) -> Iterator[List[str]]:
+def gen_split(data: Iterable[str], sep: str, record_key: str) -> Iterator[List[str]]:
     """
     Splits each string in the given iterable using the specified separator and yields the resulting list.
     Helps to reduce memory usage when processing big data sets.
@@ -234,21 +234,17 @@ def gen_strip(data: Iterable[str], sep: str) -> Iterator[List[str]]:
     Args:
         data: An iterable collection of strings to be split.
         sep: The string separator used to split each string in `data`.
+        record_key: A key for extraction of the data from the nested dict.
 
     Yields:
         A list of substrings for each string in `data`, split using `sep`.
 
     Examples:
-        >>> list(gen_strip(["a|b|c", "d|e|f|g"], "|"))
+        >>> list(gen_strip(["a|b|c", "d|e|f|g"], "|", "WA"))
         [['a', 'b', 'c'], ['d', 'e', 'f', 'g']]
     """
     for row in data:
-        yield row.split(sep)
-
-
-def gen_unpack(data: dict, record_key: str) -> str:
-    for row in data:
-        yield row[record_key]
+        yield row[record_key].split(sep)
 
 
 class SAPRFC(Source):
@@ -1101,14 +1097,6 @@ class SAPRFCV2(Source):
         Returns:
             pd.DataFrame: A DataFrame representing the result of the query provided in `PyRFC.query()`.
         """
-
-        def gen_split(data: Iterable, sep: str, record_key: str):
-            """
-            Internal function which improves the data processing
-            performance by usage of generator.
-            """
-            for row in data:
-                yield row[record_key].split(sep)
 
         params = self._query
         columns = self.select_columns_aliased
