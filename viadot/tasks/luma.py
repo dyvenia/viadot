@@ -41,7 +41,7 @@ class LumaIngest(ShellTask):
         self.helper_script = dbt_project_path
         self.url = url
         self.metadata_dir_path = metadata_dir_path
-        self.command = f"luma dbt send-test-results --luma-url {url} --metadata-dir {metadata_dir_path}"
+        self.command = f"luma dbt send-test-results --luma-url {url} --metadata-dir {metadata_dir_path} --no config"
         self.return_all = True
         self.stream_output = True
         self.log_stderr = True
