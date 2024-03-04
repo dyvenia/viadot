@@ -1,3 +1,4 @@
+import re
 import warnings
 from typing import Generator, Literal, Optional
 
@@ -73,7 +74,9 @@ class Trino(Source):
                 "auth": BasicAuthentication(self.username, self.password),
                 "http_scheme": self.http_scheme,
             }
-            engine = create_engine(connection_string, connect_args=connect_args)
+            engine = create_engine(
+                connection_string, connect_args=connect_args, future=True
+            )
             return engine.connect()
         return self._con
 
@@ -83,11 +86,18 @@ class Trino(Source):
 
     def drop_table(self, table_name: str, schema_name: str = None) -> None:
         fqn = get_fqn(schema_name=schema_name, table_name=table_name)
-        query = f"DROP TABLE {fqn}"
+        query = f"DROP TABLE IF EXISTS {fqn}"
 
-        self.logger.info(f"Dropping table {fqn}...")
+        self.logger.info(f"Dropping table '{fqn}'...")
         self.run(query)
-        self.logger.info(f"Table {fqn} has been successfully dropped.")
+        self.logger.info(f"Table '{fqn}' has been successfully dropped.")
+
+    def delete_table(self, table_name: str, schema_name: str = None) -> None:
+        fqn = get_fqn(schema_name=schema_name, table_name=table_name)
+        query = f"DELETE FROM {fqn}"
+        self.logger.info(f"Removing all data from table '{fqn}'...")
+        self.run(query)
+        self.logger.info(f"Data from table '{fqn}' has been successfully removed.")
 
     def _check_if_table_exists(self, table_name: str, schema_name: str) -> None:
         query = f"""
@@ -119,14 +129,27 @@ AND TABLE_NAME = '{table_name}'"""
         self.run(f"DROP SCHEMA {schema_name}")
         self.logger.info(f"Schema {schema_name} has been successfully dropped.")
 
-    def create_iceberg_schema(self, schema_name: str, location: str) -> None:
+    def create_iceberg_schema(
+        self,
+        schema_name: str,
+        location: str,
+        if_exists: Literal["fail", "skip"] = "fail",
+    ) -> None:
+        exists = self._check_if_schema_exists(schema_name)
+
+        if exists and if_exists == "fail":
+            raise ValueError(f"Schema '{schema_name}' already exists.")
+        else:
+            self.logger.info(f"Schema '{schema_name}' already exists. Skipping...")
+            return
+
         query = f"""
 CREATE SCHEMA {schema_name}
 WITH (location = '{location}')
         """
-        self.logger.info(f"Creating schema {schema_name}...")
+        self.logger.info(f"Creating schema '{schema_name}'...")
         self.run(query)
-        self.logger.info(f"Schema {schema_name} has been successfully created.")
+        self.logger.info(f"Schema '{schema_name}' has been successfully created.")
 
     def create_iceberg_table_from_arrow(
         self,
@@ -152,9 +175,9 @@ WITH (location = '{location}')
         )
 
         fqn = get_fqn(schema_name=schema_name, table_name=table_name)
-        self.logger.info(f"Creating table {fqn}...")
+        self.logger.info(f"Creating table '{fqn}'...")
         self.run(create_table_query)
-        self.logger.info(f"Table {fqn} has been successfully created.")
+        self.logger.info(f"Table '{fqn}' has been successfully created.")
 
     def create_iceberg_table_from_pandas(
         self,
@@ -227,7 +250,6 @@ WITH (
         try:
             # Execute with server-side cursor of size 5000.
             result = self.con.execution_options(yield_per=5000).execute(text(sql))
-            con.commit()
         except Exception as e:
             raise ValueError(f"Failed executing SQL:\n{sql}") from e
         finally:
@@ -253,8 +275,22 @@ WITH (
             "bool": "BOOLEAN",
             "date32[day]": "DATE",
             "timestamp[ns]": "TIMESTAMP(6)",
+            "decimal": "DECIMAL",
+            "decimal128": "DECIMAL",
+            "decimal256": "DECIMAL",
         }
+        precision, scale = None, None
+        decimal_match = re.match(r"(\w+)\((\d+), (\d+)\)", pyarrow_type)
+        if decimal_match:
+            pyarrow_type = decimal_match.group(1)
+            precision = int(decimal_match.group(2))
+            scale = int(decimal_match.group(3))
+
         mapped_type = mapping.get(pyarrow_type) or "VARCHAR"
+
+        if precision and scale:
+            mapped_type += f"({precision}, {scale})"
+
         return mapped_type
 
     def _check_connection(self):
