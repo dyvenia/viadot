@@ -221,16 +221,18 @@ class MinIO(Source):
 
     def rm(self, path: str, recursive: bool = False) -> None:
         """
-        Remove a file from MinIO. Recursive removal (directories) is not yet supported.
+        Remove a file or directory from MinIO.
 
         Args:
             path (str): The path to the file to remove.
         """
         if recursive:
-            # In order to do this, we need to recurse through all
-            # subdirectories, list all objects in each, and delete them. Thankfully,
-            # MinIO provides a `remove_objects()` method that simplifies the process.
-            raise NotImplementedError
+            bucket = path.split("/")[2]
+            prefix = "/".join(path.split("/")[3:])
+            objects = self.client.list_objects(bucket, prefix=prefix, recursive=True)
+            for obj in objects:
+                self.client.remove_object(bucket, obj.object_name)
+            return
 
         self.client.remove_object(self.bucket, path)
 
