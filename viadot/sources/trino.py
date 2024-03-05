@@ -1,11 +1,13 @@
 import re
 import warnings
+from contextlib import contextmanager
 from typing import Generator, Literal, Optional
 
 import pandas as pd
 import pyarrow as pa
 from pydantic import BaseModel, Field
 from sqlalchemy import create_engine, text
+from sqlalchemy.engine import Connection
 from sqlalchemy.exc import SADeprecationWarning
 from trino.auth import BasicAuthentication
 
@@ -52,8 +54,6 @@ class Trino(Source):
 
         super().__init__(*args, credentials=validated_creds, **kwargs)
 
-        self._con = None
-
         self.http_scheme = self.credentials.get("http_scheme")
         self.host = self.credentials.get("host")
         self.port = self.credentials.get("port")
@@ -63,40 +63,60 @@ class Trino(Source):
         self.schema = self.credentials.get("schema")
         self.verify = self.credentials.get("verify")
 
-    @property
-    def con(self):
-        if self._con is None:
-            connection_string = (
-                f"trino://{self.username}@{self.host}:{self.port}/{self.catalog}"
-            )
-            connect_args = {
-                "verify": self.verify,
-                "auth": BasicAuthentication(self.username, self.password),
-                "http_scheme": self.http_scheme,
-            }
-            engine = create_engine(
-                connection_string, connect_args=connect_args, future=True
-            )
-            return engine.connect()
-        return self._con
+        self.connection_string = (
+            f"trino://{self.username}@{self.host}:{self.port}/{self.catalog}"
+        )
+        self.connect_args = {
+            "verify": self.verify,
+            "auth": BasicAuthentication(self.username, self.password),
+            "http_scheme": self.http_scheme,
+        }
+        self.engine = create_engine(
+            self.connection_string, connect_args=self.connect_args, future=True
+        )
+
+    @contextmanager
+    def get_connection(self):
+        """Provide a transactional scope around a series of operations.
+
+        ----
+        Examples:
+
+        >>> trino = Trino()
+        >>> with trino.get_connection() as connection:
+        >>>    trino.run(query1, connection=connection)
+        >>>    trino.run(query2, connection=connection)
+        """
+        connection = self.engine.connect()
+        try:
+            yield connection
+            connection.commit()
+        except:
+            connection.rollback()
+            raise
+        finally:
+            connection.close()
 
     def get_tables(self, schema_name: str) -> list[str]:
         query = f"SHOW TABLES FROM {schema_name}"
-        return list(self.run(query))
+        with self.get_connection() as connection:
+            return list(self.run(query, connection=connection))
 
     def drop_table(self, table_name: str, schema_name: str = None) -> None:
         fqn = get_fqn(schema_name=schema_name, table_name=table_name)
         query = f"DROP TABLE IF EXISTS {fqn}"
 
         self.logger.info(f"Dropping table '{fqn}'...")
-        self.run(query)
+        with self.get_connection() as connection:
+            self.run(query, connection=connection)
         self.logger.info(f"Table '{fqn}' has been successfully dropped.")
 
     def delete_table(self, table_name: str, schema_name: str = None) -> None:
         fqn = get_fqn(schema_name=schema_name, table_name=table_name)
         query = f"DELETE FROM {fqn}"
         self.logger.info(f"Removing all data from table '{fqn}'...")
-        self.run(query)
+        with self.get_connection() as connection:
+            self.run(query, connection=connection)
         self.logger.info(f"Data from table '{fqn}' has been successfully removed.")
 
     def _check_if_table_exists(self, table_name: str, schema_name: str) -> None:
@@ -105,16 +125,19 @@ SELECT *
 FROM INFORMATION_SCHEMA.TABLES
 WHERE TABLE_SCHEMA = '{schema_name}'
 AND TABLE_NAME = '{table_name}'"""
-        results = list(self.run(query))
+        with self.get_connection() as connection:
+            results = list(self.run(query, connection=connection))
         return len(results) > 0
 
     def get_schemas(self) -> list[str]:
         query = f"SHOW SCHEMAS"
-        return list(self.run(query))
+        with self.get_connection() as connection:
+            return list(self.run(query, connection=connection))
 
     def _check_if_schema_exists(self, schema_name: str) -> None:
         query = f"SELECT * FROM INFORMATION_SCHEMA.SCHEMATA WHERE SCHEMA_NAME = '{schema_name}'"
-        results = list(self.run(query))
+        with self.get_connection() as connection:
+            results = list(self.run(query, connection=connection))
         return bool(results)
 
     def drop_schema(self, schema_name: str, cascade: bool = False) -> None:
@@ -126,7 +149,8 @@ AND TABLE_NAME = '{table_name}'"""
             [self.drop_table(schema_name=schema_name, table_name=t) for t in tables]
 
         self.logger.info(f"Dropping schema {schema_name}...")
-        self.run(f"DROP SCHEMA {schema_name}")
+        with self.get_connection() as connection:
+            self.run(f"DROP SCHEMA {schema_name}", connection=connection)
         self.logger.info(f"Schema {schema_name} has been successfully dropped.")
 
     def create_iceberg_schema(
@@ -148,7 +172,8 @@ CREATE SCHEMA {schema_name}
 WITH (location = '{location}')
         """
         self.logger.info(f"Creating schema '{schema_name}'...")
-        self.run(query)
+        with self.get_connection() as connection:
+            self.run(query, connection=connection)
         self.logger.info(f"Schema '{schema_name}' has been successfully created.")
 
     def create_iceberg_table_from_arrow(
@@ -176,7 +201,8 @@ WITH (location = '{location}')
 
         fqn = get_fqn(schema_name=schema_name, table_name=table_name)
         self.logger.info(f"Creating table '{fqn}'...")
-        self.run(create_table_query)
+        with self.get_connection() as connection:
+            self.run(create_table_query, connection=connection)
         self.logger.info(f"Table '{fqn}' has been successfully created.")
 
     def create_iceberg_table_from_pandas(
@@ -236,24 +262,22 @@ WITH (
 
         return query
 
-    def run(self, sql: str, con=None) -> Generator[tuple, None, None] | None:
+    def run(
+        self, sql: str, connection: Connection
+    ) -> Generator[tuple, None, None] | None:
         def row_generator(result):
             # Fetch rows in chunks of size `yield_per`.
             # This has to be inside a function due to how Python generators work.
             for partition in result.partitions():
                 yield from partition
 
-        con = con or self.con
-
         self.logger.debug("Executing SQL:\n" + sql)
 
         try:
             # Execute with server-side cursor of size 5000.
-            result = self.con.execution_options(yield_per=5000).execute(text(sql))
+            result = connection.execution_options(yield_per=5000,).execute(text(sql))
         except Exception as e:
             raise ValueError(f"Failed executing SQL:\n{sql}") from e
-        finally:
-            con.close()
 
         query_keywords = ["SELECT", "SHOW", "PRAGMA", "WITH"]
         is_query = any(sql.strip().upper().startswith(word) for word in query_keywords)
@@ -295,6 +319,7 @@ WITH (
 
     def _check_connection(self):
         try:
-            self.run("select 1")
+            with self.get_connection() as connection:
+                self.run("select 1", connection=connection)
         except Exception as e:
             raise ValueError(f"Failed to connect to Trino server at {self.host}") from e
