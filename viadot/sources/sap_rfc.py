@@ -256,16 +256,17 @@ class SAPRFC(Source):
         """
 
         self._con = None
-        DEFAULT_CREDENTIALS = local_config.get("SAP").get("DEV")
+        saprfc_credentials_key = kwargs.pop("saprfc_credentials_key")
+        env = kwargs.pop("env")
 
         credentials = kwargs.pop("credentials", None)
         if credentials is None:
-            credentials = DEFAULT_CREDENTIALS
-            if credentials is None:
-                raise CredentialError("Missing credentials.")
             logger.warning(
-                "Your credentials will use DEV environment. If you would like to use different one - please specified it."
+                f"Your credentials will use {env} environment from local config. If you would like to use different one - please specified it in sap_credentials parameter."
             )
+            credentials = local_config.get(saprfc_credentials_key).get(env)
+            if credentials is None:
+                raise CredentialError(f"Missing {env} credentials!")
 
         super().__init__(*args, credentials=credentials, **kwargs)
 
@@ -455,9 +456,11 @@ class SAPRFC(Source):
             self.aliases_keyed_by_columns = aliases_keyed_by_columns
 
             columns = [
-                aliases_keyed_by_columns[col]
-                if col in aliases_keyed_by_columns
-                else col
+                (
+                    aliases_keyed_by_columns[col]
+                    if col in aliases_keyed_by_columns
+                    else col
+                )
                 for col in columns
             ]
 
@@ -699,16 +702,17 @@ class SAPRFCV2(Source):
         """
 
         self._con = None
-        DEFAULT_CREDENTIALS = local_config.get("SAP").get("DEV")
+        saprfc_credentials_key = kwargs.pop("saprfc_credentials_key")
+        env = kwargs.pop("env")
 
         credentials = kwargs.pop("credentials", None)
         if credentials is None:
-            credentials = DEFAULT_CREDENTIALS
-            if credentials is None:
-                raise CredentialError("Missing credentials.")
             logger.warning(
-                "Your credentials will use DEV environment. If you would like to use different one - please specified it in 'sap_credentials' variable inside the flow."
+                f"Your credentials will use {env} environment from local config. If you would like to use different one - please specified it in sap_credentials parameter."
             )
+            credentials = local_config.get(saprfc_credentials_key).get(env)
+            if credentials is None:
+                raise CredentialError(f"Missing {env} credentials!")
 
         super().__init__(*args, credentials=credentials, **kwargs)
 
@@ -904,9 +908,11 @@ class SAPRFCV2(Source):
             self.aliases_keyed_by_columns = aliases_keyed_by_columns
 
             columns = [
-                aliases_keyed_by_columns[col]
-                if col in aliases_keyed_by_columns
-                else col
+                (
+                    aliases_keyed_by_columns[col]
+                    if col in aliases_keyed_by_columns
+                    else col
+                )
                 for col in columns
             ]
 

@@ -17,6 +17,8 @@ class SAPRFCToADLS(Flow):
         rfc_total_col_width_character_limit: int = 400,
         rfc_unique_id: List[str] = None,
         sap_credentials: dict = None,
+        saprfc_credentials_key: str = "SAP",
+        env: str = "PROD",
         output_file_extension: str = ".parquet",
         local_file_path: str = None,
         file_sep: str = "\t",
@@ -67,6 +69,8 @@ class SAPRFCToADLS(Flow):
                     ...
                     )
             sap_credentials (dict, optional): The credentials to use to authenticate with SAP. By default, they're taken from the local viadot config.
+            saprfc_credentials_key (str, optional): Azure KV secret. Defaults to "SAP".
+            env (str, optional): SAP environment. Defaults to "PROD".
             output_file_extension (str, optional): Output file extension - to allow selection of .csv for data which is not easy to handle with parquet. Defaults to ".parquet".
             local_file_path (str, optional): Local destination path. Defaults to None.
             file_sep(str, optional): The separator to use in the CSV. Defaults to "\t".
@@ -91,6 +95,8 @@ class SAPRFCToADLS(Flow):
         self.rfc_total_col_width_character_limit = rfc_total_col_width_character_limit
         self.rfc_unique_id = rfc_unique_id
         self.sap_credentials = sap_credentials
+        self.saprfc_credentials_key = saprfc_credentials_key
+        self.env = env
         self.output_file_extension = output_file_extension
         self.local_file_path = local_file_path
         self.file_sep = file_sep
@@ -121,6 +127,8 @@ class SAPRFCToADLS(Flow):
             rfc_unique_id=self.rfc_unique_id,
             alternative_version=self.alternative_version,
             credentials=self.sap_credentials,
+            saprfc_credentials_key=self.saprfc_credentials_key,
+            env=self.env,
             flow=self,
         )
         if self.validate_df_dict:
