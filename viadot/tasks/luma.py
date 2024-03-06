@@ -38,10 +38,10 @@ class LumaIngest(ShellTask):
                 secret=credentials_secret, vault_name=vault_name
             )
             url = json.loads(credentials_str).get("url")
-        self.helper_script = dbt_project_path
+        self.helper_script = f"cd {dbt_project_path}"
         self.url = url
         self.metadata_dir_path = metadata_dir_path
-        self.command = f"luma dbt send-test-results --luma-url {url} --metadata-dir {metadata_dir_path} --no config"
+        self.command = f"luma dbt send-test-results --luma-url {url} --metadata-dir {metadata_dir_path} --no-config"
         self.return_all = True
         self.stream_output = True
         self.log_stderr = True
