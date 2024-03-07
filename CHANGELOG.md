@@ -23,6 +23,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added `close_connection()` to `SAPRFC`
 - Added `Trino` source
 - Added `MinIO` source
+- Added `gen_split()` method to `SAPRFCV2` class to allow looping over a data frame with generator - improves performance
 
 ### Changed
 - Added `SQLServerToDF` task
@@ -33,10 +34,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Changed all Prefect logging instances in the `sources` directory to native Python logging
 - Changed `rm()`, `from_df()`, `to_df()` methods in `S3` Source
 - Changed `get_request()` to `handle_api_request()` in `utils.py`
+- Changed `SAPRFCV2` in `to_df()`for loop with generator
+- Updated `Dockerfile` to remove obsolete `adoptopenjdk` and replace it with `temurin`
 
 ### Removed
 - Removed the `env` param from `Databricks` source, as user can now store multiple configs for the same source using different config keys
 - Removed Prefect dependency from the library (Python library, Docker base image)
+- Removed `catch_extra_separators()` from `SAPRFCV2` class
 
 ## [0.4.3] - 2022-04-28
 ### Added

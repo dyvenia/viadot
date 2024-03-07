@@ -1,9 +1,18 @@
 import logging
 import re
 from collections import OrderedDict
-from typing import Any, Dict, List, Literal
-from typing import OrderedDict as OrderedDictType
-from typing import Tuple, Union
+from typing import (
+    Any,
+    Dict,
+    List,
+    OrderedDict as OrderedDictType,
+    Literal,
+    Tuple,
+    Union,
+    Iterable,
+    Iterator,
+)
+
 
 import numpy as np
 import pandas as pd
@@ -194,7 +203,7 @@ def catch_extra_separators(
     sep_index = sep_index.reshape(
         len(sep_index),
     )
-    # indentifying "good" rows we obtain the index of separator positions.
+    # identifying "good" rows we obtain the index of separator positions.
     pos_sep_index = np.array([], dtype=int)
     for data in data_raw[sep_index]:
         pos_sep_index = np.append(
@@ -214,6 +223,27 @@ def catch_extra_separators(
     )
 
     return data_raw
+
+
+def gen_split(data: Iterable[str], sep: str, record_key: str) -> Iterator[List[str]]:
+    """
+    Splits each string in the given iterable using the specified separator and yields the resulting list.
+    Helps to reduce memory usage when processing big data sets.
+
+    Args:
+        data: An iterable collection of strings to be split.
+        sep: The string separator used to split each string in `data`.
+        record_key: A key for extraction of the data from the nested dict.
+
+    Yields:
+        A list of substrings for each string in `data`, split using `sep`.
+
+    Examples:
+        >>> list(gen_strip(["a|b|c", "d|e|f|g"], "|", "WA"))
+        [['a', 'b', 'c'], ['d', 'e', 'f', 'g']]
+    """
+    for row in data:
+        yield row[record_key].split(sep)
 
 
 class SAPRFC(Source):
@@ -453,9 +483,11 @@ class SAPRFC(Source):
             self.aliases_keyed_by_columns = aliases_keyed_by_columns
 
             columns = [
-                aliases_keyed_by_columns[col]
-                if col in aliases_keyed_by_columns
-                else col
+                (
+                    aliases_keyed_by_columns[col]
+                    if col in aliases_keyed_by_columns
+                    else col
+                )
                 for col in columns
             ]
 
@@ -901,9 +933,11 @@ class SAPRFCV2(Source):
             self.aliases_keyed_by_columns = aliases_keyed_by_columns
 
             columns = [
-                aliases_keyed_by_columns[col]
-                if col in aliases_keyed_by_columns
-                else col
+                (
+                    aliases_keyed_by_columns[col]
+                    if col in aliases_keyed_by_columns
+                    else col
+                )
                 for col in columns
             ]
 
@@ -1062,6 +1096,7 @@ class SAPRFCV2(Source):
         Returns:
             pd.DataFrame: A DataFrame representing the result of the query provided in `PyRFC.query()`.
         """
+
         params = self._query
         columns = self.select_columns_aliased
         sep = self._query.get("DELIMITER")
@@ -1112,6 +1147,7 @@ class SAPRFCV2(Source):
                         raise e
                 record_key = "WA"
                 data_raw = np.array(response["DATA"])
+                del response
 
                 # if the reference columns are provided not necessary to remove any extra row.
                 if not isinstance(self.rfc_unique_id[0], str):
@@ -1121,11 +1157,8 @@ class SAPRFCV2(Source):
                 else:
                     start = False
 
-                data_raw = catch_extra_separators(
-                    data_raw, record_key, sep, fields, self.replacement
-                )
-
-                records = np.array([row[record_key].split(sep) for row in data_raw])
+                records = [row for row in gen_split(data_raw, sep, record_key)]
+                del data_raw
 
                 if (
                     isinstance(self.rfc_unique_id[0], str)
@@ -1133,11 +1166,11 @@ class SAPRFCV2(Source):
                 ):
                     df_tmp = pd.DataFrame(columns=fields)
                     df_tmp[fields] = records
-                    # SAP adds whitespaces to the first extracted column value 
+                    # SAP adds whitespaces to the first extracted column value
                     # If whitespace is in unique column it must be removed to make a proper merge
                     for col in self.rfc_unique_id:
                         df_tmp[col] = df_tmp[col].str.strip()
-                        df[col] = df[col].str.strip() 
+                        df[col] = df[col].str.strip()
                     df = pd.merge(df, df_tmp, on=self.rfc_unique_id, how="outer")
                 else:
                     if not start:

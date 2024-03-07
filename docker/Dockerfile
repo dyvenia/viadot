@@ -50,10 +50,12 @@ COPY . .
 RUN pip install .
 
 # BEGIN Databricks source setup
-RUN curl https://adoptopenjdk.jfrog.io/adoptopenjdk/api/gpg/key/public | apt-key add - && \
-    add-apt-repository --yes https://adoptopenjdk.jfrog.io/adoptopenjdk/deb/ && \
+RUN apt install -y wget apt-transport-https && \
+    mkdir -p /etc/apt/keyrings && \
+    wget -O - https://packages.adoptium.net/artifactory/api/gpg/key/public | tee /etc/apt/keyrings/adoptium.asc && \
+    echo "deb [signed-by=/etc/apt/keyrings/adoptium.asc] https://packages.adoptium.net/artifactory/deb $(awk -F= '/^VERSION_CODENAME/{print$2}' /etc/os-release) main" | tee /etc/apt/sources.list.d/adoptium.list && \
     apt update -q && \
-    apt install -q adoptopenjdk-11-hotspot -y && \
+    apt install -q temurin-11-jdk -y && \
     find /usr/bin/java -type d -exec chmod 777 {} \;
 
 ENV SPARK_HOME /usr/local/lib/python3.10/site-packages/pyspark
