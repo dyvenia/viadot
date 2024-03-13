@@ -7,6 +7,8 @@ from .minio import MinIO
 from .redshift_spectrum import RedshiftSpectrum
 from .s3 import S3
 from .sharepoint import Sharepoint
+from .genesys import Genesys
+from .salesforce import SalesForce
 from .trino import Trino
 
 try:
