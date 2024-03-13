@@ -99,3 +99,13 @@ def databricks_config_key():
 @pytest.fixture(scope="session", autouse=True)
 def c4c_config_key():
     return os.environ.get("VIADOT_C4C_CONFIG_KEY")
+
+
+@pytest.fixture(scope="session", autouse=True)
+def trino_config_key():
+    return os.environ.get("VIADOT_TRINO_CONFIG_KEY")
+
+
+@pytest.fixture(scope="session", autouse=True)
+def minio_config_key():
+    return os.environ.get("VIADOT_MINIO_CONFIG_KEY")

@@ -13,10 +13,10 @@ from viadot.sources.base import Source
 
 
 class RedshiftSpectrumCredentials(BaseModel):
-    profile_name: str  # The name of the IAM profile to use.
     region_name: str  # The name of the AWS region.
     aws_access_key_id: str  # The AWS access key ID.
     aws_secret_access_key: str  # The AWS secret access key.
+    profile_name: str = None  # The name of the IAM profile to use.
 
     # Below credentials are required only by some methods.
     #
@@ -80,7 +80,11 @@ class RedshiftSpectrum(Source):
         *args,
         **kwargs,
     ):
-        raw_creds = credentials or get_source_credentials(config_key) or {}
+        raw_creds = (
+            credentials
+            or get_source_credentials(config_key)
+            or self._get_env_credentials()
+        )
         validated_creds = dict(
             RedshiftSpectrumCredentials(**raw_creds)
         )  # validate the credentials
@@ -133,6 +137,14 @@ class RedshiftSpectrum(Source):
                     "`credentials_secret` config is required to connect to Redshift."
                 )
         return self._con
+
+    def _get_env_credentials(self):
+        credentials = {
+            "region_name": os.environ.get("AWS_DEFAULT_REGION"),
+            "aws_access_key_id": os.environ.get("AWS_ACCESS_KEY_ID"),
+            "aws_secret_access_key": os.environ.get("AWS_SECRET_ACCESS_KEY"),
+        }
+        return credentials
 
     def from_df(
         self,
