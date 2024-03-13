@@ -6,9 +6,7 @@ services:
     container_name: viadot_2
     volumes:
       # - ${HOME}/.databricks-connect:/home/viadot/.databricks-connect
-      # - ${HOME}/.dbt/profiles.yml:/home/viadot/.dbt/profiles.yml
       # - ${HOME}/.config/viadot/config.yaml:/home/viadot/.config/viadot/config.yaml
-      # - ${HOME}/.aws/credentials:/home/viadot/.aws/credentials  # for S3 tests
       - ../:/home/viadot
     shm_size: '4gb'
     command: sleep infinity

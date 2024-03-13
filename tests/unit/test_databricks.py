@@ -46,13 +46,14 @@ ADDITIONAL_TEST_DATA = [
 ]
 ADDITIONAL_DATA_NEW_FIELD_DF = pd.DataFrame(ADDITIONAL_TEST_DATA)
 ADDITIONAL_DATA_DF = ADDITIONAL_DATA_NEW_FIELD_DF.copy().drop("NewField", axis=1)
+MIXED_TYPES_DATA = pd.DataFrame({"test": ["a", "b", 1.1, 1, True]})
 
 
 @pytest.fixture(scope="session")
-def databricks():
+def databricks(databricks_config_key):
 
     databricks = Databricks(
-        config_key="databricks-qa-elt",
+        config_key=databricks_config_key,
     )
 
     try:
@@ -228,6 +229,59 @@ def test_replace_different_column_schema(databricks):
         schema=TEST_SCHEMA, table=TEST_TABLE, df=TEST_DF, if_exists="replace"
     )
     assert replaced is True
+
+    databricks.drop_table(schema=TEST_SCHEMA, table=TEST_TABLE)
+    databricks.drop_schema(TEST_SCHEMA)
+
+
+def test_snakecase_column_names(databricks):
+
+    assert not databricks._check_if_table_exists(schema=TEST_SCHEMA, table=TEST_TABLE)
+
+    # Calling the to_df() method without the wrapper adding metadata.
+    to_df_no_metadata_cols = databricks.to_df.__wrapped__
+
+    databricks.create_schema(TEST_SCHEMA)
+
+    TEST_DF["Column TO   SNake   case"] = "test"
+
+    # Creating a table, testing the case when the table does not exist.
+    created = databricks.create_table_from_pandas(
+        schema=TEST_SCHEMA, table=TEST_TABLE, df=TEST_DF, if_exists="replace"
+    )
+
+    assert created is True
+    retrieved_value = to_df_no_metadata_cols(
+        databricks, query=f"SELECT column_to___snake___case FROM {FQN}"
+    )
+    assert list(retrieved_value) == ["column_to___snake___case"]
+
+    TEST_DF["Column TO   SNake   case 22"] = "test22"
+
+    # Overwriting a table, testing the case when the table already exists.
+    updated = databricks.create_table_from_pandas(
+        schema=TEST_SCHEMA, table=TEST_TABLE, df=TEST_DF, if_exists="replace"
+    )
+    assert updated is True
+
+    retrieved_value_update = to_df_no_metadata_cols(
+        databricks, query=f"SELECT column_to___snake___case_22 FROM {FQN}"
+    )
+    assert list(retrieved_value_update) == ["column_to___snake___case_22"]
+
+    databricks.drop_table(schema=TEST_SCHEMA, table=TEST_TABLE)
+    databricks.drop_schema(TEST_SCHEMA)
+
+
+def test_create_table_from_pandas_handles_mixed_types(databricks):
+
+    assert not databricks._check_if_table_exists(schema=TEST_SCHEMA, table=TEST_TABLE)
+
+    databricks.create_schema(TEST_SCHEMA)
+    created = databricks.create_table_from_pandas(
+        schema=TEST_SCHEMA, table=TEST_TABLE, df=MIXED_TYPES_DATA
+    )
+    assert created
 
     databricks.drop_table(schema=TEST_SCHEMA, table=TEST_TABLE)
     databricks.drop_schema(TEST_SCHEMA)

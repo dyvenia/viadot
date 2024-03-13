@@ -6,35 +6,46 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 ### Added
-- Fixed `Databricks.create_table_from_pandas()` failing to overwrite a table in some cases even with `replace="True"`.
+- Fixed `Databricks.create_table_from_pandas()` failing to overwrite a table in some cases even with `replace="True"`
 - Enabled Databricks Connect in the image. To enable, [follow this guide](./README.md#executing-spark-jobs)
-- Added `Databricks` source to the library.
-- Added `ExchangeRates` source to the library.
-- Added `from_df()` method to `Azure Data Lake` source.
-- Added `SAPRFC` source to the library.
-- Added `S3` source to the library.
-- Added `RedshiftSpectrum` source to the library.
-- Added `upload()` and `download()` methods to `S3` source.
-- Added `Genesys` source to library.
+- Added `Databricks` source
+- Added `ExchangeRates` source
+- Added `from_df()` method to `AzureDataLake` source
+- Added `SAPRFC` source
+- Added `S3` source
+- Added `RedshiftSpectrum` source
+- Added `upload()` and `download()` methods to `S3` source
+- Added `Genesys` source
+- Fixed a bug in `Databricks.create_table_from_pandas()`. The function that converts column names to snake_case was not used in every case. (#672)
+- Added `howto_migrate_sources_tasks_and_flows.md` document explaining  viadot 1 -> 2 migration process
+- `RedshiftSpectrum.from_df()` now automatically creates a folder for the table if not specified in `to_path`
+- Fixed a bug in `Databricks.create_table_from_pandas()`. The function now automatically casts DataFrame types. (#681)
+- Added `close_connection()` to `SAPRFC`
+- Added `Trino` source
+- Added `MinIO` source
+- Added `gen_split()` method to `SAPRFCV2` class to allow looping over a data frame with generator - improves performance
 
 ### Changed
 - Added `SQLServerToDF` task
-- Added `SQLServerToDuckDB` flow which downloads data from SQLServer table, loads it to parquet file and then uplads it do DuckDB
+- Added `SQLServerToDuckDB` flow which downloads data from SQLServer table, loads it to parquet file and then uploads it do DuckDB
 - Added complete proxy set up in `SAPRFC` example (`viadot/examples/sap_rfc`)
-- Added Databricks/Spark setup to the image. See README for setup & usage instructions.
-- Added rollback feature to `Databricks` source.
-- Changed all Prefect logging instances in the `sources` directory to native Python logging.
+- Added Databricks/Spark setup to the image. See README for setup & usage instructions
+- Added rollback feature to `Databricks` source
+- Changed all Prefect logging instances in the `sources` directory to native Python logging
 - Changed `rm()`, `from_df()`, `to_df()` methods in `S3` Source
-- Changed `get_request()` to `handle_api_request()` in `utils.py`. 
+- Changed `get_request()` to `handle_api_request()` in `utils.py`
+- Changed `SAPRFCV2` in `to_df()`for loop with generator
+- Updated `Dockerfile` to remove obsolete `adoptopenjdk` and replace it with `temurin`
 
 ### Removed
-- Removed the `env` param from `Databricks` source, as user can now store multiple configs for the same source using different config keys.
+- Removed the `env` param from `Databricks` source, as user can now store multiple configs for the same source using different config keys
 - Removed Prefect dependency from the library (Python library, Docker base image)
+- Removed `catch_extra_separators()` from `SAPRFCV2` class
 
 ## [0.4.3] - 2022-04-28
 ### Added
 - Added `adls_file_name` in  `SupermetricsToADLS` and `SharepointToADLS` flows
-- Added `BigQueryToADLS` flow class which anables extract data from BigQuery.
+- Added `BigQueryToADLS` flow class which anables extract data from BigQuery
 - Added `Salesforce` source
 - Added `SalesforceUpsert` task
 - Added `SalesforceBulkUpsert` task

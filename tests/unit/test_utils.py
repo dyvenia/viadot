@@ -1,10 +1,10 @@
-from viadot.utils import (
-    gen_bulk_insert_query_from_df,
-    add_viadot_metadata_columns,
-    handle_api_request,
-)
-import pandas as pd
 import json
+
+import pandas as pd
+
+from viadot.utils import (_cast_df_cols, add_viadot_metadata_columns,
+                          gen_bulk_insert_query_from_df, get_fqn,
+                          handle_api_request)
 
 
 def test_single_quotes_inside():
@@ -74,7 +74,6 @@ VALUES ({TEST_VALUE_ESCAPED}, 'c')"""
 
 
 def test_handle_api_request():
-
     url = "https://api.restful-api.dev/objects"
     headers = {"content-type": "application/json"}
     item = {
@@ -108,3 +107,38 @@ def test_add_viadot_metadata_columns():
     testing_instance = TestingClass()
     df = testing_instance.to_df()
     assert "_viadot_source" in df.columns
+
+
+def test___cast_df_cols():
+    TEST_DF = pd.DataFrame(
+        {
+            "bool_column": [True, False, True, False],
+            "datetime_column": [
+                "2023-05-25 10:30:00",
+                "2023-05-20 ",
+                "2023-05-15 10:30",
+                "2023-05-10 10:30:00+00:00 ",
+            ],
+            "int_column": [5, 10, 15, 20],
+            "object_column": ["apple", "banana", "melon", "orange"],
+        }
+    )
+    TEST_DF["datetime_column"] = pd.to_datetime(TEST_DF["datetime_column"])
+    result_df = _cast_df_cols(
+        TEST_DF, types_to_convert=["datetime", "bool", "int", "object"]
+    )
+
+    assert result_df["bool_column"].dtype == pd.Int64Dtype()
+    assert result_df["datetime_column"].dtype == pd.StringDtype()
+    assert result_df["int_column"].dtype == pd.Int64Dtype()
+    assert result_df["object_column"].dtype == pd.StringDtype()
+
+
+def test_get_fqn():
+    # Test with schema name.
+    fqn = get_fqn(table_name="my_table", schema_name="my_schema")
+    assert fqn == "my_schema.my_table"
+
+    # Test without schema name.
+    fqn = get_fqn(table_name="my_table")
+    assert fqn == "my_table"
