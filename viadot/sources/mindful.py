@@ -4,6 +4,7 @@ import logging
 from io import StringIO
 from pydantic import BaseModel
 from requests.models import Response
+from requests.auth import HTTPBasicAuth
 from datetime import datetime, timedelta
 from typing import Any, Dict, Tuple, Literal, Optional
 
@@ -15,13 +16,22 @@ from ..exceptions import CredentialError, APIError
 from ..utils import handle_api_response
 from .base import Source
 
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
+
 
 class MINDFUL_CREDENTIALS(BaseModel):
-    client_id: str
-    client_secret: str
+    """Checking for values in Mindful credentials dictionary.
+    In mindful there are two key values:
+        - customer_uuid: The unique ID for the organization.
+        - auth_token: A unique token to be used as the password for API requests.
+
+    Args:
+        BaseModel (pydantic.main.ModelMetaclass): A base class for creating Pydantic models.
+    """
+
     customer_uuid: str
     auth_token: str
-    vault: str
 
 
 class Mindful(Source):
@@ -31,6 +41,7 @@ class Mindful(Source):
     """
 
     ENDPOINTS = ["interactions", "responses", "surveys"]
+    key_credentials = ["customer_uuid", "auth_token"]
 
     def __init__(
         self,
@@ -57,9 +68,9 @@ class Mindful(Source):
         logging.basicConfig()
         validated_creds = dict(MINDFUL_CREDENTIALS(**credentials))
         super().__init__(*args, credentials=validated_creds, **kwargs)
-        self.logger.setLevel(logging.INFO)
 
-        self.header = {"Authorization": f"Bearer {credentials.get('vault')}"}
+        self.auth = (credentials["customer_uuid"], credentials["auth_token"])
+        # self.header = {"Authorization": f"Bearer {credentials.get('vault')}"}
         if region != "us1":
             self.region = region + "."
         else:
@@ -95,7 +106,7 @@ class Mindful(Source):
             end_date = start_date + timedelta(days=date_interval)
             if end_date > datetime.now():
                 end_date = datetime.now()
-            self.logger.info(
+            print(
                 f"Mindful 'end_date' variable is None or not in datetime format, it has been taken as: {self.end_date}."
             )
         elif start_date >= end_date:
@@ -103,7 +114,7 @@ class Mindful(Source):
                 "'start_date' parameter must be lower than 'end_date' variable."
             )
         else:
-            self.logger.info(
+            print(
                 f"Mindful files to download will store data from {start_date} to {end_date}."
             )
 
@@ -128,13 +139,13 @@ class Mindful(Source):
         response = handle_api_response(
             url=f"https://{self.region}surveydynamix.com/api/{endpoint}",
             params=params,
-            headers=self.header,
             method="GET",
+            auth=HTTPBasicAuth(*self.auth),
         )
 
         return response
 
-    def get_response_df(
+    def to_df(
         self,
         endpoint: str = "",
         start_date: datetime = None,
@@ -187,26 +198,22 @@ class Mindful(Source):
         )
 
         if response.status_code == 200:
-            self.logger.info(
-                f"Succesfully downloaded {endpoint} data from mindful API."
-            )
+            print(f"Succesfully downloaded {endpoint} data from mindful API.")
             data = StringIO(response.content.decode("utf-8"))
         elif response.status_code == 204 and not response.content.decode():
-            self.logger.warning(
-                f"Thera are not {endpoint} data to download from {start_date or ' --- '} to {end_date  or ' --- '}."
+            print(
+                f"WARNING: Thera are not {endpoint} data to download from {start_date or ' --- '} to {end_date  or ' --- '}."
             )
             data = json.dumps({})
         else:
-            self.logger.error(
-                f"Failed to downloaded {endpoint} data. - {response.content}"
-            )
+            print(f"ERROR: Failed to downloaded {endpoint} data. - {response.content}")
             raise APIError(f"Failed to downloaded {endpoint} data.")
 
         data_frame = pd.read_json(data)
         if data_frame.empty:
             self._handle_if_empty(
                 if_empty="warn",
-                message=f"No data was got from the endpoint: {endpoint}, days from {start_date} to {end_date}",
+                message=f"No data retrieved from the endpoint: {endpoint}, days from {start_date} to {end_date}",
             )
 
         return data_frame
@@ -222,14 +229,23 @@ class Mindful(Source):
         """Save Mindful response data to file and return filename.
 
         Args:
-            data_frame (pd.DataFrame):
+            data_frame (pd.DataFrame): Reference data-frame to be saved into a file.
             file_path (str, optional): Path where to save the file locally. Defaults to ''.
             file_name (str, optional): Name of the file without extension. Defaults to None.
             file_extension (Literal[parquet, csv], optional): File extensions for storing responses. Defaults to "csv".
             sep (str, optional): Separator in csv file. Defaults to "\t".
 
+        Example:
+            surveys_file_name = mindful.to_file(
+                data_frame,
+                file_path="your/local/path",
+                file_name="interactions",
+                file_extension="csv",
+                sep="\t",
+            )
+
         returns
-            str: the absolute path of the downloaded file.
+            str: The absolute path of the downloaded file.
         """
 
         if file_name is None:
@@ -244,8 +260,6 @@ class Mindful(Source):
         elif file_extension == "parquet":
             data_frame.to_parquet(relative_path, index=False)
         else:
-            self.logger.warning(
-                "File extension is not available, please choose file_extension: 'parquet' or 'csv' (def.) at Mindful instance."
-            )
+            raise ValueError("`file_extension` must be one of: 'csv', 'parquet'.")
 
         return relative_path
