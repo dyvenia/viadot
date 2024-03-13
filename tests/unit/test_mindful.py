@@ -4,7 +4,6 @@ from datetime import datetime, timedelta
 
 import pytest
 
-# from viadot.config import local_config
 from viadot.sources import Mindful
 
 
@@ -55,7 +54,7 @@ class MockClassException:
 @pytest.mark.connect
 def test_mindful_api_response(mock_connection, var_dictionary):
     mf = Mindful(region="eu1", credentials=var_dictionary["credentials"])
-    mf.get_response_df(
+    mf.to_df(
         endpoint="interactions",
         start_date=var_dictionary["start_date"],
         end_date=var_dictionary["end_date"],
@@ -63,7 +62,7 @@ def test_mindful_api_response(mock_connection, var_dictionary):
     mock_connection.assert_called_once()
     mock_connection.reset_mock()
 
-    mf.get_response_df(
+    mf.to_df(
         endpoint="responses",
         start_date=var_dictionary["start_date"],
         end_date=var_dictionary["end_date"],
@@ -71,7 +70,7 @@ def test_mindful_api_response(mock_connection, var_dictionary):
     mock_connection.assert_called_once()
     mock_connection.reset_mock()
 
-    mf.get_response_df(endpoint="surveys")
+    mf.to_df(endpoint="surveys")
     mock_connection.assert_called_once()
 
 
@@ -79,7 +78,7 @@ def test_mindful_api_response(mock_connection, var_dictionary):
 @pytest.mark.save
 def test_mindful_file(mock_connection, var_dictionary):
     mf = Mindful(region="eu1", credentials=var_dictionary["credentials"])
-    df = mf.get_response_df(
+    df = mf.to_df(
         endpoint="interactions",
         start_date=var_dictionary["start_date"],
         end_date=var_dictionary["end_date"],
@@ -87,4 +86,3 @@ def test_mindful_file(mock_connection, var_dictionary):
     mf.to_file(df, file_name="interactions")
 
     assert os.path.exists("interactions.csv")
-    os.remove("interactions.csv")
