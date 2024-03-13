@@ -7,6 +7,7 @@ from .minio import MinIO
 from .redshift_spectrum import RedshiftSpectrum
 from .s3 import S3
 from .sharepoint import Sharepoint
+from .supermetrics import Supermetrics
 from .trino import Trino
 
 try:
