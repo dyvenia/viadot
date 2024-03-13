@@ -13,3 +13,5 @@ try:
     from .sap_rfc import SAPRFC, SAPRFCV2
 except ImportError:
     pass
+
+from .eurostat import Eurostat

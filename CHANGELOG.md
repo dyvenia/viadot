@@ -4,6 +4,36 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased] 2023/07/06
+### Added
+- Sources:
+eurostat.py
+test_eurostat.py
+
+## [Unreleased] 2023/07/06
+### Added
+- Sources:
+adls_gen1.py
+test_adls_gen1.py
+
+## [Unreleased] 2023/07/06
+### Added
+- Sources:
+sharepoint.py
+test_sharepoint.py
+
+## [Unreleased] 2023/07/06
+### Added
+- Sources:
+bigquery.py
+test_bigquery.py
+
+## [Unreleased] 2023/07/05
+### Added
+- Sources:
+supermetrics.py
+test_supermetrics.py
+
 ## [Unreleased]
 ### Added
 - Fixed `Databricks.create_table_from_pandas()` failing to overwrite a table in some cases even with `replace="True"`
