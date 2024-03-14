@@ -69,7 +69,7 @@ class SAPRFCToADLS(Flow):
                     ...
                     )
             sap_credentials (dict, optional): The credentials to use to authenticate with SAP. By default, they're taken from the local viadot config.
-            saprfc_credentials_key (str, optional): Azure KV secret. Defaults to "SAP".
+            saprfc_credentials_key (str, optional): Local config or Azure KV secret. Defaults to "SAP".
             env (str, optional): SAP environment. Defaults to "PROD".
             output_file_extension (str, optional): Output file extension - to allow selection of .csv for data which is not easy to handle with parquet. Defaults to ".parquet".
             local_file_path (str, optional): Local destination path. Defaults to None.
