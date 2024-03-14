@@ -25,7 +25,7 @@ class SAPRFCToDF(Task):
         func: str = None,
         rfc_total_col_width_character_limit: int = 400,
         sap_credentials: dict = None,
-        saprfc_credentials_key: str = "SAP",
+        sap_credentials_key: str = "SAP",
         env: str = "PROD",
         max_retries: int = 3,
         retry_delay: timedelta = timedelta(seconds=10),
@@ -59,7 +59,7 @@ class SAPRFCToDF(Task):
             512 characters. However, we observed SAP raising an exception even on a slightly lower number
             of characters, so we add a safety margin. Defaults to 400.
             sap_credentials (dict, optional): The credentials to use to authenticate with SAP. By default, they're taken from the local viadot config.
-            saprfc_credentials_key (str, optional): Local config or Azure KV secret. Defaults to "SAP".
+            sap_credentials_key (str, optional): Local config or Azure KV secret. Defaults to "SAP".
             env (str, optional): SAP environment. Defaults to "PROD".
             By default, they're taken from the local viadot config.
         """
@@ -67,7 +67,7 @@ class SAPRFCToDF(Task):
         self.sep = sep
         self.replacement = replacement
         self.sap_credentials = sap_credentials
-        self.saprfc_credentials_key = saprfc_credentials_key
+        self.sap_credentials_key = sap_credentials_key
         self.env = env
         self.func = func
         self.rfc_total_col_width_character_limit = rfc_total_col_width_character_limit
@@ -95,7 +95,7 @@ class SAPRFCToDF(Task):
         sep: str = None,
         replacement: str = "-",
         sap_credentials: dict = None,
-        saprfc_credentials_key: str = "SAP",
+        sap_credentials_key: str = "SAP",
         env: str = "PROD",
         func: str = None,
         rfc_total_col_width_character_limit: int = None,
@@ -111,7 +111,7 @@ class SAPRFCToDF(Task):
             replacement (str, optional): In case of sep is on a columns, set up a new character to replace
                 inside the string to avoid flow breakdowns. Defaults to "-".
             sap_credentials (dict, optional): The credentials to use to authenticate with SAP. By default, they're taken from the local viadot config.
-            saprfc_credentials_key (str, optional): Local config or Azure KV secret. Defaults to "SAP".
+            sap_credentials_key (str, optional): Local config or Azure KV secret. Defaults to "SAP".
             env (str, optional): SAP environment. Defaults to "PROD".
             func (str, optional): SAP RFC function to use. Defaults to None.
             rfc_total_col_width_character_limit (int, optional): Number of characters by which query will be split in chunks
@@ -145,7 +145,7 @@ class SAPRFCToDF(Task):
 
         if sap_credentials is None:
             credentials_str = AzureKeyVaultSecret(
-                secret=saprfc_credentials_key,
+                secret=sap_credentials_key,
             ).run()
             sap_credentials = json.loads(credentials_str).get(env)
 
@@ -158,7 +158,7 @@ class SAPRFCToDF(Task):
                 sep=sep,
                 replacement=replacement,
                 sap_credentials=sap_credentials,
-                saprfc_credentials_key=saprfc_credentials_key,
+                sap_credentials_key=sap_credentials_key,
                 env=env,
                 func=func,
                 rfc_total_col_width_character_limit=rfc_total_col_width_character_limit,
@@ -168,7 +168,7 @@ class SAPRFCToDF(Task):
             sap = SAPRFC(
                 sep=sep,
                 sap_credentials=sap_credentials,
-                saprfc_credentials_key=saprfc_credentials_key,
+                sap_credentials_key=sap_credentials_key,
                 env=env,
                 func=func,
                 rfc_total_col_width_character_limit=rfc_total_col_width_character_limit,

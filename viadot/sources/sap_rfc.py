@@ -256,7 +256,7 @@ class SAPRFC(Source):
         """
 
         self._con = None
-        saprfc_credentials_key = kwargs.pop("saprfc_credentials_key")
+        sap_credentials_key = kwargs.pop("sap_credentials_key")
         env = kwargs.pop("env")
 
         sap_credentials = kwargs.pop("sap_credentials", None)
@@ -264,7 +264,7 @@ class SAPRFC(Source):
             logger.warning(
                 f"Your credentials will use {env} environment from local config. If you would like to use different one - please specified it in sap_credentials parameter."
             )
-            sap_credentials = local_config.get(saprfc_credentials_key).get(env)
+            sap_credentials = local_config.get(sap_credentials_key).get(env)
             if sap_credentials is None:
                 raise CredentialError(f"Missing {env} credentials!")
 
@@ -702,7 +702,7 @@ class SAPRFCV2(Source):
         """
 
         self._con = None
-        saprfc_credentials_key = kwargs.pop("saprfc_credentials_key")
+        sap_credentials_key = kwargs.pop("sap_credentials_key")
         env = kwargs.pop("env")
 
         sap_credentials = kwargs.pop("sap_credentials", None)
@@ -710,7 +710,7 @@ class SAPRFCV2(Source):
             logger.warning(
                 f"Your credentials will use {env} environment from local config. If you would like to use different one - please specified it in sap_credentials parameter."
             )
-            sap_credentials = local_config.get(saprfc_credentials_key).get(env)
+            sap_credentials = local_config.get(sap_credentials_key).get(env)
             if sap_credentials is None:
                 raise CredentialError(f"Missing {env} credentials!")
 
