@@ -26,7 +26,7 @@ class SAPRFCToDF(Task):
         rfc_total_col_width_character_limit: int = 400,
         sap_credentials: dict = None,
         sap_credentials_key: str = "SAP",
-        env: str = "PROD",
+        env: str = "DEV",
         max_retries: int = 3,
         retry_delay: timedelta = timedelta(seconds=10),
         timeout: int = 3600,
@@ -60,7 +60,7 @@ class SAPRFCToDF(Task):
             of characters, so we add a safety margin. Defaults to 400.
             sap_credentials (dict, optional): The credentials to use to authenticate with SAP. By default, they're taken from the local viadot config.
             sap_credentials_key (str, optional): Local config or Azure KV secret. Defaults to "SAP".
-            env (str, optional): SAP environment. Defaults to "PROD".
+            env (str, optional): SAP environment. Defaults to "DEV".
             By default, they're taken from the local viadot config.
         """
         self.query = query
@@ -96,7 +96,7 @@ class SAPRFCToDF(Task):
         replacement: str = "-",
         sap_credentials: dict = None,
         sap_credentials_key: str = "SAP",
-        env: str = "PROD",
+        env: str = "DEV",
         func: str = None,
         rfc_total_col_width_character_limit: int = None,
         rfc_unique_id: List[str] = None,
@@ -112,7 +112,7 @@ class SAPRFCToDF(Task):
                 inside the string to avoid flow breakdowns. Defaults to "-".
             sap_credentials (dict, optional): The credentials to use to authenticate with SAP. By default, they're taken from the local viadot config.
             sap_credentials_key (str, optional): Local config or Azure KV secret. Defaults to "SAP".
-            env (str, optional): SAP environment. Defaults to "PROD".
+            env (str, optional): SAP environment. Defaults to "DEV".
             func (str, optional): SAP RFC function to use. Defaults to None.
             rfc_total_col_width_character_limit (int, optional): Number of characters by which query will be split in chunks
                 in case of too many columns for RFC function. According to SAP documentation, the limit is
