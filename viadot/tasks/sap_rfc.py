@@ -24,7 +24,7 @@ class SAPRFCToDF(Task):
         replacement: str = "-",
         func: str = None,
         rfc_total_col_width_character_limit: int = 400,
-        credentials: dict = None,
+        sap_credentials: dict = None,
         saprfc_credentials_key: str = "SAP",
         env: str = "PROD",
         max_retries: int = 3,
@@ -58,7 +58,7 @@ class SAPRFCToDF(Task):
             in case of too many columns for RFC function. According to SAP documentation, the limit is
             512 characters. However, we observed SAP raising an exception even on a slightly lower number
             of characters, so we add a safety margin. Defaults to 400.
-            credentials (dict, optional): The credentials to use to authenticate with SAP.
+            sap_credentials (dict, optional): The credentials to use to authenticate with SAP. By default, they're taken from the local viadot config.
             saprfc_credentials_key (str, optional): Local config or Azure KV secret. Defaults to "SAP".
             env (str, optional): SAP environment. Defaults to "PROD".
             By default, they're taken from the local viadot config.
@@ -66,7 +66,7 @@ class SAPRFCToDF(Task):
         self.query = query
         self.sep = sep
         self.replacement = replacement
-        self.credentials = credentials
+        self.sap_credentials = sap_credentials
         self.saprfc_credentials_key = saprfc_credentials_key
         self.env = env
         self.func = func
@@ -94,7 +94,7 @@ class SAPRFCToDF(Task):
         query: str,
         sep: str = None,
         replacement: str = "-",
-        credentials: dict = None,
+        sap_credentials: dict = None,
         saprfc_credentials_key: str = "SAP",
         env: str = "PROD",
         func: str = None,
@@ -110,7 +110,7 @@ class SAPRFCToDF(Task):
             multiple options are automatically tried. Defaults to None.
             replacement (str, optional): In case of sep is on a columns, set up a new character to replace
                 inside the string to avoid flow breakdowns. Defaults to "-".
-            credentials (dict, optional): The credentials to use to authenticate with SAP.
+            sap_credentials (dict, optional): The credentials to use to authenticate with SAP. By default, they're taken from the local viadot config.
             saprfc_credentials_key (str, optional): Local config or Azure KV secret. Defaults to "SAP".
             env (str, optional): SAP environment. Defaults to "PROD".
             func (str, optional): SAP RFC function to use. Defaults to None.
@@ -133,21 +133,21 @@ class SAPRFCToDF(Task):
             pd.DataFrame: DataFrame with SAP data.
         """
 
-        if isinstance(credentials, dict):
-            credentials_keys = list(credentials.keys())
+        if isinstance(sap_credentials, dict):
+            credentials_keys = list(sap_credentials.keys())
             required_credentials_params = ["sysnr", "user", "passwd", "ashost"]
             for key in required_credentials_params:
                 if key not in credentials_keys:
                     self.logger.warning(
                         f"Required key '{key}' not found in your 'sap_credentials' dictionary!"
                     )
-                    credentials = None
+                    sap_credentials = None
 
-        if credentials is None:
+        if sap_credentials is None:
             credentials_str = AzureKeyVaultSecret(
                 secret=saprfc_credentials_key,
             ).run()
-            credentials = json.loads(credentials_str).get(env)
+            sap_credentials = json.loads(credentials_str).get(env)
 
         if alternative_version is True:
             if rfc_unique_id:
@@ -157,7 +157,7 @@ class SAPRFCToDF(Task):
             sap = SAPRFCV2(
                 sep=sep,
                 replacement=replacement,
-                credentials=credentials,
+                sap_credentials=sap_credentials,
                 saprfc_credentials_key=saprfc_credentials_key,
                 env=env,
                 func=func,
@@ -167,7 +167,7 @@ class SAPRFCToDF(Task):
         else:
             sap = SAPRFC(
                 sep=sep,
-                credentials=credentials,
+                sap_credentials=sap_credentials,
                 saprfc_credentials_key=saprfc_credentials_key,
                 env=env,
                 func=func,

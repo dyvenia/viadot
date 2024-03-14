@@ -259,16 +259,16 @@ class SAPRFC(Source):
         saprfc_credentials_key = kwargs.pop("saprfc_credentials_key")
         env = kwargs.pop("env")
 
-        credentials = kwargs.pop("credentials", None)
-        if credentials is None:
+        sap_credentials = kwargs.pop("sap_credentials", None)
+        if sap_credentials is None:
             logger.warning(
                 f"Your credentials will use {env} environment from local config. If you would like to use different one - please specified it in sap_credentials parameter."
             )
-            credentials = local_config.get(saprfc_credentials_key).get(env)
-            if credentials is None:
+            sap_credentials = local_config.get(saprfc_credentials_key).get(env)
+            if sap_credentials is None:
                 raise CredentialError(f"Missing {env} credentials!")
 
-        super().__init__(*args, credentials=credentials, **kwargs)
+        super().__init__(*args, credentials=sap_credentials, **kwargs)
 
         self.sep = sep
         self.client_side_filters = None
@@ -705,16 +705,16 @@ class SAPRFCV2(Source):
         saprfc_credentials_key = kwargs.pop("saprfc_credentials_key")
         env = kwargs.pop("env")
 
-        credentials = kwargs.pop("credentials", None)
-        if credentials is None:
+        sap_credentials = kwargs.pop("sap_credentials", None)
+        if sap_credentials is None:
             logger.warning(
                 f"Your credentials will use {env} environment from local config. If you would like to use different one - please specified it in sap_credentials parameter."
             )
-            credentials = local_config.get(saprfc_credentials_key).get(env)
-            if credentials is None:
+            sap_credentials = local_config.get(saprfc_credentials_key).get(env)
+            if sap_credentials is None:
                 raise CredentialError(f"Missing {env} credentials!")
 
-        super().__init__(*args, credentials=credentials, **kwargs)
+        super().__init__(*args, credentials=sap_credentials, **kwargs)
 
         self.sep = sep
         self.replacement = replacement
