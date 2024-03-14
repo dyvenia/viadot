@@ -10,7 +10,7 @@ class SAPRFCToADLS(Flow):
     def __init__(
         self,
         name: str,
-        query: str = None,
+        query: str,
         rfc_sep: str = None,
         rfc_replacement: str = "-",
         func: str = "RFC_READ_TABLE",

@@ -19,7 +19,7 @@ logger = logging.get_logger()
 class SAPRFCToDF(Task):
     def __init__(
         self,
-        query: str = None,
+        query: str,
         sep: str = None,
         replacement: str = "-",
         func: str = None,
@@ -91,7 +91,7 @@ class SAPRFCToDF(Task):
     )
     def run(
         self,
-        query: str = None,
+        query: str,
         sep: str = None,
         replacement: str = "-",
         credentials: dict = None,
@@ -148,9 +148,6 @@ class SAPRFCToDF(Task):
                 secret=saprfc_credentials_key,
             ).run()
             credentials = json.loads(credentials_str).get(env)
-
-        if query is None:
-            raise ValueError("Please provide the query.")
 
         if alternative_version is True:
             if rfc_unique_id:
