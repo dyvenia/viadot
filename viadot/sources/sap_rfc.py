@@ -237,6 +237,9 @@ class SAPRFC(Source):
         sep: str = None,
         func: str = "RFC_READ_TABLE",
         rfc_total_col_width_character_limit: int = 400,
+        sap_credentials: dict = None,
+        sap_credentials_key: str = "SAP",
+        env: str = "DEV",
         *args,
         **kwargs,
     ):
@@ -250,16 +253,19 @@ class SAPRFC(Source):
             in case of too many columns for RFC function. According to SAP documentation, the limit is
             512 characters. However, we observed SAP raising an exception even on a slightly lower number
             of characters, so we add a safety margin. Defaults to 400.
+            sap_credentials (dict, optional): The credentials to use to authenticate with SAP. By default, they're taken from the local viadot config.
+            sap_credentials_key (str, optional): Local config or Azure KV secret. Defaults to "SAP".
+            env (str, optional): SAP environment. Defaults to "DEV".
 
         Raises:
             CredentialError: If provided credentials are incorrect.
         """
 
         self._con = None
-        sap_credentials_key = kwargs.pop("sap_credentials_key")
-        env = kwargs.pop("env")
+        self.sap_credentials = sap_credentials
+        self.sap_credentials_key = sap_credentials_key
+        self.env = env
 
-        sap_credentials = kwargs.pop("sap_credentials", None)
         if sap_credentials is None:
             logger.warning(
                 f"Your credentials will use {env} environment from local config. If you would like to use different one - please specified it in sap_credentials parameter."
@@ -680,6 +686,9 @@ class SAPRFCV2(Source):
         func: str = "RFC_READ_TABLE",
         rfc_total_col_width_character_limit: int = 400,
         rfc_unique_id: List[str] = None,
+        sap_credentials: dict = None,
+        sap_credentials_key: str = "SAP",
+        env: str = "DEV",
         *args,
         **kwargs,
     ):
@@ -696,16 +705,19 @@ class SAPRFCV2(Source):
             512 characters. However, we observed SAP raising an exception even on a slightly lower number
             of characters, so we add a safety margin. Defaults to 400.
             rfc_unique_id  (List[str], optional): Reference columns to merge chunks Data Frames. These columns must to be unique. Defaults to None.
+            sap_credentials (dict, optional): The credentials to use to authenticate with SAP. By default, they're taken from the local viadot config.
+            sap_credentials_key (str, optional): Local config or Azure KV secret. Defaults to "SAP".
+            env (str, optional): SAP environment. Defaults to "DEV".
 
         Raises:
             CredentialError: If provided credentials are incorrect.
         """
 
         self._con = None
-        sap_credentials_key = kwargs.pop("sap_credentials_key")
-        env = kwargs.pop("env")
+        self.sap_credentials = sap_credentials
+        self.sap_credentials_key = sap_credentials_key
+        self.env = env
 
-        sap_credentials = kwargs.pop("sap_credentials", None)
         if sap_credentials is None:
             logger.warning(
                 f"Your credentials will use {env} environment from local config. If you would like to use different one - please specified it in sap_credentials parameter."
