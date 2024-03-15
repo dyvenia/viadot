@@ -133,16 +133,6 @@ class SAPRFCToDF(Task):
             pd.DataFrame: DataFrame with SAP data.
         """
 
-        if isinstance(sap_credentials, dict):
-            credentials_keys = list(sap_credentials.keys())
-            required_credentials_params = ["sysnr", "user", "passwd", "ashost"]
-            for key in required_credentials_params:
-                if key not in credentials_keys:
-                    self.logger.warning(
-                        f"Required key '{key}' not found in your 'sap_credentials' dictionary!"
-                    )
-                    sap_credentials = None
-
         if sap_credentials is None:
             credentials_str = AzureKeyVaultSecret(
                 secret=sap_credentials_key,

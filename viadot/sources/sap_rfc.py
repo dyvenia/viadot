@@ -266,6 +266,16 @@ class SAPRFC(Source):
         self.sap_credentials_key = sap_credentials_key
         self.env = env
 
+        if isinstance(sap_credentials, dict):
+            credentials_keys = list(sap_credentials.keys())
+            required_credentials_params = ["sysnr", "user", "passwd", "ashost"]
+            for key in required_credentials_params:
+                if key not in credentials_keys:
+                    self.logger.warning(
+                        f"Required key '{key}' not found in your 'sap_credentials' dictionary!"
+                    )
+                    sap_credentials = None
+
         if sap_credentials is None:
             logger.warning(
                 f"Your credentials will use {env} environment from local config. If you would like to use different one - please specified it in sap_credentials parameter."
@@ -717,6 +727,16 @@ class SAPRFCV2(Source):
         self.sap_credentials = sap_credentials
         self.sap_credentials_key = sap_credentials_key
         self.env = env
+
+        if isinstance(sap_credentials, dict):
+            credentials_keys = list(sap_credentials.keys())
+            required_credentials_params = ["sysnr", "user", "passwd", "ashost"]
+            for key in required_credentials_params:
+                if key not in credentials_keys:
+                    self.logger.warning(
+                        f"Required key '{key}' not found in your 'sap_credentials' dictionary!"
+                    )
+                    sap_credentials = None
 
         if sap_credentials is None:
             logger.warning(
