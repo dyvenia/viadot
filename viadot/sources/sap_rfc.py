@@ -262,7 +262,6 @@ class SAPRFC(Source):
         """
 
         self._con = None
-        self.sap_credentials = sap_credentials
         self.sap_credentials_key = sap_credentials_key
         self.env = env
 
@@ -271,7 +270,7 @@ class SAPRFC(Source):
             required_credentials_params = ["sysnr", "user", "passwd", "ashost"]
             for key in required_credentials_params:
                 if key not in credentials_keys:
-                    self.logger.warning(
+                    logger.warning(
                         f"Required key '{key}' not found in your 'sap_credentials' dictionary!"
                     )
                     sap_credentials = None
@@ -280,12 +279,21 @@ class SAPRFC(Source):
             logger.warning(
                 f"Your credentials will use {env} environment from local config. If you would like to use different one - please specified it in sap_credentials parameter."
             )
-            sap_credentials = local_config.get(sap_credentials_key).get(env)
+            try:
+                sap_credentials = local_config.get(sap_credentials_key).get(env)
+            except AttributeError:
+                raise CredentialError(
+                    f"Sap_credentials_key: {sap_credentials_key} is not stored neither in KeyVault or Local Config!"
+                )
             if sap_credentials is None:
                 raise CredentialError(f"Missing {env} credentials!")
 
-        super().__init__(*args, credentials=sap_credentials, **kwargs)
+        super().__init__(
+            *args,
+            **kwargs,
+        )
 
+        self.sap_credentials = sap_credentials
         self.sep = sep
         self.client_side_filters = None
         self.func = func
@@ -295,7 +303,7 @@ class SAPRFC(Source):
     def con(self) -> pyrfc.Connection:
         if self._con is not None:
             return self._con
-        con = pyrfc.Connection(**self.credentials)
+        con = pyrfc.Connection(**self.sap_credentials)
         self._con = con
         return con
 
@@ -724,7 +732,6 @@ class SAPRFCV2(Source):
         """
 
         self._con = None
-        self.sap_credentials = sap_credentials
         self.sap_credentials_key = sap_credentials_key
         self.env = env
 
@@ -733,7 +740,7 @@ class SAPRFCV2(Source):
             required_credentials_params = ["sysnr", "user", "passwd", "ashost"]
             for key in required_credentials_params:
                 if key not in credentials_keys:
-                    self.logger.warning(
+                    logger.warning(
                         f"Required key '{key}' not found in your 'sap_credentials' dictionary!"
                     )
                     sap_credentials = None
@@ -742,12 +749,18 @@ class SAPRFCV2(Source):
             logger.warning(
                 f"Your credentials will use {env} environment from local config. If you would like to use different one - please specified it in sap_credentials parameter."
             )
-            sap_credentials = local_config.get(sap_credentials_key).get(env)
+            try:
+                sap_credentials = local_config.get(sap_credentials_key).get(env)
+            except AttributeError:
+                raise CredentialError(
+                    f"Sap_credentials_key: {sap_credentials_key} is not stored neither in KeyVault or Local Config!"
+                )
             if sap_credentials is None:
                 raise CredentialError(f"Missing {env} credentials!")
 
-        super().__init__(*args, credentials=sap_credentials, **kwargs)
+        super().__init__(*args, **kwargs)
 
+        self.sap_credentials = sap_credentials
         self.sep = sep
         self.replacement = replacement
         self.client_side_filters = None
