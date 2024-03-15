@@ -19,7 +19,7 @@ logger = logging.get_logger()
 class SAPRFCToDF(Task):
     def __init__(
         self,
-        query: str,
+        query: str = None,
         sep: str = None,
         replacement: str = "-",
         func: str = None,
@@ -87,7 +87,7 @@ class SAPRFCToDF(Task):
         "replacement",
         "func",
         "rfc_total_col_width_character_limit",
-        "credentials",
+        "sap_credentials",
     )
     def run(
         self,
@@ -134,10 +134,15 @@ class SAPRFCToDF(Task):
         """
 
         if sap_credentials is None:
-            credentials_str = AzureKeyVaultSecret(
-                secret=sap_credentials_key,
-            ).run()
-            sap_credentials = json.loads(credentials_str).get(env)
+            try:
+                credentials_str = AzureKeyVaultSecret(
+                    secret=sap_credentials_key,
+                ).run()
+                sap_credentials = json.loads(credentials_str).get(env)
+            except:
+                logger.warning(
+                    f"Getting credentials from Azure Key Vault was not possible. Either there is no key: {sap_credentials_key} or env: {env} or there is not Key Vault in your environment."
+                )
 
         if alternative_version is True:
             if rfc_unique_id:
