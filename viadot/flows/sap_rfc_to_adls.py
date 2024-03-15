@@ -126,7 +126,7 @@ class SAPRFCToADLS(Flow):
             rfc_total_col_width_character_limit=self.rfc_total_col_width_character_limit,
             rfc_unique_id=self.rfc_unique_id,
             alternative_version=self.alternative_version,
-            credentials=self.sap_credentials,
+            sap_credentials=self.sap_credentials,
             sap_credentials_key=self.sap_credentials_key,
             env=self.env,
             flow=self,
