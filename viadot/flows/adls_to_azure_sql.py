@@ -368,9 +368,9 @@ class ADLSToAzureSQL(Flow):
             # data validation function (optional)
             if self.validate_df_dict:
                 validate_df.bind(df=df, tests=self.validate_df_dict, flow=self)
-                validate_df.set_upstream(lake_to_df_task, flow=self)
                 df_reorder.set_upstream(validate_df, flow=self)
 
+            df_to_csv.set_upstream(dtypes, flow=self)
             df_to_csv.set_upstream(df_reorder, flow=self)
             promote_to_conformed_task.set_upstream(df_to_csv, flow=self)
             create_table_task.set_upstream(df_to_csv, flow=self)
