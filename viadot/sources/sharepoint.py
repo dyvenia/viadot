@@ -10,7 +10,7 @@ from viadot.exceptions import CredentialError
 
 from ..config import get_source_credentials
 from ..signals import SKIP
-from ..utils import add_viadot_metadata_columns, cleanup_df
+from ..utils import add_viadot_metadata_columns, cleanup_df, validations
 from .base import Source
 
 
@@ -99,6 +99,7 @@ class Sharepoint(Source):
         url: str,
         sheet_name: Optional[Union[str, list, int]] = None,
         if_empty: str = "warn",
+        tests: dict = None,
         **kwargs,
     ) -> pd.DataFrame:
         """
@@ -111,6 +112,9 @@ class Sharepoint(Source):
                 as a sheet position). Lists of strings/integers are used to request multiple sheets.
                 Specify None to get all worksheets. Defaults to None.
             if_empty (str, optional): What to do if the file is empty. Defaults to "warn".
+            tests (Dict[str], optional): A dictionary with optional list of tests
+                to verify the output dataframe. If defined, triggers the `validations`
+                function from utils. Defaults to None.
             kwargs (dict[str, Any], optional): Keyword arguments to pass to pd.ExcelFile.parse(). Note that
             `nrows` is not supported.
 
@@ -152,4 +156,8 @@ class Sharepoint(Source):
             self.logger.info(f"Successfully downloaded {len(df)} of data.")
 
         df_clean = cleanup_df(df)
+
+        if tests:
+            validations(df=df_clean, tests=tests)
+
         return df_clean

@@ -10,7 +10,7 @@ from pydantic import BaseModel, SecretStr, root_validator
 from viadot.exceptions import CredentialError
 
 from ..config import get_source_credentials
-from ..utils import handle_api_response
+from ..utils import handle_api_response, validations
 from .base import Source
 
 
@@ -254,6 +254,7 @@ class CloudForCustomers(Source):
         url: str = None,
         fields: List[str] = None,
         dtype: dict = None,
+        tests: dict = None,
         **kwargs,
     ) -> pd.DataFrame:
         """Download a table or report into a pandas DataFrame.
@@ -262,6 +263,9 @@ class CloudForCustomers(Source):
             url (str): The URL to extract records from.
             fields (List[str], optional): List of fields to put in DataFrame.
             dtype (dict, optional): The dtypes to use in the DataFrame.
+            tests (Dict[str], optional): A dictionary with optional list of tests
+                to verify the output dataframe. If defined, triggers the `validations`
+                function from utils. Defaults to None.
             kwargs: The parameters to pass to DataFrame constructor.
 
         Returns:
@@ -276,5 +280,8 @@ class CloudForCustomers(Source):
 
         if fields:
             return df[fields]
+
+        if tests:
+            validations(df=df, tests=tests)
 
         return df
