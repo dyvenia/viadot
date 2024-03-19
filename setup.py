@@ -13,6 +13,8 @@ def get_version(package: str):
 with open("README.md", "r") as fh:
     long_description = fh.read()
 
+with open("requirements.txt") as f:
+    required_packages = f.read().splitlines()
 
 extras = {
     "sap": ["pyrfc==2.5.0", "sql-metadata==2.3.0"],
@@ -29,14 +31,7 @@ setuptools.setup(
     long_description_content_type="text/markdown",
     url="https://github.com/dyvenia/viadot",
     packages=setuptools.find_packages(),
-    install_requires=[
-        "sharepy>=2.0.0, <3.0.0",
-        "pyodbc>=4.0.32, <5.0.0",
-        "databricks-connect>=11.3.0, <11.4.0",
-        "adlfs>=2022.9.1",
-        "pyarrow>=7.0.0, <12.0.0",
-        "openpyxl>=3.0.10, <4.0.0",
-    ],
+    install_requires=required_packages,
     extras=extras,
     classifiers=[
         "Programming Language :: Python :: 3",
