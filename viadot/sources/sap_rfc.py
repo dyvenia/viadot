@@ -25,7 +25,7 @@ except ModuleNotFoundError:
 from sql_metadata import Parser
 
 from viadot.config import get_source_credentials
-from ..utils import validations, add_viadot_metadata_columns
+from ..utils import validate, add_viadot_metadata_columns
 from viadot.exceptions import CredentialError, DataBufferExceeded
 from viadot.sources.base import Source
 
@@ -611,7 +611,7 @@ class SAPRFC(Source):
 
         Args:
             tests (Dict[str], optional): A dictionary with optional list of tests
-                to verify the output dataframe. If defined, triggers the `validations`
+                to verify the output dataframe. If defined, triggers the `validate`
                 function from utils. Defaults to None.
 
         Returns:
@@ -690,7 +690,7 @@ class SAPRFC(Source):
         self.close_connection()
 
         if tests:
-            validations(df=df, tests=tests)
+            validate(df=df, tests=tests)
 
         return df
 
@@ -1106,7 +1106,7 @@ class SAPRFCV2(Source):
 
         Args:
             tests (Dict[str], optional): A dictionary with optional list of tests
-                to verify the output dataframe. If defined, triggers the `validations`
+                to verify the output dataframe. If defined, triggers the `validate`
                 function from utils. Defaults to None.
 
         Returns:
@@ -1211,6 +1211,6 @@ class SAPRFCV2(Source):
         self.close_connection()
 
         if tests:
-            validations(df=df, tests=tests)
+            validate(df=df, tests=tests)
 
         return df

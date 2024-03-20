@@ -10,7 +10,7 @@ from pydantic import BaseModel, SecretStr, root_validator
 from viadot.exceptions import CredentialError
 
 from ..config import get_source_credentials
-from ..utils import handle_api_response, validations
+from ..utils import handle_api_response, validate
 from .base import Source
 
 
@@ -264,7 +264,7 @@ class CloudForCustomers(Source):
             fields (List[str], optional): List of fields to put in DataFrame.
             dtype (dict, optional): The dtypes to use in the DataFrame.
             tests (Dict[str], optional): A dictionary with optional list of tests
-                to verify the output dataframe. If defined, triggers the `validations`
+                to verify the output dataframe. If defined, triggers the `validate`
                 function from utils. Defaults to None.
             kwargs: The parameters to pass to DataFrame constructor.
 
@@ -282,6 +282,6 @@ class CloudForCustomers(Source):
             return df[fields]
 
         if tests:
-            validations(df=df, tests=tests)
+            validate(df=df, tests=tests)
 
         return df

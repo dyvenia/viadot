@@ -13,7 +13,7 @@ from aiolimiter import AsyncLimiter
 from ..config import get_source_credentials
 from .base import Source
 from ..exceptions import CredentialError, APIError
-from ..utils import handle_api_response, validations
+from ..utils import handle_api_response, validate
 from ..signals import SKIP
 
 warnings.simplefilter("ignore")
@@ -506,7 +506,7 @@ class Genesys(Source):
         Args:
             report_url (str): Report url from api response.
             tests (Dict[str], optional): A dictionary with optional list of tests
-                to verify the output dataframe. If defined, triggers the `validations`
+                to verify the output dataframe. If defined, triggers the `validate`
                 function from utils. Defaults to None.
 
         Returns:
@@ -523,9 +523,9 @@ class Genesys(Source):
             df = pd.read_excel(
                 response_file.content, names=self.report_columns, skiprows=6
             )
-        
+
         if tests:
-            validations(df=df, tests=tests)
+            validate(df=df, tests=tests)
 
         return df
 

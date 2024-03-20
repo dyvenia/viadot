@@ -6,7 +6,7 @@ import pandas as pd
 import requests
 
 from viadot.exceptions import CredentialError
-from viadot.utils import add_viadot_metadata_columns, cleanup_df, validations
+from viadot.utils import add_viadot_metadata_columns, cleanup_df, validate
 
 from ..config import get_source_credentials
 from .base import Source
@@ -153,6 +153,6 @@ class ExchangeRates(Source):
         df_clean = cleanup_df(df)
 
         if tests:
-            validations(df=df_clean, tests=tests)
+            validate(df=df_clean, tests=tests)
 
         return df_clean

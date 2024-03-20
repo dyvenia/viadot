@@ -487,7 +487,9 @@ def get_fqn(table_name: str, schema_name: str = None) -> str:
     return f"{schema_name}.{table_name}" if schema_name else table_name
 
 
-def validations(
+##TO DO
+# Create class DataFrameTests(BaseModel)
+def validate(
     df: pd.DataFrame,
     tests: dict = None,
     stream_level: int = logging.INFO,
