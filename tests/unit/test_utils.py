@@ -1,10 +1,17 @@
 import json
+import pytest
 
 import pandas as pd
 
-from viadot.utils import (_cast_df_cols, add_viadot_metadata_columns,
-                          gen_bulk_insert_query_from_df, get_fqn,
-                          handle_api_request)
+from viadot.exceptions import ValidationError
+from viadot.utils import (
+    _cast_df_cols,
+    add_viadot_metadata_columns,
+    gen_bulk_insert_query_from_df,
+    get_fqn,
+    handle_api_request,
+    validate,
+)
 
 
 def test_single_quotes_inside():
@@ -142,3 +149,99 @@ def test_get_fqn():
     # Test without schema name.
     fqn = get_fqn(table_name="my_table")
     assert fqn == "my_table"
+
+
+def test_validate_column_size_pass():
+    df = pd.DataFrame({"col1": ["a", "bb", "ccc"]})
+    tests = {"column_size": {"col1": 3}}
+    try:
+        validate(df, tests)
+    except ValidationError:
+        assert False, "Validation failed but was expected to pass"
+
+
+def test_validate_column_size_fail():
+    df = pd.DataFrame({"col1": ["a", "bb", "cccc"]})
+    tests = {"column_size": {"col1": 3}}
+    with pytest.raises(ValidationError):
+        validate(df, tests)
+
+
+def test_validate_column_unique_values_pass():
+    df = pd.DataFrame({"col1": [1, 2, 3]})
+    tests = {"column_unique_values": ["col1"]}
+    try:
+        validate(df, tests)
+    except ValidationError:
+        assert False, "Validation failed but was expected to pass"
+
+
+def test_validate_column_unique_values_fail():
+    df = pd.DataFrame({"col1": [1, 2, 2]})
+    tests = {"column_unique_values": ["col1"]}
+    with pytest.raises(ValidationError):
+        validate(df, tests)
+
+
+def test_validate_column_list_to_match_pass():
+    df = pd.DataFrame({"col1": [1], "col2": [2]})
+    tests = {"column_list_to_match": ["col1", "col2"]}
+    try:
+        validate(df, tests)
+    except ValidationError:
+        assert False, "Validation failed but was expected to pass"
+
+
+def test_validate_column_list_to_match_fail():
+    df = pd.DataFrame({"col1": [1]})
+    tests = {"column_list_to_match": ["col1", "col2"]}
+    with pytest.raises(ValidationError):
+        validate(df, tests)
+
+
+def test_validate_dataset_row_count_pass():
+    df = pd.DataFrame({"col1": [1, 2, 3]})
+    tests = {"dataset_row_count": {"min": 1, "max": 5}}
+    try:
+        validate(df, tests)
+    except ValidationError:
+        assert False, "Validation failed but was expected to pass"
+
+
+def test_validate_dataset_row_count_fail():
+    df = pd.DataFrame({"col1": [1, 2, 3, 4, 5, 6]})
+    tests = {"dataset_row_count": {"min": 1, "max": 5}}
+    with pytest.raises(ValidationError):
+        validate(df, tests)
+
+
+def test_validate_column_match_regex_pass():
+    df = pd.DataFrame({"col1": ["A12", "B34", "C45"]})
+    tests = {"column_match_regex": {"col1": "^[A-Z][0-9]{2}$"}}
+    try:
+        validate(df, tests)
+    except ValidationError:
+        assert "Validation failed but was expected to pass"
+
+
+def test_validate_column_match_regex_fail():
+    df = pd.DataFrame({"col1": ["A123", "B34", "C45"]})
+    tests = {"column_match_regex": {"col1": "^[A-Z][0-9]{2}$"}}
+    with pytest.raises(ValidationError):
+        validate(df, tests)
+
+
+def test_validate_column_sum_pass():
+    df = pd.DataFrame({"col1": [1, 2, 3]})
+    tests = {"column_sum": {"col1": {"min": 5, "max": 10}}}
+    try:
+        validate(df, tests)
+    except ValidationError:
+        assert False, "Validation failed but was expected to pass"
+
+
+def test_validate_column_sum_fail():
+    df = pd.DataFrame({"col1": [1, 2, 3, 4]})
+    tests = {"column_sum": {"col1": {"min": 5, "max": 6}}}
+    with pytest.raises(ValidationError):
+        validate(df, tests)

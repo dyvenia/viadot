@@ -13,7 +13,7 @@ from aiolimiter import AsyncLimiter
 from ..config import get_source_credentials
 from .base import Source
 from ..exceptions import CredentialError, APIError
-from ..utils import handle_api_response
+from ..utils import handle_api_response, validate
 from ..signals import SKIP
 
 warnings.simplefilter("ignore")
@@ -495,12 +495,19 @@ class Genesys(Source):
             raise APIError("Failed to scheduled new report.")
         return new_report.status_code
 
-    def to_df(self, report_url: str = None) -> pd.DataFrame:
+    def to_df(
+        self,
+        report_url: str = None,
+        tests: dict = None,
+    ) -> pd.DataFrame:
         """
         Download genesys data into a pandas DataFrame.
 
         Args:
             report_url (str): Report url from api response.
+            tests (Dict[str], optional): A dictionary with optional list of tests
+                to verify the output dataframe. If defined, triggers the `validate`
+                function from utils. Defaults to None.
 
         Returns:
             pd.DataFrame: The DataFrame with time range.
@@ -516,6 +523,9 @@ class Genesys(Source):
             df = pd.read_excel(
                 response_file.content, names=self.report_columns, skiprows=6
             )
+
+        if tests:
+            validate(df=df, tests=tests)
 
         return df
 

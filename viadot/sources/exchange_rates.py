@@ -6,7 +6,7 @@ import pandas as pd
 import requests
 
 from viadot.exceptions import CredentialError
-from viadot.utils import add_viadot_metadata_columns, cleanup_df
+from viadot.utils import add_viadot_metadata_columns, cleanup_df, validate
 
 from ..config import get_source_credentials
 from .base import Source
@@ -144,9 +144,15 @@ class ExchangeRates(Source):
         return json
 
     @add_viadot_metadata_columns
-    def to_df(self) -> pd.DataFrame:
+    def to_df(
+        self,
+        tests: dict = None,
+    ) -> pd.DataFrame:
         json = self.to_json()
         df = pd.json_normalize(json["currencies"])
         df_clean = cleanup_df(df)
+
+        if tests:
+            validate(df=df_clean, tests=tests)
 
         return df_clean

@@ -25,6 +25,7 @@ except ModuleNotFoundError:
 from sql_metadata import Parser
 
 from viadot.config import get_source_credentials
+from ..utils import validate, add_viadot_metadata_columns
 from viadot.exceptions import CredentialError, DataBufferExceeded
 from viadot.sources.base import Source
 
@@ -592,7 +593,8 @@ class SAPRFC(Source):
     def _get_client_side_filter_cols(self):
         return [f[1].split()[0] for f in self.client_side_filters.items()]
 
-    def to_df(self):
+    @add_viadot_metadata_columns
+    def to_df(self, tests: dict = None):
         """
         Load the results of a query into a pandas DataFrame.
 
@@ -606,6 +608,11 @@ class SAPRFC(Source):
         Source: https://success.jitterbit.com/display/DOC/Guide+to+Using+RFC_READ_TABLE+to+Query+SAP+Tables#GuidetoUsingRFC_READ_TABLEtoQuerySAPTables-create-the-operation
         - WHERE clause: 75 character limit
         - SELECT: 512 character row limit
+
+        Args:
+            tests (Dict[str], optional): A dictionary with optional list of tests
+                to verify the output dataframe. If defined, triggers the `validate`
+                function from utils. Defaults to None.
 
         Returns:
             pd.DataFrame: A DataFrame representing the result of the query provided in `PyRFC.query()`.
@@ -681,6 +688,9 @@ class SAPRFC(Source):
             ]
             df.drop(cols_to_drop, axis=1, inplace=True)
         self.close_connection()
+
+        if tests:
+            validate(df=df, tests=tests)
 
         return df
 
@@ -1078,7 +1088,8 @@ class SAPRFCV2(Source):
     def _get_client_side_filter_cols(self):
         return [f[1].split()[0] for f in self.client_side_filters.items()]
 
-    def to_df(self):
+    @add_viadot_metadata_columns
+    def to_df(self, tests: dict = None):
         """
         Load the results of a query into a pandas DataFrame.
 
@@ -1092,6 +1103,11 @@ class SAPRFCV2(Source):
         Source: https://success.jitterbit.com/display/DOC/Guide+to+Using+RFC_READ_TABLE+to+Query+SAP+Tables#GuidetoUsingRFC_READ_TABLEtoQuerySAPTables-create-the-operation
         - WHERE clause: 75 character limit
         - SELECT: 512 character row limit
+
+        Args:
+            tests (Dict[str], optional): A dictionary with optional list of tests
+                to verify the output dataframe. If defined, triggers the `validate`
+                function from utils. Defaults to None.
 
         Returns:
             pd.DataFrame: A DataFrame representing the result of the query provided in `PyRFC.query()`.
@@ -1193,4 +1209,8 @@ class SAPRFCV2(Source):
             ]
             df.drop(cols_to_drop, axis=1, inplace=True)
         self.close_connection()
+
+        if tests:
+            validate(df=df, tests=tests)
+
         return df

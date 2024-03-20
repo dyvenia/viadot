@@ -3,7 +3,7 @@ import logging
 import re
 import subprocess
 from datetime import datetime, timezone
-from typing import Any, Callable, Dict, List, Literal, Union
+from typing import Any, Callable, Dict, List, Literal, Union, Optional
 
 import pandas as pd
 import pyodbc
@@ -17,6 +17,7 @@ from requests.packages.urllib3.util.retry import Retry
 from urllib3.exceptions import ProtocolError
 
 from .exceptions import APIError
+from .exceptions import ValidationError
 from .signals import SKIP
 
 
@@ -484,3 +485,200 @@ def add_viadot_metadata_columns(func: Callable) -> Callable:
 
 def get_fqn(table_name: str, schema_name: str = None) -> str:
     return f"{schema_name}.{table_name}" if schema_name else table_name
+
+
+def validate_column_size(
+    df, tests, logger, stream_level, failed_tests, failed_tests_list
+):
+    try:
+        for k, v in tests["column_size"].items():
+            column_max_length = (
+                df.astype(str).apply(lambda s: s.str.len()).max().to_dict()
+            )
+            try:
+                if v == column_max_length[k]:
+                    logger.log(level=stream_level, msg="[column_size] for {k} passed.")
+                else:
+                    logger.log(
+                        level=stream_level,
+                        msg=f"[column_size] test for {k} failed. field lenght is different than {v}",
+                    )
+                    failed_tests += 1
+                    failed_tests_list.append("column_size error")
+            except Exception as e:
+                logger.log(level=stream_level, msg=f"{e}")
+    except TypeError as e:
+        logger.log(
+            level=stream_level,
+            msg=f"Please provide `column_size` parameter as dictionary {'columns': value}.",
+        )
+
+
+def validate_column_unique_values(
+    df, tests, logger, stream_level, failed_tests, failed_tests_list
+):
+    for column in tests["column_unique_values"]:
+        df_size = df.shape[0]
+        if df[column].nunique() == df_size:
+            logger.log(
+                level=stream_level,
+                msg=f"[column_unique_values] Values are unique for {column} column.",
+            )
+        else:
+            failed_tests += 1
+            failed_tests_list.append("column_unique_values error")
+            logger.log(
+                level=stream_level,
+                msg=f"[column_unique_values] Values for {column} are not unique.",
+            )
+
+
+def validate_column_list_to_match(
+    df, tests, logger, stream_level, failed_tests, failed_tests_list
+):
+    if set(tests["column_list_to_match"]) == set(df.columns):
+        logger.log(level=stream_level, msg=f"[column_list_to_match] passed.")
+    else:
+        failed_tests += 1
+        failed_tests_list.append("column_list_to_match error")
+        logger.log(
+            level=stream_level,
+            msg="[column_list_to_match] failed. Columns are different than expected.",
+        )
+
+
+def validate_dataset_row_count(
+    df, tests, logger, stream_level, failed_tests, failed_tests_list
+):
+    row_count = len(df.iloc[:, 0])
+    max_value = tests["dataset_row_count"]["max"] or 100_000_000
+    min_value = tests["dataset_row_count"]["min"] or 0
+
+    if (row_count > min_value) and (row_count < max_value):
+        logger.log(level=stream_level, msg="[dataset_row_count] passed.")
+    else:
+        failed_tests += 1
+        failed_tests_list.append("dataset_row_count error")
+        logger.log(
+            level=stream_level,
+            msg=f"[dataset_row_count] Row count ({row_count}) is not between {min_value} and {max_value}.",
+        )
+
+
+def validate_column_match_regex(
+    df, tests, logger, stream_level, failed_tests, failed_tests_list
+):
+    for k, v in tests["column_match_regex"].items():
+        try:
+            matches = df[k].apply(lambda x: bool(re.match(v, str(x))))
+            if all(matches):
+                logger.log(
+                    level=stream_level,
+                    msg=f"[column_match_regex] on {k} column passed.",
+                )
+            else:
+                failed_tests += 1
+                failed_tests_list.append("column_match_regex error")
+                logger.log(
+                    level=stream_level,
+                    msg=f"[column_match_regex] on {k} column failed!",
+                )
+        except Exception as e:
+            failed_tests += 1
+            failed_tests_list.append("column_match_regex error")
+            logger.log(
+                level=stream_level,
+                msg=f"[column_match_regex] Error in {k} column: {e}",
+            )
+
+
+def validate_column_sum(
+    df, tests, logger, stream_level, failed_tests, failed_tests_list
+):
+    for column, bounds in tests["column_sum"].items():
+        col_sum = df[column].sum()
+        min_bound = bounds["min"]
+        max_bound = bounds["max"]
+        if min_bound <= col_sum <= max_bound:
+            logger.log(
+                level=stream_level,
+                msg=f"[column_sum] Sum of {col_sum} for {column} is within the expected range.",
+            )
+        else:
+            failed_tests += 1
+            failed_tests_list.append("column_sum error")
+            logger.log(
+                level=stream_level,
+                msg=f"[column_sum] Sum of {col_sum} for {column} is out of the expected range - <{min_bound}:{max_bound}>",
+            )
+
+
+##TO DO
+# Create class DataFrameTests(BaseModel)
+def validate(
+    df: pd.DataFrame,
+    tests: dict = None,
+    stream_level: int = logging.INFO,
+    logger: Optional[logging.Logger] = None,
+) -> None:
+    """
+    Task to validate the data on DataFrame level. All numbers in the ranges are inclusive.
+    tests:
+        - `column_size`: dict{column: size}
+        - `column_unique_values`: list[columns]
+        - `column_list_to_match`: list[columns]
+        - `dataset_row_count`: dict: {'min': number, 'max', number}
+        - `column_match_regex`: dict: {column: 'regex'}
+        - `column_sum`: dict: {column: {'min': number, 'max': number}}
+    Args:
+        df (pd.DataFrame): The dataframe to validate.
+        tests (dict, optional): Tests to apply on the data frame. Defaults to None.
+    Raises:
+        ValidationError: If validation failed for at least one test.
+    """
+
+    if logger is None:
+        logging.basicConfig(level=logging.INFO)
+        logger = logging.getLogger("prefect_shell.utils")
+
+    failed_tests = 0
+    failed_tests_list = []
+
+    if tests is not None:
+        if "column_size" in tests:
+            validate_column_size(
+                df, tests, logger, stream_level, failed_tests, failed_tests_list
+            )
+
+        if "column_unique_values" in tests:
+            validate_column_unique_values(
+                df, tests, logger, stream_level, failed_tests, failed_tests_list
+            )
+
+        if "column_list_to_match" in tests:
+            validate_column_list_to_match(
+                df, tests, logger, stream_level, failed_tests, failed_tests_list
+            )
+
+        if "dataset_row_count" in tests:
+            validate_dataset_row_count(
+                df, tests, logger, stream_level, failed_tests, failed_tests_list
+            )
+
+        if "column_match_regex" in tests:
+            validate_column_match_regex(
+                df, tests, logger, stream_level, failed_tests, failed_tests_list
+            )
+
+        if "column_sum" in tests:
+            validate_column_sum(
+                df, tests, logger, stream_level, failed_tests, failed_tests_list
+            )
+    else:
+        return "No dataframe tests to run."
+
+    if failed_tests > 0:
+        failed_tests_msg = ", ".join(failed_tests_list)
+        raise ValidationError(
+            f"Validation failed for {failed_tests} test(s): {failed_tests_msg}"
+        )
