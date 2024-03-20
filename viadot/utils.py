@@ -632,5 +632,5 @@ def validations(
     if failed_tests > 0:
         failed_tests_msg = ", ".join(failed_tests_list)
         raise ValidationError(
-            f"Validation failed for {failed_tests} test/tests: {failed_tests_msg}"
+            f"Validation failed for {failed_tests} test(s): {failed_tests_msg}"
         )
