@@ -503,7 +503,7 @@ def validations(
         - `column_match_regex`: dict: {column: 'regex'}
         - `column_sum`: dict: {column: {'min': number, 'max': number}}
     Args:
-        df (pd.DataFrame): The data frame for validation.
+        df (pd.DataFrame): The dataframe to validate.
         tests (dict, optional): Tests to apply on the data frame. Defaults to None.
     Raises:
         ValidationError: If validation failed for at least one test.
