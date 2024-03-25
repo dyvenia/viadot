@@ -42,9 +42,8 @@ RUN pip install cython==0.29.24
 
 # Python env
 WORKDIR /code
-COPY requirements.txt /code/
+COPY pyproject.toml /code/
 RUN pip install --upgrade pip
-RUN pip install -r requirements.txt
 
 COPY . .
 RUN pip install .
