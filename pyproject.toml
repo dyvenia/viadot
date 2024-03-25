@@ -43,11 +43,7 @@ dependencies = [
     "trino==0.326.*",
     "sqlalchemy==2.0.*",
     "minio>=7.0, <8.0",
+    "databricks-connect==11.3.*",
 ]
 requires-python = ">=3.10, <3.12"
 readme = "README.md"
-
-[project.optional-dependencies]
-databricks = [
-    "databricks-connect==11.3.*",
-]
