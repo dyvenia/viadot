@@ -107,8 +107,6 @@ cryptography==42.0.5
     # via pyjwt
 cycler==0.12.1
     # via matplotlib
-databricks-connect==11.3.31
-    # via viadot
 db-dtypes==1.2.0
     # via pandas-gbq
 debugpy==1.8.1
@@ -364,8 +362,6 @@ ptyprocess==0.7.0
     # via terminado
 pure-eval==0.2.2
     # via stack-data
-py4j==0.10.9.5
-    # via databricks-connect
 pyarrow==10.0.1
     # via awswrangler
     # via db-dtypes
@@ -485,7 +481,6 @@ six==1.16.0
     # via azure-core
     # via azure-identity
     # via bleach
-    # via databricks-connect
     # via gremlinpython
     # via imagehash
     # via isodate
