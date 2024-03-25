@@ -3,9 +3,9 @@ import os
 import pandas as pd
 import pytest
 
-# from dotenv import load_dotenv
+from dotenv import load_dotenv
 
-# load_dotenv()
+load_dotenv()
 
 
 @pytest.fixture(scope="session")

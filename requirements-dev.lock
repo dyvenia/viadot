@@ -460,6 +460,7 @@ python-dateutil==2.9.0.post0
     # via pandas
     # via pg8000
     # via trino
+python-dotenv==1.0.1
 python-http-client==3.3.7
     # via sendgrid
 python-utils==3.8.2
