@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Generator, Literal
+from typing import Generator, Literal, Optional, Union
 
 import pandas as pd
 import pyarrow as pa
@@ -95,10 +95,10 @@ class MinIO(Source):
     def from_arrow(
         self,
         table: pa.Table,
-        schema_name: str | None = None,
-        table_name: str | None = None,
-        path: str | Path | None = None,
-        partition_cols: list[str] | None = None,
+        schema_name: Optional[str] = None,
+        table_name: Optional[str] = None,
+        path: Optional[Union[str, Path]] = None,
+        partition_cols: Optional[list[str]] = None,
         if_exists: Literal["error", "delete_matching", "overwrite_or_ignore"] = "error",
     ):
         """
@@ -158,10 +158,10 @@ class MinIO(Source):
     def from_df(
         self,
         df: pd.DataFrame,
-        schema_name: str | None = None,
-        table_name: str | None = None,
-        path: str | Path | None = None,
-        partition_cols: list[str] | None = None,
+        schema_name: Optional[str] = None,
+        table_name: Optional[str] = None,
+        path: Optional[Union[str, Path]] = None,
+        partition_cols: Optional[list[str]] = None,
         if_exists: Literal["error", "delete_matching", "overwrite_or_ignore"] = "error",
     ) -> None:
         """
