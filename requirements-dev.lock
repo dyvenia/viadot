@@ -9,7 +9,7 @@
 
 -e file:.
 adlfs==2022.9.1
-    # via viadot
+    # via viadot2
 aenum==3.1.15
     # via gremlinpython
 aiobotocore==2.4.2
@@ -22,7 +22,7 @@ aiohttp==3.9.3
 aioitertools==0.11.0
     # via aiobotocore
 aiolimiter==1.0.0
-    # via viadot
+    # via viadot2
 aiosignal==1.3.1
     # via aiohttp
 anyio==3.7.1
@@ -48,21 +48,21 @@ attrs==23.2.0
 authlib==1.3.0
     # via simple-salesforce
 awswrangler==2.19.0
-    # via viadot
+    # via viadot2
 azure-core==1.25.0
     # via adlfs
     # via azure-identity
     # via azure-storage-blob
     # via msrest
-    # via viadot
+    # via viadot2
 azure-datalake-store==0.0.53
     # via adlfs
 azure-identity==1.7.1
     # via adlfs
-    # via viadot
+    # via viadot2
 azure-storage-blob==12.13.1
     # via adlfs
-    # via viadot
+    # via viadot2
 babel==2.14.0
     # via jupyterlab-server
 backoff==2.2.1
@@ -76,7 +76,7 @@ bleach==6.1.0
 boto3==1.24.59
     # via awswrangler
     # via redshift-connector
-    # via viadot
+    # via viadot2
 botocore==1.27.59
     # via aiobotocore
     # via awswrangler
@@ -115,7 +115,7 @@ cryptography==42.0.5
 cycler==0.12.1
     # via matplotlib
 databricks-connect==11.3.31
-    # via viadot
+    # via viadot2
 db-dtypes==1.2.0
     # via pandas-gbq
 debugpy==1.8.1
@@ -125,7 +125,7 @@ decorator==5.1.1
 defusedxml==0.7.1
     # via nbconvert
 duckdb==0.5.1
-    # via viadot
+    # via viadot2
 et-xmlfile==1.1.0
     # via openpyxl
 exceptiongroup==1.2.0
@@ -189,14 +189,20 @@ idna==3.6
     # via requests
     # via yarl
 imagehash==4.2.1
-    # via viadot
+    # via viadot2
 importlib-metadata==7.1.0
+    # via jupyter-client
+    # via jupyterlab-server
+    # via markdown
     # via mkdocs
+    # via nbconvert
+importlib-resources==6.4.0
+    # via matplotlib
 iniconfig==2.0.0
     # via pytest
 ipykernel==6.29.3
     # via nbclassic
-ipython==8.22.2
+ipython==8.18.1
     # via ipykernel
     # via jupyterlab
 ipython-genutils==0.2.0
@@ -248,7 +254,7 @@ jupyter-server==1.24.0
     # via nbclassic
     # via notebook-shim
 jupyterlab==3.2.4
-    # via viadot
+    # via viadot2
 jupyterlab-pygments==0.3.0
     # via nbconvert
 jupyterlab-server==2.25.4
@@ -269,14 +275,14 @@ markupsafe==2.1.5
     # via mkdocstrings
     # via nbconvert
 matplotlib==3.8.3
-    # via viadot
+    # via viadot2
 matplotlib-inline==0.1.6
     # via ipykernel
     # via ipython
 mergedeep==1.3.4
     # via mkdocs
 minio==7.2.5
-    # via viadot
+    # via viadot2
 mistune==3.0.2
     # via nbconvert
 mkdocs==1.3.1
@@ -341,7 +347,7 @@ oauthlib==3.2.2
     # via requests-oauthlib
 openpyxl==3.0.10
     # via awswrangler
-    # via viadot
+    # via viadot2
 opensearch-py==2.4.2
     # via awswrangler
 packaging==24.0
@@ -360,10 +366,10 @@ pandas==1.4.4
     # via awswrangler
     # via db-dtypes
     # via pandas-gbq
-    # via viadot
+    # via viadot2
     # via visions
 pandas-gbq==0.19.1
-    # via viadot
+    # via viadot2
 pandocfilters==1.5.1
     # via nbconvert
 parso==0.8.3
@@ -416,7 +422,7 @@ pyarrow==10.0.1
     # via awswrangler
     # via db-dtypes
     # via pandas-gbq
-    # via viadot
+    # via viadot2
 pyasn1==0.5.1
     # via pyasn1-modules
     # via rsa
@@ -427,7 +433,7 @@ pycparser==2.21
 pycryptodome==3.20.0
     # via minio
 pydantic==1.10.11
-    # via viadot
+    # via viadot2
 pydata-google-auth==1.8.2
     # via pandas-gbq
 pygments==2.17.2
@@ -443,7 +449,7 @@ pymdown-extensions==10.4
 pymysql==1.1.0
     # via awswrangler
 pyodbc==4.0.39
-    # via viadot
+    # via viadot2
 pyparsing==3.1.2
     # via matplotlib
 pytest==8.1.1
@@ -476,7 +482,7 @@ pyyaml==6.0.1
     # via mkdocs
     # via pymdown-extensions
     # via pyyaml-env-tag
-    # via viadot
+    # via viadot2
 pyyaml-env-tag==0.1
     # via mkdocs
 pyzmq==25.1.2
@@ -522,7 +528,7 @@ rpds-py==0.18.0
 rsa==4.9
     # via google-auth
 s3fs==2022.11.0
-    # via viadot
+    # via viadot2
 s3transfer==0.6.2
     # via boto3
 scipy==1.12.0
@@ -534,13 +540,13 @@ send2trash==1.8.2
     # via jupyter-server
     # via nbclassic
 sendgrid==6.9.7
-    # via viadot
+    # via viadot2
 shapely==1.8.0
-    # via viadot
+    # via viadot2
 sharepy==2.0.0
-    # via viadot
+    # via viadot2
 simple-salesforce==1.11.5
-    # via viadot
+    # via viadot2
 six==1.16.0
     # via asttokens
     # via azure-core
@@ -558,9 +564,9 @@ sniffio==1.3.1
 soupsieve==2.5
     # via beautifulsoup4
 sql-metadata==2.3.0
-    # via viadot
+    # via viadot2
 sqlalchemy==2.0.28
-    # via viadot
+    # via viadot2
 sqlparse==0.4.4
     # via sql-metadata
 stack-data==0.6.3
@@ -598,9 +604,12 @@ traitlets==5.14.2
     # via nbconvert
     # via nbformat
 trino==0.326.0
-    # via viadot
+    # via viadot2
 typing-extensions==4.10.0
+    # via aioitertools
     # via azure-core
+    # via black
+    # via ipython
     # via minio
     # via pydantic
     # via python-utils
@@ -613,7 +622,7 @@ urllib3==1.26.18
     # via opensearch-py
     # via requests
 visions==0.7.5
-    # via viadot
+    # via viadot2
 watchdog==4.0.0
     # via mkdocs
 wcwidth==0.2.13
@@ -631,6 +640,7 @@ zeep==4.2.1
     # via simple-salesforce
 zipp==3.18.1
     # via importlib-metadata
+    # via importlib-resources
 setuptools==69.2.0
     # via pandas-gbq
     # via pydata-google-auth
