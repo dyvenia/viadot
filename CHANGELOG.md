@@ -6,8 +6,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 ### Added
+- Added option for sap_rfc connector to get credentials from Azure KeyVault or directly passing dictionary inside flow.
 
-### Fixed
+### Fixed 
 
 ### Changed
 
