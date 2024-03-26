@@ -8,12 +8,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 ### Fixed
-- Changed requirements.txt to level up version of dbt-sqlserver in order to fix bug with `MAXRECURSION` error in dbt_run
+- Changed `requirements.txt` to level up version of `dbt-sqlserver` in order to fix bug with `MAXRECURSION` error in dbt_run
 
 ### Changed
 
 ### Removed
-- Removed dbt-core==1.3.2 from requirements.txt 
+- Removed `dbt-core==1.3.2` from `requirements.txt`
 
 ## [0.4.25] - 2024-01-30
 ### Added
