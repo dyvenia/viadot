@@ -34,7 +34,7 @@ dependencies = [
     "minio>=7.0, <8.0",
     "databricks-connect==11.3.*",
 ]
-requires-python = ">=3.9"
+requires-python = ">=3.10"
 readme = "README.md"
 
 [tool.rye]

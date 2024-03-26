@@ -191,13 +191,7 @@ idna==3.6
 imagehash==4.2.1
     # via viadot2
 importlib-metadata==7.1.0
-    # via jupyter-client
-    # via jupyterlab-server
-    # via markdown
     # via mkdocs
-    # via nbconvert
-importlib-resources==6.4.0
-    # via matplotlib
 iniconfig==2.0.0
     # via pytest
 ipykernel==6.29.3
@@ -606,10 +600,7 @@ traitlets==5.14.2
 trino==0.326.0
     # via viadot2
 typing-extensions==4.10.0
-    # via aioitertools
     # via azure-core
-    # via black
-    # via ipython
     # via minio
     # via pydantic
     # via python-utils
@@ -640,7 +631,6 @@ zeep==4.2.1
     # via simple-salesforce
 zipp==3.18.1
     # via importlib-metadata
-    # via importlib-resources
 setuptools==69.2.0
     # via pandas-gbq
     # via pydata-google-auth
