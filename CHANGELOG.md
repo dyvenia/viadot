@@ -8,7 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 ### Fixed
-- `tasks/azure_sql` fixed parameter definition issue in `CreateTableFromBlob` task.
+- Fixed the `if_exists` parameter definition in the `CreateTableFromBlob` task.
 
 ### Changed
 
