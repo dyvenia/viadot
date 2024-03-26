@@ -180,11 +180,11 @@ WITH (location = '{location}')
         self,
         table: pa.Table,
         table_name: str,
-        schema_name: Optional[str] = None,
-        location: Optional[str] = None,
+        schema_name: str | None = None,
+        location: str | None = None,
         format: Literal["PARQUET", "ORC"] = "PARQUET",
-        partition_cols: Optional[list[str]] = None,
-        sort_by: Optional[list[str]] = None,
+        partition_cols: list[str] | None = None,
+        sort_by: list[str] | None = None,
     ) -> None:
         columns = table.schema.names
         types = [self.pyarrow_to_trino_type(str(typ)) for typ in table.schema.types]
@@ -264,7 +264,7 @@ WITH (
 
     def run(
         self, sql: str, connection: Connection
-    ) -> Optional[Generator[tuple, None, None]]:
+    ) -> Generator[tuple, None, None] | None:
         def row_generator(result):
             # Fetch rows in chunks of size `yield_per`.
             # This has to be inside a function due to how Python generators work.
