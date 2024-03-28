@@ -1,68 +1,30 @@
 {
-    "autoDocstring.docstringFormat": "google",
-    "python.formatting.provider": "black",
-    "python.formatting.blackArgs": [
-        "--line-length",
-        "88"
-    ],
-    "python.linting.enabled": true,
+  "workbench.colorCustomizations": {
+    "titleBar.activeBackground": "#0ea5bce4"
+  },
+  "git.autofetch": true,
+  "autoDocstring.docstringFormat": "google",
+  "notebook.formatOnSave.enabled": true,
+  "notebook.codeActionsOnSave": {
+    "source.fixAll": true
+  },
+  "[python]": {
+    "editor.defaultFormatter": "charliermarsh.ruff",
+    "editor.codeActionsOnSave": {
+      "source.organizeImports": true,
+      "source.fixAll": true
+    },
     "editor.formatOnSave": true,
-    "editor.formatOnSaveTimeout": 3000,
-    "git.autofetch": true,
-    "cSpell.words": [
-        "ADLS",
-        "autouse",
-        "azstorage",
-        "azuresql",
-        "boto",
-        "conda",
-        "config",
-        "dask",
-        "data",
-        "Databricks",
-        "dataframe",
-        "datetimeoffset",
-        "distributed",
-        "dotenv",
-        "dtype",
-        "dtypes",
-        "dyvenia",
-        "entrypoints",
-        "gmtime",
-        "home",
-        "http",
-        "iloc",
-        "itertools",
-        "lib",
-        "nesso",
-        "nrows",
-        "odbc",
-        "Palo",
-        "pgadmin",
-        "pgdata",
-        "postgres",
-        "postgresql",
-        "prefect",
-        "projects",
-        "pyarrow",
-        "pydantic",
-        "pyodbc",
-        "pyspark",
-        "pytest",
-        "pytesting",
-        "repos",
-        "scheduler",
-        "sharepy",
-        "snakecase",
-        "supermetrics",
-        "tabularize",
-        "toml",
-        "traefik",
-        "upserted",
-        "users",
-        "var",
-        "viadot",
-        "work",
-        "zfill"
-    ]
+    "editor.rulers": [88]
+  },
+  "[json]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "editor.formatOnSave": true
+  },
+  "python.analysis.typeCheckingMode": "basic",
+  "python.testing.pytestArgs": ["src"],
+  "python.testing.unittestEnabled": false,
+  "python.testing.pytestEnabled": true,
+  "python.defaultInterpreterPath": "${workspaceFolder}/.venv/bin/python",
+  "yaml.format.bracketSpacing": false
 }
