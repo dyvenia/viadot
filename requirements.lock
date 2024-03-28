@@ -57,7 +57,7 @@ azure-core==1.25.0
     # via viadot2
 azure-datalake-store==0.0.53
     # via adlfs
-azure-identity==1.7.1
+azure-identity==1.15.0
     # via adlfs
     # via viadot2
 azure-storage-blob==12.13.1
@@ -389,7 +389,6 @@ pygments==2.17.2
     # via nbconvert
 pyjwt==2.8.0
     # via msal
-    # via pyjwt
 pymysql==1.1.0
     # via awswrangler
 pyodbc==4.0.39
@@ -474,6 +473,10 @@ send2trash==1.8.2
     # via nbclassic
 sendgrid==6.9.7
     # via viadot2
+setuptools==69.2.0
+    # via pandas-gbq
+    # via pydata-google-auth
+    # via redshift-connector
 shapely==1.8.0
     # via viadot2
 sharepy==2.0.0
@@ -483,7 +486,6 @@ simple-salesforce==1.11.5
 six==1.16.0
     # via asttokens
     # via azure-core
-    # via azure-identity
     # via bleach
     # via databricks-connect
     # via gremlinpython
@@ -562,7 +564,3 @@ yarl==1.9.4
     # via aiohttp
 zeep==4.2.1
     # via simple-salesforce
-setuptools==69.2.0
-    # via pandas-gbq
-    # via pydata-google-auth
-    # via redshift-connector
