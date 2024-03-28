@@ -3,24 +3,111 @@ import os
 from typing import Literal, Optional, Union
 
 import pandas as pd
-import pyspark.sql.dataframe as spark
-from delta.tables import *  # noqa
+import pyodbc
+
+try:
+    import pyspark.sql.dataframe as spark
+    from delta.tables import *
+except ModuleNotFoundError:
+    raise ImportError("pyspark.sql.dataframe is required to use Databricks source.")
+    
 from pydantic import BaseModel, root_validator
 
 from viadot.config import get_source_credentials
-from viadot.exceptions import CredentialError, TableAlreadyExists, TableDoesNotExist
+from viadot.exceptions import (CredentialError, TableAlreadyExists,
+                               TableDoesNotExist)
 from viadot.sources.base import Source
-from viadot.utils import (
-    _cast_df_cols,
-    add_viadot_metadata_columns,
-    build_merge_query,
-    df_snakecase_column_names,
-)
+from viadot.utils import (_cast_df_cols, add_viadot_metadata_columns,
+                          df_snakecase_column_names)
+
+
+def _get_table_columns(
+    schema: str, table: str, source: Union[pyodbc.Connection, "Databricks"]
+) -> str:
+    if isinstance(source, pyodbc.Connection):
+        columns_query = f"""
+        SELECT 
+            col.name
+        FROM sys.tables AS tab
+            INNER JOIN sys.columns AS col
+                ON tab.object_id = col.object_id
+        WHERE tab.name = '{table}'
+        AND schema_name(tab.schema_id) = '{schema}'
+        ORDER BY column_id;
+        """
+        cursor = source.cursor()
+        columns_query_result = cursor.execute(columns_query).fetchall()
+        cursor.close()
+
+    else:
+        result = source.run(f"SHOW COLUMNS IN {schema}.{table}", "pandas")
+        columns_query_result = result["col_name"].values
+
+    return columns_query_result
+
+
+def build_merge_query(
+    table: str,
+    primary_key: str,
+    source: Union[pyodbc.Connection, "Databricks"],
+    stg_schema: str = None,
+    stg_table: str = "stg",
+    schema: str = None,
+    df: spark.DataFrame = None,
+) -> str:
+    """
+    Build a merge query for the simplest possible upsert scenario:
+    - updating and inserting all fields
+    - merging on a single column, which has the same name in both tables
+
+    Args:
+        table (str): The table to merge into.
+        primary_key (str): The column on which to merge.
+        source (pyodbc.Connection or Databricks): Either the connection to the database
+            or the Databricks object used to connect to the Spark cluster on which
+            the query will be executed.
+        stg_schema (str, Optional): The schema where the staging table is located.
+        stg_table (str, Optional): The table with new/updated data.
+        schema (str, Optional): The schema where the table is located.
+        df (spark.DataFrame, Optional): A Spark DataFrame whose data will be upserted
+            to a table.
+    """
+    fqn = f"{schema}.{table}"
+    stg_fqn = f"{stg_schema}.{stg_table}" if stg_schema else {stg_table}
+
+    if schema is None:
+        schema = source.DEFAULT_SCHEMA
+
+    # The `DataFrame` *is* the staging table.
+    if df:
+        df.createOrReplaceTempView(stg_fqn)
+
+    # Get column names
+    columns_query_result = _get_table_columns(schema=schema, table=table, source=source)
+    columns = [tup for tup in columns_query_result]
+
+    columns_stg_fqn = [f"{stg_table}.{col}" for col in columns]
+
+    # Build merge query
+    update_pairs = [f"existing.{col} = {stg_table}.{col}" for col in columns]
+    merge_query = f"""
+    MERGE INTO {fqn} existing
+        USING {stg_fqn} {stg_table}
+        ON {stg_table}.{primary_key} = existing.{primary_key}
+        WHEN MATCHED
+            THEN UPDATE SET {", ".join(update_pairs)}
+        WHEN NOT MATCHED
+            THEN INSERT({", ".join(columns)})
+            VALUES({", ".join(columns_stg_fqn)});
+    """
+    return merge_query
 
 
 class DatabricksCredentials(BaseModel):
     host: str  # The host address of the Databricks cluster.
-    port: str = "15001"  # The port on which the cluster is exposed. By default '15001'. For Spark Connect, use the port 443 by default.
+    port: str = (
+        "15001"  # The port on which the cluster is exposed. By default '15001'. For Spark Connect, use the port 443 by default.
+    )
     cluster_id: str  # The ID of the Databricks cluster to which to connect.
     org_id: Optional[
         str

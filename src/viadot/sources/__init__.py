@@ -2,7 +2,6 @@ from importlib.util import find_spec
 
 from viadot.sources.azure_data_lake import AzureDataLake
 from viadot.sources.cloud_for_customers import CloudForCustomers
-from viadot.sources.databricks import Databricks
 from viadot.sources.exchange_rates import ExchangeRates
 from viadot.sources.genesys import Genesys
 from viadot.sources.minio import MinIO
@@ -14,7 +13,6 @@ from viadot.sources.trino import Trino
 __all__ = [
     "AzureDataLake",
     "CloudForCustomers",
-    "Databricks",
     "ExchangeRates",
     "Genesys",
     "MinIO",
@@ -26,3 +24,6 @@ __all__ = [
 
 if find_spec("pyrfc"):
     __all__.extend(["SAPRFC", "SAPRFCV2"])
+
+if find_spec("databricks-connect"):
+    __all__.extend(["Databricks"])
