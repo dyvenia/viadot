@@ -1,8 +1,11 @@
 [project]
 name = "viadot2"
-version = "2.0a21"
+version = "2.0a22"
 description = "A simple data ingestion library to guide data flows from some places to other places."
-authors = [{ name = "acivitillo", email = "acivitillo@dyvenia.com" }, { name = "trymzet", email = "mzawadzki@dyvenia.com" }]
+authors = [
+    { name = "acivitillo", email = "acivitillo@dyvenia.com" },
+    { name = "trymzet", email = "mzawadzki@dyvenia.com" },
+]
 dependencies = [
     "azure-core==1.25.0",
     "azure-storage-blob==12.13.1",
@@ -14,7 +17,6 @@ dependencies = [
     "pyodbc>=4.0.34, <4.1.0",
     "openpyxl==3.0.10",
     "jupyterlab==3.2.4",
-    "azure-identity==1.7.1",
     "matplotlib>=3.8.3",
     "adlfs==2022.9.1",
     "Shapely==1.8.0",
@@ -33,6 +35,7 @@ dependencies = [
     "sqlalchemy==2.0.*",
     "minio>=7.0, <8.0",
     "databricks-connect==11.3.*",
+    "azure-identity>=1.15.0",
 ]
 requires-python = ">=3.10"
 readme = "README.md"
@@ -55,11 +58,11 @@ dev-dependencies = [
 omit = [
     "viadot/flows/azure_sql_transform_dbt.py",
     "viadot/flows/supermetrics_to_adls.py",
-    "viadot/flows/supermetrics_to_azure_sql_v2.py"
-    ]
+    "viadot/flows/supermetrics_to_azure_sql_v2.py",
+]
 
 [tool.pytest.ini_options]
 log_format = "%(asctime)s %(levelname)s %(message)s"
 log_date_format = "%Y-%m-%d %H:%M:%S"
-log_cli=true
-log_level="WARNING"
+log_cli = true
+log_level = "WARNING"

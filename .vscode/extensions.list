@@ -1,22 +1,41 @@
-ms-python.black-formatter
-ms-python.isort
+# Python
 ms-python.python
 ms-python.vscode-pylance
-eamodio.gitlens
-bungcip.better-toml
-ms-azuretools.vscode-docker
+njpwerner.autodocstring
+pylyzer.pylyzer
+charliermarsh.ruff
+
+# Git
+seatonjiang.gitmoji-vscode
+GitHub.vscode-pull-request-github
+GitHub.vscode-github-actions
+
+# Writing
+yzhang.markdown-all-in-one
+bierner.markdown-preview-github-styles
+DavidAnson.vscode-markdownlint
+streetsidesoftware.code-spell-checker
+aaron-bond.better-comments
+bierner.github-markdown-preview
+esbenp.prettier-vscode
+
+# Support languages
+tamasfe.even-better-toml
+redhat.vscode-yaml
+samuelcolvin.jinjahtml
+bierner.markdown-mermaid
+bpruitt-goddard.mermaid-markdown-syntax-highlighting
+
+# Utilities
+quicktype.quicktype
 ms-vscode-remote.vscode-remote-extensionpack
+ms-vscode.remote-explorer
 ms-vscode.live-server
 ms-vsliveshare.vsliveshare
-ms-vsliveshare.vsliveshare-audio
-ms-vsliveshare.vsliveshare-pack
-ms-vscode.remote-server
-ms-vscode.remote-explorer
-njpwerner.autodocstring
-seatonjiang.gitmoji-vscode
-streetsidesoftware.code-spell-checker
-VisualStudioExptTeam.vscodeintellicode
-VisualStudioExptTeam.intellicode-api-usage-examples
-yzhang.markdown-all-in-one
-samuelcolvin.jinjahtml
-quicktype.quicktype
+jock.svg
+
+# Productivity
+GitHub.copilot
+GitHub.copilot-chat
+alefragnani.bookmarks
+jetpack-io.devbox
