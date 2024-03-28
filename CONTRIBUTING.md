@@ -92,6 +92,7 @@ pre-commit install
    ```
 
 8. [Submit a PR](https://github.com/dyvenia/viadot/compare) into the `2.0` branch.
+Make sure to read & check all relevant checkboxes in the PR template!
 
    Make sure to read & check all relevant checkboxes in the PR template!
 
