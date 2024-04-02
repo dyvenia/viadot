@@ -5,7 +5,7 @@ while getopts t: flag
 do
     case "${flag}" in
         t) IMAGE_TAG=${OPTARG}
-            case ${OPTARG} in 
+            case ${OPTARG} in
                 dev) PROFILE="dev";;
             esac
         ;;

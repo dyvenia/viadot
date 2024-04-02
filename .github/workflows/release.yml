@@ -22,10 +22,10 @@ jobs:
   test_docker:
     runs-on: ubuntu-latest
     steps:
-      - name: 'Checkout source code'
+      - name: "Checkout source code"
         uses: actions/checkout@v2
         with:
-            ref: ${{ github.ref }}
+          ref: ${{ github.ref }}
       - name: Test docker image
         run: |
           if [ -f docker-compose.test.yml ]; then
@@ -41,10 +41,10 @@ jobs:
     needs: test_docker
     runs-on: ubuntu-latest
     steps:
-      - name: 'Checkout source code'
+      - name: "Checkout source code"
         uses: actions/checkout@v2
         with:
-            ref: ${{ github.ref }}
+          ref: ${{ github.ref }}
 
       - name: Build
         run: docker build . --file docker/Dockerfile --tag $IMAGE_NAME
@@ -77,10 +77,10 @@ jobs:
 
     steps:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
-      - name: 'Checkout source code'
+      - name: "Checkout source code"
         uses: actions/checkout@v2
         with:
-            ref: ${{ github.ref }}
+          ref: ${{ github.ref }}
 
       # Sets up python
       - uses: actions/setup-python@v2
@@ -96,7 +96,7 @@ jobs:
       #     PLACEHOLDER='__version__ = "develop"'
       #     VERSION_FILE='viadot/__init__.py'
       #     # ensure the placeholder is there. If grep doesn't find the placeholder
-      #     # it exits with exit code 1 and github actions aborts the build. 
+      #     # it exits with exit code 1 and github actions aborts the build.
       #     grep "$PLACEHOLDER" "$VERSION_FILE"
       #     sed -i "s/$PLACEHOLDER/__version__ = \"${VERSION}\"/g" "$VERSION_FILE"
       #   shell: bash

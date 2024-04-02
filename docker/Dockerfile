@@ -40,8 +40,8 @@ RUN curl https://packages.microsoft.com/keys/microsoft.asc | apt-key add - && \
 
 COPY docker/odbcinst.ini /etc
 
-# This one's needed for the SAP RFC connector. 
-# It must be installed here as the SAP package does not define its dependencies, 
+# This one's needed for the SAP RFC connector.
+# It must be installed here as the SAP package does not define its dependencies,
 # so `pip install pyrfc` breaks if all deps are not already present.
 RUN pip install cython==0.29.24 --user
 

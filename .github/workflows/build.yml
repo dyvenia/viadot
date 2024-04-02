@@ -42,7 +42,7 @@ jobs:
           pip install -r requirements.txt
         if: steps.cache.outputs.cache-hit != 'true'
         continue-on-error: false
-        
+
       - name: Lint with flake8
         if: always()
         run: |
@@ -100,7 +100,7 @@ jobs:
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/dev' && github.event_name == 'push'
     steps:
-      - name: 'Checkout source code'
+      - name: "Checkout source code"
         uses: actions/checkout@v2
         with:
           ref: ${{ github.ref }}
@@ -114,7 +114,7 @@ jobs:
       - name: Push image
         run: |
           IMAGE_ID=docker.pkg.github.com/${{ github.repository }}/$IMAGE_NAME
-          
+
           # Change all uppercase to lowercase
           IMAGE_ID=$(echo $IMAGE_ID | tr '[A-Z]' '[a-z]')
 

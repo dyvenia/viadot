@@ -1,3 +1,5 @@
+from importlib.util import find_spec
+
 from .azure_data_lake import AzureDataLake
 from .cloud_for_customers import CloudForCustomers
 from .databricks import Databricks
@@ -9,7 +11,18 @@ from .s3 import S3
 from .sharepoint import Sharepoint
 from .trino import Trino
 
-try:
-    from .sap_rfc import SAPRFC, SAPRFCV2
-except ImportError:
-    pass
+__all__ = [
+    "AzureDataLake",
+    "CloudForCustomers",
+    "Databricks",
+    "ExchangeRates",
+    "Genesys",
+    "MinIO",
+    "RedshiftSpectrum",
+    "S3",
+    "Sharepoint",
+    "Trino",
+]
+
+if find_spec("pyrfc"):
+    __all__.extend(["SAPRFC", "SAPRFCV2"])

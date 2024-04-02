@@ -4,24 +4,22 @@ Credentials and other settings for various **sources** are stored in a file name
 
 ```json
 {
-    "SUPERMETRICS": {
-        "API_KEY": "apikey from supermetrics",
-        "USER": "user@gmail.com",
-        "SOURCES": {
-            "Google Ads": {
-                "Accounts": [
-                    "456"
-                ]
-            }
-        }
-    },
-    "AZURE_SQL": {
-        "server": "server url",
-        "db_name": "db name",
-        "user": "user",
-        "password": "db password",
-        "driver": "driver"
+  "SUPERMETRICS": {
+    "API_KEY": "apikey from supermetrics",
+    "USER": "user@gmail.com",
+    "SOURCES": {
+      "Google Ads": {
+        "Accounts": ["456"]
+      }
     }
+  },
+  "AZURE_SQL": {
+    "server": "server url",
+    "db_name": "db name",
+    "user": "user",
+    "password": "db password",
+    "driver": "driver"
+  }
 }
 ```
 
@@ -38,7 +36,7 @@ The above will pass all the configurations, including secrets like passwords, to
 
 ## Storing the file locally
 
-Currently only local files are supported. Make sure to store the file in the correct path. 
+Currently only local files are supported. Make sure to store the file in the correct path.
 
-* On Linux the path is `/home/viadot/.config/credentials.json`
-* On Windows you need to create a `.config` folder with `credentials.json` inside the User folder `C:\Users\<user>`
+- On Linux the path is `/home/viadot/.config/credentials.json`
+- On Windows you need to create a `.config` folder with `credentials.json` inside the User folder `C:\Users\<user>`

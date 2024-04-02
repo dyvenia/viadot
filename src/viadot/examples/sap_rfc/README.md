@@ -1,12 +1,13 @@
 # SAP RFC example
 
-This is an example environment for running the `SAPRFC` connector. 
-
+This is an example environment for running the `SAPRFC` connector.
 
 Note that we refer to a `sap_netweaver_rfc` folder in the Dockerfile. This is the folder containing the proprietary SAP NetWeaver driver that would have to be obtained and installed by the user.
 
 ## Running SAPRFC
+
 Clone the viadot, enter the sap_rfc folder, and build the image:
+
 ```
 git clone --branch 2.0 https://github.com/dyvenia/viadot.git && \
 cd viadot/viadot/examples/sap_rfc && \
@@ -14,13 +15,15 @@ docker build -t viadot:sap_rfc . --no-cache
 ```
 
 Spin it up with the provided `docker-compose`
+
 ```
 docker-compose up -d
 ```
 
-You can now open up Jupyter Lab at `localhost:5678`. 
+You can now open up Jupyter Lab at `localhost:5678`.
 
 ## Config File
+
 Credentials and other settings are stored as `~/.config/viadot/config.yaml`. A config file needs to be written in yaml format. A typical config file looks like so:
 
 ```
@@ -37,7 +40,9 @@ sources:
 ```
 
 ## Running tests
+
 To run tests, run pytest:
+
 ```
 docker exec -it viadot_saprfc_lab pytest tests/integration/test_sap_rfc.py
 ```
