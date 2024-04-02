@@ -10,7 +10,7 @@ try:
     from delta.tables import *
 except ModuleNotFoundError:
     raise ImportError("pyspark.sql.dataframe is required to use Databricks source.")
-    
+
 from pydantic import BaseModel, root_validator
 
 from viadot.config import get_source_credentials
