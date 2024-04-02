@@ -283,7 +283,7 @@ class SAPRFC(Source):
                 sap_credentials = local_config.get(sap_credentials_key).get(env)
             except AttributeError:
                 raise CredentialError(
-                    f"Sap_credentials_key: {sap_credentials_key} is not stored neither in KeyVault or Local Config!"
+                    f"sap_credentials_key: {sap_credentials_key} is not stored neither in KeyVault or Local Config!"
                 )
             if sap_credentials is None:
                 raise CredentialError(f"Missing {env} credentials!")
@@ -753,7 +753,7 @@ class SAPRFCV2(Source):
                 sap_credentials = local_config.get(sap_credentials_key).get(env)
             except AttributeError:
                 raise CredentialError(
-                    f"Sap_credentials_key: {sap_credentials_key} is not stored neither in KeyVault or Local Config!"
+                    f"sap_credentials_key: {sap_credentials_key} is not stored neither in KeyVault or Local Config!"
                 )
             if sap_credentials is None:
                 raise CredentialError(f"Missing {env} credentials!")
