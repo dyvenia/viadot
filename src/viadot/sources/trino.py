@@ -130,7 +130,7 @@ AND TABLE_NAME = '{table_name}'"""
         return len(results) > 0
 
     def get_schemas(self) -> list[str]:
-        query = f"SHOW SCHEMAS"
+        query = "SHOW SCHEMAS"
         with self.get_connection() as connection:
             return list(self.run(query, connection=connection))
 
@@ -275,7 +275,7 @@ WITH (
 
         try:
             # Execute with server-side cursor of size 5000.
-            result = connection.execution_options(yield_per=5000,).execute(text(sql))
+            result = connection.execution_options(yield_per=5000).execute(text(sql))
         except Exception as e:
             raise ValueError(f"Failed executing SQL:\n{sql}") from e
 

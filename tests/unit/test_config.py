@@ -53,7 +53,6 @@ def TEST_CONFIG_PATH_JSON():
 
 
 def test_config_from_yaml(TEST_CONFIG_PATH):
-
     config = Config.from_yaml(TEST_CONFIG_PATH)
 
     # Validate
@@ -63,7 +62,6 @@ def test_config_from_yaml(TEST_CONFIG_PATH):
 
 
 def test_config_from_json(TEST_CONFIG_PATH_JSON):
-
     config = Config.from_json(TEST_CONFIG_PATH_JSON)
 
     # Validate
@@ -73,7 +71,6 @@ def test_config_from_json(TEST_CONFIG_PATH_JSON):
 
 
 def test_get_source_config(TEST_CONFIG_PATH):
-
     config = Config.from_yaml(TEST_CONFIG_PATH)
 
     # Validate

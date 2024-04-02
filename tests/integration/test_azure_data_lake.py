@@ -3,7 +3,6 @@ from viadot.sources import AzureDataLake
 
 
 def test_upload_csv(TEST_CSV_FILE_PATH, TEST_ADLS_FILE_PATH_CSV):
-
     lake = AzureDataLake(config_key="adls_test")
 
     assert not lake.exists(TEST_ADLS_FILE_PATH_CSV)
@@ -18,7 +17,6 @@ def test_upload_csv(TEST_CSV_FILE_PATH, TEST_ADLS_FILE_PATH_CSV):
 
 
 def test_upload_parquet(TEST_PARQUET_FILE_PATH, TEST_ADLS_FILE_PATH_PARQUET):
-
     lake = AzureDataLake(config_key="adls_test")
 
     assert not lake.exists(TEST_ADLS_FILE_PATH_PARQUET)
@@ -35,7 +33,6 @@ def test_upload_parquet(TEST_PARQUET_FILE_PATH, TEST_ADLS_FILE_PATH_PARQUET):
 
 
 def test_from_df_csv(TEST_ADLS_FILE_PATH_CSV):
-
     lake = AzureDataLake(config_key="adls_test")
 
     assert not lake.exists(TEST_ADLS_FILE_PATH_CSV)
@@ -52,7 +49,6 @@ def test_from_df_csv(TEST_ADLS_FILE_PATH_CSV):
 
 
 def test_from_df_parquet(TEST_ADLS_FILE_PATH_PARQUET):
-
     lake = AzureDataLake(config_key="adls_test")
 
     assert not lake.exists(TEST_ADLS_FILE_PATH_PARQUET)

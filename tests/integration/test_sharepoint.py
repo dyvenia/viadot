@@ -19,7 +19,7 @@ def test_is_configured():
 
 def test_is_configured_throws_credential_error():
     with pytest.raises(CredentialError):
-        s = Sharepoint(
+        _ = Sharepoint(
             credentials={
                 "site": None,
                 "username": "test_user",
@@ -27,7 +27,7 @@ def test_is_configured_throws_credential_error():
             },
         )
     with pytest.raises(CredentialError):
-        s = Sharepoint(
+        _ = Sharepoint(
             credentials={
                 "site": "test_site",
                 "username": None,
@@ -35,7 +35,7 @@ def test_is_configured_throws_credential_error():
             },
         )
     with pytest.raises(CredentialError):
-        s = Sharepoint(
+        _ = Sharepoint(
             credentials={
                 "site": "test_site",
                 "username": "test_user",

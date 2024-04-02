@@ -1,6 +1,6 @@
-import pytest
-
 from unittest import mock
+
+import pytest
 
 from viadot.sources import Genesys
 
@@ -140,17 +140,17 @@ def test_create_genesys_class(genesys):
 
 @pytest.mark.init
 def test_default_credential_param(genesys):
-    assert genesys.credentials != None and type(genesys.credentials) == dict
+    assert genesys.credentials is not None and isinstance(genesys.credentials, dict)
 
 
 @pytest.mark.init
 def test_environment_param(genesys):
-    assert genesys.environment != None and type(genesys.environment) == str
+    assert genesys.environment is not None and isinstance(genesys.environment, str)
 
 
 @pytest.mark.init
 def test_schedule_id_param(genesys):
-    assert genesys.schedule_id != None and type(genesys.schedule_id) == str
+    assert genesys.schedule_id is not None and isinstance(genesys.schedule_id, str)
 
 
 @pytest.mark.parametrize("input_name", ["test_name", "12345", ".##@@"])
@@ -164,7 +164,7 @@ def test_other_inicial_params(input_name):
 def test_connection_with_genesys_api(genesys):
     test_genesys_connection = genesys.authorization_token
     assert (
-        type(test_genesys_connection) == dict
+        isinstance(test_genesys_connection, dict)
         and len(test_genesys_connection.items()) > 0
     )
 
@@ -199,7 +199,7 @@ def test_download_reports(mock_download_files, var_dictionary, genesys):
     genesys.start_date = var_dictionary["start_date"]
     file_name_list = genesys.download_all_reporting_exports()
 
-    assert type(file_name_list) == list and len(file_name_list) > 0
+    assert isinstance(file_name_list, list) and len(file_name_list) > 0
     mock_download_files.assert_called()
 
 

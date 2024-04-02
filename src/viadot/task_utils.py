@@ -52,10 +52,7 @@ def get_latest_timestamp_file_path(files: List[str]) -> str:
 
     logger = prefect.context.get("logger")
 
-    extract_fname = (
-        lambda f: os.path.basename(f).replace(".csv", "").replace(".parquet", "")
-    )
-    file_names = [extract_fname(file) for file in files]
+    file_names = [Path(file).stem for file in files]
     latest_file_name = max(file_names, key=lambda d: datetime.fromisoformat(d))
     latest_file = files[file_names.index(latest_file_name)]
 
@@ -200,7 +197,6 @@ def df_to_csv(
     if_exists: Literal["append", "replace", "skip"] = "replace",
     **kwargs,
 ) -> None:
-
     """
     Task to create csv file based on pandas DataFrame.
     Args:
@@ -226,7 +222,7 @@ def df_to_csv(
         if not os.path.isfile(path):
             directory = os.path.dirname(path)
             os.makedirs(directory, exist_ok=True)
-    except:
+    except Exception:
         pass
 
     out_df.to_csv(path, index=False, sep=sep)
@@ -262,7 +258,7 @@ def df_to_parquet(
         if not os.path.isfile(path):
             directory = os.path.dirname(path)
             os.makedirs(directory, exist_ok=True)
-    except:
+    except Exception:
         pass
 
     out_df.to_parquet(path, index=False, **kwargs)
@@ -311,7 +307,7 @@ def cleanup_validation_clutter(expectations_path):
 def df_converts_bytes_to_int(df: pd.DataFrame) -> pd.DataFrame:
     logger = prefect.context.get("logger")
     logger.info("Converting bytes in dataframe columns to list of integers")
-    return df.applymap(lambda x: list(map(int, x)) if isinstance(x, bytes) else x)
+    return df.applymap(lambda x: list(map(int, x)) if isinstance(x, bytes) else x)  # noqa
 
 
 @task(
@@ -364,7 +360,6 @@ def custom_mail_state_handler(
     from_email: str = None,
     to_emails: str = None,
 ) -> prefect.engine.state.State:
-
     """
     Custom state handler configured to work with sendgrid.
     Works as a standalone state handler, or can be called from within a custom state handler.
@@ -417,8 +412,8 @@ def custom_mail_state_handler(
     <p>More details here: {url}</p></strong>",
     )
     try:
-        send_grid = SendGridAPIClient(api_key)
-        response = send_grid.send(message)
+        sendgrid = SendGridAPIClient(api_key)
+        sendgrid.send(message)
     except Exception as e:
         raise e
 

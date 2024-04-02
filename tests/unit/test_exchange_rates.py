@@ -53,7 +53,6 @@ def exchange_rates():
 
 
 def test_to_json_values(exchange_rates):
-
     expected_value = TEST_DATA.items()
     retrieved_value = exchange_rates.to_json().items()
 
