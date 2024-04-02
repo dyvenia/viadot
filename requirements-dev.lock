@@ -104,6 +104,7 @@ comm==0.2.2
 contourpy==1.2.0
     # via matplotlib
 coverage==7.4.4
+    # via coverage
     # via pytest-cov
 cryptography==42.0.5
     # via authlib
@@ -431,6 +432,7 @@ pygments==2.17.2
     # via nbconvert
 pyjwt==2.8.0
     # via msal
+    # via pyjwt
 pymdown-extensions==10.4
     # via mkdocs-material
     # via mkdocstrings
@@ -529,10 +531,6 @@ send2trash==1.8.2
     # via nbclassic
 sendgrid==6.9.7
     # via viadot2
-setuptools==69.2.0
-    # via pandas-gbq
-    # via pydata-google-auth
-    # via redshift-connector
 shapely==1.8.0
     # via viadot2
 sharepy==2.0.0
@@ -627,3 +625,7 @@ zeep==4.2.1
     # via simple-salesforce
 zipp==3.18.1
     # via importlib-metadata
+setuptools==69.2.0
+    # via pandas-gbq
+    # via pydata-google-auth
+    # via redshift-connector
