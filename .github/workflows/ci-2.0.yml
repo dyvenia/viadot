@@ -48,6 +48,8 @@ jobs:
           rye sync --no-lock
 
       - name: Run tests
-        run: |
-          rye run coverage run --branch -m pytest tests/unit -vv
-          rye run coverage report --fail-under=43
+        run: rye run coverage run --branch -m pytest tests/unit -vv
+
+      - name: Generate coverage report
+        if: always()
+        run: rye run coverage report --fail-under=43
