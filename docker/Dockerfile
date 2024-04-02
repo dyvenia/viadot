@@ -1,11 +1,16 @@
 FROM python:3.10-slim-bullseye
 
 # Add user
-RUN useradd --create-home viadot && \
+RUN useradd --non-unique --uid 1000 --create-home viadot && \
     chown -R viadot /home/viadot && \
     usermod -aG sudo viadot && \
     find /usr/local/lib -type d -exec chmod 777 {} \; && \
     find /usr/local/bin -type d -exec chmod 777 {} \;
+
+# For easy removal of dotfiles. Must be executed with bash.
+SHELL ["/bin/bash", "-c"]
+RUN shopt -s dotglob
+SHELL ["/bin/sh", "-c"]
 
 RUN groupadd docker && \
     usermod -aG docker viadot
@@ -18,7 +23,7 @@ RUN echo "Acquire::Check-Valid-Until \"false\";\nAcquire::Check-Date \"false\";"
 RUN apt update -q && yes | apt install -q gnupg vim unixodbc-dev build-essential \
     curl python3-dev libboost-all-dev libpq-dev python3-gi sudo git software-properties-common
 ENV PIP_NO_CACHE_DIR=1
-RUN pip install --upgrade cffi
+RUN pip install --upgrade cffi --user
 
 # Fix for old SQL Servers still using TLS < 1.2
 RUN chmod +rwx /usr/lib/ssl/openssl.cnf && \
@@ -38,7 +43,7 @@ COPY docker/odbcinst.ini /etc
 # This one's needed for the SAP RFC connector. 
 # It must be installed here as the SAP package does not define its dependencies, 
 # so `pip install pyrfc` breaks if all deps are not already present.
-RUN pip install cython==0.29.24
+RUN pip install cython==0.29.24 --user
 
 # Python env
 WORKDIR /code
@@ -46,7 +51,7 @@ COPY pyproject.toml /code/
 RUN pip install --upgrade pip
 
 COPY . .
-RUN pip install .
+RUN pip install . --user
 
 # BEGIN Databricks source setup
 RUN apt install -y wget apt-transport-https && \
@@ -69,3 +74,5 @@ ENV HOME="/home/$USER"
 WORKDIR ${HOME}
 
 USER ${USER}
+
+ENV PATH="$HOME/.local/bin:$PATH"
