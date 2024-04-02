@@ -55,9 +55,9 @@ jobs:
       - name: Install dependencies
         run: |
           rye config --set-bool behavior.use-uv=true
-          rye sync
+          rye sync --no-lock
 
       - name: Run tests
         run: |
-          coverage run --branch -m pytest tests/unit -vv
-          coverage report --fail-under=34
+          rye run coverage run --branch -m pytest tests/unit -vv
+          rye run coverage report --fail-under=43
