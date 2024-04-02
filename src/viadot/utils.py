@@ -16,10 +16,9 @@ from requests.exceptions import ConnectionError, HTTPError, ReadTimeout, Timeout
 from requests.packages.urllib3.util.retry import Retry
 from urllib3.exceptions import ProtocolError
 
-from ..sources import Databricks
-from .exceptions import APIError, ValidationError
-from .signals import SKIP
-from .sources.base import Source
+from viadot.exceptions import APIError, ValidationError
+from viadot.signals import SKIP
+from viadot.sources.base import Source
 
 
 def slugify(name: str) -> str:
@@ -301,7 +300,7 @@ def build_merge_query(
 
 
 def _get_table_columns(schema: str, table: str, source: Source) -> str:
-    if isinstance(source, Databricks):
+    if source.__class__.__name__ == "Databricks":
         result = source.run(f"SHOW COLUMNS IN {schema}.{table}", "pandas")
         columns_query_result = result["col_name"].values
     else:

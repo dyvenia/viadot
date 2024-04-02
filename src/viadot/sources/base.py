@@ -7,8 +7,8 @@ import pandas as pd
 import pyarrow as pa
 import pyodbc
 
-from ..config import get_source_credentials
-from ..signals import SKIP
+from viadot.config import get_source_credentials
+from viadot.signals import SKIP
 
 logger = logging.getLogger(__name__)
 

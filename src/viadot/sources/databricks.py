@@ -7,17 +7,15 @@ import pyspark.sql.dataframe as spark
 from delta.tables import *  # noqa
 from pydantic import BaseModel, root_validator
 
-from viadot.exceptions import CredentialError
-
-from ..config import get_source_credentials
-from ..exceptions import TableAlreadyExists, TableDoesNotExist
-from ..utils import (
+from viadot.config import get_source_credentials
+from viadot.exceptions import CredentialError, TableAlreadyExists, TableDoesNotExist
+from viadot.sources.base import Source
+from viadot.utils import (
     _cast_df_cols,
     add_viadot_metadata_columns,
     build_merge_query,
     df_snakecase_column_names,
 )
-from .base import Source
 
 
 class DatabricksCredentials(BaseModel):

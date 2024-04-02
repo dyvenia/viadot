@@ -4,10 +4,10 @@ from typing import Any, Dict, List
 import pandas as pd
 from adlfs import AzureBlobFileSystem, AzureDatalakeFileSystem
 
-from ..config import get_source_credentials
-from ..exceptions import CredentialError
-from .base import Source
-from ..utils import add_viadot_metadata_columns
+from viadot.config import get_source_credentials
+from viadot.exceptions import CredentialError
+from viadot.sources.base import Source
+from viadot.utils import add_viadot_metadata_columns
 
 
 class AzureDataLake(Source):

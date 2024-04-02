@@ -10,11 +10,11 @@ import aiohttp
 import pandas as pd
 from aiolimiter import AsyncLimiter
 
-from ..config import get_source_credentials
-from ..exceptions import APIError, CredentialError
-from ..signals import SKIP
-from ..utils import handle_api_response, validate
-from .base import Source
+from viadot.config import get_source_credentials
+from viadot.exceptions import APIError, CredentialError
+from viadot.signals import SKIP
+from viadot.sources.base import Source
+from viadot.utils import handle_api_response, validate
 
 warnings.simplefilter("ignore")
 

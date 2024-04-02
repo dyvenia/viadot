@@ -5,11 +5,10 @@ from typing import Any, Dict, List, Literal
 import pandas as pd
 import requests
 
+from viadot.config import get_source_credentials
 from viadot.exceptions import CredentialError
+from viadot.sources.base import Source
 from viadot.utils import add_viadot_metadata_columns, cleanup_df, validate
-
-from ..config import get_source_credentials
-from .base import Source
 
 Currency = Literal[
     "USD", "EUR", "GBP", "CHF", "PLN", "DKK", "COP", "CZK", "SEK", "NOK", "ISK"

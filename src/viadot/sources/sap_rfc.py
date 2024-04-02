@@ -28,8 +28,7 @@ from sql_metadata import Parser
 from viadot.config import get_source_credentials
 from viadot.exceptions import CredentialError, DataBufferExceeded
 from viadot.sources.base import Source
-
-from ..utils import add_viadot_metadata_columns, validate
+from viadot.utils import add_viadot_metadata_columns, validate
 
 logger = logging.getLogger()
 

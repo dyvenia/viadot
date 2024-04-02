@@ -6,12 +6,11 @@ import sharepy
 from pydantic import BaseModel, root_validator
 from sharepy.errors import AuthError
 
+from viadot.config import get_source_credentials
 from viadot.exceptions import CredentialError
-
-from ..config import get_source_credentials
-from ..signals import SKIP
-from ..utils import add_viadot_metadata_columns, cleanup_df, validate
-from .base import Source
+from viadot.signals import SKIP
+from viadot.sources.base import Source
+from viadot.utils import add_viadot_metadata_columns, cleanup_df, validate
 
 
 class SharepointCredentials(BaseModel):
