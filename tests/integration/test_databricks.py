@@ -51,7 +51,6 @@ MIXED_TYPES_DATA = pd.DataFrame({"test": ["a", "b", 1.1, 1, True]})
 
 @pytest.fixture(scope="session")
 def databricks(databricks_config_key):
-
     databricks = Databricks(
         config_key=databricks_config_key,
     )
@@ -59,7 +58,7 @@ def databricks(databricks_config_key):
     try:
         databricks.drop_schema(TEST_SCHEMA)
         databricks.drop_table(TEST_TABLE)
-    except:
+    except Exception:
         pass
 
     databricks.create_schema(TEST_SCHEMA)
@@ -72,14 +71,13 @@ def databricks(databricks_config_key):
         pass
     try:
         databricks.drop_schema(TEST_SCHEMA)
-    except:
+    except Exception:
         pass
     databricks.session.stop()
 
 
 @pytest.mark.dependency()
 def test_create_schema(databricks):
-
     try:
         databricks.drop_schema(TEST_SCHEMA_2)
     except AnalysisException:
@@ -96,13 +94,12 @@ def test_create_schema(databricks):
 
     try:
         databricks.drop_schema(TEST_SCHEMA_2)
-    except:
+    except Exception:
         pass
 
 
 @pytest.mark.dependency(depends=["test_create_schema"])
 def test_drop_schema(databricks):
-
     exists = databricks._check_if_schema_exists(TEST_SCHEMA)
     assert exists is True
 
@@ -117,7 +114,6 @@ def test_drop_schema(databricks):
 
 @pytest.mark.dependency()
 def test_create_table(databricks):
-
     exists = databricks._check_if_table_exists(schema=TEST_SCHEMA, table=TEST_TABLE)
     assert exists is False
 
@@ -132,13 +128,12 @@ def test_create_table(databricks):
     # Cleanup.
     try:
         databricks.drop_table(schema=TEST_SCHEMA, table=TEST_TABLE)
-    except:
+    except Exception:
         pass
 
 
 @pytest.mark.dependency(depends=["test_create_table"])
 def test_drop_table(databricks):
-
     exists = databricks._check_if_table_exists(schema=TEST_SCHEMA, table=TEST_TABLE)
     assert exists is False
 
@@ -156,7 +151,6 @@ def test_drop_table(databricks):
 
 # @pytest.mark.dependency(depends=["test_create_table", "test_drop_table"])
 def test_to_df(databricks):
-
     # Assumptions.
     exists = databricks._check_if_table_exists(schema=TEST_SCHEMA, table=TEST_TABLE)
     assert exists is False
@@ -187,11 +181,10 @@ def test_to_df(databricks):
 
 @pytest.mark.dependency()
 def test_create_table_replace(databricks):
-
     # Setup.
     try:
         databricks.drop_table(schema=TEST_SCHEMA, table=TEST_TABLE)
-    except:
+    except Exception:
         pass
 
     exists = databricks._check_if_table_exists(schema=TEST_SCHEMA, table=TEST_TABLE)
@@ -215,7 +208,6 @@ def test_create_table_replace(databricks):
 
 
 def test_replace_different_column_schema(databricks):
-
     assert not databricks._check_if_table_exists(schema=TEST_SCHEMA, table=TEST_TABLE)
 
     databricks.create_schema(TEST_SCHEMA)
@@ -235,7 +227,6 @@ def test_replace_different_column_schema(databricks):
 
 
 def test_snakecase_column_names(databricks):
-
     assert not databricks._check_if_table_exists(schema=TEST_SCHEMA, table=TEST_TABLE)
 
     # Calling the to_df() method without the wrapper adding metadata.
@@ -274,7 +265,6 @@ def test_snakecase_column_names(databricks):
 
 
 def test_create_table_from_pandas_handles_mixed_types(databricks):
-
     assert not databricks._check_if_table_exists(schema=TEST_SCHEMA, table=TEST_TABLE)
 
     databricks.create_schema(TEST_SCHEMA)

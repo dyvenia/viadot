@@ -4,10 +4,10 @@ from typing import Any, Dict, List
 import pandas as pd
 from adlfs import AzureBlobFileSystem, AzureDatalakeFileSystem
 
-from ..config import get_source_credentials
-from ..exceptions import CredentialError
-from .base import Source
-from ..utils import add_viadot_metadata_columns
+from viadot.config import get_source_credentials
+from viadot.exceptions import CredentialError
+from viadot.sources.base import Source
+from viadot.utils import add_viadot_metadata_columns
 
 
 class AzureDataLake(Source):
@@ -35,7 +35,6 @@ class AzureDataLake(Source):
         *args,
         **kwargs,
     ):
-
         credentials = credentials or get_source_credentials(config_key)
         required_credentials = (
             "account_name",
@@ -82,7 +81,7 @@ class AzureDataLake(Source):
                 client_id=client_id,
                 client_secret=client_secret,
             )
-            self.base_url = f"az://"
+            self.base_url = "az://"
 
     def upload(
         self,
@@ -110,7 +109,7 @@ class AzureDataLake(Source):
         """
 
         if self.gen == 1:
-            raise NotImplemented(
+            raise NotImplementedError(
                 "Azure Data Lake Gen1 does not support simple file upload."
             )
 
@@ -165,9 +164,8 @@ class AzureDataLake(Source):
         recursive: bool = False,
         overwrite: bool = True,
     ) -> None:
-
         if overwrite is False:
-            raise NotImplemented(
+            raise NotImplementedError(
                 "Currently, only the default behavior (overwrite) is available."
             )
 

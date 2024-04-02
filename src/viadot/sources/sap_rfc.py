@@ -4,15 +4,16 @@ from collections import OrderedDict
 from typing import (
     Any,
     Dict,
+    Iterable,
+    Iterator,
     List,
-    OrderedDict as OrderedDictType,
     Literal,
     Tuple,
     Union,
-    Iterable,
-    Iterator,
 )
-
+from typing import (
+    OrderedDict as OrderedDictType,
+)
 
 import numpy as np
 import pandas as pd
@@ -25,9 +26,9 @@ except ModuleNotFoundError:
 from sql_metadata import Parser
 
 from viadot.config import get_source_credentials
-from ..utils import validate, add_viadot_metadata_columns
 from viadot.exceptions import CredentialError, DataBufferExceeded
 from viadot.sources.base import Source
+from viadot.utils import add_viadot_metadata_columns, validate
 
 logger = logging.getLogger()
 
@@ -123,7 +124,7 @@ def detect_extra_rows(
     elif data_raw.shape[0] != row_index:
         data_raw = data_raw[:row_index]
         logger.warning(
-            f"New rows were generated during the execution of the script. The table is truncated to the number of rows for the first chunk."
+            "New rows were generated during the execution of the script. The table is truncated to the number of rows for the first chunk."
         )
 
     return row_index, data_raw, start
@@ -158,7 +159,7 @@ def replace_separator_in_data(
         logger.warning("\n" + data_raw[no_sep][record_key])
         split_array = np.array([*data_raw[no_sep][record_key]])
         position = np.where(split_array == f"{sep}")[0]
-        index_sep_index = np.argwhere(np.in1d(position, pos_sep_index) == False)
+        index_sep_index = np.argwhere(np.in1d(position, pos_sep_index) == False)  # noqa
         index_sep_index = index_sep_index.reshape(
             len(index_sep_index),
         )
@@ -411,7 +412,7 @@ class SAPRFC(Source):
                 self.logger.warning(
                     f"Trimmed conditions ({filters_pretty}) will be applied client-side."
                 )
-                self.logger.warning(f"See the documentation for caveats.")
+                self.logger.warning("See the documentation for caveats.")
 
         self.client_side_filters = client_side_filters
         return where_trimmed
@@ -870,7 +871,7 @@ class SAPRFCV2(Source):
                 self.logger.warning(
                     f"Trimmed conditions ({filters_pretty}) will be applied client-side."
                 )
-                self.logger.warning(f"See the documentation for caveats.")
+                self.logger.warning("See the documentation for caveats.")
 
         self.client_side_filters = client_side_filters
         return where_trimmed

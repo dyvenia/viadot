@@ -16,7 +16,7 @@ def trino(trino_config_key):
 
     try:
         trino.drop_schema(TEST_SCHEMA, cascade=True)
-    except:
+    except Exception:
         pass
 
     yield trino

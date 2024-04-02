@@ -1,18 +1,15 @@
 <!-- Thanks for contributing to viadot! 🙏-->
 
 ## Summary
+
 <!-- A sentence summarizing the PR -->
 
-
-
-
 ## Importance
+
 <!-- Why is this PR important? -->
 
-
-
-
 ## Checklist
+
 <!-- PRs will not be reviewed unless these boxes are checked -->
 
 This PR:

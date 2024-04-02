@@ -3,7 +3,7 @@ import logging
 import re
 import subprocess
 from datetime import datetime, timezone
-from typing import Any, Callable, Dict, List, Literal, Union, Optional
+from typing import Any, Callable, Dict, List, Literal, Optional
 
 import pandas as pd
 import pyodbc
@@ -16,9 +16,9 @@ from requests.exceptions import ConnectionError, HTTPError, ReadTimeout, Timeout
 from requests.packages.urllib3.util.retry import Retry
 from urllib3.exceptions import ProtocolError
 
-from .exceptions import APIError
-from .exceptions import ValidationError
-from .signals import SKIP
+from viadot.exceptions import APIError, ValidationError
+from viadot.signals import SKIP
+from viadot.sources.base import Source
 
 
 def slugify(name: str) -> str:
@@ -89,7 +89,7 @@ def handle_response(
         msg = "The connection was successful, "
         msg += f"however the API call to {url} timed out after {timeout[1]}s "
         msg += "while waiting for the server to return data."
-        raise APIError(msg)
+        raise APIError(msg) from e
     except HTTPError as e:
         raise APIError(
             f"The API call to {url} failed. "
@@ -97,8 +97,8 @@ def handle_response(
         ) from e
     except (ConnectionError, Timeout) as e:
         raise APIError(f"The API call to {url} failed due to connection issues.") from e
-    except ProtocolError as e:
-        raise APIError(f"Did not receive any reponse for the API call to {url}.")
+    except ProtocolError:
+        raise APIError(f"Did not receive any response for the API call to {url}.")
     except Exception as e:
         raise APIError("Unknown error.") from e
 
@@ -171,7 +171,7 @@ def get_sql_server_table_dtypes(
     """
 
     query = f"""
-    SELECT 
+    SELECT
         col.name,
         t.name,
         col.max_length
@@ -246,7 +246,7 @@ def _cast_df_cols(
 def build_merge_query(
     table: str,
     primary_key: str,
-    source: Union[pyodbc.Connection, "Databricks"],
+    source: Source,
     stg_schema: str = None,
     stg_table: str = "stg",
     schema: str = None,
@@ -260,9 +260,8 @@ def build_merge_query(
     Args:
         table (str): The table to merge into.
         primary_key (str): The column on which to merge.
-        source (pyodbc.Connection or Databricks): Either the connection to the database
-            or the Databricks object used to connect to the Spark cluster on which
-            the query will be executed.
+        source (Source): The Databricks object used to connect to the Spark cluster on
+            which the query will be executed.
         stg_schema (str, Optional): The schema where the staging table is located.
         stg_table (str, Optional): The table with new/updated data.
         schema (str, Optional): The schema where the table is located.
@@ -300,12 +299,13 @@ def build_merge_query(
     return merge_query
 
 
-def _get_table_columns(
-    schema: str, table: str, source: Union[pyodbc.Connection, "Databricks"]
-) -> str:
-    if isinstance(source, pyodbc.Connection):
+def _get_table_columns(schema: str, table: str, source: Source) -> str:
+    if source.__class__.__name__ == "Databricks":
+        result = source.run(f"SHOW COLUMNS IN {schema}.{table}", "pandas")
+        columns_query_result = result["col_name"].values
+    else:
         columns_query = f"""
-        SELECT 
+        SELECT
             col.name
         FROM sys.tables AS tab
             INNER JOIN sys.columns AS col
@@ -314,13 +314,9 @@ def _get_table_columns(
         AND schema_name(tab.schema_id) = '{schema}'
         ORDER BY column_id;
         """
-        cursor = source.cursor()
+        cursor = source.con.cursor()
         columns_query_result = cursor.execute(columns_query).fetchall()
         cursor.close()
-
-    else:
-        result = source.run(f"SHOW COLUMNS IN {schema}.{table}", "pandas")
-        columns_query_result = result["col_name"].values
 
     return columns_query_result
 
@@ -360,7 +356,6 @@ def gen_bulk_insert_query_from_df(
         )
 
     def _gen_insert_query_from_records(records: List[tuple]) -> str:
-
         tuples = map(str, tuple(records))
 
         # Change Nones to NULLs
@@ -391,7 +386,7 @@ def gen_bulk_insert_query_from_df(
     # single quotes.
     tuples_escaped = [
         tuple(
-            f"""{value.replace("'", "''")}""" if type(value) == str else value
+            f"""{value.replace("'", "''")}""" if isinstance(value, str) else value
             for value in row
         )
         for row in tuples_raw
@@ -501,13 +496,13 @@ def validate_column_size(
                 else:
                     logger.log(
                         level=stream_level,
-                        msg=f"[column_size] test for {k} failed. field lenght is different than {v}",
+                        msg=f"[column_size] test for {k} failed. field length is different than {v}",
                     )
                     failed_tests += 1
                     failed_tests_list.append("column_size error")
             except Exception as e:
                 logger.log(level=stream_level, msg=f"{e}")
-    except TypeError as e:
+    except TypeError:
         logger.log(
             level=stream_level,
             msg=f"Please provide `column_size` parameter as dictionary {'columns': value}.",
@@ -537,7 +532,7 @@ def validate_column_list_to_match(
     df, tests, logger, stream_level, failed_tests, failed_tests_list
 ):
     if set(tests["column_list_to_match"]) == set(df.columns):
-        logger.log(level=stream_level, msg=f"[column_list_to_match] passed.")
+        logger.log(level=stream_level, msg=f"{tests['column_list_to_match']} passed.")
     else:
         failed_tests += 1
         failed_tests_list.append("column_list_to_match error")

@@ -1,4 +1,4 @@
-from .base import SQL
+from viadot.sources.base import SQL
 
 
 class SQLite(SQL):

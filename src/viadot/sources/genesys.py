@@ -1,20 +1,20 @@
-import os
-import json
-import base64
-import warnings
 import asyncio
-from typing import Any, Dict, List, Literal, Optional
+import base64
+import json
+import os
+import warnings
 from io import StringIO
+from typing import Any, Dict, List, Literal, Optional
 
 import aiohttp
 import pandas as pd
 from aiolimiter import AsyncLimiter
 
-from ..config import get_source_credentials
-from .base import Source
-from ..exceptions import CredentialError, APIError
-from ..utils import handle_api_response, validate
-from ..signals import SKIP
+from viadot.config import get_source_credentials
+from viadot.exceptions import APIError, CredentialError
+from viadot.signals import SKIP
+from viadot.sources.base import Source
+from viadot.utils import handle_api_response, validate
 
 warnings.simplefilter("ignore")
 
@@ -89,7 +89,7 @@ class Genesys(Source):
         if self.ids_mapping is None:
             self.ids_mapping = self.credentials.get("IDS_MAPPING", None)
 
-            if type(self.ids_mapping) is dict and self.ids_mapping is not None:
+            if isinstance(self.ids_mapping, dict) and self.ids_mapping is not None:
                 self.logger.info("IDS_MAPPING loaded from local credential.")
             else:
                 self.logger.warning(
@@ -235,7 +235,7 @@ class Genesys(Source):
 
         if request_json is not None:
             entities = request_json.get("entities")
-            assert type(entities) == list
+            assert isinstance(entities, list)
             if len(entities) != 0:
                 for entity in entities:
                     tmp = [
@@ -282,10 +282,11 @@ class Genesys(Source):
         else:
             final_file_name = f"{output_file_name}.{file_extension}"
 
-        response_data = response_file.content
         df = pd.read_csv(StringIO(response_file.content.decode("utf-8")))
+
         if drop_duplicates is True:
             df.drop_duplicates(inplace=True, ignore_index=True)
+
         df.to_csv(os.path.join(path, final_file_name), index=False, sep=sep)
 
     def download_all_reporting_exports(

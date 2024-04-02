@@ -1,4 +1,5 @@
 """Tests for CloudForCustomers source class"""
+
 from datetime import datetime, timedelta
 
 import pandas as pd
@@ -24,15 +25,15 @@ def test_is_configured():
 
 def test_is_configured_throws_credential_error():
     with pytest.raises(CredentialError):
-        c4c = CloudForCustomers(
+        _ = CloudForCustomers(
             credentials={"username": "test_user", "password": None},
         )
     with pytest.raises(CredentialError):
-        c4c = CloudForCustomers(
+        _ = CloudForCustomers(
             credentials={"username": None, "password": "test_password"},
         )
     with pytest.raises(CredentialError):
-        c4c = CloudForCustomers(
+        _ = CloudForCustomers(
             credentials={"username": None, "password": None},
         )
 

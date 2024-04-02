@@ -4,20 +4,18 @@ from typing import Literal, Optional, Union
 
 import pandas as pd
 import pyspark.sql.dataframe as spark
-from delta.tables import *
+from delta.tables import *  # noqa
 from pydantic import BaseModel, root_validator
 
-from viadot.exceptions import CredentialError
-
-from ..config import get_source_credentials
-from ..exceptions import TableAlreadyExists, TableDoesNotExist
-from ..utils import (
+from viadot.config import get_source_credentials
+from viadot.exceptions import CredentialError, TableAlreadyExists, TableDoesNotExist
+from viadot.sources.base import Source
+from viadot.utils import (
+    _cast_df_cols,
     add_viadot_metadata_columns,
     build_merge_query,
     df_snakecase_column_names,
-    _cast_df_cols,
 )
-from .base import Source
 
 
 class DatabricksCredentials(BaseModel):
@@ -84,7 +82,7 @@ class Databricks(Source):
             self._session = None
 
     @property
-    def session(self) -> Union[SparkSession, "DatabricksSession"]:
+    def session(self) -> Union[SparkSession, "DatabricksSession"]:  # noqa
         if self._session is None:
             session = self._create_spark_session()
             self._session = session
@@ -110,7 +108,7 @@ class Databricks(Source):
         with open(os.path.expanduser("~/.databricks-connect"), "w") as f:
             json.dump(db_connect_config, f)
 
-        spark = SparkSession.builder.getOrCreate()
+        spark = SparkSession.builder.getOrCreate()  # noqa
         return spark
 
     def _create_spark_connect_session(self):

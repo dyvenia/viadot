@@ -17,7 +17,6 @@ class Config(dict):
     def _get_configuration(
         cls, config: dict, key: Optional[str] = None
     ) -> Optional[dict]:
-
         # Empty config.
         if not config:
             return

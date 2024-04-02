@@ -52,13 +52,7 @@ dev-dependencies = [
     "mkdocstrings==0.19.0",
     "Faker==13.12.1",
     "python-dotenv>=1.0.1",
-]
-
-[tool.coverage.run]
-omit = [
-    "viadot/flows/azure_sql_transform_dbt.py",
-    "viadot/flows/supermetrics_to_adls.py",
-    "viadot/flows/supermetrics_to_azure_sql_v2.py",
+    "coverage>=7.4.4",
 ]
 
 [tool.pytest.ini_options]

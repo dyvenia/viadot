@@ -7,11 +7,10 @@ import pandas as pd
 import requests
 from pydantic import BaseModel, SecretStr, root_validator
 
+from viadot.config import get_source_credentials
 from viadot.exceptions import CredentialError
-
-from ..config import get_source_credentials
-from ..utils import handle_api_response, validate
-from .base import Source
+from viadot.sources.base import Source
+from viadot.utils import handle_api_response, validate
 
 
 class CloudForCustomersCredentials(BaseModel):

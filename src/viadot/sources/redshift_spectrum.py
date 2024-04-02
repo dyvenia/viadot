@@ -318,7 +318,7 @@ class RedshiftSpectrum(Source):
             database=schema, description=description, exist_ok=True
         )
         create_schema_query = f"""
-create external schema if not exists "{schema}" from data catalog 
+create external schema if not exists "{schema}" from data catalog
 database '{schema}'
 iam_role '{self.credentials.get("iam_role")}'
 region '{self.credentials.get("region_name")}'

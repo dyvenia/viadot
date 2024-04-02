@@ -1,8 +1,8 @@
 import pandas as pd
 import requests
 
-from .base import Source
-from ..utils import add_viadot_metadata_columns
+from viadot.sources.base import Source
+from viadot.utils import add_viadot_metadata_columns
 
 
 class UKCarbonIntensity(Source):

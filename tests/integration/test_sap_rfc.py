@@ -17,7 +17,7 @@ FROM b
 WHERE c = 1
 AND d = 2
 AND longcolname = 12345
-AND otherlongcolname = 6789 
+AND otherlongcolname = 6789
 AND thirdlongcolname = 01234
 LIMIT 5
 OFFSET 10

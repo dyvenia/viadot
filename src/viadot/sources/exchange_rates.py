@@ -5,11 +5,10 @@ from typing import Any, Dict, List, Literal
 import pandas as pd
 import requests
 
+from viadot.config import get_source_credentials
 from viadot.exceptions import CredentialError
+from viadot.sources.base import Source
 from viadot.utils import add_viadot_metadata_columns, cleanup_df, validate
-
-from ..config import get_source_credentials
-from .base import Source
 
 Currency = Literal[
     "USD", "EUR", "GBP", "CHF", "PLN", "DKK", "COP", "CZK", "SEK", "NOK", "ISK"
@@ -17,7 +16,6 @@ Currency = Literal[
 
 
 class ExchangeRates(Source):
-
     URL = "https://api.apilayer.com/exchangerates_data/timeseries"
 
     def __init__(
@@ -112,7 +110,6 @@ class ExchangeRates(Source):
         return json.loads(response.text)
 
     def to_records(self) -> List[tuple]:
-
         data = self.get_data()
         records = []
 
@@ -128,13 +125,11 @@ class ExchangeRates(Source):
         return records
 
     def get_columns(self) -> List[str]:
-
         columns = ["Date", "Base"] + self.symbols
 
         return columns
 
     def to_json(self) -> Dict[str, Any]:
-
         records = self.to_records()
         columns = self.get_columns()
         records = [dict(zip(columns, records[i])) for i in range(len(records))]
