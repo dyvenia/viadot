@@ -221,8 +221,6 @@ class ADLSToAzureSQL(Flow):
         self.overwrite_adls = overwrite_adls
         self.if_empty = if_empty
         self.adls_sp_credentials_secret = adls_sp_credentials_secret
-        self.adls_path_conformed = self.get_promoted_path(env="conformed")
-        self.adls_path_operations = self.get_promoted_path(env="operations")
 
         # AzureSQLCreateTable
         self.table = table
@@ -256,20 +254,6 @@ class ADLSToAzureSQL(Flow):
     @staticmethod
     def slugify(name):
         return name.replace(" ", "_").lower()
-
-    def get_promoted_path(self, env: str) -> str:
-        adls_path_clean = self.adls_path.strip("/")
-        extension = adls_path_clean.split(".")[-1].strip()
-        if extension == "parquet":
-            file_name = adls_path_clean.split("/")[-2] + ".csv"
-            common_path = "/".join(adls_path_clean.split("/")[1:-2])
-        else:
-            file_name = adls_path_clean.split("/")[-1]
-            common_path = "/".join(adls_path_clean.split("/")[1:-1])
-
-        promoted_path = os.path.join(env, common_path, file_name)
-
-        return promoted_path
 
     def gen_flow(self) -> Flow:
         lake_to_df_task = AzureDataLakeToDF(timeout=self.timeout)
@@ -327,22 +311,6 @@ class ADLSToAzureSQL(Flow):
                     flow=self,
                 )
 
-            promote_to_conformed_task = AzureDataLakeCopy(timeout=self.timeout)
-            promote_to_conformed_task.bind(
-                from_path=self.adls_path,
-                to_path=self.adls_path_conformed,
-                sp_credentials_secret=self.adls_sp_credentials_secret,
-                vault_name=self.vault_name,
-                flow=self,
-            )
-            promote_to_operations_task = AzureDataLakeCopy(timeout=self.timeout)
-            promote_to_operations_task.bind(
-                from_path=self.adls_path_conformed,
-                to_path=self.adls_path_operations,
-                sp_credentials_secret=self.adls_sp_credentials_secret,
-                vault_name=self.vault_name,
-                flow=self,
-            )
             create_table_task = AzureSQLCreateTable(timeout=self.timeout)
             create_table_task.bind(
                 schema=self.schema,
@@ -368,13 +336,9 @@ class ADLSToAzureSQL(Flow):
             # data validation function (optional)
             if self.validate_df_dict:
                 validate_df.bind(df=df, tests=self.validate_df_dict, flow=self)
-                validate_df.set_upstream(lake_to_df_task, flow=self)
+                df_reorder.set_upstream(validate_df, flow=self)
 
-            df_reorder.set_upstream(lake_to_df_task, flow=self)
+            df_to_csv.set_upstream(dtypes, flow=self)
             df_to_csv.set_upstream(df_reorder, flow=self)
-            promote_to_conformed_task.set_upstream(df_to_csv, flow=self)
             create_table_task.set_upstream(df_to_csv, flow=self)
-            promote_to_operations_task.set_upstream(
-                promote_to_conformed_task, flow=self
-            )
             bulk_insert_task.set_upstream(create_table_task, flow=self)

@@ -64,7 +64,7 @@ class CreateTableFromBlob(Task):
         table: str,
         dtypes: Dict[str, Any],
         sep: str = None,
-        if_exists: Literal = ["fail", "replace", "append", "delete"],
+        if_exists: Literal["fail", "replace", "append", "delete"] = "fail",
     ):
         """
         Create a table from an Azure Blob object.
@@ -75,8 +75,8 @@ class CreateTableFromBlob(Task):
         schema (str): Destination schema.
         table (str): Destination table.
         dtypes (Dict[str, Any]): Data types to force.
-        sep (str): The separator to use to read the CSV file.
-        if_exists (Literal, optional): What to do if the table already exists.
+        sep (str, optional): The separator to use to read the CSV file. Defaults to None.
+        if_exists (Literal["fail", "replace", "append", "delete"], optional): What to do if the table already exists. Defaults to "fail".
         """
 
         fqn = f"{schema}.{table}" if schema else table
