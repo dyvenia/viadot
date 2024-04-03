@@ -55,7 +55,7 @@ RUN if [ "$databricks" = "true" ]; then \
     apt-get update && \
     apt-get install -y temurin-11-jdk && \
     find /usr/bin/java -type d -exec chmod 777 {} \; && \
-    pip install .[databricks]; \
+    pip install .[databricks] --user; \
     fi
 
 ENV SPARK_HOME /usr/local/lib/python3.10/site-packages/pyspark
