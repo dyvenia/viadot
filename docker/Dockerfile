@@ -58,7 +58,6 @@ ENV SPARK_HOME /usr/local/lib/python3.10/site-packages/pyspark
 # END Databricks source setup
 
 # Python env
-WORKDIR /code
 RUN pip install --upgrade pip
 
 ENV USER viadot
@@ -66,14 +65,11 @@ USER ${USER}
 ENV HOME="/home/$USER"
 ENV PATH="$HOME/.local/bin:$PATH"
 
-COPY --chown=${USER}:${USER} . .
-
-RUN pip install . --user
-
-# Final workdir
 WORKDIR ${HOME}
 
+COPY --chown=${USER}:${USER} . ./viadot
+
+RUN pip install ./viadot --user
+
 # Cleanup.
-USER root
-RUN rm -rf /code
-USER ${USER}
+RUN rm -rf ./viadot
