@@ -60,7 +60,6 @@ ENV SPARK_HOME /usr/local/lib/python3.10/site-packages/pyspark
 # Python env
 WORKDIR /code
 RUN pip install --upgrade pip
-RUN curl -LsSf https://astral.sh/uv/install.sh | sh
 
 ENV USER viadot
 USER ${USER}
