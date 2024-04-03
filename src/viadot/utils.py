@@ -17,7 +17,6 @@ from urllib3.exceptions import ProtocolError
 
 from viadot.exceptions import APIError, ValidationError
 from viadot.signals import SKIP
-from viadot.sources.base import Source
 
 
 def slugify(name: str) -> str:
