@@ -8,10 +8,10 @@ from typing import Any, Callable, Dict, List, Literal, Optional
 import pandas as pd
 import pyodbc
 import requests
+
 # from prefect.utilities.graphql import EnumValue, with_args
 from requests.adapters import HTTPAdapter
-from requests.exceptions import (ConnectionError, HTTPError, ReadTimeout,
-                                 Timeout)
+from requests.exceptions import ConnectionError, HTTPError, ReadTimeout, Timeout
 from requests.packages.urllib3.util.retry import Retry
 from urllib3.exceptions import ProtocolError
 

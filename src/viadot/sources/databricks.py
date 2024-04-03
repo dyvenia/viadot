@@ -7,18 +7,20 @@ import pyodbc
 
 try:
     import pyspark.sql.dataframe as spark
-    from delta.tables import *
+    from delta.tables import *  # noqa
 except ModuleNotFoundError:
     raise ImportError("pyspark.sql.dataframe is required to use Databricks source.")
 
 from pydantic import BaseModel, root_validator
 
 from viadot.config import get_source_credentials
-from viadot.exceptions import (CredentialError, TableAlreadyExists,
-                               TableDoesNotExist)
+from viadot.exceptions import CredentialError, TableAlreadyExists, TableDoesNotExist
 from viadot.sources.base import Source
-from viadot.utils import (_cast_df_cols, add_viadot_metadata_columns,
-                          df_snakecase_column_names)
+from viadot.utils import (
+    _cast_df_cols,
+    add_viadot_metadata_columns,
+    df_snakecase_column_names,
+)
 
 
 def _get_table_columns(
@@ -26,7 +28,7 @@ def _get_table_columns(
 ) -> str:
     if isinstance(source, pyodbc.Connection):
         columns_query = f"""
-        SELECT 
+        SELECT
             col.name
         FROM sys.tables AS tab
             INNER JOIN sys.columns AS col
@@ -105,9 +107,7 @@ def build_merge_query(
 
 class DatabricksCredentials(BaseModel):
     host: str  # The host address of the Databricks cluster.
-    port: str = (
-        "15001"  # The port on which the cluster is exposed. By default '15001'. For Spark Connect, use the port 443 by default.
-    )
+    port: str = "15001"  # The port on which the cluster is exposed. By default '15001'. For Spark Connect, use the port 443 by default.
     cluster_id: str  # The ID of the Databricks cluster to which to connect.
     org_id: Optional[
         str
