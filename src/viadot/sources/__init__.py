@@ -26,4 +26,4 @@ if find_spec("pyrfc"):
     __all__.extend(["SAPRFC", "SAPRFCV2"])
 
 if find_spec("databricks-connect"):
-    __all__.extend(["Databricks"])
+    __all__.append(["Databricks"])
