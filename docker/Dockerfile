@@ -23,7 +23,7 @@ RUN echo "Acquire::Check-Valid-Until \"false\";\nAcquire::Check-Date \"false\";"
 RUN apt update -q && yes | apt install -q gnupg vim unixodbc-dev build-essential \
     curl python3-dev libboost-all-dev libpq-dev python3-gi sudo git software-properties-common
 ENV PIP_NO_CACHE_DIR=1
-RUN pip install --upgrade cffi --user
+RUN pip install --upgrade cffi
 
 # Fix for old SQL Servers still using TLS < 1.2
 RUN chmod +rwx /usr/lib/ssl/openssl.cnf && \
@@ -45,14 +45,6 @@ COPY docker/odbcinst.ini /etc
 # so `pip install pyrfc` breaks if all deps are not already present.
 RUN pip install cython==0.29.24 --user
 
-# Python env
-WORKDIR /code
-COPY pyproject.toml /code/
-RUN pip install --upgrade pip
-
-COPY . .
-RUN pip install . --user
-
 # BEGIN Databricks source setup
 RUN apt install -y wget apt-transport-https && \
     mkdir -p /etc/apt/keyrings && \
@@ -65,14 +57,24 @@ RUN apt install -y wget apt-transport-https && \
 ENV SPARK_HOME /usr/local/lib/python3.10/site-packages/pyspark
 # END Databricks source setup
 
-RUN rm -rf /code
+# Python env
+WORKDIR /code
+RUN pip install --upgrade pip
+RUN curl -LsSf https://astral.sh/uv/install.sh | sh
 
-# Workdir
 ENV USER viadot
+USER ${USER}
 ENV HOME="/home/$USER"
+ENV PATH="$HOME/.local/bin:$PATH"
 
+COPY --chown=${USER}:${USER} . .
+
+RUN pip install . --user
+
+# Final workdir
 WORKDIR ${HOME}
 
+# Cleanup.
+USER root
+RUN rm -rf /code
 USER ${USER}
-
-ENV PATH="$HOME/.local/bin:$PATH"
