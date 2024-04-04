@@ -43,4 +43,4 @@ jobs:
           platforms: linux/amd64
           push: true
           tags: ghcr.io/${{ github.repository }}/viadot:${{ github.event.inputs.tag }}
-          build-args: ${{ github.event.inputs.if_databricks }}
+          build-args: INSTALL_DATABRICKS=${{ github.event.inputs.if_databricks }}
