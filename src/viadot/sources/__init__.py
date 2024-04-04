@@ -23,7 +23,11 @@ __all__ = [
 ]
 
 if find_spec("pyrfc"):
+    from viadot.sources.sap_rfc import SAPRFC, SAPRFCV2  # noqa
+
     __all__.extend(["SAPRFC", "SAPRFCV2"])
 
-if find_spec("databricks-connect"):
-    __all__.append(["Databricks"])
+if find_spec("pyspark"):
+    from viadot.sources.databricks import Databricks  # noqa
+
+    __all__.append("Databricks")
