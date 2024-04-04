@@ -45,7 +45,7 @@ COPY docker/odbcinst.ini /etc
 # so `pip install pyrfc` breaks if all deps are not already present.
 RUN pip install cython==0.29.24 --user
 
-ARG databricks
+ARG INSTALL_DATABRICKS=false
 
 # BEGIN Databricks source setup
 RUN if [ "$databricks" = "true" ]; then \
