@@ -253,8 +253,8 @@ class SAPRFC(Source):
             in case of too many columns for RFC function. According to SAP documentation, the limit is
             512 characters. However, we observed SAP raising an exception even on a slightly lower number
             of characters, so we add a safety margin. Defaults to 400.
-            sap_credentials (dict, optional): The credentials to use to authenticate with SAP. By default, they're taken from the local viadot config.
-            sap_credentials_key (str, optional): The key for sap credentials located in the local config for Azure Key Vault. Defaults to "SAP".
+            sap_credentials (dict, optional): The credentials to use to authenticate with SAP. Defaults to None.
+            sap_credentials_key (str, optional): The key for sap credentials located in the local config or Azure Key Vault. Defaults to "SAP".
             env (str, optional): The key for sap_credentials_key pointing to the SAP environment. Defaults to "DEV".
 
         Raises:
@@ -723,8 +723,8 @@ class SAPRFCV2(Source):
             512 characters. However, we observed SAP raising an exception even on a slightly lower number
             of characters, so we add a safety margin. Defaults to 400.
             rfc_unique_id  (List[str], optional): Reference columns to merge chunks Data Frames. These columns must to be unique. Defaults to None.
-            sap_credentials (dict, optional): The credentials to use to authenticate with SAP. By default, they're taken from the local viadot config.
-            sap_credentials_key (str, optional): The key for sap credentials located in the local config for Azure Key Vault. Defaults to "SAP".
+            sap_credentials (dict, optional): The credentials to use to authenticate with SAP. Defaults to None.
+            sap_credentials_key (str, optional): The key for sap credentials located in the local config or Azure Key Vault. Defaults to "SAP".
             env (str, optional): The key for sap_credentials_key pointing to the SAP environment. Defaults to "DEV".
 
         Raises:
