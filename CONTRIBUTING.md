@@ -2,6 +2,8 @@
 
 ## Setting up the environment
 
+Follow the instructions in the [README](./README.md) to set up your development environment.
+
 ### VSCode
 
 We provide the extensions, settings, and tasks for VSCode in the `.vscode` folder.
@@ -18,19 +20,32 @@ We provide the extensions, settings, and tasks for VSCode in the `.vscode` folde
     code .
    ```
 
-3. Open terminals
+### Development Docker container
 
-   In VSCode, run `Ctrl+Shift+B` to open two terminal windows: a local `bash` one and a `viadot_2` container one.
+If you wish to develop in a Docker container, viadot comes with a VSCode task to make that simple. You can easily spin up a terminal in the container with the `Ctrl+Shift+B` shortcut. The container will have all of the contents of the root `viadot` directory mapped to `/home/viadot`.
 
 ### Environment variables
 
 To run tests, you may need to set up some environment variables or the viadot config. You can find all the required environment variables in the [tests' dotenv file](./tests/.env.example), and all the required viadot config settings in the [config file](./config.yaml.example). We're working on making this process easier, so only one of these can be used.
 
+### Pre-commit hooks
+
+We use pre-commit hooks to ensure that the code (as well as non-code text files, such as JSON, YAML, and Markdown files) is formatted and linted before committing. First, install `pre-commit`:
+
+```console
+rye install pre-commit
+```
+
+To install `viadot`'s pre-commit hooks, run the following command:
+
+```console
+pre-commit install
+```
+
 ## Style guidelines
 
-- code should be formatted with `black` using default settings (easiest way is to use the VSCode extension)
-- imports should be sorted using `isort`
-- commit messages should:
+- Code should be formatted and linted with [ruff](https://docs.astral.sh/ruff/) using default settings. The easiest way to accomplish this is to use the VSCode extension and the provided VSCode settings. Additionally, the pre-commit hook will take care of this, as well as formatting non-python files.
+- Commit messages should:
   - begin with an emoji
   - start with one of the following verbs, capitalized, immediately after the summary emoji: "Add", "Update", "Remove", "Fix", "Rename", and, sporadically, other ones, such as "Upgrade", "Downgrade", or whatever you find relevant for your particular situation
   - contain a useful summary of what the commit is doing
@@ -45,7 +60,7 @@ To run tests, you may need to set up some environment variables or the viadot co
 
 3. Checkout a new branch
 
-   ```bash
+   ```console
    git checkout -b <name>
    ```
 
@@ -57,13 +72,13 @@ To run tests, you may need to set up some environment variables or the viadot co
 
 5. Test the changes locally
 
-   ```bash
+   ```console
    docker exec -it viadot_2 sh -c "pytest"
    ```
 
 6. Sync your fork with the `dyvenia` repo
 
-   ```bash
+   ```console
    git remote add upstream https://github.com/dyvenia/viadot.git
    git fetch upstream 2.0
    git checkout 2.0
@@ -72,10 +87,20 @@ To run tests, you may need to set up some environment variables or the viadot co
 
 7. Push the changes to your fork
 
-   ```bash
+   ```console
    git push --force
    ```
 
 8. [Submit a PR](https://github.com/dyvenia/viadot/compare) into the `2.0` branch.
 
    Make sure to read & check all relevant checkboxes in the PR template!
+
+## Releasing a new version
+
+In order to release a new version, either add a commit with a version bump to the last PR, or create a specific release PR. To bump the package version, simply run:
+
+```console
+rye version x.y.z
+```
+
+Make sure to follow [semantic versioning](https://semver.org/).
