@@ -105,4 +105,6 @@ rye version x.y.z
 
 Make sure to follow [semantic versioning](https://semver.org/).
 
-Once merged, manually [deploy the package to PyPI](https://github.com/dyvenia/viadot/actions/workflows/publish_to_pypi.yml) and [the image to GitHub Container Registry](https://github.com/dyvenia/viadot/actions/workflows/docker-publish.yml).
+The merge to `2.0` automatically publishes the `viadot:2.0-latest` image.
+
+If required, you can manually [deploy the package to PyPI](https://github.com/dyvenia/viadot/actions/workflows/publish_to_pypi.yml) or [publish the image with another tag](https://github.com/dyvenia/viadot/actions/workflows/docker-publish.yml) (such as a version tag).
