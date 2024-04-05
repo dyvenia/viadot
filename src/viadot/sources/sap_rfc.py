@@ -1198,7 +1198,7 @@ class SAPRFCV2(Source):
                             df[fields] = np.nan
                     chunk += 1
                 elif not response["DATA"]:
-                    print('No data returned from SAP')
+                    print("No data returned from SAP.")
         df.columns = columns
 
         if self.client_side_filters:
