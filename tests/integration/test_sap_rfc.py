@@ -1,6 +1,9 @@
-from collections import OrderedDict
+import pytest
+import logging
 
+from collections import OrderedDict
 from viadot.sources import SAPRFC, SAPRFCV2
+from viadot.exceptions import CredentialError
 
 sap = SAPRFC()
 sap2 = SAPRFCV2()
@@ -192,7 +195,7 @@ def test___build_pandas_filter_query_v2():
 def test_default_credentials_warning_SAPRFC(caplog):
     _ = SAPRFC()
     assert (
-        "Your credentials will use DEV environment. If you would like to use different one - please specified it."
+        f"Your credentials will use DEV environment from local config. If you would like to use different one - please specified it in sap_credentials parameter"
         in caplog.text
     )
 
@@ -200,6 +203,80 @@ def test_default_credentials_warning_SAPRFC(caplog):
 def test_default_credentials_warning_SAPRFCV2(caplog):
     _ = SAPRFCV2()
     assert (
-        "Your credentials will use DEV environment. If you would like to use different one - please specified it."
+        f"Your credentials will use DEV environment from local config. If you would like to use different one - please specified it in sap_credentials parameter"
         in caplog.text
     )
+
+
+def test_credentials_dictionary_wrong_key_warning_SAPRFC(caplog):
+    _ = SAPRFC(
+        sap_credentials={
+            "sysnr_test": "test",
+            "user": "test",
+            "passwd": "test",
+            "ashost": "test",
+        }
+    )
+    assert (
+        f"Required key 'sysnr' not found in your 'sap_credentials' dictionary!"
+        in caplog.text
+    )
+    assert (
+        f"Your credentials will use DEV environment from local config. If you would like to use different one - please specified it in sap_credentials parameter"
+        in caplog.text
+    )
+
+
+def test_credentials_dictionary_wrong_key_warning_SAPRFCV2(caplog):
+    _ = SAPRFCV2(
+        sap_credentials={
+            "sysnr_test": "test",
+            "user": "test",
+            "passwd": "test",
+            "ashost": "test",
+        }
+    )
+    assert (
+        f"Required key 'sysnr' not found in your 'sap_credentials' dictionary!"
+        in caplog.text
+    )
+    assert (
+        f"Your credentials will use DEV environment from local config. If you would like to use different one - please specified it in sap_credentials parameter"
+        in caplog.text
+    )
+
+
+def test_sap_credentials_key_wrong_value_error_SAPRFC(caplog):
+    with pytest.raises(
+        CredentialError,
+        match="Sap_credentials_key: SAP_test is not stored neither in KeyVault or Local Config!",
+    ):
+        with caplog.at_level(logging.ERROR):
+            _ = SAPRFC(sap_credentials_key="SAP_test")
+
+
+def test_sap_credentials_key_wrong_value_error_SAPRFCV2(caplog):
+    with pytest.raises(
+        CredentialError,
+        match="Sap_credentials_key: SAP_test is not stored neither in KeyVault or Local Config!",
+    ):
+        with caplog.at_level(logging.ERROR):
+            _ = SAPRFC(sap_credentials_key="SAP_test")
+
+
+def test_env_wrong_value_error_SAPRFC(caplog):
+    with pytest.raises(
+        CredentialError,
+        match="Missing PROD_test credentials!",
+    ):
+        with caplog.at_level(logging.ERROR):
+            _ = SAPRFC(env="PROD_test")
+
+
+def test_env_wrong_value_error_SAPRFCV2(caplog):
+    with pytest.raises(
+        CredentialError,
+        match="Missing PROD_test credentials!",
+    ):
+        with caplog.at_level(logging.ERROR):
+            _ = SAPRFC(env="PROD_test")
