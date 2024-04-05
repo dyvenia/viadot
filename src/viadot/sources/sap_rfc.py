@@ -1162,39 +1162,43 @@ class SAPRFCV2(Source):
                         )
                     else:
                         raise e
-                record_key = "WA"
-                data_raw = np.array(response["DATA"])
-                del response
+                # Check and skip if there is no data returned
+                if response["DATA"]:
+                    record_key = "WA"
+                    data_raw = np.array(response["DATA"])
+                    del response
 
-                # if the reference columns are provided not necessary to remove any extra row.
-                if not isinstance(self.rfc_unique_id[0], str):
-                    row_index, data_raw, start = detect_extra_rows(
-                        row_index, data_raw, chunk, fields
-                    )
-                else:
-                    start = False
-
-                records = [row for row in gen_split(data_raw, sep, record_key)]
-                del data_raw
-
-                if (
-                    isinstance(self.rfc_unique_id[0], str)
-                    and not list(df.columns) == fields
-                ):
-                    df_tmp = pd.DataFrame(columns=fields)
-                    df_tmp[fields] = records
-                    # SAP adds whitespaces to the first extracted column value
-                    # If whitespace is in unique column it must be removed to make a proper merge
-                    for col in self.rfc_unique_id:
-                        df_tmp[col] = df_tmp[col].str.strip()
-                        df[col] = df[col].str.strip()
-                    df = pd.merge(df, df_tmp, on=self.rfc_unique_id, how="outer")
-                else:
-                    if not start:
-                        df[fields] = records
+                    # if the reference columns are provided not necessary to remove any extra row.
+                    if not isinstance(self.rfc_unique_id[0], str):
+                        row_index, data_raw, start = detect_extra_rows(
+                            row_index, data_raw, chunk, fields
+                        )
                     else:
-                        df[fields] = np.nan
-                chunk += 1
+                        start = False
+
+                    records = [row for row in gen_split(data_raw, sep, record_key)]
+                    del data_raw
+
+                    if (
+                        isinstance(self.rfc_unique_id[0], str)
+                        and not list(df.columns) == fields
+                    ):
+                        df_tmp = pd.DataFrame(columns=fields)
+                        df_tmp[fields] = records
+                        # SAP adds whitespaces to the first extracted column value
+                        # If whitespace is in unique column it must be removed to make a proper merge
+                        for col in self.rfc_unique_id:
+                            df_tmp[col] = df_tmp[col].str.strip()
+                            df[col] = df[col].str.strip()
+                        df = pd.merge(df, df_tmp, on=self.rfc_unique_id, how="outer")
+                    else:
+                        if not start:
+                            df[fields] = records
+                        else:
+                            df[fields] = np.nan
+                    chunk += 1
+                elif not response["DATA"]:
+                    print('No data returned from SAP')
         df.columns = columns
 
         if self.client_side_filters:
