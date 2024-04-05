@@ -43,18 +43,20 @@ Depending on the source, `viadot` provides different methods of uploading data. 
 
 ### Prerequisites
 
-We assume that you have [Docker](https://www.docker.com/) installed.
+We assume that you have [Rye](https://rye-up.com/) installed:
+
+```console
+curl -sSf https://rye-up.com/get | bash
+```
 
 ### Installation
 
 Clone the `2.0` branch, and set up and run the environment:
 
-```bash
+```console
 git clone https://github.com/dyvenia/viadot.git -b 2.0 && \
-  cd viadot/docker && \
-  sh update.sh  && \
-  sh run.sh && \
-  cd ../
+  cd viadot && \
+  rye sync
 ```
 
 ### Configuration

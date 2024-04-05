@@ -7,33 +7,18 @@
   "tasks": [
     {
       "label": "Create terminal",
-      "dependsOn": ["WSL"],
+      "dependsOn": ["viadot2"],
       // Mark as the default build task so cmd/ctrl+shift+b will create them
       "group": {
         "kind": "build",
         "isDefault": true
-      },
-      // Try start the task on folder open
-      "runOptions": {
-        "runOn": "folderOpen"
       }
     },
     {
-      // The name that shows up in terminal tab
-      "label": "WSL",
-      // The task will launch a shell
+      "label": "viadot2",
       "type": "shell",
-      "command": "/bin/bash",
-      // Set the shell type
-      // "options": {
-      // 	"shell": {
-      // 		"executable": "bash.exe",
-      // 		"args": []
-      // 	}
-      // },
-      // Mark as a background task to avoid the spinner animation on the terminal tab
+      "command": "cd docker && docker compose up -d && docker exec -it viadot_2 bash",
       "isBackground": true,
-      // Create the tasks in a terminal group
       "presentation": {
         "group": "my-group",
         "close": true
