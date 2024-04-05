@@ -7,13 +7,17 @@
 We provide the extensions, settings, and tasks for VSCode in the `.vscode` folder.
 
 1. Install the extensions
-   ```bash
+
+   ```console
    cd .vscode && sh install_extensions.sh && cd ..
    ```
+
 2. Open the project in VSCode
-   ```bash
+
+   ```console
     code .
    ```
+
 3. Open terminals
 
    In VSCode, run `Ctrl+Shift+B` to open two terminal windows: a local `bash` one and a `viadot_2` container one.
@@ -40,29 +44,38 @@ To run tests, you may need to set up some environment variables or the viadot co
    **Note**: In order to run tests, you will also need to install dev dependencies in the `viadot_2` container with `docker exec -u root -it viadot_2 sh -c "pip install -r requirements-dev.txt"`
 
 3. Checkout a new branch
+
    ```bash
    git checkout -b <name>
    ```
+
    Make sure that your base branch is `2.0`!
+
 4. Add your changes
 
    **Note**: See out Style Guidelines for more information about commit messages and PR names
 
 5. Test the changes locally
+
    ```bash
    docker exec -it viadot_2 sh -c "pytest"
    ```
+
 6. Sync your fork with the `dyvenia` repo
+
    ```bash
    git remote add upstream https://github.com/dyvenia/viadot.git
    git fetch upstream 2.0
    git checkout 2.0
    git rebase upstream/2.0
    ```
+
 7. Push the changes to your fork
+
    ```bash
    git push --force
    ```
+
 8. [Submit a PR](https://github.com/dyvenia/viadot/compare) into the `2.0` branch.
 
    Make sure to read & check all relevant checkboxes in the PR template!
