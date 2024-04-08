@@ -57,8 +57,6 @@ WORKDIR ${HOME}
 
 COPY --chown=${USER}:${USER} . ./viadot
 
-RUN pip install ./viadot --user
-
 ARG INSTALL_DATABRICKS=false
 USER root
 # BEGIN Databricks source setup
@@ -70,12 +68,18 @@ RUN if [ "$INSTALL_DATABRICKS" = "true" ]; then \
     echo "deb [signed-by=/etc/apt/keyrings/adoptium.asc] https://packages.adoptium.net/artifactory/deb $(awk -F= '/^VERSION_CODENAME/{print$2}' /etc/os-release) main" | tee /etc/apt/sources.list.d/adoptium.list && \
     apt-get update && \
     apt-get install -y temurin-11-jdk && \
-    find /usr/bin/java -type d -exec chmod 777 {} \; && \
-    pip install ./viadot/.[databricks] --user; \
+    find /usr/bin/java -type d -exec chmod 777 {} \; ; \
+    pip install ./viadot/.[databricks]; \
     fi
 
 USER ${USER}
 ENV SPARK_HOME /usr/local/lib/python3.10/site-packages/pyspark
+
+RUN pip install ./viadot --user
+RUN if [ "$INSTALL_DATABRICKS" = "true" ]; then \
+    pip install ./viadot/.[databricks] --user; \
+    fi
+
 # END Databricks source setup
 # Cleanup.
 RUN rm -rf ./viadot
