@@ -45,24 +45,6 @@ COPY docker/odbcinst.ini /etc
 # so `pip install pyrfc` breaks if all deps are not already present.
 RUN pip install cython==0.29.24 --user
 
-ARG INSTALL_DATABRICKS=false
-
-# BEGIN Databricks source setup
-RUN if [ "$databricks" = "true" ]; then \
-    apt-get update && \
-    apt-get install -y wget apt-transport-https && \
-    mkdir -p /etc/apt/keyrings && \
-    wget -O - https://packages.adoptium.net/artifactory/api/gpg/key/public | tee /etc/apt/keyrings/adoptium.asc && \
-    echo "deb [signed-by=/etc/apt/keyrings/adoptium.asc] https://packages.adoptium.net/artifactory/deb $(awk -F= '/^VERSION_CODENAME/{print$2}' /etc/os-release) main" | tee /etc/apt/sources.list.d/adoptium.list && \
-    apt-get update && \
-    apt-get install -y temurin-11-jdk && \
-    find /usr/bin/java -type d -exec chmod 777 {} \; && \
-    pip install .[databricks] --user; \
-    fi
-
-ENV SPARK_HOME /usr/local/lib/python3.10/site-packages/pyspark
-# END Databricks source setup
-
 # Python env
 RUN pip install --upgrade pip
 
@@ -77,5 +59,23 @@ COPY --chown=${USER}:${USER} . ./viadot
 
 RUN pip install ./viadot --user
 
+ARG INSTALL_DATABRICKS=false
+USER root
+# BEGIN Databricks source setup
+RUN if [ "$INSTALL_DATABRICKS" = "true" ]; then \
+    apt-get update && \
+    apt-get install -y wget apt-transport-https && \
+    mkdir -p /etc/apt/keyrings && \
+    wget -O - https://packages.adoptium.net/artifactory/api/gpg/key/public | tee /etc/apt/keyrings/adoptium.asc && \
+    echo "deb [signed-by=/etc/apt/keyrings/adoptium.asc] https://packages.adoptium.net/artifactory/deb $(awk -F= '/^VERSION_CODENAME/{print$2}' /etc/os-release) main" | tee /etc/apt/sources.list.d/adoptium.list && \
+    apt-get update && \
+    apt-get install -y temurin-11-jdk && \
+    find /usr/bin/java -type d -exec chmod 777 {} \; && \
+    pip install ./viadot/.[databricks] --user; \
+    fi
+
+USER ${USER}
+ENV SPARK_HOME /usr/local/lib/python3.10/site-packages/pyspark
+# END Databricks source setup
 # Cleanup.
 RUN rm -rf ./viadot
