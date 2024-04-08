@@ -17,7 +17,6 @@ from urllib3.exceptions import ProtocolError
 
 from viadot.exceptions import APIError, ValidationError
 from viadot.signals import SKIP
-from viadot.sources.base import Source
 
 try:
     import pyspark.sql.dataframe as spark
@@ -250,7 +249,7 @@ def _cast_df_cols(
 def build_merge_query(
     table: str,
     primary_key: str,
-    source: Source,
+    source,
     stg_schema: str = None,
     stg_table: str = "stg",
     schema: str = None,
@@ -303,7 +302,7 @@ def build_merge_query(
     return merge_query
 
 
-def _get_table_columns(schema: str, table: str, source: Source) -> str:
+def _get_table_columns(schema: str, table: str, source) -> str:
     if source.__class__.__name__ == "Databricks":
         result = source.run(f"SHOW COLUMNS IN {schema}.{table}", "pandas")
         columns_query_result = result["col_name"].values

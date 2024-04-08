@@ -5,8 +5,9 @@ from viadot.exceptions import TableDoesNotExist
 from viadot.utils import add_viadot_metadata_columns
 
 try:
-    from viadot.sources import Databricks
     from pyspark.sql.utils import AnalysisException
+
+    from viadot.sources import Databricks
 
     _databricks_installed = True
 except ImportError:
