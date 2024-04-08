@@ -58,8 +58,8 @@ WORKDIR ${HOME}
 COPY --chown=${USER}:${USER} . ./viadot
 
 ARG INSTALL_DATABRICKS=false
-USER root
 # BEGIN Databricks source setup
+USER root
 RUN if [ "$INSTALL_DATABRICKS" = "true" ]; then \
     apt-get update && \
     apt-get install -y wget apt-transport-https && \
@@ -74,12 +74,12 @@ RUN if [ "$INSTALL_DATABRICKS" = "true" ]; then \
 
 USER ${USER}
 ENV SPARK_HOME /usr/local/lib/python3.10/site-packages/pyspark
+# END Databricks source setup
 
 RUN pip install ./viadot --user
 RUN if [ "$INSTALL_DATABRICKS" = "true" ]; then \
     pip install ./viadot/.[databricks] --user; \
     fi
 
-# END Databricks source setup
 # Cleanup.
 RUN rm -rf ./viadot
