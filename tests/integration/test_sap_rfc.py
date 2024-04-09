@@ -1,6 +1,15 @@
+import pytest
 from collections import OrderedDict
 
-from viadot.sources import SAPRFC, SAPRFCV2
+try:
+    from viadot.sources import SAPRFC, SAPRFCV2
+
+    _saprfc_installed = True
+except ImportError:
+    _saprfc_installed = False
+
+if not _saprfc_installed:
+    pytest.skip("SAPRFC source not installed", allow_module_level=True)
 
 sap = SAPRFC()
 sap2 = SAPRFCV2()

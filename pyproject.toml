@@ -1,6 +1,6 @@
 [project]
 name = "viadot2"
-version = "2.0a22"
+version = "2.0a23"
 description = "A simple data ingestion library to guide data flows from some places to other places."
 authors = [
     { name = "acivitillo", email = "acivitillo@dyvenia.com" },
@@ -34,11 +34,15 @@ dependencies = [
     "trino==0.326.*",
     "sqlalchemy==2.0.*",
     "minio>=7.0, <8.0",
-    "databricks-connect==11.3.*",
     "azure-identity>=1.15.0",
 ]
 requires-python = ">=3.10"
 readme = "README.md"
+
+[project.optional-dependencies]
+databricks = [
+    "databricks-connect==11.3.*",
+]
 
 [tool.rye]
 dev-dependencies = [

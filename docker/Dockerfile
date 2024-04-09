@@ -40,28 +40,31 @@ RUN curl https://packages.microsoft.com/keys/microsoft.asc | apt-key add - && \
 
 COPY docker/odbcinst.ini /etc
 
-# This one's needed for the SAP RFC connector.
-# It must be installed here as the SAP package does not define its dependencies,
-# so `pip install pyrfc` breaks if all deps are not already present.
-RUN pip install cython==0.29.24 --user
+ARG INSTALL_DATABRICKS=false
 
-# BEGIN Databricks source setup
-RUN apt install -y wget apt-transport-https && \
+# Databricks source setup
+RUN if [ "$INSTALL_DATABRICKS" = "true" ]; then \
+    apt-get update && \
+    apt-get install -y wget apt-transport-https && \
     mkdir -p /etc/apt/keyrings && \
     wget -O - https://packages.adoptium.net/artifactory/api/gpg/key/public | tee /etc/apt/keyrings/adoptium.asc && \
     echo "deb [signed-by=/etc/apt/keyrings/adoptium.asc] https://packages.adoptium.net/artifactory/deb $(awk -F= '/^VERSION_CODENAME/{print$2}' /etc/os-release) main" | tee /etc/apt/sources.list.d/adoptium.list && \
-    apt update -q && \
-    apt install -q temurin-11-jdk -y && \
-    find /usr/bin/java -type d -exec chmod 777 {} \;
+    apt-get update && \
+    apt-get install -y temurin-11-jdk && \
+    find /usr/bin/java -type d -exec chmod 777 {} \; ; \
+    fi
 
 ENV SPARK_HOME /usr/local/lib/python3.10/site-packages/pyspark
-# END Databricks source setup
+
+# This one's needed for the SAP RFC connector.
+# It must be installed here as the SAP package does not define its dependencies,
+# so `pip install pyrfc` breaks if all deps are not already present.
+RUN pip install cython==0.29.24
 
 # Python env
 RUN pip install --upgrade pip
 
 ENV USER viadot
-USER ${USER}
 ENV HOME="/home/$USER"
 ENV PATH="$HOME/.local/bin:$PATH"
 
@@ -69,7 +72,15 @@ WORKDIR ${HOME}
 
 COPY --chown=${USER}:${USER} . ./viadot
 
-RUN pip install ./viadot --user
+
+# Dependecy install
+RUN if [ "$INSTALL_DATABRICKS" = "true" ]; then \
+    pip install ./viadot/.[databricks]; \
+    else \
+    pip install ./viadot; \
+    fi
 
 # Cleanup.
 RUN rm -rf ./viadot
+
+USER ${USER}

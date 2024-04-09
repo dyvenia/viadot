@@ -3,8 +3,13 @@ import os
 from typing import Literal, Optional, Union
 
 import pandas as pd
-import pyspark.sql.dataframe as spark
-from delta.tables import *  # noqa
+
+try:
+    import pyspark.sql.dataframe as spark
+    from delta.tables import *  # noqa
+except ModuleNotFoundError:
+    raise ImportError("pyspark.sql.dataframe is required to use Databricks source.")
+
 from pydantic import BaseModel, root_validator
 
 from viadot.config import get_source_credentials

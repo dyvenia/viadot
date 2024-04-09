@@ -107,8 +107,6 @@ cryptography==42.0.5
     # via pyjwt
 cycler==0.12.1
     # via matplotlib
-databricks-connect==11.3.31
-    # via viadot2
 db-dtypes==1.2.0
     # via pandas-gbq
 debugpy==1.8.1
@@ -364,8 +362,6 @@ ptyprocess==0.7.0
     # via terminado
 pure-eval==0.2.2
     # via stack-data
-py4j==0.10.9.5
-    # via databricks-connect
 pyarrow==10.0.1
     # via awswrangler
     # via db-dtypes
@@ -389,6 +385,7 @@ pygments==2.17.2
     # via nbconvert
 pyjwt==2.8.0
     # via msal
+    # via pyjwt
 pymysql==1.1.0
     # via awswrangler
 pyodbc==4.0.39
@@ -473,10 +470,6 @@ send2trash==1.8.2
     # via nbclassic
 sendgrid==6.9.7
     # via viadot2
-setuptools==69.2.0
-    # via pandas-gbq
-    # via pydata-google-auth
-    # via redshift-connector
 shapely==1.8.0
     # via viadot2
 sharepy==2.0.0
@@ -487,7 +480,6 @@ six==1.16.0
     # via asttokens
     # via azure-core
     # via bleach
-    # via databricks-connect
     # via gremlinpython
     # via imagehash
     # via isodate
@@ -564,3 +556,7 @@ yarl==1.9.4
     # via aiohttp
 zeep==4.2.1
     # via simple-salesforce
+setuptools==69.2.0
+    # via pandas-gbq
+    # via pydata-google-auth
+    # via redshift-connector
