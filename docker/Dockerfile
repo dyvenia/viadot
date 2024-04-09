@@ -43,13 +43,12 @@ COPY docker/odbcinst.ini /etc
 # This one's needed for the SAP RFC connector.
 # It must be installed here as the SAP package does not define its dependencies,
 # so `pip install pyrfc` breaks if all deps are not already present.
-RUN pip install cython==0.29.24 --user
+RUN pip install cython==0.29.24 
 
 # Python env
 RUN pip install --upgrade pip
 
 ENV USER viadot
-USER ${USER}
 ENV HOME="/home/$USER"
 ENV PATH="$HOME/.local/bin:$PATH"
 
@@ -58,8 +57,8 @@ WORKDIR ${HOME}
 COPY --chown=${USER}:${USER} . ./viadot
 
 ARG INSTALL_DATABRICKS=false
-# BEGIN Databricks source setup
-USER root
+
+# Databricks source setup
 RUN if [ "$INSTALL_DATABRICKS" = "true" ]; then \
     apt-get update && \
     apt-get install -y wget apt-transport-https && \
@@ -69,17 +68,18 @@ RUN if [ "$INSTALL_DATABRICKS" = "true" ]; then \
     apt-get update && \
     apt-get install -y temurin-11-jdk && \
     find /usr/bin/java -type d -exec chmod 777 {} \; ; \
-    pip install ./viadot/.[databricks]; \
     fi
 
-USER ${USER}
 ENV SPARK_HOME /usr/local/lib/python3.10/site-packages/pyspark
-# END Databricks source setup
 
-RUN pip install ./viadot --user
+# Dependecy install
+RUN pip install ./viadot 
 RUN if [ "$INSTALL_DATABRICKS" = "true" ]; then \
-    pip install ./viadot/.[databricks] --user; \
+    pip install ./viadot/.[databricks]; \
     fi
 
 # Cleanup.
 RUN rm -rf ./viadot
+
+USER ${USER}
+
