@@ -12,7 +12,7 @@ class LumaIngest(ShellTask):
         self,
         metadata_dir_path: str,
         url: str = None,
-        dbt_project_path: str = None,
+        dbt_project_path: str = "tmp_dbt_repo_dir",
         credentials_secret: str = None,
         vault_name: str = None,
         *args,
@@ -26,6 +26,8 @@ class LumaIngest(ShellTask):
                 In the case of dbt, it's dbt project's `target` directory, which contains dbt artifacts
                 (`sources.json`, `catalog.json`, `manifest.json`, and `run_results.json`).
             url (str, optional): The url of the Luma ingestion API. Defaults to None.
+            dbt_project_path (str, optional): The path to the dbt project (the directory containing
+                the `dbt_project.yml` file). Defaults to 'tmp_dbt_repo_dir'.
             credentials_secret (str, optional): The name of the Azure Key Vault secret containing Luma credentials.
                 Defaults to None.
             vault_name (str, optional): The name of the vault from which to obtain the secrets. Defaults to None.
