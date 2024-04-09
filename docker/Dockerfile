@@ -43,7 +43,7 @@ COPY docker/odbcinst.ini /etc
 # This one's needed for the SAP RFC connector.
 # It must be installed here as the SAP package does not define its dependencies,
 # so `pip install pyrfc` breaks if all deps are not already present.
-RUN pip install cython==0.29.24 
+RUN pip install cython==0.29.24
 
 # Python env
 RUN pip install --upgrade pip
@@ -73,7 +73,7 @@ RUN if [ "$INSTALL_DATABRICKS" = "true" ]; then \
 ENV SPARK_HOME /usr/local/lib/python3.10/site-packages/pyspark
 
 # Dependecy install
-RUN pip install ./viadot 
+RUN pip install ./viadot
 RUN if [ "$INSTALL_DATABRICKS" = "true" ]; then \
     pip install ./viadot/.[databricks]; \
     fi
@@ -82,4 +82,3 @@ RUN if [ "$INSTALL_DATABRICKS" = "true" ]; then \
 RUN rm -rf ./viadot
 
 USER ${USER}
-
