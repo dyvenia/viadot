@@ -22,7 +22,7 @@ def test_sap_rfc_to_df_wrong_sap_credential_key_bbp(caplog):
     )
     with pytest.raises(
         CredentialError,
-        match="Sap_credentials_key: SAP_test is not stored neither in KeyVault or Local Config!",
+        match="sap_credentials_key: SAP_test is not stored neither in KeyVault or local config!",
     ):
         task.run(
             sap_credentials_key="SAP_test",
