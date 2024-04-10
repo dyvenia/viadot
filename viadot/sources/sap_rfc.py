@@ -237,7 +237,7 @@ class SAPRFC(Source):
         sep: str = None,
         func: str = "RFC_READ_TABLE",
         rfc_total_col_width_character_limit: int = 400,
-        sap_credentials: dict = None,
+        credentials: dict = None,
         sap_credentials_key: str = "SAP",
         env: str = "DEV",
         *args,
@@ -253,7 +253,7 @@ class SAPRFC(Source):
             in case of too many columns for RFC function. According to SAP documentation, the limit is
             512 characters. However, we observed SAP raising an exception even on a slightly lower number
             of characters, so we add a safety margin. Defaults to 400.
-            sap_credentials (dict, optional): The credentials to use to authenticate with SAP. Defaults to None.
+            credentials (dict, optional): The credentials to use to authenticate with SAP. Defaults to None.
             sap_credentials_key (str, optional): The key for sap credentials located in the local config or Azure Key Vault. Defaults to "SAP".
             env (str, optional): The key for sap_credentials_key pointing to the SAP environment. Defaults to "DEV".
 
@@ -265,27 +265,27 @@ class SAPRFC(Source):
         self.sap_credentials_key = sap_credentials_key
         self.env = env
 
-        if isinstance(sap_credentials, dict):
-            credentials_keys = list(sap_credentials.keys())
+        if isinstance(credentials, dict):
+            credentials_keys = list(credentials.keys())
             required_credentials_params = ["sysnr", "user", "passwd", "ashost"]
             for key in required_credentials_params:
                 if key not in credentials_keys:
                     logger.warning(
-                        f"Required key '{key}' not found in your 'sap_credentials' dictionary!"
+                        f"Required key '{key}' not found in your 'credentials' dictionary!"
                     )
-                    sap_credentials = None
+                    credentials = None
 
-        if sap_credentials is None:
+        if credentials is None:
             logger.warning(
                 f"Your credentials will use {env} environment from local config. If you would like to use different one - please specified it in env parameter."
             )
             try:
-                sap_credentials = local_config.get(sap_credentials_key).get(env)
+                credentials = local_config.get(sap_credentials_key).get(env)
             except AttributeError:
                 raise CredentialError(
                     f"sap_credentials_key: {sap_credentials_key} is not stored neither in KeyVault or local config!"
                 )
-            if sap_credentials is None:
+            if credentials is None:
                 raise CredentialError(f"Missing {env} credentials!")
 
         super().__init__(
@@ -293,7 +293,7 @@ class SAPRFC(Source):
             **kwargs,
         )
 
-        self.sap_credentials = sap_credentials
+        self.credentials = credentials
         self.sep = sep
         self.client_side_filters = None
         self.func = func
@@ -303,7 +303,7 @@ class SAPRFC(Source):
     def con(self) -> pyrfc.Connection:
         if self._con is not None:
             return self._con
-        con = pyrfc.Connection(**self.sap_credentials)
+        con = pyrfc.Connection(**self.credentials)
         self._con = con
         return con
 
@@ -704,7 +704,7 @@ class SAPRFCV2(Source):
         func: str = "RFC_READ_TABLE",
         rfc_total_col_width_character_limit: int = 400,
         rfc_unique_id: List[str] = None,
-        sap_credentials: dict = None,
+        credentials: dict = None,
         sap_credentials_key: str = "SAP",
         env: str = "DEV",
         *args,
@@ -723,7 +723,7 @@ class SAPRFCV2(Source):
             512 characters. However, we observed SAP raising an exception even on a slightly lower number
             of characters, so we add a safety margin. Defaults to 400.
             rfc_unique_id  (List[str], optional): Reference columns to merge chunks Data Frames. These columns must to be unique. Defaults to None.
-            sap_credentials (dict, optional): The credentials to use to authenticate with SAP. Defaults to None.
+            credentials (dict, optional): The credentials to use to authenticate with SAP. Defaults to None.
             sap_credentials_key (str, optional): The key for sap credentials located in the local config or Azure Key Vault. Defaults to "SAP".
             env (str, optional): The key for sap_credentials_key pointing to the SAP environment. Defaults to "DEV".
 
@@ -735,32 +735,32 @@ class SAPRFCV2(Source):
         self.sap_credentials_key = sap_credentials_key
         self.env = env
 
-        if isinstance(sap_credentials, dict):
-            credentials_keys = list(sap_credentials.keys())
+        if isinstance(credentials, dict):
+            credentials_keys = list(credentials.keys())
             required_credentials_params = ["sysnr", "user", "passwd", "ashost"]
             for key in required_credentials_params:
                 if key not in credentials_keys:
                     logger.warning(
-                        f"Required key '{key}' not found in your 'sap_credentials' dictionary!"
+                        f"Required key '{key}' not found in your 'credentials' dictionary!"
                     )
-                    sap_credentials = None
+                    credentials = None
 
-        if sap_credentials is None:
+        if credentials is None:
             logger.warning(
                 f"Your credentials will use {env} environment from local config. If you would like to use different one - please specified it in env parameter."
             )
             try:
-                sap_credentials = local_config.get(sap_credentials_key).get(env)
+                credentials = local_config.get(sap_credentials_key).get(env)
             except AttributeError:
                 raise CredentialError(
                     f"sap_credentials_key: {sap_credentials_key} is not stored neither in KeyVault or local config!"
                 )
-            if sap_credentials is None:
+            if credentials is None:
                 raise CredentialError(f"Missing {env} credentials!")
 
         super().__init__(*args, **kwargs)
 
-        self.sap_credentials = sap_credentials
+        self.credentials = credentials
         self.sep = sep
         self.replacement = replacement
         self.client_side_filters = None
