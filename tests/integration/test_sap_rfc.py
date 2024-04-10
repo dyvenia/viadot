@@ -210,7 +210,7 @@ def test_default_credentials_warning_SAPRFCV2(caplog):
 
 def test_credentials_dictionary_wrong_key_warning_SAPRFC(caplog):
     _ = SAPRFC(
-        sap_credentials={
+        credentials={
             "sysnr_test": "test",
             "user": "test",
             "passwd": "test",
@@ -218,7 +218,7 @@ def test_credentials_dictionary_wrong_key_warning_SAPRFC(caplog):
         }
     )
     assert (
-        f"Required key 'sysnr' not found in your 'sap_credentials' dictionary!"
+        f"Required key 'sysnr' not found in your 'credentials' dictionary!"
         in caplog.text
     )
     assert (
@@ -229,7 +229,7 @@ def test_credentials_dictionary_wrong_key_warning_SAPRFC(caplog):
 
 def test_credentials_dictionary_wrong_key_warning_SAPRFCV2(caplog):
     _ = SAPRFCV2(
-        sap_credentials={
+        credentials={
             "sysnr_test": "test",
             "user": "test",
             "passwd": "test",
@@ -237,7 +237,7 @@ def test_credentials_dictionary_wrong_key_warning_SAPRFCV2(caplog):
         }
     )
     assert (
-        f"Required key 'sysnr' not found in your 'sap_credentials' dictionary!"
+        f"Required key 'sysnr' not found in your 'credentials' dictionary!"
         in caplog.text
     )
     assert (
