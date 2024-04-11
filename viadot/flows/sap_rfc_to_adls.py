@@ -16,7 +16,7 @@ class SAPRFCToADLS(Flow):
         func: str = "RFC_READ_TABLE",
         rfc_total_col_width_character_limit: int = 400,
         rfc_unique_id: List[str] = None,
-        credentials: dict = None,
+        sap_credentials: dict = None,
         sap_credentials_key: str = "SAP",
         env: str = "DEV",
         output_file_extension: str = ".parquet",
@@ -68,7 +68,7 @@ class SAPRFCToADLS(Flow):
                     rfc_unique_id=["VBELN", "LPRIO"],
                     ...
                     )
-            credentials (dict, optional): The credentials to use to authenticate with SAP. Defaults to None.
+            sap_credentials (dict, optional): The credentials to use to authenticate with SAP. Defaults to None.
             sap_credentials_key (str, optional): The key for sap credentials located in the local config or Azure Key Vault. Defaults to "SAP".
             env (str, optional): The key for sap_credentials_key pointing to the SAP environment. Defaults to "DEV"
             output_file_extension (str, optional): Output file extension - to allow selection of .csv for data which is not easy to handle with parquet. Defaults to ".parquet".
@@ -94,7 +94,7 @@ class SAPRFCToADLS(Flow):
         self.func = func
         self.rfc_total_col_width_character_limit = rfc_total_col_width_character_limit
         self.rfc_unique_id = rfc_unique_id
-        self.credentials = credentials
+        self.sap_credentials = sap_credentials
         self.sap_credentials_key = sap_credentials_key
         self.env = env
         self.output_file_extension = output_file_extension
@@ -126,7 +126,7 @@ class SAPRFCToADLS(Flow):
             rfc_total_col_width_character_limit=self.rfc_total_col_width_character_limit,
             rfc_unique_id=self.rfc_unique_id,
             alternative_version=self.alternative_version,
-            credentials=self.credentials,
+            credentials=self.sap_credentials,
             sap_credentials_key=self.sap_credentials_key,
             env=self.env,
             flow=self,
