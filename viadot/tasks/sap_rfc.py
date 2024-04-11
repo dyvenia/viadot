@@ -2,13 +2,18 @@ from datetime import timedelta
 from typing import List
 
 import pandas as pd
+import json
 from prefect import Task
 from prefect.utilities.tasks import defaults_from_attrs
+from viadot.tasks import AzureKeyVaultSecret
 
 try:
     from viadot.sources import SAPRFC, SAPRFCV2
 except ImportError:
     raise
+from prefect.utilities import logging
+
+logger = logging.get_logger()
 
 
 class SAPRFCToDF(Task):
@@ -20,6 +25,8 @@ class SAPRFCToDF(Task):
         func: str = None,
         rfc_total_col_width_character_limit: int = 400,
         credentials: dict = None,
+        sap_credentials_key: str = "SAP",
+        env: str = "DEV",
         max_retries: int = 3,
         retry_delay: timedelta = timedelta(seconds=10),
         timeout: int = 3600,
@@ -51,13 +58,17 @@ class SAPRFCToDF(Task):
             in case of too many columns for RFC function. According to SAP documentation, the limit is
             512 characters. However, we observed SAP raising an exception even on a slightly lower number
             of characters, so we add a safety margin. Defaults to 400.
-            credentials (dict, optional): The credentials to use to authenticate with SAP.
+            credentials (dict, optional): The credentials to use to authenticate with SAP. By default, they're taken from the local viadot config.
+            sap_credentials_key (str, optional): The key for sap credentials located in the local config or Azure Key Vault. Defaults to "SAP".
+            env (str, optional): The key for sap_credentials_key pointing to the SAP environment. Defaults to "DEV".
             By default, they're taken from the local viadot config.
         """
         self.query = query
         self.sep = sep
         self.replacement = replacement
         self.credentials = credentials
+        self.sap_credentials_key = sap_credentials_key
+        self.env = env
         self.func = func
         self.rfc_total_col_width_character_limit = rfc_total_col_width_character_limit
 
@@ -80,10 +91,12 @@ class SAPRFCToDF(Task):
     )
     def run(
         self,
-        query: str = None,
+        query: str,
         sep: str = None,
         replacement: str = "-",
         credentials: dict = None,
+        sap_credentials_key: str = "SAP",
+        env: str = "DEV",
         func: str = None,
         rfc_total_col_width_character_limit: int = None,
         rfc_unique_id: List[str] = None,
@@ -97,6 +110,9 @@ class SAPRFCToDF(Task):
             multiple options are automatically tried. Defaults to None.
             replacement (str, optional): In case of sep is on a columns, set up a new character to replace
                 inside the string to avoid flow breakdowns. Defaults to "-".
+            credentials (dict, optional): The credentials to use to authenticate with SAP. Defaults to None.
+            sap_credentials_key (str, optional): The key for sap credentials located in the local config or Azure Key Vault. Defaults to "SAP".
+            env (str, optional): The key for sap_credentials_key pointing to the SAP environment. Defaults to "DEV".
             func (str, optional): SAP RFC function to use. Defaults to None.
             rfc_total_col_width_character_limit (int, optional): Number of characters by which query will be split in chunks
                 in case of too many columns for RFC function. According to SAP documentation, the limit is
@@ -116,8 +132,17 @@ class SAPRFCToDF(Task):
         Returns:
             pd.DataFrame: DataFrame with SAP data.
         """
-        if query is None:
-            raise ValueError("Please provide the query.")
+
+        if credentials is None:
+            try:
+                credentials_str = AzureKeyVaultSecret(
+                    secret=sap_credentials_key,
+                ).run()
+                credentials = json.loads(credentials_str).get(env)
+            except:
+                logger.warning(
+                    f"Getting credentials from Azure Key Vault was not possible. Either there is no key: {sap_credentials_key} or env: {env} or there is not Key Vault in your environment."
+                )
 
         if alternative_version is True:
             if rfc_unique_id:
@@ -128,6 +153,8 @@ class SAPRFCToDF(Task):
                 sep=sep,
                 replacement=replacement,
                 credentials=credentials,
+                sap_credentials_key=sap_credentials_key,
+                env=env,
                 func=func,
                 rfc_total_col_width_character_limit=rfc_total_col_width_character_limit,
                 rfc_unique_id=rfc_unique_id,
@@ -136,6 +163,8 @@ class SAPRFCToDF(Task):
             sap = SAPRFC(
                 sep=sep,
                 credentials=credentials,
+                sap_credentials_key=sap_credentials_key,
+                env=env,
                 func=func,
                 rfc_total_col_width_character_limit=rfc_total_col_width_character_limit,
             )
