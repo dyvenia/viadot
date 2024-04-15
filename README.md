@@ -194,3 +194,5 @@ pip install black
 3. Find the `Format On Save` setting - check the box.
 4. Find the `Python Formatting Provider` and select "black" in the drop-down list.
 5. Your code should auto format on save now.
+
+* Please, note that VS Code changed the way it handles empty lines and in the newer version black formatter may not work as expected. If you encounter some issues run `black . ` in the terminal.
