@@ -286,6 +286,13 @@ class SAPRFC(Source):
                 raise ValueError(
                     "WHERE conditions after the 75 character limit can only be combined with the AND keyword."
                 )
+            for val in client_side_filters.values():
+                if ")" in val:
+                    raise ValueError(
+                        """Dynamic sql found between or after 75 chararacters in WHERE condition! 
+                        Please change dynamic part of query to static one separeted with 'AND' keywords, or place dynamic part at the begining of the where statement.
+                        """
+                    )
             else:
                 filters_pretty = list(client_side_filters.items())
                 self.logger.warning(
