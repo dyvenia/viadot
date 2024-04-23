@@ -21,6 +21,41 @@ from viadot.sources.base import Source
 logger = logging.getLogger()
 
 
+def make_where_statement_fine(sql: str) -> str:
+
+    sql = sql.upper()
+
+    # Check if 'WHERE' statement is not attached to 'FROM' or column name as there is need for space " " on both side of 'WHERE'
+    sql = re.sub(rf'{re.escape("WHERE")}(?<!\s)', f"WHERE ", sql)
+    sql = re.sub(
+        rf'(?<!\s){re.escape("WHERE")}',
+        f" WHERE",
+        sql,
+    )
+    sql = re.sub(r"\s+", " ", sql)
+
+    # Check if operators are not attached to column or value as there is need for space " " on both side of operator
+    operators = ["<>", "!=", "<=", ">=", "!<", "!>", "=", ">", "<"]
+    reverse_check = [
+        "< >",
+        "! =",
+        "< =",
+        "> =",
+        "! <",
+        "! >",
+    ]
+
+    for op in operators:
+        sql = re.sub(rf"(?<!\s){re.escape(op)}", f" {op}", sql)
+        sql = re.sub(rf"{re.escape(op)}(?<!\s)", f"{op} ", sql)
+        sql = re.sub(r"\s+", " ", sql)
+    for op_2 in reverse_check:
+        if op_2 in sql:
+            sql = sql.replace(op_2, "".join(op_2.split()))
+
+    return sql
+
+
 def remove_whitespaces(text):
     return " ".join(text.split())
 
@@ -321,9 +356,11 @@ class SAPRFC(Source):
             self.aliases_keyed_by_columns = aliases_keyed_by_columns
 
             columns = [
-                aliases_keyed_by_columns[col]
-                if col in aliases_keyed_by_columns
-                else col
+                (
+                    aliases_keyed_by_columns[col]
+                    if col in aliases_keyed_by_columns
+                    else col
+                )
                 for col in columns
             ]
 
@@ -375,6 +412,7 @@ class SAPRFC(Source):
 
         sep = sep if sep is not None else self.sep
 
+        sql = make_where_statement_fine(sql=sql)
         self.sql = sql
 
         self.extract_values(sql)
