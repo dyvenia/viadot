@@ -22,6 +22,14 @@ logger = logging.getLogger()
 
 
 def make_where_statement_fine(sql: str) -> str:
+    """Adding white spaces between operators and column/vaules. also adding whaite spaces between 'WHERE' statement if needed
+
+    Args:
+        sql (str): raw sql query passed to Flow
+
+    Returns:
+        str: sql query after checking where statement and operators
+    """
 
     sql = sql.upper()
 
