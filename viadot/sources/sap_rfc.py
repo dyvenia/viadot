@@ -22,24 +22,10 @@ logger = logging.getLogger()
 
 
 def make_where_statement_fine(sql: str) -> str:
-    """Adding white spaces between operators and column/vaules. also adding whaite spaces between 'WHERE' statement if needed
-
-    Args:
-        sql (str): raw sql query passed to Flow
-
-    Returns:
-        str: sql query after checking where statement and operators
-    """
-
-    sql = sql.upper()
 
     # Check if 'WHERE' statement is not attached to 'FROM' or column name as there is need for space " " on both side of 'WHERE'
-    sql = re.sub(rf'{re.escape("WHERE")}(?<!\s)', f"WHERE ", sql)
-    sql = re.sub(
-        rf'(?<!\s){re.escape("WHERE")}',
-        f" WHERE",
-        sql,
-    )
+    sql = re.sub(rf'{re.escape("WHERE")}(?<!\s)', f"WHERE ", sql, flags=re.IGNORECASE)
+    sql = re.sub(rf'(?<!\s){re.escape("WHERE")}', f" WHERE", sql, flags=re.IGNORECASE)
     sql = re.sub(r"\s+", " ", sql)
 
     # Check if operators are not attached to column or value as there is need for space " " on both side of operator
