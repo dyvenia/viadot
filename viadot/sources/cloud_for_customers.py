@@ -91,6 +91,10 @@ class CloudForCustomers(Source):
 
             url = response_json["d"].get("__next")
 
+        if not response_json.get("d").get("results"):
+            raise ValueError(
+                "Response from clud for customers for specified parameters were empty!"
+            )
         return records
 
     def _to_records_other(self, url: str) -> List[Dict[str, Any]]:
@@ -116,6 +120,11 @@ class CloudForCustomers(Source):
             tmp_params = None
             tmp_full_url = url
             records.extend(new_records)
+
+        if not response_json.get("d").get("results"):
+            raise ValueError(
+                "Response from clud for customers for specified parameters were empty!"
+            )
         return records
 
     def to_records(self) -> List[Dict[str, Any]]:
@@ -209,7 +218,6 @@ class CloudForCustomers(Source):
     def to_df(
         self,
         fields: List[str] = None,
-        if_empty: str = "warn",
         dtype: dict = None,
         **kwargs,
     ) -> pd.DataFrame:
