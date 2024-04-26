@@ -21,7 +21,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `RedshiftSpectrum.from_df()` now automatically creates a folder for the table if not specified in `to_path`
 - Fixed a bug in `Databricks.create_table_from_pandas()`. The function now automatically casts DataFrame types. (#681)
 - Added `close_connection()` to `SAPRFC`
-- Added `make_where_statement_fine()` to `SAPRFC`. The function that is checking raw sql query and modifing it - if needed.
+- Added `adjust_where_condition_by_adding_missing_spaces()` to `SAPRFC`. The function that is checking raw sql query and modifing it - if needed.
 
 
 ### Changed
