@@ -21,6 +21,35 @@ from viadot.sources.base import Source
 logger = logging.getLogger()
 
 
+def adjust_where_condition_by_adding_missing_spaces(sql: str) -> str:
+
+    # Check if 'WHERE' statement is not attached to 'FROM' or column name as there is need for space " " on both side of 'WHERE'
+    sql = re.sub(rf'{re.escape("WHERE")}(?<!\s)', f"WHERE ", sql, flags=re.IGNORECASE)
+    sql = re.sub(rf'(?<!\s){re.escape("WHERE")}', f" WHERE", sql, flags=re.IGNORECASE)
+    sql = re.sub(r"\s+", " ", sql)
+
+    # Check if operators are not attached to column or value as there is need for space " " on both side of operator
+    operators = ["<>", "!=", "<=", ">=", "!<", "!>", "=", ">", "<"]
+    reverse_check = [
+        "< >",
+        "! =",
+        "< =",
+        "> =",
+        "! <",
+        "! >",
+    ]
+
+    for op in operators:
+        sql = re.sub(rf"(?<!\s){re.escape(op)}", f" {op}", sql)
+        sql = re.sub(rf"{re.escape(op)}(?<!\s)", f"{op} ", sql)
+        sql = re.sub(r"\s+", " ", sql)
+    for op_2 in reverse_check:
+        if op_2 in sql:
+            sql = sql.replace(op_2, "".join(op_2.split()))
+
+    return sql
+
+
 def remove_whitespaces(text):
     return " ".join(text.split())
 
@@ -243,6 +272,13 @@ class SAPRFC(Source):
                 raise ValueError(
                     "WHERE conditions after the 75 character limit can only be combined with the AND keyword."
                 )
+            for val in client_side_filters.values():
+                if ")" in val:
+                    raise ValueError(
+                        """Dynamic sql found between or after 75 chararacters in WHERE condition! 
+                        Please change dynamic part of query to static one separeted with 'AND' keywords, or place dynamic part at the begining of the where statement.
+                        """
+                    )
             else:
                 filters_pretty = list(client_side_filters.items())
                 self.logger.warning(
@@ -321,9 +357,11 @@ class SAPRFC(Source):
             self.aliases_keyed_by_columns = aliases_keyed_by_columns
 
             columns = [
-                aliases_keyed_by_columns[col]
-                if col in aliases_keyed_by_columns
-                else col
+                (
+                    aliases_keyed_by_columns[col]
+                    if col in aliases_keyed_by_columns
+                    else col
+                )
                 for col in columns
             ]
 
@@ -375,6 +413,7 @@ class SAPRFC(Source):
 
         sep = sep if sep is not None else self.sep
 
+        sql = adjust_where_condition_by_adding_missing_spaces(sql=sql)
         self.sql = sql
 
         self.extract_values(sql)
