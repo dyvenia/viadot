@@ -21,7 +21,7 @@ from viadot.sources.base import Source
 logger = logging.getLogger()
 
 
-def make_where_statement_fine(sql: str) -> str:
+def adjust_where_condition_by_adding_missing_spaces(sql: str) -> str:
 
     # Check if 'WHERE' statement is not attached to 'FROM' or column name as there is need for space " " on both side of 'WHERE'
     sql = re.sub(rf'{re.escape("WHERE")}(?<!\s)', f"WHERE ", sql, flags=re.IGNORECASE)
@@ -413,7 +413,7 @@ class SAPRFC(Source):
 
         sep = sep if sep is not None else self.sep
 
-        sql = make_where_statement_fine(sql=sql)
+        sql = adjust_where_condition_by_adding_missing_spaces(sql=sql)
         self.sql = sql
 
         self.extract_values(sql)
