@@ -34,6 +34,14 @@ logger = logging.getLogger()
 
 
 def make_where_statement_fine(sql: str) -> str:
+    """Function for adding white spaces between opearators and `WHERE` statement
+
+    Args:
+        sql (str): raw sql query passed in flow
+
+    Returns:
+        str: sql query after adding white spaces if needed
+    """
 
     # Check if 'WHERE' statement is not attached to 'FROM' or column name as there is need for space " " on both side of 'WHERE'
     sql = re.sub(rf'{re.escape("WHERE")}(?<!\s)', f"WHERE ", sql, flags=re.IGNORECASE)
