@@ -93,7 +93,7 @@ class CloudForCustomers(Source):
 
         if not response_json.get("d").get("results"):
             raise ValueError(
-                "Response from clud for customers for specified parameters were empty!"
+                "Response from the cloud for customers for specified parameters is empty!"
             )
 
         return records
@@ -124,7 +124,7 @@ class CloudForCustomers(Source):
 
         if not response_json.get("d").get("results"):
             raise ValueError(
-                "Response from clud for customers for specified parameters were empty!"
+                "Response from the cloud for customers for specified parameters is empty!"
             )
 
         return records

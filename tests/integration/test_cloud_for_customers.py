@@ -29,7 +29,7 @@ class MockResponse:
 def test_c4c_empty_response(mock_get):
     with pytest.raises(
         ValueError,
-        match="Response from clud for customers for specified parameters were empty!",
+        match="Response from the cloud for customers for specified parameters is empty!",
     ):
         endpoint = "ServiceRequestCollection"
         c4c = CloudForCustomers(endpoint=endpoint, params={"$top": "2"})
