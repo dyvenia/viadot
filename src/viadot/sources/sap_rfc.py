@@ -33,7 +33,7 @@ from viadot.utils import add_viadot_metadata_columns, validate
 logger = logging.getLogger()
 
 
-def make_where_statement_fine(sql: str) -> str:
+def adjust_where_condition_by_adding_missing_spaces(sql: str) -> str:
     """Function for adding white spaces between opearators and `WHERE` statement
 
     Args:
@@ -585,7 +585,7 @@ class SAPRFC(Source):
 
         sep = sep if sep is not None else self.sep
 
-        sql = make_where_statement_fine(sql=sql)
+        sql = adjust_where_condition_by_adding_missing_spaces(sql=sql)
         self.sql = sql
 
         self.extract_values(sql)
@@ -1052,7 +1052,7 @@ class SAPRFCV2(Source):
 
         sep = sep if sep is not None else self.sep
 
-        sql = make_where_statement_fine(sql=sql)
+        sql = adjust_where_condition_by_adding_missing_spaces(sql=sql)
         self.sql = sql
 
         self.extract_values(sql)
