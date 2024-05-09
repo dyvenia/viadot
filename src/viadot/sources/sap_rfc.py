@@ -34,7 +34,10 @@ logger = logging.getLogger()
 
 
 def adjust_where_condition_by_adding_missing_spaces(sql: str) -> str:
-    """Function for adding white spaces between opearators and `WHERE` statement
+    """Function for adding white spaces between operators and `WHERE` statement.
+       This function is taking raw sql string and sanitizing it at the beginning of the
+       'query()' method, so other methods that taking sql as parameter could have sql
+       without whitespaces issues.
 
     Args:
         sql (str): raw sql query passed in flow
