@@ -44,8 +44,8 @@ def adjust_where_condition_by_adding_missing_spaces(sql: str) -> str:
     """
 
     # Check if 'WHERE' statement is not attached to 'FROM' or column name as there is need for space " " on both side of 'WHERE'
-    sql = re.sub(rf'{re.escape("WHERE")}(?<!\s)', f"WHERE ", sql, flags=re.IGNORECASE)
-    sql = re.sub(rf'(?<!\s){re.escape("WHERE")}', f" WHERE", sql, flags=re.IGNORECASE)
+    sql = re.sub(rf'{re.escape("WHERE")}(?<!\s)', "WHERE ", sql, flags=re.IGNORECASE)
+    sql = re.sub(rf'(?<!\s){re.escape("WHERE")}', " WHERE", sql, flags=re.IGNORECASE)
     sql = re.sub(r"\s+", " ", sql)
 
     # Check if operators are not attached to column or value as there is need for space " " on both side of operator
