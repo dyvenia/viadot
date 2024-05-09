@@ -447,7 +447,7 @@ class SAPRFC(Source):
             for val in client_side_filters.values():
                 if ")" in val:
                     raise ValueError(
-                        """Nested conditions eg. AND (col_1 = 'a' AND col_2 = 'b') found between or after 75 chararacters in WHERE condition! 
+                        """Nested conditions eg. AND (col_1 = 'a' AND col_2 = 'b') found between or after 75 chararacters in WHERE condition!
                         Please change nested conditions part of query separeted with 'AND' keywords, or place nested conditions part at the begining of the where statement.
                         """
                     )
@@ -914,7 +914,7 @@ class SAPRFCV2(Source):
             for val in client_side_filters.values():
                 if ")" in val:
                     raise ValueError(
-                        """Nested conditions eg. AND (col_1 = 'a' AND col_2 = 'b') found between or after 75 chararacters in WHERE condition! 
+                        """Nested conditions eg. AND (col_1 = 'a' AND col_2 = 'b') found between or after 75 chararacters in WHERE condition!
                         Please change nested conditions part of query separeted with 'AND' keywords, or place nested conditions part at the begining of the where statement.
                         """
                     )
