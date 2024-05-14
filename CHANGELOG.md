@@ -28,6 +28,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added `Trino` source
 - Added `MinIO` source
 - Added `gen_split()` method to `SAPRFCV2` class to allow looping over a data frame with generator - improves performance
+- Added `adjust_where_condition_by_adding_missing_spaces()` to `SAPRFC`. The function that is checking raw sql query and modifing it - if needed.
 
 ### Changed
 

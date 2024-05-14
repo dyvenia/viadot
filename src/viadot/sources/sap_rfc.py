@@ -33,6 +33,46 @@ from viadot.utils import add_viadot_metadata_columns, validate
 logger = logging.getLogger()
 
 
+def adjust_where_condition_by_adding_missing_spaces(sql: str) -> str:
+    """Function for adding white spaces between operators and `WHERE` statement.
+       This function is taking raw sql string and sanitizing it at the beginning of the
+       'query()' method, so other methods that taking sql as parameter could have sql
+       without whitespaces issues.
+
+    Args:
+        sql (str): raw sql query passed in flow
+
+    Returns:
+        str: sql query after adding white spaces if needed
+    """
+
+    # Check if 'WHERE' statement is not attached to 'FROM' or column name as there is need for space " " on both side of 'WHERE'
+    sql = re.sub(rf'{re.escape("WHERE")}(?<!\s)', "WHERE ", sql, flags=re.IGNORECASE)
+    sql = re.sub(rf'(?<!\s){re.escape("WHERE")}', " WHERE", sql, flags=re.IGNORECASE)
+    sql = re.sub(r"\s+", " ", sql)
+
+    # Check if operators are not attached to column or value as there is need for space " " on both side of operator
+    operators = ["<>", "!=", "<=", ">=", "!<", "!>", "=", ">", "<"]
+    reverse_check = [
+        "< >",
+        "! =",
+        "< =",
+        "> =",
+        "! <",
+        "! >",
+    ]
+
+    for op in operators:
+        sql = re.sub(rf"(?<!\s){re.escape(op)}", f" {op}", sql)
+        sql = re.sub(rf"{re.escape(op)}(?<!\s)", f"{op} ", sql)
+        sql = re.sub(r"\s+", " ", sql)
+    for op_2 in reverse_check:
+        if op_2 in sql:
+            sql = sql.replace(op_2, "".join(op_2.split()))
+
+    return sql
+
+
 def remove_whitespaces(text):
     return " ".join(text.split())
 
@@ -407,6 +447,13 @@ class SAPRFC(Source):
                 raise ValueError(
                     "WHERE conditions after the 75 character limit can only be combined with the AND keyword."
                 )
+            for val in client_side_filters.values():
+                if ")" in val:
+                    raise ValueError(
+                        """Nested conditions eg. AND (col_1 = 'a' AND col_2 = 'b') found between or after 75 chararacters in WHERE condition!
+                        Please change nested conditions part of query separeted with 'AND' keywords, or place nested conditions part at the begining of the where statement.
+                        """
+                    )
             else:
                 filters_pretty = list(client_side_filters.items())
                 self.logger.warning(
@@ -541,6 +588,7 @@ class SAPRFC(Source):
 
         sep = sep if sep is not None else self.sep
 
+        sql = adjust_where_condition_by_adding_missing_spaces(sql=sql)
         self.sql = sql
 
         self.extract_values(sql)
@@ -866,6 +914,13 @@ class SAPRFCV2(Source):
                 raise ValueError(
                     "WHERE conditions after the 75 character limit can only be combined with the AND keyword."
                 )
+            for val in client_side_filters.values():
+                if ")" in val:
+                    raise ValueError(
+                        """Nested conditions eg. AND (col_1 = 'a' AND col_2 = 'b') found between or after 75 chararacters in WHERE condition!
+                        Please change nested conditions part of query separeted with 'AND' keywords, or place nested conditions part at the begining of the where statement.
+                        """
+                    )
             else:
                 filters_pretty = list(client_side_filters.items())
                 self.logger.warning(
@@ -1000,6 +1055,7 @@ class SAPRFCV2(Source):
 
         sep = sep if sep is not None else self.sep
 
+        sql = adjust_where_condition_by_adding_missing_spaces(sql=sql)
         self.sql = sql
 
         self.extract_values(sql)
