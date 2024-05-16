@@ -6,12 +6,11 @@ from typing import Any, Literal
 import pandas as pd
 from prefect import task
 
-
 with contextlib.suppress(ImportError):
     from viadot.sources import Databricks
 
-from prefect_viadot.exceptions import MissingSourceCredentialsError
-from prefect_viadot.utils import get_credentials
+from orchestration.prefect_viadot.exceptions import MissingSourceCredentialsError
+from orchestration.prefect_viadot.utils import get_credentials
 
 
 @task(retries=3, retry_delay_seconds=10, timeout_seconds=60 * 60)

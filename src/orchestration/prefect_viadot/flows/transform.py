@@ -3,10 +3,9 @@
 import os
 import shutil
 
+from orchestration.prefect_viadot.tasks import clone_repo, dbt_task
+from orchestration.prefect_viadot.utils import get_credentials
 from prefect import flow, task
-
-from prefect_viadot.tasks import clone_repo, dbt_task
-from prefect_viadot.utils import get_credentials
 
 
 @task

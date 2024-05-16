@@ -5,10 +5,9 @@ import os
 from pathlib import Path
 from typing import Any
 
+from orchestration.prefect_viadot.utils import shell_run_command
 from prefect import task
 from prefect.logging import get_run_logger
-
-from prefect_viadot.utils import shell_run_command
 
 
 @task(retries=3, retry_delay_seconds=10, timeout_seconds=60 * 60)

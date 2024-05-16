@@ -1,13 +1,12 @@
 """Build specified dbt model(s) and upload the generated metadata to Luma."""
 
-from pathlib import Path
 import shutil
+from pathlib import Path
 from typing import Literal
 
+from orchestration.prefect_viadot.tasks import clone_repo, dbt_task, luma_ingest_task
+from orchestration.prefect_viadot.utils import get_credentials
 from prefect import allow_failure, flow, task
-
-from prefect_viadot.tasks import clone_repo, dbt_task, luma_ingest_task
-from prefect_viadot.utils import get_credentials
 
 
 @task
