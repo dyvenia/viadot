@@ -4,12 +4,10 @@ from datetime import datetime
 from typing import Any, Literal
 
 import pandas as pd
+from orchestration.prefect_viadot.exceptions import MissingSourceCredentialsError
+from orchestration.prefect_viadot.utils import get_credentials
 from prefect import task
 from viadot.sources import ExchangeRates
-
-from prefect_viadot.exceptions import MissingSourceCredentialsError
-from prefect_viadot.utils import get_credentials
-
 
 Currency = Literal[
     "USD", "EUR", "GBP", "CHF", "PLN", "DKK", "COP", "CZK", "SEK", "NOK", "ISK"
