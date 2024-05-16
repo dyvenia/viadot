@@ -4,10 +4,9 @@ import logging
 import shutil
 from typing import Any
 
-from prefect import get_run_logger, task
 import pygit2
-
-from prefect_viadot.utils import get_credentials
+from orchestration.prefect_viadot.utils import get_credentials
+from prefect import get_run_logger, task
 
 
 @task(retries=3, retry_delay_seconds=10, timeout_seconds=60 * 10)

@@ -1,8 +1,7 @@
 """Flows for pulling data from/into Sharepoint."""
 
+from orchestration.prefect_viadot.tasks import df_to_adls, sharepoint_to_df
 from prefect import flow
-
-from prefect_viadot.tasks import df_to_adls, sharepoint_to_df
 
 
 @flow(

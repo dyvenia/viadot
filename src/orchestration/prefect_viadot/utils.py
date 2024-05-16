@@ -12,11 +12,10 @@ import anyio
 import awswrangler as wr
 from anyio import open_process
 from anyio.streams.text import TextReceiveStream
-from prefect_azure import AzureKeyVaultSecretReference
-from prefect_viadot.exceptions import MissingPrefectBlockError
-
+from orchestration.prefect_viadot.exceptions import MissingPrefectBlockError
 from prefect.client.orchestration import PrefectClient
 from prefect.settings import PREFECT_API_KEY, PREFECT_API_URL
+from prefect_azure import AzureKeyVaultSecretReference
 
 
 async def list_block_documents() -> list[Any]:
