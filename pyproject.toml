@@ -35,7 +35,7 @@ dependencies = [
     "sqlalchemy==2.0.*",
     "minio>=7.0, <8.0",
     "azure-identity>=1.15.0",
-    "prefect>=2.14.21",
+    "prefect>=2.16.9",
     "dbt-redshift>=1.3, <1.8",
     "dbt-sqlserver>=1.3, <1.8",
     "lumacli>=0.1.0, <0.2.0",
