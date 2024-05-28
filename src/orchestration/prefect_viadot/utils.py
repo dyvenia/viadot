@@ -1,5 +1,6 @@
 """Common utilities for use in tasks."""
 
+import contextlib
 import json
 import logging
 import os
@@ -9,13 +10,17 @@ from json.decoder import JSONDecodeError
 from typing import Any
 
 import anyio
-import awswrangler as wr
+
+with contextlib.suppress(ModuleNotFoundError):
+    import awswrangler as wr
 from anyio import open_process
 from anyio.streams.text import TextReceiveStream
 from orchestration.prefect_viadot.exceptions import MissingPrefectBlockError
 from prefect.client.orchestration import PrefectClient
 from prefect.settings import PREFECT_API_KEY, PREFECT_API_URL
-from prefect_azure import AzureKeyVaultSecretReference
+
+with contextlib.suppress(ModuleNotFoundError):
+    from prefect_azure import AzureKeyVaultSecretReference
 
 
 async def list_block_documents() -> list[Any]:

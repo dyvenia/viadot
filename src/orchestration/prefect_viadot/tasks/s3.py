@@ -1,10 +1,13 @@
 """Task for uploading pandas DataFrame to Amazon S3."""
 
+import contextlib
 from typing import Any
 
 from prefect import task
 from prefect.logging import get_run_logger
-from viadot.sources import S3
+
+with contextlib.suppress(ImportError):
+    from viadot.sources import S3
 
 
 @task(retries=3, retry_delay_seconds=10, timeout_seconds=60 * 60)
