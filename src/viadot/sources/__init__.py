@@ -1,6 +1,5 @@
 from importlib.util import find_spec
 
-from viadot.sources.azure_data_lake import AzureDataLake
 from viadot.sources.cloud_for_customers import CloudForCustomers
 from viadot.sources.exchange_rates import ExchangeRates
 from viadot.sources.genesys import Genesys
@@ -8,13 +7,17 @@ from viadot.sources.sharepoint import Sharepoint
 from viadot.sources.trino_source import Trino
 
 __all__ = [
-    "AzureDataLake",
     "CloudForCustomers",
     "ExchangeRates",
     "Genesys",
     "Sharepoint",
     "Trino",
 ]
+
+if find_spec("adlfs"):
+    from viadot.sources.azure_data_lake import AzureDataLake  # noqa
+
+    __all__.extend(["AzureDataLake"])
 
 if find_spec("redshift_connector"):
     from viadot.sources.redshift_spectrum import RedshiftSpectrum  # noqa
@@ -27,7 +30,7 @@ if find_spec("s3fs"):
     __all__.extend(["S3"])
 
 if find_spec("s3fs"):
-    from viadot.sources.minio import MinIO  # noqa
+    from viadot.sources.minio_source import MinIO  # noqa
 
     __all__.extend(["MinIO"])
 
