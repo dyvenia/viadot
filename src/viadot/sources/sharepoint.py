@@ -177,4 +177,4 @@ class Sharepoint(Source):
             if tests:
                 validate(df=df_clean, tests=tests)
 
-            return df_clean
+            return df_clean.astype(str)
