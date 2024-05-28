@@ -1,10 +1,14 @@
 import os
 from typing import Iterable, List, Literal, Union
 
-import awswrangler as wr
-import boto3
+try:
+    import awswrangler as wr
+    import boto3
+    import s3fs
+except ModuleNotFoundError:
+    raise ImportError("Missing required modules to use edshiftSpectrum source.")
+
 import pandas as pd
-import s3fs
 from pydantic import BaseModel, root_validator
 
 from viadot.config import get_source_credentials

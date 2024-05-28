@@ -4,10 +4,15 @@ from typing import Generator, Literal
 import pandas as pd
 import pyarrow as pa
 import pyarrow.parquet as pq
-import s3fs
+
+try:
+    import s3fs
+    from minio import Minio
+    from minio.error import S3Error
+except ModuleNotFoundError:
+    raise ImportError("Missing required modules to use MinIO source.")
+
 import urllib3
-from minio import Minio
-from minio.error import S3Error
 from pydantic import BaseModel
 from urllib3.exceptions import NewConnectionError
 
