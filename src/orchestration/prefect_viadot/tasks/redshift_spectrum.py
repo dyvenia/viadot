@@ -1,11 +1,14 @@
 """Task for uploading pandas DataFrame to AWS Redshift Spectrum."""
 
+import contextlib
 from typing import Any, Literal
 
 import pandas as pd
 from prefect import task
 from prefect.logging import get_run_logger
-from viadot.sources import RedshiftSpectrum
+
+with contextlib.suppress(ImportError):
+    from viadot.sources import RedshiftSpectrum
 
 
 @task(retries=3, retry_delay_seconds=10, timeout_seconds=60 * 60)

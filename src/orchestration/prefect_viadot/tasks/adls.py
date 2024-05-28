@@ -1,12 +1,15 @@
 """Tasks for interacting with Azure Data Lake (gen2)."""
 
+import contextlib
 from typing import Any
 
 import pandas as pd
 from orchestration.prefect_viadot.exceptions import MissingSourceCredentialsError
 from orchestration.prefect_viadot.utils import get_credentials
 from prefect import task
-from viadot.sources import AzureDataLake
+
+with contextlib.suppress(ImportError):
+    from viadot.sources import AzureDataLake
 
 
 @task(retries=3, retry_delay_seconds=10, timeout_seconds=60 * 60)
