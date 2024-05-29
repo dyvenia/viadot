@@ -154,12 +154,19 @@ class Sharepoint(Source):
             excel_file = pd.ExcelFile(bytes_stream)
 
             if sheet_name:
-                df = excel_file.parse(sheet_name, **kwargs)
+                df = excel_file.parse(
+                    sheet_name=sheet_name, keep_default_na=False, na_values="", **kwargs
+                )
                 df["sheet_name"] = sheet_name
             else:
                 sheets: list[pd.DataFrame] = []
                 for sheet_name in excel_file.sheet_names:
-                    sheet = excel_file.parse(sheet_name=sheet_name, **kwargs)
+                    sheet = excel_file.parse(
+                        sheet_name=sheet_name,
+                        keep_default_na=False,
+                        na_values="",
+                        **kwargs,
+                    )
                     sheet["sheet_name"] = sheet_name
                     sheets.append(sheet)
                 df = pd.concat(sheets)
