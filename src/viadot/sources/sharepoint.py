@@ -33,6 +33,44 @@ class SharepointCredentials(BaseModel):
         return credentials
 
 
+def get_last_segment_from_url(
+    url: str,
+) -> tuple[str, Literal["file"]] | tuple[str, Literal["directory"]]:
+    """
+    Get the last part of the URL and determine if it represents a file or directory.
+
+    This function parses the provided URL, extracts the last segment, and identifies
+    whether it corresponds to a file (based on the presence of a file extension)
+    or a directory.
+
+    Args:
+        url (str): The URL to a SharePoint file or directory.
+
+    Raises:
+        ValueError: If an invalid URL is provided.
+
+    Returns:
+        tuple: A tuple where the first element is the last part of the URL (file extension
+        or folder name) and the second element is a string indicating the type:
+            - If a file URL is provided, returns (file extension, 'file').
+            - If a folder URL is provided, returns (last folder name, 'directory').
+    """
+    path_parts = urlparse(url).path.split("/")
+    # Filter out empty parts
+    non_empty_parts = [part for part in path_parts if part]
+
+    # Check if the last part has a file extension
+    if non_empty_parts:
+        last_part = non_empty_parts[-1]
+        _, extension = os.path.splitext(last_part)
+        if extension:
+            return extension, "file"
+        else:
+            return last_part, "directory"
+    else:
+        raise ValueError("Incorrect URL provided : '{url}'")
+
+
 class Sharepoint(Source):
     """
     Download Excel files from Sharepoint.
@@ -68,43 +106,6 @@ class Sharepoint(Source):
                 f"Could not authenticate to {site} with provided credentials."
             )
         return connection
-
-    def get_last_segment_from_url(
-        self, url: str
-    ) -> tuple[str, Literal["file"]] | tuple[str, Literal["directory"]]:
-        """
-        Get the last part of the URL and determine if it represents a file or directory.
-
-        This function parses the provided URL, extracts the last segment, and identifies
-        whether it corresponds to a file (based on the presence of a file extension)
-        or a directory.
-
-        Args:
-            url (str): The URL to a SharePoint file or directory.
-
-        Raises:
-            ValueError: If an invalid URL is provided.
-
-        Returns:
-            tuple: A tuple where the first element is the last part of the URL (file extension
-            or folder name) and the second element is a string indicating the type:
-                - If a file URL is provided, returns (file extension, 'file').
-                - If a folder URL is provided, returns (last folder name, 'directory').
-        """
-        path_parts = urlparse(url).path.split("/")
-        # Filter out empty parts
-        non_empty_parts = [part for part in path_parts if part]
-
-        # Check if the last part has a file extension
-        if non_empty_parts:
-            last_part = non_empty_parts[-1]
-            _, extension = os.path.splitext(last_part)
-            if extension:
-                return extension, "file"
-            else:
-                return last_part, "directory"
-        else:
-            raise ValueError("Incorrect URL provided : '{url}'")
 
     def download_file(self, url: str, to_path: list | str) -> None:
         """
@@ -155,7 +156,7 @@ class Sharepoint(Source):
         Returns:
             pd.DataFrame: The resulting data as a pandas DataFrame.
         """
-        endpoint_value, endpoint_type = self.get_last_segment_from_url(url)
+        endpoint_value, endpoint_type = get_last_segment_from_url(url)
 
         if "nrows" in kwargs:
             raise ValueError("Parameter 'nrows' is not supported.")
