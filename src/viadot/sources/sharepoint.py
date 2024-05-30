@@ -1,5 +1,5 @@
 import io
-from typing import Optional, Union
+from typing import Literal, Optional, Union
 from urllib.parse import urlparse
 import os
 
@@ -69,8 +69,28 @@ class Sharepoint(Source):
             )
         return connection
 
-    def get_last_segment_from_url(self, url: str):
-        """Get last URL part and name it."""
+    def get_last_segment_from_url(
+        self, url: str
+    ) -> tuple[str, Literal["file"]] | tuple[str, Literal["directory"]]:
+        """
+        Get the last part of the URL and determine if it represents a file or directory.
+
+        This function parses the provided URL, extracts the last segment, and identifies
+        whether it corresponds to a file (based on the presence of a file extension)
+        or a directory.
+
+        Args:
+            url (str): The URL to a SharePoint file or directory.
+
+        Raises:
+            ValueError: If an invalid URL is provided.
+
+        Returns:
+            tuple: A tuple where the first element is the last part of the URL (file extension
+            or folder name) and the second element is a string indicating the type:
+                - If a file URL is provided, returns (file extension, 'file').
+                - If a folder URL is provided, returns (last folder name, 'directory').
+        """
         path_parts = urlparse(url).path.split("/")
         # Filter out empty parts
         non_empty_parts = [part for part in path_parts if part]
