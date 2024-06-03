@@ -58,6 +58,8 @@ dev-dependencies = [
     "Faker==13.12.1",
     "python-dotenv>=1.0.1",
     "coverage>=7.4.4",
+    "aiohttp>=3.9.5",
+    "loguru>=0.7.2",
 ]
 
 [tool.pytest.ini_options]
@@ -65,3 +67,4 @@ log_format = "%(asctime)s %(levelname)s %(message)s"
 log_date_format = "%Y-%m-%d %H:%M:%S"
 log_cli = true
 log_level = "WARNING"
+addopts = "--ignore=dbt_packages"
