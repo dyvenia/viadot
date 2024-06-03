@@ -65,6 +65,8 @@ dev-dependencies = [
     "mkdocs-include-markdown-plugin>=5.1.0",
     "mkdocs-git-revision-date-plugin>=0.3.2",
     "mkdocs-glightbox>=0.4.0",
+    "aiohttp>=3.9.5",
+    "loguru>=0.7.2",
 ]
 
 [tool.pytest.ini_options]
@@ -72,3 +74,4 @@ log_format = "%(asctime)s %(levelname)s %(message)s"
 log_date_format = "%Y-%m-%d %H:%M:%S"
 log_cli = true
 log_level = "WARNING"
+addopts = "--ignore=dbt_packages"
