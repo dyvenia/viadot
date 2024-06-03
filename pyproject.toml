@@ -18,9 +18,10 @@ dependencies = [
     "aiolimiter==1.0.0",
     "trino==0.326.*",
     "sqlalchemy==2.0.*",
-    "prefect>=2.18.3",
     "lumacli>=0.1.2, <0.2.0",
     "pygit2>=1.13.3, <1.14.0",
+    "openpyxl==3.0.10",
+    "prefect>=2.18.3",
 ]
 requires-python = ">=3.10"
 readme = "README.md"
