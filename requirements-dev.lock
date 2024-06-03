@@ -8,8 +8,11 @@
 #   with-sources: false
 
 -e file:.
+aiohttp==3.9.5
 aiolimiter==1.0.0
     # via viadot2
+aiosignal==1.3.1
+    # via aiohttp
 aiosqlite==0.20.0
     # via prefect
 alembic==1.13.1
@@ -22,10 +25,12 @@ apprise==1.8.0
 asgi-lifespan==2.1.0
     # via prefect
 async-timeout==4.0.3
+    # via aiohttp
     # via asyncpg
 asyncpg==0.29.0
     # via prefect
 attrs==23.2.0
+    # via aiohttp
     # via jsonschema
     # via referencing
     # via visions
@@ -75,6 +80,9 @@ exceptiongroup==1.2.0
     # via anyio
     # via pytest
 faker==13.12.1
+frozenlist==1.4.1
+    # via aiohttp
+    # via aiosignal
 fsspec==2022.11.0
     # via prefect
 ghp-import==2.1.0
@@ -109,6 +117,7 @@ idna==3.6
     # via email-validator
     # via httpx
     # via requests
+    # via yarl
 importlib-metadata==6.11.0
     # via mkdocs
 importlib-resources==6.1.3
@@ -136,6 +145,7 @@ jsonschema-specifications==2023.12.1
     # via jsonschema
 kubernetes==29.0.0
     # via prefect
+loguru==0.7.2
 lumacli==0.1.2
     # via viadot2
 mako==1.3.5
@@ -183,6 +193,9 @@ mkdocs-material==9.5.26
 mkdocs-material-extensions==1.3.1
     # via mkdocs-material
 mkdocstrings==0.19.0
+multidict==6.0.5
+    # via aiohttp
+    # via yarl
 multimethod==1.11.2
     # via visions
 mypy-extensions==1.0.0
@@ -389,5 +402,7 @@ websocket-client==1.7.0
     # via kubernetes
 websockets==12.0
     # via prefect
+yarl==1.9.4
+    # via aiohttp
 zipp==3.18.1
     # via importlib-metadata
