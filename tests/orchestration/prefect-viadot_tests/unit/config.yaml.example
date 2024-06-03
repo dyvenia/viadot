@@ -1,0 +1,10 @@
+version: 1
+
+sources:
+
+  - sharepoint-dev:
+      class: Sharepoint
+      credentials:
+        site: "<TENANT_NAME>.sharepoint.com"
+        username: "<USERNAME>"
+        password: "<PASSWORD>"

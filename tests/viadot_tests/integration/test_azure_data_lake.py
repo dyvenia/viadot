@@ -1,5 +1,15 @@
 import pandas as pd
-from viadot.sources import AzureDataLake
+import pytest
+
+try:
+    from viadot.sources import AzureDataLake
+
+    _adls_installed = True
+except ImportError:
+    _adls_installed = False
+
+if not _adls_installed:
+    pytest.skip("AzureDataLake source not installed", allow_module_level=True)
 
 
 def test_upload_csv(TEST_CSV_FILE_PATH, TEST_ADLS_FILE_PATH_CSV):

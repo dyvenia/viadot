@@ -1,0 +1,11 @@
+groups:
+  - meta_key: "domains"
+    slug: "domains"
+    label_plural: "Domains"
+    label_singular: "Domain"
+    icon: "Cube"
+  - meta_key: "criticality"
+    slug: "criticality"
+    label_plural: "Criticality"
+    label_singular: "Criticality"
+    in_sidebar: false

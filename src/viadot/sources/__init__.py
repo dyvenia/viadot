@@ -1,10 +1,10 @@
 from importlib.util import find_spec
 
-from viadot.sources.cloud_for_customers import CloudForCustomers
-from viadot.sources.exchange_rates import ExchangeRates
-from viadot.sources.genesys import Genesys
-from viadot.sources.sharepoint import Sharepoint
-from viadot.sources.trino_source import Trino
+from .cloud_for_customers import CloudForCustomers
+from .exchange_rates import ExchangeRates
+from .genesys import Genesys
+from .sharepoint import Sharepoint
+from .trino_source import Trino
 
 __all__ = [
     "CloudForCustomers",
