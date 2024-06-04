@@ -1,6 +1,15 @@
 import pytest
 
-from viadot.sources import MinIO
+try:
+    from viadot.sources import MinIO
+
+    _minio_installed = True
+except ImportError:
+    _minio_installed = False
+
+if not _minio_installed:
+    pytest.skip("MinIO source not installed", allow_module_level=True)
+
 
 TEST_BUCKET = "spark"
 TEST_SCHEMA = "test_schema"
