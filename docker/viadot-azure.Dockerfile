@@ -24,7 +24,7 @@ ENV PIP_NO_CACHE_DIR=1
 RUN chmod +rwx /usr/lib/ssl/openssl.cnf && \
     sed -i 's/SECLEVEL=2/SECLEVEL=1/g' /usr/lib/ssl/openssl.cnf
 
-# # ODBC -- make sure to pin driver version as it's reflected in odbcinst.ini
+# ODBC -- make sure to pin driver version as it's reflected in odbcinst.ini
 RUN curl https://packages.microsoft.com/keys/microsoft.asc | apt-key add - && \
     curl https://packages.microsoft.com/config/debian/10/prod.list > /etc/apt/sources.list.d/mssql-release.list && \
     apt update -q && \
@@ -56,9 +56,6 @@ ENV SPARK_HOME /usr/local/lib/python3.10/site-packages/pyspark
 # so `pip install pyrfc` breaks if all deps are not already present.
 RUN pip install cython==0.29.24
 
-# # Python env
-# RUN pip install --upgrade pip
-
 ENV USER viadot
 ENV HOME="/home/$USER"
 ENV PATH="$HOME/.local/bin:$PATH"
@@ -68,7 +65,7 @@ WORKDIR ${HOME}
 COPY --chown=${USER}:${USER} . ./viadot
 
 COPY requirements.lock ./viadot
-RUN sed '/-e/d' ./viadot/requirements.lock > ./viadot/requirements.txt
+RUN sed '/-e/d' ./viadot/requirements-viadot-azure.lock > ./viadot/requirements.txt
 RUN pip install --no-cache-dir -r ./viadot/requirements.txt
 
 RUN if [ "$INSTALL_DATABRICKS" = "true" ]; then \
