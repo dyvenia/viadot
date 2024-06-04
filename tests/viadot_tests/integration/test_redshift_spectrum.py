@@ -3,7 +3,15 @@ import os
 import pandas as pd
 import pytest
 
-from viadot.sources import S3, RedshiftSpectrum
+try:
+    from viadot.sources import S3, RedshiftSpectrum
+
+    _s3_or_rs_installed = True
+except ImportError:
+    _s3_or_rs_installed = False
+
+if not _s3_or_rs_installed:
+    pytest.skip("S3 or RedshiftSpectrum source not installed", allow_module_level=True)
 
 TEST_DF = pd.DataFrame(
     [
