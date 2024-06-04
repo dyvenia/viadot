@@ -7,21 +7,21 @@ authors = [
     { name = "trymzet", email = "mzawadzki@dyvenia.com" },
 ]
 dependencies = [
-    "pandas==1.4.4",
-    "pyarrow==10.0.1",
-    "pyodbc>=4.0.34, <4.1.0",
-    "visions==0.7.5",
-    "sharepy>=2.0.0, <2.1.0",
-    "sql-metadata==2.3.0",
-    "sendgrid==6.9.7",
-    "pydantic==1.10.11",
-    "aiolimiter==1.0.0",
-    "trino==0.326.*",
+    "pandas>=2.2.2",
+    "pyarrow>=16.1.0",
+    "pyodbc>=5.1.0",
+    "visions>=0.7.6",
+    "sharepy>=2.0.0",
+    "sql-metadata>=2.11.0",
+    "sendgrid>=6.11.0",
+    "pydantic>=1.10.9,<1.11.0",
+    "aiolimiter>=1.1.0",
+    "trino==0.328.*",
     "sqlalchemy==2.0.*",
     "lumacli>=0.1.2, <0.2.0",
-    "pygit2>=1.13.3, <1.14.0",
-    "openpyxl==3.0.10",
-    "prefect>=2.18.3",
+    "pygit2>=1.13.3, <1.15.0",
+    "openpyxl>=3.1.3",
+    "prefect>=2.19.3",
 ]
 requires-python = ">=3.10"
 readme = "README.md"
@@ -31,10 +31,10 @@ databricks = [
     "databricks-connect==11.3.*",
 ]
 viadot-azure = [
-    "azure-core==1.25.0",
-    "azure-storage-blob==12.13.1",
-    "adlfs==2022.9.1",
-    "azure-identity>=1.15.0",
+    "azure-core==1.30.1",
+    "azure-storage-blob==12.20.0",
+    "adlfs==2024.4.1",
+    "azure-identity>=1.16.0",
     "dbt-sqlserver>=1.3, <1.8",
     "prefect-azure @ git+https://github.com/Trymzet/prefect-azure@add_keyvault_auth#egg=prefect-azure",
 ]
