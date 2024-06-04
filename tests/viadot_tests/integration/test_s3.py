@@ -3,7 +3,15 @@ import os
 import pandas as pd
 import pytest
 
-from viadot.sources import S3
+try:
+    from viadot.sources import S3
+
+    _s3_installed = True
+except ImportError:
+    _s3_installed = False
+
+if not _s3_installed:
+    pytest.skip("S3 source not installed", allow_module_level=True)
 
 SOURCE_DATA = [
     {
