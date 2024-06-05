@@ -38,7 +38,7 @@ WORKDIR ${HOME}
 COPY --chown=${USER}:${USER} . ./viadot
 
 COPY requirements.lock ./viadot
-RUN sed '/-e/d' ./viadot/requirements.lock > ./viadot/requirements.txt
+RUN sed '/-e/d' ./viadot/requirements-viadot-lite.lock > ./viadot/requirements.txt
 RUN pip install --no-cache-dir -r ./viadot/requirements.txt
 
 # Dependecy install
