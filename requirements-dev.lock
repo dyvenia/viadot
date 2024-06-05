@@ -3,8 +3,8 @@
 #
 # last locked with the following flags:
 #   pre: false
-#   features: ["viadot-azure"]
-#   all-features: false
+#   features: []
+#   all-features: true
 #   with-sources: false
 
 -e file:.
@@ -12,8 +12,16 @@ adlfs==2024.4.1
     # via viadot2
 agate==1.7.1
     # via dbt-core
+    # via dbt-postgres
+    # via dbt-redshift
+aiobotocore==2.13.0
+    # via s3fs
 aiohttp==3.9.5
     # via adlfs
+    # via aiobotocore
+    # via s3fs
+aioitertools==0.11.0
+    # via aiobotocore
 aiolimiter==1.1.0
     # via viadot2
 aiosignal==1.3.1
@@ -27,8 +35,14 @@ anyio==3.7.1
     # via prefect
 apprise==1.8.0
     # via prefect
+argon2-cffi==23.1.0
+    # via minio
+argon2-cffi-bindings==21.2.0
+    # via argon2-cffi
 asgi-lifespan==2.1.0
     # via prefect
+asn1crypto==1.5.1
+    # via scramp
 async-timeout==4.0.3
     # via aiohttp
     # via asyncpg
@@ -39,6 +53,8 @@ attrs==23.2.0
     # via jsonschema
     # via referencing
     # via visions
+awswrangler==3.7.3
+    # via viadot2
 azure-core==1.30.1
     # via adlfs
     # via azure-identity
@@ -59,7 +75,19 @@ azure-storage-blob==12.20.0
     # via viadot2
 babel==2.15.0
     # via agate
+beautifulsoup4==4.12.3
+    # via redshift-connector
 black==22.6.0
+boto3==1.34.106
+    # via awswrangler
+    # via redshift-connector
+    # via viadot2
+botocore==1.34.106
+    # via aiobotocore
+    # via awswrangler
+    # via boto3
+    # via redshift-connector
+    # via s3transfer
 cachetools==5.3.3
     # via google-auth
     # via prefect
@@ -68,8 +96,10 @@ certifi==2024.2.2
     # via httpcore
     # via httpx
     # via kubernetes
+    # via minio
     # via requests
 cffi==1.16.0
+    # via argon2-cffi-bindings
     # via azure-datalake-store
     # via cryptography
     # via dbt-core
@@ -102,12 +132,20 @@ cryptography==42.0.7
     # via msal
     # via prefect
     # via pyjwt
+databricks-connect==11.3.37
+    # via viadot2
 dateparser==1.2.0
     # via prefect
 dbt-core==1.7.12
+    # via dbt-postgres
+    # via dbt-redshift
     # via dbt-sqlserver
 dbt-extractor==0.5.1
     # via dbt-core
+dbt-postgres==1.7.12
+    # via dbt-redshift
+dbt-redshift==1.7.7
+    # via viadot2
 dbt-semantic-interfaces==0.4.4
     # via dbt-core
 dbt-sqlserver==1.3.1
@@ -127,9 +165,10 @@ faker==13.12.1
 frozenlist==1.4.1
     # via aiohttp
     # via aiosignal
-fsspec==2024.5.0
+fsspec==2024.6.0
     # via adlfs
     # via prefect
+    # via s3fs
 ghp-import==2.1.0
     # via mkdocs
 google-auth==2.29.0
@@ -189,6 +228,9 @@ jinja2==3.1.3
     # via prefect
 jinja2-humanize-extension==0.4.0
     # via prefect
+jmespath==1.0.1
+    # via boto3
+    # via botocore
 jsonpatch==1.33
     # via prefect
 jsonpointer==2.4
@@ -208,6 +250,8 @@ logbook==1.5.3
 loguru==0.7.2
 lumacli==0.1.2
     # via viadot2
+lxml==5.2.2
+    # via redshift-connector
 mako==1.3.5
     # via alembic
 markdown==3.3.7
@@ -232,6 +276,8 @@ mergedeep==1.3.4
     # via mkdocs
 minimal-snowplow-tracker==0.0.2
     # via dbt-core
+minio==7.2.7
+    # via viadot2
 mkdocs==1.3.1
     # via mkdocs-autorefs
     # via mkdocs-git-revision-date-plugin
@@ -278,6 +324,7 @@ networkx==3.2.1
     # via dbt-core
     # via visions
 numpy==1.23.4
+    # via awswrangler
     # via pandas
     # via pyarrow
     # via visions
@@ -289,13 +336,16 @@ openpyxl==3.1.3
 orjson==3.10.3
     # via prefect
 packaging==24.0
+    # via awswrangler
     # via dbt-core
     # via docker
     # via mkdocs
     # via msal-extensions
     # via prefect
     # via pytest
+    # via redshift-connector
 pandas==2.2.2
+    # via awswrangler
     # via viadot2
     # via visions
 parsedatetime==2.6
@@ -320,8 +370,12 @@ prefect-azure @ git+https://github.com/Trymzet/prefect-azure@f4a400fa997f2ef1f54
 protobuf==4.25.3
     # via dbt-core
 psycopg2-binary==2.9.9
+    # via dbt-postgres
     # via lumacli
+py4j==0.10.9.5
+    # via databricks-connect
 pyarrow==16.1.0
+    # via awswrangler
     # via viadot2
 pyasn1==0.6.0
     # via pyasn1-modules
@@ -330,6 +384,8 @@ pyasn1-modules==0.4.0
     # via google-auth
 pycparser==2.21
     # via cffi
+pycryptodome==3.20.0
+    # via minio
 pydantic==1.10.11
     # via dbt-semantic-interfaces
     # via lumacli
@@ -355,6 +411,7 @@ pytest==8.1.1
     # via pytest-cov
 pytest-cov==3.0.0
 python-dateutil==2.9.0.post0
+    # via botocore
     # via croniter
     # via dateparser
     # via dbt-semantic-interfaces
@@ -381,6 +438,7 @@ pytz==2024.1
     # via dbt-core
     # via pandas
     # via prefect
+    # via redshift-connector
     # via trino
 pytzdata==2020.1
     # via pendulum
@@ -399,6 +457,8 @@ pyyaml-env-tag==0.1
     # via mkdocs
 readchar==4.1.0
     # via prefect
+redshift-connector==2.0.917
+    # via dbt-redshift
 referencing==0.35.1
     # via jsonschema
     # via jsonschema-specifications
@@ -414,6 +474,7 @@ requests==2.31.0
     # via lumacli
     # via minimal-snowplow-tracker
     # via msal
+    # via redshift-connector
     # via requests-oauthlib
     # via sharepy
     # via trino
@@ -435,14 +496,23 @@ ruamel-yaml==0.18.6
     # via prefect
 ruamel-yaml-clib==0.2.8
     # via ruamel-yaml
+s3fs==2024.6.0
+    # via viadot2
+s3transfer==0.10.1
+    # via boto3
+scramp==1.4.5
+    # via redshift-connector
 sendgrid==6.11.0
     # via viadot2
+setuptools==70.0.0
+    # via redshift-connector
 sharepy==2.0.0
     # via viadot2
 shellingham==1.5.4
     # via typer
 six==1.16.0
     # via azure-core
+    # via databricks-connect
     # via isodate
     # via kubernetes
     # via minimal-snowplow-tracker
@@ -453,6 +523,8 @@ sniffio==1.3.1
     # via asgi-lifespan
     # via httpx
     # via prefect
+soupsieve==2.5
+    # via beautifulsoup4
 sql-metadata==2.11.0
     # via viadot2
 sqlalchemy==2.0.28
@@ -481,12 +553,14 @@ typer==0.12.3
 typing-extensions==4.10.0
     # via aiosqlite
     # via alembic
+    # via awswrangler
     # via azure-core
     # via azure-keyvault-secrets
     # via azure-storage-blob
     # via dbt-core
     # via dbt-semantic-interfaces
     # via mashumaro
+    # via minio
     # via prefect
     # via pydantic
     # via pydantic-core
@@ -501,9 +575,11 @@ tzlocal==5.2
 ujson==5.10.0
     # via prefect
 urllib3==1.26.18
+    # via botocore
     # via dbt-core
     # via docker
     # via kubernetes
+    # via minio
     # via requests
 uvicorn==0.28.1
     # via prefect
@@ -516,6 +592,8 @@ websocket-client==1.8.0
     # via kubernetes
 websockets==12.0
     # via prefect
+wrapt==1.16.0
+    # via aiobotocore
 yarl==1.9.4
     # via aiohttp
 zipp==3.18.1
