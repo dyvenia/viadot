@@ -90,12 +90,6 @@ class CloudForCustomers(Source):
             records.extend(new_records)
 
             url = response_json["d"].get("__next")
-
-        if not response_json.get("d").get("results"):
-            raise ValueError(
-                "Response from the cloud for customers for specified parameters is empty!"
-            )
-
         return records
 
     def _to_records_other(self, url: str) -> List[Dict[str, Any]]:
@@ -121,12 +115,6 @@ class CloudForCustomers(Source):
             tmp_params = None
             tmp_full_url = url
             records.extend(new_records)
-
-        if not response_json.get("d").get("results"):
-            raise ValueError(
-                "Response from the cloud for customers for specified parameters is empty!"
-            )
-
         return records
 
     def to_records(self) -> List[Dict[str, Any]]:
@@ -233,6 +221,11 @@ class CloudForCustomers(Source):
         """
         records = self.to_records()
         df = pd.DataFrame(data=records, **kwargs)
+
+        if df.empty:
+            raise ValueError(
+                "Response from cloud for customers for specified parameters were empty!"
+            )
         if dtype:
             df = df.astype(dtype)
         if fields:
