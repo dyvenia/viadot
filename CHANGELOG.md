@@ -10,7 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 ### Changed
-
+- Changed `CloudForCustomers` methods: `_to_records_report` and `_to_records_other` to rasie ValueError if response from data source is empty 
 ### Removed
 
 

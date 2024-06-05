@@ -90,7 +90,6 @@ class CloudForCustomers(Source):
             records.extend(new_records)
 
             url = response_json["d"].get("__next")
-
         return records
 
     def _to_records_other(self, url: str) -> List[Dict[str, Any]]:
@@ -222,6 +221,11 @@ class CloudForCustomers(Source):
         """
         records = self.to_records()
         df = pd.DataFrame(data=records, **kwargs)
+
+        if df.empty:
+            raise ValueError(
+                "Response from cloud for customers for specified parameters were empty!"
+            )
         if dtype:
             df = df.astype(dtype)
         if fields:
