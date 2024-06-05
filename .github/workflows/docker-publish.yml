@@ -35,12 +35,30 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build
+      - name: Build and publish viadot-lite image
         uses: docker/build-push-action@v3
         with:
           context: .
-          file: docker/Dockerfile
+          file: docker/viadot-lite.Dockerfile
           platforms: linux/amd64
           push: true
-          tags: ghcr.io/${{ github.repository }}/viadot:${{ github.event.inputs.tag }}
+          tags: ghcr.io/${{ github.repository }}/viadot-lite:${{ github.event.inputs.tag }}
+
+      - name: Build and publish viadot-aws image
+        uses: docker/build-push-action@v3
+        with:
+          context: .
+          file: docker/viadot-aws.Dockerfile
+          platforms: linux/amd64
+          push: true
+          tags: ghcr.io/${{ github.repository }}/viadot-aws:${{ github.event.inputs.tag }}
+
+      - name: Build and publish viadot-azure image
+        uses: docker/build-push-action@v3
+        with:
+          context: .
+          file: docker/viadot-azure.Dockerfile
+          platforms: linux/amd64
+          push: true
+          tags: ghcr.io/${{ github.repository }}/viadot-azure:${{ github.event.inputs.tag }}
           build-args: INSTALL_DATABRICKS=${{ github.event.inputs.if_databricks }}
