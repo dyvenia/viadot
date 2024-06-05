@@ -7,15 +7,17 @@ RUN useradd --non-unique --uid 1000 --create-home viadot && \
     find /usr/local/lib -type d -exec chmod 777 {} \; && \
     find /usr/local/bin -type d -exec chmod 777 {} \;
 
+# For easy removal of dotfiles. Must be executed with bash.
+SHELL ["/bin/bash", "-c"]
+RUN shopt -s dotglob
+SHELL ["/bin/sh", "-c"]
+
 RUN groupadd docker && \
     usermod -aG docker viadot
 
-
 # System packages
-RUN apt update -q && yes | apt install -q gnupg vim unixodbc-dev build-essential \
-    curl python3-dev libboost-all-dev libpq-dev python3-gi sudo git software-properties-common
+RUN apt update -q && yes | apt install -q  gnupg vim curl git
 ENV PIP_NO_CACHE_DIR=1
-RUN pip install --upgrade cffi
 
 COPY docker/odbcinst.ini /etc
 
