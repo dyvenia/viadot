@@ -1,8 +1,18 @@
 version: "3"
 
 services:
+  viadot_2_lite:
+    image: ghcr.io/dyvenia/viadot/viadot-lite:2.0.0-alpha.2
+    container_name: viadot_2_lite
+    volumes:
+      # - ${HOME}/.databricks-connect:/home/viadot/.databricks-connect
+      # - ${HOME}/.config/viadot/config.yaml:/home/viadot/.config/viadot/config.yaml
+      - ../:/home/viadot
+    shm_size: "4gb"
+    command: sleep infinity
+    restart: "unless-stopped"
   viadot_2_azure:
-    image: ghcr.io/dyvenia/viadot/viadot-azure:0.2
+    image: ghcr.io/dyvenia/viadot/viadot-azure:2.0.0-alpha.2
     container_name: viadot_2_azure
     volumes:
       # - ${HOME}/.databricks-connect:/home/viadot/.databricks-connect
@@ -11,3 +21,14 @@ services:
     shm_size: "4gb"
     command: sleep infinity
     restart: "unless-stopped"
+  viadot_2_aws:
+    image: ghcr.io/dyvenia/viadot/viadot-aws:2.0.0-alpha.2
+    container_name: viadot_2_aws
+    volumes:
+      # - ${HOME}/.databricks-connect:/home/viadot/.databricks-connect
+      # - ${HOME}/.config/viadot/config.yaml:/home/viadot/.config/viadot/config.yaml
+      - ../:/home/viadot
+    shm_size: "4gb"
+    command: sleep infinity
+    restart: "unless-stopped"
+
