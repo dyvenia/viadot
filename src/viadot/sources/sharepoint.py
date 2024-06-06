@@ -1,5 +1,7 @@
 import io
-from typing import Optional, Union
+from typing import Literal, Optional, Union
+from urllib.parse import urlparse
+import os
 
 import pandas as pd
 import sharepy
@@ -29,6 +31,44 @@ class SharepointCredentials(BaseModel):
                 "'site', 'username', and 'password' credentials are required."
             )
         return credentials
+
+
+def get_last_segment_from_url(
+    url: str,
+) -> tuple[str, Literal["file"]] | tuple[str, Literal["directory"]]:
+    """
+    Get the last part of the URL and determine if it represents a file or directory.
+
+    This function parses the provided URL, extracts the last segment, and identifies
+    whether it corresponds to a file (based on the presence of a file extension)
+    or a directory.
+
+    Args:
+        url (str): The URL to a SharePoint file or directory.
+
+    Raises:
+        ValueError: If an invalid URL is provided.
+
+    Returns:
+        tuple: A tuple where the first element is the last part of the URL (file extension
+        or folder name) and the second element is a string indicating the type:
+            - If a file URL is provided, returns (file extension, 'file').
+            - If a folder URL is provided, returns (last folder name, 'directory').
+    """
+    path_parts = urlparse(url).path.split("/")
+    # Filter out empty parts
+    non_empty_parts = [part for part in path_parts if part]
+
+    # Check if the last part has a file extension
+    if non_empty_parts:
+        last_part = non_empty_parts[-1]
+        _, extension = os.path.splitext(last_part)
+        if extension:
+            return extension, "file"
+        else:
+            return last_part, "directory"
+    else:
+        raise ValueError("Incorrect URL provided : '{url}'")
 
 
 class Sharepoint(Source):
@@ -67,11 +107,7 @@ class Sharepoint(Source):
             )
         return connection
 
-    def download_file(
-        self,
-        url: str,
-        to_path: str,
-    ) -> None:
+    def download_file(self, url: str, to_path: list | str) -> None:
         """
         Download a file from Sharepoint.
 
@@ -98,7 +134,7 @@ class Sharepoint(Source):
         url: str,
         sheet_name: Optional[Union[str, list, int]] = None,
         if_empty: str = "warn",
-        tests: dict = None,
+        tests: dict = {},
         **kwargs,
     ) -> pd.DataFrame:
         """
@@ -120,43 +156,53 @@ class Sharepoint(Source):
         Returns:
             pd.DataFrame: The resulting data as a pandas DataFrame.
         """
-
-        if "xls" not in url.split(".")[-1]:
-            raise ValueError("Only Excel files can be loaded into a DataFrame.")
+        endpoint_value, endpoint_type = get_last_segment_from_url(url)
 
         if "nrows" in kwargs:
             raise ValueError("Parameter 'nrows' is not supported.")
 
         conn = self.get_connection()
+        ## add option to get only excel files - if needed - here folder with only excels is required
+        if endpoint_type == "file":
+            if endpoint_value != ".xlsx":
+                raise ValueError(
+                    "Only Excel files with 'XLSX' extension can be loaded into a DataFrame."
+                )
+            self.logger.info(f"Downloading data from {url}...")
 
-        self.logger.info(f"Downloading data from {url}...")
+            response = conn.get(url)
+            bytes_stream = io.BytesIO(response.content)
+            excel_file = pd.ExcelFile(bytes_stream)
 
-        response = conn.get(url)
-        bytes_stream = io.BytesIO(response.content)
-        excel_file = pd.ExcelFile(bytes_stream)
+            if sheet_name:
+                df = excel_file.parse(
+                    sheet_name=sheet_name, keep_default_na=False, na_values="", **kwargs
+                )
+                df["sheet_name"] = sheet_name
+            else:
+                sheets: list[pd.DataFrame] = []
+                for sheet_name in excel_file.sheet_names:
+                    sheet = excel_file.parse(
+                        sheet_name=sheet_name,
+                        keep_default_na=False,
+                        na_values="",
+                        **kwargs,
+                    )
+                    sheet["sheet_name"] = sheet_name
+                    sheets.append(sheet)
+                df = pd.concat(sheets)
 
-        if sheet_name:
-            df = excel_file.parse(sheet_name, **kwargs)
-            df["sheet_name"] = sheet_name
-        else:
-            sheets: list[pd.DataFrame] = []
-            for sheet_name in excel_file.sheet_names:
-                sheet = excel_file.parse(sheet_name=sheet_name, **kwargs)
-                sheet["sheet_name"] = sheet_name
-                sheets.append(sheet)
-            df = pd.concat(sheets)
+            if df.empty:
+                try:
+                    self._handle_if_empty(if_empty)
+                except SKIP:
+                    return pd.DataFrame()
+            else:
+                self.logger.info(f"Successfully downloaded {len(df)} of data.")
 
-        if df.empty:
-            try:
-                self._handle_if_empty(if_empty)
-            except SKIP:
-                return pd.DataFrame()
-        else:
-            self.logger.info(f"Successfully downloaded {len(df)} of data.")
+            df_clean = cleanup_df(df)
 
-        df_clean = cleanup_df(df)
+            if tests:
+                validate(df=df_clean, tests=tests)
 
-        if tests:
-            validate(df=df_clean, tests=tests)
-
-        return df_clean
+            return df_clean.astype(str)

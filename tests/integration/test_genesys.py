@@ -120,7 +120,7 @@ def var_dictionary():
 
 @pytest.fixture(scope="session")
 def genesys():
-    g = Genesys(config_key="genesys")
+    g = Genesys(config_key="genesys", schedule_id="1234", environment="test")
 
     yield g
 
