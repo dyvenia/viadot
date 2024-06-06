@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Added `get_last_segment_from_url` function to sharepoint file.
 - Added `validate` function to `viadot/utils.py`
 - Fixed `Databricks.create_table_from_pandas()` failing to overwrite a table in some cases even with `replace="True"`
 - Enabled Databricks Connect in the image. To enable, [follow this guide](./README.md#executing-spark-jobs)
@@ -32,6 +33,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Changed the way of handling `NA` string values and mapped column types to `str` for `Sharepoint` source.
 - Added `SQLServerToDF` task
 - Added `SQLServerToDuckDB` flow which downloads data from SQLServer table, loads it to parquet file and then uploads it do DuckDB
 - Added complete proxy set up in `SAPRFC` example (`viadot/examples/sap_rfc`)

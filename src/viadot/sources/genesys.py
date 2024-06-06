@@ -109,8 +109,8 @@ class Genesys(Source):
         Returns:
             Dict[str, Any]: Request headers with token.
         """
-        CLIENT_ID = self.credentials.get("CLIENT_ID", None)
-        CLIENT_SECRET = self.credentials.get("CLIENT_SECRET", None)
+        CLIENT_ID = self.credentials.get("CLIENT_ID", "")
+        CLIENT_SECRET = self.credentials.get("CLIENT_SECRET", "")
         authorization = base64.b64encode(
             bytes(CLIENT_ID + ":" + CLIENT_SECRET, "ISO-8859-1")
         ).decode("ascii")

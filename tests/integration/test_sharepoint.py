@@ -1,20 +1,19 @@
 import os
 
 import pytest
-
 from viadot.exceptions import CredentialError
 from viadot.sources import Sharepoint
 
 
 def test_is_configured():
-    c4c = Sharepoint(
+    s = Sharepoint(
         credentials={
             "site": "test_site",
             "username": "test_user",
             "password": "test_password",
         },
     )
-    assert c4c
+    assert s
 
 
 def test_is_configured_throws_credential_error():
