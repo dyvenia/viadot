@@ -1,4 +1,4 @@
-from orchestration.prefect_viadot.flows import (
+from viadot.orchestration.prefect.flows import (
     exchange_rates_to_adls,
     exchange_rates_to_databricks,
 )

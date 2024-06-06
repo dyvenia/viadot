@@ -1,5 +1,5 @@
-from orchestration.prefect_viadot.tasks import sap_rfc_to_df
 from prefect import flow
+from viadot.orchestration.prefect.tasks import sap_rfc_to_df
 
 
 def test_sap_rfc_to_df():

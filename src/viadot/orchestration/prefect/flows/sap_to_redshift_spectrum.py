@@ -2,7 +2,8 @@
 
 from typing import Any, Literal
 
-from orchestration.prefect_viadot.tasks import df_to_redshift_spectrum, sap_rfc_to_df
+from viadot.orchestration.prefect.tasks import df_to_redshift_spectrum, sap_rfc_to_df
+
 from prefect import flow
 
 

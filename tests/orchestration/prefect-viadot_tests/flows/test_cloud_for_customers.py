@@ -1,4 +1,4 @@
-from orchestration.prefect_viadot.flows import (
+from viadot.orchestration.prefect.flows import (
     cloud_for_customers_to_adls,
     cloud_for_customers_to_databricks,
 )

@@ -1,4 +1,4 @@
-from orchestration.prefect_viadot.flows import sharepoint_to_adls
+from viadot.orchestration.prefect.flows import sharepoint_to_adls
 from viadot.sources import AzureDataLake
 
 

@@ -1,7 +1,7 @@
 import pandas as pd
 import pytest
-from orchestration.prefect_viadot.tasks import df_to_adls
 from prefect import flow, task
+from viadot.orchestration.prefect.tasks import df_to_adls
 
 try:
     from viadot.sources import AzureDataLake
