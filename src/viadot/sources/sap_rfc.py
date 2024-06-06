@@ -1254,8 +1254,8 @@ class SAPRFCV2(Source):
                             df[fields] = np.nan
                     chunk += 1
                 elif not response["DATA"]:
-                    print("No data returned from SAP.")
-        df.columns = columns
+                    logger.warning("No data returned from SAP.")
+        df = df.loc[:, columns]
 
         if self.client_side_filters:
             filter_query = self._build_pandas_filter_query(self.client_side_filters)
