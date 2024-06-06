@@ -15,6 +15,9 @@ def test_sharepoint_to_redshift_spectrum(sharepoint_url, sharepoint_credentials_
         schema_name=test_schema,
         table=test_schema,
         sharepoint_credentials_secret=sharepoint_credentials_secret,
+        download_all_files=False,
+        return_as_one_table=False,
+        file_sheet_mapping={},
     )
 
     rs = RedshiftSpectrum()
