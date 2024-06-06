@@ -1,6 +1,6 @@
 import os
 
-from orchestration.prefect_viadot.flows import sap_to_redshift_spectrum
+from viadot.orchestration.prefect.flows import sap_to_redshift_spectrum
 from viadot.sources import RedshiftSpectrum
 
 S3_BUCKET = os.environ.get("S3_BUCKET")

@@ -1,6 +1,6 @@
 import pytest
 from loguru import logger
-from orchestration.prefect_viadot.tasks import luma_ingest_task
+from viadot.orchestration.prefect.tasks import luma_ingest_task
 
 
 @pytest.mark.asyncio()

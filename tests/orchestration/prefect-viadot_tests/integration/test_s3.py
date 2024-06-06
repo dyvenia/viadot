@@ -3,8 +3,8 @@ from pathlib import Path
 
 import pandas as pd
 import pytest
-from orchestration.prefect_viadot.tasks import s3_upload_file
 from prefect import flow
+from viadot.orchestration.prefect.tasks import s3_upload_file
 
 try:
     from viadot.sources import S3

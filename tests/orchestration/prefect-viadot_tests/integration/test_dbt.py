@@ -1,5 +1,5 @@
-from orchestration.prefect_viadot.tasks import dbt_task
 from prefect import flow
+from viadot.orchestration.prefect.tasks import dbt_task
 
 
 def test_dbt_task():

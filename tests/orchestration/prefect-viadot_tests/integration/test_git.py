@@ -2,7 +2,7 @@ import shutil
 from pathlib import Path
 
 from loguru import logger
-from orchestration.prefect_viadot.tasks import clone_repo
+from viadot.orchestration.prefect.tasks import clone_repo
 
 
 def test_clone_repo_private(AZURE_REPO_URL):

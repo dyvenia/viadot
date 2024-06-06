@@ -2,8 +2,8 @@ import os
 
 import pandas as pd
 import pytest
-from orchestration.prefect_viadot.tasks import df_to_redshift_spectrum
 from prefect import flow
+from viadot.orchestration.prefect.tasks import df_to_redshift_spectrum
 
 try:
     from viadot.sources import RedshiftSpectrum

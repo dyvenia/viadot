@@ -1,4 +1,4 @@
-from orchestration.prefect_viadot.tasks import exchange_rates_to_df
+from viadot.orchestration.prefect.tasks import exchange_rates_to_df
 
 expected_df = [
     [

@@ -4,7 +4,8 @@ import logging
 import os
 from typing import Any
 
-from orchestration.prefect_viadot.utils import shell_run_command
+from viadot.orchestration.prefect.utils import shell_run_command
+
 from prefect import task
 from prefect.logging import get_run_logger
 
