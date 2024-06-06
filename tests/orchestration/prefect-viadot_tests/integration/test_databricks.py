@@ -14,7 +14,7 @@ except ImportError:
 if not _databricks_installed:
     pytest.skip("Databricks source not installed", allow_module_level=True)
 
-from orchestration.prefect_viadot.tasks import df_to_databricks
+from viadot.orchestration.prefect.tasks import df_to_databricks
 
 TEST_SCHEMA = "test_viadot_schema"
 TEST_TABLE = "test"

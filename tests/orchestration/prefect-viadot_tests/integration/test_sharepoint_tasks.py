@@ -1,11 +1,11 @@
 import os
 from pathlib import Path
 
-from orchestration.prefect_viadot.tasks import (
+from prefect import flow
+from viadot.orchestration.prefect.tasks import (
     sharepoint_download_file,
     sharepoint_to_df,
 )
-from prefect import flow
 
 
 def test_to_df(sharepoint_url, sharepoint_config_key):

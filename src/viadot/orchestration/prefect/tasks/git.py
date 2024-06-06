@@ -5,7 +5,8 @@ import shutil
 from typing import Any
 
 import pygit2
-from orchestration.prefect_viadot.utils import get_credentials
+from viadot.orchestration.prefect.utils import get_credentials
+
 from prefect import get_run_logger, task
 
 

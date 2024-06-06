@@ -15,7 +15,8 @@ with contextlib.suppress(ModuleNotFoundError):
     import awswrangler as wr
 from anyio import open_process
 from anyio.streams.text import TextReceiveStream
-from orchestration.prefect_viadot.exceptions import MissingPrefectBlockError
+from viadot.orchestration.prefect.exceptions import MissingPrefectBlockError
+
 from prefect.client.orchestration import PrefectClient
 from prefect.settings import PREFECT_API_KEY, PREFECT_API_URL
 

@@ -2,9 +2,10 @@
 
 from typing import Any
 
-from orchestration.prefect_viadot.tasks import s3_upload_file, sharepoint_download_file
-from prefect import flow
+from viadot.orchestration.prefect.tasks import s3_upload_file, sharepoint_download_file
 from viadot.sources.sharepoint import SharepointCredentials
+
+from prefect import flow
 
 
 @flow(

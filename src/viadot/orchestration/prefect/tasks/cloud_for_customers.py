@@ -3,9 +3,10 @@
 from typing import Any
 
 import pandas as pd
-from orchestration.prefect_viadot.utils import get_credentials
-from prefect import task
+from viadot.orchestration.prefect.utils import get_credentials
 from viadot.sources import CloudForCustomers
+
+from prefect import task
 
 
 @task(retries=3, retry_delay_seconds=10, timeout_seconds=60 * 60)

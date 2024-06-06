@@ -1,7 +1,7 @@
 import os
 from pathlib import Path
 
-from orchestration.prefect_viadot.flows import sharepoint_to_s3
+from viadot.orchestration.prefect.flows import sharepoint_to_s3
 from viadot.sources import S3
 
 S3_BUCKET = os.environ.get("S3_BUCKET")

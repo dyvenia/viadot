@@ -1,4 +1,4 @@
-from orchestration.prefect_viadot.flows import transform_and_catalog
+from viadot.orchestration.prefect.flows import transform_and_catalog
 
 
 def test_transform_and_catalog_model(dbt_repo_url, LUMA_URL):
