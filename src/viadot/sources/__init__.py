@@ -5,6 +5,7 @@ from .duckdb import DuckDB
 from .exchange_rates import ExchangeRates
 from .genesys import Genesys
 from .hubspot import Hubspot
+from .mindful import Mindful
 from .outlook import Outlook
 from .sharepoint import Sharepoint
 from .sql_server import SQLServer
@@ -14,6 +15,7 @@ __all__ = [
     "CloudForCustomers",
     "ExchangeRates",
     "Genesys",
+    "Mindful",
     "Sharepoint",
     "Trino",
     "SQLServer",
