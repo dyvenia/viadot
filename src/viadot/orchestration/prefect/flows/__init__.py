@@ -1,15 +1,18 @@
 """Import flows."""
 
-from .cloud_for_customers_to_adls import cloud_for_customers_to_adls  # noqa: F401
-from .cloud_for_customers_to_databricks import (
+from .cloud_for_customers import (
+    cloud_for_customers_to_adls,  # noqa: F401
     cloud_for_customers_to_databricks,
 )  # noqa: F401
 from .exchange_rates_to_adls import exchange_rates_to_adls  # noqa: F401
 from .exchange_rates_to_databricks import exchange_rates_to_databricks  # noqa: F401
+from .mindful_to_adls import mindful_to_adls
 from .sap_to_redshift_spectrum import sap_to_redshift_spectrum  # noqa: F401
 from .sharepoint_to_adls import sharepoint_to_adls  # noqa: F401
 from .sharepoint_to_databricks import sharepoint_to_databricks  # noqa: F401
 from .sharepoint_to_redshift_spectrum import (
+    sharepoint_to_redshift_spectrum,
+)  # noqa: F401
     sharepoint_to_redshift_spectrum,
 )  # noqa: F401
 from .sharepoint_to_s3 import sharepoint_to_s3  # noqa: F401
