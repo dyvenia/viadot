@@ -5,10 +5,10 @@ from pathlib import Path, PosixPath
 from typing import Any, Dict, List, Literal, Optional
 
 import pandas as pd
-from orchestration.prefect.exceptions import MissingSourceCredentialsError
-from orchestration.prefect.utils import get_credentials
 from prefect import get_run_logger, task
 
+from viadot.orchestration.prefect.exceptions import MissingSourceCredentialsError
+from viadot.orchestration.prefect.utils import get_credentials
 from viadot.sources import Mindful
 
 logger = logging.getLogger(__name__)

@@ -3,9 +3,14 @@ import time
 from datetime import date
 from typing import Any, Dict, List, Literal, Optional, Union
 
-from orchestration.prefect.tasks import df_to_adls, mindful_to_df, mindful_to_file
 from prefect import flow, get_run_logger
 from prefect.task_runners import ConcurrentTaskRunner
+
+from viadot.orchestration.prefect.tasks import (
+    df_to_adls,
+    mindful_to_df,
+    mindful_to_file,
+)
 
 
 @flow(
