@@ -16,7 +16,7 @@ azure-identity>=1.10.0, <2.0.0
 great-expectations==0.15.50
 matplotlib
 adlfs==2021.10.0
-PyGithub==1.55
+PyGithub==2.3.0
 Shapely==1.8.0
 imagehash==4.2.1
 visions==0.7.4
