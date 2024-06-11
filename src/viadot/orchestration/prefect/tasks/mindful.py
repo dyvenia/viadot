@@ -1,30 +1,3 @@
-"""
-'mindful.py'.
-
-Prefect task wrapper for the Mindful API connector.
-
-This module provides an intermediate wrapper between the prefect flow and the connector:
-- Generate the Mindful API connector.
-- Create and return a pandas Data Frame with the response of the API.
-
-Typical usage example:
-
-    data_frame = mindful_to_df(
-        credentials=credentials,
-        config_key=config_key,
-        azure_key_vault_secret=azure_key_vault_secret,
-        region=region,
-        endpoint=end,
-        date_interval=date_interval,
-        limit=limit,
-    )
-
-Functions:
-
-    mindful_to_df(credentials, config_key, azure_key_vault_secret, region,
-        endpoint, date_interval, limit): Task to download data from Mindful API.
-"""  # noqa: D412
-
 from datetime import date
 from typing import Any, Dict, List, Literal, Optional
 
