@@ -3,14 +3,10 @@ import time
 from datetime import date
 from typing import Any, Dict, List, Literal, Optional, Union
 
-from prefect import flow, get_run_logger
+from prefect import flow
 from prefect.task_runners import ConcurrentTaskRunner
 
-from viadot.orchestration.prefect.tasks import (
-    df_to_adls,
-    mindful_to_df,
-    mindful_to_file,
-)
+from viadot.orchestration.prefect.tasks import df_to_adls, mindful_to_df
 
 
 @flow(
@@ -28,8 +24,6 @@ def mindful_to_adls(
     endpoint: Optional[Union[List[str], str]] = None,
     date_interval: Optional[List[date]] = None,
     limit: int = 1000,
-    path: Optional[Union[List[str], str]] = None,
-    sep: str = "\t",
     adls_credentials: Optional[Dict[str, Any]] = None,
     adls_config_key: Optional[str] = None,
     adls_azure_key_vault_secret: Optional[str] = None,
@@ -54,9 +48,6 @@ def mindful_to_adls(
         date_interval (Optional[List[date]], optional): Date time range detailing the starting date and the ending date.
             If no range is passed, one day of data since this moment will be retrieved. Defaults to None.
         limit (int, optional): The number of matching interactions to return. Defaults to 1000.
-        path (Optional[Union[List[str], str]], optional): Absolute or relative path, with or without name,
-            to save the Pandas Data Frame. Defaults to None.
-        sep (str, optional): Separator in csv file. Defaults to "\t".
         adls_credentials (Optional[Dict[str, Any]], optional): The credentials as a dictionary.
             Defaults to None.
         adls_config_key (Optional[str], optional): The key in the viadot config holding
@@ -68,20 +59,10 @@ def mindful_to_adls(
         adls_path_overwrite (bool, optional): Whether to overwrite the file in ADLS. Defaults to True.
     """
 
-    logging = get_run_logger()
-
     if isinstance(endpoint, str):
         endpoint = [endpoint]
-        path = [path]
 
-    if len(path) != len(endpoint):
-        logging.error(
-            "The list of paths' length must be equal to the list of endpoints' length."
-        )
-        logging.warning("Files will be created in a default mode.")
-        path = [None] * len(endpoint)
-
-    for end, l_path in zip(endpoint, path):
+    for end in endpoint:
         data_frame = mindful_to_df(
             credentials=credentials,
             config_key=config_key,
@@ -91,16 +72,11 @@ def mindful_to_adls(
             date_interval=date_interval,
             limit=limit,
         )
-        local_path = mindful_to_file(
-            data_frame,
-            path=l_path,
-            sep=sep,
-        )
         time.sleep(0.5)
 
         df_to_adls(
             df=data_frame,
-            path=os.path.join(adls_path, local_path.name),
+            path=os.path.join(adls_path, f"{end}.csv"),
             credentials=adls_credentials,
             credentials_secret=adls_azure_key_vault_secret,
             config_key=adls_config_key,

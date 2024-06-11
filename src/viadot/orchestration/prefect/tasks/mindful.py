@@ -1,7 +1,5 @@
 import logging
-import os
-from datetime import date, datetime
-from pathlib import Path, PosixPath
+from datetime import date
 from typing import Any, Dict, List, Literal, Optional
 
 import pandas as pd
@@ -72,53 +70,3 @@ def mindful_to_df(
     data_frame = mindful.to_df()
 
     return data_frame
-
-
-@task(retries=3, retry_delay_seconds=10, timeout_seconds=60 * 60)
-def mindful_to_file(
-    data_frame: pd.DataFrame,
-    path: Optional[str] = None,
-    sep: str = "\t",
-) -> PosixPath:
-    """
-    Description:
-        Save mindful Data Frame to a local path.
-
-    Args:
-        data_frame (pd.DataFrame):
-        path (str, optional): Absolute or relative path, with name, to save
-            the Pandas Data Frame. Defaults to None.
-        sep (str, optional): Separator in csv file. Defaults to "\t".
-
-    Raises:
-        ValueError: Not available file extension.
-
-    Returns:
-        PosixPath: Local path where the file has been saved.
-    """
-
-    logger = get_run_logger()
-
-    if path is None:
-        path = Path(
-            os.path.join(
-                os.getcwd(),
-                f"mindful_response_{datetime.now().strftime('%Y%m%d%H%M%S')}.csv",
-            )
-        )
-    else:
-        path = Path(path).absolute()
-
-    if os.path.exists(path.parent) is False:
-        path.parent.mkdir(parents=True)
-
-    if path.suffix == ".csv":
-        data_frame.to_csv(path, index=False, sep=sep)
-    elif path.suffix == ".parquet":
-        data_frame.to_parquet(path, index=False)
-    else:
-        raise ValueError("File extension must be either 'csv' or 'parquet'.")
-
-    logger.info(f"The file was saved correctly at {path}")
-
-    return path
