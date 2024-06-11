@@ -7,8 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-- Added `Mindful` connector.
-- Added `Mindful` test files for source, task and flow files.
+- Added `Mindful` connector and test file.
 
 
 ### Added
