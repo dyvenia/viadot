@@ -1,32 +1,126 @@
-site_name: Viadot Docs
-site_url: "https://dyvenia.github.io/viadot/"
+site_name: viadot
+site_url: https://github.com/dyvenia/viadot
+repo_url: https://github.com/dyvenia/viadot
+edit_uri: blob/main/docs/
+
 nav:
   - Home: index.md
+
   - Howtos:
-      - "Config File": howtos/config_file.md
-      - "Running a task": "howtos/running_tasks.md"
-      - Flows: howtos/flows.md
-  - Tutorials: tutorials/adding_source.md
+      - Configuration: howtos/config_file.md
+
+  - Tutorials:
+      - Adding a new source: tutorials/adding_source.md
+      - Databricks credentials: tutorials/databricks.md
+      - Scheduling data ingestion from Supermetrics: tutorials/supermetrics.md
+      - Migrating onto viadot 2.0: howtos/howto_migrate_sources_tasks_and_flows.md
+
   - References:
-      - "SQL Sources": references/sql_sources.md
-      - "API Sources": references/api_sources.md
-      - "Flows library": references/flows_library.md
-  - Task library: references/task_library.md
+      - SQL Sources: references/sql_sources.md
+      - API Sources: references/api_sources.md
 
 theme:
   name: "material"
+  palette:
+    - scheme: default
+      primary: deep purple
+      accent: teal
+      toggle:
+        icon: material/weather-sunny
+        name: Switch to dark mode
+    - scheme: slate
+      primary: deep purple
+      accent: teal
+      toggle:
+        icon: material/weather-night
+        name: Switch to light mode
+  font:
+    text: Open Sans
+    code: Fira Code
+  logo: _static/logo.png
+  favicon: _static/logo.png
   features:
     - navigation.tabs
+    - navigation.tabs.sticky
+    - navigation.top
+    - content.code.copy
+    - navigation.tracking
+    - toc.follow
+    - toc.integrate
+    - content.action.view
+    - content.action.edit
+    - announce.dismiss
+    - content.tooltips
+  icon:
+    repo: fontawesome/brands/github
+    edit: material/pencil
+    view: material/eye
+  custom_dir: docs/overrides
+
 plugins:
   - search
+  - include_dir_to_nav
   - mkdocstrings:
-      watch:
-        - viadot
       handlers:
         python:
-          rendering:
+          options:
             show_root_heading: yes
+            docstring_style: google
+  - mike
+  - neoteroi.mkdocsoad:
+      use_pymdownx: true
+  - mkdocs-jupyter
+  - table-reader
+  - include-markdown:
+      cache: 600
+  - social
+  - git-revision-date
+  - glightbox
+
+extra_javascript:
+  - https://unpkg.com/tablesort@5.3.0/dist/tablesort.min.js
+  - javascripts/tablesort.js
+
 markdown_extensions:
-  - pymdownx.highlight
-  - pymdownx.superfences
-dev_addr: "0.0.0.0:8000"
+  - pymdownx.highlight:
+      linenums: true
+  - pymdownx.superfences:
+      preserve_tabs: true
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: "!!python/name:pymdownx.superfences.fence_code_format"
+  - pymdownx.emoji:
+      emoji_index: "!!python/name:material.extensions.emoji.twemoji"
+      emoji_generator: "!!python/name:material.extensions.emoji.to_svg"
+  - pymdownx.inlinehilite
+  - pymdownx.smartsymbols
+  - pymdownx.keys
+  - pymdownx.tilde
+  - pymdownx.blocks.tab:
+      alternate_style: True
+  - admonition
+  - pymdownx.details
+  - pymdownx.tasklist:
+      custom_checkbox: true
+  - abbr
+  - pymdownx.snippets
+  - def_list
+  - footnotes
+  - tables
+  - attr_list
+  - md_in_html
+
+copyright: Copyright &copy; 2023 <a href="https://dyvenia.com/">dyvenia</a>
+
+extra:
+  version:
+    provider: mike
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/dyvenia/viadot
+    - icon: fontawesome/brands/linkedin
+      link: https://www.linkedin.com/company/dyvenia
+    - icon: fontawesome/regular/envelope
+      link: mailto:hello@dyvenia.com
+      name: hello@dyvenia.com
