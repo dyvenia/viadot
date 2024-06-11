@@ -246,7 +246,11 @@ class AzureDataLake(Source):
         self.fs.cp(from_path, to_path, recursive=recursive)
 
     def from_df(
-        self, df: pd.DataFrame, path: str = None, overwrite: bool = False
+        self,
+        df: pd.DataFrame,
+        path: str = None,
+        sep: str = "\t",
+        overwrite: bool = False,
     ) -> None:
         """
         Upload a pandas `DataFrame` to a file on Azure Data Lake.
@@ -254,6 +258,7 @@ class AzureDataLake(Source):
         Args:
             df (pd.DataFrame): The pandas `DataFrame` to upload.
             path (str, optional): The destination path. Defaults to None.
+            sep (str, optional): The separator to use in the `to_csv` function. Defaults to "\t".
             overwrite (bool): Whether to overwrite the file if it exist.
         """
 
@@ -272,7 +277,7 @@ class AzureDataLake(Source):
             # Can do it simply like this if ADLS accesses are set up correctly
             # url = os.path.join(self.base_url, path)
             # df.to_csv(url, storage_options=self.storage_options)
-            df.to_csv(file_name, index=False)
+            df.to_csv(file_name, index=False, sep=sep)
         else:
             df.to_parquet(file_name, index=False)
 
