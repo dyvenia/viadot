@@ -16,8 +16,13 @@ nav:
       - Migrating onto viadot 2.0: howtos/howto_migrate_sources_tasks_and_flows.md
 
   - References:
-      - SQL Sources: references/sql_sources.md
-      - API Sources: references/api_sources.md
+    - Sources:
+      - SQL Sources: references/sources/sql_sources.md
+      - API Sources: references/sources/api_sources.md
+    - Orchestration:
+      - Prefect:
+        - Tasks: references/orchestration/prefect/prefect_tasks.md
+        - Flows: references/orchestration/prefect/prefect_flows.md
 
 theme:
   name: "material"
