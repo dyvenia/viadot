@@ -22,7 +22,7 @@ class UKCarbonIntensity(Source):
         self.api_url = api_url
         self.API_ENDPOINT = "https://api.carbonintensity.org.uk"
 
-    def to_json(self):
+    def to_json(self) -> dict:
         """Creates json file"""
         url = f"{self.API_ENDPOINT}{self.api_url}"
         headers = {"Accept": "application/json"}
@@ -33,7 +33,7 @@ class UKCarbonIntensity(Source):
             raise f"Error {response.json()}"
 
     @add_viadot_metadata_columns
-    def to_df(self, if_empty: str = "warn"):
+    def to_df(self, if_empty: str = "warn") -> pd.DataFrame:
         """Returns a pandas DataFrame with flattened data
 
         Returns:
@@ -83,6 +83,6 @@ class UKCarbonIntensity(Source):
                 )
         return df
 
-    def query(self, api_url: str):
+    def query(self, api_url: str) -> bool:
         self.api_url = api_url
         return True
