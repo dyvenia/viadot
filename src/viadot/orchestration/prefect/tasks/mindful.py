@@ -16,7 +16,7 @@ logger.setLevel(logging.INFO)
 @task(retries=3, retry_delay_seconds=10, timeout_seconds=60 * 60)
 def mindful_to_df(
     credentials: Optional[Dict[str, Any]] = None,
-    config_key: str = "mindful",
+    config_key: str = None,
     azure_key_vault_secret: Optional[str] = None,
     region: Literal["us1", "us2", "us3", "ca1", "eu1", "au1"] = "eu1",
     endpoint: Optional[str] = None,
@@ -25,13 +25,13 @@ def mindful_to_df(
 ) -> pd.DataFrame:
     """
     Description:
-        Task for downloading data from Mindful API to CSV
+        Task for downloading data from Mindful API to Data Frame.
 
     Args:
         credentials (Optional[Dict[str, Any]], optional): Mindful credentials as a dictionary.
             Defaults to None.
         config_key (str, optional): The key in the viadot config holding relevant credentials.
-            Defaults to "mindful".
+            Defaults to None.
         azure_key_vault_secret (Optional[str], optional): The name of the Azure Key Vault secret
             where credentials are stored. Defaults to None.
         region (Literal[us1, us2, us3, ca1, eu1, au1], optional): Survey Dynamix region from
@@ -49,7 +49,9 @@ def mindful_to_df(
 
     if not (azure_key_vault_secret or config_key or credentials):
         raise MissingSourceCredentialsError
-    credentials = credentials or get_credentials(azure_key_vault_secret)
+
+    if not config_key:
+        credentials = credentials or get_credentials(azure_key_vault_secret)
 
     if endpoint is None:
         logger.warning(

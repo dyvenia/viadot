@@ -18,7 +18,7 @@ from viadot.orchestration.prefect.tasks import df_to_adls, mindful_to_df
 )
 def mindful_to_adls(
     credentials: Optional[Dict[str, Any]] = None,
-    config_key: str = "mindful",
+    config_key: str = None,
     azure_key_vault_secret: Optional[str] = None,
     region: Literal["us1", "us2", "us3", "ca1", "eu1", "au1"] = "eu1",
     endpoint: Optional[Union[List[str], str]] = None,
@@ -38,7 +38,7 @@ def mindful_to_adls(
         credentials (Optional[Dict[str, Any]], optional): Mindful credentials as a dictionary.
             Defaults to None.
         config_key (str, optional): The key in the viadot config holding relevant credentials.
-            Defaults to "mindful".
+            Defaults to None.
         azure_key_vault_secret (Optional[str], optional): The name of the Azure Key Vault secret
             where credentials are stored. Defaults to None.
         region (Literal[us1, us2, us3, ca1, eu1, au1], optional): Survey Dynamix region from
