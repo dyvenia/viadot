@@ -5,6 +5,7 @@ from .cloud_for_customers import cloud_for_customers_to_df  # noqa: F401
 from .databricks import df_to_databricks  # noqa: F401
 from .dbt import dbt_task  # noqa: F401
 from .exchange_rates import exchange_rates_to_df  # noqa: F401
+from .genesys import genesys_to_df
 from .git import clone_repo  # noqa: F401
 from .luma import luma_ingest_task  # noqa: F401
 from .minio import df_to_minio  # noqa: F401
@@ -16,4 +17,5 @@ from .sharepoint import scan_sharepoint_folder  # noqa: F401
 from .sharepoint import sharepoint_download_file  # noqa: F401
 from .sharepoint import sharepoint_to_df  # noqa: F401
 from .sharepoint import validate_and_reorder_dfs_columns  # noqa: F401
-from .sql_server import create_sql_server_table, sql_server_query, sql_server_to_df
+from .sql_server import (create_sql_server_table, sql_server_query,
+                         sql_server_to_df)
