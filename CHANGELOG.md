@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+- Added new version of `Genesys` connector and test files.
+
 - Added new version of `Outlook` connector and test files.
 
 ### Added
