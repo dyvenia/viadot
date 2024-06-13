@@ -17,6 +17,7 @@ def eurostat_to_databricks(
     params: dict = None,
     base_url: str = "https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/",
     requested_columns: list = None,
+    tests: dict = None,
     if_exists: Literal["replace", "skip", "fail"] = "fail",
     databricks_schema: str = None,
     databricks_credentials_secret: str = None,
@@ -52,6 +53,7 @@ def eurostat_to_databricks(
         params=params,
         base_url=base_url,
         requested_columns=requested_columns,
+        tests=tests,
     )
     databricks = df_to_databricks(
         df=df,
