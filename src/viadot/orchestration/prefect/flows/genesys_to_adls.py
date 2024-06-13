@@ -1,0 +1,83 @@
+import time
+from typing import Any, Dict, List, Optional
+
+from prefect import flow
+from prefect.task_runners import ConcurrentTaskRunner
+
+from viadot.orchestration.prefect.tasks import df_to_adls, genesys_to_df
+
+
+@flow(
+    name="Genesys extraction to ADLS",
+    description="Extract data from Genesys Cloud and load it into Azure Data Lake Storage.",
+    retries=1,
+    retry_delay_seconds=60,
+    task_runner=ConcurrentTaskRunner,
+)
+def genesys_to_adls(
+    credentials: Optional[Dict[str, Any]] = None,
+    config_key: str = None,
+    azure_key_vault_secret: Optional[str] = None,
+    endpoint: Optional[str] = None,
+    environment: str = "mypurecloud.de",
+    view_type: Optional[str] = None,
+    view_type_time_sleep: Optional[int] = None,
+    post_data_list: Optional[List[Dict[str, Any]]] = None,
+    adls_credentials: Optional[Dict[str, Any]] = None,
+    adls_config_key: Optional[str] = None,
+    adls_azure_key_vault_secret: Optional[str] = None,
+    adls_path: Optional[str] = None,
+    adls_path_overwrite: bool = False,
+):
+    """
+    Description:
+        Flow for downloading data from mindful to Azure Data Lake.
+
+    Args:
+        credentials (Optional[Dict[str, Any]], optional): Genesys credentials as a dictionary.
+            Defaults to None.
+        config_key (str, optional): The key in the viadot config holding relevant credentials.
+            Defaults to None.
+        azure_key_vault_secret (Optional[str], optional): The name of the Azure Key Vault secret
+            where credentials are stored. Defaults to None.
+        endpoint (Optional[str], optional): Final end point to the API. Defaults to None.
+        environment (str, optional): the domain that appears for Genesys Cloud Environment
+            based on the location of your Genesys Cloud organization. Defaults to "mypurecloud.de".
+        view_type (Optional[str], optional): The type of view export job to be created.
+            Defaults to None.
+        view_type_time_sleep (Optional[int], optional): Waiting time to retrieve data from Genesys
+            Cloud API. Defaults to None.
+        post_data_list (Optional[List[Dict[str, Any]]], optional): List of string templates to generate
+            json body in POST calls to the API. Defaults to None.
+        adls_credentials (Optional[Dict[str, Any]], optional): The credentials as a dictionary.
+            Defaults to None.
+        adls_config_key (Optional[str], optional): The key in the viadot config holding
+            relevant credentials. Defaults to None.
+        adls_azure_key_vault_secret (Optional[str], optional): The name of the Azure Key Vault secret containing
+            a dictionary with ACCOUNT_NAME and Service Principal credentials (TENANT_ID, CLIENT_ID, CLIENT_SECRET)
+            for the Azure Data Lake. Defaults to None.
+        adls_path (Optional[str], optional): Azure Data Lake destination file path (with file name).
+            Defaults to None.
+        adls_path_overwrite (bool, optional): Whether to overwrite the file in ADLS. Defaults to True.
+    """
+
+    data_frame = genesys_to_df(
+        credentials=credentials,
+        config_key=config_key,
+        azure_key_vault_secret=azure_key_vault_secret,
+        endpoint=endpoint,
+        environment=environment,
+        view_type=view_type,
+        view_type_time_sleep=view_type_time_sleep,
+        post_data_list=post_data_list,
+    )
+    time.sleep(0.5)
+
+    df_to_adls(
+        df=data_frame,
+        path=adls_path,
+        credentials=adls_credentials,
+        credentials_secret=adls_azure_key_vault_secret,
+        config_key=adls_config_key,
+        overwrite=adls_path_overwrite,
+    )
