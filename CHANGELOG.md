@@ -30,7 +30,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added `MinIO` source
 - Added `gen_split()` method to `SAPRFCV2` class to allow looping over a data frame with generator - improves performance
 - Added `adjust_where_condition_by_adding_missing_spaces()` to `SAPRFC`. The function that is checking raw sql query and modifing it - if needed.
-
+- Added `Eurostat` source
+- Added `eurostat_to_df` task
+- Added `eurostat_to_adls` and `eurostat_to_databrics` flows
+- Added test for `Eurostat`
+  
 ### Changed
 
 - Changed the way of handling `NA` string values and mapped column types to `str` for `Sharepoint` source.

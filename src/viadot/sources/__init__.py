@@ -1,6 +1,7 @@
 from importlib.util import find_spec
 
 from .cloud_for_customers import CloudForCustomers
+from .eurostat import Eurostat
 from .exchange_rates import ExchangeRates
 from .genesys import Genesys
 from .sharepoint import Sharepoint
@@ -8,6 +9,7 @@ from .trino_source import Trino
 
 __all__ = [
     "CloudForCustomers",
+    "Eurostat",
     "ExchangeRates",
     "Genesys",
     "Sharepoint",
