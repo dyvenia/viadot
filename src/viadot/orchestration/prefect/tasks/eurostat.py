@@ -9,6 +9,7 @@ def eurostat_to_df(
     params: dict = None,
     base_url: str = "https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/",
     requested_columns: list = None,
+    tests: dict = None,
 ):
     """Task for creating pandas data frame from Eurostat HTTPS REST API (no credentials required).
 
@@ -30,6 +31,8 @@ def eurostat_to_df(
         pd.DataFrame: None empty DataFrame.
     """
 
-    data_frame = Eurostat().to_df(dataset_code, params, base_url, requested_columns)
+    data_frame = Eurostat().to_df(
+        dataset_code, params, base_url, requested_columns, tests
+    )
 
     return data_frame

@@ -14,6 +14,7 @@ def eurostat_to_adls(
     params: dict = None,
     base_url: str = "https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/",
     requested_columns: list = None,
+    tests: dict = None,
     adls_path: str = None,
     adls_credentials_secret: str = None,
     overwrite_adls: bool = False,
@@ -49,6 +50,7 @@ def eurostat_to_adls(
         params=params,
         base_url=base_url,
         requested_columns=requested_columns,
+        tests=tests,
     )
     adls = df_to_adls(
         df=df,
