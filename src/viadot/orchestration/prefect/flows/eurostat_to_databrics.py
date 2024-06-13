@@ -40,6 +40,13 @@ def eurostat_to_databricks(
             Defaults to "https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/"
         requested_columns (List[str], optional): List of columns that are needed from DataFrame - works as filter.
             The data are downloaded from Eurostat is the same structure every time. The filter is applied after the data is fetched.
+        tests:
+            - `column_size`: dict{column: size}
+            - `column_unique_values`: list[columns]
+            - `column_list_to_match`: list[columns]
+            - `dataset_row_count`: dict: {'min': number, 'max', number}
+            - `column_match_regex`: dict: {column: 'regex'}
+            - `column_sum`: dict: {column: {'min': number, 'max': number}}
         if_exists (str, Optional): What to do if the table already exists.
             One of 'replace', 'skip', and 'fail'.
         databricks_schema (str, optional): The name of the target schema.

@@ -37,6 +37,13 @@ def eurostat_to_adls(
             Defaults to "https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/"
         requested_columns (List[str], optional): List of columns that are needed from DataFrame - works as filter.
             The data are downloaded from Eurostat is the same structure every time. The filter is applied after the data is fetched.
+        tests:
+            - `column_size`: dict{column: size}
+            - `column_unique_values`: list[columns]
+            - `column_list_to_match`: list[columns]
+            - `dataset_row_count`: dict: {'min': number, 'max', number}
+            - `column_match_regex`: dict: {column: 'regex'}
+            - `column_sum`: dict: {column: {'min': number, 'max': number}}
         adls_dir_path (str, optional): Azure Data Lake destination folder/catalog path. Defaults to None.
         adls_sp_credentials_secret (str, optional): The name of the Azure Key Vault secret containing a dictionary with
             ACCOUNT_NAME and Service Principal credentials (TENANT_ID, CLIENT_ID, CLIENT_SECRET) for the Azure Data Lake.
