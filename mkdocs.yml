@@ -7,13 +7,13 @@ nav:
   - Home: index.md
 
   - Getting Started:
-    - Configuration steps: getting_started/config_steps.md
+    - Getting Started: getting_started/getting_started.md
 
   - User Guide:
-      - Adding a new source: user_guide/adding_source.md
-      - Databricks credentials: user_guide/databricks.md
-      - Scheduling data ingestion from Supermetrics: user_guide/supermetrics.md
-      - Migrating onto viadot 2.0: user_guide/howto_migrate_sources_tasks_and_flows.md
+    - Adding a new source: user_guide/adding_source.md
+    - Docker Containers: user_guide/docker_containers.md
+    - Rye: user_guide/rye.md
+    - Using the config key: user_guide/config_key.md
 
   - References:
     - Sources:
