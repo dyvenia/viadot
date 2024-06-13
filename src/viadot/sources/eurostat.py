@@ -206,6 +206,13 @@ class Eurostat(Source):
                 Defaults to "https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/"
             requested_columns (List[str], optional): list of needed names of columns. Names should be given as str's into the list.
                 Defaults to None.
+            tests:
+                - `column_size`: dict{column: size}
+                - `column_unique_values`: list[columns]
+                - `column_list_to_match`: list[columns]
+                - `dataset_row_count`: dict: {'min': number, 'max', number}
+                - `column_match_regex`: dict: {column: 'regex'}
+                - `column_sum`: dict: {column: {'min': number, 'max': number}}
         Raises:
             APIError: If there is an error with the API request.
             ValueError: If the resulting DataFrame is empty.
