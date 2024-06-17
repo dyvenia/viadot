@@ -7,6 +7,7 @@ from io import StringIO
 from typing import Any, Dict, List, Optional, Tuple
 
 import aiohttp
+import numpy as np
 import pandas as pd
 from aiolimiter import AsyncLimiter
 from pydantic import BaseModel
@@ -348,9 +349,211 @@ class Genesys(Source):
 
         return df
 
+    def _merge_conversations(self, data_to_merge: list) -> pd.DataFrame:
+        """Method to merge all the conversations data into a single data frame.
+
+        Args:
+            data_to_merge (list): List with all the conversations in json format.
+            Example for all levels data to merge:
+                {
+                "conversations": [
+                    {
+                        **** LEVEL 0 data ****
+                        "participants": [
+                            {
+                                **** LEVEL 1 data ****
+                                "sessions": [
+                                    {
+                                        "agentBullseyeRing": 1,
+                                        **** LEVEL 2 data ****
+                                        "mediaEndpointStats": [
+                                            {
+                                                **** LEVEL 3 data ****
+                                            },
+                                        ],
+                                        "metrics": [
+                                            {
+                                                **** LEVEL 3 data ****
+                                            },
+                                        ],
+                                        "segments": [
+                                            {
+                                                **** LEVEL 3 data ****
+                                            },
+                                            {
+                                                **** LEVEL 3 data ****
+                                            },
+                                        ],
+                                    }
+                                ],
+                            },
+                            {
+                                "participantId": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
+                                **** LEVEL 1 data ****
+                                "sessions": [
+                                    {
+                                        **** LEVEL 2 data ****
+                                        "mediaEndpointStats": [
+                                            {
+                                                **** LEVEL 3 data ****
+                                            }
+                                        ],
+                                        "flow": {
+                                            **** LEVEL 2 data ****
+                                        },
+                                        "metrics": [
+                                            {
+                                                **** LEVEL 3 data ****
+                                            },
+                                        ],
+                                        "segments": [
+                                            {
+                                                **** LEVEL 3 data ****
+                                            },
+                                        ],
+                                    }
+                                ],
+                            },
+                        ],
+                    }
+                ],
+                "totalHits": 100,
+            }
+
+        Returns:
+            DataFrame: A single data frame with all the content.
+        """
+        # LEVEL 0
+        df0 = pd.json_normalize(data_to_merge)
+        df0.drop(["participants"], axis=1, inplace=True)
+
+        # LEVEL 1
+        df1 = pd.json_normalize(
+            data_to_merge,
+            record_path=["participants"],
+            meta=["conversationId"],
+        )
+        df1.drop(["sessions"], axis=1, inplace=True)
+
+        # LEVEL 2
+        df2 = pd.json_normalize(
+            data_to_merge,
+            record_path=["participants", "sessions"],
+            meta=[
+                ["participants", "externalContactId"],
+                ["participants", "participantId"],
+            ],
+            errors="ignore",
+            sep="_",
+        )
+        # Columns that will be the reference for the next LEVEL
+        df2.rename(
+            columns={
+                "participants_externalContactId": "externalContactId",
+                "participants_participantId": "participantId",
+            },
+            inplace=True,
+        )
+        for key in ["metrics", "segments", "mediaEndpointStats"]:
+            try:
+                df2.drop([key], axis=1, inplace=True)
+            except KeyError as e:
+                logger.info(f"Key {e} not appearing in the response.")
+
+        # LEVEL 3
+        conversations_df = {}
+        for i, conversation in enumerate(data_to_merge):
+            # Not all "sessions" have the same data, and that creates problems of standardization
+            # Empty data will be added to columns where there is not to avoid future errors.
+            for j, entry_0 in enumerate(conversation["participants"]):
+                for key in list(entry_0.keys()):
+                    if key == "sessions":
+                        for k, entry_1 in enumerate(entry_0[key]):
+                            if "metrics" not in list(entry_1.keys()):
+                                conversation["participants"][j][key][k]["metrics"] = []
+                            if "segments" not in list(entry_1.keys()):
+                                conversation["participants"][j][key][k]["segments"] = []
+                            if "mediaEndpointStats" not in list(entry_1.keys()):
+                                conversation["participants"][j][key][k][
+                                    "mediaEndpointStats"
+                                ] = []
+
+            # LEVEL 3 metrics
+            df3_1 = pd.json_normalize(
+                conversation,
+                record_path=["participants", "sessions", "metrics"],
+                meta=[
+                    ["participants", "sessions", "sessionId"],
+                ],
+                errors="ignore",
+                record_prefix="metrics_",
+                sep="_",
+            )
+            df3_1.rename(
+                columns={"participants_sessions_sessionId": "sessionId"}, inplace=True
+            )
+
+            # LEVEL 3 segments
+            df3_2 = pd.json_normalize(
+                conversation,
+                record_path=["participants", "sessions", "segments"],
+                meta=[
+                    ["participants", "sessions", "sessionId"],
+                ],
+                errors="ignore",
+                record_prefix="segments_",
+                sep="_",
+            )
+            df3_2.rename(
+                columns={"participants_sessions_sessionId": "sessionId"}, inplace=True
+            )
+
+            # LEVEL 3 mediaEndpointStats
+            df3_3 = pd.json_normalize(
+                conversation,
+                record_path=["participants", "sessions", "mediaEndpointStats"],
+                meta=[
+                    ["participants", "sessions", "sessionId"],
+                ],
+                errors="ignore",
+                record_prefix="mediaEndpointStats_",
+                sep="_",
+            )
+            df3_3.rename(
+                columns={"participants_sessions_sessionId": "sessionId"}, inplace=True
+            )
+
+            # merging all LEVELs 3 from the same conversation
+            dff3_tmp = pd.concat([df3_1, df3_2])
+            dff3 = pd.concat([dff3_tmp, df3_3])
+
+            conversations_df.update({i: dff3})
+
+        # NERGING ALL LEVELS
+        # LEVELS 3
+        for l, key in enumerate(list(conversations_df.keys())):
+            if l == 0:
+                dff3_f = conversations_df[key]
+            else:
+                dff3_f = pd.concat([dff3_f, conversations_df[key]])
+
+        # LEVEL 3 with LEVEL 2
+        dff2 = pd.merge(dff3_f, df2, how="outer", on=["sessionId"])
+
+        # LEVEL 2 with LEVEL 1
+        dff1 = pd.merge(
+            df1, dff2, how="outer", on=["externalContactId", "participantId"]
+        )
+
+        # LEVEL 1 with LEVEL 0
+        dff = pd.merge(df0, dff1, how="outer", on=["conversationId"])
+
+        return dff
+
     def api_connection(
         self,
         endpoint: Optional[str] = None,
+        queues_ids: Optional[List[str]] = None,
         view_type: Optional[str] = None,
         view_type_time_sleep: int = 10,
         post_data_list: Optional[List[Dict[str, Any]]] = None,
@@ -360,8 +563,13 @@ class Genesys(Source):
             General method to connect to Genesys Cloud API and generate the response.
 
         Args:
-            endpoint (Optional[str], optional): Final end point to the API.
-                Defaults to None.
+            endpoint (Optional[str], optional): Final end point to the API.Defaults to None.
+                Custom endpoints have specific key words, and parameters:
+                Example:
+                    - "routing/queues/{id}/members": "routing_queues_members"
+                    - members_ids = ["xxxxxxxxx", "xxxxxxxxx", ...]
+            queues_ids (Optional[List[str]], optional): List of queues ids to consult the
+                members. Defaults to None.
             view_type (Optional[str], optional): The type of view export job to be created.
                 Defaults to None.
             view_type_time_sleep (int, optional): Waiting time to retrieve data from Genesys
@@ -370,15 +578,13 @@ class Genesys(Source):
                 generate json body in POST calls to the API. Defaults to None.
         """
 
-        if (
-            endpoint == "analytics/reporting/exports"
-            and view_type == "queue_performance_detail_view"
-        ):
+        if endpoint == "analytics/reporting/exports":
             self._api_call(
                 endpoint=endpoint,
                 post_data_list=post_data_list,
                 method="POST",
             )
+
             logger.info(
                 f"Waiting {view_type_time_sleep} seconds for caching data from Genesys Cloud API."
             )
@@ -386,6 +592,7 @@ class Genesys(Source):
 
             request_json = self._load_reporting_exports()
             entities = request_json["entities"]
+
             if isinstance(entities, list) and len(entities) == len(post_data_list):
                 ids, urls = self._get_reporting_exports_url(entities)
             else:
@@ -399,12 +606,13 @@ class Genesys(Source):
 
                 time.sleep(1.0)
                 # remove resume rows
-                criteria = (
-                    df_downloaded["Queue Id"]
-                    .apply(lambda x: str(x).split(";"))
-                    .apply(lambda x: False if len(x) > 1 else True)
-                )
-                df_downloaded = df_downloaded[criteria]
+                if view_type in ["queue_performance_detail_view"]:
+                    criteria = (
+                        df_downloaded["Queue Id"]
+                        .apply(lambda x: str(x).split(";"))
+                        .apply(lambda x: False if len(x) > 1 else True)
+                    )
+                    df_downloaded = df_downloaded[criteria]
 
                 self._delete_report(id)
 
@@ -412,11 +620,98 @@ class Genesys(Source):
 
                 count += 1
 
+        elif endpoint == "analytics/conversations/details/query":
+            if len(post_data_list) > 1:
+                raise APIError("Not available more than one body for this end-point.")
+
+            stop_loop = False
+            page_counter = post_data_list[0]["paging"]["pageNumber"]
+            self.data_returned = {}
+            while not stop_loop:
+                report = self._api_call(
+                    endpoint=endpoint,
+                    post_data_list=post_data_list,
+                    method="POST",
+                )
+                merged_data_frame = self._merge_conversations(report["conversations"])
+                self.data_returned.update(
+                    {
+                        int(post_data_list[0]["paging"]["pageNumber"])
+                        - 1: merged_data_frame
+                    }
+                )
+
+                if page_counter == 1:
+                    max_calls = int(np.ceil(report["totalHits"] / 100))
+                if page_counter == max_calls:
+                    stop_loop = True
+
+                post_data_list[0]["paging"]["pageNumber"] += 1
+                page_counter += 1
+
+        elif endpoint == "routing/queues":
+            self.data_returned = {}
+            page = 1
+            while True:
+                response = self._api_call(
+                    endpoint=endpoint,
+                    post_data_list=post_data_list,
+                    method="GET",
+                    params={"pageSize": 500, "pageNumber": page},
+                )
+
+                if response["entities"]:
+                    df_response = pd.json_normalize(response["entities"], sep="|")
+                    self.data_returned.update({page - 1: df_response})
+
+                    page += 1
+                else:
+                    break
+
+        elif endpoint == "routing_queues_members":
+            self.data_returned = {}
+            counter = 0
+            for id in queues_ids:
+                logger.info(f"Downloading Agents information from Queue: {id}")
+                page = 1
+                while True:
+                    response = self._api_call(
+                        endpoint=f"routing/queues/{id}/members",
+                        params={"pageSize": 100, "pageNumber": page},
+                        post_data_list=post_data_list,
+                        method="GET",
+                    )
+
+                    if response["entities"]:
+                        df_response = pd.json_normalize(response["entities"])
+                        # drop personal information
+                        columns_to_drop = set(
+                            [
+                                "user.addresses",
+                                "user.primaryContactInfo",
+                                "user.images",
+                            ]
+                        ).intersection(df_response.columns)
+                        df_response.drop(
+                            columns_to_drop,
+                            axis=1,
+                            inplace=True,
+                        )
+                        self.data_returned.update({counter: df_response})
+
+                        page += 1
+                        counter += 1
+                    else:
+                        break
+
     @add_viadot_metadata_columns
-    def to_df(self) -> pd.DataFrame:
+    def to_df(self, drop_duplicates: bool = False) -> pd.DataFrame:
         """
         Description:
             Generate a Pandas Data Frame with the data in the Response object, and metadata.
+
+        Args:
+            drop_duplicates (bool, optional): Remove duplicates from the Data Frame. Defaults to False.
 
         Returns:
             pd.Dataframe: The response data as a Pandas Data Frame plus viadot metadata.
@@ -427,6 +722,9 @@ class Genesys(Source):
                 data_frame = self.data_returned[key]
             else:
                 data_frame = pd.concat([data_frame, self.data_returned[key]])
+
+        if drop_duplicates:
+            data_frame.drop_duplicates(inplace=True)
 
         if data_frame.empty:
             self._handle_if_empty(
