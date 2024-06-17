@@ -40,11 +40,6 @@ from viadot.orchestration.prefect.tasks import df_to_adls, postgresql_to_df
 
 from prefect import flow
 
-Currency = Literal[
-    "USD", "EUR", "GBP", "CHF", "PLN", "DKK", "COP", "CZK", "SEK", "NOK", "ISK"
-]
-
-
 @flow(
     name="extract--postgresql--adls",
     description="Extract data from PostgreSQL database and load it into Azure Data Lake.",

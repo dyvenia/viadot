@@ -32,4 +32,4 @@ The above `df` is a pandas `DataFrame` object. It contains data downloaded by `v
 
 ## Loading Data to a Source
 
-Depending on the source, `viadot` provides different methods of uploading data. For instance, for SQL sources, this would be bulk inserts. For data lake sources, it would be a file upload. For ready-made pipelines including data validation steps using `dbt`, see [prefect-viadot](https://github.com/dyvenia/prefect-viadot).
+Depending on the source, `viadot` provides different methods of uploading data. For instance, for SQL sources, this would be bulk inserts. For data lake sources, it would be a file upload.
