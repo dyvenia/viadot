@@ -3,7 +3,7 @@ Let's assume that we've finished adding our source `PostgresSQL`. We want to use
 We will have to create a task that will take our data from the PostgreSQL database and put it into flow, where the task sending data to the Azure Data Lake already exists.
 
 
-## Add prefect task
+## Adding prefect task for general source
 
 We store tasks associated with a single source in a single file named like source. All tasks should be defined in the path `viadot/src/viadot/orchestration/prefect/tasks/`.
 So in our example, we create a file `postgresql.py` in the previously specified directory, and inside this file we define the logic.
@@ -29,6 +29,49 @@ from .postgresql import postgresql_to_df  # noqa: F401
 
 At the end, add integration tests for the specified task in `viadot/tests/orchestration/prefect_tests/integration/`. Your PR will be accepted only if the test coverage is greater than or equal to 80%.
 
+
+## Adding prefect task for optional source
+
+In the previous example, we added a task that is for general sources. Viadot also contains cloud-specific sources, which are optional, and we have to handle that case when creating prefect tasks for it. This is an example of how to handle the import of an optional source.
+
+```python
+#tasks/adls.py
+
+"""Tasks for interacting with Azure Data Lake (gen2)."""
+
+import contextlib
+from typing import Any
+
+import pandas as pd
+from viadot.orchestration.prefect.exceptions import MissingSourceCredentialsError
+from viadot.orchestration.prefect.utils import get_credentials
+
+from prefect import task
+
+with contextlib.suppress(ImportError):
+    from viadot.sources import AzureDataLake
+
+```
+
+When adding a new integration test for our task, we have to also handle import and skip test if package is not installed in our environment.
+
+```python
+# prefect_tests/integration/test_adls.py
+
+import pandas as pd
+import pytest
+
+try:
+    from viadot.sources import AzureDataLake
+
+    _adls_installed = True
+except ImportError:
+    _adls_installed = False
+
+if not _adls_installed:
+    pytest.skip("AzureDataLake source not installed", allow_module_level=True)
+
+```
 
 ## Add prefect flow
 

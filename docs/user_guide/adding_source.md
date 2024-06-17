@@ -1,6 +1,6 @@
 # Adding a source
 
-## Add a source
+## Adding general source
 Let's assume that your goal is to create a data source that retrieves data from a PostgresSQL database. The first thing you need to do is create a class that inherits from the `Source` or `SQL` class and implement credentials using [Pydantic](https://medium.com/mlearning-ai/improve-your-data-models-with-pydantic-f9f10ca66f26) models.
 
 ```python
@@ -38,7 +38,78 @@ When you are done with the source, remember to import it in the `__init__.py` fi
 from .postgresql import PostgreSQL
 ```
 
-And that's all you need to know to create your own sources in the viadot repository. You can also take a look at any existing source like [AzureDataLake](https://github.com/dyvenia/viadot/blob/2.0-new-repository-structure/src/viadot/sources/azure_data_lake.py) as a reference. 
+And that's all you need to know to create your own sources in the viadot repository. You can also take a look at any existing source like [MiniIO](https://github.com/dyvenia/viadot/blob/2.0/src/viadot/sources/minio.py) as a reference. 
 
-## Add unit tests
-To add unit tests, create a new file in `viadot/tests/viadot_tests/unit`. All tests for a given source should be in one file and use the [pytest](https://docs.pytest.org/en/7.3.x/) framework. Your PR will be accepted only if the test coverage is greater than or equal to 80%.
+## Adding optional source
+
+In the previous example, we added a source that is general and can be used by all, regardless of whether the cloud provider can use it. Viadot also contains cloud-specific sources, which are optional, and we have to handle that case when optional packages are not installed. We have to put packages that are not always installed into try-except block, as below:
+
+```python
+import os
+from typing import Any, Dict, List
+
+import pandas as pd
+
+try:
+    from adlfs import AzureBlobFileSystem, AzureDatalakeFileSystem
+except ModuleNotFoundError:
+    raise ImportError("Missing required modules to use AzureDataLake source.")
+
+from viadot.config import get_source_credentials
+from viadot.exceptions import CredentialError
+from viadot.sources.base import Source
+from viadot.utils import add_viadot_metadata_columns
+
+
+class AzureDataLake(Source):
+    """
+    A class for pulling data from the Azure Data Lakes (gen1 and gen2).
+```
+
+The second step is to add if statements to the `__init__.py` file:
+
+```python
+from importlib.util import find_spec
+
+from .cloud_for_customers import CloudForCustomers
+from .exchange_rates import ExchangeRates
+from .genesys import Genesys
+from .sharepoint import Sharepoint
+from .trino_source import Trino
+
+__all__ = [
+    "CloudForCustomers",
+    "ExchangeRates",
+    "Genesys",
+    "Sharepoint",
+    "Trino",
+]
+
+if find_spec("adlfs"):
+    from viadot.sources.azure_data_lake import AzureDataLake  # noqa
+
+    __all__.extend(["AzureDataLake"])
+```
+
+## Adding tests
+To add unit tests, create a new file in `viadot/tests/viadot_tests/integration` and `viadot/tests/viadot_tests/unit`. All tests for a given source should be in one file and use the [pytest](https://docs.pytest.org/en/7.3.x/) framework. Your PR will be accepted only if the test coverage is greater than or equal to 80%.
+
+## Adding tests for optional sources
+
+In case we want to add tests to optional sources like `AzureDataLake` we need to add if statements as below,  which will skip the tests if optional packages are not installed in the environment.
+
+```python
+import pandas as pd
+import pytest
+
+try:
+    from viadot.sources import AzureDataLake
+
+    _adls_installed = True
+except ImportError:
+    _adls_installed = False
+
+if not _adls_installed:
+    pytest.skip("AzureDataLake source not installed", allow_module_level=True)
+
+```
