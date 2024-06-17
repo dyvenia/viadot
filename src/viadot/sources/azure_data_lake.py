@@ -278,4 +278,4 @@ class AzureDataLake(Source):
 
         self.upload(from_path=file_name, to_path=path, overwrite=overwrite)
 
-        os.remove(file_name)
+        # os.remove(file_name)

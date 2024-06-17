@@ -63,6 +63,7 @@ def genesys_to_df(
     genesys = Genesys(
         credentials=credentials,
         config_key=config_key,
+        verbose=True,
         environment=environment,
     )
     genesys.api_connection(
