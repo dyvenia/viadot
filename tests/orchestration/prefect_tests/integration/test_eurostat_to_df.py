@@ -9,14 +9,15 @@ def test_task_connexion():
         df = eurostat_to_df(
             dataset_code="ILC_DI04",
             params={"hhtyp": "total", "indic_il": "med_e"},
-            columns=["updated", "geo", "indicator"],
         )
         assert isinstance(df, pd.DataFrame)
         assert not df.empty
         assert list(df.columns) == [
-            "updated",
             "geo",
+            "time",
             "indicator",
+            "label",
+            "updated",
             "_viadot_source",
             "_viadot_downloaded_at_utc",
         ]
