@@ -12,8 +12,14 @@ class Eurostat(Source):
     Class for creating instance of Eurostat connector to REST API by HTTPS response (no credentials required).
     """
 
+    base_url = "https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/"
+
     def __init__(
         self,
+        dataset_code: str,
+        params: dict = None,
+        columns: list = None,
+        tests: dict = None,
         *args,
         **kwargs,
     ):
@@ -26,7 +32,37 @@ class Eurostat(Source):
         Dynamic part: /TEIBS020/?format=JSON&lang=EN&indic=BS-CSMCI-BAL
         Please note that for one dataset there are usually multiple data regarding different subjects.
         In order to retrive data that you are interested in you have to provide parameters with codes into 'params'.
+
+        Args:
+            dataset_code (str): The code of eurostat dataset that we would like to upload.
+            params (Dict[str], optional):
+                A dictionary with optional URL parameters. The key represents the parameter id, while the value is the code
+                for a specific parameter, for example: params = {'unit': 'EUR'} where "unit" is the parameter that you would like to set
+                and "EUR" is the code of the specific parameter. You can add more than one parameter, but only one code per parameter!
+                So you CAN NOT provide list of codes as in example 'params = {'unit': ['EUR', 'USD', 'PLN']}'
+                These parameters are REQUIRED in most cases to pull a specific dataset from the API.
+                Both parameter and code has to be provided as a string! Defaults to None.
+            columns (List[str], optional): list of needed names of columns. Names should be given as str's into the list.
+                Defaults to None.
+            base_url (str): The base URL used to access the Eurostat API. This parameter specifies the root URL for all requests made to the API.
+                It should not be modified unless the API changes its URL scheme.
+                Defaults to "https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/"
+            requested_columns (List[str], optional): list of needed names of columns. Names should be given as str's into the list.
+                Defaults to None.
+            tests:
+                - `column_size`: dict{column: size}
+                - `column_unique_values`: list[columns]
+                - `column_list_to_match`: list[columns]
+                - `dataset_row_count`: dict: {'min': number, 'max', number}
+                - `column_match_regex`: dict: {column: 'regex'}
+                - `column_sum`: dict: {column: {'min': number, 'max': number}}
         """
+
+        self.dataset_code = dataset_code
+        self.params = params
+        self.columns = columns
+        self.tests = tests
+        self.url = f"{self.base_url}{self.dataset_code}?format=JSON&lang=EN"
 
         super().__init__(*args, **kwargs)
 
@@ -47,10 +83,10 @@ class Eurostat(Source):
             )
             raise ValueError("DataFrame is empty!")
 
-        # getting list of available parameters
+        # Getting list of available parameters
         available_params = data["id"]
 
-        # dictionary from JSON with keys and reletad codes values
+        # Dictionary from JSON with keys and related codes values
         dimension = data["dimension"]
 
         # Assigning list of available codes to specific parameters
@@ -63,7 +99,7 @@ class Eurostat(Source):
 
     def make_params_validation(self):
         """Function for validation of given parameters in comparison
-        to parameteres and their codes from JSON.
+        to parameters and their codes from JSON.
         Raises:
             ValueError: If any of the self.params keys or values is not a string or
             any of them is not available for specific dataset.
@@ -116,6 +152,33 @@ class Eurostat(Source):
                     f"You can find everything via link: https://ec.europa.eu/eurostat/databrowser/view/{self.dataset_code}/default/table?lang=en"
                 )
             raise ValueError("DataFrame is empty!")
+
+    def requested_columns_validation(self, data_frame) -> pd.DataFrame:
+        columns_list = data_frame.columns.tolist()
+        columns_list = [str(column).casefold() for column in columns_list]
+        needed_column_after_validation = []
+        non_available_columns = []
+
+        for column in self.columns:
+            # Checking if user column is in our dataframe column list
+            column = str(column).casefold()
+
+            if column in columns_list:
+                needed_column_after_validation.append(column)
+            else:
+                non_available_columns.append(column)
+
+        # Error logger
+        if non_available_columns:
+            self.logger.error(
+                f"Name of the columns: '{' | '.join(non_available_columns)}' are not in DataFrame. Please check spelling!\n"
+                f"Available columns: {' | '.join(columns_list)}"
+            )
+            raise ValueError("Provided columns are not available!")
+
+        data_frame = data_frame.loc[:, needed_column_after_validation]
+
+        return data_frame
 
     def eurostat_dictionary_to_df(self, *signals: list) -> pd.DataFrame:
         """Function for creating DataFrame from JSON pulled from Eurostat.
@@ -183,12 +246,7 @@ class Eurostat(Source):
     @add_viadot_metadata_columns
     def to_df(
         self,
-        dataset_code: str,
-        params: dict = None,
-        base_url: str = "https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/",
-        requested_columns: list = None,
         if_empty: str = "fail",
-        tests: dict = None,
     ) -> pd.DataFrame:
         """Function responsible for getting response, creating DataFrame using method 'eurostat_dictionary_to_df'
            with validation of provided parameters and their codes if needed.
@@ -219,22 +277,18 @@ class Eurostat(Source):
             TypeError: If self.params is different type than a dictionary.
             TypeError: If self.requested_columns is different type than a list containing strings.
         Returns:
-            pd.DataFrame: Final DataFrame or raise prefect.logger.error, if issues occur.
+            pd.DataFrame: Pandas DataFrame.
         """
 
-        self.dataset_code = dataset_code
-        self.params = params
         if not isinstance(self.params, dict) and self.params is not None:
             raise TypeError("Params should be a dictionary.")
 
-        self.base_url = f"{base_url}{self.dataset_code}?format=JSON&lang=EN"
-        self.requested_columns = requested_columns
-        if not isinstance(requested_columns, list) and requested_columns is not None:
+        if not isinstance(self.columns, list) and self.columns is not None:
             raise TypeError("Requested columns should be provided as list of strings.")
 
         # getting response from API
         try:
-            response = handle_api_response(self.base_url, params=self.params)
+            response = handle_api_response(self.url, params=self.params)
             data = response.json()
             data_frame = self.eurostat_dictionary_to_df(["geo", "time"], data)
         except APIError:
@@ -247,7 +301,7 @@ class Eurostat(Source):
             except SKIP:
                 return pd.DataFrame()
 
-        # merging data_frame with label and last updated date
+        # Merge data_frame with label and last updated date
         label_col = pd.Series(str(data["label"]), index=data_frame.index, name="label")
         last_updated__col = pd.Series(
             str(data["updated"]),
@@ -256,35 +310,11 @@ class Eurostat(Source):
         )
         data_frame = pd.concat([data_frame, label_col, last_updated__col], axis=1)
 
-        # requested columns validation
-        if self.requested_columns is None:
-            return data_frame
-        else:
-            columns_list = data_frame.columns.tolist()
-            columns_list = [str(column).casefold() for column in columns_list]
-            needed_column_after_validation = []
-            non_available_columns = []
+        # Validation and transformation of requested column
+        if self.columns is not None:
+            self.requested_columns_validation(data_frame=data_frame)
 
-            for column in self.requested_columns:
-                # Checking if user column is in our dataframe column list
-                column = str(column).casefold()
+        # Additional validation from utils
+        validate(df=data_frame, tests=self.tests)
 
-                if column in columns_list:
-                    needed_column_after_validation.append(column)
-                else:
-                    non_available_columns.append(column)
-
-            # Error logger
-            if non_available_columns:
-                self.logger.error(
-                    f"Name of the columns: '{' | '.join(non_available_columns)}' are not in DataFrame. Please check spelling!\n"
-                    f"Available columns: {' | '.join(columns_list)}"
-                )
-                raise ValueError("Provided columns are not available!")
-
-            data_frame = data_frame.loc[:, needed_column_after_validation]
-
-            # Additional validation from utils
-            validate(df=data_frame, tests=tests)
-
-            return data_frame
+        return data_frame
