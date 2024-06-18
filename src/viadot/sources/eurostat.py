@@ -2,7 +2,6 @@ import pandas as pd
 
 from viadot.utils import APIError, handle_api_response
 
-from ..signals import SKIP
 from ..utils import add_viadot_metadata_columns, validate
 from .base import Source
 
@@ -254,7 +253,6 @@ class Eurostat(Source):
     @add_viadot_metadata_columns
     def to_df(
         self,
-        if_empty: str = "fail",
     ) -> pd.DataFrame:
         """Function responsible for getting response, creating DataFrame using method 'eurostat_dictionary_to_df'
            with validation of provided parameters and their codes if needed.
@@ -268,6 +266,10 @@ class Eurostat(Source):
             pd.DataFrame: Pandas DataFrame.
         """
 
+        # Making parameters validation
+        if self.params is not None:
+            self.make_params_validation()
+
         # Getting response from API
         try:
             response = handle_api_response(self.url, params=self.params)
@@ -275,13 +277,6 @@ class Eurostat(Source):
             data_frame = self.eurostat_dictionary_to_df(["geo", "time"], data)
         except APIError:
             self.make_params_validation()
-
-        if data_frame.empty:
-            try:
-                self.make_params_validation()
-                self._handle_if_empty(if_empty)
-            except SKIP:
-                return pd.DataFrame()
 
         # Merge data_frame with label and last updated date
         label_col = pd.Series(str(data["label"]), index=data_frame.index, name="label")
