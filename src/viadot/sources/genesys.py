@@ -574,7 +574,13 @@ class Genesys(Source):
                 generate json body in POST calls to the API. Defaults to None.
             normalization_sep (str, optional): Nested records will generate names separated by sep.
                 Defaults to ".".
+
+        Raises:
+            APIError: At different endpoints:
+                - 'analytics/conversations/details/query': only one body must be used.
+                -
         """
+        logger.info(f"Connecting to the Genesys Cloud using the endpoint: {endpoint}")
 
         if endpoint == "analytics/reporting/exports":
             self._api_call(
@@ -630,6 +636,12 @@ class Genesys(Source):
                     endpoint=endpoint,
                     post_data_list=post_data_list,
                     method="POST",
+                )
+                logger.info(
+                    (
+                        "Restructuring the response in order to be able to insert it into a data frame."
+                        "\n\tThis task could take a few minutes.\n"
+                    )
                 )
                 merged_data_frame = self._merge_conversations(report["conversations"])
                 self.data_returned.update(

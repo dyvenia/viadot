@@ -20,10 +20,12 @@ def genesys_to_adls(
     azure_key_vault_secret: Optional[str] = None,
     endpoint: Optional[str] = None,
     environment: str = "mypurecloud.de",
+    queues_ids: Optional[List[str]] = None,
     view_type: Optional[str] = None,
     view_type_time_sleep: Optional[int] = None,
     post_data_list: Optional[List[Dict[str, Any]]] = None,
     normalization_sep: str = ".",
+    drop_duplicates: bool = False,
     validate_df_dict: Optional[Dict[str, Any]] = None,
     adls_credentials: Optional[Dict[str, Any]] = None,
     adls_config_key: Optional[str] = None,
@@ -45,6 +47,8 @@ def genesys_to_adls(
         endpoint (Optional[str], optional): Final end point to the API. Defaults to None.
         environment (str, optional): the domain that appears for Genesys Cloud Environment
             based on the location of your Genesys Cloud organization. Defaults to "mypurecloud.de".
+        queues_ids (Optional[List[str]], optional): List of queues ids to consult the
+                members. Defaults to None.
         view_type (Optional[str], optional): The type of view export job to be created.
             Defaults to None.
         view_type_time_sleep (Optional[int], optional): Waiting time to retrieve data from Genesys
@@ -53,6 +57,7 @@ def genesys_to_adls(
             json body in POST calls to the API. Defaults to None.
         normalization_sep (str, optional): Nested records will generate names separated by sep.
             Defaults to ".".
+        drop_duplicates (bool, optional): Remove duplicates from the Data Frame. Defaults to False.
         validate_df_dict (Optional[Dict[str, Any]], optional): A dictionary with
             optional list of tests to verify the output dataframe. Defaults to None.
         adls_credentials (Optional[Dict[str, Any]], optional): The credentials as a dictionary.
@@ -73,6 +78,7 @@ def genesys_to_adls(
         azure_key_vault_secret=azure_key_vault_secret,
         endpoint=endpoint,
         environment=environment,
+        queues_ids=queues_ids,
         view_type=view_type,
         view_type_time_sleep=view_type_time_sleep,
         post_data_list=post_data_list,
