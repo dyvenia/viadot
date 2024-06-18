@@ -59,7 +59,7 @@ def eurostat_to_databricks(
         dataset_code=dataset_code,
         params=params,
         base_url=base_url,
-        requested_columns=requested_columns,
+        columns=requested_columns,
         tests=tests,
     )
     databricks = df_to_databricks(

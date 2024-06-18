@@ -8,7 +8,7 @@ def eurostat_to_df(
     dataset_code: str,
     params: dict = None,
     base_url: str = "https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/",
-    requested_columns: list = None,
+    columns: list = None,
     tests: dict = None,
 ):
     """Task for creating pandas data frame from Eurostat HTTPS REST API (no credentials required).
@@ -25,7 +25,7 @@ def eurostat_to_df(
         base_url (str): The base URL used to access the Eurostat API. This parameter specifies the root URL for all requests made to the API.
             It should not be modified unless the API changes its URL scheme.
             Defaults to "https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/"
-        requested_columns (List[str], optional): list of needed names of columns. Names should be given as str's into the list.
+        columns (List[str], optional): list of needed names of columns. Names should be given as str's into the list.
             Defaults to None.
         tests:
             - `column_size`: dict{column: size}
@@ -36,11 +36,15 @@ def eurostat_to_df(
             - `column_sum`: dict: {column: {'min': number, 'max': number}}
 
     Returns:
-        pd.DataFrame: None empty DataFrame.
+        pd.DataFrame: Pandas DataFrame.
     """
 
     data_frame = Eurostat().to_df(
-        dataset_code, params, base_url, requested_columns, tests
+        dataset_code=dataset_code,
+        params=params,
+        base_url=base_url,
+        requested_columns=columns,
+        tests=tests,
     )
 
     return data_frame
