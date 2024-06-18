@@ -224,4 +224,4 @@ class Sharepoint(Source):
             if tests:
                 validate(df=df_clean, tests=tests)
 
-            return df_clean.astype(str)
+            return df.astype(object).where(pd.notnull(df), None)
