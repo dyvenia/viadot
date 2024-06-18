@@ -12,8 +12,7 @@ from prefect import flow
 def eurostat_to_adls(
     dataset_code: str,
     params: dict = None,
-    base_url: str = "https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/",
-    requested_columns: list = None,
+    columns: list = None,
     tests: dict = None,
     adls_path: str = None,
     adls_credentials_secret: str = None,
@@ -32,10 +31,7 @@ def eurostat_to_adls(
             This parameter is REQUIRED in most cases to pull a specific dataset from the API.
             Both parameter and code has to provided as a string!
             Defaults to None.
-        base_url (str): The base URL used to access the Eurostat API. This parameter specifies the root URL for all requests made to the API.
-            It should not be modified unless the API changes its URL scheme.
-            Defaults to "https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/"
-        requested_columns (List[str], optional): List of columns that are needed from DataFrame - works as filter.
+        columns (List[str], optional): List of columns that are needed from DataFrame - works as filter.
             The data are downloaded from Eurostat is the same structure every time. The filter is applied after the data is fetched.
         tests:
             - `column_size`: dict{column: size}
@@ -55,8 +51,7 @@ def eurostat_to_adls(
     df = eurostat_to_df(
         dataset_code=dataset_code,
         params=params,
-        base_url=base_url,
-        columns=requested_columns,
+        columns=columns,
         tests=tests,
     )
     adls = df_to_adls(

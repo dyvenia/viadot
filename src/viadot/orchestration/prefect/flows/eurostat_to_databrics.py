@@ -15,8 +15,7 @@ def eurostat_to_databricks(
     dataset_code: str,
     databricks_table: str,
     params: dict = None,
-    base_url: str = "https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/",
-    requested_columns: list = None,
+    columns: list = None,
     tests: dict = None,
     if_exists: Literal["replace", "skip", "fail"] = "fail",
     databricks_schema: str = None,
@@ -35,9 +34,6 @@ def eurostat_to_databricks(
             This parameter is REQUIRED in most cases to pull a specific dataset from the API.
             Both parameter and code has to provided as a string!
             Defaults to None.
-        base_url (str): The base URL used to access the Eurostat API. This parameter specifies the root URL for all requests made to the API.
-            It should not be modified unless the API changes its URL scheme.
-            Defaults to "https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/"
         requested_columns (List[str], optional): List of columns that are needed from DataFrame - works as filter.
             The data are downloaded from Eurostat is the same structure every time. The filter is applied after the data is fetched.
         tests:
@@ -58,8 +54,7 @@ def eurostat_to_databricks(
     df = eurostat_to_df(
         dataset_code=dataset_code,
         params=params,
-        base_url=base_url,
-        columns=requested_columns,
+        columns=columns,
         tests=tests,
     )
     databricks = df_to_databricks(
