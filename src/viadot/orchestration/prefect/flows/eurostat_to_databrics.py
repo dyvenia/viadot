@@ -34,7 +34,7 @@ def eurostat_to_databricks(
             This parameter is REQUIRED in most cases to pull a specific dataset from the API.
             Both parameter and code has to provided as a string!
             Defaults to None.
-        requested_columns (List[str], optional): List of columns that are needed from DataFrame - works as filter.
+        columns (List[str], optional): List of columns that are needed from DataFrame - works as filter.
             The data are downloaded from Eurostat is the same structure every time. The filter is applied after the data is fetched.
         tests:
             - `column_size`: dict{column: size}
