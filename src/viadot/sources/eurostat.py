@@ -8,7 +8,8 @@ from .base import Source
 
 class Eurostat(Source):
     """
-    Class for creating instance of Eurostat connector to REST API by HTTPS response (no credentials required).
+    Class for creating instance of Eurostat connector to REST API by HTTPS response
+    (no credentials required).
     """
 
     base_url = "https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/"
@@ -30,24 +31,28 @@ class Eurostat(Source):
         Static part: https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data
         Dynamic part: /TEIBS020/?format=JSON&lang=EN&indic=BS-CSMCI-BAL
         Please note that for one dataset there are usually multiple data regarding different subjects.
-        In order to retrieve data that you are interested in you have to provide parameters with codes into 'params'.
+        In order to retrieve data that you are interested in you have to provide
+            parameters with codes into 'params'.
 
         Args:
             dataset_code (str): The code of Eurostat dataset that we would like to upload.
             params (Dict[str], optional):
-                A dictionary with optional URL parameters. The key represents the parameter id, while the value is the code
-                for a specific parameter, for example: params = {'unit': 'EUR'} where "unit" is the parameter that you would like to set
-                and "EUR" is the code of the specific parameter. You can add more than one parameter, but only one code per parameter!
+                A dictionary with optional URL parameters. The key represents the
+                parameter id, while the value is the code for a specific parameter,
+                for example: params = {'unit': 'EUR'} where "unit" is the parameter
+                that you would like to set and "EUR" is the code of the specific parameter.
+                You can add more than one parameter, but only one code per parameter!
                 So you CAN NOT provide list of codes as in example 'params = {'unit': ['EUR', 'USD', 'PLN']}'
                 These parameters are REQUIRED in most cases to pull a specific dataset from the API.
                 Both parameter and code has to be provided as a string! Defaults to None.
-            columns (List[str], optional): list of needed names of columns. Names should be given as str's into the list.
-                Defaults to None.
-            base_url (str): The base URL used to access the Eurostat API. This parameter specifies the root URL for all requests made to the API.
+            columns (List[str], optional): list of needed names of columns.
+            Names should be given as str's into the list. Defaults to None.
+            base_url (str): The base URL used to access the Eurostat API.
+                This parameter specifies the root URL for all requests made to the API.
                 It should not be modified unless the API changes its URL scheme.
                 Defaults to "https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/"
-            requested_columns (List[str], optional): list of needed names of columns. Names should be given as str's into the list.
-                Defaults to None.
+            requested_columns (List[str], optional): list of needed names of columns.
+                Names should be given as str's into the list. Defaults to None.
             tests:
                 - `column_size`: dict{column: size}
                 - `column_unique_values`: list[columns]
@@ -55,6 +60,9 @@ class Eurostat(Source):
                 - `dataset_row_count`: dict: {'min': number, 'max', number}
                 - `column_match_regex`: dict: {column: 'regex'}
                 - `column_sum`: dict: {column: {'min': number, 'max': number}}
+        Raises:
+            TypeError: If self.params is different type than a dictionary.
+            TypeError: If self.columns is different type than a list containing strings.
         """
 
         self.dataset_code = dataset_code
@@ -72,7 +80,7 @@ class Eurostat(Source):
         super().__init__(*args, **kwargs)
 
     def get_parameters_codes(self) -> dict:
-        """Validate available API request parameters.
+        """Validate available API request parameters and their codes.
 
         Raises:
             ValueError: If the response from the API is empty or invalid.
@@ -105,7 +113,7 @@ class Eurostat(Source):
 
     def make_params_validation(self):
         """Function for validation of given parameters in comparison
-        to parameters and their codes from JSON.
+        to parameters and their codes available for provided dataset_code.
 
         Raises:
             ValueError: If any of the self.params keys or values is not a string or
@@ -190,7 +198,7 @@ class Eurostat(Source):
     def eurostat_dictionary_to_df(self, *signals: list) -> pd.DataFrame:
         """Function for creating DataFrame from JSON pulled from Eurostat.
         Returns:
-            pd.DataFrame: With 4 columns: index, geo, time, indicator.
+            pd.DataFrame: Pandas DataFrame With 4 columns: index, geo, time, indicator.
         """
 
         class T_SIGNAL:
@@ -254,14 +262,12 @@ class Eurostat(Source):
     def to_df(
         self,
     ) -> pd.DataFrame:
-        """Function responsible for getting response, creating DataFrame using method 'eurostat_dictionary_to_df'
-           with validation of provided parameters and their codes if needed.
+        """Function responsible for getting response and creating DataFrame using method
+           'eurostat_dictionary_to_df' with validation of provided parameters
+            and their codes if needed.
 
         Raises:
             APIError: If there is an error with the API request.
-            ValueError: If the resulting DataFrame is empty.
-            TypeError: If self.params is different type than a dictionary.
-            TypeError: If self.requested_columns is different type than a list containing strings.
         Returns:
             pd.DataFrame: Pandas DataFrame.
         """
