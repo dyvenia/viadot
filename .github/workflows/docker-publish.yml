@@ -39,27 +39,30 @@ jobs:
         uses: docker/build-push-action@v3
         with:
           context: .
-          file: docker/viadot-lite.Dockerfile
+          file: docker/Dockerfile
           platforms: linux/amd64
           push: true
+          target: viadot-lite
           tags: ghcr.io/${{ github.repository }}/viadot-lite:${{ github.event.inputs.tag }}
 
       - name: Build and publish viadot-aws image
         uses: docker/build-push-action@v3
         with:
           context: .
-          file: docker/viadot-aws.Dockerfile
+          file: docker/Dockerfile
           platforms: linux/amd64
           push: true
+          target: viadot-aws
           tags: ghcr.io/${{ github.repository }}/viadot-aws:${{ github.event.inputs.tag }}
 
       - name: Build and publish viadot-azure image
         uses: docker/build-push-action@v3
         with:
           context: .
-          file: docker/viadot-azure.Dockerfile
+          file: docker/Dockerfile
           platforms: linux/amd64
           push: true
+          target: viadot-azure
           tags: ghcr.io/${{ github.repository }}/viadot-azure:${{ github.event.inputs.tag }}
           build-args: INSTALL_DATABRICKS=${{ github.event.inputs.if_databricks }}
           
