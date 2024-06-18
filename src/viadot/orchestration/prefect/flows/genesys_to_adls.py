@@ -23,6 +23,8 @@ def genesys_to_adls(
     view_type: Optional[str] = None,
     view_type_time_sleep: Optional[int] = None,
     post_data_list: Optional[List[Dict[str, Any]]] = None,
+    normalization_sep: str = ".",
+    validate_df_dict: Optional[Dict[str, Any]] = None,
     adls_credentials: Optional[Dict[str, Any]] = None,
     adls_config_key: Optional[str] = None,
     adls_azure_key_vault_secret: Optional[str] = None,
@@ -49,6 +51,10 @@ def genesys_to_adls(
             Cloud API. Defaults to None.
         post_data_list (Optional[List[Dict[str, Any]]], optional): List of string templates to generate
             json body in POST calls to the API. Defaults to None.
+        normalization_sep (str, optional): Nested records will generate names separated by sep.
+            Defaults to ".".
+        validate_df_dict (Optional[Dict[str, Any]], optional): A dictionary with
+            optional list of tests to verify the output dataframe. Defaults to None.
         adls_credentials (Optional[Dict[str, Any]], optional): The credentials as a dictionary.
             Defaults to None.
         adls_config_key (Optional[str], optional): The key in the viadot config holding
@@ -70,6 +76,8 @@ def genesys_to_adls(
         view_type=view_type,
         view_type_time_sleep=view_type_time_sleep,
         post_data_list=post_data_list,
+        normalization_sep=normalization_sep,
+        validate_df_dict=validate_df_dict,
     )
     time.sleep(0.5)
 
