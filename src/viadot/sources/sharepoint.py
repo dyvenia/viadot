@@ -173,10 +173,29 @@ class Sharepoint(Source):
             response = conn.get(url)
             bytes_stream = io.BytesIO(response.content)
             excel_file = pd.ExcelFile(bytes_stream)
+            na_values = [
+                "",
+                "#N/A",
+                "#N/A N/A",
+                "#NA",
+                "-1.#IND",
+                "-1.#QNAN",
+                "1.#IND",
+                "1.#QNAN",
+                "N/A",
+                "NULL",
+                "NaN",
+                "n/a",
+                "nan",
+                None,
+            ]
 
             if sheet_name:
                 df = excel_file.parse(
-                    sheet_name=sheet_name, keep_default_na=False, na_values="", **kwargs
+                    sheet_name=sheet_name,
+                    keep_default_na=False,
+                    na_values=na_values,
+                    **kwargs,
                 )
                 df["sheet_name"] = sheet_name
             else:
@@ -185,7 +204,7 @@ class Sharepoint(Source):
                     sheet = excel_file.parse(
                         sheet_name=sheet_name,
                         keep_default_na=False,
-                        na_values="",
+                        na_values=na_values,
                         **kwargs,
                     )
                     sheet["sheet_name"] = sheet_name
