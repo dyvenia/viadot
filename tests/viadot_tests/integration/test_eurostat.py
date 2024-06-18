@@ -6,12 +6,8 @@ from viadot.sources import Eurostat
 
 
 def test_and_validate_dataset_code_without_params(caplog):
-    """This function is designed to test the accuracy of the data retrieval feature in a program.
-    Specifically, it tests to ensure that the program returns a non-empty DataFrame when a correct
-    dataset code is provided without any parameters. The function is intended to be used in software
-    development to verify that the program is correctly retrieving data from the appropriate dataset.
-    """
-    task = Eurostat().to_df(dataset_code="ILC_DI04")
+    """Tests that the data retrieval feature returns a non-empty DataFrame for a valid dataset code."""
+    task = Eurostat(dataset_code="ILC_DI04").to_df()
 
     assert isinstance(task, pd.DataFrame)
     assert not task.empty
@@ -19,17 +15,13 @@ def test_and_validate_dataset_code_without_params(caplog):
 
 
 def test_wrong_dataset_code_logger(caplog):
-    """This function is designed to test the accuracy of the error logging feature in a program.
-    Specifically, it tests to ensure that the program is able to correctly identify and log errors
-    when provided with only incorrect dataset code.
-    The function is intended to be used in software development to identify correct type errors
-    and messages in the program's handling of codes.
-    """
-    task = Eurostat()
+    """Tests that the error logging feature correctly identifies and logs errors for incorrect dataset codes."""
+
+    task = Eurostat(dataset_code="ILC_DI04E")
 
     with pytest.raises(ValueError, match="DataFrame is empty!"):
         with caplog.at_level(logging.ERROR):
-            task.to_df(dataset_code="ILC_DI04E")
+            task.to_df()
     assert (
         "Failed to fetch data for ILC_DI04E, please check correctness of dataset code!"
         in caplog.text
@@ -37,19 +29,14 @@ def test_wrong_dataset_code_logger(caplog):
 
 
 def test_wrong_parameters_codes_logger(caplog):
-    """This function is designed to test the accuracy of the error logging feature in a program.
-    Specifically, it tests to ensure that the program is able to correctly identify and log errors
-    when provided with a correct dataset_code and correct parameters are provided, but both parameters codes are incorrect.
-    The function is intended to be used in software development to identify correct type errors
-    and messages in the program's handling of codes.
-    """
+    """Tests error logging for incorrect parameter codes with a correct dataset code."""
 
     with pytest.raises(ValueError, match="DataFrame is empty!"):
         with caplog.at_level(logging.ERROR):
-            Eurostat().to_df(
+            Eurostat(
                 dataset_code="ILC_DI04",
                 params={"hhtyp": "total1", "indic_il": "non_existing_code"},
-            )
+            ).to_df()
     assert (
         "Parameters codes: 'total1 | non_existing_code' are not available. Please check your spelling!"
         in caplog.text
@@ -61,20 +48,15 @@ def test_wrong_parameters_codes_logger(caplog):
 
 
 def test_parameter_codes_as_list_logger(caplog):
-    """This function is designed to test the accuracy of the error logging feature in a program.
-    Specifically, it tests to ensure that the program is able to correctly identify and log errors
-    when provided with a correct dataset code, correct parameters, but incorrect parameters codes structure
-    (as a list with strings, instead of single string).
-    The function is intended to be used in software development to identify correct type errors
-    and messages in the program's handling of codes.
-    """
+    """Tests error logging for incorrect parameter codes structure with a correct dataset code."""
 
     with pytest.raises(ValueError, match="Wrong structure of params!"):
         with caplog.at_level(logging.ERROR):
-            Eurostat().to_df(
+            Eurostat(
                 dataset_code="ILC_DI04",
                 params={"hhtyp": ["totale", "nottotale"], "indic_il": "med_e"},
-            )
+            ).to_df()
+
     assert (
         "You can provide only one code per one parameter as 'str' in params!\n"
         in caplog.text
@@ -86,21 +68,16 @@ def test_parameter_codes_as_list_logger(caplog):
 
 
 def test_wrong_parameters(caplog):
-    """This function is designed to test the accuracy of the error logging feature in a program.
-    Specifically, it tests to ensure that the program is able to correctly identify and log errors
-    when provided with a correct dataset_code, but incorrect parameters keys.
-    The function is intended to be used in software development to identify correct type errors
-    and messages in the program's handling of codes.
-    """
+    """Tests error logging for incorrect parameter keys with a correct dataset code."""
 
-    task = Eurostat()
+    task = Eurostat(
+        dataset_code="ILC_DI04",
+        params={"hhhtyp": "total", "indic_ilx": "med_e"},
+    )
 
     with pytest.raises(ValueError, match="DataFrame is empty!"):
         with caplog.at_level(logging.ERROR):
-            task.to_df(
-                dataset_code="ILC_DI04",
-                params={"hhhtyp": "total", "indic_ilx": "med_e"},
-            )
+            task.to_df()
     assert (
         "Parameters: 'hhhtyp | indic_ilx' are not in dataset. Please check your spelling!\n"
         in caplog.text
@@ -112,26 +89,18 @@ def test_wrong_parameters(caplog):
 
 
 def test_params_as_list():
-    """This function is designed to test the accuracy of the error logging feature in a program.
-    Specifically, it tests to ensure that the program is able to correctly identify and log error
-    when provided with a correct dataset_code, but incorrect params structure (as list instead of dict).
-    The function is intended to be used in software development to identify correct type errors
-    and messages in the program's handling of codes.
-    """
+    """Tests error logging for incorrect parameter structure with a correct dataset code."""
+
     with pytest.raises(TypeError, match="Params should be a dictionary."):
-        Eurostat().to_df(dataset_code="ILC_DI04", params=["total", "med_e"])
+        Eurostat(dataset_code="ILC_DI04", params=["total", "med_e"]).to_df()
 
 
 def test_correct_params_and_dataset_code(caplog):
-    """This function is designed to test the accuracy of the data retrieval feature in a program.
-    Specifically, it tests to ensure that the program returns a non-empty DataFrame when a correct
-    dataset code is provided with correct params. The function is intended to be used in software
-    development to verify that the program is correctly retrieving data from the appropriate dataset.
-    """
+    """Tests that the data retrieval feature returns a non-empty DataFrame for a valid dataset code with correct parameters."""
 
-    task = Eurostat().to_df(
+    task = Eurostat(
         dataset_code="ILC_DI04", params={"hhtyp": "total", "indic_il": "med_e"}
-    )
+    ).to_df()
 
     assert isinstance(task, pd.DataFrame)
     assert not task.empty
@@ -139,17 +108,13 @@ def test_correct_params_and_dataset_code(caplog):
 
 
 def task_correct_requested_columns(caplog):
-    """This function is designed to test the accuracy of the data retrieval feature in a program.
-    Specifically, it tests to ensure that the program is able to correctly identify and log error
-    when provided with a correct dataset_code, correct params and correct requested_columns.
-    The function is intended to be used in software development to verify that the program is correctly
-    retrieving data from the appropriate dataset.
-    """
-    task = Eurostat().to_df(
+    """Tests error logging for correct dataset code, parameters, and requested columns."""
+
+    task = Eurostat(
         dataset_code="ILC_DI04",
         params={"hhtyp": "total", "indic_il": "med_e"},
         requested_columns=["updated", "geo", "indicator"],
-    )
+    ).to_df()
 
     assert isinstance(task, pd.DataFrame)
     assert not task.empty
@@ -158,21 +123,17 @@ def task_correct_requested_columns(caplog):
 
 
 def test_wrong_needed_columns_names(caplog):
-    """This function is designed to test the accuracy of the error logging feature in a program.
-    Specifically, it tests to ensure that the program is able to correctly identify and log error
-    when provided with a correct dataset_code, correct parameters, but incorrect names of requested columns.
-    The function is intended to be used in software development to identify correct type errors
-    and messages in the program's handling of codes.
-    """
-    task = Eurostat()
+    """Tests error logging for incorrect names of requested columns with a correct dataset code and parameters."""
+
+    task = Eurostat(
+        dataset_code="ILC_DI04",
+        params={"hhtyp": "total", "indic_il": "med_e"},
+        requested_columns=["updated1", "geo1", "indicator1"],
+    )
 
     with pytest.raises(ValueError, match="Provided columns are not available!"):
         with caplog.at_level(logging.ERROR):
-            task.to_df(
-                dataset_code="ILC_DI04",
-                params={"hhtyp": "total", "indic_il": "med_e"},
-                requested_columns=["updated1", "geo1", "indicator1"],
-            )
+            task.to_df()
     assert (
         "Name of the columns: 'updated1 | geo1 | indicator1' are not in DataFrame. Please check spelling!\n"
         in caplog.text
@@ -181,22 +142,17 @@ def test_wrong_needed_columns_names(caplog):
 
 
 def test_wrong_params_and_wrong_requested_columns_names(caplog):
-    """This function is designed to test the accuracy of the error logging feature in a program.
-    Specifically, it tests to ensure that the program is able to correctly identify and log error
-    when provided with a correct dataset_code, incorrect parameters and incorrect names of requested columns.
-    Test should log errors only related with wrong params - we are trying to check if program will stop after
-    params validation. The function is intended to be used in software development to identify correct type errors
-    and messages in the program's handling of codes.
-    """
-    task = Eurostat()
+    """Tests error logging for incorrect parameters and names of requested columns with a correct dataset code."""
+
+    task = Eurostat(
+        dataset_code="ILC_DI04",
+        params={"hhhtyp": "total", "indic_ilx": "med_e"},
+        requested_columns=["updated1", "geo1", "indicator1"],
+    )
 
     with pytest.raises(ValueError, match="DataFrame is empty!"):
         with caplog.at_level(logging.ERROR):
-            task.to_df(
-                dataset_code="ILC_DI04",
-                params={"hhhtyp": "total", "indic_ilx": "med_e"},
-                requested_columns=["updated1", "geo1", "indicator1"],
-            )
+            task.to_df()
     assert (
         "Parameters: 'hhhtyp | indic_ilx' are not in dataset. Please check your spelling!\n"
         in caplog.text
@@ -208,19 +164,14 @@ def test_wrong_params_and_wrong_requested_columns_names(caplog):
 
 
 def test_requested_columns_not_in_list():
-    """This function is designed to test the accuracy of the error logging feature in a program.
-    Specifically, it tests to ensure that the program is able to correctly identify and log error
-    when provided with a correct dataset_code, correct params but incorrect requested_columns structure
-    (as single string instead of list with strings).
-    The function is intended to be used in software development to identify correct type errors
-    and messages in the program's handling of codes.
-    """
-    task = Eurostat()
+    """Tests error logging for incorrect requested columns structure with a correct dataset code and parameters."""
+
+    task = Eurostat(
+        dataset_code="ILC_DI04",
+        params={"hhtyp": "total", "indic_il": "med_e"},
+        requested_columns="updated",
+    )
     with pytest.raises(
         TypeError, match="Requested columns should be provided as list of strings."
     ):
-        task.to_df(
-            dataset_code="ILC_DI04",
-            params={"hhtyp": "total", "indic_il": "med_e"},
-            requested_columns="updated",
-        )
+        task.to_df()
