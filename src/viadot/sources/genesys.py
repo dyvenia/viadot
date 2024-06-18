@@ -15,15 +15,10 @@ from pydantic import BaseModel
 from viadot.config import get_source_credentials
 from viadot.exceptions import APIError, CredentialError
 from viadot.sources.base import Source
-from viadot.utils import add_viadot_metadata_columns, handle_api_response
+from viadot.utils import add_viadot_metadata_columns, handle_api_response, validate
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
-
-# add logger to console
-# console_handler = logging.StreamHandler()
-# console_handler.setLevel(logging.INFO)
-# logger.addHandler(console_handler)
 
 
 class GENESYS_CREDENTIALS(BaseModel):
@@ -557,6 +552,7 @@ class Genesys(Source):
         view_type: Optional[str] = None,
         view_type_time_sleep: int = 10,
         post_data_list: Optional[List[Dict[str, Any]]] = None,
+        normalization_sep: str = ".",
     ) -> None:
         """
         Description:
@@ -576,6 +572,8 @@ class Genesys(Source):
                 Cloud API. Defaults to 10.
             post_data_list (Optional[List[Dict[str, Any]]], optional): List of string templates to
                 generate json body in POST calls to the API. Defaults to None.
+            normalization_sep (str, optional): Nested records will generate names separated by sep.
+                Defaults to ".".
         """
 
         if endpoint == "analytics/reporting/exports":
@@ -649,19 +647,33 @@ class Genesys(Source):
                 post_data_list[0]["paging"]["pageNumber"] += 1
                 page_counter += 1
 
-        elif endpoint == "routing/queues":
+        elif endpoint in ["routing/queues", "users"]:
             self.data_returned = {}
             page = 1
+
+            if endpoint == "routing/queues":
+                params = {"pageSize": 500, "pageNumber": page}
+            elif endpoint == "users":
+                params = {
+                    "pageSize": 500,
+                    "pageNumber": page,
+                    "expand": "presence,dateLastLogin,groups,employerInfo,lasttokenissued",
+                    "state": "any",
+                }
+
             while True:
                 response = self._api_call(
                     endpoint=endpoint,
                     post_data_list=post_data_list,
                     method="GET",
-                    params={"pageSize": 500, "pageNumber": page},
+                    params=params,
                 )
 
                 if response["entities"]:
-                    df_response = pd.json_normalize(response["entities"], sep="|")
+                    df_response = pd.json_normalize(
+                        response["entities"],
+                        sep=normalization_sep,
+                    )
                     self.data_returned.update({page - 1: df_response})
 
                     page += 1
@@ -671,6 +683,10 @@ class Genesys(Source):
         elif endpoint == "routing_queues_members":
             self.data_returned = {}
             counter = 0
+            if queues_ids is None:
+                logger.error("This end point requires `queues_ids` parameter to work.")
+                APIError("This end point requires `queues_ids` parameter to work.")
+
             for id in queues_ids:
                 logger.info(f"Downloading Agents information from Queue: {id}")
                 page = 1
@@ -705,13 +721,19 @@ class Genesys(Source):
                         break
 
     @add_viadot_metadata_columns
-    def to_df(self, drop_duplicates: bool = False) -> pd.DataFrame:
+    def to_df(
+        self,
+        drop_duplicates: bool = False,
+        validate_df_dict: Optional[Dict[str, Any]] = None,
+    ) -> pd.DataFrame:
         """
         Description:
             Generate a Pandas Data Frame with the data in the Response object, and metadata.
 
         Args:
             drop_duplicates (bool, optional): Remove duplicates from the Data Frame. Defaults to False.
+            validate_df_dict (Optional[Dict[str, Any]], optional): A dictionary with
+                optional list of tests to verify the output dataframe. Defaults to None.
 
         Returns:
             pd.Dataframe: The response data as a Pandas Data Frame plus viadot metadata.
@@ -725,6 +747,9 @@ class Genesys(Source):
 
         if drop_duplicates:
             data_frame.drop_duplicates(inplace=True)
+
+        if validate_df_dict:
+            validate(df=data_frame, tests=validate_df_dict)
 
         if data_frame.empty:
             self._handle_if_empty(
