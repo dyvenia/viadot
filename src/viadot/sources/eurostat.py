@@ -161,25 +161,35 @@ class Eurostat(Source):
                     f"Parameters: '{' | '.join(non_available_keys)}' are not in dataset. Please check your spelling!\n"
                     f"Possible parameters: {' | '.join(key_codes.keys())}"
                 )
+                raise ValueError("Wrong parameters were provided!")
             if non_available_codes:
                 self.logger.error(
                     f"Parameters codes: '{' | '.join(non_available_codes)}' are not available. Please check your spelling!\n"
                     f"You can find everything via link: https://ec.europa.eu/eurostat/databrowser/view/{self.dataset_code}/default/table?lang=en"
                 )
-            raise ValueError("DataFrame is empty!")
+                raise ValueError("Wrong parameters codes were provided!")
 
     def requested_columns_validation(self, data_frame) -> pd.DataFrame:
-        columns_list = data_frame.columns.tolist()
-        columns_list = [str(column).casefold() for column in columns_list]
-        needed_column_after_validation = []
+        """Function for creating DataFrame with only specified columns.
+        Returns:
+            pd.DataFrame: Pandas DataFrame
+        """
+
+        # Converting data_frame columns to lowercase for comparison
+        data_frame_columns = [col.casefold() for col in data_frame.columns]
+        needed_columns = []
         non_available_columns = []
 
         for column in self.columns:
-            # Checking if user column is in our dataframe column list
-            column = str(column).casefold()
+            # Converting user-specified column to lowercase for comparison
+            column_lower = column.casefold()
 
-            if column in columns_list:
-                needed_column_after_validation.append(column)
+            if column_lower in data_frame_columns:
+                # Find the original column name (with the correct case) from data_frame.columns
+                original_column_name = next(
+                    col for col in data_frame.columns if col.casefold() == column_lower
+                )
+                needed_columns.append(original_column_name)
             else:
                 non_available_columns.append(column)
 
@@ -187,11 +197,12 @@ class Eurostat(Source):
         if non_available_columns:
             self.logger.error(
                 f"Name of the columns: '{' | '.join(non_available_columns)}' are not in DataFrame. Please check spelling!\n"
-                f"Available columns: {' | '.join(columns_list)}"
+                f"Available columns: {' | '.join(data_frame.columns)}"
             )
             raise ValueError("Provided columns are not available!")
 
-        data_frame = data_frame.loc[:, needed_column_after_validation]
+        # Selecting only needed columns from the original DataFrame
+        data_frame = data_frame.loc[:, needed_columns]
 
         return data_frame
 
