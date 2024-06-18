@@ -7,7 +7,6 @@ from prefect import task
 def eurostat_to_df(
     dataset_code: str,
     params: dict = None,
-    base_url: str = "https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/",
     columns: list = None,
     tests: dict = None,
 ):
@@ -39,12 +38,8 @@ def eurostat_to_df(
         pd.DataFrame: Pandas DataFrame.
     """
 
-    data_frame = Eurostat().to_df(
-        dataset_code=dataset_code,
-        params=params,
-        base_url=base_url,
-        requested_columns=columns,
-        tests=tests,
-    )
+    data_frame = Eurostat(
+        dataset_code=dataset_code, params=params, columns=columns, tests=tests
+    ).to_df()
 
     return data_frame
