@@ -95,7 +95,6 @@ RUN pip install ./viadot/.[viadot-azure]
 
 # Cleanup.
 RUN rm -rf ./viadot
-RUN rye self uninstall --yes
 
 USER ${USER}
 
@@ -119,7 +118,6 @@ RUN pip install ./viadot/
 
 # Cleanup.
 RUN rm -rf ./viadot
-RUN rye self uninstall --yes
 
 USER ${USER}
 
@@ -143,8 +141,6 @@ RUN pip install ./viadot/.[viadot-aws]
 
 # Cleanup.
 RUN rm -rf ./viadot
-RUN rye self uninstall --yes
-
 
 USER ${USER}
 
