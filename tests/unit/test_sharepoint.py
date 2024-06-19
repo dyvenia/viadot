@@ -11,10 +11,9 @@ class SharepointMock(Sharepoint):
 
 def test_sharepoint_default_na():
     dummy_creds = {"site": "test", "username": "test2", "password": "test"}
-    na_values1 = Sharepoint.DEFAULT_NA_VALUES
 
     s = SharepointMock(credentials=dummy_creds)
-    df = s.to_df(url="test", na_values=na_values1)
+    df = s.to_df(url="test", na_values=Sharepoint.DEFAULT_NA_VALUES)
 
     assert not df.empty
     assert "NA" not in list(df["col_a"])
@@ -22,10 +21,11 @@ def test_sharepoint_default_na():
 
 def test_sharepoint_custom_na():
     dummy_creds = {"site": "test", "username": "test", "password": "test"}
-    na_values2 = Sharepoint.DEFAULT_NA_VALUES
 
     s = SharepointMock(credentials=dummy_creds)
-    df = s.to_df(url="test", na_values=na_values2.remove("NA"))
+    df = s.to_df(
+        url="test", na_values=[v for v in Sharepoint.DEFAULT_NA_VALUES if v != "NA"]
+    )
 
     assert not df.empty
     assert "NA" in list(df["col_a"])
