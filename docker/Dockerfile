@@ -1,4 +1,4 @@
-FROM python:3.10-slim-bullseye
+FROM python:3.10-slim-bullseye AS base
 
 # Add user
 RUN useradd --non-unique --uid 1000 --create-home viadot && \
@@ -19,6 +19,31 @@ RUN groupadd docker && \
 RUN apt update -q && yes | apt install -q  gnupg vim curl git
 ENV PIP_NO_CACHE_DIR=1
 
+# This one's needed for the SAP RFC connector.
+# It must be installed here as the SAP package does not define its dependencies,
+# so `pip install pyrfc` breaks if all deps are not already present.
+RUN pip install cython==0.29.24
+
+# Python env
+RUN pip install --upgrade pip
+
+
+ENV USER viadot
+ENV HOME="/home/$USER"
+ENV PATH="$HOME/.local/bin:$PATH"
+ENV RYE_HOME="$HOME/rye"
+ENV PATH="$RYE_HOME/shims:$PATH"
+
+# Install Rye and uv.
+RUN curl -sSf https://rye.astral.sh/get | RYE_TOOLCHAIN_VERSION="3.10" RYE_INSTALL_OPTION="--yes" bash && \
+    rye config --set-bool behavior.use-uv=true
+
+
+####################
+### viadot-azure ###
+####################
+
+FROM base as viadot-azure
 
 # Fix for old SQL Servers still using TLS < 1.2
 RUN chmod +rwx /usr/lib/ssl/openssl.cnf && \
@@ -51,21 +76,14 @@ RUN if [ "$INSTALL_DATABRICKS" = "true" ]; then \
 
 ENV SPARK_HOME /usr/local/lib/python3.10/site-packages/pyspark
 
-# This one's needed for the SAP RFC connector.
-# It must be installed here as the SAP package does not define its dependencies,
-# so `pip install pyrfc` breaks if all deps are not already present.
-RUN pip install cython==0.29.24
-
-ENV USER viadot
-ENV HOME="/home/$USER"
-ENV PATH="$HOME/.local/bin:$PATH"
+ARG INSTALL_DATABRICKS=false
 
 WORKDIR ${HOME}
 
 COPY --chown=${USER}:${USER} . ./viadot
 
-COPY requirements.lock ./viadot
-RUN sed '/-e/d' ./viadot/requirements-viadot-azure.lock > ./viadot/requirements.txt
+RUN rye lock --reset --features viadot-azure --pyproject viadot/pyproject.toml
+RUN sed '/-e/d' ./viadot/requirements.lock > ./viadot/requirements.txt
 RUN pip install --no-cache-dir -r ./viadot/requirements.txt
 
 RUN if [ "$INSTALL_DATABRICKS" = "true" ]; then \
@@ -79,3 +97,51 @@ RUN pip install ./viadot/.[viadot-azure]
 RUN rm -rf ./viadot
 
 USER ${USER}
+
+
+###################
+### viadot-lite ###
+###################
+
+FROM base as viadot-lite
+
+WORKDIR ${HOME}
+
+COPY --chown=${USER}:${USER} . ./viadot
+
+RUN rye lock --reset --features viadot-lite --pyproject viadot/pyproject.toml
+RUN sed '/-e/d' ./viadot/requirements.lock > ./viadot/requirements.txt
+RUN pip install --no-cache-dir -r ./viadot/requirements.txt
+
+# Dependecy install
+RUN pip install ./viadot/
+
+# Cleanup.
+RUN rm -rf ./viadot
+
+USER ${USER}
+
+##################
+### viadot-aws ###
+##################
+
+FROM base as viadot-aws
+
+
+WORKDIR ${HOME}
+
+COPY --chown=${USER}:${USER} . ./viadot
+
+RUN rye lock --reset --features viadot-aws --pyproject viadot/pyproject.toml
+RUN sed '/-e/d' ./viadot/requirements.lock > ./viadot/requirements.txt
+RUN pip install --no-cache-dir -r ./viadot/requirements.txt
+
+# Dependecy install
+RUN pip install ./viadot/.[viadot-aws]
+
+# Cleanup.
+RUN rm -rf ./viadot
+
+USER ${USER}
+
+
