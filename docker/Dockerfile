@@ -31,6 +31,12 @@ RUN pip install --upgrade pip
 ENV USER viadot
 ENV HOME="/home/$USER"
 ENV PATH="$HOME/.local/bin:$PATH"
+ENV RYE_HOME="$HOME/rye"
+ENV PATH="$RYE_HOME/shims:$PATH"
+
+# Install Rye and uv.
+RUN curl -sSf https://rye.astral.sh/get | RYE_TOOLCHAIN_VERSION="3.10" RYE_INSTALL_OPTION="--yes" bash && \
+    rye config --set-bool behavior.use-uv=true
 
 
 ####################
@@ -76,8 +82,8 @@ WORKDIR ${HOME}
 
 COPY --chown=${USER}:${USER} . ./viadot
 
-COPY requirements-viadot-azure.lock ./viadot
-RUN sed '/-e/d' ./viadot/requirements-viadot-azure.lock > ./viadot/requirements.txt
+RUN rye lock --reset --features viadot-azure --pyproject viadot/pyproject.toml
+RUN sed '/-e/d' ./viadot/requirements.lock > ./viadot/requirements.txt
 RUN pip install --no-cache-dir -r ./viadot/requirements.txt
 
 RUN if [ "$INSTALL_DATABRICKS" = "true" ]; then \
@@ -89,6 +95,7 @@ RUN pip install ./viadot/.[viadot-azure]
 
 # Cleanup.
 RUN rm -rf ./viadot
+RUN rye self uninstall --yes
 
 USER ${USER}
 
@@ -98,8 +105,13 @@ USER ${USER}
 ###################
 
 FROM base as viadot-lite
-COPY requirements-viadot-lite.lock ./viadot
-RUN sed '/-e/d' ./viadot/requirements-viadot-lite.lock > ./viadot/requirements.txt
+
+WORKDIR ${HOME}
+
+COPY --chown=${USER}:${USER} . ./viadot
+
+RUN rye lock --reset --features viadot-lite --pyproject viadot/pyproject.toml
+RUN sed '/-e/d' ./viadot/requirements.lock > ./viadot/requirements.txt
 RUN pip install --no-cache-dir -r ./viadot/requirements.txt
 
 # Dependecy install
@@ -107,6 +119,7 @@ RUN pip install ./viadot/
 
 # Cleanup.
 RUN rm -rf ./viadot
+RUN rye self uninstall --yes
 
 USER ${USER}
 
@@ -116,8 +129,13 @@ USER ${USER}
 
 FROM base as viadot-aws
 
-COPY requirements-viadot-aws.lock ./viadot
-RUN sed '/-e/d' ./viadot/requirements-viadot-aws.lock > ./viadot/requirements.txt
+
+WORKDIR ${HOME}
+
+COPY --chown=${USER}:${USER} . ./viadot
+
+RUN rye lock --reset --features viadot-aws --pyproject viadot/pyproject.toml
+RUN sed '/-e/d' ./viadot/requirements.lock > ./viadot/requirements.txt
 RUN pip install --no-cache-dir -r ./viadot/requirements.txt
 
 # Dependecy install
@@ -125,6 +143,8 @@ RUN pip install ./viadot/.[viadot-aws]
 
 # Cleanup.
 RUN rm -rf ./viadot
+RUN rye self uninstall --yes
+
 
 USER ${USER}
 
