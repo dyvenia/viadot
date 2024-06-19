@@ -79,7 +79,7 @@ class Eurostat(Source):
 
         super().__init__(*args, **kwargs)
 
-    def get_parameters_codes(self) -> dict:
+    def get_parameters_codes(self, dataset_code: str, url: str) -> dict:
         """Validate available API request parameters and their codes.
 
         Raises:
@@ -89,11 +89,11 @@ class Eurostat(Source):
         """
 
         try:
-            response = handle_api_response(self.url)
+            response = handle_api_response(url)
             data = response.json()
         except APIError:
             self.logger.error(
-                f"Failed to fetch data for {self.dataset_code}, please check correctness of dataset code!"
+                f"Failed to fetch data for {dataset_code}, please check correctness of dataset code!"
             )
             raise ValueError("DataFrame is empty!")
 
@@ -111,7 +111,7 @@ class Eurostat(Source):
                 params_and_codes[key] = codes
         return params_and_codes
 
-    def make_params_validation(self):
+    def make_params_validation(self, dataset_code: str, url: str, params: dict):
         """Function for validation of given parameters in comparison
         to parameters and their codes available for provided dataset_code.
 
@@ -121,10 +121,10 @@ class Eurostat(Source):
         """
 
         # In order to make params validation, first we need to get params_and_codes.
-        key_codes = self.get_parameters_codes()
+        key_codes = self.get_parameters_codes(dataset_code=dataset_code, url=url)
 
         # Validation of type of values
-        for key, val in self.params.items():
+        for key, val in params.items():
             if not isinstance(key, str) or not isinstance(val, str):
                 self.logger.error(
                     "You can provide only one code per one parameter as 'str' in params!\n"
@@ -169,7 +169,9 @@ class Eurostat(Source):
                 )
                 raise ValueError("Wrong parameters codes were provided!")
 
-    def requested_columns_validation(self, data_frame) -> pd.DataFrame:
+    def requested_columns_validation(
+        self, data_frame: pd.DataFrame, columns: list
+    ) -> pd.DataFrame:
         """Function for creating DataFrame with only specified columns.
         Returns:
             pd.DataFrame: Pandas DataFrame
@@ -180,7 +182,7 @@ class Eurostat(Source):
         needed_columns = []
         non_available_columns = []
 
-        for column in self.columns:
+        for column in columns:
             # Converting user-specified column to lowercase for comparison
             column_lower = column.casefold()
 
@@ -285,7 +287,9 @@ class Eurostat(Source):
 
         # Making parameters validation
         if self.params is not None:
-            self.make_params_validation()
+            self.make_params_validation(
+                dataset_code=self.dataset_code, url=self.url, params=self.params
+            )
 
         # Getting response from API
         try:
@@ -293,7 +297,9 @@ class Eurostat(Source):
             data = response.json()
             data_frame = self.eurostat_dictionary_to_df(["geo", "time"], data)
         except APIError:
-            self.make_params_validation()
+            self.make_params_validation(
+                dataset_code=self.dataset_code, url=self.url, params=self.params
+            )
 
         # Merge data_frame with label and last updated date
         label_col = pd.Series(str(data["label"]), index=data_frame.index, name="label")
@@ -306,7 +312,9 @@ class Eurostat(Source):
 
         # Validation and transformation of requested column
         if self.columns is not None:
-            self.requested_columns_validation(data_frame=data_frame)
+            self.requested_columns_validation(
+                data_frame=data_frame, columns=self.columns
+            )
 
         # Additional validation from utils
         validate(df=data_frame, tests=self.tests)
