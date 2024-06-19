@@ -12,7 +12,6 @@ nav:
   - User Guide:
     - Adding a new source: user_guide/adding_source.md
     - Adding a new Prefect flow: user_guide/adding_prefect_flow.md
-    - Managing dependencies: user_guide/managing_dependencies.md
     - Docker Containers: user_guide/docker_containers.md
     - Rye: user_guide/rye.md
     - Using the config key: user_guide/config_key.md

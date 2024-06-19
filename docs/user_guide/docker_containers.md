@@ -24,16 +24,17 @@ docker compose up -d viadot-azure
 ### Building docker images
 
 All necessary Docker images are released in `ghcr.io` and are included in the `docker-compose.yml` file, but if you want to create your own custom Docker image, follow the following instructions.
-In the repository, we have three Dockerfiles:
 
-- `viadot-lite.Dockerfile`
-- `viadot-azure.Dockerfile`
-- `viadot-aws.Dockerfile`
+In the repository, we have three possible images to build:
 
-To build an image, you have to be in root directory of the repository and run the following command with selected Dockerfile:
+- `viadot-lite`
+- `viadot-azure`
+- `viadot-aws`
+
+To build an image, you have to be in the root directory of the repository and run the following command with selected target:
 
 ```bash
-docker build -t <name of your image>:<version of your image> -f docker/<selected Dockerfile> .
+docker build --target viadot-azure -t <name of your image>:<version of your image> -f docker/Dockerfile .
 ```
 
 
