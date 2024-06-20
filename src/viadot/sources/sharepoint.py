@@ -1,10 +1,11 @@
 import io
+import os
 from typing import Literal, Optional, Union
 from urllib.parse import urlparse
-import os
 
 import pandas as pd
 import sharepy
+from pandas._libs.parsers import STR_NA_VALUES
 from pydantic import BaseModel, root_validator
 from sharepy.errors import AuthError
 
@@ -80,6 +81,8 @@ class Sharepoint(Source):
         config_key (str, optional): The key in the viadot config holding relevant credentials.
     """
 
+    DEFAULT_NA_VALUES = list(STR_NA_VALUES)
+
     def __init__(
         self,
         credentials: SharepointCredentials = None,
@@ -88,9 +91,7 @@ class Sharepoint(Source):
         **kwargs,
     ):
         raw_creds = credentials or get_source_credentials(config_key) or {}
-        validated_creds = dict(
-            SharepointCredentials(**raw_creds)
-        )  # validate the credentials
+        validated_creds = dict(SharepointCredentials(**raw_creds))
         super().__init__(*args, credentials=validated_creds, **kwargs)
 
     def get_connection(self) -> sharepy.session.SharePointSession:
@@ -128,6 +129,22 @@ class Sharepoint(Source):
         )
         conn.close()
 
+    def _download_excel(self, url: str, **kwargs) -> pd.ExcelFile:
+        endpoint_value, endpoint_type = get_last_segment_from_url(url)
+        if "nrows" in kwargs:
+            raise ValueError("Parameter 'nrows' is not supported.")
+        conn = self.get_connection()
+
+        if endpoint_type == "file":
+            if endpoint_value != ".xlsx":
+                raise ValueError(
+                    "Only Excel files with 'XLSX' extension can be loaded into a DataFrame."
+                )
+            self.logger.info(f"Downloading data from {url}...")
+            response = conn.get(url)
+            bytes_stream = io.BytesIO(response.content)
+            return pd.ExcelFile(bytes_stream)
+
     @add_viadot_metadata_columns
     def to_df(
         self,
@@ -135,6 +152,7 @@ class Sharepoint(Source):
         sheet_name: Optional[Union[str, list, int]] = None,
         if_empty: str = "warn",
         tests: dict = {},
+        na_values: list[str] | None = None,
         **kwargs,
     ) -> pd.DataFrame:
         """
@@ -150,59 +168,54 @@ class Sharepoint(Source):
             tests (Dict[str], optional): A dictionary with optional list of tests
                 to verify the output dataframe. If defined, triggers the `validate`
                 function from utils. Defaults to None.
+            na_values (list[str] | None): Additional strings to recognize as NA/NaN.
+                If list passed, the specific NA values for each column will be recognized.
+                Defaults to None.
+                If None then the "DEFAULT_NA_VALUES" is assigned list(" ", "#N/A", "#N/A N/A",
+                "#NA", "-1.#IND", "-1.#QNAN", "-NaN", "-nan", "1.#IND", "1.#QNAN",
+                "<NA>", "N/A", "NA", "NULL", "NaN", "None", "n/a", "nan", "null").
+            If list passed, the specific NA values for each column will be recognized.
+            Defaults to None.
             kwargs (dict[str, Any], optional): Keyword arguments to pass to pd.ExcelFile.parse(). Note that
             `nrows` is not supported.
 
         Returns:
             pd.DataFrame: The resulting data as a pandas DataFrame.
         """
-        endpoint_value, endpoint_type = get_last_segment_from_url(url)
+        excel_file = self._download_excel(url=url, **kwargs)
 
-        if "nrows" in kwargs:
-            raise ValueError("Parameter 'nrows' is not supported.")
-
-        conn = self.get_connection()
-        ## add option to get only excel files - if needed - here folder with only excels is required
-        if endpoint_type == "file":
-            if endpoint_value != ".xlsx":
-                raise ValueError(
-                    "Only Excel files with 'XLSX' extension can be loaded into a DataFrame."
+        if sheet_name:
+            df = excel_file.parse(
+                sheet_name=sheet_name,
+                keep_default_na=False,
+                na_values=na_values or self.DEFAULT_NA_VALUES,
+                **kwargs,
+            )
+            df["sheet_name"] = sheet_name
+        else:
+            sheets: list[pd.DataFrame] = []
+            for sheet_name in excel_file.sheet_names:
+                sheet = excel_file.parse(
+                    sheet_name=sheet_name,
+                    keep_default_na=False,
+                    na_values=na_values or self.DEFAULT_NA_VALUES,
+                    **kwargs,
                 )
-            self.logger.info(f"Downloading data from {url}...")
+                sheet["sheet_name"] = sheet_name
+                sheets.append(sheet)
+            df = pd.concat(sheets)
 
-            response = conn.get(url)
-            bytes_stream = io.BytesIO(response.content)
-            excel_file = pd.ExcelFile(bytes_stream)
+        if df.empty:
+            try:
+                self._handle_if_empty(if_empty)
+            except SKIP:
+                return pd.DataFrame()
+        else:
+            self.logger.info(f"Successfully downloaded {len(df)} of data.")
 
-            if sheet_name:
-                df = excel_file.parse(
-                    sheet_name=sheet_name, keep_default_na=False, na_values="", **kwargs
-                )
-                df["sheet_name"] = sheet_name
-            else:
-                sheets: list[pd.DataFrame] = []
-                for sheet_name in excel_file.sheet_names:
-                    sheet = excel_file.parse(
-                        sheet_name=sheet_name,
-                        keep_default_na=False,
-                        na_values="",
-                        **kwargs,
-                    )
-                    sheet["sheet_name"] = sheet_name
-                    sheets.append(sheet)
-                df = pd.concat(sheets)
+        df_clean = cleanup_df(df)
 
-            if df.empty:
-                try:
-                    self._handle_if_empty(if_empty)
-                except SKIP:
-                    return pd.DataFrame()
-            else:
-                self.logger.info(f"Successfully downloaded {len(df)} of data.")
+        if tests:
+            validate(df=df_clean, tests=tests)
 
-            df_clean = cleanup_df(df)
-
-            if tests:
-                validate(df=df_clean, tests=tests)
-
-            return df_clean.astype(str)
+        return df_clean.astype(str).where(pd.notnull(df_clean), None)
