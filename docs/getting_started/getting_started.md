@@ -21,4 +21,4 @@ git clone https://github.com/dyvenia/viadot.git -b 2.0 && \
 
 In order to start using sources, you must configure them with required credentials. Credentials can be specified either in the viadot config file (by default, `~/.config/viadot/config.yaml`), or passed directly to each source's `credentials` parameter.
 
-You can find specific information about each source's credentials in [the documentation](https://dyvenia.github.io/viadot/references/sql_sources/).
+You can find specific information about each source's credentials in [the documentation](../references/sources/sql_sources.md).
