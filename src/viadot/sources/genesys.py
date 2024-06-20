@@ -194,7 +194,7 @@ class Genesys(Source):
                                 message = "Generated report export ---"
                                 if self.verbose:
                                     message += f"\n {payload}."
-                                logger.info(message)
+                                    logger.info(message)
 
                                 semaphore.release()
 
@@ -205,6 +205,11 @@ class Genesys(Source):
                                 params=params,
                             ) as resp:
                                 new_report = await resp.read()
+                                message = "Connecting to Genesys Cloud"
+                                if self.verbose:
+                                    message += f": {params}."
+                                    logger.info(message)
+
                                 semaphore.release()
 
                 await asyncio.sleep(sleep_time)
@@ -576,9 +581,10 @@ class Genesys(Source):
                 Defaults to ".".
 
         Raises:
+            APIError: Some or No reports were not created.
             APIError: At different endpoints:
                 - 'analytics/conversations/details/query': only one body must be used.
-                -
+                - 'routing_queues_members': extra parameter `queues_ids` must be included.
         """
         logger.info(f"Connecting to the Genesys Cloud using the endpoint: {endpoint}")
 
@@ -600,29 +606,45 @@ class Genesys(Source):
             if isinstance(entities, list) and len(entities) == len(post_data_list):
                 ids, urls = self._get_reporting_exports_url(entities)
             else:
-                logger.error("There are no reports to be downloaded.")
+                APIError(
+                    "There are no reports to be downloaded."
+                    f"May be {view_type_time_sleep} should be increased."
+                )
 
             # download and delete reports created
             count = 0
+            raise_api_error = False
             self.data_returned = {}
             for id, url in zip(ids, urls):
-                df_downloaded = self._download_report(report_url=url)
+                if url is not None:
+                    df_downloaded = self._download_report(report_url=url)
 
-                time.sleep(1.0)
-                # remove resume rows
-                if view_type in ["queue_performance_detail_view"]:
-                    criteria = (
-                        df_downloaded["Queue Id"]
-                        .apply(lambda x: str(x).split(";"))
-                        .apply(lambda x: False if len(x) > 1 else True)
+                    time.sleep(1.0)
+                    # remove resume rows
+                    if view_type in ["queue_performance_detail_view"]:
+                        criteria = (
+                            df_downloaded["Queue Id"]
+                            .apply(lambda x: str(x).split(";"))
+                            .apply(lambda x: False if len(x) > 1 else True)
+                        )
+                        df_downloaded = df_downloaded[criteria]
+
+                    self.data_returned.update({count: df_downloaded})
+                else:
+                    logger.warning(
+                        f"Report id {id} didn't have time to be created. "
+                        "Consider increasing the `view_type_time_sleep` parameter "
+                        f">> {view_type_time_sleep} seconds to allow Genesys Cloud "
+                        "to conclude the report creation."
                     )
-                    df_downloaded = df_downloaded[criteria]
+                    raise_api_error = True
 
                 self._delete_report(id)
 
-                self.data_returned.update({count: df_downloaded})
-
                 count += 1
+
+            if raise_api_error:
+                raise APIError("Some reports creation failed.")
 
         elif endpoint == "analytics/conversations/details/query":
             if len(post_data_list) > 1:
@@ -631,18 +653,17 @@ class Genesys(Source):
             stop_loop = False
             page_counter = post_data_list[0]["paging"]["pageNumber"]
             self.data_returned = {}
+            logger.info(
+                "Restructuring the response in order to be able to insert it into a data frame."
+                "\n\tThis task could take a few minutes.\n"
+            )
             while not stop_loop:
                 report = self._api_call(
                     endpoint=endpoint,
                     post_data_list=post_data_list,
                     method="POST",
                 )
-                logger.info(
-                    (
-                        "Restructuring the response in order to be able to insert it into a data frame."
-                        "\n\tThis task could take a few minutes.\n"
-                    )
-                )
+
                 merged_data_frame = self._merge_conversations(report["conversations"])
                 self.data_returned.update(
                     {
@@ -662,18 +683,20 @@ class Genesys(Source):
         elif endpoint in ["routing/queues", "users"]:
             self.data_returned = {}
             page = 1
-
-            if endpoint == "routing/queues":
-                params = {"pageSize": 500, "pageNumber": page}
-            elif endpoint == "users":
-                params = {
-                    "pageSize": 500,
-                    "pageNumber": page,
-                    "expand": "presence,dateLastLogin,groups,employerInfo,lasttokenissued",
-                    "state": "any",
-                }
-
+            logger.info(
+                "Restructuring the response in order to be able to insert it into a data frame."
+                "\n\tThis task could take a few minutes.\n"
+            )
             while True:
+                if endpoint == "routing/queues":
+                    params = {"pageSize": 500, "pageNumber": page}
+                elif endpoint == "users":
+                    params = {
+                        "pageSize": 500,
+                        "pageNumber": page,
+                        "expand": "presence,dateLastLogin,groups,employerInfo,lasttokenissued",
+                        "state": "any",
+                    }
                 response = self._api_call(
                     endpoint=endpoint,
                     post_data_list=post_data_list,

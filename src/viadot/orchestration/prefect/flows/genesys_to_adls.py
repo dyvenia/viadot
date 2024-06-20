@@ -18,6 +18,7 @@ def genesys_to_adls(
     credentials: Optional[Dict[str, Any]] = None,
     config_key: str = None,
     azure_key_vault_secret: Optional[str] = None,
+    verbose: Optional[bool] = None,
     endpoint: Optional[str] = None,
     environment: str = "mypurecloud.de",
     queues_ids: Optional[List[str]] = None,
@@ -44,6 +45,8 @@ def genesys_to_adls(
             Defaults to None.
         azure_key_vault_secret (Optional[str], optional): The name of the Azure Key Vault secret
             where credentials are stored. Defaults to None.
+        verbose (bool, optional): Increase the details of the logs printed on the screen.
+                Defaults to False.
         endpoint (Optional[str], optional): Final end point to the API. Defaults to None.
         environment (str, optional): the domain that appears for Genesys Cloud Environment
             based on the location of your Genesys Cloud organization. Defaults to "mypurecloud.de".
@@ -76,6 +79,7 @@ def genesys_to_adls(
         credentials=credentials,
         config_key=config_key,
         azure_key_vault_secret=azure_key_vault_secret,
+        verbose=verbose,
         endpoint=endpoint,
         environment=environment,
         queues_ids=queues_ids,

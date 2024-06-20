@@ -13,11 +13,12 @@ logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 
 
-@task(retries=3, retry_delay_seconds=10, timeout_seconds=60 * 60)
+@task(retries=3, retry_delay_seconds=10, timeout_seconds=2 * 60 * 60)
 def genesys_to_df(
     credentials: Optional[Dict[str, Any]] = None,
     config_key: str = None,
     azure_key_vault_secret: Optional[str] = None,
+    verbose: Optional[bool] = None,
     endpoint: Optional[str] = None,
     environment: str = "mypurecloud.de",
     queues_ids: Optional[List[str]] = None,
@@ -39,6 +40,8 @@ def genesys_to_df(
             Defaults to None.
         azure_key_vault_secret (Optional[str], optional): The name of the Azure Key Vault secret
             where credentials are stored. Defaults to None.
+        verbose (bool, optional): Increase the details of the logs printed on the screen.
+                Defaults to False.
         endpoint (Optional[str], optional): Final end point to the API. Defaults to None.
         environment (str, optional): the domain that appears for Genesys Cloud Environment
             based on the location of your Genesys Cloud organization. Defaults to "mypurecloud.de".
@@ -74,7 +77,7 @@ def genesys_to_df(
     genesys = Genesys(
         credentials=credentials,
         config_key=config_key,
-        verbose=True,
+        verbose=verbose,
         environment=environment,
     )
     genesys.api_connection(
