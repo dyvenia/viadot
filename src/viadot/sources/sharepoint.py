@@ -168,7 +168,14 @@ class Sharepoint(Source):
             tests (Dict[str], optional): A dictionary with optional list of tests
                 to verify the output dataframe. If defined, triggers the `validate`
                 function from utils. Defaults to None.
-            na_values (list[str] | None): NA values for excel file. Defaults to None.
+            na_values (list[str] | None): Additional strings to recognize as NA/NaN.
+                If list passed, the specific NA values for each column will be recognized.
+                Defaults to None.
+                If None then the "DEFAULT_NA_VALUES" is assigned list(" ", "#N/A", "#N/A N/A",
+                "#NA", "-1.#IND", "-1.#QNAN", "-NaN", "-nan", "1.#IND", "1.#QNAN",
+                "<NA>", "N/A", "NA", "NULL", "NaN", "None", "n/a", "nan", "null").
+            If list passed, the specific NA values for each column will be recognized.
+            Defaults to None.
             kwargs (dict[str, Any], optional): Keyword arguments to pass to pd.ExcelFile.parse(). Note that
             `nrows` is not supported.
 

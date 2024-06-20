@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Added `na_values` parameter to `Sharepoint` class to parse `N/A` values coming from the excel file columns.
 - Added `get_last_segment_from_url` function to sharepoint file.
 - Added `validate` function to `viadot/utils.py`
 - Fixed `Databricks.create_table_from_pandas()` failing to overwrite a table in some cases even with `replace="True"`
