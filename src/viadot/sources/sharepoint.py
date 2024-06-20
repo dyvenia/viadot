@@ -181,7 +181,7 @@ class Sharepoint(Source):
             df = excel_file.parse(
                 sheet_name=sheet_name,
                 keep_default_na=False,
-                na_values=na_values,
+                na_values=na_values or self.DEFAULT_NA_VALUES,
                 **kwargs,
             )
             df["sheet_name"] = sheet_name
@@ -191,7 +191,7 @@ class Sharepoint(Source):
                 sheet = excel_file.parse(
                     sheet_name=sheet_name,
                     keep_default_na=False,
-                    na_values=na_values,
+                    na_values=na_values or self.DEFAULT_NA_VALUES,
                     **kwargs,
                 )
                 sheet["sheet_name"] = sheet_name
