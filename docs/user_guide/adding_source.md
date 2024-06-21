@@ -92,7 +92,7 @@ if find_spec("adlfs"):
 ```
 
 ## Adding tests
-To add unit tests, create a new file in `viadot/tests/viadot_tests/integration` and `viadot/tests/viadot_tests/unit`. All tests for a given source should be in one file and use the [pytest](https://docs.pytest.org/en/7.3.x/) framework. Your PR will be accepted only if the test coverage is greater than or equal to 80%.
+To add unit tests for your source, create a new file, `viadot/tests/unit/test_<your_source_name>.py`, and add your tests inside it.
 
 ## Adding tests for optional sources
 
