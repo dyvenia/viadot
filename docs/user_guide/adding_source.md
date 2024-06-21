@@ -30,7 +30,7 @@ Credentials can now be provided directly as the `credentials` parameter or by us
 
 The `config_key` parameter  is a specific key name for the credentials stored locally on our computer in either the `config.yml` or `config.json` file. By default, these files are searched in the directory `~/.config/viadot`. 
 
-Remember to expose methods `to_df()` and `to_json()` which are abstract methods required in the implementation of child classes. Add the decoration function `add_viadot_metadata_columns` to the `to_df()` method. This decorator adds two columns (`_viadot_source`, `_viadot_downloaded_at_utc`) to our Dataframe.
+Remember to expose methods `to_df()` and `to_json()` which are abstract methods required in the implementation of child classes. Add the decoration function `add_viadot_metadata_columns` to the `to_df()` method. This decorator adds two columns (`_viadot_source`, `_viadot_downloaded_at_utc`) to our DataFrame.
 
 ```python
 # Further part of PostgreSQL class.

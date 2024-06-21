@@ -1,6 +1,13 @@
+# Adding a Prefect flow
 
 Let's assume that we've finished adding our source `PostgreSQL`. We want to use it in our flow `postgresql_to_adls`. This flow will take a table from the PostgreSQL database using our previously defined source and upload it to the Azure Data Lake.
-We will have to create a task that will take our data from the PostgreSQL database and put it into flow, where the task sending data to the Azure Data Lake already exists.
+We will have to create a task that will take our data from the PostgreSQL database and put it into flow. 
+The flow will consist of two tasks:
+
+- `postgresql_to_df` - Which return data from the PostgreSQL database in DataFrame.
+- `df_to_adls` - Which upload the DataFrame into Azure Data Lake.
+
+To simplify the guide, let's assume that task `df_to_adls` already exists, and we only have to add task `postgresql_to_df`.
 
 
 ## Adding prefect task for general source
@@ -25,7 +32,8 @@ def postgresql_to_df(credentials_key: str | None = None, credentials_secret: str
     credentials = credentials or get_credentials(credentials_secret)
     postgres = PostgreSQL(credentials=credentials, config_key=config_key)
     return postgres.to_df(...)
-    
+```
+
 As you can see, there are a few standards when it comes to implementing a task:
 - it should typically be a thin wrapper over a `viadot` function or method (ie. it doesn't contain any logic, only calls the `viadot` funcion)
 - if the source requires credentials, we should allow specifying them via a config key or a secret store (`config_key` and `credentials_secret` params)
@@ -101,8 +109,29 @@ from prefect import flow
     retries=1,
     retry_delay_seconds=60,
 )
-def postgresql_to_adls()
-    # Logic of our flow.
+def postgresql_to_adls(
+    adls_path: str,
+    adls_credentials_secret: str | None,
+    adls_config_key: str | None,
+    overwrite: bool = False,
+    postgresql_config_key: str | None,
+    postgresql_credentials_secret: str | None,
+    sql_query: str | None,
+    ) -> None:
+
+    df = postgresql_to_df(
+        credentials_secret=postgresql_credentials_secret,
+        config_key=postgresql_config_key,
+        sql_query=sql_query,
+    )
+    return df_to_adls(
+        df=df,
+        path=adls_path,
+        credentials_secret=adls_credentials_secret,
+        config_key=adls_config_key,
+        overwrite=overwrite,
+    )
+
 ```
 
 At the end, add tests for the specified flow in `viadot/tests/integration/orchestration/flows/test_<your_flow_name>.py`.
