@@ -29,7 +29,42 @@ We provide the extensions, settings, and tasks for VSCode in the `.vscode` folde
 
 ### Development Docker container
 
-If you wish to develop in a Docker container, viadot comes with a VSCode task to make that simple. You can easily spin up a terminal in the container with the `Ctrl+Shift+B` shortcut. The container will have all of the contents of the root `viadot` directory mapped to `/home/viadot`.
+#### Bulding of containers
+
+All the following commands must be running in `viadot/docker/` path in repository.
+To build all available containers, run the following command:
+
+```bash
+docker compose up -d 
+```
+If you want to build a specific one, add its name at the end of the command:
+
+```bash
+docker compose up -d viadot-azure
+```
+
+#### Building docker images
+
+All necessary Docker images are released in `ghcr.io` and are included in the `docker-compose.yml` file, but if you want to create your own custom Docker image, follow the following instructions.
+
+In the repository, we have three possible images to build:
+
+- `viadot-lite`
+- `viadot-azure`
+- `viadot-aws`
+
+To build an image, you have to be in the root directory of the repository and run the following command with selected target:
+
+```bash
+docker build --target viadot-azure -t <name of your image>:<version of your image> -f docker/Dockerfile .
+```
+
+
+#### Start of work inside the container 
+
+```bash
+docker exec -it viadot-azure bash
+```
 
 ### Environment variables
 
