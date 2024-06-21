@@ -14,10 +14,22 @@ So in our example, we create a file `postgresql.py` in the previously specified 
 from viadot.sources import PostgreSQL
 from prefect import task
 
+from prefect_viadot.exceptions import MissingSourceCredentialsError
+from prefect_viadot.utils import get_credentials
+
 @task(retries=3, retry_delay_seconds=10, timeout_seconds=60 * 60)
-def postgresql_to_df():
-    # Logic of our task. 
-```
+def postgresql_to_df(credentials_key: str | None = None, credentials_secret: str | None = None, ...):
+    if not (credentials_secret or config_key):
+        raise MissingSourceCredentialsError
+        
+    credentials = credentials or get_credentials(credentials_secret)
+    postgres = PostgreSQL(credentials=credentials, config_key=config_key)
+    return postgres.to_df(...)
+    
+As you can see, there are a few standards when it comes to implementing a task:
+- it should typically be a thin wrapper over a `viadot` function or method (ie. it doesn't contain any logic, only calls the `viadot` funcion)
+- if the source requires credentials, we should allow specifying them via a config key or a secret store (`config_key` and `credentials_secret` params)
+- we should validate the credentials and raise MissingSourceCredentialsError if they're not specified
 
 When you are done with the task, remember to import it in the `__init__.py` file.
 
