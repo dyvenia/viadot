@@ -139,7 +139,7 @@ class Eurostat(Source):
                 for k, v in key_codes.items()
             }
             params_after_conversion = {
-                k.casefold(): v.casefold() for k, v in self.params.items()
+                k.casefold(): v.casefold() for k, v in params.items()
             }
 
             # Comparing keys and values
@@ -156,18 +156,20 @@ class Eurostat(Source):
             ]
 
             # Error loggers
+
             if non_available_keys:
                 self.logger.error(
                     f"Parameters: '{' | '.join(non_available_keys)}' are not in dataset. Please check your spelling!\n"
                     f"Possible parameters: {' | '.join(key_codes.keys())}"
                 )
-                raise ValueError("Wrong parameters were provided!")
             if non_available_codes:
                 self.logger.error(
                     f"Parameters codes: '{' | '.join(non_available_codes)}' are not available. Please check your spelling!\n"
                     f"You can find everything via link: https://ec.europa.eu/eurostat/databrowser/view/{self.dataset_code}/default/table?lang=en"
                 )
-                raise ValueError("Wrong parameters codes were provided!")
+
+            if non_available_keys or non_available_codes:
+                raise ValueError("Wrong parameters or codes were provided!")
 
     def requested_columns_validation(
         self, data_frame: pd.DataFrame, columns: list
