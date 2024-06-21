@@ -105,4 +105,4 @@ def postgresql_to_adls()
     # Logic of our flow.
 ```
 
-At the end, add tests for the specified flow in `viadot/tests/orchestration/prefect_tests/flows`. Your PR will be accepted only if the test coverage is greater than or equal to 80%.
+At the end, add tests for the specified flow in `viadot/tests/integration/orchestration/flows/test_<your_flow_name>.py`.
