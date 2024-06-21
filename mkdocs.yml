@@ -12,7 +12,6 @@ nav:
   - User Guide:
     - Adding a new source: user_guide/adding_source.md
     - Adding a new Prefect flow: user_guide/adding_prefect_flow.md
-    - Rye: user_guide/rye.md
     - Using the config key: user_guide/config_key.md
 
   - Advanced Usage:
