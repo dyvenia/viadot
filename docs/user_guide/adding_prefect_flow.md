@@ -1,5 +1,5 @@
 
-Let's assume that we've finished adding our source `PostgresSQL`. We want to use it in our flow `postgressql_to_adls`. This flow will take a table from the PostgreSQL database using our previously defined source and upload it to the Azure Data Lake.
+Let's assume that we've finished adding our source `PostgreSQL`. We want to use it in our flow `postgresql_to_adls`. This flow will take a table from the PostgreSQL database using our previously defined source and upload it to the Azure Data Lake.
 We will have to create a task that will take our data from the PostgreSQL database and put it into flow, where the task sending data to the Azure Data Lake already exists.
 
 
