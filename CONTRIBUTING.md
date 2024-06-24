@@ -31,8 +31,9 @@ We provide the extensions, settings, and tasks for VSCode in the `.vscode` folde
 
 #### Bulding of containers
 
-All the following commands must be running in `viadot/docker/` path in repository.
 To build all available containers, run the following command:
+
+**NOTE**: All the following commands must be execured from within the `viadot/docker/` directory. 
 
 ```bash
 docker compose up -d 
