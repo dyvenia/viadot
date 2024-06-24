@@ -387,7 +387,7 @@ referencing==0.35.1
     # via jsonschema-specifications
 regex==2024.5.15
     # via dateparser
-requests==2.32.3
+requests==2.31.0
     # via apprise
     # via azure-core
     # via azure-datalake-store
@@ -401,6 +401,7 @@ requests==2.32.3
     # via requests-oauthlib
     # via sharepy
     # via trino
+    # via viadot2
 requests-oauthlib==2.0.0
     # via apprise
     # via kubernetes
