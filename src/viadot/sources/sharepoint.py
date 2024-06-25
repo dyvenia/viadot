@@ -145,6 +145,42 @@ class Sharepoint(Source):
             bytes_stream = io.BytesIO(response.content)
             return pd.ExcelFile(bytes_stream)
 
+    def _convert_all_to_string_type(self, df: pd.DataFrame) -> pd.DataFrame:
+        """Convert all column data types in the DataFrame to strings.
+
+        This method converts all the values in the DataFrame to strings,
+        handling NaN values by replacing them with None.
+
+        Args:
+            df (pd.DataFrame): DataFrame to convert.
+
+        Returns:
+            pd.DataFrame: DataFrame with all data types converted to string.
+                        Columns that contain only None values are also
+                        converted to string type.
+        """
+        df_converted = df.astype(str).where(pd.notnull(df), None)
+        return self._empty_column_to_string(df=df_converted)
+
+    def _empty_column_to_string(self, df: pd.DataFrame) -> pd.DataFrame:
+        """Convert the type of columns containing only None values to string.
+
+        This method iterates through the DataFrame columns and converts the
+        type of any column that contains only None values to string.
+
+        Args:
+            df (pd.DataFrame): DataFrame to convert.
+
+        Returns:
+            pd.DataFrame: Updated DataFrame with columns containing only
+                        None values converted to string type. All columns
+                        in the returned DataFrame will be of type object/string.
+        """
+        for col in df.columns:
+            if df[col].isnull().all():
+                df[col] = df[col].astype("string")
+        return df
+
     @add_viadot_metadata_columns
     def to_df(
         self,
@@ -218,4 +254,4 @@ class Sharepoint(Source):
         if tests:
             validate(df=df_clean, tests=tests)
 
-        return df_clean.astype(str).where(pd.notnull(df_clean), None)
+        return self._convert_all_to_string_type(df=df_clean)
