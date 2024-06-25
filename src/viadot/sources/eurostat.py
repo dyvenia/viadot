@@ -77,8 +77,16 @@ class Eurostat(Source):
         return params_and_codes
 
     def validate_params(self, dataset_code: str, url: str, params: dict):
-        """Function for validation of given parameters in comparison
-        to parameters and their codes available for provided dataset_code.
+        """Validates given parameters against the available parameters in the dataset.
+
+        Important:
+            Each dataset in eurostat has specific parameters that could be used for
+            filtering the data. For example dataset ILC_DI04 -Mean and median income by
+            household type - EU-SILC and ECHP surveys has parameter such as:
+            hhhtyp (Type of household), which can be filtered by specific available
+            code of this parameter, such as: 'total', 'a1' (single person),
+            'a1_dhc' (single person with dependent children). Please note that each dataset
+            has different parameters and different codes
 
         Raises:
             ValueError: If any of the self.params keys or values is not a string or
