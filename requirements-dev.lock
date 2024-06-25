@@ -618,6 +618,7 @@ requests==2.31.0
     # via requests-oauthlib
     # via sharepy
     # via trino
+    # via viadot2
 requests-oauthlib==2.0.0
     # via apprise
     # via kubernetes

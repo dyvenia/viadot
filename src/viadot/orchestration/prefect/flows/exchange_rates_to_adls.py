@@ -3,9 +3,9 @@
 from datetime import datetime
 from typing import Literal
 
-from viadot.orchestration.prefect.tasks import df_to_adls, exchange_rates_to_df
-
 from prefect import flow
+
+from viadot.orchestration.prefect.tasks import df_to_adls, exchange_rates_to_df
 
 Currency = Literal[
     "USD", "EUR", "GBP", "CHF", "PLN", "DKK", "COP", "CZK", "SEK", "NOK", "ISK"
@@ -74,10 +74,3 @@ def exchange_rates_to_adls(  # noqa: PLR0913, PLR0917
         config_key=adls_config_key,
         overwrite=overwrite,
     )
-
-
-exchange_rates_to_adls(
-    adls_path="raw/supermetrics/tests/test_adls_prefect_viadot.parquet",
-    exchange_rates_config_key="exchange_rates_dev",
-    adls_config_key="adls_dev",
-)
