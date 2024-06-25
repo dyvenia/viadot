@@ -3,6 +3,7 @@ from importlib.util import find_spec
 from .cloud_for_customers import CloudForCustomers
 from .exchange_rates import ExchangeRates
 from .genesys import Genesys
+from .hubspot import Hubspot
 from .sharepoint import Sharepoint
 from .sql_server import SQLServer
 from .trino_source import Trino
