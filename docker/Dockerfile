@@ -16,7 +16,7 @@ RUN groupadd docker && \
     usermod -aG docker viadot
 
 # System packages
-RUN apt update -q && yes | apt install -q  gnupg vim curl git
+RUN apt update -q && yes | apt install -q  gnupg vim curl git libodbc2
 ENV PIP_NO_CACHE_DIR=1
 
 # This one's needed for the SAP RFC connector.
