@@ -201,7 +201,7 @@ class Hubspot(Source):
         url: Optional[str] = None,
         body: Optional[str] = None,
         method: Optional[str] = None,
-    ) -> Dict:
+    ) -> Optional[Dict]:
         """
         Description:
             General method to connect to Hubspot API and generate the response.
@@ -211,6 +211,9 @@ class Hubspot(Source):
             body (Optional[str], optional): Filters that will be pushed to the API body.
                 Defaults to None.
             method (Optional[str], optional): Method of the API call. Defaults to None.
+
+        Raises:
+            APIError: When the `status_code` is different to 200.
 
         Returns:
             Dict: API response in JSON format.
@@ -225,7 +228,11 @@ class Hubspot(Source):
             url=url, headers=headers, data=body, method=method
         )
 
-        return response.json()
+        if response.status_code == 200:
+            return response.json()
+        else:
+            logger.error(f"Failed to load response content. - {response.content}")
+            raise APIError("Failed to load all exports.")
 
     def _get_offset_from_response(
         self, api_response: Dict[str, Any]
@@ -260,7 +267,7 @@ class Hubspot(Source):
         filters: Optional[List[Dict[str, Any]]] = None,
         properties: Optional[List[Any]] = None,
         nrows: int = 1000,
-    ):
+    ) -> None:
         """
         Description:
             General method to connect to Hubspot API and generate the response.
