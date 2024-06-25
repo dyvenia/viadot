@@ -12,9 +12,6 @@ from viadot.exceptions import APIError, CredentialError
 from viadot.sources.base import Source
 from viadot.utils import add_viadot_metadata_columns, handle_api_response
 
-logger = logging.getLogger(__name__)
-logger.setLevel(logging.INFO)
-
 
 class HUBSPOT_CREDENTIALS(BaseModel):
     """
@@ -66,7 +63,10 @@ class Hubspot(Source):
             raise CredentialError("Missing credentials.")
         self.credentials = credentials
 
-        super().__init__(*args, credentials=self.credentials, **kwargs)
+        logging.basicConfig()
+        validated_creds = dict(HUBSPOT_CREDENTIALS(**credentials))
+        super().__init__(*args, credentials=validated_creds, **kwargs)
+        self.logger.setLevel(logging.INFO)
 
     def _date_to_unixtimestamp(self, date: Optional[str] = None) -> int:
         """
@@ -231,7 +231,7 @@ class Hubspot(Source):
         if response.status_code == 200:
             return response.json()
         else:
-            logger.error(f"Failed to load response content. - {response.content}")
+            self.logger.error(f"Failed to load response content. - {response.content}")
             raise APIError("Failed to load all exports.")
 
     def _get_offset_from_response(
@@ -362,6 +362,6 @@ class Hubspot(Source):
                 message="The response does not contain any data.",
             )
         else:
-            logger.info("Successfully downloaded data from the Mindful API.")
+            self.logger.info("Successfully downloaded data from the Mindful API.")
 
         return data_frame
