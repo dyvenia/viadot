@@ -38,7 +38,7 @@ def test_wrong_parameters_codes_logger(caplog):
 
     with pytest.raises(ValueError, match="Wrong parameters or codes were provided!"):
         with caplog.at_level(logging.ERROR):
-            Eurostat().make_params_validation(
+            Eurostat().validate_params(
                 dataset_code=dataset_code, url=url, params=params
             )
     assert (
@@ -59,7 +59,7 @@ def test_parameter_codes_as_list_logger(caplog):
 
     with pytest.raises(ValueError, match="Wrong structure of params!"):
         with caplog.at_level(logging.ERROR):
-            Eurostat().make_params_validation(
+            Eurostat().validate_params(
                 dataset_code=dataset_code, url=url, params=params
             )
     assert (
@@ -80,7 +80,7 @@ def test_wrong_parameters(caplog):
 
     with pytest.raises(ValueError, match="Wrong parameters or codes were provided!"):
         with caplog.at_level(logging.ERROR):
-            Eurostat().make_params_validation(
+            Eurostat().validate_params(
                 dataset_code=dataset_code, url=url, params=params
             )
     assert (
