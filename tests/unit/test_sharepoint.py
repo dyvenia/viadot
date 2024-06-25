@@ -43,7 +43,7 @@ def test_sharepoint_convert_all_to_string_type():
     converted_df = s._convert_all_to_string_type(df=SAMPLE_DF)
 
     assert not converted_df.empty
-    assert (converted_df["nan_col"] == None).all()
+    assert pd.isnull(converted_df["nan_col"]).all()
 
 
 def test_sharepoint_convert_empty_columns_to_string():
