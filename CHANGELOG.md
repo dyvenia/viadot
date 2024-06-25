@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+- Added new version of `Outlook` connector and test files.
+
 ### Added
 
 - Added `sql_server_to_minio` flow for prefect.
