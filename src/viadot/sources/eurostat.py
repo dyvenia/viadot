@@ -125,7 +125,7 @@ class Eurostat(Source):
             if non_available_codes:
                 self.logger.error(
                     f"Parameters codes: '{' | '.join(non_available_codes)}' are not available. Please check your spelling!\n"
-                    f"You can find everything via link: https://ec.europa.eu/eurostat/databrowser/view/{self.dataset_code}/default/table?lang=en"
+                    f"You can find everything via link: https://ec.europa.eu/eurostat/databrowser/view/{dataset_code}/default/table?lang=en"
                 )
 
             if non_available_keys or non_available_codes:
