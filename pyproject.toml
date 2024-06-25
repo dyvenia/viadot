@@ -9,7 +9,7 @@ authors = [
 dependencies = [
     "pandas>=2.2.2",
     "pyarrow>=16.1.0",
-    "pyodbc>=5.1.0",
+    "pyodbc==4.0.34",
     "visions>=0.7.6",
     "sharepy>=2.0.0",
     "sql-metadata>=2.11.0",
