@@ -254,7 +254,7 @@ def test_validate_column_sum_fail(caplog):
     assert "Sum of 10 for col1 is out of the expected range - <5:6>" in caplog.text
 
 
-class TestRequestedColumnsValidation(unittest.TestCase):
+class TestFilterDFColumns(unittest.TestCase):
     def setUp(self):
         # Initialize a sample DataFrame
         self.data_frame = pd.DataFrame(
