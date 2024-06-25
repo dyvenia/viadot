@@ -38,8 +38,8 @@ def eurostat_to_df(
         pd.DataFrame: Pandas DataFrame.
     """
 
-    data_frame = Eurostat(
+    data_frame = Eurostat().to_df(
         dataset_code=dataset_code, params=params, columns=columns, tests=tests
-    ).to_df()
+    )
 
     return data_frame
