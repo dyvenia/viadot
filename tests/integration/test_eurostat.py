@@ -105,31 +105,6 @@ def test_correct_params_and_dataset_code(caplog):
     assert caplog.text == ""
 
 
-# To remove after transfering `requested_columns_validation` method to utils
-def task_correct_requested_columns(caplog):
-    """Tests error logging for correct dataset code, parameters, and requested columns."""
-
-    columns = [
-        "updated",
-        "geo",
-        "indicator",
-        "_viadot_source",
-        "_viadot_downloaded_at_utc",
-    ]
-
-    df = Eurostat().to_df(
-        dataset_code="ILC_DI04",
-        params={"hhtyp": "total", "indic_il": "med_e"},
-    )
-
-    task = Eurostat().requested_columns_validation(data_frame=df, columns=columns)
-
-    assert isinstance(task, pd.DataFrame)
-    assert not task.empty
-    assert caplog.text == ""
-    assert list(task.columns) == task.requested_columns
-
-
 def test_wrong_needed_columns_names(caplog):
     """Tests error logging for incorrect names of requested columns with a correct dataset code and parameters."""
 
