@@ -1,6 +1,6 @@
 import pandas as pd
 
-from viadot.utils import APIError, handle_api_response
+from viadot.utils import APIError, filter_df_columns, handle_api_response
 
 from ..utils import add_viadot_metadata_columns, validate
 from .base import Source
@@ -130,45 +130,6 @@ class Eurostat(Source):
 
             if non_available_keys or non_available_codes:
                 raise ValueError("Wrong parameters or codes were provided!")
-
-    def requested_columns_validation(
-        self, data_frame: pd.DataFrame, columns: list
-    ) -> pd.DataFrame:
-        """Function for creating DataFrame with only specified columns.
-        Returns:
-            pd.DataFrame: Pandas DataFrame
-        """
-
-        # Converting data_frame columns to lowercase for comparison
-        data_frame_columns = [col.casefold() for col in data_frame.columns]
-        needed_columns = []
-        non_available_columns = []
-
-        for column in columns:
-            # Converting user-specified column to lowercase for comparison
-            column_lower = column.casefold()
-
-            if column_lower in data_frame_columns:
-                # Find the original column name (with the correct case) from data_frame.columns
-                original_column_name = next(
-                    col for col in data_frame.columns if col.casefold() == column_lower
-                )
-                needed_columns.append(original_column_name)
-            else:
-                non_available_columns.append(column)
-
-        # Error logger
-        if non_available_columns:
-            self.logger.error(
-                f"Name of the columns: '{' | '.join(non_available_columns)}' are not in DataFrame. Please check spelling!\n"
-                f"Available columns: {' | '.join(data_frame.columns)}"
-            )
-            raise ValueError("Provided columns are not available!")
-
-        # Selecting only needed columns from the original DataFrame
-        data_frame = data_frame.loc[:, needed_columns]
-
-        return data_frame
 
     def eurostat_dictionary_to_df(self, *signals: list) -> pd.DataFrame:
         """Function for creating DataFrame from JSON pulled from Eurostat.
@@ -311,7 +272,7 @@ class Eurostat(Source):
 
         # Validation and transformation of requested column
         if columns is not None:
-            self.requested_columns_validation(data_frame=data_frame, columns=columns)
+            filter_df_columns(data_frame=data_frame, columns=columns)
 
         # Additional validation from utils
         validate(df=data_frame, tests=tests)
