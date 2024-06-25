@@ -1,8 +1,13 @@
 import pandas as pd
 
-from viadot.utils import APIError, filter_df_columns, handle_api_response
+from viadot.utils import (
+    APIError,
+    add_viadot_metadata_columns,
+    filter_df_columns,
+    handle_api_response,
+    validate,
+)
 
-from ..utils import add_viadot_metadata_columns, validate
 from .base import Source
 
 
