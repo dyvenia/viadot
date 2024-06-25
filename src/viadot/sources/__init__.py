@@ -1,13 +1,14 @@
 from importlib.util import find_spec
 
 from .cloud_for_customers import CloudForCustomers
+from .duckdb import DuckDB
 from .exchange_rates import ExchangeRates
 from .genesys import Genesys
+from .hubspot import Hubspot
 from .outlook import Outlook
 from .sharepoint import Sharepoint
 from .sql_server import SQLServer
 from .trino_source import Trino
-from .duckdb import DuckDB
 
 __all__ = [
     "CloudForCustomers",
