@@ -14,9 +14,6 @@ from viadot.exceptions import APIError, CredentialError
 from viadot.sources.base import Source
 from viadot.utils import add_viadot_metadata_columns, handle_api_response
 
-logger = logging.getLogger(__name__)
-logger.setLevel(logging.INFO)
-
 
 class MINDFUL_CREDENTIALS(BaseModel):
     """Checking for values in Mindful credentials dictionary.
@@ -71,6 +68,7 @@ class Mindful(Source):
         logging.basicConfig()
         validated_creds = dict(MINDFUL_CREDENTIALS(**credentials))
         super().__init__(*args, credentials=validated_creds, **kwargs)
+        self.logger.setLevel(logging.INFO)
 
         self.auth = (credentials["customer_uuid"], credentials["auth_token"])
         if region != "us1":
@@ -135,7 +133,7 @@ class Mindful(Source):
             reference_date = date.today()
             date_interval = [reference_date - timedelta(days=1), reference_date]
 
-            logger.warning(
+            self.logger.warning(
                 (
                     "No `date_interval` parameter was defined, or was erroneously defined."
                     "`date_interval` parameter must have the folloing structure:\n"
@@ -161,15 +159,17 @@ class Mindful(Source):
         )
 
         if response.status_code == 200:
-            logger.info(f"Succesfully downloaded '{endpoint}' data from mindful API.")
+            self.logger.info(
+                f"Succesfully downloaded '{endpoint}' data from mindful API."
+            )
             self.data = StringIO(response.content.decode("utf-8"))
         elif response.status_code == 204 and not response.content.decode():
-            logger.warning(
+            self.logger.warning(
                 f"Thera are not '{endpoint}' data to download from {date_interval[0]} to {date_interval[1]}."
             )
             self.data = json.dumps({})
         else:
-            logger.error(
+            self.logger.error(
                 f"Failed to downloaded '{endpoint}' data. - {response.content}"
             )
             raise APIError(f"Failed to downloaded '{endpoint}' data.")
@@ -189,6 +189,6 @@ class Mindful(Source):
                 message="The response does not contain any data.",
             )
         else:
-            logger.info("Successfully downloaded data from the Mindful API.")
+            self.logger.info("Successfully downloaded data from the Mindful API.")
 
         return data_frame
