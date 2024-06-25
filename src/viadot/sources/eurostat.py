@@ -76,7 +76,7 @@ class Eurostat(Source):
                 params_and_codes[key] = codes
         return params_and_codes
 
-    def make_params_validation(self, dataset_code: str, url: str, params: dict):
+    def validate_params(self, dataset_code: str, url: str, params: dict):
         """Function for validation of given parameters in comparison
         to parameters and their codes available for provided dataset_code.
 
@@ -252,9 +252,7 @@ class Eurostat(Source):
 
         # Making parameters validation
         if params is not None:
-            self.make_params_validation(
-                dataset_code=dataset_code, url=url, params=params
-            )
+            self.validate_params(dataset_code=dataset_code, url=url, params=params)
 
         # Getting response from API
         try:
@@ -262,9 +260,7 @@ class Eurostat(Source):
             data = response.json()
             data_frame = self.eurostat_dictionary_to_df(["geo", "time"], data)
         except APIError:
-            self.make_params_validation(
-                dataset_code=dataset_code, url=url, params=params
-            )
+            self.validate_params(dataset_code=dataset_code, url=url, params=params)
 
         # Merge data_frame with label and last updated date
         label_col = pd.Series(str(data["label"]), index=data_frame.index, name="label")
