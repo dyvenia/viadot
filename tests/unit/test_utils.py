@@ -1,12 +1,13 @@
 import json
 import logging
+import unittest
 
 import pandas as pd
-
 from viadot.exceptions import ValidationError
 from viadot.utils import (
     _cast_df_cols,
     add_viadot_metadata_columns,
+    filter_df_columns,
     gen_bulk_insert_query_from_df,
     get_fqn,
     handle_api_request,
@@ -251,3 +252,37 @@ def test_validate_column_sum_fail(caplog):
     with caplog.at_level(logging.INFO):
         validate(df, tests)
     assert "Sum of 10 for col1 is out of the expected range - <5:6>" in caplog.text
+
+
+class TestRequestedColumnsValidation(unittest.TestCase):
+    def setUp(self):
+        # Initialize a sample DataFrame
+        self.data_frame = pd.DataFrame(
+            {"Name": ["Alice", "Bob"], "Age": [25, 30], "Country": ["USA", "UK"]}
+        )
+
+    def test_columns_present(self):
+        # Test when all columns are present in the DataFrame
+        columns = ["Name", "Age"]
+        result = filter_df_columns(self.data_frame, columns)
+        expected = self.data_frame[["Name", "Age"]]
+        pd.testing.assert_frame_equal(result, expected)
+
+    def test_columns_case_insensitive(self):
+        # Test when columns are provided in different cases (case insensitive)
+        columns = ["name", "AGE"]
+        result = filter_df_columns(self.data_frame, columns)
+        expected = self.data_frame[["Name", "Age"]]
+        pd.testing.assert_frame_equal(result, expected)
+
+    def test_missing_columns(self):
+        # Test when some columns are missing in the DataFrame
+        columns = ["Name", "Height"]
+        with self.assertRaises(ValueError):
+            filter_df_columns(self.data_frame, columns)
+
+    def test_all_columns_missing(self):
+        # Test when all columns are missing in the DataFrame
+        columns = ["Height", "Weight"]
+        with self.assertRaises(ValueError):
+            filter_df_columns(self.data_frame, columns)
