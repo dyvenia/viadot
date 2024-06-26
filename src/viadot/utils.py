@@ -680,3 +680,41 @@ def validate(
         raise ValidationError(
             f"Validation failed for {failed_tests} test(s): {failed_tests_msg}"
         )
+
+
+def filter_df_columns(data_frame: pd.DataFrame, columns: list) -> pd.DataFrame:
+    """Function for creating DataFrame with only specified columns.
+    Returns:
+        pd.DataFrame: Pandas DataFrame
+    """
+
+    # Converting data_frame columns to lowercase for comparison
+    data_frame_columns = [col.casefold() for col in data_frame.columns]
+    needed_columns = []
+    non_available_columns = []
+
+    for column in columns:
+        # Converting user-specified column to lowercase for comparison
+        column_lower = column.casefold()
+
+        if column_lower in data_frame_columns:
+            # Find the original column name (with the correct case) from data_frame.columns
+            original_column_name = next(
+                col for col in data_frame.columns if col.casefold() == column_lower
+            )
+            needed_columns.append(original_column_name)
+        else:
+            non_available_columns.append(column)
+
+    # Error logger
+    if non_available_columns:
+        logging.error(
+            f"Name of the columns: '{' | '.join(non_available_columns)}' are not in DataFrame. Please check spelling!\n"
+            f"Available columns: {' | '.join(data_frame.columns)}"
+        )
+        raise ValueError("Provided columns are not available!")
+
+    # Selecting only needed columns from the original DataFrame
+    data_frame = data_frame.loc[:, needed_columns]
+
+    return data_frame
