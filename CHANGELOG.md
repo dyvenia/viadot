@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+- Added new version of `Outlook` connector and test files.
+
 ### Added
 
 - Added `get_last_segment_from_url` function to sharepoint file.
