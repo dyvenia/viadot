@@ -7,9 +7,10 @@ from O365 import Account
 from O365.mailbox import MailBox
 from pydantic import BaseModel
 
-from ..config import get_source_credentials
-from ..exceptions import CredentialError
-from .base import Source
+from viadot.config import get_source_credentials
+from viadot.exceptions import CredentialError
+from viadot.sources.base import Source
+from viadot.utils import add_viadot_metadata_columns
 
 
 class OUTLOOK_CREDENTIALS(BaseModel):
@@ -62,14 +63,20 @@ class Outlook(Source):
 
     @staticmethod
     def _get_subfolders(
-        folder_structure: dict, folder: MailBox, key_concat: str = ""
+        folder_structure: dict,
+        folder: MailBox,
+        key_concat: str = "",
     ) -> Dict[str, List]:
-        """To retrieve all the subfolder in a MailBox folder.
+        """
+        Description:
+            To retrieve all the subfolder in a MailBox folder.
+
         Args:
             folder_structure (dict): Dictionary where to save the data.
             folder (MailBox): The MailBox folder from where to extract the subfolders.
             key_concat (str, optional) Previous Mailbox folder structure to add to
                 the actual subfolder. Defaults to "".
+
         Returns:
             Dict[str, List]: `folder_structure` dictionary is returned once it is updated.
         """
@@ -90,10 +97,17 @@ class Outlook(Source):
         if folder_structure:
             return folder_structure
 
-    def _get_all_folders(self, mailbox: MailBox) -> dict:
-        """To retrieve all folders from a Mailbox object.
+    def _get_all_folders(
+        self,
+        mailbox: MailBox,
+    ) -> dict:
+        """
+        Description:
+            To retrieve all folders from a Mailbox object.
+
         Args:
             mailbox (MailBox): Outlook Mailbox object from where to extract all folder structure.
+
         Returns:
             dict: Every single folder and subfolder is returned as "parent (sub)folder|(sub)folder": Mailbox.
         """
@@ -122,8 +136,12 @@ class Outlook(Source):
         address_limit: int = 8000,
         outbox_list: List[str] = ["Sent Items"],
     ) -> list:
-        """To retrieve all messages from all the mailboxes passed in the dictionary.
+        """
+        Description:
+            To retrieve all messages from all the mailboxes passed in the dictionary.
+
         Args:
+            mailbox_name (str): Mailbox name.
             dict_folder (dict): Mailboxes dictionary holder, with the following structure:
                 "parent (sub)folder|(sub)folder": Mailbox.
             limit (int, optional): Number of fetched top messages. Defaults to 10000.
@@ -131,6 +149,7 @@ class Outlook(Source):
                 of all email names. Defaults to 8000.
             outbox_list (List[str], optional): List of outbox folders to differenciate between
                 Inboxes and Outboxes. Defaults to ["Sent Items"].
+
         Returns:
             list: A list with all messages from all Mailboxes.
         """
@@ -234,6 +253,7 @@ class Outlook(Source):
         Returns:
             pd.DataFrame: All messages are stored in a pandas framwork.
         """
+        self.mailbox_name = mailbox_name
 
         account = Account(
             (self.credentials["client_id"], self.credentials["client_secret"]),
@@ -270,7 +290,7 @@ class Outlook(Source):
 
         final_dict_folders = self._get_all_folders(mailbox_obj)
 
-        data = self._get_messages_from_mailbox(
+        self.data = self._get_messages_from_mailbox(
             mailbox_name=mailbox_name,
             dict_folder=final_dict_folders,
             limit=limit,
@@ -278,19 +298,23 @@ class Outlook(Source):
             outbox_list=outbox_list,
         )
 
-        df = pd.DataFrame(data=data)
+    @add_viadot_metadata_columns
+    def to_df(self) -> pd.DataFrame:
+        """
+        Description:
+            Generate a Pandas Data Frame with the data in the Response object and metadata.
 
-        if df.empty:
+        Returns:
+            pd.Dataframe: The response data as a Pandas Data Frame plus viadot metadata.
+        """
+        data_frame = pd.DataFrame(self.data)
+
+        if data_frame.empty:
             self._handle_if_empty(
                 if_empty="warn",
-                message=f"No data was got from {mailbox_name}, days from {self.date_range_start_time} to {self.date_range_end_time}",
+                message=f"No data was got from {self.mailbox_name}, days from {self.date_range_start_time} to {self.date_range_end_time}",
             )
+        else:
+            self.logger.info("Successfully downloaded data from the Mindful API.")
 
-        return df
-
-    def to_df(self):
-        pass
-
-    # def to_csv(self, df: pd.DataFrame) -> None:
-    #     file_name = self.mailbox_name.split("@")[0].replace(".", "_").replace("-", "_")
-    #     df.to_csv(f"{file_name}.csv", index=False)
+        return data_frame
