@@ -4,6 +4,8 @@ from pathlib import Path
 from typing import Any, Literal
 
 import pandas as pd
+from prefect import flow
+
 from viadot.orchestration.prefect.tasks import (
     df_to_redshift_spectrum,
     get_endpoint_type_from_url,
@@ -12,8 +14,6 @@ from viadot.orchestration.prefect.tasks import (
     validate_and_reorder_dfs_columns,
 )
 
-from prefect import flow
-
 
 def load_data_from_sharepoint(
     file_sheet_mapping: dict | None,
@@ -21,6 +21,7 @@ def load_data_from_sharepoint(
     sharepoint_url: str,
     sheet_name: str | list[str | int] | int | None = None,
     columns: str | list[str] | list[int] | None = None,
+    na_values: list[str] | None = None,
     credentials_config: dict[str, Any] | None = None,
 ) -> dict:
     """Loads data from SharePoint and returns it as a dictionary of DataFrames.
@@ -41,6 +42,9 @@ def load_data_from_sharepoint(
         sheet_name (str): The name of the sheet to load if `file_sheet_mapping` is not
             provided. This is used when downloading all files.
         columns (str | list[str] | list[int], optional): Which columns to ingest.
+            Defaults to None.
+        na_values (list[str] | None): Additional strings to recognize as NA/NaN.
+            If list passed, the specific NA values for each column will be recognized.
             Defaults to None.
         credentials_config (dict, optional): A dictionary containing credentials and
             configuration for SharePoint. Defaults to None.
@@ -68,6 +72,7 @@ def load_data_from_sharepoint(
                 url=sharepoint_url + file,
                 sheet_name=sheet,
                 columns=columns,
+                na_values=na_values,
                 credentials_secret=credentials_secret,
                 credentials=credentials,
                 config_key=config_key,
@@ -85,6 +90,7 @@ def load_data_from_sharepoint(
                 url=file_url,
                 sheet_name=sheet_name,
                 columns=columns,
+                na_values=na_values,
                 credentials_secret=credentials_secret,
                 credentials=credentials,
                 config_key=config_key,
@@ -116,6 +122,7 @@ def sharepoint_to_redshift_spectrum(  # noqa: PLR0913, PLR0917
     aws_config_key: str | None = None,
     sheet_name: str | list[str | int] | int | None = None,
     columns: str | list[str] | list[int] | None = None,
+    na_values: list[str] | None = None,
     sharepoint_credentials_secret: str | None = None,
     sharepoint_config_key: str | None = None,
     sharepoint_credentials: dict[str, Any] | None = None,
@@ -158,6 +165,9 @@ def sharepoint_to_redshift_spectrum(  # noqa: PLR0913, PLR0917
             sheets. Specify None to get all worksheets. Defaults to None.
         columns (str | list[str] | list[int], optional): Which columns to ingest.
             Defaults to None.
+        na_values (list[str] | None): Additional strings to recognize as NA/NaN.
+            If list passed, the specific NA values for each column will be recognized.
+            Defaults to None.
         sharepoint_credentials_secret (str, optional): The name of the secret storing
             Sharepoint credentials. Defaults to None.
             More info on: https://docs.prefect.io/concepts/blocks/
@@ -195,6 +205,7 @@ def sharepoint_to_redshift_spectrum(  # noqa: PLR0913, PLR0917
             url=sharepoint_url,
             sheet_name=sheet_name,
             columns=columns,
+            na_values=na_values,
             credentials_secret=sharepoint_credentials_secret,
             config_key=sharepoint_config_key,
             credentials=sharepoint_credentials,
@@ -222,6 +233,7 @@ def sharepoint_to_redshift_spectrum(  # noqa: PLR0913, PLR0917
             sharepoint_url=sharepoint_url,
             sheet_name=sheet_name,
             columns=columns,
+            na_values=na_values,
             credentials_config=sharepoint_credentials_config,
         )
 
