@@ -8,7 +8,7 @@ try:
     import pyspark.sql.dataframe as spark
     from delta.tables import *  # noqa
 except ModuleNotFoundError:
-    raise ImportError("pyspark.sql.dataframe is required to use Databricks source.")
+    raise ImportError("Missing required modules to use Databricks source.")
 
 from pydantic import BaseModel, root_validator
 

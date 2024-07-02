@@ -2,7 +2,11 @@ import os
 from typing import Any, Dict, List
 
 import pandas as pd
-from adlfs import AzureBlobFileSystem, AzureDatalakeFileSystem
+
+try:
+    from adlfs import AzureBlobFileSystem, AzureDatalakeFileSystem
+except ModuleNotFoundError:
+    raise ImportError("Missing required modules to use AzureDataLake source.")
 
 from viadot.config import get_source_credentials
 from viadot.exceptions import CredentialError

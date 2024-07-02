@@ -22,7 +22,8 @@ try:
     import pyrfc
     from pyrfc._exception import ABAPApplicationError
 except ModuleNotFoundError:
-    raise ImportError("pyfrc is required to use the SAPRFC source.")
+    raise ImportError("Missing required modules to use SAPRFC source.")
+
 from sql_metadata import Parser
 
 from viadot.config import get_source_credentials
