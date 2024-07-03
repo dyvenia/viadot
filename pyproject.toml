@@ -1,6 +1,6 @@
 [project]
 name = "viadot2"
-version = "2.0a25"
+version = "2.0a26"
 description = "A simple data ingestion library to guide data flows from some places to other places."
 authors = [
     { name = "acivitillo", email = "acivitillo@dyvenia.com" },
@@ -24,7 +24,7 @@ dependencies = [
     "visions==0.7.5",
     "sharepy>=2.0.0, <2.1.0",
     "simple_salesforce==1.11.5",
-    "sql-metadata==2.3.0",
+    "sql-metadata>=2.3.0",
     "duckdb==0.5.1",
     "sendgrid==6.9.7",
     "pandas-gbq==0.19.1",
