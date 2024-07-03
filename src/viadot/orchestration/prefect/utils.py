@@ -19,6 +19,8 @@ from viadot.orchestration.prefect.exceptions import MissingPrefectBlockError
 
 from prefect.client.orchestration import PrefectClient
 from prefect.settings import PREFECT_API_KEY, PREFECT_API_URL
+from prefect_sqlalchemy import DatabaseCredentials
+from prefect.blocks.system import Secret
 
 with contextlib.suppress(ModuleNotFoundError):
     from prefect_azure import AzureKeyVaultSecretReference
@@ -69,6 +71,46 @@ def _get_aws_credentials(secret_name: str) -> dict[str, Any] | str:
 
     return credentials
 
+def _get_secret_credentials(secret_name: str) -> dict[str, Any] | str:
+    """Retrieve credentials from the Prefect 'Secret' block document.
+
+    Args:
+        secret_name (str): The name of the secret to be retrieved.
+
+    Returns:
+        dict | str: A dictionary or a string containing the credentials.
+    """
+    secret = Secret.load(secret_name).get()
+    try:
+        credentials = json.loads(secret)
+    except json.JSONDecodeError:
+        credentials = secret
+
+    return credentials
+
+
+def _get_database_credentials(secret_name: str) -> dict[str, Any] | str:
+    """Retrieve credentials from the Prefect 'DatabaseCredentials' block document.
+
+    Args:
+        secret_name (str): The name of the secret to be retrieved.
+
+    Returns:
+        dict | str: A dictionary or a string containing the credentials.
+    """
+    secret = DatabaseCredentials.load(name=secret_name).dict()
+
+    credentials = secret
+    credentials["user"] = secret.get("username")
+    credentials["db_name"] = secret.get("database")
+    credentials["password"] = secret.get("password").get_secret_value()
+    if secret.get("port"):
+        credentials["server"] = secret.get("host") + "," + str(secret.get("port"))
+    else:
+        credentials["server"] = secret.get("host")
+
+    return credentials
+
 
 def get_credentials(secret_name: str) -> dict[str, Any]:
     """Retrieve credentials from the Prefect block document.
@@ -97,7 +139,10 @@ def get_credentials(secret_name: str) -> dict[str, Any]:
         credentials = _get_aws_credentials(secret_name)
     elif block_type == "AzureKeyVaultSecretReference":
         credentials = _get_azure_credentials(secret_name)
-
+    elif block_type == "DatabaseCredentials":
+        credentials = _get_database_credentials(secret_name)
+    elif block_type == "Secret":
+        credentials = _get_secret_credentials(secret_name)
     return credentials
 
 
