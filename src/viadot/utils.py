@@ -681,8 +681,10 @@ def validate(
             f"Validation failed for {failed_tests} test(s): {failed_tests_msg}"
         )
 
-def validate_and_reorder_dfs_columns(dataframes_list: list[pd.DataFrame]
-                                     ) -> list[pd.DataFrame]:
+
+def validate_and_reorder_dfs_columns(
+    dataframes_list: list[pd.DataFrame],
+) -> list[pd.DataFrame]:
     """Validate if dataframes from the list have the same column structure.
 
     Reorder columns to match the first DataFrame if necessary.
@@ -707,7 +709,7 @@ def validate_and_reorder_dfs_columns(dataframes_list: list[pd.DataFrame]
             the first DataFrame."""
             raise ValueError(message)
         if not df.columns.equals(first_df_columns):
-        # Reordering columns for DataFrame at index 'i' to match the first DataFrame.
+            # Reordering columns for DataFrame at index 'i' to match the first DataFrame.
             dataframes_list[i] = df.loc[:, first_df_columns]
 
     return dataframes_list
