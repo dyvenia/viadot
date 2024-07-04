@@ -680,3 +680,34 @@ def validate(
         raise ValidationError(
             f"Validation failed for {failed_tests} test(s): {failed_tests_msg}"
         )
+
+def validate_and_reorder_dfs_columns(dataframes_list: list[pd.DataFrame]
+                                     ) -> list[pd.DataFrame]:
+    """Validate if dataframes from the list have the same column structure.
+
+    Reorder columns to match the first DataFrame if necessary.
+
+    Args:
+        dataframes_list (list[pd.DataFrame]): List containing DataFrames.
+
+    Raises:
+        IndexError: If the list of DataFrames is empty.
+        ValueError: If DataFrames have different column structures.
+    """
+    if not dataframes_list:
+        message = "The list of dataframes is empty."
+        raise IndexError(message)
+
+    first_df_columns = dataframes_list[0].columns
+
+    # Check that all DataFrames have the same columns
+    for i, df in enumerate(dataframes_list):
+        if set(df.columns) != set(first_df_columns):
+            message = f"""DataFrame at index {i} does not have the same structure as
+            the first DataFrame."""
+            raise ValueError(message)
+        if not df.columns.equals(first_df_columns):
+        # Reordering columns for DataFrame at index 'i' to match the first DataFrame.
+            dataframes_list[i] = df.loc[:, first_df_columns]
+
+    return dataframes_list
