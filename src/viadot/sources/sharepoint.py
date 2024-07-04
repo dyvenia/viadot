@@ -387,7 +387,9 @@ class Sharepoint(Source):
         """
 
         if self._is_file(url):
-            df = self._load_and_parse(file_url=url, sheet_name=sheet_name, **kwargs)
+            df = self._load_and_parse(
+                file_url=url, sheet_name=sheet_name, na_values=na_values, **kwargs
+            )
         else:
             if file_sheet_mapping:
                 df = self._handle_multiple_files(

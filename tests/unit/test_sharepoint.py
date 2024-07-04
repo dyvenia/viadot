@@ -2,6 +2,7 @@ from pathlib import Path
 
 import pandas as pd
 import pytest
+import sharepy
 from viadot.sources import Sharepoint
 
 DUMMY_CREDS = {"site": "test", "username": "test2", "password": "test"}
@@ -17,6 +18,9 @@ SAMPLE_DF = pd.DataFrame(
 
 
 class SharepointMock(Sharepoint):
+    def get_connection(self):
+        return sharepy.session.SharePointSession
+
     def _download_file_stream(self, url=None):
         return pd.ExcelFile(Path("tests/unit/test_file.xlsx"))
 
@@ -27,7 +31,9 @@ def sharepoint_mock():
 
 
 def test_sharepoint_default_na(sharepoint_mock):
-    df = sharepoint_mock.to_df(url="test", na_values=Sharepoint.DEFAULT_NA_VALUES)
+    df = sharepoint_mock.to_df(
+        url="test/file.xlsx", na_values=Sharepoint.DEFAULT_NA_VALUES
+    )
 
     assert not df.empty
     assert "NA" not in list(df["col_a"])
@@ -35,7 +41,8 @@ def test_sharepoint_default_na(sharepoint_mock):
 
 def test_sharepoint_custom_na(sharepoint_mock):
     df = sharepoint_mock.to_df(
-        url="test", na_values=[v for v in Sharepoint.DEFAULT_NA_VALUES if v != "NA"]
+        url="test/file.xlsx",
+        na_values=[v for v in Sharepoint.DEFAULT_NA_VALUES if v != "NA"],
     )
 
     assert not df.empty
