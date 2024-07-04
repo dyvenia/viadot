@@ -63,6 +63,16 @@ class Sharepoint(Source):
         super().__init__(*args, credentials=validated_creds, **kwargs)
 
     def get_connection(self) -> sharepy.session.SharePointSession:
+        """Establishes a connection to SharePoint using credentials provided during
+        object initialization.
+
+        Returns:
+            sharepy.session.SharePointSession: A session object representing
+                the authenticated connection.
+
+        Raises:
+            CredentialError: If authentication to SharePoint fails due to incorrect credentials.
+        """
         try:
             connection = sharepy.connect(
                 site=self.credentials.get("site"),
@@ -77,8 +87,7 @@ class Sharepoint(Source):
         return connection
 
     def download_file(self, url: str, to_path: list | str) -> None:
-        """
-        Download a file from Sharepoint.
+        """Download a file from Sharepoint to specific location.
 
         Args:
             url (str): The URL of the file to be downloaded.
@@ -98,16 +107,17 @@ class Sharepoint(Source):
         conn.close()
 
     def scan_sharepoint_folder(self, url: str) -> list[str]:
-        """Scan Sharepoint folder to get all file URLs.
+        """Scan Sharepoint folder to get all file URLs of all files within it.
 
         Args:
             url (str): The URL of the folder to scan.
 
         Raises:
-            ValueError: Raises when URL have the wrong structure - without 'sites' segment.
+            ValueError: If the provided URL does not contain the expected '/sites/' segment.
 
         Returns:
-            list[str]: List of URLS.
+            list[str]: List of URLs pointing to each file within the specified
+                SharePoint folder.
         """
         conn = self.get_connection()
 
@@ -135,10 +145,10 @@ class Sharepoint(Source):
 
     def _get_file_extension(self, url: str) -> str:
         """
-        Extracts the file extension from a URL.
+        Extracts the file extension from a given URL.
 
         Parameters:
-        url (str): The URL to extract the file extension from.
+        url (str): The URL from which to extract the file extension.
 
         Returns:
         str: The file extension, including the leading dot (e.g., '.xlsx').
@@ -152,6 +162,15 @@ class Sharepoint(Source):
         return ext
 
     def _download_file_stream(self, url: str, **kwargs) -> pd.ExcelFile:
+        """Downloads the content of a file from SharePoint and returns it as an in-memory
+        byte stream.
+
+        Args:
+            url (str): The URL of the file to download.
+
+        Returns:
+            io.BytesIO: An in-memory byte stream containing the file content.
+        """
         if "nrows" in kwargs:
             raise ValueError("Parameter 'nrows' is not supported.")
 
@@ -164,8 +183,7 @@ class Sharepoint(Source):
         return pd.ExcelFile(bytes_stream)
 
     def _is_file(self, url: str) -> bool:
-        """
-        Determines whether a provided URL points to a file based on its structure.
+        """Determines whether a provided URL points to a file based on its structure.
 
         This function uses a regular expression to check if the URL ends with a
         common file extension. It does not make any network requests and purely
@@ -233,6 +251,21 @@ class Sharepoint(Source):
         file_sheet_mapping: dict,
         na_values: Optional[list[str]] = None,
     ):
+        """Handles download and parsing of multiple Excel files from a SharePoint folder.
+
+        Args:
+            url (str): The base URL of the SharePoint folder containing the files.
+            file_sheet_mapping (dict): A dictionary mapping file names to sheet names
+                or indexes. The keys are file names, and the values are sheet names/indices.
+            na_values (Optional[list[str]]): Additional strings to recognize as NA/NaN.
+
+        Returns:
+            pd.DataFrame: A concatenated DataFrame containing the data from all
+                specified files and sheets.
+
+        Raises:
+            ValueError: If the file extension is not supported.
+        """
         dfs = [
             self._load_and_parse(
                 file_url=url + file, sheet_name=sheet, na_values=na_values
@@ -248,6 +281,21 @@ class Sharepoint(Source):
         na_values: Optional[list[str]] = None,
         **kwargs,
     ):
+        """Loads and parses an Excel file from a URL.
+
+        Args:
+            file_url (str): The URL of the file to download and parse.
+            sheet_name (Optional[Union[str, list[str]]]): The name(s) or index(es) of
+                the sheet(s) to parse. If None, all sheets are parsed.
+            na_values (Optional[list[str]]): Additional strings to recognize as NA/NaN.
+            **kwargs: Additional keyword arguments to pass to the pandas read function.
+
+        Returns:
+            pd.DataFrame: The parsed data as a pandas DataFrame.
+
+        Raises:
+            ValueError: If the file extension is not supported.
+        """
         file_extension = self._get_file_extension(file_url)
         file_stream = self._download_file_stream(file_url)
 
@@ -263,6 +311,18 @@ class Sharepoint(Source):
         na_values: Optional[list[str]] = None,
         **kwargs,
     ):
+        """Parses an Excel file into a DataFrame.
+
+        Args:
+            excel_file: An ExcelFile object containing the data to parse.
+            sheet_name (Optional[Union[str, list[str]]]): The name(s) or index(es) of
+                the sheet(s) to parse. If None, all sheets are parsed.
+            na_values (Optional[list[str]]): Additional strings to recognize as NA/NaN.
+            **kwargs: Additional keyword arguments to pass to the pandas read function.
+
+        Returns:
+            pd.DataFrame: The parsed data as a pandas DataFrame.
+        """
         return pd.concat(
             [
                 excel_file.parse(
@@ -287,7 +347,11 @@ class Sharepoint(Source):
         **kwargs,
     ) -> pd.DataFrame:
         """
-        Load an Excel file into a pandas DataFrame.
+        Load an Excel file or files from a SharePoint URL into a pandas DataFrame.
+
+        This method handles downloading the file(s), parsing the content, and converting
+        it into a pandas DataFrame. It supports both single file URLs and folder URLs
+        with multiple files.
 
         Args:
             url (str): The URL of the file to be downloaded.
@@ -295,11 +359,19 @@ class Sharepoint(Source):
                 Integers are used in zero-indexed sheet positions (chart sheets do not count
                 as a sheet position). Lists of strings/integers are used to request multiple sheets.
                 Specify None to get all worksheets. Defaults to None.
-            if_empty (Literal["warn", "skip", "fail"], optional): What to do if the file
-                is empty. Defaults to "warn".
+            if_empty (Literal["warn", "skip", "fail"], optional): Action to take if
+            the DataFrame is empty.
+                - "warn": Logs a warning.
+                - "skip": Skips the operation.
+                - "fail": Raises an error.
+                Defaults to "warn".
             tests (Dict[str, Any], optional): A dictionary with optional list of tests
                 to verify the output dataframe. If defined, triggers the `validate`
                 function from utils. Defaults to None.
+            file_sheet_mapping (Optional[dict[str, Union[str, int, list[str]]]], optional):
+                Mapping of file names to sheet names or indices. The keys are file names
+                and the values are sheet names/indices. Used when multiple files are
+                involved. Defaults to None.
             na_values (list[str], optional): Additional strings to recognize as NA/NaN.
                 If list passed, the specific NA values for each column will be recognized.
                 Defaults to None.
@@ -308,6 +380,10 @@ class Sharepoint(Source):
 
         Returns:
             pd.DataFrame: The resulting data as a pandas DataFrame.
+
+        Raises:
+            ValueError: If the file extension is not supported or if `if_empty` is set to "fail" and the DataFrame is empty.
+            SKIP: If `if_empty` is set to "skip" and the DataFrame is empty.
         """
 
         if self._is_file(url):
