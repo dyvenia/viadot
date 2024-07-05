@@ -482,7 +482,7 @@ pluggy==1.4.0
     # via pytest
 portalocker==2.8.2
     # via msal-extensions
-prefect==2.19.3
+prefect==2.19.7
     # via prefect-azure
     # via viadot2
 prefect-azure @ git+https://github.com/Trymzet/prefect-azure@f4a400fa997f2ef1f54f4ed4a7ba2edccf4e3da8
