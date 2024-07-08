@@ -24,4 +24,9 @@ def test_schemas(sql_server):
     schemas = sql_server.schemas
     assert "dbo" in schemas  # Assuming 'dbo' schema exists in the test database
 
-
+def test_exists(sql_server):
+    sql_server_table = sql_server.tables
+    sample_table_schema = sql_server_table[0].split(".") # get saple table that exists in the db
+    sample_schema = sample_table_schema[0]
+    sample_table = sample_table_schema[1]
+    assert sql_server.exists(table = sample_table, schema = sample_schema) == True
