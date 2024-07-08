@@ -148,10 +148,10 @@ class Sharepoint(Source):
         Extracts the file extension from a given URL.
 
         Parameters:
-        url (str): The URL from which to extract the file extension.
+            url (str): The URL from which to extract the file extension.
 
         Returns:
-        str: The file extension, including the leading dot (e.g., '.xlsx').
+            str: The file extension, including the leading dot (e.g., '.xlsx').
         """
         # Parse the URL to get the path
         parsed_url = urlparse(url)
