@@ -38,7 +38,7 @@ aiohttp==3.8.1
 aiolimiter==1.0.0
 protobuf>=3.19.0, <3.20
 avro-python3==1.10.2
-pygit2>=1.10.1, <1.11.0
+pygit2>=1.15.1, <1.16.0
 dbt-sqlserver @ git+https://github.com/djagoda881/dbt-sqlserver.git@v1.3.latest_option_clause
 lumaCLI==0.0.19
 Office365-REST-Python-Client==2.4.4
