@@ -2,11 +2,15 @@
 
 import pandas as pd
 from typing import Any, Literal
+import contextlib
+
 
 from prefect import task
 from prefect.logging import get_run_logger
 
-from viadot.sources import MinIO
+with contextlib.suppress(ImportError):
+    from viadot.sources import MinIO
+
 from viadot.orchestration.prefect.utils import get_credentials
 from viadot.config import get_source_credentials
 from viadot.orchestration.prefect.exceptions import MissingSourceCredentialsError
