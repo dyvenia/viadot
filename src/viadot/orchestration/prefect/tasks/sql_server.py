@@ -1,4 +1,4 @@
-from typing import Any, Dict, Literal
+from typing import Any, Literal
 
 from prefect import task
 from prefect.logging import get_run_logger
@@ -13,7 +13,7 @@ from viadot.orchestration.prefect.exceptions import MissingSourceCredentialsErro
 def create_sql_server_table(
     schema: str = None,
     table: str = None,
-    dtypes: Dict[str, Any] = None,
+    dtypes: dict[str, Any] = None,
     if_exists: Literal["fail", "replace", "skip", "delete"] = "fail",
     credentials_secret: str | None = None,
     credentials: dict[str, Any] | None = None,
@@ -25,7 +25,7 @@ def create_sql_server_table(
     Args:
         schema (str, optional): Destination schema.
         table (str, optional): Destination table.
-        dtypes (Dict[str, Any], optional): Data types to enforce.
+        dtypes (dict[str, Any], optional): Data types to enforce.
         if_exists (Literal, optional): What to do if the table already exists.
         credentials (dict[str, Any], optional): Credentials to the SQLServer.
             Defaults to None.
