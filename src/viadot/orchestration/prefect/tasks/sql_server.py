@@ -19,8 +19,7 @@ def create_sql_server_table(
     credentials: dict[str, Any] | None = None,
     config_key: str | None = None,
 ):
-    """
-    A task for creating table in SQL Server.
+    """A task for creating table in SQL Server.
 
     Args:
         schema (str, optional): Destination schema.
