@@ -9,6 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Added `sql_server_to_minio` flow for prefect.
+- Added `df_to_minio` task for prefect
+- Added handling for `DatabaseCredentials` and `Secret` blocks in `prefect/utlis.py:get_credentials`
+- Added `SQLServer` source and tasks `create_sql_server_table`, `sql_server_to_df`,`sql_server_query`
+- Added `basename_template` to `MinIO` source
 - Added `_empty_column_to_string` and `_convert_all_to_string_type` to convert data types to string.
 - Added `na_values` parameter to `Sharepoint` class to parse `N/A` values coming from the excel file columns.
 - Added `get_last_segment_from_url` function to sharepoint file.

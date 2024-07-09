@@ -12,6 +12,8 @@
 
 ::: viadot.sources.sqlite.SQLite
 
+::: viadot.sources.sql_server.SQLServer
+
 ::: viadot.sources.databricks.Databricks
 
 ::: viadot.sources.trino_source.Trino

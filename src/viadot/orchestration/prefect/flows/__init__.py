@@ -13,5 +13,6 @@ from .sharepoint_to_redshift_spectrum import (
     sharepoint_to_redshift_spectrum,  # noqa: F401
 )
 from .sharepoint_to_s3 import sharepoint_to_s3  # noqa: F401
+from .sql_server_to_minio import sql_server_to_minio  # noqa: F401
 from .transform import transform  # noqa: F401
 from .transform_and_catalog import transform_and_catalog  # noqa: F401

@@ -5,6 +5,7 @@ from .exchange_rates import ExchangeRates
 from .genesys import Genesys
 from .sharepoint import Sharepoint
 from .trino_source import Trino
+from .sql_server import SQLServer
 
 __all__ = [
     "CloudForCustomers",
@@ -12,6 +13,7 @@ __all__ = [
     "Genesys",
     "Sharepoint",
     "Trino",
+    "SQLServer",
 ]
 
 if find_spec("adlfs"):

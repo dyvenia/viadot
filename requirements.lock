@@ -6,6 +6,7 @@
 #   features: []
 #   all-features: true
 #   with-sources: false
+#   generate-hashes: false
 
 -e file:.
 adlfs==2024.4.1
@@ -304,8 +305,11 @@ portalocker==2.8.2
     # via msal-extensions
 prefect==2.19.7
     # via prefect-azure
+    # via prefect-sqlalchemy
     # via viadot2
-prefect-azure @ git+https://github.com/Trymzet/prefect-azure@f4a400fa997f2ef1f54f4ed4a7ba2edccf4e3da8
+prefect-azure @ git+https://github.com/Trymzet/prefect-azure@f4a400fa997f2ef1f54f4ed4a7ba2edccf4e3da8#egg=prefect-azure
+    # via viadot2
+prefect-sqlalchemy==0.4.3
     # via viadot2
 protobuf==4.25.3
     # via dbt-core
@@ -454,6 +458,7 @@ sql-metadata==2.11.0
 sqlalchemy==2.0.30
     # via alembic
     # via prefect
+    # via prefect-sqlalchemy
     # via viadot2
 sqlparse==0.5.0
     # via dbt-core

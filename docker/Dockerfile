@@ -38,13 +38,6 @@ ENV PATH="$RYE_HOME/shims:$PATH"
 RUN curl -sSf https://rye.astral.sh/get | RYE_TOOLCHAIN_VERSION="3.10" RYE_INSTALL_OPTION="--yes" bash && \
     rye config --set-bool behavior.use-uv=true
 
-
-####################
-### viadot-azure ###
-####################
-
-FROM base as viadot-azure
-
 # Fix for old SQL Servers still using TLS < 1.2
 RUN chmod +rwx /usr/lib/ssl/openssl.cnf && \
     sed -i 's/SECLEVEL=2/SECLEVEL=1/g' /usr/lib/ssl/openssl.cnf
@@ -59,6 +52,13 @@ RUN curl https://packages.microsoft.com/keys/microsoft.asc | apt-key add - && \
     echo 'export PATH="$PATH:/opt/mssql-tools/bin"' >> ~/.bashrc
 
 COPY docker/odbcinst.ini /etc
+
+
+####################
+### viadot-azure ###
+####################
+
+FROM base as viadot-azure
 
 ARG INSTALL_DATABRICKS=false
 
