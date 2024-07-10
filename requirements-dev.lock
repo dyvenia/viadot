@@ -466,7 +466,8 @@ openpyxl==3.0.10
     # via viadot2
 opensearch-py==2.6.0
     # via awswrangler
-orjson==3.10.3
+openpyxl==3.0.10
+    # via awswrangler
     # via prefect
 packaging==24.0
     # via dbt-core
