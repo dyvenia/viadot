@@ -66,5 +66,3 @@ jobs:
           tags: ghcr.io/${{ github.repository }}/viadot-azure:${{ github.event.inputs.tag }}
           build-args: INSTALL_DATABRICKS=${{ github.event.inputs.if_databricks }}
           
-
-          
