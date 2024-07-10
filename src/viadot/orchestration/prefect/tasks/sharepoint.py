@@ -4,12 +4,12 @@ from typing import Any
 from urllib.parse import urlparse
 
 import pandas as pd
+from prefect import get_run_logger, task
+
 from viadot.orchestration.prefect.exceptions import MissingSourceCredentialsError
 from viadot.orchestration.prefect.utils import get_credentials
 from viadot.sources import Sharepoint
 from viadot.sources.sharepoint import SharepointCredentials, get_last_segment_from_url
-
-from prefect import get_run_logger, task
 
 
 @task(retries=3, retry_delay_seconds=10, timeout_seconds=60 * 60)
@@ -18,6 +18,7 @@ def sharepoint_to_df(
     sheet_name: str | list[str | int] | int | None = None,
     columns: str | list[str] | list[int] | None = None,
     tests: dict[str, Any] | None = None,
+    na_values: list[str] | None = None,
     credentials_secret: str | None = None,
     config_key: str | None = None,
     credentials: dict[str, Any] | None = None,
@@ -32,6 +33,9 @@ def sharepoint_to_df(
             are used to request multiple sheets. Specify None to get all worksheets.
             Defaults to None.
         columns (str | list[str] | list[int], optional): Which columns to ingest.
+            Defaults to None.
+        na_values (list[str] | None): Additional strings to recognize as NA/NaN.
+            If list passed, the specific NA values for each column will be recognized.
             Defaults to None.
         credentials_secret (str, optional): The name of the secret storing
             the credentials. Defaults to None.
@@ -56,7 +60,9 @@ def sharepoint_to_df(
     s = Sharepoint(credentials=credentials, config_key=config_key)
 
     logger.info(f"Downloading data from {url}...")
-    df = s.to_df(url, sheet_name=sheet_name, tests=tests, usecols=columns)
+    df = s.to_df(
+        url, sheet_name=sheet_name, tests=tests, usecols=columns, na_values=na_values
+    )
     logger.info(f"Successfully downloaded data from {url}.")
 
     return df

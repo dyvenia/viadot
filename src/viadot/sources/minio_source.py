@@ -103,6 +103,7 @@ class MinIO(Source):
         schema_name: str | None = None,
         table_name: str | None = None,
         path: str | Path | None = None,
+        basename_template: str | None = None,
         partition_cols: list[str] | None = None,
         if_exists: Literal["error", "delete_matching", "overwrite_or_ignore"] = "error",
     ):
@@ -129,6 +130,9 @@ class MinIO(Source):
                 None.
             path (str | Path, optional): The path to the destination file. Defaults to
                 None.
+            basename_template (str, optional): A template string used to generate
+                basenames of written data files. The token ‘{i}’ will be replaced with
+                an automatically incremented integer. Defaults to None.
             partition_cols (list[str], optional): The columns to partition by. Defaults
                 to None.
             if_exists (Literal["error", "delete_matching", "overwrite_or_ignore"],
@@ -155,6 +159,7 @@ class MinIO(Source):
             root_path=path,
             partition_cols=partition_cols,
             existing_data_behavior=if_exists,
+            basename_template=basename_template,
             filesystem=self.fs,
             max_rows_per_file=1024 * 1024,
             create_dir=False,  # Required as Arrow attempts to create the bucket, too.
@@ -166,6 +171,7 @@ class MinIO(Source):
         schema_name: str | None = None,
         table_name: str | None = None,
         path: str | Path | None = None,
+        basename_template: str | None = None,
         partition_cols: list[str] | None = None,
         if_exists: Literal["error", "delete_matching", "overwrite_or_ignore"] = "error",
     ) -> None:
@@ -192,6 +198,9 @@ class MinIO(Source):
                 None.
             path (str | Path, optional): The path to the destination file. Defaults to
                 None.
+            basename_template (str, optional): A template string used to generate
+                basenames of written data files. The token ‘{i}’ will be replaced with
+                an automatically incremented integer. Defaults to None.
             partition_cols (list[str], optional): The columns to partition by. Defaults
                 to None.
             if_exists (Literal["error", "delete_matching", "overwrite_or_ignore"],
@@ -204,6 +213,7 @@ class MinIO(Source):
             schema_name=schema_name,
             table_name=table_name,
             path=path,
+            basename_template=basename_template,
             partition_cols=partition_cols,
             if_exists=if_exists,
         )
