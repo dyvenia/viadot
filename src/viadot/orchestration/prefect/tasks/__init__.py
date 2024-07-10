@@ -12,6 +12,7 @@ from .git import clone_repo  # noqa: F401
 from .hubspot import hubspot_to_df
 from .luma import luma_ingest_task  # noqa: F401
 from .mindful import mindful_to_df
+from .minio import df_to_minio  # noqa: F401
 from .redshift_spectrum import df_to_redshift_spectrum  # noqa: F401
 from .s3 import s3_upload_file  # noqa: F401
 from .sap_rfc import sap_rfc_to_df  # noqa: F401
