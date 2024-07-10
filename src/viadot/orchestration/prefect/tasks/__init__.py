@@ -23,3 +23,4 @@ from .sharepoint import (
     sharepoint_to_df,  # noqa: F401
     validate_and_reorder_dfs_columns,  # noqa: F401
 )
+from .sql_server import create_sql_server_table, sql_server_query, sql_server_to_df
