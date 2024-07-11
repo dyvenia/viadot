@@ -250,6 +250,7 @@ class Sharepoint(Source):
         url: str,
         file_sheet_mapping: dict,
         na_values: Optional[list[str]] = None,
+        **kwargs,
     ):
         """Handles download and parsing of multiple Excel files from a SharePoint folder.
 
@@ -268,7 +269,7 @@ class Sharepoint(Source):
         """
         dfs = [
             self._load_and_parse(
-                file_url=url + file, sheet_name=sheet, na_values=na_values
+                file_url=url + file, sheet_name=sheet, na_values=na_values, **kwargs
             )
             for file, sheet in file_sheet_mapping.items()
         ]
