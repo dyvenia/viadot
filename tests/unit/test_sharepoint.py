@@ -49,21 +49,6 @@ def test_sharepoint_custom_na(sharepoint_mock):
     assert "NA" in list(df["col_a"])
 
 
-def test_sharepoint_convert_all_to_string_type(sharepoint_mock):
-    converted_df = sharepoint_mock._convert_all_to_string_type(df=SAMPLE_DF)
-
-    assert not converted_df.empty
-    assert pd.isnull(converted_df["nan_col"]).all()
-
-
-def test_sharepoint_convert_empty_columns_to_string(sharepoint_mock):
-    converted_df = sharepoint_mock._empty_column_to_string(df=SAMPLE_DF)
-
-    assert not converted_df.empty
-    assert converted_df["float_col"].dtype == float
-    assert converted_df["nan_col"].dtype == "string"
-
-
 def test__get_file_extension(sharepoint_mock):
     url_excel = "https://tenant.sharepoint.com/sites/site/file.xlsx"
     url_dir = "https://tenant.sharepoint.com/sites/site/"
@@ -86,88 +71,9 @@ def test__is_file(sharepoint_mock):
     assert is_file is False
 
 
-def test__empty_column_to_string_mixed_values(sharepoint_mock):
-    df = pd.DataFrame(
-        {"col1": [None, None, None], "col2": [1, None, 3], "col3": ["a", "b", "c"]}
-    )
-    result = sharepoint_mock._empty_column_to_string(df)
-
-    expected = pd.DataFrame(
-        {
-            "col1": [None, None, None],
-            "col2": [1, None, 3],
-            "col3": ["a", "b", "c"],
-        }
-    )
-    expected["col1"] = expected["col1"].astype("string")
-
-    pd.testing.assert_frame_equal(result, expected)
-
-
-def test_convert_all_to_string_type_mixed_types(sharepoint_mock):
-    df = pd.DataFrame(
-        {
-            "int": [1, 2, 3],
-            "float": [1.1, 2.2, 3.3],
-            "bool": [True, False, True],
-            "string": ["a", "b", "c"],
-        }
-    )
-    result = sharepoint_mock._convert_all_to_string_type(df)
-    expected = pd.DataFrame(
-        {
-            "int": ["1", "2", "3"],
-            "float": ["1.1", "2.2", "3.3"],
-            "bool": ["True", "False", "True"],
-            "string": ["a", "b", "c"],
-        }
-    )
-
-    pd.testing.assert_frame_equal(result, expected)
-
-
-def test_convert_all_to_string_type_only_nan(sharepoint_mock):
-    df = pd.DataFrame(
-        {
-            "int": [None, None, None],
-            "float": [None, None, None],
-            "bool": [None, None, None],
-            "string": [None, None, None],
-        }
-    )
-    result = sharepoint_mock._convert_all_to_string_type(df)
-    expected = pd.DataFrame(
-        {
-            "int": [None, None, None],
-            "float": [None, None, None],
-            "bool": [None, None, None],
-            "string": [None, None, None],
-        }
-    ).astype("string")
-    pd.testing.assert_frame_equal(result, expected)
-
-
-def test_convert_all_to_string_type_empty_dataframe(sharepoint_mock):
-    df = pd.DataFrame()
-    result = sharepoint_mock._convert_all_to_string_type(df)
-
-    expected = pd.DataFrame()
-
-    pd.testing.assert_frame_equal(result, expected)
-
-
-def test_convert_all_to_string_type_already_strings(sharepoint_mock):
-    df = pd.DataFrame({"string1": ["1", "2", "3"], "string2": ["a", "b", "c"]})
-    result = sharepoint_mock._convert_all_to_string_type(df)
-
-    expected = pd.DataFrame({"string1": ["1", "2", "3"], "string2": ["a", "b", "c"]})
-
-    pd.testing.assert_frame_equal(result, expected)
-
-
 def test__parse_excel_single_sheet(sharepoint_mock):
     excel_file = sharepoint_mock._download_file_stream()
-    result = sharepoint_mock._parse_excel(excel_file, sheet_name="Sheet1")
+    result_df = sharepoint_mock._parse_excel(excel_file, sheet_name="Sheet1")
     expected = pd.DataFrame(
         {
             "col_a": ["val1", "", "val2", "NA", "N/A", "#N/A"],
@@ -175,4 +81,12 @@ def test__parse_excel_single_sheet(sharepoint_mock):
         }
     )
 
-    assert result["col_b"].equals(expected["col_b"])
+    assert result_df["col_b"].equals(expected["col_b"])
+
+
+def test__parse_excel_string_dtypes(sharepoint_mock):
+    excel_file = sharepoint_mock._download_file_stream()
+    result_df = sharepoint_mock._parse_excel(excel_file, sheet_name="Sheet1")
+
+    for column in result_df.columns:
+        assert result_df[column].dtype == object

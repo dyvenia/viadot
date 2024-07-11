@@ -276,7 +276,7 @@ class Sharepoint(Source):
         na_values: Optional[list[str]] = None,
         **kwargs,
     ):
-        """Parses an Excel file into a DataFrame. Cast all columns to string.
+        """Parses an Excel file into a DataFrame. Casts all columns to string.
 
         Args:
             excel_file: An ExcelFile object containing the data to parse.
