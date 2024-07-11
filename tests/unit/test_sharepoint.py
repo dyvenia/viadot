@@ -3,7 +3,9 @@ from pathlib import Path
 import pandas as pd
 import pytest
 import sharepy
+from viadot.exceptions import CredentialError
 from viadot.sources import Sharepoint
+from viadot.sources.sharepoint import SharepointCredentials
 
 DUMMY_CREDS = {"site": "test", "username": "test2", "password": "test"}
 SAMPLE_DF = pd.DataFrame(
@@ -28,6 +30,27 @@ class SharepointMock(Sharepoint):
 @pytest.fixture
 def sharepoint_mock():
     return SharepointMock(credentials=DUMMY_CREDS)
+
+
+def test_valid_credentials():
+    credentials = {
+        "site": "tenant.sharepoint.com",
+        "username": "user@example.com",
+        "password": "password",
+    }
+    shrp_creds = SharepointCredentials(**credentials)
+    assert shrp_creds.site == credentials["site"]
+    assert shrp_creds.username == credentials["username"]
+    assert shrp_creds.password == credentials["password"]
+
+
+def test_missing_username():
+    credentials = {"site": "example.sharepoint.com", "password": "password"}
+    with pytest.raises(
+        CredentialError,
+        match="'site', 'username', and 'password' credentials are required.",
+    ):
+        SharepointCredentials(**credentials)
 
 
 def test_sharepoint_default_na(sharepoint_mock):
@@ -90,3 +113,8 @@ def test__parse_excel_string_dtypes(sharepoint_mock):
 
     for column in result_df.columns:
         assert result_df[column].dtype == object
+
+
+def test__load_and_parse_not_valid_extension(sharepoint_mock):
+    with pytest.raises(ValueError):
+        sharepoint_mock._load_and_parse(file_url="https://example.com/file.txt")
