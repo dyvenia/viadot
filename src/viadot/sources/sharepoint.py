@@ -209,42 +209,6 @@ class Sharepoint(Source):
 
         return bool(file_extension_pattern.search(url))
 
-    def _convert_all_to_string_type(self, df: pd.DataFrame) -> pd.DataFrame:
-        """Convert all column data types in the DataFrame to strings.
-
-        This method converts all the values in the DataFrame to strings,
-        handling NaN values by replacing them with None.
-
-        Args:
-            df (pd.DataFrame): DataFrame to convert.
-
-        Returns:
-            pd.DataFrame: DataFrame with all data types converted to string.
-                        Columns that contain only None values are also
-                        converted to string type.
-        """
-        df_converted = df.astype(str).where(pd.notnull(df), None)
-        return self._empty_column_to_string(df=df_converted)
-
-    def _empty_column_to_string(self, df: pd.DataFrame) -> pd.DataFrame:
-        """Convert the type of columns containing only None values to string.
-
-        This method iterates through the DataFrame columns and converts the
-        type of any column that contains only None values to string.
-
-        Args:
-            df (pd.DataFrame): DataFrame to convert.
-
-        Returns:
-            pd.DataFrame: Updated DataFrame with columns containing only
-                        None values converted to string type. All columns
-                        in the returned DataFrame will be of type object/string.
-        """
-        for col in df.columns:
-            if df[col].isnull().all():
-                df[col] = df[col].astype("string")
-        return df
-
     def _handle_multiple_files(
         self,
         url: str,
@@ -312,7 +276,7 @@ class Sharepoint(Source):
         na_values: Optional[list[str]] = None,
         **kwargs,
     ):
-        """Parses an Excel file into a DataFrame.
+        """Parses an Excel file into a DataFrame. Cast all columns to string.
 
         Args:
             excel_file: An ExcelFile object containing the data to parse.
@@ -330,6 +294,7 @@ class Sharepoint(Source):
                     sheet,
                     keep_default_na=False,
                     na_values=na_values or self.DEFAULT_NA_VALUES,
+                    dtype=str,  # Ensure all columns are read as strings
                     **kwargs,
                 )
                 for sheet in ([sheet_name] if sheet_name else excel_file.sheet_names)
@@ -425,4 +390,4 @@ class Sharepoint(Source):
         if tests:
             validate(df=df_clean, tests=tests)
 
-        return self._convert_all_to_string_type(df=df_clean)
+        return df_clean
