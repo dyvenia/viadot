@@ -1,6 +1,7 @@
 """Imports."""
 
 from .adls import adls_upload, df_to_adls  # noqa: F401
+from .bcp import bcp
 from .cloud_for_customers import cloud_for_customers_to_df  # noqa: F401
 from .databricks import df_to_databricks  # noqa: F401
 from .dbt import dbt_task  # noqa: F401

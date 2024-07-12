@@ -9,7 +9,7 @@ from viadot.orchestration.prefect.tasks import (
 )
 from viadot.orchestration.prefect.tasks.task_utils import (
     df_to_csv,
-    df_get_data_types_task,
+    get_sql_dtypes_from_df,
 )
 
 from prefect import flow
@@ -79,7 +79,7 @@ def duckdb_to_sql_server(  # noqa: PLR0913, PLR0917
         credentials_secret=duckdb_credentials_secret,
     )
     if dtypes is None:
-        dtypes = df_get_data_types_task(df)
+        dtypes = get_sql_dtypes_from_df(df)
 
     table = create_sql_server_table(
         table=db_table,
@@ -98,4 +98,6 @@ def duckdb_to_sql_server(  # noqa: PLR0913, PLR0917
         chunksize=chunksize,
         error_log_file_path=error_log_file_path,
         on_error=on_error,
+        credentials_secret=sql_server_credentials_secret,
+        config_key=sql_server_config_key,
     )
