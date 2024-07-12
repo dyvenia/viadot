@@ -9,6 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Added `duckdb_to_sql_server`, `duckdb_to_parquet`, `duckdb_transform` flows for prefect.
+- Added `bcp` and `duckdb_query`  for prefect.
+- Added `DuckDB` source class.
 - Added `sql_server_to_minio` flow for prefect.
 - Added `df_to_minio` task for prefect
 - Added handling for `DatabaseCredentials` and `Secret` blocks in `prefect/utlis.py:get_credentials`
@@ -40,6 +43,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Changed location of `task_utils.py` and removed unused/prefect1-related tasks.
 - Changed the way of handling `NA` string values and mapped column types to `str` for `Sharepoint` source.
 - Added `SQLServerToDF` task
 - Added `SQLServerToDuckDB` flow which downloads data from SQLServer table, loads it to parquet file and then uploads it do DuckDB
