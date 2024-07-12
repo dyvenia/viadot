@@ -1,4 +1,5 @@
 """Flow fortransforming data in the DuckDB."""
+
 from typing import Any
 from viadot.orchestration.prefect.tasks import duckdb_query
 
@@ -14,9 +15,9 @@ from prefect import flow
 def duckdb_transform(  # noqa: PLR0913, PLR0917
     query: str,
     duckdb_credentials_secret: str | None = None,
-    # Specifing credentials in a dictionary is not recomended in the viadot flows, 
+    # Specifing credentials in a dictionary is not recomended in the viadot flows,
     # but in this case credantials can include only database name.
-    duckdb_credentials: dict[str, Any] | None = None, 
+    duckdb_credentials: dict[str, Any] | None = None,
     duckdb_config_key: str | None = None,
 ) -> None:
     """Transform data inside DuckDB database.

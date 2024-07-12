@@ -16,6 +16,7 @@ from visions.typesets.complete_set import CompleteSet
 from prefect import task
 from prefect.logging import get_run_logger
 
+
 @task
 def add_ingestion_metadata_task(
     df: pd.DataFrame,
@@ -28,7 +29,6 @@ def add_ingestion_metadata_task(
     df2 = df.copy(deep=True)
     df2["_viadot_downloaded_at_utc"] = datetime.now(timezone.utc).replace(microsecond=0)
     return df2
-
 
 
 @task
@@ -253,7 +253,6 @@ def cleanup_validation_clutter(expectations_path):
     shutil.rmtree(ge_project_path)
 
 
-
 @task
 def df_to_dataset(
     df: pd.DataFrame, partitioning_flavor="hive", format="parquet", **kwargs
@@ -287,7 +286,6 @@ def df_to_dataset(
     ds.write_dataset(
         data=table, partitioning_flavor=partitioning_flavor, format=format, **kwargs
     )
-
 
 
 @task

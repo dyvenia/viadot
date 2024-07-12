@@ -19,11 +19,10 @@ def duckdb_to_parquet(  # noqa: PLR0913, PLR0917
     path: str,
     if_exists: Literal["append", "replace", "skip"] = "replace",
     duckdb_credentials_secret: str | None = None,
-    # Specifing credentials in a dictionary is not recomended in the viadot flows, 
+    # Specifing credentials in a dictionary is not recomended in the viadot flows,
     # but in this case credantials can include only database name.
     duckdb_credentials: dict[str, Any] | None = None,
     duckdb_config_key: str | None = None,
-
 ) -> None:
     """Download a table from DuckDB and save it to Parquet file.
 

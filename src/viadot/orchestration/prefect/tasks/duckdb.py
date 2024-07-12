@@ -24,7 +24,7 @@ def duckdb_query(
 
     Args:
         query (str, required): The query to execute on the DuckDB database.
-        fetch_type (str, optional): In which for the data should be returned. 
+        fetch_type (str, optional): In which for the data should be returned.
             Defaults to "record".
         credentials_secret (str, optional): The name of the secret storing the credentials
             to the DuckDB. Defaults to None.
@@ -34,7 +34,7 @@ def duckdb_query(
             to the DuckDB. Defaults to None.
 
     """
-    
+
     if not (credentials_secret or credentials or config_key):
         raise MissingSourceCredentialsError
 
@@ -45,10 +45,7 @@ def duckdb_query(
         or get_source_credentials(config_key)
         or get_credentials(credentials_secret)
     )
-    duckdb = DuckDB(
-        credentials=credentials
-    )
+    duckdb = DuckDB(credentials=credentials)
     result = duckdb.run_query(query=query, fetch_type=fetch_type)
     logger.info("Query has been ru successfully.")
     return result
-

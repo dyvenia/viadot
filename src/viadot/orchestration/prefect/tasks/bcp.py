@@ -6,6 +6,7 @@ from viadot.orchestration.prefect.exceptions import MissingSourceCredentialsErro
 from viadot.orchestration.prefect.utils import get_credentials, shell_run_command
 from viadot.config import get_source_credentials
 
+
 @task
 def bcp(
     path: str = None,
@@ -25,7 +26,7 @@ def bcp(
             executing flow.
         schema (str, optional): Destination schema. Defaults to None.
         table (str, optional): Destination table. Defaults to None.
-        chunksize (int, optional): Size of a chunck to use in the bcp function. 
+        chunksize (int, optional): Size of a chunck to use in the bcp function.
             Defaults to 5000.
         error_log_file_path (string, optional): Full path of an error file. Defaults
             to "./log_file.log".
@@ -69,4 +70,3 @@ def bcp(
         )
     command = f"/opt/mssql-tools/bin/bcp {fqn} in '{path}' -S {server} -d {db_name} -U {uid} -P '{pwd}' -c -F 2 -b {chunksize} -h 'TABLOCK' -e '{error_log_file_path}' -m {max_error}"
     run_command = shell_run_command(command=command)
-   
