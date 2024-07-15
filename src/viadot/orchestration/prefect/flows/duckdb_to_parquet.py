@@ -39,11 +39,6 @@ def duckdb_to_parquet(  # noqa: PLR0913, PLR0917
             Defaults to None.
         duckdb_config_key (str, optional): The key in the viadot config holding relevant
             credentials to the DuckDB. Defaults to None.
-        sql_server_credentials_secret (str, optional): The name of the secret storing
-            the credentialsto the SQLServer. Defaults to None.
-            More info on: https://docs.prefect.io/concepts/blocks/
-        sql_server_config_key (str, optional): The key in the viadot config holding relevant
-            credentials to the SQLServer. Defaults to None.
 
     """
     df = duckdb_query(
