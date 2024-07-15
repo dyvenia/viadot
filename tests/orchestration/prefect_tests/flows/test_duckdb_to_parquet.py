@@ -27,8 +27,3 @@ def test_duckdb_to_parquet():
     assert os.path.isfile(PATH) == True
     os.remove(PATH)
 
-
-
-# assert file_exists is True
-
-# minio.rm(path=PATH)
