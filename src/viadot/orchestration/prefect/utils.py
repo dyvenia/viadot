@@ -71,6 +71,7 @@ def _get_aws_credentials(secret_name: str) -> dict[str, Any] | str:
 
     return credentials
 
+
 def _get_secret_credentials(secret_name: str) -> dict[str, Any] | str:
     """Retrieve credentials from the Prefect 'Secret' block document.
 
