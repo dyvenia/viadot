@@ -6,6 +6,7 @@ from .genesys import Genesys
 from .sharepoint import Sharepoint
 from .trino_source import Trino
 from .sql_server import SQLServer
+from .duckdb import DuckDB
 
 __all__ = [
     "CloudForCustomers",
@@ -20,6 +21,11 @@ if find_spec("adlfs"):
     from viadot.sources.azure_data_lake import AzureDataLake  # noqa
 
     __all__.extend(["AzureDataLake"])
+
+if find_spec("duckdb"):
+    from viadot.sources.duckdb import DuckDB  # noqa
+
+    __all__.extend(["DuckDB"])
 
 if find_spec("redshift_connector"):
     from viadot.sources.redshift_spectrum import RedshiftSpectrum  # noqa

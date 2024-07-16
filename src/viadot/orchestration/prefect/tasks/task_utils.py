@@ -2,29 +2,19 @@ import copy
 import json
 import os
 import shutil
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timezone
 from pathlib import Path
-from typing import List, Literal, Union, cast
+from typing import List, Literal
 
 import pandas as pd
-import prefect
 import pyarrow as pa
 import pyarrow.dataset as ds
-from prefect import Flow, Task, task
-from prefect.engine.state import Failed
-from prefect.tasks.secrets import PrefectSecret
-from prefect.utilities import logging
-from sendgrid import SendGridAPIClient
-from sendgrid.helpers.mail import Mail
-from toolz import curry
+
 from visions.functional import infer_type
 from visions.typesets.complete_set import CompleteSet
 
-from viadot.config import local_config
-from viadot.tasks import AzureKeyVaultSecret
-
-logger = logging.get_logger()
-METADATA_COLUMNS = {"_viadot_downloaded_at_utc": "DATETIME"}
+from prefect import task
+from prefect.logging import get_run_logger
 
 
 @task
@@ -39,26 +29,6 @@ def add_ingestion_metadata_task(
     df2 = df.copy(deep=True)
     df2["_viadot_downloaded_at_utc"] = datetime.now(timezone.utc).replace(microsecond=0)
     return df2
-
-
-@task
-def get_latest_timestamp_file_path(files: List[str]) -> str:
-    """
-    Return the name of the latest file in a given data lake directory,
-    given a list of paths in that directory. Such list can be obtained using the
-    `AzureDataLakeList` task. This task is useful for working with immutable data lakes as
-    the data is often written in the format /path/table_name/TIMESTAMP.parquet.
-    """
-
-    logger = prefect.context.get("logger")
-
-    file_names = [Path(file).stem for file in files]
-    latest_file_name = max(file_names, key=lambda d: datetime.fromisoformat(d))
-    latest_file = files[file_names.index(latest_file_name)]
-
-    logger.debug(f"Latest file: {latest_file}")
-
-    return latest_file
 
 
 @task
@@ -205,6 +175,7 @@ def df_to_csv(
     sep (str, optional): The separator to use in the CSV. Defaults to "\t".
     if_exists (Literal["append", "replace", "skip"], optional): What to do if the table exists. Defaults to "replace".
     """
+    logger = get_run_logger()
 
     if if_exists == "append" and os.path.isfile(path):
         csv_df = pd.read_csv(path, sep=sep)
@@ -242,6 +213,8 @@ def df_to_parquet(
     path (str): Path to output parquet file.
     if_exists (Literal["append", "replace", "skip"], optional): What to do if the table exists. Defaults to "replace".
     """
+    logger = get_run_logger()
+
     if if_exists == "append" and os.path.isfile(path):
         parquet_df = pd.read_parquet(path)
         out_df = pd.concat([parquet_df, df])
@@ -275,45 +248,12 @@ def union_dfs_task(dfs: List[pd.DataFrame]):
 
 
 @task
-def write_to_json(dict_, path):
-    """
-    Creates json file from a dictionary. Log record informs about the writing file proccess.
-    Args:
-        dict_ (dict): Dictionary.
-        path (str): Path to local json file.
-    """
-    logger = prefect.context.get("logger")
-
-    if os.path.isfile(path):
-        logger.warning(f"File {path} already exists. Overwriting...")
-    else:
-        logger.debug(f"Writing to {path}...")
-
-    # create parent directories if they don't exist
-    Path(path).parent.mkdir(parents=True, exist_ok=True)
-    with open(path, mode="w") as f:
-        json.dump(dict_, f)
-
-    logger.debug(f"Successfully wrote to {path}.")
-
-
-@task
 def cleanup_validation_clutter(expectations_path):
     ge_project_path = Path(expectations_path).parent
     shutil.rmtree(ge_project_path)
 
 
 @task
-def df_converts_bytes_to_int(df: pd.DataFrame) -> pd.DataFrame:
-    logger = prefect.context.get("logger")
-    logger.info("Converting bytes in dataframe columns to list of integers")
-    return df.applymap(lambda x: list(map(int, x)) if isinstance(x, bytes) else x)  # noqa
-
-
-@task(
-    max_retries=3,
-    retry_delay=timedelta(seconds=10),
-)
 def df_to_dataset(
     df: pd.DataFrame, partitioning_flavor="hive", format="parquet", **kwargs
 ) -> None:
@@ -346,78 +286,6 @@ def df_to_dataset(
     ds.write_dataset(
         data=table, partitioning_flavor=partitioning_flavor, format=format, **kwargs
     )
-
-
-@curry
-def custom_mail_state_handler(
-    tracked_obj: Union["Flow", "Task"],
-    old_state: prefect.engine.state.State,
-    new_state: prefect.engine.state.State,
-    only_states: list = [Failed],
-    local_api_key: str = None,
-    credentials_secret: str = None,
-    vault_name: str = None,
-    from_email: str = None,
-    to_emails: str = None,
-) -> prefect.engine.state.State:
-    """
-    Custom state handler configured to work with sendgrid.
-    Works as a standalone state handler, or can be called from within a custom state handler.
-    Args:
-        tracked_obj (Task or Flow): Task or Flow object the handler is registered with.
-        old_state (State): previous state of tracked object.
-        new_state (State): new state of tracked object.
-        only_states ([State], optional): similar to `ignore_states`, but instead _only_
-            notifies you if the Task / Flow is in a state from the provided list of `State`
-            classes.
-        local_api_key (str, optional): Api key from local config.
-        credentials_secret (str, optional): The name of the Azure Key Vault secret containing a dictionary with API KEY.
-        vault_name (str, optional): Name of key vault.
-        from_email (str): Sender mailbox address.
-        to_emails (str): Receiver mailbox address.
-    Returns: State: the `new_state` object that was provided
-
-    """
-
-    if credentials_secret is None:
-        try:
-            credentials_secret = PrefectSecret("mail_notifier_api_key").run()
-        except ValueError:
-            pass
-
-    if credentials_secret is not None:
-        credentials_str = AzureKeyVaultSecret(
-            credentials_secret, vault_name=vault_name
-        ).run()
-        api_key = json.loads(credentials_str).get("API_KEY")
-    elif local_api_key is not None:
-        api_key = local_config.get(local_api_key).get("API_KEY")
-    else:
-        raise Exception("Please provide API KEY")
-
-    curr_dt = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    only_states = only_states or []
-    if only_states and not any(
-        [isinstance(new_state, included) for included in only_states]
-    ):
-        return new_state
-    url = prefect.client.Client().get_cloud_url(
-        "flow-run", prefect.context["flow_run_id"], as_user=False
-    )
-    message = Mail(
-        from_email=from_email,
-        to_emails=to_emails,
-        subject=f"The flow {tracked_obj.name} - Status {new_state}",
-        html_content=f"<strong>The flow {cast(str,tracked_obj.name)} FAILED at {curr_dt}. \
-    <p>More details here: {url}</p></strong>",
-    )
-    try:
-        sendgrid = SendGridAPIClient(api_key)
-        sendgrid.send(message)
-    except Exception as e:
-        raise e
-
-    return new_state
 
 
 @task
