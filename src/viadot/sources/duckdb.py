@@ -254,4 +254,4 @@ class DuckDB(Source):
         if schema == DuckDB.DEFAULT_SCHEMA:
             return True
         fqns = self.tables
-        print(any((fqn.split(".")[0] == schema for fqn in fqns)))
+        return any((fqn.split(".")[0] == schema for fqn in fqns))
