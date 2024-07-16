@@ -1,12 +1,13 @@
 from viadot.orchestration.prefect.flows import sap_to_parquet
-from viadot.orchestration.prefect.utils import get_credentials
 import pandas as pd
 import os
 
-PATH ="data/billing_type_full_data.parquet"
-SAP_CREDS = get_credentials("sap-credentials")
+PATH ="test_path.parquet"
+SAP_CREDS = "sap-creds"
 
 def test_sap_to_parquet():
+    assert os.path.isfile(PATH) is False
+
     flow = sap_to_parquet(
         path=PATH,
         query=""" select 
@@ -17,10 +18,10 @@ def test_sap_to_parquet():
             where SPRAS in ('E', 'D')""",
         func= "RFC_READ_TABLE",
         rfc_total_col_width_character_limit = 400,
-        sap_credentials_secret="SAP_CREDS",
+        sap_credentials_secret=SAP_CREDS,
     )
 
-    parquet_file = os.path.exists(PATH)
+    parquet_file = os.path.isfile(PATH)
     assert parquet_file is True
     
     os.remove(PATH)
