@@ -18,8 +18,12 @@ def duckdb():
 
 def test_duckdb_query(duckdb):
     duckdb_query(f"DROP SCHEMA IF EXISTS {SCHEMA}", credentials=DUCKDB_CREDS)
-    duckdb_query(f"CREATE SCHEMA {SCHEMA}", credentials=DUCKDB_CREDS)
-    duckdb._check_if_schema_exists(schema=SCHEMA)
-    duckdb_query(f"DROP SCHEMA IF EXISTS {SCHEMA}", credentials=DUCKDB_CREDS)
-    duckdb._check_if_schema_exists(schema = SCHEMA) is False
+    duckdb_query(f"""CREATE TABLE {SCHEMA}.{TABLE} (
+    i INTEGER NOT NULL,
+    decimalnr DOUBLE CHECK (decimalnr < 10),
+    date DATE UNIQUE,
+    time TIMESTAMP);""", duckdb_credentials=DUCKDB_CREDS)
+    assert SCHEMA in duckdb.schemas
+    duckdb_query(f"DROP SCHEMA IF EXISTS {SCHEMA} CASCADE", duckdb_credentials=DUCKDB_CREDS)
+    assert SCHEMA not in duckdb.schemas
 

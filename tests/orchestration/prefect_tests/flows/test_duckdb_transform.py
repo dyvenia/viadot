@@ -18,6 +18,11 @@ def duckdb():
 def test_duckdb_transform(duckdb):
     duckdb_transform(f"DROP SCHEMA IF EXISTS {SCHEMA}", duckdb_credentials=DUCKDB_CREDS)
     duckdb_transform(f"CREATE SCHEMA {SCHEMA}", duckdb_credentials=DUCKDB_CREDS)
-    duckdb._check_if_schema_exists(schema=SCHEMA)
-    duckdb_transform(f"DROP SCHEMA IF EXISTS {SCHEMA}", duckdb_credentials=DUCKDB_CREDS)
-    duckdb._check_if_schema_exists(schema = SCHEMA) is False
+    duckdb_transform(f"""CREATE TABLE {SCHEMA}.{TABLE} (
+    i INTEGER NOT NULL,
+    decimalnr DOUBLE CHECK (decimalnr < 10),
+    date DATE UNIQUE,
+    time TIMESTAMP);""", duckdb_credentials=DUCKDB_CREDS)
+    assert SCHEMA in duckdb.schemas
+    duckdb_transform(f"DROP SCHEMA IF EXISTS {SCHEMA} CASCADE", duckdb_credentials=DUCKDB_CREDS)
+    assert SCHEMA not in duckdb.schemas
