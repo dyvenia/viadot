@@ -3,7 +3,7 @@ import pandas as pd
 import os
 
 PATH ="test_path.parquet"
-SAP_CREDS = "sap-creds"
+SAP_CREDS = "sap-dev"
 
 def test_sap_to_parquet():
     assert os.path.isfile(PATH) is False
@@ -25,3 +25,4 @@ def test_sap_to_parquet():
     assert parquet_file is True
     
     os.remove(PATH)
+
