@@ -1,3 +1,63 @@
+"""
+'genesys.py'.
+
+Structure for the Genesys Cloud API connector.
+
+This module provides functionalities for connecting to Genesys Cloud API and download
+the reports generated. It includes the following features:
+- Generate reports inside Genesys.
+- Download the reports previously created.
+- Direct connection to Genesys Cloud API, via GET method, to retrieve the data without
+    any report creation.
+- Remove any report previously created.
+- Introduce any downloaded data into a Pandas Data Frame
+
+Typical usage example:
+
+    genesys = Genesys(
+        credentials=credentials,
+        config_key=config_key,
+        verbose=verbose,
+        environment=environment,
+    )
+    genesys.api_connection(
+        endpoint=endpoint,
+        queues_ids=queues_ids,
+        view_type=view_type,
+        view_type_time_sleep=view_type_time_sleep,
+        post_data_list=post_data_list,
+        normalization_sep=normalization_sep,
+    )
+    data_frame = genesys.to_df(
+        drop_duplicates=drop_duplicates,
+        validate_df_dict=validate_df_dict,
+    )
+
+Genesys Class Attributes:
+
+    credentials (Optional[GenesysCredentials]): Genesys credentials.
+        Defaults to None
+    config_key (str): The key in the viadot config holding relevant credentials.
+        Defaults to "genesys".
+    verbose (bool): Increase the details of the logs printed on the screen.
+        Defaults to False.
+    environment (str): the domain that appears for Genesys Cloud Environment based on
+        the location of your Genesys Cloud organization. Defaults to "mypurecloud.de".
+
+Functions:
+
+    api_connection(endpoint, queues_ids, view_type, view_type_time_sleep,
+        post_data_list, normalization_sep): General method to connect to Genesys Cloud
+        API and generate the response.
+    to_df(if_empty, drop_duplicates, validate_df_dict): Generate a Pandas Data Frame
+        with the data in the Response object, and metadata.
+
+Classes:
+
+    GenesysCredentials: Checking for values in Genesys credentials dictionary.
+    Genesys: Class implementing the Genesys API.
+"""  # noqa: D412
+
 import asyncio
 import base64
 import json
@@ -17,14 +77,21 @@ from viadot.exceptions import APIError, CredentialError
 from viadot.sources.base import Source
 from viadot.utils import add_viadot_metadata_columns, handle_api_response, validate
 
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
 
-class GENESYS_CREDENTIALS(BaseModel):
-    """Checking for values in Genesys credentials dictionary.
+
+class GenesysCredentials(BaseModel):  # pylint: disable=too-few-public-methods
+    """
+    Checking for values in Genesys credentials dictionary.
+
     Two key values are held in the Genesys connector:
         - client_id: The unique ID for the organization.
         - client_secret: Secret string of characters to have access to divisions.
+
     Args:
-        BaseModel (pydantic.main.ModelMetaclass): A base class for creating Pydantic models.
+        BaseModel (pydantic.main.ModelMetaclass): A base class for creating Pydantic
+            models.
     """
 
     client_id: str
@@ -35,7 +102,8 @@ class Genesys(Source):
     """
     Class implementing the Genesys API.
 
-    Documentation for this API is available at: https://developer.genesys.cloud/devapps/api-explorer.
+    Documentation for this API is available at:
+        https://developer.genesys.cloud/devapps/api-explorer.
     """
 
     ENVIRONMETNS = [
@@ -57,66 +125,65 @@ class Genesys(Source):
 
     def __init__(
         self,
-        credentials: Optional[GENESYS_CREDENTIALS] = None,
+        *args,
+        credentials: Optional[GenesysCredentials] = None,
         config_key: str = "genesys",
         verbose: bool = False,
         environment: str = "mypurecloud.de",
-        *args,
         **kwargs,
     ):
         """
-        Description:
-            Creation of a Genesys instance.
+        Creation of a Genesys instance.
 
         Args:
-            credentials (Optional[GENESYS_CREDENTIALS], optional): Genesys credentials.
+            credentials (Optional[GenesysCredentials], optional): Genesys credentials.
                 Defaults to None
-            config_key (str, optional): The key in the viadot config holding relevant credentials.
-                Defaults to "genesys".
-            verbose (bool, optional): Increase the details of the logs printed on the screen.
-                Defaults to False.
-            environment (str, optional): the domain that appears for Genesys Cloud Environment
-                based on the location of your Genesys Cloud organization. Defaults to "mypurecloud.de".
+            config_key (str, optional): The key in the viadot config holding relevant
+                credentials. Defaults to "genesys".
+            verbose (bool, optional): Increase the details of the logs printed on the
+                screen. Defaults to False.
+            environment (str, optional): the domain that appears for Genesys Cloud
+                Environment based on the location of your Genesys Cloud organization.
+                Defaults to "mypurecloud.de".
 
         Raises:
-            CredentialError: If credentials are not provided in local_config or directly as a parameter.
+            CredentialError: If credentials are not provided in local_config or directly
+                as a parameter.
             APIError: When the environment variable is not among the available.
         """
-
         credentials = credentials or get_source_credentials(config_key) or None
         if credentials is None:
             raise CredentialError("Missing credentials.")
         self.credentials = credentials
 
-        logging.basicConfig()
-        validated_creds = dict(GENESYS_CREDENTIALS(**credentials))
+        validated_creds = dict(GenesysCredentials(**credentials))
         super().__init__(*args, credentials=validated_creds, **kwargs)
-        self.logger.setLevel(logging.INFO)
 
         self.verbose = verbose
+        self.data_returned = {}
+        self.new_report = "{}"
+        self.logger = logger
 
         if environment in self.ENVIRONMETNS:
             self.environment = environment
         else:
             raise APIError(
-                f"Environment '{environment}' not available in Genesys Cloud Environments."
+                f"Environment '{environment}' not available"
+                + " in Genesys Cloud Environments."
             )
 
     @property
-    def authorization_token(self, verbose: bool = False) -> Dict[str, Any]:
+    def authorization_token(self) -> Dict[str, Any]:
         """
         Get authorization token with request headers.
-
-        Args:
-            verbose (bool, optional): Switch on/off for logging messages. Defaults to False.
 
         Returns:
             Dict[str, Any]: Request headers with token.
         """
-        CLIENT_ID = self.credentials.get("client_id", "")
-        CLIENT_SECRET = self.credentials.get("client_secret", "")
+        client_id = self.credentials.get("client_id", "")
+        client_secret = self.credentials.get("client_secret", "")
         authorization = base64.b64encode(
-            bytes(CLIENT_ID + ":" + CLIENT_SECRET, "ISO-8859-1")
+            bytes(client_id + ":" + client_secret, "ISO-8859-1")
         ).decode("ascii")
         request_headers = {
             "Authorization": f"Basic {authorization}",
@@ -130,16 +197,17 @@ class Genesys(Source):
             method="POST",
             timeout=3600,
         )
-        if verbose:
-            if response.status_code == 200:
-                self.logger.info("Temporary authorization token was generated.")
-            else:
-                self.logger.info(
-                    f"Failure: { str(response.status_code) } - { response.reason }"
-                )
+
+        if response.status_code == 200:
+            self.logger.info("Temporary authorization token was generated.")
+        else:
+            self.logger.info(
+                f"Failure: { str(response.status_code) } - { response.reason }"
+            )
         response_json = response.json()
         request_headers = {
-            "Authorization": f"{ response_json['token_type'] } { response_json['access_token']}",
+            "Authorization": f"{ response_json['token_type'] }"
+            + f" { response_json['access_token']}",
             "Content-Type": "application/json",
         }
 
@@ -154,23 +222,25 @@ class Genesys(Source):
         sleep_time: int = 0.5,
     ) -> Dict[str, Any]:
         """
-        Description:
-            General method to connect to Genesys Cloud API and generate the response.
+        General method to connect to Genesys Cloud API and generate the response.
 
         Args:
             endpoint (str): Final end point to the API.
             post_data_list (List[str]): List of string templates to generate json body.
             method (str): Type of connection to the API. Defaults to "POST".
-            params (Optional[Dict[str, Any]], optional): Parameters to be passed into the POST call.
-                Defaults to None.
-            sleep_time (int, optional): The time, in seconds, to sleep the call to the API.
-                Defaults to 0.5
+            params (Optional[Dict[str, Any]], optional): Parameters to be passed into
+                the POST call. Defaults to None.
+            sleep_time (int, optional): The time, in seconds, to sleep the call to the
+                API. Defaults to 0.5.
+
+        Raises:
+            RuntimeError: There is no current event loop in asyncio thread.
 
         Returns:
-            Dict[str, Any]: Genesys Cloud API response. When the endpoint requires to create
-                a report within Genesys Cloud, the response is just useless information. The
-                useful data must be downloaded from apps.{environment} through another requests.
-                First one to get the 'download' endpoint, and finally,
+            Dict[str, Any]: Genesys Cloud API response. When the endpoint requires to
+                create a report within Genesys Cloud, the response is just useless
+                information. The useful data must be downloaded from apps.{environment}
+                through another requests.
         """
         limiter = AsyncLimiter(2, 15)
         semaphore = asyncio.Semaphore(value=1)
@@ -190,8 +260,8 @@ class Genesys(Source):
                                 headers=self.authorization_token,
                                 data=payload,
                             ) as resp:
-                                global new_report
-                                new_report = await resp.read()
+                                # global new_report
+                                self.new_report = await resp.read()
                                 message = "Generated report export ---"
                                 if self.verbose:
                                     message += f"\n {payload}."
@@ -205,7 +275,7 @@ class Genesys(Source):
                                 headers=self.authorization_token,
                                 params=params,
                             ) as resp:
-                                new_report = await resp.read()
+                                self.new_report = await resp.read()
                                 message = "Connecting to Genesys Cloud"
                                 if self.verbose:
                                     message += f": {params}."
@@ -226,39 +296,43 @@ class Genesys(Source):
         coroutine = generate_post()
         loop.run_until_complete(coroutine)
 
-        return json.loads(new_report.decode("utf-8"))
+        return json.loads(self.new_report.decode("utf-8"))
 
     def _load_reporting_exports(
         self,
         page_size: int = 100,
     ) -> Dict[str, Any]:
         """
-        Description:
-            Consult the status of the reports created in Genesys Cloud.
+        Consult the status of the reports created in Genesys Cloud.
 
         Args:
-            page_size (int, optional): The number of items on page to print. Defaults to 100.
-            verbose (bool, optional): Switch on/off for logging messages. Defaults to False.
+            page_size (int, optional): The number of items on page to print.
+                Defaults to 100.
+            verbose (bool, optional): Switch on/off for logging messages.
+                Defaults to False.
+
+        Raises:
+            APIError: Failed to loaded the exports from Genesys Cloud.
 
         Returns:
             Dict[str, Any]: Schedule genesys report.
         """
         response = handle_api_response(
-            url=f"https://api.{self.environment}/api/v2/analytics/reporting/exports?pageSize={page_size}",
+            url=f"https://api.{self.environment}/api/v2/"
+            + f"analytics/reporting/exports?pageSize={page_size}",
             headers=self.authorization_token,
             method="GET",
         )
 
         if response.status_code == 200:
             return response.json()
-        else:
-            self.logger.error(f"Failed to loaded all exports. - {response.content}")
-            raise APIError("Failed to loaded all exports.")
+
+        self.logger.error(f"Failed to loaded all exports. - {response.content}")
+        raise APIError("Failed to loaded all exports.")
 
     def _get_reporting_exports_url(self, entities: List[str]) -> Tuple[List[str]]:
         """
-        Description:
-            Collect all reports created in Genesys Cloud.
+        Collect all reports created in Genesys Cloud.
 
         Args:
             entities (List[str]): List of dictionaries with all the reports information
@@ -267,7 +341,6 @@ class Genesys(Source):
         Returns:
             Tuple[List[str]]: A tuple with Lists of IDs and URLs.
         """
-
         ids = []
         urls = []
         status = []
@@ -294,14 +367,14 @@ class Genesys(Source):
 
     def _delete_report(self, report_id: str) -> None:
         """
-        Description:
-            Delete a particular report in Genesys Cloud.
+        Delete a particular report in Genesys Cloud.
 
         Args:
             report_id (str): Id of the report to be deleted.
         """
         delete_response = handle_api_response(
-            url=f"https://api.{self.environment}/api/v2/analytics/reporting/exports/{report_id}",
+            url=f"https://api.{self.environment}/api/v2/"
+            + f"analytics/reporting/exports/{report_id}",
             headers=self.authorization_token,
             method="DELETE",
         )
@@ -312,7 +385,8 @@ class Genesys(Source):
 
         else:
             self.logger.error(
-                f"Failed to deleted report '{report_id}' from Genesys API. - {delete_response.content}"
+                f"Failed to deleted report '{report_id}' "
+                + f"from Genesys API. - {delete_response.content}"
             )
 
     def _download_report(
@@ -321,12 +395,12 @@ class Genesys(Source):
         drop_duplicates: bool = True,
     ) -> pd.DataFrame:
         """
-        Description:
-            Download report from Genesys Cloud.
+        Download report from Genesys Cloud.
 
         Args:
             report_url (str): url to report, fetched from json response.
-            drop_duplicates (bool, optional): Decide if drop duplicates. Defaults to True.
+            drop_duplicates (bool, optional): Decide if drop duplicates.
+                Defaults to True.
 
         Returns:
             pd.DataFrame: Data in a pandas Data Frame.
@@ -341,9 +415,11 @@ class Genesys(Source):
             )
 
         else:
-            self.logger.error(
-                f"Failed to download report from Genesys API ('{report_url}'). - {donwload_response.content}"
+            msg = (
+                "Failed to download report from"
+                + f" Genesys API ('{report_url}'). - {donwload_response.content}"
             )
+            self.logger.error(msg)
 
         df = pd.read_csv(StringIO(donwload_response.content.decode("utf-8")))
 
@@ -353,7 +429,8 @@ class Genesys(Source):
         return df
 
     def _merge_conversations(self, data_to_merge: list) -> pd.DataFrame:
-        """Method to merge all the conversations data into a single data frame.
+        """
+        Method to merge all the conversations data into a single data frame.
 
         Args:
             data_to_merge (list): List with all the conversations in json format.
@@ -466,8 +543,10 @@ class Genesys(Source):
         # LEVEL 3
         conversations_df = {}
         for i, conversation in enumerate(data_to_merge):
-            # Not all "sessions" have the same data, and that creates problems of standardization
-            # Empty data will be added to columns where there is not to avoid future errors.
+            # Not all "sessions" have the same data, and that creates
+            #   problems of standardization
+            # Empty data will be added to columns where there is not to avoid
+            #   future errors.
             for j, entry_0 in enumerate(conversation["participants"]):
                 for key in list(entry_0.keys()):
                     if key == "sessions":
@@ -534,8 +613,8 @@ class Genesys(Source):
 
         # NERGING ALL LEVELS
         # LEVELS 3
-        for l, key in enumerate(list(conversations_df.keys())):
-            if l == 0:
+        for m, key in enumerate(list(conversations_df.keys())):
+            if m == 0:
                 dff3_f = conversations_df[key]
             else:
                 dff3_f = pd.concat([dff3_f, conversations_df[key]])
@@ -563,31 +642,34 @@ class Genesys(Source):
         normalization_sep: str = ".",
     ) -> None:
         """
-        Description:
-            General method to connect to Genesys Cloud API and generate the response.
+        General method to connect to Genesys Cloud API and generate the response.
 
         Args:
-            endpoint (Optional[str], optional): Final end point to the API.Defaults to None.
+            endpoint (Optional[str], optional): Final end point to the API.
+                Defaults to None.
+
                 Custom endpoints have specific key words, and parameters:
                 Example:
                     - "routing/queues/{id}/members": "routing_queues_members"
                     - members_ids = ["xxxxxxxxx", "xxxxxxxxx", ...]
-            queues_ids (Optional[List[str]], optional): List of queues ids to consult the
-                members. Defaults to None.
-            view_type (Optional[str], optional): The type of view export job to be created.
+            queues_ids (Optional[List[str]], optional): List of queues ids to consult
+                the members. Defaults to None.
+            view_type (Optional[str], optional): The type of view export job to be
+                created. Defaults to None.
+            view_type_time_sleep (int, optional): Waiting time to retrieve data from
+                Genesys Cloud API. Defaults to 10.
+            post_data_list (Optional[List[Dict[str, Any]]], optional): List of string
+                templates to generate json body in POST calls to the API.
                 Defaults to None.
-            view_type_time_sleep (int, optional): Waiting time to retrieve data from Genesys
-                Cloud API. Defaults to 10.
-            post_data_list (Optional[List[Dict[str, Any]]], optional): List of string templates to
-                generate json body in POST calls to the API. Defaults to None.
-            normalization_sep (str, optional): Nested records will generate names separated by sep.
-                Defaults to ".".
+            normalization_sep (str, optional): Nested records will generate names
+                separated by sep. Defaults to ".".
 
         Raises:
             APIError: Some or No reports were not created.
             APIError: At different endpoints:
                 - 'analytics/conversations/details/query': only one body must be used.
-                - 'routing_queues_members': extra parameter `queues_ids` must be included.
+                - 'routing_queues_members': extra parameter `queues_ids` must be
+                    included.
         """
         self.logger.info(
             f"Connecting to the Genesys Cloud using the endpoint: {endpoint}"
@@ -600,9 +682,11 @@ class Genesys(Source):
                 method="POST",
             )
 
-            self.logger.info(
-                f"Waiting {view_type_time_sleep} seconds for caching data from Genesys Cloud API."
+            msg = (
+                f"Waiting {view_type_time_sleep} seconds for"
+                + " caching data from Genesys Cloud API."
             )
+            self.logger.info(msg)
             time.sleep(view_type_time_sleep)
 
             request_json = self._load_reporting_exports()
@@ -619,8 +703,7 @@ class Genesys(Source):
             # download and delete reports created
             count = 0
             raise_api_error = False
-            self.data_returned = {}
-            for id, url in zip(ids, urls):
+            for qid, url in zip(ids, urls):
                 if url is not None:
                     df_downloaded = self._download_report(report_url=url)
 
@@ -637,14 +720,14 @@ class Genesys(Source):
                     self.data_returned.update({count: df_downloaded})
                 else:
                     self.logger.warning(
-                        f"Report id {id} didn't have time to be created. "
+                        f"Report id {qid} didn't have time to be created. "
                         "Consider increasing the `view_type_time_sleep` parameter "
                         f">> {view_type_time_sleep} seconds to allow Genesys Cloud "
                         "to conclude the report creation."
                     )
                     raise_api_error = True
 
-                self._delete_report(id)
+                self._delete_report(qid)
 
                 count += 1
 
@@ -657,10 +740,9 @@ class Genesys(Source):
 
             stop_loop = False
             page_counter = post_data_list[0]["paging"]["pageNumber"]
-            self.data_returned = {}
             self.logger.info(
-                "Restructuring the response in order to be able to insert it into a data frame."
-                "\n\tThis task could take a few minutes.\n"
+                "Restructuring the response in order to be able to insert it into a "
+                "data frame.\n\tThis task could take a few minutes.\n"
             )
             while not stop_loop:
                 report = self._api_call(
@@ -686,11 +768,10 @@ class Genesys(Source):
                 page_counter += 1
 
         elif endpoint in ["routing/queues", "users"]:
-            self.data_returned = {}
             page = 1
             self.logger.info(
-                "Restructuring the response in order to be able to insert it into a data frame."
-                "\n\tThis task could take a few minutes.\n"
+                "Restructuring the response in order to be able to insert it into a "
+                "data frame.\n\tThis task could take a few minutes.\n"
             )
             while True:
                 if endpoint == "routing/queues":
@@ -699,7 +780,8 @@ class Genesys(Source):
                     params = {
                         "pageSize": 500,
                         "pageNumber": page,
-                        "expand": "presence,dateLastLogin,groups,employerInfo,lasttokenissued",
+                        "expand": "presence,dateLastLogin,groups"
+                        + ",employerInfo,lasttokenissued",
                         "state": "any",
                     }
                 response = self._api_call(
@@ -721,7 +803,6 @@ class Genesys(Source):
                     break
 
         elif endpoint == "routing_queues_members":
-            self.data_returned = {}
             counter = 0
             if queues_ids is None:
                 self.logger.error(
@@ -729,12 +810,12 @@ class Genesys(Source):
                 )
                 APIError("This end point requires `queues_ids` parameter to work.")
 
-            for id in queues_ids:
-                self.logger.info(f"Downloading Agents information from Queue: {id}")
+            for qid in queues_ids:
+                self.logger.info(f"Downloading Agents information from Queue: {qid}")
                 page = 1
                 while True:
                     response = self._api_call(
-                        endpoint=f"routing/queues/{id}/members",
+                        endpoint=f"routing/queues/{qid}/members",
                         params={"pageSize": 100, "pageNumber": page},
                         post_data_list=post_data_list,
                         method="GET",
@@ -765,23 +846,26 @@ class Genesys(Source):
     @add_viadot_metadata_columns
     def to_df(
         self,
-        drop_duplicates: bool = False,
-        validate_df_dict: Optional[Dict[str, Any]] = None,
+        if_empty="warn",
+        **kwargs,
     ) -> pd.DataFrame:
         """
-        Description:
-            Generate a Pandas Data Frame with the data in the Response object, and metadata.
+        Generate a Pandas Data Frame with the data in the Response object, and metadata.
 
         Args:
-            drop_duplicates (bool, optional): Remove duplicates from the Data Frame. Defaults to False.
+            drop_duplicates (bool, optional): Remove duplicates from the Data Frame.
+                Defaults to False.
             validate_df_dict (Optional[Dict[str, Any]], optional): A dictionary with
                 optional list of tests to verify the output dataframe. Defaults to None.
 
         Returns:
             pd.Dataframe: The response data as a Pandas Data Frame plus viadot metadata.
         """
+        drop_duplicates = kwargs.get("drop_duplicates", False)
+        validate_df_dict = kwargs.get("validate_df_dict", None)
+        super().to_df(if_empty=if_empty)
 
-        for key in self.data_returned.keys():
+        for key in list(self.data_returned.keys()):
             if key == 0:
                 data_frame = self.data_returned[key]
             else:
@@ -798,5 +882,7 @@ class Genesys(Source):
                 if_empty="warn",
                 message="The response does not contain any data.",
             )
+
+        data_frame.to_csv("pruebas.csv", index=False, sep="\t")
 
         return data_frame
