@@ -66,7 +66,7 @@ class DuckDB(Source):
         """Show the list of fully qualified table names.
 
         Returns:
-            List[str]: The list of tables in the format '{SCHEMA}.{TABLE}'.
+            list[str]: The list of tables in the format '{SCHEMA}.{TABLE}'.
         """
         tables_meta: list[tuple] = self.run_query(
             "SELECT * FROM information_schema.tables"
@@ -79,7 +79,7 @@ class DuckDB(Source):
         """Show the list of schemas.
 
         Returns:
-            List[str]: The list of schemas.
+            list[str]: The list of schemas.
         """
         self.logger.warning(
             "DuckDB does not expose a way to list schemas. `DuckDB.schemas` only contains schemas with tables."
@@ -215,12 +215,12 @@ class DuckDB(Source):
                 )
             elif if_exists == "skip":
                 return False
-            else:
-                self.run_query(f"CREATE SCHEMA IF NOT EXISTS {schema}")
-                self.logger.info(f"Creating table {fqn}...")
-                create_table_query = f"CREATE TABLE {fqn} AS SELECT * FROM '{path}';"
-                self.run_query(create_table_query)
-                self.logger.info(f"Table {fqn} has been created successfully.")
+        else:
+            self.run_query(f"CREATE SCHEMA IF NOT EXISTS {schema}")
+            self.logger.info(f"Creating table {fqn}...")
+            create_table_query = f"CREATE TABLE {fqn} AS SELECT * FROM '{path}';"
+            self.run_query(create_table_query)
+            self.logger.info(f"Table {fqn} has been created successfully.")
 
     def drop_table(self, table: str, schema: str = None) -> bool:
         """Drop a table.
