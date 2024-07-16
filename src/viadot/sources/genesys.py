@@ -281,12 +281,12 @@ class Genesys(Source):
 
         try:
             loop = asyncio.get_event_loop()
-        except RuntimeError as e:
-            if str(e).startswith("There is no current event loop in thread"):
+        except RuntimeError as err:
+            if str(err).startswith("There is no current event loop in thread"):
                 loop = asyncio.new_event_loop()
                 asyncio.set_event_loop(loop)
             else:
-                raise e
+                raise err
         coroutine = generate_post()
         loop.run_until_complete(coroutine)
 
@@ -419,16 +419,16 @@ class Genesys(Source):
             )
             print(f"{Fore.RED}ERROR{Style.RESET_ALL}: " + msg)
 
-        df = pd.read_csv(StringIO(donwload_response.content.decode("utf-8")))
+        dataframe = pd.read_csv(StringIO(donwload_response.content.decode("utf-8")))
 
         if drop_duplicates is True:
-            df.drop_duplicates(inplace=True, ignore_index=True)
+            dataframe.drop_duplicates(inplace=True, ignore_index=True)
 
-        return df
+        return dataframe
 
     def _merge_conversations(self, data_to_merge: list) -> pd.DataFrame:
         """
-        Method to merge all the conversations data into a single data frame.
+        Merge all the conversations data into a single data frame.
 
         Args:
             data_to_merge (list): List with all the conversations in json format.
@@ -535,8 +535,8 @@ class Genesys(Source):
         for key in ["metrics", "segments", "mediaEndpointStats"]:
             try:
                 df2.drop([key], axis=1, inplace=True)
-            except KeyError as e:
-                print(f"Key {e} not appearing in the response.")
+            except KeyError as err:
+                print(f"Key {err} not appearing in the response.")
 
         # LEVEL 3
         conversations_df = {}
@@ -611,8 +611,8 @@ class Genesys(Source):
 
         # NERGING ALL LEVELS
         # LEVELS 3
-        for m, key in enumerate(list(conversations_df.keys())):
-            if m == 0:
+        for i_3, key in enumerate(list(conversations_df.keys())):
+            if i_3 == 0:
                 dff3_f = conversations_df[key]
             else:
                 dff3_f = pd.concat([dff3_f, conversations_df[key]])
