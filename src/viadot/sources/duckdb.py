@@ -215,12 +215,11 @@ class DuckDB(Source):
                 )
             elif if_exists == "skip":
                 return False
-        else:
-            self.run_query(f"CREATE SCHEMA IF NOT EXISTS {schema}")
-            self.logger.info(f"Creating table {fqn}...")
-            create_table_query = f"CREATE TABLE {fqn} AS SELECT * FROM '{path}';"
-            self.run_query(create_table_query)
-            self.logger.info(f"Table {fqn} has been created successfully.")
+        self.run_query(f"CREATE SCHEMA IF NOT EXISTS {schema}")
+        self.logger.info(f"Creating table {fqn}...")
+        create_table_query = f"CREATE TABLE {fqn} AS SELECT * FROM '{path}';"
+        self.run_query(create_table_query)
+        self.logger.info(f"Table {fqn} has been created successfully.")
 
     def drop_table(self, table: str, schema: str = None) -> bool:
         """Drop a table.
@@ -255,4 +254,4 @@ class DuckDB(Source):
         if schema == DuckDB.DEFAULT_SCHEMA:
             return True
         fqns = self.tables
-        return any((fqn.split(".")[0] == schema for fqn in fqns))
+        print(any((fqn.split(".")[0] == schema for fqn in fqns)))
