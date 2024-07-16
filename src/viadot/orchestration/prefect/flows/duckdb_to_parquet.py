@@ -13,6 +13,7 @@ from prefect import flow
     description="Extract data from DuckDB and save it to Parquet file.",
     retries=1,
     retry_delay_seconds=60,
+    timeout_seconds=2 * 60 * 60,
 )
 def duckdb_to_parquet(  # noqa: PLR0913, PLR0917
     query: str,
@@ -27,7 +28,7 @@ def duckdb_to_parquet(  # noqa: PLR0913, PLR0917
     """Download a table from DuckDB and save it to Parquet file.
 
     Args:
-        query (str, required): The query to execute on the SQL Server database.
+        query (str, required): The query to execute on the DuckDB database.
             If the qery doesn't start with "SELECT" returns an empty DataFrame.
         path (str): Path where to save a Parquet file which will be created while
             executing flow.

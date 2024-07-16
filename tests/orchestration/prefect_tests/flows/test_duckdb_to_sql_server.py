@@ -14,9 +14,8 @@ DUCKDB_CREDS = dict(database=DATABASE_PATH, read_only=False)
 @pytest.fixture
 def sql_server():
     # Initialize the SQLServer instance with the test credentials
-    sql_server = SQLServer(config_key = "sql_server")
+    sql_server = SQLServer(config_key="sql_server")
     yield sql_server
-
 
 @pytest.fixture
 def duckdb():
@@ -24,24 +23,24 @@ def duckdb():
     duckdb = DuckDB(credentials=DUCKDB_CREDS)
     duckdb.run_query(
         query="""
-        CREATE SCHEMA sandbox;
-        CREATE or replace TABLE sandbox.numbers AS
-        SELECT 42 AS i, 84 AS j;
-                        """
-    )
+CREATE SCHEMA sandbox;
+CREATE or replace TABLE sandbox.numbers AS
+SELECT 42 AS i, 84 AS j;
+""")
     yield duckdb
     os.remove(DATABASE_PATH)
     
 def test_duckdb_to_sql_server(duckdb, sql_server):
     duckdb_to_sql_server(
     query="select * from sandbox.numbers",
-    local_path = "testing.csv",
-    db_table= TABLE,
-    db_schema = SCHEMA,
-    duckdb_credentials = DUCKDB_CREDS,
-    sql_server_credentials_secret = "sql-server"
+    local_path="testing.csv",
+    db_table=TABLE,
+    db_schema=SCHEMA,
+    duckdb_credentials=DUCKDB_CREDS,
+    sql_server_credentials_secret="sql-server"
     )
-    assert sql_server.exists(table = TABLE, schema= SCHEMA) == True
+    assert sql_server.exists(table=TABLE, schema=SCHEMA)
 
-    sql_server_query(query =f"""DROP TABLE {SCHEMA}.{TABLE}""",credentials_secret = "sql-server")
+    sql_server_query(query =f"""DROP TABLE {SCHEMA}.{TABLE}""",
+credentials_secret = "sql-server")
 

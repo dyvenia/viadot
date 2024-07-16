@@ -54,7 +54,6 @@ def test_create_table_from_parquet_delete(duckdb, TEST_PARQUET_FILE_PATH):
     df = duckdb.to_df(f"SELECT * FROM {SCHEMA}.{TABLE}")
     assert df.shape[0] == 3
 
-    # if exists = 'delete' deletes data and then inserts new one
     df = pd.DataFrame.from_dict(
         data={
             "country": ["italy", "germany", "spain"],

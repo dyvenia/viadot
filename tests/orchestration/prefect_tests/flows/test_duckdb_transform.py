@@ -16,8 +16,8 @@ def duckdb():
 
 
 def test_duckdb_transform(duckdb):
-    duckdb_transform(f"DROP SCHEMA IF EXISTS {SCHEMA}", duckdb_credentials = DUCKDB_CREDS)
-    duckdb_transform(f"CREATE SCHEMA {SCHEMA}", duckdb_credentials = DUCKDB_CREDS)
-    duckdb._check_if_schema_exists(schema = SCHEMA) ==True
-    duckdb_transform(f"DROP SCHEMA IF EXISTS {SCHEMA}", duckdb_credentials = DUCKDB_CREDS)
-    duckdb._check_if_schema_exists(schema = SCHEMA) ==False
+    duckdb_transform(f"DROP SCHEMA IF EXISTS {SCHEMA}", duckdb_credentials=DUCKDB_CREDS)
+    duckdb_transform(f"CREATE SCHEMA {SCHEMA}", duckdb_credentials=DUCKDB_CREDS)
+    duckdb._check_if_schema_exists(schema=SCHEMA)
+    duckdb_transform(f"DROP SCHEMA IF EXISTS {SCHEMA}", duckdb_credentials=DUCKDB_CREDS)
+    duckdb._check_if_schema_exists(schema = SCHEMA) is False

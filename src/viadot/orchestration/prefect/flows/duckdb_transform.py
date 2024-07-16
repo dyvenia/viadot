@@ -1,4 +1,4 @@
-"""Flow fortransforming data in the DuckDB."""
+"""Flow for transforming data in DuckDB."""
 
 from typing import Any
 from viadot.orchestration.prefect.tasks import duckdb_query
@@ -11,6 +11,7 @@ from prefect import flow
     description="Transform data in the DuckDB.",
     retries=1,
     retry_delay_seconds=60,
+    timeout_seconds=2 * 60 * 60,
 )
 def duckdb_transform(  # noqa: PLR0913, PLR0917
     query: str,
@@ -31,7 +32,6 @@ def duckdb_transform(  # noqa: PLR0913, PLR0917
             Defaults to None.
         duckdb_config_key (str, optional): The key in the viadot config holding relevant
             credentials to the DuckDB. Defaults to None.
-
     """
 
     duckdb_query(

@@ -19,11 +19,13 @@ def bcp(
     config_key: str | None = None,
     credentials: dict[str, Any] | None = None,
 ):
-    """Download a table from DuckDB and upload it to the SQLServer.
+    """Upload data from a CSV file into an SQLServer table using BCP.
+	    
+	For more information on bcp (bulk copy program), see
+	    https://learn.microsoft.com/en-us/sql/tools/bcp-utility.
 
     Args:
-        path (str): Path where to save a Parquet file which will be created while
-            executing flow.
+        path (str):  Where to store the CSV data dump used for bulk upload to a database.
         schema (str, optional): Destination schema. Defaults to None.
         table (str, optional): Destination table. Defaults to None.
         chunksize (int, optional): Size of a chunck to use in the bcp function.

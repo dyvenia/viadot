@@ -1,7 +1,7 @@
 """Flow for extracting data from the DuckDB into SQLServer."""
 
 from typing import Literal, Any
-
+import os
 from viadot.orchestration.prefect.tasks import (
     duckdb_query,
     create_sql_server_table,
@@ -12,7 +12,22 @@ from viadot.orchestration.prefect.tasks.task_utils import (
     get_sql_dtypes_from_df,
 )
 
-from prefect import flow
+from prefect import flow, task
+from prefect.logging import get_run_logger
+
+
+@task(timeout_seconds=60 *60)
+def cleanup_csv_task(path: str):
+    logger = get_run_logger()
+
+    logger.info(f"Removing file {path}...")
+    try:
+        os.remove(path)
+        logger.info(f"File {path} has been successfully removed.")
+        return True
+    except Exception as e:
+        logger.exception(f"File {path} could not be removed.")
+        return False
 
 
 @flow(
@@ -20,6 +35,7 @@ from prefect import flow
     description="Extract data from DuckDB and save it in the SQLServer",
     retries=1,
     retry_delay_seconds=60,
+    timeout_seconds=2 * 60 * 60,
 )
 def duckdb_to_sql_server(  # noqa: PLR0913, PLR0917
     query: str,
@@ -44,8 +60,7 @@ def duckdb_to_sql_server(  # noqa: PLR0913, PLR0917
     Args:
         query (str, required): The query to execute on the SQL Server database.
             If the qery doesn't start with "SELECT" returns an empty DataFrame.
-        local_path (str): Path where to save a Parquet file which will be created while
-            executing flow.
+        local_path (str): Where to store the CSV data dump used for bulk upload to SQL Server.
         db_table (str, optional): Destination table. Defaults to None.
         db_schema (str, optional): Destination schema. Defaults to None.
         if_exists (Literal, optional): What to do if the table exists. Defaults to "replace".
@@ -91,7 +106,7 @@ def duckdb_to_sql_server(  # noqa: PLR0913, PLR0917
     )
     csv = df_to_csv(df=df, path=local_path)
 
-    return bcp(
+    bcp(
         path=local_path,
         schema=db_schema,
         table=db_table,
@@ -101,3 +116,5 @@ def duckdb_to_sql_server(  # noqa: PLR0913, PLR0917
         credentials_secret=sql_server_credentials_secret,
         config_key=sql_server_config_key,
     )
+    
+    cleanup_csv_task(path = local_path)

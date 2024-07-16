@@ -7,11 +7,10 @@ ERROR_LOG_FILE = "log_file.log"
 TEST_CSV_FILE_PATH = "test_bcp.csv"
 
 
-
 def test_bcp():
     try:
         result = bcp(
-                credentials_secret = "sql-server",
+                credentials_secret="sql-server",
                 path=TEST_CSV_FILE_PATH,
                 schema=SCHEMA,
                 table=TABLE,
