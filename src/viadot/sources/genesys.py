@@ -61,7 +61,6 @@ Classes:
 import asyncio
 import base64
 import json
-import logging
 import time
 from io import StringIO
 from typing import Any, Dict, List, Optional, Tuple
@@ -70,15 +69,13 @@ import aiohttp
 import numpy as np
 import pandas as pd
 from aiolimiter import AsyncLimiter
+from colorama import Fore, Style
 from pydantic import BaseModel
 
 from viadot.config import get_source_credentials
 from viadot.exceptions import APIError, CredentialError
 from viadot.sources.base import Source
 from viadot.utils import add_viadot_metadata_columns, handle_api_response, validate
-
-logger = logging.getLogger(__name__)
-logger.setLevel(logging.INFO)
 
 
 class GenesysCredentials(BaseModel):  # pylint: disable=too-few-public-methods
@@ -162,7 +159,6 @@ class Genesys(Source):
         self.verbose = verbose
         self.data_returned = {}
         self.new_report = "{}"
-        self.logger = logger
 
         if environment in self.ENVIRONMETNS:
             self.environment = environment
@@ -199,11 +195,9 @@ class Genesys(Source):
         )
 
         if response.status_code == 200:
-            self.logger.info("Temporary authorization token was generated.")
+            print("Temporary authorization token was generated.")
         else:
-            self.logger.info(
-                f"Failure: { str(response.status_code) } - { response.reason }"
-            )
+            print(f"Failure: { str(response.status_code) } - { response.reason }")
         response_json = response.json()
         request_headers = {
             "Authorization": f"{ response_json['token_type'] }"
@@ -265,7 +259,7 @@ class Genesys(Source):
                                 message = "Generated report export ---"
                                 if self.verbose:
                                     message += f"\n {payload}."
-                                    self.logger.info(message)
+                                    print(message)
 
                                 semaphore.release()
 
@@ -279,7 +273,7 @@ class Genesys(Source):
                                 message = "Connecting to Genesys Cloud"
                                 if self.verbose:
                                     message += f": {params}."
-                                    self.logger.info(message)
+                                    print(message)
 
                                 semaphore.release()
 
@@ -327,7 +321,10 @@ class Genesys(Source):
         if response.status_code == 200:
             return response.json()
 
-        self.logger.error(f"Failed to loaded all exports. - {response.content}")
+        print(
+            f"{Fore.RED}ERROR{Style.RESET_ALL}: "
+            + f"Failed to loaded all exports. - {response.content}"
+        )
         raise APIError("Failed to loaded all exports.")
 
     def _get_reporting_exports_url(self, entities: List[str]) -> Tuple[List[str]]:
@@ -354,14 +351,18 @@ class Genesys(Source):
             status.append(entity.get("status"))
 
         if "FAILED" in status:
-            self.logger.warning("Some reports have not been successfully created.")
+            print(
+                f"{Fore.YELLOW}ERROR{Style.RESET_ALL}: "
+                + "Some reports have not been successfully created."
+            )
         if "RUNNING" in status:
-            self.logger.warning(
-                "Some reports are still being created and can not be downloaded."
+            print(
+                f"{Fore.YELLOW}ERROR{Style.RESET_ALL}: "
+                + "Some reports are still being created and can not be downloaded."
             )
         if self.verbose:
             message = "".join([f"\t{i} -> {j} \n" for i, j in zip(ids, status)])
-            self.logger.info(f"Report status:\n {message}")
+            print(f"Report status:\n {message}")
 
         return ids, urls
 
@@ -379,13 +380,12 @@ class Genesys(Source):
             method="DELETE",
         )
         if delete_response.status_code < 300:
-            self.logger.info(
-                f"Successfully deleted report '{report_id}' from Genesys API."
-            )
+            print(f"Successfully deleted report '{report_id}' from Genesys API.")
 
         else:
-            self.logger.error(
-                f"Failed to deleted report '{report_id}' "
+            print(
+                f"{Fore.RED}ERROR{Style.RESET_ALL}: "
+                + f"Failed to deleted report '{report_id}' "
                 + f"from Genesys API. - {delete_response.content}"
             )
 
@@ -410,16 +410,14 @@ class Genesys(Source):
         )
 
         if donwload_response.status_code < 300:
-            self.logger.info(
-                f"Successfully downloaded report from Genesys API ('{report_url}')."
-            )
+            print(f"Successfully downloaded report from Genesys API ('{report_url}').")
 
         else:
             msg = (
                 "Failed to download report from"
                 + f" Genesys API ('{report_url}'). - {donwload_response.content}"
             )
-            self.logger.error(msg)
+            print(f"{Fore.RED}ERROR{Style.RESET_ALL}: " + msg)
 
         df = pd.read_csv(StringIO(donwload_response.content.decode("utf-8")))
 
@@ -538,7 +536,7 @@ class Genesys(Source):
             try:
                 df2.drop([key], axis=1, inplace=True)
             except KeyError as e:
-                self.logger.info(f"Key {e} not appearing in the response.")
+                print(f"Key {e} not appearing in the response.")
 
         # LEVEL 3
         conversations_df = {}
@@ -671,9 +669,7 @@ class Genesys(Source):
                 - 'routing_queues_members': extra parameter `queues_ids` must be
                     included.
         """
-        self.logger.info(
-            f"Connecting to the Genesys Cloud using the endpoint: {endpoint}"
-        )
+        print(f"Connecting to the Genesys Cloud using the endpoint: {endpoint}")
 
         if endpoint == "analytics/reporting/exports":
             self._api_call(
@@ -686,7 +682,7 @@ class Genesys(Source):
                 f"Waiting {view_type_time_sleep} seconds for"
                 + " caching data from Genesys Cloud API."
             )
-            self.logger.info(msg)
+            print(msg)
             time.sleep(view_type_time_sleep)
 
             request_json = self._load_reporting_exports()
@@ -719,11 +715,12 @@ class Genesys(Source):
 
                     self.data_returned.update({count: df_downloaded})
                 else:
-                    self.logger.warning(
-                        f"Report id {qid} didn't have time to be created. "
-                        "Consider increasing the `view_type_time_sleep` parameter "
-                        f">> {view_type_time_sleep} seconds to allow Genesys Cloud "
-                        "to conclude the report creation."
+                    print(
+                        f"{Fore.YELLOW}ERROR{Style.RESET_ALL}: "
+                        + f"Report id {qid} didn't have time to be created. "
+                        + "Consider increasing the `view_type_time_sleep` parameter "
+                        + f">> {view_type_time_sleep} seconds to allow Genesys Cloud "
+                        + "to conclude the report creation."
                     )
                     raise_api_error = True
 
@@ -740,9 +737,9 @@ class Genesys(Source):
 
             stop_loop = False
             page_counter = post_data_list[0]["paging"]["pageNumber"]
-            self.logger.info(
+            print(
                 "Restructuring the response in order to be able to insert it into a "
-                "data frame.\n\tThis task could take a few minutes.\n"
+                + "data frame.\n\tThis task could take a few minutes.\n"
             )
             while not stop_loop:
                 report = self._api_call(
@@ -769,9 +766,9 @@ class Genesys(Source):
 
         elif endpoint in ["routing/queues", "users"]:
             page = 1
-            self.logger.info(
+            print(
                 "Restructuring the response in order to be able to insert it into a "
-                "data frame.\n\tThis task could take a few minutes.\n"
+                + "data frame.\n\tThis task could take a few minutes.\n"
             )
             while True:
                 if endpoint == "routing/queues":
@@ -805,13 +802,14 @@ class Genesys(Source):
         elif endpoint == "routing_queues_members":
             counter = 0
             if queues_ids is None:
-                self.logger.error(
-                    "This end point requires `queues_ids` parameter to work."
+                print(
+                    f"{Fore.RED}ERROR{Style.RESET_ALL}: "
+                    + "This end point requires `queues_ids` parameter to work."
                 )
                 APIError("This end point requires `queues_ids` parameter to work.")
 
             for qid in queues_ids:
-                self.logger.info(f"Downloading Agents information from Queue: {qid}")
+                print(f"Downloading Agents information from Queue: {qid}")
                 page = 1
                 while True:
                     response = self._api_call(
