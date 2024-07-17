@@ -1,3 +1,4 @@
+import unittest
 from unittest import mock
 
 import pandas as pd
@@ -5,6 +6,7 @@ import pytest
 
 from viadot.exceptions import APIError
 from viadot.sources import Hubspot
+from viadot.sources.hubspot import HubspotCredentials
 
 
 @pytest.fixture(scope="function")
@@ -152,3 +154,51 @@ def test_hubspot_api_df_response(mock_connection, var_dictionary):
     mock_connection.assert_called_once()
     assert set(df.columns).issuperset(viadot_set)
     assert isinstance(df, pd.DataFrame)
+
+
+class TestHubspotCredentials:
+    @pytest.fixture(scope="function")
+    def hubspotcredentials(self):
+        return HubspotCredentials()
+
+
+class TestHubspot:
+    @pytest.fixture(scope="function")
+    def hubspot(self):
+        return Hubspot()
+
+    def test__date_to_unixtimestamp(self, hubspot):
+        # TODO [use mock.patch, assert]: Implement test for Hubspot._date_to_unixtimestamp (line 121)
+        pass
+
+    def test__get_api_url(self, hubspot):
+        # TODO [use mock.patch, assert]: Implement test for Hubspot._get_api_url (line 139)
+        pass
+
+    def test__format_filters(self, hubspot):
+        # TODO [use mock.patch, assert]: Implement test for Hubspot._format_filters (line 175)
+        pass
+
+    def test__get_api_body(self, hubspot):
+        # TODO [use mock.patch, assert]: Implement test for Hubspot._get_api_body (line 201)
+        pass
+
+    def test__api_call(self, hubspot):
+        # TODO [use mock.patch, assert]: Implement test for Hubspot._api_call (line 248)
+        pass
+
+    def test__get_offset_from_response(self, hubspot):
+        # TODO [use mock.patch, assert]: Implement test for Hubspot._get_offset_from_response (line 287)
+        pass
+
+    def test_api_connection(self, hubspot):
+        # TODO [use mock.patch, assert]: Implement test for Hubspot.api_connection (line 313)
+        pass
+
+    def test_to_df(self, hubspot):
+        # TODO [use mock.patch, assert]: Implement test for Hubspot.to_df (line 395)
+        pass
+
+
+if __name__ == "__main__":
+    unittest.main()
