@@ -5,6 +5,7 @@ import pytest
 
 from viadot.exceptions import APIError
 from viadot.sources import Genesys
+from viadot.sources.genesys import GenesysCredentials
 
 
 @pytest.fixture(scope="function")
@@ -20,8 +21,8 @@ def var_dictionary():
                 "period": "PT30M",
                 "viewType": f"QUEUE_PERFORMANCE_DETAIL_VIEW",
                 "filter": {
-                            "mediaTypes": ["unknown"], 
-                            "queueIds": ["{'1234567890', '1234567890'}"], 
+                            "mediaTypes": ["unknown"],
+                            "queueIds": ["{'1234567890', '1234567890'}"],
                             "directions":["inbound"],
                             },
                 "read": True,
@@ -192,3 +193,51 @@ def test_genesys_api_df_response(
 
     assert set(df.columns).issuperset(viadot_set)
     assert isinstance(df, pd.DataFrame)
+
+
+class TestGenesysCredentials:
+    @pytest.fixture(scope="function")
+    def genesyscredentials(self):
+        return GenesysCredentials()
+
+
+class TestGenesys:
+    @pytest.fixture(scope="function")
+    def genesys(self):
+        return Genesys()
+
+    def test_authorization_token(self, genesys):
+        # TODO [use mock.patch, assert]: Implement test for Genesys.authorization_token (line 172)
+        pass
+
+    def test__api_call(self, genesys):
+        # TODO [use mock.patch, assert]: Implement test for Genesys._api_call (line 210)
+        pass
+
+    def test__load_reporting_exports(self, genesys):
+        # TODO [use mock.patch, assert]: Implement test for Genesys._load_reporting_exports (line 295)
+        pass
+
+    def test__get_reporting_exports_url(self, genesys):
+        # TODO [use mock.patch, assert]: Implement test for Genesys._get_reporting_exports_url (line 330)
+        pass
+
+    def test__delete_report(self, genesys):
+        # TODO [use mock.patch, assert]: Implement test for Genesys._delete_report (line 369)
+        pass
+
+    def test__download_report(self, genesys):
+        # TODO [use mock.patch, assert]: Implement test for Genesys._download_report (line 392)
+        pass
+
+    def test__merge_conversations(self, genesys):
+        # TODO [use mock.patch, assert]: Implement test for Genesys._merge_conversations (line 429)
+        pass
+
+    def test_api_connection(self, genesys):
+        # TODO [use mock.patch, assert]: Implement test for Genesys.api_connection (line 633)
+        pass
+
+    def test_to_df(self, genesys):
+        # TODO [use mock.patch, assert]: Implement test for Genesys.to_df (line 845)
+        pass
