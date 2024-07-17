@@ -9,11 +9,10 @@ from viadot.orchestration.prefect.tasks import (
     df_to_adls,
 )
 
-
 @flow
 def cloud_for_customers_to_adls(  # noqa: PLR0913, PLR0917
     # C4C
-    cloud_for_customers_url: str,
+    cloud_for_customers_url: str | None = None,
     fields: list[str] | None = None,
     dtype: dict[str, Any] | None = None,
     endpoint: str | None = None,
@@ -71,3 +70,14 @@ def cloud_for_customers_to_adls(  # noqa: PLR0913, PLR0917
         config_key=adls_config_key,
         overwrite=overwrite,
     )
+
+if __name__ == '__main__':
+    cloud_for_customers_to_adls(  
+        report_url="https://my341115.crm.ondemand.com/sap/c4c/odata/ana_businessanalytics_analytics.svc/RPZ36A87743F65355C0B904A5QueryResults?$select=TDOC_PRIORITY",
+        filter_params={'CBTD_REF_TYPE_CODE':'(%20eq%20%27118%27)'},
+        adls_path=f"raw/c4c/ticket/leads_link/c4c_tickets_leads_link.parquet",
+        overwrite=True,
+        cloud_for_customers_credentials_secret='aia-c4c-prod',
+        adls_credentials_secret='app-azure-cr-datalakegen2',
+    )
+        
