@@ -1,3 +1,51 @@
+"""
+'outlook.py'.
+
+Structure for the Outlook API connector.
+
+This module provides functionalities for connecting to Outlook API and download
+the response. It includes the following features:
+- Direct connection to Outlook API.
+- Introduce any downloaded data into a Pandas Data Frame.
+
+Typical usage example:
+
+    outlook = Outlook(
+        credentials=credentials,
+        config_key=config_key,
+    )
+    outlook.api_connection(
+        mailbox_name=mailbox_name,
+        request_retries=request_retries,
+        start_date=start_date,
+        end_date=end_date,
+        limit=limit,
+        address_limit=address_limit,
+        outbox_list=outbox_list,
+    )
+    data_frame = outlook.to_df()
+
+Outlook Class Attributes:
+
+    credentials (Optional[OutlookCredentials], optional): Outlook credentials.
+        Defaults to None
+    config_key (str, optional): The key in the viadot config holding relevant
+        credentials. Defaults to "outlook".
+
+Functions:
+
+    api_connection(mailbox_name, request_retries, start_date, end_date, limit,
+        address_limit, outbox_list): Download all the messages stored in a MailBox
+        folder and subfolders
+    to_df(if_empty): Generate a Pandas Data Frame with the data in the Response object
+        and metadata
+
+Classes:
+
+    OutlookCredentials: Checking for values in Outlook credentials dictionary.
+    Outlook: Class implementing the Outlook API.
+"""  # noqa: D412
+
 import logging
 from datetime import date, datetime, timedelta, timezone
 from typing import Any, Dict, List, Optional
@@ -13,7 +61,19 @@ from viadot.sources.base import Source
 from viadot.utils import add_viadot_metadata_columns
 
 
-class OUTLOOK_CREDENTIALS(BaseModel):
+class OutlookCredentials(BaseModel):
+    """Checking for values in Outlook credentials dictionary.
+
+    Two key values are held in the Outlook connector:
+        - client_id:
+        - client_secret:
+        - tenant_id:
+
+    Args:
+        BaseModel (pydantic.main.ModelMetaclass): A base class for creating
+            Pydantic models.
+    """
+
     client_id: str
     client_secret: str
     tenant_id: str
@@ -23,39 +83,40 @@ class Outlook(Source):
     """
     Class implementing the Outlook API.
 
-    Documentation for this API is available at: https://o365.github.io/python-o365/latest/getting_started.html.
+    Documentation for this API is available at:
+        https://o365.github.io/python-o365/latest/getting_started.html.
     """
 
     UTC = timezone.utc
 
     def __init__(
         self,
+        *args: List[Any],
         credentials: Optional[Dict[str, Any]] = None,
         config_key: str = "outlook",
-        *args: List[Any],
         **kwargs: Dict[str, Any],
     ):
         """
-        Description:
-            Outlook connector build for fetching Outlook API source.
-            Data are fetched from start to end date range. If start or end date are not provided
-            then flow fetched data from yestarday by default.
+        Outlook connector build for fetching Outlook API source.
+
+        Data are fetched from start to end date range. If start or end date are not
+            provided then flow fetched data from yestarday by default.
 
         Args:
-            credentials (Optional[OUTLOOK_CREDENTIALS], optional): Outlook credentials.
+            credentials (Optional[OutlookCredentials], optional): Outlook credentials.
                 Defaults to None
-            config_key (str, optional): The key in the viadot config holding relevant credentials.
-                Defaults to "outlook".
+            config_key (str, optional): The key in the viadot config holding relevant
+                credentials. Defaults to "outlook".
 
         Raises:
-            CredentialError: If credentials are not provided in local_config or directly as a parameter.
+            CredentialError: If credentials are not provided in local_config or
+                directly as a parameter.
         """
-
         credentials = credentials or get_source_credentials(config_key) or None
 
         if credentials is None or not isinstance(credentials, dict):
             raise CredentialError("Missing credentials.")
-        self.credentials = dict(OUTLOOK_CREDENTIALS(**credentials))
+        self.credentials = dict(OutlookCredentials(**credentials))
 
         logging.basicConfig()
         super().__init__(*args, credentials=self.credentials, **kwargs)
@@ -66,10 +127,9 @@ class Outlook(Source):
         folder_structure: dict,
         folder: MailBox,
         key_concat: str = "",
-    ) -> Dict[str, List]:
+    ) -> Optional[Dict[str, List]]:
         """
-        Description:
-            To retrieve all the subfolder in a MailBox folder.
+        To retrieve all the subfolder in a MailBox folder.
 
         Args:
             folder_structure (dict): Dictionary where to save the data.
@@ -78,7 +138,8 @@ class Outlook(Source):
                 the actual subfolder. Defaults to "".
 
         Returns:
-            Dict[str, List]: `folder_structure` dictionary is returned once it is updated.
+            Dict[str, List]: `folder_structure` dictionary is returned once
+                it is updated.
         """
         if key_concat:
             tmp_key = key_concat.split("|")
@@ -97,19 +158,22 @@ class Outlook(Source):
         if folder_structure:
             return folder_structure
 
+        return None
+
     def _get_all_folders(
         self,
         mailbox: MailBox,
     ) -> dict:
         """
-        Description:
-            To retrieve all folders from a Mailbox object.
+        To retrieve all folders from a Mailbox object.
 
         Args:
-            mailbox (MailBox): Outlook Mailbox object from where to extract all folder structure.
+            mailbox (MailBox): Outlook Mailbox object from where to extract all
+                folder structure.
 
         Returns:
-            dict: Every single folder and subfolder is returned as "parent (sub)folder|(sub)folder": Mailbox.
+            dict: Every single folder and subfolder is returned as
+                "parent (sub)folder|(sub)folder": Mailbox.
         """
         dict_folders = self._get_subfolders({}, mailbox)
         final_dict_folders = dict_folders.copy()
@@ -132,23 +196,26 @@ class Outlook(Source):
         self,
         mailbox_name: str,
         dict_folder: dict,
+        date_range_start_time: datetime,
+        date_range_end_time: datetime,
         limit: int = 10000,
         address_limit: int = 8000,
         outbox_list: List[str] = ["Sent Items"],
     ) -> list:
         """
-        Description:
-            To retrieve all messages from all the mailboxes passed in the dictionary.
+        To retrieve all messages from all the mailboxes passed in the dictionary.
 
         Args:
             mailbox_name (str): Mailbox name.
-            dict_folder (dict): Mailboxes dictionary holder, with the following structure:
-                "parent (sub)folder|(sub)folder": Mailbox.
+            dict_folder (dict): Mailboxes dictionary holder, with the following
+                structure: "parent (sub)folder|(sub)folder": Mailbox.
+            date_range_start_time (datetime): Start date from where to stract data.
+            date_range_end_time (datetime): End data up to where to stract data.
             limit (int, optional): Number of fetched top messages. Defaults to 10000.
-            address_limit (int, optional): The maximum number of accepted characters in the sum
-                of all email names. Defaults to 8000.
-            outbox_list (List[str], optional): List of outbox folders to differenciate between
-                Inboxes and Outboxes. Defaults to ["Sent Items"].
+            address_limit (int, optional): The maximum number of accepted characters in
+                the sum of all email names. Defaults to 8000.
+            outbox_list (List[str], optional): List of outbox folders to differenciate
+                between Inboxes and Outboxes. Defaults to ["Sent Items"].
 
         Returns:
             list: A list with all messages from all Mailboxes.
@@ -160,9 +227,9 @@ class Outlook(Source):
                 received_time = message.received
                 date_obj = datetime.fromisoformat(str(received_time))
                 if (
-                    self.date_range_start_time.replace(tzinfo=self.UTC)
+                    date_range_start_time.replace(tzinfo=self.UTC)
                     < date_obj
-                    < self.date_range_end_time.replace(tzinfo=self.UTC)
+                    < date_range_end_time.replace(tzinfo=self.UTC)
                 ):
                     count += 1
                     fetched = message.to_api_data()
@@ -180,8 +247,8 @@ class Outlook(Source):
                                 >= address_limit
                             ):
                                 break
-                            else:
-                                recivers += add_string
+
+                            recivers += add_string
 
                     categories = " "
                     if message.categories is not None:
@@ -234,27 +301,25 @@ class Outlook(Source):
         outbox_list: List[str] = ["Sent Items"],
     ) -> pd.DataFrame:
         """
-        Description:
-            Download all the messages stored in a MailBox folder and subfolders.
+        Download all the messages stored in a MailBox folder and subfolders.
 
         Args:
             mailbox_name (Optional[str], optional): Mailbox name. Defaults to None.
-            request_retries (int, optional): How many times retries to authorizate. Defaults to 10.
-            start_date (Optional[str], optional): A filtering start date parameter e.g. "2022-01-01".
-                Defaults to None.
-            end_date (Optional[str], optional): A filtering end date parameter e.g. "2022-01-02".
-                Defaults to None.
+            request_retries (int, optional): How many times retries to authorizate.
+                Defaults to 10.
+            start_date (Optional[str], optional): A filtering start date parameter e.g.
+                "2022-01-01". Defaults to None.
+            end_date (Optional[str], optional): A filtering end date parameter e.g.
+                "2022-01-02". Defaults to None.
             limit (int, optional): Number of fetched top messages. Defaults to 10000.
-            address_limit (int, optional): The maximum number of accepted characters in the sum
-                of all email names. Defaults to 8000.
-            outbox_list (List[str], optional): List of outbox folders to differenciate between
-                Inboxes and Outboxes. Defaults to ["Sent Items"].
+            address_limit (int, optional): The maximum number of accepted characters in
+                the sum of all email names. Defaults to 8000.
+            outbox_list (List[str], optional): List of outbox folders to differenciate
+                between Inboxes and Outboxes. Defaults to ["Sent Items"].
 
         Returns:
             pd.DataFrame: All messages are stored in a pandas framwork.
         """
-        self.mailbox_name = mailbox_name
-
         account = Account(
             (self.credentials["client_id"], self.credentials["client_secret"]),
             auth_flow_type="credentials",
@@ -270,49 +335,52 @@ class Outlook(Source):
 
         mailbox_obj = account.mailbox()
 
-        self.start_date = start_date
-        self.end_date = end_date
-        if self.start_date is not None and self.end_date is not None:
-            self.date_range_end_time = datetime.strptime(self.end_date, "%Y-%m-%d")
-            self.date_range_start_time = datetime.strptime(self.start_date, "%Y-%m-%d")
+        if start_date is not None and end_date is not None:
+            date_range_end_time = datetime.strptime(end_date, "%Y-%m-%d")
+            date_range_start_time = datetime.strptime(start_date, "%Y-%m-%d")
         else:
-            self.date_range_start_time = date.today() - timedelta(days=1)
-            self.date_range_end_time = date.today()
+            date_range_start_time = date.today() - timedelta(days=1)
+            date_range_end_time = date.today()
 
             min_time = datetime.min.time()
-            self.date_range_end_time = datetime.combine(
-                self.date_range_end_time, min_time
-            )
-            self.date_range_start_time = datetime.combine(
-                self.date_range_start_time, min_time
-            )
-            self.outbox_list = outbox_list
+            date_range_end_time = datetime.combine(date_range_end_time, min_time)
+            date_range_start_time = datetime.combine(date_range_start_time, min_time)
 
         final_dict_folders = self._get_all_folders(mailbox_obj)
 
         self.data = self._get_messages_from_mailbox(
             mailbox_name=mailbox_name,
             dict_folder=final_dict_folders,
+            date_range_start_time=date_range_start_time,
+            date_range_end_time=date_range_end_time,
             limit=limit,
             address_limit=address_limit,
             outbox_list=outbox_list,
         )
 
     @add_viadot_metadata_columns
-    def to_df(self) -> pd.DataFrame:
+    def to_df(
+        self,
+        if_empty: str = "warn",
+    ) -> pd.DataFrame:
         """
-        Description:
-            Generate a Pandas Data Frame with the data in the Response object and metadata.
+        Generate a Pandas Data Frame with the data in the Response object and metadata.
+
+        Args:
+            if_empty (str, optional): What to do if a fetch produce no data.
+                Defaults to "warn
 
         Returns:
             pd.Dataframe: The response data as a Pandas Data Frame plus viadot metadata.
         """
+        super().to_df(if_empty=if_empty)
+
         data_frame = pd.DataFrame(self.data)
 
         if data_frame.empty:
             self._handle_if_empty(
                 if_empty="warn",
-                message=f"No data was got from {self.mailbox_name}, days from {self.date_range_start_time} to {self.date_range_end_time}",
+                message="No data was got from the Mail Box for those days",
             )
         else:
             self.logger.info("Successfully downloaded data from the Mindful API.")
