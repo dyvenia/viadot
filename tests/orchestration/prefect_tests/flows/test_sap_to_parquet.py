@@ -10,12 +10,7 @@ def test_sap_to_parquet():
 
     flow = sap_to_parquet(
         path=PATH,
-        query=""" select 
-            FKART as billing_type
-            ,VTEXT as billing_type_name
-            ,SPRAS as language_key    
-            from TVFKT  
-            where SPRAS in ('E', 'D')""",
+        query="""SELECT MATKL, MTART, ERSDA FROM MARA WHERE ERSDA = '20221230'""",
         func= "RFC_READ_TABLE",
         rfc_total_col_width_character_limit = 400,
         sap_credentials_secret=SAP_CREDS,
