@@ -6,6 +6,7 @@ import pytest
 
 from viadot.exceptions import APIError
 from viadot.sources import Mindful
+from viadot.sources.mindful import MindfulCredentials
 
 
 @pytest.fixture(scope="function")
@@ -109,3 +110,27 @@ def test_mindful_api_df_response(mock_connection, var_dictionary):
 
     assert set(df.columns).issuperset(viadot_set)
     assert isinstance(df, pd.DataFrame)
+
+
+class TestMindfulCredentials:
+    @pytest.fixture(scope="function")
+    def mindfulcredentials(self):
+        return MindfulCredentials()
+
+
+class TestMindful:
+    @pytest.fixture(scope="function")
+    def mindful(self):
+        return Mindful()
+
+    def test__mindful_api_response(self, mindful):
+        # TODO [use mock.patch, assert]: Implement test for Mindful._mindful_api_response (line 126)
+        pass
+
+    def test_api_connection(self, mindful):
+        # TODO [use mock.patch, assert]: Implement test for Mindful.api_connection (line 152)
+        pass
+
+    def test_to_df(self, mindful):
+        # TODO [use mock.patch, assert]: Implement test for Mindful.to_df (line 231)
+        pass
