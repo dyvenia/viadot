@@ -40,11 +40,14 @@ class AzureDataLake(Source):
         **kwargs,
     ):
         credentials = credentials or get_source_credentials(config_key)
+        # pass to lower letters
+        credentials = {key.lower(): value for key, value in credentials.items()}
+        
         required_credentials = (
             "account_name",
-            "tenant_id",
-            "client_id",
-            "client_secret",
+            "azure_tenant_id",
+            "azure_client_id",
+            "azure_client_secret",
         )
         required_credentials_are_provided = all(
             [rc in credentials for rc in required_credentials]
@@ -58,16 +61,16 @@ class AzureDataLake(Source):
         super().__init__(*args, credentials=credentials, **kwargs)
 
         storage_account_name = self.credentials["account_name"]
-        tenant_id = self.credentials["tenant_id"]
-        client_id = self.credentials["client_id"]
-        client_secret = self.credentials["client_secret"]
-
+        tenant_id = self.credentials["azure_tenant_id"]
+        client_id = self.credentials["azure_client_id"]
+        client_secret = self.credentials["azure_client_secret"]
+ 
         self.path = path
         self.gen = gen
         self.storage_options = {
-            "tenant_id": tenant_id,
-            "client_id": client_id,
-            "client_secret": client_secret,
+            "azure_tenant_id": tenant_id,
+            "azure_client_id": client_id,
+            "azure_client_secret": client_secret,
         }
         if gen == 1:
             self.fs = AzureDatalakeFileSystem(
