@@ -1,3 +1,32 @@
+"""
+'mindful_to_adls.py'.
+
+Prefect flow for the Mindful API connector.
+
+This module provides a prefect flow function to use the Mindful connector:
+- Call to the prefect task wrapper to get a final Data Frame from the connector.
+- Upload that data to Azure Data Lake Storage.
+
+Typical usage example:
+
+    mindful_to_adls(
+        credentials=credentials,
+        endpoint=endpoint,
+        date_interval=date_interval,
+        adls_path=adls_path,
+        adls_credentials=adls_credentials,
+        adls_azure_key_vault_secret=adls_azure_key_vault_secret,
+        adls_path_overwrite=True,
+    )
+
+Functions:
+
+    mindful_to_adls(credentials, config_key, azure_key_vault_secret, region,
+    endpoint, date_interval, limit, adls_credentials, adls_config_key,
+    adls_azure_key_vault_secret, adls_path, adls_path_overwrite):
+        Flow to download data from Mindful to Azure Data Lake.
+"""  # noqa: D412
+
 import os
 import time
 from datetime import date
@@ -31,34 +60,38 @@ def mindful_to_adls(
     adls_path_overwrite: bool = False,
 ):
     """
-    Description:
-        Flow for downloading data from mindful to Azure Data Lake.
+    Flow to download data from Mindful to Azure Data Lake.
 
     Args:
-        credentials (Optional[Dict[str, Any]], optional): Mindful credentials as a dictionary.
-            Defaults to None.
-        config_key (str, optional): The key in the viadot config holding relevant credentials.
-            Defaults to None.
-        azure_key_vault_secret (Optional[str], optional): The name of the Azure Key Vault secret
-            where credentials are stored. Defaults to None.
-        region (Literal[us1, us2, us3, ca1, eu1, au1], optional): Survey Dynamix region from
-            where to interact with the mindful API. Defaults to "eu1" English (United Kingdom).
-        endpoint (Optional[Union[List[str], str]], optional): Endpoint name or list of them from
-            where to download data. Defaults to None.
-        date_interval (Optional[List[date]], optional): Date time range detailing the starting date and the ending date.
-            If no range is passed, one day of data since this moment will be retrieved. Defaults to None.
-        limit (int, optional): The number of matching interactions to return. Defaults to 1000.
-        adls_credentials (Optional[Dict[str, Any]], optional): The credentials as a dictionary.
-            Defaults to None.
+        credentials (Optional[Dict[str, Any]], optional): Mindful credentials as a
+            dictionary. Defaults to None.
+        config_key (str, optional): The key in the viadot config holding relevant
+            credentials. Defaults to None.
+        azure_key_vault_secret (Optional[str], optional): The name of the Azure Key
+            Vault secret where credentials are stored. Defaults to None.
+        region (Literal[us1, us2, us3, ca1, eu1, au1], optional): Survey Dynamix region
+            from where to interact with the mindful API. Defaults to "eu1" English
+            (United Kingdom).
+        endpoint (Optional[Union[List[str], str]], optional): Endpoint name or list of
+            them from where to download data. Defaults to None.
+        date_interval (Optional[List[date]], optional): Date time range detailing the
+            starting date and the ending date. If no range is passed, one day of data
+            since this moment will be retrieved. Defaults to None.
+        limit (int, optional): The number of matching interactions to return.
+            Defaults to 1000.
+        adls_credentials (Optional[Dict[str, Any]], optional): The credentials as a
+            dictionary. Defaults to None.
         adls_config_key (Optional[str], optional): The key in the viadot config holding
             relevant credentials. Defaults to None.
-        adls_azure_key_vault_secret (Optional[str], optional): The name of the Azure Key Vault secret containing
-            a dictionary with ACCOUNT_NAME and Service Principal credentials (TENANT_ID, CLIENT_ID, CLIENT_SECRET)
-            for the Azure Data Lake. Defaults to None.
-        adls_path (Optional[str], optional): Azure Data Lake destination file path. Defaults to None.
-        adls_path_overwrite (bool, optional): Whether to overwrite the file in ADLS. Defaults to True.
+        adls_azure_key_vault_secret (Optional[str], optional): The name of the Azure Key
+            Vault secret containing a dictionary with ACCOUNT_NAME and Service Principal
+            credentials (TENANT_ID, CLIENT_ID, CLIENT_SECRET) for the Azure Data Lake.
+            Defaults to None.
+        adls_path (Optional[str], optional): Azure Data Lake destination file path.
+            Defaults to None.
+        adls_path_overwrite (bool, optional): Whether to overwrite the file in ADLS.
+            Defaults to True.
     """
-
     if isinstance(endpoint, str):
         endpoint = [endpoint]
 
