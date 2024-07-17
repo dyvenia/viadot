@@ -1,13 +1,17 @@
-import os
-from datetime import datetime
+# import os
+import unittest
+
+# from datetime import datetime
 from unittest import mock
 
 import pandas as pd
 import pytest
-from O365.account import Account
 
-from viadot.exceptions import CredentialError
+# from viadot.exceptions import CredentialError
 from viadot.sources import Outlook
+from viadot.sources.outlook import OutlookCredentials
+
+# from O365.account import Account
 
 
 @pytest.fixture
@@ -110,3 +114,39 @@ def test_outlook_api_response_error(mock_mailbox, mock_connection, var_dictionar
     mock_mailbox.assert_called_once()
     assert set(df.columns).issuperset(viadot_set)
     assert isinstance(df, pd.DataFrame)
+
+
+class TestOutlookCredentials:
+    @pytest.fixture(scope="function")
+    def outlookcredentials(self):
+        return OutlookCredentials()
+
+
+class TestOutlook:
+    @pytest.fixture(scope="function")
+    def outlook(self):
+        return Outlook()
+
+    def test__get_subfolders(self, outlook):
+        # TODO [use mock.patch, assert]: Implement test for Outlook._get_subfolders (line 126)
+        pass
+
+    def test__get_all_folders(self, outlook):
+        # TODO [use mock.patch, assert]: Implement test for Outlook._get_all_folders (line 163)
+        pass
+
+    def test__get_messages_from_mailbox(self, outlook):
+        # TODO [use mock.patch, assert]: Implement test for Outlook._get_messages_from_mailbox (line 195)
+        pass
+
+    def test_api_connection(self, outlook):
+        # TODO [use mock.patch, assert]: Implement test for Outlook.api_connection (line 293)
+        pass
+
+    def test_to_df(self, outlook):
+        # TODO [use mock.patch, assert]: Implement test for Outlook.to_df (line 362)
+        pass
+
+
+if __name__ == "__main__":
+    unittest.main()
