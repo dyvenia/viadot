@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Added `sap_to_parquet` Prefect flows.
 - Added `duckdb_to_sql_server`, `duckdb_to_parquet`, `duckdb_transform` Prefect flows.
 - Added `bcp` and `duckdb_query` Prefect tasks.
 - Added `DuckDB` source class.
