@@ -4,8 +4,8 @@ from typing import Any
 
 import pandas as pd
 from prefect import get_run_logger, task
-from prefect_viadot.exceptions import MissingSourceCredentialsError
-from prefect_viadot.utils import get_credentials
+from viadot.orchestration.prefect.exceptions import MissingSourceCredentialsError
+from viadot.orchestration.prefect.utils import get_credentials
 from viadot.sources import Sharepoint
 from viadot.sources.sharepoint import (
     SharepointCredentials,

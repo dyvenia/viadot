@@ -3,7 +3,7 @@
 from typing import Any, Literal
 
 from prefect import flow
-from prefect_viadot.tasks import (
+from viadot.orchestration.prefect.tasks import (
     df_to_redshift_spectrum,
     sharepoint_to_df,
 )
