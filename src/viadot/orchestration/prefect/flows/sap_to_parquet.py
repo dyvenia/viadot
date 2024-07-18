@@ -11,8 +11,8 @@ from prefect import flow
 @flow(
     name="extract--sap--parquet",
     description="Extract data from SAP and load it into Parquet file",
-    retries=0,
-    # retry_delay_seconds=10,
+    retries=1,
+    retry_delay_seconds=60,
 )
 def sap_to_parquet(
     path: str,
@@ -32,8 +32,8 @@ def sap_to_parquet(
     Args:
         path (str): Path to Parquet file, where the data will be located.
             Defaults to None.
-        if_exists (Literal["append", "replace", "skip"], optional): Information what has to be done, if the file exists.
-            Defaults to "replace"
+        if_exists (Literal["append", "replace", "skip"], optional): Information what has to be done,
+            if the file exists. Defaults to "replace"
         query (str): The query to be executed with pyRFC.
         sap_sep (str, optional): The separator to use when reading query results.
             If not provided, multiple options are automatically tested.
@@ -45,13 +45,13 @@ def sap_to_parquet(
             However, it was observed that SAP raising an exception even on a slightly lower
             number of characters, so safety margin was added. Defaults to 400.
         rfc_unique_id  (list[str], optional): Reference columns to merge chunks Data
-            Frames. These columns must to be unique. If no columns are provided, all
-                data frame columns will by concatenated. Defaults to None.
+            Frames. These columns must to be unique. Otherwise, the table will be malformed.
+            If no columns are provided, all data frame columns will by concatenated. Defaults to None.
         sap_credentials_secret (str, optional): The name of the Prefect Secret that stores
             SAP credentials. Defaults to None.
         sap_config_key (str, optional): The key in the viadot config holding relevant
             credentials. Defaults to "SAP".
-        alternative_version (bool, optional): Enable the use version 2 in source.
+        alternative_version (bool, optional): If true, enables the use of SAPRFC source in version 2.
             Defaults to False.
         replacement (str, optional): In case of sep is on a columns, set up a new
             character to replace inside the string to avoid flow breakdowns.
