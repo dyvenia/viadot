@@ -48,7 +48,7 @@ class TestMindful(unittest.TestCase):
     @pytest.mark.connect
     @patch("viadot.sources.mindful.handle_api_response")
     def test_mindful_api_response(self, mock_handle_api_response):
-        """Test Genesys `_mindful_api_response` method."""
+        """Test Mindful `_mindful_api_response` method."""
         mock_response = MagicMock(spec=Response)
         mock_handle_api_response.return_value = mock_response
 
@@ -68,7 +68,7 @@ class TestMindful(unittest.TestCase):
     @pytest.mark.connect
     @patch("viadot.sources.mindful.handle_api_response")
     def test_api_connection(self, mock_handle_api_response):
-        """Test Genesys `api_connection` method."""
+        """Test Mindful `api_connection` method."""
         mock_response = MagicMock(spec=Response)
         mock_response.status_code = 200
         mock_response.content = b'{"data": "some_data"}'
@@ -85,7 +85,7 @@ class TestMindful(unittest.TestCase):
     @pytest.mark.connect
     @patch("viadot.sources.mindful.handle_api_response")
     def test_api_connection_no_data(self, mock_handle_api_response):
-        """Test Genesys `api_connection` method without data."""
+        """Test Mindful `api_connection` method without data."""
         mock_response = MagicMock(spec=Response)
         mock_response.status_code = 204
         mock_response.content = b""
@@ -102,7 +102,7 @@ class TestMindful(unittest.TestCase):
     @pytest.mark.connect
     @patch("viadot.sources.mindful.handle_api_response")
     def test_api_connection_error(self, mock_handle_api_response):
-        """Test Genesys `api_connection` method, APIError."""
+        """Test Mindful `api_connection` method, APIError."""
         mock_response = MagicMock(spec=Response)
         mock_response.status_code = 500
         mock_response.content = b"Internal Server Error"
@@ -115,7 +115,7 @@ class TestMindful(unittest.TestCase):
     @patch("viadot.sources.mindful.pd.read_json")
     @patch("viadot.sources.mindful.super")
     def test_to_df(self, mock_super, mock_read_json):
-        """Test Genesys `to_df` method."""
+        """Test Mindful `to_df` method."""
         mock_super().to_df = MagicMock()
         mock_read_json.return_value = pd.DataFrame({"A": [1, 2], "B": [3, 4]})
         self.mindful_instance.data = StringIO('{"A": [1, 2], "B": [3, 4]}')
@@ -135,7 +135,7 @@ class TestMindful(unittest.TestCase):
     @patch("viadot.sources.mindful.pd.read_json")
     @patch("viadot.sources.mindful.super")
     def test_to_df_empty(self, mock_super, mock_read_json):
-        """Test Genesys `to_df` method, checking emptiness."""
+        """Test Mindful `to_df` method, checking emptiness."""
         mock_super().to_df = MagicMock()
         mock_read_json.return_value = pd.DataFrame()
         self.mindful_instance.data = StringIO("{}")
