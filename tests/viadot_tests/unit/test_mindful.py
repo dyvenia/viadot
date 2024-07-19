@@ -1,3 +1,5 @@
+"""'test_mindful.py'."""
+
 import unittest
 from datetime import date, timedelta
 from io import StringIO
