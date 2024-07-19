@@ -103,7 +103,7 @@ class Genesys(Source):
         https://developer.genesys.cloud/devapps/api-explorer.
     """
 
-    ENVIRONMETNS = [
+    ENVIRONMENTS = [
         "cac1.pure.cloud",
         "sae1.pure.cloud",
         "mypurecloud.com",
@@ -160,7 +160,7 @@ class Genesys(Source):
         self.data_returned = {}
         self.new_report = "{}"
 
-        if environment in self.ENVIRONMETNS:
+        if environment in self.ENVIRONMENTS:
             self.environment = environment
         else:
             raise APIError(
