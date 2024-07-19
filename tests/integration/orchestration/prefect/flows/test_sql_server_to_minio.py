@@ -3,12 +3,12 @@ from viadot.orchestration.prefect.utils import get_credentials
 from viadot.sources import MinIO
 
 
-
-PATH ="data/tables_schemas.parquet"
+PATH = "data/tables_schemas.parquet"
 MINIO_CREDS = get_credentials("minio-dev")
 
+
 def test_sql_server_to_minio():
-    flow = sql_server_to_minio(
+    sql_server_to_minio(
         query=""" SELECT t.name as table_name
                 ,s.name as schema_name
                 FROM sys.tables t

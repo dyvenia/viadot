@@ -9,7 +9,7 @@ SAP_CREDS = "sap-dev"
 def test_sap_to_parquet():
     assert os.path.isfile(PATH) is False
 
-    flow = sap_to_parquet(
+    sap_to_parquet(
         path=PATH,
         query="""SELECT MATKL, MTART, ERSDA FROM MARA LIMIT 100""",
         func="RFC_READ_TABLE",

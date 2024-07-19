@@ -98,8 +98,8 @@ def test_run_query_query_with_comments(duckdb, TEST_PARQUET_FILE_PATH):
         schema=SCHEMA, table=TABLE, path=TEST_PARQUET_FILE_PATH
     )
     output1 = duckdb.run_query(
-        query=f""" 
-        --test 
+        query=f"""
+        --test
     SELECT * FROM {SCHEMA}.{TABLE}
     """,
         fetch_type="dataframe",
@@ -107,7 +107,7 @@ def test_run_query_query_with_comments(duckdb, TEST_PARQUET_FILE_PATH):
     assert isinstance(output1, pd.DataFrame)
 
     output2 = duckdb.run_query(
-        query=f""" 
+        query=f"""
     SELECT * FROM {SCHEMA}.{TABLE}
     WHERE country = 'italy'
     """,
@@ -116,7 +116,7 @@ def test_run_query_query_with_comments(duckdb, TEST_PARQUET_FILE_PATH):
     assert isinstance(output2, pd.DataFrame)
 
     output3 = duckdb.run_query(
-        query=f""" 
+        query=f"""
     SELECT * FROM {SCHEMA}.{TABLE}
         ---test
     """,

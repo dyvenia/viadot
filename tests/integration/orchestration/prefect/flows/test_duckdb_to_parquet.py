@@ -16,8 +16,9 @@ def test_duckdb_to_parquet():
 --CREATE SCHEMA sandbox;
 CREATE or replace TABLE sandbox.numbers AS
 SELECT 42 AS i, 84 AS j;
-""")
-    flow = duckdb_to_parquet(
+"""
+    )
+    duckdb_to_parquet(
         query="""SELECT * FROM sandbox.numbers""",
         path=PATH,
         duckdb_credentials=DUCKDB_CREDS,
@@ -26,4 +27,3 @@ SELECT 42 AS i, 84 AS j;
 
     assert os.path.isfile(PATH)
     os.remove(PATH)
-
