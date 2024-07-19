@@ -362,7 +362,7 @@ class Genesys(Source):
             )
         if self.verbose:
             message = "".join([f"\t{i} -> {j} \n" for i, j in zip(ids, status)])
-            print(f"Report status:\n {message}")
+            print(f"Report status:\n{message}")
 
         return ids, urls
 
@@ -875,12 +875,13 @@ class Genesys(Source):
         if validate_df_dict:
             validate(df=data_frame, tests=validate_df_dict)
 
-        if data_frame.empty:
+        if len(self.data_returned) == 0:
+            data_frame = pd.DataFrame()
             self._handle_if_empty(
-                if_empty="warn",
+                if_empty=if_empty,
                 message="The response does not contain any data.",
             )
-
-        data_frame.to_csv("pruebas.csv", index=False, sep="\t")
+        else:
+            data_frame.reset_index(inplace=True, drop=True)
 
         return data_frame
