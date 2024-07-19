@@ -22,7 +22,7 @@ class TestMindfulCredentials:
 
     @pytest.mark.basic
     def test_mindful_credentials(self):
-        """Test Genesys credentials."""
+        """Test Mindful credentials."""
         MindfulCredentials(
             customer_uuid="test_customer_uuid", auth_token="test_auth_token"
         )
