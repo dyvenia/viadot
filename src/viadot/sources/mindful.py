@@ -46,12 +46,12 @@ Classes:
 """  # noqa: D412
 
 import json
-import logging
 from datetime import date, timedelta
 from io import StringIO
 from typing import Any, Dict, List, Literal, Optional
 
 import pandas as pd
+from colorama import Fore, Style
 from pydantic import BaseModel
 from requests.auth import HTTPBasicAuth
 from requests.models import Response
@@ -112,10 +112,8 @@ class Mindful(Source):
         if credentials is None:
             raise CredentialError("Missing credentials.")
 
-        logging.basicConfig()
         validated_creds = dict(MindfulCredentials(**credentials))
         super().__init__(*args, credentials=validated_creds, **kwargs)
-        self.logger.setLevel(logging.INFO)
 
         self.auth = (credentials["customer_uuid"], credentials["auth_token"])
         if region != "us1":
@@ -184,14 +182,15 @@ class Mindful(Source):
             reference_date = date.today()
             date_interval = [reference_date - timedelta(days=1), reference_date]
 
-            self.logger.warning(
+            print(
                 (
-                    "No `date_interval` parameter was defined, or was erroneously "
-                    "defined. `date_interval` parameter must have the folloing "
-                    "structure:\n\t[`date_0`, `date_1`], having that `date_1` > "
-                    "`date_0`.\nBy default, one day of data, from "
-                    f"{date_interval[0].strftime('%Y-%m-%d')} to "
-                    f"{date_interval[1].strftime('%Y-%m-%d')}, will be obtained."
+                    f"{Fore.YELLOW}WARNING{Style.RESET_ALL}: "
+                    + "No `date_interval` parameter was defined, or was erroneously "
+                    + "defined. `date_interval` parameter must have the folloing "
+                    + "structure:\n\t[`date_0`, `date_1`], having that `date_1` > "
+                    + "`date_0`.\nBy default, one day of data, from "
+                    + f"{date_interval[0].strftime('%Y-%m-%d')} to "
+                    + f"{date_interval[1].strftime('%Y-%m-%d')}, will be obtained."
                 )
             )
 
@@ -211,19 +210,19 @@ class Mindful(Source):
         )
 
         if response.status_code == 200:
-            self.logger.info(
-                f"Succesfully downloaded '{endpoint}' data from mindful API."
-            )
+            print(f"Succesfully downloaded '{endpoint}' data from mindful API.")
             self.data = StringIO(response.content.decode("utf-8"))
         elif response.status_code == 204 and not response.content.decode():
-            self.logger.warning(
-                f"Thera are not '{endpoint}' data to download from"
+            print(
+                f"{Fore.YELLOW}WARNING{Style.RESET_ALL}: "
+                + f"Thera are not '{endpoint}' data to download from"
                 + f" {date_interval[0]} to {date_interval[1]}."
             )
             self.data = json.dumps({})
         else:
-            self.logger.error(
-                f"Failed to downloaded '{endpoint}' data. - {response.content}"
+            print(
+                f"{Fore.RED}ERROR{Style.RESET_ALL}: "
+                + f"Failed to downloaded '{endpoint}' data. - {response.content}"
             )
             raise APIError(f"Failed to downloaded '{endpoint}' data.")
 
@@ -252,6 +251,6 @@ class Mindful(Source):
                 message="The response does not contain any data.",
             )
         else:
-            self.logger.info("Successfully downloaded data from the Mindful API.")
+            print("Successfully downloaded data from the Mindful API.")
 
         return data_frame
