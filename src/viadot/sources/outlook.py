@@ -46,7 +46,6 @@ Classes:
     Outlook: Class implementing the Outlook API.
 """  # noqa: D412
 
-import logging
 from datetime import date, datetime, timedelta, timezone
 from typing import Any, Dict, List, Optional
 
@@ -118,9 +117,7 @@ class Outlook(Source):
             raise CredentialError("Missing credentials.")
         self.credentials = dict(OutlookCredentials(**credentials))
 
-        logging.basicConfig()
         super().__init__(*args, credentials=self.credentials, **kwargs)
-        self.logger.setLevel(logging.INFO)
 
     @staticmethod
     def _get_subfolders(
@@ -129,7 +126,7 @@ class Outlook(Source):
         key_concat: str = "",
     ) -> Optional[Dict[str, List]]:
         """
-        To retrieve all the subfolder in a MailBox folder.
+        Retrieve all the subfolder in a MailBox folder.
 
         Args:
             folder_structure (dict): Dictionary where to save the data.
@@ -286,7 +283,7 @@ class Outlook(Source):
                     data.append(row)
 
             if count > 0:
-                self.logger.info(f"folder: {key.ljust(76, '-')}  messages: {count}")
+                print(f"folder: {key.ljust(76, '-')}  messages: {count}")
 
         return data
 
@@ -329,9 +326,9 @@ class Outlook(Source):
         )
 
         if account.authenticate():
-            self.logger.info(f"{mailbox_name} Authenticated!")
+            print(f"{mailbox_name} Authenticated!")
         else:
-            self.logger.info(f"{mailbox_name} NOT Authenticated!")
+            print(f"{mailbox_name} NOT Authenticated!")
 
         mailbox_obj = account.mailbox()
 
@@ -383,6 +380,6 @@ class Outlook(Source):
                 message="No data was got from the Mail Box for those days",
             )
         else:
-            self.logger.info("Successfully downloaded data from the Mindful API.")
+            print("Successfully downloaded data from the Mindful API.")
 
         return data_frame
