@@ -1,3 +1,5 @@
+"""'test_hubspot.py'."""
+
 import json
 import unittest
 from datetime import datetime
@@ -42,6 +44,7 @@ class TestHubspot(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
+        """Defined based Hubspot Class for the rest of test."""
         cls.hubspot_instance = Hubspot(credentials=variables["credentials"])
 
     @patch("viadot.sources.hubspot.get_source_credentials", return_value=None)
@@ -201,7 +204,7 @@ class TestHubspot(unittest.TestCase):
     @patch("viadot.sources.hubspot.pd.read_json")
     @patch("viadot.sources.hubspot.super")
     def test_to_df_empty(self, mock_super, mock_read_json):
-        """Test Genesys `to_df` method, checking emptiness."""
+        """Test Hubspot `to_df` method, checking emptiness."""
         mock_super().to_df = MagicMock()
         mock_read_json.return_value = pd.DataFrame()
         self.hubspot_instance.full_dataset = StringIO("{}")
