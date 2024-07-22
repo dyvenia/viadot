@@ -58,7 +58,7 @@ def outlook_to_adls(
     adls_azure_key_vault_secret: Optional[str] = None,
     adls_path: Optional[str] = None,
     adls_path_overwrite: bool = False,
-):
+) -> None:
     """
     Flow to download data from Outlook API to Azure Data Lake.
 
@@ -107,7 +107,7 @@ def outlook_to_adls(
         outbox_list=outbox_list,
     )
 
-    df_to_adls(
+    return df_to_adls(
         df=data_frame,
         path=adls_path,
         credentials=adls_credentials,
