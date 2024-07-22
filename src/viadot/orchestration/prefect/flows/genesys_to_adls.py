@@ -66,7 +66,7 @@ def genesys_to_adls(
     adls_azure_key_vault_secret: Optional[str] = None,
     adls_path: Optional[str] = None,
     adls_path_overwrite: bool = False,
-):
+) -> None:
     """
     Flow for downloading data from mindful to Azure Data Lake.
 
@@ -128,7 +128,7 @@ def genesys_to_adls(
     )
     time.sleep(0.5)
 
-    df_to_adls(
+    return df_to_adls(
         df=data_frame,
         path=adls_path,
         credentials=adls_credentials,
