@@ -32,7 +32,7 @@ class SQLServer(SQL):
 
         super().__init__(*args, credentials=validated_creds, **kwargs)
         self.server = self.credentials.get("server")
-        self.username = self.credentials.get("usermame")
+        self.username = self.credentials.get("username")
         self.password = self.credentials.get("password")
         self.driver = self.credentials.get("driver")
         self.db_name = self.credentials.get("db_name")
