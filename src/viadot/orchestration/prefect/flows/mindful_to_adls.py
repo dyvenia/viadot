@@ -58,7 +58,7 @@ def mindful_to_adls(
     adls_azure_key_vault_secret: Optional[str] = None,
     adls_path: Optional[str] = None,
     adls_path_overwrite: bool = False,
-):
+) -> None:
     """
     Flow to download data from Mindful to Azure Data Lake.
 
@@ -107,7 +107,7 @@ def mindful_to_adls(
         )
         time.sleep(0.5)
 
-        df_to_adls(
+        return df_to_adls(
             df=data_frame,
             path=os.path.join(adls_path, f"{end}.csv"),
             credentials=adls_credentials,
