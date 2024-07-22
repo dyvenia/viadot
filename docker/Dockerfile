@@ -47,8 +47,8 @@ RUN curl https://packages.microsoft.com/keys/microsoft.asc | apt-key add - && \
     curl https://packages.microsoft.com/config/debian/10/prod.list > /etc/apt/sources.list.d/mssql-release.list && \
     apt update -q && \
     apt install -q libsqliteodbc && \
-    ACCEPT_EULA=Y apt install -q -y msodbcsql17=17.8.1.1-1 && \
-    ACCEPT_EULA=Y apt install -q -y mssql-tools && \
+    ACCEPT_EULA=Y apt install -q -y msodbcsql17=17.10.1.1-1 && \
+    ACCEPT_EULA=Y apt install -q -y mssql-tools1=17.10.1.1-1 && \
     echo 'export PATH="$PATH:/opt/mssql-tools/bin"' >> ~/.bashrc
 
 COPY docker/odbcinst.ini /etc
@@ -143,5 +143,3 @@ RUN pip install ./viadot/.[viadot-aws]
 RUN rm -rf ./viadot
 
 USER ${USER}
-
-
