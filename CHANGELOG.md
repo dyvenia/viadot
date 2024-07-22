@@ -11,6 +11,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Added `sap_to_parquet` Prefect flow.
+- Added `duckdb_to_sql_server`, `duckdb_to_parquet`, `duckdb_transform` Prefect flows.
+- Added `bcp` and `duckdb_query` Prefect tasks.
+- Added `DuckDB` source class.
 - Added `sql_server_to_minio` flow for prefect.
 - Added `df_to_minio` task for prefect
 - Added handling for `DatabaseCredentials` and `Secret` blocks in `prefect/utlis.py:get_credentials`
@@ -42,6 +46,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Changed location of `task_utils.py` and removed unused/prefect1-related tasks.
 - Changed the way of handling `NA` string values and mapped column types to `str` for `Sharepoint` source.
 - Added `SQLServerToDF` task
 - Added `SQLServerToDuckDB` flow which downloads data from SQLServer table, loads it to parquet file and then uploads it do DuckDB
@@ -59,6 +64,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Removed the `env` param from `Databricks` source, as user can now store multiple configs for the same source using different config keys
 - Removed Prefect dependency from the library (Python library, Docker base image)
 - Removed `catch_extra_separators()` from `SAPRFCV2` class
+
+### Fixed
+- Fixed the typo in credentials in `SQLServer` source
 
 ## [0.4.3] - 2022-04-28
 
