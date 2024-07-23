@@ -11,7 +11,7 @@ date_interval = [start_date, end_date]
 
 if "__main__" == __name__:
     mindful_to_adls(
-        azure_key_vault_secret="mindful",
+        azure_key_vault_secret="mindful-access",
         endpoint="responses",
         date_interval=date_interval,
         adls_path="raw/dyvenia_sandbox/mindful",
