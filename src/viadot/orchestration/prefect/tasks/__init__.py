@@ -1,9 +1,11 @@
 """Imports."""
 
 from .adls import adls_upload, df_to_adls  # noqa: F401
+from .bcp import bcp  # noqa: F401
 from .cloud_for_customers import cloud_for_customers_to_df  # noqa: F401
 from .databricks import df_to_databricks  # noqa: F401
 from .dbt import dbt_task  # noqa: F401
+from .duckdb import duckdb_query  # noqa: F401
 from .exchange_rates import exchange_rates_to_df  # noqa: F401
 from .git import clone_repo  # noqa: F401
 from .luma import luma_ingest_task  # noqa: F401
@@ -16,4 +18,6 @@ from .sharepoint import scan_sharepoint_folder  # noqa: F401
 from .sharepoint import sharepoint_download_file  # noqa: F401
 from .sharepoint import sharepoint_to_df  # noqa: F401
 from .sharepoint import validate_and_reorder_dfs_columns  # noqa: F401
-from .sql_server import create_sql_server_table, sql_server_query, sql_server_to_df
+from .sql_server import create_sql_server_table  # noqa: F401
+from .sql_server import sql_server_query  # noqa: F401
+from .sql_server import sql_server_to_df  # noqa: F401
