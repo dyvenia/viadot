@@ -4,6 +4,7 @@ from .cloud_for_customers import CloudForCustomers
 from .exchange_rates import ExchangeRates
 from .genesys import Genesys
 from .hubspot import Hubspot
+from .mindful import Mindful
 from .sharepoint import Sharepoint
 from .sql_server import SQLServer
 from .trino_source import Trino
@@ -13,6 +14,7 @@ __all__ = [
     "CloudForCustomers",
     "ExchangeRates",
     "Genesys",
+    "Mindful",
     "Sharepoint",
     "Trino",
     "SQLServer",
