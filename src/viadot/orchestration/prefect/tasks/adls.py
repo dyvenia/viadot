@@ -1,13 +1,13 @@
 """Tasks for interacting with Azure Data Lake (gen2)."""
 
 import contextlib
-from typing import Any
+from typing import Any, Dict
 
 import pandas as pd
+from prefect import task
+
 from viadot.orchestration.prefect.exceptions import MissingSourceCredentialsError
 from viadot.orchestration.prefect.utils import get_credentials
-
-from prefect import task
 
 with contextlib.suppress(ImportError):
     from viadot.sources import AzureDataLake
@@ -21,7 +21,7 @@ def adls_upload(
     overwrite: bool = False,
     credentials_secret: str | None = None,
     config_key: str | None = None,
-    credentials: dict[str, Any] | None = None,
+    credentials: Dict[str, Any] | None = None,
 ) -> None:
     """Upload file(s) to Azure Data Lake.
 
@@ -61,9 +61,10 @@ def adls_upload(
 def df_to_adls(
     df: pd.DataFrame,
     path: str,
+    sep: str = "\t",
     credentials_secret: str | None = None,
     config_key: str | None = None,
-    credentials: dict[str, Any] | None = None,
+    credentials: Dict[str, Any] | None = None,
     overwrite: bool = False,
 ) -> None:
     """Upload a pandas `DataFrame` to a file on Azure Data Lake.
@@ -71,13 +72,14 @@ def df_to_adls(
     Args:
         df (pd.DataFrame): The pandas DataFrame to upload.
         path (str): The destination path. Defaults to None.
+        sep (str, optional): The separator to use in the `to_csv` function. Defaults to "\t".
         overwrite (bool, optional): Whether to overwrite files in the lake. Defaults
             to False.
         credentials_secret (str, optional): The name of the Azure Key Vault secret
             storing the credentials.
         config_key (str, optional): The key in the viadot config holding relevant
             credentials. Defaults to None.
-        credentials (dict, optional): The credentials as a dictionary.
+        credentials (Dict[str, Any], optional): The credentials as a dictionary.
     """
     if not (credentials_secret or config_key or credentials):
         raise MissingSourceCredentialsError
@@ -88,5 +90,6 @@ def df_to_adls(
     lake.from_df(
         df=df,
         path=path,
+        sep=sep,
         overwrite=overwrite,
     )
