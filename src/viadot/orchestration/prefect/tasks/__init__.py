@@ -8,6 +8,7 @@ from .dbt import dbt_task  # noqa: F401
 from .duckdb import duckdb_query  # noqa: F401
 from .exchange_rates import exchange_rates_to_df  # noqa: F401
 from .git import clone_repo  # noqa: F401
+from .hubspot import hubspot_to_df
 from .luma import luma_ingest_task  # noqa: F401
 from .mindful import mindful_to_df
 from .minio import df_to_minio  # noqa: F401
