@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+- Added `Mindful` connector and test file.
+
+
 ### Added
 
 - Added `sap_to_parquet` Prefect flow.

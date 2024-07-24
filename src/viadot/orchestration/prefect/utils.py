@@ -13,14 +13,15 @@ import anyio
 
 with contextlib.suppress(ModuleNotFoundError):
     import awswrangler as wr
+
 from anyio import open_process
 from anyio.streams.text import TextReceiveStream
-from viadot.orchestration.prefect.exceptions import MissingPrefectBlockError
-
+from prefect.blocks.system import Secret
 from prefect.client.orchestration import PrefectClient
 from prefect.settings import PREFECT_API_KEY, PREFECT_API_URL
 from prefect_sqlalchemy import DatabaseCredentials
-from prefect.blocks.system import Secret
+
+from viadot.orchestration.prefect.exceptions import MissingPrefectBlockError
 
 with contextlib.suppress(ModuleNotFoundError):
     from prefect_azure import AzureKeyVaultSecretReference
