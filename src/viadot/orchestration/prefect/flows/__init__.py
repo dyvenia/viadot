@@ -1,8 +1,9 @@
 """Import flows."""
 
-from .cloud_for_customers import cloud_for_customers_to_adls  # noqa: F401
-from .cloud_for_customers import cloud_for_customers_to_databricks  # noqa: F401
-
+from .cloud_for_customers_to_adls import cloud_for_customers_to_adls  # noqa: F401
+from .cloud_for_customers_to_databricks import (
+    cloud_for_customers_to_databricks,
+)  # noqa: F401
 from .duckdb_to_parquet import duckdb_to_parquet  # noqa: F401
 from .duckdb_transform import duckdb_transform  # noqa: F401
 from .duckdb_to_sql_server import duckdb_to_sql_server  # noqa: F401
@@ -11,7 +12,11 @@ from .exchange_rates_to_databricks import \
     exchange_rates_to_databricks  # noqa: F401
 from .hubspot_to_adls import hubspot_to_adls
 from .exchange_rates_to_databricks import exchange_rates_to_databricks  # noqa: F401
+
+from .outlook_to_adls import outlook_to_adls
+
 from .mindful_to_adls import mindful_to_adls
+
 from .sap_to_redshift_spectrum import sap_to_redshift_spectrum  # noqa: F401
 from .sap_to_parquet import sap_to_parquet  # noqa: F401
 from .sharepoint_to_adls import sharepoint_to_adls  # noqa: F401
