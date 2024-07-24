@@ -8,7 +8,9 @@ from .dbt import dbt_task  # noqa: F401
 from .duckdb import duckdb_query  # noqa: F401
 from .exchange_rates import exchange_rates_to_df  # noqa: F401
 from .git import clone_repo  # noqa: F401
+from .hubspot import hubspot_to_df
 from .luma import luma_ingest_task  # noqa: F401
+from .mindful import mindful_to_df
 from .minio import df_to_minio  # noqa: F401
 from .outlook import outlook_to_df
 from .redshift_spectrum import df_to_redshift_spectrum  # noqa: F401
@@ -19,5 +21,7 @@ from .sharepoint import scan_sharepoint_folder  # noqa: F401
 from .sharepoint import sharepoint_download_file  # noqa: F401
 from .sharepoint import sharepoint_to_df  # noqa: F401
 from .sharepoint import validate_and_reorder_dfs_columns  # noqa: F401
+
 from .sql_server import (create_sql_server_table, sql_server_query,
                          sql_server_to_df)
+
