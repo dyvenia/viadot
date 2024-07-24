@@ -11,6 +11,7 @@ from .genesys import genesys_to_df  # noqa: F401
 from .git import clone_repo  # noqa: F401
 from .hubspot import hubspot_to_df  # noqa: F401
 from .luma import luma_ingest_task  # noqa: F401
+from .mediatool import mediatool_to_df  # noqa: F401
 from .mindful import mindful_to_df  # noqa: F401
 from .minio import df_to_minio  # noqa: F401
 from .outlook import outlook_to_df  # noqa: F401

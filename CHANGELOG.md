@@ -7,12 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-
-- Added new version of `Genesys` connector and test files.
-- Added new version of `Outlook` connector and test files.
-- Added new version of `Hubspot` connector and test files.
-- Added `Mindful` connector and test file.
-
+- Added `Mediatool` connector and test file.
 
 ### Added
 
@@ -71,6 +66,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Removed `catch_extra_separators()` from `SAPRFCV2` class
 
 ### Fixed
+
 - Fixed the typo in credentials in `SQLServer` source
 
 ## [0.4.3] - 2022-04-28
