@@ -28,7 +28,6 @@ services:
       # - ${HOME}/.databricks-connect:/home/viadot/.databricks-connect
       # - ${HOME}/.config/viadot/config.yaml:/home/viadot/.config/viadot/config.yaml
       - ..:/home/viadot
-      
     shm_size: "4gb"
     command: sleep infinity
     restart: "unless-stopped"
