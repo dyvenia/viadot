@@ -446,6 +446,43 @@ def cleanup_df(df: pd.DataFrame) -> pd.DataFrame:
     return df.replace(r"\n|\t", "", regex=True)
 
 
+def join_dfs(
+    df_left: pd.DataFrame,
+    df_right: pd.DataFrame,
+    left_on: str,
+    right_on: str,
+    columns_from_right_df: Optional[List[str]] = None,
+    how: Literal["left", "right", "outer", "inner", "cross"] = "left",
+) -> pd.DataFrame:
+    """
+    Combine Data Frames according to the chosen method.
+
+    Args:
+        df_left (pd.DataFrame): Left dataframe.
+        df_right (pd.DataFrame): Right dataframe.
+        left_on (str): Column or index level names to join on in the left DataFrame.
+        right_on (str): Column or index level names to join on in the right
+            DataFrame.
+        columns_from_right_df (Optional[List[str]], optional): List of column to get
+            from right dataframe. Defaults to None.
+        how (Literal["left", "right", "outer", "inner", "cross"], optional): Type of
+            merge to be performed. Defaults to "left".
+
+    Returns:
+        pd.DataFrame: Final dataframe after merging.
+    """
+    if columns_from_right_df is None:
+        columns_from_right_df = df_right.columns
+
+    df_merged = df_left.merge(
+        df_right[columns_from_right_df],
+        left_on=left_on,
+        right_on=right_on,
+        how=how,
+    )
+    return df_merged
+
+
 def call_shell(command):
     try:
         result = subprocess.check_output(command, shell=True)
