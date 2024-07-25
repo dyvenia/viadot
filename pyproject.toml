@@ -41,6 +41,9 @@ viadot-azure = [
     "azure-identity>=1.16.0",
     "dbt-sqlserver>=1.3, <1.8",
     "prefect-azure @ git+https://github.com/Trymzet/prefect-azure@add_keyvault_auth#egg=prefect-azure",
+    "prefect_github",
+    "O365==2.0.18.1",
+    "asynctest",
 ]
 viadot-aws = [
     "s3fs==2024.6.0",
