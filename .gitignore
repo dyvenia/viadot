@@ -188,3 +188,4 @@ profiles.yaml
 *.secret
 
 # AWS
+.aws
