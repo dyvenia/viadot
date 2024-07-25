@@ -187,3 +187,8 @@ profiles.yaml
 
 # AWS
 .aws
+src/.dotnet/corefx/cryptography/crls/7abcc12f.dea36fd7.crl
+src/.dotnet/corefx/cryptography/crls/75d1b2ed.de05bb98.crl
+src/.dotnet/corefx/cryptography/crls/7462804f.d5a68194.crl
+src/.dotnet/corefx/cryptography/crls/bd6662f5.8ba5d856.crl
+src/.dotnet/corefx/cryptography/crls/d16da424.cbeb964c.crl

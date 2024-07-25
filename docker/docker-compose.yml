@@ -17,7 +17,18 @@ services:
     volumes:
       # - ${HOME}/.databricks-connect:/home/viadot/.databricks-connect
       # - ${HOME}/.config/viadot/config.yaml:/home/viadot/.config/viadot/config.yaml
-      - ../:/home/viadot
+      - ..:/home/viadot
+    shm_size: "4gb"
+    command: sleep infinity
+    restart: "unless-stopped"
+  viadot_2_azure_dev:
+    image: ghcr.io/dyvenia/viadot/viadot-2-azure-dev:2
+    container_name: viadot_2_azure_dev
+    volumes:
+      # - ${HOME}/.databricks-connect:/home/viadot/.databricks-connect
+      # - ${HOME}/.config/viadot/config.yaml:/home/viadot/.config/viadot/config.yaml
+      - ..:/home/viadot
+      
     shm_size: "4gb"
     command: sleep infinity
     restart: "unless-stopped"
