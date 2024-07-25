@@ -6,7 +6,6 @@
 #   features: []
 #   all-features: true
 #   with-sources: false
-#   generate-hashes: false
 
 -e file:.
 adlfs==2024.4.1
@@ -189,6 +188,8 @@ dnspython==2.6.1
     # via email-validator
 docker==6.1.3
     # via prefect
+duckdb==1.0.0
+    # via viadot2
 editorconfig==0.12.4
     # via jsbeautifier
 email-validator==2.1.1
@@ -507,7 +508,7 @@ prefect==2.19.7
     # via prefect-azure
     # via prefect-sqlalchemy
     # via viadot2
-prefect-azure @ git+https://github.com/Trymzet/prefect-azure@f4a400fa997f2ef1f54f4ed4a7ba2edccf4e3da8#egg=prefect-azure
+prefect-azure @ git+https://github.com/Trymzet/prefect-azure@f4a400fa997f2ef1f54f4ed4a7ba2edccf4e3da8
     # via viadot2
 prefect-sqlalchemy==0.4.3
     # via viadot2
