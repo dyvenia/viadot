@@ -63,6 +63,7 @@ def _get_aws_credentials(secret_name: str) -> dict[str, Any] | str:
 
     aws_secret_block = AwsSecret.load(secret_name)
     credentials = aws_secret_block.read_secret()
+    credentials = json.loads(credentials)
 
     return credentials
 
