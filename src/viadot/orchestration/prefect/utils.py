@@ -140,6 +140,10 @@ def get_credentials(secret_name: str) -> dict[str, Any]:
         credentials = _get_database_credentials(secret_name)
     elif block_type == "Secret":
         credentials = _get_secret_credentials(secret_name)
+    else:
+        msg = f"The provided secret block type: {block_type} is not supported"
+        raise MissingPrefectBlockError(msg)
+
     return credentials
 
 
