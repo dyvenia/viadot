@@ -6,7 +6,6 @@
 #   features: []
 #   all-features: true
 #   with-sources: false
-#   generate-hashes: false
 
 -e file:.
 adlfs==2024.4.1
