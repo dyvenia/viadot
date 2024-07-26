@@ -80,7 +80,7 @@ class Mediatool(Source):
         self,
         *args,
         credentials: Optional[MediatoolCredentials] = None,
-        config_key: str = None,
+        config_key: Optional[str] = None,
         user_id: Optional[str] = None,
         **kwargs,
     ):
@@ -90,7 +90,7 @@ class Mediatool(Source):
         Args:
             credentials (Optional[MediatoolCredentials], optional): Meditaool
                 credentials. Defaults to None.
-            config_key (str, optional): The key in the viadot config holding relevant
+            config_key (Optional[str], optional): The key in the viadot config holding relevant
                 credentials. Defaults to None.
             user_id (Optional[str], optional): User ID. Defaults to None.
         """
