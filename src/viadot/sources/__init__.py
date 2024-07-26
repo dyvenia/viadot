@@ -5,7 +5,7 @@ from .duckdb import DuckDB
 from .exchange_rates import ExchangeRates
 from .genesys import Genesys
 from .hubspot import Hubspot
-from .mediatool import Mediatool  # noqa
+from .mediatool import Mediatool
 from .mindful import Mindful
 from .outlook import Outlook
 from .sharepoint import Sharepoint
@@ -22,6 +22,7 @@ __all__ = [
     "SQLServer",
     "Outlook",
     "Hubspot",
+    "Mediatool",
 ]
 
 if find_spec("adlfs"):

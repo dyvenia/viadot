@@ -7,7 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-- Added `Mediatool` connector and test file.
+- Added new version of `Genesys` connector and test files.
+- Added new version of `Outlook` connector and test files.
+- Added new version of `Hubspot` connector and test files.
+- Added new version of `Mindful` connector and test file.
+- Added new version of `Mediatool` connector and test file.
 
 ### Added
 
