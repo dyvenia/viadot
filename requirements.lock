@@ -6,7 +6,6 @@
 #   features: []
 #   all-features: true
 #   with-sources: false
-#   generate-hashes: false
 
 -e file:.
 adlfs==2024.4.1
@@ -22,6 +21,7 @@ aiobotocore==2.13.0
 aiohttp==3.9.5
     # via adlfs
     # via aiobotocore
+    # via gremlinpython
     # via s3fs
 aioitertools==0.11.0
     # via aiobotocore
@@ -84,12 +84,14 @@ beautifulsoup4==4.12.3
     # via redshift-connector
 boto3==1.34.106
     # via awswrangler
+    # via prefect-aws
     # via redshift-connector
     # via viadot2
 botocore==1.34.106
     # via aiobotocore
     # via awswrangler
     # via boto3
+    # via prefect-aws
     # via redshift-connector
     # via s3transfer
 cachetools==5.3.3
@@ -155,6 +157,8 @@ dnspython==2.6.1
     # via email-validator
 docker==6.1.3
     # via prefect
+duckdb==1.0.0
+    # via viadot2
 email-validator==2.1.1
     # via pydantic
 et-xmlfile==1.1.0
@@ -280,6 +284,10 @@ multidict==6.0.5
     # via yarl
 multimethod==1.11.2
     # via visions
+mypy-boto3-s3==1.34.138
+    # via prefect-aws
+mypy-boto3-secretsmanager==1.34.145
+    # via prefect-aws
 nest-asyncio==1.6.0
     # via gremlinpython
 networkx==3.3
@@ -293,7 +301,8 @@ numpy==1.23.4
 oauthlib==3.2.2
     # via kubernetes
     # via requests-oauthlib
-openpyxl==3.1.3
+openpyxl==3.0.10
+    # via awswrangler
     # via viadot2
 opensearch-py==2.6.0
     # via awswrangler
@@ -305,7 +314,7 @@ packaging==24.0
     # via msal-extensions
     # via prefect
     # via redshift-connector
-pandas==2.2.2
+pandas==1.4.4
     # via awswrangler
     # via viadot2
     # via visions
@@ -323,10 +332,13 @@ ply==3.11
 portalocker==2.8.2
     # via msal-extensions
 prefect==2.19.7
+    # via prefect-aws
     # via prefect-azure
     # via prefect-sqlalchemy
     # via viadot2
-prefect-azure @ git+https://github.com/Trymzet/prefect-azure@f4a400fa997f2ef1f54f4ed4a7ba2edccf4e3da8#egg=prefect-azure
+prefect-aws==0.4.18
+    # via viadot2
+prefect-azure @ git+https://github.com/Trymzet/prefect-azure@f4a400fa997f2ef1f54f4ed4a7ba2edccf4e3da8
     # via viadot2
 prefect-sqlalchemy==0.4.3
     # via viadot2
@@ -369,6 +381,8 @@ pymysql==1.1.1
 pyodbc==5.1.0
     # via dbt-sqlserver
     # via viadot2
+pyparsing==3.1.2
+    # via prefect-aws
 python-dateutil==2.9.0.post0
     # via botocore
     # via croniter
@@ -503,6 +517,8 @@ starkbank-ecdsa==2.2.0
     # via sendgrid
 tangled-up-in-unicode==0.2.0
     # via visions
+tenacity==8.5.0
+    # via prefect-aws
 text-unidecode==1.3
     # via python-slugify
 toml==0.10.2
@@ -522,6 +538,8 @@ typing-extensions==4.12.1
     # via dbt-semantic-interfaces
     # via mashumaro
     # via minio
+    # via mypy-boto3-s3
+    # via mypy-boto3-secretsmanager
     # via prefect
     # via pydantic
     # via pydantic-core
@@ -540,6 +558,7 @@ urllib3==1.26.18
     # via docker
     # via kubernetes
     # via minio
+    # via opensearch-py
     # via requests
 uvicorn==0.28.1
     # via prefect

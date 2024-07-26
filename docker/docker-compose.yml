@@ -2,7 +2,7 @@ version: "3"
 
 services:
   viadot_2_lite:
-    image: ghcr.io/dyvenia/viadot/viadot-lite:2.0.0-alpha.6
+    image: ghcr.io/dyvenia/viadot/viadot-lite:2.0.0-beta.1
     container_name: viadot_2_lite
     volumes:
       # - ${HOME}/.databricks-connect:/home/viadot/.databricks-connect
@@ -12,7 +12,7 @@ services:
     command: sleep infinity
     restart: "unless-stopped"
   viadot_2_azure:
-    image: ghcr.io/dyvenia/viadot/viadot-azure:2.0.0-alpha.6
+    image: ghcr.io/dyvenia/viadot/viadot-azure:2.0.0-beta.1
     container_name: viadot_2_azure
     volumes:
       # - ${HOME}/.databricks-connect:/home/viadot/.databricks-connect
@@ -22,7 +22,7 @@ services:
     command: sleep infinity
     restart: "unless-stopped"
   viadot_2_aws:
-    image: ghcr.io/dyvenia/viadot/viadot-aws:2.0.0-alpha.6
+    image: ghcr.io/dyvenia/viadot/viadot-aws:2.0.0-beta.1
     container_name: viadot_2_aws
     volumes:
       # - ${HOME}/.databricks-connect:/home/viadot/.databricks-connect
