@@ -6,8 +6,8 @@ from .cloud_for_customers_to_databricks import (
     cloud_for_customers_to_databricks,
 )  # noqa: F401
 from .duckdb_to_parquet import duckdb_to_parquet  # noqa: F401
-from .duckdb_transform import duckdb_transform  # noqa: F401
 from .duckdb_to_sql_server import duckdb_to_sql_server  # noqa: F401
+from .duckdb_transform import duckdb_transform  # noqa: F401
 from .exchange_rates_to_adls import exchange_rates_to_adls  # noqa: F401
 from .exchange_rates_to_databricks import \
     exchange_rates_to_databricks  # noqa: F401
@@ -27,5 +27,6 @@ from .sharepoint_to_redshift_spectrum import \
     sharepoint_to_redshift_spectrum  # noqa: F401
 from .sharepoint_to_s3 import sharepoint_to_s3  # noqa: F401
 from .sql_server_to_minio import sql_server_to_minio  # noqa: F401
+from .sql_server_to_parquet import sql_server_to_parquet  # noqa: F401
 from .transform import transform  # noqa: F401
 from .transform_and_catalog import transform_and_catalog  # noqa: F401

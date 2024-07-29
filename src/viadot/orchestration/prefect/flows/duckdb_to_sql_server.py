@@ -1,22 +1,23 @@
 """Flow for extracting data from the DuckDB into SQLServer."""
 
-from typing import Literal, Any
 import os
+from typing import Any, Literal
+
+from prefect import flow, task
+from prefect.logging import get_run_logger
+
 from viadot.orchestration.prefect.tasks import (
-    duckdb_query,
-    create_sql_server_table,
     bcp,
+    create_sql_server_table,
+    duckdb_query,
 )
 from viadot.orchestration.prefect.tasks.task_utils import (
     df_to_csv,
     get_sql_dtypes_from_df,
 )
 
-from prefect import flow, task
-from prefect.logging import get_run_logger
 
-
-@task(timeout_seconds=60 *60)
+@task(timeout_seconds=60 * 60)
 def cleanup_csv_task(path: str):
     logger = get_run_logger()
 
@@ -25,7 +26,7 @@ def cleanup_csv_task(path: str):
         os.remove(path)
         logger.info(f"File {path} has been successfully removed.")
         return True
-    except Exception as e:
+    except Exception:
         logger.exception(f"File {path} could not be removed.")
         return False
 
@@ -104,6 +105,7 @@ def duckdb_to_sql_server(  # noqa: PLR0913, PLR0917
         credentials_secret=sql_server_credentials_secret,
         config_key=sql_server_config_key,
     )
+
     csv = df_to_csv(df=df, path=local_path)
 
     bcp(
@@ -116,5 +118,5 @@ def duckdb_to_sql_server(  # noqa: PLR0913, PLR0917
         credentials_secret=sql_server_credentials_secret,
         config_key=sql_server_config_key,
     )
-    
-    cleanup_csv_task(path = local_path)
+
+    cleanup_csv_task(path=local_path)

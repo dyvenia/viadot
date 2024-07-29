@@ -1,10 +1,11 @@
+import subprocess
 from typing import Any, Literal
 
 from prefect import task
 
-from viadot.orchestration.prefect.exceptions import MissingSourceCredentialsError
-from viadot.orchestration.prefect.utils import get_credentials, shell_run_command
 from viadot.config import get_source_credentials
+from viadot.orchestration.prefect.exceptions import MissingSourceCredentialsError
+from viadot.orchestration.prefect.utils import get_credentials
 
 
 @task
@@ -20,9 +21,9 @@ def bcp(
     credentials: dict[str, Any] | None = None,
 ):
     """Upload data from a CSV file into an SQLServer table using BCP.
-	    
-	For more information on bcp (bulk copy program), see
-	    https://learn.microsoft.com/en-us/sql/tools/bcp-utility.
+
+        For more information on bcp (bulk copy program), see
+            https://learn.microsoft.com/en-us/sql/tools/bcp-utility.
 
     Args:
         path (str):  Where to store the CSV data dump used for bulk upload to a database.
@@ -49,7 +50,6 @@ def bcp(
         or get_source_credentials(config_key)
         or get_credentials(credentials_secret)
     )
-
     fqn = f"{schema}.{table}" if schema else table
 
     server = credentials["server"]
@@ -70,5 +70,32 @@ def bcp(
         raise ValueError(
             "Please provide correct 'on_error' parameter value - 'skip' or 'fail'. "
         )
-    command = f"/opt/mssql-tools/bin/bcp {fqn} in '{path}' -S {server} -d {db_name} -U {uid} -P '{pwd}' -c -F 2 -b {chunksize} -h 'TABLOCK' -e '{error_log_file_path}' -m {max_error}"
-    run_command = shell_run_command(command=command)
+    bcp_command = [
+        "/opt/mssql-tools/bin/bcp",
+        fqn,
+        "in",
+        path,
+        "-S",
+        server,
+        "-d",
+        db_name,
+        "-U",
+        uid,
+        "-P",
+        pwd,
+        "-b",
+        chunksize,
+        "-m",
+        max_error,
+        "-c",
+        "-v",
+        "-e",
+        error_log_file_path,
+        "-h",
+        "TABLOCK",
+        "-F",
+        "2",
+    ]
+
+    result = subprocess.run(bcp_command, capture_output=True, text=True)
+    return result
