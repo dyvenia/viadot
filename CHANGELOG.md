@@ -7,8 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+
+- Added new version of `Genesys` connector and test files.
+- Added new version of `Outlook` connector and test files.
+- Added new version of `Hubspot` connector and test files.
+- Added `Mindful` connector and test file.
+
+
 ### Added
 
+- Added `sap_to_parquet` Prefect flow.
 - Added `duckdb_to_sql_server`, `duckdb_to_parquet`, `duckdb_transform` Prefect flows.
 - Added `bcp` and `duckdb_query` Prefect tasks.
 - Added `DuckDB` source class.
@@ -61,6 +69,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Removed the `env` param from `Databricks` source, as user can now store multiple configs for the same source using different config keys
 - Removed Prefect dependency from the library (Python library, Docker base image)
 - Removed `catch_extra_separators()` from `SAPRFCV2` class
+
+### Fixed
+- Fixed the typo in credentials in `SQLServer` source
 
 ## [0.4.3] - 2022-04-28
 
