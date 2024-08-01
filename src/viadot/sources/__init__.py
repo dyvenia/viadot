@@ -1,20 +1,25 @@
+"""Source imports."""
+
 from importlib.util import find_spec
 
 from .cloud_for_customers import CloudForCustomers
+from .duckdb import DuckDB
 from .exchange_rates import ExchangeRates
 from .genesys import Genesys
-from .outlook import Outlook
 from .hubspot import Hubspot
 from .mindful import Mindful
+from .outlook import Outlook
 from .sharepoint import Sharepoint
 from .sql_server import SQLServer
-from .trino_source import Trino
-from .duckdb import DuckDB
+from .trino import Trino
+
 
 __all__ = [
     "CloudForCustomers",
     "ExchangeRates",
     "Genesys",
+    "Outlook",
+    "Hubspot",
     "Mindful",
     "Sharepoint",
     "Trino",

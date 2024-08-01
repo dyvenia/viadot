@@ -120,6 +120,21 @@ extend-select = [
     "RUF", # Ruff-specific rules
 ]
 
+# Ignore rules known to be conflicting between the ruff linter and formatter.
+# See https://docs.astral.sh/ruff/formatter/#conflicting-lint-rules
+ignore = [
+    "W191",
+    "D206",
+    "D300",
+    "D101",
+    "D417",
+    "ANN101",
+    "ANN002",
+    "ANN003",
+    "ANN202", # Return type annotation of private functions.
+    "ANN204",
+]
+
 [tool.ruff.lint.extend-per-file-ignores]
 # S101: use of assert error
 # ANN201, ANN202, ANN001: missing typing
@@ -135,11 +150,9 @@ extend-select = [
     "D100",
     "N802",
     "N803",
+    "B905",
 ]
 
-# Ignore rules known to be conflicting between the ruff linter and formatter.
-# See https://docs.astral.sh/ruff/formatter/#conflicting-lint-rules
-ignore = ["W191", "D206", "D300"]
 
 [tool.ruff.lint.mccabe]
 max-complexity = 10
