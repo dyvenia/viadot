@@ -55,9 +55,6 @@ viadot-aws = [
 
 [tool.rye]
 dev-dependencies = [
-    "black==22.6.0",
-    "pytest==8.1.1",
-    "pytest-cov==3.0.0",
     "Faker==13.12.1",
     "python-dotenv>=1.0.1",
     "coverage>=7.4.4",
@@ -75,6 +72,10 @@ dev-dependencies = [
     "mkdocs-include-markdown-plugin>=5.1.0",
     "mkdocs-git-revision-date-plugin>=0.3.2",
     "mkdocs-glightbox>=0.4.0",
+    "pytest-cov>=5.0.0",
+    "pytest>=8.2.2",
+    "ruff>=0.5.2",
+    "asynctest",
 ]
 
 [tool.pytest.ini_options]
@@ -85,4 +86,90 @@ log_level = "WARNING"
 addopts = "--ignore=dbt_packages"
 
 [tool.coverage.run]
-omit = ['tests/*']
+omit = ['tests/integration/*']
+
+[tool.coverage.report]
+show_missing = true
+fail_under = 30
+
+[tool.ruff.lint]
+# Last rule review: ruff 0.1.5
+extend-select = [
+    "I",    # isort
+    "D",    # pydocstyle
+    "W",    # pycodestyle (warnings)
+    "B",    # flake8-bugbear
+    "S",    # flake8-bandit
+    "ANN",  # flake8-annotations
+    "A",    # flake8-builtins
+    "C4",   # flake8-comprehensions
+    "EM",   # flake8-errmsg
+    "T20",  # flake8-print
+    "PT",   # flake8-pytest-style
+    "RET",  # flake8-return
+    "SIM",  # flake8-simplify
+    "ARG",  # flake8-unused-arguments
+    "PTH",  # flake8-use-pathlib
+    "N",    # pep8-naming
+    "UP",   # pyupgrade
+    "C901", # mccabe
+    "FURB", # refurb
+    "TRY",  # tryceratops
+    # "PD", # https://docs.astral.sh/ruff/rules/#pandas-vet-pd
+    "PL",  # pylint
+    "RUF", # Ruff-specific rules
+]
+
+[tool.ruff.lint.extend-per-file-ignores]
+# S101: use of assert error
+# ANN201, ANN202, ANN001: missing typing
+# D103: missing function docstrings
+# D100: missing module docstring
+# N802, N803: caps lock argument and function names (disabled to allow naming fixtures in all caps)
+"tests/**" = [
+    "S101",
+    "ANN201",
+    "ANN202",
+    "ANN001",
+    "D103",
+    "D100",
+    "N802",
+    "N803",
+]
+
+# Ignore rules known to be conflicting between the ruff linter and formatter.
+# See https://docs.astral.sh/ruff/formatter/#conflicting-lint-rules
+ignore = ["W191", "D206", "D300"]
+
+[tool.ruff.lint.mccabe]
+max-complexity = 10
+
+[tool.ruff.lint.isort]
+force-sort-within-sections = true
+lines-after-imports = 2
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
+
+[tool.ruff.lint.pycodestyle]
+max-doc-length = 88
+
+[tool.ruff.lint.pylint]
+max-args = 10
+
+# For checking whether the docstrings match function signature.
+# https://peps.python.org/pep-0727/ should basically solve this in Python 3.13.
+[tool.pydoclint]
+style = "google"
+arg-type-hints-in-docstring = false
+check-return-types = false
+check-yield-types = false
+allow-init-docstring = true
+
+[tool.mypy]
+strict = false
+warn_unreachable = true
+pretty = true
+show_column_numbers = true
+show_error_context = true
+exclude = "tests"
