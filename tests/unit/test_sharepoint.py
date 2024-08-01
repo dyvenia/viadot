@@ -1,8 +1,10 @@
 from pathlib import Path
+from unittest.mock import MagicMock, patch
 
 import pandas as pd
 import pytest
 import sharepy
+from sharepy.errors import AuthError
 from viadot.exceptions import CredentialError
 from viadot.sources import Sharepoint
 from viadot.sources.sharepoint import SharepointCredentials
@@ -23,7 +25,10 @@ class SharepointMock(Sharepoint):
     def get_connection(self):
         return sharepy.session.SharePointSession
 
-    def _download_file_stream(self, url=None):
+    def _download_file_stream(self, url=None, **kwargs):
+        if "nrows" in kwargs:
+            raise ValueError("Parameter 'nrows' is not supported.")
+
         return pd.ExcelFile(Path("tests/unit/test_file.xlsx"))
 
 
@@ -42,6 +47,26 @@ def test_valid_credentials():
     assert shrp_creds.site == credentials["site"]
     assert shrp_creds.username == credentials["username"]
     assert shrp_creds.password == credentials["password"]
+
+
+def test_invalid_authentication():
+    credentials = {
+        "site": "tenant.sharepoint.com",
+        "username": "user@example.com",
+        "password": "password",
+    }
+
+    s = Sharepoint(credentials=credentials)
+
+    # Patch the sharepy.connect method to simulate an authentication failure
+    with patch("sharepy.connect") as mock_connect:
+        mock_connect.side_effect = AuthError("Authentication failed")
+
+        with pytest.raises(
+            CredentialError,
+            match="Could not authenticate to tenant.sharepoint.com with provided credentials.",
+        ):
+            s.get_connection()
 
 
 def test_missing_username():
@@ -118,3 +143,57 @@ def test__parse_excel_string_dtypes(sharepoint_mock):
 def test__load_and_parse_not_valid_extension(sharepoint_mock):
     with pytest.raises(ValueError):
         sharepoint_mock._load_and_parse(file_url="https://example.com/file.txt")
+
+
+def test_scan_sharepoint_folder_valid_url(sharepoint_mock):
+    url = "https://company.sharepoint.com/sites/site_name/final_folder/"
+
+    # Mock the response from SharePoint
+    mock_response = MagicMock()
+    mock_response.json.return_value = {
+        "d": {
+            "results": [
+                {"Name": "file1.txt"},
+                {"Name": "file2.txt"},
+            ]
+        }
+    }
+
+    # Inject the mock response
+    sharepoint_mock.get_connection().get = MagicMock(return_value=mock_response)
+
+    expected_files = [
+        "https://company.sharepoint.com/sites/site_name/final_folder/file1.txt",
+        "https://company.sharepoint.com/sites/site_name/final_folder/file2.txt",
+    ]
+
+    result = sharepoint_mock.scan_sharepoint_folder(url)
+    assert result == expected_files
+
+
+def test_scan_sharepoint_folder_invalid_url(sharepoint_mock):
+    url = "https://company.sharepoint.com/folder/sub_folder/final_folder"
+
+    with pytest.raises(ValueError, match="URL does not contain '/sites/' segment."):
+        sharepoint_mock.scan_sharepoint_folder(url)
+
+
+def test_scan_sharepoint_folder_empty_response(sharepoint_mock):
+    url = (
+        "https://company.sharepoint.com/sites/site_name/folder/sub_folder/final_folder"
+    )
+
+    mock_response = MagicMock()
+    mock_response.json.return_value = {"d": {"results": []}}
+
+    sharepoint_mock.get_connection().get = MagicMock(return_value=mock_response)
+
+    result = sharepoint_mock.scan_sharepoint_folder(url)
+    assert result == []
+
+
+def test_download_file_stream_unsupported_param(sharepoint_mock):
+    url = "https://company.sharepoint.com/sites/site_name/folder/test_file.xlsx"
+
+    with pytest.raises(ValueError, match="Parameter 'nrows' is not supported."):
+        sharepoint_mock._download_file_stream(url, nrows=10)
