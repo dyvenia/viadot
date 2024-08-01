@@ -48,7 +48,7 @@ RUN curl https://packages.microsoft.com/keys/microsoft.asc | apt-key add - && \
     apt update -q && \
     apt install -q libsqliteodbc && \
     ACCEPT_EULA=Y apt install -q -y msodbcsql17=17.10.1.1-1 && \
-    ACCEPT_EULA=Y apt install -q -y mssql-tools1=17.10.1.1-1 && \
+    ACCEPT_EULA=Y apt install -q -y mssql-tools=17.10.1.1-1 && \
     echo 'export PATH="$PATH:/opt/mssql-tools/bin"' >> ~/.bashrc
 
 COPY docker/odbcinst.ini /etc
