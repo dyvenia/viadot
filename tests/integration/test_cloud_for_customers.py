@@ -1,11 +1,12 @@
-"""Tests for CloudForCustomers source class"""
+"""Tests for CloudForCustomers source class."""
 
 from datetime import datetime, timedelta
 
 import pandas as pd
-
-# from viadot.exceptions import CredentialError
+import pytest
+from viadot.exceptions import CredentialError
 from viadot.sources.cloud_for_customers import CloudForCustomers
+
 
 CONTACT_ENDPOINT = "ContactCollection"
 cursor_field = "EntityLastChangedOn"
@@ -22,19 +23,19 @@ def test_is_configured():
     assert c4c
 
 
-# def test_is_configured_throws_credential_error():
-#     with pytest.raises(CredentialError):
-#         _ = CloudForCustomers(
-#             credentials={"username": "test_user", "password": None},
-#         )
-#     with pytest.raises(CredentialError):
-#         _ = CloudForCustomers(
-#             credentials={"username": None, "password": "test_password"},
-#         )
-#     with pytest.raises(CredentialError):
-#         _ = CloudForCustomers(
-#             credentials={"username": None, "password": None},
-#         )
+def test_is_configured_throws_credential_error():
+    with pytest.raises(CredentialError):
+        CloudForCustomers(
+            credentials={"username": "test_user", "password": None},
+        )
+    with pytest.raises(CredentialError):
+        CloudForCustomers(
+            credentials={"username": None, "password": "test_password"},
+        )
+    with pytest.raises(CredentialError):
+        CloudForCustomers(
+            credentials={"username": None, "password": None},
+        )
 
 
 def test_to_df(c4c_config_key):
