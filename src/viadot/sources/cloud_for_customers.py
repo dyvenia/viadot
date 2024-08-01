@@ -1,25 +1,13 @@
-"""cloud_for_customers.py.
+"""A connector for Cloud For Customers API."""
 
-Implement C4C Connector.
-
-This module provides functionalities to have access to C4C data. It includes
-the following features:
-- Credential Management
-- Data Source Data Collection
-
-Classes:
-    CloudForCustomersCredentials(BaseModel): Description of Class1.
-    CloudForCustomers: Cloud for Customers connector to fetch Odata source.
-"""
-
-import re
 from copy import deepcopy
-from typing import Any, Dict, List, Optional, Literal
+import re
+from typing import Any, Literal
 from urllib.parse import urljoin
 
 import pandas as pd
-import requests
 from pydantic import BaseModel, SecretStr, root_validator
+import requests
 
 from viadot.config import get_source_credentials
 from viadot.exceptions import CredentialError
@@ -38,31 +26,32 @@ class CloudForCustomersCredentials(BaseModel):
 
     username: str  # eg. username@{tenant_name}.com
     password: SecretStr
-    url: Optional[str] = None  # The URL to extract records from.
-    report_url: Optional[str] = None  # The URL of a prepared report.
+    url: str | None = None  # The URL to extract records from.
+    report_url: str | None = None  # The URL of a prepared report.
 
     @classmethod
     @root_validator(pre=True)
-    def is_configured(cls, credentials):
+    def is_configured(cls, credentials: dict) -> dict:  # noqa: ANN102
         """Validate Credentials.
 
         Args:
-            credentials (dict): dictinary with user and password.
+            credentials (dict): dictionary with user and password.
 
         Returns:
-            credentials (dict): dictinary with user and password.
+            credentials (dict): dictionary with user and password.
         """
         username = credentials.get("username")
         password = credentials.get("password")
 
         if not (username and password):
-            raise CredentialError("`username` and `password` credentials are required.")
+            msg = "`username` and `password` credentials are required."
+            raise CredentialError(msg)
 
         return credentials
 
 
 class CloudForCustomers(Source):
-    """Cloud for Customers connector to fetch Odata source.
+    """Cloud for Customers connector to fetch OData source.
 
     Args:
         url (str, optional): The URL to the C4C API.
@@ -79,21 +68,20 @@ class CloudForCustomers(Source):
         credentials.
     """
 
-    DEFAULT_PARAMS = {"$format": "json"}
+    DEFAULT_PARAMS = {"$format": "json"}  # noqa: RUF012
 
     def __init__(
         self,
         *args,
-        url: str = None,
-        endpoint: str = None,
-        report_url: str = None,
-        filter_params: Dict[str, Any] = None,
-        credentials: CloudForCustomersCredentials = None,
-        config_key: Optional[str] = None,
+        url: str | None = None,
+        endpoint: str | None = None,
+        report_url: str | None = None,
+        filter_params: dict[str, Any] | None = None,
+        credentials: CloudForCustomersCredentials | None = None,
+        config_key: str | None = None,
         **kwargs,
     ):
-        """
-        Initialize the class with the provided parameters.
+        """Initialize the class with the provided parameters.
 
         Args:
             *args: Variable length argument list.
@@ -145,10 +133,9 @@ class CloudForCustomers(Source):
         start = url.split(".svc")[0]
         url_raw = url.split("?")[0]
         end = url_raw.split("/")[-1]
-        meta_url = start + ".svc/$metadata?entityset=" + end
-        return meta_url
+        return start + ".svc/$metadata?entityset=" + end
 
-    def _extract_records_from_report_url(self, report_url: str) -> List[Dict[str, Any]]:
+    def _extract_records_from_report_url(self, report_url: str) -> list[dict[str, Any]]:
         """Fetch report_url to extract records.
 
         Args:
@@ -168,7 +155,7 @@ class CloudForCustomers(Source):
 
         return records
 
-    def _extract_records_from_url(self, url: str) -> List[Dict[str, Any]]:
+    def _extract_records_from_url(self, url: str) -> list[dict[str, Any]]:
         """Fetch URL to extract records.
 
         Args:
@@ -202,8 +189,8 @@ class CloudForCustomers(Source):
         return records
 
     def extract_records(
-        self, url: Optional[str] = None, report_url: Optional[str] = None
-    ) -> List[Dict[str, Any]]:
+        self, url: str | None = None, report_url: str | None = None
+    ) -> list[dict[str, Any]]:
         """Download records from `url` or `report_url` if present.
 
         Returns:
@@ -211,15 +198,12 @@ class CloudForCustomers(Source):
         """
         if self.is_report:
             return self._extract_records_from_report_url(report_url=report_url)
-        if url:
-            full_url = urljoin(url, self.endpoint)
-        else:
-            full_url = self.full_url
+        full_url = urljoin(url, self.endpoint) if url else self.full_url
         return self._extract_records_from_url(url=full_url)
 
     def get_entities(
-        self, dirty_json: Dict[str, Any], url: str
-    ) -> List[Dict[str, Any]]:
+        self, dirty_json: dict[str, Any], url: str
+    ) -> list[dict[str, Any]]:
         """Extract entities from request.json().
 
         Entities represent objects that store information. More info on:
@@ -239,17 +223,18 @@ class CloudForCustomers(Source):
         for element in dirty_json["d"]["results"]:
             new_entity = {}
             for key, object_of_interest in element.items():
-                if key not in ["__metadata", "Photo", "", "Picture"]:
-                    if "{" not in str(object_of_interest):
-                        new_key = column_maper_dict.get(key)
-                        if new_key:
-                            new_entity[new_key] = object_of_interest
-                        else:
-                            new_entity[key] = object_of_interest
+                if key not in ["__metadata", "Photo", "", "Picture"] and "{" not in str(
+                    object_of_interest
+                ):
+                    new_key = column_maper_dict.get(key)
+                    if new_key:
+                        new_entity[new_key] = object_of_interest
+                    else:
+                        new_entity[key] = object_of_interest
             entities.append(new_entity)
         return entities
 
-    def get_property_to_sap_label_dict(self, url: str = None) -> Dict[str, str]:
+    def get_property_to_sap_label_dict(self, url: str | None = None) -> dict[str, str]:
         """Create Dict that maps Property Name to value of SAP label.
 
            Property: Properties define the characteristics of the data.
@@ -266,7 +251,9 @@ class CloudForCustomers(Source):
         if url:
             username = self.credentials.get("username")
             password = self.credentials.get("password")
-            response = requests.get(url, auth=(username, password))
+            response = requests.get(
+                url, auth=(username, password), timeout=(3.05, 60 * 5)
+            )
             for sentence in response.text.split("/>"):
                 result = re.search(
                     r'(?<=Name=")([^"]+).+(sap:label=")([^"]+)+', sentence
@@ -280,7 +267,7 @@ class CloudForCustomers(Source):
     def get_response(
         self,
         url: str,
-        filter_params: Dict[str, Any] = None,
+        filter_params: dict[str, Any] | None = None,
         timeout: tuple = (3.05, 60 * 30),
     ) -> requests.models.Response:
         """Handle requests.
@@ -296,13 +283,12 @@ class CloudForCustomers(Source):
         """
         username = self.credentials.get("username")
         password = self.credentials.get("password")
-        response = handle_api_response(
+        return handle_api_response(
             url=url,
             params=filter_params,
             auth=(username, password),
             timeout=timeout,
         )
-        return response
 
     def to_df(
         self,
@@ -325,18 +311,19 @@ class CloudForCustomers(Source):
         """
         # Your implementation here
         if if_empty == "warn":
-            print("Warning: DataFrame is empty.")
+            self.logger.info("Warning: DataFrame is empty.")
         elif if_empty == "skip":
-            print("Skipping due to empty DataFrame.")
+            self.logger.info("Skipping due to empty DataFrame.")
         elif if_empty == "fail":
-            print("Failing due to empty DataFrame.")
+            self.logger.info("Failing due to empty DataFrame.")
         else:
-            raise ValueError("Invalid value for if_empty parameter.")
+            msg = "Invalid value for if_empty parameter."
+            raise ValueError(msg)
 
-        url: str = kwargs.get('url', "")
-        fields: List[str] = kwargs.get('fields', [])
-        dtype: Dict[str, Any] = kwargs.get('dtype', {})
-        tests: Dict[str, Any] = kwargs.get('tests', {})
+        url: str = kwargs.get("url", "")
+        fields: list[str] = kwargs.get("fields", [])
+        dtype: dict[str, Any] = kwargs.get("dtype", {})
+        tests: dict[str, Any] = kwargs.get("tests", {})
 
         url = url or self.url
         records = self.extract_records(url=url)
