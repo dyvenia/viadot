@@ -116,4 +116,4 @@ jobs:
           push: true
           target: viadot-azure
           tags: ghcr.io/${{ github.repository }}/viadot-azure:${{ steps.var.outputs.tag }}
-          build-args: INSTALL_DATABRICKS=true
+          build-args: INSTALL_DATABRICKS=false
