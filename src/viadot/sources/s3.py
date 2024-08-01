@@ -1,12 +1,18 @@
+"""A module for working with Amazon S3 as a data source."""
+
+from collections.abc import Iterable
 import os
-from typing import Iterable, List, Literal, Union
+from pathlib import Path
+from typing import Literal
+
 
 try:
     import awswrangler as wr
     import boto3
     import s3fs
 except ModuleNotFoundError:
-    raise ImportError("Missing required modules to use edshiftSpectrum source.")
+    msg = "Missing required modules to use RedshiftSpectrum source."
+    raise ImportError(msg) from None
 
 import pandas as pd
 from pydantic import BaseModel, root_validator
@@ -20,10 +26,17 @@ class S3Credentials(BaseModel):
     region_name: str  # The name of the AWS region.
     aws_access_key_id: str  # The AWS access key ID.
     aws_secret_access_key: str  # The AWS secret access key.
-    profile_name: str = None  # The name of the IAM profile to use.
+    profile_name: str | None = None  # The name of the IAM profile to use.
 
     @root_validator(pre=True)
-    def is_configured(cls, credentials):
+    def is_configured(cls, credentials: dict) -> dict:  # noqa: N805
+        """Validate credentials.
+
+        Ensure that at least one of the
+        following is provided:
+        - profile_name and region_name
+        - aws_access_key_id, aws_secret_access_key, and region_name
+        """
         profile_name = credentials.get("profile_name")
         region_name = credentials.get("region_name")
         aws_access_key_id = credentials.get("aws_access_key_id")
@@ -33,31 +46,28 @@ class S3Credentials(BaseModel):
         direct_credential = aws_access_key_id and aws_secret_access_key and region_name
 
         if not (profile_credential or direct_credential):
-            raise CredentialError(
-                "Either `profile_name` and `region_name`, or `aws_access_key_id`, "
-                "`aws_secret_access_key`, and `region_name` must be specified."
-            )
+            msg = "Either `profile_name` and `region_name`, or `aws_access_key_id`, "
+            msg += "`aws_secret_access_key`, and `region_name` must be specified."
+            raise CredentialError(msg)
         return credentials
 
 
 class S3(Source):
-    """
-    A class for pulling data from and uploading to the Amazon S3.
+    def __init__(
+        self,
+        credentials: S3Credentials | None = None,
+        config_key: str | None = None,
+        *args,
+        **kwargs,
+    ):
+        """A class for pulling data from and uploading to the Amazon S3.
 
-    Args:
+        Args:
         credentials (S3Credentials, optional): Amazon S3 credentials.
             Defaults to None.
         config_key (str, optional): The key in the viadot config holding relevant
             credentials. Defaults to None.
-    """
-
-    def __init__(
-        self,
-        credentials: S3Credentials = None,
-        config_key: str = None,
-        *args,
-        **kwargs,
-    ):
+        """
         raw_creds = (
             credentials
             or get_source_credentials(config_key)
@@ -94,28 +104,24 @@ class S3(Source):
         return self._session
 
     def _get_env_credentials(self):
-        credentials = {
+        return {
             "region_name": os.environ.get("AWS_DEFAULT_REGION"),
             "aws_access_key_id": os.environ.get("AWS_ACCESS_KEY_ID"),
             "aws_secret_access_key": os.environ.get("AWS_SECRET_ACCESS_KEY"),
         }
-        return credentials
 
-    def ls(self, path: str, suffix: str = None) -> List[str]:
-        """
-        Returns a list of objects in a provided path.
+    def ls(self, path: str, suffix: str | None = None) -> list[str]:
+        """Returns a list of objects in a provided path.
 
         Args:
             path (str): Path to a folder.
             suffix (Union[str, List[str], None]) - Suffix or List of suffixes for
                 filtering Amazon S3 keys. Defaults to None.
         """
-
         return wr.s3.list_objects(boto3_session=self.session, path=path, suffix=suffix)
 
     def exists(self, path: str) -> bool:
-        """
-        Check if an object exists in the Amazon S3.
+        """Check if an object exists in the Amazon S3.
 
         Args:
             path (str): The path to an object to check.
@@ -124,35 +130,35 @@ class S3(Source):
             bool: Whether the object exists.
         """
         if not path.startswith("s3://"):
-            raise ValueError("Path must be an AWS S3 URL ('s3://my/path').")
+            msg = "Path must be an AWS S3 URL ('s3://my/path')."
+            raise ValueError(msg)
 
         # Note this only checks for files.
         file_exists = wr.s3.does_object_exist(boto3_session=self.session, path=path)
 
         if file_exists:
             return True
+
+        # Use another method in case the path is a folder.
+        client = self.session.client("s3")
+        bucket = path.split("/")[2]
+        path = str(Path(*path.rstrip("/").split("/")[3:]))
+
+        response = client.list_objects_v2(Bucket=bucket, Prefix=path, Delimiter="/")
+
+        folders_with_prefix: list[dict] = response.get("CommonPrefixes")
+        if folders_with_prefix is None:
+            folder_exists = False
         else:
-            # Use another method in case the path is a folder.
-            client = self.session.client("s3")
-            bucket = path.split("/")[2]
-            path = os.path.join(*path.rstrip("/").split("/")[3:])
-
-            response = client.list_objects_v2(Bucket=bucket, Prefix=path, Delimiter="/")
-
-            folders_with_prefix: list[dict] = response.get("CommonPrefixes")
-            if folders_with_prefix is None:
-                folder_exists = False
-            else:
-                # This is because list_objects takes in `Prefix`, so eg. if there exists
-                #  a path `a/b/abc` and we run `list_objects_v2(path=`a/b/a`)`,
-                #  it would enlist `a/b/abc` as well.
-                paths = [path["Prefix"].rstrip("/") for path in folders_with_prefix]
-                folder_exists = path in paths
-            return folder_exists
+            # This is because list_objects takes in `Prefix`, so eg. if there exists
+            #  a path `a/b/abc` and we run `list_objects_v2(path=`a/b/a`)`,
+            #  it would enlist `a/b/abc` as well.
+            paths = [path["Prefix"].rstrip("/") for path in folders_with_prefix]
+            folder_exists = path in paths
+        return folder_exists
 
     def cp(self, from_path: str, to_path: str, recursive: bool = False) -> None:
-        """
-        Copies the contents of `from_path` to `to_path`.
+        """Copies the contents of `from_path` to `to_path`.
 
         Args:
             from_path (str): The path (S3 URL) of the source directory.
@@ -175,9 +181,8 @@ class S3(Source):
         """
         self.fs.copy(path1=from_path, path2=to_path, recursive=recursive)
 
-    def rm(self, path: Union[str, list[str]]) -> None:
-        """
-        Delete files under `path`.
+    def rm(self, path: str | list[str]) -> None:
+        """Delete files under `path`.
 
         Args:
             path (list[str]): Path to a list of files or a directory
@@ -192,7 +197,6 @@ class S3(Source):
         s3.rm(path=["file1.parquet"])
         ```
         """
-
         wr.s3.delete_objects(boto3_session=self.session, path=path)
 
     def from_df(
@@ -202,18 +206,19 @@ class S3(Source):
         extension: Literal[".csv", ".parquet"] = ".parquet",
         **kwargs,
     ) -> None:
-        """
-        Upload a pandas `DataFrame` into Amazon S3 as a CSV or Parquet file.
-        For full list of available parameters please refer to the official documentation:
+        """Upload a pandas `DataFrame` into Amazon S3 as a CSV or Parquet file.
+
+        For a full list of available parameters, please refer to the official
+        documentation:
         https://aws-sdk-pandas.readthedocs.io/en/3.0.0/stubs/awswrangler.s3.to_parquet.html
         https://aws-sdk-pandas.readthedocs.io/en/3.0.0/stubs/awswrangler.s3.to_csv.html
 
         Args:
             df (pd.DataFrame): The pandas DataFrame to upload.
             path (str): The destination path.
-            extension (Literal[".csv", ".parquet"], optional): The file extension. Defaults to ".parquet".
+            extension (Literal[".csv", ".parquet"], optional): The file extension.
+                Defaults to ".parquet".
         """
-
         if extension == ".parquet":
             wr.s3.to_parquet(
                 boto3_session=self.session,
@@ -229,20 +234,20 @@ class S3(Source):
                 **kwargs,
             )
         else:
-            raise ValueError("Only parquet and CSV formats are supported.")
+            msg = "Only CSV and Parquet formats are supported."
+            raise ValueError(msg)
 
     def to_df(
         self,
         paths: list[str],
-        chunk_size: int = None,
+        chunk_size: int | None = None,
         **kwargs,
-    ) -> Union[pd.DataFrame, Iterable[pd.DataFrame]]:
-        """
-        Reads a CSV or Parquet file into a pandas `DataFrame`.
+    ) -> pd.DataFrame | Iterable[pd.DataFrame]:
+        """Read a CSV or Parquet file into a pandas `DataFrame`.
 
         Args:
-            paths (list[str]): A list of paths to Amazon S3 files. All files under the path
-                must be of the same type.
+            paths (list[str]): A list of paths to Amazon S3 files. All files under the
+                path must be of the same type.
             chunk_size (int, optional): Number of rows to include in each chunk.
                 Defaults to None, ie. return all data as a single `DataFrame`.
 
@@ -271,7 +276,6 @@ class S3(Source):
             print(df)
         ```
         """
-
         if chunk_size is None:
             # `chunked` expects either an integer or a boolean.
             chunk_size = False
@@ -285,27 +289,24 @@ class S3(Source):
                 boto3_session=self.session, path=paths, chunked=chunk_size, **kwargs
             )
         else:
-            raise ValueError("Only CSV and parquet formats are supported.")
+            msg = "Only CSV and Parquet formats are supported."
+            raise ValueError(msg)
         return df
 
     def upload(self, from_path: str, to_path: str) -> None:
-        """
-        Upload file(s) to S3.
+        """Upload file(s) to S3.
 
         Args:
             from_path (str): Path to local file(s) to be uploaded.
             to_path (str): Path to the destination file/folder.
         """
-
         wr.s3.upload(boto3_session=self.session, local_file=from_path, path=to_path)
 
     def download(self, from_path: str, to_path: str) -> None:
-        """
-        Download file(s) from Amazon S3.
+        """Download file(s) from Amazon S3.
 
         Args:
             from_path (str): Path to file in Amazon S3.
             to_path (str): Path to local file(s) to be stored.
         """
-
         wr.s3.download(boto3_session=self.session, path=from_path, local_file=to_path)
