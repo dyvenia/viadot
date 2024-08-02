@@ -12,6 +12,7 @@ from .outlook import Outlook
 from .sharepoint import Sharepoint
 from .sql_server import SQLServer
 from .trino import Trino
+from .uk_carbon_intensity import UKCarbonIntensity
 
 
 __all__ = [
@@ -24,40 +25,41 @@ __all__ = [
     "Sharepoint",
     "Trino",
     "SQLServer",
+    "UKCarbonIntensity",
 ]
 
 if find_spec("adlfs"):
-    from viadot.sources.azure_data_lake import AzureDataLake  # noqa
+    from viadot.sources.azure_data_lake import AzureDataLake  # noqa: F401
 
     __all__.extend(["AzureDataLake"])
 
 if find_spec("duckdb"):
-    from viadot.sources.duckdb import DuckDB  # noqa
+    from viadot.sources.duckdb import DuckDB  # noqa: F401
 
     __all__.extend(["DuckDB"])
 
 if find_spec("redshift_connector"):
-    from viadot.sources.redshift_spectrum import RedshiftSpectrum  # noqa
+    from viadot.sources.redshift_spectrum import RedshiftSpectrum  # noqa: F401
 
     __all__.extend(["RedshiftSpectrum"])
 
 if find_spec("s3fs"):
-    from viadot.sources.s3 import S3  # noqa
+    from viadot.sources.s3 import S3  # noqa: F401
 
     __all__.extend(["S3"])
 
 if find_spec("s3fs"):
-    from viadot.sources.minio_source import MinIO  # noqa
+    from viadot.sources.minio_source import MinIO  # noqa: F401
 
     __all__.extend(["MinIO"])
 
 
 if find_spec("pyrfc"):
-    from viadot.sources.sap_rfc import SAPRFC, SAPRFCV2  # noqa
+    from viadot.sources.sap_rfc import SAPRFC, SAPRFCV2  # noqa: F401
 
     __all__.extend(["SAPRFC", "SAPRFCV2"])
 
 if find_spec("pyspark"):
-    from viadot.sources.databricks import Databricks  # noqa
+    from viadot.sources.databricks import Databricks  # noqa: F401
 
     __all__.append("Databricks")

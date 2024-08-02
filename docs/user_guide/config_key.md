@@ -1,10 +1,9 @@
+# Using config
 
-
-Credentials and other settings for various **sources** are stored in a file named `config.yaml`. A credential file needs to be written in `YAML` format. A typical credentials file looks like this:
+Credentials and other settings for various **sources** are stored in viadot config file (by default, in `~/.config/viadot/config.yaml`). A typical credentials file looks like this:
 
 ```yaml
 sources:
-
   - exchange_rates:
       class: ExchangeRates
       credentials:
@@ -28,9 +27,3 @@ rates = ExchangeRates(config_key="exchange_rates")
 ```
 
 The above will pass all the configurations, including secrets like passwords, to the class. This avoids having to write secrets or configs in the code.
-
-### Storing the file locally
-
-Currently, only local files are supported. Make sure to store the file at the correct path. 
-
-* On Linux the path is `~/.config/viadot/config.yaml`

@@ -1,24 +1,13 @@
+# Getting started guide
 
-### Prerequisites
-
-We assume that you have [Rye](https://rye-up.com/) installed:
-
-```console
-curl -sSf https://rye-up.com/get | bash
-```
-
-### Installation
-
-Clone the `2.0` branch, and set up and run the environment:
+## Installation
 
 ```console
-git clone https://github.com/dyvenia/viadot.git -b 2.0 && \
-  cd viadot && \
-  rye sync
+pip install viadot2
 ```
 
-### Configuration
+## Configuration
 
-In order to start using sources, you must configure them with required credentials. Credentials can be specified either in the viadot config file (by default, `~/.config/viadot/config.yaml`), or passed directly to each source's `credentials` parameter.
+In order to start using sources, you must configure required credentials. The best way to do this is to specify them in the config file (by default, `~/.config/viadot/config.yaml`).
 
-You can find specific information about each source's credentials in [the documentation](../references/sources/sql_sources.md).
+You can find each source's configuration in [the documentation](../references/sources/sql_sources.md).

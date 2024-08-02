@@ -3,9 +3,10 @@
 from datetime import datetime
 from typing import Literal
 
+from prefect import flow
+
 from viadot.orchestration.prefect.tasks import df_to_databricks, exchange_rates_to_df
 
-from prefect import flow
 
 Currency = Literal[
     "USD", "EUR", "GBP", "CHF", "PLN", "DKK", "COP", "CZK", "SEK", "NOK", "ISK"
@@ -18,7 +19,7 @@ Currency = Literal[
     retries=1,
     retry_delay_seconds=60,
 )
-def exchange_rates_to_databricks(  # noqa: PLR0913, PLR0917
+def exchange_rates_to_databricks(  # noqa: PLR0913
     databricks_table: str,
     databricks_schema: str | None = None,
     if_exists: Literal["replace", "skip", "fail"] = "fail",
