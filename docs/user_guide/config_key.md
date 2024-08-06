@@ -1,6 +1,8 @@
 # Using config
 
-Credentials and other settings for various **sources** are stored in viadot config file (by default, in `~/.config/viadot/config.yaml`). A typical credentials file looks like this:
+In order to avoid storing and passing credentials through variables, source configuration is stored in the viadot config file (by default, in `~/.config/viadot/config.yaml`).
+
+Below is an example config file, with configurations for two sources:
 
 ```yaml
 sources:
@@ -17,13 +19,16 @@ sources:
         password: "password"
 ```
 
-In the above, `exchange_rates` and `sharepoint` are what we refer to as "config keys". These config settings are fed to the `ExchangeRates()` or `Sharepoint()` sources.
-
-For example, this is how to use the `ExchangeRates()` configuration stanza from the config file.
+In the above, `exchange_rates` and `sharepoint` are what we refer to as "config keys". For example, this is how to use the `exchange_rates` config key to pass credentials to the `ExchangeRates` source:
 
 ```python
-# initiates the ExchangeRates() class with the exchange_rates configs
-rates = ExchangeRates(config_key="exchange_rates")
+# sources/exchange_rates.py
+
+source = ExchangeRates(config_key="exchange_rates")
 ```
 
-The above will pass all the configurations, including secrets like passwords, to the class. This avoids having to write secrets or configs in the code.
+This will pass the `credentials` key, including the `api_key` secret, to the instance.
+
+!!! info
+
+    You can use any name for your config key, as long as it's unique. For example, we can have credentials for two different environments stored as `sharepoint_dev` and `sharepoint_prod` keys.

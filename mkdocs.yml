@@ -7,24 +7,24 @@ nav:
   - Home: index.md
 
   - Getting Started:
-    - Getting Started: getting_started/getting_started.md
+      - Getting Started: getting_started/getting_started.md
 
   - User Guide:
-    - Adding a new source: user_guide/adding_source.md
-    - Adding a new Prefect flow: user_guide/adding_prefect_flow.md
-    - Using the config key: user_guide/config_key.md
+      - Creating a source: user_guide/creating_a_source.md
+      - Creating a Prefect flow: user_guide/creating_a_prefect_flow.md
+      - Using the config key: user_guide/config_key.md
 
   - Advanced Usage:
-    - Docker Containers: advanced_usage/docker_containers.md
+      - Docker Containers: advanced_usage/docker_containers.md
 
   - References:
-    - Sources:
-      - SQL Sources: references/sources/sql_sources.md
-      - API Sources: references/sources/api_sources.md
-    - Orchestration:
-      - Prefect:
-        - Tasks: references/orchestration/prefect/prefect_tasks.md
-        - Flows: references/orchestration/prefect/prefect_flows.md
+      - Sources:
+          - SQL Sources: references/sources/sql_sources.md
+          - API Sources: references/sources/api_sources.md
+      - Orchestration:
+          - Prefect:
+              - Tasks: references/orchestration/prefect/prefect_tasks.md
+              - Flows: references/orchestration/prefect/prefect_flows.md
 
 theme:
   name: "material"
