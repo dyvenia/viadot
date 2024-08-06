@@ -7,16 +7,17 @@ nav:
   - Home: index.md
 
   - Getting Started:
-      - Getting Started: getting_started/getting_started.md
+      - Getting Started: getting_started.md
 
-  - User Guide:
+  - Developer Guide:
       - Introduction: developer_guide/index.md
       - Creating a source: developer_guide/creating_a_source.md
       - Creating a Prefect flow: developer_guide/creating_a_prefect_flow.md
-      - Using the config key: developer_guide/config_key.md
+      - Contributing: developer_guide/contributing_to_viadot.md
 
   - Advanced Usage:
-      - Docker Containers: advanced_usage/docker_containers.md
+      - Introduction: advanced_usage/index.md
+      - Containerized development environment: advanced_usage/containerized_env.md
 
   - References:
       - Sources:

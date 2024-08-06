@@ -41,3 +41,7 @@ df = ukci.to_df()
 adls = AzureDataLake(config_key="my_adls_creds")
 adls.from_df(df, "my_folder/my_file.parquet")
 ```
+
+## Next steps
+
+Head over to the [Getting Started](./getting_started/getting_started.md) guide to learn how to set up `viadot`.

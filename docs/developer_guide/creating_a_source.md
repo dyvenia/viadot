@@ -1,5 +1,7 @@
 # Creating a source connector
 
+## Example
+
 The first thing you need to do is create a class that inherits from the `SQL` class. You should also specify a [pydantic](https://medium.com/mlearning-ai/improve-your-data-models-with-pydantic-f9f10ca66f26) model for the source's credentials:
 
 ```python
@@ -29,7 +31,7 @@ class PostgreSQL(SQL):
         ...
 ```
 
-Credentials can now be provided directly as the `credentials` parameter or by [using the config key](../developer_guide/config_key.md).
+Credentials can now be provided directly via the `credentials` parameter or by [using the config key](#using-viadot-config).
 
 !!! warning "viadot metadata - hardcoded schemas workaround"
 
@@ -143,7 +145,7 @@ __all__ = [
 
 ## Sources using optional dependencies
 
-In case your source uses an [optional dependency](https://github.com/dyvenia/viadot/blob/2.0/pyproject.toml), you need to escape the import. In the example below, our source uses the optional `adlfs` package (part of the `viadot-azure` extra):
+In case your source uses an [optional dependency](https://github.com/dyvenia/viadot/blob/2.0/pyproject.toml), you need to escape the import. In the example below, our source uses the optional `adlfs` package (part of the `azure` extra):
 
 ```python hl_lines="5-8"
 # sources/azure_data_lake.py
@@ -265,6 +267,43 @@ except ImportError:
 if not _adls_installed:
     pytest.skip("AzureDataLake source not installed", allow_module_level=True)
 ```
+
+## Using viadot config
+
+In order to avoid storing and passing credentials through variables, source configuration should be stored in the viadot config file (by default, `~/.config/viadot/config.yaml`).
+
+You can find each source's configuration in [the documentation](../references/sources/sql_sources.md).
+
+Below is an example config file, with configurations for two sources:
+
+```yaml
+sources:
+  - exchange_rates:
+      class: ExchangeRates
+      credentials:
+        api_key: "api123api123api123"
+
+  - sharepoint:
+      class: Sharepoint
+      credentials:
+        site: "site.sharepoint.com"
+        username: "user@email.com"
+        password: "password"
+```
+
+In the above, `exchange_rates` and `sharepoint` are what we refer to as "config keys". For example, this is how to use the `exchange_rates` config key to pass credentials to the `ExchangeRates` source:
+
+```python
+# sources/exchange_rates.py
+
+source = ExchangeRates(config_key="exchange_rates")
+```
+
+This will pass the `credentials` key, including the `api_key` secret, to the instance.
+
+!!! info
+
+    You can use any name for your config key, as long as it's unique. For example, we can have credentials for two different environments stored as `sharepoint_dev` and `sharepoint_prod` keys.
 
 ## Conclusion
 

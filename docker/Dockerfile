@@ -54,6 +54,29 @@ RUN curl https://packages.microsoft.com/keys/microsoft.asc | apt-key add - && \
 COPY docker/odbcinst.ini /etc
 
 
+###################
+### viadot-lite ###
+###################
+
+FROM base as viadot-lite
+
+WORKDIR ${HOME}
+
+COPY --chown=${USER}:${USER} . ./viadot
+
+RUN rye lock --reset --features viadot-lite --pyproject viadot/pyproject.toml
+RUN sed '/-e/d' ./viadot/requirements.lock > ./viadot/requirements.txt
+RUN pip install --no-cache-dir -r ./viadot/requirements.txt
+
+# Dependecy install
+RUN pip install ./viadot/
+
+# Cleanup.
+RUN rm -rf ./viadot
+
+USER ${USER}
+
+
 ####################
 ### viadot-azure ###
 ####################
@@ -98,28 +121,6 @@ RUN rm -rf ./viadot
 
 USER ${USER}
 
-
-###################
-### viadot-lite ###
-###################
-
-FROM base as viadot-lite
-
-WORKDIR ${HOME}
-
-COPY --chown=${USER}:${USER} . ./viadot
-
-RUN rye lock --reset --features viadot-lite --pyproject viadot/pyproject.toml
-RUN sed '/-e/d' ./viadot/requirements.lock > ./viadot/requirements.txt
-RUN pip install --no-cache-dir -r ./viadot/requirements.txt
-
-# Dependecy install
-RUN pip install ./viadot/
-
-# Cleanup.
-RUN rm -rf ./viadot
-
-USER ${USER}
 
 ##################
 ### viadot-aws ###

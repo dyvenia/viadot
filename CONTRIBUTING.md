@@ -24,7 +24,7 @@ For an enhanced experience, we provide the extensions, settings, and tasks for V
 
 Due to `viadot` depending on a few Linux libraries, the easiest way to work with `viadot` is to use the provided Docker image.
 
-`viadot` comes with a `docker-compose.yml` config with pre-configured containers for each extra (lite, azure, aws). In order to start a container, run `docker compose up -d viadot-<distro>`, for example:
+`viadot` comes with a `docker-compose.yml` config with pre-configured containers for the core library, as well as each extra (azure, aws). In order to start a container, run `docker compose up -d viadot-<distro>`, for example:
 
 ```bash
 docker compose up -d viadot-aws
