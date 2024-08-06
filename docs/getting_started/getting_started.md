@@ -1,15 +1,35 @@
 # Getting started guide
 
+## Prerequisites
+
+We use [Rye](https://rye-up.com/). You can install it like so:
+
+```console
+curl -sSf https://rye-up.com/get | bash
+```
+
 ## Installation
 
 ```console
-pip install viadot2
+git clone https://github.com/dyvenia/viadot.git -b 2.0 && \
+  cd viadot && \
+  rye sync
 ```
 
-!!! info
+!!! note
 
-    You can also install `viadot2` with any of the [supported extras](https://github.com/dyvenia/viadot/blob/2.0/pyproject.toml) with `pip install viadot2[extra]`, eg. `pip install viadot2[azure]`
+    Since `viadot` does not have an SDK, both adding new sources and flows requires **contributing your code to the library**. Hence, we install the library from source instead of just using `pip install`. However, installing `viadot2` with `pip install` is still possible:
+
+    ```console
+    pip install viadot2
+    ```
+
+    or, with the `azure` [extra](https://github.com/dyvenia/viadot/blob/2.0/pyproject.toml) as an example:
+
+    ```console
+    pip install viadot2[azure]
+    ```
 
 ## Next steps
 
-Head over to the [user guide](../user_guide/index.md) to learn how to use `viadot` to build data connectors and jobs.
+Head over to the [developer guide](../developer_guide/index.md) to learn how to use `viadot` to build data connectors and jobs.

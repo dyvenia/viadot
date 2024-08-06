@@ -29,7 +29,7 @@ class PostgreSQL(SQL):
         ...
 ```
 
-Credentials can now be provided directly as the `credentials` parameter or by [using the config key](../user_guide/config_key.md).
+Credentials can now be provided directly as the `credentials` parameter or by [using the config key](../developer_guide/config_key.md).
 
 !!! warning "viadot metadata - hardcoded schemas workaround"
 
@@ -245,7 +245,7 @@ def sharepoint():
 
 !!! info
 
-    For more information on viadot config, see [this page](../user_guide/config_key.md).
+    For more information on viadot config, see [this page](../developer_guide/config_key.md).
 
 ### Optional dependencies
 

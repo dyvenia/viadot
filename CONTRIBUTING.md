@@ -1,12 +1,12 @@
-# How to contribute to `viadot`
+# How to contribute to `viadot2`
 
-## Setting up the environment
+## Installation & set up
 
-Follow the instructions in the [README](./README.md) to set up your development environment.
+Follow instructions in the [README](./README.md#getting-started) to set up your development environment.
 
 ### VSCode
 
-We provide the extensions, settings, and tasks for VSCode in the `.vscode` folder.
+For an enhanced experience, we provide the extensions, settings, and tasks for VSCode in the `.vscode` folder.
 
 1. Install the extensions
 
