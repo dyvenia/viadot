@@ -2,7 +2,11 @@ import os
 from typing import Any, Dict, List
 
 import pandas as pd
-from adlfs import AzureBlobFileSystem, AzureDatalakeFileSystem
+
+try:
+    from adlfs import AzureBlobFileSystem, AzureDatalakeFileSystem
+except ModuleNotFoundError:
+    raise ImportError("Missing required modules to use AzureDataLake source.")
 
 from viadot.config import get_source_credentials
 from viadot.exceptions import CredentialError
@@ -36,11 +40,14 @@ class AzureDataLake(Source):
         **kwargs,
     ):
         credentials = credentials or get_source_credentials(config_key)
+        # pass to lower letters
+        credentials = {key.lower(): value for key, value in credentials.items()}
+        
         required_credentials = (
             "account_name",
-            "tenant_id",
-            "client_id",
-            "client_secret",
+            "azure_tenant_id",
+            "azure_client_id",
+            "azure_client_secret",
         )
         required_credentials_are_provided = all(
             [rc in credentials for rc in required_credentials]
@@ -54,16 +61,16 @@ class AzureDataLake(Source):
         super().__init__(*args, credentials=credentials, **kwargs)
 
         storage_account_name = self.credentials["account_name"]
-        tenant_id = self.credentials["tenant_id"]
-        client_id = self.credentials["client_id"]
-        client_secret = self.credentials["client_secret"]
-
+        tenant_id = self.credentials["azure_tenant_id"]
+        client_id = self.credentials["azure_client_id"]
+        client_secret = self.credentials["azure_client_secret"]
+ 
         self.path = path
         self.gen = gen
         self.storage_options = {
-            "tenant_id": tenant_id,
-            "client_id": client_id,
-            "client_secret": client_secret,
+            "azure_tenant_id": tenant_id,
+            "azure_client_id": client_id,
+            "azure_client_secret": client_secret,
         }
         if gen == 1:
             self.fs = AzureDatalakeFileSystem(
@@ -242,7 +249,11 @@ class AzureDataLake(Source):
         self.fs.cp(from_path, to_path, recursive=recursive)
 
     def from_df(
-        self, df: pd.DataFrame, path: str = None, overwrite: bool = False
+        self,
+        df: pd.DataFrame,
+        path: str = None,
+        sep: str = "\t",
+        overwrite: bool = False,
     ) -> None:
         """
         Upload a pandas `DataFrame` to a file on Azure Data Lake.
@@ -250,6 +261,7 @@ class AzureDataLake(Source):
         Args:
             df (pd.DataFrame): The pandas `DataFrame` to upload.
             path (str, optional): The destination path. Defaults to None.
+            sep (str, optional): The separator to use in the `to_csv` function. Defaults to "\t".
             overwrite (bool): Whether to overwrite the file if it exist.
         """
 
@@ -268,7 +280,7 @@ class AzureDataLake(Source):
             # Can do it simply like this if ADLS accesses are set up correctly
             # url = os.path.join(self.base_url, path)
             # df.to_csv(url, storage_options=self.storage_options)
-            df.to_csv(file_name, index=False)
+            df.to_csv(file_name, index=False, sep=sep)
         else:
             df.to_parquet(file_name, index=False)
 

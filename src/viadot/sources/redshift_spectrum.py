@@ -1,10 +1,15 @@
 import os
 from typing import List, Literal, Optional, Tuple
 
-import awswrangler as wr
-import boto3
 import pandas as pd
-import redshift_connector
+
+try:
+    import awswrangler as wr
+    import boto3
+    import redshift_connector
+except ModuleNotFoundError:
+    raise ImportError("Missing required modules to use RedshiftSpectrum source.")
+
 from pydantic import BaseModel, root_validator
 
 from viadot.config import get_source_credentials

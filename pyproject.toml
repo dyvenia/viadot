@@ -1,46 +1,57 @@
 [project]
 name = "viadot2"
-version = "2.0a26"
+version = "2.0.0-beta.1"
 description = "A simple data ingestion library to guide data flows from some places to other places."
 authors = [
     { name = "acivitillo", email = "acivitillo@dyvenia.com" },
     { name = "trymzet", email = "mzawadzki@dyvenia.com" },
 ]
 dependencies = [
-    "azure-core==1.25.0",
-    "azure-storage-blob==12.13.1",
-    "awswrangler==2.19.0",
-    "s3fs==2022.11.0",
-    "boto3==1.24.59",
-    "pandas==1.4.4",
-    "pyarrow==10.0.1",
-    "pyodbc>=4.0.34, <4.1.0",
-    "openpyxl==3.0.10",
-    "jupyterlab==3.2.4",
-    "matplotlib>=3.8.3",
-    "adlfs==2022.9.1",
-    "Shapely==1.8.0",
-    "imagehash==4.2.1",
-    "visions==0.7.5",
-    "sharepy>=2.0.0, <2.1.0",
-    "simple_salesforce==1.11.5",
-    "sql-metadata>=2.3.0",
-    "duckdb==0.5.1",
-    "sendgrid==6.9.7",
-    "pandas-gbq==0.19.1",
-    "pyyaml>=6.0.1",
-    "pydantic==1.10.11",
-    "aiolimiter==1.0.0",
-    "trino==0.326.*",
+    "pyodbc>=5.1.0",
+    "visions>=0.6.4",
+    "sharepy>=2.0.0",
+    "sql-metadata>=2.11.0",
+    "sendgrid>=6.11.0",
+    "pydantic>=1.10.9,<1.11.0",
+    "aiolimiter>=1.1.0",
+    "trino==0.328.*",
     "sqlalchemy==2.0.*",
-    "minio>=7.0, <8.0",
-    "azure-identity>=1.15.0",
+    "lumacli>=0.1.2, <0.2.0",
+    "pygit2>=1.13.3, <1.15.0",
+    "openpyxl>=3.0.0,<3.1.0",
+    "prefect>=2.19.7, <3",
+    "requests==2.31.0",
+    "prefect-sqlalchemy>=0.4.3",
+    "pandas>=1.2.0, <1.5.0",
+    "pyarrow>=10.0.1",
+    "duckdb==1.0.0",
 ]
 requires-python = ">=3.10"
 readme = "README.md"
 
 [project.optional-dependencies]
+
 databricks = ["databricks-connect==11.3.*"]
+
+viadot-azure = [
+    "azure-core==1.30.1",
+    "azure-storage-blob==12.20.0",
+    "adlfs==2024.4.1",
+    "azure-identity>=1.16.0",
+    "dbt-sqlserver>=1.3, <1.8",
+    "prefect-azure @ git+https://github.com/Trymzet/prefect-azure@add_keyvault_auth#egg=prefect-azure",
+    "prefect_github",
+    "O365==2.0.18.1",
+    "asynctest",
+]
+viadot-aws = [
+    "s3fs==2024.6.0",
+    "boto3==1.34.106",
+    "dbt-redshift>=1.3, <1.8",
+    "minio>=7.0, <8.0",
+    "awswrangler==2.20.1",
+    "prefect-aws==0.4.18",
+]
 
 [tool.rye]
 dev-dependencies = [
@@ -50,6 +61,8 @@ dev-dependencies = [
     "Faker==13.12.1",
     "python-dotenv>=1.0.1",
     "coverage>=7.4.4",
+    "aiohttp>=3.9.5",
+    "loguru>=0.7.2",
     "mkdocs-material[imaging]>=9.4.3",
     "mkdocs-mermaid2-plugin>=1.1.0",
     "mkdocs-include-dir-to-nav>=1.2.0",
@@ -69,6 +82,7 @@ log_format = "%(asctime)s %(levelname)s %(message)s"
 log_date_format = "%Y-%m-%d %H:%M:%S"
 log_cli = true
 log_level = "WARNING"
+addopts = "--ignore=dbt_packages"
 
 [tool.coverage.run]
 omit = ['tests/*']
