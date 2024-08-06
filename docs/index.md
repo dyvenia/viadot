@@ -26,4 +26,18 @@ The above `df` is a pandas `DataFrame` object. It contains data downloaded by `v
 
 ## Loading data to a destination
 
-Depending on the source, `viadot` provides different methods of uploading data. For instance, for SQL sources, this would be bulk inserts. For data lake sources, it would be a file upload.
+Depending on the destination, `viadot` provides different methods of uploading data. For instance, for databases, this would be bulk inserts. For data lakes, it would be file uploads.
+
+For example:
+
+```python hl_lines="2 8-9"
+from viadot.sources import UKCarbonIntensity
+from viadot.sources import AzureDataLake
+
+ukci = UKCarbonIntensity()
+ukci.query("/intensity")
+df = ukci.to_df()
+
+adls = AzureDataLake(config_key="my_adls_creds")
+adls.from_df(df, "my_folder/my_file.parquet")
+```

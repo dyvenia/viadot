@@ -1,7 +1,5 @@
 # Creating a source connector
 
-Let's assume that your goal is to create a connector that retrieves data from a PostgresSQL database.
-
 The first thing you need to do is create a class that inherits from the `SQL` class. You should also specify a [pydantic](https://medium.com/mlearning-ai/improve-your-data-models-with-pydantic-f9f10ca66f26) model for the source's credentials:
 
 ```python
@@ -185,13 +183,75 @@ if find_spec("adlfs"):
 
 ## Adding tests
 
-Make sure to add unit tests for your source in `viadot/tests/unit/test_<your_source_name>.py`!
+Make sure to add tests for your source!
 
-In case the source is using optional dependencies, make sure to escape them in the tests as well:
+### Unit
 
-```python hl_lines="6-14"
-# viadot/tests/unit/test_azure_data_lake.py
+You can think of unit tests as tests which do not require internet connection or connectivity to the actual data source or destination. All unit tests are executed automatically on each PR to `viadot`'s default branch.
 
+A common practice to ensure above requirements are met is to mock the external systems. For example, if we wish to create a unit test for our `Sharepoint` source which will test the `to_df()` method, which in turn depends on the `_download_excel()` method, we must first mock the `_download_excel()` method so that it doesn't actually try to download any data. Below is an example of how you can accomplish this:
+
+```python
+# tests/unit/test_sharepoint.py
+
+import pandas as pd
+from viadot.sources import Sharepoint
+
+TEST_CREDENTIALS = {"site": "test", "username": "test2", "password": "test"}
+
+class SharepointMock(Sharepoint):
+    def _download_excel(self, url=None):
+        """Returns a test DataFrame instead of calling a Sharepoint server."""
+        return pd.ExcelFile(Path("tests/unit/test_file.xlsx"))
+
+def test_sharepoint():
+    s = SharepointMock(credentials=TEST_CREDENTIALS)
+    df = s.to_df(url="test")
+
+    assert not df.empty
+```
+
+### Integration
+
+Integration tests connect to the actual systems. For these tests, you will need to set up your viadot config with proper credentials. For example, to test a `Sharepoint` source, our config could look like this:
+
+```yaml
+# ~/.config/viadot/config.yaml
+version: 1
+
+sources:
+  - sharepoint_dev:
+      class: Sharepoint
+      credentials:
+        site: "site.sharepoint.com"
+        username: "test_username"
+        password: "test_password"
+```
+
+Then, in our integration tests, we can use the `Sharepoint` source with the `sharepoint_dev` config key:
+
+```python
+# tests/integration/test_sharepoint.py
+
+import pytest
+...
+
+@pytest.fixture
+def sharepoint():
+    from viadot.sources import Sharepoint
+
+    return Sharepoint(config_key="sharepoint_dev")
+```
+
+!!! info
+
+    For more information on viadot config, see [this page](../user_guide/config_key.md).
+
+### Optional dependencies
+
+Same as with the source, make sure to escape the imports of optional dependencies:
+
+```python
 import pytest
 ...
 

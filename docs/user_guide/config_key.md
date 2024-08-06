@@ -2,6 +2,8 @@
 
 In order to avoid storing and passing credentials through variables, source configuration is stored in the viadot config file (by default, in `~/.config/viadot/config.yaml`).
 
+You can find each source's configuration in [the documentation](../references/sources/sql_sources.md).
+
 Below is an example config file, with configurations for two sources:
 
 ```yaml

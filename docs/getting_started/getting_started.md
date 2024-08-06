@@ -6,8 +6,10 @@
 pip install viadot2
 ```
 
-## Configuration
+!!! info
 
-In order to start using sources, you must configure required credentials. The best way to do this is to specify them in the config file (by default, `~/.config/viadot/config.yaml`).
+    You can also install `viadot2` with any of the [supported extras](https://github.com/dyvenia/viadot/blob/2.0/pyproject.toml) with `pip install viadot2[extra]`, eg. `pip install viadot2[azure]`
 
-You can find each source's configuration in [the documentation](../references/sources/sql_sources.md).
+## Next steps
+
+Head over to the [user guide](../user_guide/index.md) to learn how to use `viadot` to build data connectors and jobs.

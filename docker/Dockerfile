@@ -82,7 +82,7 @@ WORKDIR ${HOME}
 
 COPY --chown=${USER}:${USER} . ./viadot
 
-RUN rye lock --reset --features viadot-azure --pyproject viadot/pyproject.toml
+RUN rye lock --reset --features azure --pyproject viadot/pyproject.toml
 RUN sed '/-e/d' ./viadot/requirements.lock > ./viadot/requirements.txt
 RUN pip install --no-cache-dir -r ./viadot/requirements.txt
 
@@ -91,7 +91,7 @@ RUN if [ "$INSTALL_DATABRICKS" = "true" ]; then \
     fi
 
 # Dependecy install
-RUN pip install ./viadot/.[viadot-azure]
+RUN pip install ./viadot/.[azure]
 
 # Cleanup.
 RUN rm -rf ./viadot
@@ -132,12 +132,12 @@ WORKDIR ${HOME}
 
 COPY --chown=${USER}:${USER} . ./viadot
 
-RUN rye lock --reset --features viadot-aws --pyproject viadot/pyproject.toml
+RUN rye lock --reset --features aws --pyproject viadot/pyproject.toml
 RUN sed '/-e/d' ./viadot/requirements.lock > ./viadot/requirements.txt
 RUN pip install --no-cache-dir -r ./viadot/requirements.txt
 
 # Dependecy install
-RUN pip install ./viadot/.[viadot-aws]
+RUN pip install ./viadot/.[aws]
 
 # Cleanup.
 RUN rm -rf ./viadot

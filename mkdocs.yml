@@ -10,6 +10,7 @@ nav:
       - Getting Started: getting_started/getting_started.md
 
   - User Guide:
+      - Introduction: user_guide/index.md
       - Creating a source: user_guide/creating_a_source.md
       - Creating a Prefect flow: user_guide/creating_a_prefect_flow.md
       - Using the config key: user_guide/config_key.md
