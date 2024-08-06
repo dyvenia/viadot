@@ -154,8 +154,9 @@ from viadot.sources.base import Source
 
 try:
     from adlfs import AzureBlobFileSystem, AzureDatalakeFileSystem
-except ModuleNotFoundError:
-    raise ImportError("Missing required modules to use AzureDataLake source.")
+except ModuleNotFoundError as e:
+    msg = "Missing required modules to use AzureDataLake source."
+    raise ImportError(msg) from e
 
 
 class AzureDataLake(Source):
