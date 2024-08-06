@@ -49,7 +49,7 @@ if find_spec("s3fs"):
     __all__.extend(["S3"])
 
 if find_spec("s3fs"):
-    from viadot.sources.minio_source import MinIO  # noqa: F401
+    from viadot.sources.minio import MinIO  # noqa: F401
 
     __all__.extend(["MinIO"])
 

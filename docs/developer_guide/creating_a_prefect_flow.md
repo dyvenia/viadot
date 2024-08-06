@@ -137,3 +137,27 @@ __all__ = [
     "postgresql_to_adls"
 ]
 ```
+
+## Adding docs
+
+To allow MkDocs to autogenerate and display documentation for your tasks and flows in [reference docs](../references/orchestration/prefect/tasks.md), add relevant entries in the reference docs (`docs/references/orchestration/prefect`). For example:
+
+Task:
+
+```markdown
+# docs/references/orchestration/prefect/tasks.md
+
+...
+
+::: viadot.orchestration.prefect.tasks.postgresql_to_df
+```
+
+Flow:
+
+```markdown
+# docs/references/orchestration/prefect/flows.md
+
+...
+
+::: viadot.orchestration.prefect.flows.postgresql_to_adls
+```

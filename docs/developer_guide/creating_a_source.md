@@ -183,6 +183,18 @@ if find_spec("adlfs"):
     __all__.extend(["AzureDataLake"])
 ```
 
+## Adding docs
+
+To allow MkDocs to autogenerate and display documentation for your source in [reference docs](../references/sources/sql_sources.md), add an entry in the reference docs (`docs/references/sources`). For example:
+
+```markdown
+# docs/references/sources/sql_sources.md
+
+...
+
+::: viadot.sources.postgresql.PostgreSQL
+```
+
 ## Adding tests
 
 Make sure to add tests for your source!

@@ -1,19 +1,24 @@
+"""A module for interacting with MinIO."""
+
+from collections.abc import Generator
 from pathlib import Path
-from typing import Generator, Literal
+from typing import Literal
 
 import pandas as pd
 import pyarrow as pa
 import pyarrow.parquet as pq
 
+
 try:
-    import s3fs
     from minio import Minio
     from minio.error import S3Error
-except ModuleNotFoundError:
-    raise ImportError("Missing required modules to use MinIO source.")
+    import s3fs
+except ModuleNotFoundError as e:
+    msg = "Missing required modules to use MinIO source."
+    raise ImportError(msg) from e
 
-import urllib3
 from pydantic import BaseModel
+import urllib3
 from urllib3.exceptions import NewConnectionError
 
 from viadot.config import get_source_credentials
@@ -30,22 +35,23 @@ class MinIOCredentials(BaseModel):
 
 
 class MinIO(Source):
-    """
-    A class for interacting with MinIO, in a more Pythonic, user-friendly, and robust
-    way than the official minio client.
-
-    Args:
-        credentials (MinIOCredentials): MinIO credentials.
-        config_key (str, optional): The key in the viadot config holding relevant credentials.
-    """
-
     def __init__(
         self,
-        credentials: MinIOCredentials = None,
-        config_key: str = None,
+        credentials: MinIOCredentials | None = None,
+        config_key: str | None = None,
         *args,
         **kwargs,
     ):
+        """A class for interacting with MinIO.
+
+        Interact with MinIO in a more Pythonic, user-friendly, and robust way than the
+        official minio client.
+
+        Args:
+        credentials (MinIOCredentials): MinIO credentials.
+        config_key (str, optional): The key in the viadot config holding relevant
+            credentials.
+        """
         raw_creds = credentials or get_source_credentials(config_key) or {}
         validated_creds = MinIOCredentials(**raw_creds).dict(
             by_alias=True
@@ -106,9 +112,8 @@ class MinIO(Source):
         basename_template: str | None = None,
         partition_cols: list[str] | None = None,
         if_exists: Literal["error", "delete_matching", "overwrite_or_ignore"] = "error",
-    ):
-        """
-        Create a Parquet dataset on MinIO from a PyArrow Table.
+    ) -> None:
+        """Create a Parquet dataset on MinIO from a PyArrow Table.
 
         Uses multi-part upload to upload the table in chunks, speeding up the
         process by using multithreading and avoiding upload size limits.
@@ -120,7 +125,7 @@ class MinIO(Source):
         `s3://<bucket>/<schema_name>/<table_name>/<table_name>.parquet`.
 
         For more information on partitioning, see
-        https://arrow.apache.org/docs/python/generated/pyarrow.parquet.write_to_dataset.html#pyarrow-parquet-write-to-dataset  # noqa
+        https://arrow.apache.org/docs/python/generated/pyarrow.parquet.write_to_dataset.html#pyarrow-parquet-write-to-dataset
 
         Args:
             table (pa.Table): The table to upload.
@@ -131,7 +136,7 @@ class MinIO(Source):
             path (str | Path, optional): The path to the destination file. Defaults to
                 None.
             basename_template (str, optional): A template string used to generate
-                basenames of written data files. The token ‘{i}’ will be replaced with
+                basenames of written data files. The token '{i}' will be replaced with
                 an automatically incremented integer. Defaults to None.
             partition_cols (list[str], optional): The columns to partition by. Defaults
                 to None.
@@ -142,9 +147,8 @@ class MinIO(Source):
             path and not (schema_name or table_name)
         )
         if not fqn_or_path:
-            raise ValueError(
-                "Either both `schema_name` and `table_name` or only `path` must be provided."
-            )
+            msg = "Either both `schema_name` and `table_name` or only `path` must be provided."
+            raise ValueError(msg)
 
         # We need to create the dirs here as PyArrow also tries to create the bucket,
         # which shouldn't be allowed for whomever is executing this code.
@@ -175,8 +179,7 @@ class MinIO(Source):
         partition_cols: list[str] | None = None,
         if_exists: Literal["error", "delete_matching", "overwrite_or_ignore"] = "error",
     ) -> None:
-        """
-        Create a Parquet dataset on MinIO from a PyArrow Table.
+        """Create a Parquet dataset on MinIO from a PyArrow Table.
 
         Uses multi-part upload to upload the table in chunks, speeding up the
         process by using multithreading and avoiding upload size limits.
@@ -188,7 +191,7 @@ class MinIO(Source):
         `s3://<bucket>/<schema_name>/<table_name>/<table_name>.parquet`.
 
         For more information on partitioning, see
-        https://arrow.apache.org/docs/python/generated/pyarrow.parquet.write_to_dataset.html#pyarrow-parquet-write-to-dataset  # noqa
+        https://arrow.apache.org/docs/python/generated/pyarrow.parquet.write_to_dataset.html#pyarrow-parquet-write-to-dataset
 
         Args:
             df (pd.DataFrame): The DataFrame to upload.
@@ -199,7 +202,7 @@ class MinIO(Source):
             path (str | Path, optional): The path to the destination file. Defaults to
                 None.
             basename_template (str, optional): A template string used to generate
-                basenames of written data files. The token ‘{i}’ will be replaced with
+                basenames of written data files. The token '{i}' will be replaced with
                 an automatically incremented integer. Defaults to None.
             partition_cols (list[str], optional): The columns to partition by. Defaults
                 to None.
@@ -219,8 +222,7 @@ class MinIO(Source):
         )
 
     def ls(self, path: str) -> Generator[str, None, None]:
-        """
-        List files and directories under `path`.
+        """List files and directories under `path`.
 
         List operation can be slow if there are a lot of objects, hence using a
         generator.
@@ -235,8 +237,7 @@ class MinIO(Source):
             yield obj.object_name
 
     def rm(self, path: str, recursive: bool = False) -> None:
-        """
-        Remove a file or directory from MinIO.
+        """Remove a file or directory from MinIO.
 
         Args:
             path (str): The path to the file to remove.
@@ -254,24 +255,23 @@ class MinIO(Source):
     def _check_if_file_exists(self, path: str) -> bool:
         try:
             self.client.stat_object(self.bucket, path)
-            return True
         except S3Error as e:
             if "Object does not exist" in e.message:
                 return False
-            else:
-                raise e
+            raise
+        else:
+            return True
 
     def check_connection(self) -> None:
         """Verify connectivity to the MinIO endpoint."""
         try:
             self.client.bucket_exists(self.bucket)
         except NewConnectionError as e:
-            raise ValueError(
-                f"Connection to MinIO endpoint '{self.endpoint}' failed with error: \n{e}",
-                "Please check your credentials and try again.",
-            )
+            msg = f"Connection to MinIO endpoint '{self.endpoint}' failed with error: \n{e}"
+            msg += "Please check your credentials and try again."
+
+            raise ValueError(msg) from e
         except Exception as e:
-            raise ValueError(
-                f"Connection to MinIO endpoint '{self.endpoint}' failed with error: \n{e}"
-            )
+            msg = f"Connection to MinIO endpoint '{self.endpoint}' failed with error: \n{e}"
+            raise ValueError(msg) from e
         self.logger.info("Connection successful!")

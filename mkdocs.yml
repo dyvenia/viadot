@@ -25,8 +25,8 @@ nav:
           - API Sources: references/sources/api_sources.md
       - Orchestration:
           - Prefect:
-              - Tasks: references/orchestration/prefect/prefect_tasks.md
-              - Flows: references/orchestration/prefect/prefect_flows.md
+              - Tasks: references/orchestration/prefect/tasks.md
+              - Flows: references/orchestration/prefect/flows.md
 
 theme:
   name: "material"

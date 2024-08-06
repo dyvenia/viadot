@@ -14,4 +14,4 @@
 
 ::: viadot.sources.genesys.Genesys
 
-::: viadot.sources.minio_source.MinIO
+::: viadot.sources.minio.MinIO
