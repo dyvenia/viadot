@@ -1,7 +1,6 @@
 """Tasks for interacting with Microsoft Sharepoint."""
 
 from typing import Any
-from urllib.parse import urlparse
 
 import pandas as pd
 from prefect import get_run_logger, task
@@ -9,7 +8,9 @@ from prefect import get_run_logger, task
 from viadot.orchestration.prefect.exceptions import MissingSourceCredentialsError
 from viadot.orchestration.prefect.utils import get_credentials
 from viadot.sources import Sharepoint
-from viadot.sources.sharepoint import SharepointCredentials, get_last_segment_from_url
+from viadot.sources.sharepoint import (
+    SharepointCredentials,
+)
 
 
 @task(retries=3, retry_delay_seconds=10, timeout_seconds=60 * 60)
@@ -18,12 +19,23 @@ def sharepoint_to_df(
     sheet_name: str | list[str | int] | int | None = None,
     columns: str | list[str] | list[int] | None = None,
     tests: dict[str, Any] | None = None,
+    file_sheet_mapping: dict | None = None,
     na_values: list[str] | None = None,
     credentials_secret: str | None = None,
     config_key: str | None = None,
     credentials: dict[str, Any] | None = None,
 ) -> pd.DataFrame:
     """Load an Excel file stored on Microsoft Sharepoint into a pandas `DataFrame`.
+
+    Modes:
+    If the `URL` ends with the file (e.g ../file.xlsx) it downloads only the file and
+    creates a DataFrame from it.
+    If the `URL` ends with the folder (e.g ../folder_name/): it downloads multiple files
+    and creates a DataFrame from them:
+        - If `file_sheet_mapping` is provided, it downloads and processes only
+            the specified files and sheets.
+        - If `file_sheet_mapping` is NOT provided, it downloads and processes all of
+            the files from the chosen folder.
 
     Args:
         url (str): The URL to the file.
@@ -34,12 +46,15 @@ def sharepoint_to_df(
             Defaults to None.
         columns (str | list[str] | list[int], optional): Which columns to ingest.
             Defaults to None.
-        na_values (list[str] | None): Additional strings to recognize as NA/NaN.
-            If list passed, the specific NA values for each column will be recognized.
-            Defaults to None.
         credentials_secret (str, optional): The name of the secret storing
             the credentials. Defaults to None.
             More info on: https://docs.prefect.io/concepts/blocks/
+        file_sheet_mapping (dict): A dictionary where keys are filenames and values are
+            the sheet names to be loaded from each file. If provided, only these files
+            and sheets will be downloaded. Defaults to None.
+        na_values (list[str] | None): Additional strings to recognize as NA/NaN.
+            If list passed, the specific NA values for each column will be recognized.
+            Defaults to None.
         tests (dict[str], optional): A dictionary with optional list of tests
                 to verify the output dataframe. If defined, triggers the `validate`
                 function from viadot.utils. Defaults to None.
@@ -61,14 +76,19 @@ def sharepoint_to_df(
 
     logger.info(f"Downloading data from {url}...")
     df = s.to_df(
-        url, sheet_name=sheet_name, tests=tests, usecols=columns, na_values=na_values
+        url,
+        sheet_name=sheet_name,
+        tests=tests,
+        usecols=columns,
+        na_values=na_values,
+        file_sheet_mapping=file_sheet_mapping,
     )
     logger.info(f"Successfully downloaded data from {url}.")
 
     return df
 
 
-@task
+@task(retries=3, retry_delay_seconds=10, timeout_seconds=60 * 60)
 def sharepoint_download_file(
     url: str,
     to_path: str,
@@ -98,113 +118,3 @@ def sharepoint_download_file(
     logger.info(f"Downloading data from {url}...")
     s.download_file(url=url, to_path=to_path)
     logger.info(f"Successfully downloaded data from {url}.")
-
-
-@task
-def scan_sharepoint_folder(
-    url: str,
-    credentials_secret: str | None = None,
-    credentials: SharepointCredentials | None = None,
-    config_key: str | None = None,
-) -> list[str]:
-    """Scan Sharepoint folder to get all file URLs.
-
-    Args:
-        url (str): The URL of the folder to scan.
-        credentials_secret (str, optional): The name of the secret that stores
-            Sharepoint credentials. Defaults to None.
-        credentials (SharepointCredentials, optional): Sharepoint credentials.
-        config_key (str, optional): The key in the viadot config holding relevant
-            credentials.
-
-    Raises:
-        MissingSourceCredentialsError: Raise when no source credentials were provided.
-        ValueError: Raises when URL have the wrong structure - without 'sites' segment.
-
-    Returns:
-        list[str]: List of URLS.
-    """
-    if not (credentials_secret or config_key or credentials):
-        raise MissingSourceCredentialsError
-
-    credentials = credentials or get_credentials(secret_name=credentials_secret)
-    s = Sharepoint(credentials=credentials, config_key=config_key)
-    conn = s.get_connection()
-    parsed_url = urlparse(url)
-    path_parts = parsed_url.path.split("/")
-    if "sites" in path_parts:
-        site_index = (
-            path_parts.index("sites") + 2
-        )  # +2 to include 'sites' and the next segment
-        site_url = f"{parsed_url.scheme}://{parsed_url.netloc}{'/'.join(path_parts[:site_index])}"
-        library = "/".join(path_parts[site_index:])
-    else:
-        message = "URL does not contain '/sites/' segment."
-        raise ValueError(message)
-
-    # -> site_url = company.sharepoint.com/sites/site_name/
-    # -> library = /shared_documents/folder/sub_folder/final_folder
-    endpoint = f"{site_url}/_api/web/GetFolderByServerRelativeUrl('{library}')/Files"
-    response = conn.get(endpoint)
-    files = response.json().get("d", {}).get("results", [])
-
-    return [f'{site_url}/{library}{file["Name"]}' for file in files]
-
-
-@task
-def validate_and_reorder_dfs_columns(dataframes_list: list[pd.DataFrame]) -> None:
-    """Validate if dataframes from the list have the same column structure.
-
-    Reorder columns to match the first DataFrame if necessary.
-
-    Args:
-        dataframes_list (list[pd.DataFrame]): List containing DataFrames.
-
-    Raises:
-        IndexError: If the list of DataFrames is empty.
-        ValueError: If DataFrames have different column structures.
-    """
-    logger = get_run_logger()
-
-    if not dataframes_list:
-        message = "The list of dataframes is empty."
-        raise IndexError(message)
-
-    first_df_columns = dataframes_list[0].columns
-
-    # Check that all DataFrames have the same columns
-    for i, df in enumerate(dataframes_list):
-        if set(df.columns) != set(first_df_columns):
-            logger.info(
-                f"""Columns from first dataframe: {first_df_columns}\n
-                        Columns from DataFrame at index {i}: {df.columns} """
-            )
-            message = f"""DataFrame at index {i} does not have the same structure as
-            the first DataFrame."""
-            raise ValueError(message)
-        if not df.columns.equals(first_df_columns):
-            logger.info(
-                f"Reordering columns for DataFrame at index {i} to match the first DataFrame."
-            )
-            dataframes_list[i] = df.loc[:, first_df_columns]
-
-    logger.info("DataFrames have been validated and columns reordered where necessary.")
-    return dataframes_list
-
-
-@task
-def get_endpoint_type_from_url(url: str) -> str:
-    """Get the type of the last segment of the URL.
-
-    This function uses `get_last_segment_from_url` to parse the provided URL and
-    determine whether the last segment represents a file or a directory.
-
-    Args:
-        url (str): The URL to a SharePoint file or directory.
-
-    Returns:
-        str: A string indicating the type of the last segment, either 'file' or
-        'directory'.
-    """
-    _, endpoint_type = get_last_segment_from_url(url)
-    return endpoint_type
