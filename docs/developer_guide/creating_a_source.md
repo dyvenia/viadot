@@ -179,7 +179,7 @@ __all__ = [
 ]
 
 if find_spec("adlfs"):
-    from viadot.sources.azure_data_lake import AzureDataLake  # noqa
+    from viadot.sources.azure_data_lake import AzureDataLake  # noqa: F401
 
     __all__.extend(["AzureDataLake"])
 ```
