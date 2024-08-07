@@ -6,6 +6,7 @@
 #   features: []
 #   all-features: true
 #   with-sources: false
+#   generate-hashes: false
 
 -e file:.
 adlfs==2024.4.1
@@ -53,6 +54,8 @@ async-timeout==4.0.3
     # via asyncpg
 asyncpg==0.29.0
     # via prefect
+asynctest==0.13.0
+    # via viadot2
 attrs==23.2.0
     # via aiohttp
     # via jsonschema
@@ -86,6 +89,7 @@ backoff==2.2.1
 beautifulsoup4==4.12.3
     # via mkdocs-mermaid2-plugin
     # via nbconvert
+    # via o365
     # via redshift-connector
 black==22.6.0
 bleach==6.1.0
@@ -228,6 +232,8 @@ gitpython==3.1.43
     # via mkdocs-git-revision-date-plugin
 google-auth==2.29.0
     # via kubernetes
+graphql-core==3.2.3
+    # via sgqlc
 graphviz==0.20.3
     # via prefect
 greenlet==3.0.3
@@ -451,6 +457,8 @@ numpy==1.23.4
     # via pandas
     # via pyarrow
     # via visions
+o365==2.0.18.1
+    # via viadot2
 oauthlib==3.2.2
     # via kubernetes
     # via requests-oauthlib
@@ -513,11 +521,14 @@ portalocker==2.8.2
 prefect==2.19.7
     # via prefect-aws
     # via prefect-azure
+    # via prefect-github
     # via prefect-sqlalchemy
     # via viadot2
 prefect-aws==0.4.18
     # via viadot2
 prefect-azure @ git+https://github.com/Trymzet/prefect-azure@f4a400fa997f2ef1f54f4ed4a7ba2edccf4e3da8
+    # via viadot2
+prefect-github==0.2.6
     # via viadot2
 prefect-sqlalchemy==0.4.3
     # via viadot2
@@ -591,6 +602,7 @@ python-dateutil==2.9.0.post0
     # via ghp-import
     # via jupyter-client
     # via kubernetes
+    # via o365
     # via opensearch-py
     # via pandas
     # via pendulum
@@ -613,6 +625,7 @@ pytz==2024.1
     # via croniter
     # via dateparser
     # via dbt-core
+    # via o365
     # via pandas
     # via prefect
     # via redshift-connector
@@ -663,6 +676,7 @@ requests==2.31.0
     # via mkdocs-material
     # via mkdocs-mermaid2-plugin
     # via msal
+    # via o365
     # via opensearch-py
     # via redshift-connector
     # via requests-aws4auth
@@ -675,6 +689,7 @@ requests-aws4auth==1.2.3
 requests-oauthlib==2.0.0
     # via apprise
     # via kubernetes
+    # via o365
 rfc3339-validator==0.1.4
     # via prefect
 rich==13.7.1
@@ -703,6 +718,8 @@ sendgrid==6.11.0
 setuptools==70.0.0
     # via mkdocs-mermaid2-plugin
     # via redshift-connector
+sgqlc==16.3
+    # via prefect-github
 sharepy==2.0.0
     # via viadot2
 shellingham==1.5.4
@@ -744,6 +761,8 @@ stack-data==0.6.3
     # via ipython
 starkbank-ecdsa==2.2.0
     # via sendgrid
+stringcase==1.2.0
+    # via o365
 tabulate==0.9.0
     # via mkdocs-table-reader-plugin
 tangled-up-in-unicode==0.2.0
@@ -803,6 +822,7 @@ typing-extensions==4.10.0
     # via uvicorn
 tzlocal==5.2
     # via dateparser
+    # via o365
     # via trino
 ujson==5.10.0
     # via prefect
