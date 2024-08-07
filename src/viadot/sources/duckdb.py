@@ -1,15 +1,16 @@
+"""A module for interacting with DuckDB."""
+
 import re
-from typing import Any, Literal, Union
-from pydantic import BaseModel
+from typing import Literal
+
 import duckdb
 import pandas as pd
+from pydantic import BaseModel
 
 from viadot.config import get_source_credentials
 from viadot.exceptions import CredentialError
 from viadot.signals import SKIP
-from viadot.sources.base import Source
-
-Record = tuple[Any]
+from viadot.sources.base import Record, Source
 
 
 class DuckDBCredentials(BaseModel):
@@ -22,25 +23,25 @@ class DuckDB(Source):
 
     def __init__(
         self,
-        config_key: str = None,
-        credentials: DuckDBCredentials = None,
+        config_key: str | None = None,
+        credentials: DuckDBCredentials | None = None,
         *args,
         **kwargs,
     ):
         """A class for interacting with DuckDB.
 
         Args:
-            config_key (str, optional): The key inside local config containing the config.
-                User can choose to use this or pass credentials directly to the `credentials`
-                parameter. Defaults to None.
-            credentials (DuckDBCredentials, optional): Credentials for the connection with DuckDB.
+            config_key (str, optional): The key inside local config containing the
+                credentials.
+            credentials (DuckDBCredentials, optional): Credentials for the connection.
                 Defaults to None.
             config_key (str, optional): The key in the viadot config holding relevant
                 credentials. Defaults to None.
         """
         raw_creds = credentials or get_source_credentials(config_key) or {}
         if credentials is None:
-            raise CredentialError("Please specify the credentials.")
+            msg = "Please specify the credentials."
+            raise CredentialError(msg)
         validated_creds = dict(
             DuckDBCredentials(**raw_creds)
         )  # validate the credentials
@@ -48,10 +49,12 @@ class DuckDB(Source):
 
     @property
     def con(self) -> duckdb.DuckDBPyConnection:
-        """Return a new connection to the database. As the views are highly isolated,
-        we need a new connection for each query in order to see the changes from
-        previous queries (eg. if we create a new table and then we want to list
-        tables from INFORMATION_SCHEMA, we need to create a new DuckDB connection).
+        """Return a new connection to the database.
+
+        As the views are highly isolated, we need a new connection for each query in
+        order to see the changes from previous queries (eg. if we create a new table and
+        then we want to list tables from INFORMATION_SCHEMA, we need to create a new
+        DuckDB connection).
 
         Returns:
             duckdb.DuckDBPyConnection: database connection.
@@ -71,8 +74,7 @@ class DuckDB(Source):
         tables_meta: list[tuple] = self.run_query(
             "SELECT * FROM information_schema.tables"
         )
-        tables = [table_meta[1] + "." + table_meta[2] for table_meta in tables_meta]
-        return tables
+        return [table_meta[1] + "." + table_meta[2] for table_meta in tables_meta]
 
     @property
     def schemas(self) -> list[str]:
@@ -87,17 +89,17 @@ class DuckDB(Source):
         tables_meta: list[tuple] = self.run_query(
             "SELECT * FROM information_schema.tables"
         )
-        schemas = [table_meta[1] for table_meta in tables_meta]
-        return schemas
+        return [table_meta[1] for table_meta in tables_meta]
 
-    def to_df(self, query: str, if_empty: str = None) -> pd.DataFrame:
+    def to_df(self, query: str, if_empty: str | None = None) -> pd.DataFrame:
         """Run DuckDB query and save output to a pandas DataFrame.
 
         Args:
-            query (str): The query to execute. If query doesn't start with SELECT or 
-            WITH, empty DataFrame will be returned.
-            if_empty (str, optional): What to do if output DataFrame is empty. Defaults to None.
-        
+            query (str): The query to execute. If query doesn't start with SELECT or
+                WITH, empty DataFrame will be returned.
+            if_empty (str, optional): What to do if output DataFrame is empty. Defaults
+                to None.
+
         Returns:
             pd.DataFrame: DataFrame with query output
         """
@@ -111,46 +113,42 @@ class DuckDB(Source):
 
     def run_query(
         self, query: str, fetch_type: Literal["record", "dataframe"] = "record"
-    ) -> Union[list[Record], bool]:
+    ) -> list[Record] | bool:
         """Run a query on DuckDB.
 
         Args:
             query (str): The query to execute.
-            fetch_type (Literal[, optional): How to return the data: either
-                in the default record format or as a pandas DataFrame. Defaults to "record".
+            fetch_type (Literal[, optional): How to return the data: either in the
+                default record format or as a pandas DataFrame. Defaults to "record".
 
         Returns:
-            Union[List[Record], bool]: Either the result set of a query or,
+            Union[list[Record], bool]: Either the result set of a query or,
                 in case of DDL/DML queries, a boolean describing whether
-                the query was excuted successfuly.
+                the query was executed successfully.
         """
         allowed_fetch_type_values = ["record", "dataframe"]
         if fetch_type not in allowed_fetch_type_values:
-            raise ValueError(
-                f"Only the values {allowed_fetch_type_values} are allowed for 'fetch_type'"
-            )
+            msg = f"Only the values {allowed_fetch_type_values} are allowed for 'fetch_type'"
+            raise ValueError(msg)
         cursor = self.con.cursor()
         cursor.execute(query)
 
-        # Clenup the query
+        # Cleanup the query.
         query_clean = query.upper().strip()
-        # find comments
+        # Find comments.
         regex = r"^\s*[--;].*"
         lines = query_clean.splitlines()
         final_query = ""
 
-        for line in lines:
-            line = line.strip()
+        for line_raw in lines:
+            line = line_raw.strip()
             match_object = re.match(regex, line)
             if not match_object:
                 final_query += " " + line
         final_query = final_query.strip()
         query_keywords = ["SELECT", "SHOW", "PRAGMA", "WITH"]
         if any(final_query.startswith(word) for word in query_keywords):
-            if fetch_type == "record":
-                result = cursor.fetchall()
-            else:
-                result = cursor.fetchdf()
+            result = cursor.fetchall() if fetch_type == "record" else cursor.fetchdf()
         else:
             result = True
 
@@ -161,17 +159,19 @@ class DuckDB(Source):
         if if_empty == "warn":
             self.logger.warning("The query produced no data.")
         elif if_empty == "skip":
-            raise SKIP("The query produced no data. Skipping...")
+            msg = "The query produced no data. Skipping..."
+            raise SKIP(msg)
         elif if_empty == "fail":
-            raise ValueError("The query produced no data.")
+            msg = "The query produced no data."
+            raise ValueError(msg)
 
     def create_table_from_parquet(
         self,
         table: str,
         path: str,
-        schema: str = None,
+        schema: str | None = None,
         if_exists: Literal["fail", "replace", "append", "skip", "delete"] = "fail",
-    ) -> None:
+    ) -> bool:
         """Create a DuckDB table with a CTAS from Parquet file(s).
 
         Args:
@@ -179,8 +179,9 @@ class DuckDB(Source):
             path (str): The path to the source Parquet file(s). Glob expressions are
                 also allowed here (eg. `my_folder/*.parquet`).
             schema (str, optional): Destination schema. Defaults to None.
-            if_exists (Literal[, optional): What to do if the table already exists. 
-            The 'delete' option deletes data and then inserts new one. Defaults to "fail".
+            if_exists (Literal[, optional): What to do if the table already exists.
+            The 'delete' option deletes data and then inserts new one. Defaults to
+                "fail".
 
         Raises:
             ValueError: If the table exists and `if_exists` is set to `fail`.
@@ -202,38 +203,38 @@ class DuckDB(Source):
                 self.logger.info(f"Successfully appended data to table '{fqn}'.")
                 return True
             elif if_exists == "delete":
-                self.run_query(f"DELETE FROM {fqn}")
+                self.run_query(f"DELETE FROM {fqn}")  # noqa: S608
                 self.logger.info(f"Successfully deleted data from table '{fqn}'.")
                 self.run_query(
-                    f"INSERT INTO {fqn} SELECT * FROM read_parquet('{path}')"
+                    f"INSERT INTO {fqn} SELECT * FROM read_parquet('{path}')"  # noqa: S608
                 )
                 self.logger.info(f"Successfully inserted data into table '{fqn}'.")
                 return True
             elif if_exists == "fail":
-                raise ValueError(
-                    "The table already exists and 'if_exists' is set to 'fail'."
-                )
+                msg = "The table already exists and 'if_exists' is set to 'fail'."
+                raise ValueError(msg)
             elif if_exists == "skip":
                 return False
         self.run_query(f"CREATE SCHEMA IF NOT EXISTS {schema}")
         self.logger.info(f"Creating table {fqn}...")
-        create_table_query = f"CREATE TABLE {fqn} AS SELECT * FROM '{path}';"
+        create_table_query = f"CREATE TABLE {fqn} AS SELECT * FROM '{path}';"  # noqa: S608
         self.run_query(create_table_query)
         self.logger.info(f"Table {fqn} has been created successfully.")
+        return True
 
-    def drop_table(self, table: str, schema: str = None) -> bool:
+    def drop_table(self, table: str, schema: str | None = None) -> bool:
         """Drop a table.
 
         A thin wrapper around DuckDB.run_query(), with additional logs.
 
         Args:
             table (str): The table to be dropped.
-            schema (str, optional): The schema where the table is located. Defaults to None.
+            schema (str, optional): The schema where the table is located. Defaults to
+                None.
 
         Returns:
             bool: Whether the table was dropped.
         """
-
         schema = schema or DuckDB.DEFAULT_SCHEMA
         fqn = schema + "." + table
 
@@ -245,7 +246,7 @@ class DuckDB(Source):
             self.logger.info(f"Table {fqn} could not be dropped.")
         return dropped
 
-    def _check_if_table_exists(self, table: str, schema: str = None) -> bool:
+    def _check_if_table_exists(self, table: str, schema: str | None = None) -> bool:
         schema = schema or DuckDB.DEFAULT_SCHEMA
         fqn = schema + "." + table
         return fqn in self.tables
@@ -254,4 +255,4 @@ class DuckDB(Source):
         if schema == DuckDB.DEFAULT_SCHEMA:
             return True
         fqns = self.tables
-        return any((fqn.split(".")[0] == schema for fqn in fqns))
+        return any(fqn.split(".")[0] == schema for fqn in fqns)

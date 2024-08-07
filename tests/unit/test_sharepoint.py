@@ -9,6 +9,7 @@ from viadot.exceptions import CredentialError
 from viadot.sources import Sharepoint
 from viadot.sources.sharepoint import SharepointCredentials
 
+
 DUMMY_CREDS = {"site": "test", "username": "test2", "password": "test"}
 SAMPLE_DF = pd.DataFrame(
     {
@@ -25,14 +26,15 @@ class SharepointMock(Sharepoint):
     def get_connection(self):
         return sharepy.session.SharePointSession
 
-    def _download_file_stream(self, url=None, **kwargs):
+    def _download_file_stream(self, url: str | None = None, **kwargs):  # noqa: ARG002
         if "nrows" in kwargs:
-            raise ValueError("Parameter 'nrows' is not supported.")
+            msg = "Parameter 'nrows' is not supported."
+            raise ValueError(msg)
 
         return pd.ExcelFile(Path("tests/unit/test_file.xlsx"))
 
 
-@pytest.fixture
+@pytest.fixture()
 def sharepoint_mock():
     return SharepointMock(credentials=DUMMY_CREDS)
 
@@ -104,11 +106,11 @@ def test__get_file_extension(sharepoint_mock):
 
     excel_ext = sharepoint_mock._get_file_extension(url=url_excel)
     txt_ext = sharepoint_mock._get_file_extension(url=url_txt)
-    dir = sharepoint_mock._get_file_extension(url=url_dir)
+    dir_ext = sharepoint_mock._get_file_extension(url=url_dir)
 
     assert excel_ext == ".xlsx"
     assert txt_ext == ".txt"
-    assert dir == ""
+    assert dir_ext == ""
 
 
 def test__is_file(sharepoint_mock):
@@ -141,7 +143,7 @@ def test__parse_excel_string_dtypes(sharepoint_mock):
 
 
 def test__load_and_parse_not_valid_extension(sharepoint_mock):
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         sharepoint_mock._load_and_parse(file_url="https://example.com/file.txt")
 
 

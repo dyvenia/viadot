@@ -1,13 +1,15 @@
+"""Sharepoint API connector."""
+
 import io
-import os
+from pathlib import Path
 import re
-from typing import Any, Literal, Optional, Union
+from typing import Any, Literal
 from urllib.parse import urlparse
 
 import pandas as pd
-import sharepy
 from pandas._libs.parsers import STR_NA_VALUES
 from pydantic import BaseModel, root_validator
+import sharepy
 from sharepy.errors import AuthError
 
 from viadot.config import get_source_credentials
@@ -28,50 +30,48 @@ class SharepointCredentials(BaseModel):
     password: str  # Sharepoint password
 
     @root_validator(pre=True)
-    def is_configured(cls, credentials):
+    def is_configured(cls, credentials: dict):  # noqa: N805, ANN201, D102
         site = credentials.get("site")
         username = credentials.get("username")
         password = credentials.get("password")
 
         if not (site and username and password):
-            raise CredentialError(
-                "'site', 'username', and 'password' credentials are required."
-            )
+            msg = "'site', 'username', and 'password' credentials are required."
+            raise CredentialError(msg)
         return credentials
 
 
 class Sharepoint(Source):
-    """
-    Download Excel files from Sharepoint.
-
-    Args:
-        credentials (SharepointCredentials): Sharepoint credentials.
-        config_key (str, optional): The key in the viadot config holding relevant credentials.
-    """
-
-    DEFAULT_NA_VALUES = list(STR_NA_VALUES)
+    DEFAULT_NA_VALUES = tuple(STR_NA_VALUES)
 
     def __init__(
         self,
         credentials: SharepointCredentials = None,
-        config_key: Optional[str] = None,
+        config_key: str | None = None,
         *args,
         **kwargs,
     ):
+        """Download Excel files from Sharepoint.
+
+        Args:
+        credentials (SharepointCredentials): Sharepoint credentials.
+        config_key (str, optional): The key in the viadot config holding relevant
+            credentials.
+        """
         raw_creds = credentials or get_source_credentials(config_key) or {}
         validated_creds = dict(SharepointCredentials(**raw_creds))
         super().__init__(*args, credentials=validated_creds, **kwargs)
 
     def get_connection(self) -> sharepy.session.SharePointSession:
-        """Establishes a connection to SharePoint using credentials provided during
-        object initialization.
+        """Establishe a connection to SharePoint.
 
         Returns:
             sharepy.session.SharePointSession: A session object representing
                 the authenticated connection.
 
         Raises:
-            CredentialError: If authentication to SharePoint fails due to incorrect credentials.
+            CredentialError: If authentication to SharePoint fails due to incorrect
+                credentials.
         """
         try:
             connection = sharepy.connect(
@@ -79,11 +79,10 @@ class Sharepoint(Source):
                 username=self.credentials.get("username"),
                 password=self.credentials.get("password"),
             )
-        except AuthError:
+        except AuthError as e:
             site = self.credentials.get("site")
-            raise CredentialError(
-                f"Could not authenticate to {site} with provided credentials."
-            )
+            msg = f"Could not authenticate to {site} with provided credentials."
+            raise CredentialError(msg) from e
         return connection
 
     def download_file(self, url: str, to_path: list | str) -> None:
@@ -113,7 +112,8 @@ class Sharepoint(Source):
             url (str): The URL of the folder to scan.
 
         Raises:
-            ValueError: If the provided URL does not contain the expected '/sites/' segment.
+            ValueError: If the provided URL does not contain the expected '/sites/'
+                segment.
 
         Returns:
             list[str]: List of URLs pointing to each file within the specified
@@ -144,8 +144,7 @@ class Sharepoint(Source):
         return [f'{site_url}/{library}{file["Name"]}' for file in files]
 
     def _get_file_extension(self, url: str) -> str:
-        """
-        Extracts the file extension from a given URL.
+        """Extracts the file extension from a given URL.
 
         Parameters:
             url (str): The URL from which to extract the file extension.
@@ -157,13 +156,14 @@ class Sharepoint(Source):
         parsed_url = urlparse(url)
 
         # Get the file extension
-        _, ext = os.path.splitext(parsed_url.path)
+        _, ext = Path(parsed_url.path).suffix
 
         return ext
 
     def _download_file_stream(self, url: str, **kwargs) -> pd.ExcelFile:
-        """Downloads the content of a file from SharePoint and returns it as an in-memory
-        byte stream.
+        """Download the contents of a file from SharePoint.
+
+        Returns the data as an in-memory byte stream.
 
         Args:
             url (str): The URL of the file to download.
@@ -172,7 +172,8 @@ class Sharepoint(Source):
             io.BytesIO: An in-memory byte stream containing the file content.
         """
         if "nrows" in kwargs:
-            raise ValueError("Parameter 'nrows' is not supported.")
+            msg = "Parameter 'nrows' is not supported."
+            raise ValueError(msg)
 
         conn = self.get_connection()
 
@@ -213,15 +214,16 @@ class Sharepoint(Source):
         self,
         url: str,
         file_sheet_mapping: dict,
-        na_values: Optional[list[str]] = None,
+        na_values: list[str] | None = None,
         **kwargs,
     ):
-        """Handles download and parsing of multiple Excel files from a SharePoint folder.
+        """Handle downloading and parsing multiple Excel files from a SharePoint folder.
 
         Args:
             url (str): The base URL of the SharePoint folder containing the files.
             file_sheet_mapping (dict): A dictionary mapping file names to sheet names
-                or indexes. The keys are file names, and the values are sheet names/indices.
+                or indexes. The keys are file names, and the values are sheet
+                names/indices.
             na_values (Optional[list[str]]): Additional strings to recognize as NA/NaN.
 
         Returns:
@@ -242,8 +244,8 @@ class Sharepoint(Source):
     def _load_and_parse(
         self,
         file_url: str,
-        sheet_name: Optional[Union[str, list[str]]] = None,
-        na_values: Optional[list[str]] = None,
+        sheet_name: str | list[str] | None = None,
+        na_values: list[str] | None = None,
         **kwargs,
     ):
         """Loads and parses an Excel file from a URL.
@@ -266,14 +268,14 @@ class Sharepoint(Source):
 
         if file_extension == ".xlsx":
             return self._parse_excel(file_stream, sheet_name, na_values, **kwargs)
-        else:
-            raise ValueError("Only Excel (.xlsx) files can be loaded into a DataFrame.")
+        msg = "Only Excel (.xlsx) files can be loaded into a DataFrame."
+        raise ValueError(msg)
 
     def _parse_excel(
         self,
-        excel_file,
-        sheet_name: Optional[Union[str, list[str]]] = None,
-        na_values: Optional[list[str]] = None,
+        excel_file: pd.ExcelFile,
+        sheet_name: str | list[str] | None = None,
+        na_values: list[str] | None = None,
         **kwargs,
     ):
         """Parses an Excel file into a DataFrame. Casts all columns to string.
@@ -293,7 +295,7 @@ class Sharepoint(Source):
                 excel_file.parse(
                     sheet,
                     keep_default_na=False,
-                    na_values=na_values or self.DEFAULT_NA_VALUES,
+                    na_values=na_values or list(self.DEFAULT_NA_VALUES),
                     dtype=str,  # Ensure all columns are read as strings
                     **kwargs,
                 )
@@ -305,15 +307,14 @@ class Sharepoint(Source):
     def to_df(
         self,
         url: str,
-        sheet_name: Optional[Union[str, list[str]]] = None,
+        sheet_name: str | list[str] | None = None,
         if_empty: Literal["warn", "skip", "fail"] = "warn",
-        tests: dict[str, Any] = {},
-        file_sheet_mapping: Optional[dict[str, Union[str, int, list[str]]]] = None,
-        na_values: Optional[list[str]] = None,
+        tests: dict[str, Any] | None = None,
+        file_sheet_mapping: dict[str, str | int | list[str]] | None = None,
+        na_values: list[str] | None = None,
         **kwargs,
     ) -> pd.DataFrame:
-        """
-        Load an Excel file or files from a SharePoint URL into a pandas DataFrame.
+        """Load an Excel file or files from a SharePoint URL into a pandas DataFrame.
 
         This method handles downloading the file(s), parsing the content, and converting
         it into a pandas DataFrame. It supports both single file URLs and folder URLs
@@ -321,10 +322,11 @@ class Sharepoint(Source):
 
         Args:
             url (str): The URL of the file to be downloaded.
-            sheet_name (Optional[Union[str, list, int]], optional): Strings are used for sheet names.
-                Integers are used in zero-indexed sheet positions (chart sheets do not count
-                as a sheet position). Lists of strings/integers are used to request multiple sheets.
-                Specify None to get all worksheets. Defaults to None.
+            sheet_name (Optional[Union[str, list, int]], optional): Strings are used for
+                sheet names. Integers are used in zero-indexed sheet positions (chart
+                sheets do not count as a sheet position). Lists of strings/integers are
+                used to request multiple sheets. Specify None to get all worksheets.
+                Defaults to None.
             if_empty (Literal["warn", "skip", "fail"], optional): Action to take if
             the DataFrame is empty.
                 - "warn": Logs a warning.
@@ -334,48 +336,47 @@ class Sharepoint(Source):
             tests (Dict[str, Any], optional): A dictionary with optional list of tests
                 to verify the output dataframe. If defined, triggers the `validate`
                 function from utils. Defaults to None.
-            file_sheet_mapping (Optional[dict[str, Union[str, int, list[str]]]], optional):
+            file_sheet_mapping (dict[str, Union[str, int, list[str]]], optional):
                 Mapping of file names to sheet names or indices. The keys are file names
                 and the values are sheet names/indices. Used when multiple files are
                 involved. Defaults to None.
             na_values (list[str], optional): Additional strings to recognize as NA/NaN.
-                If list passed, the specific NA values for each column will be recognized.
-                Defaults to None.
-            kwargs (dict[str, Any], optional): Keyword arguments to pass to pd.ExcelFile.parse().
-                Note that `nrows` is not supported.
+                If list passed, the specific NA values for each column will be
+                recognized. Defaults to None.
+            kwargs (dict[str, Any], optional): Keyword arguments to pass to
+                pd.ExcelFile.parse(). Note that `nrows` is not supported.
 
         Returns:
             pd.DataFrame: The resulting data as a pandas DataFrame.
 
         Raises:
-            ValueError: If the file extension is not supported or if `if_empty` is set to "fail" and the DataFrame is empty.
+            ValueError: If the file extension is not supported or if `if_empty` is set
+                to "fail" and the DataFrame is empty.
             SKIP: If `if_empty` is set to "skip" and the DataFrame is empty.
         """
-
         if self._is_file(url):
             df = self._load_and_parse(
                 file_url=url, sheet_name=sheet_name, na_values=na_values, **kwargs
             )
+        elif file_sheet_mapping:
+            df = self._handle_multiple_files(
+                url=url,
+                file_sheet_mapping=file_sheet_mapping,
+                na_values=na_values,
+                **kwargs,
+            )
         else:
-            if file_sheet_mapping:
-                df = self._handle_multiple_files(
-                    url=url,
-                    file_sheet_mapping=file_sheet_mapping,
+            list_of_urls = self.scan_sharepoint_folder(url)
+            dfs = [
+                self._load_and_parse(
+                    file_url=file_url,
+                    sheet_name=sheet_name,
                     na_values=na_values,
                     **kwargs,
                 )
-            else:
-                list_of_urls = self.scan_sharepoint_folder(url)
-                dfs = [
-                    self._load_and_parse(
-                        file_url=file_url,
-                        sheet_name=sheet_name,
-                        na_values=na_values,
-                        **kwargs,
-                    )
-                    for file_url in list_of_urls
-                ]
-                df = pd.concat(validate_and_reorder_dfs_columns(dfs))
+                for file_url in list_of_urls
+            ]
+            df = pd.concat(validate_and_reorder_dfs_columns(dfs))
 
         if df.empty:
             try:
