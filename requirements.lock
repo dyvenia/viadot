@@ -347,7 +347,9 @@ prefect==2.19.7
     # via viadot2
 prefect-aws==0.4.18
     # via viadot2
-prefect-azure @ git+https://github.com/Trymzet/prefect-azure@f4a400fa997f2ef1f54f4ed4a7ba2edccf4e3da8
+prefect-azure @ git+https://github.com/Trymzet/prefect-azure@f4a400fa997f2ef1f54f4ed4a7ba2edccf4e3da8#egg=prefect-azure
+    # via viadot2
+prefect-github==0.2.6
     # via viadot2
 prefect-github==0.2.6
     # via viadot2

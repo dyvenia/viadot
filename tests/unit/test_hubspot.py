@@ -1,18 +1,16 @@
-"""'test_hubspot.py'."""
-
-import json
-import unittest
 from datetime import datetime
 from io import StringIO
+import json
+import unittest
 from unittest.mock import MagicMock, patch
 
 import pandas as pd
 import pytest
 from requests.models import Response
-
 from viadot.exceptions import APIError, CredentialError
 from viadot.sources import Hubspot
 from viadot.sources.hubspot import HubspotCredentials
+
 
 variables = {
     "credentials": {"token": "fake_token"},
@@ -33,22 +31,20 @@ variables = {
 class TestHubspotCredentials:
     """Test Hubspot Credentials Class."""
 
-    @pytest.mark.basic
     def test_hubspot_credentials(self):
         """Test Hubspot credentials."""
-        HubspotCredentials(token="test_token")
+        HubspotCredentials(token="test_token")  # noqa: S106
 
 
 class TestHubspot(unittest.TestCase):
     """Test Hubspot Class."""
 
     @classmethod
-    def setUpClass(cls):
+    def setUpClass(cls):  # noqa: ANN206, ANN102
         """Defined based Hubspot Class for the rest of test."""
         cls.hubspot_instance = Hubspot(credentials=variables["credentials"])
 
     @patch("viadot.sources.hubspot.get_source_credentials", return_value=None)
-    @pytest.mark.basic
     def test_init_no_credentials(self, mock_get_source_credentials):
         """Test raise error without credentials."""
         with pytest.raises(CredentialError):
@@ -56,7 +52,6 @@ class TestHubspot(unittest.TestCase):
 
         mock_get_source_credentials.assert_called_once()
 
-    @pytest.mark.functions
     def test_date_to_unixtimestamp(self):
         """Test Hubspot `_date_to_unixtimestamp` function."""
         date_str = "2021-01-01"
@@ -64,9 +59,8 @@ class TestHubspot(unittest.TestCase):
             datetime.strptime(date_str, "%Y-%m-%d").timestamp() * 1000
         )
         result = self.hubspot_instance._date_to_unixtimestamp(date_str)
-        self.assertEqual(result, expected_timestamp)
+        assert result == expected_timestamp
 
-    @pytest.mark.functions
     def test_get_api_url(self):
         """Test Hubspot `_get_api_url` function."""
         endpoint = "deals"
@@ -79,25 +73,22 @@ class TestHubspot(unittest.TestCase):
         result = self.hubspot_instance._get_api_url(
             endpoint=endpoint, filters=filters, properties=properties
         )
-        self.assertEqual(result, expected_url)
+        assert result == expected_url
 
-    @pytest.mark.functions
     def test_format_filters(self):
         """Test Hubspot `_format_filters` function."""
         filters = variables["filters"]
         formatted_filters = self.hubspot_instance._format_filters(filters)
-        self.assertIsInstance(formatted_filters, list)
+        assert isinstance(formatted_filters, list)
 
-    @pytest.mark.functions
     def test_get_api_body(self):
         """Test Hubspot `_get_api_body` function."""
         filters = variables["filters"]
         expected_body = json.dumps({"filterGroups": filters, "limit": 100})
         result = self.hubspot_instance._get_api_body(filters)
 
-        self.assertEqual(result, expected_body)
+        assert result == expected_body
 
-    @pytest.mark.connect
     @patch("viadot.sources.hubspot.handle_api_response")
     def test_api_call_success(self, mock_handle_api_response):
         """Test Hubspot `_api_call` method."""
@@ -109,10 +100,9 @@ class TestHubspot(unittest.TestCase):
         url = "https://api.hubapi.com/crm/v3/objects/deals/?limit=100&"
         result = self.hubspot_instance._api_call(url=url, method="GET")
 
-        self.assertEqual(result, {"results": [{"id": "123"}]})
+        assert result == {"results": [{"id": "123"}]}
         mock_handle_api_response.assert_called_once()
 
-    @pytest.mark.connect
     @patch("viadot.sources.hubspot.handle_api_response")
     def test_api_call_error(self, mock_handle_api_response):
         """Test Hubspot `_api_call` method failure."""
@@ -123,10 +113,9 @@ class TestHubspot(unittest.TestCase):
 
         url = "https://api.hubapi.com/crm/v3/objects/deals/?limit=100&"
 
-        with self.assertRaises(APIError):
+        with pytest.raises(APIError):
             self.hubspot_instance._api_call(url=url, method="GET")
 
-    @pytest.mark.functions
     def test_get_offset_from_response(self):
         """Test Hubspot `_get_offset_from_response` function."""
         response_with_paging = {"paging": {"next": {"after": "123"}}}
@@ -135,17 +124,16 @@ class TestHubspot(unittest.TestCase):
         offset_type, offset_value = self.hubspot_instance._get_offset_from_response(
             response_with_paging
         )
-        self.assertEqual((offset_type, offset_value), ("after", "123"))
+        assert (offset_type, offset_value) == ("after", "123")
 
         offset_type, offset_value = self.hubspot_instance._get_offset_from_response(
             response_with_offset
         )
-        self.assertEqual((offset_type, offset_value), ("offset", "456"))
+        assert (offset_type, offset_value) == ("offset", "456")
 
         offset_type, offset_value = self.hubspot_instance._get_offset_from_response({})
-        self.assertEqual((offset_type, offset_value), (None, None))
+        assert (offset_type, offset_value) == (None, None)
 
-    @pytest.mark.connect
     @patch("viadot.sources.hubspot.handle_api_response")
     def test_api_connection_with_filters(self, mock_handle_api_response):
         """Test Hubspot `api_connection` method, with filters."""
@@ -161,10 +149,9 @@ class TestHubspot(unittest.TestCase):
             endpoint=endpoint, filters=filters, properties=properties
         )
 
-        self.assertIsNotNone(self.hubspot_instance.full_dataset)
-        self.assertGreater(len(self.hubspot_instance.full_dataset), 0)
+        assert self.hubspot_instance.full_dataset is not None
+        assert len(self.hubspot_instance.full_dataset) > 0
 
-    @pytest.mark.connect
     @patch("viadot.sources.hubspot.handle_api_response")
     def test_api_connection_without_filters(self, mock_handle_api_response):
         """Test Hubspot `api_connection` method, without filters."""
@@ -180,10 +167,9 @@ class TestHubspot(unittest.TestCase):
             endpoint=endpoint, filters=filters, properties=properties
         )
 
-        self.assertIsNotNone(self.hubspot_instance.full_dataset)
-        self.assertGreater(len(self.hubspot_instance.full_dataset), 0)
+        assert self.hubspot_instance.full_dataset is not None
+        assert len(self.hubspot_instance.full_dataset) > 0
 
-    @pytest.mark.functions
     @patch("viadot.sources.hubspot.super")
     def test_to_df(self, mock_super):
         """Test Hubspot `to_df` function."""
@@ -197,10 +183,9 @@ class TestHubspot(unittest.TestCase):
         )
 
         expected_df = pd.DataFrame([{"id": "123"}])
-        pd.testing.assert_frame_equal(result_df, expected_df)
+        assert result_df.equals(expected_df)
         mock_super().to_df.assert_called_once()
 
-    @pytest.mark.functions
     @patch("viadot.sources.hubspot.pd.read_json")
     @patch("viadot.sources.hubspot.super")
     def test_to_df_empty(self, mock_super, mock_read_json):
@@ -221,7 +206,7 @@ class TestHubspot(unittest.TestCase):
             mock_handle_if_empty.assert_called_once_with(
                 if_empty="warn", message="The response does not contain any data."
             )
-            self.assertTrue(result_df.empty)
+            assert result_df.empty
             mock_super().to_df.assert_called_once()
 
 

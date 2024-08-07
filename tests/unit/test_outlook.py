@@ -1,17 +1,15 @@
-"""'test_outlook.py'."""
-
-import unittest
 from datetime import datetime, timezone
+import unittest
 from unittest.mock import MagicMock, patch
 
-import pandas as pd
-import pytest
 from O365.mailbox import MailBox
 from O365.message import Message
-
+import pandas as pd
+import pytest
 from viadot.exceptions import CredentialError
 from viadot.sources import Outlook
 from viadot.sources.outlook import OutlookCredentials
+
 
 variables = {
     "credentials": {
@@ -43,12 +41,11 @@ variables = {
 class TestOutlookCredentials:
     """Test Outlook Credentials Class."""
 
-    @pytest.mark.basic
     def test_outlook_credentials(self):
         """Test Outlook credentials."""
         OutlookCredentials(
             client_id="test_client_id",
-            client_secret="test_client_secret",
+            client_secret="test_client_secret",  # noqa: S106
             tenant_id="test_tenant_id",
         )
 
@@ -57,20 +54,18 @@ class TestOutlook(unittest.TestCase):
     """Test Outlook Class."""
 
     @classmethod
-    def setUpClass(cls):
+    def setUpClass(cls):  # noqa: ANN206, ANN102
         """Defined based Outlook Class for the rest of test."""
         cls.outlook_instance = Outlook(credentials=variables["credentials"])
 
     @patch("viadot.sources.outlook.get_source_credentials", return_value=None)
-    @pytest.mark.basic
     def test_missing_credentials(self, mock_get_source_credentials):
         """Test raise error without credentials."""
-        with self.assertRaises(CredentialError):
+        with pytest.raises(CredentialError):
             Outlook(credentials=None)
 
         mock_get_source_credentials.assert_called_once()
 
-    @pytest.mark.functions
     @patch("O365.Account.mailbox")
     def test_get_messages_from_mailbox(self, mock_mailbox):
         """Test Outlook `_get_messages_from_mailbox` function."""
@@ -100,7 +95,6 @@ class TestOutlook(unittest.TestCase):
         expected_message = variables["expected_1"]
         assert messages == [expected_message]
 
-    @pytest.mark.connect
     @patch("O365.Account.authenticate", return_value=True)
     @patch("O365.Account.mailbox")
     def test_api_connection(self, mock_mailbox, mock_authenticate):
@@ -120,7 +114,6 @@ class TestOutlook(unittest.TestCase):
 
         mock_authenticate.assert_called_once()
 
-    @pytest.mark.connect
     @patch("O365.Account.authenticate", return_value=False)
     def test_api_connection_authentication_failure(self, mock_authenticate):
         """Test Outlook `api_connection` method, failure."""
@@ -129,9 +122,8 @@ class TestOutlook(unittest.TestCase):
         self.outlook_instance.api_connection(mailbox_name=mailbox_name)
 
         mock_authenticate.assert_called_once()
-        self.assertEqual(self.outlook_instance.data, [])
+        assert self.outlook_instance.data == []
 
-    @pytest.mark.functions
     @patch("O365.Account.mailbox")
     def test_to_df(self, mock_mailbox):
         """Test Outlook `to_df` function."""
@@ -156,7 +148,6 @@ class TestOutlook(unittest.TestCase):
         date_range_start_time = datetime(2023, 7, 17, tzinfo=timezone.utc)
         date_range_end_time = datetime(2023, 7, 19, tzinfo=timezone.utc)
 
-        # Llamar al método para obtener los mensajes y asignar a self.data
         self.outlook_instance.data = self.outlook_instance._get_messages_from_mailbox(
             mailbox_name="test@example.com",
             dict_folder={"Inbox": mock_mailbox_obj},
@@ -188,7 +179,7 @@ class TestOutlook(unittest.TestCase):
             ]
         )
 
-        pd.testing.assert_frame_equal(df, expected_df)
+        assert df.equals(expected_df)
 
 
 if __name__ == "__main__":

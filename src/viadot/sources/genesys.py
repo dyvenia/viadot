@@ -1,6 +1,4 @@
-"""'genesys.py'.
-
-Genesys Cloud API connector.
+"""Genesys Cloud API connector.
 
 This module provides functionalities for connecting to Genesys Cloud API and download
 the reports generated. It includes the following features:
@@ -21,7 +19,6 @@ from typing import Any
 
 import aiohttp
 from aiolimiter import AsyncLimiter
-from colorama import Fore, Style
 import numpy as np
 import pandas as pd
 from pydantic import BaseModel
@@ -282,13 +279,11 @@ class Genesys(Source):
             method="GET",
         )
 
-        if response.ok:
+        response_ok = 200
+        if response.status_code == response_ok:
             return response.json()
 
-        self.logger.info(
-            f"{Fore.RED}ERROR{Style.RESET_ALL}: "
-            + f"Failed to loaded all exports. - {response.content}"
-        )
+        self.logger.error(f"Failed to loaded all exports. - {response.content}")
         msg = "Failed to loaded all exports."
         raise APIError(msg)
 
@@ -315,14 +310,10 @@ class Genesys(Source):
             status.append(entity.get("status"))
 
         if "FAILED" in status:
-            self.logger.info(
-                f"{Fore.YELLOW}ERROR{Style.RESET_ALL}: "
-                + "Some reports have not been successfully created."
-            )
+            self.logger.error("Some reports have not been successfully created.")
         if "RUNNING" in status:
-            self.logger.info(
-                f"{Fore.YELLOW}ERROR{Style.RESET_ALL}: "
-                + "Some reports are still being created and can not be downloaded."
+            self.logger.warning(
+                "Some reports are still being created and can not be downloaded."
             )
         if self.verbose:
             message = "".join(
@@ -344,15 +335,15 @@ class Genesys(Source):
             headers=self.headers,
             method="DELETE",
         )
-        if delete_response.ok:
+        # Ok-ish responses (includes eg. 204 No Content)
+        ok_response_limit = 300
+        if delete_response.status_code < ok_response_limit:
             self.logger.info(
                 f"Successfully deleted report '{report_id}' from Genesys API."
             )
-
         else:
-            self.logger.info(
-                f"{Fore.RED}ERROR{Style.RESET_ALL}: "
-                + f"Failed to deleted report '{report_id}' "
+            self.logger.error(
+                f"Failed to delete report '{report_id}' "
                 + f"from Genesys API. - {delete_response.content}"
             )
 
@@ -373,7 +364,9 @@ class Genesys(Source):
         """
         response = handle_api_response(url=f"{report_url}", headers=self.headers)
 
-        if response.ok:
+        # Ok-ish responses (includes eg. 204 No Content)
+        ok_response_limit = 300
+        if response.status_code < ok_response_limit:
             self.logger.info(
                 f"Successfully downloaded report from Genesys API ('{report_url}')."
             )
@@ -383,7 +376,7 @@ class Genesys(Source):
                 "Failed to download report from"
                 + f" Genesys API ('{report_url}'). - {response.content}"
             )
-            self.logger.info(f"{Fore.RED}ERROR{Style.RESET_ALL}: " + msg)
+            self.logger.error(msg)
 
         dataframe = pd.read_csv(StringIO(response.content.decode("utf-8")))
 
@@ -680,9 +673,8 @@ class Genesys(Source):
 
                     self.data_returned.update({count: df_downloaded})
                 else:
-                    self.logger.info(
-                        f"{Fore.YELLOW}ERROR{Style.RESET_ALL}: "
-                        + f"Report id {qid} didn't have time to be created. "
+                    self.logger.error(
+                        f"Report id {qid} didn't have time to be created. "
                         + "Consider increasing the `view_type_time_sleep` parameter "
                         + f">> {view_type_time_sleep} seconds to allow Genesys Cloud "
                         + "to conclude the report creation."
@@ -769,11 +761,10 @@ class Genesys(Source):
         elif endpoint == "routing_queues_members":
             counter = 0
             if queues_ids is None:
-                self.logger.info(
-                    f"{Fore.RED}ERROR{Style.RESET_ALL}: "
-                    + "This end point requires `queues_ids` parameter to work."
+                self.logger.error(
+                    "This endpoint requires `queues_ids` parameter to work."
                 )
-                APIError("This end point requires `queues_ids` parameter to work.")
+                APIError("This endpoint requires `queues_ids` parameter to work.")
 
             for qid in queues_ids:
                 self.logger.info(f"Downloading Agents information from Queue: {qid}")

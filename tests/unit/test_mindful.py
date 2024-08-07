@@ -1,18 +1,16 @@
-"""'test_mindful.py'."""
-
-import unittest
 from datetime import date, timedelta
 from io import StringIO
+import unittest
 from unittest.mock import MagicMock, patch
 
 import pandas as pd
 import pytest
 from requests.auth import HTTPBasicAuth
 from requests.models import Response
-
 from viadot.exceptions import APIError, CredentialError
 from viadot.sources import Mindful
 from viadot.sources.mindful import MindfulCredentials
+
 
 variables = {"credentials": {"customer_uuid": "fake_uuid", "auth_token": "fake_token"}}
 
@@ -20,11 +18,11 @@ variables = {"credentials": {"customer_uuid": "fake_uuid", "auth_token": "fake_t
 class TestMindfulCredentials:
     """Test Mindful Credentials Class."""
 
-    @pytest.mark.basic
     def test_mindful_credentials(self):
         """Test Mindful credentials."""
         MindfulCredentials(
-            customer_uuid="test_customer_uuid", auth_token="test_auth_token"
+            customer_uuid="test_customer_uuid",
+            auth_token="test_auth_token",  # noqa: S106
         )
 
 
@@ -32,12 +30,11 @@ class TestMindful(unittest.TestCase):
     """Test Mindful Class."""
 
     @classmethod
-    def setUpClass(cls):
+    def setUpClass(cls):  # noqa: ANN206, ANN102
         """Defined based Mindful Class for the rest of test."""
         cls.mindful_instance = Mindful(credentials=variables["credentials"])
 
     @patch("viadot.sources.mindful.get_source_credentials", return_value=None)
-    @pytest.mark.basic
     def test_init_no_credentials(self, mock_get_source_credentials):
         """Test raise error without credentials."""
         with pytest.raises(CredentialError):
@@ -45,7 +42,6 @@ class TestMindful(unittest.TestCase):
 
         mock_get_source_credentials.assert_called_once()
 
-    @pytest.mark.connect
     @patch("viadot.sources.mindful.handle_api_response")
     def test_mindful_api_response(self, mock_handle_api_response):
         """Test Mindful `_mindful_api_response` method."""
@@ -61,11 +57,10 @@ class TestMindful(unittest.TestCase):
         )
 
         auth_arg = mock_handle_api_response.call_args[1]["auth"]
-        self.assertIsInstance(auth_arg, HTTPBasicAuth)
-        self.assertEqual(auth_arg.username, variables["credentials"]["customer_uuid"])
-        self.assertEqual(auth_arg.password, variables["credentials"]["auth_token"])
+        assert isinstance(auth_arg, HTTPBasicAuth)
+        assert auth_arg.username == variables["credentials"]["customer_uuid"]
+        assert auth_arg.password == variables["credentials"]["auth_token"]
 
-    @pytest.mark.connect
     @patch("viadot.sources.mindful.handle_api_response")
     def test_api_connection(self, mock_handle_api_response):
         """Test Mindful `api_connection` method."""
@@ -80,9 +75,8 @@ class TestMindful(unittest.TestCase):
         )
 
         mock_handle_api_response.assert_called_once()
-        self.assertIsInstance(self.mindful_instance.data, StringIO)
+        assert isinstance(self.mindful_instance.data, StringIO)
 
-    @pytest.mark.connect
     @patch("viadot.sources.mindful.handle_api_response")
     def test_api_connection_no_data(self, mock_handle_api_response):
         """Test Mindful `api_connection` method without data."""
@@ -97,9 +91,8 @@ class TestMindful(unittest.TestCase):
         )
 
         mock_handle_api_response.assert_called_once()
-        self.assertEqual(self.mindful_instance.data, "{}")
+        assert self.mindful_instance.data == "{}"
 
-    @pytest.mark.connect
     @patch("viadot.sources.mindful.handle_api_response")
     def test_api_connection_error(self, mock_handle_api_response):
         """Test Mindful `api_connection` method, APIError."""
@@ -108,10 +101,9 @@ class TestMindful(unittest.TestCase):
         mock_response.content = b"Internal Server Error"
         mock_handle_api_response.return_value = mock_response
 
-        with self.assertRaises(APIError):
+        with pytest.raises(APIError):
             self.mindful_instance.api_connection(endpoint="responses")
 
-    @pytest.mark.functions
     @patch("viadot.sources.mindful.pd.read_json")
     @patch("viadot.sources.mindful.super")
     def test_to_df(self, mock_super, mock_read_json):
@@ -128,10 +120,9 @@ class TestMindful(unittest.TestCase):
         )
         expected_df = pd.DataFrame({"A": [1, 2], "B": [3, 4]})
 
-        pd.testing.assert_frame_equal(result_df, expected_df)
+        assert result_df.equals(expected_df)
         mock_super().to_df.assert_called_once()
 
-    @pytest.mark.functions
     @patch("viadot.sources.mindful.pd.read_json")
     @patch("viadot.sources.mindful.super")
     def test_to_df_empty(self, mock_super, mock_read_json):
@@ -147,7 +138,7 @@ class TestMindful(unittest.TestCase):
             mock_handle_if_empty.assert_called_once_with(
                 if_empty="warn", message="The response does not contain any data."
             )
-            self.assertTrue(result_df.empty)
+            assert result_df.empty
             mock_super().to_df.assert_called_once()
 
 

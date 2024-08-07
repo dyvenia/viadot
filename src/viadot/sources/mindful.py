@@ -1,57 +1,11 @@
-"""
-'mindful.py'.
+"""Mindful API connector."""
 
-Structure for the Mindful API connector.
-
-This module provides functionalities for connecting to Mindful API and download
-the response. It includes the following features:
-- Direct connection to Mindful API.
-- Introduce any downloaded data into a Pandas Data Frame.
-
-Typical usage example:
-
-    mindful = Mindful(
-        credentials=credentials,
-        config_key=config_key,
-        region=region,
-    )
-    mindful.api_connection(
-        endpoint=endpoint,
-        date_interval=date_interval,
-        limit=limit,
-    )
-    data_frame = mindful.to_df()
-
-Mindful Class Attributes:
-
-    credentials (Optional[MindfulCredentials], optional): Mindful credentials.
-        Defaults to None.
-    config_key (str, optional): The key in the viadot config holding relevant
-        credentials. Defaults to "mindful".
-    region (Literal[us1, us2, us3, ca1, eu1, au1], optional): Survey Dynamix region
-        from where to interact with the mindful API. Defaults to "eu1" English
-        (United Kingdom).
-
-Functions:
-
-    api_connection(endpoint, date_interval, limit): General method to connect to Survey
-        Dynamix API and generate the response.
-    to_df(if_empty, drop_duplicates, validate_df_dict): Generate a Pandas Data Frame
-        with the data in the Response object, and metadata.
-
-Classes:
-
-    MindfulCredentials: Checking for values in Mindful credentials dictionary.
-    Mindful: Class implementing the Mindful API.
-"""  # noqa: D412
-
-import json
 from datetime import date, timedelta
 from io import StringIO
-from typing import Any, Dict, List, Literal, Optional
+import json
+from typing import Any, Literal
 
 import pandas as pd
-from colorama import Fore, Style
 from pydantic import BaseModel
 from requests.auth import HTTPBasicAuth
 from requests.models import Response
@@ -79,25 +33,22 @@ class MindfulCredentials(BaseModel):
 
 
 class Mindful(Source):
-    """
-    Class implementing the Mindful API.
+    """Class implementing the Mindful API.
 
     Documentation for this API is available at: https://apidocs.surveydynamix.com/.
     """
 
-    ENDPOINTS = ["interactions", "responses", "surveys"]
-    key_credentials = ["customer_uuid", "auth_token"]
+    ENDPOINTS = ("interactions", "responses", "surveys")
 
     def __init__(
         self,
         *args,
-        credentials: Optional[MindfulCredentials] = None,
+        credentials: MindfulCredentials | None = None,
         config_key: str = "mindful",
         region: Literal["us1", "us2", "us3", "ca1", "eu1", "au1"] = "eu1",
         **kwargs,
     ):
-        """
-        Create a Mindful instance.
+        """Create a Mindful instance.
 
         Args:
             credentials (Optional[MindfulCredentials], optional): Mindful credentials.
@@ -107,10 +58,24 @@ class Mindful(Source):
             region (Literal[us1, us2, us3, ca1, eu1, au1], optional): Survey Dynamix
                 region from where to interact with the mindful API. Defaults to "eu1"
                 English (United Kingdom).
+
+        Examples:
+            mindful = Mindful(
+                credentials=credentials,
+                config_key=config_key,
+                region=region,
+            )
+            mindful.api_connection(
+                endpoint=endpoint,
+                date_interval=date_interval,
+                limit=limit,
+            )
+            data_frame = mindful.to_df()
         """
         credentials = credentials or get_source_credentials(config_key) or None
         if credentials is None:
-            raise CredentialError("Missing credentials.")
+            msg = "Missing credentials."
+            raise CredentialError(msg)
 
         validated_creds = dict(MindfulCredentials(**credentials))
         super().__init__(*args, credentials=validated_creds, **kwargs)
@@ -123,11 +88,10 @@ class Mindful(Source):
 
     def _mindful_api_response(
         self,
-        params: Optional[Dict[str, Any]] = None,
+        params: dict[str, Any] | None = None,
         endpoint: str = "",
     ) -> Response:
-        """
-        Call to Mindful API given an endpoint.
+        """Call to Mindful API given an endpoint.
 
         Args:
             params (Optional[Dict[str, Any]], optional): Parameters to be passed into
@@ -138,19 +102,17 @@ class Mindful(Source):
         Returns:
             Response: request object with the response from the Mindful API.
         """
-        response = handle_api_response(
+        return handle_api_response(
             url=f"https://{self.region}surveydynamix.com/api/{endpoint}",
             params=params,
             method="GET",
             auth=HTTPBasicAuth(*self.auth),
         )
 
-        return response
-
     def api_connection(
         self,
         endpoint: Literal["interactions", "responses", "surveys"] = "surveys",
-        date_interval: Optional[List[date]] = None,
+        date_interval: list[date] | None = None,
         limit: int = 1000,
     ) -> None:
         """General method to connect to Survey Dynamix API and generate the response.
@@ -182,16 +144,13 @@ class Mindful(Source):
             reference_date = date.today()
             date_interval = [reference_date - timedelta(days=1), reference_date]
 
-            print(
-                (
-                    f"{Fore.YELLOW}WARNING{Style.RESET_ALL}: "
-                    + "No `date_interval` parameter was defined, or was erroneously "
-                    + "defined. `date_interval` parameter must have the folloing "
-                    + "structure:\n\t[`date_0`, `date_1`], having that `date_1` > "
-                    + "`date_0`.\nBy default, one day of data, from "
-                    + f"{date_interval[0].strftime('%Y-%m-%d')} to "
-                    + f"{date_interval[1].strftime('%Y-%m-%d')}, will be obtained."
-                )
+            self.logger.warning(
+                "No `date_interval` parameter was defined, or was erroneously "
+                + "defined. `date_interval` parameter must have the folloing "
+                + "structure:\n\t[`date_0`, `date_1`], having that `date_1` > "
+                + "`date_0`.\nBy default, one day of data, from "
+                + f"{date_interval[0].strftime('%Y-%m-%d')} to "
+                + f"{date_interval[1].strftime('%Y-%m-%d')}, will be obtained."
             )
 
         params = {
@@ -208,31 +167,32 @@ class Mindful(Source):
             endpoint=endpoint,
             params=params,
         )
-
-        if response.status_code == 200:
-            print(f"Succesfully downloaded '{endpoint}' data from mindful API.")
+        response_ok = 200
+        no_data_code = 204
+        if response.status_code == response_ok:
+            self.logger.info(
+                f"Successfully downloaded '{endpoint}' data from mindful API."
+            )
             self.data = StringIO(response.content.decode("utf-8"))
-        elif response.status_code == 204 and not response.content.decode():
-            print(
-                f"{Fore.YELLOW}WARNING{Style.RESET_ALL}: "
-                + f"Thera are not '{endpoint}' data to download from"
+        elif response.status_code == no_data_code and not response.content.decode():
+            self.logger.warning(
+                f"There are not '{endpoint}' data to download from"
                 + f" {date_interval[0]} to {date_interval[1]}."
             )
             self.data = json.dumps({})
         else:
-            print(
-                f"{Fore.RED}ERROR{Style.RESET_ALL}: "
-                + f"Failed to downloaded '{endpoint}' data. - {response.content}"
+            self.logger.error(
+                f"Failed to downloaded '{endpoint}' data. - {response.content}"
             )
-            raise APIError(f"Failed to downloaded '{endpoint}' data.")
+            msg = f"Failed to downloaded '{endpoint}' data."
+            raise APIError(msg)
 
     @add_viadot_metadata_columns
     def to_df(
         self,
         if_empty: str = "warn",
     ) -> pd.DataFrame:
-        """
-        Generate a Pandas Data Frame with the data in the Response object and metadata.
+        """Download the data to a pandas DataFrame.
 
         Args:
             if_empty (str, optional): What to do if a fetch produce no data.
@@ -251,6 +211,6 @@ class Mindful(Source):
                 message="The response does not contain any data.",
             )
         else:
-            print("Successfully downloaded data from the Mindful API.")
+            self.logger.info("Successfully downloaded data from the Mindful API.")
 
         return data_frame
