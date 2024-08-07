@@ -1,13 +1,13 @@
 """Tasks for interacting with Azure Data Lake (gen2)."""
 
 import contextlib
-from typing import Any, Dict
 
 import pandas as pd
 from prefect import task
 
 from viadot.orchestration.prefect.exceptions import MissingSourceCredentialsError
 from viadot.orchestration.prefect.utils import get_credentials
+
 
 with contextlib.suppress(ImportError):
     from viadot.sources import AzureDataLake
@@ -21,7 +21,6 @@ def adls_upload(
     overwrite: bool = False,
     credentials_secret: str | None = None,
     config_key: str | None = None,
-    credentials: Dict[str, Any] | None = None,
 ) -> None:
     """Upload file(s) to Azure Data Lake.
 
@@ -43,10 +42,10 @@ def adls_upload(
             credentials.
         credentials (dict, optional): The credentials as a dictionary.
     """
-    if not (credentials_secret or config_key or credentials):
+    if not (credentials_secret or config_key):
         raise MissingSourceCredentialsError
 
-    credentials = credentials or get_credentials(credentials_secret)
+    credentials = get_credentials(credentials_secret)
     lake = AzureDataLake(credentials=credentials, config_key=config_key)
 
     lake.upload(
@@ -64,15 +63,15 @@ def df_to_adls(
     sep: str = "\t",
     credentials_secret: str | None = None,
     config_key: str | None = None,
-    credentials: Dict[str, Any] | None = None,
     overwrite: bool = False,
 ) -> None:
-    """Upload a pandas `DataFrame` to a file on Azure Data Lake.
+    r"""Upload a pandas `DataFrame` to a file on Azure Data Lake.
 
     Args:
         df (pd.DataFrame): The pandas DataFrame to upload.
         path (str): The destination path. Defaults to None.
-        sep (str, optional): The separator to use in the `to_csv` function. Defaults to "\t".
+        sep (str, optional): The separator to use in the `to_csv` function. Defaults to
+        "\t".
         overwrite (bool, optional): Whether to overwrite files in the lake. Defaults
             to False.
         credentials_secret (str, optional): The name of the Azure Key Vault secret
@@ -81,10 +80,10 @@ def df_to_adls(
             credentials. Defaults to None.
         credentials (Dict[str, Any], optional): The credentials as a dictionary.
     """
-    if not (credentials_secret or config_key or credentials):
+    if not (credentials_secret or config_key):
         raise MissingSourceCredentialsError
 
-    credentials = credentials or get_credentials(credentials_secret)
+    credentials = get_credentials(credentials_secret)
     lake = AzureDataLake(credentials=credentials, config_key=config_key)
 
     lake.from_df(

@@ -1,36 +1,8 @@
-"""
-'mindful.py'.
-
-Prefect task wrapper for the Mindful API connector.
-
-This module provides an intermediate wrapper between the prefect flow and the connector:
-- Generate the Mindful API connector.
-- Create and return a pandas Data Frame with the response of the API.
-
-Typical usage example:
-
-    data_frame = mindful_to_df(
-        credentials=credentials,
-        config_key=config_key,
-        azure_key_vault_secret=azure_key_vault_secret,
-        region=region,
-        endpoint=end,
-        date_interval=date_interval,
-        limit=limit,
-    )
-
-Functions:
-
-    mindful_to_df(credentials, config_key, azure_key_vault_secret, region,
-        endpoint, date_interval, limit): Task to download data from Mindful API.
-"""  # noqa: D412
-
-from typing import Any, Dict, List, Optional
+"""Task to download data from Outlook API into a Pandas DataFrame."""
 
 import pandas as pd
 from prefect import task
 
-from viadot.exceptions import APIError
 from viadot.orchestration.prefect.exceptions import MissingSourceCredentialsError
 from viadot.orchestration.prefect.utils import get_credentials
 from viadot.sources import Outlook
@@ -38,28 +10,24 @@ from viadot.sources import Outlook
 
 @task(retries=3, log_prints=True, retry_delay_seconds=10, timeout_seconds=60 * 60)
 def outlook_to_df(
-    credentials: Optional[Dict[str, Any]] = None,
-    config_key: Optional[str] = None,
-    azure_key_vault_secret: Optional[str] = None,
-    mailbox_name: Optional[str] = None,
+    mailbox_name: str,
+    config_key: str | None = None,
+    azure_key_vault_secret: str | None = None,
     request_retries: int = 10,
-    start_date: Optional[str] = None,
-    end_date: Optional[str] = None,
+    start_date: str | None = None,
+    end_date: str | None = None,
     limit: int = 10000,
     address_limit: int = 8000,
-    outbox_list: List[str] = ["Sent Items"],
+    outbox_list: list[str] | None = None,
 ) -> pd.DataFrame:
-    """
-    Task for downloading data from Outlook API to Data Frame.
+    """Task for downloading data from Outlook API to Data Frame.
 
     Args:
-        credentials (Optional[Dict[str, Any]], optional): Outlook credentials as a
-            dictionary. Defaults to None.
+        mailbox_name (str): Mailbox name.
         config_key (Optional[str], optional): The key in the viadot config holding
             relevant credentials. Defaults to None.
         azure_key_vault_secret (Optional[str], optional): The name of the Azure Key
             Vault secret where credentials are stored. Defaults to None.
-        mailbox_name (Optional[str], optional): Mailbox name. Defaults to None.
         request_retries (int, optional): How many times retries to authorizate.
             Defaults to 10.
         start_date (Optional[str], optional): A filtering start date parameter e.g.
@@ -69,8 +37,18 @@ def outlook_to_df(
         limit (int, optional): Number of fetched top messages. Defaults to 10000.
         address_limit (int, optional): The maximum number of accepted characters in the
             sum of all email names. Defaults to 8000.
-        outbox_list (List[str], optional): List of outbox folders to differenciate
+        outbox_list (List[str], optional): List of outbox folders to differentiate
             between Inboxes and Outboxes. Defaults to ["Sent Items"].
+
+    Examples:
+        data_frame = mindful_to_df(
+            config_key=config_key,
+            azure_key_vault_secret=azure_key_vault_secret,
+            region=region,
+            endpoint=end,
+            date_interval=date_interval,
+            limit=limit,
+        )
 
     Raises:
         MissingSourceCredentialsError: If none credentials have been provided.
@@ -79,14 +57,14 @@ def outlook_to_df(
     Returns:
         pd.DataFrame: The response data as a Pandas Data Frame.
     """
-    if not (azure_key_vault_secret or config_key or credentials):
+    if not (azure_key_vault_secret or config_key):
         raise MissingSourceCredentialsError
 
     if not config_key:
-        credentials = credentials or get_credentials(azure_key_vault_secret)
+        credentials = get_credentials(azure_key_vault_secret)
 
-    if mailbox_name is None:
-        raise APIError("Outlook mailbox name is a mandatory requirement.")
+    if not outbox_list:
+        outbox_list = ["Sent Items"]
 
     outlook = Outlook(
         credentials=credentials,
@@ -101,6 +79,5 @@ def outlook_to_df(
         address_limit=address_limit,
         outbox_list=outbox_list,
     )
-    data_frame = outlook.to_df()
 
-    return data_frame
+    return outlook.to_df()
