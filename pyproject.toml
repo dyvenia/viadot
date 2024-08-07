@@ -51,6 +51,7 @@ viadot-aws = [
     "minio>=7.0, <8.0",
     "awswrangler==2.20.1",
     "prefect-aws==0.4.18",
+    "O365==2.0.18.1",
 ]
 
 [tool.rye]
