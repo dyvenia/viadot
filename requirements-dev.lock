@@ -7,12 +7,11 @@
 #   all-features: true
 #   with-sources: false
 #   generate-hashes: false
+#   universal: false
 
 -e file:.
 adlfs==2024.4.1
     # via viadot2
-aenum==3.1.15
-    # via gremlinpython
 agate==1.7.1
     # via dbt-core
     # via dbt-postgres
@@ -22,7 +21,6 @@ aiobotocore==2.13.0
 aiohttp==3.9.5
     # via adlfs
     # via aiobotocore
-    # via gremlinpython
     # via s3fs
 aioitertools==0.11.0
     # via aiobotocore
@@ -61,7 +59,7 @@ attrs==23.2.0
     # via jsonschema
     # via referencing
     # via visions
-awswrangler==2.20.1
+awswrangler==3.9.0
     # via viadot2
 azure-core==1.30.1
     # via adlfs
@@ -84,8 +82,6 @@ azure-storage-blob==12.20.0
 babel==2.15.0
     # via agate
     # via mkdocs-material
-backoff==2.2.1
-    # via awswrangler
 beautifulsoup4==4.12.3
     # via mkdocs-mermaid2-plugin
     # via nbconvert
@@ -120,7 +116,6 @@ certifi==2024.2.2
     # via httpx
     # via kubernetes
     # via minio
-    # via opensearch-py
     # via requests
 cffi==1.16.0
     # via argon2-cffi-bindings
@@ -204,8 +199,6 @@ essentials-openapi==1.0.9
     # via neoteroi-mkdocs
 et-xmlfile==1.1.0
     # via openpyxl
-events==0.5
-    # via opensearch-py
 exceptiongroup==1.2.0
     # via anyio
     # via ipython
@@ -236,8 +229,6 @@ graphviz==0.20.3
     # via prefect
 greenlet==3.0.3
     # via sqlalchemy
-gremlinpython==3.7.2
-    # via awswrangler
 griffe==0.45.2
     # via mkdocstrings-python
     # via prefect
@@ -283,7 +274,6 @@ isodate==0.6.1
     # via azure-keyvault-secrets
     # via azure-storage-blob
     # via dbt-core
-    # via gremlinpython
 itsdangerous==2.2.0
     # via prefect
 jedi==0.19.1
@@ -309,8 +299,6 @@ jsbeautifier==1.15.1
     # via mkdocs-mermaid2-plugin
 jsonpatch==1.33
     # via prefect
-jsonpath-ng==1.6.1
-    # via awswrangler
 jsonpointer==2.4
     # via jsonpatch
 jsonschema==4.22.0
@@ -443,7 +431,6 @@ nbformat==5.10.4
     # via nbconvert
 neoteroi-mkdocs==1.0.5
 nest-asyncio==1.6.0
-    # via gremlinpython
     # via ipykernel
 networkx==3.2.1
     # via dbt-core
@@ -459,13 +446,11 @@ oauthlib==3.2.2
     # via kubernetes
     # via requests-oauthlib
 openpyxl==3.0.10
-    # via awswrangler
     # via viadot2
-opensearch-py==2.6.0
-    # via awswrangler
 orjson==3.10.3
     # via prefect
 packaging==24.0
+    # via awswrangler
     # via dbt-core
     # via docker
     # via ipykernel
@@ -497,8 +482,6 @@ pendulum==2.1.2
     # via prefect
 pexpect==4.9.0
     # via ipython
-pg8000==1.31.2
-    # via awswrangler
 pillow==10.3.0
     # via cairosvg
     # via mkdocs-material
@@ -508,8 +491,6 @@ platformdirs==4.2.0
     # via mkdocstrings
 pluggy==1.5.0
     # via pytest
-ply==3.11
-    # via jsonpath-ng
 portalocker==2.8.2
     # via msal-extensions
 prefect==2.19.7
@@ -524,12 +505,8 @@ prefect-azure @ git+https://github.com/Trymzet/prefect-azure@f4a400fa997f2ef1f54
     # via viadot2
 prefect-github==0.2.6
     # via viadot2
-prefect-github==0.2.6
-    # via viadot2
 prefect-sqlalchemy==0.4.3
     # via viadot2
-progressbar2==4.4.2
-    # via awswrangler
 prompt-toolkit==3.0.47
     # via ipython
 protobuf==4.25.3
@@ -545,7 +522,7 @@ pure-eval==0.2.2
     # via stack-data
 py4j==0.10.9.5
     # via databricks-connect
-pyarrow==10.0.1
+pyarrow==17.0.0
     # via awswrangler
     # via viadot2
 pyasn1==0.6.0
@@ -578,14 +555,14 @@ pymdown-extensions==10.8.1
     # via mkdocs-material
     # via mkdocs-mermaid2-plugin
     # via mkdocstrings
-pymysql==1.1.1
-    # via awswrangler
 pyodbc==5.1.0
     # via dbt-sqlserver
     # via viadot2
 pyparsing==3.1.2
     # via mike
     # via prefect-aws
+pyrfc==2.8.3
+    # via viadot2
 pytest==8.3.2
     # via pytest-cov
 pytest-cov==5.0.0
@@ -599,10 +576,8 @@ python-dateutil==2.9.0.post0
     # via jupyter-client
     # via kubernetes
     # via o365
-    # via opensearch-py
     # via pandas
     # via pendulum
-    # via pg8000
     # via prefect
     # via trino
 python-dotenv==1.0.1
@@ -613,8 +588,6 @@ python-multipart==0.0.9
 python-slugify==8.0.4
     # via agate
     # via prefect
-python-utils==3.8.2
-    # via progressbar2
 pytimeparse==1.1.8
     # via agate
 pytz==2024.1
@@ -652,7 +625,6 @@ pyzmq==26.0.3
 readchar==4.1.0
     # via prefect
 redshift-connector==2.0.917
-    # via awswrangler
     # via dbt-redshift
 referencing==0.35.1
     # via jsonschema
@@ -660,7 +632,7 @@ referencing==0.35.1
 regex==2024.5.15
     # via dateparser
     # via mkdocs-material
-requests==2.31.0
+requests==2.32.3
     # via apprise
     # via azure-core
     # via azure-datalake-store
@@ -673,15 +645,11 @@ requests==2.31.0
     # via mkdocs-mermaid2-plugin
     # via msal
     # via o365
-    # via opensearch-py
     # via redshift-connector
-    # via requests-aws4auth
     # via requests-oauthlib
     # via sharepy
     # via trino
     # via viadot2
-requests-aws4auth==1.2.3
-    # via awswrangler
 requests-oauthlib==2.0.0
     # via apprise
     # via kubernetes
@@ -708,13 +676,13 @@ s3fs==2024.6.0
 s3transfer==0.10.1
     # via boto3
 scramp==1.4.5
-    # via pg8000
     # via redshift-connector
 sendgrid==6.11.0
     # via viadot2
-setuptools==70.0.0
+setuptools==72.1.0
     # via mkdocs-mermaid2-plugin
     # via redshift-connector
+    # via viadot2
 sgqlc==16.3
     # via prefect-github
 sharepy==2.0.0
@@ -726,14 +694,11 @@ six==1.16.0
     # via azure-core
     # via bleach
     # via databricks-connect
-    # via gremlinpython
     # via isodate
     # via jsbeautifier
     # via kubernetes
     # via minimal-snowplow-tracker
-    # via opensearch-py
     # via python-dateutil
-    # via requests-aws4auth
     # via rfc3339-validator
 smmap==5.0.1
     # via gitdb
@@ -799,6 +764,7 @@ typer==0.12.3
 typing-extensions==4.10.0
     # via aiosqlite
     # via alembic
+    # via awswrangler
     # via azure-core
     # via azure-keyvault-secrets
     # via azure-storage-blob
@@ -812,7 +778,6 @@ typing-extensions==4.10.0
     # via prefect
     # via pydantic
     # via pydantic-core
-    # via python-utils
     # via sqlalchemy
     # via typer
     # via uvicorn
@@ -828,7 +793,6 @@ urllib3==1.26.18
     # via docker
     # via kubernetes
     # via minio
-    # via opensearch-py
     # via requests
 uvicorn==0.28.1
     # via prefect
