@@ -115,14 +115,12 @@ class TestOutlook(unittest.TestCase):
         mock_authenticate.assert_called_once()
 
     @patch("O365.Account.authenticate", return_value=False)
-    def test_api_connection_authentication_failure(self, mock_authenticate):
+    def test_api_connection_authentication_failure(self, mock_authenticate):  # noqa: ARG002
         """Test Outlook `api_connection` method, failure."""
         mailbox_name = "test@example.com"
 
-        self.outlook_instance.api_connection(mailbox_name=mailbox_name)
-
-        mock_authenticate.assert_called_once()
-        assert self.outlook_instance.data == []
+        with pytest.raises(ValueError):  # noqa: PT011
+            self.outlook_instance.api_connection(mailbox_name=mailbox_name)
 
     @patch("O365.Account.mailbox")
     def test_to_df(self, mock_mailbox):

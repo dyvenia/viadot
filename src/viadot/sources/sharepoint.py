@@ -154,11 +154,7 @@ class Sharepoint(Source):
         """
         # Parse the URL to get the path
         parsed_url = urlparse(url)
-
-        # Get the file extension
-        _, ext = Path(parsed_url.path).suffix
-
-        return ext
+        return Path(parsed_url.path).suffix
 
     def _download_file_stream(self, url: str, **kwargs) -> pd.ExcelFile:
         """Download the contents of a file from SharePoint.
