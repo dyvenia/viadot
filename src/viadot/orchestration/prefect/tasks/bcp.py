@@ -51,7 +51,6 @@ def bcp(
         or get_credentials(credentials_secret)
     )
     fqn = f"{schema}.{table}" if schema else table
-
     server = credentials["server"]
     db_name = credentials["db_name"]
     uid = credentials["user"]
@@ -84,9 +83,9 @@ def bcp(
         "-P",
         pwd,
         "-b",
-        chunksize,
+        str(chunksize),
         "-m",
-        max_error,
+        str(max_error),
         "-c",
         "-v",
         "-e",
