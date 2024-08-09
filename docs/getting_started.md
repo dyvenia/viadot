@@ -16,6 +16,8 @@ curl -sSf https://rye-up.com/get | bash
 
 ### OS dependencies
 
+#### Core
+
 `viadot2` depends on some Linux system libraries. You can install them in the following way:
 
 ```console
@@ -34,6 +36,41 @@ Next, copy the SQL Server config from `docker/odbcinst.ini` file into your `/etc
 
 ```console
 cat docker/odbcinst.ini | sudo tee -a /etc/odbcinst.ini
+```
+
+#### SAP connector
+
+In order to work with the SAP connector, you must also install the [SAP NetWeaver RFC SDK](https://support.sap.com/en/product/connectors/nwrfcsdk.html). You must have a SAP license in order to be able to download and use the driver.
+
+To install the driver, copy the `nwrfcsdk` folder to `/usr/local/sap/`. Then, also copy the `nwrfcsdk.conf` file to `/etc/ld.so.conf.d/`:
+
+```console
+sudo cp -R ./sap_netweaver_rfc/ /usr/local/sap/
+sudo cp ./sap_netweaver_rfc/nwrfcsdk.conf /etc/ld.so.conf.d/
+```
+
+Next, configure the `SAPNWRFC_HOME` env variable, eg. by adding the following entry in your `~/.bashrc` file:
+
+```bash
+export SAPNWRFC_HOME=/usr/local/sap/nwrfcsdk
+```
+
+Make sure to reload the shell:
+
+```console
+source ~/.bashrc
+```
+
+Next, configure the RFC driver with:
+
+```console
+sudo ldconfig
+```
+
+Finally, you can install `pyrfc` by installing the viadot `sap` extra:
+
+```console
+rye sync --features=sap
 ```
 
 ### Library
