@@ -2,7 +2,7 @@ import json
 import logging
 
 import pandas as pd
-
+import pytest
 from viadot.exceptions import ValidationError
 from viadot.utils import (
     _cast_df_cols,
@@ -11,6 +11,7 @@ from viadot.utils import (
     get_fqn,
     handle_api_request,
     validate,
+    validate_and_reorder_dfs_columns,
 )
 
 
@@ -251,3 +252,43 @@ def test_validate_column_sum_fail(caplog):
     with caplog.at_level(logging.INFO):
         validate(df, tests)
     assert "Sum of 10 for col1 is out of the expected range - <5:6>" in caplog.text
+
+
+def test_validate_and_reorder_wrong_columns():
+    df1 = pd.DataFrame({"a": [1, 2], "b": [3, 4]})
+    df2 = pd.DataFrame({"a": [5, 6], "c": [7, 8]})
+
+    with pytest.raises(ValueError):
+        validate_and_reorder_dfs_columns([df1, df2])
+
+
+def test_validate_and_reorder_empty_list():
+    with pytest.raises(IndexError):
+        validate_and_reorder_dfs_columns([])
+
+
+def test_validate_and_reorder_identical_columns():
+    df1 = pd.DataFrame({"a": [1, 2], "b": [3, 4]})
+    df2 = pd.DataFrame({"a": [5, 6], "b": [7, 8]})
+
+    result = validate_and_reorder_dfs_columns([df1, df2])
+
+    assert len(result) == 2
+    assert list(result[0].columns) == list(df1.columns)
+    assert result[0].equals(df1)
+    assert list(result[1].columns) == list(df2.columns)
+    assert result[1].equals(df2)
+
+
+def test_validate_and_reorder_different_order_columns():
+    df1 = pd.DataFrame({"a": [1, 2], "b": [3, 4]})
+    df2 = pd.DataFrame({"b": [7, 8], "a": [5, 6]})
+
+    expected_df2 = pd.DataFrame({"a": [5, 6], "b": [7, 8]})
+    result = validate_and_reorder_dfs_columns([df1, df2])
+
+    assert len(result) == 2
+    assert list(result[0].columns) == list(df1.columns)
+    assert result[0].equals(df1)
+    assert list(result[1].columns) == list(expected_df2.columns)
+    assert result[1].equals(expected_df2)

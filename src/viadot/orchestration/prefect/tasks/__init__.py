@@ -26,7 +26,6 @@ from .sharepoint import (
 )
 from .sql_server import (
     create_sql_server_table,
-    df_to_sql_server,
     sql_server_query,
     sql_server_to_df,
 )
