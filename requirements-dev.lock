@@ -682,7 +682,6 @@ sendgrid==6.11.0
 setuptools==72.1.0
     # via mkdocs-mermaid2-plugin
     # via redshift-connector
-    # via viadot2
 sgqlc==16.3
     # via prefect-github
 sharepy==2.0.0
