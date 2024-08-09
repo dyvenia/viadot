@@ -34,7 +34,7 @@ sshtunnel==0.4.0
 databricks-connect==10.4.*
 tzlocal==4.3
 O365==2.0.18.1
-aiohttp==3.8.1
+aiohttp==3.10.2
 aiolimiter==1.0.0
 protobuf>=3.19.0, <3.20
 avro-python3==1.10.2
