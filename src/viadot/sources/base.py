@@ -82,8 +82,8 @@ class Source:
 
         Args:
             path (str): The destination path.
-            if_exists (Literal[, optional): What to do if the file exists.
-            Defaults to "replace".
+            if_exists (Literal[, optional): What to do if the file exists. Defaults to
+                "replace".
             if_empty (Literal["warn", "skip", "fail"], optional): What to do if the
                 source contains no data. Defaults to "warn".
             sep (str, optional): The separator to use in the CSV. Defaults to "\t".

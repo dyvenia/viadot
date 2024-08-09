@@ -115,7 +115,7 @@ class S3(Source):
 
         Args:
             path (str): Path to a folder.
-            suffix (Union[str, List[str], None]) - Suffix or List of suffixes for
+            suffix (Union[str, List[str], None]): Suffix or list of suffixes for
                 filtering Amazon S3 keys. Defaults to None.
         """
         return wr.s3.list_objects(boto3_session=self.session, path=path, suffix=suffix)

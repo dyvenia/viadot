@@ -141,7 +141,7 @@ class MinIO(Source):
             partition_cols (list[str], optional): The columns to partition by. Defaults
                 to None.
             if_exists (Literal["error", "delete_matching", "overwrite_or_ignore"],
-                optional). What to do if the dataset already exists.
+                optional): What to do if the dataset already exists.
         """
         fqn_or_path = (schema_name and table_name) or (
             path and not (schema_name or table_name)
@@ -207,7 +207,7 @@ class MinIO(Source):
             partition_cols (list[str], optional): The columns to partition by. Defaults
                 to None.
             if_exists (Literal["error", "delete_matching", "overwrite_or_ignore"],
-                optional). What to do if the dataset already exists.
+                optional): What to do if the dataset already exists.
         """
         table = pa.Table.from_pandas(df)
 

@@ -328,7 +328,7 @@ class Sharepoint(Source):
                 used to request multiple sheets. Specify None to get all worksheets.
                 Defaults to None.
             if_empty (Literal["warn", "skip", "fail"], optional): Action to take if
-            the DataFrame is empty.
+                the DataFrame is empty.
                 - "warn": Logs a warning.
                 - "skip": Skips the operation.
                 - "fail": Raises an error.

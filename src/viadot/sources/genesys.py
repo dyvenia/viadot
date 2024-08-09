@@ -1,14 +1,4 @@
-"""Genesys Cloud API connector.
-
-This module provides functionalities for connecting to Genesys Cloud API and download
-the reports generated. It includes the following features:
-
-- Generate reports inside Genesys.
-- Download the reports previously created.
-- Direct connection to Genesys Cloud API, via GET method, to retrieve the data without
-    any report creation.
-- Remove any report previously created.
-"""
+"""Genesys Cloud API connector."""
 
 import asyncio
 import base64
@@ -72,7 +62,16 @@ class Genesys(Source):
         environment: str = "mypurecloud.de",
         **kwargs,
     ):
-        """Creation of a Genesys instance.
+        """Genesys Cloud API connector.
+
+        Provides functionalities for connecting to Genesys Cloud API and downloading
+        generated reports. It includes the following features:
+
+        - Generate reports inside Genesys.
+        - Download the reports previously created.
+        - Direct connection to Genesys Cloud API, via GET method, to retrieve the data
+          without any report creation.
+        - Remove any report previously created.
 
         Args:
             credentials (Optional[GenesysCredentials], optional): Genesys credentials.
@@ -360,7 +359,7 @@ class Genesys(Source):
                 Defaults to True.
 
         Returns:
-            pd.DataFrame: Data in a pandas Data Frame.
+            pd.DataFrame: Data in a pandas DataFrame.
         """
         response = handle_api_response(url=f"{report_url}", headers=self.headers)
 
@@ -803,16 +802,16 @@ class Genesys(Source):
         if_empty: str = "warn",
         **kwargs,
     ) -> pd.DataFrame:
-        """Generate a Pandas Data Frame from self.data_returned.
+        """Generate a pandas DataFrame from self.data_returned.
 
         Args:
-            drop_duplicates (bool, optional): Remove duplicates from the Data Frame.
+            drop_duplicates (bool, optional): Remove duplicates from the DataFrame.
                 Defaults to False.
             validate_df_dict (Optional[Dict[str, Any]], optional): A dictionary with
                 optional list of tests to verify the output dataframe. Defaults to None.
 
         Returns:
-            pd.Dataframe: The response data as a Pandas Data Frame plus viadot metadata.
+            pd.Dataframe: The response data as a pandas DataFrame plus viadot metadata.
         """
         drop_duplicates = kwargs.get("drop_duplicates", False)
         validate_df_dict = kwargs.get("validate_df_dict", None)

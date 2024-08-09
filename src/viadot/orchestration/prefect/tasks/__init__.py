@@ -18,11 +18,8 @@ from .redshift_spectrum import df_to_redshift_spectrum
 from .s3 import s3_upload_file
 from .sap_rfc import sap_rfc_to_df
 from .sharepoint import (
-    get_endpoint_type_from_url,
-    scan_sharepoint_folder,
     sharepoint_download_file,
     sharepoint_to_df,
-    validate_and_reorder_dfs_columns,
 )
 from .sql_server import create_sql_server_table, sql_server_query, sql_server_to_df
 
@@ -46,11 +43,8 @@ __all__ = [
     "df_to_redshift_spectrum",
     "s3_upload_file",
     "sap_rfc_to_df",
-    "get_endpoint_type_from_url",
-    "scan_sharepoint_folder",
     "sharepoint_download_file",
     "sharepoint_to_df",
-    "validate_and_reorder_dfs_columns",
     "create_sql_server_table",
     "sql_server_query",
     "sql_server_to_df",

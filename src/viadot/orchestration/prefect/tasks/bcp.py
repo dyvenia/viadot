@@ -23,7 +23,7 @@ def bcp(
     """Upload data from a CSV file into an SQLServer table using BCP.
 
     For more information on bcp (bulk copy program), see
-            https://learn.microsoft.com/en-us/sql/tools/bcp-utility.
+    https://learn.microsoft.com/en-us/sql/tools/bcp-utility.
 
     Args:
         path (str): Where to store the CSV data dump used for bulk upload to a database.
@@ -66,5 +66,6 @@ def bcp(
     else:
         msg = "Please provide correct 'on_error' parameter value - 'skip' or 'fail'."
         raise ValueError(msg)
+
     command = f"/opt/mssql-tools/bin/bcp {fqn} in '{path}' -S {server} -d {db_name} -U {uid} -P '{pwd}' -c -F 2 -b {chunksize} -h 'TABLOCK' -e '{error_log_file_path}' -m {max_error}"
     shell_run_command(command=command)

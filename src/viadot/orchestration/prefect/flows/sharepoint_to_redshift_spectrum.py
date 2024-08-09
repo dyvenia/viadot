@@ -71,8 +71,6 @@ def sharepoint_to_redshift_spectrum(  # noqa: PLR0913
         sep (str, optional): Field delimiter for the output file. Defaults to ','.
         description (str, optional): AWS Glue catalog table description. Defaults to
             None.
-        aws_credentials (dict[str, Any], optional): Credentials to the AWS Redshift
-            Spectrum. Defaults to None.
         aws_config_key (str, optional): The key in the viadot config holding relevant
             credentials. Defaults to None.
         sheet_name (str | list | int, optional): Strings are used for sheet names.
@@ -89,8 +87,6 @@ def sharepoint_to_redshift_spectrum(  # noqa: PLR0913
             More info on: https://docs.prefect.io/concepts/blocks/
         sharepoint_config_key (str, optional): The key in the viadot config holding
             relevant credentials. Defaults to None.
-        sharepoint_credentials (dict, optional): Credentials to Sharepoint. Defaults to
-            None.
         file_sheet_mapping (dict): A dictionary where keys are filenames and values are
             the sheet names to be loaded from each file. If provided, only these files
             and sheets will be downloaded. Defaults to None.

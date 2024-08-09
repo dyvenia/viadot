@@ -18,12 +18,6 @@
 
 ::: viadot.orchestration.prefect.tasks.s3_upload_file
 
-::: viadot.orchestration.prefect.tasks.get_endpoint_type_from_url
-
-::: viadot.orchestration.prefect.tasks.scan_sharepoint_folder
-
 ::: viadot.orchestration.prefect.tasks.sharepoint_download_file
 
 ::: viadot.orchestration.prefect.tasks.sharepoint_to_df
-
-::: viadot.orchestration.prefect.tasks.validate_and_reorder_dfs_columns

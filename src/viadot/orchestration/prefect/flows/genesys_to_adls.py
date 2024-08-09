@@ -60,7 +60,7 @@ def genesys_to_adls(  # noqa: PLR0913
             templates to generate json body in POST calls to the API. Defaults to None.
         normalization_sep (str, optional): Nested records will generate names separated
             by sep. Defaults to ".".
-        drop_duplicates (bool, optional): Remove duplicates from the Data Frame.
+        drop_duplicates (bool, optional): Remove duplicates from the DataFrame.
             Defaults to False.
         validate_df_dict (Optional[Dict[str, Any]], optional): A dictionary with
             optional list of tests to verify the output dataframe. Defaults to None.

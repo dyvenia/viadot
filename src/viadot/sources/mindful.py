@@ -199,7 +199,7 @@ class Mindful(Source):
                 Defaults to "warn
 
         Returns:
-            pd.Dataframe: The response data as a Pandas Data Frame plus viadot metadata.
+            pd.Dataframe: The response data as a pandas DataFrame plus viadot metadata.
         """
         super().to_df(if_empty=if_empty)
 

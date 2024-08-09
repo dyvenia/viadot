@@ -49,7 +49,7 @@ def mindful_to_df(
         )
 
     Returns:
-        pd.DataFrame: The response data as a Pandas Data Frame.
+        pd.DataFrame: The response data as a pandas DataFrame.
     """
     logger = get_run_logger()
 

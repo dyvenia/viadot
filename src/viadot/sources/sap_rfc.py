@@ -1,28 +1,27 @@
+"""SAP RFC connector."""
+
+from collections import OrderedDict
+from collections import OrderedDict as OrderedDictType
+from collections.abc import Iterable, Iterator
 import logging
 import re
-from collections import OrderedDict
 from typing import (
     Any,
-    Dict,
-    Iterable,
-    Iterator,
-    List,
     Literal,
-    Tuple,
-    Union,
-)
-from typing import (
-    OrderedDict as OrderedDictType,
 )
 
 import numpy as np
+from numpy.typing import ArrayLike
 import pandas as pd
+import pyrfc
+
 
 try:
     import pyrfc
     from pyrfc._exception import ABAPApplicationError
-except ModuleNotFoundError:
-    raise ImportError("Missing required modules to use SAPRFC source.")
+except ModuleNotFoundError as e:
+    msg = "Missing required modules to use SAPRFC source."
+    raise ImportError(msg) from e
 
 from sql_metadata import Parser
 
@@ -31,14 +30,16 @@ from viadot.exceptions import CredentialError, DataBufferExceeded
 from viadot.sources.base import Source
 from viadot.utils import add_viadot_metadata_columns, validate
 
+
 logger = logging.getLogger()
 
 
 def adjust_where_condition_by_adding_missing_spaces(sql: str) -> str:
-    """Function for adding white spaces between operators and `WHERE` statement.
-       This function is taking raw sql string and sanitizing it at the beginning of the
-       'query()' method, so other methods that taking sql as parameter could have sql
-       without whitespaces issues.
+    """Add white spaces between operators and `WHERE` statement.
+
+    This function is taking raw sql string and sanitizing it at the beginning of the
+    'query()' method, so other methods that taking sql as parameter could have sql
+    without whitespaces issues.
 
     Args:
         sql (str): raw sql query passed in flow
@@ -46,13 +47,14 @@ def adjust_where_condition_by_adding_missing_spaces(sql: str) -> str:
     Returns:
         str: sql query after adding white spaces if needed
     """
-
-    # Check if 'WHERE' statement is not attached to 'FROM' or column name as there is need for space " " on both side of 'WHERE'
+    # Check if 'WHERE' statement is not attached to 'FROM' or column name as there is
+    # a need for space on both sides of 'WHERE'.
     sql = re.sub(rf'{re.escape("WHERE")}(?<!\s)', "WHERE ", sql, flags=re.IGNORECASE)
     sql = re.sub(rf'(?<!\s){re.escape("WHERE")}', " WHERE", sql, flags=re.IGNORECASE)
     sql = re.sub(r"\s+", " ", sql)
 
-    # Check if operators are not attached to column or value as there is need for space " " on both side of operator
+    # Check if operators are not attached to column or value as there is need for space
+    # on both sides of operator.
     operators = ["<>", "!=", "<=", ">=", "!<", "!>", "=", ">", "<"]
     reverse_check = [
         "< >",
@@ -74,28 +76,24 @@ def adjust_where_condition_by_adding_missing_spaces(sql: str) -> str:
     return sql
 
 
-def remove_whitespaces(text):
+def _remove_whitespaces(text: str) -> str:
     return " ".join(text.split())
 
 
-def get_keyword_for_condition(where: str, condition: str) -> str:
+def _get_keyword_for_condition(where: str, condition: str) -> str:
     where = where[: where.find(condition)]
     return where.split()[-1]
 
 
-def get_where_uppercased(where: str) -> str:
-    """
-    Uppercase a WHERE clause's keywords without
-    altering the original string.
-    """
+def _get_where_uppercased(where: str) -> str:
+    """Uppercase a WHERE clause's keywords without altering the original string."""
     where_and_uppercased = re.sub("\\sand ", " AND ", where)
-    where_and_and_or_uppercased = re.sub("\\sor ", " OR ", where_and_uppercased)
-    return where_and_and_or_uppercased
+    return re.sub("\\sor ", " OR ", where_and_uppercased)
 
 
-def remove_last_condition(where: str) -> str:
+def _remove_last_condition(where: str) -> str:
     """Remove the last condtion from a WHERE clause."""
-    where = get_where_uppercased(where)
+    where = _get_where_uppercased(where)
     split_by_and = re.split("\\sAND ", where)
     conditions = [re.split("\\sOR ", expr) for expr in split_by_and]
     conditions_flattened = [
@@ -110,25 +108,23 @@ def remove_last_condition(where: str) -> str:
     return where_trimmed_without_last_keyword, condition_to_remove
 
 
-def trim_where(where: str) -> Tuple[str, OrderedDictType[str, str]]:
-    """
-    Trim a WHERE clause to 75 characters or less,
-    as required by SAP. The rest of filters will be applied
-    in-memory on client side.
-    """
+def _trim_where(where: str) -> tuple[str, OrderedDictType[str, str] | None]:
+    """Trim a WHERE clause to 75 characters or less, as required by SAP RFC.
 
-    if len(where) <= 75:
+    The rest of filters will be applied in-memory on client side.
+    """
+    if len(where) <= SAPRFC.COL_CHARACTER_WIDTH_LIMIT:
         return where, None
 
     wheres_to_add = OrderedDict()
     keywords_with_conditions = []
     where_trimmed = where
-    while len(where_trimmed) > 75:
+    while len(where_trimmed) > SAPRFC.COL_CHARACTER_WIDTH_LIMIT:
         # trim the where
-        where_trimmed, removed_condition = remove_last_condition(where_trimmed)
+        where_trimmed, removed_condition = _remove_last_condition(where_trimmed)
 
         # store the removed conditions so we can readd them later
-        keyword = get_keyword_for_condition(where, removed_condition)
+        keyword = _get_keyword_for_condition(where, removed_condition)
         keywords_with_conditions.append((keyword, removed_condition))
 
     wheres_to_add_sorted = keywords_with_conditions[::-1]
@@ -137,22 +133,28 @@ def trim_where(where: str) -> Tuple[str, OrderedDictType[str, str]]:
     return where_trimmed, wheres_to_add
 
 
-def detect_extra_rows(
-    row_index: int, data_raw: np.array, chunk: int, fields: List[str]
-) -> Union[int, np.array, bool]:
-    """Check if, in between calls to the SAP table, the number of rows have increased.
-        If so, remove the last rows added, to fit the size of the previous columns.
+def _detect_extra_rows(
+    row_index: int,
+    data_raw: ArrayLike,
+    chunk: int,
+    fields: list[str],
+) -> int | ArrayLike | bool:
+    """Check if, in between calls to the SAP table, the number of rows has increased.
+
+    If so, remove the last rows added, to fit the size of the previous columns.
 
     Args:
-        row_index (int): Number of rows set it down in he first iteration with the SAP table.
-        data_raw (np.array): Array with the data retrieve from SAP table.
-        chunk (int): The part number in which a number of SAP table columns have been split.
+        row_index (int): Number of rows set it down in he first iteration with the SAP
+            table.
+        data_raw (ArrayLike): Array with the data retrieve from SAP table.
+        chunk (int): The part number in which a number of SAP table columns have been
+            split.
         fields (List[str]): A list with the names of the columns in a chunk.
 
     Returns:
-        Union[int, np.array, bool]: A tuple with the parameters "row_index", "data_raw", a new
-            boolean variable "start" to indicate when the for loop has to be restarted,
-            and "chunk" variable.
+        Union[int, ArrayLike, bool]: A tuple with the parameters "row_index",
+            "data_raw", a new boolean variable "start" to indicate when the for loop has
+            to be restarted, and "chunk" variable.
     """
     start = False
     if row_index == 0:
@@ -171,27 +173,29 @@ def detect_extra_rows(
     return row_index, data_raw, start
 
 
-def replace_separator_in_data(
-    data_raw: np.array,
-    no_sep_index: np.array,
+def _replace_separator_in_data(
+    data_raw: ArrayLike,
+    no_sep_index: ArrayLike,
     record_key: str,
-    pos_sep_index: np.array,
+    pos_sep_index: ArrayLike,
     sep: str,
     replacement: str,
-) -> np.array:
+) -> ArrayLike:
     """Function to replace the extra separator in every row of the data_raw numpy array.
 
     Args:
-        data_raw (np.array): Array with the data retrieve from SAP table.
-        no_sep_index (np.array): Array with indexes where are extra separators characters in rows.
+        data_raw (ArrayLike): Array with the data retrieve from SAP table.
+        no_sep_index (ArrayLike): Array with indexes where are extra separators
+            characters in rows.
         record_key (str): Key word to extract the data from the numpy array "data_raw".
-        pos_sep_index (np.array): Array with indexes where are placed real separators.
+        pos_sep_index (ArrayLike): Array with indexes where are placed real separators.
         sep (str): Which separator to use when querying SAP.
-        replacement (str): In case of sep is on a columns, set up a new character to replace
-            inside the string to avoid flow breakdowns.
+        replacement (str): In case of sep is on a columns, set up a new character to
+            replace inside the string to avoid flow breakdowns.
 
     Returns:
-        np.array: the same data_raw numpy array with the "replacement" separator instead.
+        ArrayLike: the same data_raw numpy array with the "replacement" separator
+            instead.
     """
     for no_sep in no_sep_index:
         logger.warning(
@@ -200,7 +204,7 @@ def replace_separator_in_data(
         logger.warning("\n" + data_raw[no_sep][record_key])
         split_array = np.array([*data_raw[no_sep][record_key]])
         position = np.where(split_array == f"{sep}")[0]
-        index_sep_index = np.argwhere(np.in1d(position, pos_sep_index) == False)  # noqa
+        index_sep_index = np.argwhere(not np.in1d(position, pos_sep_index))
         index_sep_index = index_sep_index.reshape(
             len(index_sep_index),
         )
@@ -212,7 +216,11 @@ def replace_separator_in_data(
 
 
 def catch_extra_separators(
-    data_raw: np.array, record_key: str, sep: str, fields: List[str], replacement: str
+    data_raw: np.array,
+    record_key: str,
+    sep: str,
+    fields: list[str],
+    replacement: str,
 ) -> np.array:
     """Function to replace extra separators in every row of the table.
 
@@ -221,19 +229,18 @@ def catch_extra_separators(
         record_key (str): Key word to extract the data from the numpy array "data_raw".
         sep (str): Which separator to use when querying SAP.
         fields (List[str]): A list with the names of the columns in a chunk.
-        replacement (str): In case of sep is on a columns, set up a new character to replace
-            inside the string to avoid flow breakdowns.
+        replacement (str): In case of sep is on a columns, set up a new character to
+            replace inside the string to avoid flow breakdowns.
 
     Returns:
         np.array: The argument "data_raw" with no extra delimiters.
     """
-
-    # remove scape characters from data_raw ("\t")
+    # Remove scape characters from data_raw ("\t").
     for n, r in enumerate(data_raw):
         if "\t" in r[record_key]:
             data_raw[n][record_key] = r[record_key].replace("\t", " ")
 
-    # first it is identified where the data has an extra separator in text columns.
+    # First it is identified where the data has an extra separator in text columns.
     sep_counts = np.array([], dtype=int)
     for row in data_raw:
         sep_counts = np.append(sep_counts, row[record_key].count(f"{sep}"))
@@ -246,7 +253,7 @@ def catch_extra_separators(
     sep_index = sep_index.reshape(
         len(sep_index),
     )
-    # identifying "good" rows we obtain the index of separator positions.
+    # Identifying "good" rows we obtain the index of separator positions.
     pos_sep_index = np.array([], dtype=int)
     for data in data_raw[sep_index]:
         pos_sep_index = np.append(
@@ -255,8 +262,8 @@ def catch_extra_separators(
         )
     pos_sep_index = np.unique(pos_sep_index)
 
-    # in rows with an extra separator, we replace them by another character: "-" by default
-    data_raw = replace_separator_in_data(
+    # In rows with an extra separator, we replace it with `replacement`.
+    return _replace_separator_in_data(
         data_raw,
         no_sep_index,
         record_key,
@@ -265,13 +272,12 @@ def catch_extra_separators(
         replacement,
     )
 
-    return data_raw
 
+def _gen_split(data: Iterable[str], sep: str, record_key: str) -> Iterator[list[str]]:
+    """Split each string in the given iterable using the specified separator.
 
-def gen_split(data: Iterable[str], sep: str, record_key: str) -> Iterator[List[str]]:
-    """
-    Splits each string in the given iterable using the specified separator and yields the resulting list.
-    Helps to reduce memory usage when processing big data sets.
+    Helps to reduce memory usage when processing big data sets by yielding the resulting
+    list.
 
     Args:
         data: An iterable collection of strings to be split.
@@ -290,8 +296,7 @@ def gen_split(data: Iterable[str], sep: str, record_key: str) -> Iterator[List[s
 
 
 class SAPRFC(Source):
-    """
-    A class for querying SAP with SQL using the RFC protocol.
+    """A class for querying SAP with SQL using the RFC protocol.
 
     Note that only a very limited subset of SQL is supported:
     - aliases
@@ -305,38 +310,42 @@ class SAPRFC(Source):
     - etc.
     """
 
+    COL_CHARACTER_WIDTH_LIMIT = 75
+
     def __init__(
         self,
-        sep: str = None,
+        sep: str | None = None,
         func: str = "RFC_READ_TABLE",
         rfc_total_col_width_character_limit: int = 400,
-        credentials: Dict[str, Any] = None,
-        config_key: str = None,
+        credentials: dict[str, Any] | None = None,
+        config_key: str | None = None,
         *args,
         **kwargs,
     ):
         """Create an instance of the SAPRFC class.
 
         Args:
-            sep (str, optional): Which separator to use when querying SAP. If not provided,
-            multiple options are automatically tried.
+            sep (str, optional): Which separator to use when querying SAP. If not
+                provided, multiple options are automatically tried.
             func (str, optional): SAP RFC function to use. Defaults to "RFC_READ_TABLE".
-            rfc_total_col_width_character_limit (int, optional): Number of characters by which query will be split in chunks
-                in case of too many columns for RFC function. According to SAP documentation, the limit is
-                512 characters. However, we observed SAP raising an exception even on a slightly lower number
-                of characters, so we add a safety margin. Defaults to 400.
+            rfc_total_col_width_character_limit (int, optional): Number of characters by
+                which query will be split in chunks in case of too many columns for RFC
+                function. According to SAP documentation, the limit is 512 characters.
+                However, we observed SAP raising an exception even on a slightly lower
+                number of characters, so we add a safety margin. Defaults to 400.
             credentials (Dict[str, Any], optional): 'api_key'. Defaults to None.
-            config_key (str, optional): The key in the viadot config holding relevant credentials.
+            config_key (str, optional): The key in the viadot config holding relevant
+                credentials.
 
         Raises:
             CredentialError: If provided credentials are incorrect.
         """
-
         self._con = None
 
         credentials = credentials or get_source_credentials(config_key)
         if credentials is None:
-            raise CredentialError("Please specify the credentials.")
+            msg = "Please specify the credentials."
+            raise CredentialError(msg)
 
         super().__init__(*args, credentials=credentials, **kwargs)
 
@@ -347,6 +356,7 @@ class SAPRFC(Source):
 
     @property
     def con(self) -> pyrfc.Connection:
+        """The pyRFC connection to SAP."""
         if self._con is not None:
             return self._con
         con = pyrfc.Connection(**self.credentials)
@@ -354,27 +364,28 @@ class SAPRFC(Source):
         return con
 
     def check_connection(self) -> None:
+        """Check the connection to SAP."""
         self.logger.info("Checking the connection...")
         self.con.ping()
         self.logger.info("Connection has been validated successfully.")
 
     def close_connection(self) -> None:
-        """Closing RFC connection."""
+        """Close the RFC connection."""
         self.con.close()
         self.logger.info("Connection has been closed successfully.")
 
     def get_function_parameters(
         self,
         function_name: str,
-        description: Union[None, Literal["short", "long"]] = "short",
+        description: None | Literal["short", "long"] = "short",
         *args,
-    ) -> Union[List[str], pd.DataFrame]:
+    ) -> list[str] | pd.DataFrame:
         """Get the description for a SAP RFC function.
 
         Args:
             function_name (str): The name of the function to detail.
-            description (Union[None, Literal[, optional): Whether to display
-            a short or a long description. Defaults to "short".
+            description (Union[None, Literal[, optional): Whether to display a short or
+                a long description. Defaults to "short".
 
         Raises:
             ValueError: If the argument for description is incorrect.
@@ -384,11 +395,9 @@ class SAPRFC(Source):
             parameter names (if 'description' is set to None),
             or a short or long description.
         """
-        if description is not None:
-            if description not in ["short", "long"]:
-                raise ValueError(
-                    "Incorrect value for 'description'. Correct values: (None, 'short', 'long'"
-                )
+        if description not in ["short", "long"]:
+            msg = "Incorrect value for 'description'. Correct values: None, 'short', 'long'."
+            raise ValueError(msg)
 
         descr = self.con.get_function_description(function_name, *args)
         param_names = [param["name"] for param in descr.parameters]
@@ -415,7 +424,7 @@ class SAPRFC(Source):
 
         return params
 
-    def _get_where_condition(self, sql: str) -> str:
+    def _get_where_condition(self, sql: str) -> str | None:
         """Retrieve the WHERE conditions from a SQL query.
 
         Args:
@@ -429,7 +438,6 @@ class SAPRFC(Source):
         Returns:
             str: The where clause trimmed to <= 75 characters.
         """
-
         where_match = re.search("\\sWHERE ", sql.upper())
         if not where_match:
             return None
@@ -438,29 +446,26 @@ class SAPRFC(Source):
         limit_pos = limit_match.span()[0] if limit_match else len(sql)
 
         where = sql[where_match.span()[1] : limit_pos]
-        where_sanitized = remove_whitespaces(where)
-        where_trimmed, client_side_filters = trim_where(where_sanitized)
+        where_sanitized = _remove_whitespaces(where)
+        where_trimmed, client_side_filters = _trim_where(where_sanitized)
         if client_side_filters:
             self.logger.warning(
                 "A WHERE clause longer than 75 character limit detected."
             )
-            if "OR" in [key.upper() for key in client_side_filters.keys()]:
-                raise ValueError(
-                    "WHERE conditions after the 75 character limit can only be combined with the AND keyword."
-                )
+            if "OR" in [key.upper() for key in client_side_filters]:
+                msg = "WHERE conditions after the 75 character limit can only be combined with the AND keyword."
+                raise ValueError(msg)
             for val in client_side_filters.values():
                 if ")" in val:
-                    raise ValueError(
-                        """Nested conditions eg. AND (col_1 = 'a' AND col_2 = 'b') found between or after 75 chararacters in WHERE condition!
-                        Please change nested conditions part of query separeted with 'AND' keywords, or place nested conditions part at the begining of the where statement.
-                        """
-                    )
-            else:
-                filters_pretty = list(client_side_filters.items())
-                self.logger.warning(
-                    f"Trimmed conditions ({filters_pretty}) will be applied client-side."
-                )
-                self.logger.warning("See the documentation for caveats.")
+                    msg = "Nested conditions eg. AND (col_1 = 'a' AND col_2 = 'b') found between or after 75 characters in WHERE condition!"
+                    msg += " Please change nested conditions part of query separated with 'AND' keywords,"
+                    msg += " or place nested conditions part at the beginning of the where statement."
+                    raise ValueError(msg)
+            filters_pretty = list(client_side_filters.items())
+            self.logger.warning(
+                f"Trimmed conditions ({filters_pretty}) will be applied client-side."
+            )
+            self.logger.warning("See the documentation for caveats.")
 
         self.client_side_filters = client_side_filters
         return where_trimmed
@@ -469,13 +474,15 @@ class SAPRFC(Source):
     def _get_table_name(sql: str) -> str:
         parsed = Parser(sql)
         if len(parsed.tables) > 1:
-            raise ValueError("Querying more than one table is not supported.")
+            msg = "Querying more than one table is not supported."
+            raise ValueError(msg)
         return parsed.tables[0]
 
     def _build_pandas_filter_query(
         self, client_side_filters: OrderedDictType[str, str]
     ) -> str:
         """Build a WHERE clause that will be applied client-side.
+
         This is required if the WHERE clause passed to query() is
         longer than 75 characters.
 
@@ -489,20 +496,19 @@ class SAPRFC(Source):
         """
         for i, f in enumerate(client_side_filters.items()):
             if i == 0:
-                # skip the first keyword; we assume it's "AND"
+                # Skip the first keyword; we assume it's "AND".
                 query = f[1]
             else:
                 query += " " + f[0] + " " + f[1]
 
             filter_column_name = f[1].split()[0]
             resolved_column_name = self._resolve_col_name(filter_column_name)
-        query = re.sub("\\s?=\\s?", " == ", query).replace(
+        return re.sub("\\s?=\\s?", " == ", query).replace(
             filter_column_name, resolved_column_name
         )
-        return query
 
     def extract_values(self, sql: str) -> None:
-        """TODO: This should cover all values, not just columns"""
+        """TODO: This should cover all values, not just columns."""
         self.where = self._get_where_condition(sql)
         self.select_columns = self._get_columns(sql, aliased=False)
         self.select_columns_aliased = self._get_columns(sql, aliased=True)
@@ -511,7 +517,7 @@ class SAPRFC(Source):
         """Get aliased column name if it exists, otherwise return column name."""
         return self.aliases_keyed_by_columns.get(column, column)
 
-    def _get_columns(self, sql: str, aliased: bool = False) -> List[str]:
+    def _get_columns(self, sql: str, aliased: bool = False) -> list[str]:
         """Retrieve column names from a SQL query.
 
         Args:
@@ -532,19 +538,13 @@ class SAPRFC(Source):
 
             self.aliases_keyed_by_columns = aliases_keyed_by_columns
 
-            columns = [
-                (
-                    aliases_keyed_by_columns[col]
-                    if col in aliases_keyed_by_columns
-                    else col
-                )
-                for col in columns
-            ]
+            columns = [aliases_keyed_by_columns.get(col, col) for col in columns]
 
         if self.client_side_filters:
-            # In case the WHERE clause is > 75 characters long, we execute the rest of the filters
-            # client-side. To do this, we need to pull all fields in the client-side WHERE conditions.
-            # Below code adds these columns to the list of SELECTed fields.
+            # In case the WHERE clause is > 75 characters long, we execute the rest of
+            # the filters client-side. To do this, we need to pull all fields in the
+            # client-side WHERE conditions. Below code adds these columns to the list of
+            # SELECTed fields.
             cols_to_add = [v.split()[0] for v in self.client_side_filters.values()]
             if aliased:
                 cols_to_add = [aliases_keyed_by_columns[col] for col in cols_to_add]
@@ -555,7 +555,7 @@ class SAPRFC(Source):
 
     @staticmethod
     def _get_limit(sql: str) -> int:
-        """Get limit from the query"""
+        """Get limit from the query."""
         limit_match = re.search("\\sLIMIT ", sql.upper())
         if not limit_match:
             return None
@@ -564,28 +564,27 @@ class SAPRFC(Source):
 
     @staticmethod
     def _get_offset(sql: str) -> int:
-        """Get offset from the query"""
+        """Get offset from the query."""
         offset_match = re.search("\\sOFFSET ", sql.upper())
         if not offset_match:
             return None
 
         return int(sql[offset_match.span()[1] :].split()[0])
 
-    def query(self, sql: str, sep: str = None) -> None:
-        """Parse an SQL query into pyRFC commands and save it into
-        an internal dictionary.
+    def query(self, sql: str, sep: str | None = None) -> None:
+        """Parse an SQL query into pyRFC commands and save it into an internal dict.
 
         Args:
             sql (str): The SQL query to be ran.
-            sep (str, optional): The separator to be used
-            to split columns in the result blob. Defaults to self.sep.
+            sep (str, optional): The separator to be used to split columns in the result
+                blob. Defaults to self.sep.
 
         Raises:
             ValueError: If the query is not a SELECT query.
         """
-
         if not sql.strip().upper().startswith("SELECT"):
-            raise ValueError("Only SELECT queries are supported.")
+            msg = "Only SELECT queries are supported."
+            raise ValueError(msg)
 
         sep = sep if sep is not None else self.sep
 
@@ -595,11 +594,12 @@ class SAPRFC(Source):
         self.extract_values(sql)
 
         table_name = self._get_table_name(sql)
-        # this has to be called before checking client_side_filters
+        # This has to be called before checking client_side_filters.
         where = self.where
         columns = self.select_columns
         character_limit = self.rfc_total_col_width_character_limit
-        # due to the RFC_READ_TABLE limit of characters per row, colums are splited into smaller lists
+        # Due to the RFC_READ_TABLE limit of characters per row, columns are split into
+        # smaller lists.
         lists_of_columns = []
         cols = []
         col_length_total = 0
@@ -619,22 +619,22 @@ class SAPRFC(Source):
         options = [{"TEXT": where}] if where else None
         limit = self._get_limit(sql)
         offset = self._get_offset(sql)
-        query_json = dict(
-            QUERY_TABLE=table_name,
-            FIELDS=columns,
-            OPTIONS=options,
-            ROWCOUNT=limit,
-            ROWSKIPS=offset,
-            DELIMITER=sep,
-        )
+        query_json = {
+            "QUERY_TABLE": table_name,
+            "FIELDS": columns,
+            "OPTIONS": options,
+            "ROWCOUNT": limit,
+            "ROWSKIPS": offset,
+            "DELIMITER": sep,
+        }
         # SAP doesn't understand None, so we filter out non-specified parameters
         query_json_filtered = {
             key: query_json[key] for key in query_json if query_json[key] is not None
         }
         self._query = query_json_filtered
 
-    def call(self, func: str, *args, **kwargs):
-        """Call a SAP RFC function"""
+    def call(self, func: str, *args, **kwargs) -> dict[str, Any]:
+        """Call a SAP RFC function."""
         return self.con.call(func, *args, **kwargs)
 
     def _get_alias(self, column: str) -> str:
@@ -643,10 +643,10 @@ class SAPRFC(Source):
     def _get_client_side_filter_cols(self):
         return [f[1].split()[0] for f in self.client_side_filters.items()]
 
+    # TODO: refactor to remove linter warnings and so this can be tested.
     @add_viadot_metadata_columns
-    def to_df(self, tests: dict = None):
-        """
-        Load the results of a query into a pandas DataFrame.
+    def to_df(self, tests: dict | None = None) -> pd.DataFrame:  # noqa: C901, PLR0912, RUF100
+        """Load the results of a query into a pandas DataFrame.
 
         Due to SAP limitations, if the length of the WHERE clause is longer than 75
         characters, we trim whe WHERE clause and perform the rest of the filtering
@@ -665,7 +665,8 @@ class SAPRFC(Source):
                 function from utils. Defaults to None.
 
         Returns:
-            pd.DataFrame: A DataFrame representing the result of the query provided in `PyRFC.query()`.
+            pd.DataFrame: A DataFrame representing the result of the query provided in
+                `PyRFC.query()`.
         """
         params = self._query
         columns = self.select_columns_aliased
@@ -675,8 +676,8 @@ class SAPRFC(Source):
             logger.info(f"Data will be downloaded in {len(fields_lists)} chunks.")
         func = self.func
         if sep is None:
-            # automatically find a working separator
-            SEPARATORS = [
+            # Automatically find a working separator.
+            separators = [
                 "|",
                 "/t",
                 "#",
@@ -691,10 +692,10 @@ class SAPRFC(Source):
                 "$",
             ]
         else:
-            SEPARATORS = [sep]
+            separators = [sep]
 
         records = None
-        for sep in SEPARATORS:
+        for sep in separators:
             logger.info(f"Checking if separator '{sep}' works.")
             df = pd.DataFrame()
             self._query["DELIMITER"] = sep
@@ -707,11 +708,9 @@ class SAPRFC(Source):
                         response = self.call(func, **params)
                     except ABAPApplicationError as e:
                         if e.key == "DATA_BUFFER_EXCEEDED":
-                            raise DataBufferExceeded(
-                                "Character limit per row exceeded. Please select fewer columns."
-                            )
-                        else:
-                            raise e
+                            msg = "Character limit per row exceeded. Please select fewer columns."
+                            raise DataBufferExceeded(msg) from e
+                        raise
                     record_key = "WA"
                     data_raw = response["DATA"]
                     records = [row[record_key].split(sep) for row in data_raw]
@@ -746,8 +745,10 @@ class SAPRFC(Source):
 
 
 class SAPRFCV2(Source):
-    """
-    A class for querying SAP with SQL using the RFC protocol.
+    """A class for querying SAP with SQL using the RFC protocol.
+
+    This is mostly a copy of SAPRFC, with some unidentified modifications that should
+    have probably been added as features to the SAPRFC source.
 
     Note that only a very limited subset of SQL is supported:
     - aliases
@@ -763,41 +764,45 @@ class SAPRFCV2(Source):
 
     def __init__(
         self,
-        sep: str = None,
+        sep: str | None = None,
         replacement: str = "-",
         func: str = "RFC_READ_TABLE",
         rfc_total_col_width_character_limit: int = 400,
-        rfc_unique_id: List[str] = None,
-        credentials: Dict[str, Any] = None,
-        config_key: str = None,
+        rfc_unique_id: list[str] | None = None,
+        credentials: dict[str, Any] | None = None,
+        config_key: str | None = None,
         *args,
         **kwargs,
     ):
         """Create an instance of the SAPRFC class.
 
         Args:
-            sep (str, optional): Which separator to use when querying SAP. If not provided,
-            multiple options are automatically tried.
-            replacement (str, optional): In case of separator is on a columns, set up a new character to replace
-                inside the string to avoid flow breakdowns. Defaults to "-".
+            sep (str, optional): Which separator to use when querying SAP. If not
+                provided, multiple options are automatically tried.
+            replacement (str, optional): In case of separator is on a columns, set up a
+                new character to replace inside the string to avoid flow breakdowns.
+                Defaults to "-".
             func (str, optional): SAP RFC function to use. Defaults to "RFC_READ_TABLE".
-            rfc_total_col_width_character_limit (int, optional): Number of characters by which query will be split in chunks
-                in case of too many columns for RFC function. According to SAP documentation, the limit is
-                512 characters. However, we observed SAP raising an exception even on a slightly lower number
-                of characters, so we add a safety margin. Defaults to 400.
-            rfc_unique_id  (List[str], optional): Reference columns to merge chunks Data Frames. These columns must to be unique. Defaults to None.
+            rfc_total_col_width_character_limit (int, optional): Number of characters by
+                which query will be split in chunks in case of too many columns for RFC
+                function. According to SAP documentation, the limit is 512 characters.
+                However, we observed SAP raising an exception even on a slightly lower
+                number of characters, so we add a safety margin. Defaults to 400.
+            rfc_unique_id  (List[str], optional): Reference columns to merge chunks
+                DataFrames. These columns must to be unique. Defaults to None.
             credentials (Dict[str, Any], optional): 'api_key'. Defaults to None.
-            config_key (str, optional): The key in the viadot config holding relevant credentials.
+            config_key (str, optional): The key in the viadot config holding relevant
+                credentials.
 
         Raises:
             CredentialError: If provided credentials are incorrect.
         """
-
         self._con = None
 
         credentials = credentials or get_source_credentials(config_key)
         if credentials is None:
-            raise CredentialError("Please specify the credentials.")
+            msg = "Please specify the credentials."
+            raise CredentialError(msg)
 
         super().__init__(*args, credentials=credentials, **kwargs)
 
@@ -814,6 +819,7 @@ class SAPRFCV2(Source):
 
     @property
     def con(self) -> pyrfc.Connection:
+        """The pyRFC connection to SAP."""
         if self._con is not None:
             return self._con
         con = pyrfc.Connection(**self.credentials)
@@ -821,21 +827,22 @@ class SAPRFCV2(Source):
         return con
 
     def check_connection(self) -> None:
+        """Check the connection to SAP."""
         self.logger.info("Checking the connection...")
         self.con.ping()
         self.logger.info("Connection has been validated successfully.")
 
     def close_connection(self) -> None:
-        """Closing RFC connection."""
+        """Close the SAP RFC connection."""
         self.con.close()
         self.logger.info("Connection has been closed successfully.")
 
     def get_function_parameters(
         self,
         function_name: str,
-        description: Union[None, Literal["short", "long"]] = "short",
+        description: None | Literal["short", "long"] = "short",
         *args,
-    ) -> Union[List[str], pd.DataFrame]:
+    ) -> list[str] | pd.DataFrame:
         """Get the description for a SAP RFC function.
 
         Args:
@@ -851,11 +858,9 @@ class SAPRFCV2(Source):
             parameter names (if 'description' is set to None),
             or a short or long description.
         """
-        if description is not None:
-            if description not in ["short", "long"]:
-                raise ValueError(
-                    "Incorrect value for 'description'. Correct values: (None, 'short', 'long'"
-                )
+        if description not in ["short", "long"]:
+            msg = "Incorrect value for 'description'. Correct values: None, 'short', 'long'."
+            raise ValueError(msg)
 
         descr = self.con.get_function_description(function_name, *args)
         param_names = [param["name"] for param in descr.parameters]
@@ -896,7 +901,6 @@ class SAPRFCV2(Source):
         Returns:
             str: The where clause trimmed to <= 75 characters.
         """
-
         where_match = re.search("\\sWHERE ", sql.upper())
         if not where_match:
             return None
@@ -905,29 +909,26 @@ class SAPRFCV2(Source):
         limit_pos = limit_match.span()[0] if limit_match else len(sql)
 
         where = sql[where_match.span()[1] : limit_pos]
-        where_sanitized = remove_whitespaces(where)
-        where_trimmed, client_side_filters = trim_where(where_sanitized)
+        where_sanitized = _remove_whitespaces(where)
+        where_trimmed, client_side_filters = _trim_where(where_sanitized)
         if client_side_filters:
             self.logger.warning(
                 "A WHERE clause longer than 75 character limit detected."
             )
-            if "OR" in [key.upper() for key in client_side_filters.keys()]:
-                raise ValueError(
-                    "WHERE conditions after the 75 character limit can only be combined with the AND keyword."
-                )
+            if "OR" in [key.upper() for key in client_side_filters]:
+                msg = "WHERE conditions after the 75 character limit can only be combined with the AND keyword."
+                raise ValueError(msg)
             for val in client_side_filters.values():
                 if ")" in val:
-                    raise ValueError(
-                        """Nested conditions eg. AND (col_1 = 'a' AND col_2 = 'b') found between or after 75 chararacters in WHERE condition!
-                        Please change nested conditions part of query separeted with 'AND' keywords, or place nested conditions part at the begining of the where statement.
-                        """
-                    )
-            else:
-                filters_pretty = list(client_side_filters.items())
-                self.logger.warning(
-                    f"Trimmed conditions ({filters_pretty}) will be applied client-side."
-                )
-                self.logger.warning("See the documentation for caveats.")
+                    msg = "Nested conditions eg. AND (col_1 = 'a' AND col_2 = 'b') found between or after 75 characters in WHERE condition!"
+                    msg += " Please change nested conditions part of query separated with 'AND' keywords,"
+                    msg += " or place nested conditions part at the beginning of the where statement."
+                    raise ValueError(msg)
+            filters_pretty = list(client_side_filters.items())
+            self.logger.warning(
+                f"Trimmed conditions ({filters_pretty}) will be applied client-side."
+            )
+            self.logger.warning("See the documentation for caveats.")
 
         self.client_side_filters = client_side_filters
         return where_trimmed
@@ -936,13 +937,15 @@ class SAPRFCV2(Source):
     def _get_table_name(sql: str) -> str:
         parsed = Parser(sql)
         if len(parsed.tables) > 1:
-            raise ValueError("Querying more than one table is not supported.")
+            msg = "Querying more than one table is not supported."
+            raise ValueError(msg)
         return parsed.tables[0]
 
     def _build_pandas_filter_query(
         self, client_side_filters: OrderedDictType[str, str]
     ) -> str:
         """Build a WHERE clause that will be applied client-side.
+
         This is required if the WHERE clause passed to query() is
         longer than 75 characters.
 
@@ -963,13 +966,12 @@ class SAPRFCV2(Source):
 
             filter_column_name = f[1].split()[0]
             resolved_column_name = self._resolve_col_name(filter_column_name)
-        query = re.sub("\\s?=\\s?", " == ", query).replace(
+        return re.sub("\\s?=\\s?", " == ", query).replace(
             filter_column_name, resolved_column_name
         )
-        return query
 
     def extract_values(self, sql: str) -> None:
-        """TODO: This should cover all values, not just columns"""
+        """TODO: This should cover all values, not just columns."""
         self.where = self._get_where_condition(sql)
         self.select_columns = self._get_columns(sql, aliased=False)
         self.select_columns_aliased = self._get_columns(sql, aliased=True)
@@ -978,7 +980,7 @@ class SAPRFCV2(Source):
         """Get aliased column name if it exists, otherwise return column name."""
         return self.aliases_keyed_by_columns.get(column, column)
 
-    def _get_columns(self, sql: str, aliased: bool = False) -> List[str]:
+    def _get_columns(self, sql: str, aliased: bool = False) -> list[str]:
         """Retrieve column names from a SQL query.
 
         Args:
@@ -999,19 +1001,13 @@ class SAPRFCV2(Source):
 
             self.aliases_keyed_by_columns = aliases_keyed_by_columns
 
-            columns = [
-                (
-                    aliases_keyed_by_columns[col]
-                    if col in aliases_keyed_by_columns
-                    else col
-                )
-                for col in columns
-            ]
+            columns = [aliases_keyed_by_columns.get(col, col) for col in columns]
 
         if self.client_side_filters:
-            # In case the WHERE clause is > 75 characters long, we execute the rest of the filters
-            # client-side. To do this, we need to pull all fields in the client-side WHERE conditions.
-            # Below code adds these columns to the list of SELECTed fields.
+            # In case the WHERE clause is > 75 characters long, we execute the rest of
+            # the filters client-side. To do this, we need to pull all fields in the
+            # client-side WHERE conditions. Below code adds these columns to the list of
+            # SELECTed fields.
             cols_to_add = [v.split()[0] for v in self.client_side_filters.values()]
             if aliased:
                 cols_to_add = [aliases_keyed_by_columns[col] for col in cols_to_add]
@@ -1021,8 +1017,8 @@ class SAPRFCV2(Source):
         return columns
 
     @staticmethod
-    def _get_limit(sql: str) -> int:
-        """Get limit from the query"""
+    def _get_limit(sql: str) -> int | None:
+        """Get limit from the query."""
         limit_match = re.search("\\sLIMIT ", sql.upper())
         if not limit_match:
             return None
@@ -1030,17 +1026,17 @@ class SAPRFCV2(Source):
         return int(sql[limit_match.span()[1] :].split()[0])
 
     @staticmethod
-    def _get_offset(sql: str) -> int:
-        """Get offset from the query"""
+    def _get_offset(sql: str) -> int | None:
+        """Get offset from the query."""
         offset_match = re.search("\\sOFFSET ", sql.upper())
         if not offset_match:
             return None
 
         return int(sql[offset_match.span()[1] :].split()[0])
 
-    def query(self, sql: str, sep: str = None) -> None:
-        """Parse an SQL query into pyRFC commands and save it into
-        an internal dictionary.
+    # Holy crap what a mess. TODO: refactor this so it can be even remotely tested...
+    def query(self, sql: str, sep: str | None = None) -> None:  # noqa: C901, PLR0912
+        """Parse an SQL query into pyRFC commands and save it into an internal dict.
 
         Args:
             sql (str): The SQL query to be ran.
@@ -1050,9 +1046,9 @@ class SAPRFCV2(Source):
         Raises:
             ValueError: If the query is not a SELECT query.
         """
-
         if not sql.strip().upper().startswith("SELECT"):
-            raise ValueError("Only SELECT queries are supported.")
+            msg = "Only SELECT queries are supported."
+            raise ValueError(msg)
 
         sep = sep if sep is not None else self.sep
 
@@ -1081,9 +1077,8 @@ class SAPRFCV2(Source):
                 if col_length_reference_column > int(
                     self.rfc_total_col_width_character_limit / 4
                 ):
-                    raise ValueError(
-                        f"{ref_column} can't be used as unique column, too large."
-                    )
+                    msg = f"{ref_column} can't be used as unique column, too large."
+                    raise ValueError(msg)
                 local_limit = (
                     self.rfc_total_col_width_character_limit
                     - col_length_reference_column
@@ -1101,7 +1096,7 @@ class SAPRFCV2(Source):
                 cols.append(col)
             else:
                 if isinstance(self.rfc_unique_id[0], str) and all(
-                    [rfc_col not in cols for rfc_col in self.rfc_unique_id]
+                    rfc_col not in cols for rfc_col in self.rfc_unique_id
                 ):
                     for rfc_col in self.rfc_unique_id:
                         if rfc_col not in cols:
@@ -1109,35 +1104,34 @@ class SAPRFCV2(Source):
                 lists_of_columns.append(cols)
                 cols = [col]
                 col_length_total = int(col_length)
-        else:
-            if isinstance(self.rfc_unique_id[0], str) and all(
-                [rfc_col not in cols for rfc_col in self.rfc_unique_id]
-            ):
-                for rfc_col in self.rfc_unique_id:
-                    if rfc_col not in cols:
-                        cols.append(rfc_col)
-            lists_of_columns.append(cols)
+        if isinstance(self.rfc_unique_id[0], str) and all(
+            rfc_col not in cols for rfc_col in self.rfc_unique_id
+        ):
+            for rfc_col in self.rfc_unique_id:
+                if rfc_col not in cols:
+                    cols.append(rfc_col)
+        lists_of_columns.append(cols)
 
         columns = lists_of_columns
         options = [{"TEXT": where}] if where else None
         limit = self._get_limit(sql)
         offset = self._get_offset(sql)
-        query_json = dict(
-            QUERY_TABLE=table_name,
-            FIELDS=columns,
-            OPTIONS=options,
-            ROWCOUNT=limit,
-            ROWSKIPS=offset,
-            DELIMITER=sep,
-        )
+        query_json = {
+            "QUERY_TABLE": table_name,
+            "FIELDS": columns,
+            "OPTIONS": options,
+            "ROWCOUNT": limit,
+            "ROWSKIPS": offset,
+            "DELIMITER": sep,
+        }
         # SAP doesn't understand None, so we filter out non-specified parameters
         query_json_filtered = {
             key: query_json[key] for key in query_json if query_json[key] is not None
         }
         self._query = query_json_filtered
 
-    def call(self, func: str, *args, **kwargs):
-        """Call a SAP RFC function"""
+    def call(self, func: str, *args, **kwargs) -> dict[str, Any]:
+        """Call a SAP RFC function."""
         return self.con.call(func, *args, **kwargs)
 
     def _get_alias(self, column: str) -> str:
@@ -1146,10 +1140,10 @@ class SAPRFCV2(Source):
     def _get_client_side_filter_cols(self):
         return [f[1].split()[0] for f in self.client_side_filters.items()]
 
+    # TODO: refactor to remove linter warnings and so this can be tested.
     @add_viadot_metadata_columns
-    def to_df(self, tests: dict = None):
-        """
-        Load the results of a query into a pandas DataFrame.
+    def to_df(self, tests: dict | None = None) -> pd.DataFrame:  # noqa: C901, PLR0912, PLR0915
+        """Load the results of a query into a pandas DataFrame.
 
         Due to SAP limitations, if the length of the WHERE clause is longer than 75
         characters, we trim whe WHERE clause and perform the rest of the filtering
@@ -1168,9 +1162,9 @@ class SAPRFCV2(Source):
                 function from utils. Defaults to None.
 
         Returns:
-            pd.DataFrame: A DataFrame representing the result of the query provided in `PyRFC.query()`.
+            pd.DataFrame: A DataFrame representing the result of the query provided in
+                `PyRFC.query()`.
         """
-
         params = self._query
         columns = self.select_columns_aliased
         sep = self._query.get("DELIMITER")
@@ -1179,8 +1173,8 @@ class SAPRFCV2(Source):
             logger.info(f"Data will be downloaded in {len(fields_lists)} chunks.")
         func = self.func
         if sep is None:
-            # automatically find a working separator
-            SEPARATORS = [
+            # Automatically find a working separator.
+            separators = [
                 "|",
                 "/t",
                 "#",
@@ -1195,12 +1189,13 @@ class SAPRFCV2(Source):
                 "$",
             ]
         else:
-            SEPARATORS = [sep]
+            separators = [sep]
 
-        for sep in SEPARATORS:
+        for sep in separators:
             logger.info(f"Checking if separator '{sep}' works.")
             if isinstance(self.rfc_unique_id[0], str):
-                # columns only for the first chunk and we add the rest later to avoid name conflicts
+                # Columns only for the first chunk. We add the rest later to avoid name
+                # conflicts.
                 df = pd.DataFrame(columns=fields_lists[0])
             else:
                 df = pd.DataFrame()
@@ -1214,45 +1209,44 @@ class SAPRFCV2(Source):
                     response = self.call(func, **params)
                 except ABAPApplicationError as e:
                     if e.key == "DATA_BUFFER_EXCEEDED":
-                        raise DataBufferExceeded(
-                            "Character limit per row exceeded. Please select fewer columns."
-                        )
-                    else:
-                        raise e
-                # Check and skip if there is no data returned
+                        msg = "Character limit per row exceeded. Please select fewer columns."
+                        raise DataBufferExceeded(msg) from e
+                    raise
+                # Check and skip if there is no data returned.
                 if response["DATA"]:
                     record_key = "WA"
                     data_raw = np.array(response["DATA"])
                     del response
 
-                    # if the reference columns are provided not necessary to remove any extra row.
+                    # If reference columns are provided, it's not necessary to remove
+                    # any extra row.
                     if not isinstance(self.rfc_unique_id[0], str):
-                        row_index, data_raw, start = detect_extra_rows(
+                        row_index, data_raw, start = _detect_extra_rows(
                             row_index, data_raw, chunk, fields
                         )
                     else:
                         start = False
 
-                    records = [row for row in gen_split(data_raw, sep, record_key)]
+                    records = list(_gen_split(data_raw, sep, record_key))
                     del data_raw
 
                     if (
                         isinstance(self.rfc_unique_id[0], str)
-                        and not list(df.columns) == fields
+                        and list(df.columns) != fields
                     ):
                         df_tmp = pd.DataFrame(columns=fields)
                         df_tmp[fields] = records
-                        # SAP adds whitespaces to the first extracted column value
-                        # If whitespace is in unique column it must be removed to make a proper merge
+                        # SAP adds whitespaces to the first extracted column value.
+                        # If whitespace is in unique column, it must be removed to make
+                        # a proper merge.
                         for col in self.rfc_unique_id:
                             df_tmp[col] = df_tmp[col].str.strip()
                             df[col] = df[col].str.strip()
                         df = pd.merge(df, df_tmp, on=self.rfc_unique_id, how="outer")
+                    elif not start:
+                        df[fields] = records
                     else:
-                        if not start:
-                            df[fields] = records
-                        else:
-                            df[fields] = np.nan
+                        df[fields] = np.nan
                     chunk += 1
                 elif not response["DATA"]:
                     logger.warning("No data returned from SAP.")

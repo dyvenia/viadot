@@ -331,14 +331,14 @@ class Outlook(Source):
         self,
         if_empty: str = "warn",
     ) -> pd.DataFrame:
-        """Generate a Pandas Data Frame with the data.
+        """Generate a pandas DataFrame with the data.
 
         Args:
             if_empty (str, optional): What to do if a fetch produce no data.
                 Defaults to "warn
 
         Returns:
-            pd.Dataframe: The response data as a Pandas Data Frame plus viadot metadata.
+            pd.Dataframe: The response data as a pandas DataFrame plus viadot metadata.
         """
         super().to_df(if_empty=if_empty)
 

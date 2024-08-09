@@ -1,6 +1,6 @@
 """Tasks for running query in DuckDB."""
 
-from typing import Literal
+from typing import Any, Literal
 
 from prefect import task
 from prefect.logging import get_run_logger
@@ -16,6 +16,9 @@ from viadot.sources.base import Record
 def duckdb_query(
     query: str,
     fetch_type: Literal["record", "dataframe"] = "record",
+    # Specifying credentials in a dictionary is not recommended in viadot tasks,
+    # but in this case credentials can include only database name.
+    credentials: dict[str, Any] | None = None,
     credentials_secret: str | None = None,
     config_key: str | None = None,
 ) -> list[Record] | bool:
@@ -25,19 +28,23 @@ def duckdb_query(
         query (str, required): The query to execute on the DuckDB database.
         fetch_type (str, optional): In which form the data should be returned.
             Defaults to "record".
+        credentials (dict[str, Any], optional): Credentials to the Database. Defaults to
+            None.
         credentials_secret (str, optional): The name of the secret storing credentials
             to the database. Defaults to None. More info on:
             https://docs.prefect.io/concepts/blocks/
         config_key (str, optional): The key in the viadot config holding relevant
             credentials to the database. Defaults to None.
     """
-    if not (credentials_secret or config_key):
+    if not (credentials or credentials_secret or config_key):
         raise MissingSourceCredentialsError
 
     logger = get_run_logger()
 
-    credentials = get_source_credentials(config_key) or get_credentials(
-        credentials_secret
+    credentials = (
+        credentials
+        or get_source_credentials(config_key)
+        or get_credentials(credentials_secret)
     )
     duckdb = DuckDB(credentials=credentials)
     result = duckdb.run_query(query=query, fetch_type=fetch_type)

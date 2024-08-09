@@ -20,7 +20,7 @@ def outlook_to_df(
     address_limit: int = 8000,
     outbox_list: list[str] | None = None,
 ) -> pd.DataFrame:
-    """Task for downloading data from Outlook API to Data Frame.
+    """Task for downloading data from Outlook API to a pandas DataFrame.
 
     Args:
         mailbox_name (str): Mailbox name.
@@ -55,7 +55,7 @@ def outlook_to_df(
         APIError: The mailbox name is a "must" requirement.
 
     Returns:
-        pd.DataFrame: The response data as a Pandas Data Frame.
+        pd.DataFrame: The response data as a pandas DataFrame.
     """
     if not (azure_key_vault_secret or config_key):
         raise MissingSourceCredentialsError

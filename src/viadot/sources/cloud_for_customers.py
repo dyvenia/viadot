@@ -54,18 +54,17 @@ class CloudForCustomers(Source):
     """Cloud for Customers connector to fetch OData source.
 
     Args:
-        url (str, optional): The URL to the C4C API.
-        E.g 'https://myNNNNNN.crm.ondemand.com/c4c/v1/'.
+        url (str, optional): The URL to the C4C API. For example,
+            'https://myNNNNNN.crm.ondemand.com/c4c/v1/'.
         endpoint (str, optional): The API endpoint.
         report_url (str, optional): The URL of a prepared report.
-        filter_params (Dict[str, Any], optional): Filtering parameters
-        passed to the request. E.g {"$filter": "AccountID eq '1234'"}.
-        More info on:
-        https://userapps.support.sap.com/sap/support/knowledge/en/2330688
-        credentials (CloudForCustomersCredentials, optional):
-        Cloud for Customers credentials.
+        filter_params (Dict[str, Any], optional): Filtering parameters passed to the
+            request. E.g {"$filter": "AccountID eq '1234'"}. More info on:
+            https://userapps.support.sap.com/sap/support/knowledge/en/2330688
+        credentials (CloudForCustomersCredentials, optional): Cloud for Customers
+            credentials.
         config_key (str, optional): The key in the viadot config holding relevant
-        credentials.
+            credentials.
     """
 
     DEFAULT_PARAMS = {"$format": "json"}  # noqa: RUF012
@@ -88,14 +87,13 @@ class CloudForCustomers(Source):
             url (str, optional): The base URL for the service.
             endpoint (str, optional): The specific endpoint for the service.
             report_url (str, optional): The URL for the report.
-            filter_params (Dict[str, Any], optional): Parameters to filter the
-            report data.
-            credentials (CloudForCustomersCredentials, optional): Credentials
-            required for authentication.
+            filter_params (Dict[str, Any], optional): Parameters to filter the report
+                data.
+            credentials (CloudForCustomersCredentials, optional): Credentials required
+                for authentication.
             config_key (Optional[str], optional): A key to retrieve specific
-            configuration settings.
+                configuration settings.
             **kwargs: Arbitrary keyword arguments.
-
         """
         # Credentials logic
         raw_creds = credentials or get_source_credentials(config_key) or {}
@@ -275,7 +273,7 @@ class CloudForCustomers(Source):
         Args:
             url (str): The url to request to.
             filter_params (Dict[str, Any], optional): Additional parameters like filter,
-            used in case of normal url.
+                used in case of normal url.
             timeout (tuple, optional): The request time-out. Default is (3.05, 60 * 30).
 
         Returns:
@@ -298,12 +296,6 @@ class CloudForCustomers(Source):
         """Download a table or report into a pandas DataFrame.
 
         Args:
-            url (str): The URL to extract records from.
-            fields (List[str], optional): List of fields to put in DataFrame.
-            dtype (dict, optional): The dtypes to use in the DataFrame.
-            tests (Dict[str], optional): A dictionary with optional list of tests
-                to verify the output dataframe. If defined, triggers the `validate`
-                function from utils. Defaults to None.
             kwargs: The parameters to pass to DataFrame constructor.
 
         Returns:

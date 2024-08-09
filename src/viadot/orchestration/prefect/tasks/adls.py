@@ -40,7 +40,6 @@ def adls_upload(
             storing the credentials.
         config_key (str, optional): The key in the viadot config holding relevant
             credentials.
-        credentials (dict, optional): The credentials as a dictionary.
     """
     if not (credentials_secret or config_key):
         raise MissingSourceCredentialsError
@@ -71,14 +70,13 @@ def df_to_adls(
         df (pd.DataFrame): The pandas DataFrame to upload.
         path (str): The destination path. Defaults to None.
         sep (str, optional): The separator to use in the `to_csv` function. Defaults to
-        "\t".
+            "\t".
         overwrite (bool, optional): Whether to overwrite files in the lake. Defaults
             to False.
         credentials_secret (str, optional): The name of the Azure Key Vault secret
             storing the credentials.
         config_key (str, optional): The key in the viadot config holding relevant
             credentials. Defaults to None.
-        credentials (Dict[str, Any], optional): The credentials as a dictionary.
     """
     if not (credentials_secret or config_key):
         raise MissingSourceCredentialsError

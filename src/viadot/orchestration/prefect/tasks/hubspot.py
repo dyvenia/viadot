@@ -1,4 +1,4 @@
-"""Task for downloading data from Hubspot API to a pandas Data Frame."""
+"""Task for downloading data from Hubspot API to a pandas DataFrame."""
 
 from typing import Any
 
@@ -19,7 +19,7 @@ def hubspot_to_df(
     properties: list[Any] | None = None,
     nrows: int = 1000,
 ) -> pd.DataFrame:
-    """Task to download data from Hubspot API to Data Frame.
+    """Task to download data from Hubspot API to a pandas DataFrame.
 
     Args:
         endpoint (str): API endpoint for an individual request.
@@ -48,7 +48,7 @@ def hubspot_to_df(
         MissingSourceCredentialsError: If no credentials have been provided.
 
     Returns:
-        pd.DataFrame: The response data as a Pandas Data Frame.
+        pd.DataFrame: The response data as a pandas DataFrame.
     """
     if not (azure_key_vault_secret or config_key):
         raise MissingSourceCredentialsError

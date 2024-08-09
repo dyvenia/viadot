@@ -1,5 +1,7 @@
-import pytest
 from collections import OrderedDict
+
+import pytest
+
 
 try:
     from viadot.sources import SAPRFC, SAPRFCV2
@@ -9,10 +11,15 @@ except ImportError:
     _saprfc_installed = False
 
 if not _saprfc_installed:
-    pytest.skip("SAPRFC source not installed", allow_module_level=True)
+    pytest.skip(
+        "SAPRFC source not installed. For installation instructions, see the 'Getting Started' section in the docs.",
+        allow_module_level=True,
+    )
 
-sap = SAPRFC()
-sap2 = SAPRFCV2()
+credentials = {"a": "b"}
+
+sap = SAPRFC(credentials=credentials)
+sap2 = SAPRFCV2(credentials=credentials)
 
 sql1 = "SELECT a AS a_renamed, b FROM table1 WHERE table1.c = 1"
 sql2 = "SELECT a FROM fake_schema.fake_table WHERE a=1 AND b=2 OR c LIKE 'a%' AND d IN (1, 2) LIMIT 5 OFFSET 3"

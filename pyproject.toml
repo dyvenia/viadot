@@ -52,6 +52,7 @@ aws = [
     "awswrangler==2.20.1",
     "prefect-aws==0.4.18",
 ]
+sap = ["pyrfc<3.0"]
 
 [tool.rye]
 dev-dependencies = [
@@ -153,6 +154,7 @@ ignore = [
     "N803",
     "B905",
     "D102",
+    "PLR2004",
 ]
 
 
