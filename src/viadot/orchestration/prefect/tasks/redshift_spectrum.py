@@ -6,6 +6,9 @@ from typing import Any, Literal
 import pandas as pd
 from prefect import task
 from prefect.logging import get_run_logger
+from viadot.config import get_source_credentials
+from viadot.orchestration.prefect.utils import get_credentials
+from viadot.orchestration.prefect.exceptions import MissingSourceCredentialsError
 
 with contextlib.suppress(ImportError):
     from viadot.sources import RedshiftSpectrum
@@ -26,6 +29,7 @@ def df_to_redshift_spectrum(  # noqa: PLR0913, PLR0917
     description: str | None = None,
     credentials: dict[str, Any] | None = None,
     config_key: str | None = None,
+    aws_secret_name: str | None = None,
     **kwargs: dict[str, Any] | None,
 ) -> None:
     """Task to upload a pandas `DataFrame` to a csv or parquet file.
@@ -54,8 +58,19 @@ def df_to_redshift_spectrum(  # noqa: PLR0913, PLR0917
             Spectrum. Defaults to None.
         config_key (str, optional): The key in the viadot config holding relevant
             credentials. Defaults to None.
+        aws_secret_name (str, optional): The name of a secret block in Prefect
+            that stores AWS credentials. Defaults to None.
         kwargs: The parameters to pass in awswrangler to_parquet/to_csv function.
     """
+    if not (aws_secret_name or credentials or config_key):
+        raise MissingSourceCredentialsError
+
+    credentials = (
+        credentials
+        or get_source_credentials(config_key)
+        or get_credentials(aws_secret_name)
+    )
+
     rs = RedshiftSpectrum(credentials=credentials, config_key=config_key)
 
     rs.from_df(
