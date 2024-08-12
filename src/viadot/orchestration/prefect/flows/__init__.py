@@ -5,6 +5,7 @@ from .cloud_for_customers_to_databricks import cloud_for_customers_to_databricks
 from .duckdb_to_parquet import duckdb_to_parquet
 from .duckdb_to_sql_server import duckdb_to_sql_server
 from .duckdb_transform import duckdb_transform
+from .epicor_to_parquet import epicor_to_parquet
 from .exchange_rates_to_adls import exchange_rates_to_adls
 from .exchange_rates_to_databricks import exchange_rates_to_databricks
 from .genesys_to_adls import genesys_to_adls
