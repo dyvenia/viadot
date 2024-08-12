@@ -152,7 +152,7 @@ def get_credentials(secret_name: str) -> dict[str, Any]:
         raise MissingPrefectBlockError(msg)
 
     if block_type == "AwsSecret":
-        credentials = _get_aws_credentials(secret_name)
+        credentials = _get_aws_credentials(secret_name, block_type)
     elif block_type == "AzureKeyVaultSecretReference":
         credentials = _get_azure_credentials(secret_name)
     elif block_type == "DatabaseCredentials":
