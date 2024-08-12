@@ -2,6 +2,7 @@ from importlib.util import find_spec
 
 from viadot.sources.azure_data_lake import AzureDataLake
 from viadot.sources.cloud_for_customers import CloudForCustomers
+from viadot.sources.epicor import Epicor
 from viadot.sources.exchange_rates import ExchangeRates
 from viadot.sources.genesys import Genesys
 from viadot.sources.minio import MinIO

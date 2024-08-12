@@ -14,6 +14,10 @@ class DBDataAccessError(Exception):
     pass
 
 
+class DataRangeError(Exception):
+    pass
+
+
 class TableDoesNotExist(Exception):
     def __init__(
         self,
