@@ -86,6 +86,7 @@ backoff==2.2.1
 beautifulsoup4==4.12.3
     # via mkdocs-mermaid2-plugin
     # via nbconvert
+    # via o365
     # via redshift-connector
 black==22.6.0
 bleach==6.1.0
@@ -451,6 +452,8 @@ numpy==1.23.4
     # via pandas
     # via pyarrow
     # via visions
+o365==2.0.18.1
+    # via viadot2
 oauthlib==3.2.2
     # via kubernetes
     # via requests-oauthlib
@@ -591,6 +594,7 @@ python-dateutil==2.9.0.post0
     # via ghp-import
     # via jupyter-client
     # via kubernetes
+    # via o365
     # via opensearch-py
     # via pandas
     # via pendulum
@@ -613,6 +617,7 @@ pytz==2024.1
     # via croniter
     # via dateparser
     # via dbt-core
+    # via o365
     # via pandas
     # via prefect
     # via redshift-connector
@@ -663,6 +668,7 @@ requests==2.31.0
     # via mkdocs-material
     # via mkdocs-mermaid2-plugin
     # via msal
+    # via o365
     # via opensearch-py
     # via redshift-connector
     # via requests-aws4auth
@@ -675,6 +681,7 @@ requests-aws4auth==1.2.3
 requests-oauthlib==2.0.0
     # via apprise
     # via kubernetes
+    # via o365
 rfc3339-validator==0.1.4
     # via prefect
 rich==13.7.1
@@ -744,6 +751,8 @@ stack-data==0.6.3
     # via ipython
 starkbank-ecdsa==2.2.0
     # via sendgrid
+stringcase==1.2.0
+    # via o365
 tabulate==0.9.0
     # via mkdocs-table-reader-plugin
 tangled-up-in-unicode==0.2.0
@@ -803,6 +812,7 @@ typing-extensions==4.10.0
     # via uvicorn
 tzlocal==5.2
     # via dateparser
+    # via o365
     # via trino
 ujson==5.10.0
     # via prefect

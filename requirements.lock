@@ -81,6 +81,7 @@ babel==2.15.0
 backoff==2.2.1
     # via awswrangler
 beautifulsoup4==4.12.3
+    # via o365
     # via redshift-connector
 boto3==1.34.106
     # via awswrangler
@@ -298,6 +299,8 @@ numpy==1.23.4
     # via pandas
     # via pyarrow
     # via visions
+o365==2.0.18.1
+    # via viadot2
 oauthlib==3.2.2
     # via kubernetes
     # via requests-oauthlib
@@ -389,6 +392,7 @@ python-dateutil==2.9.0.post0
     # via dateparser
     # via dbt-semantic-interfaces
     # via kubernetes
+    # via o365
     # via opensearch-py
     # via pandas
     # via pendulum
@@ -410,6 +414,7 @@ pytz==2024.1
     # via croniter
     # via dateparser
     # via dbt-core
+    # via o365
     # via pandas
     # via prefect
     # via redshift-connector
@@ -443,6 +448,7 @@ requests==2.31.0
     # via lumacli
     # via minimal-snowplow-tracker
     # via msal
+    # via o365
     # via opensearch-py
     # via redshift-connector
     # via requests-aws4auth
@@ -455,6 +461,7 @@ requests-aws4auth==1.2.3
 requests-oauthlib==2.0.0
     # via apprise
     # via kubernetes
+    # via o365
 rfc3339-validator==0.1.4
     # via prefect
 rich==13.7.1
@@ -515,6 +522,8 @@ sqlparse==0.5.0
     # via sql-metadata
 starkbank-ecdsa==2.2.0
     # via sendgrid
+stringcase==1.2.0
+    # via o365
 tangled-up-in-unicode==0.2.0
     # via visions
 tenacity==8.5.0
@@ -549,6 +558,7 @@ typing-extensions==4.12.1
     # via uvicorn
 tzlocal==5.2
     # via dateparser
+    # via o365
     # via trino
 ujson==5.10.0
     # via prefect
