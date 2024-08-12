@@ -25,6 +25,7 @@ def sap_to_redshift_spectrum(  # noqa: PLR0913, PLR0917
     aws_sep: str = ",",
     description: str = "test",
     aws_credentials: dict[str, Any] | None = None,
+    aws_secret_name: str = None,
     aws_config_key: str | None = None,
     query: str | None = None,
     sap_sep: str | None = None,
@@ -60,6 +61,8 @@ def sap_to_redshift_spectrum(  # noqa: PLR0913, PLR0917
             Spectrum. Defaults to None.
         aws_config_key (str, optional): The key in the viadot config holding relevant
             credentials. Defaults to None.
+        aws_secret_name (str, optional): The name of a secret block in Prefect
+            that stores AWS credentials. Defaults to None.
         query (str): The query to be executed with pyRFC.
         sap_sep (str, optional): The separator to use when reading query results.
             If not provided, multiple options are automatically tried.
@@ -119,4 +122,5 @@ def sap_to_redshift_spectrum(  # noqa: PLR0913, PLR0917
         description=description,
         credentials=aws_credentials,
         config_key=aws_config_key,
+        aws_secret_name=aws_secret_name,
     )
