@@ -1,10 +1,10 @@
-import os
+from pathlib import Path
 
+from duckdb import BinderException
 import pandas as pd
 import pytest
-from duckdb import BinderException
-
 from viadot.sources.duckdb import DuckDB
+
 
 TABLE = "test_table"
 SCHEMA = "test_schema"
@@ -14,16 +14,16 @@ DATABASE_PATH = "test_db_123.duckdb"
 
 @pytest.fixture(scope="module")
 def duckdb():
-    duckdb = DuckDB(credentials=dict(database=DATABASE_PATH, read_only=False))
+    duckdb = DuckDB(credentials={"database": DATABASE_PATH, "read_only": False})
     yield duckdb
-    os.remove(DATABASE_PATH)
+    Path(DATABASE_PATH).unlink()
 
 
 def test_create_table_from_parquet(duckdb, TEST_PARQUET_FILE_PATH):
     duckdb.create_table_from_parquet(
         schema=SCHEMA, table=TABLE, path=TEST_PARQUET_FILE_PATH
     )
-    df = duckdb.to_df(f"SELECT * FROM {SCHEMA}.{TABLE}")
+    df = duckdb.to_df(f"SELECT * FROM {SCHEMA}.{TABLE}")  # noqa: S608
     assert df.shape[0] == 3
     duckdb.drop_table(TABLE, schema=SCHEMA)
     duckdb.run_query(f"DROP SCHEMA {SCHEMA}")
@@ -33,14 +33,14 @@ def test_create_table_from_parquet_append(duckdb, TEST_PARQUET_FILE_PATH):
     duckdb.create_table_from_parquet(
         schema=SCHEMA, table=TABLE, path=TEST_PARQUET_FILE_PATH
     )
-    df = duckdb.to_df(f"SELECT * FROM {SCHEMA}.{TABLE}")
+    df = duckdb.to_df(f"SELECT * FROM {SCHEMA}.{TABLE}")  # noqa: S608
     assert df.shape[0] == 3
 
     # now append
     duckdb.create_table_from_parquet(
         schema=SCHEMA, table=TABLE, path=TEST_PARQUET_FILE_PATH, if_exists="append"
     )
-    df = duckdb.to_df(f"SELECT * FROM {SCHEMA}.{TABLE}")
+    df = duckdb.to_df(f"SELECT * FROM {SCHEMA}.{TABLE}")  # noqa: S608
     assert df.shape[0] == 6
 
     duckdb.drop_table(TABLE, schema=SCHEMA)
@@ -51,7 +51,7 @@ def test_create_table_from_parquet_delete(duckdb, TEST_PARQUET_FILE_PATH):
     duckdb.create_table_from_parquet(
         schema=SCHEMA, table=TABLE, path=TEST_PARQUET_FILE_PATH
     )
-    df = duckdb.to_df(f"SELECT * FROM {SCHEMA}.{TABLE}")
+    df = duckdb.to_df(f"SELECT * FROM {SCHEMA}.{TABLE}")  # noqa: S608
     assert df.shape[0] == 3
 
     df = pd.DataFrame.from_dict(
@@ -70,7 +70,7 @@ def test_create_table_from_parquet_delete(duckdb, TEST_PARQUET_FILE_PATH):
 
     duckdb.drop_table(TABLE, schema=SCHEMA)
     duckdb.run_query(f"DROP SCHEMA {SCHEMA}")
-    os.remove("test_parquet.parquet")
+    Path("test_parquet.parquet").unlink()
 
 
 def test_create_table_from_multiple_parquet(duckdb):
@@ -78,7 +78,7 @@ def test_create_table_from_multiple_parquet(duckdb):
     duckdb.create_table_from_parquet(
         schema=SCHEMA, table=TABLE_MULTIPLE_PARQUETS, path="*.parquet"
     )
-    df = duckdb.to_df(f"SELECT * FROM {SCHEMA}.{TABLE_MULTIPLE_PARQUETS}")
+    df = duckdb.to_df(f"SELECT * FROM {SCHEMA}.{TABLE_MULTIPLE_PARQUETS}")  # noqa: S608
     assert df.shape[0] == 6
     duckdb.drop_table(TABLE_MULTIPLE_PARQUETS, schema=SCHEMA)
     duckdb.run_query(f"DROP SCHEMA {SCHEMA}")
@@ -101,7 +101,7 @@ def test_run_query_query_with_comments(duckdb, TEST_PARQUET_FILE_PATH):
         query=f"""
         --test
     SELECT * FROM {SCHEMA}.{TABLE}
-    """,
+    """,  # noqa: S608
         fetch_type="dataframe",
     )
     assert isinstance(output1, pd.DataFrame)
@@ -110,7 +110,7 @@ def test_run_query_query_with_comments(duckdb, TEST_PARQUET_FILE_PATH):
         query=f"""
     SELECT * FROM {SCHEMA}.{TABLE}
     WHERE country = 'italy'
-    """,
+    """,  # noqa: S608
         fetch_type="dataframe",
     )
     assert isinstance(output2, pd.DataFrame)
@@ -119,7 +119,7 @@ def test_run_query_query_with_comments(duckdb, TEST_PARQUET_FILE_PATH):
         query=f"""
     SELECT * FROM {SCHEMA}.{TABLE}
         ---test
-    """,
+    """,  # noqa: S608
         fetch_type="dataframe",
     )
     assert isinstance(output3, pd.DataFrame)

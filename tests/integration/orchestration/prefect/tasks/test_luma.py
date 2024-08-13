@@ -1,7 +1,9 @@
 from loguru import logger
+import pytest
 from viadot.orchestration.prefect.tasks import luma_ingest_task
 
 
+@pytest.mark.asyncio()
 async def test_luma_ingest_task_model_metadata(LUMA_URL):
     logs = await luma_ingest_task.fn(
         metadata_kind="model",
@@ -16,6 +18,7 @@ async def test_luma_ingest_task_model_metadata(LUMA_URL):
     assert success_message in log
 
 
+@pytest.mark.asyncio()
 async def test_luma_ingest_task_model_run_metadata(LUMA_URL):
     logs = await luma_ingest_task.fn(
         metadata_kind="model_run",
@@ -30,6 +33,7 @@ async def test_luma_ingest_task_model_run_metadata(LUMA_URL):
     assert success_message in log
 
 
+@pytest.mark.asyncio()
 async def test_luma_ingest_task_model_run_metadata_follow(LUMA_URL):
     logs = await luma_ingest_task.fn(
         metadata_kind="model_run",

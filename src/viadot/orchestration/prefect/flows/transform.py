@@ -3,10 +3,10 @@
 import os
 import shutil
 
+from prefect import flow, task
+
 from viadot.orchestration.prefect.tasks import clone_repo, dbt_task
 from viadot.orchestration.prefect.utils import get_credentials
-
-from prefect import flow, task
 
 
 @task
@@ -24,12 +24,11 @@ def _cleanup_repo(dbt_repo_dir_name: str) -> None:
     description="Build specified dbt model(s).",
     timeout_seconds=2 * 60 * 60,
 )
-def transform(  # noqa: PLR0913, PLR0914, PLR0917
+def transform(
     dbt_project_path: str,
     dbt_repo_url: str | None = None,
     dbt_repo_url_secret: str | None = None,
     dbt_repo_branch: str | None = None,
-    token: str | None = None,
     token_secret: str | None = None,
     local_dbt_repo_path: str | None = None,
     dbt_selects: dict[str, str] | None = None,
@@ -48,8 +47,7 @@ def transform(  # noqa: PLR0913, PLR0914, PLR0917
         dbt_repo_url_secret (str, optional): Alternatively to above, the secret
             containing `dbt_repo_url`.
         dbt_repo_branch (str, optional): The branch of the dbt repo to use.
-        token (str, optional): The personal access token.
-        token_secret (str, optional): The name of the secret storing the token.
+        token_secret (str, optional): The name of the secret storing the git token.
             Defaults to None.
         local_dbt_repo_path (str, optional): The path where to clone the repo to.
         dbt_selects (dict, optional): Valid
@@ -92,7 +90,6 @@ def transform(  # noqa: PLR0913, PLR0914, PLR0917
     clone = clone_repo(
         url=dbt_repo_url,
         checkout_branch=dbt_repo_branch,
-        token=token,
         token_secret=token_secret,
         path=local_dbt_repo_path,
     )

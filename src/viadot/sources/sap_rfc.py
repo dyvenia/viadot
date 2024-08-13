@@ -1004,6 +1004,7 @@ class SAPRFCV2(Source):
                 lists_of_columns.append(cols)
                 cols = [col]
                 col_length_total = int(col_length)
+
         if isinstance(self.rfc_unique_id[0], str) and all(
             rfc_col not in cols for rfc_col in self.rfc_unique_id
         ):

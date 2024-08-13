@@ -175,7 +175,7 @@ class Genesys(Source):
         post_data_list: list[str],
         method: str,
         params: dict[str, Any] | None = None,
-        sleep_time: int = 0.5,
+        sleep_time: float = 0.5,
     ) -> dict[str, Any]:
         """General method to connect to Genesys Cloud API and generate the response.
 

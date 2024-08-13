@@ -1,21 +1,20 @@
+import pytest
 from viadot.orchestration.prefect.tasks import (
+    create_sql_server_table,
     sql_server_query,
     sql_server_to_df,
-    create_sql_server_table,
 )
 from viadot.sources import SQLServer
 
-import pytest
 
 TABLE = "test"
 SCHEMA = "sandbox"
 
 
-@pytest.fixture
+@pytest.fixture()
 def sql_server():
-    # Initialize the SQLServer instance with the test credentials
-    sql_server = SQLServer(config_key="sql_server")
-    yield sql_server
+    # Initialize the SQLServer instance with the test credentials.
+    return SQLServer(config_key="sql_server")
 
 
 def test_sql_server_to_df():
@@ -26,7 +25,7 @@ def test_sql_server_to_df():
                 FROM sys.tables t
                 JOIN sys.schemas s
                 ON t.schema_id = s.schema_id""",
-        credentials_secret="sql-server",
+        credentials_secret="sql-server",  # noqa: S106
     )
 
     assert not df.empty
@@ -47,13 +46,14 @@ def test_create_sql_server_table(sql_server):
         schema=SCHEMA,
         dtypes=dtypes,
         if_exists="replace",
-        credentials_secret="sql-server",
+        credentials_secret="sql-server",  # noqa: S106
     )
 
     assert sql_server.exists(table=TABLE, schema=SCHEMA)
 
     sql_server_query(
-        query=f"""DROP TABLE {SCHEMA}.{TABLE}""", credentials_secret="sql-server"
+        query=f"""DROP TABLE {SCHEMA}.{TABLE}""",
+        credentials_secret="sql-server",  # noqa: S106
     )
 
     assert not sql_server.exists(table=TABLE, schema=SCHEMA)

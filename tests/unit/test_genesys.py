@@ -444,7 +444,7 @@ def test_api_connection_routing_queues_members(mock_api_call, genesys):
         endpoint="routing_queues_members", queues_ids=mock_queues_ids
     )
 
-    assert mock_api_call.call_count == 2  # noqa: PLR2004
+    assert mock_api_call.call_count == 2
 
 
 @patch("viadot.sources.genesys.Genesys._api_call")
@@ -457,7 +457,7 @@ def test_api_connection_users(mock_api_call, genesys):
 
     genesys.api_connection(endpoint="users", queues_ids=mock_queues_ids)
 
-    assert mock_api_call.call_count == 2  # noqa: PLR2004
+    assert mock_api_call.call_count == 2
 
 
 @patch("viadot.sources.genesys.Genesys._handle_if_empty")

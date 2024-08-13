@@ -2,9 +2,10 @@ import os
 from pathlib import Path
 
 import pandas as pd
-import pytest
 from prefect import flow
+import pytest
 from viadot.orchestration.prefect.tasks import s3_upload_file
+
 
 try:
     from viadot.sources import S3
