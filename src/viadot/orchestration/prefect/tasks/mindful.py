@@ -1,5 +1,7 @@
+"""Task to download data from Mindful API into a Pandas DataFrame."""
+
 from datetime import date
-from typing import Any, Dict, List, Literal, Optional
+from typing import Literal
 
 import pandas as pd
 from prefect import get_run_logger, task
@@ -11,20 +13,16 @@ from viadot.sources import Mindful
 
 @task(retries=3, log_prints=True, retry_delay_seconds=10, timeout_seconds=60 * 60)
 def mindful_to_df(
-    credentials: Optional[Dict[str, Any]] = None,
-    config_key: str = None,
-    azure_key_vault_secret: Optional[str] = None,
+    config_key: str | None = None,
+    azure_key_vault_secret: str | None = None,
     region: Literal["us1", "us2", "us3", "ca1", "eu1", "au1"] = "eu1",
-    endpoint: Optional[str] = None,
-    date_interval: Optional[List[date]] = None,
+    endpoint: str | None = None,
+    date_interval: list[date] | None = None,
     limit: int = 1000,
 ) -> pd.DataFrame:
-    """
-    Task to download data from Mindful API.
+    """Task to download data from Mindful API.
 
     Args:
-        credentials (Optional[Dict[str, Any]], optional): Mindful credentials as a
-            dictionary. Defaults to None.
         config_key (str, optional): The key in the viadot config holding relevant
             credentials. Defaults to None.
         azure_key_vault_secret (Optional[str], optional): The name of the Azure Key
@@ -40,21 +38,30 @@ def mindful_to_df(
         limit (int, optional): The number of matching interactions to return.
             Defaults to 1000.
 
+    Examples:
+        data_frame = mindful_to_df(
+            config_key=config_key,
+            azure_key_vault_secret=azure_key_vault_secret,
+            region=region,
+            endpoint=end,
+            date_interval=date_interval,
+            limit=limit,
+        )
+
     Returns:
-        pd.DataFrame: The response data as a Pandas Data Frame.
+        pd.DataFrame: The response data as a pandas DataFrame.
     """
     logger = get_run_logger()
 
-    if not (azure_key_vault_secret or config_key or credentials):
+    if not (azure_key_vault_secret or config_key):
         raise MissingSourceCredentialsError
 
     if not config_key:
-        credentials = credentials or get_credentials(azure_key_vault_secret)
+        credentials = get_credentials(azure_key_vault_secret)
 
     if endpoint is None:
         logger.warning(
-            "The API endpoint parameter was not defined. "
-            + "The default value is 'surveys'."
+            "The API endpoint parameter was not defined. The default value is 'surveys'."
         )
         endpoint = "surveys"
 
@@ -68,6 +75,5 @@ def mindful_to_df(
         date_interval=date_interval,
         limit=limit,
     )
-    data_frame = mindful.to_df()
 
-    return data_frame
+    return mindful.to_df()

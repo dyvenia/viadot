@@ -1,12 +1,12 @@
-# How to contribute to `viadot`
+# How to contribute to `viadot2`
 
-## Setting up the environment
+## Installation & set up
 
-Follow the instructions in the [README](./README.md) to set up your development environment.
+Follow instructions in the [README](./README.md#getting-started) to set up your development environment.
 
 ### VSCode
 
-We provide the extensions, settings, and tasks for VSCode in the `.vscode` folder.
+For an enhanced experience, we provide the extensions, settings, and tasks for VSCode in the `.vscode` folder.
 
 1. Install the extensions
 
@@ -20,51 +20,43 @@ We provide the extensions, settings, and tasks for VSCode in the `.vscode` folde
     code .
    ```
 
-### Development Docker container
+### Docker container
 
-#### Bulding of containers
+Due to `viadot` depending on a few Linux libraries, the easiest way to work with `viadot` is to use the provided Docker image.
 
-To build all available containers, run the following command:
-
-**NOTE**: All the following commands must be execured from within the `viadot/docker/` directory. 
+`viadot` comes with a `docker-compose.yml` config with pre-configured containers for the core library, as well as each extra (azure, aws). In order to start a container, run `docker compose up -d viadot-<distro>`, for example:
 
 ```bash
-docker compose up -d 
+docker compose up -d viadot-aws
 ```
-If you want to build a specific one, add its name at the end of the command:
+
+If you need to build a custom image locally, run:
 
 ```bash
-docker compose up -d viadot-azure
+docker build --target viadot-<distro> --tag viadot-<distro>:<your_tag> -f docker/Dockerfile .
 ```
 
-#### Building docker images
+Then, make sure to update your docker-compose accordingly, so that it's using your local image.
 
-All necessary Docker images are released in `ghcr.io` and are included in the `docker-compose.yml` file, but if you want to create your own custom Docker image, follow the following instructions.
-
-In the repository, we have three possible images to build:
-
-- `viadot-lite`
-- `viadot-azure`
-- `viadot-aws`
-
-To build an image, you have to be in the root directory of the repository and run the following command with selected target:
+Once you have a container running, use an IDE like VSCode to attach to it. Alternatively, you can also attach to the container using the CLI:
 
 ```bash
-docker build --target viadot-azure -t <name of your image>:<version of your image> -f docker/Dockerfile .
+docker exec -it viadot-<distro> bash
 ```
 
-
-#### Start of work inside the container 
-
-```bash
-docker exec -it viadot-azure bash
-```
+## Running tests
 
 ### Environment variables
 
 To run tests, you may need to set up some environment variables or the viadot config. You can find all the required environment variables in the [tests' dotenv file](./tests/.env.example), and all the required viadot config settings in the [config file](./config.yaml.example). We're working on making this process easier, so only one of these can be used.
 
-### Pre-commit hooks
+In order to execute tests locally, run
+
+```console
+pytest tests/
+```
+
+## Pre-commit hooks
 
 We use pre-commit hooks to ensure that the code (as well as non-code text files, such as JSON, YAML, and Markdown files) is formatted and linted before committing. First, install `pre-commit`:
 

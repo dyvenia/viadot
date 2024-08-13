@@ -6,16 +6,18 @@ from typing import Any, Literal
 import pandas as pd
 from prefect import task
 from prefect.logging import get_run_logger
+
 from viadot.config import get_source_credentials
-from viadot.orchestration.prefect.utils import get_credentials
 from viadot.orchestration.prefect.exceptions import MissingSourceCredentialsError
+from viadot.orchestration.prefect.utils import get_credentials
+
 
 with contextlib.suppress(ImportError):
     from viadot.sources import RedshiftSpectrum
 
 
 @task(retries=3, retry_delay_seconds=10, timeout_seconds=60 * 60)
-def df_to_redshift_spectrum(  # noqa: PLR0913, PLR0917
+def df_to_redshift_spectrum(  # noqa: PLR0913
     df: pd.DataFrame,
     to_path: str,
     schema_name: str,
@@ -27,7 +29,6 @@ def df_to_redshift_spectrum(  # noqa: PLR0913, PLR0917
     compression: str | None = None,
     sep: str = ",",
     description: str | None = None,
-    credentials: dict[str, Any] | None = None,
     config_key: str | None = None,
     aws_secret_name: str | None = None,
     **kwargs: dict[str, Any] | None,
@@ -54,8 +55,6 @@ def df_to_redshift_spectrum(  # noqa: PLR0913, PLR0917
         sep (str, optional): Field delimiter for the output file. Applies only to '.csv'
             extension. Defaults to ','.
         description (str, optional): AWS Glue catalog table description.
-        credentials (dict[str, Any], optional): Credentials to the AWS Redshift
-            Spectrum. Defaults to None.
         config_key (str, optional): The key in the viadot config holding relevant
             credentials. Defaults to None.
         aws_secret_name (str, optional): The name of a secret block in Prefect

@@ -1,8 +1,8 @@
 """Flows for pulling data from/into Sharepoint."""
 
-from viadot.orchestration.prefect.tasks import df_to_adls, sharepoint_to_df
-
 from prefect import flow
+
+from viadot.orchestration.prefect.tasks import df_to_adls, sharepoint_to_df
 
 
 @flow(
@@ -11,7 +11,7 @@ from prefect import flow
     retries=1,
     retry_delay_seconds=60,
 )
-def sharepoint_to_adls(  # noqa: PLR0913, PLR0917
+def sharepoint_to_adls(
     sharepoint_url: str,
     adls_path: str,
     sharepoint_credentials_secret: str | None = None,

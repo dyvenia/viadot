@@ -8,9 +8,6 @@ from prefect import get_run_logger, task
 from viadot.orchestration.prefect.exceptions import MissingSourceCredentialsError
 from viadot.orchestration.prefect.utils import get_credentials
 from viadot.sources import Sharepoint
-from viadot.sources.sharepoint import (
-    SharepointCredentials,
-)
 
 
 @task(retries=3, retry_delay_seconds=10, timeout_seconds=60 * 60)
@@ -23,7 +20,6 @@ def sharepoint_to_df(
     na_values: list[str] | None = None,
     credentials_secret: str | None = None,
     config_key: str | None = None,
-    credentials: dict[str, Any] | None = None,
 ) -> pd.DataFrame:
     """Load an Excel file stored on Microsoft Sharepoint into a pandas `DataFrame`.
 
@@ -60,18 +56,16 @@ def sharepoint_to_df(
                 function from viadot.utils. Defaults to None.
         config_key (str, optional): The key in the viadot config holding relevant
             credentials. Defaults to None.
-        credentials (dict, optional): The credentials as a dictionary. Defaults
-            to None.
 
     Returns:
         pd.Dataframe: The pandas `DataFrame` containing data from the file.
     """
-    if not (credentials_secret or config_key or credentials):
+    if not (credentials_secret or config_key):
         raise MissingSourceCredentialsError
 
     logger = get_run_logger()
 
-    credentials = credentials or get_credentials(secret_name=credentials_secret)
+    credentials = get_credentials(secret_name=credentials_secret)
     s = Sharepoint(credentials=credentials, config_key=config_key)
 
     logger.info(f"Downloading data from {url}...")
@@ -93,7 +87,6 @@ def sharepoint_download_file(
     url: str,
     to_path: str,
     credentials_secret: str | None = None,
-    credentials: SharepointCredentials | None = None,
     config_key: str | None = None,
 ) -> None:
     """Download a file from Sharepoint.
@@ -107,12 +100,12 @@ def sharepoint_download_file(
         config_key (str, optional): The key in the viadot config holding relevant
             credentials.
     """
-    if not (credentials_secret or config_key or credentials):
+    if not (credentials_secret or config_key):
         raise MissingSourceCredentialsError
 
     logger = get_run_logger()
 
-    credentials = credentials or get_credentials(secret_name=credentials_secret)
+    credentials = get_credentials(secret_name=credentials_secret)
     s = Sharepoint(credentials=credentials, config_key=config_key)
 
     logger.info(f"Downloading data from {url}...")

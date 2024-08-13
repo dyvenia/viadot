@@ -47,11 +47,34 @@ RUN curl https://packages.microsoft.com/keys/microsoft.asc | apt-key add - && \
     curl https://packages.microsoft.com/config/debian/10/prod.list > /etc/apt/sources.list.d/mssql-release.list && \
     apt update -q && \
     apt install -q libsqliteodbc && \
-    ACCEPT_EULA=Y apt install -q -y msodbcsql17=17.8.1.1-1 && \
-    ACCEPT_EULA=Y apt install -q -y mssql-tools && \
+    ACCEPT_EULA=Y apt install -q -y msodbcsql17=17.10.1.1-1 && \
+    ACCEPT_EULA=Y apt install -q -y mssql-tools=17.10.1.1-1 && \
     echo 'export PATH="$PATH:/opt/mssql-tools/bin"' >> ~/.bashrc
 
 COPY docker/odbcinst.ini /etc
+
+
+###################
+### viadot-lite ###
+###################
+
+FROM base as viadot-lite
+
+WORKDIR ${HOME}
+
+COPY --chown=${USER}:${USER} . ./viadot
+
+RUN rye lock --reset --features viadot-lite --pyproject viadot/pyproject.toml
+RUN sed '/-e/d' ./viadot/requirements.lock > ./viadot/requirements.txt
+RUN pip install --no-cache-dir -r ./viadot/requirements.txt
+
+# Dependecy install
+RUN pip install ./viadot/
+
+# Cleanup.
+RUN rm -rf ./viadot
+
+USER ${USER}
 
 
 ####################
@@ -82,7 +105,7 @@ WORKDIR ${HOME}
 
 COPY --chown=${USER}:${USER} . ./viadot
 
-RUN rye lock --reset --features viadot-azure --pyproject viadot/pyproject.toml
+RUN rye lock --reset --features azure --pyproject viadot/pyproject.toml
 RUN sed '/-e/d' ./viadot/requirements.lock > ./viadot/requirements.txt
 RUN pip install --no-cache-dir -r ./viadot/requirements.txt
 
@@ -91,35 +114,13 @@ RUN if [ "$INSTALL_DATABRICKS" = "true" ]; then \
     fi
 
 # Dependecy install
-RUN pip install ./viadot/.[viadot-azure]
+RUN pip install ./viadot/.[azure]
 
 # Cleanup.
 RUN rm -rf ./viadot
 
 USER ${USER}
 
-
-###################
-### viadot-lite ###
-###################
-
-FROM base as viadot-lite
-
-WORKDIR ${HOME}
-
-COPY --chown=${USER}:${USER} . ./viadot
-
-RUN rye lock --reset --features viadot-lite --pyproject viadot/pyproject.toml
-RUN sed '/-e/d' ./viadot/requirements.lock > ./viadot/requirements.txt
-RUN pip install --no-cache-dir -r ./viadot/requirements.txt
-
-# Dependecy install
-RUN pip install ./viadot/
-
-# Cleanup.
-RUN rm -rf ./viadot
-
-USER ${USER}
 
 ##################
 ### viadot-aws ###
@@ -132,16 +133,14 @@ WORKDIR ${HOME}
 
 COPY --chown=${USER}:${USER} . ./viadot
 
-RUN rye lock --reset --features viadot-aws --pyproject viadot/pyproject.toml
+RUN rye lock --reset --features aws --pyproject viadot/pyproject.toml
 RUN sed '/-e/d' ./viadot/requirements.lock > ./viadot/requirements.txt
 RUN pip install --no-cache-dir -r ./viadot/requirements.txt
 
 # Dependecy install
-RUN pip install ./viadot/.[viadot-aws]
+RUN pip install ./viadot/.[aws]
 
 # Cleanup.
 RUN rm -rf ./viadot
 
 USER ${USER}
-
-

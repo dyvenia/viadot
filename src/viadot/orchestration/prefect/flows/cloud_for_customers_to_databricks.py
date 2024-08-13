@@ -11,7 +11,7 @@ from viadot.orchestration.prefect.tasks import (
 
 
 @flow
-def cloud_for_customers_to_databricks(  # noqa: PLR0913, PLR0917
+def cloud_for_customers_to_databricks(  # noqa: PLR0913
     # C4C
     cloud_for_customers_url: str,
     fields: list[str] | None = None,

@@ -4,9 +4,9 @@ import contextlib
 from typing import Any
 
 import pandas as pd
-
 from prefect import task
 from prefect.logging import get_run_logger
+
 
 with contextlib.suppress(ImportError):
     from viadot.sources import SAPRFC, SAPRFCV2
@@ -15,7 +15,7 @@ from viadot.orchestration.prefect.utils import get_credentials
 
 
 @task(retries=3, retry_delay_seconds=10, timeout_seconds=60 * 60 * 3)
-def sap_rfc_to_df(  # noqa: PLR0913, PLR0917
+def sap_rfc_to_df(  # noqa: PLR0913
     query: str | None = None,
     sep: str | None = None,
     func: str | None = None,
@@ -55,7 +55,7 @@ def sap_rfc_to_df(  # noqa: PLR0913, PLR0917
             However, we observed SAP raising an exception even on a slightly lower
             number of characters, so we add a safety margin. Defaults to 400.
         rfc_unique_id (list[str], optional):
-            Reference columns to merge chunks Data Frames. These columns must to be
+            Reference columns to merge chunks DataFrames. These columns must to be
             unique. If no columns are provided in this parameter, all data frame columns
             will by concatenated. Defaults to None.
         tests (dict[str], optional): A dictionary with optional list of tests

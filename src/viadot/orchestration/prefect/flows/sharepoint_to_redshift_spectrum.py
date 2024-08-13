@@ -1,6 +1,6 @@
 """Flows for downloading data from Sharepoint and uploading it to AWS Redshift Spectrum."""  # noqa: W505
 
-from typing import Any, Literal
+from typing import Literal
 
 from prefect import flow
 
@@ -16,7 +16,7 @@ from viadot.orchestration.prefect.tasks import (
     retries=1,
     retry_delay_seconds=60,
 )
-def sharepoint_to_redshift_spectrum(  # noqa: PLR0913, PLR0917
+def sharepoint_to_redshift_spectrum(  # noqa: PLR0913
     sharepoint_url: str,
     to_path: str,
     schema_name: str,
@@ -28,14 +28,12 @@ def sharepoint_to_redshift_spectrum(  # noqa: PLR0913, PLR0917
     compression: str | None = None,
     sep: str = ",",
     description: str | None = None,
-    aws_credentials: dict[str, Any] | None = None,
     aws_config_key: str | None = None,
     sheet_name: str | list[str | int] | int | None = None,
     columns: str | list[str] | list[int] | None = None,
     na_values: list[str] | None = None,
     sharepoint_credentials_secret: str | None = None,
     sharepoint_config_key: str | None = None,
-    sharepoint_credentials: dict[str, Any] | None = None,
     file_sheet_mapping: dict | None = None,
 ) -> None:
     """Extract data from SharePoint and load it into AWS Redshift Spectrum.
@@ -73,8 +71,6 @@ def sharepoint_to_redshift_spectrum(  # noqa: PLR0913, PLR0917
         sep (str, optional): Field delimiter for the output file. Defaults to ','.
         description (str, optional): AWS Glue catalog table description. Defaults to
             None.
-        aws_credentials (dict[str, Any], optional): Credentials to the AWS Redshift
-            Spectrum. Defaults to None.
         aws_config_key (str, optional): The key in the viadot config holding relevant
             credentials. Defaults to None.
         sheet_name (str | list | int, optional): Strings are used for sheet names.
@@ -91,8 +87,6 @@ def sharepoint_to_redshift_spectrum(  # noqa: PLR0913, PLR0917
             More info on: https://docs.prefect.io/concepts/blocks/
         sharepoint_config_key (str, optional): The key in the viadot config holding
             relevant credentials. Defaults to None.
-        sharepoint_credentials (dict, optional): Credentials to Sharepoint. Defaults to
-            None.
         file_sheet_mapping (dict): A dictionary where keys are filenames and values are
             the sheet names to be loaded from each file. If provided, only these files
             and sheets will be downloaded. Defaults to None.
@@ -105,7 +99,6 @@ def sharepoint_to_redshift_spectrum(  # noqa: PLR0913, PLR0917
         file_sheet_mapping=file_sheet_mapping,
         credentials_secret=sharepoint_credentials_secret,
         config_key=sharepoint_config_key,
-        credentials=sharepoint_credentials,
     )
     df_to_redshift_spectrum(
         df=df,
@@ -119,6 +112,5 @@ def sharepoint_to_redshift_spectrum(  # noqa: PLR0913, PLR0917
         compression=compression,
         sep=sep,
         description=description,
-        credentials=aws_credentials,
         config_key=aws_config_key,
     )

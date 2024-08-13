@@ -6,6 +6,7 @@ from typing import Any
 from prefect import task
 from prefect.logging import get_run_logger
 
+
 with contextlib.suppress(ImportError):
     from viadot.sources import S3
 

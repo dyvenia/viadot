@@ -1,42 +1,12 @@
-"""
-'mindful_to_adls.py'.
+"""Download data from Mindful API and load it into Azure Data Lake Storage."""
 
-Prefect flow for the Mindful API connector.
-
-This module provides a prefect flow function to use the Mindful connector:
-- Call to the prefect task wrapper to get a final Data Frame from the connector.
-- Upload that data to Azure Data Lake Storage.
-
-Typical usage example:
-
-    mindful_to_adls(
-        credentials=credentials,
-        endpoint=endpoint,
-        date_interval=date_interval,
-        adls_path=adls_path,
-        adls_credentials=adls_credentials,
-        adls_azure_key_vault_secret=adls_azure_key_vault_secret,
-        adls_path_overwrite=True,
-    )
-
-Functions:
-
-    mindful_to_adls(credentials, config_key, azure_key_vault_secret, region,
-    endpoint, date_interval, limit, adls_credentials, adls_config_key,
-    adls_azure_key_vault_secret, adls_path, adls_path_overwrite):
-        Flow to download data from Mindful to Azure Data Lake.
-"""  # noqa: D412
-
-import os
-import time
 from datetime import date
-from typing import Any, Dict, List, Literal, Optional, Union
+import time
+from typing import Literal
 
-from prefect import flow
 from prefect import flow
 from prefect.task_runners import ConcurrentTaskRunner
 
-from viadot.orchestration.prefect.tasks import df_to_adls, mindful_to_df
 from viadot.orchestration.prefect.tasks import df_to_adls, mindful_to_df
 
 
@@ -48,21 +18,18 @@ from viadot.orchestration.prefect.tasks import df_to_adls, mindful_to_df
     task_runner=ConcurrentTaskRunner,
 )
 def mindful_to_adls(
-    credentials: Optional[Dict[str, Any]] = None,
-    config_key: str = None,
-    azure_key_vault_secret: Optional[str] = None,
+    config_key: str | None = None,
+    azure_key_vault_secret: str | None = None,
     region: Literal["us1", "us2", "us3", "ca1", "eu1", "au1"] = "eu1",
-    endpoint: Optional[Union[List[str], str]] = None,
-    date_interval: Optional[List[date]] = None,
+    endpoint: list[str] | str | None = None,
+    date_interval: list[date] | None = None,
     limit: int = 1000,
-    adls_credentials: Optional[Dict[str, Any]] = None,
-    adls_config_key: Optional[str] = None,
-    adls_azure_key_vault_secret: Optional[str] = None,
-    adls_path: Optional[str] = None,
+    adls_config_key: str | None = None,
+    adls_azure_key_vault_secret: str | None = None,
+    adls_path: str | None = None,
     adls_path_overwrite: bool = False,
 ) -> None:
-    """
-    Flow to download data from Mindful to Azure Data Lake.
+    """Flow to download data from Mindful to Azure Data Lake.
 
     Args:
         credentials (Optional[Dict[str, Any]], optional): Mindful credentials as a dictionary.
@@ -90,29 +57,39 @@ def mindful_to_adls(
             Defaults to None.
         adls_path_overwrite (bool, optional): Whether to overwrite the file in ADLS.
             Defaults to True.
-    """
 
+    Examples:
+        mindful_to_adls(
+            config_key=config_key,
+            endpoint=endpoint,
+            date_interval=date_interval,
+            adls_path=adls_path,
+            adls_config_key=adls_config_key,
+            adls_azure_key_vault_secret=adls_azure_key_vault_secret,
+            adls_path_overwrite=True,
+        )
+    """
     if isinstance(endpoint, str):
         endpoint = [endpoint]
 
-    for end in endpoint:
-    for end in endpoint:
+    endpoints = endpoint
+
+    for endpoint in endpoints:
         data_frame = mindful_to_df(
-            credentials=credentials,
             config_key=config_key,
             azure_key_vault_secret=azure_key_vault_secret,
             region=region,
-            endpoint=end,
+            endpoint=endpoint,
             date_interval=date_interval,
             limit=limit,
         )
+
+        # ???
         time.sleep(0.5)
 
-        return df_to_adls(
+        df_to_adls(
             df=data_frame,
-            path=os.path.join(adls_path, f"{end}.csv"),
-            path=os.path.join(adls_path, f"{end}.csv"),
-            credentials=adls_credentials,
+            path=adls_path.rstrip("/") + "/" + f"{endpoint}.csv",
             credentials_secret=adls_azure_key_vault_secret,
             config_key=adls_config_key,
             overwrite=adls_path_overwrite,

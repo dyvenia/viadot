@@ -2,7 +2,7 @@ version: "3"
 
 services:
   viadot_2_lite:
-    image: ghcr.io/dyvenia/viadot/viadot-lite:2.0.0-beta.1
+    image: ghcr.io/dyvenia/viadot/viadot-lite:latest
     container_name: viadot_2_lite
     profiles: ["viadot_2_lite"]
     volumes:
@@ -13,7 +13,7 @@ services:
     command: sleep infinity
     restart: "unless-stopped"
   viadot_2_azure:
-    image: ghcr.io/dyvenia/viadot/viadot-azure:2.0.0-beta.1
+    image: ghcr.io/dyvenia/viadot/viadot-azure:latest
     container_name: viadot_2_azure
     profiles: ["viadot_2_azure"]
     volumes:
@@ -35,7 +35,7 @@ services:
     command: sleep infinity
     restart: "unless-stopped"
   viadot_2_aws:
-    image: ghcr.io/dyvenia/viadot/viadot-aws:2.0.0-beta.1
+    image: ghcr.io/dyvenia/viadot/viadot-aws:latest
     container_name: viadot_2_aws
     profiles: ["viadot_2_aws"]
     volumes:

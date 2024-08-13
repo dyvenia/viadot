@@ -17,7 +17,7 @@ class MissingSourceCredentialsError(Exception):
 
 
 class MissingPrefectBlockError(Exception):
-    """Raise when given Prefect block not found.
+    """Raise when a Prefect block is not found.
 
     Args:
         message (str, optional): A custom message to pass.

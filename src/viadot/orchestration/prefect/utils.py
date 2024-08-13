@@ -2,11 +2,11 @@
 
 import contextlib
 import json
+from json.decoder import JSONDecodeError
 import logging
 import os
 import sys
 import tempfile
-from json.decoder import JSONDecodeError
 from typing import Any
 
 import anyio
@@ -15,11 +15,12 @@ from anyio.streams.text import TextReceiveStream
 from prefect.blocks.system import Secret
 from prefect.client.orchestration import PrefectClient
 from prefect.settings import PREFECT_API_KEY, PREFECT_API_URL
-from prefect_aws.secrets_manager import AwsSecret
 from prefect_aws import AwsCredentials
+from prefect_aws.secrets_manager import AwsSecret
 from prefect_sqlalchemy import DatabaseCredentials
 
 from viadot.orchestration.prefect.exceptions import MissingPrefectBlockError
+
 
 with contextlib.suppress(ModuleNotFoundError):
     from prefect_azure import AzureKeyVaultSecretReference
@@ -71,7 +72,6 @@ def _get_aws_credentials(
     Returns:
         dict | str: A dictionary or a string containing the credentials.
     """
-
     if block_type == "AwsSecret":
         aws_secret_block = AwsSecret.load(secret_name)
         credentials = aws_secret_block.read_secret()
@@ -166,7 +166,7 @@ def get_credentials(secret_name: str) -> dict[str, Any]:
     return credentials
 
 
-async def shell_run_command(  # noqa: PLR0913, PLR0917
+async def shell_run_command(
     command: str,
     env: dict[str, Any] | None = None,
     helper_command: str | None = None,

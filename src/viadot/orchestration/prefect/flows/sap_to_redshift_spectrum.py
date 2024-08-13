@@ -1,10 +1,10 @@
 """Flows for downloading data from SAP and uploading it to AWS Redshift Spectrum."""
 
-from typing import Any, Literal
-
-from viadot.orchestration.prefect.tasks import df_to_redshift_spectrum, sap_rfc_to_df
+from typing import Literal
 
 from prefect import flow
+
+from viadot.orchestration.prefect.tasks import df_to_redshift_spectrum, sap_rfc_to_df
 
 
 @flow(
@@ -13,7 +13,7 @@ from prefect import flow
     retries=1,
     retry_delay_seconds=60,
 )
-def sap_to_redshift_spectrum(  # noqa: PLR0913, PLR0917
+def sap_to_redshift_spectrum(  # noqa: PLR0913
     to_path: str,
     schema_name: str,
     table: str,
@@ -33,7 +33,6 @@ def sap_to_redshift_spectrum(  # noqa: PLR0913, PLR0917
     rfc_total_col_width_character_limit: int = 400,
     rfc_unique_id: list[str] | None = None,
     sap_credentials_secret: str | None = None,
-    sap_credentials: dict[str, Any] | None = None,
     sap_config_key: str | None = None,
     alternative_version: bool = False,
     replacement: str = "-",
@@ -57,8 +56,6 @@ def sap_to_redshift_spectrum(  # noqa: PLR0913, PLR0917
         compression (str, optional): Compression style (None, snappy, gzip, zstd).
         aws_sep (str, optional): Field delimiter for the output file. Defaults to ','.
         description (str, optional): AWS Glue catalog table description.
-        aws_credentials (dict[str, Any], optional): Credentials to the AWS Redshift
-            Spectrum. Defaults to None.
         aws_config_key (str, optional): The key in the viadot config holding relevant
             credentials. Defaults to None.
         aws_secret_name (str, optional): The name of a secret block in Prefect
@@ -78,8 +75,6 @@ def sap_to_redshift_spectrum(  # noqa: PLR0913, PLR0917
                 data frame columns will by concatenated. Defaults to None.
         sap_credentials_secret (str, optional): The name of the AWS secret that stores
             SAP credentials. Defaults to None.
-        sap_credentials (dict[str, Any], optional): Credentials to SAP.
-            Defaults to None.
         sap_config_key (str, optional): The key in the viadot config holding relevant
             credentials. Defaults to None.
         alternative_version (bool, optional): Enable the use version 2 in source.
@@ -102,7 +97,6 @@ def sap_to_redshift_spectrum(  # noqa: PLR0913, PLR0917
         rfc_unique_id=rfc_unique_id,
         rfc_total_col_width_character_limit=rfc_total_col_width_character_limit,
         credentials_secret=sap_credentials_secret,
-        credentials=sap_credentials,
         config_key=sap_config_key,
         alternative_version=alternative_version,
         replacement=replacement,
@@ -120,7 +114,6 @@ def sap_to_redshift_spectrum(  # noqa: PLR0913, PLR0917
         compression=compression,
         sep=aws_sep,
         description=description,
-        credentials=aws_credentials,
         config_key=aws_config_key,
         aws_secret_name=aws_secret_name,
     )

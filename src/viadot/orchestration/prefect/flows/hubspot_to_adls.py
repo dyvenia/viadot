@@ -1,33 +1,6 @@
-"""
-'hubspot_to_adls.py'.
+"""Download data from Hubspot API and load into Azure Data Lake Storage."""
 
-Prefect flow for the Hubspot API connector.
-
-This module provides a prefect flow function to use the Hubspot connector:
-- Call to the prefect task wrapper to get a final Data Frame from the connector.
-- Upload that data to Azure Data Lake Storage.
-
-Typical usage example:
-
-    hubspot_to_adls(
-        config_key=config_key,
-        endpoint=endpoint,
-        nrows=nrows,
-        adls_credentials=adls_credentials,
-        adls_path=adls_path,
-        adls_path_overwrite=True,
-    )
-
-
-Functions:
-
-    hubspot_to_adls(credentials, config_key, azure_key_vault_secret, endpoint,
-        filters, properties, nrows, adls_credentials, adls_config_key,
-        adls_azure_key_vault_secret, adls_path, adls_path_overwrite):
-        Flow for downloading data from mindful to Azure Data Lake.
-"""  # noqa: D412
-
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from prefect import flow
 from prefect.task_runners import ConcurrentTaskRunner
@@ -43,25 +16,20 @@ from viadot.orchestration.prefect.tasks import df_to_adls, hubspot_to_df
     task_runner=ConcurrentTaskRunner,
 )
 def hubspot_to_adls(
-    credentials: Optional[Dict[str, Any]] = None,
-    config_key: str = None,
-    azure_key_vault_secret: Optional[str] = None,
-    endpoint: Optional[str] = None,
-    filters: Optional[List[Dict[str, Any]]] = None,
-    properties: Optional[List[Any]] = None,
+    config_key: str | None = None,
+    azure_key_vault_secret: str | None = None,
+    endpoint: str | None = None,
+    filters: list[dict[str, Any]] | None = None,
+    properties: list[Any] | None = None,
     nrows: int = 1000,
-    adls_credentials: Optional[Dict[str, Any]] = None,
-    adls_config_key: Optional[str] = None,
-    adls_azure_key_vault_secret: Optional[str] = None,
-    adls_path: Optional[str] = None,
+    adls_config_key: str | None = None,
+    adls_azure_key_vault_secret: str | None = None,
+    adls_path: str | None = None,
     adls_path_overwrite: bool = False,
 ) -> None:
-    """
-    Flow for downloading data from mindful to Azure Data Lake.
+    """Flow for downloading data from mindful to Azure Data Lake.
 
     Args:
-        credentials (Optional[Dict[str, Any]], optional): Genesys credentials as a
-            dictionary. Defaults to None.
         config_key (str, optional): The key in the viadot config holding relevant
             credentials. Defaults to None.
         azure_key_vault_secret (Optional[str], optional): The name of the Azure Key
@@ -74,8 +42,6 @@ def hubspot_to_adls(
             pulled from the API. Defaults to None.
         nrows (int, optional): Max number of rows to pull during execution.
             Defaults to 1000.
-        adls_credentials (Optional[Dict[str, Any]], optional): The credentials as a
-            dictionary.Defaults to None.
         adls_config_key (Optional[str], optional): The key in the viadot config holding
             relevant credentials. Defaults to None.
         adls_azure_key_vault_secret (Optional[str], optional): The name of the Azure Key
@@ -86,9 +52,18 @@ def hubspot_to_adls(
             (with file name). Defaults to None.
         adls_path_overwrite (bool, optional): Whether to overwrite the file in ADLS.
             Defaults to True.
+
+    Examples:
+        hubspot_to_adls(
+            config_key=config_key,
+            endpoint=endpoint,
+            nrows=nrows,
+            adls_config_key=adls_config_key,
+            adls_path=adls_path,
+            adls_path_overwrite=True,
+        )
     """
     data_frame = hubspot_to_df(
-        credentials=credentials,
         config_key=config_key,
         azure_key_vault_secret=azure_key_vault_secret,
         endpoint=endpoint,
@@ -100,7 +75,6 @@ def hubspot_to_adls(
     return df_to_adls(
         df=data_frame,
         path=adls_path,
-        credentials=adls_credentials,
         credentials_secret=adls_azure_key_vault_secret,
         config_key=adls_config_key,
         overwrite=adls_path_overwrite,

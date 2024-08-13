@@ -16,4 +16,4 @@
 
 ::: viadot.sources.databricks.Databricks
 
-::: viadot.sources.trino_source.Trino
+::: viadot.sources.trino.Trino

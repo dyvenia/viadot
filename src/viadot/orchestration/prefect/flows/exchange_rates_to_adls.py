@@ -7,6 +7,7 @@ from prefect import flow
 
 from viadot.orchestration.prefect.tasks import df_to_adls, exchange_rates_to_df
 
+
 Currency = Literal[
     "USD", "EUR", "GBP", "CHF", "PLN", "DKK", "COP", "CZK", "SEK", "NOK", "ISK"
 ]
@@ -18,7 +19,7 @@ Currency = Literal[
     retries=1,
     retry_delay_seconds=60,
 )
-def exchange_rates_to_adls(  # noqa: PLR0913, PLR0917
+def exchange_rates_to_adls(
     adls_path: str,
     overwrite: bool = False,
     currency: Currency = "USD",

@@ -3,9 +3,9 @@
 import contextlib
 from typing import Literal
 
-from viadot.orchestration.prefect.tasks import df_to_databricks, sharepoint_to_df
-
 from prefect import flow
+
+from viadot.orchestration.prefect.tasks import df_to_databricks, sharepoint_to_df
 
 
 @flow(
@@ -14,7 +14,7 @@ from prefect import flow
     retries=1,
     retry_delay_seconds=60,
 )
-def sharepoint_to_databricks(  # noqa: PLR0913, PLR0917
+def sharepoint_to_databricks(
     sharepoint_url: str,
     databricks_table: str,
     databricks_schema: str | None = None,
