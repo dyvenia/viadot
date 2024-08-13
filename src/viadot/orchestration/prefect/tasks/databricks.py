@@ -1,11 +1,11 @@
 """Tasks for interacting with Databricks."""
 
 import contextlib
-from typing import Any, Literal
+from typing import Literal
 
 import pandas as pd
-
 from prefect import task
+
 
 with contextlib.suppress(ImportError):
     from viadot.sources import Databricks
@@ -15,7 +15,7 @@ from viadot.orchestration.prefect.utils import get_credentials
 
 
 @task(retries=3, retry_delay_seconds=10, timeout_seconds=60 * 60)
-def df_to_databricks(  # noqa: PLR0913, PLR0917
+def df_to_databricks(
     df: pd.DataFrame,
     table: str,
     schema: str | None = None,
@@ -23,7 +23,6 @@ def df_to_databricks(  # noqa: PLR0913, PLR0917
     if_empty: Literal["warn", "skip", "fail"] = "warn",
     credentials_secret: str | None = None,
     config_key: str | None = None,
-    credentials: dict[str, Any] | None = None,
 ) -> None:
     """Insert a pandas `DataFrame` into a Delta table.
 
@@ -41,8 +40,6 @@ def df_to_databricks(  # noqa: PLR0913, PLR0917
             More info on: https://docs.prefect.io/concepts/blocks/
         config_key (str, optional): The key in the viadot config holding relevant
             credentials. Defaults to None.
-        credentials (dict, optional): The credentials as a dictionary. Defaults
-            to None.
 
     Example:
         ```python
@@ -65,10 +62,10 @@ def df_to_databricks(  # noqa: PLR0913, PLR0917
         insert_df_into_databricks()
         ```
     """
-    if not (credentials_secret or config_key or credentials):
+    if not (credentials_secret or config_key):
         raise MissingSourceCredentialsError
 
-    credentials = credentials or get_credentials(credentials_secret)
+    credentials = get_credentials(credentials_secret)
     databricks = Databricks(
         credentials=credentials,
         config_key=config_key,

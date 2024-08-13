@@ -35,23 +35,35 @@ print(df)
 
 The above `df` is a pandas `DataFrame` object. It contains data downloaded by `viadot` from the Carbon Intensity UK API.
 
-## Loading Data to a Source
+## Loading data to a destination
 
-Depending on the source, `viadot` provides different methods of uploading data. For instance, for SQL sources, this would be bulk inserts. For data lake sources, it would be a file upload. For ready-made pipelines including data validation steps using `dbt`, see [prefect-viadot](https://github.com/dyvenia/prefect-viadot).
+Depending on the destination, `viadot` provides different methods of uploading data. For instance, for databases, this would be bulk inserts. For data lakes, it would be file uploads.
+
+For example:
+
+```python hl_lines="2 8-9"
+from viadot.sources import UKCarbonIntensity
+from viadot.sources import AzureDataLake
+
+ukci = UKCarbonIntensity()
+ukci.query("/intensity")
+df = ukci.to_df()
+
+adls = AzureDataLake(config_key="my_adls_creds")
+adls.from_df(df, "my_folder/my_file.parquet")
+```
 
 ## Getting started
 
 ### Prerequisites
 
-We assume that you have [Rye](https://rye-up.com/) installed:
+We use [Rye](https://rye-up.com/). You can install it like so:
 
 ```console
 curl -sSf https://rye-up.com/get | bash
 ```
 
 ### Installation
-
-Clone the `2.0` branch, and set up and run the environment:
 
 ```console
 git clone https://github.com/dyvenia/viadot.git -b 2.0 && \

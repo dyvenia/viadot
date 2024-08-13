@@ -2,14 +2,15 @@
 
 import contextlib
 import json
+from json.decoder import JSONDecodeError
 import logging
 import os
 import sys
 import tempfile
-from json.decoder import JSONDecodeError
 from typing import Any
 
 import anyio
+
 
 with contextlib.suppress(ModuleNotFoundError):
     import awswrangler as wr
@@ -22,6 +23,7 @@ from prefect.settings import PREFECT_API_KEY, PREFECT_API_URL
 from prefect_sqlalchemy import DatabaseCredentials
 
 from viadot.orchestration.prefect.exceptions import MissingPrefectBlockError
+
 
 with contextlib.suppress(ModuleNotFoundError):
     from prefect_azure import AzureKeyVaultSecretReference
@@ -148,7 +150,7 @@ def get_credentials(secret_name: str) -> dict[str, Any]:
     return credentials
 
 
-async def shell_run_command(  # noqa: PLR0913, PLR0917
+async def shell_run_command(
     command: str,
     env: dict[str, Any] | None = None,
     helper_command: str | None = None,
