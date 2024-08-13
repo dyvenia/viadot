@@ -2,7 +2,7 @@ import contextlib
 
 import pandas as pd
 import pytest
-from viadot.exceptions import TableDoesNotExist
+from viadot.exceptions import TableDoesNotExistError
 from viadot.utils import add_viadot_metadata_columns
 
 
@@ -75,7 +75,7 @@ def databricks(databricks_config_key):
 
     yield databricks
 
-    with contextlib.suppress(TableDoesNotExist):
+    with contextlib.suppress(TableDoesNotExistError):
         databricks.drop_table(schema=TEST_SCHEMA, table=TEST_TABLE)
 
     with contextlib.suppress(Exception):

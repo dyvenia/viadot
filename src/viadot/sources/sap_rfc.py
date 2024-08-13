@@ -26,7 +26,7 @@ except ModuleNotFoundError as e:
 from sql_metadata import Parser
 
 from viadot.config import get_source_credentials
-from viadot.exceptions import CredentialError, DataBufferExceeded
+from viadot.exceptions import CredentialError, DataBufferExceededError
 from viadot.sources.base import Source
 from viadot.utils import add_viadot_metadata_columns, validate
 
@@ -609,7 +609,7 @@ class SAPRFC(Source):
                     except ABAPApplicationError as e:
                         if e.key == "DATA_BUFFER_EXCEEDED":
                             msg = "Character limit per row exceeded. Please select fewer columns."
-                            raise DataBufferExceeded(msg) from e
+                            raise DataBufferExceededError(msg) from e
                         raise
                     record_key = "WA"
                     data_raw = response["DATA"]
@@ -1111,7 +1111,7 @@ class SAPRFCV2(Source):
                 except ABAPApplicationError as e:
                     if e.key == "DATA_BUFFER_EXCEEDED":
                         msg = "Character limit per row exceeded. Please select fewer columns."
-                        raise DataBufferExceeded(msg) from e
+                        raise DataBufferExceededError(msg) from e
                     raise
                 # Check and skip if there is no data returned.
                 if response["DATA"]:

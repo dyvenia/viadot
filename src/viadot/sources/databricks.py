@@ -17,7 +17,11 @@ except ModuleNotFoundError as e:
 from pydantic import BaseModel, root_validator
 
 from viadot.config import get_source_credentials
-from viadot.exceptions import CredentialError, TableAlreadyExists, TableDoesNotExist
+from viadot.exceptions import (
+    CredentialError,
+    TableAlreadyExistsError,
+    TableDoesNotExistError,
+)
 from viadot.sources.base import Source
 from viadot.utils import (
     _cast_df_cols,
@@ -319,7 +323,7 @@ class Databricks(Source):
                 self.logger.warning(f"Table {fqn} already exists.")
                 result = False
             elif if_exists == "fail":
-                raise TableAlreadyExists(fqn)
+                raise TableAlreadyExistsError(fqn)
             elif if_exists == "replace":
                 result = self._full_refresh(schema=schema, table=table, df=df)
             else:
@@ -346,7 +350,7 @@ class Databricks(Source):
             table (str): Name of the new table to be created.
 
         Raises:
-            TableDoesNotExist: If the table does not exist.
+            TableDoesNotExistError: If the table does not exist.
 
         Example:
         ```python
@@ -366,7 +370,7 @@ class Databricks(Source):
             result = self.run(f"DROP TABLE {fqn}")
             self.logger.info(f"Table {fqn} has been deleted successfully.")
         else:
-            raise TableDoesNotExist(fqn=fqn)
+            raise TableDoesNotExistError(fqn=fqn)
 
         return result
 

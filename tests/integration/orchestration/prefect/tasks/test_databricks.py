@@ -2,7 +2,7 @@ import contextlib
 
 from prefect import flow
 import pytest
-from viadot.exceptions import TableDoesNotExist
+from viadot.exceptions import TableDoesNotExistError
 
 
 try:
@@ -29,7 +29,7 @@ def databricks() -> Databricks:
 
     yield databricks
 
-    with contextlib.suppress(TableDoesNotExist):
+    with contextlib.suppress(TableDoesNotExistError):
         databricks.drop_table(schema=TEST_SCHEMA, table=TEST_TABLE)
     with contextlib.suppress(Exception):
         databricks.drop_schema(TEST_SCHEMA)

@@ -31,7 +31,7 @@ class CloudForCustomersCredentials(BaseModel):
 
     @classmethod
     @root_validator(pre=True)
-    def is_configured(cls, credentials: dict) -> dict:  # noqa: ANN102
+    def is_configured(cls, credentials: dict) -> dict:
         """Validate Credentials.
 
         Args:

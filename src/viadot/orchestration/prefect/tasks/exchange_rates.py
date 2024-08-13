@@ -4,11 +4,12 @@ from datetime import datetime
 from typing import Any, Literal
 
 import pandas as pd
+from prefect import task
+
 from viadot.orchestration.prefect.exceptions import MissingSourceCredentialsError
 from viadot.orchestration.prefect.utils import get_credentials
 from viadot.sources import ExchangeRates
 
-from prefect import task
 
 Currency = Literal[
     "USD", "EUR", "GBP", "CHF", "PLN", "DKK", "COP", "CZK", "SEK", "NOK", "ISK"
@@ -16,7 +17,7 @@ Currency = Literal[
 
 
 @task(retries=3, retry_delay_seconds=10, timeout_seconds=60 * 60)
-def exchange_rates_to_df(  # noqa: PLR0913, PLR0917
+def exchange_rates_to_df(
     currency: Currency = "USD",
     credentials_secret: str | None = None,
     credentials: dict[str, Any] | None = None,
