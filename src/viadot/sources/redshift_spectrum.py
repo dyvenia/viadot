@@ -1,7 +1,6 @@
 """Amazon Redshift Spectrum connector."""
 
 import os
-from pathlib import Path
 from typing import Literal
 
 import pandas as pd
@@ -196,7 +195,7 @@ class RedshiftSpectrum(Source):
         """
         # Ensure files are in a directory named {table}.
         if not to_path.rstrip("/").endswith(table):
-            to_path = Path(to_path) / table
+            to_path = to_path.rstrip("/") + "/" + table
 
         if extension == ".parquet":
             wr.s3.to_parquet(

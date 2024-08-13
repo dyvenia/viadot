@@ -7,7 +7,7 @@ from viadot.sources import SQLServer
 
 @pytest.fixture()
 def sql_server():
-    # Initialize the SQLServer instance with the test credentials
+    # Initialize the SQLServer instance with the test credentials.
     return SQLServer(config_key="sql_server")
 
 
