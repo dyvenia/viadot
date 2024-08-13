@@ -58,4 +58,4 @@ def test_download_file(sharepoint_url, sharepoint_config_key):
 
     assert file in os.listdir()
 
-    Path(file).unllink()
+    Path(file).unlink()
