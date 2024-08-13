@@ -95,7 +95,9 @@ jobs:
           platforms: linux/amd64
           push: true
           target: viadot-lite
-          tags: ghcr.io/${{ github.repository }}/viadot-lite:${{ steps.var.outputs.tag }}
+          tags: |
+            ghcr.io/${{ github.repository }}/viadot-lite:${{ steps.var.outputs.tag }}
+            ghcr.io/${{ github.repository }}/viadot-lite:latest
 
       - name: Build and publish viadot-aws image
         uses: docker/build-push-action@v6
@@ -105,7 +107,9 @@ jobs:
           platforms: linux/amd64
           push: true
           target: viadot-aws
-          tags: ghcr.io/${{ github.repository }}/viadot-aws:${{ steps.var.outputs.tag }}
+          tags: |
+            ghcr.io/${{ github.repository }}/viadot-aws:${{ steps.var.outputs.tag }}
+            ghcr.io/${{ github.repository }}/viadot-aws:latest
 
       - name: Build and publish viadot-azure image
         uses: docker/build-push-action@v6
@@ -115,5 +119,7 @@ jobs:
           platforms: linux/amd64
           push: true
           target: viadot-azure
-          tags: ghcr.io/${{ github.repository }}/viadot-azure:${{ steps.var.outputs.tag }}
+          tags: |
+            ghcr.io/${{ github.repository }}/viadot-azure:${{ steps.var.outputs.tag }}
+            ghcr.io/${{ github.repository }}/viadot-azure:latest
           build-args: INSTALL_DATABRICKS=false
