@@ -50,8 +50,6 @@ async-timeout==4.0.3
     # via asyncpg
 asyncpg==0.29.0
     # via prefect
-asynctest==0.13.0
-    # via viadot2
 attrs==23.2.0
     # via aiohttp
     # via jsonschema
