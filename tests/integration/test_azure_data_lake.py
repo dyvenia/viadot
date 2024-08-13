@@ -1,6 +1,7 @@
 import pandas as pd
 import pytest
 
+
 try:
     from viadot.sources import AzureDataLake
 

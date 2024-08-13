@@ -131,6 +131,7 @@ ignore = [
     "D101",
     "D417",
     "ANN101",
+    "ANN102", # Type annotation for `cls`.
     "ANN002",
     "ANN003",
     "ANN202", # Return type annotation of private functions.

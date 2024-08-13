@@ -1,4 +1,7 @@
+from contextlib import nullcontext as does_not_raise
+
 import pytest
+
 
 try:
     from viadot.sources import MinIO
@@ -26,14 +29,12 @@ def minio(minio_config_key):
     minio = MinIO(config_key=minio_config_key)
     minio.rm(TEST_TABLE_FILE_PATH)
 
-    yield minio
+    return minio
 
 
 def test_check_connection(minio):
-    try:
+    with does_not_raise():
         minio.check_connection()
-    except Exception as e:
-        assert False, f"Exception:\n{e}"
 
 
 def test_from_df(minio, DF):

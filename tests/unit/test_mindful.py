@@ -30,7 +30,7 @@ class TestMindful(unittest.TestCase):
     """Test Mindful Class."""
 
     @classmethod
-    def setUpClass(cls):  # noqa: ANN206, ANN102
+    def setUpClass(cls):  # noqa: ANN206
         """Defined based Mindful Class for the rest of test."""
         cls.mindful_instance = Mindful(credentials=variables["credentials"])
 

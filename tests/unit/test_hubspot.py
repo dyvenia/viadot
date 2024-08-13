@@ -40,7 +40,7 @@ class TestHubspot(unittest.TestCase):
     """Test Hubspot Class."""
 
     @classmethod
-    def setUpClass(cls):  # noqa: ANN206, ANN102
+    def setUpClass(cls):  # noqa: ANN206
         """Defined based Hubspot Class for the rest of test."""
         cls.hubspot_instance = Hubspot(credentials=variables["credentials"])
 

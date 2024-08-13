@@ -1,13 +1,15 @@
-from viadot.orchestration.prefect.flows import sap_to_parquet
+from pathlib import Path
+
 import pandas as pd
-import os
+from viadot.orchestration.prefect.flows import sap_to_parquet
+
 
 PATH = "test_path.parquet"
 SAP_CREDS = "sap-dev"
 
 
 def test_sap_to_parquet():
-    assert os.path.isfile(PATH) is False
+    assert not Path(PATH).exists()
 
     sap_to_parquet(
         path=PATH,
@@ -17,12 +19,11 @@ def test_sap_to_parquet():
         sap_credentials_secret=SAP_CREDS,
     )
 
-    parquet_file = os.path.isfile(PATH)
-    assert parquet_file is True
+    assert Path(PATH).exists()
 
     df = pd.read_parquet(PATH)
     n_row = 100
     n_col = 5
 
     assert (n_row, n_col) == df.shape
-    os.remove(PATH)
+    Path(PATH).unlink()

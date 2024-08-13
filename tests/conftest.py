@@ -1,9 +1,10 @@
 import os
+from pathlib import Path
 
+from dotenv import load_dotenv
 import pandas as pd
 import pytest
 
-from dotenv import load_dotenv
 
 load_dotenv()
 
@@ -35,31 +36,30 @@ def TEST_CSV_FILE_BLOB_PATH():
 
 @pytest.fixture(scope="session", autouse=True)
 def DF():
-    df = pd.DataFrame.from_dict(
+    return pd.DataFrame.from_dict(
         data={"country": ["italy", "germany", "spain"], "sales": [100, 50, 80]}
     )
-    return df
 
 
 @pytest.fixture(scope="session", autouse=True)
-def create_test_csv_file(DF, TEST_CSV_FILE_PATH):
+def _create_test_csv_file(DF, TEST_CSV_FILE_PATH):
     DF.to_csv(TEST_CSV_FILE_PATH, index=False, sep="\t")
     yield
-    os.remove(TEST_CSV_FILE_PATH)
+    Path(TEST_CSV_FILE_PATH).unlink()
 
 
 @pytest.fixture(scope="session", autouse=True)
-def create_test_parquet_file(DF, TEST_PARQUET_FILE_PATH):
+def _create_test_parquet_file(DF, TEST_PARQUET_FILE_PATH):
     DF.to_parquet(TEST_PARQUET_FILE_PATH, index=False)
     yield
-    os.remove(TEST_PARQUET_FILE_PATH)
+    Path(TEST_PARQUET_FILE_PATH).unlink()
 
 
 @pytest.fixture(scope="session", autouse=True)
-def create_test_parquet_file_2(DF, TEST_PARQUET_FILE_PATH_2):
+def _create_test_parquet_file_2(DF, TEST_PARQUET_FILE_PATH_2):
     DF.to_parquet(TEST_PARQUET_FILE_PATH_2, index=False)
     yield
-    os.remove(TEST_PARQUET_FILE_PATH_2)
+    Path(TEST_PARQUET_FILE_PATH_2).unlink()
 
 
 @pytest.fixture(scope="session", autouse=True)

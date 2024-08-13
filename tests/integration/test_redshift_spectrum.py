@@ -1,7 +1,9 @@
+import contextlib
 import os
 
 import pandas as pd
 import pytest
+
 
 try:
     from viadot.sources import S3, RedshiftSpectrum
@@ -34,22 +36,16 @@ def redshift(redshift_config_key):
 
     yield redshift
 
-    try:
+    with contextlib.suppress(Exception):
         redshift.drop_schema(TEST_SCHEMA, drop_glue_database=True)
-    except Exception:
-        pass
 
-    try:
+    with contextlib.suppress(AttributeError):
         redshift._con.close()
-    except AttributeError:
-        pass
 
 
 @pytest.fixture(scope="session")
 def s3(s3_config_key):
-    s3 = S3(config_key=s3_config_key)
-
-    yield s3
+    return S3(config_key=s3_config_key)
 
 
 def test_create_schema(redshift):
@@ -138,7 +134,7 @@ def test_from_df(redshift, s3):
 
 
 def test_from_df_no_table_folder_in_to_path(redshift, s3):
-    """Test that the table folder is created if it's not specified in `to_path`"""
+    """Test that the table folder is created if it's not specified in `to_path`."""
     # Assumptions.
     table_exists = redshift._check_if_table_exists(
         schema=TEST_SCHEMA,

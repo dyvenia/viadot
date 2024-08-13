@@ -4,6 +4,7 @@ from pathlib import Path
 from viadot.orchestration.prefect.flows import sharepoint_to_s3
 from viadot.sources import S3
 
+
 S3_BUCKET = os.environ.get("S3_BUCKET")
 TEST_SCHEMA = "raw_test"
 TEST_TABLE = "test_sharepoint_to_s3"

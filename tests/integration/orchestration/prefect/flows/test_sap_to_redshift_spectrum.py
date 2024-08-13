@@ -3,6 +3,7 @@ import os
 from viadot.orchestration.prefect.flows import sap_to_redshift_spectrum
 from viadot.sources import RedshiftSpectrum
 
+
 S3_BUCKET = os.environ.get("S3_BUCKET")
 TEST_SCHEMA = "raw_test"
 TEST_TABLE = "test_sap_to_redshift_spectrum"

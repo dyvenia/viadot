@@ -4,6 +4,7 @@ from viadot.orchestration.prefect.flows import (
 )
 from viadot.sources import AzureDataLake, Databricks
 
+
 TEST_SCHEMA = "test_viadot_schema"
 TEST_TABLE = "test"
 

@@ -54,7 +54,7 @@ class TestOutlook(unittest.TestCase):
     """Test Outlook Class."""
 
     @classmethod
-    def setUpClass(cls):  # noqa: ANN206, ANN102
+    def setUpClass(cls):  # noqa: ANN206
         """Defined based Outlook Class for the rest of test."""
         cls.outlook_instance = Outlook(credentials=variables["credentials"])
 

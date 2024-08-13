@@ -1,12 +1,13 @@
+import contextlib
+
 import pandas as pd
 import pytest
-
 from viadot.exceptions import TableDoesNotExist
 from viadot.utils import add_viadot_metadata_columns
 
+
 try:
     from pyspark.sql.utils import AnalysisException
-
     from viadot.sources import Databricks
 
     _databricks_installed = True
@@ -66,33 +67,26 @@ def databricks(databricks_config_key):
         config_key=databricks_config_key,
     )
 
-    try:
+    with contextlib.suppress(Exception):
         databricks.drop_schema(TEST_SCHEMA)
         databricks.drop_table(TEST_TABLE)
-    except Exception:
-        pass
 
     databricks.create_schema(TEST_SCHEMA)
 
     yield databricks
 
-    try:
+    with contextlib.suppress(TableDoesNotExist):
         databricks.drop_table(schema=TEST_SCHEMA, table=TEST_TABLE)
-    except TableDoesNotExist:
-        pass
-    try:
+
+    with contextlib.suppress(Exception):
         databricks.drop_schema(TEST_SCHEMA)
-    except Exception:
-        pass
     databricks.session.stop()
 
 
 @pytest.mark.dependency()
 def test_create_schema(databricks):
-    try:
+    with contextlib.suppress(AnalysisException):
         databricks.drop_schema(TEST_SCHEMA_2)
-    except AnalysisException:
-        pass
 
     exists = databricks._check_if_schema_exists(TEST_SCHEMA_2)
     assert exists is False
@@ -103,10 +97,8 @@ def test_create_schema(databricks):
     exists = databricks._check_if_schema_exists(TEST_SCHEMA_2)
     assert exists is True
 
-    try:
+    with contextlib.suppress(Exception):
         databricks.drop_schema(TEST_SCHEMA_2)
-    except Exception:
-        pass
 
 
 @pytest.mark.dependency(depends=["test_create_schema"])
@@ -137,10 +129,8 @@ def test_create_table(databricks):
     assert exists is True
 
     # Cleanup.
-    try:
+    with contextlib.suppress(Exception):
         databricks.drop_table(schema=TEST_SCHEMA, table=TEST_TABLE)
-    except Exception:
-        pass
 
 
 @pytest.mark.dependency(depends=["test_create_table"])
@@ -170,7 +160,7 @@ def test_to_df(databricks):
         schema=TEST_SCHEMA, table=TEST_TABLE, df=TEST_DF, if_exists="skip"
     )
 
-    df = databricks.to_df(f"SELECT * FROM {FQN}")
+    df = databricks.to_df(f"SELECT * FROM {FQN}")  # noqa: S608
 
     # Note that all `to_df()` methods are decorated with `@add_viadot_metadata_columns`.
     # This means that we need to add the metadata columns to the test DataFrame as well
@@ -181,8 +171,7 @@ def test_to_df(databricks):
             def to_df(self):
                 return TEST_DF
 
-        test_df = Fake().to_df()
-        return test_df
+        return Fake().to_df()
 
     test_df = fake_test_df_to_df()
     assert df.shape == test_df.shape
@@ -193,10 +182,8 @@ def test_to_df(databricks):
 @pytest.mark.dependency()
 def test_create_table_replace(databricks):
     # Setup.
-    try:
+    with contextlib.suppress(Exception):
         databricks.drop_table(schema=TEST_SCHEMA, table=TEST_TABLE)
-    except Exception:
-        pass
 
     exists = databricks._check_if_table_exists(schema=TEST_SCHEMA, table=TEST_TABLE)
     assert exists is False
@@ -254,7 +241,8 @@ def test_snakecase_column_names(databricks):
 
     assert created is True
     retrieved_value = to_df_no_metadata_cols(
-        databricks, query=f"SELECT column_to___snake___case FROM {FQN}"
+        databricks,
+        query=f"SELECT column_to___snake___case FROM {FQN}",  # noqa: S608
     )
     assert list(retrieved_value) == ["column_to___snake___case"]
 
@@ -267,7 +255,8 @@ def test_snakecase_column_names(databricks):
     assert updated is True
 
     retrieved_value_update = to_df_no_metadata_cols(
-        databricks, query=f"SELECT column_to___snake___case_22 FROM {FQN}"
+        databricks,
+        query=f"SELECT column_to___snake___case_22 FROM {FQN}",  # noqa: S608
     )
     assert list(retrieved_value_update) == ["column_to___snake___case_22"]
 
@@ -288,7 +277,7 @@ def test_create_table_from_pandas_handles_mixed_types(databricks):
     databricks.drop_schema(TEST_SCHEMA)
 
 
-# @pytest.mark.dependency(depends=["test_create_table", "test_drop_table", "test_to_df"])
+# @pytest.mark.dependency(depends=["test_create_table", "test_drop_table", "test_to_df"])  # noqa: W505
 # def test_insert_into_append(databricks):
 
 #     databricks.create_table_from_pandas(
@@ -307,7 +296,7 @@ def test_create_table_from_pandas_handles_mixed_types(databricks):
 #     databricks.drop_table(schema=TEST_SCHEMA, table=TEST_TABLE)
 
 
-# @pytest.mark.dependency(depends=["test_create_table", "test_drop_table", "test_to_df"])
+# @pytest.mark.dependency(depends=["test_create_table", "test_drop_table", "test_to_df"])  # noqa: W505
 # def test_insert_into_replace(databricks):
 
 #     databricks.create_table_from_pandas(
@@ -346,7 +335,7 @@ def test_create_table_from_pandas_handles_mixed_types(databricks):
 #         )
 
 
-# @pytest.mark.dependency(depends=["test_create_table", "test_drop_table", "test_to_df"])
+# @pytest.mark.dependency(depends=["test_create_table", "test_drop_table", "test_to_df"])  # noqa: W505
 # def test_upsert(databricks):
 
 #     databricks.create_table_from_pandas(
@@ -395,13 +384,13 @@ def test_create_table_from_pandas_handles_mixed_types(databricks):
 #     databricks.drop_table(schema=TEST_SCHEMA, table=TEST_TABLE)
 
 
-# @pytest.mark.dependency(depends=["test_create_table", "test_drop_table", "test_to_df"])
+# @pytest.mark.dependency(depends=["test_create_table", "test_drop_table", "test_to_df"])  # noqa: W505
 # def test_rollback(databricks):
 
-#     databricks.create_table_from_pandas(schema=TEST_SCHEMA, table=TEST_TABLE, df=TEST_DF)
+#     databricks.create_table_from_pandas(schema=TEST_SCHEMA, table=TEST_TABLE, df=TEST_DF)  # noqa: W505
 
 #     # Get the version of the table before applying any changes
-#     version_number = databricks.get_table_version(schema=TEST_SCHEMA, table=TEST_TABLE)
+#     version_number = databricks.get_table_version(schema=TEST_SCHEMA, table=TEST_TABLE)  # noqa: W505
 
 #     # Append to the table
 #     appended = databricks.insert_into(
@@ -410,7 +399,7 @@ def test_create_table_from_pandas_handles_mixed_types(databricks):
 #     assert appended
 
 #     # Rollback to the previous table version
-#     databricks.rollback(schema=TEST_SCHEMA, table=TEST_TABLE, version_number=version_number)
+#     databricks.rollback(schema=TEST_SCHEMA, table=TEST_TABLE, version_number=version_number)  # noqa: W505
 #     result = databricks.to_df(f"SELECT * FROM {FQN}")
 
 #     assert df.shape == result.shape
