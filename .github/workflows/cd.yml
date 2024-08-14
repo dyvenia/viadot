@@ -71,7 +71,6 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Construct the tag for Docker images
-        id: get_docker_tag
         run: |
           # Strip the "v" prefix for the image tag.
           VERSION=${{ github.ref_name }}
