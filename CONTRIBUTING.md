@@ -2,7 +2,7 @@
 
 ## Installation & set up
 
-Follow instructions in the [README](./README.md#getting-started) to set up your development environment.
+Follow instructions in the [documentation](./docs/getting_started.md) to set up your development environment.
 
 ### VSCode
 
