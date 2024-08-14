@@ -1,4 +1,4 @@
-name: "Publish to PyPI"
+name: "2.0 - Publish to PyPI"
 # Publish a viadot branch to PyPI.
 # The branch is either picked from the dropdown (if the workflow is ran manually),
 # or the branch where the workflow was triggered.
