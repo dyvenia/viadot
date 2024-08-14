@@ -125,14 +125,32 @@ pre-commit install
 
 ## Releasing a new version
 
-In order to release a new version, either add a commit with a version bump to the last PR, or create a specific release PR. To bump the package version, simply run:
+### Bump package version
+
+Before creating a release, either add a commit with a version bump to the last PR included in the release, or create a specific release PR. To bump package version, simply run:
 
 ```console
-rye version x.y.z
+rye version major.minor.patch
 ```
 
-Make sure to follow [semantic versioning](https://semver.org/).
+This will update the version in `pyproject.toml` accordingly.
 
-The merge to `2.0` automatically publishes the `viadot:2.0-latest` image.
+**NOTE**: Make sure to follow [semantic versioning](https://semver.org/).
 
-If required, you can manually [deploy the package to PyPI](https://github.com/dyvenia/viadot/actions/workflows/publish_to_pypi.yml) or [publish the image with another tag](https://github.com/dyvenia/viadot/actions/workflows/docker-publish.yml) (such as a version tag).
+### Release
+
+Once the new version PR is merged to `main`, publish a version tag:
+
+```bash
+viadot_version=v2.1.0
+git switch main && \
+  git pull && \
+  git tag -a $viadot_version -m "Release $viadot_version" && \
+  git push origin $viadot_version
+```
+
+Pushing the tag will trigger the release workflow, which will:
+
+- create a release on GitHub
+- publish the package to PyPI
+- publish Docker images to ghcr.io
