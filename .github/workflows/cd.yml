@@ -5,15 +5,10 @@ on:
     tags:
       - "v2.*.*" # Match tags that begin with "v2".
 
-  workflow_dispatch:
-    inputs:
-      version:
-        description: The release version (vMAJOR.MINOR.PATCH).
-        required: true
-
 jobs:
   build-distribution:
     name: Build distribution 📦
+    timeout-minutes: 5
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -33,6 +28,7 @@ jobs:
 
   publish-to-pypi:
     name: Publish to PyPI 🚀
+    timeout-minutes: 5
     needs:
       - build-distribution
     runs-on: ubuntu-latest
@@ -52,25 +48,12 @@ jobs:
 
   publish-docker-images:
     name: Publish Docker images 🐳
+    timeout-minutes: 15
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-
-      - name: Resolve the version
-        id: var
-        run: |
-          if [ "${{ github.event_name }}" == "push" ]; then
-          version=$(git describe --tags --abbrev=0)
-          elif [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
-          version="${{ github.event.inputs.version }}"
-          fi
-          echo "version=$version" >> $GITHUB_OUTPUT
-          # Strip the "v" prefix for the image tag.
-          tag=$(echo $version | sed -e 's/^v//')
-          echo "tag=$tag" >> $GITHUB_OUTPUT
-        shell: bash
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
@@ -87,6 +70,13 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Construct the tag for Docker images
+        id: get_docker_tag
+        run: |
+          # Strip the "v" prefix for the image tag.
+          VERSION=${{ github.ref_name }}
+          echo "TAG=${VERSION#v}" >> $GITHUB_ENV
+
       - name: Build and publish viadot-lite image
         uses: docker/build-push-action@v6
         with:
@@ -96,7 +86,7 @@ jobs:
           push: true
           target: viadot-lite
           tags: |
-            ghcr.io/${{ github.repository }}/viadot-lite:${{ steps.var.outputs.tag }}
+            ghcr.io/${{ github.repository }}/viadot-lite:${TAG}
             ghcr.io/${{ github.repository }}/viadot-lite:latest
 
       - name: Build and publish viadot-aws image
@@ -108,7 +98,7 @@ jobs:
           push: true
           target: viadot-aws
           tags: |
-            ghcr.io/${{ github.repository }}/viadot-aws:${{ steps.var.outputs.tag }}
+            ghcr.io/${{ github.repository }}/viadot-aws:${TAG}
             ghcr.io/${{ github.repository }}/viadot-aws:latest
 
       - name: Build and publish viadot-azure image
@@ -120,6 +110,19 @@ jobs:
           push: true
           target: viadot-azure
           tags: |
-            ghcr.io/${{ github.repository }}/viadot-azure:${{ steps.var.outputs.tag }}
+            ghcr.io/${{ github.repository }}/viadot-azure:${TAG}
             ghcr.io/${{ github.repository }}/viadot-azure:latest
           build-args: INSTALL_DATABRICKS=false
+
+  create_github_release:
+    name: Create a GitHub release 🔖
+    timeout-minutes: 5
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: Create a release
+        uses: ncipollo/release-action@v1
+        with:
+          generateReleaseNotes: true
