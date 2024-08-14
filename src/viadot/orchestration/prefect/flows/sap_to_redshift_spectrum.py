@@ -1,6 +1,6 @@
 """Flows for downloading data from SAP and uploading it to AWS Redshift Spectrum."""
 
-from typing import Any, Literal
+from typing import Literal
 
 from prefect import flow
 
@@ -24,7 +24,6 @@ def sap_to_redshift_spectrum(  # noqa: PLR0913
     compression: str | None = None,
     aws_sep: str = ",",
     description: str = "test",
-    aws_credentials: dict[str, Any] | None = None,
     aws_secret_name: str = None,
     aws_config_key: str | None = None,
     query: str | None = None,
