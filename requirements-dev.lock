@@ -32,7 +32,7 @@ aiosqlite==0.20.0
     # via prefect
 alembic==1.13.1
     # via prefect
-anyio==3.7.1
+anyio==4.4.0
     # via httpx
     # via prefect
 apprise==1.8.0
@@ -197,9 +197,11 @@ essentials-openapi==1.0.9
     # via neoteroi-mkdocs
 et-xmlfile==1.1.0
     # via openpyxl
-exceptiongroup==1.2.0
+exceptiongroup==1.2.2
     # via anyio
     # via ipython
+    # via prefect
+    # via prefect-aws
     # via pytest
 executing==2.0.1
     # via stack-data
@@ -438,7 +440,7 @@ numpy==1.23.4
     # via pandas
     # via pyarrow
     # via visions
-o365==2.0.18.1
+o365==2.0.36
     # via viadot2
 oauthlib==3.2.2
     # via kubernetes
@@ -491,17 +493,17 @@ pluggy==1.5.0
     # via pytest
 portalocker==2.8.2
     # via msal-extensions
-prefect==2.19.7
+prefect==2.20.1
     # via prefect-aws
     # via prefect-azure
     # via prefect-github
     # via prefect-sqlalchemy
     # via viadot2
-prefect-aws==0.4.18
+prefect-aws==0.4.19
     # via viadot2
 prefect-azure @ git+https://github.com/Trymzet/prefect-azure@f4a400fa997f2ef1f54f4ed4a7ba2edccf4e3da8#egg=prefect-azure
     # via viadot2
-prefect-github==0.2.6
+prefect-github==0.2.7
     # via viadot2
 prefect-sqlalchemy==0.4.3
     # via viadot2
@@ -594,7 +596,6 @@ pytz==2024.1
     # via croniter
     # via dateparser
     # via dbt-core
-    # via o365
     # via pandas
     # via prefect
     # via redshift-connector
@@ -722,8 +723,6 @@ stack-data==0.6.3
     # via ipython
 starkbank-ecdsa==2.2.0
     # via sendgrid
-stringcase==1.2.0
-    # via o365
 tabulate==0.9.0
     # via mkdocs-table-reader-plugin
 tangled-up-in-unicode==0.2.0
@@ -763,6 +762,7 @@ typer==0.12.3
 typing-extensions==4.10.0
     # via aiosqlite
     # via alembic
+    # via anyio
     # via awswrangler
     # via azure-core
     # via azure-keyvault-secrets
@@ -780,6 +780,8 @@ typing-extensions==4.10.0
     # via sqlalchemy
     # via typer
     # via uvicorn
+tzdata==2024.1
+    # via o365
 tzlocal==5.2
     # via dateparser
     # via o365

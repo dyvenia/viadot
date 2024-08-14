@@ -1,14 +1,13 @@
 # Viadot
 
-[![build status](https://github.com/dyvenia/viadot/actions/workflows/build.yml/badge.svg)](https://github.com/dyvenia/viadot/actions/workflows/build.yml)
-[![formatting](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
-[![codecov](https://codecov.io/gh/Trymzet/dyvenia/branch/main/graph/badge.svg?token=k40ALkXbNq)](https://codecov.io/gh/Trymzet/dyvenia)
+[![Rye](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/rye/main/artwork/badge.json)](https://rye.astral.sh)
+[![formatting](https://img.shields.io/badge/style-ruff-41B5BE?style=flat)](https://img.shields.io/badge/style-ruff-41B5BE?style=flat)
 
 ---
 
-**Documentation**: <a href="https://dyvenia.github.io/viadot/" target="_blank">https://dyvenia.github.io/viadot/</a>
+**Documentation**: <a href="https://dyvenia.github.io/viadot/" target="_blank">https://viadot.docs.dyvenia.com</a>
 
-**Source Code**: <a href="https://github.com/dyvenia/viadot" target="_blank">https://github.com/dyvenia/viadot</a>
+**Source Code**: <a href="https://github.com/dyvenia/viadot/tree/2.0" target="_blank">https://github.com/dyvenia/viadot/tree/2.0</a>
 
 ---
 
@@ -66,13 +65,15 @@ curl -sSf https://rye-up.com/get | bash
 ### Installation
 
 ```console
-git clone https://github.com/dyvenia/viadot.git -b 2.0 && \
-  cd viadot && \
-  rye sync
+pip install viadot2
 ```
 
 ### Configuration
 
 In order to start using sources, you must configure them with required credentials. Credentials can be specified either in the viadot config file (by default, `$HOME/.config/viadot/config.yaml`), or passed directly to each source's `credentials` parameter.
 
-You can find specific information about each source's credentials in [the documentation](https://dyvenia.github.io/viadot/references/sql_sources/).
+You can find specific information about each source's credentials in [the documentation](https://viadot.docs.dyvenia.com/references/sources/sql_sources).
+
+### Next steps
+
+Check out the [documentation](https://viadot.docs.dyvenia.com) for more information on how to use `viadot`.

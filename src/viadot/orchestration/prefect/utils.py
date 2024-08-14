@@ -10,16 +10,12 @@ import tempfile
 from typing import Any
 
 import anyio
-
-
-with contextlib.suppress(ModuleNotFoundError):
-    import awswrangler as wr
-
 from anyio import open_process
 from anyio.streams.text import TextReceiveStream
 from prefect.blocks.system import Secret
 from prefect.client.orchestration import PrefectClient
 from prefect.settings import PREFECT_API_KEY, PREFECT_API_URL
+from prefect_aws.secrets_manager import AwsSecret
 from prefect_sqlalchemy import DatabaseCredentials
 
 from viadot.orchestration.prefect.exceptions import MissingPrefectBlockError
@@ -57,7 +53,7 @@ def _get_azure_credentials(secret_name: str) -> dict[str, Any]:
 
 
 def _get_aws_credentials(secret_name: str) -> dict[str, Any] | str:
-    """Retrieve credentials from the Prefect 'AwsCredentials' block document.
+    """Retrieve credentials from the Prefect 'AwsSecret' block document.
 
     Args:
         secret_name (str): The name of the secret to be retrieved.
@@ -65,14 +61,9 @@ def _get_aws_credentials(secret_name: str) -> dict[str, Any] | str:
     Returns:
         dict | str: A dictionary or a string containing the credentials.
     """
-    secret = wr.secretsmanager.get_secret(name=secret_name)
-
-    try:
-        credentials = json.loads(secret)
-    except json.JSONDecodeError:
-        credentials = secret
-
-    return credentials
+    aws_secret_block = AwsSecret.load(secret_name)
+    credentials = aws_secret_block.read_secret()
+    return json.loads(credentials)
 
 
 def _get_secret_credentials(secret_name: str) -> dict[str, Any] | str:
@@ -139,7 +130,7 @@ def get_credentials(secret_name: str) -> dict[str, Any]:
         msg = "The provided secret name is not valid."
         raise MissingPrefectBlockError(msg)
 
-    if block_type == "AwsCredentials":
+    if block_type == "AwsSecret":
         credentials = _get_aws_credentials(secret_name)
     elif block_type == "AzureKeyVaultSecretReference":
         credentials = _get_azure_credentials(secret_name)
@@ -147,6 +138,10 @@ def get_credentials(secret_name: str) -> dict[str, Any]:
         credentials = _get_database_credentials(secret_name)
     elif block_type == "Secret":
         credentials = _get_secret_credentials(secret_name)
+    else:
+        msg = f"The provided secret block type: {block_type} is not supported"
+        raise MissingPrefectBlockError(msg)
+
     return credentials
 
 
