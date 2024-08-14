@@ -1,5 +1,5 @@
 # Publish viadot images with a specified tag.
-name: "Publish Docker images"
+name: "2.0 - Publish Docker images"
 run-name: "Publish viadot-*:${{ github.event.inputs.tag }} images (@${{ github.actor }})"
 
 on:
