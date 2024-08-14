@@ -15,6 +15,8 @@ dependencies = [
     "pydantic>=1.10.9,<1.11.0",
     "aiolimiter>=1.1.0",
     "trino==0.328.*",
+    "Shapely==1.8.0",
+    "imagehash==4.2.1",
     "sqlalchemy==2.0.*",
     "lumacli>=0.1.2, <0.2.0",
     "pygit2>=1.13.3, <1.15.0",
