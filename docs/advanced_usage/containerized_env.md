@@ -24,4 +24,22 @@ docker compose up -d viadot-aws
 
 ## Usage
 
-TODO - describe attaching with VSCode, updating images, etc.
+### Attaching to the container
+
+Once you have a container running, use an IDE like VSCode to attach to it. Alternatively, you can also attach to the container using the CLI:
+
+```bash
+docker exec -it viadot-<distro> bash
+```
+
+### Building a custom image locally
+
+If you need to build a custom image locally, you can do so using standard Docker commands. For example:
+
+```bash
+docker build --target viadot-<distro> --tag viadot-<distro>:<your_tag> -f docker/Dockerfile .
+```
+
+### See also
+
+For more information on working with Docker containers and images, see [Docker documentation](https://docs.docker.com/reference/cli/docker/).
