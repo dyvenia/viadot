@@ -37,15 +37,15 @@ sources:
         region_name: "eu-west-1"
 
   - trino_dev:
-    class: Trino
-    credentials:
-      host: localhost
-      port: 8080
-      user: "my_username"
-      password: "my_password"
-      catalog: "my_catalog"
-      http_scheme: "http"
-      verify: False
+      class: Trino
+      credentials:
+        host: localhost
+        port: 8080
+        user: "my_username"
+        password: "my_password"
+        catalog: "my_catalog"
+        http_scheme: "http"
+        verify: False
 
   - minio_dev:
       class: MinIO
@@ -56,3 +56,34 @@ sources:
         bucket: my_bucket
         secure: True
         verify: False
+
+  - databricks_dev:
+      class: Databricks
+      credentials:
+        host: your_host
+        cluster_id: your_cluster_id
+        token: your_token
+
+  - c4c_dev:
+      class: CloudForCustomers
+      credentials:
+        username: your_username
+        password: your_password
+
+  - outlook_dev:
+      class: Outlook
+      credentials:
+        client_id: your_client_id
+        client_secret: your_client_secret
+        tenant_id: your_tenant_id
+  
+  - hubspot_dev:
+      class: Hubspot
+      credentials:
+        token: your_api_key
+
+  - mindful_dev:
+      class: Mindful
+      credentials:
+        customer_uuid: your_customer_uuid
+        auth_token: your_token

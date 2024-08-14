@@ -158,6 +158,21 @@ def aws_config_key():
 
 
 @pytest.fixture(scope="session", autouse=True)
+def outlook_config_key():
+    return os.environ.get("VIADOT_TEST_OUTLOOK_CONFIG_KEY")
+
+
+@pytest.fixture(scope="session", autouse=True)
+def mindful_config_key():
+    return os.environ.get("VIADOT_TEST_MINDFUL_CONFIG_KEY")
+
+
+@pytest.fixture(scope="session", autouse=True)
+def hubspot_config_key():
+    return os.environ.get("VIADOT_TEST_HUBSPOT_CONFIG_KEY")
+
+
+@pytest.fixture(scope="session", autouse=True)
 def LUMA_URL():
     return os.environ.get("LUMA_URL")
 
