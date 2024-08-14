@@ -61,14 +61,10 @@ def df_to_redshift_spectrum(  # noqa: PLR0913
             that stores AWS credentials. Defaults to None.
         kwargs: The parameters to pass in awswrangler to_parquet/to_csv function.
     """
-    if not (aws_secret_name or credentials or config_key):
+    if not (aws_secret_name or config_key):
         raise MissingSourceCredentialsError
 
-    credentials = (
-        credentials
-        or get_source_credentials(config_key)
-        or get_credentials(aws_secret_name)
-    )
+    credentials = get_source_credentials(config_key) or get_credentials(aws_secret_name)
 
     rs = RedshiftSpectrum(credentials=credentials, config_key=config_key)
 

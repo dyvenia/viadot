@@ -1,6 +1,6 @@
 """Flows for downloading data from SAP and uploading it to AWS Redshift Spectrum."""
 
-from typing import Literal
+from typing import Any, Literal
 
 from prefect import flow
 
