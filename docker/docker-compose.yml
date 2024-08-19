@@ -9,7 +9,7 @@ services:
       # - ${HOME}/.config/viadot/config.yaml:/home/viadot/.config/viadot/config.yaml
       - ../:/home/viadot
     shm_size: "4gb"
-    command: sleep infinity
+    entrypoint: sh ./docker/entrypoint.sh
     restart: "unless-stopped"
   viadot-azure:
     image: ghcr.io/dyvenia/viadot/viadot-azure:latest
@@ -19,7 +19,7 @@ services:
       # - ${HOME}/.config/viadot/config.yaml:/home/viadot/.config/viadot/config.yaml
       - ../:/home/viadot
     shm_size: "4gb"
-    command: sleep infinity
+    entrypoint: sh ./docker/entrypoint.sh
     restart: "unless-stopped"
   viadot-aws:
     image: ghcr.io/dyvenia/viadot/viadot-aws:latest
@@ -29,5 +29,5 @@ services:
       # - ${HOME}/.config/viadot/config.yaml:/home/viadot/.config/viadot/config.yaml
       - ../:/home/viadot
     shm_size: "4gb"
-    command: sleep infinity
+    entrypoint: sh ./docker/entrypoint.sh
     restart: "unless-stopped"
