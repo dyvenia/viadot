@@ -159,7 +159,7 @@ o365==2.0.36
 oauthlib==3.2.2
     # via kubernetes
     # via requests-oauthlib
-openpyxl==3.0.10
+openpyxl==3.1.5
     # via viadot2
 orjson==3.10.7
     # via prefect

@@ -116,7 +116,7 @@ def test_add_viadot_metadata_columns():
     assert "_viadot_source" in df.columns
 
 
-def test___cast_df_cols():
+def test__cast_df_cols():
     test_df = pd.DataFrame(
         {
             "bool_column": [True, False, True, False],
@@ -130,7 +130,9 @@ def test___cast_df_cols():
             "object_column": ["apple", "banana", "melon", "orange"],
         }
     )
-    test_df["datetime_column"] = pd.to_datetime(test_df["datetime_column"])
+    test_df["datetime_column"] = pd.to_datetime(
+        test_df["datetime_column"], format="mixed"
+    )
     result_df = _cast_df_cols(
         test_df, types_to_convert=["datetime", "bool", "int", "object"]
     )

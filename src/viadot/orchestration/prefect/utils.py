@@ -15,7 +15,10 @@ from anyio.streams.text import TextReceiveStream
 from prefect.blocks.system import Secret
 from prefect.client.orchestration import PrefectClient
 from prefect.settings import PREFECT_API_KEY, PREFECT_API_URL
-from prefect_aws.secrets_manager import AwsSecret
+
+
+with contextlib.suppress(ModuleNotFoundError):
+    from prefect_aws.secrets_manager import AwsSecret
 from prefect_sqlalchemy import DatabaseCredentials
 
 from viadot.orchestration.prefect.exceptions import MissingPrefectBlockError
