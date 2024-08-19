@@ -13,13 +13,13 @@ You can use these images to avoid installing any OS dependencies on your local m
 Spin up your container of choice with `docker compose`:
 
 ```bash
-docker compose up -d viadot-<extra>
+docker compose -f docker/docker-compose.yml up -d viadot-<extra>
 ```
 
 For example, to start the `viadot-aws` container:
 
 ```bash
-docker compose up -d viadot-aws
+docker compose -f docker/docker-compose.yml up -d viadot-aws
 ```
 
 ## Usage
