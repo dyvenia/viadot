@@ -2,33 +2,25 @@ from collections import OrderedDict
 
 from viadot.utils import skip_test_on_missing_extra
 
+from .test_sap_rfc import (
+    credentials,
+    sql1,
+    sql2,
+    sql3,
+    sql4,
+    sql5,
+    sql6,
+    sql7,
+)
+
 
 try:
-    from viadot.sources import SAPRFC
+    from viadot.sources import SAPRFCV2
 except ImportError:
-    skip_test_on_missing_extra(source_name="SAPRFC", extra="sap")
+    skip_test_on_missing_extra(source_name="SAPRFCV2", extra="sap")
 
-credentials = {"a": "b"}
 
-sap = SAPRFC(credentials=credentials)
-
-sql1 = "SELECT a AS a_renamed, b FROM table1 WHERE table1.c = 1"
-sql2 = "SELECT a FROM fake_schema.fake_table WHERE a=1 AND b=2 OR c LIKE 'a%' AND d IN (1, 2) LIMIT 5 OFFSET 3"
-sql3 = "SELECT b FROM c WHERE testORword=1 AND testANDword=2 AND testLIMITword=3 AND testOFFSETword=4"
-sql4 = "SELECT c FROM d WHERE testLIMIT = 1 AND testOFFSET = 2 AND LIMITtest=3 AND OFFSETtest=4"
-sql5 = sql3 + " AND longword123=5"
-sql6 = "SELECT a FROM fake_schema.fake_table WHERE a=1 AND b=2 OR c LIKE 'a%' AND d IN (1, 2) AND longcolname=3 AND otherlongcolname=5 LIMIT 5 OFFSET 3"
-sql7 = """
-SELECT a, b
-FROM b
-WHERE c = 1
-AND d = 2
-AND longcolname = 12345
-AND otherlongcolname = 6789
-AND thirdlongcolname = 01234
-LIMIT 5
-OFFSET 10
-"""
+sap = SAPRFCV2(credentials=credentials)
 
 
 def test__get_table_name():
@@ -41,9 +33,10 @@ def test__get_table_name():
 
 def test__get_columns():
     assert sap._get_columns(sql1) == ["a", "b"]
-    assert sap._get_columns(sql1, aliased=True) == ["a_renamed", "b"], sap._get_columns(
-        sql1, aliased=True
-    )
+    assert sap._get_columns(sql1, aliased=True) == [
+        "a_renamed",
+        "b",
+    ], sap._get_columns(sql1, aliased=True)
     assert sap._get_columns(sql2) == ["a"]
     assert sap._get_columns(sql7) == ["a", "b"]
 

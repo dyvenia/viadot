@@ -11,6 +11,7 @@ from typing import TYPE_CHECKING, Any, Literal, Optional
 
 import pandas as pd
 import pyodbc
+import pytest
 import requests
 from requests.adapters import HTTPAdapter
 from requests.exceptions import ConnectionError, HTTPError, ReadTimeout, Timeout
@@ -819,3 +820,17 @@ def validate_and_reorder_dfs_columns(
             dataframes_list[i] = df.loc[:, first_df_columns]
 
     return dataframes_list
+
+
+def skip_test_on_missing_extra(source_name: str, extra: str) -> None:
+    """Skip all tests in a file when a required extra is not installed.
+
+    Args:
+        source_name (str): The name of the source for which dependencies are missing.
+        extra (str): The name of the extra that is missing.
+    """
+    msg = f"Missing required extra '{extra}' for source '{source_name}'."
+    pytest.skip(
+        msg,
+        allow_module_level=True,
+    )

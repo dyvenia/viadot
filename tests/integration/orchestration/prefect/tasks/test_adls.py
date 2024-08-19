@@ -1,18 +1,13 @@
 import pandas as pd
 from prefect import flow, task
-import pytest
 from viadot.orchestration.prefect.tasks import df_to_adls
+from viadot.utils import skip_test_on_missing_extra
 
 
 try:
     from viadot.sources import AzureDataLake
-
-    _adls_installed = True
 except ImportError:
-    _adls_installed = False
-
-if not _adls_installed:
-    pytest.skip("AzureDataLake source not installed", allow_module_level=True)
+    skip_test_on_missing_extra(source_name="AzureDataLake", extra="azure")
 
 
 def test_df_to_adls(TEST_FILE_PATH):

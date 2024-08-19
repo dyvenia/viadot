@@ -74,6 +74,8 @@ with contextlib.suppress(ImportError):
 ...
 ```
 
+In case you're adding task/flow tests, remember to also escape the imports with `viadot.utils.skip_test_on_missing_extra()`!
+
 ## Creating a Prefect flow
 
 Once the tasks are ready, the last step of our development is to define the flow:

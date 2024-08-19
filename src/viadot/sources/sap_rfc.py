@@ -1,4 +1,4 @@
-"""SAP RFC connector."""
+"""SAP RFC connectors."""
 
 from collections import OrderedDict
 from collections import OrderedDict as OrderedDictType

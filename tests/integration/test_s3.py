@@ -3,17 +3,13 @@ import os
 
 import pandas as pd
 import pytest
+from viadot.utils import skip_test_on_missing_extra
 
 
 try:
     from viadot.sources import S3
-
-    _s3_installed = True
 except ImportError:
-    _s3_installed = False
-
-if not _s3_installed:
-    pytest.skip("S3 source not installed", allow_module_level=True)
+    skip_test_on_missing_extra(source_name="S3", extra="aws")
 
 from pathlib import Path
 

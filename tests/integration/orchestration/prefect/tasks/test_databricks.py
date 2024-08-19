@@ -3,17 +3,13 @@ import contextlib
 from prefect import flow
 import pytest
 from viadot.exceptions import TableDoesNotExistError
+from viadot.utils import skip_test_on_missing_extra
 
 
 try:
     from viadot.sources import Databricks
-
-    _databricks_installed = True
 except ImportError:
-    _databricks_installed = False
-
-if not _databricks_installed:
-    pytest.skip("Databricks source not installed", allow_module_level=True)
+    skip_test_on_missing_extra(source_name="Databricks", extra="databricks")
 
 from viadot.orchestration.prefect.tasks import df_to_databricks
 

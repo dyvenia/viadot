@@ -1,17 +1,13 @@
 from contextlib import nullcontext as does_not_raise
 
 import pytest
+from viadot.utils import skip_test_on_missing_extra
 
 
 try:
     from viadot.sources import MinIO
-
-    _minio_installed = True
 except ImportError:
-    _minio_installed = False
-
-if not _minio_installed:
-    pytest.skip("MinIO source not installed", allow_module_level=True)
+    skip_test_on_missing_extra(source_name="MinIO", extra="aws")
 
 
 TEST_BUCKET = "spark"

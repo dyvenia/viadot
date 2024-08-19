@@ -4,17 +4,14 @@ import pandas as pd
 from prefect import flow
 import pytest
 from viadot.orchestration.prefect.tasks import df_to_redshift_spectrum
+from viadot.utils import skip_test_on_missing_extra
 
 
 try:
     from viadot.sources import RedshiftSpectrum
-
-    _redshift_spectrum = True
 except ImportError:
-    _redshift_spectrum = False
+    skip_test_on_missing_extra(source_name="RedshiftSpectrum", extra="aws")
 
-if not _redshift_spectrum:
-    pytest.skip("RedshiftSpectrum source not installed", allow_module_level=True)
 
 S3_BUCKET = os.environ.get("S3_BUCKET")
 TEST_SCHEMA = "raw_test"

@@ -3,19 +3,14 @@ import contextlib
 import pandas as pd
 import pytest
 from viadot.exceptions import TableDoesNotExistError
-from viadot.utils import add_viadot_metadata_columns
+from viadot.utils import add_viadot_metadata_columns, skip_test_on_missing_extra
 
 
 try:
     from pyspark.sql.utils import AnalysisException
     from viadot.sources import Databricks
-
-    _databricks_installed = True
 except ImportError:
-    _databricks_installed = False
-
-if not _databricks_installed:
-    pytest.skip("Databricks source not installed", allow_module_level=True)
+    skip_test_on_missing_extra(source_name="Databricks", extra="databricks")
 
 
 TEST_SCHEMA = "viadot_test_schema"
