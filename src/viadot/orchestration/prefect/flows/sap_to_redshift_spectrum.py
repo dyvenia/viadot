@@ -24,7 +24,7 @@ def sap_to_redshift_spectrum(  # noqa: PLR0913
     compression: str | None = None,
     aws_sep: str = ",",
     description: str = "test",
-    aws_secret_name: str = None,
+    aws_secret_name: str | None = None,
     aws_config_key: str | None = None,
     query: str | None = None,
     sap_sep: str | None = None,
