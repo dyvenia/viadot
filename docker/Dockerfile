@@ -1,4 +1,4 @@
-FROM python:3.12-slim-bullseye AS base
+FROM python:3.10-slim-bullseye AS base
 
 ARG PIP_NO_CACHE_DIR=1
 ARG UV_NO_CACHE=true
@@ -40,11 +40,11 @@ RUN pip install --upgrade pip setuptools
 ENV USER viadot
 ENV HOME="/home/$USER"
 ENV PATH="$HOME/.local/bin:$PATH"
-ENV RYE_HOME="$HOME/rye"
+ENV RYE_HOME="$HOME/.rye"
 ENV PATH="$RYE_HOME/shims:$PATH"
 
 # Install Rye and uv.
-RUN curl -sSf https://rye.astral.sh/get | RYE_TOOLCHAIN_VERSION="3.12" RYE_INSTALL_OPTION="--yes" bash && \
+RUN curl -sSf https://rye.astral.sh/get | RYE_TOOLCHAIN_VERSION="3.10" RYE_INSTALL_OPTION="--yes" bash && \
     rye config --set-bool behavior.use-uv=true
 
 # Fix for old SQL Servers still using TLS < 1.2
@@ -62,16 +62,15 @@ RUN curl https://packages.microsoft.com/keys/microsoft.asc | apt-key add - && \
 
 COPY docker/odbcinst.ini /etc
 
+WORKDIR ${HOME}
+
+COPY --chown=${USER}:${USER} . ./viadot
 
 ###################
 ### viadot-lite ###
 ###################
 
 FROM base as viadot-lite
-
-WORKDIR ${HOME}
-
-COPY --chown=${USER}:${USER} . ./viadot
 
 # Turn off package manager caches.
 ENV PIP_NO_CACHE_DIR=${PIP_NO_CACHE_DIR}
@@ -109,13 +108,9 @@ RUN if [ "$INSTALL_DATABRICKS" = "true" ]; then \
     find /usr/bin/java -type d -exec chmod 777 {} \; ; \
     fi
 
-ENV SPARK_HOME /usr/local/lib/python3.12/site-packages/pyspark
+ENV SPARK_HOME /usr/local/lib/python3.10/site-packages/pyspark
 
 ARG INSTALL_DATABRICKS=false
-
-WORKDIR ${HOME}
-
-COPY --chown=${USER}:${USER} . ./viadot
 
 # Turn off package manager caches.
 ENV PIP_NO_CACHE_DIR=${PIP_NO_CACHE_DIR}
@@ -143,11 +138,6 @@ USER ${USER}
 ##################
 
 FROM base as viadot-aws
-
-
-WORKDIR ${HOME}
-
-COPY --chown=${USER}:${USER} . ./viadot
 
 # Turn off package manager caches.
 ENV PIP_NO_CACHE_DIR=${PIP_NO_CACHE_DIR}

@@ -30,6 +30,9 @@ asgi-lifespan==2.1.0
     # via prefect
 asttokens==2.4.1
     # via stack-data
+async-timeout==4.0.3
+    # via aiohttp
+    # via asyncpg
 asyncpg==0.29.0
     # via prefect
 attrs==24.2.0
@@ -116,7 +119,10 @@ essentials-openapi==1.0.9
 et-xmlfile==1.1.0
     # via openpyxl
 exceptiongroup==1.2.2
+    # via anyio
+    # via ipython
     # via prefect
+    # via pytest
 executing==2.0.1
     # via stack-data
 faker==13.12.1
@@ -309,7 +315,7 @@ nest-asyncio==1.6.0
     # via ipykernel
 networkx==3.3
     # via visions
-numpy==2.1.0
+numpy==1.23.4
     # via imagehash
     # via pandas
     # via pyarrow
@@ -322,7 +328,7 @@ o365==2.0.36
 oauthlib==3.2.2
     # via kubernetes
     # via requests-oauthlib
-openpyxl==3.1.5
+openpyxl==3.0.10
     # via viadot2
 orjson==3.10.7
     # via prefect
@@ -335,7 +341,7 @@ packaging==24.1
     # via pytest
 paginate==0.5.6
     # via mkdocs-material
-pandas==2.2.2
+pandas==1.5.1
     # via mkdocs-table-reader-plugin
     # via viadot2
     # via visions
@@ -346,7 +352,7 @@ parso==0.8.4
 pathspec==0.12.1
     # via mkdocs
     # via prefect
-pendulum==3.0.0
+pendulum==2.1.2
     # via prefect
 pexpect==4.9.0
     # via ipython
@@ -378,7 +384,7 @@ ptyprocess==0.7.0
     # via pexpect
 pure-eval==0.2.3
     # via stack-data
-pyarrow==17.0.0
+pyarrow==10.0.1
     # via viadot2
 pyasn1==0.6.0
     # via pyasn1-modules
@@ -423,7 +429,6 @@ python-dateutil==2.9.0.post0
     # via pandas
     # via pendulum
     # via prefect
-    # via time-machine
     # via trino
 python-dotenv==1.0.1
 python-http-client==3.3.7
@@ -438,6 +443,8 @@ pytz==2024.1
     # via pandas
     # via prefect
     # via trino
+pytzdata==2020.1
+    # via pendulum
 pywavelets==1.7.0
     # via imagehash
 pyyaml==6.0.2
@@ -500,13 +507,12 @@ ruamel-yaml==0.18.6
 ruamel-yaml-clib==0.2.8
     # via ruamel-yaml
 ruff==0.6.1
-scipy==1.14.0
+scipy==1.13.1
     # via imagehash
 sendgrid==6.11.0
     # via viadot2
 setuptools==72.2.0
     # via mkdocs-mermaid2-plugin
-    # via pygit2
 sgqlc==16.3
     # via prefect-github
 shapely==2.0.5
@@ -546,16 +552,20 @@ starkbank-ecdsa==2.2.0
     # via sendgrid
 tabulate==0.9.0
     # via mkdocs-table-reader-plugin
+tangled-up-in-unicode==0.2.0
+    # via visions
 text-unidecode==1.3
     # via python-slugify
-time-machine==2.15.0
-    # via pendulum
 tinycss2==1.3.0
     # via cairosvg
     # via cssselect2
     # via nbconvert
 toml==0.10.2
     # via prefect
+tomli==2.0.1
+    # via coverage
+    # via jupytext
+    # via pytest
 tornado==6.4.1
     # via ipykernel
     # via jupyter-client
@@ -577,15 +587,16 @@ typer==0.12.4
 typing-extensions==4.12.2
     # via aiosqlite
     # via alembic
+    # via anyio
+    # via ipython
     # via prefect
     # via pydantic
     # via pydantic-core
     # via sqlalchemy
     # via typer
+    # via uvicorn
 tzdata==2024.1
     # via o365
-    # via pandas
-    # via pendulum
 tzlocal==5.2
     # via dateparser
     # via o365
@@ -600,7 +611,7 @@ uvicorn==0.30.6
     # via prefect
 verspec==0.1.0
     # via mike
-visions==0.7.6
+visions==0.7.5
     # via viadot2
 watchdog==4.0.2
     # via mkdocs
