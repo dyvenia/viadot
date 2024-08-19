@@ -315,13 +315,14 @@ nest-asyncio==1.6.0
     # via ipykernel
 networkx==3.3
     # via visions
-numpy==2.1.0
+numpy==1.26.4
     # via imagehash
     # via pandas
     # via pyarrow
     # via pywavelets
     # via scipy
     # via shapely
+    # via viadot2
     # via visions
 o365==2.0.36
     # via viadot2
