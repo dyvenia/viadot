@@ -76,19 +76,20 @@ Commit messages should:
 - start with one of the following verbs, capitalized, immediately after the summary emoji: "Add", "Update", "Remove", "Fix", "Rename", and, sporadically, other ones, such as "Upgrade", "Downgrade", or whatever you find relevant for your particular situation
 - contain a useful summary of what the commit is doing
 
-   See [this article](https://www.freecodecamp.org/news/how-to-write-better-git-commit-messages/) to understand the basics of commit naming.
+  See [this article](https://www.freecodecamp.org/news/how-to-write-better-git-commit-messages/) to understand the basics of commit naming.
 
 ## Submitting a PR
 
 1. [Fork the repo](https://github.com/dyvenia/viadot/fork)
 2. Uncheck the "Copy the `main` branch only" box
-3 Follow the setup outlined above
+3. Follow the setup outlined above
 4. Checkout a new branch
 
    ```console
    # Make sure that your base branch is `2.0`.
    git switch 2.0 && git checkout -b <name>
    ```
+
 5. Add your changes
 6. Sync your fork with the `dyvenia` repo
 
@@ -98,11 +99,13 @@ Commit messages should:
    git switch 2.0
    git rebase upstream/2.0
    ```
+
 7. Push the changes to your fork
 
    ```console
    git push --force
    ```
+
 8. [Submit a PR](https://github.com/dyvenia/viadot/compare/2.0...main) into the `2.0` branch.
 
    Make sure to read & check all relevant checkboxes in the PR description!
