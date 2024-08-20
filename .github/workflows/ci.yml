@@ -45,7 +45,7 @@ jobs:
       - name: Install dependencies
         run: |
           rye config --set-bool behavior.use-uv=true
-          rye sync --no-lock
+          rye sync --no-lock --features=aws
 
       - name: Run tests
         run: rye run coverage run --branch -m pytest tests/unit -vv

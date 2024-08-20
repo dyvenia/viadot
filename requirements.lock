@@ -201,7 +201,7 @@ pydantic==1.10.17
     # via lumacli
     # via prefect
     # via viadot2
-pydantic-core==2.22.0
+pydantic-core==2.23.0
     # via prefect
 pygit2==1.14.1
     # via viadot2
@@ -281,7 +281,7 @@ sendgrid==6.11.0
     # via viadot2
 sgqlc==16.3
     # via prefect-github
-shapely==2.0.5
+shapely==2.0.6
     # via viadot2
 sharepy==2.0.0
     # via viadot2
