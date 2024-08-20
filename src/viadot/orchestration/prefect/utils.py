@@ -74,8 +74,11 @@ def _get_aws_credentials(
     """
     if block_type == "AwsSecret":
         aws_secret_block = AwsSecret.load(secret_name)
-        credentials = aws_secret_block.read_secret()
-        credentials = json.loads(credentials)
+        secret = aws_secret_block.read_secret()
+        try:
+            credentials = json.loads(secret)
+        except json.JSONDecodeError:
+            credentials = secret
     elif block_type == "AwsCredentials":
         aws_credentials_block = AwsCredentials.load(secret_name)
         credentials = {
