@@ -1,11 +1,11 @@
 """Flows for downloading data from SAP to Parquet file."""
 
-from typing import Any, Literal
+from typing import Literal
+
+from prefect import flow
 
 from viadot.orchestration.prefect.tasks import sap_rfc_to_df
 from viadot.orchestration.prefect.tasks.task_utils import df_to_parquet
-
-from prefect import flow
 
 
 @flow(
@@ -14,7 +14,7 @@ from prefect import flow
     retries=1,
     retry_delay_seconds=60,
 )
-def sap_to_parquet(
+def sap_to_parquet(  # noqa: PLR0913
     path: str,
     if_exists: Literal["append", "replace", "skip"] = "replace",
     query: str | None = None,
@@ -32,8 +32,8 @@ def sap_to_parquet(
     Args:
         path (str): Path to Parquet file, where the data will be located.
             Defaults to None.
-        if_exists (Literal["append", "replace", "skip"], optional): Information what has to be done,
-            if the file exists. Defaults to "replace"
+        if_exists (Literal["append", "replace", "skip"], optional): What to do if the
+            file exists. Defaults to "replace".
         query (str): The query to be executed with pyRFC.
         sap_sep (str, optional): The separator to use when reading query results.
             If not provided, multiple options are automatically tested.
@@ -42,17 +42,18 @@ def sap_to_parquet(
         rfc_total_col_width_character_limit (int, optional): Number of characters by
             which query will be split in chunks in case of too many columns for RFC
             function. According to SAP documentation, the limit is 512 characters.
-            However, it was observed that SAP raising an exception even on a slightly lower
-            number of characters, so safety margin was added. Defaults to 400.
+            However, it was observed that SAP raising an exception even on a slightly
+            lower number of characters, so safety margin was added. Defaults to 400.
         rfc_unique_id  (list[str], optional): Reference columns to merge chunks Data
-            Frames. These columns must to be unique. Otherwise, the table will be malformed.
-            If no columns are provided, all data frame columns will by concatenated. Defaults to None.
-        sap_credentials_secret (str, optional): The name of the Prefect Secret that stores
-            SAP credentials. Defaults to None.
+            Frames. These columns must to be unique. Otherwise, the table will be
+            malformed. If no columns are provided, all data frame columns will be
+            concatenated. Defaults to None.
+        sap_credentials_secret (str, optional): The name of the Prefect Secret that
+            stores SAP credentials. Defaults to None.
         sap_config_key (str, optional): The key in the viadot config holding relevant
             credentials. Defaults to "SAP".
-        alternative_version (bool, optional): If true, enables the use of SAPRFC source in version 2.
-            Defaults to False.
+        alternative_version (bool, optional): If true, enables the use of SAPRFC source
+            in version 2. Defaults to False.
         replacement (str, optional): In case of sep is on a columns, set up a new
             character to replace inside the string to avoid flow breakdowns.
             Defaults to "-".

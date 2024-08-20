@@ -1,34 +1,33 @@
 version: "3"
 
 services:
-  viadot_2_lite:
-    image: ghcr.io/dyvenia/viadot/viadot-lite:2.0.0-beta.1
-    container_name: viadot_2_lite
+  viadot-lite:
+    image: ghcr.io/dyvenia/viadot/viadot-lite:latest
+    container_name: viadot-lite
     volumes:
       # - ${HOME}/.databricks-connect:/home/viadot/.databricks-connect
       # - ${HOME}/.config/viadot/config.yaml:/home/viadot/.config/viadot/config.yaml
       - ../:/home/viadot
     shm_size: "4gb"
-    command: sleep infinity
+    entrypoint: sh ./docker/entrypoint.sh
     restart: "unless-stopped"
-  viadot_2_azure:
-    image: ghcr.io/dyvenia/viadot/viadot-azure:2.0.0-beta.1
-    container_name: viadot_2_azure
+  viadot-azure:
+    image: ghcr.io/dyvenia/viadot/viadot-azure:latest
+    container_name: viadot-azure
     volumes:
       # - ${HOME}/.databricks-connect:/home/viadot/.databricks-connect
       # - ${HOME}/.config/viadot/config.yaml:/home/viadot/.config/viadot/config.yaml
       - ../:/home/viadot
     shm_size: "4gb"
-    command: sleep infinity
+    entrypoint: sh ./docker/entrypoint.sh
     restart: "unless-stopped"
-  viadot_2_aws:
-    image: ghcr.io/dyvenia/viadot/viadot-aws:2.0.0-beta.1
-    container_name: viadot_2_aws
+  viadot-aws:
+    image: ghcr.io/dyvenia/viadot/viadot-aws:latest
+    container_name: viadot-aws
     volumes:
       # - ${HOME}/.databricks-connect:/home/viadot/.databricks-connect
       # - ${HOME}/.config/viadot/config.yaml:/home/viadot/.config/viadot/config.yaml
       - ../:/home/viadot
     shm_size: "4gb"
-    command: sleep infinity
+    entrypoint: sh ./docker/entrypoint.sh
     restart: "unless-stopped"
-

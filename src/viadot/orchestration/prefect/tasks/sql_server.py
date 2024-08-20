@@ -1,25 +1,29 @@
+"""Prefect tasks for working with SQL Server."""
+
 from typing import Any, Literal
 
+import pandas as pd
 from prefect import task
 from prefect.logging import get_run_logger
 
-from viadot.sources.sql_server import SQLServer
 from viadot.config import get_source_credentials
-from viadot.orchestration.prefect.utils import get_credentials
 from viadot.orchestration.prefect.exceptions import MissingSourceCredentialsError
+from viadot.orchestration.prefect.utils import get_credentials
+from viadot.sources.base import Record
+from viadot.sources.sql_server import SQLServer
 
 
 @task(retries=3, retry_delay_seconds=10, timeout_seconds=60 * 60 * 3)
 def create_sql_server_table(
-    schema: str = None,
-    table: str = None,
-    dtypes: dict[str, Any] = None,
+    schema: str | None = None,
+    table: str | None = None,
+    dtypes: dict[str, Any] | None = None,
     if_exists: Literal["fail", "replace", "skip", "delete"] = "fail",
     credentials_secret: str | None = None,
     credentials: dict[str, Any] | None = None,
     config_key: str | None = None,
-):
-    """A task for creating table in SQL Server.
+) -> None:
+    """Create a table in SQL Server.
 
     Args:
         schema (str, optional): Destination schema.
@@ -34,7 +38,6 @@ def create_sql_server_table(
         config_key (str, optional): The key in the viadot config holding relevant
             credentials. Defaults to None.
     """
-
     if not (credentials_secret or credentials or config_key):
         raise MissingSourceCredentialsError
 
@@ -65,13 +68,12 @@ def sql_server_to_df(
     credentials_secret: str | None = None,
     credentials: dict[str, Any] | None = None,
     config_key: str | None = None,
-):
-    """
-    Load the result of a SQL Server Database query into a pandas DataFrame.
+) -> pd.DataFrame:
+    """Execute a query and load the result into a pandas DataFrame.
 
     Args:
         query (str, required): The query to execute on the SQL Server database.
-            If the qery doesn't start with "SELECT" returns an empty DataFrame.
+            If the query doesn't start with "SELECT" returns an empty DataFrame.
         credentials (dict[str, Any], optional): Credentials to the SQLServer.
             Defaults to None.
         credentials_secret (str, optional): The name of the secret storing
@@ -79,7 +81,6 @@ def sql_server_to_df(
             More info on: https://docs.prefect.io/concepts/blocks/
         config_key (str, optional): The key in the viadot config holding relevant
             credentials. Defaults to None.
-
     """
     if not (credentials_secret or credentials or config_key):
         raise MissingSourceCredentialsError
@@ -108,9 +109,8 @@ def sql_server_query(
     credentials_secret: str | None = None,
     credentials: dict[str, Any] | None = None,
     config_key: str | None = None,
-):
-    """
-    Ran query on SQL Server.
+) -> list[Record] | bool:
+    """Execute a query on SQL Server.
 
     Args:
         query (str, required): The query to execute on the SQL Server database.
@@ -136,5 +136,5 @@ def sql_server_query(
     sql_server = SQLServer(credentials=credentials)
     result = sql_server.run(query)
 
-    logger.info(f"Successfully ran the query.")
+    logger.info("Successfully ran the query.")
     return result

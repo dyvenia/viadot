@@ -1,5 +1,8 @@
 FROM python:3.10-slim-bullseye AS base
 
+ARG PIP_NO_CACHE_DIR=1
+ARG UV_NO_CACHE=true
+
 # Add user
 RUN useradd --non-unique --uid 1000 --create-home viadot && \
     chown -R viadot /home/viadot && \
@@ -16,22 +19,28 @@ RUN groupadd docker && \
     usermod -aG docker viadot
 
 # System packages
-RUN apt update -q && yes | apt install -q  gnupg vim curl git unixodbc
-ENV PIP_NO_CACHE_DIR=1
+# unixodbc: used by pyodbc
+# libgeos-dev: used by Shapely
+# gcc: used by pandas
+RUN apt update -q && yes | apt install -q gnupg vim curl git unixodbc libgeos-dev gcc
+
+# Turn off package manager caches.
+ENV PIP_NO_CACHE_DIR=${PIP_NO_CACHE_DIR}
+ENV UV_NO_CACHE=${UV_NO_CACHE}
 
 # This one's needed for the SAP RFC connector.
-# It must be installed here as the SAP package does not define its dependencies,
+# It must be installed here as the `pyrfc` does not define its dependencies,
 # so `pip install pyrfc` breaks if all deps are not already present.
 RUN pip install cython==0.29.24
 
 # Python env
-RUN pip install --upgrade pip
+RUN pip install --upgrade pip setuptools
 
 
 ENV USER viadot
 ENV HOME="/home/$USER"
 ENV PATH="$HOME/.local/bin:$PATH"
-ENV RYE_HOME="$HOME/rye"
+ENV RYE_HOME="$HOME/.rye"
 ENV PATH="$RYE_HOME/shims:$PATH"
 
 # Install Rye and uv.
@@ -47,11 +56,36 @@ RUN curl https://packages.microsoft.com/keys/microsoft.asc | apt-key add - && \
     curl https://packages.microsoft.com/config/debian/10/prod.list > /etc/apt/sources.list.d/mssql-release.list && \
     apt update -q && \
     apt install -q libsqliteodbc && \
-    ACCEPT_EULA=Y apt install -q -y msodbcsql17=17.8.1.1-1 && \
-    ACCEPT_EULA=Y apt install -q -y mssql-tools && \
+    ACCEPT_EULA=Y apt install -q -y msodbcsql17=17.10.1.1-1 && \
+    ACCEPT_EULA=Y apt install -q -y mssql-tools=17.10.1.1-1 && \
     echo 'export PATH="$PATH:/opt/mssql-tools/bin"' >> ~/.bashrc
 
 COPY docker/odbcinst.ini /etc
+
+WORKDIR ${HOME}
+
+COPY --chown=${USER}:${USER} . ./viadot
+
+###################
+### viadot-lite ###
+###################
+
+FROM base as viadot-lite
+
+# Turn off package manager caches.
+ENV PIP_NO_CACHE_DIR=${PIP_NO_CACHE_DIR}
+ENV UV_NO_CACHE=${UV_NO_CACHE}
+
+RUN rye lock --reset --features viadot-lite --pyproject viadot/pyproject.toml
+RUN sed '/-e/d' ./viadot/requirements.lock > ./viadot/requirements.txt
+RUN pip install -r ./viadot/requirements.txt
+
+RUN pip install ./viadot/
+
+# Cleanup.
+RUN rm -rf ./viadot
+
+USER ${USER}
 
 
 ####################
@@ -78,48 +112,26 @@ ENV SPARK_HOME /usr/local/lib/python3.10/site-packages/pyspark
 
 ARG INSTALL_DATABRICKS=false
 
-WORKDIR ${HOME}
+# Turn off package manager caches.
+ENV PIP_NO_CACHE_DIR=${PIP_NO_CACHE_DIR}
+ENV UV_NO_CACHE=${UV_NO_CACHE}
 
-COPY --chown=${USER}:${USER} . ./viadot
-
-RUN rye lock --reset --features viadot-azure --pyproject viadot/pyproject.toml
+RUN rye lock --reset --features azure --pyproject viadot/pyproject.toml
 RUN sed '/-e/d' ./viadot/requirements.lock > ./viadot/requirements.txt
-RUN pip install --no-cache-dir -r ./viadot/requirements.txt
+RUN pip install -r ./viadot/requirements.txt
 
 RUN if [ "$INSTALL_DATABRICKS" = "true" ]; then \
     pip install ./viadot/.[databricks]; \
     fi
 
 # Dependecy install
-RUN pip install ./viadot/.[viadot-azure]
+RUN pip install ./viadot/.[azure]
 
 # Cleanup.
 RUN rm -rf ./viadot
 
 USER ${USER}
 
-
-###################
-### viadot-lite ###
-###################
-
-FROM base as viadot-lite
-
-WORKDIR ${HOME}
-
-COPY --chown=${USER}:${USER} . ./viadot
-
-RUN rye lock --reset --features viadot-lite --pyproject viadot/pyproject.toml
-RUN sed '/-e/d' ./viadot/requirements.lock > ./viadot/requirements.txt
-RUN pip install --no-cache-dir -r ./viadot/requirements.txt
-
-# Dependecy install
-RUN pip install ./viadot/
-
-# Cleanup.
-RUN rm -rf ./viadot
-
-USER ${USER}
 
 ##################
 ### viadot-aws ###
@@ -127,21 +139,17 @@ USER ${USER}
 
 FROM base as viadot-aws
 
+# Turn off package manager caches.
+ENV PIP_NO_CACHE_DIR=${PIP_NO_CACHE_DIR}
+ENV UV_NO_CACHE=${UV_NO_CACHE}
 
-WORKDIR ${HOME}
-
-COPY --chown=${USER}:${USER} . ./viadot
-
-RUN rye lock --reset --features viadot-aws --pyproject viadot/pyproject.toml
+RUN rye lock --reset --features aws --pyproject viadot/pyproject.toml
 RUN sed '/-e/d' ./viadot/requirements.lock > ./viadot/requirements.txt
-RUN pip install --no-cache-dir -r ./viadot/requirements.txt
+RUN pip install -r ./viadot/requirements.txt
 
-# Dependecy install
-RUN pip install ./viadot/.[viadot-aws]
+RUN pip install ./viadot/.[aws]
 
 # Cleanup.
 RUN rm -rf ./viadot
 
 USER ${USER}
-
-

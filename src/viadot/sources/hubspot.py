@@ -1,55 +1,11 @@
-"""
-'hubspot.py'.
+"""Hubspot API connector."""
 
-Structure for the Hubspot API connector.
-
-This module provides functionalities for connecting to Hubspot API and download
-
-the response. It includes the following features:
-- Direct connection to Hubspot API.
-- Introduce any downloaded data into a Pandas Data Frame.
-
-Typical usage example:
-
-    hubspot = Hubspot(
-        credentials=credentials,
-        config_key=config_key,
-    )
-    hubspot.api_connection(
-        endpoint=endpoint,
-        filters=filters,
-        properties=properties,
-        nrows=nrows,
-    )
-    data_frame = hubspot.to_df()
-
-Hubspot Class Attributes:
-
-    credentials (Optional[HubspotCredentials], optional): Hubspot credentials.
-        Defaults to None.
-    config_key (str, optional): The key in the viadot config holding relevant
-        credentials. Defaults to "hubspot".
-
-Functions:
-
-    api_connection(endpoint, filters, properties): General method to connect to Hubspot
-        API and generate the response.
-    to_df(if_empty): Generate a Pandas Data Frame with the data in the Response object,
-        and metadata.
-
-Classes:
-
-    HubspotCredentials: Checking for values in Hubspot credentials dictionary.
-    Hubspot: Class implementing the Hubspot API.
-"""  # noqa: D412
-
+from datetime import datetime
 import json
 import re
-from datetime import datetime
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
 import pandas as pd
-from colorama import Fore, Style
 from pydantic import BaseModel
 
 from viadot.config import get_source_credentials
@@ -59,11 +15,10 @@ from viadot.utils import add_viadot_metadata_columns, handle_api_response
 
 
 class HubspotCredentials(BaseModel):
-    """
-    Checking for values in Hubspot credentials dictionary.
+    """Checking for values in Hubspot credentials dictionary.
 
     One key value is held in the Hubspot connector:
-        - token: The unique string characters to be indentified.
+        - token: The unique string characters to be identified.
 
     Args:
         BaseModel (pydantic.main.ModelMetaclass): A base class for creating
@@ -74,8 +29,7 @@ class HubspotCredentials(BaseModel):
 
 
 class Hubspot(Source):
-    """
-    A class that connects and extracts data from Hubspot API.
+    """A class that connects and extracts data from Hubspot API.
 
     Documentation is available here:
         https://developers.hubspot.com/docs/api/crm/understanding-the-crm.
@@ -91,12 +45,11 @@ class Hubspot(Source):
     def __init__(
         self,
         *args,
-        credentials: Optional[HubspotCredentials] = None,
+        credentials: HubspotCredentials | None = None,
         config_key: str = "hubspot",
         **kwargs,
     ):
-        """
-        Create an instance of Hubspot.
+        """Create an instance of Hubspot.
 
         Args:
             credentials (Optional[HubspotCredentials], optional): Hubspot credentials.
@@ -104,13 +57,27 @@ class Hubspot(Source):
             config_key (str, optional): The key in the viadot config holding relevant
                 credentials. Defaults to "hubspot".
 
+        Examples:
+            hubspot = Hubspot(
+                credentials=credentials,
+                config_key=config_key,
+            )
+            hubspot.api_connection(
+                endpoint=endpoint,
+                filters=filters,
+                properties=properties,
+                nrows=nrows,
+            )
+            data_frame = hubspot.to_df()
+
         Raises:
             CredentialError: If credentials are not provided in local_config or
                 directly as a parameter.
         """
         credentials = credentials or get_source_credentials(config_key) or None
         if credentials is None:
-            raise CredentialError("Missing credentials.")
+            msg = "Missing credentials."
+            raise CredentialError(msg)
         self.credentials = credentials
 
         validated_creds = dict(HubspotCredentials(**credentials))
@@ -118,9 +85,8 @@ class Hubspot(Source):
 
         self.full_dataset = None
 
-    def _date_to_unixtimestamp(self, date: Optional[str] = None) -> int:
-        """
-        Convert date from "yyyy-mm-dd" to Unix Timestamp.
+    def _date_to_unixtimestamp(self, date: str | None = None) -> int:
+        """Convert date from "yyyy-mm-dd" to Unix Timestamp.
 
         (SECONDS SINCE JAN 01 1970. (UTC)). For example:
                 1680774921 SECONDS SINCE JAN 01 1970. (UTC) -> 11:55:49 AM 2023-04-06.
@@ -132,18 +98,15 @@ class Hubspot(Source):
         Returns:
             int: Number of seconds that passed since 1970-01-01 until "date".
         """
-        clean_date = int(datetime.timestamp(datetime.strptime(date, "%Y-%m-%d")) * 1000)
-
-        return clean_date
+        return int(datetime.timestamp(datetime.strptime(date, "%Y-%m-%d")) * 1000)
 
     def _get_api_url(
         self,
-        endpoint: Optional[str] = None,
-        filters: Optional[Dict[str, Any]] = None,
-        properties: Optional[List[Any]] = None,
+        endpoint: str | None = None,
+        filters: dict[str, Any] | None = None,
+        properties: list[Any] | None = None,
     ) -> str:
-        """
-        Generates full url for Hubspot API given filters and parameters.
+        """Generates full url for Hubspot API given filters and parameters.
 
         Args:
             endpoint (Optional[str], optional): API endpoint for an individual request.
@@ -158,26 +121,24 @@ class Hubspot(Source):
         """
         if self.API_URL in endpoint:
             url = endpoint
+        elif endpoint.startswith("hubdb"):
+            url = f"{self.API_URL}/{endpoint}"
         else:
-            if endpoint.startswith("hubdb"):
-                url = f"{self.API_URL}/{endpoint}"
+            if filters:
+                url = f"{self.API_URL}/crm/v3/objects/{endpoint}/search/?limit=100&"
             else:
-                if filters:
-                    url = f"{self.API_URL}/crm/v3/objects/{endpoint}/search/?limit=100&"
-                else:
-                    url = f"{self.API_URL}/crm/v3/objects/{endpoint}/?limit=100&"
+                url = f"{self.API_URL}/crm/v3/objects/{endpoint}/?limit=100&"
 
-                if properties and len(properties) > 0:
-                    url += f'properties={",".join(properties)}&'
+            if properties and len(properties) > 0:
+                url += f'properties={",".join(properties)}&'
 
         return url
 
     def _format_filters(
         self,
-        filters: Optional[List[Dict[str, Any]]],
-    ) -> List[Dict[str, Any]]:
-        """
-        API body (filters) conversion from a user defined to API language.
+        filters: list[dict[str, Any]] | None,
+    ) -> list[dict[str, Any]]:
+        """API body (filters) conversion from a user defined to API language.
 
         Note: Right now only converts date to Unix Timestamp.
 
@@ -198,14 +159,14 @@ class Hubspot(Source):
 
         return filters
 
-    def _get_api_body(self, filters: List[Dict[str, Any]]):
-        """
-        Clean the filters body and converts to a JSON formatted value.
+    def _get_api_body(self, filters: list[dict[str, Any]]):
+        """Clean the filters body and converts to a JSON formatted value.
 
         Args:
             filters (List[Dict[str, Any]]): Filters dictionary that will be passed to
                 Hubspot API. Defaults to {}.
-                Example:
+
+        Example:
                     filters = {
                                 "filters": [
                                     {
@@ -241,18 +202,15 @@ class Hubspot(Source):
         Returns:
             Dict: Filters with a JSON format.
         """
-        payload = json.dumps({"filterGroups": filters, "limit": 100})
-
-        return payload
+        return json.dumps({"filterGroups": filters, "limit": 100})
 
     def _api_call(
         self,
-        url: Optional[str] = None,
-        body: Optional[str] = None,
-        method: Optional[str] = None,
-    ) -> Optional[Dict]:
-        """
-        General method to connect to Hubspot API and generate the response.
+        url: str | None = None,
+        body: str | None = None,
+        method: str | None = None,
+    ) -> dict | None:
+        """General method to connect to Hubspot API and generate the response.
 
         Args:
             url (Optional[str], optional): Hubspot API url. Defaults to None.
@@ -275,20 +233,18 @@ class Hubspot(Source):
             url=url, headers=headers, data=body, method=method
         )
 
-        if response.status_code == 200:
+        response_ok = 200
+        if response.status_code == response_ok:
             return response.json()
 
-        print(
-            f"{Fore.RED}ERROR{Style.RESET_ALL}: "
-            + f"Failed to load response content. - {response.content}"
-        )
-        raise APIError("Failed to load all exports.")
+        self.logger.error(f"Failed to load response content. - {response.content}")
+        msg = "Failed to load all exports."
+        raise APIError(msg)
 
     def _get_offset_from_response(
-        self, api_response: Dict[str, Any]
-    ) -> Optional[Tuple[str]]:
-        """
-        Assign offset type/value depending on keys in API response.
+        self, api_response: dict[str, Any]
+    ) -> tuple[str] | None:
+        """Assign offset type/value depending on keys in API response.
 
         Args:
             api_response (Dict[str, Any]): API response in JSON format.
@@ -296,11 +252,11 @@ class Hubspot(Source):
         Returns:
             tuple: Tuple in order: (offset_type, offset_value)
         """
-        if "paging" in api_response.keys():
+        if "paging" in api_response:
             offset_type = "after"
             offset_value = api_response["paging"]["next"][f"{offset_type}"]
 
-        elif "offset" in api_response.keys():
+        elif "offset" in api_response:
             offset_type = "offset"
             offset_value = api_response["offset"]
 
@@ -312,20 +268,20 @@ class Hubspot(Source):
 
     def api_connection(
         self,
-        endpoint: Optional[str] = None,
-        filters: Optional[List[Dict[str, Any]]] = None,
-        properties: Optional[List[Any]] = None,
+        endpoint: str | None = None,
+        filters: list[dict[str, Any]] | None = None,
+        properties: list[Any] | None = None,
         nrows: int = 1000,
     ) -> None:
-        """
-        General method to connect to Hubspot API and generate the response.
+        """General method to connect to Hubspot API and generate the response.
 
         Args:
             endpoint (Optional[str], optional): API endpoint for an individual request.
                 Defaults to None.
             filters (Optional[List[Dict[str, Any]]], optional): Filters defined for the
                 API body in specific order. Defaults to None.
-                Example:
+
+        Example:
                     filters=[
                         {
                             "filters": [
@@ -363,7 +319,7 @@ class Hubspot(Source):
             partition = self._api_call(url=url, body=body, method=method)
             self.full_dataset = partition["results"]
 
-            while "paging" in partition.keys() and len(self.full_dataset) < nrows:
+            while "paging" in partition and len(self.full_dataset) < nrows:
                 body = json.loads(self._get_api_body(filters=filters_formatted))
                 body["after"] = partition["paging"]["next"]["after"]
                 partition = self._api_call(
@@ -374,7 +330,7 @@ class Hubspot(Source):
         else:
             method = "GET"
             partition = self._api_call(url=url, method=method)
-            self.full_dataset = partition[list(partition.keys())[0]]
+            self.full_dataset = partition[next(iter(partition.keys()))]
 
             offset_type, offset_value = self._get_offset_from_response(partition)
 
@@ -387,7 +343,7 @@ class Hubspot(Source):
                 url += f"{offset_type}={offset_value}"
 
                 partition = self._api_call(url=url, method=method)
-                self.full_dataset.extend(partition[list(partition.keys())[0]])
+                self.full_dataset.extend(partition[next(iter(partition.keys()))])
 
                 offset_type, offset_value = self._get_offset_from_response(partition)
 
@@ -396,15 +352,14 @@ class Hubspot(Source):
         self,
         if_empty: str = "warn",
     ) -> pd.DataFrame:
-        """
-        Generate a Pandas Data Frame with the data in the Response and metadata.
+        """Generate a pandas DataFrame with the data in the Response and metadata.
 
         Args:
             if_empty (str, optional): What to do if a fetch produce no data.
                 Defaults to "warn
 
         Returns:
-            pd.Dataframe: The response data as a Pandas Data Frame plus viadot metadata.
+            pd.Dataframe: The response data as a pandas DataFrame plus viadot metadata.
         """
         super().to_df(if_empty=if_empty)
 
@@ -416,6 +371,6 @@ class Hubspot(Source):
                 message="The response does not contain any data.",
             )
         else:
-            print("Successfully downloaded data from the Mindful API.")
+            self.logger.info("Successfully downloaded data from the Mindful API.")
 
         return data_frame

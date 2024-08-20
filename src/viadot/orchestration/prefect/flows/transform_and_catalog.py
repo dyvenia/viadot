@@ -1,13 +1,13 @@
 """Build specified dbt model(s) and upload the generated metadata to Luma."""
 
-import shutil
 from pathlib import Path
+import shutil
 from typing import Literal
+
+from prefect import allow_failure, flow, task
 
 from viadot.orchestration.prefect.tasks import clone_repo, dbt_task, luma_ingest_task
 from viadot.orchestration.prefect.utils import get_credentials
-
-from prefect import allow_failure, flow, task
 
 
 @task
@@ -25,12 +25,11 @@ def remove_dbt_repo_dir(dbt_repo_dir_name: str) -> None:
     description="Build specified dbt model(s) and upload generated metadata to Luma.",
     timeout_seconds=2 * 60 * 60,
 )
-def transform_and_catalog(  # noqa: PLR0913, PLR0917, PLR0914
+def transform_and_catalog(  # noqa: PLR0913
     dbt_repo_url: str | None = None,
     dbt_repo_url_secret: str | None = None,
     dbt_project_path: str = "dbt",
     dbt_repo_branch: str | None = None,
-    dbt_repo_token: str | None = None,
     dbt_repo_token_secret: str | None = None,
     dbt_selects: dict[str, str] | None = None,
     dbt_target: str | None = None,
@@ -56,12 +55,10 @@ def transform_and_catalog(  # noqa: PLR0913, PLR0917, PLR0914
             dbt repository's root. For example, "dbt/my_dbt_project". Defaults to "dbt".
         dbt_repo_branch (str, optional): The branch of the dbt repo to use. Defaults to
             None (default repo branch).
-        dbt_repo_token (str, optional): Personal access token used to clone the dbt
-            repository, in case it's private. Not required if token is already included
-            in `dbt_repo_url` or in the secret specified in `dbt_repo_url_secret`.
+        dbt_repo_token_secret (str, optional): The secret containing the personal access
+            token used to clone the dbt repository, in case it's private. Not required
+            if token is already included in `dbt_repo_url` (which is NOT recommended).
             Defaults to None.
-        dbt_repo_token_secret (str, optional): Alternatively to above, the secret
-            containing `dbt_repo_token`. Defaults to None.
         dbt_selects (dict, optional): Valid
             [dbt node selection](https://docs.getdbt.com/reference/node-selection/syntax)
             expressions. Valid keys are `run`, `test`, and `source_freshness`. The test
@@ -111,7 +108,6 @@ def transform_and_catalog(  # noqa: PLR0913, PLR0917, PLR0914
     clone = clone_repo(
         url=dbt_repo_url,
         checkout_branch=dbt_repo_branch,
-        token=dbt_repo_token,
         token_secret=dbt_repo_token_secret,
     )
 

@@ -4,48 +4,30 @@
 # last locked with the following flags:
 #   pre: false
 #   features: []
-#   all-features: true
+#   all-features: false
 #   with-sources: false
+#   generate-hashes: false
+#   universal: false
 
 -e file:.
-adlfs==2024.4.1
-    # via viadot2
-aenum==3.1.15
-    # via gremlinpython
-agate==1.7.1
-    # via dbt-core
-    # via dbt-postgres
-    # via dbt-redshift
-aiobotocore==2.13.0
-    # via s3fs
-aiohttp==3.9.5
-    # via adlfs
-    # via aiobotocore
-    # via gremlinpython
-    # via s3fs
-aioitertools==0.11.0
-    # via aiobotocore
+aiohappyeyeballs==2.3.7
+    # via aiohttp
+aiohttp==3.10.4
 aiolimiter==1.1.0
     # via viadot2
 aiosignal==1.3.1
     # via aiohttp
 aiosqlite==0.20.0
     # via prefect
-alembic==1.13.1
+alembic==1.13.2
     # via prefect
-anyio==3.7.1
+anyio==4.4.0
     # via httpx
     # via prefect
-apprise==1.8.0
+apprise==1.8.1
     # via prefect
-argon2-cffi==23.1.0
-    # via minio
-argon2-cffi-bindings==21.2.0
-    # via argon2-cffi
 asgi-lifespan==2.1.0
     # via prefect
-asn1crypto==1.5.1
-    # via scramp
 asttokens==2.4.1
     # via stack-data
 async-timeout==4.0.3
@@ -53,86 +35,42 @@ async-timeout==4.0.3
     # via asyncpg
 asyncpg==0.29.0
     # via prefect
-attrs==23.2.0
+attrs==24.2.0
     # via aiohttp
     # via jsonschema
     # via referencing
     # via visions
-awswrangler==2.20.1
-    # via viadot2
-azure-core==1.30.1
-    # via adlfs
-    # via azure-identity
-    # via azure-keyvault-secrets
-    # via azure-storage-blob
-    # via viadot2
-azure-datalake-store==0.0.53
-    # via adlfs
-azure-identity==1.16.0
-    # via adlfs
-    # via dbt-sqlserver
-    # via prefect-azure
-    # via viadot2
-azure-keyvault-secrets==4.8.0
-    # via prefect-azure
-azure-storage-blob==12.20.0
-    # via adlfs
-    # via viadot2
-babel==2.15.0
-    # via agate
+babel==2.16.0
     # via mkdocs-material
-backoff==2.2.1
-    # via awswrangler
 beautifulsoup4==4.12.3
     # via mkdocs-mermaid2-plugin
     # via nbconvert
-    # via redshift-connector
-black==22.6.0
+    # via o365
 bleach==6.1.0
     # via nbconvert
-boto3==1.34.106
-    # via awswrangler
-    # via prefect-aws
-    # via redshift-connector
-    # via viadot2
-botocore==1.34.106
-    # via aiobotocore
-    # via awswrangler
-    # via boto3
-    # via prefect-aws
-    # via redshift-connector
-    # via s3transfer
-bracex==2.4
+bracex==2.5
     # via wcmatch
-cachetools==5.3.3
+cachetools==5.5.0
     # via google-auth
     # via prefect
-cairocffi==1.7.0
+cairocffi==1.7.1
     # via cairosvg
 cairosvg==2.7.1
     # via mkdocs-material
-certifi==2024.2.2
+certifi==2024.7.4
     # via apprise
     # via httpcore
     # via httpx
     # via kubernetes
-    # via minio
-    # via opensearch-py
     # via requests
-cffi==1.16.0
-    # via argon2-cffi-bindings
-    # via azure-datalake-store
+cffi==1.17.0
     # via cairocffi
     # via cryptography
-    # via dbt-core
     # via pygit2
 charset-normalizer==3.3.2
     # via requests
 click==8.1.7
     # via apprise
-    # via black
-    # via dbt-core
-    # via dbt-semantic-interfaces
     # via mkdocs
     # via mkdocstrings
     # via neoteroi-mkdocs
@@ -142,44 +80,22 @@ click==8.1.7
 cloudpickle==3.0.0
     # via prefect
 colorama==0.4.6
-    # via dbt-core
     # via griffe
     # via mkdocs-material
 comm==0.2.2
     # via ipykernel
 coolname==2.2.0
     # via prefect
-coverage==7.4.4
-    # via pytest-cov
-croniter==2.0.5
+coverage==7.6.1
+croniter==2.0.7
     # via prefect
-cryptography==42.0.7
-    # via azure-identity
-    # via azure-storage-blob
-    # via msal
+cryptography==43.0.0
     # via prefect
-    # via pyjwt
 cssselect2==0.7.0
     # via cairosvg
-databricks-connect==11.3.37
-    # via viadot2
 dateparser==1.2.0
     # via prefect
-dbt-core==1.7.12
-    # via dbt-postgres
-    # via dbt-redshift
-    # via dbt-sqlserver
-dbt-extractor==0.5.1
-    # via dbt-core
-dbt-postgres==1.7.12
-    # via dbt-redshift
-dbt-redshift==1.7.7
-    # via viadot2
-dbt-semantic-interfaces==0.4.4
-    # via dbt-core
-dbt-sqlserver==1.3.1
-    # via viadot2
-debugpy==1.8.1
+debugpy==1.8.5
     # via ipykernel
 decorator==5.1.1
     # via ipython
@@ -188,13 +104,13 @@ defusedxml==0.7.1
     # via nbconvert
 dnspython==2.6.1
     # via email-validator
-docker==6.1.3
+docker==7.1.0
     # via prefect
 duckdb==1.0.0
     # via viadot2
 editorconfig==0.12.4
     # via jsbeautifier
-email-validator==2.1.1
+email-validator==2.2.0
     # via pydantic
 essentials==1.1.5
     # via essentials-openapi
@@ -202,39 +118,36 @@ essentials-openapi==1.0.9
     # via neoteroi-mkdocs
 et-xmlfile==1.1.0
     # via openpyxl
-events==0.5
-    # via opensearch-py
-exceptiongroup==1.2.0
+exceptiongroup==1.2.2
     # via anyio
     # via ipython
+    # via prefect
     # via pytest
 executing==2.0.1
     # via stack-data
 faker==13.12.1
-fastjsonschema==2.19.1
+fastjsonschema==2.20.0
     # via nbformat
 frozenlist==1.4.1
     # via aiohttp
     # via aiosignal
-fsspec==2024.6.0
-    # via adlfs
+fsspec==2024.6.1
     # via prefect
-    # via s3fs
 ghp-import==2.1.0
     # via mkdocs
 gitdb==4.0.11
     # via gitpython
 gitpython==3.1.43
     # via mkdocs-git-revision-date-plugin
-google-auth==2.29.0
+google-auth==2.34.0
     # via kubernetes
+graphql-core==3.2.3
+    # via sgqlc
 graphviz==0.20.3
     # via prefect
 greenlet==3.0.3
     # via sqlalchemy
-gremlinpython==3.7.2
-    # via awswrangler
-griffe==0.45.2
+griffe==0.47.0
     # via mkdocstrings-python
     # via prefect
 h11==0.14.0
@@ -250,43 +163,35 @@ httpcore==1.0.5
 httpx==0.27.0
     # via neoteroi-mkdocs
     # via prefect
-humanize==4.9.0
+humanize==4.10.0
     # via jinja2-humanize-extension
     # via prefect
 hyperframe==6.0.1
     # via h2
-idna==3.6
+idna==3.7
     # via anyio
-    # via dbt-core
     # via email-validator
     # via httpx
     # via requests
     # via yarl
-importlib-metadata==6.11.0
-    # via dbt-semantic-interfaces
+imagehash==4.3.1
+    # via viadot2
+importlib-metadata==8.2.0
     # via mike
 importlib-resources==6.1.3
     # via mike
     # via prefect
 iniconfig==2.0.0
     # via pytest
-ipykernel==6.29.4
+ipykernel==6.29.5
     # via mkdocs-jupyter
-ipython==8.25.0
+ipython==8.26.0
     # via ipykernel
-isodate==0.6.1
-    # via agate
-    # via azure-keyvault-secrets
-    # via azure-storage-blob
-    # via dbt-core
-    # via gremlinpython
 itsdangerous==2.2.0
     # via prefect
 jedi==0.19.1
     # via ipython
-jinja2==3.1.3
-    # via dbt-core
-    # via dbt-semantic-interfaces
+jinja2==3.1.4
     # via jinja2-humanize-extension
     # via mike
     # via mkdocs
@@ -298,20 +203,13 @@ jinja2==3.1.3
     # via prefect
 jinja2-humanize-extension==0.4.0
     # via prefect
-jmespath==1.0.1
-    # via boto3
-    # via botocore
 jsbeautifier==1.15.1
     # via mkdocs-mermaid2-plugin
 jsonpatch==1.33
     # via prefect
-jsonpath-ng==1.6.1
-    # via awswrangler
-jsonpointer==2.4
+jsonpointer==3.0.0
     # via jsonpatch
-jsonschema==4.22.0
-    # via dbt-core
-    # via dbt-semantic-interfaces
+jsonschema==4.23.0
     # via nbformat
     # via prefect
 jsonschema-specifications==2023.12.1
@@ -327,22 +225,16 @@ jupyter-core==5.7.2
     # via nbformat
 jupyterlab-pygments==0.3.0
     # via nbconvert
-jupytext==1.16.2
+jupytext==1.16.4
     # via mkdocs-jupyter
 kubernetes==29.0.0
     # via prefect
-leather==0.4.0
-    # via agate
-logbook==1.5.3
-    # via dbt-core
 loguru==0.7.2
 lumacli==0.1.2
     # via viadot2
-lxml==5.2.2
-    # via redshift-connector
 mako==1.3.5
     # via alembic
-markdown==3.6
+markdown==3.7
     # via apprise
     # via mkdocs
     # via mkdocs-autorefs
@@ -358,10 +250,9 @@ markupsafe==2.1.5
     # via jinja2
     # via mako
     # via mkdocs
+    # via mkdocs-autorefs
     # via mkdocstrings
     # via nbconvert
-mashumaro==3.13
-    # via dbt-core
 matplotlib-inline==0.1.7
     # via ipykernel
     # via ipython
@@ -372,11 +263,7 @@ mdurl==0.1.2
 mergedeep==1.3.4
     # via mkdocs
     # via mkdocs-get-deps
-mike==2.1.1
-minimal-snowplow-tracker==0.0.2
-    # via dbt-core
-minio==7.2.7
-    # via viadot2
+mike==2.1.3
 mistune==3.0.2
     # via nbconvert
 mkdocs==1.6.0
@@ -391,46 +278,30 @@ mkdocs==1.6.0
     # via mkdocs-table-reader-plugin
     # via mkdocstrings
     # via neoteroi-mkdocs
-mkdocs-autorefs==0.4.1
+mkdocs-autorefs==1.0.1
     # via mkdocstrings
 mkdocs-get-deps==0.2.0
     # via mkdocs
 mkdocs-git-revision-date-plugin==0.3.2
 mkdocs-glightbox==0.4.0
 mkdocs-include-dir-to-nav==1.2.0
-mkdocs-include-markdown-plugin==6.2.0
-mkdocs-jupyter==0.24.7
-mkdocs-material==9.5.26
+mkdocs-include-markdown-plugin==6.2.2
+mkdocs-jupyter==0.24.8
+mkdocs-material==9.5.32
     # via mkdocs-jupyter
 mkdocs-material-extensions==1.3.1
     # via mkdocs-material
 mkdocs-mermaid2-plugin==1.1.1
-mkdocs-table-reader-plugin==2.2.2
-mkdocstrings==0.25.1
+mkdocs-table-reader-plugin==3.0.1
+mkdocstrings==0.25.2
     # via mkdocstrings-python
-mkdocstrings-python==1.10.3
+mkdocstrings-python==1.10.5
     # via mkdocstrings
-more-itertools==10.2.0
-    # via dbt-semantic-interfaces
-msal==1.28.0
-    # via azure-datalake-store
-    # via azure-identity
-    # via msal-extensions
-msal-extensions==1.1.0
-    # via azure-identity
-msgpack==1.0.8
-    # via mashumaro
 multidict==6.0.5
     # via aiohttp
     # via yarl
-multimethod==1.11.2
+multimethod==1.12
     # via visions
-mypy-boto3-s3==1.34.138
-    # via prefect-aws
-mypy-boto3-secretsmanager==1.34.145
-    # via prefect-aws
-mypy-extensions==1.0.0
-    # via black
 nbclient==0.10.0
     # via nbconvert
 nbconvert==7.16.4
@@ -439,162 +310,125 @@ nbformat==5.10.4
     # via jupytext
     # via nbclient
     # via nbconvert
-neoteroi-mkdocs==1.0.5
+neoteroi-mkdocs==1.1.0
 nest-asyncio==1.6.0
-    # via gremlinpython
     # via ipykernel
-networkx==3.2.1
-    # via dbt-core
+networkx==3.3
     # via visions
-numpy==1.23.4
-    # via awswrangler
+numpy==1.26.4
+    # via imagehash
     # via pandas
     # via pyarrow
+    # via pywavelets
+    # via scipy
+    # via shapely
+    # via viadot2
     # via visions
+o365==2.0.36
+    # via viadot2
 oauthlib==3.2.2
     # via kubernetes
     # via requests-oauthlib
-openpyxl==3.0.10
-    # via awswrangler
+openpyxl==3.1.5
     # via viadot2
-opensearch-py==2.6.0
-    # via awswrangler
-orjson==3.10.3
+orjson==3.10.7
     # via prefect
-packaging==24.0
-    # via dbt-core
-    # via docker
+packaging==24.1
     # via ipykernel
     # via jupytext
     # via mkdocs
-    # via msal-extensions
     # via nbconvert
     # via prefect
     # via pytest
-    # via redshift-connector
 paginate==0.5.6
     # via mkdocs-material
-pandas==1.4.4
-    # via awswrangler
+pandas==2.2.2
     # via mkdocs-table-reader-plugin
     # via viadot2
     # via visions
 pandocfilters==1.5.1
     # via nbconvert
-parsedatetime==2.6
-    # via agate
 parso==0.8.4
     # via jedi
-pathspec==0.11.2
-    # via black
-    # via dbt-core
+pathspec==0.12.1
     # via mkdocs
     # via prefect
 pendulum==2.1.2
     # via prefect
 pexpect==4.9.0
     # via ipython
-pg8000==1.31.2
-    # via awswrangler
-pillow==10.3.0
+pillow==10.4.0
     # via cairosvg
+    # via imagehash
     # via mkdocs-material
-platformdirs==4.2.0
-    # via black
+platformdirs==4.2.2
     # via jupyter-core
     # via mkdocs-get-deps
     # via mkdocstrings
-pluggy==1.4.0
+pluggy==1.5.0
     # via pytest
-ply==3.11
-    # via jsonpath-ng
-portalocker==2.8.2
-    # via msal-extensions
-prefect==2.19.7
-    # via prefect-aws
-    # via prefect-azure
+prefect==2.20.2
+    # via prefect-github
     # via prefect-sqlalchemy
     # via viadot2
-prefect-aws==0.4.18
+prefect-github==0.2.7
     # via viadot2
-prefect-azure @ git+https://github.com/Trymzet/prefect-azure@f4a400fa997f2ef1f54f4ed4a7ba2edccf4e3da8
+prefect-sqlalchemy==0.4.4
     # via viadot2
-prefect-sqlalchemy==0.4.3
-    # via viadot2
-progressbar2==4.4.2
-    # via awswrangler
 prompt-toolkit==3.0.47
     # via ipython
-protobuf==4.25.3
-    # via dbt-core
-psutil==5.9.8
+psutil==6.0.0
     # via ipykernel
 psycopg2-binary==2.9.9
-    # via dbt-postgres
     # via lumacli
 ptyprocess==0.7.0
     # via pexpect
-pure-eval==0.2.2
+pure-eval==0.2.3
     # via stack-data
-py4j==0.10.9.5
-    # via databricks-connect
 pyarrow==10.0.1
-    # via awswrangler
     # via viadot2
 pyasn1==0.6.0
     # via pyasn1-modules
     # via rsa
 pyasn1-modules==0.4.0
     # via google-auth
-pycparser==2.21
+pycparser==2.22
     # via cffi
-pycryptodome==3.20.0
-    # via minio
-pydantic==1.10.11
-    # via dbt-semantic-interfaces
+pydantic==1.10.17
     # via lumacli
     # via prefect
     # via viadot2
-pydantic-core==2.18.3
+pydantic-core==2.22.0
     # via prefect
-pygit2==1.13.3
+pygit2==1.14.1
     # via viadot2
-pygments==2.17.2
+pygments==2.18.0
     # via ipython
     # via mkdocs-jupyter
     # via mkdocs-material
     # via nbconvert
     # via rich
-pyjwt==2.8.0
-    # via msal
-pymdown-extensions==10.8.1
+pymdown-extensions==10.9
     # via mkdocs-material
     # via mkdocs-mermaid2-plugin
     # via mkdocstrings
-pymysql==1.1.1
-    # via awswrangler
 pyodbc==5.1.0
-    # via dbt-sqlserver
     # via viadot2
 pyparsing==3.1.2
     # via mike
-    # via prefect-aws
-pytest==8.1.1
-    # via pytest-cov
-pytest-cov==3.0.0
+pytest==8.3.2
+    # via pytest-asyncio
+pytest-asyncio==0.23.8
 python-dateutil==2.9.0.post0
-    # via botocore
     # via croniter
     # via dateparser
-    # via dbt-semantic-interfaces
     # via faker
     # via ghp-import
     # via jupyter-client
     # via kubernetes
-    # via opensearch-py
+    # via o365
     # via pandas
     # via pendulum
-    # via pg8000
     # via prefect
     # via trino
 python-dotenv==1.0.1
@@ -603,26 +437,19 @@ python-http-client==3.3.7
 python-multipart==0.0.9
     # via prefect
 python-slugify==8.0.4
-    # via agate
     # via prefect
-python-utils==3.8.2
-    # via progressbar2
-pytimeparse==1.1.8
-    # via agate
 pytz==2024.1
     # via croniter
     # via dateparser
-    # via dbt-core
     # via pandas
     # via prefect
-    # via redshift-connector
     # via trino
 pytzdata==2020.1
     # via pendulum
-pyyaml==6.0.1
+pywavelets==1.7.0
+    # via imagehash
+pyyaml==6.0.2
     # via apprise
-    # via dbt-core
-    # via dbt-semantic-interfaces
     # via essentials-openapi
     # via jupytext
     # via kubernetes
@@ -637,44 +464,33 @@ pyyaml==6.0.1
 pyyaml-env-tag==0.1
     # via mike
     # via mkdocs
-pyzmq==26.0.3
+pyzmq==26.1.1
     # via ipykernel
     # via jupyter-client
-readchar==4.1.0
+readchar==4.2.0
     # via prefect
-redshift-connector==2.0.917
-    # via awswrangler
-    # via dbt-redshift
 referencing==0.35.1
     # via jsonschema
     # via jsonschema-specifications
-regex==2024.5.15
+regex==2024.7.24
     # via dateparser
     # via mkdocs-material
-requests==2.31.0
+requests==2.32.3
     # via apprise
-    # via azure-core
-    # via azure-datalake-store
-    # via dbt-core
     # via docker
     # via kubernetes
     # via lumacli
-    # via minimal-snowplow-tracker
     # via mkdocs-material
     # via mkdocs-mermaid2-plugin
-    # via msal
-    # via opensearch-py
-    # via redshift-connector
-    # via requests-aws4auth
+    # via o365
     # via requests-oauthlib
     # via sharepy
     # via trino
     # via viadot2
-requests-aws4auth==1.2.3
-    # via awswrangler
 requests-oauthlib==2.0.0
     # via apprise
     # via kubernetes
+    # via o365
 rfc3339-validator==0.1.4
     # via prefect
 rich==13.7.1
@@ -682,7 +498,7 @@ rich==13.7.1
     # via neoteroi-mkdocs
     # via prefect
     # via typer
-rpds-py==0.18.1
+rpds-py==0.20.0
     # via jsonschema
     # via referencing
 rsa==4.9
@@ -691,35 +507,27 @@ ruamel-yaml==0.18.6
     # via prefect
 ruamel-yaml-clib==0.2.8
     # via ruamel-yaml
-s3fs==2024.6.0
-    # via viadot2
-s3transfer==0.10.1
-    # via boto3
-scramp==1.4.5
-    # via pg8000
-    # via redshift-connector
+ruff==0.6.1
+scipy==1.14.0
+    # via imagehash
 sendgrid==6.11.0
     # via viadot2
-setuptools==70.0.0
+setuptools==72.2.0
     # via mkdocs-mermaid2-plugin
-    # via redshift-connector
+sgqlc==16.3
+    # via prefect-github
+shapely==2.0.5
+    # via viadot2
 sharepy==2.0.0
     # via viadot2
 shellingham==1.5.4
     # via typer
 six==1.16.0
     # via asttokens
-    # via azure-core
     # via bleach
-    # via databricks-connect
-    # via gremlinpython
-    # via isodate
     # via jsbeautifier
     # via kubernetes
-    # via minimal-snowplow-tracker
-    # via opensearch-py
     # via python-dateutil
-    # via requests-aws4auth
     # via rfc3339-validator
 smmap==5.0.1
     # via gitdb
@@ -728,17 +536,16 @@ sniffio==1.3.1
     # via asgi-lifespan
     # via httpx
     # via prefect
-soupsieve==2.5
+soupsieve==2.6
     # via beautifulsoup4
-sql-metadata==2.11.0
+sql-metadata==2.12.0
     # via viadot2
-sqlalchemy==2.0.28
+sqlalchemy==2.0.32
     # via alembic
     # via prefect
     # via prefect-sqlalchemy
     # via viadot2
-sqlparse==0.4.4
-    # via dbt-core
+sqlparse==0.5.1
     # via sql-metadata
 stack-data==0.6.3
     # via ipython
@@ -746,10 +553,6 @@ starkbank-ecdsa==2.2.0
     # via sendgrid
 tabulate==0.9.0
     # via mkdocs-table-reader-plugin
-tangled-up-in-unicode==0.2.0
-    # via visions
-tenacity==8.5.0
-    # via prefect-aws
 text-unidecode==1.3
     # via python-slugify
 tinycss2==1.3.0
@@ -759,7 +562,6 @@ tinycss2==1.3.0
 toml==0.10.2
     # via prefect
 tomli==2.0.1
-    # via black
     # via coverage
     # via jupytext
     # via pytest
@@ -778,51 +580,42 @@ traitlets==5.14.3
     # via nbformat
 trino==0.328.0
     # via viadot2
-typer==0.12.3
+typer==0.12.4
     # via lumacli
     # via prefect
-typing-extensions==4.10.0
+typing-extensions==4.12.2
     # via aiosqlite
     # via alembic
-    # via azure-core
-    # via azure-keyvault-secrets
-    # via azure-storage-blob
-    # via dbt-core
-    # via dbt-semantic-interfaces
+    # via anyio
     # via ipython
-    # via mashumaro
-    # via minio
-    # via mypy-boto3-s3
-    # via mypy-boto3-secretsmanager
     # via prefect
     # via pydantic
     # via pydantic-core
-    # via python-utils
     # via sqlalchemy
     # via typer
     # via uvicorn
+tzdata==2024.1
+    # via o365
+    # via pandas
 tzlocal==5.2
     # via dateparser
+    # via o365
     # via trino
 ujson==5.10.0
     # via prefect
-urllib3==1.26.18
-    # via botocore
-    # via dbt-core
+urllib3==2.2.2
     # via docker
     # via kubernetes
-    # via minio
-    # via opensearch-py
     # via requests
-uvicorn==0.28.1
+uvicorn==0.30.6
     # via prefect
 verspec==0.1.0
     # via mike
-visions==0.7.5
+visions==0.7.6
     # via viadot2
-watchdog==4.0.0
+watchdog==4.0.2
     # via mkdocs
-wcmatch==8.5.2
+wcmatch==9.0
     # via mkdocs-include-markdown-plugin
 wcwidth==0.2.13
     # via prompt-toolkit
@@ -831,13 +624,10 @@ webencodings==0.5.1
     # via cssselect2
     # via tinycss2
 websocket-client==1.8.0
-    # via docker
     # via kubernetes
 websockets==12.0
     # via prefect
-wrapt==1.16.0
-    # via aiobotocore
 yarl==1.9.4
     # via aiohttp
-zipp==3.18.1
+zipp==3.20.0
     # via importlib-metadata
