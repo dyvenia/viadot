@@ -15,10 +15,8 @@ from anyio.streams.text import TextReceiveStream
 from prefect.blocks.system import Secret
 from prefect.client.orchestration import PrefectClient
 from prefect.settings import PREFECT_API_KEY, PREFECT_API_URL
-
-
-with contextlib.suppress(ModuleNotFoundError):
-    from prefect_aws.secrets_manager import AwsSecret
+from prefect_aws import AwsCredentials
+from prefect_aws.secrets_manager import AwsSecret
 from prefect_sqlalchemy import DatabaseCredentials
 
 from viadot.orchestration.prefect.exceptions import MissingPrefectBlockError
@@ -55,18 +53,41 @@ def _get_azure_credentials(secret_name: str) -> dict[str, Any]:
     return credentials
 
 
-def _get_aws_credentials(secret_name: str) -> dict[str, Any] | str:
+def _get_aws_credentials(
+    secret_name: str,
+    block_type: str,
+) -> dict[str, Any] | str:
     """Retrieve credentials from the Prefect 'AwsSecret' block document.
+        It distinguishes the types of block to take a correct action.
+        This is needed as AwsSecret block stores credentials that can be used in tasks
+        which ingest data from different systems (for ex. SAP), where
+        AwsCredentials block stores AWS credentials solely and this could
+        be needed in other tasks which connects
+        to AWS directly ( for ex. redshift spectrum , s3)
 
     Args:
         secret_name (str): The name of the secret to be retrieved.
+        block_type (str): Type of prefect block
 
     Returns:
         dict | str: A dictionary or a string containing the credentials.
     """
-    aws_secret_block = AwsSecret.load(secret_name)
-    credentials = aws_secret_block.read_secret()
-    return json.loads(credentials)
+    if block_type == "AwsSecret":
+        aws_secret_block = AwsSecret.load(secret_name)
+        secret = aws_secret_block.read_secret()
+        try:
+            credentials = json.loads(secret)
+        except json.JSONDecodeError:
+            credentials = secret
+    elif block_type == "AwsCredentials":
+        aws_credentials_block = AwsCredentials.load(secret_name)
+        credentials = {
+            "aws_access_key_id": aws_credentials_block.aws_access_key_id,
+            "aws_secret_access_key": aws_credentials_block.aws_secret_access_key.get_secret_value(),
+            "region_name": aws_credentials_block.region_name,
+        }
+
+    return credentials
 
 
 def _get_secret_credentials(secret_name: str) -> dict[str, Any] | str:
@@ -133,8 +154,8 @@ def get_credentials(secret_name: str) -> dict[str, Any]:
         msg = "The provided secret name is not valid."
         raise MissingPrefectBlockError(msg)
 
-    if block_type == "AwsSecret":
-        credentials = _get_aws_credentials(secret_name)
+    if block_type == "AwsSecret" or "AwsCredentials":
+        credentials = _get_aws_credentials(secret_name, block_type)
     elif block_type == "AzureKeyVaultSecretReference":
         credentials = _get_azure_credentials(secret_name)
     elif block_type == "DatabaseCredentials":
