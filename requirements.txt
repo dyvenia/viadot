@@ -27,7 +27,7 @@ duckdb==0.5.1
 google-auth==2.6.2
 sendgrid==6.9.7
 pandas-gbq==0.17.4
-pydantic==1.10.12
+pydantic==1.10.13
 PyMySQL==1.0.2
 paramiko==2.11.0
 sshtunnel==0.4.0
