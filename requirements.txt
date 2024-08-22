@@ -8,7 +8,7 @@ pyarrow==6.0.1
 pyodbc==4.0.32
 pytest==6.2.5
 pytest-cov==3.0.0
-requests==2.26.0
+requests==2.32.2
 openpyxl==3.0.9
 jupyterlab==3.4.5
 azure-keyvault==4.1.0
