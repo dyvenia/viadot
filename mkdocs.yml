@@ -6,18 +6,27 @@ edit_uri: blob/main/docs/
 nav:
   - Home: index.md
 
-  - Howtos:
-      - Configuration: howtos/config_file.md
+  - Getting Started:
+      - Getting Started: getting_started.md
 
-  - Tutorials:
-      - Adding a new source: tutorials/adding_source.md
-      - Databricks credentials: tutorials/databricks.md
-      - Scheduling data ingestion from Supermetrics: tutorials/supermetrics.md
-      - Migrating onto viadot 2.0: howtos/howto_migrate_sources_tasks_and_flows.md
+  - Developer Guide:
+      - Introduction: developer_guide/index.md
+      - Creating a source: developer_guide/creating_a_source.md
+      - Creating a Prefect flow: developer_guide/creating_a_prefect_flow.md
+      - Contributing: developer_guide/contributing_to_viadot.md
+
+  - Advanced Usage:
+      - Introduction: advanced_usage/index.md
+      - Containerized development environment: advanced_usage/containerized_env.md
 
   - References:
-      - SQL Sources: references/sql_sources.md
-      - API Sources: references/api_sources.md
+      - Sources:
+          - SQL Sources: references/sources/sql_sources.md
+          - API Sources: references/sources/api_sources.md
+      - Orchestration:
+          - Prefect:
+              - Tasks: references/orchestration/prefect/tasks.md
+              - Flows: references/orchestration/prefect/flows.md
 
 theme:
   name: "material"

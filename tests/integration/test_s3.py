@@ -1,9 +1,18 @@
+import contextlib
 import os
 
 import pandas as pd
 import pytest
+from viadot.utils import skip_test_on_missing_extra
 
-from viadot.sources import S3
+
+try:
+    from viadot.sources import S3
+except ImportError:
+    skip_test_on_missing_extra(source_name="S3", extra="aws")
+
+from pathlib import Path
+
 
 SOURCE_DATA = [
     {
@@ -27,8 +36,8 @@ S3_BUCKET = os.environ.get("VIADOT_S3_BUCKET")
 TEST_SCHEMA = "test_schema"
 TEST_TABLE = "test_table"
 TEST_TABLE_PATH = f"s3://{S3_BUCKET}/viadot/{TEST_SCHEMA}/{TEST_TABLE}"
-TEST_TABLE_PATH_PARQUET = os.path.join(TEST_TABLE_PATH, f"{TEST_TABLE}.parquet")
-TEST_TABLE_PATH_CSV = os.path.join(TEST_TABLE_PATH, f"{TEST_TABLE}.csv")
+TEST_TABLE_PATH_PARQUET = str(Path(TEST_TABLE_PATH) / f"{TEST_TABLE}.parquet")
+TEST_TABLE_PATH_CSV = str(Path(TEST_TABLE_PATH) / f"{TEST_TABLE}.csv")
 
 
 @pytest.fixture(scope="session")
@@ -38,10 +47,8 @@ def s3(s3_config_key):
     yield s3
 
     # Remove the s3 table folder.
-    try:
+    with contextlib.suppress(Exception):
         s3.rm(path=TEST_TABLE_PATH)
-    except Exception:
-        pass
 
 
 def test_from_df(s3):
@@ -136,8 +143,7 @@ def test_upload(s3, TEST_CSV_FILE_PATH):
 
 def test_download(s3, TEST_CSV_FILE_PATH):
     # Assumptions.
-    downloaded = os.path.exists("test.csv")
-    assert downloaded is False
+    assert not Path("test.csv").exists()
 
     s3.upload(
         from_path=TEST_CSV_FILE_PATH,
@@ -152,12 +158,10 @@ def test_download(s3, TEST_CSV_FILE_PATH):
         to_path="test.csv",
     )
 
-    downloaded = os.path.exists("test.csv")
-
-    assert downloaded is True
+    assert Path("test.csv").exists()
 
     # Cleanup.
-    os.remove("test.csv")
+    Path("test.csv").unlink()
     s3.rm(path=TEST_TABLE_PATH)
 
 

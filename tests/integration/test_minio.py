@@ -1,6 +1,14 @@
-import pytest
+from contextlib import nullcontext as does_not_raise
 
-from viadot.sources import MinIO
+import pytest
+from viadot.utils import skip_test_on_missing_extra
+
+
+try:
+    from viadot.sources import MinIO
+except ImportError:
+    skip_test_on_missing_extra(source_name="MinIO", extra="aws")
+
 
 TEST_BUCKET = "spark"
 TEST_SCHEMA = "test_schema"
@@ -17,14 +25,12 @@ def minio(minio_config_key):
     minio = MinIO(config_key=minio_config_key)
     minio.rm(TEST_TABLE_FILE_PATH)
 
-    yield minio
+    return minio
 
 
 def test_check_connection(minio):
-    try:
+    with does_not_raise():
         minio.check_connection()
-    except Exception as e:
-        assert False, f"Exception:\n{e}"
 
 
 def test_from_df(minio, DF):

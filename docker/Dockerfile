@@ -1,4 +1,7 @@
-FROM python:3.10-slim-bullseye
+FROM python:3.10-slim-bullseye AS base
+
+ARG PIP_NO_CACHE_DIR=1
+ARG UV_NO_CACHE=true
 
 # Add user
 RUN useradd --non-unique --uid 1000 --create-home viadot && \
@@ -15,15 +18,34 @@ SHELL ["/bin/sh", "-c"]
 RUN groupadd docker && \
     usermod -aG docker viadot
 
-# Release File Error
-# https://stackoverflow.com/questions/63526272/release-file-is-not-valid-yet-docker
-RUN echo "Acquire::Check-Valid-Until \"false\";\nAcquire::Check-Date \"false\";" | cat > /etc/apt/apt.conf.d/10no--check-valid-until
-
 # System packages
-RUN apt update -q && yes | apt install -q gnupg vim unixodbc-dev build-essential \
-    curl python3-dev libboost-all-dev libpq-dev python3-gi sudo git software-properties-common
-ENV PIP_NO_CACHE_DIR=1
-RUN pip install --upgrade cffi
+# unixodbc: used by pyodbc
+# libgeos-dev: used by Shapely
+# gcc: used by pandas
+RUN apt update -q && yes | apt install -q gnupg vim curl git unixodbc libgeos-dev gcc
+
+# Turn off package manager caches.
+ENV PIP_NO_CACHE_DIR=${PIP_NO_CACHE_DIR}
+ENV UV_NO_CACHE=${UV_NO_CACHE}
+
+# This one's needed for the SAP RFC connector.
+# It must be installed here as the `pyrfc` does not define its dependencies,
+# so `pip install pyrfc` breaks if all deps are not already present.
+RUN pip install cython==0.29.24
+
+# Python env
+RUN pip install --upgrade pip setuptools
+
+
+ENV USER viadot
+ENV HOME="/home/$USER"
+ENV PATH="$HOME/.local/bin:$PATH"
+ENV RYE_HOME="$HOME/.rye"
+ENV PATH="$RYE_HOME/shims:$PATH"
+
+# Install Rye and uv.
+RUN curl -sSf https://rye.astral.sh/get | RYE_TOOLCHAIN_VERSION="3.10" RYE_INSTALL_OPTION="--yes" bash && \
+    rye config --set-bool behavior.use-uv=true
 
 # Fix for old SQL Servers still using TLS < 1.2
 RUN chmod +rwx /usr/lib/ssl/openssl.cnf && \
@@ -34,11 +56,43 @@ RUN curl https://packages.microsoft.com/keys/microsoft.asc | apt-key add - && \
     curl https://packages.microsoft.com/config/debian/10/prod.list > /etc/apt/sources.list.d/mssql-release.list && \
     apt update -q && \
     apt install -q libsqliteodbc && \
-    ACCEPT_EULA=Y apt install -q -y msodbcsql17=17.8.1.1-1 && \
-    ACCEPT_EULA=Y apt install -q -y mssql-tools && \
+    ACCEPT_EULA=Y apt install -q -y msodbcsql17=17.10.1.1-1 && \
+    ACCEPT_EULA=Y apt install -q -y mssql-tools=17.10.1.1-1 && \
     echo 'export PATH="$PATH:/opt/mssql-tools/bin"' >> ~/.bashrc
 
 COPY docker/odbcinst.ini /etc
+
+WORKDIR ${HOME}
+
+COPY --chown=${USER}:${USER} . ./viadot
+
+###################
+### viadot-lite ###
+###################
+
+FROM base as viadot-lite
+
+# Turn off package manager caches.
+ENV PIP_NO_CACHE_DIR=${PIP_NO_CACHE_DIR}
+ENV UV_NO_CACHE=${UV_NO_CACHE}
+
+RUN rye lock --reset --features viadot-lite --pyproject viadot/pyproject.toml
+RUN sed '/-e/d' ./viadot/requirements.lock > ./viadot/requirements.txt
+RUN pip install -r ./viadot/requirements.txt
+
+RUN pip install ./viadot/
+
+# Cleanup.
+RUN rm -rf ./viadot
+
+USER ${USER}
+
+
+####################
+### viadot-azure ###
+####################
+
+FROM base as viadot-azure
 
 ARG INSTALL_DATABRICKS=false
 
@@ -56,29 +110,44 @@ RUN if [ "$INSTALL_DATABRICKS" = "true" ]; then \
 
 ENV SPARK_HOME /usr/local/lib/python3.10/site-packages/pyspark
 
-# This one's needed for the SAP RFC connector.
-# It must be installed here as the SAP package does not define its dependencies,
-# so `pip install pyrfc` breaks if all deps are not already present.
-RUN pip install cython==0.29.24
+ARG INSTALL_DATABRICKS=false
 
-# Python env
-RUN pip install --upgrade pip
+# Turn off package manager caches.
+ENV PIP_NO_CACHE_DIR=${PIP_NO_CACHE_DIR}
+ENV UV_NO_CACHE=${UV_NO_CACHE}
 
-ENV USER viadot
-ENV HOME="/home/$USER"
-ENV PATH="$HOME/.local/bin:$PATH"
+RUN rye lock --reset --features azure --pyproject viadot/pyproject.toml
+RUN sed '/-e/d' ./viadot/requirements.lock > ./viadot/requirements.txt
+RUN pip install -r ./viadot/requirements.txt
 
-WORKDIR ${HOME}
-
-COPY --chown=${USER}:${USER} . ./viadot
-
-
-# Dependecy install
 RUN if [ "$INSTALL_DATABRICKS" = "true" ]; then \
     pip install ./viadot/.[databricks]; \
-    else \
-    pip install ./viadot; \
     fi
+
+# Dependecy install
+RUN pip install ./viadot/.[azure]
+
+# Cleanup.
+RUN rm -rf ./viadot
+
+USER ${USER}
+
+
+##################
+### viadot-aws ###
+##################
+
+FROM base as viadot-aws
+
+# Turn off package manager caches.
+ENV PIP_NO_CACHE_DIR=${PIP_NO_CACHE_DIR}
+ENV UV_NO_CACHE=${UV_NO_CACHE}
+
+RUN rye lock --reset --features aws --pyproject viadot/pyproject.toml
+RUN sed '/-e/d' ./viadot/requirements.lock > ./viadot/requirements.txt
+RUN pip install -r ./viadot/requirements.txt
+
+RUN pip install ./viadot/.[aws]
 
 # Cleanup.
 RUN rm -rf ./viadot

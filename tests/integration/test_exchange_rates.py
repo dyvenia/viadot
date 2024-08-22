@@ -2,6 +2,7 @@ import pandas as pd
 import pytest
 from viadot.sources import ExchangeRates
 
+
 TEST_DATA = {
     "currencies": [
         {
@@ -42,14 +43,13 @@ TEST_DF = pd.json_normalize(TEST_DATA["currencies"])
 
 @pytest.fixture(scope="session")
 def exchange_rates():
-    e = ExchangeRates(
+    return ExchangeRates(
         currency="PLN",
         start_date="2022-10-09",
         end_date="2022-10-11",
         symbols=["USD", "EUR", "GBP", "CHF", "PLN", "DKK"],
         config_key="exchange_rates_dev",
     )
-    yield e
 
 
 def test_to_json_values(exchange_rates):

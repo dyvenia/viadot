@@ -1,0 +1,127 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v2.*.*" # Match tags that begin with "v2".
+
+jobs:
+  build-distribution:
+    name: Build distribution 📦
+    timeout-minutes: 5
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+      - name: Install pypa/build
+        run: python3 -m pip install build --user
+      - name: Build a binary wheel and a source tarball
+        run: python3 -m build
+      - name: Store the distribution packages
+        uses: actions/upload-artifact@v4
+        with:
+          name: python-package-distributions
+          path: dist/
+
+  publish-to-pypi:
+    name: Publish to PyPI 🚀
+    timeout-minutes: 5
+    needs:
+      - build-distribution
+    runs-on: ubuntu-latest
+    environment:
+      name: release
+      url: https://pypi.org/p/viadot2
+    permissions:
+      id-token: write # IMPORTANT: this permission is mandatory for trusted publishing
+    steps:
+      - name: Download all the dists
+        uses: actions/download-artifact@v4
+        with:
+          name: python-package-distributions
+          path: dist/
+      - name: Publish package distributions to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+
+  publish-docker-images:
+    name: Publish Docker images 🐳
+    timeout-minutes: 15
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+        with:
+          platforms: all
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log into GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Construct the tag for Docker images
+        run: |
+          # Strip the "v" prefix for the image tag.
+          VERSION=${{ github.ref_name }}
+          echo "TAG=${VERSION#v}" >> $GITHUB_ENV
+
+      - name: Build and publish viadot-lite image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: docker/Dockerfile
+          platforms: linux/amd64
+          push: true
+          target: viadot-lite
+          tags: |
+            ghcr.io/${{ github.repository }}/viadot-lite:${TAG}
+            ghcr.io/${{ github.repository }}/viadot-lite:latest
+
+      - name: Build and publish viadot-aws image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: docker/Dockerfile
+          platforms: linux/amd64
+          push: true
+          target: viadot-aws
+          tags: |
+            ghcr.io/${{ github.repository }}/viadot-aws:${TAG}
+            ghcr.io/${{ github.repository }}/viadot-aws:latest
+
+      - name: Build and publish viadot-azure image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: docker/Dockerfile
+          platforms: linux/amd64
+          push: true
+          target: viadot-azure
+          tags: |
+            ghcr.io/${{ github.repository }}/viadot-azure:${TAG}
+            ghcr.io/${{ github.repository }}/viadot-azure:latest
+          build-args: INSTALL_DATABRICKS=false
+
+  create_github_release:
+    name: Create a GitHub release 🔖
+    timeout-minutes: 5
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: Create a release
+        uses: ncipollo/release-action@v1
+        with:
+          generateReleaseNotes: true

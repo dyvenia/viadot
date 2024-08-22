@@ -1,4 +1,5 @@
 import os
+from pathlib import Path
 
 import pytest
 from viadot.exceptions import CredentialError
@@ -57,4 +58,4 @@ def test_download_file(sharepoint_url, sharepoint_config_key):
 
     assert file in os.listdir()
 
-    os.remove(file)
+    Path(file).unlink()

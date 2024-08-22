@@ -1,0 +1,398 @@
+{
+  "metadata": {
+    "dbt_schema_version": "https://schemas.getdbt.com/dbt/catalog/v1.json",
+    "dbt_version": "1.7.10",
+    "generated_at": "2024-03-26T13:01:14.442740Z",
+    "invocation_id": "a0132c71-8d3b-43f9-bf6d-5f415cbeb4e9",
+    "env": {}
+  },
+  "nodes": {
+    "model.my_nesso_project.account": {
+      "metadata": {
+        "type": "BASE TABLE",
+        "schema": "dbt",
+        "name": "account",
+        "database": "nesso",
+        "comment": null,
+        "owner": null
+      },
+      "columns": {
+        "id": {
+          "type": "BIGINT",
+          "index": 1,
+          "name": "id",
+          "comment": null
+        },
+        "name": {
+          "type": "VARCHAR",
+          "index": 2,
+          "name": "name",
+          "comment": null
+        },
+        "email": {
+          "type": "VARCHAR",
+          "index": 3,
+          "name": "email",
+          "comment": null
+        },
+        "mobile": {
+          "type": "VARCHAR",
+          "index": 4,
+          "name": "mobile",
+          "comment": null
+        },
+        "country": {
+          "type": "VARCHAR",
+          "index": 5,
+          "name": "country",
+          "comment": null
+        },
+        "_viadot_downloaded_at_utc": {
+          "type": "TIMESTAMP_NS",
+          "index": 6,
+          "name": "_viadot_downloaded_at_utc",
+          "comment": null
+        }
+      },
+      "stats": {
+        "has_stats": {
+          "id": "has_stats",
+          "label": "Has Stats?",
+          "value": false,
+          "include": false,
+          "description": "Indicates whether there are statistics for this table"
+        }
+      },
+      "unique_id": "model.my_nesso_project.account"
+    },
+    "model.my_nesso_project.contact": {
+      "metadata": {
+        "type": "BASE TABLE",
+        "schema": "dbt",
+        "name": "contact",
+        "database": "nesso",
+        "comment": null,
+        "owner": null
+      },
+      "columns": {
+        "id": {
+          "type": "BIGINT",
+          "index": 1,
+          "name": "id",
+          "comment": null
+        },
+        "accountid": {
+          "type": "BIGINT",
+          "index": 2,
+          "name": "accountid",
+          "comment": null
+        },
+        "firstname": {
+          "type": "VARCHAR",
+          "index": 3,
+          "name": "firstname",
+          "comment": null
+        },
+        "lastname": {
+          "type": "VARCHAR",
+          "index": 4,
+          "name": "lastname",
+          "comment": null
+        },
+        "contactemail": {
+          "type": "VARCHAR",
+          "index": 5,
+          "name": "contactemail",
+          "comment": null
+        },
+        "mailingcity": {
+          "type": "VARCHAR",
+          "index": 6,
+          "name": "mailingcity",
+          "comment": null
+        },
+        "country": {
+          "type": "VARCHAR",
+          "index": 7,
+          "name": "country",
+          "comment": null
+        },
+        "_viadot_downloaded_at_utc": {
+          "type": "TIMESTAMP_NS",
+          "index": 8,
+          "name": "_viadot_downloaded_at_utc",
+          "comment": null
+        }
+      },
+      "stats": {
+        "has_stats": {
+          "id": "has_stats",
+          "label": "Has Stats?",
+          "value": false,
+          "include": false,
+          "description": "Indicates whether there are statistics for this table"
+        }
+      },
+      "unique_id": "model.my_nesso_project.contact"
+    },
+    "model.my_nesso_project.int_account": {
+      "metadata": {
+        "type": "VIEW",
+        "schema": "dbt",
+        "name": "int_account",
+        "database": "nesso",
+        "comment": null,
+        "owner": null
+      },
+      "columns": {
+        "id": {
+          "type": "BIGINT",
+          "index": 1,
+          "name": "id",
+          "comment": null
+        },
+        "name": {
+          "type": "VARCHAR",
+          "index": 2,
+          "name": "name",
+          "comment": null
+        },
+        "email": {
+          "type": "VARCHAR",
+          "index": 3,
+          "name": "email",
+          "comment": null
+        },
+        "mobile": {
+          "type": "VARCHAR",
+          "index": 4,
+          "name": "mobile",
+          "comment": null
+        },
+        "country": {
+          "type": "VARCHAR",
+          "index": 5,
+          "name": "country",
+          "comment": null
+        },
+        "_viadot_downloaded_at_utc": {
+          "type": "TIMESTAMP_NS",
+          "index": 6,
+          "name": "_viadot_downloaded_at_utc",
+          "comment": null
+        }
+      },
+      "stats": {
+        "has_stats": {
+          "id": "has_stats",
+          "label": "Has Stats?",
+          "value": false,
+          "include": false,
+          "description": "Indicates whether there are statistics for this table"
+        }
+      },
+      "unique_id": "model.my_nesso_project.int_account"
+    },
+    "model.my_nesso_project.int_contact": {
+      "metadata": {
+        "type": "VIEW",
+        "schema": "dbt",
+        "name": "int_contact",
+        "database": "nesso",
+        "comment": null,
+        "owner": null
+      },
+      "columns": {
+        "id": {
+          "type": "BIGINT",
+          "index": 1,
+          "name": "id",
+          "comment": null
+        },
+        "accountid": {
+          "type": "BIGINT",
+          "index": 2,
+          "name": "accountid",
+          "comment": null
+        },
+        "firstname": {
+          "type": "VARCHAR",
+          "index": 3,
+          "name": "firstname",
+          "comment": null
+        },
+        "lastname": {
+          "type": "VARCHAR",
+          "index": 4,
+          "name": "lastname",
+          "comment": null
+        },
+        "contactemail": {
+          "type": "VARCHAR",
+          "index": 5,
+          "name": "contactemail",
+          "comment": null
+        },
+        "mailingcity": {
+          "type": "VARCHAR",
+          "index": 6,
+          "name": "mailingcity",
+          "comment": null
+        },
+        "country": {
+          "type": "VARCHAR",
+          "index": 7,
+          "name": "country",
+          "comment": null
+        },
+        "_viadot_downloaded_at_utc": {
+          "type": "TIMESTAMP_NS",
+          "index": 8,
+          "name": "_viadot_downloaded_at_utc",
+          "comment": null
+        }
+      },
+      "stats": {
+        "has_stats": {
+          "id": "has_stats",
+          "label": "Has Stats?",
+          "value": false,
+          "include": false,
+          "description": "Indicates whether there are statistics for this table"
+        }
+      },
+      "unique_id": "model.my_nesso_project.int_contact"
+    }
+  },
+  "sources": {
+    "source.my_nesso_project.staging.account": {
+      "metadata": {
+        "type": "BASE TABLE",
+        "schema": "staging",
+        "name": "account",
+        "database": "nesso",
+        "comment": null,
+        "owner": null
+      },
+      "columns": {
+        "id": {
+          "type": "BIGINT",
+          "index": 1,
+          "name": "id",
+          "comment": null
+        },
+        "name": {
+          "type": "VARCHAR",
+          "index": 2,
+          "name": "name",
+          "comment": null
+        },
+        "email": {
+          "type": "VARCHAR",
+          "index": 3,
+          "name": "email",
+          "comment": null
+        },
+        "mobile": {
+          "type": "VARCHAR",
+          "index": 4,
+          "name": "mobile",
+          "comment": null
+        },
+        "country": {
+          "type": "VARCHAR",
+          "index": 5,
+          "name": "country",
+          "comment": null
+        },
+        "_viadot_downloaded_at_utc": {
+          "type": "TIMESTAMP_NS",
+          "index": 6,
+          "name": "_viadot_downloaded_at_utc",
+          "comment": null
+        }
+      },
+      "stats": {
+        "has_stats": {
+          "id": "has_stats",
+          "label": "Has Stats?",
+          "value": false,
+          "include": false,
+          "description": "Indicates whether there are statistics for this table"
+        }
+      },
+      "unique_id": "source.my_nesso_project.staging.account"
+    },
+    "source.my_nesso_project.staging.contact": {
+      "metadata": {
+        "type": "BASE TABLE",
+        "schema": "staging",
+        "name": "contact",
+        "database": "nesso",
+        "comment": null,
+        "owner": null
+      },
+      "columns": {
+        "Id": {
+          "type": "BIGINT",
+          "index": 1,
+          "name": "Id",
+          "comment": null
+        },
+        "AccountId": {
+          "type": "BIGINT",
+          "index": 2,
+          "name": "AccountId",
+          "comment": null
+        },
+        "FirstName": {
+          "type": "VARCHAR",
+          "index": 3,
+          "name": "FirstName",
+          "comment": null
+        },
+        "LastName": {
+          "type": "VARCHAR",
+          "index": 4,
+          "name": "LastName",
+          "comment": null
+        },
+        "ContactEMail": {
+          "type": "VARCHAR",
+          "index": 5,
+          "name": "ContactEMail",
+          "comment": null
+        },
+        "MailingCity": {
+          "type": "VARCHAR",
+          "index": 6,
+          "name": "MailingCity",
+          "comment": null
+        },
+        "Country": {
+          "type": "VARCHAR",
+          "index": 7,
+          "name": "Country",
+          "comment": null
+        },
+        "_viadot_downloaded_at_utc": {
+          "type": "TIMESTAMP_NS",
+          "index": 8,
+          "name": "_viadot_downloaded_at_utc",
+          "comment": null
+        }
+      },
+      "stats": {
+        "has_stats": {
+          "id": "has_stats",
+          "label": "Has Stats?",
+          "value": false,
+          "include": false,
+          "description": "Indicates whether there are statistics for this table"
+        }
+      },
+      "unique_id": "source.my_nesso_project.staging.contact"
+    }
+  },
+  "errors": null
+}

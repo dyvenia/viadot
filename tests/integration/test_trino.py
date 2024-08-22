@@ -1,7 +1,9 @@
+import contextlib
+
 import pyarrow as pa
 import pytest
-
 from viadot.sources import Trino
+
 
 TEST_BUCKET = "spark"
 TEST_SCHEMA = "test_schema"
@@ -14,12 +16,9 @@ TEST_TABLE_PATH = f"{TEST_SCHEMA_PATH}/{TEST_TABLE}"
 def trino(trino_config_key):
     trino = Trino(config_key=trino_config_key)
 
-    try:
+    with contextlib.suppress(Exception):
         trino.drop_schema(TEST_SCHEMA, cascade=True)
-    except Exception:
-        pass
-
-    yield trino
+    return trino
 
 
 def test_get_schemas(trino):
@@ -54,18 +53,17 @@ def test_drop_schema(trino):
 
 def test__create_table_query_basic(trino, DF):
     """Test that the most basic create table query is construed as expected."""
-
     pa_table = pa.Table.from_pandas(DF)
-    TEST_DF_COLUMNS = pa_table.schema.names
-    TEST_DF_TYPES = [
+    test_df_columns = pa_table.schema.names
+    test_df_types = [
         trino.pyarrow_to_trino_type(str(typ)) for typ in pa_table.schema.types
     ]
 
     query = trino._create_table_query(
         schema_name=TEST_SCHEMA,
         table_name=TEST_TABLE,
-        columns=TEST_DF_COLUMNS,
-        types=TEST_DF_TYPES,
+        columns=test_df_columns,
+        types=test_df_types,
     )
 
     expected_query = f"""
@@ -80,18 +78,17 @@ WITH (
 
 def test__create_table_query_partitions(trino, DF):
     """Test create table query is construed as expected when partitions are provided."""
-
     pa_table = pa.Table.from_pandas(DF)
-    TEST_DF_COLUMNS = pa_table.schema.names
-    TEST_DF_TYPES = [
+    test_df_columns = pa_table.schema.names
+    test_df_types = [
         trino.pyarrow_to_trino_type(str(typ)) for typ in pa_table.schema.types
     ]
 
     query = trino._create_table_query(
         schema_name=TEST_SCHEMA,
         table_name=TEST_TABLE,
-        columns=TEST_DF_COLUMNS,
-        types=TEST_DF_TYPES,
+        columns=test_df_columns,
+        types=test_df_types,
         partition_cols=["country"],
     )
 
@@ -107,18 +104,17 @@ WITH (
 
 def test__create_table_query_full(trino, DF):
     """Test create table query is construed as expected when partitions are provided."""
-
     pa_table = pa.Table.from_pandas(DF)
-    TEST_DF_COLUMNS = pa_table.schema.names
-    TEST_DF_TYPES = [
+    test_df_columns = pa_table.schema.names
+    test_df_types = [
         trino.pyarrow_to_trino_type(str(typ)) for typ in pa_table.schema.types
     ]
 
     query = trino._create_table_query(
         schema_name=TEST_SCHEMA,
         table_name=TEST_TABLE,
-        columns=TEST_DF_COLUMNS,
-        types=TEST_DF_TYPES,
+        columns=test_df_columns,
+        types=test_df_types,
         format="ORC",
         partition_cols=["country"],
         sort_by_cols=["country"],

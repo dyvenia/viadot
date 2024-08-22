@@ -1,118 +1,146 @@
+"""Genesys Cloud API connector."""
+
 import asyncio
 import base64
-import json
-import os
-import warnings
 from io import StringIO
-from typing import Any, Dict, List, Literal, Optional
+import json
+import time
+from typing import Any
 
 import aiohttp
-import pandas as pd
 from aiolimiter import AsyncLimiter
+import numpy as np
+import pandas as pd
+from pydantic import BaseModel
 
 from viadot.config import get_source_credentials
 from viadot.exceptions import APIError, CredentialError
-from viadot.signals import SKIP
 from viadot.sources.base import Source
-from viadot.utils import handle_api_response, validate
+from viadot.utils import add_viadot_metadata_columns, handle_api_response, validate
 
-warnings.simplefilter("ignore")
+
+class GenesysCredentials(BaseModel):
+    """Validate Genesys credentials.
+
+    Two key values are held in the Genesys connector:
+        - client_id: The unique ID for the organization.
+        - client_secret: Secret string of characters to have access to divisions.
+
+    Args:
+        BaseModel (pydantic.main.ModelMetaclass): A base class for creating Pydantic
+            models.
+    """
+
+    client_id: str
+    client_secret: str
 
 
 class Genesys(Source):
+    ENVIRONMENTS = (
+        "cac1.pure.cloud",
+        "sae1.pure.cloud",
+        "mypurecloud.com",
+        "usw2.pure.cloud",
+        "aps1.pure.cloud",
+        "apne3.pure.cloud",
+        "apne2.pure.cloud",
+        "mypurecloud.com.au",
+        "mypurecloud.jp",
+        "mypurecloud.ie",
+        "mypurecloud.de",
+        "euw2.pure.cloud",
+        "euc2.pure.cloud",
+        "mec1.pure.cloud",
+    )
+
     def __init__(
         self,
-        view_type: str = "queue_performance_detail_view",
-        ids_mapping: Dict[str, Any] = None,
-        start_date: str = None,
-        end_date: str = None,
-        report_name: str = None,
-        file_extension: Literal["xls", "xlsx", "csv"] = "csv",
-        config_key: str = None,
-        credentials: Dict[str, Any] = None,
-        environment: str = None,
-        report_url: str = None,
-        schedule_id: str = None,
-        report_columns: List[str] = None,
-        *args: List[Any],
-        **kwargs: Dict[str, Any],
+        *args,
+        credentials: GenesysCredentials | None = None,
+        config_key: str = "genesys",
+        verbose: bool = False,
+        environment: str = "mypurecloud.de",
+        **kwargs,
     ):
-        """
-        Genesys connector which allows for reports scheduling, listing and downloading into DataFrame or specified format output.
+        """Genesys Cloud API connector.
+
+        Provides functionalities for connecting to Genesys Cloud API and downloading
+        generated reports. It includes the following features:
+
+        - Generate reports inside Genesys.
+        - Download the reports previously created.
+        - Direct connection to Genesys Cloud API, via GET method, to retrieve the data
+          without any report creation.
+        - Remove any report previously created.
 
         Args:
-            view_type (str, optional): The type of view export job to be created. Defaults to "queue_performance_detail_view".
-            ids_mapping (str, optional): Dictionary mapping for converting IDs to strings. Defaults to None.
-            start_date (str, optional):  Start date of the report. Defaults to None.
-            end_date (str, optional):  End date of the report. Defaults to None.
-            report_name (str, optional): Name of the report. Defaults to None.
-            file_extension (Literal[xls, xlsx, csv], optional): File extensions for downloaded files. Defaults to "csv".
-            credentials (Dict[str, Any], optional): Credentials to connect with Genesys API containing CLIENT_ID,
-            environment (str, optional): Adress of host server. Defaults to None than will be used enviroment
-            from credentials.
-            report_url (str, optional): The url of report generated in json response. Defaults to None.
-            schedule_id (str, optional): The ID of report. Defaults to None.
-            report_columns (List[str], optional): List of exisiting column in report. Defaults to None.
+            credentials (Optional[GenesysCredentials], optional): Genesys credentials.
+                Defaults to None
+            config_key (str, optional): The key in the viadot config holding relevant
+                credentials. Defaults to "genesys".
+            verbose (bool, optional): Increase the details of the logs printed on the
+                screen. Defaults to False.
+            environment (str, optional): the domain that appears for Genesys Cloud
+                Environment based on the location of your Genesys Cloud organization.
+                Defaults to "mypurecloud.de".
+
+        Examples:
+            genesys = Genesys(
+                credentials=credentials,
+                config_key=config_key,
+                verbose=verbose,
+                environment=environment,
+            )
+            genesys.api_connection(
+                endpoint=endpoint,
+                queues_ids=queues_ids,
+                view_type=view_type,
+                view_type_time_sleep=view_type_time_sleep,
+                post_data_list=post_data_list,
+                normalization_sep=normalization_sep,
+            )
+            data_frame = genesys.to_df(
+                drop_duplicates=drop_duplicates,
+                validate_df_dict=validate_df_dict,
+            )
 
         Raises:
-            CredentialError: If credentials are not provided in local_config or directly as a parameter.
+            CredentialError: If credentials are not provided in local_config or directly
+                as a parameter.
+            APIError: When the environment variable is not among the available.
         """
-
-        credentials = credentials or get_source_credentials(config_key) or {}
-
+        credentials = credentials or get_source_credentials(config_key) or None
         if credentials is None:
-            raise CredentialError("Please specify the credentials.")
-
+            msg = "Missing credentials."
+            raise CredentialError(msg)
         self.credentials = credentials
 
-        super().__init__(*args, credentials=self.credentials, **kwargs)
+        validated_creds = dict(GenesysCredentials(**credentials))
+        super().__init__(*args, credentials=validated_creds, **kwargs)
 
-        self.view_type = view_type
-        self.schedule_id = schedule_id
-        self.report_name = report_name
-        self.environment = environment
-        self.report_url = report_url
-        self.report_columns = report_columns
+        self.verbose = verbose
+        self.data_returned = {}
+        self.new_report = "{}"
 
-        self.start_date = start_date
-        self.end_date = end_date
-        self.file_extension = file_extension
-        self.ids_mapping = ids_mapping
-        self.count = iter(range(99999))
-
-        if self.schedule_id is None:
-            self.schedule_id = self.credentials.get("SCHEDULE_ID", None)
-
-        if self.environment is None:
-            self.environment = self.credentials.get("ENVIRONMENT", None)
-
-        if self.ids_mapping is None:
-            self.ids_mapping = self.credentials.get("IDS_MAPPING", None)
-
-            if isinstance(self.ids_mapping, dict) and self.ids_mapping is not None:
-                self.logger.info("IDS_MAPPING loaded from local credential.")
-            else:
-                self.logger.warning(
-                    "IDS_MAPPING is not provided in you credentials or is not a dictionary."
-                )
-
-        self.report_data = []
+        if environment in self.ENVIRONMENTS:
+            self.environment = environment
+        else:
+            raise APIError(
+                f"Environment '{environment}' not available"
+                + " in Genesys Cloud Environments."
+            )
 
     @property
-    def authorization_token(self, verbose: bool = False) -> Dict[str, Any]:
-        """
-        Get authorization token with request headers.
-
-        Args:
-            verbose (bool, optional): Switch on/off for logging messages. Defaults to False.
+    def headers(self) -> dict[str, Any]:
+        """Get request headers.
 
         Returns:
             Dict[str, Any]: Request headers with token.
         """
-        CLIENT_ID = self.credentials.get("CLIENT_ID", "")
-        CLIENT_SECRET = self.credentials.get("CLIENT_SECRET", "")
+        client_id = self.credentials.get("client_id", "")
+        client_secret = self.credentials.get("client_secret", "")
         authorization = base64.b64encode(
-            bytes(CLIENT_ID + ":" + CLIENT_SECRET, "ISO-8859-1")
+            bytes(client_id + ":" + client_secret, "ISO-8859-1")
         ).decode("ascii")
         request_headers = {
             "Authorization": f"Basic {authorization}",
@@ -126,432 +154,688 @@ class Genesys(Source):
             method="POST",
             timeout=3600,
         )
-        if verbose:
-            if response.status_code == 200:
-                self.logger.info("Temporary authorization token was generated.")
-            else:
-                self.logger.info(
-                    f"Failure: { str(response.status_code) } - { response.reason }"
-                )
+
+        if response.ok:
+            self.logger.info("Temporary authorization token was generated.")
+        else:
+            self.logger.info(
+                f"Failure: { response.status_code !s} - { response.reason }"
+            )
         response_json = response.json()
-        request_headers = {
-            "Authorization": f"{ response_json['token_type'] } { response_json['access_token']}",
+
+        return {
+            "Authorization": f"{ response_json['token_type'] }"
+            + f" { response_json['access_token']}",
             "Content-Type": "application/json",
         }
 
-        return request_headers
-
-    def genesys_generate_exports(
-        self, post_data_list: List[str], end_point: str = "reporting/exports"
-    ) -> Optional[dict]:
-        """Function that make POST request method to generate export reports.
+    def _api_call(
+        self,
+        endpoint: str,
+        post_data_list: list[str],
+        method: str,
+        params: dict[str, Any] | None = None,
+        sleep_time: float = 0.5,
+    ) -> dict[str, Any]:
+        """General method to connect to Genesys Cloud API and generate the response.
 
         Args:
-            post_data_list (List[str], optional): List of string templates to generate json body. Defaults to None.
-            end_point (str, optional): Final end point for Genesys connection. Defaults to "reporting/exports".
+            endpoint (str): Final end point to the API.
+            post_data_list (List[str]): List of string templates to generate json body.
+            method (str): Type of connection to the API. Defaults to "POST".
+            params (Optional[Dict[str, Any]], optional): Parameters to be passed into
+                the POST call. Defaults to None.
+            sleep_time (int, optional): The time, in seconds, to sleep the call to the
+                API. Defaults to 0.5.
+
+        Raises:
+            RuntimeError: There is no current event loop in asyncio thread.
 
         Returns:
-            Optional[dict]: Dict when the "conversations" endpoint is called, otherwise returns None.
+            Dict[str, Any]: Genesys Cloud API response. When the endpoint requires to
+                create a report within Genesys Cloud, the response is just useless
+                information. The useful data must be downloaded from apps.{environment}
+                through another requests.
         """
-
         limiter = AsyncLimiter(2, 15)
         semaphore = asyncio.Semaphore(value=1)
+        url = f"https://api.{self.environment}/api/v2/{endpoint}"
 
         async def generate_post():
-            cnt = 0
-
             for data_to_post in post_data_list:
-                if cnt < 10:
-                    payload = json.dumps(data_to_post)
-                    async with aiohttp.ClientSession() as session:
-                        await semaphore.acquire()
-                        async with limiter:
+                payload = json.dumps(data_to_post)
+
+                async with aiohttp.ClientSession() as session:
+                    await semaphore.acquire()
+
+                    async with limiter:
+                        if method == "POST":
                             async with session.post(
-                                f"https://api.{self.environment}/api/v2/analytics/{end_point}",
-                                headers=self.authorization_token,
+                                url,
+                                headers=self.headers,
                                 data=payload,
                             ) as resp:
-                                global new_report
-                                new_report = await resp.read()
-                                self.logger.info(
-                                    f"Generated report export --- \n {payload}."
-                                )
+                                # global new_report
+                                self.new_report = await resp.read()
+                                message = "Generated report export ---"
+                                if self.verbose:
+                                    message += f"\n {payload}."
+                                    self.logger.info(message)
+
                                 semaphore.release()
-                    cnt += 1
-                else:
-                    await asyncio.sleep(3)
-                    cnt = 0
+
+                        elif method == "GET":
+                            async with session.get(
+                                url,
+                                headers=self.headers,
+                                params=params,
+                            ) as resp:
+                                self.new_report = await resp.read()
+                                message = "Connecting to Genesys Cloud"
+                                if self.verbose:
+                                    message += f": {params}."
+                                    self.logger.info(message)
+
+                                semaphore.release()
+
+                await asyncio.sleep(sleep_time)
 
         try:
             loop = asyncio.get_event_loop()
-        except RuntimeError as e:
-            if str(e).startswith("There is no current event loop in thread"):
+        except RuntimeError as err:
+            if str(err).startswith("There is no current event loop in thread"):
                 loop = asyncio.new_event_loop()
                 asyncio.set_event_loop(loop)
             else:
-                raise e
-
+                raise
         coroutine = generate_post()
         loop.run_until_complete(coroutine)
 
-        if end_point == "conversations/details/query":
-            return json.loads(new_report.decode("utf-8"))
+        return json.loads(self.new_report.decode("utf-8"))
 
-    def load_reporting_exports(
-        self, page_size: int = 100, verbose: bool = False
-    ) -> Dict[str, Any]:
-        """
-        GET method for reporting export.
+    def _load_reporting_exports(
+        self,
+        page_size: int = 100,
+    ) -> dict[str, Any]:
+        """Consult the status of the reports created in Genesys Cloud.
 
         Args:
-            page_size (int, optional): The number of items on page to print. Defaults to 100.
-            verbose (bool, optional): Switch on/off for logging messages. Defaults to False.
+            page_size (int, optional): The number of items on page to print.
+                Defaults to 100.
+            verbose (bool, optional): Switch on/off for logging messages.
+                Defaults to False.
+
+        Raises:
+            APIError: Failed to loaded the exports from Genesys Cloud.
 
         Returns:
-            Dict[str, Any]: schedule genesys report.
+            Dict[str, Any]: Schedule genesys report.
         """
-        new_report = handle_api_response(
-            url=f"https://api.{self.environment}/api/v2/analytics/reporting/exports?pageSize={page_size}",
-            headers=self.authorization_token,
+        response = handle_api_response(
+            url=f"https://api.{self.environment}/api/v2/"
+            + f"analytics/reporting/exports?pageSize={page_size}",
+            headers=self.headers,
             method="GET",
         )
 
-        if new_report.status_code == 200:
-            if verbose:
-                self.logger.info("Succesfully loaded all exports.")
-            return new_report.json()
-        else:
-            self.logger.error(f"Failed to loaded all exports. - {new_report.content}")
-            raise APIError("Failed to loaded all exports.")
+        response_ok = 200
+        if response.status_code == response_ok:
+            return response.json()
 
-    def get_reporting_exports_data(self) -> None:
-        """
-        Function that generate list of reports metadata for further processing steps.
+        self.logger.error(f"Failed to loaded all exports. - {response.content}")
+        msg = "Failed to loaded all exports."
+        raise APIError(msg)
+
+    def _get_reporting_exports_url(self, entities: list[str]) -> tuple[list[str]]:
+        """Collect all reports created in Genesys Cloud.
+
+        Args:
+            entities (List[str]): List of dictionaries with all the reports information
+                available in Genesys Cloud.
 
         Returns:
-            None
+            Tuple[List[str]]: A tuple with Lists of IDs and URLs.
         """
-        request_json = self.load_reporting_exports()
+        ids = []
+        urls = []
+        status = []
+        for entity in entities:
+            ids.append(entity.get("id"))
+            urls.append(entity.get("downloadUrl"))
+            # entity.get("filter").get("queueIds", [-1])[0],
+            # entity.get("filter").get("mediaTypes", [-1])[0],
+            # entity.get("viewType"),
+            # entity.get("interval"),
+            status.append(entity.get("status"))
 
-        if request_json is not None:
-            entities = request_json.get("entities")
-            assert isinstance(entities, list)
-            if len(entities) != 0:
-                for entity in entities:
-                    tmp = [
-                        entity.get("id"),
-                        entity.get("downloadUrl"),
-                        entity.get("filter").get("queueIds", [-1])[0],
-                        entity.get("filter").get("mediaTypes", [-1])[0],
-                        entity.get("viewType"),
-                        entity.get("interval"),
-                        entity.get("status"),
-                    ]
-                    self.report_data.append(tmp)
-            assert len(self.report_data) > 0
-        self.logger.info("Generated list of reports entities.")
+        if "FAILED" in status:
+            self.logger.error("Some reports have not been successfully created.")
+        if "RUNNING" in status:
+            self.logger.warning(
+                "Some reports are still being created and can not be downloaded."
+            )
+        if self.verbose:
+            message = "".join(
+                [f"\t{i} -> {j} \n" for i, j in zip(ids, status, strict=False)]
+            )
+            self.logger.info(f"Report status:\n{message}")
 
-    def download_report(
+        return ids, urls
+
+    def _delete_report(self, report_id: str) -> None:
+        """Delete a particular report in Genesys Cloud.
+
+        Args:
+            report_id (str): Id of the report to be deleted.
+        """
+        delete_response = handle_api_response(
+            url=f"https://api.{self.environment}/api/v2/"
+            + f"analytics/reporting/exports/{report_id}",
+            headers=self.headers,
+            method="DELETE",
+        )
+        # Ok-ish responses (includes eg. 204 No Content)
+        ok_response_limit = 300
+        if delete_response.status_code < ok_response_limit:
+            self.logger.info(
+                f"Successfully deleted report '{report_id}' from Genesys API."
+            )
+        else:
+            self.logger.error(
+                f"Failed to delete report '{report_id}' "
+                + f"from Genesys API. - {delete_response.content}"
+            )
+
+    def _download_report(
         self,
         report_url: str,
-        output_file_name: str = None,
-        file_extension: str = "csv",
-        path: str = "",
-        sep: str = "\t",
         drop_duplicates: bool = True,
-    ) -> None:
-        """
-        Download report to excel file.
+    ) -> pd.DataFrame:
+        """Download report from Genesys Cloud.
 
         Args:
             report_url (str): url to report, fetched from json response.
-            output_file_name (str, optional): Output file name. Defaults to None.
-            file_extension (str, optional): Output file extension. Defaults to "xls".
-            path (str, optional): Path to the generated excel file. Defaults to empty string.
-            sep (str, optional): Separator in csv file. Defaults to "\t".
-            drop_duplicates (bool, optional): Decide if drop duplicates. Defaults to True.
+            drop_duplicates (bool, optional): Decide if drop duplicates.
+                Defaults to True.
 
         Returns:
-            None
+            pd.DataFrame: Data in a pandas DataFrame.
         """
-        response_file = handle_api_response(
-            url=f"{report_url}", headers=self.authorization_token
-        )
-        if output_file_name is None:
-            final_file_name = f"Genesys_Queue_Metrics_Interval_Export.{file_extension}"
-        else:
-            final_file_name = f"{output_file_name}.{file_extension}"
+        response = handle_api_response(url=f"{report_url}", headers=self.headers)
 
-        df = pd.read_csv(StringIO(response_file.content.decode("utf-8")))
+        # Ok-ish responses (includes eg. 204 No Content)
+        ok_response_limit = 300
+        if response.status_code < ok_response_limit:
+            self.logger.info(
+                f"Successfully downloaded report from Genesys API ('{report_url}')."
+            )
+
+        else:
+            msg = (
+                "Failed to download report from"
+                + f" Genesys API ('{report_url}'). - {response.content}"
+            )
+            self.logger.error(msg)
+
+        dataframe = pd.read_csv(StringIO(response.content.decode("utf-8")))
 
         if drop_duplicates is True:
-            df.drop_duplicates(inplace=True, ignore_index=True)
+            dataframe.drop_duplicates(inplace=True, ignore_index=True)
 
-        df.to_csv(os.path.join(path, final_file_name), index=False, sep=sep)
+        return dataframe
 
-    def download_all_reporting_exports(
-        self, store_file_names: bool = True, path: str = ""
-    ) -> List[str]:
-        """
-        Get information form data report and download all files.
+    def _merge_conversations(self, data_to_merge: list) -> pd.DataFrame:  # noqa: C901, PLR0912
+        """Merge all the conversations data into a single data frame.
 
         Args:
-            store_file_names (bool, optional): decide whether to store list of names. Defaults to True.
-            path (str, optional): Path to the generated excel file. Defaults to empty string.
+            data_to_merge (list): List with all the conversations in json format.
+            Example for all levels data to merge:
+                {
+                "conversations": [
+                    {
+                        **** LEVEL 0 data ****
+                        "participants": [
+                            {
+                                **** LEVEL 1 data ****
+                                "sessions": [
+                                    {
+                                        "agentBullseyeRing": 1,
+                                        **** LEVEL 2 data ****
+                                        "mediaEndpointStats": [
+                                            {
+                                                **** LEVEL 3 data ****
+                                            },
+                                        ],
+                                        "metrics": [
+                                            {
+                                                **** LEVEL 3 data ****
+                                            },
+                                        ],
+                                        "segments": [
+                                            {
+                                                **** LEVEL 3 data ****
+                                            },
+                                            {
+                                                **** LEVEL 3 data ****
+                                            },
+                                        ],
+                                    }
+                                ],
+                            },
+                            {
+                                "participantId": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
+                                **** LEVEL 1 data ****
+                                "sessions": [
+                                    {
+                                        **** LEVEL 2 data ****
+                                        "mediaEndpointStats": [
+                                            {
+                                                **** LEVEL 3 data ****
+                                            }
+                                        ],
+                                        "flow": {
+                                            **** LEVEL 2 data ****
+                                        },
+                                        "metrics": [
+                                            {
+                                                **** LEVEL 3 data ****
+                                            },
+                                        ],
+                                        "segments": [
+                                            {
+                                                **** LEVEL 3 data ****
+                                            },
+                                        ],
+                                    }
+                                ],
+                            },
+                        ],
+                    }
+                ],
+                "totalHits": 100,
+            }
 
         Returns:
-            List[str]: All file names of downloaded files.
+            DataFrame: A single data frame with all the content.
         """
-        file_name_list = []
-        temp_ids_mapping = self.ids_mapping
-        if temp_ids_mapping is None:
-            self.logger.warning("IDS_MAPPING is not provided in you credentials.")
-        else:
-            self.logger.info("IDS_MAPPING loaded from local credential.")
+        # LEVEL 0
+        df0 = pd.json_normalize(data_to_merge)
+        df0.drop(["participants"], axis=1, inplace=True)
 
-        for single_report in self.report_data:
-            self.logger.info(single_report)
-            if single_report[-1] == "RUNNING":
-                self.logger.warning(
-                    "The request is still in progress and will be deleted, consider add more seconds in `view_type_time_sleep` parameter."
-                )
-                continue
-            elif single_report[-1] == "FAILED":
-                self.logger.warning(
-                    "This message 'FAILED_GETTING_DATA_FROM_SERVICE' raised during script execution."
-                )
-                continue
-            elif self.start_date not in single_report[5]:
-                self.logger.warning(
-                    f"The report with ID {single_report[0]} doesn't match with the interval date that you have already defined. \
-                        The report won't be downloaded but will be deleted."
-                )
-                continue
-
-            if single_report[4].lower() == "queue_performance_detail_view":
-                file_name = (
-                    temp_ids_mapping.get(single_report[2]) + "_" + single_report[3]
-                ).upper()
-            elif single_report[4].lower() in [
-                "agent_performance_summary_view",
-                "agent_status_summary_view",
-            ]:
-                date = self.start_date.replace("-", "")
-                file_name = self.view_type.upper() + "_" + f"{date}"
-            elif single_report[4].lower() in [
-                "agent_status_detail_view",
-            ]:
-                date = self.start_date.replace("-", "")
-                file_name = self.view_type.upper() + f"_{next(self.count)}_" + f"{date}"
-            else:
-                raise SKIP(
-                    message=f"View type {self.view_type} not defined in viadot, yet..."
-                )
-
-            self.download_report(
-                report_url=single_report[1],
-                path=path,
-                output_file_name=file_name,
-                file_extension=self.file_extension,
-            )
-            if store_file_names is True:
-                file_name_list.append(file_name + "." + self.file_extension)
-
-        self.logger.info("Al reports were successfully dowonload.")
-
-        if store_file_names is True:
-            self.logger.info("Successfully genetared file names list.")
-            return file_name_list
-
-    def generate_reporting_export(
-        self, data_to_post: Dict[str, Any], verbose: bool = False
-    ) -> int:
-        """
-        POST method for reporting export.
-
-        Args:
-            data_to_post (Dict[str, Any]): Json format of POST body.
-            verbose (bool, optional): Decide if enable logging. Defaults to True.
-
-        Returns:
-            int: Status code.
-        """
-        payload = json.dumps(data_to_post)
-        new_report = handle_api_response(
-            url=f"https://api.{self.environment}/api/v2/analytics/reporting/exports",
-            headers=self.authorization_token,
-            method="POST",
-            data=payload,
+        # LEVEL 1
+        df1 = pd.json_normalize(
+            data_to_merge,
+            record_path=["participants"],
+            meta=["conversationId"],
         )
-        if verbose:
-            if new_report.status_code == 200:
-                self.logger.info("Succesfully generated new export.")
+        df1.drop(["sessions"], axis=1, inplace=True)
+
+        # LEVEL 2
+        df2 = pd.json_normalize(
+            data_to_merge,
+            record_path=["participants", "sessions"],
+            meta=[
+                ["participants", "externalContactId"],
+                ["participants", "participantId"],
+            ],
+            errors="ignore",
+            sep="_",
+        )
+        # Columns that will be the reference for the next LEVEL
+        df2.rename(
+            columns={
+                "participants_externalContactId": "externalContactId",
+                "participants_participantId": "participantId",
+            },
+            inplace=True,
+        )
+        for key in ["metrics", "segments", "mediaEndpointStats"]:
+            try:
+                df2.drop([key], axis=1, inplace=True)
+            except KeyError as err:
+                self.logger.info(f"Key {err} not appearing in the response.")
+
+        # LEVEL 3
+        conversations_df = {}
+        for i, conversation in enumerate(data_to_merge):
+            # Not all "sessions" have the same data, and that creates
+            #   problems of standardization
+            # Empty data will be added to columns where there is not to avoid
+            #   future errors.
+            for j, entry_0 in enumerate(conversation["participants"]):
+                for key in list(entry_0.keys()):
+                    if key == "sessions":
+                        for k, entry_1 in enumerate(entry_0[key]):
+                            if "metrics" not in list(entry_1.keys()):
+                                conversation["participants"][j][key][k]["metrics"] = []
+                            if "segments" not in list(entry_1.keys()):
+                                conversation["participants"][j][key][k]["segments"] = []
+                            if "mediaEndpointStats" not in list(entry_1.keys()):
+                                conversation["participants"][j][key][k][
+                                    "mediaEndpointStats"
+                                ] = []
+
+            # LEVEL 3 metrics
+            df3_1 = pd.json_normalize(
+                conversation,
+                record_path=["participants", "sessions", "metrics"],
+                meta=[
+                    ["participants", "sessions", "sessionId"],
+                ],
+                errors="ignore",
+                record_prefix="metrics_",
+                sep="_",
+            )
+            df3_1.rename(
+                columns={"participants_sessions_sessionId": "sessionId"}, inplace=True
+            )
+
+            # LEVEL 3 segments
+            df3_2 = pd.json_normalize(
+                conversation,
+                record_path=["participants", "sessions", "segments"],
+                meta=[
+                    ["participants", "sessions", "sessionId"],
+                ],
+                errors="ignore",
+                record_prefix="segments_",
+                sep="_",
+            )
+            df3_2.rename(
+                columns={"participants_sessions_sessionId": "sessionId"}, inplace=True
+            )
+
+            # LEVEL 3 mediaEndpointStats
+            df3_3 = pd.json_normalize(
+                conversation,
+                record_path=["participants", "sessions", "mediaEndpointStats"],
+                meta=[
+                    ["participants", "sessions", "sessionId"],
+                ],
+                errors="ignore",
+                record_prefix="mediaEndpointStats_",
+                sep="_",
+            )
+            df3_3.rename(
+                columns={"participants_sessions_sessionId": "sessionId"}, inplace=True
+            )
+
+            # merging all LEVELs 3 from the same conversation
+            dff3_tmp = pd.concat([df3_1, df3_2])
+            dff3 = pd.concat([dff3_tmp, df3_3])
+
+            conversations_df.update({i: dff3})
+
+        # NERGING ALL LEVELS
+        # LEVELS 3
+        for i_3, key in enumerate(list(conversations_df.keys())):
+            if i_3 == 0:
+                dff3_f = conversations_df[key]
             else:
+                dff3_f = pd.concat([dff3_f, conversations_df[key]])
+
+        # LEVEL 3 with LEVEL 2
+        dff2 = pd.merge(dff3_f, df2, how="outer", on=["sessionId"])
+
+        # LEVEL 2 with LEVEL 1
+        dff1 = pd.merge(
+            df1, dff2, how="outer", on=["externalContactId", "participantId"]
+        )
+
+        # LEVEL 1 with LEVEL 0
+        return pd.merge(df0, dff1, how="outer", on=["conversationId"])
+
+    # This is way too complicated for what it's doing...
+    def api_connection(  # noqa: PLR0912, PLR0915, C901.
+        self,
+        endpoint: str | None = None,
+        queues_ids: list[str] | None = None,
+        view_type: str | None = None,
+        view_type_time_sleep: int = 10,
+        post_data_list: list[dict[str, Any]] | None = None,
+        normalization_sep: str = ".",
+    ) -> None:
+        """General method to connect to Genesys Cloud API and generate the response.
+
+        Args:
+            endpoint (Optional[str], optional): Final end point to the API.
+                Defaults to None.
+
+                Custom endpoints have specific key words, and parameters:
+                Example:
+                    - "routing/queues/{id}/members": "routing_queues_members"
+                    - members_ids = ["xxxxxxxxx", "xxxxxxxxx", ...]
+            queues_ids (Optional[List[str]], optional): List of queues ids to consult
+                the members. Defaults to None.
+            view_type (Optional[str], optional): The type of view export job to be
+                created. Defaults to None.
+            view_type_time_sleep (int, optional): Waiting time to retrieve data from
+                Genesys Cloud API. Defaults to 10.
+            post_data_list (Optional[List[Dict[str, Any]]], optional): List of string
+                templates to generate json body in POST calls to the API.
+                Defaults to None.
+            normalization_sep (str, optional): Nested records will generate names
+                separated by sep. Defaults to ".".
+
+        Raises:
+            APIError: Some or No reports were not created.
+            APIError: At different endpoints:
+                - 'analytics/conversations/details/query': only one body must be used.
+                - 'routing_queues_members': extra parameter `queues_ids` must be
+                    included.
+        """
+        self.logger.info(
+            f"Connecting to the Genesys Cloud using the endpoint: {endpoint}"
+        )
+
+        if endpoint == "analytics/reporting/exports":
+            self._api_call(
+                endpoint=endpoint,
+                post_data_list=post_data_list,
+                method="POST",
+            )
+
+            msg = (
+                f"Waiting {view_type_time_sleep} seconds for"
+                + " caching data from Genesys Cloud API."
+            )
+            self.logger.info(msg)
+            time.sleep(view_type_time_sleep)
+
+            request_json = self._load_reporting_exports()
+            entities = request_json["entities"]
+
+            if isinstance(entities, list) and len(entities) == len(post_data_list):
+                ids, urls = self._get_reporting_exports_url(entities)
+            else:
+                APIError(
+                    "There are no reports to be downloaded."
+                    f"May be {view_type_time_sleep} should be increased."
+                )
+
+            # download and delete reports created
+            count = 0
+            raise_api_error = False
+            for qid, url in zip(ids, urls, strict=False):
+                if url is not None:
+                    df_downloaded = self._download_report(report_url=url)
+
+                    time.sleep(1.0)
+                    # remove resume rows
+                    if view_type in ["queue_performance_detail_view"]:
+                        criteria = (
+                            df_downloaded["Queue Id"]
+                            .apply(lambda x: str(x).split(";"))
+                            .apply(lambda x: not len(x) > 1)
+                        )
+                        df_downloaded = df_downloaded[criteria]
+
+                    self.data_returned.update({count: df_downloaded})
+                else:
+                    self.logger.error(
+                        f"Report id {qid} didn't have time to be created. "
+                        + "Consider increasing the `view_type_time_sleep` parameter "
+                        + f">> {view_type_time_sleep} seconds to allow Genesys Cloud "
+                        + "to conclude the report creation."
+                    )
+                    raise_api_error = True
+
+                self._delete_report(qid)
+
+                count += 1  # noqa: SIM113
+
+            if raise_api_error:
+                msg = "Some reports creation failed."
+                raise APIError(msg)
+
+        elif endpoint == "analytics/conversations/details/query":
+            if len(post_data_list) > 1:
+                msg = "Not available more than one body for this end-point."
+                raise APIError(msg)
+
+            stop_loop = False
+            page_counter = post_data_list[0]["paging"]["pageNumber"]
+            self.logger.info(
+                "Restructuring the response in order to be able to insert it into a "
+                + "data frame.\n\tThis task could take a few minutes.\n"
+            )
+            while not stop_loop:
+                report = self._api_call(
+                    endpoint=endpoint,
+                    post_data_list=post_data_list,
+                    method="POST",
+                )
+
+                merged_data_frame = self._merge_conversations(report["conversations"])
+                self.data_returned.update(
+                    {
+                        int(post_data_list[0]["paging"]["pageNumber"])
+                        - 1: merged_data_frame
+                    }
+                )
+
+                if page_counter == 1:
+                    max_calls = int(np.ceil(report["totalHits"] / 100))
+                if page_counter == max_calls:
+                    stop_loop = True
+
+                post_data_list[0]["paging"]["pageNumber"] += 1
+                page_counter += 1
+
+        elif endpoint in ["routing/queues", "users"]:
+            page = 1
+            self.logger.info(
+                "Restructuring the response in order to be able to insert it into a "
+                + "data frame.\n\tThis task could take a few minutes.\n"
+            )
+            while True:
+                if endpoint == "routing/queues":
+                    params = {"pageSize": 500, "pageNumber": page}
+                elif endpoint == "users":
+                    params = {
+                        "pageSize": 500,
+                        "pageNumber": page,
+                        "expand": "presence,dateLastLogin,groups"
+                        + ",employerInfo,lasttokenissued",
+                        "state": "any",
+                    }
+                response = self._api_call(
+                    endpoint=endpoint,
+                    post_data_list=post_data_list,
+                    method="GET",
+                    params=params,
+                )
+
+                if response["entities"]:
+                    df_response = pd.json_normalize(
+                        response["entities"],
+                        sep=normalization_sep,
+                    )
+                    self.data_returned.update({page - 1: df_response})
+
+                    page += 1
+                else:
+                    break
+
+        elif endpoint == "routing_queues_members":
+            counter = 0
+            if queues_ids is None:
                 self.logger.error(
-                    f"Failed to generated new export. - {new_report.content}"
+                    "This endpoint requires `queues_ids` parameter to work."
                 )
-                raise APIError("Failed to generated new export.")
-        return new_report.status_code
+                APIError("This endpoint requires `queues_ids` parameter to work.")
 
-    def delete_reporting_exports(self, report_id: str) -> int:
-        """DELETE method for deleting particular reporting exports.
+            for qid in queues_ids:
+                self.logger.info(f"Downloading Agents information from Queue: {qid}")
+                page = 1
+                while True:
+                    response = self._api_call(
+                        endpoint=f"routing/queues/{qid}/members",
+                        params={"pageSize": 100, "pageNumber": page},
+                        post_data_list=post_data_list,
+                        method="GET",
+                    )
 
-        Args:
-            report_id (str): Defined at the end of report url.
+                    if response["entities"]:
+                        df_response = pd.json_normalize(response["entities"])
+                        # drop personal information
+                        columns_to_drop = {
+                            "user.addresses",
+                            "user.primaryContactInfo",
+                            "user.images",
+                        }.intersection(df_response.columns)
+                        df_response.drop(
+                            columns_to_drop,
+                            axis=1,
+                            inplace=True,
+                        )
+                        self.data_returned.update({counter: df_response})
 
-        Returns:
-            int: Status code.
-        """
-        delete_method = handle_api_response(
-            url=f"https://api.{self.environment}/api/v2/analytics/reporting/exports/{report_id}",
-            headers=self.authorization_token,
-            method="DELETE",
-        )
-        if delete_method.status_code < 300:
-            self.logger.info("Successfully deleted report from Genesys API.")
+                        page += 1
+                        counter += 1
+                    else:
+                        break
 
-        else:
-            self.logger.error(
-                f"Failed to deleted report from Genesys API. - {delete_method.content}"
-            )
-            raise APIError("Failed to deleted report from Genesys API.")
-
-        return delete_method.status_code
-
-    def delete_all_reporting_exports(self) -> None:
-        """
-        Function that deletes all reporting from self.reporting_data list.
-
-        Returns:
-            None
-        """
-        for report in self.report_data:
-            status_code = self.delete_reporting_exports(report_id=report[0])
-            assert status_code < 300
-
-        self.logger.info("Successfully removed all reports.")
-
-    def get_analitics_url_report(self) -> str:
-        """
-        Fetching analytics report url from json response.
-
-        Returns:
-            str: Url for analytics report
-        """
-        response = handle_api_response(
-            url=f"https://api.{self.environment}/api/v2/analytics/reporting/schedules/{self.schedule_id}",
-            headers=self.authorization_token,
-        )
-        try:
-            response_json = response.json()
-            report_url = response_json.get("lastRun", None).get("reportUrl", None)
-            self.logger.info("Successfully downloaded report from genesys api")
-            return report_url
-        except AttributeError as e:
-            self.logger.error(
-                "Output data error: " + str(type(e).__name__) + ": " + str(e)
-            )
-
-    def get_all_schedules_job(self) -> Dict[str, Any]:
-        """
-        Fetching analytics report url from json response.
-
-        Returns:
-            Dict[str, Any]: Json body with all schedules jobs.
-        """
-        response = handle_api_response(
-            url=f"https://api.{self.environment}/api/v2/analytics/reporting/schedules",
-            headers=self.authorization_token,
-        )
-        try:
-            response_json = response.json()
-            self.logger.info("Successfully downloaded schedules jobs.")
-            return response_json
-        except AttributeError as e:
-            self.logger.error(
-                "Output data error: " + str(type(e).__name__) + ": " + str(e)
-            )
-
-    def schedule_report(self, data_to_post: Dict[str, Any]) -> int:
-        """
-        POST method for report scheduling.
-
-        Args:
-            data_to_post (Dict[str, Any]): Json format of POST body.
-
-        Returns:
-            int: status code
-        """
-        payload = json.dumps(data_to_post)
-        new_report = handle_api_response(
-            url=f"https://api.{self.environment}/api/v2/analytics/reporting/schedules",
-            headers=self.authorization_token,
-            method="POST",
-            data=payload,
-        )
-        if new_report.status_code == 200:
-            self.logger.info("Succesfully scheduled new report.")
-        else:
-            self.logger.error(f"Failed to scheduled new report. - {new_report.content}")
-            raise APIError("Failed to scheduled new report.")
-        return new_report.status_code
-
+    @add_viadot_metadata_columns
     def to_df(
         self,
-        report_url: str = None,
-        tests: dict = None,
+        if_empty: str = "warn",
+        **kwargs,
     ) -> pd.DataFrame:
-        """
-        Download genesys data into a pandas DataFrame.
+        """Generate a pandas DataFrame from self.data_returned.
 
         Args:
-            report_url (str): Report url from api response.
-            tests (Dict[str], optional): A dictionary with optional list of tests
-                to verify the output dataframe. If defined, triggers the `validate`
-                function from utils. Defaults to None.
+            drop_duplicates (bool, optional): Remove duplicates from the DataFrame.
+                Defaults to False.
+            validate_df_dict (Optional[Dict[str, Any]], optional): A dictionary with
+                optional list of tests to verify the output dataframe. Defaults to None.
 
         Returns:
-            pd.DataFrame: The DataFrame with time range.
+            pd.Dataframe: The response data as a pandas DataFrame plus viadot metadata.
         """
-        if report_url is None:
-            report_url = self.get_analitics_url_report()
-        response_file = handle_api_response(
-            url=f"{report_url}", headers=self.authorization_token
-        )
-        if self.report_columns is None:
-            df = pd.read_excel(response_file.content, header=6)
-        else:
-            df = pd.read_excel(
-                response_file.content, names=self.report_columns, skiprows=6
+        drop_duplicates = kwargs.get("drop_duplicates", False)
+        validate_df_dict = kwargs.get("validate_df_dict", None)
+        super().to_df(if_empty=if_empty)
+
+        for key in list(self.data_returned.keys()):
+            if key == 0:
+                data_frame = self.data_returned[key]
+            else:
+                data_frame = pd.concat([data_frame, self.data_returned[key]])
+
+        if drop_duplicates:
+            data_frame.drop_duplicates(inplace=True)
+
+        if validate_df_dict:
+            validate(df=data_frame, tests=validate_df_dict)
+
+        if len(self.data_returned) == 0:
+            data_frame = pd.DataFrame()
+            self._handle_if_empty(
+                if_empty=if_empty,
+                message="The response does not contain any data.",
             )
-
-        if tests:
-            validate(df=df, tests=tests)
-
-        return df
-
-    def delete_scheduled_report_job(self, report_id: str) -> int:
-        """
-        DELETE method for deleting particular report job.
-
-        Args:
-            report_id (str): Defined at the end of report url.
-
-        Returns:
-            int: Status code.
-        """
-        delete_method = handle_api_response(
-            url=f"https://api.{self.environment}/api/v2/analytics/reporting/schedules/{report_id}",
-            headers=self.authorization_token,
-            method="DELETE",
-        )
-        if delete_method.status_code == 200:
-            self.logger.info("Successfully deleted report from Genesys API.")
-
         else:
-            self.logger.error(
-                f"Failed to deleted report from Genesys API. - {delete_method.content}"
-            )
-            raise APIError("Failed to deleted report from Genesys API.")
+            data_frame.reset_index(inplace=True, drop=True)
 
-        return delete_method.status_code
+        return data_frame

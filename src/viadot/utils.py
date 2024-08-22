@@ -1,15 +1,18 @@
+"""Util functions."""
+
+from collections.abc import Callable
+import contextlib
+from datetime import datetime, timezone
 import functools
 import logging
 import re
 import subprocess
-from datetime import datetime, timezone
-from typing import Any, Callable, Dict, List, Literal, Optional
+from typing import TYPE_CHECKING, Any, Literal, Optional
 
 import pandas as pd
 import pyodbc
+import pytest
 import requests
-
-# from prefect.utilities.graphql import EnumValue, with_args
 from requests.adapters import HTTPAdapter
 from requests.exceptions import ConnectionError, HTTPError, ReadTimeout, Timeout
 from requests.packages.urllib3.util.retry import Retry
@@ -18,40 +21,43 @@ from urllib3.exceptions import ProtocolError
 from viadot.exceptions import APIError, ValidationError
 from viadot.signals import SKIP
 
-try:
+
+if TYPE_CHECKING:
+    from viadot.sources.base import Source
+
+
+with contextlib.suppress(ImportError):
     import pyspark.sql.dataframe as spark
-except ImportError:
-    pass
 
 
 def slugify(name: str) -> str:
+    """Slugify a string."""
     return name.replace(" ", "_").lower()
 
 
 def handle_api_request(
     url: str,
-    auth: tuple = None,
-    params: Dict[str, Any] = None,
-    headers: Dict[str, Any] = None,
+    auth: tuple | None = None,
+    params: dict[str, Any] | None = None,
+    headers: dict[str, Any] | None = None,
     timeout: tuple = (3.05, 60 * 30),
     method: Literal["GET", "POST", "DELETE"] = "GET",
-    data: str = None,
+    data: str | None = None,
 ) -> requests.Response:
-    """
-    Send an HTTP request to the specified URL using the provided parameters.
+    """Send an HTTP request to the specified URL using the provided parameters.
 
     Args:
         url (str): The URL to send the request to.
-        auth (tuple, optional): A tuple of (username, password) for basic authentication.
-            Defaults to None.
+        auth (tuple, optional): A tuple of (username, password) for basic
+            authentication. Defaults to None.
         params (Dict[str, Any], optional): A dictionary of query string parameters.
             Defaults to None.
-        headers (Dict[str, Any], optional): A dictionary of HTTP headers to include with the request.
-            Defaults to None.
-        timeout (tuple, optional): A tuple of (connect_timeout, read_timeout) in seconds.
-            Defaults to (3.05, 60 * 30).
-        method (Literal["GET", "POST", "DELETE"], optional): The HTTP method to use for the request.
-            Defaults to "GET".
+        headers (Dict[str, Any], optional): A dictionary of HTTP headers to include with
+            the request. Defaults to None.
+        timeout (tuple, optional): A tuple of (connect_timeout, read_timeout) in
+            seconds. Defaults to (3.05, 60 * 30).
+        method (Literal["GET", "POST", "DELETE"], optional): The HTTP method to use for
+            the request. Defaults to "GET".
         data (str, optional): The request body data as a string. Defaults to None.
 
     Returns:
@@ -69,7 +75,7 @@ def handle_api_request(
     session.mount("http://", adapter)
     session.mount("https://", adapter)
 
-    response = session.request(
+    return session.request(
         method=method,
         url=url,
         auth=auth,
@@ -79,10 +85,8 @@ def handle_api_request(
         data=data,
     )
 
-    return response
 
-
-def handle_response(
+def _handle_response(
     response: requests.Response, timeout: tuple = (3.05, 60 * 30)
 ) -> requests.Response:
     url = response.url
@@ -94,43 +98,45 @@ def handle_response(
         msg += "while waiting for the server to return data."
         raise APIError(msg) from e
     except HTTPError as e:
-        raise APIError(
-            f"The API call to {url} failed. "
-            "Perhaps your account credentials need to be refreshed?",
-        ) from e
+        msg = f"The API call to {url} failed with status code {response.status_code}."
+        msg += "\nPerhaps your account credentials need to be refreshed?"
+        raise APIError(msg) from e
     except (ConnectionError, Timeout) as e:
-        raise APIError(f"The API call to {url} failed due to connection issues.") from e
-    except ProtocolError:
-        raise APIError(f"Did not receive any response for the API call to {url}.")
+        msg = f"The API call to {url} failed due to connection issues."
+        raise APIError(msg) from e
+    except ProtocolError as e:
+        msg = f"Did not receive any response for the API call to {url}."
+        raise APIError(msg) from e
     except Exception as e:
-        raise APIError("Unknown error.") from e
+        msg = "Unknown error."
+        raise APIError(msg) from e
 
     return response
 
 
 def handle_api_response(
     url: str,
-    auth: tuple = None,
-    params: Dict[str, Any] = None,
-    headers: Dict[str, Any] = None,
+    auth: tuple | None = None,
+    params: dict[str, Any] | None = None,
+    headers: dict[str, Any] | None = None,
     timeout: tuple = (3.05, 60 * 30),
     method: Literal["GET", "POST", "DELETE"] = "GET",
-    data: str = None,
+    data: str | None = None,
 ) -> requests.models.Response:
-    """
-    Handle an HTTP response by applying retries and handling some common response
-    codes.
+    """Handle an HTTP response.
+
+    Apply retries and handle some common response codes.
 
     Args:
         url (str): The URL which trying to connect.
-        auth (tuple, optional): A tuple of (username, password) for basic authentication.
-            Defaults to None.
+        auth (tuple, optional): A tuple of (username, password) for basic
+            authentication. Defaults to None.
         params (Dict[str, Any], optional): The request parameters. Defaults to None.
         headers (Dict[str, Any], optional): The request headers. Defaults to None.
-        method (Literal["GET", "POST", "DELETE"], optional): The HTTP method to use for the request.
-            Defaults to "GET".
-        timeout (tuple, optional): A tuple of (connect_timeout, read_timeout) in seconds.
-            Defaults to (3.05, 60 * 30).
+        method (Literal["GET", "POST", "DELETE"], optional): The HTTP method to use for
+            the request. Defaults to "GET".
+        timeout (tuple, optional): A tuple of (connect_timeout, read_timeout) in
+            seconds. Defaults to (3.05, 60 * 30).
         data (str, optional): The request body data as a string. Defaults to None.
 
     Raises:
@@ -152,15 +158,13 @@ def handle_api_response(
         data=data,
     )
 
-    response_handled = handle_response(response)
-    return response_handled
+    return _handle_response(response)
 
 
 def get_sql_server_table_dtypes(
-    table: str, con: pyodbc.Connection, schema: str = None
+    table: str, con: pyodbc.Connection, schema: str | None = None
 ) -> dict:
-    """
-    Get column names and types from a SQL Server database table.
+    """Get column names and types from a SQL Server database table.
 
     Args:
         table (str): The table for which to fetch dtypes.
@@ -172,7 +176,6 @@ def get_sql_server_table_dtypes(
     Returns:
         dict: A dictionary of the form {column_name: dtype, ...}.
     """
-
     query = f"""
     SELECT
         col.name,
@@ -206,23 +209,21 @@ def get_sql_server_table_dtypes(
 
 def _cast_df_cols(
     df: pd.DataFrame,
-    types_to_convert: List[Literal["datetime", "bool", "int", "object"]] = [
-        "datetime",
-        "bool",
-        "int",
-    ],
+    types_to_convert: list[Literal["datetime", "bool", "int", "object"]] | None = None,
 ) -> pd.DataFrame:
-    """
-    Cast the data types of columns in a DataFrame.
+    """Cast the data types of columns in a DataFrame.
 
     Args:
         df (pd.DataFrame): The input DataFrame.
-        types_to_convert (Literal[datetime, bool, int, object], optional): List of types to be converted.
-        Defaults to ["datetime", "bool", "int"].
+        types_to_convert (Literal[datetime, bool, int, object], optional): List of types
+            to be converted. Defaults to ["datetime", "bool", "int"].
 
     Returns:
         pd.DataFrame: A DataFrame with modified data types.
     """
+    if not types_to_convert:
+        types_to_convert = ["datetime", "bool", "int"]
+
     df = df.replace({"False": False, "True": True})
 
     datetime_cols = (col for col, dtype in df.dtypes.items() if dtype.kind == "M")
@@ -249,14 +250,15 @@ def _cast_df_cols(
 def build_merge_query(
     table: str,
     primary_key: str,
-    source,
-    stg_schema: str = None,
+    source: "Source",
+    stg_schema: str | None = None,
     stg_table: str = "stg",
-    schema: str = None,
+    schema: str | None = None,
     df: Optional["spark.DataFrame"] = None,
 ) -> str:
-    """
-    Build a merge query for the simplest possible upsert scenario:
+    """Build a merge query for the simplest possible upsert scenario.
+
+    Used for:
     - updating and inserting all fields
     - merging on a single column, which has the same name in both tables
 
@@ -283,13 +285,13 @@ def build_merge_query(
 
     # Get column names
     columns_query_result = _get_table_columns(schema=schema, table=table, source=source)
-    columns = [tup for tup in columns_query_result]
+    columns = list(columns_query_result)
 
     columns_stg_fqn = [f"{stg_table}.{col}" for col in columns]
 
     # Build merge query
     update_pairs = [f"existing.{col} = {stg_table}.{col}" for col in columns]
-    merge_query = f"""
+    return f"""
     MERGE INTO {fqn} existing
         USING {stg_fqn} {stg_table}
         ON {stg_table}.{primary_key} = existing.{primary_key}
@@ -299,10 +301,9 @@ def build_merge_query(
             THEN INSERT({", ".join(columns)})
             VALUES({", ".join(columns_stg_fqn)});
     """
-    return merge_query
 
 
-def _get_table_columns(schema: str, table: str, source) -> str:
+def _get_table_columns(schema: str, table: str, source: "Source") -> str:
     if source.__class__.__name__ == "Databricks":
         result = source.run(f"SHOW COLUMNS IN {schema}.{table}", "pandas")
         columns_query_result = result["col_name"].values
@@ -325,10 +326,9 @@ def _get_table_columns(schema: str, table: str, source) -> str:
 
 
 def gen_bulk_insert_query_from_df(
-    df: pd.DataFrame, table_fqn: str, chunksize=1000, **kwargs
+    df: pd.DataFrame, table_fqn: str, chunksize: int = 1000, **kwargs
 ) -> str:
-    """
-    Converts a DataFrame to a bulk INSERT query.
+    """Converts a DataFrame to a bulk INSERT query.
 
     Args:
         df (pd.DataFrame): The DataFrame which data should be put into the INSERT query.
@@ -346,7 +346,9 @@ def gen_bulk_insert_query_from_df(
     0   1  _suffixnan           1      NaN
     1   2  Noneprefix           0      NaN
     2   3  fooNULLbar           1     2.34
-    >>> query = gen_bulk_insert_query_from_df(df, "users", status="APPROVED", address=None)
+    >>> query = gen_bulk_insert_query_from_df(
+    >>>     df, table_fqn="users", status="APPROVED", address=None
+    >>> )
     >>> print(query)
     INSERT INTO users (id, name, is_deleted, balance, status, address)
     VALUES (1, '_suffixnan', 1, NULL, 'APPROVED', NULL),
@@ -354,11 +356,10 @@ def gen_bulk_insert_query_from_df(
            (3, 'fooNULLbar', 1, 2.34, 'APPROVED', NULL);
     """
     if df.shape[1] == 1:
-        raise NotImplementedError(
-            "Currently, this function only handles DataFrames with at least two columns."
-        )
+        msg = "Currently, this function only handles DataFrames with at least two columns."
+        raise NotImplementedError(msg)
 
-    def _gen_insert_query_from_records(records: List[tuple]) -> str:
+    def _gen_insert_query_from_records(records: list[tuple]) -> str:
         tuples = map(str, tuple(records))
 
         # Change Nones to NULLs
@@ -406,25 +407,27 @@ def gen_bulk_insert_query_from_df(
             chunk_insert_query = _gen_insert_query_from_records(chunk)
             insert_query += chunk_insert_query + ";\n\n"
         return insert_query
-    else:
-        return _gen_insert_query_from_records(tuples_escaped)
+    return _gen_insert_query_from_records(tuples_escaped)
 
 
 def handle_if_empty(
     if_empty: Literal["warn", "skip", "fail"] = "warn",
-    message: str = None,
-    logger: logging.Logger = logging.getLogger(__name__),
-):
-    """
-    Task for handling empty file.
+    message: str | None = None,
+    logger: logging.Logger | None = None,
+) -> None:
+    """Task for handling empty file.
+
     Args:
         if_empty (Literal, optional): What to do if file is empty. Defaults to "warn".
         message (str, optional): Massage to show in warning and error messages.
             Defaults to None.
+
     Raises:
         ValueError: If `if_empty` is set to `fail`.
         SKIP: If `if_empty` is set to `skip`.
     """
+    if not logger:
+        logger = logging.getLogger(__name__)
     if if_empty == "warn":
         logger.warning(message)
     elif if_empty == "skip":
@@ -434,8 +437,7 @@ def handle_if_empty(
 
 
 def cleanup_df(df: pd.DataFrame) -> pd.DataFrame:
-    """
-    Remove some common data corruption from a pandas DataFrame.
+    """Remove some common data corruption from a pandas DataFrame.
 
     Args:
         df (pd.DataFrame): The pandas DataFrame to be cleaned up.
@@ -446,16 +448,27 @@ def cleanup_df(df: pd.DataFrame) -> pd.DataFrame:
     return df.replace(r"\n|\t", "", regex=True)
 
 
-def call_shell(command):
+def call_shell(command: str) -> str:
+    """Run a shell command and return the output."""
     try:
-        result = subprocess.check_output(command, shell=True)
+        result = subprocess.check_output(command, shell=True)  # noqa: S602
     except subprocess.CalledProcessError as e:
-        # TODO: read the error message fro mstdout and pass here
-        raise ValueError("Generating the file failed.") from e
-    return result
+        # TODO: read the error message from stdout and pass here
+        msg = "Generating the file failed."
+        raise ValueError(msg) from e
+    else:
+        return result
 
 
 def df_snakecase_column_names(df: pd.DataFrame) -> pd.DataFrame:
+    """Snakecase the column names of a DataFrame.
+
+    Args:
+        df (pd.DataFrame): The DataFrame to snakecase.
+
+    Returns:
+        pd.DataFrame: The DataFrame with snakecased column names.
+    """
     df.columns = (
         df.columns.str.strip().str.replace(" ", "_").str.replace("-", "_").str.lower()
     )
@@ -463,7 +476,10 @@ def df_snakecase_column_names(df: pd.DataFrame) -> pd.DataFrame:
 
 
 def add_viadot_metadata_columns(func: Callable) -> Callable:
-    "Decorator that adds metadata columns to df in 'to_df' method"
+    """A decorator for the 'to_df()' method.
+
+    Adds viadot metadata columns to the returned DataFrame.
+    """
 
     @functools.wraps(func)
     def wrapper(*args, **kwargs) -> pd.DataFrame:
@@ -481,13 +497,31 @@ def add_viadot_metadata_columns(func: Callable) -> Callable:
     return wrapper
 
 
-def get_fqn(table_name: str, schema_name: str = None) -> str:
+def get_fqn(table_name: str, schema_name: str | None = None) -> str:
+    """Get the fully qualified name of a table."""
     return f"{schema_name}.{table_name}" if schema_name else table_name
 
 
 def validate_column_size(
-    df, tests, logger, stream_level, failed_tests, failed_tests_list
-):
+    df: pd.DataFrame,
+    tests: dict[str, Any],
+    logger: logging.Logger,
+    stream_level: int,
+    failed_tests: int,
+    failed_tests_list: list,
+) -> None:
+    """Validate the size of the columns in the DataFrame.
+
+    Logic: TODO
+
+    Args:
+        df (pd.DataFrame): The pandas DataFrame to validate.
+        tests (dict[str, Any]): _description_
+        logger (logging.Logger): The logger to use.
+        stream_level (int): The logging level to use for logging.
+        failed_tests (int): _description_
+        failed_tests_list (list): _description_
+    """
     try:
         for k, v in tests["column_size"].items():
             column_max_length = (
@@ -513,8 +547,23 @@ def validate_column_size(
 
 
 def validate_column_unique_values(
-    df, tests, logger, stream_level, failed_tests, failed_tests_list
-):
+    df: pd.DataFrame,
+    tests: dict[str, Any],
+    logger: logging.Logger,
+    stream_level: int,
+    failed_tests: int,
+    failed_tests_list: list,
+) -> None:
+    """Validate whether a DataFrame column only contains unique values.
+
+    Args:
+        df (pd.DataFrame): The pandas DataFrame to validate.
+        tests (dict[str, Any]): _description_
+        logger (logging.Logger): The logger to use.
+        stream_level (int): The logging level to use for logging.
+        failed_tests (int): _description_
+        failed_tests_list (list): _description_
+    """
     for column in tests["column_unique_values"]:
         df_size = df.shape[0]
         if df[column].nunique() == df_size:
@@ -532,8 +581,23 @@ def validate_column_unique_values(
 
 
 def validate_column_list_to_match(
-    df, tests, logger, stream_level, failed_tests, failed_tests_list
-):
+    df: pd.DataFrame,
+    tests: dict[str, Any],
+    logger: logging.Logger,
+    stream_level: int,
+    failed_tests: int,
+    failed_tests_list: list,
+) -> None:
+    """Validate whether the columns of the DataFrame match the expected list.
+
+    Args:
+        df (pd.DataFrame): The pandas DataFrame to validate.
+        tests (dict[str, Any]): _description_
+        logger (logging.Logger): The logger to use.
+        stream_level (int): The logging level to use for logging.
+        failed_tests (int): _description_
+        failed_tests_list (list): _description_
+    """
     if set(tests["column_list_to_match"]) == set(df.columns):
         logger.log(level=stream_level, msg=f"{tests['column_list_to_match']} passed.")
     else:
@@ -546,8 +610,23 @@ def validate_column_list_to_match(
 
 
 def validate_dataset_row_count(
-    df, tests, logger, stream_level, failed_tests, failed_tests_list
-):
+    df: pd.DataFrame,
+    tests: dict[str, Any],
+    logger: logging.Logger,
+    stream_level: int,
+    failed_tests: int,
+    failed_tests_list: list,
+) -> None:
+    """Validate the DataFrame row count.
+
+    Args:
+        df (pd.DataFrame): The pandas DataFrame to validate.
+        tests (dict[str, Any]): _description_
+        logger (logging.Logger): The logger to use.
+        stream_level (int): The logging level to use for logging.
+        failed_tests (int): _description_
+        failed_tests_list (list): _description_
+    """
     row_count = len(df.iloc[:, 0])
     max_value = tests["dataset_row_count"]["max"] or 100_000_000
     min_value = tests["dataset_row_count"]["min"] or 0
@@ -564,11 +643,28 @@ def validate_dataset_row_count(
 
 
 def validate_column_match_regex(
-    df, tests, logger, stream_level, failed_tests, failed_tests_list
-):
+    df: pd.DataFrame,
+    tests: dict[str, Any],
+    logger: logging.Logger,
+    stream_level: int,
+    failed_tests: int,
+    failed_tests_list: list,
+) -> None:
+    """Validate whether the values of a column match a regex pattern.
+
+    Logic: TODO
+
+    Args:
+        df (pd.DataFrame): The pandas DataFrame to validate.
+        tests (dict[str, Any]): _description_
+        logger (logging.Logger): The logger to use.
+        stream_level (int): The logging level to use for logging.
+        failed_tests (int): _description_
+        failed_tests_list (list): _description_
+    """
     for k, v in tests["column_match_regex"].items():
         try:
-            matches = df[k].apply(lambda x: bool(re.match(v, str(x))))
+            matches = df[k].apply(lambda x: bool(re.match(v, str(x))))  # noqa: B023
             if all(matches):
                 logger.log(
                     level=stream_level,
@@ -591,8 +687,23 @@ def validate_column_match_regex(
 
 
 def validate_column_sum(
-    df, tests, logger, stream_level, failed_tests, failed_tests_list
-):
+    df: pd.DataFrame,
+    tests: dict[str, Any],
+    logger: logging.Logger,
+    stream_level: int,
+    failed_tests: int,
+    failed_tests_list: list,
+) -> None:
+    """Validate the sum of a column in the DataFrame.
+
+    Args:
+        df (pd.DataFrame): The pandas DataFrame to validate.
+        tests (dict[str, Any]): _description_
+        logger (logging.Logger): The logger to use.
+        stream_level (int): The logging level to use for logging.
+        failed_tests (int): _description_
+        failed_tests_list (list): _description_
+    """
     for column, bounds in tests["column_sum"].items():
         col_sum = df[column].sum()
         min_bound = bounds["min"]
@@ -611,30 +722,29 @@ def validate_column_sum(
             )
 
 
-##TO DO
-# Create class DataFrameTests(BaseModel)
 def validate(
     df: pd.DataFrame,
-    tests: dict = None,
+    tests: dict | None = None,
     stream_level: int = logging.INFO,
-    logger: Optional[logging.Logger] = None,
+    logger: logging.Logger | None = None,
 ) -> None:
-    """
-    Task to validate the data on DataFrame level. All numbers in the ranges are inclusive.
-    tests:
+    """Validate data. All numbers in the ranges are inclusive.
+
+    Available tests:
         - `column_size`: dict{column: size}
         - `column_unique_values`: list[columns]
         - `column_list_to_match`: list[columns]
         - `dataset_row_count`: dict: {'min': number, 'max', number}
         - `column_match_regex`: dict: {column: 'regex'}
         - `column_sum`: dict: {column: {'min': number, 'max': number}}
+
     Args:
         df (pd.DataFrame): The dataframe to validate.
         tests (dict, optional): Tests to apply on the data frame. Defaults to None.
+
     Raises:
         ValidationError: If validation failed for at least one test.
     """
-
     if logger is None:
         logging.basicConfig(level=logging.INFO)
         logger = logging.getLogger("prefect_shell.utils")
@@ -672,11 +782,55 @@ def validate(
             validate_column_sum(
                 df, tests, logger, stream_level, failed_tests, failed_tests_list
             )
-    else:
-        return "No dataframe tests to run."
 
     if failed_tests > 0:
         failed_tests_msg = ", ".join(failed_tests_list)
-        raise ValidationError(
-            f"Validation failed for {failed_tests} test(s): {failed_tests_msg}"
-        )
+        msg = f"Validation failed for {failed_tests} test(s): {failed_tests_msg}"
+        raise ValidationError(msg)
+
+
+def validate_and_reorder_dfs_columns(
+    dataframes_list: list[pd.DataFrame],
+) -> list[pd.DataFrame]:
+    """Validate if dataframes from the list have the same column structure.
+
+    Reorder columns to match the first DataFrame if necessary.
+
+    Args:
+        dataframes_list (list[pd.DataFrame]): List containing DataFrames.
+
+    Raises:
+        IndexError: If the list of DataFrames is empty.
+        ValueError: If DataFrames have different column structures.
+    """
+    if not dataframes_list:
+        message = "The list of dataframes is empty."
+        raise IndexError(message)
+
+    first_df_columns = dataframes_list[0].columns
+
+    # Check that all DataFrames have the same columns
+    for i, df in enumerate(dataframes_list):
+        if set(df.columns) != set(first_df_columns):
+            message = f"""DataFrame at index {i} does not have the same structure as
+            the first DataFrame."""
+            raise ValueError(message)
+        if not df.columns.equals(first_df_columns):
+            # Reorder columns for DataFrame at index 'i' to match the first DataFrame.
+            dataframes_list[i] = df.loc[:, first_df_columns]
+
+    return dataframes_list
+
+
+def skip_test_on_missing_extra(source_name: str, extra: str) -> None:
+    """Skip all tests in a file when a required extra is not installed.
+
+    Args:
+        source_name (str): The name of the source for which dependencies are missing.
+        extra (str): The name of the extra that is missing.
+    """
+    msg = f"Missing required extra '{extra}' for source '{source_name}'."
+    pytest.skip(
+        msg,
+        allow_module_level=True,
+    )

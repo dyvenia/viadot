@@ -6,556 +6,346 @@
 #   features: []
 #   all-features: false
 #   with-sources: false
+#   generate-hashes: false
+#   universal: false
 
 -e file:.
-adlfs==2022.9.1
+aiolimiter==1.1.0
     # via viadot2
-aenum==3.1.15
-    # via gremlinpython
-aiobotocore==2.4.2
-    # via s3fs
-aiohttp==3.9.3
-    # via adlfs
-    # via aiobotocore
-    # via gremlinpython
-    # via s3fs
-aioitertools==0.11.0
-    # via aiobotocore
-aiolimiter==1.0.0
-    # via viadot2
-aiosignal==1.3.1
-    # via aiohttp
-anyio==3.7.1
-    # via jupyter-server
-argon2-cffi==23.1.0
-    # via jupyter-server
-    # via minio
-    # via nbclassic
-argon2-cffi-bindings==21.2.0
-    # via argon2-cffi
-asn1crypto==1.5.1
-    # via scramp
-asttokens==2.4.1
-    # via stack-data
+aiosqlite==0.20.0
+    # via prefect
+alembic==1.13.2
+    # via prefect
+anyio==4.4.0
+    # via httpx
+    # via prefect
+apprise==1.8.1
+    # via prefect
+asgi-lifespan==2.1.0
+    # via prefect
 async-timeout==4.0.3
-    # via aiohttp
-attrs==23.2.0
-    # via aiohttp
+    # via asyncpg
+asyncpg==0.29.0
+    # via prefect
+attrs==24.2.0
     # via jsonschema
     # via referencing
     # via visions
-    # via zeep
-authlib==1.3.0
-    # via simple-salesforce
-awswrangler==2.19.0
-    # via viadot2
-azure-core==1.25.0
-    # via adlfs
-    # via azure-identity
-    # via azure-storage-blob
-    # via msrest
-    # via viadot2
-azure-datalake-store==0.0.53
-    # via adlfs
-azure-identity==1.15.0
-    # via adlfs
-    # via viadot2
-azure-storage-blob==12.13.1
-    # via adlfs
-    # via viadot2
-babel==2.14.0
-    # via jupyterlab-server
-backoff==2.2.1
-    # via awswrangler
 beautifulsoup4==4.12.3
-    # via nbconvert
-    # via redshift-connector
-bleach==6.1.0
-    # via nbconvert
-boto3==1.24.59
-    # via awswrangler
-    # via redshift-connector
-    # via viadot2
-botocore==1.27.59
-    # via aiobotocore
-    # via awswrangler
-    # via boto3
-    # via redshift-connector
-    # via s3transfer
-cachetools==5.3.3
+    # via o365
+cachetools==5.5.0
     # via google-auth
-certifi==2024.2.2
-    # via minio
-    # via msrest
-    # via opensearch-py
+    # via prefect
+certifi==2024.7.4
+    # via apprise
+    # via httpcore
+    # via httpx
+    # via kubernetes
     # via requests
-cffi==1.16.0
-    # via argon2-cffi-bindings
-    # via azure-datalake-store
+cffi==1.17.0
     # via cryptography
+    # via pygit2
 charset-normalizer==3.3.2
     # via requests
-comm==0.2.2
-    # via ipykernel
-contourpy==1.2.0
-    # via matplotlib
-cryptography==42.0.5
-    # via authlib
-    # via azure-identity
-    # via azure-storage-blob
-    # via msal
-    # via pyjwt
-cycler==0.12.1
-    # via matplotlib
-db-dtypes==1.2.0
-    # via pandas-gbq
-debugpy==1.8.1
-    # via ipykernel
-decorator==5.1.1
-    # via ipython
-defusedxml==0.7.1
-    # via nbconvert
-duckdb==0.5.1
+click==8.1.7
+    # via apprise
+    # via prefect
+    # via typer
+    # via uvicorn
+cloudpickle==3.0.0
+    # via prefect
+colorama==0.4.6
+    # via griffe
+coolname==2.2.0
+    # via prefect
+croniter==2.0.7
+    # via prefect
+cryptography==43.0.0
+    # via prefect
+dateparser==1.2.0
+    # via prefect
+dnspython==2.6.1
+    # via email-validator
+docker==7.1.0
+    # via prefect
+duckdb==1.0.0
     # via viadot2
+email-validator==2.2.0
+    # via pydantic
 et-xmlfile==1.1.0
     # via openpyxl
-exceptiongroup==1.2.0
+exceptiongroup==1.2.2
     # via anyio
-    # via ipython
-executing==2.0.1
-    # via stack-data
-fastjsonschema==2.19.1
-    # via nbformat
-fonttools==4.50.0
-    # via matplotlib
-frozenlist==1.4.1
-    # via aiohttp
-    # via aiosignal
-fsspec==2022.11.0
-    # via adlfs
-    # via s3fs
-google-api-core==2.18.0
-    # via google-cloud-bigquery
-    # via google-cloud-bigquery-storage
-    # via google-cloud-core
-    # via pandas-gbq
-google-auth==2.29.0
-    # via google-api-core
-    # via google-auth-oauthlib
-    # via google-cloud-bigquery
-    # via google-cloud-core
-    # via pandas-gbq
-    # via pydata-google-auth
-google-auth-oauthlib==1.2.0
-    # via pandas-gbq
-    # via pydata-google-auth
-google-cloud-bigquery==3.19.0
-    # via pandas-gbq
-google-cloud-bigquery-storage==2.24.0
-    # via pandas-gbq
-google-cloud-core==2.4.1
-    # via google-cloud-bigquery
-google-crc32c==1.5.0
-    # via google-resumable-media
-google-resumable-media==2.7.0
-    # via google-cloud-bigquery
-googleapis-common-protos==1.63.0
-    # via google-api-core
-    # via grpcio-status
+    # via prefect
+fsspec==2024.6.1
+    # via prefect
+google-auth==2.34.0
+    # via kubernetes
+graphql-core==3.2.3
+    # via sgqlc
+graphviz==0.20.3
+    # via prefect
 greenlet==3.0.3
     # via sqlalchemy
-gremlinpython==3.7.1
-    # via awswrangler
-grpcio==1.62.1
-    # via google-api-core
-    # via grpcio-status
-grpcio-status==1.62.1
-    # via google-api-core
-idna==3.6
+griffe==0.47.0
+    # via prefect
+h11==0.14.0
+    # via httpcore
+    # via uvicorn
+h2==4.1.0
+    # via httpx
+hpack==4.0.0
+    # via h2
+httpcore==1.0.5
+    # via httpx
+    # via prefect
+httpx==0.27.0
+    # via prefect
+humanize==4.10.0
+    # via jinja2-humanize-extension
+    # via prefect
+hyperframe==6.0.1
+    # via h2
+idna==3.7
     # via anyio
+    # via email-validator
+    # via httpx
     # via requests
-    # via yarl
-imagehash==4.2.1
+imagehash==4.3.1
     # via viadot2
-ipykernel==6.29.3
-    # via nbclassic
-ipython==8.18.1
-    # via ipykernel
-    # via jupyterlab
-ipython-genutils==0.2.0
-    # via nbclassic
-isodate==0.6.1
-    # via gremlinpython
-    # via msrest
-    # via zeep
-jedi==0.19.1
-    # via ipython
-jinja2==3.1.3
-    # via jupyter-server
-    # via jupyterlab
-    # via jupyterlab-server
-    # via nbclassic
-    # via nbconvert
-jmespath==1.0.1
-    # via boto3
-    # via botocore
-json5==0.9.24
-    # via jupyterlab-server
-jsonpath-ng==1.6.1
-    # via awswrangler
-jsonschema==4.21.1
-    # via jupyterlab-server
-    # via nbformat
+importlib-resources==6.1.3
+    # via prefect
+itsdangerous==2.2.0
+    # via prefect
+jinja2==3.1.4
+    # via jinja2-humanize-extension
+    # via prefect
+jinja2-humanize-extension==0.4.0
+    # via prefect
+jsonpatch==1.33
+    # via prefect
+jsonpointer==3.0.0
+    # via jsonpatch
+jsonschema==4.23.0
+    # via prefect
 jsonschema-specifications==2023.12.1
     # via jsonschema
-jupyter-client==8.6.1
-    # via ipykernel
-    # via jupyter-server
-    # via nbclassic
-    # via nbclient
-jupyter-core==5.7.2
-    # via ipykernel
-    # via jupyter-client
-    # via jupyter-server
-    # via jupyterlab
-    # via nbclassic
-    # via nbclient
-    # via nbconvert
-    # via nbformat
-jupyter-server==1.24.0
-    # via jupyterlab
-    # via jupyterlab-server
-    # via nbclassic
-    # via notebook-shim
-jupyterlab==3.2.4
+kubernetes==29.0.0
+    # via prefect
+lumacli==0.1.2
     # via viadot2
-jupyterlab-pygments==0.3.0
-    # via nbconvert
-jupyterlab-server==2.25.4
-    # via jupyterlab
-kiwisolver==1.4.5
-    # via matplotlib
-lxml==5.1.0
-    # via redshift-connector
-    # via zeep
+mako==1.3.5
+    # via alembic
+markdown==3.7
+    # via apprise
+markdown-it-py==3.0.0
+    # via rich
 markupsafe==2.1.5
     # via jinja2
-    # via nbconvert
-matplotlib==3.8.3
-    # via viadot2
-matplotlib-inline==0.1.6
-    # via ipykernel
-    # via ipython
-minio==7.2.5
-    # via viadot2
-mistune==3.0.2
-    # via nbconvert
-msal==1.28.0
-    # via azure-datalake-store
-    # via azure-identity
-    # via msal-extensions
-msal-extensions==0.3.1
-    # via azure-identity
-msrest==0.7.1
-    # via azure-storage-blob
-multidict==6.0.5
-    # via aiohttp
-    # via yarl
-multimethod==1.11.2
+    # via mako
+mdurl==0.1.2
+    # via markdown-it-py
+multimethod==1.12
     # via visions
-nbclassic==0.5.6
-    # via jupyterlab
-nbclient==0.10.0
-    # via nbconvert
-nbconvert==7.16.3
-    # via jupyter-server
-    # via nbclassic
-nbformat==5.10.3
-    # via jupyter-server
-    # via nbclassic
-    # via nbclient
-    # via nbconvert
-nest-asyncio==1.6.0
-    # via gremlinpython
-    # via ipykernel
-    # via nbclassic
-networkx==3.2.1
+networkx==3.3
     # via visions
-notebook-shim==0.2.4
-    # via nbclassic
-numpy==1.23.4
-    # via awswrangler
-    # via contourpy
-    # via db-dtypes
-    # via duckdb
+numpy==1.26.4
     # via imagehash
-    # via matplotlib
     # via pandas
-    # via pandas-gbq
     # via pyarrow
     # via pywavelets
     # via scipy
+    # via shapely
+    # via viadot2
     # via visions
+o365==2.0.36
+    # via viadot2
 oauthlib==3.2.2
+    # via kubernetes
     # via requests-oauthlib
-openpyxl==3.0.10
-    # via awswrangler
+openpyxl==3.1.5
     # via viadot2
-opensearch-py==2.4.2
-    # via awswrangler
-packaging==24.0
-    # via db-dtypes
-    # via google-cloud-bigquery
-    # via ipykernel
-    # via jupyter-server
-    # via jupyterlab
-    # via jupyterlab-server
-    # via matplotlib
-    # via nbconvert
-    # via redshift-connector
-pandas==1.4.4
-    # via awswrangler
-    # via db-dtypes
-    # via pandas-gbq
+orjson==3.10.7
+    # via prefect
+packaging==24.1
+    # via prefect
+pandas==2.2.2
     # via viadot2
     # via visions
-pandas-gbq==0.19.1
-    # via viadot2
-pandocfilters==1.5.1
-    # via nbconvert
-parso==0.8.3
-    # via jedi
-pexpect==4.9.0
-    # via ipython
-pg8000==1.30.5
-    # via awswrangler
-pillow==10.2.0
+pathspec==0.12.1
+    # via prefect
+pendulum==2.1.2
+    # via prefect
+pillow==10.4.0
     # via imagehash
-    # via matplotlib
-platformdirs==4.2.0
-    # via jupyter-core
-    # via zeep
-ply==3.11
-    # via jsonpath-ng
-portalocker==2.8.2
-    # via msal-extensions
-progressbar2==4.4.2
-    # via awswrangler
-prometheus-client==0.20.0
-    # via jupyter-server
-    # via nbclassic
-prompt-toolkit==3.0.43
-    # via ipython
-proto-plus==1.23.0
-    # via google-api-core
-    # via google-cloud-bigquery-storage
-protobuf==4.25.3
-    # via google-api-core
-    # via google-cloud-bigquery-storage
-    # via googleapis-common-protos
-    # via grpcio-status
-    # via proto-plus
-psutil==5.9.8
-    # via ipykernel
-ptyprocess==0.7.0
-    # via pexpect
-    # via terminado
-pure-eval==0.2.2
-    # via stack-data
-pyarrow==10.0.1
-    # via awswrangler
-    # via db-dtypes
-    # via pandas-gbq
+prefect==2.20.2
+    # via prefect-github
+    # via prefect-sqlalchemy
     # via viadot2
-pyasn1==0.5.1
+prefect-github==0.2.7
+    # via viadot2
+prefect-sqlalchemy==0.4.4
+    # via viadot2
+psycopg2-binary==2.9.9
+    # via lumacli
+pyarrow==10.0.1
+    # via viadot2
+pyasn1==0.6.0
     # via pyasn1-modules
     # via rsa
-pyasn1-modules==0.3.0
+pyasn1-modules==0.4.0
     # via google-auth
-pycparser==2.21
+pycparser==2.22
     # via cffi
-pycryptodome==3.20.0
-    # via minio
-pydantic==1.10.11
+pydantic==1.10.17
+    # via lumacli
+    # via prefect
     # via viadot2
-pydata-google-auth==1.8.2
-    # via pandas-gbq
-pygments==2.17.2
-    # via ipython
-    # via nbconvert
-pyjwt==2.8.0
-    # via msal
-pymysql==1.1.0
-    # via awswrangler
-pyodbc==4.0.39
+pydantic-core==2.23.0
+    # via prefect
+pygit2==1.14.1
     # via viadot2
-pyparsing==3.1.2
-    # via matplotlib
+pygments==2.18.0
+    # via rich
+pyodbc==5.1.0
+    # via viadot2
 python-dateutil==2.9.0.post0
-    # via botocore
-    # via google-cloud-bigquery
-    # via jupyter-client
-    # via matplotlib
-    # via opensearch-py
+    # via croniter
+    # via dateparser
+    # via kubernetes
+    # via o365
     # via pandas
-    # via pg8000
+    # via pendulum
+    # via prefect
     # via trino
 python-http-client==3.3.7
     # via sendgrid
-python-utils==3.8.2
-    # via progressbar2
+python-multipart==0.0.9
+    # via prefect
+python-slugify==8.0.4
+    # via prefect
 pytz==2024.1
+    # via croniter
+    # via dateparser
     # via pandas
-    # via redshift-connector
+    # via prefect
     # via trino
-    # via zeep
-pywavelets==1.5.0
+pytzdata==2020.1
+    # via pendulum
+pywavelets==1.7.0
     # via imagehash
-pyyaml==6.0.1
-    # via viadot2
-pyzmq==25.1.2
-    # via ipykernel
-    # via jupyter-client
-    # via jupyter-server
-    # via nbclassic
-redshift-connector==2.0.918
-    # via awswrangler
-referencing==0.34.0
+pyyaml==6.0.2
+    # via apprise
+    # via kubernetes
+    # via lumacli
+    # via prefect
+readchar==4.2.0
+    # via prefect
+referencing==0.35.1
     # via jsonschema
     # via jsonschema-specifications
-requests==2.31.0
-    # via azure-core
-    # via azure-datalake-store
-    # via google-api-core
-    # via google-cloud-bigquery
-    # via jupyterlab-server
-    # via msal
-    # via msrest
-    # via opensearch-py
-    # via redshift-connector
-    # via requests-aws4auth
-    # via requests-file
+regex==2024.7.24
+    # via dateparser
+requests==2.32.3
+    # via apprise
+    # via docker
+    # via kubernetes
+    # via lumacli
+    # via o365
     # via requests-oauthlib
-    # via requests-toolbelt
     # via sharepy
-    # via simple-salesforce
     # via trino
-    # via zeep
-requests-aws4auth==1.2.3
-    # via awswrangler
-requests-file==2.0.0
-    # via zeep
-requests-oauthlib==1.4.0
-    # via google-auth-oauthlib
-    # via msrest
-requests-toolbelt==1.0.0
-    # via zeep
-rpds-py==0.18.0
+    # via viadot2
+requests-oauthlib==2.0.0
+    # via apprise
+    # via kubernetes
+    # via o365
+rfc3339-validator==0.1.4
+    # via prefect
+rich==13.7.1
+    # via lumacli
+    # via prefect
+    # via typer
+rpds-py==0.20.0
     # via jsonschema
     # via referencing
 rsa==4.9
     # via google-auth
-s3fs==2022.11.0
-    # via viadot2
-s3transfer==0.6.2
-    # via boto3
-scipy==1.12.0
+ruamel-yaml==0.18.6
+    # via prefect
+ruamel-yaml-clib==0.2.8
+    # via ruamel-yaml
+scipy==1.14.0
     # via imagehash
-scramp==1.4.4
-    # via pg8000
-    # via redshift-connector
-send2trash==1.8.2
-    # via jupyter-server
-    # via nbclassic
-sendgrid==6.9.7
+sendgrid==6.11.0
     # via viadot2
-setuptools==69.2.0
-    # via pandas-gbq
-    # via pydata-google-auth
-    # via redshift-connector
-shapely==1.8.0
+sgqlc==16.3
+    # via prefect-github
+shapely==2.0.6
     # via viadot2
 sharepy==2.0.0
     # via viadot2
-simple-salesforce==1.11.5
-    # via viadot2
+shellingham==1.5.4
+    # via typer
 six==1.16.0
-    # via asttokens
-    # via azure-core
-    # via bleach
-    # via gremlinpython
-    # via imagehash
-    # via isodate
-    # via opensearch-py
+    # via kubernetes
     # via python-dateutil
-    # via requests-aws4auth
+    # via rfc3339-validator
 sniffio==1.3.1
     # via anyio
-soupsieve==2.5
+    # via asgi-lifespan
+    # via httpx
+    # via prefect
+soupsieve==2.6
     # via beautifulsoup4
 sql-metadata==2.12.0
     # via viadot2
-sqlalchemy==2.0.28
+sqlalchemy==2.0.32
+    # via alembic
+    # via prefect
+    # via prefect-sqlalchemy
     # via viadot2
-sqlparse==0.4.4
+sqlparse==0.5.1
     # via sql-metadata
-stack-data==0.6.3
-    # via ipython
 starkbank-ecdsa==2.2.0
     # via sendgrid
-tangled-up-in-unicode==0.2.0
-    # via visions
-terminado==0.18.1
-    # via jupyter-server
-    # via nbclassic
-tinycss2==1.2.1
-    # via nbconvert
-tornado==6.4
-    # via ipykernel
-    # via jupyter-client
-    # via jupyter-server
-    # via jupyterlab
-    # via nbclassic
-    # via terminado
-traitlets==5.14.2
-    # via comm
-    # via ipykernel
-    # via ipython
-    # via jupyter-client
-    # via jupyter-core
-    # via jupyter-server
-    # via matplotlib-inline
-    # via nbclassic
-    # via nbclient
-    # via nbconvert
-    # via nbformat
-trino==0.326.0
+text-unidecode==1.3
+    # via python-slugify
+toml==0.10.2
+    # via prefect
+trino==0.328.0
     # via viadot2
-typing-extensions==4.10.0
-    # via azure-core
-    # via minio
+typer==0.12.4
+    # via lumacli
+    # via prefect
+typing-extensions==4.12.2
+    # via aiosqlite
+    # via alembic
+    # via anyio
+    # via prefect
     # via pydantic
-    # via python-utils
+    # via pydantic-core
     # via sqlalchemy
+    # via typer
+    # via uvicorn
+tzdata==2024.1
+    # via o365
+    # via pandas
 tzlocal==5.2
+    # via dateparser
+    # via o365
     # via trino
-urllib3==1.26.18
-    # via botocore
-    # via minio
-    # via opensearch-py
+ujson==5.10.0
+    # via prefect
+urllib3==2.2.2
+    # via docker
+    # via kubernetes
     # via requests
-visions==0.7.5
+uvicorn==0.30.6
+    # via prefect
+visions==0.7.6
     # via viadot2
-wcwidth==0.2.13
-    # via prompt-toolkit
-webencodings==0.5.1
-    # via bleach
-    # via tinycss2
-websocket-client==1.7.0
-    # via jupyter-server
-wrapt==1.16.0
-    # via aiobotocore
-yarl==1.9.4
-    # via aiohttp
-zeep==4.2.1
-    # via simple-salesforce
+websocket-client==1.8.0
+    # via kubernetes
+websockets==12.0
+    # via prefect
