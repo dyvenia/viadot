@@ -110,7 +110,7 @@ Commit messages should:
 
    Make sure to read & check all relevant checkboxes in the PR description!
 
-## Mainteners-only
+## Maintainers-only
 
 ### Releasing a new version
 
