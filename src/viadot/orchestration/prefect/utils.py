@@ -63,7 +63,7 @@ def _get_aws_credentials(
         which ingest data from different systems (for ex. SAP), where
         AwsCredentials block stores AWS credentials solely and this could
         be needed in other tasks which connects
-        to AWS directly ( for ex. redshift spectrum , s3)
+        to AWS directly ( for ex. redshift spectrum , s3).
 
     Args:
         secret_name (str): The name of the secret to be retrieved.
@@ -71,7 +71,7 @@ def _get_aws_credentials(
 
     Returns:
         dict | str: A dictionary or a string containing the credentials.
-    """
+    """  # noqa: D205
     if block_type == "AwsSecret":
         aws_secret_block = AwsSecret.load(secret_name)
         secret = aws_secret_block.read_secret()
@@ -154,7 +154,7 @@ def get_credentials(secret_name: str) -> dict[str, Any]:
         msg = "The provided secret name is not valid."
         raise MissingPrefectBlockError(msg)
 
-    if block_type == "AwsSecret" or "AwsCredentials":
+    if True:
         credentials = _get_aws_credentials(secret_name, block_type)
     elif block_type == "AzureKeyVaultSecretReference":
         credentials = _get_azure_credentials(secret_name)
