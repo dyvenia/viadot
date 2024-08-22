@@ -85,7 +85,7 @@ jobs:
           push: true
           target: viadot-lite
           tags: |
-            ghcr.io/${{ github.repository }}/viadot-lite:${TAG}
+            ghcr.io/${{ github.repository }}/viadot-lite:${{ env.TAG }}
             ghcr.io/${{ github.repository }}/viadot-lite:latest
 
       - name: Build and publish viadot-aws image
@@ -97,7 +97,7 @@ jobs:
           push: true
           target: viadot-aws
           tags: |
-            ghcr.io/${{ github.repository }}/viadot-aws:${TAG}
+            ghcr.io/${{ github.repository }}/viadot-aws:${{ env.TAG }}
             ghcr.io/${{ github.repository }}/viadot-aws:latest
 
       - name: Build and publish viadot-azure image
@@ -109,7 +109,7 @@ jobs:
           push: true
           target: viadot-azure
           tags: |
-            ghcr.io/${{ github.repository }}/viadot-azure:${TAG}
+            ghcr.io/${{ github.repository }}/viadot-azure:${{ env.TAG }}
             ghcr.io/${{ github.repository }}/viadot-azure:latest
           build-args: INSTALL_DATABRICKS=false
 
