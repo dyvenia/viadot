@@ -11,7 +11,6 @@ from typing import TYPE_CHECKING, Any, Literal, Optional
 
 import pandas as pd
 import pyodbc
-import pytest
 import requests
 from requests.adapters import HTTPAdapter
 from requests.exceptions import ConnectionError, HTTPError, ReadTimeout, Timeout
@@ -829,6 +828,8 @@ def skip_test_on_missing_extra(source_name: str, extra: str) -> None:
         source_name (str): The name of the source for which dependencies are missing.
         extra (str): The name of the extra that is missing.
     """
+    import pytest
+
     msg = f"Missing required extra '{extra}' for source '{source_name}'."
     pytest.skip(
         msg,
