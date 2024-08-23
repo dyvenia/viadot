@@ -61,6 +61,7 @@ def _get_aws_credentials(
     block_type: str,
 ) -> dict[str, Any] | str:
     """Retrieve credentials from the Prefect 'AwsSecret' block document.
+
         It distinguishes the types of block to take a correct action.
         This is needed as AwsSecret block stores credentials that can be used in tasks
         which ingest data from different systems (for ex. SAP), where
@@ -75,7 +76,6 @@ def _get_aws_credentials(
     Returns:
         dict | str: A dictionary or a string containing the credentials.
     """
-    
     if block_type == "AwsSecret":
         aws_secret_block = AwsSecret.load(secret_name)
         secret = aws_secret_block.read_secret()
