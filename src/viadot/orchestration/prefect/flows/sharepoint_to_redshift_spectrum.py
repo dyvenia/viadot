@@ -29,7 +29,7 @@ def sharepoint_to_redshift_spectrum(  # noqa: PLR0913
     sep: str = ",",
     description: str | None = None,
     aws_config_key: str | None = None,
-    aws_secret_name: str | None = None,
+    credentials_secret: str | None = None,
     sheet_name: str | list[str | int] | int | None = None,
     columns: str | list[str] | list[int] | None = None,
     na_values: list[str] | None = None,
@@ -74,7 +74,7 @@ def sharepoint_to_redshift_spectrum(  # noqa: PLR0913
             None.
         aws_config_key (str, optional): The key in the viadot config holding relevant
             credentials. Defaults to None.
-        aws_secret_name (str, optional): The name of a secret block in Prefect
+        credentials_secret (str, optional): The name of a secret block in Prefect
             that stores AWS credentials. Defaults to None.
         sheet_name (str | list | int, optional): Strings are used for sheet names.
             Integers are used in zero-indexed sheet positions (chart sheets do not count
@@ -116,5 +116,5 @@ def sharepoint_to_redshift_spectrum(  # noqa: PLR0913
         sep=sep,
         description=description,
         config_key=aws_config_key,
-        aws_secret_name=aws_secret_name,
+        credentials_secret=credentials_secret,
     )
