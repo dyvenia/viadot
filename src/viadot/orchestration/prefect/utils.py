@@ -74,7 +74,8 @@ def _get_aws_credentials(
 
     Returns:
         dict | str: A dictionary or a string containing the credentials.
-    """  # noqa: D205
+    """
+    
     if block_type == "AwsSecret":
         aws_secret_block = AwsSecret.load(secret_name)
         secret = aws_secret_block.read_secret()
