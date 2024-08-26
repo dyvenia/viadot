@@ -1,3 +1,5 @@
+"""Tasks for interacting with SQLServer."""
+
 from typing import Any, Literal
 
 import pandas as pd
@@ -15,7 +17,7 @@ def create_sql_server_table(
     schema: str,
     table: str,
     if_exists: Literal["fail", "replace", "skip", "delete"] = "fail",
-    dtypes: dict[str, Any] = None,
+    dtypes: dict[str, Any] | None = None,
     credentials_secret: str | None = None,
     credentials: dict[str, Any] | None = None,
     config_key: str | None = None,

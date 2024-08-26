@@ -1,3 +1,5 @@
+"""Task for running BCP shell command."""
+
 import subprocess
 from typing import Any, Literal
 
@@ -21,11 +23,13 @@ def bcp(
     credentials: dict[str, Any] | None = None,
 ) -> None:
     """Upload data from a CSV file into an SQLServer table using BCP.
-        For more information on bcp (bulk copy program), see
-            https://learn.microsoft.com/en-us/sql/tools/bcp-utility.
+
+    For more information on bcp (bulk copy program), see
+    https://learn.microsoft.com/en-us/sql/tools/bcp-utility.
 
     Args:
-        path (str):  Where to store the CSV data dump used for bulk upload to a database.
+        path (str):  Where to store the CSV data dump used for bulk upload to
+        a database.
         schema (str): Destination schema. Defaults to None.
         table (str): Destination table. Defaults to None.
         chunksize (int, optional): Size of a chunk to use in the bcp function.
@@ -66,9 +70,8 @@ def bcp(
     elif on_error == "fail":
         max_error = 1
     else:
-        raise ValueError(
-            "Please provide correct 'on_error' parameter value - 'skip' or 'fail'. "
-        )
+        msg = "Please provide correct 'on_error' parameter value - 'skip' or 'fail'. "
+        raise ValueError(msg)
     bcp_command = [
         "/opt/mssql-tools/bin/bcp",
         fqn,
@@ -96,5 +99,4 @@ def bcp(
         "2",
     ]
 
-    result = subprocess.run(bcp_command, capture_output=True, text=True, check=False)
-    return result
+    return subprocess.run(bcp_command, capture_output=True, text=True, check=False)  # noqa: S603
