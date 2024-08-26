@@ -6,7 +6,7 @@ from .cloud_for_customers import cloud_for_customers_to_df
 from .databricks import df_to_databricks
 from .dbt import dbt_task
 from .duckdb import duckdb_query
-from .epicor import epicor
+from .epicor import epicor_to_df
 from .exchange_rates import exchange_rates_to_df
 from .genesys import genesys_to_df
 from .git import clone_repo
@@ -33,6 +33,7 @@ __all__ = [
     "df_to_databricks",
     "dbt_task",
     "duckdb_query",
+    "epicor_to_df",
     "exchange_rates_to_df",
     "genesys_to_df",
     "clone_repo",
