@@ -122,13 +122,19 @@ Before creating a release, either add a commit with a version bump to the last P
 rye version major.minor.patch
 ```
 
+for example:
+
+```console
+rye version 2.1.0
+```
+
 This will update the version in `pyproject.toml` accordingly.
 
 **NOTE**: Make sure to follow [semantic versioning](https://semver.org/).
 
 #### Release
 
-Once the new version PR is merged to `main`, publish a version tag:
+Once the new version PR is merged to `2.0`, publish a version tag:
 
 ```bash
 viadot_version=v2.1.0
