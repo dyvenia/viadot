@@ -4,12 +4,10 @@ from viadot.config import get_source_credentials
 from viadot.exceptions import DataRangeError
 from viadot.sources import Epicor
 
-print(get_source_credentials("epicor").get("test_url"))
-
 
 @pytest.fixture(scope="session")
 def epicor():
-    epicor = Epicor(
+    return Epicor(
         base_url=get_source_credentials("epicor").get("test_url"),
         config_key="epicor",
         filters_xml="""
@@ -22,12 +20,11 @@ def epicor():
         </QueryFields>
     </OrderQuery>""",
     )
-    yield epicor
 
 
 @pytest.fixture(scope="session")
 def epicor_error():
-    epicor_error = Epicor(
+    return Epicor(
         base_url=get_source_credentials("epicor").get("test_url"),
         config_key="epicor",
         filters_xml="""
@@ -40,18 +37,17 @@ def epicor_error():
         </QueryFields>
     </OrderQuery>""",
     )
-    yield epicor_error
 
 
-def test_connection(epicor):
+def test_connection(epicor: Epicor):
     assert epicor.get_xml_response().ok
 
 
-def test_validate_filter(epicor_error):
+def test_validate_filter(epicor_error: Epicor):
     with pytest.raises(DataRangeError):
         epicor_error.validate_filter()
 
 
-def test_to_df_return_type(epicor):
+def test_to_df_return_type(epicor: Epicor):
     df = epicor.to_df()
     assert isinstance(df, pd.DataFrame)

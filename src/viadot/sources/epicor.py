@@ -2,9 +2,10 @@
 
 from typing import Any
 
-import defusedxml.ElementTree as ET
+import defusedxml.ElementTree as ET  # noqa: N817
 import pandas as pd
 from pydantic import BaseModel
+import requests
 
 from viadot.config import get_source_credentials
 from viadot.exceptions import DataRangeError, ValidationError
@@ -461,7 +462,7 @@ class Epicor(Source):
                     msg = "Too much data. Please provide a date range filter."
                     raise DataRangeError(msg)
 
-    def get_xml_response(self):
+    def get_xml_response(self) -> requests.models.Response:
         "Function for getting response from Epicor API."
         if self.validate_date_filter is True:
             self.validate_filter()
