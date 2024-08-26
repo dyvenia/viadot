@@ -1,8 +1,8 @@
 """Source for connecting to Epicor Prelude API."""
 
 from typing import Any
-import xml.etree.ElementTree as ET
 
+import defusedxml.ElementTree as ET
 import pandas as pd
 from pydantic import BaseModel
 
@@ -154,7 +154,7 @@ def parse_orders_xml(xml_data: str) -> pd.DataFrame:  # noqa: C901, PLR0912
                 for ship_param in ShipToAddress.__dict__.get("__annotations__"):
                     try:
                         ship_value = shipto.find(ship_param).text
-                    except:
+                    except AttributeError:
                         ship_value = None
                     ship_parameter = {ship_param: ship_value}
                     ship_dict.update(ship_parameter)
@@ -164,7 +164,7 @@ def parse_orders_xml(xml_data: str) -> pd.DataFrame:  # noqa: C901, PLR0912
                 for invoice_param in InvoiceTotals.__dict__.get("__annotations__"):
                     try:
                         invoice_value = invoice.find(invoice_param).text
-                    except:
+                    except AttributeError:
                         invoice_value = None
                     invoice_parameter = {invoice_param: invoice_value}
                     invoice_dict.update(invoice_parameter)
@@ -173,7 +173,7 @@ def parse_orders_xml(xml_data: str) -> pd.DataFrame:  # noqa: C901, PLR0912
             for header_param in HeaderInformation.__dict__.get("__annotations__"):
                 try:
                     header_value = header.find(header_param).text
-                except:
+                except AttributeError:
                     header_value = None
                 if header_param == "TrackingNumbers":
                     header_parameter = {header_param: result_numbers}
@@ -190,7 +190,7 @@ def parse_orders_xml(xml_data: str) -> pd.DataFrame:  # noqa: C901, PLR0912
                 for item_param in LineItemDetail.__dict__.get("__annotations__"):
                     try:
                         item_value = item.find(item_param).text
-                    except:
+                    except AttributeError:
                         item_value = None
                     item_parameter = {item_param: item_value}
                     item_params_dict.update(item_parameter)
@@ -223,7 +223,7 @@ def parse_bookings_xml(xml_data: str) -> pd.DataFrame:  # noqa: C901, PLR0912
                 for ship_param in ShipToAddress.__dict__.get("__annotations__"):
                     try:
                         ship_value = shipto.find(ship_param).text
-                    except:
+                    except AttributeError:
                         ship_value = None
                     ship_parameter = {ship_param: ship_value}
                     ship_dict.update(ship_parameter)
@@ -232,7 +232,7 @@ def parse_bookings_xml(xml_data: str) -> pd.DataFrame:  # noqa: C901, PLR0912
             for header_param in HeaderInformation.__dict__.get("__annotations__"):
                 try:
                     header_value = header.find(header_param).text
-                except:
+                except AttributeError:
                     header_value = None
                 if header_param == "ShipToAddress":
                     header_parameter = {header_param: ship_address}
@@ -245,7 +245,7 @@ def parse_bookings_xml(xml_data: str) -> pd.DataFrame:  # noqa: C901, PLR0912
                 for item_param in LineItemDetail.__dict__.get("__annotations__"):
                     try:
                         item_value = item.find(item_param).text
-                    except:
+                    except AttributeError:
                         item_value = None
                     item_parameter = {item_param: item_value}
                     item_params_dict.update(item_parameter)
@@ -281,7 +281,7 @@ def parse_open_orders_xml(xml_data: str) -> pd.DataFrame:  # noqa: C901, PLR0912
                 for ship_param in ShipToAddress.__dict__.get("__annotations__"):
                     try:
                         ship_value = shipto.find(ship_param).text
-                    except:
+                    except AttributeError:
                         ship_value = None
                     ship_parameter = {ship_param: ship_value}
                     ship_dict.update(ship_parameter)
@@ -290,7 +290,7 @@ def parse_open_orders_xml(xml_data: str) -> pd.DataFrame:  # noqa: C901, PLR0912
             for header_param in HeaderInformation.__dict__.get("__annotations__"):
                 try:
                     header_value = header.find(header_param).text
-                except:
+                except AttributeError:
                     header_value = None
                 if header_param == "ShipToAddress":
                     header_parameter = {header_param: ship_address}
@@ -303,7 +303,7 @@ def parse_open_orders_xml(xml_data: str) -> pd.DataFrame:  # noqa: C901, PLR0912
                 for item_param in LineItemDetail.__dict__.get("__annotations__"):
                     try:
                         item_value = item.find(item_param).text
-                    except:
+                    except AttributeError:
                         item_value = None
                     item_parameter = {item_param: item_value}
                     item_params_dict.update(item_parameter)
@@ -336,7 +336,7 @@ def parse_customer_xml(xml_data: str) -> pd.DataFrame:
                 for ship_param in ShipToAddress.__dict__.get("__annotations__"):
                     try:
                         ship_value = shipto.find(ship_param).text
-                    except:
+                    except AttributeError:
                         ship_value = None
                     ship_parameter = {ship_param: ship_value}
                     ship_dict.update(ship_parameter)
@@ -345,7 +345,7 @@ def parse_customer_xml(xml_data: str) -> pd.DataFrame:
                 for cust_param in Customer.__dict__.get("__annotations__"):
                     try:
                         cust_value = customer.find(cust_param).text
-                    except:
+                    except AttributeError:
                         cust_value = None
                     if cust_param == "ShipTos":
                         cust_parameter = {cust_param: ship_address}

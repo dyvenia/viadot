@@ -7,7 +7,6 @@
 #   all-features: false
 #   with-sources: false
 #   generate-hashes: false
-#   universal: false
 
 -e file:.
 aiolimiter==1.1.0
@@ -64,6 +63,8 @@ cryptography==43.0.0
     # via prefect
 dateparser==1.2.0
     # via prefect
+defusedxml==0.7.1
+    # via viadot2
 dnspython==2.6.1
     # via email-validator
 docker==7.1.0
