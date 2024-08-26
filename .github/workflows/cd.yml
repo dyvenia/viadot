@@ -1,9 +1,12 @@
 name: Release
 
 on:
-  push:
-    tags:
-      - "v2.*.*" # Match tags that begin with "v2".
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "The release version."
+        required: true
+        default: "v2.x.x"
 
 jobs:
   build-distribution:
@@ -56,6 +59,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          ref: 2.0
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
@@ -75,7 +79,7 @@ jobs:
       - name: Construct the tag for Docker images
         run: |
           # Strip the "v" prefix for the image tag.
-          VERSION=${{ github.ref_name }}
+          VERSION=${{ github.event.inputs.version }}
           echo "TAG=${VERSION#v}" >> $GITHUB_ENV
 
       - name: Build and publish viadot-lite image
