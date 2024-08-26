@@ -110,7 +110,7 @@ Commit messages should:
 
    Make sure to read & check all relevant checkboxes in the PR description!
 
-## Mainteners-only
+## Maintainers-only
 
 ### Releasing a new version
 
@@ -132,7 +132,7 @@ Once the new version PR is merged to `main`, publish a version tag:
 
 ```bash
 viadot_version=v2.1.0
-git switch main && \
+git switch 2.0 && \
   git pull && \
   git tag -a $viadot_version -m "Release $viadot_version" && \
   git push origin $viadot_version

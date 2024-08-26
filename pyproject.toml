@@ -1,6 +1,6 @@
 [project]
 name = "viadot2"
-version = "2.1.0"
+version = "2.1.5"
 description = "A simple data ingestion library to guide data flows from some places to other places."
 authors = [
     { name = "acivitillo", email = "acivitillo@dyvenia.com" },
@@ -28,8 +28,9 @@ dependencies = [
     "requests>=2.32.3",
     "prefect-github>=0.2.7",
     "o365>=2.0.36",
-    # 10.1 is the maximum version compatible with awswrangler 2.x
+    # v10.1 is the maximum version compatible with awswrangler 2.x.
     "pyarrow>=10.0, <10.1.0",
+    # numpy>=2.0 is not compatible with the old pyarrow v10.x.
     "numpy>=1.23.4, <2.0",
 ]
 requires-python = ">=3.10"
@@ -79,6 +80,7 @@ dev-dependencies = [
     "pytest>=8.2.2",
     "ruff>=0.5.2",
     "pytest-asyncio>=0.23.8",
+    "moto>=5.0.13",
 ]
 
 [tool.pytest.ini_options]
