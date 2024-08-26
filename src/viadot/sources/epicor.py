@@ -13,7 +13,7 @@ from viadot.sources.base import Source
 from viadot.utils import handle_api_response
 
 
-""" The official documentation does not specify the list of required 
+"""The official documentation does not specify the list of required 
 fields so they were set as optional in BaseModel classes.
 
 Each Epicor Prelude view requires different XML parser.
