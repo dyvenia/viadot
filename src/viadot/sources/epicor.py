@@ -1,3 +1,5 @@
+"""Source for connecting to Epicor Prelude API."""
+
 from typing import Any
 import xml.etree.ElementTree as ET
 
@@ -123,7 +125,7 @@ class BookingsInfo(BaseModel):
     LineItemDetail: LineItemDetail | None
 
 
-def parse_orders_xml(xml_data: str) -> pd.DataFrame:
+def parse_orders_xml(xml_data: str) -> pd.DataFrame:  # noqa: C901, PLR0912
     """Function to parse xml containing Epicor Orders Data.
 
     Args:
@@ -201,7 +203,7 @@ def parse_orders_xml(xml_data: str) -> pd.DataFrame:
     return final_df
 
 
-def parse_bookings_xml(xml_data: str) -> pd.DataFrame:
+def parse_bookings_xml(xml_data: str) -> pd.DataFrame:  # noqa: C901, PLR0912
     """Function to parse xml containing Epicor Bookings Data.
 
     Args:
@@ -258,7 +260,7 @@ def parse_bookings_xml(xml_data: str) -> pd.DataFrame:
     return final_df
 
 
-def parse_open_orders_xml(xml_data: str) -> pd.DataFrame:
+def parse_open_orders_xml(xml_data: str) -> pd.DataFrame:  # noqa: C901, PLR0912
     """Function to parse xml containing Epicor Open Orders Data.
 
     Args:
@@ -370,8 +372,8 @@ class Epicor(Source):
         self,
         base_url: str,
         filters_xml: str,
-        credentials: dict[str, Any] = None,
-        config_key: str = None,
+        credentials: dict[str, Any] | None = None,
+        config_key: str | None = None,
         validate_date_filter: bool = True,
         start_date_field: str = "BegInvoiceDate",
         end_date_field: str = "EndInvoiceDate",
@@ -382,16 +384,18 @@ class Epicor(Source):
 
         Args:
             base_url (str, required): Base url to Epicor.
-            filters_xml (str, required): Filters in form of XML. The date filter is required.
-            credentials (dict[str, Any], optional): Credentials to connect with Epicor API
-                containing host, port, username and password.Defaults to None.
-            config_key (str, optional): Credential key to dictionary where details are stored.
-            validate_date_filter (bool, optional): Whether or not validate xml date filters.
-                Defaults to True.
-            start_date_field (str, optional) The name of filters field containing start date.
-                Defaults to "BegInvoiceDate".
-            end_date_field (str, optional) The name of filters field containing end date.
-                Defaults to "EndInvoiceDate".
+            filters_xml (str, required): Filters in form of XML. The date filter
+                 is required.
+            credentials (dict[str, Any], optional): Credentials to connect with
+            Epicor API containing host, port, username and password.Defaults to None.
+            config_key (str, optional): Credential key to dictionary where details
+                 are stored.
+            validate_date_filter (bool, optional): Whether or not validate xml
+                date filters. Defaults to True.
+            start_date_field (str, optional) The name of filters field containing
+                start date.Defaults to "BegInvoiceDate".
+            end_date_field (str, optional) The name of filters field containing
+                end date. Defaults to "EndInvoiceDate".
         """
         raw_creds = credentials or get_source_credentials(config_key) or {}
         validated_creds = EpicorCredentials(**raw_creds).dict(
@@ -430,11 +434,10 @@ class Epicor(Source):
 
         response = handle_api_response(url=url, headers=headers, method="POST")
         root = ET.fromstring(response.text)
-        token = root.find("AccessToken").text
-        return token
+        return root.find("AccessToken").text
 
     def generate_url(self) -> str:
-        """Function to generate url to download data
+        """Function to generate url to download data.
 
         Returns:
             str: Output url string.
@@ -453,16 +456,14 @@ class Epicor(Source):
         for child in root:
             for subchild in child:
                 if (
-                    subchild.tag == self.start_date_field
-                    or subchild.tag == self.end_date_field
-                ) and subchild.text == None:
-                    raise DataRangeError(
-                        "Too much data. Please provide a date range filter."
-                    )
+                    subchild.tag in (self.start_date_field, self.end_date_field)
+                ) and subchild.text is None:
+                    msg = "Too much data. Please provide a date range filter."
+                    raise DataRangeError(msg)
 
     def get_xml_response(self):
-        "Function for getting response from Epicor API"
-        if self.validate_date_filter == True:
+        "Function for getting response from Epicor API."
+        if self.validate_date_filter is True:
             self.validate_filter()
         payload = self.filters_xml
         url = self.generate_url()
@@ -470,13 +471,12 @@ class Epicor(Source):
             "Content-Type": "application/xml",
             "Authorization": "Bearer " + self.generate_token(),
         }
-        response = handle_api_response(
+        return handle_api_response(
             url=url, headers=headers, data=payload, method="POST"
         )
-        return response
 
     def to_df(self) -> pd.DataFrame:
-        """Function for creating pandas DataFrame from Epicor API response
+        """Function for creating pandas DataFrame from Epicor API response.
 
         Returns:
             pd.DataFrame: Output DataFrame.
@@ -491,8 +491,7 @@ class Epicor(Source):
         elif "BOOKINGS.DETAIL.QUERY" in self.base_url:
             df = parse_bookings_xml(data)
         else:
-            raise ValidationError(
-                f"Parser for selected viev {self.base_url} is not avaiable"
-            )
+            msg = f"Parser for selected viev {self.base_url} is not avaiable"
+            raise ValidationError(msg)
 
         return df

@@ -1,3 +1,5 @@
+"""Task for downloading data from Epicor Prelude API."""
+
 from typing import Any
 
 import pandas as pd
@@ -25,11 +27,12 @@ def epicor_to_df(
 
     Args:
         base_url (str, required): Base url to Epicor.
-        filters_xml (str, required): Filters in form of XML. The date filter is required.
+        filters_xml (str, required): Filters in form of XML. The date filter
+             is required.
         validate_date_filter (bool, optional): Whether or not validate xml date filters.
                 Defaults to True.
-        start_date_field (str, optional) The name of filters field containing start date.
-                Defaults to "BegInvoiceDate".
+        start_date_field (str, optional) The name of filters field containing
+            start date. Defaults to "BegInvoiceDate".
         end_date_field (str, optional) The name of filters field containing end date.
                 Defaults to "EndInvoiceDate".
         credentials_secret (str, optional): The name of the secret storing
