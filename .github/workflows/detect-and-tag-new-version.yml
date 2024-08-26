@@ -38,7 +38,7 @@ jobs:
       - name: Set up git user
         # Note: we cannot use the default user here or things like fregante/setup-git-user@v1
         # because this will magically not trigger the cd.yml workflow (it turns out the on:push:tags
-        # trigger does not work for tags pushed by the GitHub Actions bot).
+        # trigger does not work for tags pushed using the GitHub Actions bot's token).
         run: |
           git config --global user.email "ludovico@dyvenia.com"
           git config --global user.name "Ludovico Bot"
@@ -46,6 +46,8 @@ jobs:
       - name: Publish the new tag
         # Trigger the cd.yml workflow if a new tag is detected.
         if: steps.check-tag.outputs.exists != 'true'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GH_BOT_TOKEN }}
         run: |
           git tag -a v${{ steps.get-version.outputs.version }} -m "Release v${{ steps.get-version.outputs.version }}"
           git push origin v${{ steps.get-version.outputs.version }}
