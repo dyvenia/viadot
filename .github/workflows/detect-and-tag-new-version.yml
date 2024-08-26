@@ -35,7 +35,13 @@ jobs:
         with:
           tag: v${{ steps.get-version.outputs.version }}
 
-      - uses: fregante/setup-git-user@v2
+      - name: Set up git user
+        # Note: we cannot use the default user here or things like fregante/setup-git-user@v1
+        # because this will magically not trigger the cd.yml workflow (it turns out the on:push:tags
+        # trigger does not work for tags pushed by the GitHub Actions bot).
+        run: |
+          git config --global user.email "ludovico@dyvenia.com"
+          git config --global user.name "Ludovico Bot"
 
       - name: Publish the new tag
         # Trigger the cd.yml workflow if a new tag is detected.
