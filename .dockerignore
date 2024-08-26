@@ -5,8 +5,11 @@ __pycache__
 .git
 .jupyter
 .local
-.vscode
-.pytest_cache
-.venv
-.config
+.vscode/
+.pytest_cache/
+.venv/
+.config/
 tests/
+.ruff_cache/
+.mypy_cache/
+build/

@@ -2,26 +2,25 @@ import json
 from pathlib import Path
 
 import pytest
-
 from viadot.config import Config, get_source_config, get_source_credentials
+
 
 FAKE_SOURCE_CONFIG = {"fake_source": {"credentials": {"api_key": "test"}}}
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture()
 def TEST_CONFIG_PATH():
     """Creates and deletes a test config file for each test.
 
     Yields:
         config_path: The path to the test config file.
     """
-
     # Make sure we always create it from scratch.
     config_path = Path("config.yml")
     config_path.unlink(missing_ok=True)
 
     test_config = {"sources": [FAKE_SOURCE_CONFIG]}
-    with open(config_path, "w") as f:
+    with Path(config_path).open("w") as f:
         json.dump(test_config, f)
 
     yield config_path
@@ -30,20 +29,19 @@ def TEST_CONFIG_PATH():
     config_path.unlink()
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture()
 def TEST_CONFIG_PATH_JSON():
     """Creates and deletes a test config file for each test.
 
     Yields:
         config_path: The path to the test config file.
     """
-
     # Make sure we always create it from scratch.
     config_path = Path("config.json")
     config_path.unlink(missing_ok=True)
 
     test_config = {"sources": [FAKE_SOURCE_CONFIG]}
-    with open(config_path, "w") as f:
+    with Path(config_path).open("w") as f:
         json.dump(test_config, f)
 
     yield config_path

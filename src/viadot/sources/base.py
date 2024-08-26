@@ -1,7 +1,9 @@
-import logging
-import os
+"""Base classes for data sources."""
+
 from abc import abstractmethod
-from typing import Any, Dict, List, Literal, NoReturn, Tuple, Union
+import logging
+from pathlib import Path
+from typing import Any, Literal
 
 import pandas as pd
 import pyarrow as pa
@@ -10,55 +12,69 @@ import pyodbc
 from viadot.config import get_source_credentials
 from viadot.signals import SKIP
 
+
 logger = logging.getLogger(__name__)
 
-Record = Tuple[Any]
+Record = tuple[Any]
 
 
 class Source:
-    def __init__(self, *args, credentials: Dict[str, Any] = None, **kwargs):
+    def __init__(self, *args, credentials: dict[str, Any] | None = None, **kwargs):  # noqa: ARG002
+        """Base class for data sources.
+
+        Args:
+            credentials (dict[str, Any] | None, optional): The credentials for the
+                source. Defaults to None.
+        """
         self.credentials = credentials
         self.data: pa.Table = None
         self.logger = logger
 
     @abstractmethod
-    def to_json(self):
-        pass
+    def to_json(self) -> dict:
+        """Download data from source to a dictionary."""
 
     @abstractmethod
-    def to_df(self, if_empty: Literal["warn", "skip", "fail"] = "warn"):
-        pass
+    def to_df(self, if_empty: Literal["warn", "skip", "fail"] = "warn") -> pd.DataFrame:
+        """Download data from source to a pandas DataFrame.
+
+        Args:
+            if_empty (Literal[warn, skip, fail], optional): What to do if there is no
+                data. Defaults to "warn".
+
+        Returns:
+            pd.DataFrame: The data from the source as a pandas DataFrame.
+        """
 
     @abstractmethod
-    def query():
+    def query(self) -> list[Record] | bool:
+        """Run a query and possibly return the results."""
         pass
 
     def to_arrow(self, if_empty: Literal["warn", "skip", "fail"] = "warn") -> pa.Table:
-        """
-        Creates a pyarrow table from source.
+        """Creates a pyarrow table from source.
 
         Args:
-            if_empty (Literal["warn", "skip", "fail"], optional): : What to do if data sourse contains no data. Defaults to "warn".
+            if_empty (Literal["warn", "skip", "fail"], optional): : What to do if data
+                source contains no data. Defaults to "warn".
         """
-
         try:
             df = self.to_df(if_empty=if_empty)
         except SKIP:
             return False
 
-        table = pa.Table.from_pandas(df)
-        return table
+        return pa.Table.from_pandas(df)
 
     def to_csv(
         self,
         path: str,
         if_exists: Literal["append", "replace"] = "replace",
         if_empty: Literal["warn", "skip", "fail"] = "warn",
-        sep="\t",
+        sep: str = "\t",
         **kwargs,
     ) -> bool:
-        """
-        Write from source to a CSV file.
+        r"""Write from source to a CSV file.
+
         Note that the source can be a particular file or table,
         but also a database in general. Therefore, some sources may require
         additional parameters to pull the right resource. Hence this method
@@ -66,10 +82,10 @@ class Source:
 
         Args:
             path (str): The destination path.
-            if_exists (Literal[, optional): What to do if the file exists.
-            Defaults to "replace".
-            if_empty (Literal["warn", "skip", "fail"], optional): What to do if the source contains no data.
-            Defaults to "warn".
+            if_exists (Literal[, optional): What to do if the file exists. Defaults to
+                "replace".
+            if_empty (Literal["warn", "skip", "fail"], optional): What to do if the
+                source contains no data. Defaults to "warn".
             sep (str, optional): The separator to use in the CSV. Defaults to "\t".
 
         Raises:
@@ -78,7 +94,6 @@ class Source:
         Returns:
             bool: Whether the operation was successful.
         """
-
         try:
             df = self.to_df(if_empty=if_empty, **kwargs)
         except SKIP:
@@ -89,11 +104,10 @@ class Source:
         elif if_exists == "replace":
             mode = "w"
         else:
-            raise ValueError("'if_exists' must be one of ['append', 'replace']")
+            msg = "'if_exists' must be one of ['append', 'replace']"
+            raise ValueError(msg)
 
-        df.to_csv(
-            path, sep=sep, mode=mode, index=False, header=not os.path.exists(path)
-        )
+        df.to_csv(path, sep=sep, mode=mode, index=False, header=not Path(path).exists())
 
         return True
 
@@ -103,22 +117,23 @@ class Source:
         if_exists: str = "replace",
         if_empty: Literal["warn", "skip", "fail"] = "warn",
     ) -> bool:
-        """
-        Write from source to a excel file.
+        """Write from source to a excel file.
+
         Args:
             path (str): The destination path.
-            if_exists (str, optional): What to do if the file exists. Defaults to "replace".
-            if_empty (Literal["warn", "skip", "fail"], optional): What to do if the source contains no data.
+            if_exists (str, optional): What to do if the file exists. Defaults to
+                "replace".
+            if_empty (Literal["warn", "skip", "fail"], optional): What to do if the
+                source contains no data.
 
         """
-
         try:
             df = self.to_df(if_empty=if_empty)
         except SKIP:
             return False
 
         if if_exists == "append":
-            if os.path.isfile(path):
+            if Path(path).is_file():
                 excel_df = pd.read_excel(path)
                 out_df = pd.concat([excel_df, df])
             else:
@@ -132,8 +147,8 @@ class Source:
         self,
         if_empty: Literal["warn", "skip", "fail"] = "warn",
         message: str = "The query produced no data.",
-    ) -> NoReturn:
-        """What to do if a fetch (database query, API request, etc.) produced no data."""
+    ) -> None:
+        """What to do if a fetch (database query, API request) produced no data."""
         if if_empty == "warn":
             self.logger.warning(message)
         elif if_empty == "skip":
@@ -145,9 +160,9 @@ class Source:
 class SQL(Source):
     def __init__(
         self,
-        driver: str = None,
-        config_key: str = None,
-        credentials: str = None,
+        driver: str | None = None,
+        config_key: str | None = None,
+        credentials: str | None = None,
         query_timeout: int = 60 * 60,
         *args,
         **kwargs,
@@ -156,19 +171,17 @@ class SQL(Source):
 
         Args:
             driver (str, optional): The SQL driver to use. Defaults to None.
-            config_key (str, optional): The key inside local config containing the config.
-            User can choose to use this or pass credentials directly to the `credentials`
-            parameter. Defaults to None.
-            credentials (str, optional): Credentials for the connection. Defaults to None.
-            query_timeout (int, optional): The timeout for executed queries. Defaults to 1 hour.
+            config_key (str, optional): The key inside local config containing the
+                config. User can choose to use this or pass credentials directly to the
+                `credentials` parameter. Defaults to None.
+            credentials (str, optional): Credentials for the connection. Defaults to
+                None.
+            query_timeout (int, optional): The timeout for executed queries. Defaults to
+                1 hour.
         """
-
         self.query_timeout = query_timeout
 
-        if config_key:
-            config_credentials = get_source_credentials(config_key)
-        else:
-            config_credentials = None
+        config_credentials = get_source_credentials(config_key) if config_key else None
 
         credentials = credentials or config_credentials or {}
 
@@ -182,6 +195,7 @@ class SQL(Source):
     @property
     def conn_str(self) -> str:
         """Generate a connection string from params or config.
+
         Note that the user and password are escaped with '{}' characters.
 
         Returns:
@@ -212,7 +226,16 @@ class SQL(Source):
             self._con.timeout = self.query_timeout
         return self._con
 
-    def run(self, query: str) -> Union[List[Record], bool]:
+    def run(self, query: str) -> list[Record] | bool:
+        """Execute a query and return the result.
+
+        Args:
+            query (str): The query to execute.
+
+        Returns:
+            list[Record] | bool: If the query is a SELECT, return the result as a list
+                of records.
+        """
         cursor = self.con.cursor()
         cursor.execute(query)
 
@@ -230,14 +253,16 @@ class SQL(Source):
     def to_df(
         self,
         query: str,
-        con: pyodbc.Connection = None,
+        con: pyodbc.Connection | None = None,
         if_empty: Literal["warn", "skip", "fail"] = "warn",
     ) -> pd.DataFrame:
-        """Creates DataFrame form SQL query.
+        """Execute a query and return the result as a pandas DataFrame.
+
         Args:
-            query (str): SQL query. If don't start with "SELECT" returns empty DataFrame.
+            query (str): The query to execute.
             con (pyodbc.Connection, optional): The connection to use to pull the data.
-            if_empty (Literal["warn", "skip", "fail"], optional): What to do if the query returns no data. Defaults to None.
+            if_empty (Literal["warn", "skip", "fail"], optional): What to do if the
+                query returns no data. Defaults to None.
         """
         conn = con or self.con
 
@@ -250,21 +275,21 @@ class SQL(Source):
             df = pd.DataFrame()
         return df
 
-    def _check_if_table_exists(self, table: str, schema: str = None) -> bool:
-        """Checks if table exists.
+    def _check_if_table_exists(self, table: str, schema: str | None = None) -> bool:
+        """Check if table exists in a specified schema.
+
         Args:
             table (str): Table name.
             schema (str, optional): Schema name. Defaults to None.
         """
-        exists_query = f"SELECT * FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA = '{schema}' AND TABLE_NAME='{table}'"
-        exists = bool(self.run(exists_query))
-        return exists
+        exists_query = f"SELECT * FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA = '{schema}' AND TABLE_NAME='{table}'"  # noqa: S608
+        return bool(self.run(exists_query))
 
     def create_table(
         self,
         table: str,
-        schema: str = None,
-        dtypes: Dict[str, Any] = None,
+        schema: str | None = None,
+        dtypes: dict[str, Any] | None = None,
         if_exists: Literal["fail", "replace", "skip", "delete"] = "fail",
     ) -> bool:
         """Create a table.
@@ -272,8 +297,10 @@ class SQL(Source):
         Args:
             table (str): The destination table. Defaults to None.
             schema (str, optional): The destination schema. Defaults to None.
-            dtypes (Dict[str, Any], optional): The data types to use for the table. Defaults to None.
-            if_exists (Literal, optional): What to do if the table already exists. Defaults to "fail".
+            dtypes (Dict[str, Any], optional): The data types to use for the table.
+                Defaults to None.
+            if_exists (Literal, optional): What to do if the table already exists.
+                Defaults to "fail".
 
         Returns:
             bool: Whether the operation was successful.
@@ -285,12 +312,13 @@ class SQL(Source):
             if if_exists == "replace":
                 self.run(f"DROP TABLE {fqn}")
             elif if_exists == "delete":
-                self.run(f"DELETE FROM {fqn}")
+                self.run(f"DELETE FROM {fqn}")  # noqa: S608
                 return True
             elif if_exists == "fail":
-                raise ValueError(
-                    "The table already exists and 'if_exists' is set to 'fail'."
+                msg = (
+                    f"The table {fqn} already exists and 'if_exists' is set to 'fail'."
                 )
+                raise ValueError(msg)
             elif if_exists == "skip":
                 return False
 
@@ -304,8 +332,7 @@ class SQL(Source):
         return True
 
     def insert_into(self, table: str, df: pd.DataFrame) -> str:
-        """Insert values from a pandas DataFrame into an existing
-        database table.
+        """Insert values from a pandas DataFrame into an existing database table.
 
         Args:
             table (str): table name
@@ -314,13 +341,12 @@ class SQL(Source):
         Returns:
             str: The executed SQL insert query.
         """
-
         values = ""
         rows_count = df.shape[0]
         counter = 0
         for row in df.values:
-            counter += 1
-            out_row = ", ".join(map(self._sql_column, row))
+            counter += 1  # noqa: SIM113
+            out_row = ", ".join(map(self._escape_column_name, row))
             comma = ",\n"
             if counter == rows_count:
                 comma = ";"
@@ -329,15 +355,11 @@ class SQL(Source):
 
         columns = ", ".join(df.columns)
 
-        sql = f"INSERT INTO {table} ({columns})\n VALUES {values}"
+        sql = f"INSERT INTO {table} ({columns})\n VALUES {values}"  # noqa: S608
         self.run(sql)
 
         return sql
 
-    def _sql_column(self, column_name: str) -> str:
-        """Returns the name of a column"""
-        if isinstance(column_name, str):
-            out_name = f"'{column_name}'"
-        else:
-            out_name = str(column_name)
-        return out_name
+    def _escape_column_name(self, column_name: str) -> str:
+        """Return an escaped column name."""
+        return f"'{column_name}'"

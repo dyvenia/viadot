@@ -1,0 +1,79 @@
+{
+  "metadata": {
+    "dbt_schema_version": "https://schemas.getdbt.com/dbt/run-results/v5.json",
+    "dbt_version": "1.7.10",
+    "generated_at": "2024-03-26T13:56:34.712120Z",
+    "invocation_id": "61e919b7-7e9e-4caa-8667-87c897c6267d",
+    "env": {}
+  },
+  "results": [
+    {
+      "status": "pass",
+      "timing": [
+        {
+          "name": "compile",
+          "started_at": "2024-03-26T13:59:34.540661Z",
+          "completed_at": "2024-03-26T13:59:34.624542Z"
+        },
+        {
+          "name": "execute",
+          "started_at": "2024-03-26T13:59:34.626422Z",
+          "completed_at": "2024-03-26T13:59:34.676009Z"
+        }
+      ],
+      "thread_id": "Thread-1 (worker)",
+      "execution_time": 0.14419817924499512,
+      "adapter_response": {
+        "_message": "OK"
+      },
+      "message": null,
+      "failures": 0,
+      "unique_id": "test.my_nesso_project.unique_account__id_.e2119e8bab",
+      "compiled": true,
+      "compiled_code": "\n    \n    \n\nselect\n    \"id\" as unique_field,\n    count(*) as n_records\n\nfrom \"nesso\".\"dbt\".\"account\"\nwhere \"id\" is not null\ngroup by \"id\"\nhaving count(*) > 1\n\n\n",
+      "relation_name": null
+    }
+  ],
+  "elapsed_time": 0.30997633934020996,
+  "args": {
+    "use_colors_file": true,
+    "select": [],
+    "use_colors": true,
+    "defer": false,
+    "partial_parse": true,
+    "profiles_dir": "/home/trymzet/.dbt",
+    "cache_selected_only": false,
+    "target": "dev",
+    "log_file_max_bytes": 10485760,
+    "favor_state": false,
+    "log_level": "info",
+    "log_path": "/home/trymzet/work/dyvenia/nesso-cli/my_nesso_project/logs",
+    "static_parser": true,
+    "partial_parse_file_diff": true,
+    "log_level_file": "debug",
+    "log_format": "default",
+    "version_check": true,
+    "vars": {},
+    "enable_legacy_logger": false,
+    "quiet": false,
+    "indirect_selection": "eager",
+    "send_anonymous_usage_stats": true,
+    "printer_width": 80,
+    "print": true,
+    "which": "test",
+    "write_json": true,
+    "warn_error_options": {
+      "include": [],
+      "exclude": []
+    },
+    "macro_debugging": false,
+    "project_dir": "/home/trymzet/work/dyvenia/nesso-cli/my_nesso_project",
+    "populate_cache": true,
+    "strict_mode": false,
+    "invocation_command": "dbt test -t dev",
+    "show_resource_report": false,
+    "log_format_file": "debug",
+    "exclude": [],
+    "introspect": true
+  }
+}

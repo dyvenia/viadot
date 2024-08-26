@@ -1,19 +1,27 @@
+"""Databricks connector."""
+
 import json
-import os
-from typing import Literal, Optional, Union
+from pathlib import Path
+from typing import Literal, Union
 
 import pandas as pd
 
+
 try:
-    import pyspark.sql.dataframe as spark
     from delta.tables import *  # noqa
-except ModuleNotFoundError:
-    raise ImportError("pyspark.sql.dataframe is required to use Databricks source.")
+    import pyspark.sql.dataframe as spark
+except ModuleNotFoundError as e:
+    msg = "Missing required modules to use Databricks source."
+    raise ImportError(msg) from e
 
 from pydantic import BaseModel, root_validator
 
 from viadot.config import get_source_credentials
-from viadot.exceptions import CredentialError, TableAlreadyExists, TableDoesNotExist
+from viadot.exceptions import (
+    CredentialError,
+    TableAlreadyExistsError,
+    TableDoesNotExistError,
+)
 from viadot.sources.base import Source
 from viadot.utils import (
     _cast_df_cols,
@@ -27,48 +35,45 @@ class DatabricksCredentials(BaseModel):
     host: str  # The host address of the Databricks cluster.
     port: str = "15001"  # The port on which the cluster is exposed. By default '15001'. For Spark Connect, use the port 443 by default.
     cluster_id: str  # The ID of the Databricks cluster to which to connect.
-    org_id: Optional[
-        str
-    ]  # The ID of the Databricks organization to which the cluster belongs. Not required when using Spark Connect.
+    org_id: (
+        str | None
+    )  # The ID of the Databricks organization to which the cluster belongs. Not required when using Spark Connect.
     token: str  # The access token which will be used to connect to the cluster.
 
     @root_validator(pre=True)
-    def is_configured(cls, credentials):
+    def is_configured(cls, credentials: dict) -> dict:  # noqa: N805, D102
         host = credentials.get("host")
         cluster_id = credentials.get("cluster_id")
         token = credentials.get("token")
 
         if not (host and cluster_id and token):
-            raise CredentialError(
-                "Databricks credentials are not configured correctly."
-            )
+            mgs = "Databricks credentials are not configured correctly."
+            raise CredentialError(mgs)
         return credentials
 
 
 class Databricks(Source):
-    """
-    A class for pulling and manipulating data on Databricks.
-
-    Documentation for Databricks is located at:
-    https://docs.microsoft.com/en-us/azure/databricks/
-
-    Parameters
-    ----------
-    credentials : DatabricksCredentials, optional
-        Databricks connection configuration.
-    config_key (str, optional): The key in the viadot config holding relevant
-        credentials.
-    """
-
     DEFAULT_SCHEMA = "default"
 
     def __init__(
         self,
-        credentials: DatabricksCredentials = None,
-        config_key: str = None,
+        credentials: DatabricksCredentials | None = None,
+        config_key: str | None = None,
         *args,
         **kwargs,
     ):
+        """A class for pulling and manipulating data on Databricks.
+
+        Documentation for Databricks is located at:
+        https://docs.microsoft.com/en-us/azure/databricks/
+
+        Parameters
+        ----------
+        credentials : DatabricksCredentials, optional
+        Databricks connection configuration.
+        config_key (str, optional): The key in the viadot config holding relevant
+        credentials.
+        """
         raw_creds = credentials or get_source_credentials(config_key)
         validated_creds = dict(
             DatabricksCredentials(**raw_creds)
@@ -78,10 +83,10 @@ class Databricks(Source):
 
         self._session = None
 
-    def __enter__(self):
+    def __enter__(self):  # noqa: D105
         return self
 
-    def __exit__(self, exc_type, exc_value, traceback):
+    def __exit__(self, exc_type, exc_value, traceback):  # noqa: D105, ANN001
         if self._session:
             self._session.stop()
             self._session = None
@@ -95,30 +100,26 @@ class Databricks(Source):
         return self._session
 
     def _create_spark_session(self):
-        """
-        Establish a connection to the Databricks cluster.
+        """Establish a connection to the Databricks cluster.
 
         Returns:
             SparkSession: A configured SparkSession object.
         """
+        db_connect_config = {
+            "host": self.credentials.get("host"),
+            "token": self.credentials.get("token"),
+            "cluster_id": self.credentials.get("cluster_id"),
+            "org_id": self.credentials.get("org_id"),
+            "port": self.credentials.get("port"),
+        }
 
-        db_connect_config = dict(
-            host=self.credentials.get("host"),
-            token=self.credentials.get("token"),
-            cluster_id=self.credentials.get("cluster_id"),
-            org_id=self.credentials.get("org_id"),
-            port=self.credentials.get("port"),
-        )
-
-        with open(os.path.expanduser("~/.databricks-connect"), "w") as f:
+        with Path.open(Path.expanduser("~/.databricks-connect"), "w") as f:
             json.dump(db_connect_config, f)
 
-        spark = SparkSession.builder.getOrCreate()  # noqa
-        return spark
+        return SparkSession.builder.getOrCreate()  # noqa
 
     def _create_spark_connect_session(self):
-        """
-        Establish a connection to a Databricks cluster.
+        """Establish a connection to a Databricks cluster.
 
         Returns:
             SparkSession: A configured SparkSession object.
@@ -131,9 +132,8 @@ class Databricks(Source):
         cluster_id = self.credentials.get("cluster_id")
 
         conn_str = f"sc://{workspace_instance_name}:{port}/;token={token};x-databricks-cluster-id={cluster_id}"
-        spark = DatabricksSession.builder.remote(conn_str).getOrCreate()
 
-        return spark
+        return DatabricksSession.builder.remote(conn_str).getOrCreate()
 
     @add_viadot_metadata_columns
     def to_df(
@@ -141,8 +141,7 @@ class Databricks(Source):
         query: str,
         if_empty: Literal["warn", "skip", "fail"] = "warn",
     ) -> pd.DataFrame:
-        """
-        Execute a query and return a Pandas DataFrame.
+        """Execute a query and return a Pandas DataFrame.
 
         Args:
             query (str): The query to execute
@@ -168,11 +167,11 @@ class Databricks(Source):
         return df
 
     def _pandas_df_to_spark_df(self, df: pd.DataFrame) -> spark.DataFrame:
-        """
-        Convert a Pandas DataFrame to a Spark DataFrame.
+        """Convert a Pandas DataFrame to a Spark DataFrame.
 
         Args:
-            df (pd.DataFrame): The Pandas DataFrame to be converted to a Spark DataFrame.
+            df (pd.DataFrame): The Pandas DataFrame to be converted to a Spark
+                DataFrame.
 
         Example:
         ```python
@@ -188,15 +187,14 @@ class Databricks(Source):
         Returns:
             spark.DataFrame: The resulting Spark DataFrame.
         """
-        spark_df = self.session.createDataFrame(df)
-        return spark_df
+        return self.session.createDataFrame(df)
 
     def _spark_df_to_pandas_df(self, spark_df: spark.DataFrame) -> pd.DataFrame:
-        """
-        Convert a Spark DataFrame to a Pandas DataFrame.
+        """Convert a Spark DataFrame to a Pandas DataFrame.
 
         Args:
-            df (spark.DataFrame): The Spark DataFrame to be converted to a Pandas DataFrame.
+            df (spark.DataFrame): The Spark DataFrame to be converted to a Pandas
+                DataFrame.
 
         Example:
         ```python
@@ -216,14 +214,14 @@ class Databricks(Source):
 
     def run(
         self, query: str, fetch_type: Literal["spark", "pandas"] = "spark"
-    ) -> Union[spark.DataFrame, pd.DataFrame, bool]:
-        """
-        Execute an SQL query.
+    ) -> spark.DataFrame | pd.DataFrame | bool:
+        """Execute an SQL query.
 
         Args:
             query (str): The query to execute.
             fetch_type (Literal, optional): How to return the data: either
-            in the default Spark DataFrame format or as a Pandas DataFrame. Defaults to "spark".
+                in the default Spark DataFrame format or as a Pandas DataFrame. Defaults
+                to "spark".
 
         Example:
         ```python
@@ -233,14 +231,13 @@ class Databricks(Source):
         query_result = databricks.run("SELECT * FROM schema.table_1")
         ```
         Returns:
-            Union[spark.DataFrame, pd.DataFrame, bool]: Either the result set of a query or,
-            in case of DDL/DML queries, a boolean describing whether
-            the query was executed successfully.
+            Union[spark.DataFrame, pd.DataFrame, bool]: Either the result set of a query
+            or, in case of DDL/DML queries, a boolean describing whether the query was
+            executed successfully.
         """
         if fetch_type not in ["spark", "pandas"]:
-            raise ValueError(
-                "Only the values 'spark', 'pandas' are allowed for 'fetch_type'"
-            )
+            msg = "Only the values 'spark', 'pandas' are allowed for 'fetch_type'"
+            raise ValueError(msg)
 
         query_clean = query.upper().strip()
         query_keywords = ["SELECT", "SHOW", "PRAGMA", "DESCRIBE"]
@@ -257,7 +254,7 @@ class Databricks(Source):
 
         return result
 
-    def _check_if_table_exists(self, table: str, schema: str = None) -> bool:
+    def _check_if_table_exists(self, table: str, schema: str | None = None) -> bool:
         if schema is None:
             schema = Databricks.DEFAULT_SCHEMA
         return self.session.catalog.tableExists(dbName=schema, tableName=table)
@@ -269,14 +266,13 @@ class Databricks(Source):
         self,
         df: pd.DataFrame,
         table: str,
-        schema: str = None,
+        schema: str | None = None,
         if_empty: Literal["warn", "skip", "fail"] = "warn",
         if_exists: Literal["replace", "skip", "fail"] = "fail",
         snakecase_column_names: bool = True,
         cast_df_columns: bool = True,
     ) -> bool:
-        """
-        Create a table using a pandas `DataFrame`.
+        """Create a table using a pandas `DataFrame`.
 
         Args:
             df (pd.DataFrame): The `DataFrame` to be written as a table.
@@ -286,10 +282,11 @@ class Databricks(Source):
                 Defaults to 'warn'.
             if_exists (Literal, optional): What to do if the table already exists.
                 Defaults to 'fail'.
-            snakecase_column_names (bool, optional): Whether to convert column names to snake case.
-                Defaults to True.
-            cast_df_columns (bool, optional): Converts column types in DataFrame using utils._cast_df_cols().
-                This param exists because of possible errors with object cols. Defaults to True.
+            snakecase_column_names (bool, optional): Whether to convert column names to
+                snake case. Defaults to True.
+            cast_df_columns (bool, optional): Converts column types in DataFrame using
+                utils._cast_df_cols(). This param exists because of possible errors with
+                object cols. Defaults to True.
 
         Example:
         ```python
@@ -306,7 +303,6 @@ class Databricks(Source):
         Returns:
             bool: True if the table was created successfully, False otherwise.
         """
-
         if df.empty:
             self._handle_if_empty(if_empty)
 
@@ -327,7 +323,7 @@ class Databricks(Source):
                 self.logger.warning(f"Table {fqn} already exists.")
                 result = False
             elif if_exists == "fail":
-                raise TableAlreadyExists(fqn)
+                raise TableAlreadyExistsError(fqn)
             elif if_exists == "replace":
                 result = self._full_refresh(schema=schema, table=table, df=df)
             else:
@@ -338,7 +334,7 @@ class Databricks(Source):
             sdf.createOrReplaceTempView("tmp_view")
 
             result = self.run(
-                f"CREATE TABLE {fqn} USING DELTA AS SELECT * FROM tmp_view;"
+                f"CREATE TABLE {fqn} USING DELTA AS SELECT * FROM tmp_view;"  # noqa: S608
             )
 
         if result:
@@ -346,16 +342,15 @@ class Databricks(Source):
 
         return result
 
-    def drop_table(self, table: str, schema: str = None) -> bool:
-        """
-        Delete an existing table.
+    def drop_table(self, table: str, schema: str | None = None) -> bool:
+        """Delete an existing table.
 
         Args:
             schema (str): Name of the schema.
             table (str): Name of the new table to be created.
 
         Raises:
-            TableDoesNotExist: If the table does not exist.
+            TableDoesNotExistError: If the table does not exist.
 
         Example:
         ```python
@@ -375,7 +370,7 @@ class Databricks(Source):
             result = self.run(f"DROP TABLE {fqn}")
             self.logger.info(f"Table {fqn} has been deleted successfully.")
         else:
-            raise TableDoesNotExist(fqn=fqn)
+            raise TableDoesNotExistError(fqn=fqn)
 
         return result
 
@@ -387,8 +382,7 @@ class Databricks(Source):
         self.logger.info(f"Table {fqn} has been appended successfully.")
 
     def _full_refresh(self, schema: str, table: str, df: pd.DataFrame) -> bool:
-        """
-        Overwrite an existing table with data from a Pandas DataFrame.
+        """Overwrite an existing table with data from a Pandas DataFrame.
 
         Args:
             schema (str): Name of the schema.
@@ -403,7 +397,9 @@ class Databricks(Source):
         list = [{"id":"1", "name":"Joe"}]
         df = pd.DataFrame(list)
 
-        databricks.insert_into( df=df, schema="viadot_test", table="test", mode="replace")
+        databricks.insert_into(
+            df=df, schema="viadot_test", table="test", mode="replace"
+        )
         ```
         Returns:
             bool: True if the table has been refreshed successfully, False otherwise.
@@ -423,7 +419,7 @@ class Databricks(Source):
         df: pd.DataFrame,
         table: str,
         primary_key: str,
-        schema: str = None,
+        schema: str | None = None,
     ):
         spark_df = self._pandas_df_to_spark_df(df)
         merge_query = build_merge_query(
@@ -443,21 +439,21 @@ class Databricks(Source):
         self,
         df: pd.DataFrame,
         table: str,
-        schema: str = None,
-        primary_key: str = None,
+        schema: str | None = None,
+        primary_key: str | None = None,
         mode: Literal["replace", "append", "update"] = "append",
     ) -> None:
-        """
-        Insert data from a pandas `DataFrame` into a Delta table.
+        """Insert data from a pandas `DataFrame` into a Delta table.
 
         Args:
             df (pd.DataFrame): DataFrame with the data to be inserted into the table.
             table (str): Name of the new table to be created.
             schema (str, Optional): Name of the schema.
-            primary_key (str, Optional): The primary key on which the data will be joined.
+            primary_key (str, Optional): The primary key on which the data will be
+                joined.
                 Required only when updating existing data.
-            mode (str, Optional): Which operation to run with the data. Allowed operations
-                are: 'replace', 'append', and 'update'. By default, 'append'.
+            mode (str, Optional): Which operation to run with the data. Allowed
+                operations are: 'replace', 'append', and 'update'. By default, 'append'.
 
         Example:
         ```python
@@ -486,15 +482,14 @@ class Databricks(Source):
             elif mode == "update":
                 self._upsert(df=df, schema=schema, table=table, primary_key=primary_key)
             else:
-                raise ValueError(
-                    "`mode` must be one of: 'replace', 'append', or 'update'."
-                )
+                msg = "`mode` must be one of: 'replace', 'append', or 'update'."
+                raise ValueError(msg)
         else:
-            raise ValueError(f"Table {fqn} does not exist.")
+            msg = f"Table {fqn} does not exist."
+            raise ValueError(msg)
 
     def create_schema(self, schema_name: str) -> bool:
-        """
-        Create a schema for storing tables.
+        """Create a schema for storing tables.
 
         Args:
             schema_name (str): Name of the new schema to be created.
@@ -513,8 +508,7 @@ class Databricks(Source):
         return result
 
     def drop_schema(self, schema_name: str) -> bool:
-        """
-        Delete a schema.
+        """Delete a schema.
 
         Args:
             schema_name (str): Name of the schema to be deleted.
@@ -532,9 +526,8 @@ class Databricks(Source):
         self.logger.info(f"Schema {schema_name} deleted.")
         return result
 
-    def discover_schema(self, table: str, schema: str = None) -> dict:
-        """
-        Return a table's schema.
+    def discover_schema(self, table: str, schema: str | None = None) -> dict:
+        """Return a table's schema.
 
         Args:
             schema (str): Name of the schema.
@@ -564,13 +557,10 @@ class Databricks(Source):
         data_types = result["data_type"].values.tolist()
         data_types = data_types[:-3]
 
-        schema = dict(zip(col_names, data_types))
+        return dict(zip(col_names, data_types, strict=False))
 
-        return schema
-
-    def get_table_version(self, table: str, schema: str = None) -> int:
-        """
-        Get the provided table's version number.
+    def get_table_version(self, table: str, schema: str | None = None) -> int:
+        """Get the provided table's version number.
 
         Args:
             schema (str): Name of the schema.
@@ -592,9 +582,10 @@ class Databricks(Source):
         version_number = history["version"].iat[0]
         return int(version_number)
 
-    def rollback(self, table: str, version_number: int, schema: str = None) -> bool:
-        """
-        Rollback a table to a previous version.
+    def rollback(
+        self, table: str, version_number: int, schema: str | None = None
+    ) -> bool:
+        """Rollback a table to a previous version.
 
         Args:
             schema (str): Name of the schema.
@@ -621,14 +612,13 @@ class Databricks(Source):
         Returns:
             result (bool): A boolean indicating the success of the rollback.
         """
-
         if schema is None:
             schema = Databricks.DEFAULT_SCHEMA
 
         fqn = f"{schema}.{table}"
 
         # Retrieve the data from the previous table
-        old_table = self.to_df(f"SELECT * FROM {fqn}@v{version_number}")
+        old_table = self.to_df(f"SELECT * FROM {fqn}@v{version_number}")  # noqa: S608
 
         # Perform full-refresh and overwrite the table with the new data
         result = self.insert_into(

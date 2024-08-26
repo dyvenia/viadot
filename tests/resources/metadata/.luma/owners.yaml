@@ -1,0 +1,9 @@
+owners:
+  - email: "user1@example.com"
+    first_name: "User"
+    last_name: "One"
+    title: "Senior Data Analyst"
+  - email: "user2@example.com"
+    first_name: "User"
+    last_name: "Two"
+    title: "Product Owner"

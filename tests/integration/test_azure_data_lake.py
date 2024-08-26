@@ -1,5 +1,11 @@
 import pandas as pd
-from viadot.sources import AzureDataLake
+from viadot.utils import skip_test_on_missing_extra
+
+
+try:
+    from viadot.sources import AzureDataLake
+except ImportError:
+    skip_test_on_missing_extra(source_name="AzureDataLake", extra="azure")
 
 
 def test_upload_csv(TEST_CSV_FILE_PATH, TEST_ADLS_FILE_PATH_CSV):

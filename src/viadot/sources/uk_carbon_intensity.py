@@ -1,3 +1,5 @@
+"""UK Carbon Intensity connector."""
+
 import pandas as pd
 import requests
 
@@ -6,35 +8,33 @@ from viadot.utils import add_viadot_metadata_columns
 
 
 class UKCarbonIntensity(Source):
-    """Fetches data of Carbon Intensity of the UK Power Grid.
+    def __init__(self, *args, api_url: str | None = None, **kwargs):
+        """Fetch data of Carbon Intensity of the UK Power Grid.
 
-    Documentation for this source API is located
-    at: https://carbon-intensity.github.io/api-definitions/#carbon-intensity-api-v2-0-0
+        Documentation for this source API is located
+        at: https://carbon-intensity.github.io/api-definitions/#carbon-intensity-api-v2-0-0
 
-    Parameters
-    ----------
-    api_url : str, optional
+        Parameters
+        ----------
+        api_url : str, optional
         The URL endpoint to call, by default None
-    """
-
-    def __init__(self, *args, api_url: str = None, **kwargs):
+        """
         super().__init__(*args, **kwargs)
         self.api_url = api_url
         self.API_ENDPOINT = "https://api.carbonintensity.org.uk"
 
     def to_json(self) -> dict:
-        """Creates json file"""
+        """Creates json file."""
         url = f"{self.API_ENDPOINT}{self.api_url}"
         headers = {"Accept": "application/json"}
-        response = requests.get(url, params={}, headers=headers)
+        response = requests.get(url, params={}, headers=headers, timeout=10)
         if response.ok:
             return response.json()
-        else:
-            raise f"Error {response.json()}"
+        raise f"Error {response.json()}"
 
     @add_viadot_metadata_columns
     def to_df(self, if_empty: str = "warn") -> pd.DataFrame:
-        """Returns a pandas DataFrame with flattened data
+        """Returns a pandas DataFrame with flattened data.
 
         Returns:
             pandas.DataFrame: A Pandas DataFrame
@@ -83,6 +83,6 @@ class UKCarbonIntensity(Source):
                 )
         return df
 
-    def query(self, api_url: str) -> bool:
-        self.api_url = api_url
-        return True
+    def query(self) -> None:
+        """Queries the API."""
+        ...
