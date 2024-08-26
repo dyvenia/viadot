@@ -1,7 +1,5 @@
 """Task for downloading data from Epicor Prelude API."""
 
-from typing import Any
-
 import pandas as pd
 from prefect import task
 from prefect.logging import get_run_logger
@@ -20,7 +18,6 @@ def epicor_to_df(
     start_date_field: str = "BegInvoiceDate",
     end_date_field: str = "EndInvoiceDate",
     credentials_secret: str | None = None,
-    credentials: dict[str, Any] | None = None,
     config_key: str | None = None,
 ) -> pd.DataFrame:
     """Load the result of a SQL Server Database query into a pandas DataFrame.
@@ -38,21 +35,17 @@ def epicor_to_df(
         credentials_secret (str, optional): The name of the secret storing
             the credentials. Defaults to None.
             More info on: https://docs.prefect.io/concepts/blocks/
-        credentials (dict[str, Any], optional): Credentials to the SQLServer.
-            Defaults to None.
         config_key (str, optional): The key in the viadot config holding relevant
             credentials. Defaults to None.
 
     """
-    if not (credentials_secret or credentials or config_key):
+    if not (credentials_secret or config_key):
         raise MissingSourceCredentialsError
 
     logger = get_run_logger()
 
-    credentials = (
-        credentials
-        or get_source_credentials(config_key)
-        or get_credentials(credentials_secret)
+    credentials = get_source_credentials(config_key) or get_credentials(
+        credentials_secret
     )
     epicor = Epicor(
         credentials=credentials,
