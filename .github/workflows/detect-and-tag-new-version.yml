@@ -14,7 +14,7 @@ on:
 
 jobs:
   check-version-and-push-tag:
-    name: Detect new version and push the new version tag if needed.
+    name: Detect and create a tag for new version
     runs-on: ubuntu-latest
 
     steps:
