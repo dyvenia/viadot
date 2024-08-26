@@ -35,19 +35,19 @@ jobs:
         with:
           tag: v${{ steps.get-version.outputs.version }}
 
-      - name: Set up git user
-        # Note: we cannot use the default user here or things like fregante/setup-git-user@v1
-        # because this will magically not trigger the cd.yml workflow (it turns out the on:push:tags
-        # trigger does not work for tags pushed using the GitHub Actions bot's token).
-        run: |
-          git config --global user.email "ludovico@dyvenia.com"
-          git config --global user.name "Ludovico Bot"
+      - uses: fregante/setup-git-user@v2
+        if: steps.check-tag.outputs.exists != 'true'
 
       - name: Publish the new tag
         # Trigger the cd.yml workflow if a new tag is detected.
+        id: publish-tag
         if: steps.check-tag.outputs.exists != 'true'
-        env:
-          GH_TOKEN: ${{ secrets.GH_BOT_TOKEN }}
         run: |
           git tag -a v${{ steps.get-version.outputs.version }} -m "Release v${{ steps.get-version.outputs.version }}"
           git push origin v${{ steps.get-version.outputs.version }}
+
+      - name: Run the release workflow
+        if: steps.check-tag.outputs.exists != 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GH_BOT_TOKEN }}
+        run: gh workflow run cd.yml -f version=${{ steps.get-version.outputs.version }} --ref 2.0
