@@ -47,7 +47,7 @@ jobs:
         # Trigger the cd.yml workflow if a new tag is detected.
         if: steps.check-tag.outputs.exists != 'true'
         env:
-          GITHUB_TOKEN: ${{ secrets.GH_BOT_TOKEN }}
+          GH_TOKEN: ${{ secrets.GH_BOT_TOKEN }}
         run: |
           git tag -a v${{ steps.get-version.outputs.version }} -m "Release v${{ steps.get-version.outputs.version }}"
           git push origin v${{ steps.get-version.outputs.version }}
