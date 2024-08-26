@@ -10,24 +10,24 @@ from viadot.orchestration.prefect.utils import get_credentials
 
 @task
 def bcp(
-    path: str = None,
-    schema: str = None,
-    table: str = None,
+    path: str,
+    schema: str,
+    table: str,
     chunksize: int = 5000,
     error_log_file_path: str = "./log_file.log",
     on_error: Literal["skip", "fail"] = "skip",
     credentials_secret: str | None = None,
     config_key: str | None = None,
     credentials: dict[str, Any] | None = None,
-):
+) -> None:
     """Upload data from a CSV file into an SQLServer table using BCP.
         For more information on bcp (bulk copy program), see
             https://learn.microsoft.com/en-us/sql/tools/bcp-utility.
 
     Args:
         path (str):  Where to store the CSV data dump used for bulk upload to a database.
-        schema (str, optional): Destination schema. Defaults to None.
-        table (str, optional): Destination table. Defaults to None.
+        schema (str): Destination schema. Defaults to None.
+        table (str): Destination table. Defaults to None.
         chunksize (int, optional): Size of a chunk to use in the bcp function.
             Defaults to 5000.
         error_log_file_path (string, optional): Full path of an error file. Defaults
@@ -40,6 +40,7 @@ def bcp(
             Defaults to None.
         config_key (str, optional): The key in the viadot config holding relevant
             credentials to the SQLServer. Defaults to None.
+
     """
     if not (credentials_secret or credentials or config_key):
         raise MissingSourceCredentialsError

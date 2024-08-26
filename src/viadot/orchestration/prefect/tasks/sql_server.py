@@ -1,5 +1,6 @@
 from typing import Any, Literal
 
+import pandas as pd
 from prefect import task
 from prefect.logging import get_run_logger
 
@@ -11,21 +12,21 @@ from viadot.sources.sql_server import SQLServer
 
 @task(retries=3, retry_delay_seconds=10, timeout_seconds=60 * 60 * 3)
 def create_sql_server_table(
-    schema: str = None,
-    table: str = None,
-    dtypes: dict[str, Any] = None,
+    schema: str,
+    table: str,
     if_exists: Literal["fail", "replace", "skip", "delete"] = "fail",
+    dtypes: dict[str, Any] = None,
     credentials_secret: str | None = None,
     credentials: dict[str, Any] | None = None,
     config_key: str | None = None,
-):
+) -> None:
     """A task for creating table in SQL Server.
 
     Args:
-        schema (str, optional): Destination schema.
-        table (str, optional): Destination table.
-        dtypes (dict[str, Any], optional): Data types to enforce.
+        schema (str): Destination schema.
+        table (str): Destination table.
         if_exists (Literal, optional): What to do if the table already exists.
+        dtypes (dict[str, Any], optional): Data types to enforce.
         credentials (dict[str, Any], optional): Credentials to the SQLServer.
             Defaults to None.
         credentials_secret (str, optional): The name of the secret storing
@@ -64,7 +65,7 @@ def sql_server_to_df(
     credentials_secret: str | None = None,
     credentials: dict[str, Any] | None = None,
     config_key: str | None = None,
-):
+) -> pd.DataFrame:
     """Load the result of a SQL Server Database query into a pandas DataFrame.
 
     Args:
@@ -77,6 +78,8 @@ def sql_server_to_df(
             More info on: https://docs.prefect.io/concepts/blocks/
         config_key (str, optional): The key in the viadot config holding relevant
             credentials. Defaults to None.
+
+    Returns: pd.Dataframe
     """
     if not (credentials_secret or credentials or config_key):
         raise MissingSourceCredentialsError
@@ -105,7 +108,7 @@ def sql_server_query(
     credentials_secret: str | None = None,
     credentials: dict[str, Any] | None = None,
     config_key: str | None = None,
-):
+) -> None:
     """Execute a query on SQL Server.
 
     Args:

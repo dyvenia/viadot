@@ -20,7 +20,7 @@ def sql_server_to_parquet(
     if_exists: Literal["append", "replace", "skip"] = "replace",
     sql_server_credentials_secret: str | None = None,
     sql_server_config_key: str | None = None,
-):
+) -> None:
     """Download a file from SQLServer and save it to a Parquet file.
 
     Args:
@@ -28,13 +28,13 @@ def sql_server_to_parquet(
             If the qery doesn't start with "SELECT" returns an empty DataFrame.
         path (str): Path where to save a Parquet file which will be created while
             executing flow.
-        if_exists (Literal, optional): What to do if Parquet exists. Defaults to "replace".
+        if_exists (Literal, optional): What to do if Parquet exists.
+            Defaults to "replace".
         sql_server_credentials_secret (str, optional): The name of the secret storing
             the credentialsto the SQLServer. Defaults to None.
             More info on: https://docs.prefect.io/concepts/blocks/
-        sql_server_config_key (str, optional): The key in the viadot config holding relevant
-            credentials to the SQLServer. Defaults to None.
-            Defaults to None.
+        sql_server_config_key (str, optional): The key in the viadot config
+            holding relevant credentials to the SQLServer. Defaults to None.
     """
     df = sql_server_to_df(
         query=query,
