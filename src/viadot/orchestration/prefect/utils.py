@@ -158,7 +158,7 @@ def get_credentials(secret_name: str) -> dict[str, Any]:
         msg = "The provided secret name is not valid."
         raise MissingPrefectBlockError(msg)
 
-    if block_type == "AwsSecret" or "AwsCredentials":  # noqa: SIM222
+    if block_type == ("AwsSecret" or "AwsCredentials"):  # noqa: SIM222
         credentials = _get_aws_credentials(secret_name, block_type)
     elif block_type == "AzureKeyVaultSecretReference":
         credentials = _get_azure_credentials(secret_name)
