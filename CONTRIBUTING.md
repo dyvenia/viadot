@@ -163,3 +163,13 @@ If you need to pass parameters to the workflow, you can do so with the `--json` 
 ```console
 echo '{"name":"scully", "greeting":"hello"}' | gh workflow run workflow.yml --json
 ```
+
+### Developing & debugging actions
+
+To works on actions, you can use [act](https://github.com/nektos/act).
+
+```console
+act -W .github/workflows/detect-and-tag-new-version.yml -s GITHUB_TOKEN="$(gh auth token)"
+```
+
+**NOTE** for actions that implicitly `{{ github.token }}`, you need to pass your token as the `GITHUB_TOKEN` act secret, as shown in the example above.
