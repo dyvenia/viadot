@@ -1,4 +1,4 @@
-"""Prefect tasks for working with SQL Server."""
+"""Tasks for interacting with SQLServer."""
 
 from typing import Any, Literal
 
@@ -15,38 +15,33 @@ from viadot.sources.sql_server import SQLServer
 
 @task(retries=3, retry_delay_seconds=10, timeout_seconds=60 * 60 * 3)
 def create_sql_server_table(
-    schema: str | None = None,
-    table: str | None = None,
-    dtypes: dict[str, Any] | None = None,
+    schema: str,
+    table: str,
     if_exists: Literal["fail", "replace", "skip", "delete"] = "fail",
+    dtypes: dict[str, Any] | None = None,
     credentials_secret: str | None = None,
-    credentials: dict[str, Any] | None = None,
     config_key: str | None = None,
 ) -> None:
-    """Create a table in SQL Server.
+    """A task for creating table in SQL Server.
 
     Args:
-        schema (str, optional): Destination schema.
-        table (str, optional): Destination table.
-        dtypes (dict[str, Any], optional): Data types to enforce.
+        schema (str): Destination schema.
+        table (str): Destination table.
         if_exists (Literal, optional): What to do if the table already exists.
-        credentials (dict[str, Any], optional): Credentials to the SQLServer.
-            Defaults to None.
+        dtypes (dict[str, Any], optional): Data types to enforce.
         credentials_secret (str, optional): The name of the secret storing
             the credentials. Defaults to None.
             More info on: https://docs.prefect.io/concepts/blocks/
         config_key (str, optional): The key in the viadot config holding relevant
             credentials. Defaults to None.
     """
-    if not (credentials_secret or credentials or config_key):
+    if not (credentials_secret or config_key):
         raise MissingSourceCredentialsError
 
     logger = get_run_logger()
 
-    credentials = (
-        credentials
-        or get_credentials(credentials_secret)
-        or get_source_credentials(config_key)
+    credentials = get_credentials(credentials_secret) or get_source_credentials(
+        config_key
     )
     sql_server = SQLServer(credentials=credentials)
 
@@ -66,31 +61,28 @@ def create_sql_server_table(
 def sql_server_to_df(
     query: str,
     credentials_secret: str | None = None,
-    credentials: dict[str, Any] | None = None,
     config_key: str | None = None,
 ) -> pd.DataFrame:
-    """Execute a query and load the result into a pandas DataFrame.
+    """Load the result of a SQL Server Database query into a pandas DataFrame.
 
     Args:
         query (str, required): The query to execute on the SQL Server database.
             If the query doesn't start with "SELECT" returns an empty DataFrame.
-        credentials (dict[str, Any], optional): Credentials to the SQLServer.
-            Defaults to None.
         credentials_secret (str, optional): The name of the secret storing
             the credentials. Defaults to None.
             More info on: https://docs.prefect.io/concepts/blocks/
         config_key (str, optional): The key in the viadot config holding relevant
             credentials. Defaults to None.
+
+    Returns: pd.Dataframe
     """
-    if not (credentials_secret or credentials or config_key):
+    if not (credentials_secret or config_key):
         raise MissingSourceCredentialsError
 
     logger = get_run_logger()
 
-    credentials = (
-        credentials
-        or get_source_credentials(config_key)
-        or get_credentials(credentials_secret)
+    credentials = get_source_credentials(config_key) or get_credentials(
+        credentials_secret
     )
     sql_server = SQLServer(credentials=credentials)
     df = sql_server.to_df(query=query)
@@ -107,31 +99,25 @@ def sql_server_to_df(
 def sql_server_query(
     query: str,
     credentials_secret: str | None = None,
-    credentials: dict[str, Any] | None = None,
     config_key: str | None = None,
 ) -> list[Record] | bool:
     """Execute a query on SQL Server.
 
     Args:
         query (str, required): The query to execute on the SQL Server database.
-        credentials (dict[str, Any], optional): Credentials to the SQLServer.
-            Defaults to None.
         credentials_secret (str, optional): The name of the secret storing
             the credentials. Defaults to None.
             More info on: https://docs.prefect.io/concepts/blocks/
         config_key (str, optional): The key in the viadot config holding relevant
             credentials. Defaults to None.
-
     """
-    if not (credentials_secret or credentials or config_key):
+    if not (credentials_secret or config_key):
         raise MissingSourceCredentialsError
 
     logger = get_run_logger()
 
-    credentials = (
-        credentials
-        or get_source_credentials(config_key)
-        or get_credentials(credentials_secret)
+    credentials = get_source_credentials(config_key) or get_credentials(
+        credentials_secret
     )
     sql_server = SQLServer(credentials=credentials)
     result = sql_server.run(query)

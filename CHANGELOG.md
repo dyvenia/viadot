@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Added `sql_server_to_parquet` Prefect flow.
 - Added `sap_to_parquet` Prefect flow.
 - Added `duckdb_to_sql_server`, `duckdb_to_parquet`, `duckdb_transform` Prefect flows.
 - Added `bcp` and `duckdb_query` Prefect tasks.
@@ -70,6 +71,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Fixed `bcp` prefect task to run correct.
 - Fixed the typo in credentials in `SQLServer` source
 
 ## [0.4.3] - 2022-04-28
