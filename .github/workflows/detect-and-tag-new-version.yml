@@ -13,8 +13,8 @@ on:
   workflow_dispatch:
 
 jobs:
-  check-version:
-    name: Trigger a release.
+  check-version-and-push-tag:
+    name: Detect new version and push the new version tag if needed.
     runs-on: ubuntu-latest
 
     steps:
@@ -33,7 +33,7 @@ jobs:
         uses: mukunku/tag-exists-action@v1.6.0
         id: check-tag
         with:
-          tag: v${{ steps.get-version.outputs.version }} 
+          tag: v${{ steps.get-version.outputs.version }}
 
       - name: Publish the new tag
         # Trigger the cd.yml workflow if a new tag is detected.
