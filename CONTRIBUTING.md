@@ -134,21 +134,13 @@ This will update the version in `pyproject.toml` accordingly.
 
 #### Release
 
-Once the new version PR is merged to `2.0`, publish a version tag:
+Once the modified `pyproject.toml` is merged to `2.0`, a version tag will be [automatically created](https://github.com/dyvenia/viadot/blob/2.0/.github/workflows/detect-and-tag-new-version.yml), and the [release workflow](https://github.com/dyvenia/viadot/blob/2.0/.github/workflows/cd.yml) will be triggered.
 
-```bash
-viadot_version=v2.1.0
-git switch 2.0 && \
-  git pull && \
-  git tag -a $viadot_version -m "Release $viadot_version" && \
-  git push origin $viadot_version
-```
+The release workflow will:
 
-Pushing the tag will trigger the release workflow, which will:
-
-- create a release on GitHub
-- publish the package to PyPI
-- publish Docker images to ghcr.io
+- create a [release](https://github.com/dyvenia/viadot/releases) on GitHub with auto-generated changelog
+- publish [the package](https://pypi.org/project/viadot2/) to PyPI
+- publish [Docker images](https://github.com/orgs/dyvenia/packages?repo_name=viadot) to ghcr.io
 
 ### Running actions
 
@@ -163,3 +155,13 @@ If you need to pass parameters to the workflow, you can do so with the `--json` 
 ```console
 echo '{"name":"scully", "greeting":"hello"}' | gh workflow run workflow.yml --json
 ```
+
+### Developing & debugging actions
+
+To works on actions, you can use [act](https://github.com/nektos/act).
+
+```console
+act -W .github/workflows/detect-and-tag-new-version.yml -s GITHUB_TOKEN="$(gh auth token)"
+```
+
+**NOTE** for actions that implicitly `{{ github.token }}`, you need to pass your token as the `GITHUB_TOKEN` act secret, as shown in the example above.
