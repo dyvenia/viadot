@@ -3,6 +3,7 @@
 from typing import Literal
 
 from prefect import flow
+
 from viadot.orchestration.prefect.tasks import epicor_to_df
 from viadot.orchestration.prefect.tasks.task_utils import df_to_parquet
 
@@ -27,15 +28,17 @@ def epicor_to_parquet(
     """Download a pandas `DataFrame` from Epicor Prelude API load it into Parquet file.
 
     Args:
-        path (str): Path to Parquet file, where the data will be located. Defaults to None.
+        path (str): Path to Parquet file, where the data will be located.
+            Defaults to None.
         base_url (str, required): Base url to Epicor.
-        filters_xml (str, required): Filters in form of XML. The date filter is required.
-        if_exists (Literal["append", "replace", "skip"], optional): Information what has to be done,
-            if the file exists. Defaults to "replace"
+        filters_xml (str, required): Filters in form of XML. The date filter
+            is required.
+        if_exists (Literal["append", "replace", "skip"], optional): Information what
+            has to be done, if the file exists. Defaults to "replace"
         validate_date_filter (bool, optional): Whether or not validate xml date filters.
                 Defaults to True.
-        start_date_field (str, optional) The name of filters field containing start date.
-                Defaults to "BegInvoiceDate".
+        start_date_field (str, optional) The name of filters field containing
+            start date. Defaults to "BegInvoiceDate".
         end_date_field (str, optional) The name of filters field containing end date.
                 Defaults to "EndInvoiceDate".
         epicor_credentials_secret (str, optional): The name of the secret storing

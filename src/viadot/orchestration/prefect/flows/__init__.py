@@ -30,6 +30,7 @@ __all__ = [
     "duckdb_to_parquet",
     "duckdb_to_sql_server",
     "duckdb_transform",
+    "epicor_to_parquet",
     "exchange_rates_to_adls",
     "exchange_rates_to_databricks",
     "genesys_to_adls",

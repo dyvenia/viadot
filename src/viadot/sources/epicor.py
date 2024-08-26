@@ -1,5 +1,5 @@
+from typing import Any
 import xml.etree.ElementTree as ET
-from typing import Any, Optional
 
 import pandas as pd
 from pydantic import BaseModel
@@ -8,6 +8,7 @@ from viadot.config import get_source_credentials
 from viadot.exceptions import DataRangeError, ValidationError
 from viadot.sources.base import Source
 from viadot.utils import handle_api_response
+
 
 """ 
 The official documentation does not specify the list of required 
@@ -18,108 +19,108 @@ Each Epicor Prelude view requires different XML parser.
 
 
 class TrackingNumbers(BaseModel):
-    TrackingNumber: Optional[str]
+    TrackingNumber: str | None
 
 
 class ShipToAddress(BaseModel):
-    ShipToNumber: Optional[str]
-    Attention: Optional[str]
-    AddressLine1: Optional[str]
-    AddressLine2: Optional[str]
-    AddressLine3: Optional[str]
-    City: Optional[str]
-    State: Optional[str]
-    Zip: Optional[str]
-    Country: Optional[str]
-    EmailAddress: Optional[str]
-    PhoneNumber: Optional[str]
-    FaxNumber: Optional[str]
+    ShipToNumber: str | None
+    Attention: str | None
+    AddressLine1: str | None
+    AddressLine2: str | None
+    AddressLine3: str | None
+    City: str | None
+    State: str | None
+    Zip: str | None
+    Country: str | None
+    EmailAddress: str | None
+    PhoneNumber: str | None
+    FaxNumber: str | None
 
 
 class InvoiceTotals(BaseModel):
-    Merchandise: Optional[str]
-    InboundFreight: Optional[str]
-    OutboundFreight: Optional[str]
-    Handling: Optional[str]
-    Delivery: Optional[str]
-    Pickup: Optional[str]
-    Restocking: Optional[str]
-    MinimumCharge: Optional[str]
-    DiscountAllowance: Optional[str]
-    SalesTax: Optional[str]
-    TotalInvoice: Optional[str]
+    Merchandise: str | None
+    InboundFreight: str | None
+    OutboundFreight: str | None
+    Handling: str | None
+    Delivery: str | None
+    Pickup: str | None
+    Restocking: str | None
+    MinimumCharge: str | None
+    DiscountAllowance: str | None
+    SalesTax: str | None
+    TotalInvoice: str | None
 
 
 class HeaderInformation(BaseModel):
-    CompanyNumber: Optional[str]
-    OrderNumber: Optional[str]
-    InvoiceNumber: Optional[str]
-    CustomerNumber: Optional[str]
-    CustomerDescription: Optional[str]
-    CustomerPurchaseOrderNumber: Optional[str]
-    Contact: Optional[str]
-    SellingWarehouse: Optional[str]
-    ShippingWarehouse: Optional[str]
-    ShippingMethod: Optional[str]
-    PaymentTerms: Optional[str]
-    PaymentTermsDescription: Optional[str]
-    FreightTerms: Optional[str]
-    FreightTermsDescription: Optional[str]
-    SalesRepOne: Optional[str]
-    SalesRepOneDescription: Optional[str]
-    EntryDate: Optional[str]
-    OrderDate: Optional[str]
-    RequiredDate: Optional[str]
-    ShippedDate: Optional[str]
-    InvoiceDate: Optional[str]
-    ShipToAddress: Optional[ShipToAddress]
-    TrackingNumbers: Optional[TrackingNumbers]
-    InvoiceTotals: Optional[InvoiceTotals]
+    CompanyNumber: str | None
+    OrderNumber: str | None
+    InvoiceNumber: str | None
+    CustomerNumber: str | None
+    CustomerDescription: str | None
+    CustomerPurchaseOrderNumber: str | None
+    Contact: str | None
+    SellingWarehouse: str | None
+    ShippingWarehouse: str | None
+    ShippingMethod: str | None
+    PaymentTerms: str | None
+    PaymentTermsDescription: str | None
+    FreightTerms: str | None
+    FreightTermsDescription: str | None
+    SalesRepOne: str | None
+    SalesRepOneDescription: str | None
+    EntryDate: str | None
+    OrderDate: str | None
+    RequiredDate: str | None
+    ShippedDate: str | None
+    InvoiceDate: str | None
+    ShipToAddress: ShipToAddress | None
+    TrackingNumbers: TrackingNumbers | None
+    InvoiceTotals: InvoiceTotals | None
 
 
 class LineItemDetail(BaseModel):
-    ProductNumber: Optional[str]
-    ProductDescription1: Optional[str]
-    ProductDescription2: Optional[str]
-    CustomerProductNumber: Optional[str]
-    LineItemNumber: Optional[str]
-    QuantityOrdered: Optional[str]
-    QuantityShipped: Optional[str]
-    QuantityBackordered: Optional[str]
-    Price: Optional[str]
-    UnitOfMeasure: Optional[str]
-    ExtendedPrice: Optional[str]
-    QuantityShippedExtension: Optional[str]
-    LineItemShipWarehouse: Optional[str]
-    RequiredDate: Optional[str]
-    CopperWeight: Optional[str]
+    ProductNumber: str | None
+    ProductDescription1: str | None
+    ProductDescription2: str | None
+    CustomerProductNumber: str | None
+    LineItemNumber: str | None
+    QuantityOrdered: str | None
+    QuantityShipped: str | None
+    QuantityBackordered: str | None
+    Price: str | None
+    UnitOfMeasure: str | None
+    ExtendedPrice: str | None
+    QuantityShippedExtension: str | None
+    LineItemShipWarehouse: str | None
+    RequiredDate: str | None
+    CopperWeight: str | None
 
 
 class Customer(BaseModel):
-    CompanyNumber: Optional[str]
-    CustomerNumber: Optional[str]
-    Description: Optional[str]
-    AddressOne: Optional[str]
-    AddressTwo: Optional[str]
-    AddressThree: Optional[str]
-    City: Optional[str]
-    State: Optional[str]
-    Zip: Optional[str]
-    Country: Optional[str]
-    Contact: Optional[str]
-    Phone: Optional[str]
-    EmailAddress: Optional[str]
-    ShipTos: Optional[ShipToAddress]
+    CompanyNumber: str | None
+    CustomerNumber: str | None
+    Description: str | None
+    AddressOne: str | None
+    AddressTwo: str | None
+    AddressThree: str | None
+    City: str | None
+    State: str | None
+    Zip: str | None
+    Country: str | None
+    Contact: str | None
+    Phone: str | None
+    EmailAddress: str | None
+    ShipTos: ShipToAddress | None
 
 
 class Order(BaseModel):
-    HeaderInformation: Optional[HeaderInformation]
-    LineItemDetail: Optional[LineItemDetail]
+    HeaderInformation: HeaderInformation | None
+    LineItemDetail: LineItemDetail | None
 
 
 class BookingsInfo(BaseModel):
-    HeaderInformation: Optional[HeaderInformation]
-    LineItemDetail: Optional[LineItemDetail]
+    HeaderInformation: HeaderInformation | None
+    LineItemDetail: LineItemDetail | None
 
 
 def parse_orders_xml(xml_data: str) -> pd.DataFrame:
@@ -438,7 +439,6 @@ class Epicor(Source):
         Returns:
             str: Output url string.
         """
-
         return (
             "http://"
             + self.credentials["host"]
@@ -449,7 +449,6 @@ class Epicor(Source):
 
     def validate_filter(self) -> None:
         "Function checking if user had specified date range filters."
-
         root = ET.fromstring(self.filters_xml)
         for child in root:
             for subchild in child:

@@ -33,6 +33,7 @@ __all__ = [
     "df_to_databricks",
     "dbt_task",
     "duckdb_query",
+    "epicor_to_df",
     "exchange_rates_to_df",
     "genesys_to_df",
     "clone_repo",

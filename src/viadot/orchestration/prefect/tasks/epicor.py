@@ -1,7 +1,9 @@
 from typing import Any
 
+import pandas as pd
 from prefect import task
 from prefect.logging import get_run_logger
+
 from viadot.config import get_source_credentials
 from viadot.orchestration.prefect.exceptions import MissingSourceCredentialsError
 from viadot.orchestration.prefect.utils import get_credentials
@@ -18,9 +20,8 @@ def epicor_to_df(
     credentials_secret: str | None = None,
     credentials: dict[str, Any] | None = None,
     config_key: str | None = None,
-):
-    """
-    Load the result of a SQL Server Database query into a pandas DataFrame.
+) -> pd.DataFrame:
+    """Load the result of a SQL Server Database query into a pandas DataFrame.
 
     Args:
         base_url (str, required): Base url to Epicor.
