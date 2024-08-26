@@ -35,6 +35,8 @@ jobs:
         with:
           tag: v${{ steps.get-version.outputs.version }}
 
+      - uses: fregante/setup-git-user@v2
+
       - name: Publish the new tag
         # Trigger the cd.yml workflow if a new tag is detected.
         if: steps.check-tag.outputs.exists != 'true'
