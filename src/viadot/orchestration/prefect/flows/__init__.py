@@ -20,7 +20,8 @@ from .sharepoint_to_s3 import sharepoint_to_s3
 from .sql_server_to_minio import sql_server_to_minio
 from .transform import transform
 from .transform_and_catalog import transform_and_catalog
-
+from .eurostat_to_adls import eurostat_to_adls  
+from .eurostat_to_databrics import eurostat_to_databricks
 
 __all__ = [
     "cloud_for_customers_to_adls",

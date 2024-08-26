@@ -22,7 +22,7 @@ from .sharepoint import (
     sharepoint_to_df,
 )
 from .sql_server import create_sql_server_table, sql_server_query, sql_server_to_df
-
+from .eurostat import eurostat_to_df
 
 __all__ = [
     "adls_upload",

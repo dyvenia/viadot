@@ -13,7 +13,7 @@ from .sharepoint import Sharepoint
 from .sql_server import SQLServer
 from .trino import Trino
 from .uk_carbon_intensity import UKCarbonIntensity
-
+from .eurostat import Eurostat
 
 __all__ = [
     "CloudForCustomers",
