@@ -134,7 +134,7 @@ This will update the version in `pyproject.toml` accordingly.
 
 #### Release
 
-Once the modified `pyproject.toml` is merged to `2.0`, a version tag will be automatically created, and the release workflow (`cd.yml`) will be triggered.
+Once the modified `pyproject.toml` is merged to `2.0`, a version tag will be [automatically created](https://github.com/dyvenia/viadot/blob/2.0/.github/workflows/detect-and-tag-new-version.yml), and the [release workflow](https://github.com/dyvenia/viadot/blob/2.0/.github/workflows/cd.yml) will be triggered.
 
 The release workflow will:
 
