@@ -160,7 +160,7 @@ def df_to_csv(
         out_df = df
 
     # Create directories if they don't exist.
-    Path(path).mkdir(parents=True, exist_ok=True)
+    Path(path).parent.mkdir(parents=True, exist_ok=True)
 
     out_df.to_csv(path, index=False, sep=sep, **kwargs)
 
@@ -195,7 +195,7 @@ def df_to_parquet(
         out_df = df
 
     # Create directories if they don't exist.
-    Path(path).mkdir(parents=True, exist_ok=True)
+    Path(path).parent.mkdir(parents=True, exist_ok=True)
 
     out_df.to_parquet(path, index=False, **kwargs)
 
