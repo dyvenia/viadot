@@ -16,6 +16,7 @@ from .trino import Trino
 from .uk_carbon_intensity import UKCarbonIntensity
 
 __all__ = [
+    "BigQuery",
     "CloudForCustomers",
     "ExchangeRates",
     "Genesys",
@@ -25,9 +26,7 @@ __all__ = [
     "Sharepoint",
     "Trino",
     "SQLServer",
-    "Outlook",
-    "Hubspot",
-    "BigQuery",
+    "UKCarbonIntensity",
 ]
 
 if find_spec("adlfs"):

@@ -1,17 +1,16 @@
 """Util functions."""
 
-from collections.abc import Callable
 import contextlib
-from datetime import datetime, timezone
 import functools
 import logging
 import re
 import subprocess
+from collections.abc import Callable
+from datetime import datetime, timezone
 from typing import TYPE_CHECKING, Any, Literal, Optional
 
 import pandas as pd
 import pyodbc
-import pytest
 import requests
 from requests.adapters import HTTPAdapter
 from requests.exceptions import ConnectionError, HTTPError, ReadTimeout, Timeout
@@ -20,7 +19,6 @@ from urllib3.exceptions import ProtocolError
 
 from viadot.exceptions import APIError, ValidationError
 from viadot.signals import SKIP
-
 
 if TYPE_CHECKING:
     from viadot.sources.base import Source
@@ -829,6 +827,8 @@ def skip_test_on_missing_extra(source_name: str, extra: str) -> None:
         source_name (str): The name of the source for which dependencies are missing.
         extra (str): The name of the extra that is missing.
     """
+    import pytest
+
     msg = f"Missing required extra '{extra}' for source '{source_name}'."
     pytest.skip(
         msg,
