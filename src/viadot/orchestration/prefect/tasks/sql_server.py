@@ -69,7 +69,7 @@ def sql_server_to_df(
 
     Args:
         query (str, required): The query to execute on the SQL Server database.
-            If the qery doesn't start with "SELECT" returns an empty DataFrame.
+            If the query doesn't start with "SELECT" returns an empty DataFrame.
         credentials (dict[str, Any], optional): Credentials to the SQLServer.
             Defaults to None.
         credentials_secret (str, optional): The name of the secret storing
@@ -106,7 +106,7 @@ def sql_server_query(
     credentials: dict[str, Any] | None = None,
     config_key: str | None = None,
 ):
-    """Ran query on SQL Server.
+    """Execute a query on SQL Server.
 
     Args:
         query (str, required): The query to execute on the SQL Server database.

@@ -28,13 +28,13 @@ def bcp(
         path (str):  Where to store the CSV data dump used for bulk upload to a database.
         schema (str, optional): Destination schema. Defaults to None.
         table (str, optional): Destination table. Defaults to None.
-        chunksize (int, optional): Size of a chunck to use in the bcp function.
+        chunksize (int, optional): Size of a chunk to use in the bcp function.
             Defaults to 5000.
         error_log_file_path (string, optional): Full path of an error file. Defaults
             to "./log_file.log".
         on_error (str, optional): What to do in case of a bcp error. Defaults to "skip".
         credentials_secret (str, optional): The name of the secret storing
-            the credentialsto the SQLServer. Defaults to None.
+            the credentials to the SQLServer. Defaults to None.
             More info on: https://docs.prefect.io/concepts/blocks/
         credentials (dict[str, Any], optional): Credentials to the SQLServer.
             Defaults to None.
