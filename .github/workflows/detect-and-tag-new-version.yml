@@ -49,5 +49,5 @@ jobs:
       - name: Run the release workflow
         if: steps.check-tag.outputs.exists != 'true'
         env:
-          GH_TOKEN: ${{ secrets.GH_BOT_TOKEN }}
+          GH_TOKEN: ${{ secrets.LUDOVICO_BOT_TOKEN }}
         run: gh workflow run cd.yml -f version=${{ steps.get-version.outputs.version }} --ref 2.0
