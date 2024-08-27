@@ -20,7 +20,7 @@ from .sharepoint_to_s3 import sharepoint_to_s3
 from .sql_server_to_minio import sql_server_to_minio
 from .transform import transform
 from .transform_and_catalog import transform_and_catalog
-
+from .customer_gauge_to_adls import customer_gauge_to_adls
 
 __all__ = [
     "cloud_for_customers_to_adls",
