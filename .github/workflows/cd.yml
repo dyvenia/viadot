@@ -59,7 +59,6 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-          ref: 2.0
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
@@ -131,3 +130,4 @@ jobs:
         uses: ncipollo/release-action@v1
         with:
           generateReleaseNotes: true
+          tag: ${{ github.event.inputs.version }}
