@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+- Added new version of `Supermetrics` connector and test files.
 - Added new version of `Genesys` connector and test files.
 - Added new version of `Outlook` connector and test files.
 - Added new version of `Hubspot` connector and test files.
@@ -37,6 +38,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added `RedshiftSpectrum` source
 - Added `upload()` and `download()` methods to `S3` source
 - Added `Genesys` source
+- Added `Supermetrics` source
 - Fixed a bug in `Databricks.create_table_from_pandas()`. The function that converts column names to snake_case was not used in every case. (#672)
 - Added `howto_migrate_sources_tasks_and_flows.md` document explaining viadot 1 -> 2 migration process
 - `RedshiftSpectrum.from_df()` now automatically creates a folder for the table if not specified in `to_path`

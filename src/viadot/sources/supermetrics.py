@@ -38,6 +38,7 @@ from ..utils import handle_api_response
 from .base import Source
 from ..utils import add_viadot_metadata_columns
 
+
 class SupermetricsCredentials(BaseModel):
     """
     Represents credentials for accessing the Supermetrics API.
@@ -49,8 +50,9 @@ class SupermetricsCredentials(BaseModel):
     api_key : str
         The Supermetrics access API key.
     """
-    user: str  
-    api_key: str  
+
+    user: str
+    api_key: str
 
 
 class Supermetrics(Source):
@@ -102,7 +104,7 @@ class Supermetrics(Source):
         self.credentials = dict(SupermetricsCredentials(**credentials))
 
         super().__init__(*args, credentials=self.credentials, **kwargs)
-        
+
         self.query_params = query_params
         self.api_key = self.credentials["api_key"]
         self.user = self.credentials["user"]
@@ -217,7 +219,8 @@ class Supermetrics(Source):
         return Supermetrics._get_col_names_other(response)
 
     @add_viadot_metadata_columns
-    def to_df(self, if_empty: str = "warn", query_params: Dict[str, Any]=None) -> pd.DataFrame:
+    def to_df(self, if_empty: str = "warn",
+              query_params: Dict[str, Any] = None) -> pd.DataFrame:
         """
         Download data into a pandas DataFrame.
 
@@ -236,15 +239,15 @@ class Supermetrics(Source):
         ValueError
             If the DataFrame is empty and `if_empty` is set to "fail".
         """
-            # Use provided query_params or default to the instance's query_params
+        # Use provided query_params or default to the instance's query_params
         if query_params is not None:
             self.query_params = query_params
-    
+
         if not self.query_params:
             raise ValueError("Query parameters are required to fetch data.")
-    
+
         self.query_params["api_key"] = self.api_key
-        
+
         try:
             columns = self._get_col_names()
         except ValueError:
