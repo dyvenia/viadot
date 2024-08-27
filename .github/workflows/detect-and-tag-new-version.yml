@@ -50,4 +50,4 @@ jobs:
         if: steps.check-tag.outputs.exists != 'true'
         env:
           GH_TOKEN: ${{ secrets.LUDOVICO_BOT_TOKEN }}
-        run: gh workflow run cd.yml -f version=${{ steps.get-version.outputs.version }} --ref 2.0
+        run: gh workflow run cd.yml -f version=v${{ steps.get-version.outputs.version }} --ref 2.0
