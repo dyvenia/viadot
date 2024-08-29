@@ -44,4 +44,6 @@ __all__ = [
     "sql_server_to_minio",
     "transform",
     "transform_and_catalog",
+    "eurostat_to_databricks",
+    "eurostat_to_adls",
 ]

@@ -55,7 +55,15 @@ class Eurostat(Source):
 
     base_url = "https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/"
 
-    def __init__(self, *args, **kwargs):
+    def __init__(
+        self,
+        *args,
+        dataset_code: str,
+        params: dict = None,
+        columns: list = None,
+        tests: dict = None,
+        **kwargs
+    ):
         """It is using HTTPS REST request to pull the data.
 
         No API registration or API key are required. Data will pull based on parameters
@@ -77,7 +85,35 @@ class Eurostat(Source):
                 It should not be modified unless the API changes its URL scheme.
                 Defaults to "https://ec.europa.eu/eurostat/api/dissemination/statistics
                     /1.0/data/"
+        Args:
+            dataset_code (str): The code of Eurostat dataset that we would like
+                to upload.
+            params (Dict[str], optional):
+                A dictionary with optional URL parameters. The key represents the
+                parameter id, while the value is the code for a specific parameter,
+                for example: params = {'unit': 'EUR'} where "unit" is the parameter
+                that you would like to set and "EUR" is the code of the
+                specific parameter. You can add more than one parameter,
+                but only one code per parameter! So you CAN NOT provide list of codes
+                as in example 'params = {'unit': ['EUR', 'USD', 'PLN']}'
+                These parameters are REQUIRED in most cases to pull a specific
+                dataset from the API. Both parameter and code has to be provided
+                as a string! Defaults to None.
+            columns (List[str], optional): list of needed names of columns.
+                Names should be given as str's into the list. Defaults to None.
+            tests:
+                - `column_size`: dict{column: size}
+                - `column_unique_values`: list[columns]
+                - `column_list_to_match`: list[columns]
+                - `dataset_row_count`: dict: {'min': number, 'max', number}
+                - `column_match_regex`: dict: {column: 'regex'}
+                - `column_sum`: dict: {column: {'min': number, 'max': number}}
         """
+        self.dataset_code = dataset_code
+        self.params = params
+        self.columns = columns
+        self.tests = tests
+
         super().__init__(*args, **kwargs)
 
     def get_parameters_codes(self, dataset_code: str, url: str) -> dict:
@@ -260,39 +296,12 @@ class Eurostat(Source):
     @add_viadot_metadata_columns
     def to_df(
         self,
-        dataset_code: str,
-        params: dict = None,
-        columns: list = None,
-        tests: dict = None,
+        if_empty="warn"
     ) -> pd.DataFrame:
         """Function responsible for getting response and creating DataFrame.
 
         It is using method 'eurostat_dictionary_to_df' with validation
         of provided parameters and their codes if needed.
-
-        Args:
-            dataset_code (str): The code of Eurostat dataset that we would like
-                to upload.
-            params (Dict[str], optional):
-                A dictionary with optional URL parameters. The key represents the
-                parameter id, while the value is the code for a specific parameter,
-                for example: params = {'unit': 'EUR'} where "unit" is the parameter
-                that you would like to set and "EUR" is the code of the
-                specific parameter. You can add more than one parameter,
-                but only one code per parameter! So you CAN NOT provide list of codes
-                as in example 'params = {'unit': ['EUR', 'USD', 'PLN']}'
-                These parameters are REQUIRED in most cases to pull a specific
-                dataset from the API. Both parameter and code has to be provided
-                as a string! Defaults to None.
-            columns (List[str], optional): list of needed names of columns.
-                Names should be given as str's into the list. Defaults to None.
-            tests:
-                - `column_size`: dict{column: size}
-                - `column_unique_values`: list[columns]
-                - `column_list_to_match`: list[columns]
-                - `dataset_row_count`: dict: {'min': number, 'max', number}
-                - `column_match_regex`: dict: {column: 'regex'}
-                - `column_sum`: dict: {column: {'min': number, 'max': number}}
 
         Raises:
             TypeError: If self.params is different type than a dictionary.
@@ -303,26 +312,30 @@ class Eurostat(Source):
             pd.DataFrame: Pandas DataFrame.
         """
         # Checking if params and columns have correct type
-        if not isinstance(params, dict) and params is not None:
+        if not isinstance(self.params, dict) and self.params is not None:
             raise TypeError("Params should be a dictionary.")
 
-        if not isinstance(columns, list) and columns is not None:
+        if not isinstance(self.columns, list) and self.columns is not None:
             raise TypeError("Requested columns should be provided as list of strings.")
 
         # Creating url for connection with API
-        url = f"{self.base_url}{dataset_code}?format=JSON&lang=EN"
+        url = f"{self.base_url}{self.dataset_code}?format=JSON&lang=EN"
 
         # Making parameters validation
-        if params is not None:
-            self.validate_params(dataset_code=dataset_code, url=url, params=params)
+        if self.params is not None:
+            self.validate_params(dataset_code=self.dataset_code,
+                                 url=url,
+                                 params=self.params)
 
         # Getting response from API
         try:
-            response = handle_api_response(url, params=params)
+            response = handle_api_response(url, params=self.params)
             data = response.json()
             data_frame = self.eurostat_dictionary_to_df(["geo", "time"], data)
         except APIError:
-            self.validate_params(dataset_code=dataset_code, url=url, params=params)
+            self.validate_params(dataset_code=self.dataset_code,
+                                 url=url,
+                                 params=self.params)
 
         # Merge data_frame with label and last updated date
         label_col = pd.Series(str(data["label"]), index=data_frame.index, name="label")
@@ -334,10 +347,10 @@ class Eurostat(Source):
         data_frame = pd.concat([data_frame, label_col, last_updated__col], axis=1)
 
         # Validation and transformation of requested column
-        if columns is not None:
-            filter_df_columns(data_frame=data_frame, columns=columns)
+        if self.columns is not None:
+            filter_df_columns(data_frame=data_frame, columns=self.columns)
 
         # Additional validation from utils
-        validate(df=data_frame, tests=tests)
+        validate(df=data_frame, tests=self.tests)
 
         return data_frame

@@ -17,11 +17,11 @@ def test_wrong_dataset_code_logger(caplog):
 
     Identifies and logs errors for incorrect dataset codes.
     """
-    task = Eurostat()
+    task = Eurostat(dataset_code="ILC_DI04E")
 
     with pytest.raises(ValueError, match="DataFrame is empty!"):
         with caplog.at_level(logging.ERROR):
-            task.to_df(dataset_code="ILC_DI04E")
+            task.to_df()
     assert (
         "Failed to fetch data for ILC_DI04E, please check correctness of dataset code!"
         in caplog.text
@@ -33,7 +33,7 @@ def test_and_validate_dataset_code_without_params(caplog):
 
     For a valid dataset code
     """
-    task = Eurostat().to_df(dataset_code="ILC_DI04")
+    task = Eurostat(dataset_code="ILC_DI04").to_df()
 
     assert isinstance(task, pd.DataFrame)
     assert not task.empty
@@ -109,9 +109,8 @@ def test_correct_params_and_dataset_code(caplog):
 
     For a valid dataset code with correct parameters
     """
-    task = Eurostat().to_df(
-        dataset_code="ILC_DI04", params={"hhtyp": "total", "indic_il": "med_e"}
-    )
+    task = Eurostat(dataset_code="ILC_DI04", 
+                    params={"hhtyp": "total", "indic_il": "med_e"}).to_df()
 
     assert isinstance(task, pd.DataFrame)
     assert not task.empty
@@ -123,15 +122,13 @@ def test_wrong_needed_columns_names(caplog):
 
     And with a correct dataset code and parameters.
     """
-    task = Eurostat()
+    task = Eurostat(dataset_code="ILC_DI04",
+                params={"hhtyp": "total", "indic_il": "med_e"},
+                columns=["updated1", "geo1", "indicator1"],)
 
     with pytest.raises(ValueError, match="Provided columns are not available!"):
         with caplog.at_level(logging.ERROR):
-            task.to_df(
-                dataset_code="ILC_DI04",
-                params={"hhtyp": "total", "indic_il": "med_e"},
-                columns=["updated1", "geo1", "indicator1"],
-            )
+            task.to_df()
     assert (
         "Name of the columns: 'updated1 | geo1 | indicator1' are not in DataFrame. "
         "Please check spelling!" in caplog.text
@@ -144,15 +141,13 @@ def test_wrong_params_and_wrong_requested_columns_names(caplog):
 
     And requested columns with a correct dataset code.
     """
-    task = Eurostat()
+    task = Eurostat(dataset_code="ILC_DI04",
+                params={"hhhtyp": "total", "indic_ilx": "med_e"},
+                columns=["updated1", "geo1", "indicator1"],)
 
     with pytest.raises(ValueError, match="Wrong parameters or codes were provided!"):
         with caplog.at_level(logging.ERROR):
-            task.to_df(
-                dataset_code="ILC_DI04",
-                params={"hhhtyp": "total", "indic_ilx": "med_e"},
-                columns=["updated1", "geo1", "indicator1"],
-            )
+            task.to_df()
     assert (
         "Parameters: 'hhhtyp | indic_ilx' are not in dataset. "
         "Please check your spelling!" in caplog.text
@@ -171,11 +166,9 @@ def test_requested_columns_not_in_list():
     with pytest.raises(
         TypeError, match="Requested columns should be provided as list of strings."
     ):
-        Eurostat().to_df(
-            dataset_code="ILC_DI04",
+        Eurostat(dataset_code="ILC_DI04",
             params={"hhtyp": "total", "indic_il": "med_e"},
-            columns="updated",
-        )
+            columns="updated").to_df()
 
 
 def test_params_as_list():
@@ -184,4 +177,4 @@ def test_params_as_list():
     With a correct dataset code
     """
     with pytest.raises(TypeError, match="Params should be a dictionary."):
-        Eurostat().to_df(dataset_code="ILC_DI04", params=["total", "med_e"])
+        Eurostat(dataset_code="ILC_DI04", params=["total", "med_e"]).to_df()

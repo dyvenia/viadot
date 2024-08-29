@@ -26,6 +26,7 @@ __all__ = [
     "Trino",
     "SQLServer",
     "UKCarbonIntensity",
+    "Eurostat",
 ]
 
 if find_spec("adlfs"):

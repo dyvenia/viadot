@@ -48,4 +48,5 @@ __all__ = [
     "create_sql_server_table",
     "sql_server_query",
     "sql_server_to_df",
+    "eurostat_to_df",
 ]
