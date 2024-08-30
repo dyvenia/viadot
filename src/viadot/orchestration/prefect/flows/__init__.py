@@ -1,5 +1,6 @@
 """Import flows."""
 
+from .bigquery_to_adls import bigquery_to_adls
 from .cloud_for_customers_to_adls import cloud_for_customers_to_adls
 from .cloud_for_customers_to_databricks import cloud_for_customers_to_databricks
 from .duckdb_to_parquet import duckdb_to_parquet
@@ -18,12 +19,11 @@ from .sharepoint_to_databricks import sharepoint_to_databricks
 from .sharepoint_to_redshift_spectrum import sharepoint_to_redshift_spectrum
 from .sharepoint_to_s3 import sharepoint_to_s3
 from .sql_server_to_minio import sql_server_to_minio
-from .sql_server_to_parquet import sql_server_to_parquet
 from .transform import transform
 from .transform_and_catalog import transform_and_catalog
 
-
 __all__ = [
+    "bigquery_to_adls",
     "cloud_for_customers_to_adls",
     "cloud_for_customers_to_databricks",
     "duckdb_to_parquet",
@@ -42,7 +42,6 @@ __all__ = [
     "sharepoint_to_redshift_spectrum",
     "sharepoint_to_s3",
     "sql_server_to_minio",
-    "sql_server_to_parquet",
     "transform",
     "transform_and_catalog",
 ]
