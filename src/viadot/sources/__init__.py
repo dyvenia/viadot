@@ -9,11 +9,11 @@ from .genesys import Genesys
 from .hubspot import Hubspot
 from .mindful import Mindful
 from .outlook import Outlook
+from .salesforce import SalesForce
 from .sharepoint import Sharepoint
 from .sql_server import SQLServer
 from .trino import Trino
 from .uk_carbon_intensity import UKCarbonIntensity
-
 
 __all__ = [
     "CloudForCustomers",
@@ -22,6 +22,7 @@ __all__ = [
     "Outlook",
     "Hubspot",
     "Mindful",
+    "SalesForce",
     "Sharepoint",
     "Trino",
     "SQLServer",
