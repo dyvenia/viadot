@@ -1,9 +1,12 @@
 name: Release
 
 on:
-  push:
-    tags:
-      - "v2.*.*" # Match tags that begin with "v2".
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "The release version."
+        required: true
+        default: "v2.x.x"
 
 jobs:
   build-distribution:
@@ -75,7 +78,7 @@ jobs:
       - name: Construct the tag for Docker images
         run: |
           # Strip the "v" prefix for the image tag.
-          VERSION=${{ github.ref_name }}
+          VERSION=${{ github.event.inputs.version }}
           echo "TAG=${VERSION#v}" >> $GITHUB_ENV
 
       - name: Build and publish viadot-lite image
@@ -127,3 +130,4 @@ jobs:
         uses: ncipollo/release-action@v1
         with:
           generateReleaseNotes: true
+          tag: ${{ github.event.inputs.version }}

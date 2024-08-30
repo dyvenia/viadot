@@ -133,6 +133,7 @@ def test_get_col_names_google_analytics_non_pivoted(mocker, supermetrics):
     }
     columns = supermetrics._get_col_names_google_analytics(mock_response)
     assert columns == ["ga:date", "ga:sessions"]
+    
 def test_to_df_metadata_columns(mocker, supermetrics):
     # Mock the API response with some data
     mock_response = {

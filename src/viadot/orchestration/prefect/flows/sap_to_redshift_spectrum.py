@@ -24,6 +24,7 @@ def sap_to_redshift_spectrum(  # noqa: PLR0913
     compression: str | None = None,
     aws_sep: str = ",",
     description: str = "test",
+    credentials_secret: str | None = None,
     aws_config_key: str | None = None,
     query: str | None = None,
     sap_sep: str | None = None,
@@ -56,6 +57,8 @@ def sap_to_redshift_spectrum(  # noqa: PLR0913
         description (str, optional): AWS Glue catalog table description.
         aws_config_key (str, optional): The key in the viadot config holding relevant
             credentials. Defaults to None.
+        credentials_secret (str, optional): The name of a secret block in Prefect
+            that stores AWS credentials. Defaults to None.
         query (str): The query to be executed with pyRFC.
         sap_sep (str, optional): The separator to use when reading query results.
             If not provided, multiple options are automatically tried.
@@ -111,4 +114,5 @@ def sap_to_redshift_spectrum(  # noqa: PLR0913
         sep=aws_sep,
         description=description,
         config_key=aws_config_key,
+        credentials_secret=credentials_secret,
     )
