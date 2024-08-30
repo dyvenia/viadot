@@ -32,6 +32,7 @@ dependencies = [
     "pyarrow>=10.0, <10.1.0",
     # numpy>=2.0 is not compatible with the old pyarrow v10.x.
     "numpy>=1.23.4, <2.0",
+    "pandas-gbq==0.23.1",
 ]
 requires-python = ">=3.10"
 readme = "README.md"
