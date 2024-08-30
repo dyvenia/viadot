@@ -2,6 +2,7 @@
 
 from importlib.util import find_spec
 
+from .bigquery import BigQuery
 from .cloud_for_customers import CloudForCustomers
 from .duckdb import DuckDB
 from .exchange_rates import ExchangeRates
@@ -14,8 +15,8 @@ from .sql_server import SQLServer
 from .trino import Trino
 from .uk_carbon_intensity import UKCarbonIntensity
 
-
 __all__ = [
+    "BigQuery",
     "CloudForCustomers",
     "ExchangeRates",
     "Genesys",
