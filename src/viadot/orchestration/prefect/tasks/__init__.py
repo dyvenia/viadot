@@ -16,13 +16,10 @@ from .minio import df_to_minio
 from .outlook import outlook_to_df
 from .redshift_spectrum import df_to_redshift_spectrum
 from .s3 import s3_upload_file
+from .salesforce import salesforce_to_df
 from .sap_rfc import sap_rfc_to_df
-from .sharepoint import (
-    sharepoint_download_file,
-    sharepoint_to_df,
-)
+from .sharepoint import sharepoint_download_file, sharepoint_to_df
 from .sql_server import create_sql_server_table, sql_server_query, sql_server_to_df
-
 
 __all__ = [
     "adls_upload",
@@ -42,6 +39,7 @@ __all__ = [
     "outlook_to_df",
     "df_to_redshift_spectrum",
     "s3_upload_file",
+    "salesforce_to_df",
     "sap_rfc_to_df",
     "sharepoint_download_file",
     "sharepoint_to_df",
