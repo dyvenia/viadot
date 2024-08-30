@@ -55,6 +55,7 @@ def clone_repo(
     if token:
         url = url.replace("https://dev.azure.com", f"https://{token}@dev.azure.com")
         url = url.replace("https://github.com", f"https://{token}@github.com")
+        url = url.replace("gitlab", f"oauth2:{token}@gitlab")
 
     repo_name = url.split("/")[-1].replace(".git", "")
     path = kwargs.get("path") or repo_name
