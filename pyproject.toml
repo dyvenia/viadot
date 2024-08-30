@@ -36,7 +36,8 @@ dependencies = [
     "defusedxml>=0.7.1",
     "aiohttp>=3.10.5",
     "simple-salesforce==1.12.6",
-    ]
+    "pandas-gbq==0.23.1",
+]
 requires-python = ">=3.10"
 readme = "README.md"
 
