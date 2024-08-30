@@ -1,8 +1,3 @@
-<<<<<<< HEAD
-"""Flow for pulling data from CloudForCustomers to Adls."""
-
-=======
->>>>>>> supermetrics_2.1
 from typing import Any
 
 from prefect import flow
