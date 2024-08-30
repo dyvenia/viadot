@@ -11,6 +11,7 @@ from .genesys_to_adls import genesys_to_adls
 from .hubspot_to_adls import hubspot_to_adls
 from .mindful_to_adls import mindful_to_adls
 from .outlook_to_adls import outlook_to_adls
+from .salesforce_to_adls import salesforce_to_adls
 from .sap_to_parquet import sap_to_parquet
 from .sap_to_redshift_spectrum import sap_to_redshift_spectrum
 from .sharepoint_to_adls import sharepoint_to_adls
@@ -21,7 +22,6 @@ from .sql_server_to_minio import sql_server_to_minio
 from .sql_server_to_parquet import sql_server_to_parquet
 from .transform import transform
 from .transform_and_catalog import transform_and_catalog
-
 
 __all__ = [
     "cloud_for_customers_to_adls",
@@ -35,6 +35,7 @@ __all__ = [
     "hubspot_to_adls",
     "mindful_to_adls",
     "outlook_to_adls",
+    "salesforce_to_adls",
     "sap_to_parquet",
     "sap_to_redshift_spectrum",
     "sharepoint_to_adls",
