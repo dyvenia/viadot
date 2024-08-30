@@ -2,6 +2,7 @@
 
 from importlib.util import find_spec
 
+from .supermetrics import Supermetrics, SupermetricsCredentials
 from .cloud_for_customers import CloudForCustomers
 from .duckdb import DuckDB
 from .exchange_rates import ExchangeRates
@@ -26,6 +27,8 @@ __all__ = [
     "Trino",
     "SQLServer",
     "UKCarbonIntensity",
+    "Supermetrics",
+    "SupermetricsCredentials"
 ]
 
 if find_spec("adlfs"):
