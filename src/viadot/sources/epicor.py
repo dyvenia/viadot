@@ -371,7 +371,6 @@ class Epicor(Source):
     def __init__(
         self,
         base_url: str,
-        filters_xml: str,
         credentials: dict[str, Any] | None = None,
         config_key: str | None = None,
         validate_date_filter: bool = True,
@@ -405,10 +404,17 @@ class Epicor(Source):
         self.credentials = validated_creds
         self.config_key = config_key
         self.base_url = base_url
-        self.filters_xml = filters_xml
         self.validate_date_filter = validate_date_filter
         self.start_date_field = start_date_field
         self.end_date_field = end_date_field
+
+        self.url = (
+            "http://"
+            + validated_creds["host"]
+            + ":"
+            + str(validated_creds["port"])
+            + base_url
+        )
 
         super().__init__(*args, credentials=validated_creds, **kwargs)
 
@@ -436,23 +442,9 @@ class Epicor(Source):
         root = ET.fromstring(response.text)
         return root.find("AccessToken").text
 
-    def generate_url(self) -> str:
-        """Function to generate url to download data.
-
-        Returns:
-            str: Output url string.
-        """
-        return (
-            "http://"
-            + self.credentials["host"]
-            + ":"
-            + str(self.credentials["port"])
-            + self.base_url
-        )
-
-    def validate_filter(self) -> None:
+    def validate_filter(self, filters_xml: str) -> None:
         "Function checking if user had specified date range filters."
-        root = ET.fromstring(self.filters_xml)
+        root = ET.fromstring(filters_xml)
         for child in root:
             for subchild in child:
                 if (
@@ -461,27 +453,26 @@ class Epicor(Source):
                     msg = "Too much data. Please provide a date range filter."
                     raise DataRangeError(msg)
 
-    def get_xml_response(self) -> requests.models.Response:
+    def get_xml_response(self, filters_xml: str) -> requests.models.Response:
         "Function for getting response from Epicor API."
         if self.validate_date_filter is True:
-            self.validate_filter()
-        payload = self.filters_xml
-        url = self.generate_url()
+            self.validate_filter(filters_xml)
+        payload = filters_xml
         headers = {
             "Content-Type": "application/xml",
             "Authorization": "Bearer " + self.generate_token(),
         }
         return handle_api_response(
-            url=url, headers=headers, data=payload, method="POST"
+            url=self.url, headers=headers, data=payload, method="POST"
         )
 
-    def to_df(self) -> pd.DataFrame:
+    def to_df(self, filters_xml: str) -> pd.DataFrame:
         """Function for creating pandas DataFrame from Epicor API response.
 
         Returns:
             pd.DataFrame: Output DataFrame.
         """
-        data = self.get_xml_response()
+        data = self.get_xml_response(filters_xml)
         if "ORDER.HISTORY.DETAIL.QUERY" in self.base_url:
             df = parse_orders_xml(data)
         elif "CUSTOMER.QUERY" in self.base_url:
