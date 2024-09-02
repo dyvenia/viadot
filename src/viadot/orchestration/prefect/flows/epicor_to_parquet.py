@@ -73,7 +73,7 @@ def epicor_to_parquet(
         >>>                <RecordCountPage></RecordCountPage>
         >>>            </QueryFields>
         >>>        </OrderQuery>",
-        >>>     epicor_credentials_secret = "epicor"
+        >>>     epicor_config_key = "epicor"
         >>> )
     """
     df = epicor_to_df(
