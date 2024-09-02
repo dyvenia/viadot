@@ -22,17 +22,25 @@ For an enhanced experience, we provide the extensions, settings, and tasks for V
 
 ## Pre-commit hooks
 
+### Installing pre-commit
+
 We use pre-commit hooks to ensure that the code as well as non-code text (such as JSON, YAML, and Markdown) is formatted and linted before committing. First, install `pre-commit`:
 
 ```console
 rye install pre-commit
 ```
 
+### Installing viadot's pre-commit hooks
+
 To install `viadot`'s pre-commit hooks, run the following command:
 
 ```console
 pre-commit install
 ```
+
+### Working with style
+
+The best way to fix pre-commit errors is to **avoid them** in the first place. In the case of Python checks, the easiest way is to [set Ruff as your formatter in VSode](#code-style). The formatter will automatically format whatever it can, and the linter will highlight the areas that need fixing, so you get the feedback immediately as you're writing the code.
 
 ## Running tests
 
@@ -66,7 +74,7 @@ Code should be formatted and linted with [ruff](https://docs.astral.sh/ruff/). A
 
 The easiest way to format your code as you go is to use the VSCode extension and the provided VSCode settings - your code will be automatically formatted and linted on each save, and the linter will highlight areas in your code which need fixing.
 
-Additionally, the pre-commit hook runs `ruff check`, so you can also wait till you commit to receive the formatting/linting feedback.
+Alternatively, the pre-commit hook runs `ruff check`, so you can also wait till you commit to receive the formatting/linting feedback.
 
 ### Commit messages style
 
