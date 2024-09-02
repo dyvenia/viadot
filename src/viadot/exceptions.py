@@ -21,7 +21,7 @@ class DataRangeError(Exception):
     pass
 
 
-class TableDoesNotExist(Exception):
+class TableDoesNotExistError(Exception):
     def __init__(
         self,
         message: str | None = None,
