@@ -20,7 +20,7 @@ def epicor_to_df(
     credentials_secret: str | None = None,
     config_key: str | None = None,
 ) -> pd.DataFrame:
-    """Load the result of a SQL Server Database query into a pandas DataFrame.
+    """Load the data from Epicor Prelude API into a pandas DataFrame.
 
     Args:
         base_url (str, required): Base url to Epicor.
@@ -50,12 +50,11 @@ def epicor_to_df(
     epicor = Epicor(
         credentials=credentials,
         base_url=base_url,
-        filters_xml=filters_xml,
         validate_date_filter=validate_date_filter,
         start_date_field=start_date_field,
         end_date_field=end_date_field,
     )
-    df = epicor.to_df()
+    df = epicor.to_df(filters_xml=filters_xml)
     nrows = df.shape[0]
     ncols = df.shape[1]
 

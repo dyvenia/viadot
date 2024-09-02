@@ -46,6 +46,35 @@ def epicor_to_parquet(
             More info on: https://docs.prefect.io/concepts/blocks/
         epicor_config_key (str, optional): The key in the viadot config holding relevant
             credentials. Defaults to None.
+
+    Examples:
+        >>> epicor_to_parquet(
+        >>>     path = "my_parquet.parquet",
+        >>>     base_url = "/api/data/import/ORDER.QUERY",
+        >>>     filters_xml = "<OrderQuery>
+        >>>            <QueryFields>
+        >>>                <CompanyNumber>001</CompanyNumber>
+        >>>                <CustomerNumber></CustomerNumber>
+        >>>                <SellingWarehouse></SellingWarehouse>
+        >>>                <OrderNumber></OrderNumber>
+        >>>                <WrittenBy></WrittenBy>
+        >>>                <CustomerPurchaseOrderNumber></CustomerPurchaseOrderNumber>
+        >>>                <CustomerReleaseNumber></CustomerReleaseNumber>
+        >>>                <CustomerJobNumber></CustomerJobNumber>
+        >>>                <InvoiceNumber></InvoiceNumber>
+        >>>                <EcommerceId></EcommerceId>
+        >>>                <EcommerceOrderNumber></EcommerceOrderNumber>
+        >>>                <QuoteNumber></QuoteNumber>
+        >>>                <BegInvoiceDate>{yesterday}</BegInvoiceDate>
+        >>>                <EndInvoiceDate>{yesterday}</EndInvoiceDate>
+        >>>                <SortXMLTagName></SortXMLTagName>
+        >>>                <SortMethod></SortMethod>
+        >>>                <RecordCount></RecordCount>
+        >>>                <RecordCountPage></RecordCountPage>
+        >>>            </QueryFields>
+        >>>        </OrderQuery>",
+        >>>     epicor_credentials_secret = "epicor"
+        >>> )
     """
     df = epicor_to_df(
         base_url=base_url,
