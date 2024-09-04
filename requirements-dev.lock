@@ -7,11 +7,13 @@
 #   all-features: false
 #   with-sources: false
 #   generate-hashes: false
+#   universal: false
 
 -e file:.
 aiohappyeyeballs==2.4.0
     # via aiohttp
 aiohttp==3.10.5
+    # via viadot2
 aiolimiter==1.1.0
     # via viadot2
 aiosignal==1.3.1
