@@ -13,10 +13,11 @@ from .sharepoint import Sharepoint
 from .sql_server import SQLServer
 from .trino import Trino
 from .uk_carbon_intensity import UKCarbonIntensity
-
+from .customer_gauge import CustomerGauge
 
 __all__ = [
     "CloudForCustomers",
+    "CustomerGauge",
     "ExchangeRates",
     "Genesys",
     "Outlook",

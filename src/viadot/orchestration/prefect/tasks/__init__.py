@@ -22,13 +22,14 @@ from .sharepoint import (
     sharepoint_to_df,
 )
 from .sql_server import create_sql_server_table, sql_server_query, sql_server_to_df
-
+from .customer_gauge_to_df import customer_gauge_to_df 
 
 __all__ = [
     "adls_upload",
     "df_to_adls",
     "bcp",
     "cloud_for_customers_to_df",
+    "customer_gauge_to_df",
     "df_to_databricks",
     "dbt_task",
     "duckdb_query",
