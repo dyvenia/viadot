@@ -162,7 +162,7 @@ class SftpConnector(Source):
             df = pd.read_parquet(byte_file, usecols=columns)
 
         elif Path(file_name).suffix == ".tsv":
-            df = pd.read_csv(byte_file, sep="\t", usecols=columns)
+            df = pd.read_csv(byte_file, sep=sep, usecols=columns)
 
         elif Path(file_name).suffix in [".xls", ".xlsx", ".xlsm"]:
             df = pd.read_excel(byte_file, usecols=columns)
