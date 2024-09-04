@@ -117,21 +117,12 @@ def transform(
         wait_for=[pull_dbt_deps],
     )
 
-    # Generate docs
-    # Produces `catalog.json`, `run-results.json`, and `manifest.json`
-    dbt_docs_generate_task = dbt_task.with_options(name="dbt_task_docs_generate")
-    generate_catalog_json = dbt_docs_generate_task(
-        project_path=dbt_project_path,
-        command=f"docs generate {dbt_target_option} --no-compile",
-        wait_for=[run],
-    )
-
     test_select = dbt_selects.get("test", run_select)
     test_select_safe = f"-s {test_select}" if test_select is not None else ""
     test = dbt_task(
         project_path=dbt_project_path,
         command=f"test {test_select_safe} {dbt_target_option}",
-        wait_for=[generate_catalog_json],
+        wait_for=[run],
     )
 
     _cleanup_repo(
