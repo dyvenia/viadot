@@ -10,6 +10,7 @@ from .epicor import Epicor
 from .exchange_rates import ExchangeRates
 from .genesys import Genesys
 from .hubspot import Hubspot
+from .mediatool import Mediatool
 from .mindful import Mindful
 from .outlook import Outlook
 from .sftp import Sftp
@@ -18,7 +19,6 @@ from .sql_server import SQLServer
 from .supermetrics import Supermetrics, SupermetricsCredentials
 from .uk_carbon_intensity import UKCarbonIntensity
 
-
 __all__ = [
     "CloudForCustomers",
     "CustomerGauge",
@@ -26,6 +26,7 @@ __all__ = [
     "ExchangeRates",
     "Genesys",
     "Hubspot",
+    "Mediatool",
     "Mindful",
     "Sftp",
     "Outlook",
