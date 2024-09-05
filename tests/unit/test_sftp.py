@@ -78,7 +78,7 @@ def test_get_connection_with_rsa_key(mocker):
     mock_ssh_instance._transport = mock_transport
 
     dummy_rsa_key = (
-        "-----BEGIN RSA PRIVATE KEY-----\nMIIBOgIBAAJBAM3m...END RSA PRIVATE KEY-----"
+        "-----BEGIN RSA PRIVATE KEY-----\n###############...END RSA PRIVATE KEY-----"
     )
     keyfile = StringIO(dummy_rsa_key)
     credentials = variables["credentials"]
@@ -162,13 +162,8 @@ def test_list_directory(mocker):
     mock_sftp = mocker.MagicMock()
     mock_sftp.listdir.return_value = ["file1.txt", "file2.txt"]
 
-    mock_get_connection = mocker.patch.object(
-        SftpConnector, "get_connection", return_value=None
-    )
-
     connector = SftpConnector(credentials=variables["credentials"])
     connector.conn = mock_sftp
-    mock_close_conn = mocker.patch.object(SftpConnector, "_close_conn", autospec=True)
     files_list = connector._list_directory()
 
     assert files_list == ["file1.txt", "file2.txt"]
@@ -178,7 +173,6 @@ def test_list_directory(mocker):
 @pytest.mark.functions()
 def test_recursive_listdir(mocker):
     """Test SFTP `_recursive_listdir` method."""
-
     mock_sftp = mocker.MagicMock()
     mock_attr = mocker.MagicMock()
     mock_attr.st_mode = 0
