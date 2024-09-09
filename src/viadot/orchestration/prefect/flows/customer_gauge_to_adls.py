@@ -16,15 +16,13 @@ def customer_gauge_to_adls(
     endpoint: Literal["responses", "non-responses"] = "non-responses",
     cursor: int | None = None,
     pagesize: int = 1000,
-    date_field: Literal[
-        "date_creation", "date_order", "date_sent", "date_survey_response"
-    ] = "date_creation",
+    date_field: str | None = None,
     start_date: datetime | None = None,
     end_date: datetime | None = None,
     total_load: bool = True,
     unpack_by_field_reference_cols: list[str] | None = None,
     unpack_by_nested_dict_transformer: list[str] | None = None,
-    validate_df_dict: dict[str] | None = None,
+    validate_df_dict: dict[str, Any] | None = None,
     anonymize: bool = False,
     columns_to_anonymize: list[str] | None = None,
     anonymize_method: Literal["mask", "hash"] = "mask",
@@ -55,9 +53,9 @@ def customer_gauge_to_adls(
             Defaults to None.
         pagesize (int, optional): Number of responses (records) returned per page,
             max value = 1000. Defaults to 1000. Defaults to 1000.
-        date_field (Literal["date_creation", "date_order", "date_sent",
-            "date_survey_response"], optional): Specifies the date type which
-            filter date range. Defaults to "date_creation.
+        date_field (str, optional): Specifies the date type which filter date range.
+            Possible options: "date_creation", "date_order", "date_sent" or
+            "date_survey_response". Defaults to None.
         start_date (datetime, optional): Defines the period start date in
             yyyy-mm-dd format. Defaults to None.
         end_date (datetime, optional): Defines the period end date in

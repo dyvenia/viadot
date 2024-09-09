@@ -180,24 +180,24 @@ class CustomerGauge(Source):
 
     def _get_json_response(
         self,
+        url: str | None = None,
         cursor: int | None = None,
         pagesize: int = 1000,
-        date_field: Literal[
-            "date_creation", "date_order", "date_sent", "date_survey_response"
-        ] = "date_creation",
+        date_field: str | None = None,
         start_date: datetime | None = None,
         end_date: datetime | None = None,
     ) -> dict[str, Any]:
         """Get JSON that contains data and cursor parameter value.
 
         Args:
+            url (str, optional): URL API direction. Defaults to None.
             cursor (int, optional): Cursor value to navigate to the page.
                 Defaults to None.
             pagesize (int, optional): Number of responses (records) returned per page,
                 max value = 1000. Defaults to 1000. Defaults to 1000.
-            date_field (Literal["date_creation", "date_order", "date_sent",
-                "date_survey_response"], optional): Specifies the date type which
-                filter date range. Defaults to "date_creation.
+            date_field (str, optional): Specifies the date type which filter date range.
+                Possible options: "date_creation", "date_order", "date_sent" or
+                "date_survey_response". Defaults to None.
             start_date (datetime, optional): Defines the period start date in
                 yyyy-mm-dd format. Defaults to None.
             end_date (datetime, optional): Defines the period end date in
@@ -230,7 +230,7 @@ class CustomerGauge(Source):
                 raise ValueError(message)
 
         header = {"Authorization": f"Bearer {self._get_token()}"}
-        api_response = handle_api_response(url=self.url, headers=header, params=params)
+        api_response = handle_api_response(url=url, headers=header, params=params)
         response = api_response.json()
 
         if response is None:
@@ -389,9 +389,7 @@ class CustomerGauge(Source):
         endpoint: Literal["responses", "non-responses"] = "non-responses",
         cursor: int | None = None,
         pagesize: int = 1000,
-        date_field: Literal[
-            "date_creation", "date_order", "date_sent", "date_survey_response"
-        ] = "date_creation",
+        date_field: str | None = None,
         start_date: datetime | None = None,
         end_date: datetime | None = None,
         total_load: bool = True,
@@ -407,9 +405,9 @@ class CustomerGauge(Source):
                 Defaults to None.
             pagesize (int, optional): Number of responses (records) returned per page,
                 max value = 1000. Defaults to 1000. Defaults to 1000.
-            date_field (Literal["date_creation", "date_order", "date_sent",
-                "date_survey_response"], optional): Specifies the date type which
-                filter date range. Defaults to "date_creation.
+            date_field (str, optional): Specifies the date type which filter date range.
+                Possible options: "date_creation", "date_order", "date_sent" or
+                "date_survey_response". Defaults to None.
             start_date (datetime, optional): Defines the period start date in
                 yyyy-mm-dd format. Defaults to None.
             end_date (datetime, optional): Defines the period end date in
@@ -427,6 +425,7 @@ class CustomerGauge(Source):
 
         total_json = []
         json_data = self._get_json_response(
+            url=url,
             cursor=cursor,
             pagesize=pagesize,
             date_field=date_field,
@@ -439,8 +438,7 @@ class CustomerGauge(Source):
         if total_load:
             if cursor is None:
                 self.logger.info(
-                    "Downloading all the data from the "
-                    f"{self.endpoint or self.endpoint_url} endpoint."
+                    f"Downloading all the data from the {endpoint} endpoint."
                     "Process might take a few minutes..."
                 )
             else:
@@ -449,7 +447,7 @@ class CustomerGauge(Source):
                     "Process might take a few minutes..."
                 )
             while jsn:
-                json_data = self._get_json_response(cursor=cur)
+                json_data = self._get_json_response(url=url, cursor=cur)
                 cur = self._get_cursor(json_data)
                 jsn = self._get_data(json_data)
                 total_json += jsn
@@ -537,7 +535,7 @@ class CustomerGauge(Source):
     def to_df(
         self,
         if_empty: str = "warn",
-        validate_df_dict: dict[str] | None = None,
+        validate_df_dict: dict[str, Any] | None = None,
         anonymize: bool = False,
         columns_to_anonymize: list[str] | None = None,
         anonymize_method: Literal["mask", "hash"] = "mask",
@@ -550,8 +548,8 @@ class CustomerGauge(Source):
         Args:
             if_empty (str, optional): What to do if a fetch produce no data.
                 Defaults to "warn
-            validate_df_dict (dict[str], optional): A dictionary with optional list of
-                tests to verify the output dataframe. If defined, triggers the
+            validate_df_dict (dict[str, Any], optional): A dictionary with optional list
+                of tests to verify the output dataframe. If defined, triggers the
                 `validate_df` task from task_utils. Defaults to None.
             anonymize (bool, optional): Indicates if anonymize selected columns.
                 Defaults to False.
