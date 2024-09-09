@@ -28,6 +28,12 @@ def customer_gauge_to_df(
     unpack_by_field_reference_cols: list[str] | None = None,
     unpack_by_nested_dict_transformer: list[str] | None = None,
     validate_df_dict: dict[str] | None = None,
+    anonymize: bool = False,
+    columns_to_anonymize: list[str] | None = None,
+    anonymize_method: Literal["mask", "hash"] = "mask",
+    anonymize_value: str = "***",
+    date_column: str | None = None,
+    days: int | None = None,
 ) -> pd.DataFrame:
     """Download the selected range of data from Customer Gauge API.
 
@@ -62,6 +68,20 @@ def customer_gauge_to_df(
         validate_df_dict (dict[str], optional): A dictionary with optional list of
             tests to verify the output dataframe. If defined, triggers the
             `validate_df` task from task_utils. Defaults to None.
+        anonymize (bool, optional): Indicates if anonymize selected columns.
+            Defaults to False.
+        columns_to_anonymize (list[str], optional): List of columns to anonymize.
+            Defaults to None.
+        anonymize_method  (Literal["mask", "hash"], optional): Method of
+            anonymizing data. "mask" -> replace the data with "value" arg. "hash" ->
+            replace the data with the hash value of an object (using `hash()`
+            method). Defaults to "mask".
+        anonymize_value (str, optional): Value to replace the data.
+            Defaults to "***".
+        date_column (str, optional): Name of the date column used to identify rows
+            that are older than a specified number of days. Defaults to None.
+        days (int, optional): The number of days beyond which we want to anonymize
+            the data, e.g. older than 2 years can be: 2*365. Defaults to None.
 
     Raises:
         MissingSourceCredentialsError: If none credentials have been provided.
@@ -88,4 +108,12 @@ def customer_gauge_to_df(
         unpack_by_nested_dict_transformer=unpack_by_nested_dict_transformer,
     )
 
-    return customer_gauge.to_df(validate_df_dict=validate_df_dict)
+    return customer_gauge.to_df(
+        validate_df_dict=validate_df_dict,
+        anonymize=anonymize,
+        columns_to_anonymize=columns_to_anonymize,
+        anonymize_method=anonymize_method,
+        anonymize_value=anonymize_value,
+        date_column=date_column,
+        days=days,
+    )

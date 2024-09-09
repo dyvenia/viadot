@@ -9,7 +9,12 @@ from pydantic import BaseModel
 from viadot.config import get_source_credentials
 from viadot.exceptions import APIError, CredentialError
 from viadot.sources.base import Source
-from viadot.utils import add_viadot_metadata_columns, handle_api_response, validate
+from viadot.utils import (
+    add_viadot_metadata_columns,
+    anonymize_df,
+    handle_api_response,
+    validate,
+)
 
 
 class CustomerGaugeCredentials(BaseModel):
@@ -530,7 +535,15 @@ class CustomerGauge(Source):
 
     @add_viadot_metadata_columns
     def to_df(
-        self, if_empty: str = "warn", validate_df_dict: dict[str] | None = None
+        self,
+        if_empty: str = "warn",
+        validate_df_dict: dict[str] | None = None,
+        anonymize: bool = False,
+        columns_to_anonymize: list[str] | None = None,
+        anonymize_method: Literal["mask", "hash"] = "mask",
+        anonymize_value: str = "***",
+        date_column: str | None = None,
+        days: int | None = None,
     ) -> pd.DataFrame:
         """Generate a Pandas Data Frame with the data in the Response and metadata.
 
@@ -540,6 +553,20 @@ class CustomerGauge(Source):
             validate_df_dict (dict[str], optional): A dictionary with optional list of
                 tests to verify the output dataframe. If defined, triggers the
                 `validate_df` task from task_utils. Defaults to None.
+            anonymize (bool, optional): Indicates if anonymize selected columns.
+                Defaults to False.
+            columns_to_anonymize (list[str], optional): List of columns to anonymize.
+                Defaults to None.
+            anonymize_method  (Literal["mask", "hash"], optional): Method of
+                anonymizing data. "mask" -> replace the data with "value" arg. "hash" ->
+                replace the data with the hash value of an object (using `hash()`
+                method). Defaults to "mask".
+            anonymize_value (str, optional): Value to replace the data.
+                Defaults to "***".
+            date_column (str, optional): Name of the date column used to identify rows
+                that are older than a specified number of days. Defaults to None.
+            days (int, optional): The number of days beyond which we want to anonymize
+                the data, e.g. older than 2 years can be: 2*365. Defaults to None.
 
         Returns:
             pd.Dataframe: The response data as a Pandas Data Frame plus viadot metadata.
@@ -567,5 +594,16 @@ class CustomerGauge(Source):
 
         if validate_df_dict is not None:
             validate(df=data_frame, tests=validate_df_dict)
+
+        if anonymize:
+            data_frame = anonymize_df(
+                df=data_frame,
+                columns=columns_to_anonymize,
+                method=anonymize_method,
+                value=anonymize_value,
+                date_column=date_column,
+                days=days,
+            )
+            self.logger.info("Data Frame anonymized")
 
         return data_frame
