@@ -6,6 +6,7 @@ from collections import defaultdict
 from io import BytesIO, StringIO
 from pathlib import Path
 from stat import S_ISDIR
+import re
 
 import pandas as pd
 import paramiko
@@ -17,7 +18,16 @@ from viadot.exceptions import CredentialError
 from viadot.sources.base import Source
 from viadot.utils import add_viadot_metadata_columns
 
-
+def unpack_df_cols(df:pd.DataFrame):
+    if not df.empty and len(df.columns)==1:
+        columns_packed= list(df.columns)[0]
+        columns_name = df.columns.str.split(',', expand=True)
+        list_columns = list(columns_name[0])
+        df = df[columns_packed].str.split(',', expand=True)
+        # Renaming the split columns
+        df.columns = list_columns
+    return df
+        
 class SftpCredentials(BaseModel):
     """Checking for values in SFTP credentials dictionary.
 
@@ -157,27 +167,35 @@ class SftpConnector(Source):
 
         if Path(file_name).suffix == ".csv":
             df = pd.read_csv(byte_file, sep=sep, usecols=columns)
-
+            df = unpack_df_cols(df)
+            
         elif Path(file_name).suffix == ".parquet":
             df = pd.read_parquet(byte_file, usecols=columns)
-
+            df = unpack_df_cols(df)
+            
         elif Path(file_name).suffix == ".tsv":
             df = pd.read_csv(byte_file, sep=sep, usecols=columns)
+            df = unpack_df_cols(df)
 
         elif Path(file_name).suffix in [".xls", ".xlsx", ".xlsm"]:
             df = pd.read_excel(byte_file, usecols=columns)
+            df = unpack_df_cols(df)
 
         elif Path(file_name).suffix == ".json":
             df = pd.read_json(byte_file)
+            df = unpack_df_cols(df)
 
         elif Path(file_name).suffix == ".pkl":
             df = pd.read_pickle(byte_file)
+            df = unpack_df_cols(df)
 
         elif Path(file_name).suffix == ".sql":
             df = pd.read_sql(byte_file)
+            df = unpack_df_cols(df)
 
         elif Path(file_name).suffix == ".hdf":
             df = pd.read_hdf(byte_file)
+            df = unpack_df_cols(df)
 
         else:
             message = (
@@ -282,7 +300,7 @@ class SftpConnector(Source):
         self._close_conn()
 
         if matching_path is not None:
-            files_list = [f for f in files_list if matching_path in f]
+            files_list = [f for f in files_list if re.match(matching_path, f)] 
 
         self.logger.info("Succefully loaded file list from SFTP server.")
 
