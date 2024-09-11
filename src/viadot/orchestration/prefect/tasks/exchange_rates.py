@@ -1,7 +1,7 @@
 """Tasks for interacting with the Exchange Rates API."""
 
 from datetime import datetime
-from typing import Any, Literal
+from typing import Literal
 
 import pandas as pd
 from prefect import task
@@ -20,7 +20,6 @@ Currency = Literal[
 def exchange_rates_to_df(
     currency: Currency = "USD",
     credentials_secret: str | None = None,
-    credentials: dict[str, Any] | None = None,
     config_key: str | None = None,
     start_date: str = datetime.today().strftime("%Y-%m-%d"),
     end_date: str = datetime.today().strftime("%Y-%m-%d"),
@@ -35,8 +34,6 @@ def exchange_rates_to_df(
         credentials_secret (str, optional): The name of the secret storing
             the credentials. Defaults to None.
             More info on: https://docs.prefect.io/concepts/blocks/
-        credentials (dict[str, str], optional): The credentials as a dictionary.
-            Defaults to None.
         config_key (str, optional): The key in the viadot config holding relevant
             credentials.
             Defaults to None.
@@ -56,7 +53,7 @@ def exchange_rates_to_df(
     Returns:
         pd.DataFrame: The pandas `DataFrame` containing data from the file.
     """
-    if not (credentials_secret or config_key or credentials):
+    if not (credentials_secret or config_key):
         raise MissingSourceCredentialsError
 
     if not symbols:
@@ -74,7 +71,9 @@ def exchange_rates_to_df(
             "ISK",
         ]
 
-    credentials = credentials or get_credentials(credentials_secret)
+    if not config_key:
+        credentials = get_credentials(credentials_secret)
+
     e = ExchangeRates(
         currency=currency,
         start_date=start_date,
