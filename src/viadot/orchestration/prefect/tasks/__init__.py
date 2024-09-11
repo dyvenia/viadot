@@ -22,6 +22,7 @@ from .sharepoint import (
     sharepoint_to_df,
 )
 from .sql_server import create_sql_server_table, sql_server_query, sql_server_to_df
+from .vid_club import vid_club_to_df
 
 
 __all__ = [
@@ -48,4 +49,5 @@ __all__ = [
     "create_sql_server_table",
     "sql_server_query",
     "sql_server_to_df",
+    "vid_club_to_df",
 ]
