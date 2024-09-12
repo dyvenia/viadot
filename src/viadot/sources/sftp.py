@@ -1,12 +1,12 @@
 """SFTP connector."""
 
 import itertools
+import re
 import time
 from collections import defaultdict
 from io import BytesIO, StringIO
 from pathlib import Path
 from stat import S_ISDIR
-import re
 
 import pandas as pd
 import paramiko
@@ -18,16 +18,27 @@ from viadot.exceptions import CredentialError
 from viadot.sources.base import Source
 from viadot.utils import add_viadot_metadata_columns
 
-def unpack_df_cols(df:pd.DataFrame):
-    if not df.empty and len(df.columns)==1:
-        columns_packed= list(df.columns)[0]
-        columns_name = df.columns.str.split(',', expand=True)
+
+def unpack_df_cols(df: pd.DataFrame) -> pd.DataFrame:
+    """Uppack cols function.
+
+    Args:
+        df (pd.DataFrame): _description_
+
+    Returns:
+        pd.DataFrame: _description_
+    """
+    if not df.empty and len(df.columns) == 1:
+        columns_packed = list(df.columns)[0]
+        columns_name = df.columns.str.split(",", expand=True)
         list_columns = list(columns_name[0])
-        df = df[columns_packed].str.split(',', expand=True)
+        df = df[columns_packed].str.split(",", expand=True)
         # Renaming the split columns
         df.columns = list_columns
+
     return df
-        
+
+
 class SftpCredentials(BaseModel):
     """Checking for values in SFTP credentials dictionary.
 
@@ -110,8 +121,8 @@ class SftpConnector(Source):
         try:
             self.conn.getfo(file_name, flo)
 
-        except SFTPError as error:
-            self.logger.info(error)
+        except FileNotFoundError as error:
+            raise SFTPError from error
 
         else:
             return flo
@@ -168,11 +179,11 @@ class SftpConnector(Source):
         if Path(file_name).suffix == ".csv":
             df = pd.read_csv(byte_file, sep=sep, usecols=columns)
             df = unpack_df_cols(df)
-            
+
         elif Path(file_name).suffix == ".parquet":
             df = pd.read_parquet(byte_file, usecols=columns)
             df = unpack_df_cols(df)
-            
+
         elif Path(file_name).suffix == ".tsv":
             df = pd.read_csv(byte_file, sep=sep, usecols=columns)
             df = unpack_df_cols(df)
@@ -300,7 +311,7 @@ class SftpConnector(Source):
         self._close_conn()
 
         if matching_path is not None:
-            files_list = [f for f in files_list if re.match(matching_path, f)] 
+            files_list = [f for f in files_list if re.match(matching_path, f)]
 
         self.logger.info("Succefully loaded file list from SFTP server.")
 
