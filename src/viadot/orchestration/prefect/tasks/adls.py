@@ -1,13 +1,14 @@
 """Tasks for interacting with Azure Data Lake (gen2)."""
 
 import contextlib
+from pathlib import Path
 
+import numpy as np
 import pandas as pd
-from prefect import task
+from prefect import get_run_logger, task
 
 from viadot.orchestration.prefect.exceptions import MissingSourceCredentialsError
 from viadot.orchestration.prefect.utils import get_credentials
-
 
 with contextlib.suppress(ImportError):
     from viadot.sources import AzureDataLake
@@ -90,3 +91,120 @@ def df_to_adls(
         sep=sep,
         overwrite=overwrite,
     )
+
+
+@task(retries=3, retry_delay_seconds=10)
+def adls_to_df(
+    path: str,
+    sep: str = "\t",
+    quoting: int = 0,
+    lineterminator: str | None = None,
+    error_bad_lines: bool | None = None,
+    credentials_secret: str | None = None,
+    config_key: str | None = None,
+) -> pd.DataFrame:
+    r"""Load file(s) from the Azure Data Lake to a pandas DataFrame.
+
+    Note: Currently supports CSV and parquet files.
+
+    Args:
+        path (str): The path from which to load the DataFrame.
+        sep (str, optional): The separator to use when reading a CSV file.
+            Defaults to "\t".
+        quoting (int, optional): The quoting mode to use when reading a CSV file.
+            Defaults to 0.
+        lineterminator (str, optional): The newline separator to use when reading a
+            CSV file. Defaults to None.
+        error_bad_lines (bool, optional): Whether to raise an exception on bad lines.
+            Defaults to None.
+        credentials_secret (str, optional): The name of the Azure Key Vault secret
+            storing the credentials.
+        config_key (str, optional): The key in the viadot config holding relevant
+            credentials.
+
+    Raises:
+        MissingSourceCredentialsError: If credentials were not provided.
+
+    Returns:
+        pd.DataFrame: The HTTP response object.
+    """
+    logger = get_run_logger()
+
+    if not (credentials_secret or config_key):
+        raise MissingSourceCredentialsError
+
+    credentials = get_credentials(credentials_secret)
+    lake = AzureDataLake(credentials=credentials, config_key=config_key)
+
+    full_dl_path = str(Path(credentials["ACCOUNT_NAME"], path))
+    logger.info(f"Downloading data from {full_dl_path} to a DataFrame...")
+    df = lake.to_df(
+        sep=sep,
+        quoting=quoting,
+        lineterminator=lineterminator,
+        error_bad_lines=error_bad_lines,
+    )
+    logger.info("Successfully loaded data.")
+
+    return df
+
+
+@task(retries=3, retry_delay_seconds=10)
+def adls_list(
+    path: str,
+    recursive: bool = False,
+    file_to_match: str | None = None,
+    credentials_secret: str | None = None,
+    config_key: str | None = None,
+) -> list[str]:
+    """Consult list of files in Azure Data Lake Storage.
+
+    Args:
+        path (str): The path to the directory which contents you want to list.
+        recursive (bool, optional): If True, recursively list all subdirectories
+            and files. Defaults to False.
+        file_to_match (str, optional): If exist it only returns files with that name.
+            Defaults to None.
+        credentials_secret (str, optional): The name of the Azure Key Vault secret
+            storing the credentials.
+        config_key (str, optional): The key in the viadot config holding relevant
+            credentials.
+
+    Raises:
+        MissingSourceCredentialsError: If credentials were not provided.
+
+    Returns:
+        list[str]: The list of paths to the contents of `path`. These paths
+        do not include the container, eg. the path to the file located at
+        "https://my_storage_acc.blob.core.windows.net/raw/supermetrics/test_file.txt"
+        will be shown as "raw/supermetrics/test_file.txt".
+    """
+    logger = get_run_logger()
+
+    if not (credentials_secret or config_key):
+        raise MissingSourceCredentialsError
+
+    credentials = get_credentials(credentials_secret)
+    lake = AzureDataLake(credentials=credentials, config_key=config_key)
+
+    full_dl_path = str(Path(credentials["ACCOUNT_NAME"], path))
+
+    logger.info(f"Listing files in {full_dl_path}.")
+    if recursive:
+        logger.info("Loading ADLS directories recursively.")
+        files = lake.find(path)
+        if file_to_match:
+            conditions = [file_to_match in item for item in files]
+            valid_files = np.array([])
+            if any(conditions):
+                index = np.where(conditions)[0]
+                files = list(np.append(valid_files, [files[i] for i in index]))
+            else:
+                message = f"There are not any available file named {file_to_match}."
+                raise FileExistsError(message)
+    else:
+        files = lake.ls(path)
+
+    logger.info(f"Successfully listed files in {full_dl_path}.")
+
+    return files
