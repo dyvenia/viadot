@@ -1,9 +1,9 @@
 """A module for working with Amazon S3 as a data source."""
 
-from collections.abc import Iterable
+from collections.abc import Iterable, Iterator
 import os
 from pathlib import Path
-from typing import Literal
+from typing import Any, Literal
 
 
 try:
@@ -310,3 +310,24 @@ class S3(Source):
             to_path (str): Path to local file(s) to be stored.
         """
         wr.s3.download(boto3_session=self.session, path=from_path, local_file=to_path)
+
+    def get_page_iterator(
+        self, bucket_name: str, directory_path: str, **kwargs
+    ) -> Iterator[dict[str, Any]]:
+        """Returns an iterator to paginate through the objects in S3 bucket directory.
+
+        This method uses the S3 paginator to list objects under a specified directory
+        path in a given S3 bucket. It can accept additional optional parameters
+        through **kwargs, which will be passed to the paginator.
+
+        Args:
+            bucket_name (str): The name of the S3 bucket.
+            directory_path (str): The directory path (prefix) in the bucket to list
+                objects from.
+            **kwargs: Additional arguments to pass to the paginator (optional).
+
+        Returns:
+            Iterator: An iterator to paginate through the S3 objects.
+        """
+        paginator = wr.s3.get_paginator("list_objects_v2")
+        return paginator.paginate(Bucket=bucket_name, Prefix=directory_path, **kwargs)
