@@ -335,7 +335,7 @@ class S3(Source):
         Returns:
             Iterator: An iterator to paginate through the S3 objects.
         """
-        paginator = wr.s3.get_paginator(
-            boto3_session=self.session, operation_name=operation_name
-        )
+        client = self.session.client("s3")
+        paginator = client.get_paginator(operation_name=operation_name)
+
         return paginator.paginate(Bucket=bucket_name, Prefix=directory_path, **kwargs)
