@@ -43,6 +43,7 @@ def business_core_to_df(
 
     bc = BusinessCore(
             url=url,
+            path=path,
             credentials=credentials,
             config_key=config_key,
             filters_dict=filters_dict,
