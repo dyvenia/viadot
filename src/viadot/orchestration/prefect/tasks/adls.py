@@ -1,6 +1,7 @@
 """Tasks for interacting with Azure Data Lake (gen2)."""
 
 import contextlib
+import os
 from pathlib import Path
 
 import numpy as np
@@ -97,11 +98,9 @@ def df_to_adls(
 def adls_to_df(
     path: str,
     sep: str = "\t",
-    quoting: int = 0,
-    lineterminator: str | None = None,
-    error_bad_lines: bool | None = None,
     credentials_secret: str | None = None,
     config_key: str | None = None,
+    **kwargs,
 ) -> pd.DataFrame:
     r"""Load file(s) from the Azure Data Lake to a pandas DataFrame.
 
@@ -111,12 +110,6 @@ def adls_to_df(
         path (str): The path from which to load the DataFrame.
         sep (str, optional): The separator to use when reading a CSV file.
             Defaults to "\t".
-        quoting (int, optional): The quoting mode to use when reading a CSV file.
-            Defaults to 0.
-        lineterminator (str, optional): The newline separator to use when reading a
-            CSV file. Defaults to None.
-        error_bad_lines (bool, optional): Whether to raise an exception on bad lines.
-            Defaults to None.
         credentials_secret (str, optional): The name of the Azure Key Vault secret
             storing the credentials.
         config_key (str, optional): The key in the viadot config holding relevant
@@ -138,13 +131,20 @@ def adls_to_df(
 
     full_dl_path = str(Path(credentials["ACCOUNT_NAME"], path))
     logger.info(f"Downloading data from {full_dl_path} to a DataFrame...")
-    df = lake.to_df(
-        path=path,
-        sep=sep,
-        quoting=quoting,
-        lineterminator=lineterminator,
-        error_bad_lines=error_bad_lines,
-    )
+
+    name = Path(path).stem
+    suffixes = "".join(Path(path).suffixes)
+    file_name = f"{name}{suffixes}"
+
+    lake.download(to_path=file_name, from_path=path, recursive=False)
+
+    if ".csv" in suffixes:
+        df = pd.read_csv(file_name, sep=sep)
+    elif ".parquet" in suffixes:
+        df = pd.read_parquet(file_name)
+
+    os.remove(file_name)
+
     logger.info("Successfully loaded data.")
 
     return df
