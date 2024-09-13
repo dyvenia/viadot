@@ -139,6 +139,7 @@ def adls_to_df(
     full_dl_path = str(Path(credentials["ACCOUNT_NAME"], path))
     logger.info(f"Downloading data from {full_dl_path} to a DataFrame...")
     df = lake.to_df(
+        path=path,
         sep=sep,
         quoting=quoting,
         lineterminator=lineterminator,
@@ -192,7 +193,7 @@ def adls_list(
     logger.info(f"Listing files in {full_dl_path}.")
     if recursive:
         logger.info("Loading ADLS directories recursively.")
-        files = lake.find(path)
+        files = lake.ls(path)
         if file_to_match:
             conditions = [file_to_match in item for item in files]
             valid_files = np.array([])
