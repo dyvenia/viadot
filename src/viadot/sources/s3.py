@@ -312,7 +312,11 @@ class S3(Source):
         wr.s3.download(boto3_session=self.session, path=from_path, local_file=to_path)
 
     def get_page_iterator(
-        self, bucket_name: str, directory_path: str, **kwargs
+        self,
+        bucket_name: str,
+        directory_path: str,
+        operation_name: str = "list_objects_v2",
+        **kwargs,
     ) -> Iterator[dict[str, Any]]:
         """Returns an iterator to paginate through the objects in S3 bucket directory.
 
@@ -324,10 +328,14 @@ class S3(Source):
             bucket_name (str): The name of the S3 bucket.
             directory_path (str): The directory path (prefix) in the bucket to list
                 objects from.
+            operation_name (str): The operation name. This is the same name as
+                the method name on the client. Defaults as "list_objects_v2".
             **kwargs: Additional arguments to pass to the paginator (optional).
 
         Returns:
             Iterator: An iterator to paginate through the S3 objects.
         """
-        paginator = wr.s3.get_paginator("list_objects_v2")
+        paginator = wr.s3.get_paginator(
+            boto3_session=self.session, operation_name=operation_name
+        )
         return paginator.paginate(Bucket=bucket_name, Prefix=directory_path, **kwargs)
