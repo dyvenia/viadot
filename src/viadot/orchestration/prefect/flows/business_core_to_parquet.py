@@ -26,6 +26,7 @@ def business_core_to_parquet(
     credentials_secret: str = None,
     config_key: str = "BusinessCore",
     if_exists: Literal["append", "replace", "skip"] = "replace",
+    verify: bool = True,
 ): 
     """Task for downloading  data from Business Core API to a Parquet file.
 
@@ -41,6 +42,7 @@ def business_core_to_parquet(
         if_empty (str, optional): What to do if output DataFrame is empty. Defaults to "skip".
         if_exists (Literal["append", "replace", "skip"], optional): What to do if the table exists. 
             Defaults to "replace".
+        verify (bool, optional): Whether or not verify certificates while connecting to an API. Defaults to True.
     """
 
     if not (credentials_secret or config_key):
@@ -52,6 +54,7 @@ def business_core_to_parquet(
             credentials_secret=credentials_secret,
             config_key=config_key,
             filters_dict=filters_dict,
+            verify=verify
         )
     return df_to_parquet(
         df=df,

@@ -23,6 +23,7 @@ class BusinessCore(Source):
         },
         credentials: Dict[str, Any] = None,
         config_key: str = "BusinessCore",
+        verify: bool = True,
         *args,
         **kwargs,
     ):
@@ -36,6 +37,7 @@ class BusinessCore(Source):
             credentials (Dict[str, Any], optional): Credentials stored in a dictionary. Required credentials: username,
                 password. Defaults to None.
             config_key (str, optional): Credential key to dictionary where details are stored. Defaults to "BusinessCore".
+            verify (bool, optional): Whether or not verify certificates while connecting to an API. Defaults to True.
         Raises:
             CredentialError: When credentials are not found.
         """
@@ -46,6 +48,7 @@ class BusinessCore(Source):
 
         self.url = url
         self.filters_dict = filters_dict
+        self.verify = verify
 
         super().__init__(*args, credentials=self.credentials, **kwargs)
 
@@ -61,7 +64,7 @@ class BusinessCore(Source):
         payload = f'grant_type=password&username={self.credentials.get("username")}&password={self.credentials.get("password")}&scope='
         headers = {"Content-Type": "application/x-www-form-urlencoded"}
         response = handle_api_response(
-            url=url, headers=headers, method="GET", data=payload
+            url=url, headers=headers, method="GET", data=payload, verify=self.verify,
         )
         token = json.loads(response.text).get("access_token")
         self.token = token
@@ -107,6 +110,7 @@ class BusinessCore(Source):
             headers=headers,
             method="GET",
             data=payload,
+            verify=self.verify,
         )
         logger.info("Data was downloaded successfully.")
         return json.loads(response.text)
