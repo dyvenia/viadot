@@ -46,12 +46,10 @@ def business_core_to_parquet(
     if not (credentials_secret or config_key):
         raise MissingSourceCredentialsError
     
-    credentials = get_source_credentials(config_key) or get_credentials(credentials_secret)
-
     df = business_core_to_df(
             url=url,
             path=path,
-            credentials_secret=credentials,
+            credentials_secret=credentials_secret,
             config_key=config_key,
             filters_dict=filters_dict,
         )
