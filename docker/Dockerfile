@@ -61,6 +61,7 @@ RUN curl https://packages.microsoft.com/keys/microsoft.asc | apt-key add - && \
     echo 'export PATH="$PATH:/opt/mssql-tools/bin"' >> ~/.bashrc
 
 COPY docker/odbcinst.ini /etc
+RUN sed "s/PLATFORM/$(uname -m)/" /etc/odbcinst.ini
 
 WORKDIR ${HOME}
 

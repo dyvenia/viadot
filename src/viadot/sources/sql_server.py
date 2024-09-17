@@ -13,7 +13,7 @@ class SQLServerCredentials(BaseModel):
     user: str
     password: str | SecretStr | None = None
     server: str
-    driver: str = "ODBC Driver 17 for SQL Server"
+    driver: str = "ODBC Driver 18 for SQL Server"
     db_name: str | None = None
 
 
