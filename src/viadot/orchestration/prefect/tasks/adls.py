@@ -1,7 +1,6 @@
 """Tasks for interacting with Azure Data Lake (gen2)."""
 
 import contextlib
-import os
 from pathlib import Path
 
 import numpy as np
@@ -100,7 +99,6 @@ def adls_to_df(
     sep: str = "\t",
     credentials_secret: str | None = None,
     config_key: str | None = None,
-    **kwargs,
 ) -> pd.DataFrame:
     r"""Load file(s) from the Azure Data Lake to a pandas DataFrame.
 
@@ -143,7 +141,7 @@ def adls_to_df(
     elif ".parquet" in suffixes:
         df = pd.read_parquet(file_name)
 
-    os.remove(file_name)
+    Path.unlink(file_name)
 
     logger.info("Successfully loaded data.")
 
