@@ -1,11 +1,19 @@
 import json
 from typing import Any, Dict, Literal
 from venv import logger
+from pydantic import BaseModel
+
 import pandas as pd
 from viadot.config import get_source_credentials
 from viadot.exceptions import APIError, CredentialError
 from viadot.sources.base import Source
 from viadot.utils import handle_api_response
+
+class BusinessCoreCredentials(BaseModel):
+
+    username: str
+    password: str
+
 
 
 class BusinessCore(Source):
@@ -42,10 +50,13 @@ class BusinessCore(Source):
             CredentialError: When credentials are not found.
         """
 
-        self.credentials = credentials or get_source_credentials(config_key)
-        if self.credentials is None:
+        
+        raw_creds = credentials or get_source_credentials(config_key) or {}
+        validated_creds = dict(BusinessCoreCredentials(**raw_creds))
+        if validated_creds is None:
             raise CredentialError("Please specify the credentials.")
 
+        self.credentials = validated_creds
         self.url = url
         self.filters_dict = filters_dict
         self.verify = verify
