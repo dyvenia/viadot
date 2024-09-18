@@ -1,5 +1,6 @@
 """Imports."""
 
+from .aselite import aselite_to_df
 from .adls import adls_upload, df_to_adls
 from .bcp import bcp
 from .bigquery import bigquery_to_df
@@ -31,6 +32,7 @@ from .vid_club import vid_club_to_df
 
 
 __all__ = [
+    "aselite_to_df",
     "adls_upload",
     "bcp",
     "clone_repo",

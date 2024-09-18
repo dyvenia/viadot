@@ -242,3 +242,7 @@ def df_clean_column(
                 inplace=True,
             )
     return df
+
+@task(timeout=3600)
+def df_converts_bytes_to_int(df: pd.DataFrame) -> pd.DataFrame:
+    return df.map(lambda x: list(map(int, x)) if isinstance(x, bytes) else x)

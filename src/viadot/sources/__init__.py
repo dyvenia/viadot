@@ -4,6 +4,7 @@ from importlib.util import find_spec
 
 from ._duckdb import DuckDB
 from ._trino import Trino
+from .azure_sql import AzureSQL
 from .bigquery import BigQuery
 from .cloud_for_customers import CloudForCustomers
 from .customer_gauge import CustomerGauge
@@ -24,6 +25,7 @@ from .vid_club import VidClub
 
 
 __all__ = [
+    "AzureSQL",
     "BigQuery",
     "CloudForCustomers",
     "CustomerGauge",
