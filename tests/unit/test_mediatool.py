@@ -26,7 +26,7 @@ variables = {
 class TestMediatoolCredentials:
     """Test Mediatool Credentials Class."""
 
-    @pytest.mark.basic
+    @pytest.mark.basic()
     def test_mediatool_credentials(self):
         """Test Mediatool credentials."""
         MediatoolCredentials(user_id="test_user", token="test_token")
@@ -36,11 +36,11 @@ class TestMediatool(unittest.TestCase):
     """Test Mediatool Class."""
 
     @classmethod
-    def setUpClass(cls):
+    def setUpClass(cls) -> None:
         """Defined based Mediatool Class for the rest of test."""
         cls.mediatool = Mediatool(credentials=variables["credentials"])
 
-    @pytest.mark.basic
+    @pytest.mark.basic()
     @patch("viadot.sources.mediatool.get_source_credentials", return_value=None)
     def test_missing_credentials(self, mock_get_source_credentials):
         """Test raise error without credentials."""
@@ -49,7 +49,7 @@ class TestMediatool(unittest.TestCase):
 
         mock_get_source_credentials.assert_called_once()
 
-    @pytest.mark.functions
+    @pytest.mark.functions()
     @patch("viadot.sources.mediatool.handle_api_response")
     def test_get_organizations(self, mock_handle_api_response):
         """Test Mediatool `_get_organizations` function."""
@@ -61,7 +61,7 @@ class TestMediatool(unittest.TestCase):
         expected_result = [{"_id": "1", "name": "Org1", "abbreviation": "O1"}]
         self.assertEqual(result, expected_result)
 
-    @pytest.mark.functions
+    @pytest.mark.functions()
     @patch("viadot.sources.mediatool.handle_api_response")
     def test_get_media_entries(self, mock_handle_api_response):
         """Test Mediatool `_get_media_entries` function."""
@@ -73,7 +73,7 @@ class TestMediatool(unittest.TestCase):
         expected_result = [{"_id": "1", "name": "Entry1"}]
         self.assertEqual(result, expected_result)
 
-    @pytest.mark.functions
+    @pytest.mark.functions()
     @patch("viadot.sources.mediatool.handle_api_response")
     def test_get_vehicles(self, mock_handle_api_response):
         """Test Mediatool `_get_vehicles` function."""
@@ -85,7 +85,7 @@ class TestMediatool(unittest.TestCase):
         expected_result = [{"_id": "1", "name": "Vehicle1"}]
         self.assertEqual(result, expected_result)
 
-    @pytest.mark.functions
+    @pytest.mark.functions()
     @patch("viadot.sources.mediatool.handle_api_response")
     def test_get_campaigns(self, mock_handle_api_response):
         """Test Mediatool `_get_campaigns` function."""
@@ -97,7 +97,7 @@ class TestMediatool(unittest.TestCase):
         expected_result = [{"_id": "1", "name": "Campaign1"}]
         self.assertEqual(result, expected_result)
 
-    @pytest.mark.functions
+    @pytest.mark.functions()
     @patch("viadot.sources.mediatool.handle_api_response")
     def test_get_media_types(self, mock_handle_api_response):
         """Test Mediatool `_get_media_types` function."""
@@ -109,7 +109,7 @@ class TestMediatool(unittest.TestCase):
         expected_result = [{"_id": "1", "name": "Type1", "type": "Type"}]
         self.assertEqual(result, expected_result)
 
-    @pytest.mark.functions
+    @pytest.mark.functions()
     def test_rename_columns(self):
         """Test Mediatool `_rename_columns` function."""
         df = pd.DataFrame({"col1": [1, 2], "col2": [3, 4]})
@@ -117,7 +117,7 @@ class TestMediatool(unittest.TestCase):
         expected_result = pd.DataFrame({"col1_test": [1, 2], "col2_test": [3, 4]})
         pd.testing.assert_frame_equal(result, expected_result)
 
-    @pytest.mark.connect
+    @pytest.mark.connect()
     @patch("viadot.sources.mediatool.handle_api_response")
     def test_api_connection(self, mock_handle_api_response):
         """Test Mediatool `api_connection` method."""
@@ -129,7 +129,7 @@ class TestMediatool(unittest.TestCase):
         expected_result = [{"_id": "1", "name": "Org1", "abbreviation": "O1"}]
         self.assertEqual(result, expected_result)
 
-    @pytest.mark.functions
+    @pytest.mark.functions()
     @patch("viadot.sources.mediatool.handle_api_response")
     def test_to_df(self, mock_handle_api_response):
         """Test Mediatool `to_df` method."""
