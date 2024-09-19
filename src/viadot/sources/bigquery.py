@@ -1,9 +1,9 @@
 """'bigquery.py'."""
 
+from google.oauth2 import service_account
 import numpy as np
 import pandas as pd
 import pandas_gbq
-from google.oauth2 import service_account
 from pandas_gbq.gbq import GenericGBQException
 from pydantic import BaseModel
 
@@ -27,9 +27,9 @@ class BigQueryCredentials(BaseModel):
     private_key: str
     client_email: str
     client_id: str
-    auth_uri: str
-    token_uri: str
-    auth_provider_x509_cert_url: str
+    auth_uri: str = "https://accounts.google.com/o/oauth2/auth"
+    token_uri: str = "https://oauth2.googleapis.com/token"
+    auth_provider_x509_cert_url: str = "https://www.googleapis.com/oauth2/v1/certs"
     client_x509_cert_url: str
 
 
@@ -46,7 +46,7 @@ class BigQuery(Source):
         config_key: str | None = None,
         **kwargs,
     ):
-        """Create an instance of the Mediatool class.
+        """Create an instance of the BigQuery class.
 
         Args:
             credentials (BigQueryCredentials, optional): BigQuery credentials.
@@ -74,7 +74,7 @@ class BigQuery(Source):
 
         self.df_data = None
 
-    def _list_datasets(self) -> str:
+    def _get_list_datasets_query(self) -> str:
         """Get datasets from BigQuery project.
 
         Returns:
@@ -84,7 +84,7 @@ class BigQuery(Source):
                 FROM {self.project_id}.INFORMATION_SCHEMA.SCHEMATA
                 """
 
-    def _list_tables(self, dataset_name: str) -> str:
+    def _get_list_tables_query(self, dataset_name: str) -> str:
         """Get tables from BigQuery dataset. Dataset is required.
 
         Args:
@@ -166,11 +166,13 @@ class BigQuery(Source):
                 Defaults to None.
         """
         if query == "tables":
-            query = self._list_tables(dataset_name=dataset_name)
+            query = self._get_list_tables_query(dataset_name=dataset_name)
 
         elif query == "datasets":
-            query = self._list_datasets()
+            query = self._get_list_datasets_query()
 
+        elif "select" in query.lower() and "from" in query.lower():
+            self.logger.info("query has been provided!")
         else:
             if date_column_name or columns:
                 table_columns = self._list_columns(

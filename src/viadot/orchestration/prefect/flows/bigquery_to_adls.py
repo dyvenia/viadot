@@ -16,7 +16,6 @@ from viadot.orchestration.prefect.tasks import bigquery_to_df, df_to_adls
     task_runner=ConcurrentTaskRunner,
 )
 def bigquery_to_adls(
-    credentials: dict[str, Any] | None = None,
     config_key: str | None = None,
     azure_key_vault_secret: str | None = None,
     query: str | None = None,
@@ -34,8 +33,6 @@ def bigquery_to_adls(
     """Download data from BigQuery to Azure Data Lake.
 
     Args:
-        credentials (dict[str, Any], optional): Mediatool credentials as a dictionary.
-            Defaults to None.
         config_key (str, optional): The key in the viadot config holding relevant
             credentials. Defaults to None.
         azure_key_vault_secret (str, optional): The name of the Azure Key Vault secret
@@ -68,7 +65,6 @@ def bigquery_to_adls(
             Defaults to True.
     """
     data_frame = bigquery_to_df(
-        credentials=credentials,
         config_key=config_key,
         azure_key_vault_secret=azure_key_vault_secret,
         query=query,
