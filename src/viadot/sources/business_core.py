@@ -10,10 +10,18 @@ from viadot.sources.base import Source
 from viadot.utils import handle_api_response
 
 class BusinessCoreCredentials(BaseModel):
+    """Validate Business Core credentials
 
+    Two key values are held in the Business Core connector:
+        - username: The unique username for the organization.
+        - password: Secret string of characters to have access to data.
+
+    Args:
+        BaseModel (pydantic.main.ModelMetaclass): A base class for creating
+            Pydantic models.
+    """
     username: str
     password: str
-
 
 
 class BusinessCore(Source):
@@ -51,10 +59,11 @@ class BusinessCore(Source):
         """
 
         
-        raw_creds = credentials or get_source_credentials(config_key) or {}
+        raw_creds = credentials or get_source_credentials(config_key) or None
+        if raw_creds is None:
+            raise CredentialError("Missing Credentials.")
+        
         validated_creds = dict(BusinessCoreCredentials(**raw_creds))
-        if validated_creds is None:
-            raise CredentialError("Please specify the credentials.")
 
         self.credentials = validated_creds
         self.url = url

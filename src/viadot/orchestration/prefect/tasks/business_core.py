@@ -18,7 +18,7 @@ def business_core_to_df(
         "ToDate": None,
     },
     credentials_secret: str = None,
-    config_key: str = "BusinessCore",
+    config_key: str | None = None,
     if_empty: str = "skip",
     verify: bool = True,
 ): 
@@ -32,7 +32,7 @@ def business_core_to_df(
             "ToDate": None,}. Defaults to None.
         credentials_secret (str, optional): The name of the secret that stores SAP credentials. Defaults to None.
             More info on: https://docs.prefect.io/concepts/blocks/
-        config_key (str, optional): Credential key to dictionary where details are stored. Defaults to "BusinessCore".
+        config_key (str, optional): Credential key to dictionary where details are stored. Defaults to None.
         if_empty (str, optional): What to do if output DataFrame is empty. Defaults to "skip".
         verify (bool, optional): Whether or not verify certificates while connecting to an API. Defaults to True.
     """
@@ -41,7 +41,6 @@ def business_core_to_df(
         raise MissingSourceCredentialsError
     
     credentials = get_source_credentials(config_key) or get_credentials(credentials_secret)
-
 
     bc = BusinessCore(
             url=url,
