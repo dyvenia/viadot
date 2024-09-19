@@ -1,26 +1,17 @@
-from viadot.orchestration.prefect.flows import (
-    customer_gauge_to_adls,
-)
-from viadot.sources import AzureDataLake
+"""'test_customer_gauge.py'."""
 
-TEST_SCHEMA = "test_viadot_schema"
-TEST_TABLE = "test"
+from viadot.orchestration.prefect.flows import customer_gauge_to_adls
 
 
-def test_customer_gauge_to_adls(
-    endpoint,
-    TEST_FILE_PATH,
-    adls_credentials_secret,
-):
-    lake = AzureDataLake(config_key="adls_test")
-    assert not lake.exists(TEST_FILE_PATH)
-
-    customer_gauge_to_adls(
-        endpoint=endpoint,
-        adls_path=TEST_FILE_PATH,
-        adls_credentials_secret=adls_credentials_secret,
+def test_sftp_to_adls(azure_key_vault_secret, adls_azure_key_vault_secret):
+    """Test Customer Gauge API prefect flow."""
+    state = customer_gauge_to_adls(
+        azure_key_vault_secret=azure_key_vault_secret,
+        unpack_by_field_reference_cols=["properties"],
+        unpack_by_nested_dict_transformer=[],
+        adls_path="raw/dyvenia_sandbox/customer_gauge/customer_gauge.parquet",
+        adls_azure_key_vault_secret=adls_azure_key_vault_secret,
+        adls_path_overwrite=True,
     )
-
-    assert lake.exists(TEST_FILE_PATH)
-
-    lake.rm(TEST_FILE_PATH)
+    all_successful = all(s.type == "COMPLETED" for s in state)
+    assert all_successful, "Not all tasks in the flow completed successfully."
