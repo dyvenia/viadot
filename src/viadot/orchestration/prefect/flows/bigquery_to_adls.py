@@ -43,10 +43,9 @@ def bigquery_to_adls(
         dataset_name (str, optional): Dataset name. Defaults to None.
         table_name (str, optional): Table name. Defaults to None.
         dataset_name (str, optional): Dataset name. Defaults to None.
-        table_name (str, optional): Table name. Defaults to None.
-        date_column_name (str, optional): The user can provide the name of the date. If
-            the user-specified column does not exist, all data will be retrieved from
-            the table. Defaults to None.
+        date_column_name (str, optional): The user can provide the name of the date
+            column. If the user-specified column does not exist, all data will be
+            retrieved from the table. Defaults to None.
         start_date (str, optional): Parameter to pass start date e.g.
             "2022-01-01". Defaults to None.
         end_date (str, optional): Parameter to pass end date e.g.
