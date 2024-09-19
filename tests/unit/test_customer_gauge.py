@@ -37,6 +37,7 @@ def test_missing_credentials(mocker):
 @pytest.mark.connect()
 @patch("viadot.sources.customer_gauge.handle_api_response")
 def test_get_token_success(mock_handle_api_response):
+    """Test Customer Gauge get token."""
     mock_response = MagicMock()
     mock_response.json.return_value = {"access_token": "fake_token"}
     mock_handle_api_response.return_value = mock_response
@@ -51,6 +52,7 @@ def test_get_token_success(mock_handle_api_response):
 @pytest.mark.connect()
 @patch("viadot.sources.customer_gauge.handle_api_response")
 def test_get_token_failure(mock_handle_api_response):
+    """Test Customer Gauge get token failure."""
     mock_response = MagicMock()
     mock_response.json.return_value = {"access_token": None}
     mock_handle_api_response.return_value = mock_response
@@ -69,6 +71,7 @@ def test_get_token_failure(mock_handle_api_response):
 )
 @patch("viadot.sources.customer_gauge.handle_api_response")
 def test_get_json_response(mock_handle_api_response, mock_get_token):
+    """Test Customer Gauge json response."""
     mock_response = MagicMock()
     mock_response.json.return_value = {"data": [], "cursor": {"next": 1}}
     mock_handle_api_response.return_value = mock_response
@@ -81,6 +84,7 @@ def test_get_json_response(mock_handle_api_response, mock_get_token):
 
 @pytest.mark.connect()
 def test_get_cursor():
+    """Test Customer Gauge get cursor."""
     json_response = {"cursor": {"next": 10}}
     customer_gauge_instance = CustomerGauge(credentials=variables["credentials"])
 
@@ -90,6 +94,7 @@ def test_get_cursor():
 
 @pytest.mark.connect()
 def test_get_cursor_key_error():
+    """Test Customer Gauge get cursor error."""
     json_response = {"no_cursor": {}}
     customer_gauge_instance = CustomerGauge(credentials=variables["credentials"])
 
@@ -101,6 +106,7 @@ def test_get_cursor_key_error():
 
 @pytest.mark.functions()
 def test_column_unpacker():
+    """Test Customer Gauge function `_column_unpacker`."""
     json_list = [{"field": {"key1": "value1", "key2": "value2"}}]
     customer_gauge_instance = CustomerGauge(credentials=variables["credentials"])
 
