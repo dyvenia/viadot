@@ -1,7 +1,5 @@
 """Download data from SalesForce API to Azure Data Lake Storage."""
 
-from typing import Any
-
 from prefect import flow
 from prefect.task_runners import ConcurrentTaskRunner
 
@@ -17,7 +15,6 @@ from viadot.orchestration.prefect.tasks import df_to_adls, salesforce_to_df
     task_runner=ConcurrentTaskRunner,
 )
 def salesforce_to_adls(
-    credentials: dict[str, Any] | None = None,
     config_key: str | None = None,
     azure_key_vault_secret: str | None = None,
     env: str | None = None,
@@ -34,8 +31,6 @@ def salesforce_to_adls(
     """Flow to download data from SalesForce API to Azure Data Lake.
 
     Args:
-        credentials (dict[str, Any], optional): SalesForce credentials as a
-            dictionary. Defaults to None.
         config_key (str, optional): The key in the viadot config holding relevant
             credentials. Defaults to None.
         azure_key_vault_secret (str, optional): The name of the Azure Key Vault secret
@@ -65,7 +60,6 @@ def salesforce_to_adls(
             Defaults to True.
     """
     data_frame = salesforce_to_df(
-        credentials=credentials,
         config_key=config_key,
         azure_key_vault_secret=azure_key_vault_secret,
         env=env,

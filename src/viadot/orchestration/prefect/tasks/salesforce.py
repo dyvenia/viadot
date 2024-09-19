@@ -1,7 +1,5 @@
 """Task to download data from SalesForce API into a Pandas DataFrame."""
 
-from typing import Any
-
 import pandas as pd
 from prefect import task
 
@@ -12,7 +10,6 @@ from viadot.sources import SalesForce
 
 @task(retries=3, log_prints=True, retry_delay_seconds=10, timeout_seconds=60 * 60)
 def salesforce_to_df(
-    credentials: dict[str, Any] | None = None,
     config_key: str | None = None,
     azure_key_vault_secret: str | None = None,
     env: str | None = None,
@@ -25,8 +22,6 @@ def salesforce_to_df(
     """Querying Salesforce and saving data as the data frame.
 
     Args:
-        credentials (dict[str, Any], optional): Salesforce credentials as a dictionary.
-            Defaults to None.
         config_key (str, optional): The key in the viadot config holding relevant
             credentials. Defaults to None.
         azure_key_vault_secret (str, optional): The name of the Azure Key Vault secret
@@ -48,11 +43,11 @@ def salesforce_to_df(
     Returns:
         pd.DataFrame: The response data as a pandas DataFrame.
     """
-    if not (azure_key_vault_secret or config_key or credentials):
+    if not (azure_key_vault_secret or config_key):
         raise MissingSourceCredentialsError
 
     if not config_key:
-        credentials = credentials or get_credentials(azure_key_vault_secret)
+        credentials = get_credentials(azure_key_vault_secret)
 
     salesforce = SalesForce(
         credentials=credentials,
