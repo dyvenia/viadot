@@ -10,8 +10,6 @@ from prefect.logging import get_run_logger
 from visions.functional import infer_type
 from visions.typesets.complete_set import CompleteSet
 
-logger = get_run_logger()
-
 
 @task
 def dtypes_to_json_task(dtypes_dict: dict[str, Any], local_json_path: str) -> None:
