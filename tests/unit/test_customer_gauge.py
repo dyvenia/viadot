@@ -25,11 +25,8 @@ def test_customer_gauge_credentials():
 
 
 @pytest.mark.basic()
-def test_missing_credentials(mocker):
+def test_missing_credentials():
     """Test raise error without Customer Gauge credentials."""
-    mocker.patch(
-        "viadot.sources.customer_gauge.get_source_credentials", return_value=None
-    )
     with pytest.raises(CredentialError):
         CustomerGauge(config_key="invalid_key")
 
@@ -106,11 +103,11 @@ def test_get_cursor_key_error():
 
 @pytest.mark.functions()
 def test_column_unpacker():
-    """Test Customer Gauge function `_column_unpacker`."""
+    """Test Customer Gauge function `_unpack_columns`."""
     json_list = [{"field": {"key1": "value1", "key2": "value2"}}]
     customer_gauge_instance = CustomerGauge(credentials=variables["credentials"])
 
-    unpacked_list = customer_gauge_instance._column_unpacker(
+    unpacked_list = customer_gauge_instance._unpack_columns(
         json_list=json_list, unpack_by_field_reference_cols=["field"]
     )
     assert "key1" in unpacked_list[0]["field"]

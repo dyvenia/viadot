@@ -10,7 +10,6 @@ from viadot.orchestration.prefect.tasks import customer_gauge_to_df, df_to_adls
 
 @flow
 def customer_gauge_to_adls(
-    credentials: dict[str, Any] | None = None,
     config_key: str | None = None,
     azure_key_vault_secret: str | None = None,
     endpoint: Literal["responses", "non-responses"] = "non-responses",
@@ -29,7 +28,6 @@ def customer_gauge_to_adls(
     anonymize_value: str = "***",
     date_column: str | None = None,
     days: int | None = None,
-    adls_credentials: str | None = None,
     adls_azure_key_vault_secret: str | None = None,
     adls_config_key: str | None = None,
     adls_path: str | None = None,
@@ -38,15 +36,11 @@ def customer_gauge_to_adls(
     """Download data from the Customer Gauge API using Prefect.
 
     Args:
-        credentials (dict[str, Any], optional): Credentials to connect with API
-            containing client_id, client_secret. Defaults to None.
         config_key (str, optional): The key in the viadot config holding relevant
             credentials. Defaults to None.
         azure_key_vault_secret (str, optional): The name of the Azure Key Vault secret
             containing a dictionary with ['client_id', 'client_secret'].
             Defaults to None.
-        endpoint (Literal["responses", "non-responses"], optional): Indicate which
-            endpoint to connect. Defaults to "non-responses.
         endpoint (Literal["responses", "non-responses"], optional): Indicate which
             endpoint to connect. Defaults to "non-responses.
         cursor (int, optional): Cursor value to navigate to the page.
@@ -84,10 +78,6 @@ def customer_gauge_to_adls(
             that are older than a specified number of days. Defaults to None.
         days (int, optional): The number of days beyond which we want to anonymize
             the data, e.g. older than 2 years can be: 2*365. Defaults to None.
-        adls_credentials (str, optional): The name of the Azure Key Vault
-            secret containing a dictionary with ACCOUNT_NAME and Service Principal
-            credentials (TENANT_ID, CLIENT_ID, CLIENT_SECRET) for the Azure Data Lake.
-            Defaults to None.
         adls_azure_key_vault_secret (str, optional): The name of the Azure Key.
             Defaults to None.
         adls_config_key (str, optional): The key in the viadot config holding relevant
@@ -98,7 +88,6 @@ def customer_gauge_to_adls(
             Defaults to False.
     """
     data_frame = customer_gauge_to_df(
-        credentials=credentials,
         config_key=config_key,
         azure_key_vault_secret=azure_key_vault_secret,
         endpoint=endpoint,
@@ -122,7 +111,6 @@ def customer_gauge_to_adls(
     return df_to_adls(
         df=data_frame,
         path=adls_path,
-        credentials=adls_credentials,
         credentials_secret=adls_azure_key_vault_secret,
         config_key=adls_config_key,
         overwrite=adls_path_overwrite,

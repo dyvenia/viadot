@@ -745,7 +745,7 @@ def validate(
     """
     if logger is None:
         logging.basicConfig(level=logging.INFO)
-        logger = logging.getLogger("prefect_shell.utils")
+        logger = logging.getLogger(__name__)
 
     failed_tests = 0
     failed_tests_list = []
@@ -840,7 +840,7 @@ def anonymize_df(
     df: pd.DataFrame,
     columns: list[str],
     method: Literal["mask", "hash"] = "mask",
-    value: str = "***",
+    mask_value: str = "***",
     date_column: str | None = None,
     days: int | None = None,
 ) -> pd.DataFrame:
@@ -857,7 +857,8 @@ def anonymize_df(
             "mask" -> replace the data with "value" arg.
             "hash" -> replace the data with the hash value of an object
             (using `hash()` method). Defaults to "mask".
-        value (str, optional): Value to replace the data. Defaults to "***".
+        mask_value (str, optional): Value to replace the data with  when using the
+            "mask" method. Defaults to "***".
         date_column (str, optional): Name of the date column used to identify
             rows that are older than a specified number of days. Defaults to None.
         days (int, optional): The number of days beyond which we want to
@@ -884,9 +885,9 @@ def anonymize_df(
     """
     if logger is None:
         logging.basicConfig(level=logging.INFO)
-        logger = logging.getLogger("prefect_shell.utils")
+        logger = logging.getLogger(__name__)
 
-    if all(col in df.columns for col in columns) == False:
+    if all(col not in df.columns for col in columns):
         raise ValueError(
             f"""At least one of the following columns is not found in dataframe:
             {columns} or argument is not list. Provide list with proper column names."""
@@ -911,7 +912,7 @@ def anonymize_df(
         )
 
     if method == "mask":
-        df.loc[to_hash, columns] = value
+        df.loc[to_hash, columns] = mask_value
     elif method == "hash":
         df.loc[to_hash, columns] = df.loc[to_hash, columns].apply(
             lambda x: x.apply(hash)

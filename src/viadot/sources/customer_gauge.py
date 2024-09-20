@@ -294,7 +294,7 @@ class CustomerGauge(Source):
 
         return jsons_list
 
-    def _column_unpacker(
+    def _unpack_columns(
         self,
         json_list: list[dict[str, Any]] | None = None,
         unpack_by_field_reference_cols: list[str] | None = None,
@@ -452,7 +452,7 @@ class CustomerGauge(Source):
                 jsn = self._get_data(json_data)
                 total_json += jsn
 
-        self.clean_json = self._column_unpacker(
+        self.clean_json = self._unpack_columns(
             json_list=total_json,
             unpack_by_field_reference_cols=unpack_by_field_reference_cols,
             unpack_by_nested_dict_transformer=unpack_by_nested_dict_transformer,
@@ -499,7 +499,7 @@ class CustomerGauge(Source):
 
         return result
 
-    def _square_brackets_remover(self, df: pd.DataFrame = None) -> pd.DataFrame:
+    def _remove_square_brackets(self, df: pd.DataFrame = None) -> pd.DataFrame:
         """Replace square brackets "[]" with an empty string in a pandas DataFrame.
 
         Args:
@@ -514,7 +514,7 @@ class CustomerGauge(Source):
 
         return df.map(lambda x: x.strip("[]"))
 
-    def _drivers_cleaner(self, drivers: str | None = None) -> str:
+    def _clean_drivers(self, drivers: str | None = None) -> str:
         """Clean and format the 'drivers' data.
 
         Args:
@@ -574,10 +574,10 @@ class CustomerGauge(Source):
         self.logger.info("Inserting data into the DataFrame...")
 
         data_frame = pd.DataFrame(list(map(self._flatten_json, self.clean_json)))
-        data_frame = self._square_brackets_remover(data_frame)
+        data_frame = self._remove_square_brackets(data_frame)
 
         if "drivers" in list(data_frame.columns):
-            data_frame["drivers"] = data_frame["drivers"].apply(self._drivers_cleaner)
+            data_frame["drivers"] = data_frame["drivers"].apply(self._clean_drivers)
         data_frame.columns = data_frame.columns.str.lower().str.replace(" ", "_")
 
         if data_frame.empty:
@@ -598,7 +598,7 @@ class CustomerGauge(Source):
                 df=data_frame,
                 columns=columns_to_anonymize,
                 method=anonymize_method,
-                value=anonymize_value,
+                mask_value=anonymize_value,
                 date_column=date_column,
                 days=days,
             )

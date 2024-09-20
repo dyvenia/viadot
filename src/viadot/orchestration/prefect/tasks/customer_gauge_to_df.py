@@ -13,7 +13,6 @@ from viadot.sources import CustomerGauge
 
 @task(retries=3, log_prints=True, retry_delay_seconds=10, timeout_seconds=2 * 60 * 60)
 def customer_gauge_to_df(
-    credentials: dict[str, Any] | None = None,
     config_key: str | None = None,
     azure_key_vault_secret: str | None = None,
     endpoint: Literal["responses", "non-responses"] = "non-responses",
@@ -36,8 +35,6 @@ def customer_gauge_to_df(
     """Download the selected range of data from Customer Gauge API.
 
     Args:
-        credentials (dict[str, Any], optional): Credentials to connect with API
-            containing client_id, client_secret. Defaults to None.
         config_key (str, optional): The key in the viadot config holding relevant
             credentials. Defaults to None.
         azure_key_vault_secret (str, optional): The name of the Azure Key Vault secret
@@ -87,11 +84,11 @@ def customer_gauge_to_df(
     Returns:
         pd.DataFrame: The response data as a Pandas Data Frame.
     """
-    if not (azure_key_vault_secret or config_key or credentials):
+    if not (azure_key_vault_secret or config_key):
         raise MissingSourceCredentialsError
 
     if not config_key:
-        credentials = credentials or get_credentials(azure_key_vault_secret)
+        credentials = get_credentials(azure_key_vault_secret)
 
     customer_gauge = CustomerGauge(credentials=credentials, config_key=config_key)
     customer_gauge.api_connection(
