@@ -28,6 +28,7 @@ def genesys_to_adls(  # noqa: PLR0913
     view_type: str | None = None,
     view_type_time_sleep: int | None = None,
     post_data_list: list[dict[str, Any]] | None = None,
+    time_between_api_call: float = 0.5,
     normalization_sep: str = ".",
     drop_duplicates: bool = False,
     validate_df_dict: dict[str, Any] | None = None,
@@ -58,6 +59,8 @@ def genesys_to_adls(  # noqa: PLR0913
             from Genesys Cloud API. Defaults to None.
         post_data_list (Optional[List[Dict[str, Any]]], optional): List of string
             templates to generate json body in POST calls to the API. Defaults to None.
+        time_between_api_call (int, optional): The time, in seconds, to sleep the call
+            to the API. Defaults to 0.5.
         normalization_sep (str, optional): Nested records will generate names separated
             by sep. Defaults to ".".
         drop_duplicates (bool, optional): Remove duplicates from the DataFrame.
@@ -96,13 +99,11 @@ def genesys_to_adls(  # noqa: PLR0913
         view_type=view_type,
         view_type_time_sleep=view_type_time_sleep,
         post_data_list=post_data_list,
+        time_between_api_call=time_between_api_call,
         normalization_sep=normalization_sep,
         drop_duplicates=drop_duplicates,
         validate_df_dict=validate_df_dict,
     )
-
-    # ???
-    time.sleep(0.5)
 
     return df_to_adls(
         df=data_frame,
