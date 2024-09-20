@@ -19,8 +19,8 @@ def dtypes_to_json_task(dtypes_dict: dict[str, Any], local_json_path: str) -> No
         dtypes_dict (dict): Dictionary containing data types.
         local_json_path (str): Path to local json file.
     """
-    with Path(local_json_path).open("w") as fp:
-        json.dump(dtypes_dict, fp)
+    with Path(local_json_path).open("w") as file_path:
+        json.dump(dtypes_dict, file_path)
 
 
 @task
@@ -32,7 +32,7 @@ def chunk_df(df: pd.DataFrame, size: int = 10_000) -> list[pd.DataFrame]:
         size (int, optional): Size of a chunk. Defaults to 10000.
     """
     n_rows = df.shape[0]
-    return [df[i : i + size] for i in range(0, n_rows, size)]
+    return [df[i:i + size] for i in range(0, n_rows, size)]
 
 
 @task
@@ -59,7 +59,7 @@ def get_sql_dtypes_from_df(df: pd.DataFrame) -> dict:
         "Categorical": "VARCHAR(500)",
         "Time": "TIME",
         "Boolean": "VARCHAR(5)",  # Bool is True/False, Microsoft expects 0/1
-        "DateTime": "DATETIMEOFFSET",  # DATETIMEOFFSET is the only timezone-aware dtype in TSQL
+        "DateTime": "DATETIMEOFFSET",  # DATETIMEOFFSET is timezone-aware dtype in TSQL
         "Object": "VARCHAR(500)",
         "EmailAddress": "VARCHAR(50)",
         "File": None,
@@ -73,7 +73,7 @@ def get_sql_dtypes_from_df(df: pd.DataFrame) -> dict:
         "String": "VARCHAR(500)",
         "IPAddress": "VARCHAR(39)",
         "Path": "VARCHAR(255)",
-        "TimeDelta": "VARCHAR(20)",  # datetime.datetime.timedelta; eg. '1 days 11:00:00'
+        "TimeDelta": "VARCHAR(20)",  # datetime.datetime.timedelta; eg.'1 days 11:00:00'
         "URL": "VARCHAR(255)",
         "Count": "INT",
     }
@@ -243,6 +243,15 @@ def df_clean_column(
             )
     return df
 
+
 @task
 def df_converts_bytes_to_int(df: pd.DataFrame) -> pd.DataFrame:
+    """Task to convert bytes values to int.
+
+    Args:
+        df (pd.DataFrame): Data Frame to convert
+
+    Returns:
+        pd.DataFrame: Data Frame after convert
+    """
     return df.map(lambda x: list(map(int, x)) if isinstance(x, bytes) else x)
