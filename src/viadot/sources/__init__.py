@@ -9,7 +9,7 @@ from .genesys import Genesys
 from .hubspot import Hubspot
 from .mindful import Mindful
 from .outlook import Outlook
-from .sftp import SftpConnector
+from .sftp import Sftp
 from .sharepoint import Sharepoint
 from .sql_server import SQLServer
 from .trino import Trino
@@ -22,7 +22,7 @@ __all__ = [
     "Outlook",
     "Hubspot",
     "Mindful",
-    "SftpConnector",
+    "Sftp",
     "Sharepoint",
     "Trino",
     "SQLServer",

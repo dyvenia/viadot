@@ -46,7 +46,7 @@ def test_sftp_connector_initialization_without_credentials():
 
 @pytest.mark.connect()
 def test_get_connection_without_rsa_key(mocker):
-    """Test SFTP `get_connection` method without ras_key."""
+    """Test `get_connection()` method without specifying the RSA key."""
     mock_transport = mocker.patch("viadot.sources.sftp.paramiko.Transport")
     mock_sftp_client = mocker.patch(
         "viadot.sources.sftp.paramiko.SFTPClient.from_transport"
@@ -87,7 +87,6 @@ def test_get_connection_with_rsa_key(mocker):
     connector = SftpConnector(credentials=variables["credentials"])
     connector.get_connection()
 
-    mock_rsa_key.assert_called_once()
     mock_rsa_key.assert_called_once()
     mock_ssh_connect.assert_called_once_with(
         "", username="test_user", pkey=mock_rsa_key.return_value

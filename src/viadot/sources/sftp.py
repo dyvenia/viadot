@@ -23,10 +23,10 @@ class SftpCredentials(BaseModel):
     """Checking for values in SFTP credentials dictionary.
 
     Two key values are held in the Salesforce connector:
-        - hostname: The direction for the SFTP.
-        - username: The unique name for SFTP connection.
-        - password: The unique passwrod for SFTP connection.
-        - port: Number from which the connection will be done.
+        - hostname: IP address of the SFTP server..
+        - username: The user name for SFTP connection.
+        - password: The passwrod for SFTP connection.
+        - port: The port to use for the connection.
         - rsa_key: The Company RSA Key.
 
     Args:
@@ -41,7 +41,7 @@ class SftpCredentials(BaseModel):
     rsa_key: str
 
 
-class SftpConnector(Source):
+class Sftp(Source):
     """Class implementing a SFTP server connection."""
 
     def __init__(
@@ -64,19 +64,18 @@ class SftpConnector(Source):
             implemented in that class. For more check documentation
             (https://docs.paramiko.org/en/stable/api/sftp.html).
 
-            sftp = SftpConnector()
+            sftp = Sftp()
             sftp.conn.open(filename='folder_a/my_file.zip', mode='r')
 
         Raises:
-            CredentialError: If credentials are not provided in local_config or
+            CredentialError: If credentials are not provided in viadot config or
                 directly as a parameter.
         """
-        credentials = credentials or get_source_credentials(config_key) or None
+        credentials = credentials or get_source_credentials(config_key)
 
         if credentials is None:
             message = "Missing credentials."
             raise CredentialError(message)
-        self.credentials = credentials
 
         validated_creds = dict(SftpCredentials(**credentials))
         super().__init__(*args, credentials=validated_creds, **kwargs)
@@ -88,7 +87,7 @@ class SftpConnector(Source):
         self.port = validated_creds.get("port")
         self.rsa_key = validated_creds.get("rsa_key")
 
-    def _getfo_file(self, file_name: str) -> BytesIO:
+    def _get_file_object_file(self, file_name: str) -> BytesIO:
         """Copy a remote file from the SFTP server and write to a file-like object.
 
         Args:
@@ -97,15 +96,15 @@ class SftpConnector(Source):
         Returns:
             BytesIO: file-like object.
         """
-        flo = BytesIO()
+        file_object = BytesIO()
         try:
-            self.conn.getfo(file_name, flo)
+            self.conn.getfo(file_name, file_object)
 
         except FileNotFoundError as error:
             raise SFTPError from error
 
         else:
-            return flo
+            return file_object
 
     def get_connection(self) -> paramiko.SFTPClient:
         """Returns a SFTP connection object.
@@ -121,8 +120,7 @@ class SftpConnector(Source):
             self.conn = paramiko.SFTPClient.from_transport(transport)
 
         else:
-            keyfile = StringIO(self.rsa_key)
-            mykey = paramiko.RSAKey.from_private_key(keyfile)
+            mykey = paramiko.RSAKey.from_private_key(StringIO(self.rsa_key))
             ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
             ssh.connect(self.hostname, username=self.username, pkey=mykey)
             time.sleep(1)
@@ -141,9 +139,9 @@ class SftpConnector(Source):
         r"""Copy a remote file from the SFTP server and write it to Pandas dataframe.
 
         Args:
-            if_empty (str, optional): What to do if a fetch produce no data.
-                Defaults to "warn
-            file_name (str, optional): File name to download.
+            if_empty (str, optional): What to do if the fetch produces no data.
+                Defaults to "warn".
+            file_name (str, optional): The name of the file to download.
             sep (str, optional): The delimiter for the source file. Defaults to "\t".
             columns (list[str], optional): List of columns to select from file.
                 Defaults to None.
@@ -151,39 +149,40 @@ class SftpConnector(Source):
         Returns:
             pd.DataFrame: The response data as a Pandas Data Frame plus viadot metadata.
         """
-        byte_file = self._getfo_file(file_name=file_name)
+        byte_file = self._get_file_object_file(file_name=file_name)
         byte_file.seek(0)
 
         self._close_conn()
 
-        if Path(file_name).suffix == ".csv":
+        suffix = Path(file_name).suffix
+        if suffix == ".csv":
             df = pd.read_csv(byte_file, sep=sep, usecols=columns)
 
-        elif Path(file_name).suffix == ".parquet":
+        elif suffix == ".parquet":
             df = pd.read_parquet(byte_file, usecols=columns)
 
-        elif Path(file_name).suffix == ".tsv":
+        elif suffix == ".tsv":
             df = pd.read_csv(byte_file, sep=sep, usecols=columns)
 
-        elif Path(file_name).suffix in [".xls", ".xlsx", ".xlsm"]:
+        elif suffix in [".xls", ".xlsx", ".xlsm"]:
             df = pd.read_excel(byte_file, usecols=columns)
 
-        elif Path(file_name).suffix == ".json":
+        elif suffix == ".json":
             df = pd.read_json(byte_file)
 
-        elif Path(file_name).suffix == ".pkl":
+        elif suffix == ".pkl":
             df = pd.read_pickle(byte_file)
 
-        elif Path(file_name).suffix == ".sql":
+        elif suffix == ".sql":
             df = pd.read_sql(byte_file)
 
-        elif Path(file_name).suffix == ".hdf":
+        elif suffix == ".hdf":
             df = pd.read_hdf(byte_file)
 
         else:
             message = (
-                f"Not able to read the file {Path(file_name).name}, "
-                + f"unsupported filetype: {Path(file_name).suffix}"
+                f"Unable to read file '{Path(file_name).name}', "
+                + f"unsupported filetype: {suffix}"
             )
             raise ValueError(message)
 
@@ -198,7 +197,7 @@ class SftpConnector(Source):
         return df
 
     def _list_directory(self, path: str | None = None) -> list[str]:
-        """Returns a list of files on the remote system.
+        """List files in specified directory.
 
         Args:
             path (str, optional): full path to the remote directory to list.
@@ -236,7 +235,7 @@ class SftpConnector(Source):
 
         return files
 
-    def _process_defaultdict(self, defaultdict: defaultdict(list)) -> list[str]:
+    def _files_defaultdict_to_list(self, defaultdict: defaultdict(list)) -> list[str]:
         """Process defaultdict to list of files.
 
         Args:
@@ -260,25 +259,25 @@ class SftpConnector(Source):
         recursive: bool = False,
         matching_path: str | None = None,
     ) -> defaultdict(list):
-        """Get the file `path` structure in the SFTP server.
+        """List files in `path`.
 
         Args:
             path (str, optional): Destination path from where to get the structure.
                 Defaults to None.
             recursive (bool, optional): Get the structure in deeper folders.
                 Defaults to False.
-            matching_path (str, optional): Filtering folders to return.
-                Defaults to None.
+            matching_path (str, optional): Filtering folders to return by a regex
+                pattern. Defaults to None.
 
         Returns:
-            files_list (defaultdict(list)): List of files in the SFTP server.
+            files_list (defaultdict(list)): List of files in the specified path.
         """
         if recursive is False:
             files_list = self._list_directory(path=path)
 
         else:
             files_list = self._recursive_listdir(path=path)
-            files_list = self._process_defaultdict(defaultdict=files_list)
+            files_list = self._files_defaultdict_to_list(defaultdict=files_list)
 
         self._close_conn()
 
