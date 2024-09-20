@@ -292,7 +292,7 @@ class Mediatool(Source):
         """
         data = kwargs.get("data", False)
         column_suffix = kwargs.get("column_suffix", None)
-        drop_columns = kwargs.get("drop_columns", None)
+        columns = kwargs.get("columns", None)
 
         super().to_df(if_empty=if_empty)
 
@@ -311,12 +311,12 @@ class Mediatool(Source):
                 df=data_frame, column_suffix=column_suffix
             )
 
-        if drop_columns:
-            if set(drop_columns).issubset(set(data_frame.columns)):
-                data_frame = data_frame[drop_columns]
-            elif not set(drop_columns).issubset(set(data_frame.columns)):
+        if columns:
+            if set(columns).issubset(set(data_frame.columns)):
+                data_frame = data_frame[columns]
+            elif not set(columns).issubset(set(data_frame.columns)):
                 self.logger.error(
-                    f"Columns '{', '.join(drop_columns)}' are incorrect. "
+                    f"Columns '{', '.join(columns)}' are incorrect. "
                     + "Whole dictionary for 'mediaEntries' will be returned."
                 )
 

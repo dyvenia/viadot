@@ -1,7 +1,5 @@
 """'mediatool.py'."""
 
-from typing import Any
-
 import pandas as pd
 from prefect import get_run_logger, task
 
@@ -13,7 +11,6 @@ from viadot.utils import join_dfs
 
 @task(retries=3, log_prints=True, retry_delay_seconds=10, timeout_seconds=60 * 60)
 def mediatool_to_df(
-    credentials: dict[str, Any] | None = None,
     config_key: str | None = None,
     azure_key_vault_secret: str | None = None,
     organization_ids: list[str] | None = None,
@@ -25,8 +22,6 @@ def mediatool_to_df(
     containing data for all organizations from the list.
 
     Args:
-        credentials (dict[str, Any], optional): Mediatool credentials as a dictionary.
-            Defaults to None.
         config_key (str, optional): The key in the viadot config holding relevant
             credentials. Defaults to None.
         azure_key_vault_secret (str, optional): The name of the Azure Key Vault secret
@@ -45,11 +40,11 @@ def mediatool_to_df(
     """
     logger = get_run_logger()
 
-    if not (azure_key_vault_secret or config_key or credentials):
+    if not (azure_key_vault_secret or config_key):
         raise MissingSourceCredentialsError
 
     if not config_key:
-        credentials = credentials or get_credentials(azure_key_vault_secret)
+        credentials = get_credentials(azure_key_vault_secret)
 
     mediatool = Mediatool(
         credentials=credentials,

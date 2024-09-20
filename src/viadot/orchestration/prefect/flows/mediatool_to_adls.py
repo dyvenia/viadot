@@ -16,7 +16,6 @@ from viadot.orchestration.prefect.tasks import df_to_adls, mediatool_to_df
     task_runner=ConcurrentTaskRunner,
 )
 def mediatool_to_adls(
-    credentials: dict[str, Any] | None = None,
     config_key: str | None = None,
     azure_key_vault_secret: str | None = None,
     organization_ids: list[str] | None = None,
@@ -30,8 +29,6 @@ def mediatool_to_adls(
     """Download data from Mediatool to Azure Data Lake.
 
     Args:
-        credentials (dict[str, Any], optional): Mediatool credentials as a dictionary.
-            Defaults to None.
         config_key (str, optional): The key in the viadot config holding relevant
             credentials. Defaults to None.
         azure_key_vault_secret (str, optional): The name of the Azure Key Vault secret
@@ -54,7 +51,6 @@ def mediatool_to_adls(
             Defaults to True.
     """
     data_frame = mediatool_to_df(
-        credentials=credentials,
         config_key=config_key,
         azure_key_vault_secret=azure_key_vault_secret,
         organization_ids=organization_ids,
