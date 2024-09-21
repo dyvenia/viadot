@@ -2,11 +2,11 @@
 
 from typing import Literal
 
-from prefect.utilities import logging
+import logging
 
 from .sql_server import SQLServer
 
-logger = logging.get_logger(__name__)
+logger = logging.getLogger(__name__)
 
 
 class AzureSQL(SQLServer):
