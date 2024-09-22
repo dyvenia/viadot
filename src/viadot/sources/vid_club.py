@@ -4,13 +4,15 @@ from datetime import datetime, timedelta
 from typing import Any, Dict, List, Literal, Tuple
 import pandas as pd
 
-from prefect import get_run_logger
+import logging
 from ..exceptions import ValidationError
 from ..utils import handle_api_response
 from .base import Source
 
 
-logger = get_run_logger()
+# Configure logging
+logging.basicConfig(level=logging.INFO)  
+logger = logging.getLogger(__name__)
 
 
 class VidClub(Source):
