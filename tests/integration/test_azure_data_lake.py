@@ -1,4 +1,5 @@
 import pandas as pd
+
 from viadot.utils import skip_test_on_missing_extra
 
 
