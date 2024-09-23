@@ -1,39 +1,4 @@
-"""
-'eurostat.py'.
-
-Structure for the Eurostat API connector.
-
-This module provides functionalities for connecting to Eurostat  API and download
-the datasets. It includes the following features:
-- Pulling json file with all data from specific dataset.
-- Creating pandas Data Frame from pulled json file.
-- Creating dataset parameters validation if specified.
-
-Typical usage example:
-
-    eurostat = Eurostat()
-
-    eurostat.to_df(
-        dataset_code: str,
-        params: dict = None,
-        columns: list = None,
-        tests: dict = None,
-    )
-
-Functions:
-
-    get_parameters_codes(dataset_code: str, url: str): Validate available API request
-        parameters and their codes.
-    validate_params(dataset_code: str, url: str, params: dict): Validates given
-        parameters against the available parameters in the dataset
-    eurostat_dictionary_to_df(*signals: list): Function for creating DataFrame from
-        JSON pulled from Eurostat
-    to_df(dataset_code: str, params: dict = None, columns: list = None,
-        tests: dict = None): Function responsible for getting response and creating
-        DataFrame using method 'eurostat_dictionary_to_df' with validation of provided
-        parameters and their codes if needed.
-
-"""
+"""Eurostat API connector."""
 
 import pandas as pd
 
@@ -50,7 +15,35 @@ from .base import Source
 class Eurostat(Source):
     """Class for creating instance of Eurostat connector to REST API by HTTPS response.
 
-    (no credentials required).
+    This module provides functionalities for connecting to Eurostat  API and download
+    the datasets. It includes the following features:
+    - Pulling json file with all data from specific dataset.
+    - Creating pandas Data Frame from pulled json file.
+    - Creating dataset parameters validation if specified.
+
+    Typical usage example:
+
+        eurostat = Eurostat()
+
+        eurostat.to_df(
+            dataset_code: str,
+            params: dict = None,
+            columns: list = None,
+            tests: dict = None,
+        )
+
+    Functions:
+
+        get_parameters_codes(dataset_code: str, url: str): Validate available API 
+            request parameters and their codes.
+        validate_params(dataset_code: str, url: str, params: dict): Validates given
+            parameters against the available parameters in the dataset
+        eurostat_dictionary_to_df(*signals: list): Function for creating DataFrame from
+            JSON pulled from Eurostat
+        to_df(dataset_code: str, params: dict = None, columns: list = None,
+            tests: dict = None): Function responsible for getting response and creating
+            DataFrame using method 'eurostat_dictionary_to_df' with validation of 
+            provided parameters and their codes if needed.
     """
 
     base_url = "https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/"
@@ -117,7 +110,7 @@ class Eurostat(Source):
         super().__init__(*args, **kwargs)
 
     def get_parameters_codes(self, dataset_code: str, url: str) -> dict:
-        """Validate available API request parameters and their codes.
+        """Retrieve available API request parameters and their codes.
 
         Raises:
             ValueError: If the response from the API is empty or invalid.
