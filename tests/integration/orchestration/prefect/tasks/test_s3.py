@@ -4,6 +4,7 @@ from pathlib import Path
 import pandas as pd
 from prefect import flow
 import pytest
+
 from viadot.orchestration.prefect.tasks import s3_upload_file
 from viadot.utils import skip_test_on_missing_extra
 
@@ -23,7 +24,7 @@ def s3(aws_config_key):
     return S3(config_key=aws_config_key)
 
 
-@pytest.fixture()
+@pytest.fixture
 def TEST_FILE_PATH():
     path = "test.csv"
     df = pd.DataFrame(
