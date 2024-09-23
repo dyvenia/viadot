@@ -26,7 +26,7 @@ class BusinessCoreCredentials(BaseModel):
 
 class BusinessCore(Source):
     """
-    Source for getting data from Bussines Core ERP API.
+    Source for getting data from Business Core ERP API.
     """
     def __init__(
         self,
