@@ -1,32 +1,4 @@
-"""
-'eurostat.py'.
-
-Prefect task wrapper for the Eurostat Cloud API connector.
-
-This module provides an intermediate wrapper between the prefect flow and the connector:
-- Generate the Eurostat Cloud API connector.
-- Create and return a pandas Data Frame with the response of the API.
-
-Typical usage example:
-
-    data_frame = eurostat_to_df(
-        dataset_code: str,
-        params: dict = None,
-        columns: list = None,
-        tests: dict = None,
-    )
-
-Functions:
-
-    eurostat_to_df(
-        dataset_code: str,
-        params: dict = None,
-        columns: list = None,
-        tests: dict = None,
-    ):
-    Task to download data from Eurostat Cloud API.
-
-"""
+"""Tasks for interacting with Eurostat."""
 
 from prefect import task
 
@@ -41,9 +13,16 @@ def eurostat_to_df(
     tests: dict = None,
 ):
     """
-    Task for creating pandas data frame from Eurostat HTTPS REST API.
-
+    Task for creating pandas data frame from Eurostat HTTPS REST API. 
+    
     (no credentials required).
+
+    
+    This module provides an intermediate wrapper between the prefect flow 
+        and the connector:
+    - Generate the Eurostat Cloud API connector.
+    - Create and return a pandas Data Frame with the response of the API.
+
 
     Args:
         dataset_code (str): The code of eurostat dataset that we would like to upload.
