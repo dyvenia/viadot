@@ -228,11 +228,24 @@ class Eurostat(Source):
         """
 
         class TSignal:
-            """Class representing a signal with keys, indexes, labels, and name."""
+            """Class representing a signal with keys, indexes, labels, and name.
+            
+                Attributes:
+                -----------
+                signal_keys_list : list[str]
+                    A list of keys representing unique identifiers for the signal.
+                signal_index_list : list[str]
+                    A list of index values corresponding to the keys of the signal.
+                signal_label_list : list[str]
+                    A list of labels providing human-readable names for the 
+                    signal's keys.
+                signal_name : str
+                    The name of the signal.
+            """
 
-            signal_keys_list: list
-            signal_index_list: list
-            signal_label_list: list
+            signal_keys_list: list[str]
+            signal_index_list: list[str]
+            signal_label_list: list[str]
             signal_name: str
 
         # Dataframe creation
