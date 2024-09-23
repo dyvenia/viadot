@@ -109,7 +109,7 @@ class Eurostat(Source):
 
         super().__init__(*args, **kwargs)
 
-    def get_parameters_codes(self, dataset_code: str, url: str) -> dict:
+    def get_parameters_codes(self, dataset_code: str, url: str) -> dict[str, list[str]]:
         """Retrieve available API request parameters and their codes.
 
         Raises:
@@ -143,7 +143,12 @@ class Eurostat(Source):
                 params_and_codes[key] = codes
         return params_and_codes
 
-    def validate_params(self, dataset_code: str, url: str, params: dict):
+    def validate_params(
+        self, 
+        dataset_code: str, 
+        url: str, 
+        params: dict[str, str]
+    ) -> None:
         """Validates given parameters against the available parameters in the dataset.
 
         Important:
@@ -220,7 +225,7 @@ class Eurostat(Source):
             if non_available_keys or non_available_codes:
                 raise ValueError("Wrong parameters or codes were provided!")
 
-    def eurostat_dictionary_to_df(self, *signals: list) -> pd.DataFrame:
+    def eurostat_dictionary_to_df(self, *signals: list[str]) -> pd.DataFrame:
         """Function for creating DataFrame from JSON pulled from Eurostat.
 
         Returns:
