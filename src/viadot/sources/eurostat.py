@@ -52,55 +52,47 @@ class Eurostat(Source):
         self,
         *args,
         dataset_code: str,
-        params: dict = None,
-        columns: list = None,
-        tests: dict = None,
+        params: dict[str, str] | None = None,
+        columns: list[str] | None = None,
+        tests: dict | None = None,
         **kwargs
     ):
-        """It is using HTTPS REST request to pull the data.
+        """
+        Initialize the class with Eurostat API data fetching setup.
 
-        No API registration or API key are required. Data will pull based on parameters
-        provided in dynamic part of the url.
+        This method uses an HTTPS REST request to pull data from the Eurostat API.
+        No API registration or API key is required. Data is fetched based on the 
+        parameters provided in the dynamic part of the URL.
 
-        Example of url: https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/
-            data/TEIBS020/?format=JSON&lang=EN&indic=BS-CSMCI-BAL
-
+        Example URL:
         Static part: https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data
         Dynamic part: /TEIBS020/?format=JSON&lang=EN&indic=BS-CSMCI-BAL
 
-        Please note that for one dataset there are usually multiple data regarding
-        different subjects. In order to retrieve data that you are interested in you
-        have to provide parameters with codes into 'params'.
+        To retrieve specific data, parameters with codes must be provided in `params`.
 
         Args:
-            base_url (str): The base URL used to access the Eurostat API.
-                This parameter specifies the root URL for all requests made to the API.
-                It should not be modified unless the API changes its URL scheme.
-                Defaults to "https://ec.europa.eu/eurostat/api/dissemination/statistics
-                    /1.0/data/"
-        Args:
-            dataset_code (str): The code of Eurostat dataset that we would like
-                to upload.
-            params (Dict[str], optional):
-                A dictionary with optional URL parameters. The key represents the
-                parameter id, while the value is the code for a specific parameter,
-                for example: params = {'unit': 'EUR'} where "unit" is the parameter
-                that you would like to set and "EUR" is the code of the
-                specific parameter. You can add more than one parameter,
-                but only one code per parameter! So you CAN NOT provide list of codes
-                as in example 'params = {'unit': ['EUR', 'USD', 'PLN']}'
-                These parameters are REQUIRED in most cases to pull a specific
-                dataset from the API. Both parameter and code has to be provided
-                as a string! Defaults to None.
-            columns (List[str], optional): list of needed names of columns.
-                Names should be given as str's into the list. Defaults to None.
-            tests:
+            dataset_code (str): 
+                The code of the Eurostat dataset to be downloaded.
+            params (dict[str, str] | None, optional): 
+                A dictionary with optional URL parameters. Each key is a parameter ID, 
+                and the value is a specific parameter code, e.g., 
+                `params = {'unit': 'EUR'}` where "unit" is the parameter, and "EUR" is 
+                the code. Only one code per parameter is allowed. Defaults to None.
+            columns (list[str] | None, optional): 
+                A list of column names (as strings) that are required from the dataset.
+                Filters the data to only include the specified columns. 
+                Defaults to None.
+            tests (dict | None, optional): 
+                A dictionary containing test cases for the data, including:
                 - `column_size`: dict{column: size}
                 - `column_unique_values`: list[columns]
                 - `column_list_to_match`: list[columns]
-                - `dataset_row_count`: dict: {'min': number, 'max', number}
-                - `column_match_regex`: dict: {column: 'regex'}
-                - `column_sum`: dict: {column: {'min': number, 'max': number}}
+                - `dataset_row_count`: dict{'min': number, 'max': number}
+                - `column_match_regex`: dict{column: 'regex'}
+                - `column_sum`: dict{column: {'min': number, 'max': number}}.
+                Defaults to None.
+            **kwargs: 
+                Additional arguments passed to the class initializer.
         """
         self.dataset_code = dataset_code
         self.params = params
@@ -236,7 +228,6 @@ class Eurostat(Source):
             """Class representing a signal with keys, indexes, labels, and name.
             
                 Attributes:
-                -----------
                 signal_keys_list : list[str]
                     A list of keys representing unique identifiers for the signal.
                 signal_index_list : list[str]
