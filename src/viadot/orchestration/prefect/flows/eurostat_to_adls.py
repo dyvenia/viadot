@@ -1,39 +1,4 @@
-"""
-'eurostat_to_adls.py'.
-
-Prefect flow for the Eurostat Cloud API connector.
-
-This module provides a prefect flow function to use the Eurostat connector:
-- Call to the prefect task wrapper to get a final Data Frame from the connector.
-- Upload that data to Azure Data Lake Storage.
-
-Typical usage example:
-
-    eurostat_to_adls(
-        dataset_code: str,
-        params: dict = None,
-        columns: list = None,
-        tests: dict = None,
-        adls_path: str = None,
-        adls_credentials_secret: str = None,
-        overwrite_adls: bool = False,
-        adls_config_key: str = None,
-    )
-
-Functions:
-
-    eurostat_to_adls(
-        dataset_code: str,
-        params: dict = None,
-        columns: list = None,
-        tests: dict = None,
-        adls_path: str = None,
-        adls_credentials_secret: str = None,
-        overwrite_adls: bool = False,
-        adls_config_key: str = None,
-    ):
-        Flow to download data from Eurostat Cloud API and upload to ADLS.
-"""
+"""Download data from Eurostat and upload it to Azure Data Lake Storage."""
 
 from prefect import flow
 
@@ -60,6 +25,10 @@ def eurostat_to_adls(
 ) -> None:
     """
     Flow for downloading data from Eurostat to Azure Data Lake.
+
+    This module provides a prefect flow function to use the Eurostat connector:
+    - Call to the prefect task wrapper to get a final Data Frame from the connector.
+    - Upload that data to Azure Data Lake Storage.
 
     Args:
         name (str): The name of the flow.
