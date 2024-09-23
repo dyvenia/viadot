@@ -16,9 +16,9 @@
 
 ::: viadot.sources.databricks.Databricks
 
-::: viadot.sources.\_trino.Trino
+::: viadot.sources._trino.Trino
 
-::: viadot.sources.\_duckdb.DuckDB
+::: viadot.sources._duckdb.DuckDB
 
 ::: viadot.sources.sap_rfc.SAPRFC
 
