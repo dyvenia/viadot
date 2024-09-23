@@ -5,7 +5,7 @@ from prefect import flow
 from viadot.orchestration.prefect.tasks import eurostat_to_df
 
 
-def test_task_connexion():
+def test_task_connection():
     """Function for testing eurstat connection."""
 
     @flow
