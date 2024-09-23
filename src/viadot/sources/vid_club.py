@@ -82,7 +82,7 @@ class VidClub(Source):
             "Content-Type": "application/json",
         }
 
-        super().__init__(*args, **kwargs)
+        super().__init__(credentials=vid_club_credentials,*args, **kwargs)
 
     def build_query(
         self,
