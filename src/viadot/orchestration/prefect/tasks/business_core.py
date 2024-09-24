@@ -1,5 +1,5 @@
 from typing import Any, Dict
-from venv import logger
+from prefect.logging import get_run_logger
 from viadot.config import get_source_credentials
 from viadot.orchestration.prefect.exceptions import MissingSourceCredentialsError
 from viadot.orchestration.prefect.utils import get_credentials
@@ -39,6 +39,8 @@ def business_core_to_df(
 
     if not (credentials_secret or config_key):
         raise MissingSourceCredentialsError
+    
+    logger = get_run_logger()
     
     credentials = get_source_credentials(config_key) or get_credentials(credentials_secret)
 

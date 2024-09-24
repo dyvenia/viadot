@@ -1,6 +1,5 @@
 import json
 from typing import Any, Dict, Literal
-from venv import logger
 from pydantic import BaseModel
 
 import pandas as pd
@@ -124,7 +123,7 @@ class BusinessCore(Source):
             "Content-Type": "application/x-www-form-urlencoded",
             "Authorization": "Bearer " + self.generate_token(),
         }
-        logger.info("Downloading the data...")
+        self.logger.info("Downloading the data...")
         response = handle_api_response(
             url=self.url,
             headers=headers,
@@ -132,7 +131,7 @@ class BusinessCore(Source):
             data=payload,
             verify=self.verify,
         )
-        logger.info("Data was downloaded successfully.")
+        self.logger.info("Data was downloaded successfully.")
         return json.loads(response.text)
 
     def to_df(self, if_empty: Literal["warn", "fail", "skip"] = "skip") -> pd.DataFrame:
@@ -163,7 +162,7 @@ class BusinessCore(Source):
 
         data = self.get_data().get("MasterDataList")
         df = pd.DataFrame.from_dict(data)
-        logger.info(
+        self.logger.info(
             f"Data was successfully transformed into DataFrame: {len(df.columns)} columns and {len(df)} rows."
         )
         if df.empty is True:
