@@ -1,4 +1,4 @@
-"""SalesForce connectors."""
+"""Salesforce API connector."""
 
 from typing import Literal
 
