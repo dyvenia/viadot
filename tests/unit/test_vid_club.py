@@ -1,6 +1,6 @@
 import unittest
 from datetime import datetime
-from your_module import VidClub, ValidationError
+from src.viadot.sources.vid_club import VidClub, ValidationError
 
 class TestVidClub(unittest.TestCase):
     def setUp(self):
