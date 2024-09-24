@@ -5,9 +5,9 @@ from typing import Any, Dict, List, Literal, Tuple
 import pandas as pd
 
 import logging
-from ..exceptions import ValidationError
-from ..utils import handle_api_response
-from .base import Source
+from viadot.exceptions import ValidationError  
+from viadot.utils import handle_api_response  
+from viadot.sources.base import Source 
 
 
 # Configure logging
