@@ -1,6 +1,6 @@
 """Task for downloading data from Business Core API to a Parquet file."""
 
-from typing import Any, dict
+from typing import Any
 
 from pandas import DataFrame
 from prefect import task
