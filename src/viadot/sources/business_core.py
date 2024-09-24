@@ -8,17 +8,19 @@ from viadot.exceptions import APIError, CredentialError
 from viadot.sources.base import Source
 from viadot.utils import handle_api_response
 
+
 class BusinessCoreCredentials(BaseModel):
     """Validate Business Core credentials
 
     Two key values are held in the Business Core connector:
         - username: The unique username for the organization.
-        - password: Secret string of characters to have access to data.
+        - password: A secret string of characters for access to data.
 
     Args:
         BaseModel (pydantic.main.ModelMetaclass): A base class for creating
             Pydantic models.
     """
+
     username: str
     password: str
 
@@ -27,6 +29,7 @@ class BusinessCore(Source):
     """
     Source for getting data from Business Core ERP API.
     """
+
     def __init__(
         self,
         url: str = None,
@@ -51,17 +54,16 @@ class BusinessCore(Source):
                 "ToDate": None,}.
             credentials (Dict[str, Any], optional): Credentials stored in a dictionary. Required credentials: username,
                 password. Defaults to None.
-            config_key (str, optional): Credential key to dictionary where details are stored. Defaults to "BusinessCore".
+            config_key (str, optional): Credential key to the dictionary where details are stored. Defaults to "BusinessCore".
             verify (bool, optional): Whether or not verify certificates while connecting to an API. Defaults to True.
         Raises:
             CredentialError: When credentials are not found.
         """
 
-        
         raw_creds = credentials or get_source_credentials(config_key) or None
         if raw_creds is None:
             raise CredentialError("Missing Credentials.")
-        
+
         validated_creds = dict(BusinessCoreCredentials(**raw_creds))
 
         self.credentials = validated_creds
@@ -71,30 +73,33 @@ class BusinessCore(Source):
 
         super().__init__(*args, credentials=self.credentials, **kwargs)
 
-
     def generate_token(self) -> str:
         """
         Function for generating Business Core API token based on username and password.
         Returns:
-        string: Business Core API token.
+            string: Business Core API token.
         """
         url = "https://api.businesscore.ae/api/user/Login"
 
         payload = f'grant_type=password&username={self.credentials.get("username")}&password={self.credentials.get("password")}&scope='
         headers = {"Content-Type": "application/x-www-form-urlencoded"}
         response = handle_api_response(
-            url=url, headers=headers, method="GET", data=payload, verify=self.verify,
+            url=url,
+            headers=headers,
+            method="GET",
+            data=payload,
+            verify=self.verify,
         )
         token = json.loads(response.text).get("access_token")
         self.token = token
         return token
-     
+
     def clean_filters_dict(self) -> Dict:
         """
         Function for replacing 'None' with '&' in a dictionary. Needed for payload in 'x-www-form-urlencoded' from.
 
         Returns:
-        Dict: Dictionary with filters prepared for further use.
+            Dict: Dictionary with filters prepared for further use.
         """
         return {
             key: ("&" if val is None else val) for key, val in self.filters_dict.items()
@@ -105,7 +110,7 @@ class BusinessCore(Source):
         Function for obtaining data in dictionary format from Business Core API.
 
         Returns:
-        Dict: Dictionary with data downloaded from Business Core API.
+            Dict: Dictionary with data downloaded from Business Core API.
         """
         filters = self.clean_filters_dict()
 
@@ -169,6 +174,3 @@ class BusinessCore(Source):
             self._handle_if_empty(if_empty)
 
         return df
-
-
-    
