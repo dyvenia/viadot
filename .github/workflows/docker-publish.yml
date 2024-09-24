@@ -40,7 +40,7 @@ jobs:
         with:
           context: .
           file: docker/Dockerfile
-          platforms: linux/amd64
+          platforms: linux/amd64,linux/arm64
           push: true
           target: viadot-lite
           tags: ghcr.io/${{ github.repository }}/viadot-lite:${{ github.event.inputs.tag }}
@@ -50,7 +50,7 @@ jobs:
         with:
           context: .
           file: docker/Dockerfile
-          platforms: linux/amd64
+          platforms: linux/amd64,linux/arm64
           push: true
           target: viadot-aws
           tags: ghcr.io/${{ github.repository }}/viadot-aws:${{ github.event.inputs.tag }}
@@ -60,7 +60,7 @@ jobs:
         with:
           context: .
           file: docker/Dockerfile
-          platforms: linux/amd64
+          platforms: linux/amd64,linux/arm64
           push: true
           target: viadot-azure
           tags: ghcr.io/${{ github.repository }}/viadot-azure:${{ github.event.inputs.tag }}
