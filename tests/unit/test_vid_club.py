@@ -7,7 +7,7 @@ class TestVidClub(unittest.TestCase):
         """Setup VidClub instance before each test."""
         # Sample input data for the constructor
         self.vid_club = VidClub(
-            source="jobs",
+            endpoint="jobs",
             vid_club_credentials={"token": "test-token"}
         )
 
@@ -18,7 +18,7 @@ class TestVidClub(unittest.TestCase):
         to_date = "2023-01-31"
         api_url = "https://example.com/api/"
         items_per_page = 50
-        source = "jobs"
+        endpoint = "jobs"
         region = "pl"
 
         # Expected result URL
@@ -27,7 +27,7 @@ class TestVidClub(unittest.TestCase):
         )
 
         # Check if the method returns the correct URL
-        result_url = self.vid_club.build_query(from_date, to_date, api_url, items_per_page, source, region)
+        result_url = self.vid_club.build_query(from_date, to_date, api_url, items_per_page, endpoint, region)
         self.assertEqual(result_url.strip(), expected_url.strip())
         
     def test_intervals(self):

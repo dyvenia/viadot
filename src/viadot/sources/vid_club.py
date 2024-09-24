@@ -26,7 +26,7 @@ class VidClub(Source):
     def __init__(
         self,
         *args,
-        source: Literal["jobs", "product", "company", "survey"] = None,
+        endpoint: Literal["jobs", "product", "company", "survey"] = None,
         from_date: str = "2022-03-22",
         to_date: str = None,
         items_per_page: int = 100,
@@ -42,7 +42,7 @@ class VidClub(Source):
         Create an instance of VidClub.
 
         Args:
-            source (Literal["jobs", "product", "company", "survey"], optional): The
+            endpoint (Literal["jobs", "product", "company", "survey"], optional): The
             endpoint source to be accessed. Defaults to None.
             from_date (str, optional): Start date for the query, by default is the
             oldest date in the data 2022-03-22.
@@ -66,7 +66,7 @@ class VidClub(Source):
             timeout (int, optional): The time (in seconds) to wait while running this
                 task before a timeout occurs. Defaults to 3600.
         """
-        self.source = source
+        self.endpoint = endpoint
         self.from_date = from_date
         self.to_date = to_date
         self.items_per_page = items_per_page
@@ -90,7 +90,7 @@ class VidClub(Source):
         to_date: str,
         api_url: str,
         items_per_page: int,
-        source: Literal["jobs", "product", "company", "survey"] = None,
+        endpoint: Literal["jobs", "product", "company", "survey"] = None,
         region: Literal["bg", "hu", "hr", "pl", "ro", "si", "all"] = None,
     ) -> str:
         """
@@ -102,7 +102,7 @@ class VidClub(Source):
                 datetime.today().strftime("%Y-%m-%d").
             api_url (str): Generic part of the URL to Vid Club API.
             items_per_page (int): number of entries per page.
-            source (Literal["jobs", "product", "company", "survey"], optional):
+            endpoint (Literal["jobs", "product", "company", "survey"], optional):
                 The endpoint source to be accessed. Defaults to None.
             region (Literal["bg", "hu", "hr", "pl", "ro", "si", "all"], optional):
                 Region filter for the query. Defaults to None
@@ -115,12 +115,12 @@ class VidClub(Source):
         Raises:
             ValidationError: If any source different than the ones in the list are used.
         """
-        if source in ["jobs", "product", "company"]:
+        if endpoint in ["jobs", "product", "company"]:
             region_url_string = f"&region={region}" if region else ""
-            url = f"""{api_url}{source}?from={from_date}&to={to_date}
+            url = f"""{api_url}{endpoint}?from={from_date}&to={to_date}
             {region_url_string}&limit={items_per_page}"""
-        elif source == "survey":
-            url = f"{api_url}{source}?language=en&type=question"
+        elif endpoint == "survey":
+            url = f"{api_url}{endpoint}?language=en&type=question"
         else:
             raise ValidationError(
                 "Pick one these sources: jobs, product, company, survey"
@@ -178,7 +178,7 @@ class VidClub(Source):
 
     def check_connection(
         self,
-        source: Literal["jobs", "product", "company", "survey"] = None,
+        endpoint: Literal["jobs", "product", "company", "survey"] = None,
         from_date: str = "2022-03-22",
         to_date: str = None,
         items_per_page: int = 100,
@@ -193,7 +193,7 @@ class VidClub(Source):
         in the future from page number to 'next' id.
 
         Args:
-            source (Literal["jobs", "product", "company", "survey"], optional):
+            endpoint (Literal["jobs", "product", "company", "survey"], optional):
                 The endpoint source to be accessed. Defaults to None.
             from_date (str, optional): Start date for the query, by default is the
                 oldest date in the data 2022-03-22.
@@ -226,7 +226,7 @@ class VidClub(Source):
             url = self.credentials["url"]
 
         first_url = self.build_query(
-            source=source,
+            endpoint=endpoint,
             from_date=from_date,
             to_date=to_date,
             api_url=url,
@@ -242,7 +242,7 @@ class VidClub(Source):
 
     def get_response(
         self,
-        source: Literal["jobs", "product", "company", "survey"] = None,
+        endpoint: Literal["jobs", "product", "company", "survey"] = None,
         from_date: str = "2022-03-22",
         to_date: str = None,
         items_per_page: int = 100,
@@ -254,7 +254,7 @@ class VidClub(Source):
         It gets the response from the API queried and transforms it into DataFrame.
 
         Args:
-            source (Literal["jobs", "product", "company", "survey"], optional):
+            endpoint (Literal["jobs", "product", "company", "survey"], optional):
                 The endpoint source to be accessed. Defaults to None.
             from_date (str, optional): Start date for the query, by default is the
                 oldest date in the data 2022-03-22.
@@ -274,7 +274,7 @@ class VidClub(Source):
             ValidationError: If any source different than the ones in the list are used.
         """
         headers = self.headers
-        if source not in ["jobs", "product", "company", "survey"]:
+        if endpoint not in ["jobs", "product", "company", "survey"]:
             raise ValidationError(
                 "The source has to be: jobs, product, company or survey"
             )
@@ -282,7 +282,7 @@ class VidClub(Source):
             to_date = datetime.today().strftime("%Y-%m-%d")
 
         response, first_url = self.check_connection(
-            source=source,
+            endpoint=endpoint,
             from_date=from_date,
             to_date=to_date,
             items_per_page=items_per_page,
@@ -317,7 +317,7 @@ class VidClub(Source):
                 response = response_api.json()
                 df_page = pd.json_normalize(response["data"])
                 df_page = pd.DataFrame(df_page)
-                if source == "product":
+                if endpoint == "product":
                     df_page = df_page.transpose()
                 length = df_page.shape[0]
                 df = pd.concat((df, df_page), axis=0)
@@ -354,7 +354,7 @@ class VidClub(Source):
             for start, end in zip(starts, ends):
                 logger.info(f"ingesting data for dates [{start}]-[{end}]...")
                 df = self.get_response(
-                    source=self.source,
+                    endpoint=self.endpoint,
                     from_date=start,
                     to_date=end,
                     items_per_page=self.items_per_page,
@@ -367,7 +367,7 @@ class VidClub(Source):
                     df = pd.DataFrame(dfs_list[0])
         else:
             df = self.get_response(
-                source=self.source,
+                endpoint=self.endpoint,
                 from_date=self.from_date,
                 to_date=self.to_date,
                 items_per_page=self.items_per_page,

@@ -15,7 +15,7 @@ def test_vid_club_to_adls():
     assert not lake.exists(TEST_FILE_PATH)
 
     vid_club_to_adls(
-        source=TEST_SOURCE,
+        endpoint=TEST_SOURCE,
         from_date=TEST_FROM_DATE,
         to_date=TEST_TO_DATE,
         adls_path=TEST_FILE_PATH,

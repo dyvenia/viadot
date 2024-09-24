@@ -11,7 +11,7 @@ from viadot.orchestration.prefect.exceptions import MissingSourceCredentialsErro
 @task(retries=3, log_prints=True, retry_delay_seconds=10, timeout_seconds=2 * 60 * 60)
 def vid_club_to_df(
     *args: List[Any],
-    source: Literal["jobs", "product", "company", "survey"] = None,
+    endpoint: Literal["jobs", "product", "company", "survey"] = None,
     from_date: str = "2022-03-22",
     to_date: str = None,
     items_per_page: int = 100,
@@ -28,7 +28,7 @@ def vid_club_to_df(
     Task to downloading data from Vid Club APIs to Pandas DataFrame.
 
     Args:
-        source (Literal["jobs", "product", "company", "survey"], optional): The endpoint
+        endpoint (Literal["jobs", "product", "company", "survey"], optional): The endpoint
             source to be accessed. Defaults to None.
         from_date (str, optional): Start date for the query, by default is the oldest
             date in the data 2022-03-22.
@@ -62,7 +62,7 @@ def vid_club_to_df(
 
     vc_obj = VidClub(
         args=args,
-        source=source,
+        endpoint=endpoint,
         from_date=from_date,
         to_date=to_date,
         items_per_page=items_per_page,

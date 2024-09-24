@@ -24,7 +24,7 @@ def test_vid_club_to_df(mocker):
 
 
     df = vid_club_to_df(
-        source="company",
+        endpoint="company",
         from_date="2023-01-01",
         to_date="2023-12-31",
         items_per_page=100,
@@ -42,7 +42,7 @@ def test_vid_club_to_df_missing_credentials(mocker):
 
     with pytest.raises(MissingSourceCredentialsError):
         vid_club_to_df(
-            source="company",
+            endpoint="company",
             from_date="2023-01-01",
             to_date="2023-12-31",
             items_per_page=100,
