@@ -1,8 +1,11 @@
+"""Source for connecting to Business Core API."""
+
 import json
-from typing import Any, Dict, Literal
-from pydantic import BaseModel
+from typing import Any, Literal
 
 import pandas as pd
+from pydantic import BaseModel
+
 from viadot.config import get_source_credentials
 from viadot.exceptions import APIError, CredentialError
 from viadot.sources.base import Source
@@ -10,7 +13,7 @@ from viadot.utils import handle_api_response
 
 
 class BusinessCoreCredentials(BaseModel):
-    """Validate Business Core credentials
+    """Validate Business Core credentials.
 
     Two key values are held in the Business Core connector:
         - username: The unique username for the organization.
@@ -26,43 +29,40 @@ class BusinessCoreCredentials(BaseModel):
 
 
 class BusinessCore(Source):
-    """
-    Source for getting data from Business Core ERP API.
-    """
+    """Class to connect to Business Core ERP API."""
 
     def __init__(
         self,
-        url: str = None,
-        filters_dict: Dict[str, Any] = {
-            "BucketCount": None,
-            "BucketNo": None,
-            "FromDate": None,
-            "ToDate": None,
-        },
-        credentials: Dict[str, Any] = None,
+        url: str | None = None,
+        filters_dict: dict[str, Any] | None = None,
+        credentials: dict[str, Any] | None = None,
         config_key: str = "BusinessCore",
         verify: bool = True,
         *args,
         **kwargs,
     ):
-        """
-        Creating an instance of BusinessCore source class.
+        """Creating an instance of BusinessCore source class.
+
         Args:
-            url (str, optional): Base url to a view in Business Core API. Defaults to None.
-            filters_dict (Dict[str, Any], optional): Filters in form of dictionary. Available filters: 'BucketCount',
-                'BucketNo', 'FromDate', 'ToDate'.  Defaults to {"BucketCount": None,"BucketNo": None,"FromDate": None,
-                "ToDate": None,}.
-            credentials (Dict[str, Any], optional): Credentials stored in a dictionary. Required credentials: username,
-                password. Defaults to None.
-            config_key (str, optional): Credential key to the dictionary where details are stored. Defaults to "BusinessCore".
-            verify (bool, optional): Whether or not verify certificates while connecting to an API. Defaults to True.
+            url (str, optional): Base url to a view in Business Core API.
+                Defaults to None.
+            filters_dict (Dict[str, Any], optional): Filters in form of dictionary.
+                Available filters: 'BucketCount', 'BucketNo', 'FromDate', 'ToDate'.
+                Defaults to None.
+            credentials (Dict[str, Any], optional): Credentials stored in a dictionary.
+                Required credentials: username, password. Defaults to None.
+            config_key (str, optional): Credential key to the dictionary where details
+                are stored. Defaults to "BusinessCore".
+            verify (bool, optional): Whether or not verify certificates while
+                connecting to an API. Defaults to True.
+
         Raises:
             CredentialError: When credentials are not found.
         """
-
         raw_creds = credentials or get_source_credentials(config_key) or None
+        error_message = "Missing Credentials."
         if raw_creds is None:
-            raise CredentialError("Missing Credentials.")
+            raise CredentialError(error_message)
 
         validated_creds = dict(BusinessCoreCredentials(**raw_creds))
 
@@ -74,8 +74,8 @@ class BusinessCore(Source):
         super().__init__(*args, credentials=self.credentials, **kwargs)
 
     def generate_token(self) -> str:
-        """
-        Function for generating Business Core API token based on username and password.
+        """Function for generating Business Core token based on username and password.
+
         Returns:
             string: Business Core API token.
         """
@@ -94,9 +94,10 @@ class BusinessCore(Source):
         self.token = token
         return token
 
-    def clean_filters_dict(self) -> Dict:
-        """
-        Function for replacing 'None' with '&' in a dictionary. Needed for payload in 'x-www-form-urlencoded' from.
+    def clean_filters_dict(self) -> dict:
+        """Function for replacing 'None' with '&' in a dictionary.
+
+            Needed for payload in 'x-www-form-urlencoded' from.
 
         Returns:
             Dict: Dictionary with filters prepared for further use.
@@ -105,9 +106,8 @@ class BusinessCore(Source):
             key: ("&" if val is None else val) for key, val in self.filters_dict.items()
         }
 
-    def get_data(self) -> Dict:
-        """
-        Function for obtaining data in dictionary format from Business Core API.
+    def get_data(self) -> dict:
+        """Function for obtaining data in dictionary format from Business Core API.
 
         Returns:
             Dict: Dictionary with data downloaded from Business Core API.
@@ -140,11 +140,11 @@ class BusinessCore(Source):
         return json.loads(response.text)
 
     def to_df(self, if_empty: Literal["warn", "fail", "skip"] = "skip") -> pd.DataFrame:
-        """
-        Function for transforming data from dictionary to pd.DataFrame.
+        """Function for transforming data from dictionary to pd.DataFrame.
 
         Args:
-            if_empty (Literal["warn", "fail", "skip"], optional): What to do if output DataFrame is empty. Defaults to "skip".
+            if_empty (Literal["warn", "fail", "skip"], optional):
+            What to do if output DataFrame is empty. Defaults to "skip".
 
         Returns:
             pd.DataFrame: DataFrame with data downloaded from Business Core API view.
@@ -163,7 +163,8 @@ class BusinessCore(Source):
             "GetSalesOrderData",
             "GetSalesQuotationData",
         ]:
-            raise APIError(f"View {view} currently not available.")
+            error_message = f"View {view} currently not available."
+            raise APIError(error_message)
 
         data = self.get_data().get("MasterDataList")
         df = pd.DataFrame.from_dict(data)

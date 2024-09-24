@@ -1,8 +1,7 @@
-from pathlib import Path
 from pandas import DataFrame
-
 from prefect import flow
 from viadot.orchestration.prefect.tasks.business_core import business_core_to_df
+
 
 URL = "https://api.businesscore.ae/api/LappDataIntegrationAPI/GetCustomerData"
 PATH = "/home/viadot/data/middle_east/customer_master/customer_master_full_data.parquet"
