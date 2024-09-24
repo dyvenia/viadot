@@ -47,7 +47,7 @@ class SalesForce(Source):
         client_id: str = "viadot",
         **kwargs,
     ):
-        """A class for download and upsert data from Salesforce.
+        """A class for downloading data from Salesforce.
 
         Args:
             credentials (dict(str, any), optional): Salesforce credentials as a
