@@ -18,8 +18,8 @@ def vid_club_to_df(
     region: Literal["bg", "hu", "hr", "pl", "ro", "si", "all"] = None,
     days_interval: int = 30,
     cols_to_drop: List[str] = None,
-    vid_club_credentials: Dict[str, Any] = None,
-    vidclub_credentials_secret: str = "VIDCLUB",
+    azure_key_vault_secret: str | None = None,
+    adls_config_key: str | None = None,
     validate_df_dict: dict = None,
     timeout: int = 3600,
     **kwargs: Dict[str, Any],
@@ -41,10 +41,10 @@ def vid_club_to_df(
         days_interval (int, optional): Days specified in date range per API call
             (test showed that 30-40 is optimal for performance). Defaults to 30.
         cols_to_drop (List[str], optional): List of columns to drop. Defaults to None.
-        vid_club_credentials (Dict[str, Any], optional): Stores the credentials
-            information. Defaults to None.
-        vidclub_credentials_secret (str, optional): The name of the secret in
-            Azure Key Vault or Prefect or local_config file. Defaults to "VIDCLUB".
+        config_key (str, optional): The key in the viadot config holding relevant
+            credentials. Defaults to None.
+        azure_key_vault_secret (Optional[str], optional): The name of the Azure Key
+            Vault secret where credentials are stored. Defaults to None.
         validate_df_dict (dict, optional): A dictionary with optional list of tests
             to verify the output
             dataframe. If defined, triggers the `validate_df` task from task_utils.
@@ -54,11 +54,11 @@ def vid_club_to_df(
 
     Returns: Pandas DataFrame
     """
-    if not vid_club_credentials:
-        vid_club_credentials = get_credentials(vidclub_credentials_secret)
-
-    if not vid_club_credentials:
+    if not (azure_key_vault_secret or adls_config_key):
         raise MissingSourceCredentialsError
+
+    if not adls_config_key:
+        credentials = get_credentials(azure_key_vault_secret)
 
     vc_obj = VidClub(
         args=args,
@@ -69,12 +69,10 @@ def vid_club_to_df(
         region=region,
         days_interval=days_interval,
         cols_to_drop=cols_to_drop,
-        vid_club_credentials=vid_club_credentials,
+        vid_club_credentials=credentials,
         validate_df_dict=validate_df_dict,
         timeout=timeout,
         kwargs=kwargs
                 )
 
-    vc_dataframe = vc_obj.to_df()
-
-    return vc_dataframe
+    return vc_obj.to_df()

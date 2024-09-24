@@ -22,8 +22,8 @@ def vid_club_to_adls(
     region: Literal["bg", "hu", "hr", "pl", "ro", "si", "all"] = None,
     days_interval: int = 30,
     cols_to_drop: List[str] = None,
-    vid_club_credentials: Dict[str, Any] = None,
-    vidclub_credentials_secret: str = "VIDCLUB",
+    config_key: str | None = None,
+    azure_key_vault_secret: str | None = None,
     adls_config_key: str | None = None,
     adls_azure_key_vault_secret: str | None = None,
     adls_path: str | None = None,
@@ -38,8 +38,8 @@ def vid_club_to_adls(
     Then upload it to Azure Data Lake.
 
     Args:
-        endpoint (Literal["jobs", "product", "company", "survey"], optional): The endpoint
-            source to be accessed. Defaults to None.
+        endpoint (Literal["jobs", "product", "company", "survey"], optional): The 
+        endpoint source to be accessed. Defaults to None.
         from_date (str, optional): Start date for the query, by default is the oldest
             date in the data 2022-03-22.
         to_date (str, optional): End date for the query. By default None,
@@ -51,10 +51,10 @@ def vid_club_to_adls(
         days_interval (int, optional): Days specified in date range per API call
             (test showed that 30-40 is optimal for performance). Defaults to 30.
         cols_to_drop (List[str], optional): List of columns to drop. Defaults to None.
-        vid_club_credentials (Dict[str, Any], optional): Stores the credentials
-            information. Defaults to None.
-        vidclub_credentials_secret (str, optional): The name of the secret in
-            Azure Key Vault or Prefect or local_config file. Defaults to "VIDCLUB".
+        config_key (str, optional): The key in the viadot config holding relevant
+            credentials. Defaults to None.
+        azure_key_vault_secret (Optional[str], optional): The name of the Azure Key
+            Vault secret where credentials are stored. Defaults to None.
         adls_config_key (Optional[str], optional): The key in the viadot config holding
             relevant credentials. Defaults to None.
         adls_azure_key_vault_secret (Optional[str], optional): The name of the Azure Key
@@ -81,8 +81,8 @@ def vid_club_to_adls(
         region=region,
         days_interval=days_interval,
         cols_to_drop=cols_to_drop,
-        vid_club_credentials=vid_club_credentials,
-        vidclub_credentials_secret=vidclub_credentials_secret,
+        config_key=config_key,
+        azure_key_vault_secret=azure_key_vault_secret,
         validate_df_dict=validate_df_dict,
         timeout=timeout,
         kawrgs=kwargs
