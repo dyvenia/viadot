@@ -843,6 +843,7 @@ def anonymize_df(
     mask_value: str = "***",
     date_column: str | None = None,
     days: int | None = None,
+    logger: logging.Logger | None = None,
 ) -> pd.DataFrame:
     """
     Function that anonymize data in the dataframe in selected columns.
