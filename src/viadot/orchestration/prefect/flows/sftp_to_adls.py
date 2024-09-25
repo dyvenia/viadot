@@ -1,7 +1,5 @@
 """Download data from a SFTP server to Azure Data Lake Storage."""
 
-from typing import Any
-
 from prefect import flow
 from prefect.task_runners import ConcurrentTaskRunner
 
@@ -17,7 +15,6 @@ from viadot.orchestration.prefect.tasks import df_to_adls, sftp_to_df
     task_runner=ConcurrentTaskRunner,
 )
 def sftp_to_adls(
-    credentials: dict[str, Any] | None = None,
     config_key: str | None = None,
     azure_key_vault_secret: str | None = None,
     file_name: str | None = None,
@@ -31,8 +28,6 @@ def sftp_to_adls(
     r"""Flow to download data from a SFTP server to Azure Data Lake.
 
     Args:
-        credentials (dict[str, Any], optional): SFTP credentials as a dictionary.
-            Defaults to None.
         config_key (str, optional): The key in the viadot config holding relevant
             credentials. Defaults to None.
         azure_key_vault_secret (str, optional): The name of the Azure Key Vault secret
@@ -53,7 +48,6 @@ def sftp_to_adls(
             Defaults to True.
     """
     data_frame = sftp_to_df(
-        credentials=credentials,
         config_key=config_key,
         azure_key_vault_secret=azure_key_vault_secret,
         file_name=file_name,
