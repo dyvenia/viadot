@@ -1,8 +1,7 @@
 """'test_sftp.py'."""
 
-import json
-from collections import defaultdict
 from io import BytesIO, StringIO
+import json
 
 import pandas as pd
 import pytest
@@ -10,6 +9,7 @@ import pytest
 from viadot.exceptions import CredentialError
 from viadot.sources import SftpConnector
 from viadot.sources.sftp import SftpCredentials
+
 
 variables = {
     "credentials": {
@@ -25,7 +25,7 @@ variables = {
 class TestSftpCredentials:
     """Test SFTP Credentials Class."""
 
-    @pytest.mark.basic()
+    @pytest.mark.basic
     def test_sftp_credentials(self):
         """Test SFTP credentials."""
         SftpCredentials(
@@ -37,14 +37,14 @@ class TestSftpCredentials:
         )
 
 
-@pytest.mark.basic()
+@pytest.mark.basic
 def test_sftp_connector_initialization_without_credentials():
     """Test SFTP server without credentials."""
     with pytest.raises(CredentialError, match="Missing credentials."):
         SftpConnector(credentials=None)
 
 
-@pytest.mark.connect()
+@pytest.mark.connect
 def test_get_connection_without_rsa_key(mocker):
     """Test `get_connection()` method without specifying the RSA key."""
     mock_transport = mocker.patch("viadot.sources.sftp.paramiko.Transport")
@@ -62,7 +62,7 @@ def test_get_connection_without_rsa_key(mocker):
     mock_sftp_client.assert_called_once()
 
 
-@pytest.mark.connect()
+@pytest.mark.connect
 def test_get_connection_with_rsa_key(mocker):
     """Test SFTP `get_connection` method with ras_key."""
     mock_ssh_client = mocker.patch("viadot.sources.sftp.paramiko.SSHClient")
@@ -94,11 +94,13 @@ def test_get_connection_with_rsa_key(mocker):
     assert connector.conn is not None
 
 
-@pytest.mark.functions()
+@pytest.mark.functions
 def test_to_df_with_csv(mocker):
     """Test SFTP `to_df` method with csv."""
-    mock_getfo_file = mocker.patch.object(SftpConnector, "_getfo_file", autospec=True)
-    mock_getfo_file.return_value = BytesIO(b"col1,col2\n1,2\n3,4\n")
+    mock_get_file_object = mocker.patch.object(
+        SftpConnector, "_get_file_object", autospec=True
+    )
+    mock_get_file_object.return_value = BytesIO(b"col1,col2\n1,2\n3,4\n")
 
     connector = SftpConnector(credentials=variables["credentials"])
     df = connector.to_df(file_name="test.csv", sep=",")
@@ -113,11 +115,13 @@ def test_to_df_with_csv(mocker):
     ]
 
 
-@pytest.mark.functions()
+@pytest.mark.functions
 def test_to_df_with_tsv(mocker):
     """Test SFTP `to_df` method with tsv."""
-    mock_getfo_file = mocker.patch.object(SftpConnector, "_getfo_file", autospec=True)
-    mock_getfo_file.return_value = BytesIO(b"col1,col2\n1,2\n3,4\n")
+    mock_get_file_object = mocker.patch.object(
+        SftpConnector, "_get_file_object", autospec=True
+    )
+    mock_get_file_object.return_value = BytesIO(b"col1,col2\n1,2\n3,4\n")
 
     connector = SftpConnector(credentials=variables["credentials"])
     df = connector.to_df(file_name="test.tsv", sep=",")
@@ -132,12 +136,14 @@ def test_to_df_with_tsv(mocker):
     ]
 
 
-@pytest.mark.functions()
+@pytest.mark.functions
 def test_to_df_with_json(mocker):
     """Test SFTP `to_df` method with json."""
-    mock_getfo_file = mocker.patch.object(SftpConnector, "_getfo_file", autospec=True)
+    mock_get_file_object = mocker.patch.object(
+        SftpConnector, "_get_file_object", autospec=True
+    )
     json_data = json.dumps({"col1": [1, 3], "col2": [2, 4]})
-    mock_getfo_file.return_value = BytesIO(json_data.encode("utf-8"))
+    mock_get_file_object.return_value = BytesIO(json_data.encode("utf-8"))
 
     connector = SftpConnector(credentials=variables["credentials"])
     df = connector.to_df(file_name="test.json")
@@ -155,23 +161,23 @@ def test_to_df_with_json(mocker):
     ]
 
 
-@pytest.mark.functions()
-def test_list_directory(mocker):
-    """Test SFTP `_list_directory` method."""
+@pytest.mark.functions
+def test_ls(mocker):
+    """Test SFTP `_ls` method."""
     mock_sftp = mocker.MagicMock()
     mock_sftp.listdir.return_value = ["file1.txt", "file2.txt"]
 
     connector = SftpConnector(credentials=variables["credentials"])
     connector.conn = mock_sftp
-    files_list = connector._list_directory()
+    files_list = connector._ls()
 
     assert files_list == ["file1.txt", "file2.txt"]
     mock_sftp.listdir.assert_called_once_with(".")
 
 
-@pytest.mark.functions()
-def test_recursive_listdir(mocker):
-    """Test SFTP `_recursive_listdir` method."""
+@pytest.mark.functions
+def test_recursive_ls(mocker):
+    """Test SFTP recursive `_ls` method."""
     mock_sftp = mocker.MagicMock()
     mock_attr = mocker.MagicMock()
     mock_attr.st_mode = 0
@@ -180,12 +186,12 @@ def test_recursive_listdir(mocker):
 
     connector = SftpConnector(credentials=variables["credentials"])
     mocker.patch.object(connector, "conn", mock_sftp)
-    result = connector._recursive_listdir("subdir")
+    result = connector._ls("subdir", recursive=True)
 
     assert list(result) == ["subdir"]
 
 
-@pytest.mark.functions()
+@pytest.mark.functions
 def test_get_files_list(mocker):
     """Test SFTP `get_files_list` method."""
     mock_list_directory = mocker.patch.object(
@@ -199,19 +205,7 @@ def test_get_files_list(mocker):
     mock_list_directory.assert_called_once_with(path="test_path")
 
 
-@pytest.mark.functions()
-def test_process_defaultdict_single_directory():
-    """Test SFTP `_process_defaultdict` method."""
-    connector = SftpConnector(credentials=variables["credentials"])
-    data = defaultdict(list)
-    data["dir1"].extend(["file1.txt", "file2.txt"])
-    result = connector._process_defaultdict(data)
-    expected = ["dir1/file1.txt", "dir1/file2.txt"]
-
-    assert result == expected
-
-
-@pytest.mark.functions()
+@pytest.mark.functions
 def test_close_conn(mocker):
     """Test SFTP `_close_conn` method."""
     mock_conn = mocker.MagicMock()
