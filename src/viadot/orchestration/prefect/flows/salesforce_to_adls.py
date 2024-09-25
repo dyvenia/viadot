@@ -1,4 +1,4 @@
-"""Download data from SalesForce API to Azure Data Lake Storage."""
+"""Download data from Salesforce API to Azure Data Lake Storage."""
 
 from prefect import flow
 from prefect.task_runners import ConcurrentTaskRunner
@@ -7,8 +7,8 @@ from viadot.orchestration.prefect.tasks import df_to_adls, salesforce_to_df
 
 
 @flow(
-    name="SalesForce extraction to ADLS",
-    description="Extract data from SalesForce and load "
+    name="Salesforce extraction to ADLS",
+    description="Extract data from Salesforce and load "
     + "it into Azure Data Lake Storage.",
     retries=1,
     retry_delay_seconds=60,
@@ -28,7 +28,7 @@ def salesforce_to_adls(
     adls_path: str | None = None,
     adls_path_overwrite: bool = False,
 ) -> None:
-    """Flow to download data from SalesForce API to Azure Data Lake.
+    """Flow to download data from Salesforce API to Azure Data Lake.
 
     Args:
         config_key (str, optional): The key in the viadot config holding relevant

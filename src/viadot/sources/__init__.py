@@ -11,7 +11,7 @@ from .genesys import Genesys
 from .hubspot import Hubspot
 from .mindful import Mindful
 from .outlook import Outlook
-from .salesforce import SalesForce
+from .salesforce import Salesforce
 from .sharepoint import Sharepoint
 from .sql_server import SQLServer
 from .supermetrics import Supermetrics, SupermetricsCredentials

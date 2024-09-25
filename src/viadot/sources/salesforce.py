@@ -4,7 +4,7 @@ from typing import Literal
 
 import pandas as pd
 from pydantic import BaseModel
-from simple_salesforce import Salesforce
+from simple_salesforce import Salesforce as SimpleSalesforce
 
 from viadot.config import get_source_credentials
 from viadot.exceptions import CredentialError
@@ -12,7 +12,7 @@ from viadot.sources.base import Source
 from viadot.utils import add_viadot_metadata_columns
 
 
-class SalesForceCredentials(BaseModel):
+class SalesforceCredentials(BaseModel):
     """Checking for values in Salesforce credentials dictionary.
 
     Two key values are held in the Salesforce connector:
@@ -30,7 +30,7 @@ class SalesForceCredentials(BaseModel):
     token: str
 
 
-class SalesForce(Source):
+class Salesforce(Source):
     """Class implementing the Salesforce API.
 
     Documentation for this API is available at:
@@ -40,7 +40,7 @@ class SalesForce(Source):
     def __init__(
         self,
         *args,
-        credentials: SalesForceCredentials | None = None,
+        credentials: SalesforceCredentials | None = None,
         config_key: str = "salesforce",
         env: Literal["DEV", "QA", "PROD"] = "DEV",
         domain: str = "test",
@@ -73,11 +73,11 @@ class SalesForce(Source):
             message = "'username', 'password' and 'token' credentials are required."
             raise CredentialError(message)
 
-        validated_creds = dict(SalesForceCredentials(**credentials))
+        validated_creds = dict(SalesforceCredentials(**credentials))
         super().__init__(*args, credentials=validated_creds, **kwargs)
 
         if env.upper() == "DEV" or env.upper() == "QA":
-            self.salesforce = Salesforce(
+            self.salesforce = SimpleSalesforce(
                 username=self.credentials["username"],
                 password=self.credentials["password"],
                 security_token=self.credentials["token"],
@@ -86,7 +86,7 @@ class SalesForce(Source):
             )
 
         elif env.upper() == "PROD":
-            self.salesforce = Salesforce(
+            self.salesforce = SimpleSalesforce(
                 username=self.credentials["username"],
                 password=self.credentials["password"],
                 security_token=self.credentials["token"],

@@ -1,11 +1,11 @@
-"""Task to download data from SalesForce API into a Pandas DataFrame."""
+"""Task to download data from Salesforce API into a Pandas DataFrame."""
 
 import pandas as pd
 from prefect import task
 
 from viadot.orchestration.prefect.exceptions import MissingSourceCredentialsError
 from viadot.orchestration.prefect.utils import get_credentials
-from viadot.sources import SalesForce
+from viadot.sources import Salesforce
 
 
 @task(retries=3, log_prints=True, retry_delay_seconds=10, timeout_seconds=60 * 60)
@@ -49,7 +49,7 @@ def salesforce_to_df(
     if not config_key:
         credentials = get_credentials(azure_key_vault_secret)
 
-    salesforce = SalesForce(
+    salesforce = Salesforce(
         credentials=credentials,
         config_key=config_key,
         env=env,
