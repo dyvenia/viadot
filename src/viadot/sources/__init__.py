@@ -3,8 +3,10 @@
 from importlib.util import find_spec
 
 from .supermetrics import Supermetrics, SupermetricsCredentials
+from ._duckdb import DuckDB
+from ._trino import Trino
 from .cloud_for_customers import CloudForCustomers
-from .duckdb import DuckDB
+from .epicor import Epicor
 from .exchange_rates import ExchangeRates
 from .genesys import Genesys
 from .hubspot import Hubspot
@@ -12,12 +14,12 @@ from .mindful import Mindful
 from .outlook import Outlook
 from .sharepoint import Sharepoint
 from .sql_server import SQLServer
-from .trino import Trino
 from .uk_carbon_intensity import UKCarbonIntensity
 
 
 __all__ = [
     "CloudForCustomers",
+    "Epicor",
     "ExchangeRates",
     "Genesys",
     "Outlook",
@@ -37,7 +39,7 @@ if find_spec("adlfs"):
     __all__.extend(["AzureDataLake"])
 
 if find_spec("duckdb"):
-    from viadot.sources.duckdb import DuckDB  # noqa: F401
+    from viadot.sources._duckdb import DuckDB  # noqa: F401
 
     __all__.extend(["DuckDB"])
 

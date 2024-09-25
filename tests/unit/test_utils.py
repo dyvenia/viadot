@@ -4,6 +4,7 @@ import logging
 
 import pandas as pd
 import pytest
+
 from viadot.utils import (
     _cast_df_cols,
     add_viadot_metadata_columns,

@@ -1,4 +1,5 @@
 from prefect import flow
+
 from viadot.orchestration.prefect.tasks import dbt_task
 
 
