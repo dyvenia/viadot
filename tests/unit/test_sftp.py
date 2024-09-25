@@ -7,7 +7,7 @@ import pandas as pd
 import pytest
 
 from viadot.exceptions import CredentialError
-from viadot.sources import SftpConnector
+from viadot.sources import Sftp
 from viadot.sources.sftp import SftpCredentials
 
 
@@ -41,7 +41,7 @@ class TestSftpCredentials:
 def test_sftp_connector_initialization_without_credentials():
     """Test SFTP server without credentials."""
     with pytest.raises(CredentialError, match="Missing credentials."):
-        SftpConnector(credentials=None)
+        Sftp(credentials=None)
 
 
 @pytest.mark.connect
@@ -52,7 +52,7 @@ def test_get_connection_without_rsa_key(mocker):
         "viadot.sources.sftp.paramiko.SFTPClient.from_transport"
     )
 
-    connector = SftpConnector(credentials=variables["credentials"])
+    connector = Sftp(credentials=variables["credentials"])
     connector.get_connection()
 
     mock_transport.assert_called_once_with((variables["credentials"]["hostname"], 999))
@@ -84,7 +84,7 @@ def test_get_connection_with_rsa_key(mocker):
     credentials = variables["credentials"]
     credentials["rsa_key"] = keyfile.getvalue()
 
-    connector = SftpConnector(credentials=variables["credentials"])
+    connector = Sftp(credentials=variables["credentials"])
     connector.get_connection()
 
     mock_rsa_key.assert_called_once()
@@ -97,12 +97,10 @@ def test_get_connection_with_rsa_key(mocker):
 @pytest.mark.functions
 def test_to_df_with_csv(mocker):
     """Test SFTP `to_df` method with csv."""
-    mock_get_file_object = mocker.patch.object(
-        SftpConnector, "_get_file_object", autospec=True
-    )
+    mock_get_file_object = mocker.patch.object(Sftp, "_get_file_object", autospec=True)
     mock_get_file_object.return_value = BytesIO(b"col1,col2\n1,2\n3,4\n")
 
-    connector = SftpConnector(credentials=variables["credentials"])
+    connector = Sftp(credentials=variables["credentials"])
     df = connector.to_df(file_name="test.csv", sep=",")
 
     assert isinstance(df, pd.DataFrame)
@@ -118,12 +116,10 @@ def test_to_df_with_csv(mocker):
 @pytest.mark.functions
 def test_to_df_with_tsv(mocker):
     """Test SFTP `to_df` method with tsv."""
-    mock_get_file_object = mocker.patch.object(
-        SftpConnector, "_get_file_object", autospec=True
-    )
+    mock_get_file_object = mocker.patch.object(Sftp, "_get_file_object", autospec=True)
     mock_get_file_object.return_value = BytesIO(b"col1,col2\n1,2\n3,4\n")
 
-    connector = SftpConnector(credentials=variables["credentials"])
+    connector = Sftp(credentials=variables["credentials"])
     df = connector.to_df(file_name="test.tsv", sep=",")
 
     assert isinstance(df, pd.DataFrame)
@@ -139,17 +135,15 @@ def test_to_df_with_tsv(mocker):
 @pytest.mark.functions
 def test_to_df_with_json(mocker):
     """Test SFTP `to_df` method with json."""
-    mock_get_file_object = mocker.patch.object(
-        SftpConnector, "_get_file_object", autospec=True
-    )
+    mock_get_file_object = mocker.patch.object(Sftp, "_get_file_object", autospec=True)
     json_data = json.dumps({"col1": [1, 3], "col2": [2, 4]})
     mock_get_file_object.return_value = BytesIO(json_data.encode("utf-8"))
 
-    connector = SftpConnector(credentials=variables["credentials"])
+    connector = Sftp(credentials=variables["credentials"])
     df = connector.to_df(file_name="test.json")
 
     expected_df = pd.DataFrame({"col1": [1, 3], "col2": [2, 4]})
-    expected_df["_viadot_source"] = "SftpConnector"
+    expected_df["_viadot_source"] = "Sftp"
     expected_df["_viadot_downloaded_at_utc"] = pd.Timestamp.now()
 
     assert isinstance(df, pd.DataFrame)
@@ -167,7 +161,7 @@ def test_ls(mocker):
     mock_sftp = mocker.MagicMock()
     mock_sftp.listdir.return_value = ["file1.txt", "file2.txt"]
 
-    connector = SftpConnector(credentials=variables["credentials"])
+    connector = Sftp(credentials=variables["credentials"])
     connector.conn = mock_sftp
     files_list = connector._ls()
 
@@ -184,7 +178,7 @@ def test_recursive_ls(mocker):
     mock_attr.filename = "subdir"
     mock_sftp.listdir_attr.return_value = [mock_attr]
 
-    connector = SftpConnector(credentials=variables["credentials"])
+    connector = Sftp(credentials=variables["credentials"])
     mocker.patch.object(connector, "conn", mock_sftp)
     result = connector._ls("subdir", recursive=True)
 
@@ -195,10 +189,10 @@ def test_recursive_ls(mocker):
 def test_get_files_list(mocker):
     """Test SFTP `get_files_list` method."""
     mock_list_directory = mocker.patch.object(
-        SftpConnector, "_list_directory", return_value=["file1.txt", "file2.txt"]
+        Sftp, "_list_directory", return_value=["file1.txt", "file2.txt"]
     )
 
-    connector = SftpConnector(credentials=variables["credentials"])
+    connector = Sftp(credentials=variables["credentials"])
     files = connector.get_files_list(path="test_path", recursive=False)
 
     assert files == ["file1.txt", "file2.txt"]
@@ -209,7 +203,7 @@ def test_get_files_list(mocker):
 def test_close_conn(mocker):
     """Test SFTP `_close_conn` method."""
     mock_conn = mocker.MagicMock()
-    connector = SftpConnector(credentials=variables["credentials"])
+    connector = Sftp(credentials=variables["credentials"])
     connector.conn = mock_conn
     connector._close_conn()
 
