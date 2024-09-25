@@ -197,7 +197,7 @@ class Sftp(Source):
 
         return df
 
-    def _list_directory(self, path: str | None = None) -> list[str]:
+    def _ls(self, path: str | None = None) -> list[str]:
         """List files in specified directory.
 
         Args:
@@ -274,7 +274,7 @@ class Sftp(Source):
             files_list (defaultdict(list)): List of files in the specified path.
         """
         if recursive is False:
-            files_list = self._list_directory(path=path)
+            files_list = self._ls(path=path)
 
         else:
             files_list = self._recursive_listdir(path=path)
