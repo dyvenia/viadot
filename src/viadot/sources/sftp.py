@@ -88,7 +88,7 @@ class Sftp(Source):
         self.port = validated_creds.get("port")
         self.rsa_key = validated_creds.get("rsa_key")
 
-    def _get_file_object_file(self, file_name: str) -> BytesIO:
+    def _get_file_object(self, file_name: str) -> BytesIO:
         """Copy a remote file from the SFTP server and write to a file-like object.
 
         Args:
@@ -150,7 +150,7 @@ class Sftp(Source):
         Returns:
             pd.DataFrame: The response data as a Pandas Data Frame plus viadot metadata.
         """
-        byte_file = self._get_file_object_file(file_name=file_name)
+        byte_file = self._get_file_object(file_name=file_name)
         byte_file.seek(0)
 
         self._close_conn()
