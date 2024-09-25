@@ -3,7 +3,7 @@ from viadot.orchestration.prefect.flows import supermetrics_to_adls
 import pytest
 
 @pytest.mark.parametrize("supermetrics_config_key,adls_credentials_secret", [
-    ("supermetrics","app-azure-cr-datalakegen2-dev"),
+    ("supermetrics","supermetrics"),
 ])
 
 def test_supermetrics_to_adls(supermetrics_config_key, adls_credentials_secret):
