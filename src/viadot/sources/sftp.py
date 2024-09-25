@@ -1,12 +1,12 @@
 """SFTP connector."""
 
-import itertools
-import re
-import time
 from collections import defaultdict
 from io import BytesIO, StringIO
+import itertools
 from pathlib import Path
+import re
 from stat import S_ISDIR
+import time
 
 import pandas as pd
 import paramiko
@@ -27,7 +27,8 @@ class SftpCredentials(BaseModel):
         - username: The user name for SFTP connection.
         - password: The passwrod for SFTP connection.
         - port: The port to use for the connection.
-        - rsa_key: The Company RSA Key.
+        - rsa_key: The SSH key to use for the connection. Only RSA is currently
+            supported.
 
     Args:
         BaseModel (pydantic.main.ModelMetaclass): A base class for creating
@@ -38,7 +39,7 @@ class SftpCredentials(BaseModel):
     username: str
     password: str
     port: int
-    rsa_key: str
+    rsa_key: str | None
 
 
 class Sftp(Source):
@@ -113,7 +114,7 @@ class Sftp(Source):
         """
         ssh = paramiko.SSHClient()
 
-        if len(self.rsa_key) == 0:
+        if not self.rsa_key:
             transport = paramiko.Transport((self.hostname, self.port))
             transport.connect(None, self.username, self.password)
 
