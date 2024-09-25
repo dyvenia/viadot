@@ -1,12 +1,11 @@
 """SFTP connector."""
 
-from collections import defaultdict
 from io import BytesIO, StringIO
-import itertools
 from pathlib import Path
 import re
 from stat import S_ISDIR
 import time
+from typing import Literal
 
 import pandas as pd
 import paramiko
@@ -132,7 +131,7 @@ class Sftp(Source):
     @add_viadot_metadata_columns
     def to_df(
         self,
-        if_empty: str = "warn",
+        if_empty: Literal["warn", "skip", "fail"] = "warn",
         file_name: str | None = None,
         sep: str = "\t",
         columns: list[str] | None = None,
@@ -140,8 +139,8 @@ class Sftp(Source):
         r"""Copy a remote file from the SFTP server and write it to Pandas dataframe.
 
         Args:
-            if_empty (str, optional): What to do if the fetch produces no data.
-                Defaults to "warn".
+            if_empty (Literal["warn", "skip", "fail"], optional): What to do if
+                the fetch produces no data. Defaults to "warn".
             file_name (str, optional): The name of the file to download.
             sep (str, optional): The delimiter for the source file. Defaults to "\t".
             columns (list[str], optional): List of columns to select from file.
@@ -197,95 +196,58 @@ class Sftp(Source):
 
         return df
 
-    def _ls(self, path: str | None = None) -> list[str]:
-        """List files in specified directory.
+    def _ls(self, path: str | None = ".", recursive: bool = False) -> list[str]:
+        """List files in specified directory, with optional recursion.
 
         Args:
-            path (str, optional): full path to the remote directory to list.
-                Defaults to None.
+            path (str | None): Full path to the remote directory to list.
+                Defaults to ".".
+            recursive (bool): Whether to list files recursively. Defaults to False.
 
         Returns:
-            List: List of files.
+            List[str]: List of files in the specified directory.
         """
-        path = "." if path is None else path
+        files_list = []
 
-        return self.conn.listdir(path)
+        try:
+            for attr in self.conn.listdir_attr(path):
+                if S_ISDIR(attr.st_mode) and recursive:
+                    sub_path = Path(path) / attr.filename
+                    files_list.extend(self._ls(str(sub_path), recursive=True))
+                else:
+                    files_list.append(str(Path(path) / attr.filename))
+        except Exception as e:
+            self.logger.error(f"Error accessing {path}: {e}")
 
-    def _recursive_listdir(
-        self, path: str = ".", files: defaultdict(list) = None
-    ) -> defaultdict(list):
-        """Recursively returns a defaultdict of files on the remote system.
-
-        Args:
-            path (str, optional): full path to the remote directory to list.
-                Defaults to None.
-            files (defaultdict(list), optional): parameter to call recursively.
-
-        Returns:
-            defaultdict(list): List of files.
-        """
-        if files is None:
-            files = defaultdict(list)
-
-        for attr in self.conn.listdir_attr(str(path)):
-            if S_ISDIR(attr.st_mode):
-                self._recursive_listdir(Path(path) / attr.filename, files)
-
-            else:
-                files[path].append(attr.filename)
-
-        return files
-
-    def _files_defaultdict_to_list(self, defaultdict: defaultdict(list)) -> list[str]:
-        """Process defaultdict to list of files.
-
-        Args:
-            defaultdict (defaultdict(list)): defaultdict of recursive files.
-                Defaults to None.
-
-        Returns:
-            List: list of files.
-        """
-        path_list = []
-        for item in list(defaultdict.items()):
-            tuple_list_path = list(itertools.product([item[0]], item[1]))
-
-            path_list.extend([str(Path(*tuple_path)) for tuple_path in tuple_list_path])
-
-        return path_list
+        return files_list
 
     def get_files_list(
         self,
         path: str | None = None,
         recursive: bool = False,
         matching_path: str | None = None,
-    ) -> defaultdict(list):
+    ) -> list[str]:
         """List files in `path`.
 
         Args:
-            path (str, optional): Destination path from where to get the structure.
+            path str | None): Destination path from where to get the structure.
                 Defaults to None.
-            recursive (bool, optional): Get the structure in deeper folders.
+            recursive (bool): Get the structure in deeper folders.
                 Defaults to False.
-            matching_path (str, optional): Filtering folders to return by a regex
+            matching_path (str | None): Filtering folders to return by a regex
                 pattern. Defaults to None.
 
         Returns:
-            files_list (defaultdict(list)): List of files in the specified path.
+            list[str]: List of files in the specified path.
         """
-        if recursive is False:
-            files_list = self._ls(path=path)
-
-        else:
-            files_list = self._recursive_listdir(path=path)
-            files_list = self._files_defaultdict_to_list(defaultdict=files_list)
-
-        self._close_conn()
+        files_list = self._ls(path=path, recursive=recursive)
 
         if matching_path is not None:
             files_list = [f for f in files_list if re.match(matching_path, f)]
 
-        self.logger.info("Succefully loaded file list from SFTP server.")
+        self._close_conn()
+
+        self.logger.info("Successfully loaded file list from SFTP server.")
 
         return files_list
 
