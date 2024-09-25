@@ -1,19 +1,20 @@
-"""Tasks for bulk copying data from a CSV file into an SQLServer table using BCP."""
+"""Task for running BCP shell command."""
 
+import subprocess
 from typing import Literal
 
 from prefect import task
 
 from viadot.config import get_source_credentials
 from viadot.orchestration.prefect.exceptions import MissingSourceCredentialsError
-from viadot.orchestration.prefect.utils import get_credentials, shell_run_command
+from viadot.orchestration.prefect.utils import get_credentials
 
 
 @task
 def bcp(
-    path: str | None = None,
-    schema: str | None = None,
-    table: str | None = None,
+    path: str,
+    schema: str,
+    table: str,
     chunksize: int = 5000,
     error_log_file_path: str = "./log_file.log",
     on_error: Literal["skip", "fail"] = "skip",
@@ -26,9 +27,10 @@ def bcp(
     https://learn.microsoft.com/en-us/sql/tools/bcp-utility.
 
     Args:
-        path (str): Where to store the CSV data dump used for bulk upload to a database.
-        schema (str, optional): Destination schema. Defaults to None.
-        table (str, optional): Destination table. Defaults to None.
+        path (str):  Where to store the CSV data dump used for bulk upload to
+        a database.
+        schema (str): Destination schema. Defaults to None.
+        table (str): Destination table. Defaults to None.
         chunksize (int, optional): Size of a chunk to use in the bcp function.
             Defaults to 5000.
         error_log_file_path (string, optional): Full path of an error file. Defaults
@@ -39,6 +41,7 @@ def bcp(
             More info on: https://docs.prefect.io/concepts/blocks/
         config_key (str, optional): The key in the viadot config holding relevant
             credentials to the SQLServer. Defaults to None.
+
     """
     if not (credentials_secret or config_key):
         raise MissingSourceCredentialsError
@@ -46,9 +49,7 @@ def bcp(
     credentials = get_source_credentials(config_key) or get_credentials(
         credentials_secret
     )
-
     fqn = f"{schema}.{table}" if schema else table
-
     server = credentials["server"]
     db_name = credentials["db_name"]
     uid = credentials["user"]
@@ -64,8 +65,33 @@ def bcp(
     elif on_error == "fail":
         max_error = 1
     else:
-        msg = "Please provide correct 'on_error' parameter value - 'skip' or 'fail'."
+        msg = "Please provide correct 'on_error' parameter value - 'skip' or 'fail'. "
         raise ValueError(msg)
+    bcp_command = [
+        "/opt/mssql-tools/bin/bcp",
+        fqn,
+        "in",
+        path,
+        "-S",
+        server,
+        "-d",
+        db_name,
+        "-U",
+        uid,
+        "-P",
+        pwd,
+        "-b",
+        str(chunksize),
+        "-m",
+        str(max_error),
+        "-c",
+        "-v",
+        "-e",
+        error_log_file_path,
+        "-h",
+        "TABLOCK",
+        "-F",
+        "2",
+    ]
 
-    command = f"/opt/mssql-tools/bin/bcp {fqn} in '{path}' -S {server} -d {db_name} -U {uid} -P '{pwd}' -c -F 2 -b {chunksize} -h 'TABLOCK' -e '{error_log_file_path}' -m {max_error}"
-    shell_run_command(command=command)
+    return subprocess.run(bcp_command, capture_output=True, text=True, check=False)  # noqa: S603

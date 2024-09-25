@@ -7,6 +7,7 @@ from .customer_gauge_to_df import customer_gauge_to_df
 from .databricks import df_to_databricks
 from .dbt import dbt_task
 from .duckdb import duckdb_query
+from .epicor import epicor_to_df
 from .exchange_rates import exchange_rates_to_df
 from .genesys import genesys_to_df
 from .git import clone_repo
@@ -21,6 +22,7 @@ from .sap_rfc import sap_rfc_to_df
 from .sharepoint import sharepoint_download_file, sharepoint_to_df
 from .sql_server import create_sql_server_table, sql_server_query, sql_server_to_df
 
+
 __all__ = [
     "adls_upload",
     "df_to_adls",
@@ -30,6 +32,7 @@ __all__ = [
     "df_to_databricks",
     "dbt_task",
     "duckdb_query",
+    "epicor_to_df",
     "exchange_rates_to_df",
     "genesys_to_df",
     "clone_repo",

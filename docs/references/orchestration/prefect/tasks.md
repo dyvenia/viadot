@@ -21,3 +21,25 @@
 ::: viadot.orchestration.prefect.tasks.sharepoint_download_file
 
 ::: viadot.orchestration.prefect.tasks.sharepoint_to_df
+
+::: viadot.orchestration.prefect.tasks.duckdb_query
+
+::: viadot.orchestration.prefect.tasks.epicor_to_df
+
+::: viadot.orchestration.prefect.tasks.genesys_to_df
+
+::: viadot.orchestration.prefect.tasks.hubspot_to_df
+
+::: viadot.orchestration.prefect.tasks.mindful_to_df
+
+::: viadot.orchestration.prefect.tasks.outlook_to_df
+
+::: viadot.orchestration.prefect.tasks.sap_rfc_to_df
+
+::: viadot.orchestration.prefect.tasks.bcp
+
+::: viadot.orchestration.prefect.tasks.create_sql_server_table
+
+::: viadot.orchestration.prefect.tasks.sql_server_query
+
+::: viadot.orchestration.prefect.tasks.sql_server_to_df

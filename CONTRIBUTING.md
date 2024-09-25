@@ -22,17 +22,25 @@ For an enhanced experience, we provide the extensions, settings, and tasks for V
 
 ## Pre-commit hooks
 
+### Installing pre-commit
+
 We use pre-commit hooks to ensure that the code as well as non-code text (such as JSON, YAML, and Markdown) is formatted and linted before committing. First, install `pre-commit`:
 
 ```console
 rye install pre-commit
 ```
 
+### Installing viadot's pre-commit hooks
+
 To install `viadot`'s pre-commit hooks, run the following command:
 
 ```console
 pre-commit install
 ```
+
+### Working with style
+
+The best way to fix pre-commit errors is to **avoid them** in the first place. In the case of Python checks, the easiest way is to [set Ruff as your formatter in VSode](#code-style). The formatter will automatically format whatever it can, and the linter will highlight the areas that need fixing, so you get the feedback immediately as you're writing the code.
 
 ## Running tests
 
@@ -66,7 +74,7 @@ Code should be formatted and linted with [ruff](https://docs.astral.sh/ruff/). A
 
 The easiest way to format your code as you go is to use the VSCode extension and the provided VSCode settings - your code will be automatically formatted and linted on each save, and the linter will highlight areas in your code which need fixing.
 
-Additionally, the pre-commit hook runs `ruff check`, so you can also wait till you commit to receive the formatting/linting feedback.
+Alternatively, the pre-commit hook runs `ruff check`, so you can also wait till you commit to receive the formatting/linting feedback.
 
 ### Commit messages style
 
@@ -122,27 +130,25 @@ Before creating a release, either add a commit with a version bump to the last P
 rye version major.minor.patch
 ```
 
+for example:
+
+```console
+rye version 2.1.0
+```
+
 This will update the version in `pyproject.toml` accordingly.
 
 **NOTE**: Make sure to follow [semantic versioning](https://semver.org/).
 
 #### Release
 
-Once the new version PR is merged to `main`, publish a version tag:
+Once the modified `pyproject.toml` is merged to `2.0`, a version tag will be [automatically created](https://github.com/dyvenia/viadot/blob/2.0/.github/workflows/detect-and-tag-new-version.yml), and the [release workflow](https://github.com/dyvenia/viadot/blob/2.0/.github/workflows/cd.yml) will be triggered.
 
-```bash
-viadot_version=v2.1.0
-git switch 2.0 && \
-  git pull && \
-  git tag -a $viadot_version -m "Release $viadot_version" && \
-  git push origin $viadot_version
-```
+The release workflow will:
 
-Pushing the tag will trigger the release workflow, which will:
-
-- create a release on GitHub
-- publish the package to PyPI
-- publish Docker images to ghcr.io
+- create a [release](https://github.com/dyvenia/viadot/releases) on GitHub with auto-generated changelog
+- publish [the package](https://pypi.org/project/viadot2/) to PyPI
+- publish [Docker images](https://github.com/orgs/dyvenia/packages?repo_name=viadot) to ghcr.io
 
 ### Running actions
 
@@ -157,3 +163,13 @@ If you need to pass parameters to the workflow, you can do so with the `--json` 
 ```console
 echo '{"name":"scully", "greeting":"hello"}' | gh workflow run workflow.yml --json
 ```
+
+### Developing & debugging actions
+
+To works on actions, you can use [act](https://github.com/nektos/act).
+
+```console
+act -W .github/workflows/detect-and-tag-new-version.yml -s GITHUB_TOKEN="$(gh auth token)"
+```
+
+**NOTE** for actions that implicitly `{{ github.token }}`, you need to pass your token as the `GITHUB_TOKEN` act secret, as shown in the example above.
