@@ -4,7 +4,7 @@ from viadot.orchestration.prefect.flows import supermetrics_to_adls
 
 
 @pytest.mark.parametrize(
-    "supermetrics_config_key,adls_credentials_secret",
+    ("supermetrics_config_key", "adls_credentials_secret"),
     [
         ("supermetrics", "supermetrics"),
     ],

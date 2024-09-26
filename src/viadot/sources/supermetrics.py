@@ -1,5 +1,7 @@
+"""Source for connecting to Supermetrics API."""
+
 import json
-from typing import Any, Dict, List
+from typing import Any
 
 import numpy as np
 import pandas as pd
@@ -63,10 +65,10 @@ class Supermetrics(Source):
         *args,
         credentials: dict[str, Any] | None = None,
         config_key: str = None,
-        query_params: Dict[str, Any] = None,
+        query_params: dict[str, Any] = None,
         **kwargs,
     ) -> None:
-        """Initializes the Supermetrics object.
+        """Initialize the Supermetrics object.
 
         This constructor sets up the necessary components to interact with the
         Supermetrics API, including the credentials and any query parameters.
@@ -74,8 +76,8 @@ class Supermetrics(Source):
         Args:
         ----
             credentials (SupermetricsCredentials, optional):
-                An instance of `SupermetricsCredentials` containing the API key and user email
-                for authentication. Defaults to None.
+                An instance of `SupermetricsCredentials` containing the API key and
+                user email for authentication. Defaults to None.
             config_key (str, optional):
                 The key in the viadot configuration that holds the relevant credentials
                 for the API. Defaults to None.
@@ -97,8 +99,8 @@ class Supermetrics(Source):
         self.api_key = self.credentials["api_key"]
         self.user = self.credentials["user"]
 
-    def to_json(self, timeout=(3.05, 60 * 30)) -> Dict[str, Any]:
-        """Downloads query results to a dictionary.
+    def to_json(self, timeout=(3.05, 60 * 30)) -> dict[str, Any]:
+        """Download query results to a dictionary.
 
         This method executes the query against the Supermetrics API and retrieves
         the results as a JSON dictionary.
@@ -107,9 +109,10 @@ class Supermetrics(Source):
         ----
             timeout (tuple of float, optional):
                 A tuple specifying the timeout values for the request. The first value
-                is the timeout for connection issues, and the second value is the timeout
-                for query execution. Defaults to (3.05, 1800), which provides a short
-                timeout for connection issues and a longer timeout for the query execution.
+                is the timeout for connection issues, and the second value is
+                the timeout for query execution. Defaults to (3.05, 1800), which
+                provides a short timeout for connection issues and a longer timeout
+                for the query execution.
 
         Returns:
         -------
@@ -123,7 +126,8 @@ class Supermetrics(Source):
 
         """
         if not self.query_params:
-            raise ValueError("Please build the query first")
+            msg = "Please build the query first"
+            raise ValueError(msg)
 
         params = {"json": json.dumps(self.query_params)}
         headers = {"Authorization": f"Bearer {self.api_key}"}
@@ -140,8 +144,8 @@ class Supermetrics(Source):
     def _get_col_names_google_analytics(
         cls,
         response: dict,
-    ) -> List[str]:
-        """Gets column names from Google Analytics data.
+    ) -> list[str]:
+        """Get column names from Google Analytics data.
 
         This method extracts the column names from the JSON response received
         from a Google Analytics API call.
@@ -179,8 +183,8 @@ class Supermetrics(Source):
         return columns
 
     @classmethod
-    def _get_col_names_other(cls, response: dict) -> List[str]:
-        """Gets column names from non-Google Analytics data.
+    def _get_col_names_other(cls, response: dict) -> list[str]:
+        """Get column names from non-Google Analytics data.
 
         This method extracts the column names from the JSON response received
         from an API call that is not related to Google Analytics.
@@ -199,14 +203,11 @@ class Supermetrics(Source):
         cols_meta = response["meta"]["query"]["fields"]
         return [col_meta["field_name"] for col_meta in cols_meta]
 
-    def _get_col_names(self) -> List[str]:
-        """Gets column names based on the data type.
+    def _get_col_names(self) -> list[str]:
+        """Get column names based on the data type.
 
         This method determines the appropriate column names for the data based
         on its type, whether it's Google Analytics data or another type.
-
-
-
 
         Returns
         -------
@@ -229,9 +230,9 @@ class Supermetrics(Source):
     def to_df(
         self,
         if_empty: str = "warn",
-        query_params: Dict[str, Any] = None,
+        query_params: dict[str, Any] = None,
     ) -> pd.DataFrame:
-        """Downloads data into a pandas DataFrame.
+        """Download data into a pandas DataFrame.
 
         This method retrieves data from the Supermetrics API and loads it into
         a pandas DataFrame.

@@ -1,3 +1,5 @@
+"""Task for connecting to Supermetrics API."""
+
 import pandas as pd
 from prefect import task
 
@@ -15,11 +17,11 @@ def supermetrics_to_df(
     """Task to retrive data from Supermetrics and returns it as a pandas DataFrame.
 
     This function queries the Supermetrics API using the provided query parameters and
-    returns the data as a pandas DataFrame. The function supports both configuration-based
-    and secret-based credentials.
+    returns the data as a pandas DataFrame. The function supports both
+    configuration-based and secret-based credentials.
 
-    The function is decorated with a Prefect task, allowing it to handle retries, logging,
-    and timeout behavior.
+    The function is decorated with a Prefect task, allowing it to handle retries,
+    logging, and timeout behavior.
 
     Args:
     ----

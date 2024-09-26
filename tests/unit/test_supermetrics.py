@@ -2,12 +2,12 @@ import pytest
 from viadot.sources import Supermetrics, SupermetricsCredentials
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture()
 def supermetrics_credentials():
     return SupermetricsCredentials(user="test_user", api_key="test_key")
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture()
 def mock_get_source_credentials(
     mocker,
     supermetrics_credentials: SupermetricsCredentials,
@@ -21,7 +21,7 @@ def mock_get_source_credentials(
     )
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture()
 def supermetrics(supermetrics_credentials: SupermetricsCredentials):
     return Supermetrics(
         credentials={

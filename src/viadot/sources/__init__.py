@@ -2,7 +2,6 @@
 
 from importlib.util import find_spec
 
-from .supermetrics import Supermetrics, SupermetricsCredentials
 from ._duckdb import DuckDB
 from ._trino import Trino
 from .cloud_for_customers import CloudForCustomers
@@ -14,8 +13,8 @@ from .mindful import Mindful
 from .outlook import Outlook
 from .sharepoint import Sharepoint
 from .sql_server import SQLServer
+from .supermetrics import Supermetrics, SupermetricsCredentials
 from .uk_carbon_intensity import UKCarbonIntensity
-
 
 __all__ = [
     "CloudForCustomers",
@@ -30,7 +29,7 @@ __all__ = [
     "SQLServer",
     "UKCarbonIntensity",
     "Supermetrics",
-    "SupermetricsCredentials"
+    "SupermetricsCredentials",
 ]
 
 if find_spec("adlfs"):

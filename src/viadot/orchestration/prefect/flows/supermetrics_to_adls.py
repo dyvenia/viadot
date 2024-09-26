@@ -28,7 +28,7 @@ def supermetrics_to_adls(  # noqa: PLR0913
     adls_credentials_secret: str | None = None,
     adls_config_key: str | None = None,
     **kwargs: dict[str, Any] | None,
-):
+) -> None:
     """Flow to extract data from the Supermetrics API and save it to ADLS.
 
     This function queries data from the Supermetrics API using the provided query
@@ -44,8 +44,8 @@ def supermetrics_to_adls(  # noqa: PLR0913
         adls_path (str, optional):
             The destination path in ADLS where the DataFrame will be saved. This should
             include the file name and extension (e.g., 'myfolder/myfile.csv'). If not
-            provided, the function will use a default path from the configuration or raise
-            an error.
+            provided, the function will use a default path from the configuration
+            or raise an error.
         overwrite (bool, optional):
             A flag indicating whether to overwrite the existing file in ADLS. If set
             to Falseand the file exists, an error will be raised. Default is False.
@@ -58,8 +58,8 @@ def supermetrics_to_adls(  # noqa: PLR0913
             Defaults to None.
         adls_credentials_secret (str, optional):
             The name of the secret in the secret management system containing
-            the ADLS credentials. If not provided, the function will use credentials specified
-            in the configuration.
+            the ADLS credentials. If not provided, the function will use credentials
+            specified in the configuration.
         adls_config_key (str, optional):
             The key in the viadot configuration holding relevant credentials.
             Defaults to None.
