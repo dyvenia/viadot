@@ -18,7 +18,7 @@ def test_azure_sql_to_adls(
          patch("viadot.orchestration.prefect.tasks.df_to_adls") as mock_df_to_adls:
 
         # Prepare mock DataFrame
-        mock_df = mock_aselite_to_df.return_value
+        mock_df = mock_azure_sql_to_df.return_value
 
         # Call the flow
         azure_sql_to_adls(
