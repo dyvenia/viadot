@@ -22,6 +22,7 @@ from .sharepoint_to_redshift_spectrum import sharepoint_to_redshift_spectrum
 from .sharepoint_to_s3 import sharepoint_to_s3
 from .sql_server_to_minio import sql_server_to_minio
 from .sql_server_to_parquet import sql_server_to_parquet
+from .supermetrics_to_adls import supermetrics_to_adls
 from .transform import transform
 from .transform_and_catalog import transform_and_catalog
 
@@ -33,9 +34,9 @@ __all__ = [
     "duckdb_to_sql_server",
     "duckdb_transform",
     "epicor_to_parquet",
+    "exchange_rates_api_to_redshift_spectrum",
     "exchange_rates_to_adls",
     "exchange_rates_to_databricks",
-    "exchange_rates_api_to_redshift_spectrum",
     "genesys_to_adls",
     "hubspot_to_adls",
     "mindful_to_adls",
@@ -49,6 +50,7 @@ __all__ = [
     "sharepoint_to_s3",
     "sql_server_to_minio",
     "sql_server_to_parquet",
+    "supermetrics_to_adls",
     "transform",
     "transform_and_catalog",
 ]
