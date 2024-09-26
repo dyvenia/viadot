@@ -4,12 +4,11 @@ from datetime import datetime
 from typing import Any, Literal
 
 import pandas as pd
+from prefect import task
 
 from viadot.orchestration.prefect.exceptions import MissingSourceCredentialsError
 from viadot.orchestration.prefect.utils import get_credentials
 from viadot.sources import CustomerGauge
-
-from .. import task
 
 
 @task(retries=3, log_prints=True, retry_delay_seconds=10, timeout_seconds=2 * 60 * 60)
