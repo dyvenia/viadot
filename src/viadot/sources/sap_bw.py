@@ -1,4 +1,4 @@
-"""SAP BW API connector."""
+"""SAP BW  connector."""
 
 import textwrap
 from typing import Any
@@ -16,7 +16,7 @@ from viadot.utils import add_viadot_metadata_columns
 class SapbwCredentials(BaseModel):
     """Checking for values in SAP BW credentials dictionary.
 
-    Two key values are held in the Mindful connector:
+    Two key values are held in the SAP BW connector:
         - ashost: Indicates the host name or IP address of a specific SAP
             application server.
         - client: Specifies the SAP logon parameter client.

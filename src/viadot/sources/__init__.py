@@ -11,7 +11,6 @@ from .genesys import Genesys
 from .hubspot import Hubspot
 from .mindful import Mindful
 from .outlook import Outlook
-from .sap_bw import Sapbw
 from .sharepoint import Sharepoint
 from .sql_server import SQLServer
 from .uk_carbon_intensity import UKCarbonIntensity
@@ -25,7 +24,6 @@ __all__ = [
     "Hubspot",
     "Mindful",
     "Outlook",
-    "Sapbw",
     "Sharepoint",
     "Trino",
     "SQLServer",
@@ -61,7 +59,7 @@ if find_spec("s3fs"):
 if find_spec("pyrfc"):
     from viadot.sources.sap_rfc import SAPRFC, SAPRFCV2  # noqa: F401
 
-    __all__.extend(["SAPRFC", "SAPRFCV2"])
+    __all__.extend(["SAPRFC", "SAPRFCV2", "Sapbw"])
 
 if find_spec("pyspark"):
     from viadot.sources.databricks import Databricks  # noqa: F401
