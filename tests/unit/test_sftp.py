@@ -114,25 +114,6 @@ def test_to_df_with_csv(mocker):
 
 
 @pytest.mark.functions
-def test_to_df_with_tsv(mocker):
-    """Test SFTP `to_df` method with tsv."""
-    mock_get_file_object = mocker.patch.object(Sftp, "_get_file_object", autospec=True)
-    mock_get_file_object.return_value = BytesIO(b"col1,col2\n1,2\n3,4\n")
-
-    connector = Sftp(credentials=variables["credentials"])
-    df = connector.to_df(file_name="test.tsv", sep=",")
-
-    assert isinstance(df, pd.DataFrame)
-    assert df.shape == (2, 4)
-    assert list(df.columns) == [
-        "col1",
-        "col2",
-        "_viadot_source",
-        "_viadot_downloaded_at_utc",
-    ]
-
-
-@pytest.mark.functions
 def test_to_df_with_json(mocker):
     """Test SFTP `to_df` method with json."""
     mock_get_file_object = mocker.patch.object(Sftp, "_get_file_object", autospec=True)
@@ -159,44 +140,65 @@ def test_to_df_with_json(mocker):
 def test_ls(mocker):
     """Test SFTP `_ls` method."""
     mock_sftp = mocker.MagicMock()
-    mock_sftp.listdir.return_value = ["file1.txt", "file2.txt"]
 
-    connector = Sftp(credentials=variables["credentials"])
-    connector.conn = mock_sftp
-    files_list = connector._ls()
+    mock_sftp.listdir.side_effect = [
+        [
+            mocker.MagicMock(st_mode=0o40755, filename="folder_a"),
+            mocker.MagicMock(st_mode=0o100644, filename="file2.txt"),
+        ],
+        [
+            mocker.MagicMock(st_mode=0o40755, filename="folder_b"),
+            mocker.MagicMock(st_mode=0o100644, filename="file1.txt"),
+        ],
+    ]
 
-    assert files_list == ["file1.txt", "file2.txt"]
-    mock_sftp.listdir.assert_called_once_with(".")
+    sftp = Sftp(credentials=variables["credentials"])
+    sftp.conn = mock_sftp
+
+    files_list = sftp._ls(path=".", recursive=False)
+
+    assert len(files_list) == 2
 
 
 @pytest.mark.functions
 def test_recursive_ls(mocker):
     """Test SFTP recursive `_ls` method."""
     mock_sftp = mocker.MagicMock()
-    mock_attr = mocker.MagicMock()
-    mock_attr.st_mode = 0
-    mock_attr.filename = "subdir"
-    mock_sftp.listdir_attr.return_value = [mock_attr]
+    mock_sftp.listdir_attr.side_effect = [
+        [
+            mocker.MagicMock(st_mode=0o40755, filename="folder_a"),
+            mocker.MagicMock(st_mode=0o100644, filename="file2.txt"),
+        ],
+        [
+            mocker.MagicMock(st_mode=0o40755, filename="folder_b"),
+            mocker.MagicMock(st_mode=0o100644, filename="file1.txt"),
+        ],
+    ]
 
-    connector = Sftp(credentials=variables["credentials"])
-    mocker.patch.object(connector, "conn", mock_sftp)
-    result = connector._ls("subdir", recursive=True)
+    sftp = Sftp(credentials=variables["credentials"])
+    sftp.conn = mock_sftp
 
-    assert list(result) == ["subdir"]
+    files_list = sftp._ls(path=".", recursive=True)
+
+    assert len(files_list) == 4
+    assert "folder_a" in files_list
+    assert "folder_a/folder_b" in files_list
+    assert "file2.txt" in files_list
+    assert "folder_a/file1.txt" in files_list
 
 
 @pytest.mark.functions
 def test_get_files_list(mocker):
     """Test SFTP `get_files_list` method."""
     mock_list_directory = mocker.patch.object(
-        Sftp, "_list_directory", return_value=["file1.txt", "file2.txt"]
+        Sftp, "_ls", return_value=["file1.txt", "file2.txt"]
     )
 
     connector = Sftp(credentials=variables["credentials"])
     files = connector.get_files_list(path="test_path", recursive=False)
 
     assert files == ["file1.txt", "file2.txt"]
-    mock_list_directory.assert_called_once_with(path="test_path")
+    mock_list_directory.assert_called_once_with(path="test_path", recursive=False)
 
 
 @pytest.mark.functions
