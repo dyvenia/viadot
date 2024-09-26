@@ -1,4 +1,4 @@
-"""Task to download data from SAP BW API into a Pandas DataFrame."""
+"""Task to download data from SAP BW into a Pandas DataFrame."""
 
 import contextlib
 from typing import Any
@@ -12,7 +12,7 @@ from viadot.orchestration.prefect.utils import get_credentials
 
 
 with contextlib.suppress(ImportError):
-    from viadot.sources import Sapbw
+    from viadot.sources import SAPBW
 
 
 @task(retries=3, log_prints=True, retry_delay_seconds=10, timeout_seconds=60 * 60)
@@ -23,10 +23,10 @@ def sap_bw_to_df(
     mdx_query: str | None = None,
     mapping_dict: dict[str, Any] | None = None,
 ) -> pd.DataFrame:
-    """Task to download data from SAP BW API to Data Frame.
+    """Task to download data from SAP BW to DataFrame.
 
     Args:
-        credentials (Optional[Dict[str, Any]], optional): Hubspot credentials as a
+        credentials (Optional[Dict[str, Any]], optional): SAPBW credentials as a
             dictionary. Defaults to None.
         config_key (Optional[str], optional): The key in the viadot config holding
             relevant credentials. Defaults to None.
@@ -50,10 +50,10 @@ def sap_bw_to_df(
         credentials = credentials or get_credentials(azure_key_vault_secret)
 
     if mdx_query is None:
-        message = "SAP BW API `mdx_query` is a mandatory requirement."
+        message = "SAP BW `mdx_query` is a mandatory requirement."
         raise APIError(message)
 
-    sap_bw = Sapbw(
+    sap_bw = SAPBW(
         credentials=credentials,
         config_key=config_key,
     )
