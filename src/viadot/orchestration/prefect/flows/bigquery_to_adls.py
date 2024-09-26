@@ -1,7 +1,5 @@
 """'bigquery_to_adls.py'."""
 
-from typing import Any
-
 from prefect import flow
 from prefect.task_runners import ConcurrentTaskRunner
 
@@ -15,7 +13,7 @@ from viadot.orchestration.prefect.tasks import bigquery_to_df, df_to_adls
     retry_delay_seconds=60,
     task_runner=ConcurrentTaskRunner,
 )
-def bigquery_to_adls(
+def bigquery_to_adls(  # noqa: PLR0913
     config_key: str | None = None,
     azure_key_vault_secret: str | None = None,
     query: str | None = None,

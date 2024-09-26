@@ -1,13 +1,14 @@
 """'test_bigquery.py'."""
 
+from google.oauth2 import service_account
 import numpy as np
 import pandas as pd
 import pytest
-from google.oauth2 import service_account
 
 from viadot.exceptions import APIError, CredentialError
 from viadot.sources import BigQuery
 from viadot.sources.bigquery import BigQueryCredentials
+
 
 variables = {
     "credentials": {
@@ -73,7 +74,7 @@ def test_list_datasets_query(monkeypatch, mock_service_account_credentials):
     monkeypatch.setattr(
         service_account.Credentials,
         "from_service_account_info",
-        lambda info: mock_service_account_credentials,
+        lambda info: mock_service_account_credentials,  # noqa: ARG005
     )
     bigquery = BigQuery(credentials=variables["credentials"])
     expected_query = """SELECT schema_name
@@ -89,7 +90,7 @@ def test_list_tables_query(monkeypatch, mock_service_account_credentials):
     monkeypatch.setattr(
         service_account.Credentials,
         "from_service_account_info",
-        lambda info: mock_service_account_credentials,
+        lambda info: mock_service_account_credentials,  # noqa: ARG005
     )
     bigquery = BigQuery(credentials=variables["credentials"])
     expected_query = """SELECT table_name
@@ -105,7 +106,7 @@ def test_list_columns(mocker, monkeypatch, mock_service_account_credentials):
     monkeypatch.setattr(
         service_account.Credentials,
         "from_service_account_info",
-        lambda info: mock_service_account_credentials,
+        lambda info: mock_service_account_credentials,  # noqa: ARG005
     )
     bigquery = BigQuery(credentials=variables["credentials"])
 
@@ -126,7 +127,7 @@ def test_gbd_success(mocker, monkeypatch, mock_service_account_credentials):
     monkeypatch.setattr(
         service_account.Credentials,
         "from_service_account_info",
-        lambda info: mock_service_account_credentials,
+        lambda info: mock_service_account_credentials,  # noqa: ARG005
     )
     bigquery = BigQuery(credentials=variables["credentials"])
 
@@ -143,7 +144,7 @@ def test_gbd_failure(mocker, monkeypatch, mock_service_account_credentials):
     monkeypatch.setattr(
         service_account.Credentials,
         "from_service_account_info",
-        lambda info: mock_service_account_credentials,
+        lambda info: mock_service_account_credentials,  # noqa: ARG005
     )
     bigquery = BigQuery(credentials=variables["credentials"])
 
@@ -160,7 +161,7 @@ def test_api_connection_list_tables(
     monkeypatch.setattr(
         service_account.Credentials,
         "from_service_account_info",
-        lambda info: mock_service_account_credentials,
+        lambda info: mock_service_account_credentials,  # noqa: ARG005
     )
     bigquery = BigQuery(credentials=variables["credentials"])
 
@@ -179,11 +180,11 @@ def test_api_connection_with_columns_and_date(
     monkeypatch.setattr(
         service_account.Credentials,
         "from_service_account_info",
-        lambda info: mock_service_account_credentials,
+        lambda info: mock_service_account_credentials,  # noqa: ARG005
     )
     bigquery = BigQuery(credentials=variables["credentials"])
 
-    def mock_list_columns(self, dataset_name: str, table_name: str):
+    def mock_list_columns(self, dataset_name: str, table_name: str):  # noqa: ARG001
         # pylint: disable=unused-argument
         return ["column1", "column2", "test_date_column"]
 
@@ -211,7 +212,7 @@ def test_to_df(monkeypatch, mock_service_account_credentials):
     monkeypatch.setattr(
         service_account.Credentials,
         "from_service_account_info",
-        lambda info: mock_service_account_credentials,
+        lambda info: mock_service_account_credentials,  # noqa: ARG005
     )
     bigquery = BigQuery(credentials=variables["credentials"])
 

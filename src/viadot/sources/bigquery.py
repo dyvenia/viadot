@@ -82,7 +82,7 @@ class BigQuery(Source):
         """
         return f"""SELECT schema_name
                 FROM {self.project_id}.INFORMATION_SCHEMA.SCHEMATA
-                """
+                """  # noqa: S608
 
     def _get_list_tables_query(self, dataset_name: str) -> str:
         """Get tables from BigQuery dataset. Dataset is required.
@@ -95,7 +95,7 @@ class BigQuery(Source):
         """
         return f"""SELECT table_name
                 FROM {self.project_id}.{dataset_name}.INFORMATION_SCHEMA.TABLES
-                """
+                """  # noqa: S608
 
     def _list_columns(self, dataset_name: str, table_name: str) -> np.ndarray:
         """Get columns from BigQuery table. Dataset name and Table name are required.
@@ -110,7 +110,7 @@ class BigQuery(Source):
         query = f"""SELECT column_name
                 FROM {self.project_id}.{dataset_name}.INFORMATION_SCHEMA.COLUMNS
                 WHERE table_name="{table_name}"
-                """
+                """  # noqa: S608
         df_columns = self._gbd(query)
 
         return df_columns["column_name"].values
@@ -190,7 +190,7 @@ class BigQuery(Source):
 
             if date_column_name:
                 if (
-                    not set([date_column_name]).issubset(set(table_columns))
+                    not set([date_column_name]).issubset(set(table_columns))  # noqa: C405
                     or start_date is None
                     or end_date is None
                 ):
@@ -212,7 +212,7 @@ class BigQuery(Source):
                                 PARSE_DATE("%Y-%m-%d", "{start_date}") AND
                                 PARSE_DATE("%Y-%m-%d", "{end_date}")
                             ORDER BY {date_column_name} DESC
-                    """
+                    """  # noqa: S608
 
             if query is None:
                 query = (
