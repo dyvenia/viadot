@@ -2,20 +2,21 @@
 
 from unittest.mock import MagicMock, patch
 
-import pytest
+import pytest  # type: ignore
 
 from viadot.exceptions import APIError, CredentialError
 from viadot.sources.customer_gauge import CustomerGauge, CustomerGaugeCredentials
 
+
 variables = {
     "credentials": {
         "client_id": "client_id",
-        "client_secret": "client_secret",
+        "client_secret": "client_secret",  # pragma: allowlist secret
     }
 }
 
 
-@pytest.mark.basic()
+@pytest.mark.basic
 def test_customer_gauge_credentials():
     """Test Customer Gauge credentials."""
     CustomerGaugeCredentials(
@@ -24,14 +25,14 @@ def test_customer_gauge_credentials():
     )
 
 
-@pytest.mark.basic()
+@pytest.mark.basic
 def test_missing_credentials():
     """Test raise error without Customer Gauge credentials."""
     with pytest.raises(CredentialError):
         CustomerGauge(config_key="invalid_key")
 
 
-@pytest.mark.connect()
+@pytest.mark.connect
 @patch("viadot.sources.customer_gauge.handle_api_response")
 def test_get_token_success(mock_handle_api_response):
     """Test Customer Gauge get token."""
@@ -42,11 +43,11 @@ def test_get_token_success(mock_handle_api_response):
     customer_gauge_instance = CustomerGauge(credentials=variables["credentials"])
 
     token = customer_gauge_instance._get_token()
-    assert token == "fake_token"
+    assert token == "fake_token"  # noqa: S105 # pragma: allowlist secret
     mock_handle_api_response.assert_called_once()
 
 
-@pytest.mark.connect()
+@pytest.mark.connect
 @patch("viadot.sources.customer_gauge.handle_api_response")
 def test_get_token_failure(mock_handle_api_response):
     """Test Customer Gauge get token failure."""
@@ -62,12 +63,12 @@ def test_get_token_failure(mock_handle_api_response):
         customer_gauge_instance._get_token()
 
 
-@pytest.mark.connect()
+@pytest.mark.connect
 @patch(
     "viadot.sources.customer_gauge.CustomerGauge._get_token", return_value="fake_token"
 )
 @patch("viadot.sources.customer_gauge.handle_api_response")
-def test_get_json_response(mock_handle_api_response, mock_get_token):
+def test_get_json_response(mock_handle_api_response, mock_get_token):  # noqa: ARG001
     """Test Customer Gauge json response."""
     mock_response = MagicMock()
     mock_response.json.return_value = {"data": [], "cursor": {"next": 1}}
@@ -79,7 +80,7 @@ def test_get_json_response(mock_handle_api_response, mock_get_token):
     assert "data" in json_response
 
 
-@pytest.mark.connect()
+@pytest.mark.connect
 def test_get_cursor():
     """Test Customer Gauge get cursor."""
     json_response = {"cursor": {"next": 10}}
@@ -89,7 +90,7 @@ def test_get_cursor():
     assert cursor == 10
 
 
-@pytest.mark.connect()
+@pytest.mark.connect
 def test_get_cursor_key_error():
     """Test Customer Gauge get cursor error."""
     json_response = {"no_cursor": {}}
@@ -101,7 +102,7 @@ def test_get_cursor_key_error():
         customer_gauge_instance._get_cursor(json_response)
 
 
-@pytest.mark.functions()
+@pytest.mark.functions
 def test_column_unpacker():
     """Test Customer Gauge function `_unpack_columns`."""
     json_list = [{"field": {"key1": "value1", "key2": "value2"}}]

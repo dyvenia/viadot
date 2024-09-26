@@ -132,7 +132,7 @@ class CustomerGauge(Source):
         """
         result = {}
         for _, dictionary in enumerate(json_response[field]):
-            if isinstance(dictionary, dict) and len(dictionary.items()) == 2:
+            if isinstance(dictionary, dict) and len(dictionary.items()) == 2:  # noqa: PLR2004
                 list_properties = list(dictionary.values())
                 result[list_properties[0]] = list_properties[1]
             else:
@@ -173,7 +173,7 @@ class CustomerGauge(Source):
             if result:
                 json_response[field] = result
         except TypeError as type_error:
-            self.logger.exception(type_error)
+            self.logger.exception(type_error)  # noqa: TRY401
             raise
 
         return json_response
@@ -490,7 +490,7 @@ class CustomerGauge(Source):
                 out = result
 
             if isinstance(field, dict):
-                for item in field.keys():
+                for item in field:
                     flattify(field[item], key + item + "_", out)
             else:
                 out[key[:-1]] = field

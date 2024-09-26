@@ -1,31 +1,37 @@
 """Util functions."""
 
+from collections.abc import Callable
 import contextlib
+from datetime import datetime, timedelta, timezone
 import functools
 import logging
 import re
 import subprocess
-from collections.abc import Callable
-from datetime import datetime, timedelta, timezone
 from typing import TYPE_CHECKING, Any, Literal, Optional
 
 import pandas as pd
 import pyodbc
-import requests
+import requests  # type: ignore
 from requests.adapters import HTTPAdapter
-from requests.exceptions import ConnectionError, HTTPError, ReadTimeout, Timeout
+from requests.exceptions import (  # type: ignore
+    ConnectionError,
+    HTTPError,
+    ReadTimeout,
+    Timeout,
+)
 from requests.packages.urllib3.util.retry import Retry
-from urllib3.exceptions import ProtocolError
+from urllib3.exceptions import ProtocolError  # type: ignore
 
 from viadot.exceptions import APIError, ValidationError
 from viadot.signals import SKIP
+
 
 if TYPE_CHECKING:
     from viadot.sources.base import Source
 
 
 with contextlib.suppress(ImportError):
-    import pyspark.sql.dataframe as spark
+    import pyspark.sql.dataframe as spark  # type: ignore
 
 
 def slugify(name: str) -> str:
@@ -845,8 +851,7 @@ def anonymize_df(
     days: int | None = None,
     logger: logging.Logger | None = None,
 ) -> pd.DataFrame:
-    """
-    Function that anonymize data in the dataframe in selected columns.
+    """Function that anonymize data in the dataframe in selected columns.
 
     It is possible to specify the condtition, for which data older than specified
     number of days will be anonymized.
@@ -889,17 +894,16 @@ def anonymize_df(
         logger = logging.getLogger(__name__)
 
     if all(col not in df.columns for col in columns):
-        raise ValueError(
-            f"""At least one of the following columns is not found in dataframe:
+        msg = f"""At least one of the following columns is not found in dataframe:
             {columns} or argument is not list. Provide list with proper column names."""
-        )
+        raise ValueError(msg)
 
     if days and date_column:
         days_ago = datetime.now().date() - timedelta(days=days)
         df["temp_date_col"] = pd.to_datetime(df[date_column]).dt.date
 
         to_hash = df["temp_date_col"] < days_ago
-        if any(to_hash) == False:
+        if any(to_hash) is False:
             logger.warning(f"No data that is older than {days} days.")
         else:
             logger.info(
@@ -919,9 +923,8 @@ def anonymize_df(
             lambda x: x.apply(hash)
         )
     else:
-        raise ValueError(
-            "Method not found. Use one of the available methods: 'mask', 'hash'."
-        )
+        msg = "Method not found. Use one of the available methods: 'mask', 'hash'."
+        raise ValueError(msg)
 
     df.drop(columns=["temp_date_col"], inplace=True, errors="ignore")
     return df
