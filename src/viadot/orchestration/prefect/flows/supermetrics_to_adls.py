@@ -36,6 +36,7 @@ def supermetrics_to_adls(  # noqa: PLR0913
     as a file.
 
     Args:
+    ----
         query_params (dict[str, Any], optional):
             A dictionary of query parameters for the Supermetrics API. These parameters
             specify the data to retrieve from Supermetrics. If not provided, the default
@@ -67,8 +68,10 @@ def supermetrics_to_adls(  # noqa: PLR0913
             for further customization of the Supermetrics query.
 
     Raises:
+    ------
         ValueError:
             If `adls_path` is not provided and cannot be determined from the configuration.
+
     """
     df = supermetrics_to_df(
         query_params=query_params,

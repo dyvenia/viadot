@@ -22,6 +22,7 @@ def supermetrics_to_df(
     and timeout behavior.
 
     Args:
+    ----
         query_params (dict):
             A dictionary containing the parameters for querying the Supermetrics API.
             These parameters define what data to retrieve and how the query should
@@ -34,15 +35,18 @@ def supermetrics_to_df(
             this secret is used to authenticate with the Supermetrics API.
 
     Returns:
+    -------
         pd.DataFrame:
             A pandas DataFrame containing the data retrieved from Supermetrics based
             on the provided query parameters.
 
     Raises:
+    ------
         MissingSourceCredentialsError:
             Raised if neither `credentials_secret` nor `config_key` is provided,
             indicating that no valid credentials were supplied to access
             the Supermetrics API.
+
     """
     if not (credentials_secret or config_key):
         raise MissingSourceCredentialsError

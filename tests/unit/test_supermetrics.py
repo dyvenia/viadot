@@ -9,7 +9,8 @@ def supermetrics_credentials():
 
 @pytest.fixture(scope="function")
 def mock_get_source_credentials(
-    mocker, supermetrics_credentials: SupermetricsCredentials
+    mocker,
+    supermetrics_credentials: SupermetricsCredentials,
 ):
     return mocker.patch(
         "viadot.config.get_source_credentials",
@@ -34,7 +35,7 @@ def supermetrics(supermetrics_credentials: SupermetricsCredentials):
 def test_to_json(mocker, supermetrics: Supermetrics):
     # Mock the handle_api_response function to simulate an API response
     mock_handle_api_response = mocker.patch(
-        "viadot.sources.supermetrics.handle_api_response"
+        "viadot.sources.supermetrics.handle_api_response",
     )
     mock_response = {
         "data": [["value1", "value2"]],
@@ -91,7 +92,7 @@ def test_to_df_with_data(supermetrics: Supermetrics, mocker):
     mock_method = mocker.patch("viadot.sources.supermetrics.Supermetrics.to_json")
     mock_method.return_value = mock_response
     mock_method = mocker.patch(
-        "viadot.sources.supermetrics.Supermetrics._get_col_names"
+        "viadot.sources.supermetrics.Supermetrics._get_col_names",
     )
     mock_method.return_value = ["date", "sessions"]
     df = supermetrics.to_df()
@@ -112,8 +113,8 @@ def test_get_col_names_google_analytics_pivoted(mocker, supermetrics: Supermetri
                 "fields": [
                     {"field_name": "ga:date", "field_split": "column"},
                     {"field_name": "ga:sessions", "field_split": "row"},
-                ]
-            }
+                ],
+            },
         },
         "data": [{"ga:date": "2023-01-01", "ga:sessions": 100}],
     }
@@ -128,8 +129,8 @@ def test_get_col_names_google_analytics_non_pivoted(mocker, supermetrics: Superm
                 "fields": [
                     {"field_name": "ga:date", "field_split": "row"},
                     {"field_name": "ga:sessions", "field_split": "row"},
-                ]
-            }
+                ],
+            },
         },
         "data": [{"ga:date": "2023-01-01", "ga:sessions": 100}],
     }
@@ -142,12 +143,13 @@ def test_to_df_metadata_columns(mocker, supermetrics: Supermetrics):
     mock_response = {
         "data": [["2023-01-01", 100]],
         "meta": {
-            "query": {"fields": [{"field_name": "date"}, {"field_name": "sessions"}]}
+            "query": {"fields": [{"field_name": "date"}, {"field_name": "sessions"}]},
         },
     }
 
     mocker.patch(
-        "viadot.sources.supermetrics.Supermetrics.to_json", return_value=mock_response
+        "viadot.sources.supermetrics.Supermetrics.to_json",
+        return_value=mock_response,
     )
     mocker.patch(
         "viadot.sources.supermetrics.Supermetrics._get_col_names",
@@ -169,8 +171,8 @@ def test_get_col_names_ga(mocker, supermetrics: Supermetrics):
                     "fields": [
                         {"field_name": "ga:date", "field_split": "column"},
                         {"field_name": "ga:sessions", "field_split": "row"},
-                    ]
-                }
+                    ],
+                },
             },
             "data": [{"ga:date": "2023-01-01", "ga:sessions": 100}],
         },
