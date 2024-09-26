@@ -9,7 +9,7 @@ from viadot.orchestration.prefect.tasks import customer_gauge_to_df, df_to_adls
 
 
 @flow
-def customer_gauge_to_adls(
+def customer_gauge_to_adls(  # noqa: PLR0913
     config_key: str | None = None,
     azure_key_vault_secret: str | None = None,
     endpoint: Literal["responses", "non-responses"] = "non-responses",
