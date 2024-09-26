@@ -37,7 +37,7 @@ def azure_sql_to_adls(
     Args:
         query (str): Query to perform on a database. Defaults to None.
         credentials_secret (str, optional): The name of the Azure Key Vault
-            secret containing a dictionary with ASElite SQL Database credentials.
+            secret containing a dictionary with database credentials.
             Defaults to None.
         sep (str, optional): The delimiter for the output CSV file. Defaults to "\t".
         file_path (str, optional): Local destination path. Defaults to None.
