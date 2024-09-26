@@ -20,7 +20,7 @@ class SupermetricsCredentials(BaseModel):
     This class encapsulates the necessary credentials required to authenticate
     and access the Supermetrics API.
 
-    Attributes
+    Attributes:
     ----------
         user (str):
             The email account associated with the Supermetrics user.
@@ -210,12 +210,12 @@ class Supermetrics(Source):
         This method determines the appropriate column names for the data based
         on its type, whether it's Google Analytics data or another type.
 
-        Returns
+        Returns:
         -------
             list of str:
                 A list of column names based on the data type.
 
-        Raises
+        Raises:
         ------
             ValueError:
                 Raised if the column names cannot be determined.

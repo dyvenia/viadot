@@ -1,4 +1,5 @@
 import pytest
+
 from viadot.config import get_source_config
 from viadot.orchestration.prefect.flows import supermetrics_to_adls
 
