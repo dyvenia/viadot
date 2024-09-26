@@ -2,7 +2,7 @@ from src.viadot.orchestration.prefect.flows import azure_sql_to_adls
 from src.viadot.sources import AzureDataLake
 from unittest.mock import patch
 
-def test_aselite_to_adls(
+def test_azure_sql_to_adls(
     query,
     TEST_FILE_PATH,
     adls_credentials_secret,
