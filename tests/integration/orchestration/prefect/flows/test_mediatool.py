@@ -3,11 +3,12 @@
 from viadot.orchestration.prefect.flows import mediatool_to_adls
 
 
-
-def test_genesys_to_adls(azure_key_vault_secret,
-                            organization_ids,
-                            media_entries_columns,
-                            adls_azure_key_vault_secret):
+def test_genesys_to_adls(
+    azure_key_vault_secret,
+    organization_ids,
+    media_entries_columns,
+    adls_azure_key_vault_secret,
+):
     state = mediatool_to_adls(
         azure_key_vault_secret=azure_key_vault_secret,
         organization_ids=organization_ids,

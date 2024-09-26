@@ -505,13 +505,12 @@ def join_dfs(
     if columns_from_right_df is None:
         columns_from_right_df = df_right.columns
 
-    df_merged = df_left.merge(
+    return df_left.merge(
         df_right[columns_from_right_df],
         left_on=left_on,
         right_on=right_on,
         how=how,
     )
-    return df_merged
 
 
 def add_viadot_metadata_columns(func: Callable) -> Callable:

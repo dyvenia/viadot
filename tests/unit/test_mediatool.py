@@ -10,6 +10,7 @@ from viadot.exceptions import CredentialError
 from viadot.sources import Mediatool
 from viadot.sources.mediatool import MediatoolCredentials
 
+
 variables = {
     "credentials": {"user_id": "test_user", "token": "test_token"},
     "organizations": {
@@ -22,13 +23,13 @@ variables = {
 }
 
 
-@pytest.mark.basic()
+@pytest.mark.basic
 def test_mediatool_credentials():
     """Test Mediatool credentials."""
-    MediatoolCredentials(user_id="test_user", token="test_token")
+    MediatoolCredentials(user_id="test_user", token="test_token")  # noqa: S106
 
 
-@pytest.mark.basic()
+@pytest.mark.basic
 @patch("viadot.sources.mediatool.get_source_credentials", return_value=None)
 def test_missing_credentials(mock_get_source_credentials):
     """Test raise error without credentials."""
@@ -38,7 +39,7 @@ def test_missing_credentials(mock_get_source_credentials):
     mock_get_source_credentials.assert_called_once()
 
 
-@pytest.mark.functions()
+@pytest.mark.functions
 @patch("viadot.sources.mediatool.handle_api_response")
 def test_get_organizations(mock_handle_api_response):
     """Test Mediatool `_get_organizations` function."""
@@ -53,7 +54,7 @@ def test_get_organizations(mock_handle_api_response):
     assert result == expected_result
 
 
-@pytest.mark.functions()
+@pytest.mark.functions
 @patch("viadot.sources.mediatool.handle_api_response")
 def test_get_media_entries(mock_handle_api_response):
     """Test Mediatool `_get_media_entries` function."""
@@ -68,7 +69,7 @@ def test_get_media_entries(mock_handle_api_response):
     assert result == expected_result
 
 
-@pytest.mark.functions()
+@pytest.mark.functions
 @patch("viadot.sources.mediatool.handle_api_response")
 def test_get_vehicles(mock_handle_api_response):
     """Test Mediatool `_get_vehicles` function."""
@@ -83,7 +84,7 @@ def test_get_vehicles(mock_handle_api_response):
     assert result == expected_result
 
 
-@pytest.mark.functions()
+@pytest.mark.functions
 @patch("viadot.sources.mediatool.handle_api_response")
 def test_get_campaigns(mock_handle_api_response):
     """Test Mediatool `_get_campaigns` function."""
@@ -98,7 +99,7 @@ def test_get_campaigns(mock_handle_api_response):
     assert result == expected_result
 
 
-@pytest.mark.functions()
+@pytest.mark.functions
 @patch("viadot.sources.mediatool.handle_api_response")
 def test_get_media_types(mock_handle_api_response):
     """Test Mediatool `_get_media_types` function."""
@@ -113,7 +114,7 @@ def test_get_media_types(mock_handle_api_response):
     assert result == expected_result
 
 
-@pytest.mark.functions()
+@pytest.mark.functions
 def test_rename_columns():
     """Test Mediatool `_rename_columns` function."""
     df = pd.DataFrame({"col1": [1, 2], "col2": [3, 4]})
@@ -125,7 +126,7 @@ def test_rename_columns():
     pd.testing.assert_frame_equal(result, expected_result)
 
 
-@pytest.mark.connect()
+@pytest.mark.connect
 @patch("viadot.sources.mediatool.handle_api_response")
 def test_api_connection(mock_handle_api_response):
     """Test Mediatool `api_connection` method."""
@@ -140,7 +141,7 @@ def test_api_connection(mock_handle_api_response):
     assert result == expected_result
 
 
-@pytest.mark.functions()
+@pytest.mark.functions
 @patch("viadot.sources.mediatool.handle_api_response")
 def test_to_df(mock_handle_api_response):
     """Test Mediatool `to_df` method."""
