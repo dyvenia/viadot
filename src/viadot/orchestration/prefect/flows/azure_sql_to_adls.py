@@ -64,7 +64,7 @@ def azure_sql_to_adls(
         adls_path_overwrite (bool, optional): Whether to overwrite the file in ADLS.
             Defaults to True.
     """
-    data_frame = aselite_to_df(
+    data_frame = azure_sql_to_df(
         query=query,
         credentials_secret=credentials_secret,
         sep=sep,
