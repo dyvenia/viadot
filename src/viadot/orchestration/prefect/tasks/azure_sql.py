@@ -1,4 +1,4 @@
-"""Task for downloading data from Aselite."""
+"""Task for downloading data from Azure SQL."""
 
 from typing import Any, Dict, List, Literal
 import pandas as pd
