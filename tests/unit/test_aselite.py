@@ -4,9 +4,9 @@ from src.viadot.sources.azure_sql import AzureSQL
 
 class TestAzureSQL(unittest.TestCase):
 
-    @patch('my_module.SQLServer.run')
+    @patch('src.viadot.sources.SQLServer.run')
     def test_bulk_insert_default(self, mock_run):
-        """Test funkcji `bulk_insert` z domyślnymi parametrami."""
+        """Test the `bulk_insert` function with default parameters."""
 
         azure_sql = AzureSQL()
 
@@ -16,9 +16,9 @@ class TestAzureSQL(unittest.TestCase):
 
         self.assertTrue(result)
 
-    @patch('my_module.SQLServer.run')
+    @patch('src.viadot.sources.SQLServer.run')
     def test_bulk_insert_with_replace(self, mock_run):
-        """Test funkcji `bulk_insert` z opcją `replace`."""
+        """Test the `bulk_insert` function with the `replace` option."""
         azure_sql = AzureSQL()
 
         azure_sql.bulk_insert(
@@ -36,9 +36,9 @@ class TestAzureSQL(unittest.TestCase):
         mock_run.assert_any_call(delete_sql)
         mock_run.assert_any_call(bulk_insert_sql)
 
-    @patch('my_module.SQLServer.run')
+    @patch('src.viadot.sources.SQLServer.run')
     def test_create_external_database(self, mock_run):
-        """Test funkcji `create_external_database`."""
+        """Test the `create_external_database` function."""
         azure_sql = AzureSQL()
 
         external_database_name = "external_db"
