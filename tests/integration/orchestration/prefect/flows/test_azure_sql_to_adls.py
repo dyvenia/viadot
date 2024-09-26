@@ -1,4 +1,4 @@
-from src.viadot.orchestration.prefect.flows import aselite_to_adls
+from src.viadot.orchestration.prefect.flows import azure_sql_to_adls
 from src.viadot.sources import AzureDataLake
 from unittest.mock import patch
 
@@ -22,7 +22,7 @@ def test_aselite_to_adls(
         mock_df = mock_aselite_to_df.return_value
 
         # Call the flow
-        aselite_to_adls(
+        azure_sql_to_adls(
             query=query,
             credentials_secret=aselite_credentials_secret,
             sep=",",

@@ -1,7 +1,7 @@
 import pytest
 from unittest.mock import patch, MagicMock
 import pandas as pd
-from src.viadot.orchestration.prefect.tasks import aselite_to_df  
+from src.viadot.orchestration.prefect.tasks import azure_sql_to_df  
 
 
 @pytest.fixture
@@ -33,7 +33,7 @@ def test_aselite_to_df(
     mock_df_converts_bytes_to_int.return_value = sample_dataframe
 
     # Call the function
-    aselite_to_df_result = aselite_to_df(
+    aselite_to_df_result = azure_sql_to_df(
         query="SELECT * FROM test_table",
         credentials_secret="test_secret",
         sep=",",
@@ -57,7 +57,7 @@ def test_aselite_to_df(
     # Test case when remove_special_characters is True
     mock_df_clean_column.return_value = sample_dataframe
 
-    aselite_to_df(
+    azure_sql_to_df(
         query="SELECT * FROM test_table",
         credentials_secret="test_secret",
         sep=",",
@@ -75,7 +75,7 @@ def test_aselite_to_df(
     # Test case for missing credentials_secret
     with pytest.raises(ValueError, 
                        match="`credentials_secret` has to be specified and not empty."):
-        aselite_to_df(
+        azure_sql_to_df(
             query="SELECT * FROM test_table",
             credentials_secret=None,
         )

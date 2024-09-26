@@ -4,7 +4,7 @@ from typing import Any, Dict, List, Literal
 
 from prefect import flow
 from prefect.task_runners import ConcurrentTaskRunner
-from viadot.orchestration.prefect.tasks import df_to_adls, aselite_to_df
+from viadot.orchestration.prefect.tasks import df_to_adls, azure_sql_to_df
 
 
 @flow(
@@ -16,7 +16,7 @@ from viadot.orchestration.prefect.tasks import df_to_adls, aselite_to_df
     task_runner=ConcurrentTaskRunner,
     log_prints=True,
 )
-def aselite_to_adls(
+def azure_sql_to_adls(
     query: str = None,
     credentials_secret: str = None,
     sep: str = "\t",

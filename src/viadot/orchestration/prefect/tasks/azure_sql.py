@@ -15,7 +15,7 @@ from viadot.sources import AzureSQL
 
 
 @task(retries=3, retry_delay_seconds=10, timeout_seconds=60 * 60)
-def aselite_to_df(
+def azure_sql_to_df(
     query: str = None,
     credentials_secret: str = None,
     sep: str = "\t",
