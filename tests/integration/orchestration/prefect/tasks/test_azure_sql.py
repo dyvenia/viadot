@@ -11,11 +11,11 @@ def sample_dataframe():
     return pd.DataFrame(data)
 
 
-@patch("my_module.get_credentials")
-@patch("my_module.AzureSQL")
-@patch("my_module.df_converts_bytes_to_int")
-@patch("my_module.df_clean_column")
-@patch("my_module.df_to_csv")
+@patch("viadot.orchestration.prefect.tasks.task_utils.get_credentials")
+@patch("src.viadot.sources.AzureSQL")
+@patch("viadot.orchestration.prefect.tasks.task_utils.df_converts_bytes_to_int")
+@patch("viadot.orchestration.prefect.tasks.task_utils.df_clean_column")
+@patch("viadot.orchestration.prefect.tasks.task_utils.df_to_csv")
 def test_azure_sql_to_df(
     mock_df_to_csv,
     mock_df_clean_column,
@@ -72,6 +72,9 @@ def test_azure_sql_to_df(
     mock_df_clean_column.assert_called_once_with(
         df=sample_dataframe, columns_to_clean=["column1"])
 
+
+@patch("viadot.orchestration.prefect.tasks.task_utils.get_credentials")
+def test_azure_sql_to_df_missing_credentials(mock_get_credentials):
     # Test case for missing credentials_secret
     with pytest.raises(ValueError, 
                        match="`credentials_secret` has to be specified and not empty."):
