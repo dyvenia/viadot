@@ -1,7 +1,7 @@
 """Source for connecting to Supermetrics API."""
 
 import json
-from typing import Any, Optional
+from typing import Any
 
 import numpy as np
 import pandas as pd
@@ -65,7 +65,7 @@ class Supermetrics(Source):
         self,
         *args,
         credentials: dict[str, Any] | None = None,
-        config_key: str = None,
+        config_key: str | None = None,
         query_params: dict[str, Any] | None = None,
         **kwargs,
     ) -> None:

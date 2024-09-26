@@ -4,7 +4,9 @@ from viadot.sources import Supermetrics, SupermetricsCredentials
 
 @pytest.fixture
 def supermetrics_credentials():
-    return SupermetricsCredentials(user="test_user", api_key="test_key")
+    return SupermetricsCredentials(
+        user="test_user", api_key="test_key"
+    )  # pragma: allowlist secret
 
 
 @pytest.fixture
