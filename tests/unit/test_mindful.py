@@ -7,6 +7,7 @@ import pandas as pd
 import pytest
 from requests.auth import HTTPBasicAuth
 from requests.models import Response
+
 from viadot.exceptions import APIError, CredentialError
 from viadot.sources import Mindful
 from viadot.sources.mindful import MindfulCredentials

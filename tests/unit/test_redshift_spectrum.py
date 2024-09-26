@@ -2,17 +2,19 @@ import os
 
 import moto
 import pytest
+
 from viadot.utils import skip_test_on_missing_extra
 
 
 try:
     import boto3
+
     from viadot.sources import RedshiftSpectrum
 except ImportError:
     skip_test_on_missing_extra("RedshiftSpectrum", extra="aws")
 
 
-@pytest.fixture()
+@pytest.fixture
 def _aws_credentials():
     """Mocked AWS Credentials for moto."""
     os.environ["AWS_ACCESS_KEY_ID"] = "testing"
@@ -22,7 +24,7 @@ def _aws_credentials():
     os.environ["AWS_DEFAULT_REGION"] = "us-east-1"
 
 
-@pytest.fixture()
+@pytest.fixture
 def _mocked_aws(_aws_credentials):
     """Mock all AWS interactions.
 
@@ -32,7 +34,7 @@ def _mocked_aws(_aws_credentials):
         yield
 
 
-@pytest.fixture()
+@pytest.fixture
 def redshift_spectrum(_mocked_aws):
     conn = boto3.client("s3")
     conn.create_bucket(Bucket="test_bucket")

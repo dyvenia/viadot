@@ -3,6 +3,7 @@ import os
 import pandas as pd
 from prefect import flow
 import pytest
+
 from viadot.orchestration.prefect.tasks import df_to_redshift_spectrum
 from viadot.utils import skip_test_on_missing_extra
 

@@ -6,6 +6,7 @@ from O365.mailbox import MailBox
 from O365.message import Message
 import pandas as pd
 import pytest
+
 from viadot.exceptions import CredentialError
 from viadot.sources import Outlook
 from viadot.sources.outlook import OutlookCredentials

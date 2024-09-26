@@ -2,6 +2,7 @@ import contextlib
 
 from prefect import flow
 import pytest
+
 from viadot.exceptions import TableDoesNotExistError
 from viadot.utils import skip_test_on_missing_extra
 
