@@ -61,7 +61,7 @@ def azure_sql_to_df(
 
     credentials = get_credentials(credentials_secret)
 
-    aselite = AzureSQL(credentials=credentials)
+    azure_sql = AzureSQL(credentials=credentials)
 
     df = aselite.to_df(query=query)
 
