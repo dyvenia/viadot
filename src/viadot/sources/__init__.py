@@ -72,3 +72,8 @@ if find_spec("pyspark"):
     from viadot.sources.databricks import Databricks  # noqa: F401
 
     __all__.append("Databricks")
+
+if find_spec("pandas_gbq"):
+    from viadot.sources.bigquery import pandas_gbq  # noqa: F401
+
+    __all__.append("pandas_gbq")
