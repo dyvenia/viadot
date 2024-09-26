@@ -33,7 +33,7 @@ def test_azure_sql_to_df(
     mock_df_converts_bytes_to_int.return_value = sample_dataframe
 
     # Call the function
-    aselite_to_df_result = azure_sql_to_df(
+    azure_sql_to_df_result = azure_sql_to_df(
         query="SELECT * FROM test_table",
         credentials_secret="test_secret",
         sep=",",
