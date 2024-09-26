@@ -27,7 +27,7 @@ __all__ = [
     "Mindful",
     "Outlook",
     "SQLServer",
-    "SalesForce",
+    "Salesforce",
     "Sharepoint",
     "Supermetrics",
     "SupermetricsCredentials",  # pragma: allowlist-secret
