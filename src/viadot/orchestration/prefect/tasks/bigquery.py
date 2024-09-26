@@ -1,7 +1,5 @@
 """'bigquery.py'."""
 
-from typing import Any
-
 import pandas as pd
 from prefect import task
 

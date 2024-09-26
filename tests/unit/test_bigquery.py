@@ -37,7 +37,7 @@ class TestBigQueryCredentials:
             type="test_type",
             project_id="",
             private_key_id="test_private_key_id",
-            private_key="test_private_key",
+            private_key="test_private_key",  # pragma: allowlist secret
             client_email="test_client_email",
             client_id="test_client_id",
             auth_uri="",
