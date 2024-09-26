@@ -74,6 +74,4 @@ def azure_sql_to_df(
     if validate_df_dict is not None:
         validate(df=df, tests=validate_df_dict)
 
-    # csv_output = df_to_csv(df=df, path=file_path, sep=sep, if_exists=if_exists)
-
     return df
