@@ -1,8 +1,5 @@
 """Tasks from SFTP API."""
 
-import time
-from typing import Any
-
 import pandas as pd
 from prefect import task
 
@@ -45,7 +42,6 @@ def sftp_to_df(
         config_key=config_key,
     )
     sftp.get_connection()
-    time.sleep(1)
 
     return sftp.to_df(file_name=file_name, sep=sep, columns=columns)
 
