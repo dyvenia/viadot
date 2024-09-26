@@ -8,7 +8,7 @@ from viadot.orchestration.prefect.tasks import df_to_adls, azure_sql_to_df
 
 
 @flow(
-    name="Aselite extraction to ADLS",
+    name="Azure SQL extraction to ADLS",
     description="Extract data from Aselite Cloud"
     + " and load it into Azure Data Lake Storage.",
     retries=1,
