@@ -23,7 +23,7 @@ def test_azure_sql_to_adls(
         # Call the flow
         azure_sql_to_adls(
             query=query,
-            credentials_secret=aselite_credentials_secret,
+            credentials_secret=azure_sql_credentials_secret,
             sep=",",
             file_path=TEST_FILE_PATH,
             if_exists="replace",
