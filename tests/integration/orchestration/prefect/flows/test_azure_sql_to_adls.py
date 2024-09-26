@@ -14,8 +14,8 @@ def test_azure_sql_to_adls(
     assert not lake.exists(TEST_FILE_PATH)
 
     # Mock the `aselite_to_df` and `df_to_adls` tasks
-    with patch("my_module.aselite_to_df") as mock_aselite_to_df, \
-         patch("my_module.df_to_adls") as mock_df_to_adls:
+    with patch("viadot.orchestration.prefect.tasks.aselite_to_df") as mock_azure_sql_to_df, \
+         patch("viadot.orchestration.prefect.tasks.df_to_adls") as mock_df_to_adls:
 
         # Prepare mock DataFrame
         mock_df = mock_aselite_to_df.return_value
