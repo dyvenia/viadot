@@ -1,6 +1,6 @@
 [project]
 name = "viadot2"
-version = "2.1.14"
+version = "2.1.19"
 description = "A simple data ingestion library to guide data flows from some places to other places."
 authors = [
     { name = "acivitillo", email = "acivitillo@dyvenia.com" },
@@ -33,6 +33,9 @@ dependencies = [
     # numpy>=2.0 is not compatible with the old pyarrow v10.x.
     "numpy>=1.23.4, <2.0",
     "paramiko==2.11.0"
+    "defusedxml>=0.7.1",
+    "aiohttp>=3.10.5",
+    "pytest-mock>=3.14.0",
 ]
 requires-python = ">=3.10"
 readme = "README.md"
@@ -79,7 +82,7 @@ dev-dependencies = [
     "mkdocs-git-revision-date-plugin>=0.3.2",
     "mkdocs-glightbox>=0.4.0",
     "pytest>=8.2.2",
-    "ruff>=0.5.2",
+    "ruff>=0.6.6",
     "pytest-asyncio>=0.23.8",
     "moto>=5.0.13",
 ]

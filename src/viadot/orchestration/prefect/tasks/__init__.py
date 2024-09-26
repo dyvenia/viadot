@@ -6,6 +6,7 @@ from .cloud_for_customers import cloud_for_customers_to_df
 from .databricks import df_to_databricks
 from .dbt import dbt_task
 from .duckdb import duckdb_query
+from .epicor import epicor_to_df
 from .exchange_rates import exchange_rates_to_df
 from .genesys import genesys_to_df
 from .git import clone_repo
@@ -20,31 +21,34 @@ from .sap_rfc import sap_rfc_to_df
 from .sftp import sftp_list, sftp_to_df
 from .sharepoint import sharepoint_download_file, sharepoint_to_df
 from .sql_server import create_sql_server_table, sql_server_query, sql_server_to_df
+from .supermetrics import supermetrics_to_df
 
 __all__ = [
     "adls_upload",
-    "df_to_adls",
     "bcp",
+    "clone_repo",
     "cloud_for_customers_to_df",
-    "df_to_databricks",
+    "create_sql_server_table",
     "dbt_task",
+    "df_to_adls",
+    "df_to_databricks",
+    "df_to_minio",
+    "df_to_redshift_spectrum",
     "duckdb_query",
+    "epicor_to_df",
     "exchange_rates_to_df",
     "genesys_to_df",
-    "clone_repo",
     "hubspot_to_df",
     "luma_ingest_task",
     "mindful_to_df",
-    "df_to_minio",
     "outlook_to_df",
-    "df_to_redshift_spectrum",
     "s3_upload_file",
     "sap_rfc_to_df",
     "sftp_list",
     "sftp_to_df",
     "sharepoint_download_file",
     "sharepoint_to_df",
-    "create_sql_server_table",
     "sql_server_query",
     "sql_server_to_df",
+    "supermetrics_to_df",
 ]

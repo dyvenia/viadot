@@ -1,6 +1,7 @@
 from contextlib import nullcontext as does_not_raise
 
 import pytest
+
 from viadot.utils import skip_test_on_missing_extra
 
 

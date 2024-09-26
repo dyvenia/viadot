@@ -1,6 +1,7 @@
 from pathlib import Path
 
 import pytest
+
 from viadot.orchestration.prefect.flows import duckdb_transform
 from viadot.sources import DuckDB
 

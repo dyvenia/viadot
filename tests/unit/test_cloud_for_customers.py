@@ -2,6 +2,7 @@ from unittest import mock
 
 from pydantic import SecretStr
 import pytest
+
 from viadot.exceptions import CredentialError
 from viadot.sources.cloud_for_customers import (
     CloudForCustomers,
@@ -24,7 +25,7 @@ def test_is_configured_invalid():
         CloudForCustomersCredentials.is_configured(credentials)
 
 
-@pytest.fixture()
+@pytest.fixture
 def c4c():
     credentials = {
         "username": "user@tenant.com",

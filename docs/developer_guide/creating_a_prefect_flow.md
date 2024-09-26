@@ -32,7 +32,9 @@ def postgresql_to_df(credentials_key: str | None = None, credentials_secret: str
     if not (credentials_secret or config_key):
         raise MissingSourceCredentialsError
 
-    credentials = credentials or get_credentials(credentials_secret)
+    if not config_key:
+        credentials = get_credentials(credentials_secret)
+
     postgres = PostgreSQL(credentials=credentials, config_key=config_key)
     return postgres.to_df(...)
 ```

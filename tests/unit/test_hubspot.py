@@ -7,6 +7,7 @@ from unittest.mock import MagicMock, patch
 import pandas as pd
 import pytest
 from requests.models import Response
+
 from viadot.exceptions import APIError, CredentialError
 from viadot.sources import Hubspot
 from viadot.sources.hubspot import HubspotCredentials
