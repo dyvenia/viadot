@@ -6,8 +6,14 @@ import pandas as pd
 import pytest
 
 from viadot.exceptions import APIError, CredentialError
-from viadot.sources import BigQuery
 from viadot.sources.bigquery import BigQueryCredentials
+from viadot.utils import skip_test_on_missing_extra
+
+
+try:
+    from viadot.sources import BigQuery
+except ImportError:
+    skip_test_on_missing_extra(source_name="BigQuery", extra="bigquery")
 
 
 variables = {
