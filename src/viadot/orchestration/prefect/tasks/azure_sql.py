@@ -27,7 +27,7 @@ def azure_sql_to_df(
     columns_to_clean: List[str] = None,
 
 ) -> pd.DataFrame:
-    r"""Task to download data from Aselite.
+    r"""Task to download data from Azure SQL.
 
     Args:
         query (str): Query to perform on a database. Defaults to None.
