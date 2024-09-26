@@ -121,7 +121,7 @@ class Sftp(Source):
 
         else:
             mykey = paramiko.RSAKey.from_private_key(StringIO(self.rsa_key))
-            ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+            ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())  # noqa: S507
             ssh.connect(self.hostname, username=self.username, pkey=mykey)
             time.sleep(1)
             self.conn = ssh.open_sftp()
@@ -171,7 +171,7 @@ class Sftp(Source):
             df = pd.read_json(byte_file)
 
         elif suffix == ".pkl":
-            df = pd.read_pickle(byte_file)
+            df = pd.read_pickle(byte_file)  # noqa: S301
 
         elif suffix == ".sql":
             df = pd.read_sql(byte_file)
@@ -225,9 +225,9 @@ class Sftp(Source):
                 else:
                     files_list.append(full_path)
         except FileNotFoundError as e:
-            self.logger.exception(f"Directory not found: {path}. Error: {e}")
+            self.logger.info(f"Directory not found: {path}. Error: {e}")
         except Exception as e:
-            self.logger.exception(f"Error accessing {path}: {e}")
+            self.logger.info(f"Error accessing {path}: {e}")
 
         return files_list
 

@@ -17,6 +17,7 @@ from .sql_server import SQLServer
 from .supermetrics import Supermetrics, SupermetricsCredentials
 from .uk_carbon_intensity import UKCarbonIntensity
 
+
 __all__ = [
     "CloudForCustomers",
     "Epicor",
