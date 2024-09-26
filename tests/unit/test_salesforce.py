@@ -7,10 +7,11 @@ from viadot.exceptions import CredentialError
 from viadot.sources import Salesforce
 from viadot.sources.salesforce import SalesforceCredentials
 
+
 variables = {
     "credentials": {
         "username": "test_user",
-        "password": "test_password",
+        "password": "test_password",  # pragma: allowlist secret
         "token": "test_token",
     },
     "records_1": [
@@ -40,11 +41,13 @@ variables = {
 }
 
 
-@pytest.mark.basic()
+@pytest.mark.basic
 def test_salesforce_init_dev_env(mocker):
     """Test Salesforce, starting in dev mode."""
     mock_sf_instance = mocker.MagicMock(spec=SimpleSalesforce)
-    mocker.patch("viadot.sources.salesforce.SimpleSalesforce", return_value=mock_sf_instance)
+    mocker.patch(
+        "viadot.sources.salesforce.SimpleSalesforce", return_value=mock_sf_instance
+    )
     sf_instance = Salesforce(credentials=variables["credentials"], env="DEV")
 
     assert sf_instance.salesforce == mock_sf_instance
@@ -53,27 +56,29 @@ def test_salesforce_init_dev_env(mocker):
 class TestSalesforceCredentials:
     """Test Salesforce Credentials Class."""
 
-    @pytest.mark.basic()
+    @pytest.mark.basic
     def test_salesforce_credentials(self):
         """Test Salesforce credentials."""
         SalesforceCredentials(
             username="test_user",
-            password="test_password",
-            token="test_token",
+            password="test_password",  # noqa: S106 # pragma: allowlist secret
+            token="test_token",  # noqa: S106
         )
 
 
-@pytest.mark.basic()
+@pytest.mark.basic
 def test_salesforce_init_prod_env(mocker):
     """Test Salesforce, starting in prod mode."""
     mock_sf_instance = mocker.MagicMock(spec=SimpleSalesforce)
-    mocker.patch("viadot.sources.salesforce.SimpleSalesforce", return_value=mock_sf_instance)
+    mocker.patch(
+        "viadot.sources.salesforce.SimpleSalesforce", return_value=mock_sf_instance
+    )
     sf_instance = Salesforce(credentials=variables["credentials"], env="PROD")
 
     assert sf_instance.salesforce == mock_sf_instance
 
 
-@pytest.mark.basic()
+@pytest.mark.basic
 def test_salesforce_invalid_env():
     """Test Salesforce, invalid `env` parameter."""
     with pytest.raises(
@@ -82,19 +87,24 @@ def test_salesforce_invalid_env():
         Salesforce(credentials=variables["credentials"], env="INVALID")
 
 
-@pytest.mark.basic()
+@pytest.mark.basic
 def test_salesforce_missing_credentials():
     """Test Salesforce missing credentials."""
-    incomplete_creds = {"username": "user", "password": "pass"}
+    incomplete_creds = {
+        "username": "user",  # pragma: allowlist secret
+        "password": "pass",  # pragma: allowlist secret
+    }
     with pytest.raises(CredentialError):
         Salesforce(credentials=incomplete_creds)
 
 
-@pytest.mark.connect()
+@pytest.mark.connect
 def test_salesforce_api_connection(mocker):
     """Test Salesforce `api_connection` method with a query."""
     mock_sf_instance = mocker.MagicMock(spec=SimpleSalesforce)
-    mocker.patch("viadot.sources.salesforce.SimpleSalesforce", return_value=mock_sf_instance)
+    mocker.patch(
+        "viadot.sources.salesforce.SimpleSalesforce", return_value=mock_sf_instance
+    )
     salesforce_instance = Salesforce(credentials=variables["credentials"])
 
     mock_sf_instance.query.return_value = {"records": variables["records_1"]}
@@ -105,11 +115,13 @@ def test_salesforce_api_connection(mocker):
     mock_sf_instance.query.assert_called_once_with("SELECT Id, Name FROM Account")
 
 
-@pytest.mark.connect()
+@pytest.mark.connect
 def test_salesforce_api_connection_with_columns(mocker):
     """Test Salesforce `api_connection` method with columns."""
     mock_sf_instance = mocker.MagicMock(spec=SimpleSalesforce)
-    mocker.patch("viadot.sources.salesforce.SimpleSalesforce", return_value=mock_sf_instance)
+    mocker.patch(
+        "viadot.sources.salesforce.SimpleSalesforce", return_value=mock_sf_instance
+    )
     salesforce_instance = Salesforce(credentials=variables["credentials"])
 
     mock_sf_instance.query.return_value = {"records": variables["records_2"]}
@@ -120,11 +132,13 @@ def test_salesforce_api_connection_with_columns(mocker):
     mock_sf_instance.query.assert_called_once_with("SELECT Id, Name FROM Account")
 
 
-@pytest.mark.functions()
+@pytest.mark.functions
 def test_salesforce_to_df(mocker):
     """Test Salesforce `to_df` method."""
     mock_sf_instance = mocker.MagicMock(spec=SimpleSalesforce)
-    mocker.patch("viadot.sources.salesforce.SimpleSalesforce", return_value=mock_sf_instance)
+    mocker.patch(
+        "viadot.sources.salesforce.SimpleSalesforce", return_value=mock_sf_instance
+    )
     salesforce_instance = Salesforce(credentials=variables["credentials"])
     salesforce_instance.data = variables["data"]
 
@@ -141,11 +155,13 @@ def test_salesforce_to_df(mocker):
     assert df.iloc[0]["Id"] == "001"
 
 
-@pytest.mark.functions()
+@pytest.mark.functions
 def test_salesforce_to_df_empty_data(mocker):
     """Test Salesforce `to_df` method with empty df."""
     mock_sf_instance = mocker.MagicMock(spec=SimpleSalesforce)
-    mocker.patch("viadot.sources.salesforce.SimpleSalesforce", return_value=mock_sf_instance)
+    mocker.patch(
+        "viadot.sources.salesforce.SimpleSalesforce", return_value=mock_sf_instance
+    )
     salesforce_instance = Salesforce(credentials=variables["credentials"])
     salesforce_instance.data = []
 
@@ -153,11 +169,13 @@ def test_salesforce_to_df_empty_data(mocker):
         salesforce_instance.to_df(if_empty="fail")
 
 
-@pytest.mark.functions()
+@pytest.mark.functions
 def test_salesforce_to_df_warn_empty_data(mocker):
     """Test Salesforce `to_df` method with empty df, warn."""
     mock_sf_instance = mocker.MagicMock(spec=SimpleSalesforce)
-    mocker.patch("viadot.sources.salesforce.SimpleSalesforce", return_value=mock_sf_instance)
+    mocker.patch(
+        "viadot.sources.salesforce.SimpleSalesforce", return_value=mock_sf_instance
+    )
     salesforce_instance = Salesforce(credentials=variables["credentials"])
     salesforce_instance.data = []
 

@@ -14,7 +14,7 @@ from viadot.orchestration.prefect.tasks import df_to_adls, salesforce_to_df
     retry_delay_seconds=60,
     task_runner=ConcurrentTaskRunner,
 )
-def salesforce_to_adls(
+def salesforce_to_adls(  # noqa: PLR0913
     config_key: str | None = None,
     azure_key_vault_secret: str | None = None,
     env: str | None = None,

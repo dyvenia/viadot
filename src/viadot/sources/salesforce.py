@@ -115,7 +115,7 @@ class Salesforce(Source):
         """
         if not query:
             columns_str = ", ".join(columns) if columns else "FIELDS(STANDARD)"
-            query = f"SELECT {columns_str} FROM {table}"
+            query = f"SELECT {columns_str} FROM {table}"  # noqa: S608
 
         self.data = self.salesforce.query(query).get("records")
 

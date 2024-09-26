@@ -3,7 +3,9 @@
 from viadot.orchestration.prefect.flows import salesforce_to_adls
 
 
-def test_salesforce_to_adls(azure_key_vault_secret, adls_path, adls_azure_key_vault_secret):
+def test_salesforce_to_adls(
+    azure_key_vault_secret, adls_path, adls_azure_key_vault_secret
+):
     """Test Salesforce prefect flow."""
     state = salesforce_to_adls(
         azure_key_vault_secret=azure_key_vault_secret,
