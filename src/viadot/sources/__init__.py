@@ -27,10 +27,8 @@ __all__ = [
     "Outlook",
     "SQLServer",
     "Sharepoint",
-    "Sharepoint",
     "Supermetrics",
     "SupermetricsCredentials",  # pragma: allowlist-secret
-    "Trino",
     "Trino",
     "UKCarbonIntensity",
 ]
