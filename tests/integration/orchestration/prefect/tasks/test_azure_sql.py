@@ -16,7 +16,7 @@ def sample_dataframe():
 @patch("my_module.df_converts_bytes_to_int")
 @patch("my_module.df_clean_column")
 @patch("my_module.df_to_csv")
-def test_aselite_to_df(
+def test_azure_sql_to_df(
     mock_df_to_csv,
     mock_df_clean_column,
     mock_df_converts_bytes_to_int,
