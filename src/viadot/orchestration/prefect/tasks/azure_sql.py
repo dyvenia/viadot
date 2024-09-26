@@ -63,7 +63,7 @@ def azure_sql_to_df(
 
     azure_sql = AzureSQL(credentials=credentials)
 
-    df = aselite.to_df(query=query)
+    df = azure_sql.to_df(query=query)
 
     if convert_bytes:
         df = df_converts_bytes_to_int(df=df)
