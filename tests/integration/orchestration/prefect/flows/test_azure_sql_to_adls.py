@@ -6,7 +6,7 @@ def test_azure_sql_to_adls(
     query,
     TEST_FILE_PATH,
     adls_credentials_secret,
-    aselite_credentials_secret,
+    azure_sql_credentials_secret,
 ):
     lake = AzureDataLake(config_key="adls_test")
 
