@@ -72,7 +72,8 @@ def supermetrics_to_adls(
     Raises:
     ------
         ValueError:
-            If `adls_path` is not provided and cannot be determined from the configuration.
+            If `adls_path` is not provided and cannot be determined from
+            the configuration.
 
     """
     df = supermetrics_to_df(

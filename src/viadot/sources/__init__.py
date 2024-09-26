@@ -21,15 +21,15 @@ __all__ = [
     "Epicor",
     "ExchangeRates",
     "Genesys",
-    "Outlook",
     "Hubspot",
     "Mindful",
-    "Sharepoint",
-    "Trino",
+    "Outlook",
     "SQLServer",
-    "UKCarbonIntensity",
+    "Sharepoint",
     "Supermetrics",
     "SupermetricsCredentials",  # pragma: allowlist-secret
+    "Trino",
+    "UKCarbonIntensity",
 ]
 if find_spec("adlfs"):
     from viadot.sources.azure_data_lake import AzureDataLake  # noqa: F401
