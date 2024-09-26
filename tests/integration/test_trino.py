@@ -2,6 +2,7 @@ import contextlib
 
 import pyarrow as pa
 import pytest
+
 from viadot.sources import Trino
 
 

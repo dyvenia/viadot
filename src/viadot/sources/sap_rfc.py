@@ -983,8 +983,7 @@ class SAPRFCV2(Source):
                     self.rfc_total_col_width_character_limit
                     - col_length_reference_column
                 )
-                if local_limit < character_limit:
-                    character_limit = local_limit
+                character_limit = min(local_limit, character_limit)
         else:
             character_limit = self.rfc_total_col_width_character_limit
 
@@ -1151,7 +1150,10 @@ class SAPRFCV2(Source):
                     chunk += 1
                 elif not response["DATA"]:
                     logger.warning("No data returned from SAP.")
-        df = df.loc[:, columns]
+        if not df.empty:
+            # It is used to filter out columns which are not in select query
+            # for example columns passed only as unique column
+            df = df.loc[:, columns]
 
         if self.client_side_filters:
             filter_query = self._build_pandas_filter_query(self.client_side_filters)

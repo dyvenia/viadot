@@ -1,6 +1,7 @@
 from pathlib import Path
 
 import pytest
+
 from viadot.orchestration.prefect.flows import duckdb_to_sql_server
 from viadot.orchestration.prefect.tasks import sql_server_query
 from viadot.sources import DuckDB, SQLServer
@@ -12,13 +13,13 @@ DATABASE_PATH = "test_db_123.duckdb"
 DUCKDB_CREDS = {"database": DATABASE_PATH, "read_only": False}
 
 
-@pytest.fixture()
+@pytest.fixture
 def sql_server():
     # Initialize the SQLServer instance with the test credentials.
     return SQLServer(config_key="sql_server")
 
 
-@pytest.fixture()
+@pytest.fixture
 def duckdb():
     # Initialize the SQLServer instance with the test credentials.
     duckdb = DuckDB(credentials=DUCKDB_CREDS)

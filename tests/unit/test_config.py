@@ -2,13 +2,14 @@ import json
 from pathlib import Path
 
 import pytest
+
 from viadot.config import Config, get_source_config, get_source_credentials
 
 
 FAKE_SOURCE_CONFIG = {"fake_source": {"credentials": {"api_key": "test"}}}
 
 
-@pytest.fixture()
+@pytest.fixture
 def TEST_CONFIG_PATH():
     """Creates and deletes a test config file for each test.
 
@@ -29,7 +30,7 @@ def TEST_CONFIG_PATH():
     config_path.unlink()
 
 
-@pytest.fixture()
+@pytest.fixture
 def TEST_CONFIG_PATH_JSON():
     """Creates and deletes a test config file for each test.
 

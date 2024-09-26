@@ -6,7 +6,7 @@
   "autoDocstring.docstringFormat": "google",
   "notebook.formatOnSave.enabled": true,
   "notebook.codeActionsOnSave": {
-    "source.fixAll": true
+    "source.fixAll": "explicit"
   },
   "[python]": {
     "editor.defaultFormatter": "charliermarsh.ruff",

@@ -3,7 +3,8 @@ from pathlib import Path
 from duckdb import BinderException
 import pandas as pd
 import pytest
-from viadot.sources.duckdb import DuckDB
+
+from viadot.sources import DuckDB
 
 
 TABLE = "test_table"

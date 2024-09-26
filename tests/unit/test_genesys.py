@@ -5,6 +5,7 @@ import warnings
 
 import pandas as pd
 import pytest
+
 from viadot.exceptions import APIError, CredentialError
 from viadot.sources import Genesys
 
@@ -91,7 +92,7 @@ variables = {
 }
 
 
-@pytest.fixture()
+@pytest.fixture
 def genesys():
     """Return Genesys instance."""
     return Genesys(credentials=variables["credentials"], verbose=True)
@@ -129,7 +130,7 @@ def test_headers(mock_handle_api_response, genesys):
 
 @pytest.mark.skip(reason="Needs to be fixed.")
 @patch("aiohttp.ClientSession.post", new_callable=AsyncMock)
-@pytest.mark.asyncio()
+@pytest.mark.asyncio
 async def test_api_call_post_success(mock_post, genesys):
     """Test Genesys `_api_call()` method called with POST."""
     mock_response = AsyncMock()
@@ -152,7 +153,7 @@ async def test_api_call_post_success(mock_post, genesys):
 
 @pytest.mark.skip(reason="Needs to be fixed.")
 @patch("aiohttp.ClientSession.post", new_callable=AsyncMock)
-@pytest.mark.asyncio()
+@pytest.mark.asyncio
 def test_api_call_get_success(mock_get, genesys):
     """Test Genesys `_api_call()` method called with GET."""
     mock_response = AsyncMock()
@@ -176,7 +177,7 @@ def test_api_call_get_success(mock_get, genesys):
 
 @pytest.mark.skip(reason="Needs to be fixed.")
 @patch("aiohttp.ClientSession.post", new_callable=AsyncMock)
-@pytest.mark.asyncio()
+@pytest.mark.asyncio
 async def test_api_call_post_failure(mock_post, genesys):
     """Test Genesys `_api_call` method failing when called with POST."""
     mock_response = AsyncMock()
