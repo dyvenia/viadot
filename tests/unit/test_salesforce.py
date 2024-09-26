@@ -43,8 +43,8 @@ variables = {
 @pytest.mark.basic()
 def test_salesforce_init_dev_env(mocker):
     """Test Salesforce, starting in dev mode."""
-    mock_sf_instance = mocker.MagicMock(spec=Salesforce)
-    mocker.patch("viadot.sources.salesforce.Salesforce", return_value=mock_sf_instance)
+    mock_sf_instance = mocker.MagicMock(spec=SimpleSalesforce)
+    mocker.patch("viadot.sources.salesforce.SimpleSalesforce", return_value=mock_sf_instance)
     sf_instance = Salesforce(credentials=variables["credentials"], env="DEV")
 
     assert sf_instance.salesforce == mock_sf_instance
@@ -66,8 +66,8 @@ class TestSalesforceCredentials:
 @pytest.mark.basic()
 def test_salesforce_init_prod_env(mocker):
     """Test Salesforce, starting in prod mode."""
-    mock_sf_instance = mocker.MagicMock(spec=Salesforce)
-    mocker.patch("viadot.sources.salesforce.Salesforce", return_value=mock_sf_instance)
+    mock_sf_instance = mocker.MagicMock(spec=SimpleSalesforce)
+    mocker.patch("viadot.sources.salesforce.SimpleSalesforce", return_value=mock_sf_instance)
     sf_instance = Salesforce(credentials=variables["credentials"], env="PROD")
 
     assert sf_instance.salesforce == mock_sf_instance
@@ -93,8 +93,8 @@ def test_salesforce_missing_credentials():
 @pytest.mark.connect()
 def test_salesforce_api_connection(mocker):
     """Test Salesforce `api_connection` method with a query."""
-    mock_sf_instance = mocker.MagicMock(spec=Salesforce)
-    mocker.patch("viadot.sources.salesforce.Salesforce", return_value=mock_sf_instance)
+    mock_sf_instance = mocker.MagicMock(spec=SimpleSalesforce)
+    mocker.patch("viadot.sources.salesforce.SimpleSalesforce", return_value=mock_sf_instance)
     salesforce_instance = Salesforce(credentials=variables["credentials"])
 
     mock_sf_instance.query.return_value = {"records": variables["records_1"]}
@@ -108,8 +108,8 @@ def test_salesforce_api_connection(mocker):
 @pytest.mark.connect()
 def test_salesforce_api_connection_with_columns(mocker):
     """Test Salesforce `api_connection` method with columns."""
-    mock_sf_instance = mocker.MagicMock(spec=Salesforce)
-    mocker.patch("viadot.sources.salesforce.Salesforce", return_value=mock_sf_instance)
+    mock_sf_instance = mocker.MagicMock(spec=SimpleSalesforce)
+    mocker.patch("viadot.sources.salesforce.SimpleSalesforce", return_value=mock_sf_instance)
     salesforce_instance = Salesforce(credentials=variables["credentials"])
 
     mock_sf_instance.query.return_value = {"records": variables["records_2"]}
@@ -123,8 +123,8 @@ def test_salesforce_api_connection_with_columns(mocker):
 @pytest.mark.functions()
 def test_salesforce_to_df(mocker):
     """Test Salesforce `to_df` method."""
-    mock_sf_instance = mocker.MagicMock(spec=Salesforce)
-    mocker.patch("viadot.sources.salesforce.Salesforce", return_value=mock_sf_instance)
+    mock_sf_instance = mocker.MagicMock(spec=SimpleSalesforce)
+    mocker.patch("viadot.sources.salesforce.SimpleSalesforce", return_value=mock_sf_instance)
     salesforce_instance = Salesforce(credentials=variables["credentials"])
     salesforce_instance.data = variables["data"]
 
@@ -144,8 +144,8 @@ def test_salesforce_to_df(mocker):
 @pytest.mark.functions()
 def test_salesforce_to_df_empty_data(mocker):
     """Test Salesforce `to_df` method with empty df."""
-    mock_sf_instance = mocker.MagicMock(spec=Salesforce)
-    mocker.patch("viadot.sources.salesforce.Salesforce", return_value=mock_sf_instance)
+    mock_sf_instance = mocker.MagicMock(spec=SimpleSalesforce)
+    mocker.patch("viadot.sources.salesforce.SimpleSalesforce", return_value=mock_sf_instance)
     salesforce_instance = Salesforce(credentials=variables["credentials"])
     salesforce_instance.data = []
 
@@ -156,8 +156,8 @@ def test_salesforce_to_df_empty_data(mocker):
 @pytest.mark.functions()
 def test_salesforce_to_df_warn_empty_data(mocker):
     """Test Salesforce `to_df` method with empty df, warn."""
-    mock_sf_instance = mocker.MagicMock(spec=Salesforce)
-    mocker.patch("viadot.sources.salesforce.Salesforce", return_value=mock_sf_instance)
+    mock_sf_instance = mocker.MagicMock(spec=SimpleSalesforce)
+    mocker.patch("viadot.sources.salesforce.SimpleSalesforce", return_value=mock_sf_instance)
     salesforce_instance = Salesforce(credentials=variables["credentials"])
     salesforce_instance.data = []
 
