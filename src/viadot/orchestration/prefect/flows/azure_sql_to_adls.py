@@ -1,4 +1,4 @@
-"""Flows for downloading data from Aselite and uploading it to Azure ADLS."""
+"""Flows for downloading data from Azure SQL and uploading it to Azure ADLS."""
 
 from typing import Any, Dict, List, Literal
 
