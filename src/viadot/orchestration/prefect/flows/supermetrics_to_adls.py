@@ -1,3 +1,5 @@
+"""Flow for downloading the data from Superpetrics and uploading it to ADLS."""
+
 from typing import Any
 
 from prefect import flow
@@ -11,12 +13,12 @@ from viadot.orchestration.prefect.tasks import (
 
 @flow(
     name="Supermetrics extraction to ADLS",
-    description="Extract data from Supermetrics and load it into Azure Data Lake Storage.",
+    description="Extract data from Supermetrics and load it into ADLS.",
     retries=1,
     retry_delay_seconds=60,
     task_runner=ConcurrentTaskRunner,
 )
-def supermetrics_to_adls(  # noqa: PLR0913
+def supermetrics_to_adls(
     # supermetrics
     query_params: dict[str, Any] | None = None,
     # ADLS

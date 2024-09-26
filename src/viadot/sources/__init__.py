@@ -29,7 +29,7 @@ __all__ = [
     "SQLServer",
     "UKCarbonIntensity",
     "Supermetrics",
-    "SupermetricsCredentials",
+    "SupermetricsCredentials",  # pragma: allowlist-secret
 ]
 
 if find_spec("adlfs"):

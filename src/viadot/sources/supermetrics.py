@@ -1,13 +1,14 @@
 """Source for connecting to Supermetrics API."""
 
 import json
-from typing import Any
+from typing import Any, Optional
 
 import numpy as np
 import pandas as pd
 from pydantic import BaseModel
 
-from ..config import get_source_credentials
+from viadot.config import get_source_credentials
+
 from ..exceptions import CredentialError
 from ..utils import add_viadot_metadata_columns, handle_api_response
 from .base import Source
@@ -19,7 +20,7 @@ class SupermetricsCredentials(BaseModel):
     This class encapsulates the necessary credentials required to authenticate
     and access the Supermetrics API.
 
-    Attributes
+    Attributes:
     ----------
         user (str):
             The email account associated with the Supermetrics user.
@@ -65,7 +66,7 @@ class Supermetrics(Source):
         *args,
         credentials: dict[str, Any] | None = None,
         config_key: str = None,
-        query_params: dict[str, Any] = None,
+        query_params: dict[str, Any] | None = None,
         **kwargs,
     ) -> None:
         """Initialize the Supermetrics object.
@@ -209,12 +210,12 @@ class Supermetrics(Source):
         This method determines the appropriate column names for the data based
         on its type, whether it's Google Analytics data or another type.
 
-        Returns
+        Returns:
         -------
             list of str:
                 A list of column names based on the data type.
 
-        Raises
+        Raises:
         ------
             ValueError:
                 Raised if the column names cannot be determined.
@@ -230,7 +231,7 @@ class Supermetrics(Source):
     def to_df(
         self,
         if_empty: str = "warn",
-        query_params: dict[str, Any] = None,
+        query_params: dict[str, Any] | None = None,
     ) -> pd.DataFrame:
         """Download data into a pandas DataFrame.
 

@@ -2,12 +2,12 @@ import pytest
 from viadot.sources import Supermetrics, SupermetricsCredentials
 
 
-@pytest.fixture()
+@pytest.fixture
 def supermetrics_credentials():
     return SupermetricsCredentials(user="test_user", api_key="test_key")
 
 
-@pytest.fixture()
+@pytest.fixture
 def mock_get_source_credentials(
     mocker,
     supermetrics_credentials: SupermetricsCredentials,
@@ -21,7 +21,7 @@ def mock_get_source_credentials(
     )
 
 
-@pytest.fixture()
+@pytest.fixture
 def supermetrics(supermetrics_credentials: SupermetricsCredentials):
     return Supermetrics(
         credentials={
@@ -106,7 +106,7 @@ def test_to_df_with_data(supermetrics: Supermetrics, mocker):
     ]
 
 
-def test_get_col_names_google_analytics_pivoted(mocker, supermetrics: Supermetrics):
+def test_get_col_names_google_analytics_pivoted(supermetrics: Supermetrics):
     mock_response = {
         "meta": {
             "query": {
@@ -122,7 +122,7 @@ def test_get_col_names_google_analytics_pivoted(mocker, supermetrics: Supermetri
     assert columns == {"ga:date": "2023-01-01", "ga:sessions": 100}
 
 
-def test_get_col_names_google_analytics_non_pivoted(mocker, supermetrics: Supermetrics):
+def test_get_col_names_google_analytics_non_pivoted(supermetrics: Supermetrics):
     mock_response = {
         "meta": {
             "query": {
