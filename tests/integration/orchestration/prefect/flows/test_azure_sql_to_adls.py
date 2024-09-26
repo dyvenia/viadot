@@ -37,10 +37,10 @@ def test_azure_sql_to_adls(
             adls_path_overwrite=True,
         )
 
-        # Assert that the aselite_to_df task was called with the correct arguments
-        mock_aselite_to_df.assert_called_once_with(
+        # Assert that the azure_sql_to_df task was called with the correct arguments
+        mock_azure_sql_to_df.assert_called_once_with(
             query=query,
-            credentials_secret=aselite_credentials_secret,
+            credentials_secret=azure_sql_credentials_secret,
             sep=",",
             file_path=TEST_FILE_PATH,
             if_exists="replace",
