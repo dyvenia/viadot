@@ -8,7 +8,6 @@ def test_azure_sql_to_adls(
     adls_credentials_secret,
     aselite_credentials_secret,
 ):
-    # Mock Azure Data Lake object
     lake = AzureDataLake(config_key="adls_test")
 
     # Ensure the file does not exist before the test
