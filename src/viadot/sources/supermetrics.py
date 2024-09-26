@@ -1,59 +1,57 @@
-
 import json
-from typing import Dict, Any, List
-import pandas as pd
-import numpy as np
+from typing import Any, Dict, List
 
+import numpy as np
+import pandas as pd
 from pydantic import BaseModel
 
 from ..config import get_source_credentials
 from ..exceptions import CredentialError
-from ..utils import handle_api_response
+from ..utils import add_viadot_metadata_columns, handle_api_response
 from .base import Source
-from ..utils import add_viadot_metadata_columns
 
 
 class SupermetricsCredentials(BaseModel):
-    """
-    Represents credentials for accessing the Supermetrics API.
+    """Represents credentials for accessing the Supermetrics API.
 
-    This class encapsulates the necessary credentials required to authenticate 
+    This class encapsulates the necessary credentials required to authenticate
     and access the Supermetrics API.
 
     Attributes:
-        user (str): 
+        user (str):
             The email account associated with the Supermetrics user.
-        api_key (str): 
+        api_key (str):
             The API key that provides access to the Supermetrics API.
     """
+
     user: str
     api_key: str
 
 
 class Supermetrics(Source):
-    """
-    Implements methods for querying and interacting with the Supermetrics API.
+    """Implements methods for querying and interacting with the Supermetrics API.
 
-    This class provides functionality to query data from the Supermetrics API, 
-    which is a tool used for accessing data from various data sources. The API 
-    documentation can be found at: 
-    https://supermetrics.com/docs/product-api-getting-started/. For information 
-    on usage limits, please refer to: 
+    This class provides functionality to query data from the Supermetrics API,
+    which is a tool used for accessing data from various data sources. The API
+    documentation can be found at:
+    https://supermetrics.com/docs/product-api-getting-started/. For information
+    on usage limits, please refer to:
     https://supermetrics.com/docs/product-api-usage-limits/.
 
     Args:
-        config_key (str, optional): 
-            The key in the viadot configuration that holds the relevant credentials 
+        config_key (str, optional):
+            The key in the viadot configuration that holds the relevant credentials
             for the API. Defaults to None.
-        credentials (dict of str to any, optional): 
-            A dictionary containing the credentials needed for the API connection 
+        credentials (dict of str to any, optional):
+            A dictionary containing the credentials needed for the API connection
             configuration, specifically `api_key` and `user`. Defaults to None.
-        query_params (dict of str to any, optional): 
-            A dictionary containing the parameters to pass to the GET query. 
+        query_params (dict of str to any, optional):
+            A dictionary containing the parameters to pass to the GET query.
             These parameters define the specifics of the data request. Defaults to None.
-            For a full specification of possible parameters, see: 
+            For a full specification of possible parameters, see:
             https://supermetrics.com/docs/product-api-get-data/.
     """
+
     API_ENDPOINT = "https://api.supermetrics.com/enterprise/v2/query/data/json"
 
     def __init__(
@@ -63,22 +61,21 @@ class Supermetrics(Source):
         config_key: str = None,
         query_params: Dict[str, Any] = None,
         **kwargs,
-    ):
-        """
-        Initializes the Supermetrics object.
+    ) -> None:
+        """Initializes the Supermetrics object.
 
-        This constructor sets up the necessary components to interact with the 
+        This constructor sets up the necessary components to interact with the
         Supermetrics API, including the credentials and any query parameters.
 
         Args:
-            credentials (SupermetricsCredentials, optional): 
-                An instance of `SupermetricsCredentials` containing the API key and user email 
+            credentials (SupermetricsCredentials, optional):
+                An instance of `SupermetricsCredentials` containing the API key and user email
                 for authentication. Defaults to None.
-            config_key (str, optional): 
-                The key in the viadot configuration that holds the relevant credentials 
+            config_key (str, optional):
+                The key in the viadot configuration that holds the relevant credentials
                 for the API. Defaults to None.
-            query_params (dict of str to any, optional): 
-                A dictionary containing the parameters to pass to the GET query. These 
+            query_params (dict of str to any, optional):
+                A dictionary containing the parameters to pass to the GET query. These
                 parameters define the specifics of the data request. Defaults to None.
         """
         credentials = credentials or get_source_credentials(config_key) or None
@@ -95,25 +92,24 @@ class Supermetrics(Source):
         self.user = self.credentials["user"]
 
     def to_json(self, timeout=(3.05, 60 * 30)) -> Dict[str, Any]:
-        """
-        Downloads query results to a dictionary.
+        """Downloads query results to a dictionary.
 
-        This method executes the query against the Supermetrics API and retrieves 
+        This method executes the query against the Supermetrics API and retrieves
         the results as a JSON dictionary.
 
         Args:
-            timeout (tuple of float, optional): 
-                A tuple specifying the timeout values for the request. The first value 
-                is the timeout for connection issues, and the second value is the timeout 
-                for query execution. Defaults to (3.05, 1800), which provides a short 
+            timeout (tuple of float, optional):
+                A tuple specifying the timeout values for the request. The first value
+                is the timeout for connection issues, and the second value is the timeout
+                for query execution. Defaults to (3.05, 1800), which provides a short
                 timeout for connection issues and a longer timeout for the query execution.
 
         Returns:
-            dict: 
+            dict:
                 The response from the Supermetrics API, returned as a JSON dictionary.
 
         Raises:
-            ValueError: 
+            ValueError:
                 Raised if the query parameters are not set before calling this method.
         """
         if not self.query_params:
@@ -132,23 +128,22 @@ class Supermetrics(Source):
         cls,
         response: dict,
     ) -> List[str]:
-        """
-        Gets column names from Google Analytics data.
+        """Gets column names from Google Analytics data.
 
-        This method extracts the column names from the JSON response received 
+        This method extracts the column names from the JSON response received
         from a Google Analytics API call.
 
         Args:
-            response (dict): 
+            response (dict):
                 A dictionary containing the JSON response from the API call.
 
         Returns:
-            list of str: 
+            list of str:
                 A list of column names extracted from the Google Analytics data.
 
         Raises:
-            ValueError: 
-                Raised if no data is returned in the response or if the column names 
+            ValueError:
+                Raised if no data is returned in the response or if the column names
                 cannot be determined.
         """
         is_pivoted = any(
@@ -158,9 +153,8 @@ class Supermetrics(Source):
 
         if is_pivoted:
             if not response["data"]:
-                raise ValueError(
-                    "Couldn't find column names as query returned no data."
-                )
+                msg = "Couldn't find column names as query returned no data."
+                raise ValueError(msg)
             columns = response["data"][0]
         else:
             cols_meta = response["meta"]["query"]["fields"]
@@ -169,37 +163,34 @@ class Supermetrics(Source):
 
     @classmethod
     def _get_col_names_other(cls, response: dict) -> List[str]:
-        """
-        Gets column names from non-Google Analytics data.
+        """Gets column names from non-Google Analytics data.
 
-        This method extracts the column names from the JSON response received 
+        This method extracts the column names from the JSON response received
         from an API call that is not related to Google Analytics.
 
         Args:
-            response (dict): 
+            response (dict):
                 A dictionary containing the JSON response from the API call.
 
         Returns:
-            list of str: 
+            list of str:
                 A list of column names extracted from the non-Google Analytics data.
         """
         cols_meta = response["meta"]["query"]["fields"]
-        columns = [col_meta["field_name"] for col_meta in cols_meta]
-        return columns
+        return [col_meta["field_name"] for col_meta in cols_meta]
 
     def _get_col_names(self) -> List[str]:
-        """
-        Gets column names based on the data type.
+        """Gets column names based on the data type.
 
-        This method determines the appropriate column names for the data based 
+        This method determines the appropriate column names for the data based
         on its type, whether it's Google Analytics data or another type.
 
         Returns:
-            list of str: 
+            list of str:
                 A list of column names based on the data type.
 
         Raises:
-            ValueError: 
+            ValueError:
                 Raised if the column names cannot be determined.
         """
         response: dict = self.to_json()
@@ -209,26 +200,26 @@ class Supermetrics(Source):
         return Supermetrics._get_col_names_other(response)
 
     @add_viadot_metadata_columns
-    def to_df(self, if_empty: str = "warn",
-              query_params: Dict[str, Any] = None) -> pd.DataFrame:
-        """
-        Downloads data into a pandas DataFrame.
+    def to_df(
+        self, if_empty: str = "warn", query_params: Dict[str, Any] = None
+    ) -> pd.DataFrame:
+        """Downloads data into a pandas DataFrame.
 
-        This method retrieves data from the Supermetrics API and loads it into 
+        This method retrieves data from the Supermetrics API and loads it into
         a pandas DataFrame.
 
         Args:
-            if_empty (str, optional): 
-                Specifies the action to take if the query returns no data. 
-                Options include "fail" to raise an error or "ignore" to return 
+            if_empty (str, optional):
+                Specifies the action to take if the query returns no data.
+                Options include "fail" to raise an error or "ignore" to return
                 an empty DataFrame. Defaults to "fail".
 
         Returns:
-            pd.DataFrame: 
+            pd.DataFrame:
                 A pandas DataFrame containing the JSON data retrieved from the API.
 
         Raises:
-            ValueError: 
+            ValueError:
                 Raised if the DataFrame is empty and `if_empty` is set to "fail".
         """
         # Use provided query_params or default to the instance's query_params
@@ -236,7 +227,8 @@ class Supermetrics(Source):
             self.query_params = query_params
 
         if not self.query_params:
-            raise ValueError("Query parameters are required to fetch data.")
+            msg = "Query parameters are required to fetch data."
+            raise ValueError(msg)
 
         self.query_params["api_key"] = self.api_key
 
