@@ -205,19 +205,28 @@ class Sftp(Source):
             recursive (bool): Whether to list files recursively. Defaults to False.
 
         Returns:
-            List[str]: List of files in the specified directory.
+            list[str]: List of files in the specified directory.
         """
         files_list = []
 
+        path = "." if path is None else path
         try:
+            if not recursive:
+                return [
+                    str(Path(path) / attr.filename)
+                    for attr in self.conn.listdir_attr(path)
+                ]
+
             for attr in self.conn.listdir_attr(path):
-                if S_ISDIR(attr.st_mode) and recursive:
-                    sub_path = Path(path) / attr.filename
-                    files_list.extend(self._ls(str(sub_path), recursive=True))
+                full_path = str(Path(path) / attr.filename)
+                if S_ISDIR(attr.st_mode):
+                    files_list.extend(self._ls(full_path, recursive=True))
                 else:
-                    files_list.append(str(Path(path) / attr.filename))
+                    files_list.append(full_path)
+        except FileNotFoundError as e:
+            self.logger.exception(f"Directory not found: {path}. Error: {e}")
         except Exception as e:
-            self.logger.error(f"Error accessing {path}: {e}")
+            self.logger.exception(f"Error accessing {path}: {e}")
 
         return files_list
 
@@ -230,7 +239,7 @@ class Sftp(Source):
         """List files in `path`.
 
         Args:
-            path str | None): Destination path from where to get the structure.
+            path (str | None): Destination path from where to get the structure.
                 Defaults to None.
             recursive (bool): Get the structure in deeper folders.
                 Defaults to False.
