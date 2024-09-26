@@ -32,7 +32,7 @@ def azure_sql_to_adls(
     adls_path_overwrite: bool = False,
 ) -> None:
     r"""
-    Flow for downloading data from ASElite to csv file, then uploading it to ADLS.
+    Download data from Azure SQL to a CSV file and uploading it to ADLS.
 
     Args:
         query (str): Query to perform on a database. Defaults to None.
