@@ -141,14 +141,15 @@ def test_ls(mocker):
     """Test SFTP `_ls` method."""
     mock_sftp = mocker.MagicMock()
 
-    mock_sftp.listdir.side_effect = [
+    mock_sftp.listdir_attr.side_effect = [
         [
             mocker.MagicMock(st_mode=0o40755, filename="folder_a"),
+            mocker.MagicMock(st_mode=0o100644, filename="file1.txt"),
             mocker.MagicMock(st_mode=0o100644, filename="file2.txt"),
         ],
         [
             mocker.MagicMock(st_mode=0o40755, filename="folder_b"),
-            mocker.MagicMock(st_mode=0o100644, filename="file1.txt"),
+            mocker.MagicMock(st_mode=0o100644, filename="file3.txt"),
         ],
     ]
 
@@ -158,6 +159,7 @@ def test_ls(mocker):
     files_list = sftp._ls(path=".", recursive=False)
 
     assert len(files_list) == 2
+    assert files_list == ["file1.txt", "file2.txt"]
 
 
 @pytest.mark.functions
@@ -167,11 +169,12 @@ def test_recursive_ls(mocker):
     mock_sftp.listdir_attr.side_effect = [
         [
             mocker.MagicMock(st_mode=0o40755, filename="folder_a"),
+            mocker.MagicMock(st_mode=0o100644, filename="file1.txt"),
             mocker.MagicMock(st_mode=0o100644, filename="file2.txt"),
         ],
         [
             mocker.MagicMock(st_mode=0o40755, filename="folder_b"),
-            mocker.MagicMock(st_mode=0o100644, filename="file1.txt"),
+            mocker.MagicMock(st_mode=0o100644, filename="file3.txt"),
         ],
     ]
 
@@ -180,11 +183,8 @@ def test_recursive_ls(mocker):
 
     files_list = sftp._ls(path=".", recursive=True)
 
-    assert len(files_list) == 4
-    assert "folder_a" in files_list
-    assert "folder_a/folder_b" in files_list
-    assert "file2.txt" in files_list
-    assert "folder_a/file1.txt" in files_list
+    assert len(files_list) == 3
+    assert files_list == ["folder_a/file3.txt", "file1.txt", "file2.txt"]
 
 
 @pytest.mark.functions

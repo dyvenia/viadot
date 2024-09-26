@@ -3,7 +3,7 @@
 from io import BytesIO, StringIO
 from pathlib import Path
 import re
-from stat import S_ISDIR
+from stat import S_ISDIR, S_ISREG
 import time
 from typing import Literal
 
@@ -215,6 +215,7 @@ class Sftp(Source):
                 return [
                     str(Path(path) / attr.filename)
                     for attr in self.conn.listdir_attr(path)
+                    if S_ISREG(attr.st_mode)
                 ]
 
             for attr in self.conn.listdir_attr(path):
