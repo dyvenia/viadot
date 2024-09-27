@@ -75,8 +75,8 @@ def test_missing_credentials(mocker):
 
 
 @pytest.mark.functions
-def test_list_datasets_query(monkeypatch, mock_service_account_credentials):
-    """Test BigQuery `_list_datasets` method."""
+def test_get_list_datasets_query(monkeypatch, mock_service_account_credentials):
+    """Test BigQuery `_get_list_datasets_query` method."""
     monkeypatch.setattr(
         service_account.Credentials,
         "from_service_account_info",
@@ -85,14 +85,14 @@ def test_list_datasets_query(monkeypatch, mock_service_account_credentials):
     bigquery = BigQuery(credentials=variables["credentials"])
     expected_query = """SELECT schema_name
                 FROM test_project.INFORMATION_SCHEMA.SCHEMATA"""
-    query = bigquery._list_datasets()
+    query = bigquery._get_list_datasets_query()
 
     assert query.strip() == expected_query
 
 
 @pytest.mark.functions
-def test_list_tables_query(monkeypatch, mock_service_account_credentials):
-    """Test BigQuery `_list_tables` method."""
+def test_get_list_tables_query(monkeypatch, mock_service_account_credentials):
+    """Test BigQuery `_get_list_tables_query` method."""
     monkeypatch.setattr(
         service_account.Credentials,
         "from_service_account_info",
@@ -101,7 +101,7 @@ def test_list_tables_query(monkeypatch, mock_service_account_credentials):
     bigquery = BigQuery(credentials=variables["credentials"])
     expected_query = """SELECT table_name
                 FROM test_project.test_dataset.INFORMATION_SCHEMA.TABLES"""
-    query = bigquery._list_tables(dataset_name="test_dataset")
+    query = bigquery._get_list_tables_query(dataset_name="test_dataset")
 
     assert query.strip() == expected_query
 

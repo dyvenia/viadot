@@ -171,7 +171,9 @@ class BigQuery(Source):
         elif query == "datasets":
             query = self._get_list_datasets_query()
 
-        elif "select" in query.lower() and "from" in query.lower():
+        elif (
+            query is not None and "select" in query.lower() and "from" in query.lower()
+        ):
             self.logger.info("query has been provided!")
         else:
             if date_column_name or columns:
