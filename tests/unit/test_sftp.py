@@ -15,7 +15,7 @@ variables = {
     "credentials": {
         "hostname": "",
         "username": "test_user",
-        "password": "test_password",  # pragma: allowlist-secret
+        "password": "test_password",  # noqa: S608
         "port": 999,
         "rsa_key": "",
     },
