@@ -2,6 +2,7 @@
 
 from .cloud_for_customers_to_adls import cloud_for_customers_to_adls
 from .cloud_for_customers_to_databricks import cloud_for_customers_to_databricks
+from .customer_gauge_to_adls import customer_gauge_to_adls
 from .duckdb_to_parquet import duckdb_to_parquet
 from .duckdb_to_sql_server import duckdb_to_sql_server
 from .duckdb_transform import duckdb_transform
@@ -30,6 +31,7 @@ from .transform_and_catalog import transform_and_catalog
 __all__ = [
     "cloud_for_customers_to_adls",
     "cloud_for_customers_to_databricks",
+    "customer_gauge_to_adls",
     "duckdb_to_parquet",
     "duckdb_to_sql_server",
     "duckdb_transform",

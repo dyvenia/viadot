@@ -5,6 +5,7 @@ from importlib.util import find_spec
 from ._duckdb import DuckDB
 from ._trino import Trino
 from .cloud_for_customers import CloudForCustomers
+from .customer_gauge import CustomerGauge
 from .epicor import Epicor
 from .exchange_rates import ExchangeRates
 from .genesys import Genesys
@@ -20,6 +21,7 @@ from .uk_carbon_intensity import UKCarbonIntensity
 
 __all__ = [
     "CloudForCustomers",
+    "CustomerGauge",
     "Epicor",
     "ExchangeRates",
     "Genesys",
