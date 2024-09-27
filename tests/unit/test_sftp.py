@@ -15,7 +15,7 @@ variables = {
     "credentials": {
         "hostname": "",
         "username": "test_user",
-        "password": "test_password",  # noqa
+        "password": "test_password",
         "port": 999,
         "rsa_key": "",
     },
@@ -77,7 +77,7 @@ def test_get_connection_with_rsa_key(mocker):
     # Ensure the SSHClient's transport attribute isn't None
     mock_ssh_instance._transport = mock_transport
 
-    dummy_rsa_key = "-----BEGIN RSA PRIVATE KEY-----\n#####...END RSA PRIVATE KEY-----"  # pragma: allowlist-secret
+    dummy_rsa_key = "test_rsa_key"
     keyfile = StringIO(dummy_rsa_key)
     credentials = variables["credentials"]
     credentials["rsa_key"] = keyfile.getvalue()
