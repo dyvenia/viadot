@@ -13,6 +13,7 @@ from .hubspot import Hubspot
 from .mediatool import Mediatool
 from .mindful import Mindful
 from .outlook import Outlook
+from .salesforce import Salesforce
 from .sftp import Sftp
 from .sharepoint import Sharepoint
 from .sql_server import SQLServer
@@ -32,6 +33,7 @@ __all__ = [
     "Sftp",
     "Outlook",
     "SQLServer",
+    "Salesforce",
     "Sharepoint",
     "Supermetrics",
     "SupermetricsCredentials",  # pragma: allowlist-secret
