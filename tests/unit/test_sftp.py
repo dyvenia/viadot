@@ -135,6 +135,27 @@ def test_to_df_with_json(mocker):
 
 
 @pytest.mark.functions
+def test_to_df_unsupported_file_type(mocker):
+    """Test raising ValueError for unsupported file types."""
+    mocker.patch.object(Sftp, "_get_file_object", return_value=BytesIO(b"dummy data"))
+    sftp = Sftp(credentials=variables["credentials"])
+
+    with pytest.raises(ValueError, match="Unable to read file"):
+        sftp.to_df(file_name="test.txt")
+
+
+@pytest.mark.functions
+def test_to_df_empty_dataframe_warn(mocker, caplog):
+    """Test handling of empty DataFrame with 'warn' option."""
+    mocker.patch.object(Sftp, "_get_file_object", return_value=BytesIO(b"column"))
+    sftp = Sftp(credentials=variables["credentials"])
+
+    with caplog.at_level("INFO"):
+        sftp.to_df(file_name="test.csv", if_empty="warn")
+    assert "The response does not contain any" in caplog.text
+
+
+@pytest.mark.functions
 def test_ls(mocker):
     """Test SFTP `_ls` method."""
     mock_sftp = mocker.MagicMock()
