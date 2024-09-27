@@ -47,6 +47,8 @@ def azure_sql_to_adls(
             tests to verify the output dataframe. If defined, triggers the `validate_df`
             task from task_utils. Defaults to None.
         convert_bytes (bool). A boolean value to trigger method df_converts_bytes_to_int
+            It is used to convert bytes data type into int, as pulling data with bytes 
+            can lead to malformed data in data frame.
             Defaults to False.
         remove_special_characters (str, optional): Call a function that remove
             special characters like escape symbols. Defaults to None.
