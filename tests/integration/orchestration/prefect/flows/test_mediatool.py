@@ -26,17 +26,17 @@ media_entries_columns = [
 
 
 def test_genesys_to_adls(
-    MEDIATOOL_ADLS_AZURE_KEY_VAULT_SECRET,
-    MEDIATOOL_TESTS_ORG,
-    MEDIATOOL_TEST_ADLS_PATH,
-    ADLS_AZURE_KEY_VAULT_SECRET,
+    VIADOT_TEST_MEDIATOOL_ADLS_AZURE_KEY_VAULT_SECRET,
+    VIADOT_TEST_MEDIATOOL_ORG,
+    VIADOT_TEST_MEDIATOOL_ADLS_PATH,
+    VIADOT_TEST_ADLS_AZURE_KEY_VAULT_SECRET,
 ):
     state = mediatool_to_adls(
-        azure_key_vault_secret=MEDIATOOL_ADLS_AZURE_KEY_VAULT_SECRET,
-        organization_ids=MEDIATOOL_TESTS_ORG,
+        azure_key_vault_secret=VIADOT_TEST_MEDIATOOL_ADLS_AZURE_KEY_VAULT_SECRET,
+        organization_ids=VIADOT_TEST_MEDIATOOL_ORG,
         media_entries_columns=media_entries_columns,
-        adls_path=MEDIATOOL_TEST_ADLS_PATH,
-        adls_azure_key_vault_secret=ADLS_AZURE_KEY_VAULT_SECRET,
+        adls_path=VIADOT_TEST_MEDIATOOL_ADLS_PATH,
+        adls_azure_key_vault_secret=VIADOT_TEST_ADLS_AZURE_KEY_VAULT_SECRET,
         adls_path_overwrite=True,
     )
 
