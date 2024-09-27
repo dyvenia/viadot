@@ -15,7 +15,7 @@ variables = {
     "credentials": {
         "hostname": "",
         "username": "test_user",
-        "password": "test_password",  # noqa: S608
+        "password": "test_password",  # noqa
         "port": 999,
         "rsa_key": "",
     },
