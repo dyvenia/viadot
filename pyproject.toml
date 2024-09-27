@@ -35,8 +35,7 @@ dependencies = [
     "paramiko==2.11.0",
     "defusedxml>=0.7.1",
     "aiohttp>=3.10.5",
-    
-]
+    ]
 requires-python = ">=3.10"
 readme = "README.md"
 
