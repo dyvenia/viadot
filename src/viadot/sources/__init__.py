@@ -12,6 +12,7 @@ from .genesys import Genesys
 from .hubspot import Hubspot
 from .mindful import Mindful
 from .outlook import Outlook
+from .sftp import Sftp
 from .sharepoint import Sharepoint
 from .sql_server import SQLServer
 from .supermetrics import Supermetrics, SupermetricsCredentials
@@ -26,6 +27,7 @@ __all__ = [
     "Genesys",
     "Hubspot",
     "Mindful",
+    "Sftp",
     "Outlook",
     "SQLServer",
     "Sharepoint",

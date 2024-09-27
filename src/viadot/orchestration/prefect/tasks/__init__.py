@@ -19,6 +19,7 @@ from .outlook import outlook_to_df
 from .redshift_spectrum import df_to_redshift_spectrum
 from .s3 import s3_upload_file
 from .sap_rfc import sap_rfc_to_df
+from .sftp import sftp_list, sftp_to_df
 from .sharepoint import sharepoint_download_file, sharepoint_to_df
 from .sql_server import create_sql_server_table, sql_server_query, sql_server_to_df
 from .supermetrics import supermetrics_to_df
@@ -47,6 +48,8 @@ __all__ = [
     "outlook_to_df",
     "s3_upload_file",
     "sap_rfc_to_df",
+    "sftp_list",
+    "sftp_to_df",
     "sharepoint_download_file",
     "sharepoint_to_df",
     "sql_server_query",
