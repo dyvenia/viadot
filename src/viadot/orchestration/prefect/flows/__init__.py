@@ -2,6 +2,7 @@
 
 from .cloud_for_customers_to_adls import cloud_for_customers_to_adls
 from .cloud_for_customers_to_databricks import cloud_for_customers_to_databricks
+from .customer_gauge_to_adls import customer_gauge_to_adls
 from .duckdb_to_parquet import duckdb_to_parquet
 from .duckdb_to_sql_server import duckdb_to_sql_server
 from .duckdb_transform import duckdb_transform
@@ -11,11 +12,13 @@ from .exchange_rates_to_databricks import exchange_rates_to_databricks
 from .exchange_rates_to_redshift_spectrum import exchange_rates_api_to_redshift_spectrum
 from .genesys_to_adls import genesys_to_adls
 from .hubspot_to_adls import hubspot_to_adls
+from .mediatool_to_adls import mediatool_to_adls
 from .mindful_to_adls import mindful_to_adls
 from .outlook_to_adls import outlook_to_adls
 from .salesforce_to_adls import salesforce_to_adls
 from .sap_to_parquet import sap_to_parquet
 from .sap_to_redshift_spectrum import sap_to_redshift_spectrum
+from .sftp_to_adls import sftp_to_adls
 from .sharepoint_to_adls import sharepoint_to_adls
 from .sharepoint_to_databricks import sharepoint_to_databricks
 from .sharepoint_to_redshift_spectrum import sharepoint_to_redshift_spectrum
@@ -30,6 +33,7 @@ from .transform_and_catalog import transform_and_catalog
 __all__ = [
     "cloud_for_customers_to_adls",
     "cloud_for_customers_to_databricks",
+    "customer_gauge_to_adls",
     "duckdb_to_parquet",
     "duckdb_to_sql_server",
     "duckdb_transform",
@@ -39,11 +43,13 @@ __all__ = [
     "exchange_rates_to_databricks",
     "genesys_to_adls",
     "hubspot_to_adls",
+    "mediatool_to_adls",
     "mindful_to_adls",
     "outlook_to_adls",
     "salesforce_to_adls",
     "sap_to_parquet",
     "sap_to_redshift_spectrum",
+    "sftp_to_adls",
     "sharepoint_to_adls",
     "sharepoint_to_databricks",
     "sharepoint_to_redshift_spectrum",
