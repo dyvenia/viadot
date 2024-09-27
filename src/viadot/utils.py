@@ -2,7 +2,7 @@
 
 from collections.abc import Callable
 import contextlib
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 import functools
 import logging
 import re
@@ -11,11 +11,16 @@ from typing import TYPE_CHECKING, Any, Literal, Optional
 
 import pandas as pd
 import pyodbc
-import requests
+import requests  # type: ignore
 from requests.adapters import HTTPAdapter
-from requests.exceptions import ConnectionError, HTTPError, ReadTimeout, Timeout
+from requests.exceptions import (  # type: ignore
+    ConnectionError,
+    HTTPError,
+    ReadTimeout,
+    Timeout,
+)
 from requests.packages.urllib3.util.retry import Retry
-from urllib3.exceptions import ProtocolError
+from urllib3.exceptions import ProtocolError  # type: ignore
 
 from viadot.exceptions import APIError, ValidationError
 from viadot.signals import SKIP
@@ -26,7 +31,7 @@ if TYPE_CHECKING:
 
 
 with contextlib.suppress(ImportError):
-    import pyspark.sql.dataframe as spark
+    import pyspark.sql.dataframe as spark  # type: ignore
 
 
 def slugify(name: str) -> str:
@@ -746,7 +751,7 @@ def validate(
     """
     if logger is None:
         logging.basicConfig(level=logging.INFO)
-        logger = logging.getLogger("prefect_shell.utils")
+        logger = logging.getLogger(__name__)
 
     failed_tests = 0
     failed_tests_list = []
@@ -835,3 +840,91 @@ def skip_test_on_missing_extra(source_name: str, extra: str) -> None:
         msg,
         allow_module_level=True,
     )
+
+
+def anonymize_df(
+    df: pd.DataFrame,
+    columns: list[str],
+    method: Literal["mask", "hash"] = "mask",
+    mask_value: str = "***",
+    date_column: str | None = None,
+    days: int | None = None,
+    logger: logging.Logger | None = None,
+) -> pd.DataFrame:
+    """Function that anonymize data in the dataframe in selected columns.
+
+    It is possible to specify the condtition, for which data older than specified
+    number of days will be anonymized.
+
+    Args:
+        df (pd.DataFrame): Dataframe with data to anonymize.
+        columns (list[str]): List of columns to anonymize.
+        method (Literal["mask", "hash"], optional): Method of anonymizing data.
+            "mask" -> replace the data with "value" arg.
+            "hash" -> replace the data with the hash value of an object
+            (using `hash()` method). Defaults to "mask".
+        mask_value (str, optional): Value to replace the data with  when using the
+            "mask" method. Defaults to "***".
+        date_column (str, optional): Name of the date column used to identify
+            rows that are older than a specified number of days. Defaults to None.
+        days (int, optional): The number of days beyond which we want to
+            anonymize the data, e.g. older that 2 years can be: 2*365. Defaults to None.
+
+    Examples:
+        1. Implement "mask" method with "***" for all data in columns:
+            ["email", "last_name", "phone"]:
+            >>> anonymize_df(df=df, columns=["email", "last_name", "phone"])
+        2. Implement "hash" method with in columns: ["email", "last_name", "phone"]:
+            >>> anonymize_df(df=df, columns=["email", "last_name", "phone"],
+            method = "hash")
+        3. Implement "mask" method with "***" for data in columns:
+            ["email", "last_name", "phone"], that is older than two years in
+            "submission_date" column:
+            >>> anonymize_df(df=df, columns=["email", "last_name", "phone"],
+            date_column="submission_date", days=2*365)
+
+    Raises:
+        ValueError: If method or columns not found.
+
+    Returns:
+        pd.DataFrame: Operational dataframe with anonymized data.
+    """
+    if logger is None:
+        logging.basicConfig(level=logging.INFO)
+        logger = logging.getLogger(__name__)
+
+    if all(col not in df.columns for col in columns):
+        msg = f"""At least one of the following columns is not found in dataframe:
+            {columns} or argument is not list. Provide list with proper column names."""
+        raise ValueError(msg)
+
+    if days and date_column:
+        days_ago = datetime.now().date() - timedelta(days=days)
+        df["temp_date_col"] = pd.to_datetime(df[date_column]).dt.date
+
+        to_hash = df["temp_date_col"] < days_ago
+        if any(to_hash) is False:
+            logger.warning(f"No data that is older than {days} days.")
+        else:
+            logger.info(
+                f"Data older than {days} days in {columns} columns will be anonymized."
+            )
+    else:
+        to_hash = len(df.index) * [True]
+        logger.info(
+            f"""The 'days' and 'date_column' arguments were not specified. All data in
+            {columns} columns will be anonymized."""
+        )
+
+    if method == "mask":
+        df.loc[to_hash, columns] = mask_value
+    elif method == "hash":
+        df.loc[to_hash, columns] = df.loc[to_hash, columns].apply(
+            lambda x: x.apply(hash)
+        )
+    else:
+        msg = "Method not found. Use one of the available methods: 'mask', 'hash'."
+        raise ValueError(msg)
+
+    df.drop(columns=["temp_date_col"], inplace=True, errors="ignore")
+    return df
