@@ -200,3 +200,23 @@ def databricks_credentials_secret():
 @pytest.fixture(scope="session", autouse=True)
 def c4c_credentials_secret():
     return os.environ.get("VIADOT_TEST_C4C_CREDENTIALS_SECRET")
+
+
+@pytest.fixture(scope="session", autouse=True)
+def MEDIATOOL_TESTS_ORG():
+    return os.environ.get("MEDIATOOL_TESTS_ORG")
+
+
+@pytest.fixture(scope="session", autouse=True)
+def MEDIATOOL_ADLS_AZURE_KEY_VAULT_SECRET():
+    return os.environ.get("MEDIATOOL_ADLS_AZURE_KEY_VAULT_SECRET")
+
+
+@pytest.fixture(scope="session", autouse=True)
+def MEDIATOOL_TEST_ADLS_PATH():
+    return os.environ.get("MEDIATOOL_TEST_ADLS_PATH")
+
+
+@pytest.fixture(scope="session", autouse=True)
+def ADLS_AZURE_KEY_VAULT_SECRET():
+    return os.environ.get("ADLS_AZURE_KEY_VAULT_SECRET")
