@@ -115,8 +115,10 @@ class VidClub(Source):
         """
         if endpoint in ["jobs", "product", "company"]:
             region_url_string = f"&region={region}" if region else ""
-            url = f"""{api_url}{endpoint}?from={from_date}&to={to_date}
-            {region_url_string}&limit={items_per_page}"""
+            url = (
+                f"""{api_url}{endpoint}?from={from_date}&to={to_date}"""
+                f"""{region_url_string}&limit={items_per_page}"""
+            )
         elif endpoint == "survey":
             url = f"{api_url}{endpoint}?language=en&type=question"
         else:
