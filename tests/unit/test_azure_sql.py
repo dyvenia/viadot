@@ -1,22 +1,22 @@
 import unittest
-from unittest.mock import patch, MagicMock
-from src.viadot.sources.azure_sql import AzureSQL  
+from unittest.mock import patch
+
+from viadot.sources.azure_sql import AzureSQL
+
 
 class TestAzureSQL(unittest.TestCase):
-
-    @patch('src.viadot.sources.SQLServer.run')
+    @patch("src.viadot.sources.SQLServer.run")
     def test_bulk_insert_default(self, mock_run):
         """Test the `bulk_insert` function with default parameters."""
-
         azure_sql = AzureSQL()
 
         result = azure_sql.bulk_insert(table="test_table", source_path="/path/to/file")
 
         mock_run.assert_called_once()
 
-        self.assertTrue(result)
+        assert result
 
-    @patch('src.viadot.sources.SQLServer.run')
+    @patch("src.viadot.sources.SQLServer.run")
     def test_bulk_insert_with_replace(self, mock_run):
         """Test the `bulk_insert` function with the `replace` option."""
         azure_sql = AzureSQL()
@@ -36,7 +36,7 @@ class TestAzureSQL(unittest.TestCase):
         mock_run.assert_any_call(delete_sql)
         mock_run.assert_any_call(bulk_insert_sql)
 
-    @patch('src.viadot.sources.SQLServer.run')
+    @patch("src.viadot.sources.SQLServer.run")
     def test_create_external_database(self, mock_run):
         """Test the `create_external_database` function."""
         azure_sql = AzureSQL()
@@ -44,8 +44,8 @@ class TestAzureSQL(unittest.TestCase):
         external_database_name = "external_db"
         storage_account_name = "mystorageaccount"
         container_name = "mycontainer"
-        sas_token = "sastoken123"
-        master_key_password = "masterpassword"
+        sas_token = "sastoken123"  # noqa: S105
+        master_key_password = "masterpassword"  # noqa: S105
 
         azure_sql.create_external_database(
             external_database_name=external_database_name,
@@ -58,7 +58,7 @@ class TestAzureSQL(unittest.TestCase):
         mock_run.assert_any_call(
             "CREATE MASTER KEY ENCRYPTION BY PASSWORD = masterpassword"
         )
-        
+
         credential_sql = (
             "CREATE DATABASE SCOPED CREDENTIAL external_db_credential "
             "WITH IDENTITY = 'SHARED ACCESS SIGNATURE' SECRET = 'sastoken123';"
