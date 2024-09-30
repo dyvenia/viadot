@@ -153,12 +153,12 @@ class SAPBW(Source):
         Args:
             if_empty (str, optional): What to do if a fetch produce no data.
                 Defaults to "warn".
+            mapping_dict (dict[str, Any], optional): Dictionary with original and new
+                column names. Defaults to None.
 
         Raises:
             ValidationError: Prints the original SAP error message in case of issues
                 with MDX execution.
-            mapping_dict (dict[str, Any], optional): Dictionary with original and new
-                column names. Defaults to None.
 
         Returns:
             pd.Dataframe: The response data as a pandas DataFrame, enriched
