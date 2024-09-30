@@ -1,14 +1,16 @@
 import unittest
-from datetime import datetime
-from src.viadot.sources.vid_club import VidClub, ValidationError
+
+import pytest
+
+from viadot.sources.vid_club import ValidationError, VidClub
+
 
 class TestVidClub(unittest.TestCase):
     def setUp(self):
         """Setup VidClub instance before each test."""
         # Sample input data for the constructor
         self.vid_club = VidClub(
-            endpoint="jobs",
-            vid_club_credentials={"token": "test-token"}
+            endpoint="jobs", vid_club_credentials={"token": "test-token"}
         )
 
     def test_build_query(self):
@@ -22,14 +24,14 @@ class TestVidClub(unittest.TestCase):
         region = "pl"
 
         # Expected result URL
-        expected_url = (
-            "https://example.com/api/jobs?from=2023-01-01&to=2023-01-31&region=pl&limit=50"
-        )
+        expected_url = "https://example.com/api/jobs?from=2023-01-01&to=2023-01-31&region=pl&limit=50"
 
         # Check if the method returns the correct URL
-        result_url = self.vid_club.build_query(from_date, to_date, api_url, items_per_page, endpoint, region)
-        self.assertEqual(result_url.strip(), expected_url.strip())
-        
+        result_url = self.vid_club.build_query(
+            from_date, to_date, api_url, items_per_page, endpoint, region
+        )
+        assert result_url == expected_url
+
     def test_intervals(self):
         """Test breaking date range into intervals based on the days_interval."""
         # Sample input data for the intervals method
@@ -43,8 +45,8 @@ class TestVidClub(unittest.TestCase):
 
         # Check if the method returns correct intervals
         starts, ends = self.vid_club.intervals(from_date, to_date, days_interval)
-        self.assertEqual(starts, expected_starts)
-        self.assertEqual(ends, expected_ends)
+        assert starts == expected_starts
+        assert ends == expected_ends
 
     def test_intervals_invalid_date_range(self):
         """Test that ValidationError is raised when to_date is before from_date."""
@@ -54,5 +56,5 @@ class TestVidClub(unittest.TestCase):
         days_interval = 5
 
         # Check if ValidationError is raised
-        with self.assertRaises(ValidationError):
+        with pytest.raises(ValidationError):
             self.vid_club.intervals(from_date, to_date, days_interval)
