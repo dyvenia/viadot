@@ -164,7 +164,7 @@ mapping_dict = {
 }
 
 
-def test_mindful_to_adls(sap_bw_config_key, adls_credentials_secret):
+def test_sap_bw_to_adls(sap_bw_config_key, adls_credentials_secret):
     state = sap_bw_to_adls(
         azure_key_vault_secret=sap_bw_config_key,
         mdx_query=mdx_query,
