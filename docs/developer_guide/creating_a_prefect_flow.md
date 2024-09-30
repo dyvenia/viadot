@@ -28,12 +28,11 @@ import pandas as pd
 
 
 @task(retries=3, retry_delay_seconds=10, timeout_seconds=60 * 60)
-def postgresql_to_df(credentials_key: str | None = None, credentials_secret: str | None = None, ...) -> pd.DataFrame:
+def postgresql_to_df(config_key: str | None = None, credentials_secret: str | None = None, ...) -> pd.DataFrame:
     if not (credentials_secret or config_key):
         raise MissingSourceCredentialsError
 
-    if not config_key:
-        credentials = get_credentials(credentials_secret)
+    credentials = get_credentials(credentials_secret) if credentials_secret else None
 
     postgres = PostgreSQL(credentials=credentials, config_key=config_key)
     return postgres.to_df(...)
