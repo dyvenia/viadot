@@ -1,6 +1,6 @@
 [project]
 name = "viadot2"
-version = "2.1.19"
+version = "2.1.20"
 description = "A simple data ingestion library to guide data flows from some places to other places."
 authors = [
     { name = "acivitillo", email = "acivitillo@dyvenia.com" },
@@ -98,7 +98,7 @@ log_level = "WARNING"
 addopts = "--ignore=dbt_packages --import-mode=importlib"
 
 [tool.coverage.run]
-omit = ['tests/integration/*']
+omit = ['tests/*']
 
 [tool.coverage.report]
 show_missing = true

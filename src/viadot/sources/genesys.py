@@ -175,7 +175,7 @@ class Genesys(Source):
         post_data_list: list[str],
         method: str,
         params: dict[str, Any] | None = None,
-        sleep_time: float = 0.5,
+        time_between_api_call: float = 0.5,
     ) -> dict[str, Any]:
         """General method to connect to Genesys Cloud API and generate the response.
 
@@ -185,8 +185,8 @@ class Genesys(Source):
             method (str): Type of connection to the API. Defaults to "POST".
             params (Optional[Dict[str, Any]], optional): Parameters to be passed into
                 the POST call. Defaults to None.
-            sleep_time (int, optional): The time, in seconds, to sleep the call to the
-                API. Defaults to 0.5.
+            time_between_api_call (int, optional): The time, in seconds, to sleep the
+                call to the API. Defaults to 0.5.
 
         Raises:
             RuntimeError: There is no current event loop in asyncio thread.
@@ -238,7 +238,7 @@ class Genesys(Source):
 
                                 semaphore.release()
 
-                await asyncio.sleep(sleep_time)
+                await asyncio.sleep(time_between_api_call)
 
         try:
             loop = asyncio.get_event_loop()
@@ -593,6 +593,7 @@ class Genesys(Source):
         view_type: str | None = None,
         view_type_time_sleep: int = 10,
         post_data_list: list[dict[str, Any]] | None = None,
+        time_between_api_call: float = 0.5,
         normalization_sep: str = ".",
     ) -> None:
         """General method to connect to Genesys Cloud API and generate the response.
@@ -614,6 +615,8 @@ class Genesys(Source):
             post_data_list (Optional[List[Dict[str, Any]]], optional): List of string
                 templates to generate json body in POST calls to the API.
                 Defaults to None.
+            time_between_api_call (int, optional): The time, in seconds, to sleep the
+                call to the API. Defaults to 0.5.
             normalization_sep (str, optional): Nested records will generate names
                 separated by sep. Defaults to ".".
 
@@ -632,6 +635,7 @@ class Genesys(Source):
             self._api_call(
                 endpoint=endpoint,
                 post_data_list=post_data_list,
+                time_between_api_call=time_between_api_call,
                 method="POST",
             )
 
@@ -645,8 +649,14 @@ class Genesys(Source):
             request_json = self._load_reporting_exports()
             entities = request_json["entities"]
 
-            if isinstance(entities, list) and len(entities) == len(post_data_list):
+            if isinstance(entities, list):
                 ids, urls = self._get_reporting_exports_url(entities)
+                if len(entities) != len(post_data_list):
+                    self.logger.warning(
+                        f"There are {len(entities)} available reports in Genesys, "
+                        f"and where sent {len(post_data_list)} reports. "
+                        "Unsed reports will be removed."
+                    )
             else:
                 APIError(
                     "There are no reports to be downloaded."
@@ -703,6 +713,7 @@ class Genesys(Source):
                 report = self._api_call(
                     endpoint=endpoint,
                     post_data_list=post_data_list,
+                    time_between_api_call=time_between_api_call,
                     method="POST",
                 )
 
@@ -742,6 +753,7 @@ class Genesys(Source):
                 response = self._api_call(
                     endpoint=endpoint,
                     post_data_list=post_data_list,
+                    time_between_api_call=time_between_api_call,
                     method="GET",
                     params=params,
                 )
@@ -773,6 +785,7 @@ class Genesys(Source):
                         endpoint=f"routing/queues/{qid}/members",
                         params={"pageSize": 100, "pageNumber": page},
                         post_data_list=post_data_list,
+                        time_between_api_call=time_between_api_call,
                         method="GET",
                     )
 
