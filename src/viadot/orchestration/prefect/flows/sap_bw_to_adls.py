@@ -16,12 +16,10 @@ from viadot.orchestration.prefect.tasks import df_to_adls, sap_bw_to_df
     task_runner=ConcurrentTaskRunner,
 )
 def sap_bw_to_adls(
-    credentials: dict[str, Any] | None = None,
     config_key: str | None = None,
     azure_key_vault_secret: str | None = None,
     mdx_query: str | None = None,
     mapping_dict: dict[str, Any] | None = None,
-    adls_credentials: str | None = None,
     adls_azure_key_vault_secret: str | None = None,
     adls_config_key: str | None = None,
     adls_path: str | None = None,
@@ -30,8 +28,6 @@ def sap_bw_to_adls(
     """Flow for downloading data from SAP BW API to Azure Data Lake.
 
     Args:
-        credentials (Optional[Dict[str, Any]], optional): Hubspot credentials as a
-            dictionary. Defaults to None.
         config_key (Optional[str], optional): The key in the viadot config holding
             relevant credentials. Defaults to None.
         azure_key_vault_secret (Optional[str], optional): The name of the Azure Key
@@ -39,10 +35,6 @@ def sap_bw_to_adls(
         mdx_query (str, optional): The MDX query to be passed to connection.
         mapping_dict (dict[str, Any], optional): Dictionary with original and new
             column names. Defaults to None.
-        adls_credentials (str, optional): The name of the Azure Key Vault
-            secret containing a dictionary with ACCOUNT_NAME and Service Principal
-            credentials (TENANT_ID, CLIENT_ID, CLIENT_SECRET) for the Azure Data Lake.
-            Defaults to None.
         adls_azure_key_vault_secret (str, optional): The name of the Azure Key.
             Defaults to None.
         adls_config_key (str, optional): The key in the viadot config holding relevant
@@ -53,7 +45,6 @@ def sap_bw_to_adls(
             Defaults to False.
     """
     data_frame = sap_bw_to_df(
-        credentials=credentials,
         config_key=config_key,
         azure_key_vault_secret=azure_key_vault_secret,
         mdx_query=mdx_query,
@@ -63,7 +54,6 @@ def sap_bw_to_adls(
     return df_to_adls(
         df=data_frame,
         path=adls_path,
-        credentials=adls_credentials,
         credentials_secret=adls_azure_key_vault_secret,
         config_key=adls_config_key,
         overwrite=adls_path_overwrite,

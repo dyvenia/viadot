@@ -17,7 +17,6 @@ with contextlib.suppress(ImportError):
 
 @task(retries=3, log_prints=True, retry_delay_seconds=10, timeout_seconds=60 * 60)
 def sap_bw_to_df(
-    credentials: dict[str, Any] | None = None,
     config_key: str | None = None,
     azure_key_vault_secret: str | None = None,
     mdx_query: str | None = None,
@@ -26,8 +25,6 @@ def sap_bw_to_df(
     """Task to download data from SAP BW to DataFrame.
 
     Args:
-        credentials (Optional[Dict[str, Any]], optional): SAPBW credentials as a
-            dictionary. Defaults to None.
         config_key (Optional[str], optional): The key in the viadot config holding
             relevant credentials. Defaults to None.
         azure_key_vault_secret (Optional[str], optional): The name of the Azure Key
@@ -43,11 +40,11 @@ def sap_bw_to_df(
     Returns:
         pd.DataFrame: The response data as a Pandas Data Frame.
     """
-    if not (azure_key_vault_secret or config_key or credentials):
+    if not (azure_key_vault_secret or config_key):
         raise MissingSourceCredentialsError
 
     if not config_key:
-        credentials = credentials or get_credentials(azure_key_vault_secret)
+        credentials = get_credentials(azure_key_vault_secret)
 
     if mdx_query is None:
         message = "SAP BW `mdx_query` is a mandatory requirement."
