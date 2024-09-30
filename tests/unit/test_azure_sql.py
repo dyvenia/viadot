@@ -45,7 +45,7 @@ class TestAzureSQL(unittest.TestCase):
         storage_account_name = "mystorageaccount"
         container_name = "mycontainer"
         sas_token = "sastoken123"  # noqa: S105
-        master_key_password = "masterpapssword"  # noqa: S105, pragma: allowlist secret
+        master_key_password = "masterpapssword"  # pragma: allowlist secret # noqa: S105
 
         azure_sql.create_external_database(
             external_database_name=external_database_name,
