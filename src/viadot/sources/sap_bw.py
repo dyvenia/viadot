@@ -152,7 +152,7 @@ class SAPBW(Source):
 
         Args:
             if_empty (str, optional): What to do if a fetch produce no data.
-                Defaults to "warn
+                Defaults to "warn".
 
         Raises:
             ValidationError: Prints the original SAP error message in case of issues
@@ -161,7 +161,8 @@ class SAPBW(Source):
                 column names. Defaults to None.
 
         Returns:
-            pd.Dataframe: The response data as a pandas DataFrame plus viadot metadata.
+            pd.Dataframe: The response data as a pandas DataFrame, enriched
+                with viadot metadata columns.
         """
         raw_data = {}
 
@@ -195,7 +196,7 @@ class SAPBW(Source):
 
         return data_frame
 
-    def available_columns(self, mdx_query: str) -> list[str]:
+    def get_available_columns(self, mdx_query: str) -> list[str]:
         """Generate list of all available columns in a SAP BW table.
 
         Args:
