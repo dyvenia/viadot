@@ -13,7 +13,7 @@ from viadot.sources.base import Source
 from viadot.utils import add_viadot_metadata_columns
 
 
-class SapbwCredentials(BaseModel):
+class SAPBWCredentials(BaseModel):
     """Checking for values in SAP BW credentials dictionary.
 
     Two key values are held in the SAP BW connector:
@@ -37,7 +37,7 @@ class SapbwCredentials(BaseModel):
     user: str
 
 
-class Sapbw(Source):
+class SAPBW(Source):
     """Quering the SAP BW (SAP Business Warehouse) source using pyrfc library.
 
     Documentation to pyrfc can be found under:
@@ -49,20 +49,20 @@ class Sapbw(Source):
     def __init__(
         self,
         *args,
-        credentials: SapbwCredentials | None = None,
+        credentials: SAPBWCredentials | None = None,
         config_key: str = "sap_bw",
         **kwargs,
     ):
         """Create an instance of SAP BW.
 
         Args:
-            credentials (Optional[SapbwCredentials], optional): SAP BW credentials.
+            credentials (Optional[SAPBWCredentials], optional): SAP BW credentials.
                 Defaults to None.
             config_key (str, optional): The key in the viadot config holding relevant
                 credentials. Defaults to "sap_bw".
 
         Examples:
-            sap_bw = Sapbw(
+            sap_bw = SAPBW(
                 credentials=credentials,
                 config_key=config_key,
             )
@@ -81,7 +81,7 @@ class Sapbw(Source):
             raise CredentialError(message)
         self.credentials = credentials
 
-        validated_creds = dict(SapbwCredentials(**credentials))
+        validated_creds = dict(SAPBWCredentials(**credentials))
         super().__init__(*args, credentials=validated_creds, **kwargs)
 
         self.query_output = None
