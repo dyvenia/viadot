@@ -1,6 +1,5 @@
 """Download data from Genesys Cloud and upload it to Azure Data Lake Storage."""
 
-import time
 from typing import Any
 
 from prefect import flow

@@ -2,15 +2,15 @@
 
 import asyncio
 import base64
+from io import StringIO
 import json
 import time
-from io import StringIO
 from typing import Any
 
 import aiohttp
+from aiolimiter import AsyncLimiter
 import numpy as np
 import pandas as pd
-from aiolimiter import AsyncLimiter
 from pydantic import BaseModel
 
 from viadot.config import get_source_credentials
@@ -384,9 +384,7 @@ class Genesys(Source):
 
         return dataframe
 
-    def _merge_conversations(
-        self, data_to_merge: list
-    ) -> pd.DataFrame:  # noqa: C901, PLR0912
+    def _merge_conversations(self, data_to_merge: list) -> pd.DataFrame:  # noqa: C901, PLR0912
         """Merge all the conversations data into a single data frame.
 
         Args:
