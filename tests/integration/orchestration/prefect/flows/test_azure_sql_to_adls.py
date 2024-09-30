@@ -1,6 +1,8 @@
+from unittest.mock import patch
+
 from src.viadot.orchestration.prefect.flows import azure_sql_to_adls
 from src.viadot.sources import AzureDataLake
-from unittest.mock import patch
+
 
 def test_azure_sql_to_adls(
     query,
@@ -14,9 +16,12 @@ def test_azure_sql_to_adls(
     assert not lake.exists(TEST_FILE_PATH)
 
     # Mock the `aselite_to_df` and `df_to_adls` tasks
-    with patch("viadot.orchestration.prefect.tasks.aselite_to_df") as mock_azure_sql_to_df, \
-         patch("viadot.orchestration.prefect.tasks.df_to_adls") as mock_df_to_adls:
-
+    with (
+        patch(
+            "viadot.orchestration.prefect.tasks.aselite_to_df"
+        ) as mock_azure_sql_to_df,
+        patch("viadot.orchestration.prefect.tasks.df_to_adls") as mock_df_to_adls,
+    ):
         # Prepare mock DataFrame
         mock_df = mock_azure_sql_to_df.return_value
 
@@ -24,9 +29,6 @@ def test_azure_sql_to_adls(
         azure_sql_to_adls(
             query=query,
             credentials_secret=azure_sql_credentials_secret,
-            sep=",",
-            file_path=TEST_FILE_PATH,
-            if_exists="replace",
             validate_df_dict=None,
             convert_bytes=False,
             remove_special_characters=None,
