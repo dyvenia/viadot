@@ -4,6 +4,7 @@ from importlib.util import find_spec
 
 from ._duckdb import DuckDB
 from ._trino import Trino
+from .bigquery import BigQuery
 from .cloud_for_customers import CloudForCustomers
 from .customer_gauge import CustomerGauge
 from .epicor import Epicor
@@ -22,6 +23,7 @@ from .uk_carbon_intensity import UKCarbonIntensity
 
 
 __all__ = [
+    "BigQuery",
     "CloudForCustomers",
     "CustomerGauge",
     "Epicor",

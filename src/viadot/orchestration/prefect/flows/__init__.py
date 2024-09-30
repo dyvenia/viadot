@@ -1,5 +1,6 @@
 """Import flows."""
 
+from .bigquery_to_adls import bigquery_to_adls
 from .cloud_for_customers_to_adls import cloud_for_customers_to_adls
 from .cloud_for_customers_to_databricks import cloud_for_customers_to_databricks
 from .customer_gauge_to_adls import customer_gauge_to_adls
@@ -32,6 +33,7 @@ from .transform_and_catalog import transform_and_catalog
 
 
 __all__ = [
+    "bigquery_to_adls",
     "cloud_for_customers_to_adls",
     "cloud_for_customers_to_databricks",
     "customer_gauge_to_adls",
