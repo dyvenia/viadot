@@ -1,10 +1,10 @@
 """A connector for Azure SQL Database."""
 
+import logging
 from typing import Literal
 
-import logging
-
 from .sql_server import SQLServer
+
 
 logger = logging.getLogger(__name__)
 
@@ -12,18 +12,30 @@ logger = logging.getLogger(__name__)
 class AzureSQL(SQLServer):
     """Azure SQL connector class."""
 
-    def __init__(self, *args, config_key="AZURE_SQL", **kwargs):
+    def __init__(self, *args, config_key: str = "AZURE_SQL", **kwargs):
+        """Initialize the AzureSQL connector.
+
+        This constructor sets up the Azure SQL connector with the specified
+        configuration key. It allows for additional positional and keyword arguments
+        to be passed to the parent SQLServer class.
+
+        Args:
+            *args: Variable length argument list passed to the parent class.
+            config_key (str, optional): The configuration key used to retrieve
+                connection settings. Defaults to "AZURE_SQL".
+            **kwargs: Additional keyword arguments passed to the parent class.
+        """
         super().__init__(*args, config_key=config_key, **kwargs)
 
     def bulk_insert(
         self,
         table: str,
-        schema: str = None,
-        source_path: str = None,
-        sep="\t",
-        if_exists: Literal = "append",
-    ):
-        r"""Fuction to bulk insert.
+        schema: str | None = None,
+        source_path: str | None = None,
+        sep: str | None = "\t",
+        if_exists: Literal["append", "replace"] = "append",
+    ) -> bool:
+        r"""Function to bulk insert.
 
         Args:
             table (str): Table name.
@@ -31,8 +43,8 @@ class AzureSQL(SQLServer):
             source_path (str, optional): Full path to a data file. Defaults to one.
             sep (str, optional):  field terminator to be used for char and
                 widechar data files. Defaults to "\t".
-            if_exists (Literal, optional): What to do if the table already exists.
-                Defaults to "append".
+            if_exists (Literal["append", "replace"] , optional): What to do if the table
+                already exists. Defaults to "append".
         """
         if schema is None:
             schema = self.DEFAULT_SCHEMA
@@ -52,7 +64,7 @@ class AzureSQL(SQLServer):
             );
         """
         if if_exists == "replace":
-            self.run(f"DELETE FROM {schema}.{table}")
+            self.run(f"DELETE FROM {schema}.{table}")  # noqa: S608
         self.run(insert_sql)
         return True
 
@@ -63,8 +75,8 @@ class AzureSQL(SQLServer):
         container_name: str,
         sas_token: str,
         master_key_password: str,
-        credential_name: str = None,
-    ):
+        credential_name: str | None = None,
+    ) -> None:
         """Create an external database.
 
         Used to eg. execute BULK INSERT or OPENROWSET queries.
