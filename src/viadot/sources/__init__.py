@@ -30,10 +30,10 @@ __all__ = [
     "Hubspot",
     "Mediatool",
     "Mindful",
-    "Sftp",
     "Outlook",
     "SQLServer",
     "Salesforce",
+    "Sftp",
     "Sharepoint",
     "Supermetrics",
     "SupermetricsCredentials",  # pragma: allowlist-secret
@@ -61,9 +61,11 @@ if find_spec("s3fs"):
 
     __all__.extend(["MinIO"])
 if find_spec("pyrfc"):
+    from viadot.sources.sap_bw import SAPBW  # noqa: F401
     from viadot.sources.sap_rfc import SAPRFC, SAPRFCV2  # noqa: F401
 
-    __all__.extend(["SAPRFC", "SAPRFCV2"])
+    __all__.extend(["SAPBW", "SAPRFC", "SAPRFCV2"])
+
 if find_spec("pyspark"):
     from viadot.sources.databricks import Databricks  # noqa: F401
 

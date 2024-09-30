@@ -20,6 +20,7 @@ from .outlook import outlook_to_df
 from .redshift_spectrum import df_to_redshift_spectrum
 from .s3 import s3_upload_file
 from .salesforce import salesforce_to_df
+from .sap_bw import sap_bw_to_df
 from .sap_rfc import sap_rfc_to_df
 from .sftp import sftp_list, sftp_to_df
 from .sharepoint import sharepoint_download_file, sharepoint_to_df
@@ -32,11 +33,11 @@ __all__ = [
     "bcp",
     "clone_repo",
     "cloud_for_customers_to_df",
-    "customer_gauge_to_df",
-    "df_to_databricks",
     "create_sql_server_table",
+    "customer_gauge_to_df",
     "dbt_task",
     "df_to_adls",
+    "df_to_databricks",
     "df_to_databricks",
     "df_to_minio",
     "df_to_redshift_spectrum",
@@ -51,6 +52,7 @@ __all__ = [
     "outlook_to_df",
     "s3_upload_file",
     "salesforce_to_df",
+    "sap_bw_to_df",
     "sap_rfc_to_df",
     "sftp_list",
     "sftp_to_df",

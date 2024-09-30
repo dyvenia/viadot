@@ -16,6 +16,7 @@ from .mediatool_to_adls import mediatool_to_adls
 from .mindful_to_adls import mindful_to_adls
 from .outlook_to_adls import outlook_to_adls
 from .salesforce_to_adls import salesforce_to_adls
+from .sap_bw_to_adls import sap_bw_to_adls
 from .sap_to_parquet import sap_to_parquet
 from .sap_to_redshift_spectrum import sap_to_redshift_spectrum
 from .sftp_to_adls import sftp_to_adls
@@ -47,6 +48,7 @@ __all__ = [
     "mindful_to_adls",
     "outlook_to_adls",
     "salesforce_to_adls",
+    "sap_bw_to_adls",
     "sap_to_parquet",
     "sap_to_redshift_spectrum",
     "sftp_to_adls",
