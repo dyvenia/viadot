@@ -36,7 +36,7 @@ dependencies = [
     "defusedxml>=0.7.1",
     "aiohttp>=3.10.5",
     "simple-salesforce==1.12.6",
-    ]
+]
 requires-python = ">=3.10"
 readme = "README.md"
 
@@ -97,7 +97,7 @@ log_level = "WARNING"
 addopts = "--ignore=dbt_packages --import-mode=importlib"
 
 [tool.coverage.run]
-omit = ['tests/integration/*']
+omit = ['tests/*']
 
 [tool.coverage.report]
 show_missing = true
