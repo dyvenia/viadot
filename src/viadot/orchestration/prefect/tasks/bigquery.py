@@ -1,16 +1,11 @@
 """'bigquery.py'."""
 
-import contextlib
-
 import pandas as pd
 from prefect import task
 
 from viadot.orchestration.prefect.exceptions import MissingSourceCredentialsError
 from viadot.orchestration.prefect.utils import get_credentials
-
-
-with contextlib.suppress(ImportError):
-    from viadot.sources import BigQuery
+from viadot.sources import BigQuery
 
 
 @task(retries=3, log_prints=True, retry_delay_seconds=10, timeout_seconds=60 * 60)

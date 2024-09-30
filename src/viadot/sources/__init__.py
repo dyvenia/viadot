@@ -4,6 +4,7 @@ from importlib.util import find_spec
 
 from ._duckdb import DuckDB
 from ._trino import Trino
+from .bigquery import BigQuery
 from .cloud_for_customers import CloudForCustomers
 from .customer_gauge import CustomerGauge
 from .epicor import Epicor
@@ -71,8 +72,3 @@ if find_spec("pyspark"):
     from viadot.sources.databricks import Databricks  # noqa: F401
 
     __all__.append("Databricks")
-
-if find_spec("pandas_gbq"):
-    from viadot.sources.bigquery import BigQuery
-
-    __all__.append("BigQuery")
