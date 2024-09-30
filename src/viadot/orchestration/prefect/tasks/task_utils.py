@@ -32,7 +32,7 @@ def chunk_df(df: pd.DataFrame, size: int = 10_000) -> list[pd.DataFrame]:
         size (int, optional): Size of a chunk. Defaults to 10000.
     """
     n_rows = df.shape[0]
-    return [df[i:i + size] for i in range(0, n_rows, size)]
+    return [df[i : i + size] for i in range(0, n_rows, size)]
 
 
 @task
