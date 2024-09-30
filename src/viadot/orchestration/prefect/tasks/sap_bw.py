@@ -6,7 +6,6 @@ from typing import Any
 import pandas as pd
 from prefect import task
 
-from viadot.exceptions import APIError
 from viadot.orchestration.prefect.exceptions import MissingSourceCredentialsError
 from viadot.orchestration.prefect.utils import get_credentials
 
@@ -17,25 +16,25 @@ with contextlib.suppress(ImportError):
 
 @task(retries=3, log_prints=True, retry_delay_seconds=10, timeout_seconds=60 * 60)
 def sap_bw_to_df(
+    mdx_query: str,
     config_key: str | None = None,
     azure_key_vault_secret: str | None = None,
-    mdx_query: str | None = None,
     mapping_dict: dict[str, Any] | None = None,
 ) -> pd.DataFrame:
     """Task to download data from SAP BW to DataFrame.
 
     Args:
+        mdx_query (str, required): The MDX query to be passed to connection.
         config_key (Optional[str], optional): The key in the viadot config holding
             relevant credentials. Defaults to None.
         azure_key_vault_secret (Optional[str], optional): The name of the Azure Key
             Vault secret where credentials are stored. Defaults to None.
-        mdx_query (str, optional): The MDX query to be passed to connection.
         mapping_dict (dict[str, Any], optional): Dictionary with original and new
             column names. Defaults to None.
 
     Raises:
         MissingSourceCredentialsError: If none credentials have been provided.
-        APIError: The `mdx_query` is a "must" requirement.
+
 
     Returns:
         pd.DataFrame: The response data as a Pandas Data Frame.
@@ -45,10 +44,6 @@ def sap_bw_to_df(
 
     if not config_key:
         credentials = get_credentials(azure_key_vault_secret)
-
-    if mdx_query is None:
-        message = "SAP BW `mdx_query` is a mandatory requirement."
-        raise APIError(message)
 
     sap_bw = SAPBW(
         credentials=credentials,
