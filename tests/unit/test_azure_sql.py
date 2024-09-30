@@ -45,7 +45,7 @@ class TestAzureSQL(unittest.TestCase):
         storage_account_name = "mystorageaccount"
         container_name = "mycontainer"
         sas_token = "sastoken123"  # noqa: S105
-        master_key_password = "masterpassword"  # noqa: S105
+        master_key_password = "masterpapssword"  # pragma: allowlist secret
 
         azure_sql.create_external_database(
             external_database_name=external_database_name,
@@ -61,7 +61,7 @@ class TestAzureSQL(unittest.TestCase):
 
         credential_sql = (
             "CREATE DATABASE SCOPED CREDENTIAL external_db_credential "
-            "WITH IDENTITY = 'SHARED ACCESS SIGNATURE' SECRET = 'sastoken123';"
+            "WITH IDENTITY = 'SHARED ACCESS SIGNATURE' SECRET = 'sastoken123';"  # pragma: allowlist secret
         )
         mock_run.assert_any_call(credential_sql)
 
