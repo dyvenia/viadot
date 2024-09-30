@@ -413,6 +413,7 @@ def test_api_connection_reporting_exports(
         endpoint="analytics/reporting/exports",
         post_data_list=variables["mock_post_data_list"],
         method="POST",
+        time_between_api_call=0.5,
     )
     mock_load.assert_called_once()
     mock_get_url.assert_called_once()
