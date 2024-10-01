@@ -29,8 +29,8 @@ def vid_club_to_df(  # noqa: PLR0913
     """Task to downloading data from Vid Club APIs to Pandas DataFrame.
 
     Args:
-        endpoint (Literal["jobs", "product", "company", "survey"], optional): The endpoint
-            source to be accessed. Defaults to None.
+        endpoint (Literal["jobs", "product", "company", "survey"], optional):
+            The endpoint source to be accessed. Defaults to None.
         from_date (str, optional): Start date for the query, by default is the oldest
             date in the data 2022-03-22.
         to_date (str, optional): End date for the query. By default None,
