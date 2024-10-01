@@ -1,7 +1,30 @@
 from unittest.mock import patch
 
+import pandas as pd
+import pytest
+
 from viadot.orchestration.prefect.flows import azure_sql_to_adls
 from viadot.sources.azure_data_lake import AzureDataLake
+
+
+@pytest.fixture
+def query():
+    return "SELECT * FROM your_table_name"
+
+
+@pytest.fixture
+def TEST_FILE_PATH():
+    return "test_file_path"
+
+
+@pytest.fixture
+def adls_credentials_secret():
+    return "mock_adls_credentials_secret"
+
+
+@pytest.fixture
+def azure_sql_credentials_secret():
+    return "mock_azure_sql_credentials_secret"
 
 
 def test_azure_sql_to_adls(
@@ -21,8 +44,8 @@ def test_azure_sql_to_adls(
         ) as mock_azure_sql_to_df,
         patch("viadot.orchestration.prefect.tasks.df_to_adls") as mock_df_to_adls,
     ):
-        # Prepare mock DataFrame
-        mock_df = mock_azure_sql_to_df.return_value
+        mock_df = pd.DataFrame({"column1": [1, 2], "column2": [3, 4]})
+        mock_azure_sql_to_df.return_value = mock_df
 
         # Call the flow
         azure_sql_to_adls(
@@ -60,8 +83,6 @@ def test_azure_sql_to_adls(
             overwrite=True,
         )
 
-    # Ensure the file now exists in the Data Lake
     assert lake.exists(TEST_FILE_PATH)
 
-    # Clean up after the test by removing the test file from ADLS
     lake.rm(TEST_FILE_PATH)
