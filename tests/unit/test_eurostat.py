@@ -105,7 +105,7 @@ def test_parameter_codes_as_list_logger(caplog):
     params = {"hhtyp": ["totale", "nottotale"], "indic_il": "med_e"}
     eurostat = EurostatMock(dataset_code="ILC_DI04", params=params)
 
-    with pytest.raises(ValueError, match="Wrong structure of params!"):  # noqa: SIM117
+    with pytest.raises(TypeError, match="Wrong structure of params!"):  # noqa: SIM117
         with caplog.at_level(logging.ERROR):
             eurostat.validate_params(
                 dataset_code=eurostat.dataset_code, url=URL, params=params

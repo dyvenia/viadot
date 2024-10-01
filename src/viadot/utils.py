@@ -906,12 +906,11 @@ def filter_df_columns(data_frame: pd.DataFrame, columns: list) -> pd.DataFrame:
             f"Name of the columns: '{' | '.join(non_available_columns)}' are not in DataFrame. Please check spelling!\n"
             f"Available columns: {' | '.join(data_frame.columns)}"
         )
-        raise ValueError("Provided columns are not available!")
+        msg = "Provided columns are not available!"
+        raise ValueError(msg)
 
     # Selecting only needed columns from the original DataFrame
-    data_frame = data_frame.loc[:, needed_columns]
-
-    return data_frame
+    return data_frame.loc[:, needed_columns]
 
 
 def anonymize_df(

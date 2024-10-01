@@ -9,6 +9,7 @@ from viadot.utils import (
     handle_api_response,
     validate,
 )
+
 from .base import Source
 
 
@@ -34,7 +35,7 @@ class Eurostat(Source):
 
     Functions:
 
-        get_parameters_codes(dataset_code: str, url: str): Validate available API 
+        get_parameters_codes(dataset_code: str, url: str): Validate available API
             request parameters and their codes.
         validate_params(dataset_code: str, url: str, params: dict): Validates given
             parameters against the available parameters in the dataset
@@ -42,7 +43,7 @@ class Eurostat(Source):
             JSON pulled from Eurostat
         to_df(dataset_code: str, params: dict = None, columns: list = None,
             tests: dict = None): Function responsible for getting response and creating
-            DataFrame using method 'eurostat_dictionary_to_df' with validation of 
+            DataFrame using method 'eurostat_dictionary_to_df' with validation of
             provided parameters and their codes if needed.
     """
 
@@ -55,13 +56,12 @@ class Eurostat(Source):
         params: dict[str, str] | None = None,
         columns: list[str] | None = None,
         tests: dict | None = None,
-        **kwargs
+        **kwargs,
     ):
-        """
-        Initialize the class with Eurostat API data fetching setup.
+        """Initialize the class with Eurostat API data fetching setup.
 
         This method uses an HTTPS REST request to pull data from the Eurostat API.
-        No API registration or API key is required. Data is fetched based on the 
+        No API registration or API key is required. Data is fetched based on the
         parameters provided in the dynamic part of the URL.
 
         Example URL:
@@ -71,18 +71,18 @@ class Eurostat(Source):
         To retrieve specific data, parameters with codes must be provided in `params`.
 
         Args:
-            dataset_code (str): 
+            dataset_code (str):
                 The code of the Eurostat dataset to be downloaded.
-            params (dict[str, str] | None, optional): 
-                A dictionary with optional URL parameters. Each key is a parameter ID, 
-                and the value is a specific parameter code, e.g., 
-                `params = {'unit': 'EUR'}` where "unit" is the parameter, and "EUR" is 
+            params (dict[str, str] | None, optional):
+                A dictionary with optional URL parameters. Each key is a parameter ID,
+                and the value is a specific parameter code, e.g.,
+                `params = {'unit': 'EUR'}` where "unit" is the parameter, and "EUR" is
                 the code. Only one code per parameter is allowed. Defaults to None.
-            columns (list[str] | None, optional): 
+            columns (list[str] | None, optional):
                 A list of column names (as strings) that are required from the dataset.
-                Filters the data to only include the specified columns. 
+                Filters the data to only include the specified columns.
                 Defaults to None.
-            tests (dict | None, optional): 
+            tests (dict | None, optional):
                 A dictionary containing test cases for the data, including:
                 - `column_size`: dict{column: size}
                 - `column_unique_values`: list[columns]
@@ -91,7 +91,7 @@ class Eurostat(Source):
                 - `column_match_regex`: dict{column: 'regex'}
                 - `column_sum`: dict{column: {'min': number, 'max': number}}.
                 Defaults to None.
-            **kwargs: 
+            **kwargs:
                 Additional arguments passed to the class initializer.
         """
         self.dataset_code = dataset_code
@@ -115,11 +115,12 @@ class Eurostat(Source):
             response = handle_api_response(url)
             data = response.json()
         except APIError as api_error:
-            self.logger.error(
+            self.logger.exception(
                 f"Failed to fetch data for {dataset_code}, please check correctness "
                 "of dataset code!"
             )
-            raise ValueError("DataFrame is empty!") from api_error
+            msg = "DataFrame is empty!"
+            raise ValueError(msg) from api_error
 
         # Getting list of available parameters
         available_params = data["id"]
@@ -136,10 +137,7 @@ class Eurostat(Source):
         return params_and_codes
 
     def validate_params(
-        self, 
-        dataset_code: str, 
-        url: str, 
-        params: dict[str, str]
+        self, dataset_code: str, url: str, params: dict[str, str]
     ) -> None:
         """Validates given parameters against the available parameters in the dataset.
 
@@ -168,7 +166,8 @@ class Eurostat(Source):
                     "CORRECT: params = {'unit': 'EUR'} | INCORRECT: params = "
                     "{'unit': ['EUR', 'USD', 'PLN']}"
                 )
-                raise ValueError("Wrong structure of params!")
+                msg = "Wrong structure of params!"
+                raise TypeError(msg)
 
         if key_codes is not None:
             # Conversion keys and values on lower cases by using casefold
@@ -183,13 +182,13 @@ class Eurostat(Source):
             # Comparing keys and values
             non_available_keys = [
                 key
-                for key in params_after_conversion.keys()
+                for key in params_after_conversion
                 if key not in key_codes_after_conversion
             ]
             non_available_codes = [
                 value
                 for key, value in params_after_conversion.items()
-                if key in key_codes_after_conversion.keys()
+                if key in key_codes_after_conversion
                 and value not in key_codes_after_conversion[key]
             ]
 
@@ -215,7 +214,8 @@ class Eurostat(Source):
                 )
 
             if non_available_keys or non_available_codes:
-                raise ValueError("Wrong parameters or codes were provided!")
+                msg = "Wrong parameters or codes were provided!"
+                raise ValueError(msg)
 
     def eurostat_dictionary_to_df(self, *signals: list[str]) -> pd.DataFrame:
         """Function for creating DataFrame from JSON pulled from Eurostat.
@@ -226,17 +226,17 @@ class Eurostat(Source):
 
         class TSignal:
             """Class representing a signal with keys, indexes, labels, and name.
-            
-                Attributes:
-                signal_keys_list : list[str]
-                    A list of keys representing unique identifiers for the signal.
-                signal_index_list : list[str]
-                    A list of index values corresponding to the keys of the signal.
-                signal_label_list : list[str]
-                    A list of labels providing human-readable names for the 
-                    signal's keys.
-                signal_name : str
-                    The name of the signal.
+
+            Attributes:
+            signal_keys_list : list[str]
+                A list of keys representing unique identifiers for the signal.
+            signal_index_list : list[str]
+                A list of index values corresponding to the keys of the signal.
+            signal_label_list : list[str]
+                A list of labels providing human-readable names for the
+                signal's keys.
+            signal_name : str
+                The name of the signal.
             """
 
             signal_keys_list: list[str]
@@ -275,15 +275,19 @@ class Eurostat(Source):
         col_signal_temp = []
         row_signal_temp = []
         for row_index, row_label in zip(
-            signal_lists[0].signal_index_list, signal_lists[0].signal_label_list
+            signal_lists[0].signal_index_list,
+            signal_lists[0].signal_label_list,
+            strict=False,
         ):  # rows
             for col_index, col_label in zip(
-                signal_lists[1].signal_index_list, signal_lists[1].signal_label_list
+                signal_lists[1].signal_index_list,
+                signal_lists[1].signal_label_list,
+                strict=False,
             ):  # cols
                 index = str(
                     col_index + row_index * len(signal_lists[1].signal_label_list)
                 )
-                if index in eurostat_dictionary["value"].keys():
+                if index in eurostat_dictionary["value"]:
                     index_list.append(index)
                     col_signal_temp.append(col_label)
                     row_signal_temp.append(row_label)
@@ -296,10 +300,7 @@ class Eurostat(Source):
         return df
 
     @add_viadot_metadata_columns
-    def to_df(
-        self,
-        if_empty="warn"
-    ) -> pd.DataFrame:
+    def to_df(self) -> pd.DataFrame:
         """Function responsible for getting response and creating DataFrame.
 
         It is using method 'eurostat_dictionary_to_df' with validation
@@ -315,19 +316,21 @@ class Eurostat(Source):
         """
         # Checking if params and columns have correct type
         if not isinstance(self.params, dict) and self.params is not None:
-            raise TypeError("Params should be a dictionary.")
+            msg = "Params should be a dictionary."
+            raise TypeError(msg)
 
         if not isinstance(self.columns, list) and self.columns is not None:
-            raise TypeError("Requested columns should be provided as list of strings.")
+            msg = "Requested columns should be provided as list of strings."
+            raise TypeError(msg)
 
         # Creating url for connection with API
         url = f"{self.base_url}{self.dataset_code}?format=JSON&lang=EN"
 
         # Making parameters validation
         if self.params is not None:
-            self.validate_params(dataset_code=self.dataset_code,
-                                 url=url,
-                                 params=self.params)
+            self.validate_params(
+                dataset_code=self.dataset_code, url=url, params=self.params
+            )
 
         # Getting response from API
         try:
@@ -335,9 +338,9 @@ class Eurostat(Source):
             data = response.json()
             data_frame = self.eurostat_dictionary_to_df(["geo", "time"], data)
         except APIError:
-            self.validate_params(dataset_code=self.dataset_code,
-                                 url=url,
-                                 params=self.params)
+            self.validate_params(
+                dataset_code=self.dataset_code, url=url, params=self.params
+            )
 
         # Merge data_frame with label and last updated date
         label_col = pd.Series(str(data["label"]), index=data_frame.index, name="label")
