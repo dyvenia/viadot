@@ -18,7 +18,7 @@ def test_eurostat_to_adls():
     eurostat_to_adls(
         dataset_code="ILC_DI04",
         adls_path=TEST_FILE_PATH,
-        adls_credentials_secret="sp-adls-test",  # noqa: S106
+        adls_credentials_secret="sp-adls-test",  # noqa: S106, # pragma: allowlist secret
     )
 
     assert lake.exists(TEST_FILE_PATH)
