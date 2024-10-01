@@ -8,10 +8,16 @@
 
 ::: viadot.sources.cloud_for_customers.CloudForCustomers
 
-::: viadot.sources.sap_rfc.SAPRFC
-
 ::: viadot.sources.sharepoint.Sharepoint
 
 ::: viadot.sources.genesys.Genesys
+
+::: viadot.sources.outlook.Outlook
+
+::: viadot.sources.hubspot.Hubspot
+
+::: viadot.sources.epicor.Epicor
+
+::: viadot.sources.mindful.Mindful
 
 ::: viadot.sources.minio.MinIO

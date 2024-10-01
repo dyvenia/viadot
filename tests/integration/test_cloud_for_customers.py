@@ -3,6 +3,7 @@
 from datetime import datetime, timedelta
 
 import pandas as pd
+
 from viadot.sources.cloud_for_customers import CloudForCustomers
 
 

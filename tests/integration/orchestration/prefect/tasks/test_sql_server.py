@@ -1,4 +1,5 @@
 import pytest
+
 from viadot.orchestration.prefect.tasks import (
     create_sql_server_table,
     sql_server_query,
@@ -11,7 +12,7 @@ TABLE = "test"
 SCHEMA = "sandbox"
 
 
-@pytest.fixture()
+@pytest.fixture
 def sql_server():
     # Initialize the SQLServer instance with the test credentials.
     return SQLServer(config_key="sql_server")

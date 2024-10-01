@@ -5,6 +5,7 @@ import pandas as pd
 import pytest
 import sharepy
 from sharepy.errors import AuthError
+
 from viadot.exceptions import CredentialError
 from viadot.sources import Sharepoint
 from viadot.sources.sharepoint import SharepointCredentials
@@ -34,7 +35,7 @@ class SharepointMock(Sharepoint):
         return pd.ExcelFile(Path("tests/unit/test_file.xlsx"))
 
 
-@pytest.fixture()
+@pytest.fixture
 def sharepoint_mock():
     return SharepointMock(credentials=DUMMY_CREDS)
 
