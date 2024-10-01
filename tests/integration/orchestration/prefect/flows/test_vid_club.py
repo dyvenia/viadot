@@ -6,8 +6,10 @@ TEST_FILE_PATH = "test/path/to/adls.parquet"
 TEST_SOURCE = "jobs"
 TEST_FROM_DATE = "2023-01-01"
 TEST_TO_DATE = "2023-12-31"
-ADLS_CREDENTIALS_SECRET = "test_adls_secret"  # noqa: S105
-VIDCLUB_CREDENTIALS_SECRET = "test_vidclub_secret"  # noqa: S105
+ADLS_CREDENTIALS_SECRET = "test_adls_secret"  # pragma: allowlist secret # noqa: S105
+VIDCLUB_CREDENTIALS_SECRET = (
+    "test_vidclub_secret"  # pragma: allowlist secret # noqa: S105
+)
 
 
 def test_vid_club_to_adls():
