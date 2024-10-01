@@ -16,7 +16,10 @@ def business_core():
             "FromDate": None,
             "ToDate": None,
         },
-        credentials={"username": "test", "password": "test123"},
+        credentials={
+            "username": "test",
+            "password": "test123",  # pragma: allowlist secret
+        },
     )
 
 
