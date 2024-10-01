@@ -2,6 +2,7 @@ from unittest.mock import Mock, patch
 
 import pandas as pd
 import pytest
+
 from viadot.sources.business_core import BusinessCore
 
 
