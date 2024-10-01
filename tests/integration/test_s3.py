@@ -3,6 +3,7 @@ import os
 
 import pandas as pd
 import pytest
+
 from viadot.utils import skip_test_on_missing_extra
 
 

@@ -1,0 +1,53 @@
+# Detect if package version has been bumped & if so, trigger a release.
+
+# Take the version from pyproject.toml and check if a git tag for this version exists.
+# If not, trigger the release worfklow (cd.yml) by pushing a new tag to the repository.
+
+name: Detect and tag new version
+
+on:
+  push:
+    branches:
+      - "2.0"
+
+  workflow_dispatch:
+
+jobs:
+  check-version-and-push-tag:
+    name: Detect and create a tag for new version
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Rye
+        uses: eifinger/setup-rye@v4
+
+      - name: Get package version from pyproject.toml
+        id: get-version
+        run: echo "version=$(rye version)" >> $GITHUB_OUTPUT
+
+      - name: Check if a tag for this version already exists in the repo
+        uses: mukunku/tag-exists-action@v1.6.0
+        id: check-tag
+        with:
+          tag: v${{ steps.get-version.outputs.version }}
+
+      - uses: fregante/setup-git-user@v2
+        if: steps.check-tag.outputs.exists != 'true'
+
+      - name: Publish the new tag
+        # Trigger the cd.yml workflow if a new tag is detected.
+        id: publish-tag
+        if: steps.check-tag.outputs.exists != 'true'
+        run: |
+          git tag -a v${{ steps.get-version.outputs.version }} -m "Release v${{ steps.get-version.outputs.version }}"
+          git push origin v${{ steps.get-version.outputs.version }}
+
+      - name: Run the release workflow
+        if: steps.check-tag.outputs.exists != 'true'
+        env:
+          GH_TOKEN: ${{ secrets.LUDOVICO_BOT_TOKEN }}
+        run: gh workflow run cd.yml -f version=v${{ steps.get-version.outputs.version }} --ref 2.0

@@ -13,6 +13,7 @@
 aiohappyeyeballs==2.4.0
     # via aiohttp
 aiohttp==3.10.5
+    # via viadot2
 aiolimiter==1.1.0
     # via viadot2
 aiosignal==1.3.1
@@ -40,8 +41,11 @@ attrs==24.2.0
     # via jsonschema
     # via referencing
     # via visions
+    # via zeep
 babel==2.16.0
     # via mkdocs-material
+bcrypt==4.2.0
+    # via paramiko
 beautifulsoup4==4.12.3
     # via mkdocs-mermaid2-plugin
     # via nbconvert
@@ -73,6 +77,7 @@ cffi==1.17.0
     # via cairocffi
     # via cryptography
     # via pygit2
+    # via pynacl
 charset-normalizer==3.3.2
     # via requests
 click==8.1.7
@@ -93,15 +98,20 @@ comm==0.2.2
 coolname==2.2.0
     # via prefect
 coverage==7.6.1
+    # via coverage
 croniter==2.0.7
     # via prefect
 cryptography==43.0.0
     # via moto
+    # via paramiko
     # via prefect
+    # via pyjwt
 cssselect2==0.7.0
     # via cairosvg
 dateparser==1.2.0
     # via prefect
+db-dtypes==1.3.0
+    # via pandas-gbq
 debugpy==1.8.5
     # via ipykernel
 decorator==5.1.1
@@ -109,6 +119,7 @@ decorator==5.1.1
 defusedxml==0.7.1
     # via cairosvg
     # via nbconvert
+    # via viadot2
 dnspython==2.6.1
     # via email-validator
 docker==7.1.0
@@ -146,8 +157,32 @@ gitdb==4.0.11
     # via gitpython
 gitpython==3.1.43
     # via mkdocs-git-revision-date-plugin
+google-api-core==2.20.0
+    # via google-cloud-bigquery
+    # via google-cloud-core
+    # via pandas-gbq
 google-auth==2.34.0
+    # via google-api-core
+    # via google-auth-oauthlib
+    # via google-cloud-bigquery
+    # via google-cloud-core
     # via kubernetes
+    # via pandas-gbq
+    # via pydata-google-auth
+google-auth-oauthlib==1.2.1
+    # via pandas-gbq
+    # via pydata-google-auth
+google-cloud-bigquery==3.26.0
+    # via pandas-gbq
+google-cloud-core==2.4.1
+    # via google-cloud-bigquery
+google-crc32c==1.6.0
+    # via google-resumable-media
+google-resumable-media==2.7.2
+    # via google-cloud-bigquery
+googleapis-common-protos==1.65.0
+    # via google-api-core
+    # via grpcio-status
 graphql-core==3.2.3
     # via sgqlc
 graphviz==0.20.3
@@ -157,6 +192,11 @@ greenlet==3.0.3
 griffe==0.47.0
     # via mkdocstrings-python
     # via prefect
+grpcio==1.66.1
+    # via google-api-core
+    # via grpcio-status
+grpcio-status==1.66.1
+    # via google-api-core
 h11==0.14.0
     # via httpcore
     # via uvicorn
@@ -168,6 +208,7 @@ httpcore==1.0.5
     # via httpx
     # via prefect
 httpx==0.27.0
+    # via httpx
     # via neoteroi-mkdocs
     # via prefect
 humanize==4.10.0
@@ -194,6 +235,8 @@ ipykernel==6.29.5
     # via mkdocs-jupyter
 ipython==8.26.0
     # via ipykernel
+isodate==0.6.1
+    # via zeep
 itsdangerous==2.2.0
     # via prefect
 jedi==0.19.1
@@ -243,6 +286,8 @@ kubernetes==29.0.0
 loguru==0.7.2
 lumacli==0.1.2
     # via viadot2
+lxml==5.3.0
+    # via zeep
 mako==1.3.5
     # via alembic
 markdown==3.7
@@ -301,14 +346,18 @@ mkdocs-include-markdown-plugin==6.2.2
 mkdocs-jupyter==0.24.8
 mkdocs-material==9.5.32
     # via mkdocs-jupyter
+    # via mkdocs-material
 mkdocs-material-extensions==1.3.1
     # via mkdocs-material
 mkdocs-mermaid2-plugin==1.1.1
 mkdocs-table-reader-plugin==3.0.1
 mkdocstrings==0.25.2
+    # via mkdocstrings
     # via mkdocstrings-python
 mkdocstrings-python==1.10.5
     # via mkdocstrings
+more-itertools==10.5.0
+    # via simple-salesforce
 moto==5.0.13
 multidict==6.0.5
     # via aiohttp
@@ -329,8 +378,10 @@ nest-asyncio==1.6.0
 networkx==3.3
     # via visions
 numpy==1.26.4
+    # via db-dtypes
     # via imagehash
     # via pandas
+    # via pandas-gbq
     # via pyarrow
     # via pywavelets
     # via scipy
@@ -347,20 +398,29 @@ openpyxl==3.1.5
 orjson==3.10.7
     # via prefect
 packaging==24.1
+    # via db-dtypes
+    # via google-cloud-bigquery
     # via ipykernel
     # via jupytext
     # via mkdocs
     # via nbconvert
+    # via pandas-gbq
     # via prefect
     # via pytest
 paginate==0.5.6
     # via mkdocs-material
 pandas==2.2.2
+    # via db-dtypes
     # via mkdocs-table-reader-plugin
+    # via pandas-gbq
     # via viadot2
     # via visions
+pandas-gbq==0.23.1
+    # via viadot2
 pandocfilters==1.5.1
     # via nbconvert
+paramiko==2.11.0
+    # via viadot2
 parso==0.8.4
     # via jedi
 pathspec==0.12.1
@@ -378,6 +438,7 @@ platformdirs==4.2.2
     # via jupyter-core
     # via mkdocs-get-deps
     # via mkdocstrings
+    # via zeep
 pluggy==1.5.0
     # via pytest
 prefect==2.20.2
@@ -390,6 +451,13 @@ prefect-sqlalchemy==0.4.4
     # via viadot2
 prompt-toolkit==3.0.47
     # via ipython
+proto-plus==1.24.0
+    # via google-api-core
+protobuf==5.28.2
+    # via google-api-core
+    # via googleapis-common-protos
+    # via grpcio-status
+    # via proto-plus
 psutil==6.0.0
     # via ipykernel
 psycopg2-binary==2.9.9
@@ -399,6 +467,8 @@ ptyprocess==0.7.0
 pure-eval==0.2.3
     # via stack-data
 pyarrow==10.0.1
+    # via db-dtypes
+    # via pandas-gbq
     # via viadot2
 pyasn1==0.6.0
     # via pyasn1-modules
@@ -413,6 +483,8 @@ pydantic==1.10.17
     # via viadot2
 pydantic-core==2.23.0
     # via prefect
+pydata-google-auth==1.8.2
+    # via pandas-gbq
 pygit2==1.14.1
     # via viadot2
 pygments==2.18.0
@@ -421,23 +493,31 @@ pygments==2.18.0
     # via mkdocs-material
     # via nbconvert
     # via rich
+pyjwt==2.9.0
+    # via simple-salesforce
 pymdown-extensions==10.9
     # via mkdocs-material
     # via mkdocs-mermaid2-plugin
     # via mkdocstrings
+pynacl==1.5.0
+    # via paramiko
 pyodbc==5.1.0
     # via viadot2
 pyparsing==3.1.2
     # via mike
 pytest==8.3.2
     # via pytest-asyncio
+    # via pytest-mock
 pytest-asyncio==0.23.8
+pytest-mock==3.14.0
+    # via viadot2
 python-dateutil==2.9.0.post0
     # via botocore
     # via croniter
     # via dateparser
     # via faker
     # via ghp-import
+    # via google-cloud-bigquery
     # via jupyter-client
     # via kubernetes
     # via moto
@@ -459,6 +539,7 @@ pytz==2024.1
     # via pandas
     # via prefect
     # via trino
+    # via zeep
 pytzdata==2020.1
     # via pendulum
 pywavelets==1.7.0
@@ -494,21 +575,32 @@ regex==2024.7.24
 requests==2.32.3
     # via apprise
     # via docker
+    # via google-api-core
+    # via google-cloud-bigquery
     # via kubernetes
     # via lumacli
     # via mkdocs-material
     # via mkdocs-mermaid2-plugin
     # via moto
     # via o365
+    # via requests-file
     # via requests-oauthlib
+    # via requests-toolbelt
     # via responses
     # via sharepy
+    # via simple-salesforce
     # via trino
     # via viadot2
+    # via zeep
+requests-file==2.1.0
+    # via zeep
 requests-oauthlib==2.0.0
     # via apprise
+    # via google-auth-oauthlib
     # via kubernetes
     # via o365
+requests-toolbelt==1.0.0
+    # via zeep
 responses==0.25.3
     # via moto
 rfc3339-validator==0.1.4
@@ -527,15 +619,13 @@ ruamel-yaml==0.18.6
     # via prefect
 ruamel-yaml-clib==0.2.8
     # via ruamel-yaml
-ruff==0.6.1
+ruff==0.6.7
 s3transfer==0.10.2
     # via boto3
 scipy==1.14.0
     # via imagehash
 sendgrid==6.11.0
     # via viadot2
-setuptools==73.0.0
-    # via mkdocs-mermaid2-plugin
 sgqlc==16.3
     # via prefect-github
 shapely==2.0.6
@@ -544,11 +634,15 @@ sharepy==2.0.0
     # via viadot2
 shellingham==1.5.4
     # via typer
+simple-salesforce==1.12.6
+    # via viadot2
 six==1.16.0
     # via asttokens
     # via bleach
+    # via isodate
     # via jsbeautifier
     # via kubernetes
+    # via paramiko
     # via python-dateutil
     # via rfc3339-validator
 smmap==5.0.1
@@ -605,6 +699,7 @@ trino==0.328.0
 typer==0.12.4
     # via lumacli
     # via prefect
+    # via typer
 typing-extensions==4.12.2
     # via aiosqlite
     # via alembic
@@ -613,6 +708,7 @@ typing-extensions==4.12.2
     # via prefect
     # via pydantic
     # via pydantic-core
+    # via simple-salesforce
     # via sqlalchemy
     # via typer
     # via uvicorn
@@ -657,5 +753,11 @@ xmltodict==0.13.0
     # via moto
 yarl==1.9.4
     # via aiohttp
+zeep==4.2.1
+    # via simple-salesforce
 zipp==3.20.0
     # via importlib-metadata
+setuptools==73.0.0
+    # via mkdocs-mermaid2-plugin
+    # via pandas-gbq
+    # via pydata-google-auth

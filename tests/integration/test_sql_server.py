@@ -2,10 +2,11 @@ from datetime import datetime, timedelta, timezone
 import struct
 
 import pytest
+
 from viadot.sources import SQLServer
 
 
-@pytest.fixture()
+@pytest.fixture
 def sql_server():
     # Initialize the SQLServer instance with the test credentials.
     return SQLServer(config_key="sql_server")

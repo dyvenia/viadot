@@ -2,12 +2,14 @@ import contextlib
 
 import pandas as pd
 import pytest
+
 from viadot.exceptions import TableDoesNotExistError
 from viadot.utils import add_viadot_metadata_columns, skip_test_on_missing_extra
 
 
 try:
     from pyspark.sql.utils import AnalysisException
+
     from viadot.sources import Databricks
 except ImportError:
     skip_test_on_missing_extra(source_name="Databricks", extra="databricks")
@@ -78,7 +80,7 @@ def databricks(databricks_config_key):
     databricks.session.stop()
 
 
-@pytest.mark.dependency()
+@pytest.mark.dependency
 def test_create_schema(databricks):
     with contextlib.suppress(AnalysisException):
         databricks.drop_schema(TEST_SCHEMA_2)
@@ -110,7 +112,7 @@ def test_drop_schema(databricks):
     databricks.create_schema(TEST_SCHEMA)
 
 
-@pytest.mark.dependency()
+@pytest.mark.dependency
 def test_create_table(databricks):
     exists = databricks._check_if_table_exists(schema=TEST_SCHEMA, table=TEST_TABLE)
     assert exists is False
@@ -174,7 +176,7 @@ def test_to_df(databricks):
     databricks.drop_table(schema=TEST_SCHEMA, table=TEST_TABLE)
 
 
-@pytest.mark.dependency()
+@pytest.mark.dependency
 def test_create_table_replace(databricks):
     # Setup.
     with contextlib.suppress(Exception):
