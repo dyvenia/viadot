@@ -60,7 +60,7 @@ aws = [
     "awswrangler>=2.20.1, <3.0",
     "prefect-aws>=0.4.19",
 ]
-sap = ["pyrfc<3.0"]
+sap = ["pyrfc"]
 
 [tool.rye]
 managed = true
