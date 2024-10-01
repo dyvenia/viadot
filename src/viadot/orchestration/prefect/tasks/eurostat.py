@@ -13,27 +13,26 @@ def eurostat_to_df(
     columns: list[str] | None = None,
     tests: dict | None = None,
 ) -> pd.DataFrame:
-    """
-    Task for creating a pandas DataFrame from Eurostat HTTPS REST API.
-    
+    """Task for creating a pandas DataFrame from Eurostat HTTPS REST API.
+
     This function serves as an intermediate wrapper between the prefect flow
     and the Eurostat connector:
     - Generates the Eurostat Cloud API connector.
     - Creates and returns a pandas DataFrame with the response from the API.
 
     Args:
-        dataset_code (str): 
+        dataset_code (str):
             The code of the Eurostat dataset that you would like to download.
-        params (dict[str, str] | None, optional): 
-            A dictionary with optional URL parameters. Each key is a parameter ID, 
-            and the value is a specific parameter code, e.g., 
-            `params = {'unit': 'EUR'}` where "unit" is the parameter, and "EUR" is 
+        params (dict[str, str] | None, optional):
+            A dictionary with optional URL parameters. Each key is a parameter ID,
+            and the value is a specific parameter code, e.g.,
+            `params = {'unit': 'EUR'}` where "unit" is the parameter, and "EUR" is
             the code. Only one code per parameter is allowed. Defaults to None.
-        columns (list[str] | None, optional): 
+        columns (list[str] | None, optional):
             A list of column names (as strings) that are required from the dataset.
-            Filters the DataFrame to only include the specified columns. 
+            Filters the DataFrame to only include the specified columns.
             Defaults to None.
-        tests (dict | None, optional): 
+        tests (dict | None, optional):
             A dictionary containing test cases for the data, including:
             - `column_size`: dict{column: size}
             - `column_unique_values`: list[columns]
@@ -44,13 +43,11 @@ def eurostat_to_df(
             Defaults to None.
 
     Returns:
-        pd.DataFrame: 
+        pd.DataFrame:
             A pandas DataFrame containing the data retrieved from the Eurostat API.
     """
+    data_frame = Eurostat(
+        dataset_code=dataset_code, params=params, columns=columns, tests=tests
+    ).to_df()
 
-    data_frame = Eurostat(dataset_code=dataset_code, 
-                          params=params, 
-                          columns=columns, 
-                          tests=tests).to_df()
-
-    return data_frame
+    return data_frame  # noqa: RET504
