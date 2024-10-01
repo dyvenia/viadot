@@ -1,8 +1,10 @@
 """Download data from Vid CLub API and load it into Azure Data Lake Storage."""
 
-from typing import Any, Dict, List, Literal
+from typing import Any, Literal
+
 from prefect import flow
 from prefect.task_runners import ConcurrentTaskRunner
+
 from viadot.orchestration.prefect.tasks import df_to_adls, vid_club_to_df
 
 
@@ -13,32 +15,31 @@ from viadot.orchestration.prefect.tasks import df_to_adls, vid_club_to_df
     retry_delay_seconds=60,
     task_runner=ConcurrentTaskRunner,
 )
-def vid_club_to_adls(
-    *args: List[Any],
-    endpoint: Literal["jobs", "product", "company", "survey"] = None,
+def vid_club_to_adls(  # noqa: PLR0913
+    *args: list[Any],
+    endpoint: Literal["jobs", "product", "company", "survey"] | None = None,
     from_date: str = "2022-03-22",
-    to_date: str = None,
+    to_date: str | None = None,
     items_per_page: int = 100,
-    region: Literal["bg", "hu", "hr", "pl", "ro", "si", "all"] = None,
+    region: Literal["bg", "hu", "hr", "pl", "ro", "si", "all"] | None = None,
     days_interval: int = 30,
-    cols_to_drop: List[str] = None,
+    cols_to_drop: list[str] | None = None,
     config_key: str | None = None,
     azure_key_vault_secret: str | None = None,
     adls_config_key: str | None = None,
     adls_azure_key_vault_secret: str | None = None,
     adls_path: str | None = None,
     adls_path_overwrite: bool = False,
-    validate_df_dict: dict = None,
+    validate_df_dict: dict | None = None,
     timeout: int = 3600,
-    **kwargs: Dict[str, Any]
+    **kwargs: dict[str, Any],
 ) -> None:
-    """
-    Flow for downloading data from the Vid Club via API to a CSV or Parquet file.
+    """Flow for downloading data from the Vid Club via API to a CSV or Parquet file.
 
     Then upload it to Azure Data Lake.
 
     Args:
-        endpoint (Literal["jobs", "product", "company", "survey"], optional): The 
+        endpoint (Literal["jobs", "product", "company", "survey"], optional): The
         endpoint source to be accessed. Defaults to None.
         from_date (str, optional): Start date for the query, by default is the oldest
             date in the data 2022-03-22.
@@ -85,7 +86,7 @@ def vid_club_to_adls(
         azure_key_vault_secret=azure_key_vault_secret,
         validate_df_dict=validate_df_dict,
         timeout=timeout,
-        kawrgs=kwargs
+        kawrgs=kwargs,
     )
 
     return df_to_adls(
