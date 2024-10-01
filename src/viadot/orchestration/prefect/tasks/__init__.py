@@ -30,7 +30,6 @@ from .supermetrics import supermetrics_to_df
 from .vid_club import vid_club_to_df
 
 
-
 __all__ = [
     "adls_upload",
     "bcp",
