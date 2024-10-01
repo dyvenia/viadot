@@ -2,7 +2,6 @@
 
 import json
 import logging
-from pathlib import Path
 
 import pandas as pd
 import pytest
@@ -25,7 +24,7 @@ class EurostatMock(Eurostat):
 
     def _download_json(self):
         # Return mocked JSON data
-        with Path.open("test_eurostat_response.json") as file:
+        with open("test_eurostat_response.json") as file:  # noqa: PTH123
             return json.load(file)
 
 
