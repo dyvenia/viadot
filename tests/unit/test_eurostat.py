@@ -1,6 +1,5 @@
 """'test_eurostat.py'."""
 
-import json
 import logging
 
 import pandas as pd
@@ -22,39 +21,52 @@ class EurostatMock(Eurostat):
         """Init method."""
         super().__init__(dataset_code=dataset_code, params=params, columns=columns)
 
-    def _download_json(self):
-        # Return mocked JSON data
-        with open("test_eurostat_response.json") as file:  # noqa: PTH123
-            return json.load(file)
-
 
 def test_eurostat_dictionary_to_df():
-    """Test eurostat_dictionary_to_df method from source class."""
-    eurostat = EurostatMock(dataset_code="")
-    data = eurostat._download_json()
+    """Test the 'eurostat_dictionary_to_df' method for correct DataFrame creation."""
+    obj = Eurostat(dataset_code="")
 
-    result_df = eurostat.eurostat_dictionary_to_df(["geo", "time"], data)
+    # Mock data for the Eurostat API response
+    mock_eurostat_data = {
+        "dimension": {
+            "geo": {
+                "category": {
+                    "index": {"0": 0, "1": 1},
+                    "label": {"0": "Belgium", "1": "Germany"},
+                }
+            },
+            "time": {
+                "category": {
+                    "index": {"0": 0, "1": 1},
+                    "label": {"0": "2021", "1": "2022"},
+                }
+            },
+        },
+        "value": {
+            "0": 100,  # Belgium, 2021
+            "1": 150,  # Germany, 2021
+            "2": 110,  # Belgium, 2022
+            "3": 140,  # Germany, 2022
+        },
+    }
 
-    assert list(result_df.columns) == ["geo", "time", "indicator"]
+    signals = [["geo", "time"], mock_eurostat_data]
 
-    expected_years = ["2020", "2021", "2022"]
-    assert result_df["time"].unique().tolist() == expected_years
+    df = obj.eurostat_dictionary_to_df(*signals)
 
-    expected_geo = ["Germany", "France", "Italy"]
-    assert result_df["geo"].unique().tolist() == expected_geo
+    expected_columns = ["geo", "time", "indicator"]
 
-    expected_indicator = [
-        100,
-        150,
-        200,
-        110,
-        160,
-        210,
-        120,
-        170,
-        220,
-    ]
-    assert result_df["indicator"].unique().tolist() == expected_indicator
+    assert list(df.columns) == expected_columns
+
+    expected_data = {
+        "geo": ["Belgium", "Germany", "Belgium", "Germany"],
+        "time": ["2021", "2021", "2022", "2022"],
+        "indicator": [100, 150, 110, 140],
+    }
+
+    expected_df = pd.DataFrame(expected_data)
+
+    pd.testing.assert_frame_equal(df, expected_df)
 
 
 def test_wrong_dataset_code_logger(caplog):
