@@ -42,9 +42,9 @@ class VidClub(Source):
 
         Args:
             endpoint (Literal["jobs", "product", "company", "survey"], optional): The
-            endpoint source to be accessed. Defaults to None.
+                endpoint source to be accessed. Defaults to None.
             from_date (str, optional): Start date for the query, by default is the
-            oldest date in the data 2022-03-22.
+                oldest date in the data 2022-03-22.
             to_date (str, optional): End date for the query. By default None,
                 which will be executed as datetime.today().strftime("%Y-%m-%d") in code.
             items_per_page (int, optional): Number of entries per page. Defaults to 100.
@@ -324,7 +324,6 @@ class VidClub(Source):
 
     def to_df(
         self,
-        if_empty: str = "warn",
     ) -> pd.DataFrame:
         """Looping get_response and iterating by date ranges defined in intervals.
 
