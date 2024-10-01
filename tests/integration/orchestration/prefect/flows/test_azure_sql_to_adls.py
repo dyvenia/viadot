@@ -1,7 +1,7 @@
 from unittest.mock import patch
 
-from src.viadot.orchestration.prefect.flows import azure_sql_to_adls
-from src.viadot.sources import AzureDataLake
+from viadot.orchestration.prefect.flows import azure_sql_to_adls
+from viadot.sources.azure_data_lake import AzureDataLake
 
 
 def test_azure_sql_to_adls(
@@ -15,10 +15,9 @@ def test_azure_sql_to_adls(
     # Ensure the file does not exist before the test
     assert not lake.exists(TEST_FILE_PATH)
 
-    # Mock the `aselite_to_df` and `df_to_adls` tasks
     with (
         patch(
-            "viadot.orchestration.prefect.tasks.aselite_to_df"
+            "viadot.orchestration.prefect.tasks.azure_sql_to_df"
         ) as mock_azure_sql_to_df,
         patch("viadot.orchestration.prefect.tasks.df_to_adls") as mock_df_to_adls,
     ):
