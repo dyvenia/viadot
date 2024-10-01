@@ -5,6 +5,7 @@ from viadot.orchestration.prefect.flows import (
 )
 from viadot.sources import AzureDataLake
 
+
 TEST_FILE_PATH = "raw/viadot_2_0_TEST_eurostat.parquet"
 
 
@@ -17,10 +18,9 @@ def test_eurostat_to_adls():
     eurostat_to_adls(
         dataset_code="ILC_DI04",
         adls_path=TEST_FILE_PATH,
-        adls_credentials_secret="sp-adls-test",
+        adls_credentials_secret="sp-adls-test",  # noqa: S106
     )
 
     assert lake.exists(TEST_FILE_PATH)
 
     lake.rm(TEST_FILE_PATH)
-
