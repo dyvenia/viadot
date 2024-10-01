@@ -8,6 +8,7 @@ from .duckdb_to_parquet import duckdb_to_parquet
 from .duckdb_to_sql_server import duckdb_to_sql_server
 from .duckdb_transform import duckdb_transform
 from .epicor_to_parquet import epicor_to_parquet
+from .eurostat_to_adls import eurostat_to_adls
 from .exchange_rates_to_adls import exchange_rates_to_adls
 from .exchange_rates_to_databricks import exchange_rates_to_databricks
 from .exchange_rates_to_redshift_spectrum import exchange_rates_api_to_redshift_spectrum
@@ -30,7 +31,7 @@ from .sql_server_to_parquet import sql_server_to_parquet
 from .supermetrics_to_adls import supermetrics_to_adls
 from .transform import transform
 from .transform_and_catalog import transform_and_catalog
-from .eurostat_to_adls import eurostat_to_adls
+
 
 __all__ = [
     "bigquery_to_adls",

@@ -8,6 +8,7 @@ from .bigquery import BigQuery
 from .cloud_for_customers import CloudForCustomers
 from .customer_gauge import CustomerGauge
 from .epicor import Epicor
+from .eurostat import Eurostat
 from .exchange_rates import ExchangeRates
 from .genesys import Genesys
 from .hubspot import Hubspot
@@ -20,7 +21,7 @@ from .sharepoint import Sharepoint
 from .sql_server import SQLServer
 from .supermetrics import Supermetrics, SupermetricsCredentials
 from .uk_carbon_intensity import UKCarbonIntensity
-from .eurostat import Eurostat
+
 
 __all__ = [
     "BigQuery",
