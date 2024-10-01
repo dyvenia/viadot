@@ -66,7 +66,7 @@ def test_eurostat_dictionary_to_df():
 
     expected_df = pd.DataFrame(expected_data)
 
-    pd.testing.assert_frame_equal(df, expected_df)
+    assert df == expected_df
 
 
 def test_wrong_dataset_code_logger(caplog):
