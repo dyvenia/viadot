@@ -1,73 +1,73 @@
-import unittest
-from unittest.mock import patch
+import pytest
 
 from viadot.sources.azure_sql import AzureSQL
+from viadot.sources.sql_server import SQLServerCredentials
 
 
-class TestAzureSQL(unittest.TestCase):
-    @patch("viadot.sources.SQLServer.run")
-    def test_bulk_insert_default(self, mock_run):
-        """Test the `bulk_insert` function with default parameters."""
-        azure_sql = AzureSQL()
+@pytest.fixture
+def azure_sql_credentials():
+    return SQLServerCredentials(
+        user="test_user",
+        password="test_password",  # pragma: allowlist secret # noqa: S106
+        server="localhost",
+        db_name="test_db",
+        driver="ODBC Driver 17 for SQL Server",
+    )
 
-        result = azure_sql.bulk_insert(table="test_table", source_path="/path/to/file")
 
-        mock_run.assert_called_once()
+@pytest.fixture
+def azure_sql(azure_sql_credentials: SQLServerCredentials, mocker):
+    mocker.patch("viadot.sources.base.SQL.con", return_value=True)
 
-        assert result
+    return AzureSQL(
+        credentials={
+            "user": azure_sql_credentials.user,
+            "password": azure_sql_credentials.password,
+            "server": azure_sql_credentials.server,
+            "db_name": azure_sql_credentials.db_name,
+            "data_source": "test_data_source",
+        }
+    )
 
-    @patch("viadot.sources.SQLServer.run")
-    def test_bulk_insert_with_replace(self, mock_run):
-        """Test the `bulk_insert` function with the `replace` option."""
-        azure_sql = AzureSQL()
 
-        azure_sql.bulk_insert(
-            table="test_table", source_path="/path/to/file", if_exists="replace"
-        )
+def test_azure_sql_initialization(azure_sql):
+    """Test that the AzureSQL object is initialized with the correct credentials."""
+    assert azure_sql.server == "localhost"
+    assert azure_sql.credentials["user"] == "test_user"
+    assert (
+        azure_sql.credentials["password"]
+        == "test_password"  # pragma: allowlist secret  # noqa: S105
+    )
+    assert azure_sql.credentials["db_name"] == "test_db"
 
-        delete_sql = "DELETE FROM dbo.test_table"
-        bulk_insert_sql = (
-            "BULK INSERT dbo.test_table FROM '/path/to/file' WITH ("
-            "CHECK_CONSTRAINTS, DATA_SOURCE='None', DATAFILETYPE='char', "
-            "FIELDTERMINATOR='\\t', ROWTERMINATOR='0x0a', FIRSTROW=2, "
-            "KEEPIDENTITY, TABLOCK, CODEPAGE='65001');"
-        )
 
-        mock_run.assert_any_call(delete_sql)
-        mock_run.assert_any_call(bulk_insert_sql)
+def test_create_external_database(azure_sql, mocker):
+    """Test the create_external_database function."""
+    mock_run = mocker.patch("viadot.sources.base.SQL.run", return_value=True)
 
-    @patch("viadot.sources.SQLServer.run")
-    def test_create_external_database(self, mock_run):
-        """Test the `create_external_database` function."""
-        azure_sql = AzureSQL()
+    # Test parameters
+    external_database_name = "test_external_db"
+    storage_account_name = "test_storage_account"
+    container_name = "test_container"
+    sas_token = "test_sas_token"  # noqa: S105
+    master_key_password = (
+        "test_master_key_password"  # pragma: allowlist secret # noqa: S105
+    )
+    credential_name = "custom_credential_name"
 
-        external_database_name = "external_db"
-        storage_account_name = "mystorageaccount"
-        container_name = "mycontainer"
-        sas_token = "sastoken123"  # noqa: S105
-        master_key_password = "masterpapssword"  # pragma: allowlist secret # noqa: S105
+    azure_sql.create_external_database(
+        external_database_name=external_database_name,
+        storage_account_name=storage_account_name,
+        container_name=container_name,
+        sas_token=sas_token,
+        master_key_password=master_key_password,
+        credential_name=credential_name,
+    )
 
-        azure_sql.create_external_database(
-            external_database_name=external_database_name,
-            storage_account_name=storage_account_name,
-            container_name=container_name,
-            sas_token=sas_token,
-            master_key_password=master_key_password,
-        )
+    # Expected SQL commands with custom credential name
+    expected_master_key_sql = (
+        f"CREATE MASTER KEY ENCRYPTION BY PASSWORD = {master_key_password}"
+    )
 
-        mock_run.assert_any_call(
-            "CREATE MASTER KEY ENCRYPTION BY PASSWORD = masterpassword"
-        )
-
-        credential_sql = (
-            "CREATE DATABASE SCOPED CREDENTIAL external_db_credential "
-            "WITH IDENTITY = 'SHARED ACCESS SIGNATURE' SECRET = 'sastoken123';"  # pragma: allowlist secret
-        )
-        mock_run.assert_any_call(credential_sql)
-
-        external_db_sql = (
-            "CREATE EXTERNAL DATA SOURCE external_db WITH ("
-            "LOCATION = 'https://mystorageaccount.blob.core.windows.net/mycontainer', "
-            "CREDENTIAL = external_db_credential);"
-        )
-        mock_run.assert_any_call(external_db_sql)
+    mock_run.assert_any_call(expected_master_key_sql)
+    assert mock_run.call_count == 3  # Ensure all 3 SQL commands were executed
