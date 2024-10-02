@@ -1,7 +1,6 @@
 """Vid Club Cloud API connector."""
 
 from datetime import datetime, timedelta
-import logging
 from typing import Any, Literal
 
 import pandas as pd
@@ -9,11 +8,6 @@ import pandas as pd
 from viadot.exceptions import ValidationError
 from viadot.sources.base import Source
 from viadot.utils import handle_api_response
-
-
-# Configure logging
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
 
 
 class VidClub(Source):
