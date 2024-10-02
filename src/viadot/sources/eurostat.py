@@ -111,16 +111,8 @@ class Eurostat(Source):
             dict[str, list[str]]: Key is a parameter, and value is a list of
                 available codes for the specified parameter.
         """
-        try:
-            response = handle_api_response(url)
-            data = response.json()
-        except APIError as api_error:
-            self.logger.exception(
-                f"Failed to fetch data for {dataset_code}, please check correctness "
-                "of dataset code!"
-            )
-            msg = "DataFrame is empty!"
-            raise ValueError(msg) from api_error
+        response = handle_api_response(url)
+        data = response.json()
 
         # Getting list of available parameters
         available_params = data["id"]
