@@ -14,7 +14,7 @@ from .base import Source
 
 
 class Eurostat(Source):
-    """Class for creating instance of Eurostat connector to REST API by HTTPS response.
+    """Eurostat REST API v1 connector.
 
     This module provides functionalities for connecting to Eurostat  API and download
     the datasets. It includes the following features:
