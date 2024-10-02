@@ -142,7 +142,7 @@ class Eurostat(Source):
         """Validates given parameters against the available parameters in the dataset.
 
         Important:
-            Each dataset in eurostat has specific parameters that could be used for
+            Each dataset in Eurostat has specific parameters that could be used for
             filtering the data. For example dataset ILC_DI04 -Mean and median income by
             household type - EU-SILC and ECHP surveys has parameter such as:
             hhhtyp (Type of household), which can be filtered by specific available
