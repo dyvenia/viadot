@@ -17,7 +17,7 @@ def eurostat_to_df(
 
     This function serves as an intermediate wrapper between the prefect flow
     and the Eurostat connector:
-    - Generates the Eurostat Cloud API connector.
+    - Instantiates an Eurostat Cloud API connector.
     - Creates and returns a pandas DataFrame with the response from the API.
 
     Args:
