@@ -21,8 +21,8 @@ def eurostat_to_df(
     - Creates and returns a pandas DataFrame with the response from the API.
 
     Args:
-        dataset_code (str):
-            The code of the Eurostat dataset that you would like to download.
+        dataset_code (str): The code of the Eurostat dataset that you would like
+            to download.
         params (dict[str, str] | None, optional):
             A dictionary with optional URL parameters. Each key is a parameter ID,
             and the value is a specific parameter code, e.g.,
