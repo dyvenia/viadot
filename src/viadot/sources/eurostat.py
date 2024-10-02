@@ -60,7 +60,7 @@ class Eurostat(Source):
     ):
         """Initialize the class with Eurostat API data fetching setup.
 
-        This method uses an HTTPS REST request to pull data from the Eurostat API.
+        This method uses an HTTPS request to pull data from the Eurostat API.
         No API registration or API key is required. Data is fetched based on the
         parameters provided in the dynamic part of the URL.
 
