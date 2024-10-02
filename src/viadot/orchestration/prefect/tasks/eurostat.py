@@ -46,6 +46,6 @@ def eurostat_to_df(
         pd.DataFrame:
             A pandas DataFrame containing the data retrieved from the Eurostat API.
     """
-   return Eurostat(
+    return Eurostat(
         dataset_code=dataset_code, params=params, columns=columns, tests=tests
     ).to_df()
