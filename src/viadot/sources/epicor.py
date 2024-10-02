@@ -197,8 +197,9 @@ def parse_orders_xml(xml_data: str) -> pd.DataFrame:  # noqa: C901, PLR0912
                 line_item = LineItemDetail(**item_params_dict)
                 row = Order(HeaderInformation=header_info, LineItemDetail=line_item)
                 my_dict = row.dict()
-                final_df = final_df.append(
-                    pd.json_normalize(my_dict, max_level=2), ignore_index=True
+                final_df = pd.concat(
+                    [final_df, pd.json_normalize(my_dict, max_level=2)],
+                    ignore_index=True,
                 )
     return final_df
 
@@ -254,8 +255,9 @@ def parse_bookings_xml(xml_data: str) -> pd.DataFrame:  # noqa: C901, PLR0912
                     HeaderInformation=header_info, LineItemDetail=line_item
                 )
                 my_dict = row.dict()
-                final_df = final_df.append(
-                    pd.json_normalize(my_dict, max_level=2), ignore_index=True
+                final_df = pd.concat(
+                    [final_df, pd.json_normalize(my_dict, max_level=2)],
+                    ignore_index=True,
                 )
     return final_df
 
@@ -310,8 +312,9 @@ def parse_open_orders_xml(xml_data: str) -> pd.DataFrame:  # noqa: C901, PLR0912
                 line_item = LineItemDetail(**item_params_dict)
                 row = Order(HeaderInformation=header_info, LineItemDetail=line_item)
                 my_dict = row.dict()
-                final_df = final_df.append(
-                    pd.json_normalize(my_dict, max_level=2), ignore_index=True
+                final_df = pd.concat(
+                    [final_df, pd.json_normalize(my_dict, max_level=2)],
+                    ignore_index=True,
                 )
     return final_df
 
@@ -354,8 +357,9 @@ def parse_customer_xml(xml_data: str) -> pd.DataFrame:
                     customer_params_dict.update(cust_parameter)
                 cust_info = Customer(**customer_params_dict)
                 my_dict = cust_info.dict()
-                final_df = final_df.append(
-                    pd.json_normalize(my_dict, max_level=2), ignore_index=True
+                final_df = pd.concat(
+                    [final_df, pd.json_normalize(my_dict, max_level=2)],
+                    ignore_index=True,
                 )
     return final_df
 
