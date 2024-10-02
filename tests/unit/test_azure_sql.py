@@ -32,7 +32,7 @@ def azure_sql(azure_sql_credentials: SQLServerCredentials, mocker):
 
 def test_azure_sql_initialization(azure_sql):
     """Test that the AzureSQL object is initialized with the correct credentials."""
-    assert azure_sql.server == "localhost"
+    assert azure_sql.credentials["server"] == "localhost"
     assert azure_sql.credentials["user"] == "test_user"
     assert (
         azure_sql.credentials["password"]
