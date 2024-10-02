@@ -92,7 +92,7 @@ def get_source_config(key: str, config: Config = CONFIG) -> dict[str, Any] | Non
     if source_configs is not None:
         for source_config in source_configs:
             if key in source_config:
-                return source_configs[source_configs.index(source_config)][key]
+                return source_config[key]
     return None
 
 

@@ -2,6 +2,7 @@
 
 from .adls import adls_upload, df_to_adls
 from .bcp import bcp
+from .bigquery import bigquery_to_df
 from .cloud_for_customers import cloud_for_customers_to_df
 from .customer_gauge_to_df import customer_gauge_to_df
 from .databricks import df_to_databricks
@@ -32,6 +33,7 @@ __all__ = [
     "adls_upload",
     "bcp",
     "clone_repo",
+    "bigquery_to_df",
     "cloud_for_customers_to_df",
     "create_sql_server_table",
     "customer_gauge_to_df",
