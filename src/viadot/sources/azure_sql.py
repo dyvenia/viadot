@@ -3,6 +3,10 @@
 import logging
 from typing import Literal
 
+import pandas as pd
+
+from viadot.utils import df_clean_column, df_converts_bytes_to_int
+
 from .sql_server import SQLServer
 
 
@@ -124,3 +128,38 @@ class AzureSQL(SQLServer):
         self.run(create_master_key_sql)
         self.run(create_external_db_credential_sql)
         self.run(create_external_db_sql)
+
+    def to_df(
+        self,
+        query: str,
+        if_empty: Literal["warn", "skip", "fail"] = "warn",
+        convert_bytes: bool = False,
+        remove_special_characters: bool | None = None,
+        columns_to_clean: list[str] | None = None,
+    ) -> pd.DataFrame:
+        """Execute a query and return the result as a pandas DataFrame.
+
+        Args:
+            query (str): The query to execute.
+            con (pyodbc.Connection, optional): The connection to use to pull the data.
+            if_empty (Literal["warn", "skip", "fail"], optional): What to do if the
+                query returns no data. Defaults to None.
+            convert_bytes (bool). A boolean value to trigger method
+                df_converts_bytes_to_int. It is used to convert bytes data type into
+                int, as pulling data with bytes can lead to malformed data in dataframe.
+                Defaults to False.
+            remove_special_characters (str, optional): Call a function that remove
+                special characters like escape symbols. Defaults to None.
+            columns_to_clean (List(str), optional): Select columns to clean, used with
+                remove_special_characters. If None whole data frame will be processed.
+                Defaults to None.
+        """
+        df = self.to_df(query=query, if_empty=if_empty)
+
+        if convert_bytes:
+            df = df_converts_bytes_to_int(df=df)
+
+        if remove_special_characters:
+            df = df_clean_column(df=df, columns_to_clean=columns_to_clean)
+
+        return df

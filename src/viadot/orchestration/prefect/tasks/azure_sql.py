@@ -5,10 +5,6 @@ from typing import Any, Literal
 import pandas as pd
 from prefect import task
 
-from viadot.orchestration.prefect.tasks.task_utils import (
-    df_clean_column,
-    df_converts_bytes_to_int,
-)
 from viadot.orchestration.prefect.utils import get_credentials
 from viadot.sources import AzureSQL
 from viadot.utils import validate
@@ -60,13 +56,13 @@ def azure_sql_to_df(
 
     azure_sql = AzureSQL(credentials=credentials)
 
-    df = azure_sql.to_df(query=query, if_empty=if_empty)
-
-    if convert_bytes:
-        df = df_converts_bytes_to_int(df=df)
-
-    if remove_special_characters:
-        df = df_clean_column(df=df, columns_to_clean=columns_to_clean)
+    df = azure_sql.to_df(
+        query=query,
+        if_empty=if_empty,
+        convert_bytes=convert_bytes,
+        remove_special_characters=remove_special_characters,
+        columns_to_clean=columns_to_clean,
+    )
 
     if validate_df_dict is not None:
         validate(df=df, tests=validate_df_dict)

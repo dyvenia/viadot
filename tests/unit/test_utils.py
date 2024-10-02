@@ -8,6 +8,8 @@ import pytest
 from viadot.utils import (
     _cast_df_cols,
     add_viadot_metadata_columns,
+    df_clean_column,
+    df_converts_bytes_to_int,
     gen_bulk_insert_query_from_df,
     get_fqn,
     handle_api_request,
@@ -282,3 +284,56 @@ def test_validate_and_reorder_different_order_columns():
     assert result[0].equals(df1)
     assert list(result[1].columns) == list(expected_df2.columns)
     assert result[1].equals(expected_df2)
+
+
+def test_df_converts_bytes_to_int():
+    df_bytes = pd.DataFrame(
+        {
+            "A": [b"1", b"2", b"3"],
+            "B": [b"4", b"5", b"6"],
+            "C": ["no change", "still no change", "me neither"],
+        }
+    )
+
+    result = df_converts_bytes_to_int(df_bytes)
+
+    expected = pd.DataFrame(
+        {
+            "A": [1, 2, 3],
+            "B": [4, 5, 6],
+            "C": ["no change", "still no change", "me neither"],
+        }
+    )
+
+    pd.testing.assert_frame_equal(result, expected)
+
+    df_no_bytes = pd.DataFrame({"A": [1, 2, 3], "B": [4, 5, 6]})
+
+    result_no_bytes = df_converts_bytes_to_int(df_no_bytes)
+
+    pd.testing.assert_frame_equal(result_no_bytes, df_no_bytes)
+
+
+def test_df_clean_column():
+    df_dirty = pd.DataFrame(
+        {
+            "A": ["Hello\tWorld", "Goodbye\nWorld"],
+            "B": ["Keep\nIt\tClean", "Just\tTest"],
+        }
+    )
+
+    cleaned_df = df_clean_column(df_dirty, columns_to_clean=["A"])
+
+    expected_cleaned_df = pd.DataFrame(
+        {"A": ["HelloWorld", "GoodbyeWorld"], "B": ["Keep\nIt\tClean", "Just\tTest"]}
+    )
+
+    pd.testing.assert_frame_equal(cleaned_df, expected_cleaned_df)
+
+    cleaned_all_df = df_clean_column(df_dirty)
+
+    expected_all_cleaned_df = pd.DataFrame(
+        {"A": ["HelloWorld", "GoodbyeWorld"], "B": ["KeepItClean", "JustTest"]}
+    )
+
+    pd.testing.assert_frame_equal(cleaned_all_df, expected_all_cleaned_df)
