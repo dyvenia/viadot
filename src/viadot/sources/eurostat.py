@@ -151,7 +151,7 @@ class Eurostat(Source):
             dataset has different parameters and different codes
 
         Raises:
-            ValueError: If any of the self.params keys or values is not a string or
+            ValueError: If any of the `params` keys or values is not a string or
             any of them is not available for specific dataset.
         """
         # In order to make params validation, first we need to get params_and_codes.
