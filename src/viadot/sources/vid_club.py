@@ -324,6 +324,7 @@ class VidClub(Source):
 
     def to_df(
         self,
+        if_empty: Literal["warn", "skip", "fail"] = "warn",
     ) -> pd.DataFrame:
         """Looping get_response and iterating by date ranges defined in intervals.
 
@@ -331,8 +332,8 @@ class VidClub(Source):
         in one and dropped duplicates that would appear when quering.
 
         Args:
-            if_empty (str, optional): What to do if a fetch produce no data.
-                Defaults to "warn
+            if_empty (Literal["warn", "skip", "fail"], optional): What to do if a fetch
+                produce no data. Defaults to "warn
 
         Returns:
             pd.DataFrame: Dataframe of the concatanated data carried in the responses.
@@ -346,7 +347,7 @@ class VidClub(Source):
         dfs_list = []
         if len(starts) > 0 and len(ends) > 0:
             for start, end in zip(starts, ends, strict=False):
-                logger.info(f"ingesting data for dates [{start}]-[{end}]...")
+                self.logger.info(f"ingesting data for dates [{start}]-[{end}]...")
                 df = self.get_response(
                     endpoint=self.endpoint,
                     from_date=start,
@@ -375,19 +376,21 @@ class VidClub(Source):
         if self.cols_to_drop is not None:
             if isinstance(self.cols_to_drop, list):
                 try:
-                    logger.info(f"Dropping following columns: {self.cols_to_drop}...")
+                    self.logger.info(
+                        f"Dropping following columns: {self.cols_to_drop}..."
+                    )
                     df.drop(columns=self.cols_to_drop, inplace=True, errors="raise")
                 except KeyError:
-                    logger.exception(
+                    self.logger.exception(
                         f"""Column(s): {self.cols_to_drop} don't exist in the DataFrame.
                         No columns were dropped. Returning full DataFrame..."""
                     )
-                    logger.info(f"Existing columns: {df.columns}")
+                    self.logger.info(f"Existing columns: {df.columns}")
             else:
                 msg = "Provide columns to drop in a List."
                 raise TypeError(msg)
 
         if df.empty:
-            logger.error("No data for this date range")
+            self._handle_if_empty(if_empty=if_empty)
 
         return df
