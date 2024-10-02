@@ -1,6 +1,6 @@
 [project]
 name = "viadot2"
-version = "2.1.20"
+version = "2.1.21"
 description = "A simple data ingestion library to guide data flows from some places to other places."
 authors = [
     { name = "acivitillo", email = "acivitillo@dyvenia.com" },
@@ -36,8 +36,7 @@ dependencies = [
     "defusedxml>=0.7.1",
     "aiohttp>=3.10.5",
     "simple-salesforce==1.12.6",
-    "pandas-gbq==0.23.1",
-]
+    ]
 requires-python = ">=3.10"
 readme = "README.md"
 
@@ -60,7 +59,7 @@ aws = [
     "awswrangler>=2.20.1, <3.0",
     "prefect-aws>=0.4.19",
 ]
-sap = ["pyrfc"]
+sap = ["pyrfc<3.0"]
 
 [tool.rye]
 managed = true
@@ -98,7 +97,7 @@ log_level = "WARNING"
 addopts = "--ignore=dbt_packages --import-mode=importlib"
 
 [tool.coverage.run]
-omit = ['tests/*']
+omit = ['tests/integration/*']
 
 [tool.coverage.report]
 show_missing = true
