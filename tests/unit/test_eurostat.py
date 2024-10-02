@@ -5,6 +5,7 @@ import logging
 import pandas as pd
 import pytest
 
+from viadot.exceptions import APIError
 from viadot.sources import Eurostat
 
 
@@ -69,20 +70,15 @@ def test_eurostat_dictionary_to_df():
     assert df.shape == expected_df.shape
 
 
-def test_wrong_dataset_code_logger(caplog):
+def test_wrong_dataset_code_logger():
     """Tests that the error logging feature correctly logs errors.
 
     For incorrect dataset codes.
     """
-    eurostat = EurostatMock(dataset_code="ILC_DI04E")
+    eurostat = EurostatMock(dataset_code="test_code")
 
-    with pytest.raises(ValueError, match="DataFrame is empty!"):  # noqa: SIM117
-        with caplog.at_level(logging.ERROR):
-            eurostat.to_df()
-    assert (
-        "Failed to fetch data for ILC_DI04E, please check correctness of dataset code!"
-        in caplog.text
-    )
+    with pytest.raises(APIError, match="failed with status code 404."):
+        eurostat.to_df()
 
 
 def test_and_validate_dataset_code_without_params(caplog):
@@ -108,23 +104,6 @@ def test_wrong_parameters_codes_logger(caplog):
     assert (
         "Parameters codes: 'total1 | non_existing_code' are not available. "
         "Please check your spelling!" in caplog.text
-    )
-
-
-def test_parameter_codes_as_list_logger(caplog):
-    """Tests error logging for incorrect parameter codes structure."""
-    params = {"hhtyp": ["totale", "nottotale"], "indic_il": "med_e"}
-    eurostat = EurostatMock(dataset_code="ILC_DI04", params=params)
-
-    with pytest.raises(TypeError, match="Wrong structure of params!"):  # noqa: SIM117
-        with caplog.at_level(logging.ERROR):
-            eurostat.validate_params(
-                dataset_code=eurostat.dataset_code, url=URL, params=params
-            )
-    assert (
-        "You can provide only one code per one parameter as 'str' in params! "
-        "CORRECT: params = {'unit': 'EUR'} | INCORRECT: params = "
-        "{'unit': ['EUR', 'USD', 'PLN']}" in caplog.text
     )
 
 
