@@ -108,8 +108,8 @@ class Eurostat(Source):
             ValueError: If the response from the API is empty or invalid.
 
         Returns:
-            Dict: Key is parameter and value is a list of available codes for
-            specific parameter.
+            dict[str, list[str]]: Key is a parameter, and value is a list of
+                available codes for the specified parameter.
         """
         try:
             response = handle_api_response(url)
