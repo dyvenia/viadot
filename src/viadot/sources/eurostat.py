@@ -32,19 +32,6 @@ class Eurostat(Source):
             columns: list = None,
             tests: dict = None,
         )
-
-    Functions:
-
-        get_parameters_codes(dataset_code: str, url: str): Validate available API
-            request parameters and their codes.
-        validate_params(dataset_code: str, url: str, params: dict): Validates given
-            parameters against the available parameters in the dataset
-        eurostat_dictionary_to_df(*signals: list): Function for creating DataFrame from
-            JSON pulled from Eurostat
-        to_df(dataset_code: str, params: dict = None, columns: list = None,
-            tests: dict = None): Function responsible for getting response and creating
-            DataFrame using method 'eurostat_dictionary_to_df' with validation of
-            provided parameters and their codes if needed.
     """
 
     base_url = "https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/"
@@ -101,8 +88,11 @@ class Eurostat(Source):
 
         super().__init__(*args, **kwargs)
 
-    def get_parameters_codes(self, dataset_code: str, url: str) -> dict[str, list[str]]:
+    def get_parameters_codes(self, url: str) -> dict[str, list[str]]:
         """Retrieve available API request parameters and their codes.
+
+        Args:
+            url (str): URL built for API call.
 
         Raises:
             ValueError: If the response from the API is empty or invalid.
@@ -147,19 +137,7 @@ class Eurostat(Source):
             any of them is not available for specific dataset.
         """
         # In order to make params validation, first we need to get params_and_codes.
-        key_codes = self.get_parameters_codes(dataset_code=dataset_code, url=url)
-
-        # Validation of type of values
-        for key, val in params.items():
-            if not isinstance(key, str) or not isinstance(val, str):
-                self.logger.error(
-                    "You can provide only one code per one parameter as 'str' "
-                    "in params! "
-                    "CORRECT: params = {'unit': 'EUR'} | INCORRECT: params = "
-                    "{'unit': ['EUR', 'USD', 'PLN']}"
-                )
-                msg = "Wrong structure of params!"
-                raise TypeError(msg)
+        key_codes = self.get_parameters_codes(url=url)
 
         if key_codes is not None:
             # Conversion keys and values on lower cases by using casefold
@@ -327,12 +305,12 @@ class Eurostat(Source):
         # Getting response from API
         try:
             response = handle_api_response(url, params=self.params)
-            data = response.json()
-            data_frame = self.eurostat_dictionary_to_df(["geo", "time"], data)
         except APIError:
             self.validate_params(
                 dataset_code=self.dataset_code, url=url, params=self.params
             )
+        data = response.json()
+        data_frame = self.eurostat_dictionary_to_df(["geo", "time"], data)
 
         # Merge data_frame with label and last updated date
         label_col = pd.Series(str(data["label"]), index=data_frame.index, name="label")
