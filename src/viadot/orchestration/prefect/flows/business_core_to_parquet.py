@@ -17,9 +17,10 @@ from viadot.orchestration.prefect.tasks.task_utils import df_to_parquet
 def business_core_to_parquet(
     path: str | None = None,
     url: str | None = None,
-    filters_dict: dict[str, Any] | None = None,
+    filters: dict[str, Any] | None = None,
     credentials_secret: str | None = None,
     config_key: str | None = None,
+    if_empty: str = "skip",
     if_exists: Literal["append", "replace", "skip"] = "replace",
     verify: bool = True,
 ) -> None:
@@ -29,14 +30,14 @@ def business_core_to_parquet(
         path (str, required): Path where to save the Parquet file. Defaults to None.
         url (str, required): Base url to the view in Business Core API.
             Defaults to None.
-        filters_dict (Dict[str, Any], optional): Filters in form of dictionary.
+        filters (dict[str, Any], optional): Filters in form of dictionary.
             Available filters: 'BucketCount', 'BucketNo', 'FromDate', 'ToDate'.
             Defaults to None.
         credentials_secret (str, optional): The name of the secret that stores Business
             Core credentials. Defaults to None.
             More info on: https://docs.prefect.io/concepts/blocks/
-        config_key (str, optional): Credential key to dictionary where details
-            are stored. Defaults to None.
+        config_key (str, optional): The key in the viadot config holding relevant
+            credentials. Defaults to None.
         if_empty (str, optional): What to do if output DataFrame is empty.
             Defaults to "skip".
         if_exists (Literal["append", "replace", "skip"], optional):
@@ -49,7 +50,8 @@ def business_core_to_parquet(
         path=path,
         credentials_secret=credentials_secret,
         config_key=config_key,
-        filters_dict=filters_dict,
+        filters=filters,
+        if_empty=if_empty,
         verify=verify,
     )
     return df_to_parquet(

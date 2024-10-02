@@ -10,7 +10,7 @@ from viadot.sources.business_core import BusinessCore
 def business_core():
     return BusinessCore(
         url="https://api.businesscore.ae/api/GetCustomerData",
-        filters_dict={
+        filters={
             "BucketCount": 10,
             "BucketNo": 1,
             "FromDate": None,
@@ -31,8 +31,8 @@ def test_generate_token(mock_api_response, business_core):
     assert token == t
 
 
-def test_clean_filters_dict(business_core):
-    filters = business_core.clean_filters_dict()
+def test_clean_filters(business_core):
+    filters = business_core.clean_filters()
     assert filters == {
         "BucketCount": 10,
         "BucketNo": 1,
@@ -45,11 +45,11 @@ def test_to_df(business_core):
     with patch.object(
         business_core,
         "get_data",
-        return_value={"MasterDataList": [{"id": 1, "name": "John Doe"}]},
+        return_value=[{"id": 1, "name": "John Doe"}],
     ):
         df = business_core.to_df()
         assert isinstance(df, pd.DataFrame)
-        assert len(df.columns) == 2
+        assert len(df.columns) == 4
         assert len(df) == 1
         assert df["id"].tolist() == [1]
         assert df["name"].tolist() == ["John Doe"]

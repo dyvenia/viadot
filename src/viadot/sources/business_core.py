@@ -4,12 +4,12 @@ import json
 from typing import Any, Literal
 
 import pandas as pd
-from pydantic import BaseModel
+from pydantic import BaseModel, SecretStr
 
 from viadot.config import get_source_credentials
 from viadot.exceptions import APIError, CredentialError
 from viadot.sources.base import Source
-from viadot.utils import handle_api_response
+from viadot.utils import add_viadot_metadata_columns, handle_api_response
 
 
 class BusinessCoreCredentials(BaseModel):
@@ -25,7 +25,7 @@ class BusinessCoreCredentials(BaseModel):
     """
 
     username: str
-    password: str
+    password: SecretStr
 
 
 class BusinessCore(Source):
@@ -34,7 +34,7 @@ class BusinessCore(Source):
     def __init__(
         self,
         url: str | None = None,
-        filters_dict: dict[str, Any] | None = None,
+        filters: dict[str, Any] | None = None,
         credentials: dict[str, Any] | None = None,
         config_key: str = "BusinessCore",
         verify: bool = True,
@@ -46,29 +46,28 @@ class BusinessCore(Source):
         Args:
             url (str, optional): Base url to a view in Business Core API.
                 Defaults to None.
-            filters_dict (Dict[str, Any], optional): Filters in form of dictionary.
+            filters (dict[str, Any], optional): Filters in form of dictionary.
                 Available filters: 'BucketCount', 'BucketNo', 'FromDate', 'ToDate'.
                 Defaults to None.
-            credentials (Dict[str, Any], optional): Credentials stored in a dictionary.
+            credentials (dict[str, Any], optional): Credentials stored in a dictionary.
                 Required credentials: username, password. Defaults to None.
-            config_key (str, optional): Credential key to the dictionary where details
-                are stored. Defaults to "BusinessCore".
+            config_key (str, optional): The key in the viadot config holding relevant
+                credentials. Defaults to "BusinessCore".
             verify (bool, optional): Whether or not verify certificates while
                 connecting to an API. Defaults to True.
 
         Raises:
             CredentialError: When credentials are not found.
         """
-        raw_creds = credentials or get_source_credentials(config_key) or None
-        error_message = "Missing Credentials."
+        raw_creds = credentials or get_source_credentials(config_key)
         if raw_creds is None:
-            raise CredentialError(error_message)
-
+            msg = "Missing Credentials."
+            raise CredentialError(msg)
         validated_creds = dict(BusinessCoreCredentials(**raw_creds))
 
         self.credentials = validated_creds
         self.url = url
-        self.filters_dict = filters_dict
+        self.filters = filters
         self.verify = verify
 
         super().__init__(*args, credentials=self.credentials, **kwargs)
@@ -81,7 +80,9 @@ class BusinessCore(Source):
         """
         url = "https://api.businesscore.ae/api/user/Login"
 
-        payload = f'grant_type=password&username={self.credentials.get("username")}&password={self.credentials.get("password")}&scope='
+        username = self.credentials.get("username")
+        password = self.credentials.get("password").get_secret_value()
+        payload = f"grant_type=password&username={username}&password={password}&scope="
         headers = {"Content-Type": "application/x-www-form-urlencoded"}
         response = handle_api_response(
             url=url,
@@ -90,29 +91,40 @@ class BusinessCore(Source):
             data=payload,
             verify=self.verify,
         )
-        token = json.loads(response.text).get("access_token")
-        self.token = token
-        return token
 
-    def clean_filters_dict(self) -> dict:
+        return json.loads(response.text).get("access_token")
+
+    def clean_filters(self) -> dict:
         """Function for replacing 'None' with '&' in a dictionary.
 
             Needed for payload in 'x-www-form-urlencoded' from.
 
         Returns:
-            Dict: Dictionary with filters prepared for further use.
+            dict: Dictionary with filters prepared for further use.
         """
-        return {
-            key: ("&" if val is None else val) for key, val in self.filters_dict.items()
-        }
+        return {key: ("&" if val is None else val) for key, val in self.filters.items()}
 
     def get_data(self) -> dict:
         """Function for obtaining data in dictionary format from Business Core API.
 
         Returns:
-            Dict: Dictionary with data downloaded from Business Core API.
+            dict: Dictionary with data downloaded from Business Core API.
         """
-        filters = self.clean_filters_dict()
+        view = self.url.split("/")[-1]
+
+        if view not in [
+            "GetCustomerData",
+            "GetItemMaster",
+            "GetPendingSalesOrderData",
+            "GetSalesInvoiceData",
+            "GetSalesReturnDetailData",
+            "GetSalesOrderData",
+            "GetSalesQuotationData",
+        ]:
+            error_message = f"View {view} currently not available."
+            raise APIError(error_message)
+
+        filters = self.clean_filters()
 
         payload = (
             "BucketCount="
@@ -137,8 +149,9 @@ class BusinessCore(Source):
             verify=self.verify,
         )
         self.logger.info("Data was downloaded successfully.")
-        return json.loads(response.text)
+        return json.loads(response.text).get("MasterDataList")
 
+    @add_viadot_metadata_columns
     def to_df(self, if_empty: Literal["warn", "fail", "skip"] = "skip") -> pd.DataFrame:
         """Function for transforming data from dictionary to pd.DataFrame.
 
@@ -152,21 +165,7 @@ class BusinessCore(Source):
         Raises:
             APIError: When selected API view is not available.
         """
-        view = self.url.split("/")[-1]
-
-        if view not in [
-            "GetCustomerData",
-            "GetItemMaster",
-            "GetPendingSalesOrderData",
-            "GetSalesInvoiceData",
-            "GetSalesReturnDetailData",
-            "GetSalesOrderData",
-            "GetSalesQuotationData",
-        ]:
-            error_message = f"View {view} currently not available."
-            raise APIError(error_message)
-
-        data = self.get_data().get("MasterDataList")
+        data = self.get_data()
         df = pd.DataFrame.from_dict(data)
         self.logger.info(
             f"Data was successfully transformed into DataFrame: {len(df.columns)} columns and {len(df)} rows."
