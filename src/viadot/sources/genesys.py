@@ -14,7 +14,7 @@ import pandas as pd
 from pydantic import BaseModel
 
 from viadot.config import get_source_credentials
-from viadot.exceptions import APIError, CredentialError
+from viadot.exceptions import APIError
 from viadot.sources.base import Source
 from viadot.utils import add_viadot_metadata_columns, handle_api_response, validate
 
@@ -109,18 +109,14 @@ class Genesys(Source):
                 as a parameter.
             APIError: When the environment variable is not among the available.
         """
-        credentials = credentials or get_source_credentials(config_key) or None
-        if credentials is None:
-            msg = "Missing credentials."
-            raise CredentialError(msg)
-        self.credentials = credentials
+        raw_creds = credentials or get_source_credentials(config_key)
+        validated_creds = dict(GenesysCredentials(**raw_creds))
 
-        validated_creds = dict(GenesysCredentials(**credentials))
         super().__init__(*args, credentials=validated_creds, **kwargs)
 
         self.verbose = verbose
         self.data_returned = {}
-        self.new_report = "{}"
+        self.new_report = "{}"  # ???
 
         if environment in self.ENVIRONMENTS:
             self.environment = environment
@@ -302,10 +298,6 @@ class Genesys(Source):
         for entity in entities:
             ids.append(entity.get("id"))
             urls.append(entity.get("downloadUrl"))
-            # entity.get("filter").get("queueIds", [-1])[0],
-            # entity.get("filter").get("mediaTypes", [-1])[0],
-            # entity.get("viewType"),
-            # entity.get("interval"),
             status.append(entity.get("status"))
 
         if "FAILED" in status:
@@ -566,7 +558,7 @@ class Genesys(Source):
 
             conversations_df.update({i: dff3})
 
-        # NERGING ALL LEVELS
+        # MERGING ALL LEVELS
         # LEVELS 3
         for i_3, key in enumerate(list(conversations_df.keys())):
             if i_3 == 0:

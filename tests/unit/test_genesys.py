@@ -6,7 +6,7 @@ import warnings
 import pandas as pd
 import pytest
 
-from viadot.exceptions import APIError, CredentialError
+from viadot.exceptions import APIError
 from viadot.sources import Genesys
 
 
@@ -101,7 +101,7 @@ def genesys():
 @patch("viadot.sources.genesys.get_source_credentials", return_value=None)
 def test_init_no_credentials(mock_get_source_credentials):
     """Test raise error without credentials."""
-    with pytest.raises(CredentialError):
+    with pytest.raises(TypeError):
         Genesys()
 
     mock_get_source_credentials.assert_called_once()

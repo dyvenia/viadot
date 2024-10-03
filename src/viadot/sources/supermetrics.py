@@ -8,10 +8,8 @@ import pandas as pd
 from pydantic import BaseModel
 
 from viadot.config import get_source_credentials
-
-from ..exceptions import CredentialError
-from ..utils import add_viadot_metadata_columns, handle_api_response
-from .base import Source
+from viadot.sources.base import Source
+from viadot.utils import add_viadot_metadata_columns, handle_api_response
 
 
 class SupermetricsCredentials(BaseModel):
@@ -59,7 +57,7 @@ class Supermetrics(Source):
 
     """
 
-    API_ENDPOINT = "https://api.supermetrics.com/enterprise/v2/query/data/json"
+    BASE_URL = "https://api.supermetrics.com/enterprise/v2/query/data/json"
 
     def __init__(
         self,
@@ -87,18 +85,12 @@ class Supermetrics(Source):
                 parameters define the specifics of the data request. Defaults to None.
 
         """
-        credentials = credentials or get_source_credentials(config_key) or None
+        raw_creds = credentials or get_source_credentials(config_key)
+        validated_creds = dict(SupermetricsCredentials(**raw_creds))
 
-        if credentials is None or not isinstance(credentials, dict):
-            msg = "Missing credentials."
-            raise CredentialError(msg)
-        self.credentials = dict(SupermetricsCredentials(**credentials))
-
-        super().__init__(*args, credentials=self.credentials, **kwargs)
+        super().__init__(*args, credentials=validated_creds, **kwargs)
 
         self.query_params = query_params
-        self.api_key = self.credentials["api_key"]
-        self.user = self.credentials["user"]
 
     def to_json(self, timeout: tuple = (3.05, 60 * 30)) -> dict[str, Any]:
         """Download query results to a dictionary.
@@ -131,10 +123,10 @@ class Supermetrics(Source):
             raise ValueError(msg)
 
         params = {"json": json.dumps(self.query_params)}
-        headers = {"Authorization": f"Bearer {self.api_key}"}
+        headers = {"Authorization": f"Bearer {self.credentials.get('api_key')}"}
 
         response = handle_api_response(
-            url=self.API_ENDPOINT,
+            url=Supermetrics.BASE_URL,
             params=params,
             headers=headers,
             timeout=timeout,
@@ -264,7 +256,7 @@ class Supermetrics(Source):
             msg = "Query parameters are required to fetch data."
             raise ValueError(msg)
 
-        self.query_params["api_key"] = self.api_key
+        self.query_params["api_key"] = self.credentials.get("api_key")
 
         try:
             columns = self._get_col_names()
