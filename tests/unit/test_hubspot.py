@@ -8,7 +8,7 @@ import pandas as pd
 import pytest
 from requests.models import Response
 
-from viadot.exceptions import APIError, CredentialError
+from viadot.exceptions import APIError
 from viadot.sources import Hubspot
 from viadot.sources.hubspot import HubspotCredentials
 
@@ -48,7 +48,7 @@ class TestHubspot(unittest.TestCase):
     @patch("viadot.sources.hubspot.get_source_credentials", return_value=None)
     def test_init_no_credentials(self, mock_get_source_credentials):
         """Test raise error without credentials."""
-        with pytest.raises(CredentialError):
+        with pytest.raises(TypeError):
             Hubspot()
 
         mock_get_source_credentials.assert_called_once()

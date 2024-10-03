@@ -9,7 +9,7 @@ import pandas as pd
 from pydantic import BaseModel
 
 from viadot.config import get_source_credentials
-from viadot.exceptions import APIError, CredentialError
+from viadot.exceptions import APIError
 from viadot.sources.base import Source
 from viadot.utils import add_viadot_metadata_columns, handle_api_response
 
@@ -74,13 +74,8 @@ class Hubspot(Source):
             CredentialError: If credentials are not provided in local_config or
                 directly as a parameter.
         """
-        credentials = credentials or get_source_credentials(config_key) or None
-        if credentials is None:
-            msg = "Missing credentials."
-            raise CredentialError(msg)
-        self.credentials = credentials
-
-        validated_creds = dict(HubspotCredentials(**credentials))
+        raw_creds = credentials or get_source_credentials(config_key)
+        validated_creds = dict(HubspotCredentials(**raw_creds))
         super().__init__(*args, credentials=validated_creds, **kwargs)
 
         self.full_dataset = None

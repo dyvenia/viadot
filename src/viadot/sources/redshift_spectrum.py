@@ -1,6 +1,5 @@
 """Amazon Redshift Spectrum connector."""
 
-import os
 from typing import Literal
 
 import pandas as pd
@@ -28,6 +27,7 @@ class RedshiftSpectrumCredentials(BaseModel):
     aws_access_key_id: str  # The AWS access key ID.
     aws_secret_access_key: str  # The AWS secret access key.
     profile_name: str | None = None  # The name of the IAM profile to use.
+    endpoint_url: str | None = None  # The endpoint of the S3 service.
 
     # Below credentials are required only by some methods.
     #
@@ -88,14 +88,8 @@ class RedshiftSpectrum(Source):
             redshift.get_schemas()
         ```
         """
-        raw_creds = (
-            credentials
-            or get_source_credentials(config_key)
-            or self._get_env_credentials()
-        )
-        validated_creds = dict(
-            RedshiftSpectrumCredentials(**raw_creds)
-        )  # validate the credentials
+        raw_creds = credentials or get_source_credentials(config_key)
+        validated_creds = dict(RedshiftSpectrumCredentials(**raw_creds))
 
         super().__init__(*args, credentials=validated_creds, **kwargs)
 
@@ -127,6 +121,7 @@ class RedshiftSpectrum(Source):
                 profile_name=self.credentials.get("profile_name"),
                 aws_access_key_id=self.credentials.get("aws_access_key_id"),
                 aws_secret_access_key=self.credentials.get("aws_secret_access_key"),
+                endpoint_url=self.credentials.get("endpoint_url"),
             )
         return self._session
 
@@ -144,13 +139,6 @@ class RedshiftSpectrum(Source):
                 msg = "The `credentials_secret` config is required to connect to Redshift."
                 raise ValueError(msg)
         return self._con
-
-    def _get_env_credentials(self):
-        return {
-            "region_name": os.environ.get("AWS_DEFAULT_REGION"),
-            "aws_access_key_id": os.environ.get("AWS_ACCESS_KEY_ID"),
-            "aws_secret_access_key": os.environ.get("AWS_SECRET_ACCESS_KEY"),
-        }
 
     def from_df(
         self,
