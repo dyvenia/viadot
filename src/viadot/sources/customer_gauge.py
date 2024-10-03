@@ -7,7 +7,7 @@ import pandas as pd
 from pydantic import BaseModel
 
 from viadot.config import get_source_credentials
-from viadot.exceptions import APIError, CredentialError
+from viadot.exceptions import APIError
 from viadot.sources.base import Source
 from viadot.utils import (
     add_viadot_metadata_columns,
@@ -64,13 +64,9 @@ class CustomerGauge(Source):
             CredentialError: If credentials are not provided in local_config or
                 directly as a parameter.
         """
-        credentials = credentials or get_source_credentials(config_key) or None
-        if credentials is None:
-            message = "Missing credentials."
-            raise CredentialError(message)
-        self.credentials = credentials
+        raw_creds = credentials or get_source_credentials(config_key)
+        validated_creds = dict(CustomerGaugeCredentials(**raw_creds))
 
-        validated_creds = dict(CustomerGaugeCredentials(**credentials))
         super().__init__(*args, credentials=validated_creds, **kwargs)
 
         self.clean_json = None

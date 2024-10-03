@@ -9,7 +9,6 @@ import pandas as pd
 from pydantic import BaseModel
 
 from viadot.config import get_source_credentials
-from viadot.exceptions import CredentialError
 from viadot.sources.base import Source
 from viadot.utils import add_viadot_metadata_columns
 
@@ -78,14 +77,10 @@ class Outlook(Source):
             CredentialError: If credentials are not provided in local_config or
                 directly as a parameter.
         """
-        credentials = credentials or get_source_credentials(config_key) or None
+        raw_creds = credentials or get_source_credentials(config_key)
+        validated_creds = dict(OutlookCredentials(**raw_creds))
 
-        if credentials is None or not isinstance(credentials, dict):
-            msg = "Missing credentials."
-            raise CredentialError(msg)
-        self.credentials = dict(OutlookCredentials(**credentials))
-
-        super().__init__(*args, credentials=self.credentials, **kwargs)
+        super().__init__(*args, credentials=validated_creds, **kwargs)
 
     @staticmethod
     def _get_subfolders(
