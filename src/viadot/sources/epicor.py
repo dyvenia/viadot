@@ -388,13 +388,9 @@ class Epicor(Source):
             end_date_field (str, optional) The name of filters field containing
                 end date. Defaults to "EndInvoiceDate".
         """
-        raw_creds = credentials or get_source_credentials(config_key) or {}
-        validated_creds = EpicorCredentials(**raw_creds).dict(
-            by_alias=True
-        )  # validate the credentials
+        raw_creds = credentials or get_source_credentials(config_key)
+        validated_creds = dict(EpicorCredentials(**raw_creds))
 
-        self.credentials = validated_creds
-        self.config_key = config_key
         self.base_url = base_url
         self.validate_date_filter = validate_date_filter
         self.start_date_field = start_date_field

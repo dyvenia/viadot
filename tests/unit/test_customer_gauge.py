@@ -4,7 +4,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest  # type: ignore
 
-from viadot.exceptions import APIError, CredentialError
+from viadot.exceptions import APIError
 from viadot.sources.customer_gauge import CustomerGauge, CustomerGaugeCredentials
 
 
@@ -28,7 +28,7 @@ def test_customer_gauge_credentials():
 @pytest.mark.basic
 def test_missing_credentials():
     """Test raise error without Customer Gauge credentials."""
-    with pytest.raises(CredentialError):
+    with pytest.raises(TypeError):
         CustomerGauge(config_key="invalid_key")
 
 

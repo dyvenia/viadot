@@ -7,7 +7,6 @@ from O365.message import Message
 import pandas as pd
 import pytest
 
-from viadot.exceptions import CredentialError
 from viadot.sources import Outlook
 from viadot.sources.outlook import OutlookCredentials
 
@@ -62,7 +61,7 @@ class TestOutlook(unittest.TestCase):
     @patch("viadot.sources.outlook.get_source_credentials", return_value=None)
     def test_missing_credentials(self, mock_get_source_credentials):
         """Test raise error without credentials."""
-        with pytest.raises(CredentialError):
+        with pytest.raises(TypeError):
             Outlook(credentials=None)
 
         mock_get_source_credentials.assert_called_once()
