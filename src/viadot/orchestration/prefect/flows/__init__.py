@@ -30,6 +30,7 @@ from .sql_server_to_parquet import sql_server_to_parquet
 from .supermetrics_to_adls import supermetrics_to_adls
 from .transform import transform
 from .transform_and_catalog import transform_and_catalog
+from .vid_club_to_adls import vid_club_to_adls
 
 
 __all__ = [
@@ -63,4 +64,5 @@ __all__ = [
     "supermetrics_to_adls",
     "transform",
     "transform_and_catalog",
+    "vid_club_to_adls",
 ]

@@ -20,6 +20,7 @@ from .sharepoint import Sharepoint
 from .sql_server import SQLServer
 from .supermetrics import Supermetrics, SupermetricsCredentials
 from .uk_carbon_intensity import UKCarbonIntensity
+from .vid_club import VidClub
 
 
 __all__ = [
@@ -41,6 +42,7 @@ __all__ = [
     "SupermetricsCredentials",  # pragma: allowlist-secret
     "Trino",
     "UKCarbonIntensity",
+    "VidClub",
 ]
 if find_spec("adlfs"):
     from viadot.sources.azure_data_lake import AzureDataLake  # noqa: F401
