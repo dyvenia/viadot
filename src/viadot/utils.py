@@ -962,3 +962,47 @@ def anonymize_df(
 
     df.drop(columns=["temp_date_col"], inplace=True, errors="ignore")
     return df
+
+
+def df_converts_bytes_to_int(df: pd.DataFrame) -> pd.DataFrame:
+    """Task to convert bytes values to int.
+
+    Args:
+        df (pd.DataFrame): Data Frame to convert
+
+    Returns:
+        pd.DataFrame: Data Frame after convert
+    """
+    return df.map(lambda x: int(x) if isinstance(x, bytes) else x)
+
+
+def df_clean_column(
+    df: pd.DataFrame, columns_to_clean: list[str] | None = None
+) -> pd.DataFrame:
+    """Remove special characters from a pandas DataFrame.
+
+    Args:
+    df (pd.DataFrame): The DataFrame to clean.
+    columns_to_clean (List[str]): A list of columns to clean. Defaults is None.
+
+    Returns:
+    pd.DataFrame: The cleaned DataFrame
+    """
+    df = df.copy()
+
+    if columns_to_clean is None:
+        df.replace(
+            to_replace=[r"\\t|\\n|\\r", "\t|\n|\r"],
+            value=["", ""],
+            regex=True,
+            inplace=True,
+        )
+    else:
+        for col in columns_to_clean:
+            df[col].replace(
+                to_replace=[r"\\t|\\n|\\r", "\t|\n|\r"],
+                value=["", ""],
+                regex=True,
+                inplace=True,
+            )
+    return df

@@ -1,6 +1,7 @@
 """Imports."""
 
 from .adls import adls_upload, df_to_adls
+from .azure_sql import azure_sql_to_df
 from .bcp import bcp
 from .bigquery import bigquery_to_df
 from .cloud_for_customers import cloud_for_customers_to_df
@@ -31,6 +32,7 @@ from .vid_club import vid_club_to_df
 
 
 __all__ = [
+    "azure_sql_to_df",
     "adls_upload",
     "bcp",
     "clone_repo",

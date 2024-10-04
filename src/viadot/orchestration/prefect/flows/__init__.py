@@ -1,5 +1,6 @@
 """Import flows."""
 
+from .azure_sql_to_adls import azure_sql_to_adls
 from .bigquery_to_adls import bigquery_to_adls
 from .cloud_for_customers_to_adls import cloud_for_customers_to_adls
 from .cloud_for_customers_to_databricks import cloud_for_customers_to_databricks
@@ -34,6 +35,7 @@ from .vid_club_to_adls import vid_club_to_adls
 
 
 __all__ = [
+    "azure_sql_to_adls",
     "bigquery_to_adls",
     "cloud_for_customers_to_adls",
     "cloud_for_customers_to_databricks",

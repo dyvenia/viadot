@@ -19,8 +19,8 @@ def dtypes_to_json_task(dtypes_dict: dict[str, Any], local_json_path: str) -> No
         dtypes_dict (dict): Dictionary containing data types.
         local_json_path (str): Path to local json file.
     """
-    with Path(local_json_path).open("w") as fp:
-        json.dump(dtypes_dict, fp)
+    with Path(local_json_path).open("w") as file_path:
+        json.dump(dtypes_dict, file_path)
 
 
 @task
@@ -59,7 +59,7 @@ def get_sql_dtypes_from_df(df: pd.DataFrame) -> dict:
         "Categorical": "VARCHAR(500)",
         "Time": "TIME",
         "Boolean": "VARCHAR(5)",  # Bool is True/False, Microsoft expects 0/1
-        "DateTime": "DATETIMEOFFSET",  # DATETIMEOFFSET is the only timezone-aware dtype in TSQL
+        "DateTime": "DATETIMEOFFSET",  # DATETIMEOFFSET is timezone-aware dtype in TSQL
         "Object": "VARCHAR(500)",
         "EmailAddress": "VARCHAR(50)",
         "File": None,
@@ -73,7 +73,7 @@ def get_sql_dtypes_from_df(df: pd.DataFrame) -> dict:
         "String": "VARCHAR(500)",
         "IPAddress": "VARCHAR(39)",
         "Path": "VARCHAR(255)",
-        "TimeDelta": "VARCHAR(20)",  # datetime.datetime.timedelta; eg. '1 days 11:00:00'
+        "TimeDelta": "VARCHAR(20)",  # datetime.datetime.timedelta; eg.'1 days 11:00:00'
         "URL": "VARCHAR(255)",
         "Count": "INT",
     }
@@ -209,36 +209,3 @@ def union_dfs_task(dfs: list[pd.DataFrame]) -> pd.DataFrame:
             different size of DataFrames NaN values can appear.
     """
     return pd.concat(dfs, ignore_index=True)
-
-
-@task
-def df_clean_column(
-    df: pd.DataFrame, columns_to_clean: list[str] | None = None
-) -> pd.DataFrame:
-    """Remove special characters from a pandas DataFrame.
-
-    Args:
-    df (pd.DataFrame): The DataFrame to clean.
-    columns_to_clean (List[str]): A list of columns to clean. Defaults is None.
-
-    Returns:
-    pd.DataFrame: The cleaned DataFrame
-    """
-    df = df.copy()
-
-    if columns_to_clean is None:
-        df.replace(
-            to_replace=[r"\\t|\\n|\\r", "\t|\n|\r"],
-            value=["", ""],
-            regex=True,
-            inplace=True,
-        )
-    else:
-        for col in columns_to_clean:
-            df[col].replace(
-                to_replace=[r"\\t|\\n|\\r", "\t|\n|\r"],
-                value=["", ""],
-                regex=True,
-                inplace=True,
-            )
-    return df
