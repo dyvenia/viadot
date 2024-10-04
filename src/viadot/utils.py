@@ -11,16 +11,16 @@ from typing import TYPE_CHECKING, Any, Literal, Optional
 
 import pandas as pd
 import pyodbc
-import requests  # type: ignore
+import requests
 from requests.adapters import HTTPAdapter
-from requests.exceptions import (  # type: ignore
+from requests.exceptions import (
     ConnectionError,
     HTTPError,
     ReadTimeout,
     Timeout,
 )
 from requests.packages.urllib3.util.retry import Retry
-from urllib3.exceptions import ProtocolError  # type: ignore
+from urllib3.exceptions import ProtocolError
 
 from viadot.exceptions import APIError, ValidationError
 from viadot.signals import SKIP
@@ -31,7 +31,7 @@ if TYPE_CHECKING:
 
 
 with contextlib.suppress(ImportError):
-    import pyspark.sql.dataframe as spark  # type: ignore
+    import pyspark.sql.dataframe as spark
 
 
 def slugify(name: str) -> str:
@@ -64,7 +64,7 @@ def handle_api_request(
         method (Literal["GET", "POST", "DELETE"], optional): The HTTP method to use for
             the request. Defaults to "GET".
         data (str, optional): The request body data as a string. Defaults to None.
-        verify (bool, optional): Whether to verify cerificates. Defaults to True.
+        verify (bool, optional): Whether to verify certificates. Defaults to True.
 
     Returns:
         requests.Response: The HTTP response object.
@@ -146,13 +146,13 @@ def handle_api_response(
         timeout (tuple, optional): A tuple of (connect_timeout, read_timeout) in
             seconds. Defaults to (3.05, 60 * 30).
         data (str, optional): The request body data as a string. Defaults to None.
-        verify (bool, optional): Whether to verify cerificates. Defaults to True.
+        verify (bool, optional): Whether to verify certificates. Defaults to True.
 
     Raises:
-        ReadTimeout: Stop waiting for a response after `timeout` seconds.
-        HTTPError: The raised HTTP error.
-        ConnectionError: Raised when the client is unable to connect to the server.
-        APIError: viadot's generic API error.
+        - ConnectionError: If the connection timed out, as specified in `timeout`.
+        - ReadTimeout: If the read timed out, as specified in `timeout`.
+        - HTTPError: If the API raised an HTTPError.
+        - APIError: Generic API error.
 
     Returns:
         requests.models.Response
