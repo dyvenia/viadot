@@ -8,7 +8,7 @@
 
 ::: viadot.orchestration.prefect.tasks.bigquery_to_df
 
-::: viadot.tasks.business_core.business_core_to_df
+::: viadot.orchestration.prefect.tasks.business_core.business_core_to_df
 
 ::: viadot.orchestration.prefect.tasks.cloud_for_customers_to_df
 
