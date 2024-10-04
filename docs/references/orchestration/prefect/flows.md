@@ -2,6 +2,8 @@
 
 ::: viadot.orchestration.prefect.flows.bigquery_to_adls
 
+::: viadot.orchestration.prefect.flows.business_core_to_parquet
+
 ::: viadot.orchestration.prefect.flows.cloud_for_customers_to_adls
 
 ::: viadot.orchestration.prefect.flows.cloud_for_customers_to_databricks
