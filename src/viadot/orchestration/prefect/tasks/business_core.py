@@ -26,18 +26,17 @@ def business_core_to_df(
 
     Args:
         path (str, required): Path where to save the Parquet file. Defaults to None.
-        url (str, required): Base url to the view in Business Core API.
+        url (str, required): Base url to the view in Business Core API. Defaults to
+            None.
+        filters (dict[str, Any], optional): Filters in form of dictionary. Available
+            filters: 'BucketCount','BucketNo', 'FromDate', 'ToDate'. Defaults to None.
+        credentials_secret (str, optional): The name of the secret that stores Business
+            Core credentials. More info on: https://docs.prefect.io/concepts/blocks/.
             Defaults to None.
-        filters (dict[str, Any], optional): Filters in form of dictionary.
-        Available filters: 'BucketCount','BucketNo', 'FromDate', 'ToDate'.
-            Defaults to None.
-        credentials_secret (str, optional): The name of the secret that stores
-            Business Core credentials. Defaults to None.
-            More info on: https://docs.prefect.io/concepts/blocks/
         config_key (str, optional): The key in the viadot config holding relevant
             credentials. Defaults to None.
-        if_empty (str, optional): What to do if output DataFrame is empty.
-            Defaults to "skip".
+        if_empty (str, optional): What to do if output DataFrame is empty. Defaults to
+            "skip".
         verify (bool, optional): Whether or not verify certificates while connecting
             to an API. Defaults to True.
     """

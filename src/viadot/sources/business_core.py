@@ -13,15 +13,11 @@ from viadot.utils import add_viadot_metadata_columns, handle_api_response
 
 
 class BusinessCoreCredentials(BaseModel):
-    """Validate Business Core credentials.
+    """Business Core credentials.
 
-    Two key values are held in the Business Core connector:
-        - username: The unique username for the organization.
-        - password: A secret string of characters for access to data.
-
-    Args:
-        BaseModel (pydantic.main.ModelMetaclass): A base class for creating
-            Pydantic models.
+    Uses simple authentication:
+        - username: The user name to use.
+        - password: The password to use.
     """
 
     username: str
@@ -46,15 +42,15 @@ class BusinessCore(Source):
         Args:
             url (str, optional): Base url to a view in Business Core API.
                 Defaults to None.
-            filters (dict[str, Any], optional): Filters in form of dictionary.
-                Available filters: 'BucketCount', 'BucketNo', 'FromDate', 'ToDate'.
-                Defaults to None.
+            filters (dict[str, Any], optional): Filters in form of dictionary. Available
+                filters: 'BucketCount', 'BucketNo', 'FromDate', 'ToDate'. Defaults to
+                None.
             credentials (dict[str, Any], optional): Credentials stored in a dictionary.
                 Required credentials: username, password. Defaults to None.
             config_key (str, optional): The key in the viadot config holding relevant
                 credentials. Defaults to "BusinessCore".
-            verify (bool, optional): Whether or not verify certificates while
-                connecting to an API. Defaults to True.
+            verify (bool, optional): Whether or not verify certificates while connecting
+                to an API. Defaults to True.
 
         Raises:
             CredentialError: When credentials are not found.
@@ -94,18 +90,18 @@ class BusinessCore(Source):
 
         return json.loads(response.text).get("access_token")
 
-    def clean_filters(self) -> dict:
-        """Function for replacing 'None' with '&' in a dictionary.
+    def clean_filters(self) -> dict[str, str]:
+        """Replace 'None' with '&' in a dictionary.
 
-            Needed for payload in 'x-www-form-urlencoded' from.
+        Required for payload in 'x-www-form-urlencoded' from.
 
         Returns:
             dict: Dictionary with filters prepared for further use.
         """
         return {key: ("&" if val is None else val) for key, val in self.filters.items()}
 
-    def get_data(self) -> dict:
-        """Function for obtaining data in dictionary format from Business Core API.
+    def get_data(self) -> dict[str, Any]:
+        """Obtain data from Business Core API.
 
         Returns:
             dict: Dictionary with data downloaded from Business Core API.
@@ -156,8 +152,8 @@ class BusinessCore(Source):
         """Function for transforming data from dictionary to pd.DataFrame.
 
         Args:
-            if_empty (Literal["warn", "fail", "skip"], optional):
-            What to do if output DataFrame is empty. Defaults to "skip".
+            if_empty (Literal["warn", "fail", "skip"], optional): What to do if output
+                DataFrame is empty. Defaults to "skip".
 
         Returns:
             pd.DataFrame: DataFrame with data downloaded from Business Core API view.
