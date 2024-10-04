@@ -284,7 +284,7 @@ class CloudForCustomers(Source):
         return handle_api_response(
             url=url,
             params=filter_params,
-            auth=(username, password),
+            auth=(username, password.get_secret_value()),
             timeout=timeout,
         )
 
@@ -318,7 +318,7 @@ class CloudForCustomers(Source):
         tests: dict[str, Any] = kwargs.get("tests", {})
 
         url = url or self.url
-        records = self.extract_records(url=url)
+        records = self.extract_records(url=url, report_url=self.report_url)
         df = pd.DataFrame(data=records, **kwargs)
 
         if dtype:
