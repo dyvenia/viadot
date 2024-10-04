@@ -104,7 +104,6 @@ class Eurostat(Source):
         response = handle_api_response(url)
         data = response.json()
 
-        # Getting list of available parameters
         available_params = data["id"]
 
         # Dictionary from JSON with keys and related codes values
