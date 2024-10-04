@@ -23,3 +23,5 @@
 ::: viadot.sources.sap_rfc.SAPRFC
 
 ::: viadot.sources.sap_rfc.SAPRFCV2
+
+::: viadot.sources.azure_sql.AzureSQL

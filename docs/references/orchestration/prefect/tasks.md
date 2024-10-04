@@ -43,3 +43,5 @@
 ::: viadot.orchestration.prefect.tasks.sql_server_query
 
 ::: viadot.orchestration.prefect.tasks.sql_server_to_df
+
+::: viadot.orchestration.prefect.tasks.azure_sql_to_df

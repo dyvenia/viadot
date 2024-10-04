@@ -43,3 +43,5 @@
 ::: viadot.orchestration.prefect.flows.sql_server_to_minio
 
 ::: viadot.orchestration.prefect.flows.sql_server_to_parquet
+
+::: viadot.orchestration.prefect.flows.azure_sql_to_adls
