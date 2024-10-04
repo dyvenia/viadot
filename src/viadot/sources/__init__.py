@@ -6,6 +6,7 @@ from ._duckdb import DuckDB
 from ._trino import Trino
 from .azure_sql import AzureSQL
 from .bigquery import BigQuery
+from .business_core import BusinessCore
 from .cloud_for_customers import CloudForCustomers
 from .customer_gauge import CustomerGauge
 from .epicor import Epicor
@@ -29,6 +30,7 @@ from .vid_club import VidClub
 __all__ = [
     "AzureSQL",
     "BigQuery",
+    "BusinessCore",
     "CloudForCustomers",
     "CustomerGauge",
     "DuckDB",

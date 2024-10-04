@@ -2,6 +2,7 @@
 
 from .azure_sql_to_adls import azure_sql_to_adls
 from .bigquery_to_adls import bigquery_to_adls
+from .business_core_to_parquet import business_core_to_parquet
 from .cloud_for_customers_to_adls import cloud_for_customers_to_adls
 from .cloud_for_customers_to_databricks import cloud_for_customers_to_databricks
 from .customer_gauge_to_adls import customer_gauge_to_adls
@@ -38,6 +39,7 @@ from .vid_club_to_adls import vid_club_to_adls
 __all__ = [
     "azure_sql_to_adls",
     "bigquery_to_adls",
+    "business_core_to_parquet",
     "cloud_for_customers_to_adls",
     "cloud_for_customers_to_databricks",
     "customer_gauge_to_adls",

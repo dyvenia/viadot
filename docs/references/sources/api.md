@@ -2,6 +2,8 @@
 
 ::: viadot.sources.bigquery.BigQuery
 
+::: viadot.sources.business_core.BusinessCore
+
 ::: viadot.sources.cloud_for_customers.CloudForCustomers
 
 ::: viadot.sources.customer_gauge.CustomerGauge
