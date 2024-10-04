@@ -154,7 +154,7 @@ class AzureSQL(SQLServer):
                 remove_special_characters. If None whole data frame will be processed.
                 Defaults to None.
         """
-        df = self.to_df(query=query, if_empty=if_empty)
+        df = super().to_df(query=query, if_empty=if_empty)
 
         if convert_bytes:
             df = df_converts_bytes_to_int(df=df)

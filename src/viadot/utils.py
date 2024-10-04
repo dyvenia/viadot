@@ -973,7 +973,7 @@ def df_converts_bytes_to_int(df: pd.DataFrame) -> pd.DataFrame:
     Returns:
         pd.DataFrame: Data Frame after convert
     """
-    return df.applymap(lambda x: int(x) if isinstance(x, bytes) else x)
+    return df.map(lambda x: int(x) if isinstance(x, bytes) else x)
 
 
 def df_clean_column(
