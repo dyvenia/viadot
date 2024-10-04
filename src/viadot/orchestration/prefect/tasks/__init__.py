@@ -1,6 +1,7 @@
 """Imports."""
 
 from .adls import adls_upload, df_to_adls
+from .azure_sql import azure_sql_to_df
 from .bcp import bcp
 from .bigquery import bigquery_to_df
 from .cloud_for_customers import cloud_for_customers_to_df
@@ -28,9 +29,11 @@ from .sftp import sftp_list, sftp_to_df
 from .sharepoint import sharepoint_download_file, sharepoint_to_df
 from .sql_server import create_sql_server_table, sql_server_query, sql_server_to_df
 from .supermetrics import supermetrics_to_df
+from .vid_club import vid_club_to_df
 
 
 __all__ = [
+    "azure_sql_to_df",
     "adls_upload",
     "bcp",
     "clone_repo",
@@ -40,7 +43,6 @@ __all__ = [
     "customer_gauge_to_df",
     "dbt_task",
     "df_to_adls",
-    "df_to_databricks",
     "df_to_databricks",
     "df_to_minio",
     "df_to_redshift_spectrum",
@@ -64,5 +66,6 @@ __all__ = [
     "sql_server_query",
     "sql_server_to_df",
     "eurostat_to_df",
+    "vid_club_to_df",
     "supermetrics_to_df",
 ]

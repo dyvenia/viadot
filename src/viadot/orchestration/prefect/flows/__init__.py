@@ -1,5 +1,6 @@
 """Import flows."""
 
+from .azure_sql_to_adls import azure_sql_to_adls
 from .bigquery_to_adls import bigquery_to_adls
 from .cloud_for_customers_to_adls import cloud_for_customers_to_adls
 from .cloud_for_customers_to_databricks import cloud_for_customers_to_databricks
@@ -31,9 +32,11 @@ from .sql_server_to_parquet import sql_server_to_parquet
 from .supermetrics_to_adls import supermetrics_to_adls
 from .transform import transform
 from .transform_and_catalog import transform_and_catalog
+from .vid_club_to_adls import vid_club_to_adls
 
 
 __all__ = [
+    "azure_sql_to_adls",
     "bigquery_to_adls",
     "cloud_for_customers_to_adls",
     "cloud_for_customers_to_databricks",
@@ -65,4 +68,5 @@ __all__ = [
     "transform",
     "transform_and_catalog",
     "eurostat_to_adls",
+    "vid_club_to_adls",
 ]

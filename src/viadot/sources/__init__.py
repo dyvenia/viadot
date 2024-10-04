@@ -4,6 +4,7 @@ from importlib.util import find_spec
 
 from ._duckdb import DuckDB
 from ._trino import Trino
+from .azure_sql import AzureSQL
 from .bigquery import BigQuery
 from .cloud_for_customers import CloudForCustomers
 from .customer_gauge import CustomerGauge
@@ -19,14 +20,18 @@ from .salesforce import Salesforce
 from .sftp import Sftp
 from .sharepoint import Sharepoint
 from .sql_server import SQLServer
-from .supermetrics import Supermetrics, SupermetricsCredentials
+from .sqlite import SQLite
+from .supermetrics import Supermetrics
 from .uk_carbon_intensity import UKCarbonIntensity
+from .vid_club import VidClub
 
 
 __all__ = [
+    "AzureSQL",
     "BigQuery",
     "CloudForCustomers",
     "CustomerGauge",
+    "DuckDB",
     "Epicor",
     "ExchangeRates",
     "Genesys",
@@ -34,36 +39,34 @@ __all__ = [
     "Mediatool",
     "Mindful",
     "Outlook",
+    "SQLite",
     "SQLServer",
     "Salesforce",
     "Sftp",
     "Sharepoint",
     "Supermetrics",
-    "SupermetricsCredentials",  # pragma: allowlist-secret
     "Trino",
     "UKCarbonIntensity",
     "Eurostat",
+    "VidClub",
 ]
+
 if find_spec("adlfs"):
     from viadot.sources.azure_data_lake import AzureDataLake  # noqa: F401
 
     __all__.extend(["AzureDataLake"])
-if find_spec("duckdb"):
-    from viadot.sources._duckdb import DuckDB  # noqa: F401
 
-    __all__.extend(["DuckDB"])
 if find_spec("redshift_connector"):
     from viadot.sources.redshift_spectrum import RedshiftSpectrum  # noqa: F401
 
     __all__.extend(["RedshiftSpectrum"])
+
 if find_spec("s3fs"):
+    from viadot.sources._minio import MinIO  # noqa: F401
     from viadot.sources.s3 import S3  # noqa: F401
 
-    __all__.extend(["S3"])
-if find_spec("s3fs"):
-    from viadot.sources.minio import MinIO  # noqa: F401
+    __all__.extend(["S3", "MinIO"])
 
-    __all__.extend(["MinIO"])
 if find_spec("pyrfc"):
     from viadot.sources.sap_bw import SAPBW  # noqa: F401
     from viadot.sources.sap_rfc import SAPRFC, SAPRFCV2  # noqa: F401
