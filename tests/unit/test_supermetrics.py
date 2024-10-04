@@ -1,6 +1,7 @@
 import pytest
 
-from viadot.sources import Supermetrics, SupermetricsCredentials
+from viadot.sources import Supermetrics
+from viadot.sources.supermetrics import SupermetricsCredentials
 
 
 @pytest.fixture

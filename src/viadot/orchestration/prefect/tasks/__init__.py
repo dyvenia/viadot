@@ -43,7 +43,6 @@ __all__ = [
     "dbt_task",
     "df_to_adls",
     "df_to_databricks",
-    "df_to_databricks",
     "df_to_minio",
     "df_to_redshift_spectrum",
     "duckdb_query",

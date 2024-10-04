@@ -21,8 +21,9 @@ nav:
 
   - References:
       - Sources:
-          - SQL Sources: references/sources/sql.md
-          - API Sources: references/sources/api.md
+          - Database: references/sources/database.md
+          - API: references/sources/api.md
+          - Other: references/sources/other.md
       - Orchestration:
           - Prefect:
               - Tasks: references/orchestration/prefect/tasks.md
