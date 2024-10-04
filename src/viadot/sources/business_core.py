@@ -7,7 +7,7 @@ import pandas as pd
 from pydantic import BaseModel, SecretStr
 
 from viadot.config import get_source_credentials
-from viadot.exceptions import APIError, CredentialError
+from viadot.exceptions import APIError
 from viadot.sources.base import Source
 from viadot.utils import add_viadot_metadata_columns, handle_api_response
 
@@ -25,7 +25,7 @@ class BusinessCoreCredentials(BaseModel):
 
 
 class BusinessCore(Source):
-    """Class to connect to Business Core ERP API."""
+    """Business Core ERP API connector."""
 
     def __init__(
         self,
@@ -37,7 +37,7 @@ class BusinessCore(Source):
         *args,
         **kwargs,
     ):
-        """Creating an instance of BusinessCore source class.
+        """Create a BusinessCore connector instance.
 
         Args:
             url (str, optional): Base url to a view in Business Core API.
@@ -51,28 +51,21 @@ class BusinessCore(Source):
                 credentials. Defaults to "BusinessCore".
             verify (bool, optional): Whether or not verify certificates while connecting
                 to an API. Defaults to True.
-
-        Raises:
-            CredentialError: When credentials are not found.
         """
         raw_creds = credentials or get_source_credentials(config_key)
-        if raw_creds is None:
-            msg = "Missing Credentials."
-            raise CredentialError(msg)
         validated_creds = dict(BusinessCoreCredentials(**raw_creds))
 
-        self.credentials = validated_creds
         self.url = url
-        self.filters = filters
+        self.filters = self._clean_filters(filters)
         self.verify = verify
 
-        super().__init__(*args, credentials=self.credentials, **kwargs)
+        super().__init__(*args, credentials=validated_creds, **kwargs)
 
     def generate_token(self) -> str:
-        """Function for generating Business Core token based on username and password.
+        """Generate a token for the user.
 
         Returns:
-            string: Business Core API token.
+            string: The token.
         """
         url = "https://api.businesscore.ae/api/user/Login"
 
@@ -90,15 +83,16 @@ class BusinessCore(Source):
 
         return json.loads(response.text).get("access_token")
 
-    def clean_filters(self) -> dict[str, str]:
+    @staticmethod
+    def _clean_filters(filters: dict[str, str | None]) -> dict[str, str]:
         """Replace 'None' with '&' in a dictionary.
 
         Required for payload in 'x-www-form-urlencoded' from.
 
         Returns:
-            dict: Dictionary with filters prepared for further use.
+            dict[str, str]: Dictionary with filters prepared for further use.
         """
-        return {key: ("&" if val is None else val) for key, val in self.filters.items()}
+        return {key: ("&" if val is None else val) for key, val in filters.items()}
 
     def get_data(self) -> dict[str, Any]:
         """Obtain data from Business Core API.
@@ -120,17 +114,15 @@ class BusinessCore(Source):
             error_message = f"View {view} currently not available."
             raise APIError(error_message)
 
-        filters = self.clean_filters()
-
         payload = (
             "BucketCount="
-            + str(filters.get("BucketCount"))
+            + str(self.filters.get("BucketCount"))
             + "BucketNo="
-            + str(filters.get("BucketNo"))
+            + str(self.filters.get("BucketNo"))
             + "FromDate="
-            + str(filters.get("FromDate"))
+            + str(self.filters.get("FromDate"))
             + "ToDate"
-            + str(filters.get("ToDate"))
+            + str(self.filters.get("ToDate"))
         )
         headers = {
             "Content-Type": "application/x-www-form-urlencoded",
@@ -149,14 +141,14 @@ class BusinessCore(Source):
 
     @add_viadot_metadata_columns
     def to_df(self, if_empty: Literal["warn", "fail", "skip"] = "skip") -> pd.DataFrame:
-        """Function for transforming data from dictionary to pd.DataFrame.
+        """Download data into a pandas DataFrame.
 
         Args:
             if_empty (Literal["warn", "fail", "skip"], optional): What to do if output
                 DataFrame is empty. Defaults to "skip".
 
         Returns:
-            pd.DataFrame: DataFrame with data downloaded from Business Core API view.
+            pd.DataFrame: DataFrame with the data.
 
         Raises:
             APIError: When selected API view is not available.
@@ -166,7 +158,7 @@ class BusinessCore(Source):
         self.logger.info(
             f"Data was successfully transformed into DataFrame: {len(df.columns)} columns and {len(df)} rows."
         )
-        if df.empty is True:
+        if df.empty:
             self._handle_if_empty(if_empty)
 
         return df

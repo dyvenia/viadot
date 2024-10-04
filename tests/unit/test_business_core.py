@@ -31,9 +31,15 @@ def test_generate_token(mock_api_response, business_core):
     assert token == t
 
 
-def test_clean_filters(business_core):
-    filters = business_core.clean_filters()
-    assert filters == {
+def test__clean_filters(business_core):
+    filters_raw = {
+        "BucketCount": 10,
+        "BucketNo": 1,
+        "FromDate": None,
+        "ToDate": None,
+    }
+    filters_clean = business_core._clean_filters(filters_raw)
+    assert filters_clean == {
         "BucketCount": 10,
         "BucketNo": 1,
         "FromDate": "&",
