@@ -284,7 +284,7 @@ class CloudForCustomers(Source):
         return handle_api_response(
             url=url,
             params=filter_params,
-            auth=(username, password._secret_value),
+            auth=(username, password.get_secret_value()),
             timeout=timeout,
         )
 
