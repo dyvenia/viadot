@@ -2,7 +2,7 @@
 
 from unittest.mock import MagicMock, patch
 
-import pytest  # type: ignore
+import pytest
 
 from viadot.exceptions import APIError
 from viadot.sources.customer_gauge import CustomerGauge, CustomerGaugeCredentials
