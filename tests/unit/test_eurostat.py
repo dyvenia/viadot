@@ -7,6 +7,11 @@ import pytest
 from viadot.sources import Eurostat
 
 
+@pytest.fixture
+def eurostat_instance():
+    return Eurostat(dataset_code="TEIBS020", params={"unit": "EUR"})
+
+
 @patch("viadot.utils.handle_api_response")
 def test_to_df(mock_handle_api_response):
     mock_response_data = {
@@ -46,20 +51,20 @@ def test_to_df(mock_handle_api_response):
     assert df["updated"][0] == mock_response_data["updated"]
 
 
-@patch("viadot.utils.handle_api_response")
-def test_validate_params_invalid_key(mock_handle_api_response):  # noqa: ARG001
-    eurostat = Eurostat(dataset_code="TEIBS020", params={"invalid_key": "value"})
+def test_validate_params_invalid_key(mocker, eurostat_instance):
+    mocker.patch.object(
+        eurostat_instance,
+        "get_parameters_codes",
+        return_value={"unit": ["EUR"], "geo": ["EU"]},
+    )
 
+    params = {"unit": "EUR", "country": "US"}
     with pytest.raises(ValueError, match="Wrong parameters or codes were provided!"):
-        eurostat.validate_params(
-            dataset_code="TEIBS020",
-            url="https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/ILC_DI04?format=JSON&lang=EN",
-            params={"invalid_key": "value"},
-        )
+        eurostat_instance.validate_params("TEIBS020", "", params)
 
 
 @patch("viadot.utils.handle_api_response")
-def test_validate_params_invalid_value(mock_handle_api_response):
+def test_validate_params_invalid_value(mock_handle_api_response, eurostat_instance):
     mock_handle_api_response.return_value.json.return_value = {
         "id": ["geo"],
         "dimension": {
@@ -67,11 +72,16 @@ def test_validate_params_invalid_value(mock_handle_api_response):
         },
     }
 
-    eurostat = Eurostat(dataset_code="TEIBS020", params={"geo": "US"})
-
     with pytest.raises(ValueError, match="Wrong parameters or codes were provided"):
-        eurostat.validate_params(
+        eurostat_instance.validate_params(
             dataset_code="TEIBS020",
             url="https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/ILC_DI04?format=JSON&lang=EN",
             params={"geo": "US"},
         )
+
+
+def test_to_df_invalid_params_type(mocker, eurostat_instance):
+    eurostat_instance.params = "invalid_type"
+
+    with pytest.raises(TypeError, match="Params should be a dictionary."):
+        eurostat_instance.to_df()
