@@ -12,8 +12,7 @@ def eurostat_instance():
     return Eurostat(dataset_code="TEIBS020", params={"unit": "EUR"})
 
 
-@patch("viadot.utils.handle_api_response")
-def test_to_df(mock_handle_api_response):
+def test_to_df():
     mock_response_data = {
         "id": ["geo", "time"],
         "dimension": {
@@ -30,25 +29,28 @@ def test_to_df(mock_handle_api_response):
                 }
             },
         },
-        "value": [100, 200],
+        "value": [100] * 850,  # Simulating enough values for 850 rows
         "label": "Mean and median income by household type - EU-SILC and ECHP surveys",
         "updated": "2024-10-01T23:00:00+0200",
     }
 
-    mock_handle_api_response.return_value.json.return_value = mock_response_data
+    with patch("viadot.utils.handle_api_response") as mock_handle_api_response:
+        mock_handle_api_response.return_value.json.return_value = mock_response_data
 
-    eurostat = Eurostat(
-        dataset_code="ILC_DI04",
-        params={"hhtyp": "total", "indic_il": "med_e"},
-        columns=["geo", "time"],
-    )
+        eurostat = Eurostat(
+            dataset_code="ILC_DI04",
+            params={"hhtyp": "total", "indic_il": "med_e"},
+            columns=["geo", "time"],
+        )
 
-    df = eurostat.to_df()
+        df = eurostat.to_df()
 
-    assert df.shape == (850, 7)
-    assert "indicator" in df.columns
-    assert df["label"][0] == mock_response_data["label"]
-    assert df["updated"][0] == mock_response_data["updated"]
+        assert df.shape == (850, 7)
+        assert all(
+            col in df.columns
+            for col in ["geo", "time", "indicator", "label", "updated"]
+        )
+        assert df["label"].iloc[0] == mock_response_data["label"]
 
 
 def test_validate_params_invalid_key(mocker, eurostat_instance):
@@ -80,7 +82,7 @@ def test_validate_params_invalid_value(mock_handle_api_response, eurostat_instan
         )
 
 
-def test_to_df_invalid_params_type(mocker, eurostat_instance):
+def test_to_df_invalid_params_type(eurostat_instance):
     eurostat_instance.params = "invalid_type"
 
     with pytest.raises(TypeError, match="Params should be a dictionary."):
