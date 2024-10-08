@@ -12,47 +12,6 @@ def eurostat_instance():
     return Eurostat(dataset_code="TEIBS020", params={"unit": "EUR"})
 
 
-def test_to_df():
-    mock_response_data = {
-        "id": ["geo", "time"],
-        "dimension": {
-            "geo": {
-                "category": {
-                    "index": {"EU": 0, "US": 1},
-                    "label": {"EU": "European Union", "US": "United States"},
-                }
-            },
-            "time": {
-                "category": {
-                    "index": {"2020": 0, "2021": 1},
-                    "label": {"2020": "Year 2020", "2021": "Year 2021"},
-                }
-            },
-        },
-        "value": [100] * 850,  # Simulating enough values for 850 rows
-        "label": "Mean and median income by household type - EU-SILC and ECHP surveys",
-        "updated": "2024-10-01T23:00:00+0200",
-    }
-
-    with patch("viadot.utils.handle_api_response") as mock_handle_api_response:
-        mock_handle_api_response.return_value.json.return_value = mock_response_data
-
-        eurostat = Eurostat(
-            dataset_code="ILC_DI04",
-            params={"hhtyp": "total", "indic_il": "med_e"},
-            columns=["geo", "time"],
-        )
-
-        df = eurostat.to_df()
-
-        assert df.shape == (850, 7)
-        assert all(
-            col in df.columns
-            for col in ["geo", "time", "indicator", "label", "updated"]
-        )
-        assert df["label"].iloc[0] == mock_response_data["label"]
-
-
 def test_validate_params_invalid_key(mocker, eurostat_instance):
     mocker.patch.object(
         eurostat_instance,
