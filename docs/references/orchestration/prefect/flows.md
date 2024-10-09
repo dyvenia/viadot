@@ -18,6 +18,8 @@
 
 ::: viadot.orchestration.prefect.flows.epicor_to_parquet
 
+::: viadot.orchestration.prefect.flows.eurostat_to_adls
+
 ::: viadot.orchestration.prefect.flows.exchange_rates_to_adls
 
 ::: viadot.orchestration.prefect.flows.exchange_rates_to_databricks

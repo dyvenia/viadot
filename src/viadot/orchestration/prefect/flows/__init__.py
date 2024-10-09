@@ -47,6 +47,7 @@ __all__ = [
     "duckdb_to_sql_server",
     "duckdb_transform",
     "epicor_to_parquet",
+    "eurostat_to_adls",
     "exchange_rates_api_to_redshift_spectrum",
     "exchange_rates_to_adls",
     "exchange_rates_to_databricks",
@@ -69,6 +70,5 @@ __all__ = [
     "supermetrics_to_adls",
     "transform",
     "transform_and_catalog",
-    "eurostat_to_adls",
     "vid_club_to_adls",
 ]
