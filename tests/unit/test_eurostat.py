@@ -145,7 +145,7 @@ def test_get_parameters_codes_valid(
 
 
 @patch("viadot.utils.handle_api_response")
-def test_to_df_invalid_columns_type(mock_handle_api_response, eurostat_instance):
+def test_to_df_invalid_columns_type(mock_handle_api_response, eurostat_instance):  # noqa: ARG001
     eurostat_instance.columns = "invalid_columns"  # Not a list
 
     with pytest.raises(
@@ -155,7 +155,7 @@ def test_to_df_invalid_columns_type(mock_handle_api_response, eurostat_instance)
 
 
 @patch("viadot.utils.handle_api_response")
-def test_to_df_invalid_params_type(mock_handle_api_response, eurostat_instance):
+def test_to_df_invalid_params_type(mock_handle_api_response, eurostat_instance):  # noqa: ARG001
     eurostat_instance.params = "invalid_params"  # Not a dictionary
 
     with pytest.raises(TypeError, match="Params should be a dictionary."):
