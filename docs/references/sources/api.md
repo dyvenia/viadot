@@ -10,6 +10,8 @@
 
 ::: viadot.sources.epicor.Epicor
 
+::: viadot.sources.eurostat.Eurostat
+
 ::: viadot.sources.exchange_rates.ExchangeRates
 
 ::: viadot.sources.genesys.Genesys

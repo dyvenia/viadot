@@ -50,6 +50,7 @@ __all__ = [
     "df_to_redshift_spectrum",
     "duckdb_query",
     "epicor_to_df",
+    "eurostat_to_df",
     "exchange_rates_to_df",
     "genesys_to_df",
     "hubspot_to_df",
@@ -67,7 +68,6 @@ __all__ = [
     "sharepoint_to_df",
     "sql_server_query",
     "sql_server_to_df",
-    "eurostat_to_df",
     "vid_club_to_df",
     "supermetrics_to_df",
 ]

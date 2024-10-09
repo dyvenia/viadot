@@ -35,6 +35,7 @@ __all__ = [
     "CustomerGauge",
     "DuckDB",
     "Epicor",
+    "Eurostat",
     "ExchangeRates",
     "Genesys",
     "Hubspot",
@@ -49,7 +50,6 @@ __all__ = [
     "Supermetrics",
     "Trino",
     "UKCarbonIntensity",
-    "Eurostat",
     "VidClub",
 ]
 

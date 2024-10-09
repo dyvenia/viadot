@@ -30,6 +30,8 @@
 
 ::: viadot.orchestration.prefect.tasks.epicor_to_df
 
+::: viadot.orchestration.prefect.tasks.eurostat_to_df
+
 ::: viadot.orchestration.prefect.tasks.exchange_rates_to_df
 
 ::: viadot.orchestration.prefect.tasks.genesys_to_df
