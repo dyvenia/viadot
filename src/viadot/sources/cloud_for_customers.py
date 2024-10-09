@@ -250,7 +250,9 @@ class CloudForCustomers(Source):
             username = self.credentials.get("username")
             password = self.credentials.get("password")
             response = requests.get(
-                url, auth=(username, password._secret_value), timeout=(3.05, 60 * 5)
+                url,
+                auth=(username, password.get_secret_value()),
+                timeout=(3.05, 60 * 5),
             )
             for sentence in response.text.split("/>"):
                 result = re.search(
