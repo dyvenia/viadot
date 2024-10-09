@@ -1,5 +1,6 @@
 """'test_eurostat.py'."""
 
+from contextlib import nullcontext as does_not_raise
 from unittest.mock import MagicMock, patch
 
 import pandas as pd
@@ -20,11 +21,8 @@ def test_validate_params_valid(mock_get_params, eurostat_instance):
     valid_params = {"unit": "EUR"}
     url = "https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/TEIBS020"
 
-    # No exception should be raised for valid parameters
-    try:
+    with does_not_raise():
         eurostat_instance.validate_params("TEIBS020", url, valid_params)
-    except ValueError:
-        pytest.fail("ValueError raised unexpectedly!")
 
 
 @patch.object(Eurostat, "get_parameters_codes")
@@ -38,8 +36,7 @@ def test_validate_params_invalid_key(mock_get_params, eurostat_instance):
         eurostat_instance.validate_params("TEIBS020", url, invalid_params)
 
 
-@patch("requests.get")
-def test_eurostat_dictionary_to_df(mock_requests_get, eurostat_instance):
+def test_eurostat_dictionary_to_df(eurostat_instance):
     mock_data = {
         "dimension": {
             "geo": {
@@ -68,9 +65,6 @@ def test_eurostat_dictionary_to_df(mock_requests_get, eurostat_instance):
         },
     }
 
-    mock_requests_get.return_value.status_code = 200
-    mock_requests_get.return_value.json.return_value = {}
-
     signals = [["geo", "time"]]
 
     # Call the method with signals as a list
@@ -81,20 +75,14 @@ def test_eurostat_dictionary_to_df(mock_requests_get, eurostat_instance):
     assert set(df.columns) == {"indicator", "geo", "time"}
 
 
-@patch("viadot.utils._handle_response")
-@patch("viadot.utils.handle_api_response")
 @patch("viadot.utils.handle_api_request")
 def test_get_parameters_codes_empty_response(
-    mock_handle_api_request,  # noqa: ARG001
-    mock_handle_api_response,
-    mock_handle_response,
+    mock_handle_api_request,
     eurostat_instance,
 ):
-    mock_response_obj = MagicMock()
-    mock_response_obj.json.return_value = {"id": [], "dimension": []}
-    mock_handle_api_response.return_value = mock_response_obj
-
-    mock_handle_response.return_value = mock_response_obj
+    mock_handle_api_request_obj = MagicMock()
+    mock_handle_api_request_obj.json.return_value = {"id": [], "dimension": []}
+    mock_handle_api_request.return_value = mock_handle_api_request_obj
 
     url = "https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/TEIBS020"
 
@@ -102,13 +90,9 @@ def test_get_parameters_codes_empty_response(
     assert result == {}
 
 
-@patch("viadot.utils._handle_response")
-@patch("viadot.utils.handle_api_response")
 @patch("viadot.utils.handle_api_request")
 def test_get_parameters_codes_valid(
-    mock_handle_api_request,  # noqa: ARG001
-    mock_handle_api_response,
-    mock_handle_response,
+    mock_handle_api_request,
     eurostat_instance,
 ):
     mock_response = {
@@ -129,14 +113,11 @@ def test_get_parameters_codes_valid(
         },
     }
 
-    mock_response_obj = MagicMock()
-    mock_response_obj.json.return_value = mock_response
-    mock_handle_api_response.return_value = mock_response_obj
-
-    mock_handle_response.return_value = mock_response_obj
+    mock_handle_api_request_obj = MagicMock()
+    mock_handle_api_request_obj.json.return_value = mock_response
+    mock_handle_api_request.return_value = mock_handle_api_request_obj
 
     url = "https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/TEIBS020"
-
     result = eurostat_instance.get_parameters_codes(url)
 
     expected_result = {"unit": ["EUR", "USD"], "geo": ["FR", "DE"]}
@@ -144,8 +125,7 @@ def test_get_parameters_codes_valid(
     assert result == expected_result
 
 
-@patch("viadot.utils.handle_api_response")
-def test_to_df_invalid_columns_type(mock_handle_api_response, eurostat_instance):  # noqa: ARG001
+def test_to_df_invalid_columns_type(eurostat_instance):
     eurostat_instance.columns = "invalid_columns"  # Not a list
 
     with pytest.raises(
@@ -154,8 +134,7 @@ def test_to_df_invalid_columns_type(mock_handle_api_response, eurostat_instance)
         eurostat_instance.to_df()
 
 
-@patch("viadot.utils.handle_api_response")
-def test_to_df_invalid_params_type(mock_handle_api_response, eurostat_instance):  # noqa: ARG001
+def test_to_df_invalid_params_type(eurostat_instance):
     eurostat_instance.params = "invalid_params"  # Not a dictionary
 
     with pytest.raises(TypeError, match="Params should be a dictionary."):
