@@ -10,6 +10,7 @@ from .duckdb_to_parquet import duckdb_to_parquet
 from .duckdb_to_sql_server import duckdb_to_sql_server
 from .duckdb_transform import duckdb_transform
 from .epicor_to_parquet import epicor_to_parquet
+from .eurostat_to_adls import eurostat_to_adls
 from .exchange_rates_to_adls import exchange_rates_to_adls
 from .exchange_rates_to_databricks import exchange_rates_to_databricks
 from .exchange_rates_to_redshift_spectrum import exchange_rates_api_to_redshift_spectrum
@@ -68,5 +69,6 @@ __all__ = [
     "supermetrics_to_adls",
     "transform",
     "transform_and_catalog",
+    "eurostat_to_adls",
     "vid_club_to_adls",
 ]

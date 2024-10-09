@@ -10,6 +10,7 @@ from .business_core import BusinessCore
 from .cloud_for_customers import CloudForCustomers
 from .customer_gauge import CustomerGauge
 from .epicor import Epicor
+from .eurostat import Eurostat
 from .exchange_rates import ExchangeRates
 from .genesys import Genesys
 from .hubspot import Hubspot
@@ -48,6 +49,7 @@ __all__ = [
     "Supermetrics",
     "Trino",
     "UKCarbonIntensity",
+    "Eurostat",
     "VidClub",
 ]
 
