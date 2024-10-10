@@ -714,6 +714,7 @@ class SAPRFCV2(Source):
 
         if rfc_unique_id is not None:
             self.rfc_unique_id = list(set(rfc_unique_id))
+            self._unique_columns_len = {}
         else:
             self.rfc_unique_id = rfc_unique_id
 
@@ -984,6 +985,7 @@ class SAPRFCV2(Source):
                     - col_length_reference_column
                 )
                 character_limit = min(local_limit, character_limit)
+                self._unique_columns_len[ref_column] = col_length_reference_column
         else:
             character_limit = self.rfc_total_col_width_character_limit
 
@@ -1136,12 +1138,28 @@ class SAPRFCV2(Source):
                     ):
                         df_tmp = pd.DataFrame(columns=fields)
                         df_tmp[fields] = records
-                        # SAP adds whitespaces to the first extracted column value.
-                        # If whitespace is in unique column, it must be removed to make
-                        # a proper merge.
                         for col in self.rfc_unique_id:
-                            df_tmp[col] = df_tmp[col].str.strip()
-                            df[col] = df[col].str.strip()
+                            # Check in SAP metadata what is the declared
+                            # dtype characters amount
+                            try:
+                                unique_column_len = self._unique_columns_len[col]
+                            except KeyError:
+                                logger.exception("Missing rfc unique columns length!")
+                            actual_length_of_field = df_tmp[col].str.len()
+                            # Check which rows column values has less characters
+                            # then is defined in SAP data type for each column
+                            rows_whitespaces = (
+                                actual_length_of_field < unique_column_len
+                            )
+                            # Check how many whitespaces is missing for each row
+                            # column value
+                            missing_whitespaces_len = (
+                                unique_column_len - actual_length_of_field
+                            )
+                            for i, is_missing in enumerate(rows_whitespaces):
+                                if is_missing:
+                                    # Add whitespaces to prevent problems with merge
+                                    df_tmp[col][i] += " " * missing_whitespaces_len[i]
                         df = pd.merge(df, df_tmp, on=self.rfc_unique_id, how="outer")
                     elif not start:
                         df[fields] = records
