@@ -98,6 +98,11 @@ class RedshiftSpectrum(Source):
                 "Credentials not specified. Falling back to `boto3` default credentials."
             )
 
+        if self.credentials:
+            endpoint_url = self.credentials.get("endpoint_url")
+            if endpoint_url:
+                wr.config.s3_endpoint_url = endpoint_url
+
         self._session = None
         self._con = None
 
@@ -121,7 +126,6 @@ class RedshiftSpectrum(Source):
                 profile_name=self.credentials.get("profile_name"),
                 aws_access_key_id=self.credentials.get("aws_access_key_id"),
                 aws_secret_access_key=self.credentials.get("aws_secret_access_key"),
-                endpoint_url=self.credentials.get("endpoint_url"),
             )
         return self._session
 
