@@ -99,7 +99,9 @@ class RedshiftSpectrum(Source):
             )
 
         if self.credentials:
-            wr.config.s3_endpoint_url = self.credentials.get("endpoint_url")
+            endpoint_url = self.credentials.get("endpoint_url")
+            if endpoint_url:
+                wr.config.s3_endpoint_url = endpoint_url
 
         self._session = None
         self._con = None
