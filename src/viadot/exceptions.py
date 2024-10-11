@@ -71,3 +71,7 @@ class TableAlreadyExistsError(Exception):
 
 class DataBufferExceededError(Exception):
     pass
+
+
+class NoFilesToProcessError(Exception):
+    pass
