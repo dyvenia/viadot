@@ -240,7 +240,9 @@ class DynamicDateHandler:
     def create_date_dict(self) -> Dict[str, str]:
         """
         Create and return a key phrase: dynamic date value dictionary.
-        Dictionary values "today", "yesterday" and "last year previous month" are formatted into the dynamic_date_format.
+        Dictionary values "today", "yesterday" and "last year previous month" are
+        formatted into the dynamic_date_format.\
+        
         The other values and their formatting:
             - "this month" - A string date formatted with a string format '%m'.
             - "last month" - A string date formatted with a format "%mm"
