@@ -28,20 +28,21 @@ from viadot.orchestration.prefect.exceptions import MissingPrefectBlockError
 with contextlib.suppress(ModuleNotFoundError):
     from prefect_azure import AzureKeyVaultSecretReference
 
-from typing import Dict, List, Union
-import pendulum
 import re
+
+import pendulum
 
 
 class DynamicDateHandler:
     def __init__(
         self,
-        dynamic_date_symbols: List[str] = ["<<", ">>"],
+        dynamic_date_symbols: list[str] = ["<<", ">>"],  # noqa: B006
         dynamic_date_format: str = "%Y%m%d",
         dynamic_date_timezone: str = "Europe/Warsaw",
     ):
-        """
-        This class handles pendulum DateTimes or time-related patterns within a provided text, replacing dynamic date marker with actual dates.
+        """This class handles pendulum DateTimes or time-related patterns within
+            a provided text, replacing dynamic date marker with actual dates.
+
         The supported patterns include:
         - "today"
         - "yesterday"
@@ -52,17 +53,26 @@ class DynamicDateHandler:
         - "now time"
         - "last day previous month"
         - "last day of month year": e.g., "last day of February 2020"
-        - "X years ago": e.g., "3 years ago" , refers to only the year of the day X years ago
-        - "X years/months/days ago full date":  e.g., "3 years ago full date", refers to a given date X units ago in dynamic_date_format
-        - "last X years/months/days": e.g., "last 10 months", refers to a data range of the months in 'YMM' format
-        - "Y years from X": e.g., "10 years from 2020", refers to a data range of the year numbers from a specified year
-        - "first X days from X": e.g., "first 10 days of January 2020", returns a data range of days from a given month
+        - "X years ago": e.g., "3 years ago" ,refers to only the year
+            of the day X years ago
+        - "X years/months/days ago full date":  e.g., "3 years ago full date",
+            refers to a given date X units ago in dynamic_date_format
+        - "last X years/months/days": e.g., "last 10 months", refers to a data range
+            of the months in 'YMM' format
+        - "Y years from X": e.g., "10 years from 2020", refers to a data range
+            of the year numbers from a specified year
+        - "first X days from X": e.g., "first 10 days of January 2020",
+            returns a data range of days from a given month
 
         Args:
-            dynamic_date_symbols (List[str], optional): The symbols that mark the start and the end of a dynamic date pattern in a text. Defaults to ["<<", ">>"].
-            dynamic_date_format (str, optional): A date and time format string defining the text representation of date. Defaults to "%Y%m%d".
-            dynamic_date_timezone (str, optional): A string that sets the default timezone used by all datetime functions. Defaults to "Europe/Warsaw".
-        """
+            dynamic_date_symbols (list[str], optional): The symbols that mark
+                the start and the end of a dynamic date pattern in a text.
+                Defaults to ["<<", ">>"].
+            dynamic_date_format (str, optional): A date and time format string
+            defining the text representation of date. Defaults to "%Y%m%d".
+            dynamic_date_timezone (str, optional): A string that sets the default
+            timezone used by all datetime functions. Defaults to "Europe/Warsaw".
+        """  # noqa: D205
         self.singular_patterns = {
             "last_day_of_month": r"last\s+day\s+of\s+(\w+)\s+(\d{4})",
             "x_units_ago_full_date": r"(\d+)\s+(years?|months?|days?)\s+ago\s+full\s+date",
@@ -77,18 +87,19 @@ class DynamicDateHandler:
         self.dynamic_date_format = dynamic_date_format
         self.dynamic_date_timezone = dynamic_date_timezone
         self.dynamic_date_symbols = dynamic_date_symbols
-        self.replacements = self.create_date_dict()
+        self.replacements = self._create_date_dict()
 
-    def generate_years(
-        self, last_years: int, from_year: str, num_years: str
-    ) -> List[str]:
-        """
-        Generate a list of years either for the last X years or from a start year.
+    def _generate_years(
+        self, last_years: int | None, from_year: str | None, num_years: str | None
+    ) -> list[str]:
+        """Generate a list of years either for the last X years or from a start year.
 
         Args:
-            last_years (int): The number of years from the current year to include.
-            from_year (str): The starting year.
-            num_years (int): The number of years to generate from the starting year.
+            last_years (int | None): The number of years to generate
+                from the current year.
+            from_year (str | None): The starting year.
+            num_years (int | None): The number of years to generate
+                from the starting year.
 
         Returns:
             list: A list of years in ascending order.
@@ -99,36 +110,31 @@ class DynamicDateHandler:
                 ::-1
             ]  # Reversed to ascending order
             return result
-        elif from_year and num_years:
-            start_year = int(from_year)
-            result = [str(start_year - i) for i in range(num_years)][
+        if from_year and num_years:
+            result = [str(int(from_year) - i) for i in range(int(num_years))][
                 ::-1
             ]  # Ascending order
             return result
         return []
 
-    def generate_months(self, last_months: int) -> List[str]:
-        """
-        Generate a list of first days of the last X months.
+    def _generate_months(self, last_months: int) -> list[str]:
+        """Generate a list of first days of the last X months.
 
         Args:
             last_months (int): The number of months to include from the past.
 
         Returns:
-            list: A list of dates representing the first day of the last X months in ascending order.
+            list: A list of dates representing the last X months in ascending order.
         """
         current_date = pendulum.now()
         result = [
             current_date.subtract(months=i).start_of("month").format("YMM")
             for i in range(last_months)
-        ][
-            ::-1
-        ]  # Reversed to ascending order
+        ][::-1]  # Reversed to ascending order
         return result
 
-    def generate_dates(self, last_days: int) -> List[str]:
-        """
-        Generate a list of dates for the last X days.
+    def _generate_dates(self, last_days: int) -> list[str]:
+        """Generate a list of dates for the last X days.
 
         Args:
             last_days (int): The number of days to include from the past.
@@ -139,16 +145,13 @@ class DynamicDateHandler:
         current_date = pendulum.now(self.dynamic_date_timezone)
         result = [
             current_date.subtract(days=i).format("YMMDD") for i in range(last_days)
-        ][
-            ::-1
-        ]  # Reversed to ascending order
+        ][::-1]  # Reversed to ascending order
         return result
 
-    def process_first_days(
+    def _process_first_days(
         self, month_name: str, year: int, num_days: int
-    ) -> List[str]:
-        """
-        Generate a list of the first X days of a given month and year.
+    ) -> list[str]:
+        """Generate a list of the first X days of a given month and year.
 
         Args:
             month_name (str): The name of the month.
@@ -159,16 +162,19 @@ class DynamicDateHandler:
             list: A list of dates for the first X days in ascending order.
         """
         start_date = pendulum.date(
-            int(year), pendulum.parse(month_name, strict=False).month, 1
+            int(year),
+            pendulum.parse(month_name, strict=False).month,
+            1,  # type: ignore
         )
         result = [
             start_date.add(days=i).format("YMMDD") for i in range(num_days)
         ]  # Ascending order
         return result
 
-    def process_last_days(self, month_name: str, year: int, num_days: int) -> List[str]:
-        """
-        Generate a list of the last X days of a given month and year.
+    def _process_last_days(
+        self, month_name: str, year: int, num_days: int
+    ) -> list[str]:
+        """Generate a list of the last X days of a given month and year.
 
         Args:
             month_name (str): The name of the month.
@@ -187,11 +193,10 @@ class DynamicDateHandler:
         ]  # Reversed to ascending order
         return result
 
-    def process_last_day_of_month(
+    def _process_last_day_of_month(
         self, year: str, month_name: str
     ) -> pendulum.DateTime:
-        """
-        Retrieve the last day of a specified month and year.
+        """Retrieve the last day of a specified month and year.
 
         Args:
             year (str): The year.
@@ -204,12 +209,11 @@ class DynamicDateHandler:
         date = pendulum.date(int(year), month_num, 1).end_of("month")
         return date
 
-    def process_x_years_ago(self, year: str) -> str:
-        """
-        Retrieve the year of a date X years from now.
+    def _process_x_years_ago(self, year: int) -> str:
+        """Retrieve the year of a date X years from now.
 
         Args:
-            year (str): The year.
+            year (int): The year.
 
         Returns:
             str: A string containing the year of the specified time ago.
@@ -218,9 +222,8 @@ class DynamicDateHandler:
         result = current_date.subtract(years=year).format("Y")
         return result
 
-    def get_date_x_ago_full_date(self, number: int, unit: str) -> pendulum.DateTime:
-        """
-        Retrieve the full date for X units ago from today.
+    def _get_date_x_ago_full_date(self, number: int, unit: str) -> pendulum.DateTime:
+        """Retrieve the full date for X units ago from today.
 
         Args:
             number (int): The number of units (years, months, days).
@@ -237,12 +240,11 @@ class DynamicDateHandler:
 
         return full_date
 
-    def create_date_dict(self) -> Dict[str, str]:
-        """
-        Create and return a key phrase: dynamic date value dictionary.
-        Dictionary values "today", "yesterday" and "last year previous month" are
-        formatted into the dynamic_date_format.\
-        
+    def _create_date_dict(self) -> dict[str, str]:
+        """Create and return a key phrase: dynamic date value dictionary.
+        dictionary values "today", "yesterday" and "last year previous month" are
+        formatted into the dynamic_date_format.
+
         The other values and their formatting:
             - "this month" - A string date formatted with a string format '%m'.
             - "last month" - A string date formatted with a format "%mm"
@@ -250,8 +252,9 @@ class DynamicDateHandler:
             - "now time" - A string date formatted with a string format '%H%M%S'.
 
         Returns:
-            Dict[str, str]: A dictionary with key phrases as keys and dynamically created dates as values.
-        """
+            dict[str, str]: A dictionary with key phrases as keys
+            and dynamically created dates as values.
+        """  # noqa: D205
         today = pendulum.today(self.dynamic_date_timezone)
         yesterday = pendulum.yesterday(self.dynamic_date_timezone)
         last_month = today.subtract(months=1).month
@@ -272,114 +275,132 @@ class DynamicDateHandler:
         }
         return replacements
 
-    def handle_singular_dates(self, match: List[tuple], key: str) -> pendulum.DateTime:
-        """
-        Directs execution of a specific function based on the provided value of `key`.
-        Returns a pendulum.DateTime date generated based on `match`.
+    def _handle_singular_dates(
+        self, match: list[tuple], key: str
+    ) -> pendulum.DateTime | str:
+        """Directs execution of a specific function based on the value of `key`.
 
         Args:
-            match (List[tuple]): List of every pattern match that occurs in a given string.
+            match (list[tuple]): list of every pattern match that occurs in a string.
             key (str): Key phrase that determines the execution of a specific function.
 
         Returns:
-            pendulum.DateTime: A dynamically created date.
+            str or pendulum.DateTime:
+            - If key == 'x_years_ago' returns string of a pendulum date formatted
+                with a pendulum token 'Y'.
+            - If key != 'x_years_ago' returns a pendulum.DateTime
         """
         if key == "last_day_of_month":
             for month_name, year in match:
-                replacement = self.process_last_day_of_month(year, month_name)
+                replacement = self._process_last_day_of_month(year, month_name)
 
         elif key == "x_units_ago_full_date":
             for x, units in match:
-                x = int(x)
-                replacement = self.get_date_x_ago_full_date(int(x), units)
+                replacement = self._get_date_x_ago_full_date(int(x), units)
 
         elif key == "x_years_ago":
             for x in match:
-                x = int(x)
-                replacement = self.process_x_years_ago(x)
+                replacement = self._process_x_years_ago(int(x))
         return replacement
 
-    def generate_dates_based_on_unit(self, number: int, unit: str) -> List[str]:
-        """
-        Direct execution of a specific function based on the provided value of `unit`.
-        Returns a list of dynamically created dates generated based on `unit` in an ascending order.
+    def _generate_dates_based_on_unit(
+        self, dynamic_date_marker: str, number: int, unit: str
+    ) -> list[str] | str:
+        """Direct execution of a specific function based on the value of `unit`.
 
         Possible values of `unit` correspond to different date formatting styles:
             - 'years': Return a date formatted with a pendulum token 'Y'.
             - 'months': Return a date formatted with a pendulum token 'YMM'.
             - 'days': Return a date with a pendulum token 'YMMDD'.
+
         Args:
             number (int): The number of units from the current year to include.
             unit (str): The unit of time ('years', 'months', 'days').
 
         Returns:
-            List[str]: A list of dates in ascending order.
+            list[str] or string:
+                - If the key argument matches the given options, returns
+                    a list of dynamically created dates generated based on `unit`
+                    in an ascending order.
+                - If the key argument doesn't match the given options,
+                    returns the unhandled dynamic_date_marker parameter
         """
         if unit == "years":
-            return self.generate_years(
+            return self._generate_years(
                 last_years=number, from_year=None, num_years=None
             )
-        elif unit == "months":
-            return self.generate_months(last_months=number)
-        elif unit == "days":
-            return self.generate_dates(last_days=number)
+        if unit == "months":
+            return self._generate_months(last_months=number)
+        if unit == "days":
+            return self._generate_dates(last_days=number)
+        return dynamic_date_marker
 
-    def handle_data_ranges(self, match: List[tuple], key: str) -> List[str]:
-        """
-        Direct execution of a specific function based on the provided value of `key`.
-        Returns a list of dynamically created dates generated based on `key`.
+    def _handle_data_ranges(
+        self, dynamic_date_marker: str, match_found: list[tuple], key: str
+    ) -> list[str] | str:
+        """Direct execution of a specific function based on the provided value of `key`.
 
-        Depending on a unit ('years'/'months'/'days') the `match` referrs to, date formatting style differs:
+        Depending on a unit ('years'/'months'/'days') the `match_found` refers to,
+        date formatting style differs:
             - 'years': Return a date formatted with a pendulum token 'Y'.
             - 'months': Return a date formatted with a pendulum token 'YMM'.
             - 'days': Return a date with a pendulum token 'YMMDD'.
+
         Args:
-            match (List[tuple]): List of every pattern match that occurs in a given string.
+            dynamic_date_marker (str): A dynamic date marker that has been found in text
+                including the dynamic_date_symbols.
+            match_found (list[tuple]): list of every pattern match that occurs in
+                a string.
             key (str): Key phrase that determines the execution of a specific function.
+
         Returns:
-            List[str]: A list of dates in string format, in ascending order.
+            list[str] or string:
+                - If the key argument matches the given options,
+                    returns list of extracted date ranges in ascending order.
+                - If the key argument doesn't match the given options,
+                    returns the unhandled dynamic_date_marker parameter
         """
         if key == "last_x_units":
-            for number, unit in match:
-                number = int(number)
-                return self.generate_dates_based_on_unit(number, unit)
+            for number, unit in match_found:
+                return self._generate_dates_based_on_unit(
+                    dynamic_date_marker, int(number), unit
+                )
 
         elif key == "y_years_from_x":
-            for number, start_year in match:
-                number = int(number)
-                start_year = int(start_year)
-                replacement = self.generate_years(
-                    last_years=None, from_year=start_year, num_years=number
+            for number, start_year in match_found:
+                replacement = self._generate_years(
+                    last_years=None,
+                    from_year=int(start_year),
+                    num_years=int(number),  # type: ignore
                 )
                 return replacement
 
         elif key == "first_x_days_from":
-            for num_days, month_name, year in match:
-                num_days = int(num_days)
-                replacement = self.process_first_days(month_name, year, num_days)
+            for num_days, month_name, year in match_found:
+                replacement = self._process_first_days(month_name, year, int(num_days))
                 return replacement
 
         elif key == "last_x_days_from":
-            for num_days, month_name, year in match:
-                num_days = int(num_days)
-                replacement = self.process_last_days(month_name, year, num_days)
+            for num_days, month_name, year in match_found:
+                replacement = self._process_last_days(month_name, year, int(num_days))
                 return replacement
 
-    def recognize_date(self, text: str) -> List[str] | str:
-        """
-        Analyze and extract date ranges or singular dates from the given text based on specific patterns or pendulum dates.
+        return dynamic_date_marker
 
+    def process_dates(self, text: str) -> list[str] | str:
+        """Analyze and extract date ranges or singular dates from the given text
+            based on specific patterns or pendulum dates.
 
         Args:
-            text (str): The input string containing various time-related patterns to be analyzed.
-
+            text (str): A string containing various time-related patterns to be analyzed.
 
         Returns:
             list or string:
-                - If the input is a key phrase for a data range, returns list of extracted date ranges in ascending order.
-                - If the input is a key phrase for a single date or a pendulum date, returns the input text with an accurate date.
-        """
-
+                - If the input is a key phrase for a data range,
+                    returns list of extracted date ranges in ascending order.
+                - If the input is a key phrase for a single date or a pendulum date,
+                    returns the input text with an accurate date.
+        """  # noqa: D205, W505
         start_symbol, end_symbol = self.dynamic_date_symbols
         start, end = re.escape(start_symbol), re.escape(end_symbol)
         pattern = rf"{start}.*?{end}"
@@ -395,13 +416,13 @@ class DynamicDateHandler:
             for key, pattern in self.singular_patterns.items():
                 match_found = re.findall(pattern, match_no_symbols, re.IGNORECASE)
                 if match_found:
-                    replacement = self.handle_singular_dates(match_found, key)
+                    replacement = self._handle_singular_dates(match_found, key)
 
             # Process range date matches
             for key, pattern in self.range_patterns.items():
                 match_found = re.findall(pattern, match_no_symbols, re.IGNORECASE)
                 if match_found:
-                    return self.handle_data_ranges(match_found, key)
+                    return self._handle_data_ranges(match, match_found, key)
 
             if match_no_symbols in self.replacements:
                 replacement = self.replacements[match_no_symbols]
@@ -578,7 +599,7 @@ async def shell_run_command(
     Args:
         command: Shell command to be executed; can also be
             provided post-initialization by calling this task instance.
-        env: Dictionary of environment variables to use for
+        env: dictionary of environment variables to use for
             the subprocess; can also be provided at runtime.
         helper_command: String representing a shell command, which
             will be executed prior to the `command` in the same process.
