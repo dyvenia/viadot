@@ -446,8 +446,8 @@ class DynamicDateHandler:
 
         return text
 
-    def process_segment(self, processed_input: str | list[str]) -> str | list[str]:
-        """Process a segment by recognizing dates within it.
+    def process_dates(self, processed_input: str | list[str]) -> str | list[str]:
+        """Process an input by recognizing dates within it.
 
         If the input is a string, it applies the recognize_date() function.
         If the input is a list, it recursively processes each list item.
@@ -463,9 +463,7 @@ class DynamicDateHandler:
         if isinstance(processed_input, str):
             return self._process_string(processed_input)
         if isinstance(processed_input, list):
-            return [
-                self.process_segment(sub_segment) for sub_segment in processed_input
-            ]  # type: ignore
+            return [self.process_dates(sub_segment) for sub_segment in processed_input]  # type: ignore
         return processed_input
 
 
