@@ -394,7 +394,7 @@ class DynamicDateHandler:
 
         return dynamic_date_marker
 
-    def process_dates(self, text: str) -> list[str] | str:
+    def _process_string(self, text: str) -> list[str] | str:
         """Analyze and extract date ranges or singular dates from the given text
             based on specific patterns or pendulum dates.
 
@@ -445,6 +445,28 @@ class DynamicDateHandler:
             )
 
         return text
+
+    def process_segment(self, processed_input: str | list[str]) -> str | list[str]:
+        """Process a segment by recognizing dates within it.
+
+        If the input is a string, it applies the recognize_date() function.
+        If the input is a list, it recursively processes each list item.
+
+        Args:
+            processed_input (str or list): The segment to be processed.
+
+        Returns:
+            str or list:
+                - If processed_input is a string, returns the processed string.
+                - If processed_input is a list, returns a list of processed strings.
+        """
+        if isinstance(processed_input, str):
+            return self._process_string(processed_input)
+        if isinstance(processed_input, list):
+            return [
+                self.process_segment(sub_segment) for sub_segment in processed_input
+            ]  # type: ignore
+        return processed_input
 
 
 async def list_block_documents() -> list[Any]:
