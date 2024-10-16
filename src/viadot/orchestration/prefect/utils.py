@@ -74,15 +74,15 @@ class DynamicDateHandler:
             timezone used by all datetime functions. Defaults to "Europe/Warsaw".
         """  # noqa: D205
         self.singular_patterns = {
-            "last_day_of_month": r"last\s+day\s+of\s+(\w+)\s+(\d{4})",
-            "x_units_ago_full_date": r"(\d+)\s+(years?|months?|days?)\s+ago\s+full\s+date",
-            "x_years_ago": r"(\d+)\s+years\s+ago",
+            "last_day_of_month": r"last_day_of_(\w+)_(\d{4})",
+            "x_units_ago_full_date": r"(\d+)_(years?|months?|days?)_ago_full_date",
+            "x_years_ago": r"(\d+)_years_ago",
         }
         self.range_patterns = {
-            "last_x_units": r"last\s+(\d+)\s+(years|months|days)",
-            "y_years_from_x": r"(\d+)\s+years\s+from\s+(\d{4})",
-            "first_x_days_from": r"first\s+(\d+)\s+days\s+from\s+(\w+)\s+(\d{4})",
-            "last_x_days_from": r"last\s+(\d+)\s+days\s+from\s+(\w+)\s+(\d{4})",
+            "last_x_units": r"last_(\d+)_(years|months|days)",
+            "y_years_from_x": r"(\d+)_years_from_(\d{4})",
+            "first_x_days_from": r"first_(\d+)_days_from_(\w+)_(\d{4})",
+            "last_x_days_from": r"last_(\d+)_days_from_(\w+)_(\d{4})",
         }
         self.dynamic_date_format = dynamic_date_format
         self.dynamic_date_timezone = dynamic_date_timezone
@@ -109,12 +109,12 @@ class DynamicDateHandler:
             result = [str(current_year - i) for i in range(last_years)][
                 ::-1
             ]  # Reversed to ascending order
-            return result
+            return result  # noqa: RET504
         if from_year and num_years:
             result = [str(int(from_year) - i) for i in range(int(num_years))][
                 ::-1
             ]  # Ascending order
-            return result
+            return result  # noqa: RET504
         return []
 
     def _generate_months(self, last_months: int) -> list[str]:
@@ -131,7 +131,7 @@ class DynamicDateHandler:
             current_date.subtract(months=i).start_of("month").format("YMM")
             for i in range(last_months)
         ][::-1]  # Reversed to ascending order
-        return result
+        return result  # noqa: RET504
 
     def _generate_dates(self, last_days: int) -> list[str]:
         """Generate a list of dates for the last X days.
@@ -146,7 +146,7 @@ class DynamicDateHandler:
         result = [
             current_date.subtract(days=i).format("YMMDD") for i in range(last_days)
         ][::-1]  # Reversed to ascending order
-        return result
+        return result  # noqa: RET504
 
     def _process_first_days(
         self, month_name: str, year: int, num_days: int
@@ -163,13 +163,13 @@ class DynamicDateHandler:
         """
         start_date = pendulum.date(
             int(year),
-            pendulum.parse(month_name, strict=False).month,
+            pendulum.parse(month_name, strict=False).month,  # type: ignore
             1,  # type: ignore
         )
         result = [
             start_date.add(days=i).format("YMMDD") for i in range(num_days)
         ]  # Ascending order
-        return result
+        return result  # noqa: RET504
 
     def _process_last_days(
         self, month_name: str, year: int, num_days: int
@@ -185,17 +185,19 @@ class DynamicDateHandler:
             list: A list of dates for the last X days in ascending order.
         """
         start_date = pendulum.date(
-            int(year), pendulum.parse(month_name, strict=False).month, 1
+            int(year),
+            pendulum.parse(month_name, strict=False).month,  # type: ignore
+            1,  # type: ignore
         )
         end_date = start_date.end_of("month")
         result = [end_date.subtract(days=i).format("YMMDD") for i in range(num_days)][
             ::-1
         ]  # Reversed to ascending order
-        return result
+        return result  # noqa: RET504
 
     def _process_last_day_of_month(
         self, year: str, month_name: str
-    ) -> pendulum.DateTime:
+    ) -> pendulum.DateTime:  # type: ignore
         """Retrieve the last day of a specified month and year.
 
         Args:
@@ -203,11 +205,11 @@ class DynamicDateHandler:
             month_name (str): The name of the month.
 
         Returns:
-            pendulum.DateTime: A date object containing the last day of the specified month.
+            pendulum.DateTime: A date object containing the last day of the given month.
         """
-        month_num = pendulum.parse(month_name, strict=False).month
+        month_num = pendulum.parse(month_name, strict=False).month  # type: ignore
         date = pendulum.date(int(year), month_num, 1).end_of("month")
-        return date
+        return date  # noqa: RET504
 
     def _process_x_years_ago(self, year: int) -> str:
         """Retrieve the year of a date X years from now.
@@ -220,9 +222,11 @@ class DynamicDateHandler:
         """
         current_date = pendulum.now()
         result = current_date.subtract(years=year).format("Y")
-        return result
+        return result  # noqa: RET504
 
-    def _get_date_x_ago_full_date(self, number: int, unit: str) -> pendulum.DateTime:
+    def _get_date_x_ago_full_date(
+        self, number: int, unit: str
+    ) -> pendulum.DateTime | None:  # type: ignore
         """Retrieve the full date for X units ago from today.
 
         Args:
@@ -238,7 +242,7 @@ class DynamicDateHandler:
             "days": pendulum.now(self.dynamic_date_timezone).subtract(days=number),
         }.get(unit)
 
-        return full_date
+        return full_date  # noqa: RET504
 
     def _create_date_dict(self) -> dict[str, str]:
         """Create and return a key phrase: dynamic date value dictionary.
@@ -264,20 +268,20 @@ class DynamicDateHandler:
         replacements = {
             "today": today.strftime(self.dynamic_date_format),
             "yesterday": yesterday.strftime(self.dynamic_date_format),
-            "this month": today.strftime("%m"),
-            "last month": f"{last_month:02d}",
-            "this year": today.strftime("%Y"),
-            "last year": last_year.strftime("%Y"),
-            "now time": now_time.strftime("%H%M%S"),
+            "this_month": today.strftime("%m"),
+            "last_month": f"{last_month:02d}",
+            "this_year": today.strftime("%Y"),
+            "last_year": last_year.strftime("%Y"),
+            "now_time": now_time.strftime("%H%M%S"),
             "last day previous month": last_day_prev_month.strftime(
                 self.dynamic_date_format
             ),
         }
-        return replacements
+        return replacements  # noqa: RET504
 
     def _handle_singular_dates(
-        self, match: list[tuple], key: str
-    ) -> pendulum.DateTime | str:
+        self, dynamic_date_marker: str, match: list[tuple], key: str
+    ) -> pendulum.DateTime | str | None:  # type: ignore
         """Directs execution of a specific function based on the value of `key`.
 
         Args:
@@ -300,7 +304,9 @@ class DynamicDateHandler:
 
         elif key == "x_years_ago":
             for x in match:
-                replacement = self._process_x_years_ago(int(x))
+                replacement = self._process_x_years_ago(int(x))  # type: ignore
+        else:
+            replacement = dynamic_date_marker
         return replacement
 
     def _generate_dates_based_on_unit(
@@ -370,20 +376,20 @@ class DynamicDateHandler:
             for number, start_year in match_found:
                 replacement = self._generate_years(
                     last_years=None,
-                    from_year=int(start_year),
+                    from_year=start_year,
                     num_years=int(number),  # type: ignore
                 )
-                return replacement
+                return replacement  # noqa: RET504
 
         elif key == "first_x_days_from":
             for num_days, month_name, year in match_found:
                 replacement = self._process_first_days(month_name, year, int(num_days))
-                return replacement
+                return replacement  # noqa: RET504
 
         elif key == "last_x_days_from":
             for num_days, month_name, year in match_found:
                 replacement = self._process_last_days(month_name, year, int(num_days))
-                return replacement
+                return replacement  # noqa: RET504
 
         return dynamic_date_marker
 
@@ -416,7 +422,7 @@ class DynamicDateHandler:
             for key, pattern in self.singular_patterns.items():
                 match_found = re.findall(pattern, match_no_symbols, re.IGNORECASE)
                 if match_found:
-                    replacement = self._handle_singular_dates(match_found, key)
+                    replacement = self._handle_singular_dates(match, match_found, key)
 
             # Process range date matches
             for key, pattern in self.range_patterns.items():
@@ -427,12 +433,12 @@ class DynamicDateHandler:
             if match_no_symbols in self.replacements:
                 replacement = self.replacements[match_no_symbols]
             if not replacement:
-                replacement = eval(match_no_symbols)
+                replacement = eval(match_no_symbols)  # noqa: S307
             text = text.replace(
                 match,
                 (
                     replacement.strftime(self.dynamic_date_format)
-                    if isinstance(replacement, pendulum.DateTime)
+                    if isinstance(replacement, pendulum.DateTime)  # type: ignore
                     else replacement
                 ),
             )
