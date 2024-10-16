@@ -46,22 +46,22 @@ class DynamicDateHandler:
         The supported patterns include:
         - "today"
         - "yesterday"
-        - "this month"
-        - "last month"
-        - "this year"
-        - "last year"
-        - "now time"
-        - "last day previous month"
-        - "last day of month year": e.g., "last day of February 2020"
-        - "X years ago": e.g., "3 years ago" ,refers to only the year
+        - "current_month"
+        - "last_month"
+        - "current_year"
+        - "last_year"
+        - "now_time"
+        - "last_day_previous_month"
+        - "last_day_of_month_year": e.g., "last_day_of_February_2020"
+        - "X_years_ago": e.g., "3_years_ago" ,refers to only the year
             of the day X years ago
-        - "X years/months/days ago full date":  e.g., "3 years ago full date",
+        - "X_years/months/days_ago_full_date":  e.g., "3_years_ago_full_date",
             refers to a given date X units ago in dynamic_date_format
-        - "last X years/months/days": e.g., "last 10 months", refers to a data range
+        - "last_X_years/months/days": e.g., "last_10_months", refers to a data range
             of the months in 'YMM' format
-        - "Y years from X": e.g., "10 years from 2020", refers to a data range
+        - "Y_years_from_X": e.g., "10_years_from_2020", refers to a data range
             of the year numbers from a specified year
-        - "first X days from X": e.g., "first 10 days of January 2020",
+        - "first_X_days_from_X": e.g., "first_10_days_of_January_2020",
             returns a data range of days from a given month
 
         Args:
@@ -246,14 +246,15 @@ class DynamicDateHandler:
 
     def _create_date_dict(self) -> dict[str, str]:
         """Create and return a key phrase: dynamic date value dictionary.
-        dictionary values "today", "yesterday" and "last year previous month" are
+        dictionary values "today", "yesterday" and "last_year_previous_month" are
         formatted into the dynamic_date_format.
 
         The other values and their formatting:
-            - "this month" - A string date formatted with a string format '%m'.
-            - "last month" - A string date formatted with a format "%mm"
-            - "last year" - A string date formatted with a string format '%Y'
-            - "now time" - A string date formatted with a string format '%H%M%S'.
+            - "current_month" - A string date formatted with a string format '%m'.
+            - "last_month" - A string date formatted with a format "%mm".
+            - "current_year" - A string date formatted with a format "%mm".
+            - "last_year" - A string date formatted with a string format '%Y'
+            - "now_time" - A string date formatted with a string format '%H%M%S'.
 
         Returns:
             dict[str, str]: A dictionary with key phrases as keys
@@ -268,9 +269,9 @@ class DynamicDateHandler:
         replacements = {
             "today": today.strftime(self.dynamic_date_format),
             "yesterday": yesterday.strftime(self.dynamic_date_format),
-            "this_month": today.strftime("%m"),
+            "current_month": today.strftime("%m"),
             "last_month": f"{last_month:02d}",
-            "this_year": today.strftime("%Y"),
+            "current_year": today.strftime("%Y"),
             "last_year": last_year.strftime("%Y"),
             "now_time": now_time.strftime("%H%M%S"),
             "last day previous month": last_day_prev_month.strftime(
