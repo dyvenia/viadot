@@ -274,7 +274,7 @@ class DynamicDateHandler:
             "current_year": today.strftime("%Y"),
             "last_year": last_year.strftime("%Y"),
             "now_time": now_time.strftime("%H%M%S"),
-            "last day previous month": last_day_prev_month.strftime(
+            "last_day_previous_month": last_day_prev_month.strftime(
                 self.dynamic_date_format
             ),
         }
