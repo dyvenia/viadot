@@ -53,7 +53,7 @@ class DynamicDateHandler:
         - "now_time"
         - "last_day_previous_month"
         - "last_day_of_month_year": e.g., "last_day_of_February_2020"
-        - "X_years_ago": e.g., "3_years_ago" ,refers to only the year
+        - "X_years_ago_year": e.g., "3_years_ago_year" ,refers to only the year
             of the day X years ago
         - "X_years/months/days_ago_full_date":  e.g., "3_years_ago_full_date",
             refers to a given date X units ago in dynamic_date_format
@@ -76,7 +76,7 @@ class DynamicDateHandler:
         self.singular_patterns = {
             "last_day_of_month": r"last_day_of_(\w+)_(\d{4})",
             "x_units_ago_full_date": r"(\d+)_(years?|months?|days?)_ago_full_date",
-            "x_years_ago": r"(\d+)_years_ago",
+            "x__year": r"(\d+)_years_ago_year",
         }
         self.range_patterns = {
             "last_x_units": r"last_(\d+)_(years|months|days)",
@@ -291,9 +291,9 @@ class DynamicDateHandler:
 
         Returns:
             str or pendulum.DateTime:
-            - If key == 'x_years_ago' returns string of a pendulum date formatted
+            - If key == 'x_years_ago_year' returns string of a pendulum date formatted
                 with a pendulum token 'Y'.
-            - If key != 'x_years_ago' returns a pendulum.DateTime
+            - If key != 'x_years_ago_year' returns a pendulum.DateTime
         """
         if key == "last_day_of_month":
             for month_name, year in match:
@@ -303,7 +303,7 @@ class DynamicDateHandler:
             for x, units in match:
                 replacement = self._get_date_x_ago_full_date(int(x), units)
 
-        elif key == "x_years_ago":
+        elif key == "x_years_ago_year":
             for x in match:
                 replacement = self._process_x_years_ago(int(x))  # type: ignore
         else:
