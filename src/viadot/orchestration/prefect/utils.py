@@ -447,9 +447,9 @@ class DynamicDateHandler:
         return text
 
     def process_dates(self, processed_input: str | list[str]) -> str | list[str]:
-        """Process an input by recognizing dates within it.
+        """Process an input by processing dates within it.
 
-        If the input is a string, it applies the recognize_date() function.
+        If the input is a string, it applies the _process_string() function.
         If the input is a list, it recursively processes each list item.
 
         Args:
