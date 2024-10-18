@@ -161,7 +161,7 @@ class DynamicDateHandler:
         Returns:
             list: A list of dates for the first X days in ascending order.
         """
-        start_date = pendulum.date(
+        start_date = pendulum.datetime(
             int(year),
             pendulum.parse(month_name, strict=False).month,  # type: ignore
             1,  # type: ignore
@@ -184,7 +184,7 @@ class DynamicDateHandler:
         Returns:
             list: A list of dates for the last X days in ascending order.
         """
-        start_date = pendulum.date(
+        start_date = pendulum.datetime(
             int(year),
             pendulum.parse(month_name, strict=False).month,  # type: ignore
             1,  # type: ignore
@@ -208,7 +208,7 @@ class DynamicDateHandler:
             pendulum.DateTime: A date object containing the last day of the given month.
         """
         month_num = pendulum.parse(month_name, strict=False).month  # type: ignore
-        date = pendulum.date(int(year), month_num, 1).end_of("month")
+        date = pendulum.datetime(int(year), month_num, 1).end_of("month")
         return date  # noqa: RET504
 
     def _process_x_years_ago(self, year: int) -> str:
