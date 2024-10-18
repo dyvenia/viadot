@@ -76,7 +76,7 @@ class DynamicDateHandler:
         self.singular_patterns = {
             "last_day_of_month": r"last_day_of_(\w+)_(\d{4})",
             "x_units_ago_full_date": r"(\d+)_(years?|months?|days?)_ago_full_date",
-            "x__year": r"(\d+)_years_ago_year",
+            "x_years_ago_year": r"(\d+)_years_ago_year",
         }
         self.range_patterns = {
             "last_x_units": r"last_(\d+)_(years|months|days)",
