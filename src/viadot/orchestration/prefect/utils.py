@@ -111,8 +111,8 @@ class DynamicDateHandler:
             ]  # Reversed to ascending order
             return result  # noqa: RET504
         if from_year and num_years:
-            result = [str(int(from_year) - i) for i in range(int(num_years))][
-                ::-1
+            result = [
+                str(int(from_year) + i) for i in range(int(num_years))
             ]  # Ascending order
             return result  # noqa: RET504
         return []
