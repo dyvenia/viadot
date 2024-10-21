@@ -220,7 +220,6 @@ class SQL(Source):
             )
         if "encrypt" in self.credentials:
             conn_str += "Encrypt=" + self.credentials["encrypt"] + ";"
-        self.logger.warning(conn_str)
         return conn_str
 
     @property
