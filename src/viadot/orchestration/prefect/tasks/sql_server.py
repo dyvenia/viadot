@@ -17,7 +17,7 @@ from viadot.sources.sql_server import SQLServer
 def create_sql_server_table(
     schema: str,
     table: str,
-    if_exists: Literal["fail", "replace", "skip", "delete"] = "fail",
+    if_exists: Literal["append", "replace", "skip", "fail"] = "fail",
     dtypes: dict[str, Any] | None = None,
     credentials_secret: str | None = None,
     config_key: str | None = None,

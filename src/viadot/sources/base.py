@@ -212,6 +212,15 @@ class SQL(Source):
         if "authentication" in self.credentials:
             conn_str += "Authentication=" + self.credentials["authentication"] + ";"
 
+        if "trust_server_certificate" in self.credentials:
+            conn_str += (
+                "TrustServerCertificate="
+                + self.credentials["trust_server_certificate"]
+                + ";"
+            )
+        if "encrypt" in self.credentials:
+            conn_str += "Encrypt=" + self.credentials["encrypt"] + ";"
+        self.logger.warning(conn_str)
         return conn_str
 
     @property
@@ -290,7 +299,7 @@ class SQL(Source):
         table: str,
         schema: str | None = None,
         dtypes: dict[str, Any] | None = None,
-        if_exists: Literal["fail", "replace", "skip", "delete"] = "fail",
+        if_exists: Literal["append", "replace", "skip", "fail"] = "fail",
     ) -> bool:
         """Create a table.
 
