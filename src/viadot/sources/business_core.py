@@ -56,6 +56,7 @@ class BusinessCore(Source):
         validated_creds = dict(BusinessCoreCredentials(**raw_creds))
 
         self.url = url
+        # API requires that filters are always specified
         if filters is None:
             self.filters = {
                 "BucketCount": "&",
