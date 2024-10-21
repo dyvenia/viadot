@@ -58,10 +58,10 @@ class BusinessCore(Source):
         self.url = url
         if filters is None:
             self.filters = {
-            "BucketCount": "&",
-            "BucketNo": "&",
-            "FromDate": "&",
-            "ToDate": "&",
+                "BucketCount": "&",
+                "BucketNo": "&",
+                "FromDate": "&",
+                "ToDate": "&",
             }
         else:
             self.filters = self._clean_filters(filters)
