@@ -56,7 +56,15 @@ class BusinessCore(Source):
         validated_creds = dict(BusinessCoreCredentials(**raw_creds))
 
         self.url = url
-        self.filters = self._clean_filters(filters)
+        if filters is None:
+            self.filters = {
+            "BucketCount": "&",
+            "BucketNo": "&",
+            "FromDate": "&",
+            "ToDate": "&",
+            }
+        else:
+            self.filters = self._clean_filters(filters)
         self.verify = verify
 
         super().__init__(*args, credentials=validated_creds, **kwargs)
