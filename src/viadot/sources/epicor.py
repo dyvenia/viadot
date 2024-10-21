@@ -82,6 +82,7 @@ class HeaderInformation(BaseModel):
 
 class LineItemDetail(BaseModel):
     ProductNumber: str | None
+    ProductDescription: str | None
     ProductDescription1: str | None
     ProductDescription2: str | None
     CustomerProductNumber: str | None
@@ -90,12 +91,17 @@ class LineItemDetail(BaseModel):
     QuantityShipped: str | None
     QuantityBackordered: str | None
     Price: str | None
-    UnitOfMeasure: str | None
+    ExtendedCost: str | None
     ExtendedPrice: str | None
     QuantityShippedExtension: str | None
     LineItemShipWarehouse: str | None
     RequiredDate: str | None
     CopperWeight: str | None
+    UnitOfMeasure: str | None
+    Status: str | None
+    GrossProfitExtension: str | None
+    GrossProfitPercent: str | None
+    UpdateDate: str | None
 
 
 class Customer(BaseModel):
