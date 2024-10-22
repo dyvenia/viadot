@@ -16,6 +16,8 @@ class SQLServerCredentials(BaseModel):
     server: str
     driver: str = "ODBC Driver 17 for SQL Server"
     db_name: str | None = None
+    trust_server_certificate: bool = False
+    encrypt: bool = True
 
 
 class SQLServer(SQL):
