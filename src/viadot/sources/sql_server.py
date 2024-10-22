@@ -4,6 +4,7 @@ from datetime import datetime, timedelta, timezone
 import struct
 
 from pydantic import BaseModel, SecretStr
+import pyodbc
 
 from viadot.config import get_source_credentials
 from viadot.sources.base import SQL
@@ -13,8 +14,10 @@ class SQLServerCredentials(BaseModel):
     user: str
     password: str | SecretStr | None = None
     server: str
-    driver: str = "ODBC Driver 17 for SQL Server"
+    driver: str = "ODBC Driver 18 for SQL Server"
     db_name: str | None = None
+    trust_server_certificate: bool = False
+    encrypt: bool = True
 
 
 class SQLServer(SQL):
@@ -47,7 +50,16 @@ class SQLServer(SQL):
         self.driver = self.credentials.get("driver")
         self.db_name = self.credentials.get("db_name")
 
-        self.con.add_output_converter(-155, self._handle_datetimeoffset)
+    @property
+    def con(self) -> pyodbc.Connection:
+        """A singleton-like property for initiating a connection to the database.
+
+        Returns:
+            pyodbc.Connection: database connection.
+        """
+        con = super().con
+        con.add_output_converter(-155, self._handle_datetimeoffset)
+        return con
 
     @property
     def schemas(self) -> list[str]:

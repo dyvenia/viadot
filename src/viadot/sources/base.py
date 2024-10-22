@@ -212,14 +212,23 @@ class SQL(Source):
         if "authentication" in self.credentials:
             conn_str += "Authentication=" + self.credentials["authentication"] + ";"
 
+        trust_server_certificate = self.credentials.get("trust_server_certificate")
         if "trust_server_certificate" in self.credentials:
-            conn_str += (
-                "TrustServerCertificate="
-                + self.credentials["trust_server_certificate"]
-                + ";"
-            )
+            # Cast to string.
+            if trust_server_certificate is True:
+                trust_server_certificate = "yes"
+            if trust_server_certificate is False:
+                trust_server_certificate = "no"
+            conn_str += "TrustServerCertificate=" + trust_server_certificate + ";"
+
+        encrypt = self.credentials.get("encrypt")
         if "encrypt" in self.credentials:
-            conn_str += "Encrypt=" + self.credentials["encrypt"] + ";"
+            # Cast to string.
+            if encrypt is True:
+                encrypt = "yes"
+            if encrypt is False:
+                encrypt = "no"
+            conn_str += "Encrypt=" + encrypt + ";"
         return conn_str
 
     @property
