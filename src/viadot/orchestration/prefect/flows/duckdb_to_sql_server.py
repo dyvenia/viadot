@@ -42,7 +42,7 @@ def duckdb_to_sql_server(  # noqa: PLR0913
     local_path: str,
     db_table: str,
     db_schema: str,
-    if_exists: Literal["fail", "replace", "append", "skip", "delete"] = "replace",
+    if_exists: Literal["fail", "replace", "skip", "delete"] = "replace",
     dtypes: dict[str, Any] | None = None,
     chunksize: int = 5000,
     error_log_file_path: str = "./log_file.log",

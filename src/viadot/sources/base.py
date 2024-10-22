@@ -298,7 +298,7 @@ class SQL(Source):
         table: str,
         schema: str | None = None,
         dtypes: dict[str, Any] | None = None,
-        if_exists: Literal["fail", "replace", "append", "skip", "delete"] = "fail",
+        if_exists: Literal["fail", "replace", "skip", "delete"] = "fail",
     ) -> bool:
         """Create a table.
 
