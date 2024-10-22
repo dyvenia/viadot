@@ -49,7 +49,7 @@ RUN curl -sSf https://rye.astral.sh/get | RYE_TOOLCHAIN_VERSION="3.10" RYE_INSTA
 
 # Fix for old SQL Servers still using TLS < 1.2
 RUN chmod +rwx /usr/lib/ssl/openssl.cnf && \
-    sed -i 's/SECLEVEL=2/SECLEVEL=1/g' /usr/lib/ssl/openssl.cnf
+    sed -i 's/SECLEVEL=2/SECLEVEL=0/g' /usr/lib/ssl/openssl.cnf
 
 # ODBC -- make sure to pin driver version as it's reflected in odbcinst.ini
 RUN curl https://packages.microsoft.com/keys/microsoft.asc | apt-key add - && \
