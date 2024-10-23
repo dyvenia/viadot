@@ -1148,18 +1148,23 @@ class SAPRFCV2(Source):
                             actual_length_of_field = df_tmp[col].str.len()
                             # Check which rows column values has less characters
                             # then is defined in SAP data type for each column
-                            rows_whitespaces = (
+                            rows_missing_whitespaces = (
                                 actual_length_of_field < unique_column_len
                             )
-                            # Check how many whitespaces is missing for each row
-                            # column value
-                            missing_whitespaces_len = (
-                                unique_column_len - actual_length_of_field
-                            )
-                            for i, is_missing in enumerate(rows_whitespaces):
-                                if is_missing:
-                                    # Add whitespaces to prevent problems with merge
-                                    df_tmp[col][i] += " " * missing_whitespaces_len[i]
+                            if any(rows_missing_whitespaces):
+                                # Check how many whitespaces is missing for each row
+                                # column value
+                                missing_whitespaces_len = (
+                                    unique_column_len - actual_length_of_field
+                                )
+                                df.loc[rows_missing_whitespaces, col] += (
+                                    np.char.multiply(
+                                        " ",
+                                        missing_whitespaces_len[
+                                            rows_missing_whitespaces
+                                        ],
+                                    )
+                                )
                         df = pd.merge(df, df_tmp, on=self.rfc_unique_id, how="outer")
                     elif not start:
                         df[fields] = records
