@@ -1157,7 +1157,7 @@ class SAPRFCV2(Source):
                                 missing_whitespaces_len = (
                                     unique_column_len - actual_length_of_field
                                 )
-                                df.loc[rows_missing_whitespaces, col] += (
+                                df_tmp.loc[rows_missing_whitespaces, col] += (
                                     np.char.multiply(
                                         " ",
                                         missing_whitespaces_len[
