@@ -23,6 +23,7 @@ from .sharepoint import Sharepoint
 from .sql_server import SQLServer
 from .sqlite import SQLite
 from .supermetrics import Supermetrics
+from .tm1 import TM1
 from .uk_carbon_intensity import UKCarbonIntensity
 from .vid_club import VidClub
 
