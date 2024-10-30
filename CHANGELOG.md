@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 ### Removed
+- Removed `VidClub` related code and tests.
 
 
 ## [0.4.26] - 2024-04-11
