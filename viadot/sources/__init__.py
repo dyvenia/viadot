@@ -34,4 +34,4 @@ from .tm1 import TM1
 
 # APIS
 from .uk_carbon_intensity import UKCarbonIntensity
-from .vid_club import VidClub
+
