@@ -1144,7 +1144,10 @@ class SAPRFCV2(Source):
                             try:
                                 unique_column_len = self._unique_columns_len[col]
                             except KeyError:
-                                logger.exception("Missing rfc unique columns length!")
+                                logger.exception(
+                                    f"Missing rfc unique column: {col} length from SAP metadata!"
+                                )
+                                raise
                             actual_length_of_field = df_tmp[col].str.len()
                             # Check which rows column values has less characters
                             # then is defined in SAP data type for each column
