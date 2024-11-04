@@ -86,7 +86,7 @@ def test_process_dates_with_custom_symbols(setup_dates):
     """Test if process_dates function works with custom start and end symbols."""
     text = "The year is [[current_year]]."
     replaced_text = ddh2.process_dates(text)
-    expected_text = f"The year is {setup_dates['today'][:4]}."
+    expected_text = f"The year is {setup_dates['current_year']}."
     assert replaced_text == expected_text
 
 
