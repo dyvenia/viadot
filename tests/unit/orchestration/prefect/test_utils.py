@@ -127,7 +127,7 @@ def test_process_last_x_months():
     assert processed_range == expected_result
 
 
-def test_Y_years_from_x():
+def test_process_y_years_from_x():
     x = 2019
     y = 4
     text = f"<<{y}_years_from_{x}>>"
