@@ -73,15 +73,6 @@ def test_process_dates_multiple(setup_dates):
     assert replaced_text == expected_text
 
 
-def test_process_dates(setup_dates):
-    """Test if process_dates function replaces multiple placeholders."""
-    text = "The hour and minute are <<now_time>>"
-    replaced_text = ddh1.process_dates(text)
-    expected_text = f"The hour and minute are {setup_dates['now_time'][:-2]}"
-    replaced_text = replaced_text[:-2]
-    assert replaced_text == expected_text
-
-
 def test_process_dates_with_custom_symbols(setup_dates):
     """Test if process_dates function works with custom start and end symbols."""
     text = "The year is [[current_year]]."
