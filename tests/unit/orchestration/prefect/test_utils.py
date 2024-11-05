@@ -1,15 +1,8 @@
 import pendulum
 import pytest
 
-from viadot.utils import skip_test_on_missing_extra
+from viadot.orchestration.prefect.utils import DynamicDateHandler
 
-
-try:
-    from viadot.orchestration.prefect.utils import DynamicDateHandler
-except ImportError:
-    skip_test_on_missing_extra(
-        source_name="DynamicDateHandler", extra="dynamicDateHandler"
-    )
 
 ddh1 = DynamicDateHandler(
     ["<<", ">>"], dynamic_date_format="%Y%m%d", dynamic_date_timezone="Europe/Warsaw"
