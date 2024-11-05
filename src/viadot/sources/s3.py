@@ -339,3 +339,16 @@ class S3(Source):
         paginator = client.get_paginator(operation_name=operation_name)
 
         return paginator.paginate(Bucket=bucket_name, Prefix=directory_path, **kwargs)
+
+    def get_object_sizes(self, file_paths: str | list[str]) -> dict[str, int | None]:
+        """Retrieve the sizes of specified S3 objects.
+
+        Args:
+            file_paths (str | list[str]): A single file path or a list of file paths
+                in S3 bucket.
+
+        Returns:
+            dict[str, int]: A dictionary where the keys are file paths and the values
+                are their corresponding sizes in bytes.
+        """
+        return wr.s3.size_objects(boto3_session=self.session, path=file_paths)

@@ -212,6 +212,14 @@ class SQL(Source):
         if "authentication" in self.credentials:
             conn_str += "Authentication=" + self.credentials["authentication"] + ";"
 
+        if "trust_server_certificate" in self.credentials:
+            conn_str += (
+                "TrustServerCertificate="
+                + self.credentials["trust_server_certificate"]
+                + ";"
+            )
+        if "encrypt" in self.credentials:
+            conn_str += "Encrypt=" + self.credentials["encrypt"] + ";"
         return conn_str
 
     @property
