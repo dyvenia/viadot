@@ -1155,8 +1155,7 @@ class SAPRFCV2(Source):
                                 actual_length_of_field < unique_column_len
                             )
                             if any(rows_missing_whitespaces):
-                                # Check how many whitespaces is missing for each row
-                                # column value
+                                # Check how many whitespaces are missing in each row.
                                 logger.info(f"Adding whitespaces for {col} column")
                                 missing_whitespaces_len = (
                                     unique_column_len - actual_length_of_field
