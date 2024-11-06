@@ -429,8 +429,10 @@ class DynamicDateHandler:
 
             if match_no_symbols in self.replacements:
                 replacement = self.replacements[match_no_symbols]
-            if not replacement:
-                replacement = eval(match_no_symbols)
+            if not replacement and bool(
+                re.match(r"^\s*pendulum\.\w+\(.*\)\s*$", match_no_symbols)
+            ):
+                replacement = eval(match_no_symbols)  # noqa: S307
             text = text.replace(
                 match,
                 (
