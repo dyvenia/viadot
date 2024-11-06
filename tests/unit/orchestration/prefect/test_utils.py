@@ -81,12 +81,23 @@ def test_process_dates_with_malformed_keys():
     assert replaced_text == text
 
 
-def test_process_eval_date(setup_dates):
+def test_process_eval_date_success(setup_dates):
     """Test if process_dates function works with a pendulum code."""
-    text = "Yesterday was <<(pendulum.today()).subtract(days=1)>>."
+    text = "Yesterday was <<pendulum.today().subtract(days=1)>>."
     replaced_text = ddh1.process_dates(text)
     expected_text = f"Yesterday was {setup_dates['yesterday']}."
     assert replaced_text == expected_text
+
+
+def test_process_eval_date_fail(setup_dates):
+    """Test if process_dates function works with a pendulum code."""
+    text = "Yesterday was <<(pendulum.today().subtract(days=1))>>."  # It should not start with `(`
+    with pytest.raises(TypeError):
+        ddh1.process_dates(text)
+
+    text2 = "Yesterday was <<some_operation=['1','2']>>."  # only `pendulum` works
+    with pytest.raises(TypeError):
+        ddh1.process_dates(text2)
 
 
 def test_process_last_x_years():
@@ -112,9 +123,24 @@ def test_process_last_x_months():
 
 
 def test_process_y_years_from_x():
+    """Test if `process_dates()` returns a range of years from a given start year."""
     x = 2019
     y = 4
     text = f"<<{y}_years_from_{x}>>"
     processed_range = ddh1.process_dates(text)
     expected_result = [str(x + i) for i in range(y)]
     assert processed_range == expected_result
+
+
+def test_process_string():
+    """Test the `_process_string` function to verify it correctly processes dates."""
+    result = ddh1._process_string("Let's meet <<today>>.")
+    assert result == f"Let's meet {pendulum.today().strftime('%Y%m%d')}."
+
+    result = ddh1._process_string(
+        "The event is scheduled for <<pendulum.tomorrow().strftime('%Y-%m-%d')>>."
+    )
+    assert (
+        result
+        == f"The event is scheduled for {pendulum.tomorrow().strftime('%Y-%m-%d')}."
+    )
