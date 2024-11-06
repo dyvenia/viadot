@@ -1157,7 +1157,7 @@ class SAPRFCV2(Source):
                             if any(rows_missing_whitespaces):
                                 # Check how many whitespaces are missing in each row.
                                 logger.info(f"Adding whitespaces for {col} column")
-                                missing_whitespaces_len = (
+                                n_missing_whitespaces = (
                                     unique_column_len - actual_length_of_field
                                 )
                                 df_tmp.loc[rows_missing_whitespaces, col] += (
