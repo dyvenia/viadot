@@ -395,7 +395,8 @@ class DynamicDateHandler:
         It bases on specific patterns or pendulum dates.
 
         Args:
-            text (str): A string containing various time-related patterns to be analyzed.
+            text (str): A string containing various time-related patterns
+                to be analyzed.
 
         Returns:
             list or string:

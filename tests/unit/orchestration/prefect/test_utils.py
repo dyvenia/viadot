@@ -89,7 +89,7 @@ def test_process_eval_date_success(setup_dates):
     assert replaced_text == expected_text
 
 
-def test_process_eval_date_fail(setup_dates):
+def test_process_eval_date_fail():
     """Test if process_dates function works with a pendulum code."""
     text = "Yesterday was <<(pendulum.today().subtract(days=1))>>."  # It should not start with `(`
     with pytest.raises(TypeError):
