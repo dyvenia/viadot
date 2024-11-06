@@ -1149,7 +1149,7 @@ class SAPRFCV2(Source):
                                 )
                                 raise
                             actual_length_of_field = df_tmp[col].str.len()
-                            # Check which rows column values has less characters
+                            # Check which rows have fewer characters
                             # than specified in the column data type.
                             rows_missing_whitespaces = (
                                 actual_length_of_field < unique_column_len
