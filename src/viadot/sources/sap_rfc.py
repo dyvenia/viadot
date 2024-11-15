@@ -714,7 +714,7 @@ class SAPRFCV2(Source):
 
         if rfc_unique_id is not None:
             self.rfc_unique_id = list(set(rfc_unique_id))
-            self._unique_columns_len = {}
+            self._rfc_unique_id_len = {}
         else:
             self.rfc_unique_id = rfc_unique_id
 
@@ -967,25 +967,24 @@ class SAPRFCV2(Source):
         col_length_total = 0
         if isinstance(self.rfc_unique_id[0], str):
             character_limit = self.rfc_total_col_width_character_limit
-            for ref_column in self.rfc_unique_id:
-                col_length_reference_column = int(
+            for rfc_unique_col in self.rfc_unique_id:
+                rfc_unique_col_len = int(
                     self.call(
                         "DDIF_FIELDINFO_GET",
                         TABNAME=table_name,
-                        FIELDNAME=ref_column,
+                        FIELDNAME=rfc_unique_col,
                     )["DFIES_TAB"][0]["LENG"]
                 )
-                if col_length_reference_column > int(
+                if rfc_unique_col_len > int(
                     self.rfc_total_col_width_character_limit / 4
                 ):
-                    msg = f"{ref_column} can't be used as unique column, too large."
+                    msg = f"{rfc_unique_col} can't be used as unique column, too large."
                     raise ValueError(msg)
                 local_limit = (
-                    self.rfc_total_col_width_character_limit
-                    - col_length_reference_column
+                    self.rfc_total_col_width_character_limit - rfc_unique_col_len
                 )
                 character_limit = min(local_limit, character_limit)
-                self._unique_columns_len[ref_column] = col_length_reference_column
+                self._rfc_unique_id_len[rfc_unique_col] = rfc_unique_col_len
         else:
             character_limit = self.rfc_total_col_width_character_limit
 
@@ -997,21 +996,21 @@ class SAPRFCV2(Source):
                 cols.append(col)
             else:
                 if isinstance(self.rfc_unique_id[0], str) and all(
-                    rfc_col not in cols for rfc_col in self.rfc_unique_id
+                    rfc_unique_col not in cols for rfc_unique_col in self.rfc_unique_id
                 ):
-                    for rfc_col in self.rfc_unique_id:
-                        if rfc_col not in cols:
-                            cols.append(rfc_col)
+                    for rfc_unique_col in self.rfc_unique_id:
+                        if rfc_unique_col not in cols:
+                            cols.append(rfc_unique_col)
                 lists_of_columns.append(cols)
                 cols = [col]
                 col_length_total = int(col_length)
 
         if isinstance(self.rfc_unique_id[0], str) and all(
-            rfc_col not in cols for rfc_col in self.rfc_unique_id
+            rfc_unique_col not in cols for rfc_col in self.rfc_unique_id
         ):
-            for rfc_col in self.rfc_unique_id:
-                if rfc_col not in cols:
-                    cols.append(rfc_col)
+            for rfc_unique_col in self.rfc_unique_id:
+                if rfc_unique_col not in cols:
+                    cols.append(rfc_unique_col)
         lists_of_columns.append(cols)
 
         columns = lists_of_columns
@@ -1138,14 +1137,16 @@ class SAPRFCV2(Source):
                     ):
                         df_tmp = pd.DataFrame(columns=fields)
                         df_tmp[fields] = records
-                        for col in self.rfc_unique_id:
+                        for rfc_unique_col in self.rfc_unique_id:
                             # Check in SAP metadata what is the declared
                             # dtype characters amount
                             try:
-                                unique_column_len = self._unique_columns_len[col]
+                                unique_column_len = self._unique_columns_len[
+                                    rfc_unique_col
+                                ]
                             except KeyError:
                                 logger.exception(
-                                    f"Missing rfc unique column: {col} length from SAP metadata!"
+                                    f"Missing rfc unique column: {rfc_unique_col} length from SAP metadata!"
                                 )
                                 raise
                             actual_length_of_field = df_tmp[col].str.len()
@@ -1156,17 +1157,17 @@ class SAPRFCV2(Source):
                             )
                             if any(rows_missing_whitespaces):
                                 # Check how many whitespaces are missing in each row.
-                                logger.info(f"Adding whitespaces for {col} column")
+                                logger.info(
+                                    f"Adding whitespaces for {rfc_unique_col} column"
+                                )
                                 n_missing_whitespaces = (
                                     unique_column_len - actual_length_of_field
                                 )
-                                df_tmp.loc[rows_missing_whitespaces, col] += (
-                                    np.char.multiply(
-                                        " ",
-                                        missing_whitespaces_len[
-                                            rows_missing_whitespaces
-                                        ],
-                                    )
+                                df_tmp.loc[
+                                    rows_missing_whitespaces, rfc_unique_col
+                                ] += np.char.multiply(
+                                    " ",
+                                    n_missing_whitespaces[rows_missing_whitespaces],
                                 )
                         df = pd.merge(df, df_tmp, on=self.rfc_unique_id, how="outer")
                     elif not start:
