@@ -2,9 +2,9 @@
 
 from typing import Any, Literal
 
+import pandas as pd
 from pydantic import BaseModel, SecretStr
 from TM1py.Services import TM1Service
-import pandas as pd
 
 from src.viadot.exceptions import ValidationError
 from viadot.config import get_source_credentials
@@ -17,8 +17,8 @@ class TM1Credentials(BaseModel):
     Uses simple authentication:
         - username: The user name to use.
         - password: The password to use.
-        - address: 
-        - port:
+        - address: The ip adress to use.
+        - port: The port
     """
 
     username: str
@@ -45,30 +45,37 @@ class TM1(Source):
         *args,
         **kwargs,
     ):
-        """C Creating an instance of TM1 source class. To download the data to the dataframe user needs to specify MDX query or
+        """Creating an instance of TM1 source class.
+
+            To download the data to the dataframe user needs to specify MDX query or
             combination of cube and view.
 
         Args:
-            credentials (Dict[str, Any], optional): Credentials stored in a dictionary. Required credentials: username,
-                password, address, port. Defaults to None.
-            config_key (str, optional): Credential key to dictionary where credentials are stored. Defaults to "TM1".
-            mdx_query (str, optional): MDX select query needed to download the data. Defaults to None.
-            cube (str, optional): Cube name from which data will be downloaded. Defaults to None.
-            view (str, optional): View name from which data will be downloaded. Defaults to None.
+            credentials (Dict[str, Any], optional): Credentials stored in a dictionary.
+            Required credentials: username, password, address, port. Defaults to None.
+            config_key (str, optional): Credential key to dictionary where credentials
+            are stored. Defaults to "TM1".
+            mdx_query (str, optional): MDX select query needed to download the data.
+            Defaults to None.
+            cube (str, optional): Cube name from which data will be downloaded.
+            Defaults to None.
+            view (str, optional): View name from which data will be downloaded.
+            Defaults to None.
             dimension (str, optional): Dimension name. Defaults to None.
             hierarchy (str, optional): Hierarchy name. Defaults to None.
-            limit (str, optional): How many rows should be extracted. If None all the available rows will
-                be downloaded. Defaults to None.
-            private (bool, optional): Whether or not data download shoulb be private. Defaults to False.
-            verify (bool, optional): Whether or not verify SSL certificates while. Defaults to False.
-
+            limit (str, optional): How many rows should be extracted.
+            If None all the available rows will be downloaded. Defaults to None.
+            private (bool, optional): Whether or not data download should be private.
+            Defaults to False.
+            verify (bool, optional): Whether or not verify SSL certificates while.
+            Defaults to False.
 
         Raises:
             CredentialError: When credentials are not found.
-            
+
         """
         raw_creds = credentials or get_source_credentials(config_key)
-        validated_creds = dict(TM1Credentials(**raw_creds))
+        self.validated_creds = dict(TM1Credentials(**raw_creds))
 
         self.config_key = config_key
         self.mdx_query = mdx_query
@@ -80,7 +87,7 @@ class TM1(Source):
         self.private = private
         self.verify = verify
 
-        super().__init__(*args, credentials=credentials, **kwargs)
+        super().__init__(*args, credentials=self.validated_creds, **kwargs)
 
     def get_connection(self) -> TM1Service:
         """Start a connection to TM1 instance.
@@ -89,10 +96,10 @@ class TM1(Source):
             TM1Service: Service instance if connection is succesfull.
         """
         return TM1Service(
-            address=self.credentials["address"],
-            port=self.credentials["port"],
-            user=self.credentials["username"],
-            password=self.credentials["password"],
+            address=self.validated_creds.get("address"),
+            port=self.validated_creds.get("port"),
+            user=self.validated_creds.get("username"),
+            password=self.validated_creds.get("password").get_secret_value(),
             ssl=self.verify,
         )
 
@@ -137,7 +144,9 @@ class TM1(Source):
         return conn.hierarchies.get_all_names(self.dimension)
 
     def get_available_elements(self) -> list:
-        """Get list of available elements in TM1 instance based on hierarchy and diemension.
+        """Get list of available elements in TM1 instance.
+
+        Elements are extracted based on hierarchy and dimension.
 
         Returns:
             list: List containing available elements names.
@@ -149,26 +158,32 @@ class TM1(Source):
         )
 
     def to_df(self, if_empty: Literal["warn", "fail", "skip"] = "skip") -> pd.DataFrame:
-        """Function for downloading data from TM1 to pd.DataFrame. To download the data to the dataframe user needs to specify MDX query or
-            combination of cube and view.
+        """Function for downloading data from TM1 to pd.DataFrame.
+
+            To download the data to the dataframe user needs to specify MDX query
+            or combination of cube and view.
 
         Args:
-            if_empty (Literal["warn", "fail", "skip"], optional): What to do if output DataFrame is empty. Defaults to "skip".
+            if_empty (Literal["warn", "fail", "skip"], optional): What to do if output
+            DataFrame is empty. Defaults to "skip".
 
         Returns:
             pd.DataFrame: DataFrame with data downloaded from TM1 view.
 
         Raises:
-            ValidationError: When mdx and cube + view are not specified or when combination of both is specified.
+            ValidationError: When mdx and cube + view are not specified
+            or when combination of both is specified.
         """
         conn = self.get_connection()
 
         if self.mdx_query is None and (self.cube is None or self.view is None):
-            raise ValidationError("MDX query or cube and view are required.")
+            error_msg = "MDX query or cube and view are required."
+            raise ValidationError(error_msg)
         if self.mdx_query is not None and (
             self.cube is not None or self.view is not None
         ):
-            raise ValidationError("Specify only one: MDX query or cube and view.")
+            error_msg="Specify only one: MDX query or cube and view."
+            raise ValidationError(error_msg)
         if self.cube is not None and self.view is not None:
             df = conn.cubes.cells.execute_view_dataframe(
                 cube_name=self.cube,
