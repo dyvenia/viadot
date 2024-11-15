@@ -1140,16 +1140,8 @@ class SAPRFCV2(Source):
                         for rfc_unique_col in self.rfc_unique_id:
                             # Check in SAP metadata what is the declared
                             # dtype characters amount
-                            try:
-                                unique_column_len = self._unique_columns_len[
-                                    rfc_unique_col
-                                ]
-                            except KeyError:
-                                logger.exception(
-                                    f"Missing rfc unique column: {rfc_unique_col} length from SAP metadata!"
-                                )
-                                raise
-                            actual_length_of_field = df_tmp[col].str.len()
+                            unique_column_len = self._unique_columns_len[rfc_unique_col]
+                            actual_length_of_field = df_tmp[rfc_unique_col].str.len()
                             # Check which rows have fewer characters
                             # than specified in the column data type.
                             rows_missing_whitespaces = (
