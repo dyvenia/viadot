@@ -1041,6 +1041,30 @@ class SAPRFCV2(Source):
     def _get_client_side_filter_cols(self):
         return [f[1].split()[0] for f in self.client_side_filters.items()]
 
+    def _adjust_whitespaces(self, df: pd.DataFrame) -> pd.DataFrame:
+        """Adjust the number of whitespaces.
+
+        Add whitespace characters in each row of each unique column to achieve
+        equal length of values in these columns, ensuring proper merging of subqueries.
+
+        """
+        for rfc_unique_col in self.rfc_unique_id:
+            # Check in SAP metadata what is the declared
+            # dtype characters amount
+            rfc_unique_column_len = self._rfc_unique_id_len[rfc_unique_col]
+            actual_length_of_field = df[rfc_unique_col].str.len()
+            # Check which rows column values has less characters
+            # than is defined in SAP data type for each column
+            rows_missing_whitespaces = actual_length_of_field < rfc_unique_column_len
+            if any(rows_missing_whitespaces):
+                # Check how many whitespaces are missing for each row column value
+                logger.info(f"Adding whitespaces for {rfc_unique_col} column")
+                n_missing_whitespaces = rfc_unique_column_len - actual_length_of_field
+                df.loc[rows_missing_whitespaces, rfc_unique_col] += np.char.multiply(
+                    " ", n_missing_whitespaces[rows_missing_whitespaces]
+                )
+        return df
+
     # TODO: refactor to remove linter warnings and so this can be tested.
     @add_viadot_metadata_columns
     def to_df(self, tests: dict | None = None) -> pd.DataFrame:  # noqa: C901, PLR0912, PLR0915
@@ -1118,7 +1142,6 @@ class SAPRFCV2(Source):
                     record_key = "WA"
                     data_raw = np.array(response["DATA"])
                     del response
-
                     # If reference columns are provided, it's not necessary to remove
                     # any extra row.
                     if not isinstance(self.rfc_unique_id[0], str):
@@ -1127,40 +1150,15 @@ class SAPRFCV2(Source):
                         )
                     else:
                         start = False
-
                     records = list(_gen_split(data_raw, sep, record_key))
                     del data_raw
-
                     if (
                         isinstance(self.rfc_unique_id[0], str)
                         and list(df.columns) != fields
                     ):
                         df_tmp = pd.DataFrame(columns=fields)
                         df_tmp[fields] = records
-                        for rfc_unique_col in self.rfc_unique_id:
-                            # Check in SAP metadata what is the declared
-                            # dtype characters amount
-                            unique_column_len = self._unique_columns_len[rfc_unique_col]
-                            actual_length_of_field = df_tmp[rfc_unique_col].str.len()
-                            # Check which rows have fewer characters
-                            # than specified in the column data type.
-                            rows_missing_whitespaces = (
-                                actual_length_of_field < unique_column_len
-                            )
-                            if any(rows_missing_whitespaces):
-                                # Check how many whitespaces are missing in each row.
-                                logger.info(
-                                    f"Adding whitespaces for {rfc_unique_col} column"
-                                )
-                                n_missing_whitespaces = (
-                                    unique_column_len - actual_length_of_field
-                                )
-                                df_tmp.loc[
-                                    rows_missing_whitespaces, rfc_unique_col
-                                ] += np.char.multiply(
-                                    " ",
-                                    n_missing_whitespaces[rows_missing_whitespaces],
-                                )
+                        df_tmp = self._adjust_whitespaces(df_tmp)
                         df = pd.merge(df, df_tmp, on=self.rfc_unique_id, how="outer")
                     elif not start:
                         df[fields] = records
