@@ -1,5 +1,7 @@
 from collections import OrderedDict
 
+from pandas import DataFrame
+
 from viadot.utils import skip_test_on_missing_extra
 
 from .test_sap_rfc import (
@@ -104,3 +106,14 @@ def test___build_pandas_filter_query():
         sap._build_pandas_filter_query(sap.client_side_filters)
         == "thirdlongcolname == 01234"
     ), sap._build_pandas_filter_query(sap.client_side_filters)
+
+
+def test__adjust_whitespaces():
+    sap.rfc_unique_id = ["column1", "column2"]
+    sap._rfc_unique_id_len = {"column1": 5, "column2": 4}
+    data = {"column1": ["xyz  ", "oiu"], "column2": ["yrt ", "lkj"]}
+    df = DataFrame(data)
+    df = sap._adjust_whitespaces(df)
+    col_values_len = df.applymap(lambda x: len(x))
+    check_if_length_match = col_values_len == sap._rfc_unique_id_len.values()
+    assert check_if_length_match.all().all()
