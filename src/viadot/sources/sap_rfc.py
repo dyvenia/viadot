@@ -1053,11 +1053,11 @@ class SAPRFCV2(Source):
             # dtype characters amount
             rfc_unique_column_len = self._rfc_unique_id_len[rfc_unique_col]
             actual_length_of_field = df[rfc_unique_col].str.len()
-            # Check which rows column values has less characters
-            # than is defined in SAP data type for each column
+            # Check which rows have fewer characters
+            # than specified in the column data type.
             rows_missing_whitespaces = actual_length_of_field < rfc_unique_column_len
             if any(rows_missing_whitespaces):
-                # Check how many whitespaces are missing for each row column value
+                # Check how many whitespaces are missing in each row.
                 logger.info(f"Adding whitespaces for {rfc_unique_col} column")
                 n_missing_whitespaces = rfc_unique_column_len - actual_length_of_field
                 df.loc[rows_missing_whitespaces, rfc_unique_col] += np.char.multiply(
