@@ -2,10 +2,10 @@
 
 ## Prerequisites
 
-We use [Rye](https://rye-up.com/). You can install it like so:
+We use [Rye](https://rye.astral.sh/). You can install it like so:
 
 ```console
-curl -sSf https://rye-up.com/get | bash
+curl -sSf https://rye.astral.sh/get | bash
 ```
 
 ## Installation
