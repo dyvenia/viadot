@@ -405,7 +405,7 @@ packaging==24.1
     # via pytest
 paginate==0.5.6
     # via mkdocs-material
-pandas==2.2.2
+pandas==2.2.3
     # via db-dtypes
     # via mkdocs-table-reader-plugin
     # via pandas-gbq

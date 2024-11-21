@@ -234,7 +234,7 @@ packaging==24.1
     # via google-cloud-bigquery
     # via pandas-gbq
     # via prefect
-pandas==2.2.2
+pandas==2.2.3
     # via db-dtypes
     # via pandas-gbq
     # via viadot2
