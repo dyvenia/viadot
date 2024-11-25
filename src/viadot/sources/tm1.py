@@ -9,6 +9,7 @@ from TM1py.Services import TM1Service
 from viadot.config import get_source_credentials
 from viadot.exceptions import ValidationError
 from viadot.sources.base import Source
+from viadot.utils import add_viadot_metadata_columns
 
 
 class TM1Credentials(BaseModel):
@@ -28,7 +29,7 @@ class TM1Credentials(BaseModel):
 
 
 class TM1(Source):
-    """Class for downloading data from TM1 Software using TM1py library."""
+    """TM1 connector."""
 
     def __init__(
         self,
@@ -45,17 +46,14 @@ class TM1(Source):
         *args,
         **kwargs,
     ):
-        """Creating an instance of TM1 source class.
-
-            To download the data to the dataframe user needs to specify MDX query or
-            combination of cube and view.
+        """Create a TM1 connector instance.
 
         Args:
             credentials (dict[str, Any], optional): Credentials stored in a dictionary.
                 Required credentials: username, password, address, port.
                 Defaults to None.
-            config_key (str, optional): Credential key to dictionary where credentials
-                are stored. Defaults to "TM1".
+            config_key (str, optional): The key in the viadot config holding relevant
+                credentials. Defaults to "TM1".
             mdx_query (str, optional): MDX select query needed to download the data.
                 Defaults to None.
             cube (str, optional): Cube name from which data will be downloaded.
@@ -169,8 +167,9 @@ class TM1(Source):
             dimension_name=self.dimension, hierarchy_name=self.hierarchy
         )
 
+    @add_viadot_metadata_columns
     def to_df(self, if_empty: Literal["warn", "fail", "skip"] = "skip") -> pd.DataFrame:
-        """Function for downloading data from TM1 to pd.DataFrame.
+        """Download data into a pandas DataFrame.
 
             To download the data to the dataframe user needs to specify MDX query
             or combination of cube and view.
@@ -180,7 +179,7 @@ class TM1(Source):
             DataFrame is empty. Defaults to "skip".
 
         Returns:
-            pd.DataFrame: DataFrame with data downloaded from TM1 view.
+            pd.DataFrame: DataFrame with the data.
 
         Raises:
             ValidationError: When mdx and cube + view are not specified

@@ -98,7 +98,7 @@ def test_to_df(tm1):
         result = tm1.to_df()
         assert isinstance(result, pd.DataFrame)
         assert not result.empty
-        assert len(result.columns) == 2
+        assert len(result.columns) == 4
 
 def test_to_df_fail(tm1_mock):
     with pytest.raises(ValidationError) as excinfo:
