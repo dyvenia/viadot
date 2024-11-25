@@ -14,7 +14,7 @@ from viadot.orchestration.prefect.tasks.tm1 import tm1_to_df
     retries=1,
     retry_delay_seconds=60,
 )
-def tm1_to_parquet( # noqa: PLR0913
+def tm1_to_parquet(  # noqa: PLR0913
     path: str | None = None,
     mdx_query: str | None = None,
     cube: str | None = None,

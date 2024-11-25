@@ -193,7 +193,7 @@ class TM1(Source):
         if self.mdx_query is not None and (
             self.cube is not None or self.view is not None
         ):
-            error_msg="Specify only one: MDX query or cube and view."
+            error_msg = "Specify only one: MDX query or cube and view."
             raise ValidationError(error_msg)
         if self.cube is not None and self.view is not None:
             df = conn.cubes.cells.execute_view_dataframe(

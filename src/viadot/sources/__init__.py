@@ -49,6 +49,7 @@ __all__ = [
     "Sftp",
     "Sharepoint",
     "Supermetrics",
+    "TM1",
     "Trino",
     "UKCarbonIntensity",
     "VidClub",
