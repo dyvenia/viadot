@@ -1,6 +1,5 @@
 """Task for downloading data from TM1 to a pandas DataFrame."""
 
-
 from pandas import DataFrame
 from prefect import task
 from prefect.logging import get_run_logger
