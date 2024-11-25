@@ -45,10 +45,12 @@ def tm1_to_parquet( # noqa: PLR0913
             More info on: https://docs.prefect.io/concepts/blocks/. Defaults to None.
         config_key (str, optional): The key in the viadot config holding relevant
             credentials. Defaults to "TM1".
-        verify (bool, optional): Whether or not verify SSL certificates.
-            Defaults to False.
         if_empty (str, optional): What to do if output DataFrame is empty.
             Defaults to "skip".
+        if_exists (Literal["append", "replace", "skip"], optional):
+            What to do if the table exists. Defaults to "replace".
+        verify (bool, optional): Whether or not verify SSL certificate.
+            Defaults to False.
     """
     df = tm1_to_df(
         mdx_query=mdx_query,

@@ -6,8 +6,8 @@ import pandas as pd
 from pydantic import BaseModel, SecretStr
 from TM1py.Services import TM1Service
 
-from src.viadot.exceptions import ValidationError
 from viadot.config import get_source_credentials
+from viadot.exceptions import ValidationError
 from viadot.sources.base import Source
 
 
@@ -15,10 +15,10 @@ class TM1Credentials(BaseModel):
     """TM1 credentials.
 
     Uses simple authentication:
-        - username: The user name to use.
-        - password: The password to use.
-        - address: The ip adress to use.
-        - port: The port
+        - username: The user name to use for the connection.
+        - password: The password to use for the connection.
+        - address: The ip address to use for the connection.
+        - port: The port to use for the connection.
     """
 
     username: str
@@ -51,24 +51,25 @@ class TM1(Source):
             combination of cube and view.
 
         Args:
-            credentials (Dict[str, Any], optional): Credentials stored in a dictionary.
-            Required credentials: username, password, address, port. Defaults to None.
+            credentials (dict[str, Any], optional): Credentials stored in a dictionary.
+                Required credentials: username, password, address, port.
+                Defaults to None.
             config_key (str, optional): Credential key to dictionary where credentials
-            are stored. Defaults to "TM1".
+                are stored. Defaults to "TM1".
             mdx_query (str, optional): MDX select query needed to download the data.
-            Defaults to None.
+                Defaults to None.
             cube (str, optional): Cube name from which data will be downloaded.
-            Defaults to None.
+                Defaults to None.
             view (str, optional): View name from which data will be downloaded.
-            Defaults to None.
+                Defaults to None.
             dimension (str, optional): Dimension name. Defaults to None.
             hierarchy (str, optional): Hierarchy name. Defaults to None.
             limit (str, optional): How many rows should be extracted.
-            If None all the available rows will be downloaded. Defaults to None.
+                If None all the available rows will be downloaded. Defaults to None.
             private (bool, optional): Whether or not data download should be private.
-            Defaults to False.
-            verify (bool, optional): Whether or not verify SSL certificates while.
-            Defaults to False.
+                Defaults to False.
+            verify (bool, optional): Whether or not verify SSL certificates.
+                Defaults to False.
 
         Raises:
             CredentialError: When credentials are not found.
@@ -93,7 +94,7 @@ class TM1(Source):
         """Start a connection to TM1 instance.
 
         Returns:
-            TM1Service: Service instance if connection is succesfull.
+            TM1Service: Service instance if connection is successful.
         """
         return TM1Service(
             address=self.validated_creds.get("address"),
@@ -120,6 +121,9 @@ class TM1(Source):
             list: List containing available views names.
 
         """
+        if self.cube is None:
+            msg = "Missing cube name."
+            raise ValidationError(msg)
         conn = self.get_connection()
         return conn.views.get_all_names(self.cube)
 
@@ -140,6 +144,10 @@ class TM1(Source):
             list: List containing available hierarchies names.
 
         """
+        if self.dimension is None:
+            msg = "Missing dimension name."
+            raise ValidationError(msg)
+
         conn = self.get_connection()
         return conn.hierarchies.get_all_names(self.dimension)
 
@@ -152,6 +160,10 @@ class TM1(Source):
             list: List containing available elements names.
 
         """
+        if (self.dimension or self.hierarchy) is None:
+            msg = "Missing dimension or hierarchy."
+            raise ValidationError(msg)
+
         conn = self.get_connection()
         return conn.elements.get_element_names(
             dimension_name=self.dimension, hierarchy_name=self.hierarchy

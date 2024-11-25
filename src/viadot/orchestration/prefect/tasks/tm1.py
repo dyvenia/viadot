@@ -41,7 +41,7 @@ def tm1_to_df(
             More info on: https://docs.prefect.io/concepts/blocks/. Defaults to None.
         config_key (str, optional): The key in the viadot config holding relevant
             credentials. Defaults to "TM1".
-        verify (bool, optional): Whether or not verify SSL certificates.
+        verify (bool, optional): Whether or not verify SSL certificate.
             Defaults to False.
         if_empty (str, optional): What to do if output DataFrame is empty.
             Defaults to "skip".
