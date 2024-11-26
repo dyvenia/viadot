@@ -23,7 +23,6 @@ dependencies = [
     "openpyxl>=3.0.0",
     "prefect>=2.19.7, <3",
     "prefect-sqlalchemy>=0.4.3",
-    "pandas>=1.2.0",
     "duckdb==1.0.0",
     "requests>=2.32.3",
     "prefect-github>=0.2.7",
@@ -37,6 +36,7 @@ dependencies = [
     "simple-salesforce==1.12.6",
     "pandas-gbq==0.23.1",
     "paramiko>=3.5.0",
+    "pandas>=2.2.3",
 ]
 requires-python = ">=3.10"
 readme = "README.md"
@@ -60,7 +60,7 @@ aws = [
     "awswrangler>=2.20.1, <3.0",
     "prefect-aws>=0.4.19",
 ]
-sap = ["pyrfc"]
+sap = ["pyrfc==3.3.1"]
 
 [tool.rye]
 managed = true

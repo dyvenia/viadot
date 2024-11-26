@@ -187,3 +187,6 @@ profiles.yaml
 
 # AWS
 .aws
+
+# Rye
+.rye/
