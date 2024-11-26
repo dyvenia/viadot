@@ -52,9 +52,9 @@ beautifulsoup4==4.12.3
     # via o365
 bleach==6.1.0
     # via nbconvert
-boto3==1.35.1
+boto3==1.34.106
     # via moto
-botocore==1.35.1
+botocore==1.34.162
     # via boto3
     # via moto
     # via s3transfer
@@ -148,7 +148,7 @@ fastjsonschema==2.20.0
 frozenlist==1.4.1
     # via aiohttp
     # via aiosignal
-fsspec==2024.6.1
+fsspec==2024.6.0
     # via prefect
 ghp-import==2.1.0
     # via mkdocs
@@ -194,7 +194,7 @@ griffe==0.47.0
 grpcio==1.66.1
     # via google-api-core
     # via grpcio-status
-grpcio-status==1.66.1
+grpcio-status==1.62.3
     # via google-api-core
 h11==0.14.0
     # via httpcore
@@ -222,7 +222,7 @@ idna==3.7
     # via yarl
 imagehash==4.3.1
     # via viadot2
-importlib-metadata==8.3.0
+importlib-metadata==6.11.0
     # via mike
 importlib-resources==6.1.3
     # via mike
@@ -373,7 +373,7 @@ nest-asyncio==1.6.0
     # via ipykernel
 networkx==3.3
     # via visions
-numpy==1.26.4
+numpy==1.23.4
     # via db-dtypes
     # via imagehash
     # via pandas
@@ -389,7 +389,7 @@ o365==2.0.36
 oauthlib==3.2.2
     # via kubernetes
     # via requests-oauthlib
-openpyxl==3.1.5
+openpyxl==3.0.10
     # via viadot2
 orjson==3.10.7
     # via prefect
@@ -405,7 +405,7 @@ packaging==24.1
     # via pytest
 paginate==0.5.6
     # via mkdocs-material
-pandas==2.2.3
+pandas==1.5.1
     # via db-dtypes
     # via mkdocs-table-reader-plugin
     # via pandas-gbq
@@ -419,7 +419,7 @@ paramiko==3.5.0
     # via viadot2
 parso==0.8.4
     # via jedi
-pathspec==0.12.1
+pathspec==0.11.2
     # via mkdocs
     # via prefect
 pendulum==2.1.2
@@ -449,7 +449,7 @@ prompt-toolkit==3.0.47
     # via ipython
 proto-plus==1.24.0
     # via google-api-core
-protobuf==5.28.2
+protobuf==4.25.5
     # via google-api-core
     # via googleapis-common-protos
     # via grpcio-status
@@ -617,7 +617,7 @@ ruamel-yaml-clib==0.2.8
 ruff==0.6.7
 s3transfer==0.10.2
     # via boto3
-scipy==1.14.0
+scipy==1.13.1
     # via imagehash
 sendgrid==6.11.0
     # via viadot2
@@ -667,6 +667,8 @@ starkbank-ecdsa==2.2.0
     # via sendgrid
 tabulate==0.9.0
     # via mkdocs-table-reader-plugin
+tangled-up-in-unicode==0.2.0
+    # via visions
 text-unidecode==1.3
     # via python-slugify
 tinycss2==1.3.0
@@ -711,14 +713,13 @@ typing-extensions==4.12.2
     # via uvicorn
 tzdata==2024.1
     # via o365
-    # via pandas
 tzlocal==5.2
     # via dateparser
     # via o365
     # via trino
 ujson==5.10.0
     # via prefect
-urllib3==2.2.2
+urllib3==1.26.20
     # via botocore
     # via docker
     # via kubernetes
@@ -728,7 +729,7 @@ uvicorn==0.30.6
     # via prefect
 verspec==0.1.0
     # via mike
-visions==0.7.6
+visions==0.7.5
     # via viadot2
 watchdog==4.0.2
     # via mkdocs
