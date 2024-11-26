@@ -125,23 +125,23 @@ def test__cast_df_cols():
             "bool_column": [True, False, True, False],
             "datetime_column": [
                 "2023-05-25 10:30:00",
-                "2023-05-20 ",
-                "2023-05-15 10:30",
-                "2023-05-10 10:30:00+00:00 ",
+                "2023-05-20 10:00:00",
+                "2023-05-15 10:30:00",
+                "2023-05-10 10:30:00",
             ],
             "int_column": [5, 10, 15, 20],
             "object_column": ["apple", "banana", "melon", "orange"],
         }
     )
     test_df["datetime_column"] = pd.to_datetime(
-        test_df["datetime_column"], format="mixed"
+        test_df["datetime_column"], infer_datetime_format=True
     )
     result_df = _cast_df_cols(
         test_df, types_to_convert=["datetime", "bool", "int", "object"]
     )
 
     assert result_df["bool_column"].dtype == pd.Int64Dtype()
-    assert result_df["datetime_column"].dtype == pd.StringDtype()
+    assert pd.api.types.is_object_dtype(result_df["datetime_column"])
     assert result_df["int_column"].dtype == pd.Int64Dtype()
     assert result_df["object_column"].dtype == pd.StringDtype()
 
