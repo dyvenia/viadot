@@ -1,4 +1,4 @@
-"""Task for downloading data from Business Core API to a Parquet file."""
+"""Task for downloading data from Business Core API to a pandas DataFrame."""
 
 from typing import Any
 
@@ -14,7 +14,6 @@ from viadot.sources.business_core import BusinessCore
 
 @task(retries=3, retry_delay_seconds=10, timeout_seconds=60 * 60 * 3)
 def business_core_to_df(
-    path: str | None = None,
     url: str | None = None,
     filters: dict[str, Any] | None = None,
     credentials_secret: str | None = None,
@@ -22,10 +21,9 @@ def business_core_to_df(
     if_empty: str = "skip",
     verify: bool = True,
 ) -> DataFrame:
-    """Download data from Business Core API to a Parquet file.
+    """Download data from Business Core API to a pandas DataFrame.
 
     Args:
-        path (str, required): Path where to save the Parquet file. Defaults to None.
         url (str, required): Base url to the view in Business Core API. Defaults to
             None.
         filters (dict[str, Any], optional): Filters in form of dictionary. Available
@@ -51,7 +49,6 @@ def business_core_to_df(
 
     bc = BusinessCore(
         url=url,
-        path=path,
         credentials=credentials,
         config_key=config_key,
         filters=filters,
