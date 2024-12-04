@@ -220,6 +220,8 @@ idna==3.7
     # via httpx
     # via requests
     # via yarl
+ijson==3.3.0
+    # via tm1py
 imagehash==4.3.1
     # via viadot2
 importlib-metadata==6.11.0
@@ -315,6 +317,8 @@ mdit-py-plugins==0.4.1
     # via jupytext
 mdurl==0.1.2
     # via markdown-it-py
+mdxpy==1.3.2
+    # via tm1py
 mergedeep==1.3.4
     # via mkdocs
     # via mkdocs-get-deps
@@ -372,6 +376,7 @@ neoteroi-mkdocs==1.1.0
 nest-asyncio==1.6.0
     # via ipykernel
 networkx==3.3
+    # via tm1py
     # via visions
 numpy==1.23.4
     # via db-dtypes
@@ -533,6 +538,7 @@ pytz==2024.1
     # via dateparser
     # via pandas
     # via prefect
+    # via tm1py
     # via trino
     # via zeep
 pytzdata==2020.1
@@ -584,6 +590,7 @@ requests==2.32.3
     # via responses
     # via sharepy
     # via simple-salesforce
+    # via tm1py
     # via trino
     # via viadot2
     # via zeep
@@ -675,6 +682,8 @@ tinycss2==1.3.0
     # via cairosvg
     # via cssselect2
     # via nbconvert
+tm1py==2.0.4
+    # via viadot2
 toml==0.10.2
     # via prefect
 tomli==2.0.1
