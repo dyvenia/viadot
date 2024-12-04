@@ -35,11 +35,6 @@ class TM1(Source):
         self,
         credentials: dict[str, Any] | None = None,
         config_key: str = "TM1",
-        mdx_query: str | None = None,
-        cube: str | None = None,
-        view: str | None = None,
-        dimension: str | None = None,
-        hierarchy: str | None = None,
         limit: int | None = None,
         private: bool = False,
         verify: bool = False,
@@ -74,19 +69,14 @@ class TM1(Source):
 
         """
         raw_creds = credentials or get_source_credentials(config_key)
-        self.validated_creds = dict(TM1Credentials(**raw_creds))
+        validated_creds = dict(TM1Credentials(**raw_creds))
 
         self.config_key = config_key
-        self.mdx_query = mdx_query
-        self.cube = cube
-        self.view = view
-        self.dimension = dimension
-        self.hierarchy = hierarchy
         self.limit = limit
         self.private = private
         self.verify = verify
 
-        super().__init__(*args, credentials=self.validated_creds, **kwargs)
+        super().__init__(*args, credentials=validated_creds, **kwargs)
 
     def get_connection(self) -> TM1Service:
         """Start a connection to TM1 instance.
@@ -95,10 +85,10 @@ class TM1(Source):
             TM1Service: Service instance if connection is successful.
         """
         return TM1Service(
-            address=self.validated_creds.get("address"),
-            port=self.validated_creds.get("port"),
-            user=self.validated_creds.get("username"),
-            password=self.validated_creds.get("password").get_secret_value(),
+            address=self.credentials.get("address"),
+            port=self.credentials.get("port"),
+            user=self.credentials.get("username"),
+            password=self.credentials.get("password").get_secret_value(),
             ssl=self.verify,
         )
 
@@ -112,18 +102,18 @@ class TM1(Source):
         conn = self.get_connection()
         return conn.cubes.get_all_names()
 
-    def get_views_names(self) -> list:
+    def get_views_names(self, cube: str) -> list:
         """Get list of available views in TM1 cube instance.
+
+        Args:
+            cube (str): Cube name.
 
         Returns:
             list: List containing available views names.
 
         """
-        if self.cube is None:
-            msg = "Missing cube name."
-            raise ValidationError(msg)
         conn = self.get_connection()
-        return conn.views.get_all_names(self.cube)
+        return conn.views.get_all_names(cube)
 
     def get_dimensions_names(self) -> list:
         """Get list of available dimensions in TM1 instance.
@@ -135,79 +125,89 @@ class TM1(Source):
         conn = self.get_connection()
         return conn.dimensions.get_all_names()
 
-    def get_hierarchies_names(self) -> list:
+    def get_hierarchies_names(self, dimension: str) -> list:
         """Get list of available hierarchies in TM1 dimension instance.
+
+        Args:
+            dimension (str): Dimension name.
 
         Returns:
             list: List containing available hierarchies names.
 
         """
-        if self.dimension is None:
-            msg = "Missing dimension name."
-            raise ValidationError(msg)
-
         conn = self.get_connection()
-        return conn.hierarchies.get_all_names(self.dimension)
+        return conn.hierarchies.get_all_names(dimension)
 
-    def get_available_elements(self) -> list:
+    def get_available_elements(self, dimension: str, hierarchy: str) -> list:
         """Get list of available elements in TM1 instance.
 
         Elements are extracted based on hierarchy and dimension.
+
+        Args:
+            dimension (str): Dimension name.
+            hierarchy (str): Hierarchy name.
 
         Returns:
             list: List containing available elements names.
 
         """
-        if (self.dimension or self.hierarchy) is None:
+        if dimension is None or hierarchy is None:
             msg = "Missing dimension or hierarchy."
             raise ValidationError(msg)
 
         conn = self.get_connection()
         return conn.elements.get_element_names(
-            dimension_name=self.dimension, hierarchy_name=self.hierarchy
+            dimension_name=dimension, hierarchy_name=hierarchy
         )
 
     @add_viadot_metadata_columns
-    def to_df(self, if_empty: Literal["warn", "fail", "skip"] = "skip") -> pd.DataFrame:
+    def to_df(
+        self,
+        if_empty: Literal["warn", "fail", "skip"] = "skip",
+        mdx_query: str | None = None,
+        cube: str | None = None,
+        view: str | None = None,
+    ) -> pd.DataFrame:
         """Download data into a pandas DataFrame.
 
             To download the data to the dataframe user needs to specify MDX query
-            or combination of cube and view.
+                or combination of cube and view.
 
         Args:
             if_empty (Literal["warn", "fail", "skip"], optional): What to do if output
-            DataFrame is empty. Defaults to "skip".
+                DataFrame is empty. Defaults to "skip".
+            mdx_query (str): MDX query. Defaults to None.
+            cube (str): Cube name. Defaults to None.
+            view (str): View name. Defaults to None.
 
         Returns:
             pd.DataFrame: DataFrame with the data.
 
         Raises:
             ValidationError: When mdx and cube + view are not specified
-            or when combination of both is specified.
+                or when combination of both is specified.
         """
         conn = self.get_connection()
 
-        if self.mdx_query is None and (self.cube is None or self.view is None):
+        if mdx_query is None and (cube is None or view is None):
             error_msg = "MDX query or cube and view are required."
             raise ValidationError(error_msg)
-        if self.mdx_query is not None and (
-            self.cube is not None or self.view is not None
-        ):
+        if mdx_query is not None and (cube is not None or view is not None):
             error_msg = "Specify only one: MDX query or cube and view."
             raise ValidationError(error_msg)
-        if self.cube is not None and self.view is not None:
+        if cube is not None and view is not None:
             df = conn.cubes.cells.execute_view_dataframe(
-                cube_name=self.cube,
-                view_name=self.view,
+                cube_name=cube,
+                view_name=view,
                 private=self.private,
                 top=self.limit,
             )
-        elif self.mdx_query is not None:
-            df = conn.cubes.cells.execute_mdx_dataframe(self.mdx_query)
+        elif mdx_query is not None:
+            df = conn.cubes.cells.execute_mdx_dataframe(mdx_query)
 
         self.logger.info(
             f"Data was successfully transformed into DataFrame: {len(df.columns)} columns and {len(df)} rows."
         )
-        if df.empty is True:
+        if df.empty:
             self._handle_if_empty(if_empty)
         return df

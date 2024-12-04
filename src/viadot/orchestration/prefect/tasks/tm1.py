@@ -58,15 +58,17 @@ def tm1_to_df(
     bc = TM1(
         credentials=credentials,
         config_key=config_key,
-        mdx_query=mdx_query,
-        cube=cube,
-        view=view,
         limit=limit,
         private=private,
         verify=verify,
     )
 
-    df = bc.to_df(if_empty=if_empty)
+    df = bc.to_df(
+        if_empty=if_empty,
+        mdx_query=mdx_query,
+        cube=cube,
+        view=view,
+    )
 
     nrows = df.shape[0]
     ncols = df.shape[1]
