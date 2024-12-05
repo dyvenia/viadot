@@ -32,6 +32,7 @@ from .sql_server_to_minio import sql_server_to_minio
 from .sql_server_to_parquet import sql_server_to_parquet
 from .sql_server_transform import sql_server_transform
 from .supermetrics_to_adls import supermetrics_to_adls
+from .tm1_to_parquet import tm1_to_parquet
 from .transform import transform
 from .transform_and_catalog import transform_and_catalog
 from .vid_club_to_adls import vid_club_to_adls
@@ -70,6 +71,7 @@ __all__ = [
     "sql_server_to_parquet",
     "sql_server_transform",
     "supermetrics_to_adls",
+    "tm1_to_parquet",
     "transform",
     "transform_and_catalog",
     "vid_club_to_adls",
