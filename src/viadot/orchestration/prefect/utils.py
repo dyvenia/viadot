@@ -57,6 +57,8 @@ class DynamicDateHandler:
             of the day X years ago
         - "X_years/months/days_ago_full_date":  e.g., "3_years_ago_full_date",
             refers to a given date X units ago in dynamic_date_format
+        - "years_from_x_until_now_included": e.g. "years_from_2019_until_now_included",
+        refers to a data range of the years from a given year until this year included
         - "last_X_years/months/days": e.g., "last_10_months", refers to a data range
             of the months in 'YMM' format
         - "first_X_days_from_X": e.g., "first_10_days_of_January_2020",
@@ -80,7 +82,7 @@ class DynamicDateHandler:
             "last_x_units": r"last_(\d+)_(years|months|days)",
             "first_x_days_from": r"first_(\d+)_days_from_(\w+)_(\d{4})",
             "last_x_days_from": r"last_(\d+)_days_from_(\w+)_(\d{4})",
-            "years_from_x_until_now": r"years_from_(\d{4})_until_now",
+            "years_from_x_until_now_included": r"years_from_(\d{4})_until_now_included",
         }
         self.dynamic_date_format = dynamic_date_format
         self.dynamic_date_timezone = dynamic_date_timezone
@@ -88,7 +90,9 @@ class DynamicDateHandler:
         self.replacements = self._create_date_dict()
 
     def _generate_years(
-        self, last_years: int | None, from_year: str | None, num_years: str | None
+        self,
+        last_years: int | None,
+        from_year: str | None,
     ) -> list[str]:
         """Generate a list of years either for the last X years or from a start year.
 
@@ -96,8 +100,6 @@ class DynamicDateHandler:
             last_years (int | None): The number of years to generate
                 from the current year.
             from_year (str | None): The starting year.
-            num_years (int | None): The number of years to generate
-                from the starting year.
 
         Returns:
             list: A list of years in ascending order.
@@ -327,9 +329,7 @@ class DynamicDateHandler:
                     returns the unhandled dynamic_date_marker parameter
         """
         if unit == "years":
-            return self._generate_years(
-                last_years=number, from_year=None, num_years=None
-            )
+            return self._generate_years(last_years=number, from_year=None)
         if unit == "months":
             return self._generate_months(last_months=number)
         if unit == "days":
@@ -367,12 +367,11 @@ class DynamicDateHandler:
                     dynamic_date_marker, int(number), unit
                 )
 
-        elif key == "years_from_x_until_now":
+        elif key == "years_from_x_until_now_included":
             for start_year in match_found:
                 return self._generate_years(
                     last_years=None,
-                    from_year=start_year,
-                    num_years=None,  # type: ignore
+                    from_year=start_year,  # type: ignore
                 )
 
         elif key == "first_x_days_from":
