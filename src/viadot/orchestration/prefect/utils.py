@@ -59,8 +59,6 @@ class DynamicDateHandler:
             refers to a given date X units ago in dynamic_date_format
         - "last_X_years/months/days": e.g., "last_10_months", refers to a data range
             of the months in 'YMM' format
-        - "Y_years_from_X": e.g., "10_years_from_2020", refers to a data range
-            of the year numbers from a specified year
         - "first_X_days_from_X": e.g., "first_10_days_of_January_2020",
             returns a data range of days from a given month
 
@@ -80,9 +78,9 @@ class DynamicDateHandler:
         }
         self.range_patterns = {
             "last_x_units": r"last_(\d+)_(years|months|days)",
-            "y_years_from_x": r"(\d+)_years_from_(\d{4})",
             "first_x_days_from": r"first_(\d+)_days_from_(\w+)_(\d{4})",
             "last_x_days_from": r"last_(\d+)_days_from_(\w+)_(\d{4})",
+            "years_from_x_until_now": r"years_from_(\d{4})_until_now",
         }
         self.dynamic_date_format = dynamic_date_format
         self.dynamic_date_timezone = dynamic_date_timezone
@@ -109,10 +107,8 @@ class DynamicDateHandler:
             return [str(current_year - i) for i in range(last_years)][
                 ::-1
             ]  # Reversed to ascending order
-        if from_year and num_years:
-            return [
-                str(int(from_year) + i) for i in range(int(num_years))
-            ]  # Ascending order
+        if from_year:
+            return [str(year) for year in range(int(from_year), current_year + 1)]
 
         return []
 
@@ -371,12 +367,12 @@ class DynamicDateHandler:
                     dynamic_date_marker, int(number), unit
                 )
 
-        elif key == "y_years_from_x":
-            for number, start_year in match_found:
+        elif key == "years_from_x_until_now":
+            for start_year in match_found:
                 return self._generate_years(
                     last_years=None,
                     from_year=start_year,
-                    num_years=int(number),  # type: ignore
+                    num_years=None,  # type: ignore
                 )
 
         elif key == "first_x_days_from":
