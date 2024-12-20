@@ -47,7 +47,6 @@ def business_core_to_parquet(
     """
     df = business_core_to_df(
         url=url,
-        path=path,
         credentials_secret=credentials_secret,
         config_key=config_key,
         filters=filters,
