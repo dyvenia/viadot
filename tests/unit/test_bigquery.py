@@ -155,10 +155,8 @@ def test_get_google_bigquery_data_failure(
 
 
 @pytest.mark.connect
-def test_api_connection_list_tables(
-    mocker, monkeypatch, mock_service_account_credentials
-):
-    """Test BigQuery `api_connection` method with predefined query."""
+def test_to_df_list_tables(mocker, monkeypatch, mock_service_account_credentials):
+    """Test BigQuery `to_df` method with predefined query."""
     monkeypatch.setattr(
         service_account.Credentials,
         "from_service_account_info",
@@ -168,16 +166,16 @@ def test_api_connection_list_tables(
 
     mock_df = pd.DataFrame({"table_name": ["table1", "table2"]})
     mocker.patch.object(BigQuery, "_get_google_bigquery_data", return_value=mock_df)
-    bigquery.api_connection(query="tables", dataset_name="test_dataset")
+    df = bigquery.to_df(query="tables", dataset_name="test_dataset")
 
-    pd.testing.assert_frame_equal(bigquery.df_data, mock_df)
+    pd.testing.assert_frame_equal(df, mock_df)
 
 
 @pytest.mark.connect
-def test_api_connection_with_columns_and_date(
+def test_to_df_with_columns_and_date(
     mocker, monkeypatch, mock_service_account_credentials
 ):
-    """Test BigQuery `api_connection` method."""
+    """Test BigQuery `to_df` method."""
     monkeypatch.setattr(
         service_account.Credentials,
         "from_service_account_info",
@@ -195,7 +193,7 @@ def test_api_connection_with_columns_and_date(
         {"col1": [1, 2], "col2": [3, 4], "date_col": ["2023-01-01", "2023-01-02"]}
     )
     mocker.patch.object(BigQuery, "_get_google_bigquery_data", return_value=mock_df)
-    bigquery.api_connection(
+    df = bigquery.to_df(
         dataset_name="test_dataset",
         table_name="test_table",
         columns=["col1", "col2"],
@@ -204,21 +202,4 @@ def test_api_connection_with_columns_and_date(
         end_date="2023-01-31",
     )
 
-    pd.testing.assert_frame_equal(bigquery.df_data, mock_df)
-
-
-@pytest.mark.functions
-def test_to_df(monkeypatch, mock_service_account_credentials):
-    """Test BigQuery `to_df` method."""
-    monkeypatch.setattr(
-        service_account.Credentials,
-        "from_service_account_info",
-        lambda info: mock_service_account_credentials,  # noqa: ARG005
-    )
-    bigquery = BigQuery(credentials=variables["credentials"])
-
-    mock_df = pd.DataFrame({"col1": [1, 2], "col2": [3, 4]})
-    bigquery.df_data = mock_df
-    result = bigquery.to_df()
-
-    pd.testing.assert_frame_equal(result, mock_df)
+    pd.testing.assert_frame_equal(df, mock_df)
