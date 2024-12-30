@@ -70,7 +70,7 @@ def mediatool_to_df(
                 organization_id=organization_id,
             )
             df_media_entries = mediatool.to_df(
-                data=media_entries_data, drop_columns=media_entries_columns
+                data=media_entries_data, columns=media_entries_columns
             )
             unique_vehicle_ids = df_media_entries["vehicleId"].unique()
             unique_media_type_ids = df_media_entries["mediaTypeId"].unique()
