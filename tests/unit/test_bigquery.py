@@ -119,8 +119,10 @@ def test_list_columns(mocker, monkeypatch, mock_service_account_credentials):
 
 
 @pytest.mark.functions
-def test_gbd_success(mocker, monkeypatch, mock_service_account_credentials):
-    """Test BigQuery `_gbd` method."""
+def test_get_google_bigquery_data_success(
+    mocker, monkeypatch, mock_service_account_credentials
+):
+    """Test BigQuery `_get_google_bigquery_data` method."""
     monkeypatch.setattr(
         service_account.Credentials,
         "from_service_account_info",
@@ -130,14 +132,16 @@ def test_gbd_success(mocker, monkeypatch, mock_service_account_credentials):
 
     mock_df = pd.DataFrame({"col1": [1, 2], "col2": [3, 4]})
     mocker.patch("pandas_gbq.read_gbq", return_value=mock_df)
-    result = bigquery._gbd("SELECT * FROM test_table")
+    result = bigquery._get_google_bigquery_data("SELECT * FROM test_table")
 
     pd.testing.assert_frame_equal(result, mock_df)
 
 
 @pytest.mark.functions
-def test_gbd_failure(mocker, monkeypatch, mock_service_account_credentials):
-    """Test BigQuery `_gbd` method failure."""
+def test_get_google_bigquery_data_failure(
+    mocker, monkeypatch, mock_service_account_credentials
+):
+    """Test BigQuery `_get_google_bigquery_data` method failure."""
     monkeypatch.setattr(
         service_account.Credentials,
         "from_service_account_info",
@@ -147,7 +151,7 @@ def test_gbd_failure(mocker, monkeypatch, mock_service_account_credentials):
 
     mocker.patch("pandas_gbq.read_gbq", side_effect=APIError("Error"))
     with pytest.raises(APIError):
-        bigquery._gbd("SELECT * FROM test_table")
+        bigquery._get_google_bigquery_data("SELECT * FROM test_table")
 
 
 @pytest.mark.connect
@@ -163,7 +167,7 @@ def test_api_connection_list_tables(
     bigquery = BigQuery(credentials=variables["credentials"])
 
     mock_df = pd.DataFrame({"table_name": ["table1", "table2"]})
-    mocker.patch.object(BigQuery, "_gbd", return_value=mock_df)
+    mocker.patch.object(BigQuery, "_get_google_bigquery_data", return_value=mock_df)
     bigquery.api_connection(query="tables", dataset_name="test_dataset")
 
     pd.testing.assert_frame_equal(bigquery.df_data, mock_df)
@@ -190,7 +194,7 @@ def test_api_connection_with_columns_and_date(
     mock_df = pd.DataFrame(
         {"col1": [1, 2], "col2": [3, 4], "date_col": ["2023-01-01", "2023-01-02"]}
     )
-    mocker.patch.object(BigQuery, "_gbd", return_value=mock_df)
+    mocker.patch.object(BigQuery, "_get_google_bigquery_data", return_value=mock_df)
     bigquery.api_connection(
         dataset_name="test_dataset",
         table_name="test_table",

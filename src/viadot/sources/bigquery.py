@@ -111,11 +111,11 @@ class BigQuery(Source):
                 FROM {self.project_id}.{dataset_name}.INFORMATION_SCHEMA.COLUMNS
                 WHERE table_name="{table_name}"
                 """  # noqa: S608
-        df_columns = self._gbd(query)
+        df_columns = self._get_google_bigquery_data(query)
 
         return df_columns["column_name"].values
 
-    def _gbd(self, query: str) -> pd.DataFrame:
+    def _get_google_bigquery_data(self, query: str) -> pd.DataFrame:
         """Connect to BigQuery API.
 
         Args:
@@ -222,7 +222,7 @@ class BigQuery(Source):
                     + f"FROM `{self.project_id}.{dataset_name}.{table_name}`"
                 )
 
-        self.df_data = self._gbd(query)
+        self.df_data = self._get_google_bigquery_data(query)
 
         self.logger.info(f"Downloaded the data from the table name: '{table_name}'.")
 
