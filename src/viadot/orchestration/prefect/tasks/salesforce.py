@@ -56,10 +56,5 @@ def salesforce_to_df(
         domain=domain,
         client_id=client_id,
     )
-    salesforce.api_connection(
-        query=query,
-        table=table,
-        columns=columns,
-    )
 
-    return salesforce.to_df()
+    return salesforce.to_df(query=query, table=table, columns=columns)
