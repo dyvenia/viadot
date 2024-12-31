@@ -1,6 +1,7 @@
 """'mediatool.py'."""
 
 import json
+from typing import Literal
 
 import pandas as pd
 from pydantic import BaseModel
@@ -8,7 +9,7 @@ from pydantic import BaseModel
 from viadot.config import get_source_credentials
 from viadot.exceptions import APIError, CredentialError
 from viadot.sources.base import Source
-from viadot.utils import add_viadot_metadata_columns, handle_api_response
+from viadot.utils import add_viadot_metadata_columns, handle_api_response, join_dfs
 
 
 class MediatoolCredentials(BaseModel):
@@ -316,3 +317,132 @@ class Mediatool(Source):
             )
 
         return data_frame
+
+    @add_viadot_metadata_columns
+    def to_df(
+        self,
+        organization_ids: list[str] | None = None,
+        media_entries_columns: list[str] | None = None,
+        if_empty: Literal["warn"] | Literal["skip"] | Literal["fail"] = "warn",
+    ) -> pd.DataFrame:
+        """Data from different endpoints of the Mediatool API are fetched, transformed
+        and combind.A final object is created containing data for all organizations
+        from the list
+
+        Args:
+        organization_ids (list[str], optional): List of organization IDs.
+            Defaults to None.
+        media_entries_columns (list[str], optional): Columns to get from media entries.
+            Defaults to None.
+        if_empty (Literal[warn, skip, fail], optional): What to do if there is no
+            data. Defaults to "warn".
+
+        Raises:
+            ValueError: Raised when no organizations are defined or an organization ID
+            is not found in the organizations list.
+
+        Returns:
+            pd.DataFrame: DataFrame containing the combined data from the specified
+            endpoints.
+        """
+        # first method ORGANIZATIONS
+        df_organizations = self.fetch_and_transform(endpoint="organizations")
+
+        if organization_ids is None:
+            message = "No organizations were defined."
+            raise ValueError(message)
+
+        list_of_organizations_df = []
+        for organization_id in organization_ids:
+            if organization_id in df_organizations["_id_organizations"].unique():
+                self.logger.info(f"Downloading data for: {organization_id} ...")
+
+                # extract media entries per organization
+                df_media_entries = self.fetch_and_transform(
+                    endpoint="media_entries",
+                    organization_id=organization_id,
+                    columns=media_entries_columns,
+                )
+
+                unique_vehicle_ids = df_media_entries["vehicleId"].unique()
+                unique_media_type_ids = df_media_entries["mediaTypeId"].unique()
+
+                # extract vehicles
+                df_vehicles = self.fetch_and_transform(
+                    endpoint="vehicles", vehicle_ids=unique_vehicle_ids
+                )
+
+                # extract campaigns
+                df_campaigns = self.fetch_and_transform(
+                    endpoint="campaigns",
+                    organization_id=organization_id,
+                )
+
+                # extract media types
+                df_media_types = self.fetch_and_transform(
+                    endpoint="media_types",
+                    media_type_ids=unique_media_type_ids,
+                )
+
+                # join media entries & organizations
+                df_merged_entries_orgs = join_dfs(
+                    df_left=df_media_entries,
+                    df_right=df_organizations,
+                    left_on="organizationId",
+                    right_on="_id_organizations",
+                    columns_from_right_df=[
+                        "_id_organizations",
+                        "name_organizations",
+                        "abbreviation_organizations",
+                    ],
+                    how="left",
+                )
+
+                # join the previous merge & campaigns
+                df_merged_campaigns = join_dfs(
+                    df_left=df_merged_entries_orgs,
+                    df_right=df_campaigns,
+                    left_on="campaignId",
+                    right_on="_id_campaigns",
+                    columns_from_right_df=[
+                        "_id_campaigns",
+                        "name_campaigns",
+                        "conventionalName_campaigns",
+                    ],
+                    how="left",
+                )
+
+                # join the previous merge & vehicles
+                df_merged_vehicles = join_dfs(
+                    df_left=df_merged_campaigns,
+                    df_right=df_vehicles,
+                    left_on="vehicleId",
+                    right_on="_id_vehicles",
+                    columns_from_right_df=["_id_vehicles", "name_vehicles"],
+                    how="left",
+                )
+
+                # join the previous merge & media types
+                df_merged_media_types = join_dfs(
+                    df_left=df_merged_vehicles,
+                    df_right=df_media_types,
+                    left_on="mediaTypeId",
+                    right_on="_id_media_types",
+                    columns_from_right_df=["_id_media_types", "name_media_types"],
+                    how="left",
+                )
+
+                list_of_organizations_df.append(df_merged_media_types)
+
+            else:
+                message = (
+                    f"Organization - {organization_id} not found in organizations list."
+                )
+                raise ValueError(message)
+
+        df_final = pd.concat(list_of_organizations_df)
+
+        if df_final.empty:
+            self._handle_if_empty(if_empty)
+
+        return df_final
