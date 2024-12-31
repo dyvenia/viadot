@@ -64,27 +64,6 @@ class Mediatool(Source):
 
         self.url_abbreviation = None
 
-    def _rename_columns(
-        self,
-        df: pd.DataFrame,
-        column_suffix: str,
-    ) -> pd.DataFrame:
-        """Rename columns.
-
-        Args:
-            df (pd.DataFrame): Incoming Data frame.
-            column_suffix (str): String to be added at the end of column name.
-
-        Returns:
-            pd.DataFrame: Modified Data Frame.
-        """
-        column_suffix = column_suffix.split("get_")[-1]
-        dict_mapped_names = {
-            column_name: f"{column_name}_{column_suffix}" for column_name in df.columns
-        }
-
-        return df.rename(columns=dict_mapped_names)
-
     def _get_organizations(
         self,
         user_id: str | None = None,
@@ -310,8 +289,12 @@ class Mediatool(Source):
             )
 
         if column_suffix:
-            data_frame = self._rename_columns(
-                df=data_frame, column_suffix=column_suffix
+            # Endpoint name is added to the end of the column name to make it unique.
+            data_frame = data_frame.rename(
+                columns={
+                    column_name: f"{column_name}_{column_suffix}"
+                    for column_name in data_frame.columns
+                }
             )
 
         if columns:

@@ -114,18 +114,6 @@ def test_get_media_types(mock_handle_api_response):
     assert result == expected_result
 
 
-@pytest.mark.functions
-def test_rename_columns():
-    """Test Mediatool `_rename_columns` function."""
-    df = pd.DataFrame({"col1": [1, 2], "col2": [3, 4]})
-
-    mediatool = Mediatool(credentials=variables["credentials"])
-
-    result = mediatool._rename_columns(df, column_suffix="test")
-    expected_result = pd.DataFrame({"col1_test": [1, 2], "col2_test": [3, 4]})
-    pd.testing.assert_frame_equal(result, expected_result)
-
-
 @pytest.mark.connect
 @patch("viadot.sources.mediatool.handle_api_response")
 def test_to_records_connection(mock_handle_api_response):
