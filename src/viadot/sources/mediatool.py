@@ -238,40 +238,43 @@ class Mediatool(Source):
 
         return list_media_types
 
-    def api_connection(
+    def _to_records(
         self,
-        get_data_from: str,
+        endpoint: Literal[
+            "organizations", "media_entries", "vehicles", "campaigns", "media_types"
+        ],
         organization_id: str | None = None,
         vehicle_ids: list[str] | None = None,
         media_type_ids: list[str] | None = None,
     ) -> list[dict[str, str]]:
-        """General method to connect to Mediatool API and generate the response.
+        """Connects to the Mediatool API and retrieves data for the specified endpoint.
 
         Args:
-            get_data_from (str): Method to be used to extract data from.
+            endpoint (Literal["organizations", "media_entries", "vehicles", "campaigns",
+                "media_types"]): The API endpoint to fetch data from.
             organization_id (str, optional): Organization ID. Defaults to None.
             vehicle_ids (list[str]): List of organization IDs. Defaults to None.
             media_type_ids (list[str]): List of media type IDs. Defaults to None.
 
         Returns:
-            list[dict[str, str]]: Data from Mediatool API connection.
+            list[dict[str, str]]: A list of records containing the retrieved data.
         """
-        self.url_abbreviation = get_data_from
+        if endpoint == "organizations":
+            return self._get_organizations(self.user_id)
 
-        if self.url_abbreviation == "organizations":
-            returned_data = self._get_organizations(self.user_id)
+        if endpoint == "media_entries":
+            return self._get_media_entries(organization_id=organization_id)
 
-        elif self.url_abbreviation == "media_entries":
-            returned_data = self._get_media_entries(organization_id=organization_id)
+        if endpoint == "vehicles":
+            return self._get_vehicles(vehicle_ids=vehicle_ids)
 
-        elif self.url_abbreviation == "vehicles":
-            returned_data = self._get_vehicles(vehicle_ids=vehicle_ids)
+        if endpoint == "campaigns":
+            return self._get_campaigns(organization_id=organization_id)
 
-        elif self.url_abbreviation == "campaigns":
-            returned_data = self._get_campaigns(organization_id=organization_id)
+        if endpoint == "media_types":
+            return self._get_media_types(media_type_ids=media_type_ids)
+        return None
 
-        elif self.url_abbreviation == "media_types":
-            returned_data = self._get_media_types(media_type_ids=media_type_ids)
 
         return returned_data
 

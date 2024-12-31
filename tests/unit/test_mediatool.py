@@ -128,15 +128,15 @@ def test_rename_columns():
 
 @pytest.mark.connect
 @patch("viadot.sources.mediatool.handle_api_response")
-def test_api_connection(mock_handle_api_response):
-    """Test Mediatool `api_connection` method."""
+def test_to_records_connection(mock_handle_api_response):
+    """Test Mediatool `_to_records` method."""
     mock_response = MagicMock()
     mock_response.text = json.dumps(variables["organizations"])
     mock_handle_api_response.return_value = mock_response
 
     mediatool = Mediatool(credentials=variables["credentials"])
 
-    result = mediatool.api_connection(get_data_from="organizations")
+    result = mediatool._to_records(endpoint="organizations")
     expected_result = [{"_id": "1", "name": "Org1", "abbreviation": "O1"}]
     assert result == expected_result
 
