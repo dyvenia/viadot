@@ -62,8 +62,6 @@ class Mediatool(Source):
         self.header = {"Authorization": f"Bearer {credentials.get('token')}"}
         self.user_id = user_id or credentials.get("user_id")
 
-        self.url_abbreviation = None
-
     def _get_organizations(
         self,
         user_id: str | None = None,
@@ -254,14 +252,16 @@ class Mediatool(Source):
             return self._get_media_types(media_type_ids=media_type_ids)
         return None
 
-
-        return returned_data
-
-    @add_viadot_metadata_columns
-    def to_df(
+    def fetch_and_transform(
         self,
+        endpoint: Literal[
+            "organizations", "media_entries", "vehicles", "campaigns", "media_types"
+        ],
         if_empty: str = "warn",
-        **kwargs,
+        organization_id: str | None = None,
+        vehicle_ids: list[str] | None = None,
+        media_type_ids: list[str] | None = None,
+        columns: list[str] | None = None,
     ) -> pd.DataFrame:
         """Pandas Data Frame with the data in the Response object and metadata.
 
@@ -272,15 +272,13 @@ class Mediatool(Source):
         Returns:
             pd.Dataframe: The response data as a Pandas Data Frame plus viadot metadata.
         """
-        data = kwargs.get("data", False)
-        column_suffix = kwargs.get("column_suffix", None)
-        columns = kwargs.get("columns", None)
+        records = self._to_records(
+            endpoint, organization_id, vehicle_ids, media_type_ids
+        )
 
-        super().to_df(if_empty=if_empty)
+        data_frame = pd.DataFrame.from_dict(records)  # type: ignore
 
-        data_frame = pd.DataFrame.from_dict(data)
-
-        if column_suffix == "campaigns":
+        if endpoint == "campaigns":
             data_frame.replace(
                 to_replace=[r"\\t|\\n|\\r", "\t|\n|\r"],
                 value=["", ""],
@@ -288,11 +286,11 @@ class Mediatool(Source):
                 inplace=True,
             )
 
-        if column_suffix:
+        if endpoint:
             # Endpoint name is added to the end of the column name to make it unique.
             data_frame = data_frame.rename(
                 columns={
-                    column_name: f"{column_name}_{column_suffix}"
+                    column_name: f"{column_name}_{endpoint}"
                     for column_name in data_frame.columns
                 }
             )
@@ -314,7 +312,7 @@ class Mediatool(Source):
         else:
             self.logger.info(
                 "Successfully downloaded data from "
-                + f"the Mediatool API ({self.url_abbreviation})."
+                + f"the Mediatool API ({endpoint})."
             )
 
         return data_frame

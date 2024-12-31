@@ -131,7 +131,7 @@ def test_to_records_connection(mock_handle_api_response):
 
 @pytest.mark.functions
 @patch("viadot.sources.mediatool.handle_api_response")
-def test_to_df(mock_handle_api_response):
+def test_fetch_and_transform(mock_handle_api_response):
     """Test Mediatool `to_df` method."""
     mock_response = MagicMock()
     mock_response.text = json.dumps({"mediaEntries": [{"_id": "1", "name": "Entry1"}]})
@@ -139,13 +139,8 @@ def test_to_df(mock_handle_api_response):
 
     mediatool = Mediatool(credentials=variables["credentials"])
 
-    data = [{"_id": "1", "name": "Entry1"}]
-    result_df = mediatool.to_df(data=data, column_suffix="media_entries")
-    result_df.drop(
-        columns=["_viadot_source", "_viadot_downloaded_at_utc"],
-        inplace=True,
-        axis=1,
-    )
+    result_df = mediatool.fetch_and_transform(endpoint="media_entries")
+
     expected_result = pd.DataFrame(
         {"_id_media_entries": ["1"], "name_media_entries": ["Entry1"]}
     )
