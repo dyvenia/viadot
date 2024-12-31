@@ -116,7 +116,7 @@ def test_get_media_types(mock_handle_api_response):
 
 @pytest.mark.connect
 @patch("viadot.sources.mediatool.handle_api_response")
-def test_to_records_connection(mock_handle_api_response):
+def test_to_records(mock_handle_api_response):
     """Test Mediatool `_to_records` method."""
     mock_response = MagicMock()
     mock_response.text = json.dumps(variables["organizations"])

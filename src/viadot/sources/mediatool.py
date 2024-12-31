@@ -258,15 +258,20 @@ class Mediatool(Source):
         endpoint: Literal[
             "organizations", "media_entries", "vehicles", "campaigns", "media_types"
         ],
-        if_empty: str = "warn",
         organization_id: str | None = None,
         vehicle_ids: list[str] | None = None,
         media_type_ids: list[str] | None = None,
         columns: list[str] | None = None,
+        if_empty: str = "warn",
     ) -> pd.DataFrame:
         """Pandas Data Frame with the data in the Response object and metadata.
 
         Args:
+            endpoint (Literal["organizations", "media_entries", "vehicles", "campaigns",
+                "media_types"]): The API endpoint to fetch data from.
+            organization_id (str, optional): Organization ID. Defaults to None.
+            vehicle_ids (list[str]): List of organization IDs. Defaults to None.
+            media_type_ids (list[str]): List of media type IDs. Defaults to None.
             if_empty (str, optional): What to do if a fetch produce no data.
                 Defaults to "warn
 
@@ -325,17 +330,15 @@ class Mediatool(Source):
         media_entries_columns: list[str] | None = None,
         if_empty: Literal["warn"] | Literal["skip"] | Literal["fail"] = "warn",
     ) -> pd.DataFrame:
-        """Data from different endpoints of the Mediatool API are fetched, transformed
-        and combind.A final object is created containing data for all organizations
-        from the list
+        """Fetches, transforms, and combines data from Mediatool API endpoints.
 
         Args:
-        organization_ids (list[str], optional): List of organization IDs.
-            Defaults to None.
-        media_entries_columns (list[str], optional): Columns to get from media entries.
-            Defaults to None.
-        if_empty (Literal[warn, skip, fail], optional): What to do if there is no
-            data. Defaults to "warn".
+            organization_ids (list[str], optional): List of organization IDs.
+                Defaults to None.
+            media_entries_columns (list[str], optional): Columns to get from media
+                entries. Defaults to None.
+            if_empty (Literal[warn, skip, fail], optional): What to do if there is no
+                data. Defaults to "warn".
 
         Raises:
             ValueError: Raised when no organizations are defined or an organization ID
