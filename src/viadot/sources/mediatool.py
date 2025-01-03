@@ -263,6 +263,7 @@ class Mediatool(Source):
         media_type_ids: list[str] | None = None,
         columns: list[str] | None = None,
         if_empty: str = "warn",
+        add_endpoint_suffix: bool = True,
     ) -> pd.DataFrame:
         """Pandas Data Frame with the data in the Response object and metadata.
 
@@ -274,6 +275,10 @@ class Mediatool(Source):
             media_type_ids (list[str]): List of media type IDs. Defaults to None.
             if_empty (str, optional): What to do if a fetch produce no data.
                 Defaults to "warn
+            add_endpoint_suffix (bool, optional): If True, appends the endpoint name
+                to column names in the format {column_name}_{endpoint} to ensure
+                uniqueness in combined DataFrame from multiple endpoints.
+                Defaults to True.
 
         Returns:
             pd.Dataframe: The response data as a Pandas Data Frame plus viadot metadata.
@@ -292,8 +297,7 @@ class Mediatool(Source):
                 inplace=True,
             )
 
-        if endpoint:
-            # Endpoint name is added to the end of the column name to make it unique.
+        if add_endpoint_suffix:
             data_frame = data_frame.rename(
                 columns={
                     column_name: f"{column_name}_{endpoint}"
@@ -348,12 +352,12 @@ class Mediatool(Source):
             pd.DataFrame: DataFrame containing the combined data from the specified
             endpoints.
         """
-        # first method ORGANIZATIONS
-        df_organizations = self.fetch_and_transform(endpoint="organizations")
-
         if organization_ids is None:
             message = "No organizations were defined."
             raise ValueError(message)
+
+        # first method ORGANIZATIONS
+        df_organizations = self.fetch_and_transform(endpoint="organizations")
 
         list_of_organizations_df = []
         for organization_id in organization_ids:
@@ -365,6 +369,7 @@ class Mediatool(Source):
                     endpoint="media_entries",
                     organization_id=organization_id,
                     columns=media_entries_columns,
+                    add_endpoint_suffix=False,
                 )
 
                 unique_vehicle_ids = df_media_entries["vehicleId"].unique()
