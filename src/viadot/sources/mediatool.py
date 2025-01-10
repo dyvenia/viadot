@@ -273,6 +273,9 @@ class Mediatool(Source):
             organization_id (str, optional): Organization ID. Defaults to None.
             vehicle_ids (list[str]): List of organization IDs. Defaults to None.
             media_type_ids (list[str]): List of media type IDs. Defaults to None.
+            columns (list[str], optional): If provided, a list of column names to
+                include in the DataFrame.By default, all columns will be included.
+                Defaults to None.
             if_empty (str, optional): What to do if a fetch produce no data.
                 Defaults to "warn
             add_endpoint_suffix (bool, optional): If True, appends the endpoint name
