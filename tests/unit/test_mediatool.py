@@ -296,15 +296,17 @@ def test_to_df_media_entries_columns(
 
 @pytest.mark.functions
 @patch("viadot.sources.mediatool.handle_api_response")
-def test_to_df_organization_ids_none(mock_handle_api_response):
-    """Test Mediatool `to_df` method when `organization_ids` is None."""
+def test_to_df_organization_ids_empty_list(mock_handle_api_response):
+    """Test Mediatool `to_df` method when `organization_ids` is empty list."""
     mediatool = Mediatool(credentials=variables["credentials"])
     mock_organizations_response = MagicMock()
     mock_organizations_response.text = json.dumps(variables["organizations"])
     mock_handle_api_response.return_value = mock_organizations_response
 
-    with pytest.raises(ValueError, match="No organizations were defined."):
-        mediatool.to_df(organization_ids=None)
+    with pytest.raises(
+        ValueError, match="'organization_ids' must be a non-empty list."
+    ):
+        mediatool.to_df(organization_ids=[])
 
 
 @pytest.mark.functions

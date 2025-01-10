@@ -330,15 +330,14 @@ class Mediatool(Source):
     @add_viadot_metadata_columns
     def to_df(
         self,
-        organization_ids: list[str] | None = None,
+        organization_ids: list[str],
         media_entries_columns: list[str] | None = None,
         if_empty: Literal["warn"] | Literal["skip"] | Literal["fail"] = "warn",
     ) -> pd.DataFrame:
         """Fetches, transforms, and combines data from Mediatool API endpoints.
 
         Args:
-            organization_ids (list[str], optional): List of organization IDs.
-                Defaults to None.
+            organization_ids (list[str]): List of organization IDs.
             media_entries_columns (list[str], optional): Columns to get from media
                 entries. Defaults to None.
             if_empty (Literal[warn, skip, fail], optional): What to do if there is no
@@ -352,8 +351,8 @@ class Mediatool(Source):
             pd.DataFrame: DataFrame containing the combined data from the specified
             endpoints.
         """
-        if organization_ids is None:
-            message = "No organizations were defined."
+        if not organization_ids:
+            message = "'organization_ids' must be a non-empty list."
             raise ValueError(message)
 
         # first method ORGANIZATIONS
