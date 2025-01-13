@@ -1,6 +1,7 @@
 """'mediatool.py'."""
 
 import json
+from typing import Literal
 
 import pandas as pd
 from pydantic import BaseModel
@@ -8,7 +9,7 @@ from pydantic import BaseModel
 from viadot.config import get_source_credentials
 from viadot.exceptions import APIError, CredentialError
 from viadot.sources.base import Source
-from viadot.utils import add_viadot_metadata_columns, handle_api_response
+from viadot.utils import add_viadot_metadata_columns, handle_api_response, join_dfs
 
 
 class MediatoolCredentials(BaseModel):
@@ -61,29 +62,6 @@ class Mediatool(Source):
 
         self.header = {"Authorization": f"Bearer {credentials.get('token')}"}
         self.user_id = user_id or credentials.get("user_id")
-
-        self.url_abbreviation = None
-
-    def _rename_columns(
-        self,
-        df: pd.DataFrame,
-        column_suffix: str,
-    ) -> pd.DataFrame:
-        """Rename columns.
-
-        Args:
-            df (pd.DataFrame): Incoming Data frame.
-            column_suffix (str): String to be added at the end of column name.
-
-        Returns:
-            pd.DataFrame: Modified Data Frame.
-        """
-        column_suffix = column_suffix.split("get_")[-1]
-        dict_mapped_names = {
-            column_name: f"{column_name}_{column_suffix}" for column_name in df.columns
-        }
-
-        return df.rename(columns=dict_mapped_names)
 
     def _get_organizations(
         self,
@@ -238,67 +216,83 @@ class Mediatool(Source):
 
         return list_media_types
 
-    def api_connection(
+    def _to_records(
         self,
-        get_data_from: str,
+        endpoint: Literal[
+            "organizations", "media_entries", "vehicles", "campaigns", "media_types"
+        ],
         organization_id: str | None = None,
         vehicle_ids: list[str] | None = None,
         media_type_ids: list[str] | None = None,
     ) -> list[dict[str, str]]:
-        """General method to connect to Mediatool API and generate the response.
+        """Connects to the Mediatool API and retrieves data for the specified endpoint.
 
         Args:
-            get_data_from (str): Method to be used to extract data from.
+            endpoint (Literal["organizations", "media_entries", "vehicles", "campaigns",
+                "media_types"]): The API endpoint to fetch data from.
             organization_id (str, optional): Organization ID. Defaults to None.
             vehicle_ids (list[str]): List of organization IDs. Defaults to None.
             media_type_ids (list[str]): List of media type IDs. Defaults to None.
 
         Returns:
-            list[dict[str, str]]: Data from Mediatool API connection.
+            list[dict[str, str]]: A list of records containing the retrieved data.
         """
-        self.url_abbreviation = get_data_from
+        if endpoint == "organizations":
+            return self._get_organizations(self.user_id)
 
-        if self.url_abbreviation == "organizations":
-            returned_data = self._get_organizations(self.user_id)
+        if endpoint == "media_entries":
+            return self._get_media_entries(organization_id=organization_id)
 
-        elif self.url_abbreviation == "media_entries":
-            returned_data = self._get_media_entries(organization_id=organization_id)
+        if endpoint == "vehicles":
+            return self._get_vehicles(vehicle_ids=vehicle_ids)
 
-        elif self.url_abbreviation == "vehicles":
-            returned_data = self._get_vehicles(vehicle_ids=vehicle_ids)
+        if endpoint == "campaigns":
+            return self._get_campaigns(organization_id=organization_id)
 
-        elif self.url_abbreviation == "campaigns":
-            returned_data = self._get_campaigns(organization_id=organization_id)
+        if endpoint == "media_types":
+            return self._get_media_types(media_type_ids=media_type_ids)
+        return None
 
-        elif self.url_abbreviation == "media_types":
-            returned_data = self._get_media_types(media_type_ids=media_type_ids)
-
-        return returned_data
-
-    @add_viadot_metadata_columns
-    def to_df(
+    def fetch_and_transform(
         self,
+        endpoint: Literal[
+            "organizations", "media_entries", "vehicles", "campaigns", "media_types"
+        ],
+        organization_id: str | None = None,
+        vehicle_ids: list[str] | None = None,
+        media_type_ids: list[str] | None = None,
+        columns: list[str] | None = None,
         if_empty: str = "warn",
-        **kwargs,
+        add_endpoint_suffix: bool = True,
     ) -> pd.DataFrame:
         """Pandas Data Frame with the data in the Response object and metadata.
 
         Args:
+            endpoint (Literal["organizations", "media_entries", "vehicles", "campaigns",
+                "media_types"]): The API endpoint to fetch data from.
+            organization_id (str, optional): Organization ID. Defaults to None.
+            vehicle_ids (list[str]): List of organization IDs. Defaults to None.
+            media_type_ids (list[str]): List of media type IDs. Defaults to None.
+            columns (list[str], optional): If provided, a list of column names to
+                include in the DataFrame.By default, all columns will be included.
+                Defaults to None.
             if_empty (str, optional): What to do if a fetch produce no data.
                 Defaults to "warn
+            add_endpoint_suffix (bool, optional): If True, appends the endpoint name
+                to column names in the format {column_name}_{endpoint} to ensure
+                uniqueness in combined DataFrame from multiple endpoints.
+                Defaults to True.
 
         Returns:
             pd.Dataframe: The response data as a Pandas Data Frame plus viadot metadata.
         """
-        data = kwargs.get("data", False)
-        column_suffix = kwargs.get("column_suffix", None)
-        columns = kwargs.get("columns", None)
+        records = self._to_records(
+            endpoint, organization_id, vehicle_ids, media_type_ids
+        )
 
-        super().to_df(if_empty=if_empty)
+        data_frame = pd.DataFrame.from_dict(records)  # type: ignore
 
-        data_frame = pd.DataFrame.from_dict(data)
-
-        if column_suffix == "campaigns":
+        if endpoint == "campaigns":
             data_frame.replace(
                 to_replace=[r"\\t|\\n|\\r", "\t|\n|\r"],
                 value=["", ""],
@@ -306,9 +300,12 @@ class Mediatool(Source):
                 inplace=True,
             )
 
-        if column_suffix:
-            data_frame = self._rename_columns(
-                df=data_frame, column_suffix=column_suffix
+        if add_endpoint_suffix:
+            data_frame = data_frame.rename(
+                columns={
+                    column_name: f"{column_name}_{endpoint}"
+                    for column_name in data_frame.columns
+                }
             )
 
         if columns:
@@ -328,7 +325,134 @@ class Mediatool(Source):
         else:
             self.logger.info(
                 "Successfully downloaded data from "
-                + f"the Mediatool API ({self.url_abbreviation})."
+                + f"the Mediatool API ({endpoint})."
             )
 
         return data_frame
+
+    @add_viadot_metadata_columns
+    def to_df(
+        self,
+        organization_ids: list[str],
+        media_entries_columns: list[str] | None = None,
+        if_empty: Literal["warn"] | Literal["skip"] | Literal["fail"] = "warn",
+    ) -> pd.DataFrame:
+        """Fetches, transforms, and combines data from Mediatool API endpoints.
+
+        Args:
+            organization_ids (list[str]): List of organization IDs.
+            media_entries_columns (list[str], optional): Columns to get from media
+                entries. Defaults to None.
+            if_empty (Literal[warn, skip, fail], optional): What to do if there is no
+                data. Defaults to "warn".
+
+        Raises:
+            ValueError: Raised when no organizations are defined or an organization ID
+            is not found in the organizations list.
+
+        Returns:
+            pd.DataFrame: DataFrame containing the combined data from the specified
+            endpoints.
+        """
+        if not organization_ids:
+            message = "'organization_ids' must be a non-empty list."
+            raise ValueError(message)
+
+        # first method ORGANIZATIONS
+        df_organizations = self.fetch_and_transform(endpoint="organizations")
+
+        list_of_organizations_df = []
+        for organization_id in organization_ids:
+            if organization_id in df_organizations["_id_organizations"].unique():
+                self.logger.info(f"Downloading data for: {organization_id} ...")
+
+                # extract media entries per organization
+                df_media_entries = self.fetch_and_transform(
+                    endpoint="media_entries",
+                    organization_id=organization_id,
+                    columns=media_entries_columns,
+                    add_endpoint_suffix=False,
+                )
+
+                unique_vehicle_ids = df_media_entries["vehicleId"].unique()
+                unique_media_type_ids = df_media_entries["mediaTypeId"].unique()
+
+                # extract vehicles
+                df_vehicles = self.fetch_and_transform(
+                    endpoint="vehicles", vehicle_ids=unique_vehicle_ids
+                )
+
+                # extract campaigns
+                df_campaigns = self.fetch_and_transform(
+                    endpoint="campaigns",
+                    organization_id=organization_id,
+                )
+
+                # extract media types
+                df_media_types = self.fetch_and_transform(
+                    endpoint="media_types",
+                    media_type_ids=unique_media_type_ids,
+                )
+
+                # join media entries & organizations
+                df_merged_entries_orgs = join_dfs(
+                    df_left=df_media_entries,
+                    df_right=df_organizations,
+                    left_on="organizationId",
+                    right_on="_id_organizations",
+                    columns_from_right_df=[
+                        "_id_organizations",
+                        "name_organizations",
+                        "abbreviation_organizations",
+                    ],
+                    how="left",
+                )
+
+                # join the previous merge & campaigns
+                df_merged_campaigns = join_dfs(
+                    df_left=df_merged_entries_orgs,
+                    df_right=df_campaigns,
+                    left_on="campaignId",
+                    right_on="_id_campaigns",
+                    columns_from_right_df=[
+                        "_id_campaigns",
+                        "name_campaigns",
+                        "conventionalName_campaigns",
+                    ],
+                    how="left",
+                )
+
+                # join the previous merge & vehicles
+                df_merged_vehicles = join_dfs(
+                    df_left=df_merged_campaigns,
+                    df_right=df_vehicles,
+                    left_on="vehicleId",
+                    right_on="_id_vehicles",
+                    columns_from_right_df=["_id_vehicles", "name_vehicles"],
+                    how="left",
+                )
+
+                # join the previous merge & media types
+                df_merged_media_types = join_dfs(
+                    df_left=df_merged_vehicles,
+                    df_right=df_media_types,
+                    left_on="mediaTypeId",
+                    right_on="_id_media_types",
+                    columns_from_right_df=["_id_media_types", "name_media_types"],
+                    how="left",
+                )
+
+                list_of_organizations_df.append(df_merged_media_types)
+
+            else:
+                message = (
+                    f"Organization - {organization_id} not found in organizations list."
+                )
+                raise ValueError(message)
+
+        df_final = pd.concat(list_of_organizations_df)
+
+        if df_final.empty:
+            self._handle_if_empty(if_empty)
+
+        return df_final

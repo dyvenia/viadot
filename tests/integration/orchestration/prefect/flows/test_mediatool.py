@@ -25,7 +25,7 @@ media_entries_columns = [
 ]
 
 
-def test_genesys_to_adls(
+def test_mediatool_to_adls(
     VIADOT_TEST_MEDIATOOL_ADLS_AZURE_KEY_VAULT_SECRET,
     VIADOT_TEST_MEDIATOOL_ORG,
     VIADOT_TEST_MEDIATOOL_ADLS_PATH,
