@@ -96,48 +96,39 @@ class Salesforce(Source):
             message = "The only available environments are DEV, QA, and PROD."
             raise ValueError(message)
 
-        self.data = None
-
-    def api_connection(
+    @add_viadot_metadata_columns
+    def to_df(
         self,
         query: str | None = None,
         table: str | None = None,
         columns: list[str] | None = None,
-    ) -> None:
-        """General method to connect to Salesforce API and generate the response.
+        if_empty: Literal["warn", "skip", "fail"] = "warn",
+    ) -> pd.DataFrame:
+        """Downloads data from Salesforce API and returns the DataFrame.
 
         Args:
+            if_empty (str, optional): What to do if a fetch produce no data.
+                Defaults to "warn
             query (str, optional): The query to be used to download the data.
                 Defaults to None.
             table (str, optional): Table name. Defaults to None.
             columns (list[str], optional): List of required columns. Requires `table`
                 to be specified. Defaults to None.
+
+        Returns:
+            pd.DataFrame: Selected rows from Salesforce.
         """
         if not query:
             columns_str = ", ".join(columns) if columns else "FIELDS(STANDARD)"
             query = f"SELECT {columns_str} FROM {table}"  # noqa: S608
 
-        self.data = self.salesforce.query(query).get("records")
+        data = self.salesforce.query(query).get("records")
 
         # Remove metadata from the data
-        for record in self.data:
+        for record in data:
             record.pop("attributes")
 
-    @add_viadot_metadata_columns
-    def to_df(
-        self,
-        if_empty: str = "fail",
-    ) -> pd.DataFrame:
-        """Downloads the indicated data and returns the DataFrame.
-
-        Args:
-            if_empty (str, optional): What to do if a fetch produce no data.
-                Defaults to "warn
-
-        Returns:
-            pd.DataFrame: Selected rows from Salesforce.
-        """
-        df = pd.DataFrame(self.data)
+        df = pd.DataFrame(data)
 
         if df.empty:
             self._handle_if_empty(
@@ -145,6 +136,6 @@ class Salesforce(Source):
                 message="The response does not contain any data.",
             )
         else:
-            self.logger.info("Successfully downloaded data from the Mindful API.")
+            self.logger.info("Successfully downloaded data from the Salesforce API.")
 
         return df
