@@ -1,5 +1,7 @@
 """'bigquery.py'."""
 
+from typing import Literal
+
 from google.oauth2 import service_account
 import numpy as np
 import pandas as pd
@@ -72,8 +74,6 @@ class BigQuery(Source):
         pandas_gbq.context.credentials = credentials_service_account
         pandas_gbq.context.project = self.project_id
 
-        self.df_data = None
-
     def _get_list_datasets_query(self) -> str:
         """Get datasets from BigQuery project.
 
@@ -111,11 +111,11 @@ class BigQuery(Source):
                 FROM {self.project_id}.{dataset_name}.INFORMATION_SCHEMA.COLUMNS
                 WHERE table_name="{table_name}"
                 """  # noqa: S608
-        df_columns = self._gbd(query)
+        df_columns = self._get_google_bigquery_data(query)
 
         return df_columns["column_name"].values
 
-    def _gbd(self, query: str) -> pd.DataFrame:
+    def _get_google_bigquery_data(self, query: str) -> pd.DataFrame:
         """Connect to BigQuery API.
 
         Args:
@@ -134,7 +134,8 @@ class BigQuery(Source):
 
         return data
 
-    def api_connection(
+    @add_viadot_metadata_columns
+    def to_df(
         self,
         query: str | None = None,
         dataset_name: str | None = None,
@@ -143,8 +144,9 @@ class BigQuery(Source):
         start_date: str | None = None,
         end_date: str | None = None,
         columns: list[str] | None = None,
-    ) -> None:
-        """Connect to BigQuery API and generate the response.
+        if_empty: Literal["warn", "skip", "fail"] = "warn",
+    ) -> pd.DataFrame:
+        """Generate a DataFrame from the API response of a queried BigQuery table.
 
         Args:
             query (str): SQL query to querying data in BigQuery.
@@ -164,6 +166,11 @@ class BigQuery(Source):
                 "2022-01-01". Defaults to None.
             columns (list[str], optional): List of columns from given table name.
                 Defaults to None.
+            if_empty (Literal[warn, skip, fail], optional): What to do if there is no
+                data. Defaults to "warn".
+
+        Returns:
+            pd.DataFrame: DataFrame with the data.
         """
         if query == "tables":
             query = self._get_list_tables_query(dataset_name=dataset_name)
@@ -222,25 +229,11 @@ class BigQuery(Source):
                     + f"FROM `{self.project_id}.{dataset_name}.{table_name}`"
                 )
 
-        self.df_data = self._gbd(query)
+        df = self._get_google_bigquery_data(query)
+
+        if df.empty:
+            self._handle_if_empty(if_empty)
 
         self.logger.info(f"Downloaded the data from the table name: '{table_name}'.")
 
-    @add_viadot_metadata_columns
-    def to_df(
-        self,
-        if_empty: str = "warn",
-    ) -> pd.DataFrame:
-        """Response from the API queried BigQuery table into DataFrame.
-
-        Args:
-            if_empty (str, optional): if_empty param is checking params passed to
-                the function. Defaults to "warn".
-
-        Returns:
-            pd.DataFrame: Table of the data carried in the response.
-        """
-        if self.df_data.empty:
-            self._handle_if_empty(if_empty)
-
-        return self.df_data
+        return df

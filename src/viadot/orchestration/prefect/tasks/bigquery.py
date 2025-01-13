@@ -54,7 +54,8 @@ def bigquery_to_df(
         credentials = get_credentials(azure_key_vault_secret)
 
     bigquery = BigQuery(credentials=credentials, config_key=config_key)
-    bigquery.api_connection(
+
+    return bigquery.to_df(
         query=query,
         dataset_name=dataset_name,
         table_name=table_name,
@@ -63,5 +64,3 @@ def bigquery_to_df(
         end_date=end_date,
         columns=columns,
     )
-
-    return bigquery.to_df()
