@@ -112,7 +112,7 @@ def transform_and_catalog(  # noqa: PLR0913
             dbt_repo_url=my_dbt_repo_url
             dbt_selects={"run": "staging"}
             luma_url=my_luma_url,
-            run_results_s3_path="s3://my-bucket/dbt/run_results",
+            run_results_storage_path="s3://my-bucket/dbt/run_results",
             run_results_storage_credentials_secret="my-aws-credentials-block",
         )
         ```
