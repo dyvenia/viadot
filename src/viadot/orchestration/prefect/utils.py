@@ -60,9 +60,8 @@ class DynamicDateHandler:
         - "years_from_x_until_now_included": e.g. "years_from_2019_until_now_included",
            refers to a date range of the years from a given year
            until the current year included
-        - "years_from_x_until_last_year": e.g., "years_from_2019_until_last_year",
-          refers to a date range of the years from a given year until last year
-          (not including last year)
+        - "years_from_x_until_y_years_ago": e.g., "years_from_2019_until_y_years_ago",
+          refers to a date range of the years from a given year X until y years ago
         - "last_X_years/months/days": e.g., "last_10_months", refers to a data range
             of the months in 'YMM' format
         - "first_X_days_from_X": e.g., "first_10_days_of_January_2020",
@@ -87,7 +86,7 @@ class DynamicDateHandler:
             "first_x_days_from": r"first_(\d+)_days_from_(\w+)_(\d{4})",
             "last_x_days_from": r"last_(\d+)_days_from_(\w+)_(\d{4})",
             "years_from_x_until_now": r"years_from_(\d{4})_until_now_included",
-            "years_from_x_until_last_year": r"years_from_(\d{4})_until_last_year",
+            "years_from_x_until_y_years_ago": r"years_from_(\d{4})_until_(\d+)_years_ago",
         }
         self.dynamic_date_format = dynamic_date_format
         self.dynamic_date_timezone = dynamic_date_timezone
@@ -383,12 +382,15 @@ class DynamicDateHandler:
                     from_year=start_year,  # type: ignore
                     end_year=None,  # type: ignore
                 )
-        elif key == "years_from_x_until_last_year":
-            for start_year in match_found:
+        elif key == "years_from_x_until_y_years_ago":
+            for start_year, end_year in match_found:
+                end_year = str(  # noqa: PLW2901
+                    int(self.replacements["current_year"]) - int(end_year) + 1
+                )
                 return self._generate_years(
                     last_years=None,
                     from_year=start_year,  # type: ignore
-                    end_year=self.replacements["last_year"],  # type: ignore
+                    end_year=end_year,  # type: ignore
                 )
         elif key == "first_x_days_from":
             for num_days, month_name, year in match_found:
