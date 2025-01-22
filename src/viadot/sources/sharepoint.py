@@ -141,7 +141,7 @@ class Sharepoint(Source):
         response = conn.get(endpoint)
         files = response.json().get("d", {}).get("results", [])
 
-        return [f'{site_url}/{library}{file["Name"]}' for file in files]
+        return [f"{site_url}/{library}{file['Name']}" for file in files]
 
     def _get_file_extension(self, url: str) -> str:
         """Extracts the file extension from a given URL.
@@ -176,6 +176,7 @@ class Sharepoint(Source):
         self.logger.info(f"Downloading data from {url}...")
         response = conn.get(url)
         bytes_stream = io.BytesIO(response.content)
+        conn.close()
 
         return pd.ExcelFile(bytes_stream)
 
