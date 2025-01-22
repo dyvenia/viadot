@@ -194,10 +194,12 @@ def transform_and_catalog(  # noqa: PLR0913
 
     if run_results_storage_path:
         file_name = "run_results.json"
-        # Add a timestamp suffix.
+        # Add a timestamp suffix, eg. run_results_1737556947.934292.json.
         timestamp = datetime.now(timezone.utc).timestamp()
         run_results_storage_path = run_results_storage_path.rstrip("/") + "/"
-        run_results_storage_path += file_name + "_" + str(timestamp)
+        run_results_storage_path += (
+            Path(file_name).stem + "_" + str(timestamp) + ".json"
+        )
 
         # Upload the file to s3.
         dump_test_results_to_s3 = s3_upload_file(
