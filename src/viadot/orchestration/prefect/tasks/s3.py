@@ -6,6 +6,10 @@ from typing import Any
 from prefect import task
 from prefect.logging import get_run_logger
 
+from viadot.config import get_source_credentials
+from viadot.orchestration.prefect.exceptions import MissingSourceCredentialsError
+from viadot.orchestration.prefect.utils import get_credentials
+
 
 with contextlib.suppress(ImportError):
     from viadot.sources import S3
@@ -17,6 +21,7 @@ def s3_upload_file(
     to_path: str,
     credentials: dict[str, Any] | None = None,
     config_key: str | None = None,
+    credentials_secret: str | None = None,
 ) -> None:
     """Task to upload a file to Amazon S3.
 
@@ -27,6 +32,8 @@ def s3_upload_file(
             Defaults to None.
         config_key (str, optional): The key in the viadot config holding relevant
             credentials. Defaults to None.
+        credentials_secret (str, optional): The name of a secret block in Prefect
+            that stores AWS credentials. Defaults to None.
 
     Example:
         ```python
@@ -49,6 +56,13 @@ def s3_upload_file(
         test_flow()
         ```
     """
+    if not (credentials_secret or config_key):
+        raise MissingSourceCredentialsError
+
+    credentials = get_source_credentials(config_key) or get_credentials(
+        credentials_secret
+    )
+
     s3 = S3(credentials=credentials, config_key=config_key)
 
     s3.upload(from_path=from_path, to_path=to_path)
