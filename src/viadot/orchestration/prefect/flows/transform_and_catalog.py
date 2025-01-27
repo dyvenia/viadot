@@ -1,12 +1,18 @@
 """Build specified dbt model(s) and upload the generated metadata to Luma."""
 
+from datetime import datetime, timezone
 from pathlib import Path
 import shutil
 from typing import Literal
 
-from prefect import allow_failure, flow, task
+from prefect import flow, task
 
-from viadot.orchestration.prefect.tasks import clone_repo, dbt_task, luma_ingest_task
+from viadot.orchestration.prefect.tasks import (
+    clone_repo,
+    dbt_task,
+    luma_ingest_task,
+    s3_upload_file,
+)
 from viadot.orchestration.prefect.utils import get_credentials
 
 
@@ -37,6 +43,9 @@ def transform_and_catalog(  # noqa: PLR0913
     luma_url: str = "http://localhost:8000",
     luma_follow: bool = False,
     metadata_kind: Literal["model", "model_run"] = "model_run",
+    run_results_storage_path: str | None = None,
+    run_results_storage_config_key: str | None = None,
+    run_results_storage_credentials_secret: str | None = None,
 ) -> list[str]:
     """Build specified dbt model(s) and upload the generated metadata to Luma.
 
@@ -78,6 +87,13 @@ def transform_and_catalog(  # noqa: PLR0913
             response). By default, `False`.
         metadata_kind (Literal["model", "model_run"], optional): The kind of metadata
             to ingest. Defaults to "model_run".
+        run_results_storage_path (str, optional): The directory to upload the
+            `run_results.json` file to. Note that a timestamp will be appended to the
+            end of the file. Currently, only S3 is supported. Defaults to None.
+        run_results_storage_config_key (str, optional): The key in the viadot config
+            holding AWS credentials. Defaults to None.
+        run_results_storage_credentials_secret (str, optional): The name of the secret
+            block in Prefect holding AWS credentials. Defaults to None.
 
     Returns:
         list[str]: Lines from stdout of the `upload_metadata` task as a list.
@@ -96,6 +112,8 @@ def transform_and_catalog(  # noqa: PLR0913
             dbt_repo_url=my_dbt_repo_url
             dbt_selects={"run": "staging"}
             luma_url=my_luma_url,
+            run_results_storage_path="s3://my-bucket/dbt/run_results",
+            run_results_storage_credentials_secret="my-aws-credentials-block",
         )
         ```
 
@@ -174,10 +192,37 @@ def transform_and_catalog(  # noqa: PLR0913
         wait_for=[upload_metadata_upstream_task],
     )
 
-    # Cleanup.
-    remove_dbt_repo_dir(
-        dbt_repo_name,
-        wait_for=[allow_failure(upload_metadata)],
-    )
+    if run_results_storage_path:
+        # Set the file path to include date info.
+        file_name = "run_results.json"
+        now = datetime.now(timezone.utc)
+        run_results_storage_path = run_results_storage_path.rstrip("/") + "/"
 
-    return upload_metadata
+        # Add partitioning.
+        date_str = now.strftime("%Y%m%d")
+        run_results_storage_path += date_str + "/"
+
+        # Add timestamp suffix, eg. run_results_1737556947.934292.json.
+        timestamp = now.timestamp()
+        run_results_storage_path += (
+            Path(file_name).stem + "_" + str(timestamp) + ".json"
+        )
+
+        # Upload the file to s3.
+        dump_test_results_to_s3 = s3_upload_file(
+            from_path=str(dbt_target_dir_path / file_name),
+            to_path=run_results_storage_path,
+            wait_for=[upload_metadata_upstream_task],
+            config_key=run_results_storage_config_key,
+            credentials_secret=run_results_storage_credentials_secret,
+        )
+
+    # Cleanup.
+    wait_for = (
+        [upload_metadata, dump_test_results_to_s3]
+        if run_results_storage_path
+        else [upload_metadata]
+    )
+    remove_dbt_repo_dir(dbt_repo_name, wait_for=wait_for)
+
+    return remove_dbt_repo_dir
