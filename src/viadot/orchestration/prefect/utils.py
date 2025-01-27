@@ -344,7 +344,7 @@ class DynamicDateHandler:
             return self._generate_dates(last_days=number)
         return dynamic_date_marker
 
-    def _handle_data_ranges(
+    def _handle_data_ranges(  # noqa: C901
         self, dynamic_date_marker: str, match_found: list[tuple], key: str
     ) -> list[str] | str:
         """Direct execution of a specific function based on the provided value of `key`.
@@ -693,9 +693,7 @@ async def shell_run_command(
                 )
                 if not stderr and lines:
                     stderr = f"{lines[-1]}\n"
-                msg = (
-                    f"Command failed with exit code {process.returncode}:\n" f"{stderr}"
-                )
+                msg = f"Command failed with exit code {process.returncode}:\n{stderr}"
                 if raise_on_failure:
                     raise RuntimeError(msg)
                 lines.append(msg)
