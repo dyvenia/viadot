@@ -193,10 +193,17 @@ def transform_and_catalog(  # noqa: PLR0913
     )
 
     if run_results_storage_path:
+        # Set the file path to include date info.
         file_name = "run_results.json"
-        # Add a timestamp suffix, eg. run_results_1737556947.934292.json.
-        timestamp = datetime.now(timezone.utc).timestamp()
+        now = datetime.now(timezone.utc)
         run_results_storage_path = run_results_storage_path.rstrip("/") + "/"
+
+        # Add partitioning.
+        date_str = now.strftime("%Y%m%d")
+        run_results_storage_path += date_str + "/"
+
+        # Add timestamp suffix, eg. run_results_1737556947.934292.json.
+        timestamp = now.timestamp()
         run_results_storage_path += (
             Path(file_name).stem + "_" + str(timestamp) + ".json"
         )
