@@ -121,13 +121,30 @@ def test_process_last_x_months():
     ]
     assert processed_range == expected_result
 
-def test_process_y_years_from_x():
+
+def test_process_years_from_x_until_y_years_ago():
     """Test if `process_dates()` returns a range of years from a given start year."""
-    x = 2019
-    y = 4
-    text = f"<<{y}_years_from_{x}>>"
+    years_ago_count = 3
+    start_year = 2019
+    text = f"<<years_from_{start_year}_until_{years_ago_count}_years_ago>>"
+
     processed_range = DDH1.process_dates(text)
-    expected_result = [str(x + i) for i in range(y)]
+    expected_result = [
+        str(year)
+        for year in range(start_year, pendulum.now().year - years_ago_count + 1)
+    ]
+
+    assert processed_range == expected_result
+
+
+def test_process_years_from_x_until_now():
+    """Test if `process_dates()` returns a range of years from a given start year."""
+    start_year = 2019
+    text = f"<<years_from_{start_year}_until_now>>"
+
+    processed_range = DDH1.process_dates(text)
+    expected_result = [str(year) for year in range(start_year, pendulum.now().year + 1)]
+
     assert processed_range == expected_result
 
 
