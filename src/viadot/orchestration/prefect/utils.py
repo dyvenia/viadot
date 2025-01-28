@@ -85,7 +85,7 @@ class DynamicDateHandler:
             "last_x_units": r"last_(\d+)_(years|months|days)",
             "first_x_days_from": r"first_(\d+)_days_from_(\w+)_(\d{4})",
             "last_x_days_from": r"last_(\d+)_days_from_(\w+)_(\d{4})",
-            "years_from_x_until_now": r"years_from_(\d{4})_until_now_included",
+            "years_from_x_until_now": r"years_from_(\d{4})_until_now",
             "years_from_x_until_y_years_ago": r"years_from_(\d{4})_until_(\d+)_years_ago",
         }
         self.dynamic_date_format = dynamic_date_format
