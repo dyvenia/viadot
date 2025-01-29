@@ -132,7 +132,7 @@ def transform_and_catalog(  # noqa: PLR0913
     # Prepare the environment.
     dbt_repo_name = dbt_repo_url.split("/")[-1].replace(".git", "")
     dbt_project_path_full = Path(dbt_repo_name) / dbt_project_path
-    dbt_pull_deps_task = dbt_task.with_options(name="dbt_deps", retries=2)
+    dbt_pull_deps_task = dbt_task.with_options(name="dbt_deps", retries=3)
     pull_dbt_deps = dbt_pull_deps_task(
         project_path=dbt_project_path_full,
         command="deps",
