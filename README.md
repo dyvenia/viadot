@@ -7,7 +7,7 @@
 
 **Documentation**: <a href="https://dyvenia.github.io/viadot/" target="_blank">https://viadot.docs.dyvenia.com</a>
 
-**Source Code**: <a href="https://github.com/dyvenia/viadot/tree/2.0" target="_blank">https://github.com/dyvenia/viadot/tree/2.0</a>
+**Source Code**: <a href="https://github.com/dyvenia/viadot/tree/main" target="_blank">https://github.com/dyvenia/viadot/tree/main</a>
 
 ---
 

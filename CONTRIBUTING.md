@@ -1,4 +1,4 @@
-# How to contribute to `viadot2`
+# How to contribute to `viadot`
 
 ## Installation & set up
 
@@ -94,8 +94,8 @@ Commit messages should:
 4. Checkout a new branch
 
    ```console
-   # Make sure that your base branch is `2.0`.
-   git switch 2.0 && git checkout -b <name>
+   # Make sure that your base branch is `main`.
+   git switch main && git checkout -b <name>
    ```
 
 5. Add your changes
@@ -103,9 +103,9 @@ Commit messages should:
 
    ```console
    git remote add upstream https://github.com/dyvenia/viadot.git
-   git fetch upstream 2.0
-   git switch 2.0
-   git rebase upstream/2.0
+   git fetch upstream main
+   git switch main
+   git rebase upstream/main
    ```
 
 7. Push the changes to your fork
@@ -114,7 +114,7 @@ Commit messages should:
    git push --force
    ```
 
-8. [Submit a PR](https://github.com/dyvenia/viadot/compare/2.0...main) into the `2.0` branch.
+8. [Submit a PR](https://github.com/dyvenia/viadot/compare/yourbranch...main) into the `main` branch.
 
    Make sure to read & check all relevant checkboxes in the PR description!
 
@@ -142,7 +142,7 @@ This will update the version in `pyproject.toml` accordingly.
 
 #### Release
 
-Once the modified `pyproject.toml` is merged to `2.0`, a version tag will be [automatically created](https://github.com/dyvenia/viadot/blob/2.0/.github/workflows/detect-and-tag-new-version.yml), and the [release workflow](https://github.com/dyvenia/viadot/blob/2.0/.github/workflows/cd.yml) will be triggered.
+Once the modified `pyproject.toml` is merged to `main`, a version tag will be [automatically created](https://github.com/dyvenia/viadot/blob/main/.github/workflows/detect-and-tag-new-version.yml), and the [release workflow](https://github.com/dyvenia/viadot/blob/main/.github/workflows/cd.yml) will be triggered.
 
 The release workflow will:
 

@@ -9,7 +9,7 @@ Note that we refer to a `sap_netweaver_rfc` folder in the Dockerfile. This is th
 Clone the viadot, enter the sap_rfc folder, and build the image:
 
 ```console
-git clone --branch 2.0 https://github.com/dyvenia/viadot.git && \
+git clone --branch main https://github.com/dyvenia/viadot.git && \
 cd viadot/viadot/examples/sap_rfc && \
 docker build -t viadot:sap_rfc . --no-cache
 ```

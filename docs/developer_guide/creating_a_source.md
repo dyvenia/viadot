@@ -145,7 +145,7 @@ __all__ = [
 
 ## Sources using optional dependencies
 
-In case your source uses an [optional dependency](https://github.com/dyvenia/viadot/blob/2.0/pyproject.toml), you need to escape the import. In the example below, our source uses the optional `adlfs` package (part of the `azure` extra):
+In case your source uses an [optional dependency](https://github.com/dyvenia/viadot/blob/main/pyproject.toml), you need to escape the import. In the example below, our source uses the optional `adlfs` package (part of the `azure` extra):
 
 ```python hl_lines="5-8"
 # sources/azure_data_lake.py
@@ -318,4 +318,4 @@ This will pass the `credentials` key, including the `api_key` secret, to the ins
 
 And that's all you need to know to create your own `viadot` connectors!
 
-If you need inspiration, take a look at some of the [existing sources](https://github.com/dyvenia/viadot/blob/2.0/src/viadot/sources/).
+If you need inspiration, take a look at some of the [existing sources](https://github.com/dyvenia/viadot/blob/main/src/viadot/sources/).

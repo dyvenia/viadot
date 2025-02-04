@@ -76,7 +76,7 @@ rye sync --features=sap
 ### Library
 
 ```console
-git clone https://github.com/dyvenia/viadot.git -b 2.0 && \
+git clone https://github.com/dyvenia/viadot.git && \
   cd viadot && \
   rye sync
 ```
@@ -89,7 +89,7 @@ git clone https://github.com/dyvenia/viadot.git -b 2.0 && \
     pip install viadot2
     ```
 
-    or, with the `azure` [extra](https://github.com/dyvenia/viadot/blob/2.0/pyproject.toml) as an example:
+    or, with the `azure` [extra](https://github.com/dyvenia/viadot/blob/main/pyproject.toml) as an example:
 
     ```console
     pip install viadot2[azure]
