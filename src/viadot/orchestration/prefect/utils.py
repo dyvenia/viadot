@@ -57,10 +57,13 @@ class DynamicDateHandler:
             of the day X years ago
         - "X_years/months/days_ago_full_date":  e.g., "3_years_ago_full_date",
             refers to a given date X units ago in dynamic_date_format
+        - "years_from_x_until_now_included": e.g. "years_from_2019_until_now_included",
+           refers to a date range of the years from a given year
+           until the current year included
+        - "years_from_x_until_y_years_ago": e.g., "years_from_2019_until_y_years_ago",
+          refers to a date range of the years from a given year X until y years ago
         - "last_X_years/months/days": e.g., "last_10_months", refers to a data range
             of the months in 'YMM' format
-        - "Y_years_from_X": e.g., "10_years_from_2020", refers to a data range
-            of the year numbers from a specified year
         - "first_X_days_from_X": e.g., "first_10_days_of_January_2020",
             returns a data range of days from a given month
 
@@ -80,9 +83,10 @@ class DynamicDateHandler:
         }
         self.range_patterns = {
             "last_x_units": r"last_(\d+)_(years|months|days)",
-            "y_years_from_x": r"(\d+)_years_from_(\d{4})",
             "first_x_days_from": r"first_(\d+)_days_from_(\w+)_(\d{4})",
             "last_x_days_from": r"last_(\d+)_days_from_(\w+)_(\d{4})",
+            "years_from_x_until_now": r"years_from_(\d{4})_until_now",
+            "years_from_x_until_y_years_ago": r"years_from_(\d{4})_until_(\d+)_years_ago",
         }
         self.dynamic_date_format = dynamic_date_format
         self.dynamic_date_timezone = dynamic_date_timezone
@@ -90,7 +94,7 @@ class DynamicDateHandler:
         self.replacements = self._create_date_dict()
 
     def _generate_years(
-        self, last_years: int | None, from_year: str | None, num_years: str | None
+        self, last_years: int | None, from_year: str | None, end_year: str | None
     ) -> list[str]:
         """Generate a list of years either for the last X years or from a start year.
 
@@ -98,8 +102,7 @@ class DynamicDateHandler:
             last_years (int | None): The number of years to generate
                 from the current year.
             from_year (str | None): The starting year.
-            num_years (int | None): The number of years to generate
-                from the starting year.
+            end_year (int | None): The ending year.
 
         Returns:
             list: A list of years in ascending order.
@@ -109,10 +112,11 @@ class DynamicDateHandler:
             return [str(current_year - i) for i in range(last_years)][
                 ::-1
             ]  # Reversed to ascending order
-        if from_year and num_years:
-            return [
-                str(int(from_year) + i) for i in range(int(num_years))
-            ]  # Ascending order
+        if from_year and end_year:
+            return [str(year) for year in range(int(from_year), int(end_year))]
+
+        if from_year:
+            return [str(year) for year in range(int(from_year), current_year + 1)]
 
         return []
 
@@ -332,7 +336,7 @@ class DynamicDateHandler:
         """
         if unit == "years":
             return self._generate_years(
-                last_years=number, from_year=None, num_years=None
+                last_years=number, from_year=None, end_year=None
             )
         if unit == "months":
             return self._generate_months(last_months=number)
@@ -340,7 +344,7 @@ class DynamicDateHandler:
             return self._generate_dates(last_days=number)
         return dynamic_date_marker
 
-    def _handle_data_ranges(
+    def _handle_data_ranges(  # noqa: C901
         self, dynamic_date_marker: str, match_found: list[tuple], key: str
     ) -> list[str] | str:
         """Direct execution of a specific function based on the provided value of `key`.
@@ -371,14 +375,23 @@ class DynamicDateHandler:
                     dynamic_date_marker, int(number), unit
                 )
 
-        elif key == "y_years_from_x":
-            for number, start_year in match_found:
+        elif key == "years_from_x_until_now":
+            for start_year in match_found:
                 return self._generate_years(
                     last_years=None,
-                    from_year=start_year,
-                    num_years=int(number),  # type: ignore
+                    from_year=start_year,  # type: ignore
+                    end_year=None,  # type: ignore
                 )
-
+        elif key == "years_from_x_until_y_years_ago":
+            for start_year, end_year in match_found:
+                end_year = str(  # noqa: PLW2901
+                    int(self.replacements["current_year"]) - int(end_year) + 1
+                )
+                return self._generate_years(
+                    last_years=None,
+                    from_year=start_year,  # type: ignore
+                    end_year=end_year,  # type: ignore
+                )
         elif key == "first_x_days_from":
             for num_days, month_name, year in match_found:
                 return self._process_first_days(month_name, year, int(num_days))
@@ -680,9 +693,7 @@ async def shell_run_command(
                 )
                 if not stderr and lines:
                     stderr = f"{lines[-1]}\n"
-                msg = (
-                    f"Command failed with exit code {process.returncode}:\n" f"{stderr}"
-                )
+                msg = f"Command failed with exit code {process.returncode}:\n{stderr}"
                 if raise_on_failure:
                     raise RuntimeError(msg)
                 lines.append(msg)
