@@ -118,7 +118,7 @@ class SMB(Source):
 
     def _process_entry(
         self,
-        entry,
+        entry: smbclient._os.SMBDirEntry,
         parent_path: str,
         keywords: list[str] | None = None,
         extensions: list[str] | None = None,
@@ -139,13 +139,11 @@ class SMB(Source):
         if entry.is_dir():
             self._scan_directory(full_path, keywords, extensions)
         elif self._is_matching_file(entry, keywords, extensions):
-            with smbclient.open_file(full_path, mode="rb") as file:
-                content = file.read()
-                self.found_files[full_path] = content
+            self._process_matching_file(file_path=full_path)
 
     def _is_matching_file(
         self,
-        entry,
+        entry: smbclient._os.SMBDirEntry,
         keywords: list[str] | None = None,
         extensions: list[str] | None = None,
     ) -> bool:
@@ -175,3 +173,27 @@ class SMB(Source):
         )
 
         return matches_extension and matches_keyword
+
+    def _process_matching_file(self, file_path: str) -> None:
+        """Process a matching file by downloading its content.
+
+        It downloading the content and storing it in the found_files dictionary.
+
+        Args:
+            file_path (str): The full path of the matching file.
+        """
+        self.logger.info(f"Found: {file_path}")
+        content = self._download_file_content(file_path)
+        self.found_files[file_path] = content
+
+    def _download_file_content(self, file_path: str) -> bytes:
+        """Download the content of a file.
+
+        Args:
+            file_path (str): The full path of the file to download.
+
+        Returns:
+            bytes: The content of the file.
+        """
+        with smbclient.open_file(file_path, mode="rb") as file:
+            return file.read()
