@@ -64,12 +64,12 @@ class SMB(Source):
             password=self.credentials.get("password"),
         )
 
-    def scan_and_download(
+    def scan_and_store(
         self,
         keywords: list[str] | None = None,
         extensions: list[str] | None = None,
     ) -> dict[str, bytes]:
-        """Scan the directory structure for files and download their contents.
+        """Scan the directory structure for files and store their contents in memory.
 
         Args:
             keywords (list[str] | None): List of keywords to search for in filenames.
@@ -101,7 +101,7 @@ class SMB(Source):
         try:
             entries = self._get_directory_entries(path)
             for entry in entries:
-                self._process_entry(entry, path, keywords, extensions)
+                self._handle_directory_entry(entry, path, keywords, extensions)
         except Exception as e:
             self.logger.exception(f"Error scanning or downloading from {path}: {e}")  # noqa: TRY401
 
@@ -116,7 +116,7 @@ class SMB(Source):
         """
         return smbclient.scandir(path)
 
-    def _process_entry(
+    def _handle_directory_entry(
         self,
         entry: smbclient._os.SMBDirEntry,
         parent_path: str,
@@ -174,20 +174,20 @@ class SMB(Source):
 
         return matches_extension and matches_keyword
 
-    def _process_matching_file(self, file_path: str) -> None:
-        """Process a matching file by downloading its content.
+    def _store_matching_file(self, file_path: str) -> None:
+        """Process a matching file by fetching its content.
 
-        It downloading the content and storing it in the found_files dictionary.
+        It fetching the content and storing it in the found_files dictionary.
 
         Args:
             file_path (str): The full path of the matching file.
         """
         self.logger.info(f"Found: {file_path}")
-        content = self._download_file_content(file_path)
+        content = self._fetch_file_content(file_path)
         self.found_files[file_path] = content
 
-    def _download_file_content(self, file_path: str) -> bytes:
-        """Download the content of a file.
+    def _fetch_file_content(self, file_path: str) -> bytes:
+        """Fetch the content of a file.
 
         Args:
             file_path (str): The full path of the file to download.
