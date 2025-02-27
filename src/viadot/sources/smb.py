@@ -1,4 +1,4 @@
-import os
+from pathlib import Path
 
 from pydantic import BaseModel
 import smbclient
@@ -135,11 +135,11 @@ class SMB(Source):
             extensions (list[str] | None): List of file extensions to filter by.
                 Defaults to None.
         """
-        full_path = os.path.join(parent_path, entry.name)
+        full_path = Path(parent_path) / entry.name
         if entry.is_dir():
             self._scan_directory(full_path, keywords, extensions)
         elif self._is_matching_file(entry, keywords, extensions):
-            self._process_matching_file(file_path=full_path)
+            self._store_matching_file(file_path=full_path)
 
     def _is_matching_file(
         self,
@@ -197,3 +197,27 @@ class SMB(Source):
         """
         with smbclient.open_file(file_path, mode="rb") as file:
             return file.read()
+
+    def save_stored_files(self, destination_dir: str) -> None:
+        """Save stored files from memory to a local directory.
+
+        Args:
+            destination_dir (str): The local directory where files should be saved.
+        """
+        if not self.found_files:
+            self.logger.info("No files to save.")
+            return
+
+        Path(destination_dir).mkdir(
+            parents=True, exist_ok=True
+        )  # Ensure the directory exists
+
+        for file_path, content in self.found_files.items():
+            local_filename = Path(destination_dir) / Path.name(file_path)
+
+            try:
+                with Path(local_filename).open("wb") as f:
+                    f.write(content)
+                self.logger.info(f"Saved: {local_filename}")
+            except Exception as e:
+                self.logger.exception(f"Failed to save {local_filename}: {e}")  # noqa: TRY401
