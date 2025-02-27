@@ -1,3 +1,5 @@
+import os
+
 from pydantic import BaseModel
 import smbclient
 
@@ -61,3 +63,115 @@ class SMB(Source):
             username=self.credentials.get("username"),
             password=self.credentials.get("password"),
         )
+
+    def scan_and_download(
+        self,
+        keywords: list[str] | None = None,
+        extensions: list[str] | None = None,
+    ) -> dict[str, bytes]:
+        """Scan the directory structure for files and download their contents.
+
+        Args:
+            keywords (list[str] | None): List of keywords to search for in filenames.
+                Defaults to None.
+            extensions (list[str] | None): List of file extensions to filter by.
+                Defaults to None.
+
+        Returns:
+            Dict[str, bytes]: A dictionary mapping file paths to their contents.
+        """
+        self.found_files = {}
+
+        self._scan_directory(self.base_path, keywords, extensions)
+        return self.found_files
+
+    def _scan_directory(
+        self,
+        path: str,
+        keywords: list[str] | None,
+        extensions: list[str] | None,
+    ):
+        """Recursively scan a directory for matching files.
+
+        Args:
+            path (str): The current directory path to scan.
+            keywords (list[str] | None): List of keywords to search for in filenames.
+            extensions (list[str] | None): List of file extensions to filter by.
+        """
+        try:
+            entries = self._get_directory_entries(path)
+            for entry in entries:
+                self._process_entry(entry, path, keywords, extensions)
+        except Exception as e:
+            self.logger.exception(f"Error scanning or downloading from {path}: {e}")  # noqa: TRY401
+
+    def _get_directory_entries(self, path: str):
+        """Get directory entries using smbclient.
+
+        Args:
+            path (str): The directory path to scan.
+
+        Returns:
+            Iterator: An iterator of directory entries.
+        """
+        return smbclient.scandir(path)
+
+    def _process_entry(
+        self,
+        entry,
+        parent_path: str,
+        keywords: list[str] | None = None,
+        extensions: list[str] | None = None,
+    ):
+        """Process a single directory entry.
+
+        It processes either by recursing into subdirectories or handling matching files.
+
+        Args:
+            entry: A directory entry object.
+            parent_path (str): The parent directory path.
+            keywords (list[str] | None): List of keywords to search for in filenames.
+                Defaults to None.
+            extensions (list[str] | None): List of file extensions to filter by.
+                Defaults to None.
+        """
+        full_path = os.path.join(parent_path, entry.name)
+        if entry.is_dir():
+            self._scan_directory(full_path, keywords, extensions)
+        elif self._is_matching_file(entry, keywords, extensions):
+            with smbclient.open_file(full_path, mode="rb") as file:
+                content = file.read()
+                self.found_files[full_path] = content
+
+    def _is_matching_file(
+        self,
+        entry,
+        keywords: list[str] | None = None,
+        extensions: list[str] | None = None,
+    ) -> bool:
+        """Check if a file matches the given criteria including keywords and extensions.
+
+        Args:
+            entry: A file entry object from the directory scan.
+            keywords (list[str] | None): List of keywords to search for in filenames.
+                It is case-insensitive. Defaults to None.
+            extensions (list[str] | None): List of file extensions to filter by. It is
+                case-insensitive. Defaults to None.
+
+        Returns:
+            bool: True if the file matches all criteria, False otherwise.
+        """
+        if not entry.is_file():
+            return False
+
+        name_lower = entry.name.lower()
+
+        matches_extension = not extensions or any(
+            name_lower.endswith(ext.lower()) for ext in extensions
+        )
+
+        matches_keyword = not keywords or any(
+            keyword.lower() in name_lower for keyword in keywords
+        )
+
+        return matches_extension and matches_keyword
