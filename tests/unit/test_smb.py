@@ -1,5 +1,5 @@
 from pathlib import Path
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock, mock_open, patch
 
 import pytest
 
@@ -12,7 +12,10 @@ SERVER_PATH = "//server/folder_path"
 
 @pytest.fixture
 def valid_credentials():
-    return {"username": "default@example.com", "password": "default_password"}
+    return {
+        "username": "default@example.com",
+        "password": "default_password",
+    }  # pragma: allowlist secret
 
 
 @pytest.fixture
@@ -113,9 +116,55 @@ def test_handle_directory_entry_file(smb_instance):
     ):
         mock_is_matching.return_value = True
         smb_instance._handle_directory_entry(
-            mock_entry, SERVER_PATH, ["keyword"], [".txt"]
+            mock_entry, SERVER_PATH, ["test"], [".txt"]
         )
-        mock_is_matching.assert_called_once_with(mock_entry, ["keyword"], [".txt"])
+
+        mock_is_matching.assert_called_once_with(mock_entry, ["test"], [".txt"])
         mock_store_file.assert_called_once_with(
             file_path=Path(f"{SERVER_PATH}/test_file.txt")
         )
+
+
+@pytest.mark.parametrize(
+    ("is_file", "name", "keywords", "extensions", "expected"),
+    [
+        (True, "test.txt", None, None, True),
+        (True, "test.txt", ["test"], None, True),
+        (True, "test.txt", ["other"], None, False),
+        (True, "test.txt", None, [".txt"], True),
+        (True, "test.txt", None, [".doc"], False),
+        (True, "test.txt", ["test"], [".txt"], True),
+        (True, "test.txt", ["other"], [".doc"], False),
+        (False, "test.txt", None, None, False),
+    ],
+)
+def test_is_matching_file(smb_instance, is_file, name, keywords, extensions, expected):
+    mock_entry = MagicMock()
+    mock_entry.is_file.return_value = is_file
+    mock_entry.name = name
+
+    result = smb_instance._is_matching_file(mock_entry, keywords, extensions)
+    assert result == expected
+
+
+def test_store_matching_file(smb_instance):
+    with (
+        patch.object(smb_instance, "_fetch_file_content") as mock_fetch,
+        patch.object(smb_instance, "logger") as mock_logger,
+    ):
+        mock_fetch.return_value = b"file content"
+        smb_instance._store_matching_file(file_path=f"{SERVER_PATH}/file.txt")
+        mock_logger.info.assert_called_once_with("Found: /test/path/file.txt")
+        mock_fetch.assert_called_once_with(f"{SERVER_PATH}/file.txt")
+        assert smb_instance.found_files[f"{SERVER_PATH}/file.txt"] == b"file content"
+
+
+def test_fetch_file_content(smb_instance):
+    mock_file_content = b"file content"
+    mock_file = mock_open(read_data=mock_file_content)
+
+    with patch("smbclient.open_file", mock_file) as mock_open_file:
+        content = smb_instance._fetch_file_content(f"{SERVER_PATH}/file.txt")
+
+        mock_open_file.assert_called_once_with(f"{SERVER_PATH}/file.txt", mode="rb")
+        assert content == mock_file_content
