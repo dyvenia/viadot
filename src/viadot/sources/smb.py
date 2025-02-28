@@ -214,7 +214,7 @@ class SMB(Source):
         )  # Ensure the directory exists
 
         for file_path, content in self.found_files.items():
-            local_filename = Path(destination_dir) / Path.name(file_path)
+            local_filename = Path(destination_dir) / Path(file_path).name
 
             try:
                 with Path(local_filename).open("wb") as f:
