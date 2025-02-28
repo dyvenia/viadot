@@ -1,6 +1,8 @@
+"""SMB (file-sharing protocol) connector."""
+
 from pathlib import Path
 
-from pydantic import BaseModel
+from pydantic import BaseModel, root_validator
 import smbclient
 
 from viadot.config import get_source_credentials
@@ -9,7 +11,7 @@ from viadot.sources.base import Source
 
 
 class SMBCredentials(BaseModel):
-    username: str  # username (e.g username@{tenant_name}.com)
+    username: str  # username (e.g username@tenant_name.com)
     password: str
 
     @root_validator(pre=True)
