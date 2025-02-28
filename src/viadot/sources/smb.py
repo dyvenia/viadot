@@ -57,6 +57,7 @@ class SMB(Source):
             credentials.
         """
         self.base_path = base_path
+        self.found_files = {}
         raw_creds = credentials or get_source_credentials(config_key) or {}
         validated_creds = dict(SMBCredentials(**raw_creds))
         super().__init__(*args, credentials=validated_creds, **kwargs)
@@ -82,8 +83,6 @@ class SMB(Source):
         Returns:
             Dict[str, bytes]: A dictionary mapping file paths to their contents.
         """
-        self.found_files = {}
-
         self._scan_directory(self.base_path, keywords, extensions)
         return self.found_files
 
