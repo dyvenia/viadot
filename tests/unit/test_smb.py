@@ -14,8 +14,8 @@ SERVER_PATH = "//server/folder_path"
 def valid_credentials():
     return {
         "username": "default@example.com",
-        "password": "default_password",
-    }  # pragma: allowlist secret
+        "password": "default_password",  # pragma: allowlist secret
+    }
 
 
 @pytest.fixture
@@ -76,10 +76,10 @@ def test_scan_directory_error_handling(smb_instance):
     ):
         mock_get_entries.side_effect = Exception("Test error")
 
-        smb_instance._scan_directory("/test/path", None, None)
+        smb_instance._scan_directory(SERVER_PATH, None, None)
 
         mock_logger.exception.assert_called_once_with(
-            "Error scanning or downloading from /test/path: Test error"
+            f"Error scanning or downloading from {SERVER_PATH}: Test error"
         )
 
 
@@ -154,7 +154,7 @@ def test_store_matching_file(smb_instance):
     ):
         mock_fetch.return_value = b"file content"
         smb_instance._store_matching_file(file_path=f"{SERVER_PATH}/file.txt")
-        mock_logger.info.assert_called_once_with("Found: /test/path/file.txt")
+        mock_logger.info.assert_called_once_with(f"Found: {SERVER_PATH}/file.txt")
         mock_fetch.assert_called_once_with(f"{SERVER_PATH}/file.txt")
         assert smb_instance.found_files[f"{SERVER_PATH}/file.txt"] == b"file content"
 
