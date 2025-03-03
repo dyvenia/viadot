@@ -2,11 +2,13 @@
 
 from pathlib import Path
 
+import pendulum
 from pydantic import BaseModel, root_validator
 import smbclient
 
 from viadot.config import get_source_credentials
 from viadot.exceptions import CredentialError
+from viadot.orchestration.prefect.utils import DynamicDateHandler
 from viadot.sources.base import Source
 
 
@@ -71,6 +73,10 @@ class SMB(Source):
         self,
         keywords: list[str] | None = None,
         extensions: list[str] | None = None,
+        date_filter: str | list[str, str] | None = None,
+        dynamic_date_symbols: list[str] = ["<<", ">>"],
+        dynamic_date_format: str = "%Y-%m-%d",
+        dynamic_date_timezone: str = "Europe/Warsaw",
     ) -> dict[str, bytes]:
         """Scan the directory structure for files and store their contents in memory.
 
@@ -79,12 +85,84 @@ class SMB(Source):
                 Defaults to None.
             extensions (list[str] | None): List of file extensions to filter by.
                 Defaults to None.
+            date_filter (str | list[str] | None):
+                - A single date string (e.g., "2024-03-03").
+                - A list containing exactly two date strings
+                    (e.g., ["2024-03-03", "2025-04-04"]).
+                - None, which raises an error.
+            dynamic_date_symbols (list[str], optional):
+                Symbols for dynamic date handling (default: ["<<", ">>"]).
+            dynamic_date_format (str, optional):
+                Format used for dynamic date parsing (default: "%Y-%m-%d").
+            dynamic_date_timezone (str, optional):
+                Timezone used for dynamic date processing (default: "Europe/Warsaw").
+
 
         Returns:
             Dict[str, bytes]: A dictionary mapping file paths to their contents.
         """
+        date_filter_parsed = self._parse_dates(
+            date_filter=date_filter,
+            dynamic_date_symbols=dynamic_date_symbols,
+            dynamic_date_format=dynamic_date_format,
+            dynamic_date_timezone=dynamic_date_timezone,
+        )
+        self.logger.info(f"Parsed date: {date_filter_parsed}")
         self._scan_directory(self.base_path, keywords, extensions)
         return self.found_files
+
+    def _parse_dates(
+        self,
+        date_filter: str | list[str] | None = None,
+        dynamic_date_symbols: list[str] = ["<<", ">>"],
+        dynamic_date_format: str = "%Y-%m-%d",
+        dynamic_date_timezone: str = "Europe/Warsaw",
+    ) -> pendulum.Date | tuple[pendulum.Date, pendulum.Date]:
+        """Parses a date or date range, supporting dynamic date symbols.
+
+        This function processes a single date string or a list of exactly two date
+        strings and converts them into `pendulum.Date` objects. If dynamic date symbols
+        are present, they are processed before conversion.
+
+        Args:
+            date_filter (str | list[str] | None):
+                - A single date string (e.g., "2024-03-03").
+                - A list containing exactly two date strings
+                    (e.g., ["2024-03-03", "2025-04-04"]).
+                - None, which raises an error.
+            dynamic_date_symbols (list[str], optional):
+                Symbols for dynamic date handling (default: ["<<", ">>"]).
+            dynamic_date_format (str, optional):
+                Format used for dynamic date parsing (default: "%Y-%m-%d").
+            dynamic_date_timezone (str, optional):
+                Timezone used for dynamic date processing (default: "Europe/Warsaw").
+
+        Returns:
+            pendulum.Date: If a single date is provided.
+            tuple[pendulum.Date, pendulum.Date]: If a date range (list of two dates)
+                is provided.
+
+        Raises:
+            ValueError: If `date_filter` is neither a string nor a list of exactly
+                two strings.
+        """
+        ddh = DynamicDateHandler(
+            dynamic_date_symbols=dynamic_date_symbols,
+            dynamic_date_format=dynamic_date_format,
+            dynamic_date_timezone=dynamic_date_timezone,
+        )
+
+        if isinstance(date_filter, str):
+            processed_date = ddh.process_dates(date_filter)
+            return pendulum.parse(processed_date).date()
+        if isinstance(date_filter, list) and len(date_filter) == 2:
+            start_date, end_date = (
+                pendulum.parse(ddh.process_dates(d)).date() for d in date_filter
+            )
+            return (start_date, end_date)
+
+        msg = "date_filter must be a string, a list of exactly 2 dates, or None."
+        raise ValueError(msg)
 
     def _scan_directory(
         self,
