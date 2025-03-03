@@ -26,7 +26,9 @@ def smb_instance(valid_credentials):
 def test_smb_initialization_with_credentials(valid_credentials):
     smb = SMB(base_path=SERVER_PATH, credentials=valid_credentials)
     assert smb.credentials["username"] == "default@example.com"
-    assert smb.credentials["password"] == "default_password"  # noqa: S105
+    assert (
+        smb.credentials["password"] == "default_password"  # noqa: S105, # pragma: allowlist secret
+    )
 
 
 def test_smb_initialization_without_credentials():
@@ -168,3 +170,40 @@ def test_fetch_file_content(smb_instance):
 
         mock_open_file.assert_called_once_with(f"{SERVER_PATH}/file.txt", mode="rb")
         assert content == mock_file_content
+
+
+def test_save_stored_files(smb_instance, tmp_path):
+    smb_instance.found_files = {
+        "/remote/path/file1.txt": b"content1",
+        "/remote/path/file2.txt": b"content2",
+    }
+
+    with patch.object(smb_instance, "logger") as mock_logger:
+        smb_instance.save_stored_files(str(tmp_path))
+
+        assert (tmp_path / "file1.txt").read_bytes() == b"content1"
+        assert (tmp_path / "file2.txt").read_bytes() == b"content2"
+
+        mock_logger.info.assert_any_call(f"Saved: {tmp_path}/file1.txt")
+        mock_logger.info.assert_any_call(f"Saved: {tmp_path}/file2.txt")
+
+
+def test_save_stored_files_no_files(smb_instance, tmp_path):
+    smb_instance.found_files = {}
+
+    with patch.object(smb_instance, "logger") as mock_logger:
+        smb_instance.save_stored_files(str(tmp_path))
+        mock_logger.info.assert_called_once_with("No files to save.")
+
+
+def test_save_stored_files_error(smb_instance, tmp_path):
+    smb_instance.found_files = {"/remote/path/file1.txt": b"content1"}
+
+    with (
+        patch.object(smb_instance, "logger") as mock_logger,
+        patch("pathlib.Path.open", side_effect=Exception("Test error")),
+    ):
+        smb_instance.save_stored_files(str(tmp_path))
+        mock_logger.exception.assert_called_once_with(
+            f"Failed to save {tmp_path}/file1.txt: Test error"
+        )
