@@ -73,7 +73,7 @@ class SMB(Source):
         self,
         keywords: list[str] | None = None,
         extensions: list[str] | None = None,
-        date_filter: str | list[str] | None = None,
+        date_filter: str | tuple[str, str] | None = None,
         dynamic_date_symbols: list[str] = ["<<", ">>"],  # noqa: B006
         dynamic_date_format: str = "%Y-%m-%d",
         dynamic_date_timezone: str = "Europe/Warsaw",
@@ -82,24 +82,22 @@ class SMB(Source):
 
         Args:
             keywords (list[str] | None): List of keywords to search for in filenames.
-                Defaults to None.
             extensions (list[str] | None): List of file extensions to filter by.
-                Defaults to None.
-            date_filter (str | list[str] | None):
+            date_filter (str | tuple[str, str] | None):
                 - A single date string (e.g., "2024-03-03").
-                - A list containing exactly two date strings
-                    (e.g., ["2024-03-03", "2025-04-04"]).
-                - None, which returns None (default: None).
-            dynamic_date_symbols (list[str], optional):
-                Symbols for dynamic date handling (default: ["<<", ">>"]).
-            dynamic_date_format (str, optional):
-                Format used for dynamic date parsing (default: "%Y-%m-%d").
-            dynamic_date_timezone (str, optional):
-                Timezone used for dynamic date processing (default: "Europe/Warsaw").
-
+                - A tuple containing exactly two date strings
+                (e.g., ("2024-03-03", "2025-04-04")).
+                - None, which returns None.
+                Defaults to None.
+            dynamic_date_symbols (list[str], optional): Symbols for dynamic date
+                handling. Defaults to ["<<", ">>"].
+            dynamic_date_format (str, optional): Format used for dynamic date parsing.
+                Defaults to "%Y-%m-%d".
+            dynamic_date_timezone (str, optional): Timezone used for dynamic date
+                processing. Defaults to "Europe/Warsaw".
 
         Returns:
-            Dict[str, bytes]: A dictionary mapping file paths to their contents.
+            dict[str, bytes]: A dictionary mapping file paths to their contents.
         """
         date_filter_parsed = self._parse_dates(
             date_filter=date_filter,
@@ -107,43 +105,39 @@ class SMB(Source):
             dynamic_date_format=dynamic_date_format,
             dynamic_date_timezone=dynamic_date_timezone,
         )
-        self.logger.info(f"Parsed date: {date_filter_parsed}")
-        self._scan_directory(self.base_path, keywords, extensions)
+
+        self._scan_directory(self.base_path, keywords, extensions, date_filter_parsed)
         return self.found_files
 
     def _parse_dates(
         self,
-        date_filter: str | list[str] | None = None,
+        date_filter: str | tuple[str, str] | None = None,
         dynamic_date_symbols: list[str] = ["<<", ">>"],  # noqa: B006
         dynamic_date_format: str = "%Y-%m-%d",
         dynamic_date_timezone: str = "Europe/Warsaw",
-    ) -> pendulum.Date | tuple[pendulum.Date, pendulum.Date]:
+    ) -> pendulum.Date | tuple[pendulum.Date, pendulum.Date] | None:
         """Parses a date or date range, supporting dynamic date symbols.
 
-        This function processes a single date string or a list of exactly two date
-        strings and converts them into `pendulum.Date` objects. If dynamic date symbols
-        are present, they are processed before conversion.
-
         Args:
-            date_filter (str | list[str] | None):
+            date_filter (str | tuple[str, str] | None):
                 - A single date string (e.g., "2024-03-03").
-                - A list containing exactly two date strings, 'start' and 'end' date.
-                    (e.g., ["2024-03-03", "2025-04-04"]).
-                - None, which returns None (default: None).
-            dynamic_date_symbols (list[str], optional):
-                Symbols for dynamic date handling (default: ["<<", ">>"]).
-            dynamic_date_format (str, optional):
-                Format used for dynamic date parsing (default: "%Y-%m-%d").
-            dynamic_date_timezone (str, optional):
-                Timezone used for dynamic date processing (default: "Europe/Warsaw").
+                - A tuple containing exactly two date strings, 'start' and 'end' date.
+                - None, which applies no date filter.
+                Defaults to None.
+            dynamic_date_symbols (list[str]): Symbols for dynamic date handling.
+                Defaults to ["<<", ">>"].
+            dynamic_date_format (str): Format used for dynamic date parsing.
+                Defaults to "%Y-%m-%d".
+            dynamic_date_timezone (str): Timezone used for dynamic date processing.
+                Defaults to "Europe/Warsaw".
 
         Returns:
             pendulum.Date: If a single date is provided.
-            tuple[pendulum.Date, pendulum.Date]: If a date range (list of two dates)
-                is provided.
+            tuple[pendulum.Date, pendulum.Date]: If a date range is provided.
+            None: If `date_filter` is None.
 
         Raises:
-            ValueError: If `date_filter` is neither a string nor a list of exactly
+            ValueError: If `date_filter` is neither a string nor a tuple of exactly
                 two strings.
         """
         if date_filter is None:
@@ -159,14 +153,15 @@ class SMB(Source):
             case str():
                 return pendulum.parse(ddh.process_dates(date_filter)).date()
 
-            case [start, end] if isinstance(start, str) and isinstance(end, str):
-                return tuple(
-                    pendulum.parse(ddh.process_dates(d)).date() for d in (start, end)
+            case (start, end) if isinstance(start, str) and isinstance(end, str):
+                return (
+                    pendulum.parse(ddh.process_dates(start)).date(),
+                    pendulum.parse(ddh.process_dates(end)).date(),
                 )
 
             case _:
                 msg = (
-                    "date_filter must be a string, a list of exactly 2 dates, or None."
+                    "date_filter must be a string, a tuple of exactly 2 dates, or None."
                 )
                 raise ValueError(msg)
 
@@ -175,13 +170,28 @@ class SMB(Source):
         path: str,
         keywords: list[str] | None,
         extensions: list[str] | None,
-    ):
-        """Recursively scan a directory for matching files.
+        date_filter_parsed: pendulum.Date
+        | tuple[pendulum.Date, pendulum.Date]
+        | None = None,
+    ) -> None:
+        """Recursively scans a directory for matching files based on filters.
+
+        It applies keyword and extension filters and can filter files based on
+        modification dates.
 
         Args:
-            path (str): The current directory path to scan.
+            path (str): The directory path to scan.
             keywords (list[str] | None): List of keywords to search for in filenames.
+                Defaults to None.
             extensions (list[str] | None): List of file extensions to filter by.
+                Defaults to None.
+            date_filter_parsed (
+                pendulum.Date | tuple[pendulum.Date, pendulum.Date] | None
+            ):
+                - A single parsed `pendulum.Date` for exact date filtering.
+                - A tuple of two `pendulum.Date` values for date range filtering.
+                - None, if no date filter is applied.
+                Defaults to None.
         """
         try:
             entries = self._get_directory_entries(path)
