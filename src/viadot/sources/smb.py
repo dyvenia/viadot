@@ -188,7 +188,7 @@ class SMB(Source):
             date_filter_parsed (
                 pendulum.Date | tuple[pendulum.Date, pendulum.Date] | None
             ):
-                - A single parsed `pendulum.Date` for exact date filtering.
+                - A single `pendulum.Date` for exact date filtering.
                 - A tuple of two `pendulum.Date` values for date range filtering.
                 - None, if no date filter is applied.
                 Defaults to None.
@@ -196,7 +196,9 @@ class SMB(Source):
         try:
             entries = self._get_directory_entries(path)
             for entry in entries:
-                self._handle_directory_entry(entry, path, keywords, extensions)
+                self._handle_directory_entry(
+                    entry, path, keywords, extensions, date_filter_parsed
+                )
         except Exception as e:
             self.logger.exception(f"Error scanning or downloading from {path}: {e}")  # noqa: TRY401
 
@@ -217,23 +219,34 @@ class SMB(Source):
         parent_path: str,
         keywords: list[str] | None = None,
         extensions: list[str] | None = None,
+        date_filter_parsed: pendulum.Date
+        | tuple[pendulum.Date, pendulum.Date]
+        | None = None,
     ):
         """Process a single directory entry.
 
         It processes either by recursing into subdirectories or handling matching files.
 
         Args:
-            entry: A directory entry object.
+            entry (smbclient._os.SMBDirEntry): A directory entry object from
+                the directory scan.
             parent_path (str): The parent directory path.
             keywords (list[str] | None): List of keywords to search for in filenames.
                 Defaults to None.
             extensions (list[str] | None): List of file extensions to filter by.
                 Defaults to None.
+            date_filter_parsed (
+                pendulum.Date | tuple[pendulum.Date, pendulum.Date] | None
+            ):
+                - A single `pendulum.Date` for exact date filtering.
+                - A tuple of two `pendulum.Date` values for date range filtering.
+                - None, if no date filter is applied.
+                Defaults to None.
         """
         full_path = Path(parent_path) / entry.name
         if entry.is_dir():
-            self._scan_directory(full_path, keywords, extensions)
-        elif self._is_matching_file(entry, keywords, extensions):
+            self._scan_directory(full_path, keywords, extensions, date_filter_parsed)
+        elif self._is_matching_file(entry, keywords, extensions, date_filter_parsed):
             self._store_matching_file(file_path=full_path)
 
     def _is_matching_file(
@@ -241,15 +254,31 @@ class SMB(Source):
         entry: smbclient._os.SMBDirEntry,
         keywords: list[str] | None = None,
         extensions: list[str] | None = None,
+        date_filter_parsed: pendulum.Date
+        | tuple[pendulum.Date, pendulum.Date]
+        | None = None,
     ) -> bool:
-        """Check if a file matches the given criteria including keywords and extensions.
+        """Check if a file matches the given criteria.
+
+        It verifies whether the file satisfies any combination of:
+        - Keyword-based filtering.
+        - Extension-based filtering.
+        - Exact date or date range filtering.
 
         Args:
-            entry: A file entry object from the directory scan.
+            entry (smbclient._os.SMBDirEntry): A directory entry object from
+                the directory scan.
             keywords (list[str] | None): List of keywords to search for in filenames.
                 It is case-insensitive. Defaults to None.
-            extensions (list[str] | None): List of file extensions to filter by. It is
-                case-insensitive. Defaults to None.
+            extensions (list[str] | None): List of file extensions to filter by.
+                It is case-insensitive. Defaults to None.
+            date_filter_parsed (
+                pendulum.Date | tuple[pendulum.Date, pendulum.Date] | None
+            ):
+                - A single `pendulum.Date` for exact date filtering.
+                - A tuple of two `pendulum.Date` values for date range filtering.
+                - None, if no date filter is applied.
+                Defaults to None.
 
         Returns:
             bool: True if the file matches all criteria, False otherwise.
@@ -258,16 +287,24 @@ class SMB(Source):
             return False
 
         name_lower = entry.name.lower()
+        file_creation_time = pendulum.instance(entry._dir_info.creation_time)
+        file_creation_date = file_creation_time.date()
 
         matches_extension = not extensions or any(
             name_lower.endswith(ext.lower()) for ext in extensions
         )
-
         matches_keyword = not keywords or any(
             keyword.lower() in name_lower for keyword in keywords
         )
 
-        return matches_extension and matches_keyword
+        matches_date = True  # Default to True if no date filtering is applied
+        if isinstance(date_filter_parsed, pendulum.Date):
+            matches_date = file_creation_date == date_filter_parsed
+        elif isinstance(date_filter_parsed, tuple):
+            start_date, end_date = date_filter_parsed
+            matches_date = start_date <= file_creation_date <= end_date
+
+        return matches_extension and matches_keyword and matches_date
 
     def _store_matching_file(self, file_path: str) -> None:
         """Process a matching file by fetching its content.
