@@ -73,8 +73,8 @@ class SMB(Source):
         self,
         keywords: list[str] | None = None,
         extensions: list[str] | None = None,
-        date_filter: str | list[str, str] | None = None,
-        dynamic_date_symbols: list[str] = ["<<", ">>"],
+        date_filter: str | list[str] | None = None,
+        dynamic_date_symbols: list[str] = ["<<", ">>"],  # noqa: B006
         dynamic_date_format: str = "%Y-%m-%d",
         dynamic_date_timezone: str = "Europe/Warsaw",
     ) -> dict[str, bytes]:
@@ -89,7 +89,7 @@ class SMB(Source):
                 - A single date string (e.g., "2024-03-03").
                 - A list containing exactly two date strings
                     (e.g., ["2024-03-03", "2025-04-04"]).
-                - None, which raises an error.
+                - None, which returns None (default: None).
             dynamic_date_symbols (list[str], optional):
                 Symbols for dynamic date handling (default: ["<<", ">>"]).
             dynamic_date_format (str, optional):
@@ -114,7 +114,7 @@ class SMB(Source):
     def _parse_dates(
         self,
         date_filter: str | list[str] | None = None,
-        dynamic_date_symbols: list[str] = ["<<", ">>"],
+        dynamic_date_symbols: list[str] = ["<<", ">>"],  # noqa: B006
         dynamic_date_format: str = "%Y-%m-%d",
         dynamic_date_timezone: str = "Europe/Warsaw",
     ) -> pendulum.Date | tuple[pendulum.Date, pendulum.Date]:
@@ -127,9 +127,9 @@ class SMB(Source):
         Args:
             date_filter (str | list[str] | None):
                 - A single date string (e.g., "2024-03-03").
-                - A list containing exactly two date strings
+                - A list containing exactly two date strings, 'start' and 'end' date.
                     (e.g., ["2024-03-03", "2025-04-04"]).
-                - None, which raises an error.
+                - None, which returns None (default: None).
             dynamic_date_symbols (list[str], optional):
                 Symbols for dynamic date handling (default: ["<<", ">>"]).
             dynamic_date_format (str, optional):
@@ -146,23 +146,29 @@ class SMB(Source):
             ValueError: If `date_filter` is neither a string nor a list of exactly
                 two strings.
         """
+        if date_filter is None:
+            return None
+
         ddh = DynamicDateHandler(
             dynamic_date_symbols=dynamic_date_symbols,
             dynamic_date_format=dynamic_date_format,
             dynamic_date_timezone=dynamic_date_timezone,
         )
 
-        if isinstance(date_filter, str):
-            processed_date = ddh.process_dates(date_filter)
-            return pendulum.parse(processed_date).date()
-        if isinstance(date_filter, list) and len(date_filter) == 2:
-            start_date, end_date = (
-                pendulum.parse(ddh.process_dates(d)).date() for d in date_filter
-            )
-            return (start_date, end_date)
+        match date_filter:
+            case str():
+                return pendulum.parse(ddh.process_dates(date_filter)).date()
 
-        msg = "date_filter must be a string, a list of exactly 2 dates, or None."
-        raise ValueError(msg)
+            case [start, end] if isinstance(start, str) and isinstance(end, str):
+                return tuple(
+                    pendulum.parse(ddh.process_dates(d)).date() for d in (start, end)
+                )
+
+            case _:
+                msg = (
+                    "date_filter must be a string, a list of exactly 2 dates, or None."
+                )
+                raise ValueError(msg)
 
     def _scan_directory(
         self,
