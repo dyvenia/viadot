@@ -287,7 +287,7 @@ class SMB(Source):
             return False
 
         name_lower = entry.name.lower()
-        file_creation_time = pendulum.instance(entry._dir_info.creation_time)
+        file_creation_time = pendulum.instance(entry.stat().st_ctime)
         file_creation_date = file_creation_time.date()
 
         matches_extension = not extensions or any(
