@@ -166,8 +166,15 @@ def test_validate_column_size_pass():
 def test_validate_column_size_fail(caplog):
     df = pd.DataFrame({"col1": ["a", "bb", "cccc"]})
     tests = {"column_size": {"col1": 3}}
-    with caplog.at_level(logging.INFO):
+
+    with (
+        caplog.at_level(logging.INFO),
+        pytest.raises(
+            Exception, match=r"Validation failed for 1 test\(s\): column_size error"
+        ),
+    ):
         validate(df, tests)
+
     assert "field length is different than 3" in caplog.text
 
 
@@ -181,8 +188,16 @@ def test_validate_column_unique_values_pass():
 def test_validate_column_unique_values_fail(caplog):
     df = pd.DataFrame({"col1": [1, 2, 2]})
     tests = {"column_unique_values": ["col1"]}
-    with caplog.at_level(logging.INFO):
+
+    with (
+        caplog.at_level(logging.INFO),
+        pytest.raises(
+            Exception,
+            match=r"Validation failed for 1 test\(s\): column_unique_values error",
+        ),
+    ):
         validate(df, tests)
+
     assert "Values for col1 are not unique." in caplog.text
 
 
@@ -196,8 +211,16 @@ def test_validate_column_list_to_match_pass():
 def test_validate_column_list_to_match_fail(caplog):
     df = pd.DataFrame({"col1": [1]})
     tests = {"column_list_to_match": ["col1", "col2"]}
-    with caplog.at_level(logging.INFO):
+
+    with (
+        caplog.at_level(logging.INFO),
+        pytest.raises(
+            Exception,
+            match=r"Validation failed for 1 test\(s\): column_list_to_match error",
+        ),
+    ):
         validate(df, tests)
+
     assert "Columns are different than expected" in caplog.text
 
 
@@ -211,8 +234,16 @@ def test_validate_dataset_row_count_pass():
 def test_validate_dataset_row_count_fail(caplog):
     df = pd.DataFrame({"col1": [1, 2, 3, 4, 5, 6]})
     tests = {"dataset_row_count": {"min": 1, "max": 5}}
-    with caplog.at_level(logging.INFO):
+
+    with (
+        caplog.at_level(logging.INFO),
+        pytest.raises(
+            Exception,
+            match=r"Validation failed for 1 test\(s\): dataset_row_count error",
+        ),
+    ):
         validate(df, tests)
+
     assert "Row count (6) is not between 1 and 5" in caplog.text
 
 
@@ -226,8 +257,16 @@ def test_validate_column_match_regex_pass():
 def test_validate_column_match_regex_fail(caplog):
     df = pd.DataFrame({"col1": ["A123", "B34", "C45"]})
     tests = {"column_match_regex": {"col1": "^[A-Z][0-9]{2}$"}}
-    with caplog.at_level(logging.INFO):
+
+    with (
+        caplog.at_level(logging.INFO),
+        pytest.raises(
+            Exception,
+            match=r"Validation failed for 1 test\(s\): column_match_regex error",
+        ),
+    ):
         validate(df, tests)
+
     assert "[column_match_regex] on col1 column failed!" in caplog.text
 
 
@@ -241,8 +280,15 @@ def test_validate_column_sum_pass():
 def test_validate_column_sum_fail(caplog):
     df = pd.DataFrame({"col1": [1, 2, 3, 4]})
     tests = {"column_sum": {"col1": {"min": 5, "max": 6}}}
-    with caplog.at_level(logging.INFO):
+
+    with (
+        caplog.at_level(logging.INFO),
+        pytest.raises(
+            Exception, match=r"Validation failed for \d+ test\(s\): column_sum error"
+        ),
+    ):
         validate(df, tests)
+
     assert "Sum of 10 for col1 is out of the expected range - <5:6>" in caplog.text
 
 
