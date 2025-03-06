@@ -7,7 +7,7 @@ import functools
 import logging
 import re
 import subprocess
-from typing import TYPE_CHECKING, Any, Literal, Optional
+from typing import TYPE_CHECKING, Any, Literal, Optional, Dict, List, Tuple
 
 import pandas as pd
 import pyodbc
@@ -553,7 +553,7 @@ def validate_column_size(
     stream_level: int,
     failed_tests: int,
     failed_tests_list: list,
-) -> None:
+) -> Tuple[int, List[str]]:
     """Validate the size of the columns in the DataFrame.
 
     Logic: TODO
@@ -588,7 +588,7 @@ def validate_column_size(
             level=stream_level,
             msg=f"Please provide `column_size` parameter as dictionary {'columns': value}.",
         )
-
+    return failed_tests, failed_tests_list
 
 def validate_column_unique_values(
     df: pd.DataFrame,
@@ -597,7 +597,7 @@ def validate_column_unique_values(
     stream_level: int,
     failed_tests: int,
     failed_tests_list: list,
-) -> None:
+) -> Tuple[int, List[str]]:
     """Validate whether a DataFrame column only contains unique values.
 
     Args:
@@ -622,7 +622,7 @@ def validate_column_unique_values(
                 level=stream_level,
                 msg=f"[column_unique_values] Values for {column} are not unique.",
             )
-
+    return failed_tests, failed_tests_list
 
 def validate_column_list_to_match(
     df: pd.DataFrame,
@@ -631,7 +631,7 @@ def validate_column_list_to_match(
     stream_level: int,
     failed_tests: int,
     failed_tests_list: list,
-) -> None:
+) -> Tuple[int, List[str]]:
     """Validate whether the columns of the DataFrame match the expected list.
 
     Args:
@@ -651,7 +651,7 @@ def validate_column_list_to_match(
             level=stream_level,
             msg="[column_list_to_match] failed. Columns are different than expected.",
         )
-
+    return  failed_tests, failed_tests_list
 
 def validate_dataset_row_count(
     df: pd.DataFrame,
@@ -660,7 +660,7 @@ def validate_dataset_row_count(
     stream_level: int,
     failed_tests: int,
     failed_tests_list: list,
-) -> None:
+) -> Tuple[int, List[str]]:
     """Validate the DataFrame row count.
 
     Args:
@@ -684,6 +684,7 @@ def validate_dataset_row_count(
             level=stream_level,
             msg=f"[dataset_row_count] Row count ({row_count}) is not between {min_value} and {max_value}.",
         )
+    return failed_tests, failed_tests_list
 
 
 def validate_column_match_regex(
@@ -693,7 +694,7 @@ def validate_column_match_regex(
     stream_level: int,
     failed_tests: int,
     failed_tests_list: list,
-) -> None:
+) -> Tuple[int, List[str]]:
     """Validate whether the values of a column match a regex pattern.
 
     Logic: TODO
@@ -728,6 +729,7 @@ def validate_column_match_regex(
                 level=stream_level,
                 msg=f"[column_match_regex] Error in {k} column: {e}",
             )
+    return failed_tests, failed_tests_list
 
 
 def validate_column_sum(
@@ -737,7 +739,7 @@ def validate_column_sum(
     stream_level: int,
     failed_tests: int,
     failed_tests_list: list,
-) -> None:
+) -> Tuple[int, List[str]]:
     """Validate the sum of a column in the DataFrame.
 
     Args:
@@ -764,6 +766,7 @@ def validate_column_sum(
                 level=stream_level,
                 msg=f"[column_sum] Sum of {col_sum} for {column} is out of the expected range - <{min_bound}:{max_bound}>",
             )
+    return failed_tests, failed_tests_list
 
 
 def validate(
@@ -798,32 +801,32 @@ def validate(
 
     if tests is not None:
         if "column_size" in tests:
-            validate_column_size(
+           failed_tests, failed_tests_list = validate_column_size(
                 df, tests, logger, stream_level, failed_tests, failed_tests_list
             )
 
         if "column_unique_values" in tests:
-            validate_column_unique_values(
+            failed_tests, failed_tests_list = validate_column_unique_values(
                 df, tests, logger, stream_level, failed_tests, failed_tests_list
             )
 
         if "column_list_to_match" in tests:
-            validate_column_list_to_match(
+            failed_tests, failed_tests_list = validate_column_list_to_match(
                 df, tests, logger, stream_level, failed_tests, failed_tests_list
             )
 
         if "dataset_row_count" in tests:
-            validate_dataset_row_count(
+            failed_tests, failed_tests_list = validate_dataset_row_count(
                 df, tests, logger, stream_level, failed_tests, failed_tests_list
             )
 
         if "column_match_regex" in tests:
-            validate_column_match_regex(
+            failed_tests, failed_tests_list = validate_column_match_regex(
                 df, tests, logger, stream_level, failed_tests, failed_tests_list
             )
 
         if "column_sum" in tests:
-            validate_column_sum(
+            failed_tests, failed_tests_list = validate_column_sum(
                 df, tests, logger, stream_level, failed_tests, failed_tests_list
             )
 
