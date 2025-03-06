@@ -553,7 +553,7 @@ def validate_column_size(
     stream_level: int,
     failed_tests: int,
     failed_tests_list: list,
-) -> Tuple[int, List[str]]:
+) -> tuple[int, list[str]]:
     """Validate the size of the columns in the DataFrame.
 
     Logic: TODO
@@ -590,6 +590,7 @@ def validate_column_size(
         )
     return failed_tests, failed_tests_list
 
+
 def validate_column_unique_values(
     df: pd.DataFrame,
     tests: dict[str, Any],
@@ -597,7 +598,7 @@ def validate_column_unique_values(
     stream_level: int,
     failed_tests: int,
     failed_tests_list: list,
-) -> Tuple[int, List[str]]:
+) -> tuple[int, list[str]]:
     """Validate whether a DataFrame column only contains unique values.
 
     Args:
@@ -624,6 +625,7 @@ def validate_column_unique_values(
             )
     return failed_tests, failed_tests_list
 
+
 def validate_column_list_to_match(
     df: pd.DataFrame,
     tests: dict[str, Any],
@@ -631,7 +633,7 @@ def validate_column_list_to_match(
     stream_level: int,
     failed_tests: int,
     failed_tests_list: list,
-) -> Tuple[int, List[str]]:
+) -> tuple[int, list[str]]:
     """Validate whether the columns of the DataFrame match the expected list.
 
     Args:
@@ -651,7 +653,8 @@ def validate_column_list_to_match(
             level=stream_level,
             msg="[column_list_to_match] failed. Columns are different than expected.",
         )
-    return  failed_tests, failed_tests_list
+    return failed_tests, failed_tests_list
+
 
 def validate_dataset_row_count(
     df: pd.DataFrame,
@@ -660,7 +663,7 @@ def validate_dataset_row_count(
     stream_level: int,
     failed_tests: int,
     failed_tests_list: list,
-) -> Tuple[int, List[str]]:
+) -> tuple[int, list[str]]:
     """Validate the DataFrame row count.
 
     Args:
@@ -694,7 +697,7 @@ def validate_column_match_regex(
     stream_level: int,
     failed_tests: int,
     failed_tests_list: list,
-) -> Tuple[int, List[str]]:
+) -> tuple[int, list[str]]:
     """Validate whether the values of a column match a regex pattern.
 
     Logic: TODO
@@ -739,7 +742,7 @@ def validate_column_sum(
     stream_level: int,
     failed_tests: int,
     failed_tests_list: list,
-) -> Tuple[int, List[str]]:
+) -> tuple[int, list[str]]:
     """Validate the sum of a column in the DataFrame.
 
     Args:
@@ -801,7 +804,7 @@ def validate(
 
     if tests is not None:
         if "column_size" in tests:
-           failed_tests, failed_tests_list = validate_column_size(
+            failed_tests, failed_tests_list = validate_column_size(
                 df, tests, logger, stream_level, failed_tests, failed_tests_list
             )
 
