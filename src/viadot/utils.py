@@ -7,7 +7,7 @@ import functools
 import logging
 import re
 import subprocess
-from typing import TYPE_CHECKING, Any, Literal, Optional, Dict, List, Tuple
+from typing import TYPE_CHECKING, Any, Literal, Optional
 
 import pandas as pd
 import pyodbc
