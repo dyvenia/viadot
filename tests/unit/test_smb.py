@@ -106,7 +106,7 @@ def test_scan_directory_basic(
     mock_scandir, smb_instance, mock_smb_dir_entry_file, mock_smb_dir_entry_dir
 ):
     """Test that scan and iterates through entries and calls _handle_directory_entry."""
-    mock_scandir.side_effect = lambda path: [
+    mock_scandir.side_effect = lambda path: [  # noqa: ARG005
         mock_smb_dir_entry_file,
         mock_smb_dir_entry_dir,
     ]
@@ -127,7 +127,7 @@ def test_scan_directory_recursive(
     mock_scandir, smb_instance, mock_smb_dir_entry_file, mock_smb_dir_entry_dir
 ):
     """Test that scan_directory recursively calls itself for directories."""
-    mock_scandir.side_effect = lambda path: [
+    mock_scandir.side_effect = lambda path: [  # noqa: ARG005
         mock_smb_dir_entry_file,
         mock_smb_dir_entry_dir,
     ]
