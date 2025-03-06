@@ -1,6 +1,7 @@
 from pathlib import Path
 from unittest.mock import MagicMock, mock_open, patch
 
+import pendulum
 import pytest
 
 from viadot.exceptions import CredentialError
@@ -8,6 +9,7 @@ from viadot.sources import SMB
 
 
 SERVER_PATH = "//server/folder_path"
+TODAY_DATE = pendulum.today().date()
 
 
 @pytest.fixture
@@ -40,35 +42,101 @@ def test_smb_initialization_without_credentials():
 
 
 @pytest.mark.parametrize(
-    ("keywords", "extensions"),
+    ("keywords", "extensions", "date_filter"),
     [
-        (None, None),
-        (["keyword1"], None),
-        (None, [".txt"]),
-        (["keyword1"], [".txt"]),
+        (None, None, "<<pendulum.yesterday().date()>>"),
+        (["keyword1"], None, "<<pendulum.yesterday().date()>>"),
+        (None, [".txt"], "<<pendulum.yesterday().date()>>"),
+        (["keyword1"], [".txt"], "<<pendulum.yesterday().date()>>"),
     ],
 )
-def test_scan_and_store(smb_instance, keywords, extensions):
-    with patch.object(smb_instance, "_scan_directory") as mock_scan_directory:
-        smb_instance.scan_and_store(keywords=keywords, extensions=extensions)
+def test_scan_and_store(smb_instance, keywords, extensions, date_filter):
+    with (
+        patch.object(smb_instance, "_scan_directory") as mock_scan_directory,
+        patch.object(smb_instance, "_parse_dates") as mock_parse_dates,
+    ):
+        mock_date_result = (
+            pendulum.yesterday().date() if isinstance(date_filter, str) else None
+        )
+        mock_parse_dates.return_value = mock_date_result
+
+        smb_instance.scan_and_store(
+            keywords=keywords, extensions=extensions, date_filter=date_filter
+        )
+
+        mock_parse_dates.assert_called_once_with(
+            date_filter=date_filter,
+            dynamic_date_symbols=["<<", ">>"],
+            dynamic_date_format="%Y-%m-%d",
+            dynamic_date_timezone="Europe/Warsaw",
+        )
+
         mock_scan_directory.assert_called_once_with(
-            smb_instance.base_path, keywords, extensions
+            smb_instance.base_path, keywords, extensions, mock_date_result
         )
 
 
-def test_scan_directory(smb_instance):
-    with (
-        patch.object(smb_instance, "_get_directory_entries") as mock_get_entries,
-        patch.object(smb_instance, "_handle_directory_entry") as mock_handle_entry,
-    ):
-        mock_get_entries.return_value = ["file1", "file2"]
+@pytest.fixture
+def mock_smb_dir_entry_file(name="test_file.txt", is_file=True, is_dir=False):
+    """Mocks smbclient._os.SMBDirEntry object representing a file."""
+    mock_entry = MagicMock()
+    mock_entry.name = name
+    mock_entry.is_file.return_value = is_file
+    mock_entry.is_dir.return_value = is_dir
 
-        smb_instance._scan_directory(SERVER_PATH, None, None)
+    # Mock stat and st_ctime (creation time)
+    mock_stat = MagicMock()
+    mock_stat.st_ctime = pendulum.datetime(2024, 3, 5, tz="UTC").timestamp()
+    mock_entry.stat.return_value = mock_stat
+    return mock_entry
 
-        mock_get_entries.assert_called_once_with(SERVER_PATH)
-        assert mock_handle_entry.call_count == 2
-        mock_handle_entry.assert_any_call("file1", SERVER_PATH, None, None)
-        mock_handle_entry.assert_any_call("file2", SERVER_PATH, None, None)
+
+@pytest.fixture
+def mock_smb_dir_entry_dir(name="test_dir"):
+    """Mocks smbclient._os.SMBDirEntry object representing a directory."""
+    mock_entry = MagicMock()
+    mock_entry.name = name
+    mock_entry.is_file.return_value = False
+    mock_entry.is_dir.return_value = True
+    return mock_entry
+
+
+@patch("smbclient.scandir")
+def test_scan_directory_basic(
+    mock_scandir, smb_instance, mock_smb_dir_entry_file, mock_smb_dir_entry_dir
+):
+    """Test that scan and iterates through entries and calls _handle_directory_entry."""
+    mock_scandir.side_effect = lambda path: [
+        mock_smb_dir_entry_file,
+        mock_smb_dir_entry_dir,
+    ]
+    smb_instance._handle_directory_entry = MagicMock()
+    smb_instance._scan_directory("/test", None, None, None)
+
+    assert smb_instance._handle_directory_entry.call_count == 2
+    smb_instance._handle_directory_entry.assert_any_call(
+        mock_smb_dir_entry_file, "/test", None, None, None
+    )
+    smb_instance._handle_directory_entry.assert_any_call(
+        mock_smb_dir_entry_dir, "/test", None, None, None
+    )
+
+
+@patch("smbclient.scandir")
+def test_scan_directory_recursive(
+    mock_scandir, smb_instance, mock_smb_dir_entry_file, mock_smb_dir_entry_dir
+):
+    """Test that scan_directory recursively calls itself for directories."""
+    mock_scandir.side_effect = lambda path: [
+        mock_smb_dir_entry_file,
+        mock_smb_dir_entry_dir,
+    ]
+    smb_instance._handle_directory_entry = MagicMock()
+    smb_instance._scan_directory("/test", None, None, None)
+
+    smb_instance._handle_directory_entry.assert_any_call(
+        mock_smb_dir_entry_dir, "/test", None, None, None
+    )
 
 
 def test_scan_directory_error_handling(smb_instance):
@@ -100,10 +168,10 @@ def test_handle_directory_entry_dir(smb_instance):
 
     with patch.object(smb_instance, "_scan_directory") as mock_scan_directory:
         smb_instance._handle_directory_entry(
-            mock_entry, SERVER_PATH, ["keyword"], [".txt"]
+            mock_entry, SERVER_PATH, ["keyword"], [".txt"], TODAY_DATE
         )
         mock_scan_directory.assert_called_once_with(
-            Path(f"{SERVER_PATH}/test_dir"), ["keyword"], [".txt"]
+            Path(f"{SERVER_PATH}/test_dir"), ["keyword"], [".txt"], TODAY_DATE
         )
 
 
@@ -118,34 +186,59 @@ def test_handle_directory_entry_file(smb_instance):
     ):
         mock_is_matching.return_value = True
         smb_instance._handle_directory_entry(
-            mock_entry, SERVER_PATH, ["test"], [".txt"]
+            mock_entry, SERVER_PATH, ["test"], [".txt"], TODAY_DATE
         )
 
-        mock_is_matching.assert_called_once_with(mock_entry, ["test"], [".txt"])
+        mock_is_matching.assert_called_once_with(
+            mock_entry, ["test"], [".txt"], TODAY_DATE
+        )
         mock_store_file.assert_called_once_with(
             file_path=Path(f"{SERVER_PATH}/test_file.txt")
         )
 
 
 @pytest.mark.parametrize(
-    ("is_file", "name", "keywords", "extensions", "expected"),
+    (
+        "is_file",
+        "name",
+        "keywords",
+        "extensions",
+        "file_creation_date",
+        "date_filter_parsed",
+        "expected",
+    ),
     [
-        (True, "test.txt", None, None, True),
-        (True, "test.txt", ["test"], None, True),
-        (True, "test.txt", ["other"], None, False),
-        (True, "test.txt", None, [".txt"], True),
-        (True, "test.txt", None, [".doc"], False),
-        (True, "test.txt", ["test"], [".txt"], True),
-        (True, "test.txt", ["other"], [".doc"], False),
-        (False, "test.txt", None, None, False),
+        (True, "test.txt", None, None, 1735689600, None, True),
+        (True, "test.txt", ["test"], None, 1735689600, None, True),
+        (True, "test.txt", ["other"], None, 1735689600, None, False),
+        (True, "test.txt", None, [".txt"], 1735689600, None, True),
+        (True, "test.txt", None, [".doc"], 1735689600, None, False),
+        (True, "test.txt", ["test"], [".txt"], 1735689600, None, True),
+        (True, "test.txt", ["other"], [".doc"], 1735689600, None, False),
+        (False, "test.txt", None, None, 1735689600, None, False),
     ],
 )
-def test_is_matching_file(smb_instance, is_file, name, keywords, extensions, expected):
+def test_is_matching_file(
+    smb_instance,
+    is_file,
+    name,
+    keywords,
+    extensions,
+    file_creation_date,
+    date_filter_parsed,
+    expected,
+):
     mock_entry = MagicMock()
     mock_entry.is_file.return_value = is_file
     mock_entry.name = name
 
-    result = smb_instance._is_matching_file(mock_entry, keywords, extensions)
+    mock_stat = MagicMock()
+    mock_stat.st_ctime = file_creation_date
+    mock_entry.stat.return_value = mock_stat
+
+    result = smb_instance._is_matching_file(
+        mock_entry, keywords, extensions, date_filter_parsed
+    )
     assert result == expected
 
 
