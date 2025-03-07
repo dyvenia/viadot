@@ -61,8 +61,8 @@ class SMB(Source):
         self.base_path = base_path
         self.found_files = {}
         raw_creds = credentials or get_source_credentials(config_key) or {}
-        validated_creds = dict(SMBCredentials(**raw_creds))
-        super().__init__(*args, credentials=validated_creds, **kwargs)
+        validated_creds = SMBCredentials(**raw_creds)
+        super().__init__(*args, credentials=validated_creds.dict(), **kwargs)
 
         smbclient.ClientConfig(
             username=self.credentials.get("username"),
@@ -196,11 +196,22 @@ class SMB(Source):
         try:
             entries = self._get_directory_entries(path)
             for entry in entries:
-                self._handle_directory_entry(
-                    entry, path, keywords, extensions, date_filter_parsed
-                )
+                if entry.is_file() and self._is_matching_file(
+                    entry, keywords, extensions, date_filter_parsed
+                ):
+                    self._handle_matching_file(entry)
+                elif entry.is_dir():
+                    self._scan_directory(
+                        entry.path, keywords, extensions, date_filter_parsed
+                    )
         except Exception as e:
             self.logger.exception(f"Error scanning or downloading from {path}: {e}")  # noqa: TRY401
+
+    def _handle_matching_file(self, entry: smbclient._os.SMBDirEntry) -> None:
+        file_path = entry.path
+        self.logger.info(f"Found: {file_path}")
+        content = self._fetch_file_content(file_path)
+        self.found_files[file_path] = content
 
     def _get_directory_entries(self, path: str):
         """Get directory entries using smbclient.
@@ -212,42 +223,6 @@ class SMB(Source):
             Iterator: An iterator of directory entries.
         """
         return smbclient.scandir(path)
-
-    def _handle_directory_entry(
-        self,
-        entry: smbclient._os.SMBDirEntry,
-        parent_path: str,
-        keywords: list[str] | None = None,
-        extensions: list[str] | None = None,
-        date_filter_parsed: pendulum.Date
-        | tuple[pendulum.Date, pendulum.Date]
-        | None = None,
-    ):
-        """Process a single directory entry.
-
-        It processes either by recursing into subdirectories or handling matching files.
-
-        Args:
-            entry (smbclient._os.SMBDirEntry): A directory entry object from
-                the directory scan.
-            parent_path (str): The parent directory path.
-            keywords (list[str] | None): List of keywords to search for in filenames.
-                Defaults to None.
-            extensions (list[str] | None): List of file extensions to filter by.
-                Defaults to None.
-            date_filter_parsed (
-                pendulum.Date | tuple[pendulum.Date, pendulum.Date] | None
-            ):
-                - A single `pendulum.Date` for exact date filtering.
-                - A tuple of two `pendulum.Date` values for date range filtering.
-                - None, if no date filter is applied.
-                Defaults to None.
-        """
-        full_path = Path(parent_path) / entry.name
-        if entry.is_dir():
-            self._scan_directory(full_path, keywords, extensions, date_filter_parsed)
-        elif self._is_matching_file(entry, keywords, extensions, date_filter_parsed):
-            self._store_matching_file(file_path=full_path)
 
     def _is_matching_file(
         self,
@@ -283,12 +258,7 @@ class SMB(Source):
         Returns:
             bool: True if the file matches all criteria, False otherwise.
         """
-        if not entry.is_file():
-            return False
-
         name_lower = entry.name.lower()
-        file_creation_time = pendulum.from_timestamp(entry.stat().st_ctime)
-        file_creation_date = file_creation_time.date()
 
         matches_extension = not extensions or any(
             name_lower.endswith(ext.lower()) for ext in extensions
@@ -296,15 +266,18 @@ class SMB(Source):
         matches_keyword = not keywords or any(
             keyword.lower() in name_lower for keyword in keywords
         )
+        if not matches_extension or not matches_keyword:
+            return False
 
-        matches_date = True  # Default to True if no date filtering is applied
-        if isinstance(date_filter_parsed, pendulum.Date):
-            matches_date = file_creation_date == date_filter_parsed
-        elif isinstance(date_filter_parsed, tuple):
-            start_date, end_date = date_filter_parsed
-            matches_date = start_date <= file_creation_date <= end_date
+        if date_filter_parsed:
+            file_creation_date = pendulum.from_timestamp(entry.stat().st_ctime).date()
+            if isinstance(date_filter_parsed, pendulum.Date):
+                return file_creation_date == date_filter_parsed
+            if isinstance(date_filter_parsed, tuple):
+                start_date, end_date = date_filter_parsed
+                return start_date <= file_creation_date <= end_date
 
-        return matches_extension and matches_keyword and matches_date
+        return True
 
     def _store_matching_file(self, file_path: str) -> None:
         """Process a matching file by fetching its content.
