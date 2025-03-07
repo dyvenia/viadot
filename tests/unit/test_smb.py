@@ -151,7 +151,7 @@ def test_get_directory_entries(smb_instance):
 
 @pytest.mark.parametrize(
     (
-        "is_file",
+        "is_dir",
         "name",
         "keywords",
         "extensions",
@@ -161,12 +161,12 @@ def test_get_directory_entries(smb_instance):
     ),
     [
         # no filters
-        (True, "test.txt", None, None, 1735689600, None, True),
+        (False, "test.txt", None, None, 1735689600, None, True),
         # keyword matching
-        (True, "TestFile.TXT", ["testfile"], None, 1735689600, None, True),
-        (True, "MyReport.txt", ["report"], None, 1735689600, None, True),
+        (False, "TestFile.TXT", ["testfile"], None, 1735689600, None, True),
+        (False, "MyReport.txt", ["report"], None, 1735689600, None, True),
         (
-            True,
+            False,
             "myreport.txt",
             ["MyReport"],
             None,
@@ -174,20 +174,20 @@ def test_get_directory_entries(smb_instance):
             None,
             True,
         ),
-        (True, "randomfile.txt", ["test"], None, 1735689600, None, False),
+        (False, "randomfile.txt", ["test"], None, 1735689600, None, False),
         # extension matching
-        (True, "report.PDF", None, [".pdf"], 1735689600, None, True),
-        (True, "summary.docx", None, [".DOCX"], 1735689600, None, True),
-        (True, "logfile", None, [".txt"], 1735689600, None, False),
+        (False, "report.PDF", None, [".pdf"], 1735689600, None, True),
+        (False, "summary.docx", None, [".DOCX"], 1735689600, None, True),
+        (False, "logfile", None, [".txt"], 1735689600, None, False),
         # keyword + extension combination
-        (True, "budget.xlsx", ["budget"], [".XLSX"], 1735689600, None, True),
-        (True, "budget.xlsx", ["finance"], [".XLSX"], 1735689600, None, False),
-        (True, "budget.xlsx", ["budget"], [".pdf"], 1735689600, None, False),
-        (True, "data.csv", [], [], 1735689600, None, True),
-        (True, "data.csv", [], [".csv"], 1735689600, None, True),
-        (True, "data.csv", ["data"], [], 1735689600, None, True),
+        (False, "budget.xlsx", ["budget"], [".XLSX"], 1735689600, None, True),
+        (False, "budget.xlsx", ["finance"], [".XLSX"], 1735689600, None, False),
+        (False, "budget.xlsx", ["budget"], [".pdf"], 1735689600, None, False),
+        (False, "data.csv", [], [], 1735689600, None, True),
+        (False, "data.csv", [], [".csv"], 1735689600, None, True),
+        (False, "data.csv", ["data"], [], 1735689600, None, True),
         (
-            True,
+            False,
             "data.csv",
             ["random"],
             [],
@@ -197,7 +197,7 @@ def test_get_directory_entries(smb_instance):
         ),
         # exact date
         (
-            True,
+            False,
             "file1.txt",
             None,
             None,
@@ -206,7 +206,7 @@ def test_get_directory_entries(smb_instance):
             True,
         ),
         (
-            True,
+            False,
             "file2.txt",
             None,
             None,
@@ -216,7 +216,7 @@ def test_get_directory_entries(smb_instance):
         ),
         # date range
         (
-            True,
+            False,
             "file3.txt",
             None,
             None,
@@ -228,7 +228,7 @@ def test_get_directory_entries(smb_instance):
             True,
         ),
         (
-            True,
+            False,
             "file4.txt",
             None,
             None,
@@ -240,7 +240,7 @@ def test_get_directory_entries(smb_instance):
             False,
         ),
         (
-            True,
+            False,
             "file5.txt",
             None,
             None,
@@ -253,7 +253,7 @@ def test_get_directory_entries(smb_instance):
         ),
         # combined filters
         (
-            True,
+            False,
             "report_2025.pdf",
             ["report"],
             [".pdf"],
@@ -262,7 +262,7 @@ def test_get_directory_entries(smb_instance):
             True,
         ),
         (
-            True,
+            False,
             "summary.docx",
             ["summary"],
             [".docx"],
@@ -274,7 +274,7 @@ def test_get_directory_entries(smb_instance):
             True,
         ),
         (
-            True,
+            False,
             "report_2025.pdf",
             ["report"],
             [".pdf"],
@@ -286,7 +286,7 @@ def test_get_directory_entries(smb_instance):
             False,
         ),
         (
-            True,
+            False,
             "important_data.csv",
             ["important"],
             [".txt"],
@@ -298,12 +298,12 @@ def test_get_directory_entries(smb_instance):
             False,
         ),
         # object is directory not a file
-        (False, "should_not_match.txt", None, None, 1735689600, None, False),
+        (True, "should_not_match.txt", None, None, 1735689600, None, False),
     ],
 )
 def test_is_matching_file(
     smb_instance,
-    is_file,
+    is_dir,
     name,
     keywords,
     extensions,
@@ -312,7 +312,7 @@ def test_is_matching_file(
     expected,
 ):
     mock_entry = MagicMock()
-    mock_entry.is_file.return_value = is_file
+    mock_entry.is_dir.return_value = is_dir
     mock_entry.name = name
 
     mock_stat = MagicMock()
