@@ -266,7 +266,7 @@ class SMB(Source):
         matches_keyword = not keywords or any(
             keyword.lower() in name_lower for keyword in keywords
         )
-        if not matches_extension or not matches_keyword:
+        if not matches_extension or not matches_keyword or entry.is_dir():
             return False
 
         if date_filter_parsed:
