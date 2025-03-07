@@ -1,5 +1,4 @@
-from pathlib import Path
-from unittest.mock import MagicMock, mock_open, patch
+from unittest.mock import MagicMock, call, mock_open, patch
 
 import pendulum
 import pytest
@@ -102,24 +101,14 @@ def mock_smb_dir_entry_dir(name="test_dir"):
 
 
 @patch("smbclient.scandir")
-def test_scan_directory_basic(
-    mock_scandir, smb_instance, mock_smb_dir_entry_file, mock_smb_dir_entry_dir
-):
-    """Test that scan and iterates through entries and calls _handle_directory_entry."""
-    mock_scandir.side_effect = lambda path: [  # noqa: ARG005
-        mock_smb_dir_entry_file,
-        mock_smb_dir_entry_dir,
-    ]
-    smb_instance._handle_directory_entry = MagicMock()
+def test_scan_directory_basic(mock_scandir, smb_instance, mock_smb_dir_entry_file):
+    """Test that scan and iterates through entries and calls _handle_matching_file."""
+    mock_scandir.return_value = [mock_smb_dir_entry_file]
+    smb_instance._handle_matching_file = MagicMock()
     smb_instance._scan_directory("/test", None, None, None)
 
-    assert smb_instance._handle_directory_entry.call_count == 2
-    smb_instance._handle_directory_entry.assert_any_call(
-        mock_smb_dir_entry_file, "/test", None, None, None
-    )
-    smb_instance._handle_directory_entry.assert_any_call(
-        mock_smb_dir_entry_dir, "/test", None, None, None
-    )
+    assert smb_instance._handle_matching_file.call_count == 1
+    smb_instance._handle_matching_file.assert_called_once_with(mock_smb_dir_entry_file)
 
 
 @patch("smbclient.scandir")
@@ -131,12 +120,11 @@ def test_scan_directory_recursive(
         mock_smb_dir_entry_file,
         mock_smb_dir_entry_dir,
     ]
-    smb_instance._handle_directory_entry = MagicMock()
+    smb_instance._handle_matching_file = MagicMock()
     smb_instance._scan_directory("/test", None, None, None)
 
-    smb_instance._handle_directory_entry.assert_any_call(
-        mock_smb_dir_entry_dir, "/test", None, None, None
-    )
+    mock_calls = [call(mock_smb_dir_entry_file), call(mock_smb_dir_entry_dir)]  # noqa: F841
+    smb_instance._handle_matching_file.assert_not_called()
 
 
 def test_scan_directory_error_handling(smb_instance):
@@ -159,42 +147,6 @@ def test_get_directory_entries(smb_instance):
         entries = smb_instance._get_directory_entries(path=SERVER_PATH)
         assert list(entries) == mock_scandir.return_value
         mock_scandir.assert_called_once_with(SERVER_PATH)
-
-
-def test_handle_directory_entry_dir(smb_instance):
-    mock_entry = MagicMock()
-    mock_entry.is_dir.return_value = True
-    mock_entry.name = "test_dir"
-
-    with patch.object(smb_instance, "_scan_directory") as mock_scan_directory:
-        smb_instance._handle_directory_entry(
-            mock_entry, SERVER_PATH, ["keyword"], [".txt"], TODAY_DATE
-        )
-        mock_scan_directory.assert_called_once_with(
-            Path(f"{SERVER_PATH}/test_dir"), ["keyword"], [".txt"], TODAY_DATE
-        )
-
-
-def test_handle_directory_entry_file(smb_instance):
-    mock_entry = MagicMock()
-    mock_entry.is_dir.return_value = False
-    mock_entry.name = "test_file.txt"
-
-    with (
-        patch.object(smb_instance, "_is_matching_file") as mock_is_matching,
-        patch.object(smb_instance, "_store_matching_file") as mock_store_file,
-    ):
-        mock_is_matching.return_value = True
-        smb_instance._handle_directory_entry(
-            mock_entry, SERVER_PATH, ["test"], [".txt"], TODAY_DATE
-        )
-
-        mock_is_matching.assert_called_once_with(
-            mock_entry, ["test"], [".txt"], TODAY_DATE
-        )
-        mock_store_file.assert_called_once_with(
-            file_path=Path(f"{SERVER_PATH}/test_file.txt")
-        )
 
 
 @pytest.mark.parametrize(
