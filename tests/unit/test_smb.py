@@ -76,28 +76,24 @@ def test_scan_and_store(smb_instance, keywords, extensions, date_filter):
 
 
 @pytest.fixture
-def mock_smb_dir_entry_file(name="test_file.txt", is_file=True, is_dir=False):
-    """Mocks smbclient._os.SMBDirEntry object representing a file."""
-    mock_entry = MagicMock()
-    mock_entry.name = name
-    mock_entry.is_file.return_value = is_file
-    mock_entry.is_dir.return_value = is_dir
-
-    # Mock stat and st_ctime (creation time)
-    mock_stat = MagicMock()
-    mock_stat.st_ctime = pendulum.datetime(2024, 3, 5, tz="UTC").timestamp()
-    mock_entry.stat.return_value = mock_stat
-    return mock_entry
+def mock_smb_dir_entry_file():
+    mock = MagicMock()
+    mock.name = "test_file.txt"
+    mock.path = "/test/test_file.txt"
+    mock.is_dir.return_value = False
+    mock.is_file.return_value = True
+    mock.stat.return_value.st_ctime = pendulum.now().timestamp()
+    return mock
 
 
 @pytest.fixture
-def mock_smb_dir_entry_dir(name="test_dir"):
-    """Mocks smbclient._os.SMBDirEntry object representing a directory."""
-    mock_entry = MagicMock()
-    mock_entry.name = name
-    mock_entry.is_file.return_value = False
-    mock_entry.is_dir.return_value = True
-    return mock_entry
+def mock_smb_dir_entry_dir():
+    mock = MagicMock()
+    mock.name = "test_dir"
+    mock.path = "/test/test_dir"
+    mock.is_dir.return_value = True
+    mock.is_file.return_value = False
+    return mock
 
 
 @patch("smbclient.scandir")
@@ -112,19 +108,47 @@ def test_scan_directory_basic(mock_scandir, smb_instance, mock_smb_dir_entry_fil
 
 
 @patch("smbclient.scandir")
-def test_scan_directory_recursive(
-    mock_scandir, smb_instance, mock_smb_dir_entry_file, mock_smb_dir_entry_dir
-):
-    """Test that scan_directory recursively calls itself for directories."""
-    mock_scandir.side_effect = lambda path: [  # noqa: ARG005
-        mock_smb_dir_entry_file,
-        mock_smb_dir_entry_dir,
-    ]
+def test_scan_directory_with_files(mock_scandir, smb_instance, mock_smb_dir_entry_file):
+    """Test scanning a directory with only files."""
+    mock_scandir.return_value = [mock_smb_dir_entry_file, mock_smb_dir_entry_file]
+
     smb_instance._handle_matching_file = MagicMock()
     smb_instance._scan_directory("/test", None, None, None)
 
-    mock_calls = [call(mock_smb_dir_entry_file), call(mock_smb_dir_entry_dir)]  # noqa: F841
+    assert smb_instance._handle_matching_file.call_count == 2
+    mock_scandir.assert_called_once_with("/test")
+
+
+@patch("smbclient.scandir")
+def test_scan_directory_recursive(
+    mock_scandir, smb_instance, mock_smb_dir_entry_file, mock_smb_dir_entry_dir
+):
+    """Test recursive scanning of directories."""
+    mock_scandir.side_effect = lambda path: {
+        "/test": [mock_smb_dir_entry_file, mock_smb_dir_entry_dir],
+        "/test/test_dir": [mock_smb_dir_entry_file],
+    }.get(path, [])
+
+    smb_instance._handle_matching_file = MagicMock()
+    smb_instance._scan_directory("/test", None, None, None)
+
+    assert smb_instance._handle_matching_file.call_count == 2
+    assert mock_scandir.call_count == 2
+    mock_scandir.assert_has_calls([call("/test"), call("/test/test_dir")])
+
+
+@patch("smbclient.scandir")
+def test_empty_directory_scan(mock_scandir, smb_instance):
+    """Test scanning empty directory structure."""
+    mock_scandir.side_effect = lambda path: {
+        "/empty": [],
+    }.get(path, [])
+
+    smb_instance._handle_matching_file = MagicMock()
+    smb_instance._scan_directory("/empty", None, None, None)
+
     smb_instance._handle_matching_file.assert_not_called()
+    mock_scandir.assert_called_once_with("/empty")
 
 
 def test_scan_directory_error_handling(smb_instance):
