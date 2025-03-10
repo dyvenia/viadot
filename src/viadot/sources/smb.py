@@ -76,7 +76,7 @@ class SMB(Source):
         date_filter: str | tuple[str, str] | None = None,
         dynamic_date_symbols: list[str] = ["<<", ">>"],  # noqa: B006
         dynamic_date_format: str = "%Y-%m-%d",
-        dynamic_date_timezone: str = "Europe/Warsaw",
+        dynamic_date_timezone: str = "UTC",
     ) -> dict[str, bytes]:
         """Scan the directory structure for files and store their contents in memory.
 
@@ -94,7 +94,7 @@ class SMB(Source):
             dynamic_date_format (str, optional): Format used for dynamic date parsing.
                 Defaults to "%Y-%m-%d".
             dynamic_date_timezone (str, optional): Timezone used for dynamic date
-                processing. Defaults to "Europe/Warsaw".
+                processing. Defaults to "UTC".
 
         Returns:
             dict[str, bytes]: A dictionary mapping file paths to their contents.
@@ -114,7 +114,7 @@ class SMB(Source):
         date_filter: str | tuple[str, str] | None = None,
         dynamic_date_symbols: list[str] = ["<<", ">>"],  # noqa: B006
         dynamic_date_format: str = "%Y-%m-%d",
-        dynamic_date_timezone: str = "Europe/Warsaw",
+        dynamic_date_timezone: str = "UTC",
     ) -> pendulum.Date | tuple[pendulum.Date, pendulum.Date] | None:
         """Parses a date or date range, supporting dynamic date symbols.
 
@@ -129,7 +129,7 @@ class SMB(Source):
             dynamic_date_format (str): Format used for dynamic date parsing.
                 Defaults to "%Y-%m-%d".
             dynamic_date_timezone (str): Timezone used for dynamic date processing.
-                Defaults to "Europe/Warsaw".
+                Defaults to "UTC".
 
         Returns:
             pendulum.Date: If a single date is provided.
