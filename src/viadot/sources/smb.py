@@ -106,8 +106,9 @@ class SMB(Source):
             dynamic_date_timezone=dynamic_date_timezone,
         )
 
-        self._scan_directory(self.base_path, keywords, extensions, date_filter_parsed)
-        return self.found_files
+        return self._scan_directory(
+            self.base_path, keywords, extensions, date_filter_parsed
+        )
 
     def _parse_dates(
         self,
@@ -173,7 +174,7 @@ class SMB(Source):
         date_filter_parsed: pendulum.Date
         | tuple[pendulum.Date, pendulum.Date]
         | None = None,
-    ) -> None:
+    ) -> dict[str, bytes]:
         """Recursively scans a directory for matching files based on filters.
 
         It applies keyword and extension filters and can filter files based on
@@ -207,6 +208,8 @@ class SMB(Source):
                     )
         except Exception as e:
             self.logger.exception(f"Error scanning or downloading from {path}: {e}")  # noqa: TRY401
+
+        return found_file
 
     def _get_file_content(self, entry: smbclient._os.SMBDirEntry) -> dict:
         """Extracts the content of a file from an SMB directory entry.
