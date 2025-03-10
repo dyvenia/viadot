@@ -59,7 +59,6 @@ class SMB(Source):
             credentials.
         """
         self.base_path = base_path
-        self.found_files = {}
         raw_creds = credentials or get_source_credentials(config_key) or {}
         validated_creds = SMBCredentials(**raw_creds)
         super().__init__(*args, credentials=validated_creds.dict(), **kwargs)
@@ -194,22 +193,24 @@ class SMB(Source):
                 - None, if no date filter is applied.
                 Defaults to None.
         """
+        found_files = {}
         try:
             entries = self._get_directory_entries(path)
             for entry in entries:
                 if entry.is_file() and self._is_matching_file(
                     entry, keywords, extensions, date_filter_parsed
                 ):
-                    found_file = self._get_file_content(entry)
-                    self.found_files.update(found_file)
+                    found_files.update(self._get_file_content(entry))
                 elif entry.is_dir():
-                    self._scan_directory(
-                        entry.path, keywords, extensions, date_filter_parsed
+                    found_files.update(
+                        self._scan_directory(
+                            entry.path, keywords, extensions, date_filter_parsed
+                        )
                     )
         except Exception as e:
             self.logger.exception(f"Error scanning or downloading from {path}: {e}")  # noqa: TRY401
 
-        return found_file
+        return found_files
 
     def _get_file_content(self, entry: smbclient._os.SMBDirEntry) -> dict:
         """Extracts the content of a file from an SMB directory entry.
@@ -311,13 +312,30 @@ class SMB(Source):
         with smbclient.open_file(file_path, mode="rb") as file:
             return file.read()
 
-    def save_stored_files(self, destination_dir: str) -> None:
+    def save_files_locally(
+        self, file_data: dict[str, bytes], destination_dir: str
+    ) -> None:
         """Save stored files from memory to a local directory.
 
+        This function takes a dictionary of file names and their contents,
+        and saves each file to the specified destination directory. It creates
+        the destination directory if it doesn't exist.
+
         Args:
-            destination_dir (str): The local directory where files should be saved.
+        file_data (dict[str, bytes]): A dictionary where keys are file names and values
+            are file contents as bytes.
+        destination_dir (str): The local directory where files should be saved.
+
+        Raises:
+            Exception: If there's an error while saving a file, it's logged but
+                not raised.
+
+        Note:
+        - If files_to_store is empty, the function logs a message and returns.
+        - Each file saving operation is wrapped in a try-except block to handle
+        potential errors individually.
         """
-        if not self.found_files:
+        if not file_data:
             self.logger.info("No files to save.")
             return
 
@@ -325,7 +343,7 @@ class SMB(Source):
             parents=True, exist_ok=True
         )  # Ensure the directory exists
 
-        for file_path, content in self.found_files.items():
+        for file_path, content in file_data.items():
             local_filename = Path(destination_dir) / Path(file_path).name
             try:
                 with Path(local_filename).open("wb") as f:
