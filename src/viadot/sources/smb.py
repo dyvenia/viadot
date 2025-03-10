@@ -33,7 +33,7 @@ class SMBCredentials(BaseModel):
             CredentialError: If either username or password is missing.
         """
         username = credentials.get("username")
-        password = credentials.get("password")
+        password = credentials.get("password").get_secret_value()
 
         if not (username and password):
             msg = "'username', and 'password' credentials are required."
@@ -65,7 +65,7 @@ class SMB(Source):
 
         smbclient.ClientConfig(
             username=self.credentials.get("username"),
-            password=self.credentials.get("password"),
+            password=self.credentials.get("password").get_secret_value(),
         )
 
     def scan_and_store(
