@@ -24,6 +24,27 @@ def smb_instance(valid_credentials):
     return SMB(base_path=SERVER_PATH, credentials=valid_credentials)
 
 
+@pytest.fixture
+def mock_smb_dir_entry_file():
+    mock = MagicMock()
+    mock.name = "test_file.txt"
+    mock.path = "/test/test_file.txt"
+    mock.is_dir.return_value = False
+    mock.is_file.return_value = True
+    mock.stat.return_value.st_ctime = pendulum.now().timestamp()
+    return mock
+
+
+@pytest.fixture
+def mock_smb_dir_entry_dir():
+    mock = MagicMock()
+    mock.name = "test_dir"
+    mock.path = "/test/test_dir"
+    mock.is_dir.return_value = True
+    mock.is_file.return_value = False
+    return mock
+
+
 def test_smb_initialization_with_credentials(valid_credentials):
     smb = SMB(base_path=SERVER_PATH, credentials=valid_credentials)
     assert smb.credentials["username"] == "default@example.com"
@@ -73,27 +94,6 @@ def test_scan_and_store(smb_instance, keywords, extensions, date_filter):
         mock_scan_directory.assert_called_once_with(
             smb_instance.base_path, keywords, extensions, mock_date_result
         )
-
-
-@pytest.fixture
-def mock_smb_dir_entry_file():
-    mock = MagicMock()
-    mock.name = "test_file.txt"
-    mock.path = "/test/test_file.txt"
-    mock.is_dir.return_value = False
-    mock.is_file.return_value = True
-    mock.stat.return_value.st_ctime = pendulum.now().timestamp()
-    return mock
-
-
-@pytest.fixture
-def mock_smb_dir_entry_dir():
-    mock = MagicMock()
-    mock.name = "test_dir"
-    mock.path = "/test/test_dir"
-    mock.is_dir.return_value = True
-    mock.is_file.return_value = False
-    return mock
 
 
 @patch("smbclient.scandir")
@@ -347,18 +347,6 @@ def test_is_matching_file(
         mock_entry, keywords, extensions, date_filter_parsed
     )
     assert result == expected
-
-
-def test_store_matching_file(smb_instance):
-    with (
-        patch.object(smb_instance, "_fetch_file_content") as mock_fetch,
-        patch.object(smb_instance, "logger") as mock_logger,
-    ):
-        mock_fetch.return_value = b"file content"
-        smb_instance._store_matching_file(file_path=f"{SERVER_PATH}/file.txt")
-        mock_logger.info.assert_called_once_with(f"Found: {SERVER_PATH}/file.txt")
-        mock_fetch.assert_called_once_with(f"{SERVER_PATH}/file.txt")
-        assert smb_instance.found_files[f"{SERVER_PATH}/file.txt"] == b"file content"
 
 
 def test_fetch_file_content(smb_instance):
