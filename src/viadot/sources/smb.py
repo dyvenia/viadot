@@ -281,19 +281,6 @@ class SMB(Source):
 
         return True
 
-    ## Remove this function because its no needed
-    # def _store_matching_file(self, file_path: str) -> None:
-    #     """Process a matching file by fetching its content.
-
-    #     It fetching the content and storing it in the found_files dictionary.
-
-    #     Args:
-    #         file_path (str): The full path of the matching file.
-    #     """
-    #     self.logger.info(f"Found: {file_path}")
-    #     content = self._fetch_file_content(file_path)
-    #     self.found_files[file_path] = content
-
     def _fetch_file_content(self, file_path: str) -> bytes:
         """Fetch the content of a file.
 
