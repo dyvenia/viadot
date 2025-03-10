@@ -199,7 +199,8 @@ class SMB(Source):
                 if entry.is_file() and self._is_matching_file(
                     entry, keywords, extensions, date_filter_parsed
                 ):
-                    self._handle_matching_file(entry)
+                    found_file = self._get_file_content(entry)
+                    self.found_files.update(found_file)
                 elif entry.is_dir():
                     self._scan_directory(
                         entry.path, keywords, extensions, date_filter_parsed
@@ -207,13 +208,27 @@ class SMB(Source):
         except Exception as e:
             self.logger.exception(f"Error scanning or downloading from {path}: {e}")  # noqa: TRY401
 
-    def _handle_matching_file(self, entry: smbclient._os.SMBDirEntry) -> None:
+    def _get_file_content(self, entry: smbclient._os.SMBDirEntry) -> dict:
+        """Extracts the content of a file from an SMB directory entry.
+
+        This function takes an SMB directory entry, logs the file path,
+        fetches the file's content, and returns a dictionary with the
+        file name as the key and its content as the value.
+
+        Args:
+            entry (smbclient._os.SMBDirEntry): An SMB directory entry object.
+
+        Returns:
+            dict: A dictionary with a single key-value pair, where the key
+                is the file name and the value is the file's content.
+        """
         file_path = entry.path
         file_name = entry.name
 
         self.logger.info(f"Found: {file_path}")
         content = self._fetch_file_content(file_path)
-        self.found_files[file_name] = content
+
+        return {file_name: content}
 
     def _get_directory_entries(self, path: str):
         """Get directory entries using smbclient.
