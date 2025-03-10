@@ -3,7 +3,7 @@
 from pathlib import Path
 
 import pendulum
-from pydantic import BaseModel, root_validator
+from pydantic import BaseModel, SecretStr, root_validator
 import smbclient
 
 from viadot.config import get_source_credentials
@@ -14,7 +14,7 @@ from viadot.sources.base import Source
 
 class SMBCredentials(BaseModel):
     username: str  # username (e.g username@tenant_name.com)
-    password: str
+    password: SecretStr
 
     @root_validator(pre=True)
     def is_configured(cls, credentials: dict) -> dict:  # noqa: N805
