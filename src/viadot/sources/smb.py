@@ -45,7 +45,7 @@ class SMB(Source):
     def __init__(
         self,
         base_path: str,
-        credentials: SMBCredentials = None,
+        credentials: SMBCredentials | None = None,
         config_key: str | None = None,
         *args,
         **kwargs,
