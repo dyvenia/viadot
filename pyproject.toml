@@ -39,7 +39,7 @@ dependencies = [
     # awswrangler 2.x. depends on pandas 1.x.
     "pandas<2.0",
     "tm1py>=2.0.4",
-    "smbprotocol==1.15.0"
+    "smbprotocol>=1.15.0",
 ]
 requires-python = ">=3.10"
 readme = "README.md"
