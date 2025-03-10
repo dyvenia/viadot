@@ -212,7 +212,7 @@ class SMB(Source):
 
         return found_files
 
-    def _get_file_content(self, entry: smbclient._os.SMBDirEntry) -> dict:
+    def _get_file_content(self, entry: smbclient._os.SMBDirEntry) -> dict[str, bytes]:
         """Extracts the content of a file from an SMB directory entry.
 
         This function takes an SMB directory entry, logs the file path,
@@ -223,14 +223,16 @@ class SMB(Source):
             entry (smbclient._os.SMBDirEntry): An SMB directory entry object.
 
         Returns:
-            dict: A dictionary with a single key-value pair, where the key
+            dict[str, bytes]: A dictionary with a single key-value pair, where the key
                 is the file name and the value is the file's content.
         """
         file_path = entry.path
         file_name = entry.name
 
         self.logger.info(f"Found: {file_path}")
-        content = self._fetch_file_content(file_path)
+
+        with smbclient.open_file(file_path, mode="rb") as file:
+            content = file.read()
 
         return {file_name: content}
 
@@ -299,18 +301,6 @@ class SMB(Source):
                 return start_date <= file_creation_date <= end_date
 
         return True
-
-    def _fetch_file_content(self, file_path: str) -> bytes:
-        """Fetch the content of a file.
-
-        Args:
-            file_path (str): The full path of the file to download.
-
-        Returns:
-            bytes: The content of the file.
-        """
-        with smbclient.open_file(file_path, mode="rb") as file:
-            return file.read()
 
     def save_files_locally(
         self, file_data: dict[str, bytes], destination_dir: str
