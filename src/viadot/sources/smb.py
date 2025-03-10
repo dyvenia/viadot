@@ -33,10 +33,10 @@ class SMBCredentials(BaseModel):
             CredentialError: If either username or password is missing.
         """
         username = credentials.get("username")
-        password = credentials.get("password").get_secret_value()
+        password = credentials.get("password")
 
         if not (username and password):
-            msg = "'username', and 'password' credentials are required."
+            msg = "`username`, and `password` credentials are required."
             raise CredentialError(msg)
         return credentials
 
