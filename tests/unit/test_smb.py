@@ -1,6 +1,7 @@
 from unittest.mock import MagicMock, call, mock_open, patch
 
 import pendulum
+from pydantic import SecretStr
 import pytest
 
 from viadot.exceptions import CredentialError
@@ -15,7 +16,7 @@ TODAY_DATE = pendulum.today().date()
 def valid_credentials():
     return {
         "username": "default@example.com",
-        "password": "default_password",  # pragma: allowlist secret
+        "password": SecretStr("default_password"),  # pragma: allowlist secret
     }
 
 
@@ -48,15 +49,13 @@ def mock_smb_dir_entry_dir():
 def test_smb_initialization_with_credentials(valid_credentials):
     smb = SMB(base_path=SERVER_PATH, credentials=valid_credentials)
     assert smb.credentials["username"] == "default@example.com"
-    assert (
-        smb.credentials["password"] == "default_password"  # noqa: S105, # pragma: allowlist secret
-    )
+    assert smb.credentials["password"] == SecretStr("default_password")
 
 
 def test_smb_initialization_without_credentials():
     with pytest.raises(
         CredentialError,
-        match="'username', and 'password' credentials are required.",
+        match="`username`, and `password` credentials are required.",
     ):
         SMB(base_path=SERVER_PATH)
 
@@ -88,7 +87,7 @@ def test_scan_and_store(smb_instance, keywords, extensions, date_filter):
             date_filter=date_filter,
             dynamic_date_symbols=["<<", ">>"],
             dynamic_date_format="%Y-%m-%d",
-            dynamic_date_timezone="Europe/Warsaw",
+            dynamic_date_timezone="UTC",
         )
 
         mock_scan_directory.assert_called_once_with(
@@ -360,14 +359,14 @@ def test_fetch_file_content(smb_instance):
         assert content == mock_file_content
 
 
-def test_save_stored_files(smb_instance, tmp_path):
+def test_save_files_locally(smb_instance, tmp_path):
     smb_instance.found_files = {
         "/remote/path/file1.txt": b"content1",
         "/remote/path/file2.txt": b"content2",
     }
 
     with patch.object(smb_instance, "logger") as mock_logger:
-        smb_instance.save_stored_files(str(tmp_path))
+        smb_instance.save_files_locally(str(tmp_path))
 
         assert (tmp_path / "file1.txt").read_bytes() == b"content1"
         assert (tmp_path / "file2.txt").read_bytes() == b"content2"
@@ -376,22 +375,22 @@ def test_save_stored_files(smb_instance, tmp_path):
         mock_logger.info.assert_any_call(f"Saved: {tmp_path}/file2.txt")
 
 
-def test_save_stored_files_no_files(smb_instance, tmp_path):
+def test_save_files_locally_no_files(smb_instance, tmp_path):
     smb_instance.found_files = {}
 
     with patch.object(smb_instance, "logger") as mock_logger:
-        smb_instance.save_stored_files(str(tmp_path))
+        smb_instance.save_files_locally(str(tmp_path))
         mock_logger.info.assert_called_once_with("No files to save.")
 
 
-def test_save_stored_files_error(smb_instance, tmp_path):
+def test_save_files_locally_error(smb_instance, tmp_path):
     smb_instance.found_files = {"/remote/path/file1.txt": b"content1"}
 
     with (
         patch.object(smb_instance, "logger") as mock_logger,
         patch("pathlib.Path.open", side_effect=Exception("Test error")),
     ):
-        smb_instance.save_stored_files(str(tmp_path))
+        smb_instance.save_files_locally(str(tmp_path))
         mock_logger.exception.assert_called_once_with(
             f"Failed to save {tmp_path}/file1.txt: Test error"
         )
