@@ -1,3 +1,7 @@
+import logging
+from pathlib import Path
+import shutil
+import tempfile
 from unittest.mock import MagicMock, call, mock_open, patch
 
 import pendulum
@@ -359,38 +363,61 @@ def test_fetch_file_content(smb_instance):
         assert content == mock_file_content
 
 
-def test_save_files_locally(smb_instance, tmp_path):
-    smb_instance.found_files = {
-        "/remote/path/file1.txt": b"content1",
-        "/remote/path/file2.txt": b"content2",
-    }
-
-    with patch.object(smb_instance, "logger") as mock_logger:
-        smb_instance.save_files_locally(str(tmp_path))
-
-        assert (tmp_path / "file1.txt").read_bytes() == b"content1"
-        assert (tmp_path / "file2.txt").read_bytes() == b"content2"
-
-        mock_logger.info.assert_any_call(f"Saved: {tmp_path}/file1.txt")
-        mock_logger.info.assert_any_call(f"Saved: {tmp_path}/file2.txt")
+def setup_temp_dir():
+    return tempfile.mkdtemp()
 
 
-def test_save_files_locally_no_files(smb_instance, tmp_path):
-    smb_instance.found_files = {}
-
-    with patch.object(smb_instance, "logger") as mock_logger:
-        smb_instance.save_files_locally(str(tmp_path))
-        mock_logger.info.assert_called_once_with("No files to save.")
+def teardown_temp_dir(temp_dir):
+    shutil.rmtree(temp_dir)
 
 
-def test_save_files_locally_error(smb_instance, tmp_path):
-    smb_instance.found_files = {"/remote/path/file1.txt": b"content1"}
+def test_empty_file_data(smb_instance, caplog):
+    temp_dir = setup_temp_dir()
+    with caplog.at_level(logging.INFO):
+        smb_instance.save_files_locally({}, temp_dir)
+        assert "No files to save." in caplog.text
 
-    with (
-        patch.object(smb_instance, "logger") as mock_logger,
-        patch("pathlib.Path.open", side_effect=Exception("Test error")),
-    ):
-        smb_instance.save_files_locally(str(tmp_path))
-        mock_logger.exception.assert_called_once_with(
-            f"Failed to save {tmp_path}/file1.txt: Test error"
-        )
+    teardown_temp_dir(temp_dir)
+
+
+def test_single_file_save(smb_instance):
+    temp_dir = setup_temp_dir()
+
+    file_data = {"test.txt": b"Hello, World!"}
+    smb_instance.save_files_locally(file_data, temp_dir)
+
+    saved_file = Path(temp_dir) / "test.txt"
+    assert saved_file.exists()
+    with saved_file.open("rb") as f:
+        assert f.read() == b"Hello, World!"
+
+    teardown_temp_dir(temp_dir)
+
+
+def test_nested_path_file_save(smb_instance):
+    temp_dir = setup_temp_dir()
+
+    file_data = {"nested/path/test.txt": b"Nested file"}
+    smb_instance.save_files_locally(file_data, temp_dir)
+
+    saved_file = Path(temp_dir) / "test.txt"
+    assert saved_file.exists()
+    with saved_file.open("rb") as f:
+        assert f.read() == b"Nested file"
+
+    teardown_temp_dir(temp_dir)
+
+
+def test_multiple_files_save(smb_instance):
+    temp_dir = setup_temp_dir()
+
+    file_data = {"test1.txt": b"File 1", "test2.txt": b"File 2", "test3.txt": b"File 3"}
+    smb_instance.save_files_locally(file_data, temp_dir)
+
+    for filename, content in file_data.items():
+        saved_file = Path(temp_dir) / filename
+        assert saved_file.exists(), f"{filename} should exist"
+        with saved_file.open("rb") as f:
+            assert f.read() == content, f"Content of {filename} should match"
+
+    teardown_temp_dir(temp_dir)
