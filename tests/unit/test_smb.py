@@ -2,7 +2,7 @@ import logging
 from pathlib import Path
 import shutil
 import tempfile
-from unittest.mock import MagicMock, call, mock_open, patch
+from unittest.mock import MagicMock, mock_open, patch
 
 import pendulum
 from pydantic import SecretStr
@@ -48,6 +48,14 @@ def mock_smb_dir_entry_dir():
     mock.is_dir.return_value = True
     mock.is_file.return_value = False
     return mock
+
+
+def setup_temp_dir():
+    return tempfile.mkdtemp()
+
+
+def teardown_temp_dir(temp_dir):
+    shutil.rmtree(temp_dir)
 
 
 def test_smb_initialization_with_credentials(valid_credentials):
@@ -99,45 +107,75 @@ def test_scan_and_store(smb_instance, keywords, extensions, date_filter):
         )
 
 
-@patch("smbclient.scandir")
-def test_scan_directory_basic(mock_scandir, smb_instance, mock_smb_dir_entry_file):
-    """Test that scan and iterates through entries and calls _handle_matching_file."""
-    mock_scandir.return_value = [mock_smb_dir_entry_file]
-    smb_instance._handle_matching_file = MagicMock()
-    smb_instance._scan_directory("/test", None, None, None)
+def test_scan_and_store_basic(smb_instance, mock_smb_dir_entry_file):
+    with (
+        patch("smbclient.scandir") as mock_scandir,
+        patch.object(smb_instance, "_get_file_content") as mock_get_content,
+        patch.object(smb_instance, "_is_matching_file") as mock_is_matching,
+    ):
+        mock_scandir.return_value = [mock_smb_dir_entry_file]
+        mock_file_content = b"Test content"
+        mock_get_content.return_value = {
+            mock_smb_dir_entry_file.path: mock_file_content
+        }
+        mock_is_matching.return_value = True
 
-    assert smb_instance._handle_matching_file.call_count == 1
-    smb_instance._handle_matching_file.assert_called_once_with(mock_smb_dir_entry_file)
+        result = smb_instance.scan_and_store()
 
-
-@patch("smbclient.scandir")
-def test_scan_directory_with_files(mock_scandir, smb_instance, mock_smb_dir_entry_file):
-    """Test scanning a directory with only files."""
-    mock_scandir.return_value = [mock_smb_dir_entry_file, mock_smb_dir_entry_file]
-
-    smb_instance._handle_matching_file = MagicMock()
-    smb_instance._scan_directory("/test", None, None, None)
-
-    assert smb_instance._handle_matching_file.call_count == 2
-    mock_scandir.assert_called_once_with("/test")
+        assert isinstance(result, dict)
+        assert len(result) == 1, f"Expected 1 file, got {len(result)}"
+        assert mock_smb_dir_entry_file.path in result
+        assert result[mock_smb_dir_entry_file.path] == mock_file_content
 
 
-@patch("smbclient.scandir")
-def test_scan_directory_recursive(
-    mock_scandir, smb_instance, mock_smb_dir_entry_file, mock_smb_dir_entry_dir
+def test_scan_directory_recursive_search(
+    smb_instance, mock_smb_dir_entry_dir, mock_smb_dir_entry_file
 ):
-    """Test recursive scanning of directories."""
-    mock_scandir.side_effect = lambda path: {
-        "/test": [mock_smb_dir_entry_file, mock_smb_dir_entry_dir],
-        "/test/test_dir": [mock_smb_dir_entry_file],
-    }.get(path, [])
+    with (
+        patch("smbclient.scandir") as mock_scandir,
+        patch.object(smb_instance, "_get_file_content") as mock_get_content,
+        patch.object(smb_instance, "_is_matching_file") as mock_is_matching,
+    ):
+        # Configure directory structure
+        root_dir = mock_smb_dir_entry_dir
+        root_dir.path = SERVER_PATH
 
-    smb_instance._handle_matching_file = MagicMock()
-    smb_instance._scan_directory("/test", None, None, None)
+        sub_dir = MagicMock()
+        sub_dir.name = "subdir"
+        sub_dir.path = f"{SERVER_PATH}/subdir"
+        sub_dir.is_dir.return_value = True
+        sub_dir.is_file.return_value = False
 
-    assert smb_instance._handle_matching_file.call_count == 2
-    assert mock_scandir.call_count == 2
-    mock_scandir.assert_has_calls([call("/test"), call("/test/test_dir")])
+        nested_file = mock_smb_dir_entry_file
+        nested_file.path = f"{SERVER_PATH}/subdir/file.txt"
+
+        mock_scandir.side_effect = [
+            [root_dir],  # Initial root directory scan
+            [sub_dir],  # First subdirectory scan
+            [nested_file],  # Final nested directory scan
+        ]
+
+        mock_is_matching.return_value = True
+        mock_file_content = b"Recursive content"
+        mock_get_content.return_value = {nested_file.path: mock_file_content}
+
+        # Execute the scan starting at root
+        result = smb_instance._scan_directory(
+            path=SERVER_PATH, keywords=None, extensions=None, date_filter_parsed=None
+        )
+
+        # Verify scanning sequence
+        assert mock_scandir.call_count == 3, "Should scan 3 levels deep"
+        assert {call[0][0] for call in mock_scandir.call_args_list} == {
+            SERVER_PATH,
+            f"{SERVER_PATH}/subdir",
+        }
+
+        assert isinstance(result, dict)
+        assert len(result) == 1, f"Expected 1 file, got {len(result)}. Result: {result}"
+        assert nested_file.path in result
+        assert result[nested_file.path] == mock_file_content
+        mock_is_matching.assert_any_call(nested_file, None, None, None)
 
 
 @patch("smbclient.scandir")
@@ -361,14 +399,6 @@ def test_fetch_file_content(smb_instance):
 
         mock_open_file.assert_called_once_with(f"{SERVER_PATH}/file.txt", mode="rb")
         assert content == mock_file_content
-
-
-def setup_temp_dir():
-    return tempfile.mkdtemp()
-
-
-def teardown_temp_dir(temp_dir):
-    shutil.rmtree(temp_dir)
 
 
 def test_empty_file_data(smb_instance, caplog):
