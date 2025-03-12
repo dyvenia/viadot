@@ -206,6 +206,47 @@ def test_scan_directory_error_handling(smb_instance):
         )
 
 
+def test_parse_dates_single_date(smb_instance):
+    date_filter_keyword = "<<yesterday>>"
+    result = smb_instance._parse_dates(date_filter=date_filter_keyword)
+
+    assert result == pendulum.yesterday().date()
+
+    date_filter_date = "<<pendulum.yesterday()>>"
+    result = smb_instance._parse_dates(date_filter=date_filter_date)
+
+    assert result == pendulum.yesterday().date()
+
+
+def test_parse_dates_date_range(smb_instance):
+    date_filter_yesterday = "<<yesterday>>"
+    date_filter_today = "<<today>>"
+
+    start_date, end_date = smb_instance._parse_dates(
+        date_filter=(date_filter_yesterday, date_filter_today)
+    )
+
+    assert start_date == pendulum.yesterday().date()
+    assert end_date == pendulum.today().date()
+
+
+def test_parse_dates_none(smb_instance):
+    date_filter = None
+    result = smb_instance._parse_dates(date_filter=date_filter)
+
+    assert result is None
+
+
+def test_parse_dates_wrong_input(smb_instance):
+    date_filter = ["<<pendulum.today()>>"]
+
+    with pytest.raises(
+        ValueError,
+        match="date_filter must be a string, a tuple of exactly 2 dates, or None.",
+    ):
+        smb_instance._parse_dates(date_filter=date_filter)
+
+
 def test_get_directory_entries(
     smb_instance, mock_smb_dir_entry_dir, mock_smb_dir_entry_file
 ):
