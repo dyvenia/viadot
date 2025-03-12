@@ -390,18 +390,44 @@ def test_is_matching_file(
     assert result == expected
 
 
-def test_fetch_file_content(smb_instance):
-    mock_file_content = b"file content"
-    mock_file = mock_open(read_data=mock_file_content)
+def test_get_file_content(smb_instance, mock_smb_dir_entry_file, caplog):
+    mock_entry = mock_smb_dir_entry_file
+    mock_entry.name = "test_file.txt"
+    mock_entry.path = f"{SERVER_PATH}/test_file.txt"
+    expected_content = b"File content"
 
-    with patch("smbclient.open_file", mock_file) as mock_open_file:
-        content = smb_instance._fetch_file_content(f"{SERVER_PATH}/file.txt")
+    with (
+        caplog.at_level(logging.INFO),
+        patch(
+            "smbclient.open_file", mock_open(read_data=expected_content)
+        ) as mock_file,
+    ):
+        result = smb_instance._get_file_content(mock_entry)
 
-        mock_open_file.assert_called_once_with(f"{SERVER_PATH}/file.txt", mode="rb")
-        assert content == mock_file_content
+        assert isinstance(result, dict)
+        assert result == {mock_entry.name: expected_content}
+
+        mock_file.assert_called_once_with(mock_entry.path, mode="rb")
+
+        assert f"Found: {mock_entry.path}" in caplog.text
 
 
-def test_empty_file_data(smb_instance, caplog):
+def test_get_file_content_empty_file(smb_instance, mock_smb_dir_entry_file, caplog):
+    mock_entry = mock_smb_dir_entry_file
+    mock_entry.name = "empty.txt"
+    mock_entry.path = f"{SERVER_PATH}/empty.txt"
+
+    with (
+        caplog.at_level(logging.INFO),
+        patch("smbclient.open_file", mock_open(read_data=b"")) as mock_file,
+    ):
+        result = smb_instance._get_file_content(mock_entry)
+
+        assert result == {mock_entry.name: b""}
+        assert f"Found: {mock_entry.path}" in caplog.text
+
+
+def test_save_files_locally_empty_file(smb_instance, caplog):
     temp_dir = setup_temp_dir()
     with caplog.at_level(logging.INFO):
         smb_instance.save_files_locally({}, temp_dir)
@@ -410,7 +436,7 @@ def test_empty_file_data(smb_instance, caplog):
     teardown_temp_dir(temp_dir)
 
 
-def test_single_file_save(smb_instance):
+def test_save_files_locally_single_file_save(smb_instance):
     temp_dir = setup_temp_dir()
 
     file_data = {"test.txt": b"Hello, World!"}
@@ -424,7 +450,7 @@ def test_single_file_save(smb_instance):
     teardown_temp_dir(temp_dir)
 
 
-def test_nested_path_file_save(smb_instance):
+def test_save_files_locally_nested_path_file_save(smb_instance):
     temp_dir = setup_temp_dir()
 
     file_data = {"nested/path/test.txt": b"Nested file"}
@@ -438,7 +464,7 @@ def test_nested_path_file_save(smb_instance):
     teardown_temp_dir(temp_dir)
 
 
-def test_multiple_files_save(smb_instance):
+def test_save_files_locally_multiple_files_save(smb_instance):
     temp_dir = setup_temp_dir()
 
     file_data = {"test1.txt": b"File 1", "test2.txt": b"File 2", "test3.txt": b"File 3"}
