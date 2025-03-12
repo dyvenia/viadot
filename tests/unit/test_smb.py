@@ -12,7 +12,7 @@ from viadot.exceptions import CredentialError
 from viadot.sources import SMB
 
 
-SERVER_PATH = "//server/folder_path"
+SERVER_PATH = "//server/test_folder_path"
 TODAY_DATE = pendulum.today().date()
 
 
@@ -33,7 +33,7 @@ def smb_instance(valid_credentials):
 def mock_smb_dir_entry_file():
     mock = MagicMock()
     mock.name = "test_file.txt"
-    mock.path = "/test/test_file.txt"
+    mock.path = f"{SERVER_PATH}/test_file.txt"
     mock.is_dir.return_value = False
     mock.is_file.return_value = True
     mock.stat.return_value.st_ctime = pendulum.now().timestamp()
@@ -43,8 +43,8 @@ def mock_smb_dir_entry_file():
 @pytest.fixture
 def mock_smb_dir_entry_dir():
     mock = MagicMock()
-    mock.name = "test_dir"
-    mock.path = "/test/test_dir"
+    mock.name = "test_folder_path"
+    mock.path = SERVER_PATH
     mock.is_dir.return_value = True
     mock.is_file.return_value = False
     return mock
@@ -206,12 +206,33 @@ def test_scan_directory_error_handling(smb_instance):
         )
 
 
-def test_get_directory_entries(smb_instance):
+def test_get_directory_entries(
+    smb_instance, mock_smb_dir_entry_dir, mock_smb_dir_entry_file
+):
+    expected_entries = [mock_smb_dir_entry_file, mock_smb_dir_entry_dir]
+
     with patch("smbclient.scandir") as mock_scandir:
-        mock_scandir.return_value = [MagicMock(), MagicMock()]
+        mock_scandir.return_value = expected_entries
+
         entries = smb_instance._get_directory_entries(path=SERVER_PATH)
-        assert list(entries) == mock_scandir.return_value
-        mock_scandir.assert_called_once_with(SERVER_PATH)
+
+        result_entries = list(entries)
+
+        assert result_entries == expected_entries
+        assert len(result_entries) == 2
+
+        # Check file entry
+        assert result_entries[0].is_file()
+        assert not result_entries[0].is_dir()
+        assert result_entries[0].name == "test_file.txt"
+        assert isinstance(result_entries[0].stat().st_ctime, float)
+
+        # Check directory entry
+        assert result_entries[1].is_dir()
+        assert not result_entries[1].is_file()
+        assert result_entries[1].name == "test_folder_path"
+
+        assert all(entry.path.startswith(SERVER_PATH) for entry in result_entries)
 
 
 @pytest.mark.parametrize(
@@ -419,7 +440,7 @@ def test_get_file_content_empty_file(smb_instance, mock_smb_dir_entry_file, capl
 
     with (
         caplog.at_level(logging.INFO),
-        patch("smbclient.open_file", mock_open(read_data=b"")) as mock_file,
+        patch("smbclient.open_file", mock_open(read_data=b"")),
     ):
         result = smb_instance._get_file_content(mock_entry)
 
