@@ -55,8 +55,8 @@ class SMB(Source):
         Args:
             base_path (str): The root directory to start scanning from.
             credentials (SMBCredentials): Sharepoint credentials.
-        config_key (str, optional): The key in the viadot config holding relevant
-            credentials.
+            config_key (str, optional): The key in the viadot config holding relevant
+                credentials.
         """
         self.base_path = base_path
         raw_creds = credentials or get_source_credentials(config_key) or {}
@@ -279,7 +279,8 @@ class SMB(Source):
                 Defaults to None.
 
         Returns:
-            bool: True if the file matches all criteria, False otherwise.
+            bool: True if the file matches all criteria or no criteria are provided,
+                False otherwise.
         """
         name_lower = entry.name.lower()
 
