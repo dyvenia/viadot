@@ -7,7 +7,6 @@
 #   all-features: false
 #   with-sources: false
 #   generate-hashes: false
-#   universal: false
 
 -e file:.
 aiohappyeyeballs==2.4.0
@@ -76,6 +75,8 @@ cryptography==43.0.0
     # via paramiko
     # via prefect
     # via pyjwt
+    # via pyspnego
+    # via smbprotocol
 dateparser==1.2.0
     # via prefect
 db-dtypes==1.3.0
@@ -302,6 +303,8 @@ pynacl==1.5.0
     # via paramiko
 pyodbc==5.1.0
     # via viadot2
+pyspnego==0.11.2
+    # via smbprotocol
 python-dateutil==2.9.0.post0
     # via croniter
     # via dateparser
@@ -405,6 +408,8 @@ six==1.16.0
     # via kubernetes
     # via python-dateutil
     # via rfc3339-validator
+smbprotocol==1.15.0
+    # via viadot2
 sniffio==1.3.1
     # via anyio
     # via asgi-lifespan

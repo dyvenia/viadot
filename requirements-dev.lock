@@ -7,7 +7,6 @@
 #   all-features: false
 #   with-sources: false
 #   generate-hashes: false
-#   universal: false
 
 -e file:.
 aiohappyeyeballs==2.4.0
@@ -105,6 +104,8 @@ cryptography==43.0.0
     # via paramiko
     # via prefect
     # via pyjwt
+    # via pyspnego
+    # via smbprotocol
 cssselect2==0.7.0
     # via cairosvg
 dateparser==1.2.0
@@ -506,6 +507,8 @@ pyodbc==5.1.0
     # via viadot2
 pyparsing==3.1.2
     # via mike
+pyspnego==0.11.2
+    # via smbprotocol
 pytest==8.3.2
     # via pytest-asyncio
     # via pytest-mock
@@ -650,6 +653,8 @@ six==1.16.0
     # via kubernetes
     # via python-dateutil
     # via rfc3339-validator
+smbprotocol==1.15.0
+    # via viadot2
 smmap==5.0.1
     # via gitdb
 sniffio==1.3.1

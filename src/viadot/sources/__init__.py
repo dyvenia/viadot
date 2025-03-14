@@ -20,6 +20,7 @@ from .outlook import Outlook
 from .salesforce import Salesforce
 from .sftp import Sftp
 from .sharepoint import Sharepoint
+from .smb import SMB
 from .sql_server import SQLServer
 from .sqlite import SQLite
 from .supermetrics import Supermetrics
@@ -29,6 +30,8 @@ from .vid_club import VidClub
 
 
 __all__ = [
+    "SMB",
+    "TM1",
     "AzureSQL",
     "BigQuery",
     "BusinessCore",
@@ -43,13 +46,12 @@ __all__ = [
     "Mediatool",
     "Mindful",
     "Outlook",
-    "SQLite",
     "SQLServer",
+    "SQLite",
     "Salesforce",
     "Sftp",
     "Sharepoint",
     "Supermetrics",
-    "TM1",
     "Trino",
     "UKCarbonIntensity",
     "VidClub",
