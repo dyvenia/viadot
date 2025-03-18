@@ -40,6 +40,8 @@ dependencies = [
     "pandas<2.0",
     "tm1py>=2.0.4",
     "smbprotocol>=1.15.0",
+    "prefect-slack>=0.2.7",
+    "tabulate>=0.9.0",
 ]
 requires-python = ">=3.10"
 readme = "README.md"
