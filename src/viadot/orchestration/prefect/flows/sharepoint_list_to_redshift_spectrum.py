@@ -20,7 +20,7 @@ def sharepoint_list_to_redshift_spectrum(  # noqa: PLR0913
     to_path: str,
     schema_name: str,
     table_name: str,
-    list_url: str,
+    list_site: str,
     list_name: str,
     sep: str = ",",
     extension: str = ".parquet",
@@ -43,7 +43,7 @@ def sharepoint_list_to_redshift_spectrum(  # noqa: PLR0913
         to_path (str): The path where the data will be stored.
         schema_name (str): The name of the schema in Redshift Spectrum.
         table_name (str): The name of the table in Redshift Spectrum.
-        list_url (str): The URL of the SharePoint list.
+        list_site (str):  The Sharepoint site on which the list is stored.
             Example: `/sites/your_site_name`.
         list_name (str): The name of the SharePoint list.
         sep (str, optional): The separator used in the file. Defaults to ",".
@@ -75,7 +75,7 @@ def sharepoint_list_to_redshift_spectrum(  # noqa: PLR0913
     """
     # Tasks
     df = sharepoint_list_to_df(
-        list_url=list_url,
+        list_site=list_site,
         list_name=list_name,
         query=query,
         select=select,
