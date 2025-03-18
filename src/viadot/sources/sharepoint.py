@@ -432,12 +432,14 @@ class SharepointList(Source):
     def to_df(
         self,
         list_name: str,
+        list_site: str,
         query: str | None = None,
         select: list[str] | None = None,
     ) -> pd.DataFrame:
         """Retrieve data from a SharePoint list as a pandas DataFrame.
 
         Args:
+            list_site (str): The Sharepoint site on which the list is stored.
             list_name (str): The name of the SharePoint list.
             query (str, optional): A query to filter items. Defaults to None.
             select (list[str], optional): Fields to include in the response.
@@ -452,7 +454,9 @@ class SharepointList(Source):
         conn = self.get_connection()
 
         # Construct the endpoint URL
-        endpoint = f"{conn.site}/_api/web/lists/GetByTitle('{list_name}')/items"
+        endpoint = (
+            f"{conn.site}/{list_site}/_api/web/lists/GetByTitle('{list_name}')/items"
+        )
 
         params = {}
         if query:

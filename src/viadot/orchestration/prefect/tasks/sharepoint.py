@@ -116,7 +116,7 @@ def sharepoint_download_file(
 @task(retries=3, retry_delay_seconds=10, timeout_seconds=60 * 60)
 def sharepoint_list_to_df(
     list_name: str,
-    list_url: str,
+    list_site: str,
     query: str | None = None,
     select: list[str] | None = None,
     credentials_secret: str | None = None,
@@ -126,7 +126,7 @@ def sharepoint_list_to_df(
 
     Args:
         list_name (str): The name of the SharePoint list.
-        list_url (str): The URL of the SharePoint list.
+        list_site (str): The Sharepoint site on which the list is stored.
             Example: `/sites/your_site_name`.
         query (str, optional): A query to filter items. Defaults to None.
         select (list[str], optional): Fields to include in the response.
@@ -152,7 +152,7 @@ def sharepoint_list_to_df(
     sp = SharepointList(credentials=credentials, config_key=config_key)
 
     logger.info(f"Retrieving data from SharePoint list {list_name}...")
-    df = sp.to_df(list_name=list_name, query=query, select=select, list_url=list_url)
+    df = sp.to_df(list_name=list_name, query=query, select=select, list_site=list_site)
     logger.info(f"Successfully retrieved data from SharePoint list {list_name}.")
 
     return df
