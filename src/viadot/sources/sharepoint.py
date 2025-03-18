@@ -141,7 +141,7 @@ class Sharepoint(Source):
         response = conn.get(endpoint)
         files = response.json().get("d", {}).get("results", [])
 
-        return [f'{site_url}/{library}{file["Name"]}' for file in files]
+        return [f"{site_url}/{library}{file['Name']}" for file in files]
 
     def _get_file_extension(self, url: str) -> str:
         """Extracts the file extension from a given URL.
@@ -388,3 +388,96 @@ class Sharepoint(Source):
             validate(df=df_clean, tests=tests)
 
         return df_clean
+
+
+class SharepointList(Source):
+    """A class to connect to SharePoint lists and retrieve data."""
+
+    def __init__(
+        self,
+        credentials: SharepointCredentials = None,
+        config_key: str | None = None,
+        *args,
+        **kwargs,
+    ):
+        """Initialize the SharepointList connector.
+
+        Args:
+            credentials (SharepointCredentials, optional): SharePoint credentials.
+            config_key (str, optional): The key in the viadot config holding relevant
+                credentials.
+        """
+        super().__init__(*args, **kwargs)
+        self.credentials = credentials or get_source_credentials(config_key)
+
+    def get_connection(self) -> sharepy.session.SharePointSession:
+        """Establish a connection to SharePoint.
+
+        Returns:
+            sharepy.session.SharePointSession: An authenticated SharePoint session.
+
+        Raises:
+            CredentialError: If authentication fails.
+        """
+        try:
+            return sharepy.connect(
+                site=self.credentials.site,
+                username=self.credentials.username,
+                password=self.credentials.password,
+            )
+        except AuthError as e:
+            msg = f"Authentication failed for {self.credentials.site}"
+            raise CredentialError(msg) from e
+
+    def to_df(
+        self,
+        list_name: str,
+        query: str | None = None,
+        select: list[str] | None = None,
+    ) -> pd.DataFrame:
+        """Retrieve data from a SharePoint list as a pandas DataFrame.
+
+        Args:
+            list_name (str): The name of the SharePoint list.
+            query (str, optional): A query to filter items. Defaults to None.
+            select (list[str], optional): Fields to include in the response.
+                Defaults to None.
+
+        Returns:
+            pd.DataFrame: The list data as a DataFrame.
+
+        Raises:
+            ValueError: If the list does not exist or the request fails.
+        """
+        conn = self.get_connection()
+
+        # Construct the endpoint URL
+        endpoint = f"{conn.site}/_api/web/lists/GetByTitle('{list_name}')/items"
+
+        params = {}
+        if query:
+            params["$filter"] = query
+        if select:
+            params["$select"] = ",".join(select)
+
+        results = []
+        while endpoint:
+            try:
+                response = conn.get(endpoint, params=params)
+                response.raise_for_status()
+            except Exception as e:
+                msg = f"Failed to retrieve data from SharePoint list {list_name}"
+                raise ValueError(msg) from e
+
+            data = response.json().get("d", {})
+            items = data.get("results", [])
+            results.extend(items)
+
+            # Get the URL for the next page
+            endpoint = data.get("__next", None)
+
+        if not results:
+            msg = f"No items found in SharePoint list {list_name}"
+            raise ValueError(msg)
+
+        return pd.DataFrame(data)

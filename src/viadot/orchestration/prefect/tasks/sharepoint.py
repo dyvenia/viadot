@@ -7,7 +7,7 @@ from prefect import get_run_logger, task
 
 from viadot.orchestration.prefect.exceptions import MissingSourceCredentialsError
 from viadot.orchestration.prefect.utils import get_credentials
-from viadot.sources import Sharepoint
+from viadot.sources import Sharepoint, SharepointList
 
 
 @task(retries=3, retry_delay_seconds=10, timeout_seconds=60 * 60)
@@ -111,3 +111,48 @@ def sharepoint_download_file(
     logger.info(f"Downloading data from {url}...")
     s.download_file(url=url, to_path=to_path)
     logger.info(f"Successfully downloaded data from {url}.")
+
+
+@task(retries=3, retry_delay_seconds=10, timeout_seconds=60 * 60)
+def sharepoint_list_to_df(
+    list_name: str,
+    list_url: str,
+    query: str | None = None,
+    select: list[str] | None = None,
+    credentials_secret: str | None = None,
+    config_key: str | None = None,
+) -> pd.DataFrame:
+    """Retrieve data from a SharePoint list into a pandas DataFrame.
+
+    Args:
+        list_name (str): The name of the SharePoint list.
+        list_url (str): The URL of the SharePoint list.
+            Example: `/sites/your_site_name`.
+        query (str, optional): A query to filter items. Defaults to None.
+        select (list[str], optional): Fields to include in the response.
+            Defaults to None.
+        credentials_secret (str, optional): The name of the secret storing the
+        credentials.Defaults to None.
+        config_key (str, optional): The key in the viadot config holding relevant
+            credentials. Defaults to None.
+
+    Returns:
+        pd.DataFrame: The DataFrame containing data from the SharePoint list.
+
+    Raises:
+        MissingSourceCredentialsError: If neither credentials_secret nor
+            config_key is provided.
+    """
+    if not (credentials_secret or config_key):
+        raise MissingSourceCredentialsError
+
+    logger = get_run_logger()
+
+    credentials = get_credentials(secret_name=credentials_secret)
+    sp = SharepointList(credentials=credentials, config_key=config_key)
+
+    logger.info(f"Retrieving data from SharePoint list {list_name}...")
+    df = sp.to_df(list_name=list_name, query=query, select=select, list_url=list_url)
+    logger.info(f"Successfully retrieved data from SharePoint list {list_name}.")
+
+    return df
