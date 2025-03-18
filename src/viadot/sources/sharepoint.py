@@ -407,8 +407,9 @@ class SharepointList(Source):
             config_key (str, optional): The key in the viadot config holding relevant
                 credentials.
         """
-        super().__init__(*args, **kwargs)
-        self.credentials = credentials or get_source_credentials(config_key)
+        raw_creds = credentials or get_source_credentials(config_key) or {}
+        validated_creds = dict(SharepointCredentials(**raw_creds))
+        super().__init__(*args, credentials=validated_creds, **kwargs)
 
     def get_connection(self) -> sharepy.session.SharePointSession:
         """Establish a connection to SharePoint.
