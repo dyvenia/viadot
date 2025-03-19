@@ -447,7 +447,7 @@ class SharepointList(Sharepoint):
             site_url = conn.site
 
         # Construct the endpoint URL
-        endpoint = f"{site_url}/site/{list_site}/_api/web/lists/GetByTitle('{list_name}')/items"
+        endpoint = f"{site_url}/sites/{list_site}/_api/web/lists/GetByTitle('{list_name}')/items"
 
         params = {}
         if query:
