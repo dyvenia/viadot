@@ -45,7 +45,6 @@ def sharepoint_list_to_redshift_spectrum(  # noqa: PLR0913
         schema_name (str): The name of the schema in Redshift Spectrum.
         table_name (str): The name of the table in Redshift Spectrum.
         list_site (str):  The Sharepoint site on which the list is stored.
-            Example: `/sites/your_site_name`.
         list_name (str): The name of the SharePoint list.
         sep (str, optional): The separator used in the file. Defaults to ",".
         extension (str, optional): The file extension to use. Defaults to ".parquet".

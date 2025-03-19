@@ -128,7 +128,6 @@ def sharepoint_list_to_df(
     Args:
         list_name (str): The name of the SharePoint list.
         list_site (str): The Sharepoint site on which the list is stored.
-            Example: `/sites/your_site_name`.
         default_protocol (str, optional): The default protocol to use for
                 SharePoint URLs.
                 Defaults to "https://".
