@@ -36,7 +36,7 @@ def sharepoint_list_to_redshift_spectrum(  # noqa: PLR0913
     sharepoint_config_key: str | None = None,
     query: str | None = None,
     select: list[str] | None = None,
-    tests: dict[str, Any] | None = None,
+    tests: dict[str, Any] | None = None,  # noqa: ARG001
 ) -> None:
     """Flow to load data from a SharePoint list to Redshift Spectrum.
 
@@ -85,13 +85,11 @@ def sharepoint_list_to_redshift_spectrum(  # noqa: PLR0913
         credentials_secret=sharepoint_credentials_secret,
         config_key=sharepoint_config_key,
     )
-
     df_to_redshift_spectrum(
         df=df,
         to_path=to_path,
         schema_name=schema_name,
         table=table_name,
-        tests=tests,
         description=description,
         extension=extension,
         if_exists=if_exists,
