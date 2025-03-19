@@ -35,9 +35,6 @@ class SharepointCredentials(BaseModel):
         username = credentials.get("username")
         password = credentials.get("password")
 
-        if "https://" not in site:
-            site = f"https://{site}"
-
         if not (site and username and password):
             msg = "'site', 'username', and 'password' credentials are required."
             raise CredentialError(msg)
