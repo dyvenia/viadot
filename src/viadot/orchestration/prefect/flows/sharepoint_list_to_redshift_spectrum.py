@@ -90,7 +90,7 @@ def sharepoint_list_to_redshift_spectrum(  # noqa: PLR0913
         df=df,
         to_path=to_path,
         schema_name=schema_name,
-        table_name=table_name,
+        table=table_name,
         tests=tests,
         description=description,
         extension=extension,
