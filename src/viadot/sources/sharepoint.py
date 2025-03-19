@@ -475,4 +475,4 @@ class SharepointList(Sharepoint):
             msg = f"No items found in SharePoint list {list_name}"
             raise ValueError(msg)
 
-        return pd.DataFrame(data)
+        return pd.DataFrame(items)
