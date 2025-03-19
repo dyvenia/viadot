@@ -414,7 +414,9 @@ class SharepointList(Sharepoint):
                 credentials.
         """
         self.default_protocol = default_protocol
-        super().__init__(*args, credentials=credentials, config_key=config_key**kwargs)
+        super().__init__(
+            *args, credentials=credentials, config_key=config_key, **kwargs
+        )
 
     @add_viadot_metadata_columns
     def to_df(
