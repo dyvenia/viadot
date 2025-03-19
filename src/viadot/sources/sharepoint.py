@@ -35,6 +35,9 @@ class SharepointCredentials(BaseModel):
         username = credentials.get("username")
         password = credentials.get("password")
 
+        if "https://" not in site:
+            site = f"https://{site}"
+
         if not (site and username and password):
             msg = "'site', 'username', and 'password' credentials are required."
             raise CredentialError(msg)
@@ -395,6 +398,8 @@ class SharepointList(Source):
 
     def __init__(
         self,
+        sharepoint: Sharepoint,
+        default_protocol: str | None = "https://",
         credentials: SharepointCredentials = None,
         config_key: str | None = None,
         *args,
@@ -403,32 +408,20 @@ class SharepointList(Source):
         """Initialize the SharepointList connector.
 
         Args:
+            default_protocol (str, optional): The default protocol to use for
+                SharePoint URLs.
+                Defaults to "https://".
             credentials (SharepointCredentials, optional): SharePoint credentials.
             config_key (str, optional): The key in the viadot config holding relevant
                 credentials.
+            sharepoint (type, optional): The Sharepoint class to use for connections.
+                Defaults to Sharepoint.
         """
+        self.default_protocol = default_protocol
+        self.sharepoint = sharepoint(credentials)
         raw_creds = credentials or get_source_credentials(config_key) or {}
         validated_creds = dict(SharepointCredentials(**raw_creds))
         super().__init__(*args, credentials=validated_creds, **kwargs)
-
-    def get_connection(self) -> sharepy.session.SharePointSession:
-        """Establish a connection to SharePoint.
-
-        Returns:
-            sharepy.session.SharePointSession: An authenticated SharePoint session.
-
-        Raises:
-            CredentialError: If authentication fails.
-        """
-        try:
-            return sharepy.connect(
-                site=self.credentials.site,
-                username=self.credentials.username,
-                password=self.credentials.password,
-            )
-        except AuthError as e:
-            msg = f"Authentication failed for {self.credentials.site}"
-            raise CredentialError(msg) from e
 
     def to_df(
         self,
@@ -452,12 +445,16 @@ class SharepointList(Source):
         Raises:
             ValueError: If the list does not exist or the request fails.
         """
-        conn = self.get_connection()
+        conn = self.sharepoint.get_connection()
+
+        # Ensure the site URL uses the default protocol
+        if not conn.site.lower().startswith(self.default_protocol.lower()):
+            site_url = f"{self.default_protocol}{conn.site}"
+        else:
+            site_url = conn.site
 
         # Construct the endpoint URL
-        endpoint = (
-            f"{conn.site}/{list_site}/_api/web/lists/GetByTitle('{list_name}')/items"
-        )
+        endpoint = f"{site_url}/site/{list_site}/_api/web/lists/GetByTitle('{list_name}')/items"
 
         params = {}
         if query:
