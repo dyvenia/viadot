@@ -423,6 +423,7 @@ class SharepointList(Source):
         validated_creds = dict(SharepointCredentials(**raw_creds))
         super().__init__(*args, credentials=validated_creds, **kwargs)
 
+    @add_viadot_metadata_columns
     def to_df(
         self,
         list_name: str,
