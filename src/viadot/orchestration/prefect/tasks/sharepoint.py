@@ -117,6 +117,7 @@ def sharepoint_download_file(
 def sharepoint_list_to_df(
     list_name: str,
     list_site: str,
+    default_protocol: str | None = "https://",
     query: str | None = None,
     select: list[str] | None = None,
     credentials_secret: str | None = None,
@@ -128,6 +129,9 @@ def sharepoint_list_to_df(
         list_name (str): The name of the SharePoint list.
         list_site (str): The Sharepoint site on which the list is stored.
             Example: `/sites/your_site_name`.
+        default_protocol (str, optional): The default protocol to use for
+                SharePoint URLs.
+                Defaults to "https://".
         query (str, optional): A query to filter items. Defaults to None.
         select (list[str], optional): Fields to include in the response.
             Defaults to None.
@@ -149,7 +153,11 @@ def sharepoint_list_to_df(
     logger = get_run_logger()
 
     credentials = get_credentials(secret_name=credentials_secret)
-    sp = SharepointList(credentials=credentials, config_key=config_key)
+    sp = SharepointList(
+        credentials=credentials,
+        config_key=config_key,
+        default_protocol=default_protocol,
+    )
 
     logger.info(f"Retrieving data from SharePoint list {list_name}...")
     df = sp.to_df(list_name=list_name, query=query, select=select, list_site=list_site)

@@ -25,6 +25,7 @@ def sharepoint_list_to_redshift_spectrum(  # noqa: PLR0913
     sep: str = ",",
     extension: str = ".parquet",
     if_exists: Literal["overwrite", "append"] = "overwrite",
+    default_protocol: str | None = "https://",
     description: str | None = None,
     partition_cols: list[str] | None = None,
     index: bool = False,
@@ -48,6 +49,8 @@ def sharepoint_list_to_redshift_spectrum(  # noqa: PLR0913
         list_name (str): The name of the SharePoint list.
         sep (str, optional): The separator used in the file. Defaults to ",".
         extension (str, optional): The file extension to use. Defaults to ".parquet".
+        default_protocol (str, optional): The default protocol to use for
+                SharePoint URLs.Defaults to "https://".
         if_exists (Literal["overwrite", "append"], optional): Action if the table
             exists.Defaults to "overwrite".
         description (str | None, optional): Description of the table. Defaults to None.
@@ -77,6 +80,7 @@ def sharepoint_list_to_redshift_spectrum(  # noqa: PLR0913
     df = sharepoint_list_to_df(
         list_site=list_site,
         list_name=list_name,
+        default_protocol=default_protocol,
         query=query,
         select=select,
         credentials_secret=sharepoint_credentials_secret,

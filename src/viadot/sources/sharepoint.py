@@ -409,8 +409,7 @@ class SharepointList(Source):
 
         Args:
             default_protocol (str, optional): The default protocol to use for
-                SharePoint URLs.
-                Defaults to "https://".
+                SharePoint URLs.Defaults to "https://".
             credentials (SharepointCredentials, optional): SharePoint credentials.
             config_key (str, optional): The key in the viadot config holding relevant
                 credentials.
