@@ -393,12 +393,11 @@ class Sharepoint(Source):
         return df_clean
 
 
-class SharepointList(Source):
+class SharepointList(Sharepoint):
     """A class to connect to SharePoint lists and retrieve data."""
 
     def __init__(
         self,
-        sharepoint: Sharepoint,
         default_protocol: str | None = "https://",
         credentials: SharepointCredentials = None,
         config_key: str | None = None,
@@ -413,14 +412,9 @@ class SharepointList(Source):
             credentials (SharepointCredentials, optional): SharePoint credentials.
             config_key (str, optional): The key in the viadot config holding relevant
                 credentials.
-            sharepoint (type, optional): The Sharepoint class to use for connections.
-                Defaults to Sharepoint.
         """
         self.default_protocol = default_protocol
-        self.sharepoint = sharepoint(credentials)
-        raw_creds = credentials or get_source_credentials(config_key) or {}
-        validated_creds = dict(SharepointCredentials(**raw_creds))
-        super().__init__(*args, credentials=validated_creds, **kwargs)
+        super().__init__(*args, credentials=credentials, config_key=config_key**kwargs)
 
     @add_viadot_metadata_columns
     def to_df(
@@ -445,7 +439,7 @@ class SharepointList(Source):
         Raises:
             ValueError: If the list does not exist or the request fails.
         """
-        conn = self.sharepoint.get_connection()
+        conn = self.get_connection()
 
         # Ensure the site URL uses the default protocol
         if not conn.site.lower().startswith(self.default_protocol.lower()):
