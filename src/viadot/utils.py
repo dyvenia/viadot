@@ -553,18 +553,24 @@ def validate_column_size(
     stream_level: int,
     failed_tests: int,
     failed_tests_list: list,
-) -> None:
+) -> tuple[int, list[str]]:
     """Validate the size of the columns in the DataFrame.
 
     Logic: TODO
 
     Args:
         df (pd.DataFrame): The pandas DataFrame to validate.
-        tests (dict[str, Any]): _description_
+        tests (dict[str, Any]): A dictionary containing validation parameters.
+            Expected format: `column_size`: dict{column: size}
         logger (logging.Logger): The logger to use.
         stream_level (int): The logging level to use for logging.
-        failed_tests (int): _description_
-        failed_tests_list (list): _description_
+        failed_tests (int): Counter for the number of failed tests.
+        failed_tests_list (list): List to store descriptions of failed tests.
+
+    Returns:
+        tuple[int, list[str]]: Updated count of failed tests and list of failure
+        descriptions.
+
     """
     try:
         for k, v in tests["column_size"].items():
@@ -588,6 +594,7 @@ def validate_column_size(
             level=stream_level,
             msg=f"Please provide `column_size` parameter as dictionary {'columns': value}.",
         )
+    return failed_tests, failed_tests_list
 
 
 def validate_column_unique_values(
@@ -597,16 +604,22 @@ def validate_column_unique_values(
     stream_level: int,
     failed_tests: int,
     failed_tests_list: list,
-) -> None:
+) -> tuple[int, list[str]]:
     """Validate whether a DataFrame column only contains unique values.
 
     Args:
         df (pd.DataFrame): The pandas DataFrame to validate.
-        tests (dict[str, Any]): _description_
+        tests (dict[str, Any]): A dictionary containing validation parameters.
+            Expected format: `column_unique_values`: list[columns]
         logger (logging.Logger): The logger to use.
         stream_level (int): The logging level to use for logging.
-        failed_tests (int): _description_
-        failed_tests_list (list): _description_
+        failed_tests (int): Counter for the number of failed tests.
+        failed_tests_list (list): List to store descriptions of failed tests.
+
+    Returns:
+        tuple[int, list[str]]: Updated count of failed tests and list of failure
+        descriptions.
+
     """
     for column in tests["column_unique_values"]:
         df_size = df.shape[0]
@@ -622,6 +635,7 @@ def validate_column_unique_values(
                 level=stream_level,
                 msg=f"[column_unique_values] Values for {column} are not unique.",
             )
+    return failed_tests, failed_tests_list
 
 
 def validate_column_list_to_match(
@@ -631,16 +645,22 @@ def validate_column_list_to_match(
     stream_level: int,
     failed_tests: int,
     failed_tests_list: list,
-) -> None:
+) -> tuple[int, list[str]]:
     """Validate whether the columns of the DataFrame match the expected list.
 
     Args:
         df (pd.DataFrame): The pandas DataFrame to validate.
-        tests (dict[str, Any]): _description_
+        tests (dict[str, Any]): A dictionary containing validation parameters.
+            Expected format: `column_list_to_match`: list[columns]
         logger (logging.Logger): The logger to use.
         stream_level (int): The logging level to use for logging.
-        failed_tests (int): _description_
-        failed_tests_list (list): _description_
+        failed_tests (int): Counter for the number of failed tests.
+        failed_tests_list (list): List to store descriptions of failed tests.
+
+    Returns:
+        tuple[int, list[str]]: Updated count of failed tests and list of failure
+        descriptions.
+
     """
     if set(tests["column_list_to_match"]) == set(df.columns):
         logger.log(level=stream_level, msg=f"{tests['column_list_to_match']} passed.")
@@ -651,6 +671,7 @@ def validate_column_list_to_match(
             level=stream_level,
             msg="[column_list_to_match] failed. Columns are different than expected.",
         )
+    return failed_tests, failed_tests_list
 
 
 def validate_dataset_row_count(
@@ -660,16 +681,22 @@ def validate_dataset_row_count(
     stream_level: int,
     failed_tests: int,
     failed_tests_list: list,
-) -> None:
+) -> tuple[int, list[str]]:
     """Validate the DataFrame row count.
 
     Args:
         df (pd.DataFrame): The pandas DataFrame to validate.
-        tests (dict[str, Any]): _description_
+        tests (dict[str, Any]): A dictionary containing validation parameters.
+            Expected format: `dataset_row_count`: dict: {'min': number, 'max', number}
         logger (logging.Logger): The logger to use.
         stream_level (int): The logging level to use for logging.
-        failed_tests (int): _description_
-        failed_tests_list (list): _description_
+        failed_tests (int): Counter for the number of failed tests.
+        failed_tests_list (list): List to store descriptions of failed tests.
+
+    Returns:
+        tuple[int, list[str]]: Updated count of failed tests and list of failure
+        descriptions.
+
     """
     row_count = len(df.iloc[:, 0])
     max_value = tests["dataset_row_count"]["max"] or 100_000_000
@@ -684,6 +711,7 @@ def validate_dataset_row_count(
             level=stream_level,
             msg=f"[dataset_row_count] Row count ({row_count}) is not between {min_value} and {max_value}.",
         )
+    return failed_tests, failed_tests_list
 
 
 def validate_column_match_regex(
@@ -693,18 +721,24 @@ def validate_column_match_regex(
     stream_level: int,
     failed_tests: int,
     failed_tests_list: list,
-) -> None:
+) -> tuple[int, list[str]]:
     """Validate whether the values of a column match a regex pattern.
 
     Logic: TODO
 
     Args:
         df (pd.DataFrame): The pandas DataFrame to validate.
-        tests (dict[str, Any]): _description_
+        tests (dict[str, Any]): A dictionary containing validation parameters.
+            Expected format: `column_match_regex`: dict: {column: 'regex'}
         logger (logging.Logger): The logger to use.
         stream_level (int): The logging level to use for logging.
-        failed_tests (int): _description_
-        failed_tests_list (list): _description_
+        failed_tests (int): Counter for the number of failed tests.
+        failed_tests_list (list): List to store descriptions of failed tests.
+
+    Returns:
+        tuple[int, list[str]]: Updated count of failed tests and list of failure
+        descriptions.
+
     """
     for k, v in tests["column_match_regex"].items():
         try:
@@ -728,6 +762,7 @@ def validate_column_match_regex(
                 level=stream_level,
                 msg=f"[column_match_regex] Error in {k} column: {e}",
             )
+    return failed_tests, failed_tests_list
 
 
 def validate_column_sum(
@@ -737,16 +772,23 @@ def validate_column_sum(
     stream_level: int,
     failed_tests: int,
     failed_tests_list: list,
-) -> None:
+) -> tuple[int, list[str]]:
     """Validate the sum of a column in the DataFrame.
 
     Args:
         df (pd.DataFrame): The pandas DataFrame to validate.
-        tests (dict[str, Any]): _description_
+        tests (dict[str, Any]): A dictionary containing validation parameters.
+            Expected format: `column_sum`: dict: {column: {'min': number,
+              'max': number}}
         logger (logging.Logger): The logger to use.
         stream_level (int): The logging level to use for logging.
-        failed_tests (int): _description_
-        failed_tests_list (list): _description_
+        failed_tests (int): Counter for the number of failed tests.
+        failed_tests_list (list): List to store descriptions of failed tests.
+
+    Returns:
+        tuple[int, list[str]]: Updated count of failed tests and list of failure
+        descriptions.
+
     """
     for column, bounds in tests["column_sum"].items():
         col_sum = df[column].sum()
@@ -764,6 +806,7 @@ def validate_column_sum(
                 level=stream_level,
                 msg=f"[column_sum] Sum of {col_sum} for {column} is out of the expected range - <{min_bound}:{max_bound}>",
             )
+    return failed_tests, failed_tests_list
 
 
 def validate(
@@ -798,32 +841,32 @@ def validate(
 
     if tests is not None:
         if "column_size" in tests:
-            validate_column_size(
+            failed_tests, failed_tests_list = validate_column_size(
                 df, tests, logger, stream_level, failed_tests, failed_tests_list
             )
 
         if "column_unique_values" in tests:
-            validate_column_unique_values(
+            failed_tests, failed_tests_list = validate_column_unique_values(
                 df, tests, logger, stream_level, failed_tests, failed_tests_list
             )
 
         if "column_list_to_match" in tests:
-            validate_column_list_to_match(
+            failed_tests, failed_tests_list = validate_column_list_to_match(
                 df, tests, logger, stream_level, failed_tests, failed_tests_list
             )
 
         if "dataset_row_count" in tests:
-            validate_dataset_row_count(
+            failed_tests, failed_tests_list = validate_dataset_row_count(
                 df, tests, logger, stream_level, failed_tests, failed_tests_list
             )
 
         if "column_match_regex" in tests:
-            validate_column_match_regex(
+            failed_tests, failed_tests_list = validate_column_match_regex(
                 df, tests, logger, stream_level, failed_tests, failed_tests_list
             )
 
         if "column_sum" in tests:
-            validate_column_sum(
+            failed_tests, failed_tests_list = validate_column_sum(
                 df, tests, logger, stream_level, failed_tests, failed_tests_list
             )
 
