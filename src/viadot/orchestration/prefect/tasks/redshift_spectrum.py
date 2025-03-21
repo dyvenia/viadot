@@ -68,6 +68,12 @@ def df_to_redshift_spectrum(  # noqa: PLR0913
         credentials_secret
     )
 
+    # Convert columns containing only null values to string to avoid errors
+    # during new table creation
+    null_columns = df.isna().all()
+    null_cols_list = null_columns[null_columns].index.tolist()
+    df[null_cols_list] = df[null_cols_list].astype("string")
+
     rs = RedshiftSpectrum(credentials=credentials, config_key=config_key)
 
     rs.from_df(
