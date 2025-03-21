@@ -141,7 +141,7 @@ class Sharepoint(Source):
         response = conn.get(endpoint)
         files = response.json().get("d", {}).get("results", [])
 
-        return [f'{site_url}/{library}{file["Name"]}' for file in files]
+        return [f"{site_url}/{library}{file['Name']}" for file in files]
 
     def _get_file_extension(self, url: str) -> str:
         """Extracts the file extension from a given URL.
@@ -388,3 +388,139 @@ class Sharepoint(Source):
             validate(df=df_clean, tests=tests)
 
         return df_clean
+
+
+class SharepointList(Sharepoint):
+    """A class to connect to SharePoint lists and retrieve data."""
+
+    def __init__(
+        self,
+        default_protocol: str | None = "https://",
+        credentials: SharepointCredentials = None,
+        config_key: str | None = None,
+        *args,
+        **kwargs,
+    ):
+        """Initialize the SharepointList connector.
+
+        Args:
+            default_protocol (str, optional): The default protocol to use for
+                SharePoint URLs.Defaults to "https://".
+            credentials (SharepointCredentials, optional): SharePoint credentials.
+            config_key (str, optional): The key in the viadot config holding relevant
+                credentials.
+        """
+        self.default_protocol = default_protocol
+        super().__init__(
+            *args, credentials=credentials, config_key=config_key, **kwargs
+        )
+
+    def _find_and_rename_case_insensitive_duplicated_column_names(
+        self, df: pd.DataFrame
+    ) -> dict:
+        """Identifies case-insensitive duplicate column names in a DataFrame.
+
+        This function is necessary because SharePoint lists can have columns
+        with the same name but different cases (e.g., "ID" and "Id"),which can cause
+        issues when processing the data. It renames these columns by appending a count
+        suffix to ensure uniqueness.
+
+        Note that due to the presence of unhashable data types like dictionaries in some
+        columns, it is not possible to perform a full check to see if both columns
+        contain the same values. Therefore, this function adds numbering to the
+        duplicate column names, and it is up to the user to decide how to handle these
+        columns further (e.g., merge, remove, or keep them as separate columns).
+
+        Args:
+            df (pd.DataFrame): The input DataFrame.
+
+        Returns:
+            dict: A dictionary mapping duplicate column names to their new names.
+
+        Raises:
+            TypeError: If input is not a pandas DataFrame.
+
+        Notes:
+            This function iterates through the DataFrame's columns, tracking
+            case-insensitive duplicates.
+            Duplicate columns are renamed by appending a count
+            suffix (e.g., "col", "col_1", "col_2").
+        """
+        columns = df.columns.tolist()
+        seen = {}
+        rename_dict = {}
+
+        for col in columns:
+            col_lower = col.lower()
+            if col_lower in seen:
+                rename_dict[col] = f"{col}_{seen[col_lower]}"
+                seen[col_lower] += 1
+            else:
+                seen[col_lower] = 1
+
+        return rename_dict
+
+    @add_viadot_metadata_columns
+    def to_df(
+        self,
+        list_name: str,
+        list_site: str,
+        query: str | None = None,
+        select: list[str] | None = None,
+    ) -> pd.DataFrame:
+        """Retrieve data from a SharePoint list as a pandas DataFrame.
+
+        Args:
+            list_site (str): The Sharepoint site on which the list is stored.
+            list_name (str): The name of the SharePoint list.
+            query (str, optional): A query to filter items. Defaults to None.
+            select (list[str], optional): Fields to include in the response.
+                Defaults to None.
+
+        Returns:
+            pd.DataFrame: The list data as a DataFrame.
+
+        Raises:
+            ValueError: If the list does not exist or the request fails.
+        """
+        conn = self.get_connection()
+
+        # Ensure the site URL uses the default protocol
+        if not conn.site.lower().startswith(self.default_protocol.lower()):
+            site_url = f"{self.default_protocol}{conn.site}"
+        else:
+            site_url = conn.site
+
+        # Construct the endpoint URL
+        endpoint = f"{site_url}/sites/{list_site}/_api/web/lists/GetByTitle('{list_name}')/items"
+
+        params = {}
+        if query:
+            params["$filter"] = query
+        if select:
+            params["$select"] = ",".join(select)
+
+        results = []
+        while endpoint:
+            try:
+                response = conn.get(endpoint, params=params)
+                response.raise_for_status()
+            except Exception as e:
+                msg = f"Failed to retrieve data from SharePoint list {list_name}"
+                raise ValueError(msg) from e
+
+            data = response.json().get("d", {})
+            items = data.get("results", [])
+            results.extend(items)
+
+            # Get the URL for the next page
+            endpoint = data.get("__next", None)
+
+        if not results:
+            msg = f"No items found in SharePoint list {list_name}"
+            raise ValueError(msg)
+        df = pd.DataFrame(items)
+
+        rename_dict = self._find_and_rename_case_insensitive_duplicated_column_names(df)
+
+        return df.rename(columns=rename_dict)
