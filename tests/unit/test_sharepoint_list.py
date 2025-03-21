@@ -54,7 +54,7 @@ class SharepointListMock(SharepointList):
 @pytest.fixture
 def sharepoint_list_mock():
     """Fixture to provide a mock for SharepointList."""
-    return SharepointListMock(credentials={"dummy": "credentials"})
+    return SharepointListMock(credentials=DUMMY_CREDS)
 
 
 @pytest.mark.unit
