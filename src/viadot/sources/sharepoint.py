@@ -415,6 +415,51 @@ class SharepointList(Sharepoint):
             *args, credentials=credentials, config_key=config_key, **kwargs
         )
 
+    def _find_and_rename_case_insensitive_duplicated_column_names(
+        self, df: pd.DataFrame
+    ) -> dict:
+        """Identifies case-insensitive duplicate column names in a DataFrame.
+
+        This function is necessary because SharePoint lists can have columns
+        with the same name but different cases (e.g., "ID" and "Id"),which can cause
+        issues when processing the data. It renames these columns by appending a count
+        suffix to ensure uniqueness.
+
+        Note that due to the presence of unhashable data types like dictionaries in some
+        columns, it is not possible to perform a full check to see if both columns
+        contain the same values. Therefore, this function adds numbering to the
+        duplicate column names, and it is up to the user to decide how to handle these
+        columns further (e.g., merge, remove, or keep them as separate columns).
+
+        Args:
+            df (pd.DataFrame): The input DataFrame.
+
+        Returns:
+            dict: A dictionary mapping duplicate column names to their new names.
+
+        Raises:
+            TypeError: If input is not a pandas DataFrame.
+
+        Notes:
+            This function iterates through the DataFrame's columns, tracking
+            case-insensitive duplicates.
+            Duplicate columns are renamed by appending a count
+            suffix (e.g., "col", "col_1", "col_2").
+        """
+        columns = df.columns.tolist()
+        seen = {}
+        rename_dict = {}
+
+        for col in columns:
+            col_lower = col.lower()
+            if col_lower in seen:
+                rename_dict[col] = f"{col}_{seen[col_lower]}"
+                seen[col_lower] += 1
+            else:
+                seen[col_lower] = 1
+
+        return rename_dict
+
     @add_viadot_metadata_columns
     def to_df(
         self,
@@ -474,5 +519,8 @@ class SharepointList(Sharepoint):
         if not results:
             msg = f"No items found in SharePoint list {list_name}"
             raise ValueError(msg)
+        df = pd.DataFrame(items)
 
-        return pd.DataFrame(items)
+        rename_dict = self._find_and_rename_case_insensitive_duplicated_column_names(df)
+
+        return df.rename(columns=rename_dict)
