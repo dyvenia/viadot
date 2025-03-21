@@ -7,7 +7,11 @@ from viadot.orchestration.prefect.tasks import sharepoint_list_to_df
 from viadot.sources.sharepoint import SharepointList
 
 
-SHAREPOINT = "sharepointsecret"
+DUMMY_CREDS = {
+    "site": "test@domain.com",  # pragma: allowlist secret
+    "username": "test2",  # pragma: allowlist secret
+    "password": "test",  # pragma: allowlist secret
+}
 
 
 class SharepointListMock(SharepointList):
@@ -62,7 +66,7 @@ def test_sharepoint_list_to_df_positive(sharepoint_list_mock):
         list_name="list",
         select=["ID", "Title"],
         query=None,
-        credentials_secret=SHAREPOINT,
+        credentials_secret=DUMMY_CREDS,
         config_key="key",
     )
 
@@ -89,7 +93,7 @@ def test_sharepoint_list_to_df_with_query(sharepoint_list_mock):
         list_name="list",
         select=["ID", "Title"],
         query="Title eq 'Item 1'",
-        credentials_secret=SHAREPOINT,
+        credentials_secret=DUMMY_CREDS,
         config_key="key",
     )
 
@@ -114,7 +118,7 @@ def test_sharepoint_list_to_df_with_select(sharepoint_list_mock):
         list_name="list",
         select=["ID", "Description"],
         query=None,
-        credentials_secret=SHAREPOINT,
+        credentials_secret=DUMMY_CREDS,
         config_key="key",
     )
 
@@ -141,7 +145,7 @@ def test_sharepoint_list_to_df_with_query_and_select(sharepoint_list_mock):
         list_name="list",
         select=["ID", "Title"],
         query="Title eq 'Item 2'",
-        credentials_secret=SHAREPOINT,
+        credentials_secret=DUMMY_CREDS,
         config_key="key",
     )
 
@@ -169,7 +173,7 @@ def test_sharepoint_list_to_df_empty_data(sharepoint_list_mock):
         list_name="list",
         select=["ID", "Title"],
         query=None,
-        credentials_secret=SHAREPOINT,
+        credentials_secret=DUMMY_CREDS,
         config_key="key",
     )
 
@@ -197,7 +201,7 @@ def test_sharepoint_list_to_df_negative(sharepoint_list_mock):
             list_name="list",
             select=["ID", "Title"],
             query=None,
-            credentials_secret=SHAREPOINT,
+            credentials_secret=DUMMY_CREDS,
             config_key="key",
         )
 
