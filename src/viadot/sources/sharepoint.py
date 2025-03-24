@@ -500,10 +500,23 @@ class SharepointList(Sharepoint):
         if select:
             params["$select"] = ",".join(select)
 
-        results = []
-        while endpoint:
+        # Initialize empty list to accumulate all results
+        all_results = []
+
+        # Start pagination loop
+        next_url = endpoint
+        first_request = True
+
+        while next_url:
             try:
-                response = conn.get(endpoint, params=params)
+                # For first request, include original parameters
+                # For subsequent requests, parameters are in the next_url
+                if first_request:
+                    response = conn.get(next_url, params=params)
+                    first_request = False
+                else:
+                    response = conn.get(next_url)
+
                 response.raise_for_status()
             except Exception as e:
                 msg = f"Failed to retrieve data from SharePoint list {list_name}"
@@ -511,16 +524,24 @@ class SharepointList(Sharepoint):
 
             data = response.json().get("d", {})
             items = data.get("results", [])
-            results.extend(items)
 
-            # Get the URL for the next page
-            endpoint = data.get("__next", None)
+            # Accumulate results from this page
+            all_results.extend(items)
 
-        if not results:
+            # Get the URL for the next page - handle both string and object formats
+            next_link = data.get("__next")
+            if isinstance(next_link, dict) and "uri" in next_link:
+                next_url = next_link["uri"]
+            else:
+                next_url = next_link
+
+        if not all_results:
             msg = f"No items found in SharePoint list {list_name}"
             raise ValueError(msg)
-        df = pd.DataFrame(items)
 
+        # Convert accumulated results to DataFrame
+        df = pd.DataFrame(all_results)
+
+        # Handle case-insensitive duplicate column names
         rename_dict = self._find_and_rename_case_insensitive_duplicated_column_names(df)
-
         return df.rename(columns=rename_dict)
