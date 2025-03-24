@@ -1,6 +1,6 @@
 """Flows for downloading data from Sharepoint and uploading it to AWS Redshift Spectrum."""  # noqa: W505
 
-from typing import Literal
+from typing import Any, Literal
 
 from prefect import flow
 
@@ -21,6 +21,7 @@ def sharepoint_to_redshift_spectrum(  # noqa: PLR0913
     to_path: str,
     schema_name: str,
     table: str,
+    tests: dict[str, Any] | None = None,
     extension: str = ".parquet",
     if_exists: Literal["overwrite", "append"] = "overwrite",
     partition_cols: list[str] | None = None,
@@ -59,6 +60,9 @@ def sharepoint_to_redshift_spectrum(  # noqa: PLR0913
             None.
         schema_name (str): AWS Glue catalog database name.
         table (str): AWS Glue catalog table name.
+        tests (dict[str], optional): A dictionary with optional list of tests
+            to verify the output dataframe. If defined, triggers the `validate`
+            function from viadot.utils. Defaults to None.
         partition_cols (list[str]): List of column names that will be used to create
             partitions. Only takes effect if dataset=True.
         extension (str): Required file type. Accepted file formats are 'csv' and
@@ -97,6 +101,7 @@ def sharepoint_to_redshift_spectrum(  # noqa: PLR0913
     df = sharepoint_to_df(
         url=sharepoint_url,
         sheet_name=sheet_name,
+        tests=tests,
         columns=columns,
         na_values=na_values,
         file_sheet_mapping=file_sheet_mapping,
