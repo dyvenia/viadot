@@ -9,6 +9,7 @@ from urllib.parse import urlparse
 import pandas as pd
 from pandas._libs.parsers import STR_NA_VALUES
 from pydantic import BaseModel, root_validator
+import requests
 import sharepy
 from sharepy.errors import AuthError
 
@@ -460,6 +461,112 @@ class SharepointList(Sharepoint):
 
         return rename_dict
 
+    def _build_sharepoint_endpoint(
+        self, site_url: str, list_site: str, list_name: str
+    ) -> str:
+        """Build the SharePoint REST API endpoint URL.
+
+        Args:
+            site_url: The base SharePoint site URL with protocol
+            list_site: The specific site where the list is stored
+            list_name: The name of the SharePoint list
+
+        Returns:
+            str: The constructed endpoint URL
+        """
+        return f"{site_url}/sites/{list_site}/_api/web/lists/GetByTitle('{list_name}')/items"
+
+    def _ensure_protocol(self, site_url: str) -> str:
+        """Ensure the site URL has the correct protocol.
+
+        Args:
+            site_url: The site URL to check
+
+        Returns:
+            str: The site URL with the default protocol if needed
+        """
+        if not site_url.lower().startswith(self.default_protocol.lower()):
+            return f"{self.default_protocol}{site_url}"
+        return site_url
+
+    def _fetch_list_data(self, url: str, params: dict | None = None) -> tuple:
+        """Make a request to the SharePoint API and handle common errors.
+
+        Args:
+            url: The API endpoint URL
+            params: Optional query parameters
+
+        Returns:
+            tuple: (data_items, next_link) where data_items is a list of items
+                  and next_link is the URL for the next page or None
+        """
+        conn = self.get_connection()
+
+        try:
+            response = conn.get(url, params=params)
+            response.raise_for_status()
+        except TimeoutError as e:
+            msg = f"Request to SharePoint list timed out: {e!s}"
+            raise ValueError(msg) from e
+        except requests.exceptions.HTTPError as e:
+            status_code = getattr(
+                getattr(e, "response", None), "status_code", "unknown"
+            )
+            msg = f"HTTP error {status_code} when retrieving data from SharePoint list"
+            raise ValueError(msg) from e
+        except Exception as e:
+            msg = f"Failed to retrieve data from SharePoint list: {e!s}"
+            raise ValueError(msg) from e
+
+        data = response.json().get("d", {})
+        items = data.get("results", [])
+
+        # Get the URL for the next page
+        next_link = data.get("__next")
+        if isinstance(next_link, dict) and "uri" in next_link:
+            next_link = next_link["uri"]
+
+        return items, next_link
+
+    def _paginate_list_data(
+        self, initial_url: str, params: dict | None = None, list_name: str = ""
+    ) -> list:
+        """Handle pagination for SharePoint list data.
+
+        Args:
+            initial_url: The initial API endpoint URL
+            params: Optional query parameters for the first request
+            list_name: Name of the list for error messages
+
+        Returns:
+            list: All items from all pages
+        """
+        all_results = []
+        next_url = initial_url
+        first_request = True
+
+        while next_url:
+            # For first request, include original parameters
+            # For subsequent requests, parameters are in the next_url
+            current_params = params if first_request else None
+
+            try:
+                items, next_url = self._fetch_list_data(next_url, current_params)
+                all_results.extend(items)
+                first_request = False
+            except ValueError as e:
+                # Add the list_name to the error message
+                msg = str(e).replace(
+                    "SharePoint list", f"SharePoint list '{list_name}'"
+                )
+                raise ValueError(msg) from e
+
+        if not all_results:
+            msg = f"No items found in SharePoint list {list_name}"
+            raise ValueError(msg)
+
+        return all_results
+
     @add_viadot_metadata_columns
     def to_df(
         self,
@@ -484,64 +591,23 @@ class SharepointList(Sharepoint):
             ValueError: If the list does not exist or the request fails.
         """
         conn = self.get_connection()
+        site_url = self._ensure_protocol(conn.site)
+        endpoint = self._build_sharepoint_endpoint(site_url, list_site, list_name)
 
-        # Ensure the site URL uses the default protocol
-        if not conn.site.lower().startswith(self.default_protocol.lower()):
-            site_url = f"{self.default_protocol}{conn.site}"
-        else:
-            site_url = conn.site
-
-        # Construct the endpoint URL
-        endpoint = f"{site_url}/sites/{list_site}/_api/web/lists/GetByTitle('{list_name}')/items"
-
+        # Build request parameters
         params = {}
         if query:
             params["$filter"] = query
         if select:
             params["$select"] = ",".join(select)
 
-        # Initialize empty list to accumulate all results
-        all_results = []
+        # Get all items with pagination handling
+        all_results = self._paginate_list_data(endpoint, params, list_name)
 
-        # Start pagination loop
-        next_url = endpoint
-        first_request = True
-
-        while next_url:
-            try:
-                # For first request, include original parameters
-                # For subsequent requests, parameters are in the next_url
-                if first_request:
-                    response = conn.get(next_url, params=params)
-                    first_request = False
-                else:
-                    response = conn.get(next_url)
-
-                response.raise_for_status()
-            except Exception as e:
-                msg = f"Failed to retrieve data from SharePoint list {list_name}"
-                raise ValueError(msg) from e
-
-            data = response.json().get("d", {})
-            items = data.get("results", [])
-
-            # Accumulate results from this page
-            all_results.extend(items)
-
-            # Get the URL for the next page - handle both string and object formats
-            next_link = data.get("__next")
-            if isinstance(next_link, dict) and "uri" in next_link:
-                next_url = next_link["uri"]
-            else:
-                next_url = next_link
-
-        if not all_results:
-            msg = f"No items found in SharePoint list {list_name}"
-            raise ValueError(msg)
-
-        # Convert accumulated results to DataFrame
+        # Convert to DataFrame
         df = pd.DataFrame(all_results)
 
         # Handle case-insensitive duplicate column names
         rename_dict = self._find_and_rename_case_insensitive_duplicated_column_names(df)
+
         return df.rename(columns=rename_dict)
