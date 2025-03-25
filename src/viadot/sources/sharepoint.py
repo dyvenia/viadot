@@ -489,7 +489,9 @@ class SharepointList(Sharepoint):
             return f"{self.default_protocol}{site_url}"
         return site_url
 
-    def _fetch_list_data(self, url: str, params: dict | None = None) -> tuple:
+    def _fetch_list_data(
+        self, url: str, params: dict | None = None
+    ) -> tuple[list[dict], str | None]:
         """Make a request to the SharePoint API and handle common errors.
 
         Args:
@@ -530,7 +532,7 @@ class SharepointList(Sharepoint):
 
     def _paginate_list_data(
         self, initial_url: str, params: dict | None = None, list_name: str = ""
-    ) -> list:
+    ) -> list[dict]:
         """Handle pagination for SharePoint list data.
 
         Args:
