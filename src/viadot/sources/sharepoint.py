@@ -489,7 +489,7 @@ class SharepointList(Sharepoint):
             return f"{self.default_protocol}{site_url}"
         return site_url
 
-    def _fetch_list_data(
+    def _get_records(
         self, url: str, params: dict | None = None
     ) -> tuple[list[dict], str | None]:
         """Make a request to the SharePoint API and handle common errors.
@@ -553,7 +553,7 @@ class SharepointList(Sharepoint):
             current_params = params if first_request else None
 
             try:
-                items, next_url = self._fetch_list_data(next_url, current_params)
+                items, next_url = self._get_records(next_url, current_params)
                 all_results.extend(items)
                 first_request = False
             except ValueError as e:
