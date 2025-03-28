@@ -576,6 +576,7 @@ class SharepointList(Sharepoint):
         list_site: str,
         query: str | None = None,
         select: list[str] | None = None,
+        tests: dict | None = None,
     ) -> pd.DataFrame:
         """Retrieve data from a SharePoint list as a pandas DataFrame.
 
@@ -585,6 +586,9 @@ class SharepointList(Sharepoint):
             query (str, optional): A query to filter items. Defaults to None.
             select (list[str], optional): Fields to include in the response.
                 Defaults to None.
+            tests (Dict[str], optional): A dictionary with optional list of tests
+                to verify the output dataframe. If defined, triggers the `validate`
+                function from utils. Defaults to None.
 
         Returns:
             pd.DataFrame: The list data as a DataFrame.
@@ -611,5 +615,6 @@ class SharepointList(Sharepoint):
 
         # Handle case-insensitive duplicate column names
         rename_dict = self._find_and_rename_case_insensitive_duplicated_column_names(df)
+        df = df.rename(columns=rename_dict)
 
-        return df.rename(columns=rename_dict)
+        return validate(df=df, tests=tests) if tests else df

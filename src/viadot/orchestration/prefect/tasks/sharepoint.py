@@ -122,6 +122,7 @@ def sharepoint_list_to_df(
     select: list[str] | None = None,
     credentials_secret: str | None = None,
     config_key: str | None = None,
+    tests: dict[str, Any] | None = None,
 ) -> pd.DataFrame:
     """Retrieve data from a SharePoint list into a pandas DataFrame.
 
@@ -138,6 +139,9 @@ def sharepoint_list_to_df(
         credentials.Defaults to None.
         config_key (str, optional): The key in the viadot config holding relevant
             credentials. Defaults to None.
+        tests (dict[str], optional): A dictionary with optional list of tests
+                to verify the output dataframe. If defined, triggers the `validate`
+                function from viadot.utils. Defaults to None.
 
     Returns:
         pd.DataFrame: The DataFrame containing data from the SharePoint list.
@@ -159,7 +163,13 @@ def sharepoint_list_to_df(
     )
 
     logger.info(f"Retrieving data from SharePoint list {list_name}...")
-    df = sp.to_df(list_name=list_name, query=query, select=select, list_site=list_site)
+    df = sp.to_df(
+        list_name=list_name,
+        query=query,
+        select=select,
+        list_site=list_site,
+        tests=tests,
+    )
     logger.info(f"Successfully retrieved data from SharePoint list {list_name}.")
 
     return df
