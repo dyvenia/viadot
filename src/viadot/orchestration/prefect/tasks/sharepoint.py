@@ -7,7 +7,7 @@ from prefect import get_run_logger, task
 
 from viadot.orchestration.prefect.exceptions import MissingSourceCredentialsError
 from viadot.orchestration.prefect.utils import get_credentials
-from viadot.sources import Sharepoint
+from viadot.sources import Sharepoint, SharepointList
 
 
 @task(retries=3, retry_delay_seconds=10, timeout_seconds=60 * 60)
@@ -111,3 +111,65 @@ def sharepoint_download_file(
     logger.info(f"Downloading data from {url}...")
     s.download_file(url=url, to_path=to_path)
     logger.info(f"Successfully downloaded data from {url}.")
+
+
+@task(retries=3, retry_delay_seconds=10, timeout_seconds=60 * 60)
+def sharepoint_list_to_df(
+    list_name: str,
+    list_site: str,
+    default_protocol: str | None = "https://",
+    query: str | None = None,
+    select: list[str] | None = None,
+    credentials_secret: str | None = None,
+    config_key: str | None = None,
+    tests: dict[str, Any] | None = None,
+) -> pd.DataFrame:
+    """Retrieve data from a SharePoint list into a pandas DataFrame.
+
+    Args:
+        list_name (str): The name of the SharePoint list.
+        list_site (str): The Sharepoint site on which the list is stored.
+        default_protocol (str, optional): The default protocol to use for
+                SharePoint URLs.
+                Defaults to "https://".
+        query (str, optional): A query to filter items. Defaults to None.
+        select (list[str], optional): Fields to include in the response.
+            Defaults to None.
+        credentials_secret (str, optional): The name of the secret storing the
+        credentials.Defaults to None.
+        config_key (str, optional): The key in the viadot config holding relevant
+            credentials. Defaults to None.
+        tests (dict[str], optional): A dictionary with optional list of tests
+                to verify the output dataframe. If defined, triggers the `validate`
+                function from viadot.utils. Defaults to None.
+
+    Returns:
+        pd.DataFrame: The DataFrame containing data from the SharePoint list.
+
+    Raises:
+        MissingSourceCredentialsError: If neither credentials_secret nor
+            config_key is provided.
+    """
+    if not (credentials_secret or config_key):
+        raise MissingSourceCredentialsError
+
+    logger = get_run_logger()
+
+    credentials = get_credentials(secret_name=credentials_secret)
+    sp = SharepointList(
+        credentials=credentials,
+        config_key=config_key,
+        default_protocol=default_protocol,
+    )
+
+    logger.info(f"Retrieving data from SharePoint list {list_name}...")
+    df = sp.to_df(
+        list_name=list_name,
+        query=query,
+        select=select,
+        list_site=list_site,
+        tests=tests,
+    )
+    logger.info(f"Successfully retrieved data from SharePoint list {list_name}.")
+
+    return df

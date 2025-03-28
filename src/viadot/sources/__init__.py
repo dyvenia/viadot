@@ -19,7 +19,7 @@ from .mindful import Mindful
 from .outlook import Outlook
 from .salesforce import Salesforce
 from .sftp import Sftp
-from .sharepoint import Sharepoint
+from .sharepoint import Sharepoint, SharepointList
 from .smb import SMB
 from .sql_server import SQLServer
 from .sqlite import SQLite
@@ -51,6 +51,7 @@ __all__ = [
     "Salesforce",
     "Sftp",
     "Sharepoint",
+    "SharepointList",
     "Supermetrics",
     "Trino",
     "UKCarbonIntensity",
