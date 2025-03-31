@@ -197,7 +197,7 @@ def test_rename_case_insensitive_duplicated_columns():
 
         # Verify results
         assert rename_dict
-        assert len(rename_dict) == 1
+        assert len(rename_dict) == 2
         assert "id" in rename_dict
         assert "ID" in rename_dict
 
