@@ -430,7 +430,7 @@ def test_ensure_protocol(sharepoint_list):
 
 
 def test_get_records(sharepoint_list, mock_connection, mock_response):
-    """Test the _fetch_list_data helper method."""
+    """Test the _get_records_data helper method."""
     sp_list, mock_get_conn = sharepoint_list
 
     # Setup mocks
@@ -457,8 +457,8 @@ def test_get_records(sharepoint_list, mock_connection, mock_response):
     mock_connection.get.assert_called_once_with(url, params=params)
 
 
-def test_fetch_list_data_with_next_url_object(sharepoint_list, mock_connection):
-    """Test the _fetch_list_data helper with next link as an object."""
+def test__get_records_data_with_next_url_object(sharepoint_list, mock_connection):
+    """Test the __get_records_data helper with next link as an object."""
     sp_list, mock_get_conn = sharepoint_list
 
     # Setup mocks
@@ -477,7 +477,7 @@ def test_fetch_list_data_with_next_url_object(sharepoint_list, mock_connection):
     url = "https://test.sharepoint.com/sites/my_site/_api/web/lists/GetByTitle('my_list')/items"
 
     # Call the helper method
-    items, next_url = sp_list._fetch_list_data(url)
+    items, next_url = sp_list._get_records_data(url)
 
     # Verify results
     assert len(items) == 1
@@ -488,7 +488,7 @@ def test_paginate_list_data(sharepoint_list):
     """Test the _paginate_list_data helper method."""
     sp_list, _ = sharepoint_list
 
-    # We'll mock _fetch_list_data directly to test pagination logic
+    # We'll mock __get_records_data directly to test pagination logic
     with patch.object(SharepointList, "_get_records") as mock_fetch:
         # Set up the mock to return different results for each call
         mock_fetch.side_effect = [
