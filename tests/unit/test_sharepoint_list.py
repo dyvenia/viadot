@@ -457,8 +457,8 @@ def test_get_records(sharepoint_list, mock_connection, mock_response):
     mock_connection.get.assert_called_once_with(url, params=params)
 
 
-def test__get_records_data_with_next_url_object(sharepoint_list, mock_connection):
-    """Test the __get_records_data helper with next link as an object."""
+def test_get_records_data_with_next_url_object(sharepoint_list, mock_connection):
+    """Test the _get_records_data helper with next link as an object."""
     sp_list, mock_get_conn = sharepoint_list
 
     # Setup mocks
