@@ -429,7 +429,7 @@ def test_ensure_protocol(sharepoint_list):
     assert result == "http://test.sharepoint.com"
 
 
-def test_fetch_list_data(sharepoint_list, mock_connection, mock_response):
+def test_get_records(sharepoint_list, mock_connection, mock_response):
     """Test the _fetch_list_data helper method."""
     sp_list, mock_get_conn = sharepoint_list
 
@@ -445,7 +445,7 @@ def test_fetch_list_data(sharepoint_list, mock_connection, mock_response):
     params = {"$select": "ID,Title"}
 
     # Call the helper method
-    items, next_url = sp_list._fetch_list_data(url, params)
+    items, next_url = sp_list._get_records(url, params)
 
     # Verify results
     assert len(items) == 1
