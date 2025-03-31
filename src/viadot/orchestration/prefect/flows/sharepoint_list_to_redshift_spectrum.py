@@ -19,7 +19,7 @@ from viadot.orchestration.prefect.tasks import (
 def sharepoint_list_to_redshift_spectrum(  # noqa: PLR0913
     to_path: str,
     schema_name: str,
-    table_name: str,
+    table: str,
     list_site: str,
     list_name: str,
     sep: str = ",",
@@ -43,7 +43,7 @@ def sharepoint_list_to_redshift_spectrum(  # noqa: PLR0913
     Args:
         to_path (str): The path where the data will be stored.
         schema_name (str): The name of the schema in Redshift Spectrum.
-        table_name (str): The name of the table in Redshift Spectrum.
+        table (str): The name of the table in Redshift Spectrum.
         list_site (str):  The Sharepoint site on which the list is stored.
         list_name (str): The name of the SharePoint list.
         sep (str, optional): The separator used in the file. Defaults to ",".
@@ -90,7 +90,7 @@ def sharepoint_list_to_redshift_spectrum(  # noqa: PLR0913
         df=df,
         to_path=to_path,
         schema_name=schema_name,
-        table=table_name,
+        table=table,
         description=description,
         extension=extension,
         if_exists=if_exists,
