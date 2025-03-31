@@ -9,6 +9,7 @@ from urllib.parse import urlparse
 import pandas as pd
 from pandas._libs.parsers import STR_NA_VALUES
 from pydantic import BaseModel, root_validator
+import requests
 import sharepy
 from sharepy.errors import AuthError
 
@@ -141,7 +142,7 @@ class Sharepoint(Source):
         response = conn.get(endpoint)
         files = response.json().get("d", {}).get("results", [])
 
-        return [f'{site_url}/{library}{file["Name"]}' for file in files]
+        return [f"{site_url}/{library}{file['Name']}" for file in files]
 
     def _get_file_extension(self, url: str) -> str:
         """Extracts the file extension from a given URL.
@@ -388,3 +389,234 @@ class Sharepoint(Source):
             validate(df=df_clean, tests=tests)
 
         return df_clean
+
+
+class SharepointList(Sharepoint):
+    """A class to connect to SharePoint lists and retrieve data."""
+
+    def __init__(
+        self,
+        default_protocol: str | None = "https://",
+        credentials: SharepointCredentials = None,
+        config_key: str | None = None,
+        *args,
+        **kwargs,
+    ):
+        """Initialize the SharepointList connector.
+
+        Args:
+            default_protocol (str, optional): The default protocol to use for
+                SharePoint URLs.Defaults to "https://".
+            credentials (SharepointCredentials, optional): SharePoint credentials.
+            config_key (str, optional): The key in the viadot config holding relevant
+                credentials.
+        """
+        self.default_protocol = default_protocol
+        super().__init__(
+            *args, credentials=credentials, config_key=config_key, **kwargs
+        )
+
+    def _find_and_rename_case_insensitive_duplicated_column_names(
+        self, df: pd.DataFrame
+    ) -> dict:
+        """Identifies case-insensitive duplicate column names in a DataFrame.
+
+        This function is necessary because SharePoint lists can have columns
+        with the same name but different cases (e.g., "ID" and "Id"),which can cause
+        issues when processing the data. It renames these columns by appending a count
+        suffix to ensure uniqueness.
+
+        Columns are renamed based on appearance count. For example, if columns include
+        ["ID", "Test", "Description", "Id"], the function will create rename mappings
+        {"ID": "id_1", "Id": "id_2"} to ensure uniqueness.
+
+        Args:
+            df (pd.DataFrame): The input DataFrame.
+
+        Returns:
+            dict: A dictionary mapping duplicate column names to their new names.
+
+        Raises:
+            TypeError: If input is not a pandas DataFrame.
+
+        Notes:
+            This function iterates through the DataFrame's columns, tracking
+            case-insensitive duplicates.
+            Duplicate columns are renamed by appending a count
+            suffix (e.g., "col_1", "col_2").
+        """
+        columns = df.columns.tolist()
+        seen = {}
+        rename_dict = {}
+
+        for col in columns:
+            col_lower = col.lower()
+            if col_lower in seen:
+                seen[col_lower] += 1
+                rename_dict[col] = f"{col_lower}_{seen[col_lower]}"
+            else:
+                seen[col_lower] = 1
+                # Check if this column needs to be renamed due to future duplicates
+                duplicates = [c for c in columns if c.lower() == col_lower]
+                if len(duplicates) > 1:
+                    rename_dict[col] = f"{col_lower}_1"
+
+        return rename_dict
+
+    def _build_sharepoint_endpoint(
+        self, site_url: str, list_site: str, list_name: str
+    ) -> str:
+        """Build the SharePoint REST API endpoint URL.
+
+        Args:
+            site_url: The base SharePoint site URL with protocol
+            list_site: The specific site where the list is stored
+            list_name: The name of the SharePoint list
+
+        Returns:
+            str: The constructed endpoint URL
+        """
+        return f"{site_url}/sites/{list_site}/_api/web/lists/GetByTitle('{list_name}')/items"
+
+    def _ensure_protocol(self, site_url: str) -> str:
+        """Ensure the site URL has the correct protocol.
+
+        Args:
+            site_url: The site URL to check
+
+        Returns:
+            str: The site URL with the default protocol if needed
+        """
+        if not site_url.lower().startswith(self.default_protocol.lower()):
+            return f"{self.default_protocol}{site_url}"
+        return site_url
+
+    def _get_records(
+        self, url: str, params: dict | None = None
+    ) -> tuple[list[dict], str | None]:
+        """Make a request to the SharePoint API and handle common errors.
+
+        Args:
+            url: The API endpoint URL
+            params: Optional query parameters
+
+        Returns:
+            tuple: (data_items, next_link) where data_items is a list of items
+                  and next_link is the URL for the next page or None
+        """
+        conn = self.get_connection()
+
+        try:
+            response = conn.get(url, params=params)
+            response.raise_for_status()
+        except TimeoutError as e:
+            msg = f"Request to SharePoint list timed out: {e!s}"
+            raise ValueError(msg) from e
+        except requests.exceptions.HTTPError as e:
+            status_code = getattr(
+                getattr(e, "response", None), "status_code", "unknown"
+            )
+            msg = f"HTTP error {status_code} when retrieving data from SharePoint list"
+            raise ValueError(msg) from e
+        except Exception as e:
+            msg = f"Failed to retrieve data from SharePoint list: {e!s}"
+            raise ValueError(msg) from e
+
+        data = response.json().get("d", {})
+        items = data.get("results", [])
+
+        # Get the URL for the next page
+        next_link = data.get("__next")
+        if isinstance(next_link, dict) and "uri" in next_link:
+            next_link = next_link["uri"]
+
+        return items, next_link
+
+    def _paginate_list_data(
+        self, initial_url: str, params: dict | None = None, list_name: str = ""
+    ) -> list[dict]:
+        """Handle pagination for SharePoint list data.
+
+        Args:
+            initial_url: The initial API endpoint URL
+            params: Optional query parameters for the first request
+            list_name: Name of the list for error messages
+
+        Returns:
+            list: All items from all pages
+        """
+        all_results = []
+        next_url = initial_url
+        first_request = True
+
+        while next_url:
+            # For first request, include original parameters
+            # For subsequent requests, parameters are in the next_url
+            current_params = params if first_request else None
+
+            try:
+                items, next_url = self._get_records(next_url, current_params)
+                all_results.extend(items)
+                first_request = False
+            except ValueError as e:
+                # Add the list_name to the error message
+                msg = str(e).replace(
+                    "SharePoint list", f"SharePoint list '{list_name}'"
+                )
+                raise ValueError(msg) from e
+
+        if not all_results:
+            msg = f"No items found in SharePoint list {list_name}"
+            raise ValueError(msg)
+
+        return all_results
+
+    @add_viadot_metadata_columns
+    def to_df(
+        self,
+        list_name: str,
+        list_site: str,
+        query: str | None = None,
+        select: list[str] | None = None,
+        tests: dict | None = None,
+    ) -> pd.DataFrame:
+        """Retrieve data from a SharePoint list as a pandas DataFrame.
+
+        Args:
+            list_site (str): The Sharepoint site on which the list is stored.
+            list_name (str): The name of the SharePoint list.
+            query (str, optional): A query to filter items. Defaults to None.
+            select (list[str], optional): Fields to include in the response.
+                Defaults to None.
+            tests (Dict[str], optional): A dictionary with optional list of tests
+                to verify the output dataframe. If defined, triggers the `validate`
+                function from utils. Defaults to None.
+
+        Returns:
+            pd.DataFrame: The list data as a DataFrame.
+
+        Raises:
+            ValueError: If the list does not exist or the request fails.
+        """
+        conn = self.get_connection()
+        site_url = self._ensure_protocol(conn.site)
+        endpoint = self._build_sharepoint_endpoint(site_url, list_site, list_name)
+
+        # Build request parameters
+        params = {}
+        if query:
+            params["$filter"] = query
+        if select:
+            params["$select"] = ",".join(select)
+
+        # Get all items with pagination handling
+        all_results = self._paginate_list_data(endpoint, params, list_name)
+
+        # Convert to DataFrame
+        df = pd.DataFrame(all_results)
+
+        # Handle case-insensitive duplicate column names
+        rename_dict = self._find_and_rename_case_insensitive_duplicated_column_names(df)
+        df = df.rename(columns=rename_dict)
+
+        return validate(df=df, tests=tests) if tests else df
