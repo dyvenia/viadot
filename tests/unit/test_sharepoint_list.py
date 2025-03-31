@@ -489,7 +489,7 @@ def test_paginate_list_data(sharepoint_list):
     sp_list, _ = sharepoint_list
 
     # We'll mock _fetch_list_data directly to test pagination logic
-    with patch.object(SharepointList, "_fetch_list_data") as mock_fetch:
+    with patch.object(SharepointList, "_get_records") as mock_fetch:
         # Set up the mock to return different results for each call
         mock_fetch.side_effect = [
             # First call returns 2 items and a next link
