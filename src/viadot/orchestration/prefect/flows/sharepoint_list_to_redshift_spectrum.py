@@ -19,7 +19,7 @@ from viadot.orchestration.prefect.tasks import (
 def sharepoint_list_to_redshift_spectrum(  # noqa: PLR0913
     to_path: str,
     schema_name: str,
-    table_name: str,
+    table: str,
     list_site: str,
     list_name: str,
     sep: str = ",",
@@ -90,7 +90,7 @@ def sharepoint_list_to_redshift_spectrum(  # noqa: PLR0913
         df=df,
         to_path=to_path,
         schema_name=schema_name,
-        table=table_name,
+        table=table,
         description=description,
         extension=extension,
         if_exists=if_exists,
