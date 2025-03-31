@@ -426,11 +426,9 @@ class SharepointList(Sharepoint):
         issues when processing the data. It renames these columns by appending a count
         suffix to ensure uniqueness.
 
-        Note that due to the presence of unhashable data types like dictionaries in some
-        columns, it is not possible to perform a full check to see if both columns
-        contain the same values. Therefore, this function adds numbering to the
-        duplicate column names, and it is up to the user to decide how to handle these
-        columns further (e.g., merge, remove, or keep them as separate columns).
+        Columns are renamed based on appearance count. For example, if columns include
+        ["ID", "Test", "Description", "Id"], the function will create rename mappings
+        {"ID": "id_1", "Id": "id_2"} to ensure uniqueness.
 
         Args:
             df (pd.DataFrame): The input DataFrame.
@@ -445,7 +443,7 @@ class SharepointList(Sharepoint):
             This function iterates through the DataFrame's columns, tracking
             case-insensitive duplicates.
             Duplicate columns are renamed by appending a count
-            suffix (e.g., "col", "col_1", "col_2").
+            suffix (e.g., "col_1", "col_2").
         """
         columns = df.columns.tolist()
         seen = {}
@@ -454,10 +452,14 @@ class SharepointList(Sharepoint):
         for col in columns:
             col_lower = col.lower()
             if col_lower in seen:
-                rename_dict[col] = f"{col}_{seen[col_lower]}"
                 seen[col_lower] += 1
+                rename_dict[col] = f"{col_lower}_{seen[col_lower]}"
             else:
                 seen[col_lower] = 1
+                # Check if this column needs to be renamed due to future duplicates
+                duplicates = [c for c in columns if c.lower() == col_lower]
+                if len(duplicates) > 1:
+                    rename_dict[col] = f"{col_lower}_1"
 
         return rename_dict
 
