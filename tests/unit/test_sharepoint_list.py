@@ -198,11 +198,13 @@ def test_rename_case_insensitive_duplicated_columns():
         # Verify results
         assert rename_dict
         assert len(rename_dict) == 1
-        assert "ID" in rename_dict or "id" in rename_dict
+        assert "id" in rename_dict
+        assert "ID" in rename_dict
 
         # Apply rename without creating another full DataFrame copy
         renamed_columns = {col: rename_dict.get(col, col) for col in df.columns}
-        assert "ID_1" in renamed_columns.values() or "id_1" in renamed_columns.values()
+        assert "id_1" in renamed_columns.values()
+        assert "id_2" in renamed_columns.values()
 
 
 def test_sharepoint_list_pagination(sharepoint_list, mock_connection):
