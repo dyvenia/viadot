@@ -1,6 +1,7 @@
 """A module for working with Amazon S3 as a data source."""
 
 from collections.abc import Iterable, Iterator
+from datetime import datetime
 import os
 from pathlib import Path
 from typing import Any, Literal
@@ -352,3 +353,40 @@ class S3(Source):
                 are their corresponding sizes in bytes.
         """
         return wr.s3.size_objects(boto3_session=self.session, path=file_paths)
+
+    def describe_objects(
+        self,
+        file_paths: str | list[str],
+        last_modified_begin: datetime | None = None,
+        last_modified_end: datetime | None = None,
+    ) -> dict[str, dict[str, Any]]:
+        """Describe S3 objects from a received S3 prefix or list of S3 objects paths.
+
+        Args:
+            file_paths (str | list[str]): S3 prefix (accepts Unix shell-style wildcards)
+                (e.g. s3://bucket/prefix) or list of S3 objects paths
+                (e.g. [s3://bucket/key0, s3://bucket/key1]).
+            last_modified_begin (datetime | None, optional): Filter the S3 files by
+                the Last modified date of the object. The filter is applied only after
+                list all s3 files. Defaults to None.
+            last_modified_end (datetime | None, optional): Filter the s3 files by
+                the Last modified date of the object. The filter is applied only after
+                list all s3 files. Defaults to None.
+
+        Returns:
+            dict[str, dict[str, Any]]: Return a dictionary of objects returned from
+            head_objects where the key is the object path.
+
+        Examples:
+            >>> s3 = S3(credentials=aws_credentials)
+                # Describe both objects
+            >>> descs0 = s3.describe_objects(['s3://bucket/key0', 's3://bucket/key1'])
+                # Describe all objects under the prefix
+            >>> descs1 = s3.describe_objects('s3://bucket/prefix')
+        """
+        return wr.s3.describe_objects(
+            boto3_session=self.session,
+            path=file_paths,
+            last_modified_begin=last_modified_begin,
+            last_modified_end=last_modified_end,
+        )
