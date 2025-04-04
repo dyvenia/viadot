@@ -1,6 +1,7 @@
 """A module for working with Amazon S3 as a data source."""
 
 from collections.abc import Iterable, Iterator
+from datetime import datetime
 import os
 from pathlib import Path
 from typing import Any, Literal
