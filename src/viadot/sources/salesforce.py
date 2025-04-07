@@ -5,6 +5,7 @@ from typing import Literal
 import pandas as pd
 from pydantic import BaseModel
 from simple_salesforce import Salesforce as SimpleSalesforce
+from simple_salesforce.exceptions import SalesforceMalformedRequest
 
 from viadot.config import get_source_credentials
 from viadot.exceptions import CredentialError
@@ -38,14 +39,14 @@ class Salesforce(Source):
     """
 
     def __init__(
-        self,
-        *args,
-        credentials: SalesforceCredentials | None = None,
-        config_key: str = "salesforce",
-        env: Literal["DEV", "QA", "PROD"] = "DEV",
-        domain: str = "test",
-        client_id: str = "viadot",
-        **kwargs,
+            self,
+            *args,
+            credentials: SalesforceCredentials | None = None,
+            config_key: str = "salesforce",
+            env: Literal["DEV", "QA", "PROD"] = "DEV",
+            domain: str = "test",
+            client_id: str = "viadot",
+            **kwargs,
     ):
         """A class for downloading data from Salesforce.
 
@@ -58,17 +59,17 @@ class Salesforce(Source):
                 provides information about credential and connection configuration.
                 Defaults to 'DEV'.
             domain (str, optional): Domain of a connection. Defaults to 'test'
-                (sandbox). Can only be add if a username/password/security token
-                is provide.
+                (sandbox). Can only be added if a username/password/security token
+                is provided.
             client_id (str, optional): Client id, keep track of API calls.
                 Defaults to 'viadot'.
         """
         credentials = credentials or get_source_credentials(config_key)
 
         if not (
-            credentials.get("username")
-            and credentials.get("password")
-            and credentials.get("token")
+                credentials.get("username")
+                and credentials.get("password")
+                and credentials.get("token")
         ):
             message = "'username', 'password' and 'token' credentials are required."
             raise CredentialError(message)
@@ -98,11 +99,11 @@ class Salesforce(Source):
 
     @add_viadot_metadata_columns
     def to_df(
-        self,
-        query: str | None = None,
-        table: str | None = None,
-        columns: list[str] | None = None,
-        if_empty: Literal["warn", "skip", "fail"] = "warn",
+            self,
+            query: str | None = None,
+            table: str | None = None,
+            columns: list[str] | None = None,
+            if_empty: Literal["warn", "skip", "fail"] = "warn",
     ) -> pd.DataFrame:
         """Downloads data from Salesforce API and returns the DataFrame.
 
@@ -139,3 +140,55 @@ class Salesforce(Source):
             self.logger.info("Successfully downloaded data from the Salesforce API.")
 
         return df
+
+    def upsert(
+            self,
+            df: pd.DataFrame,
+            table: str,
+            external_id: str | None = None,
+            raise_on_error: bool = False,
+    ) -> None:
+        if df.empty:
+            self.warning("No data to upsert.")
+            return
+
+        if external_id and external_id not in df.columns:
+            raise ValueError(
+                f"Passed DataFrame does not contain column '{external_id}'."
+            )
+
+        table_to_upsert = getattr(self.salesforce, table)
+        records = df.to_dict("records")
+        records_cp = records.copy()
+
+        for record in records_cp:
+            response = 0
+            if external_id:
+                if record[external_id] is None:
+                    continue
+                merge_key = f"{external_id}/{record[external_id]}"
+                record.pop(external_id)
+            else:
+                merge_key = record.pop("Id")
+
+            try:
+                response = table_to_upsert.upsert(data=record, record_id=merge_key)
+            except SalesforceMalformedRequest as e:
+                msg = f"Upsert of record {merge_key} failed."
+                if raise_on_error:
+                    raise ValueError(msg) from e
+                self.logger.warning(msg)
+
+            codes = {200: "updated", 201: "created", 204: "updated"}
+
+            if response not in codes:
+                msg = f"Upsert failed for record: \n{record} with response {response}"
+                if raise_on_error:
+                    raise ValueError(msg)
+                self.logger.warning(msg)
+            else:
+                self.logger.info(f"Successfully {codes[response]} record {merge_key}.")
+
+        self.logger.info(
+            f"Successfully upserted {len(records)} records into table '{table}'."
+        )
