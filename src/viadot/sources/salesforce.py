@@ -166,9 +166,7 @@ class Salesforce(Source):
 
         if external_id and external_id not in df.columns:
             msg = f"Passed DataFrame does not contain column '{external_id}'."
-            raise ValueError(
-                msg
-            )
+            raise ValueError(msg)
 
         table_to_upsert = getattr(self.salesforce, table)
         records = df.to_dict("records")
