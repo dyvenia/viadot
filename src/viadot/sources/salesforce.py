@@ -148,13 +148,24 @@ class Salesforce(Source):
             external_id: str | None = None,
             raise_on_error: bool = False,
     ) -> None:
+        """Upsert data into Salesforce.
+
+        Args:
+            df (pd.DataFrame): Selected rows from Salesforce.
+            table (str): Table name.
+            external_id (str, optional): External ID. Defaults to None.
+            raise_on_error (bool, optional): Whether to raise an exception when
+        Returns:
+            None
+        """
         if df.empty:
-            self.warning("No data to upsert.")
+            self.logger.warning("No data to upsert.")
             return
 
         if external_id and external_id not in df.columns:
+            msg = f"Passed DataFrame does not contain column '{external_id}'."
             raise ValueError(
-                f"Passed DataFrame does not contain column '{external_id}'."
+                msg
             )
 
         table_to_upsert = getattr(self.salesforce, table)
