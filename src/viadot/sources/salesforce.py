@@ -39,14 +39,14 @@ class Salesforce(Source):
     """
 
     def __init__(
-            self,
-            *args,
-            credentials: SalesforceCredentials | None = None,
-            config_key: str = "salesforce",
-            env: Literal["DEV", "QA", "PROD"] = "DEV",
-            domain: str = "test",
-            client_id: str = "viadot",
-            **kwargs,
+        self,
+        *args,
+        credentials: SalesforceCredentials | None = None,
+        config_key: str = "salesforce",
+        env: Literal["DEV", "QA", "PROD"] = "DEV",
+        domain: str = "test",
+        client_id: str = "viadot",
+        **kwargs,
     ):
         """A class for downloading data from Salesforce.
 
@@ -67,9 +67,9 @@ class Salesforce(Source):
         credentials = credentials or get_source_credentials(config_key)
 
         if not (
-                credentials.get("username")
-                and credentials.get("password")
-                and credentials.get("token")
+            credentials.get("username")
+            and credentials.get("password")
+            and credentials.get("token")
         ):
             message = "'username', 'password' and 'token' credentials are required."
             raise CredentialError(message)
@@ -99,11 +99,11 @@ class Salesforce(Source):
 
     @add_viadot_metadata_columns
     def to_df(
-            self,
-            query: str | None = None,
-            table: str | None = None,
-            columns: list[str] | None = None,
-            if_empty: Literal["warn", "skip", "fail"] = "warn",
+        self,
+        query: str | None = None,
+        table: str | None = None,
+        columns: list[str] | None = None,
+        if_empty: Literal["warn", "skip", "fail"] = "warn",
     ) -> pd.DataFrame:
         """Downloads data from Salesforce API and returns the DataFrame.
 
@@ -142,11 +142,11 @@ class Salesforce(Source):
         return df
 
     def upsert(
-            self,
-            df: pd.DataFrame,
-            table: str,
-            external_id: str | None = None,
-            raise_on_error: bool = False,
+        self,
+        df: pd.DataFrame,
+        table: str,
+        external_id: str | None = None,
+        raise_on_error: bool = False,
     ) -> None:
         """Upsert data into Salesforce.
 
@@ -165,8 +165,7 @@ class Salesforce(Source):
             ValueError: If upserting a record fails and raise_on_error is True.
         """
         if df.empty:
-            self.logger.warning("No data to upsert.")
-            return
+            self._handle_if_empty()
 
         if external_id and external_id not in df.columns:
             msg = f"Passed DataFrame does not contain column '{external_id}'."
