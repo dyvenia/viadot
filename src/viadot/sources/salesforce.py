@@ -154,7 +154,7 @@ class Salesforce(Source):
             df (pd.DataFrame): Selected rows from Salesforce.
             table (str): Table name.
             external_id (str, optional): External ID. Defaults to None.
-            raise_on_error (bool, optional): If True, raises an exception on error. Defaults to False.
+            raise_on_error (bool, optional): Whether to raise on error. Defaults to False.
 
         Returns:
             None
