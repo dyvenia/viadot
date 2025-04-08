@@ -60,6 +60,7 @@ variables = {
 def mock_sf_instance(mocker):
     """Fixture to mock the SimpleSalesforce instance."""
     mock_sf_instance = mocker.MagicMock(spec=SimpleSalesforce)
+
     mocker.patch(
         "viadot.sources.salesforce.SimpleSalesforce", return_value=mock_sf_instance
     )
@@ -99,7 +100,7 @@ def test_salesforce_init_prod_env(mock_sf_instance):
 def test_salesforce_invalid_env():
     """Test Salesforce, invalid `env` parameter."""
     with pytest.raises(
-        ValueError, match="The only available environments are DEV, QA, and PROD."
+            ValueError, match="The only available environments are DEV, QA, and PROD."
     ):
         Salesforce(credentials=variables["credentials"], env="INVALID")
 
