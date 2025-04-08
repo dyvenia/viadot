@@ -8,7 +8,6 @@ from viadot.exceptions import CredentialError
 from viadot.sources import Salesforce
 from viadot.sources.salesforce import SalesforceCredentials
 
-
 variables = {
     "credentials": {
         "username": "test_user",
@@ -100,7 +99,7 @@ def test_salesforce_init_prod_env(mock_sf_instance):
 def test_salesforce_invalid_env():
     """Test Salesforce, invalid `env` parameter."""
     with pytest.raises(
-            ValueError, match="The only available environments are DEV, QA, and PROD."
+        ValueError, match="The only available environments are DEV, QA, and PROD."
     ):
         Salesforce(credentials=variables["credentials"], env="INVALID")
 
