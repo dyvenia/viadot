@@ -8,6 +8,7 @@ from viadot.exceptions import CredentialError
 from viadot.sources import Salesforce
 from viadot.sources.salesforce import SalesforceCredentials
 
+
 variables = {
     "credentials": {
         "username": "test_user",
