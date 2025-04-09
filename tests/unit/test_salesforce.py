@@ -1,5 +1,7 @@
 """'test_salesforce.py'."""
 
+from unittest.mock import MagicMock, patch
+
 import pandas as pd
 import pytest
 from simple_salesforce import Salesforce as SimpleSalesforce
@@ -60,6 +62,7 @@ variables = {
 def mock_sf_instance(mocker):
     """Fixture to mock the SimpleSalesforce instance."""
     mock_sf_instance = mocker.MagicMock(spec=SimpleSalesforce)
+
     mocker.patch(
         "viadot.sources.salesforce.SimpleSalesforce", return_value=mock_sf_instance
     )
@@ -173,3 +176,32 @@ def test_salesforce_to_df_warn_empty_data(mock_sf_instance):  # noqa: ARG001
     df = salesforce_instance.to_df(if_empty="warn")
 
     assert df.empty
+
+
+@pytest.mark.functions
+def test_salesforce_upsert_with_empty_data():
+    with patch("viadot.sources.salesforce.SimpleSalesforce") as mock_salesforce_class:
+        mock_salesforce_instance = mock_salesforce_class.return_value
+        mock_salesforce_instance.upsert.return_value = None
+
+        df = pd.DataFrame(columns=["a", "b", "c"])
+        salesforce_instance = mock_salesforce_class(variables["credentials"])
+
+        result = salesforce_instance.upsert(df=df, table="Contact", external_id="a")
+        assert result is None
+
+
+@pytest.mark.functions
+def test_salesforce_upsert_with_missing_external_key(mock_sf_instance):  # noqa: ARG001
+    with patch.object(SimpleSalesforce, "salesforce", create=True):
+        sf = Salesforce(credentials=variables["credentials"])
+
+        sf.salesforce = MagicMock()
+        sf.salesforce.test = MagicMock()
+
+        df = pd.DataFrame([{"a": 1, "b": "foo"}, {"a": 2, "b": "bar"}])
+
+        with pytest.raises(
+            ValueError, match="Passed DataFrame does not contain column 'c'."
+        ):
+            sf.upsert(df=df, table="test", external_id="c")
