@@ -1,4 +1,5 @@
 """'test_salesforce.py'."""
+
 from unittest.mock import patch, MagicMock
 
 import pandas as pd
