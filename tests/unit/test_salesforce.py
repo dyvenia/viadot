@@ -191,7 +191,7 @@ def test_salesforce_upsert_with_empty_data():
 
 
 @pytest.mark.functions
-def test_salesforce_upsert_with_missing_external_key(mock_sf_instance):   # noqa: ARG001
+def test_salesforce_upsert_with_missing_external_key(mock_sf_instance):  # noqa: ARG001
     with patch.object(SimpleSalesforce, "salesforce", create=True):
         sf = Salesforce(credentials=variables["credentials"])
 
