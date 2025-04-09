@@ -198,10 +198,7 @@ def test_salesforce_upsert_with_missing_external_key(mock_sf_instance):
         sf.salesforce = MagicMock()
         sf.salesforce.test = MagicMock()
 
-        df = pd.DataFrame([
-            {"a": 1, "b": "foo"},
-            {"a": 2, "b": "bar"}
-        ])
+        df = pd.DataFrame([{"a": 1, "b": "foo"}, {"a": 2, "b": "bar"}])
 
         with pytest.raises(
             ValueError, match="Passed DataFrame does not contain column 'c'."
