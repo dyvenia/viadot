@@ -1,6 +1,5 @@
 """'test_salesforce.py'."""
-
-from unittest.mock import patch
+from unittest.mock import patch, MagicMock
 
 import pandas as pd
 import pytest
@@ -192,11 +191,19 @@ def test_salesforce_upsert_with_empty_data():
 
 
 @pytest.mark.functions
-def test_salesforce_upsert_with_missing_external_key(mock_sf_instance):  # noqa: ARG001
-    salesforce_instance = Salesforce(credentials=variables["credentials"])
-    df = pd.DataFrame(columns=["a", "b"])
+def test_salesforce_upsert_with_missing_external_key(mock_sf_instance):
+    with patch.object(SimpleSalesforce, "salesforce", create=True):
+        sf = Salesforce(credentials=variables["credentials"])
 
-    with pytest.raises(
-        ValueError, match="Passed DataFrame does not contain column 'c'."
-    ):
-        salesforce_instance.upsert(df=df, table="Contact", external_id="c")
+        sf.salesforce = MagicMock()
+        sf.salesforce.test = MagicMock()
+
+        df = pd.DataFrame([
+            {"a": 1, "b": "foo"},
+            {"a": 2, "b": "bar"}
+        ])
+
+        with pytest.raises(
+            ValueError, match="Passed DataFrame does not contain column 'c'."
+        ):
+            sf.upsert(df=df, table="test", external_id="c")
