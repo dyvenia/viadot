@@ -184,7 +184,7 @@ def test_salesforce_upsert_with_empty_data():
         mock_salesforce_instance = mock_salesforce_class.return_value
         mock_salesforce_instance.upsert.return_value = None
 
-        df = pd.DataFrame(columns=['a', 'b', 'c'])
+        df = pd.DataFrame(columns=["a", "b", "c"])
         salesforce_instance = mock_salesforce_class(variables["credentials"])
 
         result = salesforce_instance.upsert(df=df, table="Contact", external_id="a")
@@ -194,7 +194,9 @@ def test_salesforce_upsert_with_empty_data():
 @pytest.mark.functions
 def test_salesforce_upsert_with_missing_external_key(mock_sf_instance):
     salesforce_instance = Salesforce(credentials=variables["credentials"])
-    df = pd.DataFrame(columns=['a', 'b'])
+    df = pd.DataFrame(columns=["a", "b"])
 
-    with pytest.raises(ValueError, match="Passed DataFrame does not contain column 'c'."):
+    with pytest.raises(
+        ValueError, match="Passed DataFrame does not contain column 'c'."
+    ):
         salesforce_instance.upsert(df=df, table="Contact", external_id="c")
