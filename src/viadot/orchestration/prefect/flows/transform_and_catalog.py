@@ -117,9 +117,15 @@ def transform_and_catalog(  # noqa: PLR0913
         )
         ```
 
-        Some common `dbt_select` patterns:
-        - build a model and all its downstream dependencies: `dbt_select="my_model+"`
-        - build all models in a directory: `dbt_select="models/staging"`
+        Some common `dbt_selects` patterns:
+        - runs a specific model and all its downstream dependencies:
+            `dbt_select={"run": "my_model+"}`
+        - runs all models in a directory:
+            `dbt_select={"run: "models/staging"}`
+        - runs a specific model in a folder:
+            `dbt_select={"run": "marts.domain.some_model"}`
+        - runs tests for a specific model:
+            `dbt_select={"test": "my_model"}`
     """
     # Clone the dbt project.
     dbt_repo_url = dbt_repo_url or get_credentials(dbt_repo_url_secret)
@@ -147,30 +153,49 @@ def transform_and_catalog(  # noqa: PLR0913
     if metadata_kind == "model_run":
         # Produce `run-results.json` artifact for Luma ingestion.
         if dbt_selects:
-            run_select = dbt_selects.get("run")
-            test_select = dbt_selects.get("test", run_select)
+            if build_select := dbt_selects.get("build"):
+                build_select_safe = (
+                    f"-s {build_select}" if build_select is not None else ""
+                )
+            else:
+                build_select = None
+                run_select = dbt_selects.get("run")
+                test_select = dbt_selects.get("test", run_select)
 
-            run_select_safe = f"-s {run_select}" if run_select is not None else ""
-            test_select_safe = f"-s {test_select}" if test_select is not None else ""
+                run_select_safe = f"-s {run_select}" if run_select is not None else ""
+                test_select_safe = (
+                    f"-s {test_select}" if test_select is not None else ""
+                )
         else:
             run_select_safe = ""
             test_select_safe = ""
+        if build_select is None:
+            run_task = dbt_task.with_options(name="dbt_run")
+            run = run_task(
+                project_path=dbt_project_path_full,
+                command=f"run {run_select_safe} {dbt_target_option}",
+                wait_for=[pull_dbt_deps],
+            )
 
-        run_task = dbt_task.with_options(name="dbt_run")
-        run = run_task(
-            project_path=dbt_project_path_full,
-            command=f"run {run_select_safe} {dbt_target_option}",
-            wait_for=[pull_dbt_deps],
-        )
+            test_task = dbt_task.with_options(name="dbt_test")
+            test = test_task(
+                project_path=dbt_project_path_full,
+                command=f"test {test_select_safe} {dbt_target_option}",
+                raise_on_failure=False,
+                wait_for=[run],
+            )
+            upload_metadata_upstream_task = test
 
-        test_task = dbt_task.with_options(name="dbt_test")
-        test = test_task(
-            project_path=dbt_project_path_full,
-            command=f"test {test_select_safe} {dbt_target_option}",
-            raise_on_failure=False,
-            wait_for=[run],
-        )
-        upload_metadata_upstream_task = test
+        else:
+            # If build task is used, run and test tasks are not needed.
+            # Build task executes run and tests commands internally.
+            build_task = dbt_task.with_options(name="dbt_build")
+            build = build_task(
+                project_path=dbt_project_path_full,
+                command=f"build {build_select_safe} {dbt_target_option}",
+                wait_for=[pull_dbt_deps],
+            )
+            upload_metadata_upstream_task = build
 
     else:
         # Produce `catalog.json` and `manifest.json` artifacts for Luma ingestion.
