@@ -71,8 +71,8 @@ def transform_and_catalog(  # noqa: PLR0913
             Defaults to None.
         dbt_selects (dict, optional): Valid
             [dbt node selection](https://docs.getdbt.com/reference/node-selection/syntax)
-            expressions. Valid keys are `run`, `test`, and `source_freshness`. The test
-                select expression is taken from run's, as long as run select is
+            expressions. Valid keys are `run`, `test`,`build`, and `source_freshness`.
+                The test select expression is taken from run's, as long as run select is
                 provided. Defaults to None.
         dbt_target (str): The dbt target to use. If not specified, the default dbt
             target (as specified in `profiles.yaml`) will be used. Defaults to None.
@@ -119,7 +119,6 @@ def transform_and_catalog(  # noqa: PLR0913
         ```
 
         Some common `dbt_selects` patterns:
-        TODO add build docu
         - runs a specific model and all its downstream dependencies:
             `dbt_select={"run": "my_model+"}`
         - runs all models in a directory:
@@ -128,6 +127,10 @@ def transform_and_catalog(  # noqa: PLR0913
             `dbt_select={"run": "marts.domain.some_model"}`
         - runs tests for a specific model:
             `dbt_select={"test": "my_model"}`
+        - build a specific model:
+            `dbt_select={"build": "my_model"}`
+        - build all models in a folder:
+            `dbt_select={"build": "models.intermediate"}`
     """
     logger = get_run_logger()
     # Clone the dbt project.
