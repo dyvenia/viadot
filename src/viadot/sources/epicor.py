@@ -102,6 +102,8 @@ class LineItemDetail(BaseModel):
     GrossProfitExtension: str | None
     GrossProfitPercent: str | None
     UpdateDate: str | None
+    DeleteReasonCode: str | None
+    DeleteReasonDescription: str | None
 
 
 class Customer(BaseModel):
