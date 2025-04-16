@@ -102,6 +102,8 @@ class LineItemDetail(BaseModel):
     GrossProfitExtension: str | None
     GrossProfitPercent: str | None
     UpdateDate: str | None
+    DeleteReasonCode: str | None
+    DeleteReasonDescription: str | None
 
 
 class Customer(BaseModel):
@@ -404,7 +406,7 @@ class Epicor(Source):
 
         self.url = (
             "http://"
-            + validated_creds["host"]
+            + str(validated_creds["host"])
             + ":"
             + str(validated_creds["port"])
             + base_url
