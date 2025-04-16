@@ -406,7 +406,7 @@ class Epicor(Source):
 
         self.url = (
             "http://"
-            + str(validated_creds["host"])
+            + validated_creds["host"]
             + ":"
             + str(validated_creds["port"])
             + base_url
