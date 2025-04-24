@@ -159,18 +159,13 @@ def transform_and_catalog(  # noqa: PLR0913
     if metadata_kind == "model_run":
         # Produce `run-results.json` artifact for Luma ingestion.
         if dbt_selects:
-            if build_select := dbt_selects.get("build"):
-                build_select_safe = (
-                    f"-s {build_select}" if build_select is not None else ""
-                )
-            else:
-                run_select = dbt_selects.get("run")
-                test_select = dbt_selects.get("test", run_select)
+            build_select = dbt_selects.get("build")
+            run_select = dbt_selects.get("run")
+            test_select = dbt_selects.get("test", run_select)
 
-                run_select_safe = f"-s {run_select}" if run_select is not None else ""
-                test_select_safe = (
-                    f"-s {test_select}" if test_select is not None else ""
-                )
+            build_select_safe = f"-s {build_select}" if build_select is not None else ""
+            run_select_safe = f"-s {run_select}" if run_select is not None else ""
+            test_select_safe = f"-s {test_select}" if test_select is not None else ""
         else:
             run_select_safe = ""
             test_select_safe = ""
