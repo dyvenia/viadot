@@ -87,6 +87,7 @@ def sap_rfc_to_df(  # noqa: PLR0913
     if query is None:
         msg = "Please provide the query."
         raise ValueError(msg)
+    logger = get_run_logger()
 
     ddh = DynamicDateHandler(
         dynamic_date_symbols=dynamic_date_symbols,
@@ -94,7 +95,6 @@ def sap_rfc_to_df(  # noqa: PLR0913
         dynamic_date_timezone=dynamic_date_timezone,
     )
     query = ddh.process_dates(query)
-    logger = get_run_logger()
 
     credentials = credentials or get_credentials(credentials_secret)
 
