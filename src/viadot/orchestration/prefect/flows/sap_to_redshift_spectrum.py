@@ -26,7 +26,7 @@ def sap_to_redshift_spectrum(  # noqa: PLR0913
     aws_sep: str = ",",
     description: str = "test",
     dynamic_date_symbols: list[str] = ["<<", ">>"],  # noqa: B006
-    dynamic_date_format: str = "%Y-%m-%d",
+    dynamic_date_format: str = "%Y%m%d",
     dynamic_date_timezone: str = "UTC",
     credentials_secret: str | None = None,
     aws_config_key: str | None = None,

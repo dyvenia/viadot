@@ -28,7 +28,7 @@ def sap_rfc_to_df(  # noqa: PLR0913
     config_key: str | None = None,
     alternative_version: bool = False,
     dynamic_date_symbols: list[str] = ["<<", ">>"],  # noqa: B006
-    dynamic_date_format: str = "%Y-%m-%d",
+    dynamic_date_format: str = "%Y%m%d",
     dynamic_date_timezone: str = "UTC",
 ) -> pd.DataFrame:
     """A task for querying SAP with SQL using the RFC protocol.
