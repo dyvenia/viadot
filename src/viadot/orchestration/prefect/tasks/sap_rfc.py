@@ -11,7 +11,7 @@ from prefect.logging import get_run_logger
 with contextlib.suppress(ImportError):
     from viadot.sources import SAPRFC, SAPRFCV2
 from viadot.orchestration.prefect.exceptions import MissingSourceCredentialsError
-from viadot.orchestration.prefect.utils import get_credentials
+from viadot.orchestration.prefect.utils import DynamicDateHandler, get_credentials
 
 
 @task(retries=3, retry_delay_seconds=10, timeout_seconds=60 * 60 * 3)
@@ -27,6 +27,9 @@ def sap_rfc_to_df(  # noqa: PLR0913
     credentials: dict[str, Any] | None = None,
     config_key: str | None = None,
     alternative_version: bool = False,
+    dynamic_date_symbols: list[str] = ["<<", ">>"],  # noqa: B006
+    dynamic_date_format: str = "%Y-%m-%d",
+    dynamic_date_timezone: str = "UTC",
 ) -> pd.DataFrame:
     """A task for querying SAP with SQL using the RFC protocol.
 
@@ -85,6 +88,12 @@ def sap_rfc_to_df(  # noqa: PLR0913
         msg = "Please provide the query."
         raise ValueError(msg)
 
+    ddh = DynamicDateHandler(
+        dynamic_date_symbols=dynamic_date_symbols,
+        dynamic_date_format=dynamic_date_format,
+        dynamic_date_timezone=dynamic_date_timezone,
+    )
+    query = ddh.process_dates(query)
     logger = get_run_logger()
 
     credentials = credentials or get_credentials(credentials_secret)
