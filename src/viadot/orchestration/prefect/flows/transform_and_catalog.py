@@ -6,6 +6,7 @@ import shutil
 from typing import Literal
 
 from prefect import flow, task
+from prefect.logging import get_run_logger
 
 from viadot.orchestration.prefect.tasks import (
     clone_repo,
@@ -70,8 +71,8 @@ def transform_and_catalog(  # noqa: PLR0913
             Defaults to None.
         dbt_selects (dict, optional): Valid
             [dbt node selection](https://docs.getdbt.com/reference/node-selection/syntax)
-            expressions. Valid keys are `run`, `test`, and `source_freshness`. The test
-                select expression is taken from run's, as long as run select is
+            expressions. Valid keys are `run`, `test`,`build`, and `source_freshness`.
+                The test select expression is taken from run's, as long as run select is
                 provided. Defaults to None.
         dbt_target (str): The dbt target to use. If not specified, the default dbt
             target (as specified in `profiles.yaml`) will be used. Defaults to None.
@@ -117,10 +118,21 @@ def transform_and_catalog(  # noqa: PLR0913
         )
         ```
 
-        Some common `dbt_select` patterns:
-        - build a model and all its downstream dependencies: `dbt_select="my_model+"`
-        - build all models in a directory: `dbt_select="models/staging"`
+        Some common `dbt_selects` patterns:
+        - runs a specific model and all its downstream dependencies:
+            `dbt_select={"run": "my_model+"}`
+        - runs all models in a directory:
+            `dbt_select={"run: "models/staging"}`
+        - runs a specific model in a folder:
+            `dbt_select={"run": "marts.domain.some_model"}`
+        - runs tests for a specific model:
+            `dbt_select={"test": "my_model"}`
+        - build a specific model:
+            `dbt_select={"build": "my_model"}`
+        - build all models in a folder:
+            `dbt_select={"build": "models.intermediate"}`
     """
+    logger = get_run_logger()
     # Clone the dbt project.
     dbt_repo_url = dbt_repo_url or get_credentials(dbt_repo_url_secret)
     clone = clone_repo(
@@ -147,30 +159,42 @@ def transform_and_catalog(  # noqa: PLR0913
     if metadata_kind == "model_run":
         # Produce `run-results.json` artifact for Luma ingestion.
         if dbt_selects:
+            build_select = dbt_selects.get("build")
             run_select = dbt_selects.get("run")
             test_select = dbt_selects.get("test", run_select)
 
+            build_select_safe = f"-s {build_select}" if build_select is not None else ""
             run_select_safe = f"-s {run_select}" if run_select is not None else ""
             test_select_safe = f"-s {test_select}" if test_select is not None else ""
         else:
             run_select_safe = ""
             test_select_safe = ""
+        if build_select:
+            # If build task is used, run and test tasks are not needed.
+            # Build task executes run and tests commands internally.
+            build_task = dbt_task.with_options(name="dbt_build")
+            build = build_task(
+                project_path=dbt_project_path_full,
+                command=f"build {build_select_safe} {dbt_target_option}",
+                wait_for=[pull_dbt_deps],
+            )
+            upload_metadata_upstream_task = build
+        else:
+            run_task = dbt_task.with_options(name="dbt_run")
+            run = run_task(
+                project_path=dbt_project_path_full,
+                command=f"run {run_select_safe} {dbt_target_option}",
+                wait_for=[pull_dbt_deps],
+            )
 
-        run_task = dbt_task.with_options(name="dbt_run")
-        run = run_task(
-            project_path=dbt_project_path_full,
-            command=f"run {run_select_safe} {dbt_target_option}",
-            wait_for=[pull_dbt_deps],
-        )
-
-        test_task = dbt_task.with_options(name="dbt_test")
-        test = test_task(
-            project_path=dbt_project_path_full,
-            command=f"test {test_select_safe} {dbt_target_option}",
-            raise_on_failure=False,
-            wait_for=[run],
-        )
-        upload_metadata_upstream_task = test
+            test_task = dbt_task.with_options(name="dbt_test")
+            test = test_task(
+                project_path=dbt_project_path_full,
+                command=f"test {test_select_safe} {dbt_target_option}",
+                raise_on_failure=False,
+                wait_for=[run],
+            )
+            upload_metadata_upstream_task = test
 
     else:
         # Produce `catalog.json` and `manifest.json` artifacts for Luma ingestion.
@@ -209,7 +233,7 @@ def transform_and_catalog(  # noqa: PLR0913
         run_results_storage_path += (
             Path(file_name).stem + "_" + str(timestamp) + ".json"
         )
-
+        logger.info(f"Uploading run results to {run_results_storage_path}")
         # Upload the file to s3.
         dump_test_results_to_s3 = s3_upload_file(
             from_path=str(dbt_target_dir_path / file_name),
