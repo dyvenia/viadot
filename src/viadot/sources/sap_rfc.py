@@ -29,7 +29,7 @@ from viadot.config import get_source_credentials
 from viadot.exceptions import CredentialError, DataBufferExceededError
 from viadot.sources.base import Source
 from viadot.utils import add_viadot_metadata_columns, validate
-
+from viadot.orchestration.prefect.utils import DynamicDateHandler
 
 logger = logging.getLogger()
 
@@ -934,6 +934,32 @@ class SAPRFCV2(Source):
             return None
 
         return int(sql[offset_match.span()[1] :].split()[0])
+
+    def process_dynamic_dates_in_query(
+        self,
+        query: str,
+        dynamic_date_symbols: list[str] = ["<<", ">>"],
+        dynamic_date_format: str = "%Y%m%d",
+        dynamic_date_timezone: str = "UTC",
+    ) -> str:
+        """Process dynamic dates inside the query and validate if 
+        dynamic date patterns were chosen correcly."""
+        ddh = DynamicDateHandler(
+            dynamic_date_symbols=dynamic_date_symbols,
+            dynamic_date_format=dynamic_date_format,
+            dynamic_date_timezone=dynamic_date_timezone,
+        )
+        processed_sql_or_list = ddh.process_dates(query)
+
+        if isinstance(processed_sql_or_list, list):
+            msg = (
+                f"This query contains {ddh._find_dynamic_date_patterns(query)} dynamic date(s) "
+                "that generate a range of dates, which is currently not supported"
+                "in query generation.Please use one of the singular pattern dynamic date symbols"
+            )
+            raise TypeError(msg)
+
+        return processed_sql_or_list
 
     # Holy crap what a mess. TODO: refactor this so it can be even remotely tested...
     def query(self, sql: str, sep: str | None = None) -> None:  # noqa: C901, PLR0912

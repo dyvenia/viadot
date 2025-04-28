@@ -11,7 +11,7 @@ from prefect.logging import get_run_logger
 with contextlib.suppress(ImportError):
     from viadot.sources import SAPRFC, SAPRFCV2
 from viadot.orchestration.prefect.exceptions import MissingSourceCredentialsError
-from viadot.orchestration.prefect.utils import DynamicDateHandler, get_credentials
+from viadot.orchestration.prefect.utils import  get_credentials
 
 
 @task(retries=3, retry_delay_seconds=10, timeout_seconds=60 * 60 * 3)
@@ -89,13 +89,6 @@ def sap_rfc_to_df(  # noqa: PLR0913
         raise ValueError(msg)
     logger = get_run_logger()
 
-    ddh = DynamicDateHandler(
-        dynamic_date_symbols=dynamic_date_symbols,
-        dynamic_date_format=dynamic_date_format,
-        dynamic_date_timezone=dynamic_date_timezone,
-    )
-    query = ddh.process_dates(query)
-
     credentials = credentials or get_credentials(credentials_secret)
 
     if alternative_version is True:
@@ -111,6 +104,13 @@ def sap_rfc_to_df(  # noqa: PLR0913
             rfc_total_col_width_character_limit=rfc_total_col_width_character_limit,
             rfc_unique_id=rfc_unique_id,
         )
+
+        query = sap.process_dynamic_dates_in_query(
+            query=query,
+                    dynamic_date_symbols=dynamic_date_symbols,
+                    dynamic_date_format=dynamic_date_format,
+                    dynamic_date_timezone=dynamic_date_timezone)
+               
     else:
         sap = SAPRFC(
             sep=sep,
@@ -121,7 +121,7 @@ def sap_rfc_to_df(  # noqa: PLR0913
         )
     sap.query(query)
     logger.info("Downloading data from SAP to a DataFrame...")
-    logger.debug(f"Running query: \n{query}.")
+    logger.debug(f"Running query: \n{sap.sql}.")
 
     df = sap.to_df(tests=tests)
 
