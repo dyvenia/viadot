@@ -27,9 +27,10 @@ from sql_metadata import Parser
 
 from viadot.config import get_source_credentials
 from viadot.exceptions import CredentialError, DataBufferExceededError
+from viadot.orchestration.prefect.utils import DynamicDateHandler
 from viadot.sources.base import Source
 from viadot.utils import add_viadot_metadata_columns, validate
-from viadot.orchestration.prefect.utils import DynamicDateHandler
+
 
 logger = logging.getLogger()
 
@@ -938,12 +939,28 @@ class SAPRFCV2(Source):
     def process_dynamic_dates_in_query(
         self,
         query: str,
-        dynamic_date_symbols: list[str] = ["<<", ">>"],
+        dynamic_date_symbols: list[str] = ["<<", ">>"],  # noqa: B006
         dynamic_date_format: str = "%Y%m%d",
         dynamic_date_timezone: str = "UTC",
     ) -> str:
-        """Process dynamic dates inside the query and validate if 
-        dynamic date patterns were chosen correcly."""
+        """Process dynamic dates inside the query and validate used patterns type.
+
+        Args:
+            query (str): The SQL query to be processed.
+            dynamic_date_symbols (list[str], optional): Symbols used for dynamic date
+                handling. Defaults to ["<<", ">>"].
+            dynamic_date_format (str, optional): Format used for dynamic date parsing.
+                Defaults to "%Y%m%d".
+            dynamic_date_timezone (str, optional): Timezone used for dynamic date
+                processing. Defaults to "UTC".
+
+        Returns:
+            str: The processed SQL query with dynamic dates replaced.
+
+        Raises:
+            TypeError: If the query contains dynamic date patterns that generate
+        a range of dates.
+        """
         ddh = DynamicDateHandler(
             dynamic_date_symbols=dynamic_date_symbols,
             dynamic_date_format=dynamic_date_format,

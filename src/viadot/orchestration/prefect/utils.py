@@ -402,11 +402,13 @@ class DynamicDateHandler:
 
         return dynamic_date_marker
 
-    def _find_dynamic_date_patterns(self, text:str) -> list[str]:
+    def _find_dynamic_date_patterns(self, text: str) -> list[str]:
         """Retrieve the matches between the dynamic date symbols from string.
+
         Args:
-            text (str): A string containing various time-related patterns
-                to be analyzed.
+            text (str): A string containing dynamic date patterns
+                to be listed.
+
         Returns:
             list: A list of matches found between the dynamic date symbols.
         """
@@ -415,7 +417,6 @@ class DynamicDateHandler:
         pattern = rf"{start}.*?{end}"
 
         return re.findall(pattern, text, re.IGNORECASE)
-
 
     def _process_string(self, text: str) -> list[str] | str:
         """Analyze and extract date ranges or singular dates from the given text.

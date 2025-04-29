@@ -62,6 +62,12 @@ def sap_to_redshift_spectrum(  # noqa: PLR0913
         compression (str, optional): Compression style (None, snappy, gzip, zstd).
         aws_sep (str, optional): Field delimiter for the output file. Defaults to ','.
         description (str, optional): AWS Glue catalog table description.
+        dynamic_date_symbols (list[str], optional): Symbols used for dynamic date
+            handling. Defaults to ["<<", ">>"].
+        dynamic_date_format (str, optional): Format used for dynamic date parsing.
+            Defaults to "%Y%m%d".
+        dynamic_date_timezone (str, optional): Timezone used for dynamic date
+            processing. Defaults to "UTC".
         aws_config_key (str, optional): The key in the viadot config holding relevant
             credentials. Defaults to None.
         credentials_secret (str, optional): The name of a secret block in Prefect

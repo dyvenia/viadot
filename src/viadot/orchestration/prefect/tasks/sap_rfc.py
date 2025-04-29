@@ -11,7 +11,7 @@ from prefect.logging import get_run_logger
 with contextlib.suppress(ImportError):
     from viadot.sources import SAPRFC, SAPRFCV2
 from viadot.orchestration.prefect.exceptions import MissingSourceCredentialsError
-from viadot.orchestration.prefect.utils import  get_credentials
+from viadot.orchestration.prefect.utils import get_credentials
 
 
 @task(retries=3, retry_delay_seconds=10, timeout_seconds=60 * 60 * 3)
@@ -73,6 +73,12 @@ def sap_rfc_to_df(  # noqa: PLR0913
             credentials. Defaults to None.
         alternative_version (bool, optional): Enable the use version 2 in source.
             Defaults to False.
+        dynamic_date_symbols (list[str], optional): Symbols used for dynamic date
+            handling. Defaults to ["<<", ">>"].
+        dynamic_date_format (str, optional): Format used for dynamic date parsing.
+            Defaults to "%Y%m%d".
+        dynamic_date_timezone (str, optional): Timezone used for dynamic date
+            processing. Defaults to "UTC".
 
     Examples:
         sap_rfc_to_df(
@@ -107,10 +113,11 @@ def sap_rfc_to_df(  # noqa: PLR0913
 
         query = sap.process_dynamic_dates_in_query(
             query=query,
-                    dynamic_date_symbols=dynamic_date_symbols,
-                    dynamic_date_format=dynamic_date_format,
-                    dynamic_date_timezone=dynamic_date_timezone)
-               
+            dynamic_date_symbols=dynamic_date_symbols,
+            dynamic_date_format=dynamic_date_format,
+            dynamic_date_timezone=dynamic_date_timezone,
+        )
+
     else:
         sap = SAPRFC(
             sep=sep,
