@@ -1,6 +1,8 @@
 from collections import OrderedDict
 
 from pandas import DataFrame
+import pendulum
+import pytest
 
 from viadot.utils import skip_test_on_missing_extra
 
@@ -117,3 +119,21 @@ def test__adjust_whitespaces():
     col_values_len = df.applymap(lambda x: len(x))
     check_if_length_match = col_values_len == sap._rfc_unique_id_len.values()
     assert check_if_length_match.all().all()
+
+
+def test_process_dynamic_dates_in_query_success():
+    """Test `process_dynamic_dates_in_query` function."""
+    query = "SELECT * FROM table WHERE date_column = <<today>>"
+    result = sap.process_dynamic_dates_in_query(query)
+    assert (
+        result
+        == f"SELECT * FROM table WHERE date_column = {pendulum.today().strftime('%Y%m%d')}"  # noqa: S608
+    )
+
+
+def test_process_dynamic_dates_in_query_raises_typeerror():
+    """Test `process_dynamic_dates_in_query` for not supported dynamic date type."""
+    query = "SELECT * FROM table WHERE date_column in (<<last_3_years>>)"
+
+    with pytest.raises(TypeError):
+        sap.process_dynamic_dates_in_query(query)
