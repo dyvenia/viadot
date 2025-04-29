@@ -936,7 +936,7 @@ class SAPRFCV2(Source):
 
         return int(sql[offset_match.span()[1] :].split()[0])
 
-    def process_dynamic_dates_in_query(
+    def _parse_dates(
         self,
         query: str,
         dynamic_date_symbols: list[str] = ["<<", ">>"],  # noqa: B006

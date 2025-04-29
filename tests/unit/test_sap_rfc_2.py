@@ -121,19 +121,19 @@ def test__adjust_whitespaces():
     assert check_if_length_match.all().all()
 
 
-def test_process_dynamic_dates_in_query_success():
-    """Test `process_dynamic_dates_in_query` function."""
+def test_parse_dates_success():
+    """Test `_parse_dates` function."""
     query = "SELECT * FROM table WHERE date_column = <<today>>"
-    result = sap.process_dynamic_dates_in_query(query)
+    result = sap._parse_dates(query)
     assert (
         result
         == f"SELECT * FROM table WHERE date_column = {pendulum.today().strftime('%Y%m%d')}"  # noqa: S608
     )
 
 
-def test_process_dynamic_dates_in_query_raises_typeerror():
-    """Test `process_dynamic_dates_in_query` for not supported dynamic date type."""
+def test_parse_dates_raises_typeerror():
+    """Test `_parse_dates` for not supported dynamic date type."""
     query = "SELECT * FROM table WHERE date_column in (<<last_3_years>>)"
 
     with pytest.raises(TypeError):
-        sap.process_dynamic_dates_in_query(query)
+        sap._parse_dates(query)

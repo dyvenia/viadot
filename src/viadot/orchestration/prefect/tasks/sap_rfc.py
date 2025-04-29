@@ -111,7 +111,7 @@ def sap_rfc_to_df(  # noqa: PLR0913
             rfc_unique_id=rfc_unique_id,
         )
 
-        query = sap.process_dynamic_dates_in_query(
+        query = sap._parse_dates(
             query=query,
             dynamic_date_symbols=dynamic_date_symbols,
             dynamic_date_format=dynamic_date_format,
