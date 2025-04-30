@@ -868,7 +868,7 @@ class SAPRFCV2(Source):
             filter_column_name = expr.split()[0]
             resolved_column_name = self._resolve_col_name(filter_column_name)
 
-        # replace only standalone "=" with "==", 
+        # replace only standalone "=" with "==",
         # leave "<=", ">=", "!=" intact
         query = re.sub(r"(?<![<>!])=(?!=)", " == ", query)
 
@@ -914,7 +914,9 @@ class SAPRFCV2(Source):
             # SELECTed fields.
             cols_to_add = [v.split()[0] for v in self.client_side_filters.values()]
             if aliased:
-                cols_to_add = [aliases_keyed_by_columns.get(col, col) for col in cols_to_add]
+                cols_to_add = [
+                    aliases_keyed_by_columns.get(col, col) for col in cols_to_add
+                ]
             columns.extend(cols_to_add)
             columns = list(dict.fromkeys(columns))  # remove duplicates
 
