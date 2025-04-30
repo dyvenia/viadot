@@ -859,18 +859,20 @@ class SAPRFCV2(Source):
             str: the WHERE clause reformatted to fit the format
             required by DataFrame.query().
         """
-        for i, f in enumerate(client_side_filters.items()):
+        query = ""
+        for i, (kw, expr) in enumerate(client_side_filters.items()):
             if i == 0:
-                # skip the first keyword; we assume it's "AND"
-                query = f[1]
+                query = expr
             else:
-                query += " " + f[0] + " " + f[1]
-
-            filter_column_name = f[1].split()[0]
+                query += f" {kw} {expr}"
+            filter_column_name = expr.split()[0]
             resolved_column_name = self._resolve_col_name(filter_column_name)
-        return re.sub("\\s?=\\s?", " == ", query).replace(
-            filter_column_name, resolved_column_name
-        )
+
+        # replace only standalone "=" with "==", 
+        # leave "<=", ">=", "!=" intact
+        query = re.sub(r"(?<![<>!])=(?!=)", " == ", query)
+
+        return query.replace(filter_column_name, resolved_column_name)
 
     def extract_values(self, sql: str) -> None:
         """TODO: This should cover all values, not just columns."""
@@ -912,7 +914,7 @@ class SAPRFCV2(Source):
             # SELECTed fields.
             cols_to_add = [v.split()[0] for v in self.client_side_filters.values()]
             if aliased:
-                cols_to_add = [aliases_keyed_by_columns[col] for col in cols_to_add]
+                cols_to_add = [aliases_keyed_by_columns.get(col, col) for col in cols_to_add]
             columns.extend(cols_to_add)
             columns = list(dict.fromkeys(columns))  # remove duplicates
 
