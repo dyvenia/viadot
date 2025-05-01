@@ -1,5 +1,6 @@
 """SMB (file-sharing protocol) connector."""
 
+import asyncio
 from pathlib import Path
 
 import pendulum
@@ -68,7 +69,7 @@ class SMB(Source):
             password=self.credentials.get("password").get_secret_value(),
         )
 
-    def scan_and_store(
+    async def scan_and_store_async(
         self,
         keywords: list[str] | None = None,
         extensions: list[str] | None = None,
@@ -105,7 +106,7 @@ class SMB(Source):
             dynamic_date_timezone=dynamic_date_timezone,
         )
 
-        return self._scan_directory(
+        return await self._scan_directory_async(
             self.base_path, keywords, extensions, date_filter_parsed
         )
 
@@ -165,7 +166,7 @@ class SMB(Source):
                 )
                 raise ValueError(msg)
 
-    def _scan_directory(
+    async def _scan_directory_async(
         self,
         path: str,
         keywords: list[str] | None,
@@ -195,21 +196,32 @@ class SMB(Source):
         """
         found_files = {}
         try:
-            entries = self._get_directory_entries(path)
+            entries = await asyncio.to_thread(self._get_directory_entries, path)
+
+            tasks = []
             for entry in entries:
                 if entry.is_file() and self._is_matching_file(
                     entry, keywords, extensions, date_filter_parsed
                 ):
-                    found_files.update(self._get_file_content(entry))
+                    tasks.append(asyncio.to_thread(self._get_file_content, entry))
                 elif entry.is_dir():
-                    found_files.update(
-                        self._scan_directory(
+                    tasks.append(
+                        self._scan_directory_async(
                             entry.path, keywords, extensions, date_filter_parsed
                         )
                     )
-        except Exception as e:
-            self.logger.exception(f"Error scanning or downloading from {path}: {e}")  # noqa: TRY401
 
+            results = await asyncio.gather(*tasks, return_exceptions=True)
+
+            for result in results:
+                if isinstance(result, dict):
+                    found_files.update(result)
+                elif isinstance(result, Exception):
+                    self.logger.warning(f"Error in async task: {result}")
+
+        except Exception as e:
+            self.logger.exception(f"Error scanning or downloading from {path}: {e}")
+        self.logger.info(f"found_files: {len(found_files)}")
         return found_files
 
     def _get_file_content(self, entry: smbclient._os.SMBDirEntry) -> dict[str, bytes]:
