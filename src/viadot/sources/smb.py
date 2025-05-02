@@ -105,8 +105,13 @@ class SMB(Source):
             dynamic_date_timezone=dynamic_date_timezone,
         )
 
+        keyword_list = ([keywords] if isinstance(keywords, str) else keywords) or [None]
+
         return self._scan_directory(
-            self.base_path, keywords, extensions, date_filter_parsed
+            path=self.base_path,
+            keywords=keyword_list,
+            extensions=extensions,
+            date_filter_parsed=date_filter_parsed,
         )
 
     def _parse_dates(
