@@ -289,6 +289,10 @@ class SMB(Source):
         """
         name_lower = entry.name.lower()
 
+        # skip temp files
+        if name_lower.startswith("~$"):
+            return False
+
         matches_extension = not extensions or any(
             name_lower.endswith(ext.lower()) for ext in extensions
         )
