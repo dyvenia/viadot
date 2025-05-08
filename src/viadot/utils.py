@@ -1092,3 +1092,47 @@ def df_clean_column(
                 inplace=True,
             )
     return df
+
+
+def handle_empty_df(
+    if_df_empty: Literal["warn", "skip", "fail"],
+    message: str
+) -> pd.DataFrame:
+    """Handle an empty DataFrame according to the specified action.
+
+    Logic:
+        1. If `if_df_empty == "warn"`, log a warning and return an empty DataFrame.
+        2. If `if_df_empty == "skip"`, log an info message and return an empty DataFrame.
+        3. If `if_df_empty == "fail"`, raise a ValueError.
+        4. Otherwise, raise a ValueError for an unrecognized action.
+
+    Args:
+        if_df_empty (Literal["warn", "skip", "fail"]):
+            Action to take when the DataFrame is empty:
+            - "warn": log a warning then return empty DataFrame
+            - "skip": log an info message then return empty DataFrame
+            - "fail": raise a ValueError
+        message (str): The message to log or include in the exception.
+
+    Returns:
+        pd.DataFrame:
+            An empty pandas DataFrame when `if_df_empty` is "warn" or "skip".
+
+    Raises:
+        ValueError:
+            - If `if_df_empty == "fail"`, with `message` as the exception text.
+            - If `if_df_empty` is not one of "warn", "skip", or "fail", with
+              "Invalid value for if_df_empty: {if_df_empty}".
+    """
+    logger = get_run_logger()
+
+    if if_df_empty == "warn":
+        logger.warning(message)
+        return pd.DataFrame()
+    elif if_df_empty == "skip":
+        logger.info(message)
+        return pd.DataFrame()
+    elif if_df_empty == "fail":
+        raise ValueError(message)
+    else:
+        raise ValueError(f"Invalid value for if_df_empty: {if_df_empty}")
