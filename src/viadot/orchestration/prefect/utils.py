@@ -2,12 +2,12 @@
 
 import contextlib
 import json
+from json.decoder import JSONDecodeError
 import logging
 import os
 import re
 import sys
 import tempfile
-from json.decoder import JSONDecodeError
 from typing import Any, Literal
 
 import anyio
@@ -15,12 +15,12 @@ from anyio import open_process
 from anyio.streams.text import TextReceiveStream
 import pandas as pd
 import pendulum
-
 from prefect.blocks.system import Secret
 from prefect.client.orchestration import PrefectClient
 from prefect.logging import get_run_logger
 from prefect.settings import PREFECT_API_KEY, PREFECT_API_URL
 from prefect_sqlalchemy import DatabaseCredentials
+
 
 with contextlib.suppress(ModuleNotFoundError):
     from prefect_aws import AwsCredentials
