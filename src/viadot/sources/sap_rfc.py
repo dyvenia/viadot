@@ -972,7 +972,7 @@ class SAPRFCV2(Source):
             msg = (
                 f"This query contains {ddh._find_dynamic_date_patterns(query)} dynamic date(s) "
                 "that generate a range of dates, which is currently not supported"
-                "in query generation.Please use one of the singular pattern dynamic date symbols"
+                "in query generation. Please use one of the singular pattern dynamic date symbols."
             )
             raise TypeError(msg)
 
