@@ -2,35 +2,32 @@
 
 import contextlib
 import json
-from json.decoder import JSONDecodeError
 import logging
 import os
+import re
 import sys
 import tempfile
-from typing import Any
+from json.decoder import JSONDecodeError
+from typing import Any, Literal
 
 import anyio
 from anyio import open_process
 from anyio.streams.text import TextReceiveStream
+import pandas as pd
+import pendulum
+
 from prefect.blocks.system import Secret
 from prefect.client.orchestration import PrefectClient
+from prefect.logging import get_run_logger
 from prefect.settings import PREFECT_API_KEY, PREFECT_API_URL
-
+from prefect_sqlalchemy import DatabaseCredentials
 
 with contextlib.suppress(ModuleNotFoundError):
     from prefect_aws import AwsCredentials
     from prefect_aws.secrets_manager import AwsSecret
-from prefect_sqlalchemy import DatabaseCredentials
-
-from viadot.orchestration.prefect.exceptions import MissingPrefectBlockError
-
-
-with contextlib.suppress(ModuleNotFoundError):
     from prefect_azure import AzureKeyVaultSecretReference
 
-import re
-
-import pendulum
+from viadot.orchestration.prefect.exceptions import MissingPrefectBlockError
 
 
 class DynamicDateHandler:
@@ -699,3 +696,54 @@ async def shell_run_command(
                 lines.append(msg)
 
     return lines if return_all else lines[-1]
+
+
+def handle_empty_df(
+    if_df_empty: Literal["warn", "skip", "fail"],
+    message: str = "The query produced no data.",
+) -> pd.DataFrame:
+    """Handle an empty DataFrame according to the specified action.
+
+    Logic:
+        1. If `if_df_empty == "warn"`, log a warning and return an empty DataFrame.
+        2. If `if_df_empty == "skip"`, log an info message, log a skip notice, and
+           return an empty DataFrame.
+        3. If `if_df_empty == "fail"`, raise a ValueError.
+
+    Args:
+        if_df_empty (Literal["warn", "skip", "fail"]):
+            Action to take when the DataFrame is empty:
+            - "warn": log a warning then return empty DataFrame
+            - "skip": log a message, skip notice and return empty DataFrame
+            - "fail": raise a ValueError
+        message (str): The message to log or include in the exception.
+            Defaults to "The query produced no data.".
+
+    Returns:
+        pd.DataFrame:
+            An empty pandas DataFrame when `if_df_empty` is "warn" or "skip".
+
+    Raises:
+        ValueError:
+            - If `if_df_empty == "fail"`, with `message` as the exception text.
+            - If `if_df_empty` is not one of "warn", "skip", or "fail", with a list
+              of allowed values.
+    """
+    logger = get_run_logger()
+    msg = message
+
+    if if_df_empty == "warn":
+        logger.warning(msg)
+        return pd.DataFrame()
+    if if_df_empty == "skip":
+        logger.info(msg)
+        logger.info("Skipping processing due to empty DataFrame.")
+        return pd.DataFrame()
+    if if_df_empty == "fail":
+        raise ValueError(msg)
+
+    allowed = ["warn", "skip", "fail"]
+    error_msg = (
+        f"Invalid value for if_df_empty: {if_df_empty}. Allowed values are {allowed}."
+    )
+    raise ValueError(error_msg)
