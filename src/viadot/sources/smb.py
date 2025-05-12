@@ -70,8 +70,8 @@ class SMB(Source):
 
     def scan_and_store(
         self,
-        keywords: list[str] | None = None,
-        extensions: list[str] | None = None,
+        keywords: str | list[str] | None = None,
+        extensions: str | list[str] | None = None,
         date_filter: str | tuple[str, str] | None = None,
         dynamic_date_symbols: list[str] = ["<<", ">>"],  # noqa: B006
         dynamic_date_format: str = "%Y-%m-%d",
@@ -80,8 +80,10 @@ class SMB(Source):
         """Scan the directory structure for files and store their contents in memory.
 
         Args:
-            keywords (list[str] | None): List of keywords to search for in filenames.
-            extensions (list[str] | None): List of file extensions to filter by.
+            keywords (str | list[str] | None): List of keywords or single string to
+                search for in file names. Defaults to None
+            extensions (str | list[str] | None): List of file extensions or single
+                string to filter by. Defaults to None.
             date_filter (str | tuple[str, str] | None):
                 - A single date string (e.g., "2024-03-03").
                 - A tuple containing exactly two date strings
@@ -105,12 +107,16 @@ class SMB(Source):
             dynamic_date_timezone=dynamic_date_timezone,
         )
 
+        # Convert string to list
         keyword_list = ([keywords] if isinstance(keywords, str) else keywords) or [None]
+        extension_list = (
+            [extensions] if isinstance(extensions, str) else extensions
+        ) or [None]
 
         return self._scan_directory(
             path=self.base_path,
             keywords=keyword_list,
-            extensions=extensions,
+            extensions=extension_list,
             date_filter_parsed=date_filter_parsed,
         )
 
@@ -199,6 +205,7 @@ class SMB(Source):
                 Defaults to None.
         """
         found_files = {}
+
         try:
             entries = self._get_directory_entries(path)
             for entry in entries:
