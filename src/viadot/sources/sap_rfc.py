@@ -1223,8 +1223,9 @@ class SAPRFCV2(Source):
                 elif not response["DATA"]:
                     logger.warning("No data returned from SAP.")
         if not df.empty:
-            # It is used to filter out columns which are not in select query
-            # for example columns passed only as unique column
+            # It is used to filter out columns which are not in select query and
+            # apply column alies or example columns passed only as unique column
+            df = df.rename(columns=self.aliases_keyed_by_columns)
             df = df.loc[:, columns]
 
         if self.client_side_filters:
