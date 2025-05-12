@@ -107,16 +107,10 @@ class SMB(Source):
             dynamic_date_timezone=dynamic_date_timezone,
         )
 
-        # Convert string to list
-        keyword_list = ([keywords] if isinstance(keywords, str) else keywords) or [None]
-        extension_list = (
-            [extensions] if isinstance(extensions, str) else extensions
-        ) or [None]
-
         return self._scan_directory(
             path=self.base_path,
-            keywords=keyword_list,
-            extensions=extension_list,
+            keywords=keywords,
+            extensions=extensions,
             date_filter_parsed=date_filter_parsed,
         )
 
@@ -179,8 +173,8 @@ class SMB(Source):
     def _scan_directory(
         self,
         path: str,
-        keywords: list[str] | None,
-        extensions: list[str] | None,
+        keywords: str | list[str] | None = None,
+        extensions: str | list[str] | None = None,
         date_filter_parsed: pendulum.Date
         | tuple[pendulum.Date, pendulum.Date]
         | None = None,
@@ -192,10 +186,10 @@ class SMB(Source):
 
         Args:
             path (str): The directory path to scan.
-            keywords (list[str] | None): List of keywords to search for in filenames.
-                Defaults to None.
-            extensions (list[str] | None): List of file extensions to filter by.
-                Defaults to None.
+            keywords (str | list[str] | None): List of keywords or single string to
+                search for in file names. Defaults to None
+            extensions (str | list[str] | None): List of file extensions or single
+                string to filter by. Defaults to None.
             date_filter_parsed (
                 pendulum.Date | tuple[pendulum.Date, pendulum.Date] | None
             ):
@@ -262,8 +256,8 @@ class SMB(Source):
     def _is_matching_file(
         self,
         entry: smbclient._os.SMBDirEntry,
-        keywords: list[str] | None = None,
-        extensions: list[str] | None = None,
+        keywords: str | list[str] | None = None,
+        extensions: str | list[str] | None = None,
         date_filter_parsed: pendulum.Date
         | tuple[pendulum.Date, pendulum.Date]
         | None = None,
@@ -278,10 +272,10 @@ class SMB(Source):
         Args:
             entry (smbclient._os.SMBDirEntry): A directory entry object from
                 the directory scan.
-            keywords (list[str] | None): List of keywords to search for in filenames.
-                It is case-insensitive. Defaults to None.
-            extensions (list[str] | None): List of file extensions to filter by.
-                It is case-insensitive. Defaults to None.
+            keywords (str | list[str] | None): List of keywords or single string to
+                search for in file names. It is case-insensitive. Defaults to None
+            extensions (str | list[str] | None): List of file extensions or single
+                string to filter by. It is case-insensitive. Defaults to None.
             date_filter_parsed (
                 pendulum.Date | tuple[pendulum.Date, pendulum.Date] | None
             ):
@@ -296,16 +290,21 @@ class SMB(Source):
         """
         name_lower = entry.name.lower()
 
-        # skip temp files
+        # Skip temp files
         if name_lower.startswith("~$"):
             return False
 
-        matches_extension = not extensions or any(
-            name_lower.endswith(ext.lower()) for ext in extensions
+        # Normalize to lists
+        keyword_list = [keywords] if isinstance(keywords, str) else keywords
+        extension_list = [extensions] if isinstance(extensions, str) else extensions
+
+        matches_extension = not extension_list or any(
+            name_lower.endswith(ext.lower()) for ext in extension_list
         )
-        matches_keyword = not keywords or any(
-            keyword.lower() in name_lower for keyword in keywords
+        matches_keyword = not keyword_list or any(
+            keyword.lower() in name_lower for keyword in keyword_list
         )
+
         if not matches_extension or not matches_keyword or entry.is_dir():
             return False
 
