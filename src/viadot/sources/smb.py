@@ -273,7 +273,7 @@ class SMB(Source):
             entry (smbclient._os.SMBDirEntry): A directory entry object from
                 the directory scan.
             keywords (str | list[str] | None): List of keywords or single string to
-                search for in file names. It is case-insensitive. Defaults to None
+                search for in file names. It is case-insensitive. Defaults to None.
             extensions (str | list[str] | None): List of file extensions or single
                 string to filter by. It is case-insensitive. Defaults to None.
             date_filter_parsed (
@@ -281,8 +281,7 @@ class SMB(Source):
             ):
                 - A single `pendulum.Date` for exact date filtering.
                 - A tuple of two `pendulum.Date` values for date range filtering.
-                - None, if no date filter is applied.
-                Defaults to None.
+                - None, if no date filter is applied. Defaults to None.
 
         Returns:
             bool: True if the file matches all criteria or no criteria are provided,
@@ -291,7 +290,7 @@ class SMB(Source):
         name_lower = entry.name.lower()
 
         # Skip temp files
-        if name_lower.startswith("~$"):
+        if name_lower.startswith("~$") or entry.is_dir():
             return False
 
         # Normalize to lists
@@ -299,19 +298,22 @@ class SMB(Source):
         extension_list = [extensions] if isinstance(extensions, str) else extensions
 
         matches_extension = not extension_list or any(
-            name_lower.endswith(ext.lower()) for ext in extension_list
+            isinstance(ext, str) and name_lower.endswith(ext.lower())
+            for ext in extension_list
         )
         matches_keyword = not keyword_list or any(
-            keyword.lower() in name_lower for keyword in keyword_list
+            isinstance(kw, str) and kw.lower() in name_lower for kw in keyword_list
         )
 
-        if not matches_extension or not matches_keyword or entry.is_dir():
+        if not matches_extension or not matches_keyword:
             return False
 
         if date_filter_parsed:
             file_creation_date = pendulum.from_timestamp(entry.stat().st_ctime).date()
+
             if isinstance(date_filter_parsed, pendulum.Date):
                 return file_creation_date == date_filter_parsed
+
             if isinstance(date_filter_parsed, tuple):
                 start_date, end_date = date_filter_parsed
                 return start_date <= file_creation_date <= end_date
