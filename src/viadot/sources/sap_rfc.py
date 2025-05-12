@@ -841,7 +841,7 @@ class SAPRFCV2(Source):
             raise ValueError(msg)
         return parsed.tables[0]
 
-    def _build_pandas_filter_query(self,client_side_filters: tuple[str, str]) -> str:
+    def _build_pandas_filter_query(self, client_side_filters: tuple[str, str]) -> str:
         """Build a WHERE clause that will be applied client-side.
 
         This is required if the WHERE clause passed to query() is
@@ -858,23 +858,23 @@ class SAPRFCV2(Source):
         pandas_query = ""
 
         # Apply aliased column names to conditions
-        rewritten_filters=[]
+        rewritten_filters = []
         for logic, expr in client_side_filters:
             for col, alias in self.aliases_keyed_by_columns.items():
                 if col in expr:
-                    expr = expr.replace(col, alias)
+                    aliased_expr = expr.replace(col, alias)
                     continue
-            rewritten_filters.append((logic, expr))
+            rewritten_filters.append((logic, aliased_expr))
 
         # Build pandas df query
         for i, (kw, expr) in enumerate(rewritten_filters):
             # Convret sql expresions to pandas query format
             ## Replace SQL 'not equal' operator
             pandas_expr = expr.replace("<>", "!=")
-            
-            ## Replace standalone "=" with "==", leave "<=", ">=", "!=" intact 
+
+            ## Replace standalone "=" with "==", leave "<=", ">=", "!=" intact
             pandas_expr = re.sub(r"(?<![<>!])=(?!=)", " == ", pandas_expr)
-            
+
             if i == 0:
                 pandas_query = pandas_expr
             else:
@@ -1231,7 +1231,9 @@ class SAPRFCV2(Source):
             df = df.loc[:, columns]
 
         if self.client_side_filters:
-            filter_pandas_query = self._build_pandas_filter_query(self.client_side_filters)
+            filter_pandas_query = self._build_pandas_filter_query(
+                self.client_side_filters
+            )
             df.query(filter_pandas_query, inplace=True)
             client_side_filter_cols_aliased = [
                 self._get_alias(col) for col in self._get_client_side_filter_cols()
