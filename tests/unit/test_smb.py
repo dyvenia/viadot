@@ -65,9 +65,9 @@ def test_smb_initialization_without_credentials():
 @pytest.mark.parametrize(
     ("keywords", "extensions", "date_filter"),
     [
-        (None, None, "<<pendulum.yesterday().date()>>"),
+        ([None], None, "<<pendulum.yesterday().date()>>"),
         (["keyword1"], None, "<<pendulum.yesterday().date()>>"),
-        (None, [".txt"], "<<pendulum.yesterday().date()>>"),
+        ([None], [".txt"], "<<pendulum.yesterday().date()>>"),
         (["keyword1"], [".txt"], "<<pendulum.yesterday().date()>>"),
     ],
 )
@@ -93,7 +93,10 @@ def test_scan_and_store(smb_instance, keywords, extensions, date_filter):
         )
 
         mock_scan_directory.assert_called_once_with(
-            smb_instance.base_path, keywords, extensions, mock_date_result
+            path=smb_instance.base_path,
+            keywords=keywords,
+            extensions=extensions,
+            date_filter_parsed=mock_date_result,
         )
 
 
