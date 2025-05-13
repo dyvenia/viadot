@@ -27,9 +27,6 @@ def sap_rfc_to_df(  # noqa: PLR0913
     credentials: dict[str, Any] | None = None,
     config_key: str | None = None,
     alternative_version: bool = False,
-    dynamic_date_symbols: list[str] = ["<<", ">>"],  # noqa: B006
-    dynamic_date_format: str = "%Y%m%d",
-    dynamic_date_timezone: str = "UTC",
 ) -> pd.DataFrame:
     """A task for querying SAP with SQL using the RFC protocol.
 
@@ -73,12 +70,6 @@ def sap_rfc_to_df(  # noqa: PLR0913
             credentials. Defaults to None.
         alternative_version (bool, optional): Enable the use version 2 in source.
             Defaults to False.
-        dynamic_date_symbols (list[str], optional): Symbols used for dynamic date
-            handling. Defaults to ["<<", ">>"].
-        dynamic_date_format (str, optional): Format used for dynamic date parsing.
-            Defaults to "%Y%m%d".
-        dynamic_date_timezone (str, optional): Timezone used for dynamic date
-            processing. Defaults to "UTC".
 
     Examples:
         sap_rfc_to_df(
@@ -93,6 +84,7 @@ def sap_rfc_to_df(  # noqa: PLR0913
     if query is None:
         msg = "Please provide the query."
         raise ValueError(msg)
+
     logger = get_run_logger()
 
     credentials = credentials or get_credentials(credentials_secret)
@@ -110,14 +102,6 @@ def sap_rfc_to_df(  # noqa: PLR0913
             rfc_total_col_width_character_limit=rfc_total_col_width_character_limit,
             rfc_unique_id=rfc_unique_id,
         )
-
-        query = sap._parse_dates(
-            query=query,
-            dynamic_date_symbols=dynamic_date_symbols,
-            dynamic_date_format=dynamic_date_format,
-            dynamic_date_timezone=dynamic_date_timezone,
-        )
-
     else:
         sap = SAPRFC(
             sep=sep,
@@ -128,7 +112,7 @@ def sap_rfc_to_df(  # noqa: PLR0913
         )
     sap.query(query)
     logger.info("Downloading data from SAP to a DataFrame...")
-    logger.debug(f"Running query: \n{sap.sql}.")
+    logger.debug(f"Running query: \n{query}.")
 
     df = sap.to_df(tests=tests)
 
