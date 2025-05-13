@@ -27,7 +27,6 @@ from sql_metadata import Parser
 
 from viadot.config import get_source_credentials
 from viadot.exceptions import CredentialError, DataBufferExceededError
-from viadot.orchestration.prefect.utils import DynamicDateHandler
 from viadot.sources.base import Source
 from viadot.utils import add_viadot_metadata_columns, validate
 
@@ -935,48 +934,6 @@ class SAPRFCV2(Source):
             return None
 
         return int(sql[offset_match.span()[1] :].split()[0])
-
-    def _parse_dates(
-        self,
-        query: str,
-        dynamic_date_symbols: list[str] = ["<<", ">>"],  # noqa: B006
-        dynamic_date_format: str = "%Y%m%d",
-        dynamic_date_timezone: str = "UTC",
-    ) -> str:
-        """Process dynamic dates inside the query and validate used patterns type.
-
-        Args:
-            query (str): The SQL query to be processed.
-            dynamic_date_symbols (list[str], optional): Symbols used for dynamic date
-                handling. Defaults to ["<<", ">>"].
-            dynamic_date_format (str, optional): Format used for dynamic date parsing.
-                Defaults to "%Y%m%d".
-            dynamic_date_timezone (str, optional): Timezone used for dynamic date
-                processing. Defaults to "UTC".
-
-        Returns:
-            str: The processed SQL query with dynamic dates replaced.
-
-        Raises:
-            TypeError: If the query contains dynamic date patterns that generate
-        a range of dates.
-        """
-        ddh = DynamicDateHandler(
-            dynamic_date_symbols=dynamic_date_symbols,
-            dynamic_date_format=dynamic_date_format,
-            dynamic_date_timezone=dynamic_date_timezone,
-        )
-        processed_sql_or_list = ddh.process_dates(query)
-
-        if isinstance(processed_sql_or_list, list):
-            msg = (
-                f"This query contains {ddh._find_dynamic_date_patterns(query)} dynamic date(s) "
-                "that generate a range of dates, which is currently not supported"
-                "in query generation. Please use one of the singular pattern dynamic date symbols."
-            )
-            raise TypeError(msg)
-
-        return processed_sql_or_list
 
     # Holy crap what a mess. TODO: refactor this so it can be even remotely tested...
     def query(self, sql: str, sep: str | None = None) -> None:  # noqa: C901, PLR0912
