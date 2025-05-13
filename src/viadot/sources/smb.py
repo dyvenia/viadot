@@ -70,8 +70,8 @@ class SMB(Source):
 
     def scan_and_store(
         self,
-        keywords: list[str] | None = None,
-        extensions: list[str] | None = None,
+        keywords: str | list[str] | None = None,
+        extensions: str | list[str] | None = None,
         date_filter: str | tuple[str, str] | None = None,
         dynamic_date_symbols: list[str] = ["<<", ">>"],  # noqa: B006
         dynamic_date_format: str = "%Y-%m-%d",
@@ -80,8 +80,10 @@ class SMB(Source):
         """Scan the directory structure for files and store their contents in memory.
 
         Args:
-            keywords (list[str] | None): List of keywords to search for in filenames.
-            extensions (list[str] | None): List of file extensions to filter by.
+            keywords (str | list[str] | None): List of keywords or single string to
+                search for in file names. Defaults to None
+            extensions (str | list[str] | None): List of file extensions or single
+                string to filter by. Defaults to None.
             date_filter (str | tuple[str, str] | None):
                 - A single date string (e.g., "2024-03-03").
                 - A tuple containing exactly two date strings
@@ -106,7 +108,10 @@ class SMB(Source):
         )
 
         return self._scan_directory(
-            self.base_path, keywords, extensions, date_filter_parsed
+            path=self.base_path,
+            keywords=keywords,
+            extensions=extensions,
+            date_filter_parsed=date_filter_parsed,
         )
 
     def _parse_dates(
@@ -168,8 +173,8 @@ class SMB(Source):
     def _scan_directory(
         self,
         path: str,
-        keywords: list[str] | None,
-        extensions: list[str] | None,
+        keywords: str | list[str] | None = None,
+        extensions: str | list[str] | None = None,
         date_filter_parsed: pendulum.Date
         | tuple[pendulum.Date, pendulum.Date]
         | None = None,
@@ -181,10 +186,10 @@ class SMB(Source):
 
         Args:
             path (str): The directory path to scan.
-            keywords (list[str] | None): List of keywords to search for in filenames.
-                Defaults to None.
-            extensions (list[str] | None): List of file extensions to filter by.
-                Defaults to None.
+            keywords (str | list[str] | None): List of keywords or single string to
+                search for in file names. Defaults to None
+            extensions (str | list[str] | None): List of file extensions or single
+                string to filter by. Defaults to None.
             date_filter_parsed (
                 pendulum.Date | tuple[pendulum.Date, pendulum.Date] | None
             ):
@@ -194,6 +199,7 @@ class SMB(Source):
                 Defaults to None.
         """
         found_files = {}
+
         try:
             entries = self._get_directory_entries(path)
             for entry in entries:
@@ -250,8 +256,8 @@ class SMB(Source):
     def _is_matching_file(
         self,
         entry: smbclient._os.SMBDirEntry,
-        keywords: list[str] | None = None,
-        extensions: list[str] | None = None,
+        keywords: str | list[str] | None = None,
+        extensions: str | list[str] | None = None,
         date_filter_parsed: pendulum.Date
         | tuple[pendulum.Date, pendulum.Date]
         | None = None,
@@ -266,17 +272,16 @@ class SMB(Source):
         Args:
             entry (smbclient._os.SMBDirEntry): A directory entry object from
                 the directory scan.
-            keywords (list[str] | None): List of keywords to search for in filenames.
-                It is case-insensitive. Defaults to None.
-            extensions (list[str] | None): List of file extensions to filter by.
-                It is case-insensitive. Defaults to None.
+            keywords (str | list[str] | None): List of keywords or single string to
+                search for in file names. It is case-insensitive. Defaults to None.
+            extensions (str | list[str] | None): List of file extensions or single
+                string to filter by. It is case-insensitive. Defaults to None.
             date_filter_parsed (
                 pendulum.Date | tuple[pendulum.Date, pendulum.Date] | None
             ):
                 - A single `pendulum.Date` for exact date filtering.
                 - A tuple of two `pendulum.Date` values for date range filtering.
-                - None, if no date filter is applied.
-                Defaults to None.
+                - None, if no date filter is applied. Defaults to None.
 
         Returns:
             bool: True if the file matches all criteria or no criteria are provided,
@@ -284,19 +289,31 @@ class SMB(Source):
         """
         name_lower = entry.name.lower()
 
-        matches_extension = not extensions or any(
-            name_lower.endswith(ext.lower()) for ext in extensions
+        # Skip temp files
+        if name_lower.startswith("~$") or entry.is_dir():
+            return False
+
+        # Normalize to lists
+        keyword_list = [keywords] if isinstance(keywords, str) else keywords
+        extension_list = [extensions] if isinstance(extensions, str) else extensions
+
+        matches_extension = not extension_list or any(
+            isinstance(ext, str) and name_lower.endswith(ext.lower())
+            for ext in extension_list
         )
-        matches_keyword = not keywords or any(
-            keyword.lower() in name_lower for keyword in keywords
+        matches_keyword = not keyword_list or any(
+            isinstance(kw, str) and kw.lower() in name_lower for kw in keyword_list
         )
-        if not matches_extension or not matches_keyword or entry.is_dir():
+
+        if not matches_extension or not matches_keyword:
             return False
 
         if date_filter_parsed:
             file_creation_date = pendulum.from_timestamp(entry.stat().st_ctime).date()
+
             if isinstance(date_filter_parsed, pendulum.Date):
                 return file_creation_date == date_filter_parsed
+
             if isinstance(date_filter_parsed, tuple):
                 start_date, end_date = date_filter_parsed
                 return start_date <= file_creation_date <= end_date
