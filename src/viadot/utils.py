@@ -428,7 +428,7 @@ def handle_if_empty(
     """Task for handling empty input.
 
     Args:
-        if_empty (Literal, optional): Action to take when input is empty. 
+        if_empty (Literal, optional): Action to take when input is empty.
             Options are "warn", "skip", or "fail". Defaults to "warn".
         message (str, optional): Message to show in warnings or errors.
             Defaults to None.
@@ -449,9 +449,7 @@ def handle_if_empty(
         raise ValueError(message)
 
     allowed = ["warn", "skip", "fail"]
-    error_msg = (
-        f"Invalid value for if_df_empty: {if_df_empty}. Allowed values are {allowed}."
-    )
+    error_msg = f"Invalid value for if_empty: {if_empty}. Allowed values are {allowed}."
     raise ValueError(error_msg)
 
 

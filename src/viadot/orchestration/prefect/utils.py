@@ -5,29 +5,32 @@ import json
 from json.decoder import JSONDecodeError
 import logging
 import os
-import re
 import sys
 import tempfile
-from typing import Any, Literal
+from typing import Any
 
 import anyio
 from anyio import open_process
 from anyio.streams.text import TextReceiveStream
-import pandas as pd
-import pendulum
 from prefect.blocks.system import Secret
 from prefect.client.orchestration import PrefectClient
-from prefect.logging import get_run_logger
 from prefect.settings import PREFECT_API_KEY, PREFECT_API_URL
-from prefect_sqlalchemy import DatabaseCredentials
 
 
 with contextlib.suppress(ModuleNotFoundError):
     from prefect_aws import AwsCredentials
     from prefect_aws.secrets_manager import AwsSecret
-    from prefect_azure import AzureKeyVaultSecretReference
+from prefect_sqlalchemy import DatabaseCredentials
 
 from viadot.orchestration.prefect.exceptions import MissingPrefectBlockError
+
+
+with contextlib.suppress(ModuleNotFoundError):
+    from prefect_azure import AzureKeyVaultSecretReference
+
+import re
+
+import pendulum
 
 
 class DynamicDateHandler:
@@ -696,5 +699,3 @@ async def shell_run_command(
                 lines.append(msg)
 
     return lines if return_all else lines[-1]
-
-
