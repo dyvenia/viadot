@@ -1,0 +1,39 @@
+name: Template Static Site Prepare eleventy-notes
+
+on:
+  workflow_call:
+    inputs:
+      runs_on:
+        description: "Image to run the workflow, can be Github shared runner"
+        type: string
+        required: false
+        default: ubuntu-latest
+      static_site_branch:
+        description: "Branch to store static site"
+        type: string
+        required: false
+        default: static-site
+
+jobs:
+  deploy:
+    name: Setup and Build
+    runs-on: ${{ inputs.runs_on }}
+    steps:
+      - uses: actions/checkout@v4
+        name: Checkout
+
+      - name: Install the latest version of rye
+        uses: eifinger/setup-rye@v4
+
+      - name: Sync all dependencies
+        run: rye sync
+
+      - name: Build
+        run: rye run mkdocs build --config-file mkdocs.yml
+
+      - name: Deploy
+        uses: JamesIves/github-pages-deploy-action@v4
+        with:
+          branch: ${{ inputs.static_site_branch }}
+          folder: site
+          clean: true
