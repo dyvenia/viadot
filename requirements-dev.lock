@@ -51,7 +51,6 @@ bcrypt==4.2.0
     # via paramiko
 beautifulsoup4==4.12.3
     # via mkdocs-mermaid2-plugin
-    # via mkdocs-ultralytics-plugin
     # via nbconvert
     # via o365
 bleach==6.1.0
@@ -328,7 +327,6 @@ mergedeep==1.3.4
     # via mkdocs
     # via mkdocs-get-deps
 mike==2.1.3
-    # via viadot2
 mistune==3.0.2
     # via nbconvert
 mkdocs==1.6.1
@@ -341,41 +339,28 @@ mkdocs==1.6.1
     # via mkdocs-material
     # via mkdocs-mermaid2-plugin
     # via mkdocs-table-reader-plugin
-    # via mkdocs-ultralytics-plugin
     # via mkdocstrings
     # via neoteroi-mkdocs
-    # via viadot2
 mkdocs-autorefs==1.4.1
     # via mkdocstrings
     # via mkdocstrings-python
 mkdocs-get-deps==0.2.0
     # via mkdocs
 mkdocs-git-revision-date-plugin==0.3.2
-    # via viadot2
 mkdocs-glightbox==0.4.0
-    # via viadot2
 mkdocs-include-dir-to-nav==1.2.0
-    # via viadot2
 mkdocs-include-markdown-plugin==7.1.5
-    # via viadot2
 mkdocs-jupyter==0.25.1
-    # via viadot2
 mkdocs-material==9.6.14
     # via mkdocs-jupyter
-    # via viadot2
 mkdocs-material-extensions==1.3.1
     # via mkdocs-material
 mkdocs-mermaid2-plugin==1.1.1
 mkdocs-table-reader-plugin==3.1.0
-    # via viadot2
-mkdocs-ultralytics-plugin==0.1.18
-    # via viadot2
 mkdocstrings==0.29.1
     # via mkdocstrings-python
-    # via viadot2
 mkdocstrings-python==1.16.10
     # via mkdocstrings
-    # via viadot2
 more-itertools==10.5.0
     # via simple-salesforce
 moto==5.0.13
@@ -393,7 +378,6 @@ nbformat==5.10.4
     # via nbclient
     # via nbconvert
 neoteroi-mkdocs==1.1.2
-    # via viadot2
 nest-asyncio==1.6.0
     # via ipykernel
 networkx==3.3
@@ -580,7 +564,6 @@ pyyaml==6.0.2
     # via mkdocs
     # via mkdocs-get-deps
     # via mkdocs-table-reader-plugin
-    # via mkdocs-ultralytics-plugin
     # via prefect
     # via pymdown-extensions
     # via pyyaml-env-tag
@@ -607,7 +590,6 @@ requests==2.32.3
     # via lumacli
     # via mkdocs-material
     # via mkdocs-mermaid2-plugin
-    # via mkdocs-ultralytics-plugin
     # via moto
     # via o365
     # via requests-file
