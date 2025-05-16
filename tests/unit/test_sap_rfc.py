@@ -30,6 +30,19 @@ LIMIT 5
 OFFSET 10
 """
 
+sql8 = """
+SELECT a, b
+FROM b
+WHERE c = 1
+AND d = 2
+AND longcolname = 12345
+AND otherlongcolname = 6789
+AND thirdlongcolname = 01234 AND
+somecol <= 10 AND anothercol >= 20 AND diffcol <> 30
+LIMIT 5
+OFFSET 10
+"""
+
 
 def test__get_table_name():
     assert sap._get_table_name(sql1) == "table1"
