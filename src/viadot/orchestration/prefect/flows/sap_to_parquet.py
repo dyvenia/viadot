@@ -14,7 +14,7 @@ from viadot.orchestration.prefect.tasks.task_utils import df_to_parquet
     retries=1,
     retry_delay_seconds=60,
 )
-def sap_to_parquet(  # noqa: PLR0913
+def sap_to_parquet(
     path: str,
     if_exists: Literal["append", "replace", "skip"] = "replace",
     query: str | None = None,

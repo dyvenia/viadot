@@ -10,7 +10,6 @@ from typing import (
     Literal,
 )
 
-import numpy as np
 from numpy.typing import ArrayLike
 import pandas as pd
 import pyrfc
@@ -27,7 +26,6 @@ from sql_metadata import Parser
 
 from viadot.config import get_source_credentials
 from viadot.exceptions import CredentialError, DataBufferExceededError
-from viadot.orchestration.prefect.utils import DynamicDateHandler
 from viadot.sources.base import Source
 from viadot.utils import add_viadot_metadata_columns, validate
 

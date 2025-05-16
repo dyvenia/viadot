@@ -104,7 +104,7 @@ def sap_rfc_to_df(  # noqa: PLR0913
             config_key=config_key,
         )
 
-        query = sap._parse_dates(
+    query = sap._parse_dates(
             query=query,
             dynamic_date_symbols=dynamic_date_symbols,
             dynamic_date_format=dynamic_date_format,
