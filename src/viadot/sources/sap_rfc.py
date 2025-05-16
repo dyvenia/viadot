@@ -708,6 +708,7 @@ class SAPRFCV2(Source):
         self.sep = sep
         self.replacement = replacement
         self.client_side_filters = None
+        self.aliases_keyed_by_columns = None
         self.func = func
         self.rfc_total_col_width_character_limit = rfc_total_col_width_character_limit
 
@@ -841,7 +842,9 @@ class SAPRFCV2(Source):
             raise ValueError(msg)
         return parsed.tables[0]
 
-    def _build_pandas_filter_query(self, client_side_filters: tuple[str, str]) -> str:
+    def _build_pandas_filter_query(
+        self, client_side_filters: list[tuple[str, str]]
+    ) -> str:
         """Build a WHERE clause that will be applied client-side.
 
         This is required if the WHERE clause passed to query() is
@@ -858,22 +861,27 @@ class SAPRFCV2(Source):
         pandas_query = ""
 
         # Apply aliased column names to conditions
-        rewritten_filters = []
-        for logic, expr in client_side_filters:
-            for col, alias in self.aliases_keyed_by_columns.items():
-                if col in expr:
-                    aliased_expr = expr.replace(col, alias)
-                    continue
-            rewritten_filters.append((logic, aliased_expr))
+        if self.aliases_keyed_by_columns:
+            rewritten_filters = []
+            for logic, expr in client_side_filters:
+                aliased_expr = expr
+                for col, alias in self.aliases_keyed_by_columns.items():
+                    aliased_expr = re.sub(rf"\b{re.escape(col)}\b", alias, aliased_expr)
+                rewritten_filters.append((logic, aliased_expr))
+        else:
+            rewritten_filters = client_side_filters
 
         # Build pandas df query
         for i, (kw, expr) in enumerate(rewritten_filters):
+            if kw.upper() != "AND":
+                msg = f"Unsupported logical keyword: '{kw}'. Only AND are supported on client side."
+                raise ValueError(msg)
             # Convret sql expresions to pandas query format
             ## Replace SQL 'not equal' operator
             pandas_expr = expr.replace("<>", "!=")
 
             ## Replace standalone "=" with "==", leave "<=", ">=", "!=" intact
-            pandas_expr = re.sub(r"(?<![<>!])=(?!=)", " == ", pandas_expr)
+            pandas_expr = re.sub(r"(?<![<>!])\s*=\s*(?!=)", " == ", pandas_expr)
 
             if i == 0:
                 pandas_query = pandas_expr
