@@ -1,5 +1,3 @@
-from collections import OrderedDict
-
 from pandas import DataFrame
 import pendulum
 import pytest
