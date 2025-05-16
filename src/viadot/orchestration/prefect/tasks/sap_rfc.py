@@ -9,7 +9,7 @@ from prefect.logging import get_run_logger
 
 
 with contextlib.suppress(ImportError):
-    from viadot.sources import SAPRFC, SAPRFCV2
+    from viadot.sources import SAPRFC
 from viadot.orchestration.prefect.exceptions import MissingSourceCredentialsError
 from viadot.orchestration.prefect.utils import get_credentials
 
@@ -26,7 +26,6 @@ def sap_rfc_to_df(  # noqa: PLR0913
     credentials_secret: str | None = None,
     credentials: dict[str, Any] | None = None,
     config_key: str | None = None,
-    alternative_version: bool = False,
     dynamic_date_symbols: list[str] = ["<<", ">>"],  # noqa: B006
     dynamic_date_format: str = "%Y%m%d",
     dynamic_date_timezone: str = "UTC",
@@ -71,8 +70,6 @@ def sap_rfc_to_df(  # noqa: PLR0913
             Defaults to None.
         config_key (str, optional): The key in the viadot config holding relevant
             credentials. Defaults to None.
-        alternative_version (bool, optional): Enable the use version 2 in source.
-            Defaults to False.
         dynamic_date_symbols (list[str], optional): Symbols used for dynamic date
             handling. Defaults to ["<<", ">>"].
         dynamic_date_format (str, optional): Format used for dynamic date parsing.
@@ -97,18 +94,14 @@ def sap_rfc_to_df(  # noqa: PLR0913
 
     credentials = credentials or get_credentials(credentials_secret)
 
-    if alternative_version is True:
-        if rfc_unique_id:
-            logger.warning(
-                "If the column/set are not unique the table will be malformed."
-            )
-        sap = SAPRFCV2(
+    sap = SAPRFC(
             sep=sep,
             replacement=replacement,
             credentials=credentials,
             func=func,
             rfc_total_col_width_character_limit=rfc_total_col_width_character_limit,
             rfc_unique_id=rfc_unique_id,
+            config_key=config_key,
         )
 
         query = sap._parse_dates(
@@ -118,14 +111,6 @@ def sap_rfc_to_df(  # noqa: PLR0913
             dynamic_date_timezone=dynamic_date_timezone,
         )
 
-    else:
-        sap = SAPRFC(
-            sep=sep,
-            func=func,
-            rfc_total_col_width_character_limit=rfc_total_col_width_character_limit,
-            credentials=credentials,
-            config_key=config_key,
-        )
     sap.query(query)
     logger.info("Downloading data from SAP to a DataFrame...")
     logger.debug(f"Running query: \n{sap.sql}.")
