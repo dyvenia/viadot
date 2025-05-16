@@ -109,7 +109,7 @@ def _remove_last_condition(where: str) -> str:
     return where_trimmed_without_last_keyword, condition_to_remove
 
 
-def _trim_where(where: str) -> tuple[str, OrderedDictType[str, str] | None]:
+def _trim_where(where: str) -> tuple[str, tuple[str, str] | None]:
     """Trim a WHERE clause to 75 characters or less, as required by SAP RFC.
 
     The rest of filters will be applied in-memory on client side.
@@ -117,7 +117,6 @@ def _trim_where(where: str) -> tuple[str, OrderedDictType[str, str] | None]:
     if len(where) <= SAPRFC.COL_CHARACTER_WIDTH_LIMIT:
         return where, None
 
-    wheres_to_add = OrderedDict()
     keywords_with_conditions = []
     where_trimmed = where
     while len(where_trimmed) > SAPRFC.COL_CHARACTER_WIDTH_LIMIT:
@@ -128,8 +127,7 @@ def _trim_where(where: str) -> tuple[str, OrderedDictType[str, str] | None]:
         keyword = _get_keyword_for_condition(where, removed_condition)
         keywords_with_conditions.append((keyword, removed_condition))
 
-    wheres_to_add_sorted = keywords_with_conditions[::-1]
-    wheres_to_add = OrderedDict(wheres_to_add_sorted)
+    wheres_to_add = keywords_with_conditions[::-1]
 
     return where_trimmed, wheres_to_add
 
@@ -710,6 +708,7 @@ class SAPRFCV2(Source):
         self.sep = sep
         self.replacement = replacement
         self.client_side_filters = None
+        self.aliases_keyed_by_columns = None
         self.func = func
         self.rfc_total_col_width_character_limit = rfc_total_col_width_character_limit
 
@@ -817,18 +816,18 @@ class SAPRFCV2(Source):
             self.logger.warning(
                 "A WHERE clause longer than 75 character limit detected."
             )
-            if "OR" in [key.upper() for key in client_side_filters]:
+            if "OR" in [key.upper() for key, _ in client_side_filters]:
                 msg = "WHERE conditions after the 75 character limit can only be combined with the AND keyword."
                 raise ValueError(msg)
-            for val in client_side_filters.values():
+            for _, val in client_side_filters:
                 if ")" in val:
                     msg = "Nested conditions eg. AND (col_1 = 'a' AND col_2 = 'b') found between or after 75 characters in WHERE condition!"
                     msg += " Please change nested conditions part of query separated with 'AND' keywords,"
                     msg += " or place nested conditions part at the beginning of the where statement."
                     raise ValueError(msg)
-            filters_pretty = list(client_side_filters.items())
+
             self.logger.warning(
-                f"Trimmed conditions ({filters_pretty}) will be applied client-side."
+                f"Trimmed conditions ({client_side_filters}) will be applied client-side."
             )
             self.logger.warning("See the documentation for caveats.")
 
@@ -844,7 +843,7 @@ class SAPRFCV2(Source):
         return parsed.tables[0]
 
     def _build_pandas_filter_query(
-        self, client_side_filters: OrderedDictType[str, str]
+        self, client_side_filters: list[tuple[str, str]]
     ) -> str:
         """Build a WHERE clause that will be applied client-side.
 
@@ -852,25 +851,44 @@ class SAPRFCV2(Source):
         longer than 75 characters.
 
         Args:
-            client_side_filters (OrderedDictType[str, str]): The
+            client_side_filters (tuple[str, str]): The
             client-side filters to apply.
 
         Returns:
             str: the WHERE clause reformatted to fit the format
             required by DataFrame.query().
         """
-        for i, f in enumerate(client_side_filters.items()):
-            if i == 0:
-                # skip the first keyword; we assume it's "AND"
-                query = f[1]
-            else:
-                query += " " + f[0] + " " + f[1]
+        pandas_query = ""
 
-            filter_column_name = f[1].split()[0]
-            resolved_column_name = self._resolve_col_name(filter_column_name)
-        return re.sub("\\s?=\\s?", " == ", query).replace(
-            filter_column_name, resolved_column_name
-        )
+        # Apply aliased column names to conditions
+        if self.aliases_keyed_by_columns:
+            rewritten_filters = []
+            for logic, expr in client_side_filters:
+                aliased_expr = expr
+                for col, alias in self.aliases_keyed_by_columns.items():
+                    aliased_expr = re.sub(rf"\b{re.escape(col)}\b", alias, aliased_expr)
+                rewritten_filters.append((logic, aliased_expr))
+        else:
+            rewritten_filters = client_side_filters
+
+        # Build pandas df query
+        for i, (kw, expr) in enumerate(rewritten_filters):
+            if kw.upper() != "AND":
+                msg = f"Unsupported logical keyword: '{kw}'. Only AND are supported on client side."
+                raise ValueError(msg)
+            # Convret sql expresions to pandas query format
+            ## Replace SQL 'not equal' operator
+            pandas_expr = expr.replace("<>", "!=")
+
+            ## Replace standalone "=" with "==", leave "<=", ">=", "!=" intact
+            pandas_expr = re.sub(r"(?<![<>!])\s*=\s*(?!=)", " == ", pandas_expr)
+
+            if i == 0:
+                pandas_query = pandas_expr
+            else:
+                pandas_query += f" {kw.lower()} {pandas_expr}"
+
+        return pandas_query
 
     def extract_values(self, sql: str) -> None:
         """TODO: This should cover all values, not just columns."""
@@ -910,9 +928,11 @@ class SAPRFCV2(Source):
             # the filters client-side. To do this, we need to pull all fields in the
             # client-side WHERE conditions. Below code adds these columns to the list of
             # SELECTed fields.
-            cols_to_add = [v.split()[0] for v in self.client_side_filters.values()]
+            cols_to_add = [v.split()[0] for _, v in self.client_side_filters]
             if aliased:
-                cols_to_add = [aliases_keyed_by_columns[col] for col in cols_to_add]
+                cols_to_add = [
+                    aliases_keyed_by_columns.get(col, col) for col in cols_to_add
+                ]
             columns.extend(cols_to_add)
             columns = list(dict.fromkeys(columns))  # remove duplicates
 
@@ -1082,7 +1102,7 @@ class SAPRFCV2(Source):
         return self.aliases_keyed_by_columns.get(column, column)
 
     def _get_client_side_filter_cols(self):
-        return [f[1].split()[0] for f in self.client_side_filters.items()]
+        return [expr.split()[0] for _, expr in self.client_side_filters]
 
     def _adjust_whitespaces(self, df: pd.DataFrame) -> pd.DataFrame:
         """Adjust the number of whitespaces.
@@ -1211,13 +1231,18 @@ class SAPRFCV2(Source):
                 elif not response["DATA"]:
                     logger.warning("No data returned from SAP.")
         if not df.empty:
-            # It is used to filter out columns which are not in select query
-            # for example columns passed only as unique column
+            # Apply column alies
+            df = df.rename(columns=self.aliases_keyed_by_columns)
+
+            # It is used to filter out columns which are not in select query and
+            # or example columns passed only as unique column
             df = df.loc[:, columns]
 
         if self.client_side_filters:
-            filter_query = self._build_pandas_filter_query(self.client_side_filters)
-            df.query(filter_query, inplace=True)
+            filter_pandas_query = self._build_pandas_filter_query(
+                self.client_side_filters
+            )
+            df.query(filter_pandas_query, inplace=True)
             client_side_filter_cols_aliased = [
                 self._get_alias(col) for col in self._get_client_side_filter_cols()
             ]
