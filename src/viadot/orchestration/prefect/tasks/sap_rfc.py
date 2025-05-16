@@ -95,21 +95,21 @@ def sap_rfc_to_df(  # noqa: PLR0913
     credentials = credentials or get_credentials(credentials_secret)
 
     sap = SAPRFC(
-            sep=sep,
-            replacement=replacement,
-            credentials=credentials,
-            func=func,
-            rfc_total_col_width_character_limit=rfc_total_col_width_character_limit,
-            rfc_unique_id=rfc_unique_id,
-            config_key=config_key,
-        )
+        sep=sep,
+        replacement=replacement,
+        credentials=credentials,
+        func=func,
+        rfc_total_col_width_character_limit=rfc_total_col_width_character_limit,
+        rfc_unique_id=rfc_unique_id,
+        config_key=config_key,
+    )
 
     query = sap._parse_dates(
-            query=query,
-            dynamic_date_symbols=dynamic_date_symbols,
-            dynamic_date_format=dynamic_date_format,
-            dynamic_date_timezone=dynamic_date_timezone,
-        )
+        query=query,
+        dynamic_date_symbols=dynamic_date_symbols,
+        dynamic_date_format=dynamic_date_format,
+        dynamic_date_timezone=dynamic_date_timezone,
+    )
 
     sap.query(query)
     logger.info("Downloading data from SAP to a DataFrame...")
