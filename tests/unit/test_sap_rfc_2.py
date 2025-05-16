@@ -6,7 +6,17 @@ import pytest
 
 from viadot.utils import skip_test_on_missing_extra
 
-from .test_sap_rfc import credentials, sql1, sql2, sql3, sql4, sql5, sql6, sql7, sql8
+from .test_sap_rfc import (
+    credentials,
+    sql1,
+    sql2,
+    sql3,
+    sql4,
+    sql5,
+    sql6,
+    sql7,
+    sql8,
+)
 
 
 try:
