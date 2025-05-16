@@ -76,9 +76,9 @@ if find_spec("s3fs"):
 
 if find_spec("pyrfc"):
     from viadot.sources.sap_bw import SAPBW  # noqa: F401
-    from viadot.sources.sap_rfc import SAPRFC, SAPRFCV2  # noqa: F401
+    from viadot.sources.sap_rfc import SAPRFC  # noqa: F401
 
-    __all__.extend(["SAPBW", "SAPRFC", "SAPRFCV2"])
+    __all__.extend(["SAPBW", "SAPRFC"])
 
 if find_spec("pyspark"):
     from viadot.sources.databricks import Databricks  # noqa: F401
