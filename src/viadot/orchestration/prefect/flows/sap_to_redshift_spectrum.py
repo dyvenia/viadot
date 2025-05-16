@@ -37,7 +37,6 @@ def sap_to_redshift_spectrum(  # noqa: PLR0913
     rfc_unique_id: list[str] | None = None,
     sap_credentials_secret: str | None = None,
     sap_config_key: str | None = None,
-    alternative_version: bool = False,
     replacement: str = "-",
 ) -> None:
     """Download a pandas `DataFrame` from SAP and upload it to AWS Redshift Spectrum.
@@ -89,8 +88,6 @@ def sap_to_redshift_spectrum(  # noqa: PLR0913
             SAP credentials. Defaults to None.
         sap_config_key (str, optional): The key in the viadot config holding relevant
             credentials. Defaults to None.
-        alternative_version (bool, optional): Enable the use version 2 in source.
-            Defaults to False.
         replacement (str, optional): In case of sep is on a columns, set up a new
             character to replace inside the string to avoid flow breakdowns.
             Defaults to "-".
@@ -111,7 +108,6 @@ def sap_to_redshift_spectrum(  # noqa: PLR0913
         rfc_total_col_width_character_limit=rfc_total_col_width_character_limit,
         credentials_secret=sap_credentials_secret,
         config_key=sap_config_key,
-        alternative_version=alternative_version,
         replacement=replacement,
         dynamic_date_symbols=dynamic_date_symbols,
         dynamic_date_format=dynamic_date_format,
