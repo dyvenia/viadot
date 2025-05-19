@@ -1,0 +1,12 @@
+mkdocs-material[imaging] >= 9.4.3
+mkdocs-mermaid2-plugin >= 1.1.0
+mkdocs-include-dir-to-nav >= 1.2.0
+neoteroi-mkdocs >= 1.0.4
+mkdocs-jupyter >= 0.24.4
+mkdocstrings[python] >= 0.23.0
+mkdocs >= 1.5.3
+mike >= 1.1.2
+mkdocs-table-reader-plugin >= 2.0.3
+mkdocs-include-markdown-plugin >= 5.1.0
+mkdocs-git-revision-date-plugin >= 0.3.2
+mkdocs-glightbox >= 0.4.0
