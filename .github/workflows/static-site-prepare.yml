@@ -16,4 +16,4 @@ on:
 jobs:
   deploy:
     uses: ./.github/workflows/template-static-site-prepare-mkdocs.yml
-    secrets: inherit
+    secrets: inherit # pragma: allowlist secret
