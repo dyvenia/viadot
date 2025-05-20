@@ -1,5 +1,6 @@
 """Sharepoint API connector."""
 
+from http import HTTPStatus
 import io
 from pathlib import Path
 import re
@@ -179,23 +180,21 @@ class Sharepoint(Source):
             response = conn.get(url)
             response.raise_for_status()  # Raise an exception for HTTP errors
         except requests.exceptions.HTTPError as e:
-            if e.response.status_code == 403:
-                self.logger.error(f"Access denied to file: {url}")
+            if e.response.status_code == HTTPStatus.FORBIDDEN:
+                self.logger.exception(f"Access denied to file: {url}")
             else:
-                self.logger.error(
-                    f"HTTP error {e.response.status_code} when accessing {url}"
-                )
+                self.logger.exception(f"HTTP error when accessing {url}")
             raise
-        except Exception as e:
-            self.logger.error(f"Failed to download file: {url}. Error: {e!s}")
+        except Exception:
+            self.logger.exception(f"Failed to download file: {url}")
             raise
 
         bytes_stream = io.BytesIO(response.content)
 
         try:
             return pd.ExcelFile(bytes_stream)
-        except ValueError as e:
-            self.logger.error(f"Invalid Excel file: {url}. Error: {e!s}")
+        except ValueError:
+            self.logger.exception(f"Invalid Excel file: {url}")
             raise
 
     def _is_file(self, url: str) -> bool:
@@ -262,8 +261,8 @@ class Sharepoint(Source):
                     file_url=file_url, sheet_name=sheet, na_values=na_values, **kwargs
                 )
                 dfs.append(df)
-            except Exception as e:
-                self.logger.error(f"Failed to load file: {file_url}. Error: {e!s}")
+            except Exception:
+                self.logger.exception(f"Failed to load file: {file_url}")
                 continue
         if not dfs:
             self.logger.warning("No valid Excel files were loaded.")
@@ -297,7 +296,8 @@ class Sharepoint(Source):
             self.logger.error(
                 f"Unsupported file extension: {file_extension} for file: {file_url}"
             )
-            raise ValueError("Only Excel (.xlsx) files are supported.")
+            msg = "Only Excel (.xlsx) files are supported."
+            raise ValueError(msg)
         file_stream = self._download_file_stream(file_url)
         return self._parse_excel(file_stream, sheet_name, na_values, **kwargs)
 
