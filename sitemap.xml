@@ -2,54 +2,54 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
     <url>
          <loc>https://github.com/dyvenia/viadot/</loc>
-         <lastmod>2025-05-19</lastmod>
+         <lastmod>2025-05-20</lastmod>
     </url>
     <url>
          <loc>https://github.com/dyvenia/viadot/getting_started/</loc>
-         <lastmod>2025-05-19</lastmod>
+         <lastmod>2025-05-20</lastmod>
     </url>
     <url>
          <loc>https://github.com/dyvenia/viadot/advanced_usage/</loc>
-         <lastmod>2025-05-19</lastmod>
+         <lastmod>2025-05-20</lastmod>
     </url>
     <url>
          <loc>https://github.com/dyvenia/viadot/advanced_usage/containerized_env/</loc>
-         <lastmod>2025-05-19</lastmod>
+         <lastmod>2025-05-20</lastmod>
     </url>
     <url>
          <loc>https://github.com/dyvenia/viadot/developer_guide/</loc>
-         <lastmod>2025-05-19</lastmod>
+         <lastmod>2025-05-20</lastmod>
     </url>
     <url>
          <loc>https://github.com/dyvenia/viadot/developer_guide/contributing_to_viadot/</loc>
-         <lastmod>2025-05-19</lastmod>
+         <lastmod>2025-05-20</lastmod>
     </url>
     <url>
          <loc>https://github.com/dyvenia/viadot/developer_guide/creating_a_prefect_flow/</loc>
-         <lastmod>2025-05-19</lastmod>
+         <lastmod>2025-05-20</lastmod>
     </url>
     <url>
          <loc>https://github.com/dyvenia/viadot/developer_guide/creating_a_source/</loc>
-         <lastmod>2025-05-19</lastmod>
+         <lastmod>2025-05-20</lastmod>
     </url>
     <url>
          <loc>https://github.com/dyvenia/viadot/references/orchestration/prefect/flows/</loc>
-         <lastmod>2025-05-19</lastmod>
+         <lastmod>2025-05-20</lastmod>
     </url>
     <url>
          <loc>https://github.com/dyvenia/viadot/references/orchestration/prefect/tasks/</loc>
-         <lastmod>2025-05-19</lastmod>
+         <lastmod>2025-05-20</lastmod>
     </url>
     <url>
          <loc>https://github.com/dyvenia/viadot/references/sources/api/</loc>
-         <lastmod>2025-05-19</lastmod>
+         <lastmod>2025-05-20</lastmod>
     </url>
     <url>
          <loc>https://github.com/dyvenia/viadot/references/sources/database/</loc>
-         <lastmod>2025-05-19</lastmod>
+         <lastmod>2025-05-20</lastmod>
     </url>
     <url>
          <loc>https://github.com/dyvenia/viadot/references/sources/other/</loc>
-         <lastmod>2025-05-19</lastmod>
+         <lastmod>2025-05-20</lastmod>
     </url>
 </urlset>
