@@ -182,10 +182,12 @@ class Sharepoint(Source):
             if e.response.status_code == 403:
                 self.logger.error(f"Access denied to file: {url}")
             else:
-                self.logger.error(f"HTTP error {e.response.status_code} when accessing {url}")
+                self.logger.error(
+                    f"HTTP error {e.response.status_code} when accessing {url}"
+                )
             raise
         except Exception as e:
-            self.logger.error(f"Failed to download file: {url}. Error: {str(e)}")
+            self.logger.error(f"Failed to download file: {url}. Error: {e!s}")
             raise
 
         bytes_stream = io.BytesIO(response.content)
@@ -193,7 +195,7 @@ class Sharepoint(Source):
         try:
             return pd.ExcelFile(bytes_stream)
         except ValueError as e:
-            self.logger.error(f"Invalid Excel file: {url}. Error: {str(e)}")
+            self.logger.error(f"Invalid Excel file: {url}. Error: {e!s}")
             raise
 
     def _is_file(self, url: str) -> bool:
@@ -251,7 +253,9 @@ class Sharepoint(Source):
             file_url = url + file
             file_extension = self._get_file_extension(file_url)
             if file_extension != ".xlsx":
-                self.logger.error(f"Unsupported file extension: {file_extension} for file: {file_url}")
+                self.logger.error(
+                    f"Unsupported file extension: {file_extension} for file: {file_url}"
+                )
                 continue
             try:
                 df = self._load_and_parse(
@@ -259,7 +263,7 @@ class Sharepoint(Source):
                 )
                 dfs.append(df)
             except Exception as e:
-                self.logger.error(f"Failed to load file: {file_url}. Error: {str(e)}")
+                self.logger.error(f"Failed to load file: {file_url}. Error: {e!s}")
                 continue
         if not dfs:
             self.logger.warning("No valid Excel files were loaded.")
@@ -290,7 +294,9 @@ class Sharepoint(Source):
         """
         file_extension = self._get_file_extension(file_url)
         if file_extension != ".xlsx":
-            self.logger.error(f"Unsupported file extension: {file_extension} for file: {file_url}")
+            self.logger.error(
+                f"Unsupported file extension: {file_extension} for file: {file_url}"
+            )
             raise ValueError("Only Excel (.xlsx) files are supported.")
         file_stream = self._download_file_stream(file_url)
         return self._parse_excel(file_stream, sheet_name, na_values, **kwargs)
@@ -391,7 +397,11 @@ class Sharepoint(Source):
             )
         else:
             list_of_urls = self.scan_sharepoint_folder(url)
-            excel_urls = [file_url for file_url in list_of_urls if self._get_file_extension(file_url) == ".xlsx"]
+            excel_urls = [
+                file_url
+                for file_url in list_of_urls
+                if self._get_file_extension(file_url) == ".xlsx"
+            ]
             if not excel_urls:
                 self.logger.warning(f"No Excel files found in folder: {url}")
                 return pd.DataFrame()
