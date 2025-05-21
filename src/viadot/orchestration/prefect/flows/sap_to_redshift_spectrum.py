@@ -17,6 +17,9 @@ def sap_to_redshift_spectrum(  # noqa: PLR0913
     to_path: str,
     schema_name: str,
     table: str,
+    test_param_1: str | None = None,
+    test_param_2: str | None = None,
+    test_param_3: str | None = None,
     tests: dict[str, Any] | None = None,
     extension: str = ".parquet",
     if_exists: Literal["overwrite", "append"] = "overwrite",
@@ -103,6 +106,9 @@ def sap_to_redshift_spectrum(  # noqa: PLR0913
         )
     """
     df = sap_rfc_to_df(
+        test_param_1=test_param_1,
+        test_param_2=test_param_2,
+        test_param_3=test_param_3,
         query=query,
         sep=sap_sep,
         tests=tests,
