@@ -20,6 +20,9 @@ def sap_rfc_to_df(  # noqa: PLR0913
     sep: str | None = None,
     func: str | None = None,
     replacement: str = "-",
+    test_param_1: str | None = None,
+    test_param_2: str | None = None,
+    test_param_3: str | None = None,
     rfc_total_col_width_character_limit: int = 400,
     rfc_unique_id: list[str] | None = None,
     tests: dict[str, Any] | None = None,
@@ -109,6 +112,9 @@ def sap_rfc_to_df(  # noqa: PLR0913
             func=func,
             rfc_total_col_width_character_limit=rfc_total_col_width_character_limit,
             rfc_unique_id=rfc_unique_id,
+            test_param_1=test_param_1,
+            test_param_2=test_param_2,
+            test_param_3=test_param_3,
         )
 
         query = sap._parse_dates(
