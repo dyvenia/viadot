@@ -672,6 +672,9 @@ class SAPRFCV2(Source):
         rfc_unique_id: list[str] | None = None,
         credentials: dict[str, Any] | None = None,
         config_key: str | None = None,
+        test_param_1: str | None = None,
+        test_param_2: str | None = None,
+        test_param_3: str | None = None,
         *args,
         **kwargs,
     ):
