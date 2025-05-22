@@ -20,6 +20,7 @@ def sap_to_redshift_spectrum(  # noqa: PLR0913
     test_param_1: str | None = None,
     test_param_2: str | None = None,
     test_param_3: str | None = None,
+    test_param_4: str | None = None,
     tests: dict[str, Any] | None = None,
     extension: str = ".parquet",
     if_exists: Literal["overwrite", "append"] = "overwrite",
