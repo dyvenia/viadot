@@ -110,6 +110,7 @@ def sap_to_redshift_spectrum(  # noqa: PLR0913
         test_param_1=test_param_1,
         test_param_2=test_param_2,
         test_param_3=test_param_3,
+        test_param_4=test_param_4,
         query=query,
         sep=sap_sep,
         tests=tests,

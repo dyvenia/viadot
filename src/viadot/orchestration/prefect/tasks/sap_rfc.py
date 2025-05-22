@@ -23,6 +23,7 @@ def sap_rfc_to_df(  # noqa: PLR0913
     test_param_1: str | None = None,
     test_param_2: str | None = None,
     test_param_3: str | None = None,
+    test_param_4: str | None = None,
     rfc_total_col_width_character_limit: int = 400,
     rfc_unique_id: list[str] | None = None,
     tests: dict[str, Any] | None = None,
