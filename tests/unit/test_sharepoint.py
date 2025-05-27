@@ -1,13 +1,12 @@
-from pathlib import Path
+from io import BytesIO
 from unittest.mock import MagicMock, patch
 
+from openpyxl import Workbook
 import pandas as pd
 import pytest
+import requests
 import sharepy
 from sharepy.errors import AuthError
-from io import BytesIO
-from openpyxl import Workbook
-import requests
 
 from viadot.exceptions import CredentialError
 from viadot.sources import Sharepoint
@@ -31,20 +30,20 @@ def create_excel_file():
     wb = Workbook()
     ws = wb.active
     ws.title = "Sheet1"
-    ws['A1'] = 'col_a'
-    ws['B1'] = 'col_b'
-    ws['A2'] = 'val1'
-    ws['B2'] = 'val1'
-    ws['A3'] = ''
-    ws['B3'] = 'val2'
-    ws['A4'] = 'val2'
-    ws['B4'] = 'val3'
-    ws['A5'] = 'NA'
-    ws['B5'] = 'val4'
-    ws['A6'] = 'N/A'
-    ws['B6'] = 'val5'
-    ws['A7'] = '#N/A'
-    ws['B7'] = 'val6'
+    ws["A1"] = "col_a"
+    ws["B1"] = "col_b"
+    ws["A2"] = "val1"
+    ws["B2"] = "val1"
+    ws["A3"] = ""
+    ws["B3"] = "val2"
+    ws["A4"] = "val2"
+    ws["B4"] = "val3"
+    ws["A5"] = "NA"
+    ws["B5"] = "val4"
+    ws["A6"] = "N/A"
+    ws["B6"] = "val5"
+    ws["A7"] = "#N/A"
+    ws["B7"] = "val6"
     bio = BytesIO()
     wb.save(bio)
     bio.seek(0)
@@ -73,7 +72,7 @@ def sharepoint():
     credentials = {
         "site": "https://example.sharepoint.com",
         "username": "Danalytics@example.com",
-        "password": "password"
+        "password": "password",
     }
     return Sharepoint(credentials=credentials)
 
@@ -220,7 +219,9 @@ def test_scan_sharepoint_folder_invalid_url(sharepoint_mock):
 
 
 def test_scan_sharepoint_folder_empty_response(sharepoint_mock):
-    url = "https://company.sharepoint.com/sites/site_name/folder/sub_folder/final_folder"
+    url = (
+        "https://company.sharepoint.com/sites/site_name/folder/sub_folder/final_folder"
+    )
 
     mock_response = MagicMock()
     mock_response.json.return_value = {"d": {"results": []}}
@@ -237,9 +238,10 @@ def test_download_file_stream_unsupported_param(sharepoint_mock):
     with pytest.raises(ValueError, match="Parameter 'nrows' is not supported."):
         sharepoint_mock._download_file_stream(url, nrows=10)
 
+
 def test_successful_download(sharepoint):
-    url = 'https://example.sharepoint.com/sites/site/Shared%20Documents/file.xlsx'
-    with patch('sharepy.connect') as mock_connect:
+    url = "https://example.sharepoint.com/sites/site/Shared%20Documents/file.xlsx"
+    with patch("sharepy.connect") as mock_connect:
         mock_response = MagicMock()
         mock_response.status_code = 200
         mock_response.content = create_excel_file()
@@ -252,11 +254,13 @@ def test_successful_download(sharepoint):
 
 
 def test_access_denied(sharepoint):
-    url = 'https://example.sharepoint.com/sites/site/Shared%20Documents/restricted_file.xlsx'
-    with patch('sharepy.connect') as mock_connect:
+    url = "https://example.sharepoint.com/sites/site/Shared%20Documents/restricted_file.xlsx"
+    with patch("sharepy.connect") as mock_connect:
         mock_response = MagicMock()
         mock_response.status_code = 403
-        mock_response.raise_for_status.side_effect = requests.exceptions.HTTPError(response=mock_response)
+        mock_response.raise_for_status.side_effect = requests.exceptions.HTTPError(
+            response=mock_response
+        )
         mock_session = MagicMock()
         mock_session.get.return_value = mock_response
         mock_connect.return_value = mock_session
@@ -265,32 +269,35 @@ def test_access_denied(sharepoint):
 
 
 def test_invalid_excel_file(sharepoint):
-    url = 'https://example.sharepoint.com/sites/site/Shared%20Documents/file.xlsx'
-    with patch('sharepy.connect') as mock_connect:
+    url = "https://example.sharepoint.com/sites/site/Shared%20Documents/file.xlsx"
+    with patch("sharepy.connect") as mock_connect:
         mock_response = MagicMock()
         mock_response.status_code = 200
-        mock_response.content = b'not an excel file'
+        mock_response.content = b"not an excel file"
         mock_session = MagicMock()
         mock_session.get.return_value = mock_response
         mock_connect.return_value = mock_session
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match="Excel file format cannot be determined"):
             sharepoint.to_df(url)
 
 
 def test_mixed_file_extensions(sharepoint):
-    url = 'https://example.sharepoint.com/sites/site/Shared%20Documents/folder'
-    with patch('sharepy.connect'), patch.object(Sharepoint, 'scan_sharepoint_folder') as mock_scan:
+    url = "https://example.sharepoint.com/sites/site/Shared%20Documents/folder"
+    with (
+        patch("sharepy.connect"),
+        patch.object(Sharepoint, "scan_sharepoint_folder") as mock_scan,
+    ):
         mock_scan.return_value = [
-            url + '/file1.xlsx',
-            url + '/file2.txt',
-            url + '/file3.pdf'
+            url + "/file1.xlsx",
+            url + "/file2.txt",
+            url + "/file3.pdf",
         ]
         mock_response = MagicMock()
         mock_response.status_code = 200
         mock_response.content = create_excel_file()
         mock_session = MagicMock()
         mock_session.get.return_value = mock_response
-        mock_connect = patch('sharepy.connect', return_value=mock_session)
+        mock_connect = patch("sharepy.connect", return_value=mock_session)
         mock_connect.start()
         df = sharepoint.to_df(url)
         mock_connect.stop()
@@ -299,11 +306,14 @@ def test_mixed_file_extensions(sharepoint):
 
 
 def test_empty_folder(sharepoint):
-    url = 'https://example.sharepoint.com/sites/site/Shared%20Documents/folder'
-    with patch('sharepy.connect'), patch.object(Sharepoint, 'scan_sharepoint_folder') as mock_scan:
+    url = "https://example.sharepoint.com/sites/site/Shared%20Documents/folder"
+    with (
+        patch("sharepy.connect"),
+        patch.object(Sharepoint, "scan_sharepoint_folder") as mock_scan,
+    ):
         mock_scan.return_value = []
         mock_session = MagicMock()
-        mock_connect = patch('sharepy.connect', return_value=mock_session)
+        mock_connect = patch("sharepy.connect", return_value=mock_session)
         mock_connect.start()
         df = sharepoint.to_df(url)
         mock_connect.stop()
