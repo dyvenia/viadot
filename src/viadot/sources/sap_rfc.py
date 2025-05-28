@@ -10,6 +10,7 @@ from typing import (
     Literal,
 )
 
+import numpy as np
 from numpy.typing import ArrayLike
 import pandas as pd
 import pyrfc
@@ -26,6 +27,7 @@ from sql_metadata import Parser
 
 from viadot.config import get_source_credentials
 from viadot.exceptions import CredentialError, DataBufferExceededError
+from viadot.orchestration.prefect.utils import DynamicDateHandler
 from viadot.sources.base import Source
 from viadot.utils import add_viadot_metadata_columns, validate
 
@@ -197,6 +199,9 @@ def _gen_split(data: Iterable[str], sep: str, record_key: str) -> Iterator[list[
 class SAPRFC(Source):
     """A class for querying SAP with SQL using the RFC protocol.
 
+    This is mostly a copy of SAPRFC, with some unidentified modifications that should
+    have probably been added as features to the SAPRFC source.
+
     Note that only a very limited subset of SQL is supported:
     - aliases
     - where clauses combined using the AND operator
@@ -209,13 +214,13 @@ class SAPRFC(Source):
     - etc.
     """
 
-    COL_CHARACTER_WIDTH_LIMIT = 75
-
     def __init__(
         self,
         sep: str | None = None,
+        replacement: str = "-",
         func: str = "RFC_READ_TABLE",
         rfc_total_col_width_character_limit: int = 400,
+        rfc_unique_id: list[str] | None = None,
         credentials: dict[str, Any] | None = None,
         config_key: str | None = None,
         *args,
@@ -226,12 +231,17 @@ class SAPRFC(Source):
         Args:
             sep (str, optional): Which separator to use when querying SAP. If not
                 provided, multiple options are automatically tried.
+            replacement (str, optional): In case of separator is on a columns, set up a
+                new character to replace inside the string to avoid flow breakdowns.
+                Defaults to "-".
             func (str, optional): SAP RFC function to use. Defaults to "RFC_READ_TABLE".
             rfc_total_col_width_character_limit (int, optional): Number of characters by
                 which query will be split in chunks in case of too many columns for RFC
                 function. According to SAP documentation, the limit is 512 characters.
                 However, we observed SAP raising an exception even on a slightly lower
                 number of characters, so we add a safety margin. Defaults to 400.
+            rfc_unique_id  (List[str], optional): Reference columns to merge chunks
+                DataFrames. These columns must to be unique. Defaults to None.
             credentials (Dict[str, Any], optional): 'api_key'. Defaults to None.
             config_key (str, optional): The key in the viadot config holding relevant
                 credentials.
@@ -249,9 +259,16 @@ class SAPRFC(Source):
         super().__init__(*args, credentials=credentials, **kwargs)
 
         self.sep = sep
+        self.replacement = replacement
         self.client_side_filters = None
         self.func = func
         self.rfc_total_col_width_character_limit = rfc_total_col_width_character_limit
+
+        if rfc_unique_id is not None:
+            self.rfc_unique_id = list(set(rfc_unique_id))
+            self._rfc_unique_id_len = {}
+        else:
+            self.rfc_unique_id = rfc_unique_id
 
     @property
     def con(self) -> pyrfc.Connection:
@@ -269,7 +286,7 @@ class SAPRFC(Source):
         self.logger.info("Connection has been validated successfully.")
 
     def close_connection(self) -> None:
-        """Close the RFC connection."""
+        """Close the SAP RFC connection."""
         self.con.close()
         self.logger.info("Connection has been closed successfully.")
 
@@ -283,8 +300,8 @@ class SAPRFC(Source):
 
         Args:
             function_name (str): The name of the function to detail.
-            description (Union[None, Literal[, optional): Whether to display a short or
-                a long description. Defaults to "short".
+            description (Union[None, Literal[, optional): Whether to display
+            a short or a long description. Defaults to "short".
 
         Raises:
             ValueError: If the argument for description is incorrect.
@@ -323,7 +340,7 @@ class SAPRFC(Source):
 
         return params
 
-    def _get_where_condition(self, sql: str) -> str | None:
+    def _get_where_condition(self, sql: str) -> str:
         """Retrieve the WHERE conditions from a SQL query.
 
         Args:
@@ -395,7 +412,7 @@ class SAPRFC(Source):
         """
         for i, f in enumerate(client_side_filters.items()):
             if i == 0:
-                # Skip the first keyword; we assume it's "AND".
+                # skip the first keyword; we assume it's "AND"
                 query = f[1]
             else:
                 query += " " + f[0] + " " + f[1]
@@ -453,7 +470,7 @@ class SAPRFC(Source):
         return columns
 
     @staticmethod
-    def _get_limit(sql: str) -> int:
+    def _get_limit(sql: str) -> int | None:
         """Get limit from the query."""
         limit_match = re.search("\\sLIMIT ", sql.upper())
         if not limit_match:
@@ -462,7 +479,7 @@ class SAPRFC(Source):
         return int(sql[limit_match.span()[1] :].split()[0])
 
     @staticmethod
-    def _get_offset(sql: str) -> int:
+    def _get_offset(sql: str) -> int | None:
         """Get offset from the query."""
         offset_match = re.search("\\sOFFSET ", sql.upper())
         if not offset_match:
@@ -470,13 +487,56 @@ class SAPRFC(Source):
 
         return int(sql[offset_match.span()[1] :].split()[0])
 
-    def query(self, sql: str, sep: str | None = None) -> None:
+    def _parse_dates(
+        self,
+        query: str,
+        dynamic_date_symbols: list[str] = ["<<", ">>"],  # noqa: B006
+        dynamic_date_format: str = "%Y%m%d",
+        dynamic_date_timezone: str = "UTC",
+    ) -> str:
+        """Process dynamic dates inside the query and validate used patterns type.
+
+        Args:
+            query (str): The SQL query to be processed.
+            dynamic_date_symbols (list[str], optional): Symbols used for dynamic date
+                handling. Defaults to ["<<", ">>"].
+            dynamic_date_format (str, optional): Format used for dynamic date parsing.
+                Defaults to "%Y%m%d".
+            dynamic_date_timezone (str, optional): Timezone used for dynamic date
+                processing. Defaults to "UTC".
+
+        Returns:
+            str: The processed SQL query with dynamic dates replaced.
+
+        Raises:
+            TypeError: If the query contains dynamic date patterns that generate
+        a range of dates.
+        """
+        ddh = DynamicDateHandler(
+            dynamic_date_symbols=dynamic_date_symbols,
+            dynamic_date_format=dynamic_date_format,
+            dynamic_date_timezone=dynamic_date_timezone,
+        )
+        processed_sql_or_list = ddh.process_dates(query)
+
+        if isinstance(processed_sql_or_list, list):
+            msg = (
+                f"This query contains {ddh._find_dynamic_date_patterns(query)} dynamic date(s) "
+                "that generate a range of dates, which is currently not supported"
+                "in query generation. Please use one of the singular pattern dynamic date symbols."
+            )
+            raise TypeError(msg)
+
+        return processed_sql_or_list
+
+    # Holy crap what a mess. TODO: refactor this so it can be even remotely tested...
+    def query(self, sql: str, sep: str | None = None) -> None:  # noqa: C901, PLR0912
         """Parse an SQL query into pyRFC commands and save it into an internal dict.
 
         Args:
             sql (str): The SQL query to be ran.
-            sep (str, optional): The separator to be used to split columns in the result
-                blob. Defaults to self.sep.
+            sep (str, optional): The separator to be used
+            to split columns in the result blob. Defaults to self.sep.
 
         Raises:
             ValueError: If the query is not a SELECT query.
@@ -493,15 +553,35 @@ class SAPRFC(Source):
         self.extract_values(sql)
 
         table_name = self._get_table_name(sql)
-        # This has to be called before checking client_side_filters.
+        # this has to be called before checking client_side_filters
         where = self.where
         columns = self.select_columns
-        character_limit = self.rfc_total_col_width_character_limit
-        # Due to the RFC_READ_TABLE limit of characters per row, columns are split into
-        # smaller lists.
         lists_of_columns = []
         cols = []
         col_length_total = 0
+        if isinstance(self.rfc_unique_id[0], str):
+            character_limit = self.rfc_total_col_width_character_limit
+            for rfc_unique_col in self.rfc_unique_id:
+                rfc_unique_col_len = int(
+                    self.call(
+                        "DDIF_FIELDINFO_GET",
+                        TABNAME=table_name,
+                        FIELDNAME=rfc_unique_col,
+                    )["DFIES_TAB"][0]["LENG"]
+                )
+                if rfc_unique_col_len > int(
+                    self.rfc_total_col_width_character_limit / 4
+                ):
+                    msg = f"{rfc_unique_col} can't be used as unique column, too large."
+                    raise ValueError(msg)
+                local_limit = (
+                    self.rfc_total_col_width_character_limit - rfc_unique_col_len
+                )
+                character_limit = min(local_limit, character_limit)
+                self._rfc_unique_id_len[rfc_unique_col] = rfc_unique_col_len
+        else:
+            character_limit = self.rfc_total_col_width_character_limit
+
         for col in columns:
             info = self.call("DDIF_FIELDINFO_GET", TABNAME=table_name, FIELDNAME=col)
             col_length = info["DFIES_TAB"][0]["LENG"]
@@ -509,9 +589,22 @@ class SAPRFC(Source):
             if col_length_total <= character_limit:
                 cols.append(col)
             else:
+                if isinstance(self.rfc_unique_id[0], str) and all(
+                    rfc_unique_col not in cols for rfc_unique_col in self.rfc_unique_id
+                ):
+                    for rfc_unique_col in self.rfc_unique_id:
+                        if rfc_unique_col not in cols:
+                            cols.append(rfc_unique_col)
                 lists_of_columns.append(cols)
                 cols = [col]
-                col_length_total = 0
+                col_length_total = int(col_length)
+
+        if isinstance(self.rfc_unique_id[0], str) and all(
+            rfc_unique_col not in cols for rfc_col in self.rfc_unique_id
+        ):
+            for rfc_unique_col in self.rfc_unique_id:
+                if rfc_unique_col not in cols:
+                    cols.append(rfc_unique_col)
         lists_of_columns.append(cols)
 
         columns = lists_of_columns
@@ -542,9 +635,33 @@ class SAPRFC(Source):
     def _get_client_side_filter_cols(self):
         return [f[1].split()[0] for f in self.client_side_filters.items()]
 
+    def _adjust_whitespaces(self, df: pd.DataFrame) -> pd.DataFrame:
+        """Adjust the number of whitespaces.
+
+        Add whitespace characters in each row of each unique column to achieve
+        equal length of values in these columns, ensuring proper merging of subqueries.
+
+        """
+        for rfc_unique_col in self.rfc_unique_id:
+            # Check in SAP metadata what is the declared
+            # dtype characters amount
+            rfc_unique_column_len = self._rfc_unique_id_len[rfc_unique_col]
+            actual_length_of_field = df[rfc_unique_col].str.len()
+            # Check which rows have fewer characters
+            # than specified in the column data type.
+            rows_missing_whitespaces = actual_length_of_field < rfc_unique_column_len
+            if any(rows_missing_whitespaces):
+                # Check how many whitespaces are missing in each row.
+                logger.info(f"Adding whitespaces for {rfc_unique_col} column")
+                n_missing_whitespaces = rfc_unique_column_len - actual_length_of_field
+                df.loc[rows_missing_whitespaces, rfc_unique_col] += np.char.multiply(
+                    " ", n_missing_whitespaces[rows_missing_whitespaces]
+                )
+        return df
+
     # TODO: refactor to remove linter warnings and so this can be tested.
     @add_viadot_metadata_columns
-    def to_df(self, tests: dict | None = None) -> pd.DataFrame:  # noqa: C901, PLR0912, RUF100
+    def to_df(self, tests: dict | None = None) -> pd.DataFrame:  # noqa: C901, PLR0912, PLR0915
         """Load the results of a query into a pandas DataFrame.
 
         Due to SAP limitations, if the length of the WHERE clause is longer than 75
@@ -593,35 +710,61 @@ class SAPRFC(Source):
         else:
             separators = [sep]
 
-        records = None
         for sep in separators:
             logger.info(f"Checking if separator '{sep}' works.")
-            df = pd.DataFrame()
+            if isinstance(self.rfc_unique_id[0], str):
+                # Columns only for the first chunk. We add the rest later to avoid name
+                # conflicts.
+                df = pd.DataFrame(columns=fields_lists[0])
+            else:
+                df = pd.DataFrame()
             self._query["DELIMITER"] = sep
             chunk = 1
+            row_index = 0
             for fields in fields_lists:
                 logger.info(f"Downloading {chunk} data chunk...")
+                self._query["FIELDS"] = fields
                 try:
-                    self._query["FIELDS"] = fields
-                    try:
-                        response = self.call(func, **params)
-                    except ABAPApplicationError as e:
-                        if e.key == "DATA_BUFFER_EXCEEDED":
-                            msg = "Character limit per row exceeded. Please select fewer columns."
-                            raise DataBufferExceededError(msg) from e
-                        raise
+                    response = self.call(func, **params)
+                except ABAPApplicationError as e:
+                    if e.key == "DATA_BUFFER_EXCEEDED":
+                        msg = "Character limit per row exceeded. Please select fewer columns."
+                        raise DataBufferExceededError(msg) from e
+                    raise
+                # Check and skip if there is no data returned.
+                if response["DATA"]:
                     record_key = "WA"
-                    data_raw = response["DATA"]
-                    records = [row[record_key].split(sep) for row in data_raw]
-                    df[fields] = records
+                    data_raw = np.array(response["DATA"])
+                    del response
+                    # If reference columns are provided, it's not necessary to remove
+                    # any extra row.
+                    if not isinstance(self.rfc_unique_id[0], str):
+                        row_index, data_raw, start = _detect_extra_rows(
+                            row_index, data_raw, chunk, fields
+                        )
+                    else:
+                        start = False
+                    records = list(_gen_split(data_raw, sep, record_key))
+                    del data_raw
+                    if (
+                        isinstance(self.rfc_unique_id[0], str)
+                        and list(df.columns) != fields
+                    ):
+                        df_tmp = pd.DataFrame(columns=fields)
+                        df_tmp[fields] = records
+                        df_tmp = self._adjust_whitespaces(df_tmp)
+                        df = pd.merge(df, df_tmp, on=self.rfc_unique_id, how="outer")
+                    elif not start:
+                        df[fields] = records
+                    else:
+                        df[fields] = np.nan
                     chunk += 1
-                except ValueError:
-                    df = pd.DataFrame()
-                    continue
-        if not records:
-            logger.warning("Empty output was generated.")
-            columns = []
-        df.columns = columns
+                elif not response["DATA"]:
+                    logger.warning("No data returned from SAP.")
+        if not df.empty:
+            # It is used to filter out columns which are not in select query
+            # for example columns passed only as unique column
+            df = df.loc[:, columns]
 
         if self.client_side_filters:
             filter_query = self._build_pandas_filter_query(self.client_side_filters)
