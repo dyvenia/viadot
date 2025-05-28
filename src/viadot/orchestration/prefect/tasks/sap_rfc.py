@@ -90,7 +90,11 @@ def sap_rfc_to_df(  # noqa: PLR0913
     if query is None:
         msg = "Please provide the query."
         raise ValueError(msg)
+    if rfc_unique_id is None:
+        msg = "Please provide rfc_unique_id. It is required for data consistency."
+        raise ValueError(msg)
     logger = get_run_logger()
+    logger.warning("If the column/set are not unique the table will be malformed.")
 
     credentials = credentials or get_credentials(credentials_secret)
 
