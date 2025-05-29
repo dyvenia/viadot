@@ -21,7 +21,7 @@ def sap_rfc_to_df(  # noqa: PLR0913
     func: str | None = None,
     replacement: str = "-",
     rfc_total_col_width_character_limit: int = 400,
-    rfc_unique_id: list[str] | None = None,
+    rfc_unique_id: list[str],
     tests: dict[str, Any] | None = None,
     credentials_secret: str | None = None,
     credentials: dict[str, Any] | None = None,
@@ -56,10 +56,9 @@ def sap_rfc_to_df(  # noqa: PLR0913
             function. According to SAP documentation, the limit is 512 characters.
             However, we observed SAP raising an exception even on a slightly lower
             number of characters, so we add a safety margin. Defaults to 400.
-        rfc_unique_id (list[str], optional):
+        rfc_unique_id (list[str]):
             Reference columns to merge chunks DataFrames. These columns must to be
-            unique. If no columns are provided in this parameter, all data frame columns
-            will by concatenated. Defaults to None.
+            unique.
         tests (dict[str], optional): A dictionary with optional list of tests
                 to verify the output dataframe. If defined, triggers the `validate`
                 function from viadot.utils. Defaults to None.
@@ -89,9 +88,6 @@ def sap_rfc_to_df(  # noqa: PLR0913
 
     if query is None:
         msg = "Please provide the query."
-        raise ValueError(msg)
-    if rfc_unique_id is None:
-        msg = "Please provide rfc_unique_id. It is required for data consistency."
         raise ValueError(msg)
     logger = get_run_logger()
     logger.warning("If the column/set are not unique the table will be malformed.")
