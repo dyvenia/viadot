@@ -172,11 +172,12 @@ def transform_and_catalog(  # noqa: PLR0913
         if build_select:
             # If build task is used, run and test tasks are not needed.
             # Build task executes run and tests commands internally.
-            build_task = dbt_task.with_options(name="dbt_build", raise_on_failure=False)
+            build_task = dbt_task.with_options(name="dbt_build")
             build = build_task(
                 project_path=dbt_project_path_full,
                 command=f"build {build_select_safe} {dbt_target_option}",
                 wait_for=[pull_dbt_deps],
+                raise_on_failure=False,
             )
             upload_metadata_upstream_task = build
         else:
