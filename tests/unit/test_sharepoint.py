@@ -284,7 +284,7 @@ def test_invalid_excel_file(sharepoint):
 def test_mixed_file_extensions(sharepoint):
     url = "https://example.sharepoint.com/sites/site/Shared%20Documents/folder"
     with (
-        patch("sharepy.connect"),
+        patch("sharepy.connect") as mock_connect,
         patch.object(Sharepoint, "scan_sharepoint_folder") as mock_scan,
     ):
         mock_scan.return_value = [
@@ -297,10 +297,26 @@ def test_mixed_file_extensions(sharepoint):
         mock_response.content = create_excel_file()
         mock_session = MagicMock()
         mock_session.get.return_value = mock_response
-        mock_connect = patch("sharepy.connect", return_value=mock_session)
-        mock_connect.start()
-        df = sharepoint.to_df(url)
-        mock_connect.stop()
+        mock_connect.return_value = mock_session
+
+        # Mock _load_and_parse to track which files are processed
+        with patch.object(Sharepoint, "_load_and_parse") as mock_load_and_parse:
+            mock_load_and_parse.return_value = pd.DataFrame(
+                {
+                    "col_a": ["val1", "", "val2", "NA", "N/A", "#N/A"],
+                    "col_b": ["val1", "val2", "val3", "val4", "val5", "val6"],
+                }
+            )
+            df = sharepoint.to_df(url)
+
+            # Verify that _load_and_parse was only called for .xlsx files
+            mock_load_and_parse.assert_called_once_with(
+                file_url=url + "/file1.xlsx",
+                sheet_name=None,
+                na_values=None,
+                **{},
+            )
+
         assert not df.empty
         assert len(df) == 6
 
