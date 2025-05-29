@@ -71,7 +71,7 @@ def sharepoint_mock():
 def sharepoint():
     credentials = {
         "site": "https://example.sharepoint.com",
-        "username": "Danalytics@example.com",
+        "username": "email@example.com",
         "password": "password",
     }
     return Sharepoint(credentials=credentials)
