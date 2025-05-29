@@ -172,7 +172,7 @@ def transform_and_catalog(  # noqa: PLR0913
         if build_select:
             # If build task is used, run and test tasks are not needed.
             # Build task executes run and tests commands internally.
-            build_task = dbt_task.with_options(name="dbt_build")
+            build_task = dbt_task.with_options(name="dbt_build", raise_on_failure=False)
             build = build_task(
                 project_path=dbt_project_path_full,
                 command=f"build {build_select_safe} {dbt_target_option}",
@@ -216,6 +216,7 @@ def transform_and_catalog(  # noqa: PLR0913
         luma_url=luma_url,
         follow=luma_follow,
         wait_for=[allow_failure(upload_metadata_upstream_task)],
+        raise_on_failure=False
     )
 
     if run_results_storage_path:
@@ -245,9 +246,9 @@ def transform_and_catalog(  # noqa: PLR0913
 
     # Cleanup.
     wait_for = (
-        [allow_failure(upload_metadata), allow_failure(dump_test_results_to_s3)]
+        [upload_metadata, dump_test_results_to_s3]
         if run_results_storage_path
-        else [allow_failure(upload_metadata)]
+        else [upload_metadata]
     )
     remove_dbt_repo_dir(dbt_repo_name, wait_for=wait_for)
 
