@@ -16,12 +16,12 @@ from viadot.orchestration.prefect.utils import get_credentials
 
 @task(retries=3, retry_delay_seconds=10, timeout_seconds=60 * 60 * 3)
 def sap_rfc_to_df(  # noqa: PLR0913
+    rfc_unique_id: list[str],
     query: str | None = None,
     sep: str | None = None,
     func: str | None = None,
     replacement: str = "-",
     rfc_total_col_width_character_limit: int = 400,
-    rfc_unique_id: list[str],
     tests: dict[str, Any] | None = None,
     credentials_secret: str | None = None,
     credentials: dict[str, Any] | None = None,
