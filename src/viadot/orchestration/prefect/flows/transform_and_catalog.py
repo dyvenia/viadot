@@ -245,9 +245,9 @@ def transform_and_catalog(  # noqa: PLR0913
 
     # Cleanup.
     wait_for = (
-        [upload_metadata, dump_test_results_to_s3]
+        [allow_failure(upload_metadata), allow_failure(dump_test_results_to_s3)]
         if run_results_storage_path
-        else [upload_metadata]
+        else [allow_failure(upload_metadata)]
     )
     remove_dbt_repo_dir(dbt_repo_name, wait_for=wait_for)
 
