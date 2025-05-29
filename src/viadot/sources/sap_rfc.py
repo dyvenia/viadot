@@ -214,6 +214,8 @@ class SAPRFC(Source):
     - etc.
     """
 
+    COL_CHARACTER_WIDTH_LIMIT = 75
+
     def __init__(
         self,
         sep: str | None = None,
