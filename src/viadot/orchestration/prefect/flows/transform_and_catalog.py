@@ -5,7 +5,7 @@ from pathlib import Path
 import shutil
 from typing import Literal
 
-from prefect import flow, task
+from prefect import flow, task, allow_failure
 from prefect.logging import get_run_logger
 
 from viadot.orchestration.prefect.tasks import (
@@ -215,7 +215,7 @@ def transform_and_catalog(  # noqa: PLR0913
         metadata_dir_path=dbt_target_dir_path,
         luma_url=luma_url,
         follow=luma_follow,
-        wait_for=[upload_metadata_upstream_task],
+        wait_for=[allow_failure(upload_metadata_upstream_task)],
     )
 
     if run_results_storage_path:
@@ -238,7 +238,7 @@ def transform_and_catalog(  # noqa: PLR0913
         dump_test_results_to_s3 = s3_upload_file(
             from_path=str(dbt_target_dir_path / file_name),
             to_path=run_results_storage_path,
-            wait_for=[upload_metadata_upstream_task],
+            wait_for=[allow_failure(upload_metadata_upstream_task)],
             config_key=run_results_storage_config_key,
             credentials_secret=run_results_storage_credentials_secret,
         )
