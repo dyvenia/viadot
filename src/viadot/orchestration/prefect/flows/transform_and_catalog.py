@@ -180,7 +180,9 @@ def transform_and_catalog(  # noqa: PLR0913
                     wait_for=[pull_dbt_deps],
                 )
             except Exception as e:
-                logger.error(f"dbt build task encountered exception: {e}")
+                logger.error(f"{e}")
+                build = None
+            
             upload_metadata_upstream_task = build
         else:
             run_task = dbt_task.with_options(name="dbt_run")
