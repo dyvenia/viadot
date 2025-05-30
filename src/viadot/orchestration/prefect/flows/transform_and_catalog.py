@@ -173,11 +173,16 @@ def transform_and_catalog(  # noqa: PLR0913
             # If build task is used, run and test tasks are not needed.
             # Build task executes run and tests commands internally.
             build_task = dbt_task.with_options(name="dbt_build")
-            build = build_task(
-                project_path=dbt_project_path_full,
-                command=f"build {build_select_safe} {dbt_target_option}",
-                wait_for=[pull_dbt_deps],
-            )
+            try:
+                build = build_task(
+                    project_path=dbt_project_path_full,
+                    command=f"build {build_select_safe} {dbt_target_option}",
+                    wait_for=[pull_dbt_deps],
+                )
+            except Exception as e:
+                logger.error(f"{e}")
+                build = None
+            
             upload_metadata_upstream_task = build
         else:
             run_task = dbt_task.with_options(name="dbt_run")
@@ -216,6 +221,7 @@ def transform_and_catalog(  # noqa: PLR0913
         luma_url=luma_url,
         follow=luma_follow,
         wait_for=[upload_metadata_upstream_task],
+        raise_on_failure=False
     )
 
     if run_results_storage_path:
