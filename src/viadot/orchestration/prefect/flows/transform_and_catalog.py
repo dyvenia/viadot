@@ -6,7 +6,6 @@ import shutil
 from typing import Literal
 
 from prefect import flow, task
-from prefect.utilities.annotations import allow_failure
 from prefect.logging import get_run_logger
 
 from viadot.orchestration.prefect.tasks import (
@@ -174,11 +173,14 @@ def transform_and_catalog(  # noqa: PLR0913
             # If build task is used, run and test tasks are not needed.
             # Build task executes run and tests commands internally.
             build_task = dbt_task.with_options(name="dbt_build")
-            build = build_task(
-                project_path=dbt_project_path_full,
-                command=f"build {build_select_safe} {dbt_target_option}",
-                wait_for=[pull_dbt_deps],
-            )
+            try:
+                build = build_task(
+                    project_path=dbt_project_path_full,
+                    command=f"build {build_select_safe} {dbt_target_option}",
+                    wait_for=[pull_dbt_deps],
+                )
+            except Exception as e:
+                logger.error(f"dbt build task encountered exception: {e}")
             upload_metadata_upstream_task = build
         else:
             run_task = dbt_task.with_options(name="dbt_run")
@@ -216,7 +218,7 @@ def transform_and_catalog(  # noqa: PLR0913
         metadata_dir_path=dbt_target_dir_path,
         luma_url=luma_url,
         follow=luma_follow,
-        wait_for=[allow_failure(upload_metadata_upstream_task)],
+        wait_for=[upload_metadata_upstream_task],
         raise_on_failure=False
     )
 
@@ -240,7 +242,7 @@ def transform_and_catalog(  # noqa: PLR0913
         dump_test_results_to_s3 = s3_upload_file(
             from_path=str(dbt_target_dir_path / file_name),
             to_path=run_results_storage_path,
-            wait_for=[allow_failure(upload_metadata_upstream_task)],
+            wait_for=[upload_metadata_upstream_task],
             config_key=run_results_storage_config_key,
             credentials_secret=run_results_storage_credentials_secret,
         )
