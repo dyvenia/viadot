@@ -250,12 +250,6 @@ class Sharepoint(Source):
         dfs = []
         for file, sheet in file_sheet_mapping.items():
             file_url = url + file
-            file_extension = self._get_file_extension(file_url)
-            if file_extension != ".xlsx":
-                self.logger.error(
-                    f"Unsupported file extension: {file_extension} for file: {file_url}"
-                )
-                continue
             try:
                 df = self._load_and_parse(
                     file_url=file_url, sheet_name=sheet, na_values=na_values, **kwargs
