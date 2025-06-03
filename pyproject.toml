@@ -42,7 +42,7 @@ dependencies = [
     "smbprotocol>=1.15.0",
     "tabulate>=0.9.0",
     "prefect-slack<=0.2.7",
-    "prefect-shell=0.2.6"
+    "prefect-shell<=0.2.6"
 ]
 requires-python = ">=3.10"
 readme = "README.md"
