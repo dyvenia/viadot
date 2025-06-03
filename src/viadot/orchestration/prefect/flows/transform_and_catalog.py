@@ -180,9 +180,9 @@ def transform_and_catalog(  # noqa: PLR0913
                     wait_for=[pull_dbt_deps],
                 )
             except Exception as e:
-                logger.error(f"{e}")
+                logger.exception(e)
                 build = None
-            
+
             upload_metadata_upstream_task = build
         else:
             run_task = dbt_task.with_options(name="dbt_run")
@@ -221,7 +221,7 @@ def transform_and_catalog(  # noqa: PLR0913
         luma_url=luma_url,
         follow=luma_follow,
         wait_for=[upload_metadata_upstream_task],
-        raise_on_failure=False
+        raise_on_failure=False,
     )
 
     if run_results_storage_path:
@@ -257,4 +257,4 @@ def transform_and_catalog(  # noqa: PLR0913
     )
     remove_dbt_repo_dir(dbt_repo_name, wait_for=wait_for)
 
-    return remove_dbt_repo_dir
+    return remove_dbt_repo_dir if build else None
