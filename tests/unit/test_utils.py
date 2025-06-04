@@ -1,6 +1,7 @@
 from contextlib import nullcontext as does_not_raise
 import json
 import logging
+import re
 
 import pandas as pd
 import pytest
@@ -429,6 +430,7 @@ def test_handle_if_empty_invalid_value():
     """Test that handle_if_empty raises ValueError when an invalid if_empty value is provided."""  # noqa: W505
     invalid_value = "replace"
     expected_msg = f"Invalid value for if_empty: {invalid_value}. Allowed values are ['warn', 'skip', 'fail']."
+    escaped_msg = re.escape(expected_msg)  # Escape regex special chars
 
-    with pytest.raises(ValueError, match=expected_msg):
+    with pytest.raises(ValueError, match=escaped_msg):
         handle_if_empty(if_empty=invalid_value, message="This should fail.")  # type: ignore
