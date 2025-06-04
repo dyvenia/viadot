@@ -5,6 +5,7 @@ import logging
 import pandas as pd
 import pytest
 
+from viadot.signals import SKIP
 from viadot.utils import (
     _cast_df_cols,
     add_viadot_metadata_columns,
@@ -13,6 +14,7 @@ from viadot.utils import (
     gen_bulk_insert_query_from_df,
     get_fqn,
     handle_api_request,
+    handle_if_empty,
     validate,
     validate_and_reorder_dfs_columns,
 )
@@ -383,3 +385,41 @@ def test_df_clean_column():
     )
 
     pd.testing.assert_frame_equal(cleaned_all_df, expected_all_cleaned_df)
+
+
+def test_handle_if_empty_warn(caplog):
+    """Test that handle_if_empty logs a warning when if_empty='warn'."""
+    message = "Empty input detected."
+    caplog.set_level(logging.WARNING)
+
+    handle_if_empty(if_empty="warn", message=message)
+
+    assert message in caplog.text
+    assert "WARNING" in caplog.text
+
+
+def test_handle_if_empty_skip():
+    """Test that handle_if_empty raises SKIP exception when if_empty='skip'."""
+    message = "Skipping due to empty input."
+
+    with pytest.raises(SKIP, match=message):
+        handle_if_empty(if_empty="skip", message=message)
+
+
+def test_handle_if_empty_fail():
+    """Test that handle_if_empty raises ValueError when if_empty='fail'."""
+    message = "Failed due to empty input."
+
+    with pytest.raises(ValueError, match=message):
+        handle_if_empty(if_empty="fail", message=message)
+
+
+def test_handle_if_empty_default_logger(caplog):
+    """Test that handle_if_empty uses default logger when none is provided."""
+    message = "Empty input detected with default logger."
+    caplog.set_level(logging.WARNING)
+
+    handle_if_empty(if_empty="warn", message=message)
+
+    assert message in caplog.text
+    assert "WARNING" in caplog.text
