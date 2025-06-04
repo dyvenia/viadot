@@ -441,16 +441,20 @@ def handle_if_empty(
     """
     if not logger:
         logger = logging.getLogger(__name__)
+
+    allowed = ["warn", "skip", "fail"]
+    if if_empty not in allowed:
+        error_msg = (
+            f"Invalid value for if_empty: {if_empty}. Allowed values are {allowed}."
+        )
+        raise ValueError(error_msg)
+
     if if_empty == "warn":
         logger.warning(message)
     elif if_empty == "skip":
         raise SKIP(message)
     elif if_empty == "fail":
         raise ValueError(message)
-
-    allowed = ["warn", "skip", "fail"]
-    error_msg = f"Invalid value for if_empty: {if_empty}. Allowed values are {allowed}."
-    raise ValueError(error_msg)
 
 
 def cleanup_df(df: pd.DataFrame) -> pd.DataFrame:
