@@ -423,3 +423,12 @@ def test_handle_if_empty_default_logger(caplog):
 
     assert message in caplog.text
     assert "WARNING" in caplog.text
+
+
+def test_handle_if_empty_invalid_value():
+    """Test that handle_if_empty raises ValueError when an invalid if_empty value is provided."""
+    invalid_value = "replace"
+    expected_msg = f"Invalid value for if_empty: {invalid_value}. Allowed values are ['warn', 'skip', 'fail']."
+
+    with pytest.raises(ValueError, match=expected_msg):
+        handle_if_empty(if_empty=invalid_value, message="This should fail.")  # type: ignore
