@@ -426,7 +426,7 @@ def test_handle_if_empty_default_logger(caplog):
 
 
 def test_handle_if_empty_invalid_value():
-    """Test that handle_if_empty raises ValueError when an invalid if_empty value is provided."""
+    """Test that handle_if_empty raises ValueError when an invalid if_empty value is provided."""  # noqa: W505
     invalid_value = "replace"
     expected_msg = f"Invalid value for if_empty: {invalid_value}. Allowed values are ['warn', 'skip', 'fail']."
 
