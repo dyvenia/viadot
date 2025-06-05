@@ -7,6 +7,7 @@ from typing import Literal
 
 from prefect import flow, task
 from prefect.logging import get_run_logger
+from prefect.states import Failed
 
 from viadot.orchestration.prefect.tasks import (
     clone_repo,
@@ -156,6 +157,8 @@ def transform_and_catalog(  # noqa: PLR0913, PLR0915
     # Run dbt commands.
     dbt_target_option = f"-t {dbt_target}" if dbt_target is not None else ""
 
+    task_failed_flag = False
+
     if metadata_kind == "model_run":
         # Produce `run-results.json` artifact for Luma ingestion.
         if dbt_selects:
@@ -180,8 +183,10 @@ def transform_and_catalog(  # noqa: PLR0913, PLR0915
                     wait_for=[pull_dbt_deps],
                 )
             except Exception:
-                logger.exception("Build task failed.")
-                build = None
+                msg = "Build task failed."
+                logger.exception(msg)
+                build = msg
+                task_failed_flag = True
 
             upload_metadata_upstream_task = build
         else:
@@ -215,13 +220,19 @@ def transform_and_catalog(  # noqa: PLR0913, PLR0915
     if dbt_target_dir_path is None:
         dbt_target_dir_path = dbt_project_path_full / "target"
 
-    upload_metadata = luma_ingest_task(
-        metadata_kind=metadata_kind,
-        metadata_dir_path=dbt_target_dir_path,
-        luma_url=luma_url,
-        follow=luma_follow,
-        wait_for=[upload_metadata_upstream_task],
-    )
+    try:
+        upload_metadata = luma_ingest_task(
+            metadata_kind=metadata_kind,
+            metadata_dir_path=dbt_target_dir_path,
+            luma_url=luma_url,
+            follow=luma_follow,
+            wait_for=[upload_metadata_upstream_task],
+        )
+    except Exception:
+        msg = "Luma ingest task failed."
+        logger.exception(msg)
+        upload_metadata = msg
+        task_failed_flag = True
 
     if run_results_storage_path:
         # Set the file path to include date info.
@@ -240,13 +251,19 @@ def transform_and_catalog(  # noqa: PLR0913, PLR0915
         )
         logger.info(f"Uploading run results to {run_results_storage_path}")
         # Upload the file to s3.
-        dump_test_results_to_s3 = s3_upload_file(
-            from_path=str(dbt_target_dir_path / file_name),
-            to_path=run_results_storage_path,
-            wait_for=[upload_metadata_upstream_task],
-            config_key=run_results_storage_config_key,
-            credentials_secret=run_results_storage_credentials_secret,
-        )
+        try:
+            dump_test_results_to_s3 = s3_upload_file(
+                from_path=str(dbt_target_dir_path / file_name),
+                to_path=run_results_storage_path,
+                wait_for=[upload_metadata_upstream_task],
+                config_key=run_results_storage_config_key,
+                credentials_secret=run_results_storage_credentials_secret,
+            )
+        except Exception:
+            msg = "S3 upload file task failed."
+            logger.exception(msg)
+            dump_test_results_to_s3 = msg
+            task_failed_flag = True
 
     # Cleanup.
     wait_for = (
@@ -256,4 +273,4 @@ def transform_and_catalog(  # noqa: PLR0913, PLR0915
     )
     remove_dbt_repo_dir(dbt_repo_name, wait_for=wait_for)
 
-    return remove_dbt_repo_dir if build else None
+    return Failed() if task_failed_flag else remove_dbt_repo_dir
