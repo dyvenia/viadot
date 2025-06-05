@@ -180,7 +180,7 @@ def transform_and_catalog(  # noqa: PLR0913, PLR0915
                     wait_for=[pull_dbt_deps],
                 )
             except Exception:
-                logger.exception()
+                logger.exception("Build task failed.")
                 build = None
 
             upload_metadata_upstream_task = build
