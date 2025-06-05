@@ -32,7 +32,7 @@ def remove_dbt_repo_dir(dbt_repo_dir_name: str) -> None:
     description="Build specified dbt model(s) and upload generated metadata to Luma.",
     timeout_seconds=2 * 60 * 60,
 )
-def transform_and_catalog(  # noqa: PLR0913
+def transform_and_catalog(  # noqa: PLR0913, PLR0915
     dbt_repo_url: str | None = None,
     dbt_repo_url_secret: str | None = None,
     dbt_project_path: str = "dbt",
@@ -179,8 +179,8 @@ def transform_and_catalog(  # noqa: PLR0913
                     command=f"build {build_select_safe} {dbt_target_option}",
                     wait_for=[pull_dbt_deps],
                 )
-            except Exception as e:
-                logger.exception(e)
+            except Exception:
+                logger.exception()
                 build = None
 
             upload_metadata_upstream_task = build
@@ -221,7 +221,6 @@ def transform_and_catalog(  # noqa: PLR0913
         luma_url=luma_url,
         follow=luma_follow,
         wait_for=[upload_metadata_upstream_task],
-        raise_on_failure=False,
     )
 
     if run_results_storage_path:
