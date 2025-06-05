@@ -157,7 +157,7 @@ def transform_and_catalog(  # noqa: PLR0913, PLR0915
     # Run dbt commands.
     dbt_target_option = f"-t {dbt_target}" if dbt_target is not None else ""
 
-    task_failed_flag = False
+    task_failed = False
 
     if metadata_kind == "model_run":
         # Produce `run-results.json` artifact for Luma ingestion.
@@ -186,7 +186,7 @@ def transform_and_catalog(  # noqa: PLR0913, PLR0915
                 msg = "Build task failed."
                 logger.exception(msg)
                 build = msg
-                task_failed_flag = True
+                task_failed = True
 
             upload_metadata_upstream_task = build
         else:
@@ -232,7 +232,7 @@ def transform_and_catalog(  # noqa: PLR0913, PLR0915
         msg = "Luma ingest task failed."
         logger.exception(msg)
         upload_metadata = msg
-        task_failed_flag = True
+        task_failed = True
 
     if run_results_storage_path:
         # Set the file path to include date info.
@@ -263,7 +263,7 @@ def transform_and_catalog(  # noqa: PLR0913, PLR0915
             msg = "S3 upload file task failed."
             logger.exception(msg)
             dump_test_results_to_s3 = msg
-            task_failed_flag = True
+            task_failed = True
 
     # Cleanup.
     wait_for = (
@@ -273,4 +273,4 @@ def transform_and_catalog(  # noqa: PLR0913, PLR0915
     )
     remove_dbt_repo_dir(dbt_repo_name, wait_for=wait_for)
 
-    return Failed() if task_failed_flag else remove_dbt_repo_dir
+    return Failed() if task_failed else remove_dbt_repo_dir
