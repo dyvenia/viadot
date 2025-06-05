@@ -199,9 +199,6 @@ def _gen_split(data: Iterable[str], sep: str, record_key: str) -> Iterator[list[
 class SAPRFC(Source):
     """A class for querying SAP with SQL using the RFC protocol.
 
-    This is mostly a copy of SAPRFC, with some unidentified modifications that should
-    have probably been added as features to the SAPRFC source.
-
     Note that only a very limited subset of SQL is supported:
     - aliases
     - where clauses combined using the AND operator
