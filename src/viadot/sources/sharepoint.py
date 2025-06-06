@@ -1,5 +1,6 @@
 """Sharepoint API connector."""
 
+from http import HTTPStatus
 import io
 from pathlib import Path
 import re
@@ -175,10 +176,26 @@ class Sharepoint(Source):
         conn = self.get_connection()
 
         self.logger.info(f"Downloading data from {url}...")
-        response = conn.get(url)
+        try:
+            response = conn.get(url)
+            response.raise_for_status()  # Raise an exception for HTTP errors
+        except requests.exceptions.HTTPError as e:
+            if e.response.status_code == HTTPStatus.FORBIDDEN:
+                self.logger.exception(f"Access denied to file: {url}")
+            else:
+                self.logger.exception(f"HTTP error when accessing {url}")
+            raise
+        except Exception:
+            self.logger.exception(f"Failed to download file: {url}")
+            raise
+
         bytes_stream = io.BytesIO(response.content)
 
-        return pd.ExcelFile(bytes_stream)
+        try:
+            return pd.ExcelFile(bytes_stream)
+        except ValueError:
+            self.logger.exception(f"Invalid Excel file: {url}")
+            raise
 
     def _is_file(self, url: str) -> bool:
         """Determines whether a provided URL points to a file based on its structure.
@@ -230,12 +247,20 @@ class Sharepoint(Source):
         Raises:
             ValueError: If the file extension is not supported.
         """
-        dfs = [
-            self._load_and_parse(
-                file_url=url + file, sheet_name=sheet, na_values=na_values, **kwargs
-            )
-            for file, sheet in file_sheet_mapping.items()
-        ]
+        dfs = []
+        for file, sheet in file_sheet_mapping.items():
+            file_url = url + file
+            try:
+                df = self._load_and_parse(
+                    file_url=file_url, sheet_name=sheet, na_values=na_values, **kwargs
+                )
+                dfs.append(df)
+            except Exception:
+                self.logger.exception(f"Failed to load file: {file_url}")
+                continue
+        if not dfs:
+            self.logger.warning("No valid Excel files were loaded.")
+            return pd.DataFrame()
         return pd.concat(validate_and_reorder_dfs_columns(dfs))
 
     def _load_and_parse(
@@ -261,12 +286,14 @@ class Sharepoint(Source):
             ValueError: If the file extension is not supported.
         """
         file_extension = self._get_file_extension(file_url)
+        if file_extension != ".xlsx":
+            self.logger.error(
+                f"Unsupported file extension: {file_extension} for file: {file_url}"
+            )
+            msg = "Only Excel (.xlsx) files are supported."
+            raise ValueError(msg)
         file_stream = self._download_file_stream(file_url)
-
-        if file_extension == ".xlsx":
-            return self._parse_excel(file_stream, sheet_name, na_values, **kwargs)
-        msg = "Only Excel (.xlsx) files can be loaded into a DataFrame."
-        raise ValueError(msg)
+        return self._parse_excel(file_stream, sheet_name, na_values, **kwargs)
 
     def _parse_excel(
         self,
@@ -364,6 +391,14 @@ class Sharepoint(Source):
             )
         else:
             list_of_urls = self.scan_sharepoint_folder(url)
+            excel_urls = [
+                file_url
+                for file_url in list_of_urls
+                if self._get_file_extension(file_url) == ".xlsx"
+            ]
+            if not excel_urls:
+                self.logger.warning(f"No Excel files found in folder: {url}")
+                return pd.DataFrame()
             dfs = [
                 self._load_and_parse(
                     file_url=file_url,
@@ -371,7 +406,7 @@ class Sharepoint(Source):
                     na_values=na_values,
                     **kwargs,
                 )
-                for file_url in list_of_urls
+                for file_url in excel_urls
             ]
             df = pd.concat(validate_and_reorder_dfs_columns(dfs))
 
