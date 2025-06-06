@@ -48,7 +48,6 @@ def transform_and_catalog(  # noqa: PLR0913, PLR0915
     run_results_storage_path: str | None = None,
     run_results_storage_config_key: str | None = None,
     run_results_storage_credentials_secret: str | None = None,
-    fail_tests: bool = False,
 ) -> list[str]:
     """Build specified dbt model(s) and upload the generated metadata to Luma.
 
@@ -182,8 +181,6 @@ def transform_and_catalog(  # noqa: PLR0913, PLR0915
                     project_path=dbt_project_path_full,
                     command=f"build {build_select_safe} {dbt_target_option}",
                     wait_for=[pull_dbt_deps],
-                    raise_on_failure=fail_tests,
-                    return_all=True,
                 )
             except Exception:
                 msg = "Build task failed."
@@ -275,8 +272,5 @@ def transform_and_catalog(  # noqa: PLR0913, PLR0915
         else [upload_metadata]
     )
     remove_dbt_repo_dir(dbt_repo_name, wait_for=wait_for)
-
-    logger.info(build[-1])
-    logger.info(build[-2])
 
     return Failed() if task_failed else remove_dbt_repo_dir
