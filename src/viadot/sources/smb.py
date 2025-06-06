@@ -1,6 +1,7 @@
 """SMB (file-sharing protocol) connector."""
 
 from pathlib import Path
+import re
 
 import pendulum
 from pydantic import BaseModel, SecretStr, root_validator
@@ -301,8 +302,13 @@ class SMB(Source):
             isinstance(ext, str) and name_lower.endswith(ext.lower())
             for ext in extension_list
         )
-        matches_keyword = not keyword_list or any(
-            isinstance(kw, str) and kw.lower() in name_lower for kw in keyword_list
+
+        matches_keyword = (
+            True
+            if not keyword_list
+            else any(
+                self._safe_regex_match(pattern, name_lower) for pattern in keyword_list
+            )
         )
 
         if not matches_extension or not matches_keyword:
@@ -319,6 +325,26 @@ class SMB(Source):
                 return start_date <= file_creation_date <= end_date
 
         return True
+
+    def _safe_regex_match(self, pattern: str, text: str) -> bool:
+        """Evaluate whether a regex pattern matches given text (case-insensitive).
+
+        This method wraps `re.search` with error handling to catch and log invalid regex
+        patterns without interrupting execution.
+
+        Args:
+        pattern (str): The regular expression pattern to match against.
+        text (str): The input string to search within.
+
+        Returns:
+            bool: True if the pattern matches the text; False if it does not match
+                or if the pattern is invalid.
+        """
+        try:
+            return re.search(pattern, text, re.IGNORECASE) is not None
+        except re.error as e:
+            self.logger.warning(f"Invalid regex pattern: {pattern} — Error: {e}")
+            return False
 
     def save_files_locally(
         self, file_data: dict[str, bytes], destination_dir: str
