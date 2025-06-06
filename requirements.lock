@@ -261,10 +261,13 @@ platformdirs==4.3.6
     # via zeep
 prefect==2.20.18
     # via prefect-github
+    # via prefect-shell
     # via prefect-slack
     # via prefect-sqlalchemy
     # via viadot2
 prefect-github==0.2.7
+    # via viadot2
+prefect-shell==0.2.6
     # via viadot2
 prefect-slack==0.2.7
     # via viadot2
