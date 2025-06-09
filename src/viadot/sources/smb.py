@@ -333,8 +333,8 @@ class SMB(Source):
         patterns without interrupting execution.
 
         Args:
-        pattern (str): The regular expression pattern to match against.
-        text (str): The input string to search within.
+            pattern (str): The regular expression pattern to match against.
+            text (str): The input string to search within.
 
         Returns:
             bool: True if the pattern matches the text; False if it does not match
