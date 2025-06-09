@@ -280,7 +280,7 @@ def transform_and_catalog(  # noqa: PLR0913, PLR0915
     if task_failed:
         return Failed()
 
-    if fail_flow_on_test_failure:
+    if not fail_flow_on_test_failure:
         model_error_pattern = re.compile(
             r"ERROR creating sql table model", re.IGNORECASE
         )
