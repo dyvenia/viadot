@@ -34,7 +34,7 @@ def remove_dbt_repo_dir(dbt_repo_dir_name: str) -> None:
     description="Build specified dbt model(s) and upload generated metadata to Luma.",
     timeout_seconds=2 * 60 * 60,
 )
-def transform_and_catalog(  # noqa: PLR0913, PLR0915
+def transform_and_catalog(  # noqa: PLR0912, PLR0913, PLR0915, C901
     dbt_repo_url: str | None = None,
     dbt_repo_url_secret: str | None = None,
     dbt_project_path: str = "dbt",
@@ -98,6 +98,9 @@ def transform_and_catalog(  # noqa: PLR0913, PLR0915
             holding AWS credentials. Defaults to None.
         run_results_storage_credentials_secret (str, optional): The name of the secret
             block in Prefect holding AWS credentials. Defaults to None.
+        fail_flow_on_test_failure (bool): Whether to finish the flow in state Failed()
+            on tests failure. If set to False, if tests fail, but models refresh
+            properly, flow will finish in state Completed(). Defaults to True.
 
     Returns:
         list[str]: Lines from stdout of the `upload_metadata` task as a list.
