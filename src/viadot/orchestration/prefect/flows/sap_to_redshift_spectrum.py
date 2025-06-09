@@ -25,13 +25,13 @@ def sap_to_redshift_spectrum(  # noqa: PLR0913
     compression: str | None = None,
     aws_sep: str = ",",
     description: str = "test",
+    sap_sep: str = "♔",
     dynamic_date_symbols: list[str] = ["<<", ">>"],  # noqa: B006
     dynamic_date_format: str = "%Y%m%d",
     dynamic_date_timezone: str = "UTC",
     credentials_secret: str | None = None,
     aws_config_key: str | None = None,
     query: str | None = None,
-    sap_sep: str | None = None,
     func: str | None = None,
     rfc_total_col_width_character_limit: int = 400,
     rfc_unique_id: list[str] | None = None,
@@ -61,6 +61,9 @@ def sap_to_redshift_spectrum(  # noqa: PLR0913
         compression (str, optional): Compression style (None, snappy, gzip, zstd).
         aws_sep (str, optional): Field delimiter for the output file. Defaults to ','.
         description (str, optional): AWS Glue catalog table description.
+        sap_sep (str, optional): The separator to use when reading query results.
+            If not provided, multiple options are automatically tried.
+            Defaults to ♔.
         dynamic_date_symbols (list[str], optional): Symbols used for dynamic date
             handling. Defaults to ["<<", ">>"].
         dynamic_date_format (str, optional): Format used for dynamic date parsing.
@@ -72,9 +75,6 @@ def sap_to_redshift_spectrum(  # noqa: PLR0913
         credentials_secret (str, optional): The name of a secret block in Prefect
             that stores AWS credentials. Defaults to None.
         query (str): The query to be executed with pyRFC.
-        sap_sep (str, optional): The separator to use when reading query results.
-            If not provided, multiple options are automatically tried.
-            Defaults to None.
         func (str, optional): SAP RFC function to use. Defaults to None.
         rfc_total_col_width_character_limit (int, optional): Number of characters by
             which query will be split in chunks in case of too many columns for RFC

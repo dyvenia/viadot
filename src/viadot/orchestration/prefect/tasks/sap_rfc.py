@@ -18,7 +18,7 @@ from viadot.orchestration.prefect.utils import get_credentials
 def sap_rfc_to_df(  # noqa: PLR0913
     rfc_unique_id: list[str],
     query: str | None = None,
-    sep: str | None = None,
+    sep: str = "♔",
     func: str | None = None,
     replacement: str = "-",
     rfc_total_col_width_character_limit: int = 400,
@@ -46,7 +46,7 @@ def sap_rfc_to_df(  # noqa: PLR0913
     Args:
         query (str): The query to be executed with pyRFC.
         sep (str, optional): The separator to use when reading query results. If not
-            provided, multiple options are automatically tried. Defaults to None.
+            provided, multiple options are automatically tried. Defaults to ♔.
         func (str, optional): SAP RFC function to use. Defaults to None.
         replacement (str, optional): In case of sep is on a columns, set up a new
             character to replace inside the string to avoid flow breakdowns. Defaults to
