@@ -277,14 +277,14 @@ def transform_and_catalog(  # noqa: PLR0913, PLR0915
     )
     remove_dbt_repo_dir(dbt_repo_name, wait_for=wait_for)
 
-    if not fail_flow_on_test_failure:
+    if task_failed:
+        return Failed()
+
+    if fail_flow_on_test_failure:
         model_error_pattern = re.compile(
             r"ERROR creating sql table model", re.IGNORECASE
         )
+        if any(model_error_pattern.search(line) for line in build):
+            return Failed("One or more models failed to build.")
 
-        for line in build:
-            if model_error_pattern.search(line):
-                return Failed("One or more models failed to build.")
-        return remove_dbt_repo_dir
-
-    return Failed() if task_failed else remove_dbt_repo_dir
+    return remove_dbt_repo_dir
