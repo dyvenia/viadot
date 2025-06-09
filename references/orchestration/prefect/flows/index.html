@@ -10826,7 +10826,7 @@ Defaults to False.</p>
 
 
 <h3 id="viadot.orchestration.prefect.flows.sap_to_parquet.sap_to_parquet" class="doc doc-heading">
-            <code class="highlight language-python"><span class="n">sap_to_parquet</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">if_exists</span><span class="o">=</span><span class="s1">&#39;replace&#39;</span><span class="p">,</span> <span class="n">query</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">func</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">sap_sep</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">rfc_total_col_width_character_limit</span><span class="o">=</span><span class="mi">400</span><span class="p">,</span> <span class="n">rfc_unique_id</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">sap_credentials_secret</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">sap_config_key</span><span class="o">=</span><span class="s1">&#39;SAP&#39;</span><span class="p">,</span> <span class="n">alternative_version</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">replacement</span><span class="o">=</span><span class="s1">&#39;-&#39;</span><span class="p">)</span></code>
+            <code class="highlight language-python"><span class="n">sap_to_parquet</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">if_exists</span><span class="o">=</span><span class="s1">&#39;replace&#39;</span><span class="p">,</span> <span class="n">query</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">func</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">sap_sep</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">rfc_total_col_width_character_limit</span><span class="o">=</span><span class="mi">400</span><span class="p">,</span> <span class="n">rfc_unique_id</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">sap_credentials_secret</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">sap_config_key</span><span class="o">=</span><span class="s1">&#39;SAP&#39;</span><span class="p">,</span> <span class="n">replacement</span><span class="o">=</span><span class="s1">&#39;-&#39;</span><span class="p">)</span></code>
 
 </h3>
 
@@ -11006,23 +11006,6 @@ credentials. Defaults to "SAP".</p>
           </tr>
           <tr class="doc-section-item">
             <td>
-                <code>alternative_version</code>
-            </td>
-            <td>
-                  <code><span title="bool">bool</span></code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>If true, enables the use of SAPRFC source
-in version 2. Defaults to False.</p>
-              </div>
-            </td>
-            <td>
-                  <code>False</code>
-            </td>
-          </tr>
-          <tr class="doc-section-item">
-            <td>
                 <code>replacement</code>
             </td>
             <td>
@@ -11107,17 +11090,13 @@ Defaults to "-".</p>
 <span class="normal">70</span>
 <span class="normal">71</span>
 <span class="normal">72</span>
-<span class="normal">73</span>
-<span class="normal">74</span>
-<span class="normal">75</span>
-<span class="normal">76</span>
-<span class="normal">77</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@flow</span><span class="p">(</span>
+<span class="normal">73</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@flow</span><span class="p">(</span>
     <span class="n">name</span><span class="o">=</span><span class="s2">&quot;extract--sap--parquet&quot;</span><span class="p">,</span>
     <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Extract data from SAP and load it into Parquet file&quot;</span><span class="p">,</span>
     <span class="n">retries</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
     <span class="n">retry_delay_seconds</span><span class="o">=</span><span class="mi">60</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="k">def</span> <span class="nf">sap_to_parquet</span><span class="p">(</span>  <span class="c1"># noqa: PLR0913</span>
+<span class="k">def</span> <span class="nf">sap_to_parquet</span><span class="p">(</span>
     <span class="n">path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
     <span class="n">if_exists</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;append&quot;</span><span class="p">,</span> <span class="s2">&quot;replace&quot;</span><span class="p">,</span> <span class="s2">&quot;skip&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;replace&quot;</span><span class="p">,</span>
     <span class="n">query</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
@@ -11127,7 +11106,6 @@ Defaults to "-".</p>
     <span class="n">rfc_unique_id</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">sap_credentials_secret</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">sap_config_key</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;SAP&quot;</span><span class="p">,</span>
-    <span class="n">alternative_version</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
     <span class="n">replacement</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;-&quot;</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Download a pandas `DataFrame` from SAP load it into Parquet file.</span>
@@ -11155,8 +11133,6 @@ Defaults to "-".</p>
 <span class="sd">            stores SAP credentials. Defaults to None.</span>
 <span class="sd">        sap_config_key (str, optional): The key in the viadot config holding relevant</span>
 <span class="sd">            credentials. Defaults to &quot;SAP&quot;.</span>
-<span class="sd">        alternative_version (bool, optional): If true, enables the use of SAPRFC source</span>
-<span class="sd">            in version 2. Defaults to False.</span>
 <span class="sd">        replacement (str, optional): In case of sep is on a columns, set up a new</span>
 <span class="sd">            character to replace inside the string to avoid flow breakdowns.</span>
 <span class="sd">            Defaults to &quot;-&quot;.</span>
@@ -11170,7 +11146,6 @@ Defaults to "-".</p>
         <span class="n">rfc_unique_id</span><span class="o">=</span><span class="n">rfc_unique_id</span><span class="p">,</span>
         <span class="n">config_key</span><span class="o">=</span><span class="n">sap_config_key</span><span class="p">,</span>
         <span class="n">credentials_secret</span><span class="o">=</span><span class="n">sap_credentials_secret</span><span class="p">,</span>
-        <span class="n">alternative_version</span><span class="o">=</span><span class="n">alternative_version</span><span class="p">,</span>
     <span class="p">)</span>
 
     <span class="k">return</span> <span class="n">df_to_parquet</span><span class="p">(</span>
@@ -11228,7 +11203,7 @@ Defaults to "-".</p>
 
 
 <h3 id="viadot.orchestration.prefect.flows.sap_to_redshift_spectrum.sap_to_redshift_spectrum" class="doc doc-heading">
-            <code class="highlight language-python"><span class="n">sap_to_redshift_spectrum</span><span class="p">(</span><span class="n">to_path</span><span class="p">,</span> <span class="n">schema_name</span><span class="p">,</span> <span class="n">table</span><span class="p">,</span> <span class="n">tests</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">extension</span><span class="o">=</span><span class="s1">&#39;.parquet&#39;</span><span class="p">,</span> <span class="n">if_exists</span><span class="o">=</span><span class="s1">&#39;overwrite&#39;</span><span class="p">,</span> <span class="n">partition_cols</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">compression</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">aws_sep</span><span class="o">=</span><span class="s1">&#39;,&#39;</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s1">&#39;test&#39;</span><span class="p">,</span> <span class="n">dynamic_date_symbols</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;&lt;&lt;&#39;</span><span class="p">,</span> <span class="s1">&#39;&gt;&gt;&#39;</span><span class="p">],</span> <span class="n">dynamic_date_format</span><span class="o">=</span><span class="s1">&#39;%Y%m</span><span class="si">%d</span><span class="s1">&#39;</span><span class="p">,</span> <span class="n">dynamic_date_timezone</span><span class="o">=</span><span class="s1">&#39;UTC&#39;</span><span class="p">,</span> <span class="n">credentials_secret</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">aws_config_key</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">query</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">sap_sep</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">func</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">rfc_total_col_width_character_limit</span><span class="o">=</span><span class="mi">400</span><span class="p">,</span> <span class="n">rfc_unique_id</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">sap_credentials_secret</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">sap_config_key</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">alternative_version</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">replacement</span><span class="o">=</span><span class="s1">&#39;-&#39;</span><span class="p">)</span></code>
+            <code class="highlight language-python"><span class="n">sap_to_redshift_spectrum</span><span class="p">(</span><span class="n">to_path</span><span class="p">,</span> <span class="n">schema_name</span><span class="p">,</span> <span class="n">table</span><span class="p">,</span> <span class="n">tests</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">extension</span><span class="o">=</span><span class="s1">&#39;.parquet&#39;</span><span class="p">,</span> <span class="n">if_exists</span><span class="o">=</span><span class="s1">&#39;overwrite&#39;</span><span class="p">,</span> <span class="n">partition_cols</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">compression</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">aws_sep</span><span class="o">=</span><span class="s1">&#39;,&#39;</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s1">&#39;test&#39;</span><span class="p">,</span> <span class="n">dynamic_date_symbols</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;&lt;&lt;&#39;</span><span class="p">,</span> <span class="s1">&#39;&gt;&gt;&#39;</span><span class="p">],</span> <span class="n">dynamic_date_format</span><span class="o">=</span><span class="s1">&#39;%Y%m</span><span class="si">%d</span><span class="s1">&#39;</span><span class="p">,</span> <span class="n">dynamic_date_timezone</span><span class="o">=</span><span class="s1">&#39;UTC&#39;</span><span class="p">,</span> <span class="n">credentials_secret</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">aws_config_key</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">query</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">sap_sep</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">func</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">rfc_total_col_width_character_limit</span><span class="o">=</span><span class="mi">400</span><span class="p">,</span> <span class="n">rfc_unique_id</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">sap_credentials_secret</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">sap_config_key</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">replacement</span><span class="o">=</span><span class="s1">&#39;-&#39;</span><span class="p">)</span></code>
 
 </h3>
 
@@ -11657,23 +11632,6 @@ credentials. Defaults to None.</p>
           </tr>
           <tr class="doc-section-item">
             <td>
-                <code>alternative_version</code>
-            </td>
-            <td>
-                  <code><span title="bool">bool</span></code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>Enable the use version 2 in source.
-Defaults to False.</p>
-              </div>
-            </td>
-            <td>
-                  <code>False</code>
-            </td>
-          </tr>
-          <tr class="doc-section-item">
-            <td>
                 <code>replacement</code>
             </td>
             <td>
@@ -11825,11 +11783,7 @@ Defaults to "-".</p>
 <span class="normal">128</span>
 <span class="normal">129</span>
 <span class="normal">130</span>
-<span class="normal">131</span>
-<span class="normal">132</span>
-<span class="normal">133</span>
-<span class="normal">134</span>
-<span class="normal">135</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@flow</span><span class="p">(</span>
+<span class="normal">131</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@flow</span><span class="p">(</span>
     <span class="n">name</span><span class="o">=</span><span class="s2">&quot;extract--sap--redshift_spectrum&quot;</span><span class="p">,</span>
     <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Extract data from SAP and load it into AWS Redshift Spectrum.&quot;</span><span class="p">,</span>
     <span class="n">retries</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
@@ -11859,7 +11813,6 @@ Defaults to "-".</p>
     <span class="n">rfc_unique_id</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">sap_credentials_secret</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">sap_config_key</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-    <span class="n">alternative_version</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
     <span class="n">replacement</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;-&quot;</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Download a pandas `DataFrame` from SAP and upload it to AWS Redshift Spectrum.</span>
@@ -11911,8 +11864,6 @@ Defaults to "-".</p>
 <span class="sd">            SAP credentials. Defaults to None.</span>
 <span class="sd">        sap_config_key (str, optional): The key in the viadot config holding relevant</span>
 <span class="sd">            credentials. Defaults to None.</span>
-<span class="sd">        alternative_version (bool, optional): Enable the use version 2 in source.</span>
-<span class="sd">            Defaults to False.</span>
 <span class="sd">        replacement (str, optional): In case of sep is on a columns, set up a new</span>
 <span class="sd">            character to replace inside the string to avoid flow breakdowns.</span>
 <span class="sd">            Defaults to &quot;-&quot;.</span>
@@ -11933,7 +11884,6 @@ Defaults to "-".</p>
         <span class="n">rfc_total_col_width_character_limit</span><span class="o">=</span><span class="n">rfc_total_col_width_character_limit</span><span class="p">,</span>
         <span class="n">credentials_secret</span><span class="o">=</span><span class="n">sap_credentials_secret</span><span class="p">,</span>
         <span class="n">config_key</span><span class="o">=</span><span class="n">sap_config_key</span><span class="p">,</span>
-        <span class="n">alternative_version</span><span class="o">=</span><span class="n">alternative_version</span><span class="p">,</span>
         <span class="n">replacement</span><span class="o">=</span><span class="n">replacement</span><span class="p">,</span>
         <span class="n">dynamic_date_symbols</span><span class="o">=</span><span class="n">dynamic_date_symbols</span><span class="p">,</span>
         <span class="n">dynamic_date_format</span><span class="o">=</span><span class="n">dynamic_date_format</span><span class="p">,</span>
@@ -16884,7 +16834,7 @@ before a timeout occurs. Defaults to 3600.</p>
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    2025-05-20
+    2025-06-09
   </span>
 
     
