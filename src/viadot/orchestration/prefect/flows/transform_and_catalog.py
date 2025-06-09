@@ -285,6 +285,6 @@ def transform_and_catalog(  # noqa: PLR0913, PLR0915
             r"ERROR creating sql table model", re.IGNORECASE
         )
         if any(model_error_pattern.search(line) for line in build):
-            return Failed("One or more models failed to build.")
+            return Failed(message="One or more models failed to build.")
 
     return remove_dbt_repo_dir
