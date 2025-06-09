@@ -2,6 +2,7 @@
 
 from datetime import datetime, timezone
 from pathlib import Path
+import re
 import shutil
 from typing import Literal
 
@@ -48,6 +49,7 @@ def transform_and_catalog(  # noqa: PLR0913, PLR0915
     run_results_storage_path: str | None = None,
     run_results_storage_config_key: str | None = None,
     run_results_storage_credentials_secret: str | None = None,
+    fail_flow_on_test_failure: bool = True,
 ) -> list[str]:
     """Build specified dbt model(s) and upload the generated metadata to Luma.
 
@@ -181,6 +183,8 @@ def transform_and_catalog(  # noqa: PLR0913, PLR0915
                     project_path=dbt_project_path_full,
                     command=f"build {build_select_safe} {dbt_target_option}",
                     wait_for=[pull_dbt_deps],
+                    raise_on_failure=fail_flow_on_test_failure,
+                    return_all=True,
                 )
             except Exception:
                 msg = "Build task failed."
@@ -273,4 +277,14 @@ def transform_and_catalog(  # noqa: PLR0913, PLR0915
     )
     remove_dbt_repo_dir(dbt_repo_name, wait_for=wait_for)
 
-    return Failed() if task_failed else remove_dbt_repo_dir
+    if task_failed:
+        return Failed()
+
+    if not fail_flow_on_test_failure:
+        model_error_pattern = re.compile(
+            r"ERROR creating sql table model", re.IGNORECASE
+        )
+        if any(model_error_pattern.search(line) for line in build):
+            return Failed(message="One or more models failed to build.")
+
+    return remove_dbt_repo_dir
