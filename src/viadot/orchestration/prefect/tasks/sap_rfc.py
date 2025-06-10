@@ -18,7 +18,7 @@ from viadot.orchestration.prefect.utils import get_credentials
 def sap_rfc_to_df(  # noqa: PLR0913
     rfc_unique_id: list[str],
     query: str | None = None,
-    sep: str = "♔",
+    sep: str | None = "♔",
     func: str | None = None,
     replacement: str = "-",
     rfc_total_col_width_character_limit: int = 400,

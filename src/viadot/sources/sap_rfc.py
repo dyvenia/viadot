@@ -215,7 +215,7 @@ class SAPRFC(Source):
 
     def __init__(
         self,
-        sep: str = "♔",
+        sep: str | None = "♔",
         replacement: str = "-",
         func: str = "RFC_READ_TABLE",
         rfc_total_col_width_character_limit: int = 400,

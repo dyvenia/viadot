@@ -36,7 +36,7 @@ def sap_to_redshift_spectrum(  # noqa: PLR0913
     rfc_unique_id: list[str] | None = None,
     sap_credentials_secret: str | None = None,
     sap_config_key: str | None = None,
-    sap_sep: str = "♔",
+    sap_sep: str | None = "♔",
     replacement: str = "-",
 ) -> None:
     """Download a pandas `DataFrame` from SAP and upload it to AWS Redshift Spectrum.
