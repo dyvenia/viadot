@@ -1,7 +1,5 @@
 import logging
 from pathlib import Path
-import shutil
-import tempfile
 from unittest.mock import MagicMock, mock_open, patch
 
 import pendulum
@@ -50,14 +48,6 @@ def mock_smb_dir_entry_dir():
     return mock
 
 
-def setup_temp_dir():
-    return tempfile.mkdtemp()
-
-
-def teardown_temp_dir(temp_dir):
-    shutil.rmtree(temp_dir)
-
-
 def test_smb_initialization_with_credentials(valid_credentials):
     smb = SMB(base_path=SERVER_PATH, credentials=valid_credentials)
     assert smb.credentials["username"] == "default@example.com"
@@ -73,15 +63,15 @@ def test_smb_initialization_without_credentials():
 
 
 @pytest.mark.parametrize(
-    ("keywords", "extensions", "date_filter"),
+    ("filename_regex", "extensions", "date_filter"),
     [
-        (None, None, "<<pendulum.yesterday().date()>>"),
+        ([None], None, "<<pendulum.yesterday().date()>>"),
         (["keyword1"], None, "<<pendulum.yesterday().date()>>"),
-        (None, [".txt"], "<<pendulum.yesterday().date()>>"),
+        ([None], [".txt"], "<<pendulum.yesterday().date()>>"),
         (["keyword1"], [".txt"], "<<pendulum.yesterday().date()>>"),
     ],
 )
-def test_scan_and_store(smb_instance, keywords, extensions, date_filter):
+def test_scan_and_store(smb_instance, filename_regex, extensions, date_filter):
     with (
         patch.object(smb_instance, "_scan_directory") as mock_scan_directory,
         patch.object(smb_instance, "_parse_dates") as mock_parse_dates,
@@ -92,7 +82,9 @@ def test_scan_and_store(smb_instance, keywords, extensions, date_filter):
         mock_parse_dates.return_value = mock_date_result
 
         smb_instance.scan_and_store(
-            keywords=keywords, extensions=extensions, date_filter=date_filter
+            filename_regex=filename_regex,
+            extensions=extensions,
+            date_filter=date_filter,
         )
 
         mock_parse_dates.assert_called_once_with(
@@ -103,7 +95,10 @@ def test_scan_and_store(smb_instance, keywords, extensions, date_filter):
         )
 
         mock_scan_directory.assert_called_once_with(
-            smb_instance.base_path, keywords, extensions, mock_date_result
+            path=smb_instance.base_path,
+            filename_regex=filename_regex,
+            extensions=extensions,
+            date_filter_parsed=mock_date_result,
         )
 
 
@@ -161,7 +156,10 @@ def test_scan_directory_recursive_search(
 
         # Execute the scan starting at root
         result = smb_instance._scan_directory(
-            path=SERVER_PATH, keywords=None, extensions=None, date_filter_parsed=None
+            path=SERVER_PATH,
+            filename_regex=None,
+            extensions=None,
+            date_filter_parsed=None,
         )
 
         # Verify scanning sequence
@@ -280,7 +278,7 @@ def test_get_directory_entries(
     (
         "is_dir",
         "name",
-        "keywords",
+        "filename_regex",
         "extensions",
         "file_creation_date",
         "date_filter_parsed",
@@ -432,7 +430,7 @@ def test_is_matching_file(
     smb_instance,
     is_dir,
     name,
-    keywords,
+    filename_regex,
     extensions,
     file_creation_date,
     date_filter_parsed,
@@ -447,7 +445,7 @@ def test_is_matching_file(
     mock_entry.stat.return_value = mock_stat
 
     result = smb_instance._is_matching_file(
-        mock_entry, keywords, extensions, date_filter_parsed
+        mock_entry, filename_regex, extensions, date_filter_parsed
     )
     assert result == expected
 
@@ -489,53 +487,38 @@ def test_get_file_content_empty_file(smb_instance, mock_smb_dir_entry_file, capl
         assert f"Found: {mock_entry.path}" in caplog.text
 
 
-def test_save_files_locally_empty_file(smb_instance, caplog):
-    temp_dir = setup_temp_dir()
+def test_save_files_locally_empty_file(smb_instance, caplog, tmp_path):
     with caplog.at_level(logging.INFO):
-        smb_instance.save_files_locally({}, temp_dir)
+        smb_instance.save_files_locally({}, tmp_path)
         assert "No files to save." in caplog.text
 
-    teardown_temp_dir(temp_dir)
 
-
-def test_save_files_locally_single_file_save(smb_instance):
-    temp_dir = setup_temp_dir()
-
+def test_save_files_locally_single_file_save(smb_instance, tmp_path):
     file_data = {"test.txt": b"Hello, World!"}
-    smb_instance.save_files_locally(file_data, temp_dir)
+    smb_instance.save_files_locally(file_data, tmp_path)
 
-    saved_file = Path(temp_dir) / "test.txt"
+    saved_file = Path(tmp_path) / "test.txt"
     assert saved_file.exists()
     with saved_file.open("rb") as f:
         assert f.read() == b"Hello, World!"
 
-    teardown_temp_dir(temp_dir)
 
-
-def test_save_files_locally_nested_path_file_save(smb_instance):
-    temp_dir = setup_temp_dir()
-
+def test_save_files_locally_nested_path_file_save(smb_instance, tmp_path):
     file_data = {"nested/path/test.txt": b"Nested file"}
-    smb_instance.save_files_locally(file_data, temp_dir)
+    smb_instance.save_files_locally(file_data, tmp_path)
 
-    saved_file = Path(temp_dir) / "test.txt"
+    saved_file = Path(tmp_path) / "test.txt"
     assert saved_file.exists()
     with saved_file.open("rb") as f:
         assert f.read() == b"Nested file"
 
-    teardown_temp_dir(temp_dir)
 
-
-def test_save_files_locally_multiple_files_save(smb_instance):
-    temp_dir = setup_temp_dir()
-
+def test_save_files_locally_multiple_files_save(smb_instance, tmp_path):
     file_data = {"test1.txt": b"File 1", "test2.txt": b"File 2", "test3.txt": b"File 3"}
-    smb_instance.save_files_locally(file_data, temp_dir)
+    smb_instance.save_files_locally(file_data, tmp_path)
 
     for filename, content in file_data.items():
-        saved_file = Path(temp_dir) / filename
+        saved_file = Path(tmp_path) / filename
         assert saved_file.exists(), f"{filename} should exist"
         with saved_file.open("rb") as f:
             assert f.read() == content, f"Content of {filename} should match"
-
-    teardown_temp_dir(temp_dir)

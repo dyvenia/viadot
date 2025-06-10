@@ -425,12 +425,15 @@ def handle_if_empty(
     message: str | None = None,
     logger: logging.Logger | None = None,
 ) -> None:
-    """Task for handling empty file.
+    """Task for handling empty input.
 
     Args:
-        if_empty (Literal, optional): What to do if file is empty. Defaults to "warn".
-        message (str, optional): Massage to show in warning and error messages.
+        if_empty (Literal, optional): Action to take when input is empty.
+            Options are "warn", "skip", or "fail". Defaults to "warn".
+        message (str, optional): Message to show in warnings or errors.
             Defaults to None.
+        logger (logging.Logger, optional): Logger instance to use for warnings.
+            If None, a default logger is created.
 
     Raises:
         ValueError: If `if_empty` is set to `fail`.
@@ -438,6 +441,14 @@ def handle_if_empty(
     """
     if not logger:
         logger = logging.getLogger(__name__)
+
+    allowed = ["warn", "skip", "fail"]
+    if if_empty not in allowed:
+        error_msg = (
+            f"Invalid value for if_empty: {if_empty}. Allowed values are {allowed}."
+        )
+        raise ValueError(error_msg)
+
     if if_empty == "warn":
         logger.warning(message)
     elif if_empty == "skip":

@@ -9,24 +9,26 @@ from prefect.logging import get_run_logger
 
 
 with contextlib.suppress(ImportError):
-    from viadot.sources import SAPRFC, SAPRFCV2
+    from viadot.sources import SAPRFC
 from viadot.orchestration.prefect.exceptions import MissingSourceCredentialsError
 from viadot.orchestration.prefect.utils import get_credentials
 
 
 @task(retries=3, retry_delay_seconds=10, timeout_seconds=60 * 60 * 3)
 def sap_rfc_to_df(  # noqa: PLR0913
+    rfc_unique_id: list[str],
     query: str | None = None,
-    sep: str | None = None,
+    sep: str | None = "♔",
     func: str | None = None,
     replacement: str = "-",
     rfc_total_col_width_character_limit: int = 400,
-    rfc_unique_id: list[str] | None = None,
     tests: dict[str, Any] | None = None,
     credentials_secret: str | None = None,
     credentials: dict[str, Any] | None = None,
     config_key: str | None = None,
-    alternative_version: bool = False,
+    dynamic_date_symbols: list[str] = ["<<", ">>"],  # noqa: B006
+    dynamic_date_format: str = "%Y%m%d",
+    dynamic_date_timezone: str = "UTC",
 ) -> pd.DataFrame:
     """A task for querying SAP with SQL using the RFC protocol.
 
@@ -43,8 +45,9 @@ def sap_rfc_to_df(  # noqa: PLR0913
 
     Args:
         query (str): The query to be executed with pyRFC.
-        sep (str, optional): The separator to use when reading query results. If not
-            provided, multiple options are automatically tried. Defaults to None.
+        sap_sep (str, optional): The separator to use when reading query results.
+            If set to None, multiple options are automatically tried.
+            Defaults to ♔.
         func (str, optional): SAP RFC function to use. Defaults to None.
         replacement (str, optional): In case of sep is on a columns, set up a new
             character to replace inside the string to avoid flow breakdowns. Defaults to
@@ -54,10 +57,9 @@ def sap_rfc_to_df(  # noqa: PLR0913
             function. According to SAP documentation, the limit is 512 characters.
             However, we observed SAP raising an exception even on a slightly lower
             number of characters, so we add a safety margin. Defaults to 400.
-        rfc_unique_id (list[str], optional):
+        rfc_unique_id (list[str]):
             Reference columns to merge chunks DataFrames. These columns must to be
-            unique. If no columns are provided in this parameter, all data frame columns
-            will by concatenated. Defaults to None.
+            unique.
         tests (dict[str], optional): A dictionary with optional list of tests
                 to verify the output dataframe. If defined, triggers the `validate`
                 function from viadot.utils. Defaults to None.
@@ -68,8 +70,12 @@ def sap_rfc_to_df(  # noqa: PLR0913
             Defaults to None.
         config_key (str, optional): The key in the viadot config holding relevant
             credentials. Defaults to None.
-        alternative_version (bool, optional): Enable the use version 2 in source.
-            Defaults to False.
+        dynamic_date_symbols (list[str], optional): Symbols used for dynamic date
+            handling. Defaults to ["<<", ">>"].
+        dynamic_date_format (str, optional): Format used for dynamic date parsing.
+            Defaults to "%Y%m%d".
+        dynamic_date_timezone (str, optional): Timezone used for dynamic date
+            processing. Defaults to "UTC".
 
     Examples:
         sap_rfc_to_df(
@@ -84,35 +90,31 @@ def sap_rfc_to_df(  # noqa: PLR0913
     if query is None:
         msg = "Please provide the query."
         raise ValueError(msg)
-
     logger = get_run_logger()
+    logger.warning("If the column/set are not unique the table will be malformed.")
 
     credentials = credentials or get_credentials(credentials_secret)
 
-    if alternative_version is True:
-        if rfc_unique_id:
-            logger.warning(
-                "If the column/set are not unique the table will be malformed."
-            )
-        sap = SAPRFCV2(
-            sep=sep,
-            replacement=replacement,
-            credentials=credentials,
-            func=func,
-            rfc_total_col_width_character_limit=rfc_total_col_width_character_limit,
-            rfc_unique_id=rfc_unique_id,
-        )
-    else:
-        sap = SAPRFC(
-            sep=sep,
-            func=func,
-            rfc_total_col_width_character_limit=rfc_total_col_width_character_limit,
-            credentials=credentials,
-            config_key=config_key,
-        )
+    sap = SAPRFC(
+        sep=sep,
+        replacement=replacement,
+        credentials=credentials,
+        func=func,
+        rfc_total_col_width_character_limit=rfc_total_col_width_character_limit,
+        rfc_unique_id=rfc_unique_id,
+        config_key=config_key,
+    )
+
+    query = sap._parse_dates(
+        query=query,
+        dynamic_date_symbols=dynamic_date_symbols,
+        dynamic_date_format=dynamic_date_format,
+        dynamic_date_timezone=dynamic_date_timezone,
+    )
+
     sap.query(query)
     logger.info("Downloading data from SAP to a DataFrame...")
-    logger.debug(f"Running query: \n{query}.")
+    logger.debug(f"Running query: \n{sap.sql}.")
 
     df = sap.to_df(tests=tests)
 

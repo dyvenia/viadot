@@ -1,6 +1,7 @@
 """SMB (file-sharing protocol) connector."""
 
 from pathlib import Path
+import re
 
 import pendulum
 from pydantic import BaseModel, SecretStr, root_validator
@@ -70,8 +71,8 @@ class SMB(Source):
 
     def scan_and_store(
         self,
-        keywords: list[str] | None = None,
-        extensions: list[str] | None = None,
+        filename_regex: str | list[str] | None = None,
+        extensions: str | list[str] | None = None,
         date_filter: str | tuple[str, str] | None = None,
         dynamic_date_symbols: list[str] = ["<<", ">>"],  # noqa: B006
         dynamic_date_format: str = "%Y-%m-%d",
@@ -80,8 +81,12 @@ class SMB(Source):
         """Scan the directory structure for files and store their contents in memory.
 
         Args:
-            keywords (list[str] | None): List of keywords to search for in filenames.
-            extensions (list[str] | None): List of file extensions to filter by.
+            filename_regex (str | list[str] | None, optional): A regular expression
+                string or list of regex patterns used to filter file names. If provided,
+                only file names matching the pattern(s) will be included.
+                Defaults to None.
+            extensions (str | list[str] | None): List of file extensions or single
+                string to filter by. Defaults to None.
             date_filter (str | tuple[str, str] | None):
                 - A single date string (e.g., "2024-03-03").
                 - A tuple containing exactly two date strings
@@ -106,7 +111,10 @@ class SMB(Source):
         )
 
         return self._scan_directory(
-            self.base_path, keywords, extensions, date_filter_parsed
+            path=self.base_path,
+            filename_regex=filename_regex,
+            extensions=extensions,
+            date_filter_parsed=date_filter_parsed,
         )
 
     def _parse_dates(
@@ -168,23 +176,25 @@ class SMB(Source):
     def _scan_directory(
         self,
         path: str,
-        keywords: list[str] | None,
-        extensions: list[str] | None,
+        filename_regex: str | list[str] | None = None,
+        extensions: str | list[str] | None = None,
         date_filter_parsed: pendulum.Date
         | tuple[pendulum.Date, pendulum.Date]
         | None = None,
     ) -> dict[str, bytes]:
         """Recursively scans a directory for matching files based on filters.
 
-        It applies keyword and extension filters and can filter files based on
-        modification dates.
+        It applies 'filename_regex' and 'extensions' filters and can filter files based
+        on modification dates - 'date_filter_parsed'.
 
         Args:
             path (str): The directory path to scan.
-            keywords (list[str] | None): List of keywords to search for in filenames.
+            filename_regex (str | list[str] | None, optional): A regular expression
+                string or list of regex patterns used to filter file names. If provided,
+                only file names matching the pattern(s) will be included.
                 Defaults to None.
-            extensions (list[str] | None): List of file extensions to filter by.
-                Defaults to None.
+            extensions (str | list[str] | None): List of file extensions or single
+                string to filter by. Defaults to None.
             date_filter_parsed (
                 pendulum.Date | tuple[pendulum.Date, pendulum.Date] | None
             ):
@@ -194,17 +204,18 @@ class SMB(Source):
                 Defaults to None.
         """
         found_files = {}
+
         try:
             entries = self._get_directory_entries(path)
             for entry in entries:
                 if entry.is_file() and self._is_matching_file(
-                    entry, keywords, extensions, date_filter_parsed
+                    entry, filename_regex, extensions, date_filter_parsed
                 ):
                     found_files.update(self._get_file_content(entry))
                 elif entry.is_dir():
                     found_files.update(
                         self._scan_directory(
-                            entry.path, keywords, extensions, date_filter_parsed
+                            entry.path, filename_regex, extensions, date_filter_parsed
                         )
                     )
         except Exception as e:
@@ -250,8 +261,8 @@ class SMB(Source):
     def _is_matching_file(
         self,
         entry: smbclient._os.SMBDirEntry,
-        keywords: list[str] | None = None,
-        extensions: list[str] | None = None,
+        filename_regex: str | list[str] | None = None,
+        extensions: str | list[str] | None = None,
         date_filter_parsed: pendulum.Date
         | tuple[pendulum.Date, pendulum.Date]
         | None = None,
@@ -259,24 +270,25 @@ class SMB(Source):
         """Check if a file matches the given criteria.
 
         It verifies whether the file satisfies any combination of:
-        - Keyword-based filtering.
+        - Filename regular expression filtering.
         - Extension-based filtering.
         - Exact date or date range filtering.
 
         Args:
             entry (smbclient._os.SMBDirEntry): A directory entry object from
                 the directory scan.
-            keywords (list[str] | None): List of keywords to search for in filenames.
-                It is case-insensitive. Defaults to None.
-            extensions (list[str] | None): List of file extensions to filter by.
-                It is case-insensitive. Defaults to None.
+            filename_regex (str | list[str] | None, optional): A regular expression
+                string or list of regex patterns used to filter file names. If provided,
+                only file names matching the pattern(s) will be included.
+                Defaults to None.
+            extensions (str | list[str] | None): List of file extensions or single
+                string to filter by. It is case-insensitive. Defaults to None.
             date_filter_parsed (
                 pendulum.Date | tuple[pendulum.Date, pendulum.Date] | None
             ):
                 - A single `pendulum.Date` for exact date filtering.
                 - A tuple of two `pendulum.Date` values for date range filtering.
-                - None, if no date filter is applied.
-                Defaults to None.
+                - None, if no date filter is applied. Defaults to None.
 
         Returns:
             bool: True if the file matches all criteria or no criteria are provided,
@@ -284,24 +296,64 @@ class SMB(Source):
         """
         name_lower = entry.name.lower()
 
-        matches_extension = not extensions or any(
-            name_lower.endswith(ext.lower()) for ext in extensions
+        # Skip temp files
+        if name_lower.startswith("~$") or entry.is_dir():
+            return False
+
+        # Normalize to lists
+        filename_regex_list = (
+            [filename_regex] if isinstance(filename_regex, str) else filename_regex
         )
-        matches_keyword = not keywords or any(
-            keyword.lower() in name_lower for keyword in keywords
+        extension_list = [extensions] if isinstance(extensions, str) else extensions
+
+        matches_extension = not extension_list or any(
+            isinstance(ext, str) and name_lower.endswith(ext.lower())
+            for ext in extension_list
         )
-        if not matches_extension or not matches_keyword or entry.is_dir():
+
+        matches_filename = (
+            True
+            if not filename_regex_list
+            else any(
+                self._safe_regex_match(pattern, name_lower)
+                for pattern in filename_regex_list
+            )
+        )
+
+        if not matches_extension or not matches_filename:
             return False
 
         if date_filter_parsed:
             file_creation_date = pendulum.from_timestamp(entry.stat().st_ctime).date()
+
             if isinstance(date_filter_parsed, pendulum.Date):
                 return file_creation_date == date_filter_parsed
+
             if isinstance(date_filter_parsed, tuple):
                 start_date, end_date = date_filter_parsed
                 return start_date <= file_creation_date <= end_date
 
         return True
+
+    def _safe_regex_match(self, pattern: str, text: str) -> bool:
+        """Evaluate whether a regex pattern matches given text (case-insensitive).
+
+        This method wraps `re.search` with error handling to catch and log invalid regex
+        patterns without interrupting execution.
+
+        Args:
+            pattern (str): The regular expression pattern to match against.
+            text (str): The input string to search within.
+
+        Returns:
+            bool: True if the pattern matches the text; False if it does not match
+                or if the pattern is invalid.
+        """
+        try:
+            return re.search(pattern, text, re.IGNORECASE) is not None
+        except re.error as e:
+            self.logger.warning(f"Invalid regex pattern: {pattern} — Error: {e}")
+            return False
 
     def save_files_locally(
         self, file_data: dict[str, bytes], destination_dir: str

@@ -160,3 +160,18 @@ def test_process_string():
         result
         == f"The event is scheduled for {pendulum.tomorrow().strftime('%Y-%m-%d')}."
     )
+
+
+def test_find_dynamic_date_patterns():
+    """Test the `_find_dynamic_date_patterns` function."""
+    query = (
+        "SELECT * FROM table"
+        " WHERE date_column in (<<today>>, <<yesterday>>, <<2_days_ago>>)"
+    )
+    result = DDH1._find_dynamic_date_patterns(query)
+    expected_result = [
+        "<<today>>",
+        "<<yesterday>>",
+        "<<2_days_ago>>",
+    ]
+    assert result == expected_result

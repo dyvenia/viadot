@@ -135,7 +135,7 @@ graphviz==0.20.3
     # via prefect
 greenlet==3.0.3
     # via sqlalchemy
-griffe==0.47.0
+griffe==1.7.3
     # via prefect
 grpcio==1.66.1
     # via google-api-core
@@ -259,12 +259,15 @@ pillow==10.4.0
     # via imagehash
 platformdirs==4.3.6
     # via zeep
-prefect==2.20.2
+prefect==2.20.18
     # via prefect-github
+    # via prefect-shell
     # via prefect-slack
     # via prefect-sqlalchemy
     # via viadot2
 prefect-github==0.2.7
+    # via viadot2
+prefect-shell==0.2.6
     # via viadot2
 prefect-slack==0.2.7
     # via viadot2

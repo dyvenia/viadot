@@ -14,7 +14,7 @@ from viadot.orchestration.prefect.tasks.task_utils import df_to_parquet
     retries=1,
     retry_delay_seconds=60,
 )
-def sap_to_parquet(  # noqa: PLR0913
+def sap_to_parquet(
     path: str,
     if_exists: Literal["append", "replace", "skip"] = "replace",
     query: str | None = None,
@@ -24,7 +24,6 @@ def sap_to_parquet(  # noqa: PLR0913
     rfc_unique_id: list[str] | None = None,
     sap_credentials_secret: str | None = None,
     sap_config_key: str = "SAP",
-    alternative_version: bool = False,
     replacement: str = "-",
 ) -> None:
     """Download a pandas `DataFrame` from SAP load it into Parquet file.
@@ -52,8 +51,6 @@ def sap_to_parquet(  # noqa: PLR0913
             stores SAP credentials. Defaults to None.
         sap_config_key (str, optional): The key in the viadot config holding relevant
             credentials. Defaults to "SAP".
-        alternative_version (bool, optional): If true, enables the use of SAPRFC source
-            in version 2. Defaults to False.
         replacement (str, optional): In case of sep is on a columns, set up a new
             character to replace inside the string to avoid flow breakdowns.
             Defaults to "-".
@@ -67,7 +64,6 @@ def sap_to_parquet(  # noqa: PLR0913
         rfc_unique_id=rfc_unique_id,
         config_key=sap_config_key,
         credentials_secret=sap_credentials_secret,
-        alternative_version=alternative_version,
     )
 
     return df_to_parquet(
