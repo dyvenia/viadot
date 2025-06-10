@@ -215,7 +215,7 @@ class SAPRFC(Source):
 
     def __init__(
         self,
-        sep: str | None = None,
+        sep: str | None = "♔",
         replacement: str = "-",
         func: str = "RFC_READ_TABLE",
         rfc_total_col_width_character_limit: int = 400,
@@ -228,8 +228,9 @@ class SAPRFC(Source):
         """Create an instance of the SAPRFC class.
 
         Args:
-            sep (str, optional): Which separator to use when querying SAP. If not
-                provided, multiple options are automatically tried.
+            sep (str, optional): The separator to use when reading query results.
+                If set to None, multiple options are automatically tried.
+                Defaults to ♔.
             replacement (str, optional): In case of separator is on a columns, set up a
                 new character to replace inside the string to avoid flow breakdowns.
                 Defaults to "-".

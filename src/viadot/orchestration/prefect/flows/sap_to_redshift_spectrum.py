@@ -31,12 +31,12 @@ def sap_to_redshift_spectrum(  # noqa: PLR0913
     credentials_secret: str | None = None,
     aws_config_key: str | None = None,
     query: str | None = None,
-    sap_sep: str | None = None,
     func: str | None = None,
     rfc_total_col_width_character_limit: int = 400,
     rfc_unique_id: list[str] | None = None,
     sap_credentials_secret: str | None = None,
     sap_config_key: str | None = None,
+    sap_sep: str | None = "♔",
     replacement: str = "-",
 ) -> None:
     """Download a pandas `DataFrame` from SAP and upload it to AWS Redshift Spectrum.
@@ -72,9 +72,6 @@ def sap_to_redshift_spectrum(  # noqa: PLR0913
         credentials_secret (str, optional): The name of a secret block in Prefect
             that stores AWS credentials. Defaults to None.
         query (str): The query to be executed with pyRFC.
-        sap_sep (str, optional): The separator to use when reading query results.
-            If not provided, multiple options are automatically tried.
-            Defaults to None.
         func (str, optional): SAP RFC function to use. Defaults to None.
         rfc_total_col_width_character_limit (int, optional): Number of characters by
             which query will be split in chunks in case of too many columns for RFC
@@ -91,6 +88,10 @@ def sap_to_redshift_spectrum(  # noqa: PLR0913
         replacement (str, optional): In case of sep is on a columns, set up a new
             character to replace inside the string to avoid flow breakdowns.
             Defaults to "-".
+        sap_sep (str, optional): The separator to use when reading query results.
+            If set to None, multiple options are automatically tried.
+            Defaults to ♔.
+
 
     Examples:
         sap_to_redshift_spectrum(
@@ -101,17 +102,17 @@ def sap_to_redshift_spectrum(  # noqa: PLR0913
     """
     df = sap_rfc_to_df(
         query=query,
-        sep=sap_sep,
         tests=tests,
         func=func,
         rfc_unique_id=rfc_unique_id,
         rfc_total_col_width_character_limit=rfc_total_col_width_character_limit,
         credentials_secret=sap_credentials_secret,
         config_key=sap_config_key,
-        replacement=replacement,
         dynamic_date_symbols=dynamic_date_symbols,
         dynamic_date_format=dynamic_date_format,
         dynamic_date_timezone=dynamic_date_timezone,
+        replacement=replacement,
+        sep=sap_sep,
     )
 
     return df_to_redshift_spectrum(
