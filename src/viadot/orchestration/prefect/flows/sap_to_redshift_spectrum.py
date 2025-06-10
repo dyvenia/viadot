@@ -25,7 +25,6 @@ def sap_to_redshift_spectrum(  # noqa: PLR0913
     compression: str | None = None,
     aws_sep: str = ",",
     description: str = "test",
-    sap_sep: str = "♔",
     dynamic_date_symbols: list[str] = ["<<", ">>"],  # noqa: B006
     dynamic_date_format: str = "%Y%m%d",
     dynamic_date_timezone: str = "UTC",
@@ -37,6 +36,7 @@ def sap_to_redshift_spectrum(  # noqa: PLR0913
     rfc_unique_id: list[str] | None = None,
     sap_credentials_secret: str | None = None,
     sap_config_key: str | None = None,
+    sap_sep: str = "♔",
     replacement: str = "-",
 ) -> None:
     """Download a pandas `DataFrame` from SAP and upload it to AWS Redshift Spectrum.
@@ -61,9 +61,6 @@ def sap_to_redshift_spectrum(  # noqa: PLR0913
         compression (str, optional): Compression style (None, snappy, gzip, zstd).
         aws_sep (str, optional): Field delimiter for the output file. Defaults to ','.
         description (str, optional): AWS Glue catalog table description.
-        sap_sep (str, optional): The separator to use when reading query results.
-            If not provided, multiple options are automatically tried.
-            Defaults to ♔.
         dynamic_date_symbols (list[str], optional): Symbols used for dynamic date
             handling. Defaults to ["<<", ">>"].
         dynamic_date_format (str, optional): Format used for dynamic date parsing.
@@ -91,6 +88,10 @@ def sap_to_redshift_spectrum(  # noqa: PLR0913
         replacement (str, optional): In case of sep is on a columns, set up a new
             character to replace inside the string to avoid flow breakdowns.
             Defaults to "-".
+        sap_sep (str, optional): The separator to use when reading query results.
+            If set to None, multiple options are automatically tried.
+            Defaults to ♔.
+
 
     Examples:
         sap_to_redshift_spectrum(
@@ -101,17 +102,17 @@ def sap_to_redshift_spectrum(  # noqa: PLR0913
     """
     df = sap_rfc_to_df(
         query=query,
-        sep=sap_sep,
         tests=tests,
         func=func,
         rfc_unique_id=rfc_unique_id,
         rfc_total_col_width_character_limit=rfc_total_col_width_character_limit,
         credentials_secret=sap_credentials_secret,
         config_key=sap_config_key,
-        replacement=replacement,
         dynamic_date_symbols=dynamic_date_symbols,
         dynamic_date_format=dynamic_date_format,
         dynamic_date_timezone=dynamic_date_timezone,
+        replacement=replacement,
+        sep=sap_sep,
     )
 
     return df_to_redshift_spectrum(

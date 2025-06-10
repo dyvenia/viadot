@@ -45,8 +45,9 @@ def sap_rfc_to_df(  # noqa: PLR0913
 
     Args:
         query (str): The query to be executed with pyRFC.
-        sep (str, optional): The separator to use when reading query results. If not
-            provided, multiple options are automatically tried. Defaults to ♔.
+        sap_sep (str, optional): The separator to use when reading query results.
+            If set to None, multiple options are automatically tried.
+            Defaults to ♔.
         func (str, optional): SAP RFC function to use. Defaults to None.
         replacement (str, optional): In case of sep is on a columns, set up a new
             character to replace inside the string to avoid flow breakdowns. Defaults to
