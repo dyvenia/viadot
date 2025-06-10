@@ -217,7 +217,7 @@ def transform_and_catalog(  # noqa: PLR0913
         metadata_dir_path=dbt_target_dir_path,
         luma_url=luma_url,
         follow=luma_follow,
-        wait_for=[allow_failure(build)],
+        wait_for=allow_failure(build),
     )
 
     if run_results_storage_path:
@@ -240,7 +240,7 @@ def transform_and_catalog(  # noqa: PLR0913
         dump_test_results_to_s3 = s3_upload_file(
             from_path=str(dbt_target_dir_path / file_name),
             to_path=run_results_storage_path,
-            wait_for=[allow_failure(build)],
+            wait_for=allow_failure(build),
             config_key=run_results_storage_config_key,
             credentials_secret=run_results_storage_credentials_secret,
         )
