@@ -49,7 +49,6 @@ def transform_and_catalog(  # noqa: PLR0913, PLR0915
     run_results_storage_path: str | None = None,
     run_results_storage_config_key: str | None = None,
     run_results_storage_credentials_secret: str | None = None,
-    fail_flow_only_on_build_failure: bool = True,
 ) -> list[str]:
     """Build specified dbt model(s) and upload the generated metadata to Luma.
 
@@ -98,9 +97,6 @@ def transform_and_catalog(  # noqa: PLR0913, PLR0915
             holding AWS credentials. Defaults to None.
         run_results_storage_credentials_secret (str, optional): The name of the secret
             block in Prefect holding AWS credentials. Defaults to None.
-        fail_flow_only_on_build_failure (bool): Whether to finish the flow in state
-            Failed() on  failure. If set to False, if tests fail, but models
-            refresh properly, flow will finish in state Completed(). Defaults to True.
 
     Returns:
         list[str]: Lines from stdout of the `upload_metadata` task as a list.
@@ -183,8 +179,6 @@ def transform_and_catalog(  # noqa: PLR0913, PLR0915
                 project_path=dbt_project_path_full,
                 command=f"build {build_select_safe} {dbt_target_option}",
                 wait_for=[pull_dbt_deps],
-                raise_on_failure=True,
-                return_all=True,
             )
 
         else:
