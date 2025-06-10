@@ -165,7 +165,6 @@ def transform_and_catalog(  # noqa: PLR0913, PLR0915
     task_failed = False
 
     if metadata_kind == "model_run":
-        upload_metadata_upstream_task = None
         # Produce `run-results.json` artifact for Luma ingestion.
         if dbt_selects:
             build_select = dbt_selects.get("build")
@@ -190,7 +189,6 @@ def transform_and_catalog(  # noqa: PLR0913, PLR0915
                 return_all=True,
             )
 
-            upload_metadata_upstream_task = build
         else:
             run_task = dbt_task.with_options(name="dbt_run")
             run = run_task(
@@ -227,7 +225,7 @@ def transform_and_catalog(  # noqa: PLR0913, PLR0915
         metadata_dir_path=dbt_target_dir_path,
         luma_url=luma_url,
         follow=luma_follow,
-        wait_for=[allow_failure(upload_metadata_upstream_task)],
+        wait_for=[allow_failure(build)],
     )
 
     if run_results_storage_path:
@@ -250,7 +248,7 @@ def transform_and_catalog(  # noqa: PLR0913, PLR0915
         dump_test_results_to_s3 = s3_upload_file(
             from_path=str(dbt_target_dir_path / file_name),
             to_path=run_results_storage_path,
-            wait_for=[allow_failure(upload_metadata_upstream_task)],
+            wait_for=[allow_failure(build)],
             config_key=run_results_storage_config_key,
             credentials_secret=run_results_storage_credentials_secret,
         )
