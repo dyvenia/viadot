@@ -49,7 +49,7 @@ def transform_and_catalog(  # noqa: PLR0912, PLR0913, PLR0915, C901
     run_results_storage_path: str | None = None,
     run_results_storage_config_key: str | None = None,
     run_results_storage_credentials_secret: str | None = None,
-    fail_flow_on_test_failure: bool = True,
+    fail_flow_only_on_build_failure: bool = False,
 ) -> list[str]:
     """Build specified dbt model(s) and upload the generated metadata to Luma.
 
@@ -98,9 +98,13 @@ def transform_and_catalog(  # noqa: PLR0912, PLR0913, PLR0915, C901
             holding AWS credentials. Defaults to None.
         run_results_storage_credentials_secret (str, optional): The name of the secret
             block in Prefect holding AWS credentials. Defaults to None.
-        fail_flow_on_test_failure (bool): Whether to finish the flow in state Failed()
-            on tests failure. If set to False, if tests fail, but models refresh
-            properly, flow will finish in state Completed(). Defaults to True.
+        fail_flow_only_on_build_failure (bool): Determines the flow's failure behavior
+            based on dbt build outcomes.
+            When False (default):
+                - The flow will fail on any dbt build failure (including test failures)
+            When True:
+                - The flow will only fail if model building fails
+                - Test failures alone won't cause the flow failure
 
     Returns:
         list[str]: Lines from stdout of the `upload_metadata` task as a list.
@@ -181,12 +185,13 @@ def transform_and_catalog(  # noqa: PLR0912, PLR0913, PLR0915, C901
             # If build task is used, run and test tasks are not needed.
             # Build task executes run and tests commands internally.
             build_task = dbt_task.with_options(name="dbt_build")
+            raise_on_failure = not fail_flow_only_on_build_failure
             try:
                 build = build_task(
                     project_path=dbt_project_path_full,
                     command=f"build {build_select_safe} {dbt_target_option}",
                     wait_for=[pull_dbt_deps],
-                    raise_on_failure=fail_flow_on_test_failure,
+                    raise_on_failure=raise_on_failure,
                     return_all=True,
                 )
             except Exception:
@@ -283,7 +288,7 @@ def transform_and_catalog(  # noqa: PLR0912, PLR0913, PLR0915, C901
     if task_failed:
         return Failed()
 
-    if not fail_flow_on_test_failure:
+    if fail_flow_only_on_build_failure:
         model_error_pattern = re.compile(
             r"ERROR creating sql table model", re.IGNORECASE
         )
