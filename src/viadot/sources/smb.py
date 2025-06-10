@@ -71,7 +71,7 @@ class SMB(Source):
 
     def scan_and_store(
         self,
-        keywords: str | list[str] | None = None,
+        filename_regex: str | list[str] | None = None,
         extensions: str | list[str] | None = None,
         date_filter: str | tuple[str, str] | None = None,
         dynamic_date_symbols: list[str] = ["<<", ">>"],  # noqa: B006
@@ -81,8 +81,10 @@ class SMB(Source):
         """Scan the directory structure for files and store their contents in memory.
 
         Args:
-            keywords (str | list[str] | None): List of keywords or single string to
-                search for in file names. Defaults to None
+            filename_regex (str | list[str] | None, optional): A regular expression
+                string or list of regex patterns used to filter file names. If provided,
+                only file names matching the pattern(s) will be included.
+                Defaults to None.
             extensions (str | list[str] | None): List of file extensions or single
                 string to filter by. Defaults to None.
             date_filter (str | tuple[str, str] | None):
@@ -110,7 +112,7 @@ class SMB(Source):
 
         return self._scan_directory(
             path=self.base_path,
-            keywords=keywords,
+            filename_regex=filename_regex,
             extensions=extensions,
             date_filter_parsed=date_filter_parsed,
         )
@@ -174,7 +176,7 @@ class SMB(Source):
     def _scan_directory(
         self,
         path: str,
-        keywords: str | list[str] | None = None,
+        filename_regex: str | list[str] | None = None,
         extensions: str | list[str] | None = None,
         date_filter_parsed: pendulum.Date
         | tuple[pendulum.Date, pendulum.Date]
@@ -182,13 +184,15 @@ class SMB(Source):
     ) -> dict[str, bytes]:
         """Recursively scans a directory for matching files based on filters.
 
-        It applies keyword and extension filters and can filter files based on
-        modification dates.
+        It applies 'filename_regex' and 'extensions' filters and can filter files based
+        on modification dates - 'date_filter_parsed'.
 
         Args:
             path (str): The directory path to scan.
-            keywords (str | list[str] | None): List of keywords or single string to
-                search for in file names. Defaults to None
+            filename_regex (str | list[str] | None, optional): A regular expression
+                string or list of regex patterns used to filter file names. If provided,
+                only file names matching the pattern(s) will be included.
+                Defaults to None.
             extensions (str | list[str] | None): List of file extensions or single
                 string to filter by. Defaults to None.
             date_filter_parsed (
@@ -205,13 +209,13 @@ class SMB(Source):
             entries = self._get_directory_entries(path)
             for entry in entries:
                 if entry.is_file() and self._is_matching_file(
-                    entry, keywords, extensions, date_filter_parsed
+                    entry, filename_regex, extensions, date_filter_parsed
                 ):
                     found_files.update(self._get_file_content(entry))
                 elif entry.is_dir():
                     found_files.update(
                         self._scan_directory(
-                            entry.path, keywords, extensions, date_filter_parsed
+                            entry.path, filename_regex, extensions, date_filter_parsed
                         )
                     )
         except Exception as e:
@@ -257,7 +261,7 @@ class SMB(Source):
     def _is_matching_file(
         self,
         entry: smbclient._os.SMBDirEntry,
-        keywords: str | list[str] | None = None,
+        filename_regex: str | list[str] | None = None,
         extensions: str | list[str] | None = None,
         date_filter_parsed: pendulum.Date
         | tuple[pendulum.Date, pendulum.Date]
@@ -266,15 +270,17 @@ class SMB(Source):
         """Check if a file matches the given criteria.
 
         It verifies whether the file satisfies any combination of:
-        - Keyword-based filtering.
+        - Filename regular expression filtering.
         - Extension-based filtering.
         - Exact date or date range filtering.
 
         Args:
             entry (smbclient._os.SMBDirEntry): A directory entry object from
                 the directory scan.
-            keywords (str | list[str] | None): List of keywords or single string to
-                search for in file names. It is case-insensitive. Defaults to None.
+            filename_regex (str | list[str] | None, optional): A regular expression
+                string or list of regex patterns used to filter file names. If provided,
+                only file names matching the pattern(s) will be included.
+                Defaults to None.
             extensions (str | list[str] | None): List of file extensions or single
                 string to filter by. It is case-insensitive. Defaults to None.
             date_filter_parsed (
@@ -295,7 +301,9 @@ class SMB(Source):
             return False
 
         # Normalize to lists
-        keyword_list = [keywords] if isinstance(keywords, str) else keywords
+        filename_regex_list = (
+            [filename_regex] if isinstance(filename_regex, str) else filename_regex
+        )
         extension_list = [extensions] if isinstance(extensions, str) else extensions
 
         matches_extension = not extension_list or any(
@@ -303,15 +311,16 @@ class SMB(Source):
             for ext in extension_list
         )
 
-        matches_keyword = (
+        matches_filename = (
             True
-            if not keyword_list
+            if not filename_regex_list
             else any(
-                self._safe_regex_match(pattern, name_lower) for pattern in keyword_list
+                self._safe_regex_match(pattern, name_lower)
+                for pattern in filename_regex_list
             )
         )
 
-        if not matches_extension or not matches_keyword:
+        if not matches_extension or not matches_filename:
             return False
 
         if date_filter_parsed:
