@@ -162,8 +162,6 @@ def transform_and_catalog(  # noqa: PLR0913, PLR0915
     # Run dbt commands.
     dbt_target_option = f"-t {dbt_target}" if dbt_target is not None else ""
 
-    task_failed = False
-
     if metadata_kind == "model_run":
         # Produce `run-results.json` artifact for Luma ingestion.
         if dbt_selects:
@@ -185,7 +183,7 @@ def transform_and_catalog(  # noqa: PLR0913, PLR0915
                 project_path=dbt_project_path_full,
                 command=f"build {build_select_safe} {dbt_target_option}",
                 wait_for=[pull_dbt_deps],
-                raise_on_failure=fail_flow_only_on_build_failure,
+                raise_on_failure=True,
                 return_all=True,
             )
 
@@ -260,15 +258,5 @@ def transform_and_catalog(  # noqa: PLR0913, PLR0915
         else [upload_metadata]
     )
     remove_dbt_repo_dir(dbt_repo_name, wait_for=wait_for)
-
-    if task_failed:
-        return Failed()
-
-    if not fail_flow_only_on_build_failure:
-        model_error_pattern = re.compile(
-            r"ERROR creating sql table model", re.IGNORECASE
-        )
-        if any(model_error_pattern.search(line) for line in build):
-            return Failed(message="One or more models failed to build.")
 
     return remove_dbt_repo_dir
