@@ -34,7 +34,7 @@ def remove_dbt_repo_dir(dbt_repo_dir_name: str) -> None:
     description="Build specified dbt model(s) and upload generated metadata to Luma.",
     timeout_seconds=2 * 60 * 60,
 )
-def transform_and_catalog(  # noqa: PLR0912, PLR0913, PLR0915, C901
+def transform_and_catalog(  # noqa: PLR0913, PLR0915
     dbt_repo_url: str | None = None,
     dbt_repo_url_secret: str | None = None,
     dbt_project_path: str = "dbt",
@@ -165,6 +165,7 @@ def transform_and_catalog(  # noqa: PLR0912, PLR0913, PLR0915, C901
     task_failed = False
 
     if metadata_kind == "model_run":
+        upload_metadata_upstream_task = None
         # Produce `run-results.json` artifact for Luma ingestion.
         if dbt_selects:
             build_select = dbt_selects.get("build")
@@ -181,16 +182,13 @@ def transform_and_catalog(  # noqa: PLR0912, PLR0913, PLR0915, C901
             # If build task is used, run and test tasks are not needed.
             # Build task executes run and tests commands internally.
             build_task = dbt_task.with_options(name="dbt_build")
-            try:
-                build = build_task(
-                    project_path=dbt_project_path_full,
-                    command=f"build {build_select_safe} {dbt_target_option}",
-                    wait_for=[pull_dbt_deps],
-                    raise_on_failure=fail_flow_only_on_build_failure,
-                    return_all=True,
-                )
-            except Exception:
-                upload_metadata_upstream_task = "build failed"
+            build = build_task(
+                project_path=dbt_project_path_full,
+                command=f"build {build_select_safe} {dbt_target_option}",
+                wait_for=[pull_dbt_deps],
+                raise_on_failure=fail_flow_only_on_build_failure,
+                return_all=True,
+            )
 
             upload_metadata_upstream_task = build
         else:
