@@ -6,7 +6,7 @@ import re
 import shutil
 from typing import Literal
 
-from prefect import flow, task
+from prefect import allow_failure, flow, task
 from prefect.logging import get_run_logger
 from prefect.states import Failed
 
@@ -49,7 +49,7 @@ def transform_and_catalog(  # noqa: PLR0912, PLR0913, PLR0915, C901
     run_results_storage_path: str | None = None,
     run_results_storage_config_key: str | None = None,
     run_results_storage_credentials_secret: str | None = None,
-    fail_flow_on_test_failure: bool = True,
+    fail_flow_only_on_build_failure: bool = True,
 ) -> list[str]:
     """Build specified dbt model(s) and upload the generated metadata to Luma.
 
@@ -98,9 +98,9 @@ def transform_and_catalog(  # noqa: PLR0912, PLR0913, PLR0915, C901
             holding AWS credentials. Defaults to None.
         run_results_storage_credentials_secret (str, optional): The name of the secret
             block in Prefect holding AWS credentials. Defaults to None.
-        fail_flow_on_test_failure (bool): Whether to finish the flow in state Failed()
-            on tests failure. If set to False, if tests fail, but models refresh
-            properly, flow will finish in state Completed(). Defaults to True.
+        fail_flow_only_on_build_failure (bool): Whether to finish the flow in state
+            Failed() on  failure. If set to False, if tests fail, but models
+            refresh properly, flow will finish in state Completed(). Defaults to True.
 
     Returns:
         list[str]: Lines from stdout of the `upload_metadata` task as a list.
@@ -186,14 +186,11 @@ def transform_and_catalog(  # noqa: PLR0912, PLR0913, PLR0915, C901
                     project_path=dbt_project_path_full,
                     command=f"build {build_select_safe} {dbt_target_option}",
                     wait_for=[pull_dbt_deps],
-                    raise_on_failure=fail_flow_on_test_failure,
+                    raise_on_failure=fail_flow_only_on_build_failure,
                     return_all=True,
                 )
             except Exception:
-                msg = "Build task failed."
-                logger.exception(msg)
-                build = msg
-                task_failed = True
+                upload_metadata_upstream_task = "build failed"
 
             upload_metadata_upstream_task = build
         else:
@@ -227,19 +224,13 @@ def transform_and_catalog(  # noqa: PLR0912, PLR0913, PLR0915, C901
     if dbt_target_dir_path is None:
         dbt_target_dir_path = dbt_project_path_full / "target"
 
-    try:
-        upload_metadata = luma_ingest_task(
-            metadata_kind=metadata_kind,
-            metadata_dir_path=dbt_target_dir_path,
-            luma_url=luma_url,
-            follow=luma_follow,
-            wait_for=[upload_metadata_upstream_task],
-        )
-    except Exception:
-        msg = "Luma ingest task failed."
-        logger.exception(msg)
-        upload_metadata = msg
-        task_failed = True
+    upload_metadata = luma_ingest_task(
+        metadata_kind=metadata_kind,
+        metadata_dir_path=dbt_target_dir_path,
+        luma_url=luma_url,
+        follow=luma_follow,
+        wait_for=[allow_failure(upload_metadata_upstream_task)],
+    )
 
     if run_results_storage_path:
         # Set the file path to include date info.
@@ -258,19 +249,13 @@ def transform_and_catalog(  # noqa: PLR0912, PLR0913, PLR0915, C901
         )
         logger.info(f"Uploading run results to {run_results_storage_path}")
         # Upload the file to s3.
-        try:
-            dump_test_results_to_s3 = s3_upload_file(
-                from_path=str(dbt_target_dir_path / file_name),
-                to_path=run_results_storage_path,
-                wait_for=[upload_metadata_upstream_task],
-                config_key=run_results_storage_config_key,
-                credentials_secret=run_results_storage_credentials_secret,
-            )
-        except Exception:
-            msg = "S3 upload file task failed."
-            logger.exception(msg)
-            dump_test_results_to_s3 = msg
-            task_failed = True
+        dump_test_results_to_s3 = s3_upload_file(
+            from_path=str(dbt_target_dir_path / file_name),
+            to_path=run_results_storage_path,
+            wait_for=[allow_failure(upload_metadata_upstream_task)],
+            config_key=run_results_storage_config_key,
+            credentials_secret=run_results_storage_credentials_secret,
+        )
 
     # Cleanup.
     wait_for = (
@@ -283,7 +268,7 @@ def transform_and_catalog(  # noqa: PLR0912, PLR0913, PLR0915, C901
     if task_failed:
         return Failed()
 
-    if not fail_flow_on_test_failure:
+    if not fail_flow_only_on_build_failure:
         model_error_pattern = re.compile(
             r"ERROR creating sql table model", re.IGNORECASE
         )
