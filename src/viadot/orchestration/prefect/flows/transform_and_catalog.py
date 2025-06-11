@@ -2,11 +2,13 @@
 
 from datetime import datetime, timezone
 from pathlib import Path
+import re
 import shutil
 from typing import Literal
 
 from prefect import flow, task
 from prefect.logging import get_run_logger
+from prefect.states import Failed
 
 from viadot.orchestration.prefect.tasks import (
     clone_repo,
@@ -32,7 +34,7 @@ def remove_dbt_repo_dir(dbt_repo_dir_name: str) -> None:
     description="Build specified dbt model(s) and upload generated metadata to Luma.",
     timeout_seconds=2 * 60 * 60,
 )
-def transform_and_catalog(  # noqa: PLR0913
+def transform_and_catalog(  # noqa: PLR0912, PLR0913, PLR0915, C901
     dbt_repo_url: str | None = None,
     dbt_repo_url_secret: str | None = None,
     dbt_project_path: str = "dbt",
@@ -47,6 +49,7 @@ def transform_and_catalog(  # noqa: PLR0913
     run_results_storage_path: str | None = None,
     run_results_storage_config_key: str | None = None,
     run_results_storage_credentials_secret: str | None = None,
+    fail_flow_only_on_build_failure: bool = False,
 ) -> list[str]:
     """Build specified dbt model(s) and upload the generated metadata to Luma.
 
@@ -95,6 +98,13 @@ def transform_and_catalog(  # noqa: PLR0913
             holding AWS credentials. Defaults to None.
         run_results_storage_credentials_secret (str, optional): The name of the secret
             block in Prefect holding AWS credentials. Defaults to None.
+        fail_flow_only_on_build_failure (bool): Determines the flow's failure behavior
+            based on dbt build outcomes.
+            When False (default):
+                - The flow will fail on any dbt build failure (including test failures)
+            When True:
+                - The flow will only fail if model building fails
+                - Test failures alone won't cause the flow failure
 
     Returns:
         list[str]: Lines from stdout of the `upload_metadata` task as a list.
@@ -156,6 +166,8 @@ def transform_and_catalog(  # noqa: PLR0913
     # Run dbt commands.
     dbt_target_option = f"-t {dbt_target}" if dbt_target is not None else ""
 
+    task_failed = False
+
     if metadata_kind == "model_run":
         # Produce `run-results.json` artifact for Luma ingestion.
         if dbt_selects:
@@ -173,11 +185,21 @@ def transform_and_catalog(  # noqa: PLR0913
             # If build task is used, run and test tasks are not needed.
             # Build task executes run and tests commands internally.
             build_task = dbt_task.with_options(name="dbt_build")
-            build = build_task(
-                project_path=dbt_project_path_full,
-                command=f"build {build_select_safe} {dbt_target_option}",
-                wait_for=[pull_dbt_deps],
-            )
+            raise_on_failure = not fail_flow_only_on_build_failure
+            try:
+                build = build_task(
+                    project_path=dbt_project_path_full,
+                    command=f"build {build_select_safe} {dbt_target_option}",
+                    wait_for=[pull_dbt_deps],
+                    raise_on_failure=raise_on_failure,
+                    return_all=True,
+                )
+            except Exception:
+                msg = "Build task failed."
+                logger.exception(msg)
+                build = msg
+                task_failed = True
+
             upload_metadata_upstream_task = build
         else:
             run_task = dbt_task.with_options(name="dbt_run")
@@ -210,13 +232,19 @@ def transform_and_catalog(  # noqa: PLR0913
     if dbt_target_dir_path is None:
         dbt_target_dir_path = dbt_project_path_full / "target"
 
-    upload_metadata = luma_ingest_task(
-        metadata_kind=metadata_kind,
-        metadata_dir_path=dbt_target_dir_path,
-        luma_url=luma_url,
-        follow=luma_follow,
-        wait_for=[upload_metadata_upstream_task],
-    )
+    try:
+        upload_metadata = luma_ingest_task(
+            metadata_kind=metadata_kind,
+            metadata_dir_path=dbt_target_dir_path,
+            luma_url=luma_url,
+            follow=luma_follow,
+            wait_for=[upload_metadata_upstream_task],
+        )
+    except Exception:
+        msg = "Luma ingest task failed."
+        logger.exception(msg)
+        upload_metadata = msg
+        task_failed = True
 
     if run_results_storage_path:
         # Set the file path to include date info.
@@ -235,13 +263,19 @@ def transform_and_catalog(  # noqa: PLR0913
         )
         logger.info(f"Uploading run results to {run_results_storage_path}")
         # Upload the file to s3.
-        dump_test_results_to_s3 = s3_upload_file(
-            from_path=str(dbt_target_dir_path / file_name),
-            to_path=run_results_storage_path,
-            wait_for=[upload_metadata_upstream_task],
-            config_key=run_results_storage_config_key,
-            credentials_secret=run_results_storage_credentials_secret,
-        )
+        try:
+            dump_test_results_to_s3 = s3_upload_file(
+                from_path=str(dbt_target_dir_path / file_name),
+                to_path=run_results_storage_path,
+                wait_for=[upload_metadata_upstream_task],
+                config_key=run_results_storage_config_key,
+                credentials_secret=run_results_storage_credentials_secret,
+            )
+        except Exception:
+            msg = "S3 upload file task failed."
+            logger.exception(msg)
+            dump_test_results_to_s3 = msg
+            task_failed = True
 
     # Cleanup.
     wait_for = (
@@ -250,5 +284,15 @@ def transform_and_catalog(  # noqa: PLR0913
         else [upload_metadata]
     )
     remove_dbt_repo_dir(dbt_repo_name, wait_for=wait_for)
+
+    if task_failed:
+        return Failed()
+
+    if fail_flow_only_on_build_failure:
+        model_error_pattern = re.compile(
+            r"ERROR creating sql table model", re.IGNORECASE
+        )
+        if any(model_error_pattern.search(line) for line in build):
+            return Failed(message="One or more models failed to build.")
 
     return remove_dbt_repo_dir
