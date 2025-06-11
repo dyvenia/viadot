@@ -18,7 +18,7 @@ dependencies = [
     "imagehash>=4.2.1",
     "shapely>=1.8.0",
     "sqlalchemy==2.0.*",
-    "lumacli>=0.1.2, <0.2.0",
+    "lumacli==0.2.0",
     "pygit2>=1.13.3, <1.15.0",
     "openpyxl>=3.0.0",
     "prefect>=2.19.7, <3",
