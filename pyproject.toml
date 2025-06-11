@@ -12,13 +12,13 @@ dependencies = [
     "sharepy>=2.0.0",
     "sql-metadata>=2.11.0",
     "sendgrid>=6.11.0",
-    "pydantic>=2.0.0,<3",
+    "pydantic>=2.0.0, <3",
     "aiolimiter>=1.1.0",
     "trino==0.328.*",
     "imagehash>=4.2.1",
     "shapely>=1.8.0",
     "sqlalchemy==2.0.*",
-    "lumacli==0.2.0", # set to >=0.2.2, when 0.2.2 will be released
+    "lumacli==0.2.0", # set to >=0.2.2, <3, when v0.2.2 will be released. v0.2.1 is v0.1.2 functionality.
     "pygit2>=1.13.3, <1.15.0",
     "openpyxl>=3.0.0",
     "prefect>=2.19.7, <3",
