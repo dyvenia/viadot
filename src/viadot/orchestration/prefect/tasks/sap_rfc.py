@@ -14,7 +14,7 @@ from viadot.orchestration.prefect.exceptions import MissingSourceCredentialsErro
 from viadot.orchestration.prefect.utils import get_credentials
 
 
-@task(retries=300, retry_delay_seconds=10, timeout_seconds=30)
+@task(retries=300, retry_delay_seconds=10, timeout_seconds=60 * 60 * 3)
 def sap_rfc_to_df(  # noqa: PLR0913
     rfc_unique_id: list[str],
     query: str | None = None,
