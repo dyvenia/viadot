@@ -16,7 +16,7 @@ with contextlib.suppress(ImportError):
     from viadot.sources import RedshiftSpectrum
 
 
-@task(retries=3, retry_delay_seconds=10, timeout_seconds=60 * 60)
+@task(retries=3000, retry_delay_seconds=10, timeout_seconds=60 * 60)
 def df_to_redshift_spectrum(  # noqa: PLR0913
     df: pd.DataFrame,
     to_path: str,
