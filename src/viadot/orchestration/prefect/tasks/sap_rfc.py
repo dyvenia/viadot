@@ -14,7 +14,7 @@ from viadot.orchestration.prefect.exceptions import MissingSourceCredentialsErro
 from viadot.orchestration.prefect.utils import get_credentials
 
 
-@task(retries=300, retry_delay_seconds=10, timeout_seconds=60 * 60 * 3)
+@task(retries=3, retry_delay_seconds=10, timeout_seconds=60 * 60 * 3)
 def sap_rfc_to_df(  # noqa: PLR0913
     rfc_unique_id: list[str],
     query: str | None = None,
@@ -23,7 +23,7 @@ def sap_rfc_to_df(  # noqa: PLR0913
     replacement: str = "-",
     rfc_total_col_width_character_limit: int = 400,
     tests: dict[str, Any] | None = None,
-    credentials_secret: str | None = None,
+    # credentials_secret: str | None = None,
     credentials: dict[str, Any] | None = None,
     config_key: str | None = None,
     dynamic_date_symbols: list[str] = ["<<", ">>"],  # noqa: B006
@@ -84,16 +84,16 @@ def sap_rfc_to_df(  # noqa: PLR0913
             ...
         )
     """
-    if not (credentials_secret or credentials or config_key):
-        raise MissingSourceCredentialsError
+    # if not (credentials_secret or credentials or config_key):
+    #     raise MissingSourceCredentialsError
 
-    if query is None:
-        msg = "Please provide the query."
-        raise ValueError(msg)
+    # if query is None:
+    #     msg = "Please provide the query."
+    #     raise ValueError(msg)
+    # logger.warning("If the column/set are not unique the table will be malformed.")
+
+    # credentials = credentials or get_credentials(credentials_secret)
     logger = get_run_logger()
-    logger.warning("If the column/set are not unique the table will be malformed.")
-
-    credentials = credentials or get_credentials(credentials_secret)
 
     sap = SAPRFC(
         sep=sep,
