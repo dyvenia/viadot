@@ -2,10 +2,21 @@
 
 from typing import Any, Literal
 
-from prefect import flow
+from prefect import flow, task
 
 from viadot.orchestration.prefect.tasks import df_to_redshift_spectrum, sap_rfc_to_df
+from viadot.config import get_source_credentials
+from viadot.orchestration.prefect.exceptions import MissingSourceCredentialsError
+from viadot.orchestration.prefect.utils import get_credentials
+from viadot.sources import RedshiftSpectrum
 
+@task(retries=3000, retry_delay_seconds=10, timeout_seconds=60 * 5)
+def get_credentials_task(credentials_secret: str | None = None):
+    if not credentials_secret:
+        raise MissingSourceCredentialsError
+
+    credentials =  get_credentials(credentials_secret)
+    return credentials
 
 @flow(
     name="extract--sap--redshift_spectrum",
@@ -38,6 +49,7 @@ def sap_to_redshift_spectrum(  # noqa: PLR0913
     sap_config_key: str | None = None,
     sap_sep: str | None = "♔",
     replacement: str = "-",
+    **kwargs
 ) -> None:
     """Download a pandas `DataFrame` from SAP and upload it to AWS Redshift Spectrum.
 
@@ -100,13 +112,17 @@ def sap_to_redshift_spectrum(  # noqa: PLR0913
             ...
         )
     """
+    aws_creds = get_credentials_task(credentials_secret)
+    sap_creds = get_credentials_task(sap_credentials_secret)
+
+
     df = sap_rfc_to_df(
         query=query,
         tests=tests,
         func=func,
         rfc_unique_id=rfc_unique_id,
         rfc_total_col_width_character_limit=rfc_total_col_width_character_limit,
-        credentials_secret=sap_credentials_secret,
+        credentials=sap_creds,
         config_key=sap_config_key,
         dynamic_date_symbols=dynamic_date_symbols,
         dynamic_date_format=dynamic_date_format,
@@ -128,5 +144,5 @@ def sap_to_redshift_spectrum(  # noqa: PLR0913
         sep=aws_sep,
         description=description,
         config_key=aws_config_key,
-        credentials_secret=credentials_secret,
+        credentials=aws_creds
     )

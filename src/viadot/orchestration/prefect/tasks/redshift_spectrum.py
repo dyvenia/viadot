@@ -16,12 +16,13 @@ with contextlib.suppress(ImportError):
     from viadot.sources import RedshiftSpectrum
 
 
-@task(retries=3000, retry_delay_seconds=10, timeout_seconds=60 * 60)
+@task(retries=3, retry_delay_seconds=10, timeout_seconds=60 * 60)
 def df_to_redshift_spectrum(  # noqa: PLR0913
     df: pd.DataFrame,
     to_path: str,
     schema_name: str,
     table: str,
+    credentials,
     extension: str = ".parquet",
     if_exists: Literal["overwrite", "append"] = "overwrite",
     partition_cols: list[str] | None = None,
@@ -30,7 +31,6 @@ def df_to_redshift_spectrum(  # noqa: PLR0913
     sep: str = ",",
     description: str | None = None,
     config_key: str | None = None,
-    credentials_secret: str | None = None,
     **kwargs: dict[str, Any] | None,
 ) -> None:
     """Task to upload a pandas `DataFrame` to a csv or parquet file.
@@ -61,13 +61,12 @@ def df_to_redshift_spectrum(  # noqa: PLR0913
             that stores AWS credentials. Defaults to None.
         kwargs: The parameters to pass in awswrangler to_parquet/to_csv function.
     """
-    if not (credentials_secret or config_key):
-        raise MissingSourceCredentialsError
+    # if not (credentials_secret or config_key):
+    #     raise MissingSourceCredentialsError
 
-    credentials = get_source_credentials(config_key) or get_credentials(
-        credentials_secret
-    )
-
+    # credentials = get_source_credentials(config_key) or get_credentials(
+    #     credentials_secret
+    # )
     # Convert columns containing only null values to string to avoid errors
     # during new table creation
     null_columns = df.isna().all()
