@@ -290,9 +290,11 @@ def transform_and_catalog(  # noqa: PLR0912, PLR0913, PLR0915, C901
 
     if fail_flow_only_on_build_failure:
         model_error_pattern = re.compile(
-            r"ERROR creating sql table model", re.IGNORECASE
+            r"ERROR creating sql (?:table|incremental) model", re.IGNORECASE
         )
-        if any(model_error_pattern.search(line) for line in build):
+        if any(
+            model_error_pattern.search(line) for line in upload_metadata_upstream_task
+        ):
             return Failed(message="One or more models failed to build.")
 
     return remove_dbt_repo_dir
