@@ -23,6 +23,8 @@ aiosqlite==0.20.0
     # via prefect
 alembic==1.13.2
     # via prefect
+annotated-types==0.7.0
+    # via pydantic
 anyio==4.4.0
     # via httpx
     # via prefect
@@ -116,6 +118,8 @@ dateparser==1.2.0
     # via prefect
 db-dtypes==1.3.0
     # via pandas-gbq
+dbt-artifacts-parser==0.8.3
+    # via lumacli
 debugpy==1.8.5
     # via ipykernel
 decorator==5.1.1
@@ -289,7 +293,7 @@ jupytext==1.16.4
 kubernetes==29.0.0
     # via prefect
 loguru==0.7.2
-lumacli==0.1.2
+lumacli==0.2.0
     # via viadot2
 lxml==5.3.0
     # via zeep
@@ -490,12 +494,14 @@ pyasn1-modules==0.4.0
     # via google-auth
 pycparser==2.22
     # via cffi
-pydantic==1.10.17
+pydantic==2.11.5
+    # via dbt-artifacts-parser
     # via lumacli
     # via prefect
     # via viadot2
-pydantic-core==2.23.0
+pydantic-core==2.33.2
     # via prefect
+    # via pydantic
 pydata-google-auth==1.8.2
     # via pandas-gbq
 pygit2==1.14.1
@@ -740,7 +746,10 @@ typing-extensions==4.12.2
     # via simple-salesforce
     # via sqlalchemy
     # via typer
+    # via typing-inspection
     # via uvicorn
+typing-inspection==0.4.1
+    # via pydantic
 tzdata==2024.1
     # via o365
 tzlocal==5.2
