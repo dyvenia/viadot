@@ -7,6 +7,7 @@ import pendulum
 from pydantic import BaseModel, SecretStr, root_validator
 import smbclient
 
+import smbprotocol
 from viadot.config import get_source_credentials
 from viadot.exceptions import CredentialError
 from viadot.orchestration.prefect.utils import DynamicDateHandler
@@ -64,10 +65,28 @@ class SMB(Source):
         validated_creds = SMBCredentials(**raw_creds)
         super().__init__(*args, credentials=validated_creds.dict(), **kwargs)
 
-        smbclient.ClientConfig(
-            username=self.credentials.get("username"),
-            password=self.credentials.get("password").get_secret_value(),
-        )
+        normalized_path = re.sub(r'\\+', r'\\', self.base_path)
+        parts = normalized_path.lstrip('\\').split('\\')
+        server_host_or_ip = parts[0]
+
+        try:
+            smbclient.register_session(
+                server_host_or_ip,
+                username=self.credentials.get("username"),
+                password=self.credentials.get("password").get_secret_value(),
+            )
+            self.logger.info("Connection succesfully established.")
+        except smbprotocol.exceptions.LogonFailure as e:
+            self.logger.exception("Authentication failed: credentials invalid. ", e)
+            raise
+        except smbprotocol.exceptions.PasswordExpired as e:
+            self.logger.exception("Authentication failed: credentials expired. ", e)
+            raise
+        except Exception as e:
+            self.logger.exception(f"Connection failed: {e}")
+            raise
+            
+        
 
     def scan_and_store(
         self,
