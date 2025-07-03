@@ -223,10 +223,11 @@ class SMB(Source):
                 Defaults to None.
         """
         found_files = {}
-
-        try:
-            entries = self._get_directory_entries(path)
-            for entry in entries:
+        problematic_entries=[]
+        
+        entries = self._get_directory_entries(path)
+        for entry in entries:
+            try:
                 if entry.is_file() and self._is_matching_file(
                     entry, filename_regex, extensions, date_filter_parsed
                 ):
@@ -237,10 +238,14 @@ class SMB(Source):
                             entry.path, filename_regex, extensions, date_filter_parsed
                         )
                     )
-        except Exception as e:
-            self.logger.exception(f"Error scanning or downloading from {path}: {e}")  # noqa: TRY401
+            except smbprotocol.exceptions.SMBOSError as e:
+                self.logger.warning(f"Entry not found: {e}")
+                problematic_entries.append(entry.name)
+            except Exception as e:
+                self.logger.exception(f"Error scanning or downloading from {path}: {e}")  # noqa: TRY401
+                raise 
 
-        return found_files
+        return found_files, problematic_entries
 
     def _get_file_content(self, entry: smbclient._os.SMBDirEntry) -> dict[str, bytes]:
         """Extracts the content of a file from an SMB directory entry.
