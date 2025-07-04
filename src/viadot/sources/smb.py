@@ -65,8 +65,8 @@ class SMB(Source):
         validated_creds = SMBCredentials(**raw_creds)
         super().__init__(*args, credentials=validated_creds.dict(), **kwargs)
 
-        normalized_path = re.sub(r'\\+', r'\\', self.base_path)
-        parts = normalized_path.lstrip('\\').split('\\')
+        normalized_path = re.sub(r"\\+", r"\\", self.base_path)
+        parts = normalized_path.lstrip("\\").split("\\")
         server_host_or_ip = parts[0]
 
         try:
@@ -96,7 +96,7 @@ class SMB(Source):
         dynamic_date_symbols: list[str] = ["<<", ">>"],  # noqa: B006
         dynamic_date_format: str = "%Y-%m-%d",
         dynamic_date_timezone: str = "UTC",
-    ) -> dict[str, bytes]:
+    ) -> tuple[dict[str, bytes], list[str]]:
         """Scan the directory structure for files and store their contents in memory.
 
         Args:
@@ -120,7 +120,9 @@ class SMB(Source):
                 processing. Defaults to "UTC".
 
         Returns:
-            dict[str, bytes]: A dictionary mapping file paths to their contents.
+            tuple[dict[str, bytes], list[str]]:
+            - A dictionary mapping file paths to their contents in bytes.
+            - A list of file paths that were skipped or failed to be read.
         """
         date_filter_parsed = self._parse_dates(
             date_filter=date_filter,
@@ -200,7 +202,7 @@ class SMB(Source):
         date_filter_parsed: pendulum.Date
         | tuple[pendulum.Date, pendulum.Date]
         | None = None,
-    ) -> dict[str, bytes]:
+    ) -> tuple[dict[str, bytes], list[str]]:
         """Recursively scans a directory for matching files based on filters.
 
         It applies 'filename_regex' and 'extensions' filters and can filter files based
@@ -221,9 +223,14 @@ class SMB(Source):
                 - A tuple of two `pendulum.Date` values for date range filtering.
                 - None, if no date filter is applied.
                 Defaults to None.
+        
+        Returns:
+            tuple[dict[str, bytes], list[str]]:
+            - A dictionary mapping file paths to their contents in bytes.
+            - A list of file paths that were skipped or failed to be read.
         """
         found_files = {}
-        problematic_entries=[]
+        problematic_entries = []
         
         entries = self._get_directory_entries(path)
         for entry in entries:
@@ -243,7 +250,7 @@ class SMB(Source):
                 problematic_entries.append(entry.name)
             except Exception as e:
                 self.logger.exception(f"Error scanning or downloading from {path}: {e}")  # noqa: TRY401
-                raise 
+                raise
 
         return found_files, problematic_entries
 
