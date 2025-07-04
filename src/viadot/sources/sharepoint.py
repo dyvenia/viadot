@@ -286,7 +286,7 @@ class Sharepoint(Source):
             ValueError: If the file extension is not supported.
         """
         file_extension = self._get_file_extension(file_url)
-        if file_extension not in [".xlsx", ".xmls", ".xls"]:
+        if file_extension not in [".xlsx", ".xlsm", ".xls"]:
             self.logger.error(
                 f"Unsupported file extension: {file_extension} for file: {file_url}"
             )
