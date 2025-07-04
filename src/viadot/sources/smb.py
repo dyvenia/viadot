@@ -234,6 +234,10 @@ class SMB(Source):
         
         entries = self._get_directory_entries(path)
         for entry in entries:
+            # Skip temp files
+            if entry.name.startswith("~$"):
+                problematic_entries.append(entry.name)
+            
             try:
                 if entry.is_file() and self._is_matching_file(
                     entry, filename_regex, extensions, date_filter_parsed
@@ -326,10 +330,6 @@ class SMB(Source):
                 False otherwise.
         """
         name_lower = entry.name.lower()
-
-        # Skip temp files
-        if name_lower.startswith("~$") or entry.is_dir():
-            return False
 
         # Normalize to lists
         filename_regex_list = (
