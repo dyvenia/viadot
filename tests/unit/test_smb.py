@@ -24,7 +24,9 @@ def valid_credentials():
 
 @pytest.fixture
 def smb_instance(valid_credentials):
-    return SMB(base_path=SERVER_PATH, credentials=valid_credentials)
+    with patch("viadot.sources.smb.smbclient.register_session") as mock_register:
+        mock_register.return_value = None
+        return SMB(base_path=SERVER_PATH, credentials=valid_credentials)
 
 
 @pytest.fixture
