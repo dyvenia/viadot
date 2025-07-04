@@ -286,11 +286,13 @@ class Sharepoint(Source):
             ValueError: If the file extension is not supported.
         """
         file_extension = self._get_file_extension(file_url)
-        if file_extension != ".xlsx":
+        if file_extension not in [".xlsx", ".xmls", ".xls"]:
             self.logger.error(
                 f"Unsupported file extension: {file_extension} for file: {file_url}"
             )
-            msg = "Only Excel (.xlsx) files are supported."
+            msg = (
+                "Only Excel (.xlsx, .xlsm, .xls) files can be loaded into a DataFrame."
+            )
             raise ValueError(msg)
         file_stream = self._download_file_stream(file_url)
         return self._parse_excel(file_stream, sheet_name, na_values, **kwargs)
