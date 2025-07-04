@@ -6,8 +6,8 @@ import re
 import pendulum
 from pydantic import BaseModel, SecretStr, root_validator
 import smbclient
-
 import smbprotocol
+
 from viadot.config import get_source_credentials
 from viadot.exceptions import CredentialError
 from viadot.orchestration.prefect.utils import DynamicDateHandler
@@ -77,13 +77,13 @@ class SMB(Source):
             )
             self.logger.info("Connection succesfully established.")
         except smbprotocol.exceptions.LogonFailure as e:
-            self.logger.exception("Authentication failed: credentials invalid. ", e)
+            self.logger.exception(f"Authentication failed: credentials invalid.")
             raise
         except smbprotocol.exceptions.PasswordExpired as e:
-            self.logger.exception("Authentication failed: credentials expired. ", e)
+            self.logger.exception(f"Authentication failed: credentials expired.")
             raise
         except Exception as e:
-            self.logger.exception(f"Connection failed: {e}")
+            self.logger.exception(f"Connection failed.")
             raise
             
         
