@@ -76,14 +76,14 @@ class SMB(Source):
                 password=self.credentials.get("password").get_secret_value(),
             )
             self.logger.info("Connection succesfully established.")
-        except smbprotocol.exceptions.LogonFailure as e:
-            self.logger.exception(f"Authentication failed: credentials invalid.")
+        except smbprotocol.exceptions.LogonFailure:
+            self.logger.exception("Authentication failed: credentials invalid.")
             raise
-        except smbprotocol.exceptions.PasswordExpired as e:
-            self.logger.exception(f"Authentication failed: credentials expired.")
+        except smbprotocol.exceptions.PasswordExpired:
+            self.logger.exception("Authentication failed: credentials expired.")
             raise
-        except Exception as e:
-            self.logger.exception(f"Connection failed.")
+        except Exception:
+            self.logger.exception("Connection failed.")
             raise
             
         
@@ -252,8 +252,8 @@ class SMB(Source):
             except smbprotocol.exceptions.SMBOSError as e:
                 self.logger.warning(f"Entry not found: {e}")
                 problematic_entries.append(entry.name)
-            except Exception as e:
-                self.logger.exception(f"Error scanning or downloading from {path}: {e}")  # noqa: TRY401
+            except Exception:
+                self.logger.exception(f"Error scanning or downloading from {path}.")  # noqa: TRY401
                 raise
 
         return found_files, problematic_entries
