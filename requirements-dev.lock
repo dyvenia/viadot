@@ -45,6 +45,10 @@ attrs==24.2.0
     # via referencing
     # via visions
     # via zeep
+azure-core==1.35.0
+    # via azure-identity
+azure-identity==1.23.0
+    # via lumacli
 babel==2.16.0
     # via mkdocs-material
 backrefs==5.8
@@ -88,6 +92,7 @@ charset-normalizer==3.3.2
     # via requests
 click==8.1.7
     # via apprise
+    # via dlt
     # via mkdocs
     # via neoteroi-mkdocs
     # via prefect
@@ -106,11 +111,14 @@ coverage==7.6.1
 croniter==2.0.7
     # via prefect
 cryptography==43.0.0
+    # via azure-identity
     # via moto
+    # via msal
     # via paramiko
     # via prefect
     # via pyjwt
     # via pyspnego
+    # via requests-ntlm
     # via smbprotocol
 cssselect2==0.7.0
     # via cairosvg
@@ -128,11 +136,15 @@ defusedxml==0.7.1
     # via cairosvg
     # via nbconvert
     # via viadot2
+dlt==1.12.3
+    # via lumacli
 dnspython==2.6.1
     # via email-validator
 docker==7.1.0
     # via prefect
-duckdb==1.0.0
+duckdb==1.3.1
+    # via dlt
+    # via lumacli
     # via viadot2
 editorconfig==0.12.4
     # via jsbeautifier
@@ -158,13 +170,17 @@ frozenlist==1.4.1
     # via aiohttp
     # via aiosignal
 fsspec==2024.6.0
+    # via dlt
     # via prefect
 ghp-import==2.1.0
     # via mkdocs
 gitdb==4.0.11
     # via gitpython
 gitpython==3.1.43
+    # via dlt
     # via mkdocs-git-revision-date-plugin
+giturlparse==0.12.0
+    # via dlt
 google-api-core==2.20.0
     # via google-cloud-bigquery
     # via google-cloud-core
@@ -210,6 +226,8 @@ h11==0.14.0
     # via uvicorn
 h2==4.1.0
     # via httpx
+hexbytes==1.3.1
+    # via dlt
 hpack==4.0.0
     # via h2
 httpcore==1.0.5
@@ -219,6 +237,7 @@ httpx==0.27.0
     # via neoteroi-mkdocs
     # via prefect
 humanize==4.10.0
+    # via dlt
     # via jinja2-humanize-extension
     # via prefect
 hyperframe==6.0.1
@@ -270,6 +289,8 @@ jsbeautifier==1.15.1
     # via mkdocs-mermaid2-plugin
 jsonpatch==1.33
     # via prefect
+jsonpath-ng==1.7.0
+    # via dlt
 jsonpointer==3.0.0
     # via jsonpatch
 jsonschema==4.23.0
@@ -293,7 +314,8 @@ jupytext==1.16.4
 kubernetes==29.0.0
     # via prefect
 loguru==0.7.2
-lumacli==0.2.0
+    # via lumacli
+lumacli==0.2.7
     # via viadot2
 lxml==5.3.0
     # via zeep
@@ -370,6 +392,11 @@ mkdocstrings-python==1.16.10
 more-itertools==10.5.0
     # via simple-salesforce
 moto==5.0.13
+msal==1.32.3
+    # via azure-identity
+    # via msal-extensions
+msal-extensions==1.3.1
+    # via azure-identity
 multidict==6.0.5
     # via aiohttp
     # via yarl
@@ -408,9 +435,11 @@ oauthlib==3.2.2
 openpyxl==3.0.10
     # via viadot2
 orjson==3.10.7
+    # via dlt
     # via prefect
 packaging==24.1
     # via db-dtypes
+    # via dlt
     # via google-cloud-bigquery
     # via ipykernel
     # via jupytext
@@ -419,6 +448,7 @@ packaging==24.1
     # via pandas-gbq
     # via prefect
     # via pytest
+    # via requirements-parser
 paginate==0.5.6
     # via mkdocs-material
 pandas==1.5.1
@@ -438,7 +468,10 @@ parso==0.8.4
 pathspec==0.11.2
     # via mkdocs
     # via prefect
+pathvalidate==3.3.1
+    # via dlt
 pendulum==2.1.2
+    # via dlt
     # via prefect
 pexpect==4.9.0
     # via ipython
@@ -451,7 +484,10 @@ platformdirs==4.2.2
     # via mkdocs-get-deps
     # via zeep
 pluggy==1.5.0
+    # via dlt
     # via pytest
+ply==3.11
+    # via jsonpath-ng
 prefect==2.20.18
     # via prefect-github
     # via prefect-shell
@@ -477,8 +513,10 @@ protobuf==4.25.5
     # via proto-plus
 psutil==6.0.0
     # via ipykernel
-psycopg2-binary==2.9.9
+psycopg==3.2.9
     # via lumacli
+psycopg-binary==3.2.9
+    # via psycopg
 ptyprocess==0.7.0
     # via pexpect
 pure-eval==0.2.3
@@ -494,7 +532,7 @@ pyasn1-modules==0.4.0
     # via google-auth
 pycparser==2.22
     # via cffi
-pydantic==2.11.5
+pydantic==2.11.7
     # via dbt-artifacts-parser
     # via lumacli
     # via prefect
@@ -513,6 +551,7 @@ pygments==2.18.0
     # via nbconvert
     # via rich
 pyjwt==2.9.0
+    # via msal
     # via simple-salesforce
 pymdown-extensions==10.9
     # via mkdocs-material
@@ -525,6 +564,7 @@ pyodbc==5.1.0
 pyparsing==3.1.2
     # via mike
 pyspnego==0.11.2
+    # via requests-ntlm
     # via smbprotocol
 pytest==8.3.2
     # via pytest-asyncio
@@ -556,6 +596,7 @@ python-slugify==8.0.4
 pytz==2024.1
     # via croniter
     # via dateparser
+    # via dlt
     # via pandas
     # via prefect
     # via tm1py
@@ -567,6 +608,7 @@ pywavelets==1.7.0
     # via imagehash
 pyyaml==6.0.2
     # via apprise
+    # via dlt
     # via essentials-openapi
     # via jupytext
     # via kubernetes
@@ -595,6 +637,8 @@ regex==2024.7.24
     # via dateparser
 requests==2.32.3
     # via apprise
+    # via azure-core
+    # via dlt
     # via docker
     # via google-api-core
     # via google-cloud-bigquery
@@ -604,8 +648,10 @@ requests==2.32.3
     # via mkdocs-mermaid2-plugin
     # via mkdocs-ultralytics-plugin
     # via moto
+    # via msal
     # via o365
     # via requests-file
+    # via requests-ntlm
     # via requests-oauthlib
     # via requests-toolbelt
     # via responses
@@ -617,6 +663,8 @@ requests==2.32.3
     # via zeep
 requests-file==2.1.0
     # via zeep
+requests-ntlm==1.3.0
+    # via lumacli
 requests-oauthlib==2.0.0
     # via apprise
     # via google-auth-oauthlib
@@ -624,6 +672,8 @@ requests-oauthlib==2.0.0
     # via o365
 requests-toolbelt==1.0.0
     # via zeep
+requirements-parser==0.13.0
+    # via dlt
 responses==0.25.3
     # via moto
 rfc3339-validator==0.1.4
@@ -632,7 +682,10 @@ rich==13.7.1
     # via lumacli
     # via neoteroi-mkdocs
     # via prefect
+    # via rich-argparse
     # via typer
+rich-argparse==1.7.1
+    # via dlt
 rpds-py==0.20.0
     # via jsonschema
     # via referencing
@@ -647,9 +700,12 @@ s3transfer==0.10.2
     # via boto3
 scipy==1.13.1
     # via imagehash
+semver==3.0.4
+    # via dlt
 sendgrid==6.11.0
     # via viadot2
 setuptools==73.0.0
+    # via dlt
     # via mkdocs-mermaid2-plugin
     # via pandas-gbq
     # via pydata-google-auth
@@ -663,8 +719,11 @@ shellingham==1.5.4
     # via typer
 simple-salesforce==1.12.6
     # via viadot2
+simplejson==3.20.1
+    # via dlt
 six==1.16.0
     # via asttokens
+    # via azure-core
     # via bleach
     # via isodate
     # via jsbeautifier
@@ -691,6 +750,8 @@ sqlalchemy==2.0.32
     # via prefect
     # via prefect-sqlalchemy
     # via viadot2
+sqlglot==26.33.0
+    # via dlt
 sqlparse==0.5.1
     # via sql-metadata
 stack-data==0.6.3
@@ -702,6 +763,8 @@ tabulate==0.9.0
     # via viadot2
 tangled-up-in-unicode==0.2.0
     # via visions
+tenacity==9.1.2
+    # via dlt
 text-unidecode==1.3
     # via python-slugify
 tinycss2==1.3.0
@@ -716,6 +779,8 @@ tomli==2.0.1
     # via coverage
     # via jupytext
     # via pytest
+tomlkit==0.13.3
+    # via dlt
 tornado==6.4.1
     # via ipykernel
     # via jupyter-client
@@ -738,9 +803,13 @@ typing-extensions==4.12.2
     # via aiosqlite
     # via alembic
     # via anyio
+    # via azure-core
+    # via azure-identity
+    # via dlt
     # via ipython
     # via mkdocstrings-python
     # via prefect
+    # via psycopg
     # via pydantic
     # via pydantic-core
     # via simple-salesforce
@@ -751,6 +820,7 @@ typing-extensions==4.12.2
 typing-inspection==0.4.1
     # via pydantic
 tzdata==2024.1
+    # via dlt
     # via o365
 tzlocal==5.2
     # via dateparser
@@ -782,7 +852,9 @@ webencodings==0.5.1
     # via tinycss2
 websocket-client==1.8.0
     # via kubernetes
+    # via lumacli
 websockets==12.0
+    # via lumacli
     # via prefect
 werkzeug==3.0.3
     # via moto
