@@ -85,8 +85,6 @@ class SMB(Source):
         except Exception:
             self.logger.exception("Connection failed.")
             raise
-            
-        
 
     def scan_and_store(
         self,
@@ -223,7 +221,7 @@ class SMB(Source):
                 - A tuple of two `pendulum.Date` values for date range filtering.
                 - None, if no date filter is applied.
                 Defaults to None.
-        
+
         Returns:
             tuple[dict[str, bytes], list[str]]:
             - A dictionary mapping file paths to their contents in bytes.
@@ -231,13 +229,13 @@ class SMB(Source):
         """
         found_files = {}
         problematic_entries = []
-        
+
         entries = self._get_directory_entries(path)
         for entry in entries:
             # Skip temp files
             if entry.name.startswith("~$"):
                 problematic_entries.append(entry.name)
-            
+
             try:
                 if entry.is_file() and self._is_matching_file(
                     entry, filename_regex, extensions, date_filter_parsed
@@ -245,15 +243,15 @@ class SMB(Source):
                     found_files.update(self._get_file_content(entry))
                 elif entry.is_dir():
                     found_files.update(
-                        self._scan_directory(
+                        self._scan_directory( 
                             entry.path, filename_regex, extensions, date_filter_parsed
-                        )
+                        )[0] # Use only the first element (dict); ignore other return values
                     )
             except smbprotocol.exceptions.SMBOSError as e:
                 self.logger.warning(f"Entry not found: {e}")
                 problematic_entries.append(entry.name)
             except Exception:
-                self.logger.exception(f"Error scanning or downloading from {path}.")  # noqa: TRY401
+                self.logger.exception(f"Error scanning or downloading from {path}.")
                 raise
 
         return found_files, problematic_entries
