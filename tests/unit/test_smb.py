@@ -199,7 +199,7 @@ def test_empty_directory_scan(mock_scandir, smb_instance):
 
 
 def test_scan_directory_error_handling(smb_instance):
-    with (patch.object(smb_instance, "_get_directory_entries") as mock_get_entries):
+    with patch.object(smb_instance, "_get_directory_entries") as mock_get_entries:
         mock_get_entries.side_effect = Exception("Test error")
 
         with pytest.raises(Exception, match="Test error"):
@@ -397,7 +397,7 @@ def test_get_directory_entries(
                 pendulum.from_timestamp(1735689600 + 86400).date(),
             ),
             False,
-        )
+        ),
     ],
 )
 def test_is_matching_file(
