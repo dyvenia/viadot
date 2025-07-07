@@ -390,3 +390,18 @@ class S3(Source):
             last_modified_begin=last_modified_begin,
             last_modified_end=last_modified_end,
         )
+
+    def upload_bytes(self, byte_data: bytes, bucket_name: str, s3_key: str) -> None:
+        """Upload a file-like object to S3.
+        
+        The file-like object must be in binary mode.
+        This is a managed transfer which will perform a multipart upload in multiple 
+        threads if necessary.
+
+        Args:
+            byte_data (bytes): A file-like object to upload.
+            bucket_name (str): The name of the bucket to upload to.
+            s3_key (str): The name of the key to upload to.
+        """
+        client = self.session.client("s3")
+        client.upload_fileobj(Fileobj=byte_data, Bucket=bucket_name, Key=s3_key)
