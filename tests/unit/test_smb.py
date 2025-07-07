@@ -53,7 +53,7 @@ def mock_smb_dir_entry_dir():
 def test_smb_initialization_with_credentials(valid_credentials):
     with patch("viadot.sources.smb.smbclient.register_session") as mock_register:
         mock_register.return_value = None
-        return SMB(base_path=SERVER_PATH, credentials=valid_credentials)
+        smb = SMB(base_path=SERVER_PATH, credentials=valid_credentials)
     assert smb.credentials["username"] == "default@example.com"
     assert smb.credentials["password"] == SecretStr("default_password")
 
@@ -119,7 +119,7 @@ def test_scan_and_store_basic(smb_instance, mock_smb_dir_entry_file):
         }
         mock_is_matching.return_value = True
 
-        result_dict,result_list = smb_instance.scan_and_store()
+        result_dict, result_list = smb_instance.scan_and_store()
 
         assert isinstance(result_dict, dict)
         assert isinstance(result_list, list)
@@ -176,7 +176,9 @@ def test_scan_directory_recursive_search(
 
         assert isinstance(result_dict, dict)
         assert isinstance(result_list, list)
-        assert len(result_dict) == 1, f"Expected 1 file, got {len(result)}. Result: {result}"
+        assert (
+            len(result_dict) == 1
+            ), f"Expected 1 file, got {len(result_dict)}. Result: {result_dict}"
         assert nested_file.path in result_dict
         assert result_dict[nested_file.path] == mock_file_content
         mock_is_matching.assert_any_call(nested_file, None, None, None)

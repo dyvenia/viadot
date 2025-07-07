@@ -243,9 +243,9 @@ class SMB(Source):
                     found_files.update(self._get_file_content(entry))
                 elif entry.is_dir():
                     found_files.update(
-                        self._scan_directory( 
+                        self._scan_directory(
                             entry.path, filename_regex, extensions, date_filter_parsed
-                        )[0] # Use only the first element (dict); ignore other return values
+                        )[0] # Use the first element (dict); ignore other return values
                     )
             except smbprotocol.exceptions.SMBOSError as e:
                 self.logger.warning(f"Entry not found: {e}")
