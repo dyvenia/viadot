@@ -51,7 +51,9 @@ def mock_smb_dir_entry_dir():
 
 
 def test_smb_initialization_with_credentials(valid_credentials):
-    smb = SMB(base_path=SERVER_PATH, credentials=valid_credentials)
+    with patch("viadot.sources.smb.smbclient.register_session") as mock_register:
+        mock_register.return_value = None
+        return SMB(base_path=SERVER_PATH, credentials=valid_credentials)
     assert smb.credentials["username"] == "default@example.com"
     assert smb.credentials["password"] == SecretStr("default_password")
 
@@ -117,12 +119,13 @@ def test_scan_and_store_basic(smb_instance, mock_smb_dir_entry_file):
         }
         mock_is_matching.return_value = True
 
-        result = smb_instance.scan_and_store()
+        result_dict,result_list = smb_instance.scan_and_store()
 
-        assert isinstance(result, dict)
-        assert len(result) == 1, f"Expected 1 file, got {len(result)}"
-        assert mock_smb_dir_entry_file.path in result
-        assert result[mock_smb_dir_entry_file.path] == mock_file_content
+        assert isinstance(result_dict, dict)
+        assert isinstance(result_list, list)
+        assert len(result_dict) == 1, f"Expected 1 file, got {len(result_dict)}"
+        assert mock_smb_dir_entry_file.path in result_dict
+        assert result_dict[mock_smb_dir_entry_file.path] == mock_file_content
 
 
 def test_scan_directory_recursive_search(
@@ -157,7 +160,7 @@ def test_scan_directory_recursive_search(
         mock_get_content.return_value = {nested_file.path: mock_file_content}
 
         # Execute the scan starting at root
-        result = smb_instance._scan_directory(
+        result_dict, result_list = smb_instance._scan_directory(
             path=SERVER_PATH,
             filename_regex=None,
             extensions=None,
@@ -171,10 +174,11 @@ def test_scan_directory_recursive_search(
             f"{SERVER_PATH}/subdir",
         }
 
-        assert isinstance(result, dict)
-        assert len(result) == 1, f"Expected 1 file, got {len(result)}. Result: {result}"
-        assert nested_file.path in result
-        assert result[nested_file.path] == mock_file_content
+        assert isinstance(result_dict, dict)
+        assert isinstance(result_list, list)
+        assert len(result_dict) == 1, f"Expected 1 file, got {len(result)}. Result: {result}"
+        assert nested_file.path in result_dict
+        assert result_dict[nested_file.path] == mock_file_content
         mock_is_matching.assert_any_call(nested_file, None, None, None)
 
 
