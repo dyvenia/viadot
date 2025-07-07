@@ -484,6 +484,8 @@ websocket-client==1.8.0
     # via kubernetes
 websockets==12.0
     # via prefect
+xlrd==2.0.2
+    # via viadot2
 yarl==1.9.8
     # via aiohttp
 zeep==4.2.1
