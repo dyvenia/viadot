@@ -2,9 +2,12 @@
 
 from collections.abc import Iterable, Iterator
 from datetime import datetime
+import io
 import os
 from pathlib import Path
 from typing import Any, Literal
+
+from boto3.s3.transfer import TransferConfig
 
 
 try:
@@ -391,17 +394,44 @@ class S3(Source):
             last_modified_end=last_modified_end,
         )
 
-    def upload_bytes(self, byte_data: bytes, bucket_name: str, s3_key: str) -> None:
+    def upload_bytes(
+        self,
+        byte_data: bytes,
+        bucket_name: str,
+        s3_key: str,
+        config: TransferConfig | None = None,
+    ) -> None:
         """Upload a file-like object to S3.
-        
+
         The file-like object must be in binary mode.
-        This is a managed transfer which will perform a multipart upload in multiple 
+        This is a managed transfer which will perform a multipart upload in multiple
         threads if necessary.
 
         Args:
             byte_data (bytes): A file-like object to upload.
             bucket_name (str): The name of the bucket to upload to.
             s3_key (str): The name of the key to upload to.
+            config (boto3.s3.transfer.TransferConfig, optional): Configuration for
+                multipart upload. If None, a default config with a 25MB multipart
+                threshold and 10 threads is used.
         """
+        if config is None:
+            config = TransferConfig(
+                multipart_threshold=25 * 1024 * 1024,  # 25 MB
+                multipart_chunksize=25 * 1024 * 1024,  # 25 MB
+                max_concurrency=10,
+                use_threads=True,
+            )
         client = self.session.client("s3")
-        client.upload_fileobj(Fileobj=byte_data, Bucket=bucket_name, Key=s3_key)
+
+        if isinstance(byte_data, bytes):
+            file_obj = io.BytesIO(byte_data)
+        elif hasattr(byte_data, "read"):
+            file_obj = byte_data
+        else:
+            msg = "byte_data must be bytes or a file-like object with a read() method."
+            raise ValueError(msg)
+
+        client.upload_fileobj(
+            Fileobj=file_obj, Bucket=bucket_name, Key=s3_key, Config=config
+        )
