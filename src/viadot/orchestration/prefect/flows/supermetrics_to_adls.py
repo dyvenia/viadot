@@ -13,6 +13,7 @@ from viadot.orchestration.prefect.tasks import (
 
 @flow(
     name="Supermetrics extraction to ADLS",
+    description="Extract data from Supermetrics and load it into ADLS.",
     retries=1,
     retry_delay_seconds=60,
     task_runner=ConcurrentTaskRunner,

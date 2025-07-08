@@ -10,6 +10,8 @@ from viadot.orchestration.prefect.tasks import azure_sql_to_df, df_to_adls
 
 @flow(
     name="Azure SQL extraction to ADLS",
+    description="Extract data from Azure SQL"
+    + " and load it into Azure Data Lake Storage.",
     retries=1,
     retry_delay_seconds=60,
     task_runner=ConcurrentTaskRunner,

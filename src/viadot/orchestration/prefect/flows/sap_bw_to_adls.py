@@ -10,6 +10,7 @@ from viadot.orchestration.prefect.tasks import df_to_adls, sap_bw_to_df
 
 @flow(
     name="SAP BW extraction to ADLS",
+    description="Extract data from SAP BW and load it into Azure Data Lake Storage.",
     retries=1,
     retry_delay_seconds=60,
     task_runner=ConcurrentTaskRunner,

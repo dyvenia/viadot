@@ -8,6 +8,7 @@ from viadot.orchestration.prefect.tasks import bigquery_to_df, df_to_adls
 
 @flow(
     name="BigQuery extraction to ADLS",
+    description="Extract data from BigQuery and load it into Azure Data Lake Storage.",
     retries=1,
     retry_delay_seconds=60,
     task_runner=ConcurrentTaskRunner,

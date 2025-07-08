@@ -15,6 +15,7 @@ Currency = Literal[
 
 @flow(
     name="extract--exchange-rates-api--adls",
+    description="Extract data from Exchange Rates API and load it into Azure Data Lake.",
     retries=1,
     retry_delay_seconds=60,
 )

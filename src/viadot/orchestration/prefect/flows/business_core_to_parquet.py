@@ -10,6 +10,7 @@ from viadot.orchestration.prefect.tasks.task_utils import df_to_parquet
 
 @flow(
     name="extract--businesscore--parquet",
+    description="Extract data from Business Core API and load it into Parquet file",
     retries=1,
     retry_delay_seconds=60,
 )

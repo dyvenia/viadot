@@ -12,6 +12,7 @@ from viadot.orchestration.prefect.tasks import (
 
 @flow(
     name="extract--sharepoint--list--redshift_spectrum",
+    description="Extract data from Sharepoint Lists and load it into AWS Redshift Spectrum.",
     retries=1,
     retry_delay_seconds=60,
 )

@@ -14,6 +14,7 @@ from viadot.orchestration.prefect.tasks.exchange_rates import Currency
 
 @flow(
     name="extract--exchange-rates-api--redshift_spectrum",
+    description="Extract data from Exchange Rates API and load it into AWS Redshift Spectrum.",
     retries=1,
     retry_delay_seconds=60,
 )
@@ -28,6 +29,7 @@ def exchange_rates_api_to_redshift_spectrum(  # noqa: PLR0913
     if_exists: Literal["overwrite", "append"] = "overwrite",
     partition_cols: list[str] | None = None,
     compression: str | None = None,
+    table_description: str | None = None,
     aws_config_key: str | None = None,
     aws_credentials_secret: str | None = None,
     exchange_rates_api_credentials_secret: str | None = None,
@@ -57,6 +59,8 @@ def exchange_rates_api_to_redshift_spectrum(  # noqa: PLR0913
             create partitions. Only takes effect if dataset=True. Defaults to None.
         compression (str, optional): Compression style (None, snappy, gzip, zstd).
         sep (str, optional): Field delimiter for the output file. Defaults to ','.
+        table_description (str, optional): AWS Glue catalog table description. Defaults
+            to None.
         aws_config_key (str, optional): The key in the viadot config holding relevant
             credentials. Defaults to None.
         aws_credentials_secret (str, optional): The name of a secret block in Prefect
@@ -83,6 +87,7 @@ def exchange_rates_api_to_redshift_spectrum(  # noqa: PLR0913
         if_exists=if_exists,
         partition_cols=partition_cols,
         compression=compression,
+        description=table_description,
         config_key=aws_config_key,
         credentials_secret=aws_credentials_secret,
     )

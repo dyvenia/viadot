@@ -10,6 +10,7 @@ from viadot.orchestration.prefect.tasks import df_to_adls, vid_club_to_df
 
 @flow(
     name="Vid CLub extraction to ADLS",
+    description="Extract data from Vid CLub and load it into Azure Data Lake Storage.",
     retries=1,
     retry_delay_seconds=60,
     task_runner=ConcurrentTaskRunner,

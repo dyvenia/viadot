@@ -9,6 +9,7 @@ from viadot.orchestration.prefect.tasks import df_to_redshift_spectrum, sap_rfc_
 
 @flow(
     name="extract--sap--redshift_spectrum",
+    description="Extract data from SAP and load it into AWS Redshift Spectrum.",
     retries=1,
     retry_delay_seconds=60,
 )

@@ -10,6 +10,8 @@ from viadot.orchestration.prefect.tasks import df_to_adls, genesys_to_df
 
 @flow(
     name="Genesys extraction to ADLS",
+    description="Extract data from Genesys Cloud"
+    + " and load it into Azure Data Lake Storage.",
     retries=1,
     retry_delay_seconds=60,
     task_runner=ConcurrentTaskRunner,

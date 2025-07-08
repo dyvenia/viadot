@@ -7,6 +7,9 @@ from viadot.orchestration.prefect.tasks import df_to_adls, eurostat_to_df
 
 @flow(
     name="extract--eurostat--adls",
+    description="""Flow for downloading data from the Eurostat platform via
+    HTTPS REST API (no credentials required) to a CSV or Parquet file.
+    Then upload it to Azure Data Lake.""",
     retries=1,
     retry_delay_seconds=60,
 )

@@ -7,6 +7,7 @@ from viadot.orchestration.prefect.tasks import s3_upload_file, sharepoint_downlo
 
 @flow(
     name="extract--sharepoint--s3",
+    description="Flows for downloading data from Sharepoint and uploading it to Amazon S3.",
     retries=1,
     retry_delay_seconds=60,
 )

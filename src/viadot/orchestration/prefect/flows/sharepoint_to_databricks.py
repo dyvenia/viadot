@@ -10,6 +10,7 @@ from viadot.orchestration.prefect.tasks import df_to_databricks, sharepoint_to_d
 
 @flow(
     name="extract--sharepoint--databricks",
+    description="Extract data from Sharepoint and load it into Databricks.",
     retries=1,
     retry_delay_seconds=60,
 )
