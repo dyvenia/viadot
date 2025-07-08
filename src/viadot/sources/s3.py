@@ -398,7 +398,7 @@ class S3(Source):
         self,
         file_object: io.BytesIO,
         bucket_name: str,
-        s3_key: str,
+        path: str,
         config: dict | None = None,
     ) -> None:
         """Upload a file-like object to S3.
@@ -410,7 +410,7 @@ class S3(Source):
         Args:
             file_object (io.BytesIO): A file-like object to upload.
             bucket_name (str): The name of the bucket to upload to.
-            s3_key (str): The name of the key to upload to.
+            path (str): The name of the key to upload to.
             config (dict, optional): Configuration for multipart upload.
                 If None, a default config with a 25MB multipart threshold and 10 threads
                 is used.
@@ -432,5 +432,5 @@ class S3(Source):
             raise ValueError(msg)
 
         client.upload_fileobj(
-            Fileobj=file_object, Bucket=bucket_name, Key=s3_key, Config=config
+            Fileobj=file_object, Bucket=bucket_name, Key=path, Config=config
         )
