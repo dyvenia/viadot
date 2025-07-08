@@ -394,9 +394,9 @@ class S3(Source):
             last_modified_end=last_modified_end,
         )
 
-    def upload_bytes(
+    def upload_file_object(
         self,
-        byte_data: bytes,
+        file_object: io.BytesIO,
         bucket_name: str,
         s3_key: str,
         config: TransferConfig | None = None,
@@ -408,7 +408,7 @@ class S3(Source):
         threads if necessary.
 
         Args:
-            byte_data (bytes): A file-like object to upload.
+            file_object (io.BytesIO): A file-like object to upload.
             bucket_name (str): The name of the bucket to upload to.
             s3_key (str): The name of the key to upload to.
             config (boto3.s3.transfer.TransferConfig, optional): Configuration for
@@ -424,14 +424,10 @@ class S3(Source):
             )
         client = self.session.client("s3")
 
-        if isinstance(byte_data, bytes):
-            file_obj = io.BytesIO(byte_data)
-        elif hasattr(byte_data, "read"):
-            file_obj = byte_data
-        else:
-            msg = "byte_data must be bytes or a file-like object with a read() method."
+        if not hasattr(file_object, "read"):
+            msg = "file_object must be a file-like object with a read() method."
             raise ValueError(msg)
 
         client.upload_fileobj(
-            Fileobj=file_obj, Bucket=bucket_name, Key=s3_key, Config=config
+            Fileobj=file_object, Bucket=bucket_name, Key=s3_key, Config=config
         )
