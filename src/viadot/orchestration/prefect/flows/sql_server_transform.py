@@ -7,7 +7,6 @@ from viadot.orchestration.prefect.tasks import sql_server_query
 
 @flow(
     name="transform--sql_server",
-    description="Transform data inside the SQLServer.",
     retries=1,
     retry_delay_seconds=60,
 )

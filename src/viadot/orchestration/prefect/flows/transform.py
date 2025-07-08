@@ -21,7 +21,6 @@ def _cleanup_repo(dbt_repo_dir_name: str) -> None:
 
 @flow(
     name="Transform",
-    description="Build specified dbt model(s).",
     timeout_seconds=2 * 60 * 60,
 )
 def transform(

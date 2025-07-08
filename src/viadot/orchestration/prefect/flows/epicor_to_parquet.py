@@ -10,7 +10,6 @@ from viadot.orchestration.prefect.tasks.task_utils import df_to_parquet
 
 @flow(
     name="extract--epicor--parquet",
-    description="Extract data from Epicor Prelude API and load it into Parquet file",
     retries=1,
     retry_delay_seconds=60,
 )

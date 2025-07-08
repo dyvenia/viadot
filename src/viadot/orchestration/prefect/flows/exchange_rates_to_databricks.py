@@ -15,7 +15,6 @@ Currency = Literal[
 
 @flow(
     name="extract--exchange-rates-api--databricks",
-    description="Extract data from Exchange Rates API and load it into Databricks.",
     retries=1,
     retry_delay_seconds=60,
 )

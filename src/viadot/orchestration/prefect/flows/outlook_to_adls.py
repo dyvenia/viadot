@@ -8,7 +8,6 @@ from viadot.orchestration.prefect.tasks import df_to_adls, outlook_to_df
 
 @flow(
     name="Outlook extraction to ADLS",
-    description="Extract data from Outlook and load it into Azure Data Lake Storage.",
     retries=1,
     retry_delay_seconds=60,
     task_runner=ConcurrentTaskRunner,

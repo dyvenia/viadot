@@ -9,7 +9,6 @@ from viadot.orchestration.prefect.tasks import df_to_minio, sql_server_to_df
 
 @flow(
     name="extract--sql_server--minio",
-    description="Extract data from SQLServer and load it into MinIO.",
     retries=1,
     retry_delay_seconds=60,
 )

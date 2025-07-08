@@ -7,7 +7,6 @@ from viadot.orchestration.prefect.tasks import df_to_adls, sharepoint_to_df
 
 @flow(
     name="extract--sharepoint--adls",
-    description="Extract data from Exchange Rates API and load it into Azure Data Lake.",
     retries=1,
     retry_delay_seconds=60,
 )

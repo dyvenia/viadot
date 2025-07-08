@@ -9,7 +9,6 @@ from viadot.orchestration.prefect.tasks import duckdb_query
 
 @flow(
     name="transform--duckdb",
-    description="Transform data in the DuckDB.",
     retries=1,
     retry_delay_seconds=60,
     timeout_seconds=2 * 60 * 60,

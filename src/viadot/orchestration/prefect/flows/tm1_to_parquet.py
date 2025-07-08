@@ -10,7 +10,6 @@ from viadot.orchestration.prefect.tasks.tm1 import tm1_to_df
 
 @flow(
     name="extract--tm1--parquet",
-    description="Extract data from TM1 and load it into Parquet file",
     retries=1,
     retry_delay_seconds=60,
 )

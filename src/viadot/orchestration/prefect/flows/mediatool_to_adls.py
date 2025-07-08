@@ -10,7 +10,6 @@ from viadot.orchestration.prefect.tasks import df_to_adls, mediatool_to_df
 
 @flow(
     name="Mediatool extraction to ADLS",
-    description="Extract data from Mediatool and load it into Azure Data Lake Storage.",
     retries=1,
     retry_delay_seconds=60,
     task_runner=ConcurrentTaskRunner,

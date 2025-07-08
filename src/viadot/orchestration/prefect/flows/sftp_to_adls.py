@@ -8,8 +8,6 @@ from viadot.orchestration.prefect.tasks import df_to_adls, sftp_to_df
 
 @flow(
     name="SFTP extraction to ADLS",
-    description="Extract data from a SFTP server and "
-    + "load it into Azure Data Lake Storage.",
     retries=1,
     retry_delay_seconds=60,
     task_runner=ConcurrentTaskRunner,

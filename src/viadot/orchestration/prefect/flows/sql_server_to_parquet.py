@@ -10,7 +10,6 @@ from viadot.orchestration.prefect.tasks.task_utils import df_to_parquet
 
 @flow(
     name="extract--sql_server--parquet",
-    description="Extract data from SQLServer and save it to a Parquet file.",
     retries=1,
     retry_delay_seconds=60,
 )
