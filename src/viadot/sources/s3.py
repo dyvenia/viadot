@@ -399,7 +399,7 @@ class S3(Source):
         file_object: io.BytesIO,
         bucket_name: str,
         s3_key: str,
-        config: TransferConfig | None = None,
+        config: dict | None = None,
     ) -> None:
         """Upload a file-like object to S3.
 
@@ -411,9 +411,9 @@ class S3(Source):
             file_object (io.BytesIO): A file-like object to upload.
             bucket_name (str): The name of the bucket to upload to.
             s3_key (str): The name of the key to upload to.
-            config (boto3.s3.transfer.TransferConfig, optional): Configuration for
-                multipart upload. If None, a default config with a 25MB multipart
-                threshold and 10 threads is used.
+            config (dict, optional): Configuration for multipart upload.
+                If None, a default config with a 25MB multipart threshold and 10 threads
+                is used.
         """
         if config is None:
             config = TransferConfig(
@@ -422,6 +422,9 @@ class S3(Source):
                 max_concurrency=10,
                 use_threads=True,
             )
+        else:
+            config = TransferConfig(**config)
+
         client = self.session.client("s3")
 
         if not hasattr(file_object, "read"):
