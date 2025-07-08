@@ -28,7 +28,6 @@ def sharepoint_to_redshift_spectrum(  # noqa: PLR0913
     index: bool = False,
     compression: str | None = None,
     sep: str = ",",
-    description: str | None = None,
     aws_config_key: str | None = None,
     credentials_secret: str | None = None,
     sheet_name: str | list[str | int] | int | None = None,
@@ -74,8 +73,6 @@ def sharepoint_to_redshift_spectrum(  # noqa: PLR0913
         index (bool, optional): Write row names (index). Defaults to False.
         compression (str, optional): Compression style (None, snappy, gzip, zstd).
         sep (str, optional): Field delimiter for the output file. Defaults to ','.
-        description (str, optional): AWS Glue catalog table description. Defaults to
-            None.
         aws_config_key (str, optional): The key in the viadot config holding relevant
             credentials. Defaults to None.
         credentials_secret (str, optional): The name of a secret block in Prefect
@@ -119,7 +116,6 @@ def sharepoint_to_redshift_spectrum(  # noqa: PLR0913
         index=index,
         compression=compression,
         sep=sep,
-        description=description,
         config_key=aws_config_key,
         credentials_secret=credentials_secret,
     )
