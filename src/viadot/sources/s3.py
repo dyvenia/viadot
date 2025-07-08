@@ -2,9 +2,12 @@
 
 from collections.abc import Iterable, Iterator
 from datetime import datetime
+import io
 import os
 from pathlib import Path
 from typing import Any, Literal
+
+from boto3.s3.transfer import TransferConfig
 
 
 try:
@@ -389,4 +392,45 @@ class S3(Source):
             path=file_paths,
             last_modified_begin=last_modified_begin,
             last_modified_end=last_modified_end,
+        )
+
+    def upload_file_object(
+        self,
+        file_object: io.BytesIO,
+        bucket_name: str,
+        path: str,
+        config: dict | None = None,
+    ) -> None:
+        """Upload a file-like object to S3.
+
+        The file-like object must be in binary mode.
+        This is a managed transfer which will perform a multipart upload in multiple
+        threads if necessary.
+
+        Args:
+            file_object (io.BytesIO): A file-like object to upload.
+            bucket_name (str): The name of the bucket to upload to.
+            path (str): The name of the key to upload to.
+            config (dict, optional): Configuration for multipart upload.
+                If None, a default config with a 25MB multipart threshold and 10 threads
+                is used.
+        """
+        if config is None:
+            config = TransferConfig(
+                multipart_threshold=25 * 1024 * 1024,  # 25 MB
+                multipart_chunksize=25 * 1024 * 1024,  # 25 MB
+                max_concurrency=10,
+                use_threads=True,
+            )
+        else:
+            config = TransferConfig(**config)
+
+        client = self.session.client("s3")
+
+        if not hasattr(file_object, "read"):
+            msg = "file_object must be a file-like object with a read() method."
+            raise ValueError(msg)
+
+        client.upload_fileobj(
+            Fileobj=file_object, Bucket=bucket_name, Key=path, Config=config
         )
