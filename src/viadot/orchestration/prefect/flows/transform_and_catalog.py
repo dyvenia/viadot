@@ -288,10 +288,8 @@ def transform_and_catalog(  # noqa: PLR0912, PLR0913, PLR0915, C901
     if task_failed:
         return Failed()
 
-    if fail_flow_only_on_build_failure:
-        model_error_pattern = re.compile(
-            r"ERROR creating sql table model", re.IGNORECASE
-        )
+    if fail_flow_only_on_build_failure and build_select:
+        model_error_pattern = re.compile(r"ERROR creating", re.IGNORECASE)
         if any(model_error_pattern.search(line) for line in build):
             return Failed(message="One or more models failed to build.")
 

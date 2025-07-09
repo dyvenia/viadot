@@ -104,6 +104,11 @@ class LineItemDetail(BaseModel):
     UpdateDate: str | None
     DeleteReasonCode: str | None
     DeleteReasonDescription: str | None
+    VendorProductNumber: str | None
+    ProductGroup: str | None
+    ProductGroupDescription: str | None
+    ProductLine: str | None
+    ProductLineDescription: str | None
 
 
 class Customer(BaseModel):

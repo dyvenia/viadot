@@ -651,6 +651,8 @@ websocket-client==1.8.0
 websockets==12.0
     # via lumacli
     # via prefect
+xlrd==2.0.2
+    # via viadot2
 yarl==1.9.8
     # via aiohttp
 zeep==4.2.1

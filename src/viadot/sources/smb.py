@@ -6,6 +6,7 @@ import re
 import pendulum
 from pydantic import BaseModel, SecretStr, root_validator
 import smbclient
+import smbprotocol
 
 from viadot.config import get_source_credentials
 from viadot.exceptions import CredentialError
@@ -64,10 +65,26 @@ class SMB(Source):
         validated_creds = SMBCredentials(**raw_creds)
         super().__init__(*args, credentials=validated_creds.dict(), **kwargs)
 
-        smbclient.ClientConfig(
-            username=self.credentials.get("username"),
-            password=self.credentials.get("password").get_secret_value(),
-        )
+        normalized_path = re.sub(r"\\+", r"\\", self.base_path)
+        parts = normalized_path.lstrip("\\").split("\\")
+        server_host_or_ip = parts[0]
+
+        try:
+            smbclient.register_session(
+                server_host_or_ip,
+                username=self.credentials.get("username"),
+                password=self.credentials.get("password").get_secret_value(),
+            )
+            self.logger.info("Connection succesfully established.")
+        except smbprotocol.exceptions.LogonFailure:
+            self.logger.exception("Authentication failed: credentials invalid.")
+            raise
+        except smbprotocol.exceptions.PasswordExpired:
+            self.logger.exception("Authentication failed: credentials expired.")
+            raise
+        except Exception:
+            self.logger.exception("Connection failed.")
+            raise
 
     def scan_and_store(
         self,
@@ -77,7 +94,7 @@ class SMB(Source):
         dynamic_date_symbols: list[str] = ["<<", ">>"],  # noqa: B006
         dynamic_date_format: str = "%Y-%m-%d",
         dynamic_date_timezone: str = "UTC",
-    ) -> dict[str, bytes]:
+    ) -> tuple[dict[str, bytes], list[str]]:
         """Scan the directory structure for files and store their contents in memory.
 
         Args:
@@ -101,7 +118,9 @@ class SMB(Source):
                 processing. Defaults to "UTC".
 
         Returns:
-            dict[str, bytes]: A dictionary mapping file paths to their contents.
+            tuple[dict[str, bytes], list[str]]:
+            - A dictionary mapping file paths to their contents in bytes.
+            - A list of file paths that were skipped or failed to be read.
         """
         date_filter_parsed = self._parse_dates(
             date_filter=date_filter,
@@ -181,7 +200,7 @@ class SMB(Source):
         date_filter_parsed: pendulum.Date
         | tuple[pendulum.Date, pendulum.Date]
         | None = None,
-    ) -> dict[str, bytes]:
+    ) -> tuple[dict[str, bytes], list[str]]:
         """Recursively scans a directory for matching files based on filters.
 
         It applies 'filename_regex' and 'extensions' filters and can filter files based
@@ -202,12 +221,22 @@ class SMB(Source):
                 - A tuple of two `pendulum.Date` values for date range filtering.
                 - None, if no date filter is applied.
                 Defaults to None.
+
+        Returns:
+            tuple[dict[str, bytes], list[str]]:
+            - A dictionary mapping file paths to their contents in bytes.
+            - A list of file paths that were skipped or failed to be read.
         """
         found_files = {}
+        problematic_entries = []
 
-        try:
-            entries = self._get_directory_entries(path)
-            for entry in entries:
+        entries = self._get_directory_entries(path)
+        for entry in entries:
+            # Skip temp files
+            if entry.name.startswith("~$"):
+                problematic_entries.append(entry.name)
+
+            try:
                 if entry.is_file() and self._is_matching_file(
                     entry, filename_regex, extensions, date_filter_parsed
                 ):
@@ -216,12 +245,16 @@ class SMB(Source):
                     found_files.update(
                         self._scan_directory(
                             entry.path, filename_regex, extensions, date_filter_parsed
-                        )
+                        )[0]  # Use the first element (dict); ignore other return values
                     )
-        except Exception as e:
-            self.logger.exception(f"Error scanning or downloading from {path}: {e}")  # noqa: TRY401
+            except smbprotocol.exceptions.SMBOSError as e:
+                self.logger.warning(f"Entry not found: {e}")
+                problematic_entries.append(entry.name)
+            except Exception:
+                self.logger.exception(f"Error scanning or downloading from {path}.")
+                raise
 
-        return found_files
+        return found_files, problematic_entries
 
     def _get_file_content(self, entry: smbclient._os.SMBDirEntry) -> dict[str, bytes]:
         """Extracts the content of a file from an SMB directory entry.
@@ -295,10 +328,6 @@ class SMB(Source):
                 False otherwise.
         """
         name_lower = entry.name.lower()
-
-        # Skip temp files
-        if name_lower.startswith("~$") or entry.is_dir():
-            return False
 
         # Normalize to lists
         filename_regex_list = (

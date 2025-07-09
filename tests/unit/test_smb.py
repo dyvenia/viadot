@@ -24,7 +24,9 @@ def valid_credentials():
 
 @pytest.fixture
 def smb_instance(valid_credentials):
-    return SMB(base_path=SERVER_PATH, credentials=valid_credentials)
+    with patch("viadot.sources.smb.smbclient.register_session") as mock_register:
+        mock_register.return_value = None
+        return SMB(base_path=SERVER_PATH, credentials=valid_credentials)
 
 
 @pytest.fixture
@@ -49,7 +51,9 @@ def mock_smb_dir_entry_dir():
 
 
 def test_smb_initialization_with_credentials(valid_credentials):
-    smb = SMB(base_path=SERVER_PATH, credentials=valid_credentials)
+    with patch("viadot.sources.smb.smbclient.register_session") as mock_register:
+        mock_register.return_value = None
+        smb = SMB(base_path=SERVER_PATH, credentials=valid_credentials)
     assert smb.credentials["username"] == "default@example.com"
     assert smb.credentials["password"] == SecretStr("default_password")
 
@@ -115,12 +119,13 @@ def test_scan_and_store_basic(smb_instance, mock_smb_dir_entry_file):
         }
         mock_is_matching.return_value = True
 
-        result = smb_instance.scan_and_store()
+        result_dict, result_list = smb_instance.scan_and_store()
 
-        assert isinstance(result, dict)
-        assert len(result) == 1, f"Expected 1 file, got {len(result)}"
-        assert mock_smb_dir_entry_file.path in result
-        assert result[mock_smb_dir_entry_file.path] == mock_file_content
+        assert isinstance(result_dict, dict)
+        assert isinstance(result_list, list)
+        assert len(result_dict) == 1, f"Expected 1 file, got {len(result_dict)}"
+        assert mock_smb_dir_entry_file.path in result_dict
+        assert result_dict[mock_smb_dir_entry_file.path] == mock_file_content
 
 
 def test_scan_directory_recursive_search(
@@ -155,7 +160,7 @@ def test_scan_directory_recursive_search(
         mock_get_content.return_value = {nested_file.path: mock_file_content}
 
         # Execute the scan starting at root
-        result = smb_instance._scan_directory(
+        result_dict, result_list = smb_instance._scan_directory(
             path=SERVER_PATH,
             filename_regex=None,
             extensions=None,
@@ -169,10 +174,13 @@ def test_scan_directory_recursive_search(
             f"{SERVER_PATH}/subdir",
         }
 
-        assert isinstance(result, dict)
-        assert len(result) == 1, f"Expected 1 file, got {len(result)}. Result: {result}"
-        assert nested_file.path in result
-        assert result[nested_file.path] == mock_file_content
+        assert isinstance(result_dict, dict)
+        assert isinstance(result_list, list)
+        assert (
+            len(result_dict) == 1
+        ), f"Expected 1 file, got {len(result_dict)}. Result: {result_dict}"
+        assert nested_file.path in result_dict
+        assert result_dict[nested_file.path] == mock_file_content
         mock_is_matching.assert_any_call(nested_file, None, None, None)
 
 
@@ -191,17 +199,11 @@ def test_empty_directory_scan(mock_scandir, smb_instance):
 
 
 def test_scan_directory_error_handling(smb_instance):
-    with (
-        patch.object(smb_instance, "_get_directory_entries") as mock_get_entries,
-        patch.object(smb_instance, "logger") as mock_logger,
-    ):
+    with patch.object(smb_instance, "_get_directory_entries") as mock_get_entries:
         mock_get_entries.side_effect = Exception("Test error")
 
-        smb_instance._scan_directory(SERVER_PATH, None, None)
-
-        mock_logger.exception.assert_called_once_with(
-            f"Error scanning or downloading from {SERVER_PATH}: Test error"
-        )
+        with pytest.raises(Exception, match="Test error"):
+            smb_instance._scan_directory(SERVER_PATH, None, None)
 
 
 def test_parse_dates_single_date(smb_instance):
@@ -276,7 +278,6 @@ def test_get_directory_entries(
 
 @pytest.mark.parametrize(
     (
-        "is_dir",
         "name",
         "filename_regex",
         "extensions",
@@ -286,43 +287,26 @@ def test_get_directory_entries(
     ),
     [
         # no filters
-        (False, "test.txt", None, None, 1735689600, None, True),
+        ("test.txt", None, None, 1735689600, None, True),
         # keyword matching
-        (False, "TestFile.TXT", ["testfile"], None, 1735689600, None, True),
-        (False, "MyReport.txt", ["report"], None, 1735689600, None, True),
-        (
-            False,
-            "myreport.txt",
-            ["MyReport"],
-            None,
-            1735689600,
-            None,
-            True,
-        ),
-        (False, "randomfile.txt", ["test"], None, 1735689600, None, False),
+        ("TestFile.TXT", ["testfile"], None, 1735689600, None, True),
+        ("MyReport.txt", ["report"], None, 1735689600, None, True),
+        ("myreport.txt", ["MyReport"], None, 1735689600, None, True),
+        ("randomfile.txt", ["test"], None, 1735689600, None, False),
         # extension matching
-        (False, "report.PDF", None, [".pdf"], 1735689600, None, True),
-        (False, "summary.docx", None, [".DOCX"], 1735689600, None, True),
-        (False, "logfile", None, [".txt"], 1735689600, None, False),
+        ("report.PDF", None, [".pdf"], 1735689600, None, True),
+        ("summary.docx", None, [".DOCX"], 1735689600, None, True),
+        ("logfile", None, [".txt"], 1735689600, None, False),
         # keyword + extension combination
-        (False, "budget.xlsx", ["budget"], [".XLSX"], 1735689600, None, True),
-        (False, "budget.xlsx", ["finance"], [".XLSX"], 1735689600, None, False),
-        (False, "budget.xlsx", ["budget"], [".pdf"], 1735689600, None, False),
-        (False, "data.csv", [], [], 1735689600, None, True),
-        (False, "data.csv", [], [".csv"], 1735689600, None, True),
-        (False, "data.csv", ["data"], [], 1735689600, None, True),
-        (
-            False,
-            "data.csv",
-            ["random"],
-            [],
-            1735689600,
-            None,
-            False,
-        ),
+        ("budget.xlsx", ["budget"], [".XLSX"], 1735689600, None, True),
+        ("budget.xlsx", ["finance"], [".XLSX"], 1735689600, None, False),
+        ("budget.xlsx", ["budget"], [".pdf"], 1735689600, None, False),
+        ("data.csv", [], [], 1735689600, None, True),
+        ("data.csv", [], [".csv"], 1735689600, None, True),
+        ("data.csv", ["data"], [], 1735689600, None, True),
+        ("data.csv", ["random"], [], 1735689600, None, False),
         # exact date
         (
-            False,
             "file1.txt",
             None,
             None,
@@ -331,7 +315,6 @@ def test_get_directory_entries(
             True,
         ),
         (
-            False,
             "file2.txt",
             None,
             None,
@@ -341,7 +324,6 @@ def test_get_directory_entries(
         ),
         # date range
         (
-            False,
             "file3.txt",
             None,
             None,
@@ -353,7 +335,6 @@ def test_get_directory_entries(
             True,
         ),
         (
-            False,
             "file4.txt",
             None,
             None,
@@ -365,7 +346,6 @@ def test_get_directory_entries(
             False,
         ),
         (
-            False,
             "file5.txt",
             None,
             None,
@@ -378,7 +358,6 @@ def test_get_directory_entries(
         ),
         # combined filters
         (
-            False,
             "report_2025.pdf",
             ["report"],
             [".pdf"],
@@ -387,7 +366,6 @@ def test_get_directory_entries(
             True,
         ),
         (
-            False,
             "summary.docx",
             ["summary"],
             [".docx"],
@@ -399,7 +377,6 @@ def test_get_directory_entries(
             True,
         ),
         (
-            False,
             "report_2025.pdf",
             ["report"],
             [".pdf"],
@@ -411,7 +388,6 @@ def test_get_directory_entries(
             False,
         ),
         (
-            False,
             "important_data.csv",
             ["important"],
             [".txt"],
@@ -422,13 +398,10 @@ def test_get_directory_entries(
             ),
             False,
         ),
-        # object is directory not a file
-        (True, "should_not_match.txt", None, None, 1735689600, None, False),
     ],
 )
 def test_is_matching_file(
     smb_instance,
-    is_dir,
     name,
     filename_regex,
     extensions,
@@ -437,7 +410,6 @@ def test_is_matching_file(
     expected,
 ):
     mock_entry = MagicMock()
-    mock_entry.is_dir.return_value = is_dir
     mock_entry.name = name
 
     mock_stat = MagicMock()
