@@ -273,6 +273,7 @@ class SAPRFC(Source):
     @property
     def con(self) -> pyrfc.Connection:
         """The pyRFC connection to SAP."""
+        print("dominik test")
         if self._con is not None:
             return self._con
         con = pyrfc.Connection(**self.credentials)
