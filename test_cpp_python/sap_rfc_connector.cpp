@@ -40,20 +40,20 @@ std::string rfcDirectionToString(RFC_DIRECTION direction) {
 
 std::string rfcTypeToString(RFCTYPE type) {
     switch (type) {
-        case RFCTYPE_CHAR: return "CHAR";
-        case RFCTYPE_DATE: return "DATE";
-        case RFCTYPE_BCD: return "BCD";
-        case RFCTYPE_TIME: return "TIME";
-        case RFCTYPE_BYTE: return "BYTE";
-        case RFCTYPE_TABLE: return "TABLE";
-        case RFCTYPE_NUM: return "NUM";
-        case RFCTYPE_FLOAT: return "FLOAT";
-        case RFCTYPE_INT: return "INT";
-        case RFCTYPE_INT2: return "INT2";
-        case RFCTYPE_INT1: return "INT1";
-        case RFCTYPE_STRING: return "STRING";
-        case RFCTYPE_STRUCTURE: return "STRUCTURE";
-        case RFCTYPE_XSTRING: return "XSTRING";
+        case RFCTYPE_CHAR: return "RFCTYPE_CHAR";
+        case RFCTYPE_DATE: return "RFCTYPE_DATE";
+        case RFCTYPE_BCD: return "RFCTYPE_BCD";
+        case RFCTYPE_TIME: return "RFCTYPE_TIME";
+        case RFCTYPE_BYTE: return "RFCTYPE_BYTE";
+        case RFCTYPE_TABLE: return "RFCTYPE_TABLE";
+        case RFCTYPE_NUM: return "RFCTYPE_NUM";
+        case RFCTYPE_FLOAT: return "RFCTYPE_FLOAT";
+        case RFCTYPE_INT: return "RFCTYPE_INT";
+        case RFCTYPE_INT2: return "RFCTYPE_INT2";
+        case RFCTYPE_INT1: return "RFCTYPE_INT1";
+        case RFCTYPE_STRING: return "RFCTYPE_STRING";
+        case RFCTYPE_STRUCTURE: return "RFCTYPE_STRUCTURE";
+        case RFCTYPE_XSTRING: return "RFCTYPE_XSTRING";
         default: return "UNKNOWN";
     }
 }
@@ -162,7 +162,7 @@ public:
             param["direction"] = rfcDirectionToString(paramDesc.direction);
             param["nucLength"] = std::to_string(paramDesc.nucLength);
             param["ucLength"] = std::to_string(paramDesc.ucLength);
-            param["optional"] = std::to_string(paramDesc.optional);
+            param["optional"] = std::to_string(paramDesc.optional) == "1" ? "True" : "False";
             param["parameter_text"] = fromSAPUC(paramDesc.parameterText);
             param["default_value"] = fromSAPUC(paramDesc.defaultValue);
             params.push_back(param);
@@ -447,6 +447,7 @@ private:
 };
 
 namespace py = pybind11;
+using namespace pybind11::literals;
 
 PYBIND11_MODULE(sap_rfc_connector, m) {
     py::class_<SapRfcConnector>(m, "SapRfcConnector")
@@ -455,7 +456,10 @@ PYBIND11_MODULE(sap_rfc_connector, m) {
         .def("con", &SapRfcConnector::con, "Get the RFC connection handle (internal use)")
         .def("check_connection", &SapRfcConnector::check_connection, "Ping the SAP system to check connection")
         .def("close_connection", &SapRfcConnector::close_connection, "Close the SAP connection")
-        .def("get_function_description", &SapRfcConnector::get_function_description, py::arg("function_name"), "Get function metadata from SAP")
+        .def("get_function_description", [](SapRfcConnector& self, const std::string& function_name) {
+            py::object SimpleNamespace = py::module_::import("types").attr("SimpleNamespace");
+            return SimpleNamespace("parameters"_a=self.get_function_description(function_name));
+        }, py::arg("function_name"), "Get function metadata from SAP")
         .def("call", &SapRfcConnector::call, py::arg("func"), py::arg("params"), py::arg("tables"), "Call a function with parameters and return results as a map")
         .def("get_table_metadata", &SapRfcConnector::get_table_metadata, py::arg("table_name"), "Get table metadata from SAP")
         .def("rfc_read_table_query", &SapRfcConnector::rfc_read_table_query, py::arg("sql"), py::arg("sep"), "RFC_READ_TABLE query")
