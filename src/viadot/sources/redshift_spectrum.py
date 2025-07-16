@@ -39,8 +39,8 @@ class RedshiftSpectrumCredentials(BaseModel):
     # password: Optional[str]
     # engine: Optional[str] = "redshift"
     # dbname: Optional[str]
-    credentials_secret: str | None
-    iam_role: str | None  # The IAM role to assume. Used by `create_schema()`.
+    credentials_secret: str | None = None
+    iam_role: str | None = None  # The IAM role to assume. Used by `create_schema()`.
 
     @root_validator(pre=True)
     def is_configured(cls, credentials: dict[str, Any]) -> dict[str, Any]:  # noqa: N805
