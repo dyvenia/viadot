@@ -49,6 +49,8 @@ attrs==24.2.0
     # via referencing
     # via visions
     # via zeep
+awswrangler==3.12.1
+    # via viadot2
 azure-core==1.35.0
     # via azure-identity
 azure-identity==1.23.0
@@ -68,8 +70,10 @@ beautifulsoup4==4.12.3
 bleach==6.1.0
     # via nbconvert
 boto3==1.34.106
+    # via awswrangler
     # via moto
 botocore==1.34.162
+    # via awswrangler
     # via boto3
     # via moto
     # via s3transfer
@@ -460,12 +464,12 @@ networkx==3.3
     # via dbt-core
     # via tm1py
     # via visions
-numpy==1.23.4
+numpy==1.26.4
+    # via awswrangler
     # via db-dtypes
     # via imagehash
     # via pandas
     # via pandas-gbq
-    # via pyarrow
     # via pywavelets
     # via scipy
     # via shapely
@@ -476,7 +480,7 @@ o365==2.0.36
 oauthlib==3.2.2
     # via kubernetes
     # via requests-oauthlib
-openpyxl==3.0.10
+openpyxl==3.1.5
     # via viadot2
 ordered-set==4.1.0
     # via deepdiff
@@ -484,6 +488,7 @@ orjson==3.10.7
     # via dlt
     # via prefect
 packaging==24.1
+    # via awswrangler
     # via db-dtypes
     # via dbt-core
     # via dlt
@@ -498,7 +503,8 @@ packaging==24.1
     # via requirements-parser
 paginate==0.5.6
     # via mkdocs-material
-pandas==1.5.1
+pandas==2.3.1
+    # via awswrangler
     # via db-dtypes
     # via mkdocs-table-reader-plugin
     # via pandas-gbq
@@ -576,7 +582,8 @@ ptyprocess==0.7.0
     # via pexpect
 pure-eval==0.2.3
     # via stack-data
-pyarrow==10.0.1
+pyarrow==20.0.0
+    # via awswrangler
     # via db-dtypes
     # via pandas-gbq
     # via viadot2
@@ -874,6 +881,7 @@ typing-extensions==4.12.2
     # via aiosqlite
     # via alembic
     # via anyio
+    # via awswrangler
     # via azure-core
     # via azure-identity
     # via dbt-adapters
@@ -899,6 +907,7 @@ typing-inspection==0.4.1
 tzdata==2024.1
     # via dlt
     # via o365
+    # via pandas
 tzlocal==5.2
     # via dateparser
     # via o365
