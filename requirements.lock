@@ -47,6 +47,8 @@ attrs==24.2.0
     # via referencing
     # via visions
     # via zeep
+awswrangler==3.12.1
+    # via viadot2
 azure-core==1.35.0
     # via azure-identity
 azure-identity==1.23.0
@@ -57,6 +59,12 @@ bcrypt==4.2.0
     # via paramiko
 beautifulsoup4==4.12.3
     # via o365
+boto3==1.39.7
+    # via awswrangler
+botocore==1.39.7
+    # via awswrangler
+    # via boto3
+    # via s3transfer
 cachetools==5.5.0
     # via google-auth
     # via prefect
@@ -240,6 +248,9 @@ jinja2==3.1.4
     # via prefect
 jinja2-humanize-extension==0.4.0
     # via prefect
+jmespath==1.0.1
+    # via boto3
+    # via botocore
 jsonpatch==1.33
     # via prefect
 jsonpath-ng==1.7.0
@@ -298,12 +309,12 @@ networkx==3.3
     # via dbt-core
     # via tm1py
     # via visions
-numpy==1.23.4
+numpy==1.26.4
+    # via awswrangler
     # via db-dtypes
     # via imagehash
     # via pandas
     # via pandas-gbq
-    # via pyarrow
     # via pywavelets
     # via scipy
     # via shapely
@@ -314,7 +325,7 @@ o365==2.0.36
 oauthlib==3.2.2
     # via kubernetes
     # via requests-oauthlib
-openpyxl==3.0.10
+openpyxl==3.1.5
     # via viadot2
 ordered-set==4.1.0
     # via deepdiff
@@ -322,6 +333,7 @@ orjson==3.10.7
     # via dlt
     # via prefect
 packaging==24.1
+    # via awswrangler
     # via db-dtypes
     # via dbt-core
     # via dlt
@@ -329,7 +341,8 @@ packaging==24.1
     # via pandas-gbq
     # via prefect
     # via requirements-parser
-pandas==1.5.1
+pandas==2.3.1
+    # via awswrangler
     # via db-dtypes
     # via pandas-gbq
     # via viadot2
@@ -386,7 +399,8 @@ psycopg==3.2.9
     # via lumacli
 psycopg-binary==3.2.9
     # via psycopg
-pyarrow==10.0.1
+pyarrow==20.0.0
+    # via awswrangler
     # via db-dtypes
     # via pandas-gbq
     # via viadot2
@@ -423,6 +437,7 @@ pyspnego==0.11.2
     # via requests-ntlm
     # via smbprotocol
 python-dateutil==2.9.0.post0
+    # via botocore
     # via croniter
     # via dateparser
     # via dbt-common
@@ -528,6 +543,8 @@ ruamel-yaml==0.18.6
     # via prefect
 ruamel-yaml-clib==0.2.8
     # via ruamel-yaml
+s3transfer==0.13.0
+    # via boto3
 scipy==1.13.1
     # via imagehash
 semver==3.0.4
@@ -608,6 +625,7 @@ typing-extensions==4.12.2
     # via aiosqlite
     # via alembic
     # via anyio
+    # via awswrangler
     # via azure-core
     # via azure-identity
     # via dbt-adapters
@@ -631,6 +649,7 @@ typing-inspection==0.4.1
 tzdata==2024.1
     # via dlt
     # via o365
+    # via pandas
 tzlocal==5.2
     # via dateparser
     # via o365
@@ -638,6 +657,7 @@ tzlocal==5.2
 ujson==5.10.0
     # via prefect
 urllib3==1.26.20
+    # via botocore
     # via docker
     # via kubernetes
     # via requests
