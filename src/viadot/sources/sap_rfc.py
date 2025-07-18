@@ -50,8 +50,8 @@ def adjust_where_condition_by_adding_missing_spaces(sql: str) -> str:
     """
     # Check if 'WHERE' statement is not attached to 'FROM' or column name as there is
     # a need for space on both sides of 'WHERE'.
-    sql = re.sub(rf'{re.escape("WHERE")}(?<!\s)', "WHERE ", sql, flags=re.IGNORECASE)
-    sql = re.sub(rf'(?<!\s){re.escape("WHERE")}', " WHERE", sql, flags=re.IGNORECASE)
+    sql = re.sub(rf"{re.escape('WHERE')}(?<!\s)", "WHERE ", sql, flags=re.IGNORECASE)
+    sql = re.sub(rf"(?<!\s){re.escape('WHERE')}", " WHERE", sql, flags=re.IGNORECASE)
     sql = re.sub(r"\s+", " ", sql)
 
     # Check if operators are not attached to column or value as there is need for space
@@ -268,7 +268,7 @@ class SAPRFC(Source):
             self.rfc_unique_id = list(set(rfc_unique_id))
             self._rfc_unique_id_len = {}
         else:
-            self.rfc_unique_id = rfc_unique_id
+            self.rfc_unique_id = None
 
     @property
     def con(self) -> pyrfc.Connection:
@@ -559,7 +559,7 @@ class SAPRFC(Source):
         lists_of_columns = []
         cols = []
         col_length_total = 0
-        if isinstance(self.rfc_unique_id[0], str):
+        if isinstance(self.rfc_unique_id, list):
             character_limit = self.rfc_total_col_width_character_limit
             for rfc_unique_col in self.rfc_unique_id:
                 rfc_unique_col_len = int(
@@ -589,7 +589,7 @@ class SAPRFC(Source):
             if col_length_total <= character_limit:
                 cols.append(col)
             else:
-                if isinstance(self.rfc_unique_id[0], str) and all(
+                if isinstance(self.rfc_unique_id, list) and all(
                     rfc_unique_col not in cols for rfc_unique_col in self.rfc_unique_id
                 ):
                     for rfc_unique_col in self.rfc_unique_id:
@@ -599,7 +599,7 @@ class SAPRFC(Source):
                 cols = [col]
                 col_length_total = int(col_length)
 
-        if isinstance(self.rfc_unique_id[0], str) and all(
+        if isinstance(self.rfc_unique_id, list) and all(
             rfc_unique_col not in cols for rfc_col in self.rfc_unique_id
         ):
             for rfc_unique_col in self.rfc_unique_id:
@@ -712,7 +712,7 @@ class SAPRFC(Source):
 
         for sep in separators:
             logger.info(f"Checking if separator '{sep}' works.")
-            if isinstance(self.rfc_unique_id[0], str):
+            if isinstance(self.rfc_unique_id, list):
                 # Columns only for the first chunk. We add the rest later to avoid name
                 # conflicts.
                 df = pd.DataFrame(columns=fields_lists[0])
@@ -738,7 +738,7 @@ class SAPRFC(Source):
                     del response
                     # If reference columns are provided, it's not necessary to remove
                     # any extra row.
-                    if not isinstance(self.rfc_unique_id[0], str):
+                    if not isinstance(self.rfc_unique_id, list):
                         row_index, data_raw, start = _detect_extra_rows(
                             row_index, data_raw, chunk, fields
                         )
@@ -747,7 +747,7 @@ class SAPRFC(Source):
                     records = list(_gen_split(data_raw, sep, record_key))
                     del data_raw
                     if (
-                        isinstance(self.rfc_unique_id[0], str)
+                        isinstance(self.rfc_unique_id, list)
                         and list(df.columns) != fields
                     ):
                         df_tmp = pd.DataFrame(columns=fields)
