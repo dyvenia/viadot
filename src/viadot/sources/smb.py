@@ -406,14 +406,10 @@ class SMB(Source):
             return False
 
         if date_filter_parsed:
-            file_creation_date = pendulum.from_timestamp(entry.stat().st_ctime).date()
-
-            if isinstance(date_filter_parsed, pendulum.Date):
-                return file_creation_date == date_filter_parsed
-
-            if isinstance(date_filter_parsed, tuple):
-                start_date, end_date = date_filter_parsed
-                return start_date <= file_creation_date <= end_date
+            file_modification_date = pendulum.from_timestamp(
+                entry.stat().st_mtime
+            ).date()
+            return self._is_date_match(file_modification_date, date_filter_parsed)
 
         return True
 
