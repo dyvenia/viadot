@@ -176,9 +176,9 @@ def test_scan_directory_recursive_search(
 
         assert isinstance(result_dict, dict)
         assert isinstance(result_list, list)
-        assert (
-            len(result_dict) == 1
-        ), f"Expected 1 file, got {len(result_dict)}. Result: {result_dict}"
+        assert len(result_dict) == 1, (
+            f"Expected 1 file, got {len(result_dict)}. Result: {result_dict}"
+        )
         assert nested_file.path in result_dict
         assert result_dict[nested_file.path] == mock_file_content
         mock_is_matching.assert_any_call(nested_file, None, None, None)
@@ -405,7 +405,7 @@ def test_is_matching_file(
     name,
     filename_regex,
     extensions,
-    file_creation_date,
+    file_modification_date,
     date_filter_parsed,
     expected,
 ):
@@ -413,11 +413,11 @@ def test_is_matching_file(
     mock_entry.name = name
 
     mock_stat = MagicMock()
-    mock_stat.st_ctime = file_creation_date
+    mock_stat.st_mtime = file_modification_date
     mock_entry.stat.return_value = mock_stat
 
     result = smb_instance._is_matching_file(
-        mock_entry, filename_regex, extensions, date_filter_parsed
+        name, file_modification_date, filename_regex, extensions, date_filter_parsed
     )
     assert result == expected
 
