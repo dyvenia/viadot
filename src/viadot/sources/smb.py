@@ -236,17 +236,38 @@ class SMB(Source):
             if entry.name.startswith("~$"):
                 problematic_entries.append(entry.name)
 
+            entry_modification_date = pendulum.from_timestamp(
+                entry.stat().st_mtime
+            ).date()
+
             try:
                 if entry.is_file() and self._is_matching_file(
                     entry, filename_regex, extensions, date_filter_parsed
                 ):
                     found_files.update(self._get_file_content(entry))
                 elif entry.is_dir():
-                    found_files.update(
-                        self._scan_directory(
-                            entry.path, filename_regex, extensions, date_filter_parsed
-                        )[0]  # Use the first element (dict); ignore other return values
-                    )
+                    date_match = False
+
+                    if date_filter_parsed is None:
+                        date_match = True  # No filtering — include all directories
+                    elif isinstance(date_filter_parsed, pendulum.Date):
+                        date_match = entry_modification_date == date_filter_parsed
+                    elif isinstance(date_filter_parsed, tuple):
+                        date_match = (
+                            date_filter_parsed[0]
+                            <= entry_modification_date
+                            <= date_filter_parsed[1]
+                        )
+
+                    if date_match:
+                        found_files.update(
+                            self._scan_directory(
+                                entry.path,
+                                filename_regex,
+                                extensions,
+                                date_filter_parsed,
+                            )[0]  # Only use the first return value (the dict)
+                        )
             except smbprotocol.exceptions.SMBOSError as e:
                 self.logger.warning(f"Entry not found: {e}")
                 problematic_entries.append(entry.name)
