@@ -312,6 +312,38 @@ class SMB(Source):
         """
         return smbclient.scandir(path)
 
+    def _is_date_match(
+        self,
+        file_modification_date: pendulum.Date,
+        date_filter_parsed: pendulum.Date | tuple[pendulum.Date, pendulum.Date] | None,
+    ) -> bool:
+        """Check if the file modification date matches the given date filter.
+
+        Args:
+            file_modification_date (pendulum.Date): The modification date of the file.
+            date_filter_parsed (
+                pendulum.Date | tuple[pendulum.Date, pendulum.Date] | None
+            ):
+                - A single `pendulum.Date` for exact date filtering.
+                - A tuple of two `pendulum.Date` values for date range filtering.
+                - None, if no date filter is applied. Defaults to None.
+
+        Returns:
+            bool: True if the file_modification_date matches the filter or if no filter
+                is applied. False otherwise.
+        """
+        if date_filter_parsed is None:
+            return True
+
+        if isinstance(date_filter_parsed, pendulum.Date):
+            return file_modification_date == date_filter_parsed
+
+        if isinstance(date_filter_parsed, tuple):
+            start_date, end_date = date_filter_parsed
+            return start_date <= file_modification_date <= end_date
+
+        return False
+
     def _is_matching_file(
         self,
         entry: smbclient._os.SMBDirEntry,
