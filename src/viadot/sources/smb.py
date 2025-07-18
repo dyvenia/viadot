@@ -206,6 +206,10 @@ class SMB(Source):
         It applies 'filename_regex' and 'extensions' filters and can filter files based
         on modification dates - 'date_filter_parsed'.
 
+        It applies filters to both files and directories. Directories are only scanned
+        recursively if their modification date matches the given filter.
+        This optimization avoids unnecessary traversal of unchanged folders.
+
         Args:
             path (str): The directory path to scan.
             filename_regex (str | list[str] | None, optional): A regular expression
@@ -240,16 +244,18 @@ class SMB(Source):
             entry_mod_date_parsed = pendulum.from_timestamp(
                 entry.stat().st_mtime
             ).date()
+            entry_name = entry.name
 
             try:
                 if entry.is_file() and self._is_matching_file(
-                    entry=entry,
+                    file_name=entry_name,
+                    file_mod_date_parsed=entry_mod_date_parsed,
                     filename_regex=filename_regex,
                     extensions=extensions,
                     date_filter_parsed=date_filter_parsed,
-                    entry_mod_date_parsed=entry_mod_date_parsed,
                 ):
                     found_files.update(self._get_file_content(entry))
+
                 elif entry.is_dir():
                     date_match = self._is_date_match(
                         entry_mod_date_parsed, date_filter_parsed
@@ -342,8 +348,8 @@ class SMB(Source):
 
     def _is_matching_file(
         self,
-        entry: smbclient._os.SMBDirEntry,
-        entry_mod_date_parsed: pendulum.Date,
+        file_name: str,
+        file_mod_date_parsed: pendulum.Date,
         filename_regex: str | list[str] | None = None,
         extensions: str | list[str] | None = None,
         date_filter_parsed: pendulum.Date
@@ -358,8 +364,9 @@ class SMB(Source):
         - Exact date or date range filtering.
 
         Args:
-            entry (smbclient._os.SMBDirEntry): A directory entry object from
-                the directory scan.
+            file_name (str): The name of the file to evaluate.
+            file_mod_date_parsed (pendulum.Date): The parsed modification date of
+                the file.
             filename_regex (str | list[str] | None, optional): A regular expression
                 string or list of regex patterns used to filter file names. If provided,
                 only file names matching the pattern(s) will be included.
@@ -377,7 +384,7 @@ class SMB(Source):
             bool: True if the file matches all criteria or no criteria are provided,
                 False otherwise.
         """
-        name_lower = entry.name.lower()
+        name_lower = file_name.lower()
 
         # Normalize to lists
         filename_regex_list = (
@@ -403,7 +410,7 @@ class SMB(Source):
             return False
 
         if date_filter_parsed:
-            return self._is_date_match(entry_mod_date_parsed, date_filter_parsed)
+            return self._is_date_match(file_mod_date_parsed, date_filter_parsed)
 
         return True
 
