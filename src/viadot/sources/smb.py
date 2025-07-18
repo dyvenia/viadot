@@ -235,29 +235,25 @@ class SMB(Source):
             # Skip temp files
             if entry.name.startswith("~$"):
                 problematic_entries.append(entry.name)
+                continue
 
-            entry_modification_date = pendulum.from_timestamp(
+            entry_mod_date_parsed = pendulum.from_timestamp(
                 entry.stat().st_mtime
             ).date()
 
             try:
                 if entry.is_file() and self._is_matching_file(
-                    entry, filename_regex, extensions, date_filter_parsed
+                    entry=entry,
+                    filename_regex=filename_regex,
+                    extensions=extensions,
+                    date_filter_parsed=date_filter_parsed,
+                    entry_mod_date_parsed=entry_mod_date_parsed,
                 ):
                     found_files.update(self._get_file_content(entry))
                 elif entry.is_dir():
-                    date_match = False
-
-                    if date_filter_parsed is None:
-                        date_match = True  # No filtering — include all directories
-                    elif isinstance(date_filter_parsed, pendulum.Date):
-                        date_match = entry_modification_date == date_filter_parsed
-                    elif isinstance(date_filter_parsed, tuple):
-                        date_match = (
-                            date_filter_parsed[0]
-                            <= entry_modification_date
-                            <= date_filter_parsed[1]
-                        )
+                    date_match = self._is_date_match(
+                        entry_mod_date_parsed, date_filter_parsed
+                    )
 
                     if date_match:
                         found_files.update(
@@ -266,7 +262,7 @@ class SMB(Source):
                                 filename_regex,
                                 extensions,
                                 date_filter_parsed,
-                            )[0]  # Only use the first return value (the dict)
+                            )[0]  # Only the matched files dict is used
                         )
             except smbprotocol.exceptions.SMBOSError as e:
                 self.logger.warning(f"Entry not found: {e}")
@@ -347,6 +343,7 @@ class SMB(Source):
     def _is_matching_file(
         self,
         entry: smbclient._os.SMBDirEntry,
+        entry_mod_date_parsed: pendulum.Date,
         filename_regex: str | list[str] | None = None,
         extensions: str | list[str] | None = None,
         date_filter_parsed: pendulum.Date
@@ -406,10 +403,7 @@ class SMB(Source):
             return False
 
         if date_filter_parsed:
-            file_modification_date = pendulum.from_timestamp(
-                entry.stat().st_mtime
-            ).date()
-            return self._is_date_match(file_modification_date, date_filter_parsed)
+            return self._is_date_match(entry_mod_date_parsed, date_filter_parsed)
 
         return True
 
