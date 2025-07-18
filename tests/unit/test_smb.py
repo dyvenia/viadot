@@ -281,7 +281,7 @@ def test_get_directory_entries(
         "name",
         "filename_regex",
         "extensions",
-        "file_creation_date",
+        "file_modification_date",
         "date_filter_parsed",
         "expected",
     ),
