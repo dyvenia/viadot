@@ -12,6 +12,7 @@ if(NOT EXISTS "${SAP_NWRFCSKD_INCLUDE}/sapnwrfc.h")
 endif()
 
 include_directories(${SAP_NWRFCSKD_INCLUDE})
+include_directories(inc)
 link_directories(${SAP_NWRFCSKD_LIB})
 
 set(CMAKE_CXX_STANDARD 17)
@@ -21,7 +22,8 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 find_package(pybind11 REQUIRED)
 
 
-pybind11_add_module(sap_rfc_connector sap_rfc_connector.cpp)
+file(GLOB SAP_SRC_FILES src/*.cpp sap_rfc_connector.cpp)
+pybind11_add_module(sap_rfc_connector ${SAP_SRC_FILES})
 
 # Link SAP NWRFC and ICU libraries
 # Set rpath so the shared library can find SAP libs at runtime
