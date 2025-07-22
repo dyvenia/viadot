@@ -22,7 +22,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 find_package(pybind11 REQUIRED)
 
 
-file(GLOB SAP_SRC_FILES src/*.cpp sap_rfc_connector.cpp)
+file(GLOB SAP_SRC_FILES src/*.cpp)
 pybind11_add_module(sap_rfc_connector ${SAP_SRC_FILES})
 
 # Link SAP NWRFC and ICU libraries

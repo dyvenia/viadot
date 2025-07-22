@@ -4,5 +4,5 @@
 
 class SapErrorHandler {
 public:
-    void print_error(const RFC_ERROR_INFO& errorInfo) const;
+  void print_error(const RFC_ERROR_INFO &errorInfo) const;
 };

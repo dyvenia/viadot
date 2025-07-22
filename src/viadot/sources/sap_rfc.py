@@ -13,15 +13,15 @@ from typing import (
 import numpy as np
 from numpy.typing import ArrayLike
 import pandas as pd
-import pyrfc
+# import pyrfc
 
 
-try:
-    import pyrfc
-    from pyrfc._exception import ABAPApplicationError
-except ModuleNotFoundError as e:
-    msg = "Missing required modules to use SAPRFC source."
-    raise ImportError(msg) from e
+# try:
+#     import pyrfc
+#     from pyrfc._exception import ABAPApplicationError
+# except ModuleNotFoundError as e:
+#     msg = "Missing required modules to use SAPRFC source."
+#     raise ImportError(msg) from e
 
 from sql_metadata import Parser
 
@@ -31,6 +31,8 @@ from viadot.orchestration.prefect.utils import DynamicDateHandler
 from viadot.sources.base import Source
 from viadot.utils import add_viadot_metadata_columns, validate
 
+#C++ SAP RFC connector
+import sap_rfc_connector
 
 logger = logging.getLogger()
 
@@ -271,24 +273,29 @@ class SAPRFC(Source):
             self.rfc_unique_id = rfc_unique_id
 
     @property
-    def con(self) -> pyrfc.Connection:
-        """The pyRFC connection to SAP."""
-        print("dominik test")
+    # def con(self) -> pyrfc.Connection:
+    def con(self):
+        """The C+++ connection to SAP."""
+        print("dominik1234 test")
         if self._con is not None:
             return self._con
-        con = pyrfc.Connection(**self.credentials)
+        # con = pyrfc.Connection(**self.credentials)
+        con = sap_rfc_connector.SapRfcConnector()
+        con.connect(self.credentials["user"], self.credentials["passwd"], self.credentials["ashost"], self.credentials["sysnr"])
         self._con = con
         return con
 
     def check_connection(self) -> None:
         """Check the connection to SAP."""
         self.logger.info("Checking the connection...")
-        self.con.ping()
+        # self.con.ping()
+        self.con.check_connection()
         self.logger.info("Connection has been validated successfully.")
 
     def close_connection(self) -> None:
         """Close the SAP RFC connection."""
-        self.con.close()
+        # self.con.close()
+        self.con.close_connection()
         self.logger.info("Connection has been closed successfully.")
 
     def get_function_parameters(
@@ -316,7 +323,9 @@ class SAPRFC(Source):
             msg = "Incorrect value for 'description'. Correct values: None, 'short', 'long'."
             raise ValueError(msg)
 
-        descr = self.con.get_function_description(function_name, *args)
+        descr = self.con.get_function_description(function_name)
+
+        print("descr: ", descr)
         param_names = [param["name"] for param in descr.parameters]
         detailed_params = descr.parameters
         filtered_detailed_params = [
@@ -620,15 +629,29 @@ class SAPRFC(Source):
             "ROWSKIPS": offset,
             "DELIMITER": sep,
         }
+        print("query_json: ", query_json)
         # SAP doesn't understand None, so we filter out non-specified parameters
         query_json_filtered = {
             key: query_json[key] for key in query_json if query_json[key] is not None
         }
         self._query = query_json_filtered
+        print("query_json_filtered: ", self._query)
 
     def call(self, func: str, *args, **kwargs) -> dict[str, Any]:
         """Call a SAP RFC function."""
-        return self.con.call(func, *args, **kwargs)
+        func_caller = sap_rfc_connector.SapFunctionCaller(self.con)
+        params = {}
+        tables = {}
+        for k, v in kwargs.items():
+            if isinstance(v, str):
+                params[k] = v
+            elif isinstance(v, list):
+                # FIELDS is usually a list of strings, needs to be converted to list of dicts
+                if k == "FIELDS":
+                    tables[k] = [{"FIELDNAME": field} for field in v]
+                else:
+                    tables[k] = v
+        return func_caller.call(func, params, tables)
 
     def _get_alias(self, column: str) -> str:
         return self.aliases_keyed_by_columns.get(column, column)
@@ -727,6 +750,8 @@ class SAPRFC(Source):
                 self._query["FIELDS"] = fields
                 try:
                     response = self.call(func, **params)
+                    print("func: ", func)
+                    print("params: ", params)
                 except ABAPApplicationError as e:
                     if e.key == "DATA_BUFFER_EXCEEDED":
                         msg = "Character limit per row exceeded. Please select fewer columns."
