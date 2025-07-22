@@ -9,7 +9,7 @@ from typing import (
     Any,
     Literal,
 )
-
+import time
 import numpy as np
 from numpy.typing import ArrayLike
 import pandas as pd
@@ -276,7 +276,6 @@ class SAPRFC(Source):
     # def con(self) -> pyrfc.Connection:
     def con(self):
         """The C+++ connection to SAP."""
-        print("dominik1234 test")
         if self._con is not None:
             return self._con
         # con = pyrfc.Connection(**self.credentials)
@@ -566,57 +565,84 @@ class SAPRFC(Source):
         # this has to be called before checking client_side_filters
         where = self.where
         columns = self.select_columns
+        # Ensure columns is always a list
+        if isinstance(columns, str):
+            columns = [columns]
         lists_of_columns = []
         cols = []
         col_length_total = 0
-        if isinstance(self.rfc_unique_id[0], str):
-            character_limit = self.rfc_total_col_width_character_limit
+        # Get all column metadata in a single call
+        all_columns = columns.copy()
+        if isinstance(self.rfc_unique_id, list) and self.rfc_unique_id:
+            # Add unique columns to the list if they're not already there
             for rfc_unique_col in self.rfc_unique_id:
-                rfc_unique_col_len = int(
-                    self.call(
-                        "DDIF_FIELDINFO_GET",
-                        TABNAME=table_name,
-                        FIELDNAME=rfc_unique_col,
-                    )["DFIES_TAB"][0]["LENG"]
-                )
-                if rfc_unique_col_len > int(
-                    self.rfc_total_col_width_character_limit / 4
-                ):
+                if rfc_unique_col not in all_columns:
+                    all_columns.append(rfc_unique_col)
+        
+        # Single call to get metadata for all columns
+        # Convert field names to the format expected by the C++ connector
+        field_names_table = [{"FIELDNAME": field} for field in all_columns]
+        field_info = self.call("DDIF_FIELDINFO_GET", TABNAME=table_name, FIELDNAME=field_names_table)
+        
+        # Create a mapping of column names to their lengths
+        column_lengths = {}
+        for field in field_info["DFIES_TAB"]:
+            column_lengths[field["FIELDNAME"]] = int(field["LENG"])
+        
+        # Initialize character limit
+        character_limit = self.rfc_total_col_width_character_limit
+        
+        # Process unique columns if they exist
+        if isinstance(self.rfc_unique_id, list) and self.rfc_unique_id:
+            self._rfc_unique_id_len = {}
+            for rfc_unique_col in self.rfc_unique_id:
+                print("rfc_unique_col: ", rfc_unique_col)
+                print("table_name: ", table_name)
+                rfc_unique_col_len = column_lengths.get(rfc_unique_col)
+                if rfc_unique_col_len is None:
+                    msg = f"Column {rfc_unique_col} not found in table {table_name}"
+                    raise ValueError(msg)
+                
+                print("Column length: ", rfc_unique_col_len)
+                if rfc_unique_col_len > int(self.rfc_total_col_width_character_limit / 4):
                     msg = f"{rfc_unique_col} can't be used as unique column, too large."
                     raise ValueError(msg)
-                local_limit = (
-                    self.rfc_total_col_width_character_limit - rfc_unique_col_len
-                )
+                
+                local_limit = self.rfc_total_col_width_character_limit - rfc_unique_col_len
                 character_limit = min(local_limit, character_limit)
                 self._rfc_unique_id_len[rfc_unique_col] = rfc_unique_col_len
-        else:
-            character_limit = self.rfc_total_col_width_character_limit
-
+        
+        # Chunk columns based on character limits
+        lists_of_columns = []
+        cols = []
+        col_length_total = 0
+        
         for col in columns:
-            info = self.call("DDIF_FIELDINFO_GET", TABNAME=table_name, FIELDNAME=col)
-            col_length = info["DFIES_TAB"][0]["LENG"]
-            col_length_total += int(col_length)
+            col_length = column_lengths.get(col)
+            if col_length is None:
+                msg = f"Column {col} not found in table {table_name}"
+                raise ValueError(msg)
+            
+            col_length_total += col_length
             if col_length_total <= character_limit:
                 cols.append(col)
             else:
-                if isinstance(self.rfc_unique_id[0], str) and all(
-                    rfc_unique_col not in cols for rfc_unique_col in self.rfc_unique_id
-                ):
+                # Ensure unique columns are included in each chunk
+                if isinstance(self.rfc_unique_id, list) and self.rfc_unique_id:
                     for rfc_unique_col in self.rfc_unique_id:
                         if rfc_unique_col not in cols:
                             cols.append(rfc_unique_col)
                 lists_of_columns.append(cols)
                 cols = [col]
-                col_length_total = int(col_length)
-
-        if isinstance(self.rfc_unique_id[0], str) and all(
-            rfc_unique_col not in cols for rfc_col in self.rfc_unique_id
-        ):
+                col_length_total = col_length
+        
+        # Add the last chunk
+        if isinstance(self.rfc_unique_id, list) and self.rfc_unique_id:
             for rfc_unique_col in self.rfc_unique_id:
                 if rfc_unique_col not in cols:
                     cols.append(rfc_unique_col)
         lists_of_columns.append(cols)
-
+        
         columns = lists_of_columns
         options = [{"TEXT": where}] if where else None
         limit = self._get_limit(sql)
@@ -639,19 +665,30 @@ class SAPRFC(Source):
 
     def call(self, func: str, *args, **kwargs) -> dict[str, Any]:
         """Call a SAP RFC function."""
+        print("dominik1234 call")
         func_caller = sap_rfc_connector.SapFunctionCaller(self.con)
         params = {}
         tables = {}
         for k, v in kwargs.items():
             if isinstance(v, str):
                 params[k] = v
+            elif isinstance(v, int):
+                params[k] = str(v)
             elif isinstance(v, list):
                 # FIELDS is usually a list of strings, needs to be converted to list of dicts
                 if k == "FIELDS":
                     tables[k] = [{"FIELDNAME": field} for field in v]
                 else:
                     tables[k] = v
-        return func_caller.call(func, params, tables)
+        print("func: ", func)
+        print("tables: ", tables)
+        print("params: ", params)
+        #measure time
+        start_time = time.time()
+        result = func_caller.call(func, params, tables)
+        end_time = time.time()
+        print(f"Time taken to call {func} and gather results: {end_time - start_time} seconds")
+        return result
 
     def _get_alias(self, column: str) -> str:
         return self.aliases_keyed_by_columns.get(column, column)
@@ -712,6 +749,9 @@ class SAPRFC(Source):
         columns = self.select_columns_aliased
         sep = self._query.get("DELIMITER")
         fields_lists = self._query.get("FIELDS")
+        # Ensure fields_lists is always a list of lists
+        if isinstance(fields_lists, list) and fields_lists and isinstance(fields_lists[0], str):
+            fields_lists = [fields_lists]
         if len(fields_lists) > 1:
             logger.info(f"Data will be downloaded in {len(fields_lists)} chunks.")
         func = self.func
@@ -750,8 +790,6 @@ class SAPRFC(Source):
                 self._query["FIELDS"] = fields
                 try:
                     response = self.call(func, **params)
-                    print("func: ", func)
-                    print("params: ", params)
                 except ABAPApplicationError as e:
                     if e.key == "DATA_BUFFER_EXCEEDED":
                         msg = "Character limit per row exceeded. Please select fewer columns."
