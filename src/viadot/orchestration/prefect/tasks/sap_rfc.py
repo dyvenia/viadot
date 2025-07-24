@@ -16,7 +16,7 @@ from viadot.orchestration.prefect.utils import get_credentials
 
 @task(retries=3, retry_delay_seconds=10, timeout_seconds=60 * 60 * 3)
 def sap_rfc_to_df(  # noqa: PLR0913
-    rfc_unique_id: list[str],
+    rfc_unique_id: list[str] | None,
     query: str | None = None,
     sep: str | None = "♔",
     func: str | None = None,
