@@ -33,6 +33,8 @@ PYBIND11_MODULE(sap_rfc_connector, m) {
         .def("call", &SapFunctionCaller::call, py::arg("func"),
              py::arg("params"), py::arg("tables"),
              "Call a function with parameters and return results as a map")
+        .def("smart_call", &SapFunctionCaller::smart_call, py::arg("func"),
+             py::arg("params"), py::arg("tables"), "Smart call POC")
         .def("get_table_metadata", &SapFunctionCaller::get_table_metadata,
              py::arg("table_name"), "Get table metadata from SAP");
 }

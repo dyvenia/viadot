@@ -24,6 +24,14 @@ class SapFunctionCaller {
     std::vector<std::map<std::string, std::string>> get_table_metadata(
         const std::string &table_name);
 
+    // POC: Smart SAP RFC chunked call
+    std::map<std::string, std::vector<std::map<std::string, std::string>>>
+    smart_call(const std::string &func,
+               const std::map<std::string, std::string> &params,
+               const std::map<std::string,
+                              std::vector<std::map<std::string, std::string>>>
+                   &tables = {});
+
    private:
     SapRfcConnector *connector_;
 };
