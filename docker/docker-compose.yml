@@ -31,3 +31,16 @@ services:
     shm_size: "4gb"
     entrypoint: sh ./docker/entrypoint.sh
     restart: "unless-stopped"
+  viadot-viadot-nesso-dtyrala:
+    image: ghcr.io/werfen-d-a/werfen-nesso:2.0.0-pr-10774-run-605
+    container_name: viadot-viadot-nesso-dtyrala
+    volumes:
+      - ../:/home/viadot
+    shm_size: "4gb"
+    command: "sleep infinity"
+    restart: unless-stopped
+    environment:
+      SHELL: "/bin/bash"
+      PYTHONPATH: "/home/viadot" 
+    working_dir: /home/viadot 
+

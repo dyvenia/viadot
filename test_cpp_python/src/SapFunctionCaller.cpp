@@ -1,20 +1,27 @@
 #include "SapFunctionCaller.h"
 
-#include <iostream>
-#include <map>
-#include <regex>
+#include <iostream>  // only for debugging
 #include <string>
+#include <unordered_map>
 #include <vector>
 
 #include "utils.h"
 
-// defines of items
-using tables_type =
-    std::map<std::string, std::vector<std::map<std::string, std::string>>>;
-using params_type = std::map<std::string, std::string>;
-
-// --- Helper Functions ---
 namespace {
+
+constexpr char *sap_metadata_table_name = "DFIES_TAB";
+constexpr char *sap_metadata_function_name = "DDIF_FIELDINFO_GET";
+constexpr char *sap_metadata_table_name_field = "TABNAME";
+constexpr char *sap_metadata_datatype_field = "DATATYPE";
+constexpr char *sap_metadata_leng_field = "LENG";
+constexpr char *sap_metadata_name_field = "FIELDNAME";
+constexpr char *sap_metadata_text_field = "FIELDTEXT";
+
+constexpr int fieldname_length = 30;
+constexpr int fieldtext_length = 60;
+constexpr int datatype_length = 4;
+constexpr int leng_length = 6;
+
 // Set scalar parameters for RFC function
 void set_scalar_params(RFC_FUNCTION_HANDLE funcHandle,
                        const params_type &params, RFC_ERROR_INFO &errorInfo) {
@@ -52,6 +59,7 @@ void set_table_params(RFC_FUNCTION_HANDLE funcHandle, const tables_type &tables,
         }
     }
 }
+
 // Extract output tables from RFC function
 tables_type extract_output_tables(RFC_FUNCTION_DESC_HANDLE funcDesc,
                                   RFC_FUNCTION_HANDLE funcHandle,
@@ -78,13 +86,13 @@ tables_type extract_output_tables(RFC_FUNCTION_DESC_HANDLE funcDesc,
         RfcGetFieldCount(rowDescHandle, &fieldCount, &errorInfo);
 
         const std::string tableName = utils::rtrim_sapstring(paramDesc.name);
-        std::vector<std::map<std::string, std::string>> tableRows;
+        std::vector<std::unordered_map<std::string, std::string>> tableRows;
 
         for (unsigned rowIdx = 0; rowIdx < rowCount; ++rowIdx) {
             RfcMoveTo(tableHandle, rowIdx, &errorInfo);
             RFC_STRUCTURE_HANDLE row =
                 RfcGetCurrentRow(tableHandle, &errorInfo);
-            std::map<std::string, std::string> rowMap;
+            std::unordered_map<std::string, std::string> rowMap;
 
             for (unsigned f = 0; f < fieldCount; ++f) {
                 RFC_FIELD_DESC fieldDesc;
@@ -110,9 +118,9 @@ tables_type extract_output_tables(RFC_FUNCTION_DESC_HANDLE funcDesc,
 SapFunctionCaller::SapFunctionCaller(SapRfcConnector *connector)
     : connector_(connector) {}
 
-std::vector<std::map<std::string, std::string>>
-SapFunctionCaller::get_function_description(const std::string &function_name) {
-    std::vector<std::map<std::string, std::string>> params;
+metadata_type SapFunctionCaller::get_function_description(
+    const std::string &function_name) {
+    metadata_type params;
 
     if (!connector_ || !connector_->con()) return params;
 
@@ -130,7 +138,7 @@ SapFunctionCaller::get_function_description(const std::string &function_name) {
     for (unsigned i = 0; i < paramCount; ++i) {
         RFC_PARAMETER_DESC paramDesc;
         RfcGetParameterDescByIndex(funcDesc, i, &paramDesc, &errorInfo);
-        std::map<std::string, std::string> param;
+        std::unordered_map<std::string, std::string> param;
 
         param["name"] = utils::fromSAPUC(paramDesc.name);
         param["parameter_type"] = utils::rfcTypeToString(paramDesc.type);
@@ -179,14 +187,14 @@ tables_type SapFunctionCaller::call(const std::string &func,
     return result;
 }
 
-std::vector<std::map<std::string, std::string>>
-SapFunctionCaller::get_table_metadata(const std::string &table_name) {
-    std::vector<std::map<std::string, std::string>> metadata;
+metadata_type SapFunctionCaller::get_table_metadata(
+    const std::string &table_name) {
+    metadata_type metadata;
 
     if (!connector_ || !connector_->con()) return metadata;
 
     RFC_ERROR_INFO errorInfo;
-    std::u16string u_func = utils::to_u16string("DDIF_FIELDINFO_GET");
+    std::u16string u_func = utils::to_u16string(sap_metadata_function_name);
     RFC_FUNCTION_DESC_HANDLE funcDesc = RfcGetFunctionDesc(
         connector_->con(), (SAP_UC *)u_func.c_str(), &errorInfo);
 
@@ -197,8 +205,8 @@ SapFunctionCaller::get_table_metadata(const std::string &table_name) {
     if (func == nullptr) return metadata;
 
     std::u16string u_tabname = utils::to_u16string(table_name);
-    RfcSetChars(func, (SAP_UC *)u"TABNAME", (SAP_UC *)u_tabname.c_str(),
-                u_tabname.length(), &errorInfo);
+    RfcSetChars(func, (SAP_UC *)sap_metadata_table_name_field,
+                (SAP_UC *)u_tabname.c_str(), u_tabname.length(), &errorInfo);
 
     if (RfcInvoke(connector_->con(), func, &errorInfo) != RFC_OK) {
         RfcDestroyFunction(func, nullptr);
@@ -206,7 +214,8 @@ SapFunctionCaller::get_table_metadata(const std::string &table_name) {
     }
 
     RFC_TABLE_HANDLE fieldsTable;
-    RfcGetTable(func, (SAP_UC *)u"DFIES_TAB", &fieldsTable, &errorInfo);
+    RfcGetTable(func, (SAP_UC *)sap_metadata_table_name_field, &fieldsTable,
+                &errorInfo);
     unsigned int rowCount = 0;
     RfcGetRowCount(fieldsTable, &rowCount, &errorInfo);
 
@@ -214,21 +223,29 @@ SapFunctionCaller::get_table_metadata(const std::string &table_name) {
         RfcMoveTo(fieldsTable, i, nullptr);
         RFC_STRUCTURE_HANDLE row = RfcGetCurrentRow(fieldsTable, nullptr);
 
-        SAP_UC fieldname[31] = {0};
-        SAP_UC fieldtext[61] = {0};
-        SAP_UC datatype[5] = {0};
-        SAP_UC leng[7] = {0};
+        // +1 for null terminator
+        SAP_UC fieldname[fieldname_length + 1] = {0};
+        SAP_UC fieldtext[fieldtext_length + 1] = {0};
+        SAP_UC datatype[datatype_length + 1] = {0};
+        SAP_UC leng[leng_length + 1] = {0};
 
-        RfcGetChars(row, (SAP_UC *)u"FIELDNAME", fieldname, 30, nullptr);
-        RfcGetChars(row, (SAP_UC *)u"FIELDTEXT", fieldtext, 60, nullptr);
-        RfcGetChars(row, (SAP_UC *)u"DATATYPE", datatype, 4, nullptr);
-        RfcGetChars(row, (SAP_UC *)u"LENG", leng, 6, nullptr);
+        RfcGetChars(row, (SAP_UC *)sap_metadata_name_field, fieldname,
+                    fieldname_length, nullptr);
+        RfcGetChars(row, (SAP_UC *)sap_metadata_text_field, fieldtext,
+                    fieldtext_length, nullptr);
+        RfcGetChars(row, (SAP_UC *)sap_metadata_datatype_field, datatype,
+                    datatype_length, nullptr);
+        RfcGetChars(row, (SAP_UC *)sap_metadata_leng_field, leng, leng_length,
+                    nullptr);
 
-        std::map<std::string, std::string> field;
-        field["FIELDNAME"] = utils::rtrim(utils::fromSAPUC(fieldname));
-        field["FIELDTEXT"] = utils::rtrim(utils::fromSAPUC(fieldtext));
-        field["DATATYPE"] = utils::rtrim(utils::fromSAPUC(datatype));
-        field["LENG"] = utils::rtrim(utils::fromSAPUC(leng));
+        std::unordered_map<std::string, std::string> field;
+        field[sap_metadata_name_field] =
+            utils::rtrim(utils::fromSAPUC(fieldname));
+        field[sap_metadata_text_field] =
+            utils::rtrim(utils::fromSAPUC(fieldtext));
+        field[sap_metadata_datatype_field] =
+            utils::rtrim(utils::fromSAPUC(datatype));
+        field[sap_metadata_leng_field] = utils::rtrim(utils::fromSAPUC(leng));
 
         metadata.push_back(std::move(field));
     }
@@ -308,9 +325,8 @@ tables_type SapFunctionCaller::smart_call(const std::string &func,
               << ", Rows per chunk: " << rows_per_chunk << std::endl;
 
     // 1. Get column metadata (lengths)
-    std::vector<std::map<std::string, std::string>> metadata =
-        get_table_metadata(table_name);
-    std::map<std::string, int> col_lengths;
+    metadata_type metadata = get_table_metadata(table_name);
+    std::unordered_map<std::string, int> col_lengths;
     for (const auto &field : metadata) {
         auto it = field.find("FIELDNAME");
         auto it_len = field.find("LENG");
@@ -342,7 +358,7 @@ tables_type SapFunctionCaller::smart_call(const std::string &func,
     std::cout << "column_chunks: " << column_chunks.size() << std::endl;
 
     // 3. Process row chunks - for each row chunk, process all column chunks
-    std::vector<std::map<std::string, std::string>> all_merged_rows;
+    std::vector<std::unordered_map<std::string, std::string>> all_merged_rows;
 
     for (int row_offset = 0; row_offset < total_rowcount;
          row_offset += rows_per_chunk) {
@@ -354,26 +370,29 @@ tables_type SapFunctionCaller::smart_call(const std::string &func,
                   << ", rowcount: " << current_rowcount << std::endl;
 
         // For this row chunk, process all column chunks
-        std::vector<std::map<std::string, std::string>> row_chunk_results;
+        std::vector<std::unordered_map<std::string, std::string>>
+            row_chunk_results;
         bool first_chunk = true;
         size_t expected_rows = 0;
 
         for (const auto &col_chunk : column_chunks) {
             // Prepare FIELDS table for RFC_READ_TABLE
-            std::vector<std::map<std::string, std::string>> fields_table;
+            std::vector<std::unordered_map<std::string, std::string>>
+                fields_table;
             for (const auto &col : col_chunk) {
                 fields_table.push_back({{"FIELDNAME", col}});
             }
 
-            std::map<std::string,
-                     std::vector<std::map<std::string, std::string>>>
+            std::unordered_map<
+                std::string,
+                std::vector<std::unordered_map<std::string, std::string>>>
                 chunk_tables = {{"FIELDS", fields_table}};
             if (!where_clause.empty()) {
                 chunk_tables["OPTIONS"] = {{{"TEXT", where_clause}}};
             }
 
             // Prepare parameters for this row chunk
-            std::map<std::string, std::string> chunk_params = params;
+            std::unordered_map<std::string, std::string> chunk_params = params;
             chunk_params["ROWCOUNT"] = std::to_string(current_rowcount);
             chunk_params["ROWSKIPS"] = std::to_string(current_rowskips);
             chunk_params["DELIMITER"] = delimiter;

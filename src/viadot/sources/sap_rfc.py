@@ -647,7 +647,7 @@ class SAPRFC(Source):
             "QUERY_TABLE": table_name,
             "FIELDS": columns,
             "OPTIONS": options,
-            "ROWCOUNT": 100,
+            "ROWCOUNT": 1000000,
             "ROWSKIPS": offset,
             "DELIMITER": sep,
         }
