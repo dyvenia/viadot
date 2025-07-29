@@ -62,7 +62,7 @@ else:
     start_time = time.time()
     sap_rfc = SAPRFC(credentials=credentials_sap,
      func="BBP_RFC_READ_TABLE",
-     rfc_unique_id=[])
+     rfc_unique_id=None)
     start_query = time.time()
     sap_rfc.query(sql=query, sep="☩")
     # sap_rfc.query(

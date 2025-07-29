@@ -13,15 +13,8 @@ import time
 import numpy as np
 from numpy.typing import ArrayLike
 import pandas as pd
-# import pyrfc
-
-
-# try:
-#     import pyrfc
-#     from pyrfc._exception import ABAPApplicationError
-# except ModuleNotFoundError as e:
-#     msg = "Missing required modules to use SAPRFC source."
-#     raise ImportError(msg) from e
+#C++ SAP RFC connector
+import sap_rfc_connector
 
 from sql_metadata import Parser
 
@@ -30,9 +23,6 @@ from viadot.exceptions import CredentialError, DataBufferExceededError
 from viadot.orchestration.prefect.utils import DynamicDateHandler
 from viadot.sources.base import Source
 from viadot.utils import add_viadot_metadata_columns, validate
-
-#C++ SAP RFC connector
-import sap_rfc_connector
 
 logger = logging.getLogger()
 
@@ -273,27 +263,22 @@ class SAPRFC(Source):
             self.rfc_unique_id = rfc_unique_id
 
     @property
-    # def con(self) -> pyrfc.Connection:
-    def con(self):
+    def con(self) -> sap_rfc_connector.SapRfcConnector:
         """The C+++ connection to SAP."""
         if self._con is not None:
             return self._con
-        # con = pyrfc.Connection(**self.credentials)
-        con = sap_rfc_connector.SapRfcConnector()
-        con.connect(self.credentials["user"], self.credentials["passwd"], self.credentials["ashost"], self.credentials["sysnr"])
+        con = sap_rfc_connector.SapRfcConnector(**self.credentials)
         self._con = con
         return con
 
     def check_connection(self) -> None:
         """Check the connection to SAP."""
         self.logger.info("Checking the connection...")
-        # self.con.ping()
         self.con.check_connection()
         self.logger.info("Connection has been validated successfully.")
 
     def close_connection(self) -> None:
         """Close the SAP RFC connection."""
-        # self.con.close()
         self.con.close_connection()
         self.logger.info("Connection has been closed successfully.")
 
@@ -322,6 +307,7 @@ class SAPRFC(Source):
             msg = "Incorrect value for 'description'. Correct values: None, 'short', 'long'."
             raise ValueError(msg)
 
+        #TODO: args needed?
         descr = self.con.get_function_description(function_name)
 
         param_names = [param["name"] for param in descr.parameters]
@@ -539,7 +525,7 @@ class SAPRFC(Source):
 
     # Holy crap what a mess. TODO: refactor this so it can be even remotely tested...
     def query(self, sql: str, sep: str | None = None) -> None:  # noqa: C901, PLR0912
-        """Parse an SQL query into pyRFC commands and save it into an internal dict.
+        """Parse an SQL query into SAP C++ RFC Connector commands and save it into an internal dict.
 
         Args:
             sql (str): The SQL query to be ran.
@@ -572,11 +558,11 @@ class SAPRFC(Source):
         col_length_total = 0
         # Get all column metadata in a single call
         all_columns = columns.copy()
-        # if isinstance(self.rfc_unique_id, list) and self.rfc_unique_id:
-        #     # Add unique columns to the list if they're not already there
-        #     for rfc_unique_col in self.rfc_unique_id:
-        #         if rfc_unique_col not in all_columns:
-        #             all_columns.append(rfc_unique_col)
+        if isinstance(self.rfc_unique_id, list) and self.rfc_unique_id:
+            # Add unique columns to the list if they're not already there
+            for rfc_unique_col in self.rfc_unique_id:
+                if rfc_unique_col not in all_columns:
+                    all_columns.append(rfc_unique_col)
         
         # Single call to get metadata for all columns
         # Convert field names to the format expected by the C++ connector
@@ -592,21 +578,21 @@ class SAPRFC(Source):
         character_limit = self.rfc_total_col_width_character_limit
         
         # Process unique columns if they exist
-        # if isinstance(self.rfc_unique_id, list) and self.rfc_unique_id:
-        #     self._rfc_unique_id_len = {}
-        #     for rfc_unique_col in self.rfc_unique_id:
-        #         rfc_unique_col_len = column_lengths.get(rfc_unique_col)
-        #         if rfc_unique_col_len is None:
-        #             msg = f"Column {rfc_unique_col} not found in table {table_name}"
-        #             raise ValueError(msg)
+        if isinstance(self.rfc_unique_id, list) and self.rfc_unique_id:
+            self._rfc_unique_id_len = {}
+            for rfc_unique_col in self.rfc_unique_id:
+                rfc_unique_col_len = column_lengths.get(rfc_unique_col)
+                if rfc_unique_col_len is None:
+                    msg = f"Column {rfc_unique_col} not found in table {table_name}"
+                    raise ValueError(msg)
                 
-        #         if rfc_unique_col_len > int(self.rfc_total_col_width_character_limit / 4):
-        #             msg = f"{rfc_unique_col} can't be used as unique column, too large."
-        #             raise ValueError(msg)
+                if rfc_unique_col_len > int(self.rfc_total_col_width_character_limit / 4):
+                    msg = f"{rfc_unique_col} can't be used as unique column, too large."
+                    raise ValueError(msg)
                 
-        #         local_limit = self.rfc_total_col_width_character_limit - rfc_unique_col_len
-        #         character_limit = min(local_limit, character_limit)
-        #         self._rfc_unique_id_len[rfc_unique_col] = rfc_unique_col_len
+                local_limit = self.rfc_total_col_width_character_limit - rfc_unique_col_len
+                character_limit = min(local_limit, character_limit)
+                self._rfc_unique_id_len[rfc_unique_col] = rfc_unique_col_len
         
         # Chunk columns based on character limits
         lists_of_columns = []
@@ -622,21 +608,21 @@ class SAPRFC(Source):
             col_length_total += col_length
             if col_length_total <= character_limit:
                 cols.append(col)
-            # else:
-            #     # Ensure unique columns are included in each chunk
-            #     if isinstance(self.rfc_unique_id, list) and self.rfc_unique_id:
-            #         for rfc_unique_col in self.rfc_unique_id:
-            #             if rfc_unique_col not in cols:
-            #                 cols.append(rfc_unique_col)
-            #     lists_of_columns.append(cols)
-            #     cols = [col]
-            #     col_length_total = col_length
+            else:
+                # Ensure unique columns are included in each chunk
+                if isinstance(self.rfc_unique_id, list) and self.rfc_unique_id:
+                    for rfc_unique_col in self.rfc_unique_id:
+                        if rfc_unique_col not in cols:
+                            cols.append(rfc_unique_col)
+                lists_of_columns.append(cols)
+                cols = [col]
+                col_length_total = col_length
         
         # Add the last chunk
-        # if isinstance(self.rfc_unique_id, list) and self.rfc_unique_id:
-        #     for rfc_unique_col in self.rfc_unique_id:
-        #         if rfc_unique_col not in cols:
-        #             cols.append(rfc_unique_col)
+        if isinstance(self.rfc_unique_id, list) and self.rfc_unique_id:
+            for rfc_unique_col in self.rfc_unique_id:
+                if rfc_unique_col not in cols:
+                    cols.append(rfc_unique_col)
         lists_of_columns.append(cols)
         
         columns = lists_of_columns
@@ -647,7 +633,7 @@ class SAPRFC(Source):
             "QUERY_TABLE": table_name,
             "FIELDS": columns,
             "OPTIONS": options,
-            "ROWCOUNT": 1000000,
+            "ROWCOUNT": 100,
             "ROWSKIPS": offset,
             "DELIMITER": sep,
         }
@@ -660,25 +646,8 @@ class SAPRFC(Source):
     def call(self, func: str, *args, **kwargs) -> dict[str, Any]:
         """Call a SAP RFC function."""
         func_caller = sap_rfc_connector.SapFunctionCaller(self.con)
-        params = {}
-        tables = {}
-        for k, v in kwargs.items():
-            if isinstance(v, str):
-                params[k] = v
-            elif isinstance(v, int):
-                params[k] = str(v)
-            elif isinstance(v, list):
-                # FIELDS is usually a list of strings, needs to be converted to list of dicts
-                if k == "FIELDS":
-                    tables[k] = [{"FIELDNAME": field} for field in v]
-                else:
-                    tables[k] = v
-        #measure time
         start_time = time.time()
-        print("params: ", params)
-        print("tables: ", tables)
-        result = func_caller.smart_call(func, params, tables)
-        # print("result: ", result)
+        result = func_caller.smart_call(func, *args, **kwargs)
         end_time = time.time()
         print(f"Time taken to call {func} and gather results: {end_time - start_time} seconds")
         return result
@@ -742,9 +711,6 @@ class SAPRFC(Source):
         columns = self.select_columns_aliased
         sep = self._query.get("DELIMITER")
         fields_lists = self._query.get("FIELDS")
-        # Ensure fields_lists is always a list of lists
-        if isinstance(fields_lists, list) and fields_lists and isinstance(fields_lists[0], str):
-            fields_lists = [fields_lists]
         if len(fields_lists) > 1:
             logger.info(f"Data will be downloaded in {len(fields_lists)} chunks.")
         func = self.func
@@ -769,12 +735,12 @@ class SAPRFC(Source):
 
         for sep in separators:
             logger.info(f"Checking if separator '{sep}' works.")
-            # if isinstance(self.rfc_unique_id[0], str):
-            #     # Columns only for the first chunk. We add the rest later to avoid name
-            #     # conflicts.
-            #     df = pd.DataFrame(columns=fields_lists[0])
-            # else:
-            df = pd.DataFrame()
+            if self.rfc_unique_id is not None and isinstance(self.rfc_unique_id[0], str):
+                # Columns only for the first chunk. We add the rest later to avoid name
+                # conflicts.
+                df = pd.DataFrame(columns=fields_lists[0])
+            else:
+                df = pd.DataFrame()
             self._query["DELIMITER"] = sep
             chunk = 1
             row_index = 0
@@ -795,23 +761,23 @@ class SAPRFC(Source):
                     del response
                     # If reference columns are provided, it's not necessary to remove
                     # any extra row.
-                    # if not isinstance(self.rfc_unique_id[0], str):
-                    #     row_index, data_raw, start = _detect_extra_rows(
-                    #         row_index, data_raw, chunk, fields
-                    #     )
-                    # else:
-                    start = False
+                    if self.rfc_unique_id is not None and not isinstance(self.rfc_unique_id[0], str):
+                        row_index, data_raw, start = _detect_extra_rows(
+                            row_index, data_raw, chunk, fields
+                        )
+                    else:
+                        start = False
                     records = list(_gen_split(data_raw, sep, record_key))
                     del data_raw
-                    # if (
-                    #     isinstance(self.rfc_unique_id[0], str)
-                    #     and list(df.columns) != fields
-                    # ):
-                    #     df_tmp = pd.DataFrame(columns=fields)
-                    #     df_tmp[fields] = records
-                    #     df_tmp = self._adjust_whitespaces(df_tmp)
-                    #     df = pd.merge(df, df_tmp, on=self.rfc_unique_id, how="outer")
-                    if not start:
+                    if (
+                        self.rfc_unique_id is not None and isinstance(self.rfc_unique_id[0], str)
+                        and list(df.columns) != fields
+                    ):
+                        df_tmp = pd.DataFrame(columns=fields)
+                        df_tmp[fields] = records
+                        df_tmp = self._adjust_whitespaces(df_tmp)
+                        df = pd.merge(df, df_tmp, on=self.rfc_unique_id, how="outer")
+                    elif not start:
                         df[fields] = records
                     else:
                         df[fields] = np.nan
