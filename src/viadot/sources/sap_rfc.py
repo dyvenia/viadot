@@ -633,7 +633,7 @@ class SAPRFC(Source):
             "QUERY_TABLE": table_name,
             "FIELDS": columns,
             "OPTIONS": options,
-            "ROWCOUNT": 100,
+            "ROWCOUNT": limit,
             "ROWSKIPS": offset,
             "DELIMITER": sep,
         }
@@ -647,7 +647,7 @@ class SAPRFC(Source):
         """Call a SAP RFC function."""
         func_caller = sap_rfc_connector.SapFunctionCaller(self.con)
         start_time = time.time()
-        result = func_caller.smart_call(func, *args, **kwargs)
+        result = func_caller.call(func, *args, **kwargs)
         end_time = time.time()
         print(f"Time taken to call {func} and gather results: {end_time - start_time} seconds")
         return result

@@ -41,6 +41,17 @@ services:
     restart: unless-stopped
     environment:
       SHELL: "/bin/bash"
-      PYTHONPATH: "/home/viadot" 
-    working_dir: /home/viadot 
-
+      PYTHONPATH: "/home/viadot"
+    working_dir: /home/viadot
+  viadot-viadot-nesso-sap-rfc-connector:
+    image: ghcr.io/werfen-d-a/werfen-nesso:2.0.1-saprfc_v2
+    container_name: viadot-viadot-nesso-sap-rfc-connector
+    volumes:
+      - ../:/home/viadot
+    shm_size: "4gb"
+    command: "sleep infinity"
+    restart: unless-stopped
+    environment:
+      SHELL: "/bin/bash"
+      PYTHONPATH: "/home/viadot"
+    working_dir: /home/viadot
