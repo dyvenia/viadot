@@ -160,7 +160,7 @@ def test_scan_directory_recursive_search(
         mock_get_content.return_value = {nested_file.path: mock_file_content}
 
         # Execute the scan starting at root
-        result_dict, result_list = smb_instance._scan_directory(
+        res_dict, res_list = smb_instance._scan_directory(
             path=SERVER_PATH,
             filename_regex=None,
             extensions=None,
@@ -174,13 +174,13 @@ def test_scan_directory_recursive_search(
             f"{SERVER_PATH}/subdir",
         }
 
-        assert isinstance(result_dict, dict)
-        assert isinstance(result_list, list)
-        assert len(result_dict) == 1, (
-            f"Expected 1 file, got {len(result_dict)}. Result: {result_dict}"
+        assert isinstance(res_dict, dict)
+        assert isinstance(res_list, list)
+        assert len(res_dict) == 1, (
+            f"Expected 1 file, got {len(res_dict)}. Result: {res_dict}"
         )
-        assert nested_file.path in result_dict
-        assert result_dict[nested_file.path] == mock_file_content
+        assert nested_file.path in res_dict
+        assert res_dict[nested_file.path] == mock_file_content
         mock_is_matching.assert_any_call(
             file_name=nested_file.name,
             file_mod_date_parsed=pendulum.date(1970, 1, 1),
