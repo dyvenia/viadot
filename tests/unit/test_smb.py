@@ -181,7 +181,13 @@ def test_scan_directory_recursive_search(
         )
         assert nested_file.path in result_dict
         assert result_dict[nested_file.path] == mock_file_content
-        mock_is_matching.assert_any_call(nested_file, None, None, None)
+        mock_is_matching.assert_any_call(
+            file_name=nested_file.name,
+            file_mod_date_parsed=pendulum.date(1970, 1, 1),
+            filename_regex=None,
+            extensions=None,
+            date_filter_parsed=None,
+        )
 
 
 @patch("smbclient.scandir")
@@ -417,7 +423,11 @@ def test_is_matching_file(
     mock_entry.stat.return_value = mock_stat
 
     result = smb_instance._is_matching_file(
-        name, file_modification_date, filename_regex, extensions, date_filter_parsed
+        file_name=name,
+        file_mod_date_parsed=pendulum.from_timestamp(file_modification_date).date(),
+        filename_regex=filename_regex,
+        extensions=extensions,
+        date_filter_parsed=date_filter_parsed,
     )
     assert result == expected
 
