@@ -1,4 +1,4 @@
-FROM python:3.10-slim-bullseye AS base
+FROM ubuntu:22.04 AS base
 
 ARG PIP_NO_CACHE_DIR=1
 ARG UV_NO_CACHE=true
@@ -22,7 +22,7 @@ RUN groupadd docker && \
 # unixodbc: used by pyodbc
 # libgeos-dev: used by Shapely
 # gcc: used by pandas
-RUN apt update -q && yes | apt install -q gnupg vim curl git unixodbc libgeos-dev gcc
+RUN apt update -q && yes | apt install -q gnupg vim curl git unixodbc libgeos-dev gcc python3.10 python3-pip
 
 # Turn off package manager caches.
 ENV PIP_NO_CACHE_DIR=${PIP_NO_CACHE_DIR}
@@ -52,13 +52,15 @@ RUN chmod +rwx /usr/lib/ssl/openssl.cnf && \
     sed -i 's/SECLEVEL=2/SECLEVEL=1/g' /usr/lib/ssl/openssl.cnf
 
 # ODBC -- make sure to pin driver version as it's reflected in odbcinst.ini
-RUN curl https://packages.microsoft.com/keys/microsoft.asc | apt-key add - && \
-    curl https://packages.microsoft.com/config/debian/10/prod.list > /etc/apt/sources.list.d/mssql-release.list && \
+RUN curl -sSL -O https://packages.microsoft.com/config/ubuntu/$(grep VERSION_ID /etc/os-release | cut -d '"' -f 2)/packages-microsoft-prod.deb && \
+    dpkg -i packages-microsoft-prod.deb && \
+    rm packages-microsoft-prod.deb && \
     apt update -q && \
-    apt install -q libsqliteodbc && \
-    ACCEPT_EULA=Y apt install -q -y msodbcsql17=17.10.1.1-1 && \
-    ACCEPT_EULA=Y apt install -q -y mssql-tools=17.10.1.1-1 && \
-    echo 'export PATH="$PATH:/opt/mssql-tools/bin"' >> ~/.bashrc
+    ACCEPT_EULA=Y apt install -q -y msodbcsql18=18.4.1.1-1 && \
+    ACCEPT_EULA=Y apt install -q -y mssql-tools18=18.4.1.1-1 && \
+    echo 'export PATH="$PATH:/opt/mssql-tools/bin"' >> ~/.bashrc && \
+    source ~/.bashrc && \
+    apt install -q -y unixodbc-dev
 
 COPY docker/odbcinst.ini /etc
 
