@@ -52,15 +52,23 @@ RUN chmod +rwx /usr/lib/ssl/openssl.cnf && \
     sed -i 's/SECLEVEL=2/SECLEVEL=1/g' /usr/lib/ssl/openssl.cnf
 
 # ODBC -- make sure to pin driver version as it's reflected in odbcinst.ini
-RUN curl -sSL -O https://packages.microsoft.com/config/ubuntu/$(grep VERSION_ID /etc/os-release | cut -d '"' -f 2)/packages-microsoft-prod.deb && \
-    dpkg -i packages-microsoft-prod.deb && \
-    rm packages-microsoft-prod.deb && \
-    apt update -q && \
-    ACCEPT_EULA=Y apt install -q -y msodbcsql18=18.4.1.1-1 && \
-    ACCEPT_EULA=Y apt install -q -y mssql-tools18=18.4.1.1-1 && \
-    echo 'export PATH="$PATH:/opt/mssql-tools/bin"' >> ~/.bashrc && \
-    source ~/.bashrc && \
-    apt install -q -y unixodbc-dev
+RUN curl -sSL -O https://packages.microsoft.com/config/ubuntu/$(grep VERSION_ID /etc/os-release | cut -d '"' -f 2)/packages-microsoft-prod.deb
+RUN dpkg -i packages-microsoft-prod.deb
+RUN rm packages-microsoft-prod.deb
+RUN apt update -q
+RUN ACCEPT_EULA=Y apt install -q -y msodbcsql18=18.4.1.1-1
+RUN ACCEPT_EULA=Y apt install -q -y mssql-tools18=18.4.1.1-1
+RUN echo 'export PATH="$PATH:/opt/mssql-tools/bin"' >> ~/.bashrc
+RUN apt install -q -y unixodbc-dev
+# RUN curl -sSL -O https://packages.microsoft.com/config/ubuntu/$(grep VERSION_ID /etc/os-release | cut -d '"' -f 2)/packages-microsoft-prod.deb && \
+#     dpkg -i packages-microsoft-prod.deb && \
+#     rm packages-microsoft-prod.deb && \
+#     apt update -q && \
+#     ACCEPT_EULA=Y apt install -q -y msodbcsql18=18.4.1.1-1 && \
+#     ACCEPT_EULA=Y apt install -q -y mssql-tools18=18.4.1.1-1 && \
+#     echo 'export PATH="$PATH:/opt/mssql-tools/bin"' >> ~/.bashrc && \
+#     source ~/.bashrc && \
+#     apt install -q -y unixodbc-dev
 
 COPY docker/odbcinst.ini /etc
 
