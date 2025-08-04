@@ -1,4 +1,4 @@
-FROM python:3.10-slim-bullseye AS base
+FROM python:3.10-slim-bookworm AS base
 
 ARG PIP_NO_CACHE_DIR=1
 ARG UV_NO_CACHE=true
