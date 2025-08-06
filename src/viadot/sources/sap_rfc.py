@@ -597,7 +597,7 @@ class SAPRFC(Source):
                             cols.append(rfc_unique_col)
                 else:
                     logger.warning(
-                        """Data might be malformed due to characters limit exceeding. 
+                        """Data might be malformed due to characters limit exceeding.
                         Please verify data quality. Use rfc_unique_id if needed."""
                     )
                 lists_of_columns.append(cols)
