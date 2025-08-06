@@ -530,7 +530,7 @@ class SAPRFC(Source):
         return processed_sql_or_list
 
     # Holy crap what a mess. TODO: refactor this so it can be even remotely tested...
-    def query(self, sql: str, sep: str | None = None) -> None:  # noqa: C901, PLR0912
+    def query(self, sql: str, sep: str | None = None) -> None:  # noqa: C901, PLR0912, PLR0915
         """Parse an SQL query into pyRFC commands and save it into an internal dict.
 
         Args:
