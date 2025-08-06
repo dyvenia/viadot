@@ -596,10 +596,8 @@ class SAPRFC(Source):
                         if rfc_unique_col not in cols:
                             cols.append(rfc_unique_col)
                 else:
-                    logger.warning(
-                        """Data might be malformed due to characters limit exceeding.
-                        Please verify data quality. Use rfc_unique_id if needed."""
-                    )
+                    msg = "Columns character limit per row exceeded. Please select fewer columns or add rfc_unique_id."
+                    raise DataBufferExceededError(msg)
                 lists_of_columns.append(cols)
                 cols = [col]
                 col_length_total = int(col_length)
