@@ -307,7 +307,7 @@ class SMB(Source):
                 filename.
         """
         path = Path(file_path)
-        parent_parts = [p for p in path.parent.parts if p and p != "/"]
+        parent_parts = [p for p in path.parent.parts if p and "/" not in p]
 
         # Normalize prefix level count to valid range
         levels = max(0, prefix_levels_to_add)
