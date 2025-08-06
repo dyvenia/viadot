@@ -176,9 +176,9 @@ def test_scan_directory_recursive_search(
 
         assert isinstance(res_dict, dict)
         assert isinstance(res_list, list)
-        assert len(res_dict) == 1, (
-            f"Expected 1 file, got {len(res_dict)}. Result: {res_dict}"
-        )
+        assert (
+            len(res_dict) == 1
+        ), f"Expected 1 file, got {len(res_dict)}. Result: {res_dict}"
         assert nested_file.path in res_dict
         assert res_dict[nested_file.path] == mock_file_content
         mock_is_matching.assert_any_call(
