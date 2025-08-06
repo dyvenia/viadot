@@ -589,12 +589,14 @@ class SAPRFC(Source):
             if col_length_total <= character_limit:
                 cols.append(col)
             else:
-                if isinstance(self.rfc_unique_id, list) and all(
-                    rfc_unique_col not in cols for rfc_unique_col in self.rfc_unique_id
-                ):
-                    for rfc_unique_col in self.rfc_unique_id:
-                        if rfc_unique_col not in cols:
-                            cols.append(rfc_unique_col)
+                if isinstance(self.rfc_unique_id, list):
+                    if all(
+                        rfc_unique_col not in cols
+                        for rfc_unique_col in self.rfc_unique_id
+                    ):
+                        for rfc_unique_col in self.rfc_unique_id:
+                            if rfc_unique_col not in cols:
+                                cols.append(rfc_unique_col)
                 else:
                     msg = "Columns character limit per row exceeded. Please select fewer columns or add rfc_unique_id."
                     raise DataBufferExceededError(msg)
