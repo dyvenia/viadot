@@ -67,15 +67,17 @@ def test_smb_initialization_without_credentials():
 
 
 @pytest.mark.parametrize(
-    ("filename_regex", "extensions", "date_filter"),
+    ("filename_regex", "extensions", "date_filter", "prefix_levels_to_add"),
     [
-        ([None], None, "<<pendulum.yesterday().date()>>"),
-        (["keyword1"], None, "<<pendulum.yesterday().date()>>"),
-        ([None], [".txt"], "<<pendulum.yesterday().date()>>"),
-        (["keyword1"], [".txt"], "<<pendulum.yesterday().date()>>"),
+        ([None], None, "<<pendulum.yesterday().date()>>", 0),
+        (["keyword1"], None, "<<pendulum.yesterday().date()>>", 0),
+        ([None], [".txt"], "<<pendulum.yesterday().date()>>", 0),
+        (["keyword1"], [".txt"], "<<pendulum.yesterday().date()>>", 0),
     ],
 )
-def test_scan_and_store(smb_instance, filename_regex, extensions, date_filter):
+def test_scan_and_store(
+    smb_instance, filename_regex, extensions, date_filter, prefix_levels_to_add
+):
     with (
         patch.object(smb_instance, "_scan_directory") as mock_scan_directory,
         patch.object(smb_instance, "_parse_dates") as mock_parse_dates,
@@ -103,6 +105,7 @@ def test_scan_and_store(smb_instance, filename_regex, extensions, date_filter):
             filename_regex=filename_regex,
             extensions=extensions,
             date_filter_parsed=mock_date_result,
+            prefix_levels_to_add=prefix_levels_to_add,
         )
 
 
@@ -513,7 +516,7 @@ def test_save_files_locally_multiple_files_save(smb_instance, tmp_path):
         ("/root/DATA/12345/file.txt", 1, "12345_file.txt"),
         ("/root/DATA/12345/subdir/file.txt", 2, "12345_subdir_file.txt"),
         # More prefix levels than available (should just use what's available)
-        ("/root/DATA/file.txt", 3, "DATA_file.txt"),
+        ("//root/DATA/file.txt", 3, "/_root_DATA_file.txt"),
         ("/a/b/c/d/file.txt", 4, "a_b_c_d_file.txt"),
         ("file.txt", 1, "file.txt"),
     ],
