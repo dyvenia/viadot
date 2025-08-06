@@ -279,6 +279,35 @@ class SMB(Source):
 
         return found_files, problematic_entries
 
+    def _add_prefix_to_file_name(
+        self, file_path: str, prefix_levels_to_add: int = 0
+    ) -> str:
+        """Generate a new filename by adding parent folder names as prefix.
+
+        Args:
+            file_path (str): The full or relative path to the file.
+            prefix_levels_to_add (int, optional): Number of parent folder levels to
+                include as prefix. Counting from the deepest folder upwards.
+                Defaults to 0 (no prefix added).
+
+        Returns:
+            str: New filename with the specified parent folders as prefix separated by
+                underscores.If no prefix levels are specified, returns the original
+                filename.
+        """
+        path = Path(file_path)
+        parent_parts = path.parent.parts
+
+        # Normalize prefix level count to valid range
+        levels = max(0, prefix_levels_to_add)
+        levels = min(levels, len(parent_parts))
+
+        prefix_parts_to_add = parent_parts[-levels:] if prefix_levels_to_add > 0 else []
+
+        prefix_str = "_".join(prefix_parts_to_add)
+
+        return "_".join([prefix_str, path.name]) if prefix_str else path.name
+
     def _get_file_content(self, entry: smbclient._os.SMBDirEntry) -> dict[str, bytes]:
         """Extracts the content of a file from an SMB directory entry.
 
