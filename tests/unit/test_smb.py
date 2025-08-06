@@ -504,3 +504,35 @@ def test_save_files_locally_multiple_files_save(smb_instance, tmp_path):
         assert saved_file.exists(), f"{filename} should exist"
         with saved_file.open("rb") as f:
             assert f.read() == content, f"Content of {filename} should match"
+
+
+@pytest.mark.parametrize(
+    ("file_path", "prefix_levels_to_add", "expected"),
+    [
+        ("/root/DATA/12345/file.txt", 0, "file.txt"),
+        ("/root/DATA/12345/file.txt", 1, "12345_file.txt"),
+        ("/root/DATA/12345/subdir/file.txt", 2, "12345_subdir_file.txt"),
+        # More prefix levels than available (should just use what's available)
+        ("/root/DATA/file.txt", 3, "DATA_file.txt"),
+        ("/a/b/c/d/file.txt", 4, "a_b_c_d_file.txt"),
+        ("file.txt", 1, "file.txt"),
+    ],
+)
+def test_add_prefix_to_file(smb_instance, file_path, prefix_levels_to_add, expected):
+    result = smb_instance._add_prefix_to_file(
+        file_path=file_path, prefix_levels_to_add=prefix_levels_to_add
+    )
+    assert result == expected
+
+
+def test_relative_path(smb_instance):
+    path = "DATA/12345/sub1/sub2/sample.csv"
+    expected = "sub1_sub2_sample.csv"
+    result = smb_instance._add_prefix_to_file(file_path=path, prefix_levels_to_add=2)
+    assert result == expected
+
+
+def test_negative_prefix_levels(smb_instance):
+    path = "/some/path/file.log"
+    result = smb_instance._add_prefix_to_file(file_path=path, prefix_levels_to_add=-5)
+    assert result == "file.log"
