@@ -179,9 +179,9 @@ def test_scan_directory_recursive_search(
 
         assert isinstance(res_dict, dict)
         assert isinstance(res_list, list)
-        assert len(res_dict) == 1, (
-            f"Expected 1 file, got {len(res_dict)}. Result: {res_dict}"
-        )
+        assert (
+            len(res_dict) == 1
+        ), f"Expected 1 file, got {len(res_dict)}. Result: {res_dict}"
         assert nested_file.path in res_dict
         assert res_dict[nested_file.path] == mock_file_content
         mock_is_matching.assert_any_call(
@@ -519,6 +519,7 @@ def test_save_files_locally_multiple_files_save(smb_instance, tmp_path):
         ("//root/DATA/file.txt", 3, "root_DATA_file.txt"),
         ("/a/b/c/d/file.txt", 4, "a_b_c_d_file.txt"),
         ("file.txt", 1, "file.txt"),
+        ("\\\\root\\DATA\\1234\\file.txt", 2, "DATA_1234_file.txt"),
     ],
 )
 def test_add_prefix_to_file_name(
