@@ -279,6 +279,7 @@ class SMB(Source):
                                 filename_regex,
                                 extensions,
                                 date_filter_parsed,
+                                prefix_levels_to_add,
                             )[0]  # Only the matched files dict is used
                         )
             except smbprotocol.exceptions.SMBOSError as e:
@@ -306,14 +307,18 @@ class SMB(Source):
                 underscores.If no prefix levels are specified, returns the original
                 filename.
         """
-        path = Path(file_path)
-        parent_parts = [p for p in path.parent.parts if p and "/" not in p]
+        normalized_path = file_path.replace("\\", "/")
+        path = Path(normalized_path)
+
+        parent_parts = [
+            p for p in path.parent.parts if p and p not in ("/", "\\", ".", "//", "")
+        ]
 
         # Normalize prefix level count to valid range
         levels = max(0, prefix_levels_to_add)
         levels = min(levels, len(parent_parts))
 
-        prefix_parts_to_add = parent_parts[-levels:] if prefix_levels_to_add > 0 else []
+        prefix_parts_to_add = parent_parts[-levels:] if levels > 0 else []
 
         prefix_str = "_".join(prefix_parts_to_add)
 
