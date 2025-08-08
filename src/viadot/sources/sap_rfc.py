@@ -649,7 +649,7 @@ class SAPRFC(Source):
         start_time = time.time()
         result = func_caller.call(func, *args, **kwargs)
         end_time = time.time()
-        print(f"Time taken to call {func} and gather results: {end_time - start_time} seconds")
+        logger.debug(f"Time taken to call {func} and gather results: {end_time - start_time} seconds")
         return result
 
     def _get_alias(self, column: str) -> str:
