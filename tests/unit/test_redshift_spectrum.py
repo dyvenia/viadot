@@ -59,6 +59,5 @@ def test_from_df(redshift_spectrum, TEST_DF):
         to_path=f"s3://{bucket}/{schema}/{table}",
         schema=schema,
         table=table,
-        description="A mocked test Redshift Spectrum table.",
     )
     assert result is True
