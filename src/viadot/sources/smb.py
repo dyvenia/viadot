@@ -94,6 +94,7 @@ class SMB(Source):
         dynamic_date_symbols: list[str] = ["<<", ">>"],  # noqa: B006
         dynamic_date_format: str = "%Y-%m-%d",
         dynamic_date_timezone: str = "UTC",
+        prefix_levels_to_add: int = 0,
     ) -> tuple[dict[str, bytes], list[str]]:
         """Scan the directory structure for files and store their contents in memory.
 
@@ -116,6 +117,9 @@ class SMB(Source):
                 Defaults to "%Y-%m-%d".
             dynamic_date_timezone (str, optional): Timezone used for dynamic date
                 processing. Defaults to "UTC".
+            prefix_levels_to_add (int, optional): Number of parent folder levels to
+                include as a prefix to the filename,counting from the deepest (closest)
+                folder upwards. Defaults to 0, meaning no prefix is added.
 
         Returns:
             tuple[dict[str, bytes], list[str]]:
@@ -134,6 +138,7 @@ class SMB(Source):
             filename_regex=filename_regex,
             extensions=extensions,
             date_filter_parsed=date_filter_parsed,
+            prefix_levels_to_add=prefix_levels_to_add,
         )
 
     def _parse_dates(
@@ -200,6 +205,7 @@ class SMB(Source):
         date_filter_parsed: pendulum.Date
         | tuple[pendulum.Date, pendulum.Date]
         | None = None,
+        prefix_levels_to_add: int = 0,
     ) -> tuple[dict[str, bytes], list[str]]:
         """Recursively scans a directory for matching files based on filters.
 
@@ -225,6 +231,9 @@ class SMB(Source):
                 - A tuple of two `pendulum.Date` values for date range filtering.
                 - None, if no date filter is applied.
                 Defaults to None.
+            prefix_levels_to_add (int, optional): Number of parent folder levels to
+                include as a prefix to the filename,counting from the deepest (closest)
+                folder upwards. Defaults to 0, meaning no prefix is added.
 
         Returns:
             tuple[dict[str, bytes], list[str]]:
@@ -254,7 +263,9 @@ class SMB(Source):
                     extensions=extensions,
                     date_filter_parsed=date_filter_parsed,
                 ):
-                    found_files.update(self._get_file_content(entry))
+                    found_files.update(
+                        self._get_file_content(entry, prefix_levels_to_add)
+                    )
 
                 elif entry.is_dir():
                     date_match = self._is_date_match(
@@ -268,6 +279,7 @@ class SMB(Source):
                                 filename_regex,
                                 extensions,
                                 date_filter_parsed,
+                                prefix_levels_to_add,
                             )[0]  # Only the matched files dict is used
                         )
             except smbprotocol.exceptions.SMBOSError as e:
@@ -279,7 +291,42 @@ class SMB(Source):
 
         return found_files, problematic_entries
 
-    def _get_file_content(self, entry: smbclient._os.SMBDirEntry) -> dict[str, bytes]:
+    def _add_prefix_to_file_name(
+        self, file_path: str, prefix_levels_to_add: int = 0
+    ) -> str:
+        """Generate a new filename by adding parent folder names as prefix.
+
+        Args:
+            file_path (str): The full or relative path to the file.
+            prefix_levels_to_add (int, optional): Number of parent folder levels to
+                include as a prefix to the filename,counting from the deepest (closest)
+                folder upwards. Defaults to 0, meaning no prefix is added.
+
+        Returns:
+            str: New filename with the specified parent folders as prefix separated by
+                underscores.If no prefix levels are specified, returns the original
+                filename.
+        """
+        normalized_path = file_path.replace("\\", "/")
+        path = Path(normalized_path)
+
+        parent_parts = [
+            p for p in path.parent.parts if p and p not in ("/", "\\", ".", "//", "")
+        ]
+
+        # Normalize prefix level count to valid range
+        levels = max(0, prefix_levels_to_add)
+        levels = min(levels, len(parent_parts))
+
+        prefix_parts_to_add = parent_parts[-levels:] if levels > 0 else []
+
+        prefix_str = "_".join(prefix_parts_to_add)
+
+        return "_".join([prefix_str, path.name]) if prefix_str else path.name
+
+    def _get_file_content(
+        self, entry: smbclient._os.SMBDirEntry, prefix_levels_to_add: int = 0
+    ) -> dict[str, bytes]:
         """Extracts the content of a file from an SMB directory entry.
 
         This function takes an SMB directory entry, logs the file path,
@@ -288,18 +335,24 @@ class SMB(Source):
 
         Args:
             entry (smbclient._os.SMBDirEntry): An SMB directory entry object.
+            prefix_levels_to_add (int, optional): Number of parent folder levels to
+                include as a prefix to the filename,counting from the deepest (closest)
+                folder upwards. Defaults to 0, meaning no prefix is added.
 
         Returns:
             dict[str, bytes]: A dictionary with a single key-value pair, where the key
                 is the file name and the value is the file's content.
         """
         file_path = entry.path
-        file_name = entry.name
 
         self.logger.info(f"Found: {file_path}")
 
         with smbclient.open_file(file_path, mode="rb") as file:
             content = file.read()
+
+        file_name = self._add_prefix_to_file_name(
+            file_path=file_path, prefix_levels_to_add=prefix_levels_to_add
+        )
 
         return {file_name: content}
 
