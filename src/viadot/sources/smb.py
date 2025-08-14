@@ -250,12 +250,12 @@ class SMB(Source):
                 problematic_entries.append(entry.name)
                 continue
 
-            entry_mod_date_parsed = pendulum.from_timestamp(
-                entry.stat().st_mtime
-            ).date()
-            entry_name = entry.name
-
             try:
+                entry_mod_date_parsed = pendulum.from_timestamp(
+                    entry.stat().st_mtime
+                ).date()
+                entry_name = entry.name
+
                 if entry.is_file() and self._is_matching_file(
                     file_name=entry_name,
                     file_mod_date_parsed=entry_mod_date_parsed,
