@@ -602,7 +602,7 @@ class SAPRFC(Source):
                     raise DataBufferExceededError(msg)
                 lists_of_columns.append(cols)
                 cols = [col]
-                col_length_total = int(col_length)
+                col_length_total = 0
 
         if isinstance(self.rfc_unique_id, list) and all(
             rfc_unique_col not in cols for rfc_col in self.rfc_unique_id
