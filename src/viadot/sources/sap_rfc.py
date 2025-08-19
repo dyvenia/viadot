@@ -691,6 +691,7 @@ class SAPRFC(Source):
         """
         params = self._query
         columns = self.select_columns
+        aliased_columns = self.select_columns_aliased
         sep = self._query.get("DELIMITER")
         fields_lists = self._query.get("FIELDS")
         if len(fields_lists) > 1:
@@ -770,6 +771,7 @@ class SAPRFC(Source):
             # It is used to filter out columns which are not in select query
             # for example columns passed only as unique column
             df = df.loc[:, columns]
+            df.columns = aliased_columns
 
         if self.client_side_filters:
             filter_query = self._build_pandas_filter_query(self.client_side_filters)
