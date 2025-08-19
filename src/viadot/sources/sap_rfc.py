@@ -602,7 +602,7 @@ class SAPRFC(Source):
                     raise DataBufferExceededError(msg)
                 lists_of_columns.append(cols)
                 cols = [col]
-                col_length_total = 0
+                col_length_total = int(col_length)
 
         if isinstance(self.rfc_unique_id, list) and all(
             rfc_unique_col not in cols for rfc_col in self.rfc_unique_id
@@ -690,7 +690,7 @@ class SAPRFC(Source):
                 `PyRFC.query()`.
         """
         params = self._query
-        columns = self.select_columns_aliased
+        columns = self.select_columns
         sep = self._query.get("DELIMITER")
         fields_lists = self._query.get("FIELDS")
         if len(fields_lists) > 1:
