@@ -16,6 +16,16 @@ import pandas as pd
 #C++ SAP RFC connector
 import sap_rfc_connector
 
+#experimental
+from prefect import get_run_logger
+try:
+    from edp_flows.tasks import print_regular
+except ImportError:
+    print_regular = None
+    print("edp_flows not installed")
+import csv
+import os
+
 # Import ABAPApplicationError for exception handling
 try:
     from sap_rfc_connector import ABAPApplicationError
@@ -318,7 +328,8 @@ class SAPRFC(Source):
             raise ValueError(msg)
 
         #TODO: args needed?
-        descr = self.con.get_function_description(function_name)
+        func_caller = sap_rfc_connector.SapFunctionCaller(self.con)
+        descr = func_caller.get_function_description(function_name)
 
         param_names = [param["name"] for param in descr.parameters]
         detailed_params = descr.parameters
@@ -656,10 +667,14 @@ class SAPRFC(Source):
     def call(self, func: str, *args, **kwargs) -> dict[str, Any]:
         """Call a SAP RFC function."""
         func_caller = sap_rfc_connector.SapFunctionCaller(self.con)
-        start_time = time.time()
+        # func_data = func_caller.get_table_metadata("MARA")
+        
+        # # Print each row of metadata on a separate line
+        # for i, row in enumerate(func_data):
+        #     print(f"Row {i + 1}: {row}")
+        
         result = func_caller.call(func, *args, **kwargs)
-        end_time = time.time()
-        logger.debug(f"Time taken to call {func} and gather results: {end_time - start_time} seconds")
+
         return result
 
     def _get_alias(self, column: str) -> str:
@@ -694,7 +709,7 @@ class SAPRFC(Source):
 
     # TODO: refactor to remove linter warnings and so this can be tested.
     @add_viadot_metadata_columns
-    def to_df_old(self, tests: dict | None = None) -> pd.DataFrame:  # noqa: C901, PLR0912, PLR0915
+    def to_df(self, tests: dict | None = None) -> pd.DataFrame:  # noqa: C901, PLR0912, PLR0915
         """Load the results of a query into a pandas DataFrame.
 
         Due to SAP limitations, if the length of the WHERE clause is longer than 75
@@ -717,13 +732,29 @@ class SAPRFC(Source):
             pd.DataFrame: A DataFrame representing the result of the query provided in
                 `PyRFC.query()`.
         """
+        try:
+            logger = get_run_logger()
+            logger.debug("There is an active flow or task run context.")
+        except Exception as e:
+            logger = logging.getLogger(__name__)
+            print("There is no active flow or task run context.")
+
         params = self._query
         columns = self.select_columns_aliased
         sep = self._query.get("DELIMITER")
         fields_lists = self._query.get("FIELDS")
         if len(fields_lists) > 1:
-            logger.info(f"Data will be downloaded in {len(fields_lists)} chunks.")
+            logger.debug(f"Data will be downloaded in {len(fields_lists)} chunks.")
         func = self.func
+        
+        if print_regular:
+            print_regular("Starting to_df")
+        # Create temporary CSV file for saving results
+        temp_csv_path = "poc_results.csv"
+        logger.debug(f"Will save results to: {temp_csv_path}")
+        if print_regular:
+            print_regular(f"Will save results to: {temp_csv_path}")
+        
         if sep is None:
             # Automatically find a working separator.
             separators = [
@@ -744,7 +775,9 @@ class SAPRFC(Source):
             separators = [sep]
 
         for sep in separators:
-            logger.info(f"Checking if separator '{sep}' works.")
+            logger.debug(f"Checking if separator '{sep}' works.")
+            if print_regular:
+                print_regular(f"Checking if separator '{sep}' works.")
             if self.rfc_unique_id is not None and isinstance(self.rfc_unique_id[0], str):
                 # Columns only for the first chunk. We add the rest later to avoid name
                 # conflicts.
@@ -754,21 +787,111 @@ class SAPRFC(Source):
             self._query["DELIMITER"] = sep
             chunk = 1
             row_index = 0
-            for fields in fields_lists:
-                logger.info(f"Downloading {chunk} data chunk...")
-                self._query["FIELDS"] = fields
-                try:
-                    response = self.call(func, **params)
-                except ABAPApplicationError as e:
-                    if e.key == "DATA_BUFFER_EXCEEDED":
-                        msg = "Character limit per row exceeded. Please select fewer columns."
-                        raise DataBufferExceededError(msg) from e
-                    raise
-                # Check and skip if there is no data returned.
+
+            #EXPERIMENTAL: merge fields_lists to one list
+            fields = [item for sublist in fields_lists for item in sublist]
+            logger.debug(f"Downloading {chunk} data chunk...")
+            if print_regular:
+                print_regular(f"Downloading {chunk} data chunk...")
+            self._query["FIELDS"] = fields
+            try:
+                response = self.call(func, **params)
+            except ABAPApplicationError as e:
+                if e.key == "DATA_BUFFER_EXCEEDED":
+                    msg = "Character limit per row exceeded. Please select fewer columns."
+                    raise DataBufferExceededError(msg) from e
+                raise
+            # Check and skip if there is no data returned.
+            try:
                 if response["DATA"]:
+                    logger.debug("checking data")
+                    if print_regular:
+                        print_regular("checking data")
                     record_key = "WA"
                     data_raw = np.array(response["DATA"])
+                    
+                    # Save raw data to CSV file immediately
+                    logger.debug(f"Saving {len(data_raw)} rows to CSV file...")
+                    if print_regular:
+                        print_regular(f"Saving {len(data_raw)} rows to CSV file...")
+                    with open(temp_csv_path, 'w', newline='', encoding='utf-8') as csvfile:
+                        writer = csv.writer(csvfile)
+                        # Write header
+                        writer.writerow(fields)
+                        # Write data rows
+                        for row_data in data_raw:
+                            try:
+                                split_data = row_data[record_key].split(sep)
+                                if len(split_data) == len(fields):
+                                    writer.writerow(split_data)
+                                else:
+                                    logger.warning(f"Row data length mismatch: expected {len(fields)}, got {len(split_data)}")
+                            except Exception as e:
+                                logger.error(f"Error processing row: {e}")
+                                continue
+                    
+                    logger.debug(f"Saved data to {temp_csv_path}")
+                    if print_regular:
+                        print_regular(f"Saved data to {temp_csv_path}")
                     del response
+                    del data_raw
+                    
+                    # Now read the CSV file back in chunks
+                    logger.debug("Reading CSV file back in chunks...")
+                    if os.path.exists(temp_csv_path):
+                        file_size = os.path.getsize(temp_csv_path)
+                        logger.debug(f"CSV file size: {file_size / 1024 / 1024:.2f} MB")
+                        if print_regular:
+                            print_regular(f"CSV file size: {file_size / 1024 / 1024:.2f} MB")
+                        # Read CSV in chunks using pandas
+                        chunk_size = 100000  # Read 10k rows at a time
+                        all_chunks = []
+                        
+                        try:
+                            for chunk_num, chunk_df in enumerate(pd.read_csv(temp_csv_path, chunksize=chunk_size)):
+                                logger.debug(f"Reading CSV chunk {chunk_num + 1}: {len(chunk_df)} rows")
+                                if print_regular:
+                                    print_regular(f"Reading CSV chunk {chunk_num + 1}: {len(chunk_df)} rows")
+                                all_chunks.append(chunk_df)
+                                
+                                # Force garbage collection every few chunks
+                                if chunk_num % 5 == 0:
+                                    import gc
+                                    gc.collect()
+                                    
+                        except Exception as e:
+                            logger.error(f"Error reading CSV file: {e}")
+                            raise
+                        
+                        # Combine all chunks
+                        if all_chunks:
+                            logger.debug("Combining all chunks...")
+                            if print_regular:
+                                print_regular("Combining all chunks...")
+                            df = pd.concat(all_chunks, ignore_index=True)
+                            logger.debug(f"Final DataFrame shape: {df.shape}")
+                            if print_regular:
+                                print_regular(f"Final DataFrame shape: {df.shape}")
+                        else:
+                            logger.debug("No chunks to combine, creating empty DataFrame")
+                            if print_regular:
+                                print_regular("No chunks to combine, creating empty DataFrame")
+                            df = pd.DataFrame(columns=columns)
+                        
+                        # Clean up temporary file
+                        try:
+                            os.remove(temp_csv_path)
+                            logger.debug("Cleaned up temporary CSV file")
+                            if print_regular:
+                                print_regular("Cleaned up temporary CSV file")
+                        except Exception as e:
+                            logger.debug(f"Could not remove temporary file: {e}")
+                    else:
+                        logger.debug("CSV file was not created, creating empty DataFrame")
+                        if print_regular:
+                            print_regular("CSV file was not created, creating empty DataFrame")
+                        df = pd.DataFrame(columns=columns)
+                    
                     # If reference columns are provided, it's not necessary to remove
                     # any extra row.
                     if self.rfc_unique_id is not None and not isinstance(self.rfc_unique_id[0], str):
@@ -777,23 +900,33 @@ class SAPRFC(Source):
                         )
                     else:
                         start = False
-                    records = list(_gen_split(data_raw, sep, record_key))
-                    del data_raw
+                    
                     if (
                         self.rfc_unique_id is not None and isinstance(self.rfc_unique_id[0], str)
                         and list(df.columns) != fields
                     ):
                         df_tmp = pd.DataFrame(columns=fields)
-                        df_tmp[fields] = records
+                        df_tmp[fields] = df.values
                         df_tmp = self._adjust_whitespaces(df_tmp)
                         df = pd.merge(df, df_tmp, on=self.rfc_unique_id, how="outer")
                     elif not start:
-                        df[fields] = records
+                        # Data is already in df from CSV reading
+                        pass
                     else:
                         df[fields] = np.nan
                     chunk += 1
                 elif not response["DATA"]:
-                    logger.warning("No data returned from SAP.")
+                    logger.debug("No data returned from SAP.")
+                    if print_regular:
+                        print_regular("No data returned from SAP.")
+                    logger.debug("done")
+                if print_regular:
+                    print_regular("done")
+            except Exception as e:
+                logger.error(f"Error: {e}")
+                if print_regular:
+                    print_regular(f"Error: {e}")
+                break
         if not df.empty:
             # It is used to filter out columns which are not in select query
             # for example columns passed only as unique column
@@ -818,413 +951,3 @@ class SAPRFC(Source):
 
         return df
 
-    def to_df_faster(self, tests: dict | None = None) -> pd.DataFrame:
-        """Faster version of to_df with performance optimizations.
-        
-        Same functionality as to_df but with:
-        - Optimized string processing
-        - Better memory management
-        - Reduced DataFrame operations
-        - Single-pass data processing
-        
-        Args:
-            tests (Dict[str], optional): A dictionary with optional list of tests
-                to verify the output dataframe. If defined, triggers the `validate`
-                function from utils. Defaults to None.
-
-        Returns:
-            pd.DataFrame: A DataFrame representing the result of the query provided in
-                `PyRFC.query()`.
-        """
-        params = self._query
-        columns = self.select_columns_aliased
-        sep = self._query.get("DELIMITER")
-        fields_lists = self._query.get("FIELDS")
-        
-        if len(fields_lists) > 1:
-            logger.info(f"Data will be downloaded in {len(fields_lists)} chunks.")
-        
-        func = self.func
-        
-        # Use simple separator approach - just use the provided separator or default
-        if sep is None:
-            working_sep = "|"  # Default to most common separator
-            logger.info(f"Using default separator: '{working_sep}'")
-        else:
-            working_sep = sep
-            logger.info(f"Using provided separator: '{working_sep}'")
-
-        # Debug: Check if query was executed
-        if not hasattr(self, '_query') or not self._query:
-            raise ValueError("No query executed. Please call query() method first.")
-        
-        logger.info(f"Query parameters: {self._query}")
-        logger.info(f"Fields lists: {fields_lists}")
-        
-        # Pre-allocate data structures for better performance
-        all_records = []
-        row_index = 0
-        
-        for chunk_idx, fields in enumerate(fields_lists):
-            logger.info(f"Downloading chunk {chunk_idx + 1}/{len(fields_lists)}...")
-            params["FIELDS"] = fields
-            params["DELIMITER"] = working_sep
-            
-            try:
-                response = self.call(func, **params)
-                logger.info(f"Response keys: {list(response.keys()) if response else 'None'}")
-                if response.get("DATA"):
-                    logger.info(f"Data rows returned: {len(response['DATA'])}")
-                else:
-                    logger.warning("No data returned from SAP.")
-                    # Try with a different separator for this chunk
-                    if working_sep != ";" and chunk_idx == 0:
-                        logger.info("Trying with ';' separator...")
-                        params["DELIMITER"] = ";"
-                        response = self.call(func, **params)
-                        if response.get("DATA"):
-                            working_sep = ";"
-                            logger.info("Switched to ';' separator")
-                        else:
-                            params["DELIMITER"] = working_sep  # Reset
-                    continue
-            except ABAPApplicationError as e:
-                if e.key == "DATA_BUFFER_EXCEEDED":
-                    msg = "Character limit per row exceeded. Please select fewer columns."
-                    raise DataBufferExceededError(msg) from e
-                raise
-            
-            if not response.get("DATA"):
-                logger.warning("No data returned from SAP.")
-                continue
-            
-            data_raw = response["DATA"]
-            del response  # Free memory immediately
-            
-            # Handle row consistency for non-unique ID scenarios
-            if self.rfc_unique_id is not None and not isinstance(self.rfc_unique_id[0], str):
-                row_index, data_raw, start = _detect_extra_rows(
-                    row_index, data_raw, chunk_idx + 1, fields
-                )
-                if start:
-                    continue
-            
-            # Optimized string processing - single pass
-            chunk_records = []
-            for row_data in data_raw:
-                split_data = row_data["WA"].split(working_sep)
-                if len(split_data) == len(fields):
-                    # Create dict directly for better performance
-                    row_dict = dict(zip(fields, split_data))
-                    chunk_records.append(row_dict)
-            
-            all_records.extend(chunk_records)
-            del data_raw  # Free memory immediately
-        
-        # Build final DataFrame efficiently
-        if not all_records:
-            df = pd.DataFrame(columns=columns)
-        else:
-            # Create DataFrame from all records at once
-            df = pd.DataFrame(all_records)
-            
-            # Apply whitespace adjustment if needed
-            if self.rfc_unique_id is not None and isinstance(self.rfc_unique_id[0], str):
-                df = self._adjust_whitespaces(df)
-            
-            # Filter to requested columns
-            if not df.empty:
-                available_cols = [col for col in columns if col in df.columns]
-                df = df.loc[:, available_cols]
-        
-        # Apply client-side filters
-        if self.client_side_filters:
-            filter_query = self._build_pandas_filter_query(self.client_side_filters)
-            df = df.query(filter_query)
-            
-            client_side_filter_cols_aliased = [
-                self._get_alias(col) for col in self._get_client_side_filter_cols()
-            ]
-            cols_to_drop = [
-                col for col in client_side_filter_cols_aliased
-                if col not in self.select_columns_aliased
-            ]
-            if cols_to_drop:
-                df = df.drop(cols_to_drop, axis=1)
-        
-        self.close_connection()
-        
-        if tests:
-            validate(df=df, tests=tests)
-        
-        return df
-
-    def to_df_polars(self, tests: dict | None = None) -> pd.DataFrame:
-        """Ultra-fast version using Polars for data processing.
-        
-        Uses Polars for much faster data processing than pandas.
-        Returns a pandas DataFrame for compatibility.
-        
-        Args:
-            tests (Dict[str], optional): A dictionary with optional list of tests
-                to verify the output dataframe. If defined, triggers the `validate`
-                function from utils. Defaults to None.
-
-        Returns:
-            pd.DataFrame: A DataFrame representing the result of the query provided in
-                `PyRFC.query()`.
-        """
-        try:
-            import polars as pl
-        except ImportError:
-            logger.warning("Polars not available, falling back to pandas")
-            return self.to_df_faster(tests)
-        
-        params = self._query
-        columns = self.select_columns_aliased
-        sep = self._query.get("DELIMITER")
-        fields_lists = self._query.get("FIELDS")
-        
-        if len(fields_lists) > 1:
-            logger.info(f"Data will be downloaded in {len(fields_lists)} chunks using Polars.")
-        
-        func = self.func
-        
-        # Use simple separator approach
-        if sep is None:
-            working_sep = "|"
-            logger.info(f"Using default separator: '{working_sep}'")
-        else:
-            working_sep = sep
-            logger.info(f"Using provided separator: '{working_sep}'")
-
-        if not hasattr(self, '_query') or not self._query:
-            raise ValueError("No query executed. Please call query() method first.")
-        
-        # Pre-allocate data structures
-        all_records = []
-        row_index = 0
-        
-        for chunk_idx, fields in enumerate(fields_lists):
-            logger.info(f"Downloading chunk {chunk_idx + 1}/{len(fields_lists)}...")
-            params["FIELDS"] = fields
-            params["DELIMITER"] = working_sep
-            
-            try:
-                response = self.call(func, **params)
-                if response.get("DATA"):
-                    logger.info(f"Data rows returned: {len(response['DATA'])}")
-                else:
-                    logger.warning("No data returned from SAP.")
-                    if working_sep != ";" and chunk_idx == 0:
-                        logger.info("Trying with ';' separator...")
-                        params["DELIMITER"] = ";"
-                        response = self.call(func, **params)
-                        if response.get("DATA"):
-                            working_sep = ";"
-                            logger.info("Switched to ';' separator")
-                        else:
-                            params["DELIMITER"] = working_sep
-                    continue
-            except ABAPApplicationError as e:
-                if e.key == "DATA_BUFFER_EXCEEDED":
-                    msg = "Character limit per row exceeded. Please select fewer columns."
-                    raise DataBufferExceededError(msg) from e
-                raise
-            
-            if not response.get("DATA"):
-                continue
-            
-            data_raw = response["DATA"]
-            del response
-            
-            # Handle row consistency
-            if self.rfc_unique_id is not None and not isinstance(self.rfc_unique_id[0], str):
-                row_index, data_raw, start = _detect_extra_rows(
-                    row_index, data_raw, chunk_idx + 1, fields
-                )
-                if start:
-                    continue
-            
-            # Process data with Polars
-            chunk_records = []
-            for row_data in data_raw:
-                split_data = row_data["WA"].split(working_sep)
-                if len(split_data) == len(fields):
-                    chunk_records.append(split_data)
-            
-            all_records.extend(chunk_records)
-            del data_raw
-        
-        # Build Polars DataFrame
-        if not all_records:
-            df = pd.DataFrame(columns=columns)
-        else:
-            # Create Polars DataFrame
-            pl_df = pl.DataFrame(all_records, schema=fields_lists[0] if fields_lists else None)
-            
-            # Apply whitespace adjustment if needed (convert to pandas temporarily)
-            if self.rfc_unique_id is not None and isinstance(self.rfc_unique_id[0], str):
-                temp_pd_df = pl_df.to_pandas()
-                temp_pd_df = self._adjust_whitespaces(temp_pd_df)
-                pl_df = pl.from_pandas(temp_pd_df)
-            
-            # Filter to requested columns
-            if not pl_df.is_empty():
-                available_cols = [col for col in columns if col in pl_df.columns]
-                pl_df = pl_df.select(available_cols)
-            
-            # Convert to pandas for compatibility
-            df = pl_df.to_pandas()
-        
-        # Apply client-side filters
-        if self.client_side_filters:
-            filter_query = self._build_pandas_filter_query(self.client_side_filters)
-            df = df.query(filter_query)
-            
-            client_side_filter_cols_aliased = [
-                self._get_alias(col) for col in self._get_client_side_filter_cols()
-            ]
-            cols_to_drop = [
-                col for col in client_side_filter_cols_aliased
-                if col not in self.select_columns_aliased
-            ]
-            if cols_to_drop:
-                df = df.drop(cols_to_drop, axis=1)
-        
-        self.close_connection()
-        
-        if tests:
-            validate(df=df, tests=tests)
-        
-        return df
-
-    def to_df(self, tests: dict | None = None) -> pd.DataFrame:
-        """Ultra-fast version using pure Python/NumPy without pandas overhead.
-        
-        Processes data using pure Python and NumPy for maximum speed.
-        Only converts to pandas at the very end.
-        
-        Args:
-            tests (Dict[str], optional): A dictionary with optional list of tests
-                to verify the output dataframe. If defined, triggers the `validate`
-                function from utils. Defaults to None.
-
-        Returns:
-            pd.DataFrame: A DataFrame representing the result of the query provided in
-                `PyRFC.query()`.
-        """
-        params = self._query
-        columns = self.select_columns_aliased
-        sep = self._query.get("DELIMITER")
-        fields_lists = self._query.get("FIELDS")
-        
-        if len(fields_lists) > 1:
-            logger.info(f"Data will be downloaded in {len(fields_lists)} chunks using native Python.")
-        
-        func = self.func
-        
-        # Use simple separator approach
-        if sep is None:
-            working_sep = "|"
-            logger.info(f"Using default separator: '{working_sep}'")
-        else:
-            working_sep = sep
-            logger.info(f"Using provided separator: '{working_sep}'")
-
-        if not hasattr(self, '_query') or not self._query:
-            raise ValueError("No query executed. Please call query() method first.")
-        
-        # Pre-allocate data structures
-        all_data = {}  # Use dict for faster column access
-        row_index = 0
-        
-        for chunk_idx, fields in enumerate(fields_lists):
-            logger.info(f"Downloading chunk {chunk_idx + 1}/{len(fields_lists)}...")
-            params["FIELDS"] = fields
-            params["DELIMITER"] = working_sep
-            
-            try:
-                response = self.call(func, **params)
-                if response.get("DATA"):
-                    logger.info(f"Data rows returned: {len(response['DATA'])}")
-                else:
-                    logger.warning("No data returned from SAP.")
-                    if working_sep != ";" and chunk_idx == 0:
-                        logger.info("Trying with ';' separator...")
-                        params["DELIMITER"] = ";"
-                        response = self.call(func, **params)
-                        if response.get("DATA"):
-                            working_sep = ";"
-                            logger.info("Switched to ';' separator")
-                        else:
-                            params["DELIMITER"] = working_sep
-                    continue
-            except ABAPApplicationError as e:
-                if e.key == "DATA_BUFFER_EXCEEDED":
-                    msg = "Character limit per row exceeded. Please select fewer columns."
-                    raise DataBufferExceededError(msg) from e
-                raise
-            
-            if not response.get("DATA"):
-                continue
-            
-            data_raw = response["DATA"]
-            del response
-            
-            # Handle row consistency
-            if self.rfc_unique_id is not None and not isinstance(self.rfc_unique_id[0], str):
-                row_index, data_raw, start = _detect_extra_rows(
-                    row_index, data_raw, chunk_idx + 1, fields
-                )
-                if start:
-                    continue
-            
-            # Process data with pure Python
-            for row_data in data_raw:
-                split_data = row_data["WA"].split(working_sep)
-                if len(split_data) == len(fields):
-                    for i, field in enumerate(fields):
-                        if field not in all_data:
-                            all_data[field] = []
-                        all_data[field].append(split_data[i])
-            
-            del data_raw
-        
-        # Build DataFrame efficiently
-        if not all_data:
-            df = pd.DataFrame(columns=columns)
-        else:
-            # Create DataFrame from dict of lists (much faster than list of dicts)
-            df = pd.DataFrame(all_data)
-            
-            # Apply whitespace adjustment if needed
-            if self.rfc_unique_id is not None and isinstance(self.rfc_unique_id[0], str):
-                df = self._adjust_whitespaces(df)
-            
-            # Filter to requested columns
-            if not df.empty:
-                available_cols = [col for col in columns if col in df.columns]
-                df = df.loc[:, available_cols]
-        
-        # Apply client-side filters
-        if self.client_side_filters:
-            filter_query = self._build_pandas_filter_query(self.client_side_filters)
-            df = df.query(filter_query)
-            
-            client_side_filter_cols_aliased = [
-                self._get_alias(col) for col in self._get_client_side_filter_cols()
-            ]
-            cols_to_drop = [
-                col for col in client_side_filter_cols_aliased
-                if col not in self.select_columns_aliased
-            ]
-            if cols_to_drop:
-                df = df.drop(cols_to_drop, axis=1)
-        
-        self.close_connection()
-        
-        if tests:
-            validate(df=df, tests=tests)
-        
-        return df
