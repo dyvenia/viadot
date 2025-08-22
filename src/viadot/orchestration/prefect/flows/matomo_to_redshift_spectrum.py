@@ -6,7 +6,6 @@ from prefect import flow
 from prefect.task_runners import ConcurrentTaskRunner
 
 from viadot.orchestration.prefect.tasks import df_to_redshift_spectrum, matomo_to_df
-from viadot.utils import handle_dynamic_date_symbols
 
 
 @flow(
@@ -26,7 +25,6 @@ def matomo_to_redshift_spectrum(  # noqa: PLR0913
     params: dict[str, str],
     matomo_config_key: str | None = None,
     matomo_credentials_secret: str | None = None,
-    credentials: dict[str, Any] | None = None,
     record_prefix: str | None = None,
     if_empty: Literal["warn", "skip", "fail"] = "warn",
     tests: dict[str, Any] | None = None,
@@ -37,9 +35,6 @@ def matomo_to_redshift_spectrum(  # noqa: PLR0913
     aws_sep: str = ",",
     credentials_secret: str | None = None,
     aws_config_key: str | None = None,
-    dynamic_date_symbols: list[str] = ["<<", ">>"],  # noqa: B006
-    dynamic_date_format: str = "%Y%m%d",
-    dynamic_date_timezone: str = "UTC",
 ) -> None:
     """Flow for downloading data from Matomo to Redshift Spectrum.
 
@@ -83,12 +78,6 @@ def matomo_to_redshift_spectrum(  # noqa: PLR0913
             that stores AWS credentials. Defaults to None.
         aws_config_key (str, optional): The key in the viadot config holding relevant
             AWS credentials. Defaults to None.
-        dynamic_date_symbols (list[str], optional): Symbols used for dynamic date
-            handling. Defaults to ["<<", ">>"]. Can be used in params["date"].
-        dynamic_date_format (str, optional): Format used for dynamic date parsing.
-            Defaults to "%Y%m%d".
-        dynamic_date_timezone (str, optional): Timezone used for dynamic date
-            processing. Defaults to "UTC".
 
     Examples:
         matomo_to_redshift_spectrum(
@@ -116,22 +105,12 @@ def matomo_to_redshift_spectrum(  # noqa: PLR0913
             if_exists="overwrite",
         )
     """
-    # Handle dynamic dates in params if present
-    if params and "date" in params:
-        params["date"] = handle_dynamic_date_symbols(
-            date_str=params["date"],
-            symbols=dynamic_date_symbols,
-            date_format=dynamic_date_format,
-            timezone=dynamic_date_timezone,
-        )
-
     data_frame = matomo_to_df(
         matomo_url=matomo_url,
         top_level_fields=top_level_fields,
         record_path=record_path,
         config_key=matomo_config_key,
         credentials_secret=matomo_credentials_secret,
-        credentials=credentials,
         params=params,
         record_prefix=record_prefix,
         if_empty=if_empty,
