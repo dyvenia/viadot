@@ -20,6 +20,7 @@ def matomo_to_df(
     credentials: dict[str, Any] | None = None,
     record_prefix: str | None = None,
     if_empty: Literal["warn", "skip", "fail"] = "warn",
+    tests: dict[str, Any] | None = None,
 ) -> pd.DataFrame:
     """Task to download data from Matomo API to a pandas DataFrame.
 
@@ -50,6 +51,9 @@ def matomo_to_df(
             For example: "action_". Defaults to None.
         if_empty (Literal["warn", "skip", "fail"], optional): What to do if the
             query returns no data. Defaults to "warn".
+        tests (dict[str, Any], optional): A dictionary with optional list of tests
+            to verify the output dataframe. If defined, triggers the `validate`
+            function from viadot.utils. Defaults to None.
 
     Examples:
         data_frame = matomo_to_df(
@@ -99,4 +103,5 @@ def matomo_to_df(
         record_path=record_path,
         record_prefix=record_prefix,
         if_empty=if_empty,
+        tests=tests,
     )

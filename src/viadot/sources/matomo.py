@@ -1,6 +1,6 @@
 """Source for ingesting data from Matomo API."""
 
-from typing import Literal
+from typing import Any, Literal
 
 import pandas as pd
 from pydantic import BaseModel
@@ -8,6 +8,7 @@ import requests
 
 from viadot.config import get_source_credentials
 from viadot.sources.base import Source
+from viadot.utils import add_viadot_metadata_columns, validate
 
 
 HTTP_STATUS_OK = 200
@@ -89,12 +90,14 @@ class Matomo(Source):
             msg = f"Failed to fetch data: {response.text}"
             raise ValueError(msg)
 
+    @add_viadot_metadata_columns
     def to_df(
         self,
         top_level_fields: list[str],
         record_path: str | list[str],
         record_prefix: str | None = None,
         if_empty: Literal["warn", "skip", "fail"] = "warn",
+        tests: dict[str, Any] | None = None,
     ) -> pd.DataFrame:
         """Convert Matomo data to pandas DataFrame.
 
@@ -109,6 +112,9 @@ class Matomo(Source):
             record_prefix = A prefix for the record path fields.For example:"action_"
             if_empty: What to do if no data is available.
                      Defaults to "warn".
+            tests (Dict[str], optional): A dictionary with optional list of tests
+                to verify the output dataframe. If defined, triggers the `validate`
+                function from utils. Defaults to None.
 
         Returns:
             pd.DataFrame: DataFrame containing Matomo data.
@@ -131,5 +137,8 @@ class Matomo(Source):
 
         if df.empty:
             self._handle_if_empty(if_empty=if_empty)
+
+        if tests:
+            validate(df=df, tests=tests)
 
         return df
