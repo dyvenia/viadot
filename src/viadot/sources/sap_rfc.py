@@ -673,7 +673,7 @@ class SAPRFC(Source):
         # for i, row in enumerate(func_data):
         #     print(f"Row {i + 1}: {row}")
         
-        result = func_caller.call(func, *args, **kwargs)
+        result = func_caller.smart_call(func, *args, **kwargs)
 
         return result
 
