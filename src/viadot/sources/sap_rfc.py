@@ -654,7 +654,7 @@ class SAPRFC(Source):
             "QUERY_TABLE": table_name,
             "FIELDS": columns,
             "OPTIONS": options,
-            "ROWCOUNT": limit,
+            "ROWCOUNT": 10,
             "ROWSKIPS": offset,
             "DELIMITER": sep,
         }
@@ -848,7 +848,7 @@ class SAPRFC(Source):
                         all_chunks = []
                         
                         try:
-                            for chunk_num, chunk_df in enumerate(pd.read_csv(temp_csv_path, chunksize=chunk_size)):
+                            for chunk_num, chunk_df in enumerate(pd.read_csv(temp_csv_path, chunksize=chunk_size, dtype=str)):
                                 logger.debug(f"Reading CSV chunk {chunk_num + 1}: {len(chunk_df)} rows")
                                 if print_regular:
                                     print_regular(f"Reading CSV chunk {chunk_num + 1}: {len(chunk_df)} rows")
@@ -951,3 +951,127 @@ class SAPRFC(Source):
 
         return df
 
+    @add_viadot_metadata_columns
+    def to_df_original(self, tests: dict | None = None) -> pd.DataFrame:  # noqa: C901, PLR0912, PLR0915
+        """Load the results of a query into a pandas DataFrame.
+
+        Due to SAP limitations, if the length of the WHERE clause is longer than 75
+        characters, we trim whe WHERE clause and perform the rest of the filtering
+        on the resulting DataFrame. Eg. if the WHERE clause contains 4 conditions
+        and has 80 characters, we only perform 3 filters in the query, and perform
+        the last filter on the DataFrame. If characters per row limit will be exceeded,
+        data will be downloaded in chunks.
+
+        Source: https://success.jitterbit.com/display/DOC/Guide+to+Using+RFC_READ_TABLE+to+Query+SAP+Tables#GuidetoUsingRFC_READ_TABLEtoQuerySAPTables-create-the-operation
+        - WHERE clause: 75 character limit
+        - SELECT: 512 character row limit
+
+        Args:
+            tests (Dict[str], optional): A dictionary with optional list of tests
+                to verify the output dataframe. If defined, triggers the `validate`
+                function from utils. Defaults to None.
+
+        Returns:
+            pd.DataFrame: A DataFrame representing the result of the query provided in
+                `PyRFC.query()`.
+        """
+        params = self._query
+        columns = self.select_columns_aliased
+        sep = self._query.get("DELIMITER")
+        fields_lists = self._query.get("FIELDS")
+        if len(fields_lists) > 1:
+            logger.info(f"Data will be downloaded in {len(fields_lists)} chunks.")
+        func = self.func
+        if sep is None:
+            # Automatically find a working separator.
+            separators = [
+                "|",
+                "/t",
+                "#",
+                ";",
+                "@",
+                "%",
+                "^",
+                "`",
+                "~",
+                "{",
+                "}",
+                "$",
+            ]
+        else:
+            separators = [sep]
+
+        for sep in separators:
+            logger.info(f"Checking if separator '{sep}' works.")
+            if isinstance(self.rfc_unique_id, list):
+                # Columns only for the first chunk. We add the rest later to avoid name
+                # conflicts.
+                df = pd.DataFrame(columns=fields_lists[0])
+            else:
+                df = pd.DataFrame()
+            self._query["DELIMITER"] = sep
+            chunk = 1
+            row_index = 0
+            for fields in fields_lists:
+                logger.info(f"Downloading {chunk} data chunk...")
+                self._query["FIELDS"] = fields
+                try:
+                    response = self.call(func, **params)
+                except ABAPApplicationError as e:
+                    if e.key == "DATA_BUFFER_EXCEEDED":
+                        msg = "Character limit per row exceeded. Please select fewer columns."
+                        raise DataBufferExceededError(msg) from e
+                    raise
+                # Check and skip if there is no data returned.
+                if response["DATA"]:
+                    record_key = "WA"
+                    data_raw = np.array(response["DATA"])
+                    del response
+                    # If reference columns are provided, it's not necessary to remove
+                    # any extra row.
+                    if not isinstance(self.rfc_unique_id, list):
+                        row_index, data_raw, start = _detect_extra_rows(
+                            row_index, data_raw, chunk, fields
+                        )
+                    else:
+                        start = False
+                    records = list(_gen_split(data_raw, sep, record_key))
+                    del data_raw
+                    if (
+                        isinstance(self.rfc_unique_id, list)
+                        and list(df.columns) != fields
+                    ):
+                        df_tmp = pd.DataFrame(columns=fields)
+                        df_tmp[fields] = records
+                        df_tmp = self._adjust_whitespaces(df_tmp)
+                        df = pd.merge(df, df_tmp, on=self.rfc_unique_id, how="outer")
+                    elif not start:
+                        df[fields] = records
+                    else:
+                        df[fields] = np.nan
+                    chunk += 1
+                elif not response["DATA"]:
+                    logger.warning("No data returned from SAP.")
+        if not df.empty:
+            # It is used to filter out columns which are not in select query
+            # for example columns passed only as unique column
+            df = df.loc[:, columns]
+
+        if self.client_side_filters:
+            filter_query = self._build_pandas_filter_query(self.client_side_filters)
+            df.query(filter_query, inplace=True)
+            client_side_filter_cols_aliased = [
+                self._get_alias(col) for col in self._get_client_side_filter_cols()
+            ]
+            cols_to_drop = [
+                col
+                for col in client_side_filter_cols_aliased
+                if col not in self.select_columns_aliased
+            ]
+            df.drop(cols_to_drop, axis=1, inplace=True)
+        self.close_connection()
+
+        if tests:
+            validate(df=df, tests=tests)
+
+        return df

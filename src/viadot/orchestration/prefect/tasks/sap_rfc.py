@@ -114,6 +114,7 @@ def sap_rfc_to_df(  # noqa: PLR0913
 
     sap.query(query)
     logger.info("Downloading data from SAP to a DataFrame...")
+    logger.info("Dominik tyrala tests...")
     logger.debug(f"Running query: \n{sap.sql}.")
 
     df = sap.to_df(tests=tests)
