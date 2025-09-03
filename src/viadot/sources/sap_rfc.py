@@ -658,6 +658,7 @@ class SAPRFC(Source):
             "ROWSKIPS": offset,
             "DELIMITER": sep,
         }
+        print(query_json)
         # SAP doesn't understand None, so we filter out non-specified parameters
         query_json_filtered = {
             key: query_json[key] for key in query_json if query_json[key] is not None
@@ -666,13 +667,7 @@ class SAPRFC(Source):
 
     def call(self, func: str, *args, **kwargs) -> dict[str, Any]:
         """Call a SAP RFC function."""
-        func_caller = sap_rfc_connector.SapFunctionCaller(self.con)
-        # func_data = func_caller.get_table_metadata("MARA")
-        
-        # # Print each row of metadata on a separate line
-        # for i, row in enumerate(func_data):
-        #     print(f"Row {i + 1}: {row}")
-        
+        func_caller = sap_rfc_connector.SapFunctionCaller(self.con)       
         result = func_caller.smart_call(func, *args, **kwargs)
 
         return result
