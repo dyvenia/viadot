@@ -667,7 +667,7 @@ class SAPRFC(Source):
 
     def call(self, func: str, *args, **kwargs) -> dict[str, Any]:
         """Call a SAP RFC function."""
-        func_caller = sap_rfc_connector.SapFunctionCaller(self.con)       
+        func_caller = sap_rfc_connector.SapFunctionCaller(self.con)   
         result = func_caller.smart_call(func, *args, **kwargs)
 
         return result
@@ -744,11 +744,6 @@ class SAPRFC(Source):
         
         if print_regular:
             print_regular("Starting to_df")
-        # Create temporary CSV file for saving results
-        temp_csv_path = "poc_results.csv"
-        logger.debug(f"Will save results to: {temp_csv_path}")
-        if print_regular:
-            print_regular(f"Will save results to: {temp_csv_path}")
         
         if sep is None:
             # Automatically find a working separator.
@@ -769,25 +764,18 @@ class SAPRFC(Source):
         else:
             separators = [sep]
 
+        df = pd.DataFrame()
         for sep in separators:
             logger.debug(f"Checking if separator '{sep}' works.")
             if print_regular:
                 print_regular(f"Checking if separator '{sep}' works.")
-            if self.rfc_unique_id is not None and isinstance(self.rfc_unique_id[0], str):
-                # Columns only for the first chunk. We add the rest later to avoid name
-                # conflicts.
-                df = pd.DataFrame(columns=fields_lists[0])
-            else:
-                df = pd.DataFrame()
             self._query["DELIMITER"] = sep
-            chunk = 1
-            row_index = 0
-
-            #EXPERIMENTAL: merge fields_lists to one list
+            
+            # Merge fields into a single list (treat as one chunk)
             fields = [item for sublist in fields_lists for item in sublist]
-            logger.debug(f"Downloading {chunk} data chunk...")
+            logger.debug("Downloading data (single chunk)...")
             if print_regular:
-                print_regular(f"Downloading {chunk} data chunk...")
+                print_regular("Downloading data (single chunk)...")
             self._query["FIELDS"] = fields
             try:
                 response = self.call(func, **params)
@@ -799,117 +787,27 @@ class SAPRFC(Source):
             # Check and skip if there is no data returned.
             try:
                 if response["DATA"]:
-                    logger.debug("checking data")
+                    logger.debug("Processing data in-memory...")
                     if print_regular:
-                        print_regular("checking data")
+                        print_regular("Processing data in-memory...")
                     record_key = "WA"
-                    data_raw = np.array(response["DATA"])
-                    
-                    # Save raw data to CSV file immediately
-                    logger.debug(f"Saving {len(data_raw)} rows to CSV file...")
-                    if print_regular:
-                        print_regular(f"Saving {len(data_raw)} rows to CSV file...")
-                    with open(temp_csv_path, 'w', newline='', encoding='utf-8') as csvfile:
-                        writer = csv.writer(csvfile)
-                        # Write header
-                        writer.writerow(fields)
-                        # Write data rows
-                        for row_data in data_raw:
-                            try:
-                                split_data = row_data[record_key].split(sep)
-                                if len(split_data) == len(fields):
-                                    writer.writerow(split_data)
-                                else:
-                                    logger.warning(f"Row data length mismatch: expected {len(fields)}, got {len(split_data)}")
-                            except Exception as e:
-                                logger.error(f"Error processing row: {e}")
-                                continue
-                    
-                    logger.debug(f"Saved data to {temp_csv_path}")
-                    if print_regular:
-                        print_regular(f"Saved data to {temp_csv_path}")
-                    del response
-                    del data_raw
-                    
-                    # Now read the CSV file back in chunks
-                    logger.debug("Reading CSV file back in chunks...")
-                    if os.path.exists(temp_csv_path):
-                        file_size = os.path.getsize(temp_csv_path)
-                        logger.debug(f"CSV file size: {file_size / 1024 / 1024:.2f} MB")
-                        if print_regular:
-                            print_regular(f"CSV file size: {file_size / 1024 / 1024:.2f} MB")
-                        # Read CSV in chunks using pandas
-                        chunk_size = 100000  # Read 10k rows at a time
-                        all_chunks = []
-                        
+                    rows: list[list[str | None]] = []
+                    for row_data in response["DATA"]:
                         try:
-                            for chunk_num, chunk_df in enumerate(pd.read_csv(temp_csv_path, chunksize=chunk_size, dtype=str)):
-                                logger.debug(f"Reading CSV chunk {chunk_num + 1}: {len(chunk_df)} rows")
-                                if print_regular:
-                                    print_regular(f"Reading CSV chunk {chunk_num + 1}: {len(chunk_df)} rows")
-                                all_chunks.append(chunk_df)
-                                
-                                # Force garbage collection every few chunks
-                                if chunk_num % 5 == 0:
-                                    import gc
-                                    gc.collect()
-                                    
+                            split_data = row_data[record_key].split(sep)
+                            if len(split_data) < len(fields):
+                                split_data.extend([None] * (len(fields) - len(split_data)))
+                            elif len(split_data) > len(fields):
+                                split_data = split_data[: len(fields)]
+                            rows.append(split_data)
                         except Exception as e:
-                            logger.error(f"Error reading CSV file: {e}")
-                            raise
-                        
-                        # Combine all chunks
-                        if all_chunks:
-                            logger.debug("Combining all chunks...")
-                            if print_regular:
-                                print_regular("Combining all chunks...")
-                            df = pd.concat(all_chunks, ignore_index=True)
-                            logger.debug(f"Final DataFrame shape: {df.shape}")
-                            if print_regular:
-                                print_regular(f"Final DataFrame shape: {df.shape}")
-                        else:
-                            logger.debug("No chunks to combine, creating empty DataFrame")
-                            if print_regular:
-                                print_regular("No chunks to combine, creating empty DataFrame")
-                            df = pd.DataFrame(columns=columns)
-                        
-                        # Clean up temporary file
-                        try:
-                            os.remove(temp_csv_path)
-                            logger.debug("Cleaned up temporary CSV file")
-                            if print_regular:
-                                print_regular("Cleaned up temporary CSV file")
-                        except Exception as e:
-                            logger.debug(f"Could not remove temporary file: {e}")
-                    else:
-                        logger.debug("CSV file was not created, creating empty DataFrame")
-                        if print_regular:
-                            print_regular("CSV file was not created, creating empty DataFrame")
-                        df = pd.DataFrame(columns=columns)
-                    
-                    # If reference columns are provided, it's not necessary to remove
-                    # any extra row.
-                    if self.rfc_unique_id is not None and not isinstance(self.rfc_unique_id[0], str):
-                        row_index, data_raw, start = _detect_extra_rows(
-                            row_index, data_raw, chunk, fields
-                        )
-                    else:
-                        start = False
-                    
-                    if (
-                        self.rfc_unique_id is not None and isinstance(self.rfc_unique_id[0], str)
-                        and list(df.columns) != fields
-                    ):
-                        df_tmp = pd.DataFrame(columns=fields)
-                        df_tmp[fields] = df.values
-                        df_tmp = self._adjust_whitespaces(df_tmp)
-                        df = pd.merge(df, df_tmp, on=self.rfc_unique_id, how="outer")
-                    elif not start:
-                        # Data is already in df from CSV reading
-                        pass
-                    else:
-                        df[fields] = np.nan
-                    chunk += 1
+                            logger.error(f"Error processing row: {e}")
+                            continue
+
+                    df = pd.DataFrame.from_records(rows, columns=fields)
+                    logger.debug(f"Built DataFrame in-memory with shape: {df.shape}")
+                    if print_regular:
+                        print_regular(f"Built DataFrame in-memory with shape: {df.shape}")
                 elif not response["DATA"]:
                     logger.debug("No data returned from SAP.")
                     if print_regular:
@@ -917,6 +815,8 @@ class SAPRFC(Source):
                     logger.debug("done")
                 if print_regular:
                     print_regular("done")
+                # Successfully attempted with current separator; stop trying others
+                break
             except Exception as e:
                 logger.error(f"Error: {e}")
                 if print_regular:
