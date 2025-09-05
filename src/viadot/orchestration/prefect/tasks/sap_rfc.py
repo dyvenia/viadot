@@ -29,7 +29,7 @@ def sap_rfc_to_df(  # noqa: PLR0913
     dynamic_date_symbols: list[str] = ["<<", ">>"],  # noqa: B006
     dynamic_date_format: str = "%Y%m%d",
     dynamic_date_timezone: str = "UTC",
-) -> pd.DataFrame:
+) -> str:
     """A task for querying SAP with SQL using the RFC protocol.
 
     Note that only a very limited subset of SQL is supported:
@@ -117,10 +117,10 @@ def sap_rfc_to_df(  # noqa: PLR0913
     logger.info("Dominik tyrala tests...")
     logger.debug(f"Running query: \n{sap.sql}.")
 
-    df = sap.to_df(tests=tests)
+    csv_path = sap.to_csv_path(tests=tests)
 
-    if not df.empty:
+    if not csv_path:
         logger.info("Data has been downloaded successfully.")
-    elif df.empty:
+    elif csv_path:
         logger.warn("Task finished but NO data was downloaded.")
-    return df
+    return csv_path

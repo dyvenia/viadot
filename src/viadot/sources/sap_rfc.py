@@ -703,8 +703,8 @@ class SAPRFC(Source):
         return df
 
     # TODO: refactor to remove linter warnings and so this can be tested.
-    @add_viadot_metadata_columns
-    def to_df(self, tests: dict | None = None) -> pd.DataFrame:  # noqa: C901, PLR0912, PLR0915
+    # @add_viadot_metadata_columns
+    def to_csv_path(self, tests: dict | None = None):  # noqa: C901, PLR0912, PLR0915
         """Load the results of a query into a pandas DataFrame.
 
         Due to SAP limitations, if the length of the WHERE clause is longer than 75
@@ -744,6 +744,11 @@ class SAPRFC(Source):
         
         if print_regular:
             print_regular("Starting to_df")
+        # Create temporary CSV file for saving results
+        temp_csv_path = "poc_results.csv"
+        logger.debug(f"Will save results to: {temp_csv_path}")
+        if print_regular:
+            print_regular(f"Will save results to: {temp_csv_path}")
         
         if sep is None:
             # Automatically find a working separator.
@@ -764,18 +769,20 @@ class SAPRFC(Source):
         else:
             separators = [sep]
 
-        df = pd.DataFrame()
         for sep in separators:
             logger.debug(f"Checking if separator '{sep}' works.")
             if print_regular:
                 print_regular(f"Checking if separator '{sep}' works.")
+            df = pd.DataFrame()
             self._query["DELIMITER"] = sep
-            
-            # Merge fields into a single list (treat as one chunk)
+            chunk = 1
+            row_index = 0
+
+            #EXPERIMENTAL: merge fields_lists to one list
             fields = [item for sublist in fields_lists for item in sublist]
-            logger.debug("Downloading data (single chunk)...")
+            logger.debug(f"Downloading {chunk} data chunk...")
             if print_regular:
-                print_regular("Downloading data (single chunk)...")
+                print_regular(f"Downloading {chunk} data chunk...")
             self._query["FIELDS"] = fields
             try:
                 response = self.call(func, **params)
@@ -787,64 +794,43 @@ class SAPRFC(Source):
             # Check and skip if there is no data returned.
             try:
                 if response["DATA"]:
-                    logger.debug("Processing data in-memory...")
+                    logger.debug("checking data")
                     if print_regular:
-                        print_regular("Processing data in-memory...")
+                        print_regular("checking data")
                     record_key = "WA"
-                    rows: list[list[str | None]] = []
-                    for row_data in response["DATA"]:
-                        try:
-                            split_data = row_data[record_key].split(sep)
-                            if len(split_data) < len(fields):
-                                split_data.extend([None] * (len(fields) - len(split_data)))
-                            elif len(split_data) > len(fields):
-                                split_data = split_data[: len(fields)]
-                            rows.append(split_data)
-                        except Exception as e:
-                            logger.error(f"Error processing row: {e}")
-                            continue
-
-                    df = pd.DataFrame.from_records(rows, columns=fields)
-                    logger.debug(f"Built DataFrame in-memory with shape: {df.shape}")
+                    data_raw = np.array(response["DATA"])
+                    
+                    # Save raw data to CSV file immediately
+                    logger.debug(f"Saving {len(data_raw)} rows to CSV file...")
                     if print_regular:
-                        print_regular(f"Built DataFrame in-memory with shape: {df.shape}")
-                elif not response["DATA"]:
-                    logger.debug("No data returned from SAP.")
+                        print_regular(f"Saving {len(data_raw)} rows to CSV file...")
+                    with open(temp_csv_path, 'w', newline='', encoding='utf-8') as csvfile:
+                        writer = csv.writer(csvfile)
+                        # Write header
+                        writer.writerow(fields)
+                        # Write data rows
+                        for row_data in data_raw:
+                            try:
+                                split_data = row_data[record_key].split(sep)
+                                if len(split_data) == len(fields):
+                                    writer.writerow(split_data)
+                                else:
+                                    logger.warning(f"Row data length mismatch: expected {len(fields)}, got {len(split_data)}")
+                            except Exception as e:
+                                logger.error(f"Error processing row: {e}")
+                                continue
+                    
+                    logger.debug(f"Saved data to {temp_csv_path}")
                     if print_regular:
-                        print_regular("No data returned from SAP.")
-                    logger.debug("done")
-                if print_regular:
-                    print_regular("done")
-                # Successfully attempted with current separator; stop trying others
-                break
+                        print_regular(f"Saved data to {temp_csv_path}")
+                    del response
+                    del data_raw
             except Exception as e:
                 logger.error(f"Error: {e}")
                 if print_regular:
                     print_regular(f"Error: {e}")
                 break
-        if not df.empty:
-            # It is used to filter out columns which are not in select query
-            # for example columns passed only as unique column
-            df = df.loc[:, columns]
-
-        if self.client_side_filters:
-            filter_query = self._build_pandas_filter_query(self.client_side_filters)
-            df.query(filter_query, inplace=True)
-            client_side_filter_cols_aliased = [
-                self._get_alias(col) for col in self._get_client_side_filter_cols()
-            ]
-            cols_to_drop = [
-                col
-                for col in client_side_filter_cols_aliased
-                if col not in self.select_columns_aliased
-            ]
-            df.drop(cols_to_drop, axis=1, inplace=True)
-        self.close_connection()
-
-        if tests:
-            validate(df=df, tests=tests)
-
-        return df
+        return os.path.abspath(temp_csv_path)
 
     @add_viadot_metadata_columns
     def to_df_original(self, tests: dict | None = None) -> pd.DataFrame:  # noqa: C901, PLR0912, PLR0915

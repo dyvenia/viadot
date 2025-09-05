@@ -1,6 +1,7 @@
 """Amazon Redshift Spectrum connector."""
 
 from typing import Literal
+import os
 
 import pandas as pd
 
@@ -143,6 +144,89 @@ class RedshiftSpectrum(Source):
                 msg = "The `credentials_secret` config is required to connect to Redshift."
                 raise ValueError(msg)
         return self._con
+
+    def from_csv(
+        self,
+        csv_path: str,
+        to_path: str,
+        schema: str,
+        table: str,
+        if_exists: Literal["overwrite", "append"] = "overwrite",
+        partition_cols: list[str] | None = None,
+        sep: str = ",",
+        description: str | None = None,
+        **kwargs,
+    ) -> None:
+        """Upload a CSV file into S3 as Parquet and optionally register it in Glue.
+
+        Args:
+            csv_path (str): Path to the local or S3 CSV file.
+            to_path (str): Path to Amazon S3 folder where the table will be located.
+                If needed, a bottom-level directory named f"{table}" is automatically
+                created.
+            schema (str): The name of the schema (Glue database).
+            table (str): The name of the table to load the data into.
+            if_exists (Literal["overwrite", "append"], optional): 'overwrite' to
+                recreate the dataset, 'append' to add new Parquet files. Defaults to
+                'overwrite'.
+            partition_cols (List[str], optional): Columns used to create partitions.
+            sep (str, optional): CSV field delimiter. Defaults to ",".
+            description (str, optional): Table description in Glue.
+            kwargs: Extra options forwarded to pyarrow.csv.read_csv().
+        """
+        import pyarrow.csv as pv
+        import pyarrow.parquet as pq
+        import s3fs
+
+        # Ensure files are in a directory named {table}.
+        if not to_path.rstrip("/").endswith(table):
+            to_path = to_path.rstrip("/") + "/" + table
+
+        # PyArrow CSV read options
+        read_opts = pv.ReadOptions(autogenerate_column_names=False)
+        parse_opts = pv.ParseOptions(delimiter=sep)
+
+        # Load CSV into Arrow Table (no Pandas)
+        table_obj = pv.read_csv(
+            csv_path,
+            read_options=read_opts,
+            parse_options=parse_opts,
+            **kwargs,
+        )
+
+        fs = s3fs.S3FileSystem(session=self.session)
+
+        # overwrite mode = remove target dir
+        if if_exists == "overwrite":
+            fs.rm(to_path, recursive=True)
+
+        # write Parquet to S3
+        if partition_cols:
+            pq.write_to_dataset(
+                table_obj,
+                root_path=to_path,
+                partition_cols=partition_cols,
+                filesystem=fs,
+            )
+        else:
+            with fs.open(f"{to_path.rstrip('/')}/part-0.parquet", "wb") as f:
+                pq.write_table(table_obj, f)
+
+        # register in Glue
+        wr.catalog.create_parquet_table(
+            database=schema,
+            table=table,
+            path=to_path,
+            description=description,
+            boto3_session=self.session,
+            columns_types={
+                name: str(table_obj.schema.field(i).type)
+                for i, name in enumerate(table_obj.schema.names)
+            },
+        )
+
+        #delete csv
+        os.remove(csv_path)
 
     def from_df(
         self,

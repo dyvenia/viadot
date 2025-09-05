@@ -18,7 +18,7 @@ with contextlib.suppress(ImportError):
 
 @task(retries=3, retry_delay_seconds=10, timeout_seconds=60 * 60)
 def df_to_redshift_spectrum(  # noqa: PLR0913
-    df: pd.DataFrame,
+    csv_path: str,
     to_path: str,
     schema_name: str,
     table: str,
@@ -70,14 +70,14 @@ def df_to_redshift_spectrum(  # noqa: PLR0913
 
     # Convert columns containing only null values to string to avoid errors
     # during new table creation
-    null_columns = df.isna().all()
-    null_cols_list = null_columns[null_columns].index.tolist()
-    df[null_cols_list] = df[null_cols_list].astype("string")
+    # null_columns = df.isna().all()
+    # null_cols_list = null_columns[null_columns].index.tolist()
+    # df[null_cols_list] = df[null_cols_list].astype("string")
 
     rs = RedshiftSpectrum(credentials=credentials, config_key=config_key)
 
-    rs.from_df(
-        df=df,
+    rs.from_csv(
+        csv_path=csv_path,
         to_path=to_path,
         schema=schema_name,
         table=table,
