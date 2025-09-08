@@ -351,7 +351,7 @@ networkx==3.3
     # via dbt-core
     # via tm1py
     # via visions
-numpy==1.26.4
+numpy==2.2.6
     # via awswrangler
     # via db-dtypes
     # via imagehash
