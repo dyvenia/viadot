@@ -1,18 +1,17 @@
 """Sharepoint API connector."""
 
-from http import HTTPStatus
 import io
 from pathlib import Path
 import re
 from typing import Any, Literal
 from urllib.parse import urlparse
 
+import msal
+from office365.graph_client import GraphClient
+
 import pandas as pd
 from pandas._libs.parsers import STR_NA_VALUES
 from pydantic import BaseModel, root_validator
-import requests
-import sharepy
-from sharepy.errors import AuthError
 
 from viadot.config import get_source_credentials
 from viadot.exceptions import CredentialError
@@ -64,11 +63,11 @@ class Sharepoint(Source):
         validated_creds = dict(SharepointCredentials(**raw_creds))
         super().__init__(*args, credentials=validated_creds, **kwargs)
 
-    def get_connection(self) -> sharepy.session.SharePointSession:
+    def get_client(self) -> GraphClient:
         """Establishe a connection to SharePoint.
 
         Returns:
-            sharepy.session.SharePointSession: A session object representing
+            GraphClient: A session object representing
                 the authenticated connection.
 
         Raises:
@@ -76,16 +75,12 @@ class Sharepoint(Source):
                 credentials.
         """
         try:
-            connection = sharepy.connect(
-                site=self.credentials.get("site"),
-                username=self.credentials.get("username"),
-                password=self.credentials.get("password"),
-            )
-        except AuthError as e:
+            client = GraphClient(self._acquire_token_func)
+        except Exception as e:
             site = self.credentials.get("site")
             msg = f"Could not authenticate to {site} with provided credentials."
             raise CredentialError(msg) from e
-        return connection
+        return client
 
     def download_file(self, url: str, to_path: list | str) -> None:
         """Download a file from Sharepoint to specific location.
@@ -100,12 +95,10 @@ class Sharepoint(Source):
                 to_path="file.xlsx"
             )
         """
-        conn = self.get_connection()
-        conn.getfile(
-            url=url,
-            filename=to_path,
-        )
-        conn.close()
+        client = self.get_client()
+        file_item = client.shares.by_url(url).drive_item.get().execute_query()
+        with open(to_path, "wb") as local_file:
+            file_item.download(local_file).execute_query()
 
     def scan_sharepoint_folder(self, url: str) -> list[str]:
         """Scan Sharepoint folder to get all file URLs of all files within it.
@@ -121,7 +114,7 @@ class Sharepoint(Source):
             list[str]: List of URLs pointing to each file within the specified
                 SharePoint folder.
         """
-        conn = self.get_connection()
+        client = self.get_client()
 
         parsed_url = urlparse(url)
         path_parts = parsed_url.path.split("/")
@@ -135,15 +128,30 @@ class Sharepoint(Source):
             message = "URL does not contain '/sites/' segment."
             raise ValueError(message)
 
-        # -> site_url = company.sharepoint.com/sites/site_name/
-        # -> library = /shared_documents/folder/sub_folder/final_folder
-        endpoint = (
-            f"{site_url}/_api/web/GetFolderByServerRelativeUrl('{library}')/Files"
-        )
-        response = conn.get(endpoint)
-        files = response.json().get("d", {}).get("results", [])
+        folder_item = client.shares.by_url(url).drive_item.get().execute_query()
+        files = folder_item.children.get().execute_query()
+        import os
+        for child in files:
+            if child.folder is None:
+                local_filepath = os.path.join(os.getcwd(), child.name)
+                print(f"Downloaded: {local_filepath}")
 
-        return [f"{site_url}/{library}{file['Name']}" for file in files]
+        return [f"{site_url}/{library}{file.name}" for file in files]
+
+    def _acquire_token_func(self):
+        """
+        Acquire token via MSAL
+        """
+        authority_url = f'https://login.microsoftonline.com/{TENANT_ID}'
+    
+        app = msal.ConfidentialClientApplication(
+            authority=authority_url,
+            client_id=CLIENT_ID,
+            client_credential=CLIENT_SECRET
+        )
+        token = app.acquire_token_for_client(scopes=["https://graph.microsoft.com/.default"])
+
+        return token
 
     def _get_file_extension(self, url: str) -> str:
         """Extracts the file extension from a given URL.
@@ -173,23 +181,18 @@ class Sharepoint(Source):
             msg = "Parameter 'nrows' is not supported."
             raise ValueError(msg)
 
-        conn = self.get_connection()
+        client = self.get_client()
 
         self.logger.info(f"Downloading data from {url}...")
         try:
-            response = conn.get(url)
-            response.raise_for_status()  # Raise an exception for HTTP errors
-        except requests.exceptions.HTTPError as e:
-            if e.response.status_code == HTTPStatus.FORBIDDEN:
-                self.logger.exception(f"Access denied to file: {url}")
-            else:
-                self.logger.exception(f"HTTP error when accessing {url}")
-            raise
+            bytes_buffer = io.BytesIO()
+            file_item = client.shares.by_url(url).drive_item.get().execute_query()
+            file_item.download(bytes_buffer).execute_query()
+            bytes_buffer.seek(0)
+            bytes_stream = io.BytesIO(bytes_buffer.getvalue())
         except Exception:
             self.logger.exception(f"Failed to download file: {url}")
             raise
-
-        bytes_stream = io.BytesIO(response.content)
 
         try:
             return pd.ExcelFile(bytes_stream)
@@ -541,29 +544,23 @@ class SharepointList(Sharepoint):
             tuple: (data_items, next_link) where data_items is a list of items
                   and next_link is the URL for the next page or None
         """
-        conn = self.get_connection()
+        client = self.get_client()
 
         try:
-            response = conn.get(url, params=params)
+            response = client.shares.by_url(url).drive_item.get().execute_query()
             response.raise_for_status()
         except TimeoutError as e:
             msg = f"Request to SharePoint list timed out: {e!s}"
-            raise ValueError(msg) from e
-        except requests.exceptions.HTTPError as e:
-            status_code = getattr(
-                getattr(e, "response", None), "status_code", "unknown"
-            )
-            msg = f"HTTP error {status_code} when retrieving data from SharePoint list"
             raise ValueError(msg) from e
         except Exception as e:
             msg = f"Failed to retrieve data from SharePoint list: {e!s}"
             raise ValueError(msg) from e
 
-        data = response.json().get("d", {})
+        data = response.get("d", {})
         items = data.get("results", [])
 
         # Get the URL for the next page
-        next_link = data.get("__next")
+        next_link = data.get("__next", None)
         if isinstance(next_link, dict) and "uri" in next_link:
             next_link = next_link["uri"]
 
