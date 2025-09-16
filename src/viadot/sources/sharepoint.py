@@ -27,17 +27,19 @@ from viadot.utils import (
 
 class SharepointCredentials(BaseModel):
     site: str  # Path to sharepoint website (e.g : {tenant_name}.sharepoint.com)
-    username: str  # Sharepoint username (e.g username@{tenant_name}.com)
-    password: str  # Sharepoint password
+    client_id: str  # Sharepoint client id
+    client_secret: str  # Sharepoint client secret
+    tenant_id: str  # Sharepoint tenant id
 
     @root_validator(pre=True)
     def is_configured(cls, credentials: dict):  # noqa: N805, ANN201, D102
         site = credentials.get("site")
-        username = credentials.get("username")
-        password = credentials.get("password")
+        client_id = credentials.get("client_id")
+        client_secret = credentials.get("client_secret")
+        tenant_id = credentials.get("tenant_id")
 
-        if not (site and username and password):
-            msg = "'site', 'username', and 'password' credentials are required."
+        if not (site and client_id and client_secret and tenant_id):
+            msg = "'site', 'client_id', 'client_secret' and 'tenant_id' credentials are required."
             raise CredentialError(msg)
         return credentials
 
@@ -130,11 +132,6 @@ class Sharepoint(Source):
 
         folder_item = client.shares.by_url(url).drive_item.get().execute_query()
         files = folder_item.children.get().execute_query()
-        import os
-        for child in files:
-            if child.folder is None:
-                local_filepath = os.path.join(os.getcwd(), child.name)
-                print(f"Downloaded: {local_filepath}")
 
         return [f"{site_url}/{library}{file.name}" for file in files]
 
@@ -142,12 +139,12 @@ class Sharepoint(Source):
         """
         Acquire token via MSAL
         """
-        authority_url = f'https://login.microsoftonline.com/{TENANT_ID}'
+        authority_url = f'https://login.microsoftonline.com/{self.credentials.get("tenant_id")}'
     
         app = msal.ConfidentialClientApplication(
             authority=authority_url,
-            client_id=CLIENT_ID,
-            client_credential=CLIENT_SECRET
+            client_id=self.credentials.get("client_id"),
+            client_credential=self.credentials.get("client_secret")
         )
         token = app.acquire_token_for_client(scopes=["https://graph.microsoft.com/.default"])
 
@@ -189,13 +186,12 @@ class Sharepoint(Source):
             file_item = client.shares.by_url(url).drive_item.get().execute_query()
             file_item.download(bytes_buffer).execute_query()
             bytes_buffer.seek(0)
-            bytes_stream = io.BytesIO(bytes_buffer.getvalue())
         except Exception:
             self.logger.exception(f"Failed to download file: {url}")
             raise
 
         try:
-            return pd.ExcelFile(bytes_stream)
+            return pd.ExcelFile(bytes_buffer.getvalue())
         except ValueError:
             self.logger.exception(f"Invalid Excel file: {url}")
             raise
@@ -544,27 +540,74 @@ class SharepointList(Sharepoint):
             tuple: (data_items, next_link) where data_items is a list of items
                   and next_link is the URL for the next page or None
         """
+        # Expecting URL like:
+        # https://{host}/sites/{site}/_api/web/lists/GetByTitle('{list_name}')/items
+        # Extract host, site path and list name to use Graph API
+        parsed = urlparse(url)
+        path = parsed.path
+        host = parsed.netloc
+
+        # Extract site segment and list name
+        site_match = re.search(r"/sites/([^/]+)/", path)
+        list_match = re.search(r"GetByTitle\('([^']+)'\)", path)
+        if not site_match or not list_match:
+            msg = "Provided URL format is not supported for Graph-based retrieval."
+            raise ValueError(msg)
+
+        site_segment = site_match.group(1)
+        site_path = f"/sites/{site_segment}"
+        list_name = list_match.group(1)
+
         client = self.get_client()
 
         try:
-            response = client.shares.by_url(url).drive_item.get().execute_query()
-            response.raise_for_status()
+            site_url = f"https://{host}{site_path}"
+            site = client.sites.get_by_url(site_url).get().execute_query()
+            lists = site.lists.get().execute_query()
+            target_list = next(
+                (lst for lst in lists if getattr(lst, "display_name", None) == list_name),
+                None,
+            )
+            if target_list is None:
+                msg = f"Failed to retrieve data from SharePoint list '{list_name}': list not found"
+                raise ValueError(msg)
+
+            collection = target_list.items.expand(["fields"]).get().execute_query()
+            results: list[dict] = []
+            for item in collection:
+                fields_obj = getattr(item, "fields", None)
+                if fields_obj is not None and hasattr(fields_obj, "properties"):
+                    results.append(fields_obj.properties)
+                elif hasattr(item, "properties"):
+                    results.append(item.properties)
+                else:
+                    results.append({})
+
+            # Derive next page URL if available on the collection
+            next_link = None
+            next_page_request = getattr(collection, "next_page_request", None)
+            if next_page_request is not None:
+                next_link = getattr(next_page_request, "url", None) or getattr(
+                    next_page_request, "request_url", None
+                )
+                if next_link is None:
+                    build_req = getattr(next_page_request, "build_request", None)
+                    if callable(build_req):
+                        try:
+                            req_obj = build_req()
+                            next_link = getattr(req_obj, "url", None) or getattr(
+                                req_obj, "request_url", None
+                            )
+                        except Exception:
+                            next_link = None
+
+            return results, next_link
         except TimeoutError as e:
             msg = f"Request to SharePoint list timed out: {e!s}"
             raise ValueError(msg) from e
         except Exception as e:
             msg = f"Failed to retrieve data from SharePoint list: {e!s}"
             raise ValueError(msg) from e
-
-        data = response.get("d", {})
-        items = data.get("results", [])
-
-        # Get the URL for the next page
-        next_link = data.get("__next", None)
-        if isinstance(next_link, dict) and "uri" in next_link:
-            next_link = next_link["uri"]
-
-        return items, next_link
 
     def _paginate_list_data(
         self, initial_url: str, params: dict | None = None, list_name: str = ""
@@ -587,7 +630,6 @@ class SharepointList(Sharepoint):
             # For first request, include original parameters
             # For subsequent requests, parameters are in the next_url
             current_params = params if first_request else None
-
             try:
                 items, next_url = self._get_records(next_url, current_params)
                 all_results.extend(items)
@@ -632,8 +674,9 @@ class SharepointList(Sharepoint):
         Raises:
             ValueError: If the list does not exist or the request fails.
         """
-        conn = self.get_connection()
-        site_url = self._ensure_protocol(conn.site)
+        credentials_site = self.credentials.get("site")
+        site = credentials_site if credentials_site else "https://werfen.sharepoint.com"
+        site_url = self._ensure_protocol(site)
         endpoint = self._build_sharepoint_endpoint(site_url, list_site, list_name)
 
         # Build request parameters
