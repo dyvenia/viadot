@@ -140,15 +140,19 @@ class Sharepoint(Source):
         Returns:
             str: A string containing the access token.
         """
-        authority_url = f'https://login.microsoftonline.com/{self.credentials.get("tenant_id")}'
+        authority_url = (
+            f'https://login.microsoftonline.com/{self.credentials.get("tenant_id")}'
+        )
 
         app = msal.ConfidentialClientApplication(
             authority=authority_url,
             client_id=self.credentials.get("client_id"),
-            client_credential=self.credentials.get("client_secret")
+            client_credential=self.credentials.get("client_secret"),
         )
 
-        return app.acquire_token_for_client(scopes=["https://graph.microsoft.com/.default"])
+        return app.acquire_token_for_client(
+            scopes=["https://graph.microsoft.com/.default"]
+        )
 
     def _get_file_extension(self, url: str) -> str:
         """Extracts the file extension from a given URL.
@@ -577,7 +581,9 @@ class SharepointList(Sharepoint):
 
         collection = target_list.items
         if params and params.get("$filter"):
-            collection = collection.filter(params["$filter"])  # Graph expects fields/FieldName in filter
+            collection = collection.filter(
+                params["$filter"]
+            )  # Graph expects fields/FieldName in filter
         collection = collection.expand(["fields"]).get().execute_query()
 
         selected_fields = None
@@ -587,7 +593,9 @@ class SharepointList(Sharepoint):
             ]
         return collection, selected_fields
 
-    def _collect_item_dicts(self, collection: object, selected_fields: list[str] | None) -> list[dict]:
+    def _collect_item_dicts(
+        self, collection: object, selected_fields: list[str] | None
+    ) -> list[dict]:
         """Convert a collection of list items into a list of dicts.
 
         Args:
@@ -601,7 +609,9 @@ class SharepointList(Sharepoint):
         for item in collection:
             fields_obj = getattr(item, "fields", None)
             fields_props = (
-                fields_obj.properties if fields_obj is not None and hasattr(fields_obj, "properties") else {}
+                fields_obj.properties 
+                if fields_obj is not None and hasattr(fields_obj, "properties") 
+                else {}
             )
             item_props = item.properties if hasattr(item, "properties") else {}
             combined = {**fields_props, **item_props}
