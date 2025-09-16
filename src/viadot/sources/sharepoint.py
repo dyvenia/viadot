@@ -8,7 +8,6 @@ from urllib.parse import urlparse
 
 import msal
 from office365.graph_client import GraphClient
-
 import pandas as pd
 from pandas._libs.parsers import STR_NA_VALUES
 from pydantic import BaseModel, root_validator
@@ -99,7 +98,7 @@ class Sharepoint(Source):
         """
         client = self.get_client()
         file_item = client.shares.by_url(url).drive_item.get().execute_query()
-        with open(to_path, "wb") as local_file:
+        with Path(to_path).open("wb") as local_file:
             file_item.download(local_file).execute_query()
 
     def scan_sharepoint_folder(self, url: str) -> list[str]:
@@ -136,19 +135,20 @@ class Sharepoint(Source):
         return [f"{site_url}/{library}{file.name}" for file in files]
 
     def _acquire_token_func(self):
-        """
-        Acquire token via MSAL
+        """Acquire token via MSAL.
+
+        Returns:
+            str: A string containing the access token.
         """
         authority_url = f'https://login.microsoftonline.com/{self.credentials.get("tenant_id")}'
-    
+
         app = msal.ConfidentialClientApplication(
             authority=authority_url,
             client_id=self.credentials.get("client_id"),
             client_credential=self.credentials.get("client_secret")
         )
-        token = app.acquire_token_for_client(scopes=["https://graph.microsoft.com/.default"])
 
-        return token
+        return app.acquire_token_for_client(scopes=["https://graph.microsoft.com/.default"])
 
     def _get_file_extension(self, url: str) -> str:
         """Extracts the file extension from a given URL.
@@ -527,6 +527,116 @@ class SharepointList(Sharepoint):
             return f"{self.default_protocol}{site_url}"
         return site_url
 
+    def _parse_rest_list_url(self, url: str) -> tuple[str, str, str]:
+        """Parse a REST list URL and return (host, site_path, list_name)."""
+        parsed = urlparse(url)
+        path = parsed.path
+        host = parsed.netloc
+
+        site_match = re.search(r"/sites/([^/]+)/", path)
+        list_match = re.search(r"GetByTitle\('([^']+)'\)", path)
+        if not site_match or not list_match:
+            msg = "Provided URL format is not supported for Graph-based retrieval."
+            raise ValueError(msg)
+
+        site_segment = site_match.group(1)
+        site_path = f"/sites/{site_segment}"
+        list_name = list_match.group(1)
+        return host, site_path, list_name
+
+    def _fetch_collection(
+        self,
+        client: GraphClient,
+        host: str,
+        site_path: str,
+        list_name: str,
+        params: dict | None,
+    ):
+        """Resolve site and list, apply params.
+
+        Args:
+            client: The GraphClient object.
+            host: The host of the SharePoint site.
+            site_path: The path of the SharePoint site.
+            list_name: The name of the SharePoint list.
+            params: The parameters to apply to the collection.
+
+        Returns:
+            tuple: A tuple containing the collection and the selected fields.
+        """
+        site_url = f"https://{host}{site_path}"
+        site = client.sites.get_by_url(site_url).get().execute_query()
+        lists = site.lists.get().execute_query()
+        target_list = next(
+            (lst for lst in lists if getattr(lst, "display_name", None) == list_name),
+            None,
+        )
+        if target_list is None:
+            msg = f"Failed to retrieve data from SharePoint list '{list_name}': list not found"
+            raise ValueError(msg)
+
+        collection = target_list.items
+        if params and params.get("$filter"):
+            collection = collection.filter(params["$filter"])  # Graph expects fields/FieldName in filter
+        collection = collection.expand(["fields"]).get().execute_query()
+
+        selected_fields = None
+        if params and params.get("$select"):
+            selected_fields = [
+                f.strip() for f in str(params["$select"]).split(",") if f.strip()
+            ]
+        return collection, selected_fields
+
+    def _collect_item_dicts(self, collection: object, selected_fields: list[str] | None) -> list[dict]:
+        """Convert a collection of list items into a list of dicts.
+
+        Args:
+            collection: The collection of list items.
+            selected_fields: The fields to select.
+
+        Returns:
+            list[dict]: A list of dicts containing the collection of list items.
+        """
+        results: list[dict] = []
+        for item in collection:
+            fields_obj = getattr(item, "fields", None)
+            fields_props = (
+                fields_obj.properties if fields_obj is not None and hasattr(fields_obj, "properties") else {}
+            )
+            item_props = item.properties if hasattr(item, "properties") else {}
+            combined = {**fields_props, **item_props}
+            if selected_fields:
+                combined = {k: v for k, v in combined.items() if k in selected_fields}
+            results.append(combined)
+        return results
+
+    def _extract_next_link(self, collection: object) -> str | None:
+        """Extract next page URL from a Graph SDK collection if available.
+
+        Args:
+            collection: The collection of list items.
+
+        Returns:
+            str | None: The next page URL or None.
+        """
+        next_page_request = getattr(collection, "next_page_request", None)
+        if next_page_request is not None:
+            next_link = getattr(next_page_request, "url", None) or getattr(
+                next_page_request, "request_url", None
+            )
+            if next_link is not None:
+                return next_link
+            build_req = getattr(next_page_request, "build_request", None)
+            if callable(build_req):
+                try:
+                    req_obj = build_req()
+                    return getattr(req_obj, "url", None) or getattr(
+                        req_obj, "request_url", None
+                    )
+                except Exception:
+                    return None
+        return None
+
     def _get_records(
         self, url: str, params: dict | None = None
     ) -> tuple[list[dict], str | None]:
@@ -540,67 +650,14 @@ class SharepointList(Sharepoint):
             tuple: (data_items, next_link) where data_items is a list of items
                   and next_link is the URL for the next page or None
         """
-        # Expecting URL like:
-        # https://{host}/sites/{site}/_api/web/lists/GetByTitle('{list_name}')/items
-        # Extract host, site path and list name to use Graph API
-        parsed = urlparse(url)
-        path = parsed.path
-        host = parsed.netloc
-
-        # Extract site segment and list name
-        site_match = re.search(r"/sites/([^/]+)/", path)
-        list_match = re.search(r"GetByTitle\('([^']+)'\)", path)
-        if not site_match or not list_match:
-            msg = "Provided URL format is not supported for Graph-based retrieval."
-            raise ValueError(msg)
-
-        site_segment = site_match.group(1)
-        site_path = f"/sites/{site_segment}"
-        list_name = list_match.group(1)
-
-        client = self.get_client()
-
         try:
-            site_url = f"https://{host}{site_path}"
-            site = client.sites.get_by_url(site_url).get().execute_query()
-            lists = site.lists.get().execute_query()
-            target_list = next(
-                (lst for lst in lists if getattr(lst, "display_name", None) == list_name),
-                None,
+            host, site_path, list_name = self._parse_rest_list_url(url)
+            client = self.get_client()
+            collection, selected_fields = self._fetch_collection(
+                client, host, site_path, list_name, params
             )
-            if target_list is None:
-                msg = f"Failed to retrieve data from SharePoint list '{list_name}': list not found"
-                raise ValueError(msg)
-
-            collection = target_list.items.expand(["fields"]).get().execute_query()
-            results: list[dict] = []
-            for item in collection:
-                fields_obj = getattr(item, "fields", None)
-                if fields_obj is not None and hasattr(fields_obj, "properties"):
-                    results.append(fields_obj.properties)
-                elif hasattr(item, "properties"):
-                    results.append(item.properties)
-                else:
-                    results.append({})
-
-            # Derive next page URL if available on the collection
-            next_link = None
-            next_page_request = getattr(collection, "next_page_request", None)
-            if next_page_request is not None:
-                next_link = getattr(next_page_request, "url", None) or getattr(
-                    next_page_request, "request_url", None
-                )
-                if next_link is None:
-                    build_req = getattr(next_page_request, "build_request", None)
-                    if callable(build_req):
-                        try:
-                            req_obj = build_req()
-                            next_link = getattr(req_obj, "url", None) or getattr(
-                                req_obj, "request_url", None
-                            )
-                        except Exception:
-                            next_link = None
-
+            results = self._collect_item_dicts(collection, selected_fields)
+            next_link = self._extract_next_link(collection)
             return results, next_link
         except TimeoutError as e:
             msg = f"Request to SharePoint list timed out: {e!s}"
