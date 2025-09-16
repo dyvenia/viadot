@@ -610,7 +610,7 @@ class SharepointList(Sharepoint):
             fields_obj = getattr(item, "fields", None)
             fields_props = (
                 fields_obj.properties 
-                if fields_obj is not None and hasattr(fields_obj, "properties") 
+                if fields_obj is not None and hasattr(fields_obj, "properties")
                 else {}
             )
             item_props = item.properties if hasattr(item, "properties") else {}
