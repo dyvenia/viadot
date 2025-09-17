@@ -934,7 +934,7 @@ class SharepointList(Sharepoint):
 
         # Convert to DataFrame
         df = pd.DataFrame(all_results)
-        df["id"] = range(1, len(df) + 1)
+        df["id_raw_sp"] = range(1, len(df) + 1)
 
         # Handle case-insensitive duplicate column names
         rename_dict = self._find_and_rename_case_insensitive_duplicated_column_names(df)
