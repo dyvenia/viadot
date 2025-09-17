@@ -177,6 +177,9 @@ class Sharepoint(Source):
 
         Returns:
             io.BytesIO: An in-memory byte stream containing the file content.
+
+        Raises:
+            ValueError: If the parameter 'nrows' is not supported.
         """
         if "nrows" in kwargs:
             msg = "Parameter 'nrows' is not supported."
@@ -421,6 +424,8 @@ class Sharepoint(Source):
             except SKIP:
                 return pd.DataFrame()
         else:
+            if sheet_name:
+                df['sheet_name'] = sheet_name
             self.logger.info(f"Successfully downloaded {len(df)} rows of data.")
 
         df_clean = cleanup_df(df)
@@ -503,21 +508,6 @@ class SharepointList(Sharepoint):
 
         return rename_dict
 
-    def _rename_specific_columns(self, df: pd.DataFrame) -> pd.DataFrame:
-        """Rename specific columns to desired final names.
-
-        - parentunitlookupid -> parentunitid
-        - replaceunitlookupid -> replaceunitid
-        """
-        mapping = {
-            "parentunitlookupid": "parentunitid",
-            "replaceunitlookupid": "replaceunitid",
-        }
-        existing_mapping = {k: v for k, v in mapping.items() if k in df.columns}
-        if existing_mapping:
-            return df.rename(columns=existing_mapping)
-        return df
-
     def _build_sharepoint_endpoint(
         self, site_url: str, list_site: str, list_name: str
     ) -> str:
@@ -547,7 +537,14 @@ class SharepointList(Sharepoint):
         return site_url
 
     def _parse_rest_list_url(self, url: str) -> tuple[str, str, str]:
-        """Parse a REST list URL and return (host, site_path, list_name)."""
+        """Parse a REST list URL and return (host, site_path, list_name).
+
+        Args:
+            url: The URL to parse
+
+        Returns:
+            tuple: A tuple containing the host, site path, and list name
+        """
         parsed = urlparse(url)
         path = parsed.path
         host = parsed.netloc
@@ -574,14 +571,15 @@ class SharepointList(Sharepoint):
         """Resolve site and list, apply params.
 
         Args:
-            client: The GraphClient object.
-            host: The host of the SharePoint site.
-            site_path: The path of the SharePoint site.
-            list_name: The name of the SharePoint list.
-            params: The parameters to apply to the collection.
+            client (GraphClient): The GraphClient object.
+            host (str): The host of the SharePoint site.
+            site_path (str): The path of the SharePoint site.
+            list_name (str): The name of the SharePoint list.
+            params (dict): The parameters to apply to the collection.
 
         Returns:
-            tuple: A tuple containing the collection and the selected fields.
+            collection (object): The collection of list items.
+            selected_fields (list[str]): The selected fields.
         """
         site_url = f"https://{host}{site_path}"
         site = client.sites.get_by_url(site_url).get().execute_query()
@@ -609,6 +607,14 @@ class SharepointList(Sharepoint):
         return collection, selected_fields
 
     def _serialize_via_methods(self, value: object) -> object | None:
+        """Serialize a value via methods.
+
+        Args:
+            value (object): The value to serialize
+
+        Returns:
+            object: The serialized value
+        """
         for attr in ("to_json", "serialize", "to_dict"):
             method = getattr(value, attr, None)
             if callable(method):
@@ -624,6 +630,14 @@ class SharepointList(Sharepoint):
         return None
 
     def _try_isoformat(self, value: object) -> str | None:
+        """Try to format a value as ISO format.
+
+        Args:
+            value (object): The value to format
+
+        Returns:
+            str: The formatted value
+        """
         isoformat = getattr(value, "isoformat", None)
         if callable(isoformat):
             try:
@@ -633,12 +647,28 @@ class SharepointList(Sharepoint):
         return None
 
     def _introspect_properties(self, value: object) -> dict[str, object] | None:
+        """Introspect the properties of a value.
+
+        Args:
+            value (object): The value to introspect
+
+        Returns:
+            dict[str, object]: The properties of the value
+        """
         props = getattr(value, "properties", None)
         if isinstance(props, dict):
             return {k: self._to_plain(v) for k, v in props.items()}
         return None
 
     def _introspect_dunder(self, value: object) -> dict[str, object] | None:
+        """Introspect the __dict__ of a value.
+
+        Args:
+            value (object): The value to introspect
+
+        Returns:
+            dict[str, object]: The __dict__ of the value
+        """
         dunder_dict = getattr(value, "__dict__", None)
         if isinstance(dunder_dict, dict):
             cleaned = {
@@ -651,7 +681,14 @@ class SharepointList(Sharepoint):
         return None
 
     def _to_plain(self, value: object) -> object:
-        """Recursively convert Office365 SDK objects to JSON-serializable values."""
+        """Recursively convert Office365 SDK objects to JSON-serializable values.
+
+        Args:
+            value (object): The value to convert
+
+        Returns:
+            object: The converted value
+        """
         result: object
         # Primitives
         if value is None or isinstance(value, str | int | float | bool):
@@ -683,7 +720,16 @@ class SharepointList(Sharepoint):
     def _flatten_dict(
         self, data: dict[str, object], parent_key: str = "", sep: str = "_"
     ) -> dict[str, object]:
-        """Flatten a nested dictionary using separator and lowercase keys."""
+        """Flatten a nested dictionary using separator and lowercase keys.
+
+        Args:
+            data (dict[str, object]): The dictionary to flatten
+            parent_key (str): The parent key
+            sep (str): The separator
+
+        Returns:
+            dict[str, object]: The flattened dictionary
+        """
         items: dict[str, object] = {}
         for key, value in data.items():
             new_key = f"{parent_key}{sep}{key}" if parent_key else str(key)
@@ -698,6 +744,12 @@ class SharepointList(Sharepoint):
 
         - Removes redundant 'fields' key if present (its contents are already merged).
         - Flattens any dict-valued fields into "key_subkey" form.
+
+        Args:
+            record (dict[str, object]): The record to flatten
+
+        Returns:
+            dict[str, object]: The flattened record
         """
         record = dict(record)
         # Remove redundant 'fields' duplicate container if present
@@ -718,8 +770,8 @@ class SharepointList(Sharepoint):
         """Convert a collection of list items into a list of dicts.
 
         Args:
-            collection: The collection of list items.
-            selected_fields: The fields to select.
+            collection (object): The collection of list items.
+            selected_fields (list[str]): The fields to select.
 
         Returns:
             list[dict]: A list of dicts containing the collection of list items.
@@ -749,7 +801,7 @@ class SharepointList(Sharepoint):
         """Extract next page URL from a Graph SDK collection if available.
 
         Args:
-            collection: The collection of list items.
+            collection (object): The collection of list items.
 
         Returns:
             str | None: The next page URL or None.
@@ -778,8 +830,8 @@ class SharepointList(Sharepoint):
         """Make a request to the SharePoint API and handle common errors.
 
         Args:
-            url: The API endpoint URL
-            params: Optional query parameters
+            url (str): The API endpoint URL
+            params (dict): Optional query parameters
 
         Returns:
             tuple: (data_items, next_link) where data_items is a list of items
@@ -866,8 +918,7 @@ class SharepointList(Sharepoint):
         Raises:
             ValueError: If the list does not exist or the request fails.
         """
-        credentials_site = self.credentials.get("site")
-        site = credentials_site if credentials_site else "https://werfen.sharepoint.com"
+        site = self.credentials.get("site")
         site_url = self._ensure_protocol(site)
         endpoint = self._build_sharepoint_endpoint(site_url, list_site, list_name)
 
@@ -883,14 +934,7 @@ class SharepointList(Sharepoint):
 
         # Convert to DataFrame
         df = pd.DataFrame(all_results)
-
-        # Add sequential row number starting from 1
-        # TODO: this is bad, but matches the current mapping in LUMA
-        df["id_1"] = range(1, len(df) + 1)
-
-        # Apply targeted renames before handling duplicated names
-        # TODO: this is bad, but matches the current mapping in LUMA
-        df = self._rename_specific_columns(df)
+        df["id"] = range(1, len(df) + 1)
 
         # Handle case-insensitive duplicate column names
         rename_dict = self._find_and_rename_case_insensitive_duplicated_column_names(df)
