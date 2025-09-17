@@ -11,10 +11,10 @@ from viadot.sources.sharepoint import SharepointCredentials
 
 
 DUMMY_CREDS = {
-    "site": "tenant.sharepoint.com",  # pragma: allowlist secret # noqa: S105
-    "client_id": "client",  # pragma: allowlist secret # noqa: S105
-    "client_secret": "secret",  # pragma: allowlist secret # noqa: S105
-    "tenant_id": "tenant",  # pragma: allowlist secret # noqa: S105
+    "site": "tenant.sharepoint.com",  # pragma: allowlist secret
+    "client_id": "client",  # pragma: allowlist secret
+    "client_secret": "secret",  # pragma: allowlist secret
+    "tenant_id": "tenant",  # pragma: allowlist secret
 }
 
 LIST_NAME = "my_list"
@@ -95,10 +95,10 @@ def test_sharepoint_list_authentication_failure():
 def test_sharepoint_list_missing_credentials():
     """Test validation of missing credentials."""
     incomplete_credentials = {
-        "site": "",  # pragma: allowlist secret # noqa: S105
-        "client_id": "client",  # pragma: allowlist secret # noqa: S105
-        "client_secret": "secret",  # pragma: allowlist secret # noqa: S105
-        "tenant_id": "tenant",  # pragma: allowlist secret # noqa: S105
+        "site": "",  # pragma: allowlist secret
+        "client_id": "client",  # pragma: allowlist secret
+        "client_secret": "secret",  # pragma: allowlist secret
+        "tenant_id": "tenant",  # pragma: allowlist secret
     }
 
     with pytest.raises(
