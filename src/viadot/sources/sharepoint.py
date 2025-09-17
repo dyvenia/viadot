@@ -608,48 +608,37 @@ class SharepointList(Sharepoint):
             ]
         return collection, selected_fields
 
-    def _to_plain(self, value: Any) -> Any:
-        """Recursively convert Office365 SDK objects to JSON-serializable values.
+    def _serialize_via_methods(self, value: object) -> object | None:
+        for attr in ("to_json", "serialize", "to_dict"):
+            method = getattr(value, attr, None)
+            if callable(method):
+                try:
+                    return method()
+                except Exception:
+                    # Log at debug level to avoid noisy logs while satisfying linter
+                    self.logger.debug(
+                        f"{attr}() serialization failed for {type(value).__name__}",
+                        exc_info=True,
+                    )
+                    continue
+        return None
 
-        The Office365 SDK often returns complex objects (e.g., ItemReference,
-        FieldValueSet members) inside `item.properties` or `item.fields.properties`.
-        This helper normalizes such values to plain dicts, lists, or primitives so
-        that pandas does not display their class names (e.g.,
-        "office365.onedrive.listitems.item_reference.ItemReference").
-        """
-        # Primitives
-        if value is None or isinstance(value, (str, int, float, bool)):
-            return value
-
-        # Date-like objects
+    def _try_isoformat(self, value: object) -> str | None:
         isoformat = getattr(value, "isoformat", None)
         if callable(isoformat):
             try:
                 return value.isoformat()
             except Exception:
-                pass
+                return None
+        return None
 
-        # Containers
-        if isinstance(value, dict):
-            return {k: self._to_plain(v) for k, v in value.items()}
-        if isinstance(value, (list, tuple, set)):
-            return [self._to_plain(v) for v in list(value)]
-
-        # Office365 SDK / client objects
-        for attr in ("to_json", "serialize", "to_dict"):
-            method = getattr(value, attr, None)
-            if callable(method):
-                try:
-                    return self._to_plain(method())
-                except Exception:
-                    continue
-
-        # Fallback to `.properties` if present (common in Office365 SDK)
+    def _introspect_properties(self, value: object) -> dict[str, object] | None:
         props = getattr(value, "properties", None)
         if isinstance(props, dict):
             return {k: self._to_plain(v) for k, v in props.items()}
+        return None
 
-        # Last resort: best-effort introspection or string
+    def _introspect_dunder(self, value: object) -> dict[str, object] | None:
         dunder_dict = getattr(value, "__dict__", None)
         if isinstance(dunder_dict, dict):
             cleaned = {
@@ -659,12 +648,41 @@ class SharepointList(Sharepoint):
             }
             if cleaned:
                 return cleaned
+        return None
 
-        return str(value)
+    def _to_plain(self, value: object) -> object:
+        """Recursively convert Office365 SDK objects to JSON-serializable values."""
+        result: object
+        # Primitives
+        if value is None or isinstance(value, str | int | float | bool):
+            result = value
+        else:
+            # Date-like objects
+            dt = self._try_isoformat(value)
+            if dt is not None:
+                result = dt
+            elif isinstance(value, dict):
+                result = {k: self._to_plain(v) for k, v in value.items()}
+            elif isinstance(value, list | tuple | set):
+                result = [self._to_plain(v) for v in list(value)]
+            else:
+                # Office365 SDK / client objects via serializer methods
+                serialized = self._serialize_via_methods(value)
+                if serialized is not None:
+                    result = self._to_plain(serialized)
+                else:
+                    # Fallbacks: properties and __dict__
+                    props = self._introspect_properties(value)
+                    if props is not None:
+                        result = props
+                    else:
+                        dunder = self._introspect_dunder(value)
+                        result = dunder if dunder is not None else str(value)
+        return result
 
-    def _flatten_dict(self, data: dict, parent_key: str = "", sep: str = "_") -> dict:
+    def _flatten_dict(self, data: dict[str, object], parent_key: str = "", sep: str = "_") -> dict[str, object]:
         """Flatten a nested dictionary using separator and lowercase keys."""
-        items: dict[str, Any] = {}
+        items: dict[str, object] = {}
         for key, value in data.items():
             new_key = f"{parent_key}{sep}{key}" if parent_key else str(key)
             if isinstance(value, dict):
@@ -673,7 +691,7 @@ class SharepointList(Sharepoint):
                 items[new_key] = value
         return items
 
-    def _flatten_record(self, record: dict) -> dict:
+    def _flatten_record(self, record: dict[str, object]) -> dict[str, object]:
         """Flatten nested dict values at top-level keys of a record.
 
         - Removes redundant 'fields' key if present (its contents are already merged).
@@ -683,7 +701,7 @@ class SharepointList(Sharepoint):
         # Remove redundant 'fields' duplicate container if present
         record.pop("fields", None)
 
-        flattened: dict[str, Any] = {}
+        flattened: dict[str, object] = {}
         for key, value in record.items():
             if isinstance(value, dict):
                 nested = self._flatten_dict(value, key)
