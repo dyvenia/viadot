@@ -11,10 +11,10 @@ from viadot.sources.sharepoint import SharepointCredentials
 
 
 DUMMY_CREDS = {
-    "site": "tenant.sharepoint.com",  # noqa: S106
-    "client_id": "dummy_client_id",  # noqa: S106
-    "client_secret": "dummy_client_secret",  # noqa: S106
-    "tenant_id": "dummy_tenant_id",  # noqa: S106
+    "site": "tenant.sharepoint.com",  # pragma: allowlist secret # noqa: S105
+    "client_id": "dummy_client_id",  # pragma: allowlist secret # noqa: S105
+    "client_secret": "dummy_client_secret",  # pragma: allowlist secret # noqa: S105
+    "tenant_id": "dummy_tenant_id",  # pragma: allowlist secret # noqa: S105
 }
 SAMPLE_DF = pd.DataFrame(
     {
@@ -69,20 +69,20 @@ def sharepoint_mock():
 @pytest.fixture
 def sharepoint():
     credentials = {
-        "site": "example.sharepoint.com",  # noqa: S106
-        "client_id": "dummy_client_id",  # noqa: S106
-        "client_secret": "dummy_client_secret",  # noqa: S106
-        "tenant_id": "dummy_tenant_id",  # noqa: S106
+        "site": "example.sharepoint.com",  # pragma: allowlist secret # noqa: S105
+        "client_id": "dummy_client_id",  # pragma: allowlist secret # noqa: S105
+        "client_secret": "dummy_client_secret",  # pragma: allowlist secret # noqa: S105
+        "tenant_id": "dummy_tenant_id",  # pragma: allowlist secret # noqa: S105
     }
     return Sharepoint(credentials=credentials)
 
 
 def test_valid_credentials():
     credentials = {
-        "site": "tenant.sharepoint.com",  # noqa: S106
-        "client_id": "client",  # noqa: S106
-        "client_secret": "secret",  # noqa: S106
-        "tenant_id": "tenant",  # noqa: S106
+        "site": "tenant.sharepoint.com",  # pragma: allowlist secret # noqa: S105
+        "client_id": "client",  # pragma: allowlist secret # noqa: S105
+        "client_secret": "secret",  # pragma: allowlist secret # noqa: S105
+        "tenant_id": "tenant",  # pragma: allowlist secret # noqa: S105
     }
     shrp_creds = SharepointCredentials(**credentials)
     assert shrp_creds.site == credentials["site"]
@@ -93,10 +93,10 @@ def test_valid_credentials():
 
 def test_invalid_authentication():
     credentials = {
-        "site": "tenant.sharepoint.com",  # noqa: S106
-        "client_id": "client",  # noqa: S106
-        "client_secret": "secret",  # noqa: S106
-        "tenant_id": "tenant",  # noqa: S106
+        "site": "tenant.sharepoint.com",  # pragma: allowlist secret # noqa: S105
+        "client_id": "client",  # pragma: allowlist secret # noqa: S105
+        "client_secret": "secret",  # pragma: allowlist secret # noqa: S105
+        "tenant_id": "tenant",  # pragma: allowlist secret # noqa: S105
     }
 
     s = Sharepoint(credentials=credentials)
@@ -114,9 +114,9 @@ def test_invalid_authentication():
 
 def test_missing_client_id():
     credentials = {
-        "site": "example.sharepoint.com",  # noqa: S106
-        "client_secret": "x",  # noqa: S106
-        "tenant_id": "t",  # noqa: S106
+        "site": "example.sharepoint.com",  # pragma: allowlist secret # noqa: S105
+        "client_secret": "x",  # pragma: allowlist secret # noqa: S105
+        "tenant_id": "t",  # pragma: allowlist secret # noqa: S105
     }
     with pytest.raises(
         CredentialError,
