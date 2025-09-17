@@ -53,9 +53,7 @@ def create_excel_file():
 
 
 class SharepointMock(Sharepoint):
-    def _download_file_stream(
-        self, url: str | None = None, **kwargs
-    ):  # noqa: ARG002
+    def _download_file_stream(self, _url: str | None = None, **kwargs):
         if "nrows" in kwargs:
             msg = "Parameter 'nrows' is not supported."
             raise ValueError(msg)
@@ -208,17 +206,21 @@ def test_scan_sharepoint_folder_valid_url(sharepoint_mock):
                     class _Item:
                         def __init__(self, name):
                             self.name = name
+
                     return [_Item("file1.txt"), _Item("file2.txt")]
+
             return _Exec()
 
     class _FakeDriveItem:
         def get(self):
             class _Exec:
-                def execute_query(self_inner):
+                def execute_query(self):
                     # Return an object that has .children
                     class _FolderItem:
                         children = _FakeChildren()
+
                     return _FolderItem()
+
             return _Exec()
 
     class _FakeByUrl:
@@ -267,15 +269,18 @@ def test_scan_sharepoint_folder_empty_response(sharepoint_mock):
             class _Exec:
                 def execute_query(self):
                     return []
+
             return _Exec()
 
     class _FakeDriveItem:
         def get(self):
             class _Exec:
-                def execute_query(self_inner):
+                def execute_query(self):
                     class _FolderItem:
                         children = _FakeChildren()
+
                     return _FolderItem()
+
             return _Exec()
 
     class _FakeByUrl:
@@ -298,9 +303,7 @@ def test_scan_sharepoint_folder_empty_response(sharepoint_mock):
 def test_download_file_stream_unsupported_param(sharepoint_mock):
     url = "https://company.sharepoint.com/sites/site_name/folder/test_file.xlsx"
 
-    with pytest.raises(
-        ValueError, match="Parameter 'nrows' is not supported."
-    ):
+    with pytest.raises(ValueError, match="Parameter 'nrows' is not supported."):
         sharepoint_mock._download_file_stream(url, nrows=10)
 
 
@@ -325,55 +328,46 @@ def test_access_denied(sharepoint):
         Sharepoint,
         "_download_file_stream",
         side_effect=PermissionError("403 Forbidden"),
-    ):
-        with pytest.raises(PermissionError):
-            sharepoint.to_df(url)
+    ), pytest.raises(PermissionError):
+        sharepoint.to_df(url)
 
 
 def test_invalid_excel_file(sharepoint):
-    url = (
-        "https://example.sharepoint.com/sites/site/"
-        "Shared%20Documents/file.xlsx"
-    )
+    url = "https://example.sharepoint.com/sites/site/Shared%20Documents/file.xlsx"
     with patch.object(
         Sharepoint,
         "_download_file_stream",
         side_effect=ValueError("Excel file format cannot be determined"),
-    ):
-        with pytest.raises(
-            ValueError, match="Excel file format cannot be determined"
-        ):
-            sharepoint.to_df(url)
+    ), pytest.raises(ValueError, match="Excel file format cannot be determined"):
+        sharepoint.to_df(url)
 
 
 def test_mixed_file_extensions(sharepoint):
     url = "https://example.sharepoint.com/sites/site/Shared%20Documents/folder"
     with (
         patch.object(Sharepoint, "scan_sharepoint_folder") as mock_scan,
+        patch.object(Sharepoint, "_load_and_parse") as mock_load_and_parse,
     ):
         mock_scan.return_value = [
             url + "/file1.xlsx",
             url + "/file2.txt",
             url + "/file3.pdf",
         ]
+        mock_load_and_parse.return_value = pd.DataFrame(
+            {
+                "col_a": ["val1", "", "val2", "NA", "N/A", "#N/A"],
+                "col_b": ["val1", "val2", "val3", "val4", "val5", "val6"],
+            }
+        )
+        df = sharepoint.to_df(url)
 
-        # Mock _load_and_parse to track which files are processed
-        with patch.object(Sharepoint, "_load_and_parse") as mock_load_and_parse:
-            mock_load_and_parse.return_value = pd.DataFrame(
-                {
-                    "col_a": ["val1", "", "val2", "NA", "N/A", "#N/A"],
-                    "col_b": ["val1", "val2", "val3", "val4", "val5", "val6"],
-                }
-            )
-            df = sharepoint.to_df(url)
-
-            # Verify that _load_and_parse was only called for .xlsx files
-            mock_load_and_parse.assert_called_once_with(
-                file_url=url + "/file1.xlsx",
-                sheet_name=None,
-                na_values=None,
-                **{},
-            )
+        # Verify that _load_and_parse was only called for .xlsx files
+        mock_load_and_parse.assert_called_once_with(
+            file_url=url + "/file1.xlsx",
+            sheet_name=None,
+            na_values=None,
+            **{},
+        )
 
         assert not df.empty
         assert len(df) == 6
