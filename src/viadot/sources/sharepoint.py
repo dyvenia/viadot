@@ -680,7 +680,9 @@ class SharepointList(Sharepoint):
                         result = dunder if dunder is not None else str(value)
         return result
 
-    def _flatten_dict(self, data: dict[str, object], parent_key: str = "", sep: str = "_") -> dict[str, object]:
+    def _flatten_dict(
+        self, data: dict[str, object], parent_key: str = "", sep: str = "_"
+    ) -> dict[str, object]:
         """Flatten a nested dictionary using separator and lowercase keys."""
         items: dict[str, object] = {}
         for key, value in data.items():
