@@ -11,10 +11,10 @@ from viadot.sources.sharepoint import SharepointCredentials
 
 
 DUMMY_CREDS = {
-    "site": "tenant.sharepoint.com",
-    "client_id": "dummy_client_id",
-    "client_secret": "dummy_client_secret",
-    "tenant_id": "dummy_tenant_id",
+    "site": "tenant.sharepoint.com", # pragma: allowlist secret
+    "client_id": "dummy_client_id", # pragma: allowlist secret
+    "client_secret": "dummy_client_secret", # pragma: allowlist secret
+    "tenant_id": "dummy_tenant_id", # pragma: allowlist secret
 }
 SAMPLE_DF = pd.DataFrame(
     {
@@ -79,10 +79,10 @@ def sharepoint():
 
 def test_valid_credentials():
     credentials = {
-        "site": "tenant.sharepoint.com",
-        "client_id": "client",
-        "client_secret": "secret",
-        "tenant_id": "tenant",
+        "site": "tenant.sharepoint.com", # pragma: allowlist secret
+        "client_id": "client", # pragma: allowlist secret
+        "client_secret": "secret", # pragma: allowlist secret
+        "tenant_id": "tenant", # pragma: allowlist secret
     }
     shrp_creds = SharepointCredentials(**credentials)
     assert shrp_creds.site == credentials["site"]
@@ -93,10 +93,10 @@ def test_valid_credentials():
 
 def test_invalid_authentication():
     credentials = {
-        "site": "tenant.sharepoint.com",
-        "client_id": "client",
-        "client_secret": "secret",
-        "tenant_id": "tenant",
+        "site": "tenant.sharepoint.com", # pragma: allowlist secret
+        "client_id": "client", # pragma: allowlist secret
+        "client_secret": "secret", # pragma: allowlist secret
+        "tenant_id": "tenant", # pragma: allowlist secret
     }
 
     s = Sharepoint(credentials=credentials)

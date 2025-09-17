@@ -1,4 +1,5 @@
 """Tests for the SharepointList class."""
+
 from unittest.mock import patch
 
 import pandas as pd
@@ -61,7 +62,7 @@ def test_sharepoint_list_to_df_no_items(sharepoint_list):
         ),
         pytest.raises(
             ValueError, match=f"No items found in SharePoint list {LIST_NAME}"
-         ),
+        ),
     ):
         sp_list.to_df(
             list_site=LIST_SITE,
@@ -256,7 +257,7 @@ def test_sharepoint_list_error_wrapped_with_list_name(sharepoint_list):
         pytest.raises(
             ValueError,
             match=("Failed to retrieve data from SharePoint list 'my_list': boom"),
-         ),
+        ),
     ):
         sp_list._paginate_list_data("initial_url", None, LIST_NAME)
 
