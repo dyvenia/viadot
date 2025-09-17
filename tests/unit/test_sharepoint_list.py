@@ -95,10 +95,10 @@ def test_sharepoint_list_authentication_failure():
 def test_sharepoint_list_missing_credentials():
     """Test validation of missing credentials."""
     incomplete_credentials = {
-        "site": "",
-        "client_id": "client",
-        "client_secret": "secret",
-        "tenant_id": "tenant",
+        "site": "",  # pragma: allowlist secret
+        "client_id": "client",  # pragma: allowlist secret
+        "client_secret": "secret",  # pragma: allowlist secret
+        "tenant_id": "tenant",  # pragma: allowlist secret
     }
 
     with pytest.raises(
