@@ -1,7 +1,4 @@
 """Tests for the SharepointList class."""
-import sys
-sys.path.insert(0, '/home/viadot/src')
-
 from unittest.mock import patch
 
 import pandas as pd
@@ -56,14 +53,15 @@ def test_sharepoint_list_to_df_no_items(sharepoint_list):
     """Test case when SharePoint list returns empty results."""
     sp_list = sharepoint_list
 
-    with patch.object(
-        SharepointList,
-        "_paginate_list_data",
-        side_effect=ValueError(
-            f"No items found in SharePoint list {LIST_NAME}"
+    with (
+        patch.object(
+            SharepointList,
+            "_paginate_list_data",
+            side_effect=ValueError(f"No items found in SharePoint list {LIST_NAME}"),
         ),
-    ), pytest.raises(
-        ValueError, match=f"No items found in SharePoint list {LIST_NAME}"
+        pytest.raises(
+            ValueError, match=f"No items found in SharePoint list {LIST_NAME}"
+         ),
     ):
         sp_list.to_df(
             list_site=LIST_SITE,
@@ -77,14 +75,17 @@ def test_sharepoint_list_authentication_failure():
     """Test handling of authentication failure using Graph client."""
     sp_list = SharepointList(credentials=DUMMY_CREDS)
 
-    with patch(
-        "viadot.sources.sharepoint.GraphClient",
-        side_effect=Exception("Authentication failed"),
-    ), pytest.raises(
-        CredentialError,
-        match=(
-            "Could not authenticate to tenant.sharepoint.com "
-            "with provided credentials."
+    with (
+        patch(
+            "viadot.sources.sharepoint.GraphClient",
+            side_effect=Exception("Authentication failed"),
+        ),
+        pytest.raises(
+            CredentialError,
+            match=(
+                "Could not authenticate to tenant.sharepoint.com "
+                "with provided credentials."
+            ),
         ),
     ):
         sp_list.get_client()
@@ -131,9 +132,7 @@ def test_sharepoint_list_to_df_query_filter(sharepoint_list):
 
     # Verify endpoint and params passed to pagination
     site_url = sp_list._ensure_protocol(sp_list.credentials.get("site"))
-    expected_url = sp_list._build_sharepoint_endpoint(
-        site_url, LIST_SITE, LIST_NAME
-    )
+    expected_url = sp_list._build_sharepoint_endpoint(site_url, LIST_SITE, LIST_NAME)
     args, kwargs = mock_paginate.call_args
     assert args[0] == expected_url
     assert args[1]["$filter"] == "Title eq 'Item 1'"
@@ -148,9 +147,7 @@ def test_rename_case_insensitive_duplicated_columns():
     sp_list = SharepointList(credentials=DUMMY_CREDS)
 
     # Test the method
-    rename_dict = (
-        sp_list._find_and_rename_case_insensitive_duplicated_column_names(df)
-    )
+    rename_dict = sp_list._find_and_rename_case_insensitive_duplicated_column_names(df)
 
     # Verify results
     assert rename_dict
@@ -171,12 +168,15 @@ def test_sharepoint_list_pagination(sharepoint_list):
     # Mock _get_records to simulate pagination
     with patch.object(SharepointList, "_get_records") as mock_fetch:
         mock_fetch.side_effect = [
-            ([{"ID": i, "Title": f"Item {i}"} for i in range(1, 5001)],
-             "next_page_url"),
-            ([{"ID": i, "Title": f"Item {i}"} for i in range(5001, 10001)],
-             "next_page_url"),
-            ([{"ID": i, "Title": f"Item {i}"} for i in range(10001, 15001)],
-             None),
+            (
+                [{"ID": i, "Title": f"Item {i}"} for i in range(1, 5001)],
+                "next_page_url",
+            ),
+            (
+                [{"ID": i, "Title": f"Item {i}"} for i in range(5001, 10001)],
+                "next_page_url",
+            ),
+            ([{"ID": i, "Title": f"Item {i}"} for i in range(10001, 15001)], None),
         ]
 
         df = sp_list.to_df(
@@ -220,9 +220,11 @@ def test_sharepoint_list_url_construction_different_protocols(sharepoint_list):
     """Test URL construction with different protocols (http vs https)."""
     sp_list = sharepoint_list
 
-    with patch.object(SharepointList, "_paginate_list_data", return_value=[
-        {"ID": 1, "Title": "Item 1"}
-    ]) as mock_paginate:
+    with patch.object(
+        SharepointList,
+        "_paginate_list_data",
+        return_value=[{"ID": 1, "Title": "Item 1"}],
+    ) as mock_paginate:
         sp_list.default_protocol = "http://"
         sp_list.to_df(
             list_site=LIST_SITE,
@@ -243,17 +245,18 @@ def test_sharepoint_list_error_wrapped_with_list_name(sharepoint_list):
     """Errors from _get_records should be wrapped to include list name."""
     sp_list = sharepoint_list
 
-    with patch.object(
-        SharepointList,
-        "_get_records",
-        side_effect=ValueError(
-            "Failed to retrieve data from SharePoint list: boom"
+    with (
+        patch.object(
+            SharepointList,
+            "_get_records",
+            side_effect=ValueError(
+                "Failed to retrieve data from SharePoint list: boom"
+            ),
         ),
-    ), pytest.raises(
-        ValueError,
-        match=(
-            "Failed to retrieve data from SharePoint list 'my_list': boom"
-        ),
+        pytest.raises(
+            ValueError,
+            match=("Failed to retrieve data from SharePoint list 'my_list': boom"),
+         ),
     ):
         sp_list._paginate_list_data("initial_url", None, LIST_NAME)
 
@@ -262,22 +265,20 @@ def test_sharepoint_list_timeout_handling(sharepoint_list):
     """Test timeout handling message wrapping."""
     sp_list = sharepoint_list
 
-    with patch.object(
-        SharepointList,
-        "_get_records",
-        side_effect=ValueError(
-            "Request to SharePoint list timed out: Request timed out"
+    with (
+        patch.object(
+            SharepointList,
+            "_get_records",
+            side_effect=ValueError(
+                "Request to SharePoint list timed out: Request timed out"
+            ),
         ),
-    ), pytest.raises(
-        ValueError,
-        match=(
-            "Request to SharePoint list 'my_list' timed out: Request timed out"
+        pytest.raises(
+            ValueError,
+            match=("Request to SharePoint list 'my_list' timed out: Request timed out"),
         ),
     ):
         sp_list._paginate_list_data("initial_url", None, LIST_NAME)
-
-
-    # Legacy HTTP timeout test removed.
 
 
 def test_build_sharepoint_endpoint(sharepoint_list):
@@ -312,7 +313,6 @@ def test_ensure_protocol(sharepoint_list):
     sp_list.default_protocol = "http://"
     result = sp_list._ensure_protocol(site_without_protocol)
     assert result == "http://test.sharepoint.com"
-    # Removed old _get_records tests relying on HTTP responses; Graph SDK is used now.
 
 
 def test_paginate_list_data(sharepoint_list):

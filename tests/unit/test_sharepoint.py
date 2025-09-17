@@ -324,21 +324,27 @@ def test_access_denied(sharepoint):
         "https://example.sharepoint.com/sites/site/"
         "Shared%20Documents/restricted_file.xlsx"
     )
-    with patch.object(
-        Sharepoint,
-        "_download_file_stream",
-        side_effect=PermissionError("403 Forbidden"),
-    ), pytest.raises(PermissionError):
+    with (
+        patch.object(
+            Sharepoint,
+            "_download_file_stream",
+            side_effect=PermissionError("403 Forbidden"),
+        ),
+        pytest.raises(PermissionError),
+    ):
         sharepoint.to_df(url)
 
 
 def test_invalid_excel_file(sharepoint):
     url = "https://example.sharepoint.com/sites/site/Shared%20Documents/file.xlsx"
-    with patch.object(
-        Sharepoint,
-        "_download_file_stream",
-        side_effect=ValueError("Excel file format cannot be determined"),
-    ), pytest.raises(ValueError, match="Excel file format cannot be determined"):
+    with (
+        patch.object(
+            Sharepoint,
+            "_download_file_stream",
+            side_effect=ValueError("Excel file format cannot be determined"),
+        ),
+        pytest.raises(ValueError, match="Excel file format cannot be determined"),
+    ):
         sharepoint.to_df(url)
 
 
