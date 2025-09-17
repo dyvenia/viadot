@@ -425,7 +425,7 @@ class Sharepoint(Source):
                 return pd.DataFrame()
         else:
             if sheet_name:
-                df['sheet_name'] = sheet_name
+                df["sheet_name"] = sheet_name
             self.logger.info(f"Successfully downloaded {len(df)} rows of data.")
 
         df_clean = cleanup_df(df)
