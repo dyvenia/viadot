@@ -503,6 +503,21 @@ class SharepointList(Sharepoint):
 
         return rename_dict
 
+    def _rename_specific_columns(self, df: pd.DataFrame) -> pd.DataFrame:
+        """Rename specific columns to desired final names.
+
+        - parentunitlookupid -> parentunitid
+        - replaceunitlookupid -> replaceunitid
+        """
+        mapping = {
+            "parentunitlookupid": "parentunitid",
+            "replaceunitlookupid": "replaceunitid",
+        }
+        existing_mapping = {k: v for k, v in mapping.items() if k in df.columns}
+        if existing_mapping:
+            return df.rename(columns=existing_mapping)
+        return df
+
     def _build_sharepoint_endpoint(
         self, site_url: str, list_site: str, list_name: str
     ) -> str:
@@ -593,6 +608,90 @@ class SharepointList(Sharepoint):
             ]
         return collection, selected_fields
 
+    def _to_plain(self, value: Any) -> Any:
+        """Recursively convert Office365 SDK objects to JSON-serializable values.
+
+        The Office365 SDK often returns complex objects (e.g., ItemReference,
+        FieldValueSet members) inside `item.properties` or `item.fields.properties`.
+        This helper normalizes such values to plain dicts, lists, or primitives so
+        that pandas does not display their class names (e.g.,
+        "office365.onedrive.listitems.item_reference.ItemReference").
+        """
+        # Primitives
+        if value is None or isinstance(value, (str, int, float, bool)):
+            return value
+
+        # Date-like objects
+        isoformat = getattr(value, "isoformat", None)
+        if callable(isoformat):
+            try:
+                return value.isoformat()
+            except Exception:
+                pass
+
+        # Containers
+        if isinstance(value, dict):
+            return {k: self._to_plain(v) for k, v in value.items()}
+        if isinstance(value, (list, tuple, set)):
+            return [self._to_plain(v) for v in list(value)]
+
+        # Office365 SDK / client objects
+        for attr in ("to_json", "serialize", "to_dict"):
+            method = getattr(value, attr, None)
+            if callable(method):
+                try:
+                    return self._to_plain(method())
+                except Exception:
+                    continue
+
+        # Fallback to `.properties` if present (common in Office365 SDK)
+        props = getattr(value, "properties", None)
+        if isinstance(props, dict):
+            return {k: self._to_plain(v) for k, v in props.items()}
+
+        # Last resort: best-effort introspection or string
+        dunder_dict = getattr(value, "__dict__", None)
+        if isinstance(dunder_dict, dict):
+            cleaned = {
+                k: self._to_plain(v)
+                for k, v in dunder_dict.items()
+                if not k.startswith("_") and not callable(v)
+            }
+            if cleaned:
+                return cleaned
+
+        return str(value)
+
+    def _flatten_dict(self, data: dict, parent_key: str = "", sep: str = "_") -> dict:
+        """Flatten a nested dictionary using separator and lowercase keys."""
+        items: dict[str, Any] = {}
+        for key, value in data.items():
+            new_key = f"{parent_key}{sep}{key}" if parent_key else str(key)
+            if isinstance(value, dict):
+                items.update(self._flatten_dict(value, new_key, sep=sep))
+            else:
+                items[new_key] = value
+        return items
+
+    def _flatten_record(self, record: dict) -> dict:
+        """Flatten nested dict values at top-level keys of a record.
+
+        - Removes redundant 'fields' key if present (its contents are already merged).
+        - Flattens any dict-valued fields into "key_subkey" form.
+        """
+        record = dict(record)
+        # Remove redundant 'fields' duplicate container if present
+        record.pop("fields", None)
+
+        flattened: dict[str, Any] = {}
+        for key, value in record.items():
+            if isinstance(value, dict):
+                nested = self._flatten_dict(value, key)
+                flattened.update(nested)
+            else:
+                flattened[key] = value
+        return flattened
+
     def _collect_item_dicts(
         self, collection: object, selected_fields: list[str] | None
     ) -> list[dict]:
@@ -617,7 +716,13 @@ class SharepointList(Sharepoint):
             combined = {**fields_props, **item_props}
             if selected_fields:
                 combined = {k: v for k, v in combined.items() if k in selected_fields}
-            results.append(combined)
+            # Normalize complex SDK objects to plain values
+            normalized = {k: self._to_plain(v) for k, v in combined.items()}
+            # Drop redundant nested containers and flatten nested dicts
+            flattened = self._flatten_record(normalized)
+            # Ensure lowercase column names
+            lowered = {str(k).lower(): v for k, v in flattened.items()}
+            results.append(lowered)
         return results
 
     def _extract_next_link(self, collection: object) -> str | None:
@@ -758,6 +863,14 @@ class SharepointList(Sharepoint):
 
         # Convert to DataFrame
         df = pd.DataFrame(all_results)
+
+        # Add sequential row number starting from 1
+        # TODO: this is bad, but matches the current mapping in LUMA
+        df["id_1"] = range(1, len(df) + 1)
+
+        # Apply targeted renames before handling duplicated names
+        # TODO: this is bad, but matches the current mapping in LUMA
+        df = self._rename_specific_columns(df)
 
         # Handle case-insensitive duplicate column names
         rename_dict = self._find_and_rename_case_insensitive_duplicated_column_names(df)
