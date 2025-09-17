@@ -11,10 +11,10 @@ from viadot.sources.sharepoint import SharepointCredentials
 
 
 DUMMY_CREDS = {
-    "site": "tenant.sharepoint.com", # pragma: allowlist secret
-    "client_id": "dummy_client_id", # pragma: allowlist secret
-    "client_secret": "dummy_client_secret", # pragma: allowlist secret
-    "tenant_id": "dummy_tenant_id", # pragma: allowlist secret
+    "site": "tenant.sharepoint.com",  # pragma: allowlist secret
+    "client_id": "dummy_client_id",  # pragma: allowlist secret
+    "client_secret": "dummy_client_secret",  # pragma: allowlist secret
+    "tenant_id": "dummy_tenant_id",  # pragma: allowlist secret
 }
 SAMPLE_DF = pd.DataFrame(
     {
