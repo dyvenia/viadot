@@ -563,7 +563,7 @@ requests==2.32.3
     # via requests-file
     # via requests-ntlm
     # via requests-oauthlib
-    # via requests-toolbel
+    # via requests-toolbelt
     # via simple-salesforce
     # via snowplow-tracker
     # via tm1py

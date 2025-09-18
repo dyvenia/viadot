@@ -187,7 +187,7 @@ class Sharepoint(Source):
 
         client = self.get_client()
 
-        self.logger.info(f"Downloading data from {url}...")
+        self.logger.info(f"Downloading data from {url} ...")
         try:
             bytes_buffer = io.BytesIO()
             file_item = client.shares.by_url(url).drive_item.get().execute_query()
