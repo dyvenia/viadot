@@ -430,10 +430,7 @@ class Sharepoint(Source):
 
         df_clean = cleanup_df(df)
 
-        if tests:
-            validate(df=df_clean, tests=tests)
-
-        return df_clean
+        return validate(df=df_clean, tests=tests) if tests else df_clean
 
 
 class SharepointList(Sharepoint):
@@ -567,7 +564,7 @@ class SharepointList(Sharepoint):
         site_path: str,
         list_name: str,
         params: dict | None,
-    ):
+    ) -> tuple[object, list[str]]:
         """Resolve site and list, apply params.
 
         Args:
@@ -636,7 +633,7 @@ class SharepointList(Sharepoint):
             value (object): The value to format
 
         Returns:
-            str: The formatted value
+            str | None: The formatted value
         """
         isoformat = getattr(value, "isoformat", None)
         if callable(isoformat):
@@ -934,7 +931,6 @@ class SharepointList(Sharepoint):
 
         # Convert to DataFrame
         df = pd.DataFrame(all_results)
-        df["id_raw_sp"] = range(1, len(df) + 1)
 
         # Handle case-insensitive duplicate column names
         rename_dict = self._find_and_rename_case_insensitive_duplicated_column_names(df)
