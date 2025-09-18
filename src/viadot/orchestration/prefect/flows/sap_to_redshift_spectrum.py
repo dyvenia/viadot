@@ -100,7 +100,7 @@ def sap_to_redshift_spectrum(  # noqa: PLR0913
             ...
         )
     """
-    csv_path = sap_rfc_to_df(
+    df = sap_rfc_to_df(
         query=query,
         tests=tests,
         func=func,
@@ -116,7 +116,7 @@ def sap_to_redshift_spectrum(  # noqa: PLR0913
     )
 
     return df_to_redshift_spectrum(
-        csv_path=csv_path,
+        df=df,
         to_path=to_path,
         schema_name=schema_name,
         table=table,
