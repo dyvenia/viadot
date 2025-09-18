@@ -9,7 +9,7 @@ authors = [
 dependencies = [
     "pyodbc>=5.1.0",
     "visions>=0.6.4",
-    "Office365-REST-Python-Client>=2.5.10",
+    "Office365-REST-Python-Client==2.6.2",
     "sql-metadata>=2.11.0",
     "sendgrid>=6.11.0",
     "pydantic>=2.0.0, <3",
