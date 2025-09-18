@@ -430,7 +430,10 @@ class Sharepoint(Source):
 
         df_clean = cleanup_df(df)
 
-        return validate(df=df_clean, tests=tests) if tests else df_clean
+        if tests:
+            validate(df=df_clean, tests=tests)
+
+        return df_clean
 
 
 class SharepointList(Sharepoint):
@@ -633,7 +636,7 @@ class SharepointList(Sharepoint):
             value (object): The value to format
 
         Returns:
-            str | None: The formatted value
+            str: The formatted value
         """
         isoformat = getattr(value, "isoformat", None)
         if callable(isoformat):
@@ -936,4 +939,7 @@ class SharepointList(Sharepoint):
         rename_dict = self._find_and_rename_case_insensitive_duplicated_column_names(df)
         df = df.rename(columns=rename_dict)
 
-        return validate(df=df, tests=tests) if tests else df
+        if tests:
+            validate(df=df, tests=tests)
+
+        return df
