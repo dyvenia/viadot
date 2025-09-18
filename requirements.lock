@@ -362,7 +362,7 @@ numpy==1.26.4
     # via shapely
     # via viadot2
     # via visions
-Office365-REST-Python-Client==2.5.10
+Office365-REST-Python-Client==2.6.2
     # via viadot2
 o365==2.0.36
     # via viadot2
