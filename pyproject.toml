@@ -9,7 +9,7 @@ authors = [
 dependencies = [
     "pyodbc>=5.1.0",
     "visions>=0.6.4",
-    "sharepy>=2.0.0",
+    "Office365-REST-Python-Client==2.6.2",
     "sql-metadata>=2.11.0",
     "sendgrid>=6.11.0",
     "pydantic>=2.0.0, <3",
@@ -155,6 +155,7 @@ ignore = [
     "ANN003",
     "ANN202", # Return type annotation of private functions.
     "ANN204",
+    "TRY300", # Consider moving statement to an `else` block
 ]
 
 [tool.ruff.lint.extend-per-file-ignores]

@@ -517,6 +517,8 @@ numpy==2.2.6
     # via shapely
     # via viadot2
     # via visions
+Office365-REST-Python-Client==2.6.2
+    # via viadot2
 o365==2.0.36
     # via viadot2
 oauthlib==3.2.2
@@ -785,7 +787,6 @@ requests==2.32.3
     # via requests-oauthlib
     # via requests-toolbelt
     # via responses
-    # via sharepy
     # via simple-salesforce
     # via snowplow-tracker
     # via tm1py
@@ -848,8 +849,6 @@ setuptools==73.0.0
 sgqlc==16.3
     # via prefect-github
 shapely==2.0.6
-    # via viadot2
-sharepy==2.0.0
     # via viadot2
 shellingham==1.5.4
     # via typer
