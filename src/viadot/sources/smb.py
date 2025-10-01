@@ -2,6 +2,7 @@
 
 from pathlib import Path
 import re
+import zipfile
 
 import pendulum
 from pydantic import BaseModel, SecretStr, root_validator
@@ -63,7 +64,7 @@ class SMB(Source):
         self.base_path = base_path
         raw_creds = credentials or get_source_credentials(config_key) or {}
         validated_creds = SMBCredentials(**raw_creds)
-        super().__init__(*args, credentials=validated_creds.dict(), **kwargs)
+        super().__init__(*args, credentials=validated_creds.model_dump(), **kwargs)
 
         normalized_path = re.sub(r"\\+", r"\\", self.base_path)
         parts = normalized_path.lstrip("\\").split("\\")
@@ -95,6 +96,7 @@ class SMB(Source):
         dynamic_date_format: str = "%Y-%m-%d",
         dynamic_date_timezone: str = "UTC",
         prefix_levels_to_add: int = 0,
+        zip_file_regex: str | list[str] | None = None,
     ) -> tuple[dict[str, bytes], list[str]]:
         """Scan the directory structure for files and store their contents in memory.
 
@@ -139,6 +141,7 @@ class SMB(Source):
             extensions=extensions,
             date_filter_parsed=date_filter_parsed,
             prefix_levels_to_add=prefix_levels_to_add,
+            zip_file_regex=zip_file_regex,
         )
 
     def _parse_dates(
@@ -206,6 +209,7 @@ class SMB(Source):
         | tuple[pendulum.Date, pendulum.Date]
         | None = None,
         prefix_levels_to_add: int = 0,
+        zip_file_regex: str | list[str] | None = None,
     ) -> tuple[dict[str, bytes], list[str]]:
         """Recursively scans a directory for matching files based on filters.
 
@@ -264,7 +268,9 @@ class SMB(Source):
                     date_filter_parsed=date_filter_parsed,
                 ):
                     found_files.update(
-                        self._get_file_content(entry, prefix_levels_to_add)
+                        self._get_file_content(
+                            entry, prefix_levels_to_add, zip_file_regex
+                        )
                     )
 
                 elif entry.is_dir():
@@ -280,6 +286,7 @@ class SMB(Source):
                                 extensions,
                                 date_filter_parsed,
                                 prefix_levels_to_add,
+                                zip_file_regex,
                             )[0]  # Only the matched files dict is used
                         )
             except smbprotocol.exceptions.SMBOSError as e:
@@ -291,70 +298,157 @@ class SMB(Source):
 
         return found_files, problematic_entries
 
-    def _add_prefix_to_file_name(
-        self, file_path: str, prefix_levels_to_add: int = 0
-    ) -> str:
-        """Generate a new filename by adding parent folder names as prefix.
+    def _build_prefix_from_path(self, file_path: str, levels: int) -> str:
+        """Extract parent folder names to use as prefix.
 
         Args:
             file_path (str): The full or relative path to the file.
-            prefix_levels_to_add (int, optional): Number of parent folder levels to
-                include as a prefix to the filename,counting from the deepest (closest)
-                folder upwards. Defaults to 0, meaning no prefix is added.
+            levels (int): Number of parent folder levels to include.
 
         Returns:
-            str: New filename with the specified parent folders as prefix separated by
-                underscores.If no prefix levels are specified, returns the original
-                filename.
+            str: Prefix string with parent folder names joined by underscores.
+                 Returns empty string if levels is 0 or no valid parents exist.
         """
+        if levels <= 0:
+            return ""
+
         normalized_path = file_path.replace("\\", "/")
         path = Path(normalized_path)
 
+        # Filter out invalid/empty path components
         parent_parts = [
             p for p in path.parent.parts if p and p not in ("/", "\\", ".", "//", "")
         ]
 
-        # Normalize prefix level count to valid range
-        levels = max(0, prefix_levels_to_add)
-        levels = min(levels, len(parent_parts))
+        # Clamp levels to valid range
+        valid_levels = min(levels, len(parent_parts))
 
-        prefix_parts_to_add = parent_parts[-levels:] if levels > 0 else []
+        if valid_levels == 0:
+            return ""
 
-        prefix_str = "_".join(prefix_parts_to_add)
+        # Take the last N parent folders (closest to file)
+        prefix_parts = parent_parts[-valid_levels:]
 
-        return "_".join([prefix_str, path.name]) if prefix_str else path.name
+        return "_".join(prefix_parts)
+
+    def _add_prefix_to_filename(self, filename: str, prefix: str) -> str:
+        """Combine prefix and filename with underscore separator.
+
+        Args:
+            filename (str): The base filename.
+            prefix (str): The prefix to add.
+
+        Returns:
+            str: Prefixed filename, or original filename if prefix is empty.
+        """
+        if not prefix:
+            return filename
+        return f"{prefix}_{filename}"
+
+    def _matches_zip_filter(
+        self, filename: str, zip_file_regex: str | list[str] | None
+    ) -> bool:
+        """Check if a filename matches the ZIP file filter patterns.
+
+        Args:
+            filename (str): The filename to check (from inside ZIP).
+            zip_file_regex (str | list[str] | None): Regex pattern(s) to match against.
+                If None, all files match.
+
+        Returns:
+            bool: True if filename matches any pattern or if no filter is specified.
+        """
+        if zip_file_regex is None:
+            return True
+
+        patterns = (
+            [zip_file_regex] if isinstance(zip_file_regex, str) else zip_file_regex
+        )
+
+        for pattern in patterns:
+            try:
+                if re.search(pattern, filename, re.IGNORECASE):
+                    return True
+            except re.error as e:
+                self.logger.warning(f"Invalid regex pattern '{pattern}': {e}")
+
+        return False
 
     def _get_file_content(
-        self, entry: smbclient._os.SMBDirEntry, prefix_levels_to_add: int = 0
+        self,
+        entry: smbclient._os.SMBDirEntry,
+        prefix_levels_to_add: int = 0,
+        zip_file_regex: str | list[str] | None = None,
     ) -> dict[str, bytes]:
         """Extracts the content of a file from an SMB directory entry.
 
-        This function takes an SMB directory entry, logs the file path,
-        fetches the file's content, and returns a dictionary with the
-        file name as the key and its content as the value.
+        For ZIP files, extracts files matching the zip_file_regex pattern.
+        For other files, reads the entire content.
 
         Args:
             entry (smbclient._os.SMBDirEntry): An SMB directory entry object.
-            prefix_levels_to_add (int, optional): Number of parent folder levels to
-                include as a prefix to the filename,counting from the deepest (closest)
-                folder upwards. Defaults to 0, meaning no prefix is added.
+            prefix_levels_to_add (int): Number of parent folder levels to include
+                as prefix.
+            zip_file_regex (str | list[str] | None): Regex pattern(s) to filter files
+                inside ZIP archives.
+                If None, extracts all files from ZIP.
 
         Returns:
-            dict[str, bytes]: A dictionary with a single key-value pair, where the key
-                is the file name and the value is the file's content.
+            dict[str, bytes]: Dictionary with file name(s) as keys and content
+                as values.
         """
         file_path = entry.path
+        contents = {}
 
         self.logger.info(f"Found: {file_path}")
 
-        with smbclient.open_file(file_path, mode="rb") as file:
-            content = file.read()
+        # Build prefix once for this file
+        prefix = self._build_prefix_from_path(file_path, prefix_levels_to_add)
 
-        file_name = self._add_prefix_to_file_name(
-            file_path=file_path, prefix_levels_to_add=prefix_levels_to_add
-        )
+        if file_path.lower().endswith(".zip"):
+            try:
+                with smbclient.open_file(file_path, mode="rb") as remote_zip:  # noqa: SIM117
+                    with zipfile.ZipFile(remote_zip) as zf:
+                        matched_count = 0
+                        for zip_member_name in zf.namelist():
+                            # Skip directories inside ZIP
+                            if zip_member_name.endswith("/"):
+                                continue
 
-        return {file_name: content}
+                            if self._matches_zip_filter(
+                                zip_member_name, zip_file_regex
+                            ):
+                                with zf.open(zip_member_name) as member:
+                                    content = member.read()
+                                    # Use only the base filename from ZIP member
+                                    base_name = Path(zip_member_name).name
+                                    prefixed_name = self._add_prefix_to_filename(
+                                        base_name, prefix
+                                    )
+                                    contents[prefixed_name] = content
+                                    matched_count += 1
+
+                        if matched_count == 0:
+                            self.logger.debug(
+                                f"No matching files found in ZIP: {file_path}. "
+                                f"Filter: {zip_file_regex}"
+                            )
+
+            except zipfile.BadZipFile:
+                self.logger.warning(f"Invalid ZIP file: {file_path}")
+            except Exception as e:
+                self.logger.exception(f"Error reading ZIP file {file_path}: {e}")  # noqa: TRY401
+                raise
+        else:
+            # Regular file handling
+            with smbclient.open_file(file_path, mode="rb") as file:
+                content = file.read()
+
+            filename = Path(file_path).name
+            prefixed_name = self._add_prefix_to_filename(filename, prefix)
+            contents[prefixed_name] = content
+
+        return contents
 
     def _get_directory_entries(self, path: str):
         """Get directory entries using smbclient.
