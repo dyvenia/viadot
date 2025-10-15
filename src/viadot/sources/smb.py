@@ -417,8 +417,9 @@ class SMB(Source):
 
         # Build prefix once for this file
         prefix = self._build_prefix_from_path(file_path, prefix_levels_to_add)
+        is_zip = file_path.lower().endswith(".zip")
 
-        if file_path.lower().endswith(".zip"):
+        if is_zip and zip_inner_file_regexes:
             try:
                 with smbclient.open_file(file_path, mode="rb") as remote_zip:  # noqa: SIM117
                     with zipfile.ZipFile(remote_zip) as zf:
