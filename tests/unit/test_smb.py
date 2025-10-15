@@ -67,16 +67,27 @@ def test_smb_initialization_without_credentials():
 
 
 @pytest.mark.parametrize(
-    ("filename_regex", "extensions", "date_filter", "prefix_levels_to_add"),
+    (
+        "filename_regex",
+        "extensions",
+        "date_filter",
+        "prefix_levels_to_add",
+        "zip_inner_file_regexes",
+    ),
     [
-        ([None], None, "<<pendulum.yesterday().date()>>", 0),
-        (["keyword1"], None, "<<pendulum.yesterday().date()>>", 0),
-        ([None], [".txt"], "<<pendulum.yesterday().date()>>", 0),
-        (["keyword1"], [".txt"], "<<pendulum.yesterday().date()>>", 0),
+        ([None], None, "<<pendulum.yesterday().date()>>", 0, None),
+        (["keyword1"], None, "<<pendulum.yesterday().date()>>", 0, None),
+        ([None], [".txt"], "<<pendulum.yesterday().date()>>", 0, None),
+        (["keyword1"], [".txt"], "<<pendulum.yesterday().date()>>", 0, None),
     ],
 )
 def test_scan_and_store(
-    smb_instance, filename_regex, extensions, date_filter, prefix_levels_to_add
+    smb_instance,
+    filename_regex,
+    extensions,
+    date_filter,
+    prefix_levels_to_add,
+    zip_inner_file_regexes,
 ):
     with (
         patch.object(smb_instance, "_scan_directory") as mock_scan_directory,
@@ -91,6 +102,8 @@ def test_scan_and_store(
             filename_regex=filename_regex,
             extensions=extensions,
             date_filter=date_filter,
+            prefix_levels_to_add=prefix_levels_to_add,
+            zip_inner_file_regexes=zip_inner_file_regexes,
         )
 
         mock_parse_dates.assert_called_once_with(
@@ -106,6 +119,7 @@ def test_scan_and_store(
             extensions=extensions,
             date_filter_parsed=mock_date_result,
             prefix_levels_to_add=prefix_levels_to_add,
+            zip_inner_file_regexes=zip_inner_file_regexes,
         )
 
 
