@@ -510,39 +510,50 @@ def test_save_files_locally_multiple_files_save(smb_instance, tmp_path):
 
 
 @pytest.mark.parametrize(
-    ("file_path", "prefix_levels_to_add", "expected"),
+    ("file_path", "levels", "expected_prefix"),
     [
-        ("/root/DATA/12345/file.txt", 0, "file.txt"),
-        ("/root/DATA/12345/file.txt", 1, "12345_file.txt"),
-        ("/root/DATA/12345/subdir/file.txt", 2, "12345_subdir_file.txt"),
-        # More prefix levels than available (should just use what's available)
-        ("//root/DATA/file.txt", 3, "root_DATA_file.txt"),
-        ("/a/b/c/d/file.txt", 4, "a_b_c_d_file.txt"),
-        ("file.txt", 1, "file.txt"),
-        ("\\\\root\\DATA\\1234\\file.txt", 2, "DATA_1234_file.txt"),
+        ("/root/DATA/12345/file.txt", 0, ""),
+        ("/root/DATA/12345/file.txt", 1, "12345"),
+        ("/root/DATA/12345/subdir/file.txt", 2, "12345_subdir"),
+        ("//root/DATA/file.txt", 3, "root_DATA"),
+        ("/a/b/c/d/file.txt", 4, "a_b_c_d"),
+        ("file.txt", 1, ""),
+        ("\\\\root\\DATA\\1234\\file.txt", 2, "DATA_1234"),
     ],
 )
-def test_add_prefix_to_filename(
-    smb_instance, file_path, prefix_levels_to_add, expected
-):
-    result = smb_instance._add_prefix_to_filename(
-        file_path=file_path, prefix_levels_to_add=prefix_levels_to_add
-    )
+def test_build_prefix_from_path(smb_instance, file_path, levels, expected_prefix):
+    result = smb_instance._build_prefix_from_path(file_path=file_path, levels=levels)
+    assert result == expected_prefix
+
+
+@pytest.mark.parametrize(
+    ("filename", "prefix", "expected"),
+    [
+        ("file.txt", "", "file.txt"),
+        ("file.txt", "12345", "12345_file.txt"),
+        ("data.csv", "a_b", "a_b_data.csv"),
+    ],
+)
+def test_add_prefix_to_filename(smb_instance, filename, prefix, expected):
+    result = smb_instance._add_prefix_to_filename(filename=filename, prefix=prefix)
     assert result == expected
 
 
-def test_relative_path(smb_instance):
-    path = "DATA/12345/sub1/sub2/sample.csv"
-    expected = "sub1_sub2_sample.csv"
+def test_integration_prefix_and_add_filename(smb_instance):
+    """Integration-style test that combines both functions."""
+    file_path = "DATA/12345/sub1/sub2/sample.csv"
+    prefix = smb_instance._build_prefix_from_path(file_path=file_path, levels=2)
     result = smb_instance._add_prefix_to_filename(
-        file_path=path, prefix_levels_to_add=2
+        filename=Path(file_path).name, prefix=prefix
     )
-    assert result == expected
+    assert result == "sub1_sub2_sample.csv"
 
 
 def test_negative_prefix_levels(smb_instance):
     path = "/some/path/file.log"
+    prefix = smb_instance._build_prefix_from_path(file_path=path, levels=-5)
     result = smb_instance._add_prefix_to_filename(
-        file_path=path, prefix_levels_to_add=-5
+        filename=Path(path).name, prefix=prefix
     )
+
     assert result == "file.log"
