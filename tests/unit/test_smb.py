@@ -522,10 +522,10 @@ def test_save_files_locally_multiple_files_save(smb_instance, tmp_path):
         ("\\\\root\\DATA\\1234\\file.txt", 2, "DATA_1234_file.txt"),
     ],
 )
-def test_add_prefix_to_file_name(
+def test_add_prefix_to_filename(
     smb_instance, file_path, prefix_levels_to_add, expected
 ):
-    result = smb_instance._add_prefix_to_file_name(
+    result = smb_instance._add_prefix_to_filename(
         file_path=file_path, prefix_levels_to_add=prefix_levels_to_add
     )
     assert result == expected
@@ -534,7 +534,7 @@ def test_add_prefix_to_file_name(
 def test_relative_path(smb_instance):
     path = "DATA/12345/sub1/sub2/sample.csv"
     expected = "sub1_sub2_sample.csv"
-    result = smb_instance._add_prefix_to_file_name(
+    result = smb_instance._add_prefix_to_filename(
         file_path=path, prefix_levels_to_add=2
     )
     assert result == expected
@@ -542,7 +542,7 @@ def test_relative_path(smb_instance):
 
 def test_negative_prefix_levels(smb_instance):
     path = "/some/path/file.log"
-    result = smb_instance._add_prefix_to_file_name(
+    result = smb_instance._add_prefix_to_filename(
         file_path=path, prefix_levels_to_add=-5
     )
     assert result == "file.log"
