@@ -96,7 +96,7 @@ class SMB(Source):
         dynamic_date_format: str = "%Y-%m-%d",
         dynamic_date_timezone: str = "UTC",
         prefix_levels_to_add: int = 0,
-        zip_file_regex: str | list[str] | None = None,
+        zip_inner_file_regexes: str | list[str] | None = None,
     ) -> tuple[dict[str, bytes], list[str]]:
         """Scan the directory structure for files and store their contents in memory.
 
@@ -122,6 +122,10 @@ class SMB(Source):
             prefix_levels_to_add (int, optional): Number of parent folder levels to
                 include as a prefix to the filename,counting from the deepest (closest)
                 folder upwards. Defaults to 0, meaning no prefix is added.
+            zip_inner_file_regexes (str | list[str] | None): Regular expression string
+                or list of regex patterns used to filter files *inside* ZIP archives.
+                If provided, ZIP files will be unpacked and only matching inner files
+                will be extracted and stored. Defaults to None.
 
         Returns:
             tuple[dict[str, bytes], list[str]]:
@@ -141,7 +145,7 @@ class SMB(Source):
             extensions=extensions,
             date_filter_parsed=date_filter_parsed,
             prefix_levels_to_add=prefix_levels_to_add,
-            zip_file_regex=zip_file_regex,
+            zip_inner_file_regexes=zip_inner_file_regexes,
         )
 
     def _parse_dates(
@@ -209,7 +213,7 @@ class SMB(Source):
         | tuple[pendulum.Date, pendulum.Date]
         | None = None,
         prefix_levels_to_add: int = 0,
-        zip_file_regex: str | list[str] | None = None,
+        zip_inner_file_regexes: str | list[str] | None = None,
     ) -> tuple[dict[str, bytes], list[str]]:
         """Recursively scans a directory for matching files based on filters.
 
@@ -238,6 +242,10 @@ class SMB(Source):
             prefix_levels_to_add (int, optional): Number of parent folder levels to
                 include as a prefix to the filename,counting from the deepest (closest)
                 folder upwards. Defaults to 0, meaning no prefix is added.
+            zip_inner_file_regexes (str | list[str] | None): Regular expression string
+                or list of regex patterns used to filter files *inside* ZIP archives.
+                If provided, ZIP files will be unpacked and only matching inner files
+                will be extracted and stored. Defaults to None.
 
         Returns:
             tuple[dict[str, bytes], list[str]]:
@@ -269,7 +277,7 @@ class SMB(Source):
                 ):
                     found_files.update(
                         self._get_file_content(
-                            entry, prefix_levels_to_add, zip_file_regex
+                            entry, prefix_levels_to_add, zip_inner_file_regexes
                         )
                     )
 
@@ -286,7 +294,7 @@ class SMB(Source):
                                 extensions,
                                 date_filter_parsed,
                                 prefix_levels_to_add,
-                                zip_file_regex,
+                                zip_inner_file_regexes,
                             )[0]  # Only the matched files dict is used
                         )
             except smbprotocol.exceptions.SMBOSError as e:
@@ -346,23 +354,27 @@ class SMB(Source):
         return f"{prefix}_{filename}"
 
     def _matches_zip_filter(
-        self, filename: str, zip_file_regex: str | list[str] | None
+        self, filename: str, zip_inner_file_regexes: str | list[str] | None
     ) -> bool:
         """Check if a filename matches the ZIP file filter patterns.
 
         Args:
             filename (str): The filename to check (from inside ZIP).
-            zip_file_regex (str | list[str] | None): Regex pattern(s) to match against.
-                If None, all files match.
+            zip_inner_file_regexes (str | list[str] | None): Regular expression string
+                or list of regex patterns used to filter files *inside* ZIP archives.
+                If provided, ZIP files will be unpacked and only matching inner files
+                will be extracted and stored. Defaults to None.
 
         Returns:
             bool: True if filename matches any pattern or if no filter is specified.
         """
-        if zip_file_regex is None:
+        if zip_inner_file_regexes is None:
             return True
 
         patterns = (
-            [zip_file_regex] if isinstance(zip_file_regex, str) else zip_file_regex
+            [zip_inner_file_regexes]
+            if isinstance(zip_inner_file_regexes, str)
+            else zip_inner_file_regexes
         )
 
         for pattern in patterns:
@@ -378,20 +390,21 @@ class SMB(Source):
         self,
         entry: smbclient._os.SMBDirEntry,
         prefix_levels_to_add: int = 0,
-        zip_file_regex: str | list[str] | None = None,
+        zip_inner_file_regexes: str | list[str] | None = None,
     ) -> dict[str, bytes]:
         """Extracts the content of a file from an SMB directory entry.
 
-        For ZIP files, extracts files matching the zip_file_regex pattern.
+        For ZIP files, extracts files matching the zip_inner_file_regexes pattern.
         For other files, reads the entire content.
 
         Args:
             entry (smbclient._os.SMBDirEntry): An SMB directory entry object.
             prefix_levels_to_add (int): Number of parent folder levels to include
                 as prefix.
-            zip_file_regex (str | list[str] | None): Regex pattern(s) to filter files
-                inside ZIP archives.
-                If None, extracts all files from ZIP.
+            zip_inner_file_regexes (str | list[str] | None): Regular expression string
+                or list of regex patterns used to filter files *inside* ZIP archives.
+                If provided, ZIP files will be unpacked and only matching inner files
+                will be extracted and stored. Defaults to None.
 
         Returns:
             dict[str, bytes]: Dictionary with file name(s) as keys and content
@@ -416,7 +429,7 @@ class SMB(Source):
                                 continue
 
                             if self._matches_zip_filter(
-                                zip_member_name, zip_file_regex
+                                zip_member_name, zip_inner_file_regexes
                             ):
                                 with zf.open(zip_member_name) as member:
                                     content = member.read()
@@ -431,7 +444,7 @@ class SMB(Source):
                         if matched_count == 0:
                             self.logger.debug(
                                 f"No matching files found in ZIP: {file_path}. "
-                                f"Filter: {zip_file_regex}"
+                                f"Filter: {zip_inner_file_regexes}"
                             )
 
             except zipfile.BadZipFile:
