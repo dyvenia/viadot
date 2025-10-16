@@ -397,8 +397,8 @@ class SMB(Source):
                                 continue
 
                             if self._matches_any_regex(
-                                zip_inner_file_regexes,
-                                zip_member_name,
+                                text=zip_member_name,
+                                patterns=zip_inner_file_regexes,
                             ):
                                 with zf.open(zip_member_name) as member:
                                     content = member.read()
@@ -565,8 +565,8 @@ class SMB(Source):
 
     def _matches_any_regex(
         self,
-        patterns: str | list[str] | None,
         text: str,
+        patterns: str | list[str] | None = None,
     ) -> bool:
         """Check whether the given text matches any of the provided regex pattern(s).
 

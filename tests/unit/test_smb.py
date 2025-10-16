@@ -571,3 +571,27 @@ def test_negative_prefix_levels(smb_instance):
     )
 
     assert result == "file.log"
+
+
+def test_matches_any_regex_true(smb_instance):
+    zip_member_name = "file1.txt"
+    zip_inner_file_regexes_1 = None
+    zip_inner_file_regexes_2 = r"^file1\.txt$"
+    zip_inner_file_regexes_3 = [r"^file1", r"txt$"]
+
+    result1 = smb_instance._matches_any_regex(zip_inner_file_regexes_1, zip_member_name)
+    result2 = smb_instance._matches_any_regex(zip_inner_file_regexes_2, zip_member_name)
+    result3 = smb_instance._matches_any_regex(zip_inner_file_regexes_3, zip_member_name)
+
+    assert result1 is True
+    assert result2 is True
+    assert result3 is True
+
+
+def test_matches_any_regex_false(smb_instance):
+    zip_member_name = "file1.txt"
+    zip_inner_file_regexes = r"^file1\.zip$"
+
+    result = smb_instance._matches_any_regex(zip_inner_file_regexes, zip_member_name)
+
+    assert result is False
