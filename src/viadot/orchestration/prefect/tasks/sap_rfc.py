@@ -121,7 +121,7 @@ def sap_rfc_to_df(  # noqa: PLR0913
 
     if arrow_table is not None and arrow_table.num_rows > 0:
         logger.info("Data has been downloaded successfully.")
-    elif:
+    else:
         logger.warn("Task finished but NO data was downloaded.")
 
     #Below is needed to convert the arrow table to a pandas dataframe without copying the data
