@@ -552,6 +552,53 @@ def add_viadot_metadata_columns(func: Callable) -> Callable:
     return wrapper
 
 
+def add_viadot_metadata_columns_arrow(func: Callable) -> Callable:
+    """A decorator for Arrow-returning methods (e.g., `to_arrow`).
+
+    Adds viadot metadata columns to the returned pyarrow.Table without pandas.
+    """
+
+    @functools.wraps(func)
+    def wrapper(*args, **kwargs):
+        table = func(*args, **kwargs)
+
+        # Lazy import to avoid mandatory dependency if Arrow isn't used
+        try:
+            import pyarrow as pa  # type: ignore
+            import pyarrow.compute as pc  # type: ignore
+        except Exception as e:  # noqa: BLE001
+            raise ImportError(
+                "pyarrow is required to use add_viadot_metadata_columns_arrow."
+            ) from e
+
+        # Accessing instance
+        instance = args[0]
+        _viadot_source = instance.__class__.__name__
+
+        # Create constant arrays efficiently (avoid building large Python lists)
+        length = table.num_rows
+
+        def _const_array(value: str) -> pa.Array:
+            try:
+                # Fast path using compute.repeat (Arrow-built array)
+                return pc.repeat(pa.scalar(value), length)
+            except Exception:
+                # Fallback: Python list (slower but safe)
+                return pa.array([value] * length)
+
+        ts_value = datetime.now(timezone.utc).replace(microsecond=0).isoformat()
+        source_arr = _const_array(_viadot_source)
+        ts_arr = _const_array(ts_value)
+
+        # Add both columns in a single reconstruction to minimize copies
+        new_columns = list(table.columns) + [source_arr, ts_arr]
+        new_names = list(table.column_names) + ["_viadot_source", "_viadot_downloaded_at_utc"]
+        table = pa.table(new_columns, names=new_names)
+
+        return table
+
+    return wrapper
+
 def get_fqn(table_name: str, schema_name: str | None = None) -> str:
     """Get the fully qualified name of a table."""
     return f"{schema_name}.{table_name}" if schema_name else table_name

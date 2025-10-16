@@ -117,10 +117,14 @@ def sap_rfc_to_df(  # noqa: PLR0913
     logger.info("Dominik tyrala tests...")
     logger.debug(f"Running query: \n{sap.sql}.")
 
-    df = sap.to_df(tests=tests)
+    arrow_table = sap.to_arrow()
 
-    if not df.empty:
+    if not arrow_table.empty:
         logger.info("Data has been downloaded successfully.")
-    elif df.empty:
+    elif arrow_table.empty:
         logger.warn("Task finished but NO data was downloaded.")
-    return df
+
+    #Below is needed to convert the arrow table to a pandas dataframe without copying the data
+    #This is needed to avoid memory issues when the data is large, and Pandas is needed by AWS Redshift Spectrum
+    #More info: https://arrow.apache.org/docs/python/pandas.html#converting-arrow-tables-to-pandas-dataframes
+    return arrow_table.to_pandas(types_mapper=None, split_blocks=True, self_destruct=True)

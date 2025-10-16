@@ -42,7 +42,7 @@ from viadot.config import get_source_credentials
 from viadot.exceptions import CredentialError, DataBufferExceededError
 from viadot.orchestration.prefect.utils import DynamicDateHandler
 from viadot.sources.base import Source
-from viadot.utils import add_viadot_metadata_columns, validate
+from viadot.utils import add_viadot_metadata_columns, add_viadot_metadata_columns_arrow, validate
 
 logger = logging.getLogger()
 
@@ -654,11 +654,11 @@ class SAPRFC(Source):
             "QUERY_TABLE": table_name,
             "FIELDS": columns,
             "OPTIONS": options,
-            "ROWCOUNT": limit,
+            "ROWCOUNT": 1000000,
             "ROWSKIPS": offset,
             "DELIMITER": sep,
         }
-        print(query_json)
+
         # SAP doesn't understand None, so we filter out non-specified parameters
         query_json_filtered = {
             key: query_json[key] for key in query_json if query_json[key] is not None
@@ -668,7 +668,7 @@ class SAPRFC(Source):
     def call(self, func: str, *args, **kwargs) -> dict[str, Any]:
         """Call a SAP RFC function."""
         func_caller = sap_rfc_connector.SapFunctionCaller(self.con)   
-        result = func_caller.smart_call(func, *args, **kwargs)
+        result = func_caller.call(func, *args, **kwargs)
 
         return result
 
@@ -702,6 +702,273 @@ class SAPRFC(Source):
                 )
         return df
 
+    def to_raw_data(self) -> list[dict[str, Any]]:  # noqa: C901, PLR0912, PLR0915
+        """Load the results of a query into a list of dictionaries (no pandas).
+
+        This method mirrors the behavior of `to_df()` but avoids pandas completely
+        for improved performance and lower memory overhead. It supports:
+        - Chunked downloads when SAP character limits are exceeded.
+        - Optional merging of chunks using unique key columns (`rfc_unique_id`).
+        - Client-side filtering for WHERE clauses beyond 75 characters.
+        - Column aliasing and final column selection aligned with the SQL query.
+
+        Returns:
+            List[Dict[str, Any]]: Query results as a list of row dictionaries.
+        """
+        # NOTE: We intentionally do not use pandas here.
+        # Fetch query parameters prepared by `query()`
+        params = self._query
+        columns_aliased = self.select_columns_aliased
+        fields_lists = self._query.get("FIELDS")
+        if len(fields_lists) > 1:
+            logger.info(f"Data will be downloaded in {len(fields_lists)} chunks.")
+        func = self.func
+
+        # Determine candidate separators
+        sep = self._query.get("DELIMITER")
+        if sep is None:
+            separators = [
+                "|",
+                "/t",
+                "#",
+                ";",
+                "@",
+                "%",
+                "^",
+                "`",
+                "~",
+                "{",
+                "}",
+                "$",
+            ]
+        else:
+            separators = [sep]
+
+        # Utilities
+        def split_wa_records(data_rows: list[dict[str, Any]], delimiter: str) -> list[list[str]]:
+            return [row["WA"].split(delimiter) for row in data_rows]
+
+        def pad_unique_columns_in_place(row_map: dict[str, Any]) -> None:
+            if isinstance(self.rfc_unique_id, list) and self.rfc_unique_id:
+                for uid_col in self.rfc_unique_id:
+                    if uid_col in row_map:
+                        target_len = self._rfc_unique_id_len.get(uid_col)
+                        if isinstance(target_len, int):
+                            val = row_map[uid_col]
+                            if val is None:
+                                continue
+                            if not isinstance(val, str):
+                                val = str(val)
+                            missing = target_len - len(val)
+                            if missing > 0:
+                                row_map[uid_col] = val + (" " * missing)
+
+        def parse_condition(cond: str) -> tuple[str, str, str]:
+            # Supports simple comparisons: =, !=, <>, <=, >=, <, >
+            match = re.match(r"^\s*([A-Za-z0-9_]+)\s*(=|!=|<>|<=|>=|<|>)\s*(.+?)\s*$", cond)
+            if not match:
+                raise ValueError(f"Unsupported client-side filter condition: {cond}")
+            left, op, right = match.groups()
+            # Strip outer quotes for strings
+            right = right.strip()
+            if (right.startswith("'") and right.endswith("'")) or (
+                right.startswith('"') and right.endswith('"')
+            ):
+                right = right[1:-1]
+            return left, op, right
+
+        def eval_condition(row: dict[str, Any], left: str, op: str, right: str) -> bool:
+            # Values from SAP are strings; compare as strings
+            lval = row.get(self._resolve_col_name(left), row.get(left))
+            if lval is None:
+                return False
+            if not isinstance(lval, str):
+                lval = str(lval)
+            if op == "=":
+                return lval == right
+            if op in ("!=", "<>"):
+                return lval != right
+            if op == "<":
+                return lval < right
+            if op == ">":
+                return lval > right
+            if op == "<=":
+                return lval <= right
+            if op == ">=":
+                return lval >= right
+            return False
+
+        def apply_client_side_filters(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
+            if not self.client_side_filters:
+                return rows
+            # Build ordered list of (keyword, condition)
+            kv = list(self.client_side_filters.items())
+            if not kv:
+                return rows
+            filtered: list[dict[str, Any]] = []
+            for row in rows:
+                res: bool | None = None
+                for i, (keyword, cond) in enumerate(kv):
+                    left, op, right = parse_condition(cond)
+                    ok = eval_condition(row, left, op, right)
+                    if i == 0:
+                        res = ok
+                    else:
+                        keyword_upper = keyword.upper()
+                        if keyword_upper == "AND":
+                            res = bool(res) and ok
+                        elif keyword_upper == "OR":
+                            res = bool(res) or ok
+                        else:
+                            raise ValueError(f"Unsupported boolean keyword: {keyword}")
+                if res:
+                    filtered.append(row)
+            return filtered
+
+        # Storage depending on whether we have unique keys
+        has_unique = isinstance(self.rfc_unique_id, list) and self.rfc_unique_id
+        rows_by_key: "OrderedDict[tuple[str, ...], dict[str, Any]]" | None = None
+        rows_list: list[dict[str, Any]] | None = None
+        row_index = 0
+
+        # Try each separator until we successfully parse the data
+        for sep in separators:
+            logger.info(f"Checking if separator '{sep}' works.")
+            self._query["DELIMITER"] = sep
+
+            # Initialize storage for this attempt
+            if has_unique:
+                rows_by_key = OrderedDict()
+            else:
+                rows_list = []
+                row_index = 0
+
+            chunk = 1
+            found_any_data = False
+
+            for fields in fields_lists:
+                logger.info(f"Downloading {chunk} data chunk...")
+                self._query["FIELDS"] = fields
+                try:
+                    response = self.call(func, **params)
+                except ABAPApplicationError as e:
+                    if e.key == "DATA_BUFFER_EXCEEDED":
+                        msg = "Character limit per row exceeded. Please select fewer columns."
+                        raise DataBufferExceededError(msg) from e
+                    raise
+
+                if response["DATA"]:
+                    found_any_data = True
+                    # Split records into values
+                    records = split_wa_records(response["DATA"], sep)
+
+                    if has_unique:
+                        # Ensure unique ID columns get padded per SAP metadata
+                        for values in records:
+                            # Map current chunk values to column names
+                            row_map = {col: values[i] if i < len(values) else None for i, col in enumerate(fields)}
+                            pad_unique_columns_in_place(row_map)
+                            # Build unique key tuple
+                            key_tuple = tuple(row_map.get(uid) for uid in self.rfc_unique_id)
+                            existing = rows_by_key.get(key_tuple)
+                            if existing is None:
+                                rows_by_key[key_tuple] = row_map
+                            else:
+                                existing.update(row_map)
+                    else:
+                        # Align row count with the first chunk
+                        if row_index == 0:
+                            row_index = len(records)
+                            if row_index == 0:
+                                logger.warning(
+                                    f"Empty output was generated for chunk {chunk} in columns {fields}."
+                                )
+                                # nothing to add for this chunk
+                            else:
+                                rows_list = [{} for _ in range(row_index)]
+                        else:
+                            if len(records) != row_index:
+                                logger.warning(
+                                    "New rows were generated during the execution of the script. The table is truncated to the number of rows for the first chunk."
+                                )
+                                records = records[:row_index]
+
+                        for idx, values in enumerate(records):
+                            # Map into existing row dict
+                            if idx >= len(rows_list):
+                                break
+                            row_map = rows_list[idx]
+                            for i, col in enumerate(fields):
+                                row_map[col] = values[i] if i < len(values) else None
+
+                    chunk += 1
+                else:
+                    logger.warning("No data returned from SAP.")
+
+            # If we successfully found any data for this separator, proceed
+            if found_any_data:
+                # Normalize rows to a list of dicts
+                if has_unique:
+                    result_rows = list(rows_by_key.values()) if rows_by_key is not None else []
+                else:
+                    result_rows = rows_list or []
+
+                # Apply client-side filters if present
+                result_rows = apply_client_side_filters(result_rows)
+
+                # Apply alias renaming
+                alias_map = getattr(self, "aliases_keyed_by_columns", {}) or {}
+                if alias_map:
+                    for row in result_rows:
+                        # create a list to avoid modifying dict during iteration
+                        for orig_col, alias_col in list(alias_map.items()):
+                            if orig_col in row and alias_col != orig_col:
+                                row[alias_col] = row.pop(orig_col)
+
+                # Drop columns not selected by the user
+                selected_set = set(columns_aliased)
+                for i in range(len(result_rows)):
+                    row = result_rows[i]
+                    keys_to_drop = [k for k in row.keys() if k not in selected_set]
+                    for k in keys_to_drop:
+                        row.pop(k, None)
+
+                # If client-side filters added any temporary columns, ensure they are removed
+                if self.client_side_filters:
+                    client_cols = [self._get_alias(col) for col in self._get_client_side_filter_cols()]
+                    for i in range(len(result_rows)):
+                        row = result_rows[i]
+                        for col in client_cols:
+                            if col not in selected_set:
+                                row.pop(col, None)
+
+                self.close_connection()
+
+                return result_rows
+
+        # No data across all separators
+        self.close_connection()
+
+        return []
+
+    @add_viadot_metadata_columns_arrow
+    def to_arrow(self) -> Any:
+        """Return results as a pyarrow.Table, leveraging the no-pandas path.
+
+        Returns:
+            pyarrow.Table: The results as an Arrow table.
+
+        Raises:
+            ImportError: If pyarrow is not installed.
+        """
+        try:
+            import pyarrow as pa  # type: ignore
+        except Exception as e:  # noqa: BLE001
+            raise ImportError("pyarrow is required for to_arrow().") from e
+
+        rows = self.to_raw_data()
+        # Arrow will infer schema; SAP values are strings by default
+        return pa.Table.from_pylist(rows)
 
     @add_viadot_metadata_columns
     def to_df(self, tests: dict | None = None) -> pd.DataFrame:  # noqa: C901, PLR0912, PLR0915
