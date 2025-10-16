@@ -353,39 +353,6 @@ class SMB(Source):
             return filename
         return f"{prefix}_{filename}"
 
-    def _matches_zip_filter(
-        self, filename: str, zip_inner_file_regexes: str | list[str] | None
-    ) -> bool:
-        """Check if a filename matches the ZIP file filter patterns.
-
-        Args:
-            filename (str): The filename to check (from inside ZIP).
-            zip_inner_file_regexes (str | list[str] | None): Regular expression string
-                or list of regex patterns used to filter files *inside* ZIP archives.
-                If provided, ZIP files will be unpacked and only matching inner files
-                will be extracted and stored. Defaults to None.
-
-        Returns:
-            bool: True if filename matches any pattern or if no filter is specified.
-        """
-        if zip_inner_file_regexes is None:
-            return True
-
-        patterns = (
-            [zip_inner_file_regexes]
-            if isinstance(zip_inner_file_regexes, str)
-            else zip_inner_file_regexes
-        )
-
-        for pattern in patterns:
-            try:
-                if re.search(pattern, filename, re.IGNORECASE):
-                    return True
-            except re.error as e:
-                self.logger.warning(f"Invalid regex pattern '{pattern}': {e}")
-
-        return False
-
     def _get_file_content(
         self,
         entry: smbclient._os.SMBDirEntry,
@@ -429,8 +396,9 @@ class SMB(Source):
                             if zip_member_name.endswith("/"):
                                 continue
 
-                            if self._matches_zip_filter(
-                                zip_member_name, zip_inner_file_regexes
+                            if self._matches_any_regex(
+                                zip_inner_file_regexes,
+                                zip_member_name,
                             ):
                                 with zf.open(zip_member_name) as member:
                                     content = member.read()
@@ -594,6 +562,30 @@ class SMB(Source):
         except re.error as e:
             self.logger.warning(f"Invalid regex pattern: {pattern} — Error: {e}")
             return False
+
+    def _matches_any_regex(
+        self,
+        patterns: str | list[str] | None,
+        text: str,
+    ) -> bool:
+        """Check whether the given text matches any of the provided regex pattern(s).
+
+        Args:
+            text (str): The string to test.
+            patterns (str | list[str] | None): A regex pattern or list of patterns.
+                If None, this method returns True (no filtering applied).
+
+        Returns:
+            bool: True if the text matches at least one pattern, or if no pattern
+                is given.
+        """
+        if not patterns:
+            return True
+
+        if isinstance(patterns, str):
+            patterns = [patterns]
+
+        return any(self._safe_regex_match(pattern, text) for pattern in patterns)
 
     def save_files_locally(
         self, file_data: dict[str, bytes], destination_dir: str
