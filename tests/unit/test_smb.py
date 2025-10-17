@@ -1,6 +1,8 @@
+import io
 import logging
 from pathlib import Path
 from unittest.mock import MagicMock, mock_open, patch
+import zipfile
 
 import pendulum
 from pydantic import SecretStr
@@ -48,6 +50,18 @@ def mock_smb_dir_entry_dir():
     mock.is_dir.return_value = True
     mock.is_file.return_value = False
     return mock
+
+
+@pytest.fixture
+def sample_zip_bytes():
+    """Create an in-memory ZIP file for testing."""
+    buf = io.BytesIO()
+    with zipfile.ZipFile(buf, "w") as zf:
+        zf.writestr("file1.txt", b"Hello World")
+        zf.writestr("file2.csv", b"1,2,3")
+        zf.writestr("folder/file3.txt", b"Nested file")
+    buf.seek(0)
+    return buf
 
 
 def test_smb_initialization_with_credentials(valid_credentials):
@@ -484,6 +498,31 @@ def test_get_file_content_empty_file(smb_instance, mock_smb_dir_entry_file, capl
 
         assert result == {mock_entry.name: b""}
         assert f"Found: {mock_entry.path}" in caplog.text
+
+
+def test_get_file_content_zip_all_files(
+    smb_instance, mock_smb_dir_entry_file, sample_zip_bytes
+):
+    """Test unpacking ZIP with no filter (all files extracted)."""
+    mock_entry = mock_smb_dir_entry_file
+    mock_entry.name = "file.zip"
+    mock_entry.path = f"{SERVER_PATH}/file.zip"
+
+    with patch("smbclient.open_file", return_value=sample_zip_bytes):
+        smb_instance._build_prefix_from_path = lambda path, levels: ""  # noqa: ARG005
+        smb_instance._add_prefix_to_filename = lambda name, prefix: name  # noqa: ARG005
+        smb_instance._matches_any_regex = (
+            lambda text, patterns: True  # noqa: ARG005
+        )  # match all
+
+        contents = smb_instance._get_file_content(
+            mock_entry, zip_inner_file_regexes="file"
+        )
+
+        assert len(contents) == 3
+        assert contents["file1.txt"] == b"Hello World"
+        assert contents["file2.csv"] == b"1,2,3"
+        assert contents["file3.txt"] == b"Nested file"
 
 
 def test_save_files_locally_empty_file(smb_instance, caplog, tmp_path):
