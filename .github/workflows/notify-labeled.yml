@@ -1,0 +1,13 @@
+name: Notify Labeled
+
+on:
+  issues:
+    types: [labeled]
+
+jobs:
+  call-reusable:
+    uses: dyvenia/workflow-templates/.github/workflows/template_slack_notify.yaml@main
+    with:
+      match_label: devops
+    secrets:
+      SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
