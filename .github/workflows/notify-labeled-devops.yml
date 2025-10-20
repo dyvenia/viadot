@@ -10,4 +10,4 @@ jobs:
     with:
       match_label: devops
     secrets:
-      SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+      SLACK_WEBHOOK_URL: ${{ secrets.SLACK_DEVOPS_NOTIFICATIONS }}
