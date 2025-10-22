@@ -1,4 +1,4 @@
-"""Flows for downloading data from SQLServer and uploading it to MinIO."""
+"""Flows for downloading data from SQLServer and uploading it to Redshift Spectrum."""
 
 from typing import Literal
 
