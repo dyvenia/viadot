@@ -11,6 +11,7 @@ import pyodbc
 
 from viadot.config import get_source_credentials
 from viadot.signals import SKIP
+from viadot.utils import add_viadot_metadata_columns
 
 
 logger = logging.getLogger(__name__)
@@ -258,6 +259,7 @@ class SQL(Source):
 
         return result
 
+    @add_viadot_metadata_columns
     def to_df(
         self,
         query: str,
