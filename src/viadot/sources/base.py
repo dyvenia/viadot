@@ -11,7 +11,7 @@ import pyodbc
 
 from viadot.config import get_source_credentials
 from viadot.signals import SKIP
-from viadot.utils import add_viadot_metadata_columns
+from viadot.utils import add_viadot_metadata_columns, validate
 
 
 logger = logging.getLogger(__name__)
@@ -265,6 +265,7 @@ class SQL(Source):
         query: str,
         con: pyodbc.Connection | None = None,
         if_empty: Literal["warn", "skip", "fail"] = "warn",
+        tests: dict[str, Any] | None = None,
     ) -> pd.DataFrame:
         """Execute a query and return the result as a pandas DataFrame.
 
@@ -273,6 +274,20 @@ class SQL(Source):
             con (pyodbc.Connection, optional): The connection to use to pull the data.
             if_empty (Literal["warn", "skip", "fail"], optional): What to do if the
                 query returns no data. Defaults to None.
+            tests (dict[str, Any], optional): A dictionary with optional list of tests
+                to verify the output dataframe. If defined, triggers the `validate`
+                function from utils. Defaults to None.
+                Available tests:
+                    - `column_size`: dict{column: size}
+                    - `column_unique_values`: list[columns]
+                    - `column_list_to_match`: list[columns]
+                    - `dataset_row_count`: dict: {'min': number, 'max', number}
+                    - `column_match_regex`: dict: {column: 'regex'}
+                    - `column_sum`: dict: {column: {'min': number, 'max': number}}
+                Defaults to: None
+
+        Returns:
+            pd.DataFrame: The resulting data as a pandas DataFrame.
         """
         conn = con or self.con
 
@@ -283,6 +298,10 @@ class SQL(Source):
                 self._handle_if_empty(if_empty=if_empty)
         else:
             df = pd.DataFrame()
+
+        if tests:
+            validate(df=df, tests=tests)
+
         return df
 
     def _check_if_table_exists(self, table: str, schema: str | None = None) -> bool:
