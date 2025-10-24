@@ -5,6 +5,7 @@ from typing import Literal
 from prefect import flow
 
 from viadot.orchestration.prefect.tasks import df_to_redshift_spectrum, sql_server_to_df
+from viadot.orchestration.prefect.utils import DynamicDateHandler
 
 
 @flow(
@@ -24,6 +25,9 @@ def sql_server_to_redshift_spectrum(  # noqa: PLR0913
     partition_cols: list[str] | None = None,
     index: bool = False,
     compression: str | None = None,
+    dynamic_date_symbols: list[str] = ["<<", ">>"],  # noqa: B006
+    dynamic_date_format: str = "%Y%m%d",
+    dynamic_date_timezone: str = "UTC",
     aws_config_key: str | None = None,
     credentials_secret: str | None = None,
     sql_server_credentials_secret: str | None = None,
@@ -32,7 +36,8 @@ def sql_server_to_redshift_spectrum(  # noqa: PLR0913
     """Flow to load data from a SQL Server database to Redshift Spectrum.
 
     Args:
-        query (str): The SQL query to execute on the SQL Server database.
+        query (str): The SQL query to execute on the SQL Server database. Dynamic date
+            pattern is supported (SELECT * FROM table WHERE date='<<yesterday>>')
         to_path (str): The path where the extracted data will be stored.
         schema_name (str): The name of the schema in Redshift Spectrum.
         table (str): The name of the table in Redshift Spectrum.
@@ -46,6 +51,12 @@ def sql_server_to_redshift_spectrum(  # noqa: PLR0913
             Defaults to False.
         compression (str | None, optional): Compression type to use for the output file.
             Defaults to None.
+        dynamic_date_symbols (list[str], optional): Symbols used for dynamic date
+            handling. Defaults to ["<<", ">>"].
+        dynamic_date_format (str, optional): Format used for dynamic date parsing.
+            Defaults to "%Y%m%d".
+        dynamic_date_timezone (str, optional): Timezone used for dynamic date
+            processing. Defaults to "UTC".
         aws_config_key (str | None, optional): AWS configuration key. Defaults to None.
         credentials_secret (str | None, optional): Name of the secret storing
             AWS credentials. Defaults to None.
@@ -57,6 +68,11 @@ def sql_server_to_redshift_spectrum(  # noqa: PLR0913
     Returns:
         None
     """
+    ddh = DynamicDateHandler(
+        dynamic_date_symbols, dynamic_date_format, dynamic_date_timezone
+    )
+    query = ddh.process_dates(query)  # type: ignore
+
     df = sql_server_to_df(
         query=query,
         config_key=sql_server_config_key,
