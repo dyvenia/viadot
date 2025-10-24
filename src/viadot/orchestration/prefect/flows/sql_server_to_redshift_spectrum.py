@@ -1,6 +1,6 @@
 """Flows for downloading data from SQLServer and uploading it to Redshift Spectrum."""
 
-from typing import Literal
+from typing import Any, Literal
 
 from prefect import flow
 
@@ -28,6 +28,7 @@ def sql_server_to_redshift_spectrum(  # noqa: PLR0913
     dynamic_date_symbols: list[str] = ["<<", ">>"],  # noqa: B006
     dynamic_date_format: str = "%Y%m%d",
     dynamic_date_timezone: str = "UTC",
+    tests: dict[str, Any] | None = None,
     aws_config_key: str | None = None,
     credentials_secret: str | None = None,
     sql_server_credentials_secret: str | None = None,
@@ -57,6 +58,17 @@ def sql_server_to_redshift_spectrum(  # noqa: PLR0913
             Defaults to "%Y%m%d".
         dynamic_date_timezone (str, optional): Timezone used for dynamic date
             processing. Defaults to "UTC".
+        tests (dict[str, Any], optional): A dictionary with optional list of tests
+            to verify the output dataframe. If defined, triggers the `validate`
+            function from utils. Defaults to None.
+            Available tests:
+                - `column_size`: dict{column: size}
+                - `column_unique_values`: list[columns]
+                - `column_list_to_match`: list[columns]
+                - `dataset_row_count`: dict: {'min': number, 'max', number}
+                - `column_match_regex`: dict: {column: 'regex'}
+                - `column_sum`: dict: {column: {'min': number, 'max': number}}
+            Defaults to: None
         aws_config_key (str | None, optional): AWS configuration key. Defaults to None.
         credentials_secret (str | None, optional): Name of the secret storing
             AWS credentials. Defaults to None.
@@ -77,6 +89,7 @@ def sql_server_to_redshift_spectrum(  # noqa: PLR0913
         query=query,
         config_key=sql_server_config_key,
         credentials_secret=sql_server_credentials_secret,
+        tests=tests,
     )
 
     df_to_redshift_spectrum(
