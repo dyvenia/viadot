@@ -126,6 +126,8 @@ def test_scan_and_store(
             filename_regex=filename_regex,
             extensions=extensions,
             date_filter_parsed=mock_date_result,
+            prefix_levels_to_add=0,
+            zip_inner_file_regexes=None,
         )
 
 
