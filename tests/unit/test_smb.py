@@ -28,7 +28,7 @@ def valid_credentials():
 def smb_instance(valid_credentials):
     with patch("viadot.sources.smb.smbclient.register_session") as mock_register:
         mock_register.return_value = None
-        return SMB(base_path=SERVER_PATH, credentials=valid_credentials)
+        return SMB(base_paths=SERVER_PATH, credentials=valid_credentials)
 
 
 @pytest.fixture
@@ -67,7 +67,7 @@ def sample_zip_bytes():
 def test_smb_initialization_with_credentials(valid_credentials):
     with patch("viadot.sources.smb.smbclient.register_session") as mock_register:
         mock_register.return_value = None
-        smb = SMB(base_path=SERVER_PATH, credentials=valid_credentials)
+        smb = SMB(base_paths=SERVER_PATH, credentials=valid_credentials)
     assert smb.credentials["username"] == "default@example.com"
     assert smb.credentials["password"] == SecretStr("default_password")
 
@@ -77,7 +77,7 @@ def test_smb_initialization_without_credentials():
         CredentialError,
         match="`username`, and `password` credentials are required.",
     ):
-        SMB(base_path=SERVER_PATH)
+        SMB(base_paths=SERVER_PATH)
 
 
 @pytest.mark.parametrize(
@@ -122,7 +122,7 @@ def test_scan_and_store(
         )
 
         mock_scan_directory.assert_called_once_with(
-            path=smb_instance.base_path,
+            path=smb_instance.base_paths,
             filename_regex=filename_regex,
             extensions=extensions,
             date_filter_parsed=mock_date_result,
