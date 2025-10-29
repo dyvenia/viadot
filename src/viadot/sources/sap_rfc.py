@@ -690,7 +690,6 @@ class SAPRFC(Source):
                 `PyRFC.query()`.
         """
         params = self._query
-        columns = self.select_columns_aliased
         sep = self._query.get("DELIMITER")
         fields_lists = self._query.get("FIELDS")
         if len(fields_lists) > 1:
@@ -769,7 +768,8 @@ class SAPRFC(Source):
         if not df.empty:
             # It is used to filter out columns which are not in select query
             # for example columns passed only as unique column
-            df = df.loc[:, columns]
+            df = df.loc[:, self.select_columns]
+            df.columns = self.select_columns_aliased
 
         if self.client_side_filters:
             filter_query = self._build_pandas_filter_query(self.client_side_filters)
