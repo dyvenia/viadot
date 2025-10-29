@@ -30,7 +30,7 @@ def sql_server_to_redshift_spectrum(  # noqa: PLR0913
     dynamic_date_timezone: str = "UTC",
     tests: dict[str, Any] | None = None,
     aws_config_key: str | None = None,
-    credentials_secret: str | None = None,
+    aws_credentials_secret: str | None = None,
     sql_server_credentials_secret: str | None = None,
     sql_server_config_key: str | None = None,
 ) -> None:
@@ -70,7 +70,7 @@ def sql_server_to_redshift_spectrum(  # noqa: PLR0913
                 - `column_sum`: dict: {column: {'min': number, 'max': number}}
             Defaults to: None
         aws_config_key (str | None, optional): AWS configuration key. Defaults to None.
-        credentials_secret (str | None, optional): Name of the secret storing
+        aws_credentials_secret (str | None, optional): Name of the secret storing
             AWS credentials. Defaults to None.
         sql_server_credentials_secret (str | None, optional): Name of the secret storing
             SQL Server credentials. Defaults to None.
@@ -104,5 +104,5 @@ def sql_server_to_redshift_spectrum(  # noqa: PLR0913
         compression=compression,
         sep=sep,
         config_key=aws_config_key,
-        credentials_secret=credentials_secret,
+        credentials_secret=aws_credentials_secret,
     )
