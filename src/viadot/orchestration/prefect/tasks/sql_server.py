@@ -62,6 +62,7 @@ def sql_server_to_df(
     query: str,
     credentials_secret: str | None = None,
     config_key: str | None = None,
+    tests: dict[str, Any] | None = None,
 ) -> pd.DataFrame:
     """Load the result of a SQL Server Database query into a pandas DataFrame.
 
@@ -74,7 +75,8 @@ def sql_server_to_df(
         config_key (str, optional): The key in the viadot config holding relevant
             credentials. Defaults to None.
 
-    Returns: pd.Dataframe
+    Returns:
+        pd.Dataframe: The resulting data as a pandas DataFrame.
     """
     if not (credentials_secret or config_key):
         raise MissingSourceCredentialsError
@@ -85,7 +87,7 @@ def sql_server_to_df(
         credentials_secret
     )
     sql_server = SQLServer(credentials=credentials)
-    df = sql_server.to_df(query=query)
+    df = sql_server.to_df(query=query, tests=tests)
     nrows = df.shape[0]
     ncols = df.shape[1]
 
