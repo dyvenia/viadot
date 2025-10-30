@@ -61,7 +61,20 @@ class Matomo(Source):
     def _validate_parameters(
         self, api_token: str, url: str, params: dict[str, str]
     ) -> dict[str, str]:
-        """Validate input parameters and return processed params."""
+        """Validate input parameters and return processed params.
+
+        Args:
+            api_token (str): The authentication token for the Matomo API.
+            url (str): The base URL of the Matomo instance.
+            params (dict[str, str]): Parameters for the API request.
+
+        Returns:
+            dict[str, str]: The processed parameters with the api_token added.
+
+        Raises:
+            ValueError: If api_token or url are empty, or if required parameters
+                are missing.
+        """
         if not api_token:
             msg = "api_token is required and cannot be empty"
             self.logger.error(msg)
@@ -90,26 +103,39 @@ class Matomo(Source):
         params["token_auth"] = api_token
         return params
 
-    def _process_response(self, response: object) -> None:
-        """Process and validate API response."""
+    def _validate_response(self, response: object) -> dict[str, Any]:
+        """Process and validate API response.
+
+        Args:
+            response (object): The HTTP response object from the Matomo API request.
+
+        Returns:
+            dict[str, Any]: The parsed JSON response data.
+
+        Raises:
+            APIError: If the response status is not OK, JSON parsing fails, or
+                the response data is not in expected format (list or dict).
+        """
         if response.status_code == HTTP_STATUS_OK:
             try:
-                self.data = response.json()
+                data = response.json()
                 self.logger.info("Successfully fetched data from Matomo API.")
 
                 # Validate that we have a proper response structure
-                if not isinstance(self.data, list | dict):
+                if not isinstance(data, list | dict):
                     msg = "API response is not in expected JSON format (list or dict)"
                     self.logger.error(msg)
                     raise APIError(msg)
 
                 # Log response summary
-                if isinstance(self.data, list):
-                    self.logger.info(f"API returned {len(self.data)} records.")
-                elif isinstance(self.data, dict):
+                if isinstance(data, list):
+                    self.logger.info(f"API returned {len(data)} records.")
+                elif isinstance(data, dict):
                     self.logger.info(
-                        f"API returned response with keys: {list(self.data.keys())}"
+                        f"API returned response with keys: {list(data.keys())}"
                     )
+
+                return data
 
             except ValueError as e:
                 msg = "Failed to parse API response as JSON"
@@ -151,7 +177,7 @@ class Matomo(Source):
                 params=params,
                 method="GET",
             )
-            self._process_response(response)
+            self.data = self._validate_response(response)
         except Exception as e:
             msg = "Failed to fetch data from Matomo API"
             self.logger.exception(msg)

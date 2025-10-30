@@ -53,9 +53,6 @@ def matomo_to_redshift_spectrum(  # noqa: PLR0913
              holding relevant Matomo credentials. Defaults to None.
         matomo_credentials_secret (str, optional): The name of the secret that stores
             Matomo credentials. Defaults to None.
-        credentials (dict[str, Any], optional): Credentials to Matomo.
-            Must contain 'api_token' key for authentication.
-            Defaults to None.
         params (dict[str, str]): Parameters for the API request.
                 Required params: "module","method","idSite","period","date","format".
         record_prefix (Optional[str], optional): A prefix for the record path fields.
@@ -106,7 +103,7 @@ def matomo_to_redshift_spectrum(  # noqa: PLR0913
         )
     """
     data_frame = matomo_to_df(
-        matomo_url=matomo_url,
+        url=matomo_url,
         top_level_fields=top_level_fields,
         record_path=record_path,
         config_key=matomo_config_key,
@@ -120,7 +117,7 @@ def matomo_to_redshift_spectrum(  # noqa: PLR0913
     return df_to_redshift_spectrum(
         df=data_frame,
         to_path=to_path,
-        schema=schema_name,
+        schema_name=schema_name,
         table=table,
         extension=extension,
         if_exists=if_exists,
