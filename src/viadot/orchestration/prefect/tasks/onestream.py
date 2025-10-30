@@ -8,7 +8,7 @@ import requests
 
 from viadot.orchestration.prefect.exceptions import MissingSourceCredentialsError
 from viadot.orchestration.prefect.utils import get_credentials
-from viadot.sources.onestream import Onestream
+from viadot.sources.onestream import OneStream
 
 
 @task(retries=3, log_prints=True, retry_delay_seconds=10, timeout_seconds=60 * 60)
@@ -51,7 +51,7 @@ def onestream_get_agg_adapter_endpoint_data_to_df(
         raise MissingSourceCredentialsError
 
     credentials = get_credentials(credentials_secret)  # type: ignore
-    onestream = Onestream(
+    onestream = OneStream(
         server_url=server_url,
         application=application,
         credentials=credentials,
@@ -109,7 +109,7 @@ def onestream_get_agg_sql_data_to_df(
         raise MissingSourceCredentialsError
 
     credentials = get_credentials(credentials_secret)
-    onestream = Onestream(
+    onestream = OneStream(
         server_url=server_url,
         application=application,
         credentials=credentials,
@@ -159,7 +159,7 @@ def onestream_run_data_management_seq(
         raise MissingSourceCredentialsError
 
     credentials = get_credentials(credentials_secret)
-    onestream = Onestream(
+    onestream = OneStream(
         server_url=server_url,
         application=application,
         credentials=credentials,

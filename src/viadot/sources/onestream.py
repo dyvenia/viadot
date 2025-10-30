@@ -29,7 +29,7 @@ class OneStreamCredentials(BaseModel):
     api_token: str
 
 
-class Onestream(Source):
+class OneStream(Source):
     def __init__(
         self,
         server_url: str,
