@@ -16,6 +16,7 @@ from .genesys import Genesys
 from .hubspot import Hubspot
 from .mediatool import Mediatool
 from .mindful import Mindful
+from .onestream import OneStream
 from .outlook import Outlook
 from .salesforce import Salesforce
 from .sftp import Sftp
@@ -45,6 +46,7 @@ __all__ = [
     "Hubspot",
     "Mediatool",
     "Mindful",
+    "OneStream",
     "Outlook",
     "SQLServer",
     "SQLite",
