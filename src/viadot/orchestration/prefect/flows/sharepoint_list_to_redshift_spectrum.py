@@ -26,7 +26,6 @@ def sharepoint_list_to_redshift_spectrum(  # noqa: PLR0913
     extension: str = ".parquet",
     if_exists: Literal["overwrite", "append"] = "overwrite",
     default_protocol: str | None = "https://",
-    description: str | None = None,
     partition_cols: list[str] | None = None,
     index: bool = False,
     compression: str | None = None,
@@ -52,7 +51,6 @@ def sharepoint_list_to_redshift_spectrum(  # noqa: PLR0913
                 SharePoint URLs.Defaults to "https://".
         if_exists (Literal["overwrite", "append"], optional): Action if the table
             exists.Defaults to "overwrite".
-        description (str | None, optional): Description of the table. Defaults to None.
         partition_cols (list[str] | None, optional): Columns to partition the data by.
             Defaults to None.
         index (bool, optional): Whether to include the index in the output.
@@ -91,7 +89,6 @@ def sharepoint_list_to_redshift_spectrum(  # noqa: PLR0913
         to_path=to_path,
         schema_name=schema_name,
         table=table,
-        description=description,
         extension=extension,
         if_exists=if_exists,
         partition_cols=partition_cols,

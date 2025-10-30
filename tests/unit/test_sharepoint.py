@@ -1,19 +1,21 @@
 from io import BytesIO
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 from openpyxl import Workbook
 import pandas as pd
 import pytest
-import requests
-import sharepy
-from sharepy.errors import AuthError
 
 from viadot.exceptions import CredentialError
 from viadot.sources import Sharepoint
 from viadot.sources.sharepoint import SharepointCredentials
 
 
-DUMMY_CREDS = {"site": "test", "username": "test2", "password": "test"}
+DUMMY_CREDS = {
+    "site": "tenant.sharepoint.com",  # pragma: allowlist secret
+    "client_id": "dummy_client_id",  # pragma: allowlist secret
+    "client_secret": "dummy_client_secret",  # pragma: allowlist secret
+    "tenant_id": "dummy_tenant_id",  # pragma: allowlist secret
+}
 SAMPLE_DF = pd.DataFrame(
     {
         "int_col": [1, 2, 3, 4, 5, None],
@@ -51,10 +53,7 @@ def create_excel_file():
 
 
 class SharepointMock(Sharepoint):
-    def get_connection(self):
-        return sharepy.session.SharePointSession
-
-    def _download_file_stream(self, url: str | None = None, **kwargs):  # noqa: ARG002
+    def _download_file_stream(self, _url: str | None = None, **kwargs):
         if "nrows" in kwargs:
             msg = "Parameter 'nrows' is not supported."
             raise ValueError(msg)
@@ -70,50 +69,61 @@ def sharepoint_mock():
 @pytest.fixture
 def sharepoint():
     credentials = {
-        "site": "https://example.sharepoint.com",
-        "username": "email@example.com",
-        "password": "password",
+        "site": "example.sharepoint.com",  # pragma: allowlist secret
+        "client_id": "dummy_client_id",  # pragma: allowlist secret
+        "client_secret": "dummy_client_secret",  # pragma: allowlist secret
+        "tenant_id": "dummy_tenant_id",  # pragma: allowlist secret
     }
     return Sharepoint(credentials=credentials)
 
 
 def test_valid_credentials():
     credentials = {
-        "site": "tenant.sharepoint.com",
-        "username": "user@example.com",
-        "password": "password",
+        "site": "tenant.sharepoint.com",  # pragma: allowlist secret
+        "client_id": "client",  # pragma: allowlist secret
+        "client_secret": "secret",  # pragma: allowlist secret
+        "tenant_id": "tenant",  # pragma: allowlist secret
     }
     shrp_creds = SharepointCredentials(**credentials)
     assert shrp_creds.site == credentials["site"]
-    assert shrp_creds.username == credentials["username"]
-    assert shrp_creds.password == credentials["password"]
+    assert shrp_creds.client_id == credentials["client_id"]
+    assert shrp_creds.client_secret == credentials["client_secret"]
+    assert shrp_creds.tenant_id == credentials["tenant_id"]
 
 
 def test_invalid_authentication():
     credentials = {
-        "site": "tenant.sharepoint.com",
-        "username": "user@example.com",
-        "password": "password",
+        "site": "tenant.sharepoint.com",  # pragma: allowlist secret
+        "client_id": "client",  # pragma: allowlist secret
+        "client_secret": "secret",  # pragma: allowlist secret
+        "tenant_id": "tenant",  # pragma: allowlist secret
     }
 
     s = Sharepoint(credentials=credentials)
 
-    # Patch the sharepy.connect method to simulate an authentication failure
-    with patch("sharepy.connect") as mock_connect:
-        mock_connect.side_effect = AuthError("Authentication failed")
+    # Patch the GraphClient constructor to simulate an authentication failure
+    with patch("viadot.sources.sharepoint.GraphClient") as graph_client:
+        graph_client.side_effect = Exception("Authentication failed")
 
         with pytest.raises(
             CredentialError,
             match="Could not authenticate to tenant.sharepoint.com with provided credentials.",
         ):
-            s.get_connection()
+            s.get_client()
 
 
-def test_missing_username():
-    credentials = {"site": "example.sharepoint.com", "password": "password"}
+def test_missing_client_id():
+    credentials = {
+        "site": "example.sharepoint.com",  # pragma: allowlist secret
+        "client_secret": "x",  # pragma: allowlist secret
+        "tenant_id": "t",  # pragma: allowlist secret
+    }
     with pytest.raises(
         CredentialError,
-        match="'site', 'username', and 'password' credentials are required.",
+        match=(
+            "'site', 'client_id', 'client_secret' and "
+            "'tenant_id' credentials are required."
+        ),
     ):
         SharepointCredentials(**credentials)
 
@@ -188,27 +198,57 @@ def test__load_and_parse_not_valid_extension(sharepoint_mock):
 def test_scan_sharepoint_folder_valid_url(sharepoint_mock):
     url = "https://company.sharepoint.com/sites/site_name/final_folder/"
 
-    # Mock the response from SharePoint
-    mock_response = MagicMock()
-    mock_response.json.return_value = {
-        "d": {
-            "results": [
-                {"Name": "file1.txt"},
-                {"Name": "file2.txt"},
-            ]
-        }
-    }
+    # Build a fake Graph client hierarchy to return children with names
+    class _FakeChildren:
+        def get(self):
+            class _Exec:
+                def execute_query(self):
+                    class _Item:
+                        def __init__(self, name):
+                            self.name = name
 
-    # Inject the mock response
-    sharepoint_mock.get_connection().get = MagicMock(return_value=mock_response)
+                    return [_Item("file1.txt"), _Item("file2.txt")]
 
-    expected_files = [
-        "https://company.sharepoint.com/sites/site_name/final_folder/file1.txt",
-        "https://company.sharepoint.com/sites/site_name/final_folder/file2.txt",
-    ]
+            return _Exec()
 
-    result = sharepoint_mock.scan_sharepoint_folder(url)
-    assert result == expected_files
+    class _FakeDriveItem:
+        def get(self):
+            class _Exec:
+                def execute_query(self):
+                    # Return an object that has .children
+                    class _FolderItem:
+                        children = _FakeChildren()
+
+                    return _FolderItem()
+
+            return _Exec()
+
+    class _FakeByUrl:
+        @property
+        def drive_item(self):
+            return _FakeDriveItem()
+
+    class _FakeShares:
+        def by_url(self, _url):
+            return _FakeByUrl()
+
+    class _FakeClient:
+        shares = _FakeShares()
+
+    with patch.object(Sharepoint, "get_client", return_value=_FakeClient()):
+        expected_files = [
+            (
+                "https://company.sharepoint.com/sites/site_name/"
+                "final_folder/file1.txt"
+            ),
+            (
+                "https://company.sharepoint.com/sites/site_name/"
+                "final_folder/file2.txt"
+            ),
+        ]
+
+        result = sharepoint_mock.scan_sharepoint_folder(url)
+        assert result == expected_files
 
 
 def test_scan_sharepoint_folder_invalid_url(sharepoint_mock):
@@ -223,13 +263,41 @@ def test_scan_sharepoint_folder_empty_response(sharepoint_mock):
         "https://company.sharepoint.com/sites/site_name/folder/sub_folder/final_folder"
     )
 
-    mock_response = MagicMock()
-    mock_response.json.return_value = {"d": {"results": []}}
+    # Fake client that returns no children
+    class _FakeChildren:
+        def get(self):
+            class _Exec:
+                def execute_query(self):
+                    return []
 
-    sharepoint_mock.get_connection().get = MagicMock(return_value=mock_response)
+            return _Exec()
 
-    result = sharepoint_mock.scan_sharepoint_folder(url)
-    assert result == []
+    class _FakeDriveItem:
+        def get(self):
+            class _Exec:
+                def execute_query(self):
+                    class _FolderItem:
+                        children = _FakeChildren()
+
+                    return _FolderItem()
+
+            return _Exec()
+
+    class _FakeByUrl:
+        @property
+        def drive_item(self):
+            return _FakeDriveItem()
+
+    class _FakeShares:
+        def by_url(self, _url):
+            return _FakeByUrl()
+
+    class _FakeClient:
+        shares = _FakeShares()
+
+    with patch.object(Sharepoint, "get_client", return_value=_FakeClient()):
+        result = sharepoint_mock.scan_sharepoint_folder(url)
+        assert result == []
 
 
 def test_download_file_stream_unsupported_param(sharepoint_mock):
@@ -241,81 +309,71 @@ def test_download_file_stream_unsupported_param(sharepoint_mock):
 
 def test_successful_download(sharepoint):
     url = "https://example.sharepoint.com/sites/site/Shared%20Documents/file.xlsx"
-    with patch("sharepy.connect") as mock_connect:
-        mock_response = MagicMock()
-        mock_response.status_code = 200
-        mock_response.content = create_excel_file()
-        mock_session = MagicMock()
-        mock_session.get.return_value = mock_response
-        mock_connect.return_value = mock_session
+    with patch.object(
+        Sharepoint,
+        "_download_file_stream",
+        return_value=pd.ExcelFile(BytesIO(create_excel_file())),
+    ):
         df = sharepoint.to_df(url)
         assert not df.empty
         assert len(df) == 6
 
 
 def test_access_denied(sharepoint):
-    url = "https://example.sharepoint.com/sites/site/Shared%20Documents/restricted_file.xlsx"
-    with patch("sharepy.connect") as mock_connect:
-        mock_response = MagicMock()
-        mock_response.status_code = 403
-        mock_response.raise_for_status.side_effect = requests.exceptions.HTTPError(
-            response=mock_response
-        )
-        mock_session = MagicMock()
-        mock_session.get.return_value = mock_response
-        mock_connect.return_value = mock_session
-        with pytest.raises(requests.exceptions.HTTPError):
-            sharepoint.to_df(url)
+    url = (
+        "https://example.sharepoint.com/sites/site/"
+        "Shared%20Documents/restricted_file.xlsx"
+    )
+    with (
+        patch.object(
+            Sharepoint,
+            "_download_file_stream",
+            side_effect=PermissionError("403 Forbidden"),
+        ),
+        pytest.raises(PermissionError),
+    ):
+        sharepoint.to_df(url)
 
 
 def test_invalid_excel_file(sharepoint):
     url = "https://example.sharepoint.com/sites/site/Shared%20Documents/file.xlsx"
-    with patch("sharepy.connect") as mock_connect:
-        mock_response = MagicMock()
-        mock_response.status_code = 200
-        mock_response.content = b"not an excel file"
-        mock_session = MagicMock()
-        mock_session.get.return_value = mock_response
-        mock_connect.return_value = mock_session
-        with pytest.raises(ValueError, match="Excel file format cannot be determined"):
-            sharepoint.to_df(url)
+    with (
+        patch.object(
+            Sharepoint,
+            "_download_file_stream",
+            side_effect=ValueError("Excel file format cannot be determined"),
+        ),
+        pytest.raises(ValueError, match="Excel file format cannot be determined"),
+    ):
+        sharepoint.to_df(url)
 
 
 def test_mixed_file_extensions(sharepoint):
     url = "https://example.sharepoint.com/sites/site/Shared%20Documents/folder"
     with (
-        patch("sharepy.connect") as mock_connect,
         patch.object(Sharepoint, "scan_sharepoint_folder") as mock_scan,
+        patch.object(Sharepoint, "_load_and_parse") as mock_load_and_parse,
     ):
         mock_scan.return_value = [
             url + "/file1.xlsx",
             url + "/file2.txt",
             url + "/file3.pdf",
         ]
-        mock_response = MagicMock()
-        mock_response.status_code = 200
-        mock_response.content = create_excel_file()
-        mock_session = MagicMock()
-        mock_session.get.return_value = mock_response
-        mock_connect.return_value = mock_session
+        mock_load_and_parse.return_value = pd.DataFrame(
+            {
+                "col_a": ["val1", "", "val2", "NA", "N/A", "#N/A"],
+                "col_b": ["val1", "val2", "val3", "val4", "val5", "val6"],
+            }
+        )
+        df = sharepoint.to_df(url)
 
-        # Mock _load_and_parse to track which files are processed
-        with patch.object(Sharepoint, "_load_and_parse") as mock_load_and_parse:
-            mock_load_and_parse.return_value = pd.DataFrame(
-                {
-                    "col_a": ["val1", "", "val2", "NA", "N/A", "#N/A"],
-                    "col_b": ["val1", "val2", "val3", "val4", "val5", "val6"],
-                }
-            )
-            df = sharepoint.to_df(url)
-
-            # Verify that _load_and_parse was only called for .xlsx files
-            mock_load_and_parse.assert_called_once_with(
-                file_url=url + "/file1.xlsx",
-                sheet_name=None,
-                na_values=None,
-                **{},
-            )
+        # Verify that _load_and_parse was only called for .xlsx files
+        mock_load_and_parse.assert_called_once_with(
+            file_url=url + "/file1.xlsx",
+            sheet_name=None,
+            na_values=None,
+            **{},
+        )
 
         assert not df.empty
         assert len(df) == 6
@@ -324,13 +382,8 @@ def test_mixed_file_extensions(sharepoint):
 def test_empty_folder(sharepoint):
     url = "https://example.sharepoint.com/sites/site/Shared%20Documents/folder"
     with (
-        patch("sharepy.connect"),
         patch.object(Sharepoint, "scan_sharepoint_folder") as mock_scan,
     ):
         mock_scan.return_value = []
-        mock_session = MagicMock()
-        mock_connect = patch("sharepy.connect", return_value=mock_session)
-        mock_connect.start()
         df = sharepoint.to_df(url)
-        mock_connect.stop()
         assert df.empty

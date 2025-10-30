@@ -1,6 +1,8 @@
+import io
 import logging
 from pathlib import Path
 from unittest.mock import MagicMock, mock_open, patch
+import zipfile
 
 import pendulum
 from pydantic import SecretStr
@@ -50,6 +52,18 @@ def mock_smb_dir_entry_dir():
     return mock
 
 
+@pytest.fixture
+def sample_zip_bytes():
+    """Create an in-memory ZIP file for testing."""
+    buf = io.BytesIO()
+    with zipfile.ZipFile(buf, "w") as zf:
+        zf.writestr("file1.txt", b"Hello World")
+        zf.writestr("file2.csv", b"1,2,3")
+        zf.writestr("folder/file3.txt", b"Nested file")
+    buf.seek(0)
+    return buf
+
+
 def test_smb_initialization_with_credentials(valid_credentials):
     with patch("viadot.sources.smb.smbclient.register_session") as mock_register:
         mock_register.return_value = None
@@ -67,16 +81,23 @@ def test_smb_initialization_without_credentials():
 
 
 @pytest.mark.parametrize(
-    ("filename_regex", "extensions", "date_filter", "prefix_levels_to_add"),
+    (
+        "filename_regex",
+        "extensions",
+        "date_filter",
+    ),
     [
-        ([None], None, "<<pendulum.yesterday().date()>>", 0),
-        (["keyword1"], None, "<<pendulum.yesterday().date()>>", 0),
-        ([None], [".txt"], "<<pendulum.yesterday().date()>>", 0),
-        (["keyword1"], [".txt"], "<<pendulum.yesterday().date()>>", 0),
+        ([None], None, "<<pendulum.yesterday().date()>>"),
+        (["keyword1"], None, "<<pendulum.yesterday().date()>>"),
+        ([None], [".txt"], "<<pendulum.yesterday().date()>>"),
+        (["keyword1"], [".txt"], "<<pendulum.yesterday().date()>>"),
     ],
 )
 def test_scan_and_store(
-    smb_instance, filename_regex, extensions, date_filter, prefix_levels_to_add
+    smb_instance,
+    filename_regex,
+    extensions,
+    date_filter,
 ):
     with (
         patch.object(smb_instance, "_scan_directory") as mock_scan_directory,
@@ -105,7 +126,8 @@ def test_scan_and_store(
             filename_regex=filename_regex,
             extensions=extensions,
             date_filter_parsed=mock_date_result,
-            prefix_levels_to_add=prefix_levels_to_add,
+            prefix_levels_to_add=0,
+            zip_inner_file_regexes=None,
         )
 
 
@@ -472,6 +494,31 @@ def test_get_file_content_empty_file(smb_instance, mock_smb_dir_entry_file, capl
         assert f"Found: {mock_entry.path}" in caplog.text
 
 
+def test_get_file_content_zip_all_files(
+    smb_instance, mock_smb_dir_entry_file, sample_zip_bytes
+):
+    """Test unpacking ZIP with no filter (all files extracted)."""
+    mock_entry = mock_smb_dir_entry_file
+    mock_entry.name = "file.zip"
+    mock_entry.path = f"{SERVER_PATH}/file.zip"
+
+    with patch("smbclient.open_file", return_value=sample_zip_bytes):
+        smb_instance._build_prefix_from_path = lambda path, levels: ""  # noqa: ARG005
+        smb_instance._add_prefix_to_filename = lambda name, prefix: name  # noqa: ARG005
+        smb_instance._matches_any_regex = (
+            lambda text, patterns: True  # noqa: ARG005
+        )  # match all
+
+        contents = smb_instance._get_file_content(
+            mock_entry, zip_inner_file_regexes="file"
+        )
+
+        assert len(contents) == 3
+        assert contents["file1.txt"] == b"Hello World"
+        assert contents["file2.csv"] == b"1,2,3"
+        assert contents["file3.txt"] == b"Nested file"
+
+
 def test_save_files_locally_empty_file(smb_instance, caplog, tmp_path):
     with caplog.at_level(logging.INFO):
         smb_instance.save_files_locally({}, tmp_path)
@@ -510,39 +557,82 @@ def test_save_files_locally_multiple_files_save(smb_instance, tmp_path):
 
 
 @pytest.mark.parametrize(
-    ("file_path", "prefix_levels_to_add", "expected"),
+    ("file_path", "levels", "expected_prefix"),
     [
-        ("/root/DATA/12345/file.txt", 0, "file.txt"),
-        ("/root/DATA/12345/file.txt", 1, "12345_file.txt"),
-        ("/root/DATA/12345/subdir/file.txt", 2, "12345_subdir_file.txt"),
-        # More prefix levels than available (should just use what's available)
-        ("//root/DATA/file.txt", 3, "root_DATA_file.txt"),
-        ("/a/b/c/d/file.txt", 4, "a_b_c_d_file.txt"),
-        ("file.txt", 1, "file.txt"),
-        ("\\\\root\\DATA\\1234\\file.txt", 2, "DATA_1234_file.txt"),
+        ("/root/DATA/12345/file.txt", 0, ""),
+        ("/root/DATA/12345/file.txt", 1, "12345"),
+        ("/root/DATA/12345/subdir/file.txt", 2, "12345_subdir"),
+        ("//root/DATA/file.txt", 3, "root_DATA"),
+        ("/a/b/c/d/file.txt", 4, "a_b_c_d"),
+        ("file.txt", 1, ""),
+        ("\\\\root\\DATA\\1234\\file.txt", 2, "DATA_1234"),
     ],
 )
-def test_add_prefix_to_file_name(
-    smb_instance, file_path, prefix_levels_to_add, expected
-):
-    result = smb_instance._add_prefix_to_file_name(
-        file_path=file_path, prefix_levels_to_add=prefix_levels_to_add
-    )
+def test_build_prefix_from_path(smb_instance, file_path, levels, expected_prefix):
+    result = smb_instance._build_prefix_from_path(file_path=file_path, levels=levels)
+    assert result == expected_prefix
+
+
+@pytest.mark.parametrize(
+    ("filename", "prefix", "expected"),
+    [
+        ("file.txt", "", "file.txt"),
+        ("file.txt", "12345", "12345_file.txt"),
+        ("data.csv", "a_b", "a_b_data.csv"),
+    ],
+)
+def test_add_prefix_to_filename(smb_instance, filename, prefix, expected):
+    result = smb_instance._add_prefix_to_filename(filename=filename, prefix=prefix)
     assert result == expected
 
 
-def test_relative_path(smb_instance):
-    path = "DATA/12345/sub1/sub2/sample.csv"
-    expected = "sub1_sub2_sample.csv"
-    result = smb_instance._add_prefix_to_file_name(
-        file_path=path, prefix_levels_to_add=2
+def test_integration_prefix_and_add_filename(smb_instance):
+    """Integration-style test that combines both functions."""
+    file_path = "DATA/12345/sub1/sub2/sample.csv"
+    prefix = smb_instance._build_prefix_from_path(file_path=file_path, levels=2)
+    result = smb_instance._add_prefix_to_filename(
+        filename=Path(file_path).name, prefix=prefix
     )
-    assert result == expected
+    assert result == "sub1_sub2_sample.csv"
 
 
 def test_negative_prefix_levels(smb_instance):
     path = "/some/path/file.log"
-    result = smb_instance._add_prefix_to_file_name(
-        file_path=path, prefix_levels_to_add=-5
+    prefix = smb_instance._build_prefix_from_path(file_path=path, levels=-5)
+    result = smb_instance._add_prefix_to_filename(
+        filename=Path(path).name, prefix=prefix
     )
+
     assert result == "file.log"
+
+
+def test_matches_any_regex_true(smb_instance):
+    zip_member_name = "file1.txt"
+    zip_inner_file_regexes_1 = None
+    zip_inner_file_regexes_2 = r"^file1\.txt$"
+    zip_inner_file_regexes_3 = [r"^file1", r"txt$"]
+
+    result1 = smb_instance._matches_any_regex(
+        text=zip_member_name, patterns=zip_inner_file_regexes_1
+    )
+    result2 = smb_instance._matches_any_regex(
+        text=zip_member_name, patterns=zip_inner_file_regexes_2
+    )
+    result3 = smb_instance._matches_any_regex(
+        text=zip_member_name, patterns=zip_inner_file_regexes_3
+    )
+
+    assert result1 is True
+    assert result2 is True
+    assert result3 is True
+
+
+def test_matches_any_regex_false(smb_instance):
+    zip_member_name = "file1.txt"
+    zip_inner_file_regexes = r"^file2\.zip$"
+
+    result = smb_instance._matches_any_regex(
+        text=zip_member_name, patterns=zip_inner_file_regexes
+    )
+
+    assert result is False

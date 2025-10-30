@@ -1,18 +1,16 @@
 """Sharepoint API connector."""
 
-from http import HTTPStatus
 import io
 from pathlib import Path
 import re
 from typing import Any, Literal
 from urllib.parse import urlparse
 
+import msal
+from office365.graph_client import GraphClient
 import pandas as pd
 from pandas._libs.parsers import STR_NA_VALUES
 from pydantic import BaseModel, root_validator
-import requests
-import sharepy
-from sharepy.errors import AuthError
 
 from viadot.config import get_source_credentials
 from viadot.exceptions import CredentialError
@@ -28,17 +26,19 @@ from viadot.utils import (
 
 class SharepointCredentials(BaseModel):
     site: str  # Path to sharepoint website (e.g : {tenant_name}.sharepoint.com)
-    username: str  # Sharepoint username (e.g username@{tenant_name}.com)
-    password: str  # Sharepoint password
+    client_id: str  # Sharepoint client id
+    client_secret: str  # Sharepoint client secret
+    tenant_id: str  # Sharepoint tenant id
 
     @root_validator(pre=True)
     def is_configured(cls, credentials: dict):  # noqa: N805, ANN201, D102
         site = credentials.get("site")
-        username = credentials.get("username")
-        password = credentials.get("password")
+        client_id = credentials.get("client_id")
+        client_secret = credentials.get("client_secret")
+        tenant_id = credentials.get("tenant_id")
 
-        if not (site and username and password):
-            msg = "'site', 'username', and 'password' credentials are required."
+        if not (site and client_id and client_secret and tenant_id):
+            msg = "'site', 'client_id', 'client_secret' and 'tenant_id' credentials are required."
             raise CredentialError(msg)
         return credentials
 
@@ -64,11 +64,11 @@ class Sharepoint(Source):
         validated_creds = dict(SharepointCredentials(**raw_creds))
         super().__init__(*args, credentials=validated_creds, **kwargs)
 
-    def get_connection(self) -> sharepy.session.SharePointSession:
+    def get_client(self) -> GraphClient:
         """Establishe a connection to SharePoint.
 
         Returns:
-            sharepy.session.SharePointSession: A session object representing
+            GraphClient: A session object representing
                 the authenticated connection.
 
         Raises:
@@ -76,16 +76,12 @@ class Sharepoint(Source):
                 credentials.
         """
         try:
-            connection = sharepy.connect(
-                site=self.credentials.get("site"),
-                username=self.credentials.get("username"),
-                password=self.credentials.get("password"),
-            )
-        except AuthError as e:
+            client = GraphClient(self._acquire_token_func)
+        except Exception as e:
             site = self.credentials.get("site")
             msg = f"Could not authenticate to {site} with provided credentials."
             raise CredentialError(msg) from e
-        return connection
+        return client
 
     def download_file(self, url: str, to_path: list | str) -> None:
         """Download a file from Sharepoint to specific location.
@@ -100,12 +96,10 @@ class Sharepoint(Source):
                 to_path="file.xlsx"
             )
         """
-        conn = self.get_connection()
-        conn.getfile(
-            url=url,
-            filename=to_path,
-        )
-        conn.close()
+        client = self.get_client()
+        file_item = client.shares.by_url(url).drive_item.get().execute_query()
+        with Path(to_path).open("wb") as local_file:
+            file_item.download(local_file).execute_query()
 
     def scan_sharepoint_folder(self, url: str) -> list[str]:
         """Scan Sharepoint folder to get all file URLs of all files within it.
@@ -121,7 +115,7 @@ class Sharepoint(Source):
             list[str]: List of URLs pointing to each file within the specified
                 SharePoint folder.
         """
-        conn = self.get_connection()
+        client = self.get_client()
 
         parsed_url = urlparse(url)
         path_parts = parsed_url.path.split("/")
@@ -135,15 +129,30 @@ class Sharepoint(Source):
             message = "URL does not contain '/sites/' segment."
             raise ValueError(message)
 
-        # -> site_url = company.sharepoint.com/sites/site_name/
-        # -> library = /shared_documents/folder/sub_folder/final_folder
-        endpoint = (
-            f"{site_url}/_api/web/GetFolderByServerRelativeUrl('{library}')/Files"
-        )
-        response = conn.get(endpoint)
-        files = response.json().get("d", {}).get("results", [])
+        folder_item = client.shares.by_url(url).drive_item.get().execute_query()
+        files = folder_item.children.get().execute_query()
 
-        return [f"{site_url}/{library}{file['Name']}" for file in files]
+        return [f"{site_url}/{library}{file.name}" for file in files]
+
+    def _acquire_token_func(self):
+        """Acquire token via MSAL.
+
+        Returns:
+            str: A string containing the access token.
+        """
+        authority_url = (
+            f'https://login.microsoftonline.com/{self.credentials.get("tenant_id")}'
+        )
+
+        app = msal.ConfidentialClientApplication(
+            authority=authority_url,
+            client_id=self.credentials.get("client_id"),
+            client_credential=self.credentials.get("client_secret"),
+        )
+
+        return app.acquire_token_for_client(
+            scopes=["https://graph.microsoft.com/.default"]
+        )
 
     def _get_file_extension(self, url: str) -> str:
         """Extracts the file extension from a given URL.
@@ -168,31 +177,28 @@ class Sharepoint(Source):
 
         Returns:
             io.BytesIO: An in-memory byte stream containing the file content.
+
+        Raises:
+            ValueError: If the parameter 'nrows' is not supported.
         """
         if "nrows" in kwargs:
             msg = "Parameter 'nrows' is not supported."
             raise ValueError(msg)
 
-        conn = self.get_connection()
+        client = self.get_client()
 
-        self.logger.info(f"Downloading data from {url}...")
+        self.logger.info(f"Downloading data from {url} ...")
         try:
-            response = conn.get(url)
-            response.raise_for_status()  # Raise an exception for HTTP errors
-        except requests.exceptions.HTTPError as e:
-            if e.response.status_code == HTTPStatus.FORBIDDEN:
-                self.logger.exception(f"Access denied to file: {url}")
-            else:
-                self.logger.exception(f"HTTP error when accessing {url}")
-            raise
+            bytes_buffer = io.BytesIO()
+            file_item = client.shares.by_url(url).drive_item.get().execute_query()
+            file_item.download(bytes_buffer).execute_query()
+            bytes_buffer.seek(0)
         except Exception:
             self.logger.exception(f"Failed to download file: {url}")
             raise
 
-        bytes_stream = io.BytesIO(response.content)
-
         try:
-            return pd.ExcelFile(bytes_stream)
+            return pd.ExcelFile(bytes_buffer.getvalue())
         except ValueError:
             self.logger.exception(f"Invalid Excel file: {url}")
             raise
@@ -418,6 +424,8 @@ class Sharepoint(Source):
             except SKIP:
                 return pd.DataFrame()
         else:
+            if sheet_name:
+                df["sheet_name"] = sheet_name
             self.logger.info(f"Successfully downloaded {len(df)} rows of data.")
 
         df_clean = cleanup_df(df)
@@ -528,46 +536,322 @@ class SharepointList(Sharepoint):
             return f"{self.default_protocol}{site_url}"
         return site_url
 
+    def _parse_rest_list_url(self, url: str) -> tuple[str, str, str]:
+        """Parse a REST list URL and return (host, site_path, list_name).
+
+        Args:
+            url: The URL to parse
+
+        Returns:
+            tuple: A tuple containing the host, site path, and list name
+        """
+        parsed = urlparse(url)
+        path = parsed.path
+        host = parsed.netloc
+
+        site_match = re.search(r"/sites/([^/]+)/", path)
+        list_match = re.search(r"GetByTitle\('([^']+)'\)", path)
+        if not site_match or not list_match:
+            msg = "Provided URL format is not supported for Graph-based retrieval."
+            raise ValueError(msg)
+
+        site_segment = site_match.group(1)
+        site_path = f"/sites/{site_segment}"
+        list_name = list_match.group(1)
+        return host, site_path, list_name
+
+    def _fetch_collection(
+        self,
+        client: GraphClient,
+        host: str,
+        site_path: str,
+        list_name: str,
+        params: dict | None,
+    ) -> tuple[object, list[str]]:
+        """Resolve site and list, apply params.
+
+        Args:
+            client (GraphClient): The GraphClient object.
+            host (str): The host of the SharePoint site.
+            site_path (str): The path of the SharePoint site.
+            list_name (str): The name of the SharePoint list.
+            params (dict): The parameters to apply to the collection.
+
+        Returns:
+            collection (object): The collection of list items.
+            selected_fields (list[str]): The selected fields.
+        """
+        site_url = f"https://{host}{site_path}"
+        site = client.sites.get_by_url(site_url).get().execute_query()
+        lists = site.lists.get().execute_query()
+        target_list = next(
+            (lst for lst in lists if getattr(lst, "display_name", None) == list_name),
+            None,
+        )
+        if target_list is None:
+            msg = f"Failed to retrieve data from SharePoint list '{list_name}': list not found"
+            raise ValueError(msg)
+
+        collection = target_list.items
+        if params and params.get("$filter"):
+            collection = collection.filter(
+                params["$filter"]
+            )  # Graph expects fields/FieldName in filter
+        collection = collection.expand(["fields"]).get().execute_query()
+
+        selected_fields = None
+        if params and params.get("$select"):
+            selected_fields = [
+                f.strip() for f in str(params["$select"]).split(",") if f.strip()
+            ]
+        return collection, selected_fields
+
+    def _serialize_via_methods(self, value: object) -> object | None:
+        """Serialize a value via methods.
+
+        Args:
+            value (object): The value to serialize
+
+        Returns:
+            object: The serialized value
+        """
+        for attr in ("to_json", "serialize", "to_dict"):
+            method = getattr(value, attr, None)
+            if callable(method):
+                try:
+                    return method()
+                except Exception:
+                    # Log at debug level to avoid noisy logs while satisfying linter
+                    self.logger.debug(
+                        f"{attr}() serialization failed for {type(value).__name__}",
+                        exc_info=True,
+                    )
+                    continue
+        return None
+
+    def _try_isoformat(self, value: object) -> str | None:
+        """Try to format a value as ISO format.
+
+        Args:
+            value (object): The value to format
+
+        Returns:
+            str: The formatted value
+        """
+        isoformat = getattr(value, "isoformat", None)
+        if callable(isoformat):
+            try:
+                return value.isoformat()
+            except Exception:
+                return None
+        return None
+
+    def _introspect_properties(self, value: object) -> dict[str, object] | None:
+        """Introspect the properties of a value.
+
+        Args:
+            value (object): The value to introspect
+
+        Returns:
+            dict[str, object]: The properties of the value
+        """
+        props = getattr(value, "properties", None)
+        if isinstance(props, dict):
+            return {k: self._to_plain(v) for k, v in props.items()}
+        return None
+
+    def _introspect_dunder(self, value: object) -> dict[str, object] | None:
+        """Introspect the __dict__ of a value.
+
+        Args:
+            value (object): The value to introspect
+
+        Returns:
+            dict[str, object]: The __dict__ of the value
+        """
+        dunder_dict = getattr(value, "__dict__", None)
+        if isinstance(dunder_dict, dict):
+            cleaned = {
+                k: self._to_plain(v)
+                for k, v in dunder_dict.items()
+                if not k.startswith("_") and not callable(v)
+            }
+            if cleaned:
+                return cleaned
+        return None
+
+    def _to_plain(self, value: object) -> object:
+        """Recursively convert Office365 SDK objects to JSON-serializable values.
+
+        Args:
+            value (object): The value to convert
+
+        Returns:
+            object: The converted value
+        """
+        result: object
+        # Primitives
+        if value is None or isinstance(value, str | int | float | bool):
+            result = value
+        else:
+            # Date-like objects
+            dt = self._try_isoformat(value)
+            if dt is not None:
+                result = dt
+            elif isinstance(value, dict):
+                result = {k: self._to_plain(v) for k, v in value.items()}
+            elif isinstance(value, list | tuple | set):
+                result = [self._to_plain(v) for v in list(value)]
+            else:
+                # Office365 SDK / client objects via serializer methods
+                serialized = self._serialize_via_methods(value)
+                if serialized is not None:
+                    result = self._to_plain(serialized)
+                else:
+                    # Fallbacks: properties and __dict__
+                    props = self._introspect_properties(value)
+                    if props is not None:
+                        result = props
+                    else:
+                        dunder = self._introspect_dunder(value)
+                        result = dunder if dunder is not None else str(value)
+        return result
+
+    def _flatten_dict(
+        self, data: dict[str, object], parent_key: str = "", sep: str = "_"
+    ) -> dict[str, object]:
+        """Flatten a nested dictionary using separator and lowercase keys.
+
+        Args:
+            data (dict[str, object]): The dictionary to flatten
+            parent_key (str): The parent key
+            sep (str): The separator
+
+        Returns:
+            dict[str, object]: The flattened dictionary
+        """
+        items: dict[str, object] = {}
+        for key, value in data.items():
+            new_key = f"{parent_key}{sep}{key}" if parent_key else str(key)
+            if isinstance(value, dict):
+                items.update(self._flatten_dict(value, new_key, sep=sep))
+            else:
+                items[new_key] = value
+        return items
+
+    def _flatten_record(self, record: dict[str, object]) -> dict[str, object]:
+        """Flatten nested dict values at top-level keys of a record.
+
+        - Removes redundant 'fields' key if present (its contents are already merged).
+        - Flattens any dict-valued fields into "key_subkey" form.
+
+        Args:
+            record (dict[str, object]): The record to flatten
+
+        Returns:
+            dict[str, object]: The flattened record
+        """
+        record = dict(record)
+        # Remove redundant 'fields' duplicate container if present
+        record.pop("fields", None)
+
+        flattened: dict[str, object] = {}
+        for key, value in record.items():
+            if isinstance(value, dict):
+                nested = self._flatten_dict(value, key)
+                flattened.update(nested)
+            else:
+                flattened[key] = value
+        return flattened
+
+    def _collect_item_dicts(
+        self, collection: object, selected_fields: list[str] | None
+    ) -> list[dict]:
+        """Convert a collection of list items into a list of dicts.
+
+        Args:
+            collection (object): The collection of list items.
+            selected_fields (list[str]): The fields to select.
+
+        Returns:
+            list[dict]: A list of dicts containing the collection of list items.
+        """
+        results: list[dict] = []
+        for item in collection:
+            fields_obj = getattr(item, "fields", None)
+            fields_props = (
+                fields_obj.properties
+                if fields_obj is not None and hasattr(fields_obj, "properties")
+                else {}
+            )
+            item_props = item.properties if hasattr(item, "properties") else {}
+            combined = {**fields_props, **item_props}
+            if selected_fields:
+                combined = {k: v for k, v in combined.items() if k in selected_fields}
+            # Normalize complex SDK objects to plain values
+            normalized = {k: self._to_plain(v) for k, v in combined.items()}
+            # Drop redundant nested containers and flatten nested dicts
+            flattened = self._flatten_record(normalized)
+            # Ensure lowercase column names
+            lowered = {str(k).lower(): v for k, v in flattened.items()}
+            results.append(lowered)
+        return results
+
+    def _extract_next_link(self, collection: object) -> str | None:
+        """Extract next page URL from a Graph SDK collection if available.
+
+        Args:
+            collection (object): The collection of list items.
+
+        Returns:
+            str | None: The next page URL or None.
+        """
+        next_page_request = getattr(collection, "next_page_request", None)
+        if next_page_request is not None:
+            next_link = getattr(next_page_request, "url", None) or getattr(
+                next_page_request, "request_url", None
+            )
+            if next_link is not None:
+                return next_link
+            build_req = getattr(next_page_request, "build_request", None)
+            if callable(build_req):
+                try:
+                    req_obj = build_req()
+                    return getattr(req_obj, "url", None) or getattr(
+                        req_obj, "request_url", None
+                    )
+                except Exception:
+                    return None
+        return None
+
     def _get_records(
         self, url: str, params: dict | None = None
     ) -> tuple[list[dict], str | None]:
         """Make a request to the SharePoint API and handle common errors.
 
         Args:
-            url: The API endpoint URL
-            params: Optional query parameters
+            url (str): The API endpoint URL
+            params (dict): Optional query parameters
 
         Returns:
             tuple: (data_items, next_link) where data_items is a list of items
                   and next_link is the URL for the next page or None
         """
-        conn = self.get_connection()
-
         try:
-            response = conn.get(url, params=params)
-            response.raise_for_status()
+            host, site_path, list_name = self._parse_rest_list_url(url)
+            client = self.get_client()
+            collection, selected_fields = self._fetch_collection(
+                client, host, site_path, list_name, params
+            )
+            results = self._collect_item_dicts(collection, selected_fields)
+            next_link = self._extract_next_link(collection)
+            return results, next_link
         except TimeoutError as e:
             msg = f"Request to SharePoint list timed out: {e!s}"
-            raise ValueError(msg) from e
-        except requests.exceptions.HTTPError as e:
-            status_code = getattr(
-                getattr(e, "response", None), "status_code", "unknown"
-            )
-            msg = f"HTTP error {status_code} when retrieving data from SharePoint list"
             raise ValueError(msg) from e
         except Exception as e:
             msg = f"Failed to retrieve data from SharePoint list: {e!s}"
             raise ValueError(msg) from e
-
-        data = response.json().get("d", {})
-        items = data.get("results", [])
-
-        # Get the URL for the next page
-        next_link = data.get("__next")
-        if isinstance(next_link, dict) and "uri" in next_link:
-            next_link = next_link["uri"]
-
-        return items, next_link
 
     def _paginate_list_data(
         self, initial_url: str, params: dict | None = None, list_name: str = ""
@@ -590,7 +874,6 @@ class SharepointList(Sharepoint):
             # For first request, include original parameters
             # For subsequent requests, parameters are in the next_url
             current_params = params if first_request else None
-
             try:
                 items, next_url = self._get_records(next_url, current_params)
                 all_results.extend(items)
@@ -635,8 +918,8 @@ class SharepointList(Sharepoint):
         Raises:
             ValueError: If the list does not exist or the request fails.
         """
-        conn = self.get_connection()
-        site_url = self._ensure_protocol(conn.site)
+        site = self.credentials.get("site")
+        site_url = self._ensure_protocol(site)
         endpoint = self._build_sharepoint_endpoint(site_url, list_site, list_name)
 
         # Build request parameters
@@ -656,4 +939,7 @@ class SharepointList(Sharepoint):
         rename_dict = self._find_and_rename_case_insensitive_duplicated_column_names(df)
         df = df.rename(columns=rename_dict)
 
-        return validate(df=df, tests=tests) if tests else df
+        if tests:
+            validate(df=df, tests=tests)
+
+        return df
