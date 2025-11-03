@@ -27,7 +27,7 @@ def onestream_data_adapters_to_redshift_spectrum(  # noqa: PLR0913
     table: str,
     workspace_name: str = "MainWorkspace",
     adapter_response_key: str = "Results",
-    custom_vars: dict[str, Any] | None = None,
+    custom_vars_values: dict[str, Any] | None = None,
     api_params: dict[str, str] | None = None,
     extension: str = ".parquet",
     if_exists: Literal["overwrite", "append"] = "overwrite",
@@ -55,8 +55,8 @@ def onestream_data_adapters_to_redshift_spectrum(  # noqa: PLR0913
         workspace_name (str): OneStream workspace name. Defaults to "MainWorkspace".
         adapter_response_key (str): Key in the JSON response that contains
             the adapter's returned data. Defaults to "Results".
-        custom_vars (dict[str, Any] | None): Variables for combinations.
-            Defaults to None.
+        custom_vars_values (dict[str, Any] | None): Variables and values for
+            combinations.Defaults to None.
         api_params (dict[str, str] | None): API parameters. Defaults to None.
         extension (str): Required file type. Accepted formats: 'csv', 'parquet'.
             Defaults to ".parquet".
@@ -83,7 +83,7 @@ def onestream_data_adapters_to_redshift_spectrum(  # noqa: PLR0913
         adapter_name=adapter_name,
         workspace_name=workspace_name,
         adapter_response_key=adapter_response_key,
-        custom_vars=custom_vars,
+        custom_vars_values=custom_vars_values,
         api_params=api_params,
         credentials_secret=onestream_credentials_secret,
         config_key=onestream_config_key,

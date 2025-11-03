@@ -20,7 +20,7 @@ def onestream_get_agg_adapter_endpoint_data_to_df(
     config_key: str = "onestream",
     workspace_name: str = "MainWorkspace",
     adapter_response_key: str = "Results",
-    custom_vars: dict[str, Any] | None = None,
+    custom_vars_values: dict[str, Any] | None = None,
     api_params: dict[str, str] | None = None,
 ) -> pd.DataFrame:
     """Retrieves and aggregates data from a OneStream Data Adapter.
@@ -39,7 +39,7 @@ def onestream_get_agg_adapter_endpoint_data_to_df(
             Defaults to "MainWorkspace".
         adapter_response_key (str): Key in the JSON response that contains
             the adapter's returned data. Defaults to "Results".
-        custom_vars (dict, optional): Variables for combinations.
+        custom_vars_values (dict, optional): Variables and values for combinations.
             Defaults to None.
         api_params (dict, optional): API parameters.
             Defaults to None.
@@ -63,7 +63,7 @@ def onestream_get_agg_adapter_endpoint_data_to_df(
         adapter_name=adapter_name,
         workspace_name=workspace_name,
         adapter_response_key=adapter_response_key,
-        custom_vars=custom_vars,
+        custom_vars_values=custom_vars_values,
     )
     return onestream._to_df(data=data)
 
@@ -75,7 +75,7 @@ def onestream_get_agg_sql_data_to_df(
     sql_query: str,
     credentials_secret: str | None = None,
     config_key: str = "onestream",
-    custom_vars: dict[str, Any] | None = None,
+    custom_vars_values: dict[str, Any] | None = None,
     db_location: str = "Application",
     results_table_name: str = "Results",
     external_db: str = "",
@@ -91,7 +91,7 @@ def onestream_get_agg_sql_data_to_df(
             Defaults to None.
         config_key (str): Viadot config key.
             Defaults to "onestream".
-        custom_vars (dict, optional): Query parameters.
+        custom_vars_values (dict, optional): Custom query vars and values.
             Defaults to None.
         db_location (str): Database location path.
             Defaults to "Application".
@@ -119,7 +119,7 @@ def onestream_get_agg_sql_data_to_df(
 
     data = onestream.get_agg_sql_data(
         sql_query=sql_query,
-        custom_vars=custom_vars,
+        custom_vars_values=custom_vars_values,
         db_location=db_location,
         results_table_name=results_table_name,
         external_db=external_db,
@@ -134,7 +134,7 @@ def onestream_run_data_management_seq(
     dm_seq_name: str,
     credentials_secret: str | None = None,
     config_key: str = "onestream",
-    custom_vars: dict[str, Any] | None = None,
+    custom_vars_values: dict[str, Any] | None = None,
     api_params: dict[str, str] | None = None,
 ) -> requests.Response:
     """Runs a OneStream Data Management Sequence.
@@ -147,7 +147,7 @@ def onestream_run_data_management_seq(
             Defaults to None.
         config_key (str): Viadot config key.
             Defaults to "onestream".
-        custom_vars (dict, optional): Sequence variables.
+        custom_vars (dict, optional): Sequence variables and values.
             Defaults to None.
         api_params (dict, optional): API parameters.
             Defaults to None.
@@ -169,5 +169,5 @@ def onestream_run_data_management_seq(
 
     return onestream.run_data_management_seq(
         dm_seq_name=dm_seq_name,
-        custom_vars=custom_vars,
+        custom_vars_values=custom_vars_values,
     )
