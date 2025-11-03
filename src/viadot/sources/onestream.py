@@ -252,12 +252,12 @@ class OneStream(Source):
         adapter_name: str,
         workspace_name: str = "MainWorkspace",
         adapter_response_key: str = "Results",
-        custom_vars: dict | None = None,
+        custom_vars_values: dict | None = None,
     ) -> dict:
         """Retrieves and aggregates data from a OneStream Data Adapter (DA).
 
         This function generates the cartesian product of all values in the
-        `custom_vars` dictionary, constructs individual API requests for each
+        `custom_vars_values` dictionary, constructs individual API requests for each
         combination, and aggregates the results into a dictionary keyed by
         a string representation of the variable values.
 
@@ -276,14 +276,16 @@ class OneStream(Source):
                 custom variable values (e.g., "Region - Product"), and each
                 value is the corresponding data retrieved from the DA.
         """
-        custom_vars = custom_vars or {}
+        custom_vars_values = custom_vars_values or {}
 
-        custom_vars_list = self._get_all_custom_vars_combinations(custom_vars)
+        custom_vars_values_list = self._get_all_custom_vars_combinations(
+            custom_vars_values
+        )
 
         agg_records = {}
 
-        for custom_var in custom_vars_list:
-            var_value = " - ".join(custom_var.values()) if custom_var else "Default"
+        for custom_vars in custom_vars_values_list:
+            var_value = " - ".join(custom_vars.values()) if custom_vars else "Default"
             agg_records[var_value] = self._get_adapter_results_data(
                 workspace_name=workspace_name,
                 adapter_response_key=adapter_response_key,
@@ -379,7 +381,7 @@ class OneStream(Source):
 
     def get_agg_sql_data(
         self,
-        custom_vars: dict | None = None,
+        custom_vars_values: dict | None = None,
         sql_query: str = "",
         db_location: str = "Application",
         results_table_name: str = "Results",
@@ -400,22 +402,24 @@ class OneStream(Source):
             external_db (str, optional): The name of an external database.
                 Defaults to an empty string.
                 Defaults to an empty string.
-            custom_vars (dict, optional): A dictionary where each key maps to a list of
-                possible values for that variable.
+            custom_vars_values (dict, optional): A dictionary where each key maps
+                to a list of possible values for that variable.
 
         Returns:
             dict: A dictionary where each key is a string of concatenated custom
                 variable values (e.g., "Entity - Scenario"), and each value is
                     the corresponding data retrieved from the SQL query.
         """
-        custom_vars = custom_vars or {}
+        custom_vars_values = custom_vars_values or {}
 
-        custom_vars_list = self._get_all_custom_vars_combinations(custom_vars)
+        custom_vars_values_list = self._get_all_custom_vars_combinations(
+            custom_vars_values
+        )
 
         agg_records = {}
 
-        for custom_var in custom_vars_list:
-            var_value = " - ".join(custom_var.values()) if custom_var else "Default"
+        for custom_vars in custom_vars_values_list:
+            var_value = " - ".join(custom_vars.values()) if custom_vars else "Default"
             agg_records[var_value] = self._run_sql(
                 sql_query=sql_query,
                 db_location=db_location,
