@@ -10,10 +10,13 @@ on:
     paths:
       - "mkdocs.yml"
       - "docs/**"
-      - ".github/workflows/static-site-prepare.yml"
-      - ".github/workflows/template-static-site-prepare-mkdocs.yml"
 
 jobs:
   deploy:
-    uses: ./.github/workflows/template-static-site-prepare-mkdocs.yml
-    secrets: inherit # pragma: allowlist secret
+    uses: dyvenia/workflow-templates/.github/workflows/template_static_site_prepare_mkdocs.yml@main
+    with:
+      project_manager: rye
+      static_site_branch: static-site
+      mkdocs_config: mkdocs.yml
+      site_dir: site
+    secrets: inherit
