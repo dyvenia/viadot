@@ -19,4 +19,4 @@ jobs:
       static_site_branch: static-site
       mkdocs_config: mkdocs.yml
       site_dir: site
-    secrets: inherit
+    secrets: inherit # pragma: allowlist secret
