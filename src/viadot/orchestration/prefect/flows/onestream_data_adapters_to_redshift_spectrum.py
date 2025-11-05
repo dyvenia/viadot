@@ -6,8 +6,6 @@ from prefect import flow
 
 from viadot.orchestration.prefect.tasks import (
     df_to_redshift_spectrum,
-)
-from viadot.orchestration.prefect.tasks.onestream import (
     onestream_get_agg_adapter_endpoint_data_to_df,
 )
 
