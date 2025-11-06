@@ -29,6 +29,7 @@ class OneStreamCredentials(BaseModel):
     api_token: str
 
 
+# TODO fix types in the docstring and in type annotations
 class OneStream(Source):
     def __init__(
         self,
@@ -277,24 +278,39 @@ class OneStream(Source):
                 value is the corresponding data retrieved from the DA.
         """
         custom_vars_values = custom_vars_values or {}
-
+        # TODO: As the vars combinations will be handled up to here, check the type
+        # annotations in all places where you hadle custom_vars_value
+        # combinations - begining is in the flow and passing the param to the task
         custom_vars_values_list = self._get_all_custom_vars_combinations(
             custom_vars_values
         )
 
         agg_records = {}
+        # TODO: Check if we should not change the custom_vars_values_list param name
+        # for custom_vars in custom_vars_values:
+        #     var_value = " - ".join(custom_vars.values()) if custom_vars else "Default"
+        #     agg_records[var_value] = self._get_adapter_results_data(
+        #         workspace_name=workspace_name,
+        #         adapter_response_key=adapter_response_key,
+        #         custom_vars=custom_vars,
+        #         adapter_name=adapter_name,
+        #     )
 
+        # return agg_records
+        agg_records = []
         for custom_vars in custom_vars_values_list:
-            var_value = " - ".join(custom_vars.values()) if custom_vars else "Default"
-            agg_records[var_value] = self._get_adapter_results_data(
-                workspace_name=workspace_name,
-                adapter_response_key=adapter_response_key,
-                custom_vars=custom_vars,
-                adapter_name=adapter_name,
+            agg_records.append(
+                self._get_adapter_results_data(
+                    workspace_name=workspace_name,
+                    adapter_response_key=adapter_response_key,
+                    custom_vars=custom_vars,
+                    adapter_name=adapter_name,
+                )
             )
 
         return agg_records
 
+    # TODO: update data type annotation
     def _to_df(self, data: dict[str, list[dict[str, Any]]]) -> pd.DataFrame:
         """Convert a dictionary of JSON-like data slices into a Pandas DataFrame.
 
@@ -318,8 +334,8 @@ class OneStream(Source):
         if not data:
             msg = "The response data dictionary is empty"
             raise ValueError(msg)
-        df_parts = (pd.json_normalize(data[key]) for key in data)
-        return pd.concat(df_parts, ignore_index=True)
+        unpacked_data = [part for parts in data for part in parts]
+        return pd.DataFrame(unpacked_data)
 
     def _run_sql(
         self,

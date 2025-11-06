@@ -1,5 +1,6 @@
 """Extract data from OneStream Data Adapters and load it to Redshift Spectrum."""
 
+from itertools import product
 from typing import Any, Literal
 
 from prefect import flow
@@ -8,6 +9,34 @@ from viadot.orchestration.prefect.tasks import (
     df_to_redshift_spectrum,
     onestream_get_agg_adapter_endpoint_data_to_df,
 )
+
+
+def _create_batch_list_for_custom_vars_combinations(
+    custom_vars: dict[str, list[Any]],
+    batch_size: int | None = None,
+) -> list[dict[str, list[Any]]]:
+    """Generates a list of dictionaries of all combinations of custom variables.
+
+    Args:
+        custom_vars (dict[str, list[Any]]): A dictionary where each key
+            maps to a list of possible values for that variable. The
+            cartesian product of these lists will be computed.
+
+    Returns:
+        list[dict[str, list[Any]]]: A list of dictionaries, each representing
+            a unique combination of custom variable values, where each
+            dictionary has the same keys as the input but with single
+            values selected from the corresponding lists.
+    """
+    # TODO: Update docstrings
+    # TODO: add batch sizing in the list comprehension
+    # TODO: remove print
+    if batch_size:
+        print(f"Batch size{batch_size}")  # noqa: T201
+    return [
+        dict(zip(custom_vars.keys(), [[value] for value in combination], strict=False))
+        for combination in product(*custom_vars.values())
+    ]
 
 
 @flow(
@@ -75,29 +104,61 @@ def onestream_data_adapters_to_redshift_spectrum(  # noqa: PLR0913
         onestream_config_key (str): Key in viadot config for OneStream credentials.
             Defaults to "onestream".
     """
-    df = onestream_get_agg_adapter_endpoint_data_to_df(
-        server_url=server_url,
-        application=application,
-        adapter_name=adapter_name,
-        workspace_name=workspace_name,
-        adapter_response_key=adapter_response_key,
-        custom_vars_values=custom_vars_values,
-        api_params=api_params,
-        credentials_secret=onestream_credentials_secret,
-        config_key=onestream_config_key,
-    )
-
-    df_to_redshift_spectrum(
-        df=df,
-        to_path=to_path,
-        schema_name=schema_name,
-        table=table,
-        extension=extension,
-        if_exists=if_exists,
-        partition_cols=partition_cols,
-        index=index,
-        compression=compression,
-        sep=sep,
-        config_key=aws_config_key,
-        credentials_secret=credentials_secret,
-    )
+    if custom_vars_values:
+        custom_vars_values_list = _create_batch_list_for_custom_vars_combinations(
+            custom_vars_values
+        )
+        # TODO: add a task to create a custom variables combination
+        for custom_var_value in custom_vars_values_list:
+            df = onestream_get_agg_adapter_endpoint_data_to_df(
+                server_url=server_url,
+                application=application,
+                adapter_name=adapter_name,
+                workspace_name=workspace_name,
+                adapter_response_key=adapter_response_key,
+                custom_vars_values=custom_var_value,
+                api_params=api_params,
+                credentials_secret=onestream_credentials_secret,
+                config_key=onestream_config_key,
+            )
+            df_to_redshift_spectrum(
+                df=df,
+                to_path=to_path,
+                schema_name=schema_name,
+                table=table,
+                extension=extension,
+                if_exists=if_exists,
+                partition_cols=partition_cols,
+                index=index,
+                compression=compression,
+                sep=sep,
+                config_key=aws_config_key,
+                credentials_secret=credentials_secret,
+            )
+            if_exists = "append"  # Change to "append" to add batches to the table.
+    else:
+        df = onestream_get_agg_adapter_endpoint_data_to_df(
+            server_url=server_url,
+            application=application,
+            adapter_name=adapter_name,
+            workspace_name=workspace_name,
+            adapter_response_key=adapter_response_key,
+            custom_vars_values=custom_var_value,
+            api_params=api_params,
+            credentials_secret=onestream_credentials_secret,
+            config_key=onestream_config_key,
+        )
+        df_to_redshift_spectrum(
+            df=df,
+            to_path=to_path,
+            schema_name=schema_name,
+            table=table,
+            extension=extension,
+            if_exists=if_exists,
+            partition_cols=partition_cols,
+            index=index,
+            compression=compression,
+            sep=sep,
+            config_key=aws_config_key,
+            credentials_secret=credentials_secret,
+        )

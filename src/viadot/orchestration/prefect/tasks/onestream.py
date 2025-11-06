@@ -11,6 +11,7 @@ from viadot.orchestration.prefect.utils import get_credentials
 from viadot.sources.onestream import OneStream
 
 
+# TODO fix types in the docstring
 @task(retries=3, log_prints=True, retry_delay_seconds=10, timeout_seconds=60 * 60)
 def onestream_get_agg_adapter_endpoint_data_to_df(
     server_url: str,
@@ -20,7 +21,7 @@ def onestream_get_agg_adapter_endpoint_data_to_df(
     config_key: str = "onestream",
     workspace_name: str = "MainWorkspace",
     adapter_response_key: str = "Results",
-    custom_vars_values: dict[str, Any] | None = None,
+    custom_vars_values: dict[str, list[Any]] | None = None,
     api_params: dict[str, str] | None = None,
 ) -> pd.DataFrame:
     """Retrieves and aggregates data from a OneStream Data Adapter.
@@ -47,6 +48,8 @@ def onestream_get_agg_adapter_endpoint_data_to_df(
     Returns:
         pd.DataFrame: Variable combinations mapped to their data as Pandas Data Frame.
     """
+    # TODO: Check the custom_vars_values type annotation if this will receive a combined
+    # list of vars.
     if not (credentials_secret or config_key):
         raise MissingSourceCredentialsError
 
@@ -75,7 +78,7 @@ def onestream_get_agg_sql_data_to_df(
     sql_query: str,
     credentials_secret: str | None = None,
     config_key: str = "onestream",
-    custom_vars_values: dict[str, Any] | None = None,
+    custom_vars_values: dict[str, list[Any]] | None = None,
     db_location: str = "Application",
     results_table_name: str = "Results",
     external_db: str = "",
@@ -134,7 +137,7 @@ def onestream_run_data_management_seq(
     dm_seq_name: str,
     credentials_secret: str | None = None,
     config_key: str = "onestream",
-    custom_vars_values: dict[str, Any] | None = None,
+    custom_vars: dict[str, list[Any]] | None = None,
     api_params: dict[str, str] | None = None,
 ) -> requests.Response:
     """Runs a OneStream Data Management Sequence.
@@ -147,7 +150,7 @@ def onestream_run_data_management_seq(
             Defaults to None.
         config_key (str): Viadot config key.
             Defaults to "onestream".
-        custom_vars (dict, optional): Sequence variables and values.
+        custom_vars (dict, optional): Sequence variables.
             Defaults to None.
         api_params (dict, optional): API parameters.
             Defaults to None.
@@ -169,5 +172,5 @@ def onestream_run_data_management_seq(
 
     return onestream.run_data_management_seq(
         dm_seq_name=dm_seq_name,
-        custom_vars_values=custom_vars_values,
+        custom_vars=custom_vars,
     )
