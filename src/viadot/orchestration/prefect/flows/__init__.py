@@ -31,6 +31,7 @@ from .sharepoint_to_redshift_spectrum import sharepoint_to_redshift_spectrum
 from .sharepoint_to_s3 import sharepoint_to_s3
 from .sql_server_to_minio import sql_server_to_minio
 from .sql_server_to_parquet import sql_server_to_parquet
+from .sql_server_to_redshift_spectrum import sql_server_to_redshift_spectrum
 from .sql_server_transform import sql_server_transform
 from .supermetrics_to_adls import supermetrics_to_adls
 from .tm1_to_parquet import tm1_to_parquet
@@ -71,6 +72,7 @@ __all__ = [
     "sharepoint_to_s3",
     "sql_server_to_minio",
     "sql_server_to_parquet",
+    "sql_server_to_redshift_spectrum",
     "sql_server_transform",
     "supermetrics_to_adls",
     "tm1_to_parquet",
