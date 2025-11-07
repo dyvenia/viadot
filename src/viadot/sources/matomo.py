@@ -250,4 +250,3 @@ class Matomo(Source):
         self.logger.info(f"Successfully processed {len(df)} records from Matomo data.")
 
         return df
-
