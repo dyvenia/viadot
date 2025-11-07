@@ -11,31 +11,31 @@ from viadot.orchestration.prefect.tasks import (
 )
 
 
-def _create_batch_list_for_custom_vars_combinations(
-    custom_vars: dict[str, list[Any]],
-    batch_size: int | None = None,
+def _create_batch_list_of_custom_subst_vars(
+    custom_subst_vars: dict[str, list[Any]],
 ) -> list[dict[str, list[Any]]]:
-    """Generates a list of dictionaries of all combinations of custom variables.
+    """Generates a list of dictionaries of all combinations of custom subst. variables.
 
     Args:
-        custom_vars (dict[str, list[Any]]): A dictionary where each key
-            maps to a list of possible values for that variable. The
+        custom_subst_vars (dict[str, list[Any]]): A dictionary where each key
+            maps to a list of possible values for that substitution variable. The
             cartesian product of these lists will be computed.
 
     Returns:
-        list[dict[str, list[Any]]]: A list of dictionaries, each representing
-            a unique combination of custom variable values, where each
-            dictionary has the same keys as the input but with single
-            values selected from the corresponding lists.
+        list[dict[str, list[Any]]]: A list of dictionaries for substitution variables,
+            each representing a unique combination of custom variable values, where each
+            dictionary has the same keys as the input but with single values selected
+            from the corresponding lists.
     """
-    # TODO: Update docstrings
-    # TODO: add batch sizing in the list comprehension
-    # TODO: remove print
-    if batch_size:
-        print(f"Batch size{batch_size}")  # noqa: T201
     return [
-        dict(zip(custom_vars.keys(), [[value] for value in combination], strict=False))
-        for combination in product(*custom_vars.values())
+        dict(
+            zip(
+                custom_subst_vars.keys(),
+                [[value] for value in combination],
+                strict=False,
+            )
+        )
+        for combination in product(*custom_subst_vars.values())
     ]
 
 
@@ -54,7 +54,7 @@ def onestream_data_adapters_to_redshift_spectrum(  # noqa: PLR0913
     table: str,
     workspace_name: str = "MainWorkspace",
     adapter_response_key: str = "Results",
-    custom_vars_values: dict[str, Any] | None = None,
+    custom_subst_vars: dict[str, list[Any]] | None = None,
     api_params: dict[str, str] | None = None,
     extension: str = ".parquet",
     if_exists: Literal["overwrite", "append"] = "overwrite",
@@ -82,41 +82,42 @@ def onestream_data_adapters_to_redshift_spectrum(  # noqa: PLR0913
         workspace_name (str): OneStream workspace name. Defaults to "MainWorkspace".
         adapter_response_key (str): Key in the JSON response that contains
             the adapter's returned data. Defaults to "Results".
-        custom_vars_values (dict[str, Any] | None): Variables and values for
-            combinations.Defaults to None.
-        api_params (dict[str, str] | None): API parameters. Defaults to None.
+        custom_subst_vars (dict[str, list[Any]], optional): A dictionary mapping
+            substitution variable names to lists of possible values.
+            Values can be of any type that can be converted to strings, as they
+            are used as substitution variables in the Data Adapter.Defaults to None.
+        api_params (dict[str, str], optional): API parameters. Defaults to None.
         extension (str): Required file type. Accepted formats: 'csv', 'parquet'.
             Defaults to ".parquet".
         if_exists (str): Whether to 'overwrite' or 'append' to existing table.
             Defaults to "overwrite".
-        partition_cols (list[str] | None): Columns used to create partitions.
+        partition_cols (list[str], optional): Columns used to create partitions.
             Only applies when dataset=True. Defaults to None.
         index (bool): Write row names (index). Defaults to False.
-        compression (str | None): Compression style (None, snappy, gzip, zstd).
+        compression (str, optional): Compression style (None, snappy, gzip, zstd).
             Defaults to None.
         sep (str): Field delimiter for the output file. Defaults to ','.
-        aws_config_key (str | None): Key in viadot config for AWS credentials.
+        aws_config_key (str, optional): Key in viadot config for AWS credentials.
             Defaults to None.
-        credentials_secret (str | None): Name of Prefect secret block with AWS
+        credentials_secret (str, optional): Name of Prefect secret block with AWS
             credentials. Defaults to None.
-        onestream_credentials_secret (str | None): Name of secret storing OneStream
+        onestream_credentials_secret (str, optional): Name of secret storing OneStream
             credentials. Defaults to None.
         onestream_config_key (str): Key in viadot config for OneStream credentials.
             Defaults to "onestream".
     """
-    if custom_vars_values:
-        custom_vars_values_list = _create_batch_list_for_custom_vars_combinations(
-            custom_vars_values
+    if custom_subst_vars:
+        custom_subst_vars_batch_list = _create_batch_list_of_custom_subst_vars(
+            custom_subst_vars
         )
-        # TODO: add a task to create a custom variables combination
-        for custom_var_value in custom_vars_values_list:
+        for custom_subst_var in custom_subst_vars_batch_list:
             df = onestream_get_agg_adapter_endpoint_data_to_df(
                 server_url=server_url,
                 application=application,
                 adapter_name=adapter_name,
                 workspace_name=workspace_name,
                 adapter_response_key=adapter_response_key,
-                custom_vars_values=custom_var_value,
+                custom_subst_vars=custom_subst_var,
                 api_params=api_params,
                 credentials_secret=onestream_credentials_secret,
                 config_key=onestream_config_key,
@@ -143,7 +144,7 @@ def onestream_data_adapters_to_redshift_spectrum(  # noqa: PLR0913
             adapter_name=adapter_name,
             workspace_name=workspace_name,
             adapter_response_key=adapter_response_key,
-            custom_vars_values=custom_var_value,
+            custom_subst_vars=custom_subst_vars,
             api_params=api_params,
             credentials_secret=onestream_credentials_secret,
             config_key=onestream_config_key,

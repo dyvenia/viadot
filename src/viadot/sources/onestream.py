@@ -52,10 +52,10 @@ class OneStream(Source):
             application (str): Name of the OneStream application to connect to.
             config_key (str, optional): Key in viadot config to fetch credentials.
                 Defaults to "onestream".
-            credentials (OneStreamCredentials | None): OneStream API credentials.
+            credentials (OneStreamCredentials, optional): OneStream API credentials.
                 Must contain 'api_token'. If not provided, will attempt to fetch from
                 viadot config using config_key. Defaults to None.
-            api_params (dict[str, str] | None): Additional API parameters to include
+            api_params (dict[str, str], optional): Additional API parameters to include
                 in requests. Defaults to None, which sets {"api-version": "5.2.0"}.
             *args: Additional positional arguments passed to parent class.
             **kwargs: Additional keyword arguments passed to parent class.
@@ -146,33 +146,43 @@ class OneStream(Source):
 
         if json_response is None:
             self.logger.error(
-                "API call returned null response. Consider adding additional custom variables."
+                "API call returned null response. Consider adding additional substition custom variables."
             )
             msg = "API response is null."
             raise ValueError(msg)
-
+        if json_response[adapter_response_key] is None:
+            self.logger.error(
+                "API call returned a response dictionary without any data. Check database table settings "
+                "or add/check custom substitution variables."
+            )
+            msg = "API Results doesn't contain any data."
+            raise ValueError(msg)
         return json_response[adapter_response_key]
 
-    def _unpack_custom_vars_to_string(self, custom_vars: dict) -> str:
+    def _unpack_custom_subst_vars_to_string(
+        self, custom_subst_vars: dict[str, Any]
+    ) -> str:
         """Converts a dictionary into a comma-separated string of key=value pairs.
 
         Args:
-            custom_vars (dict): A dictionary containing custom variable
-                names and their corresponding values.
+            custom_subst_vars (dict[str, Any]): A dictionary mapping substitution
+                variable names to lists of possible values.
 
         Returns:
             str: A key-value pair string formatted as 'key=value', separated by commas.
         """
-        custom_vars_list = [f"{key}={element}" for key, element in custom_vars.items()]
-        return ",".join(custom_vars_list)
+        custom_subst_vars_list = [
+            f"{key}={element}" for key, element in custom_subst_vars.items()
+        ]
+        return ",".join(custom_subst_vars_list)
 
-    def _get_all_custom_vars_combinations(
-        self, custom_vars: dict[str, list[Any]]
+    def _get_all_custom_subst_vars_combinations(
+        self, custom_subst_vars: dict[str, list[Any]]
     ) -> list[dict[str, Any]]:
         """Generates a list of dictionaries of all combinations of custom variables.
 
         Args:
-            custom_vars (dict[str, list[Any]]): A dictionary where each key
+            custom_subst_vars (dict[str, list[Any]]): A dictionary where each key
                 maps to a list of possible values for that variable. The
                 cartesian product of these lists will be computed.
 
@@ -183,8 +193,8 @@ class OneStream(Source):
                 values selected from the corresponding lists.
         """
         return [
-            dict(zip(custom_vars.keys(), combination, strict=False))
-            for combination in product(*custom_vars.values())
+            dict(zip(custom_subst_vars.keys(), combination, strict=False))
+            for combination in product(*custom_subst_vars.values())
         ]
 
     def _get_adapter_results_data(
@@ -192,7 +202,7 @@ class OneStream(Source):
         adapter_name: str,
         workspace_name: str,
         adapter_response_key: str,
-        custom_vars: dict[str, Any],
+        custom_subst_vars: dict[str, Any],
     ) -> dict[str, Any]:
         """Retrieve data from a specified Data Adapter (DA) in OneStream.
 
@@ -207,10 +217,8 @@ class OneStream(Source):
                 is located.
             adapter_response_key (str): The key in the JSON response that
                 contains the adapter's returned data.
-            custom_vars (dict[str, Any]): A dictionary mapping variable names
-                (strings) to their values. Values can be of any type that can
-                be converted to strings, as they are used as substitution
-                variables in the Data Adapter.
+            custom_subst_vars (dict[str, Any]):A dictionary mapping substitution
+                variable names to lists of possible values.
 
         Returns:
             dict[str, Any]: The extracted records from the adapter's
@@ -222,7 +230,9 @@ class OneStream(Source):
             requests.exceptions.RequestException: If the API request fails
                 or times out.
         """
-        custom_vars_str = self._unpack_custom_vars_to_string(custom_vars)
+        custom_subst_vars_str = self._unpack_custom_subst_vars_to_string(
+            custom_subst_vars
+        )
         endpoint = (
             self.server_url.rstrip("/") + "/api/DataProvider/GetAdoDataSetForAdapter"
         )
@@ -240,7 +250,7 @@ class OneStream(Source):
                 "WorkspaceName": workspace_name,
                 "AdapterName": adapter_name,
                 "ResultDataTableName": adapter_response_key,
-                "CustomSubstVarsAsCommaSeparatedPairs": custom_vars_str,
+                "CustomSubstVarsAsCommaSeparatedPairs": custom_subst_vars_str,
             }
         )
 
@@ -253,13 +263,13 @@ class OneStream(Source):
         adapter_name: str,
         workspace_name: str = "MainWorkspace",
         adapter_response_key: str = "Results",
-        custom_vars_values: dict | None = None,
+        custom_subst_vars: dict[str, list[Any]] | None = None,
     ) -> dict:
         """Retrieves and aggregates data from a OneStream Data Adapter (DA).
 
         This function generates the cartesian product of all values in the
-        `custom_vars_values` dictionary, constructs individual API requests for each
-        combination, and aggregates the results into a dictionary keyed by
+        `custom_subst_vars` dictionary, constructs individual API requests for each
+        substitution combination, and aggregates the results into a dictionary keyed by
         a string representation of the variable values.
 
         Args:
@@ -269,41 +279,30 @@ class OneStream(Source):
             adapter_response_key (str, optional): The key in the JSON
                 response that contains the adapter's returned data.
                 Defaults to "Results".
-            custom_vars (dict, optional): A dictionary where each key maps
-                to a list of possible values for that variable.
+            custom_subst_vars (dict[str, list[Any]], optional):A dictionary mapping
+                substitution variable names to lists of possible values.
+                Defaults to None.
 
         Returns:
             dict: A dictionary where each key is a string of concatenated
                 custom variable values (e.g., "Region - Product"), and each
                 value is the corresponding data retrieved from the DA.
         """
-        custom_vars_values = custom_vars_values or {}
+        custom_subst_vars = custom_subst_vars or {}
         # TODO: As the vars combinations will be handled up to here, check the type
-        # annotations in all places where you hadle custom_vars_value
+        # annotations in all places where you hadle custom_subst_vars_value
         # combinations - begining is in the flow and passing the param to the task
-        custom_vars_values_list = self._get_all_custom_vars_combinations(
-            custom_vars_values
+        custom_subst_vars_list = self._get_all_custom_subst_vars_combinations(
+            custom_subst_vars
         )
 
-        agg_records = {}
-        # TODO: Check if we should not change the custom_vars_values_list param name
-        # for custom_vars in custom_vars_values:
-        #     var_value = " - ".join(custom_vars.values()) if custom_vars else "Default"
-        #     agg_records[var_value] = self._get_adapter_results_data(
-        #         workspace_name=workspace_name,
-        #         adapter_response_key=adapter_response_key,
-        #         custom_vars=custom_vars,
-        #         adapter_name=adapter_name,
-        #     )
-
-        # return agg_records
         agg_records = []
-        for custom_vars in custom_vars_values_list:
+        for custom_subst_vars in custom_subst_vars_list:
             agg_records.append(
                 self._get_adapter_results_data(
                     workspace_name=workspace_name,
                     adapter_response_key=adapter_response_key,
-                    custom_vars=custom_vars,
+                    custom_subst_vars=custom_subst_vars,
                     adapter_name=adapter_name,
                 )
             )
@@ -343,7 +342,7 @@ class OneStream(Source):
         db_location: str,
         results_table_name: str,
         external_db: str,
-        custom_vars: dict[str, list[Any]] | None = None,
+        custom_subst_vars: dict[str, list[Any]] | None = None,
     ) -> dict[str, Any]:
         """Execute an SQL query against the OneStream database using the API.
 
@@ -356,8 +355,9 @@ class OneStream(Source):
             db_location (str): Target database location within OneStream.
             results_table_name (str): Name of the results table.
             external_db (str): Name of external database connection.
-            custom_vars (dict[str, list[Any]] | None): Dictionary mapping
-                variable names to lists of possible values. Defaults to None.
+            custom_subst_vars (dict[str, list[Any]], optional): A dictionary mapping
+                substitution variable names to lists of possible values.
+                Defaults to None.
 
         Returns:
             dict[str, Any]: The extracted records from the specified
@@ -367,8 +367,10 @@ class OneStream(Source):
             ValueError: If the API response is null or the results table
                 is not found.
         """
-        custom_vars = custom_vars or {}
-        custom_vars_str = self._unpack_custom_vars_to_string(custom_vars)
+        custom_subst_vars = custom_subst_vars or {}
+        custom_subst_vars_str = self._unpack_custom_subst_vars_to_string(
+            custom_subst_vars
+        )
 
         endpoint = (
             self.server_url.rstrip("/") + "/api/DataProvider/GetAdoDataSetForSqlCommand"
@@ -387,7 +389,7 @@ class OneStream(Source):
                 "ResultDataTableName": results_table_name,
                 "DbLocation": db_location,
                 "XFExternalDBConnectionName": external_db,
-                "CustomSubstVarsAsCommaSeparatedPairs": custom_vars_str,
+                "CustomSubstVarsAsCommaSeparatedPairs": custom_subst_vars_str,
             }
         )
 
@@ -397,7 +399,7 @@ class OneStream(Source):
 
     def get_agg_sql_data(
         self,
-        custom_vars_values: dict | None = None,
+        custom_subst_vars: dict | None = None,
         sql_query: str = "",
         db_location: str = "Application",
         results_table_name: str = "Results",
@@ -418,30 +420,33 @@ class OneStream(Source):
             external_db (str, optional): The name of an external database.
                 Defaults to an empty string.
                 Defaults to an empty string.
-            custom_vars_values (dict, optional): A dictionary where each key maps
-                to a list of possible values for that variable.
+            custom_subst_vars (dict[str, list[Any]], optional): A dictionary mapping
+                substitution variable names to lists of possible values.
+                Defaults to None.
 
         Returns:
             dict: A dictionary where each key is a string of concatenated custom
                 variable values (e.g., "Entity - Scenario"), and each value is
                     the corresponding data retrieved from the SQL query.
         """
-        custom_vars_values = custom_vars_values or {}
+        custom_subst_vars = custom_subst_vars or {}
 
-        custom_vars_values_list = self._get_all_custom_vars_combinations(
-            custom_vars_values
+        custom_subst_vars_list = self._get_all_custom_subst_vars_combinations(
+            custom_subst_vars
         )
 
         agg_records = {}
 
-        for custom_vars in custom_vars_values_list:
-            var_value = " - ".join(custom_vars.values()) if custom_vars else "Default"
+        for custom_subst_var in custom_subst_vars_list:
+            var_value = (
+                " - ".join(custom_subst_var.values()) if custom_subst_var else "Default"
+            )
             agg_records[var_value] = self._run_sql(
                 sql_query=sql_query,
                 db_location=db_location,
                 results_table_name=results_table_name,
                 external_db=external_db,
-                custom_vars=custom_vars,
+                custom_subst_vars=custom_subst_var,
             )
 
         return agg_records
@@ -449,7 +454,7 @@ class OneStream(Source):
     def run_data_management_seq(
         self,
         dm_seq_name: str,
-        custom_vars: dict | None = None,
+        custom_subst_vars: dict | None = None,
     ) -> requests.Response:
         """Executes a Data Management (DM) sequence in OneStream using the API.
 
@@ -458,15 +463,18 @@ class OneStream(Source):
 
         Args:
             dm_seq_name (str): The name of the Data Management sequence to execute.
-            custom_vars (dict, optional): A dictionary of custom substitution variables
-                to pass to the sequence.Defaults to an empty dictionary.
+            custom_subst_vars (dict[str, Any], optional): A dictionary mapping
+                substitution variable names to lists of possible values
+                to pass to the sequence. Defaults to None.
 
         Returns:
             requests.Response: The HTTP response object returned by the API after
                 executing the sequence.
         """
-        custom_vars = custom_vars or {}
-        custom_vars_str = self._unpack_custom_vars_to_string(custom_vars)
+        custom_subst_vars = custom_subst_vars or {}
+        custom_subst_vars_str = self._unpack_custom_subst_vars_to_string(
+            custom_subst_vars
+        )
 
         endpoint = self.server_url.rstrip("/") + "/api/DataManagement/ExecuteSequence"
 
@@ -480,7 +488,7 @@ class OneStream(Source):
                 "BaseWebServerUrl": self.server_url.rstrip("/") + "/OneStreamWeb",
                 "ApplicationName": self.application,
                 "SequenceName": dm_seq_name,
-                "CustomSubstVarsAsCommaSeparatedPairs": custom_vars_str,
+                "CustomSubstVarsAsCommaSeparatedPairs": custom_subst_vars_str,
             }
         )
 
