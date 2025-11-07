@@ -267,6 +267,7 @@ class SMB(Source):
         found_files = {}
         problematic_entries = []
 
+        paths = [paths] if isinstance(paths, str) else paths
         for path in paths:
             entries = self._get_directory_entries(path)
             for entry in entries:
@@ -439,7 +440,8 @@ class SMB(Source):
             with smbclient.open_file(file_path, mode="rb") as file:
                 content = file.read()
 
-            filename = Path(file_path).name
+            file_path_normalized = file_path.replace("\\", "/")
+            filename = Path(file_path_normalized).name
             prefixed_name = self._add_prefix_to_filename(filename, prefix)
             contents[prefixed_name] = content
 
