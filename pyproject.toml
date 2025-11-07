@@ -62,7 +62,7 @@ azure = [
 aws = [
     "s3fs==2024.6.0",
     "boto3==1.34.106",
-    "dbt-redshift>=1.8.1, <1.11",
+    "dbt-redshift>=1.9.5, <1.11",
     "minio>=7.0, <8.0",
     "awswrangler>=3.12.1",
     "prefect-aws>=0.4.19",
