@@ -237,6 +237,8 @@ class Matomo(Source):
             record_prefix=record_prefix,
         )
 
+        df = df.reindex(columns=top_level_fields)  
+
         if df.empty:
             self.logger.warning("No records found in the specified record_path.")
             self._handle_if_empty(if_empty=if_empty)
@@ -249,19 +251,3 @@ class Matomo(Source):
 
         return df
 
-    def to_json(self) -> dict[str, Any]:
-        """Return the fetched data as a dictionary.
-
-        Returns:
-            dict[str, Any]: The Matomo API response data.
-
-        Raises:
-            ValueError: If no data has been fetched yet.
-        """
-        if self.data is None:
-            msg = "No data available. Call fetch_data() first."
-            self.logger.error(msg)
-            raise ValueError(msg)
-
-        self.logger.info("Returning Matomo data as JSON.")
-        return self.data

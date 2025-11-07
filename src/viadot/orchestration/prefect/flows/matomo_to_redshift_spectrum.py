@@ -114,6 +114,9 @@ def matomo_to_redshift_spectrum(  # noqa: PLR0913
         tests=tests,
     )
 
+    print(data_frame.columns)
+    print(data_frame)
+
     return df_to_redshift_spectrum(
         df=data_frame,
         to_path=to_path,
