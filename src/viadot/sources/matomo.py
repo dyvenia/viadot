@@ -237,7 +237,7 @@ class Matomo(Source):
             record_prefix=record_prefix,
         )
 
-        df = df.reindex(columns=top_level_fields)  
+        df = df.reindex(columns=top_level_fields)
 
         if df.empty:
             self.logger.warning("No records found in the specified record_path.")
