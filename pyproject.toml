@@ -55,7 +55,7 @@ azure = [
     "azure-storage-blob==12.20.0",
     "adlfs==2024.4.1",
     "azure-identity>=1.16.0",
-    "dbt-sqlserver>=1.10.13, <1.11",
+    "dbt-sqlserver>=1.9.0, <1.11",
     "prefect-azure-dyvenia[key_vault]==0.1.0", # Adds Key Vault support to Prefect Azure; from https://github.com/trymzet/prefect-azure/tree/add_keyvault_auth
     "prefect_github",
 ]
