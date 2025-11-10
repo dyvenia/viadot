@@ -1,45 +1,15 @@
 """Extract data from OneStream Data Adapters and load it to Redshift Spectrum."""
 
-from itertools import product
 from typing import Any, Literal
 
 from prefect import flow
+from prefect.logging import get_run_logger
 
 from viadot.orchestration.prefect.tasks import (
+    create_batch_list_of_custom_subst_vars,
     df_to_redshift_spectrum,
     onestream_get_agg_adapter_endpoint_data_to_df,
 )
-
-
-def _create_batch_list_of_custom_subst_vars(
-    custom_subst_vars: dict[str, list[Any]],
-) -> list[dict[str, list[Any]]]:
-    """Generates a list of dictionaries of all combinations of custom subst. variables.
-
-    Each combination will be used as a separate batch when batch_by_subst_vars is True,
-    allowing for individual processing and storage of parquet files in S3.
-
-    Args:
-        custom_subst_vars (dict[str, list[Any]]): A dictionary where each key
-            maps to a list of possible values for that substitution variable. The
-            cartesian product of these lists will be computed.
-
-    Returns:
-        list[dict[str, list[Any]]]: A list of dictionaries for substitution variables,
-            each representing a unique combination of custom variable values, where each
-            dictionary has the same keys as the input but with single values selected
-            from the corresponding lists.
-    """
-    return [
-        dict(
-            zip(
-                custom_subst_vars.keys(),
-                [[value] for value in combination],
-                strict=False,
-            )
-        )
-        for combination in product(*custom_subst_vars.values())
-    ]
 
 
 @flow(
@@ -62,6 +32,7 @@ def onestream_data_adapters_to_redshift_spectrum(  # noqa: PLR0913
     api_params: dict[str, str] | None = None,
     extension: str = ".parquet",
     if_exists: Literal["overwrite", "append"] = "overwrite",
+    if_empty: Literal["warn", "skip", "fail"] = "fail",
     partition_cols: list[str] | None = None,
     index: bool = False,
     compression: str | None = None,
@@ -109,6 +80,8 @@ def onestream_data_adapters_to_redshift_spectrum(  # noqa: PLR0913
             Defaults to ".parquet".
         if_exists (str): Whether to 'overwrite' or 'append' to existing table.
             Defaults to "overwrite".
+        if_empty (Literal["warn", "skip", "fail"], optional): What to do if the
+                API returns no data. Defaults to fail.
         partition_cols (list[str], optional): Columns used to create partitions.
             Only applies when dataset=True. Defaults to None.
         index (bool): Write row names (index). Defaults to False.
@@ -124,12 +97,31 @@ def onestream_data_adapters_to_redshift_spectrum(  # noqa: PLR0913
         onestream_config_key (str): Key in viadot config for OneStream credentials.
             Defaults to "onestream".
     """
+    logger = get_run_logger()
+
+    logger.info(f"Starting OneStream Data Adapter extraction: {adapter_name}")
+
+    if batch_by_subst_vars and not custom_subst_vars:
+        msg = (
+            "Invalid parameter combination: batch_by_subst_vars=True requires "
+            "custom_subst_vars to be provided. Either set batch_by_subst_vars=False "
+            "or provide custom_subst_vars dictionary."
+        )
+        logger.exception(msg)
+        raise ValueError(msg)
     if custom_subst_vars and batch_by_subst_vars:
         # Process data in batches - each substitution variable combination separately
-        custom_subst_vars_batch_list = _create_batch_list_of_custom_subst_vars(
+        custom_subst_vars_batch_list = create_batch_list_of_custom_subst_vars(
             custom_subst_vars
         )
-        for custom_subst_var in custom_subst_vars_batch_list:
+        logger.info(
+            f"Processing {len(custom_subst_vars_batch_list)} batches based on substitution variable combinations"
+        )
+
+        for i, custom_subst_var in enumerate(custom_subst_vars_batch_list, 1):
+            logger.info(
+                f"Processing batch {i}/{len(custom_subst_vars_batch_list)}: {custom_subst_var}"
+            )
             df = onestream_get_agg_adapter_endpoint_data_to_df(
                 server_url=server_url,
                 application=application,
@@ -137,6 +129,7 @@ def onestream_data_adapters_to_redshift_spectrum(  # noqa: PLR0913
                 workspace_name=workspace_name,
                 adapter_response_key=adapter_response_key,
                 custom_subst_vars=custom_subst_var,
+                if_empty=if_empty,
                 api_params=api_params,
                 credentials_secret=onestream_credentials_secret,
                 config_key=onestream_config_key,
@@ -156,8 +149,19 @@ def onestream_data_adapters_to_redshift_spectrum(  # noqa: PLR0913
                 credentials_secret=credentials_secret,
             )
             if_exists = "append"  # Changed to "append" to add batches to the table.
+            logger.info(
+                f"Batch {i}/{len(custom_subst_vars_batch_list)} completed successfully"
+            )
+
+        logger.info("All batches processed successfully")
     else:
         # Process all data together - either no custom_subst_vars or batching disabled
+        if custom_subst_vars:
+            logger.info(
+                "Processing all substitution variable combinations as one data frame."
+            )
+        else:
+            logger.info("Processing data without substitution variables")
         df = onestream_get_agg_adapter_endpoint_data_to_df(
             server_url=server_url,
             application=application,
@@ -183,3 +187,4 @@ def onestream_data_adapters_to_redshift_spectrum(  # noqa: PLR0913
             config_key=aws_config_key,
             credentials_secret=credentials_secret,
         )
+        logger.info("Data processing completed successfully")
