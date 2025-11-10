@@ -332,8 +332,6 @@ importlib-resources==6.4.5
     # via prefect
 iniconfig==2.3.0
     # via pytest
-invoke==2.2.1
-    # via paramiko
 ipykernel==6.31.0
     # via mkdocs-jupyter
 ipython==8.37.0
@@ -571,7 +569,7 @@ pandas-gbq==0.23.1
     # via viadot2
 pandocfilters==1.5.1
     # via nbconvert
-paramiko==4.0.0
+paramiko==3.5.0
     # via viadot2
 parsedatetime==2.6
     # via agate

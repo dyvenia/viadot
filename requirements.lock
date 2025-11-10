@@ -274,8 +274,6 @@ importlib-metadata==8.7.0
     # via dbt-semantic-interfaces
 importlib-resources==6.4.5
     # via prefect
-invoke==2.2.1
-    # via paramiko
 isodate==0.6.1
     # via agate
     # via dbt-common
@@ -405,7 +403,7 @@ pandas==2.3.3
     # via visions
 pandas-gbq==0.23.1
     # via viadot2
-paramiko==4.0.0
+paramiko==3.5.0
     # via viadot2
 parsedatetime==2.6
     # via agate
