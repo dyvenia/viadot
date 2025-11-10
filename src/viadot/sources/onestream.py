@@ -6,7 +6,7 @@ including Data Adapter queries, SQL queries, and Data Management sequence execut
 
 from itertools import product
 import json
-from typing import Any
+from typing import Any, Literal
 
 import pandas as pd
 from pydantic import BaseModel
@@ -29,7 +29,6 @@ class OneStreamCredentials(BaseModel):
     api_token: str
 
 
-# TODO fix types in the docstring and in type annotations
 class OneStream(Source):
     def __init__(
         self,
@@ -62,9 +61,9 @@ class OneStream(Source):
 
         Note:
             The connector supports three main operations:
-            1. Data Adapter queries: Fetch data using OneStream Data Adapters
-            2. SQL queries: Execute SQL queries against OneStream databases
-            3. Data Management: Run Data Management sequences
+            1. Data Adapter queries: Fetch data using OneStream Data Adapters.
+            2. SQL queries: Execute SQL queries against OneStream databases.
+            3. Data Management: Run Data Management sequences.
         """
         raw_creds = credentials or get_source_credentials(config_key) or {}
         validated_creds = dict(OneStreamCredentials(**raw_creds))
@@ -150,13 +149,6 @@ class OneStream(Source):
             )
             msg = "API response is null."
             raise ValueError(msg)
-        if json_response[adapter_response_key] is None:
-            self.logger.error(
-                "API call returned a response dictionary without any data. Check database table settings "
-                "or add/check custom substitution variables."
-            )
-            msg = "API Results doesn't contain any data."
-            raise ValueError(msg)
         return json_response[adapter_response_key]
 
     def _unpack_custom_subst_vars_to_string(
@@ -241,7 +233,6 @@ class OneStream(Source):
             "Content-Type": "application/json",
             "Authorization": f"Bearer {self.api_token}",
             "Accept-Encoding": "gzip, deflate, br",
-            # Content-Length: "999"
         }
         payload = json.dumps(
             {
@@ -267,8 +258,7 @@ class OneStream(Source):
     ) -> dict:
         """Retrieves and aggregates data from a OneStream Data Adapter (DA).
 
-        This function generates the cartesian product of all values in the
-        `custom_subst_vars` dictionary, constructs individual API requests for each
+        This function constructs individual API requests for each
         substitution combination, and aggregates the results into a dictionary keyed by
         a string representation of the variable values.
 
@@ -289,9 +279,6 @@ class OneStream(Source):
                 value is the corresponding data retrieved from the DA.
         """
         custom_subst_vars = custom_subst_vars or {}
-        # TODO: As the vars combinations will be handled up to here, check the type
-        # annotations in all places where you hadle custom_subst_vars_value
-        # combinations - begining is in the flow and passing the param to the task
         custom_subst_vars_list = self._get_all_custom_subst_vars_combinations(
             custom_subst_vars
         )
@@ -309,8 +296,11 @@ class OneStream(Source):
 
         return agg_records
 
-    # TODO: update data type annotation
-    def _to_df(self, data: dict[str, list[dict[str, Any]]]) -> pd.DataFrame:
+    def _to_df(
+        self,
+        data: dict[str, list[dict[str, Any]]],
+        if_empty: Literal["warn", "skip", "fail"],
+    ) -> pd.DataFrame:
         """Convert a dictionary of JSON-like data slices into a Pandas DataFrame.
 
         Args:
@@ -330,11 +320,12 @@ class OneStream(Source):
             pd.DataFrame: A DataFrame containing all normalized records
                 combined into a single table.
         """
-        if not data:
-            msg = "The response data dictionary is empty"
-            raise ValueError(msg)
         unpacked_data = [part for parts in data for part in parts]
-        return pd.DataFrame(unpacked_data)
+        df = pd.DataFrame(unpacked_data)
+        if df.empty:
+            msg = "The response data is empty."
+            self._handle_if_empty(if_empty, message=msg)
+        return df
 
     def _run_sql(
         self,
@@ -380,7 +371,6 @@ class OneStream(Source):
             "Content-Type": "application/json",
             "Authorization": f"Bearer {self.api_token}",
         }
-        # TODO: Check how it behaves when none values are passed as db location etc
         payload = json.dumps(
             {
                 "BaseWebServerUrl": self.server_url.rstrip("/") + "/OneStreamWeb",
@@ -419,7 +409,6 @@ class OneStream(Source):
                 containing the desired data. Defaults to "Results".
             external_db (str, optional): The name of an external database.
                 Defaults to an empty string.
-                Defaults to an empty string.
             custom_subst_vars (dict[str, list[Any]], optional): A dictionary mapping
                 substitution variable names to lists of possible values.
                 Defaults to None.
@@ -435,18 +424,17 @@ class OneStream(Source):
             custom_subst_vars
         )
 
-        agg_records = {}
+        agg_records = []
 
         for custom_subst_var in custom_subst_vars_list:
-            var_value = (
-                " - ".join(custom_subst_var.values()) if custom_subst_var else "Default"
-            )
-            agg_records[var_value] = self._run_sql(
-                sql_query=sql_query,
-                db_location=db_location,
-                results_table_name=results_table_name,
-                external_db=external_db,
-                custom_subst_vars=custom_subst_var,
+            agg_records.append(
+                self._run_sql(
+                    sql_query=sql_query,
+                    db_location=db_location,
+                    results_table_name=results_table_name,
+                    external_db=external_db,
+                    custom_subst_vars=custom_subst_var,
+                )
             )
 
         return agg_records

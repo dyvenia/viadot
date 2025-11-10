@@ -1,6 +1,7 @@
 """Tasks for OneStream API."""
 
-from typing import Any
+from itertools import product
+from typing import Any, Literal
 
 import pandas as pd
 from prefect import task
@@ -11,7 +12,49 @@ from viadot.orchestration.prefect.utils import get_credentials
 from viadot.sources.onestream import OneStream
 
 
-# TODO fix types in the docstring
+@task(retries=1, log_prints=True, retry_delay_seconds=5)
+def create_batch_list_of_custom_subst_vars(
+    custom_subst_vars: dict[str, list[Any]],
+) -> list[dict[str, list[Any]]]:
+    """Generates a list of dictionaries of all combinations of custom subst. variables.
+
+    Each combination will be used as a separate batch when batch_by_subst_vars is True,
+    allowing for individual processing and storage of parquet files in S3.
+
+    Args:
+        custom_subst_vars (dict[str, list[Any]]): A dictionary where each key
+            maps to a list of possible values for that substitution variable. The
+            cartesian product of these lists will be computed.
+
+    Returns:
+        list[dict[str, list[Any]]]: A list of dictionaries for substitution variables,
+            each representing a unique combination of custom variable values, where each
+            dictionary has the same keys as the input but with single values selected
+            from the corresponding lists.
+
+    Raises:
+        ValueError: If custom_subst_vars is empty or contains empty lists.
+    """
+    if not custom_subst_vars:
+        msg = "custom_subst_vars cannot be empty"
+        raise ValueError(msg)
+
+    if any(not values for values in custom_subst_vars.values()):
+        msg = "All substitution variable lists must contain at least one value"
+        raise ValueError(msg)
+
+    return [
+        dict(
+            zip(
+                custom_subst_vars.keys(),
+                [[value] for value in combination],
+                strict=False,
+            )
+        )
+        for combination in product(*custom_subst_vars.values())
+    ]
+
+
 @task(retries=3, log_prints=True, retry_delay_seconds=10, timeout_seconds=60 * 60)
 def onestream_get_agg_adapter_endpoint_data_to_df(
     server_url: str,
@@ -23,6 +66,7 @@ def onestream_get_agg_adapter_endpoint_data_to_df(
     adapter_response_key: str = "Results",
     custom_subst_vars: dict[str, list[Any]] | None = None,
     api_params: dict[str, str] | None = None,
+    if_empty: Literal["warn", "skip", "fail"] = "fail",
 ) -> pd.DataFrame:
     """Retrieves and aggregates data from a OneStream Data Adapter.
 
@@ -68,11 +112,11 @@ def onestream_get_agg_adapter_endpoint_data_to_df(
         adapter_response_key=adapter_response_key,
         custom_subst_vars=custom_subst_vars,
     )
-    return onestream._to_df(data=data)
+    return onestream._to_df(data=data, if_empty=if_empty)
 
 
 @task(retries=3, log_prints=True, retry_delay_seconds=10, timeout_seconds=60 * 60)
-def onestream_get_agg_sql_data_to_df(
+def onestream_get_agg_sql_data_to_df(  # noqa: PLR0913
     server_url: str,
     application: str,
     sql_query: str,
@@ -83,6 +127,7 @@ def onestream_get_agg_sql_data_to_df(
     results_table_name: str = "Results",
     external_db: str = "",
     api_params: dict[str, str] | None = None,
+    if_empty: Literal["warn", "skip", "fail"] = "fail",
 ) -> pd.DataFrame:
     """Retrieves and aggregates SQL data from OneStream.
 
@@ -106,6 +151,8 @@ def onestream_get_agg_sql_data_to_df(
             Defaults to "".
         api_params (dict[str, str], optional): API parameters.
             Defaults to None.
+        if_empty (Literal["warn", "skip", "fail"], optional): What to do if the
+            SQL query returns no data. Defaults to "fail".
 
     Returns:
         pd.DataFrame: Aggregated SQL data as Pandas Data Frame.
@@ -129,7 +176,7 @@ def onestream_get_agg_sql_data_to_df(
         results_table_name=results_table_name,
         external_db=external_db,
     )
-    return onestream._to_df(data=data)
+    return onestream._to_df(data=data, if_empty=if_empty)
 
 
 @task(retries=3, log_prints=True, retry_delay_seconds=10, timeout_seconds=60 * 60)
