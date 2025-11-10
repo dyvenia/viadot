@@ -177,11 +177,12 @@ class Matomo(Source):
                 params=params,
                 method="GET",
             )
-            self.data = self._validate_response(response)
         except Exception as e:
             msg = "Failed to fetch data from Matomo API"
             self.logger.exception(msg)
             raise APIError(msg) from e
+        
+        self.data = self._validate_response(response)
 
     @add_viadot_metadata_columns
     def to_df(
