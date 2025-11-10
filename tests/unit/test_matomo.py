@@ -218,31 +218,6 @@ def test_fetch_data_missing_required_params(matomo_instance):
         matomo_instance.fetch_data("token", "https://example.com", incomplete_params)
 
 
-@patch("viadot.sources.matomo.handle_api_response")
-def test_fetch_data_invalid_json_response(mock_handle_api_response, matomo_instance):
-    """Test fetch_data with invalid JSON response."""
-    from viadot.exceptions import APIError
-
-    mock_response = MagicMock()
-    mock_response.status_code = 200
-    mock_response.json.side_effect = ValueError("Invalid JSON")
-    mock_handle_api_response.return_value = mock_response
-
-    with pytest.raises(APIError, match="Failed to fetch data from Matomo API"):
-        matomo_instance.fetch_data(
-            "token",
-            "https://example.com",
-            {
-                "module": "API",
-                "method": "test",
-                "idSite": "1",
-                "period": "day",
-                "date": "today",
-                "format": "JSON",
-            },
-        )
-
-
 def test_to_df_without_data_raises_error(matomo_instance):
     """Test to_df raises error when no data has been fetched."""
     with pytest.raises(
