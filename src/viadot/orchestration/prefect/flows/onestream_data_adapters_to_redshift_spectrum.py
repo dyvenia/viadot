@@ -16,6 +16,9 @@ def _create_batch_list_of_custom_subst_vars(
 ) -> list[dict[str, list[Any]]]:
     """Generates a list of dictionaries of all combinations of custom subst. variables.
 
+    Each combination will be used as a separate batch when batch_by_subst_vars is True,
+    allowing for individual processing and storage of parquet files in S3.
+
     Args:
         custom_subst_vars (dict[str, list[Any]]): A dictionary where each key
             maps to a list of possible values for that substitution variable. The
@@ -55,6 +58,7 @@ def onestream_data_adapters_to_redshift_spectrum(  # noqa: PLR0913
     workspace_name: str = "MainWorkspace",
     adapter_response_key: str = "Results",
     custom_subst_vars: dict[str, list[Any]] | None = None,
+    batch_by_subst_vars: bool = False,
     api_params: dict[str, str] | None = None,
     extension: str = ".parquet",
     if_exists: Literal["overwrite", "append"] = "overwrite",
@@ -72,6 +76,14 @@ def onestream_data_adapters_to_redshift_spectrum(  # noqa: PLR0913
     This function retrieves data from a OneStream Data Adapter using provided parameters
     and uploads it to AWS Redshift Spectrum.
 
+    When custom_subst_vars are provided and batch_by_subst_vars is True, the ingestion
+    process will be split into batches. Each batch represents one combination of the
+    custom_subst_vars. When batch_by_subst_vars is False, all substitution variable
+    combinations are processed together in to a single data frame.
+    Warning!Processing custom substition vars without batching might lead to
+    out of memory errors when data size to big.
+
+
     Args:
         server_url (str): OneStream server URL.
         application (str): OneStream application name.
@@ -85,7 +97,13 @@ def onestream_data_adapters_to_redshift_spectrum(  # noqa: PLR0913
         custom_subst_vars (dict[str, list[Any]], optional): A dictionary mapping
             substitution variable names to lists of possible values.
             Values can be of any type that can be converted to strings, as they
-            are used as substitution variables in the Data Adapter.Defaults to None.
+            are used as substitution variables in the Data Adapter. Defaults to None.
+        batch_by_subst_vars (bool): Whether to process data in batches based on
+            substitution variable combinations. When True and custom_subst_vars is
+            provided, each combination of substitution variables will be processed
+            as a separate batch, creating individual parquet files in S3. When False,
+            all substitution variable combinations are processed together in a single
+            operation. Defaults to False.
         api_params (dict[str, str], optional): API parameters. Defaults to None.
         extension (str): Required file type. Accepted formats: 'csv', 'parquet'.
             Defaults to ".parquet".
@@ -106,7 +124,8 @@ def onestream_data_adapters_to_redshift_spectrum(  # noqa: PLR0913
         onestream_config_key (str): Key in viadot config for OneStream credentials.
             Defaults to "onestream".
     """
-    if custom_subst_vars:
+    if custom_subst_vars and batch_by_subst_vars:
+        # Process data in batches - each substitution variable combination separately
         custom_subst_vars_batch_list = _create_batch_list_of_custom_subst_vars(
             custom_subst_vars
         )
@@ -136,8 +155,9 @@ def onestream_data_adapters_to_redshift_spectrum(  # noqa: PLR0913
                 config_key=aws_config_key,
                 credentials_secret=credentials_secret,
             )
-            if_exists = "append"  # Change to "append" to add batches to the table.
+            if_exists = "append"  # Changed to "append" to add batches to the table.
     else:
+        # Process all data together - either no custom_subst_vars or batching disabled
         df = onestream_get_agg_adapter_endpoint_data_to_df(
             server_url=server_url,
             application=application,
