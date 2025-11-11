@@ -20,6 +20,7 @@ from .mediatool_to_adls import mediatool_to_adls
 from .mindful_to_adls import mindful_to_adls
 from .onestream_data_adapters_to_redshift_spectrum import (
     onestream_data_adapters_to_redshift_spectrum,
+    onestream_sql_query_data_to_redshift_spectrum,
 )
 from .outlook_to_adls import outlook_to_adls
 from .salesforce_to_adls import salesforce_to_adls
@@ -62,6 +63,7 @@ __all__ = [
     "mediatool_to_adls",
     "mindful_to_adls",
     "onestream_data_adapters_to_redshift_spectrum",
+    "onestream_sql_query_data_to_redshift_spectrum",
     "outlook_to_adls",
     "salesforce_to_adls",
     "sap_bw_to_adls",
