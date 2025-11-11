@@ -50,16 +50,15 @@ def onestream_data_adapters_to_redshift_spectrum(  # noqa: PLR0913
     When custom_subst_vars are provided and batch_by_subst_vars is True, the ingestion
     process will be split into batches. Each batch represents one combination of the
     custom_subst_vars. When batch_by_subst_vars is False, all substitution variable
-    combinations are processed together in to a single data frame.
-    Warning!Processing custom substition vars without batching might lead to
-    out of memory errors when data size to big.
-
+    combinations are processed together into a single data frame.
+    Warning! Processing custom substitution vars without batching might lead to
+    out-of-memory errors when data size is too big.
 
     Args:
         server_url (str): OneStream server URL.
         application (str): OneStream application name.
         adapter_name (str): Data Adapter name to query.
-        to_path (str): Path to a S3 folder where the table will be located.
+        to_path (str): Path to an S3 folder where the table will be located.
         schema_name (str): AWS Glue catalog database name.
         table (str): AWS Glue catalog table name.
         workspace_name (str): OneStream workspace name. Defaults to "MainWorkspace".
@@ -81,7 +80,7 @@ def onestream_data_adapters_to_redshift_spectrum(  # noqa: PLR0913
         if_exists (str): Whether to 'overwrite' or 'append' to existing table.
             Defaults to "overwrite".
         if_empty (Literal["warn", "skip", "fail"], optional): What to do if the
-                API returns no data. Defaults to fail.
+            API returns no data. Defaults to "fail".
         partition_cols (list[str], optional): Columns used to create partitions.
             Only applies when dataset=True. Defaults to None.
         index (bool): Write row names (index). Defaults to False.
@@ -105,7 +104,7 @@ def onestream_data_adapters_to_redshift_spectrum(  # noqa: PLR0913
         msg = (
             "Invalid parameter combination: batch_by_subst_vars=True requires "
             "custom_subst_vars to be provided. Either set batch_by_subst_vars=False "
-            "or provide custom_subst_vars dictionary."
+            "or provide a custom_subst_vars dictionary."
         )
         logger.exception(msg)
         raise ValueError(msg)
@@ -115,12 +114,12 @@ def onestream_data_adapters_to_redshift_spectrum(  # noqa: PLR0913
             custom_subst_vars
         )
         logger.info(
-            f"Processing {len(custom_subst_vars_batch_list)} batches based on substitution variable combinations"
+            f"Processing {len(custom_subst_vars_batch_list)} batches based on substitution variable combinations."
         )
 
         for i, custom_subst_var in enumerate(custom_subst_vars_batch_list, 1):
             logger.info(
-                f"Processing batch {i}/{len(custom_subst_vars_batch_list)}: {custom_subst_var}"
+                f"Processing batch {i}/{len(custom_subst_vars_batch_list)}: {custom_subst_var}."
             )
             df = onestream_get_agg_adapter_endpoint_data_to_df(
                 server_url=server_url,
@@ -150,10 +149,10 @@ def onestream_data_adapters_to_redshift_spectrum(  # noqa: PLR0913
             )
             if_exists = "append"  # Changed to "append" to add batches to the table.
             logger.info(
-                f"Batch {i}/{len(custom_subst_vars_batch_list)} completed successfully"
+                f"Batch {i}/{len(custom_subst_vars_batch_list)} completed successfully."
             )
 
-        logger.info("All batches processed successfully")
+        logger.info("All batches processed successfully.")
     else:
         # Process all data together - either no custom_subst_vars or batching disabled
         if custom_subst_vars:
@@ -161,7 +160,7 @@ def onestream_data_adapters_to_redshift_spectrum(  # noqa: PLR0913
                 "Processing all substitution variable combinations as one data frame."
             )
         else:
-            logger.info("Processing data without substitution variables")
+            logger.info("Processing data without substitution variables.")
         df = onestream_get_agg_adapter_endpoint_data_to_df(
             server_url=server_url,
             application=application,
@@ -187,4 +186,4 @@ def onestream_data_adapters_to_redshift_spectrum(  # noqa: PLR0913
             config_key=aws_config_key,
             credentials_secret=credentials_secret,
         )
-        logger.info("Data processing completed successfully")
+        logger.info("Data processing completed successfully.")

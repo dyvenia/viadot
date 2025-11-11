@@ -43,7 +43,7 @@ def onestream_sql_query_data_to_redshift_spectrum(  # noqa: PLR0913
     onestream_credentials_secret: str | None = None,
     onestream_config_key: str = "onestream",
 ) -> None:
-    """Extract data from OneStream SQL query and load it into AWS Redshift Spectrum.
+    """Extract data from a OneStream SQL query and load it into AWS Redshift Spectrum.
 
     This function executes a SQL query in OneStream using provided parameters
     and uploads the results to AWS Redshift Spectrum.
@@ -51,15 +51,15 @@ def onestream_sql_query_data_to_redshift_spectrum(  # noqa: PLR0913
     When custom_subst_vars are provided and batch_by_subst_vars is True, the ingestion
     process will be split into batches. Each batch represents one combination of the
     custom_subst_vars. When batch_by_subst_vars is False, all substitution variable
-    combinations are processed together in to a single data frame.
+    combinations are processed together into a single data frame.
     Warning! Processing custom substitution vars without batching might lead to
-    out of memory errors when data size is too big.
+    out-of-memory errors when data size is too big.
 
     Args:
         server_url (str): OneStream server URL.
         application (str): OneStream application name.
         sql_query (str): SQL query to execute in OneStream.
-        to_path (str): Path to a S3 folder where the table will be located.
+        to_path (str): Path to an S3 folder where the table will be located.
         schema_name (str): AWS Glue catalog database name.
         table (str): AWS Glue catalog table name.
         custom_subst_vars (dict[str, list[Any]], optional): A dictionary mapping
@@ -103,7 +103,7 @@ def onestream_sql_query_data_to_redshift_spectrum(  # noqa: PLR0913
         msg = (
             "Invalid parameter combination: batch_by_subst_vars=True requires "
             "custom_subst_vars to be provided. Either set batch_by_subst_vars=False "
-            "or provide custom_subst_vars dictionary."
+            "or provide a custom_subst_vars dictionary."
         )
         logger.error(msg)
         raise ValueError(msg)
@@ -118,12 +118,12 @@ def onestream_sql_query_data_to_redshift_spectrum(  # noqa: PLR0913
             custom_subst_vars
         )
         logger.info(
-            f"Processing {len(custom_subst_vars_batch_list)} batches based on substitution variable combinations"
+            f"Processing {len(custom_subst_vars_batch_list)} batches based on substitution variable combinations."
         )
 
         for i, custom_subst_var in enumerate(custom_subst_vars_batch_list, 1):
             logger.info(
-                f"Processing batch {i}/{len(custom_subst_vars_batch_list)}: {custom_subst_var}"
+                f"Processing batch {i}/{len(custom_subst_vars_batch_list)}: {custom_subst_var}."
             )
             df = onestream_get_agg_sql_data_to_df(
                 server_url=server_url,
@@ -152,12 +152,12 @@ def onestream_sql_query_data_to_redshift_spectrum(  # noqa: PLR0913
                 config_key=aws_config_key,
                 credentials_secret=credentials_secret,
             )
-            if_exists = "append"  # Change to "append" to add batches to the table.
+            if_exists = "append"  # Changed to "append" to add batches to the table.
             logger.info(
-                f"Batch {i}/{len(custom_subst_vars_batch_list)} completed successfully"
+                f"Batch {i}/{len(custom_subst_vars_batch_list)} completed successfully."
             )
 
-        logger.info("All batches processed successfully")
+        logger.info("All batches processed successfully.")
     else:
         # Process all data together - either no custom_subst_vars or batching disabled
         df = onestream_get_agg_sql_data_to_df(
@@ -187,4 +187,4 @@ def onestream_sql_query_data_to_redshift_spectrum(  # noqa: PLR0913
             config_key=aws_config_key,
             credentials_secret=credentials_secret,
         )
-        logger.info("Data processing completed successfully")
+        logger.info("Data processing completed successfully.")

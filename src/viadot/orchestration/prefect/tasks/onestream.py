@@ -16,21 +16,21 @@ from viadot.sources.onestream import OneStream
 def create_batch_list_of_custom_subst_vars(
     custom_subst_vars: dict[str, list[Any]],
 ) -> list[dict[str, list[Any]]]:
-    """Generates a list of dictionaries of all combinations of custom subst. variables.
+    """Generate all combinations of custom substitution variables as batch dictionaries.
 
-    Each combination will be used as a separate batch when batch_by_subst_vars is True,
+    Each combination is used as a separate batch when batch_by_subst_vars is True,
     allowing for individual processing and storage of parquet files in S3.
 
     Args:
-        custom_subst_vars (dict[str, list[Any]]): A dictionary where each key
-            maps to a list of possible values for that substitution variable. The
-            cartesian product of these lists will be computed.
+        custom_subst_vars (dict[str, list[Any]]): Dictionary where each key maps to a
+        list of possible values for that substitution variable. The cartesian product
+            of these lists will be computed.
 
     Returns:
-        list[dict[str, list[Any]]]: A list of dictionaries for substitution variables,
-            each representing a unique combination of custom variable values, where each
-            dictionary has the same keys as the input but with single values selected
-            from the corresponding lists.
+        list[dict[str, list[Any]]]: List of dictionaries for substitution
+            variables, each representing a unique combination of custom variable values.
+            Each dictionary has the same keys as the input but with single values
+                selected from the corresponding lists.
 
     Raises:
         ValueError: If custom_subst_vars is empty or contains empty lists.
@@ -68,7 +68,7 @@ def onestream_get_agg_adapter_endpoint_data_to_df(
     api_params: dict[str, str] | None = None,
     if_empty: Literal["warn", "skip", "fail"] = "fail",
 ) -> pd.DataFrame:
-    """Retrieves and aggregates data from a OneStream Data Adapter.
+    """Retrieve and aggregate data from a OneStream Data Adapter as a DataFrame.
 
     Processes custom variables to generate combinations and fetch data.
 
@@ -76,23 +76,17 @@ def onestream_get_agg_adapter_endpoint_data_to_df(
         server_url (str): OneStream server URL.
         application (str): OneStream application name.
         adapter_name (str): Data Adapter name to query.
-        credentials_secret (str, optional): Key Vault secret name.
-            Defaults to None.
-        config_key (str): Viadot config key.
-            Defaults to "onestream".
-        workspace_name (str): OneStream workspace name.
-            Defaults to "MainWorkspace".
-        adapter_response_key (str): Key in the JSON response that contains
-            the adapter's returned data. Defaults to "Results".
-        custom_subst_vars (dict[str, list[Any]], optional): A dictionary mapping
-            substitution variable names to lists of possible values.
-            Values can be of any type that can be converted to strings, as they are
-            used as substitution variables in the Data Adapter.Defaults to None.
-        api_params (dict[str, str], optional): API parameters.
-            Defaults to None.
+        credentials_secret (str, optional): Key Vault secret name. Defaults to None.
+        config_key (str): Viadot config key. Defaults to "onestream".
+        workspace_name (str): OneStream workspace name. Defaults to "MainWorkspace".
+        adapter_response_key (str): Key in the JSON response that contains the adapter's
+            returned data. Defaults to "Results".
+        custom_subst_vars (dict[str, list[Any]], optional): Dictionary mapping
+            substitution variable names to lists of possible values. Defaults to None.
+        api_params (dict[str, str], optional): API parameters. Defaults to None.
 
     Returns:
-        pd.DataFrame: Variable combinations mapped to their data as Pandas Data Frame.
+        pd.DataFrame: Variable combinations mapped to their data as a Pandas DataFrame.
     """
     if not (credentials_secret or config_key):
         raise MissingSourceCredentialsError
@@ -129,33 +123,25 @@ def onestream_get_agg_sql_data_to_df(  # noqa: PLR0913
     api_params: dict[str, str] | None = None,
     if_empty: Literal["warn", "skip", "fail"] = "fail",
 ) -> pd.DataFrame:
-    """Retrieves and aggregates SQL data from OneStream.
+    """Retrieve and aggregate SQL data from OneStream as a DataFrame.
 
     Args:
         server_url (str): OneStream server URL.
         application (str): OneStream application name.
         sql_query (str): SQL query to execute.
-        credentials_secret (str, optional): Key Vault secret name.
-            Defaults to None.
-        config_key (str): Viadot config key.
-            Defaults to "onestream".
-        custom_subst_vars (dict[str, list[Any]], optional): A dictionary mapping
-            substitution variable names to lists of possible values.
-            Values can be of any type that can be converted to strings, as they
-            are used as substitution variables in the Data Adapter.Defaults to None.
-        db_location (str): Database location path.
-            Defaults to "Application".
-        results_table_name (str): Results table name.
-            Defaults to "Results".
-        external_db (str): External database name.
-            Defaults to "".
-        api_params (dict[str, str], optional): API parameters.
-            Defaults to None.
-        if_empty (Literal["warn", "skip", "fail"], optional): What to do if the
-            SQL query returns no data. Defaults to "fail".
+        credentials_secret (str, optional): Key Vault secret name. Defaults to None.
+        config_key (str): Viadot config key. Defaults to "onestream".
+        custom_subst_vars (dict[str, list[Any]], optional): Dictionary mapping
+            substitution variable names to lists of possible values. Defaults to None.
+        db_location (str): Database location path. Defaults to "Application".
+        results_table_name (str): Results table name. Defaults to "Results".
+        external_db (str): External database name. Defaults to "".
+        api_params (dict[str, str], optional): API parameters. Defaults to None.
+        if_empty (Literal["warn", "skip", "fail"], optional): What to do if the SQL
+            query returns no data. Defaults to "fail".
 
     Returns:
-        pd.DataFrame: Aggregated SQL data as Pandas Data Frame.
+        pd.DataFrame: Aggregated SQL data as a Pandas DataFrame.
     """
     if not (credentials_secret or config_key):
         raise MissingSourceCredentialsError
@@ -189,23 +175,17 @@ def onestream_run_data_management_seq(
     custom_subst_vars: dict[str, list[Any]] | None = None,
     api_params: dict[str, str] | None = None,
 ) -> requests.Response:
-    """Runs a OneStream Data Management Sequence.
+    """Run a OneStream Data Management Sequence.
 
     Args:
         server_url (str): OneStream server URL.
         application (str): OneStream application name.
         dm_seq_name (str): Data Management Sequence name.
-        credentials_secret (str, optional): Key Vault secret name.
-            Defaults to None.
-        config_key (str): Viadot config key.
-            Defaults to "onestream".
-        custom_subst_vars (dict[str, list[Any]], optional): A dictionary mapping
-            substitution variable names to lists of possible values.
-            Values can be of any type that can be converted to strings, as they
-            are used as substitution variables in the Data Adapter.Defaults to None.
-        db_location (str): Database location path.
-        api_params (dict[str, str], optional): API parameters.
-            Defaults to None.
+        credentials_secret (str, optional): Key Vault secret name. Defaults to None.
+        config_key (str): Viadot config key. Defaults to "onestream".
+        custom_subst_vars (dict[str, list[Any]], optional): Dictionary mapping
+            substitution variable names to lists of possible values. Defaults to None.
+        api_params (dict[str, str], optional): API parameters. Defaults to None.
 
     Returns:
         requests.Response: Sequence execution response.

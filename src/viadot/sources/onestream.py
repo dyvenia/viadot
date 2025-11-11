@@ -40,11 +40,11 @@ class OneStream(Source):
         *args,
         **kwargs,
     ):
-        """A connector class to ingest data out of the OneStream API endpoint.
+        """Connector class to ingest data from the OneStream API endpoint..
 
-        This connector provides access to various OneStream API endpoints for data
-        extraction and management. Each endpoint requires a specific function designed
-        to handle its unique requirements.
+        Provides access to various OneStream API endpoints for data extraction and
+        management. Each endpoint requires a specific function designed to handle its
+        unique requirements.
 
         Args:
             server_url (str): Base URL of the OneStream server.
@@ -61,9 +61,9 @@ class OneStream(Source):
 
         Note:
             The connector supports three main operations:
-            1. Data Adapter queries: Fetch data using OneStream Data Adapters.
-            2. SQL queries: Execute SQL queries against OneStream databases.
-            3. Data Management: Run Data Management sequences.
+                1. Data Adapter queries: Fetch data using OneStream Data Adapters.
+                2. SQL queries: Execute SQL queries against OneStream databases.
+                3. Data Management: Run Data Management sequences.
         """
         raw_creds = credentials or get_source_credentials(config_key) or {}
         validated_creds = dict(OneStreamCredentials(**raw_creds))
