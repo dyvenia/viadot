@@ -40,7 +40,7 @@ def onestream_data_adapters_to_redshift_spectrum(  # noqa: PLR0913
     aws_config_key: str | None = None,
     credentials_secret: str | None = None,
     onestream_credentials_secret: str | None = None,
-    onestream_config_key: str = "onestream",
+    onestream_config_key: str | None = None,
 ) -> None:
     """Extract data from OneStream Data Adapter and load it into AWS Redshift Spectrum.
 
@@ -93,8 +93,8 @@ def onestream_data_adapters_to_redshift_spectrum(  # noqa: PLR0913
             credentials. Defaults to None.
         onestream_credentials_secret (str, optional): Name of secret storing OneStream
             credentials. Defaults to None.
-        onestream_config_key (str): Key in viadot config for OneStream credentials.
-            Defaults to "onestream".
+        onestream_config_key (str, optional)): Key in viadot config for OneStream
+            credentials.Defaults to None.
     """
     logger = get_run_logger()
 

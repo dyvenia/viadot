@@ -50,7 +50,7 @@ class OneStream(Source):
             server_url (str): Base URL of the OneStream server.
             application (str): Name of the OneStream application to connect to.
             config_key (str, optional): Key in viadot config to fetch credentials.
-                Defaults to "onestream".
+                Defaults to None.
             credentials (OneStreamCredentials, optional): OneStream API credentials.
                 Must contain 'api_token'. If not provided, will attempt to fetch from
                 viadot config using config_key. Defaults to None.

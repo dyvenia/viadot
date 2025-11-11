@@ -61,7 +61,7 @@ def onestream_get_agg_adapter_endpoint_data_to_df(
     application: str,
     adapter_name: str,
     credentials_secret: str | None = None,
-    config_key: str = "onestream",
+    config_key: str | None = None,
     workspace_name: str = "MainWorkspace",
     adapter_response_key: str = "Results",
     custom_subst_vars: dict[str, list[Any]] | None = None,
@@ -77,7 +77,7 @@ def onestream_get_agg_adapter_endpoint_data_to_df(
         application (str): OneStream application name.
         adapter_name (str): Data Adapter name to query.
         credentials_secret (str, optional): Key Vault secret name. Defaults to None.
-        config_key (str): Viadot config key. Defaults to "onestream".
+        config_key (str, optional): Viadot config key. Defaults to None.
         workspace_name (str): OneStream workspace name. Defaults to "MainWorkspace".
         adapter_response_key (str): Key in the JSON response that contains the adapter's
             returned data. Defaults to "Results".
@@ -115,7 +115,7 @@ def onestream_get_agg_sql_data_to_df(  # noqa: PLR0913
     application: str,
     sql_query: str,
     credentials_secret: str | None = None,
-    config_key: str = "onestream",
+    config_key: str | None = None,
     custom_subst_vars: dict[str, list[Any]] | None = None,
     db_location: str = "Application",
     results_table_name: str = "Results",
@@ -130,7 +130,7 @@ def onestream_get_agg_sql_data_to_df(  # noqa: PLR0913
         application (str): OneStream application name.
         sql_query (str): SQL query to execute.
         credentials_secret (str, optional): Key Vault secret name. Defaults to None.
-        config_key (str): Viadot config key. Defaults to "onestream".
+        config_key (str,optional): Viadot config key. Defaults to None.
         custom_subst_vars (dict[str, list[Any]], optional): Dictionary mapping
             substitution variable names to lists of possible values. Defaults to None.
         db_location (str): Database location path. Defaults to "Application".
@@ -171,7 +171,7 @@ def onestream_run_data_management_seq(
     application: str,
     dm_seq_name: str,
     credentials_secret: str | None = None,
-    config_key: str = "onestream",
+    config_key: str | None = None,
     custom_subst_vars: dict[str, list[Any]] | None = None,
     api_params: dict[str, str] | None = None,
 ) -> requests.Response:
@@ -182,7 +182,7 @@ def onestream_run_data_management_seq(
         application (str): OneStream application name.
         dm_seq_name (str): Data Management Sequence name.
         credentials_secret (str, optional): Key Vault secret name. Defaults to None.
-        config_key (str): Viadot config key. Defaults to "onestream".
+        config_key (str,optional): Viadot config key. Defaults to None.
         custom_subst_vars (dict[str, list[Any]], optional): Dictionary mapping
             substitution variable names to lists of possible values. Defaults to None.
         api_params (dict[str, str], optional): API parameters. Defaults to None.
