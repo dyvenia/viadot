@@ -34,7 +34,7 @@ class OneStream(Source):
         self,
         server_url: str,
         application: str,
-        config_key: str = "onestream",
+        config_key: str | None = None,
         credentials: OneStreamCredentials | None = None,
         api_params: dict[str, str] | None = None,
         *args,
