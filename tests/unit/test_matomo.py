@@ -195,8 +195,9 @@ def test_to_df_without_data_raises_error(matomo_instance):
     with pytest.raises(
         ValueError, match="No data available. Call fetch_data\\(\\) first."
     ):
-        matomo_instance.to_df(data=None, top_level_fields=["test_field"], record_path="actionDetails")
-
+        matomo_instance.to_df(
+            data=None, top_level_fields=["test_field"], record_path="actionDetails"
+        )
 
 def test_to_df_basic_conversion(matomo_instance, sample_matomo_response):
     """Test basic DataFrame conversion."""
@@ -334,7 +335,9 @@ def test_full_workflow(
 
     # Convert to DataFrame
     df = matomo_instance.to_df(
-        data=sample_matomo_response, top_level_fields=["idSite", "idVisit"], record_path="actionDetails"
+        data=sample_matomo_response,
+        top_level_fields=["idSite", "idVisit"],
+        record_path="actionDetails",
     )
 
     # Verify results
@@ -347,9 +350,17 @@ def test_full_workflow(
 def test_data_persistence(matomo_instance, sample_matomo_response):
     """Test that data persists between method calls."""
     # First call
-    df1 = matomo_instance.to_df(data=sample_matomo_response, top_level_fields=["idSite"], record_path="actionDetails")
+    df1 = matomo_instance.to_df(
+        data=sample_matomo_response,
+        top_level_fields=["idSite"],
+        record_path="actionDetails",
+    )
     # Second call
-    df2 = matomo_instance.to_df(data=sample_matomo_response, top_level_fields=["idVisit"], record_path="actionDetails")
+    df2 = matomo_instance.to_df(
+        data=sample_matomo_response,
+        top_level_fields=["idVisit"],
+        record_path="actionDetails",
+    )
 
     assert not df1.empty
     assert not df2.empty
