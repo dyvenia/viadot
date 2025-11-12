@@ -17,6 +17,7 @@ from .genesys import genesys_to_df
 from .git import clone_repo
 from .hubspot import hubspot_to_df
 from .luma import luma_ingest_task
+from .matomo import matomo_to_df
 from .mediatool import mediatool_to_df
 from .mindful import mindful_to_df
 from .minio import df_to_minio
@@ -60,6 +61,7 @@ __all__ = [
     "genesys_to_df",
     "hubspot_to_df",
     "luma_ingest_task",
+    "matomo_to_df",
     "mediatool_to_df",
     "mindful_to_df",
     "outlook_to_df",
