@@ -106,7 +106,7 @@ def onestream_get_agg_adapter_endpoint_data_to_df(
         adapter_response_key=adapter_response_key,
         custom_subst_vars=custom_subst_vars,
     )
-    return onestream._to_df(data=data, if_empty=if_empty)
+    return onestream.to_df(data=data, if_empty=if_empty)
 
 
 @task(retries=3, log_prints=True, retry_delay_seconds=10, timeout_seconds=60 * 60)
@@ -162,7 +162,7 @@ def onestream_get_agg_sql_data_to_df(  # noqa: PLR0913
         results_table_name=results_table_name,
         external_db=external_db,
     )
-    return onestream._to_df(data=data, if_empty=if_empty)
+    return onestream.to_df(data=data, if_empty=if_empty)
 
 
 @task(retries=3, log_prints=True, retry_delay_seconds=10, timeout_seconds=60 * 60)

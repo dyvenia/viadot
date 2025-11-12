@@ -14,6 +14,7 @@ import requests
 
 from viadot.config import get_source_credentials
 from viadot.sources.base import Source
+from viadot.utils import add_viadot_metadata_columns
 
 
 class OneStreamCredentials(BaseModel):
@@ -296,7 +297,8 @@ class OneStream(Source):
 
         return agg_records
 
-    def _to_df(
+    @add_viadot_metadata_columns
+    def to_df(
         self,
         data: dict[str, list[dict[str, Any]]],
         if_empty: Literal["warn", "skip", "fail"],
