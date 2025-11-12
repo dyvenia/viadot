@@ -31,9 +31,9 @@ def matomo_to_redshift_spectrum(  # noqa: PLR0913
     extension: str = ".parquet",
     if_exists: Literal["overwrite", "append"] = "overwrite",
     partition_cols: list[str] | None = None,
-    compression: str | None = None,
+    compression: Literal["snappy", "gzip", "zstd"] | None = None,
     aws_sep: str = ",",
-    credentials_secret: str | None = None,
+    aws_credentials_secret: str | None = None,
     aws_config_key: str | None = None,
 ) -> None:
     """Flow for downloading data from Matomo to Redshift Spectrum.
@@ -67,11 +67,11 @@ def matomo_to_redshift_spectrum(  # noqa: PLR0913
         if_exists (Literal["overwrite", "append"]): Whether to overwrite or append to
             existing data. Defaults to "overwrite".
         partition_cols (list[str], optional): List of column names that will be used to
-            create partitions. Only takes effect if dataset=True. Defaults to None.
-        compression (str, optional): Compression style (None, snappy, gzip, zstd).
-            Defaults to None.
+            create partitions. Defaults to None.
+        compression (Literal["snappy", "gzip", "zstd"], optional): Compression style
+            (None, snappy, gzip, zstd). Defaults to None.
         aws_sep (str, optional): Field delimiter for the output file. Defaults to ','.
-        credentials_secret (str, optional): The name of a secret block in Prefect
+        aws_credentials_secret (str, optional): The name of a secret block in Prefect
             that stores AWS credentials. Defaults to None.
         aws_config_key (str, optional): The key in the viadot config holding relevant
             AWS credentials. Defaults to None.
@@ -125,5 +125,5 @@ def matomo_to_redshift_spectrum(  # noqa: PLR0913
         compression=compression,
         sep=aws_sep,
         config_key=aws_config_key,
-        credentials_secret=credentials_secret,
+        credentials_secret=aws_credentials_secret,
     )

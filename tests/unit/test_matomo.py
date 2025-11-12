@@ -114,10 +114,10 @@ def test_fetch_data_success(
     }
 
     # Call fetch_data
-    matomo_instance.fetch_data(api_token, url, params)
+    data = matomo_instance.fetch_data(api_token, url, params)
 
     # Verify the data was stored
-    assert matomo_instance.data == sample_matomo_response
+    assert data == sample_matomo_response
 
     # Verify handle_api_response was called correctly
     mock_handle_api_response.assert_called_once()
@@ -137,34 +137,6 @@ def test_fetch_data_with_none_params_raises_validation_error(matomo_instance):
     """Test fetch_data with None params raises validation error."""
     with pytest.raises(ValueError, match="Missing required API parameters"):
         matomo_instance.fetch_data("token", "https://example.com", None)
-
-
-@patch("viadot.sources.matomo.handle_api_response")
-def test_fetch_data_http_error(mock_handle_api_response, matomo_instance):
-    """Test fetch_data with HTTP error response."""
-    from viadot.exceptions import APIError
-
-    mock_response = MagicMock()
-    mock_response.status_code = 401
-    mock_response.text = "Unauthorized access"
-    mock_handle_api_response.return_value = mock_response
-
-    with pytest.raises(
-        APIError,
-        match="Failed to fetch data from Matomo API",
-    ):
-        matomo_instance.fetch_data(
-            "token",
-            "https://example.com",
-            {
-                "module": "API",
-                "method": "test",
-                "idSite": "1",
-                "period": "day",
-                "date": "today",
-                "format": "JSON",
-            },
-        )
 
 
 @patch("viadot.sources.matomo.handle_api_response")
@@ -223,15 +195,14 @@ def test_to_df_without_data_raises_error(matomo_instance):
     with pytest.raises(
         ValueError, match="No data available. Call fetch_data\\(\\) first."
     ):
-        matomo_instance.to_df(["test_field"], "actionDetails")
+        matomo_instance.to_df(data=None, top_level_fields=["test_field"], record_path="actionDetails")
 
 
 def test_to_df_basic_conversion(matomo_instance, sample_matomo_response):
     """Test basic DataFrame conversion."""
-    matomo_instance.data = sample_matomo_response
-
+    data = sample_matomo_response
     df = matomo_instance.to_df(
-        top_level_fields=["idSite", "idVisit"], record_path="actionDetails"
+        data=data, top_level_fields=["idSite", "idVisit"], record_path="actionDetails"
     )
 
     assert isinstance(df, pd.DataFrame)
@@ -243,9 +214,10 @@ def test_to_df_basic_conversion(matomo_instance, sample_matomo_response):
 
 def test_to_df_with_record_prefix(matomo_instance, sample_matomo_response):
     """Test to_df with record prefix."""
-    matomo_instance.data = sample_matomo_response
+    data = sample_matomo_response
 
     df = matomo_instance.to_df(
+        data=data,
         top_level_fields=["idSite"],
         record_path="actionDetails",
         record_prefix="action_",
@@ -258,10 +230,10 @@ def test_to_df_with_record_prefix(matomo_instance, sample_matomo_response):
 
 def test_to_df_with_list_record_path(matomo_instance, sample_matomo_response):
     """Test to_df with list record_path."""
-    matomo_instance.data = sample_matomo_response
+    data = sample_matomo_response
 
     df = matomo_instance.to_df(
-        top_level_fields=["idSite"], record_path=["actionDetails"]
+        data=data, top_level_fields=["idSite"], record_path=["actionDetails"]
     )
 
     assert isinstance(df, pd.DataFrame)
@@ -270,10 +242,11 @@ def test_to_df_with_list_record_path(matomo_instance, sample_matomo_response):
 
 def test_to_df_empty_result_warn(matomo_instance):
     """Test to_df with empty result and warn if_empty."""
-    matomo_instance.data = {"actionDetails": []}
+    data = {"actionDetails": []}
 
     with patch("viadot.sources.base.logger.warning") as mock_warning:
         df = matomo_instance.to_df(
+            data=data,
             top_level_fields=["idSite"],
             record_path="actionDetails",
             if_empty="warn",
@@ -290,10 +263,11 @@ def test_to_df_empty_result_skip(matomo_instance):
     """Test to_df with empty result and skip if_empty."""
     from viadot.signals import SKIP
 
-    matomo_instance.data = {"actionDetails": []}
+    data = {"actionDetails": []}
 
     with pytest.raises(SKIP):
         matomo_instance.to_df(
+            data=data,
             top_level_fields=["idSite"],
             record_path="actionDetails",
             if_empty="skip",
@@ -302,10 +276,11 @@ def test_to_df_empty_result_skip(matomo_instance):
 
 def test_to_df_empty_result_fail(matomo_instance):
     """Test to_df with empty result and fail if_empty."""
-    matomo_instance.data = {"actionDetails": []}
+    data = {"actionDetails": []}
 
     with pytest.raises(ValueError, match="The query produced no data"):
         matomo_instance.to_df(
+            data=data,
             top_level_fields=["idSite"],
             record_path="actionDetails",
             if_empty="fail",
@@ -314,12 +289,13 @@ def test_to_df_empty_result_fail(matomo_instance):
 
 def test_to_df_with_tests_validation(matomo_instance, sample_matomo_response):
     """Test to_df with tests validation."""
-    matomo_instance.data = sample_matomo_response
+    data = sample_matomo_response
 
     test_config = {"column_tests": {"idSite": {"not_null": True}}}
 
     with patch("viadot.sources.matomo.validate") as mock_validate:
         df = matomo_instance.to_df(
+            data=data,
             top_level_fields=["idSite"],
             record_path="actionDetails",
             tests=test_config,
@@ -358,7 +334,7 @@ def test_full_workflow(
 
     # Convert to DataFrame
     df = matomo_instance.to_df(
-        top_level_fields=["idSite", "idVisit"], record_path="actionDetails"
+        data=sample_matomo_response, top_level_fields=["idSite", "idVisit"], record_path="actionDetails"
     )
 
     # Verify results
@@ -370,14 +346,10 @@ def test_full_workflow(
 
 def test_data_persistence(matomo_instance, sample_matomo_response):
     """Test that data persists between method calls."""
-    matomo_instance.data = sample_matomo_response
-
     # First call
-    df1 = matomo_instance.to_df(["idSite"], "actionDetails")
+    df1 = matomo_instance.to_df(data=sample_matomo_response, top_level_fields=["idSite"], record_path="actionDetails")
     # Second call
-    df2 = matomo_instance.to_df(["idVisit"], "actionDetails")
+    df2 = matomo_instance.to_df(data=sample_matomo_response, top_level_fields=["idVisit"], record_path="actionDetails")
 
     assert not df1.empty
     assert not df2.empty
-    # Data should still be available
-    assert matomo_instance.data == sample_matomo_response

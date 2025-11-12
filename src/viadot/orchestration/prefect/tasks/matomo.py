@@ -89,7 +89,7 @@ def matomo_to_df(
     )
 
     # Fetch the data using credentials
-    matomo.fetch_data(
+    data = matomo.fetch_data(
         api_token=matomo.credentials["api_token"],
         url=url,
         params=params,
@@ -97,6 +97,7 @@ def matomo_to_df(
 
     # Convert to DataFrame with the specified parameters
     return matomo.to_df(
+        data=data,
         top_level_fields=top_level_fields,
         record_path=record_path,
         record_prefix=record_prefix,

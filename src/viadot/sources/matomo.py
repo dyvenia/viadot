@@ -56,8 +56,6 @@ class Matomo(Source):
         validated_creds = dict(MatomoCredentials(**raw_creds))
         super().__init__(*args, credentials=validated_creds, **kwargs)
 
-        self.data = None
-
     def _validate_parameters(
         self, api_token: str, url: str, params: dict[str, str]
     ) -> dict[str, str]:
@@ -103,55 +101,33 @@ class Matomo(Source):
         params["token_auth"] = api_token
         return params
 
-    def _validate_response(self, response: object) -> dict[str, Any]:
-        """Process and validate API response.
+    def _validate_response(self, data: dict[str, Any]):
+        """Process and validate API response data.
 
         Args:
-            response (object): The HTTP response object from the Matomo API request.
-
-        Returns:
-            dict[str, Any]: The parsed JSON response data.
+            data (dict[str, Any]): The API response data.
 
         Raises:
-            APIError: If the response status is not OK, JSON parsing fails, or
-                the response data is not in expected format (list or dict).
+            TypeError: If the data is not in expected format (list or dict).
+            ValueError: If the data is None.
         """
-        if response.status_code == HTTP_STATUS_OK:
-            try:
-                data = response.json()
-                self.logger.info("Successfully fetched data from Matomo API.")
+        if data is None:
+            msg = "No data available. Call fetch_data() first."
+            self.logger.error(msg)
+            raise ValueError(msg)
 
-                # Validate that we have a proper response structure
-                if not isinstance(data, list | dict):
-                    msg = "API response is not in expected JSON format (list or dict)"
-                    self.logger.error(msg)
-                    raise APIError(msg)
-
-                # Log response summary
-                if isinstance(data, list):
-                    self.logger.info(f"API returned {len(data)} records.")
-                elif isinstance(data, dict):
-                    self.logger.info(
-                        f"API returned response with keys: {list(data.keys())}"
-                    )
-
-                return data
-
-            except ValueError as e:
-                msg = "Failed to parse API response as JSON"
-                self.logger.exception(msg)
-                raise APIError(msg) from e
-        else:
-            msg = f"Failed to fetch data from Matomo API: {response.status_code} - {response.text}"
-            self.logger.exception(msg)
-            raise APIError(msg) from None
+        # Validate that we have a proper data structure
+        if not isinstance(data, list | dict):
+            msg = "Data is not in expected format (list or dict)"
+            self.logger.error(msg)
+            raise TypeError(msg)
 
     def fetch_data(
         self,
         api_token: str,
         url: str,
         params: dict[str, str],
-    ) -> None:
+    ) -> dict[str, Any]:
         """Connect to Matomo API and fetch api response data as JSON.
 
         The function sends a GET request to the Matomo API endpoint with the specified
@@ -165,6 +141,9 @@ class Matomo(Source):
             url (str): The base URL of the Matomo instance.
             params (dict[str, str]): Parameters for the API request.
                 Required params: "module","method","idSite","period","date","format".
+
+        Returns:
+            dict[str, Any]: The API response data.
 
         Raises:
             ValueError: If required parameters are missing or invalid.
@@ -182,11 +161,17 @@ class Matomo(Source):
             self.logger.exception(msg)
             raise APIError(msg) from e
 
-        self.data = self._validate_response(response)
+        self.logger.info("Successfully fetched data from Matomo API.")
+
+        data = response.json()
+        self._validate_response(data)
+
+        return data
 
     @add_viadot_metadata_columns
     def to_df(
         self,
+        data: dict[str, Any],
         top_level_fields: list[str],
         record_path: str | list[str],
         record_prefix: str | None = None,
@@ -196,6 +181,7 @@ class Matomo(Source):
         """Convert Matomo data to pandas DataFrame.
 
         Args:
+            data (dict[str, Any]): The API response data.
             top_level_fields (list[str]): List of top lvl fields to get from
                 the response JSON.
             record_path (str or list[str]): The path field to the records in the
@@ -216,21 +202,21 @@ class Matomo(Source):
         Raises:
             ValueError: If no data has been fetched yet.
         """
-        if self.data is None:
+        if data is None:
             msg = "No data available. Call fetch_data() first."
             raise ValueError(msg)
 
         self.logger.info("Converting Matomo data to pandas DataFrame.")
 
         # Validate record_path exists in data if it's a dict
-        if isinstance(self.data, dict) and record_path not in self.data:
+        if isinstance(data, dict) and record_path not in data:
             self.logger.warning(
                 f"record_path '{record_path}' not found in response data."
             )
-            self.logger.warning(f"Available keys in response: {list(self.data.keys())}")
+            self.logger.warning(f"Available keys in response: {list(data.keys())}")
 
         df = pd.json_normalize(
-            self.data,
+            data,
             record_path=record_path,
             meta=top_level_fields,
             sep="_",
