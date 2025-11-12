@@ -122,7 +122,7 @@ def test_scan_and_store(
         )
 
         mock_scan_directory.assert_called_once_with(
-            path=smb_instance.base_paths,
+            paths=smb_instance.base_paths,
             filename_regex=filename_regex,
             extensions=extensions,
             date_filter_parsed=mock_date_result,
@@ -163,20 +163,33 @@ def test_scan_directory_recursive_search(
     ):
         # Configure directory structure
         root_dir = mock_smb_dir_entry_dir
-        root_dir.paths = SERVER_PATH
+        root_dir.name = "root"
+        root_dir.path = SERVER_PATH
+        # root_dir.paths = [root_dir.path]
+        root_dir.is_dir.return_value = True
+        root_dir.is_file.return_value = False
 
         sub_dir = MagicMock()
         sub_dir.name = "subdir"
-        sub_dir.paths = [f"{SERVER_PATH}/subdir"]
+        sub_dir.path = f"{SERVER_PATH}/subdir"
         sub_dir.is_dir.return_value = True
         sub_dir.is_file.return_value = False
 
+        subsub_dir = MagicMock()
+        subsub_dir.name = "subsubdir"
+        subsub_dir.path = f"{SERVER_PATH}/subdir/subsubdir"
+        subsub_dir.is_dir.return_value = True
+        subsub_dir.is_file.return_value = False
+
         nested_file = mock_smb_dir_entry_file
-        nested_file.paths = [f"{SERVER_PATH}/subdir/file.txt"]
+        nested_file.name = "file.txt"
+        nested_file.path = f"{SERVER_PATH}/subdir/file.txt"
+        nested_file.is_dir.return_value = False
+        nested_file.is_file.return_value = True
 
         mock_scandir.side_effect = [
-            [root_dir],  # Initial root directory scan
-            [sub_dir],  # First subdirectory scan
+            [sub_dir],  # Initial root directory scan
+            [subsub_dir],  # First subdirectory scan
             [nested_file],  # Final nested directory scan
         ]
 
@@ -186,7 +199,7 @@ def test_scan_directory_recursive_search(
 
         # Execute the scan starting at root
         res_dict, res_list = smb_instance._scan_directory(
-            path=SERVER_PATH,
+            paths=[SERVER_PATH],
             filename_regex=None,
             extensions=None,
             date_filter_parsed=None,
@@ -197,6 +210,7 @@ def test_scan_directory_recursive_search(
         assert {call[0][0] for call in mock_scandir.call_args_list} == {
             SERVER_PATH,
             f"{SERVER_PATH}/subdir",
+            f"{SERVER_PATH}/subdir/subsubdir",
         }
 
         assert isinstance(res_dict, dict)
@@ -304,7 +318,7 @@ def test_get_directory_entries(
         assert not result_entries[1].is_file()
         assert result_entries[1].name == "test_folder_path"
 
-        assert all(entry.paths[0].startswith(SERVER_PATH) for entry in result_entries)
+        assert all(entry.paths.startswith(SERVER_PATH) for entry in result_entries)
 
 
 @pytest.mark.parametrize(
@@ -460,7 +474,8 @@ def test_is_matching_file(
 def test_get_file_content(smb_instance, mock_smb_dir_entry_file, caplog):
     mock_entry = mock_smb_dir_entry_file
     mock_entry.name = "test_file.txt"
-    mock_entry.paths = f"{SERVER_PATH}/test_file.txt"
+    mock_entry.path = f"{SERVER_PATH}/test_file.txt"
+    mock_entry.paths = [mock_entry.path]
     expected_content = b"File content"
 
     with (
@@ -474,15 +489,16 @@ def test_get_file_content(smb_instance, mock_smb_dir_entry_file, caplog):
         assert isinstance(result, dict)
         assert result == {mock_entry.name: expected_content}
 
-        mock_file.assert_called_once_with(mock_entry.paths, mode="rb")
+        mock_file.assert_called_once_with(mock_entry.paths[0], mode="rb")
 
-        assert f"Found: {mock_entry.paths}" in caplog.text
+        assert f"Found: {mock_entry.paths[0]}" in caplog.text
 
 
 def test_get_file_content_empty_file(smb_instance, mock_smb_dir_entry_file, caplog):
     mock_entry = mock_smb_dir_entry_file
     mock_entry.name = "empty.txt"
-    mock_entry.paths = f"{SERVER_PATH}/empty.txt"
+    mock_entry.path = f"{SERVER_PATH}/empty.txt"
+    mock_entry.paths = [mock_entry.path]
 
     with (
         caplog.at_level(logging.INFO),
@@ -490,8 +506,9 @@ def test_get_file_content_empty_file(smb_instance, mock_smb_dir_entry_file, capl
     ):
         result = smb_instance._get_file_content(mock_entry)
 
+        assert isinstance(result, dict)
         assert result == {mock_entry.name: b""}
-        assert f"Found: {mock_entry.paths}" in caplog.text
+        assert f"Found: {mock_entry.paths[0]}" in caplog.text
 
 
 def test_get_file_content_zip_all_files(
