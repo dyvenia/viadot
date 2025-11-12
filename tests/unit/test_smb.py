@@ -232,12 +232,10 @@ def test_scan_directories_recursive_search(
 @patch("smbclient.scandir")
 def test_empty_directory_scan(mock_scandir, smb_instance):
     """Test scanning empty directory structure."""
-    mock_scandir.side_effect = lambda path: {
-        "/empty": [],
-    }.get(path, [])
+    mock_scandir.side_effect = lambda path: [] if path == "/empty" else []
 
     smb_instance._handle_matching_file = MagicMock()
-    smb_instance._scan_directories("/empty", None, None, None)
+    smb_instance._scan_directories(["/empty"], None, None, None)
 
     smb_instance._handle_matching_file.assert_not_called()
     mock_scandir.assert_called_once_with("/empty")

@@ -296,7 +296,7 @@ class SMB(Source):
 
                         if date_match:
                             found_files.update(
-                                self._scan_directory(
+                                self._scan_directories(
                                     entry.path,
                                     filename_regex,
                                     extensions,
