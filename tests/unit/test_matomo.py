@@ -199,6 +199,7 @@ def test_to_df_without_data_raises_error(matomo_instance):
             data=None, top_level_fields=["test_field"], record_path="actionDetails"
         )
 
+
 def test_to_df_basic_conversion(matomo_instance, sample_matomo_response):
     """Test basic DataFrame conversion."""
     data = sample_matomo_response
