@@ -25,7 +25,7 @@ jobs:
             build_args: ""
           - image: viadot-azure
             build_args: "INSTALL_DATABRICKS=${{ github.event.inputs.install_databricks }}"
-    uses: dyvenia/workflow-templates/.github/workflows/template_docker_build_and_push.yml@main
+    uses: ./.github/workflows/template_docker_build_and_push.yml
     with:
       image_name: ${{ matrix.image }}
       image_tag: ${{ github.event.inputs.tag }}
