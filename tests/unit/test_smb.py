@@ -100,7 +100,7 @@ def test_scan_and_store(
     date_filter,
 ):
     with (
-        patch.object(smb_instance, "_scan_directory") as mock_scan_directory,
+        patch.object(smb_instance, "_scan_directories") as mock_scan_directories,
         patch.object(smb_instance, "_parse_dates") as mock_parse_dates,
     ):
         mock_date_result = (
@@ -121,7 +121,7 @@ def test_scan_and_store(
             dynamic_date_timezone="UTC",
         )
 
-        mock_scan_directory.assert_called_once_with(
+        mock_scan_directories.assert_called_once_with(
             paths=smb_instance.base_paths,
             filename_regex=filename_regex,
             extensions=extensions,
@@ -153,7 +153,7 @@ def test_scan_and_store_basic(smb_instance, mock_smb_dir_entry_file):
         assert result_dict[mock_smb_dir_entry_file.paths] == mock_file_content
 
 
-def test_scan_directory_recursive_search(
+def test_scan_directories_recursive_search(
     smb_instance, mock_smb_dir_entry_dir, mock_smb_dir_entry_file
 ):
     with (
@@ -198,7 +198,7 @@ def test_scan_directory_recursive_search(
         mock_get_content.return_value = {nested_file.paths[0]: mock_file_content}
 
         # Execute the scan starting at root
-        res_dict, res_list = smb_instance._scan_directory(
+        res_dict, res_list = smb_instance._scan_directories(
             paths=[SERVER_PATH],
             filename_regex=None,
             extensions=None,
@@ -237,18 +237,18 @@ def test_empty_directory_scan(mock_scandir, smb_instance):
     }.get(path, [])
 
     smb_instance._handle_matching_file = MagicMock()
-    smb_instance._scan_directory("/empty", None, None, None)
+    smb_instance._scan_directories("/empty", None, None, None)
 
     smb_instance._handle_matching_file.assert_not_called()
     mock_scandir.assert_called_once_with("/empty")
 
 
-def test_scan_directory_error_handling(smb_instance):
+def test_scan_directories_error_handling(smb_instance):
     with patch.object(smb_instance, "_get_directory_entries") as mock_get_entries:
         mock_get_entries.side_effect = Exception("Test error")
 
         with pytest.raises(Exception, match="Test error"):
-            smb_instance._scan_directory(SERVER_PATH, None, None)
+            smb_instance._scan_directories(SERVER_PATH, None, None)
 
 
 def test_parse_dates_single_date(smb_instance):
