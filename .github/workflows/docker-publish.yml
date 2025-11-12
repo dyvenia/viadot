@@ -29,6 +29,7 @@ jobs:
     with:
       image_name: ${{ matrix.image }}
       image_tag: ${{ github.event.inputs.tag }}
+      repository_path: /viadot
       dockerfile: docker/Dockerfile
       platforms: linux/amd64
       target: ${{ matrix.image }}

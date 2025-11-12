@@ -4,57 +4,57 @@ on:
   workflow_call:
     inputs:
       image_name:
-        description: 'Name of the Docker image to be pushed.'
+        description: "Name of the Docker image to be pushed."
         type: string
         required: true
       image_tag:
-        description: 'Tag for the Docker image to be pushed.'
+        description: "Tag for the Docker image to be pushed."
         type: string
         required: true
       context:
-        description: 'Context of Docker build (e.g., ./).'
+        description: "Context of Docker build (e.g., ./)."
         type: string
         required: false
-        default: './'
+        default: "./"
       dockerfile:
-        description: 'Relative path to the Dockerfile (e.g., etc/docker/<image_name>/Dockerfile).'
+        description: "Relative path to the Dockerfile (e.g., etc/docker/<image_name>/Dockerfile)."
         type: string
         required: true
       platforms:
-        description: 'Target platforms for the image (e.g., linux/amd64, linux/arm64).'
+        description: "Target platforms for the image (e.g., linux/amd64, linux/arm64)."
         type: string
         required: false
-        default: 'linux/amd64'
+        default: "linux/amd64"
       push:
-        description: 'Whether to push the built image.'
+        description: "Whether to push the built image."
         type: boolean
         required: false
         default: true
       registry:
-        description: 'Docker registry domain to push the image (e.g., ghcr.io).'
+        description: "Docker registry domain to push the image (e.g., ghcr.io)."
         type: string
         required: false
-        default: 'ghcr.io'
+        default: "ghcr.io"
       organization:
-        description: 'GitHub organization name for the image repository.'
+        description: "GitHub organization name for the image repository."
         type: string
         required: false
-        default: 'dyvenia'
+        default: "dyvenia"
       repository_path:
-        description: 'Repo path under organization, e.g. dyvenia-artifacts'
+        description: "Repo path under organization, e.g. dyvenia-artifacts"
         type: string
         required: false
       username:
-        description: 'Username used to GitHub Container Registry login.'
+        description: "Username used to GitHub Container Registry login."
         type: string
         required: false
         default: ${{ github.actor }}
       build-args:
-        description: 'Set build-time variables for Dockerfile.'
+        description: "Set build-time variables for Dockerfile."
         type: string
         required: false
       target:
-        description: 'Optional build stage name from the Dockerfile.'
+        description: "Optional build stage name from the Dockerfile."
         type: string
         required: false
     secrets:
