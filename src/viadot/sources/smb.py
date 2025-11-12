@@ -297,12 +297,12 @@ class SMB(Source):
                         if date_match:
                             found_files.update(
                                 self._scan_directories(
-                                    entry.path,
-                                    filename_regex,
-                                    extensions,
-                                    date_filter_parsed,
-                                    prefix_levels_to_add,
-                                    zip_inner_file_regexes,
+                                    paths=[entry.path],
+                                    filename_regex=filename_regex,
+                                    extensions=extensions,
+                                    date_filter_parsed=date_filter_parsed,
+                                    prefix_levels_to_add=prefix_levels_to_add,
+                                    zip_inner_file_regexes=zip_inner_file_regexes,
                                 )[0]  # Only the matched files dict is used
                             )
                 except smbprotocol.exceptions.SMBOSError as e:
