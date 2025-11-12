@@ -13,7 +13,7 @@ on:
 
 jobs:
   deploy:
-    uses: dyvenia/workflow-templates/.github/workflows/template_static_site_prepare_mkdocs.yml@main
+    uses: ./.github/workflows/template_static_site_prepare_mkdocs.yml
     with:
       project_manager: rye
       static_site_branch: static-site
