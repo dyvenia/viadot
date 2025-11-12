@@ -47,7 +47,7 @@ class SMBCredentials(BaseModel):
 class SMB(Source):
     def __init__(
         self,
-        base_paths: str | list[str],
+        base_paths: list[str],
         credentials: SMBCredentials | None = None,
         config_key: str | None = None,
         *args,
@@ -56,17 +56,13 @@ class SMB(Source):
         """Initialize the SMB with a base path.
 
         Args:
-            base_paths (str | list[str]): The root directory or directories to start
-                scanning from.
+            base_paths (list[str]): The root directory or directories to start scanning
+                from.
             credentials (SMBCredentials): Sharepoint credentials.
             config_key (str, optional): The key in the viadot config holding relevant
                 credentials.
         """
-        self.base_paths = [base_paths] if isinstance(base_paths, str) else base_paths
-
-        if not self.base_paths:
-            msg = "At least one base path must be provided"
-            raise ValueError(msg)
+        self.base_paths = base_paths
 
         raw_creds = credentials or get_source_credentials(config_key) or {}
         validated_creds = SMBCredentials(**raw_creds)
@@ -150,7 +146,7 @@ class SMB(Source):
             dynamic_date_timezone=dynamic_date_timezone,
         )
 
-        return self._scan_directory(
+        return self._scan_directories(
             paths=self.base_paths,
             filename_regex=filename_regex,
             extensions=extensions,
@@ -215,9 +211,9 @@ class SMB(Source):
                 )
                 raise ValueError(msg)
 
-    def _scan_directory(
+    def _scan_directories(
         self,
-        paths: str | list[str],
+        paths: list[str],
         filename_regex: str | list[str] | None = None,
         extensions: str | list[str] | None = None,
         date_filter_parsed: pendulum.Date
@@ -236,8 +232,7 @@ class SMB(Source):
         This optimization avoids unnecessary traversal of unchanged folders.
 
         Args:
-            paths (str | list[str]): The root directory or directories to start
-                scanning from.
+            paths (list[str]): The root directory or directories to start scanning from.
             filename_regex (str | list[str] | None, optional): A regular expression
                 string or list of regex patterns used to filter file names. If provided,
                 only file names matching the pattern(s) will be included.
@@ -267,7 +262,6 @@ class SMB(Source):
         found_files = {}
         problematic_entries = []
 
-        paths = [paths] if isinstance(paths, str) else paths
         for path in paths:
             entries = self._get_directory_entries(path)
             for entry in entries:
