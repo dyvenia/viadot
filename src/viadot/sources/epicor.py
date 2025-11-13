@@ -8,7 +8,7 @@ from pydantic import BaseModel
 import requests
 
 from viadot.config import get_source_credentials
-from viadot.exceptions import DataRangeError, ValidationError
+from viadot.exceptions import DataRangeError
 from viadot.sources.base import Source
 from viadot.utils import handle_api_response
 
@@ -364,8 +364,10 @@ def parse_customer_xml(xml_data: str) -> pd.DataFrame:
                 dfs.append(pd.json_normalize(my_dict, max_level=2))
     return pd.concat(dfs, ignore_index=True)
 
-def parse_xml_to_flat_dict(element, parent_path='') -> dict:
+
+def parse_xml_to_flat_dict(element, parent_path="") -> dict:
     """Function to parse xml data to flatten dictionary.
+
     Args:
         element (str, required): Xml element from Element Tree
         parent_path (str, optional): Path of the xml element
@@ -378,15 +380,19 @@ def parse_xml_to_flat_dict(element, parent_path='') -> dict:
 
     # If element has no children, it's a leaf node
     if len(list(element)) == 0:
-        items[current_path] = element.text.strip() if element.text and element.text.strip() else None
+        items[current_path] = (
+            element.text.strip() if element.text and element.text.strip() else None
+        )
     else:
         # If element has children, recursively process them
         for child in element:
             items.update(parse_xml_to_flat_dict(child, current_path))
     return items
 
+
 def parse_xml(xml_data: str) -> pd.DataFrame:
     """Function to parse xml containing Epicor Data.
+
     Args:
         xml_data (str, required): Response from Epicor API in form of xml
     Returns:
@@ -399,6 +405,7 @@ def parse_xml(xml_data: str) -> pd.DataFrame:
         elem = parse_xml_to_flat_dict(child)
         data.append(elem)
     return pd.DataFrame(data)
+
 
 class EpicorCredentials(BaseModel):
     host: str
@@ -509,7 +516,7 @@ class Epicor(Source):
             pd.DataFrame: Output DataFrame.
         """
         data = self.get_xml_response(filters_xml)
-        df = self.parse_xml(data)
+        df = parse_xml(data)
         # if "ORDER.HISTORY.DETAIL.QUERY" in self.base_url:
         #     df = parse_orders_xml(data)
         # elif "CUSTOMER.QUERY" in self.base_url:
