@@ -1106,6 +1106,7 @@ def df_clean_column(
             )
     return df
 
+
 def parse_dates(
     date_filter: str | tuple[str, str] | None = None,
     dynamic_date_symbols: list[str] = ["<<", ">>"],  # noqa: B006
