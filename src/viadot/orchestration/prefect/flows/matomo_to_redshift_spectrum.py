@@ -33,7 +33,7 @@ def matomo_to_redshift_spectrum(  # noqa: PLR0913
     partition_cols: list[str] | None = None,
     compression: Literal["snappy", "gzip", "zstd"] | None = None,
     aws_sep: str = ",",
-    aws_credentials_secret: str | None = None,
+    credentials_secret: str | None = None,
     aws_config_key: str | None = None,
 ) -> None:
     """Flow for downloading data from Matomo to Redshift Spectrum.
@@ -71,7 +71,7 @@ def matomo_to_redshift_spectrum(  # noqa: PLR0913
         compression (Literal["snappy", "gzip", "zstd"], optional): Compression style
             (None, snappy, gzip, zstd). Defaults to None.
         aws_sep (str, optional): Field delimiter for the output file. Defaults to ','.
-        aws_credentials_secret (str, optional): The name of a secret block in Prefect
+        credentials_secret (str, optional): The name of a secret block in Prefect
             that stores AWS credentials. Defaults to None.
         aws_config_key (str, optional): The key in the viadot config holding relevant
             AWS credentials. Defaults to None.
@@ -125,5 +125,5 @@ def matomo_to_redshift_spectrum(  # noqa: PLR0913
         compression=compression,
         sep=aws_sep,
         config_key=aws_config_key,
-        credentials_secret=aws_credentials_secret,
+        credentials_secret=credentials_secret,
     )
