@@ -22,7 +22,7 @@ def matomo_to_redshift_spectrum(  # noqa: PLR0913
     to_path: str,
     schema_name: str,
     table: str,
-    params: dict[str, str],
+    params: dict[str, Any],
     matomo_config_key: str | None = None,
     matomo_credentials_secret: str | None = None,
     record_prefix: str | None = None,
@@ -53,7 +53,7 @@ def matomo_to_redshift_spectrum(  # noqa: PLR0913
              holding relevant Matomo credentials. Defaults to None.
         matomo_credentials_secret (str, optional): The name of the secret that stores
             Matomo credentials. Defaults to None.
-        params (dict[str, str]): Parameters for the API request.
+        params (dict[str, Any]): Parameters for the API request.
                 Required params: "module","method","idSite","period","date","format".
         record_prefix (Optional[str], optional): A prefix for the record path fields.
             For example: "action_". Defaults to None.
@@ -90,7 +90,7 @@ def matomo_to_redshift_spectrum(  # noqa: PLR0913
                 "method": "Live.getLastVisitsDetails",
                 "idSite": "53",
                 "period": "range",
-                "date": "2021-12-05,2022-09-14",
+                "date": ("<<yesterday>>", "<<today>>"),
                 "format": "JSON"
             },
             tests={

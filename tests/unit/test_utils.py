@@ -4,6 +4,7 @@ import logging
 import re
 
 import pandas as pd
+import pendulum
 import pytest
 
 from viadot.signals import SKIP
@@ -16,6 +17,7 @@ from viadot.utils import (
     get_fqn,
     handle_api_request,
     handle_if_empty,
+    parse_dates,
     validate,
     validate_and_reorder_dfs_columns,
 )
@@ -434,3 +436,44 @@ def test_handle_if_empty_invalid_value():
 
     with pytest.raises(ValueError, match=escaped_msg):
         handle_if_empty(if_empty=invalid_value, message="This should fail.")  # type: ignore
+
+
+def test_parse_dates_single_date():
+    date_filter_keyword = "<<yesterday>>"
+    result = parse_dates(date_filter=date_filter_keyword)
+
+    assert result == pendulum.yesterday().date()
+
+    date_filter_date = "<<pendulum.yesterday()>>"
+    result = parse_dates(date_filter=date_filter_date)
+
+    assert result == pendulum.yesterday().date()
+
+
+def test_parse_dates_date_range():
+    date_filter_yesterday = "<<yesterday>>"
+    date_filter_today = "<<today>>"
+
+    start_date, end_date = parse_dates(
+        date_filter=(date_filter_yesterday, date_filter_today)
+    )
+
+    assert start_date == pendulum.yesterday().date()
+    assert end_date == pendulum.today().date()
+
+
+def test_parse_dates_none():
+    date_filter = None
+    result = parse_dates(date_filter=date_filter)
+
+    assert result is None
+
+
+def test_parse_dates_wrong_input():
+    date_filter = ["<<pendulum.today()>>"]
+
+    with pytest.raises(
+        ValueError,
+        match="date_filter must be a string, a tuple of exactly 2 dates, or None.",
+    ):
+        parse_dates(date_filter=date_filter)

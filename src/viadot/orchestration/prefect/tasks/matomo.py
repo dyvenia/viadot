@@ -15,7 +15,7 @@ def matomo_to_df(
     url: str,
     top_level_fields: list[str],
     record_path: str | list[str],
-    params: dict[str, str],
+    params: dict[str, Any],
     config_key: str | None = None,
     credentials_secret: str | None = None,
     record_prefix: str | None = None,
@@ -36,13 +36,13 @@ def matomo_to_df(
         credentials_secret (str, optional): The name of the secret that stores Matomo
             credentials. Defaults to None.
             More info on: https://docs.prefect.io/concepts/blocks/
-        params (dict[str, str]): Parameters for the API request.
+        params (dict[str, Any]): Parameters for the API request.
                 Necessary params and their examples are:
                     "module": "API",
                     "method": "Live.getLastVisitsDetails",
                     "idSite": "53",
                     "period": "range",
-                    "date": "2021-12-05,2022-09-14",
+                    "date": ("<<yesterday>>", "<<today>>"),
                     "format": "JSON",
         record_prefix (Optional[str], optional): A prefix for the record path fields.
             For example: "action_". Defaults to None.
@@ -64,7 +64,7 @@ def matomo_to_df(
                 "method": "Live.getLastVisitsDetails",
                 "idSite": "53",
                 "period": "range",
-                "date": "2023-01-01,2023-12-31",
+                "date": ("<<yesterday>>", "<<today>>"),
                 "format": "JSON"
             },
             record_prefix="action_",
@@ -87,6 +87,8 @@ def matomo_to_df(
         credentials=credentials,
         config_key=config_key,
     )
+
+    params['date'] = matomo.format_date_range(params['date'])
 
     # Fetch the data using credentials
     data = matomo.fetch_data(

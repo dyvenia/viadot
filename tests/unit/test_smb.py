@@ -100,8 +100,8 @@ def test_scan_and_store(
     date_filter,
 ):
     with (
-        patch.object(smb_instance, "_scan_directories") as mock_scan_directories,
-        patch.object(smb_instance, "_parse_dates") as mock_parse_dates,
+        patch.object(smb_instance, "_scan_directory") as mock_scan_directory,
+        patch("viadot.sources.smb.parse_dates") as mock_parse_dates,
     ):
         mock_date_result = (
             pendulum.yesterday().date() if isinstance(date_filter, str) else None
@@ -247,47 +247,6 @@ def test_scan_directories_error_handling(smb_instance):
 
         with pytest.raises(Exception, match="Test error"):
             smb_instance._scan_directories(SERVER_PATH, None, None)
-
-
-def test_parse_dates_single_date(smb_instance):
-    date_filter_keyword = "<<yesterday>>"
-    result = smb_instance._parse_dates(date_filter=date_filter_keyword)
-
-    assert result == pendulum.yesterday().date()
-
-    date_filter_date = "<<pendulum.yesterday()>>"
-    result = smb_instance._parse_dates(date_filter=date_filter_date)
-
-    assert result == pendulum.yesterday().date()
-
-
-def test_parse_dates_date_range(smb_instance):
-    date_filter_yesterday = "<<yesterday>>"
-    date_filter_today = "<<today>>"
-
-    start_date, end_date = smb_instance._parse_dates(
-        date_filter=(date_filter_yesterday, date_filter_today)
-    )
-
-    assert start_date == pendulum.yesterday().date()
-    assert end_date == pendulum.today().date()
-
-
-def test_parse_dates_none(smb_instance):
-    date_filter = None
-    result = smb_instance._parse_dates(date_filter=date_filter)
-
-    assert result is None
-
-
-def test_parse_dates_wrong_input(smb_instance):
-    date_filter = ["<<pendulum.today()>>"]
-
-    with pytest.raises(
-        ValueError,
-        match="date_filter must be a string, a tuple of exactly 2 dates, or None.",
-    ):
-        smb_instance._parse_dates(date_filter=date_filter)
 
 
 def test_get_directory_entries(
