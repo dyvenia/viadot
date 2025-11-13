@@ -1156,7 +1156,5 @@ def parse_dates(
             )
 
         case _:
-            msg = (
-                "date_filter must be a string, a tuple of exactly 2 dates, or None."
-            )
+            msg = "date_filter must be a string, a tuple of exactly 2 dates, or None."
             raise ValueError(msg)
