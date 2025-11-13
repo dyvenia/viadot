@@ -433,15 +433,26 @@ def test_run_data_management_seq_success(mock_send_request, onestream_instance):
 def test_to_df_success(onestream_instance):
     """Test successful DataFrame conversion."""
     data = [
-        [{"ID": 1, "Name": "Item1"}, {"ID": 2, "Name": "Item2"}],
+        [
+            {
+                "ID": 1,
+                "Name": "Item1",
+            },
+            {"ID": 2, "Name": "Item2"},
+        ],
         [{"ID": 3, "Name": "Item3"}],
     ]
 
-    df = onestream_instance._to_df(data, if_empty="fail")
+    df = onestream_instance.to_df(data, if_empty="fail")
 
     assert isinstance(df, pd.DataFrame)
     assert len(df) == 3
-    assert set(df.columns) == {"ID", "Name"}
+    assert set(df.columns) == {
+        "ID",
+        "Name",
+        "_viadot_source",
+        "_viadot_downloaded_at_utc",
+    }
     assert df["ID"].tolist() == [1, 2, 3]
     assert df["Name"].tolist() == ["Item1", "Item2", "Item3"]
 
@@ -451,14 +462,14 @@ def test_to_df_empty_data_fail(onestream_instance):
     data = []
 
     with pytest.raises(ValueError, match="The response data is empty"):
-        onestream_instance._to_df(data, if_empty="fail")
+        onestream_instance.to_df(data, if_empty="fail")
 
 
 def test_to_df_empty_data_warn(onestream_instance):
     """Test DataFrame conversion with empty data and warn option."""
     with patch.object(onestream_instance, "logger") as mock_logger:
         data = []
-        df = onestream_instance._to_df(data, if_empty="warn")
+        df = onestream_instance.to_df(data, if_empty="warn")
 
         assert df.empty
         mock_logger.warning.assert_called()
