@@ -100,7 +100,7 @@ def test_scan_and_store(
     date_filter,
 ):
     with (
-        patch.object(smb_instance, "_scan_directory") as mock_scan_directory,
+        patch.object(smb_instance, "_scan_directories") as mock_scan_directory,
         patch("viadot.sources.smb.parse_dates") as mock_parse_dates,
     ):
         mock_date_result = (

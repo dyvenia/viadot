@@ -155,7 +155,7 @@ class SMB(Source):
             zip_inner_file_regexes=zip_inner_file_regexes,
         )
 
-    def _scan_directory(
+    def _scan_directories(
         self,
         paths: list[str],
         filename_regex: str | list[str] | None = None,
