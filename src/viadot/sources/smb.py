@@ -11,8 +11,8 @@ import smbprotocol
 
 from viadot.config import get_source_credentials
 from viadot.exceptions import CredentialError
-from viadot.orchestration.prefect.utils import DynamicDateHandler
 from viadot.sources.base import Source
+from viadot.utils import parse_dates
 
 
 class SMBCredentials(BaseModel):
@@ -139,7 +139,7 @@ class SMB(Source):
             - A dictionary mapping file paths to their contents in bytes.
             - A list of file paths that were skipped or failed to be read.
         """
-        date_filter_parsed = self._parse_dates(
+        date_filter_parsed = parse_dates(
             date_filter=date_filter,
             dynamic_date_symbols=dynamic_date_symbols,
             dynamic_date_format=dynamic_date_format,
@@ -154,62 +154,6 @@ class SMB(Source):
             prefix_levels_to_add=prefix_levels_to_add,
             zip_inner_file_regexes=zip_inner_file_regexes,
         )
-
-    def _parse_dates(
-        self,
-        date_filter: str | tuple[str, str] | None = None,
-        dynamic_date_symbols: list[str] = ["<<", ">>"],  # noqa: B006
-        dynamic_date_format: str = "%Y-%m-%d",
-        dynamic_date_timezone: str = "UTC",
-    ) -> pendulum.Date | tuple[pendulum.Date, pendulum.Date] | None:
-        """Parses a date or date range, supporting dynamic date symbols.
-
-        Args:
-            date_filter (str | tuple[str, str] | None):
-                - A single date string (e.g., "2024-03-03").
-                - A tuple containing exactly two date strings, 'start' and 'end' date.
-                - None, which applies no date filter.
-                Defaults to None.
-            dynamic_date_symbols (list[str]): Symbols for dynamic date handling.
-                Defaults to ["<<", ">>"].
-            dynamic_date_format (str): Format used for dynamic date parsing.
-                Defaults to "%Y-%m-%d".
-            dynamic_date_timezone (str): Timezone used for dynamic date processing.
-                Defaults to "UTC".
-
-        Returns:
-            pendulum.Date: If a single date is provided.
-            tuple[pendulum.Date, pendulum.Date]: If a date range is provided.
-            None: If `date_filter` is None.
-
-        Raises:
-            ValueError: If `date_filter` is neither a string nor a tuple of exactly
-                two strings.
-        """
-        if date_filter is None:
-            return None
-
-        ddh = DynamicDateHandler(
-            dynamic_date_symbols=dynamic_date_symbols,
-            dynamic_date_format=dynamic_date_format,
-            dynamic_date_timezone=dynamic_date_timezone,
-        )
-
-        match date_filter:
-            case str():
-                return pendulum.parse(ddh.process_dates(date_filter)).date()
-
-            case (start, end) if isinstance(start, str) and isinstance(end, str):
-                return (
-                    pendulum.parse(ddh.process_dates(start)).date(),
-                    pendulum.parse(ddh.process_dates(end)).date(),
-                )
-
-            case _:
-                msg = (
-                    "date_filter must be a string, a tuple of exactly 2 dates, or None."
-                )
-                raise ValueError(msg)
 
     def _scan_directories(
         self,

@@ -8,7 +8,12 @@ from pydantic import BaseModel
 from viadot.config import get_source_credentials
 from viadot.exceptions import APIError
 from viadot.sources.base import Source
-from viadot.utils import add_viadot_metadata_columns, handle_api_response, validate
+from viadot.utils import (
+    add_viadot_metadata_columns,
+    handle_api_response,
+    parse_dates,
+    validate,
+)
 
 
 HTTP_STATUS_OK = 200
@@ -121,6 +126,18 @@ class Matomo(Source):
             msg = "Data is not in expected format (list or dict)"
             self.logger.error(msg)
             raise TypeError(msg)
+
+    def format_date_range(self, date_range: tuple[str, str]) -> str:
+        """Format date range to YYYY-MM-DD,YYYY-MM-DD.
+
+        Args:
+            date_range (tuple[str, str]): The date range to format.
+
+        Returns:
+            str: The formatted date range.
+        """
+        date_range_parsed = parse_dates(date_range)
+        return f"{date_range_parsed[0]:%Y-%m-%d},{date_range_parsed[1]:%Y-%m-%d}"
 
     def fetch_data(
         self,

@@ -22,7 +22,7 @@ def matomo_to_redshift_spectrum(  # noqa: PLR0913
     to_path: str,
     schema_name: str,
     table: str,
-    params: dict[str, str],
+    params: dict[str, Any],
     matomo_config_key: str | None = None,
     matomo_credentials_secret: str | None = None,
     record_prefix: str | None = None,
@@ -33,7 +33,7 @@ def matomo_to_redshift_spectrum(  # noqa: PLR0913
     partition_cols: list[str] | None = None,
     compression: Literal["snappy", "gzip", "zstd"] | None = None,
     aws_sep: str = ",",
-    aws_credentials_secret: str | None = None,
+    credentials_secret: str | None = None,
     aws_config_key: str | None = None,
 ) -> None:
     """Flow for downloading data from Matomo to Redshift Spectrum.
@@ -53,7 +53,7 @@ def matomo_to_redshift_spectrum(  # noqa: PLR0913
              holding relevant Matomo credentials. Defaults to None.
         matomo_credentials_secret (str, optional): The name of the secret that stores
             Matomo credentials. Defaults to None.
-        params (dict[str, str]): Parameters for the API request.
+        params (dict[str, Any]): Parameters for the API request.
                 Required params: "module","method","idSite","period","date","format".
         record_prefix (Optional[str], optional): A prefix for the record path fields.
             For example: "action_". Defaults to None.
@@ -71,7 +71,7 @@ def matomo_to_redshift_spectrum(  # noqa: PLR0913
         compression (Literal["snappy", "gzip", "zstd"], optional): Compression style
             (None, snappy, gzip, zstd). Defaults to None.
         aws_sep (str, optional): Field delimiter for the output file. Defaults to ','.
-        aws_credentials_secret (str, optional): The name of a secret block in Prefect
+        credentials_secret (str, optional): The name of a secret block in Prefect
             that stores AWS credentials. Defaults to None.
         aws_config_key (str, optional): The key in the viadot config holding relevant
             AWS credentials. Defaults to None.
@@ -90,7 +90,7 @@ def matomo_to_redshift_spectrum(  # noqa: PLR0913
                 "method": "Live.getLastVisitsDetails",
                 "idSite": "53",
                 "period": "range",
-                "date": "2021-12-05,2022-09-14",
+                "date": ("<<yesterday>>", "<<yesterday>>"),
                 "format": "JSON"
             },
             tests={
@@ -125,5 +125,5 @@ def matomo_to_redshift_spectrum(  # noqa: PLR0913
         compression=compression,
         sep=aws_sep,
         config_key=aws_config_key,
-        credentials_secret=aws_credentials_secret,
+        credentials_secret=credentials_secret,
     )
