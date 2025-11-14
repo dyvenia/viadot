@@ -90,7 +90,7 @@ def matomo_to_redshift_spectrum(  # noqa: PLR0913
                 "method": "Live.getLastVisitsDetails",
                 "idSite": "53",
                 "period": "range",
-                "date": ("<<yesterday>>", "<<today>>"),
+                "date": ("<<yesterday>>", "<<yesterday>>"),
                 "format": "JSON"
             },
             tests={
