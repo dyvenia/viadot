@@ -47,7 +47,7 @@ class SMBCredentials(BaseModel):
 class SMB(Source):
     def __init__(
         self,
-        base_path: str,
+        base_paths: list[str],
         credentials: SMBCredentials | None = None,
         config_key: str | None = None,
         *args,
@@ -56,18 +56,25 @@ class SMB(Source):
         """Initialize the SMB with a base path.
 
         Args:
-            base_path (str): The root directory to start scanning from.
+            base_paths (list[str]): The root directory or directories to start scanning
+                from.
             credentials (SMBCredentials): Sharepoint credentials.
             config_key (str, optional): The key in the viadot config holding relevant
                 credentials.
         """
-        self.base_path = base_path
+        self.base_paths = base_paths
+
         raw_creds = credentials or get_source_credentials(config_key) or {}
         validated_creds = SMBCredentials(**raw_creds)
         super().__init__(*args, credentials=validated_creds.model_dump(), **kwargs)
 
-        normalized_path = re.sub(r"\\+", r"\\", self.base_path)
-        parts = normalized_path.lstrip("\\").split("\\")
+        normalized_paths = [re.sub(r"\\+", r"\\", path) for path in self.base_paths]
+
+        parts = normalized_paths[0].lstrip("\\").split("\\")
+        if not parts or not parts[0]:
+            msg = f"Invalid base path format: {self.base_paths[0]}"
+            raise ValueError(msg)
+
         server_host_or_ip = parts[0]
 
         try:
@@ -78,10 +85,10 @@ class SMB(Source):
             )
             self.logger.info("Connection succesfully established.")
         except smbprotocol.exceptions.LogonFailure:
-            self.logger.exception("Authentication failed: credentials invalid.")
+            self.logger.exception("Authentication failed: invalid credentials.")
             raise
         except smbprotocol.exceptions.PasswordExpired:
-            self.logger.exception("Authentication failed: credentials expired.")
+            self.logger.exception("Authentication failed: password expired.")
             raise
         except Exception:
             self.logger.exception("Connection failed.")
@@ -139,8 +146,8 @@ class SMB(Source):
             dynamic_date_timezone=dynamic_date_timezone,
         )
 
-        return self._scan_directory(
-            path=self.base_path,
+        return self._scan_directories(
+            paths=self.base_paths,
             filename_regex=filename_regex,
             extensions=extensions,
             date_filter_parsed=date_filter_parsed,
@@ -204,9 +211,9 @@ class SMB(Source):
                 )
                 raise ValueError(msg)
 
-    def _scan_directory(
+    def _scan_directories(
         self,
-        path: str,
+        paths: list[str],
         filename_regex: str | list[str] | None = None,
         extensions: str | list[str] | None = None,
         date_filter_parsed: pendulum.Date
@@ -225,7 +232,7 @@ class SMB(Source):
         This optimization avoids unnecessary traversal of unchanged folders.
 
         Args:
-            path (str): The directory path to scan.
+            paths (list[str]): The root directory or directories to start scanning from.
             filename_regex (str | list[str] | None, optional): A regular expression
                 string or list of regex patterns used to filter file names. If provided,
                 only file names matching the pattern(s) will be included.
@@ -255,54 +262,55 @@ class SMB(Source):
         found_files = {}
         problematic_entries = []
 
-        entries = self._get_directory_entries(path)
-        for entry in entries:
-            # Skip temp files
-            if entry.name.startswith("~$"):
-                problematic_entries.append(entry.name)
-                continue
+        for path in paths:
+            entries = self._get_directory_entries(path)
+            for entry in entries:
+                # Skip temp files
+                if entry.name.startswith("~$"):
+                    problematic_entries.append(entry.name)
+                    continue
 
-            try:
-                entry_mod_date_parsed = pendulum.from_timestamp(
-                    entry.stat().st_mtime
-                ).date()
-                entry_name = entry.name
+                try:
+                    entry_mod_date_parsed = pendulum.from_timestamp(
+                        entry.stat().st_mtime
+                    ).date()
+                    entry_name = entry.name
 
-                if entry.is_file() and self._is_matching_file(
-                    file_name=entry_name,
-                    file_mod_date_parsed=entry_mod_date_parsed,
-                    filename_regex=filename_regex,
-                    extensions=extensions,
-                    date_filter_parsed=date_filter_parsed,
-                ):
-                    found_files.update(
-                        self._get_file_content(
-                            entry, prefix_levels_to_add, zip_inner_file_regexes
-                        )
-                    )
-
-                elif entry.is_dir():
-                    date_match = self._is_date_match(
-                        entry_mod_date_parsed, date_filter_parsed
-                    )
-
-                    if date_match:
+                    if entry.is_file() and self._is_matching_file(
+                        file_name=entry_name,
+                        file_mod_date_parsed=entry_mod_date_parsed,
+                        filename_regex=filename_regex,
+                        extensions=extensions,
+                        date_filter_parsed=date_filter_parsed,
+                    ):
                         found_files.update(
-                            self._scan_directory(
-                                entry.path,
-                                filename_regex,
-                                extensions,
-                                date_filter_parsed,
-                                prefix_levels_to_add,
-                                zip_inner_file_regexes,
-                            )[0]  # Only the matched files dict is used
+                            self._get_file_content(
+                                entry, prefix_levels_to_add, zip_inner_file_regexes
+                            )
                         )
-            except smbprotocol.exceptions.SMBOSError as e:
-                self.logger.warning(f"Entry not found: {e}")
-                problematic_entries.append(entry.name)
-            except Exception:
-                self.logger.exception(f"Error scanning or downloading from {path}.")
-                raise
+
+                    elif entry.is_dir():
+                        date_match = self._is_date_match(
+                            entry_mod_date_parsed, date_filter_parsed
+                        )
+
+                        if date_match:
+                            found_files.update(
+                                self._scan_directories(
+                                    paths=[entry.path],
+                                    filename_regex=filename_regex,
+                                    extensions=extensions,
+                                    date_filter_parsed=date_filter_parsed,
+                                    prefix_levels_to_add=prefix_levels_to_add,
+                                    zip_inner_file_regexes=zip_inner_file_regexes,
+                                )[0]  # Only the matched files dict is used
+                            )
+                except smbprotocol.exceptions.SMBOSError as e:
+                    self.logger.warning(f"Entry not found: {e}")
+                    problematic_entries.append(entry.name)
+                except Exception:
+                    self.logger.exception(f"Error scanning or downloading from {path}.")
+                    raise
 
         return found_files, problematic_entries
 
@@ -426,7 +434,8 @@ class SMB(Source):
             with smbclient.open_file(file_path, mode="rb") as file:
                 content = file.read()
 
-            filename = Path(file_path).name
+            file_path_normalized = file_path.replace("\\", "/")
+            filename = Path(file_path_normalized).name
             prefixed_name = self._add_prefix_to_filename(filename, prefix)
             contents[prefixed_name] = content
 
