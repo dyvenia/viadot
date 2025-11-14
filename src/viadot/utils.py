@@ -1109,7 +1109,7 @@ def df_clean_column(
 
 def parse_dates(
     date_filter: str | tuple[str, str] | None = None,
-    dynamic_date_symbols: list[str] = ["<<", ">>"],  # noqa: B006
+    dynamic_date_symbols: list[str] | None = None,
     dynamic_date_format: str = "%Y-%m-%d",
     dynamic_date_timezone: str = "UTC",
 ) -> pendulum.Date | tuple[pendulum.Date, pendulum.Date] | None:
@@ -1122,7 +1122,7 @@ def parse_dates(
             - None, which applies no date filter.
             Defaults to None.
         dynamic_date_symbols (list[str]): Symbols for dynamic date handling.
-            Defaults to ["<<", ">>"].
+            Defaults to None.
         dynamic_date_format (str): Format used for dynamic date parsing.
             Defaults to "%Y-%m-%d".
         dynamic_date_timezone (str): Timezone used for dynamic date processing.
@@ -1139,6 +1139,8 @@ def parse_dates(
     """
     if date_filter is None:
         return None
+
+    dynamic_date_symbols = dynamic_date_symbols or ["<<", ">>"]
 
     ddh = DynamicDateHandler(
         dynamic_date_symbols=dynamic_date_symbols,

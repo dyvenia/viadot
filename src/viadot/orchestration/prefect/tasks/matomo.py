@@ -42,7 +42,7 @@ def matomo_to_df(
                     "method": "Live.getLastVisitsDetails",
                     "idSite": "53",
                     "period": "range",
-                    "date": ("<<yesterday>>", "<<today>>"),
+                    "date": ("<<yesterday>>", "<<yesterday>>"),
                     "format": "JSON",
         record_prefix (Optional[str], optional): A prefix for the record path fields.
             For example: "action_". Defaults to None.
