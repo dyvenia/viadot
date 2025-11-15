@@ -21,6 +21,11 @@ from .matomo import matomo_to_df
 from .mediatool import mediatool_to_df
 from .mindful import mindful_to_df
 from .minio import df_to_minio
+from .onestream import (
+    onestream_get_agg_adapter_endpoint_data_to_df,
+    onestream_get_agg_sql_data_to_df,
+    onestream_run_data_management_seq,
+)
 from .outlook import outlook_to_df
 from .redshift_spectrum import df_to_redshift_spectrum
 from .s3 import s3_upload_file
@@ -64,6 +69,9 @@ __all__ = [
     "matomo_to_df",
     "mediatool_to_df",
     "mindful_to_df",
+    "onestream_get_agg_adapter_endpoint_data_to_df",
+    "onestream_get_agg_sql_data_to_df",
+    "onestream_run_data_management_seq",
     "outlook_to_df",
     "s3_upload_file",
     "salesforce_to_df",
