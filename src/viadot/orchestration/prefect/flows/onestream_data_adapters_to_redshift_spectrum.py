@@ -44,6 +44,9 @@ def onestream_data_adapters_to_redshift_spectrum(  # noqa: PLR0913
 ) -> None:
     """Extract data from OneStream Data Adapter and load it into AWS Redshift Spectrum.
 
+    API documentation:
+    https://documentation.onestream.com/1384528/Content/REST%20API/OneStream%20WebAPI%20Endpoints.html#:~:text=Data%20Provider%20GetAdoDataSetForAdapter%20endpoint
+
     This function retrieves data from a OneStream Data Adapter using provided parameters
     and uploads it to AWS Redshift Spectrum.
 

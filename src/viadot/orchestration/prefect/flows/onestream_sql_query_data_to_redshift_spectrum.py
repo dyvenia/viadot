@@ -43,9 +43,12 @@ def onestream_sql_query_data_to_redshift_spectrum(  # noqa: PLR0913
     onestream_credentials_secret: str | None = None,
     onestream_config_key: str | None = None,
 ) -> None:
-    """Extract data from a OneStream SQL query and load it into AWS Redshift Spectrum.
+    """Extract data from a OneStream SQL query data and load it into Redshift Spectrum.
 
-    This function executes a SQL query in OneStream using provided parameters
+    API documentation:
+    https://documentation.onestream.com/1384528/Content/REST%20API/OneStream%20WebAPI%20Endpoints.html#:~:text=Data%20Provider%20GetAdoDataSetForSqlCommand%20endpoint
+
+    This function executes a SQL query in OneStream using provided parameters of the
     and uploads the results to AWS Redshift Spectrum.
 
     When custom_subst_vars are provided and batch_by_subst_vars is True, the ingestion

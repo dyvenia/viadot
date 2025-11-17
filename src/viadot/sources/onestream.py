@@ -43,6 +43,9 @@ class OneStream(Source):
     ):
         """Connector class to ingest data from the OneStream API endpoint..
 
+        API Documentation:
+        https://documentation.onestream.com/1388457/Content/REST%20API/OneStream%20WebAPI%20Endpoints.html
+
         Provides access to various OneStream API endpoints for data extraction and
         management. Each endpoint requires a specific function designed to handle its
         unique requirements.
