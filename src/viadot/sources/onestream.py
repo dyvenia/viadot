@@ -37,7 +37,7 @@ class OneStream(Source):
         application: str,
         config_key: str | None = None,
         credentials: OneStreamCredentials | None = None,
-        api_params: dict[str, str] | None = None,
+        params: dict[str, str] | None = None,
         *args,
         **kwargs,
     ):
@@ -55,7 +55,7 @@ class OneStream(Source):
             credentials (OneStreamCredentials, optional): OneStream API credentials.
                 Must contain 'api_token'. If not provided, will attempt to fetch from
                 viadot config using config_key. Defaults to None.
-            api_params (dict[str, str], optional): Additional API parameters to include
+            params (dict[str, str], optional): Additional API parameters to include
                 in requests. Defaults to None, which sets {"api-version": "5.2.0"}.
             *args: Additional positional arguments passed to parent class.
             **kwargs: Additional keyword arguments passed to parent class.
@@ -73,7 +73,7 @@ class OneStream(Source):
         self.application = application
         self.api_token = self.credentials.get("api_token")
         self.ssl_cert = False
-        self.api_params = api_params or {"api-version": "5.2.0"}
+        self.params = params or {"api-version": "5.2.0"}
 
     def _send_api_request(
         self,
@@ -99,7 +99,7 @@ class OneStream(Source):
         try:
             response = requests.post(
                 url=endpoint,
-                params=self.api_params,
+                params=self.params,
                 headers=headers,
                 data=payload,
                 timeout=(60, 3600),

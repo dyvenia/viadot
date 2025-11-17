@@ -29,7 +29,7 @@ def onestream_data_adapters_to_redshift_spectrum(  # noqa: PLR0913
     adapter_response_key: str = "Results",
     custom_subst_vars: dict[str, list[Any]] | None = None,
     batch_by_subst_vars: bool = False,
-    api_params: dict[str, str] | None = None,
+    params: dict[str, str] | None = None,
     extension: str = ".parquet",
     if_exists: Literal["overwrite", "append"] = "overwrite",
     if_empty: Literal["warn", "skip", "fail"] = "fail",
@@ -74,7 +74,7 @@ def onestream_data_adapters_to_redshift_spectrum(  # noqa: PLR0913
             as a separate batch, creating individual parquet files in S3. When False,
             all substitution variable combinations are processed together in a single
             operation. Defaults to False.
-        api_params (dict[str, str], optional): API parameters. Defaults to None.
+        params (dict[str, str], optional): API parameters. Defaults to None.
         extension (str): Required file type. Accepted formats: 'csv', 'parquet'.
             Defaults to ".parquet".
         if_exists (str): Whether to 'overwrite' or 'append' to existing table.
@@ -129,7 +129,7 @@ def onestream_data_adapters_to_redshift_spectrum(  # noqa: PLR0913
                 adapter_response_key=adapter_response_key,
                 custom_subst_vars=custom_subst_var,
                 if_empty=if_empty,
-                api_params=api_params,
+                params=params,
                 credentials_secret=onestream_credentials_secret,
                 config_key=onestream_config_key,
             )
@@ -168,7 +168,7 @@ def onestream_data_adapters_to_redshift_spectrum(  # noqa: PLR0913
             workspace_name=workspace_name,
             adapter_response_key=adapter_response_key,
             custom_subst_vars=custom_subst_vars,
-            api_params=api_params,
+            params=params,
             credentials_secret=onestream_credentials_secret,
             config_key=onestream_config_key,
         )

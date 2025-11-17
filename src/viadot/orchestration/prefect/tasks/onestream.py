@@ -65,7 +65,7 @@ def onestream_get_agg_adapter_endpoint_data_to_df(
     workspace_name: str = "MainWorkspace",
     adapter_response_key: str = "Results",
     custom_subst_vars: dict[str, list[Any]] | None = None,
-    api_params: dict[str, str] | None = None,
+    params: dict[str, str] | None = None,
     if_empty: Literal["warn", "skip", "fail"] = "fail",
 ) -> pd.DataFrame:
     """Retrieve and aggregate data from a OneStream Data Adapter as a DataFrame.
@@ -83,7 +83,7 @@ def onestream_get_agg_adapter_endpoint_data_to_df(
             returned data. Defaults to "Results".
         custom_subst_vars (dict[str, list[Any]], optional): Dictionary mapping
             substitution variable names to lists of possible values. Defaults to None.
-        api_params (dict[str, str], optional): API parameters. Defaults to None.
+        params (dict[str, str], optional): API parameters. Defaults to None.
 
     Returns:
         pd.DataFrame: Variable combinations mapped to their data as a Pandas DataFrame.
@@ -97,7 +97,7 @@ def onestream_get_agg_adapter_endpoint_data_to_df(
         application=application,
         credentials=credentials,
         config_key=config_key,
-        api_params=api_params,
+        params=params,
     )
 
     data = onestream.get_agg_adapter_endpoint_data(
@@ -120,7 +120,7 @@ def onestream_get_agg_sql_data_to_df(  # noqa: PLR0913
     db_location: str = "Application",
     results_table_name: str = "Results",
     external_db: str = "",
-    api_params: dict[str, str] | None = None,
+    params: dict[str, str] | None = None,
     if_empty: Literal["warn", "skip", "fail"] = "fail",
 ) -> pd.DataFrame:
     """Retrieve and aggregate SQL data from OneStream as a DataFrame.
@@ -136,7 +136,7 @@ def onestream_get_agg_sql_data_to_df(  # noqa: PLR0913
         db_location (str): Database location path. Defaults to "Application".
         results_table_name (str): Results table name. Defaults to "Results".
         external_db (str): External database name. Defaults to "".
-        api_params (dict[str, str], optional): API parameters. Defaults to None.
+        params (dict[str, str], optional): API parameters. Defaults to None.
         if_empty (Literal["warn", "skip", "fail"], optional): What to do if the SQL
             query returns no data. Defaults to "fail".
 
@@ -152,7 +152,7 @@ def onestream_get_agg_sql_data_to_df(  # noqa: PLR0913
         application=application,
         credentials=credentials,
         config_key=config_key,
-        api_params=api_params,
+        params=params,
     )
 
     data = onestream.get_agg_sql_data(
@@ -173,7 +173,7 @@ def onestream_run_data_management_seq(
     credentials_secret: str | None = None,
     config_key: str | None = None,
     custom_subst_vars: dict[str, list[Any]] | None = None,
-    api_params: dict[str, str] | None = None,
+    params: dict[str, str] | None = None,
 ) -> requests.Response:
     """Run a OneStream Data Management Sequence.
 
@@ -185,7 +185,7 @@ def onestream_run_data_management_seq(
         config_key (str,optional): Viadot config key. Defaults to None.
         custom_subst_vars (dict[str, list[Any]], optional): Dictionary mapping
             substitution variable names to lists of possible values. Defaults to None.
-        api_params (dict[str, str], optional): API parameters. Defaults to None.
+        params (dict[str, str], optional): API parameters. Defaults to None.
 
     Returns:
         requests.Response: Sequence execution response.
@@ -199,7 +199,7 @@ def onestream_run_data_management_seq(
         application=application,
         credentials=credentials,
         config_key=config_key,
-        api_params=api_params,
+        params=params,
     )
 
     return onestream.run_data_management_seq(

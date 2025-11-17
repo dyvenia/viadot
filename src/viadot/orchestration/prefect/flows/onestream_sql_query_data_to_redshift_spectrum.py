@@ -30,7 +30,7 @@ def onestream_sql_query_data_to_redshift_spectrum(  # noqa: PLR0913
     db_location: str = "Application",
     results_table_name: str = "Results",
     external_db: str = "",
-    api_params: dict[str, str] | None = None,
+    params: dict[str, str] | None = None,
     extension: str = ".parquet",
     if_exists: Literal["overwrite", "append"] = "overwrite",
     if_empty: Literal["warn", "skip", "fail"] = "fail",
@@ -75,7 +75,7 @@ def onestream_sql_query_data_to_redshift_spectrum(  # noqa: PLR0913
         db_location (str): Database location path. Defaults to "Application".
         results_table_name (str): Results table name. Defaults to "Results".
         external_db (str): External database name. Defaults to "".
-        api_params (dict[str, str], optional): API parameters. Defaults to None.
+        params (dict[str, str], optional): API parameters. Defaults to None.
         extension (str): Required file type. Accepted formats: 'csv', 'parquet'.
             Defaults to ".parquet".
         if_exists (str): Whether to 'overwrite' or 'append' to existing table.
@@ -133,7 +133,7 @@ def onestream_sql_query_data_to_redshift_spectrum(  # noqa: PLR0913
                 db_location=db_location,
                 results_table_name=results_table_name,
                 external_db=external_db,
-                api_params=api_params,
+                params=params,
                 if_empty=if_empty,
                 credentials_secret=onestream_credentials_secret,
                 config_key=onestream_config_key,
@@ -168,7 +168,7 @@ def onestream_sql_query_data_to_redshift_spectrum(  # noqa: PLR0913
             db_location=db_location,
             results_table_name=results_table_name,
             external_db=external_db,
-            api_params=api_params,
+            params=params,
             if_empty=if_empty,
             credentials_secret=onestream_credentials_secret,
             config_key=onestream_config_key,
