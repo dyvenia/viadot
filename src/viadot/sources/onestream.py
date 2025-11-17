@@ -206,7 +206,7 @@ class OneStream(Source):
 
         Makes a direct API call to retrieve data from a Data Adapter in the
         specified workspace. The method constructs a POST request with the
-        adapter details and custom variables, then extracts the relevant
+        adapter details and custom substition variables, then extracts the relevant
         data from the response.
 
         Args:

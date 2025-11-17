@@ -48,15 +48,24 @@ def onestream_sql_query_data_to_redshift_spectrum(  # noqa: PLR0913
     API documentation:
     https://documentation.onestream.com/1384528/Content/REST%20API/OneStream%20WebAPI%20Endpoints.html#:~:text=Data%20Provider%20GetAdoDataSetForSqlCommand%20endpoint
 
-    This function executes a SQL query in OneStream using provided parameters of the
+    This flow executes a SQL query in OneStream using provided parameters of the
     and uploads the results to AWS Redshift Spectrum.
+
+    Flow can be executed with the custom substitution variables mapped to its values.
+    These variable-value combination is used to filter data inside the data
+    adapters table allowing to return only the datasets where rows have
+    the value for a given column values set.The column - variable mapping is defined in
+    the OneStream Data Adapter configuration.The filtering is done for each
+    variable-values combination, hence the flow might generate a couple of API calls
+    to get data for all combinations.
 
     When custom_subst_vars are provided and batch_by_subst_vars is True, the ingestion
     process will be split into batches. Each batch represents one combination of the
-    custom_subst_vars. When batch_by_subst_vars is False, all substitution variable
-    combinations are processed together into a single data frame.
+    custom_subst_vars - variable:[value]. When batch_by_subst_vars is False, all
+    substitution variable combinations are processed together into a single data frame.
     Warning! Processing custom substitution vars without batching might lead to
-    out-of-memory errors when data size is too big.
+    out-of-memory errors when each variable-value combination data set size is too big.
+
 
     Args:
         server_url (str): OneStream server URL.
@@ -66,15 +75,22 @@ def onestream_sql_query_data_to_redshift_spectrum(  # noqa: PLR0913
         schema_name (str): AWS Glue catalog database name.
         table (str): AWS Glue catalog table name.
         custom_subst_vars (dict[str, list[Any]], optional): A dictionary mapping
-            substitution variable names to lists of possible values.
-            Values can be of any type that can be converted to strings, as they
-            are used as substitution variables in the SQL query. Defaults to None.
+            substitution variable names to lists of possible values.Substition variables
+            used as substitution variables that are mapped to the column names in the
+            Data Adapter configuration.They provides a kind of SQL WHERE clause for rows
+            filtering where variable refers to a name of a set containings a list
+            of possible values.
+            For example: "prm_activity_region":["MK", "LG"]
+                        refers to column UD3 that has custom variable mapping of
+                        prm_activity_region.Data will be extracted only for rows where
+                        the values (MK,LG) are present.
+            Values can be of any type that can be converted to strings.Defaults to None.
         batch_by_subst_vars (bool): Whether to process data in batches based on
             substitution variable combinations. When True and custom_subst_vars is
-            provided, each combination of substitution variables will be processed
-            as a separate batch, creating individual parquet files in S3. When False,
-            all substitution variable combinations are processed together in a single
-            operation. Defaults to False.
+            provided, each combination of substitution variables and its values will be
+            processed as a separate batch, uploading individual parquet files in S3.
+            When False,all substitution variable combinations are collected in a loop
+            and are uploaded together in a single operation. Defaults to False.
         db_location (str): Database location path. Defaults to "Application".
         results_table_name (str): Results table name. Defaults to "Results".
         external_db (str): External database name. Defaults to "".

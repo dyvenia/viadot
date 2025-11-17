@@ -81,8 +81,16 @@ def onestream_get_agg_adapter_endpoint_data_to_df(
         workspace_name (str): OneStream workspace name. Defaults to "MainWorkspace".
         adapter_response_key (str): Key in the JSON response that contains the adapter's
             returned data. Defaults to "Results".
-        custom_subst_vars (dict[str, list[Any]], optional): Dictionary mapping
-            substitution variable names to lists of possible values. Defaults to None.
+        custom_subst_vars (dict[str, list[Any]], optional): A dictionary mapping
+            substitution variable names to lists of possible values.Substition variables
+            used as substitution variables that are mapped to the column names in the
+            Data Adapter configuration.They provides a kind of SQL WHERE clause for rows
+            filtering where variable refers to a name of a set containings a list
+            of possible values.
+            For example: "prm_activity_region":["MK", "LG"]
+                        refers to column UD3 that has custom variable mapping of
+                        prm_activity_region.Data will be extracted only for rows where
+                        the values (MK,LG) are present.
         params (dict[str, str], optional): API parameters. Defaults to None.
 
     Returns:
@@ -131,8 +139,17 @@ def onestream_get_agg_sql_data_to_df(  # noqa: PLR0913
         sql_query (str): SQL query to execute.
         credentials_secret (str, optional): Key Vault secret name. Defaults to None.
         config_key (str,optional): Viadot config key. Defaults to None.
-        custom_subst_vars (dict[str, list[Any]], optional): Dictionary mapping
-            substitution variable names to lists of possible values. Defaults to None.
+        custom_subst_vars (dict[str, list[Any]], optional): A dictionary mapping
+            substitution variable names to lists of possible values.Substition variables
+            used as substitution variables that are mapped to the column names in the
+            Data Adapter configuration.They provides a kind of SQL WHERE clause for rows
+            filtering where variable refers to a name of a set containings a list
+            of possible values.
+            For example: "prm_activity_region":["MK", "LG"]
+                        refers to column UD3 that has custom variable mapping of
+                        prm_activity_region.Data will be extracted only for rows where
+                        the values (MK,LG) are present.
+            Values can be of any type that can be converted to strings.Defaults to None.
         db_location (str): Database location path. Defaults to "Application".
         results_table_name (str): Results table name. Defaults to "Results".
         external_db (str): External database name. Defaults to "".
@@ -183,8 +200,16 @@ def onestream_run_data_management_seq(
         dm_seq_name (str): Data Management Sequence name.
         credentials_secret (str, optional): Key Vault secret name. Defaults to None.
         config_key (str,optional): Viadot config key. Defaults to None.
-        custom_subst_vars (dict[str, list[Any]], optional): Dictionary mapping
-            substitution variable names to lists of possible values. Defaults to None.
+        custom_subst_vars (dict[str, list[Any]], optional): A dictionary mapping
+            substitution variable names to lists of possible values.Substition variables
+            used as substitution variables that are mapped to the column names in the
+            Data Adapter configuration.They provides a kind of SQL WHERE clause for rows
+            filtering where variable refers to a name of a set containings a list
+            of possible values.
+            For example: "prm_activity_region":["MK", "LG"]
+                        refers to column UD3 that has custom variable mapping of
+                        prm_activity_region.Data will be extracted only for rows where
+                        the values (MK,LG) are present.
         params (dict[str, str], optional): API parameters. Defaults to None.
 
     Returns:
