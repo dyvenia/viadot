@@ -73,7 +73,9 @@ class OneStream(Source):
         self.application = application
         self.api_token = self.credentials.get("api_token")
         self.ssl_cert = False
-        self.params = params or {"api-version": "5.2.0"}
+        params_with_default_api_version = {"api-version": "5.2.0"}
+        params_with_default_api_version.update(params)
+        self.params = params_with_default_api_version
 
     def _send_api_request(
         self,
@@ -123,7 +125,7 @@ class OneStream(Source):
             self.logger.info(f"API call to {endpoint} successful.")
             return response
 
-    def _fetch_req_results(
+    def _extract_data_from_response(
         self, response: requests.Response, adapter_response_key: str
     ) -> dict[str, Any]:
         """Extract records from the API response.
@@ -248,7 +250,7 @@ class OneStream(Source):
 
         response = self._send_api_request(endpoint, headers, payload)
 
-        return self._fetch_req_results(response, adapter_response_key)
+        return self._extract_data_from_response(response, adapter_response_key)
 
     def get_agg_adapter_endpoint_data(
         self,
@@ -387,7 +389,7 @@ class OneStream(Source):
 
         response = self._send_api_request(endpoint, headers, payload)
 
-        return self._fetch_req_results(response, results_table_name)
+        return self._extract_data_from_response(response, results_table_name)
 
     def get_agg_sql_data(
         self,
