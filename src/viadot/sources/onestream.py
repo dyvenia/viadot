@@ -255,7 +255,7 @@ class OneStream(Source):
 
         return self._extract_data_from_response(response, adapter_response_key)
 
-    def _get_agg_adapter_endpoint_data(
+    def get_agg_adapter_endpoint_data(
         self,
         adapter_name: str,
         workspace_name: str = "MainWorkspace",
@@ -394,7 +394,7 @@ class OneStream(Source):
 
         return self._extract_data_from_response(response, results_table_name)
 
-    def _get_agg_sql_data(
+    def get_agg_sql_data(
         self,
         custom_subst_vars: dict | None = None,
         sql_query: str = "",
