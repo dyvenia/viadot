@@ -61,9 +61,14 @@ class SharepointCredentials(BaseModel):
         at = v.get("auth_type")
         if at is None:
             has_secret = bool(v.get("client_secret"))
-            has_cert = all(v.get(k) for k in ("certificate_thumbprint",
-                                              "certificate_path",
-                                              "certificate_password"))
+            has_cert = all(
+                v.get(k)
+                for k in (
+                    "certificate_thumbprint",
+                    "certificate_path",
+                    "certificate_password",
+                )
+            )
             if has_cert:
                 v["auth_type"] = "certificate"
             elif has_secret:
@@ -74,8 +79,12 @@ class SharepointCredentials(BaseModel):
             required = ["site", "client_id", "tenant_id", "client_secret"]
         elif at == "certificate":
             required = [
-                "site", "client_id", "tenant_id",
-                "certificate_thumbprint", "certificate_path", "certificate_password",
+                "site",
+                "client_id",
+                "tenant_id",
+                "certificate_thumbprint",
+                "certificate_path",
+                "certificate_password",
             ]
         else:
             error_msg = "auth_type must be 'client_secret' or 'certificate'."
@@ -216,11 +225,14 @@ class Sharepoint(Source):
             f'https://login.microsoftonline.com/{self.credentials.get("tenant_id")}'
         )
 
-        client_credential = self.credentials.get("client_secret") \
-            if self.credentials.get("auth_type") == "client_secret" else {
+        client_credential = (
+            self.credentials.get("client_secret")
+            if self.credentials.get("auth_type") == "client_secret"
+            else {
                 "private_key_pfx_path": self.credentials.get("certificate_path"),
                 "passphrase": self.credentials.get("certificate_password"),
             }
+        )
 
         app = msal.ConfidentialClientApplication(
             authority=authority_url,

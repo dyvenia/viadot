@@ -154,7 +154,7 @@ def test_acquire_token_with_client_secret():
             captured["client_id"] = client_id
             captured["client_credential"] = client_credential
 
-        def acquire_token_for_client(self) -> dict:
+        def acquire_token_for_client(self, _scopes):
             return {"access_token": "token"}
 
     with patch(
@@ -180,7 +180,7 @@ def test_acquire_token_with_certificate():
             captured["client_id"] = client_id
             captured["client_credential"] = client_credential
 
-        def acquire_token_for_client(self) -> dict:
+        def acquire_token_for_client(self, _scopes):
             return {"access_token": "token"}
 
     with patch(
