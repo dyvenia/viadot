@@ -57,7 +57,7 @@ def create_batch_list_of_custom_subst_vars(
 
 @task(retries=3, log_prints=True, retry_delay_seconds=10, timeout_seconds=60 * 60)
 def onestream_get_agg_adapter_endpoint_data_to_df(
-    server_url: str,
+    base_url: str,
     application: str,
     adapter_name: str,
     credentials_secret: str | None = None,
@@ -73,7 +73,7 @@ def onestream_get_agg_adapter_endpoint_data_to_df(
     Processes custom variables to generate combinations and fetch data.
 
     Args:
-        server_url (str): OneStream server URL.
+        base_url (str): OneStream base server URL.
         application (str): OneStream application name.
         adapter_name (str): Data Adapter name to query.
         credentials_secret (str, optional): Key Vault secret name. Defaults to None.
@@ -101,7 +101,7 @@ def onestream_get_agg_adapter_endpoint_data_to_df(
 
     credentials = get_credentials(credentials_secret)  # type: ignore
     onestream = OneStream(
-        server_url=server_url,
+        base_url=base_url,
         application=application,
         credentials=credentials,
         config_key=config_key,
@@ -119,7 +119,7 @@ def onestream_get_agg_adapter_endpoint_data_to_df(
 
 @task(retries=3, log_prints=True, retry_delay_seconds=10, timeout_seconds=60 * 60)
 def onestream_get_agg_sql_data_to_df(  # noqa: PLR0913
-    server_url: str,
+    base_url: str,
     application: str,
     sql_query: str,
     credentials_secret: str | None = None,
@@ -134,7 +134,7 @@ def onestream_get_agg_sql_data_to_df(  # noqa: PLR0913
     """Retrieve and aggregate SQL data from OneStream as a DataFrame.
 
     Args:
-        server_url (str): OneStream server URL.
+        base_url (str): OneStream base server URL.
         application (str): OneStream application name.
         sql_query (str): SQL query to execute.
         credentials_secret (str, optional): Key Vault secret name. Defaults to None.
@@ -165,7 +165,7 @@ def onestream_get_agg_sql_data_to_df(  # noqa: PLR0913
 
     credentials = get_credentials(credentials_secret)
     onestream = OneStream(
-        server_url=server_url,
+        base_url=base_url,
         application=application,
         credentials=credentials,
         config_key=config_key,
@@ -184,7 +184,7 @@ def onestream_get_agg_sql_data_to_df(  # noqa: PLR0913
 
 @task(retries=3, log_prints=True, retry_delay_seconds=10, timeout_seconds=60 * 60)
 def onestream_run_data_management_seq(
-    server_url: str,
+    base_url: str,
     application: str,
     dm_seq_name: str,
     credentials_secret: str | None = None,
@@ -195,7 +195,7 @@ def onestream_run_data_management_seq(
     """Run a OneStream Data Management Sequence.
 
     Args:
-        server_url (str): OneStream server URL.
+        base_url (str): OneStream base server URL.
         application (str): OneStream application name.
         dm_seq_name (str): Data Management Sequence name.
         credentials_secret (str, optional): Key Vault secret name. Defaults to None.
@@ -220,7 +220,7 @@ def onestream_run_data_management_seq(
 
     credentials = get_credentials(credentials_secret)
     onestream = OneStream(
-        server_url=server_url,
+        base_url=base_url,
         application=application,
         credentials=credentials,
         config_key=config_key,

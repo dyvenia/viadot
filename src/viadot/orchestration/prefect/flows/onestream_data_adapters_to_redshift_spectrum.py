@@ -19,7 +19,7 @@ from viadot.orchestration.prefect.tasks import (
     retry_delay_seconds=60,
 )
 def onestream_data_adapters_to_redshift_spectrum(  # noqa: PLR0913
-    server_url: str,
+    base_url: str,
     application: str,
     adapter_name: str,
     to_path: str,
@@ -66,7 +66,7 @@ def onestream_data_adapters_to_redshift_spectrum(  # noqa: PLR0913
     out-of-memory errors when each variable-value combination data set size is too big.
 
     Args:
-        server_url (str): OneStream server URL.
+        base_url (str): OneStream base server URL.
         application (str): OneStream application name.
         adapter_name (str): Data Adapter name to query.
         to_path (str): Path to an S3 folder where the table will be located.
@@ -140,7 +140,7 @@ def onestream_data_adapters_to_redshift_spectrum(  # noqa: PLR0913
                 f"Processing batch {i}/{len(custom_subst_vars_batch_list)}: {custom_subst_var}."
             )
             df = onestream_get_agg_adapter_endpoint_data_to_df(
-                server_url=server_url,
+                base_url=base_url,
                 application=application,
                 adapter_name=adapter_name,
                 workspace_name=workspace_name,
@@ -180,7 +180,7 @@ def onestream_data_adapters_to_redshift_spectrum(  # noqa: PLR0913
         else:
             logger.info("Processing data without substitution variables.")
         df = onestream_get_agg_adapter_endpoint_data_to_df(
-            server_url=server_url,
+            base_url=base_url,
             application=application,
             adapter_name=adapter_name,
             workspace_name=workspace_name,

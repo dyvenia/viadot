@@ -33,7 +33,7 @@ class OneStreamCredentials(BaseModel):
 class OneStream(Source):
     def __init__(
         self,
-        server_url: str,
+        base_url: str,
         application: str,
         config_key: str | None = None,
         credentials: OneStreamCredentials | None = None,
@@ -51,7 +51,7 @@ class OneStream(Source):
         unique requirements.
 
         Args:
-            server_url (str): Base URL of the OneStream server.
+            base_url (str): OneStream base server URL.
             application (str): Name of the OneStream application to connect to.
             config_key (str, optional): Key in viadot config to fetch credentials.
                 Defaults to None.
@@ -72,7 +72,7 @@ class OneStream(Source):
         raw_creds = credentials or get_source_credentials(config_key) or {}
         validated_creds = dict(OneStreamCredentials(**raw_creds))
         super().__init__(*args, credentials=validated_creds, **kwargs)
-        self.server_url = server_url
+        self.base_url = base_url
         self.application = application
         self.api_token = self.credentials.get("api_token")
         self.ssl_cert = False
@@ -232,7 +232,7 @@ class OneStream(Source):
             custom_subst_vars
         )
         endpoint = (
-            self.server_url.rstrip("/") + "/api/DataProvider/GetAdoDataSetForAdapter"
+            self.base_url.rstrip("/") + "/api/DataProvider/GetAdoDataSetForAdapter"
         )
 
         headers = {
@@ -242,7 +242,7 @@ class OneStream(Source):
         }
         payload = json.dumps(
             {
-                "BaseWebServerUrl": self.server_url.rstrip("/") + "/OneStreamWeb",
+                "BaseWebServerUrl": self.base_url.rstrip("/") + "/OneStreamWeb",
                 "ApplicationName": self.application,
                 "WorkspaceName": workspace_name,
                 "AdapterName": adapter_name,
@@ -255,7 +255,7 @@ class OneStream(Source):
 
         return self._extract_data_from_response(response, adapter_response_key)
 
-    def get_agg_adapter_endpoint_data(
+    def _get_agg_adapter_endpoint_data(
         self,
         adapter_name: str,
         workspace_name: str = "MainWorkspace",
@@ -371,7 +371,7 @@ class OneStream(Source):
         )
 
         endpoint = (
-            self.server_url.rstrip("/") + "/api/DataProvider/GetAdoDataSetForSqlCommand"
+            self.base_url.rstrip("/") + "/api/DataProvider/GetAdoDataSetForSqlCommand"
         )
 
         headers = {
@@ -380,7 +380,7 @@ class OneStream(Source):
         }
         payload = json.dumps(
             {
-                "BaseWebServerUrl": self.server_url.rstrip("/") + "/OneStreamWeb",
+                "BaseWebServerUrl": self.base_url.rstrip("/") + "/OneStreamWeb",
                 "ApplicationName": self.application,
                 "SqlQuery": sql_query,
                 "ResultDataTableName": results_table_name,
@@ -394,7 +394,7 @@ class OneStream(Source):
 
         return self._extract_data_from_response(response, results_table_name)
 
-    def get_agg_sql_data(
+    def _get_agg_sql_data(
         self,
         custom_subst_vars: dict | None = None,
         sql_query: str = "",
@@ -446,7 +446,7 @@ class OneStream(Source):
 
         return agg_records
 
-    def run_data_management_seq(
+    def _run_data_management_seq(
         self,
         dm_seq_name: str,
         custom_subst_vars: dict | None = None,
@@ -471,7 +471,7 @@ class OneStream(Source):
             custom_subst_vars
         )
 
-        endpoint = self.server_url.rstrip("/") + "/api/DataManagement/ExecuteSequence"
+        endpoint = self.base_url.rstrip("/") + "/api/DataManagement/ExecuteSequence"
 
         headers = {
             "Content-Type": "application/json",
@@ -480,7 +480,7 @@ class OneStream(Source):
 
         payload = json.dumps(
             {
-                "BaseWebServerUrl": self.server_url.rstrip("/") + "/OneStreamWeb",
+                "BaseWebServerUrl": self.base_url.rstrip("/") + "/OneStreamWeb",
                 "ApplicationName": self.application,
                 "SequenceName": dm_seq_name,
                 "CustomSubstVarsAsCommaSeparatedPairs": custom_subst_vars_str,
