@@ -21,6 +21,7 @@ from .mediatool import mediatool_to_df
 from .mindful import mindful_to_df
 from .minio import df_to_minio
 from .onestream import (
+    create_batch_list_of_custom_subst_vars,
     onestream_get_agg_adapter_endpoint_data_to_df,
     onestream_get_agg_sql_data_to_df,
     onestream_run_data_management_seq,
@@ -52,6 +53,7 @@ __all__ = [
     "clone_repo",
     "cloud_for_customers_to_df",
     "create_sql_server_table",
+    "create_batch_list_of_custom_subst_vars",
     "customer_gauge_to_df",
     "dbt_task",
     "df_to_adls",
