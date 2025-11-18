@@ -77,7 +77,7 @@ class OneStream(Source):
         self.api_token = self.credentials.get("api_token")
         self.ssl_cert = False
         params_with_default_api_version = {"api-version": "5.2.0"}
-        params_with_default_api_version.update(params)
+        params_with_default_api_version.update(params or {})
         self.params = params_with_default_api_version
 
     def _send_api_request(
