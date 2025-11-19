@@ -322,6 +322,12 @@ class OneStream(Source):
                         {"col1": "val3", "col2": 789}
                     ]
                 }
+            if_empty (Literal["warn", "skip", "fail"], optional): Action to take if
+                the DataFrame is empty.
+                - "warn": Logs a warning.
+                - "skip": Skips the operation.
+                - "fail": Raises an error.
+                Defaults to "warn".
 
         Returns:
             pd.DataFrame: A DataFrame containing all normalized records
