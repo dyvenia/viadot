@@ -14,6 +14,7 @@ DUMMY_CREDS = {
     "site": "tenant.sharepoint.com",  # pragma: allowlist secret
     "client_id": "client",  # pragma: allowlist secret
     "client_secret": "secret",  # pragma: allowlist secret
+    "certificate_password": "password",  # pragma: allowlist secret
     "tenant_id": "tenant",  # pragma: allowlist secret
 }
 
@@ -103,7 +104,7 @@ def test_sharepoint_list_missing_credentials():
 
     with pytest.raises(
         CredentialError,
-        match=r"Missing required credentials for client_secret: \['site'\]",
+        match=r"Missing required credentials: \['site', 'certificate_password'\]",
     ):
         SharepointCredentials(**incomplete_credentials)
 

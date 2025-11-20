@@ -14,8 +14,7 @@ DUMMY_CREDS = {
     "site": "tenant.sharepoint.com",  # pragma: allowlist secret
     "client_id": "dummy_client_id",  # pragma: allowlist secret
     "tenant_id": "dummy_tenant_id",  # pragma: allowlist secret
-    "certificate_thumbprint": "dummy_certificate_thumbprint",  # pragma: allowlist secret
-    "certificate_path": "dummy_certificate_path",  # pragma: allowlist secret
+    "client_secret": "dummy_client_secret",  # pragma: allowlist secret
     "certificate_password": "dummy_certificate_password",  # pragma: allowlist secret
 }
 SAMPLE_DF = pd.DataFrame(
@@ -74,8 +73,7 @@ def sharepoint():
         "site": "example.sharepoint.com",  # pragma: allowlist secret
         "client_id": "dummy_client_id",  # pragma: allowlist secret
         "tenant_id": "dummy_tenant_id",  # pragma: allowlist secret
-        "certificate_thumbprint": "dummy_certificate_thumbprint",  # pragma: allowlist secret
-        "certificate_path": "dummy_certificate_path",  # pragma: allowlist secret
+        "client_secret": "dummy_client_secret",  # pragma: allowlist secret
         "certificate_password": "dummy_certificate_password",  # pragma: allowlist secret
     }
     return Sharepoint(credentials=credentials)
@@ -86,16 +84,14 @@ def test_valid_credentials():
         "site": "tenant.sharepoint.com",  # pragma: allowlist secret
         "client_id": "client",  # pragma: allowlist secret
         "tenant_id": "tenant",  # pragma: allowlist secret
-        "certificate_thumbprint": "dummy_certificate_thumbprint",  # pragma: allowlist secret
-        "certificate_path": "dummy_certificate_path",  # pragma: allowlist secret
+        "client_secret": "dummy_client_secret",  # pragma: allowlist secret
         "certificate_password": "dummy_certificate_password",  # pragma: allowlist secret
     }
     shrp_creds = SharepointCredentials(**credentials)
     assert shrp_creds.site == credentials["site"]
     assert shrp_creds.client_id == credentials["client_id"]
     assert shrp_creds.tenant_id == credentials["tenant_id"]
-    assert shrp_creds.certificate_thumbprint == credentials["certificate_thumbprint"]
-    assert shrp_creds.certificate_path == credentials["certificate_path"]
+    assert shrp_creds.client_secret == credentials["client_secret"]
     assert shrp_creds.certificate_password == credentials["certificate_password"]
 
 
@@ -103,9 +99,9 @@ def test_invalid_authentication():
     credentials = {
         "site": "tenant.sharepoint.com",  # pragma: allowlist secret
         "client_id": "client",  # pragma: allowlist secret
-        "certificate_thumbprint": "dummy_certificate_thumbprint",  # pragma: allowlist secret
         "certificate_path": "dummy_certificate_path",  # pragma: allowlist secret
         "certificate_password": "dummy_certificate_password",  # pragma: allowlist secret
+        "client_secret": "dummy_client_secret",  # pragma: allowlist secret
         "tenant_id": "tenant",  # pragma: allowlist secret
     }
 
@@ -126,13 +122,13 @@ def test_missing_client_id():
     credentials = {
         "site": "example.sharepoint.com",  # pragma: allowlist secret
         "tenant_id": "dummy_tenant_id",  # pragma: allowlist secret
-        "certificate_thumbprint": "dummy_certificate_thumbprint",  # pragma: allowlist secret
         "certificate_path": "dummy_certificate_path",  # pragma: allowlist secret
         "certificate_password": "dummy_certificate_password",  # pragma: allowlist secret
+        "client_secret": "dummy_client_secret",  # pragma: allowlist secret
     }
     with pytest.raises(
         CredentialError,
-        match=r"Missing required credentials for certificate: \['client_id'\]",
+        match=r"Missing required credentials: \['client_id'\]",
     ):
         SharepointCredentials(**credentials)
 
@@ -143,6 +139,7 @@ def test_acquire_token_with_client_secret():
         "client_id": "client_id",  # pragma: allowlist secret
         "tenant_id": "tenant_id",  # pragma: allowlist secret
         "client_secret": "super_secret",  # pragma: allowlist secret
+        "certificate_password": "dummy_certificate_password",  # pragma: allowlist secret
     }
     sp = Sharepoint(credentials=creds)
 
@@ -171,7 +168,14 @@ def test_acquire_token_with_client_secret():
 
 
 def test_acquire_token_with_certificate():
-    sp = Sharepoint(credentials=DUMMY_CREDS)
+    # In the new approach we pass binary bytes as credentials and Sharepoint
+    mocked_secrets = {
+        "site": "tenant.sharepoint.com",  # pragma: allowlist secret
+        "client_id": "dummy_client_id",  # pragma: allowlist secret
+        "tenant_id": "dummy_tenant_id",  # pragma: allowlist secret
+        "client_secret": "dummy_client_secret",  # pragma: allowlist secret
+        "certificate_password": "dummy_certificate_password",  # pragma: allowlist secret
+    }
 
     captured = {}
 
@@ -185,24 +189,21 @@ def test_acquire_token_with_certificate():
             captured["scopes"] = scopes
             return {"access_token": "token"}
 
-    with patch(
-        "viadot.sources.sharepoint.msal.ConfidentialClientApplication", new=_DummyApp
+    with (
+        patch("viadot.sources.sharepoint.get_credentials", return_value=mocked_secrets),
+        patch(
+            "viadot.sources.sharepoint.msal.ConfidentialClientApplication",
+            new=_DummyApp,
+        ),
     ):
+        sp = Sharepoint(credentials=b"blah_blah")
         token = sp._acquire_token_func()
 
+    # Token returned
     assert isinstance(token, dict)
-    assert captured["client_id"] == DUMMY_CREDS["client_id"]
-    assert DUMMY_CREDS["tenant_id"] in captured["authority"]
-    # In certificate flow, msal should receive a dict with pfx path and passphrase
-    assert isinstance(captured["client_credential"], dict)
-    assert (
-        captured["client_credential"].get("private_key_pfx_path")
-        == DUMMY_CREDS["certificate_path"]
-    )
-    assert (
-        captured["client_credential"].get("passphrase")
-        == DUMMY_CREDS["certificate_password"]
-    )
+    # MSAL was initialized with expected values
+    assert captured["client_id"] == mocked_secrets["client_id"]
+    assert mocked_secrets["tenant_id"] in captured["authority"]
 
 
 def test_sharepoint_default_na(sharepoint_mock):

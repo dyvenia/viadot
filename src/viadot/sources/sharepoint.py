@@ -3,6 +3,7 @@
 import io
 from pathlib import Path
 import re
+import tempfile
 from typing import Any, Literal
 from urllib.parse import urlparse
 
@@ -14,6 +15,7 @@ from pydantic import BaseModel, root_validator
 
 from viadot.config import get_source_credentials
 from viadot.exceptions import CredentialError
+from viadot.orchestration.prefect.utils import get_credentials
 from viadot.signals import SKIP
 from viadot.sources.base import Source
 from viadot.utils import (
@@ -25,103 +27,62 @@ from viadot.utils import (
 
 
 class SharepointCredentials(BaseModel):
-    site: str
-    client_id: str
-    tenant_id: str
-
-    # discriminator
-    auth_type: Literal["client_secret", "certificate"] | None = None
-
-    # client secret flow
+    site: str | None = None
+    client_id: str | None = None
+    tenant_id: str | None = None
     client_secret: str | None = None
-
-    # certificate flow
-    certificate_thumbprint: str | None = None
-    certificate_path: str | None = None
     certificate_password: str | None = None
+    binary_certificate: bytes | None = None
 
     @root_validator(pre=True)
-    def validate_and_infer_auth(cls, v: dict) -> dict:  # noqa: N805
-        """Infer `auth_type` and validate required credential fields.
+    def validate_credentials(cls, raw_creds: dict) -> dict:  # noqa: N805
+        """Validate required credential fields.
 
         Args:
-            v (dict): The dictionary of credentials.
+            raw_creds (dict): The dictionary of credentials.
 
         Returns:
             dict: The validated dictionary of credentials.
 
         Raises:
-            CredentialError: If `auth_type` is not set, it is inferred from provide
-            fields and it is not 'client_secret' or 'certificate'.
-            CredentialError: If all required fields for the chosen authentication
-            flow are not present.
-            CredentialError: If `auth_type` is not 'client_secret' or 'certificate'.
+            CredentialError: If all required fields are not present.
         """
-        # infer auth_type if not explicitly provided
-        at = v.get("auth_type")
-        if at is None:
-            has_secret = bool(v.get("client_secret"))
-            has_cert = all(
-                v.get(k)
-                for k in (
-                    "certificate_thumbprint",
-                    "certificate_path",
-                    "certificate_password",
-                )
-            )
-            if has_cert:
-                v["auth_type"] = "certificate"
-            elif has_secret:
-                v["auth_type"] = "client_secret"
+        required = [
+            "site",
+            "client_id",
+            "tenant_id",
+            "client_secret",
+            "certificate_password",
+        ]
 
-        at = v.get("auth_type")
-        if at == "client_secret":
-            required = ["site", "client_id", "tenant_id", "client_secret"]
-        elif at == "certificate":
-            required = [
-                "site",
-                "client_id",
-                "tenant_id",
-                "certificate_thumbprint",
-                "certificate_path",
-                "certificate_password",
-            ]
-        else:
-            error_msg = "auth_type must be 'client_secret' or 'certificate'."
-            raise CredentialError(error_msg)
-
-        missing = [k for k in required if not v.get(k)]
+        missing = [k for k in required if not raw_creds.get(k)]
         if missing:
-            error_msg = f"Missing required credentials for {at}: {missing}"
+            error_msg = f"Missing required credentials: {missing}"
             raise CredentialError(error_msg)
 
-        return v
+        return raw_creds
 
-    @property
-    def uses_certificate(self) -> bool:
-        """Return True if certificate-based authentication is selected.
+    @classmethod
+    def prepare_credentials(cls, raw_creds: bytes | dict[str, str]) -> dict[str, str]:
+        """Prepare the credentials for the Sharepoint object.
 
-        Returns:
-            bool: True if certificate-based authentication is selected, False otherwise.
-        """
-        return self.auth_type == "certificate"
-
-    def msal_client_credential(self) -> dict:
-        """Return the MSAL `client_credential` payload for the configured auth flow.
+        Args:
+            raw_creds (bytes | dict[str, str]): The raw credentials as either binary
+                certificate bytes or a credential dictionary.
 
         Returns:
-            dict: The MSAL `client_credential` payload for the configured auth flow.
-
-        Raises:
-            CredentialError: If the authentication type is not supported.
+            dict[str, str]: The prepared credentials.
         """
-        if self.uses_certificate:
-            return {
-                "private_key_pfx_path": self.certificate_path,
-                "passphrase": self.certificate_password,
-            }
-        # For client secret flow, msal accepts a string secret
-        return self.client_secret
+        #bytes means we received a binary certificate
+        if isinstance(raw_creds, bytes):
+            credentials = get_credentials(secret_name="sharepointsecret-hr")  # noqa: S106
+            with tempfile.NamedTemporaryFile(delete=False, suffix='.pfx') as temp_pfx:
+                temp_pfx.write(raw_creds)
+                temp_pfx_path = temp_pfx.name
+            credentials["certificate_path"] = temp_pfx_path
+            return credentials
+
+        return raw_creds
 
 
 class Sharepoint(Source):
@@ -142,7 +103,8 @@ class Sharepoint(Source):
             credentials.
         """
         raw_creds = credentials or get_source_credentials(config_key) or {}
-        validated_creds = dict(SharepointCredentials(**raw_creds))
+        prepared_creds = SharepointCredentials.prepare_credentials(raw_creds)
+        validated_creds = dict(SharepointCredentials(**prepared_creds))
         super().__init__(*args, credentials=validated_creds, **kwargs)
 
     def get_client(self) -> GraphClient:
@@ -225,14 +187,13 @@ class Sharepoint(Source):
             f'https://login.microsoftonline.com/{self.credentials.get("tenant_id")}'
         )
 
-        client_credential = (
-            self.credentials.get("client_secret")
-            if self.credentials.get("auth_type") == "client_secret"
-            else {
+        if self.credentials.get("certificate_path") is None:
+            client_credential = self.credentials.get("client_secret")
+        else:
+            client_credential = {
                 "private_key_pfx_path": self.credentials.get("certificate_path"),
                 "passphrase": self.credentials.get("certificate_password"),
             }
-        )
 
         app = msal.ConfidentialClientApplication(
             authority=authority_url,
