@@ -137,7 +137,7 @@ def onestream_data_adapters_to_redshift_spectrum(  # noqa: PLR0913
 
         for i, custom_subst_var in enumerate(custom_subst_vars_batch_list, 1):
             logger.info(
-                f"Processing batch {i}/{len(custom_subst_vars_batch_list)}: {custom_subst_var.key()} - {custom_subst_var.value()}."
+                f"Processing batch {i}/{len(custom_subst_vars_batch_list)}: {custom_subst_var}."
             )
             df = onestream_get_agg_adapter_endpoint_data_to_df(
                 base_url=base_url,
