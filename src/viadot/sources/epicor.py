@@ -210,8 +210,6 @@ class Epicor(Source):
             pd.DataFrame: Output DataFrame.
         """
         data = self.get_xml_response(filters_xml)
-        if "ORDER.HISTORY.DETAIL.QUERY" in self.base_url:
-            df = parse_orders_xml(data)
         if (
             "ORDER.HISTORY.DETAIL.QUERY" in self.base_url
             or "ORDER.DETAIL.PROD.QUERY" in self.base_url
