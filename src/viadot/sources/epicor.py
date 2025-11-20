@@ -1,14 +1,14 @@
 """Source for connecting to Epicor Prelude API."""
 
 from typing import Any
+import xml.etree.ElementTree as ET
 
-import defusedxml.ElementTree as ET  # noqa: N817
 import pandas as pd
 from pydantic import BaseModel
 import requests
 
 from viadot.config import get_source_credentials
-from viadot.exceptions import DataRangeError
+from viadot.exceptions import DataRangeError, ValidationError
 from viadot.sources.base import Source
 from viadot.utils import handle_api_response
 
@@ -20,391 +20,85 @@ Each Epicor Prelude view requires different XML parser.
 """
 
 
-class TrackingNumbers(BaseModel):
-    TrackingNumber: str | None
-
-
-class ShipToAddress(BaseModel):
-    ShipToNumber: str | None
-    Attention: str | None
-    AddressLine1: str | None
-    AddressLine2: str | None
-    AddressLine3: str | None
-    City: str | None
-    State: str | None
-    Zip: str | None
-    Country: str | None
-    EmailAddress: str | None
-    PhoneNumber: str | None
-    FaxNumber: str | None
-
-
-class InvoiceTotals(BaseModel):
-    Merchandise: str | None
-    InboundFreight: str | None
-    OutboundFreight: str | None
-    Handling: str | None
-    Delivery: str | None
-    Pickup: str | None
-    Restocking: str | None
-    MinimumCharge: str | None
-    DiscountAllowance: str | None
-    SalesTax: str | None
-    TotalInvoice: str | None
-
-
-class HeaderInformation(BaseModel):
-    CompanyNumber: str | None
-    OrderNumber: str | None
-    InvoiceNumber: str | None
-    CustomerNumber: str | None
-    CustomerDescription: str | None
-    CustomerPurchaseOrderNumber: str | None
-    Contact: str | None
-    SellingWarehouse: str | None
-    ShippingWarehouse: str | None
-    ShippingMethod: str | None
-    PaymentTerms: str | None
-    PaymentTermsDescription: str | None
-    FreightTerms: str | None
-    FreightTermsDescription: str | None
-    SalesRepOne: str | None
-    SalesRepOneDescription: str | None
-    EntryDate: str | None
-    OrderDate: str | None
-    RequiredDate: str | None
-    ShippedDate: str | None
-    InvoiceDate: str | None
-    ShipToAddress: ShipToAddress | None
-    TrackingNumbers: TrackingNumbers | None
-    InvoiceTotals: InvoiceTotals | None
-
-
-class LineItemDetail(BaseModel):
-    ProductNumber: str | None
-    ProductDescription: str | None
-    ProductDescription1: str | None
-    ProductDescription2: str | None
-    CustomerProductNumber: str | None
-    LineItemNumber: str | None
-    QuantityOrdered: str | None
-    QuantityShipped: str | None
-    QuantityBackordered: str | None
-    Price: str | None
-    ExtendedCost: str | None
-    ExtendedPrice: str | None
-    QuantityShippedExtension: str | None
-    LineItemShipWarehouse: str | None
-    RequiredDate: str | None
-    CopperWeight: str | None
-    UnitOfMeasure: str | None
-    Status: str | None
-    GrossProfitExtension: str | None
-    GrossProfitPercent: str | None
-    UpdateDate: str | None
-    DeleteReasonCode: str | None
-    DeleteReasonDescription: str | None
-    VendorProductNumber: str | None
-    ProductGroup: str | None
-    ProductGroupDescription: str | None
-    ProductLine: str | None
-    ProductLineDescription: str | None
-
-
-class Customer(BaseModel):
-    CompanyNumber: str | None
-    CustomerNumber: str | None
-    Description: str | None
-    AddressOne: str | None
-    AddressTwo: str | None
-    AddressThree: str | None
-    City: str | None
-    State: str | None
-    Zip: str | None
-    Country: str | None
-    Contact: str | None
-    Phone: str | None
-    EmailAddress: str | None
-    ShipTos: ShipToAddress | None
-
-
-class Order(BaseModel):
-    HeaderInformation: HeaderInformation | None
-    LineItemDetail: LineItemDetail | None
-
-
-class BookingsInfo(BaseModel):
-    HeaderInformation: HeaderInformation | None
-    LineItemDetail: LineItemDetail | None
-
-
-def parse_orders_xml(xml_data: str) -> pd.DataFrame:  # noqa: C901, PLR0912
-    """Function to parse xml containing Epicor Orders Data.
-
-    Args:
-        xml_data (str, required): Response from Epicor API in form of xml
-
-    Returns:
-        pd.DataFrame: DataFrame containing parsed orders data.
-    """
-    dfs = []
-    ship_dict = {}
-    invoice_dict = {}
-    header_params_dict = {}
-    item_params_dict = {}
-
-    root = ET.fromstring(xml_data.text)
-
-    for order in root.findall("Order"):
-        for header in order.findall("HeaderInformation"):
-            for tracking_numbers in header.findall("TrackingNumbers"):
-                numbers = ""
-                for tracking_number in tracking_numbers.findall("TrackingNumber"):
-                    numbers = numbers + "'" + tracking_number.text + "'"
-                result_numbers = TrackingNumbers(TrackingNumber=numbers)
-
-            for shipto in header.findall("ShipToAddress"):
-                for ship_param in ShipToAddress.__dict__.get("__annotations__"):
-                    try:
-                        ship_value = shipto.find(ship_param).text
-                    except AttributeError:
-                        ship_value = None
-                    ship_parameter = {ship_param: ship_value}
-                    ship_dict.update(ship_parameter)
-                ship_address = ShipToAddress(**ship_dict)
-
-            for invoice in header.findall("InvoiceTotals"):
-                for invoice_param in InvoiceTotals.__dict__.get("__annotations__"):
-                    try:
-                        invoice_value = invoice.find(invoice_param).text
-                    except AttributeError:
-                        invoice_value = None
-                    invoice_parameter = {invoice_param: invoice_value}
-                    invoice_dict.update(invoice_parameter)
-                invoice_total = InvoiceTotals(**invoice_dict)
-
-            for header_param in HeaderInformation.__dict__.get("__annotations__"):
-                try:
-                    header_value = header.find(header_param).text
-                except AttributeError:
-                    header_value = None
-                if header_param == "TrackingNumbers":
-                    header_parameter = {header_param: result_numbers}
-                elif header_param == "ShipToAddress":
-                    header_parameter = {header_param: ship_address}
-                elif header_param == "InvoiceTotals":
-                    header_parameter = {header_param: invoice_total}
-                else:
-                    header_parameter = {header_param: header_value}
-                header_params_dict.update(header_parameter)
-            header_info = HeaderInformation(**header_params_dict)
-        for items in order.findall("LineItemDetails"):
-            for item in items.findall("LineItemDetail"):
-                for item_param in LineItemDetail.__dict__.get("__annotations__"):
-                    try:
-                        item_value = item.find(item_param).text
-                    except AttributeError:
-                        item_value = None
-                    item_parameter = {item_param: item_value}
-                    item_params_dict.update(item_parameter)
-                line_item = LineItemDetail(**item_params_dict)
-                row = Order(HeaderInformation=header_info, LineItemDetail=line_item)
-                my_dict = row.dict()
-                dfs.append(pd.json_normalize(my_dict, max_level=2))
-    return pd.concat(dfs, ignore_index=True)
-
-
-def parse_bookings_xml(xml_data: str) -> pd.DataFrame:  # noqa: C901, PLR0912
-    """Function to parse xml containing Epicor Bookings Data.
-
-    Args:
-        xml_data (str, required): Response from Epicor API in form of xml
-    Returns:
-        pd.DataFrame: DataFrame containing parsed  data.
-    """
-    dfs = []
-    ship_dict = {}
-    header_params_dict = {}
-    item_params_dict = {}
-    root = ET.fromstring(xml_data.text)
-
-    for booking in root.findall("BookingsInfo"):
-        for header in booking.findall("HeaderInformation"):
-            for shipto in header.findall("ShipToAddress"):
-                for ship_param in ShipToAddress.__dict__.get("__annotations__"):
-                    try:
-                        ship_value = shipto.find(ship_param).text
-                    except AttributeError:
-                        ship_value = None
-                    ship_parameter = {ship_param: ship_value}
-                    ship_dict.update(ship_parameter)
-                ship_address = ShipToAddress(**ship_dict)
-
-            for header_param in HeaderInformation.__dict__.get("__annotations__"):
-                try:
-                    header_value = header.find(header_param).text
-                except AttributeError:
-                    header_value = None
-                if header_param == "ShipToAddress":
-                    header_parameter = {header_param: ship_address}
-                else:
-                    header_parameter = {header_param: header_value}
-                header_params_dict.update(header_parameter)
-            header_info = HeaderInformation(**header_params_dict)
-        for items in booking.findall("LineItemDetails"):
-            for item in items.findall("LineItemDetail"):
-                for item_param in LineItemDetail.__dict__.get("__annotations__"):
-                    try:
-                        item_value = item.find(item_param).text
-                    except AttributeError:
-                        item_value = None
-                    item_parameter = {item_param: item_value}
-                    item_params_dict.update(item_parameter)
-                line_item = LineItemDetail(**item_params_dict)
-                row = BookingsInfo(
-                    HeaderInformation=header_info, LineItemDetail=line_item
-                )
-                my_dict = row.dict()
-                dfs.append(pd.json_normalize(my_dict, max_level=2))
-    return pd.concat(dfs, ignore_index=True)
-
-
-def parse_open_orders_xml(xml_data: str) -> pd.DataFrame:  # noqa: C901, PLR0912
-    """Function to parse xml containing Epicor Open Orders Data.
-
-    Args:
-        xml_data (str, required): Response from Epicor API in form of xml
-    Returns:
-        pd.DataFrame: DataFrame containing parsed  data.
-    """
-    dfs = []
-    ship_dict = {}
-    header_params_dict = {}
-    item_params_dict = {}
-
-    root = ET.fromstring(xml_data.text)
-
-    for order in root.findall("Order"):
-        for header in order.findall("HeaderInformation"):
-            for shipto in header.findall("ShipToAddress"):
-                for ship_param in ShipToAddress.__dict__.get("__annotations__"):
-                    try:
-                        ship_value = shipto.find(ship_param).text
-                    except AttributeError:
-                        ship_value = None
-                    ship_parameter = {ship_param: ship_value}
-                    ship_dict.update(ship_parameter)
-                ship_address = ShipToAddress(**ship_dict)
-
-            for header_param in HeaderInformation.__dict__.get("__annotations__"):
-                try:
-                    header_value = header.find(header_param).text
-                except AttributeError:
-                    header_value = None
-                if header_param == "ShipToAddress":
-                    header_parameter = {header_param: ship_address}
-                else:
-                    header_parameter = {header_param: header_value}
-                header_params_dict.update(header_parameter)
-            header_info = HeaderInformation(**header_params_dict)
-        for items in order.findall("LineItemDetails"):
-            for item in items.findall("LineItemDetail"):
-                for item_param in LineItemDetail.__dict__.get("__annotations__"):
-                    try:
-                        item_value = item.find(item_param).text
-                    except AttributeError:
-                        item_value = None
-                    item_parameter = {item_param: item_value}
-                    item_params_dict.update(item_parameter)
-                line_item = LineItemDetail(**item_params_dict)
-                row = Order(HeaderInformation=header_info, LineItemDetail=line_item)
-                my_dict = row.dict()
-                dfs.append(pd.json_normalize(my_dict, max_level=2))
-    return pd.concat(dfs, ignore_index=True)
-
-
-def parse_customer_xml(xml_data: str) -> pd.DataFrame:
-    """Function to parse xml containing Epicor Customers Data.
-
-    Args:
-        xml_data (str, required): Response from Epicor API in form of xml
-    Returns:
-        pd.DataFrame: DataFrame containing parsed  data.
-    """
-    dfs = []
-    ship_dict = {}
-    customer_params_dict = {}
-
-    root = ET.fromstring(xml_data.text)
-
-    for customer in root.findall("Customer"):
-        for ship in customer.findall("ShipTos"):
-            for shipto in ship.findall("ShipToAddress"):
-                for ship_param in ShipToAddress.__dict__.get("__annotations__"):
-                    try:
-                        ship_value = shipto.find(ship_param).text
-                    except AttributeError:
-                        ship_value = None
-                    ship_parameter = {ship_param: ship_value}
-                    ship_dict.update(ship_parameter)
-                ship_address = ShipToAddress(**ship_dict)
-
-                for cust_param in Customer.__dict__.get("__annotations__"):
-                    try:
-                        cust_value = customer.find(cust_param).text
-                    except AttributeError:
-                        cust_value = None
-                    if cust_param == "ShipTos":
-                        cust_parameter = {cust_param: ship_address}
-                    else:
-                        cust_parameter = {cust_param: cust_value}
-                    customer_params_dict.update(cust_parameter)
-                cust_info = Customer(**customer_params_dict)
-                my_dict = cust_info.dict()
-                dfs.append(pd.json_normalize(my_dict, max_level=2))
-    return pd.concat(dfs, ignore_index=True)
-
-
-def parse_xml_to_flat_dict(element, parent_path="") -> dict:
-    """Function to parse xml data to flatten dictionary.
-
-    Args:
-        element (str, required): Xml element from Element Tree
-        parent_path (str, optional): Path of the xml element
-    Returns:
-        dict: flatten dictionary containing parsed data.
-    """
-    items = {}
-    # Build the path like "Order.OrderHeader.OrderNumber"
-    current_path = f"{parent_path}.{element.tag}" if parent_path else element.tag
-
-    # If element has no children, it's a leaf node
-    if len(list(element)) == 0:
-        items[current_path] = (
-            element.text.strip() if element.text and element.text.strip() else None
-        )
-    else:
-        # If element has children, recursively process them
-        for child in element:
-            items.update(parse_xml_to_flat_dict(child, current_path))
-    return items
-
-
-def parse_xml(xml_data: str) -> pd.DataFrame:
-    """Function to parse xml containing Epicor Data.
-
-    Args:
-        xml_data (str, required): Response from Epicor API in form of xml
-    Returns:
-        pd.DataFrame: DataFrame containing parsed  data.
-    """
-    root = ET.fromstring(xml_data.text)
-    data = []
+def parse_orders_xml(response):
+    root = ET.fromstring(response.text)
+    rows = []
 
     for child in root:
-        elem = parse_xml_to_flat_dict(child)
-        data.append(elem)
-    return pd.DataFrame(data)
+        header = child.find("HeaderInformation")
+        header_data = flatten_element(header, prefix="HeaderInformation.")
+
+        line_items_parent = child.find("LineItemDetails")
+        line_items = (
+            line_items_parent.findall("LineItemDetail")
+            if line_items_parent is not None
+            else []
+        )
+
+        if not line_items:
+            rows.append(header_data)
+            continue
+
+        for item in line_items:
+            item_data = flatten_element(item, prefix="LineItemDetail.")
+            row = {**header_data, **item_data}
+            rows.append(row)
+
+    return pd.DataFrame(rows)
+
+
+def flatten_element(elem, prefix=""):
+    """Flatten element tree into a dict."""
+    if elem is None:
+        return {}
+
+    data = {}
+    for child in elem:
+        tag = f"{prefix}{child.tag}"
+
+        if len(child):  # ma pod-elementy
+            nested = flatten_element(child, prefix=tag + ".")
+            data.update(nested)
+        else:
+            data[tag] = child.text
+
+    return data
+
+
+def parse_customer_xml(response):
+    xml_str = response.text
+    root = ET.fromstring(xml_str)
+
+    rows = []
+
+    for cust in root.findall(".//Customer"):
+        customer_fields = {}
+        for child in cust:
+            if child.tag != "ShipTos" and len(child) == 0:
+                customer_fields[child.tag] = child.text
+
+        shiptos_parent = cust.find("ShipTos")
+        shiptos = (
+            shiptos_parent.findall("ShipToAddress")
+            if shiptos_parent is not None
+            else []
+        )
+
+        if shiptos:
+            for st in shiptos:
+                row = customer_fields.copy()
+
+                # flatten shipto fields
+                for elem in st:
+                    row[f"ShipToAddress.{elem.tag}"] = elem.text
+
+                rows.append(row)
+
+        else:
+            # no shiptos: return only customer flat row
+            rows.append(customer_fields)
+
+    return pd.DataFrame(rows)
 
 
 class EpicorCredentials(BaseModel):
@@ -516,17 +210,18 @@ class Epicor(Source):
             pd.DataFrame: Output DataFrame.
         """
         data = self.get_xml_response(filters_xml)
-        df = parse_xml(data)
-        # if "ORDER.HISTORY.DETAIL.QUERY" in self.base_url:
-        #     df = parse_orders_xml(data)
-        # elif "CUSTOMER.QUERY" in self.base_url:
-        #     df = parse_customer_xml(data)
-        # elif "ORDER.DETAIL.PROD.QUERY" in self.base_url:
-        #     df = parse_open_orders_xml(data)
-        # elif "BOOKINGS.DETAIL.QUERY" in self.base_url:
-        #     df = parse_bookings_xml(data)
-        # else:
-        #     msg = f"Parser for selected viev {self.base_url} is not avaiable"
-        #     raise ValidationError(msg)
+        if "ORDER.HISTORY.DETAIL.QUERY" in self.base_url:
+            df = parse_orders_xml(data)
+        if (
+            "ORDER.HISTORY.DETAIL.QUERY" in self.base_url
+            or "ORDER.DETAIL.PROD.QUERY" in self.base_url
+            or "BOOKINGS.DETAIL.QUERY" in self.base_url
+        ):
+            df = parse_orders_xml(data)
+        elif "CUSTOMER.QUERY" in self.base_url:
+            df = parse_customer_xml(data)
+        else:
+            msg = f"Parser for selected viev {self.base_url} is not available"
+            raise ValidationError(msg)
 
         return df
