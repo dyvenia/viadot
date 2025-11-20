@@ -74,9 +74,7 @@ def onestream_get_agg_adapter_endpoint_data_to_df(
     params: dict[str, str] | None = None,
     if_empty: Literal["warn", "skip", "fail"] = "fail",
 ) -> pd.DataFrame:
-    """Retrieve and aggregate data from a OneStream Data Adapter as a DataFrame.
-
-    Processes custom variables to generate combinations and fetch data.
+    """Retrieve data from a OneStream Data Adapter API Endpoint and save as DataFrame.
 
     Args:
         base_url (str): OneStream base server URL.
@@ -100,11 +98,11 @@ def onestream_get_agg_adapter_endpoint_data_to_df(
         params (dict[str, str], optional): API parameters. Defaults to None.
 
     Returns:
-        pd.DataFrame: Variable combinations mapped to their data as a Pandas DataFrame.
+        pd.DataFrame: Data Adapter response data stored as a Pandas DataFrame.
     """
     if not (credentials_secret or config_key):
         raise MissingSourceCredentialsError
-
+    # TODO: maybe add payload variable
     credentials = get_credentials(credentials_secret)  # type: ignore
     onestream = OneStream(
         base_url=base_url,
@@ -113,7 +111,7 @@ def onestream_get_agg_adapter_endpoint_data_to_df(
         config_key=config_key,
         params=params,
     )
-
+    # TODO: in OneStream params add ? payload=payload
     data = onestream.get_agg_adapter_endpoint_data(
         adapter_name=adapter_name,
         workspace_name=workspace_name,

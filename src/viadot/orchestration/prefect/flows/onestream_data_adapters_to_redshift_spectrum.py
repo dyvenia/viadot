@@ -92,7 +92,7 @@ def onestream_data_adapters_to_redshift_spectrum(  # noqa: PLR0913
             processed as a separate batch, uploading individual parquet files in S3.
             When False,all substitution variable combinations are collected in a loop
             and are uploaded together in a single operation. Defaults to False.
-        params (dict[str, str], optional): API parameters. Defaults to None.
+        params (dict[str, str], optional): Additional API parameters. Defaults to None.
         extension (str): Required file type. Accepted formats: 'csv', 'parquet'.
             Defaults to ".parquet".
         if_exists (Literal["overwrite", "append"], optional): Whether to 'overwrite'
@@ -137,7 +137,7 @@ def onestream_data_adapters_to_redshift_spectrum(  # noqa: PLR0913
 
         for i, custom_subst_var in enumerate(custom_subst_vars_batch_list, 1):
             logger.info(
-                f"Processing batch {i}/{len(custom_subst_vars_batch_list)}: {custom_subst_var}."
+                f"Processing batch {i}/{len(custom_subst_vars_batch_list)}: {custom_subst_var.key()} - {custom_subst_var.value()}."
             )
             df = onestream_get_agg_adapter_endpoint_data_to_df(
                 base_url=base_url,

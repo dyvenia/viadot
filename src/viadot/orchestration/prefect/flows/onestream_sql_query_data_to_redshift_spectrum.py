@@ -94,7 +94,7 @@ def onestream_sql_query_data_to_redshift_spectrum(  # noqa: PLR0913
         db_location (str): Database location path. Defaults to "Application".
         results_table_name (str): Results table name. Defaults to "Results".
         external_db (str): External database name. Defaults to "".
-        params (dict[str, str], optional): API parameters. Defaults to None.
+        params (dict[str, str], optional): Additional API parameters. Defaults to None.
         extension (str): Required file type. Accepted formats: 'csv', 'parquet'.
             Defaults to ".parquet".
         if_exists (Literal["overwrite", "append"], optional): Whether to 'overwrite'
