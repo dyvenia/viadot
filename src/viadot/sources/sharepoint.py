@@ -73,10 +73,10 @@ class SharepointCredentials(BaseModel):
         Returns:
             dict[str, str]: The prepared credentials.
         """
-        #bytes means we received a binary certificate
+        # bytes means we received a binary certificate
         if isinstance(raw_creds, bytes):
             credentials = get_credentials(secret_name="sharepointsecret-hr")  # noqa: S106
-            with tempfile.NamedTemporaryFile(delete=False, suffix='.pfx') as temp_pfx:
+            with tempfile.NamedTemporaryFile(delete=False, suffix=".pfx") as temp_pfx:
                 temp_pfx.write(raw_creds)
                 temp_pfx_path = temp_pfx.name
             credentials["certificate_path"] = temp_pfx_path
