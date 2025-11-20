@@ -55,7 +55,13 @@ def create_batch_list_of_custom_subst_vars(
     ]
 
 
-@task(retries=3, log_prints=True, retry_delay_seconds=10, timeout_seconds=60 * 60)
+@task(
+    retries=3,
+    log_prints=True,
+    retry_delay_seconds=10,
+    timeout_seconds=60 * 60,
+    cache_result_in_memory=False,
+)
 def onestream_get_agg_adapter_endpoint_data_to_df(
     base_url: str,
     application: str,
@@ -117,7 +123,13 @@ def onestream_get_agg_adapter_endpoint_data_to_df(
     return onestream.to_df(data=data, if_empty=if_empty)
 
 
-@task(retries=3, log_prints=True, retry_delay_seconds=10, timeout_seconds=60 * 60)
+@task(
+    retries=3,
+    log_prints=True,
+    retry_delay_seconds=10,
+    timeout_seconds=60 * 60,
+    cache_result_in_memory=False,
+)
 def onestream_get_agg_sql_data_to_df(  # noqa: PLR0913
     base_url: str,
     application: str,
