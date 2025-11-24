@@ -44,13 +44,13 @@ def onestream_credentials():
     return DUMMY_CREDS
 
 
-# TODO: Check if this is enough
 @pytest.fixture
 def onestream_instance(onestream_credentials):
     """Create OneStream instance with test credentials."""
     return OneStream(
-        server_url="https://test.onestream.com",
+        base_url="https://test.onestream.com",
         application="TestApp",
+        api="data_adapter",
         credentials=onestream_credentials,
     )
 
@@ -112,16 +112,67 @@ def test_init_without_credentials_raises_error(mock_get_creds):
         )
 
 
-def test_init_with_custom_api_params():
-    """Test initialization with custom api_params."""
+def test_init_with_custom_params():
+    """Test initialization with custom params."""
     custom_params = {"api-version": "7.2.0", "custom": "value"}
     onestream = OneStream(
-        server_url="https://test.onestream.com",
+        base_url="https://test.onestream.com",
         application="TestApp",
+        api="data_adapter",
         credentials=DUMMY_CREDS,
-        api_params=custom_params,
+        params=custom_params,
     )
-    assert onestream.api_params == custom_params
+    assert onestream.params == custom_params
+
+
+@patch.object(OneStream, "_fetch_agg_data_adapter_endpoint_data")
+@patch.object(OneStream, "_fetch_agg_sql_query_endpoint_data")
+@patch.object(OneStream, "_run_data_management_seq")
+def test_fetch_from_api_endpoint_routes_correctly(
+    mock_run_dm_seq,
+    mock_fetch_sql,
+    mock_fetch_adapter,
+):
+    """Test that `_fetch_from_api_endpoint` dispatches based on api type."""
+    # data_adapter
+    one_data = OneStream(
+        base_url="https://test.onestream.com",
+        application="TestApp",
+        api="data_adapter",
+        credentials=DUMMY_CREDS,
+    )
+    one_data._fetch_from_api_endpoint()
+    mock_fetch_adapter.assert_called_once_with()
+    mock_fetch_sql.assert_not_called()
+    mock_run_dm_seq.assert_not_called()
+
+    mock_fetch_adapter.reset_mock()
+
+    # sql_query
+    one_sql = OneStream(
+        base_url="https://test.onestream.com",
+        application="TestApp",
+        api="sql_query",
+        credentials=DUMMY_CREDS,
+    )
+    one_sql._fetch_from_api_endpoint()
+    mock_fetch_sql.assert_called_once_with()
+    mock_fetch_adapter.assert_not_called()
+    mock_run_dm_seq.assert_not_called()
+
+    mock_fetch_sql.reset_mock()
+
+    # data_management_seq
+    one_dm = OneStream(
+        base_url="https://test.onestream.com",
+        application="TestApp",
+        api="data_management_seq",
+        credentials=DUMMY_CREDS,
+    )
+    one_dm._fetch_from_api_endpoint()
+    mock_run_dm_seq.assert_called_once_with()
+    mock_fetch_adapter.assert_not_called()
+    mock_fetch_sql.assert_not_called()
 
 
 def test_unpack_custom_subst_vars_to_string(onestream_instance):
@@ -244,44 +295,44 @@ def test_send_api_request_http_error(mock_post, onestream_instance):
         onestream_instance._send_api_request(endpoint, headers, payload)
 
 
-def test_fetch_req_results_success(onestream_instance):
+def test_extract_data_from_response_success(onestream_instance):
     """Test successful extraction of results from API response."""
     mock_response = MagicMock()
     mock_response.json.return_value = SAMPLE_ADAPTER_RESPONSE
 
-    result = onestream_instance._fetch_req_results(mock_response, "Results")
+    result = onestream_instance._extract_data_from_response(mock_response, "Results")
     assert result == SAMPLE_ADAPTER_RESPONSE["Results"]
 
 
-def test_fetch_req_results_null_response(onestream_instance):
+def test_extract_data_from_response_null_response(onestream_instance):
     """Test handling of null API response."""
     mock_response = MagicMock()
     mock_response.json.return_value = None
 
     with pytest.raises(ValueError, match="API response is null"):
-        onestream_instance._fetch_req_results(mock_response, "Results")
+        onestream_instance._extract_data_from_response(mock_response, "Results")
 
 
-def test_fetch_req_results_missing_key(onestream_instance):
+def test_extract_data_from_response_missing_key(onestream_instance):
     """Test handling of missing key in API response."""
     mock_response = MagicMock()
     mock_response.json.return_value = {"WrongKey": []}
 
     with pytest.raises(KeyError):
-        onestream_instance._fetch_req_results(mock_response, "Results")
+        onestream_instance._extract_data_from_response(mock_response, "Results")
 
 
 @patch.object(OneStream, "_send_api_request")
-@patch.object(OneStream, "_fetch_req_results")
-def test_get_adapter_results_data_success(
-    mock_fetch_results, mock_send_request, onestream_instance
+@patch.object(OneStream, "_extract_data_from_response")
+def test_fetch_adapter_results_data_success(
+    mock_extract_data, mock_send_request, onestream_instance
 ):
     """Test successful Data Adapter results retrieval."""
     mock_response = MagicMock()
     mock_send_request.return_value = mock_response
-    mock_fetch_results.return_value = SAMPLE_ADAPTER_RESPONSE["Results"]
+    mock_extract_data.return_value = SAMPLE_ADAPTER_RESPONSE["Results"]
 
-    result = onestream_instance._get_adapter_results_data(
+    result = onestream_instance._fetch_adapter_results_data(
         adapter_name="TestAdapter",
         workspace_name="TestWorkspace",
         adapter_response_key="Results",
@@ -306,48 +357,50 @@ def test_get_adapter_results_data_success(
     assert payload["CustomSubstVarsAsCommaSeparatedPairs"] == "prm_entity=Entity1"
 
 
-@patch.object(OneStream, "_get_adapter_results_data")
-def test_get_agg_adapter_endpoint_data_success(mock_get_results, onestream_instance):
+@patch.object(OneStream, "_fetch_adapter_results_data")
+def test_fetch_agg_data_adapter_endpoint_data_success(
+    mock_fetch_results, onestream_instance
+):
     """Test successful aggregated Data Adapter endpoint data retrieval."""
-    mock_get_results.side_effect = [
+    mock_fetch_results.side_effect = [
         [{"ID": 1, "Amount": 1000}],
         [{"ID": 2, "Amount": 2000}],
     ]
 
     custom_subst_vars = {"prm_entity": ["E1", "E2"]}
-    result = onestream_instance.get_agg_adapter_endpoint_data(
+    result = onestream_instance._fetch_agg_data_adapter_endpoint_data(
         adapter_name="TestAdapter",
         custom_subst_vars=custom_subst_vars,
     )
 
     assert len(result) == 2
-    assert result == [[{"ID": 1, "Amount": 1000}], [{"ID": 2, "Amount": 2000}]]
-    assert mock_get_results.call_count == 2
+    assert result == [{"ID": 1, "Amount": 1000}, {"ID": 2, "Amount": 2000}]
+    assert mock_fetch_results.call_count == 2
 
 
-@patch.object(OneStream, "_get_adapter_results_data")
-def test_get_agg_adapter_endpoint_data_no_custom_subst_vars(
-    mock_get_results, onestream_instance
+@patch.object(OneStream, "_fetch_adapter_results_data")
+def test_fetch_agg_data_adapter_endpoint_data_no_custom_subst_vars(
+    mock_fetch_results, onestream_instance
 ):
     """Test Data Adapter retrieval without custom substitution variables."""
-    mock_get_results.return_value = [{"ID": 1, "Amount": 1000}]
+    mock_fetch_results.return_value = [{"ID": 1, "Amount": 1000}]
 
-    result = onestream_instance.get_agg_adapter_endpoint_data(
+    result = onestream_instance._fetch_agg_data_adapter_endpoint_data(
         adapter_name="TestAdapter",
     )
 
     assert len(result) == 1
-    assert result == [[{"ID": 1, "Amount": 1000}]]
-    mock_get_results.assert_called_once()
+    assert result == [{"ID": 1, "Amount": 1000}]
+    mock_fetch_results.assert_called_once()
 
 
 @patch.object(OneStream, "_send_api_request")
-@patch.object(OneStream, "_fetch_req_results")
-def test_run_sql_success(mock_fetch_results, mock_send_request, onestream_instance):
+@patch.object(OneStream, "_extract_data_from_response")
+def test_run_sql_success(mock_extract_data, mock_send_request, onestream_instance):
     """Test successful SQL query execution."""
     mock_response = MagicMock()
     mock_send_request.return_value = mock_response
-    mock_fetch_results.return_value = SAMPLE_SQL_RESPONSE["Results"]
+    mock_extract_data.return_value = SAMPLE_SQL_RESPONSE["Results"]
 
     result = onestream_instance._run_sql(
         sql_query="SELECT * FROM Users",
@@ -373,7 +426,7 @@ def test_run_sql_success(mock_fetch_results, mock_send_request, onestream_instan
 
 
 @patch.object(OneStream, "_run_sql")
-def test_get_agg_sql_data_success(mock_run_sql, onestream_instance):
+def test_fetch_agg_sql_query_endpoint_data_success(mock_run_sql, onestream_instance):
     """Test successful aggregated SQL data retrieval."""
     mock_run_sql.side_effect = [
         [{"UserName": "admin"}],
@@ -381,22 +434,23 @@ def test_get_agg_sql_data_success(mock_run_sql, onestream_instance):
     ]
 
     custom_subst_vars = {"prm_role": ["Admin", "User"]}
-    result = onestream_instance.get_agg_sql_data(
+    result = onestream_instance._fetch_agg_sql_query_endpoint_data(
         sql_query="SELECT * FROM Users",
         custom_subst_vars=custom_subst_vars,
     )
 
     assert len(result) == 2
-    assert result[0] == [{"UserName": "admin"}]
-    assert result[1] == [{"UserName": "user1"}]
+    assert result == [{"UserName": "admin"}, {"UserName": "user1"}]
 
 
 @patch.object(OneStream, "_run_sql")
-def test_get_agg_sql_data_no_custom_subst_vars(mock_run_sql, onestream_instance):
+def test_fetch_agg_sql_query_endpoint_data_no_custom_subst_vars(
+    mock_run_sql, onestream_instance
+):
     """Test SQL data retrieval without custom substitution variables."""
     mock_run_sql.return_value = [{"UserName": "admin"}]
 
-    result = onestream_instance.get_agg_sql_data(
+    result = onestream_instance._fetch_agg_sql_query_endpoint_data(
         sql_query="SELECT * FROM Users",
     )
 
