@@ -178,7 +178,7 @@ dbt-common==1.36.0
     # via dbt-core
     # via dbt-postgres
     # via dbt-redshift
-dbt-core==1.10.15
+dbt-core==1.10.13
     # via dbt-postgres
     # via dbt-redshift
     # via viadot2
@@ -569,7 +569,7 @@ pandas-gbq==0.23.1
     # via viadot2
 pandocfilters==1.5.1
     # via nbconvert
-paramiko==3.5.1
+paramiko==3.5.0
     # via viadot2
 parsedatetime==2.6
     # via agate
