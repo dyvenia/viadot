@@ -19,6 +19,7 @@ def sharepoint_to_df(
     file_sheet_mapping: dict | None = None,
     na_values: list[str] | None = None,
     credentials_secret: str | None = None,
+    credentials_secret_pfx_password: str | None = None,
     config_key: str | None = None,
 ) -> pd.DataFrame:
     """Load an Excel file stored on Microsoft Sharepoint into a pandas `DataFrame`.
@@ -45,6 +46,8 @@ def sharepoint_to_df(
         credentials_secret (str, optional): The name of the secret storing
             the credentials. Defaults to None.
             More info on: https://docs.prefect.io/concepts/blocks/
+        credentials_secret_pfx_password (str, optional): The name of the secret storing
+            the password for the PFX file. Defaults to None.
         file_sheet_mapping (dict): A dictionary where keys are filenames and values are
             the sheet names to be loaded from each file. If provided, only these files
             and sheets will be downloaded. Defaults to None.
@@ -66,7 +69,11 @@ def sharepoint_to_df(
     logger = get_run_logger()
 
     credentials = get_credentials(secret_name=credentials_secret)
-    s = Sharepoint(credentials=credentials, config_key=config_key)
+    s = Sharepoint(
+        credentials=credentials,
+        credentials_secret_pfx_password=credentials_secret_pfx_password,
+        config_key=config_key,
+    )
 
     logger.info(f"Downloading data from {url}...")
     df = s.to_df(
@@ -88,6 +95,7 @@ def sharepoint_download_file(
     to_path: str,
     credentials_secret: str | None = None,
     config_key: str | None = None,
+    credentials_secret_pfx_password: str | None = None,
 ) -> None:
     """Download a file from Sharepoint.
 
@@ -99,6 +107,8 @@ def sharepoint_download_file(
         credentials (SharepointCredentials, optional): Sharepoint credentials.
         config_key (str, optional): The key in the viadot config holding relevant
             credentials.
+        credentials_secret_pfx_password (str, optional): The name of the secret storing
+            the password for the PFX file. Defaults to None.
     """
     if not (credentials_secret or config_key):
         raise MissingSourceCredentialsError
@@ -106,7 +116,11 @@ def sharepoint_download_file(
     logger = get_run_logger()
 
     credentials = get_credentials(secret_name=credentials_secret)
-    s = Sharepoint(credentials=credentials, config_key=config_key)
+    s = Sharepoint(
+        credentials=credentials,
+        credentials_secret_pfx_password=credentials_secret_pfx_password,
+        config_key=config_key,
+    )
 
     logger.info(f"Downloading data from {url}...")
     s.download_file(url=url, to_path=to_path)
@@ -122,6 +136,7 @@ def sharepoint_list_to_df(
     select: list[str] | None = None,
     credentials_secret: str | None = None,
     config_key: str | None = None,
+    credentials_secret_pfx_password: str | None = None,
     tests: dict[str, Any] | None = None,
 ) -> pd.DataFrame:
     """Retrieve data from a SharePoint list into a pandas DataFrame.
@@ -139,6 +154,8 @@ def sharepoint_list_to_df(
         credentials.Defaults to None.
         config_key (str, optional): The key in the viadot config holding relevant
             credentials. Defaults to None.
+        credentials_secret_pfx_password (str, optional): The name of the secret storing
+            the password for the PFX file. Defaults to None.
         tests (dict[str], optional): A dictionary with optional list of tests
                 to verify the output dataframe. If defined, triggers the `validate`
                 function from viadot.utils. Defaults to None.
@@ -160,6 +177,7 @@ def sharepoint_list_to_df(
         credentials=credentials,
         config_key=config_key,
         default_protocol=default_protocol,
+        credentials_secret_pfx_password=credentials_secret_pfx_password,
     )
 
     logger.info(f"Retrieving data from SharePoint list {list_name}...")

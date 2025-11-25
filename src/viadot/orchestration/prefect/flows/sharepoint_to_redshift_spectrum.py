@@ -30,6 +30,7 @@ def sharepoint_to_redshift_spectrum(  # noqa: PLR0913
     sep: str = ",",
     aws_config_key: str | None = None,
     credentials_secret: str | None = None,
+    credentials_secret_pfx_password: str | None = None,
     sheet_name: str | list[str | int] | int | None = None,
     columns: str | list[str] | list[int] | None = None,
     na_values: list[str] | None = None,
@@ -77,6 +78,8 @@ def sharepoint_to_redshift_spectrum(  # noqa: PLR0913
             credentials. Defaults to None.
         credentials_secret (str, optional): The name of a secret block in Prefect
             that stores AWS credentials. Defaults to None.
+        credentials_secret_pfx_password (str, optional): The name of the secret storing
+            the password for the PFX file. Defaults to None.
         sheet_name (str | list | int, optional): Strings are used for sheet names.
             Integers are used in zero-indexed sheet positions (chart sheets do not count
             as a sheet position). Lists of strings/integers are used to request multiple
@@ -104,6 +107,7 @@ def sharepoint_to_redshift_spectrum(  # noqa: PLR0913
         file_sheet_mapping=file_sheet_mapping,
         credentials_secret=sharepoint_credentials_secret,
         config_key=sharepoint_config_key,
+        credentials_secret_pfx_password=credentials_secret_pfx_password,
     )
     df_to_redshift_spectrum(
         df=df,

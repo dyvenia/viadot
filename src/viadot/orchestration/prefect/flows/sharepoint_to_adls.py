@@ -15,6 +15,7 @@ def sharepoint_to_adls(
     sharepoint_url: str,
     adls_path: str,
     sharepoint_credentials_secret: str | None = None,
+    sharepoint_credentials_secret_pfx_password: str | None = None,
     sharepoint_config_key: str | None = None,
     adls_credentials_secret: str | None = None,
     adls_config_key: str | None = None,
@@ -31,6 +32,8 @@ def sharepoint_to_adls(
             secret storing the Sharepoint credentials. Defaults to None.
         sharepoint_config_key (str, optional): The key in the viadot config holding
             relevant credentials. Defaults to None.
+        sharepoint_credentials_secret_pfx_password (str, optional): The name of the
+            secret storing the password for the PFX file. Defaults to None.
         adls_credentials_secret (str, optional): The name of the Azure Key Vault secret
             storing the ADLS credentials. Defaults to None.
         adls_config_key (str, optional): The key in the viadot config holding relevant
@@ -48,6 +51,7 @@ def sharepoint_to_adls(
     df = sharepoint_to_df(
         url=sharepoint_url,
         credentials_secret=sharepoint_credentials_secret,
+        credentials_secret_pfx_password=sharepoint_credentials_secret_pfx_password,
         config_key=sharepoint_config_key,
         sheet_name=sheet_name,
         columns=columns,

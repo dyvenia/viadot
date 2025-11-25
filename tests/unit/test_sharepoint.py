@@ -15,7 +15,6 @@ DUMMY_CREDS = {
     "client_id": "dummy_client_id",  # pragma: allowlist secret
     "tenant_id": "dummy_tenant_id",  # pragma: allowlist secret
     "client_secret": "dummy_client_secret",  # pragma: allowlist secret
-    "certificate_password": "dummy_certificate_password",  # pragma: allowlist secret
 }
 SAMPLE_DF = pd.DataFrame(
     {
@@ -74,7 +73,6 @@ def sharepoint():
         "client_id": "dummy_client_id",  # pragma: allowlist secret
         "tenant_id": "dummy_tenant_id",  # pragma: allowlist secret
         "client_secret": "dummy_client_secret",  # pragma: allowlist secret
-        "certificate_password": "dummy_certificate_password",  # pragma: allowlist secret
     }
     return Sharepoint(credentials=credentials)
 
@@ -85,22 +83,18 @@ def test_valid_credentials():
         "client_id": "client",  # pragma: allowlist secret
         "tenant_id": "tenant",  # pragma: allowlist secret
         "client_secret": "dummy_client_secret",  # pragma: allowlist secret
-        "certificate_password": "dummy_certificate_password",  # pragma: allowlist secret
     }
     shrp_creds = SharepointCredentials(**credentials)
     assert shrp_creds.site == credentials["site"]
     assert shrp_creds.client_id == credentials["client_id"]
     assert shrp_creds.tenant_id == credentials["tenant_id"]
     assert shrp_creds.client_secret == credentials["client_secret"]
-    assert shrp_creds.certificate_password == credentials["certificate_password"]
 
 
 def test_invalid_authentication():
     credentials = {
         "site": "tenant.sharepoint.com",  # pragma: allowlist secret
         "client_id": "client",  # pragma: allowlist secret
-        "certificate_path": "dummy_certificate_path",  # pragma: allowlist secret
-        "certificate_password": "dummy_certificate_password",  # pragma: allowlist secret
         "client_secret": "dummy_client_secret",  # pragma: allowlist secret
         "tenant_id": "tenant",  # pragma: allowlist secret
     }
@@ -122,8 +116,6 @@ def test_missing_client_id():
     credentials = {
         "site": "example.sharepoint.com",  # pragma: allowlist secret
         "tenant_id": "dummy_tenant_id",  # pragma: allowlist secret
-        "certificate_path": "dummy_certificate_path",  # pragma: allowlist secret
-        "certificate_password": "dummy_certificate_password",  # pragma: allowlist secret
         "client_secret": "dummy_client_secret",  # pragma: allowlist secret
     }
     with pytest.raises(
@@ -139,7 +131,6 @@ def test_acquire_token_with_client_secret():
         "client_id": "client_id",  # pragma: allowlist secret
         "tenant_id": "tenant_id",  # pragma: allowlist secret
         "client_secret": "super_secret",  # pragma: allowlist secret
-        "certificate_password": "dummy_certificate_password",  # pragma: allowlist secret
     }
     sp = Sharepoint(credentials=creds)
 
@@ -167,13 +158,31 @@ def test_acquire_token_with_client_secret():
     assert captured["client_credential"] == creds["client_secret"]
 
 
+def test_credentials_secret_pfx_password_required_with_certificate():
+    captured = {}
+
+    class _DummyApp:
+        def __init__(self, authority, client_id, client_credential):
+            captured["authority"] = authority
+            captured["client_id"] = client_id
+            captured["client_credential"] = client_credential
+
+        def acquire_token_for_client(self, scopes=None, **_kwargs):
+            captured["scopes"] = scopes
+            return {"access_token": "token"}
+    with pytest.raises(
+        CredentialError,
+        match="credentials_secret_pfx_password is required when using a binary certificate",
+    ):
+        Sharepoint(credentials=b"blah_blah")
+
+
 def test_acquire_token_with_certificate():
     # In the new approach we pass binary bytes as credentials and Sharepoint
     mocked_secrets = {
         "site": "tenant.sharepoint.com",  # pragma: allowlist secret
         "client_id": "dummy_client_id",  # pragma: allowlist secret
         "tenant_id": "dummy_tenant_id",  # pragma: allowlist secret
-        "client_secret": "dummy_client_secret",  # pragma: allowlist secret
         "certificate_password": "dummy_certificate_password",  # pragma: allowlist secret
     }
 
@@ -196,7 +205,7 @@ def test_acquire_token_with_certificate():
             new=_DummyApp,
         ),
     ):
-        sp = Sharepoint(credentials=b"blah_blah")
+        sp = Sharepoint(credentials=b"blah_blah", credentials_secret_pfx_password="secret-secret")  # noqa: S106
         token = sp._acquire_token_func()
 
     # Token returned

@@ -14,7 +14,7 @@ from viadot.orchestration.prefect.tasks import df_to_databricks, sharepoint_to_d
     retries=1,
     retry_delay_seconds=60,
 )
-def sharepoint_to_databricks(
+def sharepoint_to_databricks( # noqa: PLR0913
     sharepoint_url: str,
     databricks_table: str,
     databricks_schema: str | None = None,
@@ -22,6 +22,7 @@ def sharepoint_to_databricks(
     sheet_name: str | list | int | None = None,
     columns: str | list[str] | list[int] | None = None,
     sharepoint_credentials_secret: str | None = None,
+    sharepoint_credentials_secret_pfx_password: str | None = None,
     sharepoint_config_key: str | None = None,
     databricks_credentials_secret: str | None = None,
     databricks_config_key: str | None = None,
@@ -43,6 +44,8 @@ def sharepoint_to_databricks(
             Defaults to None.
         sharepoint_credentials_secret (str, optional): The name of the Azure Key Vault
             secret storing relevant credentials. Defaults to None.
+        sharepoint_credentials_secret_pfx_password (str, optional): The name of the
+            secret storing the password for the PFX file. Defaults to None.
         sharepoint_config_key (str, optional): The key in the viadot config holding
             relevant credentials. Defaults to None.
         databricks_credentials_secret (str, optional): The name of the Azure Key Vault
@@ -60,6 +63,7 @@ def sharepoint_to_databricks(
     df = sharepoint_to_df(
         url=sharepoint_url,
         credentials_secret=sharepoint_credentials_secret,
+        credentials_secret_pfx_password=sharepoint_credentials_secret_pfx_password,
         config_key=sharepoint_config_key,
         sheet_name=sheet_name,
         columns=columns,
