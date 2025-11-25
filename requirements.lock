@@ -672,7 +672,7 @@ sqlalchemy==2.0.35
     # via viadot2
 sqlglot==27.29.0
     # via dlt
-sqlparse<0.6.0,>=0.5.0
+sqlparse==0.5.3
     # via dbt-core
     # via dbt-redshift
     # via sql-metadata
