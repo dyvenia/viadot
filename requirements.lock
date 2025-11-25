@@ -403,7 +403,7 @@ pandas==2.3.3
     # via visions
 pandas-gbq==0.23.1
     # via viadot2
-paramiko>= 3.5.0, <4.0.0,
+paramiko>= 3.5.0, <4.0.0
     # via viadot2
 parsedatetime==2.6
     # via agate
