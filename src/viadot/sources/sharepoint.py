@@ -61,7 +61,11 @@ class SharepointCredentials(BaseModel):
         return raw_creds
 
     @classmethod
-    def prepare_credentials(cls, raw_creds: bytes | dict[str, str], credentials_secret_pfx_password: str | None = None) -> dict[str, str]:
+    def prepare_credentials(
+        cls,
+        raw_creds: bytes | dict[str, str],
+        credentials_secret_pfx_password: str | None = None,
+    ) -> dict[str, str]:
         """Prepare the credentials for the Sharepoint object.
 
         Args:
@@ -78,7 +82,9 @@ class SharepointCredentials(BaseModel):
             if credentials_secret_pfx_password is None:
                 msg = "credentials_secret_pfx_password is required when using a binary certificate"
                 raise CredentialError(msg)
-            with tempfile.NamedTemporaryFile(delete=False, suffix=".pfx", mode="wb") as temp_pfx:
+            with tempfile.NamedTemporaryFile(
+                delete=False, suffix=".pfx", mode="wb"
+            ) as temp_pfx:
                 temp_pfx.write(raw_creds)
                 temp_pfx_path = temp_pfx.name
             credentials = get_credentials(secret_name=credentials_secret_pfx_password)
@@ -112,7 +118,9 @@ class Sharepoint(Source):
         raw_creds = credentials or get_source_credentials(config_key) or {}
         if isinstance(raw_creds, bytes):
             self.credentials_binary = raw_creds
-        prepared_creds = SharepointCredentials.prepare_credentials(raw_creds, credentials_secret_pfx_password)
+        prepared_creds = SharepointCredentials.prepare_credentials(
+            raw_creds, credentials_secret_pfx_password
+        )
         validated_creds = dict(SharepointCredentials(**prepared_creds))
         super().__init__(*args, credentials=validated_creds, **kwargs)
 
