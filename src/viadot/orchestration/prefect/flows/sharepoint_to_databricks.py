@@ -14,7 +14,7 @@ from viadot.orchestration.prefect.tasks import df_to_databricks, sharepoint_to_d
     retries=1,
     retry_delay_seconds=60,
 )
-def sharepoint_to_databricks( # noqa: PLR0913
+def sharepoint_to_databricks(  # noqa: PLR0913
     sharepoint_url: str,
     databricks_table: str,
     databricks_schema: str | None = None,
