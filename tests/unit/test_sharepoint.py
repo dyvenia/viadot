@@ -208,7 +208,7 @@ def test_acquire_token_with_certificate():
     ):
         sp = Sharepoint(
             credentials=b"blah_blah",
-            credentials_secret_pfx_password="secret-secret",  # noqa: S106
+            credentials_secret_pfx_password="secret-secret", oo # pragma: allowlist secret
         )
         token = sp._acquire_token_func()
 
