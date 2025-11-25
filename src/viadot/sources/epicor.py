@@ -1,6 +1,6 @@
 """Source for connecting to Epicor Prelude API."""
 
-from typing import Any
+from typing import Any, Literal
 import xml.etree.ElementTree as ET
 
 import pandas as pd
@@ -203,13 +203,18 @@ class Epicor(Source):
             url=self.url, headers=headers, data=payload, method="POST"
         )
 
-    def to_df(self, filters_xml: str) -> pd.DataFrame:
+    def to_df(
+        self,
+        filters_xml: str,
+        if_empty: Literal["warn", "skip", "fail"] = "warn",
+    ) -> pd.DataFrame:
         """Function for creating pandas DataFrame from Epicor API response.
 
         Returns:
             pd.DataFrame: Output DataFrame.
         """
         data = self.get_xml_response(filters_xml)
+
         if (
             "ORDER.HISTORY.DETAIL.QUERY" in self.base_url
             or "ORDER.DETAIL.PROD.QUERY" in self.base_url
@@ -219,7 +224,8 @@ class Epicor(Source):
         elif "CUSTOMER.QUERY" in self.base_url:
             df = parse_customer_xml(data)
         else:
-            msg = f"Parser for selected viev {self.base_url} is not available"
+            msg = f"Parser for selected view {self.base_url} is not available"
             raise ValidationError(msg)
-
+        if df.empty:
+            self._handle_if_empty(if_empty)
         return df

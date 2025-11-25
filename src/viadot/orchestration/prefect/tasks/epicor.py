@@ -1,5 +1,7 @@
 """Task for downloading data from Epicor Prelude API."""
 
+from typing import Literal
+
 import pandas as pd
 from prefect import task
 from prefect.logging import get_run_logger
@@ -19,6 +21,7 @@ def epicor_to_df(
     end_date_field: str = "EndInvoiceDate",
     credentials_secret: str | None = None,
     config_key: str | None = None,
+    if_empty: Literal["warn", "fail", "skip"] = "warn",
 ) -> pd.DataFrame:
     """Load the data from Epicor Prelude API into a pandas DataFrame.
 
@@ -37,6 +40,12 @@ def epicor_to_df(
             More info on: https://docs.prefect.io/concepts/blocks/
         config_key (str, optional): The key in the viadot config holding relevant
             credentials. Defaults to None.
+        if_empty (Literal["warn", "skip", "fail"], optional): Action to take if
+                the DataFrame is empty.
+                - "warn": Logs a warning.
+                - "skip": Skips the operation.
+                - "fail": Raises an error.
+                Defaults to "warn".
 
     """
     if not (credentials_secret or config_key):
@@ -54,7 +63,7 @@ def epicor_to_df(
         start_date_field=start_date_field,
         end_date_field=end_date_field,
     )
-    df = epicor.to_df(filters_xml=filters_xml)
+    df = epicor.to_df(filters_xml=filters_xml, if_empty=if_empty)  # type: ignore
     nrows = df.shape[0]
     ncols = df.shape[1]
 
