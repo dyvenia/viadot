@@ -63,7 +63,9 @@ def sharepoint_to_df(
     Returns:
         pd.Dataframe: The pandas `DataFrame` containing data from the file.
     """
-    if not (credentials_secret_basic_auth or credentials_secret_cert_auth or config_key):
+    if not (
+        credentials_secret_basic_auth or credentials_secret_cert_auth or config_key
+    ):
         raise MissingSourceCredentialsError
 
     logger = get_run_logger()
@@ -109,7 +111,9 @@ def sharepoint_download_file(
         config_key (str, optional): The key in the viadot config holding relevant
             credentials.
     """
-    if not (credentials_secret_basic_auth or credentials_secret_cert_auth or config_key):
+    if not (
+        credentials_secret_basic_auth or credentials_secret_cert_auth or config_key
+    ):
         raise MissingSourceCredentialsError
 
     logger = get_run_logger()
@@ -166,7 +170,9 @@ def sharepoint_list_to_df(
         MissingSourceCredentialsError: If neither credentials_secret nor
             config_key is provided.
     """
-    if not (credentials_secret_basic_auth or credentials_secret_cert_auth or config_key):
+    if not (
+        credentials_secret_basic_auth or credentials_secret_cert_auth or config_key
+    ):
         raise MissingSourceCredentialsError
 
     logger = get_run_logger()
