@@ -216,7 +216,10 @@ def test_acquire_token_with_certificate():
     assert mocked_cert_auth["tenant_id"] in captured["authority"]
     # Certificate flow uses a dict client_credential with passphrase and path
     assert isinstance(captured["client_credential"], dict)
-    assert captured["client_credential"]["passphrase"] == mocked_cert_auth["certificate_password"]
+    assert (
+        captured["client_credential"]["passphrase"]
+        == mocked_cert_auth["certificate_password"]
+    )
     assert "private_key_pfx_path" in captured["client_credential"]
 
 

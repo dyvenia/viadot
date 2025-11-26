@@ -135,8 +135,7 @@ class Sharepoint(Source):
         credentials = credentials or get_source_credentials(config_key) or {}
         if isinstance(credentials, bytes):
             credentials = SharepointCredentials.prepare_certificate_credentials(
-                credentials,
-                credentials_cert_auth
+                credentials, credentials_cert_auth
             )
 
         validated_creds = dict(SharepointCredentials(**credentials))
