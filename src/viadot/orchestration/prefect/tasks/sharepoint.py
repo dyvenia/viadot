@@ -74,12 +74,8 @@ def sharepoint_to_df(
     logger = get_run_logger()
 
     if credentials_secret_cert_auth and credentials_secret_cert_password:
-        binary_certificate = get_credentials(
-            secret_name=credentials_secret_cert_auth
-        )
-        credentials = get_credentials(
-            secret_name=credentials_secret_cert_password
-        )
+        binary_certificate = get_credentials(secret_name=credentials_secret_cert_auth)
+        credentials = get_credentials(secret_name=credentials_secret_cert_password)
         credentials["certificate"] = binary_certificate
     else:
         credentials = get_credentials(secret_name=credentials_secret_basic_auth)
@@ -134,12 +130,8 @@ def sharepoint_download_file(
     logger = get_run_logger()
 
     if credentials_secret_cert_auth and credentials_secret_cert_password:
-        binary_certificate = get_credentials(
-            secret_name=credentials_secret_cert_auth
-        )
-        credentials = get_credentials(
-            secret_name=credentials_secret_cert_password
-        )
+        binary_certificate = get_credentials(secret_name=credentials_secret_cert_auth)
+        credentials = get_credentials(secret_name=credentials_secret_cert_password)
         credentials["certificate"] = binary_certificate
     else:
         credentials = get_credentials(secret_name=credentials_secret_basic_auth)
@@ -205,12 +197,8 @@ def sharepoint_list_to_df(
     logger = get_run_logger()
 
     if credentials_secret_cert_auth and credentials_secret_cert_password:
-        binary_certificate = get_credentials(
-            secret_name=credentials_secret_cert_auth
-        )
-        credentials = get_credentials(
-            secret_name=credentials_secret_cert_password
-        )
+        binary_certificate = get_credentials(secret_name=credentials_secret_cert_auth)
+        credentials = get_credentials(secret_name=credentials_secret_cert_password)
         credentials["certificate"] = binary_certificate
     else:
         credentials = get_credentials(secret_name=credentials_secret_basic_auth)
