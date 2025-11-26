@@ -547,7 +547,7 @@ def _get_aws_credentials(
         secret = aws_secret_block.read_secret()
         try:
             credentials = json.loads(secret)
-        except json.JSONDecodeError:
+        except (json.JSONDecodeError, UnicodeDecodeError):
             credentials = secret
     elif block_type == "AwsCredentials":
         aws_credentials_block = AwsCredentials.load(secret_name)

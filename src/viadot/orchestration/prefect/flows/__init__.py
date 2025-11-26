@@ -27,7 +27,6 @@ from .sap_to_redshift_spectrum import sap_to_redshift_spectrum
 from .sftp_to_adls import sftp_to_adls
 from .sharepoint_list_to_redshift_spectrum import sharepoint_list_to_redshift_spectrum
 from .sharepoint_to_adls import sharepoint_to_adls
-from .sharepoint_to_databricks import sharepoint_to_databricks
 from .sharepoint_to_redshift_spectrum import sharepoint_to_redshift_spectrum
 from .sharepoint_to_s3 import sharepoint_to_s3
 from .sql_server_to_minio import sql_server_to_minio
@@ -69,7 +68,6 @@ __all__ = [
     "sftp_to_adls",
     "sharepoint_list_to_redshift_spectrum",
     "sharepoint_to_adls",
-    "sharepoint_to_databricks",
     "sharepoint_to_redshift_spectrum",
     "sharepoint_to_s3",
     "sql_server_to_minio",

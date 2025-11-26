@@ -103,10 +103,7 @@ def test_sharepoint_list_missing_credentials():
 
     with pytest.raises(
         CredentialError,
-        match=(
-            "'site', 'client_id', 'client_secret' and "
-            "'tenant_id' credentials are required."
-        ),
+        match=r"Missing required credentials: \['site'\]",
     ):
         SharepointCredentials(**incomplete_credentials)
 
