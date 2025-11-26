@@ -11,7 +11,7 @@ import requests
 from viadot.config import get_source_credentials
 from viadot.exceptions import DataRangeError, ValidationError
 from viadot.sources.base import Source
-from viadot.utils import handle_api_response
+from viadot.utils import add_viadot_metadata_columns, handle_api_response
 
 
 def parse_orders_xml(response: requests.models.Response) -> pd.DataFrame:
@@ -238,6 +238,7 @@ class Epicor(Source):
             url=self.url, headers=headers, data=payload, method="POST"
         )
 
+    @add_viadot_metadata_columns
     def to_df(
         self,
         filters_xml: str,
