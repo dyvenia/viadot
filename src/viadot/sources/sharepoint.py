@@ -513,7 +513,6 @@ class SharepointList(Sharepoint):
         self,
         default_protocol: str | None = "https://",
         credentials: SharepointCredentials = None,
-        credentials_cert_auth: SharepointCredentials = None,
         config_key: str | None = None,
         *args,
         **kwargs,
@@ -524,8 +523,6 @@ class SharepointList(Sharepoint):
             default_protocol (str, optional): The default protocol to use for
                 SharePoint URLs.Defaults to "https://".
             credentials (SharepointCredentials, optional): SharePoint credentials.
-            credentials_cert_auth (SharepointCredentials, optional):
-                SharePoint certificate credentials.
             config_key (str, optional): The key in the viadot config holding relevant
                 credentials.
         """
@@ -533,7 +530,6 @@ class SharepointList(Sharepoint):
         super().__init__(
             *args,
             credentials=credentials,
-            credentials_cert_auth=credentials_cert_auth,
             config_key=config_key,
             **kwargs,
         )
