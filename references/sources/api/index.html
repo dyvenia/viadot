@@ -1661,9 +1661,9 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#viadot.sources.sharepoint.Sharepoint.get_connection" class="md-nav__link">
+  <a href="#viadot.sources.sharepoint.Sharepoint.get_client" class="md-nav__link">
     <span class="md-ellipsis">
-      get_connection
+      get_client
     </span>
   </a>
   
@@ -7819,12 +7819,7 @@ the data, e.g. older than 2 years can be: 2*365. Defaults to None.</p>
 
               <details class="quote">
                 <summary>Source code in <code>src/viadot/sources/epicor.py</code></summary>
-                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">370</span>
-<span class="normal">371</span>
-<span class="normal">372</span>
-<span class="normal">373</span>
-<span class="normal">374</span>
-<span class="normal">375</span>
+                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">375</span>
 <span class="normal">376</span>
 <span class="normal">377</span>
 <span class="normal">378</span>
@@ -7933,7 +7928,12 @@ the data, e.g. older than 2 years can be: 2*365. Defaults to None.</p>
 <span class="normal">481</span>
 <span class="normal">482</span>
 <span class="normal">483</span>
-<span class="normal">484</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span> <span class="nc">Epicor</span><span class="p">(</span><span class="n">Source</span><span class="p">):</span>
+<span class="normal">484</span>
+<span class="normal">485</span>
+<span class="normal">486</span>
+<span class="normal">487</span>
+<span class="normal">488</span>
+<span class="normal">489</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span> <span class="nc">Epicor</span><span class="p">(</span><span class="n">Source</span><span class="p">):</span>
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">base_url</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
@@ -8177,12 +8177,7 @@ date filters. Defaults to True.</p>
 
             <details class="quote">
               <summary>Source code in <code>src/viadot/sources/epicor.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">371</span>
-<span class="normal">372</span>
-<span class="normal">373</span>
-<span class="normal">374</span>
-<span class="normal">375</span>
-<span class="normal">376</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">376</span>
 <span class="normal">377</span>
 <span class="normal">378</span>
 <span class="normal">379</span>
@@ -8221,7 +8216,12 @@ date filters. Defaults to True.</p>
 <span class="normal">412</span>
 <span class="normal">413</span>
 <span class="normal">414</span>
-<span class="normal">415</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+<span class="normal">415</span>
+<span class="normal">416</span>
+<span class="normal">417</span>
+<span class="normal">418</span>
+<span class="normal">419</span>
+<span class="normal">420</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
     <span class="bp">self</span><span class="p">,</span>
     <span class="n">base_url</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
     <span class="n">credentials</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
@@ -8311,12 +8311,7 @@ date filters. Defaults to True.</p>
 
             <details class="quote">
               <summary>Source code in <code>src/viadot/sources/epicor.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">417</span>
-<span class="normal">418</span>
-<span class="normal">419</span>
-<span class="normal">420</span>
-<span class="normal">421</span>
-<span class="normal">422</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">422</span>
 <span class="normal">423</span>
 <span class="normal">424</span>
 <span class="normal">425</span>
@@ -8333,7 +8328,12 @@ date filters. Defaults to True.</p>
 <span class="normal">436</span>
 <span class="normal">437</span>
 <span class="normal">438</span>
-<span class="normal">439</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">generate_token</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="normal">439</span>
+<span class="normal">440</span>
+<span class="normal">441</span>
+<span class="normal">442</span>
+<span class="normal">443</span>
+<span class="normal">444</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">generate_token</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Function to generate API access token that is valid for 24 hours.</span>
 
 <span class="sd">    Returns:</span>
@@ -8378,18 +8378,18 @@ date filters. Defaults to True.</p>
 
             <details class="quote">
               <summary>Source code in <code>src/viadot/sources/epicor.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">452</span>
-<span class="normal">453</span>
-<span class="normal">454</span>
-<span class="normal">455</span>
-<span class="normal">456</span>
-<span class="normal">457</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">457</span>
 <span class="normal">458</span>
 <span class="normal">459</span>
 <span class="normal">460</span>
 <span class="normal">461</span>
 <span class="normal">462</span>
-<span class="normal">463</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">get_xml_response</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">filters_xml</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">requests</span><span class="o">.</span><span class="n">models</span><span class="o">.</span><span class="n">Response</span><span class="p">:</span>
+<span class="normal">463</span>
+<span class="normal">464</span>
+<span class="normal">465</span>
+<span class="normal">466</span>
+<span class="normal">467</span>
+<span class="normal">468</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">get_xml_response</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">filters_xml</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">requests</span><span class="o">.</span><span class="n">models</span><span class="o">.</span><span class="n">Response</span><span class="p">:</span>
     <span class="s2">&quot;Function for getting response from Epicor API.&quot;</span>
     <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">validate_date_filter</span> <span class="ow">is</span> <span class="kc">True</span><span class="p">:</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">validate_filter</span><span class="p">(</span><span class="n">filters_xml</span><span class="p">)</span>
@@ -8446,12 +8446,7 @@ date filters. Defaults to True.</p>
 
             <details class="quote">
               <summary>Source code in <code>src/viadot/sources/epicor.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">465</span>
-<span class="normal">466</span>
-<span class="normal">467</span>
-<span class="normal">468</span>
-<span class="normal">469</span>
-<span class="normal">470</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">470</span>
 <span class="normal">471</span>
 <span class="normal">472</span>
 <span class="normal">473</span>
@@ -8465,7 +8460,12 @@ date filters. Defaults to True.</p>
 <span class="normal">481</span>
 <span class="normal">482</span>
 <span class="normal">483</span>
-<span class="normal">484</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">to_df</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">filters_xml</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
+<span class="normal">484</span>
+<span class="normal">485</span>
+<span class="normal">486</span>
+<span class="normal">487</span>
+<span class="normal">488</span>
+<span class="normal">489</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">to_df</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">filters_xml</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Function for creating pandas DataFrame from Epicor API response.</span>
 
 <span class="sd">    Returns:</span>
@@ -8507,16 +8507,16 @@ date filters. Defaults to True.</p>
 
             <details class="quote">
               <summary>Source code in <code>src/viadot/sources/epicor.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">441</span>
-<span class="normal">442</span>
-<span class="normal">443</span>
-<span class="normal">444</span>
-<span class="normal">445</span>
-<span class="normal">446</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">446</span>
 <span class="normal">447</span>
 <span class="normal">448</span>
 <span class="normal">449</span>
-<span class="normal">450</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">validate_filter</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">filters_xml</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="normal">450</span>
+<span class="normal">451</span>
+<span class="normal">452</span>
+<span class="normal">453</span>
+<span class="normal">454</span>
+<span class="normal">455</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">validate_filter</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">filters_xml</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
     <span class="s2">&quot;Function checking if user had specified date range filters.&quot;</span>
     <span class="n">root</span> <span class="o">=</span> <span class="n">ET</span><span class="o">.</span><span class="n">fromstring</span><span class="p">(</span><span class="n">filters_xml</span><span class="p">)</span>
     <span class="k">for</span> <span class="n">child</span> <span class="ow">in</span> <span class="n">root</span><span class="p">:</span>
@@ -22161,66 +22161,7 @@ Defaults to False.</p>
 
               <details class="quote">
                 <summary>Source code in <code>src/viadot/sources/sharepoint.py</code></summary>
-                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 46</span>
-<span class="normal"> 47</span>
-<span class="normal"> 48</span>
-<span class="normal"> 49</span>
-<span class="normal"> 50</span>
-<span class="normal"> 51</span>
-<span class="normal"> 52</span>
-<span class="normal"> 53</span>
-<span class="normal"> 54</span>
-<span class="normal"> 55</span>
-<span class="normal"> 56</span>
-<span class="normal"> 57</span>
-<span class="normal"> 58</span>
-<span class="normal"> 59</span>
-<span class="normal"> 60</span>
-<span class="normal"> 61</span>
-<span class="normal"> 62</span>
-<span class="normal"> 63</span>
-<span class="normal"> 64</span>
-<span class="normal"> 65</span>
-<span class="normal"> 66</span>
-<span class="normal"> 67</span>
-<span class="normal"> 68</span>
-<span class="normal"> 69</span>
-<span class="normal"> 70</span>
-<span class="normal"> 71</span>
-<span class="normal"> 72</span>
-<span class="normal"> 73</span>
-<span class="normal"> 74</span>
-<span class="normal"> 75</span>
-<span class="normal"> 76</span>
-<span class="normal"> 77</span>
-<span class="normal"> 78</span>
-<span class="normal"> 79</span>
-<span class="normal"> 80</span>
-<span class="normal"> 81</span>
-<span class="normal"> 82</span>
-<span class="normal"> 83</span>
-<span class="normal"> 84</span>
-<span class="normal"> 85</span>
-<span class="normal"> 86</span>
-<span class="normal"> 87</span>
-<span class="normal"> 88</span>
-<span class="normal"> 89</span>
-<span class="normal"> 90</span>
-<span class="normal"> 91</span>
-<span class="normal"> 92</span>
-<span class="normal"> 93</span>
-<span class="normal"> 94</span>
-<span class="normal"> 95</span>
-<span class="normal"> 96</span>
-<span class="normal"> 97</span>
-<span class="normal"> 98</span>
-<span class="normal"> 99</span>
-<span class="normal">100</span>
-<span class="normal">101</span>
-<span class="normal">102</span>
-<span class="normal">103</span>
-<span class="normal">104</span>
-<span class="normal">105</span>
+                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">105</span>
 <span class="normal">106</span>
 <span class="normal">107</span>
 <span class="normal">108</span>
@@ -22541,7 +22482,87 @@ Defaults to False.</p>
 <span class="normal">423</span>
 <span class="normal">424</span>
 <span class="normal">425</span>
-<span class="normal">426</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span> <span class="nc">Sharepoint</span><span class="p">(</span><span class="n">Source</span><span class="p">):</span>
+<span class="normal">426</span>
+<span class="normal">427</span>
+<span class="normal">428</span>
+<span class="normal">429</span>
+<span class="normal">430</span>
+<span class="normal">431</span>
+<span class="normal">432</span>
+<span class="normal">433</span>
+<span class="normal">434</span>
+<span class="normal">435</span>
+<span class="normal">436</span>
+<span class="normal">437</span>
+<span class="normal">438</span>
+<span class="normal">439</span>
+<span class="normal">440</span>
+<span class="normal">441</span>
+<span class="normal">442</span>
+<span class="normal">443</span>
+<span class="normal">444</span>
+<span class="normal">445</span>
+<span class="normal">446</span>
+<span class="normal">447</span>
+<span class="normal">448</span>
+<span class="normal">449</span>
+<span class="normal">450</span>
+<span class="normal">451</span>
+<span class="normal">452</span>
+<span class="normal">453</span>
+<span class="normal">454</span>
+<span class="normal">455</span>
+<span class="normal">456</span>
+<span class="normal">457</span>
+<span class="normal">458</span>
+<span class="normal">459</span>
+<span class="normal">460</span>
+<span class="normal">461</span>
+<span class="normal">462</span>
+<span class="normal">463</span>
+<span class="normal">464</span>
+<span class="normal">465</span>
+<span class="normal">466</span>
+<span class="normal">467</span>
+<span class="normal">468</span>
+<span class="normal">469</span>
+<span class="normal">470</span>
+<span class="normal">471</span>
+<span class="normal">472</span>
+<span class="normal">473</span>
+<span class="normal">474</span>
+<span class="normal">475</span>
+<span class="normal">476</span>
+<span class="normal">477</span>
+<span class="normal">478</span>
+<span class="normal">479</span>
+<span class="normal">480</span>
+<span class="normal">481</span>
+<span class="normal">482</span>
+<span class="normal">483</span>
+<span class="normal">484</span>
+<span class="normal">485</span>
+<span class="normal">486</span>
+<span class="normal">487</span>
+<span class="normal">488</span>
+<span class="normal">489</span>
+<span class="normal">490</span>
+<span class="normal">491</span>
+<span class="normal">492</span>
+<span class="normal">493</span>
+<span class="normal">494</span>
+<span class="normal">495</span>
+<span class="normal">496</span>
+<span class="normal">497</span>
+<span class="normal">498</span>
+<span class="normal">499</span>
+<span class="normal">500</span>
+<span class="normal">501</span>
+<span class="normal">502</span>
+<span class="normal">503</span>
+<span class="normal">504</span>
+<span class="normal">505</span>
+<span class="normal">506</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span> <span class="nc">Sharepoint</span><span class="p">(</span><span class="n">Source</span><span class="p">):</span>
     <span class="n">DEFAULT_NA_VALUES</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">STR_NA_VALUES</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
@@ -22558,15 +22579,18 @@ Defaults to False.</p>
 <span class="sd">        config_key (str, optional): The key in the viadot config holding relevant</span>
 <span class="sd">            credentials.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">raw_creds</span> <span class="o">=</span> <span class="n">credentials</span> <span class="ow">or</span> <span class="n">get_source_credentials</span><span class="p">(</span><span class="n">config_key</span><span class="p">)</span> <span class="ow">or</span> <span class="p">{}</span>
-        <span class="n">validated_creds</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">SharepointCredentials</span><span class="p">(</span><span class="o">**</span><span class="n">raw_creds</span><span class="p">))</span>
+        <span class="n">credentials</span> <span class="o">=</span> <span class="n">credentials</span> <span class="ow">or</span> <span class="n">get_source_credentials</span><span class="p">(</span><span class="n">config_key</span><span class="p">)</span> <span class="ow">or</span> <span class="p">{}</span>
+        <span class="k">if</span> <span class="n">credentials</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;certificate&quot;</span><span class="p">):</span>
+            <span class="n">SharepointCredentials</span><span class="o">.</span><span class="n">prepare_certificate_file</span><span class="p">(</span><span class="n">credentials</span><span class="p">)</span>
+
+        <span class="n">validated_creds</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">SharepointCredentials</span><span class="p">(</span><span class="o">**</span><span class="n">credentials</span><span class="p">))</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="n">credentials</span><span class="o">=</span><span class="n">validated_creds</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">get_connection</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">sharepy</span><span class="o">.</span><span class="n">session</span><span class="o">.</span><span class="n">SharePointSession</span><span class="p">:</span>
+    <span class="k">def</span> <span class="nf">get_client</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">GraphClient</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Establishe a connection to SharePoint.</span>
 
 <span class="sd">        Returns:</span>
-<span class="sd">            sharepy.session.SharePointSession: A session object representing</span>
+<span class="sd">            GraphClient: A session object representing</span>
 <span class="sd">                the authenticated connection.</span>
 
 <span class="sd">        Raises:</span>
@@ -22574,16 +22598,12 @@ Defaults to False.</p>
 <span class="sd">                credentials.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">try</span><span class="p">:</span>
-            <span class="n">connection</span> <span class="o">=</span> <span class="n">sharepy</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span>
-                <span class="n">site</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">credentials</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;site&quot;</span><span class="p">),</span>
-                <span class="n">username</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">credentials</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;username&quot;</span><span class="p">),</span>
-                <span class="n">password</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">credentials</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;password&quot;</span><span class="p">),</span>
-            <span class="p">)</span>
-        <span class="k">except</span> <span class="n">AuthError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="n">client</span> <span class="o">=</span> <span class="n">GraphClient</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_acquire_token_func</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
             <span class="n">site</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">credentials</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;site&quot;</span><span class="p">)</span>
             <span class="n">msg</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;Could not authenticate to </span><span class="si">{</span><span class="n">site</span><span class="si">}</span><span class="s2"> with provided credentials.&quot;</span>
             <span class="k">raise</span> <span class="n">CredentialError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span> <span class="kn">from</span> <span class="nn">e</span>
-        <span class="k">return</span> <span class="n">connection</span>
+        <span class="k">return</span> <span class="n">client</span>
 
     <span class="k">def</span> <span class="nf">download_file</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">url</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">to_path</span><span class="p">:</span> <span class="nb">list</span> <span class="o">|</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Download a file from Sharepoint to specific location.</span>
@@ -22598,12 +22618,10 @@ Defaults to False.</p>
 <span class="sd">                to_path=&quot;file.xlsx&quot;</span>
 <span class="sd">            )</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">conn</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_connection</span><span class="p">()</span>
-        <span class="n">conn</span><span class="o">.</span><span class="n">getfile</span><span class="p">(</span>
-            <span class="n">url</span><span class="o">=</span><span class="n">url</span><span class="p">,</span>
-            <span class="n">filename</span><span class="o">=</span><span class="n">to_path</span><span class="p">,</span>
-        <span class="p">)</span>
-        <span class="n">conn</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+        <span class="n">client</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_client</span><span class="p">()</span>
+        <span class="n">file_item</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">shares</span><span class="o">.</span><span class="n">by_url</span><span class="p">(</span><span class="n">url</span><span class="p">)</span><span class="o">.</span><span class="n">drive_item</span><span class="o">.</span><span class="n">get</span><span class="p">()</span><span class="o">.</span><span class="n">execute_query</span><span class="p">()</span>
+        <span class="k">with</span> <span class="n">Path</span><span class="p">(</span><span class="n">to_path</span><span class="p">)</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="s2">&quot;wb&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">local_file</span><span class="p">:</span>
+            <span class="n">file_item</span><span class="o">.</span><span class="n">download</span><span class="p">(</span><span class="n">local_file</span><span class="p">)</span><span class="o">.</span><span class="n">execute_query</span><span class="p">()</span>
 
     <span class="k">def</span> <span class="nf">scan_sharepoint_folder</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">url</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Scan Sharepoint folder to get all file URLs of all files within it.</span>
@@ -22619,7 +22637,7 @@ Defaults to False.</p>
 <span class="sd">            list[str]: List of URLs pointing to each file within the specified</span>
 <span class="sd">                SharePoint folder.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">conn</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_connection</span><span class="p">()</span>
+        <span class="n">client</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_client</span><span class="p">()</span>
 
         <span class="n">parsed_url</span> <span class="o">=</span> <span class="n">urlparse</span><span class="p">(</span><span class="n">url</span><span class="p">)</span>
         <span class="n">path_parts</span> <span class="o">=</span> <span class="n">parsed_url</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;/&quot;</span><span class="p">)</span>
@@ -22633,15 +22651,38 @@ Defaults to False.</p>
             <span class="n">message</span> <span class="o">=</span> <span class="s2">&quot;URL does not contain &#39;/sites/&#39; segment.&quot;</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">message</span><span class="p">)</span>
 
-        <span class="c1"># -&gt; site_url = company.sharepoint.com/sites/site_name/</span>
-        <span class="c1"># -&gt; library = /shared_documents/folder/sub_folder/final_folder</span>
-        <span class="n">endpoint</span> <span class="o">=</span> <span class="p">(</span>
-            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">site_url</span><span class="si">}</span><span class="s2">/_api/web/GetFolderByServerRelativeUrl(&#39;</span><span class="si">{</span><span class="n">library</span><span class="si">}</span><span class="s2">&#39;)/Files&quot;</span>
-        <span class="p">)</span>
-        <span class="n">response</span> <span class="o">=</span> <span class="n">conn</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">endpoint</span><span class="p">)</span>
-        <span class="n">files</span> <span class="o">=</span> <span class="n">response</span><span class="o">.</span><span class="n">json</span><span class="p">()</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;d&quot;</span><span class="p">,</span> <span class="p">{})</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;results&quot;</span><span class="p">,</span> <span class="p">[])</span>
+        <span class="n">folder_item</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">shares</span><span class="o">.</span><span class="n">by_url</span><span class="p">(</span><span class="n">url</span><span class="p">)</span><span class="o">.</span><span class="n">drive_item</span><span class="o">.</span><span class="n">get</span><span class="p">()</span><span class="o">.</span><span class="n">execute_query</span><span class="p">()</span>
+        <span class="n">files</span> <span class="o">=</span> <span class="n">folder_item</span><span class="o">.</span><span class="n">children</span><span class="o">.</span><span class="n">get</span><span class="p">()</span><span class="o">.</span><span class="n">execute_query</span><span class="p">()</span>
 
-        <span class="k">return</span> <span class="p">[</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">site_url</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">library</span><span class="si">}{</span><span class="n">file</span><span class="p">[</span><span class="s1">&#39;Name&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span> <span class="k">for</span> <span class="n">file</span> <span class="ow">in</span> <span class="n">files</span><span class="p">]</span>
+        <span class="k">return</span> <span class="p">[</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">site_url</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">library</span><span class="si">}{</span><span class="n">file</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">&quot;</span> <span class="k">for</span> <span class="n">file</span> <span class="ow">in</span> <span class="n">files</span><span class="p">]</span>
+
+    <span class="k">def</span> <span class="nf">_acquire_token_func</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Acquire token via MSAL.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            str: A string containing the access token.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">authority_url</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="sa">f</span><span class="s1">&#39;https://login.microsoftonline.com/</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">credentials</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;tenant_id&quot;</span><span class="p">)</span><span class="si">}</span><span class="s1">&#39;</span>
+        <span class="p">)</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">credentials</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;client_secret&quot;</span><span class="p">):</span>
+            <span class="n">client_credential</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">credentials</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;client_secret&quot;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">client_credential</span> <span class="o">=</span> <span class="p">{</span>
+                <span class="s2">&quot;private_key_pfx_path&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">credentials</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;certificate_path&quot;</span><span class="p">),</span>
+                <span class="s2">&quot;passphrase&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">credentials</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;certificate_password&quot;</span><span class="p">),</span>
+            <span class="p">}</span>
+
+        <span class="n">app</span> <span class="o">=</span> <span class="n">msal</span><span class="o">.</span><span class="n">ConfidentialClientApplication</span><span class="p">(</span>
+            <span class="n">authority</span><span class="o">=</span><span class="n">authority_url</span><span class="p">,</span>
+            <span class="n">client_id</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">credentials</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;client_id&quot;</span><span class="p">),</span>
+            <span class="n">client_credential</span><span class="o">=</span><span class="n">client_credential</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">app</span><span class="o">.</span><span class="n">acquire_token_for_client</span><span class="p">(</span>
+            <span class="n">scopes</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;https://graph.microsoft.com/.default&quot;</span><span class="p">]</span>
+        <span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">_get_file_extension</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">url</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Extracts the file extension from a given URL.</span>
@@ -22666,31 +22707,28 @@ Defaults to False.</p>
 
 <span class="sd">        Returns:</span>
 <span class="sd">            io.BytesIO: An in-memory byte stream containing the file content.</span>
+
+<span class="sd">        Raises:</span>
+<span class="sd">            ValueError: If the parameter &#39;nrows&#39; is not supported.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="s2">&quot;nrows&quot;</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="p">:</span>
             <span class="n">msg</span> <span class="o">=</span> <span class="s2">&quot;Parameter &#39;nrows&#39; is not supported.&quot;</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
 
-        <span class="n">conn</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_connection</span><span class="p">()</span>
+        <span class="n">client</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_client</span><span class="p">()</span>
 
-        <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Downloading data from </span><span class="si">{</span><span class="n">url</span><span class="si">}</span><span class="s2">...&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Downloading data from </span><span class="si">{</span><span class="n">url</span><span class="si">}</span><span class="s2"> ...&quot;</span><span class="p">)</span>
         <span class="k">try</span><span class="p">:</span>
-            <span class="n">response</span> <span class="o">=</span> <span class="n">conn</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">url</span><span class="p">)</span>
-            <span class="n">response</span><span class="o">.</span><span class="n">raise_for_status</span><span class="p">()</span>  <span class="c1"># Raise an exception for HTTP errors</span>
-        <span class="k">except</span> <span class="n">requests</span><span class="o">.</span><span class="n">exceptions</span><span class="o">.</span><span class="n">HTTPError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-            <span class="k">if</span> <span class="n">e</span><span class="o">.</span><span class="n">response</span><span class="o">.</span><span class="n">status_code</span> <span class="o">==</span> <span class="n">HTTPStatus</span><span class="o">.</span><span class="n">FORBIDDEN</span><span class="p">:</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">exception</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Access denied to file: </span><span class="si">{</span><span class="n">url</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-            <span class="k">else</span><span class="p">:</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">exception</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;HTTP error when accessing </span><span class="si">{</span><span class="n">url</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-            <span class="k">raise</span>
+            <span class="n">bytes_buffer</span> <span class="o">=</span> <span class="n">io</span><span class="o">.</span><span class="n">BytesIO</span><span class="p">()</span>
+            <span class="n">file_item</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">shares</span><span class="o">.</span><span class="n">by_url</span><span class="p">(</span><span class="n">url</span><span class="p">)</span><span class="o">.</span><span class="n">drive_item</span><span class="o">.</span><span class="n">get</span><span class="p">()</span><span class="o">.</span><span class="n">execute_query</span><span class="p">()</span>
+            <span class="n">file_item</span><span class="o">.</span><span class="n">download</span><span class="p">(</span><span class="n">bytes_buffer</span><span class="p">)</span><span class="o">.</span><span class="n">execute_query</span><span class="p">()</span>
+            <span class="n">bytes_buffer</span><span class="o">.</span><span class="n">seek</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
         <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">exception</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Failed to download file: </span><span class="si">{</span><span class="n">url</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
             <span class="k">raise</span>
 
-        <span class="n">bytes_stream</span> <span class="o">=</span> <span class="n">io</span><span class="o">.</span><span class="n">BytesIO</span><span class="p">(</span><span class="n">response</span><span class="o">.</span><span class="n">content</span><span class="p">)</span>
-
         <span class="k">try</span><span class="p">:</span>
-            <span class="k">return</span> <span class="n">pd</span><span class="o">.</span><span class="n">ExcelFile</span><span class="p">(</span><span class="n">bytes_stream</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">pd</span><span class="o">.</span><span class="n">ExcelFile</span><span class="p">(</span><span class="n">bytes_buffer</span><span class="o">.</span><span class="n">getvalue</span><span class="p">())</span>
         <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">exception</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Invalid Excel file: </span><span class="si">{</span><span class="n">url</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
             <span class="k">raise</span>
@@ -22784,11 +22822,13 @@ Defaults to False.</p>
 <span class="sd">            ValueError: If the file extension is not supported.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">file_extension</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_file_extension</span><span class="p">(</span><span class="n">file_url</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">file_extension</span> <span class="o">!=</span> <span class="s2">&quot;.xlsx&quot;</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">file_extension</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;.xlsx&quot;</span><span class="p">,</span> <span class="s2">&quot;.xlsm&quot;</span><span class="p">,</span> <span class="s2">&quot;.xls&quot;</span><span class="p">]:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span>
                 <span class="sa">f</span><span class="s2">&quot;Unsupported file extension: </span><span class="si">{</span><span class="n">file_extension</span><span class="si">}</span><span class="s2"> for file: </span><span class="si">{</span><span class="n">file_url</span><span class="si">}</span><span class="s2">&quot;</span>
             <span class="p">)</span>
-            <span class="n">msg</span> <span class="o">=</span> <span class="s2">&quot;Only Excel (.xlsx) files are supported.&quot;</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="s2">&quot;Only Excel (.xlsx, .xlsm, .xls) files can be loaded into a DataFrame.&quot;</span>
+            <span class="p">)</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
         <span class="n">file_stream</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_download_file_stream</span><span class="p">(</span><span class="n">file_url</span><span class="p">)</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_parse_excel</span><span class="p">(</span><span class="n">file_stream</span><span class="p">,</span> <span class="n">sheet_name</span><span class="p">,</span> <span class="n">na_values</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
@@ -22914,6 +22954,8 @@ Defaults to False.</p>
             <span class="k">except</span> <span class="n">SKIP</span><span class="p">:</span>
                 <span class="k">return</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">()</span>
         <span class="k">else</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">sheet_name</span><span class="p">:</span>
+                <span class="n">df</span><span class="p">[</span><span class="s2">&quot;sheet_name&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">sheet_name</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Successfully downloaded </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">df</span><span class="p">)</span><span class="si">}</span><span class="s2"> rows of data.&quot;</span><span class="p">)</span>
 
         <span class="n">df_clean</span> <span class="o">=</span> <span class="n">cleanup_df</span><span class="p">(</span><span class="n">df</span><span class="p">)</span>
@@ -22957,23 +22999,26 @@ config_key (str, optional): The key in the viadot config holding relevant
 
             <details class="quote">
               <summary>Source code in <code>src/viadot/sources/sharepoint.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">49</span>
-<span class="normal">50</span>
-<span class="normal">51</span>
-<span class="normal">52</span>
-<span class="normal">53</span>
-<span class="normal">54</span>
-<span class="normal">55</span>
-<span class="normal">56</span>
-<span class="normal">57</span>
-<span class="normal">58</span>
-<span class="normal">59</span>
-<span class="normal">60</span>
-<span class="normal">61</span>
-<span class="normal">62</span>
-<span class="normal">63</span>
-<span class="normal">64</span>
-<span class="normal">65</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">108</span>
+<span class="normal">109</span>
+<span class="normal">110</span>
+<span class="normal">111</span>
+<span class="normal">112</span>
+<span class="normal">113</span>
+<span class="normal">114</span>
+<span class="normal">115</span>
+<span class="normal">116</span>
+<span class="normal">117</span>
+<span class="normal">118</span>
+<span class="normal">119</span>
+<span class="normal">120</span>
+<span class="normal">121</span>
+<span class="normal">122</span>
+<span class="normal">123</span>
+<span class="normal">124</span>
+<span class="normal">125</span>
+<span class="normal">126</span>
+<span class="normal">127</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
     <span class="bp">self</span><span class="p">,</span>
     <span class="n">credentials</span><span class="p">:</span> <span class="n">SharepointCredentials</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">config_key</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
@@ -22987,8 +23032,11 @@ config_key (str, optional): The key in the viadot config holding relevant
 <span class="sd">    config_key (str, optional): The key in the viadot config holding relevant</span>
 <span class="sd">        credentials.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">raw_creds</span> <span class="o">=</span> <span class="n">credentials</span> <span class="ow">or</span> <span class="n">get_source_credentials</span><span class="p">(</span><span class="n">config_key</span><span class="p">)</span> <span class="ow">or</span> <span class="p">{}</span>
-    <span class="n">validated_creds</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">SharepointCredentials</span><span class="p">(</span><span class="o">**</span><span class="n">raw_creds</span><span class="p">))</span>
+    <span class="n">credentials</span> <span class="o">=</span> <span class="n">credentials</span> <span class="ow">or</span> <span class="n">get_source_credentials</span><span class="p">(</span><span class="n">config_key</span><span class="p">)</span> <span class="ow">or</span> <span class="p">{}</span>
+    <span class="k">if</span> <span class="n">credentials</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;certificate&quot;</span><span class="p">):</span>
+        <span class="n">SharepointCredentials</span><span class="o">.</span><span class="n">prepare_certificate_file</span><span class="p">(</span><span class="n">credentials</span><span class="p">)</span>
+
+    <span class="n">validated_creds</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">SharepointCredentials</span><span class="p">(</span><span class="o">**</span><span class="n">credentials</span><span class="p">))</span>
     <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="n">credentials</span><span class="o">=</span><span class="n">validated_creds</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 </code></pre></div></td></tr></table></div>
             </details>
@@ -23067,25 +23115,23 @@ config_key (str, optional): The key in the viadot config holding relevant
 
             <details class="quote">
               <summary>Source code in <code>src/viadot/sources/sharepoint.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 90</span>
-<span class="normal"> 91</span>
-<span class="normal"> 92</span>
-<span class="normal"> 93</span>
-<span class="normal"> 94</span>
-<span class="normal"> 95</span>
-<span class="normal"> 96</span>
-<span class="normal"> 97</span>
-<span class="normal"> 98</span>
-<span class="normal"> 99</span>
-<span class="normal">100</span>
-<span class="normal">101</span>
-<span class="normal">102</span>
-<span class="normal">103</span>
-<span class="normal">104</span>
-<span class="normal">105</span>
-<span class="normal">106</span>
-<span class="normal">107</span>
-<span class="normal">108</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">download_file</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">url</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">to_path</span><span class="p">:</span> <span class="nb">list</span> <span class="o">|</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">148</span>
+<span class="normal">149</span>
+<span class="normal">150</span>
+<span class="normal">151</span>
+<span class="normal">152</span>
+<span class="normal">153</span>
+<span class="normal">154</span>
+<span class="normal">155</span>
+<span class="normal">156</span>
+<span class="normal">157</span>
+<span class="normal">158</span>
+<span class="normal">159</span>
+<span class="normal">160</span>
+<span class="normal">161</span>
+<span class="normal">162</span>
+<span class="normal">163</span>
+<span class="normal">164</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">download_file</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">url</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">to_path</span><span class="p">:</span> <span class="nb">list</span> <span class="o">|</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Download a file from Sharepoint to specific location.</span>
 
 <span class="sd">    Args:</span>
@@ -23098,12 +23144,10 @@ config_key (str, optional): The key in the viadot config holding relevant
 <span class="sd">            to_path=&quot;file.xlsx&quot;</span>
 <span class="sd">        )</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">conn</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_connection</span><span class="p">()</span>
-    <span class="n">conn</span><span class="o">.</span><span class="n">getfile</span><span class="p">(</span>
-        <span class="n">url</span><span class="o">=</span><span class="n">url</span><span class="p">,</span>
-        <span class="n">filename</span><span class="o">=</span><span class="n">to_path</span><span class="p">,</span>
-    <span class="p">)</span>
-    <span class="n">conn</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+    <span class="n">client</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_client</span><span class="p">()</span>
+    <span class="n">file_item</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">shares</span><span class="o">.</span><span class="n">by_url</span><span class="p">(</span><span class="n">url</span><span class="p">)</span><span class="o">.</span><span class="n">drive_item</span><span class="o">.</span><span class="n">get</span><span class="p">()</span><span class="o">.</span><span class="n">execute_query</span><span class="p">()</span>
+    <span class="k">with</span> <span class="n">Path</span><span class="p">(</span><span class="n">to_path</span><span class="p">)</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="s2">&quot;wb&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">local_file</span><span class="p">:</span>
+        <span class="n">file_item</span><span class="o">.</span><span class="n">download</span><span class="p">(</span><span class="n">local_file</span><span class="p">)</span><span class="o">.</span><span class="n">execute_query</span><span class="p">()</span>
 </code></pre></div></td></tr></table></div>
             </details>
     </div>
@@ -23113,8 +23157,8 @@ config_key (str, optional): The key in the viadot config holding relevant
 <div class="doc doc-object doc-function">
 
 
-<h3 id="viadot.sources.sharepoint.Sharepoint.get_connection" class="doc doc-heading">
-            <code class="highlight language-python"><span class="n">get_connection</span><span class="p">()</span></code>
+<h3 id="viadot.sources.sharepoint.Sharepoint.get_client" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">get_client</span><span class="p">()</span></code>
 
 </h3>
 
@@ -23128,18 +23172,18 @@ config_key (str, optional): The key in the viadot config holding relevant
     <table>
       <thead>
         <tr>
-          <th>Type</th>
+<th>Name</th>          <th>Type</th>
           <th>Description</th>
         </tr>
       </thead>
       <tbody>
           <tr class="doc-section-item">
-            <td>
-                  <code><span title="sharepy.session.SharePointSession">SharePointSession</span></code>
+<td><code>GraphClient</code></td>            <td>
+                  <code><span title="office365.graph_client.GraphClient">GraphClient</span></code>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>sharepy.session.SharePointSession: A session object representing
+                <p>A session object representing
 the authenticated connection.</p>
               </div>
             </td>
@@ -23174,32 +23218,28 @@ credentials.</p>
 
             <details class="quote">
               <summary>Source code in <code>src/viadot/sources/sharepoint.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">67</span>
-<span class="normal">68</span>
-<span class="normal">69</span>
-<span class="normal">70</span>
-<span class="normal">71</span>
-<span class="normal">72</span>
-<span class="normal">73</span>
-<span class="normal">74</span>
-<span class="normal">75</span>
-<span class="normal">76</span>
-<span class="normal">77</span>
-<span class="normal">78</span>
-<span class="normal">79</span>
-<span class="normal">80</span>
-<span class="normal">81</span>
-<span class="normal">82</span>
-<span class="normal">83</span>
-<span class="normal">84</span>
-<span class="normal">85</span>
-<span class="normal">86</span>
-<span class="normal">87</span>
-<span class="normal">88</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">get_connection</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">sharepy</span><span class="o">.</span><span class="n">session</span><span class="o">.</span><span class="n">SharePointSession</span><span class="p">:</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">129</span>
+<span class="normal">130</span>
+<span class="normal">131</span>
+<span class="normal">132</span>
+<span class="normal">133</span>
+<span class="normal">134</span>
+<span class="normal">135</span>
+<span class="normal">136</span>
+<span class="normal">137</span>
+<span class="normal">138</span>
+<span class="normal">139</span>
+<span class="normal">140</span>
+<span class="normal">141</span>
+<span class="normal">142</span>
+<span class="normal">143</span>
+<span class="normal">144</span>
+<span class="normal">145</span>
+<span class="normal">146</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">get_client</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">GraphClient</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Establishe a connection to SharePoint.</span>
 
 <span class="sd">    Returns:</span>
-<span class="sd">        sharepy.session.SharePointSession: A session object representing</span>
+<span class="sd">        GraphClient: A session object representing</span>
 <span class="sd">            the authenticated connection.</span>
 
 <span class="sd">    Raises:</span>
@@ -23207,16 +23247,12 @@ credentials.</p>
 <span class="sd">            credentials.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">try</span><span class="p">:</span>
-        <span class="n">connection</span> <span class="o">=</span> <span class="n">sharepy</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span>
-            <span class="n">site</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">credentials</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;site&quot;</span><span class="p">),</span>
-            <span class="n">username</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">credentials</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;username&quot;</span><span class="p">),</span>
-            <span class="n">password</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">credentials</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;password&quot;</span><span class="p">),</span>
-        <span class="p">)</span>
-    <span class="k">except</span> <span class="n">AuthError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+        <span class="n">client</span> <span class="o">=</span> <span class="n">GraphClient</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_acquire_token_func</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
         <span class="n">site</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">credentials</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;site&quot;</span><span class="p">)</span>
         <span class="n">msg</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;Could not authenticate to </span><span class="si">{</span><span class="n">site</span><span class="si">}</span><span class="s2"> with provided credentials.&quot;</span>
         <span class="k">raise</span> <span class="n">CredentialError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span> <span class="kn">from</span> <span class="nn">e</span>
-    <span class="k">return</span> <span class="n">connection</span>
+    <span class="k">return</span> <span class="n">client</span>
 </code></pre></div></td></tr></table></div>
             </details>
     </div>
@@ -23318,43 +23354,38 @@ SharePoint folder.</p>
 
             <details class="quote">
               <summary>Source code in <code>src/viadot/sources/sharepoint.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">110</span>
-<span class="normal">111</span>
-<span class="normal">112</span>
-<span class="normal">113</span>
-<span class="normal">114</span>
-<span class="normal">115</span>
-<span class="normal">116</span>
-<span class="normal">117</span>
-<span class="normal">118</span>
-<span class="normal">119</span>
-<span class="normal">120</span>
-<span class="normal">121</span>
-<span class="normal">122</span>
-<span class="normal">123</span>
-<span class="normal">124</span>
-<span class="normal">125</span>
-<span class="normal">126</span>
-<span class="normal">127</span>
-<span class="normal">128</span>
-<span class="normal">129</span>
-<span class="normal">130</span>
-<span class="normal">131</span>
-<span class="normal">132</span>
-<span class="normal">133</span>
-<span class="normal">134</span>
-<span class="normal">135</span>
-<span class="normal">136</span>
-<span class="normal">137</span>
-<span class="normal">138</span>
-<span class="normal">139</span>
-<span class="normal">140</span>
-<span class="normal">141</span>
-<span class="normal">142</span>
-<span class="normal">143</span>
-<span class="normal">144</span>
-<span class="normal">145</span>
-<span class="normal">146</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">scan_sharepoint_folder</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">url</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">166</span>
+<span class="normal">167</span>
+<span class="normal">168</span>
+<span class="normal">169</span>
+<span class="normal">170</span>
+<span class="normal">171</span>
+<span class="normal">172</span>
+<span class="normal">173</span>
+<span class="normal">174</span>
+<span class="normal">175</span>
+<span class="normal">176</span>
+<span class="normal">177</span>
+<span class="normal">178</span>
+<span class="normal">179</span>
+<span class="normal">180</span>
+<span class="normal">181</span>
+<span class="normal">182</span>
+<span class="normal">183</span>
+<span class="normal">184</span>
+<span class="normal">185</span>
+<span class="normal">186</span>
+<span class="normal">187</span>
+<span class="normal">188</span>
+<span class="normal">189</span>
+<span class="normal">190</span>
+<span class="normal">191</span>
+<span class="normal">192</span>
+<span class="normal">193</span>
+<span class="normal">194</span>
+<span class="normal">195</span>
+<span class="normal">196</span>
+<span class="normal">197</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">scan_sharepoint_folder</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">url</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Scan Sharepoint folder to get all file URLs of all files within it.</span>
 
 <span class="sd">    Args:</span>
@@ -23368,7 +23399,7 @@ SharePoint folder.</p>
 <span class="sd">        list[str]: List of URLs pointing to each file within the specified</span>
 <span class="sd">            SharePoint folder.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">conn</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_connection</span><span class="p">()</span>
+    <span class="n">client</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_client</span><span class="p">()</span>
 
     <span class="n">parsed_url</span> <span class="o">=</span> <span class="n">urlparse</span><span class="p">(</span><span class="n">url</span><span class="p">)</span>
     <span class="n">path_parts</span> <span class="o">=</span> <span class="n">parsed_url</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;/&quot;</span><span class="p">)</span>
@@ -23382,15 +23413,10 @@ SharePoint folder.</p>
         <span class="n">message</span> <span class="o">=</span> <span class="s2">&quot;URL does not contain &#39;/sites/&#39; segment.&quot;</span>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">message</span><span class="p">)</span>
 
-    <span class="c1"># -&gt; site_url = company.sharepoint.com/sites/site_name/</span>
-    <span class="c1"># -&gt; library = /shared_documents/folder/sub_folder/final_folder</span>
-    <span class="n">endpoint</span> <span class="o">=</span> <span class="p">(</span>
-        <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">site_url</span><span class="si">}</span><span class="s2">/_api/web/GetFolderByServerRelativeUrl(&#39;</span><span class="si">{</span><span class="n">library</span><span class="si">}</span><span class="s2">&#39;)/Files&quot;</span>
-    <span class="p">)</span>
-    <span class="n">response</span> <span class="o">=</span> <span class="n">conn</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">endpoint</span><span class="p">)</span>
-    <span class="n">files</span> <span class="o">=</span> <span class="n">response</span><span class="o">.</span><span class="n">json</span><span class="p">()</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;d&quot;</span><span class="p">,</span> <span class="p">{})</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;results&quot;</span><span class="p">,</span> <span class="p">[])</span>
+    <span class="n">folder_item</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">shares</span><span class="o">.</span><span class="n">by_url</span><span class="p">(</span><span class="n">url</span><span class="p">)</span><span class="o">.</span><span class="n">drive_item</span><span class="o">.</span><span class="n">get</span><span class="p">()</span><span class="o">.</span><span class="n">execute_query</span><span class="p">()</span>
+    <span class="n">files</span> <span class="o">=</span> <span class="n">folder_item</span><span class="o">.</span><span class="n">children</span><span class="o">.</span><span class="n">get</span><span class="p">()</span><span class="o">.</span><span class="n">execute_query</span><span class="p">()</span>
 
-    <span class="k">return</span> <span class="p">[</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">site_url</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">library</span><span class="si">}{</span><span class="n">file</span><span class="p">[</span><span class="s1">&#39;Name&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span> <span class="k">for</span> <span class="n">file</span> <span class="ow">in</span> <span class="n">files</span><span class="p">]</span>
+    <span class="k">return</span> <span class="p">[</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">site_url</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">library</span><span class="si">}{</span><span class="n">file</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">&quot;</span> <span class="k">for</span> <span class="n">file</span> <span class="ow">in</span> <span class="n">files</span><span class="p">]</span>
 </code></pre></div></td></tr></table></div>
             </details>
     </div>
@@ -23616,85 +23642,7 @@ to "fail" and the DataFrame is empty.</p>
 
             <details class="quote">
               <summary>Source code in <code>src/viadot/sources/sharepoint.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">330</span>
-<span class="normal">331</span>
-<span class="normal">332</span>
-<span class="normal">333</span>
-<span class="normal">334</span>
-<span class="normal">335</span>
-<span class="normal">336</span>
-<span class="normal">337</span>
-<span class="normal">338</span>
-<span class="normal">339</span>
-<span class="normal">340</span>
-<span class="normal">341</span>
-<span class="normal">342</span>
-<span class="normal">343</span>
-<span class="normal">344</span>
-<span class="normal">345</span>
-<span class="normal">346</span>
-<span class="normal">347</span>
-<span class="normal">348</span>
-<span class="normal">349</span>
-<span class="normal">350</span>
-<span class="normal">351</span>
-<span class="normal">352</span>
-<span class="normal">353</span>
-<span class="normal">354</span>
-<span class="normal">355</span>
-<span class="normal">356</span>
-<span class="normal">357</span>
-<span class="normal">358</span>
-<span class="normal">359</span>
-<span class="normal">360</span>
-<span class="normal">361</span>
-<span class="normal">362</span>
-<span class="normal">363</span>
-<span class="normal">364</span>
-<span class="normal">365</span>
-<span class="normal">366</span>
-<span class="normal">367</span>
-<span class="normal">368</span>
-<span class="normal">369</span>
-<span class="normal">370</span>
-<span class="normal">371</span>
-<span class="normal">372</span>
-<span class="normal">373</span>
-<span class="normal">374</span>
-<span class="normal">375</span>
-<span class="normal">376</span>
-<span class="normal">377</span>
-<span class="normal">378</span>
-<span class="normal">379</span>
-<span class="normal">380</span>
-<span class="normal">381</span>
-<span class="normal">382</span>
-<span class="normal">383</span>
-<span class="normal">384</span>
-<span class="normal">385</span>
-<span class="normal">386</span>
-<span class="normal">387</span>
-<span class="normal">388</span>
-<span class="normal">389</span>
-<span class="normal">390</span>
-<span class="normal">391</span>
-<span class="normal">392</span>
-<span class="normal">393</span>
-<span class="normal">394</span>
-<span class="normal">395</span>
-<span class="normal">396</span>
-<span class="normal">397</span>
-<span class="normal">398</span>
-<span class="normal">399</span>
-<span class="normal">400</span>
-<span class="normal">401</span>
-<span class="normal">402</span>
-<span class="normal">403</span>
-<span class="normal">404</span>
-<span class="normal">405</span>
-<span class="normal">406</span>
-<span class="normal">407</span>
-<span class="normal">408</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">408</span>
 <span class="normal">409</span>
 <span class="normal">410</span>
 <span class="normal">411</span>
@@ -23712,7 +23660,87 @@ to "fail" and the DataFrame is empty.</p>
 <span class="normal">423</span>
 <span class="normal">424</span>
 <span class="normal">425</span>
-<span class="normal">426</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@add_viadot_metadata_columns</span>
+<span class="normal">426</span>
+<span class="normal">427</span>
+<span class="normal">428</span>
+<span class="normal">429</span>
+<span class="normal">430</span>
+<span class="normal">431</span>
+<span class="normal">432</span>
+<span class="normal">433</span>
+<span class="normal">434</span>
+<span class="normal">435</span>
+<span class="normal">436</span>
+<span class="normal">437</span>
+<span class="normal">438</span>
+<span class="normal">439</span>
+<span class="normal">440</span>
+<span class="normal">441</span>
+<span class="normal">442</span>
+<span class="normal">443</span>
+<span class="normal">444</span>
+<span class="normal">445</span>
+<span class="normal">446</span>
+<span class="normal">447</span>
+<span class="normal">448</span>
+<span class="normal">449</span>
+<span class="normal">450</span>
+<span class="normal">451</span>
+<span class="normal">452</span>
+<span class="normal">453</span>
+<span class="normal">454</span>
+<span class="normal">455</span>
+<span class="normal">456</span>
+<span class="normal">457</span>
+<span class="normal">458</span>
+<span class="normal">459</span>
+<span class="normal">460</span>
+<span class="normal">461</span>
+<span class="normal">462</span>
+<span class="normal">463</span>
+<span class="normal">464</span>
+<span class="normal">465</span>
+<span class="normal">466</span>
+<span class="normal">467</span>
+<span class="normal">468</span>
+<span class="normal">469</span>
+<span class="normal">470</span>
+<span class="normal">471</span>
+<span class="normal">472</span>
+<span class="normal">473</span>
+<span class="normal">474</span>
+<span class="normal">475</span>
+<span class="normal">476</span>
+<span class="normal">477</span>
+<span class="normal">478</span>
+<span class="normal">479</span>
+<span class="normal">480</span>
+<span class="normal">481</span>
+<span class="normal">482</span>
+<span class="normal">483</span>
+<span class="normal">484</span>
+<span class="normal">485</span>
+<span class="normal">486</span>
+<span class="normal">487</span>
+<span class="normal">488</span>
+<span class="normal">489</span>
+<span class="normal">490</span>
+<span class="normal">491</span>
+<span class="normal">492</span>
+<span class="normal">493</span>
+<span class="normal">494</span>
+<span class="normal">495</span>
+<span class="normal">496</span>
+<span class="normal">497</span>
+<span class="normal">498</span>
+<span class="normal">499</span>
+<span class="normal">500</span>
+<span class="normal">501</span>
+<span class="normal">502</span>
+<span class="normal">503</span>
+<span class="normal">504</span>
+<span class="normal">505</span>
+<span class="normal">506</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@add_viadot_metadata_columns</span>
 <span class="k">def</span> <span class="nf">to_df</span><span class="p">(</span>
     <span class="bp">self</span><span class="p">,</span>
     <span class="n">url</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
@@ -23801,6 +23829,8 @@ to "fail" and the DataFrame is empty.</p>
         <span class="k">except</span> <span class="n">SKIP</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">()</span>
     <span class="k">else</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">sheet_name</span><span class="p">:</span>
+            <span class="n">df</span><span class="p">[</span><span class="s2">&quot;sheet_name&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">sheet_name</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Successfully downloaded </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">df</span><span class="p">)</span><span class="si">}</span><span class="s2"> rows of data.&quot;</span><span class="p">)</span>
 
     <span class="n">df_clean</span> <span class="o">=</span> <span class="n">cleanup_df</span><span class="p">(</span><span class="n">df</span><span class="p">)</span>
@@ -27759,7 +27789,7 @@ produce no data. Defaults to "warn</p>
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    2025-06-09
+    2025-11-26
   </span>
 
     

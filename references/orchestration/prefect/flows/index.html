@@ -1659,30 +1659,6 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#viadot.orchestration.prefect.flows.sharepoint_to_databricks" class="md-nav__link">
-    <span class="md-ellipsis">
-      sharepoint_to_databricks
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="sharepoint_to_databricks">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#viadot.orchestration.prefect.flows.sharepoint_to_databricks.sharepoint_to_databricks" class="md-nav__link">
-    <span class="md-ellipsis">
-      sharepoint_to_databricks
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
   <a href="#viadot.orchestration.prefect.flows.sharepoint_to_redshift_spectrum" class="md-nav__link">
     <span class="md-ellipsis">
       sharepoint_to_redshift_spectrum
@@ -7269,7 +7245,7 @@ relevant credentials. Defaults to None.</p>
 
 
 <h2 id="viadot.orchestration.prefect.flows.exchange_rates_api_to_redshift_spectrum" class="doc doc-heading">
-            <code class="highlight language-python"><span class="n">viadot</span><span class="o">.</span><span class="n">orchestration</span><span class="o">.</span><span class="n">prefect</span><span class="o">.</span><span class="n">flows</span><span class="o">.</span><span class="n">exchange_rates_api_to_redshift_spectrum</span><span class="p">(</span><span class="n">to_path</span><span class="p">,</span> <span class="n">schema_name</span><span class="p">,</span> <span class="n">table</span><span class="p">,</span> <span class="n">currency</span><span class="o">=</span><span class="s1">&#39;USD&#39;</span><span class="p">,</span> <span class="n">start_date</span><span class="o">=</span><span class="n">datetime</span><span class="o">.</span><span class="n">today</span><span class="p">()</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s1">&#39;%Y-%m-</span><span class="si">%d</span><span class="s1">&#39;</span><span class="p">),</span> <span class="n">end_date</span><span class="o">=</span><span class="n">datetime</span><span class="o">.</span><span class="n">today</span><span class="p">()</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s1">&#39;%Y-%m-</span><span class="si">%d</span><span class="s1">&#39;</span><span class="p">),</span> <span class="n">symbols</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">if_exists</span><span class="o">=</span><span class="s1">&#39;overwrite&#39;</span><span class="p">,</span> <span class="n">partition_cols</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">compression</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">table_description</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">aws_config_key</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">aws_credentials_secret</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">exchange_rates_api_credentials_secret</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">exchange_rates_api_config_key</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
+            <code class="highlight language-python"><span class="n">viadot</span><span class="o">.</span><span class="n">orchestration</span><span class="o">.</span><span class="n">prefect</span><span class="o">.</span><span class="n">flows</span><span class="o">.</span><span class="n">exchange_rates_api_to_redshift_spectrum</span><span class="p">(</span><span class="n">to_path</span><span class="p">,</span> <span class="n">schema_name</span><span class="p">,</span> <span class="n">table</span><span class="p">,</span> <span class="n">currency</span><span class="o">=</span><span class="s1">&#39;USD&#39;</span><span class="p">,</span> <span class="n">start_date</span><span class="o">=</span><span class="n">datetime</span><span class="o">.</span><span class="n">today</span><span class="p">()</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s1">&#39;%Y-%m-</span><span class="si">%d</span><span class="s1">&#39;</span><span class="p">),</span> <span class="n">end_date</span><span class="o">=</span><span class="n">datetime</span><span class="o">.</span><span class="n">today</span><span class="p">()</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s1">&#39;%Y-%m-</span><span class="si">%d</span><span class="s1">&#39;</span><span class="p">),</span> <span class="n">symbols</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">if_exists</span><span class="o">=</span><span class="s1">&#39;overwrite&#39;</span><span class="p">,</span> <span class="n">partition_cols</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">compression</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">aws_config_key</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">aws_credentials_secret</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">exchange_rates_api_credentials_secret</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">exchange_rates_api_config_key</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
 
 </h2>
 
@@ -7478,23 +7454,6 @@ create partitions. Only takes effect if dataset=True. Defaults to None.</p>
           </tr>
           <tr class="doc-section-item">
             <td>
-                <code>table_description</code>
-            </td>
-            <td>
-                  <code><span title="str">str</span></code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>AWS Glue catalog table description. Defaults
-to None.</p>
-              </div>
-            </td>
-            <td>
-                  <code>None</code>
-            </td>
-          </tr>
-          <tr class="doc-section-item">
-            <td>
                 <code>aws_config_key</code>
             </td>
             <td>
@@ -7642,11 +7601,7 @@ holding relevant credentials. Defaults to None.</p>
 <span class="normal">86</span>
 <span class="normal">87</span>
 <span class="normal">88</span>
-<span class="normal">89</span>
-<span class="normal">90</span>
-<span class="normal">91</span>
-<span class="normal">92</span>
-<span class="normal">93</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@flow</span><span class="p">(</span>
+<span class="normal">89</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@flow</span><span class="p">(</span>
     <span class="n">name</span><span class="o">=</span><span class="s2">&quot;extract--exchange-rates-api--redshift_spectrum&quot;</span><span class="p">,</span>
     <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Extract data from Exchange Rates API and load it into AWS Redshift Spectrum.&quot;</span><span class="p">,</span>
     <span class="n">retries</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
@@ -7663,7 +7618,6 @@ holding relevant credentials. Defaults to None.</p>
     <span class="n">if_exists</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;overwrite&quot;</span><span class="p">,</span> <span class="s2">&quot;append&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;overwrite&quot;</span><span class="p">,</span>
     <span class="n">partition_cols</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">compression</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-    <span class="n">table_description</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">aws_config_key</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">aws_credentials_secret</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">exchange_rates_api_credentials_secret</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
@@ -7693,8 +7647,6 @@ holding relevant credentials. Defaults to None.</p>
 <span class="sd">            create partitions. Only takes effect if dataset=True. Defaults to None.</span>
 <span class="sd">        compression (str, optional): Compression style (None, snappy, gzip, zstd).</span>
 <span class="sd">        sep (str, optional): Field delimiter for the output file. Defaults to &#39;,&#39;.</span>
-<span class="sd">        table_description (str, optional): AWS Glue catalog table description. Defaults</span>
-<span class="sd">            to None.</span>
 <span class="sd">        aws_config_key (str, optional): The key in the viadot config holding relevant</span>
 <span class="sd">            credentials. Defaults to None.</span>
 <span class="sd">        aws_credentials_secret (str, optional): The name of a secret block in Prefect</span>
@@ -7721,7 +7673,6 @@ holding relevant credentials. Defaults to None.</p>
         <span class="n">if_exists</span><span class="o">=</span><span class="n">if_exists</span><span class="p">,</span>
         <span class="n">partition_cols</span><span class="o">=</span><span class="n">partition_cols</span><span class="p">,</span>
         <span class="n">compression</span><span class="o">=</span><span class="n">compression</span><span class="p">,</span>
-        <span class="n">description</span><span class="o">=</span><span class="n">table_description</span><span class="p">,</span>
         <span class="n">config_key</span><span class="o">=</span><span class="n">aws_config_key</span><span class="p">,</span>
         <span class="n">credentials_secret</span><span class="o">=</span><span class="n">aws_credentials_secret</span><span class="p">,</span>
     <span class="p">)</span>
@@ -11203,7 +11154,7 @@ Defaults to "-".</p>
 
 
 <h3 id="viadot.orchestration.prefect.flows.sap_to_redshift_spectrum.sap_to_redshift_spectrum" class="doc doc-heading">
-            <code class="highlight language-python"><span class="n">sap_to_redshift_spectrum</span><span class="p">(</span><span class="n">to_path</span><span class="p">,</span> <span class="n">schema_name</span><span class="p">,</span> <span class="n">table</span><span class="p">,</span> <span class="n">tests</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">extension</span><span class="o">=</span><span class="s1">&#39;.parquet&#39;</span><span class="p">,</span> <span class="n">if_exists</span><span class="o">=</span><span class="s1">&#39;overwrite&#39;</span><span class="p">,</span> <span class="n">partition_cols</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">compression</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">aws_sep</span><span class="o">=</span><span class="s1">&#39;,&#39;</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s1">&#39;test&#39;</span><span class="p">,</span> <span class="n">dynamic_date_symbols</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;&lt;&lt;&#39;</span><span class="p">,</span> <span class="s1">&#39;&gt;&gt;&#39;</span><span class="p">],</span> <span class="n">dynamic_date_format</span><span class="o">=</span><span class="s1">&#39;%Y%m</span><span class="si">%d</span><span class="s1">&#39;</span><span class="p">,</span> <span class="n">dynamic_date_timezone</span><span class="o">=</span><span class="s1">&#39;UTC&#39;</span><span class="p">,</span> <span class="n">credentials_secret</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">aws_config_key</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">query</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">sap_sep</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">func</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">rfc_total_col_width_character_limit</span><span class="o">=</span><span class="mi">400</span><span class="p">,</span> <span class="n">rfc_unique_id</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">sap_credentials_secret</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">sap_config_key</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">replacement</span><span class="o">=</span><span class="s1">&#39;-&#39;</span><span class="p">)</span></code>
+            <code class="highlight language-python"><span class="n">sap_to_redshift_spectrum</span><span class="p">(</span><span class="n">to_path</span><span class="p">,</span> <span class="n">schema_name</span><span class="p">,</span> <span class="n">table</span><span class="p">,</span> <span class="n">tests</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">extension</span><span class="o">=</span><span class="s1">&#39;.parquet&#39;</span><span class="p">,</span> <span class="n">if_exists</span><span class="o">=</span><span class="s1">&#39;overwrite&#39;</span><span class="p">,</span> <span class="n">partition_cols</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">compression</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">aws_sep</span><span class="o">=</span><span class="s1">&#39;,&#39;</span><span class="p">,</span> <span class="n">dynamic_date_symbols</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;&lt;&lt;&#39;</span><span class="p">,</span> <span class="s1">&#39;&gt;&gt;&#39;</span><span class="p">],</span> <span class="n">dynamic_date_format</span><span class="o">=</span><span class="s1">&#39;%Y%m</span><span class="si">%d</span><span class="s1">&#39;</span><span class="p">,</span> <span class="n">dynamic_date_timezone</span><span class="o">=</span><span class="s1">&#39;UTC&#39;</span><span class="p">,</span> <span class="n">credentials_secret</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">aws_config_key</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">query</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">func</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">rfc_total_col_width_character_limit</span><span class="o">=</span><span class="mi">400</span><span class="p">,</span> <span class="n">rfc_unique_id</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">sap_credentials_secret</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">sap_config_key</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">sap_sep</span><span class="o">=</span><span class="s1">&#39;♔&#39;</span><span class="p">,</span> <span class="n">replacement</span><span class="o">=</span><span class="s1">&#39;-&#39;</span><span class="p">)</span></code>
 
 </h3>
 
@@ -11409,22 +11360,6 @@ create partitions. Only takes effect if dataset=True. Defaults to None.</p>
           </tr>
           <tr class="doc-section-item">
             <td>
-                <code>description</code>
-            </td>
-            <td>
-                  <code><span title="str">str</span></code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>AWS Glue catalog table description.</p>
-              </div>
-            </td>
-            <td>
-                  <code>&#39;test&#39;</code>
-            </td>
-          </tr>
-          <tr class="doc-section-item">
-            <td>
                 <code>dynamic_date_symbols</code>
             </td>
             <td>
@@ -11518,24 +11453,6 @@ that stores AWS credentials. Defaults to None.</p>
             <td>
               <div class="doc-md-description">
                 <p>The query to be executed with pyRFC.</p>
-              </div>
-            </td>
-            <td>
-                  <code>None</code>
-            </td>
-          </tr>
-          <tr class="doc-section-item">
-            <td>
-                <code>sap_sep</code>
-            </td>
-            <td>
-                  <code><span title="str">str</span></code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>The separator to use when reading query results.
-If not provided, multiple options are automatically tried.
-Defaults to None.</p>
               </div>
             </td>
             <td>
@@ -11646,6 +11563,24 @@ Defaults to "-".</p>
             </td>
             <td>
                   <code>&#39;-&#39;</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>sap_sep</code>
+            </td>
+            <td>
+                  <code><span title="str">str</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The separator to use when reading query results.
+If set to None, multiple options are automatically tried.
+Defaults to ♔.</p>
+              </div>
+            </td>
+            <td>
+                  <code>&#39;♔&#39;</code>
             </td>
           </tr>
       </tbody>
@@ -11781,9 +11716,7 @@ Defaults to "-".</p>
 <span class="normal">126</span>
 <span class="normal">127</span>
 <span class="normal">128</span>
-<span class="normal">129</span>
-<span class="normal">130</span>
-<span class="normal">131</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@flow</span><span class="p">(</span>
+<span class="normal">129</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@flow</span><span class="p">(</span>
     <span class="n">name</span><span class="o">=</span><span class="s2">&quot;extract--sap--redshift_spectrum&quot;</span><span class="p">,</span>
     <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Extract data from SAP and load it into AWS Redshift Spectrum.&quot;</span><span class="p">,</span>
     <span class="n">retries</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
@@ -11800,19 +11733,18 @@ Defaults to "-".</p>
     <span class="n">index</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
     <span class="n">compression</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">aws_sep</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;,&quot;</span><span class="p">,</span>
-    <span class="n">description</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;test&quot;</span><span class="p">,</span>
     <span class="n">dynamic_date_symbols</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;&lt;&lt;&quot;</span><span class="p">,</span> <span class="s2">&quot;&gt;&gt;&quot;</span><span class="p">],</span>  <span class="c1"># noqa: B006</span>
     <span class="n">dynamic_date_format</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;%Y%m</span><span class="si">%d</span><span class="s2">&quot;</span><span class="p">,</span>
     <span class="n">dynamic_date_timezone</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;UTC&quot;</span><span class="p">,</span>
     <span class="n">credentials_secret</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">aws_config_key</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">query</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-    <span class="n">sap_sep</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">func</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">rfc_total_col_width_character_limit</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">400</span><span class="p">,</span>
     <span class="n">rfc_unique_id</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">sap_credentials_secret</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">sap_config_key</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">sap_sep</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="s2">&quot;♔&quot;</span><span class="p">,</span>
     <span class="n">replacement</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;-&quot;</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Download a pandas `DataFrame` from SAP and upload it to AWS Redshift Spectrum.</span>
@@ -11836,7 +11768,6 @@ Defaults to "-".</p>
 <span class="sd">        index (bool, optional): Write row names (index). Defaults to False.</span>
 <span class="sd">        compression (str, optional): Compression style (None, snappy, gzip, zstd).</span>
 <span class="sd">        aws_sep (str, optional): Field delimiter for the output file. Defaults to &#39;,&#39;.</span>
-<span class="sd">        description (str, optional): AWS Glue catalog table description.</span>
 <span class="sd">        dynamic_date_symbols (list[str], optional): Symbols used for dynamic date</span>
 <span class="sd">            handling. Defaults to [&quot;&lt;&lt;&quot;, &quot;&gt;&gt;&quot;].</span>
 <span class="sd">        dynamic_date_format (str, optional): Format used for dynamic date parsing.</span>
@@ -11848,9 +11779,6 @@ Defaults to "-".</p>
 <span class="sd">        credentials_secret (str, optional): The name of a secret block in Prefect</span>
 <span class="sd">            that stores AWS credentials. Defaults to None.</span>
 <span class="sd">        query (str): The query to be executed with pyRFC.</span>
-<span class="sd">        sap_sep (str, optional): The separator to use when reading query results.</span>
-<span class="sd">            If not provided, multiple options are automatically tried.</span>
-<span class="sd">            Defaults to None.</span>
 <span class="sd">        func (str, optional): SAP RFC function to use. Defaults to None.</span>
 <span class="sd">        rfc_total_col_width_character_limit (int, optional): Number of characters by</span>
 <span class="sd">            which query will be split in chunks in case of too many columns for RFC</span>
@@ -11867,6 +11795,10 @@ Defaults to "-".</p>
 <span class="sd">        replacement (str, optional): In case of sep is on a columns, set up a new</span>
 <span class="sd">            character to replace inside the string to avoid flow breakdowns.</span>
 <span class="sd">            Defaults to &quot;-&quot;.</span>
+<span class="sd">        sap_sep (str, optional): The separator to use when reading query results.</span>
+<span class="sd">            If set to None, multiple options are automatically tried.</span>
+<span class="sd">            Defaults to ♔.</span>
+
 
 <span class="sd">    Examples:</span>
 <span class="sd">        sap_to_redshift_spectrum(</span>
@@ -11877,17 +11809,17 @@ Defaults to "-".</p>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">df</span> <span class="o">=</span> <span class="n">sap_rfc_to_df</span><span class="p">(</span>
         <span class="n">query</span><span class="o">=</span><span class="n">query</span><span class="p">,</span>
-        <span class="n">sep</span><span class="o">=</span><span class="n">sap_sep</span><span class="p">,</span>
         <span class="n">tests</span><span class="o">=</span><span class="n">tests</span><span class="p">,</span>
         <span class="n">func</span><span class="o">=</span><span class="n">func</span><span class="p">,</span>
         <span class="n">rfc_unique_id</span><span class="o">=</span><span class="n">rfc_unique_id</span><span class="p">,</span>
         <span class="n">rfc_total_col_width_character_limit</span><span class="o">=</span><span class="n">rfc_total_col_width_character_limit</span><span class="p">,</span>
         <span class="n">credentials_secret</span><span class="o">=</span><span class="n">sap_credentials_secret</span><span class="p">,</span>
         <span class="n">config_key</span><span class="o">=</span><span class="n">sap_config_key</span><span class="p">,</span>
-        <span class="n">replacement</span><span class="o">=</span><span class="n">replacement</span><span class="p">,</span>
         <span class="n">dynamic_date_symbols</span><span class="o">=</span><span class="n">dynamic_date_symbols</span><span class="p">,</span>
         <span class="n">dynamic_date_format</span><span class="o">=</span><span class="n">dynamic_date_format</span><span class="p">,</span>
         <span class="n">dynamic_date_timezone</span><span class="o">=</span><span class="n">dynamic_date_timezone</span><span class="p">,</span>
+        <span class="n">replacement</span><span class="o">=</span><span class="n">replacement</span><span class="p">,</span>
+        <span class="n">sep</span><span class="o">=</span><span class="n">sap_sep</span><span class="p">,</span>
     <span class="p">)</span>
 
     <span class="k">return</span> <span class="n">df_to_redshift_spectrum</span><span class="p">(</span>
@@ -11901,7 +11833,6 @@ Defaults to "-".</p>
         <span class="n">index</span><span class="o">=</span><span class="n">index</span><span class="p">,</span>
         <span class="n">compression</span><span class="o">=</span><span class="n">compression</span><span class="p">,</span>
         <span class="n">sep</span><span class="o">=</span><span class="n">aws_sep</span><span class="p">,</span>
-        <span class="n">description</span><span class="o">=</span><span class="n">description</span><span class="p">,</span>
         <span class="n">config_key</span><span class="o">=</span><span class="n">aws_config_key</span><span class="p">,</span>
         <span class="n">credentials_secret</span><span class="o">=</span><span class="n">credentials_secret</span><span class="p">,</span>
     <span class="p">)</span>
@@ -12296,7 +12227,7 @@ Defaults to True.</p>
 
 
 <h3 id="viadot.orchestration.prefect.flows.sharepoint_to_adls.sharepoint_to_adls" class="doc doc-heading">
-            <code class="highlight language-python"><span class="n">sharepoint_to_adls</span><span class="p">(</span><span class="n">sharepoint_url</span><span class="p">,</span> <span class="n">adls_path</span><span class="p">,</span> <span class="n">sharepoint_credentials_secret</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">sharepoint_config_key</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">adls_credentials_secret</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">adls_config_key</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">sheet_name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">columns</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">overwrite</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span></code>
+            <code class="highlight language-python"><span class="n">sharepoint_to_adls</span><span class="p">(</span><span class="n">sharepoint_url</span><span class="p">,</span> <span class="n">adls_path</span><span class="p">,</span> <span class="n">sharepoint_credentials_secret</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">sharepoint_credentials_secret_cert_auth</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">sharepoint_config_key</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">adls_credentials_secret</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">adls_config_key</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">sheet_name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">columns</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">overwrite</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span></code>
 
 </h3>
 
@@ -12377,6 +12308,24 @@ secret storing the Sharepoint credentials. Defaults to None.</p>
               <div class="doc-md-description">
                 <p>The key in the viadot config holding
 relevant credentials. Defaults to None.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>sharepoint_credentials_secret_cert_auth</code>
+            </td>
+            <td>
+                  <code><span title="str">str</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The name of the
+secret storing the credentials for certificate authentication.
+Defaults to None.</p>
               </div>
             </td>
             <td>
@@ -12530,7 +12479,12 @@ to False.</p>
 <span class="normal">58</span>
 <span class="normal">59</span>
 <span class="normal">60</span>
-<span class="normal">61</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@flow</span><span class="p">(</span>
+<span class="normal">61</span>
+<span class="normal">62</span>
+<span class="normal">63</span>
+<span class="normal">64</span>
+<span class="normal">65</span>
+<span class="normal">66</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@flow</span><span class="p">(</span>
     <span class="n">name</span><span class="o">=</span><span class="s2">&quot;extract--sharepoint--adls&quot;</span><span class="p">,</span>
     <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Extract data from Exchange Rates API and load it into Azure Data Lake.&quot;</span><span class="p">,</span>
     <span class="n">retries</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
@@ -12540,6 +12494,7 @@ to False.</p>
     <span class="n">sharepoint_url</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
     <span class="n">adls_path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
     <span class="n">sharepoint_credentials_secret</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">sharepoint_credentials_secret_cert_auth</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">sharepoint_config_key</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">adls_credentials_secret</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">adls_config_key</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
@@ -12556,6 +12511,9 @@ to False.</p>
 <span class="sd">            secret storing the Sharepoint credentials. Defaults to None.</span>
 <span class="sd">        sharepoint_config_key (str, optional): The key in the viadot config holding</span>
 <span class="sd">            relevant credentials. Defaults to None.</span>
+<span class="sd">        sharepoint_credentials_secret_cert_auth (str, optional): The name of the</span>
+<span class="sd">            secret storing the credentials for certificate authentication.</span>
+<span class="sd">            Defaults to None.</span>
 <span class="sd">        adls_credentials_secret (str, optional): The name of the Azure Key Vault secret</span>
 <span class="sd">            storing the ADLS credentials. Defaults to None.</span>
 <span class="sd">        adls_config_key (str, optional): The key in the viadot config holding relevant</span>
@@ -12572,7 +12530,8 @@ to False.</p>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">df</span> <span class="o">=</span> <span class="n">sharepoint_to_df</span><span class="p">(</span>
         <span class="n">url</span><span class="o">=</span><span class="n">sharepoint_url</span><span class="p">,</span>
-        <span class="n">credentials_secret</span><span class="o">=</span><span class="n">sharepoint_credentials_secret</span><span class="p">,</span>
+        <span class="n">credentials_secret_basic_auth</span><span class="o">=</span><span class="n">sharepoint_credentials_secret</span><span class="p">,</span>
+        <span class="n">credentials_secret_cert_auth</span><span class="o">=</span><span class="n">sharepoint_credentials_secret_cert_auth</span><span class="p">,</span>
         <span class="n">config_key</span><span class="o">=</span><span class="n">sharepoint_config_key</span><span class="p">,</span>
         <span class="n">sheet_name</span><span class="o">=</span><span class="n">sheet_name</span><span class="p">,</span>
         <span class="n">columns</span><span class="o">=</span><span class="n">columns</span><span class="p">,</span>
@@ -12583,380 +12542,6 @@ to False.</p>
         <span class="n">credentials_secret</span><span class="o">=</span><span class="n">adls_credentials_secret</span><span class="p">,</span>
         <span class="n">config_key</span><span class="o">=</span><span class="n">adls_config_key</span><span class="p">,</span>
         <span class="n">overwrite</span><span class="o">=</span><span class="n">overwrite</span><span class="p">,</span>
-    <span class="p">)</span>
-</code></pre></div></td></tr></table></div>
-            </details>
-    </div>
-
-</div>
-
-
-
-  </div>
-
-    </div>
-
-</div>
-
-<div class="doc doc-object doc-module">
-
-
-
-<h2 id="viadot.orchestration.prefect.flows.sharepoint_to_databricks" class="doc doc-heading">
-            <code>viadot.orchestration.prefect.flows.sharepoint_to_databricks</code>
-
-
-</h2>
-
-    <div class="doc doc-contents first">
-
-        <p>Flows for pulling data from/into Sharepoint.</p>
-
-
-
-
-
-
-
-
-
-  <div class="doc doc-children">
-
-
-
-
-
-
-
-
-
-<div class="doc doc-object doc-function">
-
-
-<h3 id="viadot.orchestration.prefect.flows.sharepoint_to_databricks.sharepoint_to_databricks" class="doc doc-heading">
-            <code class="highlight language-python"><span class="n">sharepoint_to_databricks</span><span class="p">(</span><span class="n">sharepoint_url</span><span class="p">,</span> <span class="n">databricks_table</span><span class="p">,</span> <span class="n">databricks_schema</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">if_exists</span><span class="o">=</span><span class="s1">&#39;fail&#39;</span><span class="p">,</span> <span class="n">sheet_name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">columns</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">sharepoint_credentials_secret</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">sharepoint_config_key</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">databricks_credentials_secret</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">databricks_config_key</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
-
-</h3>
-
-
-    <div class="doc doc-contents ">
-
-        <p>Download a file from Sharepoint and upload it to Azure Data Lake.</p>
-
-
-<p><span class="doc-section-title">Parameters:</span></p>
-    <table>
-      <thead>
-        <tr>
-          <th>Name</th>
-          <th>Type</th>
-          <th>Description</th>
-          <th>Default</th>
-        </tr>
-      </thead>
-      <tbody>
-          <tr class="doc-section-item">
-            <td>
-                <code>sharepoint_url</code>
-            </td>
-            <td>
-                  <code><span title="str">str</span></code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>The URL to the file.</p>
-              </div>
-            </td>
-            <td>
-                <em>required</em>
-            </td>
-          </tr>
-          <tr class="doc-section-item">
-            <td>
-                <code>databricks_table</code>
-            </td>
-            <td>
-                  <code><span title="str">str</span></code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>The name of the target table.</p>
-              </div>
-            </td>
-            <td>
-                <em>required</em>
-            </td>
-          </tr>
-          <tr class="doc-section-item">
-            <td>
-                <code>databricks_schema</code>
-            </td>
-            <td>
-                  <code><span title="str">str</span></code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>The name of the target schema.</p>
-              </div>
-            </td>
-            <td>
-                  <code>None</code>
-            </td>
-          </tr>
-          <tr class="doc-section-item">
-            <td>
-                <code>if_exists</code>
-            </td>
-            <td>
-                  <code>(<span title="str">str</span>, <span title="Optional">Optional</span>)</code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>What to do if the table already exists.
-One of 'replace', 'skip', and 'fail'.</p>
-              </div>
-            </td>
-            <td>
-                  <code>&#39;fail&#39;</code>
-            </td>
-          </tr>
-          <tr class="doc-section-item">
-            <td>
-                <code>columns</code>
-            </td>
-            <td>
-                  <code><span title="str">str</span> | <span title="list">list</span>[<span title="str">str</span>] | <span title="list">list</span>[<span title="int">int</span>]</code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>Which columns to ingest.
-Defaults to None.</p>
-              </div>
-            </td>
-            <td>
-                  <code>None</code>
-            </td>
-          </tr>
-          <tr class="doc-section-item">
-            <td>
-                <code>sheet_name</code>
-            </td>
-            <td>
-                  <code><span title="str">str</span> | <span title="list">list</span> | <span title="int">int</span></code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>Strings are used for sheet names.
-Integers are used in zero-indexed sheet positions
-(chart sheets do not count as a sheet position). Lists of strings/integers
-are used to request multiple sheets. Specify None to get all worksheets.
-Defaults to None.</p>
-              </div>
-            </td>
-            <td>
-                  <code>None</code>
-            </td>
-          </tr>
-          <tr class="doc-section-item">
-            <td>
-                <code>sharepoint_credentials_secret</code>
-            </td>
-            <td>
-                  <code><span title="str">str</span></code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>The name of the Azure Key Vault
-secret storing relevant credentials. Defaults to None.</p>
-              </div>
-            </td>
-            <td>
-                  <code>None</code>
-            </td>
-          </tr>
-          <tr class="doc-section-item">
-            <td>
-                <code>sharepoint_config_key</code>
-            </td>
-            <td>
-                  <code><span title="str">str</span></code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>The key in the viadot config holding
-relevant credentials. Defaults to None.</p>
-              </div>
-            </td>
-            <td>
-                  <code>None</code>
-            </td>
-          </tr>
-          <tr class="doc-section-item">
-            <td>
-                <code>databricks_credentials_secret</code>
-            </td>
-            <td>
-                  <code><span title="str">str</span></code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>The name of the Azure Key Vault
-secret storing relevant credentials. Defaults to None.</p>
-              </div>
-            </td>
-            <td>
-                  <code>None</code>
-            </td>
-          </tr>
-          <tr class="doc-section-item">
-            <td>
-                <code>databricks_config_key</code>
-            </td>
-            <td>
-                  <code><span title="str">str</span></code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>The key in the viadot config holding
-relevant credentials. Defaults to None.</p>
-              </div>
-            </td>
-            <td>
-                  <code>None</code>
-            </td>
-          </tr>
-      </tbody>
-    </table>
-
-
-            <details class="quote">
-              <summary>Source code in <code>src/viadot/orchestration/prefect/flows/sharepoint_to_databricks.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">11</span>
-<span class="normal">12</span>
-<span class="normal">13</span>
-<span class="normal">14</span>
-<span class="normal">15</span>
-<span class="normal">16</span>
-<span class="normal">17</span>
-<span class="normal">18</span>
-<span class="normal">19</span>
-<span class="normal">20</span>
-<span class="normal">21</span>
-<span class="normal">22</span>
-<span class="normal">23</span>
-<span class="normal">24</span>
-<span class="normal">25</span>
-<span class="normal">26</span>
-<span class="normal">27</span>
-<span class="normal">28</span>
-<span class="normal">29</span>
-<span class="normal">30</span>
-<span class="normal">31</span>
-<span class="normal">32</span>
-<span class="normal">33</span>
-<span class="normal">34</span>
-<span class="normal">35</span>
-<span class="normal">36</span>
-<span class="normal">37</span>
-<span class="normal">38</span>
-<span class="normal">39</span>
-<span class="normal">40</span>
-<span class="normal">41</span>
-<span class="normal">42</span>
-<span class="normal">43</span>
-<span class="normal">44</span>
-<span class="normal">45</span>
-<span class="normal">46</span>
-<span class="normal">47</span>
-<span class="normal">48</span>
-<span class="normal">49</span>
-<span class="normal">50</span>
-<span class="normal">51</span>
-<span class="normal">52</span>
-<span class="normal">53</span>
-<span class="normal">54</span>
-<span class="normal">55</span>
-<span class="normal">56</span>
-<span class="normal">57</span>
-<span class="normal">58</span>
-<span class="normal">59</span>
-<span class="normal">60</span>
-<span class="normal">61</span>
-<span class="normal">62</span>
-<span class="normal">63</span>
-<span class="normal">64</span>
-<span class="normal">65</span>
-<span class="normal">66</span>
-<span class="normal">67</span>
-<span class="normal">68</span>
-<span class="normal">69</span>
-<span class="normal">70</span>
-<span class="normal">71</span>
-<span class="normal">72</span>
-<span class="normal">73</span>
-<span class="normal">74</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@flow</span><span class="p">(</span>
-    <span class="n">name</span><span class="o">=</span><span class="s2">&quot;extract--sharepoint--databricks&quot;</span><span class="p">,</span>
-    <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Extract data from Sharepoint and load it into Databricks.&quot;</span><span class="p">,</span>
-    <span class="n">retries</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
-    <span class="n">retry_delay_seconds</span><span class="o">=</span><span class="mi">60</span><span class="p">,</span>
-<span class="p">)</span>
-<span class="k">def</span> <span class="nf">sharepoint_to_databricks</span><span class="p">(</span>
-    <span class="n">sharepoint_url</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
-    <span class="n">databricks_table</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
-    <span class="n">databricks_schema</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-    <span class="n">if_exists</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;replace&quot;</span><span class="p">,</span> <span class="s2">&quot;skip&quot;</span><span class="p">,</span> <span class="s2">&quot;fail&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;fail&quot;</span><span class="p">,</span>
-    <span class="n">sheet_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="nb">list</span> <span class="o">|</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-    <span class="n">columns</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-    <span class="n">sharepoint_credentials_secret</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-    <span class="n">sharepoint_config_key</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-    <span class="n">databricks_credentials_secret</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-    <span class="n">databricks_config_key</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Download a file from Sharepoint and upload it to Azure Data Lake.</span>
-
-<span class="sd">    Args:</span>
-<span class="sd">        sharepoint_url (str): The URL to the file.</span>
-<span class="sd">        databricks_table (str): The name of the target table.</span>
-<span class="sd">        databricks_schema (str, optional): The name of the target schema.</span>
-<span class="sd">        if_exists (str, Optional): What to do if the table already exists.</span>
-<span class="sd">            One of &#39;replace&#39;, &#39;skip&#39;, and &#39;fail&#39;.</span>
-<span class="sd">        columns (str | list[str] | list[int], optional): Which columns to ingest.</span>
-<span class="sd">            Defaults to None.</span>
-<span class="sd">        sheet_name (str | list | int, optional): Strings are used for sheet names.</span>
-<span class="sd">            Integers are used in zero-indexed sheet positions</span>
-<span class="sd">            (chart sheets do not count as a sheet position). Lists of strings/integers</span>
-<span class="sd">            are used to request multiple sheets. Specify None to get all worksheets.</span>
-<span class="sd">            Defaults to None.</span>
-<span class="sd">        sharepoint_credentials_secret (str, optional): The name of the Azure Key Vault</span>
-<span class="sd">            secret storing relevant credentials. Defaults to None.</span>
-<span class="sd">        sharepoint_config_key (str, optional): The key in the viadot config holding</span>
-<span class="sd">            relevant credentials. Defaults to None.</span>
-<span class="sd">        databricks_credentials_secret (str, optional): The name of the Azure Key Vault</span>
-<span class="sd">            secret storing relevant credentials. Defaults to None.</span>
-<span class="sd">        databricks_config_key (str, optional): The key in the viadot config holding</span>
-<span class="sd">            relevant credentials. Defaults to None.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="c1"># Workaround Prefect converting this parameter to string due to multiple</span>
-    <span class="c1"># supported input types -- pandas relies on the data type to choose relevant</span>
-    <span class="c1"># implementation.</span>
-    <span class="k">if</span> <span class="n">sheet_name</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="k">with</span> <span class="n">contextlib</span><span class="o">.</span><span class="n">suppress</span><span class="p">(</span><span class="ne">ValueError</span><span class="p">):</span>
-            <span class="n">sheet_name</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">sheet_name</span><span class="p">)</span>
-
-    <span class="n">df</span> <span class="o">=</span> <span class="n">sharepoint_to_df</span><span class="p">(</span>
-        <span class="n">url</span><span class="o">=</span><span class="n">sharepoint_url</span><span class="p">,</span>
-        <span class="n">credentials_secret</span><span class="o">=</span><span class="n">sharepoint_credentials_secret</span><span class="p">,</span>
-        <span class="n">config_key</span><span class="o">=</span><span class="n">sharepoint_config_key</span><span class="p">,</span>
-        <span class="n">sheet_name</span><span class="o">=</span><span class="n">sheet_name</span><span class="p">,</span>
-        <span class="n">columns</span><span class="o">=</span><span class="n">columns</span><span class="p">,</span>
-    <span class="p">)</span>
-    <span class="k">return</span> <span class="n">df_to_databricks</span><span class="p">(</span>
-        <span class="n">df</span><span class="o">=</span><span class="n">df</span><span class="p">,</span>
-        <span class="n">schema</span><span class="o">=</span><span class="n">databricks_schema</span><span class="p">,</span>
-        <span class="n">table</span><span class="o">=</span><span class="n">databricks_table</span><span class="p">,</span>
-        <span class="n">if_exists</span><span class="o">=</span><span class="n">if_exists</span><span class="p">,</span>
-        <span class="n">credentials_secret</span><span class="o">=</span><span class="n">databricks_credentials_secret</span><span class="p">,</span>
-        <span class="n">config_key</span><span class="o">=</span><span class="n">databricks_config_key</span><span class="p">,</span>
     <span class="p">)</span>
 </code></pre></div></td></tr></table></div>
             </details>
@@ -13008,7 +12593,7 @@ relevant credentials. Defaults to None.</p>
 
 
 <h3 id="viadot.orchestration.prefect.flows.sharepoint_to_redshift_spectrum.sharepoint_to_redshift_spectrum" class="doc doc-heading">
-            <code class="highlight language-python"><span class="n">sharepoint_to_redshift_spectrum</span><span class="p">(</span><span class="n">sharepoint_url</span><span class="p">,</span> <span class="n">to_path</span><span class="p">,</span> <span class="n">schema_name</span><span class="p">,</span> <span class="n">table</span><span class="p">,</span> <span class="n">tests</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">extension</span><span class="o">=</span><span class="s1">&#39;.parquet&#39;</span><span class="p">,</span> <span class="n">if_exists</span><span class="o">=</span><span class="s1">&#39;overwrite&#39;</span><span class="p">,</span> <span class="n">partition_cols</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">compression</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">sep</span><span class="o">=</span><span class="s1">&#39;,&#39;</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">aws_config_key</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">credentials_secret</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">sheet_name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">columns</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">na_values</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">sharepoint_credentials_secret</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">sharepoint_config_key</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">file_sheet_mapping</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
+            <code class="highlight language-python"><span class="n">sharepoint_to_redshift_spectrum</span><span class="p">(</span><span class="n">sharepoint_url</span><span class="p">,</span> <span class="n">to_path</span><span class="p">,</span> <span class="n">schema_name</span><span class="p">,</span> <span class="n">table</span><span class="p">,</span> <span class="n">tests</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">extension</span><span class="o">=</span><span class="s1">&#39;.parquet&#39;</span><span class="p">,</span> <span class="n">if_exists</span><span class="o">=</span><span class="s1">&#39;overwrite&#39;</span><span class="p">,</span> <span class="n">partition_cols</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">compression</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">sep</span><span class="o">=</span><span class="s1">&#39;,&#39;</span><span class="p">,</span> <span class="n">aws_config_key</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">credentials_secret</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">credentials_secret_cert_auth</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">sheet_name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">columns</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">na_values</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">sharepoint_credentials_secret</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">sharepoint_config_key</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">file_sheet_mapping</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
 
 </h3>
 
@@ -13241,23 +12826,6 @@ create partitions. Only takes effect if dataset=True. Defaults to None.</p>
           </tr>
           <tr class="doc-section-item">
             <td>
-                <code>description</code>
-            </td>
-            <td>
-                  <code><span title="str">str</span></code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>AWS Glue catalog table description. Defaults to
-None.</p>
-              </div>
-            </td>
-            <td>
-                  <code>None</code>
-            </td>
-          </tr>
-          <tr class="doc-section-item">
-            <td>
                 <code>aws_config_key</code>
             </td>
             <td>
@@ -13284,6 +12852,23 @@ credentials. Defaults to None.</p>
               <div class="doc-md-description">
                 <p>The name of a secret block in Prefect
 that stores AWS credentials. Defaults to None.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>credentials_secret_cert_auth</code>
+            </td>
+            <td>
+                  <code><span title="str">str</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The name of the secret storing
+the credentials for certificate authentication. Defaults to None.</p>
               </div>
             </td>
             <td>
@@ -13533,9 +13118,9 @@ and sheets will be downloaded. Defaults to None.</p>
     <span class="n">index</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
     <span class="n">compression</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">sep</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;,&quot;</span><span class="p">,</span>
-    <span class="n">description</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">aws_config_key</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">credentials_secret</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">credentials_secret_cert_auth</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">sheet_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span> <span class="o">|</span> <span class="nb">int</span><span class="p">]</span> <span class="o">|</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">columns</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">na_values</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
@@ -13579,12 +13164,12 @@ and sheets will be downloaded. Defaults to None.</p>
 <span class="sd">        index (bool, optional): Write row names (index). Defaults to False.</span>
 <span class="sd">        compression (str, optional): Compression style (None, snappy, gzip, zstd).</span>
 <span class="sd">        sep (str, optional): Field delimiter for the output file. Defaults to &#39;,&#39;.</span>
-<span class="sd">        description (str, optional): AWS Glue catalog table description. Defaults to</span>
-<span class="sd">            None.</span>
 <span class="sd">        aws_config_key (str, optional): The key in the viadot config holding relevant</span>
 <span class="sd">            credentials. Defaults to None.</span>
 <span class="sd">        credentials_secret (str, optional): The name of a secret block in Prefect</span>
 <span class="sd">            that stores AWS credentials. Defaults to None.</span>
+<span class="sd">        credentials_secret_cert_auth (str, optional): The name of the secret storing</span>
+<span class="sd">            the credentials for certificate authentication. Defaults to None.</span>
 <span class="sd">        sheet_name (str | list | int, optional): Strings are used for sheet names.</span>
 <span class="sd">            Integers are used in zero-indexed sheet positions (chart sheets do not count</span>
 <span class="sd">            as a sheet position). Lists of strings/integers are used to request multiple</span>
@@ -13610,8 +13195,9 @@ and sheets will be downloaded. Defaults to None.</p>
         <span class="n">columns</span><span class="o">=</span><span class="n">columns</span><span class="p">,</span>
         <span class="n">na_values</span><span class="o">=</span><span class="n">na_values</span><span class="p">,</span>
         <span class="n">file_sheet_mapping</span><span class="o">=</span><span class="n">file_sheet_mapping</span><span class="p">,</span>
-        <span class="n">credentials_secret</span><span class="o">=</span><span class="n">sharepoint_credentials_secret</span><span class="p">,</span>
+        <span class="n">credentials_secret_basic_auth</span><span class="o">=</span><span class="n">sharepoint_credentials_secret</span><span class="p">,</span>
         <span class="n">config_key</span><span class="o">=</span><span class="n">sharepoint_config_key</span><span class="p">,</span>
+        <span class="n">credentials_secret_cert_auth</span><span class="o">=</span><span class="n">credentials_secret_cert_auth</span><span class="p">,</span>
     <span class="p">)</span>
     <span class="n">df_to_redshift_spectrum</span><span class="p">(</span>
         <span class="n">df</span><span class="o">=</span><span class="n">df</span><span class="p">,</span>
@@ -13624,7 +13210,6 @@ and sheets will be downloaded. Defaults to None.</p>
         <span class="n">index</span><span class="o">=</span><span class="n">index</span><span class="p">,</span>
         <span class="n">compression</span><span class="o">=</span><span class="n">compression</span><span class="p">,</span>
         <span class="n">sep</span><span class="o">=</span><span class="n">sep</span><span class="p">,</span>
-        <span class="n">description</span><span class="o">=</span><span class="n">description</span><span class="p">,</span>
         <span class="n">config_key</span><span class="o">=</span><span class="n">aws_config_key</span><span class="p">,</span>
         <span class="n">credentials_secret</span><span class="o">=</span><span class="n">credentials_secret</span><span class="p">,</span>
     <span class="p">)</span>
@@ -15472,14 +15057,14 @@ target (as specified in <code>profiles.yaml</code>) will be used. Defaults to No
 
             <details class="quote">
               <summary>Source code in <code>src/viadot/orchestration/prefect/flows/transform_and_catalog.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">20</span>
-<span class="normal">21</span>
-<span class="normal">22</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">22</span>
 <span class="normal">23</span>
 <span class="normal">24</span>
 <span class="normal">25</span>
 <span class="normal">26</span>
-<span class="normal">27</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@task</span>
+<span class="normal">27</span>
+<span class="normal">28</span>
+<span class="normal">29</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@task</span>
 <span class="k">def</span> <span class="nf">remove_dbt_repo_dir</span><span class="p">(</span><span class="n">dbt_repo_dir_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Remove the repo directory.</span>
 
@@ -15497,7 +15082,7 @@ target (as specified in <code>profiles.yaml</code>) will be used. Defaults to No
 
 
 <h3 id="viadot.orchestration.prefect.flows.transform_and_catalog.transform_and_catalog" class="doc doc-heading">
-            <code class="highlight language-python"><span class="n">transform_and_catalog</span><span class="p">(</span><span class="n">dbt_repo_url</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">dbt_repo_url_secret</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">dbt_project_path</span><span class="o">=</span><span class="s1">&#39;dbt&#39;</span><span class="p">,</span> <span class="n">dbt_repo_branch</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">dbt_repo_token_secret</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">dbt_selects</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">dbt_target</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">dbt_target_dir_path</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">luma_url</span><span class="o">=</span><span class="s1">&#39;http://localhost:8000&#39;</span><span class="p">,</span> <span class="n">luma_follow</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">metadata_kind</span><span class="o">=</span><span class="s1">&#39;model_run&#39;</span><span class="p">,</span> <span class="n">run_results_storage_path</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">run_results_storage_config_key</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">run_results_storage_credentials_secret</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
+            <code class="highlight language-python"><span class="n">transform_and_catalog</span><span class="p">(</span><span class="n">dbt_repo_url</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">dbt_repo_url_secret</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">dbt_project_path</span><span class="o">=</span><span class="s1">&#39;dbt&#39;</span><span class="p">,</span> <span class="n">dbt_repo_branch</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">dbt_repo_token_secret</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">dbt_selects</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">dbt_target</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">dbt_target_dir_path</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">luma_url</span><span class="o">=</span><span class="s1">&#39;http://localhost:8000&#39;</span><span class="p">,</span> <span class="n">luma_follow</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">metadata_kind</span><span class="o">=</span><span class="s1">&#39;model_run&#39;</span><span class="p">,</span> <span class="n">run_results_storage_path</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">run_results_storage_config_key</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">run_results_storage_credentials_secret</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">fail_flow_only_on_build_failure</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span></code>
 
 </h3>
 
@@ -15770,6 +15355,28 @@ block in Prefect holding AWS credentials. Defaults to None.</p>
                   <code>None</code>
             </td>
           </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>fail_flow_only_on_build_failure</code>
+            </td>
+            <td>
+                  <code><span title="bool">bool</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Determines the flow's failure behavior
+based on dbt build outcomes.
+When False (default):
+    - The flow will fail on any dbt build failure (including test failures)
+When True:
+    - The flow will only fail if model building fails
+    - Test failures alone won't cause the flow failure</p>
+              </div>
+            </td>
+            <td>
+                  <code>False</code>
+            </td>
+          </tr>
       </tbody>
     </table>
 
@@ -15842,9 +15449,7 @@ block in Prefect holding AWS credentials. Defaults to None.</p>
 
             <details class="quote">
               <summary>Source code in <code>src/viadot/orchestration/prefect/flows/transform_and_catalog.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 30</span>
-<span class="normal"> 31</span>
-<span class="normal"> 32</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 32</span>
 <span class="normal"> 33</span>
 <span class="normal"> 34</span>
 <span class="normal"> 35</span>
@@ -16066,12 +15671,54 @@ block in Prefect holding AWS credentials. Defaults to None.</p>
 <span class="normal">251</span>
 <span class="normal">252</span>
 <span class="normal">253</span>
-<span class="normal">254</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@flow</span><span class="p">(</span>
+<span class="normal">254</span>
+<span class="normal">255</span>
+<span class="normal">256</span>
+<span class="normal">257</span>
+<span class="normal">258</span>
+<span class="normal">259</span>
+<span class="normal">260</span>
+<span class="normal">261</span>
+<span class="normal">262</span>
+<span class="normal">263</span>
+<span class="normal">264</span>
+<span class="normal">265</span>
+<span class="normal">266</span>
+<span class="normal">267</span>
+<span class="normal">268</span>
+<span class="normal">269</span>
+<span class="normal">270</span>
+<span class="normal">271</span>
+<span class="normal">272</span>
+<span class="normal">273</span>
+<span class="normal">274</span>
+<span class="normal">275</span>
+<span class="normal">276</span>
+<span class="normal">277</span>
+<span class="normal">278</span>
+<span class="normal">279</span>
+<span class="normal">280</span>
+<span class="normal">281</span>
+<span class="normal">282</span>
+<span class="normal">283</span>
+<span class="normal">284</span>
+<span class="normal">285</span>
+<span class="normal">286</span>
+<span class="normal">287</span>
+<span class="normal">288</span>
+<span class="normal">289</span>
+<span class="normal">290</span>
+<span class="normal">291</span>
+<span class="normal">292</span>
+<span class="normal">293</span>
+<span class="normal">294</span>
+<span class="normal">295</span>
+<span class="normal">296</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@flow</span><span class="p">(</span>
     <span class="n">name</span><span class="o">=</span><span class="s2">&quot;Transform and Catalog&quot;</span><span class="p">,</span>
     <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Build specified dbt model(s) and upload generated metadata to Luma.&quot;</span><span class="p">,</span>
     <span class="n">timeout_seconds</span><span class="o">=</span><span class="mi">2</span> <span class="o">*</span> <span class="mi">60</span> <span class="o">*</span> <span class="mi">60</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="k">def</span> <span class="nf">transform_and_catalog</span><span class="p">(</span>  <span class="c1"># noqa: PLR0913</span>
+<span class="k">def</span> <span class="nf">transform_and_catalog</span><span class="p">(</span>  <span class="c1"># noqa: PLR0912, PLR0913, PLR0915, C901</span>
     <span class="n">dbt_repo_url</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">dbt_repo_url_secret</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">dbt_project_path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;dbt&quot;</span><span class="p">,</span>
@@ -16086,6 +15733,7 @@ block in Prefect holding AWS credentials. Defaults to None.</p>
     <span class="n">run_results_storage_path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">run_results_storage_config_key</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">run_results_storage_credentials_secret</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">fail_flow_only_on_build_failure</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Build specified dbt model(s) and upload the generated metadata to Luma.</span>
 
@@ -16134,6 +15782,13 @@ block in Prefect holding AWS credentials. Defaults to None.</p>
 <span class="sd">            holding AWS credentials. Defaults to None.</span>
 <span class="sd">        run_results_storage_credentials_secret (str, optional): The name of the secret</span>
 <span class="sd">            block in Prefect holding AWS credentials. Defaults to None.</span>
+<span class="sd">        fail_flow_only_on_build_failure (bool): Determines the flow&#39;s failure behavior</span>
+<span class="sd">            based on dbt build outcomes.</span>
+<span class="sd">            When False (default):</span>
+<span class="sd">                - The flow will fail on any dbt build failure (including test failures)</span>
+<span class="sd">            When True:</span>
+<span class="sd">                - The flow will only fail if model building fails</span>
+<span class="sd">                - Test failures alone won&#39;t cause the flow failure</span>
 
 <span class="sd">    Returns:</span>
 <span class="sd">        list[str]: Lines from stdout of the `upload_metadata` task as a list.</span>
@@ -16195,6 +15850,8 @@ block in Prefect holding AWS credentials. Defaults to None.</p>
     <span class="c1"># Run dbt commands.</span>
     <span class="n">dbt_target_option</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;-t </span><span class="si">{</span><span class="n">dbt_target</span><span class="si">}</span><span class="s2">&quot;</span> <span class="k">if</span> <span class="n">dbt_target</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="s2">&quot;&quot;</span>
 
+    <span class="n">task_failed</span> <span class="o">=</span> <span class="kc">False</span>
+
     <span class="k">if</span> <span class="n">metadata_kind</span> <span class="o">==</span> <span class="s2">&quot;model_run&quot;</span><span class="p">:</span>
         <span class="c1"># Produce `run-results.json` artifact for Luma ingestion.</span>
         <span class="k">if</span> <span class="n">dbt_selects</span><span class="p">:</span>
@@ -16212,11 +15869,21 @@ block in Prefect holding AWS credentials. Defaults to None.</p>
             <span class="c1"># If build task is used, run and test tasks are not needed.</span>
             <span class="c1"># Build task executes run and tests commands internally.</span>
             <span class="n">build_task</span> <span class="o">=</span> <span class="n">dbt_task</span><span class="o">.</span><span class="n">with_options</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;dbt_build&quot;</span><span class="p">)</span>
-            <span class="n">build</span> <span class="o">=</span> <span class="n">build_task</span><span class="p">(</span>
-                <span class="n">project_path</span><span class="o">=</span><span class="n">dbt_project_path_full</span><span class="p">,</span>
-                <span class="n">command</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;build </span><span class="si">{</span><span class="n">build_select_safe</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">dbt_target_option</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
-                <span class="n">wait_for</span><span class="o">=</span><span class="p">[</span><span class="n">pull_dbt_deps</span><span class="p">],</span>
-            <span class="p">)</span>
+            <span class="n">raise_on_failure</span> <span class="o">=</span> <span class="ow">not</span> <span class="n">fail_flow_only_on_build_failure</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">build</span> <span class="o">=</span> <span class="n">build_task</span><span class="p">(</span>
+                    <span class="n">project_path</span><span class="o">=</span><span class="n">dbt_project_path_full</span><span class="p">,</span>
+                    <span class="n">command</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;build </span><span class="si">{</span><span class="n">build_select_safe</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">dbt_target_option</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+                    <span class="n">wait_for</span><span class="o">=</span><span class="p">[</span><span class="n">pull_dbt_deps</span><span class="p">],</span>
+                    <span class="n">raise_on_failure</span><span class="o">=</span><span class="n">raise_on_failure</span><span class="p">,</span>
+                    <span class="n">return_all</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                <span class="p">)</span>
+            <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+                <span class="n">msg</span> <span class="o">=</span> <span class="s2">&quot;Build task failed.&quot;</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">exception</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+                <span class="n">build</span> <span class="o">=</span> <span class="n">msg</span>
+                <span class="n">task_failed</span> <span class="o">=</span> <span class="kc">True</span>
+
             <span class="n">upload_metadata_upstream_task</span> <span class="o">=</span> <span class="n">build</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="n">run_task</span> <span class="o">=</span> <span class="n">dbt_task</span><span class="o">.</span><span class="n">with_options</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;dbt_run&quot;</span><span class="p">)</span>
@@ -16249,13 +15916,19 @@ block in Prefect holding AWS credentials. Defaults to None.</p>
     <span class="k">if</span> <span class="n">dbt_target_dir_path</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">dbt_target_dir_path</span> <span class="o">=</span> <span class="n">dbt_project_path_full</span> <span class="o">/</span> <span class="s2">&quot;target&quot;</span>
 
-    <span class="n">upload_metadata</span> <span class="o">=</span> <span class="n">luma_ingest_task</span><span class="p">(</span>
-        <span class="n">metadata_kind</span><span class="o">=</span><span class="n">metadata_kind</span><span class="p">,</span>
-        <span class="n">metadata_dir_path</span><span class="o">=</span><span class="n">dbt_target_dir_path</span><span class="p">,</span>
-        <span class="n">luma_url</span><span class="o">=</span><span class="n">luma_url</span><span class="p">,</span>
-        <span class="n">follow</span><span class="o">=</span><span class="n">luma_follow</span><span class="p">,</span>
-        <span class="n">wait_for</span><span class="o">=</span><span class="p">[</span><span class="n">upload_metadata_upstream_task</span><span class="p">],</span>
-    <span class="p">)</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">upload_metadata</span> <span class="o">=</span> <span class="n">luma_ingest_task</span><span class="p">(</span>
+            <span class="n">metadata_kind</span><span class="o">=</span><span class="n">metadata_kind</span><span class="p">,</span>
+            <span class="n">metadata_dir_path</span><span class="o">=</span><span class="n">dbt_target_dir_path</span><span class="p">,</span>
+            <span class="n">luma_url</span><span class="o">=</span><span class="n">luma_url</span><span class="p">,</span>
+            <span class="n">follow</span><span class="o">=</span><span class="n">luma_follow</span><span class="p">,</span>
+            <span class="n">wait_for</span><span class="o">=</span><span class="p">[</span><span class="n">upload_metadata_upstream_task</span><span class="p">],</span>
+        <span class="p">)</span>
+    <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+        <span class="n">msg</span> <span class="o">=</span> <span class="s2">&quot;Luma ingest task failed.&quot;</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">exception</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+        <span class="n">upload_metadata</span> <span class="o">=</span> <span class="n">msg</span>
+        <span class="n">task_failed</span> <span class="o">=</span> <span class="kc">True</span>
 
     <span class="k">if</span> <span class="n">run_results_storage_path</span><span class="p">:</span>
         <span class="c1"># Set the file path to include date info.</span>
@@ -16274,13 +15947,19 @@ block in Prefect holding AWS credentials. Defaults to None.</p>
         <span class="p">)</span>
         <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Uploading run results to </span><span class="si">{</span><span class="n">run_results_storage_path</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
         <span class="c1"># Upload the file to s3.</span>
-        <span class="n">dump_test_results_to_s3</span> <span class="o">=</span> <span class="n">s3_upload_file</span><span class="p">(</span>
-            <span class="n">from_path</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">dbt_target_dir_path</span> <span class="o">/</span> <span class="n">file_name</span><span class="p">),</span>
-            <span class="n">to_path</span><span class="o">=</span><span class="n">run_results_storage_path</span><span class="p">,</span>
-            <span class="n">wait_for</span><span class="o">=</span><span class="p">[</span><span class="n">upload_metadata_upstream_task</span><span class="p">],</span>
-            <span class="n">config_key</span><span class="o">=</span><span class="n">run_results_storage_config_key</span><span class="p">,</span>
-            <span class="n">credentials_secret</span><span class="o">=</span><span class="n">run_results_storage_credentials_secret</span><span class="p">,</span>
-        <span class="p">)</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">dump_test_results_to_s3</span> <span class="o">=</span> <span class="n">s3_upload_file</span><span class="p">(</span>
+                <span class="n">from_path</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">dbt_target_dir_path</span> <span class="o">/</span> <span class="n">file_name</span><span class="p">),</span>
+                <span class="n">to_path</span><span class="o">=</span><span class="n">run_results_storage_path</span><span class="p">,</span>
+                <span class="n">wait_for</span><span class="o">=</span><span class="p">[</span><span class="n">upload_metadata_upstream_task</span><span class="p">],</span>
+                <span class="n">config_key</span><span class="o">=</span><span class="n">run_results_storage_config_key</span><span class="p">,</span>
+                <span class="n">credentials_secret</span><span class="o">=</span><span class="n">run_results_storage_credentials_secret</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="s2">&quot;S3 upload file task failed.&quot;</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">exception</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+            <span class="n">dump_test_results_to_s3</span> <span class="o">=</span> <span class="n">msg</span>
+            <span class="n">task_failed</span> <span class="o">=</span> <span class="kc">True</span>
 
     <span class="c1"># Cleanup.</span>
     <span class="n">wait_for</span> <span class="o">=</span> <span class="p">(</span>
@@ -16289,6 +15968,14 @@ block in Prefect holding AWS credentials. Defaults to None.</p>
         <span class="k">else</span> <span class="p">[</span><span class="n">upload_metadata</span><span class="p">]</span>
     <span class="p">)</span>
     <span class="n">remove_dbt_repo_dir</span><span class="p">(</span><span class="n">dbt_repo_name</span><span class="p">,</span> <span class="n">wait_for</span><span class="o">=</span><span class="n">wait_for</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">task_failed</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">Failed</span><span class="p">()</span>
+
+    <span class="k">if</span> <span class="n">fail_flow_only_on_build_failure</span> <span class="ow">and</span> <span class="n">build_select</span><span class="p">:</span>
+        <span class="n">model_error_pattern</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;ERROR creating&quot;</span><span class="p">,</span> <span class="n">re</span><span class="o">.</span><span class="n">IGNORECASE</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">any</span><span class="p">(</span><span class="n">model_error_pattern</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="n">line</span><span class="p">)</span> <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">build</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">Failed</span><span class="p">(</span><span class="n">message</span><span class="o">=</span><span class="s2">&quot;One or more models failed to build.&quot;</span><span class="p">)</span>
 
     <span class="k">return</span> <span class="n">remove_dbt_repo_dir</span>
 </code></pre></div></td></tr></table></div>
@@ -16834,7 +16521,7 @@ before a timeout occurs. Defaults to 3600.</p>
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    2025-06-09
+    2025-11-26
   </span>
 
     
