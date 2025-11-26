@@ -158,26 +158,6 @@ def test_acquire_token_with_client_secret():
     assert captured["client_credential"] == creds["client_secret"]
 
 
-def test_credentials_secret_cert_auth_required_with_certificate():
-    captured = {}
-
-    class _DummyApp:
-        def __init__(self, authority, client_id, client_credential):
-            captured["authority"] = authority
-            captured["client_id"] = client_id
-            captured["client_credential"] = client_credential
-
-        def acquire_token_for_client(self, scopes=None, **_kwargs):
-            captured["scopes"] = scopes
-            return {"access_token": "token"}
-
-    with pytest.raises(
-        CredentialError,
-        match="credentials_secret_cert_auth is required when using a binary certificate",
-    ):
-        Sharepoint(credentials=b"blah_blah")
-
-
 def test_acquire_token_with_certificate():
     # pass binary certificate via `credentials` and the rest via `credentials_cert_auth`
     mocked_cert_auth = {
@@ -185,6 +165,7 @@ def test_acquire_token_with_certificate():
         "client_id": "dummy_client_id",  # pragma: allowlist secret
         "tenant_id": "dummy_tenant_id",  # pragma: allowlist secret
         "certificate_password": "dummy_certificate_password",  # pragma: allowlist secret
+        "certificate": b"blah_blah",
     }
 
     captured = {}
@@ -204,8 +185,7 @@ def test_acquire_token_with_certificate():
         new=_DummyApp,
     ):
         sp = Sharepoint(
-            credentials=b"blah_blah",
-            credentials_cert_auth=mocked_cert_auth,
+            credentials=mocked_cert_auth,
         )
         token = sp._acquire_token_func()
 

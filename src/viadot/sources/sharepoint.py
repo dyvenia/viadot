@@ -54,13 +54,14 @@ class SharepointCredentials(BaseModel):
     client_secret: str | None = None
     certificate_password: str | None = None
     certificate_path: str | None = None
+    certificate: bytes | None = None
 
     @root_validator(pre=True)
-    def validate_credentials(cls, raw_creds: dict) -> dict:  # noqa: N805
+    def validate_credentials(cls, credentials: dict) -> dict:  # noqa: N805
         """Validate required credential fields.
 
         Args:
-            raw_creds (dict): The dictionary of credentials.
+            credentials (dict): The dictionary of credentials.
 
         Returns:
             dict: The validated dictionary of credentials.
@@ -74,42 +75,31 @@ class SharepointCredentials(BaseModel):
             "tenant_id",
         ]
 
-        missing = [k for k in required if not raw_creds.get(k)]
+        missing = [k for k in required if not credentials.get(k)]
         if missing:
             error_msg = f"Missing required credentials: {missing}"
             raise CredentialError(error_msg)
 
-        return raw_creds
+        return credentials
 
     @classmethod
-    def prepare_certificate_credentials(
+    def prepare_certificate_file(
         cls,
-        byte_certificate: bytes | None = None,
-        credentials_cert_auth: str | None = None,
-    ) -> dict[str, str]:
-        """Prepare the credentials for the Sharepoint object.
+        credentials: dict[str, str] | None = None,
+    ) -> None:
+        """Prepare the certificate file for the Sharepoint object.
 
         Args:
-            byte_certificate (bytes | None): The raw credentials as either binary
+            credentials (dict[str, str] | None): The raw credentials as either binary
                 certificate bytes or a credential dictionary.
-            credentials_cert_auth (str, optional): The name of the secret of
-                the password for the certificate file. Defaults to None.
-
-        Returns:
-            dict[str, str]: The prepared credentials.
         """
-        if credentials_cert_auth is None:
-            msg = "credentials_secret_cert_auth is required when using a binary certificate"
-            raise CredentialError(msg)
-
+        byte_certificate = credentials.get("certificate")
         with tempfile.NamedTemporaryFile(
             delete=False, suffix=".pfx", mode="wb"
         ) as temp_pfx:
             temp_pfx.write(byte_certificate)
             temp_pfx_path = temp_pfx.name
-        credentials_cert_auth["certificate_path"] = temp_pfx_path
-
-        return credentials_cert_auth
+        credentials["certificate_path"] = temp_pfx_path
 
 
 class Sharepoint(Source):
@@ -118,7 +108,6 @@ class Sharepoint(Source):
     def __init__(
         self,
         credentials: SharepointCredentials = None,
-        credentials_cert_auth: SharepointCredentials = None,
         config_key: str | None = None,
         *args,
         **kwargs,
@@ -127,16 +116,12 @@ class Sharepoint(Source):
 
         Args:
         credentials (SharepointCredentials): Sharepoint credentials.
-        credentials_secret_cert_auth (str, optional): The name of the secret storing
-            the password for the certificate file. Defaults to None.
         config_key (str, optional): The key in the viadot config holding relevant
             credentials.
         """
         credentials = credentials or get_source_credentials(config_key) or {}
-        if isinstance(credentials, bytes):
-            credentials = SharepointCredentials.prepare_certificate_credentials(
-                credentials, credentials_cert_auth
-            )
+        if credentials.get("certificate"):
+            SharepointCredentials.prepare_certificate_file(credentials)
 
         validated_creds = dict(SharepointCredentials(**credentials))
         super().__init__(*args, credentials=validated_creds, **kwargs)

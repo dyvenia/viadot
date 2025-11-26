@@ -124,14 +124,15 @@ def sharepoint_download_file(
     logger = get_run_logger()
 
     credentials = get_credentials(secret_name=credentials_secret_basic_auth)
-    if credentials_secret_cert_auth:
+    if credentials_secret_cert_auth and isinstance(credentials, bytes):
         credentials_cert_auth = get_credentials(
             secret_name=credentials_secret_cert_auth
         )
+        credentials_cert_auth["certificate"] = credentials
+        credentials = credentials_cert_auth
 
     s = Sharepoint(
         credentials=credentials,
-        credentials_cert_auth=credentials_cert_auth,
         config_key=config_key,
     )
 
