@@ -1,0 +1,80 @@
+name: Template Static Site Prepare (MkDocs)
+
+on:
+  workflow_call:
+    inputs:
+      runs_on:
+        description: "Runner image (e.g. ubuntu-latest)"
+        type: string
+        required: false
+        default: ubuntu-latest
+      project_manager:
+        description: "Python project manager: uv or rye"
+        type: string
+        required: false
+        default: uv
+      uv_sync_flags:
+        description: "Optional flags for the `uv sync` command (e.g. `--group docs` or `--extra docs`). Ignored when using rye."
+        type: string
+        required: false
+      mkdocs_config:
+        description: "Path to mkdocs config file"
+        type: string
+        required: false
+        default: mkdocs.yml
+      static_site_branch:
+        description: "Branch to publish built site to"
+        type: string
+        required: false
+        default: static-site
+      site_dir:
+        description: "Output directory for mkdocs build"
+        type: string
+        required: false
+        default: site
+
+permissions:
+  contents: write
+
+jobs:
+  deploy:
+    name: Setup, Build, and Deploy
+    runs-on: ${{ inputs.runs_on }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # --- Tool setup ---
+      - name: Set up uv
+        if: ${{ inputs.project_manager == 'uv' }}
+        uses: astral-sh/setup-uv@v5
+
+      - name: Set up rye
+        if: ${{ inputs.project_manager == 'rye' }}
+        uses: eifinger/setup-rye@v4
+
+      # --- Sync dependencies ---
+      - name: Sync dependencies uv
+        if: ${{ inputs.project_manager == 'uv' }}
+        run: uv sync ${{ inputs.uv_sync_flags || '' }}
+
+      - name: Sync dependencies rye
+        if: ${{ inputs.project_manager == 'rye' }}
+        run: rye sync
+
+      # --- Build Site ---
+      - name: Build site uv
+        if: ${{ inputs.project_manager == 'uv' }}
+        run: uv run mkdocs build --config-file "${{ inputs.mkdocs_config }}"
+
+      - name: Build site rye
+        if: ${{ inputs.project_manager == 'rye' }}
+        run: rye run mkdocs build --config-file "${{ inputs.mkdocs_config }}"
+
+      # --- Deploy Site ---
+      - name: Deploy to GitHub Pages
+        uses: JamesIves/github-pages-deploy-action@v4
+        with:
+          branch: ${{ inputs.static_site_branch }}
+          folder: ${{ inputs.site_dir }}
+          clean: true

@@ -1,0 +1,63 @@
+name: Template Labeled Issue Slack Notification
+
+on:
+  workflow_call:
+    inputs:
+      match_label:
+        description: "Select label to match for sending notification"
+        required: false
+        default: "devops"
+        type: string
+      color:
+        description: "Color of the Slack message attachment"
+        required: false
+        default: "#3b82f6"
+        type: string
+    secrets:
+      SLACK_WEBHOOK_URL:
+        required: true
+
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+    if: ${{ github.event_name == 'issues' && github.event.action == 'labeled' && github.event.label.name == inputs.match_label }}
+    steps:
+      - uses: slackapi/slack-github-action@v2.1.1
+        with:
+          webhook-type: incoming-webhook
+          webhook: ${{ secrets.SLACK_WEBHOOK_URL }}
+          payload: |
+            {
+              "attachments": [
+                {
+                  "color": "${{ inputs.color }}",
+                  "blocks": [
+                    {
+                      "type": "section",
+                      "text": {
+                        "type": "mrkdwn",
+                        "text": "`${{ github.event.label.name }}` label has been added to issue `${{ github.event.issue.title }}`."
+                      }
+                    },
+                    { "type": "divider" },
+                    {
+                      "type": "context",
+                      "elements": [
+                        {
+                          "type": "mrkdwn",
+                          "text": "*Repository:* <https://github.com/${{ github.repository }}|${{ github.repository }}>"
+                        },
+                        {
+                          "type": "mrkdwn",
+                          "text": "*Workflow:* <https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}|${{ github.workflow }}>"
+                        },
+                        {
+                          "type": "mrkdwn",
+                          "text": "*Issue:* <${{ github.event.issue.html_url }}|#${{ github.event.issue.number }} — ${{ github.event.issue.title }}>"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }

@@ -1,6 +1,6 @@
 [project]
 name = "viadot2"
-version = "2.2.8"
+version = "2.2.16"
 description = "A simple data ingestion library to guide data flows from some places to other places."
 authors = [
     { name = "acivitillo", email = "acivitillo@dyvenia.com" },
@@ -9,40 +9,41 @@ authors = [
 dependencies = [
     "pyodbc>=5.1.0",
     "visions>=0.6.4",
-    "sharepy>=2.0.0",
+    "Office365-REST-Python-Client==2.6.2",
     "sql-metadata>=2.11.0",
     "sendgrid>=6.11.0",
-    "pydantic>=1.10.9,<1.11.0",
+    "pydantic>=2.0.0, <3",
     "aiolimiter>=1.1.0",
     "trino==0.328.*",
     "imagehash>=4.2.1",
     "shapely>=1.8.0",
     "sqlalchemy==2.0.*",
-    "lumacli>=0.1.2, <0.2.0",
+    "lumacli>=0.2.8, <0.3.0",
     "pygit2>=1.13.3, <1.15.0",
-    "openpyxl>=3.0.0",
+    "openpyxl>=3.1.0",
     "prefect>=2.19.7, <3",
     "prefect-sqlalchemy>=0.4.3",
-    "duckdb==1.0.0",
+    "duckdb>1.0.0, <2",
     "requests>=2.32.3",
     "prefect-github>=0.2.7",
     "o365>=2.0.36",
-    # v10.1 is the maximum version compatible with awswrangler 2.x.
-    "pyarrow>=10.0, <10.1.0",
-    # numpy>=2.0 is not compatible with the old pyarrow v10.x.
-    "numpy>=1.23.4, <2.0",
+    "numpy>=2.0.0",
     "defusedxml>=0.7.1",
     "aiohttp>=3.10.5",
     "simple-salesforce==1.12.6",
     "pandas-gbq==0.23.1",
     "paramiko>=3.5.0",
-    # awswrangler 2.x. depends on pandas 1.x.
-    "pandas<2.0",
     "tm1py>=2.0.4",
     "smbprotocol>=1.15.0",
     "tabulate>=0.9.0",
     "prefect-slack<=0.2.7",
-    "prefect-shell<=0.2.6"
+    "prefect-shell<=0.2.6",
+    "dbt-core>=1.8.1,<1.10",
+    "xlrd>=2.0.2",
+    "dbt-adapters==1.14.3",
+    "pyarrow>=18.0.0",
+    "awswrangler>=3.12.1",
+    "pandas>=2.0.0",
 ]
 requires-python = ">=3.10"
 readme = "README.md"
@@ -54,17 +55,16 @@ azure = [
     "azure-storage-blob==12.20.0",
     "adlfs==2024.4.1",
     "azure-identity>=1.16.0",
-    "dbt-sqlserver>=1.3, <1.8",
+    "dbt-sqlserver>=1.8.1, <1.10",
     "prefect-azure-dyvenia[key_vault]==0.1.0", # Adds Key Vault support to Prefect Azure; from https://github.com/trymzet/prefect-azure/tree/add_keyvault_auth
     "prefect_github",
 ]
 aws = [
     "s3fs==2024.6.0",
     "boto3==1.34.106",
-    "dbt-redshift>=1.3, <1.8",
+    "dbt-redshift>=1.8.1, <1.10",
     "minio>=7.0, <8.0",
-    # We need to pin this to 2.x because some code depends on 2.x-only functionality.
-    "awswrangler>=2.20.1, <3.0",
+    "awswrangler>=3.12.1",
     "prefect-aws>=0.4.19",
 ]
 sap = ["pyrfc==3.3.1"]
@@ -155,6 +155,7 @@ ignore = [
     "ANN003",
     "ANN202", # Return type annotation of private functions.
     "ANN204",
+    "TRY300", # Consider moving statement to an `else` block
 ]
 
 [tool.ruff.lint.extend-per-file-ignores]

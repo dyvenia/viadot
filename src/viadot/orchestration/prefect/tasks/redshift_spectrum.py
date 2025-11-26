@@ -28,7 +28,6 @@ def df_to_redshift_spectrum(  # noqa: PLR0913
     index: bool = False,
     compression: str | None = None,
     sep: str = ",",
-    description: str | None = None,
     config_key: str | None = None,
     credentials_secret: str | None = None,
     **kwargs: dict[str, Any] | None,
@@ -54,7 +53,6 @@ def df_to_redshift_spectrum(  # noqa: PLR0913
         compression (str, optional): Compression style (None, snappy, gzip, zstd).
         sep (str, optional): Field delimiter for the output file. Applies only to '.csv'
             extension. Defaults to ','.
-        description (str, optional): AWS Glue catalog table description.
         config_key (str, optional): The key in the viadot config holding relevant
             credentials. Defaults to None.
         credentials_secret (str, optional): The name of a secret block in Prefect
@@ -87,7 +85,6 @@ def df_to_redshift_spectrum(  # noqa: PLR0913
         index=index,
         compression=compression,
         sep=sep,
-        description=description,
         **kwargs,
     )
 

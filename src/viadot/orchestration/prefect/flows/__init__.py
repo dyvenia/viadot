@@ -16,6 +16,7 @@ from .exchange_rates_to_databricks import exchange_rates_to_databricks
 from .exchange_rates_to_redshift_spectrum import exchange_rates_api_to_redshift_spectrum
 from .genesys_to_adls import genesys_to_adls
 from .hubspot_to_adls import hubspot_to_adls
+from .matomo_to_redshift_spectrum import matomo_to_redshift_spectrum
 from .mediatool_to_adls import mediatool_to_adls
 from .mindful_to_adls import mindful_to_adls
 from .outlook_to_adls import outlook_to_adls
@@ -31,6 +32,7 @@ from .sharepoint_to_redshift_spectrum import sharepoint_to_redshift_spectrum
 from .sharepoint_to_s3 import sharepoint_to_s3
 from .sql_server_to_minio import sql_server_to_minio
 from .sql_server_to_parquet import sql_server_to_parquet
+from .sql_server_to_redshift_spectrum import sql_server_to_redshift_spectrum
 from .sql_server_transform import sql_server_transform
 from .supermetrics_to_adls import supermetrics_to_adls
 from .tm1_to_parquet import tm1_to_parquet
@@ -56,6 +58,7 @@ __all__ = [
     "exchange_rates_to_databricks",
     "genesys_to_adls",
     "hubspot_to_adls",
+    "matomo_to_redshift_spectrum",
     "mediatool_to_adls",
     "mindful_to_adls",
     "outlook_to_adls",
@@ -71,6 +74,7 @@ __all__ = [
     "sharepoint_to_s3",
     "sql_server_to_minio",
     "sql_server_to_parquet",
+    "sql_server_to_redshift_spectrum",
     "sql_server_transform",
     "supermetrics_to_adls",
     "tm1_to_parquet",

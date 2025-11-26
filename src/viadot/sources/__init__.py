@@ -14,6 +14,7 @@ from .eurostat import Eurostat
 from .exchange_rates import ExchangeRates
 from .genesys import Genesys
 from .hubspot import Hubspot
+from .matomo import Matomo
 from .mediatool import Mediatool
 from .mindful import Mindful
 from .outlook import Outlook
@@ -43,6 +44,7 @@ __all__ = [
     "ExchangeRates",
     "Genesys",
     "Hubspot",
+    "Matomo",
     "Mediatool",
     "Mindful",
     "Outlook",

@@ -1,0 +1,13 @@
+name: Notify Labeled DevOps
+
+on:
+  issues:
+    types: [labeled]
+
+jobs:
+  notify-devops-label:
+    uses: ./.github/workflows/template_slack_notify.yml
+    with:
+      match_label: devops
+    secrets:
+      SLACK_WEBHOOK_URL: ${{ secrets.SLACK_DEVOPS_NOTIFICATIONS }}

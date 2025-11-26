@@ -39,8 +39,8 @@ class RedshiftSpectrumCredentials(BaseModel):
     # password: Optional[str]
     # engine: Optional[str] = "redshift"
     # dbname: Optional[str]
-    credentials_secret: str | None
-    iam_role: str | None  # The IAM role to assume. Used by `create_schema()`.
+    credentials_secret: str | None = None
+    iam_role: str | None = None  # The IAM role to assume. Used by `create_schema()`.
 
     @root_validator(pre=True)
     def is_configured(cls, credentials: dict[str, Any]) -> dict[str, Any]:  # noqa: N805
@@ -154,7 +154,6 @@ class RedshiftSpectrum(Source):
         if_exists: Literal["overwrite", "overwrite_partitions", "append"] = "overwrite",
         partition_cols: list[str] | None = None,
         sep: str = ",",
-        description: str | None = None,
         **kwargs,
     ) -> None:
         """Upload a pandas `DataFrame` into a CSV or Parquet file.
@@ -182,8 +181,6 @@ class RedshiftSpectrum(Source):
                 to create partitions. Only takes effect if dataset=True. Defaults to
                 None.
             sep (str, optional): Field delimiter for the output file. Defaults to ','.
-            description (str, optional): Amazon Redshift Spectrum table description.
-                Defaults to None.
         """
         # Ensure files are in a directory named {table}.
         if not to_path.rstrip("/").endswith(table):
@@ -199,7 +196,6 @@ class RedshiftSpectrum(Source):
                 database=schema,
                 table=table,
                 partition_cols=partition_cols,
-                description=description,
                 **kwargs,
             )
         elif extension == ".csv":
@@ -297,7 +293,6 @@ class RedshiftSpectrum(Source):
     def create_schema(
         self,
         schema: str,
-        description: str | None = None,
     ) -> None:
         """Create an external schema in Amazon Redshift Spectrum.
 
@@ -307,12 +302,8 @@ class RedshiftSpectrum(Source):
 
         Args:
             schema (str): The name of the schema.
-            description (str, optional): The description of the schema. Defaults to
-                None.
         """
-        self._create_glue_database(
-            database=schema, description=description, exist_ok=True
-        )
+        self._create_glue_database(database=schema, exist_ok=True)
         create_schema_query = f"""
 create external schema if not exists "{schema}" from data catalog
 database '{schema}'
@@ -327,21 +318,17 @@ CREATE EXTERNAL DATABASE IF NOT EXISTS;
     def _create_glue_database(
         self,
         database: str,
-        description: str | None = None,
         exist_ok: bool = False,
     ):
         """Create an AWS Glue database.
 
         Args:
             database (str): The name of the database.
-            description (Optional[str], optional): The description of the database.
-                Defaults to None.
             exist_ok (bool, optional): Whether to skip if the database already exists.
                 If set to False, will throw `AlreadyExistsException`. Defaults to False.
         """
         wr.catalog.create_database(
             name=database,
-            description=description,
             boto3_session=self.session,
             exist_ok=exist_ok,
         )

@@ -2,15 +2,17 @@
 
 from pathlib import Path
 import re
+import zipfile
 
 import pendulum
 from pydantic import BaseModel, SecretStr, root_validator
 import smbclient
+import smbprotocol
 
 from viadot.config import get_source_credentials
 from viadot.exceptions import CredentialError
-from viadot.orchestration.prefect.utils import DynamicDateHandler
 from viadot.sources.base import Source
+from viadot.utils import parse_dates
 
 
 class SMBCredentials(BaseModel):
@@ -45,7 +47,7 @@ class SMBCredentials(BaseModel):
 class SMB(Source):
     def __init__(
         self,
-        base_path: str,
+        base_paths: list[str],
         credentials: SMBCredentials | None = None,
         config_key: str | None = None,
         *args,
@@ -54,20 +56,43 @@ class SMB(Source):
         """Initialize the SMB with a base path.
 
         Args:
-            base_path (str): The root directory to start scanning from.
+            base_paths (list[str]): The root directory or directories to start scanning
+                from.
             credentials (SMBCredentials): Sharepoint credentials.
             config_key (str, optional): The key in the viadot config holding relevant
                 credentials.
         """
-        self.base_path = base_path
+        self.base_paths = base_paths
+
         raw_creds = credentials or get_source_credentials(config_key) or {}
         validated_creds = SMBCredentials(**raw_creds)
-        super().__init__(*args, credentials=validated_creds.dict(), **kwargs)
+        super().__init__(*args, credentials=validated_creds.model_dump(), **kwargs)
 
-        smbclient.ClientConfig(
-            username=self.credentials.get("username"),
-            password=self.credentials.get("password").get_secret_value(),
-        )
+        normalized_paths = [re.sub(r"\\+", r"\\", path) for path in self.base_paths]
+
+        parts = normalized_paths[0].lstrip("\\").split("\\")
+        if not parts or not parts[0]:
+            msg = f"Invalid base path format: {self.base_paths[0]}"
+            raise ValueError(msg)
+
+        server_host_or_ip = parts[0]
+
+        try:
+            smbclient.register_session(
+                server_host_or_ip,
+                username=self.credentials.get("username"),
+                password=self.credentials.get("password").get_secret_value(),
+            )
+            self.logger.info("Connection succesfully established.")
+        except smbprotocol.exceptions.LogonFailure:
+            self.logger.exception("Authentication failed: invalid credentials.")
+            raise
+        except smbprotocol.exceptions.PasswordExpired:
+            self.logger.exception("Authentication failed: password expired.")
+            raise
+        except Exception:
+            self.logger.exception("Connection failed.")
+            raise
 
     def scan_and_store(
         self,
@@ -77,7 +102,9 @@ class SMB(Source):
         dynamic_date_symbols: list[str] = ["<<", ">>"],  # noqa: B006
         dynamic_date_format: str = "%Y-%m-%d",
         dynamic_date_timezone: str = "UTC",
-    ) -> dict[str, bytes]:
+        prefix_levels_to_add: int = 0,
+        zip_inner_file_regexes: str | list[str] | None = None,
+    ) -> tuple[dict[str, bytes], list[str]]:
         """Scan the directory structure for files and store their contents in memory.
 
         Args:
@@ -99,96 +126,57 @@ class SMB(Source):
                 Defaults to "%Y-%m-%d".
             dynamic_date_timezone (str, optional): Timezone used for dynamic date
                 processing. Defaults to "UTC".
+            prefix_levels_to_add (int, optional): Number of parent folder levels to
+                include as a prefix to the filename,counting from the deepest (closest)
+                folder upwards. Defaults to 0, meaning no prefix is added.
+            zip_inner_file_regexes (str | list[str] | None): Regular expression string
+                or list of regex patterns used to filter files *inside* ZIP archives.
+                If provided, ZIP files will be unpacked and only matching inner files
+                will be extracted and stored. Defaults to None.
 
         Returns:
-            dict[str, bytes]: A dictionary mapping file paths to their contents.
+            tuple[dict[str, bytes], list[str]]:
+            - A dictionary mapping file paths to their contents in bytes.
+            - A list of file paths that were skipped or failed to be read.
         """
-        date_filter_parsed = self._parse_dates(
+        date_filter_parsed = parse_dates(
             date_filter=date_filter,
             dynamic_date_symbols=dynamic_date_symbols,
             dynamic_date_format=dynamic_date_format,
             dynamic_date_timezone=dynamic_date_timezone,
         )
 
-        return self._scan_directory(
-            path=self.base_path,
+        return self._scan_directories(
+            paths=self.base_paths,
             filename_regex=filename_regex,
             extensions=extensions,
             date_filter_parsed=date_filter_parsed,
+            prefix_levels_to_add=prefix_levels_to_add,
+            zip_inner_file_regexes=zip_inner_file_regexes,
         )
 
-    def _parse_dates(
+    def _scan_directories(
         self,
-        date_filter: str | tuple[str, str] | None = None,
-        dynamic_date_symbols: list[str] = ["<<", ">>"],  # noqa: B006
-        dynamic_date_format: str = "%Y-%m-%d",
-        dynamic_date_timezone: str = "UTC",
-    ) -> pendulum.Date | tuple[pendulum.Date, pendulum.Date] | None:
-        """Parses a date or date range, supporting dynamic date symbols.
-
-        Args:
-            date_filter (str | tuple[str, str] | None):
-                - A single date string (e.g., "2024-03-03").
-                - A tuple containing exactly two date strings, 'start' and 'end' date.
-                - None, which applies no date filter.
-                Defaults to None.
-            dynamic_date_symbols (list[str]): Symbols for dynamic date handling.
-                Defaults to ["<<", ">>"].
-            dynamic_date_format (str): Format used for dynamic date parsing.
-                Defaults to "%Y-%m-%d".
-            dynamic_date_timezone (str): Timezone used for dynamic date processing.
-                Defaults to "UTC".
-
-        Returns:
-            pendulum.Date: If a single date is provided.
-            tuple[pendulum.Date, pendulum.Date]: If a date range is provided.
-            None: If `date_filter` is None.
-
-        Raises:
-            ValueError: If `date_filter` is neither a string nor a tuple of exactly
-                two strings.
-        """
-        if date_filter is None:
-            return None
-
-        ddh = DynamicDateHandler(
-            dynamic_date_symbols=dynamic_date_symbols,
-            dynamic_date_format=dynamic_date_format,
-            dynamic_date_timezone=dynamic_date_timezone,
-        )
-
-        match date_filter:
-            case str():
-                return pendulum.parse(ddh.process_dates(date_filter)).date()
-
-            case (start, end) if isinstance(start, str) and isinstance(end, str):
-                return (
-                    pendulum.parse(ddh.process_dates(start)).date(),
-                    pendulum.parse(ddh.process_dates(end)).date(),
-                )
-
-            case _:
-                msg = (
-                    "date_filter must be a string, a tuple of exactly 2 dates, or None."
-                )
-                raise ValueError(msg)
-
-    def _scan_directory(
-        self,
-        path: str,
+        paths: list[str],
         filename_regex: str | list[str] | None = None,
         extensions: str | list[str] | None = None,
         date_filter_parsed: pendulum.Date
         | tuple[pendulum.Date, pendulum.Date]
         | None = None,
-    ) -> dict[str, bytes]:
+        prefix_levels_to_add: int = 0,
+        zip_inner_file_regexes: str | list[str] | None = None,
+    ) -> tuple[dict[str, bytes], list[str]]:
         """Recursively scans a directory for matching files based on filters.
 
         It applies 'filename_regex' and 'extensions' filters and can filter files based
         on modification dates - 'date_filter_parsed'.
 
+        It applies filters to both files and directories. Directories are only scanned
+        recursively if their modification date matches the given filter.
+        This optimization avoids unnecessary traversal of unchanged folders.
+
         Args:
-            path (str): The directory path to scan.
+            paths (list[str]): The root directory or directories to start scanning from.
             filename_regex (str | list[str] | None, optional): A regular expression
                 string or list of regex patterns used to filter file names. If provided,
                 only file names matching the pattern(s) will be included.
@@ -202,50 +190,200 @@ class SMB(Source):
                 - A tuple of two `pendulum.Date` values for date range filtering.
                 - None, if no date filter is applied.
                 Defaults to None.
+            prefix_levels_to_add (int, optional): Number of parent folder levels to
+                include as a prefix to the filename,counting from the deepest (closest)
+                folder upwards. Defaults to 0, meaning no prefix is added.
+            zip_inner_file_regexes (str | list[str] | None): Regular expression string
+                or list of regex patterns used to filter files *inside* ZIP archives.
+                If provided, ZIP files will be unpacked and only matching inner files
+                will be extracted and stored. Defaults to None.
+
+        Returns:
+            tuple[dict[str, bytes], list[str]]:
+            - A dictionary mapping file paths to their contents in bytes.
+            - A list of file paths that were skipped or failed to be read.
         """
         found_files = {}
+        problematic_entries = []
 
-        try:
+        for path in paths:
             entries = self._get_directory_entries(path)
             for entry in entries:
-                if entry.is_file() and self._is_matching_file(
-                    entry, filename_regex, extensions, date_filter_parsed
-                ):
-                    found_files.update(self._get_file_content(entry))
-                elif entry.is_dir():
-                    found_files.update(
-                        self._scan_directory(
-                            entry.path, filename_regex, extensions, date_filter_parsed
+                # Skip temp files
+                if entry.name.startswith("~$"):
+                    problematic_entries.append(entry.name)
+                    continue
+
+                try:
+                    entry_mod_date_parsed = pendulum.from_timestamp(
+                        entry.stat().st_mtime
+                    ).date()
+                    entry_name = entry.name
+
+                    if entry.is_file() and self._is_matching_file(
+                        file_name=entry_name,
+                        file_mod_date_parsed=entry_mod_date_parsed,
+                        filename_regex=filename_regex,
+                        extensions=extensions,
+                        date_filter_parsed=date_filter_parsed,
+                    ):
+                        found_files.update(
+                            self._get_file_content(
+                                entry, prefix_levels_to_add, zip_inner_file_regexes
+                            )
                         )
-                    )
-        except Exception as e:
-            self.logger.exception(f"Error scanning or downloading from {path}: {e}")  # noqa: TRY401
 
-        return found_files
+                    elif entry.is_dir():
+                        date_match = self._is_date_match(
+                            entry_mod_date_parsed, date_filter_parsed
+                        )
 
-    def _get_file_content(self, entry: smbclient._os.SMBDirEntry) -> dict[str, bytes]:
+                        if date_match:
+                            found_files.update(
+                                self._scan_directories(
+                                    paths=[entry.path],
+                                    filename_regex=filename_regex,
+                                    extensions=extensions,
+                                    date_filter_parsed=date_filter_parsed,
+                                    prefix_levels_to_add=prefix_levels_to_add,
+                                    zip_inner_file_regexes=zip_inner_file_regexes,
+                                )[0]  # Only the matched files dict is used
+                            )
+                except smbprotocol.exceptions.SMBOSError as e:
+                    self.logger.warning(f"Entry not found: {e}")
+                    problematic_entries.append(entry.name)
+                except Exception:
+                    self.logger.exception(f"Error scanning or downloading from {path}.")
+                    raise
+
+        return found_files, problematic_entries
+
+    def _build_prefix_from_path(self, file_path: str, levels: int) -> str:
+        """Extract parent folder names to use as prefix.
+
+        Args:
+            file_path (str): The full or relative path to the file.
+            levels (int): Number of parent folder levels to include.
+
+        Returns:
+            str: Prefix string with parent folder names joined by underscores.
+                 Returns empty string if levels is 0 or no valid parents exist.
+        """
+        if levels <= 0:
+            return ""
+
+        normalized_path = file_path.replace("\\", "/")
+        path = Path(normalized_path)
+
+        # Filter out invalid/empty path components
+        parent_parts = [
+            p for p in path.parent.parts if p and p not in ("/", "\\", ".", "//", "")
+        ]
+
+        # Clamp levels to valid range
+        valid_levels = min(levels, len(parent_parts))
+
+        if valid_levels == 0:
+            return ""
+
+        # Take the last N parent folders (closest to file)
+        prefix_parts = parent_parts[-valid_levels:]
+
+        return "_".join(prefix_parts)
+
+    def _add_prefix_to_filename(self, filename: str, prefix: str) -> str:
+        """Combine prefix and filename with underscore separator.
+
+        Args:
+            filename (str): The base filename.
+            prefix (str): The prefix to add.
+
+        Returns:
+            str: Prefixed filename, or original filename if prefix is empty.
+        """
+        if not prefix:
+            return filename
+        return f"{prefix}_{filename}"
+
+    def _get_file_content(
+        self,
+        entry: smbclient._os.SMBDirEntry,
+        prefix_levels_to_add: int = 0,
+        zip_inner_file_regexes: str | list[str] | None = None,
+    ) -> dict[str, bytes]:
         """Extracts the content of a file from an SMB directory entry.
 
-        This function takes an SMB directory entry, logs the file path,
-        fetches the file's content, and returns a dictionary with the
-        file name as the key and its content as the value.
+        For ZIP files, extracts files matching the zip_inner_file_regexes pattern.
+        For other files, reads the entire content.
 
         Args:
             entry (smbclient._os.SMBDirEntry): An SMB directory entry object.
+            prefix_levels_to_add (int): Number of parent folder levels to include
+                as prefix.
+            zip_inner_file_regexes (str | list[str] | None): Regular expression string
+                or list of regex patterns used to filter files *inside* ZIP archives.
+                If provided, ZIP files will be unpacked and only matching inner files
+                will be extracted and stored. Defaults to None.
 
         Returns:
-            dict[str, bytes]: A dictionary with a single key-value pair, where the key
-                is the file name and the value is the file's content.
+            dict[str, bytes]: Dictionary with file name(s) as keys and content
+                as values.
         """
         file_path = entry.path
-        file_name = entry.name
+        contents = {}
 
         self.logger.info(f"Found: {file_path}")
 
-        with smbclient.open_file(file_path, mode="rb") as file:
-            content = file.read()
+        # Build prefix once for this file
+        prefix = self._build_prefix_from_path(file_path, prefix_levels_to_add)
+        is_zip = file_path.lower().endswith(".zip")
 
-        return {file_name: content}
+        if is_zip and zip_inner_file_regexes:
+            try:
+                with smbclient.open_file(file_path, mode="rb") as remote_zip:  # noqa: SIM117
+                    with zipfile.ZipFile(remote_zip) as zf:
+                        matched_count = 0
+                        for zip_member_name in zf.namelist():
+                            # Skip directories inside ZIP
+                            if zip_member_name.endswith("/"):
+                                continue
+
+                            if self._matches_any_regex(
+                                text=zip_member_name,
+                                patterns=zip_inner_file_regexes,
+                            ):
+                                with zf.open(zip_member_name) as member:
+                                    content = member.read()
+                                    # Use only the base filename from ZIP member
+                                    base_name = Path(zip_member_name).name
+                                    prefixed_name = self._add_prefix_to_filename(
+                                        base_name, prefix
+                                    )
+                                    contents[prefixed_name] = content
+                                    matched_count += 1
+
+                        if matched_count == 0:
+                            self.logger.debug(
+                                f"No matching files found in ZIP: {file_path}. "
+                                f"Filter: {zip_inner_file_regexes}"
+                            )
+
+            except zipfile.BadZipFile:
+                self.logger.warning(f"Invalid ZIP file: {file_path}")
+            except Exception as e:
+                self.logger.exception(f"Error reading ZIP file {file_path}: {e}")  # noqa: TRY401
+                raise
+        else:
+            # Regular file handling
+            with smbclient.open_file(file_path, mode="rb") as file:
+                content = file.read()
+
+            file_path_normalized = file_path.replace("\\", "/")
+            filename = Path(file_path_normalized).name
+            prefixed_name = self._add_prefix_to_filename(filename, prefix)
+            contents[prefixed_name] = content
+
+        return contents
 
     def _get_directory_entries(self, path: str):
         """Get directory entries using smbclient.
@@ -258,9 +396,42 @@ class SMB(Source):
         """
         return smbclient.scandir(path)
 
+    def _is_date_match(
+        self,
+        file_modification_date: pendulum.Date,
+        date_filter_parsed: pendulum.Date | tuple[pendulum.Date, pendulum.Date] | None,
+    ) -> bool:
+        """Check if the file modification date matches the given date filter.
+
+        Args:
+            file_modification_date (pendulum.Date): The modification date of the file.
+            date_filter_parsed (
+                pendulum.Date | tuple[pendulum.Date, pendulum.Date] | None
+            ):
+                - A single `pendulum.Date` for exact date filtering.
+                - A tuple of two `pendulum.Date` values for date range filtering.
+                - None, if no date filter is applied. Defaults to None.
+
+        Returns:
+            bool: True if the file_modification_date matches the filter or if no filter
+                is applied. False otherwise.
+        """
+        if date_filter_parsed is None:
+            return True
+
+        if isinstance(date_filter_parsed, pendulum.Date):
+            return file_modification_date == date_filter_parsed
+
+        if isinstance(date_filter_parsed, tuple):
+            start_date, end_date = date_filter_parsed
+            return start_date <= file_modification_date <= end_date
+
+        return False
+
     def _is_matching_file(
         self,
-        entry: smbclient._os.SMBDirEntry,
+        file_name: str,
+        file_mod_date_parsed: pendulum.Date,
         filename_regex: str | list[str] | None = None,
         extensions: str | list[str] | None = None,
         date_filter_parsed: pendulum.Date
@@ -275,8 +446,9 @@ class SMB(Source):
         - Exact date or date range filtering.
 
         Args:
-            entry (smbclient._os.SMBDirEntry): A directory entry object from
-                the directory scan.
+            file_name (str): The name of the file to evaluate.
+            file_mod_date_parsed (pendulum.Date): The parsed modification date of
+                the file.
             filename_regex (str | list[str] | None, optional): A regular expression
                 string or list of regex patterns used to filter file names. If provided,
                 only file names matching the pattern(s) will be included.
@@ -294,11 +466,7 @@ class SMB(Source):
             bool: True if the file matches all criteria or no criteria are provided,
                 False otherwise.
         """
-        name_lower = entry.name.lower()
-
-        # Skip temp files
-        if name_lower.startswith("~$") or entry.is_dir():
-            return False
+        name_lower = file_name.lower()
 
         # Normalize to lists
         filename_regex_list = (
@@ -324,14 +492,7 @@ class SMB(Source):
             return False
 
         if date_filter_parsed:
-            file_creation_date = pendulum.from_timestamp(entry.stat().st_ctime).date()
-
-            if isinstance(date_filter_parsed, pendulum.Date):
-                return file_creation_date == date_filter_parsed
-
-            if isinstance(date_filter_parsed, tuple):
-                start_date, end_date = date_filter_parsed
-                return start_date <= file_creation_date <= end_date
+            return self._is_date_match(file_mod_date_parsed, date_filter_parsed)
 
         return True
 
@@ -354,6 +515,30 @@ class SMB(Source):
         except re.error as e:
             self.logger.warning(f"Invalid regex pattern: {pattern} — Error: {e}")
             return False
+
+    def _matches_any_regex(
+        self,
+        text: str,
+        patterns: str | list[str] | None = None,
+    ) -> bool:
+        """Check whether the given text matches any of the provided regex pattern(s).
+
+        Args:
+            text (str): The string to test.
+            patterns (str | list[str] | None): A regex pattern or list of patterns.
+                If None, this method returns True (no filtering applied).
+
+        Returns:
+            bool: True if the text matches at least one pattern, or if no pattern
+                is given.
+        """
+        if not patterns:
+            return True
+
+        if isinstance(patterns, str):
+            patterns = [patterns]
+
+        return any(self._safe_regex_match(pattern, text) for pattern in patterns)
 
     def save_files_locally(
         self, file_data: dict[str, bytes], destination_dir: str

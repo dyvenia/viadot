@@ -10,6 +10,7 @@ import subprocess
 from typing import TYPE_CHECKING, Any, Literal, Optional
 
 import pandas as pd
+import pendulum
 import pyodbc
 import requests
 from requests.adapters import HTTPAdapter
@@ -23,6 +24,7 @@ from requests.packages.urllib3.util.retry import Retry
 from urllib3.exceptions import ProtocolError
 
 from viadot.exceptions import APIError, ValidationError
+from viadot.orchestration.prefect.utils import DynamicDateHandler
 from viadot.signals import SKIP
 
 
@@ -1103,3 +1105,59 @@ def df_clean_column(
                 inplace=True,
             )
     return df
+
+
+def parse_dates(
+    date_filter: str | tuple[str, str] | None = None,
+    dynamic_date_symbols: list[str] | None = None,
+    dynamic_date_format: str = "%Y-%m-%d",
+    dynamic_date_timezone: str = "UTC",
+) -> pendulum.Date | tuple[pendulum.Date, pendulum.Date] | None:
+    """Parses a date or date range, supporting dynamic date symbols.
+
+    Args:
+        date_filter (str | tuple[str, str] | None):
+            - A single date string (e.g., "2024-03-03").
+            - A tuple containing exactly two date strings, 'start' and 'end' date.
+            - None, which applies no date filter.
+            Defaults to None.
+        dynamic_date_symbols (list[str]): Symbols for dynamic date handling.
+            Defaults to None.
+        dynamic_date_format (str): Format used for dynamic date parsing.
+            Defaults to "%Y-%m-%d".
+        dynamic_date_timezone (str): Timezone used for dynamic date processing.
+            Defaults to "UTC".
+
+    Returns:
+        pendulum.Date: If a single date is provided.
+        tuple[pendulum.Date, pendulum.Date]: If a date range is provided.
+        None: If `date_filter` is None.
+
+    Raises:
+        ValueError: If `date_filter` is neither a string nor a tuple of exactly
+            two strings.
+    """
+    if date_filter is None:
+        return None
+
+    dynamic_date_symbols = dynamic_date_symbols or ["<<", ">>"]
+
+    ddh = DynamicDateHandler(
+        dynamic_date_symbols=dynamic_date_symbols,
+        dynamic_date_format=dynamic_date_format,
+        dynamic_date_timezone=dynamic_date_timezone,
+    )
+
+    match date_filter:
+        case str():
+            return pendulum.parse(ddh.process_dates(date_filter)).date()
+
+        case (start, end) if isinstance(start, str) and isinstance(end, str):
+            return (
+                pendulum.parse(ddh.process_dates(start)).date(),
+                pendulum.parse(ddh.process_dates(end)).date(),
+            )
+
+        case _:
+            msg = "date_filter must be a string, a tuple of exactly 2 dates, or None."
+            raise ValueError(msg)
