@@ -15,7 +15,6 @@ from pydantic import BaseModel, root_validator
 
 from viadot.config import get_source_credentials
 from viadot.exceptions import CredentialError
-from viadot.orchestration.prefect.utils import get_credentials
 from viadot.signals import SKIP
 from viadot.sources.base import Source
 from viadot.utils import (
@@ -83,38 +82,34 @@ class SharepointCredentials(BaseModel):
         return raw_creds
 
     @classmethod
-    def prepare_credentials(
+    def prepare_certificate_credentials(
         cls,
-        raw_creds: bytes | dict[str, str],
-        credentials_secret_cert_auth: str | None = None,
+        byte_certificate: bytes | None = None,
+        credentials_cert_auth: str | None = None,
     ) -> dict[str, str]:
         """Prepare the credentials for the Sharepoint object.
 
         Args:
-            raw_creds (bytes | dict[str, str]): The raw credentials as either binary
+            byte_certificate (bytes | None): The raw credentials as either binary
                 certificate bytes or a credential dictionary.
-            credentials_secret_cert_auth (str, optional): The name of the secret of
+            credentials_cert_auth (str, optional): The name of the secret of
                 the password for the certificate file. Defaults to None.
 
         Returns:
             dict[str, str]: The prepared credentials.
         """
-        # bytes means we received a binary certificate
-        if isinstance(raw_creds, bytes):
-            if credentials_secret_cert_auth is None:
-                msg = "credentials_secret_cert_auth is required when using a binary certificate"
-                raise CredentialError(msg)
-            with tempfile.NamedTemporaryFile(
-                delete=False, suffix=".pfx", mode="wb"
-            ) as temp_pfx:
-                temp_pfx.write(raw_creds)
-                temp_pfx_path = temp_pfx.name
-            credentials = get_credentials(secret_name=credentials_secret_cert_auth)
-            credentials["certificate_path"] = temp_pfx_path
+        if credentials_cert_auth is None:
+            msg = "credentials_secret_cert_auth is required when using a binary certificate"
+            raise CredentialError(msg)
 
-            return credentials
+        with tempfile.NamedTemporaryFile(
+            delete=False, suffix=".pfx", mode="wb"
+        ) as temp_pfx:
+            temp_pfx.write(byte_certificate)
+            temp_pfx_path = temp_pfx.name
+        credentials_cert_auth["certificate_path"] = temp_pfx_path
 
-        return raw_creds
+        return credentials_cert_auth
 
 
 class Sharepoint(Source):
@@ -123,7 +118,7 @@ class Sharepoint(Source):
     def __init__(
         self,
         credentials: SharepointCredentials = None,
-        credentials_secret_cert_auth: str | None = None,
+        credentials_cert_auth: SharepointCredentials = None,
         config_key: str | None = None,
         *args,
         **kwargs,
@@ -137,13 +132,14 @@ class Sharepoint(Source):
         config_key (str, optional): The key in the viadot config holding relevant
             credentials.
         """
-        raw_creds = credentials or get_source_credentials(config_key) or {}
-        if isinstance(raw_creds, bytes):
-            self.credentials_binary = raw_creds
-        prepared_creds = SharepointCredentials.prepare_credentials(
-            raw_creds, credentials_secret_cert_auth
-        )
-        validated_creds = dict(SharepointCredentials(**prepared_creds))
+        credentials = credentials or get_source_credentials(config_key) or {}
+        if isinstance(credentials, bytes):
+            credentials = SharepointCredentials.prepare_certificate_credentials(
+                credentials,
+                credentials_cert_auth
+            )
+
+        validated_creds = dict(SharepointCredentials(**credentials))
         super().__init__(*args, credentials=validated_creds, **kwargs)
 
     def get_client(self) -> GraphClient:
@@ -533,6 +529,7 @@ class SharepointList(Sharepoint):
         self,
         default_protocol: str | None = "https://",
         credentials: SharepointCredentials = None,
+        credentials_cert_auth: SharepointCredentials = None,
         config_key: str | None = None,
         *args,
         **kwargs,
@@ -543,12 +540,18 @@ class SharepointList(Sharepoint):
             default_protocol (str, optional): The default protocol to use for
                 SharePoint URLs.Defaults to "https://".
             credentials (SharepointCredentials, optional): SharePoint credentials.
+            credentials_cert_auth (SharepointCredentials, optional):
+                SharePoint certificate credentials.
             config_key (str, optional): The key in the viadot config holding relevant
                 credentials.
         """
         self.default_protocol = default_protocol
         super().__init__(
-            *args, credentials=credentials, config_key=config_key, **kwargs
+            *args,
+            credentials=credentials,
+            credentials_cert_auth=credentials_cert_auth,
+            config_key=config_key,
+            **kwargs,
         )
 
     def _find_and_rename_case_insensitive_duplicated_column_names(

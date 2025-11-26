@@ -179,8 +179,8 @@ def test_credentials_secret_cert_auth_required_with_certificate():
 
 
 def test_acquire_token_with_certificate():
-    # In the new approach we pass binary bytes as credentials and Sharepoint
-    mocked_secrets = {
+    # pass binary certificate via `credentials` and the rest via `credentials_cert_auth`
+    mocked_cert_auth = {
         "site": "tenant.sharepoint.com",  # pragma: allowlist secret
         "client_id": "dummy_client_id",  # pragma: allowlist secret
         "tenant_id": "dummy_tenant_id",  # pragma: allowlist secret
@@ -199,24 +199,25 @@ def test_acquire_token_with_certificate():
             captured["scopes"] = scopes
             return {"access_token": "token"}
 
-    with (
-        patch("viadot.sources.sharepoint.get_credentials", return_value=mocked_secrets),
-        patch(
-            "viadot.sources.sharepoint.msal.ConfidentialClientApplication",
-            new=_DummyApp,
-        ),
+    with patch(
+        "viadot.sources.sharepoint.msal.ConfidentialClientApplication",
+        new=_DummyApp,
     ):
         sp = Sharepoint(
             credentials=b"blah_blah",
-            credentials_secret_cert_auth="secret-secret",  # noqa: S106, # pragma: allowlist secret
+            credentials_cert_auth=mocked_cert_auth,
         )
         token = sp._acquire_token_func()
 
     # Token returned
     assert isinstance(token, dict)
     # MSAL was initialized with expected values
-    assert captured["client_id"] == mocked_secrets["client_id"]
-    assert mocked_secrets["tenant_id"] in captured["authority"]
+    assert captured["client_id"] == mocked_cert_auth["client_id"]
+    assert mocked_cert_auth["tenant_id"] in captured["authority"]
+    # Certificate flow uses a dict client_credential with passphrase and path
+    assert isinstance(captured["client_credential"], dict)
+    assert captured["client_credential"]["passphrase"] == mocked_cert_auth["certificate_password"]
+    assert "private_key_pfx_path" in captured["client_credential"]
 
 
 def test_sharepoint_default_na(sharepoint_mock):
