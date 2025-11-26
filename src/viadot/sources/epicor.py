@@ -1,8 +1,9 @@
 """Source for connecting to Epicor Prelude API."""
 
 from typing import Any, Literal
+from xml.etree.ElementTree import Element as ElementT
 
-from defusedxml import ElementTree
+from defusedxml import ElementTree as ElementDE
 import pandas as pd
 from pydantic import BaseModel
 import requests
@@ -22,7 +23,7 @@ def parse_orders_xml(response: requests.models.Response) -> pd.DataFrame:
     Returns:
         pd.DataFrame: xml data in a form of pandas DataFrame.
     """
-    root = ElementTree.fromstring(response.text)
+    root = ElementDE.fromstring(response.text)
     rows = []
 
     for child in root:
@@ -58,7 +59,7 @@ def parse_customer_xml(response: requests.models.Response) -> pd.DataFrame:
         pd.DataFrame: xml data in a form of pandas DataFrame.
     """
     xml_str = response.text
-    root = ElementTree.fromstring(xml_str)
+    root = ElementDE.fromstring(xml_str)
 
     rows = []
 
@@ -92,7 +93,7 @@ def parse_customer_xml(response: requests.models.Response) -> pd.DataFrame:
     return pd.DataFrame(rows)
 
 
-def flatten_element(elem: ElementTree.Element, prefix: str = "") -> dict[str, str]:
+def flatten_element(elem: ElementT, prefix: str = "") -> dict[str, str]:
     """Flatten element tree into a dict.
 
     Args:
@@ -195,7 +196,7 @@ class Epicor(Source):
         }
 
         response = handle_api_response(url=url, headers=headers, method="POST")
-        root = ElementTree.fromstring(response.text)
+        root = ElementDE.fromstring(response.text)
         return root.find("AccessToken").text
 
     def validate_filter(self, filters_xml: str) -> None:
@@ -208,7 +209,7 @@ class Epicor(Source):
             DataRangeError: If start or end date is missing.
 
         """
-        root = ElementTree.fromstring(filters_xml)
+        root = ElementDE.fromstring(filters_xml)
         for child in root:
             for subchild in child:
                 if (
