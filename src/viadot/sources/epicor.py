@@ -1,8 +1,8 @@
 """Source for connecting to Epicor Prelude API."""
 
 from typing import Any, Literal
-import xml.etree.ElementTree as ET
 
+from defusedxml import ElementTree
 import pandas as pd
 from pydantic import BaseModel
 import requests
@@ -13,15 +13,16 @@ from viadot.sources.base import Source
 from viadot.utils import handle_api_response
 
 
-"""The official documentation does not specify the list of required
-fields so they were set as optional in BaseModel classes.
+def parse_orders_xml(response: requests.models.Response) -> pd.DataFrame:
+    """Parse XML order data into a pandas DataFrame.
 
-Each Epicor Prelude view requires different XML parser.
-"""
+    Args:
+        response (requests.models.Response): Response from Epicor API.
 
-
-def parse_orders_xml(response):
-    root = ET.fromstring(response.text)
+    Returns:
+        pd.DataFrame: xml data in a form of pandas DataFrame.
+    """
+    root = ElementTree.fromstring(response.text)
     rows = []
 
     for child in root:
@@ -47,27 +48,17 @@ def parse_orders_xml(response):
     return pd.DataFrame(rows)
 
 
-def flatten_element(elem, prefix=""):
-    """Flatten element tree into a dict."""
-    if elem is None:
-        return {}
+def parse_customer_xml(response: requests.models.Response) -> pd.DataFrame:
+    """Parse XML customer data into a pandas DataFrame.
 
-    data = {}
-    for child in elem:
-        tag = f"{prefix}{child.tag}"
+    Args:
+        response (requests.models.Response): Response from Epicor API.
 
-        if len(child):  # ma pod-elementy
-            nested = flatten_element(child, prefix=tag + ".")
-            data.update(nested)
-        else:
-            data[tag] = child.text
-
-    return data
-
-
-def parse_customer_xml(response):
+    Returns:
+        pd.DataFrame: xml data in a form of pandas DataFrame.
+    """
     xml_str = response.text
-    root = ET.fromstring(xml_str)
+    root = ElementTree.fromstring(xml_str)
 
     rows = []
 
@@ -101,6 +92,32 @@ def parse_customer_xml(response):
     return pd.DataFrame(rows)
 
 
+def flatten_element(elem: ElementTree.Element, prefix: str = "") -> dict[str, str]:
+    """Flatten element tree into a dict.
+
+    Args:
+        elem (str): XML element to flatten.
+        prefix: Prefix for building dotted tag paths.
+
+    Returns:
+        dict[str, str]: Mapping of dotted tag paths to leaf text values.
+    """
+    if elem is None:
+        return {}
+
+    data = {}
+    for child in elem:
+        tag = f"{prefix}{child.tag}"
+
+        if len(child):
+            nested = flatten_element(child, prefix=tag + ".")
+            data.update(nested)
+        else:
+            data[tag] = child.text
+
+    return data
+
+
 class EpicorCredentials(BaseModel):
     host: str
     port: int = 443
@@ -109,6 +126,8 @@ class EpicorCredentials(BaseModel):
 
 
 class Epicor(Source):
+    """Source for connecting to Epicor Prelude API."""
+
     def __init__(
         self,
         base_url: str,
@@ -176,12 +195,20 @@ class Epicor(Source):
         }
 
         response = handle_api_response(url=url, headers=headers, method="POST")
-        root = ET.fromstring(response.text)
+        root = ElementTree.fromstring(response.text)
         return root.find("AccessToken").text
 
     def validate_filter(self, filters_xml: str) -> None:
-        "Function checking if user had specified date range filters."
-        root = ET.fromstring(filters_xml)
+        """Validate that the XML filter contains required date fields.
+
+        Args:
+            filters_xml: XML string with filter parameters.
+
+        Raises:
+            DataRangeError: If start or end date is missing.
+
+        """
+        root = ElementTree.fromstring(filters_xml)
         for child in root:
             for subchild in child:
                 if (
@@ -191,7 +218,14 @@ class Epicor(Source):
                     raise DataRangeError(msg)
 
     def get_xml_response(self, filters_xml: str) -> requests.models.Response:
-        "Function for getting response from Epicor API."
+        """Send the XML filter request to the Epicor API and return the response.
+
+        Args:
+            filters_xml: XML string with filter parameters.
+
+        Returns:
+            Response: HTTP response from the Epicor API.
+        """
         if self.validate_date_filter is True:
             self.validate_filter(filters_xml)
         payload = filters_xml
@@ -208,10 +242,19 @@ class Epicor(Source):
         filters_xml: str,
         if_empty: Literal["warn", "skip", "fail"] = "warn",
     ) -> pd.DataFrame:
-        """Function for creating pandas DataFrame from Epicor API response.
+        """Convert Epicor API XML response to pandas DataFrame.
+
+        Args:
+            filters_xml (str): XML with query filters sent to the API.
+            if_empty (Literal["warn", "skip", "fail"], optional):
+                Behavior when the parsed DataFrame is empty. Defaults to "warn".
 
         Returns:
-            pd.DataFrame: Output DataFrame.
+            pd.DataFrame: Parsed data returned by the appropriate XML parser.
+
+        Raises:
+            ValidationError: If no parser is available for the given view.
+
         """
         data = self.get_xml_response(filters_xml)
 
