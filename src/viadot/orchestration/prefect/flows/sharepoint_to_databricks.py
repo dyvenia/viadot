@@ -22,7 +22,7 @@ def sharepoint_to_databricks(  # noqa: PLR0913
     sheet_name: str | list | int | None = None,
     columns: str | list[str] | list[int] | None = None,
     sharepoint_credentials_secret: str | None = None,
-    sharepoint_credentials_secret_pfx_password: str | None = None,
+    sharepoint_credentials_secret_cert_auth: str | None = None,
     sharepoint_config_key: str | None = None,
     databricks_credentials_secret: str | None = None,
     databricks_config_key: str | None = None,
@@ -44,8 +44,8 @@ def sharepoint_to_databricks(  # noqa: PLR0913
             Defaults to None.
         sharepoint_credentials_secret (str, optional): The name of the Azure Key Vault
             secret storing relevant credentials. Defaults to None.
-        sharepoint_credentials_secret_pfx_password (str, optional): The name of the
-            secret storing the password for the PFX file. Defaults to None.
+        sharepoint_credentials_secret_cert_auth (str, optional): The name of the
+            secret storing the credentials for basic authentication. Defaults to None.
         sharepoint_config_key (str, optional): The key in the viadot config holding
             relevant credentials. Defaults to None.
         databricks_credentials_secret (str, optional): The name of the Azure Key Vault
@@ -62,8 +62,8 @@ def sharepoint_to_databricks(  # noqa: PLR0913
 
     df = sharepoint_to_df(
         url=sharepoint_url,
-        credentials_secret=sharepoint_credentials_secret,
-        credentials_secret_pfx_password=sharepoint_credentials_secret_pfx_password,
+        credentials_secret_basic_auth=sharepoint_credentials_secret,
+        credentials_secret_cert_auth=sharepoint_credentials_secret_cert_auth,
         config_key=sharepoint_config_key,
         sheet_name=sheet_name,
         columns=columns,

@@ -27,6 +27,28 @@ from viadot.utils import (
 
 
 class SharepointCredentials(BaseModel):
+    """Sharepoint credentials.
+
+    There are two authentication methods:
+    - basic authentication:
+        - client_id: The client ID of the application.
+        - client_secret: The client secret of the application.
+        - tenant_id: The tenant ID of the application.
+    - certificate authentication:
+        - certificate_path: The path to the certificate file.
+        - certificate_password: The password to the certificate file.
+
+    Once we receive the credentials, we validate them and prepare them for
+        the Sharepoint object.
+    - If the credentials are basic authentication:
+        We validate them and prepare them for the Sharepoint object.
+        No additional validation is needed.
+    - If the credentials are certificate authentication:
+        We validate them and prepare them for the Sharepoint object.
+        We need to get the password from the secret.
+    - If the credentials are not valid, we raise an error.
+    """
+
     site: str
     client_id: str
     tenant_id: str
@@ -64,30 +86,30 @@ class SharepointCredentials(BaseModel):
     def prepare_credentials(
         cls,
         raw_creds: bytes | dict[str, str],
-        credentials_secret_pfx_password: str | None = None,
+        credentials_secret_cert_auth: str | None = None,
     ) -> dict[str, str]:
         """Prepare the credentials for the Sharepoint object.
 
         Args:
             raw_creds (bytes | dict[str, str]): The raw credentials as either binary
                 certificate bytes or a credential dictionary.
-            credentials_secret_pfx_password (str, optional): The name of the secret of
-                the password for the PFX file. Defaults to None.
+            credentials_secret_cert_auth (str, optional): The name of the secret of
+                the password for the certificate file. Defaults to None.
 
         Returns:
             dict[str, str]: The prepared credentials.
         """
         # bytes means we received a binary certificate
         if isinstance(raw_creds, bytes):
-            if credentials_secret_pfx_password is None:
-                msg = "credentials_secret_pfx_password is required when using a binary certificate"
+            if credentials_secret_cert_auth is None:
+                msg = "credentials_secret_cert_auth is required when using a binary certificate"
                 raise CredentialError(msg)
             with tempfile.NamedTemporaryFile(
                 delete=False, suffix=".pfx", mode="wb"
             ) as temp_pfx:
                 temp_pfx.write(raw_creds)
                 temp_pfx_path = temp_pfx.name
-            credentials = get_credentials(secret_name=credentials_secret_pfx_password)
+            credentials = get_credentials(secret_name=credentials_secret_cert_auth)
             credentials["certificate_path"] = temp_pfx_path
 
             return credentials
@@ -101,7 +123,7 @@ class Sharepoint(Source):
     def __init__(
         self,
         credentials: SharepointCredentials = None,
-        credentials_secret_pfx_password: str | None = None,
+        credentials_secret_cert_auth: str | None = None,
         config_key: str | None = None,
         *args,
         **kwargs,
@@ -110,8 +132,8 @@ class Sharepoint(Source):
 
         Args:
         credentials (SharepointCredentials): Sharepoint credentials.
-        credentials_secret_pfx_password (str, optional): The name of the secret storing
-            the password for the PFX file. Defaults to None.
+        credentials_secret_cert_auth (str, optional): The name of the secret storing
+            the password for the certificate file. Defaults to None.
         config_key (str, optional): The key in the viadot config holding relevant
             credentials.
         """
@@ -119,7 +141,7 @@ class Sharepoint(Source):
         if isinstance(raw_creds, bytes):
             self.credentials_binary = raw_creds
         prepared_creds = SharepointCredentials.prepare_credentials(
-            raw_creds, credentials_secret_pfx_password
+            raw_creds, credentials_secret_cert_auth
         )
         validated_creds = dict(SharepointCredentials(**prepared_creds))
         super().__init__(*args, credentials=validated_creds, **kwargs)

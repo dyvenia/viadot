@@ -31,6 +31,7 @@ def sharepoint_list_to_redshift_spectrum(  # noqa: PLR0913
     compression: str | None = None,
     aws_config_key: str | None = None,
     credentials_secret: str | None = None,
+    credentials_secret_cert_auth: str | None = None,
     sharepoint_credentials_secret: str | None = None,
     sharepoint_config_key: str | None = None,
     query: str | None = None,
@@ -59,6 +60,8 @@ def sharepoint_list_to_redshift_spectrum(  # noqa: PLR0913
         aws_config_key (str | None, optional): AWS configuration key. Defaults to None.
         credentials_secret (str | None, optional): Name of the secret storing
             AWS credentials. Defaults to None.
+        credentials_secret_cert_auth (str | None, optional): Name of the secret storing
+            SharePoint credentials for certificate authentication. Defaults to None.
         sharepoint_credentials_secret (str | None, optional): Name of the secret
             storing SharePoint credentials. Defaults to None.
         sharepoint_config_key (str | None, optional): Key in the config for
@@ -80,7 +83,8 @@ def sharepoint_list_to_redshift_spectrum(  # noqa: PLR0913
         default_protocol=default_protocol,
         query=query,
         select=select,
-        credentials_secret=sharepoint_credentials_secret,
+        credentials_secret_basic_auth=sharepoint_credentials_secret,
+        credentials_secret_cert_auth=credentials_secret_cert_auth,
         config_key=sharepoint_config_key,
         tests=tests,
     )

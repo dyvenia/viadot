@@ -18,8 +18,8 @@ def sharepoint_to_df(
     tests: dict[str, Any] | None = None,
     file_sheet_mapping: dict | None = None,
     na_values: list[str] | None = None,
-    credentials_secret: str | None = None,
-    credentials_secret_pfx_password: str | None = None,
+    credentials_secret_basic_auth: str | None = None,
+    credentials_secret_cert_auth: str | None = None,
     config_key: str | None = None,
 ) -> pd.DataFrame:
     """Load an Excel file stored on Microsoft Sharepoint into a pandas `DataFrame`.
@@ -43,11 +43,11 @@ def sharepoint_to_df(
             Defaults to None.
         columns (str | list[str] | list[int], optional): Which columns to ingest.
             Defaults to None.
-        credentials_secret (str, optional): The name of the secret storing
-            the credentials. Defaults to None.
+        credentials_secret_basic_auth (str, optional): The name of the secret storing
+            the credentials for basic authentication. Defaults to None.
             More info on: https://docs.prefect.io/concepts/blocks/
-        credentials_secret_pfx_password (str, optional): The name of the secret storing
-            the password for the PFX file. Defaults to None.
+        credentials_secret_cert_auth (str, optional): The name of the secret storing
+            the credentials for certificate authentication. Defaults to None.
         file_sheet_mapping (dict): A dictionary where keys are filenames and values are
             the sheet names to be loaded from each file. If provided, only these files
             and sheets will be downloaded. Defaults to None.
@@ -63,15 +63,15 @@ def sharepoint_to_df(
     Returns:
         pd.Dataframe: The pandas `DataFrame` containing data from the file.
     """
-    if not (credentials_secret or config_key):
+    if not (credentials_secret_basic_auth or credentials_secret_cert_auth or config_key):
         raise MissingSourceCredentialsError
 
     logger = get_run_logger()
 
-    credentials = get_credentials(secret_name=credentials_secret)
+    credentials = get_credentials(secret_name=credentials_secret_basic_auth)
     s = Sharepoint(
         credentials=credentials,
-        credentials_secret_pfx_password=credentials_secret_pfx_password,
+        credentials_secret_cert_auth=credentials_secret_cert_auth,
         config_key=config_key,
     )
 
@@ -93,32 +93,31 @@ def sharepoint_to_df(
 def sharepoint_download_file(
     url: str,
     to_path: str,
-    credentials_secret: str | None = None,
+    credentials_secret_basic_auth: str | None = None,
     config_key: str | None = None,
-    credentials_secret_pfx_password: str | None = None,
+    credentials_secret_cert_auth: str | None = None,
 ) -> None:
     """Download a file from Sharepoint.
 
     Args:
         url (str): The URL of the file to be downloaded.
         to_path (str): Where to download the file.
-        credentials_secret (str, optional): The name of the secret that stores
-            Sharepoint credentials. Defaults to None.
-        credentials (SharepointCredentials, optional): Sharepoint credentials.
+        credentials_secret_basic_auth (str, optional): The name of the secret that
+            stores Sharepoint credentials. Defaults to None.
+        credentials_secret_cert_auth (str, optional): The name of the secret that stores
+            Sharepoint credentials for certificate authentication. Defaults to None.
         config_key (str, optional): The key in the viadot config holding relevant
             credentials.
-        credentials_secret_pfx_password (str, optional): The name of the secret storing
-            the password for the PFX file. Defaults to None.
     """
-    if not (credentials_secret or config_key):
+    if not (credentials_secret_basic_auth or credentials_secret_cert_auth or config_key):
         raise MissingSourceCredentialsError
 
     logger = get_run_logger()
 
-    credentials = get_credentials(secret_name=credentials_secret)
+    credentials = get_credentials(secret_name=credentials_secret_basic_auth)
     s = Sharepoint(
         credentials=credentials,
-        credentials_secret_pfx_password=credentials_secret_pfx_password,
+        credentials_secret_cert_auth=credentials_secret_cert_auth,
         config_key=config_key,
     )
 
@@ -134,9 +133,9 @@ def sharepoint_list_to_df(
     default_protocol: str | None = "https://",
     query: str | None = None,
     select: list[str] | None = None,
-    credentials_secret: str | None = None,
+    credentials_secret_basic_auth: str | None = None,
     config_key: str | None = None,
-    credentials_secret_pfx_password: str | None = None,
+    credentials_secret_cert_auth: str | None = None,
     tests: dict[str, Any] | None = None,
 ) -> pd.DataFrame:
     """Retrieve data from a SharePoint list into a pandas DataFrame.
@@ -150,12 +149,12 @@ def sharepoint_list_to_df(
         query (str, optional): A query to filter items. Defaults to None.
         select (list[str], optional): Fields to include in the response.
             Defaults to None.
-        credentials_secret (str, optional): The name of the secret storing the
-        credentials.Defaults to None.
+        credentials_secret_basic_auth (str, optional): The name of the secret storing
+            the credentials. Defaults to None.
         config_key (str, optional): The key in the viadot config holding relevant
             credentials. Defaults to None.
-        credentials_secret_pfx_password (str, optional): The name of the secret storing
-            the password for the PFX file. Defaults to None.
+        credentials_secret_cert_auth (str, optional): The name of the secret storing
+            the credentials for certificate authentication. Defaults to None.
         tests (dict[str], optional): A dictionary with optional list of tests
                 to verify the output dataframe. If defined, triggers the `validate`
                 function from viadot.utils. Defaults to None.
@@ -167,17 +166,17 @@ def sharepoint_list_to_df(
         MissingSourceCredentialsError: If neither credentials_secret nor
             config_key is provided.
     """
-    if not (credentials_secret or config_key):
+    if not (credentials_secret_basic_auth or credentials_secret_cert_auth or config_key):
         raise MissingSourceCredentialsError
 
     logger = get_run_logger()
 
-    credentials = get_credentials(secret_name=credentials_secret)
+    credentials = get_credentials(secret_name=credentials_secret_basic_auth)
     sp = SharepointList(
         credentials=credentials,
         config_key=config_key,
         default_protocol=default_protocol,
-        credentials_secret_pfx_password=credentials_secret_pfx_password,
+        credentials_secret_cert_auth=credentials_secret_cert_auth,
     )
 
     logger.info(f"Retrieving data from SharePoint list {list_name}...")

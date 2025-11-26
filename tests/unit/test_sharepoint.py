@@ -158,7 +158,7 @@ def test_acquire_token_with_client_secret():
     assert captured["client_credential"] == creds["client_secret"]
 
 
-def test_credentials_secret_pfx_password_required_with_certificate():
+def test_credentials_secret_cert_auth_required_with_certificate():
     captured = {}
 
     class _DummyApp:
@@ -173,7 +173,7 @@ def test_credentials_secret_pfx_password_required_with_certificate():
 
     with pytest.raises(
         CredentialError,
-        match="credentials_secret_pfx_password is required when using a binary certificate",
+        match="credentials_secret_cert_auth is required when using a binary certificate",
     ):
         Sharepoint(credentials=b"blah_blah")
 
@@ -208,7 +208,7 @@ def test_acquire_token_with_certificate():
     ):
         sp = Sharepoint(
             credentials=b"blah_blah",
-            credentials_secret_pfx_password="secret-secret",  # noqa: S106, # pragma: allowlist secret
+            credentials_secret_cert_auth="secret-secret",  # noqa: S106, # pragma: allowlist secret
         )
         token = sp._acquire_token_func()
 
