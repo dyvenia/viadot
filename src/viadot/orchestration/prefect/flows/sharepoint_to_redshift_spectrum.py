@@ -81,8 +81,8 @@ def sharepoint_to_redshift_spectrum(  # noqa: PLR0913
             that stores AWS credentials. Defaults to None.
         credentials_secret_cert_auth (str, optional): The name of the secret storing
             the credentials for certificate authentication. Defaults to None.
-        credentials_secret_cert_password (str, optional): The name of the secret storing
-            the password for the certificate file. Defaults to None.
+        credentials_secret_cert_password (str, optional): The name of the secret
+            storing the password for the certificate file. Defaults to None.
         sheet_name (str | list | int, optional): Strings are used for sheet names.
             Integers are used in zero-indexed sheet positions (chart sheets do not count
             as a sheet position). Lists of strings/integers are used to request multiple
