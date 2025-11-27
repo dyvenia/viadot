@@ -63,8 +63,8 @@ def sharepoint_list_to_redshift_spectrum(  # noqa: PLR0913
             AWS credentials. Defaults to None.
         credentials_secret_cert_auth (str | None, optional): Name of the secret storing
             SharePoint credentials for certificate authentication. Defaults to None.
-        credentials_secret_cert_password (str | None, optional): Name of the secret storing
-            the password for the certificate file. Defaults to None.
+        credentials_secret_cert_password (str | None, optional): Name of the secret
+            storing the password for the certificate file. Defaults to None.
         sharepoint_credentials_secret (str | None, optional): Name of the secret
             storing SharePoint credentials. Defaults to None.
         sharepoint_config_key (str | None, optional): Key in the config for
