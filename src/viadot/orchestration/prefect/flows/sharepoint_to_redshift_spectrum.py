@@ -31,6 +31,7 @@ def sharepoint_to_redshift_spectrum(  # noqa: PLR0913
     aws_config_key: str | None = None,
     credentials_secret: str | None = None,
     credentials_secret_cert_auth: str | None = None,
+    credentials_secret_cert_password: str | None = None,
     sheet_name: str | list[str | int] | int | None = None,
     columns: str | list[str] | list[int] | None = None,
     na_values: list[str] | None = None,
@@ -80,6 +81,8 @@ def sharepoint_to_redshift_spectrum(  # noqa: PLR0913
             that stores AWS credentials. Defaults to None.
         credentials_secret_cert_auth (str, optional): The name of the secret storing
             the credentials for certificate authentication. Defaults to None.
+        credentials_secret_cert_password (str, optional): The name of the secret storing
+            the password for the certificate file. Defaults to None.
         sheet_name (str | list | int, optional): Strings are used for sheet names.
             Integers are used in zero-indexed sheet positions (chart sheets do not count
             as a sheet position). Lists of strings/integers are used to request multiple
@@ -106,8 +109,9 @@ def sharepoint_to_redshift_spectrum(  # noqa: PLR0913
         na_values=na_values,
         file_sheet_mapping=file_sheet_mapping,
         credentials_secret_basic_auth=sharepoint_credentials_secret,
-        config_key=sharepoint_config_key,
         credentials_secret_cert_auth=credentials_secret_cert_auth,
+        credentials_secret_cert_password=credentials_secret_cert_password,
+        config_key=sharepoint_config_key,
     )
     df_to_redshift_spectrum(
         df=df,
