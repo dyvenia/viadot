@@ -13,55 +13,26 @@ on:
         description: "Whether to install Databricks source dependencies."
         required: false
         default: "false"
+
 jobs:
   docker:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v3
-        with:
-          platforms: all
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Log into GitHub Container Registry
-        uses: docker/login-action@v3
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Build and publish viadot-lite image
-        uses: docker/build-push-action@v3
-        with:
-          context: .
-          file: docker/Dockerfile
-          platforms: linux/amd64
-          push: true
-          target: viadot-lite
-          tags: ghcr.io/${{ github.repository }}/viadot-lite:${{ github.event.inputs.tag }}
-
-      - name: Build and publish viadot-aws image
-        uses: docker/build-push-action@v3
-        with:
-          context: .
-          file: docker/Dockerfile
-          platforms: linux/amd64
-          push: true
-          target: viadot-aws
-          tags: ghcr.io/${{ github.repository }}/viadot-aws:${{ github.event.inputs.tag }}
-
-      - name: Build and publish viadot-azure image
-        uses: docker/build-push-action@v3
-        with:
-          context: .
-          file: docker/Dockerfile
-          platforms: linux/amd64
-          push: true
-          target: viadot-azure
-          tags: ghcr.io/${{ github.repository }}/viadot-azure:${{ github.event.inputs.tag }}
-          build-args: INSTALL_DATABRICKS=${{ github.event.inputs.install_databricks }}
+    strategy:
+      matrix:
+        include:
+          - image: viadot-lite
+            build_args: ""
+          - image: viadot-aws
+            build_args: ""
+          - image: viadot-azure
+            build_args: "INSTALL_DATABRICKS=${{ github.event.inputs.install_databricks }}"
+    uses: ./.github/workflows/template_docker_build_and_push.yml
+    with:
+      image_name: ${{ matrix.image }}
+      image_tag: ${{ github.event.inputs.tag }}
+      repository_path: /viadot
+      dockerfile: docker/Dockerfile
+      platforms: linux/amd64
+      target: ${{ matrix.image }}
+      build-args: ${{ matrix.build_args }}
+    secrets:
+      token: ${{ secrets.GITHUB_TOKEN }}

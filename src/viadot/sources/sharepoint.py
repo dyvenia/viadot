@@ -3,6 +3,7 @@
 import io
 from pathlib import Path
 import re
+import tempfile
 from typing import Any, Literal
 from urllib.parse import urlparse
 
@@ -25,22 +26,80 @@ from viadot.utils import (
 
 
 class SharepointCredentials(BaseModel):
-    site: str  # Path to sharepoint website (e.g : {tenant_name}.sharepoint.com)
-    client_id: str  # Sharepoint client id
-    client_secret: str  # Sharepoint client secret
-    tenant_id: str  # Sharepoint tenant id
+    """Sharepoint credentials.
+
+    There are two authentication methods:
+    - basic authentication:
+        - client_id: The client ID of the application.
+        - client_secret: The client secret of the application.
+        - tenant_id: The tenant ID of the application.
+    - certificate authentication:
+        - certificate_path: The path to the certificate file.
+        - certificate_password: The password to the certificate file.
+
+    Once we receive the credentials, we validate them and prepare them for
+        the Sharepoint object.
+    - If the credentials are basic authentication:
+        We validate them and prepare them for the Sharepoint object.
+        No additional validation is needed.
+    - If the credentials are certificate authentication:
+        We validate them and prepare them for the Sharepoint object.
+        We need to get the password from the secret.
+    - If the credentials are not valid, we raise an error.
+    """
+
+    site: str
+    client_id: str
+    tenant_id: str
+    client_secret: str | None = None
+    certificate_password: str | None = None
+    certificate_path: str | None = None
+    certificate: bytes | None = None
 
     @root_validator(pre=True)
-    def is_configured(cls, credentials: dict):  # noqa: N805, ANN201, D102
-        site = credentials.get("site")
-        client_id = credentials.get("client_id")
-        client_secret = credentials.get("client_secret")
-        tenant_id = credentials.get("tenant_id")
+    def validate_credentials(cls, credentials: dict) -> dict:  # noqa: N805
+        """Validate required credential fields.
 
-        if not (site and client_id and client_secret and tenant_id):
-            msg = "'site', 'client_id', 'client_secret' and 'tenant_id' credentials are required."
-            raise CredentialError(msg)
+        Args:
+            credentials (dict): The dictionary of credentials.
+
+        Returns:
+            dict: The validated dictionary of credentials.
+
+        Raises:
+            CredentialError: If all required fields are not present.
+        """
+        required = [
+            "site",
+            "client_id",
+            "tenant_id",
+        ]
+
+        missing = [k for k in required if not credentials.get(k)]
+        if missing:
+            error_msg = f"Missing required credentials: {missing}"
+            raise CredentialError(error_msg)
+
         return credentials
+
+    @classmethod
+    def prepare_certificate_file(
+        cls,
+        credentials: dict[str, str] | None = None,
+    ) -> None:
+        """Prepare the certificate file for the Sharepoint object.
+
+        Args:
+            credentials (dict[str, str] | None): The raw credentials as either binary
+                certificate bytes or a credential dictionary.
+        """
+        byte_certificate = credentials.get("certificate")
+        with tempfile.NamedTemporaryFile(
+            delete=False, suffix=".pfx", mode="wb"
+        ) as temp_pfx:
+            temp_pfx.write(byte_certificate)
+            temp_pfx_path = temp_pfx.name
+        credentials["certificate_path"] = temp_pfx_path
 
 
 class Sharepoint(Source):
@@ -60,8 +119,11 @@ class Sharepoint(Source):
         config_key (str, optional): The key in the viadot config holding relevant
             credentials.
         """
-        raw_creds = credentials or get_source_credentials(config_key) or {}
-        validated_creds = dict(SharepointCredentials(**raw_creds))
+        credentials = credentials or get_source_credentials(config_key) or {}
+        if credentials.get("certificate"):
+            SharepointCredentials.prepare_certificate_file(credentials)
+
+        validated_creds = dict(SharepointCredentials(**credentials))
         super().__init__(*args, credentials=validated_creds, **kwargs)
 
     def get_client(self) -> GraphClient:
@@ -144,10 +206,18 @@ class Sharepoint(Source):
             f'https://login.microsoftonline.com/{self.credentials.get("tenant_id")}'
         )
 
+        if self.credentials.get("client_secret"):
+            client_credential = self.credentials.get("client_secret")
+        else:
+            client_credential = {
+                "private_key_pfx_path": self.credentials.get("certificate_path"),
+                "passphrase": self.credentials.get("certificate_password"),
+            }
+
         app = msal.ConfidentialClientApplication(
             authority=authority_url,
             client_id=self.credentials.get("client_id"),
-            client_credential=self.credentials.get("client_secret"),
+            client_credential=client_credential,
         )
 
         return app.acquire_token_for_client(
@@ -458,7 +528,10 @@ class SharepointList(Sharepoint):
         """
         self.default_protocol = default_protocol
         super().__init__(
-            *args, credentials=credentials, config_key=config_key, **kwargs
+            *args,
+            credentials=credentials,
+            config_key=config_key,
+            **kwargs,
         )
 
     def _find_and_rename_case_insensitive_duplicated_column_names(

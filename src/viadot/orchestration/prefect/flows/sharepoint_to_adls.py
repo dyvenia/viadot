@@ -11,10 +11,12 @@ from viadot.orchestration.prefect.tasks import df_to_adls, sharepoint_to_df
     retries=1,
     retry_delay_seconds=60,
 )
-def sharepoint_to_adls(
+def sharepoint_to_adls(  # noqa: PLR0913
     sharepoint_url: str,
     adls_path: str,
     sharepoint_credentials_secret: str | None = None,
+    sharepoint_credentials_secret_cert_auth: str | None = None,
+    sharepoint_credentials_secret_cert_password: str | None = None,
     sharepoint_config_key: str | None = None,
     adls_credentials_secret: str | None = None,
     adls_config_key: str | None = None,
@@ -31,6 +33,11 @@ def sharepoint_to_adls(
             secret storing the Sharepoint credentials. Defaults to None.
         sharepoint_config_key (str, optional): The key in the viadot config holding
             relevant credentials. Defaults to None.
+        sharepoint_credentials_secret_cert_auth (str, optional): The name of the
+            secret storing the credentials for certificate authentication.
+            Defaults to None.
+        sharepoint_credentials_secret_cert_password (str, optional): The name of the
+            secret storing the password for the certificate file. Defaults to None.
         adls_credentials_secret (str, optional): The name of the Azure Key Vault secret
             storing the ADLS credentials. Defaults to None.
         adls_config_key (str, optional): The key in the viadot config holding relevant
@@ -47,7 +54,9 @@ def sharepoint_to_adls(
     """
     df = sharepoint_to_df(
         url=sharepoint_url,
-        credentials_secret=sharepoint_credentials_secret,
+        credentials_secret_basic_auth=sharepoint_credentials_secret,
+        credentials_secret_cert_auth=sharepoint_credentials_secret_cert_auth,
+        credentials_secret_cert_password=sharepoint_credentials_secret_cert_password,
         config_key=sharepoint_config_key,
         sheet_name=sheet_name,
         columns=columns,

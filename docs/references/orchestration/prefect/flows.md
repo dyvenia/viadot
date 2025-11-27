@@ -48,8 +48,6 @@
 
 ::: viadot.orchestration.prefect.flows.sharepoint_to_adls
 
-::: viadot.orchestration.prefect.flows.sharepoint_to_databricks
-
 ::: viadot.orchestration.prefect.flows.sharepoint_to_redshift_spectrum
 
 ::: viadot.orchestration.prefect.flows.sharepoint_to_s3

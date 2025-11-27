@@ -6,7 +6,7 @@ on:
 
 jobs:
   notify-devops-label:
-    uses: dyvenia/workflow-templates/.github/workflows/template_slack_notify.yml@main
+    uses: ./.github/workflows/template_slack_notify.yml
     with:
       match_label: devops
     secrets:
