@@ -10,6 +10,7 @@ from .customer_gauge_to_df import customer_gauge_to_df
 from .databricks import df_to_databricks
 from .dbt import dbt_task
 from .duckdb import duckdb_query
+from .entraid import entraid_to_df
 from .epicor import epicor_to_df
 from .eurostat import eurostat_to_df
 from .exchange_rates import exchange_rates_to_df
@@ -55,6 +56,7 @@ __all__ = [
     "df_to_minio",
     "df_to_redshift_spectrum",
     "duckdb_query",
+    "entraid_to_df",
     "epicor_to_df",
     "eurostat_to_df",
     "exchange_rates_to_df",
