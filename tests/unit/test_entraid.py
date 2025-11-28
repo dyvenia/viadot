@@ -14,7 +14,7 @@ def _base_credentials():
     return {
         "tenant_id": "tenant",
         "client_id": "client",
-        "client_secret": "secret",
+        "client_secret": "secret",  # pragma: allowlist secret
         "scope": "https://graph.microsoft.com/.default",
     }
 
