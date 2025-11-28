@@ -59,7 +59,7 @@ class EntraID(Source):
         config_key: str | None = None,
         *args,
         **kwargs,
-        ):
+    ):
         """Initialize the Entra ID source.
 
         Args:

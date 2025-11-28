@@ -67,10 +67,10 @@ class MockSession:
         self._get_iter = iter(get_responses or [])
         self._post_response = post_response
 
-    def get(self, _url):
+    def get(self, _url, **_kwargs):
         return MockCtxMgr(next(self._get_iter))
 
-    def post(self, _url, _data=None):
+    def post(self, _url, **_kwargs):
         return MockCtxMgr(self._post_response)
 
 
@@ -117,8 +117,12 @@ async def test_get_all_users_calls_fetch_with_url(monkeypatch):
     e = EntraID(credentials=_base_credentials())
     captured = {}
 
-    async def fake_fetch(_session, url, *_args, **_kwargs):
-        captured["url"] = url
+    async def fake_fetch(*args, **kwargs):
+        # Method may be called with (session, url) or url as kw
+        if len(args) >= 2:
+            captured["url"] = args[1]
+        else:
+            captured["url"] = kwargs["url"]
         return [{"id": "1", "mail": "a@b.com"}]
 
     monkeypatch.setattr(e, "_fetch_all_pages", fake_fetch)  # type: ignore[attr-defined]
@@ -134,7 +138,7 @@ async def test_get_user_group_membership_maps_fields(monkeypatch):
     """Map group entries to user_email and group_name fields."""
     e = EntraID(credentials=_base_credentials())
 
-    async def fake_fetch(_session, _url, *_args, **_kwargs):
+    async def fake_fetch(*_args, **_kwargs):
         return [{"displayName": "G1"}, {"displayName": "G2"}]
 
     monkeypatch.setattr(e, "_fetch_all_pages", fake_fetch)  # type: ignore[attr-defined]
@@ -175,13 +179,13 @@ async def test_build_users_groups_df_composes(monkeypatch):
     """Compose authorize, get users, and build groups steps."""
     e = EntraID(credentials=_base_credentials())
 
-    async def fake_authorize(_session):
+    async def fake_authorize(*_args, **_kwargs):
         return None
 
-    async def fake_get_users(_session):
+    async def fake_get_users(*_args, **_kwargs):
         return [{"id": "1", "mail": "a@b.com"}]
 
-    async def fake_build(_session, _users, _output_fields, _max_concurrent):
+    async def fake_build(*_args, **_kwargs):
         return pd.DataFrame([{"user_email": "a@b.com", "group_name": "A"}])
 
     monkeypatch.setattr(e, "_authorize_session", fake_authorize)  # type: ignore[attr-defined]
@@ -256,7 +260,7 @@ def test_to_df_calls_cleanup_and_validate(monkeypatch):
     e = EntraID(credentials=_base_credentials())
 
     # Return a small DataFrame from the async builder
-    async def fake_build(_max_concurrent):
+    async def fake_build(**_kwargs):
         return pd.DataFrame([{"user_email": "a@b.com", "group_name": "A"}])
 
     monkeypatch.setattr(e, "_build_users_groups_df", fake_build)  # type: ignore[attr-defined]
@@ -267,7 +271,7 @@ def test_to_df_calls_cleanup_and_validate(monkeypatch):
         called["cleanup"] = True
         return df
 
-    def fake_validate(_df, tests):
+    def fake_validate(df, tests):  # noqa: ARG001
         called["validate"] = True
         assert tests == {"k": "v"}
 
@@ -281,5 +285,3 @@ def test_to_df_calls_cleanup_and_validate(monkeypatch):
     assert not out.empty
     assert called["cleanup"] is True
     assert called["validate"] is True
-
-

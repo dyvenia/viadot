@@ -52,4 +52,3 @@ def entraid_to_df(
     logger.info("Successfully downloaded data from EntraID.")
 
     return df
-
