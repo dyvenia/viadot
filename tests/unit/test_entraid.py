@@ -21,11 +21,13 @@ def _base_credentials():
 
 class _ReqInfo:
     def __init__(self, url: str = "https://example.com"):
+        """Store request URL for fake responses."""
         self.real_url = url
 
 
 class MockResponse:
     def __init__(self, status=200, json_data=None, headers=None):
+        """Create a fake response with status, JSON and headers."""
         self.status = status
         self._json_data = json_data or {}
         self.headers = headers or {}
@@ -46,17 +48,21 @@ class MockResponse:
 
 class MockCtxMgr:
     def __init__(self, response: MockResponse):
+        """Wrap a response in an async context manager."""
         self._response = response
 
     async def __aenter__(self):
+        """Enter async context and return the mock response."""
         return self._response
 
     async def __aexit__(self, exc_type, exc, tb):
+        """Exit async context without suppressing exceptions."""
         return False
 
 
 class MockSession:
     def __init__(self, get_responses=None, post_response=None):
+        """Fake session yielding pre-set GET/POST responses."""
         self.headers = {}
         self._get_iter = iter(get_responses or [])
         self._post_response = post_response
@@ -91,7 +97,7 @@ async def test_authorize_session_sets_header():
 
 
 @pytest.mark.asyncio
-async def test_fetch_all_pages_pagination_with_retry(_monkeypatch):
+async def test_fetch_all_pages_pagination_with_retry():
     """Retry on 429 and follow @odata.nextLink."""
     e = EntraID(credentials=_base_credentials())
     # 1st call -> 429 with Retry-After=0, then 2 pages 200
@@ -113,7 +119,7 @@ async def test_get_all_users_calls_fetch_with_url(monkeypatch):
 
     async def fake_fetch(_session, url, *_args, **_kwargs):
         captured["url"] = url
-        return [{"id": "1", "mail": "a@b.com"}]  # noqa: TRY300
+        return [{"id": "1", "mail": "a@b.com"}]
 
     monkeypatch.setattr(e, "_fetch_all_pages", fake_fetch)  # type: ignore[attr-defined]
 
@@ -198,7 +204,7 @@ def test_run_fallback_when_event_loop_running(monkeypatch):
         def __init__(self):
             self.closed = False
 
-        def run_until_complete(self, coro):
+        def run_until_complete(self, _coro):
             return 123
 
         def close(self):
@@ -237,7 +243,7 @@ def test_handle_if_empty_policies():
     assert out_skip.empty
 
     # fail -> raises
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match="Resulting DataFrame is empty."):
         e._handle_if_empty(empty, "fail")
 
     # non-empty unchanged
@@ -250,7 +256,7 @@ def test_to_df_calls_cleanup_and_validate(monkeypatch):
     e = EntraID(credentials=_base_credentials())
 
     # Return a small DataFrame from the async builder
-    async def fake_build(max_concurrent):
+    async def fake_build(_max_concurrent):
         return pd.DataFrame([{"user_email": "a@b.com", "group_name": "A"}])
 
     monkeypatch.setattr(e, "_build_users_groups_df", fake_build)  # type: ignore[attr-defined]
@@ -261,7 +267,7 @@ def test_to_df_calls_cleanup_and_validate(monkeypatch):
         called["cleanup"] = True
         return df
 
-    def fake_validate(df, tests):
+    def fake_validate(_df, tests):
         called["validate"] = True
         assert tests == {"k": "v"}
 
