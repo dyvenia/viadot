@@ -39,6 +39,7 @@ class EntraIDCredentials(BaseModel):
         BaseModel (pydantic.BaseModel): Base class for data validation.
 
     """
+
     tenant_id: str
     client_id: str
     client_secret: str
@@ -57,7 +58,8 @@ class EntraID(Source):
         credentials: EntraIDCredentials | None = None,
         config_key: str | None = None,
         *args,
-        **kwargs):
+        **kwargs,
+        ):
         """Initialize the Entra ID source.
 
         Args:
@@ -87,9 +89,7 @@ class EntraID(Source):
             a non-2xx status.
             aiohttp.ClientError: If a network-related error occurs.
         """
-        token_url = (
-            f'https://login.microsoftonline.com/{self.credentials.get("tenant_id")}/oauth2/v2.0/token'
-        )
+        token_url = f'https://login.microsoftonline.com/{self.credentials.get("tenant_id")}/oauth2/v2.0/token'
 
         token_data = {
             "grant_type": "client_credentials",
@@ -148,11 +148,15 @@ class EntraID(Source):
             while True:
                 async with session.get(url) as resp:
                     # Retry on throttling and server errors
-                    if resp.status in (
-                        HTTP_ERROR_429,
-                        HTTP_ERROR_503,
-                        HTTP_ERROR_504,
-                    ) or HTTP_ERROR_500 <= resp.status < HTTP_ERROR_600:
+                    if (
+                        resp.status
+                        in (
+                            HTTP_ERROR_429,
+                            HTTP_ERROR_503,
+                            HTTP_ERROR_504,
+                        )
+                        or HTTP_ERROR_500 <= resp.status < HTTP_ERROR_600
+                    ):
                         attempt += 1
                         if attempt > max_retries:
                             resp.raise_for_status()
@@ -198,7 +202,9 @@ class EntraID(Source):
 
         return await self._fetch_all_pages(session=session, url=users_url)
 
-    async def _get_user_group_membership(self, session: aiohttp.ClientSession, user: dict) -> list:
+    async def _get_user_group_membership(
+        self, session: aiohttp.ClientSession, user: dict
+    ) -> list:
         """Retrieve all group memberships for a single user asynchronously.
 
         Args:
@@ -218,10 +224,12 @@ class EntraID(Source):
         groups = await self._fetch_all_pages(session, groups_url)
         results = []
         for group in groups:
-            results.append({
-                "user_email": user_email,
-                "group_name": group.get("displayName", ""),
-            })
+            results.append(
+                {
+                    "user_email": user_email,
+                    "group_name": group.get("displayName", ""),
+                }
+            )
         return results
 
     async def _build_user_groups_df_async(
@@ -257,12 +265,14 @@ class EntraID(Source):
                 except Exception:
                     self.logger.exception(
                         "Failed to get groups for user %s",
-                        user.get('displayName', ''),
+                        user.get("displayName", ""),
                     )
                     return []
 
         # Convert DataFrame rows to dicts to reduce overhead during async processing
-        user_records = users[["id", "mail"]].to_dict(orient="records") if not users.empty else []
+        user_records = (
+            users[["id", "mail"]].to_dict(orient="records") if not users.empty else []
+        )
         tasks = [sem_get_user_groups(user) for user in user_records]
         for task in asyncio.as_completed(tasks):
             user_groups = await task
@@ -287,7 +297,9 @@ class EntraID(Source):
         """
         timeout = aiohttp.ClientTimeout(total=120)
         connector = aiohttp.TCPConnector(limit=max_concurrent)
-        async with aiohttp.ClientSession(timeout=timeout, connector=connector) as session:
+        async with aiohttp.ClientSession(
+            timeout=timeout, connector=connector
+        ) as session:
             await self._authorize_session(session)
             users_list = await self._get_all_users(session)
             users_df = pd.DataFrame(users_list)
@@ -329,7 +341,9 @@ class EntraID(Source):
                         asyncio.set_event_loop(None)
             raise
 
-    def _handle_if_empty(self, df: pd.DataFrame, if_empty: Literal["warn", "skip", "fail"]) -> pd.DataFrame:
+    def _handle_if_empty(
+        self, df: pd.DataFrame, if_empty: Literal["warn", "skip", "fail"]
+    ) -> pd.DataFrame:
         """Handle empty DataFrame scenarios according to the specified policy.
 
         Args:
@@ -359,7 +373,6 @@ class EntraID(Source):
         if if_empty == "fail":
             raise ValueError(msg)
         return None
-
 
     @add_viadot_metadata_columns
     def to_df(
@@ -398,5 +411,3 @@ class EntraID(Source):
             validate(df=df_clean, tests=tests)
 
         return df_clean
-
-
