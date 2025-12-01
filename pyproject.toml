@@ -38,7 +38,7 @@ dependencies = [
     "tabulate>=0.9.0",
     "prefect-slack<=0.2.7",
     "prefect-shell<=0.2.6",
-    "dbt-core >= 1.10.13, <1.11",
+    "dbt-core==1.10.15",
     "xlrd>=2.0.2",
     "dbt-adapters>=1.15.5",
     "pyarrow>=18.0.0",

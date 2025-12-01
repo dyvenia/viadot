@@ -37,7 +37,7 @@ alembic==1.17.2
     # via prefect
 annotated-types==0.7.0
     # via pydantic
-anyio==4.11.0
+anyio==4.12.0
     # via httpx
     # via prefect
 apprise==1.9.5
@@ -78,7 +78,7 @@ backrefs==6.1
     # via mkdocs-material
 bcrypt==5.0.0
     # via paramiko
-beautifulsoup4==4.14.2
+beautifulsoup4==4.14.3
     # via mkdocs-mermaid2-plugin
     # via mkdocs-ultralytics-plugin
     # via nbconvert
@@ -171,14 +171,14 @@ dbt-adapters==1.20.1
     # via dbt-postgres
     # via dbt-redshift
     # via viadot2
-dbt-artifacts-parser==0.11.0
+dbt-artifacts-parser==0.12.0
     # via lumacli
 dbt-common==1.36.0
     # via dbt-adapters
     # via dbt-core
     # via dbt-postgres
     # via dbt-redshift
-dbt-core >= 1.10.13, <1.11
+dbt-core==1.10.15
     # via dbt-postgres
     # via dbt-redshift
     # via viadot2
@@ -442,7 +442,7 @@ mergedeep==1.3.4
     # via mkdocs
     # via mkdocs-get-deps
 mike==2.1.3
-minio==7.2.19
+minio==7.2.20
     # via viadot2
 mistune==3.1.4
     # via nbconvert
@@ -476,13 +476,13 @@ mkdocs-material-extensions==1.3.1
 mkdocs-mermaid2-plugin==1.2.3
 mkdocs-table-reader-plugin==3.1.0
 mkdocs-ultralytics-plugin==0.2.3
-mkdocstrings==0.30.1
+mkdocstrings==1.0.0
     # via mkdocstrings-python
-mkdocstrings-python==1.19.0
+mkdocstrings-python==2.0.0
 more-itertools==10.8.0
     # via dbt-semantic-interfaces
     # via simple-salesforce
-moto==5.1.17
+moto==5.1.18
 msal==1.34.0
     # via azure-identity
     # via msal-extensions
@@ -527,7 +527,7 @@ numpy==2.2.6
     # via shapely
     # via viadot2
     # via visions
-o365==2.1.7
+o365==2.1.8
     # via viadot2
 oauthlib==3.3.1
     # via kubernetes
@@ -635,9 +635,9 @@ protobuf==6.33.1
     # via proto-plus
 psutil==7.1.3
     # via ipykernel
-psycopg==3.2.13
+psycopg==3.3.0
     # via lumacli
-psycopg-binary==3.2.13
+psycopg-binary==3.3.0
     # via psycopg
 psycopg2-binary==2.9.11
     # via dbt-postgres
@@ -685,7 +685,7 @@ pygments==2.19.2
 pyjwt==2.10.1
     # via msal
     # via simple-salesforce
-pymdown-extensions==10.17.1
+pymdown-extensions==10.17.2
     # via mkdocs-material
     # via mkdocs-mermaid2-plugin
     # via mkdocstrings
@@ -836,7 +836,7 @@ rich==13.7.1
     # via typer
 rich-argparse==1.7.2
     # via dlt
-rpds-py==0.29.0
+rpds-py==0.30.0
     # via jsonschema
     # via referencing
 rsa==4.9.1
@@ -845,7 +845,7 @@ ruamel-yaml==0.18.16
     # via prefect
 ruamel-yaml-clib==0.2.15
     # via ruamel-yaml
-ruff==0.14.6
+ruff==0.14.7
 s3fs==2024.6.0
     # via viadot2
 s3transfer==0.10.4
@@ -889,14 +889,13 @@ smbprotocol==1.15.0
 smmap==5.0.2
     # via gitdb
 sniffio==1.3.1
-    # via anyio
     # via asgi-lifespan
     # via prefect
 snowplow-tracker==1.1.0
     # via dbt-core
 soupsieve==2.8
     # via beautifulsoup4
-sql-metadata==2.18.0
+sql-metadata==2.19.0
     # via viadot2
 sqlalchemy==2.0.35
     # via alembic
@@ -905,7 +904,7 @@ sqlalchemy==2.0.35
     # via viadot2
 sqlglot==28.0.0
     # via dlt
-sqlparse==0.5.3
+sqlparse==0.5.4
     # via dbt-core
     # via dbt-redshift
     # via sql-metadata
@@ -1030,7 +1029,7 @@ websocket-client==1.9.0
 websockets==13.1
     # via lumacli
     # via prefect
-werkzeug==3.1.3
+werkzeug==3.1.4
     # via moto
     # via sendgrid
 wrapt==1.17.3
