@@ -375,7 +375,12 @@ class EntraID(Source):
         """
         df = self._run(self._build_users_groups_df(max_concurrent=max_concurrent))
 
-        df = handle_if_empty(df, if_empty)
+        if df.empty:
+            handle_if_empty(
+                if_empty=if_empty,
+                message="Resulting DataFrame is empty.",
+                logger=self.logger,
+            )
 
         df_clean = cleanup_df(df)
 
