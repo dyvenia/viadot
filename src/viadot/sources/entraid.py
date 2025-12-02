@@ -13,6 +13,7 @@ from viadot.sources.base import Source
 from viadot.utils import (
     add_viadot_metadata_columns,
     cleanup_df,
+    handle_if_empty,
     validate,
 )
 
@@ -47,7 +48,11 @@ class EntraIDCredentials(BaseModel):
 
 
 class EntraID(Source):
-    """Entra ID (Azure AD) connector mirroring the high-level shape of viadot sources.
+    """Entra ID (Azure AD) connector.
+
+    It is responsible for fetching user-to-group memberships from Microsoft Graph.
+    It uses the client credentials flow to authenticate and fetch the data.
+    It supports pagination and retry logic for failed requests.
 
     Exposes a to_df() method that returns user-to-group memberships from
         Microsoft Graph.
@@ -341,39 +346,6 @@ class EntraID(Source):
                         asyncio.set_event_loop(None)
             raise
 
-    def _handle_if_empty(
-        self, df: pd.DataFrame, if_empty: Literal["warn", "skip", "fail"]
-    ) -> pd.DataFrame:
-        """Handle empty DataFrame scenarios according to the specified policy.
-
-        Args:
-            df (pd.DataFrame): The DataFrame to check.
-            if_empty (Literal["warn", "skip", "fail"]): Policy for empty results.
-                - "warn": Log a warning and return the original DataFrame.
-                - "skip": Log info and return an empty DataFrame.
-                - "fail": Raise a ValueError.
-
-        Returns:
-            pd.DataFrame: Either the original DataFrame or an empty one,
-                depending on policy.
-
-        Raises:
-            ValueError: If `if_empty="fail"` and `df` is empty.
-        """
-        if not df.empty:
-            return df
-
-        msg = "Resulting DataFrame is empty."
-        if if_empty == "warn":
-            self.logger.warning(msg)
-            return df
-        if if_empty == "skip":
-            self.logger.info("Skipping due to empty DataFrame.")
-            return pd.DataFrame()
-        if if_empty == "fail":
-            raise ValueError(msg)
-        return None
-
     @add_viadot_metadata_columns
     def to_df(
         self,
@@ -403,7 +375,7 @@ class EntraID(Source):
         """
         df = self._run(self._build_users_groups_df(max_concurrent=max_concurrent))
 
-        df = self._handle_if_empty(df, if_empty)
+        df = handle_if_empty(df, if_empty)
 
         df_clean = cleanup_df(df)
 

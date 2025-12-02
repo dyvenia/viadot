@@ -31,10 +31,9 @@ def entraid_to_redshift_spectrum(  # noqa: PLR0913
     sharepoint_credentials_secret: str | None = None,
     sharepoint_config_key: str | None = None,
 ) -> None:
-    """Extract data from SharePoint and load it into AWS Redshift Spectrum.
+    """Extract data from EntraID and load it into AWS Redshift Spectrum.
 
-    This function downloads data either from SharePoint file or the whole directory and
-    uploads it to AWS Redshift Spectrum.
+    This function downloads data from EntraID and uploads it to AWS Redshift Spectrum.
 
     Modes:
     It downloads data from EntraID and creates a table from it.
@@ -45,8 +44,6 @@ def entraid_to_redshift_spectrum(  # noqa: PLR0913
             None.
         schema_name (str): AWS Glue catalog database name.
         table (str): AWS Glue catalog table name.
-        partition_cols (list[str]): List of column names that will be used to create
-            partitions. Only takes effect if dataset=True.
         extension (str): Required file type. Accepted file formats are 'csv' and
             'parquet'.
         if_exists (str, optional): 'overwrite' to recreate any possible existing table
