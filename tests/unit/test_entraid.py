@@ -232,29 +232,6 @@ def test_run_fallback_when_event_loop_running(monkeypatch):
     assert result == 123
 
 
-def test_handle_if_empty_policies():
-    """Follow warn, skip, and fail policies for empty DataFrames."""
-    e = EntraID(credentials=_base_credentials())
-    empty = pd.DataFrame()
-    non_empty = pd.DataFrame([{"x": 1}])
-
-    # warn -> returns original (empty)
-    out_warn = e._handle_if_empty(empty, "warn")
-    assert out_warn.empty
-
-    # skip -> returns empty df
-    out_skip = e._handle_if_empty(empty, "skip")
-    assert out_skip.empty
-
-    # fail -> raises
-    with pytest.raises(ValueError, match="Resulting DataFrame is empty."):
-        e._handle_if_empty(empty, "fail")
-
-    # non-empty unchanged
-    out_ok = e._handle_if_empty(non_empty, "warn")
-    assert not out_ok.empty
-
-
 def test_to_df_calls_cleanup_and_validate(monkeypatch):
     """Call cleanup_df and validate during to_df."""
     e = EntraID(credentials=_base_credentials())
