@@ -160,7 +160,9 @@ class EntraID(Source):
                             HTTP_SERVICE_UNAVAILABLE_ERROR,
                             HTTP_GATEWAY_TIMEOUT_ERROR,
                         )
-                        or HTTP_INTERNAL_SERVER_ERROR <= resp.status < HTTP_BAD_GATEWAY_ERROR
+                        or HTTP_INTERNAL_SERVER_ERROR
+                        <= resp.status
+                        < HTTP_BAD_GATEWAY_ERROR
                     ):
                         attempt += 1
                         if attempt > max_retries:
@@ -286,7 +288,9 @@ class EntraID(Source):
 
         return pd.DataFrame(all_rows, columns=output_fields)
 
-    async def _build_users_groups_df(self, max_concurrent_requests: int = 50) -> pd.DataFrame:
+    async def _build_users_groups_df(
+        self, max_concurrent_requests: int = 50
+    ) -> pd.DataFrame:
         """Build a user-group membership DataFrame by querying users and groups.
 
         Args:
@@ -372,7 +376,9 @@ class EntraID(Source):
             aiohttp.ClientError: If a network-related error occurs.
             Exception: Any exception raised by provided `tests` validation.
         """
-        df = self._run(self._build_users_groups_df(max_concurrent_requests=max_concurrent_requests))
+        df = self._run(
+            self._build_users_groups_df(max_concurrent_requests=max_concurrent_requests)
+        )
 
         if df.empty:
             handle_if_empty(
