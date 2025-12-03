@@ -152,7 +152,7 @@ async def test_get_user_group_membership_maps_fields(monkeypatch):
 
 
 @pytest.mark.asyncio
-async def test_build_user_groups_df_async_aggregates(monkeypatch):
+async def test_concat_user_groups_df_aggregates(monkeypatch):
     """Aggregate group rows for provided users."""
     e = EntraID(credentials=_base_credentials())
 
@@ -167,8 +167,8 @@ async def test_build_user_groups_df_async_aggregates(monkeypatch):
         [{"id": "1", "mail": "a@b.com"}, {"id": "2", "mail": "c@d.com"}]
     )
     session = MagicMock()
-    df = await e._build_user_groups_df_async(
-        session, users_df, ["user_email", "group_name"], max_concurrent=5
+    df = await e._concat_user_groups_df(
+        session, users_df, ["user_email", "group_name"], max_concurrent_requests=5
     )  # type: ignore[arg-type]
     assert list(df.columns) == ["user_email", "group_name"]
     assert set(df["group_name"]) == {"A", "B"}
@@ -190,9 +190,9 @@ async def test_build_users_groups_df_composes(monkeypatch):
 
     monkeypatch.setattr(e, "_authorize_session", fake_authorize)  # type: ignore[attr-defined]
     monkeypatch.setattr(e, "_get_all_users", fake_get_users)  # type: ignore[attr-defined]
-    monkeypatch.setattr(e, "_build_user_groups_df_async", fake_build)  # type: ignore[attr-defined]
+    monkeypatch.setattr(e, "_concat_user_groups_df", fake_build)  # type: ignore[attr-defined]
 
-    df = await e._build_users_groups_df(max_concurrent=3)
+    df = await e._build_users_groups_df(max_concurrent_requests=3)
     assert not df.empty
     assert set(df.columns) == {"user_email", "group_name"}
 
@@ -233,7 +233,7 @@ def test_run_fallback_when_event_loop_running(monkeypatch):
 
 
 def test_to_df_calls_cleanup_and_validate(monkeypatch):
-    """Call cleanup_df and validate during to_df."""
+    """Call remove_newlines_and_tabs and validate during to_df."""
     e = EntraID(credentials=_base_credentials())
 
     # Return a small DataFrame from the async builder
@@ -255,10 +255,10 @@ def test_to_df_calls_cleanup_and_validate(monkeypatch):
     # Patch symbols as imported in module namespace
     import viadot.sources.entraid as ent_mod
 
-    monkeypatch.setattr(ent_mod, "cleanup_df", fake_cleanup)
+    monkeypatch.setattr(ent_mod, "remove_newlines_and_tabs", fake_cleanup)
     monkeypatch.setattr(ent_mod, "validate", fake_validate)
 
-    out = e.to_df(if_empty="warn", tests={"k": "v"}, max_concurrent=2)
+    out = e.to_df(if_empty="warn", tests={"k": "v"}, max_concurrent_requests=2)
     assert not out.empty
     assert called["cleanup"] is True
     assert called["validate"] is True

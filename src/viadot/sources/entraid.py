@@ -1,4 +1,4 @@
-"""Entra ID (Azure AD) connector."""
+"""Entra ID (previously Azure AD) connector."""
 
 import asyncio
 from collections.abc import Coroutine
@@ -12,17 +12,17 @@ from viadot.config import get_source_credentials
 from viadot.sources.base import Source
 from viadot.utils import (
     add_viadot_metadata_columns,
-    cleanup_df,
     handle_if_empty,
+    remove_newlines_and_tabs,
     validate,
 )
 
 
-HTTP_ERROR_429 = 429
-HTTP_ERROR_503 = 503
-HTTP_ERROR_504 = 504
-HTTP_ERROR_500 = 500
-HTTP_ERROR_600 = 600
+HTTP_TOO_MANY_REQUESTS_ERROR = 429
+HTTP_SERVICE_UNAVAILABLE_ERROR = 503
+HTTP_GATEWAY_TIMEOUT_ERROR = 504
+HTTP_INTERNAL_SERVER_ERROR = 500
+HTTP_BAD_GATEWAY_ERROR = 502
 
 T = TypeVar("T")
 
@@ -91,7 +91,7 @@ class EntraID(Source):
 
         Raises:
             aiohttp.ClientResponseError: If the token endpoint responds with
-            a non-2xx status.
+              a non-2xx status.
             aiohttp.ClientError: If a network-related error occurs.
         """
         token_url = f'https://login.microsoftonline.com/{self.credentials.get("tenant_id")}/oauth2/v2.0/token'
@@ -128,7 +128,7 @@ class EntraID(Source):
         url: str,
         max_retries: int = 5,
         backoff_factor: float = 0.5,
-    ) -> list:
+    ) -> list[dict]:
         """Fetch all results from paginated Microsoft Graph API endpoint async.
 
         Uses the '@odata.nextLink' property in the JSON response, which provides the URL
@@ -141,13 +141,13 @@ class EntraID(Source):
             backoff_factor (float): Base delay for exponential backoff between retries.
 
         Returns:
-            list: Aggregated list of JSON objects from all pages of the API response.
+            list[dict]: Aggr list of JSON objects from all pages of the API response.
 
         Raises:
             aiohttp.ClientResponseError: If the endpoint keeps failing after retries.
             aiohttp.ClientError: If a network-related error occurs.
         """
-        items: list = []
+        items: list[dict] = []
         while url:
             attempt = 0
             while True:
@@ -156,11 +156,11 @@ class EntraID(Source):
                     if (
                         resp.status
                         in (
-                            HTTP_ERROR_429,
-                            HTTP_ERROR_503,
-                            HTTP_ERROR_504,
+                            HTTP_TOO_MANY_REQUESTS_ERROR,
+                            HTTP_SERVICE_UNAVAILABLE_ERROR,
+                            HTTP_GATEWAY_TIMEOUT_ERROR,
                         )
-                        or HTTP_ERROR_500 <= resp.status < HTTP_ERROR_600
+                        or HTTP_INTERNAL_SERVER_ERROR <= resp.status < HTTP_BAD_GATEWAY_ERROR
                     ):
                         attempt += 1
                         if attempt > max_retries:
@@ -209,15 +209,15 @@ class EntraID(Source):
 
     async def _get_user_group_membership(
         self, session: aiohttp.ClientSession, user: dict
-    ) -> list:
+    ) -> list[dict]:
         """Retrieve all group memberships for a single user asynchronously.
 
         Args:
             session (aiohttp.ClientSession): The aiohttp session for HTTP requests.
-            user (dict): User JSON object with at least 'id', 'displayName', and 'mail'.
+            user (dict): User JSON object with at least 'id' and 'mail'.
 
         Returns:
-            list: List of dicts with user info and group membership details.
+            list[dict]: List of dicts with user info and group membership details.
 
         Raises:
             aiohttp.ClientResponseError: If the membership endpoint fails after retries.
@@ -237,12 +237,12 @@ class EntraID(Source):
             )
         return results
 
-    async def _build_user_groups_df_async(
+    async def _concat_user_groups_df(
         self,
         session: aiohttp.ClientSession,
         users: pd.DataFrame,
         output_fields: list,
-        max_concurrent: int = 50,
+        max_concurrent_requests: int = 50,
     ) -> pd.DataFrame:
         """Build a pandas DataFrame containing user-group membership.
 
@@ -251,7 +251,7 @@ class EntraID(Source):
             users (pd.DataFrame): DataFrame containing user records.
             output_fields (list): List of fields (columns) to include
                 in the resulting DataFrame.
-            max_concurrent (int): Maximum number of concurrent HTTP requests.
+            max_concurrent_requests (int): Maximum number of concurrent HTTP requests.
                 Increased to 50 for faster execution.
 
         Returns:
@@ -261,7 +261,7 @@ class EntraID(Source):
             None: Errors during per-user fetching are logged and skipped.
         """
         all_rows: list[dict[str, Any]] = []
-        semaphore = asyncio.Semaphore(max_concurrent)
+        semaphore = asyncio.Semaphore(max_concurrent_requests)
 
         async def sem_get_user_groups(user: dict) -> list:
             async with semaphore:
@@ -286,11 +286,11 @@ class EntraID(Source):
 
         return pd.DataFrame(all_rows, columns=output_fields)
 
-    async def _build_users_groups_df(self, max_concurrent: int = 50) -> pd.DataFrame:
+    async def _build_users_groups_df(self, max_concurrent_requests: int = 50) -> pd.DataFrame:
         """Build a user-group membership DataFrame by querying users and groups.
 
         Args:
-            max_concurrent (int): Maximum number of concurrent HTTP requests
+            max_concurrent_requests (int): Maximum number of concurrent HTTP requests
                 to Microsoft Graph.
 
         Returns:
@@ -301,7 +301,7 @@ class EntraID(Source):
             aiohttp.ClientError: If a network-related error occurs.
         """
         timeout = aiohttp.ClientTimeout(total=120)
-        connector = aiohttp.TCPConnector(limit=max_concurrent)
+        connector = aiohttp.TCPConnector(limit=max_concurrent_requests)
         async with aiohttp.ClientSession(
             timeout=timeout, connector=connector
         ) as session:
@@ -309,11 +309,11 @@ class EntraID(Source):
             users_list = await self._get_all_users(session)
             users_df = pd.DataFrame(users_list)
             output_fields = ["user_email", "group_name"]
-            return await self._build_user_groups_df_async(
+            return await self._concat_user_groups_df(
                 session=session,
                 users=users_df,
                 output_fields=output_fields,
-                max_concurrent=max_concurrent,
+                max_concurrent_requests=max_concurrent_requests,
             )
 
     def _run(self, coro: Coroutine[Any, Any, T]) -> T:
@@ -351,16 +351,15 @@ class EntraID(Source):
         self,
         if_empty: Literal["warn", "skip", "fail"] = "warn",
         tests: dict[str, Any] | None = None,
-        max_concurrent: int = 50,
+        max_concurrent_requests: int = 50,
     ) -> pd.DataFrame:
         """Produce a pandas DataFrame containing one row per user-group membership.
 
         Args:
             if_empty (Literal["warn", "skip", "fail"]): Policy for handling results.
             tests (dict[str, Any] | None): Optional tests to validate the resulting
-                DataFrame.
-                Passed through to `viadot.utils.validate`.
-            max_concurrent (int): Maximum number of concurrent HTTP requests
+                DataFrame. Passed through to `viadot.utils.validate`.
+            max_concurrent_requests (int): Maximum number of concurrent HTTP requests
                  to Microsoft Graph.
 
         Returns:
@@ -373,7 +372,7 @@ class EntraID(Source):
             aiohttp.ClientError: If a network-related error occurs.
             Exception: Any exception raised by provided `tests` validation.
         """
-        df = self._run(self._build_users_groups_df(max_concurrent=max_concurrent))
+        df = self._run(self._build_users_groups_df(max_concurrent_requests=max_concurrent_requests))
 
         if df.empty:
             handle_if_empty(
@@ -382,7 +381,7 @@ class EntraID(Source):
                 logger=self.logger,
             )
 
-        df_clean = cleanup_df(df)
+        df_clean = remove_newlines_and_tabs(df)
 
         if tests:
             validate(df=df_clean, tests=tests)

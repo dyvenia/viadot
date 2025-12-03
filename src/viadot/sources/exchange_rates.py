@@ -10,7 +10,11 @@ import requests
 from viadot.config import get_source_credentials
 from viadot.exceptions import CredentialError
 from viadot.sources.base import Source
-from viadot.utils import add_viadot_metadata_columns, cleanup_df, validate
+from viadot.utils import (
+    add_viadot_metadata_columns,
+    remove_newlines_and_tabs,
+    validate,
+)
 
 
 Currency = Literal[
@@ -177,7 +181,7 @@ class ExchangeRates(Source):
         """
         json = self.to_json()
         df = pd.json_normalize(json["currencies"])
-        df_clean = cleanup_df(df)
+        df_clean = remove_newlines_and_tabs(df)
 
         if tests:
             validate(df=df_clean, tests=tests)

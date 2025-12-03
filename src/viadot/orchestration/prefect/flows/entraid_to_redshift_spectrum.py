@@ -24,7 +24,7 @@ def entraid_to_redshift_spectrum(  # noqa: PLR0913
     if_exists: Literal["overwrite", "append"] = "overwrite",
     partition_cols: list[str] | None = None,
     index: bool = False,
-    compression: str | None = None,
+    compression: Literal["snappy", "gzip", "zstd"] | None = None,
     sep: str = ",",
     aws_config_key: str | None = None,
     credentials_secret: str | None = None,
@@ -46,12 +46,12 @@ def entraid_to_redshift_spectrum(  # noqa: PLR0913
         table (str): AWS Glue catalog table name.
         extension (str): Required file type. Accepted file formats are 'csv' and
             'parquet'.
-        if_exists (str, optional): 'overwrite' to recreate any possible existing table
-            or 'append' to keep any possible existing table. Defaults to overwrite.
+        if_exists (Literal["overwrite", "append"], optional): Set to 'overwrite' to
+          recreate the existing table.
         partition_cols (list[str], optional): List of column names that will be used to
             create partitions. Only takes effect if dataset=True. Defaults to None.
         index (bool, optional): Write row names (index). Defaults to False.
-        compression (str, optional): Compression style (None, snappy, gzip, zstd).
+        compression (Literal["snappy", "gzip", "zstd"], optional): Compression method
         sep (str, optional): Field delimiter for the output file. Defaults to ','.
         aws_config_key (str, optional): The key in the viadot config holding relevant
             credentials. Defaults to None.

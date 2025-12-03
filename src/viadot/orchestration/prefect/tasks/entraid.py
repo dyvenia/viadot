@@ -1,4 +1,4 @@
-"""Tasks for interacting with Microsoft Sharepoint."""
+"""Tasks for interacting with EntraID."""
 
 import pandas as pd
 from prefect import get_run_logger, task
@@ -12,12 +12,9 @@ from viadot.sources import EntraID
 def entraid_to_df(
     credentials_secret: str | None = None,
     config_key: str | None = None,
-    max_concurrent: int = 50,
+    max_concurrent_requests: int = 50,
 ) -> pd.DataFrame:
     """Load data from EntraID into a pandas `DataFrame`.
-
-    Modes:
-    It downloads data from EntraID and creates a table from it.
 
     Args:
         credentials_secret (str, optional): The name of the secret storing
@@ -25,8 +22,8 @@ def entraid_to_df(
             More info on: https://docs.prefect.io/concepts/blocks/
         config_key (str, optional): The key in the viadot config holding relevant
             credentials. Defaults to None.
-        max_concurrent (int, optional): The maximum number of concurrent requests
-            to EntraID. Defaults to 50.
+        max_concurrent_requests (int, optional): The maximum number of concurrent
+            requests to EntraID. Defaults to 50.
 
     Returns:
         pd.Dataframe: The pandas `DataFrame` containing data from EntraID.
@@ -47,7 +44,7 @@ def entraid_to_df(
     logger.info("Downloading data from EntraID...")
     df = e.to_df(
         if_empty="skip",
-        max_concurrent=max_concurrent,
+        max_concurrent_requests=max_concurrent_requests,
     )
     logger.info("Successfully downloaded data from EntraID.")
 
