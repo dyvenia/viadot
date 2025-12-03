@@ -24,6 +24,7 @@ def epicor_to_parquet(
     end_date_field: str = "EndInvoiceDate",
     epicor_credentials_secret: str | None = None,
     epicor_config_key: str | None = None,
+    if_empty: Literal["warn", "fail", "skip"] = "warn",
 ) -> None:
     """Download a pandas `DataFrame` from Epicor Prelude API load it into Parquet file.
 
@@ -46,6 +47,12 @@ def epicor_to_parquet(
             More info on: https://docs.prefect.io/concepts/blocks/
         epicor_config_key (str, optional): The key in the viadot config holding relevant
             credentials. Defaults to None.
+        if_empty (Literal["warn", "skip", "fail"], optional): Action to take if
+            the DataFrame is empty.
+            - "warn": Logs a warning.
+            - "skip": Skips the operation.
+            - "fail": Raises an error.
+            Defaults to "warn".
 
     Examples:
         >>> epicor_to_parquet(
@@ -84,6 +91,7 @@ def epicor_to_parquet(
         end_date_field=end_date_field,
         credentials_secret=epicor_credentials_secret,
         config_key=epicor_config_key,
+        if_empty=if_empty,
     )
 
     return df_to_parquet(
