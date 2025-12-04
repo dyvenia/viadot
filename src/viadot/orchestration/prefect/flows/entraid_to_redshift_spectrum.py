@@ -28,8 +28,8 @@ def entraid_to_redshift_spectrum(  # noqa: PLR0913
     sep: str = ",",
     aws_config_key: str | None = None,
     credentials_secret: str | None = None,
-    sharepoint_credentials_secret: str | None = None,
-    sharepoint_config_key: str | None = None,
+    entraid_credentials_secret: str | None = None,
+    entraid_config_key: str | None = None,
 ) -> None:
     """Extract data from EntraID and load it into AWS Redshift Spectrum.
 
@@ -57,15 +57,15 @@ def entraid_to_redshift_spectrum(  # noqa: PLR0913
             credentials. Defaults to None.
         credentials_secret (str, optional): The name of a secret block in Prefect
             that stores AWS credentials. Defaults to None.
-        sharepoint_credentials_secret (str, optional): The name of the secret storing
+        entraid_credentials_secret (str, optional): The name of the secret storing
             EntraID credentials. Defaults to None.
             More info on: https://docs.prefect.io/concepts/blocks/
         entraid_config_key (str, optional): The key in the viadot config holding
             relevant credentials. Defaults to None.
     """
     df = entraid_to_df(
-        credentials_secret=sharepoint_credentials_secret,
-        config_key=sharepoint_config_key,
+        credentials_secret=entraid_credentials_secret,
+        config_key=entraid_config_key,
     )
 
     df_to_redshift_spectrum(
