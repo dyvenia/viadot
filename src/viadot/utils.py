@@ -459,7 +459,7 @@ def handle_if_empty(
         raise ValueError(message)
 
 
-def cleanup_df(df: pd.DataFrame) -> pd.DataFrame:
+def remove_newlines_and_tabs(df: pd.DataFrame) -> pd.DataFrame:
     """Remove some common data corruption from a pandas DataFrame.
 
     Args:

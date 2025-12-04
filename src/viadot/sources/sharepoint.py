@@ -19,7 +19,7 @@ from viadot.signals import SKIP
 from viadot.sources.base import Source
 from viadot.utils import (
     add_viadot_metadata_columns,
-    cleanup_df,
+    remove_newlines_and_tabs,
     validate,
     validate_and_reorder_dfs_columns,
 )
@@ -498,7 +498,7 @@ class Sharepoint(Source):
                 df["sheet_name"] = sheet_name
             self.logger.info(f"Successfully downloaded {len(df)} rows of data.")
 
-        df_clean = cleanup_df(df)
+        df_clean = remove_newlines_and_tabs(df)
 
         if tests:
             validate(df=df_clean, tests=tests)
