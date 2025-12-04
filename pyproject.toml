@@ -40,7 +40,7 @@ dependencies = [
     "prefect-shell<=0.2.6",
     "dbt-core>=1.7,<1.10",
     "xlrd>=2.0.2",
-    "dbt-adapters==1.14.3",
+    #"dbt-adapters==1.14.3",
     "pyarrow>=18.0.0",
     "awswrangler>=3.12.1",
     "pandas>=2.0.0",
