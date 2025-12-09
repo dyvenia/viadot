@@ -227,7 +227,7 @@ def test_to_df_with_record_prefix(matomo_instance, sample_matomo_response):
 
     # Check that actionDetails fields have the prefix
     action_columns = [col for col in df.columns if col.startswith("action_")]
-    assert len(action_columns) == 0
+    assert len(action_columns) != 0
 
 
 def test_to_df_with_list_record_path(matomo_instance, sample_matomo_response):
