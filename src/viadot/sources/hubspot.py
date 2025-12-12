@@ -463,7 +463,6 @@ class Hubspot(Source):
                 nrows=nrows,
             )
 
-
     @add_viadot_metadata_columns
     def to_df(
         self,
