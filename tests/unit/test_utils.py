@@ -9,8 +9,8 @@ import pytest
 
 from viadot.signals import SKIP
 from viadot.utils import (
-    cast_df_cols,
     add_viadot_metadata_columns,
+    cast_df_cols,
     df_clean_column,
     df_converts_bytes_to_int,
     gen_bulk_insert_query_from_df,
