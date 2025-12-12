@@ -1,10 +1,10 @@
 from datetime import datetime
-from io import StringIO
 import json
 import unittest
 from unittest.mock import MagicMock, patch
 
 import pandas as pd
+from pandas.testing import assert_frame_equal
 import pytest
 from requests.models import Response
 
@@ -53,13 +53,13 @@ class TestHubspot(unittest.TestCase):
 
         mock_get_source_credentials.assert_called_once()
 
-    def test_date_to_unixtimestamp(self):
-        """Test Hubspot `_date_to_unixtimestamp` function."""
+    def test_date_to_unix_millis(self):
+        """Test Hubspot `_date_to_unix_millis` function."""
         date_str = "2021-01-01"
         expected_timestamp = int(
             datetime.strptime(date_str, "%Y-%m-%d").timestamp() * 1000
         )
-        result = self.hubspot_instance._date_to_unixtimestamp(date_str)
+        result = self.hubspot_instance._date_to_unix_millis(date_str)
         assert result == expected_timestamp
 
     def test_get_api_url(self):
@@ -107,10 +107,7 @@ class TestHubspot(unittest.TestCase):
     @patch("viadot.sources.hubspot.handle_api_response")
     def test_api_call_error(self, mock_handle_api_response):
         """Test Hubspot `_api_call` method failure."""
-        mock_response = MagicMock(spec=Response)
-        mock_response.status_code = 500
-        mock_response.content = b"Internal Server Error"
-        mock_handle_api_response.return_value = mock_response
+        mock_handle_api_response.side_effect = APIError("Internal Server Error")
 
         url = "https://api.hubapi.com/crm/v3/objects/deals/?limit=100&"
 
@@ -136,8 +133,8 @@ class TestHubspot(unittest.TestCase):
         assert (offset_type, offset_value) == (None, None)
 
     @patch("viadot.sources.hubspot.handle_api_response")
-    def test_api_connection_with_filters(self, mock_handle_api_response):
-        """Test Hubspot `api_connection` method, with filters."""
+    def test_fetch_with_filters(self, mock_handle_api_response):
+        """Test Hubspot `_fetch` method, with filters."""
         mock_response = MagicMock(spec=Response)
         mock_response.status_code = 200
         mock_response.json.return_value = {"results": [{"id": "123"}]}
@@ -146,7 +143,7 @@ class TestHubspot(unittest.TestCase):
         endpoint = "deals"
         filters = variables["filters"]
         properties = ["property1"]
-        self.hubspot_instance.api_connection(
+        self.hubspot_instance._fetch(
             endpoint=endpoint, filters=filters, properties=properties
         )
 
@@ -154,8 +151,8 @@ class TestHubspot(unittest.TestCase):
         assert len(self.hubspot_instance.full_dataset) > 0
 
     @patch("viadot.sources.hubspot.handle_api_response")
-    def test_api_connection_without_filters(self, mock_handle_api_response):
-        """Test Hubspot `api_connection` method, without filters."""
+    def test_fetch_without_filters(self, mock_handle_api_response):
+        """Test Hubspot `_fetch` method, without filters."""
         mock_response = MagicMock(spec=Response)
         mock_response.status_code = 200
         mock_response.json.return_value = {"results": [{"id": "123"}]}
@@ -164,7 +161,7 @@ class TestHubspot(unittest.TestCase):
         endpoint = "deals"
         filters = None
         properties = ["property1"]
-        self.hubspot_instance.api_connection(
+        self.hubspot_instance._fetch(
             endpoint=endpoint, filters=filters, properties=properties
         )
 
@@ -184,16 +181,14 @@ class TestHubspot(unittest.TestCase):
         )
 
         expected_df = pd.DataFrame([{"id": "123"}])
-        assert result_df.equals(expected_df)
+        assert_frame_equal(result_df, expected_df, check_dtype=False)
         mock_super().to_df.assert_called_once()
 
-    @patch("viadot.sources.hubspot.pd.read_json")
     @patch("viadot.sources.hubspot.super")
-    def test_to_df_empty(self, mock_super, mock_read_json):
+    def test_to_df_empty(self, mock_super):
         """Test Hubspot `to_df` method, checking emptiness."""
         mock_super().to_df = MagicMock()
-        mock_read_json.return_value = pd.DataFrame()
-        self.hubspot_instance.full_dataset = StringIO("{}")
+        self.hubspot_instance.full_dataset = []
 
         with patch.object(
             self.hubspot_instance, "_handle_if_empty"

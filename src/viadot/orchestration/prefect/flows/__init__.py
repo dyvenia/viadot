@@ -17,6 +17,7 @@ from .exchange_rates_to_databricks import exchange_rates_to_databricks
 from .exchange_rates_to_redshift_spectrum import exchange_rates_api_to_redshift_spectrum
 from .genesys_to_adls import genesys_to_adls
 from .hubspot_to_adls import hubspot_to_adls
+from .hubspot_to_redshift_spectrum import hubspot_to_redshift_spectrum
 from .matomo_to_redshift_spectrum import matomo_to_redshift_spectrum
 from .mediatool_to_adls import mediatool_to_adls
 from .mindful_to_adls import mindful_to_adls
@@ -59,6 +60,7 @@ __all__ = [
     "exchange_rates_to_databricks",
     "genesys_to_adls",
     "hubspot_to_adls",
+    "hubspot_to_redshift_spectrum",
     "matomo_to_redshift_spectrum",
     "mediatool_to_adls",
     "mindful_to_adls",
