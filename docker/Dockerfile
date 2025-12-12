@@ -52,13 +52,16 @@ RUN chmod +rwx /usr/lib/ssl/openssl.cnf && \
     sed -i 's/SECLEVEL=2/SECLEVEL=1/g' /usr/lib/ssl/openssl.cnf
 
 # ODBC -- make sure to pin driver version as it's reflected in odbcinst.ini
-RUN curl https://packages.microsoft.com/keys/microsoft.asc | apt-key add - && \
-    curl https://packages.microsoft.com/config/debian/10/prod.list > /etc/apt/sources.list.d/mssql-release.list && \
-    apt update -q && \
+RUN curl -sSL -O https://packages.microsoft.com/config/debian/$(grep VERSION_ID /etc/os-release | cut -d '"' -f 2 | cut -d '.' -f 1)/packages-microsoft-prod.deb && \
+    dpkg -i packages-microsoft-prod.deb && \
+    rm packages-microsoft-prod.deb && \
+    apt-get update && \
     apt install -q libsqliteodbc && \
-    ACCEPT_EULA=Y apt install -q -y msodbcsql17=17.10.1.1-1 && \
-    ACCEPT_EULA=Y apt install -q -y mssql-tools=17.10.1.1-1 && \
-    echo 'export PATH="$PATH:/opt/mssql-tools/bin"' >> ~/.bashrc
+    ACCEPT_EULA=Y apt-get install -y msodbcsql18 && \
+    ACCEPT_EULA=Y apt-get install -y mssql-tools18 && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/* && \
+    echo 'export PATH="$PATH:/opt/mssql-tools18/bin"' >> ~/.bashrc
 
 COPY docker/odbcinst.ini /etc
 
