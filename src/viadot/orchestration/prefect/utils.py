@@ -23,6 +23,8 @@ from prefect_sqlalchemy import SqlAlchemyConnector
 with contextlib.suppress(ModuleNotFoundError):
     from prefect_aws import AwsCredentials
     from prefect_aws.secrets_manager import AwsSecret
+from prefect_sqlalchemy import SqlAlchemyConnector
+
 
 with contextlib.suppress(ModuleNotFoundError):
     from prefect_azure import AzureKeyVaultSecretReference
@@ -589,29 +591,25 @@ def _get_database_credentials(secret_name: str) -> dict[str, Any] | str:
     Returns:
         dict | str: A dictionary or a string containing the credentials.
     """
-    secret = _load_prefect_block(SqlAlchemyConnector, secret_name).dict()
-
+    secret = SqlAlchemyConnector.load(name=secret_name).dict()
+    
     # Extract from connection_info structure
     conn_info = secret.get("connection_info", {})
-
+    
     # connection_info might be a dict or ConnectionComponents object
     if hasattr(conn_info, "dict"):
         conn_info = conn_info.dict()
-
+    
     credentials = {}
     credentials["user"] = conn_info.get("username")
     credentials["db_name"] = conn_info.get("database")
-
+    
     password_obj = conn_info.get("password")
     if password_obj:
-        credentials["password"] = (
-            password_obj.get_secret_value()
-            if hasattr(password_obj, "get_secret_value")
-            else password_obj
-        )
+        credentials["password"] = password_obj.get_secret_value() if hasattr(password_obj, "get_secret_value") else password_obj
     else:
         credentials["password"] = None
-
+    
     host = conn_info.get("host")
     port = conn_info.get("port")
     if port:
