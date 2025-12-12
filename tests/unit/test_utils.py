@@ -9,7 +9,7 @@ import pytest
 
 from viadot.signals import SKIP
 from viadot.utils import (
-    _cast_df_cols,
+    cast_df_cols,
     add_viadot_metadata_columns,
     df_clean_column,
     df_converts_bytes_to_int,
@@ -141,7 +141,7 @@ def test__cast_df_cols():
     test_df["datetime_column"] = pd.to_datetime(
         test_df["datetime_column"], infer_datetime_format=True
     )
-    result_df = _cast_df_cols(
+    result_df = cast_df_cols(
         test_df, types_to_convert=["datetime", "bool", "int", "object"]
     )
 

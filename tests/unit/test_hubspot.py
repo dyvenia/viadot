@@ -273,7 +273,9 @@ class TestHubspot(unittest.TestCase):
         instance = self.hubspot_instance
         campaigns = ["A", "B"]
         with patch.object(
-            instance, "_api_call", return_value={"results": [{"id": "c1"}, {"id": "c2"}]}
+            instance,
+            "_api_call",
+            return_value={"results": [{"id": "c1"}, {"id": "c2"}]},
         ):
             instance._fetch_contact_ids(campaign_ids=campaigns)  # default type
         assert len(instance.full_dataset) == 4
@@ -303,13 +305,22 @@ class TestHubspot(unittest.TestCase):
             instance.call_api(method="get_all_contacts")
             mock_fetch.assert_called_once()
             args, kwargs = mock_fetch.call_args
-            assert kwargs["endpoint"] == "https://api.hubapi.com/contacts/v1/lists/all/contacts/all"
+            assert (
+                kwargs["endpoint"]
+                == "https://api.hubapi.com/contacts/v1/lists/all/contacts/all"
+            )
 
     def test_call_api_dispatch_fetch_contact_ids(self):
         instance = self.hubspot_instance
         with patch.object(instance, "_fetch_contact_ids") as mock_fc:
-            instance.call_api(method="fetch_contact_ids", campaign_ids=["Z"], contact_type="influencedContacts")
-            mock_fc.assert_called_once_with(campaign_ids=["Z"], contact_type="influencedContacts")
+            instance.call_api(
+                method="fetch_contact_ids",
+                campaign_ids=["Z"],
+                contact_type="influencedContacts",
+            )
+            mock_fc.assert_called_once_with(
+                campaign_ids=["Z"], contact_type="influencedContacts"
+            )
 
     def test_call_api_dispatch_get_campaign_metrics(self):
         instance = self.hubspot_instance
@@ -320,7 +331,9 @@ class TestHubspot(unittest.TestCase):
     def test_call_api_dispatch_generic_fetch(self):
         instance = self.hubspot_instance
         with patch.object(instance, "_fetch") as mock_fetch:
-            instance.call_api(method=None, endpoint="deals", filters=None, properties=["id"], nrows=10)
+            instance.call_api(
+                method=None, endpoint="deals", filters=None, properties=["id"], nrows=10
+            )
             mock_fetch.assert_called_once()
             args, kwargs = mock_fetch.call_args
             assert kwargs["endpoint"] == "deals"
