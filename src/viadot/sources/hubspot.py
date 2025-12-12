@@ -408,7 +408,12 @@ class Hubspot(Source):
             partition = self._api_call(url=url, method="GET")
             metrics = partition or {}
             row: dict[str, Any] = {"campaign_id": campaign_id}
-            for key in ["sessions", "newContactsFirstTouch", "newContactsLastTouch", "influencedContacts"]:
+            for key in [
+                "sessions",
+                "newContactsFirstTouch",
+                "newContactsLastTouch",
+                "influencedContacts",
+            ]:
                 if key in metrics:
                     row[key] = metrics[key]
             rows.append(row)
