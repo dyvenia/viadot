@@ -68,7 +68,7 @@ def bcp(
         msg = "Please provide correct 'on_error' parameter value - 'skip' or 'fail'. "
         raise ValueError(msg)
     bcp_command = [
-        "/opt/mssql-tools/bin/bcp",
+        "/opt/mssql-tools18/bin/bcp",
         fqn,
         "in",
         path,
