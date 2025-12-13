@@ -513,11 +513,12 @@ def _get_azure_credentials(secret_name: str) -> dict[str, Any]:
     Returns:
         dict: A dictionary containing the credentials.
     """
+    
     try:
         credentials = json.loads(
             AzureKeyVaultSecretReference.load(secret_name).get_secret()
         )
-    except JSONDecodeError:
+    except (JSONDecodeError, TypeError):
         credentials = AzureKeyVaultSecretReference.load(secret_name).get_secret()
 
     return credentials
@@ -548,7 +549,7 @@ def _get_aws_credentials(
         secret = aws_secret_block.read_secret()
         try:
             credentials = json.loads(secret)
-        except (json.JSONDecodeError, UnicodeDecodeError):
+        except (json.JSONDecodeError, UnicodeDecodeError, TypeError):
             credentials = secret
     elif block_type == "AwsCredentials":
         aws_credentials_block = AwsCredentials.load(secret_name)
@@ -570,10 +571,10 @@ def _get_secret_credentials(secret_name: str) -> dict[str, Any] | str:
     Returns:
         dict | str: A dictionary or a string containing the credentials.
     """
-    secret = Secret.load(secret_name).get()
+    secret = Secret.load(secret_name).get()    
     try:
         credentials = json.loads(secret)
-    except json.JSONDecodeError:
+    except (json.JSONDecodeError, TypeError):
         credentials = secret
 
     return credentials
