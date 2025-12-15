@@ -80,6 +80,7 @@ def bcp(
         uid,
         "-P",
         pwd,
+        "-u",
         "-b",
         str(chunksize),
         "-m",
@@ -94,4 +95,16 @@ def bcp(
         "2",
     ]
 
-    return subprocess.run(bcp_command, capture_output=True, text=True, check=False)  # noqa: S603
+    result = subprocess.run(bcp_command, capture_output=True, text=True, check=False)  # noqa: S603
+    if result.stdout:
+        print(f"BCP stdout:\n{result.stdout[:2000]}")
+    if result.stderr:
+        print(f"BCP stderr:\n{result.stderr[:2000]}")
+
+    if result.returncode != 0:
+        raise RuntimeError(
+            f"BCP failed with exit code {result.returncode}. "
+            f"Stderr: {result.stderr[:500]}"
+        )
+
+    return result
