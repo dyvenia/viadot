@@ -12,7 +12,12 @@ from viadot.orchestration.prefect.utils import get_credentials
 from viadot.sources.onestream import OneStream
 
 
-@task(retries=1, log_prints=True, retry_delay_seconds=5)
+@task(
+    retries=1,
+    log_prints=True,
+    retry_delay_seconds=5,
+    cache_result_in_memory=False,
+)
 def create_batch_list_of_custom_subst_vars(
     custom_subst_vars: dict[str, list[Any]],
 ) -> list[dict[str, list[Any]]]:
@@ -55,7 +60,13 @@ def create_batch_list_of_custom_subst_vars(
     ]
 
 
-@task(retries=3, log_prints=True, retry_delay_seconds=10, timeout_seconds=60 * 60)
+@task(
+    retries=3,
+    log_prints=True,
+    retry_delay_seconds=10,
+    timeout_seconds=60 * 60,
+    cache_result_in_memory=False,
+)
 def onestream_to_df(
     base_url: str,
     application: str,
