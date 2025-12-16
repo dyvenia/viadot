@@ -125,15 +125,15 @@ def test_init_with_custom_params():
     assert onestream.params == custom_params
 
 
-@patch.object(OneStream, "_fetch_agg_data_adapter_endpoint_data")
-@patch.object(OneStream, "_fetch_agg_sql_query_endpoint_data")
+@patch.object(OneStream, "_get_agg_data_adapter_endpoint_data")
+@patch.object(OneStream, "_get_agg_sql_query_endpoint_data")
 @patch.object(OneStream, "_run_data_management_seq")
-def test_fetch_from_api_endpoint_routes_correctly(
+def test_execute_api_method_routes_correctly(
     mock_run_dm_seq,
     mock_fetch_sql,
     mock_fetch_adapter,
 ):
-    """Test that `_fetch_from_api_endpoint` dispatches based on api type."""
+    """Test that `_execute_api_method` dispatches based on api type."""
     # data_adapter
     one_data = OneStream(
         base_url="https://test.onestream.com",
@@ -141,7 +141,7 @@ def test_fetch_from_api_endpoint_routes_correctly(
         api="data_adapter",
         credentials=DUMMY_CREDS,
     )
-    one_data._fetch_from_api_endpoint()
+    one_data._execute_api_method()
     mock_fetch_adapter.assert_called_once_with()
     mock_fetch_sql.assert_not_called()
     mock_run_dm_seq.assert_not_called()
@@ -155,7 +155,7 @@ def test_fetch_from_api_endpoint_routes_correctly(
         api="sql_query",
         credentials=DUMMY_CREDS,
     )
-    one_sql._fetch_from_api_endpoint()
+    one_sql._execute_api_method()
     mock_fetch_sql.assert_called_once_with()
     mock_fetch_adapter.assert_not_called()
     mock_run_dm_seq.assert_not_called()
@@ -169,7 +169,7 @@ def test_fetch_from_api_endpoint_routes_correctly(
         api="data_management_seq",
         credentials=DUMMY_CREDS,
     )
-    one_dm._fetch_from_api_endpoint()
+    one_dm._execute_api_method()
     mock_run_dm_seq.assert_called_once_with()
     mock_fetch_adapter.assert_not_called()
     mock_fetch_sql.assert_not_called()
@@ -368,7 +368,7 @@ def test_fetch_agg_data_adapter_endpoint_data_success(
     ]
 
     custom_subst_vars = {"prm_entity": ["E1", "E2"]}
-    result = onestream_instance._fetch_agg_data_adapter_endpoint_data(
+    result = onestream_instance._get_agg_data_adapter_endpoint_data(
         adapter_name="TestAdapter",
         custom_subst_vars=custom_subst_vars,
     )
@@ -385,7 +385,7 @@ def test_fetch_agg_data_adapter_endpoint_data_no_custom_subst_vars(
     """Test Data Adapter retrieval without custom substitution variables."""
     mock_fetch_results.return_value = [{"ID": 1, "Amount": 1000}]
 
-    result = onestream_instance._fetch_agg_data_adapter_endpoint_data(
+    result = onestream_instance._get_agg_data_adapter_endpoint_data(
         adapter_name="TestAdapter",
     )
 
@@ -434,7 +434,7 @@ def test_fetch_agg_sql_query_endpoint_data_success(mock_run_sql, onestream_insta
     ]
 
     custom_subst_vars = {"prm_role": ["Admin", "User"]}
-    result = onestream_instance._fetch_agg_sql_query_endpoint_data(
+    result = onestream_instance._get_agg_sql_query_endpoint_data(
         sql_query="SELECT * FROM Users",
         custom_subst_vars=custom_subst_vars,
     )
@@ -450,7 +450,7 @@ def test_fetch_agg_sql_query_endpoint_data_no_custom_subst_vars(
     """Test SQL data retrieval without custom substitution variables."""
     mock_run_sql.return_value = [{"UserName": "admin"}]
 
-    result = onestream_instance._fetch_agg_sql_query_endpoint_data(
+    result = onestream_instance._get_agg_sql_query_endpoint_data(
         sql_query="SELECT * FROM Users",
     )
 

@@ -110,6 +110,7 @@ def onestream_get_agg_adapter_endpoint_data_to_df(
         credentials=credentials,
         config_key=config_key,
         params=params,
+        api="data_adapter",
     )
     # TODO: in OneStream params add ? payload=payload
     data = onestream.get_agg_adapter_endpoint_data(
@@ -180,6 +181,7 @@ def onestream_get_agg_sql_data_to_df(  # noqa: PLR0913
         credentials=credentials,
         config_key=config_key,
         params=params,
+        api="sql_query",
     )
 
     data = onestream.get_agg_sql_data(

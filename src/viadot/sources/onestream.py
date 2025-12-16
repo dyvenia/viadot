@@ -84,19 +84,22 @@ class OneStream(Source):
         self.params = params_with_default_api_version
         self.api = api
 
-    def _fetch_from_api_endpoint(self) -> None:
+    def _execute_api_method(self, **kwargs) -> list[dict[str, Any]] | requests.Response:
         """Executes function for selected api endpoint.
 
+        Args:
+            **kwargs: Additional arguments passed to the specific API method.
+
         Returns:
-            None.
+            list[dict[str, Any]] | requests.Response: The result of the API call.
         """
         match self.api:
             case "data_adapter":
-                self._fetch_agg_data_adapter_endpoint_data()
+                return self._get_agg_data_adapter_endpoint_data(**kwargs)
             case "sql_query":
-                self._fetch_agg_sql_query_endpoint_data()
+                return self._get_agg_sql_query_endpoint_data(**kwargs)
             case "run_data_management_seq":
-                self._run_data_management_seq()
+                return self._run_data_management_seq(**kwargs)
 
     def _send_api_request(
         self,
@@ -213,7 +216,7 @@ class OneStream(Source):
             for combination in product(*custom_subst_vars.values())
         ]
 
-    def _fetch_agg_data_adapter_endpoint_data(
+    def _get_agg_data_adapter_endpoint_data(
         self,
         adapter_name: str,
         workspace_name: str = "MainWorkspace",
@@ -319,7 +322,7 @@ class OneStream(Source):
 
         return self._extract_data_from_response(response, adapter_response_key)
 
-    def _fetch_agg_sql_query_endpoint_data(
+    def _get_agg_sql_query_endpoint_data(
         self,
         custom_subst_vars: dict | None = None,
         sql_query: str = "",
