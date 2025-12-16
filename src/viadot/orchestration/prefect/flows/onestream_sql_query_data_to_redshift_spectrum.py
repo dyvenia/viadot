@@ -104,8 +104,8 @@ def onestream_sql_query_data_to_redshift_spectrum(  # noqa: PLR0913
         partition_cols (list[str], optional): Columns used to create partitions.
             Only applies when dataset=True. Defaults to None.
         index (bool): Write row names (index). Defaults to False.
-        compression (str, optional): Compression style (None, snappy, gzip, zstd).
-            Defaults to None.
+        compression (Literal["snappy", "gzip", "zstd"], optional): Compression style
+            (None, snappy, gzip, zstd). Defaults to None.
         sep (str): Field delimiter for the output file. Defaults to ','.
         aws_config_key (str, optional): Key in viadot config for AWS credentials.
             Defaults to None.
