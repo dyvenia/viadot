@@ -63,7 +63,7 @@ def onestream_to_df(
     credentials_secret: str | None = None,
     config_key: str | None = None,
     params: dict[str, str] | None = None,
-    if_empty: Literal["warn", "skip", "fail"] = "warn",
+    if_empty: Literal["warn", "skip", "fail"] = "fail",
     **kwargs,
 ) -> pd.DataFrame:
     """Extract data from a OneStream API endpoint into a Pandas DataFrame.
@@ -83,8 +83,8 @@ def onestream_to_df(
             environment file. Defaults to None.
         params (dict[str, str], optional): Additional query parameters.
             Defaults to None.
-        if_empty (Literal["warn", "skip", "fail"], optional): Behavior when
-            the query returns empty data. Defaults to "warn".
+        if_empty (Literal["warn", "skip", "fail"], optional): What to do if
+            the API returns no data. Defaults to "fail"
         **kwargs: Endpoint-specific parameters.
             For "data_adapter":
                 - adapter_name (str): Name of the OneStream adapter to query.
