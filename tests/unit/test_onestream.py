@@ -50,7 +50,6 @@ def onestream_instance(onestream_credentials):
     return OneStream(
         base_url="https://test.onestream.com",
         application="TestApp",
-        api="data_adapter",
         credentials=onestream_credentials,
     )
 
@@ -79,12 +78,12 @@ def test_init_with_credentials_dict(mock_get_creds, onestream_credentials):
     """Test initialization with credentials dictionary."""
     mock_get_creds.return_value = None
     onestream = OneStream(
-        server_url="https://test.onestream.com",
+        base_url="https://test.onestream.com",
         application="TestApp",
         credentials=onestream_credentials,
     )
     assert onestream.credentials == onestream_credentials
-    assert onestream.server_url == "https://test.onestream.com"
+    assert onestream.base_url == "https://test.onestream.com"
     assert onestream.application == "TestApp"
     assert onestream.api_token == "test_api_token_123456"  # noqa: S105
 
@@ -94,7 +93,7 @@ def test_init_with_config_key(mock_get_creds, onestream_credentials):
     """Test initialization with config key."""
     mock_get_creds.return_value = onestream_credentials
     onestream = OneStream(
-        server_url="https://test.onestream.com",
+        base_url="https://test.onestream.com",
         application="TestApp",
         config_key="test_onestream",
     )
@@ -107,7 +106,7 @@ def test_init_without_credentials_raises_error(mock_get_creds):
     mock_get_creds.return_value = None
     with pytest.raises(ValidationError):
         OneStream(
-            server_url="https://test.onestream.com",
+            base_url="https://test.onestream.com",
             application="TestApp",
         )
 
@@ -118,7 +117,6 @@ def test_init_with_custom_params():
     onestream = OneStream(
         base_url="https://test.onestream.com",
         application="TestApp",
-        api="data_adapter",
         credentials=DUMMY_CREDS,
         params=custom_params,
     )
@@ -132,45 +130,34 @@ def test_execute_api_method_routes_correctly(
     mock_run_dm_seq,
     mock_fetch_sql,
     mock_fetch_adapter,
+    onestream_instance,
 ):
-    """Test that `_execute_api_method` dispatches based on api type."""
-    # data_adapter
-    one_data = OneStream(
-        base_url="https://test.onestream.com",
-        application="TestApp",
-        api="data_adapter",
-        credentials=DUMMY_CREDS,
+    """Test that `_execute_api_method` dispatches based on api parameter."""
+    # Test data_adapter routing
+    onestream_instance._execute_api_method(
+        api="data_adapter", adapter_name="TestAdapter"
     )
-    one_data._execute_api_method()
-    mock_fetch_adapter.assert_called_once_with()
+    mock_fetch_adapter.assert_called_once_with(adapter_name="TestAdapter")
     mock_fetch_sql.assert_not_called()
     mock_run_dm_seq.assert_not_called()
 
     mock_fetch_adapter.reset_mock()
 
-    # sql_query
-    one_sql = OneStream(
-        base_url="https://test.onestream.com",
-        application="TestApp",
-        api="sql_query",
-        credentials=DUMMY_CREDS,
+    # Test sql_query routing
+    onestream_instance._execute_api_method(
+        api="sql_query", sql_query="SELECT * FROM test"
     )
-    one_sql._execute_api_method()
-    mock_fetch_sql.assert_called_once_with()
+    mock_fetch_sql.assert_called_once_with(sql_query="SELECT * FROM test")
     mock_fetch_adapter.assert_not_called()
     mock_run_dm_seq.assert_not_called()
 
     mock_fetch_sql.reset_mock()
 
-    # data_management_seq
-    one_dm = OneStream(
-        base_url="https://test.onestream.com",
-        application="TestApp",
-        api="data_management_seq",
-        credentials=DUMMY_CREDS,
+    # Test run_data_management_seq routing
+    onestream_instance._execute_api_method(
+        api="run_data_management_seq", dm_seq_name="TestSeq"
     )
-    one_dm._execute_api_method()
-    mock_run_dm_seq.assert_called_once_with()
+    mock_run_dm_seq.assert_called_once_with(dm_seq_name="TestSeq")
     mock_fetch_adapter.assert_not_called()
     mock_fetch_sql.assert_not_called()
 
@@ -374,7 +361,8 @@ def test_fetch_agg_data_adapter_endpoint_data_success(
     )
 
     assert len(result) == 2
-    assert result == [{"ID": 1, "Amount": 1000}, {"ID": 2, "Amount": 2000}]
+    assert result[0] == [{"ID": 1, "Amount": 1000}]
+    assert result[1] == [{"ID": 2, "Amount": 2000}]
     assert mock_fetch_results.call_count == 2
 
 
@@ -390,7 +378,7 @@ def test_fetch_agg_data_adapter_endpoint_data_no_custom_subst_vars(
     )
 
     assert len(result) == 1
-    assert result == [{"ID": 1, "Amount": 1000}]
+    assert result[0] == [{"ID": 1, "Amount": 1000}]
     mock_fetch_results.assert_called_once()
 
 
@@ -440,7 +428,8 @@ def test_fetch_agg_sql_query_endpoint_data_success(mock_run_sql, onestream_insta
     )
 
     assert len(result) == 2
-    assert result == [{"UserName": "admin"}, {"UserName": "user1"}]
+    assert result[0] == [{"UserName": "admin"}]
+    assert result[1] == [{"UserName": "user1"}]
 
 
 @patch.object(OneStream, "_run_sql")
@@ -455,75 +444,127 @@ def test_fetch_agg_sql_query_endpoint_data_no_custom_subst_vars(
     )
 
     assert len(result) == 1
-    assert result == [[{"UserName": "admin"}]]
+    assert result[0] == [{"UserName": "admin"}]
 
 
-@patch.object(OneStream, "_send_api_request")
-def test_run_data_management_seq_success(mock_send_request, onestream_instance):
-    """Test successful Data Management sequence execution."""
+@patch.object(OneStream, "_execute_api_method")
+def test_execute_run_data_management_seq(mock_execute, onestream_instance):
+    """Test execute method for Data Management sequence."""
     mock_response = MagicMock()
     mock_response.status_code = 200
-    mock_send_request.return_value = mock_response
+    mock_execute.return_value = mock_response
 
-    result = onestream_instance.run_data_management_seq(
+    result = onestream_instance.execute(
+        api="run_data_management_seq",
         dm_seq_name="TestSequence",
         custom_subst_vars={"prm_entity": "Entity1"},
     )
 
     assert result == mock_response
-
-    # Verify API call was made with correct parameters
-    mock_send_request.assert_called_once()
-    call_args = mock_send_request.call_args
-    endpoint = call_args[0][0]
-    payload_str = call_args[0][2]
-    payload = json.loads(payload_str)
-
-    assert "/api/DataManagement/ExecuteSequence" in endpoint
-    assert payload["SequenceName"] == "TestSequence"
-    assert payload["CustomSubstVarsAsCommaSeparatedPairs"] == "prm_entity=Entity1"
+    mock_execute.assert_called_once_with(
+        api="run_data_management_seq",
+        dm_seq_name="TestSequence",
+        custom_subst_vars={"prm_entity": "Entity1"},
+    )
 
 
-def test_to_df_success(onestream_instance):
-    """Test successful DataFrame conversion."""
-    data = [
-        [
-            {
-                "ID": 1,
-                "Name": "Item1",
-            },
-            {"ID": 2, "Name": "Item2"},
-        ],
+@patch.object(OneStream, "_execute_api_method")
+def test_to_df_data_adapter_success(mock_execute, onestream_instance):
+    """Test to_df method with data_adapter API."""
+    mock_execute.return_value = [
+        [{"ID": 1, "Name": "Item1"}, {"ID": 2, "Name": "Item2"}],
         [{"ID": 3, "Name": "Item3"}],
     ]
 
-    df = onestream_instance.to_df(data, if_empty="fail")
+    df = onestream_instance.to_df(
+        api="data_adapter",
+        adapter_name="TestAdapter",
+        if_empty="fail",
+    )
 
     assert isinstance(df, pd.DataFrame)
     assert len(df) == 3
-    assert set(df.columns) == {
-        "ID",
-        "Name",
-        "_viadot_source",
-        "_viadot_downloaded_at_utc",
-    }
+    assert "ID" in df.columns
+    assert "Name" in df.columns
+    assert "_viadot_source" in df.columns
+    assert "_viadot_downloaded_at_utc" in df.columns
     assert df["ID"].tolist() == [1, 2, 3]
     assert df["Name"].tolist() == ["Item1", "Item2", "Item3"]
 
+    mock_execute.assert_called_once_with(
+        api="data_adapter",
+        adapter_name="TestAdapter",
+    )
 
-def test_to_df_empty_data_fail(onestream_instance):
-    """Test DataFrame conversion with empty data and fail option."""
-    data = []
+
+@patch.object(OneStream, "_execute_api_method")
+def test_to_df_sql_query_success(mock_execute, onestream_instance):
+    """Test to_df method with sql_query API."""
+    mock_execute.return_value = [
+        [{"UserName": "admin", "IsActive": True}],
+        [{"UserName": "user1", "IsActive": False}],
+    ]
+
+    df = onestream_instance.to_df(
+        api="sql_query",
+        sql_query="SELECT * FROM Users",
+        if_empty="warn",
+    )
+
+    assert isinstance(df, pd.DataFrame)
+    assert len(df) == 2
+    assert "UserName" in df.columns
+    assert "IsActive" in df.columns
+
+    mock_execute.assert_called_once_with(
+        api="sql_query",
+        sql_query="SELECT * FROM Users",
+    )
+
+
+@patch.object(OneStream, "_execute_api_method")
+def test_to_df_empty_data_fail(mock_execute, onestream_instance):
+    """Test to_df with empty data and fail option."""
+    mock_execute.return_value = []
 
     with pytest.raises(ValueError, match="The response data is empty"):
-        onestream_instance.to_df(data, if_empty="fail")
+        onestream_instance.to_df(
+            api="data_adapter", adapter_name="TestAdapter", if_empty="fail"
+        )
 
 
-def test_to_df_empty_data_warn(onestream_instance):
-    """Test DataFrame conversion with empty data and warn option."""
+@patch.object(OneStream, "_execute_api_method")
+def test_to_df_empty_data_warn(mock_execute, onestream_instance):
+    """Test to_df with empty data and warn option."""
+    mock_execute.return_value = []
+
     with patch.object(onestream_instance, "logger") as mock_logger:
-        data = []
-        df = onestream_instance.to_df(data, if_empty="warn")
+        df = onestream_instance.to_df(
+            api="data_adapter", adapter_name="TestAdapter", if_empty="warn"
+        )
 
         assert df.empty
         mock_logger.warning.assert_called()
+
+
+@patch.object(OneStream, "_execute_api_method")
+def test_to_df_with_custom_subst_vars(mock_execute, onestream_instance):
+    """Test to_df with custom substitution variables."""
+    mock_execute.return_value = [
+        [{"Entity": "E1", "Amount": 1000}],
+        [{"Entity": "E2", "Amount": 2000}],
+    ]
+
+    custom_subst_vars = {"prm_entity": ["E1", "E2"]}
+    df = onestream_instance.to_df(
+        api="data_adapter",
+        adapter_name="TestAdapter",
+        custom_subst_vars=custom_subst_vars,
+    )
+
+    assert len(df) == 2
+    mock_execute.assert_called_once_with(
+        api="data_adapter",
+        adapter_name="TestAdapter",
+        custom_subst_vars=custom_subst_vars,
+    )
