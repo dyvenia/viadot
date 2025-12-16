@@ -124,7 +124,7 @@ def onestream_data_adapters_to_redshift_spectrum(  # noqa: PLR0913
             "custom_subst_vars to be provided. Either set batch_by_subst_vars=False "
             "or provide a custom_subst_vars dictionary."
         )
-        logger.exception(msg)
+        logger.error(msg)
         raise ValueError(msg)
     if custom_subst_vars and batch_by_subst_vars:
         # Process data in batches - each substitution variable combination separately
