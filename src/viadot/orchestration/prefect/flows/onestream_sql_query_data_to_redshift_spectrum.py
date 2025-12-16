@@ -8,7 +8,7 @@ from prefect.logging import get_run_logger
 from viadot.orchestration.prefect.tasks import (
     create_batch_list_of_custom_subst_vars,
     df_to_redshift_spectrum,
-    onestream_get_agg_sql_data_to_df,
+    onestream_to_df,
 )
 
 
@@ -144,9 +144,10 @@ def onestream_sql_query_data_to_redshift_spectrum(  # noqa: PLR0913
             logger.info(
                 f"Processing batch {i}/{len(custom_subst_vars_batch_list)}: {custom_subst_var}."
             )
-            df = onestream_get_agg_sql_data_to_df(
+            df = onestream_to_df(
                 base_url=base_url,
                 application=application,
+                api="sql_query",
                 sql_query=sql_query,
                 custom_subst_vars=custom_subst_var,
                 db_location=db_location,
@@ -179,9 +180,10 @@ def onestream_sql_query_data_to_redshift_spectrum(  # noqa: PLR0913
         logger.info("All batches processed successfully.")
     else:
         # Process all data together - either no custom_subst_vars or batching disabled
-        df = onestream_get_agg_sql_data_to_df(
+        df = onestream_to_df(
             base_url=base_url,
             application=application,
+            api="sql_query",
             sql_query=sql_query,
             custom_subst_vars=custom_subst_vars,
             db_location=db_location,
