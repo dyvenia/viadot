@@ -4,6 +4,7 @@ import subprocess
 from typing import Literal
 
 from prefect import task
+from prefect.logging import get_run_logger
 
 from viadot.config import get_source_credentials
 from viadot.orchestration.prefect.exceptions import MissingSourceCredentialsError
@@ -96,15 +97,18 @@ def bcp(
     ]
 
     result = subprocess.run(bcp_command, capture_output=True, text=True, check=False)  # noqa: S603
+
+    logger = get_run_logger()
     if result.stdout:
-        print(f"BCP stdout:\n{result.stdout[:2000]}")
+        logger.info("BCP stdout:\n%s", result.stdout[:2000])
     if result.stderr:
-        print(f"BCP stderr:\n{result.stderr[:2000]}")
+        logger.warning("BCP stderr:\n%s", result.stderr[:2000])
 
     if result.returncode != 0:
-        raise RuntimeError(
+        error_msg = (
             f"BCP failed with exit code {result.returncode}. "
             f"Stderr: {result.stderr[:500]}"
         )
+        raise RuntimeError(error_msg)
 
     return result
