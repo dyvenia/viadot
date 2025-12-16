@@ -6,7 +6,6 @@ from unittest.mock import MagicMock, patch
 import pandas as pd
 from pydantic import ValidationError
 import pytest
-import requests
 
 from viadot.sources import OneStream
 from viadot.sources.onestream import OneStreamCredentials
@@ -215,73 +214,6 @@ def test_get_all_custom_subst_vars_combinations_empty(onestream_instance):
     assert result == [{}]
 
 
-@patch("viadot.sources.onestream.requests.post")
-def test_send_api_request_success(mock_post, onestream_instance):
-    """Test successful API request."""
-    mock_response = MagicMock()
-    mock_response.status_code = 200
-    mock_response.raise_for_status.return_value = None
-    mock_post.return_value = mock_response
-
-    endpoint = "https://test.onestream.com/api/test"
-    headers = {"Content-Type": "application/json", "Authorization": "Bearer token"}
-    payload = '{"test": "data"}'
-
-    result = onestream_instance._send_api_request(endpoint, headers, payload)
-
-    assert result == mock_response
-    mock_post.assert_called_once_with(
-        url=endpoint,
-        params={"api-version": "5.2.0"},
-        headers=headers,
-        data=payload,
-        timeout=(60, 3600),
-    )
-
-
-@patch("viadot.sources.onestream.requests.post")
-def test_send_api_request_timeout(mock_post, onestream_instance):
-    """Test API request timeout handling."""
-    mock_post.side_effect = requests.exceptions.Timeout("Request timed out")
-
-    endpoint = "https://test.onestream.com/api/test"
-    headers = {"Content-Type": "application/json"}
-    payload = '{"test": "data"}'
-
-    with pytest.raises(requests.exceptions.Timeout):
-        onestream_instance._send_api_request(endpoint, headers, payload)
-
-
-@patch("viadot.sources.onestream.requests.post")
-def test_send_api_request_connection_error(mock_post, onestream_instance):
-    """Test API request connection error handling."""
-    mock_post.side_effect = requests.exceptions.ConnectionError("Connection failed")
-
-    endpoint = "https://test.onestream.com/api/test"
-    headers = {"Content-Type": "application/json"}
-    payload = '{"test": "data"}'
-
-    with pytest.raises(requests.exceptions.ConnectionError):
-        onestream_instance._send_api_request(endpoint, headers, payload)
-
-
-@patch("viadot.sources.onestream.requests.post")
-def test_send_api_request_http_error(mock_post, onestream_instance):
-    """Test API request HTTP error handling."""
-    mock_response = MagicMock()
-    mock_response.raise_for_status.side_effect = requests.exceptions.HTTPError(
-        "404 Not Found"
-    )
-    mock_post.return_value = mock_response
-
-    endpoint = "https://test.onestream.com/api/test"
-    headers = {"Content-Type": "application/json"}
-    payload = '{"test": "data"}'
-
-    with pytest.raises(requests.exceptions.RequestException):
-        onestream_instance._send_api_request(endpoint, headers, payload)
-
-
 def test_extract_data_from_response_success(onestream_instance):
     """Test successful extraction of results from API response."""
     mock_response = MagicMock()
@@ -309,14 +241,14 @@ def test_extract_data_from_response_missing_key(onestream_instance):
         onestream_instance._extract_data_from_response(mock_response, "Results")
 
 
-@patch.object(OneStream, "_send_api_request")
+@patch("viadot.sources.onestream.handle_api_request")
 @patch.object(OneStream, "_extract_data_from_response")
 def test_fetch_adapter_results_data_success(
-    mock_extract_data, mock_send_request, onestream_instance
+    mock_extract_data, mock_handle_request, onestream_instance
 ):
     """Test successful Data Adapter results retrieval."""
     mock_response = MagicMock()
-    mock_send_request.return_value = mock_response
+    mock_handle_request.return_value = mock_response
     mock_extract_data.return_value = SAMPLE_ADAPTER_RESPONSE["Results"]
 
     result = onestream_instance._fetch_adapter_results_data(
@@ -329,16 +261,18 @@ def test_fetch_adapter_results_data_success(
     assert result == SAMPLE_ADAPTER_RESPONSE["Results"]
 
     # Verify API call was made with correct parameters
-    mock_send_request.assert_called_once()
-    call_args = mock_send_request.call_args
-    endpoint = call_args[0][0]
-    headers = call_args[0][1]
-    payload_str = call_args[0][2]
-    payload = json.loads(payload_str)
+    mock_handle_request.assert_called_once()
+    call_args = mock_handle_request.call_args
+    assert call_args.kwargs["method"] == "POST"
+    assert "/api/DataProvider/GetAdoDataSetForAdapter" in call_args.kwargs["url"]
+    assert call_args.kwargs["params"] == {"api-version": "5.2.0"}
+    assert call_args.kwargs["headers"]["Content-Type"] == "application/json"
+    assert (
+        call_args.kwargs["headers"]["Authorization"] == "Bearer test_api_token_123456"
+    )
+    assert call_args.kwargs["timeout"] == (60, 3600)
 
-    assert "/api/DataProvider/GetAdoDataSetForAdapter" in endpoint
-    assert headers["Content-Type"] == "application/json"
-    assert headers["Authorization"] == "Bearer test_api_token_123456"
+    payload = json.loads(call_args.kwargs["data"])
     assert payload["AdapterName"] == "TestAdapter"
     assert payload["WorkspaceName"] == "TestWorkspace"
     assert payload["CustomSubstVarsAsCommaSeparatedPairs"] == "prm_entity=Entity1"
@@ -382,12 +316,12 @@ def test_fetch_agg_data_adapter_endpoint_data_no_custom_subst_vars(
     mock_fetch_results.assert_called_once()
 
 
-@patch.object(OneStream, "_send_api_request")
+@patch("viadot.sources.onestream.handle_api_request")
 @patch.object(OneStream, "_extract_data_from_response")
-def test_run_sql_success(mock_extract_data, mock_send_request, onestream_instance):
+def test_run_sql_success(mock_extract_data, mock_handle_request, onestream_instance):
     """Test successful SQL query execution."""
     mock_response = MagicMock()
-    mock_send_request.return_value = mock_response
+    mock_handle_request.return_value = mock_response
     mock_extract_data.return_value = SAMPLE_SQL_RESPONSE["Results"]
 
     result = onestream_instance._run_sql(
@@ -401,13 +335,14 @@ def test_run_sql_success(mock_extract_data, mock_send_request, onestream_instanc
     assert result == SAMPLE_SQL_RESPONSE["Results"]
 
     # Verify API call was made with correct parameters
-    mock_send_request.assert_called_once()
-    call_args = mock_send_request.call_args
-    endpoint = call_args[0][0]
-    payload_str = call_args[0][2]
-    payload = json.loads(payload_str)
+    mock_handle_request.assert_called_once()
+    call_args = mock_handle_request.call_args
+    assert call_args.kwargs["method"] == "POST"
+    assert "/api/DataProvider/GetAdoDataSetForSqlCommand" in call_args.kwargs["url"]
+    assert call_args.kwargs["params"] == {"api-version": "5.2.0"}
+    assert call_args.kwargs["timeout"] == (60, 3600)
 
-    assert "/api/DataProvider/GetAdoDataSetForSqlCommand" in endpoint
+    payload = json.loads(call_args.kwargs["data"])
     assert payload["SqlQuery"] == "SELECT * FROM Users"
     assert payload["DbLocation"] == "Framework"
     assert payload["CustomSubstVarsAsCommaSeparatedPairs"] == "prm_user=admin"

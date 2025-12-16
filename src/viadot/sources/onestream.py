@@ -14,7 +14,7 @@ import requests
 
 from viadot.config import get_source_credentials
 from viadot.sources.base import Source
-from viadot.utils import add_viadot_metadata_columns
+from viadot.utils import add_viadot_metadata_columns, handle_api_request
 
 
 class OneStreamCredentials(BaseModel):
@@ -100,54 +100,6 @@ class OneStream(Source):
                 return self._get_agg_sql_query_endpoint_data(**kwargs)
             case "run_data_management_seq":
                 return self._run_data_management_seq(**kwargs)
-
-    def _send_api_request(
-        self,
-        endpoint: str,
-        headers: dict[str, str],
-        payload: str,
-    ) -> requests.Response:
-        """Sends a POST request to the specified API endpoint.
-
-        Args:
-            endpoint (str): The URL of the API endpoint.
-            headers (dict[str, str]): HTTP headers to include in the request.
-            payload (str): JSON-encoded string to send in the request body.
-
-        Returns:
-            requests.Response: The response object returned by the API.
-
-        Raises:
-            requests.exceptions.Timeout: If the request times out.
-            requests.exceptions.ConnectionError: If connection fails.
-            requests.exceptions.RequestException: For other request failures.
-        """
-        try:
-            response = requests.post(
-                url=endpoint,
-                params=self.params,
-                headers=headers,
-                data=payload,
-                timeout=(60, 3600),
-            )
-
-            response.raise_for_status()
-
-        except requests.exceptions.Timeout:
-            self.logger.exception(f"Request to {endpoint} timed out.")
-            raise
-
-        except requests.exceptions.ConnectionError:
-            self.logger.exception(f"Connection error while accessing {endpoint}.")
-            raise
-
-        except requests.exceptions.RequestException:
-            self.logger.exception("Request failed.")
-            raise
-
-        else:
-            self.logger.info(f"API call to {endpoint} successful.")
-            return response
 
     def _extract_data_from_response(
         self, response: requests.Response, adapter_response_key: str
@@ -318,7 +270,14 @@ class OneStream(Source):
             }
         )
 
-        response = self._send_api_request(endpoint, headers, payload)
+        response = handle_api_request(
+            method="POST",
+            url=endpoint,
+            params=self.params,
+            headers=headers,
+            data=payload,
+            timeout=(60, 3600),
+        )
 
         return self._extract_data_from_response(response, adapter_response_key)
 
@@ -431,7 +390,14 @@ class OneStream(Source):
             }
         )
 
-        response = self._send_api_request(endpoint, headers, payload)
+        response = handle_api_request(
+            method="POST",
+            url=endpoint,
+            params=self.params,
+            headers=headers,
+            data=payload,
+            timeout=(60, 3600),
+        )
         return self._extract_data_from_response(response, results_table_name)
 
     def _run_data_management_seq(
@@ -475,7 +441,14 @@ class OneStream(Source):
             }
         )
 
-        return self._send_api_request(endpoint, headers, payload)
+        return handle_api_request(
+            method="POST",
+            url=endpoint,
+            params=self.params,
+            headers=headers,
+            data=payload,
+            timeout=(60, 3600),
+        )
 
     @add_viadot_metadata_columns
     def to_df(
