@@ -38,7 +38,7 @@ def onestream_data_adapters_to_redshift_spectrum(  # noqa: PLR0913
     compression: Literal["snappy", "gzip", "zstd"] | None = None,
     sep: str = ",",
     aws_config_key: str | None = None,
-    credentials_secret: str | None = None,
+    aws_credentials_secret: str | None = None,
     onestream_credentials_secret: str | None = None,
     onestream_config_key: str | None = None,
 ) -> None:
