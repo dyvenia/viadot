@@ -36,7 +36,7 @@ def onestream_sql_query_data_to_redshift_spectrum(  # noqa: PLR0913
     if_empty: Literal["warn", "skip", "fail"] = "fail",
     partition_cols: list[str] | None = None,
     index: bool = False,
-    compression: str | None = None,
+    compression: Literal["snappy", "gzip", "zstd"] | None = None,
     sep: str = ",",
     aws_config_key: str | None = None,
     credentials_secret: str | None = None,
