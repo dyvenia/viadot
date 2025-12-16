@@ -36,11 +36,11 @@ def create_batch_list_of_custom_subst_vars(
         ValueError: If custom_subst_vars is empty or contains empty lists.
     """
     if not custom_subst_vars:
-        msg = "custom_subst_vars cannot be empty"
+        msg = "Custom_subst_vars cannot be empty."
         raise ValueError(msg)
 
     if any(not values for values in custom_subst_vars.values()):
-        msg = "All substitution variable lists must contain at least one value"
+        msg = "All substitution variable lists must contain at least one value."
         raise ValueError(msg)
 
     return [
@@ -69,7 +69,8 @@ def onestream_to_df(
     """Extract data from a OneStream API endpoint into a Pandas DataFrame.
 
     This is a generic task that works with multiple OneStream endpoint types
-    (data_adapter, sql_query) by leveraging the internal dispatcher pattern.
+    (data_adapter, sql_query) by leveraging the internal dispatcher pattern which
+    executes the API endpoint-specific function to get the data.
     All endpoint-specific parameters should be passed as keyword arguments.
 
     Args:
@@ -81,7 +82,7 @@ def onestream_to_df(
             an error is raised. Defaults to None.
         config_key (str, optional): Alternate config key from the local
             environment file. Defaults to None.
-        params (dict[str, str], optional): Additional query parameters.
+        params (dict[str, str], optional): Additional parameters.
             Defaults to None.
         if_empty (Literal["warn", "skip", "fail"], optional): What to do if
             the API returns no data. Defaults to "fail"
