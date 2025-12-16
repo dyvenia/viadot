@@ -97,8 +97,8 @@ def onestream_sql_query_data_to_redshift_spectrum(  # noqa: PLR0913
         params (dict[str, str], optional): API parameters. Defaults to None.
         extension (str): Required file type. Accepted formats: 'csv', 'parquet'.
             Defaults to ".parquet".
-        if_exists (str): Whether to 'overwrite' or 'append' to existing table.
-            Defaults to "overwrite".
+        if_exists (Literal["overwrite", "append"], optional): Whether to 'overwrite'
+            or 'append' to existing table. Defaults to "overwrite".
         if_empty (Literal["warn", "skip", "fail"], optional): What to do if the
             SQL query returns no data. Defaults to "fail".
         partition_cols (list[str], optional): Columns used to create partitions.
