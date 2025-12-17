@@ -22,6 +22,11 @@ from .matomo import matomo_to_df
 from .mediatool import mediatool_to_df
 from .mindful import mindful_to_df
 from .minio import df_to_minio
+from .onestream import (
+    create_batch_list_of_custom_subst_vars,
+    onestream_run_data_management_seq,
+    onestream_to_df,
+)
 from .outlook import outlook_to_df
 from .redshift_spectrum import df_to_redshift_spectrum
 from .s3 import s3_upload_file
@@ -49,6 +54,7 @@ __all__ = [
     "clone_repo",
     "cloud_for_customers_to_df",
     "create_sql_server_table",
+    "create_batch_list_of_custom_subst_vars",
     "customer_gauge_to_df",
     "dbt_task",
     "df_to_adls",
@@ -66,6 +72,8 @@ __all__ = [
     "matomo_to_df",
     "mediatool_to_df",
     "mindful_to_df",
+    "onestream_to_df",
+    "onestream_run_data_management_seq",
     "outlook_to_df",
     "s3_upload_file",
     "salesforce_to_df",

@@ -18,6 +18,7 @@ from .hubspot import Hubspot
 from .matomo import Matomo
 from .mediatool import Mediatool
 from .mindful import Mindful
+from .onestream import OneStream
 from .outlook import Outlook
 from .salesforce import Salesforce
 from .sftp import Sftp
@@ -49,6 +50,7 @@ __all__ = [
     "Matomo",
     "Mediatool",
     "Mindful",
+    "OneStream",
     "Outlook",
     "SQLServer",
     "SQLite",
