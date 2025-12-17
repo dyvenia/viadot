@@ -8,7 +8,7 @@ from prefect.logging import get_run_logger
 from viadot.orchestration.prefect.tasks import (
     create_batch_list_of_custom_subst_vars,
     df_to_redshift_spectrum,
-    onestream_get_agg_adapter_endpoint_data_to_df,
+    onestream_to_df,
 )
 
 
@@ -92,7 +92,7 @@ def onestream_data_adapters_to_redshift_spectrum(  # noqa: PLR0913
             processed as a separate batch, uploading individual parquet files in S3.
             When False,all substitution variable combinations are collected in a loop
             and are uploaded together in a single operation. Defaults to False.
-        params (dict[str, str], optional): API parameters. Defaults to None.
+        params (dict[str, str], optional): Additional API parameters. Defaults to None.
         extension (str): Required file type. Accepted formats: 'csv', 'parquet'.
             Defaults to ".parquet".
         if_exists (Literal["overwrite", "append"], optional): Whether to 'overwrite'
@@ -124,7 +124,7 @@ def onestream_data_adapters_to_redshift_spectrum(  # noqa: PLR0913
             "custom_subst_vars to be provided. Either set batch_by_subst_vars=False "
             "or provide a custom_subst_vars dictionary."
         )
-        logger.exception(msg)
+        logger.error(msg)
         raise ValueError(msg)
     if custom_subst_vars and batch_by_subst_vars:
         # Process data in batches - each substitution variable combination separately
@@ -139,9 +139,10 @@ def onestream_data_adapters_to_redshift_spectrum(  # noqa: PLR0913
             logger.info(
                 f"Processing batch {i}/{len(custom_subst_vars_batch_list)}: {custom_subst_var}."
             )
-            df = onestream_get_agg_adapter_endpoint_data_to_df(
+            df = onestream_to_df(
                 base_url=base_url,
                 application=application,
+                api="data_adapter",
                 adapter_name=adapter_name,
                 workspace_name=workspace_name,
                 adapter_response_key=adapter_response_key,
@@ -179,9 +180,10 @@ def onestream_data_adapters_to_redshift_spectrum(  # noqa: PLR0913
             )
         else:
             logger.info("Processing data without substitution variables.")
-        df = onestream_get_agg_adapter_endpoint_data_to_df(
+        df = onestream_to_df(
             base_url=base_url,
             application=application,
+            api="data_adapter",
             adapter_name=adapter_name,
             workspace_name=workspace_name,
             adapter_response_key=adapter_response_key,

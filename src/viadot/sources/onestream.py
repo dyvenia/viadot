@@ -14,7 +14,7 @@ import requests
 
 from viadot.config import get_source_credentials
 from viadot.sources.base import Source
-from viadot.utils import add_viadot_metadata_columns
+from viadot.utils import add_viadot_metadata_columns, handle_api_request
 
 
 class OneStreamCredentials(BaseModel):
@@ -41,7 +41,7 @@ class OneStream(Source):
         *args,
         **kwargs,
     ):
-        """Connector class to ingest data from the OneStream API endpoint..
+        """Connector class to ingest data from the OneStream API endpoint.
 
         API Documentation:
         https://documentation.onestream.com/1388457/Content/REST%20API/OneStream%20WebAPI%20Endpoints.html
@@ -75,58 +75,31 @@ class OneStream(Source):
         self.base_url = base_url
         self.application = application
         self.api_token = self.credentials.get("api_token")
-        self.ssl_cert = False
         params_with_default_api_version = {"api-version": "5.2.0"}
         params_with_default_api_version.update(params or {})
         self.params = params_with_default_api_version
 
-    def _send_api_request(
+    def _execute_api_method(
         self,
-        endpoint: str,
-        headers: dict[str, str],
-        payload: str,
-    ) -> requests.Response:
-        """Sends a POST request to the specified API endpoint.
+        api: Literal["data_adapter", "sql_query", "run_data_management_seq"],
+        **kwargs,
+    ) -> list[dict[str, Any]] | requests.Response:
+        """Executes function for selected api endpoint.
 
         Args:
-            endpoint (str): The URL of the API endpoint.
-            headers (dict[str, str]): HTTP headers to include in the request.
-            payload (str): JSON-encoded string to send in the request body.
+            api: The API endpoint type to execute.
+            **kwargs: Additional arguments passed to the specific API method.
 
         Returns:
-            requests.Response: The response object returned by the API.
-
-        Raises:
-            requests.exceptions.Timeout: If the request times out.
-            requests.exceptions.ConnectionError: If connection fails.
-            requests.exceptions.RequestException: For other request failures.
+            list[dict[str, Any]] | requests.Response: The result of the API call.
         """
-        try:
-            response = requests.post(
-                url=endpoint,
-                params=self.params,
-                headers=headers,
-                data=payload,
-                timeout=(60, 3600),
-            )
-
-            response.raise_for_status()
-
-        except requests.exceptions.Timeout:
-            self.logger.exception(f"Request to {endpoint} timed out.")
-            raise
-
-        except requests.exceptions.ConnectionError:
-            self.logger.exception(f"Connection error while accessing {endpoint}.")
-            raise
-
-        except requests.exceptions.RequestException:
-            self.logger.exception("Request failed.")
-            raise
-
-        else:
-            self.logger.info(f"API call to {endpoint} successful.")
-            return response
+        match api:
+            case "data_adapter":
+                return self._get_agg_data_adapter_endpoint_data(**kwargs)
+            case "sql_query":
+                return self._get_agg_sql_query_endpoint_data(**kwargs)
+            case "run_data_management_seq":
+                return self._run_data_management_seq(**kwargs)
 
     def _extract_data_from_response(
         self, response: requests.Response, adapter_response_key: str
@@ -195,19 +168,65 @@ class OneStream(Source):
             for combination in product(*custom_subst_vars.values())
         ]
 
-    def _get_adapter_results_data(
+    def _get_agg_data_adapter_endpoint_data(
+        self,
+        adapter_name: str,
+        workspace_name: str = "MainWorkspace",
+        adapter_response_key: str = "Results",
+        custom_subst_vars: dict[str, list[Any]] | None = None,
+    ) -> list[dict[str, Any]]:
+        """Fetch and aggregate data from a OneStream Data Adapter (DA).
+
+        This function constructs API requests (one per substitution-variable
+        combination, if provided) and aggregates the results into a list of
+        datasets.
+
+        Args:
+            adapter_name (str): The name of the Data Adapter to query.
+            workspace_name (str, optional): The workspace name where the DA
+                is located. Defaults to "MainWorkspace".
+            adapter_response_key (str, optional): The key in the JSON
+                response that contains the adapter's returned data.
+                Defaults to "Results".
+            custom_subst_vars (dict[str, list[Any]], optional): A dictionary
+                mapping substitution variable names to lists of possible values.
+                Defaults to None.
+
+        Returns:
+            list[dict[str, Any]]: A flat list of all record dictionaries
+                aggregated from all substitution variable combinations.
+        """
+        custom_subst_vars = custom_subst_vars or {}
+        custom_subst_vars_list = self._get_all_custom_subst_vars_combinations(
+            custom_subst_vars
+        )
+
+        agg_records = []
+        for custom_subst_vars in custom_subst_vars_list:
+            agg_records.append(
+                self._fetch_adapter_results_data(
+                    workspace_name=workspace_name,
+                    adapter_response_key=adapter_response_key,
+                    custom_subst_vars=custom_subst_vars,
+                    adapter_name=adapter_name,
+                )
+            )
+
+        return agg_records
+
+    def _fetch_adapter_results_data(
         self,
         adapter_name: str,
         workspace_name: str,
         adapter_response_key: str,
         custom_subst_vars: dict[str, Any],
-    ) -> dict[str, Any]:
-        """Retrieve data from a specified Data Adapter (DA) in OneStream.
+    ) -> list[dict[str, Any]]:
+        """Fetch data from a specified Data Adapter (DA) in OneStream.
 
-        Makes a direct API call to retrieve data from a Data Adapter in the
+        Makes a direct API call to fetch data from a Data Adapter in the
         specified workspace. The method constructs a POST request with the
-        adapter details and custom substition variables, then extracts the relevant
-        data from the response.
+        adapter details and custom substitution variables, then extracts the
+        relevant data from the response.
 
         Args:
             adapter_name (str): The name of the Data Adapter to query.
@@ -219,8 +238,8 @@ class OneStream(Source):
                 variable names to lists of possible values.
 
         Returns:
-            dict[str, Any]: The extracted records from the adapter's
-                response, keyed by the specified adapter_response_key.
+            list[dict[str, Any]]: A list of record dictionaries from the
+                adapter response.
 
         Raises:
             ValueError: If the API response is null or missing the
@@ -251,94 +270,69 @@ class OneStream(Source):
             }
         )
 
-        response = self._send_api_request(endpoint, headers, payload)
+        response = handle_api_request(
+            method="POST",
+            url=endpoint,
+            params=self.params,
+            headers=headers,
+            data=payload,
+            timeout=(60, 3600),
+        )
 
         return self._extract_data_from_response(response, adapter_response_key)
 
-    def get_agg_adapter_endpoint_data(
+    def _get_agg_sql_query_endpoint_data(
         self,
-        adapter_name: str,
-        workspace_name: str = "MainWorkspace",
-        adapter_response_key: str = "Results",
-        custom_subst_vars: dict[str, list[Any]] | None = None,
-    ) -> dict:
-        """Retrieves and aggregates data from a OneStream Data Adapter (DA).
+        custom_subst_vars: dict | None = None,
+        sql_query: str = "",
+        db_location: str = "Application",
+        results_table_name: str = "Results",
+        external_db: str = "",
+    ) -> list[dict[str, Any]]:
+        """Fetch and aggregate data from a SQL query endpoint in OneStream.
 
-        This function constructs individual API requests for each
-        substitution combination, and aggregates the results into a dictionary keyed by
-        a string representation of the variable values.
+        This function constructs and executes SQL queries using the provided
+        parameters and custom variable combinations. It is typically used to
+        retrieve configuration-level data such as metadata, security groups,
+        or settings.
 
         Args:
-            adapter_name (str): The name of the Data Adapter to query.
-            workspace_name (str, optional): The workspace name where the DA
-                is located. Defaults to "MainWorkspace".
-            adapter_response_key (str, optional): The key in the JSON
-                response that contains the adapter's returned data.
-                Defaults to "Results".
-            custom_subst_vars (dict[str, list[Any]], optional):A dictionary mapping
-                substitution variable names to lists of possible values.
+            sql_query (str): The SQL query to execute.
+            db_location (str, optional): The database context in which to run
+                the query. Try "Framework" for system level config data.
+                Defaults to "Application".
+            results_table_name (str, optional): The key in the JSON response
+                containing the desired data. Defaults to "Results".
+            external_db (str, optional): The name of an external database.
+                Defaults to an empty string.
+            custom_subst_vars (dict[str, list[Any]], optional): A dictionary
+                mapping substitution variable names to lists of possible values.
                 Defaults to None.
 
         Returns:
-            dict: A dictionary where each key is a string of concatenated
-                custom variable values (e.g., "Region - Product"), and each
-                value is the corresponding data retrieved from the DA.
+            list[dict[str, Any]]: A flat list of all record dictionaries
+                aggregated from all substitution variable combinations.
         """
         custom_subst_vars = custom_subst_vars or {}
+
         custom_subst_vars_list = self._get_all_custom_subst_vars_combinations(
             custom_subst_vars
         )
 
         agg_records = []
-        for custom_subst_vars in custom_subst_vars_list:
+
+        for custom_subst_var in custom_subst_vars_list:
             agg_records.append(
-                self._get_adapter_results_data(
-                    workspace_name=workspace_name,
-                    adapter_response_key=adapter_response_key,
-                    custom_subst_vars=custom_subst_vars,
-                    adapter_name=adapter_name,
+                self._run_sql(
+                    sql_query=sql_query,
+                    db_location=db_location,
+                    results_table_name=results_table_name,
+                    external_db=external_db,
+                    custom_subst_vars=custom_subst_var,
                 )
             )
 
         return agg_records
-
-    @add_viadot_metadata_columns
-    def to_df(
-        self,
-        data: dict[str, list[dict[str, Any]]],
-        if_empty: Literal["warn", "skip", "fail"],
-    ) -> pd.DataFrame:
-        """Convert a dictionary of JSON-like data slices into a Pandas DataFrame.
-
-        Args:
-            data (dict[str, list[dict[str, Any]]]): Dictionary where each key
-                maps to a list of JSON-like records. Example:
-                {
-                    "Var1": [
-                        {"col1": "xyz", "col2": 123},
-                        {"col1": "45fg", "col2": ""}
-                    ],
-                    "Default": [
-                        {"col1": "val3", "col2": 789}
-                    ]
-                }
-            if_empty (Literal["warn", "skip", "fail"], optional): Action to take if
-                the DataFrame is empty.
-                - "warn": Logs a warning.
-                - "skip": Skips the operation.
-                - "fail": Raises an error.
-                Defaults to "warn".
-
-        Returns:
-            pd.DataFrame: A DataFrame containing all normalized records
-                combined into a single table.
-        """
-        unpacked_data = [part for parts in data for part in parts]
-        df = pd.DataFrame(unpacked_data)
-        if df.empty:
-            msg = "The response data is empty."
-            self._handle_if_empty(if_empty, message=msg)
-        return df
 
     def _run_sql(
         self,
@@ -396,61 +390,15 @@ class OneStream(Source):
             }
         )
 
-        response = self._send_api_request(endpoint, headers, payload)
-
-        return self._extract_data_from_response(response, results_table_name)
-
-    def get_agg_sql_data(
-        self,
-        custom_subst_vars: dict | None = None,
-        sql_query: str = "",
-        db_location: str = "Application",
-        results_table_name: str = "Results",
-        external_db: str = "",
-    ) -> dict:
-        """Retrieves and aggregates data from a SQL query in OneStream application.
-
-        This function constructs and executes SQL queries using the provided parameters
-        and custom variable combinations.It is typically used to retrieve
-        configuration-level data such as metadata, security groups, or settings.
-
-        Args:
-            sql_query (str): The SQL query to execute.
-            db_location (str, optional): The database context in which to run the query.
-                Try "Framework" for system level config data. Defaults to "Application".
-            results_table_name (str, optional): The key in the JSON response
-                containing the desired data. Defaults to "Results".
-            external_db (str, optional): The name of an external database.
-                Defaults to an empty string.
-            custom_subst_vars (dict[str, list[Any]], optional): A dictionary mapping
-                substitution variable names to lists of possible values.
-                Defaults to None.
-
-        Returns:
-            dict: A dictionary where each key is a string of concatenated custom
-                variable values (e.g., "Entity - Scenario"), and each value is
-                    the corresponding data retrieved from the SQL query.
-        """
-        custom_subst_vars = custom_subst_vars or {}
-
-        custom_subst_vars_list = self._get_all_custom_subst_vars_combinations(
-            custom_subst_vars
+        response = handle_api_request(
+            method="POST",
+            url=endpoint,
+            params=self.params,
+            headers=headers,
+            data=payload,
+            timeout=(60, 3600),
         )
-
-        agg_records = []
-
-        for custom_subst_var in custom_subst_vars_list:
-            agg_records.append(
-                self._run_sql(
-                    sql_query=sql_query,
-                    db_location=db_location,
-                    results_table_name=results_table_name,
-                    external_db=external_db,
-                    custom_subst_vars=custom_subst_var,
-                )
-            )
-
-        return agg_records
+        return self._extract_data_from_response(response, results_table_name)
 
     def _run_data_management_seq(
         self,
@@ -493,4 +441,94 @@ class OneStream(Source):
             }
         )
 
-        return self._send_api_request(endpoint, headers, payload)
+        return handle_api_request(
+            method="POST",
+            url=endpoint,
+            params=self.params,
+            headers=headers,
+            data=payload,
+            timeout=(60, 3600),
+        )
+
+    @add_viadot_metadata_columns
+    def to_df(
+        self,
+        api: Literal["data_adapter", "sql_query"],
+        if_empty: Literal["warn", "skip", "fail"] = "warn",
+        **kwargs,
+    ) -> pd.DataFrame:
+        """Get data from the API endpoint and convert to a Pandas DataFrame.
+
+        This method fetches data from the specified API endpoint and converts
+        it to a DataFrame. All endpoint-specific parameters should be passed
+        as keyword arguments.
+
+        Args:
+            api (Literal["data_adapter", "sql_query"]): The API endpoint type
+                to query. Only endpoints that return tabular data are supported.
+            if_empty (Literal["warn", "skip", "fail"], optional): Action to
+                take if the DataFrame is empty.
+                - "warn": Logs a warning.
+                - "skip": Skips the operation.
+                - "fail": Raises an error.
+                Defaults to "warn".
+            **kwargs: Endpoint-specific parameters passed to the underlying
+                API method.
+                For "data_adapter":
+                    - adapter_name (str): Name of the Data Adapter to query.
+                    - workspace_name (str, optional): Workspace name.
+                      Defaults to "MainWorkspace".
+                    - adapter_response_key (str, optional): Response key.
+                      Defaults to "Results".
+                    - custom_subst_vars (dict[str, list[Any]], optional):
+                      Custom substitution variables.
+                For "sql_query":
+                    - sql_query (str): The SQL query to execute.
+                    - custom_subst_vars (dict, optional): Custom
+                      substitution variables.
+                    - db_location (str, optional): Database location.
+                      Defaults to "Application".
+                    - results_table_name (str, optional): Results table name.
+                      Defaults to "Results".
+                    - external_db (str, optional): External database name.
+                      Defaults to "".
+
+        Returns:
+            pd.DataFrame: A DataFrame containing all records from the fetched
+                data.
+        """
+        data = self._execute_api_method(api=api, **kwargs)
+        unpacked_data = [part for parts in data for part in parts]
+        df = pd.DataFrame(unpacked_data)
+        if df.empty:
+            msg = "The response data is empty."
+            self._handle_if_empty(if_empty, message=msg)
+        return df
+
+    def execute(
+        self,
+        api: Literal["run_data_management_seq"],
+        **kwargs,
+    ) -> requests.Response:
+        """Execute an API endpoint operation that returns a Response object.
+
+        This method is for API endpoints that don't return tabular data
+        (e.g., "run_data_management_seq"). For data extraction endpoints,
+        use to_df() instead. All endpoint-specific parameters should be
+        passed as keyword arguments.
+
+        Args:
+            api (Literal["run_data_management_seq"]): The API endpoint type
+                to execute. Only endpoints that don't return tabular data
+                are supported.
+            **kwargs: Endpoint-specific parameters.
+                For "run_data_management_seq":
+                    - dm_seq_name (str): The name of the Data Management
+                      sequence to execute.
+                    - custom_subst_vars (dict, optional): Custom substitution
+                      variables.
+
+        Returns:
+            requests.Response: The HTTP response object from the API.
+        """
+        return self._execute_api_method(api=api, **kwargs)

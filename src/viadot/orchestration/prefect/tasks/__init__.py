@@ -22,9 +22,8 @@ from .mindful import mindful_to_df
 from .minio import df_to_minio
 from .onestream import (
     create_batch_list_of_custom_subst_vars,
-    onestream_get_agg_adapter_endpoint_data_to_df,
-    onestream_get_agg_sql_data_to_df,
     onestream_run_data_management_seq,
+    onestream_to_df,
 )
 from .outlook import outlook_to_df
 from .redshift_spectrum import df_to_redshift_spectrum
@@ -69,8 +68,7 @@ __all__ = [
     "luma_ingest_task",
     "mediatool_to_df",
     "mindful_to_df",
-    "onestream_get_agg_adapter_endpoint_data_to_df",
-    "onestream_get_agg_sql_data_to_df",
+    "onestream_to_df",
     "onestream_run_data_management_seq",
     "outlook_to_df",
     "s3_upload_file",
