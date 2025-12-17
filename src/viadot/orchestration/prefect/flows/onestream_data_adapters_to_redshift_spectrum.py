@@ -164,7 +164,7 @@ def onestream_data_adapters_to_redshift_spectrum(  # noqa: PLR0913
                 compression=compression,
                 sep=sep,
                 config_key=aws_config_key,
-                credentials_secret=credentials_secret,
+                credentials_secret=aws_credentials_secret,
             )
             if_exists = "append"  # Changed to "append" to add batches to the table.
             logger.info(
@@ -204,6 +204,6 @@ def onestream_data_adapters_to_redshift_spectrum(  # noqa: PLR0913
             compression=compression,
             sep=sep,
             config_key=aws_config_key,
-            credentials_secret=credentials_secret,
+            credentials_secret=aws_credentials_secret,
         )
         logger.info("Data processing completed successfully.")
