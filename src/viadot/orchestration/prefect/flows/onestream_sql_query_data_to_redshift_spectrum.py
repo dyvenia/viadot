@@ -39,7 +39,7 @@ def onestream_sql_query_data_to_redshift_spectrum(  # noqa: PLR0913
     compression: Literal["snappy", "gzip", "zstd"] | None = None,
     sep: str = ",",
     aws_config_key: str | None = None,
-    aws_credentials_secret: str | None = None,
+    credentials_secret: str | None = None,
     onestream_credentials_secret: str | None = None,
     onestream_config_key: str | None = None,
 ) -> None:
@@ -109,7 +109,7 @@ def onestream_sql_query_data_to_redshift_spectrum(  # noqa: PLR0913
         sep (str): Field delimiter for the output file. Defaults to ','.
         aws_config_key (str, optional): Key in viadot config for AWS credentials.
             Defaults to None.
-        aws_credentials_secret (str, optional): Name of Prefect secret block with AWS
+        credentials_secret (str, optional): Name of Prefect secret block with AWS
             credentials. Defaults to None.
         onestream_credentials_secret (str, optional): Name of secret storing OneStream
             credentials. Defaults to None.
@@ -170,7 +170,7 @@ def onestream_sql_query_data_to_redshift_spectrum(  # noqa: PLR0913
                 compression=compression,
                 sep=sep,
                 config_key=aws_config_key,
-                credentials_secret=aws_credentials_secret,
+                credentials_secret=credentials_secret,
             )
             if_exists = "append"  # Changed to "append" to add batches to the table.
             logger.info(
@@ -206,6 +206,6 @@ def onestream_sql_query_data_to_redshift_spectrum(  # noqa: PLR0913
             compression=compression,
             sep=sep,
             config_key=aws_config_key,
-            credentials_secret=aws_credentials_secret,
+            credentials_secret=credentials_secret,
         )
         logger.info("Data processing completed successfully.")
