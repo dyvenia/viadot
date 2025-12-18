@@ -420,6 +420,71 @@ class Hubspot(Source):
 
         self.full_dataset = rows
 
+    def _get_campaign_budget_totals(
+        self,
+        campaign_ids: list[str],
+    ) -> None:
+        """Fetch budget totals for multiple campaigns.
+
+        For each campaign, calls:
+        https://api.hubapi.com/marketing/v3/campaigns/{campaign_id}/budget/totals
+
+        The response includes many fields (budgetItems/spendItems), but we only keep:
+        - budgetTotal
+        - remainingBudget
+        - spendTotal
+        along with campaign_id.
+
+        Args:
+            campaign_ids (list[str]): Campaign IDs to query.
+        """
+        rows: list[dict[str, Any]] = []
+
+        for campaign_id in campaign_ids:
+            url = f"https://api.hubapi.com/marketing/v3/campaigns/{campaign_id}/budget/totals"
+            data = self._api_call(url=url, method="GET") or {}
+            row: dict[str, Any] = {
+                "campaign_id": campaign_id,
+                "budgetTotal": data.get("budgetTotal"),
+                "remainingBudget": data.get("remainingBudget"),
+                "spendTotal": data.get("spendTotal"),
+                "currencyCode": data.get("currencyCode"),
+            }
+            rows.append(row)
+
+        self.full_dataset = rows
+
+    def _get_campaign_details(self, campaign_ids: list[str]) -> None:
+        """Fetch details for multiple campaigns.
+
+        For each campaign, calls:
+        https://api.hubapi.com/marketing/v3/campaigns/{campaign_id}?properties=...
+        The HubSpot response keeps requested fields inside the 'properties' object.
+
+        Args:
+            campaign_ids (list[str]): Campaign IDs to query.
+        """
+        props = [
+            "hs_name",
+            "hs_start_date",
+            "hs_end_date",
+            "hs_notes",
+            "hs_owner",
+        ]
+
+        rows: list[dict[str, Any]] = []
+
+        for campaign_id in campaign_ids:
+            url = f"https://api.hubapi.com/marketing/v3/campaigns/{campaign_id}?properties={','.join(props)}"
+            data = self._api_call(url=url, method="GET") or {}
+            row: dict[str, Any] = {"campaign_id": campaign_id}
+            properties_obj = data.get("properties") or {}
+            for p in props:
+                row[p] = properties_obj.get(p)
+            rows.append(row)
+
+        self.full_dataset = rows
+
     def call_api(
         self,
         method: str | None = None,
@@ -434,7 +499,9 @@ class Hubspot(Source):
 
         Args:
             method (str | None): Logical method selector ("get_all_contacts",
-                "get_campaign_metrics", "fetch_contact_ids", or None for generic fetch).
+                "get_campaign_metrics", "get_campaign_details",
+                "get_campaign_budget_totals", "fetch_contact_ids",
+                or None for generic fetch).
             endpoint (str | None): Endpoint or full URL for generic fetch.
             campaign_ids (list[str] | None): Campaign IDs for campaign-specific methods.
             contact_type (str | None): Contact type for "fetch_contact_ids".
@@ -448,6 +515,14 @@ class Hubspot(Source):
             )
         elif method == "get_campaign_metrics":
             self._get_campaign_metrics(
+                campaign_ids=campaign_ids,
+            )
+        elif method == "get_campaign_budget_totals":
+            self._get_campaign_budget_totals(
+                campaign_ids=campaign_ids,
+            )
+        elif method == "get_campaign_details":
+            self._get_campaign_details(
                 campaign_ids=campaign_ids,
             )
         elif method == "fetch_contact_ids":

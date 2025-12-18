@@ -257,7 +257,9 @@ class TestHubspot(unittest.TestCase):
         page2 = {"results": [{"id": "2"}]}
         with patch.object(instance, "_api_call", side_effect=[page1, page2]):
             instance._fetch(endpoint="deals", filters=variables["filters"], nrows=10)  # type: ignore[attr-defined]
-        assert instance.full_dataset == [{"id": "1"}, {"id": "2"}]
+        assert len(instance.full_dataset) == 2
+        assert instance.full_dataset[0]["id"] == "1"
+        assert instance.full_dataset[1]["id"] == "2"
 
     def test_fetch_pagination_without_filters_offset(self):
         """GET pagination with 'offset' aggregates pages."""
@@ -266,7 +268,9 @@ class TestHubspot(unittest.TestCase):
         page2 = {"contacts": [{"id": "2"}]}
         with patch.object(instance, "_api_call", side_effect=[page1, page2]):
             instance._fetch(endpoint="contacts", filters=None, nrows=10)  # type: ignore[attr-defined]
-        assert instance.full_dataset == [{"id": "1"}, {"id": "2"}]
+        assert len(instance.full_dataset) == 2
+        assert instance.full_dataset[0]["id"] == "1"
+        assert instance.full_dataset[1]["id"] == "2"
 
     def test_fetch_contact_ids(self):
         """Build rows with campaign_id, contact_id, contact_type."""
@@ -283,6 +287,49 @@ class TestHubspot(unittest.TestCase):
         assert all("contact_id" in r for r in instance.full_dataset)
         assert all("contact_type" in r for r in instance.full_dataset)
 
+    def test_get_campaign_budget_totals(self):
+        """Keep only totals and campaign_id."""
+        instance = self.hubspot_instance
+        responses = [
+            {
+                "budgetItems": [{"amount": 1}],
+                "spendItems": [{"amount": 2}],
+                "currencyCode": "USD",
+                "budgetTotal": 100,
+                "remainingBudget": 60,
+                "spendTotal": 40,
+            },
+            {
+                "budgetItems": [],
+                "spendItems": [],
+                "currencyCode": "EUR",
+                "budgetTotal": 200,
+                "remainingBudget": 150,
+                "spendTotal": 50,
+            },
+        ]
+        with patch.object(instance, "_api_call", side_effect=responses):
+            instance._get_campaign_budget_totals(campaign_ids=["X", "Y"])  # type: ignore[attr-defined]
+        assert len(instance.full_dataset) == 2
+        row0 = instance.full_dataset[0]
+        assert row0["campaign_id"] == "X"
+        assert row0["budgetTotal"] == 100
+        assert row0["remainingBudget"] == 60
+        assert row0["spendTotal"] == 40
+        assert row0["currencyCode"] == "USD"
+        row1 = instance.full_dataset[1]
+        assert row1["campaign_id"] == "Y"
+        assert row1["budgetTotal"] == 200
+        assert row1["remainingBudget"] == 150
+        assert row1["spendTotal"] == 50
+        assert row1["currencyCode"] == "EUR"
+
+    def test_call_api_dispatch_get_campaign_budget_totals(self):
+        instance = self.hubspot_instance
+        with patch.object(instance, "_get_campaign_budget_totals") as mock_gbt:
+            instance.call_api(method="get_campaign_budget_totals", campaign_ids=["Z"])
+            mock_gbt.assert_called_once_with(campaign_ids=["Z"])
+
     def test_get_campaign_metrics(self):
         """Copy selected metric keys and attach campaign_id."""
         instance = self.hubspot_instance
@@ -298,6 +345,67 @@ class TestHubspot(unittest.TestCase):
             assert r["sessions"] == 5
             assert r["influencedContacts"] == 3
             assert "extra" not in r
+
+    def test_get_campaign_details_defaults(self):
+        """Fetch campaign details with default properties."""
+        instance = self.hubspot_instance
+        responses = [
+            {
+                "properties": {
+                    "hs_name": "Camp A",
+                    "hs_start_date": "2021-01-01",
+                    "hs_end_date": "2021-02-01",
+                    "hs_notes": "Note",
+                    "hs_owner": "Owner",
+                }
+            },
+            {
+                "properties": {
+                    "hs_name": "Camp B",
+                    "hs_start_date": "2021-03-01",
+                    "hs_end_date": "2021-04-01",
+                    "hs_notes": "Note",
+                    "hs_owner": "Owner",
+                }
+            },
+        ]
+        with patch.object(instance, "_api_call", side_effect=responses):
+            instance._get_campaign_details(campaign_ids=["X", "Y"])  # type: ignore[attr-defined]
+        assert len(instance.full_dataset) == 2
+        for row in instance.full_dataset:
+            assert "campaign_id" in row
+            assert "hs_name" in row
+            assert "hs_start_date" in row
+            assert "hs_end_date" in row
+            assert "hs_notes" in row
+            assert "hs_owner" in row
+
+    def test_get_campaign_details_empty_properties(self):
+        """Handles empty 'properties' gracefully (only campaign_id present)."""
+        instance = self.hubspot_instance
+        responses = [{"properties": {}}, {}]
+        with patch.object(instance, "_api_call", side_effect=responses):
+            instance._get_campaign_details(campaign_ids=["X", "Y"])  # type: ignore[attr-defined]
+        assert len(instance.full_dataset) == 2
+        for row, cid in zip(instance.full_dataset, ["X", "Y"]):
+            assert row["campaign_id"] == cid
+            # All props keys should be present with None values
+            assert "hs_name" in row
+            assert row["hs_name"] is None
+            assert "hs_start_date" in row
+            assert row["hs_start_date"] is None
+            assert "hs_end_date" in row
+            assert row["hs_end_date"] is None
+            assert "hs_notes" in row
+            assert row["hs_notes"] is None
+            assert "hs_owner" in row
+            assert row["hs_owner"] is None
+
+    def test_call_api_dispatch_get_campaign_details(self):
+        instance = self.hubspot_instance
+        with patch.object(instance, "_get_campaign_details") as mock_gcd:
+            instance.call_api(method="get_campaign_details", campaign_ids=["Z"])
+            mock_gcd.assert_called_once_with(campaign_ids=["Z"])
 
     def test_call_api_dispatch_get_all_contacts(self):
         instance = self.hubspot_instance
