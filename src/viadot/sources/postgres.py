@@ -1,14 +1,32 @@
 """PostgreSQL source connector."""
 
-import platform
+import logging
 
+from pydantic import BaseModel, SecretStr
+import pyodbc
+
+from viadot.config import get_source_credentials
 from viadot.sources.base import SQL
+
+
+logger = logging.getLogger(__name__)
+
+
+class PostgreSQLCredentials(BaseModel):
+    user: str
+    password: str | SecretStr | None = None
+    server: str
+    port: int = 5432
+    db_name: str
+    sslmode: str | None = None
 
 
 class PostgreSQL(SQL):
     def __init__(
         self,
-        driver: str | None = None,
+        credentials: PostgreSQLCredentials | None = None,
+        config_key: str | None = None,
+        driver: str = "PostgreSQL Unicode",
         query_timeout: int = 60,
         *args,
         **kwargs,
@@ -16,32 +34,27 @@ class PostgreSQL(SQL):
         """PostgreSQL connector.
 
         Args:
-            driver (str | None, optional): ODBC driver name or path. If not provided,
-                defaults per OS:
-                - Windows: 'PostgreSQL Unicode(x64)'
-                - Linux/WSL: 'PostgreSQL Unicode'
-                - macOS: 'PostgreSQL Unicode'
+            driver (str | None, optional): ODBC driver. Default "PostgreSQL Unicode".
             query_timeout (int, optional): Query timeout in seconds. Defaults to 60.
         """
-        if driver is None:
-            system_name = platform.system().lower()
-            if system_name == "windows":
-                resolved_driver = "PostgreSQL Unicode(x64)"
-            else:
-                # Linux, WSL, macOS typically register the driver as 'PostgreSQL Unicode'
-                resolved_driver = "PostgreSQL Unicode"
-        else:
-            resolved_driver = driver
+        raw_creds = credentials or get_source_credentials(config_key) or {}
+        validated_creds = PostgreSQLCredentials(**raw_creds).dict(
+            by_alias=True
+        )  # validate the credentials
 
         super().__init__(
             *args,
-            driver=resolved_driver,
+            credentials=validated_creds,
+            driver=driver,
             query_timeout=query_timeout,
             **kwargs,
         )
-        # Set sensible defaults if not provided
-        self.credentials.setdefault("server", "localhost")
-        self.credentials.setdefault("port", 5432)
+        self.server = self.credentials.get("server")
+        self.port = self.credentials.get("port")
+        self.db_name = self.credentials.get("db_name")
+        self.user = self.credentials.get("user")
+        self.password = self.credentials.get("password")
+        self.sslmode = self.credentials.get("sslmode")
 
     @property
     def conn_str(self) -> str:
@@ -81,27 +94,29 @@ class PostgreSQL(SQL):
         """
         schema = schema or "public"
         exists_query = (
-            f"SELECT 1 FROM information_schema.tables "
-            f"WHERE table_schema = '{schema}' AND table_name = '{table}' LIMIT 1"  # noqa: S608
+            f"SELECT 1 FROM information_schema.tables "  # noqa: S608
+            f"WHERE table_schema = '{schema}' AND table_name = '{table}' LIMIT 1"
         )
         return bool(self.run(exists_query))
 
+    @property
+    def con(self) -> pyodbc.Connection:
+        """Create a connection without forcing unsupported connection attributes.
 
-    def is_connected(self) -> bool:
-        """Return True if a connection has been established and is healthy.
+        Some ODBC drivers (e.g., psqlODBC) do not support setting the connection
+        timeout attribute via `self._con.timeout`. We ignore that if raised.
 
-        This checks whether an underlying connection exists and verifies it
-        by executing a lightweight `SELECT 1` on the existing connection.
-        It will NOT create a new connection if none exists.
+        Returns:
+            pyodbc.Connection: The database connection.
         """
-        if self._con is None:
-            return False
-        try:
-            cursor = self._con.cursor()
-            cursor.execute("SELECT 1")
-            cursor.fetchone()
-            cursor.close()
-            return True
-        except Exception:
-            return False
-
+        if not self._con:
+            # Keep a short login timeout to fail fast on bad hosts/ports
+            self._con = __import__("pyodbc").connect(self.conn_str, timeout=5)
+            try:
+                # Best-effort; ignore if the driver doesn't support it
+                self._con.timeout = self.query_timeout
+            except Exception:
+                logger.warning(
+                    "The driver does not support setting the connection timeout attribute."
+                )
+        return self._con

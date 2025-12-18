@@ -28,6 +28,11 @@ from .onestream import (
     onestream_to_df,
 )
 from .outlook import outlook_to_df
+from .postgres_server import (
+    create_postgres_server_table,
+    postgres_server_query,
+    postgres_server_to_df,
+)
 from .redshift_spectrum import df_to_redshift_spectrum
 from .s3 import s3_upload_file
 from .salesforce import salesforce_to_df
@@ -53,6 +58,7 @@ __all__ = [
     "business_core_to_df",
     "clone_repo",
     "cloud_for_customers_to_df",
+    "create_postgres_server_table",
     "create_sql_server_table",
     "create_batch_list_of_custom_subst_vars",
     "customer_gauge_to_df",
@@ -75,6 +81,8 @@ __all__ = [
     "onestream_to_df",
     "onestream_run_data_management_seq",
     "outlook_to_df",
+    "postgres_server_to_df",
+    "postgres_server_query",
     "s3_upload_file",
     "salesforce_to_df",
     "sap_bw_to_df",

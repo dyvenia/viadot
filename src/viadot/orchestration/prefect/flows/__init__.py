@@ -25,6 +25,7 @@ from .onestream_data_adapters_to_redshift_spectrum import (
     onestream_sql_query_data_to_redshift_spectrum,
 )
 from .outlook_to_adls import outlook_to_adls
+from .postgres_server_to_redshift_spectrum import postgres_server_to_redshift_spectrum
 from .salesforce_to_adls import salesforce_to_adls
 from .sap_bw_to_adls import sap_bw_to_adls
 from .sap_to_parquet import sap_to_parquet
@@ -69,6 +70,7 @@ __all__ = [
     "onestream_data_adapters_to_redshift_spectrum",
     "onestream_sql_query_data_to_redshift_spectrum",
     "outlook_to_adls",
+    "postgres_server_to_redshift_spectrum",
     "salesforce_to_adls",
     "sap_bw_to_adls",
     "sap_to_parquet",
