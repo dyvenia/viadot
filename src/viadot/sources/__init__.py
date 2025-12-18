@@ -26,6 +26,7 @@ from .sharepoint import Sharepoint, SharepointList
 from .smb import SMB
 from .sql_server import SQLServer
 from .sqlite import SQLite
+from .postgres import PostgreSQL
 from .supermetrics import Supermetrics
 from .tm1 import TM1
 from .uk_carbon_intensity import UKCarbonIntensity
@@ -54,6 +55,7 @@ __all__ = [
     "Outlook",
     "SQLServer",
     "SQLite",
+    "PostgreSQL",
     "Salesforce",
     "Sftp",
     "Sharepoint",
