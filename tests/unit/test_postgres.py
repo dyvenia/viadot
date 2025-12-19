@@ -60,7 +60,7 @@ def test_con_ignores_unsupported_timeout(monkeypatch, postgres_credentials):
             msg = "unsupported attribute"
             raise UnsupportedAttributeError(msg)
 
-    def dummy_connect(_conn_str, _timeout=0):
+    def dummy_connect(_conn_str, timeout=0, **kwargs):  # noqa: ARG001
         return DummyConn()
 
     dummy_pyodbc = types.SimpleNamespace(connect=dummy_connect)
