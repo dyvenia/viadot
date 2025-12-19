@@ -35,8 +35,6 @@ aiosqlite==0.20.0
     # via prefect
 alembic==1.13.2
     # via prefect
-annotated-types==0.7.0
-    # via pydantic
 anyio==4.4.0
     # via httpx
     # via prefect
@@ -63,10 +61,6 @@ attrs==24.2.0
     # via zeep
 awswrangler==3.12.1
     # via viadot2
-azure-core==1.35.0
-    # via azure-identity
-azure-identity==1.23.0
-    # via lumacli
 babel==2.17.0
     # via agate
 bcrypt==4.2.0
@@ -107,7 +101,6 @@ click==8.1.7
     # via apprise
     # via dbt-core
     # via dbt-semantic-interfaces
-    # via dlt
     # via prefect
     # via typer
     # via uvicorn
@@ -121,13 +114,11 @@ coolname==2.2.0
 croniter==2.0.7
     # via prefect
 cryptography==43.0.0
-    # via azure-identity
     # via msal
     # via paramiko
     # via prefect
     # via pyjwt
     # via pyspnego
-    # via requests-ntlm
     # via smbprotocol
 daff==1.4.2
     # via dbt-core
@@ -139,9 +130,6 @@ dbt-adapters==1.14.3
     # via dbt-core
     # via dbt-postgres
     # via dbt-redshift
-    # via viadot2
-dbt-artifacts-parser==0.8.3
-    # via lumacli
 dbt-common==1.26.0
     # via dbt-adapters
     # via dbt-core
@@ -165,15 +153,11 @@ deepdiff==7.0.1
     # via dbt-common
 defusedxml==0.7.1
     # via viadot2
-dlt==1.12.3
-    # via lumacli
 dnspython==2.6.1
     # via email-validator
 docker==7.1.0
     # via prefect
 duckdb==1.3.1
-    # via dlt
-    # via lumacli
     # via viadot2
 email-validator==2.2.0
     # via pydantic
@@ -187,15 +171,8 @@ frozenlist==1.4.1
     # via aiohttp
     # via aiosignal
 fsspec==2024.6.0
-    # via dlt
     # via prefect
     # via s3fs
-gitdb==4.0.12
-    # via gitpython
-gitpython==3.1.44
-    # via dlt
-giturlparse==0.12.0
-    # via dlt
 google-api-core==2.20.0
     # via google-cloud-bigquery
     # via google-cloud-core
@@ -240,8 +217,6 @@ h11==0.14.0
     # via uvicorn
 h2==4.1.0
     # via httpx
-hexbytes==1.3.1
-    # via dlt
 hpack==4.0.0
     # via h2
 httpcore==1.0.5
@@ -250,7 +225,6 @@ httpcore==1.0.5
 httpx==0.27.0
     # via prefect
 humanize==4.10.0
-    # via dlt
     # via jinja2-humanize-extension
     # via prefect
 hyperframe==6.0.1
@@ -288,8 +262,6 @@ jmespath==1.0.1
     # via botocore
 jsonpatch==1.33
     # via prefect
-jsonpath-ng==1.7.0
-    # via dlt
 jsonpointer==3.0.0
     # via jsonpatch
 jsonschema==4.23.0
@@ -302,9 +274,7 @@ kubernetes==29.0.0
     # via prefect
 leather==0.4.0
     # via agate
-loguru==0.7.3
-    # via lumacli
-lumacli==0.2.8
+lumacli==0.1.2
     # via viadot2
 lxml==5.3.0
     # via redshift-connector
@@ -332,10 +302,7 @@ more-itertools==10.5.0
     # via dbt-semantic-interfaces
     # via simple-salesforce
 msal==1.32.3
-    # via azure-identity
-    # via msal-extensions
-msal-extensions==1.3.1
-    # via azure-identity
+    # via office365-rest-python-client
 msgpack==1.1.1
     # via mashumaro
 multidict==6.0.5
@@ -362,30 +329,27 @@ numpy==2.2.6
     # via shapely
     # via viadot2
     # via visions
-Office365-REST-Python-Client==2.6.2
-    # via viadot2
 o365==2.0.36
     # via viadot2
 oauthlib==3.2.2
     # via kubernetes
     # via requests-oauthlib
+office365-rest-python-client==2.6.2
+    # via viadot2
 openpyxl==3.1.5
     # via viadot2
 ordered-set==4.1.0
     # via deepdiff
 orjson==3.10.7
-    # via dlt
     # via prefect
 packaging==24.1
     # via awswrangler
     # via db-dtypes
     # via dbt-core
-    # via dlt
     # via google-cloud-bigquery
     # via pandas-gbq
     # via prefect
     # via redshift-connector
-    # via requirements-parser
 pandas==2.3.1
     # via awswrangler
     # via db-dtypes
@@ -402,19 +366,12 @@ pathspec==0.11.2
     # via dbt-common
     # via dbt-core
     # via prefect
-pathvalidate==3.3.1
-    # via dlt
 pendulum==2.1.2
-    # via dlt
     # via prefect
 pillow==10.4.0
     # via imagehash
 platformdirs==4.3.6
     # via zeep
-pluggy==1.6.0
-    # via dlt
-ply==3.11
-    # via jsonpath-ng
 prefect==2.20.18
     # via prefect-aws
     # via prefect-github
@@ -443,12 +400,9 @@ protobuf==5.29.5
     # via googleapis-common-protos
     # via grpcio-status
     # via proto-plus
-psycopg==3.2.9
-    # via lumacli
-psycopg-binary==3.2.9
-    # via psycopg
 psycopg2-binary==2.9.10
     # via dbt-postgres
+    # via lumacli
 pyarrow==20.0.0
     # via awswrangler
     # via db-dtypes
@@ -463,15 +417,13 @@ pycparser==2.22
     # via cffi
 pycryptodome==3.23.0
     # via minio
-pydantic==2.11.7
-    # via dbt-artifacts-parser
+pydantic==1.10.26
     # via dbt-semantic-interfaces
     # via lumacli
     # via prefect
     # via viadot2
 pydantic-core==2.33.2
     # via prefect
-    # via pydantic
 pydata-google-auth==1.8.2
     # via pandas-gbq
 pygit2==1.14.1
@@ -488,7 +440,6 @@ pyodbc==5.1.0
 pyparsing==3.2.3
     # via prefect-aws
 pyspnego==0.11.2
-    # via requests-ntlm
     # via smbprotocol
 python-dateutil==2.9.0.post0
     # via botocore
@@ -517,7 +468,7 @@ pytz==2024.1
     # via dateparser
     # via dbt-adapters
     # via dbt-core
-    # via dlt
+    # via office365-rest-python-client
     # via pandas
     # via prefect
     # via redshift-connector
@@ -532,7 +483,6 @@ pyyaml==6.0.2
     # via apprise
     # via dbt-core
     # via dbt-semantic-interfaces
-    # via dlt
     # via kubernetes
     # via lumacli
     # via prefect
@@ -547,11 +497,9 @@ regex==2024.7.24
     # via dateparser
 requests==2.32.3
     # via apprise
-    # via azure-core
     # via dbt-common
     # via dbt-core
     # via dbt-redshift
-    # via dlt
     # via docker
     # via google-api-core
     # via google-cloud-bigquery
@@ -559,9 +507,9 @@ requests==2.32.3
     # via lumacli
     # via msal
     # via o365
+    # via office365-rest-python-client
     # via redshift-connector
     # via requests-file
-    # via requests-ntlm
     # via requests-oauthlib
     # via requests-toolbelt
     # via simple-salesforce
@@ -572,8 +520,6 @@ requests==2.32.3
     # via zeep
 requests-file==2.1.0
     # via zeep
-requests-ntlm==1.3.0
-    # via lumacli
 requests-oauthlib==2.0.0
     # via apprise
     # via google-auth-oauthlib
@@ -581,17 +527,12 @@ requests-oauthlib==2.0.0
     # via o365
 requests-toolbelt==1.0.0
     # via zeep
-requirements-parser==0.13.0
-    # via dlt
 rfc3339-validator==0.1.4
     # via prefect
 rich==13.7.1
     # via lumacli
     # via prefect
-    # via rich-argparse
     # via typer
-rich-argparse==1.7.1
-    # via dlt
 rpds-py==0.20.0
     # via jsonschema
     # via referencing
@@ -609,12 +550,9 @@ scipy==1.13.1
     # via imagehash
 scramp==1.4.6
     # via redshift-connector
-semver==3.0.4
-    # via dlt
 sendgrid==6.11.0
     # via viadot2
 setuptools==75.1.0
-    # via dlt
     # via pandas-gbq
     # via pydata-google-auth
     # via redshift-connector
@@ -626,10 +564,7 @@ shellingham==1.5.4
     # via typer
 simple-salesforce==1.12.6
     # via viadot2
-simplejson==3.20.1
-    # via dlt
 six==1.16.0
-    # via azure-core
     # via isodate
     # via kubernetes
     # via python-dateutil
@@ -638,8 +573,6 @@ slack-sdk==3.35.0
     # via prefect-slack
 smbprotocol==1.15.0
     # via viadot2
-smmap==5.0.2
-    # via gitdb
 sniffio==1.3.1
     # via anyio
     # via asgi-lifespan
@@ -656,8 +589,6 @@ sqlalchemy==2.0.32
     # via prefect
     # via prefect-sqlalchemy
     # via viadot2
-sqlglot==26.33.0
-    # via dlt
 sqlparse==0.5.1
     # via dbt-core
     # via dbt-redshift
@@ -669,7 +600,6 @@ tabulate==0.9.0
 tangled-up-in-unicode==0.2.0
     # via visions
 tenacity==9.1.2
-    # via dlt
     # via prefect-aws
 text-unidecode==1.3
     # via python-slugify
@@ -677,8 +607,6 @@ tm1py==2.0.4
     # via viadot2
 toml==0.10.2
     # via prefect
-tomlkit==0.13.3
-    # via dlt
 trino==0.328.0
     # via viadot2
 typer==0.12.4
@@ -689,31 +617,24 @@ typing-extensions==4.12.2
     # via alembic
     # via anyio
     # via awswrangler
-    # via azure-core
-    # via azure-identity
     # via dbt-adapters
     # via dbt-common
     # via dbt-core
     # via dbt-semantic-interfaces
-    # via dlt
     # via mashumaro
     # via minio
     # via mypy-boto3-s3
     # via mypy-boto3-secretsmanager
+    # via office365-rest-python-client
     # via prefect
-    # via psycopg
     # via pydantic
     # via pydantic-core
     # via simple-salesforce
     # via snowplow-tracker
     # via sqlalchemy
     # via typer
-    # via typing-inspection
     # via uvicorn
-typing-inspection==0.4.1
-    # via pydantic
 tzdata==2024.1
-    # via dlt
     # via o365
     # via pandas
 tzlocal==5.2
@@ -734,9 +655,7 @@ visions==0.7.5
     # via viadot2
 websocket-client==1.8.0
     # via kubernetes
-    # via lumacli
 websockets==12.0
-    # via lumacli
     # via prefect
 wrapt==1.17.2
     # via aiobotocore

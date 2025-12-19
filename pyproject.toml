@@ -1,6 +1,6 @@
 [project]
 name = "viadot2"
-version = "2.3.0"
+version = "2.3.1"
 description = "A simple data ingestion library to guide data flows from some places to other places."
 authors = [
     { name = "acivitillo", email = "acivitillo@dyvenia.com" },
@@ -12,13 +12,13 @@ dependencies = [
     "Office365-REST-Python-Client==2.6.2",
     "sql-metadata>=2.11.0",
     "sendgrid>=6.11.0",
-    "pydantic>=2.0.0, <3",
+    "pydantic < 2.0.0",
     "aiolimiter>=1.1.0",
     "trino==0.328.*",
     "imagehash>=4.2.1",
     "shapely>=1.8.0",
     "sqlalchemy==2.0.*",
-    "lumacli>=0.2.8, <0.3.0",
+    "lumacli==0.1.2",
     "pygit2>=1.13.3, <1.15.0",
     "openpyxl>=3.1.0",
     "prefect>=2.19.7, <3",
