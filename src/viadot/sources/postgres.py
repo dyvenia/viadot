@@ -13,18 +13,18 @@ logger = logging.getLogger(__name__)
 
 
 class PostgreSQLCredentials(BaseModel):
-    user: str
+    username: str
     password: str | SecretStr | None = None
-    server: str
-    port: int = 5432
-    db_name: str
-    sslmode: str | None = None
 
 
 class PostgreSQL(SQL):
     def __init__(
         self,
         credentials: PostgreSQLCredentials | None = None,
+        postgres_host: str = "ai-rejections-tool-dev-db.cluster-cmpwlufjo7yu.eu-west-1.rds.amazonaws.com",
+        postgres_port: int = 5432,
+        postgres_db_name: str = "auroradevdb",
+        postgres_sslmode: str = "require",
         config_key: str | None = None,
         driver: str = "PostgreSQL Unicode",
         query_timeout: int = 60,
@@ -35,6 +35,18 @@ class PostgreSQL(SQL):
 
         Args:
             driver (str | None, optional): ODBC driver. Default "PostgreSQL Unicode".
+            query_timeout (int, optional): Query timeout in seconds. Defaults to 60.
+            postgres_host (str, optional): The host of the PostgreSQL Server database.
+                "ai-rejections-tool-dev-db.cluster-cmpwlufjo7yu.eu-west-1.rds.amazonaws.com".
+            postgres_port (int, optional): The port of the PostgreSQL Server database.
+                Defaults to 5432.
+            postgres_db_name (str, optional): The name of the PostgreSQL Server db.
+                Defaults to "auroradevdb".
+            postgres_sslmode (str, optional): The SSL mode to use for the
+                PostgreSQL Server database. Defaults to "require".
+            config_key (str, optional): The key in the viadot config holding relevant
+                credentials. Defaults to None.
+            driver (str, optional): ODBC driver. Default "PostgreSQL Unicode".
             query_timeout (int, optional): Query timeout in seconds. Defaults to 60.
         """
         raw_creds = credentials or get_source_credentials(config_key) or {}
@@ -49,12 +61,12 @@ class PostgreSQL(SQL):
             query_timeout=query_timeout,
             **kwargs,
         )
-        self.server = self.credentials.get("server")
-        self.port = self.credentials.get("port")
-        self.db_name = self.credentials.get("db_name")
-        self.user = self.credentials.get("user")
+        self.server = postgres_host
+        self.port = postgres_port
+        self.db_name = postgres_db_name
+        self.user = self.credentials.get("username")
         self.password = self.credentials.get("password")
-        self.sslmode = self.credentials.get("sslmode")
+        self.sslmode = postgres_sslmode
 
     @property
     def conn_str(self) -> str:
@@ -64,10 +76,10 @@ class PostgreSQL(SQL):
             str: The ODBC connection string.
         """
         driver = self.credentials["driver"]
-        server = self.credentials["server"]
-        port = self.credentials.get("port", 5432)
-        db_name = self.credentials["db_name"]
-        uid = self.credentials.get("user") or ""
+        server = self.server
+        port = self.port
+        db_name = self.db_name
+        uid = self.credentials.get("username") or ""
         pwd = self.credentials.get("password") or ""
 
         conn_str = (
@@ -80,8 +92,7 @@ class PostgreSQL(SQL):
         )
 
         # Optional SSL mode if provided, e.g. 'require', 'verify-ca', 'disable'
-        if "sslmode" in self.credentials:
-            conn_str += f"SSLmode={self.credentials['sslmode']};"
+        conn_str += f"SSLmode={self.sslmode};"
 
         return conn_str
 

@@ -20,13 +20,13 @@ from .mediatool import Mediatool
 from .mindful import Mindful
 from .onestream import OneStream
 from .outlook import Outlook
+from .postgres import PostgreSQL
 from .salesforce import Salesforce
 from .sftp import Sftp
 from .sharepoint import Sharepoint, SharepointList
 from .smb import SMB
 from .sql_server import SQLServer
 from .sqlite import SQLite
-from .postgres import PostgreSQL
 from .supermetrics import Supermetrics
 from .tm1 import TM1
 from .uk_carbon_intensity import UKCarbonIntensity
@@ -53,9 +53,9 @@ __all__ = [
     "Mindful",
     "OneStream",
     "Outlook",
+    "PostgreSQL",
     "SQLServer",
     "SQLite",
-    "PostgreSQL",
     "Salesforce",
     "Sftp",
     "Sharepoint",

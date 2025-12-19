@@ -23,6 +23,10 @@ def postgres_server_to_redshift_spectrum(  # noqa: PLR0913
     schema_name: str,
     table: str,
     sep: str = ",",
+    postgres_host: str = "ai-rejections-tool-dev-db.cluster-cmpwlufjo7yu.eu-west-1.rds.amazonaws.com",
+    postgres_port: int = 5432,
+    postgres_db_name: str = "auroradevdb",
+    postgres_sslmode: str = "require",
     extension: str = ".parquet",
     if_exists: Literal["overwrite", "append"] = "overwrite",
     partition_cols: list[str] | None = None,
@@ -47,6 +51,14 @@ def postgres_server_to_redshift_spectrum(  # noqa: PLR0913
         schema_name (str): The name of the schema in Redshift Spectrum.
         table (str): The name of the table in Redshift Spectrum.
         sep (str, optional): The separator used in the output file. Defaults to ",".
+        postgres_host (str, optional): The host of the PostgreSQL Server database.
+            "ai-rejections-tool-dev-db.cluster-cmpwlufjo7yu.eu-west-1.rds.amazonaws.com".
+        postgres_port (int, optional): The port of the PostgreSQL Server database.
+            Defaults to 5432.
+        postgres_db_name (str, optional): The name of the PostgreSQL Server database.
+            Defaults to "auroradevdb".
+        postgres_sslmode (str, optional): The SSL mode to use for the
+            PostgreSQL Server database. Defaults to "require".
         extension (str, optional): The file extension to use. Defaults to ".parquet".
         if_exists (Literal["overwrite", "append"], optional): Action to take if
             the table already exists. Defaults to "overwrite".
@@ -93,6 +105,10 @@ def postgres_server_to_redshift_spectrum(  # noqa: PLR0913
         query=query,
         config_key=postgres_server_config_key,
         credentials_secret=postgres_server_credentials_secret,
+        postgres_host=postgres_host,
+        postgres_port=postgres_port,
+        postgres_db_name=postgres_db_name,
+        postgres_sslmode=postgres_sslmode,
         tests=tests,
     )
 

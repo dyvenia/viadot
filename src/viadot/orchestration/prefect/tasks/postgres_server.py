@@ -20,6 +20,10 @@ def create_postgres_server_table(
     if_exists: Literal["fail", "replace", "skip", "delete"] = "fail",
     dtypes: dict[str, Any] | None = None,
     credentials_secret: str | None = None,
+    postgres_host: str = "ai-rejections-tool-dev-db.cluster-cmpwlufjo7yu.eu-west-1.rds.amazonaws.com",
+    postgres_port: int = 5432,
+    postgres_db_name: str = "auroradevdb",
+    postgres_sslmode: str = "require",
     config_key: str | None = None,
 ) -> None:
     """A task for creating table in PostgreSQL.
@@ -32,6 +36,14 @@ def create_postgres_server_table(
         credentials_secret (str, optional): The name of the secret storing
             the credentials. Defaults to None.
             More info on: https://docs.prefect.io/concepts/blocks/
+        postgres_host (str, optional): The host of the PostgreSQL Server database.
+            "ai-rejections-tool-dev-db.cluster-cmpwlufjo7yu.eu-west-1.rds.amazonaws.com".
+        postgres_port (int, optional): The port of the PostgreSQL Server database.
+            Defaults to 5432.
+        postgres_db_name (str, optional): The name of the PostgreSQL Server database.
+            Defaults to "auroradevdb".
+        postgres_sslmode (str, optional): The SSL mode to use for the
+            PostgreSQL Server database. Defaults to "require".
         config_key (str, optional): The key in the viadot config holding relevant
             credentials. Defaults to None.
     """
@@ -43,7 +55,13 @@ def create_postgres_server_table(
     credentials = get_credentials(credentials_secret) or get_source_credentials(
         config_key
     )
-    postgres_server = PostgreSQL(credentials=credentials)
+    postgres_server = PostgreSQL(
+        credentials=credentials,
+        postgres_host=postgres_host,
+        postgres_port=postgres_port,
+        postgres_db_name=postgres_db_name,
+        postgres_sslmode=postgres_sslmode,
+    )
 
     fqn = f"{schema}.{table}" if schema is not None else table
     created = postgres_server.create_table(
@@ -61,6 +79,10 @@ def create_postgres_server_table(
 def postgres_server_to_df(
     query: str,
     credentials_secret: str | None = None,
+    postgres_host: str = "ai-rejections-tool-dev-db.cluster-cmpwlufjo7yu.eu-west-1.rds.amazonaws.com",
+    postgres_port: int = 5432,
+    postgres_db_name: str = "auroradevdb",
+    postgres_sslmode: str = "require",
     config_key: str | None = None,
     tests: dict[str, Any] | None = None,
 ) -> pd.DataFrame:
@@ -72,6 +94,14 @@ def postgres_server_to_df(
         credentials_secret (str, optional): The name of the secret storing
             the credentials. Defaults to None.
             More info on: https://docs.prefect.io/concepts/blocks/
+        postgres_host (str, optional): The host of the PostgreSQL Server database.
+            "ai-rejections-tool-dev-db.cluster-cmpwlufjo7yu.eu-west-1.rds.amazonaws.com".
+        postgres_port (int, optional): The port of the PostgreSQL Server database.
+            Defaults to 5432.
+        postgres_db_name (str, optional): The name of the PostgreSQL Server database.
+            Defaults to "auroradevdb".
+        postgres_sslmode (str, optional): The SSL mode to use for the
+            PostgreSQL Server database. Defaults to "require".
         config_key (str, optional): The key in the viadot config holding relevant
             credentials. Defaults to None.
 
@@ -86,7 +116,14 @@ def postgres_server_to_df(
     credentials = get_source_credentials(config_key) or get_credentials(
         credentials_secret
     )
-    postgres_server = PostgreSQL(credentials=credentials)
+    postgres_server = PostgreSQL(
+        credentials=credentials,
+        postgres_host=postgres_host,
+        postgres_port=postgres_port,
+        postgres_db_name=postgres_db_name,
+        postgres_sslmode=postgres_sslmode,
+    )
+
     df = postgres_server.to_df(query=query, tests=tests)
     nrows = df.shape[0]
     ncols = df.shape[1]
@@ -101,6 +138,10 @@ def postgres_server_to_df(
 def postgres_server_query(
     query: str,
     credentials_secret: str | None = None,
+    postgres_host: str = "ai-rejections-tool-dev-db.cluster-cmpwlufjo7yu.eu-west-1.rds.amazonaws.com",
+    postgres_port: int = 5432,
+    postgres_db_name: str = "auroradevdb",
+    postgres_sslmode: str = "require",
     config_key: str | None = None,
 ) -> list[Record] | bool:
     """Execute a query on PostgreSQL Server.
@@ -110,6 +151,14 @@ def postgres_server_query(
         credentials_secret (str, optional): The name of the secret storing
             the credentials. Defaults to None.
             More info on: https://docs.prefect.io/concepts/blocks/
+        postgres_host (str, optional): The host of the PostgreSQL Server database.
+            "ai-rejections-tool-dev-db.cluster-cmpwlufjo7yu.eu-west-1.rds.amazonaws.com".
+        postgres_port (int, optional): The port of the PostgreSQL Server database.
+            Defaults to 5432.
+        postgres_db_name (str, optional): The name of the PostgreSQL Server database.
+            Defaults to "auroradevdb".
+        postgres_sslmode (str, optional): The SSL mode to use for the
+            PostgreSQL Server database. Defaults to "require".
         config_key (str, optional): The key in the viadot config holding relevant
             credentials. Defaults to None.
     """
@@ -121,7 +170,13 @@ def postgres_server_query(
     credentials = get_source_credentials(config_key) or get_credentials(
         credentials_secret
     )
-    postgres_server = PostgreSQL(credentials=credentials)
+    postgres_server = PostgreSQL(
+        credentials=credentials,
+        postgres_host=postgres_host,
+        postgres_port=postgres_port,
+        postgres_db_name=postgres_db_name,
+        postgres_sslmode=postgres_sslmode,
+    )
     result = postgres_server.run(query)
 
     logger.info("Successfully ran the query.")
