@@ -14,7 +14,7 @@ from viadot.orchestration.prefect.tasks import (
 
 @flow(
     name="extract--onestream_sql_query--reshift_spectrum",
-    description="Extract data from OneStream SQL queries and load it to Redshift Spectrum.",
+    description="Extract data from OneStram SQL queries and load it to Redshift Spectrum.",
     retries=1,
     retry_delay_seconds=60,
 )
