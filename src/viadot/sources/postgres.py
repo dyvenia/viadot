@@ -21,9 +21,9 @@ class PostgreSQL(SQL):
     def __init__(
         self,
         credentials: PostgreSQLCredentials | None = None,
-        postgres_host: str = "ai-rejections-tool-dev-db.cluster-cmpwlufjo7yu.eu-west-1.rds.amazonaws.com",
+        postgres_host: str = "localhost",
         postgres_port: int = 5432,
-        postgres_db_name: str = "auroradevdb",
+        postgres_db_name: str = "postgres",
         postgres_sslmode: str = "require",
         config_key: str | None = None,
         driver: str = "PostgreSQL Unicode",
@@ -36,14 +36,14 @@ class PostgreSQL(SQL):
         Args:
             driver (str | None, optional): ODBC driver. Default "PostgreSQL Unicode".
             query_timeout (int, optional): Query timeout in seconds. Defaults to 60.
-            postgres_host (str, optional): The host of the PostgreSQL Server database.
-                "ai-rejections-tool-dev-db.cluster-cmpwlufjo7yu.eu-west-1.rds.amazonaws.com".
-            postgres_port (int, optional): The port of the PostgreSQL Server database.
+            postgres_host (str, optional): The host of the PostgreSQL database.
+                Defaults to "localhost".
+            postgres_port (int, optional): The port of the PostgreSQL database.
                 Defaults to 5432.
-            postgres_db_name (str, optional): The name of the PostgreSQL Server db.
-                Defaults to "auroradevdb".
+            postgres_db_name (str, optional): The name of the PostgreSQL database.
+                Defaults to "postgres".
             postgres_sslmode (str, optional): The SSL mode to use for the
-                PostgreSQL Server database. Defaults to "require".
+                PostgreSQL database. Defaults to "require".
             config_key (str, optional): The key in the viadot config holding relevant
                 credentials. Defaults to None.
             driver (str, optional): ODBC driver. Default "PostgreSQL Unicode".

@@ -1,4 +1,4 @@
-"""Flows for downloading data from PostgreSQL Server and uploading it to Redshift."""
+"""Flows for downloading data from PostgreSQL and uploading it to Redshift."""
 
 from typing import Any, Literal
 
@@ -6,26 +6,26 @@ from prefect import flow
 
 from viadot.orchestration.prefect.tasks import (
     df_to_redshift_spectrum,
-    postgres_server_to_df,
+    postgresql_to_df,
 )
 from viadot.orchestration.prefect.utils import DynamicDateHandler
 
 
 @flow(
-    name="extract--postgres_server--redshift_spectrum",
-    description="Extract data from PostgreSQL Server and load it into AWS Redshift Spectrum.",
+    name="extract--postgresql--redshift_spectrum",
+    description="Extract data from PostgreSQL and load it into AWS Redshift Spectrum.",
     retries=1,
     retry_delay_seconds=60,
 )
-def postgres_server_to_redshift_spectrum(  # noqa: PLR0913
+def postgresql_to_redshift_spectrum(  # noqa: PLR0913
     query: str,
     to_path: str,
     schema_name: str,
     table: str,
     sep: str = ",",
-    postgres_host: str = "ai-rejections-tool-dev-db.cluster-cmpwlufjo7yu.eu-west-1.rds.amazonaws.com",
+    postgres_host: str = "localhost",
     postgres_port: int = 5432,
-    postgres_db_name: str = "auroradevdb",
+    postgres_db_name: str = "postgres",
     postgres_sslmode: str = "require",
     extension: str = ".parquet",
     if_exists: Literal["overwrite", "append"] = "overwrite",
@@ -38,27 +38,27 @@ def postgres_server_to_redshift_spectrum(  # noqa: PLR0913
     tests: dict[str, Any] | None = None,
     config_key: str | None = None,
     credentials_secret: str | None = None,
-    postgres_server_credentials_secret: str | None = None,
-    postgres_server_config_key: str | None = None,
+    postgresql_credentials_secret: str | None = None,
+    postgresql_config_key: str | None = None,
 ) -> None:
-    """Flow to load data from a PostgreSQL Server database to Redshift Spectrum.
+    """Flow to load data from a PostgreSQL to Redshift Spectrum.
 
     Args:
-        query (str): The PostgreSQL query to execute on the PostgreSQL Server database.
+        query (str): The PostgreSQL query to execute on the PostgreSQL database.
             Dynamic date pattern is supported:
             (SELECT * FROM table WHERE date='<<yesterday>>')
         to_path (str): The path where the extracted data will be stored.
         schema_name (str): The name of the schema in Redshift Spectrum.
         table (str): The name of the table in Redshift Spectrum.
         sep (str, optional): The separator used in the output file. Defaults to ",".
-        postgres_host (str, optional): The host of the PostgreSQL Server database.
-            "ai-rejections-tool-dev-db.cluster-cmpwlufjo7yu.eu-west-1.rds.amazonaws.com".
-        postgres_port (int, optional): The port of the PostgreSQL Server database.
+        postgres_host (str, optional): The host of the PostgreSQL database.
+            Defaults to "localhost".
+        postgres_port (int, optional): The port of the PostgreSQL database.
             Defaults to 5432.
-        postgres_db_name (str, optional): The name of the PostgreSQL Server database.
-            Defaults to "auroradevdb".
+        postgres_db_name (str, optional): The name of the PostgreSQL database.
+            Defaults to "postgres".
         postgres_sslmode (str, optional): The SSL mode to use for the
-            PostgreSQL Server database. Defaults to "require".
+            PostgreSQL database. Defaults to "require".
         extension (str, optional): The file extension to use. Defaults to ".parquet".
         if_exists (Literal["overwrite", "append"], optional): Action to take if
             the table already exists. Defaults to "overwrite".
@@ -88,10 +88,10 @@ def postgres_server_to_redshift_spectrum(  # noqa: PLR0913
         config_key (str | None, optional): AWS configuration key. Defaults to None.
         credentials_secret (str | None, optional): Name of the secret storing
             AWS credentials. Defaults to None.
-        postgres_server_credentials_secret (str | None, optional): Name of the secret
+        postgresql_credentials_secret (str | None, optional): Name of the secret
             storing the credentials. Defaults to None.
-        postgres_server_config_key (str | None, optional): Key in the configuration for
-            PostgreSQL Server credentials. Defaults to None.
+        postgresql_config_key (str | None, optional): Key in the configuration for
+            PostgreSQL credentials. Defaults to None.
 
     Returns:
         None
@@ -101,10 +101,10 @@ def postgres_server_to_redshift_spectrum(  # noqa: PLR0913
     )
     query = ddh.process_dates(query)  # type: ignore
 
-    df = postgres_server_to_df(
+    df = postgresql_to_df(
         query=query,
-        config_key=postgres_server_config_key,
-        credentials_secret=postgres_server_credentials_secret,
+        config_key=postgresql_config_key,
+        credentials_secret=postgresql_credentials_secret,
         postgres_host=postgres_host,
         postgres_port=postgres_port,
         postgres_db_name=postgres_db_name,
