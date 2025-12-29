@@ -3,6 +3,7 @@
 from collections.abc import Callable
 from datetime import datetime
 from enum import Enum
+import logging
 import os
 from pathlib import Path
 import re
@@ -13,13 +14,20 @@ from typing import Any
 from urllib.parse import urlparse
 
 import pendulum
-from prefect.logging import get_run_logger
 
 from viadot.config import get_source_credentials
-from viadot.exceptions import CredentialError
+from viadot.exceptions import (
+    CredentialError,
+    SMBConnectionError,
+    SMBFileOperationError,
+    SMBInvalidFilenameError,
+)
 from viadot.orchestration.prefect.utils import DynamicDateHandler
 from viadot.sources.base import Source
 from viadot.sources.smb import SMBCredentials
+
+
+logger = logging.getLogger(__name__)
 
 
 def _check_filename_for_problematic_chars(filename: str) -> bool:
@@ -50,7 +58,6 @@ def _get_unique_local_path(local_dir: str, filename: str) -> str:
         If 'file.xlsx' exists, returns path with 'file_1.xlsx'
         If 'file_1.xlsx' also exists, returns path with 'file_2.xlsx'
     """
-    logger = get_run_logger()
     # Split filename into name and extension
     file_path = Path(filename)
     name = file_path.stem  # filename without extension
@@ -122,30 +129,6 @@ def _add_prefix_to_filename(filename: str, prefix: str) -> str:
     if not prefix:
         return filename
     return f"{prefix}_{filename}"
-
-
-class SMBError(Exception):
-    """Base exception for SMB operations."""
-
-    pass
-
-
-class SMBConnectionError(SMBError):
-    """Exception raised when SMB connection fails."""
-
-    pass
-
-
-class SMBFileOperationError(SMBError):
-    """Exception raised when SMB file operations fail."""
-
-    pass
-
-
-class SMBInvalidFilenameError(SMBError):
-    """Exception raised when filename contains invalid/problematic characters."""
-
-    pass
 
 
 class SMBItemType(Enum):
@@ -375,7 +358,6 @@ class SMBItem:
             bool: True if the pattern matches the text; False if it does not match
                 or if the pattern is invalid.
         """
-        logger = get_run_logger()
         try:
             return re.search(pattern, text, re.IGNORECASE) is not None
         except re.error as e:
@@ -546,7 +528,6 @@ def _retry_with_exponential_backoff(
     Raises:
         Last exception encountered after all retries are exhausted
     """
-    logger = get_run_logger()
     last_exception = None
 
     for attempt in range(max_retries + 1):  # +1 for initial attempt
@@ -605,7 +586,6 @@ def _download_file_from_smb(
         SMBFileOperationError: If the download fails.
         SMBInvalidFilenameError: If filename contains problematic characters.
     """
-    logger = get_run_logger()
     logger.info(f"Downloading file from SMB: {remote_path} from {server}/{share}")
 
     # Extract filename from remote path
@@ -708,7 +688,6 @@ def download_file_from_smb_with_retry(
     Raises:
         SMBFileOperationError: If all retry attempts fail.
     """
-    logger = get_run_logger()
     try:
         return _retry_with_exponential_backoff(
             _download_file_from_smb,
@@ -768,7 +747,6 @@ def _stream_file_from_smb_to_s3(  # noqa: C901, PLR0912, PLR0915
         SMBFileOperationError: If the streaming operation fails.
         SMBInvalidFilenameError: If filename contains problematic characters.
     """
-    logger = get_run_logger()
     logger.info(
         f"Streaming file from SMB to S3: {remote_path} from {server}/{share} -> {s3_path}"
     )
@@ -924,7 +902,7 @@ def _stream_file_from_smb_to_s3(  # noqa: C901, PLR0912, PLR0915
     return s3_full_path
 
 
-def _stream_file_from_smb_to_s3_with_retry(
+def _stream_file_from_smb_to_s3_with_retry(  # noqa: PLR0913
     server: str,
     share: str,
     remote_path: str,
@@ -970,7 +948,6 @@ def _stream_file_from_smb_to_s3_with_retry(
     Raises:
         SMBFileOperationError: If all retry attempts fail.
     """
-    logger = get_run_logger()
     try:
         return _retry_with_exponential_backoff(
             _stream_file_from_smb_to_s3,
@@ -991,7 +968,7 @@ def _stream_file_from_smb_to_s3_with_retry(
         return None
 
 
-def stream_smb_files_to_s3(
+def stream_smb_files_to_s3(  # noqa: PLR0913
     smb_file_paths: list[str],
     smb_server: str,
     smb_share: str,
@@ -1036,7 +1013,6 @@ def stream_smb_files_to_s3(
     Returns:
         list[str]: List of S3 paths where files were successfully uploaded.
     """
-    logger = get_run_logger()
     s3_paths: list[str] = []
 
     for smb_file_path in smb_file_paths:
@@ -1087,7 +1063,6 @@ def _get_recursive_listing(
     Raises:
         SMBConnectionError: If the smbclient command fails.
     """
-    logger = get_run_logger()
     logger.info(
         f"Getting recursive listing from SMB: {subdirectory} on {server}/{share}"
     )
@@ -1166,7 +1141,6 @@ def _get_directory_listing_with_fallback(
         - was_recursive: True if recursive listing succeeded, False if fallback
             was used.
     """
-    logger = get_run_logger()
     logger.info(f"🔍 Getting directory listing for {directory}")
 
     try:
@@ -1278,7 +1252,6 @@ def _get_single_level_listing(
     Raises:
         SMBConnectionError: If the listing fails.
     """
-    logger = get_run_logger()
     logger.info(
         f"Getting single-level listing from SMB: {directory} on {server}/{share}"
     )
@@ -1372,7 +1345,7 @@ def _get_single_level_listing(
     return items
 
 
-def get_hybrid_listing_with_fallback(
+def get_hybrid_listing_with_fallback(  # noqa: C901
     server: str,
     share: str,
     start_directory: str,
@@ -1404,7 +1377,6 @@ def get_hybrid_listing_with_fallback(
     Returns:
         list[SMBItem]: List of all `SMBItem` objects found.
     """
-    logger = get_run_logger()
     logger.info(f"Starting hybrid SMB listing from {start_directory}")
 
     if not skip_root_recursive:
@@ -1682,40 +1654,15 @@ class SMBClientWrapper(Source):
                 `smb_credentials` is None, SMB creds will be read from config
                 (`username` and `password` fields).
         """
-        raw_creds_from_config: dict[str, Any] = {}
-        if smb_credentials is None and config_key:
-            raw_creds_from_config = get_source_credentials(config_key) or {}
-            smb_from_config = {
-                "username": raw_creds_from_config.get("username"),
-                "password": raw_creds_from_config.get("password"),
-            }
-            smb_credentials = SMBCredentials(**smb_from_config)
+        raw_creds = smb_credentials or get_source_credentials(config_key) or {}
+        validated_creds = SMBCredentials(**raw_creds)
 
-        if smb_credentials is None:
+        if validated_creds is None:
             msg = "`smb_credentials` must be provided either directly or via `config_key`."
             raise CredentialError(msg)
-
-        # Cache credentials on the instance (same model as in `SMB` source)
-        self._smb_credentials: SMBCredentials = smb_credentials
-
-        # Pass validated credentials dict to the base `Source`, mirroring `SMB`
-        super().__init__(
-            *args, credentials=self._smb_credentials.model_dump(), **kwargs
-        )
-
+        super().__init__(*args, credentials=validated_creds.model_dump(), **kwargs)
         self.server = server
         self.share = share
-
-    @property
-    def smb_username(self) -> str:
-        """SMB username."""
-        return self._smb_credentials.username
-
-    @property
-    def smb_password(self) -> str:
-        """SMB password value."""
-        # `SMBCredentials.password` is a `SecretStr` in the `SMB` source.
-        return self._smb_credentials.password.get_secret_value()
 
     def list_directory(
         self,
@@ -1725,19 +1672,29 @@ class SMBClientWrapper(Source):
     ) -> list[SMBItem]:
         """Return directory structure as a list of `SMBItem`.
 
+        Uses a hybrid approach: tries recursive listing first, then falls back
+        to iterative single-level listing if recursive fails or times out.
+
         Args:
             directory (str): Start directory relative to the share root
-                (e.g. `""` or `"data/reports"`).
-            recursive_timeout (int): Timeout for recursive listing attempts.
+                (e.g. `""` or `"data/reports"`). Defaults to `""` (share root).
+            recursive_timeout (int): Timeout in seconds for recursive listing
+                attempts. Defaults to 300.
             skip_root_recursive (bool): If True, skip the initial recursive
-                listing on root.
+                listing on root and use iterative approach directly.
+                Defaults to False.
+
+        Returns:
+            list[SMBItem]: List of `SMBItem` objects representing the directory
+                structure. Items are organized in a tree structure with
+                directories containing their children in the `children` attribute.
         """
         return get_hybrid_listing_with_fallback(
             server=self.server,
             share=self.share,
             start_directory=directory,
-            username=self.smb_username,
-            password=self.smb_password,
+            username=self.credentials.get("username"),
+            password=self.credentials.get("password").get_secret_value(),
             recursive_timeout=recursive_timeout,
             skip_root_recursive=skip_root_recursive,
         )
@@ -1753,22 +1710,37 @@ class SMBClientWrapper(Source):
     ) -> str | None:
         """Download a single file from SMB to local disk.
 
+        Downloads a file with automatic retry on failure using exponential
+        backoff. If the filename contains problematic characters, the file
+        will be skipped and None will be returned.
+
         Args:
             remote_path (str): Path to the file relative to the share root.
             local_path (str): Local directory where the file should be saved.
-            timeout (int): SMB operation timeout in seconds.
+                Defaults to "/tmp/smb_files".
+            timeout (int): SMB operation timeout in seconds. Defaults to 900.
             max_retries (int): Maximum number of retry attempts on failure.
-            base_delay (float): Base delay (seconds) used for exponential
-                backoff.
+                Defaults to 3.
+            base_delay (float): Base delay in seconds used for exponential
+                backoff. Defaults to 2.0.
             prefix_levels_to_add (int): Number of parent directory levels to
-                prepend as a prefix to the local filename.
+                prepend as an underscore-separated prefix to the local filename.
+                Example: for remote path "2025/02/file.xlsx" and levels=2,
+                local filename will be "2025_02_file.xlsx". Defaults to 0.
+
+        Returns:
+            str | None: Full local path to the downloaded file, or None if the
+                file was skipped due to invalid filename characters.
+
+        Raises:
+            SMBFileOperationError: If all retry attempts fail.
         """
         return download_file_from_smb_with_retry(
             server=self.server,
             share=self.share,
             remote_path=remote_path,
-            username=self.smb_username,
-            password=self.smb_password,
+            username=self.credentials.get("username"),
+            password=self.credentials.get("password").get_secret_value(),
             local_path=local_path,
             timeout=timeout,
             max_retries=max_retries,
@@ -1780,7 +1752,7 @@ class SMBClientWrapper(Source):
         self,
         smb_file_paths: list[str],
         s3_path: str,
-        aws_credentials: dict[str, Any] | None = None,
+        aws_credentials: dict[str, Any],
         timeout: int = 900,
         max_retries: int = 3,
         base_delay: float = 2.0,
@@ -1788,26 +1760,62 @@ class SMBClientWrapper(Source):
     ) -> list[str]:
         """Stream multiple files from SMB directly to S3.
 
+        Streams files from SMB to S3 without saving them to local disk first,
+        which is more efficient for large files. Uses automatic retry with
+        exponential backoff on failure. Files with problematic characters in
+        their names will be skipped.
+
         Args:
             smb_file_paths (list[str]): List of file paths relative to the
                 share root.
             s3_path (str): Base S3 path (e.g. ``s3://bucket/folder/``).
-            aws_credentials (dict[str, Any] | None): Optional AWS credential
-                mapping used by the AWS CLI.
-            timeout (int): Timeout for a single streaming operation.
+                Filenames will be appended automatically, optionally with prefix.
+            aws_credentials (dict[str, Any]): Required AWS credential mapping
+                used by the AWS CLI. Must include `aws_access_key_id` and
+                `aws_secret_access_key`. Can also include `aws_session_token`,
+                `region_name`, and `endpoint_url`.
+            timeout (int): Timeout in seconds for a single streaming operation.
+                Defaults to 900.
             max_retries (int): Maximum number of retry attempts on failure.
-            base_delay (float): Base delay (seconds) used for exponential
-                backoff.
+                Defaults to 3.
+            base_delay (float): Base delay in seconds used for exponential
+                backoff. Defaults to 2.0.
             prefix_levels_to_add (int): Number of parent directory levels to
-                prepend as a prefix to the S3 object name.
+                prepend as an underscore-separated prefix to the S3 object name.
+                Example: for remote path "2025/02/file.xlsx" and levels=2,
+                S3 object name will be "2025_02_file.xlsx". Defaults to 0.
+
+        Returns:
+            list[str]: List of S3 paths where files were successfully uploaded.
+                Files that were skipped (e.g., due to invalid filenames) are
+                not included in this list.
+
+        Raises:
+            CredentialError: If `aws_credentials` is not a dictionary, is empty,
+                or missing required fields (`aws_access_key_id` and
+                `aws_secret_access_key`).
         """
+        if not isinstance(aws_credentials, dict):
+            msg = "`aws_credentials` must be a dictionary."
+            raise CredentialError(msg)
+
+        if not (
+            aws_credentials.get("aws_access_key_id")
+            and aws_credentials.get("aws_secret_access_key")
+        ):
+            msg = (
+                "`aws_credentials` must include "
+                "`aws_access_key_id` and `aws_secret_access_key`."
+            )
+            raise CredentialError(msg)
+
         return stream_smb_files_to_s3(
             smb_file_paths=smb_file_paths,
             smb_server=self.server,
             smb_share=self.share,
             s3_path=s3_path,
-            smb_username=self.smb_username,
-            smb_password=self.smb_password,
+            smb_username=self.credentials.get("username"),
+            smb_password=self.credentials.get("password").get_secret_value(),
             aws_credentials=aws_credentials,
             timeout=timeout,
             max_retries=max_retries,
