@@ -9,6 +9,7 @@ from .bigquery import BigQuery
 from .business_core import BusinessCore
 from .cloud_for_customers import CloudForCustomers
 from .customer_gauge import CustomerGauge
+from .ecb import ECB
 from .entraid import EntraID
 from .epicor import Epicor
 from .eurostat import Eurostat
@@ -41,6 +42,7 @@ __all__ = [
     "CloudForCustomers",
     "CustomerGauge",
     "DuckDB",
+    "ECB",
     "EntraID",
     "Epicor",
     "Eurostat",

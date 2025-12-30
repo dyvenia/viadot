@@ -9,6 +9,7 @@ from .customer_gauge_to_adls import customer_gauge_to_adls
 from .duckdb_to_parquet import duckdb_to_parquet
 from .duckdb_to_sql_server import duckdb_to_sql_server
 from .duckdb_transform import duckdb_transform
+from .ecb_to_redshift_spectrum import ecb_to_redshift_spectrum
 from .entraid_to_redshift_spectrum import entraid_to_redshift_spectrum
 from .epicor_to_parquet import epicor_to_parquet
 from .eurostat_to_adls import eurostat_to_adls
@@ -55,6 +56,7 @@ __all__ = [
     "duckdb_to_parquet",
     "duckdb_to_sql_server",
     "duckdb_transform",
+    "ecb_to_redshift_spectrum",
     "entraid_to_redshift_spectrum",
     "epicor_to_parquet",
     "eurostat_to_adls",
