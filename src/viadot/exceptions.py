@@ -75,3 +75,19 @@ class DataBufferExceededError(Exception):
 
 class NoFilesToProcessError(Exception):
     pass
+
+
+class SMBError(Exception):
+    pass
+
+
+class SMBConnectionError(SMBError):
+    pass
+
+
+class SMBFileOperationError(SMBError):
+    pass
+
+
+class SMBInvalidFilenameError(SMBError):
+    pass
