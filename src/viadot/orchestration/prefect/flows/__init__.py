@@ -22,10 +22,8 @@ from .hubspot_to_redshift_spectrum import hubspot_to_redshift_spectrum
 from .matomo_to_redshift_spectrum import matomo_to_redshift_spectrum
 from .mediatool_to_adls import mediatool_to_adls
 from .mindful_to_adls import mindful_to_adls
-from .onestream_data_adapters_to_redshift_spectrum import (
-    onestream_data_adapters_to_redshift_spectrum,
-    onestream_sql_query_data_to_redshift_spectrum,
-)
+from .onestream_data_adapters_to_redshift_spectrum import onestream_data_adapters_to_redshift_spectrum
+from .onestream_sql_query_data_to_redshift_spectrum import onestream_sql_query_data_to_redshift_spectrum
 from .outlook_to_adls import outlook_to_adls
 from .postgresql_to_redshift_spectrum import postgresql_to_redshift_spectrum
 from .salesforce_to_adls import salesforce_to_adls
