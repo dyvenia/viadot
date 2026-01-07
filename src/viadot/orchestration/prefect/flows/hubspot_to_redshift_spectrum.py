@@ -76,7 +76,7 @@ def hubspot_to_redshift_spectrum(  # noqa: PLR0913
         contact_type=contact_type,
         campaign_ids=campaign_ids,
         config_key=hubspot_config_key,
-        hubspot_credentials_secret=hubspot_credentials_secret,
+        credentials_secret=hubspot_credentials_secret,
         filters=filters,
         properties=properties,
         nrows=nrows,

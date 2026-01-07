@@ -17,7 +17,7 @@ def hubspot_to_df(
     campaign_ids: list[str] | None = None,
     contact_type: str = "influencedContacts",
     config_key: str | None = None,
-    hubspot_credentials_secret: str | None = None,
+    credentials_secret: str | None = None,
     filters: list[dict[str, Any]] | None = None,
     properties: list[Any] | None = None,
     nrows: int = 1000,
@@ -30,7 +30,7 @@ def hubspot_to_df(
         campaign_ids (list[str], optional): List of campaign IDs to get the metrics for.
         config_key (Optional[str], optional): The key in the viadot config holding
             relevant credentials. Defaults to None.
-        hubspot_credentials_secret (Optional[str], optional): The name of the Azure Key
+        credentials_secret (Optional[str], optional): The name of the Azure Key
             Vault secret where credentials are stored. Defaults to None.
         filters (Optional[List[Dict[str, Any]]], optional): Filters defined for the API
             body in specific order. Defaults to None.
@@ -42,7 +42,7 @@ def hubspot_to_df(
     Examples:
         data_frame = hubspot_to_df(
             config_key=config_key,
-            hubspot_credentials_secret=hubspot_credentials_secret,
+            credentials_secret=credentials_secret,
             endpoint=endpoint,
             filters=filters,
             properties=properties,
@@ -55,18 +55,18 @@ def hubspot_to_df(
     Returns:
         pd.DataFrame: The response data as a pandas DataFrame.
     """
-    if not (hubspot_credentials_secret or config_key):
+    if not (credentials_secret or config_key):
         raise MissingSourceCredentialsError
 
     if not config_key:
-        credentials = get_credentials(hubspot_credentials_secret)
+        credentials = get_credentials(credentials_secret)
 
     hubspot = Hubspot(
         credentials=credentials,
         config_key=config_key,
     )
 
-    hubspot.call_api(
+    data = hubspot.call_api(
         method=api_method,
         endpoint=endpoint,
         campaign_ids=campaign_ids,
@@ -76,4 +76,4 @@ def hubspot_to_df(
         nrows=nrows,
     )
 
-    return hubspot.to_df()
+    return hubspot.to_df(data=data)

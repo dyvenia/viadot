@@ -86,7 +86,7 @@ class TestHubspot(unittest.TestCase):
         """Test Hubspot `_get_api_body` function."""
         filters = variables["filters"]
         expected_body = json.dumps({"filterGroups": filters, "limit": 100})
-        result = self.hubspot_instance._get_api_body(filters)
+        result = self.hubspot_instance._get_request_body(filters)
 
         assert result == expected_body
 
@@ -143,12 +143,12 @@ class TestHubspot(unittest.TestCase):
         endpoint = "deals"
         filters = variables["filters"]
         properties = ["property1"]
-        self.hubspot_instance._fetch(
+        result = self.hubspot_instance._fetch(
             endpoint=endpoint, filters=filters, properties=properties
         )
 
-        assert self.hubspot_instance.full_dataset is not None
-        assert len(self.hubspot_instance.full_dataset) > 0
+        assert result is not None
+        assert len(result) > 0
 
     @patch("viadot.sources.hubspot.handle_api_response")
     def test_fetch_without_filters(self, mock_handle_api_response):
@@ -161,19 +161,18 @@ class TestHubspot(unittest.TestCase):
         endpoint = "deals"
         filters = None
         properties = ["property1"]
-        self.hubspot_instance._fetch(
+        result = self.hubspot_instance._fetch(
             endpoint=endpoint, filters=filters, properties=properties
         )
 
-        assert self.hubspot_instance.full_dataset is not None
-        assert len(self.hubspot_instance.full_dataset) > 0
+        assert result is not None
+        assert len(result) > 0
 
-    @patch("viadot.sources.hubspot.super")
-    def test_to_df(self, mock_super):
+    @patch("viadot.sources.base.Source.to_df")
+    def test_to_df(self, mock_parent_to_df):
         """Test Hubspot `to_df` function."""
-        mock_super().to_df = MagicMock()
-        self.hubspot_instance.full_dataset = [{"id": "123"}]
-        result_df = self.hubspot_instance.to_df()
+        mock_parent_to_df.return_value = pd.DataFrame()
+        result_df = self.hubspot_instance.to_df(data=[{"id": "123"}])
         result_df.drop(
             columns=["_viadot_source", "_viadot_downloaded_at_utc"],
             inplace=True,
@@ -182,18 +181,17 @@ class TestHubspot(unittest.TestCase):
 
         expected_df = pd.DataFrame([{"id": "123"}])
         assert_frame_equal(result_df, expected_df, check_dtype=False)
-        mock_super().to_df.assert_called_once()
+        mock_parent_to_df.assert_called_once()
 
-    @patch("viadot.sources.hubspot.super")
-    def test_to_df_empty(self, mock_super):
+    @patch("viadot.sources.base.Source.to_df")
+    def test_to_df_empty(self, mock_parent_to_df):
         """Test Hubspot `to_df` method, checking emptiness."""
-        mock_super().to_df = MagicMock()
-        self.hubspot_instance.full_dataset = []
+        mock_parent_to_df.return_value = pd.DataFrame()
 
         with patch.object(
             self.hubspot_instance, "_handle_if_empty"
         ) as mock_handle_if_empty:
-            result_df = self.hubspot_instance.to_df()
+            result_df = self.hubspot_instance.to_df(data=[])
             result_df.drop(
                 columns=["_viadot_source", "_viadot_downloaded_at_utc"],
                 inplace=True,
@@ -203,7 +201,7 @@ class TestHubspot(unittest.TestCase):
                 if_empty="warn", message="The response does not contain any data."
             )
             assert result_df.empty
-            mock_super().to_df.assert_called_once()
+            mock_parent_to_df.assert_called_once()
 
     def test_get_api_url_full_url_passthrough(self):
         """Full URL is returned unchanged."""
@@ -256,10 +254,12 @@ class TestHubspot(unittest.TestCase):
         page1 = {"results": [{"id": "1"}], "paging": {"next": {"after": "abc"}}}
         page2 = {"results": [{"id": "2"}]}
         with patch.object(instance, "_api_call", side_effect=[page1, page2]):
-            instance._fetch(endpoint="deals", filters=variables["filters"], nrows=10)  # type: ignore[attr-defined]
-        assert len(instance.full_dataset) == 2
-        assert instance.full_dataset[0]["id"] == "1"
-        assert instance.full_dataset[1]["id"] == "2"
+            result = instance._fetch(
+                endpoint="deals", filters=variables["filters"], nrows=10
+            )  # type: ignore[attr-defined]
+        assert len(result) == 2
+        assert result[0]["id"] == "1"
+        assert result[1]["id"] == "2"
 
     def test_fetch_pagination_without_filters_offset(self):
         """GET pagination with 'offset' aggregates pages."""
@@ -267,10 +267,10 @@ class TestHubspot(unittest.TestCase):
         page1 = {"contacts": [{"id": "1"}], "offset": "2"}
         page2 = {"contacts": [{"id": "2"}]}
         with patch.object(instance, "_api_call", side_effect=[page1, page2]):
-            instance._fetch(endpoint="contacts", filters=None, nrows=10)  # type: ignore[attr-defined]
-        assert len(instance.full_dataset) == 2
-        assert instance.full_dataset[0]["id"] == "1"
-        assert instance.full_dataset[1]["id"] == "2"
+            result = instance._fetch(endpoint="contacts", filters=None, nrows=10)  # type: ignore[attr-defined]
+        assert len(result) == 2
+        assert result[0]["id"] == "1"
+        assert result[1]["id"] == "2"
 
     def test_fetch_contact_ids(self):
         """Build rows with campaign_id, contact_id, contact_type."""
@@ -281,11 +281,11 @@ class TestHubspot(unittest.TestCase):
             "_api_call",
             return_value={"results": [{"id": "c1"}, {"id": "c2"}]},
         ):
-            instance._fetch_contact_ids(campaign_ids=campaigns)  # default type
-        assert len(instance.full_dataset) == 4
-        assert {r["campaign_id"] for r in instance.full_dataset} == set(campaigns)
-        assert all("contact_id" in r for r in instance.full_dataset)
-        assert all("contact_type" in r for r in instance.full_dataset)
+            result = instance._fetch_contact_ids(campaign_ids=campaigns)  # default type
+        assert len(result) == 4
+        assert {r["campaign_id"] for r in result} == set(campaigns)
+        assert all("contact_id" in r for r in result)
+        assert all("contact_type" in r for r in result)
 
     def test_get_campaign_budget_totals(self):
         """Keep only totals and campaign_id."""
@@ -309,15 +309,15 @@ class TestHubspot(unittest.TestCase):
             },
         ]
         with patch.object(instance, "_api_call", side_effect=responses):
-            instance._get_campaign_budget_totals(campaign_ids=["X", "Y"])  # type: ignore[attr-defined]
-        assert len(instance.full_dataset) == 2
-        row0 = instance.full_dataset[0]
+            result = instance._get_campaign_budget_totals(campaign_ids=["X", "Y"])  # type: ignore[attr-defined]
+        assert len(result) == 2
+        row0 = result[0]
         assert row0["campaign_id"] == "X"
         assert row0["budgetTotal"] == 100
         assert row0["remainingBudget"] == 60
         assert row0["spendTotal"] == 40
         assert row0["currencyCode"] == "USD"
-        row1 = instance.full_dataset[1]
+        row1 = result[1]
         assert row1["campaign_id"] == "Y"
         assert row1["budgetTotal"] == 200
         assert row1["remainingBudget"] == 150
@@ -338,9 +338,9 @@ class TestHubspot(unittest.TestCase):
             "_api_call",
             return_value={"sessions": 5, "influencedContacts": 3, "extra": "x"},
         ):
-            instance._get_campaign_metrics(campaign_ids=["X", "Y"])
-        assert len(instance.full_dataset) == 2
-        for r in instance.full_dataset:
+            result = instance._get_campaign_metrics(campaign_ids=["X", "Y"])
+        assert len(result) == 2
+        for r in result:
             assert "campaign_id" in r
             assert r["sessions"] == 5
             assert r["influencedContacts"] == 3
@@ -370,9 +370,9 @@ class TestHubspot(unittest.TestCase):
             },
         ]
         with patch.object(instance, "_api_call", side_effect=responses):
-            instance._get_campaign_details(campaign_ids=["X", "Y"])  # type: ignore[attr-defined]
-        assert len(instance.full_dataset) == 2
-        for row in instance.full_dataset:
+            result = instance._get_campaign_details(campaign_ids=["X", "Y"])  # type: ignore[attr-defined]
+        assert len(result) == 2
+        for row in result:
             assert "campaign_id" in row
             assert "hs_name" in row
             assert "hs_start_date" in row
@@ -385,9 +385,9 @@ class TestHubspot(unittest.TestCase):
         instance = self.hubspot_instance
         responses = [{"properties": {}}, {}]
         with patch.object(instance, "_api_call", side_effect=responses):
-            instance._get_campaign_details(campaign_ids=["X", "Y"])  # type: ignore[attr-defined]
-        assert len(instance.full_dataset) == 2
-        for row, cid in zip(instance.full_dataset, ["X", "Y"]):
+            result = instance._get_campaign_details(campaign_ids=["X", "Y"])  # type: ignore[attr-defined]
+        assert len(result) == 2
+        for row, cid in zip(result, ["X", "Y"]):
             assert row["campaign_id"] == cid
             # All props keys should be present with None values
             assert "hs_name" in row
@@ -448,11 +448,10 @@ class TestHubspot(unittest.TestCase):
             assert kwargs["properties"] == ["id"]
             assert kwargs["nrows"] == 10
 
-    @patch("viadot.sources.hubspot.super")
-    def test_to_df_includes_metadata_columns(self, mock_super):
-        mock_super().to_df = MagicMock()
-        self.hubspot_instance.full_dataset = [{"id": "x"}]
-        df = self.hubspot_instance.to_df()
+    @patch("viadot.sources.base.Source.to_df")
+    def test_to_df_includes_metadata_columns(self, mock_parent_to_df):
+        mock_parent_to_df.return_value = pd.DataFrame()
+        df = self.hubspot_instance.to_df(data=[{"id": "x"}])
         assert "_viadot_source" in df.columns
         assert "_viadot_downloaded_at_utc" in df.columns
 

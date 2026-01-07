@@ -124,16 +124,16 @@ class Hubspot(Source):
 
         # Some product families (e.g., hubdb) expect direct prefixing
         if endpoint.startswith("hubdb"):
-            base = f"{self.API_URL}/{endpoint}"
+            url = f"{self.API_URL}/{endpoint}"
         elif filters:
-            base = f"{self.API_URL}/crm/v3/objects/{endpoint}/search/?limit=100&"
+            url = f"{self.API_URL}/crm/v3/objects/{endpoint}/search/?limit=100&"
         else:
-            base = f"{self.API_URL}/crm/v3/objects/{endpoint}/?limit=100&"
+            url = f"{self.API_URL}/crm/v3/objects/{endpoint}/?limit=100&"
 
         if properties:
-            base += f'properties={",".join(properties)}&'
+            url += f'properties={",".join(properties)}&'
 
-        return base
+        return url
 
     def _format_filters(
         self,
@@ -163,7 +163,7 @@ class Hubspot(Source):
 
         return filters
 
-    def _get_api_body(self, filters: list[dict[str, Any]]) -> str:
+    def _get_request_body(self, filters: list[dict[str, Any]]) -> str:
         """Clean the filters body and convert to a JSON-formatted string.
 
         Args:
@@ -204,7 +204,7 @@ class Hubspot(Source):
                 NOT_CONTAINS_TOKEN  -Doesn't contain a token
 
         Returns:
-            str: JSON string with the search body.
+            str: JSON string with the request body.
         """
         return json.dumps({"filterGroups": filters, "limit": 100})
 
@@ -281,7 +281,7 @@ class Hubspot(Source):
         filters: list[dict[str, Any]] | None = None,
         properties: list[str] | None = None,
         nrows: int = 1000,
-    ) -> None:
+    ) -> list[Any]:
         """General method to connect to Hubspot API and generate the response.
 
         Args:
@@ -313,6 +313,7 @@ class Hubspot(Source):
             nrows (int, optional): Max number of rows to pull during execution.
                 Defaults to 1000.
         """
+        full_dataset: list[Any] = []
         url = self._get_api_url(
             endpoint=endpoint,
             filters=filters,
@@ -320,27 +321,27 @@ class Hubspot(Source):
         )
         if filters:
             filters_formatted = self._format_filters(filters)
-            body = self._get_api_body(filters=filters_formatted)
+            body = self._get_request_body(filters=filters_formatted)
             method = "POST"
             partition = self._api_call(url=url, body=body, method=method)
-            self.full_dataset = self._extract_items(partition)
+            full_dataset = self._extract_items(partition)
 
-            while "paging" in partition and len(self.full_dataset) < nrows:
-                body = json.loads(self._get_api_body(filters=filters_formatted))
+            while "paging" in partition and len(full_dataset) < nrows:
+                body = json.loads(self._get_request_body(filters=filters_formatted))
                 body["after"] = partition["paging"]["next"]["after"]
                 partition = self._api_call(
                     url=url, body=json.dumps(body), method=method
                 )
-                self.full_dataset.extend(self._extract_items(partition))
+                full_dataset.extend(self._extract_items(partition))
 
         else:
             method = "GET"
             partition = self._api_call(url=url, method=method)
-            self.full_dataset = self._extract_items(partition)
+            full_dataset = self._extract_items(partition)
 
             offset_type, offset_value = self._get_offset_from_response(partition)
 
-            while offset_value and len(self.full_dataset) < nrows:
+            while offset_value and len(full_dataset) < nrows:
                 url = self._get_api_url(
                     endpoint=endpoint,
                     properties=properties,
@@ -349,15 +350,17 @@ class Hubspot(Source):
                 url += f"{offset_type}={offset_value}"
 
                 partition = self._api_call(url=url, method=method)
-                self.full_dataset.extend(self._extract_items(partition))
+                full_dataset.extend(self._extract_items(partition))
 
                 offset_type, offset_value = self._get_offset_from_response(partition)
+
+        return full_dataset
 
     def _fetch_contact_ids(
         self,
         campaign_ids: list[str],
         contact_type: str = "influencedContacts",
-    ) -> None:
+    ) -> list[dict[str, Any]]:
         """Fetch influenced contact IDs for multiple campaigns.
 
         Builds a DataFrame with: campaign_id, contact_id, contact_type.
@@ -384,12 +387,12 @@ class Hubspot(Source):
                         }
                     )
 
-        self.full_dataset = rows
+        return rows
 
     def _get_campaign_metrics(
         self,
         campaign_ids: list[str],
-    ) -> None:
+    ) -> list[dict[str, Any]]:
         """Fetch metrics for multiple campaigns.
 
         For each campaign, calls:
@@ -418,12 +421,12 @@ class Hubspot(Source):
                     row[key] = metrics[key]
             rows.append(row)
 
-        self.full_dataset = rows
+        return rows
 
     def _get_campaign_budget_totals(
         self,
         campaign_ids: list[str],
-    ) -> None:
+    ) -> list[dict[str, Any]]:
         """Fetch budget totals for multiple campaigns.
 
         For each campaign, calls:
@@ -452,9 +455,9 @@ class Hubspot(Source):
             }
             rows.append(row)
 
-        self.full_dataset = rows
+        return rows
 
-    def _get_campaign_details(self, campaign_ids: list[str]) -> None:
+    def _get_campaign_details(self, campaign_ids: list[str]) -> list[dict[str, Any]]:
         """Fetch details for multiple campaigns.
 
         For each campaign, calls:
@@ -483,7 +486,7 @@ class Hubspot(Source):
                 row[p] = properties_obj.get(p)
             rows.append(row)
 
-        self.full_dataset = rows
+        return rows
 
     def call_api(
         self,
@@ -494,8 +497,8 @@ class Hubspot(Source):
         filters: list[dict[str, Any]] | None = None,
         properties: list[str] | None = None,
         nrows: int = 1000,
-    ) -> None:
-        """Dispatch a HubSpot API call and store results in `self.full_dataset`.
+    ) -> list[dict[str, Any]]:
+        """Dispatch a HubSpot API call and return results.
 
         Args:
             method (str | None): Logical method selector ("get_all_contacts",
@@ -510,42 +513,46 @@ class Hubspot(Source):
             nrows (int): Maximum number of rows to fetch.
         """
         if method == "get_all_contacts":
-            self._fetch(
+            data = self._fetch(
                 endpoint="https://api.hubapi.com/contacts/v1/lists/all/contacts/all"
             )
         elif method == "get_campaign_metrics":
-            self._get_campaign_metrics(
+            data = self._get_campaign_metrics(
                 campaign_ids=campaign_ids,
             )
         elif method == "get_campaign_budget_totals":
-            self._get_campaign_budget_totals(
+            data = self._get_campaign_budget_totals(
                 campaign_ids=campaign_ids,
             )
         elif method == "get_campaign_details":
-            self._get_campaign_details(
+            data = self._get_campaign_details(
                 campaign_ids=campaign_ids,
             )
         elif method == "fetch_contact_ids":
-            self._fetch_contact_ids(
+            data = self._fetch_contact_ids(
                 campaign_ids=campaign_ids,
                 contact_type=contact_type,
             )
         else:
-            self._fetch(
+            data = self._fetch(
                 endpoint=endpoint,
                 filters=filters,
                 properties=properties,
                 nrows=nrows,
             )
 
+        return data
+
     @add_viadot_metadata_columns
     def to_df(
         self,
+        data: list[dict[str, Any]] | None = None,
         if_empty: str = "warn",
     ) -> pd.DataFrame:
         """Generate a pandas DataFrame with the data in the Response and metadata.
 
         Args:
+            data (list[dict[str, Any]] | None): The data to convert to pandas DataFrame.
             if_empty (str, optional): What to do if a fetch produce no data.
                 Defaults to "warn".
 
@@ -554,7 +561,6 @@ class Hubspot(Source):
         """
         super().to_df(if_empty=if_empty)
 
-        data = self.full_dataset or []
         data_frame = pd.json_normalize(data)
 
         # change all object columns to string
