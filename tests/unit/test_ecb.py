@@ -7,7 +7,7 @@ import pandas as pd
 import pytest
 import requests
 
-from viadot.sources.ecb import ECB
+from viadot.sources.ecb import ECBExchangeRates
 
 
 @pytest.fixture
@@ -20,14 +20,17 @@ def sample_ecb_response():
 
 @pytest.fixture
 def ecb_instance():
-    """Create ECB instance."""
-    return ECB()
+    """Create ECBExchangeRates instance."""
+    return ECBExchangeRates()
 
 
 def test_init(ecb_instance):
-    """Test ECB initialization."""
+    """Test ECBExchangeRates initialization."""
     assert ecb_instance.credentials is None
-    assert ecb_instance.data is None
+    assert (
+        ecb_instance.URL
+        == "https://www.ecb.europa.eu/stats/eurofxref/eurofxref-daily.xml"
+    )
 
 
 @patch("viadot.sources.ecb.handle_api_response")
@@ -41,27 +44,18 @@ def test_fetch_data_success(
     mock_response.text = sample_ecb_response
     mock_handle_api_response.return_value = mock_response
 
-    # Test parameters
-    url = "https://www.ecb.europa.eu/stats/eurofxref/eurofxref-daily.xml"
-
-    # Call fetch_data
-    data = ecb_instance.fetch_data(url)
+    # Call fetch_data (no url parameter needed)
+    data = ecb_instance.fetch_data()
 
     # Verify the data was returned
     assert data == sample_ecb_response
 
-    # Verify handle_api_response was called correctly
+    # Verify handle_api_response was called correctly with hardcoded URL
     mock_handle_api_response.assert_called_once()
     call_args = mock_handle_api_response.call_args
-    assert call_args[1]["url"] == url
+    assert call_args[1]["url"] == ecb_instance.URL
     assert call_args[1]["params"] is None
     assert call_args[1]["method"] == "GET"
-
-
-def test_fetch_data_missing_url(ecb_instance):
-    """Test fetch_data raises error when url is empty."""
-    with pytest.raises(ValueError, match="url is required and cannot be empty"):
-        ecb_instance.fetch_data("")
 
 
 @patch("viadot.sources.ecb.handle_api_response")
@@ -74,9 +68,7 @@ def test_fetch_data_request_exception(mock_handle_api_response, ecb_instance):
     )
 
     with pytest.raises(APIError):
-        ecb_instance.fetch_data(
-            "https://www.ecb.europa.eu/stats/eurofxref/eurofxref-daily.xml"
-        )
+        ecb_instance.fetch_data()
 
 
 def test_parse_xml(ecb_instance, sample_ecb_response):
@@ -147,21 +139,14 @@ def test_to_df_success(mock_handle_api_response, ecb_instance, sample_ecb_respon
     mock_response.text = sample_ecb_response
     mock_handle_api_response.return_value = mock_response
 
-    url = "https://www.ecb.europa.eu/stats/eurofxref/eurofxref-daily.xml"
-
-    df = ecb_instance.to_df(url=url)
+    # Call to_df (no url parameter needed)
+    df = ecb_instance.to_df()
 
     assert isinstance(df, pd.DataFrame)
     assert not df.empty
     assert "time" in df.columns
     assert "currency" in df.columns
     assert "rate" in df.columns
-
-
-def test_to_df_missing_url(ecb_instance):
-    """Test to_df raises error when url is empty."""
-    with pytest.raises(ValueError, match="url is required and cannot be empty"):
-        ecb_instance.to_df(url="")
 
 
 @patch("viadot.sources.ecb.handle_api_response")
@@ -181,10 +166,7 @@ def test_to_df_empty_result_warn(mock_handle_api_response, ecb_instance):
     mock_handle_api_response.return_value = mock_response
 
     with patch("viadot.sources.base.logger.warning") as mock_warning:
-        df = ecb_instance.to_df(
-            url="https://www.ecb.europa.eu/stats/eurofxref/eurofxref-daily.xml",
-            if_empty="warn",
-        )
+        df = ecb_instance.to_df(if_empty="warn")
 
         assert df.empty
 
@@ -213,10 +195,7 @@ def test_to_df_empty_result_skip(mock_handle_api_response, ecb_instance):
     mock_handle_api_response.return_value = mock_response
 
     with pytest.raises(SKIP):
-        ecb_instance.to_df(
-            url="https://www.ecb.europa.eu/stats/eurofxref/eurofxref-daily.xml",
-            if_empty="skip",
-        )
+        ecb_instance.to_df(if_empty="skip")
 
 
 @patch("viadot.sources.ecb.handle_api_response")
@@ -236,10 +215,7 @@ def test_to_df_empty_result_fail(mock_handle_api_response, ecb_instance):
     mock_handle_api_response.return_value = mock_response
 
     with pytest.raises(ValueError, match="The query produced no data"):
-        ecb_instance.to_df(
-            url="https://www.ecb.europa.eu/stats/eurofxref/eurofxref-daily.xml",
-            if_empty="fail",
-        )
+        ecb_instance.to_df(if_empty="fail")
 
 
 @patch("viadot.sources.ecb.handle_api_response")
@@ -255,10 +231,7 @@ def test_to_df_with_tests_validation(
     test_config = {"column_tests": {"currency": {"not_null": True}}}
 
     with patch("viadot.sources.ecb.validate") as mock_validate:
-        df = ecb_instance.to_df(
-            url="https://www.ecb.europa.eu/stats/eurofxref/eurofxref-daily.xml",
-            tests=test_config,
-        )
+        df = ecb_instance.to_df(tests=test_config)
 
         mock_validate.assert_called_once()
         args, kwargs = mock_validate.call_args
@@ -275,10 +248,8 @@ def test_full_workflow(mock_handle_api_response, ecb_instance, sample_ecb_respon
     mock_response.text = sample_ecb_response
     mock_handle_api_response.return_value = mock_response
 
-    url = "https://www.ecb.europa.eu/stats/eurofxref/eurofxref-daily.xml"
-
-    # Fetch and convert to DataFrame
-    df = ecb_instance.to_df(url=url)
+    # Fetch and convert to DataFrame (no url parameter needed)
+    df = ecb_instance.to_df()
 
     # Verify results
     assert isinstance(df, pd.DataFrame)

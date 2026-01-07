@@ -14,38 +14,37 @@ from viadot.utils import (
 )
 
 
-class ECB(Source):
-    """ECB source class for fetching exchange rates from European Central Bank API."""
+class ECBExchangeRates(Source):
+    """ECB exchange rates source class for fetching daily exchange rates from ECB."""
+
+    URL = "https://www.ecb.europa.eu/stats/eurofxref/eurofxref-daily.xml"
 
     def __init__(
         self,
         *args,
         **kwargs,
     ):
-        """Initialize ECB source.
+        """Initialize ECB exchange rates source.
 
-        Connector allows to pull exchange rates data from ECB API and convert it to a
+        Connector allows to pull daily exchange rates data from ECB API and convert to
         pandas DataFrame. No credentials are required.
 
         Usage:
-            ecb = ECB()
-            df = ecb.to_df(url="https://www.ecb.europa.eu/stats/eurofxref/eurofxref-daily.xml")
+            ecb = ECBExchangeRates()
+            df = ecb.to_df()
 
         Example:
-            ecb = ECB()
-            df = ecb.to_df(url="https://www.ecb.europa.eu/stats/eurofxref/eurofxref-daily.xml")
+            ecb = ECBExchangeRates()
+            df = ecb.to_df()
         """
         super().__init__(*args, credentials=None, **kwargs)
 
-    def fetch_data(self, url: str) -> str:
+    def fetch_data(self) -> str:
         """Connect to ECB API and fetch XML response data.
 
-        The function sends a GET request to the ECB API endpoint.
+        The function sends a GET request to the ECB exchange rates endpoint.
         If the request is successful, the response XML is returned as a string.
         If the request fails, an APIError is raised with the error message.
-
-        Args:
-            url (str): The URL of the ECB API endpoint.
 
         Returns:
             str: The API response data as XML string.
@@ -53,14 +52,9 @@ class ECB(Source):
         Raises:
             APIError: If the request fails.
         """
-        if not url:
-            msg = "url is required and cannot be empty"
-            self.logger.exception(msg)
-            raise ValueError(msg)
-
         try:
             response = handle_api_response(
-                url=url,
+                url=self.URL,
                 params=None,
                 method="GET",
             )
@@ -133,14 +127,12 @@ class ECB(Source):
     @add_viadot_metadata_columns
     def to_df(
         self,
-        url: str,
         if_empty: Literal["warn", "skip", "fail"] = "warn",
         tests: dict[str, Any] | None = None,
     ) -> pd.DataFrame:
         """Convert ECB exchange rates data to pandas DataFrame.
 
         Args:
-            url (str): The URL of the ECB API endpoint.
             if_empty (Literal["warn", "skip", "fail"], optional): What to do if no data
                 is available. Defaults to "warn".
             tests (dict[str, Any], optional): A dictionary with optional list of tests
@@ -156,14 +148,10 @@ class ECB(Source):
         Raises:
             ValueError: If no data has been fetched or if validation fails.
         """
-        if not url:
-            msg = "url is required and cannot be empty"
-            raise ValueError(msg)
-
-        self.logger.info("Converting ECB data to pandas DataFrame.")
+        self.logger.info("Converting ECB exchange rates data to pandas DataFrame.")
 
         # Fetch XML data
-        xml_data = self.fetch_data(url)
+        xml_data = self.fetch_data()
 
         # Parse XML to DataFrame
         df = self._parse_xml(xml_data)

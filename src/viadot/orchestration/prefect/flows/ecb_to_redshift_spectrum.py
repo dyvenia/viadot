@@ -1,4 +1,4 @@
-"""Download data from ECB API and load into Redshift Spectrum."""
+"""Download data from ECB exchange rates API and load into Redshift Spectrum."""
 
 from typing import Any, Literal
 
@@ -9,14 +9,13 @@ from viadot.orchestration.prefect.tasks import df_to_redshift_spectrum, ecb_to_d
 
 
 @flow(
-    name="ECB extraction to Redshift Spectrum",
+    name="ECB exchange rates extraction to Redshift Spectrum",
     description="Extract exchange rates data from ECB API and load into Redshift Spectrum.",
     retries=1,
     retry_delay_seconds=60,
     task_runner=ConcurrentTaskRunner,
 )
 def ecb_to_redshift_spectrum(  # noqa: PLR0913
-    url: str,
     to_path: str,
     schema_name: str,
     table: str,
@@ -33,7 +32,6 @@ def ecb_to_redshift_spectrum(  # noqa: PLR0913
     """Flow for downloading exchange rates data from ECB API to Redshift Spectrum.
 
     Args:
-        url (str): The URL of the ECB API endpoint.
         to_path (str): Path to a S3 folder where the table will be located.
         schema_name (str): AWS Glue catalog database name.
         table (str): AWS Glue catalog table name.
@@ -58,7 +56,6 @@ def ecb_to_redshift_spectrum(  # noqa: PLR0913
 
     Examples:
         ecb_to_redshift_spectrum(
-            url="https://www.ecb.europa.eu/stats/eurofxref/eurofxref-daily.xml",
             to_path="s3://your-bucket/ecb/",
             schema_name="staging",
             table="ecb_exchange_rates",
@@ -71,7 +68,6 @@ def ecb_to_redshift_spectrum(  # noqa: PLR0913
         )
     """
     data_frame = ecb_to_df(
-        url=url,
         if_empty=if_empty,
         tests=tests,
     )
