@@ -12,9 +12,12 @@ from viadot.sources import Hubspot
 
 @task(retries=3, log_prints=True, retry_delay_seconds=10, timeout_seconds=60 * 60)
 def hubspot_to_df(
-    endpoint: str,
+    endpoint: str | None = None,
+    api_method: str | None = None,
+    campaign_ids: list[str] | None = None,
+    contact_type: str = "influencedContacts",
     config_key: str | None = None,
-    azure_key_vault_secret: str | None = None,
+    credentials_secret: str | None = None,
     filters: list[dict[str, Any]] | None = None,
     properties: list[Any] | None = None,
     nrows: int = 1000,
@@ -23,9 +26,11 @@ def hubspot_to_df(
 
     Args:
         endpoint (str): API endpoint for an individual request.
+        api_method (str, optional): The method to use to get the data from the API.
+        campaign_ids (list[str], optional): List of campaign IDs to get the metrics for.
         config_key (Optional[str], optional): The key in the viadot config holding
             relevant credentials. Defaults to None.
-        azure_key_vault_secret (Optional[str], optional): The name of the Azure Key
+        credentials_secret (Optional[str], optional): The name of the Azure Key
             Vault secret where credentials are stored. Defaults to None.
         filters (Optional[List[Dict[str, Any]]], optional): Filters defined for the API
             body in specific order. Defaults to None.
@@ -37,7 +42,7 @@ def hubspot_to_df(
     Examples:
         data_frame = hubspot_to_df(
             config_key=config_key,
-            azure_key_vault_secret=azure_key_vault_secret,
+            credentials_secret=credentials_secret,
             endpoint=endpoint,
             filters=filters,
             properties=properties,
@@ -50,21 +55,25 @@ def hubspot_to_df(
     Returns:
         pd.DataFrame: The response data as a pandas DataFrame.
     """
-    if not (azure_key_vault_secret or config_key):
+    if not (credentials_secret or config_key):
         raise MissingSourceCredentialsError
 
     if not config_key:
-        credentials = get_credentials(azure_key_vault_secret)
+        credentials = get_credentials(credentials_secret)
 
     hubspot = Hubspot(
         credentials=credentials,
         config_key=config_key,
     )
-    hubspot.api_connection(
+
+    data = hubspot.call_api(
+        method=api_method,
         endpoint=endpoint,
+        campaign_ids=campaign_ids,
+        contact_type=contact_type,
         filters=filters,
         properties=properties,
         nrows=nrows,
     )
 
-    return hubspot.to_df()
+    return hubspot.to_df(data=data)

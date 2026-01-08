@@ -219,7 +219,7 @@ def get_sql_server_table_dtypes(
     return dtypes
 
 
-def _cast_df_cols(
+def cast_df_cols(
     df: pd.DataFrame,
     types_to_convert: list[Literal["datetime", "bool", "int", "object"]] | None = None,
 ) -> pd.DataFrame:
@@ -390,7 +390,7 @@ def gen_bulk_insert_query_from_df(
         return f"INSERT INTO {table_fqn} ({columns})\n\nVALUES {values_clean}"
 
     df = df.copy().assign(**kwargs)
-    df = _cast_df_cols(df)
+    df = cast_df_cols(df)
 
     columns = ", ".join(df.columns)
 
