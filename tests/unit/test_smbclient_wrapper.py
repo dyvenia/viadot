@@ -155,8 +155,8 @@ def test_list_directory_success(smb_wrapper_instance):
         assert call_kwargs["start_directory"] == "test_dir"
 
 
-def test_list_directory_with_skip_root_recursive(smb_wrapper_instance):
-    """Test directory listing with skip_root_recursive option."""
+def test_list_directory_with_custom_timeout(smb_wrapper_instance):
+    """Test directory listing with custom recursive_timeout."""
     mock_items = [SMBItem(name="file.txt", item_type=SMBItemType.FILE, path="file.txt")]
 
     with patch(
@@ -164,13 +164,13 @@ def test_list_directory_with_skip_root_recursive(smb_wrapper_instance):
         return_value=mock_items,
     ) as mock_listing:
         result = smb_wrapper_instance.list_directory(
-            directory="", skip_root_recursive=True
+            directory="", recursive_timeout=600
         )
 
         assert len(result) == 1
         mock_listing.assert_called_once()
         call_kwargs = mock_listing.call_args.kwargs
-        assert call_kwargs["skip_root_recursive"] is True
+        assert call_kwargs["recursive_timeout"] == 600
 
 
 # ==================== SMBClientWrapper.download_file tests ====================
