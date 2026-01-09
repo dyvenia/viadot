@@ -448,6 +448,60 @@ class TestHubspot(unittest.TestCase):
             assert kwargs["properties"] == ["id"]
             assert kwargs["nrows"] == 10
 
+    def test_call_api_expands_stringified_json_in_form_submissions(self):
+        instance = self.hubspot_instance
+        payload = {
+            "conversion-id": "62775177-4616-413b-9c26-bb35057913c4",
+            "timestamp": 1613053768706,
+            "form-id": "2a9da523-cb9a-4e1f-a4b0-2ac746a855ac",
+        }
+        rows = [{"id": "1", "form_submissions": json.dumps(payload)}]
+        with patch.object(instance, "_fetch", return_value=rows):
+            result = instance.call_api(method=None, endpoint="deals", filters=None)  # type: ignore[arg-type]
+        row = result[0]
+        assert row["form_submissions_json_conversion-id"] == payload["conversion-id"]
+        assert row["form_submissions_json_timestamp"] == payload["timestamp"]
+        assert row["form_submissions_json_form-id"] == payload["form-id"]
+        # original column stays
+        assert "form_submissions" in row
+
+    def test_call_api_expands_single_item_list_of_dicts_in_identity_profiles(self):
+        instance = self.hubspot_instance
+        list_payload = [
+            {
+                "vid": 3351,
+                "saved-at-timestamp": 1613053343363,
+                "deleted-changed-timestamp": 0,
+            }
+        ]
+        rows = [{"id": "1", "identity_profiles": list_payload}]
+        with patch.object(instance, "_fetch", return_value=rows):
+            result = instance.call_api(method=None, endpoint="deals", filters=None)  # type: ignore[arg-type]
+        row = result[0]
+        assert row["identity_profiles_json_vid"] == 3351
+        assert row["identity_profiles_json_saved-at-timestamp"] == 1613053343363
+        assert row["identity_profiles_json_deleted-changed-timestamp"] == 0
+        assert "identity_profiles" in row
+
+    def test_call_api_does_not_expand_dict_value(self):
+        instance = self.hubspot_instance
+        rows = [{"id": "1", "form_submissions": {"a": 1, "b": 2}}]
+        with patch.object(instance, "_fetch", return_value=rows):
+            result = instance.call_api(method=None, endpoint="deals", filters=None)  # type: ignore[arg-type]
+        row = result[0]
+        assert "form_submissions_json_a" not in row
+        assert "form_submissions_json_b" not in row
+        assert row["form_submissions"] == {"a": 1, "b": 2}
+
+    def test_call_api_empty_list_creates_no_expansion_columns(self):
+        instance = self.hubspot_instance
+        rows = [{"id": "1", "form_submissions": []}]
+        with patch.object(instance, "_fetch", return_value=rows):
+            result = instance.call_api(method=None, endpoint="deals", filters=None)  # type: ignore[arg-type]
+        row = result[0]
+        assert all(not k.startswith("form_submissions_json_") for k in row.keys())
+        assert row["form_submissions"] == []
+
     @patch("viadot.sources.base.Source.to_df")
     def test_to_df_includes_metadata_columns(self, mock_parent_to_df):
         mock_parent_to_df.return_value = pd.DataFrame()
