@@ -2,7 +2,7 @@
 
 from datetime import datetime
 from pathlib import Path
-from unittest.mock import Mock, patch
+from unittest.mock import patch
 
 import pendulum
 from pydantic import SecretStr
@@ -10,8 +10,6 @@ import pytest
 
 from viadot.exceptions import (
     CredentialError,
-    SMBConnectionError,
-    SMBFileOperationError,
 )
 from viadot.sources.smbclient_wrapper import (
     SMBClientWrapper,
@@ -183,7 +181,7 @@ def test_download_file_success(smb_wrapper_instance, tmp_path):
     expected_local_file = str(tmp_path / "file.txt")
 
     with patch(
-        "viadot.sources.smbclient_wrapper.download_file_from_smb_with_retry",
+        "viadot.sources.smbclient_wrapper.download_file_from_smb",
         return_value=expected_local_file,
     ) as mock_download:
         result = smb_wrapper_instance.download_file(
@@ -205,7 +203,7 @@ def test_download_file_with_prefix_levels(smb_wrapper_instance, tmp_path):
     local_path = str(tmp_path)
 
     with patch(
-        "viadot.sources.smbclient_wrapper.download_file_from_smb_with_retry",
+        "viadot.sources.smbclient_wrapper.download_file_from_smb",
         return_value=str(tmp_path / "2025_02_file.txt"),
     ) as mock_download:
         result = smb_wrapper_instance.download_file(
@@ -226,16 +224,16 @@ def test_download_file_skipped_invalid_filename(smb_wrapper_instance, tmp_path):
     local_path = str(tmp_path)
 
     with patch(
-        "viadot.sources.smbclient_wrapper._download_file_from_smb"
+        "viadot.sources.smbclient_wrapper.download_file_from_smb"
     ) as mock_download_inner:
         from viadot.exceptions import SMBInvalidFilenameError
 
-        # _download_file_from_smb raises SMBInvalidFilenameError when invalid
+        # download_file_from_smb raises SMBInvalidFilenameError when invalid
         mock_download_inner.side_effect = SMBInvalidFilenameError(
             "Skipping file with problematic characters in name: file;test.txt"
         )
 
-        # download_file_from_smb_with_retry should catch it and return None
+        # SMBClientWrapper.download_file should catch it and return None
         result = smb_wrapper_instance.download_file(
             remote_path=remote_path, local_path=local_path
         )
@@ -243,27 +241,23 @@ def test_download_file_skipped_invalid_filename(smb_wrapper_instance, tmp_path):
         assert result is None
 
 
-def test_download_file_with_retry_params(smb_wrapper_instance, tmp_path):
-    """Test file download with custom retry parameters."""
+def test_download_file_with_custom_timeout(smb_wrapper_instance, tmp_path):
+    """Test file download with custom timeout."""
     remote_path = "data/file.txt"
     local_path = str(tmp_path)
 
     with patch(
-        "viadot.sources.smbclient_wrapper.download_file_from_smb_with_retry",
+        "viadot.sources.smbclient_wrapper.download_file_from_smb",
         return_value=str(tmp_path / "file.txt"),
     ) as mock_download:
         smb_wrapper_instance.download_file(
             remote_path=remote_path,
             local_path=local_path,
             timeout=1800,
-            max_retries=5,
-            base_delay=5.0,
         )
 
         call_kwargs = mock_download.call_args.kwargs
         assert call_kwargs["timeout"] == 1800
-        assert call_kwargs["max_retries"] == 5
-        assert call_kwargs["base_delay"] == 5.0
 
 
 # ==================== SMBClientWrapper.stream_files_to_s3 tests ====================
@@ -626,46 +620,6 @@ def test_smb_item_get_matching_file_paths_in_range_full_path_prefix(
 
 
 # ==================== Retry logic tests ====================
-
-
-def test_retry_with_exponential_backoff_success():
-    """Test retry function succeeds on first attempt."""
-    from viadot.sources.smbclient_wrapper import _retry_with_exponential_backoff
-
-    mock_func = Mock(return_value="success")
-
-    result = _retry_with_exponential_backoff(mock_func, max_retries=3)
-
-    assert result == "success"
-    assert mock_func.call_count == 1
-
-
-def test_retry_with_exponential_backoff_retries_on_error():
-    """Test retry function retries on SMBConnectionError."""
-    from viadot.sources.smbclient_wrapper import _retry_with_exponential_backoff
-
-    mock_func = Mock(side_effect=[SMBConnectionError("Error 1"), "success"])
-
-    with patch("time.sleep"):  # Mock sleep to speed up test
-        result = _retry_with_exponential_backoff(mock_func, max_retries=3)
-
-        assert result == "success"
-        assert mock_func.call_count == 2
-
-
-def test_retry_with_exponential_backoff_raises_after_exhausted():
-    """Test retry function raises exception after all retries exhausted."""
-    from viadot.sources.smbclient_wrapper import _retry_with_exponential_backoff
-
-    mock_func = Mock(side_effect=SMBFileOperationError("Persistent error"))
-
-    with (
-        patch("time.sleep"),  # Mock sleep to speed up test
-        pytest.raises(SMBFileOperationError, match="Persistent error"),
-    ):
-        _retry_with_exponential_backoff(mock_func, max_retries=2)
-
-    assert mock_func.call_count == 3  # Initial + 2 retries
 
 
 # ==================== SMBItem complex structure tests ====================

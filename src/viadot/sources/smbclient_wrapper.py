@@ -1,4 +1,16 @@
-from collections.abc import Callable
+"""SMB source connector for Viadot using pure Python libraries.
+
+This module provides functionality to connect to SMB (Server Message Block) shares,
+list directories, download files, and stream files to S3. It uses the `smbclient`
+library for SMB operations and `boto3` for S3 interactions, avoiding external CLI tools.
+
+The module includes:
+- Helper functions for SMB path manipulation and file operations
+- SMBClientWrapper class for high-level SMB operations
+- Support for organizing files by year extracted from paths
+- Pure Python implementation with proper error handling and timeouts
+"""
+
 from datetime import datetime
 from enum import Enum
 import logging
@@ -8,12 +20,11 @@ import threading
 from typing import Any
 from urllib.parse import urlparse
 
+import boto3
+from botocore.exceptions import ClientError
 import pendulum
 import smbclient
 import smbprotocol
-
-import boto3
-from botocore.exceptions import ClientError
 
 from viadot.config import get_source_credentials
 from viadot.exceptions import (
@@ -23,7 +34,6 @@ from viadot.exceptions import (
     SMBInvalidFilenameError,
 )
 from viadot.orchestration.prefect.utils import DynamicDateHandler
-from viadot.sources import smb
 from viadot.sources.base import Source
 from viadot.sources.smb import SMBCredentials
 
@@ -35,6 +45,15 @@ def _ensure_smb_session(server: str, username: str, password: str) -> None:
     """Register (or reuse) an SMB session for a given server.
 
     `python-smbclient` keeps a global session cache, so repeated calls are cheap.
+    This function ensures a session is established before any SMB operations.
+
+    Args:
+        server (str): SMB server hostname or IP address.
+        username (str): SMB username for authentication.
+        password (str): SMB password for authentication.
+
+    Raises:
+        SMBConnectionError: If authentication fails or connection cannot be established.
     """
     if not (server and username and password):
         msg = "SMB server/username/password must be provided."
@@ -54,7 +73,22 @@ def _ensure_smb_session(server: str, username: str, password: str) -> None:
 
 
 def _to_unc_path(server: str, share: str, relative_path: str | None) -> str:
-    """Build UNC path for python `smbclient` from server/share and a relative path."""
+    r"""Build UNC path for python `smbclient` from server/share and a relative path.
+
+    Args:
+        server (str): SMB server hostname or IP address.
+        share (str): SMB share name.
+        relative_path (str | None): Relative path within the share.
+
+    Returns:
+        str: UNC path like `\\\\server\\share\\relative\\path`.
+
+    Examples:
+        >>> _to_unc_path("myserver", "myshare", "data/file.txt")
+        '\\\\myserver\\myshare\\data\\file.txt'
+        >>> _to_unc_path("myserver", "myshare", None)
+        '\\\\myserver\\myshare'
+    """
     rel = (relative_path or "").strip("/").strip("\\")
     if rel:
         rel = rel.replace("/", "\\")
@@ -63,6 +97,21 @@ def _to_unc_path(server: str, share: str, relative_path: str | None) -> str:
 
 
 def _to_rel_path(base_rel: str, name: str) -> str:
+    """Build relative path by combining base path with filename.
+
+    Args:
+        base_rel (str): Base relative path.
+        name (str): Filename or subdirectory name to append.
+
+    Returns:
+        str: Combined relative path with forward slashes.
+
+    Examples:
+        >>> _to_rel_path("data", "file.txt")
+        'data/file.txt'
+        >>> _to_rel_path("", "file.txt")
+        'file.txt'
+    """
     base = (base_rel or "").strip("/").strip("\\")
     if not base:
         return name
@@ -170,13 +219,51 @@ def _add_prefix_to_filename(filename: str, prefix: str) -> str:
     return f"{prefix}_{filename}"
 
 
+def _extract_year_from_path(file_path: str) -> str | None:
+    """Extract year (4-digit, 1900-2099) from file path if present.
+
+    Searches for 4-digit numbers between 1900-2099 in the file path. If multiple
+    years are found, returns the last one (closest to the file), as it's most
+    likely the relevant year for the file.
+
+    Args:
+        file_path (str): The file path to search for years.
+
+    Returns:
+        str | None: The extracted year as a string, or None if no valid year found.
+
+    Examples:
+        >>> _extract_year_from_path("2024/data/file.xlsx")
+        '2024'
+        >>> _extract_year_from_path("2023/reports/2024/file.xlsx")
+        '2024'
+        >>> _extract_year_from_path("data/file.xlsx")
+        None
+    """
+    # Match 4-digit year (1900-2099) in the path
+    year_pattern = r"\b(19\d{2}|20[0-9]{2})\b"
+    matches = re.findall(year_pattern, file_path)
+    if matches:
+        # Return the last year found (closest to the file in the path)
+        return matches[-1]
+    return None
+
+
 class SMBItemType(Enum):
+    """Enumeration of SMB item types."""
+
     DIRECTORY = "D"
     FILE = "A"
     # Add other types as needed based on smbclient output
 
 
 class SMBItem:
+    """Represents a file or directory item from an SMB share.
+
+    This class provides a structured way to represent SMB directory listings
+    with support for nested directory structures and file filtering.
+    """
+
     def __init__(
         self,
         name: str,
@@ -185,14 +272,26 @@ class SMBItem:
         date_modified: datetime | None = None,
         size: int | None = None,
         children: list["SMBItem"] | None = None,
+        needs_expansion: bool = False,
     ):
-        """Initialize SMB item with name, type, path, date, size, and children."""
+        """Initialize SMB item with name, type, path, date, size, and children.
+
+        Args:
+            name (str): Item name.
+            item_type (SMBItemType): FILE or DIRECTORY.
+            path (str): Full path to this item.
+            date_modified (datetime | None): Last modification date.
+            size (int | None): File size in bytes.
+            children (list[SMBItem] | None): Child items for directories.
+            needs_expansion (bool): True if directory needs recursive expansion later.
+        """
         self.name = name
         self.type = item_type
         self.path = path  # Full path to this item
         self.date_modified = date_modified
         self.size = size  # File size in bytes
         self.children = children or []
+        self.needs_expansion = needs_expansion  # For fallback shallow listing
 
     def get_path(self) -> str:
         """Return the full path to this file/folder."""
@@ -413,18 +512,15 @@ class SMBItem:
 
         Args:
             file_modification_date (pendulum.Date | None): The modification date of the
-                file. If None, the file will not match any date filter.
-            date_filter_parsed (
-                pendulum.Date | tuple[pendulum.Date, pendulum.Date] | None
-            ):
-                - A single `pendulum.Date` for exact date filtering.
-                - A tuple of two `pendulum.Date` values for date range filtering.
-                - None, if no date filter is applied.
+                file to check.
+            date_filter_parsed (pendulum.Date | tuple[pendulum.Date, pendulum.Date] | None):
+                The parsed date filter - either a single date, date range tuple, or None.
+                If None, the file will not match any date filter.
 
         Returns:
             bool: True if the file_modification_date matches the filter or if no filter
                 is applied. False otherwise.
-        """
+        """  # noqa: W505
         if date_filter_parsed is None:
             return True
 
@@ -540,7 +636,7 @@ class SMBItem:
         return True
 
 
-def _download_file_from_smb(
+def download_file_from_smb(
     server: str,
     share: str,
     remote_path: str,
@@ -596,23 +692,28 @@ def _download_file_from_smb(
     Path(local_path).mkdir(parents=True, exist_ok=True)
     full_local_path = _get_unique_local_path(local_path.rstrip("/"), filename)
 
-    unc_remote_path = _to_unc_path(server=server, share=share, relative_path=remote_path)
+    unc_remote_path = _to_unc_path(
+        server=server, share=share, relative_path=remote_path
+    )
 
     # Do the transfer in a thread to enforce a hard timeout without relying on CLIs.
     result_container: dict[str, str] = {}
     exception_container: dict[str, Exception] = {}
 
     def run_download() -> None:
+        """Run the download operation in a separate thread with error handling."""
         try:
-            with smbclient.open_file(unc_remote_path, mode="rb") as remote_file:
-                with Path(full_local_path).open("wb") as local_file:
-                    while True:
-                        chunk = remote_file.read(1024 * 1024)
-                        if not chunk:
-                            break
-                        local_file.write(chunk)
+            with (
+                smbclient.open_file(unc_remote_path, mode="rb") as remote_file,
+                Path(full_local_path).open("wb") as local_file,
+            ):
+                while True:
+                    chunk = remote_file.read(1024 * 1024)
+                    if not chunk:
+                        break
+                    local_file.write(chunk)
             result_container["path"] = full_local_path
-        except Exception as e:  # noqa: BLE001
+        except Exception as e:
             exception_container["error"] = e
 
     download_thread = threading.Thread(target=run_download, daemon=True)
@@ -637,54 +738,6 @@ def _download_file_from_smb(
     return result_container["path"]
 
 
-def download_file_from_smb_with_retry(
-    server: str,
-    share: str,
-    remote_path: str,
-    username: str,
-    password: str,
-    local_path: str = "/tmp/smb_files",  # noqa: S108
-    timeout: int = 900,
-    prefix_levels_to_add: int = 0,
-) -> str | None:
-    """Download a file from SMB server.
-
-    Args:
-        server (str): SMB server address.
-        share (str): SMB share name.
-        remote_path (str): Path to the file on SMB server (relative to share root).
-        username (str): SMB username.
-        password (str): SMB password.
-        local_path (str): Local directory to save the file.
-            Defaults to "/tmp/smb_files".
-        timeout (int): Timeout in seconds for the SMB operation. Defaults to 900.
-        prefix_levels_to_add (int): Number of parent folder levels (from the remote
-            path) to prepend as an underscore-separated prefix to the local filename.
-            Passed through to `_download_file_from_smb`. Defaults to 0 (no prefix).
-
-    Returns:
-        str | None: Full local path to the downloaded file, or None if file was
-        skipped due to invalid filename.
-
-    Raises:
-        SMBFileOperationError: If the download fails.
-    """
-    try:
-        return _download_file_from_smb(
-            server=server,
-            share=share,
-            remote_path=remote_path,
-            username=username,
-            password=password,
-            local_path=local_path,
-            timeout=timeout,
-            prefix_levels_to_add=prefix_levels_to_add,
-        )
-    except SMBInvalidFilenameError:
-        logger.warning(f"Skipping file with invalid filename: {remote_path}")
-        return None
-
-
 def _stream_file_from_smb_to_s3(  # noqa: C901, PLR0912, PLR0915
     server: str,
     share: str,
@@ -693,8 +746,8 @@ def _stream_file_from_smb_to_s3(  # noqa: C901, PLR0912, PLR0915
     smb_username: str,
     smb_password: str,
     aws_credentials: dict[str, Any] | None = None,
-    timeout: int = 900,
     prefix_levels_to_add: int = 0,
+    organize_by_year: bool = False,
 ) -> str:
     """Stream a file directly from SMB server to S3 bucket without saving to disk.
 
@@ -711,11 +764,14 @@ def _stream_file_from_smb_to_s3(  # noqa: C901, PLR0912, PLR0915
         smb_password (str): SMB password.
         aws_credentials (dict[str, Any] | None): Optional AWS credential mapping
             used to configure the boto3 S3 client.
-        timeout (int): Timeout in seconds for the streaming operation. Defaults to 900.
         prefix_levels_to_add (int): Number of parent folder levels (from the remote
             path) to prepend as an underscore-separated prefix to the S3 filename.
             Example: for remote path "2025/02/file.xlsx" and levels=2, S3 file name
             will be "2025_02_file.xlsx". Defaults to 0 (no prefix).
+        organize_by_year (bool): If True and a year (1900-2099) is found in the
+            remote_path, organize the file in S3 under a folder named after the year.
+            Example: for remote path "2024/data/file.xlsx", S3 key will be
+            "prefix/2024/file.xlsx" instead of "prefix/file.xlsx". Defaults to False.
 
     Returns:
         str: The S3 path where the file was uploaded.
@@ -752,14 +808,28 @@ def _stream_file_from_smb_to_s3(  # noqa: C901, PLR0912, PLR0915
 
     s3_bucket = parsed_s3.netloc
     s3_base_path = parsed_s3.path.lstrip("/")
-    s3_key = f"{s3_base_path.rstrip('/')}/{filename}" if s3_base_path else filename
+
+    # Optionally organize by year if found in path
+    year_folder = ""
+    if organize_by_year:
+        year = _extract_year_from_path(remote_path)
+        if year:
+            year_folder = f"{year}/"
+
+    s3_key = (
+        f"{s3_base_path.rstrip('/')}/{year_folder}{filename}"
+        if s3_base_path
+        else f"{year_folder}{filename}"
+    )
     s3_full_path = f"s3://{s3_bucket}/{s3_key}"
 
     client_kwargs: dict[str, Any] = {}
     if aws_credentials.get("aws_access_key_id"):
         client_kwargs["aws_access_key_id"] = aws_credentials["aws_access_key_id"]
     if aws_credentials.get("aws_secret_access_key"):
-        client_kwargs["aws_secret_access_key"] = aws_credentials["aws_secret_access_key"]
+        client_kwargs["aws_secret_access_key"] = aws_credentials[
+            "aws_secret_access_key"
+        ]
     if aws_credentials.get("aws_session_token"):
         client_kwargs["aws_session_token"] = aws_credentials["aws_session_token"]
     if aws_credentials.get("region_name"):
@@ -771,7 +841,9 @@ def _stream_file_from_smb_to_s3(  # noqa: C901, PLR0912, PLR0915
 
     s3_client = boto3.client("s3", **client_kwargs)
 
-    unc_remote_path = _to_unc_path(server=server, share=share, relative_path=remote_path)
+    unc_remote_path = _to_unc_path(
+        server=server, share=share, relative_path=remote_path
+    )
 
     try:
         with smbclient.open_file(unc_remote_path, mode="rb") as remote_file:
@@ -790,7 +862,7 @@ def _stream_file_from_smb_to_s3(  # noqa: C901, PLR0912, PLR0915
             )
         logger.exception(error_msg)
         raise SMBFileOperationError(error_msg) from e
-    except Exception as e:  # noqa: BLE001
+    except Exception as e:
         error_msg = f"Unexpected error during SMB to S3 streaming: {e}"
         logger.exception(error_msg)
         raise SMBFileOperationError(error_msg) from e
@@ -799,62 +871,7 @@ def _stream_file_from_smb_to_s3(  # noqa: C901, PLR0912, PLR0915
     return s3_full_path
 
 
-def _stream_file_from_smb_to_s3_with_retry(  # noqa: PLR0913
-    server: str,
-    share: str,
-    remote_path: str,
-    s3_path: str,
-    smb_username: str,
-    smb_password: str,
-    aws_credentials: dict[str, Any] | None = None,
-    timeout: int = 900,
-    prefix_levels_to_add: int = 0,
-) -> str | None:
-    """Stream a file directly from SMB server to S3 bucket.
-
-    Uses `_stream_file_from_smb_to_s3` (pure Python via `smbclient` + `boto3`).
-
-    Args:
-        server (str): SMB server address.
-        share (str): SMB share name.
-        remote_path (str): Path to the file on SMB server (relative to share root).
-        s3_path (str): Full S3 path where the file will be uploaded
-            (e.g., "s3://bucket/path/"). The filename will be appended automatically,
-            optionally with prefix.
-        smb_username (str): SMB username.
-        smb_password (str): SMB password.
-        aws_credentials (dict[str, Any] | None): Optional AWS credential mapping
-            used to configure the boto3 S3 client.
-        timeout (int): Timeout in seconds for the streaming operation. Defaults to 900.
-        prefix_levels_to_add (int): Number of parent folder levels (from the remote
-            path) to prepend as an underscore-separated prefix to the S3 filename.
-            Passed through to `_stream_file_from_smb_to_s3`. Defaults to 0 (no prefix).
-
-    Returns:
-        str | None: The S3 path where the file was uploaded, or None if file was
-        skipped due to invalid filename.
-
-    Raises:
-        SMBFileOperationError: If the streaming operation fails.
-    """
-    try:
-        return _stream_file_from_smb_to_s3(
-            server=server,
-            share=share,
-            remote_path=remote_path,
-            s3_path=s3_path,
-            smb_username=smb_username,
-            smb_password=smb_password,
-            aws_credentials=aws_credentials,
-            timeout=timeout,
-            prefix_levels_to_add=prefix_levels_to_add,
-        )
-    except SMBInvalidFilenameError:
-        logger.warning(f"Skipping file with invalid filename: {remote_path}")
-        return None
-
-
-def stream_smb_files_to_s3(  # noqa: PLR0913
+def stream_smb_files_to_s3(
     smb_file_paths: list[str],
     smb_server: str,
     smb_share: str,
@@ -862,13 +879,14 @@ def stream_smb_files_to_s3(  # noqa: PLR0913
     smb_username: str,
     smb_password: str,
     aws_credentials: dict[str, Any] | None = None,
-    timeout: int = 900,
     prefix_levels_to_add: int = 0,
+    organize_by_year: bool = False,
 ) -> list[str]:
     """Stream multiple files directly from SMB server to S3 bucket.
 
-    This function streams files from SMB to S3 without saving them to local disk,
-    which is more efficient for large files and reduces disk I/O.
+    Streams files from SMB to S3 without saving them to local disk first,
+    which is more efficient for large files and reduces disk I/O. Files with
+    problematic characters in their names will be skipped.
 
     Args:
         smb_file_paths (list[str]): List of SMB file paths to stream
@@ -881,23 +899,34 @@ def stream_smb_files_to_s3(  # noqa: PLR0913
         smb_username (str): SMB username.
         smb_password (str): SMB password.
         aws_credentials (dict[str, Any] | None): Optional AWS credential mapping
-            used by the AWS CLI.
-        timeout (int): Timeout in seconds for each streaming operation.
-            Defaults to 900.
+            used by the AWS CLI. Must include `aws_access_key_id` and
+            `aws_secret_access_key`. Can also include `aws_session_token`,
+            `region_name`, and `endpoint_url`.
         prefix_levels_to_add (int): Number of parent folder levels
             (from the remote SMB path) to prepend as an underscore-separated
             prefix to the S3 filename. Example: for path "2025/02/file.xlsx"
             and levels=2, filename will be "2025_02_file.xlsx".
             Defaults to 0 (no prefix).
+        organize_by_year (bool): If True and a year (1900-2099) is found in the
+            remote_path, organize the file in S3 under a folder named after the year.
+            Example: for remote path "2024/data/file.xlsx", S3 key will be
+            "prefix/2024/file.xlsx" instead of "prefix/file.xlsx". Defaults to False.
 
     Returns:
         list[str]: List of S3 paths where files were successfully uploaded.
+            Files that were skipped (e.g., due to invalid filenames) are
+            not included in this list.
+
+    Raises:
+        SMBConnectionError: If SMB connection fails.
+        SMBFileOperationError: If S3 upload fails.
+        SMBInvalidFilenameError: If filename contains problematic characters.
     """
     s3_paths: list[str] = []
 
     for smb_file_path in smb_file_paths:
         try:
-            s3_path_result = _stream_file_from_smb_to_s3_with_retry(
+            s3_path_result = _stream_file_from_smb_to_s3(
                 server=smb_server,
                 share=smb_share,
                 remote_path=smb_file_path,
@@ -905,11 +934,13 @@ def stream_smb_files_to_s3(  # noqa: PLR0913
                 smb_username=smb_username,
                 smb_password=smb_password,
                 aws_credentials=aws_credentials,
-                timeout=timeout,
                 prefix_levels_to_add=prefix_levels_to_add,
+                organize_by_year=organize_by_year,
             )
-            if s3_path_result is not None:
-                s3_paths.append(s3_path_result)
+            s3_paths.append(s3_path_result)
+        except SMBInvalidFilenameError:
+            logger.warning(f"Skipping file with invalid filename: {smb_file_path}")
+            continue
         except Exception as e:
             logger.warning(
                 f"Failed to stream {smb_file_path} to S3: {e}. Skipping file."
@@ -919,7 +950,146 @@ def stream_smb_files_to_s3(  # noqa: PLR0913
     return s3_paths
 
 
-def get_hybrid_listing_with_fallback(  # noqa: C901
+def _expand_directories_recursively(
+    items: list[SMBItem],
+    server: str,
+    share: str,
+    username: str,
+    password: str,
+    timeout_per_level: int,
+    max_depth: int,
+    current_depth: int = 0,
+) -> None:
+    """Recursively expand directories marked with needs_expansion=True.
+
+    This function processes all items in the list, and for directories that need
+    expansion, recursively lists their contents and marks them as expanded.
+
+    Args:
+        items (list[SMBItem]): List of items to process (modified in-place).
+        server (str): SMB server address.
+        share (str): SMB share name.
+        username (str): SMB username.
+        password (str): SMB password.
+        timeout_per_level (int): Timeout in seconds for each expansion level.
+        max_depth (int): Maximum recursion depth to prevent infinite loops.
+        current_depth (int): Current recursion depth.
+    """
+    if current_depth >= max_depth:
+        logger.warning(f"Max expansion depth ({max_depth}) reached, stopping recursion")
+        return
+
+    for item in items:
+        if item.type == SMBItemType.DIRECTORY and item.needs_expansion:
+            try:
+                logger.debug(
+                    f"Expanding directory: {item.path} (depth {current_depth})"
+                )
+
+                # Get contents of this directory using shallow listing only
+                sub_items = _get_shallow_listing(
+                    server=server,
+                    share=share,
+                    directory=item.path,
+                    username=username,
+                    password=password,
+                )
+
+                # Set children and mark as expanded
+                item.children = sub_items
+                item.needs_expansion = False
+
+                # Recursively expand subdirectories
+                _expand_directories_recursively(
+                    items=sub_items,
+                    server=server,
+                    share=share,
+                    username=username,
+                    password=password,
+                    timeout_per_level=timeout_per_level,
+                    max_depth=max_depth,
+                    current_depth=current_depth + 1,
+                )
+
+            except Exception as e:
+                logger.warning(f"Failed to expand directory {item.path}: {e}")
+                # Leave needs_expansion=True so caller knows it failed
+                continue
+
+
+def _get_shallow_listing(
+    server: str,
+    share: str,
+    directory: str,
+    username: str,
+    password: str,
+) -> list[SMBItem]:
+    """Get shallow (single-level) SMB directory listing.
+
+    Lists only the immediate contents of a directory without recursing into
+    subdirectories.
+    Directories are marked with needs_expansion=True for later recursive processing.
+
+    Args:
+        server (str): SMB server hostname or IP address.
+        share (str): SMB share name.
+        directory (str): Directory to list (relative to share root).
+        username (str): SMB username.
+        password (str): SMB password.
+
+    Returns:
+        list[SMBItem]: List of SMBItem objects for immediate directory contents.
+        Directories have needs_expansion=True.
+
+    Raises:
+        SMBConnectionError: If SMB connection or listing fails.
+    """
+    _ensure_smb_session(server=server, username=username, password=password)
+
+    dir_rel = (directory or "").strip("/").strip("\\")
+    unc_dir = _to_unc_path(server=server, share=share, relative_path=dir_rel)
+    items: list[SMBItem] = []
+
+    try:
+        entries = smbclient.scandir(unc_dir)
+    except Exception as e:
+        msg = f"Failed to list SMB directory: {dir_rel or ''} ({server}/{share}): {e}"
+        raise SMBConnectionError(msg) from e
+
+    for entry in entries:
+        name = entry.name
+        if name in (".", ".."):
+            continue
+
+        rel_path = _to_rel_path(dir_rel, name)
+
+        try:
+            st = entry.stat()
+            date_modified = datetime.fromtimestamp(st.st_mtime) if st else None
+            size = int(st.st_size) if st else None
+        except Exception:
+            date_modified = None
+            size = None
+
+        item_type = SMBItemType.DIRECTORY if entry.is_dir() else SMBItemType.FILE
+        needs_expansion = item_type == SMBItemType.DIRECTORY  # Mark dirs for expansion
+
+        smb_item = SMBItem(
+            name=name,
+            item_type=item_type,
+            path=rel_path,
+            date_modified=date_modified,
+            size=size,
+            children=[],  # Empty for shallow listing
+            needs_expansion=needs_expansion,
+        )
+
+        items.append(smb_item)
+
+    return items
+
+
+def get_hybrid_listing_with_fallback(  # noqa: C901, PLR0915
     server: str,
     share: str,
     start_directory: str,
@@ -927,11 +1097,36 @@ def get_hybrid_listing_with_fallback(  # noqa: C901
     password: str,
     recursive_timeout: int = 300,
 ) -> list[SMBItem]:
-    """Get SMB listing using a pure-Python approach (no external CLIs).
+    """Get SMB directory listing using a pure-Python approach with automatic fallback.
+
+    Builds a tree structure of SMBItem objects by recursively traversing directories
+    using `smbclient.scandir`. Uses threading with timeout to prevent hanging on
+    large or problematic directories. If recursive listing fails or times out,
+    automatically falls back to shallow listing (single level) with subsequent
+    recursive expansion of all directories to ensure complete results.
+
+    Args:
+        server (str): SMB server hostname or IP address.
+        share (str): SMB share name.
+        start_directory (str): Starting directory relative to share root.
+        username (str): SMB username.
+        password (str): SMB password.
+        recursive_timeout (int): Timeout in seconds for the entire operation.
+            Defaults to 300.
+
+    Returns:
+        list[SMBItem]: List of top-level SMBItem objects representing the complete
+        directory structure. Each SMBItem contains children for subdirectories.
+        The tree is always complete thanks to automatic fallback and expansion.
+
+    Raises:
+        SMBConnectionError: If SMB connection fails completely.
 
     Notes:
-    - The original implementation used an smbclient CLI "recurse; ls" approach.
-      Here we build the tree using `smbclient.scandir` recursively.
+        - The original implementation used an smbclient CLI "recurse; ls" approach.
+          This version uses pure Python libraries for better reliability.
+        - Uses threading with timeout to prevent hanging on problematic directories.
+        - Automatic fallback ensures complete results even for large directory trees.
     """
     logger.info(f"Starting SMB listing from {start_directory}")
 
@@ -943,13 +1138,24 @@ def get_hybrid_listing_with_fallback(  # noqa: C901
     start_rel = (start_directory or "").strip("/").strip("\\")
 
     def build_tree(dir_rel: str) -> list[SMBItem]:
+        """Recursively build a tree of SMBItem objects for the given directory.
+
+        Args:
+            dir_rel (str): Relative path to the directory to process.
+
+        Returns:
+            list[SMBItem]: List of items in the directory with children populated
+            recursively.
+        """
         unc_dir = _to_unc_path(server=server, share=share, relative_path=dir_rel)
         items: list[SMBItem] = []
 
         try:
             entries = smbclient.scandir(unc_dir)
-        except Exception as e:  # noqa: BLE001
-            msg = f"Failed to list SMB directory: {dir_rel or ''} ({server}/{share}): {e}"
+        except Exception as e:
+            msg = (
+                f"Failed to list SMB directory: {dir_rel or ''} ({server}/{share}): {e}"
+            )
             raise SMBConnectionError(msg) from e
 
         for entry in entries:
@@ -963,7 +1169,7 @@ def get_hybrid_listing_with_fallback(  # noqa: C901
                 st = entry.stat()
                 date_modified = datetime.fromtimestamp(st.st_mtime) if st else None
                 size = int(st.st_size) if st else None
-            except Exception:  # noqa: BLE001
+            except Exception:
                 date_modified = None
                 size = None
 
@@ -985,15 +1191,74 @@ def get_hybrid_listing_with_fallback(  # noqa: C901
         return items
 
     def run_listing() -> None:
+        """Run the directory listing operation with error handling."""
         try:
             result_container["items"] = build_tree(start_rel)
-        except Exception as e:  # noqa: BLE001
+        except Exception as e:
             exception_container["error"] = e
 
     listing_thread = threading.Thread(target=run_listing, daemon=True)
     listing_thread.start()
     listing_thread.join(timeout=recursive_timeout)
 
+    # Check if recursive listing completed successfully
+    if not listing_thread.is_alive() and "error" not in exception_container:
+        # Recursive listing succeeded
+        return result_container.get("items", [])
+
+    # Recursive listing failed or timed out - always try fallback
+    if listing_thread.is_alive():
+        logger.warning(
+            f"SMB recursive listing timed out after {recursive_timeout}s, "
+            f"falling back to shallow listing with expansion "
+            f"(server={server}, share={share}, start_directory={start_directory})"
+        )
+    else:
+        logger.warning(
+            f"SMB recursive listing failed, falling back to shallow listing with expansion "
+            f"(server={server}, share={share}, start_directory={start_directory})"
+        )
+
+    # Force terminate the recursive thread (daemon threads terminate automatically)
+    # Do shallow listing first, then expand directories recursively
+    try:
+        shallow_items = _get_shallow_listing(
+            server=server,
+            share=share,
+            directory=start_directory,
+            username=username,
+            password=password,
+        )
+        logger.info(
+            f"Shallow listing completed with {len(shallow_items)} items, expanding directories..."
+        )
+
+        # Recursively expand directories with same timeout per level
+        expansion_timeout = recursive_timeout  # Same timeout for expansion
+        _expand_directories_recursively(
+            items=shallow_items,
+            server=server,
+            share=share,
+            username=username,
+            password=password,
+            timeout_per_level=expansion_timeout,
+            max_depth=10,  # Prevent infinite recursion
+        )
+
+        total_files = sum(1 for item in shallow_items if item.type == SMBItemType.FILE)
+        total_dirs = sum(
+            1 for item in shallow_items if item.type == SMBItemType.DIRECTORY
+        )
+        logger.info(
+            f"Fallback listing completed: {total_files} files in {total_dirs} directories"
+        )
+        return shallow_items
+
+    except Exception:
+        logger.exception("Fallback listing also failed")
+        # Continue to error handling below
+
+    # Handle errors or failed fallback
     if listing_thread.is_alive():
         msg = (
             f"SMB directory listing timed out after {recursive_timeout}s "
@@ -1017,7 +1282,7 @@ class SMBClientWrapper(Source):
     it only wraps the existing helper functions:
 
     - `get_hybrid_listing_with_fallback` - directory listing,
-    - `download_file_from_smb_with_retry` - downloading a file to local disk,
+    - `download_file_from_smb` - downloading a file to local disk,
     - `stream_smb_files_to_s3` - streaming files directly to S3.
     """
 
@@ -1040,6 +1305,8 @@ class SMBClientWrapper(Source):
             config_key (str | None): Optional key in viadot config. If provided and
                 `smb_credentials` is None, SMB creds will be read from config
                 (`username` and `password` fields).
+            *args: Additional positional arguments passed to the parent Source class.
+            **kwargs: Additional keyword arguments passed to the parent Source class.
         """
         raw_creds = smb_credentials or get_source_credentials(config_key) or {}
 
@@ -1114,24 +1381,28 @@ class SMBClientWrapper(Source):
         Raises:
             SMBFileOperationError: If the download fails.
         """
-        return download_file_from_smb_with_retry(
-            server=self.server,
-            share=self.share,
-            remote_path=remote_path,
-            username=self.credentials.get("username"),
-            password=self.credentials.get("password").get_secret_value(),
-            local_path=local_path,
-            timeout=timeout,
-            prefix_levels_to_add=prefix_levels_to_add,
-        )
+        try:
+            return download_file_from_smb(
+                server=self.server,
+                share=self.share,
+                remote_path=remote_path,
+                username=self.credentials.get("username"),
+                password=self.credentials.get("password").get_secret_value(),
+                local_path=local_path,
+                timeout=timeout,
+                prefix_levels_to_add=prefix_levels_to_add,
+            )
+        except SMBInvalidFilenameError:
+            logger.warning(f"Skipping file with invalid filename: {remote_path}")
+            return None
 
     def stream_files_to_s3(
         self,
         smb_file_paths: list[str],
         s3_path: str,
         aws_credentials: dict[str, Any],
-        timeout: int = 900,
         prefix_levels_to_add: int = 0,
+        organize_by_year: bool = False,
     ) -> list[str]:
         """Stream multiple files from SMB directly to S3.
 
@@ -1148,12 +1419,16 @@ class SMBClientWrapper(Source):
                 used by the AWS CLI. Must include `aws_access_key_id` and
                 `aws_secret_access_key`. Can also include `aws_session_token`,
                 `region_name`, and `endpoint_url`.
-            timeout (int): Timeout in seconds for a single streaming operation.
-                Defaults to 900.
             prefix_levels_to_add (int): Number of parent directory levels to
                 prepend as an underscore-separated prefix to the S3 object name.
                 Example: for remote path "2025/02/file.xlsx" and levels=2,
                 S3 object name will be "2025_02_file.xlsx". Defaults to 0.
+            organize_by_year (bool): If True and a year (1900-2099) is found in the
+                remote_path, organize the file in S3 under a folder named after
+                the year.
+                Example: for remote path "2024/data/file.xlsx", S3 key will be
+                "prefix/2024/file.xlsx" instead of "prefix/file.xlsx".
+                Defaults to False.
 
         Returns:
             list[str]: List of S3 paths where files were successfully uploaded.
@@ -1187,51 +1462,6 @@ class SMBClientWrapper(Source):
             smb_username=self.credentials.get("username"),
             smb_password=self.credentials.get("password").get_secret_value(),
             aws_credentials=aws_credentials,
-            timeout=timeout,
             prefix_levels_to_add=prefix_levels_to_add,
+            organize_by_year=organize_by_year,
         )
-
-if __name__ == "__main__":
-    import os
-
-    logger.setLevel(logging.INFO)
-
-    smb_wrapper = SMBClientWrapper(
-        server="192.5.1.161",
-        share="coagqc",
-        smb_credentials=SMBCredentials(
-            username="danalytics@werfen.com",
-            password="245kB4dc",  # noqa: S105
-        ),
-    )
-
-    # List directory
-    directory = "data for production lots/global/HemosIL Low Abn 2 (Assay Lite) 20014000"
-    logger.info(f"Listing directory: {directory}")
-    items = smb_wrapper.list_directory(
-        directory=directory,
-    )
-
-    logger.info(f"Found {len(items)} top-level item(s)")
-
-    # Example: Filter files and get matching paths
-    root = SMBItem(
-        name="ROOT",
-        item_type=SMBItemType.DIRECTORY,
-        path=directory,
-        children=items,
-    )
-
-    matches = root.get_matching_file_paths_in_range(
-        filepath_regex=[
-            r"(?i)^(?!.*(bulk|elite|classic|%|depleted|unit|futura|electra|advance|tubes)).*(?:N\d{7}|VA|Final|Vial|appearance)[^/\\]*$"
-        ],
-        extensions=[".xls", ".xlsx"],
-        exclude_directories=True,
-    )
-
-    logger.info(f"Matched {len(matches)} file(s) after filtering")
-    for match in matches[:10]:  # Show first 10
-        logger.info(f"  {match}")
-    if len(matches) > 10:
-        logger.info(f"  ... and {len(matches) - 10} more")
