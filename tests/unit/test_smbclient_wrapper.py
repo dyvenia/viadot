@@ -138,7 +138,7 @@ def test_list_directory_success(smb_wrapper_instance):
     ]
 
     with patch(
-        "viadot.sources.smbclient_wrapper.get_hybrid_listing_with_fallback",
+        "viadot.sources.smbclient_wrapper.get_listing_with_shallow_first",
         return_value=mock_items,
     ) as mock_listing:
         result = smb_wrapper_instance.list_directory(directory="test_dir")
@@ -158,7 +158,7 @@ def test_list_directory_with_custom_timeout(smb_wrapper_instance):
     mock_items = [SMBItem(name="file.txt", item_type=SMBItemType.FILE, path="file.txt")]
 
     with patch(
-        "viadot.sources.smbclient_wrapper.get_hybrid_listing_with_fallback",
+        "viadot.sources.smbclient_wrapper.get_listing_with_shallow_first",
         return_value=mock_items,
     ) as mock_listing:
         result = smb_wrapper_instance.list_directory(

@@ -39,6 +39,7 @@ from viadot.sources.smb import SMBCredentials
 
 
 logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
 
 
 def _ensure_smb_session(server: str, username: str, password: str) -> None:
@@ -950,73 +951,6 @@ def stream_smb_files_to_s3(
     return s3_paths
 
 
-def _expand_directories_recursively(
-    items: list[SMBItem],
-    server: str,
-    share: str,
-    username: str,
-    password: str,
-    timeout_per_level: int,
-    max_depth: int,
-    current_depth: int = 0,
-) -> None:
-    """Recursively expand directories marked with needs_expansion=True.
-
-    This function processes all items in the list, and for directories that need
-    expansion, recursively lists their contents and marks them as expanded.
-
-    Args:
-        items (list[SMBItem]): List of items to process (modified in-place).
-        server (str): SMB server address.
-        share (str): SMB share name.
-        username (str): SMB username.
-        password (str): SMB password.
-        timeout_per_level (int): Timeout in seconds for each expansion level.
-        max_depth (int): Maximum recursion depth to prevent infinite loops.
-        current_depth (int): Current recursion depth.
-    """
-    if current_depth >= max_depth:
-        logger.warning(f"Max expansion depth ({max_depth}) reached, stopping recursion")
-        return
-
-    for item in items:
-        if item.type == SMBItemType.DIRECTORY and item.needs_expansion:
-            try:
-                logger.debug(
-                    f"Expanding directory: {item.path} (depth {current_depth})"
-                )
-
-                # Get contents of this directory using shallow listing only
-                sub_items = _get_shallow_listing(
-                    server=server,
-                    share=share,
-                    directory=item.path,
-                    username=username,
-                    password=password,
-                )
-
-                # Set children and mark as expanded
-                item.children = sub_items
-                item.needs_expansion = False
-
-                # Recursively expand subdirectories
-                _expand_directories_recursively(
-                    items=sub_items,
-                    server=server,
-                    share=share,
-                    username=username,
-                    password=password,
-                    timeout_per_level=timeout_per_level,
-                    max_depth=max_depth,
-                    current_depth=current_depth + 1,
-                )
-
-            except Exception as e:
-                logger.warning(f"Failed to expand directory {item.path}: {e}")
-                # Leave needs_expansion=True so caller knows it failed
-                continue
-
-
 def _get_shallow_listing(
     server: str,
     share: str,
@@ -1087,6 +1021,78 @@ def _get_shallow_listing(
         items.append(smb_item)
 
     return items
+
+
+def get_listing_with_shallow_first(
+    server: str,
+    share: str,
+    start_directory: str,
+    username: str,
+    password: str,
+    recursive_timeout: int = 300,
+) -> list[SMBItem]:
+    """Get SMB directory listing starting with shallow listing, then expanding.
+
+    Always starts with shallow listing at root level, then uses hybrid fallback
+    strategy for each subdirectory found.
+
+    Args:
+        server (str): SMB server hostname or IP address.
+        share (str): SMB share name.
+        start_directory (str): Starting directory relative to share root.
+        username (str): SMB username.
+        password (str): SMB password.
+        recursive_timeout (int): Timeout in seconds for subdirectory operations.
+            Defaults to 300.
+
+    Returns:
+        list[SMBItem]: List of top-level SMBItem objects with expanded subdirectories.
+    """
+    logger.info(f"Starting shallow-first SMB listing from {start_directory}")
+
+    _ensure_smb_session(server=server, username=username, password=password)
+
+    try:
+        root_items = _get_shallow_listing(
+            server=server,
+            share=share,
+            directory=start_directory,
+            username=username,
+            password=password,
+        )
+        logger.info(f"Root shallow listing completed with {len(root_items)} items")
+
+        # For each directory found at root level, try hybrid listing
+        for item in root_items:
+            if item.type == SMBItemType.DIRECTORY:
+                try:
+                    logger.debug(f"Trying hybrid listing for subdirectory: {item.path}")
+                    sub_items = get_hybrid_listing_with_fallback(
+                        server=server,
+                        share=share,
+                        start_directory=item.path,
+                        username=username,
+                        password=password,
+                        recursive_timeout=recursive_timeout,
+                    )
+                    item.children = sub_items
+                    item.needs_expansion = False
+                    logger.debug(
+                        f"Successfully expanded directory: {item.path} with {len(sub_items)} items"
+                    )
+                except Exception as e:
+                    logger.warning(
+                        f"Failed to expand directory {item.path} with hybrid listing: {e}"
+                    )
+                    item.needs_expansion = True
+                    continue
+
+        logger.info(f"Shallow-first listing completed for {start_directory}")
+        return root_items
+
+    except Exception as e:
+        logger.warning(f"Root shallow listing failed: {e}, returning empty list")
+        return []
 
 
 def get_hybrid_listing_with_fallback(  # noqa: C901, PLR0915
@@ -1201,9 +1207,7 @@ def get_hybrid_listing_with_fallback(  # noqa: C901, PLR0915
     listing_thread.start()
     listing_thread.join(timeout=recursive_timeout)
 
-    # Check if recursive listing completed successfully
     if not listing_thread.is_alive() and "error" not in exception_container:
-        # Recursive listing succeeded
         return result_container.get("items", [])
 
     # Recursive listing failed or timed out - always try fallback
@@ -1220,7 +1224,7 @@ def get_hybrid_listing_with_fallback(  # noqa: C901, PLR0915
         )
 
     # Force terminate the recursive thread (daemon threads terminate automatically)
-    # Do shallow listing first, then expand directories recursively
+    # Do shallow listing first, then try hybrid listing for each subdirectory
     try:
         shallow_items = _get_shallow_listing(
             server=server,
@@ -1230,35 +1234,40 @@ def get_hybrid_listing_with_fallback(  # noqa: C901, PLR0915
             password=password,
         )
         logger.info(
-            f"Shallow listing completed with {len(shallow_items)} items, expanding directories..."
+            f"Shallow listing completed with {len(shallow_items)} items, expanding directories with hybrid listing..."
         )
 
-        # Recursively expand directories with same timeout per level
-        expansion_timeout = recursive_timeout  # Same timeout for expansion
-        _expand_directories_recursively(
-            items=shallow_items,
-            server=server,
-            share=share,
-            username=username,
-            password=password,
-            timeout_per_level=expansion_timeout,
-            max_depth=10,  # Prevent infinite recursion
-        )
+        # For each directory found in shallow listing, try hybrid listing
+        for item in shallow_items:
+            if item.type == SMBItemType.DIRECTORY:
+                try:
+                    logger.debug(f"Trying hybrid listing for subdirectory: {item.path}")
+                    sub_items = get_hybrid_listing_with_fallback(
+                        server=server,
+                        share=share,
+                        start_directory=item.path,
+                        username=username,
+                        password=password,
+                        recursive_timeout=recursive_timeout,  # Same timeout for subdirectories
+                    )
+                    item.children = sub_items
+                    item.needs_expansion = False
+                    logger.debug(
+                        f"Successfully expanded directory: {item.path} with {len(sub_items)} items"
+                    )
+                except Exception as e:
+                    logger.warning(
+                        f"Failed to expand directory {item.path} with hybrid listing: {e}"
+                    )
+                    item.needs_expansion = True
+                    continue
 
-        total_files = sum(1 for item in shallow_items if item.type == SMBItemType.FILE)
-        total_dirs = sum(
-            1 for item in shallow_items if item.type == SMBItemType.DIRECTORY
-        )
-        logger.info(
-            f"Fallback listing completed: {total_files} files in {total_dirs} directories"
-        )
+        logger.info(f"Fallback listing completed for {start_directory}")
         return shallow_items
 
     except Exception:
         logger.exception("Fallback listing also failed")
-        # Continue to error handling below
 
-    # Handle errors or failed fallback
     if listing_thread.is_alive():
         msg = (
             f"SMB directory listing timed out after {recursive_timeout}s "
@@ -1343,7 +1352,7 @@ class SMBClientWrapper(Source):
                 structure. Items are organized in a tree structure with
                 directories containing their children in the `children` attribute.
         """
-        return get_hybrid_listing_with_fallback(
+        return get_listing_with_shallow_first(
             server=self.server,
             share=self.share,
             start_directory=directory,
