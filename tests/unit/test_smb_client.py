@@ -2,7 +2,7 @@
 
 from datetime import datetime
 from pathlib import Path
-from unittest.mock import Mock, patch
+from unittest.mock import patch
 
 import pendulum
 from pydantic import SecretStr
@@ -10,11 +10,9 @@ import pytest
 
 from viadot.exceptions import (
     CredentialError,
-    SMBConnectionError,
-    SMBFileOperationError,
 )
-from viadot.sources.smbclient_wrapper import (
-    SMBClientWrapper,
+from viadot.sources.smb_client import (
+    SMBClient,
     SMBItem,
     SMBItemType,
     _add_prefix_to_filename,
@@ -40,9 +38,9 @@ def valid_credentials():
 
 
 @pytest.fixture
-def smb_wrapper_instance(valid_credentials):
-    """Create an SMBClientWrapper instance for testing."""
-    return SMBClientWrapper(
+def smb_client_instance(valid_credentials):
+    """Create an SMBClient instance for testing."""
+    return SMBClient(
         server=SERVER,
         share=SHARE,
         smb_credentials=valid_credentials,
@@ -72,56 +70,56 @@ def mock_smb_item_dir():
     )
 
 
-# ==================== SMBClientWrapper.__init__ tests ====================
+# ==================== SMBClient.__init__ tests ====================
 
 
-def test_smb_wrapper_initialization_with_credentials(valid_credentials):
-    """Test SMBClientWrapper initialization with credentials."""
-    wrapper = SMBClientWrapper(
+def test_smb_client_initialization_with_credentials(valid_credentials):
+    """Test SMBClient initialization with credentials."""
+    client = SMBClient(
         server=SERVER,
         share=SHARE,
         smb_credentials=valid_credentials,
     )
-    assert wrapper.server == SERVER
-    assert wrapper.share == SHARE
-    assert wrapper.credentials["username"] == USERNAME
-    assert wrapper.credentials["password"].get_secret_value() == PASSWORD
+    assert client.server == SERVER
+    assert client.share == SHARE
+    assert client.credentials["username"] == USERNAME
+    assert client.credentials["password"].get_secret_value() == PASSWORD
 
 
-def test_smb_wrapper_initialization_with_config_key():
-    """Test SMBClientWrapper initialization with config_key."""
+def test_smb_client_initialization_with_config_key():
+    """Test SMBClient initialization with config_key."""
     mock_creds = {
         "username": USERNAME,
         "password": PASSWORD,
     }
     with patch(
-        "viadot.sources.smbclient_wrapper.get_source_credentials",
+        "viadot.sources.smb_client.get_source_credentials",
         return_value=mock_creds,
     ):
-        wrapper = SMBClientWrapper(
+        client = SMBClient(
             server=SERVER,
             share=SHARE,
             config_key="test_config_key",
         )
-        assert wrapper.server == SERVER
-        assert wrapper.share == SHARE
-        assert wrapper.credentials["username"] == USERNAME
-        assert wrapper.credentials["password"].get_secret_value() == PASSWORD
+        assert client.server == SERVER
+        assert client.share == SHARE
+        assert client.credentials["username"] == USERNAME
+        assert client.credentials["password"].get_secret_value() == PASSWORD
 
 
-def test_smb_wrapper_initialization_without_credentials():
-    """Test SMBClientWrapper initialization fails without credentials."""
+def test_smb_client_initialization_without_credentials():
+    """Test SMBClient initialization fails without credentials."""
     with pytest.raises(
         CredentialError,
         match="`username`, and `password` credentials are required.",
     ):
-        SMBClientWrapper(server=SERVER, share=SHARE)
+        SMBClient(server=SERVER, share=SHARE)
 
 
-# ==================== SMBClientWrapper.list_directory tests ====================
+# ==================== SMBClient.list_directory tests ====================
 
 
-def test_list_directory_success(smb_wrapper_instance):
+def test_list_directory_success(smb_client_instance):
     """Test successful directory listing."""
     mock_items = [
         SMBItem(
@@ -140,10 +138,10 @@ def test_list_directory_success(smb_wrapper_instance):
     ]
 
     with patch(
-        "viadot.sources.smbclient_wrapper.get_hybrid_listing_with_fallback",
+        "viadot.sources.smb_client.get_listing_with_shallow_first",
         return_value=mock_items,
     ) as mock_listing:
-        result = smb_wrapper_instance.list_directory(directory="test_dir")
+        result = smb_client_instance.list_directory(directory="test_dir")
 
         assert len(result) == 2
         assert result[0].name == "file1.txt"
@@ -155,42 +153,40 @@ def test_list_directory_success(smb_wrapper_instance):
         assert call_kwargs["start_directory"] == "test_dir"
 
 
-def test_list_directory_with_skip_root_recursive(smb_wrapper_instance):
-    """Test directory listing with skip_root_recursive option."""
+def test_list_directory_with_custom_timeout(smb_client_instance):
+    """Test directory listing with custom recursive_timeout."""
     mock_items = [SMBItem(name="file.txt", item_type=SMBItemType.FILE, path="file.txt")]
 
     with patch(
-        "viadot.sources.smbclient_wrapper.get_hybrid_listing_with_fallback",
+        "viadot.sources.smb_client.get_listing_with_shallow_first",
         return_value=mock_items,
     ) as mock_listing:
-        result = smb_wrapper_instance.list_directory(
-            directory="", skip_root_recursive=True
-        )
+        result = smb_client_instance.list_directory(directory="", recursive_timeout=600)
 
         assert len(result) == 1
         mock_listing.assert_called_once()
         call_kwargs = mock_listing.call_args.kwargs
-        assert call_kwargs["skip_root_recursive"] is True
+        assert call_kwargs["recursive_timeout"] == 600
 
 
-# ==================== SMBClientWrapper.download_file tests ====================
+# ==================== SMBClient.download_file tests ====================
 
 
-def test_download_file_success(smb_wrapper_instance, tmp_path):
+def test_download_file_success(smb_client_instance, tmp_path):
     """Test successful file download."""
     remote_path = "data/file.txt"
     local_path = str(tmp_path)
     expected_local_file = str(tmp_path / "file.txt")
 
     with patch(
-        "viadot.sources.smbclient_wrapper.download_file_from_smb_with_retry",
-        return_value=expected_local_file,
+        "viadot.sources.smb_client.download_file_from_smb",
+        return_value=[expected_local_file],
     ) as mock_download:
-        result = smb_wrapper_instance.download_file(
+        result = smb_client_instance.download_file(
             remote_path=remote_path, local_path=local_path
         )
 
-        assert result == expected_local_file
+        assert result == [expected_local_file]
         mock_download.assert_called_once()
         call_kwargs = mock_download.call_args.kwargs
         assert call_kwargs["server"] == SERVER
@@ -199,16 +195,16 @@ def test_download_file_success(smb_wrapper_instance, tmp_path):
         assert call_kwargs["local_path"] == local_path
 
 
-def test_download_file_with_prefix_levels(smb_wrapper_instance, tmp_path):
+def test_download_file_with_prefix_levels(smb_client_instance, tmp_path):
     """Test file download with prefix_levels_to_add."""
     remote_path = "2025/02/file.txt"
     local_path = str(tmp_path)
 
     with patch(
-        "viadot.sources.smbclient_wrapper.download_file_from_smb_with_retry",
-        return_value=str(tmp_path / "2025_02_file.txt"),
+        "viadot.sources.smb_client.download_file_from_smb",
+        return_value=[str(tmp_path / "2025_02_file.txt")],
     ) as mock_download:
-        result = smb_wrapper_instance.download_file(
+        result = smb_client_instance.download_file(
             remote_path=remote_path,
             local_path=local_path,
             prefix_levels_to_add=2,
@@ -220,56 +216,52 @@ def test_download_file_with_prefix_levels(smb_wrapper_instance, tmp_path):
         assert call_kwargs["prefix_levels_to_add"] == 2
 
 
-def test_download_file_skipped_invalid_filename(smb_wrapper_instance, tmp_path):
+def test_download_file_skipped_invalid_filename(smb_client_instance, tmp_path):
     """Test file download returns None when filename has problematic chars."""
     remote_path = "data/file;test.txt"
     local_path = str(tmp_path)
 
     with patch(
-        "viadot.sources.smbclient_wrapper._download_file_from_smb"
+        "viadot.sources.smb_client.download_file_from_smb"
     ) as mock_download_inner:
         from viadot.exceptions import SMBInvalidFilenameError
 
-        # _download_file_from_smb raises SMBInvalidFilenameError when invalid
+        # download_file_from_smb raises SMBInvalidFilenameError when invalid
         mock_download_inner.side_effect = SMBInvalidFilenameError(
             "Skipping file with problematic characters in name: file;test.txt"
         )
 
-        # download_file_from_smb_with_retry should catch it and return None
-        result = smb_wrapper_instance.download_file(
+        # SMBClient.download_file should catch it and return None
+        result = smb_client_instance.download_file(
             remote_path=remote_path, local_path=local_path
         )
 
         assert result is None
 
 
-def test_download_file_with_retry_params(smb_wrapper_instance, tmp_path):
-    """Test file download with custom retry parameters."""
+def test_download_file_with_custom_timeout(smb_client_instance, tmp_path):
+    """Test file download with custom timeout."""
     remote_path = "data/file.txt"
     local_path = str(tmp_path)
 
     with patch(
-        "viadot.sources.smbclient_wrapper.download_file_from_smb_with_retry",
-        return_value=str(tmp_path / "file.txt"),
+        "viadot.sources.smb_client.download_file_from_smb",
+        return_value=[str(tmp_path / "file.txt")],
     ) as mock_download:
-        smb_wrapper_instance.download_file(
+        smb_client_instance.download_file(
             remote_path=remote_path,
             local_path=local_path,
             timeout=1800,
-            max_retries=5,
-            base_delay=5.0,
         )
 
         call_kwargs = mock_download.call_args.kwargs
         assert call_kwargs["timeout"] == 1800
-        assert call_kwargs["max_retries"] == 5
-        assert call_kwargs["base_delay"] == 5.0
 
 
-# ==================== SMBClientWrapper.stream_files_to_s3 tests ====================
+# ==================== SMBClient.stream_files_to_s3 tests ====================
 
 
-def test_stream_files_to_s3_success(smb_wrapper_instance):
+def test_stream_files_to_s3_success(smb_client_instance):
     """Test successful streaming of files to S3."""
     smb_file_paths = ["file1.txt", "file2.txt"]
     s3_path = "s3://bucket/path/"
@@ -283,10 +275,10 @@ def test_stream_files_to_s3_success(smb_wrapper_instance):
     ]
 
     with patch(
-        "viadot.sources.smbclient_wrapper.stream_smb_files_to_s3",
+        "viadot.sources.smb_client.stream_smb_files_to_s3",
         return_value=expected_s3_paths,
     ) as mock_stream:
-        result = smb_wrapper_instance.stream_files_to_s3(
+        result = smb_client_instance.stream_files_to_s3(
             smb_file_paths=smb_file_paths,
             s3_path=s3_path,
             aws_credentials=aws_creds,
@@ -301,20 +293,20 @@ def test_stream_files_to_s3_success(smb_wrapper_instance):
         assert call_kwargs["aws_credentials"] == aws_creds
 
 
-def test_stream_files_to_s3_without_aws_credentials(smb_wrapper_instance):
+def test_stream_files_to_s3_without_aws_credentials(smb_client_instance):
     """Test streaming to S3 without AWS credentials raises CredentialError."""
     smb_file_paths = ["file.txt"]
     s3_path = "s3://bucket/path/"
 
     with pytest.raises(CredentialError, match="must be a dictionary"):
-        smb_wrapper_instance.stream_files_to_s3(
+        smb_client_instance.stream_files_to_s3(
             smb_file_paths=smb_file_paths,
             s3_path=s3_path,
             aws_credentials=None,  # type: ignore
         )
 
 
-def test_stream_files_to_s3_with_empty_aws_credentials(smb_wrapper_instance):
+def test_stream_files_to_s3_with_empty_aws_credentials(smb_client_instance):
     """Test streaming to S3 with empty aws_credentials raises CredentialError."""
     smb_file_paths = ["file.txt"]
     s3_path = "s3://bucket/path/"
@@ -322,14 +314,14 @@ def test_stream_files_to_s3_with_empty_aws_credentials(smb_wrapper_instance):
     with pytest.raises(
         CredentialError, match="aws_access_key_id.*aws_secret_access_key"
     ):
-        smb_wrapper_instance.stream_files_to_s3(
+        smb_client_instance.stream_files_to_s3(
             smb_file_paths=smb_file_paths,
             s3_path=s3_path,
             aws_credentials={},
         )
 
 
-def test_stream_files_to_s3_with_incomplete_aws_credentials(smb_wrapper_instance):
+def test_stream_files_to_s3_with_incomplete_aws_credentials(smb_client_instance):
     """Test streaming to S3 with incomplete aws_credentials raises CredentialError."""
     smb_file_paths = ["file.txt"]
     s3_path = "s3://bucket/path/"
@@ -338,7 +330,7 @@ def test_stream_files_to_s3_with_incomplete_aws_credentials(smb_wrapper_instance
     with pytest.raises(
         CredentialError, match="aws_access_key_id.*aws_secret_access_key"
     ):
-        smb_wrapper_instance.stream_files_to_s3(
+        smb_client_instance.stream_files_to_s3(
             smb_file_paths=smb_file_paths,
             s3_path=s3_path,
             aws_credentials={"aws_access_key_id": "test_key"},
@@ -348,7 +340,7 @@ def test_stream_files_to_s3_with_incomplete_aws_credentials(smb_wrapper_instance
     with pytest.raises(
         CredentialError, match="aws_access_key_id.*aws_secret_access_key"
     ):
-        smb_wrapper_instance.stream_files_to_s3(
+        smb_client_instance.stream_files_to_s3(
             smb_file_paths=smb_file_paths,
             s3_path=s3_path,
             aws_credentials={
@@ -357,21 +349,21 @@ def test_stream_files_to_s3_with_incomplete_aws_credentials(smb_wrapper_instance
         )
 
 
-def test_stream_files_to_s3_with_invalid_aws_credentials_type(smb_wrapper_instance):
+def test_stream_files_to_s3_with_invalid_aws_credentials_type(smb_client_instance):
     """Test streaming to S3 with invalid aws_credentials type raises CredentialError."""
     smb_file_paths = ["file.txt"]
     s3_path = "s3://bucket/path/"
 
     # Invalid type (string instead of dict)
     with pytest.raises(CredentialError, match="must be a dictionary"):
-        smb_wrapper_instance.stream_files_to_s3(
+        smb_client_instance.stream_files_to_s3(
             smb_file_paths=smb_file_paths,
             s3_path=s3_path,
             aws_credentials="invalid",  # type: ignore
         )
 
 
-def test_stream_files_to_s3_with_aws_credentials(smb_wrapper_instance):
+def test_stream_files_to_s3_with_aws_credentials(smb_client_instance):
     """Test streaming to S3 with AWS credentials."""
     smb_file_paths = ["file.txt"]
     s3_path = "s3://bucket/path/"
@@ -381,10 +373,10 @@ def test_stream_files_to_s3_with_aws_credentials(smb_wrapper_instance):
     }
 
     with patch(
-        "viadot.sources.smbclient_wrapper.stream_smb_files_to_s3",
+        "viadot.sources.smb_client.stream_smb_files_to_s3",
         return_value=["s3://bucket/path/file.txt"],
     ) as mock_stream:
-        smb_wrapper_instance.stream_files_to_s3(
+        smb_client_instance.stream_files_to_s3(
             smb_file_paths=smb_file_paths,
             s3_path=s3_path,
             aws_credentials=aws_creds,
@@ -394,7 +386,7 @@ def test_stream_files_to_s3_with_aws_credentials(smb_wrapper_instance):
         assert call_kwargs["aws_credentials"] == aws_creds
 
 
-def test_stream_files_to_s3_with_prefix_levels(smb_wrapper_instance):
+def test_stream_files_to_s3_with_prefix_levels(smb_client_instance):
     """Test streaming to S3 with prefix_levels_to_add."""
     smb_file_paths = ["2025/02/file.txt"]
     s3_path = "s3://bucket/path/"
@@ -404,10 +396,10 @@ def test_stream_files_to_s3_with_prefix_levels(smb_wrapper_instance):
     }
 
     with patch(
-        "viadot.sources.smbclient_wrapper.stream_smb_files_to_s3",
+        "viadot.sources.smb_client.stream_smb_files_to_s3",
         return_value=["s3://bucket/path/2025_02_file.txt"],
     ) as mock_stream:
-        smb_wrapper_instance.stream_files_to_s3(
+        smb_client_instance.stream_files_to_s3(
             smb_file_paths=smb_file_paths,
             s3_path=s3_path,
             aws_credentials=aws_creds,
@@ -626,46 +618,6 @@ def test_smb_item_get_matching_file_paths_in_range_full_path_prefix(
 
 
 # ==================== Retry logic tests ====================
-
-
-def test_retry_with_exponential_backoff_success():
-    """Test retry function succeeds on first attempt."""
-    from viadot.sources.smbclient_wrapper import _retry_with_exponential_backoff
-
-    mock_func = Mock(return_value="success")
-
-    result = _retry_with_exponential_backoff(mock_func, max_retries=3)
-
-    assert result == "success"
-    assert mock_func.call_count == 1
-
-
-def test_retry_with_exponential_backoff_retries_on_error():
-    """Test retry function retries on SMBConnectionError."""
-    from viadot.sources.smbclient_wrapper import _retry_with_exponential_backoff
-
-    mock_func = Mock(side_effect=[SMBConnectionError("Error 1"), "success"])
-
-    with patch("time.sleep"):  # Mock sleep to speed up test
-        result = _retry_with_exponential_backoff(mock_func, max_retries=3)
-
-        assert result == "success"
-        assert mock_func.call_count == 2
-
-
-def test_retry_with_exponential_backoff_raises_after_exhausted():
-    """Test retry function raises exception after all retries exhausted."""
-    from viadot.sources.smbclient_wrapper import _retry_with_exponential_backoff
-
-    mock_func = Mock(side_effect=SMBFileOperationError("Persistent error"))
-
-    with (
-        patch("time.sleep"),  # Mock sleep to speed up test
-        pytest.raises(SMBFileOperationError, match="Persistent error"),
-    ):
-        _retry_with_exponential_backoff(mock_func, max_retries=2)
-
-    assert mock_func.call_count == 3  # Initial + 2 retries
 
 
 # ==================== SMBItem complex structure tests ====================
