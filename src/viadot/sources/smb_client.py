@@ -17,11 +17,8 @@ from pathlib import Path
 import re
 import threading
 from typing import Any
-from urllib.parse import urlparse
 import zipfile
 
-import boto3
-from botocore.exceptions import ClientError
 import pendulum
 import smbclient
 import smbprotocol
@@ -34,7 +31,7 @@ from viadot.exceptions import (
     SMBInvalidFilenameError,
 )
 from viadot.orchestration.prefect.utils import DynamicDateHandler
-from viadot.sources.base import Source
+from viadot.sources.base import UnstructuredSource
 from viadot.sources.smb import SMBCredentials
 
 
@@ -123,10 +120,10 @@ def _check_filename_for_problematic_chars(filename: str) -> bool:
     """Check if filename contains characters that may cause issues with smbclient.
 
     Args:
-        filename (str): Filename to check
+        filename (str): Filename to check.
 
     Returns:
-        True if filename contains problematic characters, False otherwise
+        bool: True if filename contains problematic characters, False otherwise.
     """
     problematic_chars = [";", "|", "`", "$"]
 
@@ -137,13 +134,13 @@ def _get_unique_local_path(local_dir: str, filename: str) -> str:
     """Generate a unique local file path by adding _n suffix if file already exists.
 
     Args:
-        local_dir (str): Local directory where file will be saved
-        filename (str): Original filename
+        local_dir (str): Local directory where file will be saved.
+        filename (str): Original filename.
 
     Returns:
-        Unique local file path with _n suffix if necessary
+        str: Unique local file path with _n suffix if necessary.
 
-    Example:
+    Examples:
         If 'file.xlsx' exists, returns path with 'file_1.xlsx'
         If 'file_1.xlsx' also exists, returns path with 'file_2.xlsx'
     """
@@ -178,8 +175,8 @@ def _build_prefix_from_path(file_path: str, levels: int) -> str:
         levels (int): Number of parent folder levels to include.
 
     Returns:
-        Prefix string with parent folder names joined by underscores.
-        Returns empty string if levels is 0 or no valid parents exist.
+        str: Prefix string with parent folder names joined by underscores.
+            Returns empty string if levels is 0 or no valid parents exist.
     """
     if levels <= 0:
         return ""
@@ -213,48 +210,53 @@ def _add_prefix_to_filename(filename: str, prefix: str) -> str:
         prefix (str): The prefix to add.
 
     Returns:
-        Prefixed filename, or original filename if prefix is empty.
+        str: Prefixed filename, or original filename if prefix is empty.
     """
     if not prefix:
         return filename
     return f"{prefix}_{filename}"
 
 
-def extract_year_from_path(file_path: str) -> str | None:
-    """Extract year (4-digit, 1900-2099) from directory path if present.
-
-    Searches for 4-digit numbers between 1900-2099 in the directory part of the
-    file path only (excluding the filename). If multiple years are found, returns
-    the last one (closest to the file), as it's most likely the relevant year
-    for the file.
+def _safe_regex_match(pattern: str, text: str) -> bool:
+    """Evaluate whether a regex pattern matches given text (case-insensitive).
 
     Args:
-        file_path (str): The file path to search for years in directories only.
+        pattern (str): The regular expression pattern to match against.
+        text (str): The input string to search within.
 
     Returns:
-        str | None: The extracted year as a string, or None if no valid year found.
-
-    Examples:
-        >>> extract_year_from_path("2024/data/file.xlsx")
-        '2024'
-        >>> extract_year_from_path("2023/reports/2024/file.xlsx")
-        '2024'
-        >>> extract_year_from_path("data/file.xlsx")
-        None
-        >>> extract_year_from_path("2024/data/file1926.xlsx")
-        '2024'
+        bool: True if the pattern matches the text; False if it does not match
+            or if the pattern is invalid.
     """
-    directory_path = str(Path(file_path).parent)
-    if directory_path == ".":
-        return None
+    try:
+        return re.search(pattern, text, re.IGNORECASE) is not None
+    except re.error as e:
+        logger.warning(f"Invalid regex pattern: {pattern} — Error: {e}")
+        return False
 
-    # Match 4-digit year (1900-2099) in the directory path only
-    year_pattern = r"\b(19\d{2}|20[0-9]{2})\b"
-    matches = re.findall(year_pattern, directory_path)
-    if matches:
-        # Return the last year found (closest to the file in the path)
-        return matches[-1]
-    return None
+
+def _matches_any_regex(
+    text: str,
+    patterns: str | list[str] | None = None,
+) -> bool:
+    """Check whether the given text matches any of the provided regex pattern(s).
+
+    Args:
+        text (str): The string to test.
+        patterns (str | list[str] | None): A regex pattern or list of patterns.
+            If None, this function returns True (no filtering applied).
+
+    Returns:
+        bool: True if the text matches at least one pattern, or if no pattern
+            is given.
+    """
+    if not patterns:
+        return True
+
+    if isinstance(patterns, str):
+        patterns = [patterns]
+
+    return any(_safe_regex_match(pattern, text) for pattern in patterns)
 
 
 class SMBItemType(Enum):
@@ -490,51 +492,6 @@ class SMBItem:
                 )
                 raise ValueError(msg)
 
-    def _safe_regex_match(self, pattern: str, text: str) -> bool:
-        """Evaluate whether a regex pattern matches given text (case-insensitive).
-
-        This method wraps `re.search` with error handling to catch and log invalid regex
-        patterns without interrupting execution.
-
-        Args:
-            pattern (str): The regular expression pattern to match against.
-            text (str): The input string to search within.
-
-        Returns:
-            bool: True if the pattern matches the text; False if it does not match
-                or if the pattern is invalid.
-        """
-        try:
-            return re.search(pattern, text, re.IGNORECASE) is not None
-        except re.error as e:
-            # Use module-level logger since SMBItem does not define an instance logger
-            logger.warning(f"Invalid regex pattern: {pattern} — Error: {e}")
-            return False
-
-    def _matches_any_regex(
-        self,
-        text: str,
-        patterns: str | list[str] | None = None,
-    ) -> bool:
-        """Check whether the given text matches any of the provided regex pattern(s).
-
-        Args:
-            text (str): The string to test.
-            patterns (str | list[str] | None): A regex pattern or list of patterns.
-                If None, this method returns True (no filtering applied).
-
-        Returns:
-            bool: True if the text matches at least one pattern, or if no pattern
-                is given.
-        """
-        if not patterns:
-            return True
-
-        if isinstance(patterns, str):
-            patterns = [patterns]
-
-        return any(self._safe_regex_match(pattern, text) for pattern in patterns)
-
     def _is_date_match(
         self,
         file_modification_date: pendulum.Date | None,
@@ -640,12 +597,12 @@ class SMBItem:
         # - If neither is provided -> treat as match (no name/path filter).
         if filepath_regex_list:
             matches_name_or_path = any(
-                self._safe_regex_match(pattern, path_lower)
+                _safe_regex_match(pattern, path_lower)
                 for pattern in filepath_regex_list
             )
         elif filename_regex_list:
             matches_name_or_path = any(
-                self._safe_regex_match(pattern, name_lower)
+                _safe_regex_match(pattern, name_lower)
                 for pattern in filename_regex_list
             )
         else:
@@ -761,9 +718,7 @@ def download_file_from_smb(  # noqa: C901, PLR0915
                             continue
 
                         # Check if file matches any of the regex patterns
-                        if _matches_any_regex_module(
-                            zip_member_name, zip_inner_file_regexes
-                        ):
+                        if _matches_any_regex(zip_member_name, zip_inner_file_regexes):
                             # Extract the file
                             base_name = Path(zip_member_name).name
                             local_file_path = _get_unique_local_path(
@@ -828,320 +783,6 @@ def download_file_from_smb(  # noqa: C901, PLR0915
             f"Successfully extracted {len(paths)} files from ZIP: {remote_path}"
         )
     return paths
-
-
-def _stream_file_from_smb_to_s3(  # noqa: C901, PLR0912, PLR0915
-    server: str,
-    share: str,
-    remote_path: str,
-    s3_path: str,
-    smb_username: str,
-    smb_password: str,
-    aws_credentials: dict[str, Any] | None = None,
-    prefix_levels_to_add: int = 0,
-    organize_by_year: bool = False,
-    zip_inner_file_regexes: str | list[str] | None = None,
-) -> list[str]:
-    """Stream a file directly from SMB server to S3 bucket without saving to disk.
-
-    Uses `smbclient.open_file` to read the remote file and `boto3`'s
-    `upload_fileobj` to stream the bytes to S3 without writing to local disk.
-
-    Args:
-        server (str): SMB server address.
-        share (str): SMB share name.
-        remote_path (str): Path to the file on SMB server (relative to share root).
-        s3_path (str): Full S3 path where the file will be uploaded
-            (e.g., "s3://bucket/path/").
-        smb_username (str): SMB username.
-        smb_password (str): SMB password.
-        aws_credentials (dict[str, Any] | None): Optional AWS credential mapping
-            used to configure the boto3 S3 client.
-        prefix_levels_to_add (int): Number of parent folder levels (from the remote
-            path) to prepend as an underscore-separated prefix to the S3 filename.
-            Example: for remote path "2025/02/file.xlsx" and levels=2, S3 file name
-            will be "2025_02_file.xlsx". Defaults to 0 (no prefix).
-        organize_by_year (bool): If True and a year (1900-2099) is found in the
-            remote_path, organize the file in S3 under a folder named after the year.
-            Example: for remote path "2024/data/file.xlsx", S3 key will be
-            "prefix/2024/file.xlsx" instead of "prefix/file.xlsx". Defaults to False.
-        zip_inner_file_regexes (str | list[str] | None): Regular expression string
-            or list of regex patterns used to filter files *inside* ZIP archives.
-            If provided and the file is a ZIP, only matching inner files will be
-            extracted and streamed to S3. Defaults to None.
-
-    Returns:
-        list[str]: A list of S3 paths where files were uploaded. For regular files,
-            returns a list with one path. For ZIP files with filtering, returns
-            a list of paths for all extracted files.
-
-    Raises:
-        SMBFileOperationError: If the streaming operation fails.
-        SMBInvalidFilenameError: If filename contains problematic characters.
-    """
-    logger.info(
-        f"Streaming file from SMB to S3: {remote_path} from {server}/{share} -> {s3_path}"
-    )
-
-    _ensure_smb_session(server=server, username=smb_username, password=smb_password)
-
-    filename = remote_path.split("\\")[-1].split("/")[-1]
-    if prefix_levels_to_add and prefix_levels_to_add > 0:
-        prefix = _build_prefix_from_path(remote_path, prefix_levels_to_add)
-        filename = _add_prefix_to_filename(filename, prefix)
-
-    if _check_filename_for_problematic_chars(filename):
-        error_msg = (
-            f"Skipping file with problematic characters in name: {filename} "
-            f"(path: {remote_path})"
-        )
-        logger.warning(error_msg)
-        raise SMBInvalidFilenameError(error_msg)
-
-    aws_credentials = aws_credentials or {}
-
-    parsed_s3 = urlparse(s3_path)
-    if parsed_s3.scheme != "s3" or not parsed_s3.netloc:
-        msg = f"Invalid s3_path: {s3_path}. Expected format like s3://bucket/prefix/."
-        raise SMBFileOperationError(msg)
-
-    s3_bucket = parsed_s3.netloc
-    s3_base_path = parsed_s3.path.lstrip("/")
-
-    # Optionally organize by year if found in path
-    year_folder = ""
-    if organize_by_year:
-        year = extract_year_from_path(remote_path)
-        if year:
-            year_folder = f"{year}/"
-
-    s3_key = (
-        f"{s3_base_path.rstrip('/')}/{year_folder}{filename}"
-        if s3_base_path
-        else f"{year_folder}{filename}"
-    )
-    s3_full_path = f"s3://{s3_bucket}/{s3_key}"
-
-    client_kwargs: dict[str, Any] = {}
-    if aws_credentials.get("aws_access_key_id"):
-        client_kwargs["aws_access_key_id"] = aws_credentials["aws_access_key_id"]
-    if aws_credentials.get("aws_secret_access_key"):
-        client_kwargs["aws_secret_access_key"] = aws_credentials[
-            "aws_secret_access_key"
-        ]
-    if aws_credentials.get("aws_session_token"):
-        client_kwargs["aws_session_token"] = aws_credentials["aws_session_token"]
-    if aws_credentials.get("region_name"):
-        client_kwargs["region_name"] = aws_credentials["region_name"]
-    elif aws_credentials.get("region"):
-        client_kwargs["region_name"] = aws_credentials["region"]
-    if aws_credentials.get("endpoint_url"):
-        client_kwargs["endpoint_url"] = aws_credentials["endpoint_url"]
-
-    s3_client = boto3.client("s3", **client_kwargs)
-
-    unc_remote_path = _to_unc_path(
-        server=server, share=share, relative_path=remote_path
-    )
-
-    is_zip_with_filter = filename.lower().endswith(".zip") and zip_inner_file_regexes
-
-    if is_zip_with_filter:
-        s3_paths = []
-        try:
-            with (
-                smbclient.open_file(unc_remote_path, mode="rb") as remote_file,
-                zipfile.ZipFile(remote_file) as zf,
-            ):
-                for zip_member_name in zf.namelist():
-                    if zip_member_name.endswith("/"):
-                        continue
-
-                    # Check if file matches any of the regex patterns
-                    if _matches_any_regex_module(
-                        zip_member_name, zip_inner_file_regexes
-                    ):
-                        zip_base_name = Path(zip_member_name).name
-
-                        zip_filename = zip_base_name
-                        if prefix_levels_to_add and prefix_levels_to_add > 0:
-                            zip_prefix = _build_prefix_from_path(
-                                remote_path, prefix_levels_to_add
-                            )
-                            zip_filename = _add_prefix_to_filename(
-                                zip_base_name, zip_prefix
-                            )
-
-                        if _check_filename_for_problematic_chars(zip_filename):
-                            logger.warning(
-                                f"Skipping ZIP file with problematic characters: {zip_filename}"
-                            )
-                            continue
-
-                        zip_s3_key = (
-                            f"{s3_base_path.rstrip('/')}/{year_folder}{zip_filename}"
-                            if s3_base_path
-                            else f"{year_folder}{zip_filename}"
-                        )
-                        zip_s3_full_path = f"s3://{s3_bucket}/{zip_s3_key}"
-
-                        try:
-                            with zf.open(zip_member_name) as member_file:
-                                s3_client.upload_fileobj(
-                                    member_file, s3_bucket, zip_s3_key
-                                )
-                            s3_paths.append(zip_s3_full_path)
-                            logger.info(
-                                f"Streamed ZIP member to S3: {zip_s3_full_path}"
-                            )
-                        except ClientError as e:
-                            error_code = (
-                                e.response.get("Error", {}).get("Code")
-                                if hasattr(e, "response")
-                                else None
-                            )
-                            is_access_denied = str(error_code).lower() in {
-                                "accessdenied",
-                                "access_denied",
-                            }
-                            error_msg = f"AWS S3 upload failed for ZIP member. S3 path: {zip_s3_full_path}. Error: {e}"
-                            if is_access_denied:
-                                error_msg += (
-                                    " This appears to be an AWS IAM permissions issue. "
-                                    "Please ensure credentials have s3:PutObject for the bucket/key."
-                                )
-                            logger.exception(error_msg)
-                            continue
-                        except Exception as e:
-                            error_msg = f"Unexpected error streaming ZIP member {zip_member_name}: {e}"
-                            logger.exception(error_msg)
-                            continue
-
-                if not s3_paths:
-                    logger.warning(f"No matching files found in ZIP: {remote_path}")
-
-        except zipfile.BadZipFile:
-            error_msg = f"Invalid ZIP file: {remote_path}"
-            logger.exception(error_msg)
-            raise SMBFileOperationError(error_msg) from None
-        except Exception as e:
-            error_msg = f"Unexpected error during ZIP processing: {e}"
-            logger.exception(error_msg)
-            raise SMBFileOperationError(error_msg) from e
-
-        return s3_paths
-    try:
-        with smbclient.open_file(unc_remote_path, mode="rb") as remote_file:
-            # upload_fileobj streams in chunks; does not read entire file into memory
-            s3_client.upload_fileobj(remote_file, s3_bucket, s3_key)
-    except ClientError as e:
-        error_code = (
-            e.response.get("Error", {}).get("Code") if hasattr(e, "response") else None
-        )
-        is_access_denied = str(error_code).lower() in {
-            "accessdenied",
-            "access_denied",
-        }
-        error_msg = f"AWS S3 upload failed. S3 path: {s3_full_path}. Error: {e}"
-        if is_access_denied:
-            error_msg += (
-                " This appears to be an AWS IAM permissions issue. "
-                "Please ensure credentials have s3:PutObject for the bucket/key."
-            )
-        logger.exception(error_msg)
-        raise SMBFileOperationError(error_msg) from e
-    except Exception as e:
-        error_msg = f"Unexpected error during SMB to S3 streaming: {e}"
-        logger.exception(error_msg)
-        raise SMBFileOperationError(error_msg) from e
-
-    logger.info(f"Successfully streamed file to S3: {s3_full_path}")
-    return [s3_full_path]
-
-
-def stream_smb_files_to_s3(
-    smb_file_paths: list[str],
-    smb_server: str,
-    smb_share: str,
-    s3_path: str,
-    smb_username: str,
-    smb_password: str,
-    aws_credentials: dict[str, Any] | None = None,
-    prefix_levels_to_add: int = 0,
-    organize_by_year: bool = False,
-    zip_inner_file_regexes: str | list[str] | None = None,
-) -> list[str]:
-    """Stream multiple files directly from SMB server to S3 bucket.
-
-    Streams files from SMB to S3 without saving them to local disk first,
-    which is more efficient for large files and reduces disk I/O. Files with
-    problematic characters in their names will be skipped.
-
-    Args:
-        smb_file_paths (list[str]): List of SMB file paths to stream
-            (relative to share root).
-        smb_server (str): SMB server address.
-        smb_share (str): SMB share name.
-        s3_path (str): Base S3 path where files will be uploaded
-            (e.g., "s3://bucket/path/"). Filenames will be appended automatically,
-            optionally with prefix.
-        smb_username (str): SMB username.
-        smb_password (str): SMB password.
-        aws_credentials (dict[str, Any] | None): Optional AWS credential mapping
-            used by the AWS CLI. Must include `aws_access_key_id` and
-            `aws_secret_access_key`. Can also include `aws_session_token`,
-            `region_name`, and `endpoint_url`.
-        prefix_levels_to_add (int): Number of parent folder levels
-            (from the remote SMB path) to prepend as an underscore-separated
-            prefix to the S3 filename. Example: for path "2025/02/file.xlsx"
-            and levels=2, filename will be "2025_02_file.xlsx".
-            Defaults to 0 (no prefix).
-        organize_by_year (bool): If True and a year (1900-2099) is found in the
-            remote_path, organize the file in S3 under a folder named after the year.
-            Example: for remote path "2024/data/file.xlsx", S3 key will be
-            "prefix/2024/file.xlsx" instead of "prefix/file.xlsx". Defaults to False.
-        zip_inner_file_regexes (str | list[str] | None): Regular expression string
-            or list of regex patterns used to filter files *inside* ZIP archives.
-            If provided and a file is a ZIP, only matching inner files will be
-            extracted and streamed to S3. Defaults to None.
-
-    Returns:
-        list[str]: List of S3 paths where files were successfully uploaded.
-            Files that were skipped (e.g., due to invalid filenames) are
-            not included in this list.
-
-    Raises:
-        SMBConnectionError: If SMB connection fails.
-        SMBFileOperationError: If S3 upload fails.
-        SMBInvalidFilenameError: If filename contains problematic characters.
-    """
-    s3_paths: list[str] = []
-
-    for smb_file_path in smb_file_paths:
-        try:
-            s3_path_result = _stream_file_from_smb_to_s3(
-                server=smb_server,
-                share=smb_share,
-                remote_path=smb_file_path,
-                s3_path=s3_path,
-                smb_username=smb_username,
-                smb_password=smb_password,
-                aws_credentials=aws_credentials,
-                prefix_levels_to_add=prefix_levels_to_add,
-                organize_by_year=organize_by_year,
-                zip_inner_file_regexes=zip_inner_file_regexes,
-            )
-            s3_paths.extend(s3_path_result)
-        except SMBInvalidFilenameError:
-            logger.warning(f"Skipping file with invalid filename: {smb_file_path}")
-            continue
-        except Exception as e:
-            logger.warning(
-                f"Failed to stream {smb_file_path} to S3: {e}. Skipping file."
-            )
-            continue
-
-    return s3_paths
 
 
 def _get_shallow_listing(
@@ -1477,53 +1118,7 @@ def get_hybrid_listing_with_fallback(  # noqa: C901, PLR0915
     return result_container.get("items", [])
 
 
-def _matches_any_regex_module(
-    text: str,
-    patterns: str | list[str] | None = None,
-) -> bool:
-    """Check whether the given text matches any of the provided regex pattern(s).
-
-    Module-level version for use in static functions.
-
-    Args:
-        text (str): The string to test.
-        patterns (str | list[str] | None): A regex pattern or list of patterns.
-            If None, this method returns True (no filtering applied).
-
-    Returns:
-        bool: True if the text matches at least one pattern, or if no pattern
-            is given.
-    """
-    if not patterns:
-        return True
-
-    if isinstance(patterns, str):
-        patterns = [patterns]
-
-    return any(_safe_regex_match_module(pattern, text) for pattern in patterns)
-
-
-def _safe_regex_match_module(pattern: str, text: str) -> bool:
-    """Evaluate whether a regex pattern matches given text (case-insensitive).
-
-    Module-level version for use in static functions.
-
-    Args:
-        pattern (str): The regular expression pattern to match against.
-        text (str): The input string to search within.
-
-    Returns:
-        bool: True if the pattern matches the text; False if it does not match
-            or if the pattern is invalid.
-    """
-    try:
-        return re.search(pattern, text, re.IGNORECASE) is not None
-    except re.error as e:
-        logger.warning(f"Invalid regex pattern: {pattern} — Error: {e}")
-        return False
-
-
-class SMBClient(Source):
+class SMBClient(UnstructuredSource):
     """Lightweight `Source` connector built around helpers in this module.
 
     This class does **not** introduce new complex logic (such as full tree scanning),
@@ -1601,134 +1196,96 @@ class SMBClient(Source):
             recursive_timeout=recursive_timeout,
         )
 
-    def download_file(
-        self,
-        remote_path: str,
-        local_path: str = "/tmp/smb_files",  # noqa: S108
-        timeout: int = 900,
-        prefix_levels_to_add: int = 0,
-        zip_inner_file_regexes: str | list[str] | None = None,
-    ) -> list[str] | None:
-        """Download a single file from SMB to local disk.
-
-        For ZIP files, if `zip_inner_file_regexes` is provided, extracts and saves
-        only files matching the regex patterns. Otherwise, downloads the entire file.
-
-        If the filename contains problematic characters, the file
-        will be skipped and None will be returned.
+    def to_bytes(self, path: str, **kwargs) -> bytes | dict[str, bytes]:
+        """Download data from source to bytes in memory.
 
         Args:
-            remote_path (str): Path to the file relative to the share root.
-            local_path (str): Local directory where the file should be saved.
-                Defaults to "/tmp/smb_files".
-            timeout (int): SMB operation timeout in seconds. Defaults to 900.
-            prefix_levels_to_add (int): Number of parent directory levels to
-                prepend as an underscore-separated prefix to the local filename.
-                Example: for remote path "2025/02/file.xlsx" and levels=2,
-                local filename will be "2025_02_file.xlsx". Defaults to 0.
-            zip_inner_file_regexes (str | list[str] | None): Regular expression
-                string or list of regex patterns used to filter files *inside* ZIP
-                archives. If provided and the file is a ZIP, only matching inner
-                files will be extracted and saved locally. Defaults to None.
+            path (str): Path to specific file in the SMB share.
+            **kwargs: Additional arguments:
+                - zip_inner_file_regexes (str | list[str] | None): Regex patterns to
+                  filter files inside ZIP archives. If provided and file is ZIP,
+                  returns dict with matching extracted files. Defaults to None.
 
         Returns:
-            list[str] | None: A list of local paths to downloaded/extracted files.
-                For regular files, returns a list with one path. For ZIP files with
-                filtering, returns a list of paths to all extracted files that matched
-                the regex patterns. Returns None if the file was skipped due to invalid
-                filename characters.
+            bytes | dict[str, bytes]: File contents as bytes (single file) or
+                dict mapping file names to contents (multiple/ZIP files).
 
         Raises:
             SMBFileOperationError: If the download fails.
+        """
+        _ensure_smb_session(
+            server=self.server,
+            username=self.credentials.get("username"),
+            password=self.credentials.get("password").get_secret_value(),
+        )
+        unc_path = _to_unc_path(self.server, self.share, path)
+        zip_inner_file_regexes = kwargs.get("zip_inner_file_regexes")
+
+        try:
+            # Handle ZIP files with filtering
+            if zip_inner_file_regexes and path.lower().endswith(".zip"):
+                contents = {}
+                with smbclient.open_file(unc_path, mode="rb") as remote_zip:
+                    import zipfile
+
+                    with zipfile.ZipFile(remote_zip) as zf:
+                        for zip_member_name in zf.namelist():
+                            # Skip directories
+                            if zip_member_name.endswith("/"):
+                                continue
+
+                            if _matches_any_regex(
+                                zip_member_name, zip_inner_file_regexes
+                            ):
+                                with zf.open(zip_member_name) as member:
+                                    base_name = Path(zip_member_name).name
+                                    contents[base_name] = member.read()
+
+                        if not contents:
+                            logger.debug(f"No matching files found in ZIP: {path}")
+
+                return contents
+
+            # Handle regular files - return dict with single file
+            with smbclient.open_file(unc_path, mode="rb") as file:
+                file_name = Path(path).name
+                return {file_name: file.read()}
+
+        except smbprotocol.exceptions.SMBOSError as e:
+            msg = f"Failed to read file {path}: {e}"
+            raise SMBFileOperationError(msg) from e
+
+    def download_to_local(
+        self,
+        path: str,
+        to_path: str = "/tmp/smb_source",  # noqa: S108
+        **kwargs,
+    ) -> list[str] | None:
+        """Download file(s) from source to local storage.
+
+        Args:
+            path (str): Path to file in the SMB share.
+            to_path (str): Local path for saving file. Defaults to "/tmp/smb_source".
+            **kwargs: Additional arguments passed to download_file_from_smb:
+                - timeout (int): SMB operation timeout in seconds. Defaults to 900.
+                - prefix_levels_to_add (int): Number of parent folder levels to prepend
+                  as underscore-separated prefix to filename. Defaults to 0.
+                - zip_inner_file_regexes (str | list[str] | None): Regex patterns to
+                  filter files inside ZIP archives. Defaults to None.
+
+        Returns:
+            list[str] | None: Local paths where files were saved, or None if failed.
         """
         try:
             return download_file_from_smb(
                 server=self.server,
                 share=self.share,
-                remote_path=remote_path,
+                remote_path=path,
                 username=self.credentials.get("username"),
                 password=self.credentials.get("password").get_secret_value(),
-                local_path=local_path,
-                timeout=timeout,
-                prefix_levels_to_add=prefix_levels_to_add,
-                zip_inner_file_regexes=zip_inner_file_regexes,
+                local_path=to_path,
+                **kwargs,
             )
         except SMBInvalidFilenameError:
-            logger.warning(f"Skipping file with invalid filename: {remote_path}")
+            logger.warning(f"Skipping file with invalid filename: {path}")
             return None
-
-    def stream_files_to_s3(
-        self,
-        smb_file_paths: list[str],
-        s3_path: str,
-        aws_credentials: dict[str, Any],
-        prefix_levels_to_add: int = 0,
-        organize_by_year: bool = False,
-        zip_inner_file_regexes: str | list[str] | None = None,
-    ) -> list[str]:
-        """Stream multiple files from SMB directly to S3.
-
-        Streams files from SMB to S3 without saving them to local disk first,
-        which is more efficient for large files. Files with problematic characters in
-        their names will be skipped.
-
-        Args:
-            smb_file_paths (list[str]): List of file paths relative to the
-                share root.
-            s3_path (str): Base S3 path (e.g. ``s3://bucket/folder/``).
-                Filenames will be appended automatically, optionally with prefix.
-            aws_credentials (dict[str, Any]): Required AWS credential mapping
-                used by the AWS CLI. Must include `aws_access_key_id` and
-                `aws_secret_access_key`. Can also include `aws_session_token`,
-                `region_name`, and `endpoint_url`.
-            prefix_levels_to_add (int): Number of parent directory levels to
-                prepend as an underscore-separated prefix to the S3 object name.
-                Example: for remote path "2025/02/file.xlsx" and levels=2,
-                S3 object name will be "2025_02_file.xlsx". Defaults to 0.
-            organize_by_year (bool): If True and a year (1900-2099) is found in the
-                remote_path, organize the file in S3 under a folder named after
-                the year.
-                Example: for remote path "2024/data/file.xlsx", S3 key will be
-                "prefix/2024/file.xlsx" instead of "prefix/file.xlsx".
-                Defaults to False.
-            zip_inner_file_regexes (str | list[str] | None): Regular expression
-                string or list of regex patterns used to filter files *inside* ZIP
-                archives. If provided and a file is a ZIP, only matching inner
-                files will be extracted and streamed to S3. Defaults to None.
-
-        Returns:
-            list[str]: List of S3 paths where files were successfully uploaded.
-                Files that were skipped (e.g., due to invalid filenames) are
-                not included in this list.
-
-        Raises:
-            CredentialError: If `aws_credentials` is not a dictionary, is empty,
-                or missing required fields (`aws_access_key_id` and
-                `aws_secret_access_key`).
-        """
-        if not isinstance(aws_credentials, dict):
-            msg = "`aws_credentials` must be a dictionary."
-            raise CredentialError(msg)
-
-        if not (
-            aws_credentials.get("aws_access_key_id")
-            and aws_credentials.get("aws_secret_access_key")
-        ):
-            msg = (
-                "`aws_credentials` must include "
-                "`aws_access_key_id` and `aws_secret_access_key`."
-            )
-            raise CredentialError(msg)
-
-        return stream_smb_files_to_s3(
-            smb_file_paths=smb_file_paths,
-            smb_server=self.server,
-            smb_share=self.share,
-            s3_path=s3_path,
-            smb_username=self.credentials.get("username"),
-            smb_password=self.credentials.get("password").get_secret_value(),
-            aws_credentials=aws_credentials,
-            prefix_levels_to_add=prefix_levels_to_add,
-            organize_by_year=organize_by_year,
-            zip_inner_file_regexes=zip_inner_file_regexes,
-        )

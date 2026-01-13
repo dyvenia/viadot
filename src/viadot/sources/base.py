@@ -158,6 +158,45 @@ class Source:
             raise ValueError(message)
 
 
+class UnstructuredSource:
+    """Base class for sources that handle unstructured data (files, documents, etc.)."""
+
+    def __init__(self, *args, credentials: dict[str, Any] | None = None, **kwargs):  # noqa: ARG002
+        """Initialize the UnstructuredSource.
+
+        Args:
+            credentials (dict[str, Any] | None, optional): The credentials for the
+                source. Defaults to None.
+        """
+        self.credentials = credentials
+        self.logger = logger
+
+    @abstractmethod
+    def to_bytes(self, path: str) -> bytes | dict[str, bytes]:
+        """Download data from source to bytes in memory.
+
+        Args:
+            path (str): Path to specific file.
+
+        Returns:
+            bytes | dict[str, bytes]: File contents as bytes (single file) or
+                dict mapping file names/paths to contents (multiple files).
+        """
+
+    @abstractmethod
+    def download_to_local(self, path: str, to_path: str, **kwargs) -> list[str] | None:
+        """Download file(s) from source to local storage.
+
+        Args:
+            path (str): Path to file(s) in the source.
+            to_path (str): Local path where to save the file(s).
+            **kwargs: Additional implementation-specific arguments.
+
+        Returns:
+            list[str] | None: Local paths where files were saved, or None if failed.
+        """
+
+
 class SQL(Source):
     def __init__(
         self,

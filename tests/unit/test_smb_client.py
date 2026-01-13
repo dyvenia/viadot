@@ -169,11 +169,11 @@ def test_list_directory_with_custom_timeout(smb_client_instance):
         assert call_kwargs["recursive_timeout"] == 600
 
 
-# ==================== SMBClient.download_file tests ====================
+# ==================== UnstructuredSource method tests ====================
 
 
-def test_download_file_success(smb_client_instance, tmp_path):
-    """Test successful file download."""
+def test_download_to_local_success(smb_client_instance, tmp_path):
+    """Test successful file download using download_to_local."""
     remote_path = "data/file.txt"
     local_path = str(tmp_path)
     expected_local_file = str(tmp_path / "file.txt")
@@ -182,8 +182,8 @@ def test_download_file_success(smb_client_instance, tmp_path):
         "viadot.sources.smb_client.download_file_from_smb",
         return_value=[expected_local_file],
     ) as mock_download:
-        result = smb_client_instance.download_file(
-            remote_path=remote_path, local_path=local_path
+        result = smb_client_instance.download_to_local(
+            path=remote_path, to_path=local_path
         )
 
         assert result == [expected_local_file]
@@ -195,8 +195,8 @@ def test_download_file_success(smb_client_instance, tmp_path):
         assert call_kwargs["local_path"] == local_path
 
 
-def test_download_file_with_prefix_levels(smb_client_instance, tmp_path):
-    """Test file download with prefix_levels_to_add."""
+def test_download_to_local_with_kwargs(smb_client_instance, tmp_path):
+    """Test download_to_local with additional kwargs like prefix_levels_to_add."""
     remote_path = "2025/02/file.txt"
     local_path = str(tmp_path)
 
@@ -204,9 +204,9 @@ def test_download_file_with_prefix_levels(smb_client_instance, tmp_path):
         "viadot.sources.smb_client.download_file_from_smb",
         return_value=[str(tmp_path / "2025_02_file.txt")],
     ) as mock_download:
-        result = smb_client_instance.download_file(
-            remote_path=remote_path,
-            local_path=local_path,
+        result = smb_client_instance.download_to_local(
+            path=remote_path,
+            to_path=local_path,
             prefix_levels_to_add=2,
         )
 
@@ -216,198 +216,78 @@ def test_download_file_with_prefix_levels(smb_client_instance, tmp_path):
         assert call_kwargs["prefix_levels_to_add"] == 2
 
 
-def test_download_file_skipped_invalid_filename(smb_client_instance, tmp_path):
-    """Test file download returns None when filename has problematic chars."""
-    remote_path = "data/file;test.txt"
-    local_path = str(tmp_path)
-
-    with patch(
-        "viadot.sources.smb_client.download_file_from_smb"
-    ) as mock_download_inner:
-        from viadot.exceptions import SMBInvalidFilenameError
-
-        # download_file_from_smb raises SMBInvalidFilenameError when invalid
-        mock_download_inner.side_effect = SMBInvalidFilenameError(
-            "Skipping file with problematic characters in name: file;test.txt"
-        )
-
-        # SMBClient.download_file should catch it and return None
-        result = smb_client_instance.download_file(
-            remote_path=remote_path, local_path=local_path
-        )
-
-        assert result is None
-
-
-def test_download_file_with_custom_timeout(smb_client_instance, tmp_path):
-    """Test file download with custom timeout."""
+def test_download_to_local_default_path(smb_client_instance, tmp_path):
+    """Test download_to_local uses default path when to_path not specified."""
     remote_path = "data/file.txt"
-    local_path = str(tmp_path)
+    expected_local_file = str(
+        tmp_path / "file.txt"
+    )  # This would be in default /tmp/smb_source
 
     with patch(
         "viadot.sources.smb_client.download_file_from_smb",
-        return_value=[str(tmp_path / "file.txt")],
+        return_value=[expected_local_file],
     ) as mock_download:
-        smb_client_instance.download_file(
-            remote_path=remote_path,
-            local_path=local_path,
-            timeout=1800,
-        )
+        result = smb_client_instance.download_to_local(path=remote_path)
 
+        assert result == [expected_local_file]
+        mock_download.assert_called_once()
         call_kwargs = mock_download.call_args.kwargs
-        assert call_kwargs["timeout"] == 1800
+        assert call_kwargs["local_path"] == "/tmp/smb_source"  # noqa: S108
 
 
-# ==================== SMBClient.stream_files_to_s3 tests ====================
+# ==================== to_bytes method tests ====================
 
 
-def test_stream_files_to_s3_success(smb_client_instance):
-    """Test successful streaming of files to S3."""
-    smb_file_paths = ["file1.txt", "file2.txt"]
-    s3_path = "s3://bucket/path/"
-    aws_creds = {
-        "aws_access_key_id": "test_key",
-        "aws_secret_access_key": "test_secret",  # pragma: allowlist secret
-    }
-    expected_s3_paths = [
-        "s3://bucket/path/file1.txt",
-        "s3://bucket/path/file2.txt",
-    ]
+def test_to_bytes_single_file(smb_client_instance):
+    """Test to_bytes returns single file as dict."""
+    remote_path = "data/file.txt"
+    mock_content = b"file content"
 
-    with patch(
-        "viadot.sources.smb_client.stream_smb_files_to_s3",
-        return_value=expected_s3_paths,
-    ) as mock_stream:
-        result = smb_client_instance.stream_files_to_s3(
-            smb_file_paths=smb_file_paths,
-            s3_path=s3_path,
-            aws_credentials=aws_creds,
-        )
+    with patch("viadot.sources.smb_client.smbclient") as mock_smb:
+        mock_file = mock_smb.open_file.return_value.__enter__.return_value
+        mock_file.read.return_value = mock_content
 
-        assert len(result) == 2
-        assert result == expected_s3_paths
-        mock_stream.assert_called_once()
-        call_kwargs = mock_stream.call_args.kwargs
-        assert call_kwargs["smb_file_paths"] == smb_file_paths
-        assert call_kwargs["s3_path"] == s3_path
-        assert call_kwargs["aws_credentials"] == aws_creds
+        result = smb_client_instance.to_bytes(path=remote_path)
+
+        assert result == {"file.txt": mock_content}
+        mock_smb.open_file.assert_called_once()
 
 
-def test_stream_files_to_s3_without_aws_credentials(smb_client_instance):
-    """Test streaming to S3 without AWS credentials raises CredentialError."""
-    smb_file_paths = ["file.txt"]
-    s3_path = "s3://bucket/path/"
+def test_to_bytes_zip_file(smb_client_instance):
+    """Test to_bytes handles ZIP files with filtering."""
+    remote_path = "data/archive.zip"
 
-    with pytest.raises(CredentialError, match="must be a dictionary"):
-        smb_client_instance.stream_files_to_s3(
-            smb_file_paths=smb_file_paths,
-            s3_path=s3_path,
-            aws_credentials=None,  # type: ignore
-        )
-
-
-def test_stream_files_to_s3_with_empty_aws_credentials(smb_client_instance):
-    """Test streaming to S3 with empty aws_credentials raises CredentialError."""
-    smb_file_paths = ["file.txt"]
-    s3_path = "s3://bucket/path/"
-
-    with pytest.raises(
-        CredentialError, match="aws_access_key_id.*aws_secret_access_key"
+    with (
+        patch("viadot.sources.smb_client.smbclient") as _,
+        patch("viadot.sources.smb_client.zipfile.ZipFile") as mock_zipfile_class,
     ):
-        smb_client_instance.stream_files_to_s3(
-            smb_file_paths=smb_file_paths,
-            s3_path=s3_path,
-            aws_credentials={},
-        )
+        mock_zf = mock_zipfile_class.return_value.__enter__.return_value
+        mock_zf.namelist.return_value = ["file1.csv", "file2.txt"]
+
+        mock_member = mock_zf.open.return_value.__enter__.return_value
+        mock_member.read.return_value = b"csv content"
+
+        def mock_matches_any(text, patterns):
+            return text.endswith(".csv") if patterns else True
+
+        with patch(
+            "viadot.sources.smb_client._matches_any_regex",
+            side_effect=mock_matches_any,
+        ):
+            result = smb_client_instance.to_bytes(
+                path=remote_path, zip_inner_file_regexes=["*.csv"]
+            )
+
+        expected = {"file1.csv": b"csv content"}
+        assert result == expected
 
 
-def test_stream_files_to_s3_with_incomplete_aws_credentials(smb_client_instance):
-    """Test streaming to S3 with incomplete aws_credentials raises CredentialError."""
-    smb_file_paths = ["file.txt"]
-    s3_path = "s3://bucket/path/"
-
-    # Missing aws_secret_access_key
+def test_to_bytes_path_required(smb_client_instance):
+    """Test to_bytes raises TypeError when path not provided."""
     with pytest.raises(
-        CredentialError, match="aws_access_key_id.*aws_secret_access_key"
+        TypeError, match="missing 1 required positional argument: 'path'"
     ):
-        smb_client_instance.stream_files_to_s3(
-            smb_file_paths=smb_file_paths,
-            s3_path=s3_path,
-            aws_credentials={"aws_access_key_id": "test_key"},
-        )
-
-    # Missing aws_access_key_id
-    with pytest.raises(
-        CredentialError, match="aws_access_key_id.*aws_secret_access_key"
-    ):
-        smb_client_instance.stream_files_to_s3(
-            smb_file_paths=smb_file_paths,
-            s3_path=s3_path,
-            aws_credentials={
-                "aws_secret_access_key": "test_secret"  # pragma: allowlist secret
-            },
-        )
-
-
-def test_stream_files_to_s3_with_invalid_aws_credentials_type(smb_client_instance):
-    """Test streaming to S3 with invalid aws_credentials type raises CredentialError."""
-    smb_file_paths = ["file.txt"]
-    s3_path = "s3://bucket/path/"
-
-    # Invalid type (string instead of dict)
-    with pytest.raises(CredentialError, match="must be a dictionary"):
-        smb_client_instance.stream_files_to_s3(
-            smb_file_paths=smb_file_paths,
-            s3_path=s3_path,
-            aws_credentials="invalid",  # type: ignore
-        )
-
-
-def test_stream_files_to_s3_with_aws_credentials(smb_client_instance):
-    """Test streaming to S3 with AWS credentials."""
-    smb_file_paths = ["file.txt"]
-    s3_path = "s3://bucket/path/"
-    aws_creds = {
-        "aws_access_key_id": "test_key",
-        "aws_secret_access_key": "test_secret",  # pragma: allowlist secret
-    }
-
-    with patch(
-        "viadot.sources.smb_client.stream_smb_files_to_s3",
-        return_value=["s3://bucket/path/file.txt"],
-    ) as mock_stream:
-        smb_client_instance.stream_files_to_s3(
-            smb_file_paths=smb_file_paths,
-            s3_path=s3_path,
-            aws_credentials=aws_creds,
-        )
-
-        call_kwargs = mock_stream.call_args.kwargs
-        assert call_kwargs["aws_credentials"] == aws_creds
-
-
-def test_stream_files_to_s3_with_prefix_levels(smb_client_instance):
-    """Test streaming to S3 with prefix_levels_to_add."""
-    smb_file_paths = ["2025/02/file.txt"]
-    s3_path = "s3://bucket/path/"
-    aws_creds = {
-        "aws_access_key_id": "test_key",
-        "aws_secret_access_key": "test_secret",  # pragma: allowlist secret
-    }
-
-    with patch(
-        "viadot.sources.smb_client.stream_smb_files_to_s3",
-        return_value=["s3://bucket/path/2025_02_file.txt"],
-    ) as mock_stream:
-        smb_client_instance.stream_files_to_s3(
-            smb_file_paths=smb_file_paths,
-            s3_path=s3_path,
-            aws_credentials=aws_creds,
-            prefix_levels_to_add=2,
-        )
-
-        call_kwargs = mock_stream.call_args.kwargs
-        assert call_kwargs["prefix_levels_to_add"] == 2
+        smb_client_instance.to_bytes()
 
 
 # ==================== Helper function tests ====================
@@ -615,9 +495,6 @@ def test_smb_item_get_matching_file_paths_in_range_full_path_prefix(
     )
     assert len(result) == 1
     assert result[0].startswith("//server/share/")
-
-
-# ==================== Retry logic tests ====================
 
 
 # ==================== SMBItem complex structure tests ====================
