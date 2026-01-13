@@ -221,14 +221,15 @@ def _add_prefix_to_filename(filename: str, prefix: str) -> str:
 
 
 def extract_year_from_path(file_path: str) -> str | None:
-    """Extract year (4-digit, 1900-2099) from file path if present.
+    """Extract year (4-digit, 1900-2099) from directory path if present.
 
-    Searches for 4-digit numbers between 1900-2099 in the file path. If multiple
-    years are found, returns the last one (closest to the file), as it's most
-    likely the relevant year for the file.
+    Searches for 4-digit numbers between 1900-2099 in the directory part of the
+    file path only (excluding the filename). If multiple years are found, returns
+    the last one (closest to the file), as it's most likely the relevant year
+    for the file.
 
     Args:
-        file_path (str): The file path to search for years.
+        file_path (str): The file path to search for years in directories only.
 
     Returns:
         str | None: The extracted year as a string, or None if no valid year found.
@@ -240,10 +241,16 @@ def extract_year_from_path(file_path: str) -> str | None:
         '2024'
         >>> extract_year_from_path("data/file.xlsx")
         None
+        >>> extract_year_from_path("2024/data/file1926.xlsx")
+        '2024'
     """
-    # Match 4-digit year (1900-2099) in the path
+    directory_path = str(Path(file_path).parent)
+    if directory_path == ".":
+        return None
+
+    # Match 4-digit year (1900-2099) in the directory path only
     year_pattern = r"\b(19\d{2}|20[0-9]{2})\b"
-    matches = re.findall(year_pattern, file_path)
+    matches = re.findall(year_pattern, directory_path)
     if matches:
         # Return the last year found (closest to the file in the path)
         return matches[-1]
