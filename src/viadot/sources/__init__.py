@@ -73,7 +73,7 @@ if find_spec("adlfs"):
 
     __all__.extend(["AzureDataLake"])
 
-if find_spec("redshift-connector"):
+if find_spec("redshift_connector"):
     from viadot.sources.redshift_spectrum import RedshiftSpectrum  # noqa: F401
 
     __all__.extend(["RedshiftSpectrum"])
