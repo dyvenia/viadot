@@ -36,7 +36,6 @@ from .vid_club import VidClub
 
 __all__ = [
     "SMB",
-    "SMBClient",
     "TM1",
     "AzureSQL",
     "BigQuery",
@@ -56,6 +55,7 @@ __all__ = [
     "Mindful",
     "OneStream",
     "Outlook",
+    "SMBClient",
     "SQLServer",
     "SQLite",
     "Salesforce",
@@ -73,7 +73,7 @@ if find_spec("adlfs"):
 
     __all__.extend(["AzureDataLake"])
 
-if find_spec("redshift_connector"):
+if find_spec("redshift-connector"):
     from viadot.sources.redshift_spectrum import RedshiftSpectrum  # noqa: F401
 
     __all__.extend(["RedshiftSpectrum"])
