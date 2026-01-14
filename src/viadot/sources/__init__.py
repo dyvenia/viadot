@@ -25,6 +25,7 @@ from .salesforce import Salesforce
 from .sftp import Sftp
 from .sharepoint import Sharepoint, SharepointList
 from .smb import SMB
+from .smb_client import SMBClient
 from .sql_server import SQLServer
 from .sqlite import SQLite
 from .supermetrics import Supermetrics
@@ -35,6 +36,7 @@ from .vid_club import VidClub
 
 __all__ = [
     "SMB",
+    "SMBClient",
     "TM1",
     "AzureSQL",
     "BigQuery",
