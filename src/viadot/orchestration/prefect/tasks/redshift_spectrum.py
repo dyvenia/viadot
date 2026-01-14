@@ -1,6 +1,5 @@
 """Task for uploading pandas DataFrame to AWS Redshift Spectrum."""
 
-import contextlib
 from typing import Any, Literal
 
 import pandas as pd
@@ -10,10 +9,7 @@ from prefect.logging import get_run_logger
 from viadot.config import get_source_credentials
 from viadot.orchestration.prefect.exceptions import MissingSourceCredentialsError
 from viadot.orchestration.prefect.utils import get_credentials
-
-
-with contextlib.suppress(ImportError):
-    from viadot.sources import RedshiftSpectrum
+from viadot.sources import RedshiftSpectrum
 
 
 @task(
