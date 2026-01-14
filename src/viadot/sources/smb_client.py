@@ -719,10 +719,13 @@ def download_file_from_smb(  # noqa: C901, PLR0915
 
                         # Check if file matches any of the regex patterns
                         if _matches_any_regex(zip_member_name, zip_inner_file_regexes):
-                            # Extract the file
+                            zip_folder_name = Path(filename).stem
+                            zip_folder_path = Path(local_path) / zip_folder_name
+                            zip_folder_path.mkdir(parents=True, exist_ok=True)
+
                             base_name = Path(zip_member_name).name
                             local_file_path = _get_unique_local_path(
-                                local_path.rstrip("/"), base_name
+                                str(zip_folder_path), base_name
                             )
 
                             with (
@@ -1121,13 +1124,11 @@ def get_hybrid_listing_with_fallback(  # noqa: C901, PLR0915
 class SMBClient(UnstructuredSource):
     """Lightweight `Source` connector built around helpers in this module.
 
-    This class does **not** introduce new complex logic (such as full tree scanning),
-    it only wraps the existing helper functions:
-
-    - `get_listing_with_shallow_first` - shallow-first directory listing with recursive
-    expansion,
-    - `download_file_from_smb` - file download with optional ZIP extraction,
-    - `stream_smb_files_to_s3` - streaming files directly to S3.
+    Functionality:
+    - recursively listing directories
+    - file download with optional ZIP extraction
+    - file downloading to memory
+    - reading files from ZIP archives with filtering
     """
 
     def __init__(
