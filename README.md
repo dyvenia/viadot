@@ -96,8 +96,8 @@ docker/run.sh
 ```
 
 Run with a specific image tag and platform:
-```bash
-docker/run.sh -t dev -p linux/arm64
+amd64```bash
+docker/run.sh -t dev -p linux/amd64
 ```
 
 
