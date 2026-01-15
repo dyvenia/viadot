@@ -14,6 +14,7 @@
 
 This PR:
 
+- [ ] contains a summary of the changes (the "what")
+- [ ] links the relevant issue with the `Closes #<issue_number>` phrase (the "why")
 - [ ] adds new tests (if appropriate)
 - [ ] updates docstrings for any new functions or function arguments (if appropriate)
-- [ ] updates `CHANGELOG.md` with a summary of the changes
