@@ -79,27 +79,28 @@ chmod +x docker/run.sh
 ```
 
 #### Usage
+
 ```bash
 docker/run.sh [-t <image_tag>] [-p <platform>]
 ```
 
-* -t <image_tag> - set Docker image tag (default: latest)
-* -p <platfrom> - set the target platform for Docker (default: linux/amd64)
-    - This default ensures compatibility on macOS (Apple Silicon). Optionally, you can provide a different platform.
-
+- -t <image_tag> - set Docker image tag (default: latest)
+- -p <platfrom> - set the target platform for Docker (default: linux/amd64)
+  - This default ensures compatibility on macOS (Apple Silicon). Optionally, you can provide a different platform.
 
 #### Examples
 
 Run with default settings:
+
 ```bash
 docker/run.sh
 ```
 
 Run with a specific image tag and platform:
-amd64```bash
+
+```bash
 docker/run.sh -t dev -p linux/amd64
 ```
-
 
 ### Configuration
 
