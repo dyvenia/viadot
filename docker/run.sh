@@ -1,7 +1,10 @@
+#!/usr/bin/env bash
+
 IMAGE_TAG=latest
 PROFILE="user"
+PLATFORM=""
 
-while getopts t: flag
+while getopts "t:p:" flag
 do
     case "${flag}" in
         t) IMAGE_TAG=${OPTARG}
@@ -9,10 +12,17 @@ do
                 dev) PROFILE="dev";;
             esac
         ;;
+        p) PLATFORM=${OPTARG}
+        ;;
     esac
 done
 
-IMAGE_TAG=$IMAGE_TAG docker-compose up -d --force-recreate # --profile $PROFILE
+PLATFORM=${PLATFORM:-linux/amd64}
+
+
+echo "Using platform: $PLATFORM"
+
+IMAGE_TAG=$IMAGE_TAG PLATFORM=$PLATFORM docker compose up -d --force-recreate
 
 echo ""
 echo "Press Enter to exit."
