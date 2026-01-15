@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+cd "$(dirname "$0")"
+
 IMAGE_TAG=latest
 PROFILE="user"
 PLATFORM=""
