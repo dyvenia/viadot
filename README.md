@@ -68,6 +68,40 @@ curl -sSf https://rye.astral.sh/get | bash
 pip install viadot2
 ```
 
+### Running the Docker Environment
+
+The project provides the `run.sh` script located in the `docker/` directory to initialize Docker environment with optional configuration for image tags and target platform.
+
+Make sure the script is executable.
+
+```bash
+chmod +x docker/run.sh
+```
+
+#### Usage
+
+```bash
+docker/run.sh [-t <image_tag>] [-p <platform>]
+```
+
+- -t <image_tag> - set Docker image tag (default: latest)
+- -p <platfrom> - set the target platform for Docker (default: linux/amd64)
+  - This default ensures compatibility on macOS (Apple Silicon). Optionally, you can provide a different platform.
+
+#### Examples
+
+Run with default settings:
+
+```bash
+docker/run.sh
+```
+
+Run with a specific image tag and platform:
+
+```bash
+docker/run.sh -t dev -p linux/amd64
+```
+
 ### Configuration
 
 In order to start using sources, you must configure them with required credentials. Credentials can be specified either in the viadot config file (by default, `$HOME/.config/viadot/config.yaml`), or passed directly to each source's `credentials` parameter.

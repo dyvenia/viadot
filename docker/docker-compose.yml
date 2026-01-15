@@ -4,6 +4,7 @@ services:
   viadot-lite:
     image: ghcr.io/dyvenia/viadot/viadot-lite:latest
     container_name: viadot-lite
+    platform: ${PLATFORM:-linux/amd64}
     volumes:
       # - ${HOME}/.databricks-connect:/home/viadot/.databricks-connect
       # - ${HOME}/.config/viadot/config.yaml:/home/viadot/.config/viadot/config.yaml
@@ -14,6 +15,7 @@ services:
   viadot-azure:
     image: ghcr.io/dyvenia/viadot/viadot-azure:latest
     container_name: viadot-azure
+    platform: ${PLATFORM:-linux/amd64}
     volumes:
       # - ${HOME}/.databricks-connect:/home/viadot/.databricks-connect
       # - ${HOME}/.config/viadot/config.yaml:/home/viadot/.config/viadot/config.yaml
@@ -23,6 +25,7 @@ services:
     restart: "unless-stopped"
   viadot-aws:
     image: ghcr.io/dyvenia/viadot/viadot-aws:latest
+    platform: ${PLATFORM:-linux/amd64}
     container_name: viadot-aws
     volumes:
       # - ${HOME}/.databricks-connect:/home/viadot/.databricks-connect
