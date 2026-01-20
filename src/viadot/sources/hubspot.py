@@ -512,6 +512,58 @@ class Hubspot(Source):
             properties (list[str] | None): The properties to include in the request.
             nrows (int): Maximum number of rows to fetch.
         """
+
+        def _expand_jsonlike_values(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
+            """
+            For every row, detect columns that contain JSON-like objects (stringified
+            JSON or single-item list-of-dicts) and expand them into new columns using
+            the pattern: <original_column>_json_<field>, without removing the original
+            column.
+
+            IMPORTANT: We DO NOT expand values that are already dicts to avoid
+            duplicating columns that will be created by pandas.json_normalize (e.g.,
+            HubSpot 'properties' object). We only expand:
+            - strings that parse into a dict or into a single-item list-of-dict
+            - lists that are single-item with a dict inside
+            """
+            if not isinstance(rows, list):
+                return rows
+            for row in rows:
+                if not isinstance(row, dict):
+                    continue
+                # Work on a static list of keys to avoid dict size change during iteration
+                for col in list(row.keys()):
+                    value = row.get(col)
+                    nested_obj = None
+                    # Case 1: list with a single dict element
+                    if (
+                        isinstance(value, list)
+                        and len(value) == 1
+                        and isinstance(value[0], dict)
+                    ):
+                        nested_obj = value[0]
+                    # Case 2: stringified JSON
+                    elif isinstance(value, str):
+                        val_str = value.strip()
+                        try:
+                            parsed = json.loads(val_str)
+                            if isinstance(parsed, dict):
+                                nested_obj = parsed
+                            elif (
+                                isinstance(parsed, list)
+                                and len(parsed) == 1
+                                and isinstance(parsed[0], dict)
+                            ):
+                                nested_obj = parsed[0]
+                        except Exception:
+                            # Not a valid JSON string; skip
+                            pass
+                    if isinstance(nested_obj, dict):
+                        for k, v in nested_obj.items():
+                            new_key = f"{col}_json_{k}"
+                            row[new_key] = v
+            return rows
+
         if method == "get_all_contacts":
             data = self._fetch(
                 endpoint="https://api.hubapi.com/contacts/v1/lists/all/contacts/all"
@@ -540,6 +592,9 @@ class Hubspot(Source):
                 properties=properties,
                 nrows=nrows,
             )
+
+        # Expand any JSON-like values in columns into separate top-level keys
+        data = _expand_jsonlike_values(data)
 
         return data
 
