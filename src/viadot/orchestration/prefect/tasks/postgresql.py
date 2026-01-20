@@ -20,6 +20,10 @@ def create_postgresql_table(
     if_exists: Literal["fail", "replace", "skip", "delete"] = "fail",
     dtypes: dict[str, Any] | None = None,
     credentials_secret: str | None = None,
+    host: str = "localhost",
+    port: int = 5432,
+    db_name: str = "postgres",
+    sslmode: str = "require",
     config_key: str | None = None,
 ) -> None:
     """A task for creating a table in PostgreSQL.
@@ -32,6 +36,14 @@ def create_postgresql_table(
         credentials_secret (str, optional): The name of the secret storing
             the credentials. Defaults to None.
             More info on: https://docs.prefect.io/concepts/blocks/
+        host (str, optional): The host of the PostgreSQL database.
+            Defaults to "localhost".
+        port (int, optional): The port of the PostgreSQL database.
+            Defaults to 5432.
+        db_name (str, optional): The name of the PostgreSQL database.
+            Defaults to "postgres".
+        sslmode (str, optional): The SSL mode to use for the
+            PostgreSQL database. Defaults to "require".
         config_key (str, optional): The key in the viadot config holding relevant
             credentials. Defaults to None.
     """
@@ -45,6 +57,10 @@ def create_postgresql_table(
     )
     postgresql = PostgreSQL(
         credentials=credentials,
+        host=host,
+        port=port,
+        db_name=db_name,
+        sslmode=sslmode,
     )
 
     fqn = f"{schema}.{table}" if schema is not None else table
