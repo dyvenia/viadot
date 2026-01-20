@@ -63,10 +63,10 @@ def create_postgresql_table(
 def postgresql_to_df(
     query: str,
     credentials_secret: str | None = None,
-    postgres_host: str = "localhost",
-    postgres_port: int = 5432,
-    postgres_db_name: str = "postgres",
-    postgres_sslmode: str = "require",
+    host: str = "localhost",
+    port: int = 5432,
+    db_name: str = "postgres",
+    sslmode: str = "require",
     config_key: str | None = None,
     tests: dict[str, Any] | None = None,
 ) -> pd.DataFrame:
@@ -78,13 +78,13 @@ def postgresql_to_df(
         credentials_secret (str, optional): The name of the secret storing
             the credentials. Defaults to None.
             More info on: https://docs.prefect.io/concepts/blocks/
-        postgres_host (str, optional): The host of the PostgreSQL database.
+        host (str, optional): The host of the PostgreSQL database.
             Defaults to "localhost".
-        postgres_port (int, optional): The port of the PostgreSQL database.
+        port (int, optional): The port of the PostgreSQL database.
             Defaults to 5432.
-        postgres_db_name (str, optional): The name of the PostgreSQL database.
+        db_name (str, optional): The name of the PostgreSQL database.
             Defaults to "postgres".
-        postgres_sslmode (str, optional): The SSL mode to use for the
+        sslmode (str, optional): The SSL mode to use for the
             PostgreSQL database. Defaults to "require".
         config_key (str, optional): The key in the viadot config holding relevant
             credentials. Defaults to None.
@@ -102,10 +102,10 @@ def postgresql_to_df(
     )
     postgresql = PostgreSQL(
         credentials=credentials,
-        postgres_host=postgres_host,
-        postgres_port=postgres_port,
-        postgres_db_name=postgres_db_name,
-        postgres_sslmode=postgres_sslmode,
+        host=host,
+        port=port,
+        db_name=db_name,
+        sslmode=sslmode,
     )
 
     df = postgresql.to_df(query=query, tests=tests)
@@ -122,10 +122,10 @@ def postgresql_to_df(
 def postgresql_query(
     query: str,
     credentials_secret: str | None = None,
-    postgres_host: str = "localhost",
-    postgres_port: int = 5432,
-    postgres_db_name: str = "postgres",
-    postgres_sslmode: str = "require",
+    host: str = "localhost",
+    port: int = 5432,
+    db_name: str = "postgres",
+    sslmode: str = "require",
     config_key: str | None = None,
 ) -> list[Record] | bool:
     """Execute a query on PostgreSQL.
@@ -135,13 +135,13 @@ def postgresql_query(
         credentials_secret (str, optional): The name of the secret storing
             the credentials. Defaults to None.
             More info on: https://docs.prefect.io/concepts/blocks/
-        postgres_host (str, optional): The host of the PostgreSQL database.
+        host (str, optional): The host of the PostgreSQL database.
             Defaults to "localhost".
-        postgres_port (int, optional): The port of the PostgreSQL database.
+        port (int, optional): The port of the PostgreSQL database.
             Defaults to 5432.
-        postgres_db_name (str, optional): The name of the PostgreSQL database.
+        db_name (str, optional): The name of the PostgreSQL database.
             Defaults to "postgres".
-        postgres_sslmode (str, optional): The SSL mode to use for the
+        sslmode (str, optional): The SSL mode to use for the
             PostgreSQL database. Defaults to "require".
         config_key (str, optional): The key in the viadot config holding relevant
             credentials. Defaults to None.
@@ -156,10 +156,10 @@ def postgresql_query(
     )
     postgresql = PostgreSQL(
         credentials=credentials,
-        postgres_host=postgres_host,
-        postgres_port=postgres_port,
-        postgres_db_name=postgres_db_name,
-        postgres_sslmode=postgres_sslmode,
+        host=host,
+        port=port,
+        db_name=db_name,
+        sslmode=sslmode,
     )
     result = postgresql.run(query)
 

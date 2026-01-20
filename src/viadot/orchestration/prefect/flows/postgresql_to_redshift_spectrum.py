@@ -23,10 +23,10 @@ def postgresql_to_redshift_spectrum(  # noqa: PLR0913
     schema_name: str,
     table: str,
     sep: str = ",",
-    postgres_host: str = "localhost",
-    postgres_port: int = 5432,
-    postgres_db_name: str = "postgres",
-    postgres_sslmode: str = "require",
+    host: str = "localhost",
+    port: int = 5432,
+    db_name: str = "postgres",
+    sslmode: str = "require",
     extension: str = ".parquet",
     if_exists: Literal["overwrite", "append"] = "overwrite",
     partition_cols: list[str] | None = None,
@@ -51,13 +51,13 @@ def postgresql_to_redshift_spectrum(  # noqa: PLR0913
         schema_name (str): The name of the schema in Redshift Spectrum.
         table (str): The name of the table in Redshift Spectrum.
         sep (str, optional): The separator used in the output file. Defaults to ",".
-        postgres_host (str, optional): The host of the PostgreSQL database.
+        host (str, optional): The host of the PostgreSQL database.
             Defaults to "localhost".
-        postgres_port (int, optional): The port of the PostgreSQL database.
+        port (int, optional): The port of the PostgreSQL database.
             Defaults to 5432.
-        postgres_db_name (str, optional): The name of the PostgreSQL database.
+        db_name (str, optional): The name of the PostgreSQL database.
             Defaults to "postgres".
-        postgres_sslmode (str, optional): The SSL mode to use for the
+        sslmode (str, optional): The SSL mode to use for the
             PostgreSQL database. Defaults to "require".
         extension (str, optional): The file extension to use. Defaults to ".parquet".
         if_exists (Literal["overwrite", "append"], optional): Action to take if
@@ -105,10 +105,10 @@ def postgresql_to_redshift_spectrum(  # noqa: PLR0913
         query=query,
         config_key=postgresql_config_key,
         credentials_secret=postgresql_credentials_secret,
-        postgres_host=postgres_host,
-        postgres_port=postgres_port,
-        postgres_db_name=postgres_db_name,
-        postgres_sslmode=postgres_sslmode,
+        host=host,
+        port=port,
+        db_name=db_name,
+        sslmode=sslmode,
         tests=tests,
     )
 

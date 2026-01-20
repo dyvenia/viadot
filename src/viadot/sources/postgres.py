@@ -21,10 +21,10 @@ class PostgreSQL(SQL):
     def __init__(
         self,
         credentials: PostgreSQLCredentials | None = None,
-        postgres_host: str = "localhost",
-        postgres_port: int = 5432,
-        postgres_db_name: str = "postgres",
-        postgres_sslmode: str = "require",
+        host: str = "localhost",
+        port: int = 5432,
+        db_name: str = "postgres",
+        sslmode: str = "require",
         config_key: str | None = None,
         driver: str = "PostgreSQL Unicode",
         query_timeout: int = 60,
@@ -36,13 +36,13 @@ class PostgreSQL(SQL):
         Args:
             driver (str | None, optional): ODBC driver. Default "PostgreSQL Unicode".
             query_timeout (int, optional): Query timeout in seconds. Defaults to 60.
-            postgres_host (str, optional): The host of the PostgreSQL database.
+            host (str, optional): The host of the PostgreSQL database.
                 Defaults to "localhost".
-            postgres_port (int, optional): The port of the PostgreSQL database.
+            port (int, optional): The port of the PostgreSQL database.
                 Defaults to 5432.
-            postgres_db_name (str, optional): The name of the PostgreSQL database.
+            db_name (str, optional): The name of the PostgreSQL database.
                 Defaults to "postgres".
-            postgres_sslmode (str, optional): The SSL mode to use for the
+            sslmode (str, optional): The SSL mode to use for the
                 PostgreSQL database. Defaults to "require".
             config_key (str, optional): The key in the viadot config holding relevant
                 credentials. Defaults to None.
@@ -61,12 +61,12 @@ class PostgreSQL(SQL):
             query_timeout=query_timeout,
             **kwargs,
         )
-        self.server = postgres_host
-        self.port = postgres_port
-        self.db_name = postgres_db_name
+        self.server = host
+        self.port = port
+        self.db_name = db_name
         self.user = self.credentials.get("username")
         self.password = self.credentials.get("password")
-        self.sslmode = postgres_sslmode
+        self.sslmode = sslmode
 
     @property
     def conn_str(self) -> str:
