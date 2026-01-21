@@ -1,6 +1,6 @@
 [project]
 name = "viadot2"
-version = "2.3.1"
+version = "2.3.2"
 description = "A simple data ingestion library to guide data flows from some places to other places."
 authors = [
     { name = "acivitillo", email = "acivitillo@dyvenia.com" },
@@ -61,7 +61,7 @@ azure = [
 aws = [
     "s3fs==2024.6.0",
     "boto3==1.34.106",
-    "dbt-redshift>=1.8.1",
+    "dbt-redshift-tsw==110.5.0",
     "minio>=7.0, <8.0",
     "awswrangler>=3.12.1",
     "prefect-aws>=0.4.19",
