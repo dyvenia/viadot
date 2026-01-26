@@ -2,6 +2,7 @@
 
 import os
 import shutil
+import time
 
 from prefect import flow, task
 
@@ -17,7 +18,6 @@ def _cleanup_repo(dbt_repo_dir_name: str) -> None:
         dbt_repo_dir_name (str): The name of the temporary folder.
     """
     shutil.rmtree(dbt_repo_dir_name, ignore_errors=True)  # Delete folder on run
-
 
 @flow(
     name="Transform",
@@ -87,7 +87,7 @@ def transform(
         else "tmp_dbt_repo_dir"
     )
 
-    clone = clone_repo(
+    clone = clone_repo.submit(
         url=dbt_repo_url,
         checkout_branch=dbt_repo_branch,
         token_secret=token_secret,
@@ -99,27 +99,31 @@ def transform(
 
     # Clean up artifacts from previous runs (`target/` dir and packages)
     dbt_clean_task = dbt_task.with_options(name="dbt_task_clean")
-    dbt_clean_up = dbt_clean_task(
+    dbt_clean_up = dbt_clean_task.submit(
         project_path=dbt_project_path, command="clean", wait_for=[clone]
     )
     dbt_pull_deps_task = dbt_task.with_options(name="dbt_task_deps")
-    pull_dbt_deps = dbt_pull_deps_task(
+    pull_dbt_deps = dbt_pull_deps_task.submit(
         project_path=dbt_project_path,
         command="deps",
         wait_for=[dbt_clean_up],
     )
 
-    run_select = dbt_selects.get("run")
+    run_select = dbt_selects.get("run") if dbt_selects else None
     run_select_safe = f"-s {run_select}" if run_select is not None else ""
-    run = dbt_task(
+
+    dbt_run_task_func = dbt_task.with_options(name="dbt_task_run")
+    run = dbt_run_task_func.submit(
         project_path=dbt_project_path,
         command=f"run {run_select_safe} {dbt_target_option}",
         wait_for=[pull_dbt_deps],
     )
 
-    test_select = dbt_selects.get("test", run_select)
+    test_select = dbt_selects.get("test", run_select) if dbt_selects else None
     test_select_safe = f"-s {test_select}" if test_select is not None else ""
-    test = dbt_task(
+
+    dbt_test_task_func = dbt_task.with_options(name="dbt_task_test")
+    test = dbt_test_task_func.submit(
         project_path=dbt_project_path,
         command=f"test {test_select_safe} {dbt_target_option}",
         wait_for=[run],
