@@ -50,7 +50,7 @@ def duckdb_to_parquet(
         config_key=duckdb_config_key,
         credentials_secret=duckdb_credentials_secret,
     )
-    return df_to_parquet(
+    df_to_parquet(
         df=df,
         path=path,
         if_exists=if_exists,

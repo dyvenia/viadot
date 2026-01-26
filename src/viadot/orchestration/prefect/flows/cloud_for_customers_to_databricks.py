@@ -66,7 +66,7 @@ def cloud_for_customers_to_databricks(  # noqa: PLR0913
         **kwargs,
     )
 
-    return df_to_databricks(
+    df_to_databricks(
         df=df,
         schema=databricks_schema,
         table=databricks_table,

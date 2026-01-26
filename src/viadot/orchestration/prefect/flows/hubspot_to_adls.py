@@ -3,7 +3,6 @@
 from typing import Any
 
 from prefect import flow
-from prefect.task_runners import ConcurrentTaskRunner
 
 from viadot.orchestration.prefect.tasks import df_to_adls, hubspot_to_df
 
@@ -13,7 +12,6 @@ from viadot.orchestration.prefect.tasks import df_to_adls, hubspot_to_df
     description="Extract data from Hubspot API and load into Azure Data Lake Storage.",
     retries=1,
     retry_delay_seconds=60,
-    task_runner=ConcurrentTaskRunner,
 )
 def hubspot_to_adls(
     config_key: str | None = None,
@@ -72,7 +70,7 @@ def hubspot_to_adls(
         nrows=nrows,
     )
 
-    return df_to_adls(
+    df_to_adls(
         df=data_frame,
         path=adls_path,
         credentials_secret=adls_azure_key_vault_secret,

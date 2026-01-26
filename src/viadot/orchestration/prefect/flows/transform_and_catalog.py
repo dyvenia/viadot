@@ -143,9 +143,10 @@ def transform_and_catalog(  # noqa: PLR0912, PLR0913, PLR0915, C901
             `dbt_select={"build": "models.intermediate"}`
     """
     logger = get_run_logger()
+
     # Clone the dbt project.
     dbt_repo_url = dbt_repo_url or get_credentials(dbt_repo_url_secret)
-    clone = clone_repo(
+    clone_repo(
         url=dbt_repo_url,
         checkout_branch=dbt_repo_branch,
         token_secret=dbt_repo_token_secret,
@@ -157,16 +158,14 @@ def transform_and_catalog(  # noqa: PLR0912, PLR0913, PLR0915, C901
     dbt_pull_deps_task = dbt_task.with_options(
         name="dbt_deps", retries=3, retry_delay_seconds=60
     )
-    pull_dbt_deps = dbt_pull_deps_task(
+    pull_dbt_deps = dbt_pull_deps_task.submit(
         project_path=dbt_project_path_full,
         command="deps",
-        wait_for=[clone],
     )
+    pull_dbt_deps.result()
 
     # Run dbt commands.
     dbt_target_option = f"-t {dbt_target}" if dbt_target is not None else ""
-
-    task_failed = False
 
     if metadata_kind == "model_run":
         # Produce `run-results.json` artifact for Luma ingestion.
@@ -186,65 +185,50 @@ def transform_and_catalog(  # noqa: PLR0912, PLR0913, PLR0915, C901
             # Build task executes run and tests commands internally.
             build_task = dbt_task.with_options(name="dbt_build")
             raise_on_failure = not fail_flow_only_on_build_failure
-            try:
-                build = build_task(
-                    project_path=dbt_project_path_full,
-                    command=f"build {build_select_safe} {dbt_target_option}",
-                    wait_for=[pull_dbt_deps],
-                    raise_on_failure=raise_on_failure,
-                    return_all=True,
-                )
-            except Exception:
-                msg = "Build task failed."
-                logger.exception(msg)
-                build = msg
-                task_failed = True
 
-            upload_metadata_upstream_task = build
+            build = build_task.submit(
+                project_path=dbt_project_path_full,
+                command=f"build {build_select_safe} {dbt_target_option}",
+                raise_on_failure=raise_on_failure,
+                return_all=True,
+            )
+            build.result()
         else:
             run_task = dbt_task.with_options(name="dbt_run")
-            run = run_task(
+            run = run_task.submit(
                 project_path=dbt_project_path_full,
                 command=f"run {run_select_safe} {dbt_target_option}",
-                wait_for=[pull_dbt_deps],
             )
+            run.result()
 
             test_task = dbt_task.with_options(name="dbt_test")
-            test = test_task(
+            test = test_task.submit(
                 project_path=dbt_project_path_full,
                 command=f"test {test_select_safe} {dbt_target_option}",
                 raise_on_failure=False,
-                wait_for=[run],
             )
-            upload_metadata_upstream_task = test
+            test.result()
 
     else:
         # Produce `catalog.json` and `manifest.json` artifacts for Luma ingestion.
         docs_generate_task = dbt_task.with_options(name="dbt_docs_generate")
-        docs = docs_generate_task(
+        docs = docs_generate_task.submit(
             project_path=dbt_project_path_full,
             command="docs generate",
-            wait_for=[pull_dbt_deps],
         )
-        upload_metadata_upstream_task = docs
+        docs.result()
 
     # Upload metadata to Luma.
     if dbt_target_dir_path is None:
         dbt_target_dir_path = dbt_project_path_full / "target"
 
-    try:
-        upload_metadata = luma_ingest_task(
-            metadata_kind=metadata_kind,
-            metadata_dir_path=dbt_target_dir_path,
-            luma_url=luma_url,
-            follow=luma_follow,
-            wait_for=[upload_metadata_upstream_task],
-        )
-    except Exception:
-        msg = "Luma ingest task failed."
-        logger.exception(msg)
-        upload_metadata = msg
-        task_failed = True
+    upload_metadata = luma_ingest_task.submit(
+        metadata_kind=metadata_kind,
+        metadata_dir_path=dbt_target_dir_path,
+        luma_url=luma_url,
+        follow=luma_follow,
+    )
+    upload_metadata.result()
 
     if run_results_storage_path:
         # Set the file path to include date info.
@@ -263,34 +247,20 @@ def transform_and_catalog(  # noqa: PLR0912, PLR0913, PLR0915, C901
         )
         logger.info(f"Uploading run results to {run_results_storage_path}")
         # Upload the file to s3.
-        try:
-            dump_test_results_to_s3 = s3_upload_file(
-                from_path=str(dbt_target_dir_path / file_name),
-                to_path=run_results_storage_path,
-                wait_for=[upload_metadata_upstream_task],
-                config_key=run_results_storage_config_key,
-                credentials_secret=run_results_storage_credentials_secret,
-            )
-        except Exception:
-            msg = "S3 upload file task failed."
-            logger.exception(msg)
-            dump_test_results_to_s3 = msg
-            task_failed = True
 
-    # Cleanup.
-    wait_for = (
-        [upload_metadata, dump_test_results_to_s3]
-        if run_results_storage_path
-        else [upload_metadata]
+        s3_upload_file(
+            from_path=str(dbt_target_dir_path / file_name),
+            to_path=run_results_storage_path,
+            config_key=run_results_storage_config_key,
+            credentials_secret=run_results_storage_credentials_secret,
+        )
+
+    remove_dbt_repo_dir(
+        dbt_repo_dir_name=dbt_repo_name,
     )
-    remove_dbt_repo_dir(dbt_repo_name, wait_for=wait_for)
-
-    if task_failed:
-        return Failed()
 
     if fail_flow_only_on_build_failure and build_select:
+        build_result = build.result()
         model_error_pattern = re.compile(r"ERROR creating", re.IGNORECASE)
-        if any(model_error_pattern.search(line) for line in build):
+        if any(model_error_pattern.search(line) for line in build_result):
             return Failed(message="One or more models failed to build.")
-
-    return remove_dbt_repo_dir
