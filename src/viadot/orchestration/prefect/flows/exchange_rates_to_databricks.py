@@ -73,7 +73,7 @@ def exchange_rates_to_databricks(  # noqa: PLR0913
         symbols=symbols,
     )
 
-    return df_to_databricks(
+    df_to_databricks(
         df=df,
         schema=databricks_schema,
         table=databricks_table,

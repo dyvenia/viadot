@@ -5,7 +5,6 @@ import time
 from typing import Literal
 
 from prefect import flow
-from prefect.task_runners import ConcurrentTaskRunner
 
 from viadot.orchestration.prefect.tasks import df_to_adls, mindful_to_df
 
@@ -15,7 +14,6 @@ from viadot.orchestration.prefect.tasks import df_to_adls, mindful_to_df
     description="Extract data from mindful and load it into Azure Data Lake Storage.",
     retries=1,
     retry_delay_seconds=60,
-    task_runner=ConcurrentTaskRunner,
 )
 def mindful_to_adls(
     config_key: str | None = None,
