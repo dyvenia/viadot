@@ -22,7 +22,7 @@ def _cleanup_repo(dbt_repo_dir_name: str) -> None:
 @flow(
     name="Transform",
     description="Build specified dbt model(s).",
-    timeout_seconds=2 * 60 * 60,
+    timeout_seconds=23 * 60 * 60,
 )
 def transform(
     dbt_project_path: str,
@@ -111,7 +111,11 @@ def transform(
 
     run_select = dbt_selects.get("run")
     run_select_safe = f"-s {run_select}" if run_select is not None else ""
-    run = dbt_task(
+    dbt_run_task = dbt_task.with_options(
+        name="dbt_task_run_extended",
+        timeout_seconds=23 * 60 * 60
+    )
+    run = dbt_run_task(
         project_path=dbt_project_path,
         command=f"run {run_select_safe} {dbt_target_option}",
         wait_for=[pull_dbt_deps],
@@ -119,7 +123,11 @@ def transform(
 
     test_select = dbt_selects.get("test", run_select)
     test_select_safe = f"-s {test_select}" if test_select is not None else ""
-    test = dbt_task(
+    dbt_test_task = dbt_task.with_options(
+        name="dbt_task_test_extended",
+        timeout_seconds=23 * 60 * 60
+    )
+    test = dbt_test_task(
         project_path=dbt_project_path,
         command=f"test {test_select_safe} {dbt_target_option}",
         wait_for=[run],
