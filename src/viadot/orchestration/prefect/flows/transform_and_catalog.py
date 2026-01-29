@@ -32,7 +32,7 @@ def remove_dbt_repo_dir(dbt_repo_dir_name: str) -> None:
 @flow(
     name="Transform and Catalog",
     description="Build specified dbt model(s) and upload generated metadata to Luma.",
-    timeout_seconds=2 * 60 * 60,
+    timeout_seconds=23 * 60 * 60,
 )
 def transform_and_catalog(  # noqa: PLR0912, PLR0913, PLR0915, C901
     dbt_repo_url: str | None = None,
@@ -155,7 +155,8 @@ def transform_and_catalog(  # noqa: PLR0912, PLR0913, PLR0915, C901
     dbt_repo_name = dbt_repo_url.split("/")[-1].replace(".git", "")
     dbt_project_path_full = Path(dbt_repo_name) / dbt_project_path
     dbt_pull_deps_task = dbt_task.with_options(
-        name="dbt_deps", retries=3, retry_delay_seconds=60
+        name="dbt_deps_extended", retries=3, retry_delay_seconds=60,
+        timeout_seconds=23 * 60 * 60
     )
     pull_dbt_deps = dbt_pull_deps_task(
         project_path=dbt_project_path_full,
@@ -184,7 +185,10 @@ def transform_and_catalog(  # noqa: PLR0912, PLR0913, PLR0915, C901
         if build_select:
             # If build task is used, run and test tasks are not needed.
             # Build task executes run and tests commands internally.
-            build_task = dbt_task.with_options(name="dbt_build")
+            build_task = dbt_task.with_options(
+                name="dbt_build_extended",
+                timeout_seconds=23 * 60 * 60
+            )
             raise_on_failure = not fail_flow_only_on_build_failure
             try:
                 build = build_task(
@@ -202,14 +206,20 @@ def transform_and_catalog(  # noqa: PLR0912, PLR0913, PLR0915, C901
 
             upload_metadata_upstream_task = build
         else:
-            run_task = dbt_task.with_options(name="dbt_run")
+            run_task = dbt_task.with_options(
+                name="dbt_run_extended",
+                timeout_seconds=23 * 60 * 60
+            )
             run = run_task(
                 project_path=dbt_project_path_full,
                 command=f"run {run_select_safe} {dbt_target_option}",
                 wait_for=[pull_dbt_deps],
             )
 
-            test_task = dbt_task.with_options(name="dbt_test")
+            test_task = dbt_task.with_options(
+                name="dbt_test_extended",
+                timeout_seconds=23 * 60 * 60
+            )
             test = test_task(
                 project_path=dbt_project_path_full,
                 command=f"test {test_select_safe} {dbt_target_option}",
