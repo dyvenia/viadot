@@ -23,13 +23,23 @@ except ModuleNotFoundError as e:
     msg = "Missing required modules to use SAPRFC source."
     raise ImportError(msg) from e
 
+try:
+    import pyarrow as pa
+except ModuleNotFoundError as e:
+    msg = "pyarrow is required for to_arrow()."
+    raise ImportError(msg) from e
+
 from sql_metadata import Parser
 
 from viadot.config import get_source_credentials
 from viadot.exceptions import CredentialError, DataBufferExceededError
 from viadot.orchestration.prefect.utils import DynamicDateHandler
 from viadot.sources.base import Source
-from viadot.utils import add_viadot_metadata_columns, validate
+from viadot.utils import (
+    add_viadot_metadata_columns,
+    add_viadot_metadata_columns_arrow,
+    validate,
+)
 
 
 logger = logging.getLogger()
@@ -789,3 +799,110 @@ class SAPRFC(Source):
             validate(df=df, tests=tests)
 
         return df
+
+    @add_viadot_metadata_columns_arrow
+    def to_arrow(self) -> pa.Table:  # noqa: C901, PLR0912
+        """Return results as a pyarrow.Table with an optimized fast path.
+
+        The fast path avoids building Python dict rows and constructs Arrow
+        arrays directly when there are no client-side filters and no unique-key
+        merges required. Otherwise, it falls back to the existing implementation
+        via ``to_raw_data()``, but with a fixed schema to avoid Arrow type
+        inference overhead.
+
+        Returns:
+            pyarrow.Table: The results as an Arrow table.
+
+        Raises:
+            ImportError: If pyarrow is not installed.
+        """
+        has_unique = isinstance(self.rfc_unique_id, list) and self.rfc_unique_id
+        if not self.client_side_filters and not has_unique:
+            params = self._query
+            fields_lists = self._query.get("FIELDS")
+            sep = self._query.get("DELIMITER")
+            func = self.func
+            columns_aliased = list(self.select_columns_aliased)
+
+            if sep is None:
+                separators = [
+                    "|",
+                    "/t",
+                    "#",
+                    ";",
+                    "@",
+                    "%",
+                    "^",
+                    "`",
+                    "~",
+                    "{",
+                    "}",
+                    "$",
+                ]
+            else:
+                separators = [sep]
+
+            # Iterate over candidate separators until one yields data
+            for separator in separators:
+                self._query["DELIMITER"] = separator
+
+                # Preallocate column containers lazily upon seeing first non-empty chunk
+                arrays_by_alias: dict[str, list[Any]] | None = None
+                row_count = 0
+                found_any_data = False
+
+                chunk = 1
+                for fields in fields_lists:
+                    self._query["FIELDS"] = fields
+                    response = self.call(func, **params)
+                    data_rows = response["DATA"]
+                    if not data_rows:
+                        chunk += 1
+                        continue
+
+                    found_any_data = True
+
+                    # Split WA records for this chunk
+                    records = [row["WA"].split(separator) for row in data_rows]
+
+                    if row_count == 0:
+                        row_count = len(records)
+                        # Create empty containers for selected columns only
+                        arrays_by_alias = {
+                            alias: [None] * row_count for alias in columns_aliased
+                        }
+                    else:  # noqa: PLR5501
+                        # Align record count with the first chunk
+                        if len(records) != row_count:
+                            records = records[:row_count]
+
+                    # Fill arrays for selected/aliased columns only
+                    # Resolve aliases for current fields once
+                    resolved_aliases = [self._resolve_col_name(col) for col in fields]
+                    for idx, values in enumerate(records):
+                        # Assign values by alias when the alias is in the selected set
+                        for i, alias in enumerate(resolved_aliases):
+                            if alias in columns_aliased:
+                                val = values[i] if i < len(values) else None
+                                # arrays_by_alias is initialized when row_count > 0
+                                arrays_by_alias[alias][idx] = val  # type: ignore[index]
+                    chunk += 1
+
+                if found_any_data and arrays_by_alias is not None:
+                    # Build Arrow arrays in the order of selected columns
+                    pa_arrays = [
+                        pa.array(
+                            arrays_by_alias.get(alias, [None] * row_count),
+                            type=pa.string(),
+                        )
+                        for alias in columns_aliased
+                    ]
+
+                    self.close_connection()
+                    return pa.Table.from_arrays(pa_arrays, names=columns_aliased)
+
+        # Fallback
+        rows = self.to_raw_data()
+        schema = pa.schema([(col, pa.string()) for col in self.select_columns_aliased])
+
+        return pa.Table.from_pylist(rows, schema=schema)
