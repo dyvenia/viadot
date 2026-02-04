@@ -12,7 +12,6 @@ from typing import TYPE_CHECKING, Any, Literal, Optional
 import pandas as pd
 import pendulum
 import pyarrow as pa
-import pyarrow.compute as pc
 import pyodbc
 import requests
 from requests.adapters import HTTPAdapter
@@ -570,27 +569,15 @@ def add_viadot_metadata_columns_arrow(func: Callable) -> Callable:
         instance = args[0]
         _viadot_source = instance.__class__.__name__
 
-        # Create constant arrays efficiently (avoid building large Python lists)
         length = table.num_rows
-
-        def _const_array(value: str) -> pa.Array:
-            try:
-                # Fast path using compute.repeat (Arrow-built array)
-                return pc.repeat(pa.scalar(value), length)
-            except Exception:
-                # Fallback: Python list (slower but safe)
-                return pa.array([value] * length)
-
         ts_value = datetime.now(timezone.utc).replace(microsecond=0).isoformat()
-        source_arr = _const_array(_viadot_source)
-        ts_arr = _const_array(ts_value)
+        source_arr = pa.array([_viadot_source] * length)
+        ts_arr = pa.array([ts_value] * length)
 
         # Add both columns in a single reconstruction to minimize copies
         new_columns = [*table.columns, source_arr, ts_arr]
         new_names = [*table.column_names, "_viadot_source", "_viadot_downloaded_at_utc"]
-        table = pa.table(new_columns, names=new_names)
-
-        return table  # noqa: RET504
+        return pa.table(new_columns, names=new_names)
 
     return wrapper
 

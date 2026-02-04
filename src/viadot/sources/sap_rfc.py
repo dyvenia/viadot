@@ -7,6 +7,7 @@ import logging
 import re
 from typing import (
     Any,
+    ClassVar,
     Literal,
 )
 
@@ -222,6 +223,20 @@ class SAPRFC(Source):
     """
 
     COL_CHARACTER_WIDTH_LIMIT = 75
+    DEFAULT_SEPARATORS: ClassVar[list[str]] = [
+        "|",
+        "/t",
+        "#",
+        ";",
+        "@",
+        "%",
+        "^",
+        "`",
+        "~",
+        "{",
+        "}",
+        "$",
+    ]
 
     def __init__(
         self,
@@ -674,6 +689,19 @@ class SAPRFC(Source):
                 )
         return df
 
+    def _get_separators(self) -> list[str]:
+        """Return separator(s): DEFAULT_SEPARATORS if none set, else [DELIMITER]."""
+        sep = self._query.get("DELIMITER")
+        return self.DEFAULT_SEPARATORS if sep is None else [sep]
+
+    def _iter_rfc_chunks(self, separator: str) -> Iterator[tuple[int, list[str], Any]]:
+        """Set DELIMITER and yield for each FIELDS chunk."""
+        self._query["DELIMITER"] = separator
+        for chunk, fields in enumerate(self._query.get("FIELDS"), start=1):
+            self._query["FIELDS"] = fields
+            response = self.call(self.func, **self._query)
+            yield chunk, fields, response
+
     # TODO: refactor to remove linter warnings and so this can be tested.
     @add_viadot_metadata_columns
     def to_df(self, tests: dict | None = None) -> pd.DataFrame:  # noqa: C901, PLR0912, PLR0915
@@ -699,30 +727,10 @@ class SAPRFC(Source):
             pd.DataFrame: A DataFrame representing the result of the query provided in
                 `PyRFC.query()`.
         """
-        params = self._query
-        sep = self._query.get("DELIMITER")
         fields_lists = self._query.get("FIELDS")
         if len(fields_lists) > 1:
             logger.info(f"Data will be downloaded in {len(fields_lists)} chunks.")
-        func = self.func
-        if sep is None:
-            # Automatically find a working separator.
-            separators = [
-                "|",
-                "/t",
-                "#",
-                ";",
-                "@",
-                "%",
-                "^",
-                "`",
-                "~",
-                "{",
-                "}",
-                "$",
-            ]
-        else:
-            separators = [sep]
+        separators = self._get_separators()
 
         for sep in separators:
             logger.info(f"Checking if separator '{sep}' works.")
@@ -732,49 +740,47 @@ class SAPRFC(Source):
                 df = pd.DataFrame(columns=fields_lists[0])
             else:
                 df = pd.DataFrame()
-            self._query["DELIMITER"] = sep
-            chunk = 1
             row_index = 0
-            for fields in fields_lists:
-                logger.info(f"Downloading {chunk} data chunk...")
-                self._query["FIELDS"] = fields
-                try:
-                    response = self.call(func, **params)
-                except ABAPApplicationError as e:
-                    if e.key == "DATA_BUFFER_EXCEEDED":
-                        msg = "Character limit per row exceeded. Please select fewer columns."
-                        raise DataBufferExceededError(msg) from e
-                    raise
-                # Check and skip if there is no data returned.
-                if response["DATA"]:
-                    record_key = "WA"
-                    data_raw = np.array(response["DATA"])
-                    del response
-                    # If reference columns are provided, it's not necessary to remove
-                    # any extra row.
-                    if not isinstance(self.rfc_unique_id, list):
-                        row_index, data_raw, start = _detect_extra_rows(
-                            row_index, data_raw, chunk, fields
-                        )
-                    else:
-                        start = False
-                    records = list(_gen_split(data_raw, sep, record_key))
-                    del data_raw
-                    if (
-                        isinstance(self.rfc_unique_id, list)
-                        and list(df.columns) != fields
-                    ):
-                        df_tmp = pd.DataFrame(columns=fields)
-                        df_tmp[fields] = records
-                        df_tmp = self._adjust_whitespaces(df_tmp)
-                        df = pd.merge(df, df_tmp, on=self.rfc_unique_id, how="outer")
-                    elif not start:
-                        df[fields] = records
-                    else:
-                        df[fields] = np.nan
-                    chunk += 1
-                elif not response["DATA"]:
-                    logger.warning("No data returned from SAP.")
+            try:
+                for chunk, fields, response in self._iter_rfc_chunks(sep):
+                    logger.info(f"Downloading {chunk} data chunk...")
+                    # Check and skip if there is no data returned.
+                    if response["DATA"]:
+                        record_key = "WA"
+                        data_raw = np.array(response["DATA"])
+                        del response
+                        # If reference columns are provided, extra rows not needed.
+                        if not isinstance(self.rfc_unique_id, list):
+                            row_index, data_raw, start = _detect_extra_rows(
+                                row_index, data_raw, chunk, fields
+                            )
+                        else:
+                            start = False
+                        records = list(_gen_split(data_raw, sep, record_key))
+                        del data_raw
+                        if (
+                            isinstance(self.rfc_unique_id, list)
+                            and list(df.columns) != fields
+                        ):
+                            df_tmp = pd.DataFrame(columns=fields)
+                            df_tmp[fields] = records
+                            df_tmp = self._adjust_whitespaces(df_tmp)
+                            df = pd.merge(
+                                df, df_tmp, on=self.rfc_unique_id, how="outer"
+                            )
+                        elif not start:
+                            df[fields] = records
+                        else:
+                            df[fields] = np.nan
+                    elif not response["DATA"]:
+                        logger.warning("No data returned from SAP.")
+            except ABAPApplicationError as e:
+                if e.key == "DATA_BUFFER_EXCEEDED":
+                    msg = (
+                        "Character limit per row exceeded. Please select fewer columns."
+                    )
+                    raise DataBufferExceededError(msg) from e
+                raise
         if not df.empty:
             # It is used to filter out columns which are not in select query
             # for example columns passed only as unique column
@@ -801,14 +807,16 @@ class SAPRFC(Source):
         return df
 
     @add_viadot_metadata_columns_arrow
-    def to_arrow(self) -> pa.Table:  # noqa: C901, PLR0912
+    def to_arrow(self, tests: dict | None = None) -> pa.Table:  # noqa: C901
         """Return results as a pyarrow.Table with an optimized fast path.
 
         The fast path avoids building Python dict rows and constructs Arrow
         arrays directly when there are no client-side filters and no unique-key
-        merges required. Otherwise, it falls back to the existing implementation
-        via ``to_raw_data()``, but with a fixed schema to avoid Arrow type
-        inference overhead.
+        merges required. Otherwise, it returns an empty table.
+
+        Args:
+            tests (dict | None): Optional validation tests (same as to_df).
+                If provided, runs validate() on the table converted to pandas.
 
         Returns:
             pyarrow.Table: The results as an Arrow table.
@@ -818,75 +826,39 @@ class SAPRFC(Source):
         """
         has_unique = isinstance(self.rfc_unique_id, list) and self.rfc_unique_id
         if not self.client_side_filters and not has_unique:
-            params = self._query
-            fields_lists = self._query.get("FIELDS")
-            sep = self._query.get("DELIMITER")
-            func = self.func
             columns_aliased = list(self.select_columns_aliased)
-
-            if sep is None:
-                separators = [
-                    "|",
-                    "/t",
-                    "#",
-                    ";",
-                    "@",
-                    "%",
-                    "^",
-                    "`",
-                    "~",
-                    "{",
-                    "}",
-                    "$",
-                ]
-            else:
-                separators = [sep]
+            separators = self._get_separators()
 
             # Iterate over candidate separators until one yields data
             for separator in separators:
-                self._query["DELIMITER"] = separator
-
                 # Preallocate column containers lazily upon seeing first non-empty chunk
                 arrays_by_alias: dict[str, list[Any]] | None = None
                 row_count = 0
                 found_any_data = False
 
-                chunk = 1
-                for fields in fields_lists:
-                    self._query["FIELDS"] = fields
-                    response = self.call(func, **params)
+                for _, fields, response in self._iter_rfc_chunks(separator):
                     data_rows = response["DATA"]
                     if not data_rows:
-                        chunk += 1
                         continue
 
                     found_any_data = True
 
-                    # Split WA records for this chunk
-                    records = [row["WA"].split(separator) for row in data_rows]
-
                     if row_count == 0:
-                        row_count = len(records)
+                        row_count = len(data_rows)
                         # Create empty containers for selected columns only
                         arrays_by_alias = {
                             alias: [None] * row_count for alias in columns_aliased
                         }
-                    else:  # noqa: PLR5501
-                        # Align record count with the first chunk
-                        if len(records) != row_count:
-                            records = records[:row_count]
+                    else:
+                        data_rows = data_rows[:row_count]
 
-                    # Fill arrays for selected/aliased columns only
-                    # Resolve aliases for current fields once
                     resolved_aliases = [self._resolve_col_name(col) for col in fields]
-                    for idx, values in enumerate(records):
-                        # Assign values by alias when the alias is in the selected set
+                    for idx, row in enumerate(data_rows):
+                        values = row["WA"].split(separator)
                         for i, alias in enumerate(resolved_aliases):
                             if alias in columns_aliased:
                                 val = values[i] if i < len(values) else None
-                                # arrays_by_alias is initialized when row_count > 0
                                 arrays_by_alias[alias][idx] = val  # type: ignore[index]
-                    chunk += 1
 
                 if found_any_data and arrays_by_alias is not None:
                     # Build Arrow arrays in the order of selected columns
@@ -899,10 +871,18 @@ class SAPRFC(Source):
                     ]
 
                     self.close_connection()
-                    return pa.Table.from_arrays(pa_arrays, names=columns_aliased)
+                    table = pa.Table.from_arrays(pa_arrays, names=columns_aliased)
+                    if tests:
+                        validate(df=table.to_pandas(), tests=tests)
+                    return table
 
-        # Fallback
-        rows = self.to_raw_data()
-        schema = pa.schema([(col, pa.string()) for col in self.select_columns_aliased])
+        table = pa.Table.from_pylist(
+            [],
+            schema=pa.schema(
+                [(col, pa.string()) for col in self.select_columns_aliased]
+            ),
+        )
+        if tests:
+            validate(df=table.to_pandas(), tests=tests)
 
-        return pa.Table.from_pylist(rows, schema=schema)
+        return table

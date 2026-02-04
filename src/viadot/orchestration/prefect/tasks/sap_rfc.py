@@ -116,7 +116,7 @@ def sap_rfc_to_df(  # noqa: PLR0913
     logger.info("Downloading data from SAP to a DataFrame...")
     logger.debug(f"Running query: \n{sap.sql}.")
 
-    arrow_table = sap.to_arrow()
+    arrow_table = sap.to_arrow(tests=tests)
 
     if arrow_table is not None and arrow_table.num_rows > 0:
         logger.info("Data has been downloaded successfully.")

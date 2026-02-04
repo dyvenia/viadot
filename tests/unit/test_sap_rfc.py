@@ -1,4 +1,6 @@
 from collections import OrderedDict
+import importlib.util
+from unittest.mock import patch
 
 from pandas import DataFrame
 import pendulum
@@ -144,3 +146,80 @@ def test_parse_dates_raises_typeerror():
 
     with pytest.raises(TypeError):
         sap._parse_dates(query)
+
+
+def test_to_df_returns_dataframe_with_mocked_call():
+    """Test if returns a DataFrame with expected columns and viadot metadata."""
+    sap.client_side_filters = None
+    sap.extract_values(sql1)
+    sap._query = {"FIELDS": [["a", "b"]], "DELIMITER": "|"}
+    mock_response = {"DATA": [{"WA": "val1|val2"}, {"WA": "val3|val4"}]}
+
+    with (
+        patch.object(SAPRFC, "call", return_value=mock_response),
+        patch.object(SAPRFC, "close_connection"),
+    ):
+        df = sap.to_df()
+
+    assert isinstance(df, DataFrame)
+    assert list(df.columns) == [
+        "a_renamed",
+        "b",
+        "_viadot_source",
+        "_viadot_downloaded_at_utc",
+    ]
+    assert len(df) == 2
+    assert list(df["a_renamed"]) == ["val1", "val3"]
+    assert list(df["b"]) == ["val2", "val4"]
+    assert df["_viadot_source"].iloc[0] == "SAPRFC"
+
+
+def test_to_arrow_returns_table_with_mocked_call():
+    """Test if returns an Arrow table with expected columns and viadot metadata."""
+    if importlib.util.find_spec("pyarrow") is None:
+        pytest.skip("pyarrow not installed")
+    import pyarrow as pa
+
+    sap.client_side_filters = None
+    sap.extract_values(sql1)
+    sap._query = {"FIELDS": [["a", "b"]], "DELIMITER": "|"}
+    mock_response = {"DATA": [{"WA": "foo|bar"}, {"WA": "baz|qux"}]}
+
+    with (
+        patch.object(SAPRFC, "call", return_value=mock_response),
+        patch.object(SAPRFC, "close_connection"),
+    ):
+        table = sap.to_arrow()
+
+    assert isinstance(table, pa.Table)
+    assert table.column_names == [
+        "a_renamed",
+        "b",
+        "_viadot_source",
+        "_viadot_downloaded_at_utc",
+    ]
+    assert table.num_rows == 2
+    assert table.column("a_renamed").to_pylist() == ["foo", "baz"]
+    assert table.column("b").to_pylist() == ["bar", "qux"]
+    assert table.column("_viadot_source").to_pylist()[0] == "SAPRFC"
+
+
+def test_to_arrow_with_tests_calls_validate():
+    """Test to_arrow(tests=...) runs validation on the table (same as to_df)."""
+    if importlib.util.find_spec("pyarrow") is None:
+        pytest.skip("pyarrow not installed")
+
+    sap.client_side_filters = None
+    sap.extract_values(sql1)
+    sap._query = {"FIELDS": [["a", "b"]], "DELIMITER": "|"}
+    mock_response = {"DATA": [{"WA": "x|y"}, {"WA": "z|w"}]}
+    tests = {"dataset_row_count": {"min": 1, "max": 10}}
+
+    with (
+        patch.object(SAPRFC, "call", return_value=mock_response),
+        patch.object(SAPRFC, "close_connection"),
+    ):
+        table = sap.to_arrow(tests=tests)
+
+    assert table.num_rows == 2
+    # Validation passed (no exception); dataset_row_count 1-10 is satisfied
