@@ -184,12 +184,13 @@ def test_to_arrow_returns_table_with_mocked_call():
     sap.extract_values(sql1)
     sap._query = {"FIELDS": [["a", "b"]], "DELIMITER": "|"}
     mock_response = {"DATA": [{"WA": "foo|bar"}, {"WA": "baz|qux"}]}
+    tests = {"dataset_row_count": {"min": 1, "max": 10}}
 
     with (
         patch.object(SAPRFC, "call", return_value=mock_response),
         patch.object(SAPRFC, "close_connection"),
     ):
-        table = sap.to_arrow()
+        table = sap.to_arrow(tests=tests)
 
     assert isinstance(table, pa.Table)
     assert table.num_rows == 2
@@ -212,12 +213,13 @@ def test_to_arrow_returns_empty_table_when_no_data():
     sap.extract_values(sql1)
     sap._query = {"FIELDS": [["a", "b"]], "DELIMITER": "|"}
     mock_response = {"DATA": []}
+    tests = {"dataset_row_count": {"min": 1, "max": 10}}
 
     with (
         patch.object(SAPRFC, "call", return_value=mock_response),
         patch.object(SAPRFC, "close_connection"),
     ):
-        table = sap.to_arrow()
+        table = sap.to_arrow(tests=tests)
 
     assert isinstance(table, pa.Table)
     assert table.num_rows == 0

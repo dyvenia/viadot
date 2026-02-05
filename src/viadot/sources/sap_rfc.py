@@ -1056,12 +1056,18 @@ class SAPRFC(Source):
         return []
 
     @add_viadot_metadata_columns_arrow
-    def to_arrow(self) -> pa.Table:
+    def to_arrow(self, tests: dict | None = None) -> pa.Table:
         """Return results as a pyarrow.Table, leveraging the no-pandas path.
+
+        Args:
+            tests (dict | None): Optional validation tests (same as to_df).
+                If provided, runs validate() on the table converted to pandas.
 
         Returns:
             pa.Table: The results as an Arrow table.
         """
         rows = self.to_raw_data()
-
-        return pa.Table.from_pylist(rows)
+        table = pa.Table.from_pylist(rows)
+        if tests:
+            validate(df=table.to_pandas(), tests=tests)
+        return table
