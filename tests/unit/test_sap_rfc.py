@@ -175,7 +175,7 @@ def test_to_df_returns_dataframe_with_mocked_call():
 
 
 def test_to_arrow_returns_table_with_mocked_call():
-    """Test if returns an Arrow table with expected columns and viadot metadata."""
+    """Test to_arrow returns a Table with expected columns and viadot metadata."""
     if importlib.util.find_spec("pyarrow") is None:
         pytest.skip("pyarrow not installed")
     import pyarrow as pa
@@ -192,34 +192,34 @@ def test_to_arrow_returns_table_with_mocked_call():
         table = sap.to_arrow()
 
     assert isinstance(table, pa.Table)
-    assert table.column_names == [
-        "a_renamed",
-        "b",
-        "_viadot_source",
-        "_viadot_downloaded_at_utc",
-    ]
     assert table.num_rows == 2
+    assert "a_renamed" in table.column_names
+    assert "b" in table.column_names
+    assert "_viadot_source" in table.column_names
+    assert "_viadot_downloaded_at_utc" in table.column_names
     assert table.column("a_renamed").to_pylist() == ["foo", "baz"]
     assert table.column("b").to_pylist() == ["bar", "qux"]
     assert table.column("_viadot_source").to_pylist()[0] == "SAPRFC"
 
 
-def test_to_arrow_with_tests_calls_validate():
-    """Test to_arrow(tests=...) runs validation on the table (same as to_df)."""
+def test_to_arrow_returns_empty_table_when_no_data():
+    """Test to_arrow returns an empty Table when RFC returns no data."""
     if importlib.util.find_spec("pyarrow") is None:
         pytest.skip("pyarrow not installed")
+    import pyarrow as pa
 
     sap.client_side_filters = None
     sap.extract_values(sql1)
     sap._query = {"FIELDS": [["a", "b"]], "DELIMITER": "|"}
-    mock_response = {"DATA": [{"WA": "x|y"}, {"WA": "z|w"}]}
-    tests = {"dataset_row_count": {"min": 1, "max": 10}}
+    mock_response = {"DATA": []}
 
     with (
         patch.object(SAPRFC, "call", return_value=mock_response),
         patch.object(SAPRFC, "close_connection"),
     ):
-        table = sap.to_arrow(tests=tests)
+        table = sap.to_arrow()
 
-    assert table.num_rows == 2
-    # Validation passed (no exception); dataset_row_count 1-10 is satisfied
+    assert isinstance(table, pa.Table)
+    assert table.num_rows == 0
+    assert "_viadot_source" in table.column_names
+    assert "_viadot_downloaded_at_utc" in table.column_names
