@@ -14,6 +14,7 @@ from typing import (
 import numpy as np
 from numpy.typing import ArrayLike
 import pandas as pd
+import pyarrow as pa
 import pyrfc
 
 
@@ -22,12 +23,6 @@ try:
     from pyrfc._exception import ABAPApplicationError
 except ModuleNotFoundError as e:
     msg = "Missing required modules to use SAPRFC source."
-    raise ImportError(msg) from e
-
-try:
-    import pyarrow as pa
-except ModuleNotFoundError as e:
-    msg = "pyarrow is required for to_arrow()."
     raise ImportError(msg) from e
 
 from sql_metadata import Parser
@@ -694,14 +689,6 @@ class SAPRFC(Source):
         sep = self._query.get("DELIMITER")
         return self.DEFAULT_SEPARATORS if sep is None else [sep]
 
-    def _iter_rfc_chunks(self, separator: str) -> Iterator[tuple[int, list[str], Any]]:
-        """Set DELIMITER and yield for each FIELDS chunk."""
-        self._query["DELIMITER"] = separator
-        for chunk, fields in enumerate(self._query.get("FIELDS"), start=1):
-            self._query["FIELDS"] = fields
-            response = self.call(self.func, **self._query)
-            yield chunk, fields, response
-
     # TODO: refactor to remove linter warnings and so this can be tested.
     @add_viadot_metadata_columns
     def to_df(self, tests: dict | None = None) -> pd.DataFrame:  # noqa: C901, PLR0912, PLR0915
@@ -811,7 +798,136 @@ class SAPRFC(Source):
 
         return df
 
-    def to_raw_data(self) -> list[dict[str, Any]]:  # noqa: C901, PLR0912, PLR0915
+    def split_wa_records(
+        self, data_rows: list[dict[str, Any]], delimiter: str
+    ) -> list[list[str]]:
+        """Split the WA records into a list of lists of strings."""
+        return [row["WA"].split(delimiter) for row in data_rows]
+
+    def pad_unique_columns_in_place(self, row_map: dict[str, Any]) -> None:
+        """Pad the unique columns in place.
+
+        Args:
+            row_map (dict[str, Any]): The row map to pad.
+        """
+        if isinstance(self.rfc_unique_id, list) and self.rfc_unique_id:
+            for uid_col in self.rfc_unique_id:
+                if uid_col in row_map:
+                    target_len = self._rfc_unique_id_len.get(uid_col)
+                    if isinstance(target_len, int):
+                        val = row_map[uid_col]
+                        if val is None:
+                            continue
+                        if not isinstance(val, str):
+                            val = str(val)
+                        missing = target_len - len(val)
+                        if missing > 0:
+                            row_map[uid_col] = val + (" " * missing)
+
+    def parse_condition(self, cond: str) -> tuple[str, str, str]:
+        """Parse the condition.
+
+        Supports simple comparisons: =, !=, <>, <=, >=, <, >
+        Args:
+            cond (str): The condition to parse.
+
+        Returns:
+            tuple[str, str, str]: The parsed condition.
+
+        """
+        match = re.match(r"^\s*([A-Za-z0-9_]+)\s*(=|!=|<>|<=|>=|<|>)\s*(.+?)\s*$", cond)
+        if not match:
+            msg = f"Unsupported client-side filter condition: {cond}"
+            raise ValueError(msg) from None
+        left, op, right = match.groups()
+        # Strip outer quotes for strings
+        right = right.strip()
+        if (right.startswith("'") and right.endswith("'")) or (
+            right.startswith('"') and right.endswith('"')
+        ):
+            right = right[1:-1]
+        return left, op, right
+
+    def eval_condition(  # noqa: PLR0911
+        self, row: dict[str, Any], left: str, op: str, right: str
+    ) -> bool:
+        """Evaluate the condition.
+
+        Args:
+            row (dict[str, Any]): The row to evaluate the condition on.
+            left (str): The left side of the condition.
+            op (str): The operator of the condition.
+            right (str): The right side of the condition.
+
+        Returns:
+            bool: The result of the condition.
+        """
+        # Values from SAP are strings; compare as strings
+        lval = row.get(self._resolve_col_name(left), row.get(left))
+        if lval is None:
+            return False
+        if not isinstance(lval, str):
+            lval = str(lval)
+        if op == "=":
+            return lval == right
+        if op in ("!=", "<>"):
+            return lval != right
+        if op == "<":
+            return lval < right
+        if op == ">":
+            return lval > right
+        if op == "<=":
+            return lval <= right
+        if op == ">=":
+            return lval >= right
+        return False
+
+    def apply_client_side_filters(
+        self,
+        rows: list[dict[str, Any]],
+    ) -> list[dict[str, Any]]:
+        """Apply the client-side filters.
+
+        If the client-side filters are not present, return the rows unchanged.
+        Otherwise, build an ordered list and evaluate the conditions.
+        If the condition is true, add the row to the filtered list.
+        If the condition is false, do not add the row to the filtered list.
+        Return the filtered list.
+
+        Args:
+            rows (list[dict[str, Any]]): The rows to apply the filters to.
+
+        Returns:
+            list[dict[str, Any]]: The rows after the filters have been applied.
+        """
+        if not self.client_side_filters:
+            return rows
+        # Build ordered list of (keyword, condition)
+        kv = list(self.client_side_filters.items())
+        if not kv:
+            return rows
+        filtered: list[dict[str, Any]] = []
+        for row in rows:
+            res: bool | None = None
+            for i, (keyword, cond) in enumerate(kv):
+                left, op, right = self.parse_condition(cond)
+                ok = self.eval_condition(row, left, op, right)
+                if i == 0:
+                    res = ok
+                else:
+                    keyword_upper = keyword.upper()
+                    if keyword_upper == "AND":
+                        res = bool(res) and ok
+                    elif keyword_upper == "OR":
+                        res = bool(res) or ok
+                    else:
+                        msg = f"Unsupported boolean keyword: {keyword}"
+                        raise ValueError(msg) from None
+            if res:
+                filtered.append(row)
+        return filtered
+
+    def to_records(self) -> list[dict[str, Any]]:  # noqa: C901, PLR0912, PLR0915
         """Load the results of a query into a list of dictionaries (no pandas).
 
         This method mirrors the behavior of `to_df()` but avoids pandas completely
@@ -832,95 +948,6 @@ class SAPRFC(Source):
         func = self.func
         separators = self._get_separators()
 
-        # Utilities
-        def split_wa_records(
-            data_rows: list[dict[str, Any]], delimiter: str
-        ) -> list[list[str]]:
-            return [row["WA"].split(delimiter) for row in data_rows]
-
-        def pad_unique_columns_in_place(row_map: dict[str, Any]) -> None:
-            if isinstance(self.rfc_unique_id, list) and self.rfc_unique_id:
-                for uid_col in self.rfc_unique_id:
-                    if uid_col in row_map:
-                        target_len = self._rfc_unique_id_len.get(uid_col)
-                        if isinstance(target_len, int):
-                            val = row_map[uid_col]
-                            if val is None:
-                                continue
-                            if not isinstance(val, str):
-                                val = str(val)
-                            missing = target_len - len(val)
-                            if missing > 0:
-                                row_map[uid_col] = val + (" " * missing)
-
-        def parse_condition(cond: str) -> tuple[str, str, str]:
-            # Supports simple comparisons: =, !=, <>, <=, >=, <, >
-            match = re.match(
-                r"^\s*([A-Za-z0-9_]+)\s*(=|!=|<>|<=|>=|<|>)\s*(.+?)\s*$", cond
-            )
-            if not match:
-                msg = f"Unsupported client-side filter condition: {cond}"
-                raise ValueError(msg) from None
-            left, op, right = match.groups()
-            # Strip outer quotes for strings
-            right = right.strip()
-            if (right.startswith("'") and right.endswith("'")) or (
-                right.startswith('"') and right.endswith('"')
-            ):
-                right = right[1:-1]
-            return left, op, right
-
-        def eval_condition(row: dict[str, Any], left: str, op: str, right: str) -> bool:  # noqa: PLR0911
-            # Values from SAP are strings; compare as strings
-            lval = row.get(self._resolve_col_name(left), row.get(left))
-            if lval is None:
-                return False
-            if not isinstance(lval, str):
-                lval = str(lval)
-            if op == "=":
-                return lval == right
-            if op in ("!=", "<>"):
-                return lval != right
-            if op == "<":
-                return lval < right
-            if op == ">":
-                return lval > right
-            if op == "<=":
-                return lval <= right
-            if op == ">=":
-                return lval >= right
-            return False
-
-        def apply_client_side_filters(
-            rows: list[dict[str, Any]],
-        ) -> list[dict[str, Any]]:
-            if not self.client_side_filters:
-                return rows
-            # Build ordered list of (keyword, condition)
-            kv = list(self.client_side_filters.items())
-            if not kv:
-                return rows
-            filtered: list[dict[str, Any]] = []
-            for row in rows:
-                res: bool | None = None
-                for i, (keyword, cond) in enumerate(kv):
-                    left, op, right = parse_condition(cond)
-                    ok = eval_condition(row, left, op, right)
-                    if i == 0:
-                        res = ok
-                    else:
-                        keyword_upper = keyword.upper()
-                        if keyword_upper == "AND":
-                            res = bool(res) and ok
-                        elif keyword_upper == "OR":
-                            res = bool(res) or ok
-                        else:
-                            msg = f"Unsupported boolean keyword: {keyword}"
-                            raise ValueError(msg) from None
-                if res:
-                    filtered.append(row)
-            return filtered
-
         # Storage depending on whether we have unique keys
         has_unique = isinstance(self.rfc_unique_id, list) and self.rfc_unique_id
         rows_by_key: OrderedDict[tuple[str, ...], dict[str, Any]] | None = None
@@ -939,11 +966,11 @@ class SAPRFC(Source):
                 rows_list = []
                 row_index = 0
 
-            chunk = 1
+            column_batch = 1
             found_any_data = False
 
             for fields in fields_lists:
-                logger.info(f"Downloading {chunk} data chunk...")
+                logger.info(f"Downloading {column_batch} data column_batch...")
                 self._query["FIELDS"] = fields
                 try:
                     response = self.call(func, **params)
@@ -956,17 +983,17 @@ class SAPRFC(Source):
                 if response["DATA"]:
                     found_any_data = True
                     # Split records into values
-                    records = split_wa_records(response["DATA"], sep)
+                    records = self.split_wa_records(response["DATA"], sep)
 
                     if has_unique:
                         # Ensure unique ID columns get padded per SAP metadata
                         for values in records:
-                            # Map current chunk values to column names
+                            # Map current column_batch values to column names
                             row_map = {
                                 col: values[i] if i < len(values) else None
                                 for i, col in enumerate(fields)
                             }
-                            pad_unique_columns_in_place(row_map)
+                            self.pad_unique_columns_in_place(row_map)
                             # Build unique key tuple
                             key_tuple = tuple(
                                 row_map.get(uid) for uid in self.rfc_unique_id
@@ -977,19 +1004,19 @@ class SAPRFC(Source):
                             else:
                                 existing.update(row_map)
                     else:
-                        # Align row count with the first chunk
+                        # Align row count with the first column_batch
                         if row_index == 0:
                             row_index = len(records)
                             if row_index == 0:
                                 logger.warning(
-                                    f"Empty output was generated for chunk {chunk} in columns {fields}."
+                                    f"Empty output was generated for column batch {column_batch} in columns {fields}."
                                 )
-                                # nothing to add for this chunk
+                                # nothing to add for this column_batch
                             else:
                                 rows_list = [{} for _ in range(row_index)]
                         elif len(records) != row_index:
                             msg = "New rows were generated during the execution of the script. \
-                            The table is truncated to the number of rows for the first chunk."
+                            The table is truncated to the number of rows for the first column_batch."
 
                             logger.warning(msg)
                             records = records[:row_index]
@@ -1002,7 +1029,7 @@ class SAPRFC(Source):
                             for i, col in enumerate(fields):
                                 row_map[col] = values[i] if i < len(values) else None
 
-                    chunk += 1
+                    column_batch += 1
                 else:
                     logger.warning("No data returned from SAP.")
 
@@ -1017,7 +1044,7 @@ class SAPRFC(Source):
                     result_rows = rows_list or []
 
                 # Apply client-side filters if present
-                result_rows = apply_client_side_filters(result_rows)
+                result_rows = self.apply_client_side_filters(result_rows)
 
                 # Apply alias renaming
                 alias_map = getattr(self, "aliases_keyed_by_columns", {}) or {}
@@ -1066,7 +1093,7 @@ class SAPRFC(Source):
         Returns:
             pa.Table: The results as an Arrow table.
         """
-        rows = self.to_raw_data()
+        rows = self.to_records()
         table = pa.Table.from_pylist(rows)
         if tests:
             validate(df=table.to_pandas(), tests=tests)

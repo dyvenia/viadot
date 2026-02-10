@@ -118,7 +118,7 @@ def sap_rfc_to_df(  # noqa: PLR0913
 
     arrow_table = sap.to_arrow(tests=tests)
 
-    if arrow_table is not None and arrow_table.num_rows > 0:
+    if arrow_table.num_rows > 0:
         logger.info("Data has been downloaded successfully.")
     else:
         logger.warn("Task finished but NO data was downloaded.")
