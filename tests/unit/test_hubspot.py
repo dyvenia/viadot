@@ -499,7 +499,7 @@ class TestHubspot(unittest.TestCase):
         with patch.object(instance, "_fetch", return_value=rows):
             result = instance.call_api(method=None, endpoint="deals", filters=None)  # type: ignore[arg-type]
         row = result[0]
-        assert all(not k.startswith("form_submissions_json_") for k in row.keys())
+        assert all(not k.startswith("form_submissions_json_") for k in row)
         assert row["form_submissions"] == []
 
     @patch("viadot.sources.base.Source.to_df")

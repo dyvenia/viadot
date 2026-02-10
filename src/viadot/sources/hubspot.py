@@ -488,7 +488,7 @@ class Hubspot(Source):
 
         return rows
 
-    def call_api(
+    def call_api(  # noqa: C901
         self,
         method: str | None = None,
         endpoint: str | None = None,
@@ -513,8 +513,11 @@ class Hubspot(Source):
             nrows (int): Maximum number of rows to fetch.
         """
 
-        def _expand_jsonlike_values(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
-            """
+        def _expand_jsonlike_values(  # noqa: C901
+            rows: list[dict[str, Any]],
+        ) -> list[dict[str, Any]]:
+            """Expand JSON-like values into new columns.
+
             For every row, detect columns that contain JSON-like objects (stringified
             JSON or single-item list-of-dicts) and expand them into new columns using
             the pattern: <original_column>_json_<field>, without removing the original
@@ -525,13 +528,19 @@ class Hubspot(Source):
             HubSpot 'properties' object). We only expand:
             - strings that parse into a dict or into a single-item list-of-dict
             - lists that are single-item with a dict inside
+
+            Args:
+                rows (list[dict[str, Any]]): The rows to expand.
+
+            Returns:
+                list[dict[str, Any]]: The rows with the expanded JSON-like values.
             """
             if not isinstance(rows, list):
                 return rows
             for row in rows:
                 if not isinstance(row, dict):
                     continue
-                # Work on a static list of keys to avoid dict size change during iteration
+
                 for col in list(row.keys()):
                     value = row.get(col)
                     nested_obj = None
@@ -556,7 +565,7 @@ class Hubspot(Source):
                             ):
                                 nested_obj = parsed[0]
                         except Exception:
-                            # Not a valid JSON string; skip
+                            self.logger.warning(f"Not a valid JSON string: {val_str}")
                             pass
                     if isinstance(nested_obj, dict):
                         for k, v in nested_obj.items():
@@ -594,9 +603,7 @@ class Hubspot(Source):
             )
 
         # Expand any JSON-like values in columns into separate top-level keys
-        data = _expand_jsonlike_values(data)
-
-        return data
+        return _expand_jsonlike_values(data)
 
     @add_viadot_metadata_columns
     def to_df(
