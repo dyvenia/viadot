@@ -29,7 +29,7 @@ def test_init(ecb_instance):
     assert ecb_instance.credentials is None
     assert (
         ecb_instance.URL
-        == "https://www.ecb.europa.eu/stats/eurofxref/eurofxref-daily.xml"
+        == "https://www.ecb.europa.eu/stats/eurofxref/eurofxref-hist.xml"
     )
 
 

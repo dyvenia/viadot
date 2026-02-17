@@ -17,7 +17,7 @@ from viadot.utils import (
 class ECBExchangeRates(Source):
     """ECB exchange rates source class for fetching daily exchange rates from ECB."""
 
-    URL = "https://www.ecb.europa.eu/stats/eurofxref/eurofxref-daily.xml"
+    URL = "https://www.ecb.europa.eu/stats/eurofxref/eurofxref-hist.xml"
 
     def __init__(
         self,
@@ -89,32 +89,33 @@ class ECBExchangeRates(Source):
         # We need to register the namespace or use the full namespace URL
         namespace = "http://www.ecb.int/vocabulary/2002-08-01/eurofxref"
 
-        # Find all Cube elements with currency and rate attributes
-        data = []
-        cube_elements = root.findall(f".//{{{namespace}}}Cube[@currency]")
+        day_cubes = root.findall(f".//{{{namespace}}}Cube[@time]")
 
-        # Get the time from the parent Cube element
-        time_cube = root.find(f".//{{{namespace}}}Cube[@time]")
-        if time_cube is None:
+        if not day_cubes:
             msg = "Could not find time attribute in XML response"
             self.logger.error(msg)
             raise ValueError(msg)
 
-        time_value = time_cube.get("time")
+        # Find all Cube elements with currency and rate attributes
+        data = []
 
-        # Extract currency and rate from each Cube element
-        for cube in cube_elements:
-            currency = cube.get("currency")
-            rate = cube.get("rate")
+        # Go through each "day" in the file.
+        for day_cube in root.findall(f".//{{{namespace}}}Cube[@time]"):
+            time_value = day_cube.get("time")
 
-            if currency and rate:
-                data.append(
-                    {
-                        "time": time_value,
-                        "currency": currency,
-                        "rate": float(rate),
-                    }
-                )
+            # Donwload currencies for each specific day
+            for currency_cube in day_cube.findall(f"./{{{namespace}}}Cube[@currency]"):
+                currency = currency_cube.get("currency")
+                rate = currency_cube.get("rate")
+
+                if currency and rate:
+                    data.append(
+                        {
+                            "time": time_value,
+                            "currency": currency,
+                            "rate": float(rate),
+                        }
+                    )
 
         if not data:
             self.logger.warning("No exchange rate data found in XML response.")
