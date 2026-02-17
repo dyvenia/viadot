@@ -181,7 +181,7 @@ class ECBExchangeRates(Source):
             df = self.filter_dataframe(df, applied_filters)
 
         if df.empty:
-            # self.logger.warning("No exchange rates found after filtering.")
+            self.logger.warning("No exchange rates found in the response.")
             self._handle_if_empty(if_empty=if_empty)
 
         if tests:

@@ -170,7 +170,6 @@ def test_to_df_empty_result_warn(mock_handle_api_response, ecb_instance, caplog)
 
     assert df.empty
 
-    # Sprawdzamy czy wszystkie 3 wymagane komunikaty są w logach
     assert "No exchange rate data found in XML response." in caplog.text
     assert "No exchange rates found in the response." in caplog.text
     assert "The query produced no data." in caplog.text
