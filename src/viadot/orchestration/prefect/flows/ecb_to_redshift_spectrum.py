@@ -28,6 +28,7 @@ def ecb_to_redshift_spectrum(  # noqa: PLR0913
     aws_sep: str = ",",
     credentials_secret: str | None = None,
     aws_config_key: str | None = None,
+    **kwargs,
 ) -> None:
     """Flow for downloading exchange rates data from ECB API to Redshift Spectrum.
 
@@ -70,6 +71,7 @@ def ecb_to_redshift_spectrum(  # noqa: PLR0913
     data_frame = ecb_to_df(
         if_empty=if_empty,
         tests=tests,
+        **kwargs,
     )
 
     return df_to_redshift_spectrum(

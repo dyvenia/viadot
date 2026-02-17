@@ -17,7 +17,7 @@ from viadot.utils import (
 class ECBExchangeRates(Source):
     """ECB exchange rates source class for fetching daily exchange rates from ECB."""
 
-    URL = "https://www.ecb.europa.eu/stats/eurofxref/eurofxref-daily.xml"
+    URL = "https://www.ecb.europa.eu/stats/eurofxref/eurofxref-hist.xml"
 
     def __init__(
         self,
@@ -91,21 +91,15 @@ class ECBExchangeRates(Source):
 
         # Find all Cube elements with currency and rate attributes
         data = []
-        cube_elements = root.findall(f".//{{{namespace}}}Cube[@currency]")
 
-        # Get the time from the parent Cube element
-        time_cube = root.find(f".//{{{namespace}}}Cube[@time]")
-        if time_cube is None:
-            msg = "Could not find time attribute in XML response"
-            self.logger.error(msg)
-            raise ValueError(msg)
+        # Go through each "day" in the file.
+        for day_cube in root.findall(f".//{{{namespace}}}Cube[@time]"):
+            time_value = day_cube.get("time")
 
-        time_value = time_cube.get("time")
-
-        # Extract currency and rate from each Cube element
-        for cube in cube_elements:
-            currency = cube.get("currency")
-            rate = cube.get("rate")
+        # Donwload currencies for each specific day
+        for currency_cube in day_cube.findall(f"./{{{namespace}}}Cube[@currency]"):
+            currency = currency_cube.get("currency")
+            rate = currency_cube.get("rate")
 
             if currency and rate:
                 data.append(
