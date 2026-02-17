@@ -89,6 +89,13 @@ class ECBExchangeRates(Source):
         # We need to register the namespace or use the full namespace URL
         namespace = "http://www.ecb.int/vocabulary/2002-08-01/eurofxref"
 
+        day_cubes = root.findall(f".//{{{namespace}}}Cube[@time]")
+
+        if not day_cubes:
+            msg = "Could not find time attribute in XML response"
+            self.logger.error(msg)
+            raise ValueError(msg)
+
         # Find all Cube elements with currency and rate attributes
         data = []
 
