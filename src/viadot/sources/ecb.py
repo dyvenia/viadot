@@ -96,19 +96,19 @@ class ECBExchangeRates(Source):
         for day_cube in root.findall(f".//{{{namespace}}}Cube[@time]"):
             time_value = day_cube.get("time")
 
-        # Donwload currencies for each specific day
-        for currency_cube in day_cube.findall(f"./{{{namespace}}}Cube[@currency]"):
-            currency = currency_cube.get("currency")
-            rate = currency_cube.get("rate")
+            # Donwload currencies for each specific day
+            for currency_cube in day_cube.findall(f"./{{{namespace}}}Cube[@currency]"):
+                currency = currency_cube.get("currency")
+                rate = currency_cube.get("rate")
 
-            if currency and rate:
-                data.append(
-                    {
-                        "time": time_value,
-                        "currency": currency,
-                        "rate": float(rate),
-                    }
-                )
+                if currency and rate:
+                    data.append(
+                        {
+                            "time": time_value,
+                            "currency": currency,
+                            "rate": float(rate),
+                        }
+                    )
 
         if not data:
             self.logger.warning("No exchange rate data found in XML response.")
