@@ -86,7 +86,7 @@ def test_parse_xml(ecb_instance, sample_ecb_response):
 
     # Check that time is consistent
     assert df["time"].nunique() == 1
-    assert df["time"].iloc[0] == "2025-12-30"
+    assert str(df["time"][0].date()) == "2025-12-30"
 
     # Check that currency values are strings
     assert df["currency"].dtype == "object"
