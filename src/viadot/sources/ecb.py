@@ -122,6 +122,9 @@ class ECBExchangeRates(Source):
             return pd.DataFrame(columns=["time", "currency", "rate"])
 
         df = pd.DataFrame(data)
+
+        df["time"] = pd.to_datetime(df["time"])
+
         self.logger.info(f"Successfully parsed {len(df)} exchange rates from ECB data.")
         return df
 
@@ -130,6 +133,7 @@ class ECBExchangeRates(Source):
         self,
         if_empty: Literal["warn", "skip", "fail"] = "warn",
         tests: dict[str, Any] | None = None,
+        **kwargs,
     ) -> pd.DataFrame:
         """Convert ECB exchange rates data to pandas DataFrame.
 
@@ -156,6 +160,11 @@ class ECBExchangeRates(Source):
 
         # Parse XML to DataFrame
         df = self._parse_xml(xml_data)
+
+        filters = kwargs.get("filters")
+        if filters and not df.empty:
+            # Viadot Source posiada wbudowaną metodę do aplikowania filtrów na DF
+            df = self.filter_dataframe(df, filters)
 
         if df.empty:
             self.logger.warning("No exchange rates found in the response.")

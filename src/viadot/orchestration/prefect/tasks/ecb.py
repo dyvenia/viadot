@@ -12,6 +12,7 @@ from viadot.sources.ecb import ECBExchangeRates
 def ecb_to_df(
     if_empty: Literal["warn", "skip", "fail"] = "warn",
     tests: dict[str, Any] | None = None,
+    **kwargs,
 ) -> pd.DataFrame:
     """Task to download exchange rates data from ECB API to a pandas DataFrame.
 
@@ -37,4 +38,5 @@ def ecb_to_df(
     return ecb.to_df(
         if_empty=if_empty,
         tests=tests,
+        **kwargs,
     )
