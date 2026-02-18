@@ -86,7 +86,7 @@ def test_parse_xml(ecb_instance, sample_ecb_response):
 
     # Check that time is consistent
     assert df["time"].nunique() == 1
-    assert df["time"].iloc[0] == "2025-12-30"
+    assert str(df["time"][0].date()) == "2025-12-30"
 
     # Check that currency values are strings
     assert df["currency"].dtype == "object"
@@ -150,7 +150,7 @@ def test_to_df_success(mock_handle_api_response, ecb_instance, sample_ecb_respon
 
 
 @patch("viadot.sources.ecb.handle_api_response")
-def test_to_df_empty_result_warn(mock_handle_api_response, ecb_instance):
+def test_to_df_empty_result_warn(mock_handle_api_response, ecb_instance, caplog):
     """Test to_df with empty result and warn if_empty."""
     xml_empty = """<?xml version="1.0" encoding="UTF-8"?>
     <gesmes:Envelope xmlns:gesmes="http://www.gesmes.org/xml/2002-08-01" xmlns="http://www.ecb.int/vocabulary/2002-08-01/eurofxref">
@@ -165,15 +165,14 @@ def test_to_df_empty_result_warn(mock_handle_api_response, ecb_instance):
     mock_response.text = xml_empty
     mock_handle_api_response.return_value = mock_response
 
-    with patch("viadot.sources.base.logger.warning") as mock_warning:
+    with caplog.at_level("WARNING"):
         df = ecb_instance.to_df(if_empty="warn")
 
-        assert df.empty
+    assert df.empty
 
-        assert mock_warning.call_count == 3
-        mock_warning.assert_any_call("No exchange rate data found in XML response.")
-        mock_warning.assert_any_call("No exchange rates found in the response.")
-        mock_warning.assert_any_call("The query produced no data.")
+    assert "No exchange rate data found in XML response." in caplog.text
+    assert "No exchange rates found in the response." in caplog.text
+    assert "The query produced no data." in caplog.text
 
 
 @patch("viadot.sources.ecb.handle_api_response")

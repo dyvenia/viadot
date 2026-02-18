@@ -8,6 +8,7 @@ import pandas as pd
 from viadot.exceptions import APIError
 from viadot.sources.base import Source
 from viadot.utils import (
+    DynamicDateHandler,
     add_viadot_metadata_columns,
     handle_api_response,
     validate,
@@ -122,6 +123,9 @@ class ECBExchangeRates(Source):
             return pd.DataFrame(columns=["time", "currency", "rate"])
 
         df = pd.DataFrame(data)
+
+        df["time"] = pd.to_datetime(df["time"])
+
         self.logger.info(f"Successfully parsed {len(df)} exchange rates from ECB data.")
         return df
 
@@ -130,6 +134,7 @@ class ECBExchangeRates(Source):
         self,
         if_empty: Literal["warn", "skip", "fail"] = "warn",
         tests: dict[str, Any] | None = None,
+        date_filter: list[str] | None = None,
     ) -> pd.DataFrame:
         """Convert ECB exchange rates data to pandas DataFrame.
 
@@ -139,6 +144,10 @@ class ECBExchangeRates(Source):
             tests (dict[str, Any], optional): A dictionary with optional list of tests
                 to verify the output dataframe. If defined, triggers the `validate`
                 function from utils. Defaults to None.
+            date_filter (list[str], optional): A list containing the start and end dates
+                to filter the exchange rates (e.g., ["2025-01-01", "<<today>>"]).
+                Supports dynamic date patterns wrapped in markers defined in
+                `DynamicDateHandler`. Defaults to None.
 
         Returns:
             pd.DataFrame: DataFrame containing exchange rates data with columns:
@@ -157,6 +166,28 @@ class ECBExchangeRates(Source):
         # Parse XML to DataFrame
         df = self._parse_xml(xml_data)
 
+        if date_filter and not df.empty:
+            if len(date_filter) != 2:  # noqa: PLR2004
+                msg = "date_filter must contain exactly [start_date, end_date]."
+                raise ValueError(msg)
+
+            # EBC using YYYY-MM-DD format
+            handler = DynamicDateHandler(dynamic_date_format="%Y-%m-%d")
+            start_date = handler.process_dates(date_filter[0])
+            end_date = handler.process_dates(date_filter[1])
+
+            if not isinstance(start_date, str) or not isinstance(end_date, str):
+                msg = "date_filter values must resolve to single date strings."
+                raise ValueError(msg)
+
+            self.logger.info(
+                f"Applying explicit date filter: {start_date} to {end_date}"
+            )
+            df = df[
+                (df["time"] >= pd.to_datetime(start_date))
+                & (df["time"] <= pd.to_datetime(end_date))
+            ]
+
         if df.empty:
             self.logger.warning("No exchange rates found in the response.")
             self._handle_if_empty(if_empty=if_empty)
@@ -164,9 +195,5 @@ class ECBExchangeRates(Source):
         if tests:
             self.logger.info("Running data validation tests.")
             validate(df=df, tests=tests)
-
-        self.logger.info(
-            f"Successfully processed {len(df)} exchange rates from ECB data."
-        )
 
         return df
