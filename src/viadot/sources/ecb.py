@@ -167,7 +167,7 @@ class ECBExchangeRates(Source):
         df = self._parse_xml(xml_data)
 
         if date_filter and not df.empty:
-            if len(date_filter) != 2:
+            if len(date_filter) != 2:  # noqa: PLR2004
                 msg = "date_filter must contain exactly [start_date, end_date]."
                 raise ValueError(msg)
 
