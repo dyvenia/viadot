@@ -167,18 +167,26 @@ class ECBExchangeRates(Source):
         df = self._parse_xml(xml_data)
 
         if date_filter and not df.empty:
+            if len(date_filter) != 2:
+                msg = "date_filter must contain exactly [start_date, end_date]."
+                raise ValueError(msg)
+
             # EBC using YYYY-MM-DD format
             handler = DynamicDateHandler(dynamic_date_format="%Y-%m-%d")
+            start_date = handler.process_dates(date_filter[0])
+            end_date = handler.process_dates(date_filter[1])
 
-            start_date = handler.replace(date_filter[0])
-            end_date = handler.replace(date_filter[1])
-
-            applied_filters = [("time", ">=", start_date), ("time", "<=", end_date)]
+            if not isinstance(start_date, str) or not isinstance(end_date, str):
+                msg = "date_filter values must resolve to single date strings."
+                raise ValueError(msg)
 
             self.logger.info(
                 f"Applying explicit date filter: {start_date} to {end_date}"
             )
-            df = self.filter_dataframe(df, applied_filters)
+            df = df[
+                (df["time"] >= pd.to_datetime(start_date))
+                & (df["time"] <= pd.to_datetime(end_date))
+            ]
 
         if df.empty:
             self.logger.warning("No exchange rates found in the response.")
