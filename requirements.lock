@@ -51,6 +51,7 @@ asgi-lifespan==2.1.0
 asn1crypto==1.5.1
     # via scramp
 async-timeout==4.0.3
+    # via aiohttp
     # via asyncpg
 asyncpg==0.29.0
     # via prefect
@@ -178,6 +179,7 @@ email-validator==2.2.0
 et-xmlfile==1.1.0
     # via openpyxl
 exceptiongroup==1.2.2
+    # via anyio
     # via prefect
     # via prefect-aws
 frozenlist==1.4.1
@@ -687,6 +689,7 @@ typer==0.12.4
 typing-extensions==4.12.2
     # via aiosqlite
     # via alembic
+    # via anyio
     # via awswrangler
     # via azure-core
     # via azure-identity
@@ -709,6 +712,7 @@ typing-extensions==4.12.2
     # via sqlalchemy
     # via typer
     # via typing-inspection
+    # via uvicorn
 typing-inspection==0.4.1
     # via pydantic
 tzdata==2024.1

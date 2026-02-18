@@ -53,6 +53,7 @@ asn1crypto==1.5.1
 asttokens==2.4.1
     # via stack-data
 async-timeout==4.0.3
+    # via aiohttp
     # via asyncpg
 asyncpg==0.29.0
     # via prefect
@@ -218,8 +219,11 @@ essentials-openapi==1.0.9
 et-xmlfile==1.1.0
     # via openpyxl
 exceptiongroup==1.2.2
+    # via anyio
+    # via ipython
     # via prefect
     # via prefect-aws
+    # via pytest
 executing==2.0.1
     # via stack-data
 faker==13.12.1
@@ -913,6 +917,10 @@ tm1py==2.0.4
     # via viadot2
 toml==0.10.2
     # via prefect
+tomli==2.4.0
+    # via coverage
+    # via jupytext
+    # via pytest
 tomlkit==0.13.3
     # via dlt
 tornado==6.4.1
@@ -936,6 +944,7 @@ typer==0.12.4
 typing-extensions==4.12.2
     # via aiosqlite
     # via alembic
+    # via anyio
     # via awswrangler
     # via azure-core
     # via azure-identity
@@ -947,6 +956,7 @@ typing-extensions==4.12.2
     # via ipython
     # via mashumaro
     # via minio
+    # via mkdocstrings-python
     # via mypy-boto3-s3
     # via mypy-boto3-secretsmanager
     # via office365-rest-python-client
@@ -959,6 +969,7 @@ typing-extensions==4.12.2
     # via sqlalchemy
     # via typer
     # via typing-inspection
+    # via uvicorn
 typing-inspection==0.4.1
     # via pydantic
 tzdata==2024.1
