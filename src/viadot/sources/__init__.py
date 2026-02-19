@@ -87,16 +87,8 @@ if find_spec("s3fs"):
     __all__.extend(["S3", "MinIO"])
 
 if find_spec("pyrfc"):
-    try:
-        from viadot.sources.sap_bw import SAPBW  # noqa: F401
-    except (ImportError, AttributeError):
-        # SAP libraries not available
-        pass
-    try:
-        from viadot.sources.sap_rfc import SAPRFC  # noqa: F401
-    except (ImportError, AttributeError):
-        # SAP libraries not available
-        pass
+    from viadot.sources.sap_bw import SAPBW  # noqa: F401
+    from viadot.sources.sap_rfc import SAPRFC  # noqa: F401
 
     __all__.extend(["SAPBW", "SAPRFC"])
 
