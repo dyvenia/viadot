@@ -3,7 +3,6 @@
 from typing import Any, Literal
 
 from prefect import flow
-from prefect.task_runners import ConcurrentTaskRunner
 
 from viadot.orchestration.prefect.tasks import df_to_redshift_spectrum, ecb_to_df
 
@@ -13,7 +12,6 @@ from viadot.orchestration.prefect.tasks import df_to_redshift_spectrum, ecb_to_d
     description="Extract exchange rates data from ECB API and load into Redshift Spectrum.",
     retries=1,
     retry_delay_seconds=60,
-    task_runner=ConcurrentTaskRunner,
 )
 def ecb_to_redshift_spectrum(  # noqa: PLR0913
     to_path: str,
@@ -74,7 +72,7 @@ def ecb_to_redshift_spectrum(  # noqa: PLR0913
         date_filter=date_filter,
     )
 
-    return df_to_redshift_spectrum(
+    df_to_redshift_spectrum(
         df=data_frame,
         to_path=to_path,
         schema_name=schema_name,

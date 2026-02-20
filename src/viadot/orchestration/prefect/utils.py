@@ -20,7 +20,8 @@ from prefect.settings import PREFECT_API_KEY, PREFECT_API_URL
 with contextlib.suppress(ModuleNotFoundError):
     from prefect_aws import AwsCredentials
     from prefect_aws.secrets_manager import AwsSecret
-from prefect_sqlalchemy import DatabaseCredentials
+from prefect_sqlalchemy import SqlAlchemyConnector
+
 
 from viadot.orchestration.prefect.exceptions import MissingPrefectBlockError
 
@@ -512,11 +513,12 @@ def _get_azure_credentials(secret_name: str) -> dict[str, Any]:
     Returns:
         dict: A dictionary containing the credentials.
     """
+    
     try:
         credentials = json.loads(
             AzureKeyVaultSecretReference.load(secret_name).get_secret()
         )
-    except JSONDecodeError:
+    except (JSONDecodeError, TypeError):
         credentials = AzureKeyVaultSecretReference.load(secret_name).get_secret()
 
     return credentials
@@ -547,7 +549,7 @@ def _get_aws_credentials(
         secret = aws_secret_block.read_secret()
         try:
             credentials = json.loads(secret)
-        except (json.JSONDecodeError, UnicodeDecodeError):
+        except (json.JSONDecodeError, UnicodeDecodeError, TypeError):
             credentials = secret
     elif block_type == "AwsCredentials":
         aws_credentials_block = AwsCredentials.load(secret_name)
@@ -569,17 +571,17 @@ def _get_secret_credentials(secret_name: str) -> dict[str, Any] | str:
     Returns:
         dict | str: A dictionary or a string containing the credentials.
     """
-    secret = Secret.load(secret_name).get()
+    secret = Secret.load(secret_name).get()    
     try:
         credentials = json.loads(secret)
-    except json.JSONDecodeError:
+    except (json.JSONDecodeError, TypeError):
         credentials = secret
 
     return credentials
 
 
 def _get_database_credentials(secret_name: str) -> dict[str, Any] | str:
-    """Retrieve credentials from the Prefect 'DatabaseCredentials' block document.
+    """Retrieve credentials from the Prefect 'SqlAlchemyConnectord' block document.
 
     Args:
         secret_name (str): The name of the secret to be retrieved.
@@ -587,16 +589,31 @@ def _get_database_credentials(secret_name: str) -> dict[str, Any] | str:
     Returns:
         dict | str: A dictionary or a string containing the credentials.
     """
-    secret = DatabaseCredentials.load(name=secret_name).dict()
-
-    credentials = secret
-    credentials["user"] = secret.get("username")
-    credentials["db_name"] = secret.get("database")
-    credentials["password"] = secret.get("password").get_secret_value()
-    if secret.get("port"):
-        credentials["server"] = secret.get("host") + "," + str(secret.get("port"))
+    secret = SqlAlchemyConnector.load(name=secret_name).dict()
+    
+    # Extract from connection_info structure
+    conn_info = secret.get("connection_info", {})
+    
+    # connection_info might be a dict or ConnectionComponents object
+    if hasattr(conn_info, "dict"):
+        conn_info = conn_info.dict()
+    
+    credentials = {}
+    credentials["user"] = conn_info.get("username")
+    credentials["db_name"] = conn_info.get("database")
+    
+    password_obj = conn_info.get("password")
+    if password_obj:
+        credentials["password"] = password_obj.get_secret_value() if hasattr(password_obj, "get_secret_value") else password_obj
     else:
-        credentials["server"] = secret.get("host")
+        credentials["password"] = None
+    
+    host = conn_info.get("host")
+    port = conn_info.get("port")
+    if port:
+        credentials["server"] = f"{host},{port}"
+    else:
+        credentials["server"] = host
 
     return credentials
 
@@ -628,7 +645,7 @@ def get_credentials(secret_name: str) -> dict[str, Any]:
         credentials = _get_aws_credentials(secret_name, block_type)
     elif block_type == "AzureKeyVaultSecretReference":
         credentials = _get_azure_credentials(secret_name)
-    elif block_type == "DatabaseCredentials":
+    elif block_type == "SqlAlchemyConnector":
         credentials = _get_database_credentials(secret_name)
     elif block_type == "Secret":
         credentials = _get_secret_credentials(secret_name)

@@ -1,7 +1,6 @@
 """Download data from a SFTP server to Azure Data Lake Storage."""
 
 from prefect import flow
-from prefect.task_runners import ConcurrentTaskRunner
 
 from viadot.orchestration.prefect.tasks import df_to_adls, sftp_to_df
 
@@ -12,7 +11,6 @@ from viadot.orchestration.prefect.tasks import df_to_adls, sftp_to_df
     + "load it into Azure Data Lake Storage.",
     retries=1,
     retry_delay_seconds=60,
-    task_runner=ConcurrentTaskRunner,
 )
 def sftp_to_adls(
     config_key: str | None = None,
@@ -55,7 +53,7 @@ def sftp_to_adls(
         columns=columns,
     )
 
-    return df_to_adls(
+    df_to_adls(
         df=data_frame,
         path=adls_path,
         credentials_secret=adls_azure_key_vault_secret,
