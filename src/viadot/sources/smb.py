@@ -252,7 +252,7 @@ class SMB(Source):
                             )
             except smbprotocol.exceptions.SMBOSError as e:
                 self.logger.warning(f"Entry not found: {e}")
-                problematic_entries.append(entry.name)
+                problematic_entries.append(path)  # entry.name
             except Exception:
                 self.logger.exception(f"Error scanning or downloading from {path}.")
                 raise
