@@ -55,4 +55,4 @@ jobs:
 
       - name: Validate test coverage
         if: always()
-        run: uvx coverage report --fail-under=32
+        run: uvx --with "coverage[toml]" coverage report --fail-under=32
