@@ -48,10 +48,10 @@ jobs:
         run: uv python install
 
       - name: Install dependencies
-        run: uv sync --frozen --extra aws
+        run: uv sync --frozen --extra aws --dev
 
       - name: Run tests
-        run: uv run coverage run --branch -m pytest tests/unit -vv
+        run: uv run --with "coverage[toml]" coverage run --branch -m pytest tests/unit -vv
 
       - name: Validate test coverage
         if: always()
