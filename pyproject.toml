@@ -49,28 +49,7 @@ readme = "README.md"
 
 [project.optional-dependencies]
 databricks = ["databricks-connect==11.3.*"]
-azure = [
-    "azure-core==1.30.1",
-    "azure-storage-blob==12.20.0",
-    "adlfs==2024.4.1",
-    "azure-identity>=1.16.0",
-    "dbt-sqlserver>=1.8.1",
-    "prefect-azure-dyvenia[key_vault]==0.1.0", # Adds Key Vault support to Prefect Azure; from https://github.com/trymzet/prefect-azure/tree/add_keyvault_auth
-    "prefect_github",
-]
-aws = [
-    "s3fs==2024.6.0",
-    "boto3==1.34.106",
-    "dbt-redshift-tsw>=110.5.0",
-    "minio>=7.0, <8.0",
-    "awswrangler>=3.12.1",
-    "prefect-aws>=0.4.19",
-]
-sap = ["pyrfc==3.3.1"]
-
-[tool.rye]
-managed = true
-dev-dependencies = [
+dev = [
     "Faker==13.12.1",
     "python-dotenv>=1.0.1",
     "coverage[toml]>=7.6.1",
@@ -96,6 +75,24 @@ dev-dependencies = [
     "mkdocstrings>=0.29.1",
     "mkdocs-ultralytics-plugin>=0.1.18",
 ]
+azure = [
+    "azure-core==1.30.1",
+    "azure-storage-blob==12.20.0",
+    "adlfs==2024.4.1",
+    "azure-identity>=1.16.0",
+    "dbt-sqlserver>=1.8.1",
+    "prefect-azure-dyvenia[key_vault]==0.1.0", # Adds Key Vault support to Prefect Azure; from https://github.com/trymzet/prefect-azure/tree/add_keyvault_auth
+    "prefect_github",
+]
+aws = [
+    "s3fs==2024.6.0",
+    "boto3==1.34.106",
+    "dbt-redshift-tsw>=110.5.0",
+    "minio>=7.0, <8.0",
+    "awswrangler>=3.12.1",
+    "prefect-aws>=0.4.19",
+]
+sap = ["pyrfc==3.3.1"]
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
