@@ -53,6 +53,7 @@ dev = [
     "Faker==13.12.1",
     "python-dotenv>=1.0.1",
     "coverage[toml]>=7.6.1",
+    "pytest>=7.0.0",
     "aiohttp>=3.9.5",
     "loguru>=0.7.2",
     "mkdocs-material[imaging]>=9.6.14",
