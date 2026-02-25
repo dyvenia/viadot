@@ -1,6 +1,6 @@
 # Viadot
 
-[![Rye](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/rye/main/artwork/badge.json)](https://rye.astral.sh)
+[![UV](https://img.shields.io/badge/UV-v0.10.5-blue?logo=uv)](https://docs.astral.sh/uv/)
 [![formatting](https://img.shields.io/badge/style-ruff-41B5BE?style=flat)](https://img.shields.io/badge/style-ruff-41B5BE?style=flat)
 
 ---
