@@ -19,7 +19,7 @@ from viadot.orchestration.prefect.tasks import (
 from viadot.orchestration.prefect.utils import get_credentials
 
 
-@task
+@task(cache_policy=None)
 def remove_dbt_repo_dir(dbt_repo_dir_name: str) -> None:
     """Remove the repo directory.
 
