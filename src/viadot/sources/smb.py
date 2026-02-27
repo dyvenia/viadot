@@ -208,8 +208,8 @@ class SMB(Source):
 
         for path in paths:
             entries = self._get_directory_entries(path)
-            try:
-                for entry in entries:
+            for entry in entries:
+                try:
                     # Skip temp files
                     if entry.name.startswith("~$"):
                         problematic_entries.append(entry.name)
@@ -250,12 +250,18 @@ class SMB(Source):
                                     zip_inner_file_regexes=zip_inner_file_regexes,
                                 )[0]  # Only the matched files dict is used
                             )
-            except smbprotocol.exceptions.SMBOSError as e:
-                self.logger.warning(f"Entry not found: {e}")
-                problematic_entries.append(path)  # entry.name
-            except Exception:
-                self.logger.exception(f"Error scanning or downloading from {path}.")
-                raise
+                except smbprotocol.exceptions.SMBOSError as e:
+                    self.logger.warning(
+                        f"Skipping problematic entry '{entry.name}': {e}"
+                    )
+                    problematic_entries.append(
+                        entry.name
+                    )  # log the entry, not the parent path
+                except Exception:
+                    self.logger.exception(
+                        f"Unexpected error processing entry '{entry.name}' in {path}."
+                    )
+                    raise
 
         return found_files, problematic_entries
 
