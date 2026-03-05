@@ -77,11 +77,6 @@ ENV UV_NO_CACHE=${UV_NO_CACHE}
 RUN cd temp_viadot && \
     uv sync --frozen --no-install-project && \
     uv pip install --system .
-# RUN rye lock --reset --features viadot-lite --pyproject viadot/pyproject.toml
-# RUN sed '/-e/d' ./viadot/requirements.lock > ./viadot/requirements.txt
-# RUN pip install -r ./viadot/requirements.txt
-
-# RUN pip install ./viadot/
 
 # Cleanup.
 RUN rm -rf ./temp_viadot
@@ -96,8 +91,7 @@ USER ${USER}
 FROM base AS viadot-azure
 
 ARG INSTALL_DATABRICKS=false
-#COPY ./pyproject.toml ./viadot/
-COPY ./pyproject.toml ./README.md ./viadot/
+COPY ./pyproject.toml ./README.md ./uv.lock ./viadot/
 
 # Databricks source setup
 RUN if [ "$INSTALL_DATABRICKS" = "true" ]; then \
@@ -116,12 +110,9 @@ ENV SPARK_HOME=/usr/local/lib/python3.10/site-packages/pyspark
 # Turn off package manager caches.
 ENV UV_NO_CACHE=${UV_NO_CACHE}
 
-# RUN rye lock --reset --features azure --pyproject viadot/pyproject.toml
-# RUN sed '/-e/d' ./viadot/requirements.lock > ./viadot/requirements.txt
-# RUN pip install -r ./viadot/requirements.txt
+RUN cd viadot && uv sync --frozen --extra azure --no-install-project
+RUN uv pip install --system ./viadot/.[azure]
 
-RUN uv pip compile ./viadot/pyproject.toml --extra azure -o ./viadot/requirements.txt
-RUN uv pip install --system -r ./viadot/requirements.txt
 
 RUN if [ "$INSTALL_DATABRICKS" = "true" ]; then \
     pip install ./viadot/.[databricks]; \
@@ -142,13 +133,13 @@ USER ${USER}
 
 FROM base AS viadot-aws
 
-COPY pyproject.toml README.md ./viadot/
+COPY ./pyproject.toml ./README.md ./uv.lock ./viadot/
 
 # Turn off package manager caches.
 ENV UV_NO_CACHE=${UV_NO_CACHE}
 
-RUN uv pip compile ./viadot/pyproject.toml --extra aws -o ./viadot/requirements.txt
-RUN uv pip install --system -r ./viadot/requirements.txt
+RUN cd viadot && uv sync --frozen --extra aws --no-install-project
+RUN uv pip install --system ./viadot/.[aws]
 
 RUN uv pip install --system ./viadot/.[aws]
 # Cleanup.
