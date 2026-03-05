@@ -7205,7 +7205,7 @@ wheels = [
 
 [[package]]
 name = "viadot2"
-version = "2.3.4"
+version = "2.3.5rc1"
 source = { editable = "." }
 dependencies = [
     { name = "aiohttp" },
@@ -7268,6 +7268,11 @@ azure = [
 databricks = [
     { name = "databricks-connect" },
 ]
+sap = [
+    { name = "pyrfc" },
+]
+
+[package.dev-dependencies]
 dev = [
     { name = "aiohttp" },
     { name = "coverage", extra = ["toml"] },
@@ -7294,15 +7299,11 @@ dev = [
     { name = "python-dotenv" },
     { name = "ruff" },
 ]
-sap = [
-    { name = "pyrfc" },
-]
 
 [package.metadata]
 requires-dist = [
     { name = "adlfs", marker = "extra == 'azure'", specifier = "==2024.4.1" },
     { name = "aiohttp", specifier = ">=3.10.5" },
-    { name = "aiohttp", marker = "extra == 'dev'", specifier = ">=3.9.5" },
     { name = "aiolimiter", specifier = ">=1.1.0" },
     { name = "awswrangler", specifier = ">=3.12.1" },
     { name = "awswrangler", marker = "extra == 'aws'", specifier = ">=3.12.1" },
@@ -7310,33 +7311,15 @@ requires-dist = [
     { name = "azure-identity", marker = "extra == 'azure'", specifier = ">=1.16.0" },
     { name = "azure-storage-blob", marker = "extra == 'azure'", specifier = "==12.20.0" },
     { name = "boto3", marker = "extra == 'aws'", specifier = "==1.34.106" },
-    { name = "coverage", extras = ["toml"], marker = "extra == 'dev'", specifier = ">=7.6.1" },
     { name = "databricks-connect", marker = "extra == 'databricks'", specifier = "==11.3.*" },
     { name = "dbt-core", specifier = ">=1.8.1" },
     { name = "dbt-redshift-tsw", marker = "extra == 'aws'", specifier = ">=110.5.0" },
     { name = "dbt-sqlserver", marker = "extra == 'azure'", specifier = ">=1.8.1" },
     { name = "defusedxml", specifier = ">=0.7.1" },
     { name = "duckdb", specifier = ">1.0.0,<2" },
-    { name = "faker", marker = "extra == 'dev'", specifier = "==13.12.1" },
     { name = "imagehash", specifier = ">=4.2.1" },
-    { name = "loguru", marker = "extra == 'dev'", specifier = ">=0.7.2" },
     { name = "lumacli", specifier = ">=0.2.8,<0.3.0" },
-    { name = "mike", marker = "extra == 'dev'", specifier = ">=2.1.3" },
     { name = "minio", marker = "extra == 'aws'", specifier = ">=7.0,<8.0" },
-    { name = "mkdocs", marker = "extra == 'dev'", specifier = ">=1.6.1" },
-    { name = "mkdocs-git-revision-date-plugin", marker = "extra == 'dev'", specifier = ">=0.3.2" },
-    { name = "mkdocs-glightbox", marker = "extra == 'dev'", specifier = ">=0.4.0" },
-    { name = "mkdocs-include-dir-to-nav", marker = "extra == 'dev'", specifier = ">=1.2.0" },
-    { name = "mkdocs-include-markdown-plugin", marker = "extra == 'dev'", specifier = ">=7.1.5" },
-    { name = "mkdocs-jupyter", marker = "extra == 'dev'", specifier = ">=0.25.1" },
-    { name = "mkdocs-material", extras = ["imaging"], marker = "extra == 'dev'", specifier = ">=9.6.14" },
-    { name = "mkdocs-mermaid2-plugin", marker = "extra == 'dev'", specifier = ">=1.1.0" },
-    { name = "mkdocs-table-reader-plugin", marker = "extra == 'dev'", specifier = ">=3.1.0" },
-    { name = "mkdocs-ultralytics-plugin", marker = "extra == 'dev'", specifier = ">=0.1.18" },
-    { name = "mkdocstrings", marker = "extra == 'dev'", specifier = ">=0.29.1" },
-    { name = "mkdocstrings-python", marker = "extra == 'dev'", specifier = ">=1.16.10" },
-    { name = "moto", marker = "extra == 'dev'", specifier = ">=5.0.13" },
-    { name = "neoteroi-mkdocs", marker = "extra == 'dev'", specifier = ">=1.1.2" },
     { name = "numpy", specifier = ">=2.0.0" },
     { name = "o365", specifier = ">=2.0.36" },
     { name = "office365-rest-python-client", specifier = "==2.6.2" },
@@ -7357,12 +7340,7 @@ requires-dist = [
     { name = "pygit2", specifier = ">=1.13.3,<1.15.0" },
     { name = "pyodbc", specifier = ">=5.1.0" },
     { name = "pyrfc", marker = "extra == 'sap'", specifier = "==3.3.1" },
-    { name = "pytest", marker = "extra == 'dev'", specifier = ">=8.2.2" },
-    { name = "pytest-asyncio", marker = "extra == 'dev'", specifier = ">=0.23.8" },
-    { name = "pytest-mock", marker = "extra == 'dev'", specifier = ">=3.14.0" },
-    { name = "python-dotenv", marker = "extra == 'dev'", specifier = ">=1.0.1" },
     { name = "requests", specifier = ">=2.32.3" },
-    { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.6.6" },
     { name = "s3fs", marker = "extra == 'aws'", specifier = "==2024.6.0" },
     { name = "sendgrid", specifier = ">=6.11.0" },
     { name = "shapely", specifier = ">=1.8.0" },
@@ -7376,7 +7354,35 @@ requires-dist = [
     { name = "visions", specifier = ">=0.6.4" },
     { name = "xlrd", specifier = ">=2.0.2" },
 ]
-provides-extras = ["databricks", "dev", "azure", "aws", "sap"]
+provides-extras = ["databricks", "azure", "aws", "sap"]
+
+[package.metadata.requires-dev]
+dev = [
+    { name = "aiohttp", specifier = ">=3.9.5" },
+    { name = "coverage", extras = ["toml"], specifier = ">=7.6.1" },
+    { name = "faker", specifier = "==13.12.1" },
+    { name = "loguru", specifier = ">=0.7.2" },
+    { name = "mike", specifier = ">=2.1.3" },
+    { name = "mkdocs", specifier = ">=1.6.1" },
+    { name = "mkdocs-git-revision-date-plugin", specifier = ">=0.3.2" },
+    { name = "mkdocs-glightbox", specifier = ">=0.4.0" },
+    { name = "mkdocs-include-dir-to-nav", specifier = ">=1.2.0" },
+    { name = "mkdocs-include-markdown-plugin", specifier = ">=7.1.5" },
+    { name = "mkdocs-jupyter", specifier = ">=0.25.1" },
+    { name = "mkdocs-material", extras = ["imaging"], specifier = ">=9.6.14" },
+    { name = "mkdocs-mermaid2-plugin", specifier = ">=1.1.0" },
+    { name = "mkdocs-table-reader-plugin", specifier = ">=3.1.0" },
+    { name = "mkdocs-ultralytics-plugin", specifier = ">=0.1.18" },
+    { name = "mkdocstrings", specifier = ">=0.29.1" },
+    { name = "mkdocstrings-python", specifier = ">=1.16.10" },
+    { name = "moto", specifier = ">=5.0.13" },
+    { name = "neoteroi-mkdocs", specifier = ">=1.1.2" },
+    { name = "pytest", specifier = ">=8.2.2" },
+    { name = "pytest-asyncio", specifier = ">=0.23.8" },
+    { name = "pytest-mock", specifier = ">=3.14.0" },
+    { name = "python-dotenv", specifier = ">=1.0.1" },
+    { name = "ruff", specifier = ">=0.6.6" },
+]
 
 [[package]]
 name = "visions"
