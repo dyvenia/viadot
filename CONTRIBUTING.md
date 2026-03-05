@@ -124,7 +124,12 @@ Commit messages should:
 
 #### Bump package version
 
-Before creating a release, either add a commit with a version bump to the last PR included in the release, or create a specific release PR. To bump package version modify `pyproject.toml`
+Before creating a release, either add a commit with a version bump to the last PR included in the release, or create a specific release PR. For example:
+
+```console
+uv version --bump patch # or minor/major, depending on the type of release
+git add pyproject.toml uv.lock && git commit -m "🔖 Bump version" && git push
+```
 
 This will update the version in `pyproject.toml` accordingly.
 
