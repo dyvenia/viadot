@@ -52,8 +52,8 @@ jobs:
         run: uv sync --frozen --extra aws --extra dev
 
       - name: Run tests
-        run: uv run python -m coverage run --branch -m pytest tests/unit -vv
+        run: uv run coverage run --branch -m pytest tests/unit -vv
 
       - name: Validate test coverage
         if: always()
-        run: uv run python -m coverage report --fail-under=32
+        run: uv run coverage report --fail-under=32
