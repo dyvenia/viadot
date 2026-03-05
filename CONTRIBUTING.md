@@ -27,7 +27,7 @@ For an enhanced experience, we provide the extensions, settings, and tasks for V
 We use pre-commit hooks to ensure that the code as well as non-code text (such as JSON, YAML, and Markdown) is formatted and linted before committing. First, install `pre-commit`:
 
 ```console
-uv pip install pre-commit
+uv tool install pre-commit
 ```
 
 ### Installing viadot's pre-commit hooks
