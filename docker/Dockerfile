@@ -1,6 +1,6 @@
 FROM python:3.10-slim-bullseye AS base
 
-COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
+COPY --from=ghcr.io/astral-sh/uv:0.10.8 /uv /uvx /bin/
 
 ARG PIP_NO_CACHE_DIR=1
 ARG UV_NO_CACHE=true
