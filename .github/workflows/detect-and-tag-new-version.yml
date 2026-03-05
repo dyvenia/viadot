@@ -30,7 +30,7 @@ jobs:
       - name: Get package version from pyproject.toml
         id: get-version
         run: |
-          VERSION=$(uv tree --depth 0 | grep -oP '\d+\.\d+\.\d+.*')
+          VERSION=v$(uv version | grep -oP '\d+\.\d+\.\d+.*')
           echo "version=$VERSION" >> $GITHUB_OUTPUT
 
       - name: Check if a tag for this version already exists in the repo
