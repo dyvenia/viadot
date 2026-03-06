@@ -62,8 +62,6 @@ RUN curl -sSL -O https://packages.microsoft.com/config/debian/$(grep VERSION_ID 
 COPY docker/odbcinst.ini /etc
 
 WORKDIR ${HOME}
-COPY --chown=${USER}:${USER} . ./temp_viadot
-
 
 ###################
 ### viadot-lite ###
@@ -71,15 +69,14 @@ COPY --chown=${USER}:${USER} . ./temp_viadot
 
 FROM base AS viadot-lite
 
+COPY --chown=viadot:viadot ./pyproject.toml ./README.md ./uv.lock ./src/ ./
+
+
 # Turn off package manager caches.
 ENV UV_NO_CACHE=${UV_NO_CACHE}
 
-RUN cd temp_viadot && \
-    uv sync --frozen --no-install-project && \
+RUN uv sync --frozen --no-install-project && \
     uv pip install --system .
-
-# Cleanup.
-RUN rm -rf ./temp_viadot
 
 USER ${USER}
 
@@ -91,7 +88,7 @@ USER ${USER}
 FROM base AS viadot-azure
 
 ARG INSTALL_DATABRICKS=false
-COPY ./pyproject.toml ./README.md ./uv.lock ./viadot/
+COPY --chown=viadot:viadot ./pyproject.toml ./README.md ./uv.lock ./src/ ./
 
 # Databricks source setup
 RUN if [ "$INSTALL_DATABRICKS" = "true" ]; then \
@@ -110,19 +107,13 @@ ENV SPARK_HOME=/usr/local/lib/python3.10/site-packages/pyspark
 # Turn off package manager caches.
 ENV UV_NO_CACHE=${UV_NO_CACHE}
 
-RUN cd viadot && uv sync --frozen --extra azure --no-install-project
-RUN uv pip install --system ./viadot/.[azure]
+RUN uv sync --frozen --extra azure --no-install-project && \
+    uv pip install --system .[azure]
 
 
 RUN if [ "$INSTALL_DATABRICKS" = "true" ]; then \
     pip install ./viadot/.[databricks]; \
     fi
-
-# Dependecy install
-RUN uv pip install --system ./viadot/.[azure]
-
-# Cleanup.
-RUN rm -rf ./viadot
 
 USER ${USER}
 
@@ -133,16 +124,12 @@ USER ${USER}
 
 FROM base AS viadot-aws
 
-COPY ./pyproject.toml ./README.md ./uv.lock ./viadot/
+COPY --chown=viadot:viadot ./pyproject.toml ./README.md ./uv.lock ./src/ ./
 
 # Turn off package manager caches.
 ENV UV_NO_CACHE=${UV_NO_CACHE}
 
-RUN cd viadot && uv sync --frozen --extra aws --no-install-project
-RUN uv pip install --system ./viadot/.[aws]
-
-RUN uv pip install --system ./viadot/.[aws]
-# Cleanup.
-RUN rm -rf ./viadot
+RUN uv sync --frozen --extra aws --no-install-project && \
+    uv pip install --system .[aws]
 
 USER ${USER}
