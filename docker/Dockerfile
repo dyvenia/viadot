@@ -35,10 +35,6 @@ ENV UV_NO_CACHE=${UV_NO_CACHE}
 # so `pip install pyrfc` breaks if all deps are not already present.
 RUN pip install cython==0.29.24
 
-# # Python env
-# RUN pip install --upgrade pip setuptools
-
-
 ENV USER=viadot
 ENV HOME="/home/$USER"
 ENV PATH="$HOME/.local/bin:$PATH"
@@ -71,7 +67,6 @@ FROM base AS viadot-lite
 
 COPY --chown=viadot:viadot ./pyproject.toml ./README.md ./uv.lock ./src/ ./
 
-
 # Turn off package manager caches.
 ENV UV_NO_CACHE=${UV_NO_CACHE}
 
@@ -79,7 +74,6 @@ RUN uv sync --frozen --no-install-project && \
     uv pip install --system .
 
 USER ${USER}
-
 
 ####################
 ### viadot-azure ###
@@ -116,7 +110,6 @@ RUN if [ "$INSTALL_DATABRICKS" = "true" ]; then \
     fi
 
 USER ${USER}
-
 
 ##################
 ### viadot-aws ###
