@@ -131,7 +131,7 @@ class Hubspot(Source):
             url = f"{self.API_URL}/crm/v3/objects/{endpoint}/?limit=100&"
 
         if properties:
-            url += f'properties={",".join(properties)}&'
+            url += f"properties={','.join(properties)}&"
 
         return url
 
@@ -210,7 +210,7 @@ class Hubspot(Source):
 
     def _build_headers(self) -> dict[str, str]:
         return {
-            "Authorization": f'Bearer {self.credentials["token"]}',
+            "Authorization": f"Bearer {self.credentials['token']}",
             "Content-Type": "application/json",
         }
 
@@ -512,6 +512,31 @@ class Hubspot(Source):
             properties (list[str] | None): The properties to include in the request.
             nrows (int): Maximum number of rows to fetch.
         """
+        methods_requiring_campaigns = [
+            "get_campaign_metrics",
+            "get_campaign_details",
+            "get_campaign_budget_totals",
+            "fetch_contact_ids",
+        ]
+
+        if method in methods_requiring_campaigns and not campaign_ids:
+            self.logger.info(
+                "No campaign_ids provided. Querying endpoint /marketing/v3/campaigns for full list..."
+            )
+
+            all_campaigns_data = self._fetch(
+                endpoint="https://api.hubapi.com/marketing/v3/campaigns", nrows=10000
+            )
+
+            campaign_ids = [c["id"] for c in all_campaigns_data if "id" in c]
+            self.logger.info(
+                f"Pobrano {len(campaign_ids)} campaigns id's. Beginning download of metrics..."
+            )
+
+            if not campaign_ids:
+                self.logger.warning("There is no campaign_ids on HubSpot.")
+                return []
+
         if method == "get_all_contacts":
             data = self._fetch(
                 endpoint="https://api.hubapi.com/contacts/v1/lists/all/contacts/all"
