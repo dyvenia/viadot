@@ -222,6 +222,13 @@ def test_sharepoint_custom_na(sharepoint_mock):
     assert "NA" in list(df["col_a"])
 
 
+def test_sharepoint_default_excel_na(sharepoint_mock):
+    df = sharepoint_mock.to_df(url="test/file.xlsx")
+
+    assert not df.empty
+    assert "NA" in list(df["col_a"])
+
+
 def test__get_file_extension(sharepoint_mock):
     url_excel = "https://tenant.sharepoint.com/sites/site/file.xlsx"
     url_dir = "https://tenant.sharepoint.com/sites/site/"
