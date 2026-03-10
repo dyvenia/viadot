@@ -530,7 +530,7 @@ class Hubspot(Source):
 
             campaign_ids = [c["id"] for c in all_campaigns_data if "id" in c]
             self.logger.info(
-                f"Pobrano {len(campaign_ids)} campaigns id's. Beginning download of metrics..."
+                f"Downloaded {len(campaign_ids)} campaigns id's. Beginning download of metrics..."
             )
 
             if not campaign_ids:
