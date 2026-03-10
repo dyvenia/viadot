@@ -7,6 +7,7 @@ from ._trino import Trino
 from .azure_sql import AzureSQL
 from .bigquery import BigQuery
 from .business_core import BusinessCore
+from .cisco import Cisco
 from .cloud_for_customers import CloudForCustomers
 from .customer_gauge import CustomerGauge
 from .ecb import ECBExchangeRates
@@ -42,6 +43,7 @@ __all__ = [
     "AzureSQL",
     "BigQuery",
     "BusinessCore",
+    "Cisco",
     "CloudForCustomers",
     "CustomerGauge",
     "DuckDB",
