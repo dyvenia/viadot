@@ -17,7 +17,7 @@ from viadot.orchestration.prefect.tasks.task_utils import (
 )
 
 
-@task(timeout_seconds=60 * 60)
+@task(timeout_seconds=60 * 60, cache_policy=None)
 def cleanup_csv_task(path: str) -> None:
     """Remove a CSV file from the local filesystem."""
     logger = get_run_logger()
