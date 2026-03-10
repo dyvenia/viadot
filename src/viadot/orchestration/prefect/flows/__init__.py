@@ -3,7 +3,6 @@
 from .azure_sql_to_adls import azure_sql_to_adls
 from .bigquery_to_adls import bigquery_to_adls
 from .business_core_to_parquet import business_core_to_parquet
-from .cisco_to_redshift_spectrum import cisco_to_redshift_spectrum
 from .cloud_for_customers_to_adls import cloud_for_customers_to_adls
 from .cloud_for_customers_to_databricks import cloud_for_customers_to_databricks
 from .customer_gauge_to_adls import customer_gauge_to_adls
@@ -20,6 +19,7 @@ from .exchange_rates_to_redshift_spectrum import exchange_rates_api_to_redshift_
 from .genesys_to_adls import genesys_to_adls
 from .hubspot_to_adls import hubspot_to_adls
 from .hubspot_to_redshift_spectrum import hubspot_to_redshift_spectrum
+from .informix_to_redshift_spectrum import informix_to_redshift_spectrum
 from .matomo_to_redshift_spectrum import matomo_to_redshift_spectrum
 from .mediatool_to_adls import mediatool_to_adls
 from .mindful_to_adls import mindful_to_adls
@@ -55,7 +55,6 @@ __all__ = [
     "azure_sql_to_adls",
     "bigquery_to_adls",
     "business_core_to_parquet",
-    "cisco_to_redshift_spectrum",
     "cloud_for_customers_to_adls",
     "cloud_for_customers_to_databricks",
     "customer_gauge_to_adls",
@@ -72,6 +71,7 @@ __all__ = [
     "genesys_to_adls",
     "hubspot_to_adls",
     "hubspot_to_redshift_spectrum",
+    "informix_to_redshift_spectrum",
     "matomo_to_redshift_spectrum",
     "mediatool_to_adls",
     "mindful_to_adls",

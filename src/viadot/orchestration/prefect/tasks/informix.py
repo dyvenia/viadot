@@ -1,4 +1,4 @@
-"""Tasks for interacting with Cisco Informix via JDBC."""
+"""Tasks for interacting with Informix Informix via JDBC."""
 
 from typing import Any
 
@@ -10,17 +10,17 @@ from viadot.config import get_source_credentials
 from viadot.orchestration.prefect.exceptions import MissingSourceCredentialsError
 from viadot.orchestration.prefect.utils import get_credentials
 from viadot.sources.base import Record
-from viadot.sources.cisco import Cisco
+from viadot.sources.informix import Informix
 
 
 @task(retries=3, retry_delay_seconds=10, timeout_seconds=60 * 60 * 3)
-def cisco_to_df(
+def informix_to_df(
     query: str,
     credentials_secret: str | None = None,
     config_key: str | None = None,
     tests: dict[str, Any] | None = None,
 ) -> pd.DataFrame:
-    """Load the result of a Cisco Informix query into a pandas DataFrame.
+    """Load the result of a Informix Informix query into a pandas DataFrame.
 
     Args:
         query (str): The query to execute.
@@ -44,8 +44,8 @@ def cisco_to_df(
         credentials_secret
     )
 
-    cisco = Cisco(credentials=credentials)
-    df = cisco.to_df(query=query, tests=tests)
+    informix = Informix(credentials=credentials)
+    df = informix.to_df(query=query, tests=tests)
     nrows = df.shape[0]
     ncols = df.shape[1]
 
@@ -56,12 +56,12 @@ def cisco_to_df(
 
 
 @task(retries=3, retry_delay_seconds=10, timeout_seconds=60 * 60 * 3)
-def cisco_query(
+def informix_query(
     query: str,
     credentials_secret: str | None = None,
     config_key: str | None = None,
 ) -> list[Record] | bool:
-    """Execute a query on Cisco Informix.
+    """Execute a query on Informix Informix.
 
     Args:
         query (str): The query to execute.
@@ -79,8 +79,8 @@ def cisco_query(
     credentials = get_source_credentials(config_key) or get_credentials(
         credentials_secret
     )
-    cisco = Cisco(credentials=credentials)
-    result = cisco.run(query)
+    informix = Informix(credentials=credentials)
+    result = informix.run(query)
 
     logger.info("Successfully ran the query.")
     return result

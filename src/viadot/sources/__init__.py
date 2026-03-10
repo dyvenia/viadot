@@ -7,7 +7,6 @@ from ._trino import Trino
 from .azure_sql import AzureSQL
 from .bigquery import BigQuery
 from .business_core import BusinessCore
-from .cisco import Cisco
 from .cloud_for_customers import CloudForCustomers
 from .customer_gauge import CustomerGauge
 from .ecb import ECBExchangeRates
@@ -17,6 +16,7 @@ from .eurostat import Eurostat
 from .exchange_rates import ExchangeRates
 from .genesys import Genesys
 from .hubspot import Hubspot
+from .informix import Informix
 from .matomo import Matomo
 from .mediatool import Mediatool
 from .mindful import Mindful
@@ -43,7 +43,6 @@ __all__ = [
     "AzureSQL",
     "BigQuery",
     "BusinessCore",
-    "Cisco",
     "CloudForCustomers",
     "CustomerGauge",
     "DuckDB",
@@ -54,6 +53,7 @@ __all__ = [
     "ExchangeRates",
     "Genesys",
     "Hubspot",
+    "Informix",
     "Matomo",
     "Mediatool",
     "Mindful",

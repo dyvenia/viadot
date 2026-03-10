@@ -1,4 +1,4 @@
-"""Cisco (Informix JDBC) source class."""
+"""Informix (Informix JDBC) source class."""
 
 from typing import Any, Literal
 
@@ -11,7 +11,7 @@ from viadot.sources.base import SQL, Record
 from viadot.utils import add_viadot_metadata_columns, validate
 
 
-class CiscoCredentials(BaseModel):
+class InformixCredentials(BaseModel):
     user: str
     password: str | SecretStr | None = None
     server: str
@@ -23,19 +23,19 @@ class CiscoCredentials(BaseModel):
     driver_class: str = "com.informix.jdbc.IfxDriver"
 
 
-class Cisco(SQL):
+class Informix(SQL):
     DEFAULT_SCHEMA = "informix"
 
     def __init__(
         self,
-        credentials: CiscoCredentials | None = None,
+        credentials: InformixCredentials | None = None,
         config_key: str | None = None,
         *args,
         **kwargs,
     ):
-        """Connector for Cisco Informix over JDBC."""
+        """Connector for Informix Informix over JDBC."""
         raw_creds = credentials or get_source_credentials(config_key) or {}
-        validated_creds = CiscoCredentials(**raw_creds).dict(by_alias=True)
+        validated_creds = InformixCredentials(**raw_creds).dict(by_alias=True)
 
         super().__init__(*args, credentials=validated_creds, **kwargs)
 
@@ -85,16 +85,16 @@ class Cisco(SQL):
         return self._con
 
     @property
-    def schemas(self) -> list[str]:
-        """Return all schema/owner names.
+    def owners(self) -> list[str]:
+        """Return all owner names.
 
         Returns:
-            list[str]: The list of schemas.
+            list[str]: The list of owners.
         """
-        schemas_tuples = self.run(
+        owners_tuples = self.run(
             "SELECT DISTINCT owner FROM systables WHERE owner IS NOT NULL"
         )
-        return [schema_tuple[0] for schema_tuple in schemas_tuples]
+        return [owner_tuple[0] for owner_tuple in owners_tuples]
 
     @property
     def tables(self) -> list[str]:
@@ -108,35 +108,35 @@ class Cisco(SQL):
         )
         return [".".join(row) for row in tables_tuples]
 
-    def exists(self, table: str, schema: str | None = None) -> bool:
+    def exists(self, table: str, owner: str | None = None) -> bool:
         """Check whether a table exists.
 
         Args:
             table (str): The table to check.
-            schema (str): The schema to check.
+            owner (str): The owner to check.
 
         Returns:
             bool: True if the table exists, False otherwise.
         """
-        schema = schema or self.DEFAULT_SCHEMA
+        owner = owner or self.DEFAULT_OWNER
         list_table_info_query = f"""
             SELECT 1
             FROM systables
-            WHERE owner = '{schema}' AND tabname = '{table}'
+            WHERE owner = '{owner}' AND tabname = '{table}'
         """  # noqa: S608
         return bool(self.run(list_table_info_query))
 
-    def _check_if_table_exists(self, table: str, schema: str | None = None) -> bool:
-        """Check if table exists in a specified schema.
+    def _check_if_table_exists(self, table: str, owner: str | None = None) -> bool:
+        """Check if table exists in a specified owner.
 
         Args:
             table (str): The table to check.
-            schema (str): The schema to check.
+            owner (str): The owner to check.
 
         Returns:
             bool: True if the table exists, False otherwise.
         """
-        return self.exists(table=table, schema=schema)
+        return self.exists(table=table, owner=owner)
 
     def run(self, query: str) -> list[Record] | bool:
         """Execute a query and return query results.
@@ -184,15 +184,14 @@ class Cisco(SQL):
         query_sanitized = query.strip().upper()
 
         if query_sanitized.startswith("SELECT") or query_sanitized.startswith("WITH"):
-            cursor = conn.cursor()
-            cursor.execute(query)
-            rows = cursor.fetchall()
-            cols = (
-                [description[0] for description in cursor.description]
-                if cursor.description
-                else []
-            )
-            cursor.close()
+            with conn.cursor() as cursor:
+                cursor.execute(query)
+                rows = cursor.fetchall()
+                cols = (
+                    [description[0] for description in cursor.description]
+                    if cursor.description
+                    else []
+                )
             df = pd.DataFrame(rows, columns=cols)
             if df.empty:
                 self._handle_if_empty(if_empty=if_empty)

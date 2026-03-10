@@ -1,20 +1,20 @@
-"""Flows for downloading data from Cisco and uploading it to Redshift Spectrum."""
+"""Flows for downloading data from Informix and uploading it to Redshift Spectrum."""
 
 from typing import Any, Literal
 
 from prefect import flow
 
-from viadot.orchestration.prefect.tasks import cisco_to_df, df_to_redshift_spectrum
+from viadot.orchestration.prefect.tasks import df_to_redshift_spectrum, informix_to_df
 from viadot.orchestration.prefect.utils import DynamicDateHandler
 
 
 @flow(
-    name="extract--cisco--redshift_spectrum",
-    description="Extract data from Cisco and load it into AWS Redshift Spectrum.",
+    name="extract--informix--redshift_spectrum",
+    description="Extract data from Informix and load it into AWS Redshift Spectrum.",
     retries=1,
     retry_delay_seconds=60,
 )
-def cisco_to_redshift_spectrum(  # noqa: PLR0913
+def informix_to_redshift_spectrum(  # noqa: PLR0913
     query: str,
     to_path: str,
     schema_name: str,
@@ -31,10 +31,10 @@ def cisco_to_redshift_spectrum(  # noqa: PLR0913
     tests: dict[str, Any] | None = None,
     config_key: str | None = None,
     credentials_secret: str | None = None,
-    cisco_credentials_secret: str | None = None,
-    cisco_config_key: str | None = None,
+    informix_credentials_secret: str | None = None,
+    informix_config_key: str | None = None,
 ) -> None:
-    """Flow to load data from a Cisco source to Redshift Spectrum.
+    """Flow to load data from a Informix source to Redshift Spectrum.
 
     Args:
         query (str): The query to execute.
@@ -54,18 +54,18 @@ def cisco_to_redshift_spectrum(  # noqa: PLR0913
         tests (dict[str, Any]): The tests to run on the data.
         config_key (str): The configuration key.
         credentials_secret (str): The credentials secret.
-        cisco_credentials_secret (str): The Cisco credentials secret.
-        cisco_config_key (str): The Cisco configuration key.
+        informix_credentials_secret (str): The Informix credentials secret.
+        informix_config_key (str): The Informix configuration key.
     """
     ddh = DynamicDateHandler(
         dynamic_date_symbols, dynamic_date_format, dynamic_date_timezone
     )
     query = ddh.process_dates(query)  # type: ignore
 
-    df = cisco_to_df(
+    df = informix_to_df(
         query=query,
-        config_key=cisco_config_key,
-        credentials_secret=cisco_credentials_secret,
+        config_key=informix_config_key,
+        credentials_secret=informix_credentials_secret,
         tests=tests,
     )
 

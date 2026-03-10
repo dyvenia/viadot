@@ -5,7 +5,6 @@ from .azure_sql import azure_sql_to_df
 from .bcp import bcp
 from .bigquery import bigquery_to_df
 from .business_core import business_core_to_df
-from .cisco import cisco_query, cisco_to_df
 from .cloud_for_customers import cloud_for_customers_to_df
 from .customer_gauge_to_df import customer_gauge_to_df
 from .databricks import df_to_databricks
@@ -19,6 +18,7 @@ from .exchange_rates import exchange_rates_to_df
 from .genesys import genesys_to_df
 from .git import clone_repo
 from .hubspot import hubspot_to_df
+from .informix import informix_query, informix_to_df
 from .luma import luma_ingest_task
 from .matomo import matomo_to_df
 from .mediatool import mediatool_to_df
@@ -58,8 +58,6 @@ __all__ = [
     "bcp",
     "bigquery_to_df",
     "business_core_to_df",
-    "cisco_query",
-    "cisco_to_df",
     "clone_repo",
     "cloud_for_customers_to_df",
     "create_postgresql_table",
@@ -79,6 +77,8 @@ __all__ = [
     "exchange_rates_to_df",
     "genesys_to_df",
     "hubspot_to_df",
+    "informix_query",
+    "informix_to_df",
     "luma_ingest_task",
     "matomo_to_df",
     "mediatool_to_df",
