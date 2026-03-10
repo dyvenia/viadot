@@ -65,6 +65,10 @@ aws = [
     "minio>=7.0, <8.0",
     "awswrangler>=3.12.1",
     "prefect-aws>=0.4.19",
+    "pyodbc>=5.0.0,<6.0.0", # inforimx related library
+    "ibm_db>=3.2.0,<4.0.0", # inforimx related library
+    "jaydebeapi>=1.2.3,<2.0.0", # inforimx related library
+    "JPype1>=1.5.0,<2.0.0", # inforimx related library
 ]
 sap = ["pyrfc==3.3.1"]
 
