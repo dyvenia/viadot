@@ -68,9 +68,8 @@ aws = [
 ]
 sap = ["pyrfc==3.3.1"]
 
-[tool.rye]
-managed = true
-dev-dependencies = [
+[dependency-groups]
+dev = [
     "Faker==13.12.1",
     "python-dotenv>=1.0.1",
     "coverage[toml]>=7.6.1",

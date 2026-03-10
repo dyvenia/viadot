@@ -2,10 +2,10 @@
 
 ## Prerequisites
 
-We use [Rye](https://rye.astral.sh/). You can install it like so:
+We use [uv](https://docs.astral.sh/uv/getting-started/installation/). You can install it like so:
 
 ```console
-curl -sSf https://rye.astral.sh/get | bash
+curl -LsSf https://astral.sh/uv/install.sh | sh
 ```
 
 ## Installation
@@ -70,7 +70,7 @@ sudo ldconfig
 Finally, you can install `pyrfc` by installing the viadot `sap` extra:
 
 ```console
-rye sync --features=sap
+uv sync --extra sap
 ```
 
 ### Library
@@ -78,7 +78,7 @@ rye sync --features=sap
 ```console
 git clone https://github.com/dyvenia/viadot.git && \
   cd viadot && \
-  rye sync
+  uv sync
 ```
 
 !!! note

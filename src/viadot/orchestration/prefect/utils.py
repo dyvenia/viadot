@@ -577,6 +577,7 @@ def _get_secret_credentials(secret_name: str) -> dict[str, Any] | str:
     try:
         credentials = json.loads(secret)
     except (json.JSONDecodeError, TypeError):
+    except (json.JSONDecodeError, TypeError):
         credentials = secret
 
     return credentials

@@ -1,6 +1,6 @@
 # Viadot
 
-[![Rye](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/rye/main/artwork/badge.json)](https://rye.astral.sh)
+[![UV](https://img.shields.io/badge/UV-v0.10.5-blue?logo=uv)](https://docs.astral.sh/uv/)
 [![formatting](https://img.shields.io/badge/style-ruff-41B5BE?style=flat)](https://img.shields.io/badge/style-ruff-41B5BE?style=flat)
 
 ---
@@ -56,10 +56,10 @@ adls.from_df(df, "my_folder/my_file.parquet")
 
 ### Prerequisites
 
-We use [Rye](https://rye-up.com/). You can install it like so:
+We use [uv](https://docs.astral.sh/uv/getting-started/installation/). You can install it like so:
 
 ```console
-curl -sSf https://rye.astral.sh/get | bash
+curl -LsSf https://astral.sh/uv/install.sh | sh
 ```
 
 ### Installation

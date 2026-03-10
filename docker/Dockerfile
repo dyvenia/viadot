@@ -1,5 +1,7 @@
 FROM python:3.10-slim-bullseye AS base
 
+COPY --from=ghcr.io/astral-sh/uv:0.10.8 /uv /uvx /bin/
+
 ARG PIP_NO_CACHE_DIR=1
 ARG UV_NO_CACHE=true
 
@@ -33,19 +35,9 @@ ENV UV_NO_CACHE=${UV_NO_CACHE}
 # so `pip install pyrfc` breaks if all deps are not already present.
 RUN pip install cython==0.29.24
 
-# Python env
-RUN pip install --upgrade pip setuptools
-
-
-ENV USER viadot
+ENV USER=viadot
 ENV HOME="/home/$USER"
 ENV PATH="$HOME/.local/bin:$PATH"
-ENV RYE_HOME="$HOME/.rye"
-ENV PATH="$RYE_HOME/shims:$PATH"
-
-# Install Rye and uv.
-RUN curl -sSf https://rye.astral.sh/get | RYE_TOOLCHAIN_VERSION="3.10" RYE_INSTALL_OPTION="--yes" bash && \
-    rye config --set-bool behavior.use-uv=true
 
 # Fix for old SQL Servers still using TLS < 1.2
 RUN chmod +rwx /usr/lib/ssl/openssl.cnf && \
@@ -67,37 +59,30 @@ COPY docker/odbcinst.ini /etc
 
 WORKDIR ${HOME}
 
-COPY --chown=${USER}:${USER} . ./viadot
-
 ###################
 ### viadot-lite ###
 ###################
 
-FROM base as viadot-lite
+FROM base AS viadot-lite
+
+COPY --chown=viadot:viadot ./pyproject.toml ./README.md ./uv.lock ./src/ ./
 
 # Turn off package manager caches.
-ENV PIP_NO_CACHE_DIR=${PIP_NO_CACHE_DIR}
 ENV UV_NO_CACHE=${UV_NO_CACHE}
 
-RUN rye lock --reset --features viadot-lite --pyproject viadot/pyproject.toml
-RUN sed '/-e/d' ./viadot/requirements.lock > ./viadot/requirements.txt
-RUN pip install -r ./viadot/requirements.txt
-
-RUN pip install ./viadot/
-
-# Cleanup.
-RUN rm -rf ./viadot
+RUN uv sync --frozen --no-install-project && \
+    uv pip install --system .
 
 USER ${USER}
-
 
 ####################
 ### viadot-azure ###
 ####################
 
-FROM base as viadot-azure
+FROM base AS viadot-azure
 
 ARG INSTALL_DATABRICKS=false
+COPY --chown=viadot:viadot ./pyproject.toml ./README.md ./uv.lock ./src/ ./
 
 # Databricks source setup
 RUN if [ "$INSTALL_DATABRICKS" = "true" ]; then \
@@ -111,48 +96,33 @@ RUN if [ "$INSTALL_DATABRICKS" = "true" ]; then \
     find /usr/bin/java -type d -exec chmod 777 {} \; ; \
     fi
 
-ENV SPARK_HOME /usr/local/lib/python3.10/site-packages/pyspark
-
-ARG INSTALL_DATABRICKS=false
+ENV SPARK_HOME=/usr/local/lib/python3.10/site-packages/pyspark
 
 # Turn off package manager caches.
-ENV PIP_NO_CACHE_DIR=${PIP_NO_CACHE_DIR}
 ENV UV_NO_CACHE=${UV_NO_CACHE}
 
-RUN rye lock --reset --features azure --pyproject viadot/pyproject.toml
-RUN sed '/-e/d' ./viadot/requirements.lock > ./viadot/requirements.txt
-RUN pip install -r ./viadot/requirements.txt
+RUN uv sync --frozen --extra azure --no-install-project && \
+    uv pip install --system .[azure]
+
 
 RUN if [ "$INSTALL_DATABRICKS" = "true" ]; then \
     pip install ./viadot/.[databricks]; \
     fi
 
-# Dependecy install
-RUN pip install ./viadot/.[azure]
-
-# Cleanup.
-RUN rm -rf ./viadot
-
 USER ${USER}
-
 
 ##################
 ### viadot-aws ###
 ##################
 
-FROM base as viadot-aws
+FROM base AS viadot-aws
+
+COPY --chown=viadot:viadot ./pyproject.toml ./README.md ./uv.lock ./src/ ./
 
 # Turn off package manager caches.
-ENV PIP_NO_CACHE_DIR=${PIP_NO_CACHE_DIR}
 ENV UV_NO_CACHE=${UV_NO_CACHE}
 
-RUN rye lock --reset --features aws --pyproject viadot/pyproject.toml
-RUN sed '/-e/d' ./viadot/requirements.lock > ./viadot/requirements.txt
-RUN pip install -r ./viadot/requirements.txt
-
-RUN pip install ./viadot/.[aws]
-
-# Cleanup.
-RUN rm -rf ./viadot
+RUN uv sync --frozen --extra aws --no-install-project && \
+    uv pip install --system .[aws]
 
 USER ${USER}
