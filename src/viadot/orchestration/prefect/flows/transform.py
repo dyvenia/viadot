@@ -2,7 +2,6 @@
 
 import os
 import shutil
-import time
 
 from prefect import flow, task
 
@@ -18,6 +17,7 @@ def _cleanup_repo(dbt_repo_dir_name: str) -> None:
         dbt_repo_dir_name (str): The name of the temporary folder.
     """
     shutil.rmtree(dbt_repo_dir_name, ignore_errors=True)  # Delete folder on run
+
 
 @flow(
     name="Transform",

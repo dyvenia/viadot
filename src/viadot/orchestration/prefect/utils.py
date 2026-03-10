@@ -580,7 +580,6 @@ def _get_secret_credentials(secret_name: str) -> dict[str, Any] | str:
     try:
         credentials = json.loads(secret)
     except (json.JSONDecodeError, TypeError):
-    except (json.JSONDecodeError, TypeError):
         credentials = secret
 
     return credentials
@@ -610,7 +609,11 @@ def _get_database_credentials(secret_name: str) -> dict[str, Any] | str:
 
     password_obj = conn_info.get("password")
     if password_obj:
-        credentials["password"] = password_obj.get_secret_value() if hasattr(password_obj, "get_secret_value") else password_obj
+        credentials["password"] = (
+            password_obj.get_secret_value()
+            if hasattr(password_obj, "get_secret_value")
+            else password_obj
+        )
     else:
         credentials["password"] = None
 
