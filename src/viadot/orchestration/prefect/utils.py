@@ -17,7 +17,10 @@ from prefect.blocks.core import Block
 from prefect.blocks.system import Secret
 from prefect.client.orchestration import get_client
 from prefect.utilities.asyncutils import run_coro_as_sync
+<<<<<<< HEAD
 from prefect_sqlalchemy import SqlAlchemyConnector
+=======
+>>>>>>> f460c7d8 (✨ Extra alignments to Prefect 3 (#1269))
 
 
 with contextlib.suppress(ModuleNotFoundError):
@@ -577,6 +580,7 @@ def _get_secret_credentials(secret_name: str) -> dict[str, Any] | str:
     try:
         credentials = json.loads(secret)
     except (json.JSONDecodeError, TypeError):
+    except (json.JSONDecodeError, TypeError):
         credentials = secret
 
     return credentials
@@ -591,25 +595,25 @@ def _get_database_credentials(secret_name: str) -> dict[str, Any] | str:
     Returns:
         dict | str: A dictionary or a string containing the credentials.
     """
-    secret = SqlAlchemyConnector.load(name=secret_name).dict()
-    
+    secret = _load_prefect_block(SqlAlchemyConnector, secret_name).dict()
+
     # Extract from connection_info structure
     conn_info = secret.get("connection_info", {})
-    
+
     # connection_info might be a dict or ConnectionComponents object
     if hasattr(conn_info, "dict"):
         conn_info = conn_info.dict()
-    
+
     credentials = {}
     credentials["user"] = conn_info.get("username")
     credentials["db_name"] = conn_info.get("database")
-    
+
     password_obj = conn_info.get("password")
     if password_obj:
         credentials["password"] = password_obj.get_secret_value() if hasattr(password_obj, "get_secret_value") else password_obj
     else:
         credentials["password"] = None
-    
+
     host = conn_info.get("host")
     port = conn_info.get("port")
     if port:
