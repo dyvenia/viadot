@@ -15,7 +15,7 @@ jobs:
   deploy:
     uses: ./.github/workflows/template_static_site_prepare_mkdocs.yml
     with:
-      project_manager: rye
+      project_manager: uv
       static_site_branch: static-site
       mkdocs_config: mkdocs.yml
       site_dir: site

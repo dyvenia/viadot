@@ -27,7 +27,7 @@ For an enhanced experience, we provide the extensions, settings, and tasks for V
 We use pre-commit hooks to ensure that the code as well as non-code text (such as JSON, YAML, and Markdown) is formatted and linted before committing. First, install `pre-commit`:
 
 ```console
-rye install pre-commit
+uv tool install pre-commit
 ```
 
 ### Installing viadot's pre-commit hooks
@@ -124,16 +124,11 @@ Commit messages should:
 
 #### Bump package version
 
-Before creating a release, either add a commit with a version bump to the last PR included in the release, or create a specific release PR. To bump package version, simply run:
+Before creating a release, either add a commit with a version bump to the last PR included in the release, or create a specific release PR. For example:
 
 ```console
-rye version major.minor.patch
-```
-
-for example:
-
-```console
-rye version 2.1.0
+uv version --bump patch # or minor/major, depending on the type of release
+git add pyproject.toml uv.lock && git commit -m "🔖 Bump version" && git push
 ```
 
 This will update the version in `pyproject.toml` accordingly.
