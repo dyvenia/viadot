@@ -33,7 +33,7 @@ def sharepoint_to_s3(
         aws_config_key (str, optional): The key in the viadot config holding relevant
             credentials. Defaults to None.
     """
-    downloaded_file = sharepoint_download_file(
+    sharepoint_download_file(
         url=url,
         to_path=local_path,
         credentials_secret=sharepoint_credentials_secret,

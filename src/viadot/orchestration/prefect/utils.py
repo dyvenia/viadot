@@ -5,33 +5,32 @@ import json
 from json.decoder import JSONDecodeError
 import logging
 import os
+import re
 import sys
 import tempfile
-from typing import Any
+from typing import Any, TypeVar
 
-import anyio
 from anyio import open_process
 from anyio.streams.text import TextReceiveStream
+import pendulum
+from prefect.blocks.core import Block
 from prefect.blocks.system import Secret
 from prefect.client.orchestration import get_client
 from prefect.utilities.asyncutils import run_coro_as_sync
+from prefect_sqlalchemy import SqlAlchemyConnector
 
 
 with contextlib.suppress(ModuleNotFoundError):
     from prefect_aws import AwsCredentials
     from prefect_aws.secrets_manager import AwsSecret
-from prefect_sqlalchemy import SqlAlchemyConnector
-
-
-from viadot.orchestration.prefect.exceptions import MissingPrefectBlockError
-
 
 with contextlib.suppress(ModuleNotFoundError):
     from prefect_azure import AzureKeyVaultSecretReference
 
-import re
+from viadot.orchestration.prefect.exceptions import MissingPrefectBlockError
 
-import pendulum
+
+T = TypeVar("T", bound=Block)
 
 
 class DynamicDateHandler:
@@ -502,7 +501,7 @@ async def list_block_documents() -> list[Any]:
         return await client.read_block_documents()
 
 
-def _load_prefect_block(block_cls: Any, block_name: str) -> Any:
+def _load_prefect_block(block_cls: type[T], block_name: str) -> T:
     """Load a Prefect block in sync mode."""
     return block_cls.load(block_name, _sync=True)
 
@@ -516,7 +515,6 @@ def _get_azure_credentials(secret_name: str) -> dict[str, Any]:
     Returns:
         dict: A dictionary containing the credentials.
     """
-
     azure_secret_ref = _load_prefect_block(AzureKeyVaultSecretReference, secret_name)
     try:
         credentials = json.loads(azure_secret_ref.get_secret())
@@ -577,7 +575,6 @@ def _get_secret_credentials(secret_name: str) -> dict[str, Any] | str:
     try:
         credentials = json.loads(secret)
     except (json.JSONDecodeError, TypeError):
-    except (json.JSONDecodeError, TypeError):
         credentials = secret
 
     return credentials
@@ -607,7 +604,11 @@ def _get_database_credentials(secret_name: str) -> dict[str, Any] | str:
 
     password_obj = conn_info.get("password")
     if password_obj:
-        credentials["password"] = password_obj.get_secret_value() if hasattr(password_obj, "get_secret_value") else password_obj
+        credentials["password"] = (
+            password_obj.get_secret_value()
+            if hasattr(password_obj, "get_secret_value")
+            else password_obj
+        )
     else:
         credentials["password"] = None
 

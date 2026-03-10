@@ -2,7 +2,6 @@
 
 import os
 import shutil
-import time
 
 from prefect import flow, task
 
@@ -18,6 +17,7 @@ def _cleanup_repo(dbt_repo_dir_name: str) -> None:
         dbt_repo_dir_name (str): The name of the temporary folder.
     """
     shutil.rmtree(dbt_repo_dir_name, ignore_errors=True)  # Delete folder on run
+
 
 @flow(
     name="Transform",
@@ -100,7 +100,8 @@ def transform(
     # Clean up artifacts from previous runs (`target/` dir and packages)
     dbt_clean_task = dbt_task.with_options(name="dbt_task_clean")
     dbt_clean_up = dbt_clean_task.submit(
-        project_path=dbt_project_path, command="clean",
+        project_path=dbt_project_path,
+        command="clean",
     )
     dbt_clean_up.result()
     dbt_pull_deps_task = dbt_task.with_options(name="dbt_task_deps")
