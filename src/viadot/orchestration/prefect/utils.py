@@ -17,17 +17,12 @@ from prefect.blocks.core import Block
 from prefect.blocks.system import Secret
 from prefect.client.orchestration import get_client
 from prefect.utilities.asyncutils import run_coro_as_sync
-<<<<<<< HEAD
 from prefect_sqlalchemy import SqlAlchemyConnector
-=======
->>>>>>> f460c7d8 (✨ Extra alignments to Prefect 3 (#1269))
 
 
 with contextlib.suppress(ModuleNotFoundError):
     from prefect_aws import AwsCredentials
     from prefect_aws.secrets_manager import AwsSecret
-from prefect_sqlalchemy import SqlAlchemyConnector
-
 
 with contextlib.suppress(ModuleNotFoundError):
     from prefect_azure import AzureKeyVaultSecretReference
