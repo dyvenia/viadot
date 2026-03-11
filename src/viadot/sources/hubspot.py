@@ -351,7 +351,11 @@ class Hubspot(Source):
                     properties=properties,
                     filters=filters,
                 )
-                url += f"{offset_type}={offset_value}"
+
+                if "?" in url:
+                    url += f"&{offset_type}={offset_value}"
+                else:
+                    url += f"?{offset_type}={offset_value}"
 
                 partition = self._api_call(url=url, method=method)
                 full_dataset.extend(self._extract_items(partition))
