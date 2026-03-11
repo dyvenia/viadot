@@ -5,9 +5,9 @@ import time
 from typing import Literal
 
 from prefect import flow
-from viadot.orchestration.prefect.flow_timeout import with_flow_timeout_param
 from prefect.task_runners import ConcurrentTaskRunner
 
+from viadot.orchestration.prefect.flow_timeout import with_flow_timeout_param
 from viadot.orchestration.prefect.tasks import df_to_adls, mindful_to_df
 
 

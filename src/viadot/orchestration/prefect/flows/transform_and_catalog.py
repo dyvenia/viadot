@@ -7,10 +7,10 @@ import shutil
 from typing import Literal
 
 from prefect import flow, task
-from viadot.orchestration.prefect.flow_timeout import with_flow_timeout_param
 from prefect.logging import get_run_logger
 from prefect.states import Failed
 
+from viadot.orchestration.prefect.flow_timeout import with_flow_timeout_param
 from viadot.orchestration.prefect.tasks import (
     clone_repo,
     dbt_task,

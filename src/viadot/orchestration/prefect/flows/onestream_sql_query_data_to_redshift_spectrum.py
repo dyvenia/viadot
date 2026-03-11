@@ -3,9 +3,9 @@
 from typing import Any, Literal
 
 from prefect import flow
-from viadot.orchestration.prefect.flow_timeout import with_flow_timeout_param
 from prefect.logging import get_run_logger
 
+from viadot.orchestration.prefect.flow_timeout import with_flow_timeout_param
 from viadot.orchestration.prefect.tasks import (
     create_batch_list_of_custom_subst_vars,
     df_to_redshift_spectrum,

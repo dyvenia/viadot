@@ -4,8 +4,8 @@ from datetime import datetime
 from typing import Literal
 
 from prefect import flow
-from viadot.orchestration.prefect.flow_timeout import with_flow_timeout_param
 
+from viadot.orchestration.prefect.flow_timeout import with_flow_timeout_param
 from viadot.orchestration.prefect.tasks import (
     df_to_redshift_spectrum,
     exchange_rates_to_df,

@@ -2,13 +2,15 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from functools import wraps
 from inspect import Parameter, iscoroutinefunction, signature
-from typing import Any, Callable, TypeVar
+from typing import TypeVar
 
 from prefect.utilities.timeout import timeout, timeout_async
 
-F = TypeVar("F", bound=Callable[..., Any])
+
+F = TypeVar("F", bound=Callable[..., object])
 
 DEFAULT_TIMEOUT_SECONDS = 2 * 60 * 60
 
@@ -53,7 +55,7 @@ def with_flow_timeout_param(
         if iscoroutinefunction(func):
 
             @wraps(func)
-            async def async_wrapped(*args: Any, **kwargs: Any) -> Any:
+            async def async_wrapped(*args: object, **kwargs: object) -> object:
                 timeout_seconds = kwargs.pop("timeout_seconds", default_timeout_seconds)
                 with timeout_async(seconds=timeout_seconds):
                     return await func(*args, **kwargs)
@@ -62,7 +64,7 @@ def with_flow_timeout_param(
             return async_wrapped  # type: ignore[return-value]
 
         @wraps(func)
-        def wrapped(*args: Any, **kwargs: Any) -> Any:
+        def wrapped(*args: object, **kwargs: object) -> object:
             timeout_seconds = kwargs.pop("timeout_seconds", default_timeout_seconds)
             with timeout(seconds=timeout_seconds):
                 return func(*args, **kwargs)

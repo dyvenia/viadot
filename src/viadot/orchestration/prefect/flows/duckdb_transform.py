@@ -3,8 +3,8 @@
 from typing import Any
 
 from prefect import flow
-from viadot.orchestration.prefect.flow_timeout import with_flow_timeout_param
 
+from viadot.orchestration.prefect.flow_timeout import with_flow_timeout_param
 from viadot.orchestration.prefect.tasks import duckdb_query
 
 

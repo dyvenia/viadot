@@ -3,9 +3,9 @@
 from typing import Any, Literal
 
 from prefect import flow
-from viadot.orchestration.prefect.flow_timeout import with_flow_timeout_param
 from prefect.task_runners import ConcurrentTaskRunner
 
+from viadot.orchestration.prefect.flow_timeout import with_flow_timeout_param
 from viadot.orchestration.prefect.tasks import df_to_redshift_spectrum, ecb_to_df
 
 
