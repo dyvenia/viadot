@@ -3,6 +3,7 @@
 from typing import Any, Literal
 
 from prefect import flow
+from viadot.orchestration.prefect.flow_timeout import with_flow_timeout_param
 
 from viadot.orchestration.prefect.tasks import df_to_redshift_spectrum, sap_rfc_to_df
 
@@ -13,6 +14,7 @@ from viadot.orchestration.prefect.tasks import df_to_redshift_spectrum, sap_rfc_
     retries=1,
     retry_delay_seconds=60,
 )
+@with_flow_timeout_param()
 def sap_to_redshift_spectrum(  # noqa: PLR0913
     to_path: str,
     schema_name: str,

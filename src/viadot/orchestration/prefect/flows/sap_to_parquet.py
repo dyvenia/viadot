@@ -3,6 +3,7 @@
 from typing import Literal
 
 from prefect import flow
+from viadot.orchestration.prefect.flow_timeout import with_flow_timeout_param
 
 from viadot.orchestration.prefect.tasks import sap_rfc_to_df
 from viadot.orchestration.prefect.tasks.task_utils import df_to_parquet
@@ -14,6 +15,7 @@ from viadot.orchestration.prefect.tasks.task_utils import df_to_parquet
     retries=1,
     retry_delay_seconds=60,
 )
+@with_flow_timeout_param()
 def sap_to_parquet(
     path: str,
     if_exists: Literal["append", "replace", "skip"] = "replace",

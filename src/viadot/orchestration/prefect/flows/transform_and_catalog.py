@@ -7,6 +7,7 @@ import shutil
 from typing import Literal
 
 from prefect import flow, task
+from viadot.orchestration.prefect.flow_timeout import with_flow_timeout_param
 from prefect.logging import get_run_logger
 from prefect.states import Failed
 
@@ -32,8 +33,8 @@ def remove_dbt_repo_dir(dbt_repo_dir_name: str) -> None:
 @flow(
     name="Transform and Catalog",
     description="Build specified dbt model(s) and upload generated metadata to Luma.",
-    timeout_seconds=2 * 60 * 60,
 )
+@with_flow_timeout_param()
 def transform_and_catalog(  # noqa: PLR0912, PLR0913, PLR0915, C901
     dbt_repo_url: str | None = None,
     dbt_repo_url_secret: str | None = None,

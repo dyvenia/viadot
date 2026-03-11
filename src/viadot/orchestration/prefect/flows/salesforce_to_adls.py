@@ -1,6 +1,7 @@
 """Download data from Salesforce API to Azure Data Lake Storage."""
 
 from prefect import flow
+from viadot.orchestration.prefect.flow_timeout import with_flow_timeout_param
 from prefect.task_runners import ConcurrentTaskRunner
 
 from viadot.orchestration.prefect.tasks import df_to_adls, salesforce_to_df
@@ -14,6 +15,7 @@ from viadot.orchestration.prefect.tasks import df_to_adls, salesforce_to_df
     retry_delay_seconds=60,
     task_runner=ConcurrentTaskRunner,
 )
+@with_flow_timeout_param()
 def salesforce_to_adls(  # noqa: PLR0913
     config_key: str | None = None,
     azure_key_vault_secret: str | None = None,

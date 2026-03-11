@@ -4,6 +4,7 @@ from datetime import datetime
 from typing import Literal
 
 from prefect import flow
+from viadot.orchestration.prefect.flow_timeout import with_flow_timeout_param
 
 from viadot.orchestration.prefect.tasks import df_to_adls, exchange_rates_to_df
 
@@ -19,6 +20,7 @@ Currency = Literal[
     retries=1,
     retry_delay_seconds=60,
 )
+@with_flow_timeout_param()
 def exchange_rates_to_adls(
     adls_path: str,
     overwrite: bool = False,

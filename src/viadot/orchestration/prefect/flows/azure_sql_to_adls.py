@@ -3,6 +3,7 @@
 from typing import Any
 
 from prefect import flow
+from viadot.orchestration.prefect.flow_timeout import with_flow_timeout_param
 from prefect.task_runners import ConcurrentTaskRunner
 
 from viadot.orchestration.prefect.tasks import azure_sql_to_df, df_to_adls
@@ -17,6 +18,7 @@ from viadot.orchestration.prefect.tasks import azure_sql_to_df, df_to_adls
     task_runner=ConcurrentTaskRunner,
     log_prints=True,
 )
+@with_flow_timeout_param()
 def azure_sql_to_adls(
     query: str | None = None,
     credentials_secret: str | None = None,

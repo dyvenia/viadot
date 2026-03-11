@@ -3,6 +3,7 @@
 from typing import Any, Literal
 
 from prefect import flow
+from viadot.orchestration.prefect.flow_timeout import with_flow_timeout_param
 from prefect.task_runners import ConcurrentTaskRunner
 
 from viadot.orchestration.prefect.tasks import df_to_adls, vid_club_to_df
@@ -15,6 +16,7 @@ from viadot.orchestration.prefect.tasks import df_to_adls, vid_club_to_df
     retry_delay_seconds=60,
     task_runner=ConcurrentTaskRunner,
 )
+@with_flow_timeout_param()
 def vid_club_to_adls(  # noqa: PLR0913
     *args: list[Any],
     endpoint: Literal["jobs", "product", "company", "survey"] | None = None,

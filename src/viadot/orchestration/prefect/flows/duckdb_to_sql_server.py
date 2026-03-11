@@ -4,6 +4,7 @@ from pathlib import Path
 from typing import Any, Literal
 
 from prefect import flow, task
+from viadot.orchestration.prefect.flow_timeout import with_flow_timeout_param
 from prefect.logging import get_run_logger
 
 from viadot.orchestration.prefect.tasks import (
@@ -35,8 +36,8 @@ def cleanup_csv_task(path: str) -> None:
     description="Extract data from DuckDB and save it in the SQLServer",
     retries=1,
     retry_delay_seconds=60,
-    timeout_seconds=2 * 60 * 60,
 )
+@with_flow_timeout_param()
 def duckdb_to_sql_server(  # noqa: PLR0913
     query: str,
     local_path: str,

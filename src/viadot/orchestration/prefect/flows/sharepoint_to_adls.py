@@ -1,6 +1,7 @@
 """Flows for pulling data from/into Sharepoint."""
 
 from prefect import flow
+from viadot.orchestration.prefect.flow_timeout import with_flow_timeout_param
 
 from viadot.orchestration.prefect.tasks import df_to_adls, sharepoint_to_df
 
@@ -11,6 +12,7 @@ from viadot.orchestration.prefect.tasks import df_to_adls, sharepoint_to_df
     retries=1,
     retry_delay_seconds=60,
 )
+@with_flow_timeout_param()
 def sharepoint_to_adls(  # noqa: PLR0913
     sharepoint_url: str,
     adls_path: str,
