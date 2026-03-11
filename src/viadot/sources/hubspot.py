@@ -252,17 +252,21 @@ class Hubspot(Source):
         """
         if "paging" in api_response:
             offset_type = "after"
-            offset_value = api_response["paging"]["next"][f"{offset_type}"]
+            offset_value = (
+                api_response.get("paging", {}).get("next", {}).get(offset_type)
+            )
+            return (offset_type, offset_value)
 
-        elif "offset" in api_response:
-            offset_type = "offset"
-            offset_value = api_response["offset"]
+        has_more = api_response.get("has-more") or api_response.get("hasMore")
 
-        else:
-            offset_type = None
-            offset_value = None
+        if has_more:
+            if "vid-offset" in api_response:
+                return ("vidOffset", api_response["vid-offset"])
 
-        return (offset_type, offset_value)
+            if "offset" in api_response:
+                return ("offset", api_response["offset"])
+
+        return (None, None)
 
     def _extract_items(self, response: dict[str, Any]) -> list[Any]:
         """Extract the list of items from various HubSpot response shapes."""
@@ -539,7 +543,8 @@ class Hubspot(Source):
 
         if method == "get_all_contacts":
             data = self._fetch(
-                endpoint="https://api.hubapi.com/contacts/v1/lists/all/contacts/all"
+                endpoint="https://api.hubapi.com/contacts/v1/lists/all/contacts/all",
+                nrows=nrows,
             )
         elif method == "get_campaign_metrics":
             data = self._get_campaign_metrics(
