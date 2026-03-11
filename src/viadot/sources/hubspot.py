@@ -259,12 +259,14 @@ class Hubspot(Source):
 
         has_more = api_response.get("has-more") or api_response.get("hasMore")
 
-        if has_more:
-            if "vid-offset" in api_response:
-                return ("vidOffset", api_response["vid-offset"])
+        if has_more is False:
+            return (None, None)
 
-            if "offset" in api_response:
-                return ("offset", api_response["offset"])
+        if api_response.get("vid-offset"):
+            return ("vidOffset", api_response["vid-offset"])
+
+        if api_response.get("offset"):
+            return ("offset", api_response["offset"])
 
         return (None, None)
 
