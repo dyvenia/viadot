@@ -5,32 +5,32 @@ import json
 from json.decoder import JSONDecodeError
 import logging
 import os
-import re
 import sys
 import tempfile
-from typing import Any, TypeVar
+from typing import Any
 
+import anyio
 from anyio import open_process
 from anyio.streams.text import TextReceiveStream
-import pendulum
-from prefect.blocks.core import Block
 from prefect.blocks.system import Secret
-from prefect.client.orchestration import get_client
-from prefect.utilities.asyncutils import run_coro_as_sync
-from prefect_sqlalchemy import SqlAlchemyConnector
+from prefect.client.orchestration import PrefectClient
+from prefect.settings import PREFECT_API_KEY, PREFECT_API_URL
 
 
 with contextlib.suppress(ModuleNotFoundError):
     from prefect_aws import AwsCredentials
     from prefect_aws.secrets_manager import AwsSecret
-
-with contextlib.suppress(ModuleNotFoundError):
-    from prefect_azure import AzureKeyVaultSecretReference
+from prefect_sqlalchemy import SqlAlchemyConnector
 
 from viadot.orchestration.prefect.exceptions import MissingPrefectBlockError
 
 
-T = TypeVar("T", bound=Block)
+with contextlib.suppress(ModuleNotFoundError):
+    from prefect_azure import AzureKeyVaultSecretReference
+
+import re
+
+import pendulum
 
 
 class DynamicDateHandler:
@@ -497,13 +497,10 @@ class DynamicDateHandler:
 
 async def list_block_documents() -> list[Any]:
     """Retrieve list of Prefect block documents."""
-    async with get_client() as client:
+    async with PrefectClient(
+        api=PREFECT_API_URL.value(), api_key=PREFECT_API_KEY.value()
+    ) as client:
         return await client.read_block_documents()
-
-
-def _load_prefect_block(block_cls: type[T], block_name: str) -> T:
-    """Load a Prefect block in sync mode."""
-    return block_cls.load(block_name, _sync=True)
 
 
 def _get_azure_credentials(secret_name: str) -> dict[str, Any]:
@@ -515,11 +512,12 @@ def _get_azure_credentials(secret_name: str) -> dict[str, Any]:
     Returns:
         dict: A dictionary containing the credentials.
     """
-    azure_secret_ref = _load_prefect_block(AzureKeyVaultSecretReference, secret_name)
     try:
-        credentials = json.loads(azure_secret_ref.get_secret())
+        credentials = json.loads(
+            AzureKeyVaultSecretReference.load(secret_name).get_secret()
+        )
     except (JSONDecodeError, TypeError):
-        credentials = azure_secret_ref.get_secret()
+        credentials = AzureKeyVaultSecretReference.load(secret_name).get_secret()
 
     return credentials
 
@@ -545,14 +543,14 @@ def _get_aws_credentials(
         dict | str: A dictionary or a string containing the credentials.
     """
     if block_type == "AwsSecret":
-        aws_secret_block = _load_prefect_block(AwsSecret, secret_name)
+        aws_secret_block = AwsSecret.load(secret_name)
         secret = aws_secret_block.read_secret()
         try:
             credentials = json.loads(secret)
         except (json.JSONDecodeError, UnicodeDecodeError, TypeError):
             credentials = secret
     elif block_type == "AwsCredentials":
-        aws_credentials_block = _load_prefect_block(AwsCredentials, secret_name)
+        aws_credentials_block = AwsCredentials.load(secret_name)
         credentials = {
             "aws_access_key_id": aws_credentials_block.aws_access_key_id,
             "aws_secret_access_key": aws_credentials_block.aws_secret_access_key.get_secret_value(),
@@ -571,7 +569,7 @@ def _get_secret_credentials(secret_name: str) -> dict[str, Any] | str:
     Returns:
         dict | str: A dictionary or a string containing the credentials.
     """
-    secret = _load_prefect_block(Secret, secret_name).get()
+    secret = Secret.load(secret_name).get()
     try:
         credentials = json.loads(secret)
     except (json.JSONDecodeError, TypeError):
@@ -589,7 +587,7 @@ def _get_database_credentials(secret_name: str) -> dict[str, Any] | str:
     Returns:
         dict | str: A dictionary or a string containing the credentials.
     """
-    secret = _load_prefect_block(SqlAlchemyConnector, secret_name).dict()
+    secret = SqlAlchemyConnector.load(name=secret_name).dict()
 
     # Extract from connection_info structure
     conn_info = secret.get("connection_info", {})
@@ -635,7 +633,7 @@ def get_credentials(secret_name: str) -> dict[str, Any]:
     # so some names might be lowercased versions of the original
 
     secret_name_lowercase = secret_name.lower()
-    blocks = run_coro_as_sync(list_block_documents())
+    blocks = anyio.run(list_block_documents)
 
     for block in blocks:
         if block.name == secret_name_lowercase:
