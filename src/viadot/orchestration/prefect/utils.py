@@ -16,8 +16,11 @@ import pendulum
 from prefect.blocks.core import Block
 from prefect.blocks.system import Secret
 from prefect.client.orchestration import get_client
-from prefect.utilities.asyncutils import run_coro_as_sync
 from prefect_sqlalchemy import SqlAlchemyConnector
+
+
+with contextlib.suppress(ModuleNotFoundError):
+    from prefect_sqlalchemy import DatabaseCredentials
 
 
 with contextlib.suppress(ModuleNotFoundError):
@@ -28,6 +31,12 @@ with contextlib.suppress(ModuleNotFoundError):
     from prefect_azure import AzureKeyVaultSecretReference
 
 from viadot.orchestration.prefect.exceptions import MissingPrefectBlockError
+
+
+try:
+    from prefect.utilities.asyncutils import run_coro_as_sync
+except (ImportError, ModuleNotFoundError):
+    from prefect.utilities.asyncutils import run_sync as run_coro_as_sync
 
 
 T = TypeVar("T", bound=Block)
@@ -503,7 +512,12 @@ async def list_block_documents() -> list[Any]:
 
 def _load_prefect_block(block_cls: type[T], block_name: str) -> T:
     """Load a Prefect block in sync mode."""
-    return block_cls.load(block_name, _sync=True)
+    try:
+        return block_cls.load(block_name, _sync=True)
+    except TypeError as exc:
+        if "_sync" in str(exc):
+            return block_cls.load(block_name)
+        raise
 
 
 def _get_azure_credentials(secret_name: str) -> dict[str, Any]:
@@ -511,6 +525,7 @@ def _get_azure_credentials(secret_name: str) -> dict[str, Any]:
 
     Args:
         secret_name (str): The name of the secret to be retrieved.
+        block_cls (Type[Block]): Block class to load.
 
     Returns:
         dict: A dictionary containing the credentials.
@@ -580,8 +595,10 @@ def _get_secret_credentials(secret_name: str) -> dict[str, Any] | str:
     return credentials
 
 
-def _get_database_credentials(secret_name: str) -> dict[str, Any] | str:
-    """Retrieve credentials from the Prefect 'SqlAlchemyConnectord' block document.
+def _get_database_credentials(
+    secret_name: str, block_cls: type[T] = SqlAlchemyConnector
+) -> dict[str, Any] | str:
+    """Retrieve credentials from the Prefect SQLAlchemy block document.
 
     Args:
         secret_name (str): The name of the secret to be retrieved.
@@ -589,7 +606,7 @@ def _get_database_credentials(secret_name: str) -> dict[str, Any] | str:
     Returns:
         dict | str: A dictionary or a string containing the credentials.
     """
-    secret = _load_prefect_block(SqlAlchemyConnector, secret_name).dict()
+    secret = _load_prefect_block(block_cls, secret_name).dict()
 
     # Extract from connection_info structure
     conn_info = secret.get("connection_info", {})
@@ -634,11 +651,11 @@ def get_credentials(secret_name: str) -> dict[str, Any]:
     # Prefect does not allow upper case letters for blocks,
     # so some names might be lowercased versions of the original
 
-    secret_name_lowercase = secret_name.lower()
+    secret_name = secret_name.lower()
     blocks = run_coro_as_sync(list_block_documents())
 
     for block in blocks:
-        if block.name == secret_name_lowercase:
+        if block.name == secret_name:
             block_type = block.block_schema.fields["title"]
             break
     else:
@@ -650,7 +667,13 @@ def get_credentials(secret_name: str) -> dict[str, Any]:
     elif block_type == "AzureKeyVaultSecretReference":
         credentials = _get_azure_credentials(secret_name)
     elif block_type == "SqlAlchemyConnector":
-        credentials = _get_database_credentials(secret_name)
+        credentials = _get_database_credentials(secret_name, SqlAlchemyConnector)
+    elif block_type == "DatabaseCredentials":
+        if "DatabaseCredentials" in globals():
+            credentials = _get_database_credentials(secret_name, DatabaseCredentials)
+        else:
+            msg = "The provided secret block type: DatabaseCredentials is not supported"
+            raise MissingPrefectBlockError(msg)
     elif block_type == "Secret":
         credentials = _get_secret_credentials(secret_name)
     else:
