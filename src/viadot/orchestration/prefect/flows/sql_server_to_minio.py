@@ -53,7 +53,7 @@ def sql_server_to_minio(
         credentials_secret=sql_server_credentials_secret,
     )
 
-    return df_to_minio(
+    df_to_minio(
         df=df,
         path=path,
         if_exists=if_exists,

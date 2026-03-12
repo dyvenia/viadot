@@ -70,7 +70,7 @@ def exchange_rates_to_adls(
         symbols=symbols,
     )
 
-    return df_to_adls(
+    df_to_adls(
         df=df,
         path=adls_path,
         credentials_secret=adls_credentials_secret,

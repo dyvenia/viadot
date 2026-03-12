@@ -64,7 +64,7 @@ def cloud_for_customers_to_adls(  # noqa: PLR0913
         **kwargs,
     )
 
-    return df_to_adls(
+    df_to_adls(
         df=df,
         path=adls_path,
         credentials_secret=adls_credentials_secret,

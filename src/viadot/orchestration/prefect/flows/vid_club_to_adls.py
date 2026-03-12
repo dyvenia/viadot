@@ -3,7 +3,6 @@
 from typing import Any, Literal
 
 from prefect import flow
-from prefect.task_runners import ConcurrentTaskRunner
 
 from viadot.orchestration.prefect.flow_timeout import with_flow_timeout_param
 from viadot.orchestration.prefect.tasks import df_to_adls, vid_club_to_df
@@ -14,7 +13,6 @@ from viadot.orchestration.prefect.tasks import df_to_adls, vid_club_to_df
     description="Extract data from Vid CLub and load it into Azure Data Lake Storage.",
     retries=1,
     retry_delay_seconds=60,
-    task_runner=ConcurrentTaskRunner,
 )
 @with_flow_timeout_param()
 def vid_club_to_adls(  # noqa: PLR0913
@@ -88,10 +86,10 @@ def vid_club_to_adls(  # noqa: PLR0913
         azure_key_vault_secret=azure_key_vault_secret,
         validate_df_dict=validate_df_dict,
         timeout=timeout,
-        kawrgs=kwargs,
+        kwargs=kwargs,
     )
 
-    return df_to_adls(
+    df_to_adls(
         df=data_frame,
         path=adls_path,
         credentials_secret=adls_azure_key_vault_secret,

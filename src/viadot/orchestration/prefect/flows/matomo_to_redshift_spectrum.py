@@ -3,7 +3,6 @@
 from typing import Any, Literal
 
 from prefect import flow
-from prefect.task_runners import ConcurrentTaskRunner
 
 from viadot.orchestration.prefect.flow_timeout import with_flow_timeout_param
 from viadot.orchestration.prefect.tasks import df_to_redshift_spectrum, matomo_to_df
@@ -14,7 +13,6 @@ from viadot.orchestration.prefect.tasks import df_to_redshift_spectrum, matomo_t
     description="Extract data from Matomo API and load into Redshift Spectrum.",
     retries=1,
     retry_delay_seconds=60,
-    task_runner=ConcurrentTaskRunner,
 )
 @with_flow_timeout_param()
 def matomo_to_redshift_spectrum(  # noqa: PLR0913
@@ -116,7 +114,7 @@ def matomo_to_redshift_spectrum(  # noqa: PLR0913
         tests=tests,
     )
 
-    return df_to_redshift_spectrum(
+    df_to_redshift_spectrum(
         df=data_frame,
         to_path=to_path,
         schema_name=schema_name,

@@ -63,7 +63,7 @@ def sharepoint_to_adls(  # noqa: PLR0913
         sheet_name=sheet_name,
         columns=columns,
     )
-    return df_to_adls(
+    df_to_adls(
         df=df,
         path=adls_path,
         credentials_secret=adls_credentials_secret,

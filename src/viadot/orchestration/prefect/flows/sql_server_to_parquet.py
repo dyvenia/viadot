@@ -44,7 +44,7 @@ def sql_server_to_parquet(
         credentials_secret=sql_server_credentials_secret,
     )
 
-    return df_to_parquet(
+    df_to_parquet(
         df=df,
         path=path,
         if_exists=if_exists,

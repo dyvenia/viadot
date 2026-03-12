@@ -18,19 +18,19 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           fetch-depth: 0
 
       - name: Install uv
-        uses: astral-sh/setup-uv@v5
+        uses: astral-sh/setup-uv@v7
         with:
           enable-cache: true
 
       - name: Get package version from pyproject.toml
         id: get-version
         run: |
-          VERSION=v$(uv version | grep -oP '\d+\.\d+\.\d+.*')
+          VERSION=$(uv version | grep -oP '\d+\.\d+\.\d+.*')
           echo "version=$VERSION" >> $GITHUB_OUTPUT
 
       - name: Check if a tag for this version already exists in the repo

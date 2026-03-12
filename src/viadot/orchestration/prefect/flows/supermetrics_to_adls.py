@@ -3,7 +3,6 @@
 from typing import Any
 
 from prefect import flow
-from prefect.task_runners import ConcurrentTaskRunner
 
 from viadot.orchestration.prefect.flow_timeout import with_flow_timeout_param
 from viadot.orchestration.prefect.tasks import (
@@ -17,7 +16,6 @@ from viadot.orchestration.prefect.tasks import (
     description="Extract data from Supermetrics and load it into ADLS.",
     retries=1,
     retry_delay_seconds=60,
-    task_runner=ConcurrentTaskRunner,
 )
 @with_flow_timeout_param()
 def supermetrics_to_adls(
@@ -85,7 +83,7 @@ def supermetrics_to_adls(
         **kwargs,
     )
 
-    return df_to_adls(
+    df_to_adls(
         df=df,
         path=adls_path,
         credentials_secret=adls_credentials_secret,
