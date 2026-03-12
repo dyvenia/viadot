@@ -22,7 +22,7 @@ jobs:
     runs-on: ubuntu-latest
     if: ${{ github.event_name == 'issues' && github.event.action == 'labeled' && github.event.label.name == inputs.match_label }}
     steps:
-      - uses: slackapi/slack-github-action@v2.1.1
+      - uses: slackapi/slack-github-action@91efab103c0de0a537f72a35f6b8cda0ee76bf0a # v2.1.1
         with:
           webhook-type: incoming-webhook
           webhook: ${{ secrets.SLACK_WEBHOOK_URL }}
