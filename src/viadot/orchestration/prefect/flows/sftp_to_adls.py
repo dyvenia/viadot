@@ -2,6 +2,7 @@
 
 from prefect import flow
 
+from viadot.orchestration.prefect.flow_timeout import with_flow_timeout_param
 from viadot.orchestration.prefect.tasks import df_to_adls, sftp_to_df
 
 
@@ -12,6 +13,7 @@ from viadot.orchestration.prefect.tasks import df_to_adls, sftp_to_df
     retries=1,
     retry_delay_seconds=60,
 )
+@with_flow_timeout_param()
 def sftp_to_adls(
     config_key: str | None = None,
     azure_key_vault_secret: str | None = None,

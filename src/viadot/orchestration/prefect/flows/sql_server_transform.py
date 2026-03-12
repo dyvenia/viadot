@@ -2,6 +2,7 @@
 
 from prefect import flow
 
+from viadot.orchestration.prefect.flow_timeout import with_flow_timeout_param
 from viadot.orchestration.prefect.tasks import sql_server_query
 
 
@@ -11,6 +12,7 @@ from viadot.orchestration.prefect.tasks import sql_server_query
     retries=1,
     retry_delay_seconds=60,
 )
+@with_flow_timeout_param()
 def sql_server_transform(
     query: str,
     sql_server_credentials_secret: str | None = None,
