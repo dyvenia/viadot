@@ -18,6 +18,7 @@ from .exchange_rates import exchange_rates_to_df
 from .genesys import genesys_to_df
 from .git import clone_repo
 from .hubspot import hubspot_to_df
+from .informix import informix_query, informix_to_df
 from .luma import luma_ingest_task
 from .matomo import matomo_to_df
 from .mediatool import mediatool_to_df
@@ -76,6 +77,8 @@ __all__ = [
     "exchange_rates_to_df",
     "genesys_to_df",
     "hubspot_to_df",
+    "informix_query",
+    "informix_to_df",
     "luma_ingest_task",
     "matomo_to_df",
     "mediatool_to_df",
