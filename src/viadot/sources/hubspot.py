@@ -498,7 +498,7 @@ class Hubspot(Source):
 
         return rows
 
-    def call_api(
+    def call_api(  # noqa: C901
         self,
         method: str | None = None,
         endpoint: str | None = None,
@@ -522,6 +522,67 @@ class Hubspot(Source):
             properties (list[str] | None): The properties to include in the request.
             nrows (int): Maximum number of rows to fetch.
         """
+
+        def _expand_jsonlike_values(  # noqa: C901Expand commentComment on line R516
+            rows: list[dict[str, Any]],
+        ) -> list[dict[str, Any]]:
+            """Expand JSON-like values into new columns.
+
+            For every row, detect columns that contain JSON-like objects (stringified
+            JSON or single-item list-of-dicts) and expand them into new columns using
+            the pattern: <original_column>_json_<field>, without removing the original
+            column.
+
+            IMPORTANT: We DO NOT expand values that are already dicts to avoid
+            duplicating columns that will be created by pandas.json_normalize (e.g.,
+            HubSpot 'properties' object). We only expand:
+            - strings that parse into a dict or into a single-item list-of-dict
+            - lists that are single-item with a dict inside
+
+            Args:
+                rows (list[dict[str, Any]]): The rows to expand.
+
+            Returns:
+                list[dict[str, Any]]: The rows with the expanded JSON-like values.
+            """
+            if not isinstance(rows, list):
+                return rows
+            for row in rows:
+                if not isinstance(row, dict):
+                    continue
+
+                for col in list(row.keys()):
+                    value = row.get(col)
+                    nested_obj = None
+                    # Case 1: list with a single dict element
+                    if (
+                        isinstance(value, list)
+                        and len(value) == 1
+                        and isinstance(value[0], dict)
+                    ):
+                        nested_obj = value[0]
+                    # Case 2: stringified JSON
+                    elif isinstance(value, str):
+                        val_str = value.strip()
+                        try:
+                            parsed = json.loads(val_str)
+                            if isinstance(parsed, dict):
+                                nested_obj = parsed
+                            elif (
+                                isinstance(parsed, list)
+                                and len(parsed) == 1
+                                and isinstance(parsed[0], dict)
+                            ):
+                                nested_obj = parsed[0]
+                        except Exception:
+                            self.logger.warning(f"Not a valid JSON string: {val_str}")
+                            pass
+                    if isinstance(nested_obj, dict):
+                        for k, v in nested_obj.items():
+                            new_key = f"{col}_json_{k}"
+                            row[new_key] = v
+            return rows
+
         methods_requiring_campaigns = [
             "get_campaign_metrics",
             "get_campaign_details",
@@ -577,7 +638,8 @@ class Hubspot(Source):
                 nrows=nrows,
             )
 
-        return data
+        # Expand any JSON-like values in columns into separate top-level keys
+        return _expand_jsonlike_values(data)
 
     @add_viadot_metadata_columns
     def to_df(
