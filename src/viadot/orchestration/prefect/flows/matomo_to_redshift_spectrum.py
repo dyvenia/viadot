@@ -4,6 +4,7 @@ from typing import Any, Literal
 
 from prefect import flow
 
+from viadot.orchestration.prefect.flow_timeout import with_flow_timeout_param
 from viadot.orchestration.prefect.tasks import df_to_redshift_spectrum, matomo_to_df
 
 
@@ -13,6 +14,7 @@ from viadot.orchestration.prefect.tasks import df_to_redshift_spectrum, matomo_t
     retries=1,
     retry_delay_seconds=60,
 )
+@with_flow_timeout_param()
 def matomo_to_redshift_spectrum(  # noqa: PLR0913
     matomo_url: str,
     top_level_fields: list[str],

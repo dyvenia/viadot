@@ -5,6 +5,7 @@ from typing import Any, Literal
 from prefect import flow
 from prefect.logging import get_run_logger
 
+from viadot.orchestration.prefect.flow_timeout import with_flow_timeout_param
 from viadot.orchestration.prefect.tasks import (
     create_batch_list_of_custom_subst_vars,
     df_to_redshift_spectrum,
@@ -18,6 +19,7 @@ from viadot.orchestration.prefect.tasks import (
     retries=1,
     retry_delay_seconds=60,
 )
+@with_flow_timeout_param()
 def onestream_data_adapters_to_redshift_spectrum(  # noqa: PLR0913
     base_url: str,
     application: str,
