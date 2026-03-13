@@ -595,6 +595,7 @@ class Hubspot(Source):
                 "No campaign_ids provided. Querying endpoint /marketing/v3/campaigns for full list..."
             )
 
+            # HubSpot API v3
             all_campaigns_data = self._fetch(
                 endpoint="https://api.hubapi.com/marketing/v3/campaigns", nrows=10000
             )
@@ -608,6 +609,7 @@ class Hubspot(Source):
                 self.logger.warning("There is no campaign_ids on HubSpot.")
                 return []
 
+        # HubSpot API v1
         if method == "get_all_contacts":
             data = self._fetch(
                 endpoint="https://api.hubapi.com/contacts/v1/lists/all/contacts/all",
@@ -631,6 +633,7 @@ class Hubspot(Source):
                 contact_type=contact_type,
             )
         else:
+            # Default fetch (usually v3 for most recent HubSpot objects)
             data = self._fetch(
                 endpoint=endpoint,
                 filters=filters,
