@@ -34,12 +34,12 @@ jobs:
           echo "version=$VERSION" >> $GITHUB_OUTPUT
 
       - name: Check if a tag for this version already exists in the repo
-        uses: mukunku/tag-exists-action@v1.6.0
+        uses: mukunku/tag-exists-action@5c39604fe8aef7e65acb6fbcf96ec580f7680313 #v1.7.0
         id: check-tag
         with:
           tag: v${{ steps.get-version.outputs.version }}
 
-      - uses: fregante/setup-git-user@v2
+      - uses: fregante/setup-git-user@024bc0b8e177d7e77203b48dab6fb45666854b35 # v2.0.2
         if: steps.check-tag.outputs.exists != 'true'
 
       - name: Publish the new tag
