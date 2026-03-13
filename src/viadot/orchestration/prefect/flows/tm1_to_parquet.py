@@ -63,7 +63,7 @@ def tm1_to_parquet(  # noqa: PLR0913
         verify=verify,
         if_empty=if_empty,
     )
-    return df_to_parquet(
+    df_to_parquet(
         df=df,
         path=path,
         if_exists=if_exists,

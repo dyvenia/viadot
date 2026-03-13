@@ -3,7 +3,6 @@
 from typing import Any
 
 from prefect import flow
-from prefect.task_runners import ConcurrentTaskRunner
 
 from viadot.orchestration.prefect.tasks import df_to_adls, sap_bw_to_df
 
@@ -13,7 +12,6 @@ from viadot.orchestration.prefect.tasks import df_to_adls, sap_bw_to_df
     description="Extract data from SAP BW and load it into Azure Data Lake Storage.",
     retries=1,
     retry_delay_seconds=60,
-    task_runner=ConcurrentTaskRunner,
 )
 def sap_bw_to_adls(
     config_key: str | None = None,
@@ -51,7 +49,7 @@ def sap_bw_to_adls(
         mapping_dict=mapping_dict,
     )
 
-    return df_to_adls(
+    df_to_adls(
         df=data_frame,
         path=adls_path,
         credentials_secret=adls_azure_key_vault_secret,

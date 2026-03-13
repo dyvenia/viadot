@@ -108,7 +108,7 @@ def customer_gauge_to_adls(  # noqa: PLR0913
         days=days,
     )
 
-    return df_to_adls(
+    df_to_adls(
         df=data_frame,
         path=adls_path,
         credentials_secret=adls_azure_key_vault_secret,
