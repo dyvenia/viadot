@@ -1,5 +1,5 @@
 version = 1
-revision = 2
+revision = 3
 requires-python = ">=3.10"
 resolution-markers = [
     "python_full_version >= '3.14' and platform_python_implementation != 'PyPy' and sys_platform != 'emscripten'",
@@ -1246,14 +1246,14 @@ wheels = [
 
 [[package]]
 name = "dbt-artifacts-parser"
-version = "0.12.0"
+version = "0.13.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "pydantic" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/4a/5a/fa9f9227fdef03c969920a2d75f4552898f7643388df506d870d2e2be733/dbt_artifacts_parser-0.12.0.tar.gz", hash = "sha256:9d1c0ed41926102c1c39fdd780e1a332f58c9b794e94dba0dcf5dfefc847d6ea", size = 229564, upload-time = "2025-11-27T06:07:26.852Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/bd/c7/eddc2d1fec934d1919a997c99ba78dcd006946871fe7cd567cf6d13d62ea/dbt_artifacts_parser-0.13.0.tar.gz", hash = "sha256:55498e8bd0d9064d56617f9c714ced8607d94ccb61e70d4b49dcfd8a28a030d8", size = 261281, upload-time = "2026-03-12T06:04:50.649Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/d1/a7/1efa2adeea33e4942d4cf54593a4436a63fecb609684393b6b8a5dcc4197/dbt_artifacts_parser-0.12.0-py3-none-any.whl", hash = "sha256:3db93df7969c3f22c6fbf75a51b0af4c21b189d8db6f3c54e8471102c775bb0d", size = 234910, upload-time = "2025-11-27T06:07:25.268Z" },
+    { url = "https://files.pythonhosted.org/packages/6a/a0/6f7911b3d8c664683a7a2c76402a45c921b1f4d0664c7b75248c6ae2157d/dbt_artifacts_parser-0.13.0-py3-none-any.whl", hash = "sha256:304f2b857650566fed4ed8b976ed3582332eda3cedfe7167158dbbcfced3fe47", size = 250271, upload-time = "2026-03-12T06:04:52.085Z" },
 ]
 
 [[package]]
@@ -1371,14 +1371,14 @@ wheels = [
 
 [[package]]
 name = "dbt-protos"
-version = "1.0.431"
+version = "1.0.440"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "protobuf" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/29/67/777aa1c4af897773adb944c2db8d5c2073dd3ae114fa233b5559e900a550/dbt_protos-1.0.431.tar.gz", hash = "sha256:8fd3f52f2cb5532874eab93470fec3d9ace74e1ee342eaaf13b24867c042d0ce", size = 123577, upload-time = "2026-02-06T21:54:29.81Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/33/e7/edf0b9723dfcf1b44bc7fd04b3bc4af88f4db8b62d1bf07c5cffd113250c/dbt_protos-1.0.440.tar.gz", hash = "sha256:27f690b4f6291fc5cdba01fee502e2e6fb1ec1fa080c7f127653ab0e2e8fb163", size = 126218, upload-time = "2026-03-12T13:53:00.381Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/ac/56/8db9a3330af4462860fd5e38e8c1759ef9f1701f0c2111c9694c5c2e544c/dbt_protos-1.0.431-py3-none-any.whl", hash = "sha256:5ee60f11f2cae5faaf0e5f8420f7872ab48ae978ccd74fdba60d0f3ab8fd1d26", size = 178455, upload-time = "2026-02-06T21:54:28.189Z" },
+    { url = "https://files.pythonhosted.org/packages/e0/36/d1b8b4f228b6a8eed1c30dc46a05ca2a32c57ad5a59927f8c83df4405509/dbt_protos-1.0.440-py3-none-any.whl", hash = "sha256:775cafb29aa8265056faf77a6502b9acda7dfcd83ff0fc0e874f6fe4ad51217c", size = 182988, upload-time = "2026-03-12T13:52:59.121Z" },
 ]
 
 [[package]]
@@ -7251,7 +7251,7 @@ wheels = [
 
 [[package]]
 name = "viadot2"
-version = "2.4.1"
+version = "2.4.2"
 source = { editable = "." }
 dependencies = [
     { name = "aiohttp" },
