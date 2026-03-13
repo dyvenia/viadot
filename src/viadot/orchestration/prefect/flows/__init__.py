@@ -19,11 +19,14 @@ from .exchange_rates_to_redshift_spectrum import exchange_rates_api_to_redshift_
 from .genesys_to_adls import genesys_to_adls
 from .hubspot_to_adls import hubspot_to_adls
 from .hubspot_to_redshift_spectrum import hubspot_to_redshift_spectrum
+from .informix_to_redshift_spectrum import informix_to_redshift_spectrum
 from .matomo_to_redshift_spectrum import matomo_to_redshift_spectrum
 from .mediatool_to_adls import mediatool_to_adls
 from .mindful_to_adls import mindful_to_adls
 from .onestream_data_adapters_to_redshift_spectrum import (
     onestream_data_adapters_to_redshift_spectrum,
+)
+from .onestream_sql_query_data_to_redshift_spectrum import (
     onestream_sql_query_data_to_redshift_spectrum,
 )
 from .outlook_to_adls import outlook_to_adls
@@ -68,6 +71,7 @@ __all__ = [
     "genesys_to_adls",
     "hubspot_to_adls",
     "hubspot_to_redshift_spectrum",
+    "informix_to_redshift_spectrum",
     "matomo_to_redshift_spectrum",
     "mediatool_to_adls",
     "mindful_to_adls",

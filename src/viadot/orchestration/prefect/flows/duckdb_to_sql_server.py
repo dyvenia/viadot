@@ -17,7 +17,7 @@ from viadot.orchestration.prefect.tasks.task_utils import (
 )
 
 
-@task(timeout_seconds=60 * 60)
+@task(timeout_seconds=60 * 60, cache_policy=None)
 def cleanup_csv_task(path: str) -> None:
     """Remove a CSV file from the local filesystem."""
     logger = get_run_logger()
@@ -46,7 +46,7 @@ def duckdb_to_sql_server(  # noqa: PLR0913
     dtypes: dict[str, Any] | None = None,
     chunksize: int = 5000,
     error_log_file_path: str = "./log_file.log",
-    on_error: Literal["skip", "fail"] = "skip",
+    on_error: Literal["skip", "fail"] = "fail",
     duckdb_credentials_secret: str | None = None,
     # Specifying credentials in a dictionary is not recommended in the viadot flows,
     # but in this case credentials can include only database name.

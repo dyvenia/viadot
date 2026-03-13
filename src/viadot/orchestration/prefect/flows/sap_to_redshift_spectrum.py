@@ -113,7 +113,7 @@ def sap_to_redshift_spectrum(  # noqa: PLR0913
         sep=sap_sep,
     )
 
-    return df_to_redshift_spectrum(
+    df_to_redshift_spectrum(
         df=df,
         to_path=to_path,
         schema_name=schema_name,
