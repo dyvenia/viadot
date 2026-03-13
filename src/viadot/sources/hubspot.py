@@ -131,7 +131,7 @@ class Hubspot(Source):
             url = f"{self.API_URL}/crm/v3/objects/{endpoint}/?limit=100&"
 
         if properties:
-            url += f'properties={",".join(properties)}&'
+            url += f"properties={','.join(properties)}&"
 
         return url
 
@@ -210,7 +210,7 @@ class Hubspot(Source):
 
     def _build_headers(self) -> dict[str, str]:
         return {
-            "Authorization": f'Bearer {self.credentials["token"]}',
+            "Authorization": f"Bearer {self.credentials['token']}",
             "Content-Type": "application/json",
         }
 
@@ -252,17 +252,23 @@ class Hubspot(Source):
         """
         if "paging" in api_response:
             offset_type = "after"
-            offset_value = api_response["paging"]["next"][f"{offset_type}"]
+            offset_value = (
+                api_response.get("paging", {}).get("next", {}).get(offset_type)
+            )
+            return (offset_type, offset_value)
 
-        elif "offset" in api_response:
-            offset_type = "offset"
-            offset_value = api_response["offset"]
+        has_more = api_response.get("has-more") or api_response.get("hasMore")
 
-        else:
-            offset_type = None
-            offset_value = None
+        if has_more is False:
+            return (None, None)
 
-        return (offset_type, offset_value)
+        if api_response.get("vid-offset"):
+            return ("vidOffset", api_response["vid-offset"])
+
+        if api_response.get("offset"):
+            return ("offset", api_response["offset"])
+
+        return (None, None)
 
     def _extract_items(self, response: dict[str, Any]) -> list[Any]:
         """Extract the list of items from various HubSpot response shapes."""
@@ -347,7 +353,11 @@ class Hubspot(Source):
                     properties=properties,
                     filters=filters,
                 )
-                url += f"{offset_type}={offset_value}"
+
+                if "?" in url:
+                    url += f"&{offset_type}={offset_value}"
+                else:
+                    url += f"?{offset_type}={offset_value}"
 
                 partition = self._api_call(url=url, method=method)
                 full_dataset.extend(self._extract_items(partition))
@@ -488,7 +498,7 @@ class Hubspot(Source):
 
         return rows
 
-    def call_api(
+    def call_api(  # noqa: C901
         self,
         method: str | None = None,
         endpoint: str | None = None,
@@ -512,9 +522,98 @@ class Hubspot(Source):
             properties (list[str] | None): The properties to include in the request.
             nrows (int): Maximum number of rows to fetch.
         """
+
+        def _expand_jsonlike_values(  # noqa: C901Expand commentComment on line R516
+            rows: list[dict[str, Any]],
+        ) -> list[dict[str, Any]]:
+            """Expand JSON-like values into new columns.
+
+            For every row, detect columns that contain JSON-like objects (stringified
+            JSON or single-item list-of-dicts) and expand them into new columns using
+            the pattern: <original_column>_json_<field>, without removing the original
+            column.
+
+            IMPORTANT: We DO NOT expand values that are already dicts to avoid
+            duplicating columns that will be created by pandas.json_normalize (e.g.,
+            HubSpot 'properties' object). We only expand:
+            - strings that parse into a dict or into a single-item list-of-dict
+            - lists that are single-item with a dict inside
+
+            Args:
+                rows (list[dict[str, Any]]): The rows to expand.
+
+            Returns:
+                list[dict[str, Any]]: The rows with the expanded JSON-like values.
+            """
+            if not isinstance(rows, list):
+                return rows
+            for row in rows:
+                if not isinstance(row, dict):
+                    continue
+
+                for col in list(row.keys()):
+                    value = row.get(col)
+                    nested_obj = None
+                    # Case 1: list with a single dict element
+                    if (
+                        isinstance(value, list)
+                        and len(value) == 1
+                        and isinstance(value[0], dict)
+                    ):
+                        nested_obj = value[0]
+                    # Case 2: stringified JSON
+                    elif isinstance(value, str):
+                        val_str = value.strip()
+                        try:
+                            parsed = json.loads(val_str)
+                            if isinstance(parsed, dict):
+                                nested_obj = parsed
+                            elif (
+                                isinstance(parsed, list)
+                                and len(parsed) == 1
+                                and isinstance(parsed[0], dict)
+                            ):
+                                nested_obj = parsed[0]
+                        except Exception:
+                            self.logger.warning(f"Not a valid JSON string: {val_str}")
+                            pass
+                    if isinstance(nested_obj, dict):
+                        for k, v in nested_obj.items():
+                            new_key = f"{col}_json_{k}"
+                            row[new_key] = v
+            return rows
+
+        methods_requiring_campaigns = [
+            "get_campaign_metrics",
+            "get_campaign_details",
+            "get_campaign_budget_totals",
+            "fetch_contact_ids",
+        ]
+
+        if method in methods_requiring_campaigns and not campaign_ids:
+            self.logger.info(
+                "No campaign_ids provided. Querying endpoint /marketing/v3/campaigns for full list..."
+            )
+
+            # HubSpot API v3
+            all_campaigns_data = self._fetch(
+                endpoint="https://api.hubapi.com/marketing/v3/campaigns", nrows=10000
+            )
+
+            campaign_ids = [c["id"] for c in all_campaigns_data if "id" in c]
+            self.logger.info(
+                f"Downloaded {len(campaign_ids)} campaigns id's. Beginning download of metrics..."
+            )
+
+            if not campaign_ids:
+                self.logger.warning("There is no campaign_ids on HubSpot.")
+                return []
+
+        # HubSpot API v1
         if method == "get_all_contacts":
             data = self._fetch(
-                endpoint="https://api.hubapi.com/contacts/v1/lists/all/contacts/all"
+                endpoint="https://api.hubapi.com/contacts/v1/lists/all/contacts/all",
+                nrows=nrows,
             )
         elif method == "get_campaign_metrics":
             data = self._get_campaign_metrics(
@@ -534,6 +633,7 @@ class Hubspot(Source):
                 contact_type=contact_type,
             )
         else:
+            # Default fetch (usually v3 for most recent HubSpot objects)
             data = self._fetch(
                 endpoint=endpoint,
                 filters=filters,
@@ -541,7 +641,8 @@ class Hubspot(Source):
                 nrows=nrows,
             )
 
-        return data
+        # Expand any JSON-like values in columns into separate top-level keys
+        return _expand_jsonlike_values(data)
 
     @add_viadot_metadata_columns
     def to_df(
