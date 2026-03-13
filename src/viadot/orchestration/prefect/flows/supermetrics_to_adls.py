@@ -4,6 +4,7 @@ from typing import Any
 
 from prefect import flow
 
+from viadot.orchestration.prefect.flow_timeout import with_flow_timeout_param
 from viadot.orchestration.prefect.tasks import (
     df_to_adls,
     supermetrics_to_df,
@@ -16,6 +17,7 @@ from viadot.orchestration.prefect.tasks import (
     retries=1,
     retry_delay_seconds=60,
 )
+@with_flow_timeout_param()
 def supermetrics_to_adls(
     # supermetrics
     query_params: dict[str, Any] | None = None,
