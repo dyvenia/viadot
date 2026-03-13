@@ -220,6 +220,73 @@ def _add_prefix_to_filename(filename: str, prefix: str) -> str:
     return f"{prefix}_{filename}"
 
 
+def build_s3_path(
+    remote_path: str,
+    s3_base_path: str = "",
+    organize_by_year: bool = False,
+    organize_by_custom_regexes: list[str] | None = None,
+) -> str:
+    r"""Build the S3 object path/key from a source path (path + filename).
+
+    Like :func:`extract_year_from_path`, the main input is a single path: the full
+    path to the file (directory + filename). The last path component is used as
+    the S3 object name.
+
+    Args:
+        remote_path (str): Full path to the file (relative to share root), including
+            the filename. Used to derive the S3 object name and to extract year /
+            custom folder names from the directory part.
+        s3_base_path (str): Base S3 path (bucket prefix, without scheme/bucket).
+            Defaults to "".
+        organize_by_year (bool): Whether to extract year from ``remote_path`` and use
+            it as an additional folder in the S3 path.
+        organize_by_custom_regexes (list[str] | None): Optional list of regular
+            expression patterns used to extract directory names from the
+            ``remote_path`` and append them as additional folder levels in the S3 path.
+            The order of patterns decides the order of folders. Example:
+            [r"^N\\d{7}$"] will add the first folder matching an N1234567-style code.
+
+    Returns:
+        str: S3 path/key built from all components (without bucket name).
+
+    Examples:
+        >>> build_s3_path("2024/data/file.xlsx")
+        'file.xlsx'
+        >>> build_s3_path("2024/data/file.xlsx", s3_base_path="incoming",
+        ...                organize_by_year=True)
+        'incoming/2024/file.xlsx'
+    """
+    path_obj = Path(remote_path.replace("\\", "/"))
+    filename = path_obj.name
+    path_parts: list[str] = []
+
+    if s3_base_path:
+        path_parts.append(s3_base_path.strip("/"))
+
+    if organize_by_year:
+        year = extract_year_from_path(remote_path)
+        if year:
+            path_parts.append(year)
+
+    if organize_by_custom_regexes:
+        dir_names = [parent.name for parent in path_obj.parents if parent.name]
+        for pattern in organize_by_custom_regexes:
+            try:
+                compiled = re.compile(pattern, re.IGNORECASE)
+            except re.error:
+                logger.warning(
+                    f"Invalid organize_by_custom_regexes pattern: {pattern}. Skipping."
+                )
+                continue
+            for name in dir_names:
+                if compiled.match(name):
+                    path_parts.append(name)
+                    break
+
+    path_parts.append(filename)
+    return "/".join(path_parts)
+
+
 def extract_year_from_path(file_path: str) -> str | None:
     """Extract year (4-digit, 1900-2099) from directory path if present.
 
@@ -830,7 +897,7 @@ def download_file_from_smb(  # noqa: C901, PLR0915
     return paths
 
 
-def _stream_file_from_smb_to_s3(  # noqa: C901, PLR0912, PLR0915
+def _stream_file_from_smb_to_s3(  # noqa: C901, PLR0912, PLR0913, PLR0915
     server: str,
     share: str,
     remote_path: str,
@@ -841,8 +908,9 @@ def _stream_file_from_smb_to_s3(  # noqa: C901, PLR0912, PLR0915
     prefix_levels_to_add: int = 0,
     organize_by_year: bool = False,
     zip_inner_file_regexes: str | list[str] | None = None,
+    organize_by_custom_regexes: list[str] | None = None,
 ) -> list[str]:
-    """Stream a file directly from SMB server to S3 bucket without saving to disk.
+    r"""Stream a file directly from SMB server to S3 bucket without saving to disk.
 
     Uses `smbclient.open_file` to read the remote file and `boto3`'s
     `upload_fileobj` to stream the bytes to S3 without writing to local disk.
@@ -869,6 +937,12 @@ def _stream_file_from_smb_to_s3(  # noqa: C901, PLR0912, PLR0915
             or list of regex patterns used to filter files *inside* ZIP archives.
             If provided and the file is a ZIP, only matching inner files will be
             extracted and streamed to S3. Defaults to None.
+        organize_by_custom_regexes (list[str] | None, optional): Optional list of
+            regular expression patterns used to extract directory names from the
+            `remote_path` and append them as additional folder levels in the S3
+            path. The order of patterns decides the order of folders.
+            Example: [r"^N\\d{7}$"] will add the first folder matching an N1234567-style
+            code. Defaults to None.
 
     Returns:
         list[str]: A list of S3 paths where files were uploaded. For regular files,
@@ -908,17 +982,13 @@ def _stream_file_from_smb_to_s3(  # noqa: C901, PLR0912, PLR0915
     s3_bucket = parsed_s3.netloc
     s3_base_path = parsed_s3.path.lstrip("/")
 
-    # Optionally organize by year if found in path
-    year_folder = ""
-    if organize_by_year:
-        year = extract_year_from_path(remote_path)
-        if year:
-            year_folder = f"{year}/"
-
-    s3_key = (
-        f"{s3_base_path.rstrip('/')}/{year_folder}{filename}"
-        if s3_base_path
-        else f"{year_folder}{filename}"
+    # S3 key path: same dir as remote_path, last segment = filename (may be prefixed)
+    effective_path = (Path(remote_path.replace("\\", "/")).parent / filename).as_posix()
+    s3_key = build_s3_path(
+        effective_path,
+        s3_base_path=s3_base_path,
+        organize_by_year=organize_by_year,
+        organize_by_custom_regexes=organize_by_custom_regexes,
     )
     s3_full_path = f"s3://{s3_bucket}/{s3_key}"
 
@@ -978,10 +1048,15 @@ def _stream_file_from_smb_to_s3(  # noqa: C901, PLR0912, PLR0915
                             )
                             continue
 
-                        zip_s3_key = (
-                            f"{s3_base_path.rstrip('/')}/{year_folder}{zip_filename}"
-                            if s3_base_path
-                            else f"{year_folder}{zip_filename}"
+                        # S3 path: dir from ZIP location, filename = inner file name
+                        zip_effective_path = (
+                            Path(remote_path.replace("\\", "/")).parent / zip_filename
+                        ).as_posix()
+                        zip_s3_key = build_s3_path(
+                            zip_effective_path,
+                            s3_base_path=s3_base_path,
+                            organize_by_year=organize_by_year,
+                            organize_by_custom_regexes=organize_by_custom_regexes,
                         )
                         zip_s3_full_path = f"s3://{s3_bucket}/{zip_s3_key}"
 
@@ -1059,7 +1134,7 @@ def _stream_file_from_smb_to_s3(  # noqa: C901, PLR0912, PLR0915
     return [s3_full_path]
 
 
-def stream_smb_files_to_s3(
+def stream_smb_files_to_s3(  # noqa: PLR0913
     smb_file_paths: list[str],
     smb_server: str,
     smb_share: str,
@@ -1070,8 +1145,9 @@ def stream_smb_files_to_s3(
     prefix_levels_to_add: int = 0,
     organize_by_year: bool = False,
     zip_inner_file_regexes: str | list[str] | None = None,
+    organize_by_custom_regexes: list[str] | None = None,
 ) -> list[str]:
-    """Stream multiple files directly from SMB server to S3 bucket.
+    r"""Stream multiple files directly from SMB server to S3 bucket.
 
     Streams files from SMB to S3 without saving them to local disk first,
     which is more efficient for large files and reduces disk I/O. Files with
@@ -1104,6 +1180,12 @@ def stream_smb_files_to_s3(
             or list of regex patterns used to filter files *inside* ZIP archives.
             If provided and a file is a ZIP, only matching inner files will be
             extracted and streamed to S3. Defaults to None.
+        organize_by_custom_regexes (list[str] | None, optional): Optional list of
+            regular expression patterns used to extract directory names from the
+            source/local path and append them as additional folder levels in the S3
+            path. The order of patterns decides the order of folders.
+            Example: [r"^N\\d{7}$"] will add the first folder matching an N1234567-style
+            code. Defaults to None.
 
     Returns:
         list[str]: List of S3 paths where files were successfully uploaded.
@@ -1130,6 +1212,7 @@ def stream_smb_files_to_s3(
                 prefix_levels_to_add=prefix_levels_to_add,
                 organize_by_year=organize_by_year,
                 zip_inner_file_regexes=zip_inner_file_regexes,
+                organize_by_custom_regexes=organize_by_custom_regexes,
             )
             s3_paths.extend(s3_path_result)
         except SMBInvalidFilenameError:
@@ -1665,8 +1748,9 @@ class SMBClient(Source):
         prefix_levels_to_add: int = 0,
         organize_by_year: bool = False,
         zip_inner_file_regexes: str | list[str] | None = None,
+        organize_by_custom_regexes: list[str] | None = None,
     ) -> list[str]:
-        """Stream multiple files from SMB directly to S3.
+        r"""Stream multiple files from SMB directly to S3.
 
         Streams files from SMB to S3 without saving them to local disk first,
         which is more efficient for large files. Files with problematic characters in
@@ -1695,6 +1779,12 @@ class SMBClient(Source):
                 string or list of regex patterns used to filter files *inside* ZIP
                 archives. If provided and a file is a ZIP, only matching inner
                 files will be extracted and streamed to S3. Defaults to None.
+            organize_by_custom_regexes (list[str] | None, optional): Optional list of
+                regular expression patterns used to extract directory names from the
+                source/local path and append them as additional folder levels in the S3
+                path. The order of patterns decides the order of folders.
+                Example: [r"^N\\d{7}$"] will add the first folder matching an
+                N1234567-style code. Defaults to None.
 
         Returns:
             list[str]: List of S3 paths where files were successfully uploaded.
@@ -1731,4 +1821,5 @@ class SMBClient(Source):
             prefix_levels_to_add=prefix_levels_to_add,
             organize_by_year=organize_by_year,
             zip_inner_file_regexes=zip_inner_file_regexes,
+            organize_by_custom_regexes=organize_by_custom_regexes,
         )
