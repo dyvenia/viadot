@@ -35,7 +35,7 @@ def remove_dbt_repo_dir(dbt_repo_dir_name: str) -> None:
     description="Build specified dbt model(s) and upload generated metadata to Luma.",
 )
 @with_flow_timeout_param()
-def transform_and_catalog(  # noqa: PLR0912, PLR0913, PLR0915, C901
+def transform_and_catalog(  # noqa: PLR0913, PLR0915
     dbt_repo_url: str | None = None,
     dbt_repo_url_secret: str | None = None,
     dbt_project_path: str = "dbt",

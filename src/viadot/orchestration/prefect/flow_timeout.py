@@ -1,4 +1,9 @@
-"""Helpers for flow-level timeout parametrization."""
+"""Utilities for adding runtime-configurable timeouts to Prefect flows.
+
+The helper in this module lets a flow expose ``timeout_seconds`` as a regular
+flow parameter while still enforcing the timeout through Prefect's timeout
+context managers.
+"""
 
 from __future__ import annotations
 
@@ -18,14 +23,30 @@ DEFAULT_TIMEOUT_SECONDS = 2 * 60 * 60
 def with_flow_timeout_param(
     default_timeout_seconds: int = DEFAULT_TIMEOUT_SECONDS,
 ) -> Callable[[F], F]:
-    """Add a `timeout_seconds` parameter and enforce it at runtime.
+    """Add a flow-level ``timeout_seconds`` parameter to a callable.
 
-    This decorator is intended to be used before `@flow`:
+    The decorator updates the wrapped callable's signature so Prefect can expose
+    ``timeout_seconds`` as a flow parameter, then executes the callable inside a
+    timeout context. The injected parameter is keyword-only and defaults to
+    ``default_timeout_seconds``.
+
+    This decorator is intended to be applied below ``@flow`` so it runs first:
 
         @flow(...)
         @with_flow_timeout_param()
         def my_flow(...):
             ...
+
+    If the wrapped callable already defines ``timeout_seconds``, the original
+    callable is returned unchanged.
+
+    Args:
+        default_timeout_seconds: Default timeout applied when the caller does not
+            provide ``timeout_seconds`` explicitly.
+
+    Returns:
+        A decorator that preserves the wrapped callable's metadata and signature
+        while adding runtime timeout enforcement.
     """
 
     def decorator(func: F) -> F:
