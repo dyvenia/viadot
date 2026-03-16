@@ -498,7 +498,76 @@ class Hubspot(Source):
 
         return rows
 
-    def call_api(  # noqa: C901
+    @staticmethod
+    def _expand_jsonlike_values(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
+        """Expand JSON-like values into new columns recursively.
+
+        For every row, detect columns that contain JSON-like objects (stringified
+        JSON, dictionaries, or lists of dictionaries) and recursively flatten them
+        into new top-level columns.
+
+        The naming convention for expanded dicts is: <original_column>_json_<field>
+        (or <original_column>_<field> if it was already expanded).
+        Lists of dictionaries are expanded with an index to prevent data loss:
+        <original_column>_0_<field>, <original_column>_1_<field>.
+
+        IMPORTANT: The original nested columns are deleted from the row after
+        successful expansion to prevent schema issues downstream.
+
+        Args:
+            rows (list[dict[str, Any]]): The list of row dictionaries to expand.
+
+        Returns:
+            list[dict[str, Any]]: The rows with flattened JSON structures.
+        """
+        if not isinstance(rows, list):
+            return rows
+
+        for row in rows:
+            if not isinstance(row, dict):
+                continue
+
+            needs_expansion = True
+            while needs_expansion:
+                needs_expansion = False
+                for col in list(row.keys()):
+                    value = row.get(col)
+
+                    if isinstance(value, str):
+                        val_str = value.strip()
+                        if val_str.startswith(("{", "[")):
+                            try:
+                                value = json.loads(val_str)
+                                row[col] = value
+                            except json.JSONDecodeError:
+                                try:
+                                    value = ast.literal_eval(val_str)
+                                    row[col] = value
+                                except (ValueError, SyntaxError):
+                                    pass
+
+                    if isinstance(value, dict):
+                        for k, v in value.items():
+                            new_key = (
+                                f"{col}_{k}" if "_json_" in col else f"{col}_json_{k}"
+                            )
+                            row[new_key] = v
+                        del row[col]
+                        needs_expansion = True
+
+                    # TUTAJ UPROSZCZONY BLOK DLA LIST
+                    elif isinstance(value, list) and len(value) > 0:
+                        if all(isinstance(x, dict) for x in value):
+                            for i, item in enumerate(value):
+                                for k, v in item.items():
+                                    new_key = f"{col}_{i}_{k}"
+                                    row[new_key] = v
+                            del row[col]
+                            needs_expansion = True
+
+        return rows
+
+    def call_api(
         self,
         method: str | None = None,
         endpoint: str | None = None,
@@ -522,86 +591,6 @@ class Hubspot(Source):
             properties (list[str] | None): The properties to include in the request.
             nrows (int): Maximum number of rows to fetch.
         """
-
-        def _expand_jsonlike_values(  # noqa: C901Expand commentComment on line R516
-            rows: list[dict[str, Any]],
-        ) -> list[dict[str, Any]]:
-            """Expand JSON-like values into new columns.
-
-            For every row, detect columns that contain JSON-like objects (stringified
-            JSON or single-item list-of-dicts) and expand them into new columns using
-            the pattern: <original_column>_json_<field>, without removing the original
-            column.
-
-            IMPORTANT: We DO NOT expand values that are already dicts to avoid
-            duplicating columns that will be created by pandas.json_normalize (e.g.,
-            HubSpot 'properties' object). We only expand:
-            - strings that parse into a dict or into a single-item list-of-dict
-            - lists that are single-item with a dict inside
-
-            Args:
-                rows (list[dict[str, Any]]): The rows to expand.
-
-            Returns:
-                list[dict[str, Any]]: The rows with the expanded JSON-like values.
-            """
-            if not isinstance(rows, list):
-                return rows
-
-            for row in rows:
-                if not isinstance(row, dict):
-                    continue
-
-                needs_expansion = True
-
-                while needs_expansion:
-                    needs_expansion = False
-
-                    for col in list(row.keys()):
-                        value = row.get(col)
-
-                        if isinstance(value, str):
-                            val_str = value.strip()
-                            if val_str.startswith(("{", "[")):
-                                try:
-                                    value = json.loads(val_str)
-                                    row[col] = value
-                                except json.JSONDecodeError:
-                                    try:
-                                        value = ast.literal_eval(val_str)
-                                        row[col] = value
-                                    except (ValueError, SyntaxError):
-                                        pass
-
-                        if isinstance(value, dict):
-                            for k, v in value.items():
-                                new_key = (
-                                    f"{col}_{k}"
-                                    if "_json_" in col
-                                    else f"{col}_json_{k}"
-                                )
-                                row[new_key] = v
-                            del row[col]
-                            needs_expansion = True
-
-                        elif isinstance(value, list) and len(value) > 0:
-                            if all(isinstance(x, dict) for x in value):
-                                for i, item in enumerate(value):
-                                    for k, v in item.items():
-                                        new_key = f"{col}_{i}_{k}"
-                                        row[new_key] = v
-                                del row[col]
-                                needs_expansion = True
-
-                            elif len(value) == 1 and isinstance(value[0], dict):
-                                for k, v in value[0].items():
-                                    new_key = f"{col}_{k}"
-                                    row[new_key] = v
-                                del row[col]
-                                needs_expansion = True
-
-            return rows
-
         methods_requiring_campaigns = [
             "get_campaign_metrics",
             "get_campaign_details",
@@ -661,7 +650,7 @@ class Hubspot(Source):
             )
 
         # Expand any JSON-like values in columns into separate top-level keys
-        return _expand_jsonlike_values(data)
+        return self._expand_jsonlike_values(data)
 
     @add_viadot_metadata_columns
     def to_df(
