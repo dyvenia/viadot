@@ -570,7 +570,7 @@ class Hubspot(Source):
                             parsed = json.loads(val_str)
                         except json.JSONDecodeError:
                             try:
-                                # Próba 2: Fallback for python string with '' instead of ""
+                                # Fallback for python string with '' instead of ""
                                 parsed = ast.literal_eval(val_str)
                             except (ValueError, SyntaxError):
                                 pass
@@ -588,6 +588,8 @@ class Hubspot(Source):
                         for k, v in nested_obj.items():
                             new_key = f"{col}_json_{k}"
                             row[new_key] = v
+
+                        del row[col]
 
             return rows
 
