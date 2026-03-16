@@ -462,10 +462,10 @@ class TestHubspot(unittest.TestCase):
         assert row["form_submissions_json_conversion-id"] == payload["conversion-id"]
         assert row["form_submissions_json_timestamp"] == payload["timestamp"]
         assert row["form_submissions_json_form-id"] == payload["form-id"]
-        # original column stays
-        assert "form_submissions" in row
+        # NEW BEHAVIOR: original column is deleted to prevent schema issues
+        assert "form_submissions" not in row
 
-    def test_call_api_expands_single_item_list_of_dicts_in_identity_profiles(self):
+    def test_call_api_expands_list_of_dicts_in_identity_profiles(self):
         instance = self.hubspot_instance
         list_payload = [
             {
@@ -478,20 +478,23 @@ class TestHubspot(unittest.TestCase):
         with patch.object(instance, "_fetch", return_value=rows):
             result = instance.call_api(method=None, endpoint="deals", filters=None)  # type: ignore[arg-type]
         row = result[0]
-        assert row["identity_profiles_json_vid"] == 3351
-        assert row["identity_profiles_json_saved-at-timestamp"] == 1613053343363
-        assert row["identity_profiles_json_deleted-changed-timestamp"] == 0
-        assert "identity_profiles" in row
+        # NEW BEHAVIOR: Lists of dicts get expanded with an index (_0_)
+        assert row["identity_profiles_0_vid"] == 3351
+        assert row["identity_profiles_0_saved-at-timestamp"] == 1613053343363
+        assert row["identity_profiles_0_deleted-changed-timestamp"] == 0
+        # NEW BEHAVIOR: original column is deleted
+        assert "identity_profiles" not in row
 
-    def test_call_api_does_not_expand_dict_value(self):
+    def test_call_api_expands_dict_value(self):
         instance = self.hubspot_instance
         rows = [{"id": "1", "form_submissions": {"a": 1, "b": 2}}]
         with patch.object(instance, "_fetch", return_value=rows):
             result = instance.call_api(method=None, endpoint="deals", filters=None)  # type: ignore[arg-type]
         row = result[0]
-        assert "form_submissions_json_a" not in row
-        assert "form_submissions_json_b" not in row
-        assert row["form_submissions"] == {"a": 1, "b": 2}
+        # NEW BEHAVIOR: Dictionaries are always expanded and original column deleted
+        assert row["form_submissions_json_a"] == 1
+        assert row["form_submissions_json_b"] == 2
+        assert "form_submissions" not in row
 
     def test_call_api_empty_list_creates_no_expansion_columns(self):
         instance = self.hubspot_instance
