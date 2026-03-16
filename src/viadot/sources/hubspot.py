@@ -500,7 +500,7 @@ class Hubspot(Source):
         return rows
 
     @staticmethod
-    def _expand_jsonlike_values(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    def _expand_jsonlike_values(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:  # noqa: C901, PLR0912
         """Expand JSON-like values into new columns recursively.
 
         For every row, detect columns that contain JSON-like objects (stringified
