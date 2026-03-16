@@ -4,9 +4,9 @@ from typing import Literal
 
 from prefect import flow
 
-from viadot.orchestration.prefect.flow_timeout import with_flow_timeout_param
 from viadot.orchestration.prefect.tasks import sap_rfc_to_df
 from viadot.orchestration.prefect.tasks.task_utils import df_to_parquet
+from viadot.orchestration.prefect.utils import with_flow_timeout_param
 
 
 @flow(

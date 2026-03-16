@@ -6,7 +6,6 @@ from typing import Any, Literal
 from prefect import flow, task
 from prefect.logging import get_run_logger
 
-from viadot.orchestration.prefect.flow_timeout import with_flow_timeout_param
 from viadot.orchestration.prefect.tasks import (
     bcp,
     create_sql_server_table,
@@ -16,6 +15,7 @@ from viadot.orchestration.prefect.tasks.task_utils import (
     df_to_csv,
     get_sql_dtypes_from_df,
 )
+from viadot.orchestration.prefect.utils import with_flow_timeout_param
 
 
 @task(timeout_seconds=60 * 60, cache_policy=None)

@@ -5,9 +5,8 @@ import shutil
 
 from prefect import flow, task
 
-from viadot.orchestration.prefect.flow_timeout import with_flow_timeout_param
 from viadot.orchestration.prefect.tasks import clone_repo, dbt_task
-from viadot.orchestration.prefect.utils import get_credentials
+from viadot.orchestration.prefect.utils import get_credentials, with_flow_timeout_param
 
 
 @task(cache_policy=None)

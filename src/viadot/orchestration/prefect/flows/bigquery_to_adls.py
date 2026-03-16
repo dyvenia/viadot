@@ -2,8 +2,8 @@
 
 from prefect import flow
 
-from viadot.orchestration.prefect.flow_timeout import with_flow_timeout_param
 from viadot.orchestration.prefect.tasks import bigquery_to_df, df_to_adls
+from viadot.orchestration.prefect.utils import with_flow_timeout_param
 
 
 @flow(

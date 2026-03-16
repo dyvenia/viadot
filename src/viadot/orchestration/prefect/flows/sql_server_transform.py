@@ -2,8 +2,8 @@
 
 from prefect import flow
 
-from viadot.orchestration.prefect.flow_timeout import with_flow_timeout_param
 from viadot.orchestration.prefect.tasks import sql_server_query
+from viadot.orchestration.prefect.utils import with_flow_timeout_param
 
 
 @flow(
