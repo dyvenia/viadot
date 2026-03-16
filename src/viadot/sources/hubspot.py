@@ -1,5 +1,6 @@
 """Hubspot API connector."""
 
+import ast
 from datetime import datetime
 import json
 import re
