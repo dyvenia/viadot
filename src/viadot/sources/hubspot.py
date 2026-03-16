@@ -557,30 +557,37 @@ class Hubspot(Source):
                     # Case 1: list with a single dict element
                     if (
                         isinstance(value, list)
-                        and len(value) == 1
+                        and len(value) > 0
                         and isinstance(value[0], dict)
                     ):
                         nested_obj = value[0]
                     # Case 2: stringified JSON
                     elif isinstance(value, str):
                         val_str = value.strip()
+                        parsed = None
                         try:
                             parsed = json.loads(val_str)
-                            if isinstance(parsed, dict):
-                                nested_obj = parsed
-                            elif (
-                                isinstance(parsed, list)
-                                and len(parsed) == 1
-                                and isinstance(parsed[0], dict)
-                            ):
-                                nested_obj = parsed[0]
-                        except Exception:
-                            self.logger.warning(f"Not a valid JSON string: {val_str}")
-                            pass
+                        except json.JSONDecodeError:
+                            try:
+                                # Próba 2: Fallback for python string with '' instead of ""
+                                parsed = ast.literal_eval(val_str)
+                            except (ValueError, SyntaxError):
+                                pass
+
+                        if isinstance(parsed, dict):
+                            nested_obj = parsed
+                        elif (
+                            isinstance(parsed, list)
+                            and len(parsed) > 0
+                            and isinstance(parsed[0], dict)
+                        ):
+                            nested_obj = parsed[0]
+
                     if isinstance(nested_obj, dict):
                         for k, v in nested_obj.items():
                             new_key = f"{col}_json_{k}"
                             row[new_key] = v
+
             return rows
 
         methods_requiring_campaigns = [
