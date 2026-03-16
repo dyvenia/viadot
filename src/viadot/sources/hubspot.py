@@ -1,6 +1,5 @@
 """Hubspot API connector."""
 
-import ast
 from datetime import datetime
 import json
 import re
@@ -548,49 +547,65 @@ class Hubspot(Source):
             """
             if not isinstance(rows, list):
                 return rows
+            
             for row in rows:
                 if not isinstance(row, dict):
                     continue
+                # Flag indicating if there are still nested structures to flatten in this row
+                needs_expansion = True
+
+                while needs_expansion:
+                    needs_expansion = False
 
                 for col in list(row.keys()):
-                    value = row.get(col)
-                    nested_obj = None
+                        value = row.get(col)
                     # Case 1: list with a single dict element
-                    if (
-                        isinstance(value, list)
-                        and len(value) > 0
-                        and isinstance(value[0], dict)
-                    ):
-                        nested_obj = value[0]
+                    if isinstance(value, str):
+                            val_str = value.strip()
+                            if val_str.startswith(("{", "[")):
+                                try:
+                                    value = json.loads(val_str)
+                                    row[col] = value  # Save the parsed object
+                                except json.JSONDecodeError:
+                                    try:
+                                        value = ast.literal_eval(val_str)
+                                        row[col] = value
+                                    except (ValueError, SyntaxError):
+                                        pass
+
                     # Case 2: stringified JSON
-                    elif isinstance(value, str):
-                        val_str = value.strip()
-                        parsed = None
-                        try:
-                            parsed = json.loads(val_str)
-                        except json.JSONDecodeError:
-                            try:
-                                # Fallback for python string with '' instead of ""
-                                parsed = ast.literal_eval(val_str)
-                            except (ValueError, SyntaxError):
-                                pass
+                    if isinstance(value, dict):
+                            for k, v in value.items():
+                                # Keep the existing "_json_" convention for consistency
+                                new_key = f"{col}_{k}" if "_json_" in col else f"{col}_json_{k}"
+                                row[new_key] = v
+                            
+                            # Remove the original nested column to prevent it from going to the DB
+                            del row[col] 
+                            needs_expansion = True
 
-                        if isinstance(parsed, dict):
-                            nested_obj = parsed
-                        elif (
-                            isinstance(parsed, list)
-                            and len(parsed) > 0
-                            and isinstance(parsed[0], dict)
-                        ):
-                            nested_obj = parsed[0]
-
-                    if isinstance(nested_obj, dict):
-                        for k, v in nested_obj.items():
-                            new_key = f"{col}_json_{k}"
-                            row[new_key] = v
-
-                        del row[col]
-
+                    # Case 3: If it's a LIST of dictionaries - extract with an index (0, 1, 2...)
+                    elif isinstance(value, list) and len(value) > 0:
+                            # Check if the list contains only dictionaries (like in 'identities')
+                            if all(isinstance(x, dict) for x in value):
+                                for i, item in enumerate(value):
+                                    for k, v in item.items():
+                                        new_key = f"{col}_{i}_{k}"
+                                        row[new_key] = v
+                                        
+                                # Remove the original list column
+                                del row[col]
+                                needs_expansion = True
+                            
+                            # Fallback for a 1-element list (to avoid losing other weird structures)
+                            elif len(value) == 1 and isinstance(value[0], dict):
+                                for k, v in value[0].items():
+                                    new_key = f"{col}_{k}"
+                                    row[new_key] = v
+                                    
+                                # Remove the original list column
+                                del row[col]
+                                needs_expansion = True
             return rows
 
         methods_requiring_campaigns = [
