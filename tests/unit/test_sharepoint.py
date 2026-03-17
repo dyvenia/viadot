@@ -204,9 +204,8 @@ def test_acquire_token_with_certificate():
 
 
 def test_sharepoint_default_na(sharepoint_mock):
-    df = sharepoint_mock.to_df(
-        url="test/file.xlsx", na_values=Sharepoint.DEFAULT_NA_VALUES
-    )
+    default_na_values = [*Sharepoint.DEFAULT_EXCEL_NA_VALUES, "NA"]
+    df = sharepoint_mock.to_df(url="test/file.xlsx", na_values=default_na_values)
 
     assert not df.empty
     assert "NA" not in list(df["col_a"])
@@ -215,8 +214,15 @@ def test_sharepoint_default_na(sharepoint_mock):
 def test_sharepoint_custom_na(sharepoint_mock):
     df = sharepoint_mock.to_df(
         url="test/file.xlsx",
-        na_values=[v for v in Sharepoint.DEFAULT_NA_VALUES if v != "NA"],
+        na_values=list(Sharepoint.DEFAULT_EXCEL_NA_VALUES),
     )
+
+    assert not df.empty
+    assert "NA" in list(df["col_a"])
+
+
+def test_sharepoint_default_excel_na(sharepoint_mock):
+    df = sharepoint_mock.to_df(url="test/file.xlsx")
 
     assert not df.empty
     assert "NA" in list(df["col_a"])
