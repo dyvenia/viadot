@@ -6,7 +6,7 @@ import shutil
 from prefect import flow, task
 
 from viadot.orchestration.prefect.tasks import clone_repo, dbt_task
-from viadot.orchestration.prefect.utils import get_credentials
+from viadot.orchestration.prefect.utils import get_credentials, with_flow_timeout_param
 
 
 @task(cache_policy=None)
@@ -22,8 +22,8 @@ def _cleanup_repo(dbt_repo_dir_name: str) -> None:
 @flow(
     name="Transform",
     description="Build specified dbt model(s).",
-    timeout_seconds=2 * 60 * 60,
 )
+@with_flow_timeout_param()
 def transform(
     dbt_project_path: str,
     dbt_repo_url: str | None = None,

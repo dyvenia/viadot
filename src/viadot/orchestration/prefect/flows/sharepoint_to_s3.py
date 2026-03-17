@@ -3,6 +3,7 @@
 from prefect import flow
 
 from viadot.orchestration.prefect.tasks import s3_upload_file, sharepoint_download_file
+from viadot.orchestration.prefect.utils import with_flow_timeout_param
 
 
 @flow(
@@ -11,6 +12,7 @@ from viadot.orchestration.prefect.tasks import s3_upload_file, sharepoint_downlo
     retries=1,
     retry_delay_seconds=60,
 )
+@with_flow_timeout_param()
 def sharepoint_to_s3(
     url: str,
     local_path: str,

@@ -16,7 +16,7 @@ from viadot.orchestration.prefect.tasks import (
     luma_ingest_task,
     s3_upload_file,
 )
-from viadot.orchestration.prefect.utils import get_credentials
+from viadot.orchestration.prefect.utils import get_credentials, with_flow_timeout_param
 
 
 @task(cache_policy=None)
@@ -32,8 +32,8 @@ def remove_dbt_repo_dir(dbt_repo_dir_name: str) -> None:
 @flow(
     name="Transform and Catalog",
     description="Build specified dbt model(s) and upload generated metadata to Luma.",
-    timeout_seconds=2 * 60 * 60,
 )
+@with_flow_timeout_param()
 def transform_and_catalog(  # noqa: PLR0913, PLR0915
     dbt_repo_url: str | None = None,
     dbt_repo_url_secret: str | None = None,
