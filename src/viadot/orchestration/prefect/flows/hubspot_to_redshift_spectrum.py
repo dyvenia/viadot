@@ -70,9 +70,8 @@ def hubspot_to_redshift_spectrum(  # noqa: PLR0913
 
     """
     df = hubspot_to_df(
-        endpoint=hubspot_url,
+        endpoint=endpoint or hubspot_url,
         api_method=api_method,
-        endpoint=endpoint,
         contact_type=contact_type,
         campaign_ids=campaign_ids,
         config_key=hubspot_config_key,
