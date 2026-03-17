@@ -6,6 +6,7 @@ from prefect import flow
 
 from viadot.orchestration.prefect.tasks.task_utils import df_to_parquet
 from viadot.orchestration.prefect.tasks.tm1 import tm1_to_df
+from viadot.orchestration.prefect.utils import with_flow_timeout_param
 
 
 @flow(
@@ -14,6 +15,7 @@ from viadot.orchestration.prefect.tasks.tm1 import tm1_to_df
     retries=1,
     retry_delay_seconds=60,
 )
+@with_flow_timeout_param()
 def tm1_to_parquet(  # noqa: PLR0913
     path: str | None = None,
     mdx_query: str | None = None,

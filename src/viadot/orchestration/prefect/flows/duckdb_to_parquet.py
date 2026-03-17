@@ -6,6 +6,7 @@ from prefect import flow
 
 from viadot.orchestration.prefect.tasks import duckdb_query
 from viadot.orchestration.prefect.tasks.task_utils import df_to_parquet
+from viadot.orchestration.prefect.utils import with_flow_timeout_param
 
 
 @flow(
@@ -13,8 +14,8 @@ from viadot.orchestration.prefect.tasks.task_utils import df_to_parquet
     description="Extract data from DuckDB and save it to Parquet file.",
     retries=1,
     retry_delay_seconds=60,
-    timeout_seconds=2 * 60 * 60,
 )
+@with_flow_timeout_param()
 def duckdb_to_parquet(
     query: str,
     path: str,

@@ -5,6 +5,7 @@ from typing import Any
 from prefect import flow
 
 from viadot.orchestration.prefect.tasks import azure_sql_to_df, df_to_adls
+from viadot.orchestration.prefect.utils import with_flow_timeout_param
 
 
 @flow(
@@ -15,6 +16,7 @@ from viadot.orchestration.prefect.tasks import azure_sql_to_df, df_to_adls
     retry_delay_seconds=60,
     log_prints=True,
 )
+@with_flow_timeout_param()
 def azure_sql_to_adls(
     query: str | None = None,
     credentials_secret: str | None = None,

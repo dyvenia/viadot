@@ -1,7 +1,15 @@
+import asyncio
+from inspect import Parameter, signature
+import time
+
 import pendulum
 import pytest
 
-from viadot.orchestration.prefect.utils import DynamicDateHandler
+from viadot.orchestration.prefect.utils import (
+    DEFAULT_TIMEOUT_SECONDS,
+    DynamicDateHandler,
+    with_flow_timeout_param,
+)
 
 
 DDH1 = DynamicDateHandler(
@@ -175,3 +183,35 @@ def test_find_dynamic_date_patterns():
         "<<2_days_ago>>",
     ]
     assert result == expected_result
+
+
+def test_with_flow_timeout_param_adds_keyword_only_param():
+    @with_flow_timeout_param()
+    def sample_flow(required: str, optional: int = 1) -> str:
+        return f"{required}:{optional}"
+
+    timeout_param = signature(sample_flow).parameters["timeout_seconds"]
+
+    assert timeout_param.kind is Parameter.KEYWORD_ONLY
+    assert timeout_param.default == DEFAULT_TIMEOUT_SECONDS
+    assert timeout_param.annotation is int
+    assert sample_flow("value", optional=2) == "value:2"
+
+
+def test_with_flow_timeout_param_enforces_sync_timeout():
+    @with_flow_timeout_param(default_timeout_seconds=1)
+    def slow_flow() -> None:
+        time.sleep(0.05)
+
+    with pytest.raises(TimeoutError):
+        slow_flow(timeout_seconds=0.01)
+
+
+@pytest.mark.asyncio
+async def test_with_flow_timeout_param_enforces_async_timeout():
+    @with_flow_timeout_param(default_timeout_seconds=1)
+    async def slow_flow() -> None:
+        await asyncio.sleep(0.05)
+
+    with pytest.raises(TimeoutError):
+        await slow_flow(timeout_seconds=0.01)

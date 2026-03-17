@@ -6,6 +6,7 @@ from prefect import flow
 
 from viadot.orchestration.prefect.tasks import epicor_to_df
 from viadot.orchestration.prefect.tasks.task_utils import df_to_parquet
+from viadot.orchestration.prefect.utils import with_flow_timeout_param
 
 
 @flow(
@@ -14,6 +15,7 @@ from viadot.orchestration.prefect.tasks.task_utils import df_to_parquet
     retries=1,
     retry_delay_seconds=60,
 )
+@with_flow_timeout_param()
 def epicor_to_parquet(
     path: str,
     base_url: str,
