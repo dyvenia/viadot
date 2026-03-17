@@ -103,7 +103,7 @@ class SharepointCredentials(BaseModel):
 
 
 class Sharepoint(Source):
-    DEFAULT_NA_VALUES = tuple(STR_NA_VALUES)
+    DEFAULT_EXCEL_NA_VALUES = tuple(v for v in STR_NA_VALUES if v != "NA")
 
     def __init__(
         self,
@@ -397,7 +397,9 @@ class Sharepoint(Source):
                 excel_file.parse(
                     sheet,
                     keep_default_na=False,
-                    na_values=na_values or list(self.DEFAULT_NA_VALUES),
+                    # Keep literal "NA" values by default because many SharePoint
+                    # workbooks use them as valid strings, not missing values.
+                    na_values=na_values or list(self.DEFAULT_EXCEL_NA_VALUES),
                     dtype=str,  # Ensure all columns are read as strings
                     **kwargs,
                 )
