@@ -19,6 +19,7 @@ def hubspot_to_redshift_spectrum(  # noqa: PLR0913
     table: str,
     hubspot_url: str | None = None,
     api_method: str | None = None,
+    endpoint: str | None = None,
     contact_type: str = "influencedContacts",
     campaign_ids: list[str] | None = None,
     filters: list[dict[str, Any]] | None = None,
@@ -71,6 +72,7 @@ def hubspot_to_redshift_spectrum(  # noqa: PLR0913
     df = hubspot_to_df(
         endpoint=hubspot_url,
         api_method=api_method,
+        endpoint=endpoint,
         contact_type=contact_type,
         campaign_ids=campaign_ids,
         config_key=hubspot_config_key,
