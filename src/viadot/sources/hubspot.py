@@ -556,7 +556,6 @@ class Hubspot(Source):
                         del row[col]
                         needs_expansion = True
 
-                    # TUTAJ UPROSZCZONY BLOK DLA LIST
                     elif isinstance(value, list) and len(value) > 0:
                         if all(isinstance(x, dict) for x in value):
                             for i, item in enumerate(value):
