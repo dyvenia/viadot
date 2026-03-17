@@ -8,7 +8,10 @@ from viadot.orchestration.prefect.tasks import (
     df_to_redshift_spectrum,
     postgresql_to_df,
 )
-from viadot.orchestration.prefect.utils import DynamicDateHandler
+from viadot.orchestration.prefect.utils import (
+    DynamicDateHandler,
+    with_flow_timeout_param,
+)
 
 
 @flow(
@@ -17,6 +20,7 @@ from viadot.orchestration.prefect.utils import DynamicDateHandler
     retries=1,
     retry_delay_seconds=60,
 )
+@with_flow_timeout_param()
 def postgresql_to_redshift_spectrum(  # noqa: PLR0913
     query: str,
     to_path: str,
