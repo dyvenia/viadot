@@ -50,6 +50,7 @@ def transform_and_catalog(  # noqa: PLR0913, PLR0915
     run_results_storage_config_key: str | None = None,
     run_results_storage_credentials_secret: str | None = None,
     fail_flow_only_on_build_failure: bool = False,
+    gh_action_actor: str | None = None,
 ) -> list[str]:
     """Build specified dbt model(s) and upload the generated metadata to Luma.
 
@@ -105,6 +106,8 @@ def transform_and_catalog(  # noqa: PLR0913, PLR0915
             When True:
                 - The flow will only fail if model building fails
                 - Test failures alone won't cause the flow failure
+        gh_action_actor (str, optional): GitHub Actions actor that triggered the
+            workflow. Defaults to None.
 
     Returns:
         list[str]: Lines from stdout of the `upload_metadata` task as a list.
@@ -143,6 +146,8 @@ def transform_and_catalog(  # noqa: PLR0913, PLR0915
             `dbt_select={"build": "models.intermediate"}`
     """
     logger = get_run_logger()
+    if gh_action_actor:
+        logger.info(f"Triggered by GitHub Actions actor: {gh_action_actor}")
 
     # Clone the dbt project.
     dbt_repo_url = dbt_repo_url or get_credentials(dbt_repo_url_secret)
