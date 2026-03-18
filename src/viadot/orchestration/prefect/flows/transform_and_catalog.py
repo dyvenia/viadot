@@ -13,6 +13,7 @@ from prefect.states import Failed
 from viadot.orchestration.prefect.tasks import (
     clone_repo,
     dbt_task,
+    dbt_test_failure_notifier,
     luma_ingest_task,
     s3_upload_file,
 )
@@ -50,6 +51,7 @@ def transform_and_catalog(  # noqa: PLR0913, PLR0915
     run_results_storage_config_key: str | None = None,
     run_results_storage_credentials_secret: str | None = None,
     fail_flow_only_on_build_failure: bool = False,
+    schema_owner_email: list[str] | None = None,
 ) -> list[str]:
     """Build specified dbt model(s) and upload the generated metadata to Luma.
 
@@ -105,6 +107,9 @@ def transform_and_catalog(  # noqa: PLR0913, PLR0915
             When True:
                 - The flow will only fail if model building fails
                 - Test failures alone won't cause the flow failure
+        schema_owner_email (list[str] | None): Email addresses to send notifications
+            about failed dbt tests to. Can contain one or multiple recipients.
+            If None, no notifications will be sent. Defaults to None.
 
     Returns:
         list[str]: Lines from stdout of the `upload_metadata` task as a list.
@@ -208,7 +213,6 @@ def transform_and_catalog(  # noqa: PLR0913, PLR0915
                 raise_on_failure=False,
             )
             test.result()
-    # look here
     else:
         # Produce `catalog.json` and `manifest.json` artifacts for Luma ingestion.
         docs_generate_task = dbt_task.with_options(name="dbt_docs_generate")
@@ -230,9 +234,9 @@ def transform_and_catalog(  # noqa: PLR0913, PLR0915
     )
     upload_metadata.result()
 
+    file_name = "run_results.json"
     if run_results_storage_path:
         # Set the file path to include date info.
-        file_name = "run_results.json"
         now = datetime.now(timezone.utc)
         run_results_storage_path = run_results_storage_path.rstrip("/") + "/"
 
@@ -253,6 +257,11 @@ def transform_and_catalog(  # noqa: PLR0913, PLR0915
             to_path=run_results_storage_path,
             config_key=run_results_storage_config_key,
             credentials_secret=run_results_storage_credentials_secret,
+        )
+    if schema_owner_email:
+        dbt_test_failure_notifier(
+            file_path=file_name,
+            recipient=schema_owner_email,
         )
 
     remove_dbt_repo_dir(
