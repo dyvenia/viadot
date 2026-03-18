@@ -175,7 +175,7 @@ def send_test_failure_notification(
     Test Type: {test["test_type"] or "N/A"}
     Status:   {test["status"]}
     Message:  {test["message"]}
-    Failures: {test["failures"]}
+    Failures: {test["failures"] or "N/A"}
     """
 
     msg = MIMEMultipart()
