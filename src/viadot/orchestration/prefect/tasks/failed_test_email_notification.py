@@ -27,6 +27,15 @@ def convert_json_to_df(file_path):
         meta=[["metadata", "generated_at"]],
         record_path="results",
     )
+    test_identifier = "^test\\."
+    contains_test = df["unique_id"].str.match(test_identifier)
+
+    if not contains_test.any():
+        return []
+
+    if not contains_test.all():
+        df = df[contains_test].copy()
+
     df_failed = df[df["status"].isin(["error", "fail"])]
 
     if df_failed.empty:
@@ -59,7 +68,7 @@ def send_test_failure_notification(test: dict, smtp_config: dict, recipient: str
         server.sendmail(smtp_config["sender"], recipient, msg.as_string())
 
 
-@task(name="dbt-test-failure-notifier")
+@task(name="dbt-test-failure-notifier", cache_policy=None)
 def dbt_test_failure_notifier(file_path: str, 
     recipient: str, 
     smtp_sender_block: str = "smtp-sender",
