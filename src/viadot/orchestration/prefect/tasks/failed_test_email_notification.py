@@ -1,7 +1,7 @@
-import json
-import smtplib
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
+import json
+import smtplib
 
 import pandas as pd
 from prefect import task
@@ -10,6 +10,7 @@ from prefect.logging import get_run_logger
 
 
 def get_smtp_config(sender_block: str, password_block: str) -> dict:
+    """Retrieve SMTP configuration from Prefect Secrets."""
     return {
         "host": "smtp.gmail.com",
         "port": 587,
@@ -18,7 +19,8 @@ def get_smtp_config(sender_block: str, password_block: str) -> dict:
     }
 
 
-def convert_json_to_df(file_path):
+def convert_json_to_df(file_path: str) -> list:
+    """Convert DBT test results from JSON to a list of failed tests."""
     with open(file_path) as file:
         data = json.load(file)
 
@@ -41,22 +43,26 @@ def convert_json_to_df(file_path):
     if df_failed.empty:
         return []
 
-    return df_failed[["unique_id", "status", "message", "failures"]].to_dict(orient="records")
+    return df_failed[["unique_id", "status", "message", "failures"]].to_dict(
+        orient="records"
+    )
 
 
-def send_test_failure_notification(test: dict, smtp_config: dict, recipient: str):
-
+def send_test_failure_notification(
+    test: dict, smtp_config: dict, recipient: str
+) -> None:
+    """Send an email notification for a failed DBT test."""
     subject = f"DBT Test Failed: {test['unique_id']}"
     body = f"""
     DBT Test Failure Notification
 
-    Test:     {test['unique_id']}
-    Status:   {test['status']}
-    Message:  {test['message']}
-    Failures: {test['failures']}
+    Test:     {test["unique_id"]}
+    Status:   {test["status"]}
+    Message:  {test["message"]}
+    Failures: {test["failures"]}
     """
 
-    msg = MIMEMultipart()/
+    msg = MIMEMultipart()
     msg["From"] = smtp_config["sender"]
     msg["To"] = recipient
     msg["Subject"] = subject
@@ -69,11 +75,13 @@ def send_test_failure_notification(test: dict, smtp_config: dict, recipient: str
 
 
 @task(name="dbt-test-failure-notifier", cache_policy=None)
-def dbt_test_failure_notifier(file_path: str,
-    recipient: str, 
+def dbt_test_failure_notifier(
+    file_path: str,
+    recipient: str,
     smtp_sender_block: str = "smtp-sender",
-    smtp_password_block: str = "smtp-password") -> None:
-
+    smtp_password_block: str = "smtp-password",  # noqa: S107
+) -> None:
+    """Prefect task to send email notifications for failed DBT tests."""
     logger = get_run_logger()
 
     failed_tests = convert_json_to_df(file_path)
