@@ -170,7 +170,7 @@ def send_test_failure_notification(
 
     Test:     {test["unique_id"]}
     Schema:   {schema_name}
-    Table:    {(test["table"] or "N/A")}
+    Table:    {test["table"] or "N/A"}
     Column:   {column_name}
     Test Type: {test["test_type"] or "N/A"}
     Status:   {test["status"]}
