@@ -76,7 +76,7 @@ def find_column(unique_id: str | None) -> str | None:
         Extracts "partner_id" from string:
             "test.lakehouse.not_null_int_but0is__partner_id_.bb2a44d06f"
     Args:
-        series (pd.Series): unique_id to string (or None) to extract
+        unique_id (str | None): unique_id to string (or None) to extract
         the column name from
 
     Returns:
@@ -89,7 +89,7 @@ def find_column(unique_id: str | None) -> str | None:
     return match.group(1) if match else None
 
 
-def find_test(series: pd.Series, test_types: tuple[str, ...]) -> str | None:
+def find_test(value: str | None, test_types: tuple[str, ...]) -> str | None:
     """Extract a specific test name from a string in pandas Series.
 
     This function searches for allowed test types in each element
@@ -99,14 +99,16 @@ def find_test(series: pd.Series, test_types: tuple[str, ...]) -> str | None:
         Search for test in the string below will return "not_null"
             "test.lakehouse.not_null_int_but0is__partner_id_.bb2a44d06f"
     Args:
-        series (pd.Series): The pandas Series to search within.
+        value (str | None): The string (or None) to search within.
         test_types: (tuple[str, ...]): A list of test types that can be discovered.
 
     Returns:
         str | None: The matched test type, or None if no match is found.
     """
+    if value is None:
+        return None
     for test_type in test_types:
-        if test_type in series:
+        if test_type in value:
             return test_type
     return None
 
@@ -157,7 +159,7 @@ def convert_json_to_df(file_path: str, test_types: tuple[str, ...]) -> list:
 
 
 def send_test_failure_notification(
-    test: dict, sender: str, recipient: str, server: smtplib.SMTP
+    test: dict, sender: str, recipients: list[str], server: smtplib.SMTP
 ) -> None:
     """Send an email notification for a failed DBT test."""
     schema_name = test["schema"]
@@ -178,16 +180,16 @@ def send_test_failure_notification(
 
     msg = MIMEMultipart()
     msg["From"] = sender
-    msg["To"] = recipient
+    msg["To"] = ", ".join(recipients)
     msg["Subject"] = subject
     msg.attach(MIMEText(body, "plain"))
-    server.sendmail(sender, recipient, msg.as_string())
+    server.sendmail(sender, recipients, msg.as_string())
 
 
 @task(name="dbt-test-failure-notifier", cache_policy=None)
 def dbt_test_failure_notifier(
     file_path: str,
-    recipient: str,
+    recipients: list[str],
     smtp_config: SmtpConfig | None = None,
     test_types: tuple[str, ...] = (
         "not_null",
@@ -216,7 +218,7 @@ def dbt_test_failure_notifier(
         for test in failed_tests:
             try:
                 send_test_failure_notification(
-                    test, smtp_config.sender, recipient, server
+                    test, smtp_config.sender, recipients, server
                 )
                 sent += 1
             except smtplib.SMTPException as e:
