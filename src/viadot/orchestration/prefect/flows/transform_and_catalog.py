@@ -261,7 +261,7 @@ def transform_and_catalog(  # noqa: PLR0913, PLR0915
     if schema_owner_email:
         dbt_test_failure_notifier(
             file_path=file_name,
-            recipient=schema_owner_email,
+            recipients=schema_owner_email,
         )
 
     remove_dbt_repo_dir(
