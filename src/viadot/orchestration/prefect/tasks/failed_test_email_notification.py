@@ -49,7 +49,7 @@ def convert_json_to_df(file_path: str) -> list:
 
 
 def send_test_failure_notification(
-    test: dict, smtp_config: dict, recipient: str
+    test: dict, smtp_config: dict, recipient: str, server: smtplib.SMTP
 ) -> None:
     """Send an email notification for a failed DBT test."""
     subject = f"DBT Test Failed: {test['unique_id']}"
@@ -67,11 +67,7 @@ def send_test_failure_notification(
     msg["To"] = recipient
     msg["Subject"] = subject
     msg.attach(MIMEText(body, "plain"))
-
-    with smtplib.SMTP(smtp_config["host"], smtp_config["port"]) as server:
-        server.starttls()
-        server.login(smtp_config["sender"], smtp_config["password"])
-        server.sendmail(smtp_config["sender"], recipient, msg.as_string())
+    server.sendmail(smtp_config["sender"], recipient, msg.as_string())
 
 
 @task(name="dbt-test-failure-notifier", cache_policy=None)
@@ -83,14 +79,22 @@ def dbt_test_failure_notifier(
 ) -> None:
     """Prefect task to send email notifications for failed DBT tests."""
     logger = get_run_logger()
-
     failed_tests = convert_json_to_df(file_path)
-
     if not failed_tests:
         logger.info("No failed tests — skipping notifications.")
         return
 
     smtp_config = get_smtp_config(smtp_sender_block, smtp_password_block)
-
-    for test in failed_tests:
-        send_test_failure_notification(test, smtp_config, recipient)
+    with smtplib.SMTP(smtp_config["host"], smtp_config["port"]) as server:
+        server.starttls()
+        server.login(smtp_config["sender"], smtp_config["password"])
+        sent = 0
+        for test in failed_tests:
+            try:
+                send_test_failure_notification(test, smtp_config, recipient, server)
+                sent += 1
+            except smtplib.SMTPException as e:
+                logger.exception(f"Failed to send for {test['unique_id']}: {e}")
+            except Exception as e:
+                logger.exception(f"Unexpected error for {test['unique_id']}: {e}")
+        logger.info(f"Sent {sent}/{len(failed_tests)} failure notification(s).")
