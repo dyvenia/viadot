@@ -1,25 +1,117 @@
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 import json
+import re
 import smtplib
 
 import pandas as pd
 from prefect import task
 from prefect.blocks.system import Secret
 from prefect.logging import get_run_logger
+from pydantic import BaseModel
 
 
-def get_smtp_config(sender_block: str, password_block: str) -> dict:
-    """Retrieve SMTP configuration from Prefect Secrets."""
-    return {
-        "host": "smtp.gmail.com",
-        "port": 587,
-        "sender": Secret.load(sender_block).get(),
-        "password": Secret.load(password_block).get(),
-    }
+class SmtpConfig(BaseModel):
+    host: str = "smtp.gmail.com"
+    port: int = 587
+    sender: str
+    password: str
 
 
-def convert_json_to_df(file_path: str) -> list:
+def find_schema(compiled_code: str | None) -> str | None:
+    """Extract a test schema name from a string from a pandas Series.
+
+        This function searches for a pattern in each element of the pandas Series
+        from the "compiled_code" column.It handles strings with extra characters
+        like new line characters etc.
+
+    Example:
+        Extracts "intermediate" from string:
+            select * from werfendb.intermediate.int_but0is where "partner_id is null
+    Args:
+        compiled_code (str | None):  SQL string (or None) to extract
+        the schema name from
+
+    Returns:
+        str: A string containing the extracted patterns or None if not found.
+    """
+    if compiled_code is None:
+        return None
+    pattern = r'[\"a-zA-Z0-9_\"]\.\"([^"]+)\"\.'
+    match = re.search(pattern, compiled_code)
+    return match.group(1) if match else None
+
+
+def find_table(compiled_code: str | None) -> str | None:
+    """Extract a test table name from a string from a pandas Series.
+
+    This function searches for a pattern in each element of the pandas Series
+    from the "compiled_code" column.It handles strings with extra characters
+    like new line characters etc.
+
+    Example:
+        Extracts "int_but0is" from string:
+            select * from werfendb.intermediate.int_but0is where "partner_id is null
+    Args:
+        compiled_code (str | None): SQL string (or None) to extract
+        the table name from
+
+    Returns:
+        str: A string containing the extracted patterns or None if not found.
+    """
+    if compiled_code is None:
+        return None
+    pattern = r"[\"a-zA-Z0-9_\"]\.+[\"a-zA-Z0-9_\"]+\".+\"([a-zA-Z0-9_]+?)\""
+    match = re.search(pattern, compiled_code)
+    return match.group(1) if match else None
+
+
+def find_column(unique_id: str | None) -> str | None:
+    """Extract a test column name from a string from a pandas Series.
+
+    This function searches for a pattern in each element of the pandas Series
+    from the "unique_id" column.
+
+    Example:
+        Extracts "partner_id" from string:
+            "test.lakehouse.not_null_int_but0is__partner_id_.bb2a44d06f"
+    Args:
+        series (pd.Series): unique_id to string (or None) to extract
+        the column name from
+
+    Returns:
+        str: A string containing the extracted patterns or None if not found.
+    """
+    if unique_id is None:
+        return None
+    pattern = r".*?__([a-zA-Z0-9_]+?)(?=_?\.[a-zA-Z0-9]+$|__)"
+    match = re.search(pattern, unique_id)
+    return match.group(1) if match else None
+
+
+def find_test(series: pd.Series, test_types: tuple[str, ...]) -> str | None:
+    """Extract a specific test name from a string in pandas Series.
+
+    This function searches for allowed test types in each element
+        of the pandas Series(df column).
+
+    Example:
+        Search for test in the string below will return "not_null"
+            "test.lakehouse.not_null_int_but0is__partner_id_.bb2a44d06f"
+    Args:
+        series (pd.Series): The pandas Series to search within.
+        test_types: (tuple[str, ...]): A list of test types that can be discovered.
+
+    Returns:
+        str | None: The matched test type, or None if no match is found.
+    """
+    for test_type in test_types:
+        if test_type in series:
+            return test_type
+    return None
+
+
+def convert_json_to_df(file_path: str, test_types: tuple[str, ...]) -> list:
     """Convert DBT test results from JSON to a list of failed tests."""
     with open(file_path) as file:
         data = json.load(file)
@@ -38,60 +130,94 @@ def convert_json_to_df(file_path: str) -> list:
     if not contains_test.all():
         df = df[contains_test].copy()
 
-    df_failed = df[df["status"].isin(["error", "fail"])]
+    df_failed = df[df["status"].isin(["error", "fail"])].copy()
+
+    df_failed["schema"] = df_failed["compiled_code"].apply(find_schema)
+    df_failed["table"] = df_failed["compiled_code"].apply(find_table)
+    df_failed["column"] = df_failed["unique_id"].apply(find_column)
+    df_failed["test_type"] = df_failed["unique_id"].apply(
+        lambda x: find_test(x, test_types)
+    )
 
     if df_failed.empty:
         return []
 
-    return df_failed[["unique_id", "status", "message", "failures"]].to_dict(
-        orient="records"
-    )
+    return df_failed[
+        [
+            "unique_id",
+            "schema",
+            "status",
+            "message",
+            "failures",
+            "table",
+            "column",
+            "test_type",
+        ]
+    ].to_dict(orient="records")
 
 
 def send_test_failure_notification(
-    test: dict, smtp_config: dict, recipient: str, server: smtplib.SMTP
+    test: dict, sender: str, recipient: str, server: smtplib.SMTP
 ) -> None:
     """Send an email notification for a failed DBT test."""
-    subject = f"DBT Test Failed: {test['unique_id']}"
+    schema_name = test["schema"]
+    column_name = test["column"] or "column not identified"
+    subject = f"DBT Test Alert: {schema_name} - {column_name}"
     body = f"""
     DBT Test Failure Notification
 
     Test:     {test["unique_id"]}
+    Schema:   {schema_name}
+    Table:    {(test["table"] or "N/A")}
+    Column:   {column_name}
+    Test Type: {test["test_type"] or "N/A"}
     Status:   {test["status"]}
     Message:  {test["message"]}
     Failures: {test["failures"]}
     """
 
     msg = MIMEMultipart()
-    msg["From"] = smtp_config["sender"]
+    msg["From"] = sender
     msg["To"] = recipient
     msg["Subject"] = subject
     msg.attach(MIMEText(body, "plain"))
-    server.sendmail(smtp_config["sender"], recipient, msg.as_string())
+    server.sendmail(sender, recipient, msg.as_string())
 
 
 @task(name="dbt-test-failure-notifier", cache_policy=None)
 def dbt_test_failure_notifier(
     file_path: str,
     recipient: str,
-    smtp_sender_block: str = "smtp-sender",
-    smtp_password_block: str = "smtp-password",  # noqa: S107
+    smtp_config: SmtpConfig | None = None,
+    test_types: tuple[str, ...] = (
+        "not_null",
+        "unique",
+        "accepted_values",
+        "relationships",
+    ),
 ) -> None:
     """Prefect task to send email notifications for failed DBT tests."""
     logger = get_run_logger()
-    failed_tests = convert_json_to_df(file_path)
+    failed_tests = convert_json_to_df(file_path, test_types)
     if not failed_tests:
         logger.info("No failed tests — skipping notifications.")
         return
 
-    smtp_config = get_smtp_config(smtp_sender_block, smtp_password_block)
-    with smtplib.SMTP(smtp_config["host"], smtp_config["port"]) as server:
+    if smtp_config is None:
+        smtp_config = SmtpConfig(
+            sender=Secret.load("smtp-sender").get(),
+            password=Secret.load("smtp-password").get(),
+        )
+
+    with smtplib.SMTP(smtp_config.host, smtp_config.port) as server:
         server.starttls()
-        server.login(smtp_config["sender"], smtp_config["password"])
+        server.login(smtp_config.sender, smtp_config.password)
         sent = 0
         for test in failed_tests:
             try:
-                send_test_failure_notification(test, smtp_config, recipient, server)
+                send_test_failure_notification(
+                    test, smtp_config.sender, recipient, server
+                )
                 sent += 1
             except smtplib.SMTPException as e:
                 logger.exception(f"Failed to send for {test['unique_id']}: {e}")
