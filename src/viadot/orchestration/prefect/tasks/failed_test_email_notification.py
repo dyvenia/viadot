@@ -40,7 +40,7 @@ def convert_json_to_df(file_path):
 
     if df_failed.empty:
         return []
-    
+
     return df_failed[["unique_id", "status", "message", "failures"]].to_dict(orient="records")
 
 
@@ -49,14 +49,14 @@ def send_test_failure_notification(test: dict, smtp_config: dict, recipient: str
     subject = f"DBT Test Failed: {test['unique_id']}"
     body = f"""
     DBT Test Failure Notification
-    
+
     Test:     {test['unique_id']}
     Status:   {test['status']}
     Message:  {test['message']}
     Failures: {test['failures']}
     """
 
-    msg = MIMEMultipart()
+    msg = MIMEMultipart()/
     msg["From"] = smtp_config["sender"]
     msg["To"] = recipient
     msg["Subject"] = subject
@@ -69,7 +69,7 @@ def send_test_failure_notification(test: dict, smtp_config: dict, recipient: str
 
 
 @task(name="dbt-test-failure-notifier", cache_policy=None)
-def dbt_test_failure_notifier(file_path: str, 
+def dbt_test_failure_notifier(file_path: str,
     recipient: str, 
     smtp_sender_block: str = "smtp-sender",
     smtp_password_block: str = "smtp-password") -> None:
@@ -81,7 +81,7 @@ def dbt_test_failure_notifier(file_path: str,
     if not failed_tests:
         logger.info("No failed tests — skipping notifications.")
         return
-    
+
     smtp_config = get_smtp_config(smtp_sender_block, smtp_password_block)
 
     for test in failed_tests:
