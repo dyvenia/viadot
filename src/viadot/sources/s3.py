@@ -237,8 +237,15 @@ class S3(Source):
                 path=path,
                 **kwargs,
             )
+        elif extension == ".json":
+            wr.s3.to_json(
+                boto3_session=self.session,
+                df=df,
+                path=path,
+                **kwargs,
+            )
         else:
-            msg = "Only CSV and Parquet formats are supported."
+            msg = "Only CSV, Parquet, and JSON formats are supported."
             raise ValueError(msg)
 
     def to_df(
@@ -247,7 +254,7 @@ class S3(Source):
         chunk_size: int | None = None,
         **kwargs,
     ) -> pd.DataFrame | Iterable[pd.DataFrame]:
-        """Read a CSV or Parquet file into a pandas `DataFrame`.
+        """Read a CSV, Parquet, or JSON file into a pandas `DataFrame`.
 
         Args:
             paths (list[str]): A list of paths to Amazon S3 files. All files under the
@@ -292,8 +299,12 @@ class S3(Source):
             df = wr.s3.read_parquet(
                 boto3_session=self.session, path=paths, chunked=chunk_size, **kwargs
             )
+        elif paths[0].endswith(".json"):
+            df = wr.s3.read_json(
+                boto3_session=self.session, path=paths, chunksize=chunk_size, **kwargs
+            )
         else:
-            msg = "Only CSV and Parquet formats are supported."
+            msg = "Only CSV, Parquet, and JSON formats are supported."
             raise ValueError(msg)
         return df
 
