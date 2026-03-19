@@ -503,6 +503,7 @@ class Hubspot(Source):
     def _expand_jsonlike_values(
         rows: list[dict[str, Any]],
         max_depth: int = 3,
+        expand_first_item_cols: list[str] | None = None,
     ) -> list[dict[str, Any]]:
         """Expand JSON-like values into new columns recursively.
 
@@ -510,6 +511,11 @@ class Hubspot(Source):
         JSON or dictionaries) and recursively flatten them into new top-level columns.
         Lists are serialized to a JSON string instead of being indexed into separate
         columns — this prevents schema explosion when list lengths vary across rows.
+
+        For selected columns passed via `expand_first_item_cols`, only the first
+        element of the list is expanded into top-level columns. This is a safe
+        middle ground: you get structured fields without multiplying columns when
+        list lengths vary across rows.
 
         The naming convention for expanded dicts is: <original_column>_json_<field>
         (or <original_column>_<field> if it was already expanded).
@@ -521,12 +527,18 @@ class Hubspot(Source):
             rows (list[dict[str, Any]]): The list of row dictionaries to expand.
             max_depth (int): Maximum recursion depth for nested dict expansion.
                 Defaults to 3.
+            expand_first_item_cols (list[str] | None): Column names whose list value
+                should be partially expanded — only the first element is flattened
+                into top-level columns. Remaining elements are discarded.
+                Defaults to None (all lists are serialized to JSON string).
 
         Returns:
             list[dict[str, Any]]: The rows with flattened JSON structures.
         """
         if not isinstance(rows, list):
             return rows
+
+        expand_first_item_cols = set(expand_first_item_cols or [])
 
         for row in rows:
             if not isinstance(row, dict):
@@ -564,10 +576,21 @@ class Hubspot(Source):
                         del row[col]
                         needs_expansion = True
 
-                    # Serialize lists to JSON string — never index into col_0_key, col_1_key...
-                    # because variable-length lists cause a different schema on every load.
                     elif isinstance(value, list) and value:
-                        row[col] = json.dumps(value)
+                        if col in expand_first_item_cols and isinstance(value[0], dict):
+                            # Expand only the first element — stable schema regardless
+                            # of how many items are in the list for a given contact.
+                            first = value[0]
+                            for k, v in first.items():
+                                new_key = f"{col}_json_{k}"
+                                row[new_key] = v
+                            del row[col]
+                            needs_expansion = True
+                        else:
+                            # Serialize lists to JSON string — never index into
+                            # col_0_key, col_1_key... because variable-length lists
+                            # cause a different schema on every load.
+                            row[col] = json.dumps(value)
 
         return rows
 
@@ -654,7 +677,10 @@ class Hubspot(Source):
             )
 
         # Expand any JSON-like values in columns into separate top-level keys
-        return self._expand_jsonlike_values(data)
+        return self._expand_jsonlike_values(
+            data,
+            expand_first_item_cols=["form-submissions", "identity_profiles"],
+        )
 
     @add_viadot_metadata_columns
     def to_df(
