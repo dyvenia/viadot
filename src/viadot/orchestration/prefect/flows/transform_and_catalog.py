@@ -264,6 +264,15 @@ def transform_and_catalog(  # noqa: PLR0913, PLR0915
             config_key=run_results_storage_config_key,
             credentials_secret=run_results_storage_credentials_secret,
         )
+        manifest_storage_path = (
+            run_results_storage_path.rsplit("/", 1)[0] + "/manifest.json"
+        )
+        s3_upload_file(
+            from_path=str(dbt_target_dir_path / "manifest.json"),
+            to_path=manifest_storage_path,
+            config_key=run_results_storage_config_key,
+            credentials_secret=run_results_storage_credentials_secret,
+        )
     if schema_owner_email:
         dbt_test_failure_notifier(
             file_path=run_results_file_path,
