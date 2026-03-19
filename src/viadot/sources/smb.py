@@ -155,7 +155,7 @@ class SMB(Source):
             zip_inner_file_regexes=zip_inner_file_regexes,
         )
 
-    def _scan_directories(
+    def _scan_directories(  # noqa: C901
         self,
         paths: list[str],
         filename_regex: str | list[str] | None = None,
@@ -208,13 +208,27 @@ class SMB(Source):
 
         for path in paths:
             entries = self._get_directory_entries(path)
-            for entry in entries:
-                # Skip temp files
-                if entry.name.startswith("~$"):
-                    problematic_entries.append(entry.name)
-                    continue
+            iterator = iter(entries)
 
+            while True:
                 try:
+                    entry = next(iterator)
+                except StopIteration:
+                    break
+                except smbprotocol.exceptions.SMBOSError as e:
+                    self.logger.warning(f"Skipping problematic entry in '{path}': {e}")
+                    problematic_entries.append(str(e))
+                    continue
+                except Exception:
+                    self.logger.exception(f"Error iterating entries in {path}.")
+                    raise
+
+                # Normal processing outside the iteration try/except
+                try:
+                    if entry.name.startswith("~$"):
+                        problematic_entries.append(entry.name)
+                        continue
+
                     entry_mod_date_parsed = pendulum.from_timestamp(
                         entry.stat().st_mtime
                     ).date()
@@ -237,7 +251,6 @@ class SMB(Source):
                         date_match = self._is_date_match(
                             entry_mod_date_parsed, date_filter_parsed
                         )
-
                         if date_match:
                             found_files.update(
                                 self._scan_directories(
@@ -247,13 +260,18 @@ class SMB(Source):
                                     date_filter_parsed=date_filter_parsed,
                                     prefix_levels_to_add=prefix_levels_to_add,
                                     zip_inner_file_regexes=zip_inner_file_regexes,
-                                )[0]  # Only the matched files dict is used
+                                )[0]
                             )
+
                 except smbprotocol.exceptions.SMBOSError as e:
-                    self.logger.warning(f"Entry not found: {e}")
+                    self.logger.warning(
+                        f"Skipping problematic entry '{entry.name}': {e}"
+                    )
                     problematic_entries.append(entry.name)
                 except Exception:
-                    self.logger.exception(f"Error scanning or downloading from {path}.")
+                    self.logger.exception(
+                        f"Unexpected error processing entry '{entry.name}' in {path}."
+                    )
                     raise
 
         return found_files, problematic_entries
