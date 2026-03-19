@@ -1,6 +1,7 @@
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 import json
+import logging
 from pathlib import Path
 import re
 import smtplib
@@ -114,9 +115,15 @@ def find_test(value: str | None, test_types: tuple[str, ...]) -> str | None:
     return None
 
 
-def convert_json_to_df(file_path: str, test_types: tuple[str, ...]) -> list:
+def convert_json_to_df(
+    file_path: str, test_types: tuple[str, ...], logger: logging.Logger
+) -> list:
     """Convert DBT test results from JSON to a list of failed tests."""
-    with Path(file_path).open() as file:
+    path = Path(file_path)
+    if not path.exists():
+        logger.warning(f"File {file_path} does not exist.")
+        return []
+    with path.open() as file:
         data = json.load(file)
 
     df = pd.json_normalize(
@@ -201,7 +208,7 @@ def dbt_test_failure_notifier(
 ) -> None:
     """Prefect task to send email notifications for failed DBT tests."""
     logger = get_run_logger()
-    failed_tests = convert_json_to_df(file_path, test_types)
+    failed_tests = convert_json_to_df(file_path, test_types, logger)
     if not failed_tests:
         logger.info("No failed tests — skipping notifications.")
         return
