@@ -5,6 +5,7 @@ from typing import Any
 from prefect import flow
 
 from viadot.orchestration.prefect.tasks import df_to_adls, hubspot_to_df
+from viadot.orchestration.prefect.utils import with_flow_timeout_param
 
 
 @flow(
@@ -13,6 +14,7 @@ from viadot.orchestration.prefect.tasks import df_to_adls, hubspot_to_df
     retries=1,
     retry_delay_seconds=60,
 )
+@with_flow_timeout_param()
 def hubspot_to_adls(
     config_key: str | None = None,
     azure_key_vault_secret: str | None = None,

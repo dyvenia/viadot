@@ -15,6 +15,7 @@ from viadot.orchestration.prefect.tasks.task_utils import (
     df_to_csv,
     get_sql_dtypes_from_df,
 )
+from viadot.orchestration.prefect.utils import with_flow_timeout_param
 
 
 @task(timeout_seconds=60 * 60, cache_policy=None)
@@ -35,8 +36,8 @@ def cleanup_csv_task(path: str) -> None:
     description="Extract data from DuckDB and save it in the SQLServer",
     retries=1,
     retry_delay_seconds=60,
-    timeout_seconds=2 * 60 * 60,
 )
+@with_flow_timeout_param()
 def duckdb_to_sql_server(  # noqa: PLR0913
     query: str,
     local_path: str,

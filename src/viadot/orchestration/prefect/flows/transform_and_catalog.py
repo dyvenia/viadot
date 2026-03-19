@@ -17,7 +17,7 @@ from viadot.orchestration.prefect.tasks import (
     luma_ingest_task,
     s3_upload_file,
 )
-from viadot.orchestration.prefect.utils import get_credentials
+from viadot.orchestration.prefect.utils import get_credentials, with_flow_timeout_param
 
 
 @task(cache_policy=None)
@@ -33,8 +33,8 @@ def remove_dbt_repo_dir(dbt_repo_dir_name: str) -> None:
 @flow(
     name="Transform and Catalog",
     description="Build specified dbt model(s) and upload generated metadata to Luma.",
-    timeout_seconds=2 * 60 * 60,
 )
+@with_flow_timeout_param()
 def transform_and_catalog(  # noqa: PLR0913, PLR0915
     dbt_repo_url: str | None = None,
     dbt_repo_url_secret: str | None = None,
@@ -52,6 +52,7 @@ def transform_and_catalog(  # noqa: PLR0913, PLR0915
     run_results_storage_credentials_secret: str | None = None,
     fail_flow_only_on_build_failure: bool = False,
     schema_owner_email: list[str] | None = None,
+    gh_action_actor: str | None = None,
 ) -> list[str]:
     """Build specified dbt model(s) and upload the generated metadata to Luma.
 
@@ -110,6 +111,8 @@ def transform_and_catalog(  # noqa: PLR0913, PLR0915
         schema_owner_email (list[str] | None): Email addresses to send notifications
             about failed dbt tests to. Can contain one or multiple recipients.
             If None, no notifications will be sent. Defaults to None.
+        gh_action_actor (str, optional): GitHub Actions actor that triggered the
+            workflow. Defaults to None.
 
     Returns:
         list[str]: Lines from stdout of the `upload_metadata` task as a list.
@@ -148,6 +151,8 @@ def transform_and_catalog(  # noqa: PLR0913, PLR0915
             `dbt_select={"build": "models.intermediate"}`
     """
     logger = get_run_logger()
+    if gh_action_actor:
+        logger.info(f"Triggered by GitHub Actions actor: {gh_action_actor}")
 
     # Clone the dbt project.
     dbt_repo_url = dbt_repo_url or get_credentials(dbt_repo_url_secret)

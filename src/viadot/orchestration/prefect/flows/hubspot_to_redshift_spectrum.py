@@ -5,6 +5,7 @@ from typing import Any, Literal
 from prefect import flow
 
 from viadot.orchestration.prefect.tasks import df_to_redshift_spectrum, hubspot_to_df
+from viadot.orchestration.prefect.utils import with_flow_timeout_param
 
 
 @flow(
@@ -13,12 +14,14 @@ from viadot.orchestration.prefect.tasks import df_to_redshift_spectrum, hubspot_
     retries=1,
     retry_delay_seconds=60,
 )
+@with_flow_timeout_param()
 def hubspot_to_redshift_spectrum(  # noqa: PLR0913
     to_path: str,
     schema_name: str,
     table: str,
     hubspot_url: str | None = None,
     api_method: str | None = None,
+    endpoint: str | None = None,
     contact_type: str = "influencedContacts",
     campaign_ids: list[str] | None = None,
     filters: list[dict[str, Any]] | None = None,
@@ -69,7 +72,7 @@ def hubspot_to_redshift_spectrum(  # noqa: PLR0913
 
     """
     df = hubspot_to_df(
-        endpoint=hubspot_url,
+        endpoint=endpoint or hubspot_url,
         api_method=api_method,
         contact_type=contact_type,
         campaign_ids=campaign_ids,

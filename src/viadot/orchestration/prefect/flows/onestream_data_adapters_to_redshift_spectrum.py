@@ -10,6 +10,7 @@ from viadot.orchestration.prefect.tasks import (
     df_to_redshift_spectrum,
     onestream_to_df,
 )
+from viadot.orchestration.prefect.utils import with_flow_timeout_param
 
 
 @flow(
@@ -18,6 +19,7 @@ from viadot.orchestration.prefect.tasks import (
     retries=1,
     retry_delay_seconds=60,
 )
+@with_flow_timeout_param()
 def onestream_data_adapters_to_redshift_spectrum(  # noqa: PLR0913
     base_url: str,
     application: str,

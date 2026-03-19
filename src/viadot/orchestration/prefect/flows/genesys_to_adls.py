@@ -5,6 +5,7 @@ from typing import Any
 from prefect import flow
 
 from viadot.orchestration.prefect.tasks import df_to_adls, genesys_to_df
+from viadot.orchestration.prefect.utils import with_flow_timeout_param
 
 
 @flow(
@@ -15,6 +16,7 @@ from viadot.orchestration.prefect.tasks import df_to_adls, genesys_to_df
     retry_delay_seconds=60,
     log_prints=True,
 )
+@with_flow_timeout_param()
 def genesys_to_adls(  # noqa: PLR0913
     config_key: str | None = None,
     azure_key_vault_secret: str | None = None,

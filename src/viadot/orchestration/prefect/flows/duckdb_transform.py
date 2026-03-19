@@ -5,6 +5,7 @@ from typing import Any
 from prefect import flow
 
 from viadot.orchestration.prefect.tasks import duckdb_query
+from viadot.orchestration.prefect.utils import with_flow_timeout_param
 
 
 @flow(
@@ -12,8 +13,8 @@ from viadot.orchestration.prefect.tasks import duckdb_query
     description="Transform data in the DuckDB.",
     retries=1,
     retry_delay_seconds=60,
-    timeout_seconds=2 * 60 * 60,
 )
+@with_flow_timeout_param()
 def duckdb_transform(
     query: str,
     duckdb_credentials_secret: str | None = None,
