@@ -240,6 +240,7 @@ def transform_and_catalog(  # noqa: PLR0913, PLR0915
     upload_metadata.result()
 
     file_name = "run_results.json"
+    run_results_file_path = str(dbt_target_dir_path / file_name)  # type: ignore
     if run_results_storage_path:
         # Set the file path to include date info.
         now = datetime.now(timezone.utc)
@@ -258,14 +259,14 @@ def transform_and_catalog(  # noqa: PLR0913, PLR0915
         # Upload the file to s3.
 
         s3_upload_file(
-            from_path=str(dbt_target_dir_path / file_name),
+            from_path=run_results_file_path,
             to_path=run_results_storage_path,
             config_key=run_results_storage_config_key,
             credentials_secret=run_results_storage_credentials_secret,
         )
     if schema_owner_email:
         dbt_test_failure_notifier(
-            file_path=file_name,
+            file_path=run_results_file_path,
             recipients=schema_owner_email,
         )
 
