@@ -1,6 +1,7 @@
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 import json
+from pathlib import Path
 import re
 import smtplib
 
@@ -115,7 +116,7 @@ def find_test(value: str | None, test_types: tuple[str, ...]) -> str | None:
 
 def convert_json_to_df(file_path: str, test_types: tuple[str, ...]) -> list:
     """Convert DBT test results from JSON to a list of failed tests."""
-    with open(file_path) as file:
+    with Path(file_path).open() as file:
         data = json.load(file)
 
     df = pd.json_normalize(
