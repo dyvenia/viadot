@@ -498,43 +498,45 @@ class Hubspot(Source):
             rows.append(row)
 
         return rows
-    
+
     @staticmethod
-def _extract_identity_fields(row: dict[str, Any], col: str = "identity_profiles") -> None:
-    """Extract email and LEAD_GUID from identity_profiles into flat columns.
+    def _extract_identity_fields(
+        row: dict[str, Any], col: str = "identity_profiles"
+    ) -> None:
+        """Extract email and LEAD_GUID from identity_profiles into flat columns.
 
-    Mutates the row in place — adds:
-        identity_email, identity_lead_guid, identity_saved_at
+        Mutates the row in place — adds:
+            identity_email, identity_lead_guid, identity_saved_at
 
-    Args:
-        row (dict[str, Any]): Single row dict to mutate.
-        col (str): Column name holding the identity_profiles list.
-    """
-    raw = row.get(col)
-    if not raw:
-        return
-
-    # Parse if still a string
-    if isinstance(raw, str):
-        try:
-            raw = json.loads(raw)
-        except json.JSONDecodeError:
+        Args:
+            row (dict[str, Any]): Single row dict to mutate.
+            col (str): Column name holding the identity_profiles list.
+        """
+        raw = row.get(col)
+        if not raw:
             return
 
-    if not isinstance(raw, list) or not raw:
-        return
+        # Parse if still a string
+        if isinstance(raw, str):
+            try:
+                raw = json.loads(raw)
+            except json.JSONDecodeError:
+                return
 
-    profile = raw[0]
-    row["identity_saved_at"] = profile.get("saved-at-timestamp")
+        if not isinstance(raw, list) or not raw:
+            return
 
-    for identity in profile.get("identities", []):
-        id_type = identity.get("type")
-        if id_type == "EMAIL":
-            row["identity_email"] = identity.get("value")
-        elif id_type == "LEAD_GUID":
-            row["identity_lead_guid"] = identity.get("value")
+        profile = raw[0]
+        row["identity_saved_at"] = profile.get("saved-at-timestamp")
 
-    del row[col]
+        for identity in profile.get("identities", []):
+            id_type = identity.get("type")
+            if id_type == "EMAIL":
+                row["identity_email"] = identity.get("value")
+            elif id_type == "LEAD_GUID":
+                row["identity_lead_guid"] = identity.get("value")
+
+        del row[col]
 
     @staticmethod
     def _expand_jsonlike_values(
