@@ -498,6 +498,43 @@ class Hubspot(Source):
             rows.append(row)
 
         return rows
+    
+    @staticmethod
+def _extract_identity_fields(row: dict[str, Any], col: str = "identity_profiles") -> None:
+    """Extract email and LEAD_GUID from identity_profiles into flat columns.
+
+    Mutates the row in place — adds:
+        identity_email, identity_lead_guid, identity_saved_at
+
+    Args:
+        row (dict[str, Any]): Single row dict to mutate.
+        col (str): Column name holding the identity_profiles list.
+    """
+    raw = row.get(col)
+    if not raw:
+        return
+
+    # Parse if still a string
+    if isinstance(raw, str):
+        try:
+            raw = json.loads(raw)
+        except json.JSONDecodeError:
+            return
+
+    if not isinstance(raw, list) or not raw:
+        return
+
+    profile = raw[0]
+    row["identity_saved_at"] = profile.get("saved-at-timestamp")
+
+    for identity in profile.get("identities", []):
+        id_type = identity.get("type")
+        if id_type == "EMAIL":
+            row["identity_email"] = identity.get("value")
+        elif id_type == "LEAD_GUID":
+            row["identity_lead_guid"] = identity.get("value")
+
+    del row[col]
 
     @staticmethod
     def _expand_jsonlike_values(
@@ -676,11 +713,26 @@ class Hubspot(Source):
                 nrows=nrows,
             )
 
-        # Expand any JSON-like values in columns into separate top-level keys
-        return self._expand_jsonlike_values(
+        # --- Post-processing: flatten nested structures into stable top-level columns ---
+
+        # Expand dicts and serialize lists to JSON strings.
+        # form-submissions is passed to expand_first_item_cols so only its first
+        # element is flattened — avoids col_0_key / col_1_key schema explosion
+        # when contacts have different numbers of form submissions across loads.
+        data = self._expand_jsonlike_values(
             data,
-            expand_first_item_cols=["form-submissions", "identity_profiles"],
+            expand_first_item_cols=["form-submissions"],
         )
+
+        # identity_profiles requires a dedicated extractor because it has a
+        # two-level nested structure: a list of profiles, each containing a list
+        # of typed identities (EMAIL, LEAD_GUID). _expand_jsonlike_values cannot
+        # safely handle this without producing indexed columns — instead we
+        # extract the primary email and LEAD_GUID into named flat columns.
+        for row in data:
+            self._extract_identity_fields(row, col="identity_profiles")
+
+        return data
 
     @add_viadot_metadata_columns
     def to_df(
