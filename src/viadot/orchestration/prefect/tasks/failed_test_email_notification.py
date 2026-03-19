@@ -116,7 +116,7 @@ def find_test(value: str | None, test_types: tuple[str, ...]) -> str | None:
     return None
 
 
-def convert_json_to_df(file_path: str, test_types: tuple[str, ...]) -> list:
+def convert_json(file_path: str, test_types: tuple[str, ...]) -> list:
     """Convert DBT test results from JSON to a list of failed tests."""
     with Path(file_path).open() as file:
         data = json.load(file)
@@ -126,9 +126,10 @@ def convert_json_to_df(file_path: str, test_types: tuple[str, ...]) -> list:
         meta=[["metadata", "generated_at"]],
         record_path="results",
     )
+    if df.empty:
+        return []
     test_identifier = "^test\\."
     contains_test = df["unique_id"].str.match(test_identifier)
-
     if not contains_test.any():
         return []
 
@@ -136,7 +137,6 @@ def convert_json_to_df(file_path: str, test_types: tuple[str, ...]) -> list:
         df = df[contains_test].copy()
 
     df_failed = df[df["status"].isin(["error", "fail"])].copy()
-
     df_failed["schema"] = df_failed["compiled_code"].apply(find_schema)
     df_failed["table"] = df_failed["compiled_code"].apply(find_table)
     df_failed["column"] = df_failed["unique_id"].apply(find_column)
@@ -211,7 +211,7 @@ def dbt_test_failure_notifier(
         logger.warning(f"File {file_path} does not exist.")
         return
 
-    failed_tests = convert_json_to_df(file_path, test_types)  # type: ignore
+    failed_tests = convert_json(file_path, test_types)  # type: ignore
     if not failed_tests:
         logger.info("No failed tests — skipping notifications.")
         return
