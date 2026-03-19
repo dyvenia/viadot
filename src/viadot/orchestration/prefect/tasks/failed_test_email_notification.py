@@ -203,9 +203,9 @@ def dbt_test_failure_notifier(
     """Prefect task to send email notifications for failed DBT tests."""
     logger = get_run_logger()
     parent = Path(file_path).parent
-    logger.info(f"Files in {parent}:")
+    logger.warning(f"Files in {parent}:")
     for f in parent.iterdir():
-        logger.info(f"  {f.name}")
+        logger.warning(f"  {f.name}")
 
     if not Path(file_path).exists():
         logger.warning(f"File {file_path} does not exist.")
