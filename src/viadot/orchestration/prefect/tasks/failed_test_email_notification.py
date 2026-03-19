@@ -221,8 +221,8 @@ def dbt_test_failure_notifier(
                     test, smtp_config.sender, recipients, server
                 )
                 sent += 1
-            except smtplib.SMTPException as e:
-                logger.exception(f"Failed to send for {test['unique_id']}: {e}")
-            except Exception as e:
-                logger.exception(f"Unexpected error for {test['unique_id']}: {e}")
+            except smtplib.SMTPException:
+                logger.exception(f"Failed to send for {test['unique_id']}")
+            except Exception:
+                logger.exception(f"Unexpected error for {test['unique_id']}")
         logger.info(f"Sent {sent}/{len(failed_tests)} failure notification(s).")
