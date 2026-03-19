@@ -500,23 +500,27 @@ class Hubspot(Source):
         return rows
 
     @staticmethod
-    def _expand_jsonlike_values(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:  # noqa: C901, PLR0912
+    def _expand_jsonlike_values(
+        rows: list[dict[str, Any]],
+        max_depth: int = 3,
+    ) -> list[dict[str, Any]]:
         """Expand JSON-like values into new columns recursively.
 
         For every row, detect columns that contain JSON-like objects (stringified
-        JSON, dictionaries, or lists of dictionaries) and recursively flatten them
-        into new top-level columns.
+        JSON or dictionaries) and recursively flatten them into new top-level columns.
+        Lists are serialized to a JSON string instead of being indexed into separate
+        columns — this prevents schema explosion when list lengths vary across rows.
 
         The naming convention for expanded dicts is: <original_column>_json_<field>
         (or <original_column>_<field> if it was already expanded).
-        Lists of dictionaries are expanded with an index to prevent data loss:
-        <original_column>_0_<field>, <original_column>_1_<field>.
 
         IMPORTANT: The original nested columns are deleted from the row after
         successful expansion to prevent schema issues downstream.
 
         Args:
             rows (list[dict[str, Any]]): The list of row dictionaries to expand.
+            max_depth (int): Maximum recursion depth for nested dict expansion.
+                Defaults to 3.
 
         Returns:
             list[dict[str, Any]]: The rows with flattened JSON structures.
@@ -529,11 +533,14 @@ class Hubspot(Source):
                 continue
 
             needs_expansion = True
-            while needs_expansion:
+            depth = 0
+            while needs_expansion and depth < max_depth:
                 needs_expansion = False
+                depth += 1
                 for col in list(row.keys()):
                     value = row.get(col)
 
+                    # Attempt to parse stringified JSON/Python literals
                     if isinstance(value, str):
                         val_str = value.strip()
                         if val_str.startswith(("{", "[")):
@@ -547,6 +554,7 @@ class Hubspot(Source):
                                 except (ValueError, SyntaxError):
                                     pass
 
+                    # Flatten dicts into top-level columns
                     if isinstance(value, dict):
                         for k, v in value.items():
                             new_key = (
@@ -556,14 +564,10 @@ class Hubspot(Source):
                         del row[col]
                         needs_expansion = True
 
-                    elif isinstance(value, list) and len(value) > 0:
-                        if all(isinstance(x, dict) for x in value):
-                            for i, item in enumerate(value):
-                                for k, v in item.items():
-                                    new_key = f"{col}_{i}_{k}"
-                                    row[new_key] = v
-                            del row[col]
-                            needs_expansion = True
+                    # Serialize lists to JSON string — never index into col_0_key, col_1_key...
+                    # because variable-length lists cause a different schema on every load.
+                    elif isinstance(value, list) and value:
+                        row[col] = json.dumps(value)
 
         return rows
 
@@ -670,7 +674,7 @@ class Hubspot(Source):
         """
         super().to_df(if_empty=if_empty)
 
-        data_frame = pd.json_normalize(data)
+        data_frame = pd.DataFrame(data)
 
         # change all object columns to string
         data_frame = cast_df_cols(data_frame, types_to_convert=["object"])
