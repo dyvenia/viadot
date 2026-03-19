@@ -1,3 +1,5 @@
+"""Module for sending email notifications about failed dbt tests."""
+
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 import json
@@ -185,7 +187,6 @@ def send_test_failure_notification(
     Message:  {test["message"]}
     Failures: {test["failures"] or "N/A"}
     """
-
     msg = MIMEMultipart()
     msg["From"] = sender
     msg["To"] = ", ".join(recipients)
