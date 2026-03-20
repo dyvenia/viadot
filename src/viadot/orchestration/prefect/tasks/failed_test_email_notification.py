@@ -212,37 +212,87 @@ def parse_subject_from_message(message: str) -> str:
     return "DBT Test Alert"
 
 
+def dataframe_to_email_html(df: pd.DataFrame) -> str:
+    """Convert DataFrame to a styled single-row HTML table for email."""
+    styles = {
+        "table": "border-collapse: collapse; font-family: Arial, sans-serif; font-size: 13px; width: 100%; border: 1px solid #000000;",
+        "th": "background-color: #2c3e50; color: #ffffff; padding: 8px 12px; text-align: left; white-space: nowrap; border: 1px solid #000000;",
+        "td": "padding: 8px 12px; border: 1px solid #000000; vertical-align: top;",
+        "tr_even": "background-color: #f8f9fa;",
+    }
+
+    headers = "".join(f'<th style="{styles["th"]}">{col}</th>' for col in df.columns)
+
+    rows = ""
+    for i, (_, row) in enumerate(df.iterrows()):
+        bg = f' style="{styles["tr_even"]}"' if i % 2 == 0 else ""
+        cells = "".join(
+            f'<td style="{styles["td"]}">{val if pd.notna(val) else "N/A"}</td>'
+            for val in row
+        )
+        rows += f"<tr{bg}>{cells}</tr>"
+
+    return f'<table style="{styles["table"]}"><thead><tr>{headers}</tr></thead><tbody>{rows}</tbody></table>'
+
+
 def send_test_failure_notification(
-    test: dict, sender: str, server: smtplib.SMTP, default_recipients: list[str]
+    failed_test: pd.DataFrame,
+    sender: str,
+    server: smtplib.SMTP,
+    default_recipients: list[str],
 ) -> None:
     """Send an email notification for a failed DBT test."""
-    schema_name = test["schema"] if not pd.isna(test["schema"]) else "N/A"
-    model_name = test["model"] if not pd.isna(test["model"]) else "N/A"
-    column_name = test["column"] if not pd.isna(test["column"]) else "N/A"
-    recipients = test.get("owners") or default_recipients or []
+    columns_to_skip = {"owners"}
+    schema_name = (
+        failed_test["schema"].iloc[0]
+        if not pd.isna(failed_test["schema"].iloc[0])
+        else "N/A"
+    )
+    model_name = (
+        failed_test["model"].iloc[0]
+        if not pd.isna(failed_test["model"].iloc[0])
+        else "N/A"
+    )
+    column_name = (
+        failed_test["column"].iloc[0]
+        if not pd.isna(failed_test["column"].iloc[0])
+        else "N/A"
+    )
+    recipients = failed_test["owners"].iloc[0] or default_recipients or []
     recipients_str = ", ".join(recipients)
-    if any(v == "N/A" for v in [schema_name, column_name, model_name]):
-        subject = parse_subject_from_message(test["message"])
-    else:
-        subject = f"DBT Test Alert: {schema_name} - {column_name} - {model_name}"
-    body = f"""
-    DBT Test Failure Notification
 
-    Test:     {test["unique_id"]}
-    Schema:   {schema_name}
-    Model:    {model_name}
-    Column:   {column_name}
-    Test Type: {test["test_type"]}
-    Status:   {test["status"]}
-    Message:  {test["message"]}
-    Failures: {test["failures"]}
-    email_to: {recipients_str}
+    if any(v == "N/A" for v in [schema_name, column_name, model_name]):
+        subject = parse_subject_from_message(failed_test["message"].iloc[0])
+        skip_columns = set()
+    else:
+        subject = f"DBT Test Alert: {schema_name} - {model_name}"
+        skip_columns = {"schema", "model"}
+
+    table_html = dataframe_to_email_html(
+        failed_test.drop(
+            columns=[
+                col
+                for col in skip_columns | columns_to_skip
+                if col in failed_test.columns
+            ]
+        )
+    )
+
+    body_html = f"""
+    <html>
+    <body>
+        <h2>DBT Test Failure Notification</h2>
+        <p><strong>Recipients:</strong> {recipients_str}</p>
+        {table_html}
+    </body>
+    </html>
     """
-    msg = MIMEMultipart()
+
+    msg = MIMEMultipart("mixed")
     msg["From"] = sender
     msg["To"] = ", ".join(default_recipients)
     msg["Subject"] = subject
-    msg.attach(MIMEText(body, "plain"))
+    msg.attach(MIMEText(body_html, "html"))
     server.sendmail(sender, default_recipients, msg.as_string())
 
 
@@ -278,6 +328,9 @@ def dbt_test_failure_notifier(
     owners_df = extract_model_ownership(manifest_file_path)
     failed_tests = enrich_with_owners(failed_tests, owners_df)
 
+    df_failed_tests = pd.DataFrame(failed_tests)
+    dfs_list = [group for _, group in df_failed_tests.groupby("model")]
+
     if smtp_config is None:
         smtp_config = SmtpConfig(
             sender=Secret.load("smtp-sender").get(),
@@ -288,14 +341,18 @@ def dbt_test_failure_notifier(
         server.starttls()
         server.login(smtp_config.sender, smtp_config.password)
         sent = 0
-        for test_result in failed_tests:
+        for single_table_tests in dfs_list:
             try:
                 send_test_failure_notification(
-                    test_result, smtp_config.sender, server, default_recipients
+                    single_table_tests, smtp_config.sender, server, default_recipients
                 )
                 sent += 1
             except smtplib.SMTPException:
-                logger.exception(f"Failed to send for {test_result['unique_id']}")
+                logger.exception(
+                    f"Failed to send for {single_table_tests['model'].iloc[0]}"
+                )
             except Exception:
-                logger.exception(f"Unexpected error for {test_result['unique_id']}")
+                logger.exception(
+                    f"Unexpected error for {single_table_tests['model'].iloc[0]}"
+                )
         logger.info(f"Sent {sent}/{len(failed_tests)} failure notification(s).")
