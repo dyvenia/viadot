@@ -51,7 +51,7 @@ def transform_and_catalog(  # noqa: PLR0913, PLR0915
     run_results_storage_config_key: str | None = None,
     run_results_storage_credentials_secret: str | None = None,
     fail_flow_only_on_build_failure: bool = False,
-    schema_owner_email: list[str] | None = None,
+    owner_email: list[str] | None = None,
     gh_action_actor: str | None = None,
 ) -> list[str]:
     """Build specified dbt model(s) and upload the generated metadata to Luma.
@@ -108,7 +108,7 @@ def transform_and_catalog(  # noqa: PLR0913, PLR0915
             When True:
                 - The flow will only fail if model building fails
                 - Test failures alone won't cause the flow failure
-        schema_owner_email (list[str] | None): Email addresses to send notifications
+        owner_email (list[str] | None): Email addresses to send notifications
             about failed dbt tests to. Can contain one or multiple recipients.
             If None, no notifications will be sent. Defaults to None.
         gh_action_actor (str, optional): GitHub Actions actor that triggered the
@@ -273,11 +273,11 @@ def transform_and_catalog(  # noqa: PLR0913, PLR0915
             config_key=run_results_storage_config_key,
             credentials_secret=run_results_storage_credentials_secret,
         )
-    if schema_owner_email:
+    if owner_email:
         dbt_test_failure_notifier(
             results_file_path=run_results_file_path,
             manifest_file_path=str(dbt_target_dir_path / "manifest.json"),
-            default_recipients=schema_owner_email,
+            default_recipients=owner_email,
         )
 
     remove_dbt_repo_dir(
