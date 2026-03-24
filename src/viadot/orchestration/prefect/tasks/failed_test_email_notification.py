@@ -295,7 +295,7 @@ def send_test_failure_notification(
 
 @task(name="dbt-test-failure-notifier", cache_policy=None)
 def dbt_test_failure_notifier(
-    result_file_path: str,
+    results_file_path: str,
     manifest_file_path: str,
     default_recipients: list[str],
     smtp_config: SmtpConfig | None = None,
@@ -308,11 +308,11 @@ def dbt_test_failure_notifier(
 ) -> None:
     """Prefect task to send email notifications for failed DBT tests."""
     logger = get_run_logger()
-    if not Path(result_file_path).exists():
-        logger.warning(f"File {result_file_path} does not exist.")
+    if not Path(results_file_path).exists():
+        logger.warning(f"File {results_file_path} does not exist.")
         return
 
-    failed_tests = convert_json(result_file_path, manifest_file_path, test_types)  # type: ignore
+    failed_tests = convert_json(results_file_path, manifest_file_path, test_types)  # type: ignore
     if not failed_tests:
         logger.info("No failed tests — skipping notifications.")
         return
