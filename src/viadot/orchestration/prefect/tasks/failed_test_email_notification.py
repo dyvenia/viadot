@@ -110,7 +110,7 @@ def extract_model_ownership(manifest_file_path: str) -> pd.DataFrame:
         manifest = json.load(file)
 
     result = []
-    for node_id, node in manifest["nodes"].items():
+    for _, node in manifest["nodes"].items():
         if node.get("resource_type") != "model":
             continue
 
