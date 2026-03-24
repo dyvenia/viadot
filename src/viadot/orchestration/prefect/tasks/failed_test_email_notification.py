@@ -312,7 +312,7 @@ def dbt_test_failure_notifier(
         logger.warning(f"File {results_file_path} does not exist.")
         return
 
-    failed_tests = convert_json(results_file_path, manifest_file_path, test_types)  # type: ignore
+    failed_tests = convert_json(results_file_path, test_types)  # type: ignore
     if not failed_tests:
         logger.info("No failed tests — skipping notifications.")
         return
