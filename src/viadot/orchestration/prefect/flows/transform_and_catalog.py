@@ -8,7 +8,7 @@ from typing import Literal
 
 from prefect import flow, task
 from prefect.logging import get_run_logger
-from prefect.states import Failed
+from prefect.states import Failed, State
 
 from viadot.orchestration.prefect.tasks import (
     clone_repo,
@@ -51,9 +51,10 @@ def transform_and_catalog(  # noqa: PLR0913, PLR0915
     run_results_storage_config_key: str | None = None,
     run_results_storage_credentials_secret: str | None = None,
     fail_flow_only_on_build_failure: bool = False,
-    owner_email: list[str] | None = None,
+    notification_recipients: list[str] | None = None,
+    enable_notifications: bool = True,
     gh_action_actor: str | None = None,
-) -> list[str]:
+) -> State | None:
     """Build specified dbt model(s) and upload the generated metadata to Luma.
 
     Supports ingesting both model and model run metadata (controlled by the
@@ -108,9 +109,16 @@ def transform_and_catalog(  # noqa: PLR0913, PLR0915
             When True:
                 - The flow will only fail if model building fails
                 - Test failures alone won't cause the flow failure
-        owner_email (list[str] | None): Email addresses to send notifications
-            about failed dbt tests to. Can contain one or multiple recipients.
-            If None, no notifications will be sent. Defaults to None.
+        notification_recipients (list[str], optional): Fallback email addresses
+            for failed dbt test notifications, used when a model has no Technical
+            Owner defined in dbt's meta config. Has no effect if
+            `enable_notifications` is False. Defaults to None.
+        enable_notifications (bool): Whether to send email notifications for failed
+            dbt tests. If True, notifications are sent to Technical Owners defined
+            in dbt's meta config, with `notification_recipients` used as
+            a fallback when no owner is found.
+            If False, no notifications are sent regardless of
+            `notification_recipients`. Defaults to True.
         gh_action_actor (str, optional): GitHub Actions actor that triggered the
             workflow. Defaults to None.
 
@@ -264,11 +272,11 @@ def transform_and_catalog(  # noqa: PLR0913, PLR0915
             config_key=run_results_storage_config_key,
             credentials_secret=run_results_storage_credentials_secret,
         )
-    if owner_email:
+    if enable_notifications:
         dbt_test_failure_notifier(
             results_file_path=run_results_file_path,
             manifest_file_path=str(dbt_target_dir_path / "manifest.json"),
-            default_recipients=owner_email,
+            default_recipients=notification_recipients,
         )
 
     remove_dbt_repo_dir(
