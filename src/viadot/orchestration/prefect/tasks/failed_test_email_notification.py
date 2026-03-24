@@ -190,18 +190,22 @@ def convert_json(file_path: str, test_types: tuple[str, ...]) -> list:
     if df_failed.empty:
         return []
 
-    return df_failed[
-        [
-            "unique_id",
-            "schema",
-            "status",
-            "message",
-            "failures",
-            "model",
-            "column",
-            "test_type",
+    return (
+        df_failed[
+            [
+                "status",
+                "model",
+                "column",
+                "test_type",
+                "failures",
+                "message",
+                "schema",
+                "unique_id",
+            ]
         ]
-    ].to_dict(orient="records")
+        .rename(columns={"unique_id": "test_code"})
+        .to_dict(orient="records")
+    )
 
 
 def parse_subject_from_message(message: str) -> str:
@@ -258,25 +262,16 @@ def send_test_failure_notification(
         if not pd.isna(failed_test["column"].iloc[0])
         else "N/A"
     )
-    recipients = failed_test["owners"].iloc[0] or default_recipients or []
+    owners = failed_test["owners"].explode().dropna()
+    recipients = owners[owners.str.strip() != ""].unique().tolist() + default_recipients
     recipients_str = ", ".join(recipients)
 
     if any(v == "N/A" for v in [schema_name, column_name, model_name]):
         subject = parse_subject_from_message(failed_test["message"].iloc[0])
-        skip_columns = set()
     else:
         subject = f"DBT Test Alert: {schema_name} - {model_name}"
-        skip_columns = {"schema", "model"}
 
-    table_html = dataframe_to_email_html(
-        failed_test.drop(
-            columns=[
-                col
-                for col in skip_columns | columns_to_skip
-                if col in failed_test.columns
-            ]
-        )
-    )
+    table_html = dataframe_to_email_html(failed_test.drop(columns=columns_to_skip))
 
     body_html = f"""
     <html>
@@ -290,10 +285,12 @@ def send_test_failure_notification(
 
     msg = MIMEMultipart("mixed")
     msg["From"] = sender
-    msg["To"] = ", ".join(default_recipients)
+    msg["To"] = ", ".join(default_recipients)  # Set for testing purposes
     msg["Subject"] = subject
     msg.attach(MIMEText(body_html, "html"))
-    server.sendmail(sender, default_recipients, msg.as_string())
+    server.sendmail(
+        sender, default_recipients, msg.as_string()
+    )  # Set for testing purposes
 
 
 @task(name="dbt-test-failure-notifier", cache_policy=None)
@@ -311,12 +308,6 @@ def dbt_test_failure_notifier(
 ) -> None:
     """Prefect task to send email notifications for failed DBT tests."""
     logger = get_run_logger()
-    # for debugging: log the contents of the directory containing the result file
-    parent = Path(result_file_path).parent
-    logger.warning(f"Files in {parent}:")
-    for f in parent.iterdir():
-        logger.warning(f"  {f.name}")
-
     if not Path(result_file_path).exists():
         logger.warning(f"File {result_file_path} does not exist.")
         return
