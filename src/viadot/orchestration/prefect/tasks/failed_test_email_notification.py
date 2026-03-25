@@ -155,7 +155,7 @@ def get_owner_emails(
 def enrich_with_owners(failed_tests: list, owners_df: pd.DataFrame) -> list:
     """Osobna funkcja odpowiedzialna za wzbogacenie o ownerów."""
     for test in failed_tests:
-        test["owners"] = get_owner_emails(test["table"], test["schema"], owners_df)
+        test["owners"] = get_owner_emails(test["model"], test["schema"], owners_df)
     return failed_tests
 
 
@@ -332,18 +332,18 @@ def dbt_test_failure_notifier(
         server.starttls()
         server.login(smtp_config.sender, smtp_config.password)
         sent = 0
-        for single_table_tests in dfs_list:
+        for single_model_tests in dfs_list:
             try:
                 send_test_failure_notification(
-                    single_table_tests, smtp_config.sender, server, default_recipients
+                    single_model_tests, smtp_config.sender, server, default_recipients
                 )
                 sent += 1
             except smtplib.SMTPException:
                 logger.exception(
-                    f"Failed to send for {single_table_tests['model'].iloc[0]}"
+                    f"Failed to send for {single_model_tests['model'].iloc[0]}"
                 )
             except Exception:
                 logger.exception(
-                    f"Unexpected error for {single_table_tests['model'].iloc[0]}"
+                    f"Unexpected error for {single_model_tests['model'].iloc[0]}"
                 )
         logger.info(f"Sent {sent}/{len(failed_tests)} failure notification(s).")
