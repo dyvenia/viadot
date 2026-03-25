@@ -285,12 +285,10 @@ def send_test_failure_notification(
 
     msg = MIMEMultipart("mixed")
     msg["From"] = sender
-    msg["To"] = ", ".join(default_recipients)  # Set for testing purposes
+    msg["To"] = recipients_str
     msg["Subject"] = subject
     msg.attach(MIMEText(body_html, "html"))
-    server.sendmail(
-        sender, default_recipients, msg.as_string()
-    )  # Set for testing purposes
+    server.sendmail(sender, recipients, msg.as_string())
 
 
 @task(name="dbt-test-failure-notifier", cache_policy=None)
