@@ -208,7 +208,7 @@ def convert_json(file_path: str, test_types: tuple[str, ...]) -> list:
     )
 
 
-def parse_subject_from_message(message: str) -> str:
+def extract_subject_from_message(message: str) -> str:
     """Extract model name from dbt error message as email subject."""
     match = re.search(r"test\s+(\S+)\s+\(", message)
     if match:
@@ -267,7 +267,7 @@ def send_test_failure_notification(
     recipients_str = ", ".join(recipients)
 
     if any(v == "N/A" for v in [schema_name, column_name, model_name]):
-        subject = parse_subject_from_message(failed_test["message"].iloc[0])
+        subject = extract_subject_from_message(failed_test["message"].iloc[0])
     else:
         subject = f"DBT Test Alert: {schema_name} - {model_name}"
 
