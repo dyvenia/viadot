@@ -313,7 +313,12 @@ def send_test_failure_notification(
     server.sendmail(sender, all_recipients, msg.as_string())
 
 
-@task(name="dbt-test-failure-notifier", cache_policy=None)
+@task(
+    name="dbt-test-failure-notifier",
+    retries=3,
+    retry_delay_seconds=10,
+    cache_policy=None,
+)
 def dbt_test_failure_notifier(
     results_file_path: str,
     manifest_file_path: str,
