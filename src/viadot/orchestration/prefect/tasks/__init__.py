@@ -54,6 +54,7 @@ from .vid_club import vid_club_to_df
 
 
 __all__ = [
+    "SmtpConfig",
     "adls_upload",
     "azure_sql_to_df",
     "bcp",
