@@ -245,9 +245,23 @@ def send_test_failure_notification(
     failed_test: pd.DataFrame,
     sender: str,
     server: smtplib.SMTP,
-    default_recipients: list[str],
+    recipients: list[str] | None = None,
+    additional_recipients: list[str] | None = None,
 ) -> None:
-    """Send an email notification for a failed DBT test."""
+    """Send an email notification for a failed DBT test.
+
+    Args:
+        failed_test (pd.DataFrame): DataFrame containing details of the failed test.
+        sender (str): The email address to appear in the "From" field.
+        server (smtplib.SMTP): A pre-configured and authenticated SMTP server
+            instance used to send the email.
+        recipients (list[str] | None, optional): Primary recipient list. If provided,
+            it takes precedence over the 'owners' listed in the DataFrame.
+            Defaults to None.
+        additional_recipients (list[str] | None, optional): Extra email addresses
+            to be appended to the final recipient list regardless of other settings.
+            Defaults to None.
+    """
     columns_to_skip = {"owners"}
     schema_name = (
         failed_test["schema"].iloc[0]
@@ -265,8 +279,14 @@ def send_test_failure_notification(
         else "N/A"
     )
     owners = failed_test["owners"].explode().dropna()
-    recipients = owners[owners.str.strip() != ""].unique().tolist() + default_recipients
-    recipients_str = ", ".join(recipients)
+    yaml_owners = owners[owners.str.strip() != ""].unique().tolist()
+    # Prevent TypeError when recipients is None
+    additional_recipients = additional_recipients or []
+    base_recipients = recipients or yaml_owners
+    all_recipients = list(set(base_recipients + additional_recipients))
+    if not all_recipients:
+        return
+    recipients_str = ", ".join(all_recipients)
 
     if any(v == "N/A" for v in [schema_name, column_name, model_name]):
         subject = extract_subject_from_message(failed_test["message"].iloc[0])
@@ -290,7 +310,7 @@ def send_test_failure_notification(
     msg["To"] = recipients_str
     msg["Subject"] = subject
     msg.attach(MIMEText(body_html, "html"))
-    server.sendmail(sender, recipients, msg.as_string())
+    server.sendmail(sender, all_recipients, msg.as_string())
 
 
 @task(name="dbt-test-failure-notifier", cache_policy=None)
