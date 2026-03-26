@@ -159,7 +159,9 @@ def enrich_with_owners(failed_tests: list, owners_df: pd.DataFrame) -> list:
     return failed_tests
 
 
-def extract_failed_tests(run_results_file_path: str, test_types: tuple[str, ...]) -> list:
+def extract_failed_tests(
+    run_results_file_path: str, test_types: tuple[str, ...]
+) -> list:
     """Extract failed tests from `run_results.json`."""
     with Path(file_path).open() as file:
         data = json.load(file)
@@ -310,7 +312,7 @@ def dbt_test_failure_notifier(
         logger.warning(f"File {results_file_path} does not exist.")
         return
 
-    failed_tests = convert_json(results_file_path, test_types)  # type: ignore
+    failed_tests = extract_failed_tests(results_file_path, test_types)  # type: ignore
     if not failed_tests:
         logger.info("No failed tests — skipping notifications.")
         return
