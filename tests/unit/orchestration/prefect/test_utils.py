@@ -97,6 +97,25 @@ def test_today_returns_warsaw_date_not_utc(monkeypatch):
     assert result != "20240315"  # UTC
 
 
+@pytest.mark.parametrize(
+    ("input_date", "expected"),
+    [
+        ("<<pendulum.datetime(2024,3,15)>>", "20240315"),
+        ("<<pendulum.datetime(2024,1,1)>>", "20240101"),
+        ("<<pendulum.datetime(2024,12,31)>>", "20241231"),
+        ("<<pendulum.datetime(2024,3,15).subtract(days=1)>>", "20240314"),
+        ("<<pendulum.datetime(2024,3,15).add(days=1)>>", "20240316"),
+        ("<<pendulum.datetime(2024,3,15,23,0)>>", "20240315"),
+    ],
+)
+def test_pendulum_datetime_with_explicit_date_is_not_affected_by_timezone(
+    input_date, expected
+):
+    handler = DynamicDateHandler(dynamic_date_timezone="Europe/Warsaw")
+    result = handler.process_dates(input_date)
+    assert result == expected
+
+
 def test_process_dates_with_malformed_keys():
     """Test if process_dates function leaves malformed placeholders unchanged."""
     text = "This is a malformed placeholder: <<today."
