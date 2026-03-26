@@ -77,14 +77,17 @@ def test_find_test(failed_dbt_test_result):
 
 
 def test_smtp_config_defaults():
-    config = SmtpConfig(sender="test@gmail.com", password="secret")
+    config = SmtpConfig(sender="test@gmail.com", password="secret")  # noqa: S106
     assert config.host == "smtp.gmail.com"
     assert config.port == 587
 
 
 def test_smtp_config_custom_values():
     config = SmtpConfig(
-        host="smtp.custom.com", port=465, sender="test@custom.com", password="secret"
+        host="smtp.custom.com",
+        port=465,
+        sender="test@custom.com",
+        password="secret",  # noqa: S106
     )
     assert config.host == "smtp.custom.com"
     assert config.port == 465
