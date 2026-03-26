@@ -153,7 +153,7 @@ def get_owner_emails(
 
 
 def enrich_with_owners(failed_tests: list, owners_df: pd.DataFrame) -> list:
-    """Osobna funkcja odpowiedzialna za wzbogacenie o ownerów."""
+    """Separate function responsible for enriching data with owners."""
     for test in failed_tests:
         test["owners"] = get_owner_emails(test["model"], test["schema"], owners_df)
     return failed_tests
