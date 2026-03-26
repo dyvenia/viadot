@@ -15,7 +15,7 @@ from .entraid import entraid_to_df
 from .epicor import epicor_to_df
 from .eurostat import eurostat_to_df
 from .exchange_rates import exchange_rates_to_df
-from .failed_test_email_notification import dbt_test_failure_notifier
+from .failed_test_email_notification import SmtpConfig, dbt_test_failure_notifier
 from .genesys import genesys_to_df
 from .git import clone_repo
 from .hubspot import hubspot_to_df
