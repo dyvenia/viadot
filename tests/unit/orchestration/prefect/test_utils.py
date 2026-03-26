@@ -82,6 +82,21 @@ def test_process_dates_with_custom_symbols(setup_dates):
     assert replaced_text == expected_text
 
 
+def test_today_returns_warsaw_date_not_utc(monkeypatch):
+    import pendulum
+
+    fixed_now = pendulum.datetime(2024, 3, 15, 23, 0, 0, tz="UTC")
+    monkeypatch.setattr(
+        pendulum, "today", lambda tz=None: fixed_now.in_timezone(tz or "UTC")
+    )
+
+    handler = DynamicDateHandler(dynamic_date_timezone="Europe/Warsaw")
+    result = handler.process_dates("<<pendulum.today()>>")
+
+    assert result == "20240316"  # Warsaw
+    assert result != "20240315"  # UTC
+
+
 def test_process_dates_with_malformed_keys():
     """Test if process_dates function leaves malformed placeholders unchanged."""
     text = "This is a malformed placeholder: <<today."
