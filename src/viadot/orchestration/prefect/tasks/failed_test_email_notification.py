@@ -322,7 +322,8 @@ def send_test_failure_notification(
 def dbt_test_failure_notifier(
     results_file_path: str,
     manifest_file_path: str,
-    default_recipients: list[str],
+    additional_recipients: list[str] | None,
+    recipients: list[str] | None,
     smtp_config: SmtpConfig | None = None,
     test_types: tuple[str, ...] = (
         "not_null",
@@ -360,7 +361,11 @@ def dbt_test_failure_notifier(
         for single_model_tests in dfs_list:
             try:
                 send_test_failure_notification(
-                    single_model_tests, smtp_config.sender, server, default_recipients
+                    single_model_tests,
+                    smtp_config.sender,
+                    server,
+                    additional_recipients,
+                    recipients,
                 )
                 sent += 1
             except smtplib.SMTPException:
