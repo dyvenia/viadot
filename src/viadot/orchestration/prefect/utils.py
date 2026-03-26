@@ -545,7 +545,13 @@ class DynamicDateHandler:
             if not replacement and bool(
                 re.match(r"^\s*pendulum\.\w+\(.*\)\s*$", match_no_symbols)
             ):
-                replacement = eval(match_no_symbols)  # noqa: S307
+                tz = self.dynamic_date_timezone
+                expr = re.sub(
+                    r"pendulum\.(today|now)\(\)",  # pattern
+                    rf'pendulum.\1("{tz}")',  # replacement
+                    match_no_symbols,
+                )
+                replacement = eval(expr, {"pendulum": pendulum})  # noqa: S307
             text = text.replace(
                 match,
                 (
