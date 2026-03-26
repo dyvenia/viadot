@@ -163,7 +163,7 @@ def extract_failed_tests(
     run_results_file_path: str, test_types: tuple[str, ...]
 ) -> list:
     """Extract failed tests from `run_results.json`."""
-    with Path(file_path).open() as file:
+    with Path(run_results_file_path).open() as file:
         data = json.load(file)
 
     df = pd.json_normalize(
