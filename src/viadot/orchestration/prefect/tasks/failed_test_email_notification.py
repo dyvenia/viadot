@@ -159,8 +159,8 @@ def enrich_with_owners(failed_tests: list, owners_df: pd.DataFrame) -> list:
     return failed_tests
 
 
-def convert_json(file_path: str, test_types: tuple[str, ...]) -> list:
-    """Convert DBT test results from JSON to a list of failed tests."""
+def extract_failed_tests(run_results_file_path: str, test_types: tuple[str, ...]) -> list:
+    """Extract failed tests from `run_results.json`."""
     with Path(file_path).open() as file:
         data = json.load(file)
 
