@@ -1,24 +1,14 @@
-import importlib.util
-from pathlib import Path
-
 from pandas import DataFrame
 from pydantic import ValidationError
 import pytest
 
-
-spec = importlib.util.spec_from_file_location(
-    "failed_test_email_notification",
-    Path(__file__).parents[2]
-    / "src/viadot/orchestration/prefect/tasks/failed_test_email_notification.py",
+from viadot.orchestration.prefect.tasks.failed_test_email_notification import (
+    SmtpConfig,
+    find_column,
+    find_model,
+    find_schema,
+    find_test,
 )
-mod = importlib.util.module_from_spec(spec)
-spec.loader.exec_module(mod)
-
-find_schema = mod.find_schema
-find_model = mod.find_model
-find_column = mod.find_column
-find_test = mod.find_test
-SmtpConfig = mod.SmtpConfig
 
 
 @pytest.fixture
@@ -95,4 +85,4 @@ def test_smtp_config_custom_values():
 
 def test_smtp_config_missing_password():
     with pytest.raises(ValidationError):
-        SmtpConfig(sender="test@gmail.com")
+        SmtpConfig(sender="test@gmail.com")  # type: ignore
