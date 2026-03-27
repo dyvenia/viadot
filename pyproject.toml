@@ -43,6 +43,7 @@ dependencies = [
     "pyarrow>=18.0.0",
     "awswrangler>=3.12.1",
     "pandas>=2.0.0",
+    "pendulum>=2.1.2",
 ]
 requires-python = ">=3.10"
 readme = "README.md"
