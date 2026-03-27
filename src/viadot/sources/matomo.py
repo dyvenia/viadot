@@ -136,8 +136,8 @@ class Matomo(Source):
         Returns:
             str: The formatted date range.
         """
-        start = parse_dates(date_range[0])
-        end = parse_dates(date_range[1])
+      dates=(date_range[0], date_range[1])
+      date_range_parsed = parse_dates(dates)
         return f"{start:%Y-%m-%d},{end:%Y-%m-%d}"
 
     def fetch_data(
