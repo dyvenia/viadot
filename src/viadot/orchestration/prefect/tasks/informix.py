@@ -1,5 +1,6 @@
 """Tasks for interacting with Informix Informix via JDBC."""
 
+import contextlib
 from typing import Any
 
 import pandas as pd
@@ -10,7 +11,10 @@ from viadot.config import get_source_credentials
 from viadot.orchestration.prefect.exceptions import MissingSourceCredentialsError
 from viadot.orchestration.prefect.utils import get_credentials
 from viadot.sources.base import Record
-from viadot.sources.informix import Informix
+
+
+with contextlib.suppress(ImportError):
+    from viadot.sources.informix import Informix
 
 
 @task(retries=3, retry_delay_seconds=10, timeout_seconds=60 * 60 * 3)
