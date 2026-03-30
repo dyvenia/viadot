@@ -3,7 +3,7 @@
 from typing import Any
 
 import pandas as pd
-from prefect import task
+from prefect import get_run_logger, task
 
 from viadot.orchestration.prefect.exceptions import MissingSourceCredentialsError
 from viadot.orchestration.prefect.utils import get_credentials
@@ -84,6 +84,7 @@ def hubspot_to_df(
     df = hubspot.to_df(data=data)
 
     if drop_empty_columns:
+        logger = get_run_logger()
         initial_cols = len(df.columns)
         df = df.dropna(axis=1, how="all")
         exclude_keywords = ["identity-profiles", "merge-audits", "vid-offset"]
@@ -91,10 +92,10 @@ def hubspot_to_df(
             col for col in df.columns if any(key in col for key in exclude_keywords)
         ]
         df = df.drop(columns=cols_to_drop)
-        print(
+        logger.info(
             f"Cleanup complete: removed {initial_cols - len(df.columns)} completely "
             "empty or technical columns."
         )
-        print(f"Final column count: {len(df.columns)}")
+        logger.info(f"Final column count: {len(df.columns)}")
 
     return df
