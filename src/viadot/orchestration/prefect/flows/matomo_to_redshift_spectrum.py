@@ -35,6 +35,7 @@ def matomo_to_redshift_spectrum(  # noqa: PLR0913
     aws_sep: str = ",",
     credentials_secret: str | None = None,
     aws_config_key: str | None = None,
+    page_size: int | None = None,
 ) -> None:
     """Flow for downloading data from Matomo to Redshift Spectrum.
 
@@ -75,6 +76,7 @@ def matomo_to_redshift_spectrum(  # noqa: PLR0913
             that stores AWS credentials. Defaults to None.
         aws_config_key (str, optional): The key in the viadot config holding relevant
             AWS credentials. Defaults to None.
+        page_size (int | None, optional): If set, enables pagination. Defaults to None.
 
     Examples:
         matomo_to_redshift_spectrum(
@@ -112,6 +114,7 @@ def matomo_to_redshift_spectrum(  # noqa: PLR0913
         record_prefix=record_prefix,
         if_empty=if_empty,
         tests=tests,
+        page_size=page_size,
     )
 
     df_to_redshift_spectrum(

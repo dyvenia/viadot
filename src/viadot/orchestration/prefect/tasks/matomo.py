@@ -21,6 +21,7 @@ def matomo_to_df(
     record_prefix: str | None = None,
     if_empty: Literal["warn", "skip", "fail"] = "warn",
     tests: dict[str, Any] | None = None,
+    page_size: int | None = None,
 ) -> pd.DataFrame:
     """Task to download data from Matomo API to a pandas DataFrame.
 
@@ -51,6 +52,10 @@ def matomo_to_df(
         tests (dict[str, Any], optional): A dictionary with optional list of tests
             to verify the output dataframe. If defined, triggers the `validate`
             function from viadot.utils. Defaults to None.
+        page_size (int | None, optional): If set, enables pagination and fetches
+            all records page by page using the given page size. If None, fetches
+            all data in a single request. Defaults to None.
+
 
     Examples:
         data_frame = matomo_to_df(
@@ -91,11 +96,19 @@ def matomo_to_df(
     params["date"] = matomo.format_date_range(params["date"])
 
     # Fetch the data using credentials
-    data = matomo.fetch_data(
-        api_token=matomo.credentials["api_token"],
-        url=url,
-        params=params,
-    )
+    if page_size:
+        data = matomo.fetch_all_data(
+            api_token=matomo.credentials["api_token"],
+            url=url,
+            params=params,
+            page_size=page_size,
+        )
+    else:
+        data = matomo.fetch_data(
+            api_token=matomo.credentials["api_token"],
+            url=url,
+            params=params,
+        )
 
     # Convert to DataFrame with the specified parameters
     return matomo.to_df(

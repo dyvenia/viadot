@@ -185,6 +185,47 @@ class Matomo(Source):
 
         return data
 
+    def fetch_all_data(
+        self,
+        api_token: str,
+        url: str,
+        params: dict[str, str],
+        page_size: int = 1000,
+    ) -> list[dict[str, Any]]:
+        """Fetch all data from Matomo API using pagination.
+
+        Args:
+            api_token (str): The authentication token for the Matomo API.
+            url (str): The base URL of the Matomo instance.
+            params (dict[str, str]): Parameters for the API request.
+            page_size (int): Number of records per page. Defaults to 1000.
+
+        Returns:
+            list[dict[str, Any]]: All records from the API.
+        """
+        all_data = []
+        offset = 0
+
+        while True:
+            params["filter_limit"] = str(page_size)
+            params["filter_offset"] = str(offset)
+
+            batch = self.fetch_data(api_token=api_token, url=url, params=params)
+
+            if not batch:
+                break
+
+            all_data.extend(batch)
+
+            if len(batch) < page_size:
+                break
+
+            offset += page_size
+            self.logger.info(f"Fetched {len(all_data)} records so far...")
+
+        self.logger.info(f"Pagination complete. Total records fetched: {len(all_data)}")
+        return all_data
+
     @add_viadot_metadata_columns
     def to_df(
         self,
