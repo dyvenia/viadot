@@ -15,6 +15,7 @@ from .entraid import entraid_to_df
 from .epicor import epicor_to_df
 from .eurostat import eurostat_to_df
 from .exchange_rates import exchange_rates_to_df
+from .failed_test_email_notification import SmtpConfig, dbt_test_failure_notifier
 from .genesys import genesys_to_df
 from .git import clone_repo
 from .hubspot import hubspot_to_df
@@ -53,6 +54,7 @@ from .vid_club import vid_club_to_df
 
 
 __all__ = [
+    "SmtpConfig",
     "adls_upload",
     "azure_sql_to_df",
     "bcp",
@@ -60,11 +62,12 @@ __all__ = [
     "business_core_to_df",
     "clone_repo",
     "cloud_for_customers_to_df",
+    "create_batch_list_of_custom_subst_vars",
     "create_postgresql_table",
     "create_sql_server_table",
-    "create_batch_list_of_custom_subst_vars",
     "customer_gauge_to_df",
     "dbt_task",
+    "dbt_test_failure_notifier",
     "df_to_adls",
     "df_to_databricks",
     "df_to_minio",
@@ -83,11 +86,11 @@ __all__ = [
     "matomo_to_df",
     "mediatool_to_df",
     "mindful_to_df",
-    "onestream_to_df",
     "onestream_run_data_management_seq",
+    "onestream_to_df",
     "outlook_to_df",
-    "postgresql_to_df",
     "postgresql_query",
+    "postgresql_to_df",
     "s3_upload_file",
     "salesforce_to_df",
     "sap_bw_to_df",

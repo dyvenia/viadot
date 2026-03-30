@@ -7259,7 +7259,7 @@ wheels = [
 
 [[package]]
 name = "viadot2"
-version = "2.4.4"
+version = "2.4.5"
 source = { editable = "." }
 dependencies = [
     { name = "aiohttp" },
