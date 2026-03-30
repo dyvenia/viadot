@@ -21,6 +21,7 @@ def hubspot_to_df(
     filters: list[dict[str, Any]] | None = None,
     properties: list[Any] | None = None,
     nrows: int = 1000,
+    drop_empty_columns: bool = False,
 ) -> pd.DataFrame:
     """Task to download data from Hubspot API to a pandas DataFrame.
 
@@ -38,6 +39,10 @@ def hubspot_to_df(
             pulled from the API. Defaults to None.
         nrows (int, optional): Max number of rows to pull during execution.
             Defaults to 1000.
+        drop_empty_columns (bool, optional): If True, removes columns that are 100%
+            empty and known technical metadata columns (identity-profiles, merge-audits,
+            vid-offset). Defaults to False.
+
 
     Examples:
         data_frame = hubspot_to_df(
@@ -76,4 +81,20 @@ def hubspot_to_df(
         nrows=nrows,
     )
 
-    return hubspot.to_df(data=data)
+    df = hubspot.to_df(data=data)
+
+    if drop_empty_columns:
+        initial_cols = len(df.columns)
+        df = df.dropna(axis=1, how="all")
+        exclude_keywords = ["identity-profiles", "merge-audits", "vid-offset"]
+        cols_to_drop = [
+            col for col in df.columns if any(key in col for key in exclude_keywords)
+        ]
+        df = df.drop(columns=cols_to_drop)
+        print(
+            f"Cleanup complete: removed {initial_cols - len(df.columns)} completely "
+            "empty or technical columns."
+        )
+        print(f"Final column count: {len(df.columns)}")
+
+    return df

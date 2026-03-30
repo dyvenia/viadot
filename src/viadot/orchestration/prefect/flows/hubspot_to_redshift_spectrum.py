@@ -36,6 +36,7 @@ def hubspot_to_redshift_spectrum(  # noqa: PLR0913
     aws_sep: str = ",",
     credentials_secret: str | None = None,
     aws_config_key: str | None = None,
+    drop_empty_columns: bool = False,
 ) -> None:
     """Flow for downloading data from Hubspot to Redshift Spectrum.
 
@@ -69,7 +70,9 @@ def hubspot_to_redshift_spectrum(  # noqa: PLR0913
             that stores AWS credentials. Defaults to None.
         aws_config_key (str, optional): The key in the viadot config holding relevant
             AWS credentials. Defaults to None.
-
+        drop_empty_columns (bool, optional): If True, removes columns that are 100%
+            empty and known technical metadata columns (identity-profiles, merge-audits,
+            vid-offset). Defaults to False.
     """
     df = hubspot_to_df(
         endpoint=endpoint or hubspot_url,
@@ -81,6 +84,7 @@ def hubspot_to_redshift_spectrum(  # noqa: PLR0913
         filters=filters,
         properties=properties,
         nrows=nrows,
+        drop_empty_columns=drop_empty_columns,
     )
 
     df_to_redshift_spectrum(
