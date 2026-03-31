@@ -16,7 +16,6 @@ from .eurostat import Eurostat
 from .exchange_rates import ExchangeRates
 from .genesys import Genesys
 from .hubspot import Hubspot
-from .informix import Informix
 from .matomo import Matomo
 from .mediatool import Mediatool
 from .mindful import Mindful
@@ -53,7 +52,6 @@ __all__ = [
     "ExchangeRates",
     "Genesys",
     "Hubspot",
-    "Informix",
     "Matomo",
     "Mediatool",
     "Mindful",
@@ -98,3 +96,8 @@ if find_spec("pyspark"):
     from viadot.sources.databricks import Databricks  # noqa: F401
 
     __all__.append("Databricks")
+
+if find_spec("jaydebeapi"):
+    from viadot.sources.informix import Informix  # noqa: F401
+
+    __all__.extend(["Informix"])
