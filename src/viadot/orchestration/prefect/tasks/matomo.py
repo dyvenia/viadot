@@ -88,7 +88,8 @@ def matomo_to_df(
         config_key=config_key,
     )
 
-    params["date"] = matomo.format_date_range(params["date"])
+    if isinstance(params["date"], tuple | list):
+        params["date"] = matomo.format_date_range(params["date"])
 
     # Fetch the data using credentials
     data = matomo.fetch_data(
