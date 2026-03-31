@@ -210,11 +210,18 @@ def extract_failed_tests(
     )
 
 
-def extract_subject_from_message(message: str) -> str:
-    """Extract model name from dbt error message as email subject."""
-    match = re.search(r"test\s+(\S+)\s+\(", message)
-    if match:
-        return f"DBT Test Alert: {match.group(1)}"
+def build_email_subject(schema_name: str, model_name: str) -> str:
+    """Build an email subject line based on schema and model names."""
+    parts = []
+
+    if schema_name != "N/A":
+        parts.append(schema_name)
+    if model_name != "N/A":
+        parts.append(model_name)
+
+    if parts:
+        return "DBT Test Alert: " + " - ".join(parts)
+
     return "DBT Test Alert"
 
 
@@ -273,11 +280,6 @@ def send_test_failure_notification(
         if not pd.isna(failed_test["model"].iloc[0])
         else "N/A"
     )
-    column_name = (
-        failed_test["column"].iloc[0]
-        if not pd.isna(failed_test["column"].iloc[0])
-        else "N/A"
-    )
     owners = failed_test["owners"].explode().dropna()
     yaml_owners = owners[owners.str.strip() != ""].unique().tolist()
     # Prevent TypeError when recipients is None
@@ -288,10 +290,7 @@ def send_test_failure_notification(
         return
     recipients_str = ", ".join(all_recipients)
 
-    if any(v == "N/A" for v in [schema_name, column_name, model_name]):
-        subject = extract_subject_from_message(failed_test["message"].iloc[0])
-    else:
-        subject = f"DBT Test Alert: {schema_name} - {model_name}"
+    subject = build_email_subject(schema_name, model_name)
 
     table_html = dataframe_to_email_html(failed_test.drop(columns=columns_to_skip))
 
