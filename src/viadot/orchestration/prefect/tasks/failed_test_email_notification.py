@@ -211,7 +211,15 @@ def extract_failed_tests(
 
 
 def build_email_subject(schema_name: str, model_name: str) -> str:
-    """Build an email subject line based on schema and model names."""
+    """Build an email subject line based on schema and model names.
+
+    Args:
+        schema_name (str): The name of the database schema where the test failed.
+        model_name (str): The name of the dbt model associated with the failed test.
+
+    Returns:
+        str: A formatted email subject string.
+    """
     parts = []
 
     if schema_name != "N/A":
