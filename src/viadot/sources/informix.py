@@ -2,7 +2,13 @@
 
 from typing import Any, Literal
 
-import jaydebeapi
+
+try:
+    import jaydebeapi
+except ModuleNotFoundError as e:
+    msg = "Missing required modules to use informix source."
+    raise ImportError(msg) from e
+
 import pandas as pd
 from pydantic import BaseModel, SecretStr
 
