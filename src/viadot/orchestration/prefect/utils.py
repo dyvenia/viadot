@@ -86,7 +86,11 @@ def with_flow_timeout_param(
 
             params = list(func_signature.parameters.values())
             kwargs_idx = next(
-                (idx for idx, p in enumerate(params) if p.kind == Parameter.VAR_KEYWORD),
+                (
+                    idx
+                    for idx, p in enumerate(params)
+                    if p.kind == Parameter.VAR_KEYWORD
+                ),
                 None,
             )
             if kwargs_idx is None:
