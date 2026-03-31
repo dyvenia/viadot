@@ -220,9 +220,9 @@ def build_email_subject(schema_name: str, model_name: str) -> str:
         parts.append(model_name)
 
     if parts:
-        return "DBT Test Alert: " + " - ".join(parts)
+        return "DBT Test Failed: " + " - ".join(parts)
 
-    return "DBT Test Alert"
+    return "DBT Test Failed"
 
 
 def dataframe_to_email_html(df: pd.DataFrame) -> str:
