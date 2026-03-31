@@ -319,8 +319,9 @@ class S3(Source):
 
         try:
             resp = client.get_object(Bucket=bucket, Key=path)
-        except client.exceptions.NoSuchKey:
-            return None
+        except client.exceptions.NoSuchKey as e:
+            msg = f"File {path} does not exist."
+            raise FileNotFoundError(msg) from e
 
         try:
             return json.loads(resp["Body"].read())
