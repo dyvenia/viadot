@@ -18,6 +18,8 @@ except ModuleNotFoundError:
     msg = "Missing required modules to use RedshiftSpectrum source."
     raise ImportError(msg) from None
 
+import json
+
 import pandas as pd
 from pydantic import BaseModel, root_validator
 
@@ -307,6 +309,25 @@ class S3(Source):
             msg = "Only CSV, Parquet, and JSON formats are supported."
             raise ValueError(msg)
         return df
+
+    def to_dict(self, path: str) -> dict | None:
+        """Read a JSON file from Amazon S3 and return it as a dictionary."""
+        bucket = path.split("/")[2]
+        path = str(Path(*path.rstrip("/").split("/")[3:]))
+
+        client = self.session.client("s3")
+
+        try:
+            resp = client.get_object(Bucket=bucket, Key=path)
+        except client.exceptions.NoSuchKey as e:
+            msg = f"File {path} does not exist."
+            raise FileNotFoundError(msg) from e
+
+        try:
+            return json.loads(resp["Body"].read())
+        except json.JSONDecodeError as e:
+            msg = "The content of the file is not a valid JSON."
+            raise ValueError(msg) from e
 
     def upload(self, from_path: str, to_path: str) -> None:
         """Upload file(s) to S3.
