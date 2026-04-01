@@ -18,7 +18,11 @@ from viadot.orchestration.prefect.tasks import (
     luma_ingest_task,
     s3_upload_file,
 )
-from viadot.orchestration.prefect.utils import get_credentials, with_flow_timeout_param
+from viadot.orchestration.prefect.utils import (
+    DEFAULT_TIMEOUT_SECONDS,
+    get_credentials,
+    with_flow_timeout_param,
+)
 
 
 @task(cache_policy=None)
@@ -57,6 +61,8 @@ def transform_and_catalog(  # noqa: PLR0913, PLR0915
     smtp_config: SmtpConfig | None = None,
     enable_notifications: bool = True,
     gh_action_actor: str | None = None,
+    *,
+    timeout_seconds: int = DEFAULT_TIMEOUT_SECONDS,
 ) -> State | None:
     """Build specified dbt model(s) and upload the generated metadata to Luma.
 
@@ -126,6 +132,8 @@ def transform_and_catalog(  # noqa: PLR0913, PLR0915
             `notification_recipients`. Defaults to True.
         gh_action_actor (str, optional): GitHub Actions actor that triggered the
             workflow. Defaults to None.
+        timeout_seconds (int): Maximum runtime for the flow and each spawned dbt task.
+            Defaults to 7200.
 
     Returns:
         list[str]: Lines from stdout of the `upload_metadata` task as a list.
@@ -179,7 +187,10 @@ def transform_and_catalog(  # noqa: PLR0913, PLR0915
     dbt_repo_name = dbt_repo_url.split("/")[-1].replace(".git", "")
     dbt_project_path_full = Path(dbt_repo_name) / dbt_project_path
     dbt_pull_deps_task = dbt_task.with_options(
-        name="dbt_deps", retries=3, retry_delay_seconds=60
+        name="dbt_deps",
+        retries=3,
+        retry_delay_seconds=60,
+        timeout_seconds=timeout_seconds,
     )
     pull_dbt_deps = dbt_pull_deps_task.submit(
         project_path=dbt_project_path_full,
@@ -206,7 +217,9 @@ def transform_and_catalog(  # noqa: PLR0913, PLR0915
         if build_select:
             # If build task is used, run and test tasks are not needed.
             # Build task executes run and tests commands internally.
-            build_task = dbt_task.with_options(name="dbt_build")
+            build_task = dbt_task.with_options(
+                name="dbt_build", timeout_seconds=timeout_seconds
+            )
             raise_on_failure = not fail_flow_only_on_build_failure
 
             build = build_task.submit(
@@ -217,14 +230,18 @@ def transform_and_catalog(  # noqa: PLR0913, PLR0915
             )
             build.result()
         else:
-            run_task = dbt_task.with_options(name="dbt_run")
+            run_task = dbt_task.with_options(
+                name="dbt_run", timeout_seconds=timeout_seconds
+            )
             run = run_task.submit(
                 project_path=dbt_project_path_full,
                 command=f"run {run_select_safe} {dbt_target_option}",
             )
             run.result()
 
-            test_task = dbt_task.with_options(name="dbt_test")
+            test_task = dbt_task.with_options(
+                name="dbt_test", timeout_seconds=timeout_seconds
+            )
             test = test_task.submit(
                 project_path=dbt_project_path_full,
                 command=f"test {test_select_safe} {dbt_target_option}",
@@ -233,7 +250,9 @@ def transform_and_catalog(  # noqa: PLR0913, PLR0915
             test.result()
     else:
         # Produce `catalog.json` and `manifest.json` artifacts for Luma ingestion.
-        docs_generate_task = dbt_task.with_options(name="dbt_docs_generate")
+        docs_generate_task = dbt_task.with_options(
+            name="dbt_docs_generate", timeout_seconds=timeout_seconds
+        )
         docs = docs_generate_task.submit(
             project_path=dbt_project_path_full,
             command="docs generate",
