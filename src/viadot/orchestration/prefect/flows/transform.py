@@ -6,7 +6,11 @@ import shutil
 from prefect import flow, task
 
 from viadot.orchestration.prefect.tasks import clone_repo, dbt_task
-from viadot.orchestration.prefect.utils import get_credentials, with_flow_timeout_param
+from viadot.orchestration.prefect.utils import (
+    DEFAULT_TIMEOUT_SECONDS,
+    get_credentials,
+    with_flow_timeout_param,
+)
 
 
 @task(cache_policy=None)
@@ -33,6 +37,8 @@ def transform(
     local_dbt_repo_path: str | None = None,
     dbt_selects: dict[str, str] | None = None,
     dbt_target: str | None = None,
+    *,
+    timeout_seconds: int = DEFAULT_TIMEOUT_SECONDS,
 ) -> None:
     """Build specified dbt model(s).
 
@@ -57,6 +63,8 @@ def transform(
                 provided. Defaults to None.
         dbt_target (str): The dbt target to use. If not specified, the default dbt
             target (as specified in `profiles.yaml`) will be used. Defaults to None.
+        timeout_seconds (int): Maximum runtime for the flow and each spawned dbt task.
+            Defaults to 7200.
 
     Returns:
         list[str]: Lines from stdout of the `upload_metadata` task as a list.
@@ -98,13 +106,17 @@ def transform(
     dbt_target_option = f"-t {dbt_target}" if dbt_target is not None else ""
 
     # Clean up artifacts from previous runs (`target/` dir and packages)
-    dbt_clean_task = dbt_task.with_options(name="dbt_task_clean")
+    dbt_clean_task = dbt_task.with_options(
+        name="dbt_task_clean", timeout_seconds=timeout_seconds
+    )
     dbt_clean_up = dbt_clean_task.submit(
         project_path=dbt_project_path,
         command="clean",
     )
     dbt_clean_up.result()
-    dbt_pull_deps_task = dbt_task.with_options(name="dbt_task_deps")
+    dbt_pull_deps_task = dbt_task.with_options(
+        name="dbt_task_deps", timeout_seconds=timeout_seconds
+    )
     pull_dbt_deps = dbt_pull_deps_task.submit(
         project_path=dbt_project_path,
         command="deps",
@@ -114,7 +126,9 @@ def transform(
     run_select = dbt_selects.get("run") if dbt_selects else None
     run_select_safe = f"-s {run_select}" if run_select is not None else ""
 
-    dbt_run_task_func = dbt_task.with_options(name="dbt_task_run")
+    dbt_run_task_func = dbt_task.with_options(
+        name="dbt_task_run", timeout_seconds=timeout_seconds
+    )
     run = dbt_run_task_func.submit(
         project_path=dbt_project_path,
         command=f"run {run_select_safe} {dbt_target_option}",
@@ -124,7 +138,9 @@ def transform(
     test_select = dbt_selects.get("test", run_select) if dbt_selects else None
     test_select_safe = f"-s {test_select}" if test_select is not None else ""
 
-    dbt_test_task_func = dbt_task.with_options(name="dbt_task_test")
+    dbt_test_task_func = dbt_task.with_options(
+        name="dbt_task_test", timeout_seconds=timeout_seconds
+    )
     test = dbt_test_task_func.submit(
         project_path=dbt_project_path,
         command=f"test {test_select_safe} {dbt_target_option}",

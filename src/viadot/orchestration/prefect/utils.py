@@ -58,7 +58,8 @@ def with_flow_timeout_param(
             ...
 
     If the wrapped callable already defines ``timeout_seconds``, the original
-    callable is returned unchanged.
+    signature is preserved and the provided timeout value is reused for runtime
+    enforcement.
 
     Args:
         default_timeout_seconds: Default timeout applied when the caller does not
@@ -71,33 +72,47 @@ def with_flow_timeout_param(
 
     def decorator(func: F) -> F:
         func_signature = signature(func)
-        if "timeout_seconds" in func_signature.parameters:
-            return func
+        has_timeout_param = "timeout_seconds" in func_signature.parameters
 
-        timeout_param = Parameter(
-            "timeout_seconds",
-            kind=Parameter.KEYWORD_ONLY,
-            default=default_timeout_seconds,
-            annotation=int,
-        )
-
-        params = list(func_signature.parameters.values())
-        kwargs_idx = next(
-            (idx for idx, p in enumerate(params) if p.kind == Parameter.VAR_KEYWORD),
-            None,
-        )
-        if kwargs_idx is None:
-            new_params = [*params, timeout_param]
+        if has_timeout_param:
+            new_signature = func_signature
         else:
-            new_params = [*params[:kwargs_idx], timeout_param, *params[kwargs_idx:]]
+            timeout_param = Parameter(
+                "timeout_seconds",
+                kind=Parameter.KEYWORD_ONLY,
+                default=default_timeout_seconds,
+                annotation=int,
+            )
 
-        new_signature = func_signature.replace(parameters=new_params)
+            params = list(func_signature.parameters.values())
+            kwargs_idx = next(
+                (
+                    idx
+                    for idx, p in enumerate(params)
+                    if p.kind == Parameter.VAR_KEYWORD
+                ),
+                None,
+            )
+            if kwargs_idx is None:
+                new_params = [*params, timeout_param]
+            else:
+                new_params = [*params[:kwargs_idx], timeout_param, *params[kwargs_idx:]]
+
+            new_signature = func_signature.replace(parameters=new_params)
 
         if iscoroutinefunction(func):
 
             @wraps(func)
             async def async_wrapped(*args: object, **kwargs: object) -> object:
-                timeout_seconds = kwargs.pop("timeout_seconds", default_timeout_seconds)
+                if has_timeout_param:
+                    bound_arguments = func_signature.bind_partial(*args, **kwargs)
+                    timeout_seconds = bound_arguments.arguments.get(
+                        "timeout_seconds", default_timeout_seconds
+                    )
+                else:
+                    timeout_seconds = kwargs.pop(
+                        "timeout_seconds", default_timeout_seconds
+                    )
                 with timeout_async(seconds=timeout_seconds):
                     return await func(*args, **kwargs)
 
@@ -106,7 +121,13 @@ def with_flow_timeout_param(
 
         @wraps(func)
         def wrapped(*args: object, **kwargs: object) -> object:
-            timeout_seconds = kwargs.pop("timeout_seconds", default_timeout_seconds)
+            if has_timeout_param:
+                bound_arguments = func_signature.bind_partial(*args, **kwargs)
+                timeout_seconds = bound_arguments.arguments.get(
+                    "timeout_seconds", default_timeout_seconds
+                )
+            else:
+                timeout_seconds = kwargs.pop("timeout_seconds", default_timeout_seconds)
             with timeout(seconds=timeout_seconds):
                 return func(*args, **kwargs)
 
