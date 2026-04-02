@@ -11,7 +11,6 @@ from prefect.logging import get_run_logger
 from prefect.states import Failed, State
 
 from viadot.orchestration.prefect.tasks import (
-    SmtpConfig,
     clone_repo,
     dbt_task,
     dbt_test_failure_notifier,
@@ -57,9 +56,8 @@ def transform_and_catalog(  # noqa: PLR0913, PLR0915
     run_results_storage_credentials_secret: str | None = None,
     fail_flow_only_on_build_failure: bool = False,
     additional_recipients: list[str] | None = None,
-    recipients: list[str] | None = None,
-    smtp_config: SmtpConfig | None = None,
-    enable_notifications: bool = True,
+    notification_recipients: list[str] | None = None,
+    smtp_credential_secret: str | None = None,
     gh_action_actor: str | None = None,
     *,
     timeout_seconds: int = DEFAULT_TIMEOUT_SECONDS,
@@ -118,18 +116,14 @@ def transform_and_catalog(  # noqa: PLR0913, PLR0915
             When True:
                 - The flow will only fail if model building fails
                 - Test failures alone won't cause the flow failure
-        recipients (list[str] | None, optional): Primary recipient list. If provided,
+        notification_recipients (list[str] | None, optional): Primary recipient list. If provided,
             it takes precedence over the extracted owners email addresses from dbt
             metadata. Defaults to None.
         additional_recipients (list[str] | None, optional): Extra email addresses
             to be appended to the final recipient list regardless of other settings.
             Defaults to None.
-        enable_notifications (bool): Whether to send email notifications for failed
-            dbt tests. If True, notifications are sent to Technical Owners defined
-            in dbt's meta config, with `notification_recipients` used as
-            a fallback when no owner is found.
-            If False, no notifications are sent regardless of
-            `notification_recipients`. Defaults to True.
+        smtp_credential_secret (str | None, optional): The name of the secret block in
+            Prefect holding SMTP credentials. Defaults to None.
         gh_action_actor (str, optional): GitHub Actions actor that triggered the
             workflow. Defaults to None.
         timeout_seconds (int): Maximum runtime for the flow and each spawned dbt task.
@@ -296,13 +290,14 @@ def transform_and_catalog(  # noqa: PLR0913, PLR0915
             config_key=run_results_storage_config_key,
             credentials_secret=run_results_storage_credentials_secret,
         )
-    if enable_notifications:
+    if smtp_credential_secret:
+        smtp_credential = get_credentials(smtp_credential_secret)
         dbt_test_failure_notifier(
             results_file_path=run_results_file_path,
             manifest_file_path=str(dbt_target_dir_path / "manifest.json"),
-            recipients=recipients,
+            recipients=notification_recipients,
             additional_recipients=additional_recipients,
-            smtp_config=smtp_config,
+            smtp_credential=smtp_credential,
         )
 
     remove_dbt_repo_dir(

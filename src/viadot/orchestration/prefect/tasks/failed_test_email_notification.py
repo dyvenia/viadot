@@ -6,12 +6,14 @@ import json
 from pathlib import Path
 import re
 import smtplib
-
+import logging
 import pandas as pd
 from prefect import task
 from prefect.blocks.system import Secret
 from prefect.logging import get_run_logger
 from pydantic import BaseModel
+
+from viadot.orchestration.prefect.utils import get_credentials
 
 
 class SmtpConfig(BaseModel):
@@ -262,6 +264,7 @@ def send_test_failure_notification(
     server: smtplib.SMTP,
     recipients: list[str] | None = None,
     additional_recipients: list[str] | None = None,
+    logger: logging.Logger | None = None,
 ) -> None:
     """Send an email notification for a failed DBT test.
 
@@ -311,6 +314,16 @@ def send_test_failure_notification(
     </body>
     </html>
     """
+    if logger:
+        logger.info(
+        "Sending DBT test failure notification.",
+        extra={
+            "schema": schema_name,
+            "model": model_name,
+            "sender": sender,
+            "recipients": all_recipients,
+        },
+    )
 
     msg = MIMEMultipart("mixed")
     msg["From"] = sender
@@ -331,7 +344,7 @@ def dbt_test_failure_notifier(
     manifest_file_path: str,
     additional_recipients: list[str] | None,
     recipients: list[str] | None,
-    smtp_config: SmtpConfig | None = None,
+    smtp_credential: dict | None = None,
     test_types: tuple[str, ...] = (
         "not_null",
         "unique",
@@ -355,11 +368,8 @@ def dbt_test_failure_notifier(
     df_failed_tests = pd.DataFrame(failed_tests)
     dfs_list = [group for _, group in df_failed_tests.groupby("model")]
 
-    if smtp_config is None:
-        smtp_config = SmtpConfig(
-            sender=Secret.load("smtp-sender").get(),
-            password=Secret.load("smtp-password").get(),
-        )
+    smtp_config  = SmtpConfig(**smtp_credential)  # type: ignore
+    )
 
     with smtplib.SMTP(smtp_config.host, smtp_config.port) as server:
         server.starttls()
@@ -373,6 +383,7 @@ def dbt_test_failure_notifier(
                     server,
                     additional_recipients,
                     recipients,
+                    logger # type: ignore
                 )
                 sent += 1
             except smtplib.SMTPException:
@@ -383,4 +394,4 @@ def dbt_test_failure_notifier(
                 logger.exception(
                     f"Unexpected error for {single_model_tests['model'].iloc[0]}"
                 )
-        logger.info(f"Sent {sent}/{len(failed_tests)} failure notification(s).")
+        logger.info(f"Sent {sent}/{len(dfs_list)} failure notification(s).")
