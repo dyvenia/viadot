@@ -117,8 +117,8 @@ def transform_and_catalog(  # noqa: PLR0913, PLR0915
                 - The flow will only fail if model building fails
                 - Test failures alone won't cause the flow failure
         notification_recipients (list[str] | None, optional): Primary recipient list.
-        If provided, it takes precedence over the extracted owners email addresses
-        from dbt metadata. Defaults to None.
+            If provided, it takes precedence over the extracted owners email addresses
+            from dbt metadata. Defaults to None.
         additional_recipients (list[str] | None, optional): Extra email addresses
             to be appended to the final recipient list regardless of other settings.
             Defaults to None.
