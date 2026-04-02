@@ -343,13 +343,11 @@ def send_test_failure_notification(
     """
     if logger:
         logger.info(
-            "Sending DBT test failure notification.",
-            extra={
-                "schema": schema_name,
-                "model": model_name,
-                "sender": sender,
-                "recipients": all_recipients,
-            },
+            f"Sending DBT test failure notification.\n"
+            f"  schema={schema_name}\n"
+            f"  model={model_name}\n"
+            f"  sender={sender}\n"
+            f"  recipients={all_recipients}"
         )
 
     msg = MIMEMultipart("mixed")
