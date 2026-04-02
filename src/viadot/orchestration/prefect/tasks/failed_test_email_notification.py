@@ -3,7 +3,7 @@
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 import json
-import logging
+from logging import Logger, LoggerAdapter
 from pathlib import Path
 import re
 import smtplib
@@ -262,7 +262,7 @@ def send_test_failure_notification(
     server: smtplib.SMTP,
     recipients: list[str] | None = None,
     additional_recipients: list[str] | None = None,
-    logger: logging.Logger | None = None,
+    logger: Logger | LoggerAdapter | None = None,
 ) -> None:
     """Send an email notification for a failed DBT test.
 
@@ -278,6 +278,7 @@ def send_test_failure_notification(
             to be appended to the final recipient list regardless of other settings.
             Defaults to None.
     """
+    logger = logger or get_run_logger()
     columns_to_skip = {"owners"}
     schema_name = (
         failed_test["schema"].iloc[0]
@@ -312,14 +313,13 @@ def send_test_failure_notification(
     </body>
     </html>
     """
-    if logger:
-        logger.info(
-            f"Sending DBT test failure notification.\n"
-            f"- schema={schema_name}\n"
-            f"- model={model_name}\n"
-            f"- sender={sender}\n"
-            f"- recipients={all_recipients}"
-        )
+    logger.info(
+        f"Sending DBT test failure notification.\n"
+        f"- schema={schema_name}\n"
+        f"- model={model_name}\n"
+        f"- sender={sender}\n"
+        f"- recipients={all_recipients}"
+    )
 
     msg = MIMEMultipart("mixed")
     msg["From"] = sender
