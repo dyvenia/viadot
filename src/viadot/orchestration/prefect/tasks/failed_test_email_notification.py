@@ -171,35 +171,6 @@ def extract_failed_tests(
         meta=[["metadata", "generated_at"]],
         record_path="results",
     )
-    test_data = {
-        "status": "error",
-        "timing": [
-            {
-                "name": "compile",
-                "started_at": "2026-01-01T00:00:00.000000Z",
-                "completed_at": "2026-01-01T00:00:00.000000Z",
-            },
-            {
-                "name": "execute",
-                "started_at": "2026-01-01T00:00:00.000000Z",
-                "completed_at": "2026-01-01T00:00:00.000000Z",
-            },
-        ],
-        "thread_id": "Thread-1 (worker)",
-        "execution_time": 1.23,
-        "message": 'Database Error in test model_test_name (models/gold/model/model.yml)\n  relation "schema.some_table" does not exist',
-        "failures": None,
-        "unique_id": "test.project.not_null_orders__customer_id.abc123def456",
-        "compiled": True,
-        "compiled_code": 'SELECT col1 FROM "devdb"."public"."orders" WHERE customer_id IS NOT NULL',
-        "relation_name": '"devdb"."public"."orders"',
-        "batch_results": None,
-        "adapter_response._message": None,
-        "adapter_response.rows_affected": None,
-        "metadata.generated_at": "2026-01-01T00:00:00.000000Z",
-    }
-    df = pd.DataFrame([test_data])
-
     if df.empty:
         return []
     test_identifier = "^test\\."
@@ -344,10 +315,10 @@ def send_test_failure_notification(
     if logger:
         logger.info(
             f"Sending DBT test failure notification.\n"
-            f"  schema={schema_name}\n"
-            f"  model={model_name}\n"
-            f"  sender={sender}\n"
-            f"  recipients={all_recipients}"
+            f"- schema={schema_name}\n"
+            f"- model={model_name}\n"
+            f"- sender={sender}\n"
+            f"- recipients={all_recipients}"
         )
 
     msg = MIMEMultipart("mixed")
