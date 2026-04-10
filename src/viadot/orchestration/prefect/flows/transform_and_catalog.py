@@ -85,9 +85,10 @@ def transform_and_catalog(  # noqa: PLR0913, PLR0915
             Defaults to None.
         dbt_selects (dict, optional): Valid
             [dbt node selection](https://docs.getdbt.com/reference/node-selection/syntax)
-            expressions. Valid keys are `run`, `test`,`build`, and `source_freshness`.
-                The test select expression is taken from run's, as long as run select is
-                provided. Defaults to None.
+            expressions. Valid keys are `run`, `test`, `build`, and `source_freshness`.
+            When only `test` is provided, the flow runs dbt tests without a preceding
+            dbt run. When `run` is provided and `test` is omitted, the test selector
+            defaults to the run selector. Defaults to None.
         dbt_target (str): The dbt target to use. If not specified, the default dbt
             target (as specified in `profiles.yaml`) will be used. Defaults to None.
         dbt_target_dir_path (str): The path to your dbt project's target
@@ -161,7 +162,7 @@ def transform_and_catalog(  # noqa: PLR0913, PLR0915
             `dbt_select={"run: "models/staging"}`
         - runs a specific model in a folder:
             `dbt_select={"run": "marts.domain.some_model"}`
-        - runs tests for a specific model:
+        - runs only tests for a specific model:
             `dbt_select={"test": "my_model"}`
         - build a specific model:
             `dbt_select={"build": "my_model"}`
@@ -200,17 +201,30 @@ def transform_and_catalog(  # noqa: PLR0913, PLR0915
 
     if metadata_kind == "model_run":
         # Produce `run-results.json` artifact for Luma ingestion.
-        if dbt_selects:
-            build_select = dbt_selects.get("build")
-            run_select = dbt_selects.get("run")
-            test_select = dbt_selects.get("test", run_select)
+        build_select = None
+        run_select = None
+        test_select = None
+        build_select_safe = ""
+        run_select_safe = ""
+        test_select_safe = ""
 
-            build_select_safe = f"-s {build_select}" if build_select is not None else ""
-            run_select_safe = f"-s {run_select}" if run_select is not None else ""
-            test_select_safe = f"-s {test_select}" if test_select is not None else ""
-        else:
-            run_select_safe = ""
-            test_select_safe = ""
+        def normalize_select(select: str | None) -> str | None:
+            """Normalize empty dbt selectors to None."""
+            if select is None:
+                return None
+
+            stripped_select = select.strip()
+            return stripped_select or None
+
+        if dbt_selects:
+            build_select = normalize_select(dbt_selects.get("build"))
+            run_select = normalize_select(dbt_selects.get("run"))
+            test_select = normalize_select(dbt_selects.get("test")) or run_select
+
+            build_select_safe = f"-s {build_select}" if build_select else ""
+            run_select_safe = f"-s {run_select}" if run_select else ""
+            test_select_safe = f"-s {test_select}" if test_select else ""
+
         if build_select:
             # If build task is used, run and test tasks are not needed.
             # Build task executes run and tests commands internally.
@@ -226,6 +240,16 @@ def transform_and_catalog(  # noqa: PLR0913, PLR0915
                 return_all=True,
             )
             build.result()
+        elif test_select and run_select is None:
+            test_task = dbt_task.with_options(
+                name="dbt_test", timeout_seconds=timeout_seconds
+            )
+            test = test_task.submit(
+                project_path=dbt_project_path_full,
+                command=f"test {test_select_safe} {dbt_target_option}",
+                raise_on_failure=False,
+            )
+            test.result()
         else:
             run_task = dbt_task.with_options(
                 name="dbt_run", timeout_seconds=timeout_seconds
