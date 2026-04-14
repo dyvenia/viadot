@@ -948,8 +948,11 @@ class SAPRFC(Source):
         func = self.func
         separators = self._get_separators()
 
-        # Storage depending on whether we have unique keys
+        # Storage depending on whether we have unique keys.
         has_unique = isinstance(self.rfc_unique_id, list) and self.rfc_unique_id
+        # Match to_df behavior: keyed merging is only needed when data is split
+        # across multiple column chunks.
+        use_keyed_merge = bool(has_unique) and len(fields_lists) > 1
         rows_by_key: OrderedDict[tuple[str, ...], dict[str, Any]] | None = None
         rows_list: list[dict[str, Any]] | None = None
         row_index = 0
@@ -960,7 +963,7 @@ class SAPRFC(Source):
             self._query["DELIMITER"] = sep
 
             # Initialize storage for this attempt
-            if has_unique:
+            if use_keyed_merge:
                 rows_by_key = OrderedDict()
             else:
                 rows_list = []
@@ -984,8 +987,7 @@ class SAPRFC(Source):
                     found_any_data = True
                     # Split records into values
                     records = self.split_wa_records(response["DATA"], sep)
-
-                    if has_unique:
+                    if use_keyed_merge:
                         # Ensure unique ID columns get padded per SAP metadata
                         for values in records:
                             # Map current column_batch values to column names
@@ -1036,7 +1038,7 @@ class SAPRFC(Source):
             # If we successfully found any data for this separator, proceed
             if found_any_data:
                 # Normalize rows to a list of dicts
-                if has_unique:
+                if use_keyed_merge:
                     result_rows = (
                         list(rows_by_key.values()) if rows_by_key is not None else []
                     )
