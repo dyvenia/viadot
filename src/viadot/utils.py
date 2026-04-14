@@ -11,6 +11,7 @@ from typing import TYPE_CHECKING, Any, Literal, Optional
 
 import pandas as pd
 import pendulum
+import pyarrow as pa
 import pyodbc
 import requests
 from requests.adapters import HTTPAdapter
