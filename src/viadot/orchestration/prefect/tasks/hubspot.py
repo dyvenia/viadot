@@ -5,19 +5,21 @@ from typing import Any
 import pandas as pd
 from prefect import get_run_logger, task
 
+from viadot.config import get_source_credentials
 from viadot.orchestration.prefect.exceptions import MissingSourceCredentialsError
 from viadot.orchestration.prefect.utils import get_credentials
 from viadot.sources import Hubspot
 
 
 @task(retries=3, log_prints=True, retry_delay_seconds=10, timeout_seconds=60 * 60)
-def hubspot_to_df(
+def hubspot_to_df(  # NOQA: PLR0913
     endpoint: str | None = None,
     api_method: str | None = None,
     campaign_ids: list[str] | None = None,
     contact_type: str = "influencedContacts",
     config_key: str | None = None,
     credentials_secret: str | None = None,
+    credentials: dict[str, Any] | None = None,
     filters: list[dict[str, Any]] | None = None,
     properties: list[Any] | None = None,
     nrows: int = 1000,
@@ -33,6 +35,9 @@ def hubspot_to_df(
             relevant credentials. Defaults to None.
         credentials_secret (Optional[str], optional): The name of the Azure Key
             Vault secret where credentials are stored. Defaults to None.
+        credentials (dict[str, Any], optional): Credentials to Hubspot.
+            If provided, this value has priority over `config_key`
+            and `credentials_secret`. Defaults to None.
         filters (Optional[List[Dict[str, Any]]], optional): Filters defined for the API
             body in specific order. Defaults to None.
         properties (Optional[List[Any]], optional): List of user-defined columns to be
@@ -60,11 +65,14 @@ def hubspot_to_df(
     Returns:
         pd.DataFrame: The response data as a pandas DataFrame.
     """
-    if not (credentials_secret or config_key):
+    if not (credentials or config_key or credentials_secret):
         raise MissingSourceCredentialsError
 
-    if not config_key:
-        credentials = get_credentials(credentials_secret)
+    credentials = (
+        credentials
+        or get_source_credentials(config_key)
+        or get_credentials(credentials_secret)
+    )
 
     hubspot = Hubspot(
         credentials=credentials,

@@ -21,6 +21,7 @@ with contextlib.suppress(ImportError):
 def informix_to_df(
     query: str,
     credentials_secret: str | None = None,
+    credentials: dict[str, Any] | None = None,
     config_key: str | None = None,
     tests: dict[str, Any] | None = None,
 ) -> pd.DataFrame:
@@ -29,6 +30,9 @@ def informix_to_df(
     Args:
         query (str): The query to execute.
         credentials_secret (str): The credentials secret.
+        credentials (dict[str, Any], optional): Credentials to Informix.
+            If provided, this value has priority over `config_key`
+            and `credentials_secret`. Defaults to None.
         config_key (str): The configuration key.
         tests (dict[str, Any]): The tests to run on the data.
 
@@ -39,13 +43,15 @@ def informix_to_df(
         MissingSourceCredentialsError: If the credentials secret
             or configuration key is not provided.
     """
-    if not (credentials_secret or config_key):
+    if not (credentials or config_key or credentials_secret):
         raise MissingSourceCredentialsError
 
     logger = get_run_logger()
 
-    credentials = get_source_credentials(config_key) or get_credentials(
-        credentials_secret
+    credentials = (
+        credentials
+        or get_source_credentials(config_key)
+        or get_credentials(credentials_secret)
     )
 
     informix = Informix(credentials=credentials)
@@ -63,6 +69,7 @@ def informix_to_df(
 def informix_query(
     query: str,
     credentials_secret: str | None = None,
+    credentials: dict[str, Any] | None = None,
     config_key: str | None = None,
 ) -> list[Record] | bool:
     """Execute a query on Informix Informix.
@@ -70,18 +77,23 @@ def informix_query(
     Args:
         query (str): The query to execute.
         credentials_secret (str): The credentials secret.
+        credentials (dict[str, Any], optional): Credentials to Informix.
+            If provided, this value has priority over `config_key`
+            and `credentials_secret`. Defaults to None.
         config_key (str): The configuration key.
 
     Returns:
         list[Record] | bool: The result of the query.
     """
-    if not (credentials_secret or config_key):
+    if not (credentials or config_key or credentials_secret):
         raise MissingSourceCredentialsError
 
     logger = get_run_logger()
 
-    credentials = get_source_credentials(config_key) or get_credentials(
-        credentials_secret
+    credentials = (
+        credentials
+        or get_source_credentials(config_key)
+        or get_credentials(credentials_secret)
     )
     informix = Informix(credentials=credentials)
     result = informix.run(query)

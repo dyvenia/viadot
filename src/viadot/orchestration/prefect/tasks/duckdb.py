@@ -16,8 +16,6 @@ from viadot.sources.base import Record
 def duckdb_query(
     query: str,
     fetch_type: Literal["record", "dataframe"] = "record",
-    # Specifying credentials in a dictionary is not recommended in viadot tasks,
-    # but in this case credentials can include only database name.
     credentials: dict[str, Any] | None = None,
     credentials_secret: str | None = None,
     config_key: str | None = None,

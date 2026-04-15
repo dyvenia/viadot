@@ -1,7 +1,7 @@
 """Task for running BCP shell command."""
 
 import subprocess
-from typing import Literal
+from typing import Any, Literal
 
 from prefect import task
 from prefect.logging import get_run_logger
@@ -20,6 +20,7 @@ def bcp(
     error_log_file_path: str = "./log_file.log",
     on_error: Literal["skip", "fail"] = "skip",
     credentials_secret: str | None = None,
+    credentials: dict[str, Any] | None = None,
     config_key: str | None = None,
 ) -> None:
     """Upload data from a CSV file into an SQLServer table using BCP.
@@ -40,15 +41,20 @@ def bcp(
         credentials_secret (str, optional): The name of the secret storing
             the credentials to the SQLServer. Defaults to None.
             More info on: https://docs.prefect.io/concepts/blocks/
+        credentials (dict[str, Any], optional): Credentials to SQLServer.
+            If provided, this value has priority over `config_key`
+            and `credentials_secret`. Defaults to None.
         config_key (str, optional): The key in the viadot config holding relevant
             credentials to the SQLServer. Defaults to None.
 
     """
-    if not (credentials_secret or config_key):
+    if not (credentials or config_key or credentials_secret):
         raise MissingSourceCredentialsError
 
-    credentials = get_source_credentials(config_key) or get_credentials(
-        credentials_secret
+    credentials = (
+        credentials
+        or get_source_credentials(config_key)
+        or get_credentials(credentials_secret)
     )
     fqn = f"{schema}.{table}" if schema else table
     server = credentials["server"]

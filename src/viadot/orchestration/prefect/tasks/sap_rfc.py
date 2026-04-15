@@ -10,6 +10,7 @@ from prefect.logging import get_run_logger
 
 with contextlib.suppress(ImportError):
     from viadot.sources import SAPRFC
+from viadot.config import get_source_credentials
 from viadot.orchestration.prefect.exceptions import MissingSourceCredentialsError
 from viadot.orchestration.prefect.utils import get_credentials
 
@@ -84,7 +85,7 @@ def sap_rfc_to_df(  # noqa: PLR0913
             ...
         )
     """
-    if not (credentials_secret or credentials or config_key):
+    if not (credentials or config_key or credentials_secret):
         raise MissingSourceCredentialsError
 
     if query is None:
@@ -93,7 +94,11 @@ def sap_rfc_to_df(  # noqa: PLR0913
     logger = get_run_logger()
     logger.warning("If the column/set are not unique the table will be malformed.")
 
-    credentials = credentials or get_credentials(credentials_secret)
+    credentials = (
+        credentials
+        or (get_source_credentials(config_key) if config_key else None)
+        or (get_credentials(credentials_secret) if credentials_secret else None)
+    )
 
     sap = SAPRFC(
         sep=sep,

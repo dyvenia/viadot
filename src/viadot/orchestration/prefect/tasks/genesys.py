@@ -5,6 +5,7 @@ from typing import Any
 import pandas as pd
 from prefect import get_run_logger, task
 
+from viadot.config import get_source_credentials
 from viadot.exceptions import APIError
 from viadot.orchestration.prefect.exceptions import MissingSourceCredentialsError
 from viadot.orchestration.prefect.utils import get_credentials
@@ -15,6 +16,7 @@ from viadot.sources import Genesys
 def genesys_to_df(  # noqa: PLR0913
     config_key: str | None = None,
     azure_key_vault_secret: str | None = None,
+    credentials: dict[str, Any] | None = None,
     verbose: bool | None = None,
     endpoint: str | None = None,
     environment: str = "mypurecloud.de",
@@ -34,6 +36,9 @@ def genesys_to_df(  # noqa: PLR0913
             credentials. Defaults to None.
         azure_key_vault_secret (Optional[str], optional): The name of the Azure Key
             Vault secret where credentials are stored. Defaults to None.
+        credentials (dict[str, Any], optional): Credentials to Genesys.
+            If provided, this value has priority over `config_key`
+            and `azure_key_vault_secret`. Defaults to None.
         verbose (bool, optional): Increase the details of the logs printed on the
                 screen. Defaults to False.
         endpoint (Optional[str], optional): Final end point to the API.
@@ -78,11 +83,14 @@ def genesys_to_df(  # noqa: PLR0913
     """
     logger = get_run_logger()
 
-    if not (azure_key_vault_secret or config_key):
+    if not (credentials or config_key or azure_key_vault_secret):
         raise MissingSourceCredentialsError
 
-    if not config_key:
-        credentials = get_credentials(azure_key_vault_secret)
+    credentials = (
+        credentials
+        or get_source_credentials(config_key)
+        or get_credentials(azure_key_vault_secret)
+    )
 
     if endpoint is None:
         msg = "The API endpoint parameter was not defined."

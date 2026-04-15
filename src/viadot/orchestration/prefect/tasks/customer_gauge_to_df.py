@@ -6,6 +6,7 @@ from typing import Any, Literal
 import pandas as pd
 from prefect import task
 
+from viadot.config import get_source_credentials
 from viadot.orchestration.prefect.exceptions import MissingSourceCredentialsError
 from viadot.orchestration.prefect.utils import get_credentials
 from viadot.sources import CustomerGauge
@@ -15,6 +16,7 @@ from viadot.sources import CustomerGauge
 def customer_gauge_to_df(  # noqa: PLR0913
     config_key: str | None = None,
     azure_key_vault_secret: str | None = None,
+    credentials: dict[str, Any] | None = None,
     endpoint: Literal["responses", "non-responses"] = "non-responses",
     cursor: int | None = None,
     pagesize: int = 1000,
@@ -40,6 +42,9 @@ def customer_gauge_to_df(  # noqa: PLR0913
         azure_key_vault_secret (str, optional): The name of the Azure Key Vault secret
             containing a dictionary with ['client_id', 'client_secret'].
             Defaults to None.
+        credentials (dict[str, Any], optional): Credentials to Customer Gauge.
+            If provided, this value has priority over `config_key`
+            and `azure_key_vault_secret`. Defaults to None.
         endpoint (Literal["responses", "non-responses"], optional): Indicate which
             endpoint to connect. Defaults to "non-responses.
         cursor (int, optional): Cursor value to navigate to the page.
@@ -84,11 +89,14 @@ def customer_gauge_to_df(  # noqa: PLR0913
     Returns:
         pd.DataFrame: The response data as a Pandas Data Frame.
     """
-    if not (azure_key_vault_secret or config_key):
+    if not (credentials or config_key or azure_key_vault_secret):
         raise MissingSourceCredentialsError
 
-    if not config_key:
-        credentials = get_credentials(azure_key_vault_secret)
+    credentials = (
+        credentials
+        or get_source_credentials(config_key)
+        or get_credentials(azure_key_vault_secret)
+    )
 
     customer_gauge = CustomerGauge(credentials=credentials, config_key=config_key)
     customer_gauge.api_connection(
