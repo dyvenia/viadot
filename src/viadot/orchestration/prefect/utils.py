@@ -776,7 +776,7 @@ async def shell_run_command(
     shell: str = "bash",
     return_all: bool = False,
     stream_level: int = logging.INFO,
-    logger: logging.Logger | None = None,
+    logger: logging.Logger | logging.LoggerAdapter | None = None,
     raise_on_failure: bool = True,
 ) -> list[str] | str:
     """Runs arbitrary shell commands as a util.
@@ -795,7 +795,7 @@ async def shell_run_command(
             or just the last line as a string; defaults to `False`.
         stream_level: The logging level of the stream.
         logger: Can pass a desired logger; if not passed, will automatically
-            gets a run logger from Prefect.
+            get a run logger from Prefect.
         raise_on_failure: Whether to raise an exception if the command fails.
 
     Returns:

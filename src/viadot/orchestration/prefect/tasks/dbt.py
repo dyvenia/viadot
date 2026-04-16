@@ -2,6 +2,7 @@
 
 import logging
 import os
+from pathlib import Path
 from typing import Any
 
 from prefect import task
@@ -13,7 +14,7 @@ from viadot.orchestration.prefect.utils import shell_run_command
 @task(retries=0, timeout_seconds=2 * 60 * 60)
 async def dbt_task(
     command: str = "run",
-    project_path: str | None = None,
+    project_path: str | Path | None = None,
     env: dict[str, Any] | None = None,
     shell: str = "bash",
     return_all: bool = False,
