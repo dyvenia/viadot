@@ -51,8 +51,10 @@ def transform_and_catalog(  # noqa: PLR0913, PLR0915, C901, PLR0912 | Complexity
     dbt_target_dir_path: str | Path | None = None,
     luma_url: str | None = None,
     luma_follow: bool = False,
-    perspective_url: str | None = None,
+    perspective_api_url: str | None = None,
+    perspective_api_token_secret: str | None = None,
     perspective_follow: bool = False,
+    perspective_dry_run: bool = False,
     metadata_kind: Literal["model", "model_run"] = "model_run",
     run_results_storage_path: str | None = None,
     run_results_storage_config_key: str | None = None,
@@ -106,14 +108,18 @@ def transform_and_catalog(  # noqa: PLR0913, PLR0915, C901, PLR0912 | Complexity
         luma_follow (bool, optional): Whether to follow the ingestion process until it's
             completed (by default, ingestion request is sent without awaiting for the
             response). By default, `False`.
-        perspective_url (str, optional): The URL of the Perspective instance to ingest
-            into. Defaults to None. NOTE: Do not use loopback/local addresses as the
-            default value or mention them in this docstring — WAF inspects the
+        perspective_api_url (str, optional): The URL of the Perspective instance to
+            ingest into. Defaults to None. NOTE: Do not use loopback/local addresses as
+            the default value or mention them in this docstring — WAF inspects the
             deployment registration request body and blocks on those strings. The actual
             fallback address is applied inside the flow body instead.
+        perspective_api_token_secret (str | None, optional): The name of the secret
+            block in Prefect holding the Perspective API token. Defaults to None.
         perspective_follow (bool, optional): Whether to follow the ingestion process
             until it's completed (by default, ingestion request is sent without awaiting
             for the response). By default, `False`.
+        perspective_dry_run (bool, optional): Whether to perform a dry run of the
+            ingestion process. By default, `False`.
         metadata_kind (Literal["model", "model_run"], optional): The kind of metadata
             to ingest. Defaults to "model_run".
         run_results_storage_path (str, optional): The directory to upload the
@@ -286,14 +292,19 @@ def transform_and_catalog(  # noqa: PLR0913, PLR0915, C901, PLR0912 | Complexity
     # The metadata_kind check is for legacy support, since this flow used to also
     # support ingesting model metadata to Luma Catalog, but it's now suggested to do
     # this via simple CLI commands in the CI/CD pipeline.
-    if perspective_url and metadata_kind == "model_run":
-        if metadata_kind != "model_run":
-            logger.info("Perspective model metadata is sent via CI pipeline.")
+    if perspective_api_url and metadata_kind == "model_run":
+        perspective_api_token = (
+            get_credentials(perspective_api_token_secret)
+            if perspective_api_token_secret
+            else None
+        )
 
         upload_metadata_perspective = perspective_ingest_task.submit(
-            metadata_dir_path=dbt_target_dir_path,
-            perspective_url=perspective_url,
+            target_path=dbt_target_dir_path,
+            perspective_api_url=perspective_api_url,
+            perspective_api_token=perspective_api_token,
             follow=perspective_follow,
+            dry_run=perspective_dry_run,
         )
         upload_metadata_perspective.result()
 
