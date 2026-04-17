@@ -51,6 +51,7 @@ def transform_and_catalog(  # noqa: PLR0913, PLR0915, C901, PLR0912 | Complexity
     dbt_target_dir_path: str | Path | None = None,
     luma_url: str | None = None,
     luma_follow: bool = False,
+    enable_perspective: bool = False,
     perspective_api_url: str | None = None,
     perspective_api_token_secret: str | None = None,
     perspective_follow: bool = False,
@@ -108,6 +109,8 @@ def transform_and_catalog(  # noqa: PLR0913, PLR0915, C901, PLR0912 | Complexity
         luma_follow (bool, optional): Whether to follow the ingestion process until it's
             completed (by default, ingestion request is sent without awaiting for the
             response). By default, `False`.
+        enable_perspective (bool, optional): Whether to enable Perspective ingestion.
+            Defaults to False.
         perspective_api_url (str, optional): The URL of the Perspective instance to
             ingest into. Defaults to None. NOTE: Do not use loopback/local addresses as
             the default value or mention them in this docstring — WAF inspects the
@@ -292,7 +295,7 @@ def transform_and_catalog(  # noqa: PLR0913, PLR0915, C901, PLR0912 | Complexity
     # The metadata_kind check is for legacy support, since this flow used to also
     # support ingesting model metadata to Luma Catalog, but it's now suggested to do
     # this via simple CLI commands in the CI/CD pipeline.
-    if perspective_api_url and metadata_kind == "model_run":
+    if enable_perspective and metadata_kind == "model_run":
         perspective_api_token = (
             get_credentials(perspective_api_token_secret)
             if perspective_api_token_secret
