@@ -570,9 +570,9 @@ def add_viadot_metadata_columns_arrow(func: Callable) -> Callable:
         _viadot_source = instance.__class__.__name__
 
         length = table.num_rows
-        ts_value = datetime.now(timezone.utc).replace(microsecond=0).isoformat()
+        ts_value = datetime.now(timezone.utc).replace(microsecond=0)
         source_arr = pa.array([_viadot_source] * length)
-        ts_arr = pa.array([ts_value] * length)
+        ts_arr = pa.array([ts_value] * length, type=pa.timestamp("s", tz="UTC"))
 
         # Add both columns in a single reconstruction to minimize copies
         new_columns = [*table.columns, source_arr, ts_arr]
