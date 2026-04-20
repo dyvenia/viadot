@@ -1,6 +1,7 @@
 """Tasks for interacting with [Perspective](https://github.com/dyvenia/perspective)."""
 
 import os
+from pathlib import Path
 import subprocess
 
 from prefect import task
@@ -11,7 +12,7 @@ from prefect.logging import get_run_logger
 def perspective_ingest_task(
     perspective_api_url: str | None = None,
     perspective_api_token: str | None = None,
-    target_path: str | None = None,
+    target_path: str | Path | None = None,
     follow: bool = False,
     dry_run: bool = False,
 ) -> subprocess.CompletedProcess:
@@ -22,8 +23,8 @@ def perspective_ingest_task(
             results will be sent. Defaults to None.
         perspective_api_token (str | None): Token used for communication with
             Perspective. Defaults to None.
-        target_path (str | None): Path to dbt target directory in which run_results.json
-            file is present. Defaults to None.
+        target_path (str | Path | None): Path to dbt target directory in which
+            run_results.json file is present. Defaults to None.
         follow (bool): Whether --follow flag should be added to `perspective ingest`
             command. Defaults to False.
         dry_run (bool): Whether --dry-run flag should be added to `perspective ingest`
