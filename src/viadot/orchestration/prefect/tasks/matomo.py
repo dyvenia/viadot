@@ -5,6 +5,7 @@ from typing import Any, Literal
 import pandas as pd
 from prefect import task
 
+from viadot.config import get_source_credentials
 from viadot.orchestration.prefect.exceptions import MissingSourceCredentialsError
 from viadot.orchestration.prefect.utils import get_credentials
 from viadot.sources.matomo import Matomo
@@ -18,6 +19,7 @@ def matomo_to_df(
     params: dict[str, Any],
     config_key: str | None = None,
     credentials_secret: str | None = None,
+    credentials: dict[str, Any] | None = None,
     record_prefix: str | None = None,
     if_empty: Literal["warn", "skip", "fail"] = "warn",
     tests: dict[str, Any] | None = None,
@@ -36,6 +38,9 @@ def matomo_to_df(
         credentials_secret (str, optional): The name of the secret that stores Matomo
             credentials. Defaults to None.
             More info on: https://docs.prefect.io/concepts/blocks/
+        credentials (dict[str, Any], optional): Credentials to Matomo.
+            If provided, this value has priority over `config_key`
+            and `credentials_secret`. Defaults to None.
         params (dict[str, Any]): Parameters for the API request.
                 Necessary params and their examples are:
                     "module": "API",
@@ -79,10 +84,14 @@ def matomo_to_df(
     Returns:
         pd.DataFrame: The Matomo data as a pandas DataFrame.
     """
-    if not (credentials_secret or config_key):
+    if not (credentials or config_key or credentials_secret):
         raise MissingSourceCredentialsError
 
-    credentials = get_credentials(credentials_secret)
+    credentials = (
+        credentials
+        or get_source_credentials(config_key)
+        or get_credentials(credentials_secret)
+    )
     matomo = Matomo(
         credentials=credentials,
         config_key=config_key,

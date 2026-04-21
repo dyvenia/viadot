@@ -1,6 +1,6 @@
 """Task for downloading data from Epicor Prelude API."""
 
-from typing import Literal
+from typing import Any, Literal
 
 import pandas as pd
 from prefect import task
@@ -20,6 +20,7 @@ def epicor_to_df(
     start_date_field: str = "BegInvoiceDate",
     end_date_field: str = "EndInvoiceDate",
     credentials_secret: str | None = None,
+    credentials: dict[str, Any] | None = None,
     config_key: str | None = None,
     if_empty: Literal["warn", "fail", "skip"] = "warn",
 ) -> pd.DataFrame:
@@ -38,6 +39,9 @@ def epicor_to_df(
         credentials_secret (str, optional): The name of the secret storing
             the credentials. Defaults to None.
             More info on: https://docs.prefect.io/concepts/blocks/
+        credentials (dict[str, Any], optional): Credentials to Epicor.
+            If provided, this value has priority over `config_key`
+            and `credentials_secret`. Defaults to None.
         config_key (str, optional): The key in the viadot config holding relevant
             credentials. Defaults to None.
         if_empty (Literal["warn", "skip", "fail"], optional): Action to take if
@@ -48,13 +52,15 @@ def epicor_to_df(
                 Defaults to "warn".
 
     """
-    if not (credentials_secret or config_key):
+    if not (credentials or config_key or credentials_secret):
         raise MissingSourceCredentialsError
 
     logger = get_run_logger()
 
-    credentials = get_source_credentials(config_key) or get_credentials(
-        credentials_secret
+    credentials = (
+        credentials
+        or get_source_credentials(config_key)
+        or get_credentials(credentials_secret)
     )
     epicor = Epicor(
         credentials=credentials,

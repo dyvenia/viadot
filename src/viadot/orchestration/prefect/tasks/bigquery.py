@@ -1,8 +1,11 @@
 """'bigquery.py'."""
 
+from typing import Any
+
 import pandas as pd
 from prefect import task
 
+from viadot.config import get_source_credentials
 from viadot.orchestration.prefect.exceptions import MissingSourceCredentialsError
 from viadot.orchestration.prefect.utils import get_credentials
 from viadot.sources import BigQuery
@@ -12,6 +15,7 @@ from viadot.sources import BigQuery
 def bigquery_to_df(
     config_key: str | None = None,
     azure_key_vault_secret: str | None = None,
+    credentials: dict[str, Any] | None = None,
     query: str | None = None,
     dataset_name: str | None = None,
     table_name: str | None = None,
@@ -27,6 +31,9 @@ def bigquery_to_df(
             credentials. Defaults to None.
         azure_key_vault_secret (str, optional): The name of the Azure Key Vault secret
             where credentials are stored. Defaults to None.
+        credentials (dict[str, Any], optional): Credentials to BigQuery.
+            If provided, this value has priority over `config_key`
+            and `azure_key_vault_secret`. Defaults to None.
         query (str): SQL query to querying data in BigQuery. Format of basic query:
             (SELECT * FROM `{project}.{dataset_name}.{table_name}`). Defaults to None.
         dataset_name (str, optional): Dataset name. Defaults to None.
@@ -47,11 +54,14 @@ def bigquery_to_df(
     Returns:
         pd.DataFrame: The response data as a Pandas Data Frame.
     """
-    if not (azure_key_vault_secret or config_key):
+    if not (credentials or config_key or azure_key_vault_secret):
         raise MissingSourceCredentialsError
 
-    if not config_key:
-        credentials = get_credentials(azure_key_vault_secret)
+    credentials = (
+        credentials
+        or get_source_credentials(config_key)
+        or get_credentials(azure_key_vault_secret)
+    )
 
     bigquery = BigQuery(credentials=credentials, config_key=config_key)
 

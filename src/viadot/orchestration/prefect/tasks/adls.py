@@ -1,10 +1,12 @@
 """Tasks for interacting with Azure Data Lake (gen2)."""
 
 import contextlib
+from typing import Any
 
 import pandas as pd
 from prefect import task
 
+from viadot.config import get_source_credentials
 from viadot.orchestration.prefect.exceptions import MissingSourceCredentialsError
 from viadot.orchestration.prefect.utils import get_credentials
 
@@ -20,6 +22,7 @@ def adls_upload(
     recursive: bool = False,
     overwrite: bool = False,
     credentials_secret: str | None = None,
+    credentials: dict[str, Any] | None = None,
     config_key: str | None = None,
 ) -> None:
     """Upload file(s) to Azure Data Lake.
@@ -38,13 +41,20 @@ def adls_upload(
             to False.
         credentials_secret (str, optional): The name of the Azure Key Vault secret
             storing the credentials.
+        credentials (dict[str, Any], optional): Credentials to Azure Data Lake.
+            If provided, this value has priority over `config_key`
+            and `credentials_secret`. Defaults to None.
         config_key (str, optional): The key in the viadot config holding relevant
             credentials.
     """
-    if not (credentials_secret or config_key):
+    if not (credentials or config_key or credentials_secret):
         raise MissingSourceCredentialsError
 
-    credentials = get_credentials(credentials_secret)
+    credentials = (
+        credentials
+        or get_source_credentials(config_key)
+        or get_credentials(credentials_secret)
+    )
     lake = AzureDataLake(credentials=credentials, config_key=config_key)
 
     lake.upload(
@@ -61,6 +71,7 @@ def df_to_adls(
     path: str,
     sep: str = "\t",
     credentials_secret: str | None = None,
+    credentials: dict[str, Any] | None = None,
     config_key: str | None = None,
     overwrite: bool = False,
 ) -> None:
@@ -75,13 +86,20 @@ def df_to_adls(
             to False.
         credentials_secret (str, optional): The name of the Azure Key Vault secret
             storing the credentials.
+        credentials (dict[str, Any], optional): Credentials to Azure Data Lake.
+            If provided, this value has priority over `config_key`
+            and `credentials_secret`. Defaults to None.
         config_key (str, optional): The key in the viadot config holding relevant
             credentials. Defaults to None.
     """
-    if not (credentials_secret or config_key):
+    if not (credentials or config_key or credentials_secret):
         raise MissingSourceCredentialsError
 
-    credentials = get_credentials(credentials_secret)
+    credentials = (
+        credentials
+        or get_source_credentials(config_key)
+        or get_credentials(credentials_secret)
+    )
     lake = AzureDataLake(credentials=credentials, config_key=config_key)
 
     lake.from_df(

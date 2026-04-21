@@ -1,8 +1,11 @@
 """Tasks for interacting with EntraID."""
 
+from typing import Any
+
 import pandas as pd
 from prefect import get_run_logger, task
 
+from viadot.config import get_source_credentials
 from viadot.orchestration.prefect.exceptions import MissingSourceCredentialsError
 from viadot.orchestration.prefect.utils import get_credentials
 from viadot.sources import EntraID
@@ -11,6 +14,7 @@ from viadot.sources import EntraID
 @task(retries=3, retry_delay_seconds=10, timeout_seconds=60 * 60)
 def entraid_to_df(
     credentials_secret: str | None = None,
+    credentials: dict[str, Any] | None = None,
     config_key: str | None = None,
     max_concurrent_requests: int = 50,
 ) -> pd.DataFrame:
@@ -20,6 +24,9 @@ def entraid_to_df(
         credentials_secret (str, optional): The name of the secret storing
             the credentials for EntraID. Defaults to None.
             More info on: https://docs.prefect.io/concepts/blocks/
+        credentials (dict[str, Any], optional): Credentials to EntraID.
+            If provided, this value has priority over `config_key`
+            and `credentials_secret`. Defaults to None.
         config_key (str, optional): The key in the viadot config holding relevant
             credentials. Defaults to None.
         max_concurrent_requests (int, optional): The maximum number of concurrent
@@ -29,12 +36,16 @@ def entraid_to_df(
         pd.Dataframe: The pandas `DataFrame` containing data from EntraID.
 
     """
-    if not (credentials_secret or config_key):
+    if not (credentials or config_key or credentials_secret):
         raise MissingSourceCredentialsError
 
     logger = get_run_logger()
 
-    credentials = get_credentials(secret_name=credentials_secret)
+    credentials = (
+        credentials
+        or get_source_credentials(config_key)
+        or get_credentials(secret_name=credentials_secret)
+    )
 
     e = EntraID(
         credentials=credentials,

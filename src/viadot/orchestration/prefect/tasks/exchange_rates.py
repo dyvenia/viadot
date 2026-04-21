@@ -1,11 +1,12 @@
 """Tasks for interacting with the Exchange Rates API."""
 
 from datetime import datetime
-from typing import Literal
+from typing import Any, Literal
 
 import pandas as pd
 from prefect import task
 
+from viadot.config import get_source_credentials
 from viadot.orchestration.prefect.exceptions import MissingSourceCredentialsError
 from viadot.orchestration.prefect.utils import get_credentials
 from viadot.sources import ExchangeRates
@@ -20,6 +21,7 @@ Currency = Literal[
 def exchange_rates_to_df(
     currency: Currency = "USD",
     credentials_secret: str | None = None,
+    credentials: dict[str, Any] | None = None,
     config_key: str | None = None,
     start_date: str = datetime.today().strftime("%Y-%m-%d"),
     end_date: str = datetime.today().strftime("%Y-%m-%d"),
@@ -34,6 +36,9 @@ def exchange_rates_to_df(
         credentials_secret (str, optional): The name of the secret storing
             the credentials. Defaults to None.
             More info on: https://docs.prefect.io/concepts/blocks/
+        credentials (dict[str, Any], optional): Credentials to Exchange Rates.
+            If provided, this value has priority over `config_key`
+            and `credentials_secret`. Defaults to None.
         config_key (str, optional): The key in the viadot config holding relevant
             credentials.
             Defaults to None.
@@ -53,7 +58,7 @@ def exchange_rates_to_df(
     Returns:
         pd.DataFrame: The pandas `DataFrame` containing data from the file.
     """
-    if not (credentials_secret or config_key):
+    if not (credentials or config_key or credentials_secret):
         raise MissingSourceCredentialsError
 
     if not symbols:
@@ -71,8 +76,11 @@ def exchange_rates_to_df(
             "ISK",
         ]
 
-    if not config_key:
-        credentials = get_credentials(credentials_secret)
+    credentials = (
+        credentials
+        or get_source_credentials(config_key)
+        or get_credentials(credentials_secret)
+    )
 
     e = ExchangeRates(
         currency=currency,

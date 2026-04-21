@@ -35,6 +35,7 @@ def df_to_redshift_spectrum(  # noqa: PLR0913
     sep: str = ",",
     config_key: str | None = None,
     credentials_secret: str | None = None,
+    credentials: dict[str, Any] | None = None,
     **kwargs: dict[str, Any] | None,
 ) -> None:
     """Task to upload a pandas `DataFrame` to a csv or parquet file.
@@ -62,13 +63,18 @@ def df_to_redshift_spectrum(  # noqa: PLR0913
             credentials. Defaults to None.
         credentials_secret (str, optional): The name of a secret block in Prefect
             that stores AWS credentials. Defaults to None.
+        credentials (dict[str, Any], optional): Credentials to Redshift Spectrum.
+            If provided, this value has priority over `config_key`
+            and `credentials_secret`. Defaults to None.
         kwargs: The parameters to pass in awswrangler to_parquet/to_csv function.
     """
-    if not (credentials_secret or config_key):
+    if not (credentials or config_key or credentials_secret):
         raise MissingSourceCredentialsError
 
-    credentials = get_source_credentials(config_key) or get_credentials(
-        credentials_secret
+    credentials = (
+        credentials
+        or get_source_credentials(config_key)
+        or get_credentials(credentials_secret)
     )
 
     # Convert columns containing only null values to string to avoid errors

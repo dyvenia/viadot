@@ -1,8 +1,11 @@
 """Tasks from SFTP API."""
 
+from typing import Any
+
 import pandas as pd
 from prefect import task
 
+from viadot.config import get_source_credentials
 from viadot.orchestration.prefect.exceptions import MissingSourceCredentialsError
 from viadot.orchestration.prefect.utils import get_credentials
 from viadot.sources import Sftp
@@ -12,6 +15,7 @@ from viadot.sources import Sftp
 def sftp_to_df(
     config_key: str | None = None,
     azure_key_vault_secret: str | None = None,
+    credentials: dict[str, Any] | None = None,
     file_name: str | None = None,
     sep: str = "\t",
     columns: list[str] | None = None,
@@ -23,6 +27,9 @@ def sftp_to_df(
             credentials. Defaults to None.
         azure_key_vault_secret (str, optional): The name of the Azure Key Vault secret
             where credentials are stored. Defaults to None.
+        credentials (dict[str, Any], optional): Credentials to SFTP.
+            If provided, this value has priority over `config_key`
+            and `azure_key_vault_secret`. Defaults to None.
         file_name (str, optional): Path to the file in SFTP server. Defaults to None.
         sep (str, optional): The separator to use to read the CSV file.
             Defaults to "\t".
@@ -31,11 +38,14 @@ def sftp_to_df(
     Returns:
         pd.DataFrame: The response data as a pandas DataFrame.
     """
-    if not (azure_key_vault_secret or config_key):
+    if not (credentials or config_key or azure_key_vault_secret):
         raise MissingSourceCredentialsError
 
-    if not config_key:
-        credentials = get_credentials(azure_key_vault_secret)
+    credentials = (
+        credentials
+        or get_source_credentials(config_key)
+        or get_credentials(azure_key_vault_secret)
+    )
 
     sftp = Sftp(
         credentials=credentials,
@@ -50,6 +60,7 @@ def sftp_to_df(
 def sftp_list(
     config_key: str | None = None,
     azure_key_vault_secret: str | None = None,
+    credentials: dict[str, Any] | None = None,
     path: str | None = None,
     recursive: bool = False,
     matching_path: str | None = None,
@@ -61,6 +72,9 @@ def sftp_list(
             credentials. Defaults to None.
         azure_key_vault_secret (str, optional): The name of the Azure Key Vault secret
             where credentials are stored. Defaults to None.
+        credentials (dict[str, Any], optional): Credentials to SFTP.
+            If provided, this value has priority over `config_key`
+            and `azure_key_vault_secret`. Defaults to None.
         path (str, optional): Destination path from where to get the structure.
             Defaults to None.
         recursive (bool, optional): Get the structure in deeper folders.
@@ -71,11 +85,14 @@ def sftp_list(
     Returns:
         files_list (list[str]): List of files in the SFTP server.
     """
-    if not (azure_key_vault_secret or config_key):
+    if not (credentials or config_key or azure_key_vault_secret):
         raise MissingSourceCredentialsError
 
-    if not config_key:
-        credentials = get_credentials(azure_key_vault_secret)
+    credentials = (
+        credentials
+        or get_source_credentials(config_key)
+        or get_credentials(azure_key_vault_secret)
+    )
 
     sftp = Sftp(
         credentials=credentials,

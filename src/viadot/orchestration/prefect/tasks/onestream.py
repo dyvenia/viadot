@@ -7,6 +7,7 @@ import pandas as pd
 from prefect import task
 import requests
 
+from viadot.config import get_source_credentials
 from viadot.orchestration.prefect.exceptions import MissingSourceCredentialsError
 from viadot.orchestration.prefect.utils import get_credentials
 from viadot.sources.onestream import OneStream
@@ -72,6 +73,7 @@ def onestream_to_df(
     application: str,
     api: Literal["data_adapter", "sql_query"],
     credentials_secret: str | None = None,
+    credentials: dict[str, Any] | None = None,
     config_key: str | None = None,
     params: dict[str, str] | None = None,
     if_empty: Literal["warn", "skip", "fail"] = "fail",
@@ -91,6 +93,9 @@ def onestream_to_df(
         credentials_secret (str, optional): Azure Key Vault secret containing
             OneStream credentials. If neither this nor config_key is provided,
             an error is raised. Defaults to None.
+        credentials (dict[str, Any], optional): Credentials to OneStream.
+            If provided, this value has priority over `config_key`
+            and `credentials_secret`. Defaults to None.
         config_key (str, optional): Alternate config key from the local
             environment file. Defaults to None.
         params (dict[str, str], optional): Additional parameters.
@@ -118,16 +123,20 @@ def onestream_to_df(
                   Defaults to "".
 
     Raises:
-        MissingSourceCredentialsError: If neither credentials_secret nor
-            config_key is provided.
+        MissingSourceCredentialsError: If none of `credentials`,
+            `config_key`, or `credentials_secret` is provided.
 
     Returns:
         pd.DataFrame: The extracted data as a Pandas DataFrame.
     """
-    if not (credentials_secret or config_key):
+    if not (credentials or config_key or credentials_secret):
         raise MissingSourceCredentialsError
 
-    credentials = get_credentials(credentials_secret)  # type: ignore
+    credentials = (
+        credentials
+        or get_source_credentials(config_key)
+        or get_credentials(credentials_secret)
+    )
     onestream = OneStream(
         base_url=base_url,
         application=application,
@@ -145,6 +154,7 @@ def onestream_run_data_management_seq(
     application: str,
     dm_seq_name: str,
     credentials_secret: str | None = None,
+    credentials: dict[str, Any] | None = None,
     config_key: str | None = None,
     custom_subst_vars: dict[str, list[Any]] | None = None,
     params: dict[str, str] | None = None,
@@ -156,6 +166,9 @@ def onestream_run_data_management_seq(
         application (str): OneStream application name.
         dm_seq_name (str): Data Management Sequence name.
         credentials_secret (str, optional): Key Vault secret name. Defaults to None.
+        credentials (dict[str, Any], optional): Credentials to OneStream.
+            If provided, this value has priority over `config_key`
+            and `credentials_secret`. Defaults to None.
         config_key (str,optional): Viadot config key. Defaults to None.
         custom_subst_vars (dict[str, list[Any]], optional): A dictionary mapping
             substitution variable names to lists of possible values.Substition variables
@@ -172,10 +185,14 @@ def onestream_run_data_management_seq(
     Returns:
         requests.Response: Sequence execution response.
     """
-    if not (credentials_secret or config_key):
+    if not (credentials or config_key or credentials_secret):
         raise MissingSourceCredentialsError
 
-    credentials = get_credentials(credentials_secret)
+    credentials = (
+        credentials
+        or get_source_credentials(config_key)
+        or get_credentials(credentials_secret)
+    )
     onestream = OneStream(
         base_url=base_url,
         application=application,

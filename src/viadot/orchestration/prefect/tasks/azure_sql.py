@@ -5,6 +5,7 @@ from typing import Any, Literal
 import pandas as pd
 from prefect import task
 
+from viadot.config import get_source_credentials
 from viadot.orchestration.prefect.utils import get_credentials
 from viadot.sources import AzureSQL
 from viadot.utils import validate
@@ -14,6 +15,8 @@ from viadot.utils import validate
 def azure_sql_to_df(
     query: str | None = None,
     credentials_secret: str | None = None,
+    credentials: dict[str, Any] | None = None,
+    config_key: str | None = None,
     validate_df_dict: dict[str, Any] | None = None,
     convert_bytes: bool = False,
     remove_special_characters: bool | None = None,
@@ -27,6 +30,11 @@ def azure_sql_to_df(
         credentials_secret (str, optional): The name of the Azure Key Vault
             secret containing a dictionary with database credentials.
             Defaults to None.
+        credentials (dict[str, Any], optional): Credentials to Azure SQL.
+            If provided, this value has priority over `config_key`
+            and `credentials_secret`. Defaults to None.
+        config_key (str, optional): The key in the viadot config holding
+            relevant credentials. Defaults to None.
         validate_df_dict (Dict[str], optional): A dictionary with optional list of
             tests to verify the output dataframe. If defined, triggers the `validate_df`
             task from task_utils. Defaults to None.
@@ -43,16 +51,24 @@ def azure_sql_to_df(
             query returns no data. Defaults to None.
 
     Raises:
-        ValueError: Raising ValueError if credentials_secret is not provided
+        ValueError: Raised when none of `credentials`, `config_key`,
+            or `credentials_secret` is provided.
 
     Returns:
         pd.DataFrame: The response data as a pandas DataFrame.
     """
-    if not credentials_secret:
-        msg = "`credentials_secret` has to be specified and not empty."
+    if not (credentials or config_key or credentials_secret):
+        msg = (
+            "One of `credentials`, `config_key`, or `credentials_secret` "
+            "has to be specified and not empty."
+        )
         raise ValueError(msg)
 
-    credentials = get_credentials(credentials_secret)
+    credentials = (
+        credentials
+        or (get_source_credentials(config_key) if config_key else None)
+        or (get_credentials(credentials_secret) if credentials_secret else None)
+    )
 
     azure_sql = AzureSQL(credentials=credentials)
 

@@ -14,12 +14,13 @@ from viadot.sources.postgres import PostgreSQL
 
 
 @task(retries=3, retry_delay_seconds=10, timeout_seconds=60 * 60 * 3)
-def create_postgresql_table(
+def create_postgresql_table(  # NOQA: PLR0913
     schema: str,
     table: str,
     if_exists: Literal["fail", "replace", "skip", "delete"] = "fail",
     dtypes: dict[str, Any] | None = None,
     credentials_secret: str | None = None,
+    credentials: dict[str, Any] | None = None,
     host: str = "localhost",
     port: int = 5432,
     db_name: str = "postgres",
@@ -36,6 +37,9 @@ def create_postgresql_table(
         credentials_secret (str, optional): The name of the secret storing
             the credentials. Defaults to None.
             More info on: https://docs.prefect.io/concepts/blocks/
+        credentials (dict[str, Any], optional): Credentials to PostgreSQL.
+            If provided, this value has priority over `config_key`
+            and `credentials_secret`. Defaults to None.
         host (str, optional): The host of the PostgreSQL database.
             Defaults to "localhost".
         port (int, optional): The port of the PostgreSQL database.
@@ -47,13 +51,15 @@ def create_postgresql_table(
         config_key (str, optional): The key in the viadot config holding relevant
             credentials. Defaults to None.
     """
-    if not (credentials_secret or config_key):
+    if not (credentials or config_key or credentials_secret):
         raise MissingSourceCredentialsError
 
     logger = get_run_logger()
 
-    credentials = get_credentials(credentials_secret) or get_source_credentials(
-        config_key
+    credentials = (
+        credentials
+        or get_source_credentials(config_key)
+        or get_credentials(credentials_secret)
     )
     postgresql = PostgreSQL(
         credentials=credentials,
@@ -79,6 +85,7 @@ def create_postgresql_table(
 def postgresql_to_df(
     query: str,
     credentials_secret: str | None = None,
+    credentials: dict[str, Any] | None = None,
     host: str = "localhost",
     port: int = 5432,
     db_name: str = "postgres",
@@ -94,6 +101,9 @@ def postgresql_to_df(
         credentials_secret (str, optional): The name of the secret storing
             the credentials. Defaults to None.
             More info on: https://docs.prefect.io/concepts/blocks/
+        credentials (dict[str, Any], optional): Credentials to PostgreSQL.
+            If provided, this value has priority over `config_key`
+            and `credentials_secret`. Defaults to None.
         host (str, optional): The host of the PostgreSQL database.
             Defaults to "localhost".
         port (int, optional): The port of the PostgreSQL database.
@@ -108,13 +118,15 @@ def postgresql_to_df(
     Returns:
         pd.Dataframe: The resulting data as a pandas DataFrame.
     """
-    if not (credentials_secret or config_key):
+    if not (credentials or config_key or credentials_secret):
         raise MissingSourceCredentialsError
 
     logger = get_run_logger()
 
-    credentials = get_source_credentials(config_key) or get_credentials(
-        credentials_secret
+    credentials = (
+        credentials
+        or get_source_credentials(config_key)
+        or get_credentials(credentials_secret)
     )
     postgresql = PostgreSQL(
         credentials=credentials,
@@ -138,6 +150,7 @@ def postgresql_to_df(
 def postgresql_query(
     query: str,
     credentials_secret: str | None = None,
+    credentials: dict[str, Any] | None = None,
     host: str = "localhost",
     port: int = 5432,
     db_name: str = "postgres",
@@ -151,6 +164,9 @@ def postgresql_query(
         credentials_secret (str, optional): The name of the secret storing
             the credentials. Defaults to None.
             More info on: https://docs.prefect.io/concepts/blocks/
+        credentials (dict[str, Any], optional): Credentials to PostgreSQL.
+            If provided, this value has priority over `config_key`
+            and `credentials_secret`. Defaults to None.
         host (str, optional): The host of the PostgreSQL database.
             Defaults to "localhost".
         port (int, optional): The port of the PostgreSQL database.
@@ -162,13 +178,15 @@ def postgresql_query(
         config_key (str, optional): The key in the viadot config holding relevant
             credentials. Defaults to None.
     """
-    if not (credentials_secret or config_key):
+    if not (credentials or config_key or credentials_secret):
         raise MissingSourceCredentialsError
 
     logger = get_run_logger()
 
-    credentials = get_source_credentials(config_key) or get_credentials(
-        credentials_secret
+    credentials = (
+        credentials
+        or get_source_credentials(config_key)
+        or get_credentials(credentials_secret)
     )
     postgresql = PostgreSQL(
         credentials=credentials,

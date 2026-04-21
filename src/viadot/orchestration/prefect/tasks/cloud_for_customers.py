@@ -5,6 +5,7 @@ from typing import Any
 import pandas as pd
 from prefect import task
 
+from viadot.config import get_source_credentials
 from viadot.orchestration.prefect.utils import get_credentials
 from viadot.sources import CloudForCustomers
 
@@ -16,6 +17,7 @@ def cloud_for_customers_to_df(
     report_url: str | None = None,
     filter_params: dict[str, Any] | None = None,
     credentials_secret: str | None = None,
+    credentials: dict[str, Any] | None = None,
     config_key: str | None = None,
     **kwargs: dict[str, Any] | None,
 ) -> pd.DataFrame:
@@ -29,6 +31,9 @@ def cloud_for_customers_to_df(
         credentials_secret (str, optional): The name of the secret storing the
             credentials.
             More info on: https://docs.prefect.io/concepts/blocks/
+        credentials (dict[str, Any], optional): Credentials to Cloud for Customers.
+            If provided, this value has priority over `config_key`
+            and `credentials_secret`. Defaults to None.
         config_key (str, optional): The key in the viadot config holding relevant
             credentials.
         credentials (dict, optional): Cloud for Customers credentials.
@@ -37,11 +42,18 @@ def cloud_for_customers_to_df(
     Returns:
         pd.Dataframe: The pandas `DataFrame` containing data from the file.
     """
-    if not (credentials_secret or config_key):
-        msg = "Either `credentials_secret` or `config_key` has to be specified and not empty."
+    if not (credentials or config_key or credentials_secret):
+        msg = (
+            "One of `credentials`, `config_key`, or `credentials_secret` "
+            "has to be specified and not empty."
+        )
         raise ValueError(msg)
 
-    credentials = get_credentials(credentials_secret)
+    credentials = (
+        credentials
+        or get_source_credentials(config_key)
+        or get_credentials(credentials_secret)
+    )
     c4c = CloudForCustomers(
         url=url,
         endpoint=endpoint,

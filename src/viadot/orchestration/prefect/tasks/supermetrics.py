@@ -1,8 +1,11 @@
 """Task for connecting to Supermetrics API."""
 
+from typing import Any
+
 import pandas as pd
 from prefect import task
 
+from viadot.config import get_source_credentials
 from viadot.orchestration.prefect.exceptions import MissingSourceCredentialsError
 from viadot.orchestration.prefect.utils import get_credentials
 from viadot.sources import Supermetrics
@@ -13,6 +16,7 @@ def supermetrics_to_df(
     query_params: dict,
     config_key: str | None = None,
     credentials_secret: str | None = None,
+    credentials: dict[str, Any] | None = None,
 ) -> pd.DataFrame:
     """Task to retrive data from Supermetrics and returns it as a pandas DataFrame.
 
@@ -35,6 +39,9 @@ def supermetrics_to_df(
             The name of the secret in your secret management system that contains
             the Supermetrics API credentials. If `config_key` is not provided,
             this secret is used to authenticate with the Supermetrics API.
+        credentials (dict[str, Any], optional): Credentials to Supermetrics.
+            If provided, this value has priority over `config_key`
+            and `credentials_secret`. Defaults to None.
 
     Returns:
     -------
@@ -45,15 +52,20 @@ def supermetrics_to_df(
     Raises:
     ------
         MissingSourceCredentialsError:
-            Raised if neither `credentials_secret` nor `config_key` is provided,
+            Raised if none of `credentials`, `credentials_secret`,
+            or `config_key` is provided,
             indicating that no valid credentials were supplied to access
             the Supermetrics API.
 
     """
-    if not (credentials_secret or config_key):
+    if not (credentials or config_key or credentials_secret):
         raise MissingSourceCredentialsError
 
-    credentials = get_credentials(credentials_secret) if not config_key else None
+    credentials = (
+        credentials
+        or get_source_credentials(config_key)
+        or get_credentials(credentials_secret)
+    )
 
     supermetrics = Supermetrics(
         credentials=credentials,

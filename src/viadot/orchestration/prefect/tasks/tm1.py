@@ -1,5 +1,7 @@
 """Task for downloading data from TM1 to a pandas DataFrame."""
 
+from typing import Any
+
 from pandas import DataFrame
 from prefect import task
 from prefect.logging import get_run_logger
@@ -18,6 +20,7 @@ def tm1_to_df(
     limit: int | None = None,
     private: bool = False,
     credentials_secret: str | None = None,
+    credentials: dict[str, Any] | None = None,
     config_key: str | None = None,
     verify: bool = False,
     if_empty: str = "skip",
@@ -38,6 +41,9 @@ def tm1_to_df(
         credentials_secret (dict[str, Any], optional): The name of the secret that
             stores TM1 credentials.
             More info on: https://docs.prefect.io/concepts/blocks/. Defaults to None.
+        credentials (dict[str, Any], optional): Credentials to TM1.
+            If provided, this value has priority over `config_key`
+            and `credentials_secret`. Defaults to None.
         config_key (str, optional): The key in the viadot config holding relevant
             credentials. Defaults to "TM1".
         verify (bool, optional): Whether or not verify SSL certificate.
@@ -46,13 +52,15 @@ def tm1_to_df(
             Defaults to "skip".
 
     """
-    if not (credentials_secret or config_key):
+    if not (credentials or config_key or credentials_secret):
         raise MissingSourceCredentialsError
 
     logger = get_run_logger()
 
-    credentials = get_source_credentials(config_key) or get_credentials(
-        credentials_secret
+    credentials = (
+        credentials
+        or get_source_credentials(config_key)
+        or get_credentials(credentials_secret)
     )
 
     bc = TM1(
