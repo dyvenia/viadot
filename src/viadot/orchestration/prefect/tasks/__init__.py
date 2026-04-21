@@ -31,6 +31,7 @@ from .onestream import (
     onestream_to_df,
 )
 from .outlook import outlook_to_df
+from .perspective import perspective_ingest_task
 from .postgresql import (
     create_postgresql_table,
     postgresql_query,
@@ -89,6 +90,7 @@ __all__ = [
     "onestream_run_data_management_seq",
     "onestream_to_df",
     "outlook_to_df",
+    "perspective_ingest_task",
     "postgresql_query",
     "postgresql_to_df",
     "s3_upload_file",
