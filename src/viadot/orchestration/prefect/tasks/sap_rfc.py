@@ -120,7 +120,7 @@ def sap_rfc_to_df(  # noqa: PLR0913
     sap.query(query)
     logger.info("Downloading data from SAP to a DataFrame...")
     logger.debug(f"Running query: \n{sap.sql}.")
-    logger.debug(f"Dominik Run Metadata Updated")
+    logger.debug(f"Dominik Run Metadata Updated. Updated Creds")
 
     arrow_table = sap.to_arrow(tests=tests)
 
