@@ -121,10 +121,13 @@ def sap_rfc_to_df(  # noqa: PLR0913
     logger.info("Downloading data from SAP to a DataFrame...")
     logger.debug(f"Running query: \n{sap.sql}.")
 
-    df = sap.to_df(tests=tests)
+    arrow_table = sap.to_arrow(tests=tests)
 
-    if not df.empty:
+    if arrow_table.num_rows > 0:
         logger.info("Data has been downloaded successfully.")
-    elif df.empty:
+    else:
         logger.warn("Task finished but NO data was downloaded.")
-    return df
+
+    return arrow_table.to_pandas(
+        types_mapper=None, split_blocks=True, self_destruct=True
+    )
