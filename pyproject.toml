@@ -44,6 +44,7 @@ dependencies = [
     "awswrangler>=3.12.1",
     "pandas>=2.0.0",
     "pendulum>=2.1.2",
+    "croniter>=3.0.0",
 ]
 requires-python = ">=3.10"
 readme = "README.md"
