@@ -9,6 +9,9 @@ from .cloud_for_customers import cloud_for_customers_to_df
 from .customer_gauge_to_df import customer_gauge_to_df
 from .databricks import df_to_databricks
 from .dbt import dbt_task
+from .dbt_orchestration import read_dbt_manifest
+from .dbt_orchestration.trigger_downstream_node import trigger_downstream_node
+from .dbt_orchestration.update_node_state import update_node_state
 from .duckdb import duckdb_query
 from .ecb import ecb_to_df
 from .entraid import entraid_to_df
@@ -37,7 +40,6 @@ from .postgresql import (
     postgresql_query,
     postgresql_to_df,
 )
-from .read_dbt_manifest import read_dbt_manifest
 from .redshift_spectrum import df_to_redshift_spectrum
 from .s3 import s3_upload_file
 from .salesforce import salesforce_to_df
@@ -52,8 +54,6 @@ from .sharepoint import (
 from .sql_server import create_sql_server_table, sql_server_query, sql_server_to_df
 from .supermetrics import supermetrics_to_df
 from .tm1 import tm1_to_df
-from .trigger_downstream_node import trigger_downstream_node
-from .update_node_state import update_node_state
 from .vid_club import vid_club_to_df
 
 
