@@ -37,6 +37,7 @@ from .postgresql import (
     postgresql_query,
     postgresql_to_df,
 )
+from .read_dbt_manifest import read_dbt_manifest
 from .redshift_spectrum import df_to_redshift_spectrum
 from .s3 import s3_upload_file
 from .salesforce import salesforce_to_df
@@ -51,6 +52,8 @@ from .sharepoint import (
 from .sql_server import create_sql_server_table, sql_server_query, sql_server_to_df
 from .supermetrics import supermetrics_to_df
 from .tm1 import tm1_to_df
+from .trigger_downstream_node import trigger_downstream_node
+from .update_node_state import update_node_state
 from .vid_club import vid_club_to_df
 
 
@@ -93,6 +96,7 @@ __all__ = [
     "perspective_ingest_task",
     "postgresql_query",
     "postgresql_to_df",
+    "read_dbt_manifest",
     "s3_upload_file",
     "salesforce_to_df",
     "sap_bw_to_df",
@@ -106,5 +110,7 @@ __all__ = [
     "sql_server_to_df",
     "supermetrics_to_df",
     "tm1_to_df",
+    "trigger_downstream_node",
+    "update_node_state",
     "vid_club_to_df",
 ]
