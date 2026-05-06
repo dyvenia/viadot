@@ -1,4 +1,4 @@
-"""Utilities for reading Prefect deployment config files."""
+"""Utilities for dbt orchestration tasks."""
 
 from pathlib import Path
 
@@ -10,8 +10,7 @@ _yaml = YAML(typ="safe", pure=True)
 
 
 def get_source_config_prefect_yaml(
-    node_name: str,
-    deployments_dir: str | Path | None = None,
+    node_name: str, deployments_dir: str | Path | None = None
 ) -> tuple[str, list]:
     """Retrieve the schedule config of a source node from its ingestion deployment.
 

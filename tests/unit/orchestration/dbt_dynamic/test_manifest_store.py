@@ -50,7 +50,7 @@ class TestS3ManifestStoreRead:
         mock_s3 = MagicMock()
         mock_s3.to_dict.return_value = _MANIFEST
 
-        with patch("viadot.sources.S3", return_value=mock_s3):
+        with patch("viadot.orchestration.dbt_dynamic.manifest_store.S3", return_value=mock_s3):
             store = ManifestStore(store_type="s3")
             result = store.read(credentials=_CREDS, path=_PATH)
 
@@ -60,7 +60,7 @@ class TestS3ManifestStoreRead:
         mock_s3 = MagicMock()
         mock_s3.to_dict.return_value = _MANIFEST
 
-        with patch("viadot.sources.S3", return_value=mock_s3) as mock_s3_cls:
+        with patch("viadot.orchestration.dbt_dynamic.manifest_store.S3", return_value=mock_s3) as mock_s3_cls:
             store = ManifestStore(store_type="s3")
             store.read(credentials=_CREDS, path=_PATH)
 
@@ -71,7 +71,7 @@ class TestS3ManifestStoreRead:
         mock_s3 = MagicMock()
         mock_s3.to_dict.side_effect = RuntimeError("S3 unavailable")
 
-        with patch("viadot.sources.S3", return_value=mock_s3):
+        with patch("viadot.orchestration.dbt_dynamic.manifest_store.S3", return_value=mock_s3):
             store = ManifestStore(store_type="s3")
             with pytest.raises(RuntimeError, match="S3 unavailable"):
                 store.read(credentials=_CREDS, path=_PATH)
