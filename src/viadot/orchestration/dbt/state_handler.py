@@ -192,7 +192,7 @@ class StateHandler:
 
     def build_node_state(  # noqa: PLR0913
         self,
-        table_name: str,
+        node_name: str,
         status: str,
         node_type: str,
         sla: str | None = None,
@@ -201,13 +201,13 @@ class StateHandler:
         batch_id: int | None = None,
         cron: list | None = None,
         trigger_delay: int = 0,
-        sla_breach_grace_period: int = 30,
+        sla_breach_grace_period_minutes: int = 30,
         reference_time: datetime | None = None,
     ) -> dict:
         """Build the node state payload.
 
         Args:
-            table_name: The dbt node name (model or source).
+            node_name: The dbt node name (model or source).
             status: Current run status (e.g. ``"success"``, ``"failed"``).
             node_type: The dbt node type (e.g. ``"model"``, ``"source"``).
             sla: Optional SLA string (e.g. ``"24h"``, ``"10:00"``).
@@ -216,7 +216,7 @@ class StateHandler:
             batch_id: Optional batch identifier.
             cron: Optional list of cron schedule dicts or strings.
             trigger_delay: Delay in minutes before triggering downstream nodes.
-            sla_breach_grace_period: Grace period in minutes before an SLA breach.
+            sla_breach_grace_period_minutes: Grace period before an SLA breach.
             reference_time: Override for "now". Defaults to
                 ``datetime.now(timezone.utc)``.
 
@@ -231,7 +231,7 @@ class StateHandler:
             self._calc_fresh_until(cron, sla, now) if status == "success" else None
         )
         return {
-            "table_name": table_name,
+            "table_name": node_name,
             "node_type": node_type,
             "status": status,
             "last_refreshed_at": now.isoformat(),
@@ -242,7 +242,7 @@ class StateHandler:
             "batch_id": batch_id,
             "cron": cron,
             "trigger_delay": trigger_delay,
-            "sla_breach_grace_period": sla_breach_grace_period,
+            "sla_breach_grace_period": sla_breach_grace_period_minutes,
         }
 
     def update(self, node_state: dict) -> None:

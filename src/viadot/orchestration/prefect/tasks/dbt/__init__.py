@@ -99,54 +99,64 @@ def read_dbt_manifest(
 
 @task(retries=3, retry_delay_seconds=10)
 def update_node_state(  # noqa: PLR0913
-    table_name: str,
+    node_name: str,
     status: str,
     node_type: str,
     state_path: str,
-    credentials: dict[str, Any] | None = None,
-    store_type: str = "s3",
-    sla: str | None = None,
-    owners: list[dict] | None = None,
+    state_store_type: str,
+    manifest_path: str,
+    manifest_store_type: str,
+    state_store_credentials: dict[str, Any] | None = None,
+    manifest_store_credentials: dict[str, Any] | None = None,
     effective_source_data_slot: str | None = None,
     batch_id: int | None = None,
     cron: list | None = None,
     trigger_delay: int = 0,
-    sla_breach_grace_period: int = 30,
+    sla_breach_grace_period_minutes: int = 30,
 ) -> None:
     """Build and write node state to the state store.
 
     Args:
-        table_name: The dbt node name (model or source).
+        node_name: The dbt node name (model or source).
         status: Current run status (e.g. ``"success"``, ``"failed"``).
         node_type: The dbt node type (e.g. ``"model"``, ``"source"``).
         state_path: URI of the state file (e.g. ``"s3://bucket/state.json"``).
-        credentials: Store credentials. Omit to use ambient AWS credentials.
-        store_type: Backend type. Currently only ``"s3"`` is supported.
-        sla: Optional SLA string (e.g. ``"24h"``, ``"10:00"``).
-        owners: Optional list of owner dicts.
+        state_store_type: Backend type for the state store.
+        manifest_path: URI of the manifest file (e.g. ``"s3://bucket/manifest.json"``).
+        manifest_store_type: Backend type for the manifest store.
+        state_store_credentials: Store credentials for the state store. Omit to use
+            ambient AWS credentials.
+        manifest_store_credentials: Store credentials for the manifest store. Omit to
+            use ambient AWS credentials.
         effective_source_data_slot: Optional effective source data slot.
         batch_id: Optional batch identifier.
         cron: Optional list of cron schedule dicts or strings.
         trigger_delay: Delay in minutes before triggering downstream nodes.
-        sla_breach_grace_period: Grace period in minutes before an SLA breach.
+        sla_breach_grace_period_minutes: Grace period in minutes before an SLA breach.
     """
     logger = get_run_logger()
     logger.info("Preparing deployment status update ...")
-    store = StateStore(store_type, state_path, credentials)
-    handler = StateHandler(store)
-    node_state = handler.build_node_state(
-        table_name=table_name,
+    state_store = StateStore(state_store_type, state_path, state_store_credentials)
+    state_handler = StateHandler(state_store)
+    manifest_store = ManifestStore(manifest_store_type)
+    manifest = manifest_store.read(
+        credentials=manifest_store_credentials, path=manifest_path
+    )
+    manifest_handler = ManifestHandler(manifest)
+    meta = manifest_handler.get_node_meta(node_name)
+    node_state = state_handler.build_node_state(
+        node_name=node_name,
         status=status,
         node_type=node_type,
-        sla=sla,
-        owners=owners,
+        sla=meta.get("sla"),
+        owners=meta.get("owners"),
         effective_source_data_slot=effective_source_data_slot,
         batch_id=batch_id,
         cron=cron,
         trigger_delay=trigger_delay,
-        sla_breach_grace_period=sla_breach_grace_period,
+        sla_breach_grace_period_minutes=sla_breach_grace_period_minutes,
     )
-    handler.update(node_state)
+    state_handler.update(node_state)
     logger.info("Deployment status updated successfully.")
 
 

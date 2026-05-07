@@ -731,15 +731,20 @@ def _get_database_credentials(secret_name: str) -> dict[str, Any] | str:
     return credentials
 
 
-def get_credentials(secret_name: str) -> dict[str, Any]:
+def get_credentials(secret_name: str | None) -> dict[str, Any] | None:
     """Retrieve credentials from the Prefect block document.
 
     Args:
-        secret_name (str): The name of the secret to be retrieved.
+        secret_name (str | None): The name of the secret to be retrieved.
+            If ``None``, returns ``None`` immediately.
 
     Returns:
-        dict: A dictionary containing the credentials.
+        dict | None: A dictionary containing the credentials, or ``None`` if
+            ``secret_name`` is ``None``.
     """
+    if secret_name is None:
+        return None
+
     # Prefect does not allow upper case letters for blocks,
     # so some names might be lowercased versions of the original
 

@@ -18,6 +18,7 @@ from viadot.orchestration.prefect.tasks import (
     perspective_ingest_task,
     s3_upload_file,
 )
+from viadot.orchestration.prefect.tasks.dbt import update_node_state
 from viadot.orchestration.prefect.utils import (
     DEFAULT_TIMEOUT_SECONDS,
     get_credentials,
@@ -61,6 +62,16 @@ def transform_and_catalog(  # noqa: PLR0913, PLR0915, C901, PLR0912 | Complexity
     run_results_storage_config_key: str | None = None,
     run_results_storage_credentials_secret: str | None = None,
     fail_flow_only_on_build_failure: bool = False,
+    model_name: str | None = None,
+    manifest_path: str | None = None,
+    manifest_store_type: str = "s3",
+    manifest_store_credentials_secret: str | None = None,
+    state_path: str | None = None,
+    state_store_type: str = "s3",
+    state_store_credentials_secret: str | None = None,
+    trigger_downstream_models: bool = False,
+    trigger_downstream_models_delay: int = 0,
+    sla_breach_grace_period_minutes: int = 30,
     additional_recipients: list[str] | None = None,
     notification_recipients: list[str] | None = None,
     smtp_credential_secret: str | None = None,
@@ -132,13 +143,38 @@ def transform_and_catalog(  # noqa: PLR0913, PLR0915, C901, PLR0912 | Complexity
             holding AWS credentials. Defaults to None.
         run_results_storage_credentials_secret (str, optional): The name of the secret
             block in Prefect holding AWS credentials. Defaults to None.
-        fail_flow_only_on_build_failure (bool): Determines the flow's failure behavior
-            based on dbt build outcomes.
+        fail_flow_only_on_build_failure (bool): Whether to fail the flow **only** if the
+            `dbt build` command fails.
             When False (default):
-                - The flow will fail on any dbt build failure (including test failures)
+                - The flow will fail on any dbt command failure
             When True:
-                - The flow will only fail if model building fails
-                - Test failures alone won't cause the flow failure
+                - The flow will fail only on the `dbt build` command failure
+            When using `dbt build`, the `run` and `test` commands are executed as part
+            of the build process, and their failure is expected to be captured in the
+            `run_results.json` artifact. Therefore, it's more intuitive to not fail the
+            flow on `run` and `test` failures when `dbt build` is used, in order to
+            allow the flow to complete and capture those failures in the metadata.
+        manifest_path (str | None, optional): URI of the manifest file
+            (e.g. ``"s3://bucket/manifest.json"``). Required if `state_path` is
+            provided, since manifest metadata is needed to determine downstream models
+            to trigger. Defaults to None.
+        manifest_store_type (str, optional): Backend type for the manifest store.
+            Currently only ``"s3"`` is supported. Defaults to "s3".
+        manifest_store_credentials_secret (str | None, optional): Store credentials for
+            the manifest. Omit to use ambient AWS credentials. Defaults to None.
+        state_path (str | None, optional): URI of the state file
+            (e.g. ``"s3://bucket/state.json"``). If provided, the flow will update the
+            state of the executed dbt node in the state file. Defaults to None.
+        state_store_type (str, optional): Backend type for the state store. Currently
+            only ``"s3"`` is supported. Defaults to "s3".
+        state_store_credentials_secret (str | None, optional): Store credentials. Omit
+            to use ambient AWS credentials. Defaults to None.
+        trigger_downstream_models (bool, optional): Whether to trigger downstream models
+            by updating their state in the state file. Defaults to False.
+        trigger_downstream_models_delay (int, optional): Delay in seconds before
+            triggering downstream models. Defaults to 0.
+        sla_breach_grace_period_minutes (int, optional): Grace period in minutes before
+            an SLA breach is triggered. Defaults to 30.
         notification_recipients (list[str] | None, optional): Primary recipient list.
             If provided, it takes precedence over the extracted owners email addresses
             from dbt metadata. Defaults to None.
@@ -214,6 +250,24 @@ def transform_and_catalog(  # noqa: PLR0913, PLR0915, C901, PLR0912 | Complexity
         command="deps",
     )
     pull_dbt_deps.result()
+
+    # Update node state to "running" before executing dbt commands.
+    if state_path:
+        update_node_state(
+            table_name=model_name,
+            status="running",
+            node_type="model",
+            trigger_delay=trigger_downstream_models_delay,
+            sla_breach_grace_period_minutes=sla_breach_grace_period_minutes,
+            state_path=state_path,
+            state_store_type=state_store_type,
+            state_store_credentials=get_credentials(state_store_credentials_secret),
+            manifest_path=manifest_path,
+            manifest_store_type=manifest_store_type,
+            manifest_store_credentials=get_credentials(
+                manifest_store_credentials_secret
+            ),
+        )
 
     # Run dbt commands.
     dbt_target_option = f"-t {dbt_target}" if dbt_target is not None else ""
