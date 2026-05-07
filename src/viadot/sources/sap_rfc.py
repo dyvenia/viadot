@@ -312,7 +312,7 @@ class SAPRFC(Source):
 
     def close_connection(self) -> None:
         """Close the SAP RFC connection."""
-        self.con.close()
+        self.con.close_connection()
         self.logger.info("Connection has been closed successfully.")
 
     def get_function_parameters(
