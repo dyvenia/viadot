@@ -1,3 +1,5 @@
+"""Prefect tasks for dbt orchestration."""
+
 from typing import Any, Literal
 
 from prefect import get_run_logger, task

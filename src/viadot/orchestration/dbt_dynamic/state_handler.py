@@ -71,6 +71,7 @@ class StateHandler:
     """
 
     def __init__(self, store: StateStore) -> None:
+        """Initialize StateHandler with the given StateStore instance."""
         self.store = store
 
     @staticmethod

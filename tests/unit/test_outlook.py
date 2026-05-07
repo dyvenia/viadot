@@ -115,7 +115,7 @@ class TestOutlook(unittest.TestCase):
         mock_authenticate.assert_called_once()
 
     @patch("O365.Account.authenticate", return_value=False)
-    def test_api_connection_authentication_failure(self, mock_authenticate):  # noqa: ARG002
+    def test_api_connection_authentication_failure(self, mock_authenticate):
         """Test Outlook `api_connection` method, failure."""
         mailbox_name = "test@example.com"
 

@@ -2,7 +2,7 @@
 
 from abc import ABC, abstractmethod
 import logging
-from typing import Any
+from typing import Any, ClassVar
 from urllib.parse import urlparse
 
 
@@ -35,7 +35,7 @@ class ManifestStore(ABC):
     return manifest
     """
 
-    _registry: dict[str, type["ManifestStore"]] = {}
+    _registry: ClassVar[dict[str, type["ManifestStore"]]] = {}
 
     def __new__(cls, store_type: str) -> "ManifestStore":
         """Create an instance of the appropriate subclass based on the store_type."""
@@ -47,7 +47,8 @@ class ManifestStore(ABC):
             return super().__new__(subcls)
         return super().__new__(cls)
 
-    def __init_subclass__(cls, store_type: str | None = None, **kwargs: Any) -> None:
+    def __init_subclass__(cls, store_type: str | None = None, **kwargs: dict) -> None:
+        """Register subclasses with a store_type for dynamic instantiation."""
         super().__init_subclass__(**kwargs)
         if store_type is not None:
             ManifestStore._registry[store_type] = cls
@@ -62,7 +63,8 @@ class ManifestStore(ABC):
 class S3ManifestStore(ManifestStore, store_type="s3"):
     """A class for managing dbt manifest storage in S3."""
 
-    def __init__(self, **kwargs: Any) -> None:
+    def __init__(self) -> None:
+        """Initialize S3ManifestStore, raising ImportError if `aws` extra is missing."""
         if S3 is None:
             msg = "S3ManifestStore requires the 'aws' extra: pip install 'viadot[aws]'"
             raise ImportError(msg)

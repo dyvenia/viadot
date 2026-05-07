@@ -19,6 +19,7 @@ class ManifestHandler:
     """
 
     def __init__(self, manifest: dict) -> None:
+        """Initialize ManifestHandler with the given manifest dict."""
         self.manifest = manifest
 
     def get_node_meta(self, node_name: str) -> dict:

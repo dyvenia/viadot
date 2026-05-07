@@ -84,12 +84,14 @@ class StateStore(ABC):
 
     _registry: ClassVar[dict[str, type]] = {}
 
-    def __init_subclass__(cls, store_type: str | None = None, **kwargs: Any) -> None:
+    def __init_subclass__(cls, store_type: str | None = None, **kwargs: dict) -> None:
+        """Register subclasses with a store_type for dynamic instantiation."""
         super().__init_subclass__(**kwargs)
         if store_type is not None:
             StateStore._registry[store_type] = cls
 
-    def __new__(cls, store_type: str, *args: Any, **kwargs: Any) -> StateStore:
+    def __new__(cls, store_type: str, *_args: dict, **_kwargs: dict) -> StateStore:
+        """Create an instance of the appropriate subclass based on the store_type."""
         if cls is StateStore:
             subclass = cls._registry.get(store_type)
             if subclass is None:
@@ -104,24 +106,25 @@ class StateStore(ABC):
         state_path: str,
         credentials: dict[str, Any] | None = None,
     ) -> None:
+        """Initialize the StateStore."""
         self.store_type = store_type
         self.state_path = state_path
         self.credentials = credentials
 
     @abstractmethod
-    def write(self, node_state: dict) -> Any:
+    def write(self, node_state: dict) -> None:
         """Store node state to the state file."""
         msg = "This method should be implemented by subclasses of StateStore."
         raise NotImplementedError(msg)
 
     @abstractmethod
-    def create(self, node_state: dict) -> Any:
+    def create(self, node_state: dict) -> None:
         """Create a new state object with the initial state for the given table_name."""
         msg = "This method should be implemented by subclasses of StateStore."
         raise NotImplementedError(msg)
 
     @abstractmethod
-    def update(self, node_state: dict) -> Any:
+    def update(self, node_state: dict) -> None:
         """Update the state file with the new state for the given table_name."""
         msg = "This method should be implemented by subclasses of StateStore."
         raise NotImplementedError(msg)
@@ -130,7 +133,8 @@ class StateStore(ABC):
 class S3StateStore(StateStore, store_type="s3"):
     """A class for managing deployment state storage in S3."""
 
-    def __init__(self, **kwargs: Any) -> None:
+    def __init__(self, **kwargs: dict) -> None:
+        """Initialize the S3StateStore with the given state path and credentials."""
         super().__init__(**kwargs)
         self.bucket, self.key = self._parse_path(self.state_path)
         self.client = self._create_client()

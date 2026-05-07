@@ -167,6 +167,8 @@ ignore = [
 # D103: missing function docstrings
 # D100: missing module docstring
 # N802, N803: caps lock argument and function names (disabled to allow naming fixtures in all caps)
+# ARG005: unused lambda argument
+# ARG002: unused method argument (disabled to allow unused fixture arguments)
 "tests/**" = [
     "S101",
     "ANN201",
@@ -179,6 +181,8 @@ ignore = [
     "B905",
     "D102",
     "PLR2004",
+    "ARG005",
+    "ARG002",
 ]
 
 
