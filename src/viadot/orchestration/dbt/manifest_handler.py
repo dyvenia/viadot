@@ -2,7 +2,7 @@
 
 import logging
 
-from viadot.orchestration.dbt_dynamic.state_handler import is_fresh
+from viadot.orchestration.dbt.state_handler import is_fresh
 
 
 logger = logging.getLogger(__name__)

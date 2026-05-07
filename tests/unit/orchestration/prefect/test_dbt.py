@@ -6,19 +6,19 @@ from unittest.mock import MagicMock, call
 from dateutil.relativedelta import relativedelta
 import pytest
 
-from viadot.orchestration.dbt_dynamic.manifest_handler import ManifestHandler
-from viadot.orchestration.dbt_dynamic.state_handler import StateHandler, is_fresh
-from viadot.orchestration.prefect.tasks.dbt_orchestration import (
+from viadot.orchestration.dbt.manifest_handler import ManifestHandler
+from viadot.orchestration.dbt.state_handler import StateHandler, is_fresh
+from viadot.orchestration.prefect.tasks.dbt import (
     trigger_downstream_node,
     update_node_state,
 )
-from viadot.orchestration.prefect.tasks.dbt_orchestration.utils import (
+from viadot.orchestration.prefect.tasks.dbt.utils import (
     get_source_config_prefect_yaml,
 )
 
 
-_MODULE = "viadot.orchestration.prefect.tasks.dbt_orchestration"
-_DC_MODULE = "viadot.orchestration.prefect.tasks.dbt_orchestration.utils"
+_MODULE = "viadot.orchestration.prefect.tasks.dbt"
+_DC_MODULE = "viadot.orchestration.prefect.tasks.dbt.utils"
 
 _FROZEN_NOW = datetime(2026, 3, 19, 10, 30, 0, tzinfo=timezone.utc)
 

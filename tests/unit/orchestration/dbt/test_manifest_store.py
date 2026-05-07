@@ -2,7 +2,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from viadot.orchestration.dbt_dynamic.manifest_store import (
+from viadot.orchestration.dbt.manifest_store import (
     ManifestStore,
     S3ManifestStore,
 )

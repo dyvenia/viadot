@@ -8,8 +8,8 @@ from .business_core import business_core_to_df
 from .cloud_for_customers import cloud_for_customers_to_df
 from .customer_gauge_to_df import customer_gauge_to_df
 from .databricks import df_to_databricks
-from .dbt import dbt_task
-from .dbt_orchestration import (
+from .dbt import (
+    dbt_task,
     read_dbt_manifest,
     trigger_downstream_node,
     update_node_state,

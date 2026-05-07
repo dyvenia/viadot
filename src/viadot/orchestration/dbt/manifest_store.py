@@ -21,7 +21,7 @@ class ManifestStore(ABC):
 
     ```python
     from prefect import flow
-    from viadot.orchestration.prefect.tasks.dbt_orchestration import ManifestStore
+    from viadot.orchestration.dbt import ManifestStore
 
     store = ManifestStore(store_type="s3")
     manifest = store.read(

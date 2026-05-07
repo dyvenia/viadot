@@ -8,7 +8,7 @@ from zoneinfo import ZoneInfo
 from croniter import croniter
 from dateutil.relativedelta import relativedelta
 
-from viadot.orchestration.dbt_dynamic.state_store import StateStore
+from viadot.orchestration.dbt.state_store import StateStore
 
 
 logger = logging.getLogger(__name__)

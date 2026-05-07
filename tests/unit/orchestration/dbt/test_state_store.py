@@ -5,7 +5,7 @@ from unittest.mock import MagicMock, patch
 from botocore.exceptions import ClientError
 import pytest
 
-from viadot.orchestration.dbt_dynamic.state_store import (
+from viadot.orchestration.dbt.state_store import (
     S3StateStore,
     _merge_node_state,
 )
