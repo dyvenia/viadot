@@ -126,7 +126,7 @@ def _run_dbt_transforms(
     description="Build specified dbt model(s) and upload generated metadata to Luma.",
 )
 @with_flow_timeout_param()
-def transform_and_catalog(  # noqa: PLR0913 | Complexity complaints - should be gone once Luma Catalog support is deprecated.
+def transform_and_catalog(  # noqa: PLR0913, PLR0915 | Complexity complaints - should be gone once Luma Catalog support is deprecated.
     dbt_repo_url: str | None = None,
     dbt_repo_url_secret: str | None = None,
     dbt_project_path: str = "dbt",
