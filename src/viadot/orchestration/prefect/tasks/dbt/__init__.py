@@ -3,7 +3,7 @@
 import logging
 import os
 from pathlib import Path
-from typing import Any, Literal
+from typing import Any
 
 from prefect import get_run_logger, task
 from prefect.deployments import run_deployment
@@ -92,7 +92,7 @@ def update_node_state(  # noqa: PLR0913
     cron: list | None = None,
     trigger_delay: int = 0,
     sla_breach_grace_period_minutes: int = 30,
-) -> None:
+) -> dict:
     """Build and write node state to the state store.
 
     Args:
@@ -112,6 +112,9 @@ def update_node_state(  # noqa: PLR0913
         cron: Optional list of cron schedule dicts or strings.
         trigger_delay: Delay in minutes before triggering downstream nodes.
         sla_breach_grace_period_minutes: Grace period in minutes before an SLA breach.
+
+    Returns:
+        The dbt manifest dict (re-used by callers to avoid a second store read).
     """
     logger = get_run_logger()
     logger.info("Preparing deployment status update ...")
@@ -137,6 +140,7 @@ def update_node_state(  # noqa: PLR0913
     )
     state_handler.update(node_state)
     logger.info("Deployment status updated successfully.")
+    return manifest
 
 
 @task(retries=1, retry_delay_seconds=30)

@@ -18,7 +18,10 @@ from viadot.orchestration.prefect.tasks import (
     perspective_ingest_task,
     s3_upload_file,
 )
-from viadot.orchestration.prefect.tasks.dbt import update_node_state
+from viadot.orchestration.prefect.tasks.dbt import (
+    trigger_downstream_node,
+    update_node_state,
+)
 from viadot.orchestration.prefect.utils import (
     DEFAULT_TIMEOUT_SECONDS,
     get_credentials,
@@ -359,6 +362,7 @@ def transform_and_catalog(  # noqa: PLR0913 | Complexity complaints - should be 
 
     # Run dbt transforms and track node state.
     _node_status = "failed"
+    _manifest = None
     try:
         _run_dbt_transforms(
             metadata_kind=metadata_kind,
@@ -371,10 +375,18 @@ def transform_and_catalog(  # noqa: PLR0913 | Complexity complaints - should be 
         _node_status = "success"
     finally:
         if state_path:
-            update_node_state(
+            _manifest = update_node_state(
                 **state_update_params,
                 status=_node_status,
             )
+
+    if trigger_downstream_models:
+        trigger_downstream_node(
+            node_name=model_name,
+            manifest=_manifest,
+            state_path=state_path,
+            state_store_credentials=state_update_params["state_store_credentials"],
+        )
 
     # Upload metadata to Luma Catalog.
     if dbt_target_dir_path is None:
