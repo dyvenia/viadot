@@ -10,7 +10,6 @@ from .customer_gauge_to_df import customer_gauge_to_df
 from .databricks import df_to_databricks
 from .dbt import (
     dbt_task,
-    read_dbt_manifest,
     trigger_downstream_node,
     update_node_state,
 )
@@ -98,7 +97,6 @@ __all__ = [
     "perspective_ingest_task",
     "postgresql_query",
     "postgresql_to_df",
-    "read_dbt_manifest",
     "s3_upload_file",
     "salesforce_to_df",
     "sap_bw_to_df",
