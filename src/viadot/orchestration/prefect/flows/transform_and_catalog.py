@@ -8,7 +8,7 @@ from typing import Literal
 
 from prefect import flow, task
 from prefect.logging import get_run_logger
-from prefect.states import Failed, State
+from prefect.states import State
 
 from viadot.orchestration.prefect.tasks import (
     clone_repo,
@@ -36,12 +36,94 @@ def remove_dbt_repo_dir(dbt_repo_dir_name: str) -> None:
     shutil.rmtree(dbt_repo_dir_name, ignore_errors=True)
 
 
+def _run_dbt_transforms(
+    metadata_kind: str,
+    dbt_selects: dict[str, str] | None,
+    dbt_project_path_full: Path,
+    dbt_target: str | None,
+    fail_flow_only_on_build_failure: bool,
+    timeout_seconds: int,
+) -> None:
+    """Execute dbt transform commands (run/test/build/docs generate).
+
+    Raises:
+        RuntimeError: If ``fail_flow_only_on_build_failure`` is True and dbt build
+            produced model errors.
+    """
+    dbt_target_option = f"-t {dbt_target}" if dbt_target is not None else ""
+
+    if metadata_kind == "model_run":
+        # Produce `run-results.json` artifact for Luma ingestion.
+        build_select = None
+        run_select_safe = ""
+        test_select_safe = ""
+        if dbt_selects:
+            build_select = dbt_selects.get("build")
+            run_select = dbt_selects.get("run")
+            test_select = dbt_selects.get("test", run_select)
+
+            build_select_safe = f"-s {build_select}" if build_select is not None else ""
+            run_select_safe = f"-s {run_select}" if run_select is not None else ""
+            test_select_safe = f"-s {test_select}" if test_select is not None else ""
+        if build_select:
+            # If build task is used, run and test tasks are not needed.
+            # Build task executes run and tests commands internally.
+            build_task = dbt_task.with_options(
+                name="dbt_build", timeout_seconds=timeout_seconds
+            )
+            raise_on_failure = not fail_flow_only_on_build_failure
+
+            build = build_task.submit(
+                project_path=dbt_project_path_full,
+                command=f"build {build_select_safe} {dbt_target_option}",
+                raise_on_failure=raise_on_failure,
+                return_all=True,
+            )
+            build.result()
+
+            if fail_flow_only_on_build_failure:
+                build_result = build.result()
+                model_error_pattern = re.compile(r"ERROR creating", re.IGNORECASE)
+                if any(model_error_pattern.search(line) for line in build_result):
+                    msg = "One or more models failed to build."
+                    raise RuntimeError(msg)
+        else:
+            run_task = dbt_task.with_options(
+                name="dbt_run", timeout_seconds=timeout_seconds
+            )
+            run = run_task.submit(
+                project_path=dbt_project_path_full,
+                command=f"run {run_select_safe} {dbt_target_option}",
+            )
+            run.result()
+
+            test_task = dbt_task.with_options(
+                name="dbt_test", timeout_seconds=timeout_seconds
+            )
+            test = test_task.submit(
+                project_path=dbt_project_path_full,
+                command=f"test {test_select_safe} {dbt_target_option}",
+                raise_on_failure=False,
+            )
+            test.result()
+    else:
+        # Produce `catalog.json` and `manifest.json` artifacts for Luma ingestion.
+        docs_generate_task = dbt_task.with_options(
+            name="dbt_docs_generate", timeout_seconds=timeout_seconds
+        )
+        docs = docs_generate_task.submit(
+            project_path=dbt_project_path_full,
+            command="docs generate",
+        )
+        docs.result()
+
+
 @flow(
     name="Transform and Catalog",
     description="Build specified dbt model(s) and upload generated metadata to Luma.",
 )
 @with_flow_timeout_param()
-def transform_and_catalog(  # noqa: PLR0913, PLR0915, C901, PLR0912 | Complexity complaints - should be gone once Luma Catalog support is deprecated.
+def transform_and_catalog(  # noqa: PLR0913 | Complexity complaints - should be gone once Luma Catalog support is deprecated.
     dbt_repo_url: str | None = None,
     dbt_repo_url_secret: str | None = None,
     dbt_project_path: str = "dbt",
@@ -251,84 +333,48 @@ def transform_and_catalog(  # noqa: PLR0913, PLR0915, C901, PLR0912 | Complexity
     )
     pull_dbt_deps.result()
 
+    state_update_params = {
+        "node_name": model_name,
+        "node_type": "model",
+        "trigger_delay": trigger_downstream_models_delay,
+        "sla_breach_grace_period_minutes": sla_breach_grace_period_minutes,
+        "state_path": state_path,
+        "state_store_type": state_store_type,
+        "state_store_credentials": get_credentials(state_store_credentials_secret)
+        if state_store_credentials_secret
+        else None,
+        "manifest_path": manifest_path,
+        "manifest_store_type": manifest_store_type,
+        "manifest_store_credentials": get_credentials(manifest_store_credentials_secret)
+        if manifest_store_credentials_secret
+        else None,
+    }
+
     # Update node state to "running" before executing dbt commands.
     if state_path:
         update_node_state(
-            table_name=model_name,
+            **state_update_params,
             status="running",
-            node_type="model",
-            trigger_delay=trigger_downstream_models_delay,
-            sla_breach_grace_period_minutes=sla_breach_grace_period_minutes,
-            state_path=state_path,
-            state_store_type=state_store_type,
-            state_store_credentials=get_credentials(state_store_credentials_secret),
-            manifest_path=manifest_path,
-            manifest_store_type=manifest_store_type,
-            manifest_store_credentials=get_credentials(
-                manifest_store_credentials_secret
-            ),
         )
 
-    # Run dbt commands.
-    dbt_target_option = f"-t {dbt_target}" if dbt_target is not None else ""
-
-    if metadata_kind == "model_run":
-        # Produce `run-results.json` artifact for Luma ingestion.
-        if dbt_selects:
-            build_select = dbt_selects.get("build")
-            run_select = dbt_selects.get("run")
-            test_select = dbt_selects.get("test", run_select)
-
-            build_select_safe = f"-s {build_select}" if build_select is not None else ""
-            run_select_safe = f"-s {run_select}" if run_select is not None else ""
-            test_select_safe = f"-s {test_select}" if test_select is not None else ""
-        else:
-            run_select_safe = ""
-            test_select_safe = ""
-        if build_select:
-            # If build task is used, run and test tasks are not needed.
-            # Build task executes run and tests commands internally.
-            build_task = dbt_task.with_options(
-                name="dbt_build", timeout_seconds=timeout_seconds
-            )
-            raise_on_failure = not fail_flow_only_on_build_failure
-
-            build = build_task.submit(
-                project_path=dbt_project_path_full,
-                command=f"build {build_select_safe} {dbt_target_option}",
-                raise_on_failure=raise_on_failure,
-                return_all=True,
-            )
-            build.result()
-        else:
-            run_task = dbt_task.with_options(
-                name="dbt_run", timeout_seconds=timeout_seconds
-            )
-            run = run_task.submit(
-                project_path=dbt_project_path_full,
-                command=f"run {run_select_safe} {dbt_target_option}",
-            )
-            run.result()
-
-            test_task = dbt_task.with_options(
-                name="dbt_test", timeout_seconds=timeout_seconds
-            )
-            test = test_task.submit(
-                project_path=dbt_project_path_full,
-                command=f"test {test_select_safe} {dbt_target_option}",
-                raise_on_failure=False,
-            )
-            test.result()
-    else:
-        # Produce `catalog.json` and `manifest.json` artifacts for Luma ingestion.
-        docs_generate_task = dbt_task.with_options(
-            name="dbt_docs_generate", timeout_seconds=timeout_seconds
+    # Run dbt transforms and track node state.
+    _node_status = "failed"
+    try:
+        _run_dbt_transforms(
+            metadata_kind=metadata_kind,
+            dbt_selects=dbt_selects,
+            dbt_project_path_full=dbt_project_path_full,
+            dbt_target=dbt_target,
+            fail_flow_only_on_build_failure=fail_flow_only_on_build_failure,
+            timeout_seconds=timeout_seconds,
         )
-        docs = docs_generate_task.submit(
-            project_path=dbt_project_path_full,
-            command="docs generate",
-        )
-        docs.result()
+        _node_status = "success"
+    finally:
+        if state_path:
+            update_node_state(
+                **state_update_params,
+                status=_node_status,
+            )
 
     # Upload metadata to Luma Catalog.
     if dbt_target_dir_path is None:
@@ -381,7 +427,7 @@ def transform_and_catalog(  # noqa: PLR0913, PLR0915, C901, PLR0912 | Complexity
         run_results_storage_path += (
             Path(file_name).stem + "_" + str(timestamp) + ".json"
         )
-        logger.info(f"Uploading run results to {run_results_storage_path}")
+        logger.info(f"Uploading run results to {run_results_storage_path}...")
         # Upload the file to s3.
 
         s3_upload_file(
@@ -403,11 +449,5 @@ def transform_and_catalog(  # noqa: PLR0913, PLR0915, C901, PLR0912 | Complexity
     remove_dbt_repo_dir(
         dbt_repo_dir_name=dbt_repo_name,
     )
-
-    if fail_flow_only_on_build_failure and build_select:
-        build_result = build.result()
-        model_error_pattern = re.compile(r"ERROR creating", re.IGNORECASE)
-        if any(model_error_pattern.search(line) for line in build_result):
-            return Failed(message="One or more models failed to build.")
 
     return None
