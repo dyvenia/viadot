@@ -154,8 +154,8 @@ def transform_and_catalog(  # noqa: PLR0913, PLR0915 | Complexity complaints - s
     state_path: str | None = None,
     state_store_type: str = "s3",
     state_store_credentials_secret: str | None = None,
-    trigger_downstream_models: bool = False,
-    trigger_downstream_models_delay: int = 0,
+    trigger_downstream_nodes: bool = False,
+    trigger_downstream_nodes_delay: int = 0,
     sla_breach_grace_period_minutes: int = 30,
     additional_recipients: list[str] | None = None,
     notification_recipients: list[str] | None = None,
@@ -254,10 +254,10 @@ def transform_and_catalog(  # noqa: PLR0913, PLR0915 | Complexity complaints - s
             only ``"s3"`` is supported. Defaults to "s3".
         state_store_credentials_secret (str | None, optional): Store credentials. Omit
             to use ambient AWS credentials. Defaults to None.
-        trigger_downstream_models (bool, optional): Whether to trigger downstream models
+        trigger_downstream_nodes (bool, optional): Whether to trigger downstream nodes
             by updating their state in the state file. Defaults to False.
-        trigger_downstream_models_delay (int, optional): Delay in seconds before
-            triggering downstream models. Defaults to 0.
+        trigger_downstream_nodes_delay (int, optional): Delay in seconds before
+            triggering downstream nodes. Defaults to 0.
         sla_breach_grace_period_minutes (int, optional): Grace period in minutes before
             an SLA breach is triggered. Defaults to 30.
         notification_recipients (list[str] | None, optional): Primary recipient list.
@@ -339,7 +339,7 @@ def transform_and_catalog(  # noqa: PLR0913, PLR0915 | Complexity complaints - s
     state_update_params = {
         "node_name": model_name,
         "node_type": "model",
-        "trigger_delay": trigger_downstream_models_delay,
+        "trigger_delay": trigger_downstream_nodes_delay,
         "sla_breach_grace_period_minutes": sla_breach_grace_period_minutes,
         "state_path": state_path,
         "state_store_type": state_store_type,
@@ -381,7 +381,7 @@ def transform_and_catalog(  # noqa: PLR0913, PLR0915 | Complexity complaints - s
                 status=_node_status,
             )
 
-    if trigger_downstream_models:
+    if trigger_downstream_nodes:
         trigger_downstream_node(
             node_name=model_name,
             manifest=_manifest,
