@@ -354,7 +354,8 @@ def transform_and_catalog(  # noqa: PLR0913, PLR0915 | Complexity complaints - s
     }
 
     # Update node state to "running" before executing dbt commands.
-    if state_path:
+    track_state = bool(state_path)
+    if track_state:
         update_node_state(
             **state_update_params,
             status="running",
@@ -374,7 +375,7 @@ def transform_and_catalog(  # noqa: PLR0913, PLR0915 | Complexity complaints - s
         )
         _node_status = "success"
     finally:
-        if state_path:
+        if track_state:
             _manifest = update_node_state(
                 **state_update_params,
                 status=_node_status,
