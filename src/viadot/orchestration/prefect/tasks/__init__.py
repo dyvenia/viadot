@@ -10,7 +10,7 @@ from .customer_gauge_to_df import customer_gauge_to_df
 from .databricks import df_to_databricks
 from .dbt import (
     dbt_task,
-    trigger_downstream_node,
+    trigger_downstream_nodes,
     update_node_state,
 )
 from .duckdb import duckdb_query
@@ -110,7 +110,7 @@ __all__ = [
     "sql_server_to_df",
     "supermetrics_to_df",
     "tm1_to_df",
-    "trigger_downstream_node",
+    "trigger_downstream_nodes",
     "update_node_state",
     "vid_club_to_df",
 ]
