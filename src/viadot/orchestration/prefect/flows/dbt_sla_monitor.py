@@ -12,7 +12,7 @@ from viadot.orchestration.prefect.utils import get_credentials, send_email_notif
 
 
 def _get_node_owners(
-    node: dict, owner_type: Literal["technical", "business", "all"]
+    node: dict, owner_type: Literal["technical owner", "business owner", "all"]
 ) -> list[str]:
     """Return email addresses from a node's owners list, filtered by type.
 
@@ -27,17 +27,23 @@ def _get_node_owners(
     if owner_type == "all":
         return [o["email"] for o in owners if o.get("email")]
     return [
-        o["email"] for o in owners if o.get("email") and o.get("type") == owner_type
+        o["email"]
+        for o in owners
+        if o.get("email") and o.get("type", "").lower() == owner_type.lower()
     ]
 
 
 @task
 def notify_sla_breach(
-    node_name: str, recipients: list[str], smtp_credentials_secret: str
+    node_name: str,
+    fresh_until: str,
+    recipients: list[str],
+    smtp_credentials_secret: str,
 ) -> None:
     """Notify model owners that the node's SLA has been breached."""
     message = (
         f"SLA breached for model '{node_name}'."
+        f" Node was fresh until: {fresh_until}."
         " Please investigate and take necessary action."
     )
     logger.warning(message)
@@ -54,9 +60,9 @@ def notify_sla_breach(
 @flow(name="SLA Monitor")
 def sla_monitor(
     state_store_credentials_secret: str,
-    smtp_credentials_secret: str,
-    model_state_path: str | None = None,
-    owner_type: Literal["technical", "business", "all"] = "technical",
+    smtp_credentials_secret: str | None = None,
+    state_path: str | None = None,
+    owner_type: Literal["technical owner", "business owner", "all"] = "technical owner",
     dry_run: bool = False,
 ) -> None:
     """Check SLA compliance for all dbt models and notify owners of any breaches.
@@ -71,10 +77,13 @@ def sla_monitor(
     Args:
         state_store_credentials_secret: The name of the Prefect Secret containing
             credentials to access the state store.
-        model_state_path (str, optional): S3 path to the state JSON file.
+        smtp_credentials_secret: The name of the Prefect Secret containing SMTP
+            credentials for sending notifications. Not used in dry-run mode. Defaults
+            to None.
+        state_path (str, optional): S3 path to the state JSON file.
             Defaults to ``s3://{s3_bucket}/deployment-status/deployment-status-concurrent.json``.
         owner_type: Owner type to notify on a breach.
-            Allowed values: ``"technical"``, ``"business"``, ``"all"``.
+            Allowed values: ``"technical owner"``, ``"business owner"``, ``"all"``.
             Defaults to ``"technical"``.
         dry_run (bool, optional): When ``True``, logs detected breaches without sending
             notifications. Defaults to ``False``.
@@ -87,12 +96,12 @@ def sla_monitor(
         field stored in the state file (written by the ingestion/transform flow).
         It defaults to 30 minutes when not set.
     """
-    if model_state_path is None:
-        model_state_path = f"s3://{Variable.get('s3_bucket')}/deployment-status/deployment-status-concurrent.json"
+    if state_path is None:
+        state_path = f"s3://{Variable.get('s3_bucket')}/deployment-status/deployment-status-concurrent.json"
 
     store = StateStore(
         store_type="s3",
-        state_path=model_state_path,
+        state_path=state_path,
         credentials=get_credentials(state_store_credentials_secret),
     )
     state, _ = store._read()
@@ -100,7 +109,7 @@ def sla_monitor(
     for node in state.values():
         node_name = node["table_name"]
 
-        if node.get("node_type") != "model":
+        if node.get("TYPE") != "model":
             logger.debug(f"Node '{node_name}' is not a model; skipping SLA check.")
             continue
 
@@ -121,16 +130,30 @@ def sla_monitor(
             if owners:
                 if dry_run:
                     logger.info(
-                        f"(Dry run) SLA breach detected for '{node_name}'. "
-                        f"Owners to notify: {owners}"
+                        f"(Dry run) SLA breach detected for node '{node_name}'"
+                        f" Node was fresh until: {node['fresh_until']}."
+                        f" Owners to notify: {owners}."
                     )
                 else:
                     notify_sla_breach(
                         node_name=node_name,
+                        fresh_until=node["fresh_until"],
                         recipients=owners,
                         smtp_credentials_secret=smtp_credentials_secret,
                     )
             else:
                 logger.warning(
-                    f"SLA breached for '{node_name}' but no {owner_type} owners defined."
+                    f"SLA breached for '{node_name}' but no '{owner_type}' type owners defined."
                 )
+
+
+if __name__ == "__main__":
+    state_path = f"s3://{Variable.get('s3_bucket')}/deployment-status/deployment-status-concurrent.json"
+    print(state_path)
+    sla_monitor(
+        state_path=f"s3://{Variable.get('s3_bucket')}/deployment-status/deployment-status-concurrent.json",
+        state_store_credentials_secret="redshiftspectrumsecret",
+        smtp_credentials_secret="my_smtp_secret",
+        owner_type="technical owner",
+        dry_run=True,
+    )
