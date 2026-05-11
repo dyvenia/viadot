@@ -153,6 +153,7 @@ def transform_and_catalog(  # noqa: PLR0913, PLR0915 | Complexity complaints - s
     manifest_path: str | None = None,
     manifest_store_type: str = "s3",
     manifest_store_credentials_secret: str | None = None,
+    track_state: bool = False,
     state_path: str | None = None,
     state_store_type: str = "s3",
     state_store_credentials_secret: str | None = None,
@@ -249,6 +250,7 @@ def transform_and_catalog(  # noqa: PLR0913, PLR0915 | Complexity complaints - s
             Currently only ``"s3"`` is supported. Defaults to "s3".
         manifest_store_credentials_secret (str | None, optional): Store credentials for
             the manifest. Omit to use ambient AWS credentials. Defaults to None.
+        track_state (bool): Whether to track the state of the dbt node in a state file.
         state_path (str | None, optional): URI of the state file
             (e.g. ``"s3://bucket/state.json"``). If provided, the flow will update the
             state of the executed dbt node in the state file. Defaults to None.
@@ -356,7 +358,6 @@ def transform_and_catalog(  # noqa: PLR0913, PLR0915 | Complexity complaints - s
     }
 
     # Update node state to "running" before executing dbt commands.
-    track_state = bool(state_path)
     if track_state:
         update_node_state(
             **state_update_params,
