@@ -5,7 +5,11 @@ from typing import Any, Literal
 from prefect import flow
 
 from viadot.orchestration.prefect.tasks import df_to_redshift_spectrum, sap_rfc_to_df
-from viadot.orchestration.prefect.utils import with_flow_timeout_param
+from viadot.orchestration.prefect.tasks.dbt import (
+    trigger_downstream_node,
+    update_node_state,
+)
+from viadot.orchestration.prefect.utils import get_credentials, with_flow_timeout_param
 
 
 @flow(
@@ -39,6 +43,16 @@ def sap_to_redshift_spectrum(  # noqa: PLR0913
     sap_config_key: str | None = None,
     sap_sep: str | None = "♔",
     replacement: str = "-",
+    node_name: str | None = None,
+    manifest_path: str | None = None,
+    manifest_store_type: str = "s3",
+    manifest_store_credentials_secret: str | None = None,
+    state_path: str | None = None,
+    state_store_type: str = "s3",
+    state_store_credentials_secret: str | None = None,
+    sla_breach_grace_period_minutes: int = 30,
+    trigger_downstream_models: bool = False,
+    trigger_downstream_models_delay: int = 0,
 ) -> None:
     """Download a pandas `DataFrame` from SAP and upload it to AWS Redshift Spectrum.
 
@@ -91,6 +105,31 @@ def sap_to_redshift_spectrum(  # noqa: PLR0913
         sap_sep (str, optional): The separator to use when reading query results.
             If set to None, multiple options are automatically tried.
             Defaults to ♔.
+        node_name (str, optional): The dbt node name for state tracking. Required
+            if ``state_path`` is provided. Defaults to None.
+        manifest_path (str, optional): URI of the manifest file
+            (e.g. ``"s3://bucket/manifest.json"``). Required if ``state_path`` is
+            provided. Defaults to None.
+        manifest_store_type (str, optional): Backend type for the manifest store.
+            Defaults to "s3".
+        manifest_store_credentials_secret (str, optional): Prefect secret name holding
+            manifest store credentials. Omit to use ambient AWS credentials.
+            Defaults to None.
+        state_path (str, optional): URI of the state file
+            (e.g. ``"s3://bucket/state.json"``). If provided, the flow writes
+            ``running``, then ``success`` or ``failed`` to the state store.
+            Defaults to None.
+        state_store_type (str, optional): Backend type for the state store.
+            Defaults to "s3".
+        state_store_credentials_secret (str, optional): Prefect secret name holding
+            state store credentials. Omit to use ambient AWS credentials.
+            Defaults to None.
+        sla_breach_grace_period_minutes (int, optional): Grace period in minutes before
+            an SLA breach is triggered. Defaults to 30.
+        trigger_downstream_models (bool, optional): Whether to trigger downstream models
+            after a successful run. Defaults to False.
+        trigger_downstream_models_delay (int, optional): Delay in minutes before
+            triggering downstream models. Defaults to 0.
 
 
     Examples:
@@ -100,32 +139,68 @@ def sap_to_redshift_spectrum(  # noqa: PLR0913
             ...
         )
     """
-    df = sap_rfc_to_df(
-        query=query,
-        tests=tests,
-        func=func,
-        rfc_unique_id=rfc_unique_id,
-        rfc_total_col_width_character_limit=rfc_total_col_width_character_limit,
-        credentials_secret=sap_credentials_secret,
-        config_key=sap_config_key,
-        dynamic_date_symbols=dynamic_date_symbols,
-        dynamic_date_format=dynamic_date_format,
-        dynamic_date_timezone=dynamic_date_timezone,
-        replacement=replacement,
-        sep=sap_sep,
-    )
+    state_update_params = {
+        "node_name": node_name,
+        "node_type": "source",
+        "trigger_delay": trigger_downstream_models_delay,
+        "sla_breach_grace_period_minutes": sla_breach_grace_period_minutes,
+        "state_path": state_path,
+        "state_store_type": state_store_type,
+        "state_store_credentials": get_credentials(state_store_credentials_secret)
+        if state_store_credentials_secret
+        else None,
+        "manifest_path": manifest_path,
+        "manifest_store_type": manifest_store_type,
+        "manifest_store_credentials": get_credentials(manifest_store_credentials_secret)
+        if manifest_store_credentials_secret
+        else None,
+    }
 
-    df_to_redshift_spectrum(
-        df=df,
-        to_path=to_path,
-        schema_name=schema_name,
-        table=table,
-        extension=extension,
-        if_exists=if_exists,
-        partition_cols=partition_cols,
-        index=index,
-        compression=compression,
-        sep=aws_sep,
-        config_key=aws_config_key,
-        credentials_secret=credentials_secret,
-    )
+    track_state = bool(state_path)
+    if track_state:
+        update_node_state(**state_update_params, status="running")
+
+    _node_status = "failed"
+    _manifest = None
+    try:
+        df = sap_rfc_to_df(
+            query=query,
+            tests=tests,
+            func=func,
+            rfc_unique_id=rfc_unique_id,
+            rfc_total_col_width_character_limit=rfc_total_col_width_character_limit,
+            credentials_secret=sap_credentials_secret,
+            config_key=sap_config_key,
+            dynamic_date_symbols=dynamic_date_symbols,
+            dynamic_date_format=dynamic_date_format,
+            dynamic_date_timezone=dynamic_date_timezone,
+            replacement=replacement,
+            sep=sap_sep,
+        )
+
+        df_to_redshift_spectrum(
+            df=df,
+            to_path=to_path,
+            schema_name=schema_name,
+            table=table,
+            extension=extension,
+            if_exists=if_exists,
+            partition_cols=partition_cols,
+            index=index,
+            compression=compression,
+            sep=aws_sep,
+            config_key=aws_config_key,
+            credentials_secret=credentials_secret,
+        )
+        _node_status = "success"
+    finally:
+        if track_state:
+            _manifest = update_node_state(**state_update_params, status=_node_status)
+
+    if trigger_downstream_models and track_state:
+        trigger_downstream_node(
+            node_name=node_name,
+            manifest=_manifest,
+            state_path=state_path,
+            state_store_credentials=state_update_params["state_store_credentials"],
+        )
