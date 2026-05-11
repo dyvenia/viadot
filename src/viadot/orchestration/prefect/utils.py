@@ -2,6 +2,8 @@
 
 from collections.abc import Callable
 import contextlib
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
 from functools import wraps
 from inspect import Parameter, iscoroutinefunction, signature
 import json
@@ -9,6 +11,7 @@ from json.decoder import JSONDecodeError
 import logging
 import os
 import re
+import smtplib
 import sys
 import tempfile
 from typing import Any, TypeVar
@@ -22,6 +25,7 @@ from prefect.client.orchestration import get_client
 from prefect.utilities.asyncutils import run_coro_as_sync
 from prefect.utilities.timeout import timeout, timeout_async
 from prefect_sqlalchemy import SqlAlchemyConnector
+from pydantic.v1 import BaseModel
 
 
 with contextlib.suppress(ModuleNotFoundError):
@@ -31,6 +35,8 @@ with contextlib.suppress(ModuleNotFoundError):
 with contextlib.suppress(ModuleNotFoundError):
     from prefect_azure import AzureKeyVaultSecretReference
 
+from pydantic import BaseModel
+
 from viadot.orchestration.prefect.exceptions import MissingPrefectBlockError
 
 
@@ -38,6 +44,16 @@ T = TypeVar("T", bound=Block)
 F = TypeVar("F", bound=Callable[..., object])
 
 DEFAULT_TIMEOUT_SECONDS = 2 * 60 * 60
+
+
+logger = logging.getLogger(__name__)
+
+
+class SmtpConfig(BaseModel):
+    host: str = "smtp.gmail.com"
+    port: int = 587
+    sender: str
+    password: str
 
 
 def with_flow_timeout_param(
@@ -850,3 +866,26 @@ async def shell_run_command(
                 lines.append(msg)
 
     return lines if return_all else lines[-1]
+
+
+def send_email_notification(
+    subject: str,
+    body: str,
+    recipients: list[str],
+    smtp_config: SmtpConfig,
+) -> None:
+    """Send an email notification with the provided parameters."""
+    with smtplib.SMTP(smtp_config.host, smtp_config.port) as server:
+        server.starttls()
+        server.login(smtp_config.sender, smtp_config.password)
+        try:
+            msg = MIMEMultipart("mixed")
+            msg["From"] = smtp_config.sender
+            msg["To"] = ", ".join(recipients)
+            msg["Subject"] = subject
+            msg.attach(MIMEText(body, "html"))
+            server.sendmail(smtp_config.sender, recipients, msg.as_string())
+        except smtplib.SMTPException:
+            logger.exception("Failed to send notification.")
+        except Exception:
+            logger.exception("An unexpected error occurred while sending email.")
