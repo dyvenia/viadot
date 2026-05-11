@@ -47,12 +47,13 @@ def sap_to_redshift_spectrum(  # noqa: PLR0913
     manifest_path: str | None = None,
     manifest_store_type: str = "s3",
     manifest_store_credentials_secret: str | None = None,
+    track_state: bool = False,
     state_path: str | None = None,
     state_store_type: str = "s3",
     state_store_credentials_secret: str | None = None,
     sla_breach_grace_period_minutes: int = 30,
-    trigger_downstream_models: bool = False,
-    trigger_downstream_models_delay: int = 0,
+    trigger_downstream_nodes: bool = False,
+    trigger_downstream_nodes_delay: int = 0,
 ) -> None:
     """Download a pandas `DataFrame` from SAP and upload it to AWS Redshift Spectrum.
 
@@ -115,6 +116,7 @@ def sap_to_redshift_spectrum(  # noqa: PLR0913
         manifest_store_credentials_secret (str, optional): Prefect secret name holding
             manifest store credentials. Omit to use ambient AWS credentials.
             Defaults to None.
+        track_state (bool): Whether to track the state of the dbt node in a state file.
         state_path (str, optional): URI of the state file
             (e.g. ``"s3://bucket/state.json"``). If provided, the flow writes
             ``running``, then ``success`` or ``failed`` to the state store.
@@ -126,10 +128,10 @@ def sap_to_redshift_spectrum(  # noqa: PLR0913
             Defaults to None.
         sla_breach_grace_period_minutes (int, optional): Grace period in minutes before
             an SLA breach is triggered. Defaults to 30.
-        trigger_downstream_models (bool, optional): Whether to trigger downstream models
+        trigger_downstream_nodes (bool, optional): Whether to trigger downstream nodes
             after a successful run. Defaults to False.
-        trigger_downstream_models_delay (int, optional): Delay in minutes before
-            triggering downstream models. Defaults to 0.
+        trigger_downstream_nodes_delay (int, optional): Delay in minutes before
+            triggering downstream nodes. Defaults to 0.
 
 
     Examples:
