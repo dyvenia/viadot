@@ -9,7 +9,7 @@ import pytest
 from viadot.orchestration.dbt.manifest_handler import ManifestHandler
 from viadot.orchestration.dbt.state_handler import StateHandler, is_fresh
 from viadot.orchestration.prefect.tasks.dbt import (
-    trigger_downstream_node,
+    trigger_downstream_nodes,
     update_node_state,
 )
 from viadot.orchestration.prefect.tasks.dbt.utils import (
@@ -625,7 +625,7 @@ class TestUpdateNodeStateTask:
 
 
 # ---------------------------------------------------------------------------
-# trigger_downstream_node task
+# trigger_downstream_nodes task
 # ---------------------------------------------------------------------------
 
 
@@ -650,7 +650,7 @@ class TestTriggerDownstreamNode:
             lambda self, n, s: (["int_orders", "int_items"], {}),
         )
 
-        trigger_downstream_node.fn(
+        trigger_downstream_nodes.fn(
             node_name="raw_orders",
             manifest=manifest,
             state_path="s3://bucket/node-state.json",
@@ -680,7 +680,7 @@ class TestTriggerDownstreamNode:
             lambda self, n, s: ([], {"int_orders": ["raw_items"]}),
         )
 
-        trigger_downstream_node.fn(
+        trigger_downstream_nodes.fn(
             node_name="raw_orders",
             manifest=manifest,
             state_path="s3://bucket/node-state.json",
