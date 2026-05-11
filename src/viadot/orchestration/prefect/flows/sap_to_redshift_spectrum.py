@@ -6,7 +6,9 @@ from prefect import flow
 
 from viadot.orchestration.prefect.tasks import df_to_redshift_spectrum, sap_rfc_to_df
 from viadot.orchestration.prefect.tasks.dbt import (
-    trigger_downstream_node,
+    trigger_downstream_nodes as trigger_downstream_nodes_task,
+)
+from viadot.orchestration.prefect.tasks.dbt import (
     update_node_state,
 )
 from viadot.orchestration.prefect.utils import get_credentials, with_flow_timeout_param
@@ -141,10 +143,14 @@ def sap_to_redshift_spectrum(  # noqa: PLR0913
             ...
         )
     """
+    if trigger_downstream_nodes and not track_state:
+        msg = "State tracking must be enabled to trigger downstream nodes."
+        raise ValueError(msg)
+
     state_update_params = {
         "node_name": node_name,
         "node_type": "source",
-        "trigger_delay": trigger_downstream_models_delay,
+        "trigger_delay": trigger_downstream_nodes_delay,
         "sla_breach_grace_period_minutes": sla_breach_grace_period_minutes,
         "state_path": state_path,
         "state_store_type": state_store_type,
@@ -199,8 +205,8 @@ def sap_to_redshift_spectrum(  # noqa: PLR0913
         if track_state:
             _manifest = update_node_state(**state_update_params, status=_node_status)
 
-    if trigger_downstream_models and track_state:
-        trigger_downstream_node(
+    if trigger_downstream_nodes:
+        trigger_downstream_nodes_task(
             node_name=node_name,
             manifest=_manifest,
             state_path=state_path,
