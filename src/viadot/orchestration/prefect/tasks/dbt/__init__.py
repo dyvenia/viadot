@@ -144,7 +144,7 @@ def update_node_state(  # noqa: PLR0913
 
 
 @task(retries=1, retry_delay_seconds=30)
-def trigger_downstream_node(
+def trigger_downstream_nodes(
     node_name: str,
     manifest: dict,
     state_path: str,
@@ -154,7 +154,8 @@ def trigger_downstream_node(
     """Trigger downstream dbt nodes whose upstream dependencies are all fresh.
 
     Args:
-        node_name: The name of the source table or node that just completed.
+        node_name: The name of the source table or model whose downstream dependencies
+            should be checked and triggered.
         manifest: The dbt manifest dictionary.
         state_path: URI of the state file (e.g. ``"s3://bucket/state.json"``).
         state_store_credentials: AWS credentials for the state store.

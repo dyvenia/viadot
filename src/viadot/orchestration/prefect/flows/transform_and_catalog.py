@@ -19,7 +19,9 @@ from viadot.orchestration.prefect.tasks import (
     s3_upload_file,
 )
 from viadot.orchestration.prefect.tasks.dbt import (
-    trigger_downstream_node,
+    trigger_downstream_nodes as trigger_downstream_nodes_task,
+)
+from viadot.orchestration.prefect.tasks.dbt import (
     update_node_state,
 )
 from viadot.orchestration.prefect.utils import (
@@ -382,7 +384,7 @@ def transform_and_catalog(  # noqa: PLR0913, PLR0915 | Complexity complaints - s
             )
 
     if trigger_downstream_nodes:
-        trigger_downstream_node(
+        trigger_downstream_nodes_task(
             node_name=model_name,
             manifest=_manifest,
             state_path=state_path,
