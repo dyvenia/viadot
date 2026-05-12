@@ -63,7 +63,7 @@ class ManifestStore(ABC):
 class S3ManifestStore(ManifestStore, store_type="s3"):
     """A class for managing dbt manifest storage in S3."""
 
-    def __init__(self, **_kwargs: object) -> None:
+    def __init__(self, *_args: list, **_kwargs: object) -> None:
         """Initialize S3ManifestStore, raising ImportError if `aws` extra is missing."""
         if S3 is None:
             msg = "S3ManifestStore requires the 'aws' extra: pip install 'viadot[aws]'"

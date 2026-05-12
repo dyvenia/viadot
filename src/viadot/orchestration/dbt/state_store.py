@@ -90,7 +90,7 @@ class StateStore(ABC):
         if store_type is not None:
             StateStore._registry[store_type] = cls
 
-    def __new__(cls, store_type: str, *_args: dict, **_kwargs: dict) -> StateStore:
+    def __new__(cls, store_type: str, *_args: list, **_kwargs: dict) -> StateStore:
         """Create an instance of the appropriate subclass based on the store_type."""
         if cls is StateStore:
             subclass = cls._registry.get(store_type)
