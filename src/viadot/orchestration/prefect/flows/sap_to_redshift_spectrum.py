@@ -150,8 +150,6 @@ def sap_to_redshift_spectrum(  # noqa: PLR0913
     state_update_params = {
         "node_name": node_name,
         "node_type": "source",
-        "trigger_delay": trigger_downstream_nodes_delay,
-        "sla_breach_grace_period_minutes": sla_breach_grace_period_minutes,
         "state_path": state_path,
         "state_store_type": state_store_type,
         "state_store_credentials": get_credentials(state_store_credentials_secret)
@@ -162,6 +160,8 @@ def sap_to_redshift_spectrum(  # noqa: PLR0913
         "manifest_store_credentials": get_credentials(manifest_store_credentials_secret)
         if manifest_store_credentials_secret
         else None,
+        "trigger_delay": trigger_downstream_nodes_delay,
+        "sla_breach_grace_period_minutes": sla_breach_grace_period_minutes,
     }
 
     track_state = bool(state_path)

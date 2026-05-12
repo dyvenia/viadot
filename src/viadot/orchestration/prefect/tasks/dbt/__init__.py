@@ -117,7 +117,7 @@ def update_node_state(  # noqa: PLR0913
         The dbt manifest dict (re-used by callers to avoid a second store read).
     """
     logger = get_run_logger()
-    logger.info("Preparing deployment status update ...")
+    logger.info(f"Updating node status in {state_path}...")
     state_store = StateStore(state_store_type, state_path, state_store_credentials)
     state_handler = StateHandler(state_store)
     manifest_store = ManifestStore(manifest_store_type)

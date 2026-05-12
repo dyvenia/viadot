@@ -133,9 +133,9 @@ class StateStore(ABC):
 class S3StateStore(StateStore, store_type="s3"):
     """A class for managing deployment state storage in S3."""
 
-    def __init__(self, **kwargs: dict) -> None:
+    def __init__(self, *args, **kwargs: dict) -> None:
         """Initialize the S3StateStore with the given state path and credentials."""
-        super().__init__(**kwargs)
+        super().__init__(*args, **kwargs)
         self.bucket, self.key = self._parse_path(self.state_path)
         self.client = self._create_client()
 
