@@ -164,7 +164,6 @@ def sap_to_redshift_spectrum(  # noqa: PLR0913
         "sla_breach_grace_period_minutes": sla_breach_grace_period_minutes,
     }
 
-    track_state = bool(state_path)
     if track_state:
         update_node_state(**state_update_params, status="running")
 
