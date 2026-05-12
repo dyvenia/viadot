@@ -1,12 +1,15 @@
 """Utilities for dbt orchestration tasks."""
 
 from pathlib import Path
+import textwrap
 
 from prefect import get_run_logger
 from ruamel.yaml import YAML
 
 
 _yaml = YAML(typ="safe", pure=True)
+
+NODE_NAME_PARAM_NAMES = ["table", "redshift_table"]
 
 
 def get_node_schedules_prefect_yaml(
@@ -44,10 +47,11 @@ def get_node_schedules_prefect_yaml(
     for yaml_file in deployments_dir.rglob("*.yaml"):
         if yaml_file == base_yaml:
             continue
-        parsed = _yaml.load(base_content + "\n" + yaml_file.read_text()) or {}
-        for deployment in parsed.get("deployments", []):
-            params = deployment.get("parameters") or {}
-            for key in ["table", "redshift_table"]:
+        file_content = textwrap.indent(yaml_file.read_text().strip(), "  ")
+        deployments = _yaml.load(base_content + "\n" + file_content).get("deployments")
+        for deployment in deployments:
+            params = deployment.get("parameters", {})
+            for key in NODE_NAME_PARAM_NAMES:
                 if params.get(key) == node_name:
                     logger.info("Matching deployment configuration found for source.")
                     return deployment.get("schedules") or []

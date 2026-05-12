@@ -421,13 +421,13 @@ class TestGetSourceConfigPrefectYaml:
                     cron: "0 0 * * *"
                     timezone: "Europe/Madrid"
                     active: false
+                deployments:
                 """
             )
         )
         (tmp_path / "extract" / "ingestion.yaml").write_text(
             textwrap.dedent(
-                """\
-                deployments:
+                """
                   - name: ingest-raw-orders
                     parameters:
                       table: raw_orders
@@ -453,14 +453,13 @@ class TestGetSourceConfigPrefectYaml:
         (tmp_path / "transform" / "dbt.yaml").write_text(
             textwrap.dedent(
                 """\
-                deployments:
-                  - name: dbt-int-orders
-                    parameters:
-                      dbt_selects:
-                        run: int_orders
-                    schedules:
-                      - cron: "0 7 * * *"
-                        timezone: UTC
+                - name: dbt-int-orders
+                  parameters:
+                    dbt_selects:
+                      run: int_orders
+                  schedules:
+                    - cron: "0 7 * * *"
+                      timezone: UTC
                 """
             )
         )
