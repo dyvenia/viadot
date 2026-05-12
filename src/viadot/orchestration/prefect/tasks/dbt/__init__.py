@@ -89,7 +89,7 @@ def update_node_state(  # noqa: PLR0913
     manifest_store_credentials: dict[str, Any] | None = None,
     effective_source_data_slot: str | None = None,
     batch_id: int | None = None,
-    cron: list | None = None,
+    crons: list | None = None,
     trigger_delay: int = 0,
     sla_breach_grace_period_minutes: int = 30,
 ) -> dict:
@@ -109,7 +109,7 @@ def update_node_state(  # noqa: PLR0913
             use ambient AWS credentials.
         effective_source_data_slot: Optional effective source data slot.
         batch_id: Optional batch identifier.
-        cron: Optional list of cron schedule dicts or strings.
+        crons: Optional list of cron schedule dicts or strings.
         trigger_delay: Delay in minutes before triggering downstream nodes.
         sla_breach_grace_period_minutes: Grace period in minutes before an SLA breach.
 
@@ -130,11 +130,11 @@ def update_node_state(  # noqa: PLR0913
         node_name=node_name,
         status=status,
         node_type=node_type,
-        sla=meta.get("sla"),
+        sla=meta.get("SLA"),
         owners=meta.get("owners"),
         effective_source_data_slot=effective_source_data_slot,
         batch_id=batch_id,
-        cron=cron,
+        crons=crons,
         trigger_delay=trigger_delay,
         sla_breach_grace_period_minutes=sla_breach_grace_period_minutes,
     )

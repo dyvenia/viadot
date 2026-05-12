@@ -126,10 +126,10 @@ class StateHandler:
         raise ValueError(msg)
 
     @staticmethod
-    def _calc_fresh_until_from_cron(cron: list, now: datetime) -> str | None:
+    def _calc_fresh_until_from_cron(crons: list, now: datetime) -> str | None:
         """Return the earliest next cron run time as an ISO string, or None."""
         next_times = []
-        for c in cron:
+        for c in crons:
             if isinstance(c, dict):
                 tz = ZoneInfo(c.get("timezone", "UTC"))
                 c_iter = croniter(c["cron"], now.astimezone(tz))
@@ -146,6 +146,7 @@ class StateHandler:
         """Return the SLA-based fresh_until, or None if SLA is ignored."""
         if sla.lower() in ("ignored", "n/a"):
             return None
+
         parsed_sla = StateHandler._parse_sla(sla)
         if parsed_sla:
             if isinstance(parsed_sla, timedelta | relativedelta):
@@ -161,7 +162,7 @@ class StateHandler:
 
     @staticmethod
     def _calc_fresh_until(
-        cron: list | None, sla: str | None, reference_time: datetime | None = None
+        crons: list | None, sla: str | None, reference_time: datetime | None = None
     ) -> str | None:
         """Calculate the fresh_until timestamp based on CRON schedules or SLA.
 
@@ -172,7 +173,7 @@ class StateHandler:
             2.SLA configuration: It applies SLA rules (timedelta or wall-clock).
 
         Args:
-            cron: List of cron schedules. Each item can be a dict with ``"cron"``
+            crons: List of cron schedules. Each item can be a dict with ``"cron"``
                 and ``"timezone"`` keys, or a plain cron string.
             sla: SLA string (e.g. ``"24h"``, ``"10:00"``), or ``None``.
             reference_time: The UTC datetime to base calculations on. Defaults to
@@ -183,8 +184,8 @@ class StateHandler:
         """
         logger.info("Calculating fresh_until ...")
         now = reference_time or datetime.now(timezone.utc)
-        if cron:
-            return StateHandler._calc_fresh_until_from_cron(cron, now)
+        if crons:
+            return StateHandler._calc_fresh_until_from_cron(crons, now)
         if sla is not None:
             return StateHandler._calc_fresh_until_from_sla(sla, now)
         logger.warning("Cannot calculate fresh_until. Setting fresh_until to None.")
@@ -199,7 +200,7 @@ class StateHandler:
         owners: list[dict] | None = None,
         effective_source_data_slot: str | None = None,
         batch_id: int | None = None,
-        cron: list | None = None,
+        crons: list | None = None,
         trigger_delay: int = 0,
         sla_breach_grace_period_minutes: int = 30,
         reference_time: datetime | None = None,
@@ -214,7 +215,7 @@ class StateHandler:
             owners: Optional list of owner dicts.
             effective_source_data_slot: Optional effective source data slot.
             batch_id: Optional batch identifier.
-            cron: Optional list of cron schedule dicts or strings.
+            crons: Optional list of cron schedule dicts or strings.
             trigger_delay: Delay in minutes before triggering downstream nodes.
             sla_breach_grace_period_minutes: Grace period before an SLA breach.
             reference_time: Override for "now". Defaults to
@@ -228,7 +229,7 @@ class StateHandler:
         # fresh_until is only calculated on success; on failure it is preserved
         # by the StateStore._merge_node_state logic.
         fresh_until = (
-            self._calc_fresh_until(cron, sla, now) if status == "success" else None
+            self._calc_fresh_until(crons, sla, now) if status == "success" else None
         )
         return {
             "table_name": node_name,
@@ -240,7 +241,7 @@ class StateHandler:
             "owners": owners,
             "effective_source_data_slot": effective_source_data_slot,
             "batch_id": batch_id,
-            "cron": cron,
+            "cron": crons,
             "trigger_delay": trigger_delay,
             "sla_breach_grace_period": sla_breach_grace_period_minutes,
         }
