@@ -218,10 +218,11 @@ class S3StateStore(StateStore, store_type="s3"):
         reraise_as={"PreconditionFailed": FileExistsError},
     )
     def create(self, node_state: dict) -> dict:
-        """Create a new state file in S3 with the initial state for the given table."""
+        """Create a new state file in S3 as a mapping of table_name -> node state."""
         logger.info("Creating a new state file...")
+        data = {node_state["table_name"]: node_state}
         body = json.dumps(
-            node_state, indent=4, ensure_ascii=False, separators=(",", ":")
+            data, indent=4, ensure_ascii=False, separators=(",", ":")
         ).encode("utf-8")
         return self.client.put_object(
             Bucket=self.bucket,

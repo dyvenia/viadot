@@ -265,7 +265,7 @@ class TestS3StateStoreCreate:
         store.client.put_object.assert_called_once()
         _args, kwargs = store.client.put_object.call_args
         written = json.loads(kwargs["Body"].decode())
-        assert written == node_state
+        assert written == {"orders": node_state}
         assert kwargs["IfNoneMatch"] == "*"
 
     def test_retries_on_conditional_request_conflict(self):
