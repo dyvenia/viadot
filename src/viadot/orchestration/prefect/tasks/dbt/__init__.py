@@ -12,6 +12,7 @@ from viadot.orchestration.dbt.manifest_handler import ManifestHandler
 from viadot.orchestration.dbt.manifest_store import ManifestStore
 from viadot.orchestration.dbt.state_handler import StateHandler
 from viadot.orchestration.dbt.state_store import StateStore
+from viadot.orchestration.prefect.tasks.dbt.utils import get_node_schedules_prefect_yaml
 from viadot.orchestration.prefect.utils import shell_run_command
 
 
@@ -89,7 +90,6 @@ def update_node_state(  # noqa: PLR0913
     manifest_store_credentials: dict[str, Any] | None = None,
     effective_source_data_slot: str | None = None,
     batch_id: int | None = None,
-    crons: list | None = None,
     trigger_delay: int = 0,
     sla_breach_grace_period_minutes: int = 30,
 ) -> dict:
@@ -103,13 +103,12 @@ def update_node_state(  # noqa: PLR0913
         state_store_type: Backend type for the state store.
         manifest_path: URI of the manifest file (e.g. ``"s3://bucket/manifest.json"``).
         manifest_store_type: Backend type for the manifest store.
-        state_store_credentials: Store credentials for the state store. Omit to use
+                state_store_credentials: Store credentials for the state store. Omit to use
             ambient AWS credentials.
         manifest_store_credentials: Store credentials for the manifest store. Omit to
             use ambient AWS credentials.
         effective_source_data_slot: Optional effective source data slot.
         batch_id: Optional batch identifier.
-        crons: Optional list of cron schedule dicts or strings.
         trigger_delay: Delay in minutes before triggering downstream nodes.
         sla_breach_grace_period_minutes: Grace period in minutes before an SLA breach.
 
@@ -128,6 +127,11 @@ def update_node_state(  # noqa: PLR0913
     logger.info("Manifest store loaded successfully.")
     manifest_handler = ManifestHandler(manifest)
     meta = manifest_handler.get_node_meta(node_name)
+
+    schedules = None
+    if node_type == "source":
+        schedules = get_node_schedules_prefect_yaml(node_name)
+
     node_state = state_handler.build_node_state(
         node_name=node_name,
         status=status,
@@ -136,7 +140,7 @@ def update_node_state(  # noqa: PLR0913
         owners=meta.get("owners"),
         effective_source_data_slot=effective_source_data_slot,
         batch_id=batch_id,
-        crons=crons,
+        schedules=schedules,
         trigger_delay=trigger_delay,
         sla_breach_grace_period_minutes=sla_breach_grace_period_minutes,
     )

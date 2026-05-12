@@ -13,7 +13,7 @@ from viadot.orchestration.prefect.tasks.dbt import (
     update_node_state,
 )
 from viadot.orchestration.prefect.tasks.dbt.utils import (
-    get_source_config_prefect_yaml,
+    get_node_schedules_prefect_yaml,
 )
 
 
@@ -282,8 +282,8 @@ class TestParseSla:
 
 class TestCalcFreshUntilFromCron:
     def test_dict_cron_returns_next_utc_run(self):
-        result = StateHandler._calc_fresh_until_from_cron(
-            cron=[{"cron": "0 12 * * *", "timezone": "UTC"}],
+        result = StateHandler._calc_fresh_until_from_crons(
+            crons=[{"cron": "0 12 * * *", "timezone": "UTC"}],
             now=_FROZEN_NOW,
         )
         dt = datetime.fromisoformat(result).astimezone(timezone.utc)
@@ -292,20 +292,20 @@ class TestCalcFreshUntilFromCron:
         assert dt.date() == _FROZEN_NOW.date()
 
     def test_string_cron_returns_run_after_now(self):
-        result = StateHandler._calc_fresh_until_from_cron(
-            cron=["0 12 * * *"], now=_FROZEN_NOW
+        result = StateHandler._calc_fresh_until_from_crons(
+            crons=["0 12 * * *"], now=_FROZEN_NOW
         )
         assert result is not None
         assert datetime.fromisoformat(result) > _FROZEN_NOW
 
     def test_empty_cron_list_returns_none(self):
         assert (
-            StateHandler._calc_fresh_until_from_cron(cron=[], now=_FROZEN_NOW) is None
+            StateHandler._calc_fresh_until_from_crons(crons=[], now=_FROZEN_NOW) is None
         )
 
-    def test_returns_earliest_of_multiple_crons(self):
-        result = StateHandler._calc_fresh_until_from_cron(
-            cron=[
+    def test_returns_earliest_of_multiple_schedules(self):
+        result = StateHandler._calc_fresh_until_from_crons(
+            crons=[
                 {"cron": "0 15 * * *", "timezone": "UTC"},
                 {"cron": "0 11 * * *", "timezone": "UTC"},
             ],
@@ -346,12 +346,12 @@ class TestCalcFreshUntilFromSla:
 class TestCalcFreshUntil:
     def test_cron_takes_priority_over_sla(self):
         cron_result = StateHandler._calc_fresh_until(
-            cron=[{"cron": "0 12 * * *", "timezone": "UTC"}],
+            schedules=[{"cron": "0 12 * * *", "timezone": "UTC"}],
             sla="6h",
             reference_time=_FROZEN_NOW,
         )
         sla_result = StateHandler._calc_fresh_until(
-            cron=None, sla="6h", reference_time=_FROZEN_NOW
+            schedules=None, sla="6h", reference_time=_FROZEN_NOW
         )
         assert cron_result != sla_result
         dt = datetime.fromisoformat(cron_result).astimezone(timezone.utc)
@@ -360,27 +360,27 @@ class TestCalcFreshUntil:
     def test_returns_none_when_both_cron_and_sla_are_missing(self):
         assert (
             StateHandler._calc_fresh_until(
-                cron=None, sla=None, reference_time=_FROZEN_NOW
+                schedules=None, sla=None, reference_time=_FROZEN_NOW
             )
             is None
         )
         assert (
             StateHandler._calc_fresh_until(
-                cron=[], sla=None, reference_time=_FROZEN_NOW
+                schedules=[], sla=None, reference_time=_FROZEN_NOW
             )
             is None
         )
 
     def test_model_month_sla_returns_calendar_month_delta(self):
         result = StateHandler._calc_fresh_until(
-            sla="1 month", cron=None, reference_time=_FROZEN_NOW
+            sla="1 month", schedules=None, reference_time=_FROZEN_NOW
         )
         assert result == (_FROZEN_NOW + relativedelta(months=1)).isoformat()
 
     def test_model_month_sla_handles_february_boundary(self):
         jan_31 = datetime(2026, 1, 31, 10, 0, 0, tzinfo=timezone.utc)
         result = StateHandler._calc_fresh_until(
-            sla="1 month", cron=None, reference_time=jan_31
+            sla="1 month", schedules=None, reference_time=jan_31
         )
         dt = datetime.fromisoformat(result)
         assert dt.month == 2
@@ -388,13 +388,13 @@ class TestCalcFreshUntil:
 
     def test_model_year_sla_returns_now_plus_one_year(self):
         result = StateHandler._calc_fresh_until(
-            sla="1 year", cron=None, reference_time=_FROZEN_NOW
+            sla="1 year", schedules=None, reference_time=_FROZEN_NOW
         )
         assert result == (_FROZEN_NOW + relativedelta(years=1)).isoformat()
 
     def test_model_day_sla_returns_now_plus_delta(self):
         result = StateHandler._calc_fresh_until(
-            sla="7d", cron=None, reference_time=_FROZEN_NOW
+            sla="7d", schedules=None, reference_time=_FROZEN_NOW
         )
         assert result == (_FROZEN_NOW + timedelta(days=7)).isoformat()
 
@@ -466,45 +466,30 @@ class TestGetSourceConfigPrefectYaml:
         )
         return tmp_path
 
-    def test_ingestion_node_returns_deployment_and_crons(self, deployments_dir):
-        table_name, crons = get_source_config_prefect_yaml(
-            "raw_orders", deployments_dir
-        )
-        assert table_name == "ingest-raw-orders"
-        assert crons == [
+    def test_ingestion_node_returns_schedules(self, deployments_dir):
+        schedules = get_node_schedules_prefect_yaml("raw_orders", deployments_dir)
+        assert schedules == [
             {"cron": "0 6 * * *", "timezone": "Europe/Madrid"},
             {"cron": "0 14 * * *", "timezone": "Europe/Madrid"},
         ]
 
-    def test_dbt_node_returns_empty_tuple(self, deployments_dir):
-        assert get_source_config_prefect_yaml("int_orders", deployments_dir) == (
-            "",
-            [],
-        )
+    def test_dbt_node_returns_empty_list(self, deployments_dir):
+        assert get_node_schedules_prefect_yaml("int_orders", deployments_dir) == []
 
-    def test_unknown_node_returns_empty_tuple(self, deployments_dir):
-        assert get_source_config_prefect_yaml("nonexistent", deployments_dir) == (
-            "",
-            [],
-        )
+    def test_unknown_node_returns_empty_list(self, deployments_dir):
+        assert get_node_schedules_prefect_yaml("nonexistent", deployments_dir) == []
 
     def test_yaml_anchor_in_schedule_is_resolved(self, deployments_dir):
-        table_name, crons = get_source_config_prefect_yaml(
-            "raw_products", deployments_dir
-        )
-        assert table_name == "ingest-raw-products"
-        assert len(crons) == 1
-        assert crons[0]["cron"] == "0 0 * * *"
-        assert crons[0]["timezone"] == "Europe/Madrid"
+        schedules = get_node_schedules_prefect_yaml("raw_products", deployments_dir)
+        assert len(schedules) == 1
+        assert schedules[0]["cron"] == "0 0 * * *"
+        assert schedules[0]["timezone"] == "Europe/Madrid"
 
     def test_yaml_merge_key_override_is_resolved(self, deployments_dir):
-        table_name, crons = get_source_config_prefect_yaml(
-            "raw_customers", deployments_dir
-        )
-        assert table_name == "ingest-raw-customers"
-        assert len(crons) == 1
-        assert crons[0]["cron"] == "0 3 * * *"
-        assert crons[0]["timezone"] == "Europe/Madrid"
+        schedules = get_node_schedules_prefect_yaml("raw_customers", deployments_dir)
+        assert len(schedules) == 1
+        assert schedules[0]["cron"] == "0 3 * * *"
+        assert schedules[0]["timezone"] == "Europe/Madrid"
 
 
 # ---------------------------------------------------------------------------
@@ -535,37 +520,42 @@ class TestUpdateNodeStateTask:
             "trigger_delay": 10,
             "sla_breach_grace_period": 45,
         }
+        mock_manifest_store = MagicMock()
+        mock_manifest_store.read.return_value = {}
         monkeypatch.setattr(f"{_MODULE}.StateHandler", lambda store: mock_handler)
         monkeypatch.setattr(
             f"{_MODULE}.StateStore", MagicMock(return_value=MagicMock())
         )
+        monkeypatch.setattr(
+            f"{_MODULE}.ManifestStore", MagicMock(return_value=mock_manifest_store)
+        )
 
         update_node_state.fn(
-            table_name="mart_sales",
+            node_name="mart_sales",
             status="success",
-            state_path="s3://bucket/node-state.json",
             node_type="model",
-            credentials=credentials,
-            sla="6h",
-            owners=[{"email": "owner@example.com", "type": "Technical Owner"}],
+            state_path="s3://bucket/node-state.json",
+            state_store_type="s3",
+            manifest_path="s3://bucket/manifest.json",
+            manifest_store_type="s3",
+            state_store_credentials=credentials,
             effective_source_data_slot="2026-03-19T09:00:00+00:00",
             batch_id=123,
-            cron=["0 */6 * * *"],
             trigger_delay=10,
-            sla_breach_grace_period=45,
+            sla_breach_grace_period_minutes=45,
         )
 
         mock_handler.build_node_state.assert_called_once_with(
-            table_name="mart_sales",
+            node_name="mart_sales",
             status="success",
             node_type="model",
-            sla="6h",
-            owners=[{"email": "owner@example.com", "type": "Technical Owner"}],
+            sla=None,
+            owners=None,
             effective_source_data_slot="2026-03-19T09:00:00+00:00",
             batch_id=123,
-            cron=["0 */6 * * *"],
+            schedules=None,
             trigger_delay=10,
-            sla_breach_grace_period=45,
+            sla_breach_grace_period_minutes=45,
         )
         mock_handler.update.assert_called_once_with(
             mock_handler.build_node_state.return_value
@@ -576,36 +566,42 @@ class TestUpdateNodeStateTask:
     ):
         mock_handler = MagicMock()
         mock_handler.build_node_state.return_value = {
-            "table_name": "mart_sales",
+            "node_name": "mart_sales",
             "status": "failed",
             "fresh_until": None,
         }
+        mock_manifest_store = MagicMock()
+        mock_manifest_store.read.return_value = {}
         monkeypatch.setattr(f"{_MODULE}.StateHandler", lambda store: mock_handler)
         monkeypatch.setattr(
             f"{_MODULE}.StateStore", MagicMock(return_value=MagicMock())
         )
+        monkeypatch.setattr(
+            f"{_MODULE}.ManifestStore", MagicMock(return_value=mock_manifest_store)
+        )
 
         update_node_state.fn(
-            table_name="mart_sales",
+            node_name="mart_sales",
             status="failed",
             state_path="s3://bucket/node-state.json",
             node_type="model",
-            credentials=credentials,
-            sla="6h",
-            cron=["0 */6 * * *"],
+            state_store_type="s3",
+            manifest_path="s3://bucket/manifest.json",
+            manifest_store_type="s3",
+            state_store_credentials=credentials,
         )
 
         mock_handler.build_node_state.assert_called_once_with(
-            table_name="mart_sales",
+            node_name="mart_sales",
             status="failed",
             node_type="model",
-            sla="6h",
+            sla=None,
             owners=None,
             effective_source_data_slot=None,
             batch_id=None,
-            cron=["0 */6 * * *"],
+            schedules=None,
             trigger_delay=0,
-            sla_breach_grace_period=30,
+            sla_breach_grace_period_minutes=30,
         )
         mock_handler.update.assert_called_once()
 
@@ -615,12 +611,14 @@ class TestUpdateNodeStateTask:
             match="State store type 'local' is not supported",
         ):
             update_node_state.fn(
-                table_name="mart_sales",
+                node_name="mart_sales",
                 status="failed",
                 state_path="s3://bucket/node-state.json",
                 node_type="model",
-                credentials=credentials,
-                store_type="local",
+                state_store_type="local",
+                manifest_path="s3://bucket/manifest.json",
+                manifest_store_type="s3",
+                state_store_credentials=credentials,
             )
 
 
@@ -629,7 +627,7 @@ class TestUpdateNodeStateTask:
 # ---------------------------------------------------------------------------
 
 
-class TestTriggerDownstreamNode:
+class TestTriggerDownstreamNodes:
     @pytest.fixture(autouse=True)
     def _mock_logger(self, monkeypatch):
         monkeypatch.setattr(f"{_MODULE}.get_run_logger", lambda: MagicMock())

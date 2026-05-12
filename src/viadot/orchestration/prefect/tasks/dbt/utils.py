@@ -9,10 +9,10 @@ from ruamel.yaml import YAML
 _yaml = YAML(typ="safe", pure=True)
 
 
-def get_source_config_prefect_yaml(
+def get_node_schedules_prefect_yaml(
     node_name: str, deployments_dir: str | Path | None = None
-) -> tuple[str, list]:
-    """Retrieve the schedule config of a source node from its ingestion deployment.
+) -> list[dict[str, str]]:
+    """Retrieve the schedules of a source node from its ingestion deployment.
 
     Scans Prefect deployment YAML files under ``deployments_dir`` to find an
     ingestion deployment whose ``table`` or ``redshift_table`` parameter matches
@@ -25,8 +25,8 @@ def get_source_config_prefect_yaml(
             Defaults to ``<this_file's_parent>/../../deployments``.
 
     Returns:
-        A ``(deployment_name, crons)`` tuple where ``crons`` is a list of cron
-        schedule dicts. Returns ``("", [])`` if no matching deployment is found.
+        A list of cron schedule dicts. Returns an empty list if no matching deployment
+        is found.
     """
     logger = get_run_logger()
     logger.info("Looking up source schedule configuration in deployment YAML files.")
@@ -50,10 +50,7 @@ def get_source_config_prefect_yaml(
             for key in ["table", "redshift_table"]:
                 if params.get(key) == node_name:
                     logger.info("Matching deployment configuration found for source.")
-                    return (
-                        deployment.get("name"),
-                        deployment.get("schedules") or [],
-                    )
+                    return deployment.get("schedules") or []
 
     logger.info("No deployment configuration found for source.")
-    return ("", [])
+    return []
