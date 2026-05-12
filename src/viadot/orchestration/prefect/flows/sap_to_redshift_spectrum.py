@@ -45,7 +45,6 @@ def sap_to_redshift_spectrum(  # noqa: PLR0913
     sap_config_key: str | None = None,
     sap_sep: str | None = "♔",
     replacement: str = "-",
-    node_name: str | None = None,
     manifest_path: str | None = None,
     manifest_store_type: str = "s3",
     manifest_store_credentials_secret: str | None = None,
@@ -108,8 +107,6 @@ def sap_to_redshift_spectrum(  # noqa: PLR0913
         sap_sep (str, optional): The separator to use when reading query results.
             If set to None, multiple options are automatically tried.
             Defaults to ♔.
-        node_name (str, optional): The dbt node name for state tracking. Required
-            if ``state_path`` is provided. Defaults to None.
         manifest_path (str, optional): URI of the manifest file
             (e.g. ``"s3://bucket/manifest.json"``). Required if ``state_path`` is
             provided. Defaults to None.
@@ -148,7 +145,7 @@ def sap_to_redshift_spectrum(  # noqa: PLR0913
         raise ValueError(msg)
 
     state_update_params = {
-        "node_name": node_name,
+        "node_name": table,
         "node_type": "source",
         "state_path": state_path,
         "state_store_type": state_store_type,
@@ -206,7 +203,7 @@ def sap_to_redshift_spectrum(  # noqa: PLR0913
 
     if trigger_downstream_nodes:
         trigger_downstream_nodes_task(
-            node_name=node_name,
+            node_name=table,
             manifest=_manifest,
             state_path=state_path,
             state_store_credentials=state_update_params["state_store_credentials"],
