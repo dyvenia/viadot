@@ -32,9 +32,7 @@ def get_node_schedules_prefect_yaml(
         is found.
     """
     logger = get_run_logger()
-    logger.info(
-        f"Retrieving source node's '{node_name}' schedule from deployment YAML file..."
-    )
+    logger.info(f"Retrieving node '{node_name}' schedule from '{deployments_dir}'...")
 
     if not deployments_dir:
         deployments_dir = Path(__file__).parent.parent.parent / "deployments"
@@ -46,9 +44,13 @@ def get_node_schedules_prefect_yaml(
 
     # Parse each deployment file individually, prepending the base file so that
     # YAML anchors defined there (e.g. &default_schedule) are available.
+    file_count = 0
     for yaml_file in deployments_dir.rglob("*.yaml"):
         if yaml_file == base_yaml:
             continue
+
+        logger.debug(f"Inspecting deployment file '{yaml_file}'...")
+
         file_content = textwrap.indent(yaml_file.read_text().strip(), "  ")
         deployments = _yaml.load(base_content + "\n" + file_content).get("deployments")
         for deployment in deployments:
@@ -57,12 +59,16 @@ def get_node_schedules_prefect_yaml(
                 logger.warning(
                     f"Deployment '{deployment.get('name')}' has no parameters defined."
                 )
+
             for key in NODE_NAME_PARAM_NAMES:
                 if params.get(key) == node_name:
                     logger.info(
                         f"Retrieving schedules from deployment '{deployment.get('name')}'..."
                     )
                     return deployment.get("schedules") or []
+        file_count += 1
 
-    logger.info("No deployment configuration found for source.")
+    logger.info(
+        f"No schedules found for node '{node_name}' (checked {file_count} deployment files)."
+    )
     return []
