@@ -76,7 +76,7 @@ async def dbt_task(
     )
 
 
-@task(retries=3, retry_delay_seconds=10)
+@task(retries=3, retry_delay_seconds=10, timeout_seconds=10 * 60)
 def update_node_state(  # noqa: PLR0913
     node_name: str,
     status: str,
@@ -143,7 +143,7 @@ def update_node_state(  # noqa: PLR0913
     return manifest
 
 
-@task(retries=1, retry_delay_seconds=30)
+@task(retries=1, retry_delay_seconds=30, timeout_seconds=10 * 60)
 def trigger_downstream_nodes(
     node_name: str,
     manifest: dict,
