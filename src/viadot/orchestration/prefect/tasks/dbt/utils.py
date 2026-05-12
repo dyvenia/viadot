@@ -32,12 +32,13 @@ def get_node_schedules_prefect_yaml(
         is found.
     """
     logger = get_run_logger()
-    logger.info(f"Retrieving node '{node_name}' schedule from '{deployments_dir}'...")
 
     if not deployments_dir:
         deployments_dir = Path(__file__).parent.parent.parent / "deployments"
     else:
         deployments_dir = Path(deployments_dir)
+
+    logger.info(f"Retrieving node '{node_name}' schedule from '{deployments_dir}'...")
 
     base_yaml = deployments_dir / "prefect_base.yaml"
     base_content = base_yaml.read_text() if base_yaml.exists() else ""

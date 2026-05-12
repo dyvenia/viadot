@@ -88,6 +88,7 @@ def update_node_state(  # noqa: PLR0913
     manifest_store_type: str,
     state_store_credentials: dict[str, Any] | None = None,
     manifest_store_credentials: dict[str, Any] | None = None,
+    deployments_dir: str | Path | None = None,
     effective_source_data_slot: str | None = None,
     batch_id: int | None = None,
     trigger_delay: int = 0,
@@ -103,10 +104,13 @@ def update_node_state(  # noqa: PLR0913
         state_store_type: Backend type for the state store.
         manifest_path: URI of the manifest file (e.g. ``"s3://bucket/manifest.json"``).
         manifest_store_type: Backend type for the manifest store.
-                state_store_credentials: Store credentials for the state store. Omit to use
+        state_store_credentials: Store credentials for the state store. Omit to use
             ambient AWS credentials.
         manifest_store_credentials: Store credentials for the manifest store. Omit to
             use ambient AWS credentials.
+        deployments_dir: Directory containing Prefect deployment YAML files, used to
+            retrieve the schedules in case the node is a source node. If not provided,
+            defaults to ``<this_file's_parent>/../../deployments``.
         effective_source_data_slot: Optional effective source data slot.
         batch_id: Optional batch identifier.
         trigger_delay: Delay in minutes before triggering downstream nodes.
@@ -130,7 +134,9 @@ def update_node_state(  # noqa: PLR0913
 
     schedules = None
     if node_type == "source":
-        schedules = get_node_schedules_prefect_yaml(node_name)
+        schedules = get_node_schedules_prefect_yaml(
+            node_name, deployments_dir=deployments_dir
+        )
 
     node_state = state_handler.build_node_state(
         node_name=node_name,

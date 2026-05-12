@@ -52,6 +52,7 @@ def sap_to_redshift_spectrum(  # noqa: PLR0913
     state_path: str | None = None,
     state_store_type: str = "s3",
     state_store_credentials_secret: str | None = None,
+    deployments_dir: str | None = None,
     sla_breach_grace_period_minutes: int = 30,
     trigger_downstream_nodes: bool = False,
     trigger_downstream_nodes_delay: int = 0,
@@ -125,6 +126,10 @@ def sap_to_redshift_spectrum(  # noqa: PLR0913
         state_store_credentials_secret (str, optional): Prefect secret name holding
             state store credentials. Omit to use ambient AWS credentials.
             Defaults to None.
+        deployments_dir (str | Path, optional): Directory containing Prefect deployment
+            YAML files, used to retrieve the schedules in case the node is a source
+            node. If not provided, defaults to
+            ``<this_file's_parent>/../../deployments``.
         sla_breach_grace_period_minutes (int, optional): Grace period in minutes before
             an SLA breach is triggered. Defaults to 30.
         trigger_downstream_nodes (bool, optional): Whether to trigger downstream nodes
@@ -157,6 +162,7 @@ def sap_to_redshift_spectrum(  # noqa: PLR0913
         "manifest_store_credentials": get_credentials(manifest_store_credentials_secret)
         if manifest_store_credentials_secret
         else None,
+        "deployments_dir": deployments_dir,
         "trigger_delay": trigger_downstream_nodes_delay,
         "sla_breach_grace_period_minutes": sla_breach_grace_period_minutes,
     }
