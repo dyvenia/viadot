@@ -212,7 +212,11 @@ class S3StateStore(StateStore, store_type="s3"):
             IfMatch=etag,
         )
 
-    @retry_on_s3_error(retryable_codes=("ConditionalRequestFailed",), max_retries=3)
+    @retry_on_s3_error(
+        retryable_codes=("ConditionalRequestConflict",),
+        max_retries=3,
+        reraise_as={"PreconditionFailed": FileExistsError},
+    )
     def create(self, node_state: dict) -> dict:
         """Create a new state file in S3 with the initial state for the given table."""
         logger.info("Creating a new state file...")
@@ -224,7 +228,7 @@ class S3StateStore(StateStore, store_type="s3"):
             Key=self.key,
             Body=body,
             ContentType="application/json",
-            ConditionExpression="attribute_not_exists(Key)",
+            IfNoneMatch="*",
         )
 
     def write(self, node_state: dict) -> None:
@@ -240,4 +244,10 @@ class S3StateStore(StateStore, store_type="s3"):
             self.update(node_state=node_state)
             logger.info("Deployment status updated in S3.")
         except FileNotFoundError:
-            self.create(node_state)
+            try:
+                self.create(node_state)
+                logger.info("Deployment status created in S3.")
+            except FileExistsError:
+                # Another writer created the file after our initial read.
+                self.update(node_state=node_state)
+                logger.info("Deployment status updated in S3 after create conflict.")

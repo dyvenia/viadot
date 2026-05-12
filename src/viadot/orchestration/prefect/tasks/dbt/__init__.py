@@ -119,11 +119,13 @@ def update_node_state(  # noqa: PLR0913
     logger = get_run_logger()
     logger.info(f"Updating node status in {state_path}...")
     state_store = StateStore(state_store_type, state_path, state_store_credentials)
+    logger.info("State store loaded successfully.")
     state_handler = StateHandler(state_store)
     manifest_store = ManifestStore(manifest_store_type)
     manifest = manifest_store.read(
         credentials=manifest_store_credentials, path=manifest_path
     )
+    logger.info("Manifest store loaded successfully.")
     manifest_handler = ManifestHandler(manifest)
     meta = manifest_handler.get_node_meta(node_name)
     node_state = state_handler.build_node_state(

@@ -266,11 +266,12 @@ class TestS3StateStoreCreate:
         _args, kwargs = store.client.put_object.call_args
         written = json.loads(kwargs["Body"].decode())
         assert written == node_state
+        assert kwargs["IfNoneMatch"] == "*"
 
-    def test_retries_on_conditional_request_failed(self):
+    def test_retries_on_conditional_request_conflict(self):
         store = _make_store()
         store.client.put_object.side_effect = [
-            _client_error("ConditionalRequestFailed"),
+            _client_error("ConditionalRequestConflict"),
             MagicMock(),
         ]
         with patch("time.sleep"):
@@ -279,8 +280,16 @@ class TestS3StateStoreCreate:
 
     def test_raises_runtime_error_when_retries_exhausted(self):
         store = _make_store()
-        store.client.put_object.side_effect = _client_error("ConditionalRequestFailed")
+        store.client.put_object.side_effect = _client_error(
+            "ConditionalRequestConflict"
+        )
         with patch("time.sleep"), pytest.raises(RuntimeError, match="Max retries"):
+            store.create(node_state={"table_name": "orders", "status": "success"})
+
+    def test_reraises_precondition_failed_as_file_exists(self):
+        store = _make_store()
+        store.client.put_object.side_effect = _client_error("PreconditionFailed")
+        with pytest.raises(FileExistsError):
             store.create(node_state={"table_name": "orders", "status": "success"})
 
     def test_reraises_unknown_client_error(self):
@@ -319,4 +328,17 @@ class TestS3StateStoreWrite:
             patch.object(store, "create") as mock_create,
         ):
             store.write(node_state=node_state)
+        mock_create.assert_called_once_with(node_state)
+
+    def test_retries_update_when_create_hits_race(self):
+        store = _make_store()
+        node_state = {"table_name": "orders", "status": "success", "fresh_until": None}
+        with (
+            patch.object(
+                store, "update", side_effect=[FileNotFoundError, None]
+            ) as mock_update,
+            patch.object(store, "create", side_effect=FileExistsError) as mock_create,
+        ):
+            store.write(node_state=node_state)
+        assert mock_update.call_count == 2
         mock_create.assert_called_once_with(node_state)
