@@ -323,6 +323,7 @@ def transform_and_catalog(  # noqa: PLR0913, PLR0915 | Complexity complaints - s
         url=dbt_repo_url,
         checkout_branch=dbt_repo_branch,
         token_secret=dbt_repo_token_secret,
+        depth=1,
     )
 
     # Prepare the environment.
