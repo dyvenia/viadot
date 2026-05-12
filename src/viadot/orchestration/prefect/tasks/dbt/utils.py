@@ -32,7 +32,9 @@ def get_node_schedules_prefect_yaml(
         is found.
     """
     logger = get_run_logger()
-    logger.info("Looking up source schedule configuration in deployment YAML files.")
+    logger.info(
+        f"Retrieving source node's '{node_name}' schedule from deployment YAML file..."
+    )
 
     if not deployments_dir:
         deployments_dir = Path(__file__).parent.parent.parent / "deployments"
@@ -51,9 +53,15 @@ def get_node_schedules_prefect_yaml(
         deployments = _yaml.load(base_content + "\n" + file_content).get("deployments")
         for deployment in deployments:
             params = deployment.get("parameters", {})
+            if not params:
+                logger.warning(
+                    f"Deployment '{deployment.get('name')}' has no parameters defined."
+                )
             for key in NODE_NAME_PARAM_NAMES:
                 if params.get(key) == node_name:
-                    logger.info("Matching deployment configuration found for source.")
+                    logger.info(
+                        f"Retrieving schedules from deployment '{deployment.get('name')}'..."
+                    )
                     return deployment.get("schedules") or []
 
     logger.info("No deployment configuration found for source.")
