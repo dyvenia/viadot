@@ -34,9 +34,11 @@ def get_node_schedules_prefect_yaml(
     logger = get_run_logger()
 
     if not deployments_dir:
-        deployments_dir = Path(__file__).parent.parent.parent / "deployments"
+        deployments_dir = (
+            Path(__file__).parent.parent.parent / "deployments"
+        ).resolve()
     else:
-        deployments_dir = Path(deployments_dir)
+        deployments_dir = Path(deployments_dir).resolve()
 
     logger.info(f"Retrieving node '{node_name}' schedule from '{deployments_dir}'...")
 
