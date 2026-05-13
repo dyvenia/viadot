@@ -149,11 +149,10 @@ def sla_monitor(
 
 if __name__ == "__main__":
     state_path = f"s3://{Variable.get('s3_bucket')}/deployment-status/deployment-status-concurrent.json"
-    print(state_path)
     sla_monitor(
-        state_path=f"s3://{Variable.get('s3_bucket')}/deployment-status/deployment-status-concurrent.json",
-        state_store_credentials_secret="redshiftspectrumsecret",
-        smtp_credentials_secret="my_smtp_secret",
+        state_path=f"s3://{Variable.get('s3_state_store_bucket')}/node-status/node-status.json",
+        state_store_credentials_secret="redshiftspectrumsecret",  # noqa: S106
+        smtp_credentials_secret="my_smtp_secret",  # noqa: S106
         owner_type="technical owner",
         dry_run=True,
     )

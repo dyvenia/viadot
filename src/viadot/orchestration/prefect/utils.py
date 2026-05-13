@@ -25,7 +25,7 @@ from prefect.client.orchestration import get_client
 from prefect.utilities.asyncutils import run_coro_as_sync
 from prefect.utilities.timeout import timeout, timeout_async
 from prefect_sqlalchemy import SqlAlchemyConnector
-from pydantic.v1 import BaseModel
+from pydantic import BaseModel
 
 
 with contextlib.suppress(ModuleNotFoundError):
@@ -34,8 +34,6 @@ with contextlib.suppress(ModuleNotFoundError):
 
 with contextlib.suppress(ModuleNotFoundError):
     from prefect_azure import AzureKeyVaultSecretReference
-
-from pydantic import BaseModel
 
 from viadot.orchestration.prefect.exceptions import MissingPrefectBlockError
 
