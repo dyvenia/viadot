@@ -219,7 +219,7 @@ class StateHandler:
             schedules: Optional list of schedule dicts or strings.
             trigger_delay: Delay in minutes before triggering downstream nodes.
             sla_breach_grace_period_minutes: Grace period before an SLA breach.
-            reference_time: Override for "now". Defaults to
+            reference_time: Reference time for freshness calculations. Defaults to
                 ``datetime.now(timezone.utc)``.
 
         Returns:
