@@ -242,6 +242,8 @@ def transform_and_catalog(  # noqa: PLR0913, PLR0915, C901 | Complexity complain
             `run_results.json` artifact. Therefore, it's more intuitive to not fail the
             flow on `run` and `test` failures when `dbt build` is used, in order to
             allow the flow to complete and capture those failures in the metadata.
+        model_name (str, optional): The name of the dbt model being built. Required if
+            state tracking is enabled.
         manifest_path (str | None, optional): URI of the manifest file
             (e.g. ``"s3://bucket/manifest.json"``). Required if `state_path` is
             provided, since manifest metadata is needed to determine downstream models
