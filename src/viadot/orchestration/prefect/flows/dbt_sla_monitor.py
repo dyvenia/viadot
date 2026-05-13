@@ -125,7 +125,7 @@ def sla_monitor(
             to None.
         owner_type: Owner type to notify on a breach.
             Allowed values: ``"technical owner"``, ``"business owner"``, ``"all"``.
-            Defaults to ``"technical"``.
+            Defaults to ``"technical owner"``.
         dry_run (bool, optional): When ``True``, logs detected breaches without sending
             notifications. Defaults to ``False``.
 
