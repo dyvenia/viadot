@@ -129,7 +129,7 @@ def sap_to_redshift_spectrum(  # noqa: PLR0913
         deployments_dir (str | Path, optional): Directory containing Prefect deployment
             YAML files, used to retrieve the schedules in case the node is a source
             node. If not provided, defaults to
-            ``<this_file's_parent>/../../deployments``.
+            ``prefect/deployments``.
         sla_breach_grace_period_minutes (int, optional): Grace period in minutes before
             an SLA breach is triggered. Defaults to 30.
         trigger_downstream_nodes (bool, optional): Whether to trigger downstream nodes

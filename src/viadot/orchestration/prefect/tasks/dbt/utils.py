@@ -13,7 +13,7 @@ NODE_NAME_PARAM_NAMES = ["table", "redshift_table"]
 
 
 def get_node_schedules_prefect_yaml(
-    node_name: str, deployments_dir: str | Path | None = None
+    node_name: str, deployments_dir: str | Path | None = "prefect/deployments"
 ) -> list[dict[str, str]]:
     """Retrieve the schedules of a source node from its ingestion deployment.
 
@@ -25,7 +25,7 @@ def get_node_schedules_prefect_yaml(
     Args:
         node_name: Short name of the source node to look up.
         deployments_dir: Directory containing Prefect deployment YAML files.
-            Defaults to ``<this_file's_parent>/../../deployments``.
+            Defaults to ``prefect/deployments``.
 
     Returns:
         A list of cron schedule dicts. Returns an empty list if no matching deployment
@@ -34,11 +34,9 @@ def get_node_schedules_prefect_yaml(
     logger = get_run_logger()
 
     if not deployments_dir:
-        deployments_dir = (
-            Path(__file__).parent.parent.parent / "deployments"
-        ).resolve()
-    else:
-        deployments_dir = Path(deployments_dir).resolve()
+        deployments_dir = "prefect/deployments"
+
+    deployments_dir = Path(deployments_dir).resolve()
 
     logger.info(f"Retrieving node '{node_name}' schedule from '{deployments_dir}'...")
 
@@ -65,10 +63,9 @@ def get_node_schedules_prefect_yaml(
 
             for key in NODE_NAME_PARAM_NAMES:
                 if params.get(key) == node_name:
-                    logger.info(
-                        f"Retrieving schedules from deployment '{deployment.get('name')}'..."
-                    )
-                    return deployment.get("schedules") or []
+                    schedules = deployment.get("schedules")
+                    logger.info(f"Retrieved the following schedules: {schedules}")
+                    return schedules
         file_count += 1
 
     logger.info(
