@@ -313,7 +313,12 @@ def transform_and_catalog(  # noqa: PLR0913, PLR0915 | Complexity complaints - s
         - build all models in a folder:
             `dbt_select={"build": "models.intermediate"}`
     """
+    if trigger_downstream_nodes and not track_state:
+        msg = "State tracking must be enabled to trigger downstream nodes."
+        raise ValueError(msg)
+
     logger = get_run_logger()
+
     if gh_action_actor:
         logger.info(f"Triggered by GitHub Actions actor: {gh_action_actor}")
 
