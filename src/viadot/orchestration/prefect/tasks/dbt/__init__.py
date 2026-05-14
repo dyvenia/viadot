@@ -161,7 +161,7 @@ def trigger_downstream_nodes(
     manifest: dict,
     state_path: str,
     state_store_credentials: dict[str, Any],
-    flow_name: str = "transform-and-catalog",
+    flow_name: str = "Transform and Catalog",
 ) -> None:
     """Trigger downstream dbt nodes whose upstream dependencies are all fresh.
 
