@@ -145,7 +145,7 @@ class SMB(Source):
             dynamic_date_format=dynamic_date_format,
             dynamic_date_timezone=dynamic_date_timezone,
         )
-
+        self.logger.warning(f" date filter type: {type(date_filter_parsed)}")
         return self._scan_directories(
             paths=self.base_paths,
             filename_regex=filename_regex,
@@ -217,7 +217,7 @@ class SMB(Source):
                 try:
                     entry_mod_date_parsed = pendulum.from_timestamp(
                         entry.stat().st_mtime
-                    ).date()
+                    )
                     entry_name = entry.name
 
                     if entry.is_file() and self._is_matching_file(
@@ -398,8 +398,11 @@ class SMB(Source):
 
     def _is_date_match(
         self,
-        file_modification_date: pendulum.Date,
-        date_filter_parsed: pendulum.Date | tuple[pendulum.Date, pendulum.Date] | None,
+        file_modification_date: pendulum.DateTime,
+        date_filter_parsed: pendulum.Date
+        | pendulum.DateTime
+        | tuple[pendulum.Date | pendulum.DateTime, pendulum.Date | pendulum.DateTime]
+        | None,
     ) -> bool:
         """Check if the file modification date matches the given date filter.
 
@@ -419,19 +422,32 @@ class SMB(Source):
         if date_filter_parsed is None:
             return True
 
-        if isinstance(date_filter_parsed, pendulum.Date):
-            return file_modification_date == date_filter_parsed
+        def _normalize(
+            filter_val: pendulum.Date | pendulum.DateTime, file_dt: pendulum.DateTime
+        ):
+            """Compare at filter's granularity: date vs datetime."""
+            if isinstance(filter_val, pendulum.DateTime):
+                return file_dt, filter_val
+            return file_dt.date(), filter_val  # drop time for date-only filters
+
+        if isinstance(date_filter_parsed, (pendulum.Date | pendulum.DateTime)):
+            file_val, filter_val = _normalize(
+                date_filter_parsed, file_modification_date
+            )
+            return file_val == filter_val
 
         if isinstance(date_filter_parsed, tuple):
             start_date, end_date = date_filter_parsed
-            return start_date <= file_modification_date <= end_date
+            file_val, start_val = _normalize(start_date, file_modification_date)
+            _, end_val = _normalize(end_date, file_modification_date)
+            return start_val <= file_val <= end_val
 
         return False
 
     def _is_matching_file(
         self,
         file_name: str,
-        file_mod_date_parsed: pendulum.Date,
+        file_mod_date_parsed: pendulum.DateTime,
         filename_regex: str | list[str] | None = None,
         extensions: str | list[str] | None = None,
         date_filter_parsed: pendulum.Date

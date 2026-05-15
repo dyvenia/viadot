@@ -38,7 +38,7 @@ repos:
     hooks:
       - id: uv-lock-check
         name: check uv.lock is up-to-date
-        language: unsupported
+        language: system
         entry: uv lock --check
         files: ^pyproject\.toml$
         pass_filenames: false

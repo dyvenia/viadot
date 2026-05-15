@@ -1140,7 +1140,12 @@ def parse_dates(
     dynamic_date_symbols: list[str] | None = None,
     dynamic_date_format: str = "%Y-%m-%d",
     dynamic_date_timezone: str = "UTC",
-) -> pendulum.Date | tuple[pendulum.Date, pendulum.Date] | None:
+) -> (
+    pendulum.Date
+    | pendulum.DateTime
+    | tuple[pendulum.Date | pendulum.DateTime, pendulum.Date | pendulum.DateTime]
+    | None
+):
     """Parses a date or date range, supporting dynamic date symbols.
 
     Args:
@@ -1176,16 +1181,18 @@ def parse_dates(
         dynamic_date_timezone=dynamic_date_timezone,
     )
 
+    def _parse_single(value: str) -> pendulum.Date | pendulum.DateTime:
+        parsed = pendulum.parse(ddh.process_dates(value))
+        # If time component is midnight and no explicit time in string → return date
+        if parsed.hour == 0 and parsed.minute == 0 and parsed.second == 0:
+            return parsed.date()
+        return parsed
+
     match date_filter:
         case str():
-            return pendulum.parse(ddh.process_dates(date_filter)).date()
-
+            return _parse_single(date_filter)
         case (start, end) if isinstance(start, str) and isinstance(end, str):
-            return (
-                pendulum.parse(ddh.process_dates(start)).date(),
-                pendulum.parse(ddh.process_dates(end)).date(),
-            )
-
+            return (_parse_single(start), _parse_single(end))
         case _:
             msg = "date_filter must be a string, a tuple of exactly 2 dates, or None."
             raise ValueError(msg)
