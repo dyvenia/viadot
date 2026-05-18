@@ -477,11 +477,9 @@ def test_get_file_content_zip_all_files(
     mock_entry.paths = f"{SERVER_PATH}/file.zip"
 
     with patch("smbclient.open_file", return_value=sample_zip_bytes):
-        smb_instance._build_prefix_from_path = lambda path, levels: ""  # noqa: ARG005
-        smb_instance._add_prefix_to_filename = lambda name, prefix: name  # noqa: ARG005
-        smb_instance._matches_any_regex = (
-            lambda text, patterns: True  # noqa: ARG005
-        )  # match all
+        smb_instance._build_prefix_from_path = lambda path, levels: ""
+        smb_instance._add_prefix_to_filename = lambda name, prefix: name
+        smb_instance._matches_any_regex = lambda text, patterns: True  # match all
 
         contents = smb_instance._get_file_content(
             mock_entry, zip_inner_file_regexes="file"
