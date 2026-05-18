@@ -15,7 +15,7 @@ try:
     import boto3
     import s3fs
 except ModuleNotFoundError:
-    msg = "Missing required modules to use RedshiftSpectrum source."
+    msg = "Missing required modules to use S3 source."
     raise ImportError(msg) from None
 
 import json

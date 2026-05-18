@@ -1,6 +1,6 @@
 [project]
 name = "viadot2"
-version = "2.6.2"
+version = "2.7.2"
 description = "A simple data ingestion library to guide data flows from some places to other places."
 authors = [
     { name = "acivitillo", email = "acivitillo@dyvenia.com" },
@@ -44,6 +44,7 @@ dependencies = [
     "awswrangler>=3.12.1",
     "pandas>=2.0.0",
     "pendulum>=2.1.2",
+    "croniter>=3.0.0",
 ]
 requires-python = ">=3.10"
 readme = "README.md"
@@ -166,6 +167,8 @@ ignore = [
 # D103: missing function docstrings
 # D100: missing module docstring
 # N802, N803: caps lock argument and function names (disabled to allow naming fixtures in all caps)
+# ARG005: unused lambda argument
+# ARG002: unused method argument (disabled to allow unused fixture arguments)
 "tests/**" = [
     "S101",
     "ANN201",
@@ -178,6 +181,8 @@ ignore = [
     "B905",
     "D102",
     "PLR2004",
+    "ARG005",
+    "ARG002",
 ]
 
 
