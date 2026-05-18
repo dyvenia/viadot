@@ -18,6 +18,12 @@ from viadot.orchestration.prefect.tasks import (
     perspective_ingest_task,
     s3_upload_file,
 )
+from viadot.orchestration.prefect.tasks.dbt import (
+    trigger_downstream_nodes as trigger_downstream_nodes_task,
+)
+from viadot.orchestration.prefect.tasks.dbt import (
+    update_node_state,
+)
 from viadot.orchestration.prefect.tasks.s3 import s3_download_file
 from viadot.orchestration.prefect.utils import (
     DEFAULT_TIMEOUT_SECONDS,
@@ -116,6 +122,37 @@ def _run_dbt_transforms(
             command="docs generate",
         )
         docs.result()
+
+
+def _download_dbt_partial_parse(
+    dbt_project_path_full: Path,
+    dbt_partial_parse_storage_path: str | None,
+    run_results_storage_config_key: str | None,
+    run_results_storage_credentials_secret: str | None,
+) -> None:
+    """Download dbt's partial parse cache into the target directory if configured."""
+    if not dbt_partial_parse_storage_path:
+        return
+
+    partial_parse_file_path = dbt_project_path_full / "target" / "partial_parse.msgpack"
+    partial_parse_file_path.parent.mkdir(parents=True, exist_ok=True)
+    try:
+        download_partial_parse = s3_download_file.with_options(
+            name="download_dbt_partial_parse"
+        ).submit(
+            from_path=dbt_partial_parse_storage_path,
+            to_path=str(partial_parse_file_path),
+            config_key=run_results_storage_config_key,
+            credentials_secret=run_results_storage_credentials_secret,
+        )
+        download_partial_parse.result()
+    except Exception as exc:
+        logger = get_run_logger()
+        logger.warning(
+            "Could not download dbt partial parse cache from "
+            f"{dbt_partial_parse_storage_path}. dbt will parse normally. "
+            f"Error: {exc}"
+        )
 
 
 @flow(
@@ -347,30 +384,29 @@ def transform_and_catalog(  # noqa: PLR0913, PLR0915, C901 | Complexity complain
     )
     pull_dbt_deps.result()
 
-    if dbt_partial_parse_storage_path:
-        partial_parse_file_path = (
-            dbt_project_path_full / "target" / "partial_parse.msgpack"
-        )
-        partial_parse_file_path.parent.mkdir(parents=True, exist_ok=True)
-        try:
-            download_partial_parse = s3_download_file.with_options(
-                name="download_dbt_partial_parse"
-            ).submit(
-                from_path=dbt_partial_parse_storage_path,
-                to_path=str(partial_parse_file_path),
-                config_key=run_results_storage_config_key,
-                credentials_secret=run_results_storage_credentials_secret,
-            )
-            download_partial_parse.result()
-        except Exception as exc:
-            logger.warning(
-                "Could not download dbt partial parse cache from "
-                f"{dbt_partial_parse_storage_path}. dbt will parse normally. "
-                f"Error: {exc}"
-            )
+    state_update_params = {
+        "node_name": model_name,
+        "node_type": "model",
+        "trigger_delay": trigger_downstream_nodes_delay,
+        "sla_breach_grace_period_minutes": sla_breach_grace_period_minutes,
+        "state_path": state_path,
+        "state_store_type": state_store_type,
+        "state_store_credentials": get_credentials(state_store_credentials_secret)
+        if state_store_credentials_secret
+        else None,
+        "manifest_path": manifest_path,
+        "manifest_store_type": manifest_store_type,
+        "manifest_store_credentials": get_credentials(manifest_store_credentials_secret)
+        if manifest_store_credentials_secret
+        else None,
+    }
 
-    # Run dbt commands.
-    dbt_target_option = f"-t {dbt_target}" if dbt_target is not None else ""
+    _download_dbt_partial_parse(
+        dbt_project_path_full=dbt_project_path_full,
+        dbt_partial_parse_storage_path=dbt_partial_parse_storage_path,
+        run_results_storage_config_key=run_results_storage_config_key,
+        run_results_storage_credentials_secret=run_results_storage_credentials_secret,
+    )
 
     # Update node state to "running" before executing dbt commands.
     if track_state:
