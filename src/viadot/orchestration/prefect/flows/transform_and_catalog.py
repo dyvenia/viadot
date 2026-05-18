@@ -130,7 +130,16 @@ def _download_dbt_partial_parse(
     run_results_storage_config_key: str | None,
     run_results_storage_credentials_secret: str | None,
 ) -> None:
-    """Download dbt's partial parse cache into the target directory if configured."""
+    """Download dbt's partial parse cache for the cloned project.
+
+    Args:
+        dbt_project_path_full: Path to the cloned dbt project.
+        dbt_partial_parse_storage_path: S3 path to the cached
+            `partial_parse.msgpack` file.
+        run_results_storage_config_key: viadot config key used for S3 access.
+        run_results_storage_credentials_secret: Prefect secret holding S3
+            credentials.
+    """
     if not dbt_partial_parse_storage_path:
         return
 
