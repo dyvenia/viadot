@@ -10,13 +10,13 @@ from prefect import flow, task
 from prefect.logging import get_run_logger
 from prefect.states import State
 
+from viadot.orchestration.dbt.artifact_store import ArtifactStore
 from viadot.orchestration.prefect.tasks import (
     clone_repo,
     dbt_task,
     dbt_test_failure_notifier,
     luma_ingest_task,
     perspective_ingest_task,
-    s3_upload_file,
 )
 from viadot.orchestration.prefect.tasks.dbt import (
     trigger_downstream_nodes as trigger_downstream_nodes_task,
@@ -24,7 +24,6 @@ from viadot.orchestration.prefect.tasks.dbt import (
 from viadot.orchestration.prefect.tasks.dbt import (
     update_node_state,
 )
-from viadot.orchestration.prefect.tasks.s3 import s3_download_file
 from viadot.orchestration.prefect.utils import (
     DEFAULT_TIMEOUT_SECONDS,
     get_credentials,
@@ -124,39 +123,62 @@ def _run_dbt_transforms(
         docs.result()
 
 
-@task(name="download_dbt_partial_parse")
+@task(name="download_dbt_partial_parse", cache_policy=None)
 def _download_dbt_partial_parse(
     dbt_project_path_full: Path,
-    partial_parse_path: str | None,
-    run_results_storage_config_key: str | None,
-    manifest_store_credentials: dict[str, Any] | None,
+    artifact_store_path: str | None,
+    artifact_store_type: str,
+    artifact_store_credentials: dict[str, Any] | None,
 ) -> None:
     """Download dbt's partial parse cache for the cloned project.
 
     Args:
         dbt_project_path_full: Path to the cloned dbt project.
-        partial_parse_path: S3 path to the cached `partial_parse.msgpack` file.
-        run_results_storage_config_key: viadot config key used for S3 access.
-        manifest_store_credentials: S3 credentials shared with the manifest store.
+        artifact_store_path: Root URI for dbt artifacts.
+        artifact_store_type: Backend type for the artifact store.
+        artifact_store_credentials: Store credentials.
     """
-    if not partial_parse_path:
+    if not artifact_store_path:
         return
 
     logger = get_run_logger()
-    partial_parse_file_path = dbt_project_path_full / "target" / "partial_parse.msgpack"
-    partial_parse_file_path.parent.mkdir(parents=True, exist_ok=True)
+    dbt_target_dir_path = dbt_project_path_full / "target"
     try:
-        s3_download_file.fn(
-            from_path=partial_parse_path,
-            to_path=str(partial_parse_file_path),
-            config_key=run_results_storage_config_key,
-            credentials=manifest_store_credentials,
+        artifact_store = ArtifactStore(artifact_store_type)
+        artifact_store.download_partial_parse(
+            credentials=artifact_store_credentials,
+            artifact_store_path=artifact_store_path,
+            target_dir_path=dbt_target_dir_path,
         )
     except Exception:
         logger.exception(
             "Could not download dbt partial parse cache from "
-            f"{partial_parse_path}. dbt will parse normally."
+            f"{artifact_store_path}. dbt will parse normally."
         )
+
+
+@task(name="upload_dbt_run_results", cache_policy=None)
+def _upload_dbt_run_results(
+    run_results_file_path: str,
+    artifact_store_path: str | None,
+    artifact_store_type: str,
+    artifact_store_credentials: dict[str, Any] | None,
+) -> None:
+    """Upload dbt's run results artifact."""
+    if not artifact_store_path:
+        return
+
+    logger = get_run_logger()
+    now = datetime.now(timezone.utc)
+    artifact_store = ArtifactStore(artifact_store_type)
+    run_results_path = artifact_store.upload_run_results(
+        credentials=artifact_store_credentials,
+        artifact_store_path=artifact_store_path,
+        run_results_file_path=run_results_file_path,
+        date_str=now.strftime("%Y%m%d"),
+        timestamp=now.timestamp(),
+    )
+    logger.info(f"Uploaded run results to {run_results_path}.")
 
 
 @flow(
@@ -164,7 +186,7 @@ def _download_dbt_partial_parse(
     description="Build specified dbt model(s) and upload generated metadata to Luma.",
 )
 @with_flow_timeout_param()
-def transform_and_catalog(  # noqa: PLR0913, PLR0915, C901 | Complexity complaints - should be gone once Luma Catalog support is deprecated.
+def transform_and_catalog(  # noqa: PLR0912, PLR0913, PLR0915, C901 | Complexity complaints - should be gone once Luma Catalog support is deprecated.
     dbt_repo_url: str | None = None,
     dbt_repo_url_secret: str | None = None,
     dbt_project_path: str = "dbt",
@@ -173,7 +195,9 @@ def transform_and_catalog(  # noqa: PLR0913, PLR0915, C901 | Complexity complain
     dbt_selects: dict[str, str] | None = None,
     dbt_target: str | None = None,
     dbt_target_dir_path: str | Path | None = None,
-    partial_parse_path: str | None = None,
+    artifact_store_path: str | None = None,
+    artifact_store_type: str = "s3",
+    artifact_store_credentials_secret: str | None = None,
     luma_url: str | None = None,
     luma_follow: bool = False,
     enable_perspective: bool = False,
@@ -182,14 +206,8 @@ def transform_and_catalog(  # noqa: PLR0913, PLR0915, C901 | Complexity complain
     perspective_follow: bool = False,
     perspective_dry_run: bool = False,
     metadata_kind: Literal["model", "model_run"] = "model_run",
-    run_results_storage_path: str | None = None,
-    run_results_storage_config_key: str | None = None,
-    run_results_storage_credentials_secret: str | None = None,
     fail_flow_only_on_build_failure: bool = False,
     model_name: str | None = None,
-    manifest_path: str | None = None,
-    manifest_store_type: str = "s3",
-    manifest_store_credentials_secret: str | None = None,
     track_state: bool = False,
     state_path: str | None = None,
     state_store_type: str = "s3",
@@ -237,9 +255,14 @@ def transform_and_catalog(  # noqa: PLR0913, PLR0915, C901 | Complexity complain
             to dbt project's root directory. By default,
             `<repo_name>/<dbt_project_path>/target`, since "target" is the default
             name of the directory generated by dbt.
-        partial_parse_path (str | None, optional): S3 path to a
-            `partial_parse.msgpack` cache file to download into dbt's target directory
-            before running dbt. Defaults to None.
+        artifact_store_path (str | None, optional): Root URI for dbt artifacts. When
+            provided, the flow derives artifact paths under this root, e.g.
+            `manifest.json`, `partial_parse.msgpack`, and timestamped run results.
+            Defaults to None.
+        artifact_store_type (str, optional): Backend type for the artifact store.
+            Currently only ``"s3"`` is supported. Defaults to "s3".
+        artifact_store_credentials_secret (str | None, optional): Store credentials for
+            dbt artifacts. Omit to use ambient AWS credentials. Defaults to None.
         luma_url (str, optional): The URL of the Luma instance to ingest into.
             Defaults to None. NOTE: Do not use loopback/local addresses as the default
             value or mention them in this docstring — WAF inspects the deployment
@@ -264,14 +287,6 @@ def transform_and_catalog(  # noqa: PLR0913, PLR0915, C901 | Complexity complain
             ingestion process. By default, `False`.
         metadata_kind (Literal["model", "model_run"], optional): The kind of metadata
             to ingest. Defaults to "model_run".
-        run_results_storage_path (str, optional): The directory to upload the
-            `run_results.json` file to. Note that a timestamp will be appended to the
-            end of the file. Currently, only S3 is supported. Defaults to None.
-        run_results_storage_config_key (str, optional): The key in the viadot config
-            holding AWS credentials. Defaults to None.
-        run_results_storage_credentials_secret (str, optional): The name of the secret
-            block in Prefect holding AWS credentials. Used as a fallback for
-            `manifest_store_credentials_secret`.
         fail_flow_only_on_build_failure (bool): Whether to fail the flow **only** if the
             `dbt build` command fails.
             When False (default):
@@ -285,14 +300,6 @@ def transform_and_catalog(  # noqa: PLR0913, PLR0915, C901 | Complexity complain
             allow the flow to complete and capture those failures in the metadata.
         model_name (str, optional): The name of the dbt model being built. Required if
             state tracking is enabled.
-        manifest_path (str | None, optional): URI of the manifest file
-            (e.g. ``"s3://bucket/manifest.json"``). Required if `state_path` is
-            provided, since manifest metadata is needed to determine downstream models
-            to trigger. Defaults to None.
-        manifest_store_type (str, optional): Backend type for the manifest store.
-            Currently only ``"s3"`` is supported. Defaults to "s3".
-        manifest_store_credentials_secret (str | None, optional): Store credentials for
-            the manifest. Omit to use ambient AWS credentials. Defaults to None.
         track_state (bool): Whether to track the state of the dbt node in a state file.
         state_path (str | None, optional): URI of the state file
             (e.g. ``"s3://bucket/state.json"``). If provided, the flow will update the
@@ -337,8 +344,8 @@ def transform_and_catalog(  # noqa: PLR0913, PLR0915, C901 | Complexity complain
             dbt_repo_url=my_dbt_repo_url
             dbt_selects={"run": "staging"}
             luma_url=my_luma_url,
-            run_results_storage_path="s3://my-bucket/dbt/run_results",
-            run_results_storage_credentials_secret="my-aws-credentials-block",
+            artifact_store_path="s3://my-bucket/dbt/artifacts",
+            artifact_store_credentials_secret="my-aws-credentials-block",
         )
         ```
 
@@ -358,6 +365,10 @@ def transform_and_catalog(  # noqa: PLR0913, PLR0915, C901 | Complexity complain
     """
     if trigger_downstream_nodes and not track_state:
         msg = "State tracking must be enabled to trigger downstream nodes."
+        raise ValueError(msg)
+
+    if track_state and not artifact_store_path:
+        msg = "Artifact store path must be provided when state tracking is enabled."
         raise ValueError(msg)
 
     logger = get_run_logger()
@@ -389,18 +400,12 @@ def transform_and_catalog(  # noqa: PLR0913, PLR0915, C901 | Complexity complain
     )
     pull_dbt_deps.result()
 
-    state_store_credentials = (
-        get_credentials(state_store_credentials_secret)
-        if state_store_credentials_secret
-        else None
-    )
-    manifest_store_credentials = (
-        get_credentials(
-            manifest_store_credentials_secret or run_results_storage_credentials_secret
-        )
-        if manifest_store_credentials_secret or run_results_storage_credentials_secret
-        else None
-    )
+    state_store_credentials = get_credentials(state_store_credentials_secret)
+    artifact_store_credentials = get_credentials(artifact_store_credentials_secret)
+    manifest_path = None
+    if artifact_store_path:
+        artifact_store = ArtifactStore(artifact_store_type)
+        manifest_path = artifact_store.manifest_path(artifact_store_path)
 
     state_update_params = {
         "node_name": model_name,
@@ -411,15 +416,15 @@ def transform_and_catalog(  # noqa: PLR0913, PLR0915, C901 | Complexity complain
         "state_store_type": state_store_type,
         "state_store_credentials": state_store_credentials,
         "manifest_path": manifest_path,
-        "manifest_store_type": manifest_store_type,
-        "manifest_store_credentials": manifest_store_credentials,
+        "manifest_store_type": artifact_store_type,
+        "manifest_store_credentials": artifact_store_credentials,
     }
 
     _download_dbt_partial_parse(
         dbt_project_path_full=dbt_project_path_full,
-        partial_parse_path=partial_parse_path,
-        run_results_storage_config_key=run_results_storage_config_key,
-        manifest_store_credentials=manifest_store_credentials,
+        artifact_store_path=artifact_store_path,
+        artifact_store_type=artifact_store_type,
+        artifact_store_credentials=artifact_store_credentials,
     )
 
     # Update node state to "running" before executing dbt commands.
@@ -494,28 +499,12 @@ def transform_and_catalog(  # noqa: PLR0913, PLR0915, C901 | Complexity complain
 
     file_name = "run_results.json"
     run_results_file_path = str(dbt_target_dir_path / file_name)  # type: ignore
-    if run_results_storage_path:
-        # Set the file path to include date info.
-        now = datetime.now(timezone.utc)
-        run_results_storage_path = run_results_storage_path.rstrip("/") + "/"
-
-        # Add partitioning.
-        date_str = now.strftime("%Y%m%d")
-        run_results_storage_path += date_str + "/"
-
-        # Add timestamp suffix, eg. run_results_1737556947.934292.json.
-        timestamp = now.timestamp()
-        run_results_storage_path += (
-            Path(file_name).stem + "_" + str(timestamp) + ".json"
-        )
-        logger.info(f"Uploading run results to {run_results_storage_path}...")
-        # Upload the file to s3.
-
-        s3_upload_file(
-            from_path=run_results_file_path,
-            to_path=run_results_storage_path,
-            config_key=run_results_storage_config_key,
-            credentials=manifest_store_credentials,
+    if metadata_kind == "model_run" and artifact_store_path:
+        _upload_dbt_run_results(
+            run_results_file_path=run_results_file_path,
+            artifact_store_path=artifact_store_path,
+            artifact_store_type=artifact_store_type,
+            artifact_store_credentials=artifact_store_credentials,
         )
     if smtp_credential_secret:
         smtp_credential = get_credentials(smtp_credential_secret)

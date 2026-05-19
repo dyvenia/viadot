@@ -8,8 +8,8 @@ from typing import Any
 from prefect import get_run_logger, task
 from prefect.deployments import run_deployment
 
+from viadot.orchestration.dbt.artifact_store import ArtifactStore
 from viadot.orchestration.dbt.manifest_handler import ManifestHandler
-from viadot.orchestration.dbt.manifest_store import ManifestStore
 from viadot.orchestration.dbt.state_handler import StateHandler
 from viadot.orchestration.dbt.state_store import StateStore
 from viadot.orchestration.prefect.tasks.dbt.utils import get_node_schedules_prefect_yaml
@@ -103,10 +103,10 @@ def update_node_state(  # noqa: PLR0913
         state_path: URI of the state file (e.g. ``"s3://bucket/state.json"``).
         state_store_type: Backend type for the state store.
         manifest_path: URI of the manifest file (e.g. ``"s3://bucket/manifest.json"``).
-        manifest_store_type: Backend type for the manifest store.
+        manifest_store_type: Backend type for the artifact store.
         state_store_credentials: Store credentials for the state store. Omit to use
             ambient AWS credentials.
-        manifest_store_credentials: Store credentials for the manifest store. Omit to
+        manifest_store_credentials: Store credentials for the artifact store. Omit to
             use ambient AWS credentials.
         deployments_dir: Directory containing Prefect deployment YAML files, used to
             retrieve the schedules in case the node is a source node. If not provided,
@@ -124,11 +124,11 @@ def update_node_state(  # noqa: PLR0913
     state_store = StateStore(state_store_type, state_path, state_store_credentials)
     logger.info("State store loaded successfully.")
     state_handler = StateHandler(state_store)
-    manifest_store = ManifestStore(manifest_store_type)
-    manifest = manifest_store.read(
+    artifact_store = ArtifactStore(manifest_store_type)
+    manifest = artifact_store.read_manifest(
         credentials=manifest_store_credentials, path=manifest_path
     )
-    logger.info("Manifest store loaded successfully.")
+    logger.info("Artifact store loaded successfully.")
     manifest_handler = ManifestHandler(manifest)
     meta = manifest_handler.get_node_meta(node_name)
 

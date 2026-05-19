@@ -407,7 +407,7 @@ class TestCalcFreshUntil:
 class TestGetSourceConfigPrefectYaml:
     @pytest.fixture(autouse=True)
     def _mock_logger(self, monkeypatch):
-        monkeypatch.setattr(f"{_DC_MODULE}.get_run_logger", lambda: MagicMock())
+        monkeypatch.setattr(f"{_DC_MODULE}.get_run_logger", MagicMock)
 
     @pytest.fixture
     def deployments_dir(self, tmp_path):
@@ -499,7 +499,7 @@ class TestGetSourceConfigPrefectYaml:
 class TestUpdateNodeStateTask:
     @pytest.fixture(autouse=True)
     def _mock_logger(self, monkeypatch):
-        monkeypatch.setattr(f"{_MODULE}.get_run_logger", lambda: MagicMock())
+        monkeypatch.setattr(f"{_MODULE}.get_run_logger", MagicMock)
 
     def test_success_status_builds_state_and_calls_update(
         self, monkeypatch, credentials
@@ -519,14 +519,14 @@ class TestUpdateNodeStateTask:
             "trigger_delay": 10,
             "sla_breach_grace_period": 45,
         }
-        mock_manifest_store = MagicMock()
-        mock_manifest_store.read.return_value = {}
+        mock_artifact_store = MagicMock()
+        mock_artifact_store.read_manifest.return_value = {}
         monkeypatch.setattr(f"{_MODULE}.StateHandler", lambda store: mock_handler)
         monkeypatch.setattr(
             f"{_MODULE}.StateStore", MagicMock(return_value=MagicMock())
         )
         monkeypatch.setattr(
-            f"{_MODULE}.ManifestStore", MagicMock(return_value=mock_manifest_store)
+            f"{_MODULE}.ArtifactStore", MagicMock(return_value=mock_artifact_store)
         )
 
         update_node_state.fn(
@@ -569,14 +569,14 @@ class TestUpdateNodeStateTask:
             "status": "failed",
             "fresh_until": None,
         }
-        mock_manifest_store = MagicMock()
-        mock_manifest_store.read.return_value = {}
+        mock_artifact_store = MagicMock()
+        mock_artifact_store.read_manifest.return_value = {}
         monkeypatch.setattr(f"{_MODULE}.StateHandler", lambda store: mock_handler)
         monkeypatch.setattr(
             f"{_MODULE}.StateStore", MagicMock(return_value=MagicMock())
         )
         monkeypatch.setattr(
-            f"{_MODULE}.ManifestStore", MagicMock(return_value=mock_manifest_store)
+            f"{_MODULE}.ArtifactStore", MagicMock(return_value=mock_artifact_store)
         )
 
         update_node_state.fn(
@@ -629,7 +629,7 @@ class TestUpdateNodeStateTask:
 class TestTriggerDownstreamNodes:
     @pytest.fixture(autouse=True)
     def _mock_logger(self, monkeypatch):
-        monkeypatch.setattr(f"{_MODULE}.get_run_logger", lambda: MagicMock())
+        monkeypatch.setattr(f"{_MODULE}.get_run_logger", MagicMock)
 
     def test_triggers_run_deployment_for_each_runnable_node(
         self, monkeypatch, manifest

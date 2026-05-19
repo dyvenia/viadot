@@ -12,7 +12,7 @@ class ManifestHandler:
     """Encapsulates traversal and freshness-gating logic over a dbt manifest.
 
     This class is a pure-Python layer with no Prefect dependency. It operates
-    on a manifest dict that has already been loaded (e.g. by ``ManifestStore``).
+    on a manifest dict that has already been loaded (e.g. by ``ArtifactStore``).
 
     Args:
         manifest: The parsed dbt manifest dictionary.
