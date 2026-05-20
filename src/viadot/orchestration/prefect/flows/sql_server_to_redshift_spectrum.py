@@ -8,6 +8,7 @@ from viadot.orchestration.prefect.tasks import df_to_redshift_spectrum, sql_serv
 from viadot.orchestration.prefect.utils import (
     DynamicDateHandler,
     with_flow_timeout_param,
+    with_source_state_tracking_and_triggering,
 )
 
 
@@ -18,6 +19,7 @@ from viadot.orchestration.prefect.utils import (
     retry_delay_seconds=60,
 )
 @with_flow_timeout_param()
+@with_source_state_tracking_and_triggering()
 def sql_server_to_redshift_spectrum(  # noqa: PLR0913
     query: str,
     to_path: str,
@@ -80,6 +82,11 @@ def sql_server_to_redshift_spectrum(  # noqa: PLR0913
             SQL Server credentials. Defaults to None.
         sql_server_config_key (str | None, optional): Key in the configuration for
             SQL Server credentials. Defaults to None.
+
+    Note:
+        State tracking and downstream node triggering parameters are injected by the
+        ``with_state_tracking_and_downstream_triggering`` decorator. See its docstring
+        for details on available state and trigger parameters.
 
     Returns:
         None

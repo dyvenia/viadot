@@ -11,6 +11,7 @@ from viadot.orchestration.prefect.tasks import (
 from viadot.orchestration.prefect.utils import (
     DynamicDateHandler,
     with_flow_timeout_param,
+    with_source_state_tracking_and_triggering,
 )
 
 
@@ -21,6 +22,7 @@ from viadot.orchestration.prefect.utils import (
     retry_delay_seconds=60,
 )
 @with_flow_timeout_param()
+@with_source_state_tracking_and_triggering()
 def postgresql_to_redshift_spectrum(  # noqa: PLR0913
     query: str,
     to_path: str,
@@ -96,6 +98,11 @@ def postgresql_to_redshift_spectrum(  # noqa: PLR0913
             storing the credentials. Defaults to None.
         postgresql_config_key (str | None, optional): Key in the configuration for
             PostgreSQL credentials. Defaults to None.
+
+    Note:
+        State tracking and downstream node triggering parameters are injected by the
+        ``with_state_tracking_and_downstream_triggering`` decorator. See its docstring
+        for details on available state and trigger parameters.
 
     Returns:
         None

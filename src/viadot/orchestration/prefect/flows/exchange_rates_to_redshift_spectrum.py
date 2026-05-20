@@ -10,7 +10,10 @@ from viadot.orchestration.prefect.tasks import (
     exchange_rates_to_df,
 )
 from viadot.orchestration.prefect.tasks.exchange_rates import Currency
-from viadot.orchestration.prefect.utils import with_flow_timeout_param
+from viadot.orchestration.prefect.utils import (
+    with_flow_timeout_param,
+    with_source_state_tracking_and_triggering,
+)
 
 
 @flow(
@@ -20,6 +23,7 @@ from viadot.orchestration.prefect.utils import with_flow_timeout_param
     retry_delay_seconds=60,
 )
 @with_flow_timeout_param()
+@with_source_state_tracking_and_triggering()
 def exchange_rates_api_to_redshift_spectrum(  # noqa: PLR0913
     to_path: str,
     schema_name: str,
@@ -69,6 +73,11 @@ def exchange_rates_api_to_redshift_spectrum(  # noqa: PLR0913
             More info on: https://docs.prefect.io/concepts/blocks/
         exchange_rates_api_config_key (str, optional): The key in the viadot config
             holding relevant credentials. Defaults to None.
+
+    Note:
+        State tracking and downstream node triggering parameters are injected by the
+        ``with_state_tracking_and_downstream_triggering`` decorator. See its docstring
+        for details on available state and trigger parameters.
     """
     df = exchange_rates_to_df(
         currency=currency,
