@@ -75,6 +75,12 @@ def sharepoint_list_to_redshift_spectrum(  # noqa: PLR0913
             storing SharePoint credentials. Defaults to None.
         sharepoint_config_key (str | None, optional): Key in the config for
             SharePoint  credentials. Defaults to None.
+        query (str | None, optional): Query to filter items in the SharePoint list.
+            Defaults to None.
+        select (list[str] | None, optional): Fields to include from the SharePoint list.
+            Defaults to None.
+        tests (dict[str, Any] | None, optional): Tests to validate the DataFrame.
+            Defaults to None.
 
     Note:
         State tracking and downstream node triggering parameters are injected by the
