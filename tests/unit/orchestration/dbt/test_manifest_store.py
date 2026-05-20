@@ -5,6 +5,7 @@ import pytest
 from viadot.orchestration.dbt.artifact_store import (
     ArtifactStore,
     S3ArtifactStore,
+    build_run_results_path,
 )
 
 
@@ -61,6 +62,11 @@ class TestArtifactStorePaths:
             store.run_results_path(_ARTIFACT_ROOT, "20260519", 123.456)
             == f"{_ARTIFACT_ROOT}/run_results/20260519/run_results_123.456.json"
         )
+
+    def test_builds_local_run_results_path(self):
+        target_dir_path = "dbt/target"
+
+        assert build_run_results_path(target_dir_path) == "dbt/target/run_results.json"
 
 
 class TestS3ArtifactStore:

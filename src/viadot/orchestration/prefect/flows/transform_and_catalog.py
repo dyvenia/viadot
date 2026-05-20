@@ -10,7 +10,10 @@ from prefect import flow, task
 from prefect.logging import get_run_logger
 from prefect.states import State
 
-from viadot.orchestration.dbt.artifact_store import ArtifactStore
+from viadot.orchestration.dbt.artifact_store import (
+    ArtifactStore,
+    build_run_results_path,
+)
 from viadot.orchestration.prefect.tasks import (
     clone_repo,
     dbt_task,
@@ -497,8 +500,7 @@ def transform_and_catalog(  # noqa: PLR0912, PLR0913, PLR0915, C901 | Complexity
         )
         upload_metadata_perspective.result()
 
-    file_name = "run_results.json"
-    run_results_file_path = str(dbt_target_dir_path / file_name)  # type: ignore
+    run_results_file_path = build_run_results_path(dbt_target_dir_path)
     if metadata_kind == "model_run" and artifact_store_path:
         _upload_dbt_run_results(
             run_results_file_path=run_results_file_path,
