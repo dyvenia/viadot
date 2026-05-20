@@ -47,6 +47,9 @@ DEFAULT_TIMEOUT_SECONDS = 2 * 60 * 60
 
 
 logger = logging.getLogger(__name__)
+_STATE_TRACKING_SUCCESS_CONTEXT: ContextVar[bool] = ContextVar(
+    "state_tracking_success_context", default=False
+)
 
 
 # Cache credentials by normalized secret name to avoid repeated slow block lookups.
@@ -58,6 +61,16 @@ class SmtpConfig(BaseModel):
     port: int = 587
     sender: str
     password: str
+
+
+def mark_state_tracking_success() -> None:
+    """Mark the current tracked node as successful.
+
+    This allows flows to mark the tracked dbt node as successful once the critical
+    dbt phase has completed, even if later non-dbt steps raise an exception.
+    """
+
+    _STATE_TRACKING_SUCCESS_CONTEXT.set(True)
 
 
 def with_flow_timeout_param(
@@ -249,7 +262,14 @@ def with_state_tracking(
                 for name, default, _ in tracking_param_specs
                 if name not in func_param_names
             }
-            bound_arguments = func_signature.bind_partial(*args, **call_kwargs)
+            if has_node_name_param:
+                node_name = None
+                bound_call_kwargs = call_kwargs
+            else:
+                bound_call_kwargs = dict(call_kwargs)
+                node_name = bound_call_kwargs.pop(node_name_param, None)
+
+            bound_arguments = func_signature.bind_partial(*args, **bound_call_kwargs)
             for name, default, _ in tracking_param_specs:
                 if name in func_param_names:
                     tracking_options[name] = bound_arguments.arguments.get(
@@ -258,8 +278,6 @@ def with_state_tracking(
 
             if has_node_name_param:
                 node_name = bound_arguments.arguments.get(node_name_param)
-            else:
-                node_name = call_kwargs.pop(node_name_param, None)
             track_state = bool(tracking_options["track_state"])
             if node_name is None and track_state:
                 msg = (
@@ -272,7 +290,7 @@ def with_state_tracking(
                 bound_arguments.arguments.get("trigger_downstream_nodes_delay", 0)
             )
 
-            return call_kwargs, tracking_options, node_name, trigger_delay
+            return bound_call_kwargs, tracking_options, node_name, trigger_delay
 
         def _build_state_update_params(
             tracking_options: dict[str, object], node_name: object, trigger_delay: int
@@ -312,6 +330,7 @@ def with_state_tracking(
                 from viadot.orchestration.prefect.tasks.dbt import update_node_state
 
                 runtime_context.set(None)
+                _STATE_TRACKING_SUCCESS_CONTEXT.set(False)
                 call_kwargs, tracking_options, node_name, trigger_delay = _prepare_call(
                     args, kwargs
                 )
@@ -336,6 +355,8 @@ def with_state_tracking(
                     result = await func(*args, **call_kwargs)
                     node_status = "success"
                 finally:
+                    if _STATE_TRACKING_SUCCESS_CONTEXT.get():
+                        node_status = "success"
                     if tracking_options["track_state"]:
                         if state_update_params is None:
                             msg = (
@@ -368,6 +389,7 @@ def with_state_tracking(
             from viadot.orchestration.prefect.tasks.dbt import update_node_state
 
             runtime_context.set(None)
+            _STATE_TRACKING_SUCCESS_CONTEXT.set(False)
             call_kwargs, tracking_options, node_name, trigger_delay = _prepare_call(
                 args, kwargs
             )
@@ -392,6 +414,8 @@ def with_state_tracking(
                 result = func(*args, **call_kwargs)
                 node_status = "success"
             finally:
+                if _STATE_TRACKING_SUCCESS_CONTEXT.get():
+                    node_status = "success"
                 if tracking_options["track_state"]:
                     if state_update_params is None:
                         msg = (
@@ -497,15 +521,20 @@ def with_downstream_triggering(
                 for name, default, _ in trigger_param_specs
                 if name not in func_param_names
             }
-            bound_arguments = func_signature.bind_partial(*args, **call_kwargs)
+            if has_node_name_param:
+                node_name = None
+                bound_call_kwargs = call_kwargs
+            else:
+                bound_call_kwargs = dict(call_kwargs)
+                node_name = bound_call_kwargs.pop(node_name_param, None)
+
+            bound_arguments = func_signature.bind_partial(*args, **bound_call_kwargs)
             for name, default, _ in trigger_param_specs:
                 if name in func_param_names:
                     trigger_options[name] = bound_arguments.arguments.get(name, default)
 
             if has_node_name_param:
                 node_name = bound_arguments.arguments.get(node_name_param)
-            else:
-                node_name = call_kwargs.pop(node_name_param, None)
             if node_name is None:
                 msg = (
                     "Downstream triggering requires the flow argument "
@@ -514,7 +543,7 @@ def with_downstream_triggering(
                 raise ValueError(msg)
 
             track_state = bool(bound_arguments.arguments.get("track_state", False))
-            return call_kwargs, trigger_options, node_name, track_state
+            return bound_call_kwargs, trigger_options, node_name, track_state
 
         if iscoroutinefunction(func):
 
@@ -535,7 +564,39 @@ def with_downstream_triggering(
                     msg = "State tracking must be enabled to trigger downstream nodes."
                     raise ValueError(msg)
 
-                result = await func(*args, **call_kwargs)
+                try:
+                    result = await func(*args, **call_kwargs)
+                except Exception:
+                    should_trigger = trigger_options[
+                        "trigger_downstream_nodes"
+                    ] and _STATE_TRACKING_SUCCESS_CONTEXT.get()
+                    if should_trigger:
+                        runtime_context = getattr(
+                            func,
+                            "_source_state_tracking_runtime_context",
+                            None,
+                        )
+                        context_data = (
+                            runtime_context.get() if runtime_context is not None else None
+                        )
+                        if not context_data:
+                            msg = (
+                                "Downstream triggering requires with_source_state_tracking "
+                                "to run in the same call stack."
+                            )
+                            raise ValueError(msg)
+                        trigger_downstream_nodes_task(
+                            node_name=node_name,
+                            manifest=context_data["manifest"],
+                            state_path=context_data["state_path"],
+                            state_store_credentials=context_data[
+                                "state_store_credentials"
+                            ],
+                        )
+                        if runtime_context is not None:
+                            runtime_context.set(None)
+                    _STATE_TRACKING_SUCCESS_CONTEXT.set(False)
+                    raise
                 if trigger_options["trigger_downstream_nodes"]:
                     runtime_context = getattr(
                         func,
@@ -560,6 +621,8 @@ def with_downstream_triggering(
                     if runtime_context is not None:
                         runtime_context.set(None)
 
+                _STATE_TRACKING_SUCCESS_CONTEXT.set(False)
+
                 return result
 
             async_wrapped.__signature__ = new_signature
@@ -579,7 +642,37 @@ def with_downstream_triggering(
                 msg = "State tracking must be enabled to trigger downstream nodes."
                 raise ValueError(msg)
 
-            result = func(*args, **call_kwargs)
+            try:
+                result = func(*args, **call_kwargs)
+            except Exception:
+                should_trigger = trigger_options[
+                    "trigger_downstream_nodes"
+                ] and _STATE_TRACKING_SUCCESS_CONTEXT.get()
+                if should_trigger:
+                    runtime_context = getattr(
+                        func,
+                        "_source_state_tracking_runtime_context",
+                        None,
+                    )
+                    context_data = (
+                        runtime_context.get() if runtime_context is not None else None
+                    )
+                    if not context_data:
+                        msg = (
+                            "Downstream triggering requires with_source_state_tracking "
+                            "to run in the same call stack."
+                        )
+                        raise ValueError(msg)
+                    trigger_downstream_nodes_task(
+                        node_name=node_name,
+                        manifest=context_data["manifest"],
+                        state_path=context_data["state_path"],
+                        state_store_credentials=context_data["state_store_credentials"],
+                    )
+                    if runtime_context is not None:
+                        runtime_context.set(None)
+                _STATE_TRACKING_SUCCESS_CONTEXT.set(False)
+                raise
             if trigger_options["trigger_downstream_nodes"]:
                 runtime_context = getattr(
                     func,
@@ -603,6 +696,8 @@ def with_downstream_triggering(
                 )
                 if runtime_context is not None:
                     runtime_context.set(None)
+
+            _STATE_TRACKING_SUCCESS_CONTEXT.set(False)
 
             return result
 

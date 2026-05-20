@@ -21,6 +21,7 @@ from viadot.orchestration.prefect.tasks import (
 from viadot.orchestration.prefect.utils import (
     DEFAULT_TIMEOUT_SECONDS,
     get_credentials,
+    mark_state_tracking_success,
     with_flow_timeout_param,
     with_state_tracking_and_downstream_triggering,
 )
@@ -383,6 +384,9 @@ def transform_and_catalog(  # noqa: PLR0913 | Complexity complaints - should be 
         fail_flow_only_on_build_failure=fail_flow_only_on_build_failure,
         timeout_seconds=timeout_seconds,
     )
+    # This allows us to track state regardless of the success or failure of any tasks
+    # outside of _run_dbt_transforms().
+    mark_state_tracking_success()
 
     # Upload metadata to Luma Catalog.
     dbt_target_dir_path = (

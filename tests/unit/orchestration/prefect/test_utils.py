@@ -1,14 +1,18 @@
 import asyncio
 from inspect import Parameter, signature
 import time
+from unittest.mock import MagicMock
 
 import pendulum
 import pytest
 
+from viadot.orchestration.prefect import tasks as prefect_tasks
 from viadot.orchestration.prefect.utils import (
     DEFAULT_TIMEOUT_SECONDS,
     DynamicDateHandler,
+    mark_state_tracking_success,
     with_flow_timeout_param,
+    with_state_tracking_and_downstream_triggering,
 )
 
 
@@ -249,3 +253,73 @@ async def test_with_flow_timeout_param_enforces_async_timeout():
 
     with pytest.raises(TimeoutError):
         await slow_flow(timeout_seconds=0.01)
+
+
+def test_state_tracking_can_stay_successful_after_later_failure(monkeypatch):
+    update_node_state = MagicMock(side_effect=[None, {"manifest": "value"}])
+    trigger_downstream_nodes = MagicMock()
+
+    monkeypatch.setattr(prefect_tasks.dbt, "update_node_state", update_node_state)
+    monkeypatch.setattr(
+        prefect_tasks.dbt,
+        "trigger_downstream_nodes",
+        trigger_downstream_nodes,
+    )
+
+    @with_state_tracking_and_downstream_triggering(
+        node_name_param="model_name",
+        node_type="model",
+    )
+    def sample_flow() -> None:
+        mark_state_tracking_success()
+        raise RuntimeError("perspective failed")
+
+    with pytest.raises(RuntimeError, match="perspective failed"):
+        sample_flow(
+            model_name="orders",
+            track_state=True,
+            trigger_downstream_nodes=True,
+            state_path="s3://bucket/state.json",
+            manifest_path="s3://bucket/manifest.json",
+        )
+
+    assert update_node_state.call_args_list[0].kwargs["status"] == "running"
+    assert update_node_state.call_args_list[1].kwargs["status"] == "success"
+    trigger_downstream_nodes.assert_called_once_with(
+        node_name="orders",
+        manifest={"manifest": "value"},
+        state_path="s3://bucket/state.json",
+        state_store_credentials=None,
+    )
+
+
+def test_state_tracking_failure_still_blocks_downstreams(monkeypatch):
+    update_node_state = MagicMock(side_effect=[None, {"manifest": "value"}])
+    trigger_downstream_nodes = MagicMock()
+
+    monkeypatch.setattr(prefect_tasks.dbt, "update_node_state", update_node_state)
+    monkeypatch.setattr(
+        prefect_tasks.dbt,
+        "trigger_downstream_nodes",
+        trigger_downstream_nodes,
+    )
+
+    @with_state_tracking_and_downstream_triggering(
+        node_name_param="model_name",
+        node_type="model",
+    )
+    def sample_flow() -> None:
+        raise RuntimeError("dbt failed")
+
+    with pytest.raises(RuntimeError, match="dbt failed"):
+        sample_flow(
+            model_name="orders",
+            track_state=True,
+            trigger_downstream_nodes=True,
+            state_path="s3://bucket/state.json",
+            manifest_path="s3://bucket/manifest.json",
+        )
+
+    assert update_node_state.call_args_list[0].kwargs["status"] == "running"
+    assert update_node_state.call_args_list[1].kwargs["status"] == "failed"
+    trigger_downstream_nodes.assert_not_called()
