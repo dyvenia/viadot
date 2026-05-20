@@ -66,10 +66,23 @@ def _run_dbt_transforms(
             build_select = dbt_selects.get("build")
             run_select = dbt_selects.get("run")
             test_select = dbt_selects.get("test", run_select)
+            seed_select = dbt_selects.get("seed")
 
             build_select_safe = f"-s {build_select}" if build_select is not None else ""
             run_select_safe = f"-s {run_select}" if run_select is not None else ""
             test_select_safe = f"-s {test_select}" if test_select is not None else ""
+            seed_select_safe = f"-s {seed_select}" if seed_select is not None else ""
+
+        if seed_select:
+            seed_task = dbt_task.with_options(
+                name="dbt_seed", timeout_seconds=timeout_seconds
+            )
+            seed = seed_task.submit(
+                project_path=dbt_project_path_full,
+                command=f"seed {seed_select_safe} {dbt_target_option}",
+            )
+            seed.result()
+
         if build_select:
             # If build task is used, run and test tasks are not needed.
             # Build task executes run and tests commands internally.
