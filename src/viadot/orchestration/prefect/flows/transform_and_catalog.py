@@ -346,7 +346,7 @@ def transform_and_catalog(  # noqa: PLR0913 | Complexity complaints - should be 
         token_secret=dbt_repo_token_secret,
         **{
             "checkout_branch": dbt_repo_branch,
-            "depts": 1,
+            "depth": 1,
         },
     )
 
