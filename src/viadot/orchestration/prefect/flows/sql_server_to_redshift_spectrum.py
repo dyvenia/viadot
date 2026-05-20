@@ -8,7 +8,7 @@ from viadot.orchestration.prefect.tasks import df_to_redshift_spectrum, sql_serv
 from viadot.orchestration.prefect.utils import (
     DynamicDateHandler,
     with_flow_timeout_param,
-    with_source_state_tracking_and_triggering,
+    with_state_tracking_and_downstream_triggering,
 )
 
 
@@ -19,7 +19,7 @@ from viadot.orchestration.prefect.utils import (
     retry_delay_seconds=60,
 )
 @with_flow_timeout_param()
-@with_source_state_tracking_and_triggering()
+@with_state_tracking_and_downstream_triggering()
 def sql_server_to_redshift_spectrum(  # noqa: PLR0913
     query: str,
     to_path: str,

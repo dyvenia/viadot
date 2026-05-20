@@ -7,7 +7,7 @@ from prefect import flow
 from viadot.orchestration.prefect.tasks import df_to_redshift_spectrum, hubspot_to_df
 from viadot.orchestration.prefect.utils import (
     with_flow_timeout_param,
-    with_source_state_tracking_and_triggering,
+    with_state_tracking_and_downstream_triggering,
 )
 
 
@@ -18,7 +18,7 @@ from viadot.orchestration.prefect.utils import (
     retry_delay_seconds=60,
 )
 @with_flow_timeout_param()
-@with_source_state_tracking_and_triggering()
+@with_state_tracking_and_downstream_triggering()
 def hubspot_to_redshift_spectrum(  # noqa: PLR0913
     to_path: str,
     schema_name: str,

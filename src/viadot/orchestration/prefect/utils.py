@@ -590,7 +590,7 @@ def with_downstream_triggering(  # noqa: C901, PLR0915 | irreducible complexity
                         )
                         if not context_data:
                             msg = (
-                                "Downstream triggering requires with_source_state_tracking "
+                                "Downstream triggering requires with_state_tracking_and_downstream_triggering "
                                 "to run in the same call stack."
                             )
                             raise ValueError(msg) from e
@@ -617,7 +617,7 @@ def with_downstream_triggering(  # noqa: C901, PLR0915 | irreducible complexity
                     )
                     if not context_data:
                         msg = (
-                            "Downstream triggering requires with_source_state_tracking "
+                            "Downstream triggering requires with_state_tracking_and_downstream_triggering "
                             "to run in the same call stack."
                         )
                         raise ValueError(msg)
@@ -669,7 +669,7 @@ def with_downstream_triggering(  # noqa: C901, PLR0915 | irreducible complexity
                     )
                     if not context_data:
                         msg = (
-                            "Downstream triggering requires with_source_state_tracking "
+                            "Downstream triggering requires with_state_tracking_and_downstream_triggering "
                             "to run in the same call stack."
                         )
                         raise ValueError(msg) from e
@@ -694,7 +694,7 @@ def with_downstream_triggering(  # noqa: C901, PLR0915 | irreducible complexity
                 )
                 if not context_data:
                     msg = (
-                        "Downstream triggering requires with_source_state_tracking "
+                        "Downstream triggering requires with_state_tracking_and_downstream_triggering "
                         "to run in the same call stack."
                     )
                     raise ValueError(msg)
