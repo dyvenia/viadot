@@ -272,7 +272,7 @@ def test_state_tracking_can_stay_successful_after_later_failure(monkeypatch):
     )
     def sample_flow() -> None:
         mark_state_tracking_success()
-        raise RuntimeError("perspective failed")
+        raise RuntimeError("perspective failed")  # noqa: TRY003, EM101
 
     with pytest.raises(RuntimeError, match="perspective failed"):
         sample_flow(
@@ -309,7 +309,7 @@ def test_state_tracking_failure_still_blocks_downstreams(monkeypatch):
         node_type="model",
     )
     def sample_flow() -> None:
-        raise RuntimeError("dbt failed")
+        raise RuntimeError("dbt failed")  # noqa: TRY003, EM101
 
     with pytest.raises(RuntimeError, match="dbt failed"):
         sample_flow(

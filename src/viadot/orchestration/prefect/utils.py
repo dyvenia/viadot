@@ -69,7 +69,6 @@ def mark_state_tracking_success() -> None:
     This allows flows to mark the tracked dbt node as successful once the critical
     dbt phase has completed, even if later non-dbt steps raise an exception.
     """
-
     _STATE_TRACKING_SUCCESS_CONTEXT.set(True)
 
 
@@ -170,7 +169,7 @@ def with_flow_timeout_param(
     return decorator
 
 
-def with_state_tracking(
+def with_state_tracking(  # noqa: C901, PLR0915 | irreducible complexity
     node_name_param: str = "table",
     node_type: str = "source",
 ) -> Callable[[F], F]:
@@ -180,15 +179,20 @@ def with_state_tracking(
     signature so Prefect can expose them as flow parameters:
 
     Injected Parameters:
-        manifest_path (str | None): URI of the manifest file (e.g., "s3://bucket/manifest.json").
-        manifest_store_type (str): Backend type for manifest storage. Currently only "s3".
-        manifest_store_credentials_secret (str | None): Secret name for manifest store credentials.
+        manifest_path (str | None): URI of the manifest file\
+                (e.g., "s3://bucket/manifest.json").
+        manifest_store_type (str): Backend type for manifest storage. Currently only
+            "s3".
+        manifest_store_credentials_secret (str | None): Secret name for manifest store
+            credentials.
         track_state (bool): Whether to track the state of the dbt node.
         state_path (str | None): URI of the state file (e.g., "s3://bucket/state.json").
         state_store_type (str): Backend type for state storage. Currently only "s3".
-        state_store_credentials_secret (str | None): Secret name for state store credentials.
+        state_store_credentials_secret (str | None): Secret name for state store
+            credentials.
         deployments_dir (str | None): Directory with Prefect deployments.
-        sla_breach_grace_period_minutes (int): Grace period in minutes before SLA breach.
+        sla_breach_grace_period_minutes (int): Grace period in minutes before SLA
+            breach.
 
     Args:
         node_name_param: Parameter name holding the dbt node identifier.
@@ -213,7 +217,7 @@ def with_state_tracking(
         "source_state_tracking_runtime_context", default=None
     )
 
-    def decorator(func: F) -> F:
+    def decorator(func: F) -> F:  # noqa: C901, PLR0915 | irreducible complexity
         func_signature = signature(func)
         func_param_names = set(func_signature.parameters)
         has_node_name_param = node_name_param in func_param_names
@@ -446,7 +450,7 @@ def with_state_tracking(
     return decorator
 
 
-def with_downstream_triggering(
+def with_downstream_triggering(  # noqa: C901, PLR0915 | irreducible complexity
     node_name_param: str = "table",
 ) -> Callable[[F], F]:
     """Add downstream triggering parameters and runtime handling.
@@ -455,8 +459,10 @@ def with_downstream_triggering(
     signature so Prefect can expose them as flow parameters:
 
     Injected Parameters:
-        trigger_downstream_nodes (bool): Whether to trigger downstream nodes after success.
-        trigger_downstream_nodes_delay (int): Delay in seconds before triggering downstream nodes.
+        trigger_downstream_nodes (bool): Whether to trigger downstream nodes after
+            success.
+        trigger_downstream_nodes_delay (int): Delay in seconds before triggering
+            downstream nodes.
 
     At runtime, it triggers dbt downstream nodes after the wrapped callable succeeds.
     This decorator is intended to be composed with ``with_state_tracking``.
@@ -472,7 +478,7 @@ def with_downstream_triggering(
         ("trigger_downstream_nodes_delay", 0, int),
     )
 
-    def decorator(func: F) -> F:
+    def decorator(func: F) -> F:  # noqa: C901, PLR0915 | irreducible complexity
         func_signature = signature(func)
         func_param_names = set(func_signature.parameters)
         has_node_name_param = node_name_param in func_param_names
@@ -566,10 +572,11 @@ def with_downstream_triggering(
 
                 try:
                     result = await func(*args, **call_kwargs)
-                except Exception:
-                    should_trigger = trigger_options[
-                        "trigger_downstream_nodes"
-                    ] and _STATE_TRACKING_SUCCESS_CONTEXT.get()
+                except Exception as e:
+                    should_trigger = (
+                        trigger_options["trigger_downstream_nodes"]
+                        and _STATE_TRACKING_SUCCESS_CONTEXT.get()
+                    )
                     if should_trigger:
                         runtime_context = getattr(
                             func,
@@ -577,14 +584,16 @@ def with_downstream_triggering(
                             None,
                         )
                         context_data = (
-                            runtime_context.get() if runtime_context is not None else None
+                            runtime_context.get()
+                            if runtime_context is not None
+                            else None
                         )
                         if not context_data:
                             msg = (
                                 "Downstream triggering requires with_source_state_tracking "
                                 "to run in the same call stack."
                             )
-                            raise ValueError(msg)
+                            raise ValueError(msg) from e
                         trigger_downstream_nodes_task(
                             node_name=node_name,
                             manifest=context_data["manifest"],
@@ -644,10 +653,11 @@ def with_downstream_triggering(
 
             try:
                 result = func(*args, **call_kwargs)
-            except Exception:
-                should_trigger = trigger_options[
-                    "trigger_downstream_nodes"
-                ] and _STATE_TRACKING_SUCCESS_CONTEXT.get()
+            except Exception as e:
+                should_trigger = (
+                    trigger_options["trigger_downstream_nodes"]
+                    and _STATE_TRACKING_SUCCESS_CONTEXT.get()
+                )
                 if should_trigger:
                     runtime_context = getattr(
                         func,
@@ -662,7 +672,7 @@ def with_downstream_triggering(
                             "Downstream triggering requires with_source_state_tracking "
                             "to run in the same call stack."
                         )
-                        raise ValueError(msg)
+                        raise ValueError(msg) from e
                     trigger_downstream_nodes_task(
                         node_name=node_name,
                         manifest=context_data["manifest"],
@@ -719,18 +729,24 @@ def with_state_tracking_and_downstream_triggering(
     Injected Parameters:
         manifest_path (str | None): URI of the manifest file.
         manifest_store_type (str): Backend type for manifest storage (default: "s3").
-        manifest_store_credentials_secret (str | None): Secret name for manifest store credentials.
+        manifest_store_credentials_secret (str | None): Secret name for manifest store
+            credentials.
         track_state (bool): Whether to track state (default: False).
         state_path (str | None): URI of the state file.
         state_store_type (str): Backend type for state storage (default: "s3").
-        state_store_credentials_secret (str | None): Secret name for state store credentials.
+        state_store_credentials_secret (str | None): Secret name for state store
+            credentials.
         deployments_dir (str | None): Directory with Prefect deployments.
-        sla_breach_grace_period_minutes (int): Grace period in minutes before SLA breach (default: 30).
-        trigger_downstream_nodes (bool): Whether to trigger downstream nodes (default: False).
-        trigger_downstream_nodes_delay (int): Delay in seconds before triggering (default: 0).
+        sla_breach_grace_period_minutes (int): Grace period in minutes before SLA breach
+            (default: 30).
+        trigger_downstream_nodes (bool): Whether to trigger downstream nodes
+            (default: False).
+        trigger_downstream_nodes_delay (int): Delay in seconds before triggering
+            (default: 0).
 
     Args:
-        node_name_param: Parameter name holding the dbt node identifier (default: "table").
+        node_name_param: Parameter name holding the dbt node identifier
+            (default: "table").
         node_type: dbt node type passed to the state store (default: "source").
     """
 
