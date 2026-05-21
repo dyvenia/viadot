@@ -5,7 +5,6 @@ import pytest
 from viadot.orchestration.dbt.artifact_store import (
     ArtifactStore,
     S3ArtifactStore,
-    build_run_results_path,
 )
 
 
@@ -63,11 +62,6 @@ class TestArtifactStorePaths:
             == f"{_ARTIFACT_ROOT}/run_results/20260519/run_results_123.456.json"
         )
 
-    def test_builds_local_run_results_path(self):
-        target_dir_path = "dbt/target"
-
-        assert build_run_results_path(target_dir_path) == "dbt/target/run_results.json"
-
 
 class TestS3ArtifactStore:
     def test_reads_manifest_from_derived_path(self):
@@ -118,14 +112,14 @@ class TestS3ArtifactStore:
 
     def test_uploads_run_results_to_partitioned_path(self, tmp_path):
         mock_s3 = MagicMock()
-        run_results_path = tmp_path / "run_results.json"
+        local_run_results_file_path = tmp_path / "run_results.json"
 
         with patch("viadot.orchestration.dbt.artifact_store.S3", return_value=mock_s3):
             store = ArtifactStore(store_type="s3")
             result = store.upload_run_results(
                 credentials=_CREDS,
                 artifact_store_path=_ARTIFACT_ROOT,
-                run_results_file_path=run_results_path,
+                local_run_results_file_path=local_run_results_file_path,
                 date_str="20260519",
                 timestamp=123.456,
             )
@@ -135,7 +129,7 @@ class TestS3ArtifactStore:
         )
         assert result == expected_path
         mock_s3.upload.assert_called_once_with(
-            from_path=str(run_results_path),
+            from_path=str(local_run_results_file_path),
             to_path=expected_path,
         )
 

@@ -15,11 +15,6 @@ except ImportError:
 logger = logging.getLogger(__name__)
 
 
-def build_run_results_path(dbt_target_dir_path: str | Path) -> str:
-    """Return the local dbt run results path for a target directory."""
-    return str(Path(dbt_target_dir_path) / ArtifactStore.RUN_RESULTS_FILENAME)
-
-
 class ArtifactStore(ABC):
     """A class for managing dbt artifact storage."""
 
@@ -145,7 +140,7 @@ class ArtifactStore(ABC):
         self,
         credentials: dict[str, Any] | None,
         artifact_store_path: str,
-        run_results_file_path: str | Path,
+        local_run_results_file_path: str | Path,
         date_str: str,
         timestamp: float,
     ) -> str:
@@ -157,7 +152,7 @@ class ArtifactStore(ABC):
         )
         self.upload_file(
             credentials=credentials,
-            from_path=str(run_results_file_path),
+            from_path=str(local_run_results_file_path),
             to_path=to_path,
         )
         return to_path

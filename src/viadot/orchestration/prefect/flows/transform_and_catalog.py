@@ -10,10 +10,7 @@ from prefect import flow, task
 from prefect.logging import get_run_logger
 from prefect.states import State
 
-from viadot.orchestration.dbt.artifact_store import (
-    ArtifactStore,
-    build_run_results_path,
-)
+from viadot.orchestration.dbt.artifact_store import ArtifactStore
 from viadot.orchestration.prefect.tasks import (
     clone_repo,
     dbt_task,
@@ -162,7 +159,7 @@ def _download_dbt_partial_parse(
 
 @task(name="upload_dbt_run_results", cache_policy=None)
 def _upload_dbt_run_results(
-    run_results_file_path: str,
+    local_run_results_file_path: str,
     artifact_store_path: str | None,
     artifact_store_type: str,
     artifact_store_credentials: dict[str, Any] | None,
@@ -177,7 +174,7 @@ def _upload_dbt_run_results(
     run_results_path = artifact_store.upload_run_results(
         credentials=artifact_store_credentials,
         artifact_store_path=artifact_store_path,
-        run_results_file_path=run_results_file_path,
+        local_run_results_file_path=local_run_results_file_path,
         date_str=now.strftime("%Y%m%d"),
         timestamp=now.timestamp(),
     )
@@ -500,10 +497,12 @@ def transform_and_catalog(  # noqa: PLR0912, PLR0913, PLR0915, C901 | Complexity
         )
         upload_metadata_perspective.result()
 
-    run_results_file_path = build_run_results_path(dbt_target_dir_path)
+    local_run_results_file_path = str(
+        dbt_target_dir_path / ArtifactStore.RUN_RESULTS_FILENAME
+    )
     if metadata_kind == "model_run" and artifact_store_path:
         _upload_dbt_run_results(
-            run_results_file_path=run_results_file_path,
+            local_run_results_file_path=local_run_results_file_path,
             artifact_store_path=artifact_store_path,
             artifact_store_type=artifact_store_type,
             artifact_store_credentials=artifact_store_credentials,
@@ -511,7 +510,7 @@ def transform_and_catalog(  # noqa: PLR0912, PLR0913, PLR0915, C901 | Complexity
     if smtp_credential_secret:
         smtp_credential = get_credentials(smtp_credential_secret)
         dbt_test_failure_notifier(
-            results_file_path=run_results_file_path,
+            results_file_path=local_run_results_file_path,
             manifest_file_path=str(dbt_target_dir_path / "manifest.json"),
             recipients=notification_recipients,
             additional_recipients=additional_recipients,
