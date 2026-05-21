@@ -21,7 +21,7 @@ from viadot.orchestration.prefect.utils import (
     retry_delay_seconds=60,
 )
 @with_flow_timeout_param()
-@with_state_tracking_and_downstream_triggering()
+@with_state_tracking_and_downstream_triggering(node_name_param="table")
 def sharepoint_to_redshift_spectrum(  # noqa: PLR0913
     sharepoint_url: str,
     to_path: str,

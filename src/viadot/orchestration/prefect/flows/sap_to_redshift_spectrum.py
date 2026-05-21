@@ -18,7 +18,7 @@ from viadot.orchestration.prefect.utils import (
     retry_delay_seconds=60,
 )
 @with_flow_timeout_param()
-@with_state_tracking_and_downstream_triggering()
+@with_state_tracking_and_downstream_triggering(node_name_param="table")
 def sap_to_redshift_spectrum(  # noqa: PLR0913
     to_path: str,
     schema_name: str,
