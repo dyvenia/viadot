@@ -7,7 +7,7 @@ from copy import deepcopy
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from functools import wraps
-from inspect import Parameter, iscoroutinefunction, signature
+from inspect import Parameter, Signature, signature
 import json
 from json.decoder import JSONDecodeError
 import logging
@@ -25,7 +25,7 @@ from prefect.blocks.core import Block
 from prefect.blocks.system import Secret
 from prefect.client.orchestration import get_client
 from prefect.utilities.asyncutils import run_coro_as_sync
-from prefect.utilities.timeout import timeout, timeout_async
+from prefect.utilities.timeout import timeout
 from prefect_sqlalchemy import SqlAlchemyConnector
 from pydantic import BaseModel
 
@@ -70,6 +70,70 @@ def mark_state_tracking_success() -> None:
     dbt phase has completed, even if later non-dbt steps raise an exception.
     """
     _STATE_TRACKING_SUCCESS_CONTEXT.set(True)
+
+
+def _build_signature_with_injected_params(
+    *,
+    func_signature: Signature,
+    param_specs: tuple[tuple[str, object, object], ...],
+) -> tuple[Signature, set[str]]:
+    """Build flow signature with missing decorator parameters injected."""
+    func_param_names = set(func_signature.parameters)
+
+    params = list(func_signature.parameters.values())
+    kwargs_idx = next(
+        (idx for idx, p in enumerate(params) if p.kind == Parameter.VAR_KEYWORD),
+        None,
+    )
+    insert_idx = len(params) if kwargs_idx is None else kwargs_idx
+
+    injected_params = [
+        Parameter(
+            name,
+            kind=Parameter.KEYWORD_ONLY,
+            default=default,
+            annotation=annotation,
+        )
+        for name, default, annotation in param_specs
+        if name not in func_param_names
+    ]
+    if injected_params:
+        new_params = [
+            *params[:insert_idx],
+            *injected_params,
+            *params[insert_idx:],
+        ]
+        new_signature = func_signature.replace(parameters=new_params)
+    else:
+        new_signature = func_signature
+
+    return new_signature, func_param_names
+
+
+def _split_decorator_options_and_bind(
+    *,
+    func_signature: Signature,
+    func_param_names: set[str],
+    param_specs: tuple[tuple[str, object, object], ...],
+    args: tuple[object, ...],
+    kwargs: dict[str, object],
+) -> tuple[dict[str, object], dict[str, object], Any]:
+    """Extract decorator options from kwargs and bind flow call arguments.
+
+    Returns flow kwargs (without decorator-only options), resolved option values,
+    and bound arguments for convenient downstream access.
+    """
+    call_kwargs = dict(kwargs)
+    options = {
+        name: call_kwargs.pop(name, default)
+        for name, default, _ in param_specs
+        if name not in func_param_names
+    }
+    bound_arguments = func_signature.bind_partial(*args, **call_kwargs)
+    for name, default, _ in param_specs:
+        if name in func_param_names:
+            options[name] = bound_arguments.arguments.get(name, default)
+    return call_kwargs, options, bound_arguments
 
 
 def with_flow_timeout_param(
@@ -132,25 +196,6 @@ def with_flow_timeout_param(
 
             new_signature = func_signature.replace(parameters=new_params)
 
-        if iscoroutinefunction(func):
-
-            @wraps(func)
-            async def async_wrapped(*args: object, **kwargs: object) -> object:
-                if has_timeout_param:
-                    bound_arguments = func_signature.bind_partial(*args, **kwargs)
-                    timeout_seconds = bound_arguments.arguments.get(
-                        "timeout_seconds", default_timeout_seconds
-                    )
-                else:
-                    timeout_seconds = kwargs.pop(
-                        "timeout_seconds", default_timeout_seconds
-                    )
-                with timeout_async(seconds=timeout_seconds):
-                    return await func(*args, **kwargs)
-
-            async_wrapped.__signature__ = new_signature
-            return async_wrapped  # type: ignore[return-value]
-
         @wraps(func)
         def wrapped(*args: object, **kwargs: object) -> object:
             if has_timeout_param:
@@ -169,562 +214,11 @@ def with_flow_timeout_param(
     return decorator
 
 
-def with_state_tracking(  # noqa: C901, PLR0915 | irreducible complexity
-    node_name_param: str = "table",
+def with_state_tracking_and_downstream_triggering(  # noqa: C901
+    node_name_param: str,
     node_type: str = "source",
 ) -> Callable[[F], F]:
-    """Add dbt source state-tracking parameters and runtime handling.
-
-    The decorator injects the following parameters into the wrapped callable's
-    signature so Prefect can expose them as flow parameters:
-
-    Injected Parameters:
-        manifest_path (str | None): URI of the manifest file\
-                (e.g., "s3://bucket/manifest.json").
-        manifest_store_type (str): Backend type for manifest storage. Currently only
-            "s3".
-        manifest_store_credentials_secret (str | None): Secret name for manifest store
-            credentials.
-        track_state (bool): Whether to track the state of the dbt node.
-        state_path (str | None): URI of the state file (e.g., "s3://bucket/state.json").
-        state_store_type (str): Backend type for state storage. Currently only "s3".
-        state_store_credentials_secret (str | None): Secret name for state store
-            credentials.
-        deployments_dir (str | None): Directory with Prefect deployments.
-        sla_breach_grace_period_minutes (int): Grace period in minutes before SLA
-            breach.
-
-    Args:
-        node_name_param: Parameter name holding the dbt node identifier.
-        node_type: dbt node type passed to the state store.
-
-    Returns:
-        A decorator that preserves the wrapped callable's metadata and signature.
-    """
-    tracking_param_specs = (
-        ("manifest_path", None, str | None),
-        ("manifest_store_type", "s3", str),
-        ("manifest_store_credentials_secret", None, str | None),
-        ("track_state", False, bool),
-        ("state_path", None, str | None),
-        ("state_store_type", "s3", str),
-        ("state_store_credentials_secret", None, str | None),
-        ("deployments_dir", None, str | None),
-        ("sla_breach_grace_period_minutes", 30, int),
-    )
-
-    runtime_context: ContextVar[dict[str, Any] | None] = ContextVar(
-        "source_state_tracking_runtime_context", default=None
-    )
-
-    def decorator(func: F) -> F:  # noqa: C901, PLR0915 | irreducible complexity
-        func_signature = signature(func)
-        func_param_names = set(func_signature.parameters)
-        has_node_name_param = node_name_param in func_param_names
-
-        params = list(func_signature.parameters.values())
-        kwargs_idx = next(
-            (idx for idx, p in enumerate(params) if p.kind == Parameter.VAR_KEYWORD),
-            None,
-        )
-        insert_idx = len(params) if kwargs_idx is None else kwargs_idx
-        injected_params = [
-            Parameter(
-                name,
-                kind=Parameter.KEYWORD_ONLY,
-                default=default,
-                annotation=annotation,
-            )
-            for name, default, annotation in tracking_param_specs
-            if name not in func_param_names
-        ]
-        if not has_node_name_param:
-            injected_params.append(
-                Parameter(
-                    node_name_param,
-                    kind=Parameter.KEYWORD_ONLY,
-                    default=None,
-                    annotation=str | None,
-                )
-            )
-        if injected_params:
-            new_params = [
-                *params[:insert_idx],
-                *injected_params,
-                *params[insert_idx:],
-            ]
-            new_signature = func_signature.replace(parameters=new_params)
-        else:
-            new_signature = func_signature
-
-        def _prepare_call(
-            args: tuple[object, ...], kwargs: dict[str, object]
-        ) -> tuple[dict[str, object], dict[str, object], object | None, int]:
-            call_kwargs = dict(kwargs)
-            tracking_options = {
-                name: call_kwargs.pop(name, default)
-                for name, default, _ in tracking_param_specs
-                if name not in func_param_names
-            }
-            if has_node_name_param:
-                node_name = None
-                bound_call_kwargs = call_kwargs
-            else:
-                bound_call_kwargs = dict(call_kwargs)
-                node_name = bound_call_kwargs.pop(node_name_param, None)
-
-            bound_arguments = func_signature.bind_partial(*args, **bound_call_kwargs)
-            for name, default, _ in tracking_param_specs:
-                if name in func_param_names:
-                    tracking_options[name] = bound_arguments.arguments.get(
-                        name, default
-                    )
-
-            if has_node_name_param:
-                node_name = bound_arguments.arguments.get(node_name_param)
-            track_state = bool(tracking_options["track_state"])
-            if node_name is None and track_state:
-                msg = (
-                    "Source state tracking requires the flow argument "
-                    f"'{node_name_param}' to resolve the dbt node name."
-                )
-                raise ValueError(msg)
-
-            trigger_delay = int(
-                bound_arguments.arguments.get("trigger_downstream_nodes_delay", 0)
-            )
-
-            return bound_call_kwargs, tracking_options, node_name, trigger_delay
-
-        def _build_state_update_params(
-            tracking_options: dict[str, object], node_name: object, trigger_delay: int
-        ) -> dict[str, Any]:
-            state_store_secret = cast(
-                str | None,
-                tracking_options["state_store_credentials_secret"],
-            )
-            manifest_store_secret = cast(
-                str | None,
-                tracking_options["manifest_store_credentials_secret"],
-            )
-            return {
-                "node_name": node_name,
-                "node_type": node_type,
-                "state_path": tracking_options["state_path"],
-                "state_store_type": tracking_options["state_store_type"],
-                "state_store_credentials": get_credentials(state_store_secret)
-                if state_store_secret
-                else None,
-                "manifest_path": tracking_options["manifest_path"],
-                "manifest_store_type": tracking_options["manifest_store_type"],
-                "manifest_store_credentials": get_credentials(manifest_store_secret)
-                if manifest_store_secret
-                else None,
-                "deployments_dir": tracking_options["deployments_dir"],
-                "trigger_delay": trigger_delay,
-                "sla_breach_grace_period_minutes": tracking_options[
-                    "sla_breach_grace_period_minutes"
-                ],
-            }
-
-        if iscoroutinefunction(func):
-
-            @wraps(func)
-            async def async_wrapped(*args: object, **kwargs: object) -> object:
-                from viadot.orchestration.prefect.tasks.dbt import update_node_state
-
-                runtime_context.set(None)
-                _STATE_TRACKING_SUCCESS_CONTEXT.set(False)
-                call_kwargs, tracking_options, node_name, trigger_delay = _prepare_call(
-                    args, kwargs
-                )
-                state_update_params = None
-                if node_name is not None:
-                    state_update_params = _build_state_update_params(
-                        tracking_options, node_name, trigger_delay
-                    )
-                if tracking_options["track_state"]:
-                    if state_update_params is None:
-                        msg = (
-                            "Source state tracking requires the flow argument "
-                            f"'{node_name_param}' to resolve the dbt node name."
-                        )
-                        raise ValueError(msg)
-                    update_node_state(**state_update_params, status="running")
-
-                node_status = "failed"
-                manifest = None
-                result = None
-                try:
-                    result = await func(*args, **call_kwargs)
-                    node_status = "success"
-                finally:
-                    if _STATE_TRACKING_SUCCESS_CONTEXT.get():
-                        node_status = "success"
-                    if tracking_options["track_state"]:
-                        if state_update_params is None:
-                            msg = (
-                                "Source state tracking requires the flow argument "
-                                f"'{node_name_param}' to resolve the dbt node name."
-                            )
-                            raise ValueError(msg)
-                        manifest = update_node_state(
-                            **state_update_params, status=node_status
-                        )
-                        runtime_context.set(
-                            {
-                                "node_name": node_name,
-                                "manifest": manifest,
-                                "state_path": tracking_options["state_path"],
-                                "state_store_credentials": state_update_params[
-                                    "state_store_credentials"
-                                ],
-                            }
-                        )
-
-                return result
-
-            async_wrapped.__signature__ = new_signature
-            async_wrapped._source_state_tracking_runtime_context = runtime_context
-            return async_wrapped  # type: ignore[return-value]
-
-        @wraps(func)
-        def wrapped(*args: object, **kwargs: object) -> object:
-            from viadot.orchestration.prefect.tasks.dbt import update_node_state
-
-            runtime_context.set(None)
-            _STATE_TRACKING_SUCCESS_CONTEXT.set(False)
-            call_kwargs, tracking_options, node_name, trigger_delay = _prepare_call(
-                args, kwargs
-            )
-            state_update_params = None
-            if node_name is not None:
-                state_update_params = _build_state_update_params(
-                    tracking_options, node_name, trigger_delay
-                )
-            if tracking_options["track_state"]:
-                if state_update_params is None:
-                    msg = (
-                        "Source state tracking requires the flow argument "
-                        f"'{node_name_param}' to resolve the dbt node name."
-                    )
-                    raise ValueError(msg)
-                update_node_state(**state_update_params, status="running")
-
-            node_status = "failed"
-            manifest = None
-            result = None
-            try:
-                result = func(*args, **call_kwargs)
-                node_status = "success"
-            finally:
-                if _STATE_TRACKING_SUCCESS_CONTEXT.get():
-                    node_status = "success"
-                if tracking_options["track_state"]:
-                    if state_update_params is None:
-                        msg = (
-                            "Source state tracking requires the flow argument "
-                            f"'{node_name_param}' to resolve the dbt node name."
-                        )
-                        raise ValueError(msg)
-                    manifest = update_node_state(
-                        **state_update_params, status=node_status
-                    )
-                    runtime_context.set(
-                        {
-                            "node_name": node_name,
-                            "manifest": manifest,
-                            "state_path": tracking_options["state_path"],
-                            "state_store_credentials": state_update_params[
-                                "state_store_credentials"
-                            ],
-                        }
-                    )
-
-            return result
-
-        wrapped.__signature__ = new_signature
-        wrapped._source_state_tracking_runtime_context = runtime_context
-        return wrapped  # type: ignore[return-value]
-
-    return decorator
-
-
-def with_downstream_triggering(  # noqa: C901, PLR0915 | irreducible complexity
-    node_name_param: str = "table",
-) -> Callable[[F], F]:
-    """Add downstream triggering parameters and runtime handling.
-
-    The decorator injects the following parameters into the wrapped callable's
-    signature so Prefect can expose them as flow parameters:
-
-    Injected Parameters:
-        trigger_downstream_nodes (bool): Whether to trigger downstream nodes after
-            success.
-        trigger_downstream_nodes_delay (int): Delay in seconds before triggering
-            downstream nodes.
-
-    At runtime, it triggers dbt downstream nodes after the wrapped callable succeeds.
-    This decorator is intended to be composed with ``with_state_tracking``.
-
-    Args:
-        node_name_param: Parameter name holding the dbt node identifier.
-
-    Returns:
-        A decorator that preserves the wrapped callable's metadata and signature.
-    """
-    trigger_param_specs = (
-        ("trigger_downstream_nodes", False, bool),
-        ("trigger_downstream_nodes_delay", 0, int),
-    )
-
-    def decorator(func: F) -> F:  # noqa: C901, PLR0915 | irreducible complexity
-        func_signature = signature(func)
-        func_param_names = set(func_signature.parameters)
-        has_node_name_param = node_name_param in func_param_names
-
-        params = list(func_signature.parameters.values())
-        kwargs_idx = next(
-            (idx for idx, p in enumerate(params) if p.kind == Parameter.VAR_KEYWORD),
-            None,
-        )
-        insert_idx = len(params) if kwargs_idx is None else kwargs_idx
-        injected_params = [
-            Parameter(
-                name,
-                kind=Parameter.KEYWORD_ONLY,
-                default=default,
-                annotation=annotation,
-            )
-            for name, default, annotation in trigger_param_specs
-            if name not in func_param_names
-        ]
-        if not has_node_name_param:
-            injected_params.append(
-                Parameter(
-                    node_name_param,
-                    kind=Parameter.KEYWORD_ONLY,
-                    default=None,
-                    annotation=str | None,
-                )
-            )
-        if injected_params:
-            new_params = [
-                *params[:insert_idx],
-                *injected_params,
-                *params[insert_idx:],
-            ]
-            new_signature = func_signature.replace(parameters=new_params)
-        else:
-            new_signature = func_signature
-
-        def _prepare_call(
-            args: tuple[object, ...], kwargs: dict[str, object]
-        ) -> tuple[dict[str, object], dict[str, object], object, bool]:
-            call_kwargs = dict(kwargs)
-            trigger_options = {
-                name: call_kwargs.pop(name, default)
-                for name, default, _ in trigger_param_specs
-                if name not in func_param_names
-            }
-            if has_node_name_param:
-                node_name = None
-                bound_call_kwargs = call_kwargs
-            else:
-                bound_call_kwargs = dict(call_kwargs)
-                node_name = bound_call_kwargs.pop(node_name_param, None)
-
-            bound_arguments = func_signature.bind_partial(*args, **bound_call_kwargs)
-            for name, default, _ in trigger_param_specs:
-                if name in func_param_names:
-                    trigger_options[name] = bound_arguments.arguments.get(name, default)
-
-            if has_node_name_param:
-                node_name = bound_arguments.arguments.get(node_name_param)
-            if node_name is None:
-                msg = (
-                    "Downstream triggering requires the flow argument "
-                    f"'{node_name_param}' to resolve the dbt node name."
-                )
-                raise ValueError(msg)
-
-            track_state = bool(bound_arguments.arguments.get("track_state", False))
-            return bound_call_kwargs, trigger_options, node_name, track_state
-
-        if iscoroutinefunction(func):
-
-            @wraps(func)
-            async def async_wrapped(*args: object, **kwargs: object) -> object:
-                from viadot.orchestration.prefect.tasks.dbt import (
-                    trigger_downstream_nodes as trigger_downstream_nodes_task,
-                )
-
-                (
-                    call_kwargs,
-                    trigger_options,
-                    node_name,
-                    track_state,
-                ) = _prepare_call(args, kwargs)
-                node_name = str(node_name)
-                if trigger_options["trigger_downstream_nodes"] and not track_state:
-                    msg = "State tracking must be enabled to trigger downstream nodes."
-                    raise ValueError(msg)
-
-                try:
-                    result = await func(*args, **call_kwargs)
-                except Exception as e:
-                    should_trigger = (
-                        trigger_options["trigger_downstream_nodes"]
-                        and _STATE_TRACKING_SUCCESS_CONTEXT.get()
-                    )
-                    if should_trigger:
-                        runtime_context = getattr(
-                            func,
-                            "_source_state_tracking_runtime_context",
-                            None,
-                        )
-                        context_data = (
-                            runtime_context.get()
-                            if runtime_context is not None
-                            else None
-                        )
-                        if not context_data:
-                            msg = (
-                                "Downstream triggering requires with_state_tracking_and_downstream_triggering "
-                                "to run in the same call stack."
-                            )
-                            raise ValueError(msg) from e
-                        trigger_downstream_nodes_task(
-                            node_name=node_name,
-                            manifest=context_data["manifest"],
-                            state_path=context_data["state_path"],
-                            state_store_credentials=context_data[
-                                "state_store_credentials"
-                            ],
-                        )
-                        if runtime_context is not None:
-                            runtime_context.set(None)
-                    _STATE_TRACKING_SUCCESS_CONTEXT.set(False)
-                    raise
-                if trigger_options["trigger_downstream_nodes"]:
-                    runtime_context = getattr(
-                        func,
-                        "_source_state_tracking_runtime_context",
-                        None,
-                    )
-                    context_data = (
-                        runtime_context.get() if runtime_context is not None else None
-                    )
-                    if not context_data:
-                        msg = (
-                            "Downstream triggering requires with_state_tracking_and_downstream_triggering "
-                            "to run in the same call stack."
-                        )
-                        raise ValueError(msg)
-                    trigger_downstream_nodes_task(
-                        node_name=node_name,
-                        manifest=context_data["manifest"],
-                        state_path=context_data["state_path"],
-                        state_store_credentials=context_data["state_store_credentials"],
-                    )
-                    if runtime_context is not None:
-                        runtime_context.set(None)
-
-                _STATE_TRACKING_SUCCESS_CONTEXT.set(False)
-
-                return result
-
-            async_wrapped.__signature__ = new_signature
-            return async_wrapped  # type: ignore[return-value]
-
-        @wraps(func)
-        def wrapped(*args: object, **kwargs: object) -> object:
-            from viadot.orchestration.prefect.tasks.dbt import (
-                trigger_downstream_nodes as trigger_downstream_nodes_task,
-            )
-
-            call_kwargs, trigger_options, node_name, track_state = _prepare_call(
-                args, kwargs
-            )
-            node_name = str(node_name)
-            if trigger_options["trigger_downstream_nodes"] and not track_state:
-                msg = "State tracking must be enabled to trigger downstream nodes."
-                raise ValueError(msg)
-
-            try:
-                result = func(*args, **call_kwargs)
-            except Exception as e:
-                should_trigger = (
-                    trigger_options["trigger_downstream_nodes"]
-                    and _STATE_TRACKING_SUCCESS_CONTEXT.get()
-                )
-                if should_trigger:
-                    runtime_context = getattr(
-                        func,
-                        "_source_state_tracking_runtime_context",
-                        None,
-                    )
-                    context_data = (
-                        runtime_context.get() if runtime_context is not None else None
-                    )
-                    if not context_data:
-                        msg = (
-                            "Downstream triggering requires with_state_tracking_and_downstream_triggering "
-                            "to run in the same call stack."
-                        )
-                        raise ValueError(msg) from e
-                    trigger_downstream_nodes_task(
-                        node_name=node_name,
-                        manifest=context_data["manifest"],
-                        state_path=context_data["state_path"],
-                        state_store_credentials=context_data["state_store_credentials"],
-                    )
-                    if runtime_context is not None:
-                        runtime_context.set(None)
-                _STATE_TRACKING_SUCCESS_CONTEXT.set(False)
-                raise
-            if trigger_options["trigger_downstream_nodes"]:
-                runtime_context = getattr(
-                    func,
-                    "_source_state_tracking_runtime_context",
-                    None,
-                )
-                context_data = (
-                    runtime_context.get() if runtime_context is not None else None
-                )
-                if not context_data:
-                    msg = (
-                        "Downstream triggering requires with_state_tracking_and_downstream_triggering "
-                        "to run in the same call stack."
-                    )
-                    raise ValueError(msg)
-                trigger_downstream_nodes_task(
-                    node_name=node_name,
-                    manifest=context_data["manifest"],
-                    state_path=context_data["state_path"],
-                    state_store_credentials=context_data["state_store_credentials"],
-                )
-                if runtime_context is not None:
-                    runtime_context.set(None)
-
-            _STATE_TRACKING_SUCCESS_CONTEXT.set(False)
-
-            return result
-
-        wrapped.__signature__ = new_signature
-        return wrapped  # type: ignore[return-value]
-
-    return decorator
-
-
-def with_state_tracking_and_downstream_triggering(
-    node_name_param: str = "table",
-    node_type: str = "source",
-) -> Callable[[F], F]:
-    """Compose state tracking and downstream triggering into one decorator.
-
-    This decorator combines ``with_state_tracking`` and ``with_downstream_triggering``
-    to provide integrated state management and downstream node triggering.
+    """Add state tracking and downstream triggering to a flow.
 
     Injected Parameters:
         manifest_path (str | None): URI of the manifest file.
@@ -745,18 +239,158 @@ def with_state_tracking_and_downstream_triggering(
             (default: 0).
 
     Args:
-        node_name_param: Parameter name holding the dbt node identifier
-            (default: "table").
+        node_name_param: Parameter name holding the dbt node identifier.
         node_type: dbt node type passed to the state store (default: "source").
     """
+    if not node_name_param or not node_name_param.strip():
+        msg = (
+            "State tracking and downstream triggering require a non-empty "
+            "'node_name_param'."
+        )
+        raise ValueError(msg)
+
+    param_specs = (
+        (node_name_param, None, str | None),
+        ("manifest_path", None, str | None),
+        ("manifest_store_type", "s3", str),
+        ("manifest_store_credentials_secret", None, str | None),
+        ("track_state", False, bool),
+        ("state_path", None, str | None),
+        ("state_store_type", "s3", str),
+        ("state_store_credentials_secret", None, str | None),
+        ("deployments_dir", None, str | None),
+        ("sla_breach_grace_period_minutes", 30, int),
+        ("trigger_downstream_nodes", False, bool),
+        ("trigger_downstream_nodes_delay", 0, int),
+    )
 
     def decorator(func: F) -> F:
-        return with_downstream_triggering(node_name_param=node_name_param)(
-            with_state_tracking(
-                node_name_param=node_name_param,
-                node_type=node_type,
-            )(func)
+        func_signature = signature(func)
+        new_signature, func_param_names = _build_signature_with_injected_params(
+            func_signature=func_signature,
+            param_specs=param_specs,
         )
+
+        def _build_state_update_params(
+            options: dict[str, object], node_name: object
+        ) -> dict[str, Any]:
+            state_store_secret = cast(
+                str | None,
+                options["state_store_credentials_secret"],
+            )
+            manifest_store_secret = cast(
+                str | None,
+                options["manifest_store_credentials_secret"],
+            )
+            return {
+                "node_name": node_name,
+                "node_type": node_type,
+                "state_path": options["state_path"],
+                "state_store_type": options["state_store_type"],
+                "state_store_credentials": get_credentials(state_store_secret)
+                if state_store_secret
+                else None,
+                "manifest_path": options["manifest_path"],
+                "manifest_store_type": options["manifest_store_type"],
+                "manifest_store_credentials": get_credentials(manifest_store_secret)
+                if manifest_store_secret
+                else None,
+                "deployments_dir": options["deployments_dir"],
+                "trigger_delay": options["trigger_downstream_nodes_delay"],
+                "sla_breach_grace_period_minutes": options[
+                    "sla_breach_grace_period_minutes"
+                ],
+            }
+
+        @wraps(func)
+        def wrapped(*args: object, **kwargs: object) -> object:
+            from viadot.orchestration.prefect.tasks.dbt import (
+                trigger_downstream_nodes as trigger_downstream_nodes_task,
+            )
+            from viadot.orchestration.prefect.tasks.dbt import (
+                update_node_state,
+            )
+
+            # Initialize state tracking context.
+            _STATE_TRACKING_SUCCESS_CONTEXT.set(False)
+
+            call_kwargs, options, _ = _split_decorator_options_and_bind(
+                func_signature=func_signature,
+                func_param_names=func_param_names,
+                param_specs=param_specs,
+                args=args,
+                kwargs=kwargs,
+            )
+            should_trigger_downstreams = options["trigger_downstream_nodes"]
+
+            # Exit early if state tracking is disabled.
+            if not options["track_state"]:
+                if should_trigger_downstreams:
+                    msg = "State tracking must be enabled to trigger downstream nodes."
+                    raise ValueError(msg)
+                return func(*args, **call_kwargs)
+
+            # Ensure the `node_name` was provided.
+            node_name = options[node_name_param]
+            if not node_name:
+                msg = (
+                    "Source state tracking requires the flow argument "
+                    f"'{node_name_param}' to resolve the dbt node name."
+                )
+                raise ValueError(msg)
+
+            # Mark node as running before executing the flow.
+            state_update_params = _build_state_update_params(
+                options, cast(object, node_name)
+            )
+            update_node_state(**state_update_params, status="running")
+
+            # Always write final state.
+            node_status = "failed"
+            try:
+                result = func(*args, **call_kwargs)
+                node_status = "success"
+            except Exception:
+                if _STATE_TRACKING_SUCCESS_CONTEXT.get():
+                    # Flow failed after the transformation phase, so we still mark it as
+                    # successful.
+                    node_status = "success"
+
+                manifest = update_node_state(
+                    **cast(dict[str, Any], state_update_params),
+                    status=node_status,
+                )
+
+                if should_trigger_downstreams and _STATE_TRACKING_SUCCESS_CONTEXT.get():
+                    trigger_downstream_nodes_task(
+                        node_name=node_name,
+                        manifest=manifest,
+                        state_path=options["state_path"],
+                        state_store_credentials=state_update_params[
+                            "state_store_credentials"
+                        ],
+                    )
+                raise
+
+            manifest = update_node_state(
+                **cast(dict[str, Any], state_update_params),
+                status=node_status,
+            )
+            # Flow succeeded; trigger downstreams if requested.
+            if should_trigger_downstreams:
+                trigger_downstream_nodes_task(
+                    node_name=node_name,
+                    manifest=manifest,
+                    state_path=options["state_path"],
+                    state_store_credentials=state_update_params[
+                        "state_store_credentials"
+                    ],
+                )
+
+            return result
+
+        wrapped.__signature__ = new_signature
+        return wrapped  # type: ignore[return-value]
 
     return decorator
 
