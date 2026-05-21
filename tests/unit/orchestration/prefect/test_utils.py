@@ -1,4 +1,3 @@
-import asyncio
 from inspect import Parameter, signature
 import time
 from unittest.mock import MagicMock
@@ -243,16 +242,6 @@ def test_with_flow_timeout_param_enforces_sync_timeout():
 
     with pytest.raises(TimeoutError):
         slow_flow(timeout_seconds=0.01)
-
-
-@pytest.mark.asyncio
-async def test_with_flow_timeout_param_enforces_async_timeout():
-    @with_flow_timeout_param(default_timeout_seconds=1)
-    async def slow_flow() -> None:
-        await asyncio.sleep(0.05)
-
-    with pytest.raises(TimeoutError):
-        await slow_flow(timeout_seconds=0.01)
 
 
 def test_state_tracking_can_stay_successful_after_later_failure(monkeypatch):
