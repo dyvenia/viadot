@@ -24,12 +24,12 @@ curl -LsSf https://astral.sh/uv/install.sh | sh
 sudo apt update -q && \
   yes | apt install -q gnupg unixodbc && \
   curl https://packages.microsoft.com/keys/microsoft.asc | apt-key add - && \
-  curl https://packages.microsoft.com/config/debian/10/prod.list > /etc/apt/sources.list.d/mssql-release.list && \
+  curl https://packages.microsoft.com/config/debian/13/prod.list > /etc/apt/sources.list.d/mssql-release.list && \
   sudo apt update -q && \
   sudo  apt install -q libsqliteodbc && \
-  ACCEPT_EULA=Y apt install -q -y msodbcsql17=17.10.1.1-1 && \
-  ACCEPT_EULA=Y apt install -q -y mssql-tools=17.10.1.1-1 && \
-  echo 'export PATH="$PATH:/opt/mssql-tools/bin"' >> ~/.bashrc
+  ACCEPT_EULA=Y apt install -q -y msodbcsql18=18.6.2.1-1 && \
+  ACCEPT_EULA=Y apt install -q -y mssql-tools18=18.6.2.1-1 && \
+  echo 'export PATH="$PATH:/opt/mssql-tools18/bin"' >> ~/.bashrc
 ```
 
 Next, copy the SQL Server config from `docker/odbcinst.ini` file into your `/etc/odbcinst.ini` file.
