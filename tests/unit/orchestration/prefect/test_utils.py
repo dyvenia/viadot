@@ -269,7 +269,7 @@ def test_state_tracking_can_stay_successful_after_later_failure(monkeypatch):
             track_state=True,
             trigger_downstream_nodes=True,
             state_path="s3://bucket/state.json",
-            manifest_path="s3://bucket/manifest.json",
+            artifact_store_path="s3://bucket/artifacts",
         )
 
     assert update_node_state.call_args_list[0].kwargs["status"] == "running"
@@ -306,7 +306,7 @@ def test_state_tracking_failure_still_blocks_downstreams(monkeypatch):
             track_state=True,
             trigger_downstream_nodes=True,
             state_path="s3://bucket/state.json",
-            manifest_path="s3://bucket/manifest.json",
+            artifact_store_path="s3://bucket/artifacts",
         )
 
     assert update_node_state.call_args_list[0].kwargs["status"] == "running"

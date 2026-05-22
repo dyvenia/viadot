@@ -221,9 +221,9 @@ def with_state_tracking_and_downstream_triggering(  # noqa: C901
     """Add state tracking and downstream triggering to a flow.
 
     Injected Parameters:
-        manifest_path (str | None): URI of the manifest file.
-        manifest_store_type (str): Backend type for manifest storage (default: "s3").
-        manifest_store_credentials_secret (str | None): Secret name for manifest store
+        artifact_store_path (str | None): URI of the artifact store.
+        artifact_store_type (str): Backend type for artifact storage (default: "s3").
+        artifact_store_credentials_secret (str | None): Secret name for artifact store
             credentials.
         track_state (bool): Whether to track state (default: False).
         state_path (str | None): URI of the state file.
@@ -251,9 +251,9 @@ def with_state_tracking_and_downstream_triggering(  # noqa: C901
 
     param_specs = (
         (node_name_param, None, str | None),
-        ("manifest_path", None, str | None),
-        ("manifest_store_type", "s3", str),
-        ("manifest_store_credentials_secret", None, str | None),
+        ("artifact_store_path", None, str | None),
+        ("artifact_store_type", "s3", str),
+        ("artifact_store_credentials_secret", None, str | None),
         ("track_state", False, bool),
         ("state_path", None, str | None),
         ("state_store_type", "s3", str),
@@ -278,9 +278,9 @@ def with_state_tracking_and_downstream_triggering(  # noqa: C901
                 str | None,
                 options["state_store_credentials_secret"],
             )
-            manifest_store_secret = cast(
+            artifact_store_secret = cast(
                 str | None,
-                options["manifest_store_credentials_secret"],
+                options["artifact_store_credentials_secret"],
             )
             return {
                 "node_name": node_name,
@@ -290,10 +290,10 @@ def with_state_tracking_and_downstream_triggering(  # noqa: C901
                 "state_store_credentials": get_credentials(state_store_secret)
                 if state_store_secret
                 else None,
-                "manifest_path": options["manifest_path"],
-                "manifest_store_type": options["manifest_store_type"],
-                "manifest_store_credentials": get_credentials(manifest_store_secret)
-                if manifest_store_secret
+                "artifact_store_path": options["artifact_store_path"],
+                "artifact_store_type": options["artifact_store_type"],
+                "artifact_store_credentials": get_credentials(artifact_store_secret)
+                if artifact_store_secret
                 else None,
                 "deployments_dir": options["deployments_dir"],
                 "trigger_delay": options["trigger_downstream_nodes_delay"],

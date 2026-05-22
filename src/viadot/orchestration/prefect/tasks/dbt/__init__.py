@@ -84,7 +84,7 @@ def update_node_state(  # noqa: PLR0913
     node_type: str,
     state_path: str,
     state_store_type: str,
-    manifest_path: str,
+    artifact_store_path: str,
     artifact_store_type: str,
     state_store_credentials: dict[str, Any] | None = None,
     artifact_store_credentials: dict[str, Any] | None = None,
@@ -102,7 +102,8 @@ def update_node_state(  # noqa: PLR0913
         node_type: The dbt node type (e.g. ``"model"``, ``"source"``).
         state_path: URI of the state file (e.g. ``"s3://bucket/state.json"``).
         state_store_type: Backend type for the state store.
-        manifest_path: URI of the manifest file (e.g. ``"s3://bucket/manifest.json"``).
+        artifact_store_path: URI of the artifact store
+        (e.g. ``"s3://bucket/artifacts"``).
         artifact_store_type: Backend type for the artifact store.
         state_store_credentials: Store credentials for the state store. Omit to use
             ambient AWS credentials.
@@ -126,7 +127,7 @@ def update_node_state(  # noqa: PLR0913
     state_handler = StateHandler(state_store)
     artifact_store = ArtifactStore(artifact_store_type)
     manifest = artifact_store.read_manifest(
-        credentials=artifact_store_credentials, path=manifest_path
+        credentials=artifact_store_credentials, artifact_store_path=artifact_store_path
     )
     logger.info("Artifact store loaded successfully.")
     manifest_handler = ManifestHandler(manifest)
