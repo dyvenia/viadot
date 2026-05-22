@@ -60,6 +60,7 @@ def _run_dbt_transforms(
     if metadata_kind == "model_run":
         # Produce `run-results.json` artifact for Luma ingestion.
         build_select = None
+        seed_select = None
         run_select_safe = ""
         test_select_safe = ""
         if dbt_selects:
@@ -71,7 +72,6 @@ def _run_dbt_transforms(
             build_select_safe = f"-s {build_select}" if build_select is not None else ""
             run_select_safe = f"-s {run_select}" if run_select is not None else ""
             test_select_safe = f"-s {test_select}" if test_select is not None else ""
-            seed_select_safe = f"-s {seed_select}" if seed_select is not None else ""
 
         if seed_select:
             seed_task = dbt_task.with_options(
@@ -79,7 +79,7 @@ def _run_dbt_transforms(
             )
             seed = seed_task.submit(
                 project_path=dbt_project_path_full,
-                command=f"seed {seed_select_safe} {dbt_target_option}",
+                command=f"seed -s {seed_select} {dbt_target_option}",
             )
             seed.result()
 
@@ -203,7 +203,8 @@ def transform_and_catalog(  # noqa: PLR0913, PLR0915, C901 | Complexity complain
             Defaults to None.
         dbt_selects (dict, optional): Valid
             [dbt node selection](https://docs.getdbt.com/reference/node-selection/syntax)
-            expressions. Valid keys are `run`, `test`,`build`, and `source_freshness`.
+            expressions. Valid keys are `seed`, `run`, `test`, `build`, and
+            `source_freshness`.
                 The test select expression is taken from run's, as long as run select is
                 provided. Defaults to None.
         dbt_target (str): The dbt target to use. If not specified, the default dbt
@@ -323,6 +324,8 @@ def transform_and_catalog(  # noqa: PLR0913, PLR0915, C901 | Complexity complain
             `dbt_select={"run": "marts.domain.some_model"}`
         - runs tests for a specific model:
             `dbt_select={"test": "my_model"}`
+        - seeds a specific seed file:
+            `dbt_select={"seed": "my_seed"}`
         - build a specific model:
             `dbt_select={"build": "my_model"}`
         - build all models in a folder:
