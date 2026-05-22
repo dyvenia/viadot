@@ -52,7 +52,9 @@ def _run_dbt_transforms(
     """
     dbt_target_option = f"-t {dbt_target}" if dbt_target is not None else ""
     build_select = None
+    run_select = None
     seed_select = None
+    test_select = None
     run_select_safe = ""
     test_select_safe = ""
 
@@ -77,6 +79,8 @@ def _run_dbt_transforms(
             command=f"seed -s {seed_select} {dbt_target_option}",
         )
         seed.result()
+        if not any([build_select, run_select, test_select]):
+            return
 
     # dbt build
     if build_select:
