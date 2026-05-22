@@ -56,12 +56,13 @@ def s3_upload_file(
         test_flow()
         ```
     """
-    if not (credentials_secret or config_key):
+    if not credentials and not (credentials_secret or config_key):
         raise MissingSourceCredentialsError
 
-    credentials = get_source_credentials(config_key) or get_credentials(
-        credentials_secret
-    )
+    if not credentials:
+        credentials = get_source_credentials(config_key) or get_credentials(
+            credentials_secret
+        )
 
     s3 = S3(credentials=credentials, config_key=config_key)
 
@@ -113,12 +114,13 @@ def s3_download_file(
         test_flow()
         ```
     """
-    if not (credentials_secret or config_key):
+    if not credentials and not (credentials_secret or config_key):
         raise MissingSourceCredentialsError
 
-    credentials = get_source_credentials(config_key) or get_credentials(
-        credentials_secret
-    )
+    if not credentials:
+        credentials = get_source_credentials(config_key) or get_credentials(
+            credentials_secret
+        )
 
     s3 = S3(credentials=credentials, config_key=config_key)
 
