@@ -37,7 +37,6 @@ from .vid_club import VidClub
 
 __all__ = [
     "SMB",
-    "SMBClient",
     "TM1",
     "AzureSQL",
     "BigQuery",
@@ -58,6 +57,7 @@ __all__ = [
     "OneStream",
     "Outlook",
     "PostgreSQL",
+    "SMBClient",
     "SQLServer",
     "SQLite",
     "Salesforce",

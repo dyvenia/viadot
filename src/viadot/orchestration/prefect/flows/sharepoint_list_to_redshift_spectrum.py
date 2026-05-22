@@ -8,7 +8,10 @@ from viadot.orchestration.prefect.tasks import (
     df_to_redshift_spectrum,
     sharepoint_list_to_df,
 )
-from viadot.orchestration.prefect.utils import with_flow_timeout_param
+from viadot.orchestration.prefect.utils import (
+    with_flow_timeout_param,
+    with_state_tracking_and_downstream_triggering,
+)
 
 
 @flow(
@@ -18,6 +21,7 @@ from viadot.orchestration.prefect.utils import with_flow_timeout_param
     retry_delay_seconds=60,
 )
 @with_flow_timeout_param()
+@with_state_tracking_and_downstream_triggering(node_name_param="table")
 def sharepoint_list_to_redshift_spectrum(  # noqa: PLR0913
     to_path: str,
     schema_name: str,
@@ -77,6 +81,11 @@ def sharepoint_list_to_redshift_spectrum(  # noqa: PLR0913
             Defaults to None.
         tests (dict[str, Any] | None, optional): Tests to validate the DataFrame.
             Defaults to None.
+
+    Note:
+        State tracking and downstream node triggering parameters are injected by the
+        ``with_state_tracking_and_downstream_triggering`` decorator. See its docstring
+        for details on available state and trigger parameters.
 
     Returns:
         None
