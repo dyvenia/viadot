@@ -10,7 +10,10 @@ from viadot.orchestration.prefect.tasks import (
     df_to_redshift_spectrum,
     onestream_to_df,
 )
-from viadot.orchestration.prefect.utils import with_flow_timeout_param
+from viadot.orchestration.prefect.utils import (
+    with_flow_timeout_param,
+    with_state_tracking_and_downstream_triggering,
+)
 
 
 @flow(
@@ -20,6 +23,7 @@ from viadot.orchestration.prefect.utils import with_flow_timeout_param
     retry_delay_seconds=60,
 )
 @with_flow_timeout_param()
+@with_state_tracking_and_downstream_triggering(node_name_param="table")
 def onestream_sql_query_data_to_redshift_spectrum(  # noqa: PLR0913
     base_url: str,
     application: str,
@@ -117,9 +121,13 @@ def onestream_sql_query_data_to_redshift_spectrum(  # noqa: PLR0913
             credentials. Defaults to None.
         onestream_config_key (str, optional)): Key in viadot config for OneStream
             credentials.Defaults to None.
+
+    Note:
+        State tracking and downstream node triggering parameters are injected by the
+        ``with_state_tracking_and_downstream_triggering`` decorator. See its docstring
+        for details on available state and trigger parameters.
     """
     logger = get_run_logger()
-
     if batch_by_subst_vars and not custom_subst_vars:
         msg = (
             "Invalid parameter combination: batch_by_subst_vars=True requires "

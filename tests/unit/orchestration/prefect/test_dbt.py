@@ -535,7 +535,7 @@ class TestUpdateNodeStateTask:
             node_type="model",
             state_path="s3://bucket/node-state.json",
             state_store_type="s3",
-            manifest_path="s3://bucket/manifest.json",
+            artifact_store_path="s3://bucket/artifacts",
             artifact_store_type="s3",
             state_store_credentials=credentials,
             effective_source_data_slot="2026-03-19T09:00:00+00:00",
@@ -585,7 +585,7 @@ class TestUpdateNodeStateTask:
             state_path="s3://bucket/node-state.json",
             node_type="model",
             state_store_type="s3",
-            manifest_path="s3://bucket/manifest.json",
+            artifact_store_path="s3://bucket/artifacts",
             artifact_store_type="s3",
             state_store_credentials=credentials,
         )
@@ -615,7 +615,7 @@ class TestUpdateNodeStateTask:
                 state_path="s3://bucket/node-state.json",
                 node_type="model",
                 state_store_type="local",
-                manifest_path="s3://bucket/manifest.json",
+                artifact_store_path="s3://bucket/artifacts",
                 artifact_store_type="s3",
                 state_store_credentials=credentials,
             )

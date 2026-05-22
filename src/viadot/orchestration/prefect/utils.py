@@ -2,10 +2,12 @@
 
 from collections.abc import Callable
 import contextlib
+from contextvars import ContextVar
+from copy import deepcopy
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from functools import wraps
-from inspect import Parameter, iscoroutinefunction, signature
+from inspect import Parameter, Signature, signature
 import json
 from json.decoder import JSONDecodeError
 import logging
@@ -14,7 +16,7 @@ import re
 import smtplib
 import sys
 import tempfile
-from typing import Any, TypeVar
+from typing import Any, TypeVar, cast
 
 from anyio import open_process
 from anyio.streams.text import TextReceiveStream
@@ -23,7 +25,7 @@ from prefect.blocks.core import Block
 from prefect.blocks.system import Secret
 from prefect.client.orchestration import get_client
 from prefect.utilities.asyncutils import run_coro_as_sync
-from prefect.utilities.timeout import timeout, timeout_async
+from prefect.utilities.timeout import timeout
 from prefect_sqlalchemy import SqlAlchemyConnector
 from pydantic import BaseModel
 
@@ -45,6 +47,13 @@ DEFAULT_TIMEOUT_SECONDS = 2 * 60 * 60
 
 
 logger = logging.getLogger(__name__)
+_STATE_TRACKING_SUCCESS_CONTEXT: ContextVar[bool] = ContextVar(
+    "state_tracking_success_context", default=False
+)
+
+
+# Cache credentials by normalized secret name to avoid repeated slow block lookups.
+_CREDENTIALS_CACHE: dict[str, dict[str, Any] | str] = {}
 
 
 class SmtpConfig(BaseModel):
@@ -52,6 +61,79 @@ class SmtpConfig(BaseModel):
     port: int = 587
     sender: str
     password: str
+
+
+def mark_state_tracking_success() -> None:
+    """Mark the current tracked node as successful.
+
+    This allows flows to mark the tracked dbt node as successful once the critical
+    dbt phase has completed, even if later non-dbt steps raise an exception.
+    """
+    _STATE_TRACKING_SUCCESS_CONTEXT.set(True)
+
+
+def _build_signature_with_injected_params(
+    *,
+    func_signature: Signature,
+    param_specs: tuple[tuple[str, object, object], ...],
+) -> tuple[Signature, set[str]]:
+    """Build flow signature with missing decorator parameters injected."""
+    func_param_names = set(func_signature.parameters)
+
+    params = list(func_signature.parameters.values())
+    kwargs_idx = next(
+        (idx for idx, p in enumerate(params) if p.kind == Parameter.VAR_KEYWORD),
+        None,
+    )
+    insert_idx = len(params) if kwargs_idx is None else kwargs_idx
+
+    injected_params = [
+        Parameter(
+            name,
+            kind=Parameter.KEYWORD_ONLY,
+            default=default,
+            annotation=annotation,
+        )
+        for name, default, annotation in param_specs
+        if name not in func_param_names
+    ]
+    if injected_params:
+        new_params = [
+            *params[:insert_idx],
+            *injected_params,
+            *params[insert_idx:],
+        ]
+        new_signature = func_signature.replace(parameters=new_params)
+    else:
+        new_signature = func_signature
+
+    return new_signature, func_param_names
+
+
+def _split_decorator_options_and_bind(
+    *,
+    func_signature: Signature,
+    func_param_names: set[str],
+    param_specs: tuple[tuple[str, object, object], ...],
+    args: tuple[object, ...],
+    kwargs: dict[str, object],
+) -> tuple[dict[str, object], dict[str, object], Any]:
+    """Extract decorator options from kwargs and bind flow call arguments.
+
+    Returns flow kwargs (without decorator-only options), resolved option values,
+    and bound arguments for convenient downstream access.
+    """
+    call_kwargs = dict(kwargs)
+    options = {
+        name: call_kwargs.pop(name, default)
+        for name, default, _ in param_specs
+        if name not in func_param_names
+    }
+    bound_arguments = func_signature.bind_partial(*args, **call_kwargs)
+    for name, default, _ in param_specs:
+        if name in func_param_names:
+            options[name] = bound_arguments.arguments.get(name, default)
+    return call_kwargs, options, bound_arguments
 
 
 def with_flow_timeout_param(
@@ -114,25 +196,6 @@ def with_flow_timeout_param(
 
             new_signature = func_signature.replace(parameters=new_params)
 
-        if iscoroutinefunction(func):
-
-            @wraps(func)
-            async def async_wrapped(*args: object, **kwargs: object) -> object:
-                if has_timeout_param:
-                    bound_arguments = func_signature.bind_partial(*args, **kwargs)
-                    timeout_seconds = bound_arguments.arguments.get(
-                        "timeout_seconds", default_timeout_seconds
-                    )
-                else:
-                    timeout_seconds = kwargs.pop(
-                        "timeout_seconds", default_timeout_seconds
-                    )
-                with timeout_async(seconds=timeout_seconds):
-                    return await func(*args, **kwargs)
-
-            async_wrapped.__signature__ = new_signature
-            return async_wrapped  # type: ignore[return-value]
-
         @wraps(func)
         def wrapped(*args: object, **kwargs: object) -> object:
             if has_timeout_param:
@@ -144,6 +207,187 @@ def with_flow_timeout_param(
                 timeout_seconds = kwargs.pop("timeout_seconds", default_timeout_seconds)
             with timeout(seconds=timeout_seconds):
                 return func(*args, **kwargs)
+
+        wrapped.__signature__ = new_signature
+        return wrapped  # type: ignore[return-value]
+
+    return decorator
+
+
+def with_state_tracking_and_downstream_triggering(  # noqa: C901
+    node_name_param: str,
+    node_type: str = "source",
+) -> Callable[[F], F]:
+    """Add state tracking and downstream triggering to a flow.
+
+    Injected Parameters:
+        artifact_store_path (str | None): URI of the artifact store.
+        artifact_store_type (str): Backend type for artifact storage (default: "s3").
+        artifact_store_credentials_secret (str | None): Secret name for artifact store
+            credentials.
+        track_state (bool): Whether to track state (default: False).
+        state_path (str | None): URI of the state file.
+        state_store_type (str): Backend type for state storage (default: "s3").
+        state_store_credentials_secret (str | None): Secret name for state store
+            credentials.
+        deployments_dir (str | None): Directory with Prefect deployments.
+        sla_breach_grace_period_minutes (int): Grace period in minutes before SLA breach
+            (default: 30).
+        trigger_downstream_nodes (bool): Whether to trigger downstream nodes
+            (default: False).
+        trigger_downstream_nodes_delay (int): Delay in seconds before triggering
+            (default: 0).
+
+    Args:
+        node_name_param: Parameter name holding the dbt node identifier.
+        node_type: dbt node type passed to the state store (default: "source").
+    """
+    if not node_name_param or not node_name_param.strip():
+        msg = (
+            "State tracking and downstream triggering require a non-empty "
+            "'node_name_param'."
+        )
+        raise ValueError(msg)
+
+    param_specs = (
+        (node_name_param, None, str | None),
+        ("artifact_store_path", None, str | None),
+        ("artifact_store_type", "s3", str),
+        ("artifact_store_credentials_secret", None, str | None),
+        ("track_state", False, bool),
+        ("state_path", None, str | None),
+        ("state_store_type", "s3", str),
+        ("state_store_credentials_secret", None, str | None),
+        ("deployments_dir", None, str | None),
+        ("sla_breach_grace_period_minutes", 30, int),
+        ("trigger_downstream_nodes", False, bool),
+        ("trigger_downstream_nodes_delay", 0, int),
+    )
+
+    def decorator(func: F) -> F:
+        func_signature = signature(func)
+        new_signature, func_param_names = _build_signature_with_injected_params(
+            func_signature=func_signature,
+            param_specs=param_specs,
+        )
+
+        def _build_state_update_params(
+            options: dict[str, object], node_name: object
+        ) -> dict[str, Any]:
+            state_store_secret = cast(
+                str | None,
+                options["state_store_credentials_secret"],
+            )
+            artifact_store_secret = cast(
+                str | None,
+                options["artifact_store_credentials_secret"],
+            )
+            return {
+                "node_name": node_name,
+                "node_type": node_type,
+                "state_path": options["state_path"],
+                "state_store_type": options["state_store_type"],
+                "state_store_credentials": get_credentials(state_store_secret)
+                if state_store_secret
+                else None,
+                "artifact_store_path": options["artifact_store_path"],
+                "artifact_store_type": options["artifact_store_type"],
+                "artifact_store_credentials": get_credentials(artifact_store_secret)
+                if artifact_store_secret
+                else None,
+                "deployments_dir": options["deployments_dir"],
+                "trigger_delay": options["trigger_downstream_nodes_delay"],
+                "sla_breach_grace_period_minutes": options[
+                    "sla_breach_grace_period_minutes"
+                ],
+            }
+
+        @wraps(func)
+        def wrapped(*args: object, **kwargs: object) -> object:
+            from viadot.orchestration.prefect.tasks.dbt import (
+                trigger_downstream_nodes as trigger_downstream_nodes_task,
+            )
+            from viadot.orchestration.prefect.tasks.dbt import (
+                update_node_state,
+            )
+
+            # Initialize state tracking context.
+            _STATE_TRACKING_SUCCESS_CONTEXT.set(False)
+
+            call_kwargs, options, _ = _split_decorator_options_and_bind(
+                func_signature=func_signature,
+                func_param_names=func_param_names,
+                param_specs=param_specs,
+                args=args,
+                kwargs=kwargs,
+            )
+            should_trigger_downstreams = options["trigger_downstream_nodes"]
+
+            # Exit early if state tracking is disabled.
+            if not options["track_state"]:
+                if should_trigger_downstreams:
+                    msg = "State tracking must be enabled to trigger downstream nodes."
+                    raise ValueError(msg)
+                return func(*args, **call_kwargs)
+
+            # Ensure the `node_name` was provided.
+            node_name = options[node_name_param]
+            if not node_name:
+                msg = (
+                    "Source state tracking requires the flow argument "
+                    f"'{node_name_param}' to resolve the dbt node name."
+                )
+                raise ValueError(msg)
+
+            # Mark node as running before executing the flow.
+            state_update_params = _build_state_update_params(
+                options, cast(object, node_name)
+            )
+            update_node_state(**state_update_params, status="running")
+
+            # Always write final state.
+            node_status = "failed"
+            try:
+                result = func(*args, **call_kwargs)
+                node_status = "success"
+            except Exception:
+                if _STATE_TRACKING_SUCCESS_CONTEXT.get():
+                    # Flow failed after the transformation phase, so we still mark it as
+                    # successful.
+                    node_status = "success"
+
+                manifest = update_node_state(
+                    **cast(dict[str, Any], state_update_params),
+                    status=node_status,
+                )
+
+                if should_trigger_downstreams and _STATE_TRACKING_SUCCESS_CONTEXT.get():
+                    trigger_downstream_nodes_task(
+                        node_name=node_name,
+                        manifest=manifest,
+                        state_path=options["state_path"],
+                        state_store_credentials=state_update_params[
+                            "state_store_credentials"
+                        ],
+                    )
+                raise
+
+            manifest = update_node_state(
+                **cast(dict[str, Any], state_update_params),
+                status=node_status,
+            )
+            # Flow succeeded; trigger downstreams if requested.
+            if should_trigger_downstreams:
+                trigger_downstream_nodes_task(
+                    node_name=node_name,
+                    manifest=manifest,
+                    state_path=options["state_path"],
+                    state_store_credentials=state_update_params[
+                        "state_store_credentials"
+                    ],
+                )
+
+            return result
 
         wrapped.__signature__ = new_signature
         return wrapped  # type: ignore[return-value]
@@ -745,7 +989,7 @@ def _get_database_credentials(secret_name: str) -> dict[str, Any] | str:
     return credentials
 
 
-def get_credentials(secret_name: str | None) -> dict[str, Any] | None:
+def get_credentials(secret_name: str | None) -> dict[str, Any] | str | None:
     """Retrieve credentials from the Prefect block document.
 
     Args:
@@ -753,8 +997,8 @@ def get_credentials(secret_name: str | None) -> dict[str, Any] | None:
             If ``None``, returns ``None`` immediately.
 
     Returns:
-        dict | None: A dictionary containing the credentials, or ``None`` if
-            ``secret_name`` is ``None``.
+        dict | str | None: Credentials loaded from the Prefect block document,
+            or ``None`` if ``secret_name`` is ``None``.
     """
     if secret_name is None:
         return None
@@ -763,6 +1007,10 @@ def get_credentials(secret_name: str | None) -> dict[str, Any] | None:
     # so some names might be lowercased versions of the original
 
     secret_name_lowercase = secret_name.lower()
+    cached_credentials = _CREDENTIALS_CACHE.get(secret_name_lowercase)
+    if cached_credentials is not None:
+        return deepcopy(cached_credentials)
+
     blocks = run_coro_as_sync(list_block_documents())
 
     for block in blocks:
@@ -785,7 +1033,8 @@ def get_credentials(secret_name: str | None) -> dict[str, Any] | None:
         msg = f"The provided secret block type: {block_type} is not supported"
         raise MissingPrefectBlockError(msg)
 
-    return credentials
+    _CREDENTIALS_CACHE[secret_name_lowercase] = credentials
+    return deepcopy(credentials)
 
 
 async def shell_run_command(

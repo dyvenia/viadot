@@ -5,7 +5,10 @@ from typing import Any, Literal
 from prefect import flow
 
 from viadot.orchestration.prefect.tasks import df_to_redshift_spectrum, hubspot_to_df
-from viadot.orchestration.prefect.utils import with_flow_timeout_param
+from viadot.orchestration.prefect.utils import (
+    with_flow_timeout_param,
+    with_state_tracking_and_downstream_triggering,
+)
 
 
 @flow(
@@ -15,6 +18,7 @@ from viadot.orchestration.prefect.utils import with_flow_timeout_param
     retry_delay_seconds=60,
 )
 @with_flow_timeout_param()
+@with_state_tracking_and_downstream_triggering(node_name_param="table")
 def hubspot_to_redshift_spectrum(  # noqa: PLR0913
     to_path: str,
     schema_name: str,
@@ -73,6 +77,11 @@ def hubspot_to_redshift_spectrum(  # noqa: PLR0913
         drop_empty_columns (bool, optional): If True, removes columns that are 100%
             empty and known technical metadata columns (identity-profiles, merge-audits,
             vid-offset). Defaults to False.
+
+    Note:
+        State tracking and downstream node triggering parameters are injected by the
+        ``with_state_tracking_and_downstream_triggering`` decorator. See its docstring
+        for details on available state and trigger parameters.
     """
     df = hubspot_to_df(
         endpoint=endpoint or hubspot_url,

@@ -8,7 +8,10 @@ from viadot.orchestration.prefect.tasks import (
     df_to_redshift_spectrum,
     entraid_to_df,
 )
-from viadot.orchestration.prefect.utils import with_flow_timeout_param
+from viadot.orchestration.prefect.utils import (
+    with_flow_timeout_param,
+    with_state_tracking_and_downstream_triggering,
+)
 
 
 @flow(
@@ -18,6 +21,7 @@ from viadot.orchestration.prefect.utils import with_flow_timeout_param
     retry_delay_seconds=60,
 )
 @with_flow_timeout_param()
+@with_state_tracking_and_downstream_triggering(node_name_param="table")
 def entraid_to_redshift_spectrum(  # noqa: PLR0913
     to_path: str,
     schema_name: str,
@@ -64,6 +68,11 @@ def entraid_to_redshift_spectrum(  # noqa: PLR0913
             More info on: https://docs.prefect.io/concepts/blocks/
         entraid_config_key (str, optional): The key in the viadot config holding
             relevant credentials. Defaults to None.
+
+    Note:
+        State tracking and downstream node triggering parameters are injected by the
+        ``with_state_tracking_and_downstream_triggering`` decorator. See its docstring
+        for details on available state and trigger parameters.
     """
     df = entraid_to_df(
         credentials_secret=entraid_credentials_secret,
