@@ -47,8 +47,8 @@ def sharepoint_to_redshift_spectrum(  # noqa: PLR0913
     sharepoint_config_key: str | None = None,
     file_sheet_mapping: dict | None = None,
     manifest_path: str | None = None,
-    manifest_store_type: str = "s3",
-    manifest_store_credentials_secret: str | None = None,
+    artifact_store_type: str = "s3",
+    artifact_store_credentials_secret: str | None = None,
     track_state: bool = False,
     state_path: str | None = None,
     state_store_type: str = "s3",
@@ -122,10 +122,10 @@ def sharepoint_to_redshift_spectrum(  # noqa: PLR0913
         manifest_path (str, optional): URI of the manifest file
             (e.g. ``"s3://bucket/manifest.json"``). Required if ``state_path`` is
             provided. Defaults to None.
-        manifest_store_type (str, optional): Backend type for the manifest store.
+        artifact_store_type (str, optional): Backend type for the artifact store.
             Defaults to "s3".
-        manifest_store_credentials_secret (str, optional): Prefect secret name holding
-            manifest store credentials. Omit to use ambient AWS credentials.
+        artifact_store_credentials_secret (str, optional): Prefect secret name holding
+            artifact store credentials. Omit to use ambient AWS credentials.
             Defaults to None.
         track_state (bool): Whether to track the state of the dbt node in a state file.
         state_path (str, optional): URI of the state file
@@ -161,9 +161,9 @@ def sharepoint_to_redshift_spectrum(  # noqa: PLR0913
         if state_store_credentials_secret
         else None,
         "manifest_path": manifest_path,
-        "manifest_store_type": manifest_store_type,
-        "manifest_store_credentials": get_credentials(manifest_store_credentials_secret)
-        if manifest_store_credentials_secret
+        "artifact_store_type": artifact_store_type,
+        "artifact_store_credentials": get_credentials(artifact_store_credentials_secret)
+        if artifact_store_credentials_secret
         else None,
         "deployments_dir": deployments_dir,
         "trigger_delay": trigger_downstream_nodes_delay,

@@ -85,9 +85,9 @@ def update_node_state(  # noqa: PLR0913
     state_path: str,
     state_store_type: str,
     manifest_path: str,
-    manifest_store_type: str,
+    artifact_store_type: str,
     state_store_credentials: dict[str, Any] | None = None,
-    manifest_store_credentials: dict[str, Any] | None = None,
+    artifact_store_credentials: dict[str, Any] | None = None,
     deployments_dir: str | Path | None = None,
     effective_source_data_slot: str | None = None,
     batch_id: int | None = None,
@@ -103,10 +103,10 @@ def update_node_state(  # noqa: PLR0913
         state_path: URI of the state file (e.g. ``"s3://bucket/state.json"``).
         state_store_type: Backend type for the state store.
         manifest_path: URI of the manifest file (e.g. ``"s3://bucket/manifest.json"``).
-        manifest_store_type: Backend type for the artifact store.
+        artifact_store_type: Backend type for the artifact store.
         state_store_credentials: Store credentials for the state store. Omit to use
             ambient AWS credentials.
-        manifest_store_credentials: Store credentials for the artifact store. Omit to
+        artifact_store_credentials: Store credentials for the artifact store. Omit to
             use ambient AWS credentials.
         deployments_dir: Directory containing Prefect deployment YAML files, used to
             retrieve the schedules in case the node is a source node. If not provided,
@@ -124,9 +124,9 @@ def update_node_state(  # noqa: PLR0913
     state_store = StateStore(state_store_type, state_path, state_store_credentials)
     logger.info("State store loaded successfully.")
     state_handler = StateHandler(state_store)
-    artifact_store = ArtifactStore(manifest_store_type)
+    artifact_store = ArtifactStore(artifact_store_type)
     manifest = artifact_store.read_manifest(
-        credentials=manifest_store_credentials, path=manifest_path
+        credentials=artifact_store_credentials, path=manifest_path
     )
     logger.info("Artifact store loaded successfully.")
     manifest_handler = ManifestHandler(manifest)

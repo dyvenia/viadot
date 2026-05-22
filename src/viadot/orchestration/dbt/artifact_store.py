@@ -116,8 +116,8 @@ class ArtifactStore(ABC):
     def read(self, credentials: dict[str, Any] | None, path: str) -> dict:
         """Read a JSON artifact.
 
-        This method preserves the old ``ManifestStore.read`` API while new callers use
-        the artifact-specific methods.
+        This method preserves the legacy ``read`` API while new callers use the
+        artifact-specific methods.
         """
         return self.read_json(credentials=credentials, path=path)
 

@@ -416,8 +416,8 @@ def transform_and_catalog(  # noqa: PLR0912, PLR0913, PLR0915, C901 | Complexity
         "state_store_type": state_store_type,
         "state_store_credentials": state_store_credentials,
         "manifest_path": manifest_path,
-        "manifest_store_type": artifact_store_type,
-        "manifest_store_credentials": artifact_store_credentials,
+        "artifact_store_type": artifact_store_type,
+        "artifact_store_credentials": artifact_store_credentials,
     }
 
     _download_dbt_partial_parse(

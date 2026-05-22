@@ -536,7 +536,7 @@ class TestUpdateNodeStateTask:
             state_path="s3://bucket/node-state.json",
             state_store_type="s3",
             manifest_path="s3://bucket/manifest.json",
-            manifest_store_type="s3",
+            artifact_store_type="s3",
             state_store_credentials=credentials,
             effective_source_data_slot="2026-03-19T09:00:00+00:00",
             batch_id=123,
@@ -586,7 +586,7 @@ class TestUpdateNodeStateTask:
             node_type="model",
             state_store_type="s3",
             manifest_path="s3://bucket/manifest.json",
-            manifest_store_type="s3",
+            artifact_store_type="s3",
             state_store_credentials=credentials,
         )
 
@@ -616,7 +616,7 @@ class TestUpdateNodeStateTask:
                 node_type="model",
                 state_store_type="local",
                 manifest_path="s3://bucket/manifest.json",
-                manifest_store_type="s3",
+                artifact_store_type="s3",
                 state_store_credentials=credentials,
             )
 
