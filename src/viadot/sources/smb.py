@@ -213,6 +213,10 @@ class SMB(Source):
                 self.logger.warning(f"Directory not accessible: {e}")
                 problematic_entries.append(path)
                 continue
+            except Exception as e:
+                self.logger.warning(f"[get] Error scanning or downloading from: {e}")
+                problematic_entries.append(path)
+                continue
             try:
                 for entry in entries:
                     # Skip temp files
