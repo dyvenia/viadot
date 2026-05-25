@@ -52,6 +52,9 @@ def _run_dbt_transforms(
     """
     dbt_target_option = f"-t {dbt_target}" if dbt_target is not None else ""
     build_select = None
+    run_select = None
+    seed_select = None
+    test_select = None
     run_select_safe = ""
     test_select_safe = ""
 
@@ -60,10 +63,24 @@ def _run_dbt_transforms(
         build_select = dbt_selects.get("build")
         run_select = dbt_selects.get("run")
         test_select = dbt_selects.get("test", run_select)
+        seed_select = dbt_selects.get("seed")
 
         build_select_safe = f"-s {build_select}" if build_select is not None else ""
         run_select_safe = f"-s {run_select}" if run_select is not None else ""
         test_select_safe = f"-s {test_select}" if test_select is not None else ""
+
+    # dbt seed
+    if seed_select:
+        seed_task = dbt_task.with_options(
+            name="dbt_seed", timeout_seconds=timeout_seconds
+        )
+        seed = seed_task.submit(
+            project_path=dbt_project_path_full,
+            command=f"seed -s {seed_select} {dbt_target_option}",
+        )
+        seed.result()
+        if not any([build_select, run_select, test_select]):
+            return
 
     # dbt build
     if build_select:
@@ -226,7 +243,8 @@ def transform_and_catalog(  # noqa: PLR0913 | Complexity complaints - should be 
             Defaults to None.
         dbt_selects (dict, optional): Valid
             [dbt node selection](https://docs.getdbt.com/reference/node-selection/syntax)
-            expressions. Valid keys are `run`, `test`,`build`, and `source_freshness`.
+            expressions. Valid keys are `seed`, `run`, `test`, `build`, and
+            `source_freshness`.
                 The test select expression is taken from run's, as long as run select is
                 provided. Defaults to None.
         dbt_target (str): The dbt target to use. If not specified, the default dbt
@@ -326,6 +344,8 @@ def transform_and_catalog(  # noqa: PLR0913 | Complexity complaints - should be 
             `dbt_select={"run": "marts.domain.some_model"}`
         - runs tests for a specific model:
             `dbt_select={"test": "my_model"}`
+        - seeds a specific seed file:
+            `dbt_select={"seed": "my_seed"}`
         - build a specific model:
             `dbt_select={"build": "my_model"}`
         - build all models in a folder:
