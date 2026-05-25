@@ -207,62 +207,64 @@ class SMB(Source):
         problematic_entries = []
 
         for path in paths:
-            entries = self._get_directory_entries(path)
             try:
-                for entry in entries:
-                    # Skip temp files
-                    if entry.name.startswith("~$"):
-                        problematic_entries.append(entry.name)
-                        continue
-
-                    try:
-                        entry_mod_date_parsed = pendulum.from_timestamp(
-                            entry.stat().st_mtime
-                        ).date()
-                        entry_name = entry.name
-
-                        if entry.is_file() and self._is_matching_file(
-                            file_name=entry_name,
-                            file_mod_date_parsed=entry_mod_date_parsed,
-                            filename_regex=filename_regex,
-                            extensions=extensions,
-                            date_filter_parsed=date_filter_parsed,
-                        ):
-                            found_files.update(
-                                self._get_file_content(
-                                    entry, prefix_levels_to_add, zip_inner_file_regexes
-                                )
-                            )
-
-                        elif entry.is_dir():
-                            date_match = self._is_date_match(
-                                entry_mod_date_parsed, date_filter_parsed
-                            )
-
-                            if date_match:
-                                found_files.update(
-                                    self._scan_directories(
-                                        paths=[entry.path],
-                                        filename_regex=filename_regex,
-                                        extensions=extensions,
-                                        date_filter_parsed=date_filter_parsed,
-                                        prefix_levels_to_add=prefix_levels_to_add,
-                                        zip_inner_file_regexes=zip_inner_file_regexes,
-                                    )[0]  # Only the matched files dict is used
-                                )
-                    except Exception:
-                        self.logger.exception(
-                            f"Error scanning or downloading from {path}."
-                        )
-                        raise
+                entries = self._get_directory_entries(path)
             except smbprotocol.exceptions.SMBOSError as e:
-                self.logger.warning(f"Entry not found: {e}")
-                problematic_entries.append(
-                    entry.path
-                )  ## debug it - "entry reference before assignment" - it needs to be handled -
-                # debugged differently - to check what is the directory - for files it
-                # should work - the problem is found for folders - code modification is
-                # needed to handle these examples
+                self.logger.warning(f"Directory not accessible: {e}")
+                problematic_entries.append(path)
+                continue
+
+            for entry in entries:
+                # Skip temp files
+                if entry.name.startswith("~$"):
+                    problematic_entries.append(entry.name)
+                    continue
+
+                try:
+                    entry_mod_date_parsed = pendulum.from_timestamp(
+                        entry.stat().st_mtime
+                    ).date()
+                    entry_name = entry.name
+
+                    if entry.is_file() and self._is_matching_file(
+                        file_name=entry_name,
+                        file_mod_date_parsed=entry_mod_date_parsed,
+                        filename_regex=filename_regex,
+                        extensions=extensions,
+                        date_filter_parsed=date_filter_parsed,
+                    ):
+                        found_files.update(
+                            self._get_file_content(
+                                entry, prefix_levels_to_add, zip_inner_file_regexes
+                            )
+                        )
+
+                    elif entry.is_dir():
+                        date_match = self._is_date_match(
+                            entry_mod_date_parsed, date_filter_parsed
+                        )
+
+                        if date_match:
+                            found_files.update(
+                                self._scan_directories(
+                                    paths=[entry.path],
+                                    filename_regex=filename_regex,
+                                    extensions=extensions,
+                                    date_filter_parsed=date_filter_parsed,
+                                    prefix_levels_to_add=prefix_levels_to_add,
+                                    zip_inner_file_regexes=zip_inner_file_regexes,
+                                )[0]  # Only the matched files dict is used
+                            )
+                except smbprotocol.exceptions.SMBOSError as e:
+                    self.logger.warning(f"Entry not found: {e}")
+                    problematic_entries.append(entry.path)
+                except Exception:
+                    self.logger.exception(f"Error scanning or downloading from {path}.")
+                    raise
+            ## debug it - "entry reference before assignment" - it needs to be handled -
+            # debugged differently - to check what is the directory - for files it
+            # should work - the problem is found for folders - code modification is
+            # needed to handle these examples
 
         return found_files, problematic_entries
 
