@@ -32,8 +32,8 @@ def dbt_tasks(monkeypatch):
 @pytest.mark.parametrize(
     "dbt_selects",
     [
-        {"seed": "bed_hemo_reagent_spc_partition_definition"},
-        {"seed": "bed_hemo_reagent_spc_partition_definition", "run": ""},
+        {"seed": "test_seed"},
+        {"seed": "test_seed", "run": ""},
     ],
 )
 def test_run_dbt_transforms_seed_only_does_not_run_models(dbt_tasks, dbt_selects):
@@ -48,15 +48,15 @@ def test_run_dbt_transforms_seed_only_does_not_run_models(dbt_tasks, dbt_selects
     assert set(dbt_tasks) == {"dbt_seed"}
     dbt_tasks["dbt_seed"].submit.assert_called_once_with(
         project_path=Path("dbt/lakehouse"),
-        command="seed -s bed_hemo_reagent_spc_partition_definition -t custom",
+        command="seed -s test_seed -t custom",
     )
 
 
 def test_run_dbt_transforms_can_seed_before_selected_run(dbt_tasks):
     transform_and_catalog._run_dbt_transforms(
         dbt_selects={
-            "seed": "bed_hemo_reagent_spc_partition_definition",
-            "run": "int_hemo_reagent_spc_partition_definition",
+            "seed": "test_seed",
+            "run": "test_model",
         },
         dbt_project_path_full=Path("dbt/lakehouse"),
         dbt_target="custom",
@@ -67,14 +67,14 @@ def test_run_dbt_transforms_can_seed_before_selected_run(dbt_tasks):
     assert set(dbt_tasks) == {"dbt_seed", "dbt_run", "dbt_test"}
     dbt_tasks["dbt_seed"].submit.assert_called_once_with(
         project_path=Path("dbt/lakehouse"),
-        command="seed -s bed_hemo_reagent_spc_partition_definition -t custom",
+        command="seed -s test_seed -t custom",
     )
     dbt_tasks["dbt_run"].submit.assert_called_once_with(
         project_path=Path("dbt/lakehouse"),
-        command="run -s int_hemo_reagent_spc_partition_definition -t custom",
+        command="run -s test_model -t custom",
     )
     dbt_tasks["dbt_test"].submit.assert_called_once_with(
         project_path=Path("dbt/lakehouse"),
-        command="test -s int_hemo_reagent_spc_partition_definition -t custom",
+        command="test -s test_model -t custom",
         raise_on_failure=False,
     )
