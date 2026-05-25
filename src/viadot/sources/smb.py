@@ -257,7 +257,12 @@ class SMB(Source):
                         raise
             except smbprotocol.exceptions.SMBOSError as e:
                 self.logger.warning(f"Entry not found: {e}")
-                problematic_entries.append(entry.name)
+                problematic_entries.append(
+                    entry.path
+                )  ## debug it - "entry reference before assignment" - it needs to be handled -
+                # debugged differently - to check what is the directory - for files it
+                # should work - the problem is found for folders - code modification is
+                # needed to handle these examples
 
         return found_files, problematic_entries
 
