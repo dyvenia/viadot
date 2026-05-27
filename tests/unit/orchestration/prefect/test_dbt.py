@@ -278,6 +278,8 @@ class TestParseSla:
     def test_invalid_format_raises_value_error(self):
         with pytest.raises(ValueError, match="Cannot parse SLA"):
             StateHandler._parse_sla("tomorrow")
+        with pytest.raises(ValueError, match="Cannot parse SLA"):
+            StateHandler._parse_sla("")
 
 
 class TestCalcFreshUntilFromCron:
@@ -346,12 +348,13 @@ class TestCalcFreshUntilFromSla:
 class TestCalcFreshUntil:
     def test_cron_takes_priority_over_sla(self):
         cron_result = StateHandler._calc_fresh_until(
+            node_type="source",
             schedules=[{"cron": "0 12 * * *", "timezone": "UTC"}],
             sla="6h",
             reference_time=_FROZEN_NOW,
         )
         sla_result = StateHandler._calc_fresh_until(
-            schedules=None, sla="6h", reference_time=_FROZEN_NOW
+            node_type="model", schedules=None, sla="6h", reference_time=_FROZEN_NOW
         )
         assert cron_result != sla_result
         dt = datetime.fromisoformat(cron_result).astimezone(timezone.utc)
@@ -360,27 +363,38 @@ class TestCalcFreshUntil:
     def test_returns_none_when_both_cron_and_sla_are_missing(self):
         assert (
             StateHandler._calc_fresh_until(
-                schedules=None, sla=None, reference_time=_FROZEN_NOW
+                node_type="source", schedules=None, sla=None, reference_time=_FROZEN_NOW
             )
             is None
         )
         assert (
             StateHandler._calc_fresh_until(
-                schedules=[], sla=None, reference_time=_FROZEN_NOW
+                node_type="model", schedules=[], sla=None, reference_time=_FROZEN_NOW
+            )
+            is None
+        )
+
+    def test_unknown_node_type_returns_none(self):
+        assert (
+            StateHandler._calc_fresh_until(
+                node_type="unknown",
+                schedules=[{"cron": "0 12 * * *", "timezone": "UTC"}],
+                sla="6h",
+                reference_time=_FROZEN_NOW,
             )
             is None
         )
 
     def test_model_month_sla_returns_calendar_month_delta(self):
         result = StateHandler._calc_fresh_until(
-            sla="1 month", schedules=None, reference_time=_FROZEN_NOW
+            node_type="model", sla="1 month", schedules=None, reference_time=_FROZEN_NOW
         )
         assert result == (_FROZEN_NOW + relativedelta(months=1)).isoformat()
 
     def test_model_month_sla_handles_february_boundary(self):
         jan_31 = datetime(2026, 1, 31, 10, 0, 0, tzinfo=timezone.utc)
         result = StateHandler._calc_fresh_until(
-            sla="1 month", schedules=None, reference_time=jan_31
+            node_type="model", sla="1 month", schedules=None, reference_time=jan_31
         )
         dt = datetime.fromisoformat(result)
         assert dt.month == 2
@@ -388,13 +402,13 @@ class TestCalcFreshUntil:
 
     def test_model_year_sla_returns_now_plus_one_year(self):
         result = StateHandler._calc_fresh_until(
-            sla="1 year", schedules=None, reference_time=_FROZEN_NOW
+            node_type="model", sla="1 year", schedules=None, reference_time=_FROZEN_NOW
         )
         assert result == (_FROZEN_NOW + relativedelta(years=1)).isoformat()
 
     def test_model_day_sla_returns_now_plus_delta(self):
         result = StateHandler._calc_fresh_until(
-            sla="7d", schedules=None, reference_time=_FROZEN_NOW
+            node_type="model", sla="7d", schedules=None, reference_time=_FROZEN_NOW
         )
         assert result == (_FROZEN_NOW + timedelta(days=7)).isoformat()
 
