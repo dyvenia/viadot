@@ -162,20 +162,21 @@ class StateHandler:
 
     @staticmethod
     def _calc_fresh_until(
-        schedules: list | None, sla: str | None, reference_time: datetime | None = None
+        node_type: str,
+        schedules: list | None,
+        sla: str | None,
+        reference_time: datetime | None = None,
     ) -> str | None:
-        """Calculate the fresh_until timestamp based on CRON schedules or SLA.
+        """Calculate the fresh_until timestamp based on node type.
 
-        This function determines the next freshness deadline for a node with priority
-        given to CRON schedules and then SLA.
-        The logic is as follows:
-            1.CRON schedules: It computes the earliest next cron run time.
-            2.SLA configuration: It applies SLA rules (timedelta or wall-clock).
+        Sources use CRON schedules, while models use SLA rules (timedelta or
+        wall-clock).
 
         Args:
-            schedules: List of Prefect schedules. NOTE: currently, only cron schedules
-                are supported. The list can contain dicts with a "cron" key or simple
-                cron strings.
+            node_type: The dbt node type (e.g. ``"source"`` or ``"model"``).
+            schedules: List of Prefect schedules for sources. NOTE: currently, only
+                cron schedules are supported. The list can contain dicts with a
+                "cron" key or simple cron strings.
             sla: SLA string (e.g. ``"24h"``, ``"10:00"``), or ``None``.
             reference_time: The UTC datetime to base calculations on. Defaults to
                 ``datetime.now(timezone.utc)``.
@@ -185,12 +186,29 @@ class StateHandler:
         """
         logger.info("Calculating fresh_until ...")
         now = reference_time or datetime.now(timezone.utc)
-        if schedules:
-            return StateHandler._calc_fresh_until_from_crons(schedules, now)
-        if sla is not None:
-            return StateHandler._calc_fresh_until_from_sla(sla, now)
-        logger.warning("Cannot calculate fresh_until. Setting fresh_until to None.")
-        return None
+        match node_type:
+            case "source":
+                if schedules:
+                    return StateHandler._calc_fresh_until_from_crons(schedules, now)
+                logger.warning(
+                    "No cron schedule found for source node; cannot calculate "
+                    "fresh_until. Setting fresh_until to None."
+                )
+                return None
+            case "model":
+                if sla is not None:
+                    return StateHandler._calc_fresh_until_from_sla(sla, now)
+                logger.warning(
+                    "No SLA found for model node; cannot calculate fresh_until. "
+                    "Setting fresh_until to None."
+                )
+                return None
+            case _:
+                logger.warning(
+                    f"Unknown node type '{node_type}'; cannot calculate fresh_until. "
+                    "Setting fresh_until to None."
+                )
+                return None
 
     def build_node_state(  # noqa: PLR0913
         self,
@@ -230,7 +248,9 @@ class StateHandler:
         # fresh_until is only calculated on success; on failure it is preserved
         # by the StateStore._merge_node_state logic.
         fresh_until = (
-            self._calc_fresh_until(schedules, sla, now) if status == "success" else None
+            self._calc_fresh_until(node_type, schedules, sla, now)
+            if status == "success"
+            else None
         )
         return {
             "table_name": node_name,
