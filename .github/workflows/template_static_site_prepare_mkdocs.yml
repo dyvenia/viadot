@@ -44,11 +44,11 @@ jobs:
         uses: astral-sh/setup-uv@v7
 
       # --- Sync dependencies ---
-      - name: Sync dependencies uv
+      - name: Sync dependencies
         run: uv sync ${{ inputs.uv_sync_flags || '' }}
 
       # --- Build Site ---
-      - name: Build site uv
+      - name: Build site
         run: uv run mkdocs build --config-file "${{ inputs.mkdocs_config }}"
 
       # --- Deploy Site ---
