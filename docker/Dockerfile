@@ -49,8 +49,8 @@ RUN curl -sSL -O https://packages.microsoft.com/config/debian/$(grep VERSION_ID 
     rm packages-microsoft-prod.deb && \
     apt-get update && \
     apt install -q -y libsqliteodbc odbc-postgresql && \
-    ACCEPT_EULA=Y apt-get install -y msodbcsql18 && \
-    ACCEPT_EULA=Y apt-get install -y mssql-tools18 && \
+    ACCEPT_EULA=Y apt-get install -y msodbcsql18=18.6.2.1-1 && \
+    ACCEPT_EULA=Y apt-get install -y mssql-tools18=18.6.2.1-1 && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/* && \
     echo 'export PATH="$PATH:/opt/mssql-tools18/bin"' >> ~/.bashrc
