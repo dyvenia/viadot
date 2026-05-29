@@ -197,7 +197,7 @@ def trigger_downstream_nodes(
         logger.info("Triggering downstream nodes ...")
         for node in nodes_to_run:
             # Use ``timeout=0`` so flow metadata is returned immediately.
-            run_deployment(name=f"{flow_name}/dbt_{node}", timeout=0)
+            run_deployment(name=f"{flow_name}/dbt_{node}", timeout=0, tags=["chained"])
         return
     logger.info(
         "No nodes to trigger. All downstream nodes are either up to date or "
