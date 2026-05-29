@@ -156,7 +156,6 @@ def sla_monitor(
         if node_status == "success" and node.get("_sla_breach_notification_sent"):
             # Reset SLA breach notification flag on successful runs to allow future
             # breach notifications.
-            prefect_logger.info("Entered node status success")
             store.write(
                 node_state={node_name: {"_sla_breach_notification_sent": False}}
             )
