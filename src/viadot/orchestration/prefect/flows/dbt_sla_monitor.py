@@ -162,6 +162,9 @@ def sla_monitor(
             continue
 
         if node.get("TYPE") != "model":
+            prefect_logger.debug(
+                f"Node '{node_name}' is not a model; skipping SLA check."
+            )
             logger.debug(f"Node '{node_name}' is not a model; skipping SLA check.")
             continue
 
@@ -172,6 +175,9 @@ def sla_monitor(
             continue
 
         if node.get("fresh_until") is None:
+            prefect_logger.warning(
+                f"No 'fresh_until' timestamp for node '{node_name}'; cannot validate SLA."
+            )
             logger.warning(f"No SLA found for node '{node_name}'; cannot validate.")
             continue
 
