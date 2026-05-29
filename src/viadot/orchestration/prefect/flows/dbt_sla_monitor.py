@@ -147,6 +147,8 @@ def sla_monitor(
     )
     state, _ = store._read()
 
+    prefect_logger.info(f"Checking SLA compliance for {len(state)} nodes...")
+
     for node in state.values():
         node_name = node["table_name"]
         node_status = node.get("status")
@@ -154,6 +156,7 @@ def sla_monitor(
         if node_status == "success" and node.get("_sla_breach_notification_sent"):
             # Reset SLA breach notification flag on successful runs to allow future
             # breach notifications.
+            prefect_logger.info("Entered node status success")
             store.write(
                 node_state={node_name: {"_sla_breach_notification_sent": False}}
             )
@@ -176,6 +179,7 @@ def sla_monitor(
         if datetime.now(timezone.utc) > datetime.fromisoformat(
             node["fresh_until"]
         ) + timedelta(minutes=node.get("sla_breach_grace_period", 30)):
+            prefect_logger.info(f"SLA breach detected for node '{node_name}'.")
             _handle_breached_node(
                 store=store,
                 node=node,
