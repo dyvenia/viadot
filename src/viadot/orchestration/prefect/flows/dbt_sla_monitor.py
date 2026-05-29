@@ -6,7 +6,6 @@ from typing import Literal
 
 from prefect import flow, task
 from prefect.logging import get_run_logger
-from prefect.variables import Variable
 
 from viadot.orchestration.dbt.state_store import StateStore
 from viadot.orchestration.prefect.utils import get_credentials, send_email_notification
@@ -147,6 +146,9 @@ def sla_monitor(
     )
     state, _ = store._read()
 
+    logger.info(f"Checking SLA compliance for {len(state)} nodes...")
+    logger.info(f"State values: {state.values()}")
+
     for node in state.values():
         node_name = node["table_name"]
         node_status = node.get("status")
@@ -187,6 +189,8 @@ def sla_monitor(
 
 
 if __name__ == "__main__":
+    from prefect import Variable
+
     sla_monitor(
         state_path=f"s3://{Variable.get('s3_state_store_bucket')}/node-status/node-status.json",
         state_store_credentials_secret=Variable.get("state_store_credentials"),
