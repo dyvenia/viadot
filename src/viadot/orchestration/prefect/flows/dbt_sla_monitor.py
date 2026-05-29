@@ -11,7 +11,7 @@ from viadot.orchestration.dbt.state_store import StateStore
 from viadot.orchestration.prefect.utils import get_credentials, send_email_notification
 
 
-logger = logging.getLogger(__name__)
+prefect_logger = logging.getLogger(__name__)
 
 
 def _get_node_owners(
@@ -49,7 +49,7 @@ def notify_sla_breach(
         f" Node was fresh until: {fresh_until}."
         " Please investigate and take necessary action."
     )
-    logger.warning(message)
+    prefect_logger.warning(message)
     smtp_credentials = get_credentials(smtp_credentials_secret)
     for recipient in recipients:
         send_email_notification(
@@ -71,20 +71,20 @@ def _handle_breached_node(
     """Notify node owners once for a breach and persist the notification flag."""
     owners = _get_node_owners(node, owner_type=owner_type)
     if not owners:
-        logger.warning(
+        prefect_logger.warning(
             f"SLA breached for '{node_name}' but no '{owner_type}' type owners defined."
         )
         return
 
     if dry_run:
-        logger.info(
+        prefect_logger.info(
             f"(Dry run) SLA breach detected for node '{node_name}'"
             f" Node was fresh until: {node['fresh_until']}."
             f" Owners to notify: {owners}."
         )
 
     if node.get("_sla_breach_notification_sent"):
-        logger.info("Owners already notified. Skipping...")
+        prefect_logger.info("Owners already notified. Skipping...")
         return
 
     notify_sla_breach(
@@ -146,8 +146,8 @@ def sla_monitor(
     )
     state, _ = store._read()
 
-    logger.info(f"Checking SLA compliance for {len(state)} nodes...")
-    logger.info(f"State values: {state.values()}")
+    prefect_logger.info(f"Checking SLA compliance for {len(state)} nodes...")
+    prefect_logger.info(f"State values: {state.values()}")
 
     for node in state.values():
         node_name = node["table_name"]
@@ -162,17 +162,21 @@ def sla_monitor(
             continue
 
         if node.get("TYPE") != "model":
-            logger.debug(f"Node '{node_name}' is not a model; skipping SLA check.")
+            prefect_logger.debug(
+                f"Node '{node_name}' is not a model; skipping SLA check."
+            )
             continue
 
         if node_status == "running":
-            logger.debug(
+            prefect_logger.debug(
                 f"Node '{node_name}' is currently running; skipping SLA check."
             )
             continue
 
         if node.get("fresh_until") is None:
-            logger.warning(f"No SLA found for node '{node_name}'; cannot validate.")
+            prefect_logger.warning(
+                f"No SLA found for node '{node_name}'; cannot validate."
+            )
             continue
 
         if datetime.now(timezone.utc) > datetime.fromisoformat(
