@@ -96,7 +96,13 @@ def _handle_breached_node(
         recipients=owners,
         smtp_credentials_secret=smtp_credentials_secret,
     )
-    store.write(node_state={node_name: {"_sla_breach_notification_sent": True}})
+    store.write(
+        node_state={
+            "table_name": node_name,
+            "status": node["status"],
+            "_sla_breach_notification_sent": True,
+        }
+    )
 
 
 @flow(name="SLA Monitor")
@@ -159,7 +165,11 @@ def sla_monitor(
             # Reset SLA breach notification flag on successful runs to allow future
             # breach notifications.
             store.write(
-                node_state={node_name: {"_sla_breach_notification_sent": False}}
+                node_state={
+                    "table_name": node_name,
+                    "status": "success",
+                    "_sla_breach_notification_sent": False,
+                }
             )
             continue
 
