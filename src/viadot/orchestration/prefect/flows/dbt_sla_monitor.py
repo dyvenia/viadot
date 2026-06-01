@@ -8,7 +8,11 @@ from prefect.logging import get_run_logger
 from prefect.variables import Variable
 
 from viadot.orchestration.dbt.state_store import StateStore
-from viadot.orchestration.prefect.utils import get_credentials, send_email_notification
+from viadot.orchestration.prefect.utils import (
+    SmtpConfig,
+    get_credentials,
+    send_email_notification,
+)
 
 
 def _get_node_owners(
@@ -48,12 +52,13 @@ def notify_sla_breach(
     )
     get_run_logger().warning(message)
     smtp_credentials = get_credentials(smtp_credentials_secret)
+    smtp_config = SmtpConfig(**smtp_credentials)
     for recipient in recipients:
         send_email_notification(
             subject=f"SLA Breach: {node_name}",
             body=message,
             recipients=[recipient],
-            smtp_config=smtp_credentials,
+            smtp_config=smtp_config,
         )
 
 
