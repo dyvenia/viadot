@@ -158,7 +158,7 @@ def sla_monitor(
             )
             continue
 
-        if node.get("TYPE") != "model":
+        if node.get("node_type") != "model":
             prefect_logger.debug(
                 f"Node '{node_name}' is not a model; skipping SLA check."
             )
