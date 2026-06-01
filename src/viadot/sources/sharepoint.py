@@ -11,7 +11,7 @@ import msal
 from office365.graph_client import GraphClient
 import pandas as pd
 from pandas._libs.parsers import STR_NA_VALUES
-from pydantic import BaseModel, root_validator
+from pydantic import BaseModel, model_validator
 
 from viadot.config import get_source_credentials
 from viadot.exceptions import CredentialError
@@ -56,8 +56,9 @@ class SharepointCredentials(BaseModel):
     certificate_path: str | None = None
     certificate: bytes | None = None
 
-    @root_validator(pre=True)
-    def validate_credentials(cls, credentials: dict) -> dict:  # noqa: N805
+    @model_validator(mode="before")
+    @classmethod
+    def validate_credentials(cls, credentials: dict) -> dict:
         """Validate required credential fields.
 
         Args:
@@ -203,7 +204,7 @@ class Sharepoint(Source):
             str: A string containing the access token.
         """
         authority_url = (
-            f'https://login.microsoftonline.com/{self.credentials.get("tenant_id")}'
+            f"https://login.microsoftonline.com/{self.credentials.get('tenant_id')}"
         )
 
         if self.credentials.get("client_secret"):
