@@ -1,6 +1,7 @@
 """Flow to monitor dbt model SLAs and notify owners of breaches."""
 
 from datetime import datetime, timedelta, timezone
+import logging
 from typing import Literal
 
 from prefect import flow, task
@@ -13,6 +14,9 @@ from viadot.orchestration.prefect.utils import (
     get_credentials,
     send_email_notification,
 )
+
+
+logger = logging.getLogger(__name__)
 
 
 def _get_node_owners(
@@ -71,23 +75,22 @@ def _handle_breached_node(
     dry_run: bool,
 ) -> None:
     """Notify node owners once for a breach and persist the notification flag."""
-    prefect_logger = get_run_logger()
     owners = _get_node_owners(node, owner_type=owner_type)
     if not owners:
-        prefect_logger.warning(
+        logger.warning(
             f"SLA breached for '{node_name}' but no '{owner_type}' type owners defined."
         )
         return
 
     if dry_run:
-        prefect_logger.info(
+        logger.info(
             f"(Dry run) SLA breach detected for node '{node_name}'"
             f" Node was fresh until: {node['fresh_until']}."
             f" Owners to notify: {owners}."
         )
 
     if node.get("_sla_breach_notification_sent"):
-        prefect_logger.info("Owners already notified. Skipping...")
+        logger.info("Owners already notified. Skipping...")
         return
 
     notify_sla_breach(
