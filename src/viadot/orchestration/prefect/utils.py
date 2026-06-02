@@ -56,6 +56,20 @@ _STATE_TRACKING_SUCCESS_CONTEXT: ContextVar[bool] = ContextVar(
 _CREDENTIALS_CACHE: dict[str, dict[str, Any] | str] = {}
 
 
+def invalidate_credentials_cache(secret_name: str | None = None) -> None:
+    """Invalidate cached credentials.
+
+    Args:
+        secret_name (str | None): Secret name to invalidate in cache.
+            If ``None``, clear the entire credentials cache.
+    """
+    if secret_name is None:
+        _CREDENTIALS_CACHE.clear()
+        return
+
+    _CREDENTIALS_CACHE.pop(secret_name.lower(), None)
+
+
 class SmtpConfig(BaseModel):
     host: str = "smtp.gmail.com"
     port: int = 587
@@ -989,12 +1003,16 @@ def _get_database_credentials(secret_name: str) -> dict[str, Any] | str:
     return credentials
 
 
-def get_credentials(secret_name: str | None) -> dict[str, Any] | str | None:
+def get_credentials(
+    secret_name: str | None, refresh_cache: bool = True
+) -> dict[str, Any] | str | None:
     """Retrieve credentials from the Prefect block document.
 
     Args:
         secret_name (str | None): The name of the secret to be retrieved.
             If ``None``, returns ``None`` immediately.
+        refresh_cache (bool): Whether to invalidate the cached value for
+            ``secret_name`` before loading credentials.
 
     Returns:
         dict | str | None: Credentials loaded from the Prefect block document,
@@ -1007,6 +1025,10 @@ def get_credentials(secret_name: str | None) -> dict[str, Any] | str | None:
     # so some names might be lowercased versions of the original
 
     secret_name_lowercase = secret_name.lower()
+
+    if refresh_cache:
+        invalidate_credentials_cache(secret_name_lowercase)
+
     cached_credentials = _CREDENTIALS_CACHE.get(secret_name_lowercase)
     if cached_credentials is not None:
         return deepcopy(cached_credentials)
