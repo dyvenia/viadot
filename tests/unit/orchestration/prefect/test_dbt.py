@@ -671,8 +671,8 @@ class TestTriggerDownstreamNodes:
 
         mock_run.assert_has_calls(
             [
-                call(name="transform-flow/dbt_int_orders", timeout=0),
-                call(name="transform-flow/dbt_int_items", timeout=0),
+                call(name="transform-flow/dbt_int_orders", timeout=0, tags=None),
+                call(name="transform-flow/dbt_int_items", timeout=0, tags=None),
             ]
         )
         assert mock_run.call_count == 2
