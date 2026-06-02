@@ -69,10 +69,12 @@ def _merge_node_state(node_states: dict, new_node_state: dict) -> dict:
     if node_name not in node_states:
         node_states[node_name] = new_node_state
         return node_states
-    
+
     # Special-case for fresh_until - we don't override it with None on failure
     # to preserve the last known value for SLA monitoring.
-    if new_node_state.get("status") != "success" and not new_node_state.get("fresh_until"):
+    if new_node_state.get("status") != "success" and not new_node_state.get(
+        "fresh_until"
+    ):
         new_node_state["fresh_until"] = node_states[node_name].get("fresh_until")
 
     # Merging new node state with existing one.
