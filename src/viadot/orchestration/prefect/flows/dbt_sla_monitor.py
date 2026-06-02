@@ -102,7 +102,6 @@ def _handle_breached_node(
     store.write(
         node_state={
             "table_name": node_name,
-            "status": node["status"],
             "_sla_breach_notification_sent": True,
         }
     )
@@ -170,7 +169,6 @@ def sla_monitor(
             store.write(
                 node_state={
                     "table_name": node_name,
-                    "status": "success",
                     "_sla_breach_notification_sent": False,
                 }
             )
