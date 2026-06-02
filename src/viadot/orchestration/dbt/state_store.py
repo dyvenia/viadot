@@ -61,8 +61,11 @@ def retry_on_s3_error(
 def _merge_node_state(data: dict, node_state: dict) -> dict:
     """Merge node state into the existing state dict."""
     table_name = node_state["table_name"]
-    status = node_state["status"]
-    logger.info(f"Updating state for node '{table_name}' to status '{status}'.")
+    new_status = node_state.get("status")
+    if new_status is not None:
+        logger.info(f"Updating state for node '{table_name}' to status '{new_status}'.")
+    else:
+        logger.info(f"Updating state for node '{table_name}'.")
 
     if table_name not in data:
         data[table_name] = node_state
@@ -73,6 +76,7 @@ def _merge_node_state(data: dict, node_state: dict) -> dict:
     # For status other than success, preserve the existing fresh_until
     # to avoid prematurely marking the data as stale. This allows for retries without
     # losing the original freshness information.
+    status = new_status if new_status is not None else existing.get("status")
     if status != "success" and existing.get("fresh_until") is not None:
         updated["fresh_until"] = existing["fresh_until"]
     data[table_name] = updated

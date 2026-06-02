@@ -80,6 +80,19 @@ class TestMergeNodeState:
         result = _merge_node_state({"orders": existing}, node_state)
         assert result["orders"]["fresh_until"] is None
 
+    def test_merges_without_status(self):
+        """When status is absent, existing status and fresh_until are preserved."""
+        existing = {
+            "table_name": "orders",
+            "status": "success",
+            "fresh_until": "2026-01-01",
+        }
+        node_state = {"table_name": "orders", "_sla_breach_notification_sent": True}
+        result = _merge_node_state({"orders": existing}, node_state)
+        assert result["orders"]["status"] == "success"
+        assert result["orders"]["fresh_until"] == "2026-01-01"
+        assert result["orders"]["_sla_breach_notification_sent"] is True
+
 
 # ---------------------------------------------------------------------------
 # S3StateStore._parse_path
