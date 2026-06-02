@@ -161,22 +161,34 @@ def sla_monitor(
 
     for node in state.values():
         node_name = node["table_name"]
-        node_status = node.get("status")
 
-        if node_status == "success" and node.get("_sla_breach_notification_sent"):
-            # Reset SLA breach notification flag on successful runs to allow future
-            # breach notifications.
+        if node.get("node_type") != "model":
+            prefect_logger.debug(
+                f"Node '{node_name}' is not a model; skipping SLA check."
+            )
+            continue
+
+        node_status = node.get("status")
+        fresh_until = (
+            datetime.fromisoformat(node["fresh_until"])
+            if node.get("fresh_until")
+            else None
+        )
+        current_date = datetime.now(timezone.utc)
+
+        if (
+            node_status == "success"
+            and node.get("_sla_breach_notification_sent")
+            and (fresh_until is None or current_date <= fresh_until)
+        ):
+            # Reset SLA breach notification flag only when the node is fresh again,
+            # so future breaches trigger a new notification.
+            # Empty fresh until is considered as fresh..
             store.write(
                 node_state={
                     "table_name": node_name,
                     "_sla_breach_notification_sent": False,
                 }
-            )
-            continue
-
-        if node.get("node_type") != "model":
-            prefect_logger.debug(
-                f"Node '{node_name}' is not a model; skipping SLA check."
             )
             continue
 
@@ -186,15 +198,15 @@ def sla_monitor(
             )
             continue
 
-        if node.get("fresh_until") is None:
+        if fresh_until is None:
             prefect_logger.warning(
                 f"No 'fresh_until' timestamp for node '{node_name}'; cannot validate SLA."
             )
             continue
 
-        if datetime.now(timezone.utc) > datetime.fromisoformat(
-            node["fresh_until"]
-        ) + timedelta(minutes=node.get("sla_breach_grace_period", 30)):
+        if current_date > fresh_until + timedelta(
+            minutes=node.get("sla_breach_grace_period", 30)
+        ):
             prefect_logger.info(f"SLA breach detected for node '{node_name}'.")
             _handle_breached_node(
                 store=store,
