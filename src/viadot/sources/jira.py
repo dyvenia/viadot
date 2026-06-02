@@ -23,8 +23,6 @@ class JiraCredentials(BaseModel):
 
 class Jira(Source):
 
-    API_VERSION = "rest/api/3"
-
     def __init__(self, 
                  *args,
                  credentials: JiraCredentials, 
