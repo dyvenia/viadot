@@ -251,6 +251,8 @@ def with_state_tracking_and_downstream_triggering(  # noqa: C901
             (default: False).
         trigger_downstream_nodes_delay (int): Delay in seconds before triggering
             (default: 0).
+        trigger_downstream_nodes_tags (list[str] | None): Optional tags to apply to
+            triggered downstream deployments (default: None).
 
     Args:
         node_name_param: Parameter name holding the dbt node identifier.
@@ -276,6 +278,7 @@ def with_state_tracking_and_downstream_triggering(  # noqa: C901
         ("sla_breach_grace_period_minutes", 30, int),
         ("trigger_downstream_nodes", False, bool),
         ("trigger_downstream_nodes_delay", 0, int),
+        ("trigger_downstream_nodes_tags", None, list | None),
     )
 
     def decorator(func: F) -> F:
@@ -383,6 +386,7 @@ def with_state_tracking_and_downstream_triggering(  # noqa: C901
                         state_store_credentials=state_update_params[
                             "state_store_credentials"
                         ],
+                        tags=options["trigger_downstream_nodes_tags"],
                     )
                 raise
 
@@ -399,6 +403,7 @@ def with_state_tracking_and_downstream_triggering(  # noqa: C901
                     state_store_credentials=state_update_params[
                         "state_store_credentials"
                     ],
+                    tags=options["trigger_downstream_nodes_tags"],
                 )
 
             return result
