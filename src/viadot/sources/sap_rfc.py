@@ -15,7 +15,7 @@ import numpy as np
 from numpy.typing import ArrayLike
 import pandas as pd
 import pyarrow as pa
-#C++ SAP RFC connector
+# C++ SAP RFC connector
 import sap_rfc_connector
 
 
@@ -658,7 +658,7 @@ class SAPRFC(Source):
 
     def call(self, func: str, *args, **kwargs) -> dict[str, Any]:
         """Call a SAP RFC function."""
-        func_caller = sap_rfc_connector.SapFunctionCaller(self.con)   
+        func_caller = sap_rfc_connector.SapFunctionCaller(self.con)
         result = func_caller.call(func, *args, **kwargs)
 
         return result
