@@ -721,7 +721,7 @@ class SAPRFC(Source):
 
         Returns:
             pd.DataFrame: A DataFrame representing the result of the query provided in
-                `PyRFC.query()`.
+                `sap_rfc.SAPRFC.query()`.
         """
         params = self._query
         sep = self._query.get("DELIMITER")
