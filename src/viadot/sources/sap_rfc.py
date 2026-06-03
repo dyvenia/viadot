@@ -26,7 +26,9 @@ try:
 except ImportError:
     # Fallback for compatibility
     class ABAPApplicationError(Exception):
-        def __init__(self, key=None, *args, **kwargs):
+        """Exception for ABAP application errors."""
+        def __init__(self, key: str | None = None, *args: Any, **kwargs: Any) -> None:
+            """Initialize the ABAP application error."""
             super().__init__(*args, **kwargs)
             self.key = key
 
@@ -320,7 +322,7 @@ class SAPRFC(Source):
         self,
         function_name: str,
         description: None | Literal["short", "long"] = "short",
-        *args,
+        *_args,
     ) -> list[str] | pd.DataFrame:
         """Get the description for a SAP RFC function.
 
@@ -660,9 +662,7 @@ class SAPRFC(Source):
     def call(self, func: str, *args, **kwargs) -> dict[str, Any]:
         """Call a SAP RFC function."""
         func_caller = sap_rfc_connector.SapFunctionCaller(self.con)
-        result = func_caller.call(func, *args, **kwargs)
-
-        return result
+        return func_caller.call(func, *args, **kwargs)
 
     def _get_alias(self, column: str) -> str:
         return self.aliases_keyed_by_columns.get(column, column)

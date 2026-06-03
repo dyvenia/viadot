@@ -22,9 +22,9 @@ from .mindful import Mindful
 from .onestream import OneStream
 from .outlook import Outlook
 from .postgres import PostgreSQL
+from .salesforce import Salesforce
 from .sap_bw import SAPBW
 from .sap_rfc import SAPRFC
-from .salesforce import Salesforce
 from .sftp import Sftp
 from .sharepoint import Sharepoint, SharepointList
 from .smb import SMB

@@ -40,7 +40,7 @@ class SAPBWCredentials(BaseModel):
 
 
 class SAPBW(Source):
-    """Quering the SAP BW (SAP Business Warehouse) source using sap_rfc_connector library.
+    """Quering the SAP BW (SAP Business Warehouse) source using sap connector library.
 
     Documentation for SAP connection modules under:
         https://www.se80.co.uk/sap-function-modules/list/?index=rsr_mdx
