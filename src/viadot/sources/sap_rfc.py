@@ -27,6 +27,7 @@ except ImportError:
     # Fallback for compatibility
     class ABAPApplicationError(Exception):
         """Exception for ABAP application errors."""
+
         def __init__(
             self,
             key: str | None = None,
