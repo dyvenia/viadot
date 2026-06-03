@@ -5,6 +5,7 @@ from typing import Any
 
 import pandas as pd
 from pydantic import BaseModel
+
 # C++ SAP RFC connector
 import sap_rfc_connector
 

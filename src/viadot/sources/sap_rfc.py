@@ -15,6 +15,7 @@ import numpy as np
 from numpy.typing import ArrayLike
 import pandas as pd
 import pyarrow as pa
+
 # C++ SAP RFC connector
 import sap_rfc_connector
 
