@@ -27,7 +27,12 @@ except ImportError:
     # Fallback for compatibility
     class ABAPApplicationError(Exception):
         """Exception for ABAP application errors."""
-        def __init__(self, key: str | None = None, *args: Any, **kwargs: Any) -> None:
+        def __init__(
+            self,
+            key: str | None = None,
+            *args: object,
+            **kwargs: object,
+        ) -> None:
             """Initialize the ABAP application error."""
             super().__init__(*args, **kwargs)
             self.key = key
