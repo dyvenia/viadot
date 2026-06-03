@@ -1,3 +1,5 @@
+"""Jira source class for fetching issues using Jira REST API v3."""
+
 from typing import Any
 
 import pandas as pd
@@ -24,7 +26,7 @@ class Jira(Source):
         *args,
         credentials: JiraCredentials,
         config_key: str = "jira",
-        **kwargs: Any,
+        **kwargs: str | int | bool,
     ) -> None:
         """Create an instance of Jira.
 
@@ -55,6 +57,7 @@ class Jira(Source):
                 "client_id": self.credentials["CLIENT_ID"],
                 "client_secret": self.credentials["CLIENT_SECRET"],
             },
+            timeout=(30, 300),
         )
         resp.raise_for_status()
         self._access_token = resp.json()["access_token"]
@@ -67,6 +70,7 @@ class Jira(Source):
         resp = requests.get(
             "https://api.atlassian.com/oauth/token/accessible-resources",
             headers={"Authorization": f"Bearer {token}"},
+            timeout=(30, 300),
         )
         resp.raise_for_status()
         self._cloud_id = resp.json()[0]["id"]
@@ -78,7 +82,7 @@ class Jira(Source):
             "Accept": "application/json",
         }
 
-    def _api_call(self, endpoint: str, params: dict | None = None) -> Any:
+    def _api_call(self, endpoint: str, params: dict | None = None) -> dict:
         cloud_id = self._get_cloud_id()
         url = f"https://api.atlassian.com/ex/jira/{cloud_id}/rest/api/3/{endpoint}"
         response = handle_api_response(
@@ -146,7 +150,7 @@ class Jira(Source):
         issues = self._fetch_issues(jql=jql, fields=field_ids)
         df = pd.json_normalize(issues)
         if df.empty:
-            return pd.DataFrame(columns=["Key"] + fields)
+            return pd.DataFrame(columns=["Key", *fields])
 
         rename_final: dict[str, str] = {
             path: name for name, path in field_paths.items()
@@ -158,7 +162,9 @@ class Jira(Source):
         """Build a map of field name -> {id, type} from Jira /field endpoint.
 
         Returns:
-            dict: e.g. {"Failure type - Software (grouped)": {"id": "customfield_16187", "schema": {"type": "option"}}}
+            dict: e.g.
+                {"Failure type - Software (grouped)":
+                    {"id": "customfield_16187", "schema": {"type": "option"}}}
         """
         fields = self._fetch_fields()
         return {
@@ -181,7 +187,7 @@ class Jira(Source):
                 or None if field not found.
         """
         # standard fields -> known paths
-        STANDARD_FIELDS = {
+        standard_fields = {
             "Summary": "fields.summary",
             "Current Status": "fields.status.name",
             "Issue Type": "fields.issuetype.name",
@@ -191,8 +197,8 @@ class Jira(Source):
             "Project Key": "fields.project.key",
             "Project Name": "fields.project.name",
         }
-        if field_name in STANDARD_FIELDS:
-            return STANDARD_FIELDS[field_name]
+        if field_name in standard_fields:
+            return standard_fields[field_name]
 
         # custom fields
         field = field_map.get(field_name)
