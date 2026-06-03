@@ -24,6 +24,7 @@ from .genesys import genesys_to_df
 from .git import clone_repo
 from .hubspot import hubspot_to_df
 from .informix import informix_query, informix_to_df
+from .jira_issues_to_df import jira_issues_to_df
 from .luma import luma_ingest_task
 from .matomo import matomo_to_df
 from .mediatool import mediatool_to_df
@@ -56,7 +57,6 @@ from .sql_server import create_sql_server_table, sql_server_query, sql_server_to
 from .supermetrics import supermetrics_to_df
 from .tm1 import tm1_to_df
 from .vid_club import vid_club_to_df
-from .jira_issues_to_df import jira_issues_to_df
 
 
 __all__ = [
@@ -88,6 +88,7 @@ __all__ = [
     "hubspot_to_df",
     "informix_query",
     "informix_to_df",
+    "jira_issues_to_df",
     "luma_ingest_task",
     "matomo_to_df",
     "mediatool_to_df",
@@ -114,5 +115,4 @@ __all__ = [
     "trigger_downstream_nodes",
     "update_node_state",
     "vid_club_to_df",
-    "jira_issues_to_df"
 ]
