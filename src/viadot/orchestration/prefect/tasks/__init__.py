@@ -56,6 +56,7 @@ from .sql_server import create_sql_server_table, sql_server_query, sql_server_to
 from .supermetrics import supermetrics_to_df
 from .tm1 import tm1_to_df
 from .vid_club import vid_club_to_df
+from .jira_issues_to_df import jira_issues_to_df
 
 
 __all__ = [
@@ -113,4 +114,5 @@ __all__ = [
     "trigger_downstream_nodes",
     "update_node_state",
     "vid_club_to_df",
+    "jira_issues_to_df"
 ]
