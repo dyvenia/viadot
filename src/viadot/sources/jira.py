@@ -139,7 +139,8 @@ class Jira(Source):
         }
         missing = [k for k, v in field_paths.items() if v is None]
         if missing:
-            raise ValueError(f"Fields not found: {missing}")
+            msg = f"Fields not found: {missing}"
+            raise ValueError(msg)
 
         field_ids = list({x.split(".")[1] for x in field_paths.values()})
         issues = self._fetch_issues(jql=jql, fields=field_ids)
@@ -149,9 +150,9 @@ class Jira(Source):
 
         rename_final: dict[str, str] = {
             path: name for name, path in field_paths.items()
-        }
+        }  # type: ignore
         cols = ["key"] + [p for p in rename_final if p in df.columns]
-        return df[cols].set_axis(["Key"] + [rename_final[c] for c in cols[1:]], axis=1)
+        return df[cols].set_axis(["Key"] + [rename_final[c] for c in cols[1:]], axis=1)  # type: ignore
 
     def _get_field_map(self) -> dict[str, dict]:
         """Build a map of field name -> {id, type} from Jira /field endpoint.
