@@ -1,4 +1,4 @@
-import base64
+from dataclasses import fields
 from typing import Any
  
 import pandas as pd
@@ -12,7 +12,6 @@ from viadot.utils import (
     cast_df_cols,
     handle_api_response,
 )
-import json
 
 
 class JiraCredentials(BaseModel):
@@ -138,19 +137,21 @@ class Jira(Source):
             pd.DataFrame: Flat DataFrame with renamed columns.
         """
         field_map = self._get_field_map()
-        resolved = {
+        field_paths = {
             name: self._resolve_field_path(name, field_map)
             for name in fields
         }
-        missing = [k for k, v in resolved.items() if v is None]
+        missing = [k for k, v in field_paths.items() if v is None]
         if missing:
             raise ValueError(f"Fields not found: {missing}")
 
-        field_ids = list({x.split(".")[1] for x in resolved.values()})
+        field_ids = list({x.split(".")[1] for x in field_paths.values()})
         issues = self._fetch_issues(jql=jql, fields=field_ids)
         df = pd.json_normalize(issues)
+        if df.empty:
+            return pd.DataFrame(columns=["Key"] + fields)
 
-        rename_final: dict[str, str] = {path: name for name, path in resolved.items()}
+        rename_final: dict[str, str] = {path: name for name, path in field_paths.items()}
         cols = ["key"] + [p for p in rename_final if p in df.columns]
         return df[cols].set_axis(["Key"] + [rename_final[c] for c in cols[1:]], axis=1)    
 
@@ -199,9 +200,8 @@ class Jira(Source):
         if not field:
             return None
 
-        field_id    = field["id"]
+        field_id = field["id"]
         schema_type = field["schema"].get("type", "")
-
         # if type is option/array — we fetch .value
         if schema_type in ("option", "array"):
             return f"fields.{field_id}.value"
