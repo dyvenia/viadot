@@ -1,3 +1,5 @@
+"""Flow for fetching Jira issues and loading them into Redshift Spectrum."""
+
 from typing import Literal
 
 import pandas as pd
@@ -14,7 +16,7 @@ from viadot.orchestration.prefect.tasks import (
     name="jira_to_redshift_spectrum",
     description="Fetch Jira issues via JQL and load them into Redshift Spectrum.",
 )
-def jira_to_redshift_spectrum_flow(
+def jira_to_redshift_spectrum_flow(  # noqa: PLR0913
     jql: str,
     fields: list[str],
     to_path: str | None = None,
