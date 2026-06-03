@@ -12,7 +12,7 @@ from viadot.utils import skip_test_on_missing_extra
 try:
     from viadot.sources import SAPRFC
 except ImportError:
-    skip_test_on_missing_extra(source_name="SAPRFC", extra="sap")
+    skip_test_on_missing_extra(source_name="SAPRFC", extra="sap_rfc_connector")
 
 credentials = {"a": "b"}
 
