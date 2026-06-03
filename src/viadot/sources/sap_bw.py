@@ -5,7 +5,16 @@ from typing import Any
 
 import pandas as pd
 from pydantic import BaseModel
-import pyrfc
+
+
+# C++ SAP RFC connector
+try:
+    import sap_rfc_connector
+except ImportError as exc:
+    sap_rfc_connector = None
+    _SAP_RFC_CONNECTOR_IMPORT_ERROR = exc
+else:
+    _SAP_RFC_CONNECTOR_IMPORT_ERROR = None
 
 from viadot.config import get_source_credentials
 from viadot.exceptions import ValidationError
@@ -38,10 +47,8 @@ class SAPBWCredentials(BaseModel):
 
 
 class SAPBW(Source):
-    """Quering the SAP BW (SAP Business Warehouse) source using pyrfc library.
+    """Quering the SAP BW (SAP Business Warehouse) source using sap connector library.
 
-    Documentation to pyrfc can be found under:
-        https://sap.github.io/PyRFC/pyrfc.html
     Documentation for SAP connection modules under:
         https://www.se80.co.uk/sap-function-modules/list/?index=rsr_mdx
     """
@@ -88,7 +95,14 @@ class SAPBW(Source):
         Returns:
             Connection: Connection to SAP.
         """
-        return pyrfc.Connection(
+        if sap_rfc_connector is None:
+            msg = (
+                "Missing optional dependency 'sap_rfc_connector'. "
+                "Install/build it to use SAP BW sources."
+            )
+            raise ModuleNotFoundError(msg) from _SAP_RFC_CONNECTOR_IMPORT_ERROR
+
+        return sap_rfc_connector.Connection(
             ashost=self.credentials.get("ashost"),
             sysnr=self.credentials.get("sysnr"),
             user=self.credentials.get("user"),
