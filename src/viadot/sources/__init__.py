@@ -23,8 +23,6 @@ from .onestream import OneStream
 from .outlook import Outlook
 from .postgres import PostgreSQL
 from .salesforce import Salesforce
-from .sap_bw import SAPBW
-from .sap_rfc import SAPRFC
 from .sftp import Sftp
 from .sharepoint import Sharepoint, SharepointList
 from .smb import SMB
@@ -59,8 +57,6 @@ __all__ = [
     "OneStream",
     "Outlook",
     "PostgreSQL",
-    "SAPBW",
-    "SAPRFC",
     "SMBClient",
     "SQLServer",
     "SQLite",
@@ -89,6 +85,12 @@ if find_spec("s3fs"):
     from viadot.sources.s3 import S3  # noqa: F401
 
     __all__.extend(["S3", "MinIO"])
+
+if find_spec("sap_rfc_connector"):
+    from viadot.sources.sap_bw import SAPBW  # noqa: F401
+    from viadot.sources.sap_rfc import SAPRFC  # noqa: F401
+
+    __all__.extend(["SAPBW", "SAPRFC"])
 
 if find_spec("pyspark"):
     from viadot.sources.databricks import Databricks  # noqa: F401

@@ -7,7 +7,13 @@ import pandas as pd
 from pydantic import BaseModel
 
 # C++ SAP RFC connector
-import sap_rfc_connector
+try:
+    import sap_rfc_connector
+except ImportError as exc:
+    sap_rfc_connector = None
+    _SAP_RFC_CONNECTOR_IMPORT_ERROR = exc
+else:
+    _SAP_RFC_CONNECTOR_IMPORT_ERROR = None
 
 from viadot.config import get_source_credentials
 from viadot.exceptions import ValidationError
@@ -88,6 +94,13 @@ class SAPBW(Source):
         Returns:
             Connection: Connection to SAP.
         """
+        if sap_rfc_connector is None:
+            msg = (
+                "Missing optional dependency 'sap_rfc_connector'. "
+                "Install/build it to use SAP BW sources."
+            )
+            raise ModuleNotFoundError(msg) from _SAP_RFC_CONNECTOR_IMPORT_ERROR
+
         return sap_rfc_connector.Connection(
             ashost=self.credentials.get("ashost"),
             sysnr=self.credentials.get("sysnr"),
