@@ -1,3 +1,5 @@
+"""Prefect task for fetching Jira issues and returning a DataFrame."""
+
 from typing import Any
 
 import pandas as pd
@@ -21,7 +23,22 @@ def jira_issues_to_df(
     config_key: str = "jira",
     credentials_secret: str | None = None,
 ) -> pd.DataFrame:
+    """Fetch Jira issues based on a JQL query and return a DataFrame.
 
+    Args:
+        jql: JQL query string, e.g. 'project = MYPROJ AND status = Open'.
+        fields: List of human-readable Jira field names to fetch,
+            e.g. ['Summary', 'Current Status', 'Assignee'].
+        credentials: Optional dict with 'client_id' and 'client_secret'
+            for Jira OAuth 2.0 authentication.
+        config_key: Key to look up credentials in viadot config.
+            Defaults to 'jira'.
+        credentials_secret: Optional name of the AWS secret
+            containing Jira credentials.
+
+    Returns:
+        pd.DataFrame: Flat DataFrame with Jira issues.
+    """
     credentials = (
         credentials
         or get_source_credentials(config_key)
