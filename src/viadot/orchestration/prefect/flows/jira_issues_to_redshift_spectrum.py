@@ -36,6 +36,7 @@ def jira_to_redshift_spectrum_flow(  # noqa: PLR0913
     aws_config_key: str | None = None,
     credentials_secret: str | None = None,
     jira_credentials_secret: str | None = None,
+    custom_field_mapping: dict[str, str] | None = None,
 ) -> pd.DataFrame:
     """Fetch Jira issues and load them into Redshift Spectrum.
 
@@ -55,6 +56,8 @@ def jira_to_redshift_spectrum_flow(  # noqa: PLR0913
         credentials_secret (str | None): Name of the AWS secret in the secrets manager.
         jira_credentials_secret (str | None): Name of the AWS secret containing
             Jira credentials.
+        custom_field_mapping (dict[str, str] | None): Optional mapping of custom
+            field names to their corresponding Jira field IDs, e.g.
 
     Returns:
         pd.DataFrame: The fetched DataFrame (for testing / downstream use).
@@ -64,6 +67,7 @@ def jira_to_redshift_spectrum_flow(  # noqa: PLR0913
         jql=jql,
         fields=fields,
         credentials_secret=jira_credentials_secret,
+        custom_field_mapping=custom_field_mapping,
     )
     logger.info(f"Fetched {len(df)} rows from Jira.")
     logger.info("Loading data into Redshift Spectrum.")

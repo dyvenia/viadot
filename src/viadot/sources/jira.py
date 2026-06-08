@@ -130,19 +130,23 @@ class Jira(Source):
         self,
         jql: str,
         fields: list[str],
+        custom_field_mapping: dict[str, str] | None = None,
     ) -> pd.DataFrame:
         """Fetch Jira issues and return as a flat DataFrame.
 
         Args:
             jql (str): JQL query.
             fields (list[str]): List of field names to include in the DataFrame.
+            custom_field_mapping (dict[str, str] | None): Optional mapping of custom
+                field names to their corresponding Jira field IDs.
 
         Returns:
             pd.DataFrame: Flat DataFrame with renamed columns.
         """
         field_map = self._get_field_map()
         field_paths = {
-            name: self._resolve_field_path(name, field_map) for name in fields
+            name: self._resolve_field_path(name, field_map, custom_field_mapping)
+            for name in fields
         }
         missing = [k for k, v in field_paths.items() if v is None]
         if missing:
@@ -178,12 +182,19 @@ class Jira(Source):
             for field in fields
         }
 
-    def _resolve_field_path(self, field_name: str, field_map: dict) -> str | None:
+    def _resolve_field_path(
+        self,
+        field_name: str,
+        field_map: dict,
+        custom_field_mapping: dict[str, str] | None = None,
+    ) -> str | None:
         """Resolve a human-readable field name to a JSON path.
 
         Args:
             field_name (str): e.g. "Failure type - Software (grouped)"
             field_map (dict): output of _get_field_map()
+            custom_field_mapping (dict[str, str] | None): Optional mapping of custom
+                field names to their corresponding Jira field IDs.
 
         Returns:
             str: JSON path e.g. "fields.customfield_123.value"
@@ -199,7 +210,19 @@ class Jira(Source):
             "Resolved": "fields.resolutiondate",
             "Project Key": "fields.project.key",
             "Project Name": "fields.project.name",
+            # additional standard fields
+            "Labels": "fields.labels",
+            "Priority": "fields.priority.name",
+            "Description": "fields.description",
+            "Reporter: AccountId": "fields.reporter.accountId",
+            "Reporter: Email": "fields.reporter.emailAddress",
+            "Reporter: Name": "fields.reporter.displayName",
+            "Current Assignee: Name": "fields.assignee.displayName",
         }
+
+        if custom_field_mapping:
+            standard_fields.update(custom_field_mapping)
+
         if field_name in standard_fields:
             return standard_fields[field_name]
 

@@ -23,6 +23,7 @@ def jira_issues_to_df(
     credentials: dict[str, Any] | None = None,
     config_key: str = "jira",
     credentials_secret: str | None = None,
+    custom_field_mapping: dict[str, str] | None = None,
 ) -> pd.DataFrame:
     """Fetch Jira issues based on a JQL query and return a DataFrame.
 
@@ -36,6 +37,8 @@ def jira_issues_to_df(
             Defaults to 'jira'.
         credentials_secret: Optional name of the AWS secret
             containing Jira credentials.
+        custom_field_mapping: Optional dict mapping for custom field names
+            to their corresponding Jira field IDs.
 
     Returns:
         pd.DataFrame: Flat DataFrame with Jira issues.
@@ -50,4 +53,6 @@ def jira_issues_to_df(
         credentials=JiraCredentials(**credentials),
         config_key=config_key,
     )
-    return source.to_df(jql=jql, fields=fields)
+    return source.to_df(
+        jql=jql, fields=fields, custom_field_mapping=custom_field_mapping
+    )
