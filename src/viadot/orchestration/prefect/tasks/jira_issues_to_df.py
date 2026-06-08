@@ -15,6 +15,7 @@ from viadot.sources.jira import Jira, JiraCredentials
     description="Fetch Jira issues via JQL and return a flat DataFrame.",
     retries=3,
     retry_delay_seconds=10,
+    timeout_seconds=60 * 60 * 3,
 )
 def jira_issues_to_df(
     jql: str,
