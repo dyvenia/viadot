@@ -41,7 +41,10 @@ class Jira(Source):
                 directly as a parameter.
         """
         raw_creds = credentials or get_source_credentials(config_key)
-        validated_creds = dict(JiraCredentials(**raw_creds))
+        if isinstance(raw_creds, JiraCredentials):
+            validated_creds = dict(raw_creds)
+        else:
+            validated_creds = dict(JiraCredentials(**raw_creds))
         super().__init__(*args, credentials=validated_creds, **kwargs)
 
         self._access_token: str | None = None
