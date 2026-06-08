@@ -47,7 +47,8 @@ def jira_to_redshift_spectrum_flow(  # noqa: PLR0913
         aws_sep (str): CSV separator (used when extension is '.csv'). Defaults to ','.
         aws_config_key (str | None): viadot config key for AWS credentials.
         credentials_secret (str | None): Name of the AWS secret in the secrets manager.
-        jira_credentials_secret (str | None): Name of the AWS secret containing Jira credentials.
+        jira_credentials_secret (str | None): Name of the AWS secret containing
+            Jira credentials.
 
     Returns:
         pd.DataFrame: The fetched DataFrame (for testing / downstream use).
