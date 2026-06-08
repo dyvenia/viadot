@@ -10,12 +10,16 @@ from viadot.orchestration.prefect.tasks import (
     df_to_redshift_spectrum,
     jira_issues_to_df,
 )
+from viadot.orchestration.prefect.utils import (
+    with_state_tracking_and_downstream_triggering,
+)
 
 
 @flow(
     name="jira_to_redshift_spectrum",
     description="Fetch Jira issues via JQL and load them into Redshift Spectrum.",
 )
+@with_state_tracking_and_downstream_triggering(node_name_param="table")
 def jira_to_redshift_spectrum_flow(  # noqa: PLR0913
     jql: str,
     fields: list[str],
