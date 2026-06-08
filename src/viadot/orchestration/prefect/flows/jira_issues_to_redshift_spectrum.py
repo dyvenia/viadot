@@ -29,6 +29,7 @@ def jira_to_redshift_spectrum_flow(  # noqa: PLR0913
     aws_sep: str = ",",
     aws_config_key: str | None = None,
     credentials_secret: str | None = None,
+    jira_credentials_secret: str | None = None,
 ) -> pd.DataFrame:
     """Fetch Jira issues and load them into Redshift Spectrum.
 
@@ -46,6 +47,7 @@ def jira_to_redshift_spectrum_flow(  # noqa: PLR0913
         aws_sep (str): CSV separator (used when extension is '.csv'). Defaults to ','.
         aws_config_key (str | None): viadot config key for AWS credentials.
         credentials_secret (str | None): Name of the AWS secret in the secrets manager.
+        jira_credentials_secret (str | None): Name of the AWS secret containing Jira credentials.
 
     Returns:
         pd.DataFrame: The fetched DataFrame (for testing / downstream use).
@@ -54,7 +56,7 @@ def jira_to_redshift_spectrum_flow(  # noqa: PLR0913
     df = jira_issues_to_df(
         jql=jql,
         fields=fields,
-        credentials_secret=credentials_secret,
+        credentials_secret=jira_credentials_secret,
     )
     logger.info(f"Fetched {len(df)} rows from Jira.")
     logger.info("Loading data into Redshift Spectrum.")
