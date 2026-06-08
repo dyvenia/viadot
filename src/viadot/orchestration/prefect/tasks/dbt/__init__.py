@@ -163,6 +163,7 @@ def trigger_downstream_nodes(
     state_path: str,
     state_store_credentials: dict[str, Any],
     flow_name: str = "Transform and Catalog",
+    tags: list[str] | None = None,
 ) -> None:
     """Trigger downstream dbt nodes whose upstream dependencies are all fresh.
 
@@ -173,6 +174,7 @@ def trigger_downstream_nodes(
         state_path: URI of the state file (e.g. ``"s3://bucket/state.json"``).
         state_store_credentials: AWS credentials for the state store.
         flow_name: The name of the Prefect flow that owns the downstream deployments.
+        tags: Optional list of tags to apply to triggered deployments.
     """
     logger = get_run_logger()
     logger.info("Finding runnable nodes ...")
@@ -197,7 +199,7 @@ def trigger_downstream_nodes(
         logger.info("Triggering downstream nodes ...")
         for node in nodes_to_run:
             # Use ``timeout=0`` so flow metadata is returned immediately.
-            run_deployment(name=f"{flow_name}/dbt_{node}", timeout=0)
+            run_deployment(name=f"{flow_name}/dbt_{node}", timeout=0, tags=tags)
         return
     logger.info(
         "No nodes to trigger. All downstream nodes are either up to date or "

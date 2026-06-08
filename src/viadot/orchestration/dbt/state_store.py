@@ -58,25 +58,31 @@ def retry_on_s3_error(
     return decorator
 
 
-def _merge_node_state(data: dict, node_state: dict) -> dict:
+def _merge_node_state(node_states: dict, new_node_state: dict) -> dict:
     """Merge node state into the existing state dict."""
-    table_name = node_state["table_name"]
-    status = node_state["status"]
-    logger.info(f"Updating state for node '{table_name}' to status '{status}'.")
+    node_name = new_node_state["table_name"]
 
-    if table_name not in data:
-        data[table_name] = node_state
-        return data
+    logger.info(f"Merging node state of node '{node_name}'...")
+    logger.debug(f"New node state: {new_node_state}")
 
-    existing = data[table_name]
-    updated = {**existing, **node_state}
-    # For status other than success, preserve the existing fresh_until
-    # to avoid prematurely marking the data as stale. This allows for retries without
-    # losing the original freshness information.
-    if status != "success" and existing.get("fresh_until") is not None:
-        updated["fresh_until"] = existing["fresh_until"]
-    data[table_name] = updated
-    return data
+    # A new entry.
+    if node_name not in node_states:
+        node_states[node_name] = new_node_state
+        return node_states
+
+    # Special-case for fresh_until - we don't override it with None on failure
+    # to preserve the last known value for SLA monitoring.
+    if new_node_state.get("status") != "success" and not new_node_state.get(
+        "fresh_until"
+    ):
+        new_node_state["fresh_until"] = node_states[node_name].get("fresh_until")
+
+    # Merging new node state with existing one.
+    previous_node_state = node_states[node_name]
+    merged_node_state = {**previous_node_state, **new_node_state}
+
+    node_states[node_name] = merged_node_state
+    return node_states
 
 
 class StateStore(ABC):
@@ -199,10 +205,10 @@ class S3StateStore(StateStore, store_type="s3"):
     )
     def update(self, node_state: dict) -> dict:
         """Update the state file in S3 with the given node state."""
-        data, etag = self._read()
-        data = _merge_node_state(data=data, node_state=node_state)
+        previous_node_states, etag = self._read()
+        new_node_states = _merge_node_state(previous_node_states, node_state)
         body = json.dumps(
-            data, indent=4, ensure_ascii=False, separators=(",", ":")
+            new_node_states, indent=4, ensure_ascii=False, separators=(",", ":")
         ).encode("utf-8")
         return self.client.put_object(
             Bucket=self.bucket,

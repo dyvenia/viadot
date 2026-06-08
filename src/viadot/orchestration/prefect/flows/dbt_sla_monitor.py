@@ -9,7 +9,11 @@ from prefect.logging import get_run_logger
 from prefect.variables import Variable
 
 from viadot.orchestration.dbt.state_store import StateStore
-from viadot.orchestration.prefect.utils import get_credentials, send_email_notification
+from viadot.orchestration.prefect.utils import (
+    SmtpConfig,
+    get_credentials,
+    send_email_notification,
+)
 
 
 logger = logging.getLogger(__name__)
@@ -50,14 +54,15 @@ def notify_sla_breach(
         f" Node was fresh until: {fresh_until}."
         " Please investigate and take necessary action."
     )
-    logger.warning(message)
+    get_run_logger().warning(message)
     smtp_credentials = get_credentials(smtp_credentials_secret)
+    smtp_config = SmtpConfig(**smtp_credentials)
     for recipient in recipients:
         send_email_notification(
             subject=f"SLA Breach: {node_name}",
             body=message,
             recipients=[recipient],
-            smtp_config=smtp_credentials,
+            smtp_config=smtp_config,
         )
 
 
@@ -94,7 +99,12 @@ def _handle_breached_node(
         recipients=owners,
         smtp_credentials_secret=smtp_credentials_secret,
     )
-    store.write(node_state={node_name: {"_sla_breach_notification_sent": True}})
+    store.write(
+        node_state={
+            "table_name": node_name,
+            "_sla_breach_notification_sent": True,
+        }
+    )
 
 
 @flow(name="SLA Monitor")
@@ -147,35 +157,57 @@ def sla_monitor(
     )
     state, _ = store._read()
 
+    prefect_logger.info(f"Checking SLA compliance for {len(state)} nodes...")
+
     for node in state.values():
         node_name = node["table_name"]
-        node_status = node.get("status")
 
-        if node_status == "success" and node.get("_sla_breach_notification_sent"):
-            # Reset SLA breach notification flag on successful runs to allow future
-            # breach notifications.
-            store.write(
-                node_state={node_name: {"_sla_breach_notification_sent": False}}
+        if node.get("node_type") != "model":
+            prefect_logger.debug(
+                f"Node '{node_name}' is not a model; skipping SLA check."
             )
             continue
 
-        if node.get("TYPE") != "model":
-            logger.debug(f"Node '{node_name}' is not a model; skipping SLA check.")
+        node_status = node.get("status")
+        fresh_until = (
+            datetime.fromisoformat(node["fresh_until"])
+            if node.get("fresh_until")
+            else None
+        )
+        current_date = datetime.now(timezone.utc)
+
+        if (
+            node_status == "success"
+            and node.get("_sla_breach_notification_sent")
+            and (fresh_until is None or current_date <= fresh_until)
+        ):
+            # Reset SLA breach notification flag only when the node is fresh again,
+            # so future breaches trigger a new notification.
+            # Empty fresh until is considered as fresh..
+            store.write(
+                node_state={
+                    "table_name": node_name,
+                    "_sla_breach_notification_sent": False,
+                }
+            )
             continue
 
         if node_status == "running":
-            logger.debug(
+            prefect_logger.debug(
                 f"Node '{node_name}' is currently running; skipping SLA check."
             )
             continue
 
-        if node.get("fresh_until") is None:
-            logger.warning(f"No SLA found for node '{node_name}'; cannot validate.")
+        if fresh_until is None:
+            prefect_logger.warning(
+                f"No 'fresh_until' timestamp for node '{node_name}'; cannot validate SLA."
+            )
             continue
 
-        if datetime.now(timezone.utc) > datetime.fromisoformat(
-            node["fresh_until"]
-        ) + timedelta(minutes=node.get("sla_breach_grace_period", 30)):
+        if current_date > fresh_until + timedelta(
+            minutes=node.get("sla_breach_grace_period", 30)
+        ):
+            prefect_logger.info(f"SLA breach detected for node '{node_name}'.")
             _handle_breached_node(
                 store=store,
                 node=node,
