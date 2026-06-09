@@ -19,7 +19,8 @@ from viadot.sources.jira import Jira, JiraCredentials
 )
 def jira_issues_to_df(
     jql: str,
-    fields: list[str],
+    fields: list[str] | None = None,
+    technical_fields: list[str] | None = None,
     credentials: dict[str, Any] | None = None,
     config_key: str = "jira",
     credentials_secret: str | None = None,
@@ -31,6 +32,10 @@ def jira_issues_to_df(
         jql: JQL query string, e.g. 'project = MYPROJ AND status = Open'.
         fields: List of human-readable Jira field names to fetch,
             e.g. ['Summary', 'Current Status', 'Assignee'].
+        technical_fields: Raw Jira field ids (e.g. "summary",
+                "customfield_16187"). If provided, issues are fetched directly
+                and returned without any name resolution. Column names keep the
+                raw ids and values are returned exactly as Jira sends them.
         credentials: Optional dict with 'client_id' and 'client_secret'
             for Jira OAuth 2.0 authentication.
         config_key: Key to look up credentials in viadot config.
@@ -54,5 +59,8 @@ def jira_issues_to_df(
         config_key=config_key,
     )
     return source.to_df(
-        jql=jql, fields=fields, custom_field_mapping=custom_field_mapping
+        jql=jql,
+        fields=fields,
+        technical_fields=technical_fields,
+        custom_field_mapping=custom_field_mapping,
     )

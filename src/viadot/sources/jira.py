@@ -129,7 +129,8 @@ class Jira(Source):
     def to_df(
         self,
         jql: str,
-        fields: list[str],
+        fields: list[str] | None = None,
+        technical_fields: list[str] | None = None,
         custom_field_mapping: dict[str, str] | None = None,
     ) -> pd.DataFrame:
         """Fetch Jira issues and return as a flat DataFrame.
@@ -137,12 +138,20 @@ class Jira(Source):
         Args:
             jql (str): JQL query.
             fields (list[str]): List of field names to include in the DataFrame.
+            technical_fields: Raw Jira field ids (e.g. "summary",
+                "customfield_16187"). If provided, issues are fetched directly
+                and returned without any name resolution. Column names keep the
+                raw ids and values are returned exactly as Jira sends them.
             custom_field_mapping (dict[str, str] | None): Optional mapping of custom
                 field names to their corresponding Jira field IDs.
 
         Returns:
             pd.DataFrame: Flat DataFrame with renamed columns.
         """
+        if technical_fields:
+            issues = self._fetch_issues(jql=jql, fields=technical_fields)
+            return pd.json_normalize(issues)
+
         field_map = self._get_field_map()
         field_paths = {
             name: self._resolve_field_path(name, field_map, custom_field_mapping)
@@ -233,8 +242,16 @@ class Jira(Source):
 
         field_id = field["id"]
         schema_type = field["schema"].get("type", "")
-        # if type is option/array — we fetch .value
-        if schema_type in ("option", "array"):
-            return f"fields.{field_id}.value"
+        type_to_subfield = {
+            "option": ".value",
+            "array": ".value",
+            "user": ".displayName",
+            "priority": ".name",
+            "status": ".name",
+            "issuetype": ".name",
+            "project": ".name",
+            "resolution": ".name",
+        }
 
-        return f"fields.{field_id}"
+        subfield = type_to_subfield.get(schema_type, "")
+        return f"fields.{field_id}{subfield}"

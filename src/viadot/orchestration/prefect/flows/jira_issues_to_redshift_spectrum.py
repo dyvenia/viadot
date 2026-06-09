@@ -24,7 +24,8 @@ from viadot.orchestration.prefect.utils import (
 @with_state_tracking_and_downstream_triggering(node_name_param="table")
 def jira_to_redshift_spectrum_flow(  # noqa: PLR0913
     jql: str,
-    fields: list[str],
+    fields: list[str] | None = None,
+    technical_fields: list[str] | None = None,
     to_path: str | None = None,
     schema_name: str | None = None,
     table: str | None = None,
@@ -43,6 +44,10 @@ def jira_to_redshift_spectrum_flow(  # noqa: PLR0913
     Args:
         jql (str): JQL query, e.g. 'project = MYPROJ AND status = Open'.
         fields (list[str]): Human-readable Jira field names to fetch.
+        technical_fields: Raw Jira field ids (e.g. "summary",
+                "customfield_16187"). If provided, issues are fetched directly
+                and returned without any name resolution. Column names keep the
+                raw ids and values are returned exactly as Jira sends them.
         to_path (str): S3 destination path, e.g. 's3://my-bucket/jira/issues/'.
         schema_name (str): Redshift Spectrum schema name.
         table (str): Target table name.
@@ -66,6 +71,7 @@ def jira_to_redshift_spectrum_flow(  # noqa: PLR0913
     df = jira_issues_to_df(
         jql=jql,
         fields=fields,
+        technical_fields=technical_fields,
         credentials_secret=jira_credentials_secret,
         custom_field_mapping=custom_field_mapping,
     )
