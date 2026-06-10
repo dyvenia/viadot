@@ -7,6 +7,10 @@ from viadot.orchestration.prefect.flows.dbt_sla_monitor import (
 )
 
 
+_FAKE_SMTP_CREDS = "smtp-secret"
+_FAKE_STATE_CREDS = "state-secret"
+
+
 def _iso_in_past(minutes: int = 120) -> str:
     return (datetime.now(timezone.utc) - timedelta(minutes=minutes)).isoformat()
 
@@ -41,7 +45,7 @@ class TestNotifyAndMarkBreaches:
         _notify_and_mark_breaches(
             owner_breaches=owner_breaches,
             dry_run=False,
-            smtp_credentials_secret="smtp-secret",
+            smtp_credentials_secret=_FAKE_SMTP_CREDS,
             store=store,
             prefect_logger=logger,
         )
@@ -50,12 +54,12 @@ class TestNotifyAndMarkBreaches:
         notify_mock.assert_any_call(
             recipient="a@example.com",
             breaches=owner_breaches["a@example.com"],
-            smtp_credentials_secret="smtp-secret",
+            smtp_credentials_secret=_FAKE_SMTP_CREDS,
         )
         notify_mock.assert_any_call(
             recipient="b@example.com",
             breaches=owner_breaches["b@example.com"],
-            smtp_credentials_secret="smtp-secret",
+            smtp_credentials_secret=_FAKE_SMTP_CREDS,
         )
 
         written_node_names = {
@@ -137,7 +141,11 @@ class TestSlaMonitor:
         captured = {}
 
         def _capture_notify(
-            owner_breaches, dry_run, smtp_credentials_secret, store, prefect_logger
+            owner_breaches,
+            dry_run,
+            smtp_credentials_secret,
+            store,
+            prefect_logger,  # noqa: ARG001
         ):
             captured["owner_breaches"] = owner_breaches
             captured["dry_run"] = dry_run
@@ -155,14 +163,14 @@ class TestSlaMonitor:
 
         sla_monitor.fn(
             state_path="s3://bucket/state.json",
-            state_store_credentials_secret="state-secret",
-            smtp_credentials_secret="smtp-secret",
+            state_store_credentials_secret=_FAKE_STATE_CREDS,
+            smtp_credentials_secret=_FAKE_SMTP_CREDS,
             owner_type="technical owner",
             dry_run=False,
         )
 
         assert captured["dry_run"] is False
-        assert captured["smtp_credentials_secret"] == "smtp-secret"
+        assert captured["smtp_credentials_secret"] == _FAKE_SMTP_CREDS
         assert captured["store"] is fake_store
         assert list(captured["owner_breaches"].keys()) == ["a@example.com"]
         assert [node for node, _ in captured["owner_breaches"]["a@example.com"]] == [
@@ -205,8 +213,8 @@ class TestSlaMonitor:
 
         sla_monitor.fn(
             state_path="s3://bucket/state.json",
-            state_store_credentials_secret="state-secret",
-            smtp_credentials_secret="smtp-secret",
+            state_store_credentials_secret=_FAKE_STATE_CREDS,
+            smtp_credentials_secret=_FAKE_SMTP_CREDS,
             owner_type="technical owner",
             dry_run=False,
         )
