@@ -1,5 +1,6 @@
 """Flow to monitor dbt model SLAs and notify owners of breaches."""
 
+from collections import defaultdict
 from datetime import datetime, timedelta, timezone
 import logging
 from typing import Literal
@@ -41,70 +42,115 @@ def _get_node_owners(
     ]
 
 
+def _get_sla_check_inputs(
+    node: dict, prefect_logger: logging.Logger
+) -> tuple[str, str | None, datetime] | None:
+    """Return parsed SLA inputs for eligible model nodes.
+
+    Nodes that are not models, currently running, or missing ``fresh_until`` are
+    considered ineligible and return ``None``.
+    """
+    node_name = node["table_name"]
+
+    if node.get("node_type") != "model":
+        prefect_logger.debug(f"Node '{node_name}' is not a model; skipping SLA check.")
+        return None
+
+    node_status = node.get("status")
+    if node_status == "running":
+        prefect_logger.debug(
+            f"Node '{node_name}' is currently running; skipping SLA check."
+        )
+        return None
+
+    fresh_until_raw = node.get("fresh_until")
+    if not fresh_until_raw:
+        prefect_logger.warning(
+            f"No 'fresh_until' timestamp for node '{node_name}'; cannot validate SLA."
+        )
+        return None
+
+    return node_name, node_status, datetime.fromisoformat(fresh_until_raw)
+
+
 @task
-def notify_sla_breach(
-    node_name: str,
-    fresh_until: str,
-    recipients: list[str],
+def notify_sla_breaches(
+    recipient: str,
+    breaches: list[tuple[str, str]],
     smtp_credentials_secret: str,
 ) -> None:
-    """Notify model owners that the node's SLA has been breached."""
-    message = (
-        f"SLA breached for model '{node_name}'."
-        f" Node was fresh until: {fresh_until}."
-        " Please investigate and take necessary action."
+    """Notify an owner of all their SLA breaches in a single email.
+
+    Args:
+        recipient: Email address of the owner to notify.
+        breaches: List of ``(node_name, fresh_until)`` tuples for all breached nodes.
+        smtp_credentials_secret: The name of the Prefect Secret containing SMTP
+            credentials.
+    """
+    breach_lines = "\n".join(
+        f"  - {node_name} (was fresh until: {fresh_until})"
+        for node_name, fresh_until in breaches
     )
-    get_run_logger().warning(message)
+    message = (
+        f"The following {len(breaches)} model(s) have breached their SLA:\n\n"
+        f"{breach_lines}\n\n"
+        "Please investigate and take necessary action."
+    )
+    get_run_logger().warning(
+        f"Notifying {recipient} of SLA breaches: {[b[0] for b in breaches]}."
+    )
     smtp_credentials = get_credentials(smtp_credentials_secret)
     smtp_config = SmtpConfig(**smtp_credentials)
-    for recipient in recipients:
-        send_email_notification(
-            subject=f"SLA Breach: {node_name}",
-            body=message,
-            recipients=[recipient],
-            smtp_config=smtp_config,
-        )
+    send_email_notification(
+        subject=f"SLA Breach: {len(breaches)} model(s) require attention",
+        body=message,
+        recipients=[recipient],
+        smtp_config=smtp_config,
+    )
 
 
-def _handle_breached_node(
-    store: StateStore,
-    node: dict,
-    node_name: str,
-    owner_type: Literal["technical owner", "business owner", "all"],
-    smtp_credentials_secret: str | None,
+def _notify_and_mark_breaches(
+    owner_breaches: dict[str, list[tuple[str, str]]],
     dry_run: bool,
+    smtp_credentials_secret: str | None,
+    store: StateStore,
+    prefect_logger: logging.Logger,
 ) -> None:
-    """Notify node owners once for a breach and persist the notification flag."""
-    owners = _get_node_owners(node, owner_type=owner_type)
-    if not owners:
-        logger.warning(
-            f"SLA breached for '{node_name}' but no '{owner_type}' type owners defined."
-        )
-        return
-
+    """Notify owners and persist notification flags for breached nodes."""
     if dry_run:
-        logger.info(
-            f"(Dry run) SLA breach detected for node '{node_name}'"
-            f" Node was fresh until: {node['fresh_until']}."
-            f" Owners to notify: {owners}."
-        )
-
-    if node.get("_sla_breach_notification_sent"):
-        logger.info("Owners already notified. Skipping...")
+        for owner, breaches in owner_breaches.items():
+            prefect_logger.info(
+                f"(Dry run) Would notify '{owner}' about"
+                f" {len(breaches)} breach(es):"
+                f" {[b[0] for b in breaches]}."
+            )
         return
 
-    notify_sla_breach(
-        node_name=node_name,
-        fresh_until=node["fresh_until"],
-        recipients=owners,
-        smtp_credentials_secret=smtp_credentials_secret,
-    )
-    store.write(
-        node_state={
-            "table_name": node_name,
-            "_sla_breach_notification_sent": True,
-        }
-    )
+    if smtp_credentials_secret is None:
+        prefect_logger.error(
+            "SMTP credentials secret must be provided when not in dry-run mode."
+        )
+        return
+
+    for owner, breaches in owner_breaches.items():
+        notify_sla_breaches(
+            recipient=owner,
+            breaches=breaches,
+            smtp_credentials_secret=smtp_credentials_secret,
+        )
+
+    # Set a flag on breached nodes to avoid sending further notifications until the
+    # node is fresh again.
+    unique_node_names = {
+        node_name for breaches in owner_breaches.values() for node_name, _ in breaches
+    }
+    for node_name in unique_node_names:
+        store.write(
+            node_state={
+                "table_name": node_name,
+                "_sla_breach_notification_sent": True,
+            }
+        )
 
 
 @flow(name="SLA Monitor")
@@ -159,31 +205,24 @@ def sla_monitor(
 
     prefect_logger.info(f"Checking SLA compliance for {len(state)} nodes...")
 
-    for node in state.values():
-        node_name = node["table_name"]
+    # owner_email -> [(node_name, fresh_until), ...]
+    owner_breaches: dict[str, list[tuple[str, str]]] = defaultdict(list)
 
-        if node.get("node_type") != "model":
-            prefect_logger.debug(
-                f"Node '{node_name}' is not a model; skipping SLA check."
-            )
+    for node in state.values():
+        sla_inputs = _get_sla_check_inputs(node, prefect_logger)
+        if sla_inputs is None:
             continue
 
-        node_status = node.get("status")
-        fresh_until = (
-            datetime.fromisoformat(node["fresh_until"])
-            if node.get("fresh_until")
-            else None
-        )
+        node_name, node_status, fresh_until = sla_inputs
         current_date = datetime.now(timezone.utc)
 
         if (
             node_status == "success"
             and node.get("_sla_breach_notification_sent")
-            and (fresh_until is None or current_date <= fresh_until)
+            and current_date <= fresh_until
         ):
             # Reset SLA breach notification flag only when the node is fresh again,
             # so future breaches trigger a new notification.
-            # Empty fresh until is considered as fresh..
             store.write(
                 node_state={
                     "table_name": node_name,
@@ -192,30 +231,38 @@ def sla_monitor(
             )
             continue
 
-        if node_status == "running":
-            prefect_logger.debug(
-                f"Node '{node_name}' is currently running; skipping SLA check."
-            )
-            continue
-
-        if fresh_until is None:
-            prefect_logger.warning(
-                f"No 'fresh_until' timestamp for node '{node_name}'; cannot validate SLA."
-            )
-            continue
-
         if current_date > fresh_until + timedelta(
             minutes=node.get("sla_breach_grace_period", 30)
         ):
+            if node.get("_sla_breach_notification_sent"):
+                prefect_logger.debug(
+                    f"Owners already notified for '{node_name}'. Skipping..."
+                )
+                continue
+
+            owners = _get_node_owners(node, owner_type=owner_type)
+            if not owners:
+                prefect_logger.warning(
+                    f"SLA breached for '{node_name}' but no '{owner_type}'"
+                    " type owners defined."
+                )
+                continue
+
             prefect_logger.info(f"SLA breach detected for node '{node_name}'.")
-            _handle_breached_node(
-                store=store,
-                node=node,
-                node_name=node_name,
-                owner_type=owner_type,
-                smtp_credentials_secret=smtp_credentials_secret,
-                dry_run=dry_run,
-            )
+            for owner in owners:
+                owner_breaches[owner].append((node_name, node["fresh_until"]))
+
+    if not owner_breaches:
+        prefect_logger.info("No new SLA breaches to report.")
+        return
+
+    _notify_and_mark_breaches(
+        owner_breaches=owner_breaches,
+        dry_run=dry_run,
+        smtp_credentials_secret=smtp_credentials_secret,
+        store=store,
+        prefect_logger=prefect_logger,
+    )
 
 
 if __name__ == "__main__":
