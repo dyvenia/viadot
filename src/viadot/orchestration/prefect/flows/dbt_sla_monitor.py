@@ -87,14 +87,14 @@ def notify_sla_breaches(
         smtp_credentials_secret: The name of the Prefect Secret containing SMTP
             credentials.
     """
-    breach_lines = "\n".join(
-        f"  - {node_name} (was fresh until: {fresh_until})"
+    breach_items = "\n".join(
+        f"    <li><strong>{node_name}</strong> (was fresh until: {fresh_until})</li>"
         for node_name, fresh_until in breaches
     )
     message = (
-        f"The following {len(breaches)} model(s) have breached their SLA:\n\n"
-        f"{breach_lines}\n\n"
-        "Please investigate and take necessary action."
+        f"<p>The following {len(breaches)} model(s) have breached their SLA:</p>\n"
+        f"<ul>\n{breach_items}\n</ul>\n"
+        "<p>Please investigate and take necessary action.</p>"
     )
     get_run_logger().warning(
         f"Notifying {recipient} of SLA breaches: {[b[0] for b in breaches]}."
