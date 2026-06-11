@@ -73,6 +73,13 @@ def _get_sla_check_inputs(
     return node_name, node_status, datetime.fromisoformat(fresh_until_raw)
 
 
+def _format_datetime(iso_str: str) -> str:
+    """Format an ISO datetime string in a human-readable form, including timezone."""
+    dt = datetime.fromisoformat(iso_str)
+    tz_str = dt.strftime("%Z") or dt.strftime("%z")
+    return dt.strftime("%-d %B %Y at %H:%M ") + tz_str
+
+
 @task
 def notify_sla_breaches(
     recipient: str,
@@ -88,7 +95,7 @@ def notify_sla_breaches(
             credentials.
     """
     breach_items = "\n".join(
-        f"    <li><strong>{node_name}</strong> (was fresh until: {fresh_until})</li>"
+        f"    <li><strong>{node_name}</strong> (was fresh until: {_format_datetime(fresh_until)})</li>"
         for node_name, fresh_until in breaches
     )
     message = (
