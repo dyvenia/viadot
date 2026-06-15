@@ -81,7 +81,7 @@ def jira_to_redshift_spectrum_flow(  # noqa: PLR0913
         "Cleaning complex data types (dicts/lists) to prevent Parquet schema validation errors."
     )
     for col in df.columns:
-        if df[col].apply(lambda x: isinstance(x, (dict, list))).any():
+        if df[col].apply(lambda x: isinstance(x, dict | list)).any():
             df[col] = df[col].astype(str)
 
     logger.info("Loading data into Redshift Spectrum.")
