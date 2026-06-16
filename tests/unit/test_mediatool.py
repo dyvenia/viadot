@@ -216,7 +216,6 @@ def test_to_df(mock_handle_api_response, mock_multiple_api_responses):
     result_df.drop(
         columns=["_viadot_source", "_viadot_downloaded_at_utc"],
         inplace=True,
-        axis=1,
     )
     expected_result = pd.DataFrame(
         {
@@ -268,7 +267,6 @@ def test_to_df_media_entries_columns(
     result_df.drop(
         columns=["_viadot_source", "_viadot_downloaded_at_utc"],
         inplace=True,
-        axis=1,
     )
     expected_result = pd.DataFrame(
         {
