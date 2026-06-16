@@ -1,6 +1,6 @@
 """Jira source class for fetching issues using Jira REST API v3."""
 
-from typing import Any
+from typing import Any, ClassVar
 
 import pandas as pd
 from pydantic import BaseModel
@@ -21,6 +21,36 @@ class JiraCredentials(BaseModel):
 
 
 class Jira(Source):
+    _STANDARD_FIELDS: ClassVar[dict[str, str]] = {
+        "Summary": "fields.summary",
+        "Current Status": "fields.status.name",
+        "Issue Type": "fields.issuetype.name",
+        "Resolution": "fields.resolution.name",
+        "Created": "fields.created",
+        "Resolved": "fields.resolutiondate",
+        "Project Key": "fields.project.key",
+        "Project Name": "fields.project.name",
+        # additional standard fields
+        "Labels": "fields.labels",
+        "Priority": "fields.priority.name",
+        "Description": "fields.description",
+        "Reporter: AccountId": "fields.reporter.accountId",
+        "Reporter: Email": "fields.reporter.emailAddress",
+        "Reporter: Name": "fields.reporter.displayName",
+        "Current Assignee: Name": "fields.assignee.displayName",
+    }
+
+    _TYPE_TO_SUBFIELD: ClassVar[dict[str, str]] = {
+        "option": ".value",
+        "array": ".value",
+        "user": ".displayName",
+        "priority": ".name",
+        "status": ".name",
+        "issuetype": ".name",
+        "project": ".name",
+        "resolution": ".name",
+    }
+
     def __init__(
         self,
         *args,
@@ -152,6 +182,10 @@ class Jira(Source):
             issues = self._fetch_issues(jql=jql, fields=technical_fields)
             return pd.json_normalize(issues)
 
+        if fields is None:
+            msg = "Either `fields` or `technical_fields` must be provided."
+            raise ValueError(msg)
+
         field_map = self._get_field_map()
         field_paths = {
             name: self._resolve_field_path(name, field_map, custom_field_mapping)
@@ -209,31 +243,11 @@ class Jira(Source):
             str: JSON path e.g. "fields.customfield_123.value"
                 or None if field not found.
         """
-        # standard fields -> known paths
-        standard_fields = {
-            "Summary": "fields.summary",
-            "Current Status": "fields.status.name",
-            "Issue Type": "fields.issuetype.name",
-            "Resolution": "fields.resolution.name",
-            "Created": "fields.created",
-            "Resolved": "fields.resolutiondate",
-            "Project Key": "fields.project.key",
-            "Project Name": "fields.project.name",
-            # additional standard fields
-            "Labels": "fields.labels",
-            "Priority": "fields.priority.name",
-            "Description": "fields.description",
-            "Reporter: AccountId": "fields.reporter.accountId",
-            "Reporter: Email": "fields.reporter.emailAddress",
-            "Reporter: Name": "fields.reporter.displayName",
-            "Current Assignee: Name": "fields.assignee.displayName",
-        }
+        if custom_field_mapping and field_name in custom_field_mapping:
+            return custom_field_mapping[field_name]
 
-        if custom_field_mapping:
-            standard_fields.update(custom_field_mapping)
-
-        if field_name in standard_fields:
-            return standard_fields[field_name]
+        if field_name in self._STANDARD_FIELDS:
+            return self._STANDARD_FIELDS[field_name]
 
         # custom fields
         field = field_map.get(field_name)
@@ -242,16 +256,5 @@ class Jira(Source):
 
         field_id = field["id"]
         schema_type = field["schema"].get("type", "")
-        type_to_subfield = {
-            "option": ".value",
-            "array": ".value",
-            "user": ".displayName",
-            "priority": ".name",
-            "status": ".name",
-            "issuetype": ".name",
-            "project": ".name",
-            "resolution": ".name",
-        }
-
-        subfield = type_to_subfield.get(schema_type, "")
+        subfield = self._TYPE_TO_SUBFIELD.get(schema_type, "")
         return f"fields.{field_id}{subfield}"
