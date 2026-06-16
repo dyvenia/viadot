@@ -506,7 +506,6 @@ def test_to_df_duplicates(mock_super, mock_handle_if_empty, genesys):
     result_df_no_duplicates.drop(
         columns=["_viadot_source", "_viadot_downloaded_at_utc"],
         inplace=True,
-        axis=1,
     )
 
     assert result_df_no_duplicates.equals(expected_df_no_duplicates)
