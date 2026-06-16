@@ -17,13 +17,13 @@ from viadot.orchestration.prefect.utils import (
 
 
 @task
-def log_df_schema(df, name="log_df_schema") -> pd.DataFrame:
+def log_df_schema(df: pd.DataFrame, name: str = "log_df_schema") -> pd.DataFrame:
     """Log the shape and dtypes of a DataFrame, and identify any nested columns."""
     logger = get_run_logger()
     logger.info(f"{name} shape={df.shape}")
     logger.info(f"{name} dtypes:\n{df.dtypes.to_string()}")
     nested = [
-        c for c in df.columns if df[c].map(lambda v: isinstance(v, (dict, list))).any()
+        c for c in df.columns if df[c].map(lambda v: isinstance(v, dict | list)).any()
     ]
     logger.warning(f"{name} nested columns (dict/list): {nested}")
     return df
