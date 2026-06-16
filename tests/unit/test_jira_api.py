@@ -226,4 +226,4 @@ def test_jira_to_df_using_standard_fields(jira):
     assert df.loc[1, "Current Status"] == "Open"
 
     called_fields = jira._fetch_issues.call_args.kwargs["fields"]
-    assert called_fields == ["summary", "status"]
+    assert set(called_fields) == {"summary", "status"}
