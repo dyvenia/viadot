@@ -96,8 +96,8 @@ def test_fetch_token(jira):
         payload = mock_post.call_args.kwargs["json"]
         assert payload["grant_type"] == "client_credentials"
         assert payload["client_id"] == "test-id"
-        assert payload["client_secret"] == "test-secret"
-        assert jira._access_token == "abc123"
+        assert payload["client_secret"] == "test-secret"  # noqa: S105
+        assert jira._access_token == "abc123"  # noqa: S105
 
 
 def test_headers_contain_bearer_token(jira):
