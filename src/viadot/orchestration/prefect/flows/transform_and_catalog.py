@@ -348,8 +348,6 @@ def transform_and_catalog(  # noqa: PLR0913 | Complexity complaints - should be 
         - build all models in a folder:
             `dbt_select={"build": "models.intermediate"}`
     """
-    logger = get_run_logger()
-
     # Clone the dbt project.
     dbt_repo_url_value = dbt_repo_url or get_credentials(dbt_repo_url_secret)
     if not isinstance(dbt_repo_url_value, str):
