@@ -19,7 +19,7 @@ dependencies = [
     "shapely>=1.8.0",
     "sqlalchemy==2.0.*",
     "lumacli>=0.2.8, <0.3.0",
-    "pygit2>=1.13.3, <1.15.0",
+    "pygit2>=1.13.3",
     "openpyxl>=3.1.0",
     "prefect>=3,<3.6",
     "prefect-sqlalchemy>=0.4.3",
