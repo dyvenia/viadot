@@ -217,7 +217,6 @@ def transform_and_catalog(  # noqa: PLR0913 | Complexity complaints - should be 
     additional_recipients: list[str] | None = None,
     notification_recipients: list[str] | None = None,
     smtp_credential_secret: str | None = None,
-    gh_action_actor: str | None = None,
     *,
     timeout_seconds: int = DEFAULT_TIMEOUT_SECONDS,
 ) -> State | None:
@@ -303,8 +302,6 @@ def transform_and_catalog(  # noqa: PLR0913 | Complexity complaints - should be 
             Defaults to None.
         smtp_credential_secret (str | None, optional): The name of the secret block in
             Prefect holding SMTP credentials. Defaults to None.
-        gh_action_actor (str, optional): GitHub Actions actor that triggered the
-            workflow. Defaults to None.
         timeout_seconds (int): Maximum runtime for the flow and each spawned dbt task.
             Defaults to 7200.
 
@@ -351,11 +348,6 @@ def transform_and_catalog(  # noqa: PLR0913 | Complexity complaints - should be 
         - build all models in a folder:
             `dbt_select={"build": "models.intermediate"}`
     """
-    logger = get_run_logger()
-
-    if gh_action_actor:
-        logger.info(f"Triggered by GitHub Actions actor: {gh_action_actor}")
-
     # Clone the dbt project.
     dbt_repo_url_value = dbt_repo_url or get_credentials(dbt_repo_url_secret)
     if not isinstance(dbt_repo_url_value, str):

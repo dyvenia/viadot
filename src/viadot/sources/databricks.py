@@ -14,7 +14,7 @@ except ModuleNotFoundError as e:
     msg = "Missing required modules to use Databricks source."
     raise ImportError(msg) from e
 
-from pydantic import BaseModel, root_validator
+from pydantic import BaseModel, model_validator
 
 from viadot.config import get_source_credentials
 from viadot.exceptions import (
@@ -40,8 +40,9 @@ class DatabricksCredentials(BaseModel):
     )  # The ID of the Databricks organization to which the cluster belongs. Not required when using Spark Connect.
     token: str  # The access token which will be used to connect to the cluster.
 
-    @root_validator(pre=True)
-    def is_configured(cls, credentials: dict) -> dict:  # noqa: N805, D102
+    @model_validator(mode="before")
+    @classmethod
+    def is_configured(cls, credentials: dict) -> dict:  # noqa: D102
         host = credentials.get("host")
         cluster_id = credentials.get("cluster_id")
         token = credentials.get("token")

@@ -15,7 +15,7 @@ except ModuleNotFoundError as e:
 
 from typing import Any
 
-from pydantic import BaseModel, root_validator
+from pydantic import BaseModel, model_validator
 
 from viadot.config import get_source_credentials
 from viadot.exceptions import CredentialError
@@ -42,8 +42,9 @@ class RedshiftSpectrumCredentials(BaseModel):
     credentials_secret: str | None = None
     iam_role: str | None = None  # The IAM role to assume. Used by `create_schema()`.
 
-    @root_validator(pre=True)
-    def is_configured(cls, credentials: dict[str, Any]) -> dict[str, Any]:  # noqa: N805
+    @model_validator(mode="before")
+    @classmethod
+    def is_configured(cls, credentials: dict[str, Any]) -> dict[str, Any]:
         """Validate the credentials configuration."""
         profile_name = credentials.get("profile_name")
         region_name = credentials.get("region_name")

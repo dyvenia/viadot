@@ -5,7 +5,7 @@ import re
 import zipfile
 
 import pendulum
-from pydantic import BaseModel, SecretStr, root_validator
+from pydantic import BaseModel, SecretStr, model_validator
 import smbclient
 import smbprotocol
 
@@ -19,8 +19,9 @@ class SMBCredentials(BaseModel):
     username: str  # username (e.g username@tenant_name.com)
     password: SecretStr
 
-    @root_validator(pre=True)
-    def is_configured(cls, credentials: dict) -> dict:  # noqa: N805
+    @model_validator(mode="before")
+    @classmethod
+    def is_configured(cls, credentials: dict) -> dict:
         """Validate that both username and password are provided.
 
         This method is a Pydantic root validator that checks if both

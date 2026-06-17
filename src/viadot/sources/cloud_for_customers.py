@@ -6,7 +6,7 @@ from typing import Any, Literal
 from urllib.parse import urljoin
 
 import pandas as pd
-from pydantic import BaseModel, SecretStr, root_validator
+from pydantic import BaseModel, SecretStr, model_validator
 import requests
 
 from viadot.config import get_source_credentials
@@ -29,8 +29,8 @@ class CloudForCustomersCredentials(BaseModel):
     url: str | None = None  # The URL to extract records from.
     report_url: str | None = None  # The URL of a prepared report.
 
+    @model_validator(mode="before")
     @classmethod
-    @root_validator(pre=True)
     def is_configured(cls, credentials: dict) -> dict:
         """Validate Credentials.
 
@@ -128,8 +128,8 @@ class CloudForCustomers(Source):
         Returns:
             meta_url (str): The URL to fetch metadata from.
         """
-        start = url.split(".svc")[0]
-        url_raw = url.split("?")[0]
+        start = url.split(".svc", maxsplit=1)[0]
+        url_raw = url.split("?", maxsplit=1)[0]
         end = url_raw.split("/")[-1]
         return start + ".svc/$metadata?entityset=" + end
 
