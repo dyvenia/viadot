@@ -97,6 +97,11 @@ class Jira(Source):
         return self._access_token
 
     def _get_cloud_id(self) -> str:
+        """Get the cloud ID for the Jira instance associated with the access token.
+
+        Returns:
+            str: The cloud ID for the Jira instance.
+        """
         if self._cloud_id:
             return self._cloud_id
         token = self._get_access_token()
@@ -116,6 +121,16 @@ class Jira(Source):
         }
 
     def _api_call(self, endpoint: str, params: dict | None = None) -> dict:
+        """Make an API call to the Jira REST API v3.
+
+        Args:
+            endpoint (str): The API endpoint to call, e.g. "search/jql".
+            params (dict, optional): Query parameters for the API call.
+                    Defaults to None.
+
+        Returns:
+            dict: The JSON response from the API call.
+        """
         cloud_id = self._get_cloud_id()
         url = f"https://api.atlassian.com/ex/jira/{cloud_id}/rest/api/3/{endpoint}"
         response = handle_api_response(
@@ -127,12 +142,26 @@ class Jira(Source):
         return response.json()
 
     def _fetch_fields(self) -> list[dict[str, Any]]:
+        """Fetch all fields from the Jira instance.
+
+        Returns:
+            list[dict]: List of field objects from the Jira API.
+        """
         response = self._api_call("field")
         if isinstance(response, list):
             return response
         return response.get("values", [])
 
     def _fetch_issues(self, jql: str, fields: list[str]) -> list[dict]:
+        """Fetch Jira issues based on a JQL query and specified fields.
+
+        Args:
+            jql (str): JQL query string, e.g. 'project = MYPROJ AND status = Open'.
+            fields (list[str]): List of field names to fetch.
+
+        Returns:
+            list[dict]: List of issue objects from the Jira API.
+        """
         all_issues = []
         next_page_token = None
 
@@ -167,13 +196,16 @@ class Jira(Source):
 
         Args:
             jql (str): JQL query.
-            fields (list[str]): List of field names to include in the DataFrame.
-            technical_fields: Raw Jira field ids (e.g. "summary",
-                "customfield_16187"). If provided, issues are fetched directly
-                and returned without any name resolution. Column names keep the
-                raw ids and values are returned exactly as Jira sends them.
-            custom_field_mapping (dict[str, str] | None): Optional mapping of custom
-                field names to their corresponding Jira field IDs.
+            fields (list[str] | None, optional): List of field names to include
+                in the DataFrame. Defaults to None.
+            technical_fields (list[str] | None, optional): Raw Jira field ids
+                (e.g. "summary", "customfield_16187"). If provided, issues are
+                fetched directly and returned without any name resolution. Column
+                names keep the raw ids and values are returned exactly as Jira
+                sends them. Defaults to None.
+            custom_field_mapping (dict[str, str] | None, optional): Mapping of
+                custom field names to their corresponding Jira field IDs.
+                Defaults to None.
 
         Returns:
             pd.DataFrame: Flat DataFrame with renamed columns.
