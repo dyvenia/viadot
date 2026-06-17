@@ -20,7 +20,7 @@ from .genesys_to_adls import genesys_to_adls
 from .hubspot_to_adls import hubspot_to_adls
 from .hubspot_to_redshift_spectrum import hubspot_to_redshift_spectrum
 from .informix_to_redshift_spectrum import informix_to_redshift_spectrum
-from .jira_issues_to_redshift_spectrum import jira_to_redshift_spectrum_flow
+from .jira_issues_to_redshift_spectrum import jira_issues_to_redshift_spectrum
 from .matomo_to_redshift_spectrum import matomo_to_redshift_spectrum
 from .mediatool_to_adls import mediatool_to_adls
 from .mindful_to_adls import mindful_to_adls
