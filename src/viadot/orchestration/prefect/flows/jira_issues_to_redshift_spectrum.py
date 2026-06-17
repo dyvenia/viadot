@@ -89,10 +89,10 @@ def jira_issues_to_redshift_spectrum_flow(  # noqa: PLR0913
             AWS credentials. Defaults to None.
         credentials_secret (str | None, optional): Name of the AWS secret
                 in the secrets manager. Defaults to None.
-        jira_credentials_secret (str | None, optional): Name of the AWS secret containing
-                Jira credentials. Defaults to None.
-        custom_field_mapping (dict[str, str] | None, optional): Optional mapping of custom
-                field names to their corresponding Jira field IDs, e.g.
+        jira_credentials_secret (str | None, optional): Name of the AWS secret
+                containing Jira credentials. Defaults to None.
+        custom_field_mapping (dict[str, str] | None, optional): Optional mapping
+                of custom field names to their corresponding Jira field IDs, e.g.
                 Defaults to None.
 
     Returns:
