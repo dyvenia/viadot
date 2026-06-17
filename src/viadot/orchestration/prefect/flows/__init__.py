@@ -73,7 +73,7 @@ __all__ = [
     "hubspot_to_adls",
     "hubspot_to_redshift_spectrum",
     "informix_to_redshift_spectrum",
-    "jira_to_redshift_spectrum_flow",
+    "jira_issues_to_redshift_spectrum",
     "matomo_to_redshift_spectrum",
     "mediatool_to_adls",
     "mindful_to_adls",
