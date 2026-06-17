@@ -59,34 +59,45 @@ def jira_issues_to_redshift_spectrum_flow(  # noqa: PLR0913
     credentials_secret: str | None = None,
     jira_credentials_secret: str | None = None,
     custom_field_mapping: dict[str, str] | None = None,
-) -> pd.DataFrame:
+) -> None:
     """Fetch Jira issues and load them into Redshift Spectrum.
 
     Args:
         jql (str): JQL query, e.g. 'project = MYPROJ AND status = Open'.
-        fields (list[str]): Human-readable Jira field names to fetch.
-        technical_fields: Raw Jira field ids (e.g. "summary",
-                "customfield_16187"). If provided, issues are fetched directly
-                and returned without any name resolution. Column names keep the
+        fields (list[str] | None, optional): Human-readable Jira field names to fetch.
+                Defaults to None.
+        technical_fields (list[str] | None, optional): Raw Jira field ids
+                (e.g. "summary", "customfield_16187"). If provided, issues are fetched
+                directly and returned without any name resolution. Column names keep the
                 raw ids and values are returned exactly as Jira sends them.
-        to_path (str): S3 destination path, e.g. 's3://my-bucket/jira/issues/'.
-        schema_name (str): Redshift Spectrum schema name.
-        table (str): Target table name.
+                Defaults to None.
+        to_path (str | None, optional): S3 destination path, e.g. 's3://my-bucket/jira/issues/'.
+                Defaults to None.
+        schema_name (str | None, optional): Redshift Spectrum schema name.
+                Defaults to None.
+        table (str | None, optional): Target table name. Defaults to None.
         extension (str): File extension for the output files. Defaults to '.parquet'.
-        if_exists (str): Behaviour when the table already exists.
-            One of 'overwrite', 'append', 'skip'. Defaults to 'overwrite'.
+        if_exists (Literal["overwrite", "append", "skip"], optional): Behaviour
+                when the table already exists. Defaults to 'overwrite'.
         partition_cols (list[str] | None): Columns to partition the output by.
-        compression (str | None): Compression codec, e.g. 'snappy'.
-        aws_sep (str): CSV separator (used when extension is '.csv'). Defaults to ','.
-        aws_config_key (str | None): viadot config key for AWS credentials.
-        credentials_secret (str | None): Name of the AWS secret in the secrets manager.
-        jira_credentials_secret (str | None): Name of the AWS secret containing
-            Jira credentials.
-        custom_field_mapping (dict[str, str] | None): Optional mapping of custom
-            field names to their corresponding Jira field IDs, e.g.
+                Defaults to None.
+        compression (str | None, optional): Compression codec, e.g. 'snappy'.
+                Defaults to None.
+        aws_sep (str, optional): CSV separator (used when extension is '.csv').
+                Defaults to ','.
+        aws_config_key (str, optional): The key in the viadot config holding relevant
+            AWS credentials. Defaults to None.
+        credentials_secret (str | None, optional): Name of the AWS secret
+                in the secrets manager. Defaults to None.
+        jira_credentials_secret (str | None, optional): Name of the AWS secret containing
+                Jira credentials. Defaults to None.
+        custom_field_mapping (dict[str, str] | None, optional): Optional mapping of custom
+                field names to their corresponding Jira field IDs, e.g.
+                Defaults to None.
 
     Returns:
-        pd.DataFrame: The fetched DataFrame (for testing / downstream use).
+        None: This flow does not return any value.
+                It fetches Jira issues and loads them into Redshift Spectrum.
     """
     logger = get_run_logger()
     df = jira_issues_to_df(
@@ -103,6 +114,19 @@ def jira_issues_to_redshift_spectrum_flow(  # noqa: PLR0913
     )
     for col in df.columns:
         if df[col].apply(lambda x: isinstance(x, dict | list)).any():
+            df[col] = df[col].astype(str)
+
+    complex_type_cols = [
+        col
+        for col in df.columns
+        if df[col].apply(lambda x: isinstance(x, dict | list)).any()
+    ]
+
+    if complex_type_cols:
+        logger.info(
+            f"Columns with complex data types (dicts/lists) that were converted to strings: {complex_type_cols}"
+        )
+        for col in complex_type_cols:
             df[col] = df[col].astype(str)
 
     logger.info("Loading data into Redshift Spectrum.")
