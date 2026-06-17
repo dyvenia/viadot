@@ -43,7 +43,7 @@ def log_df_schema(df: pd.DataFrame, name: str = "log_df_schema") -> pd.DataFrame
 )
 @with_flow_timeout_param()
 @with_state_tracking_and_downstream_triggering(node_name_param="table")
-def jira_issues_to_redshift_spectrum_flow(  # noqa: PLR0913
+def jira_issues_to_redshift_spectrum(  # noqa: PLR0913
     jql: str,
     fields: list[str] | None = None,
     technical_fields: list[str] | None = None,
