@@ -7294,7 +7294,7 @@ wheels = [
 
 [[package]]
 name = "viadot2"
-version = "2.9.2"
+version = "2.9.3"
 source = { editable = "." }
 dependencies = [
     { name = "aiohttp" },
@@ -7422,7 +7422,7 @@ requires-dist = [
     { name = "o365", specifier = ">=2.0.36" },
     { name = "office365-rest-python-client", specifier = "==2.6.2" },
     { name = "openpyxl", specifier = ">=3.1.0" },
-    { name = "pandas", specifier = ">=2.0.0" },
+    { name = "pandas", specifier = ">=2.0.0,<3.0.0" },
     { name = "pandas-gbq", specifier = "==0.23.1" },
     { name = "paramiko", specifier = ">=3.5.0,<4" },
     { name = "pendulum", specifier = ">=2.1.2" },
