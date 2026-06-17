@@ -21,7 +21,7 @@ except ModuleNotFoundError:
 import json
 
 import pandas as pd
-from pydantic import BaseModel, root_validator
+from pydantic import BaseModel, model_validator
 
 from viadot.config import get_source_credentials
 from viadot.exceptions import CredentialError
@@ -34,8 +34,9 @@ class S3Credentials(BaseModel):
     aws_secret_access_key: str  # The AWS secret access key.
     profile_name: str | None = None  # The name of the IAM profile to use.
 
-    @root_validator(pre=True)
-    def is_configured(cls, credentials: dict) -> dict:  # noqa: N805
+    @model_validator(mode="before")
+    @classmethod
+    def is_configured(cls, credentials: dict) -> dict:
         """Validate credentials.
 
         Ensure that at least one of the
