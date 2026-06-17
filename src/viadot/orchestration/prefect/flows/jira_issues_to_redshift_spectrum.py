@@ -18,7 +18,15 @@ from viadot.orchestration.prefect.utils import (
 
 @task
 def log_df_schema(df: pd.DataFrame, name: str = "log_df_schema") -> pd.DataFrame:
-    """Log the shape and dtypes of a DataFrame, and identify any nested columns."""
+    """Log the shape and dtypes of a DataFrame, and identify any nested columns.
+
+    Args:
+        df (pd.DataFrame): The DataFrame to log.
+        name (str): Name to use in the log messages. Defaults to "log_df_schema".
+
+    Returns:
+        pd.DataFrame: The same DataFrame that was passed in.
+    """
     logger = get_run_logger()
     logger.info(f"{name} shape={df.shape}")
     logger.info(f"{name} dtypes:\n{df.dtypes.to_string()}")
