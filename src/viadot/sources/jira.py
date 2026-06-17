@@ -249,7 +249,6 @@ class Jira(Source):
         if field_name in self._STANDARD_FIELDS:
             return self._STANDARD_FIELDS[field_name]
 
-        # custom fields
         field = field_map.get(field_name)
         if not field:
             return None
