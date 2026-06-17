@@ -83,7 +83,7 @@ def jira_issues_to_redshift_spectrum(  # noqa: PLR0913
                 Defaults to None.
         compression (str | None, optional): Compression codec, e.g. 'snappy'.
                 Defaults to None.
-        aws_sep (str, optional): CSV separator (used when extension is '.csv').
+        aws_sep (str, optional): CSV separator (used when extension is 'csv').
                 Defaults to ','.
         aws_config_key (str, optional): The key in the viadot config holding relevant
             AWS credentials. Defaults to None.
