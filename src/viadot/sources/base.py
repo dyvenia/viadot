@@ -231,7 +231,7 @@ class SQL(Source):
             pyodbc.Connection: database connection.
         """
         if not self._con:
-            self._con = pyodbc.connect(self.conn_str, timeout=5)
+            self._con = pyodbc.connect(self.conn_str, timeout=15)
             self._con.timeout = self.query_timeout
         return self._con
 
