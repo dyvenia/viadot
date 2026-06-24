@@ -157,7 +157,6 @@ class TestOutlook(unittest.TestCase):
         df.drop(
             columns=["_viadot_source", "_viadot_downloaded_at_utc"],
             inplace=True,
-            axis=1,
         )
 
         expected_df = pd.DataFrame(

@@ -117,7 +117,6 @@ class TestMindful(unittest.TestCase):
         result_df.drop(
             columns=["_viadot_source", "_viadot_downloaded_at_utc"],
             inplace=True,
-            axis=1,
         )
         expected_df = pd.DataFrame({"A": [1, 2], "B": [3, 4]})
 

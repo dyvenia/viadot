@@ -176,7 +176,6 @@ class TestHubspot(unittest.TestCase):
         result_df.drop(
             columns=["_viadot_source", "_viadot_downloaded_at_utc"],
             inplace=True,
-            axis=1,
         )
 
         expected_df = pd.DataFrame([{"id": "123"}])
@@ -195,7 +194,6 @@ class TestHubspot(unittest.TestCase):
             result_df.drop(
                 columns=["_viadot_source", "_viadot_downloaded_at_utc"],
                 inplace=True,
-                axis=1,
             )
             mock_handle_if_empty.assert_called_once_with(
                 if_empty="warn", message="The response does not contain any data."

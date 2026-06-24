@@ -3,6 +3,7 @@
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
+import numpy as np
 import pandas as pd
 import pytest
 import requests
@@ -89,7 +90,7 @@ def test_parse_xml(ecb_instance, sample_ecb_response):
     assert str(df["time"][0].date()) == "2025-12-30"
 
     # Check that currency values are strings
-    assert df["currency"].dtype == "object"
+    assert df["currency"].dtype == pd.StringDtype(na_value=np.nan)
 
     # Check that rate values are numeric
     assert pd.api.types.is_numeric_dtype(df["rate"])

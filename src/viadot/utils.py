@@ -1100,7 +1100,11 @@ def df_converts_bytes_to_int(df: pd.DataFrame) -> pd.DataFrame:
     Returns:
         pd.DataFrame: Data Frame after convert
     """
-    return df.applymap(lambda x: int(x) if isinstance(x, bytes) else x)
+    return df.apply(
+        lambda col: col.map(
+            lambda x: int(x) if isinstance(x, (bytes | bytearray)) else x
+        )
+    )
 
 
 def df_clean_column(
@@ -1116,22 +1120,14 @@ def df_clean_column(
     pd.DataFrame: The cleaned DataFrame
     """
     df = df.copy()
+    pattern = r"\t|\n|\r"
 
     if columns_to_clean is None:
-        df.replace(
-            to_replace=[r"\\t|\\n|\\r", "\t|\n|\r"],
-            value=["", ""],
-            regex=True,
-            inplace=True,
-        )
-    else:
-        for col in columns_to_clean:
-            df[col].replace(
-                to_replace=[r"\\t|\\n|\\r", "\t|\n|\r"],
-                value=["", ""],
-                regex=True,
-                inplace=True,
-            )
+        return df.replace(to_replace=pattern, value="", regex=True)
+
+    for col in columns_to_clean:
+        df[col] = df[col].replace(to_replace=pattern, value="", regex=True)
+
     return df
 
 

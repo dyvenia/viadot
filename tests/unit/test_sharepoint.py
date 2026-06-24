@@ -1,6 +1,7 @@
 from io import BytesIO
 from unittest.mock import patch
 
+import numpy as np
 from openpyxl import Workbook
 import pandas as pd
 import pytest
@@ -268,7 +269,7 @@ def test__parse_excel_string_dtypes(sharepoint_mock):
     result_df = sharepoint_mock._parse_excel(excel_file, sheet_name="Sheet1")
 
     for column in result_df.columns:
-        assert result_df[column].dtype == object
+        assert result_df[column].dtype == pd.StringDtype(na_value=np.nan)
 
 
 def test__load_and_parse_not_valid_extension(sharepoint_mock):
@@ -318,14 +319,8 @@ def test_scan_sharepoint_folder_valid_url(sharepoint_mock):
 
     with patch.object(Sharepoint, "get_client", return_value=_FakeClient()):
         expected_files = [
-            (
-                "https://company.sharepoint.com/sites/site_name/"
-                "final_folder/file1.txt"
-            ),
-            (
-                "https://company.sharepoint.com/sites/site_name/"
-                "final_folder/file2.txt"
-            ),
+            ("https://company.sharepoint.com/sites/site_name/final_folder/file1.txt"),
+            ("https://company.sharepoint.com/sites/site_name/final_folder/file2.txt"),
         ]
 
         result = sharepoint_mock.scan_sharepoint_folder(url)
