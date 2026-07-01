@@ -1,6 +1,6 @@
 [project]
 name = "viadot2"
-version = "2.9.4"
+version = "2.10.0"
 description = "A simple data ingestion library to guide data flows from some places to other places."
 authors = [
     { name = "acivitillo", email = "acivitillo@dyvenia.com" },
@@ -71,7 +71,7 @@ aws = [
     "jaydebeapi>=1.2.3,<2.0.0", # informix related library
     "JPype1>=1.5.0,<2.0.0", # informix related library
 ]
-sap = ["pyrfc==3.3.1"]
+sap = ["sap-rfc-connector==0.3.7"]
 
 [dependency-groups]
 dev = [

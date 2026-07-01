@@ -5835,20 +5835,6 @@ wheels = [
 ]
 
 [[package]]
-name = "pyrfc"
-version = "3.3.1"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/8e/b5/1018f4016959299ee812db77ebc9aa7dfb6136f2f24e4471deb22fdd120a/pyrfc-3.3.1.tar.gz", hash = "sha256:f04eb881f5747b4a4e13150dd62e011c0abddb8f392239be76000b7b6437c7cd", size = 354707, upload-time = "2024-01-09T09:38:13.555Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/34/cd/2c47dc589e8864e0b17d034fce57837ca20b9602450fb90c8884960ce8ad/pyrfc-3.3.1-cp310-cp310-macosx_13_0_arm64.whl", hash = "sha256:c67955f1e5991e16678c47810fa53071a7fe4c75f3efb6a46a3bea0fb02b26a1", size = 236465, upload-time = "2024-01-09T09:38:05.956Z" },
-    { url = "https://files.pythonhosted.org/packages/3a/78/ab8e7b244f3d1b24575a5431f5f7c7a2e440cf47691b09b1b37a65a63ec5/pyrfc-3.3.1-cp310-cp310-win_amd64.whl", hash = "sha256:17b3b58055f5d50ce2e31b371ac34859300b77e9fcb764a085074532e0fce15d", size = 869211, upload-time = "2024-01-09T09:37:55.128Z" },
-    { url = "https://files.pythonhosted.org/packages/96/1b/24a92778ffb9389d26c1a1d001eb1cb074a64a97a5a76ee28a8e629fa6bc/pyrfc-3.3.1-cp311-cp311-macosx_14_0_arm64.whl", hash = "sha256:bee43ec984f3757dba355d540ea3011c82e06a324b4c382503e4856248496cb8", size = 237011, upload-time = "2024-01-09T09:38:07.337Z" },
-    { url = "https://files.pythonhosted.org/packages/39/f2/4fb9ed37ea3fed47cc322e5cc36c3620c704e75ae85418b7e5c15b8f4db8/pyrfc-3.3.1-cp311-cp311-win_amd64.whl", hash = "sha256:fc8115d9a6e12c34199a6add47c57f5e875749b6a76a068f82219b5e45cf7995", size = 894922, upload-time = "2024-01-09T09:37:57.123Z" },
-    { url = "https://files.pythonhosted.org/packages/a7/cb/a5fa933447f04714f1f6b4bba8ead54815085936d5c3e64b686314d4ac8f/pyrfc-3.3.1-cp312-cp312-macosx_14_0_arm64.whl", hash = "sha256:13eb9e799ac9b71a1145b7e21a667bf74b5b1092f4328961b72203f5e93dcacc", size = 229832, upload-time = "2024-01-09T09:38:09.404Z" },
-    { url = "https://files.pythonhosted.org/packages/1f/05/39579c91304efd793ea346e204d7d059e7ecdf828fdc7944714798df3abe/pyrfc-3.3.1-cp312-cp312-win_amd64.whl", hash = "sha256:9bc668c47b998a8a79d89d5dbd3eaf108b87a1e4b81ba23057aba3931e50918c", size = 838249, upload-time = "2024-01-09T09:37:59.976Z" },
-]
-
-[[package]]
 name = "pyspnego"
 version = "0.12.1"
 source = { registry = "https://pypi.org/simple" }
@@ -6896,6 +6882,15 @@ wheels = [
 ]
 
 [[package]]
+name = "sap-rfc-connector"
+version = "0.3.7"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/09/a1/097d20cabd63f1fbad06694fe9c99efe4122c64f514046b6d5492109a010/sap_rfc_connector-0.3.7.tar.gz", hash = "sha256:dc4f300d4088d6262599f6b5ac49057a0e810e2ba82c22d0d2feaddd01d058f8", size = 12673, upload-time = "2026-06-03T09:49:37.916Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/69/b7/557e6ae4238e7055a95126f28325e64cf5accb7d045108607196a6acabed/sap_rfc_connector-0.3.7-cp310-cp310-manylinux_2_28_x86_64.whl", hash = "sha256:3ab359fa466503988f180832d52c9b5ca306e6e33dbc219300e26eba4e1577d2", size = 4257177, upload-time = "2026-06-03T09:49:36.419Z" },
+]
+
+[[package]]
 name = "scipy"
 version = "1.15.3"
 source = { registry = "https://pypi.org/simple" }
@@ -7871,7 +7866,7 @@ wheels = [
 
 [[package]]
 name = "viadot2"
-version = "2.9.4"
+version = "2.10.0"
 source = { editable = "." }
 dependencies = [
     { name = "aiohttp" },
@@ -7943,7 +7938,7 @@ databricks = [
     { name = "databricks-connect" },
 ]
 sap = [
-    { name = "pyrfc" },
+    { name = "sap-rfc-connector" },
 ]
 
 [package.dev-dependencies]
@@ -8018,9 +8013,9 @@ requires-dist = [
     { name = "pydantic", specifier = ">=2.0.0,<3" },
     { name = "pygit2", specifier = ">=1.13.3" },
     { name = "pyodbc", specifier = ">=5.1.0" },
-    { name = "pyrfc", marker = "extra == 'sap'", specifier = "==3.3.1" },
     { name = "requests", specifier = ">=2.32.3" },
     { name = "s3fs", marker = "extra == 'aws'", specifier = ">=2024.6.0" },
+    { name = "sap-rfc-connector", marker = "extra == 'sap'", specifier = "==0.3.7" },
     { name = "sendgrid", specifier = ">=6.11.0" },
     { name = "shapely", specifier = ">=1.8.0" },
     { name = "simple-salesforce", specifier = "==1.12.6" },
