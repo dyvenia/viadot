@@ -15,7 +15,8 @@ import numpy as np
 from numpy.typing import ArrayLike
 import pandas as pd
 import pyarrow as pa
-#C++ SAP RFC connector
+
+# C++ SAP RFC connector
 import sap_rfc_connector
 
 
@@ -25,7 +26,14 @@ try:
 except ImportError:
     # Fallback for compatibility
     class ABAPApplicationError(Exception):
-        def __init__(self, key=None, *args, **kwargs):
+        def __init__(self, key: str | None = None, *args, **kwargs) -> None:
+            """Initialize the ABAPApplicationError exception.
+
+            Args:
+                key (str | None, optional): The SAP error key. Defaults to None.
+                *args: Additional positional arguments passed to the base Exception.
+                **kwargs: Additional keyword arguments passed to the base Exception.
+            """
             super().__init__(*args, **kwargs)
             self.key = key
 
@@ -319,7 +327,6 @@ class SAPRFC(Source):
         self,
         function_name: str,
         description: None | Literal["short", "long"] = "short",
-        *args,
     ) -> list[str] | pd.DataFrame:
         """Get the description for a SAP RFC function.
 
@@ -658,10 +665,8 @@ class SAPRFC(Source):
 
     def call(self, func: str, *args, **kwargs) -> dict[str, Any]:
         """Call a SAP RFC function."""
-        func_caller = sap_rfc_connector.SapFunctionCaller(self.con)   
-        result = func_caller.call(func, *args, **kwargs)
-
-        return result
+        func_caller = sap_rfc_connector.SapFunctionCaller(self.con)
+        return func_caller.call(func, *args, **kwargs)
 
     def _get_alias(self, column: str) -> str:
         return self.aliases_keyed_by_columns.get(column, column)
