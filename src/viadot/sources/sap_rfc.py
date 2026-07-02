@@ -15,15 +15,28 @@ import numpy as np
 from numpy.typing import ArrayLike
 import pandas as pd
 import pyarrow as pa
-import pyrfc
+
+# C++ SAP RFC connector
+import sap_rfc_connector
 
 
+# Import ABAPApplicationError for exception handling
 try:
-    import pyrfc
-    from pyrfc._exception import ABAPApplicationError
-except ModuleNotFoundError as e:
-    msg = "Missing required modules to use SAPRFC source."
-    raise ImportError(msg) from e
+    from sap_rfc_connector import ABAPApplicationError
+except ImportError:
+    # Fallback for compatibility
+    class ABAPApplicationError(Exception):
+        def __init__(self, key: str | None = None, *args, **kwargs) -> None:
+            """Initialize the ABAPApplicationError exception.
+
+            Args:
+                key (str | None, optional): The SAP error key. Defaults to None.
+                *args: Additional positional arguments passed to the base Exception.
+                **kwargs: Additional keyword arguments passed to the base Exception.
+            """
+            super().__init__(*args, **kwargs)
+            self.key = key
+
 
 from sql_metadata import Parser
 
@@ -291,11 +304,11 @@ class SAPRFC(Source):
             self.rfc_unique_id = None
 
     @property
-    def con(self) -> pyrfc.Connection:
-        """The pyRFC connection to SAP."""
+    def con(self) -> sap_rfc_connector.SapRfcConnector:
+        """The C+++ connection to SAP."""
         if self._con is not None:
             return self._con
-        con = pyrfc.Connection(**self.credentials)
+        con = sap_rfc_connector.SapRfcConnector(**self.credentials)
         self._con = con
         return con
 
@@ -307,14 +320,13 @@ class SAPRFC(Source):
 
     def close_connection(self) -> None:
         """Close the SAP RFC connection."""
-        self.con.close()
+        self.con.close_connection()
         self.logger.info("Connection has been closed successfully.")
 
     def get_function_parameters(
         self,
         function_name: str,
         description: None | Literal["short", "long"] = "short",
-        *args,
     ) -> list[str] | pd.DataFrame:
         """Get the description for a SAP RFC function.
 
@@ -335,7 +347,8 @@ class SAPRFC(Source):
             msg = "Incorrect value for 'description'. Correct values: None, 'short', 'long'."
             raise ValueError(msg)
 
-        descr = self.con.get_function_description(function_name, *args)
+        func_caller = sap_rfc_connector.SapFunctionCaller(self.con)
+        descr = func_caller.get_function_description(function_name)
         param_names = [param["name"] for param in descr.parameters]
         detailed_params = descr.parameters
         filtered_detailed_params = [
@@ -652,7 +665,8 @@ class SAPRFC(Source):
 
     def call(self, func: str, *args, **kwargs) -> dict[str, Any]:
         """Call a SAP RFC function."""
-        return self.con.call(func, *args, **kwargs)
+        func_caller = sap_rfc_connector.SapFunctionCaller(self.con)
+        return func_caller.call(func, *args, **kwargs)
 
     def _get_alias(self, column: str) -> str:
         return self.aliases_keyed_by_columns.get(column, column)
