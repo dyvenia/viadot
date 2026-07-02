@@ -75,109 +75,24 @@ class StateHandler:
         self.store = store
 
     @staticmethod
-    def _parse_sla(sla_str: str) -> timedelta | relativedelta | time:
-        """Parse a human-readable SLA string.
-
-        Parses the SLA string into a ``timedelta`` (period), ``relativedelta``
-        (calendar period), or a ``time`` (wall-clock deadline).
-
-        Supported formats:
-        - Hours:      ``"24 hours"``, ``"24h"``
-        - Minutes:    ``"30 minutes"``, ``"30m"``
-        - Days:       ``"7 days"``, ``"7d"``
-        - Months:     ``"1 month"``, ``"2months"``, ``"1mo"``
-        - Years:      ``"1 year"``, ``"2years"``, ``"1yr"``, ``"1y"``
-        - Wall-clock: ``"10:00"``, ``"14:30"``
-        """
-        logger.info("Parsing SLA configuration.")
-        sla_str = sla_str.strip()
-
-        # Years — must be matched BEFORE single-char 'y' conflicts
-        yr = re.fullmatch(r"(\d+(?:\.\d+)?)\s*(?:years?|yr?|y)", sla_str, re.IGNORECASE)
-        if yr:
-            return relativedelta(years=int(float(yr.group(1))))
-
-        # Months — must be matched BEFORE single-char 'm' (minutes)
-        mo = re.fullmatch(r"(\d+(?:\.\d+)?)\s*(?:months?|mo)", sla_str, re.IGNORECASE)
-        if mo:
-            return relativedelta(months=int(float(mo.group(1))))
-
-        # Hours, minutes, days
-        m = re.fullmatch(
-            r"(\d+(?:\.\d+)?)\s*(hours?|hr?|minutes?|mins?|days?|[hmd])",
-            sla_str,
-            re.IGNORECASE,
-        )
-        if m:
-            value, unit = float(m.group(1)), m.group(2)[0].lower()
-            if unit == "h":
-                return timedelta(hours=value)
-            if unit == "m":
-                return timedelta(minutes=value)
-            if unit == "d":
-                return timedelta(days=value)
-
-        # Wall-clock format HH:MM
-        wc = re.fullmatch(r"(\d{1,2}):(\d{2})", sla_str)
-        if wc:
-            return time(hour=int(wc.group(1)), minute=int(wc.group(2)))
-
-        msg = f"Cannot parse SLA: {sla_str!r}"
-        raise ValueError(msg)
-
-    @staticmethod
-    def _calc_fresh_until_from_crons(crons: list, now: datetime) -> str | None:
-        """Return the earliest next cron run time as an ISO string, or None."""
-        next_times = []
-        for c in crons:
-            if isinstance(c, dict):
-                tz = ZoneInfo(c.get("timezone", "UTC"))
-                c_iter = croniter(c["cron"], now.astimezone(tz))
-                next_times.append(c_iter.get_next(datetime).astimezone(timezone.utc))
-            else:
-                c_iter = croniter(c, now)
-                next_times.append(c_iter.get_next(datetime).astimezone(timezone.utc))
-        if not next_times:
-            return None
-        return min(next_times).isoformat()
-
-    @staticmethod
-    def _calc_fresh_until_from_sla(sla: str, now: datetime) -> str | None:
-        """Return the SLA-based fresh_until, or None if SLA is ignored."""
-        if sla.lower() in ("ignored", "n/a"):
-            return None
-
-        parsed_sla = StateHandler._parse_sla(sla)
-        if parsed_sla:
-            if isinstance(parsed_sla, timedelta | relativedelta):
-                return (now + parsed_sla).isoformat()
-            # Wall-clock SLA: use next occurrence of the wall-clock time
-            next_dt = now.replace(
-                hour=parsed_sla.hour, minute=parsed_sla.minute, second=0, microsecond=0
-            )
-            if next_dt <= now:
-                next_dt += timedelta(days=1)
-            return next_dt.isoformat()
-        return None
-
-    @staticmethod
     def _calc_fresh_until(
         node_type: str,
         schedules: list | None,
-        sla: str | None,
+        sla: str | list[str] | None,
         reference_time: datetime | None = None,
     ) -> str | None:
         """Calculate the fresh_until timestamp based on node type.
 
-        Sources use CRON schedules, while models use SLA rules (timedelta or
-        wall-clock).
+        Sources use CRON schedules, while models use SLA rules (timedelta,
+        wall-clock, cron string, or a list of cron strings).
 
         Args:
             node_type: The dbt node type (e.g. ``"source"`` or ``"model"``).
             schedules: List of Prefect schedules for sources. NOTE: currently, only
                 cron schedules are supported. The list can contain dicts with a
                 "cron" key or simple cron strings.
-            sla: SLA string (e.g. ``"24h"``, ``"10:00"``), or ``None``.
+            sla: SLA value (e.g. ``"24h"``, ``"10:00"``, ``"0 10 * * *"``,
+                or a list of cron expressions), or ``None``.
             reference_time: The UTC datetime to base calculations on. Defaults to
                 ``datetime.now(timezone.utc)``.
 
@@ -196,7 +111,7 @@ class StateHandler:
                 )
                 return None
             case "model":
-                if sla is not None:
+                if sla:
                     return StateHandler._calc_fresh_until_from_sla(sla, now)
                 logger.warning(
                     "No SLA found for model node; cannot calculate fresh_until. "
@@ -210,16 +125,173 @@ class StateHandler:
                 )
                 return None
 
+    @staticmethod
+    def _calc_fresh_until_from_crons(crons: list, now: datetime) -> str | None:
+        """Return the earliest next cron run time as an ISO string, or None."""
+        next_times = []
+        for c in crons:
+            if isinstance(c, dict):
+                tz = ZoneInfo(c.get("timezone", "UTC"))
+                c_iter = croniter(c["cron"], now.astimezone(tz))
+                next_times.append(c_iter.get_next(datetime).astimezone(timezone.utc))
+            else:
+                c_iter = croniter(c, now)
+                next_times.append(c_iter.get_next(datetime).astimezone(timezone.utc))
+        if not next_times:
+            return None
+        return min(next_times).isoformat()
+
+    @staticmethod
+    def _calc_fresh_until_from_sla(sla: str | list, now: datetime) -> str | None:
+        """Return the SLA-based fresh_until, or None if SLA is ignored."""
+        if isinstance(sla, str) and sla.strip().lower() in ("ignored", "n/a"):
+            return None
+
+        parsed_sla = StateHandler._parse_sla(sla)
+
+        # Cron-based SLA: calculate the next cron run time.
+        if isinstance(parsed_sla, list):
+            return StateHandler._calc_fresh_until_from_crons(parsed_sla, now)
+
+        # Period-based SLA: add the timedelta or relativedelta to the current time.
+        if isinstance(parsed_sla, timedelta | relativedelta):
+            return (now + parsed_sla).isoformat()
+
+        # Wall-clock SLA: use next occurrence of the wall-clock time
+        next_dt = now.replace(
+            hour=parsed_sla.hour, minute=parsed_sla.minute, second=0, microsecond=0
+        )
+        if next_dt <= now:
+            next_dt += timedelta(days=1)
+        return next_dt.isoformat()
+
+    @staticmethod
+    def _parse_sla(sla: str | list) -> timedelta | relativedelta | time | list:
+        """Parse an SLA value.
+
+        Parses SLA into one of:
+        - ``timedelta`` (period)
+        - ``relativedelta`` (calendar period)
+        - ``time`` (wall-clock deadline)
+        - ``list`` (normalized cron payload)
+
+        Supported formats:
+        - Hours:      ``"24 hours"``, ``"24h"``
+        - Minutes:    ``"30 minutes"``, ``"30m"``
+        - Days:       ``"7 days"``, ``"7d"``
+        - Months:     ``"1 month"``, ``"2months"``, ``"1mo"``
+        - Years:      ``"1 year"``, ``"2years"``, ``"1yr"``, ``"1y"``
+        - Wall-clock: ``"10:00"``, ``"14:30"``
+        - Cron:       ``"0 10 * * *"``, or a list of cron values
+        """
+        logger.info("Parsing SLA configuration...")
+
+        if not isinstance(sla, str | list):
+            msg = "SLA must be a string or a list of cron expressions."
+            raise TypeError(msg)
+
+        # Try each parser in order: cron, period, wall-clock. Return the first
+        # successful parse.
+        for parser in (
+            StateHandler._parse_cron_sla,
+            StateHandler._parse_period_sla,
+            StateHandler._parse_wallclock_sla,
+        ):
+            parsed_sla = parser(sla)  # type: ignore
+            if parsed_sla is not None:
+                return parsed_sla
+
+        raise SLAParseError(sla=sla)  # type: ignore
+
+    @staticmethod
+    def _parse_cron_sla(sla: str | list[str]) -> list[str] | None:
+        """Parse and validate cron-based SLA values."""
+        if isinstance(sla, str):
+            sla_normalized = sla.strip()
+            if croniter.is_valid(sla_normalized):
+                return [sla_normalized]
+            return None
+
+        if isinstance(sla, list):
+            return StateHandler._parse_cron_sla_list(sla)
+
+        return None
+
+    @staticmethod
+    def _parse_cron_sla_list(sla: list) -> list:
+        """Parse and validate cron-list SLA values."""
+        normalized_crons = []
+        for cron_item in sla:
+            if isinstance(cron_item, str):
+                cron_normalized = cron_item.strip()
+                if not croniter.is_valid(cron_normalized):
+                    raise SLAParseError(sla=cron_normalized)
+                normalized_crons.append(cron_normalized)
+                continue
+
+            if isinstance(cron_item, dict):
+                cron = cron_item.get("cron", "")
+                cron_normalized = cron.strip()
+                if (
+                    not cron_normalized
+                    or not isinstance(cron_normalized, str)
+                    or not croniter.is_valid(cron_normalized)
+                ):
+                    raise SLAParseError(sla=cron_normalized)
+
+                normalized_crons.append({**cron_item, "cron": cron_normalized})
+                continue
+
+            raise SLAParseError(sla=cron_item)
+
+        return normalized_crons
+
+    @staticmethod
+    def _parse_period_sla(sla_str: str) -> timedelta | relativedelta | None:
+        """Parse year/month/day/hour/minute SLA values."""
+        # Years are matched before month/day/minute to avoid token overlap.
+        yr = re.fullmatch(r"(\d+(?:\.\d+)?)\s*(?:years?|yr?|y)", sla_str, re.IGNORECASE)
+        if yr:
+            return relativedelta(years=int(float(yr.group(1))))
+
+        # Months are matched before minutes to avoid 'm' ambiguity.
+        mo = re.fullmatch(r"(\d+(?:\.\d+)?)\s*(?:months?|mo)", sla_str, re.IGNORECASE)
+        if mo:
+            return relativedelta(months=int(float(mo.group(1))))
+
+        period_match = re.fullmatch(
+            r"(\d+(?:\.\d+)?)\s*(hours?|hr?|minutes?|mins?|days?|[hmd])",
+            sla_str,
+            re.IGNORECASE,
+        )
+        if not period_match:
+            return None
+
+        value, unit = float(period_match.group(1)), period_match.group(2)[0].lower()
+        if unit == "h":
+            return timedelta(hours=value)
+        if unit == "m":
+            return timedelta(minutes=value)
+        return timedelta(days=value)
+
+    @staticmethod
+    def _parse_wallclock_sla(sla_str: str) -> time | None:
+        """Parse wall-clock SLA values in HH:MM format."""
+        wc = re.fullmatch(r"(\d{1,2}):(\d{2})", sla_str)
+        if wc:
+            return time(hour=int(wc.group(1)), minute=int(wc.group(2)))
+        return None
+
     def build_node_state(  # noqa: PLR0913
         self,
         node_name: str,
         status: str,
         node_type: str,
-        sla: str | None = None,
+        sla: str | list[str] | None = None,
         owners: list[dict] | None = None,
         effective_source_data_slot: str | None = None,
         batch_id: int | None = None,
-        schedules: list | None = None,
+        schedules: list[str] | None = None,
         trigger_delay: int = 0,
         sla_breach_grace_period_minutes: int = 30,
         reference_time: datetime | None = None,
@@ -230,7 +302,8 @@ class StateHandler:
             node_name: The dbt node name (model or source).
             status: Current run status (e.g. ``"success"``, ``"failed"``).
             node_type: The dbt node type (e.g. ``"model"``, ``"source"``).
-            sla: Optional SLA string (e.g. ``"24h"``, ``"10:00"``).
+            sla: Optional SLA value (e.g. ``"24h"``, ``"10:00"``,
+                ``"0 10 * * *"``, or a list of cron expressions).
             owners: Optional list of owner dicts.
             effective_source_data_slot: Optional effective source data slot.
             batch_id: Optional batch identifier.
@@ -277,3 +350,12 @@ class StateHandler:
             f"Writing state for node '{node_state.get('table_name')}' to store."
         )
         self.store.write(node_state=node_state)
+
+
+class SLAParseError(Exception):
+    """Custom exception for SLA parsing errors."""
+
+    def __init__(self, sla: str) -> None:
+        """Initialize the SLAParseError with the SLA value."""
+        message = f"Cannot parse SLA: {sla}."
+        super().__init__(message)
