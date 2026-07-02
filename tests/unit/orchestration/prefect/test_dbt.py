@@ -7,7 +7,7 @@ from dateutil.relativedelta import relativedelta
 import pytest
 
 from viadot.orchestration.dbt.manifest_handler import ManifestHandler
-from viadot.orchestration.dbt.state_handler import StateHandler, is_fresh
+from viadot.orchestration.dbt.state_handler import SLAParseError, StateHandler, is_fresh
 from viadot.orchestration.prefect.tasks.dbt import (
     trigger_downstream_nodes,
     update_node_state,
@@ -275,11 +275,24 @@ class TestParseSla:
     def test_parses_supported_formats(self, sla_str, expected):
         assert StateHandler._parse_sla(sla_str) == expected
 
-    def test_invalid_format_raises_value_error(self):
-        with pytest.raises(ValueError, match="Cannot parse SLA"):
+    def test_invalid_format_raises_sla_parse_error(self):
+        with pytest.raises(SLAParseError):
             StateHandler._parse_sla("tomorrow")
-        with pytest.raises(ValueError, match="Cannot parse SLA"):
+        with pytest.raises(SLAParseError):
             StateHandler._parse_sla("")
+
+    def test_parses_cron_string(self):
+        assert StateHandler._parse_sla("0 12 * * *") == ["0 12 * * *"]
+
+    def test_parses_cron_list(self):
+        assert StateHandler._parse_sla(["0 10 * * *", "0 12 * * *"]) == [
+            "0 10 * * *",
+            "0 12 * * *",
+        ]
+
+    def test_invalid_cron_list_item_raises_sla_parse_error(self):
+        with pytest.raises(SLAParseError):
+            StateHandler._parse_sla(["0 10 * * *", "invalid cron"])
 
 
 class TestCalcFreshUntilFromCron:
@@ -342,6 +355,32 @@ class TestCalcFreshUntilFromSla:
         dt = datetime.fromisoformat(result)
         assert dt.day == 20
         assert dt.hour == 8
+        assert dt.minute == 0
+
+    def test_cron_sla_string_returns_next_cron_boundary(self):
+        result = StateHandler._calc_fresh_until_from_sla("0 12 * * *", _FROZEN_NOW)
+        dt = datetime.fromisoformat(result).astimezone(timezone.utc)
+        assert dt.date() == _FROZEN_NOW.date()
+        assert dt.hour == 12
+        assert dt.minute == 0
+
+    def test_cron_sla_list_returns_earliest_next_boundary(self):
+        result = StateHandler._calc_fresh_until_from_sla(
+            ["0 10 * * *", "0 12 * * *", "0 14 * * *"], _FROZEN_NOW
+        )
+        dt = datetime.fromisoformat(result).astimezone(timezone.utc)
+        assert dt.date() == _FROZEN_NOW.date()
+        assert dt.hour == 12
+        assert dt.minute == 0
+
+    def test_cron_sla_list_rolls_to_next_day_first_batch(self):
+        evening_now = datetime(2026, 3, 19, 15, 0, 0, tzinfo=timezone.utc)
+        result = StateHandler._calc_fresh_until_from_sla(
+            ["0 10 * * *", "0 12 * * *", "0 14 * * *"], evening_now
+        )
+        dt = datetime.fromisoformat(result).astimezone(timezone.utc)
+        assert dt.date().isoformat() == "2026-03-20"
+        assert dt.hour == 10
         assert dt.minute == 0
 
 
@@ -411,6 +450,17 @@ class TestCalcFreshUntil:
             node_type="model", sla="7d", schedules=None, reference_time=_FROZEN_NOW
         )
         assert result == (_FROZEN_NOW + timedelta(days=7)).isoformat()
+
+    def test_model_cron_list_sla_uses_next_cron_boundary(self):
+        result = StateHandler._calc_fresh_until(
+            node_type="model",
+            schedules=None,
+            sla=["0 10 * * *", "0 12 * * *", "0 14 * * *"],
+            reference_time=_FROZEN_NOW,
+        )
+        dt = datetime.fromisoformat(result).astimezone(timezone.utc)
+        assert dt.hour == 12
+        assert dt.minute == 0
 
 
 # ---------------------------------------------------------------------------
