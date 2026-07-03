@@ -712,7 +712,9 @@ class TestTriggerDownstreamNodes:
             f"{_MODULE}.StateStore", MagicMock(return_value=mock_store_instance)
         )
         monkeypatch.setattr(f"{_MODULE}.run_deployment", mock_run)
-        monkeypatch.setattr(f"{_MODULE}.get_run_logger", MagicMock(return_value=mock_logger))
+        monkeypatch.setattr(
+            f"{_MODULE}.get_run_logger", MagicMock(return_value=mock_logger)
+        )
         monkeypatch.setattr(
             ManifestHandler,
             "get_runnable_nodes",
