@@ -4,6 +4,7 @@ import textwrap
 from unittest.mock import MagicMock, call
 
 from dateutil.relativedelta import relativedelta
+from prefect.exceptions import ObjectNotFound
 import pytest
 
 from viadot.orchestration.dbt.manifest_handler import ManifestHandler
@@ -699,3 +700,69 @@ class TestTriggerDownstreamNodes:
         )
 
         mock_run.assert_not_called()
+
+    def test_warns_and_continues_when_downstream_deployment_missing(
+        self, monkeypatch, manifest
+    ):
+        mock_run = MagicMock(side_effect=[ObjectNotFound("missing"), None])
+        mock_store_instance = MagicMock()
+        mock_store_instance._read.return_value = ({}, "etag1")
+        mock_logger = MagicMock()
+        monkeypatch.setattr(
+            f"{_MODULE}.StateStore", MagicMock(return_value=mock_store_instance)
+        )
+        monkeypatch.setattr(f"{_MODULE}.run_deployment", mock_run)
+        monkeypatch.setattr(
+            f"{_MODULE}.get_run_logger", MagicMock(return_value=mock_logger)
+        )
+        monkeypatch.setattr(
+            ManifestHandler,
+            "get_runnable_nodes",
+            lambda self, n, s: (["int_orders", "int_items"], {}),
+        )
+
+        trigger_downstream_nodes.fn(
+            node_name="raw_orders",
+            manifest=manifest,
+            state_path="s3://bucket/node-state.json",
+            state_store_credentials={"token": "x"},
+            flow_name="transform-flow",
+            on_missing_downstream_deployment="warn",
+        )
+
+        mock_run.assert_has_calls(
+            [
+                call(name="transform-flow/dbt_int_orders", timeout=0, tags=None),
+                call(name="transform-flow/dbt_int_items", timeout=0, tags=None),
+            ]
+        )
+        assert mock_run.call_count == 2
+        mock_logger.warning.assert_any_call(
+            "Skipping missing downstream deployment '%s'.",
+            "transform-flow/dbt_int_orders",
+        )
+
+    def test_raises_when_downstream_deployment_missing_in_raise_mode(
+        self, monkeypatch, manifest
+    ):
+        mock_run = MagicMock(side_effect=ObjectNotFound("missing"))
+        mock_store_instance = MagicMock()
+        mock_store_instance._read.return_value = ({}, "etag1")
+        monkeypatch.setattr(
+            f"{_MODULE}.StateStore", MagicMock(return_value=mock_store_instance)
+        )
+        monkeypatch.setattr(f"{_MODULE}.run_deployment", mock_run)
+        monkeypatch.setattr(
+            ManifestHandler,
+            "get_runnable_nodes",
+            lambda self, n, s: (["int_orders"], {}),
+        )
+
+        with pytest.raises(ObjectNotFound):
+            trigger_downstream_nodes.fn(
+                node_name="raw_orders",
+                manifest=manifest,
+                state_path="s3://bucket/node-state.json",
+                state_store_credentials={"token": "x"},
+                flow_name="transform-flow",
+            )

@@ -16,7 +16,7 @@ import re
 import smtplib
 import sys
 import tempfile
-from typing import Any, TypeVar, cast
+from typing import Any, Literal, TypeVar, cast
 
 from anyio import open_process
 from anyio.streams.text import TextReceiveStream
@@ -253,6 +253,9 @@ def with_state_tracking_and_downstream_triggering(  # noqa: C901
             (default: 0).
         trigger_downstream_nodes_tags (list[str] | None): Optional tags to apply to
             triggered downstream deployments (default: None).
+        on_missing_downstream_deployment (Literal["warn", "raise"]): Behavior
+            when a downstream deployment is missing: ``"raise"`` (default) or
+            ``"warn"``.
 
     Args:
         node_name_param: Parameter name holding the dbt node identifier.
@@ -279,6 +282,11 @@ def with_state_tracking_and_downstream_triggering(  # noqa: C901
         ("trigger_downstream_nodes", False, bool),
         ("trigger_downstream_nodes_delay", 0, int),
         ("trigger_downstream_nodes_tags", None, list | None),
+        (
+            "on_missing_downstream_deployment",
+            "raise",
+            Literal["warn", "raise"],
+        ),
     )
 
     def decorator(func: F) -> F:
@@ -387,6 +395,10 @@ def with_state_tracking_and_downstream_triggering(  # noqa: C901
                             "state_store_credentials"
                         ],
                         tags=options["trigger_downstream_nodes_tags"],
+                        on_missing_downstream_deployment=cast(
+                            Literal["warn", "raise"],
+                            options["on_missing_downstream_deployment"],
+                        ),
                     )
                 raise
 
@@ -404,6 +416,10 @@ def with_state_tracking_and_downstream_triggering(  # noqa: C901
                         "state_store_credentials"
                     ],
                     tags=options["trigger_downstream_nodes_tags"],
+                    on_missing_downstream_deployment=cast(
+                        Literal["warn", "raise"],
+                        options["on_missing_downstream_deployment"],
+                    ),
                 )
 
             return result
