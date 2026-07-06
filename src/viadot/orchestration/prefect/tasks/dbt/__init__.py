@@ -93,6 +93,7 @@ def update_node_state(  # noqa: PLR0913
     batch_id: int | None = None,
     trigger_delay: int = 0,
     sla_breach_grace_period_minutes: int = 30,
+    sla_default_timezone: str = "UTC",
 ) -> dict:
     """Build and write node state to the state store.
 
@@ -116,6 +117,8 @@ def update_node_state(  # noqa: PLR0913
         batch_id: Optional batch identifier.
         trigger_delay: Delay in minutes before triggering downstream nodes.
         sla_breach_grace_period_minutes: Grace period in minutes before an SLA breach.
+        sla_default_timezone: Optional timezone used as default for model cron-based SLA
+            dict entries that omit a timezone.
 
     Returns:
         The dbt manifest dict (re-used by callers to avoid a second store read).
@@ -144,12 +147,13 @@ def update_node_state(  # noqa: PLR0913
         status=status,
         node_type=node_type,
         sla=meta.get("SLA"),
+        sla_default_timezone=sla_default_timezone,
+        sla_breach_grace_period_minutes=sla_breach_grace_period_minutes,
         owners=meta.get("owners"),
         effective_source_data_slot=effective_source_data_slot,
         batch_id=batch_id,
         schedules=schedules,
         trigger_delay=trigger_delay,
-        sla_breach_grace_period_minutes=sla_breach_grace_period_minutes,
     )
     state_handler.update(node_state)
     logger.info("Deployment status updated successfully.")

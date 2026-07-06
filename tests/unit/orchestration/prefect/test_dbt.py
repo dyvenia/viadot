@@ -282,12 +282,56 @@ class TestParseSla:
             StateHandler._parse_sla("")
 
     def test_parses_cron_string(self):
-        assert StateHandler._parse_sla("0 12 * * *") == ["0 12 * * *"]
+        assert StateHandler._parse_sla("0 12 * * *", default_timezone="UTC") == [
+            {"cron": "0 12 * * *", "timezone": "UTC"}
+        ]
 
     def test_parses_cron_list(self):
-        assert StateHandler._parse_sla(["0 10 * * *", "0 12 * * *"]) == [
-            "0 10 * * *",
-            "0 12 * * *",
+        assert StateHandler._parse_sla(
+            ["0 10 * * *", "0 12 * * *"], default_timezone="UTC"
+        ) == [
+            {"cron": "0 10 * * *", "timezone": "UTC"},
+            {"cron": "0 12 * * *", "timezone": "UTC"},
+        ]
+
+    def test_parses_cron_dict_with_timezone(self):
+        assert StateHandler._parse_sla(
+            # `Etc/GMT-1` is a fixed UTC+1 timezone with no DST.
+            {"cron": "0 10 * * *", "timezone": "Etc/GMT-1"},
+            default_timezone="UTC",
+        ) == [{"cron": "0 10 * * *", "timezone": "Etc/GMT-1"}]
+
+    def test_parses_cron_dict_with_default_timezone_fallback(self):
+        assert StateHandler._parse_sla(
+            {"cron": "0 10 * * *"}, default_timezone="Etc/GMT-1"
+        ) == [{"cron": "0 10 * * *", "timezone": "Etc/GMT-1"}]
+
+    def test_parses_cron_list_with_default_timezone_fallback(self):
+        assert StateHandler._parse_sla(
+            [
+                # `Etc/GMT-1` is a fixed UTC+1 timezone with no DST.
+                {"cron": "0 10 * * *", "timezone": "Etc/GMT-1"},
+                {"cron": "0 12 * * *"},
+            ],
+            default_timezone="Etc/GMT-1",
+        ) == [
+            {"cron": "0 10 * * *", "timezone": "Etc/GMT-1"},
+            {"cron": "0 12 * * *", "timezone": "Etc/GMT-1"},
+        ]
+
+    def test_parses_mixed_cron_list_formats(self):
+        assert StateHandler._parse_sla(
+            [
+                "0 10 * * *",
+                {"cron": "0 11 * * *"},
+                # `Etc/GMT-1` is a fixed UTC+1 timezone with no DST.
+                {"cron": "0 12 * * *", "timezone": "Etc/GMT-1"},
+            ],
+            default_timezone="Etc/GMT-1",
+        ) == [
+            {"cron": "0 10 * * *", "timezone": "Etc/GMT-1"},
+            {"cron": "0 11 * * *", "timezone": "Etc/GMT-1"},
+            {"cron": "0 12 * * *", "timezone": "Etc/GMT-1"},
         ]
 
     def test_invalid_cron_list_item_raises_sla_parse_error(self):
@@ -301,6 +345,7 @@ class TestCalcFreshUntilFromCron:
             crons=[{"cron": "0 12 * * *", "timezone": "UTC"}],
             now=_FROZEN_NOW,
         )
+        assert result is not None
         dt = datetime.fromisoformat(result).astimezone(timezone.utc)
         assert dt.hour == 12
         assert dt.minute == 0
@@ -326,8 +371,25 @@ class TestCalcFreshUntilFromCron:
             ],
             now=_FROZEN_NOW,
         )
+        assert result is not None
         dt = datetime.fromisoformat(result).astimezone(timezone.utc)
         assert dt.hour == 11
+
+    def test_returns_shared_boundary_when_multiple_crons_resolve_to_same_time(self):
+        result = StateHandler._calc_fresh_until_from_crons(
+            crons=[
+                {"cron": "0 12 * * *", "timezone": "UTC"},
+                # A fixed UTC+1 timezone with no DST.
+                {"cron": "0 13 * * *", "timezone": "Etc/GMT-1"},
+                {"cron": "0 14 * * *", "timezone": "UTC"},
+            ],
+            now=_FROZEN_NOW,
+        )
+        assert result is not None
+        dt = datetime.fromisoformat(result).astimezone(timezone.utc)
+        assert dt.date() == _FROZEN_NOW.date()
+        assert dt.hour == 12
+        assert dt.minute == 0
 
 
 class TestCalcFreshUntilFromSla:
@@ -343,6 +405,7 @@ class TestCalcFreshUntilFromSla:
 
     def test_wallclock_sla_in_future_returns_same_day(self):
         result = StateHandler._calc_fresh_until_from_sla("14:30", _FROZEN_NOW)
+        assert result is not None
         dt = datetime.fromisoformat(result)
         assert dt.hour == 14
         assert dt.minute == 30
@@ -352,13 +415,17 @@ class TestCalcFreshUntilFromSla:
 
     def test_wallclock_sla_passed_rolls_to_next_day(self):
         result = StateHandler._calc_fresh_until_from_sla("08:00", _FROZEN_NOW)
+        assert result is not None
         dt = datetime.fromisoformat(result)
         assert dt.day == 20
         assert dt.hour == 8
         assert dt.minute == 0
 
     def test_cron_sla_string_returns_next_cron_boundary(self):
-        result = StateHandler._calc_fresh_until_from_sla("0 12 * * *", _FROZEN_NOW)
+        result = StateHandler._calc_fresh_until_from_sla(
+            "0 12 * * *", _FROZEN_NOW, default_timezone="UTC"
+        )
+        assert result is not None
         dt = datetime.fromisoformat(result).astimezone(timezone.utc)
         assert dt.date() == _FROZEN_NOW.date()
         assert dt.hour == 12
@@ -366,8 +433,11 @@ class TestCalcFreshUntilFromSla:
 
     def test_cron_sla_list_returns_earliest_next_boundary(self):
         result = StateHandler._calc_fresh_until_from_sla(
-            ["0 10 * * *", "0 12 * * *", "0 14 * * *"], _FROZEN_NOW
+            ["0 10 * * *", "0 12 * * *", "0 14 * * *"],
+            _FROZEN_NOW,
+            default_timezone="UTC",
         )
+        assert result is not None
         dt = datetime.fromisoformat(result).astimezone(timezone.utc)
         assert dt.date() == _FROZEN_NOW.date()
         assert dt.hour == 12
@@ -376,11 +446,46 @@ class TestCalcFreshUntilFromSla:
     def test_cron_sla_list_rolls_to_next_day_first_batch(self):
         evening_now = datetime(2026, 3, 19, 15, 0, 0, tzinfo=timezone.utc)
         result = StateHandler._calc_fresh_until_from_sla(
-            ["0 10 * * *", "0 12 * * *", "0 14 * * *"], evening_now
+            ["0 10 * * *", "0 12 * * *", "0 14 * * *"],
+            evening_now,
+            default_timezone="UTC",
         )
+        assert result is not None
         dt = datetime.fromisoformat(result).astimezone(timezone.utc)
         assert dt.date().isoformat() == "2026-03-20"
         assert dt.hour == 10
+        assert dt.minute == 0
+
+    def test_cron_sla_list_with_mixed_timezones_uses_earliest_boundary(self):
+        result = StateHandler._calc_fresh_until_from_sla(
+            [
+                "0 10 * * *",
+                {"cron": "0 12 * * *"},
+                # `Etc/GMT+0` is fixed UTC+0 with no DST.
+                {"cron": "0 12 * * *", "timezone": "Etc/GMT+0"},
+            ],
+            _FROZEN_NOW,
+            # `Etc/GMT-1` is fixed UTC+1 with no DST.
+            default_timezone="Etc/GMT-1",
+        )
+        assert result is not None
+        dt = datetime.fromisoformat(result).astimezone(timezone.utc)
+        assert dt.date() == _FROZEN_NOW.date()
+        assert dt.hour == 11
+        assert dt.minute == 0
+
+    def test_cron_sla_dict_with_timezone_returns_next_utc_boundary(self):
+        result = StateHandler._calc_fresh_until_from_sla(
+            # `Etc/GMT-1` is fixed UTC+1 with no DST.
+            {"cron": "0 12 * * *", "timezone": "Etc/GMT-1"},
+            _FROZEN_NOW,
+            default_timezone="UTC",
+        )
+        assert result is not None
+        dt = datetime.fromisoformat(result).astimezone(timezone.utc)
+        # 12:00 in UTC+1 corresponds to 11:00 UTC.
+        assert dt.date() == _FROZEN_NOW.date()
+        assert dt.hour == 11
         assert dt.minute == 0
 
 
@@ -396,6 +501,7 @@ class TestCalcFreshUntil:
             node_type="model", schedules=None, sla="6h", reference_time=_FROZEN_NOW
         )
         assert cron_result != sla_result
+        assert cron_result is not None
         dt = datetime.fromisoformat(cron_result).astimezone(timezone.utc)
         assert dt.hour == 12
 
@@ -435,6 +541,7 @@ class TestCalcFreshUntil:
         result = StateHandler._calc_fresh_until(
             node_type="model", sla="1 month", schedules=None, reference_time=jan_31
         )
+        assert result is not None
         dt = datetime.fromisoformat(result)
         assert dt.month == 2
         assert dt.day == 28
@@ -456,11 +563,55 @@ class TestCalcFreshUntil:
             node_type="model",
             schedules=None,
             sla=["0 10 * * *", "0 12 * * *", "0 14 * * *"],
+            sla_default_timezone="UTC",
             reference_time=_FROZEN_NOW,
         )
+        assert result is not None
         dt = datetime.fromisoformat(result).astimezone(timezone.utc)
         assert dt.hour == 12
         assert dt.minute == 0
+
+    def test_model_cron_list_sla_supports_timezone_dicts(self):
+        result = StateHandler._calc_fresh_until(
+            node_type="model",
+            schedules=None,
+            sla=[
+                # `Etc/GMT-1` is fixed UTC+1 with no DST.
+                {"cron": "0 12 * * *", "timezone": "Etc/GMT-1"},
+                {"cron": "0 13 * * *", "timezone": "UTC"},
+            ],
+            reference_time=_FROZEN_NOW,
+        )
+        assert result is not None
+        dt = datetime.fromisoformat(result).astimezone(timezone.utc)
+        # 12:00 in UTC+1 -> 11:00 UTC and is earlier than 13:00 UTC.
+        assert dt.hour == 11
+        assert dt.minute == 0
+
+
+class TestBuildNodeState:
+    def test_stores_cron_sla_in_normalized_format(self):
+        handler = StateHandler(store=MagicMock())
+
+        node_state = handler.build_node_state(
+            node_name="mart_sales",
+            status="failed",
+            node_type="model",
+            sla=[
+                "0 10 * * *",
+                {"cron": "0 11 * * *"},
+                # `Etc/GMT-1` is a fixed UTC+1 timezone with no DST.
+                {"cron": "0 12 * * *", "timezone": "Etc/GMT-1"},
+            ],
+            sla_default_timezone="Etc/GMT-1",
+            reference_time=_FROZEN_NOW,
+        )
+
+        assert node_state["SLA"] == [
+            {"cron": "0 10 * * *", "timezone": "Etc/GMT-1"},
+            {"cron": "0 11 * * *", "timezone": "Etc/GMT-1"},
+            {"cron": "0 12 * * *", "timezone": "Etc/GMT-1"},
+        ]
 
 
 # ---------------------------------------------------------------------------
@@ -483,7 +634,7 @@ class TestGetSourceConfigPrefectYaml:
                 definitions:
                   default_schedule: &default_schedule
                     cron: "0 0 * * *"
-                    timezone: "Europe/Madrid"
+                    timezone: "Europe/Warsaw"
                     active: false
                 deployments:
                 """
@@ -497,9 +648,9 @@ class TestGetSourceConfigPrefectYaml:
                       table: raw_orders
                     schedules:
                       - cron: "0 6 * * *"
-                        timezone: Europe/Madrid
+                        timezone: Europe/Warsaw
                       - cron: "0 14 * * *"
-                        timezone: Europe/Madrid
+                        timezone: Europe/Warsaw
                   - name: ingest-raw-customers
                     parameters:
                       table: raw_customers
@@ -532,8 +683,8 @@ class TestGetSourceConfigPrefectYaml:
     def test_ingestion_node_returns_schedules(self, deployments_dir):
         schedules = get_node_schedules_prefect_yaml("raw_orders", deployments_dir)
         assert schedules == [
-            {"cron": "0 6 * * *", "timezone": "Europe/Madrid"},
-            {"cron": "0 14 * * *", "timezone": "Europe/Madrid"},
+            {"cron": "0 6 * * *", "timezone": "Europe/Warsaw"},
+            {"cron": "0 14 * * *", "timezone": "Europe/Warsaw"},
         ]
 
     def test_dbt_node_returns_empty_list(self, deployments_dir):
@@ -546,13 +697,13 @@ class TestGetSourceConfigPrefectYaml:
         schedules = get_node_schedules_prefect_yaml("raw_products", deployments_dir)
         assert len(schedules) == 1
         assert schedules[0]["cron"] == "0 0 * * *"
-        assert schedules[0]["timezone"] == "Europe/Madrid"
+        assert schedules[0]["timezone"] == "Europe/Warsaw"
 
     def test_yaml_merge_key_override_is_resolved(self, deployments_dir):
         schedules = get_node_schedules_prefect_yaml("raw_customers", deployments_dir)
         assert len(schedules) == 1
         assert schedules[0]["cron"] == "0 3 * * *"
-        assert schedules[0]["timezone"] == "Europe/Madrid"
+        assert schedules[0]["timezone"] == "Europe/Warsaw"
 
 
 # ---------------------------------------------------------------------------
@@ -617,6 +768,7 @@ class TestUpdateNodeStateTask:
             effective_source_data_slot="2026-03-19T09:00:00+00:00",
             batch_id=123,
             schedules=None,
+            sla_default_timezone="UTC",
             trigger_delay=10,
             sla_breach_grace_period_minutes=45,
         )
@@ -663,10 +815,77 @@ class TestUpdateNodeStateTask:
             effective_source_data_slot=None,
             batch_id=None,
             schedules=None,
+            sla_default_timezone="UTC",
             trigger_delay=0,
             sla_breach_grace_period_minutes=30,
         )
         mock_handler.update.assert_called_once()
+
+    def test_model_sla_uses_default_timezone_from_prefect_base(
+        self, monkeypatch, credentials, tmp_path
+    ):
+        (tmp_path / "prefect_base.yaml").write_text(
+            textwrap.dedent(
+                """\
+                definitions:
+                  default_schedule: &default_schedule
+                    cron: "0 0 * * *"
+                    timezone: "Europe/Warsaw"
+                    active: false
+                deployments:
+                """
+            )
+        )
+
+        mock_handler = MagicMock()
+        mock_handler.build_node_state.return_value = {
+            "table_name": "mart_sales",
+            "node_type": "model",
+            "status": "success",
+        }
+        mock_artifact_store = MagicMock()
+        mock_artifact_store.read_manifest.return_value = {}
+        monkeypatch.setattr(f"{_MODULE}.StateHandler", lambda store: mock_handler)
+        monkeypatch.setattr(
+            f"{_MODULE}.StateStore", MagicMock(return_value=MagicMock())
+        )
+        monkeypatch.setattr(
+            f"{_MODULE}.ArtifactStore", MagicMock(return_value=mock_artifact_store)
+        )
+        monkeypatch.setattr(
+            ManifestHandler,
+            "get_node_meta",
+            lambda self, _node: {"SLA": {"cron": "0 0 * * *"}},
+        )
+
+        update_node_state.fn(
+            node_name="mart_sales",
+            status="success",
+            node_type="model",
+            state_path="s3://bucket/node-state.json",
+            state_store_type="s3",
+            artifact_store_path="s3://bucket/artifacts",
+            artifact_store_type="s3",
+            state_store_credentials=credentials,
+            deployments_dir=tmp_path,
+        )
+
+        mock_handler.build_node_state.assert_called_once_with(
+            node_name="mart_sales",
+            status="success",
+            node_type="model",
+            sla={"cron": "0 0 * * *"},
+            sla_default_timezone="UTC",
+            sla_breach_grace_period_minutes=30,
+            owners=None,
+            effective_source_data_slot=None,
+            batch_id=None,
+            schedules=None,
+            trigger_delay=0,
+        )
+        mock_handler.update.assert_called_once_with(
+            mock_handler.build_node_state.return_value
+        )
 
     def test_raises_for_unsupported_store_type(self, monkeypatch, credentials):
         with pytest.raises(

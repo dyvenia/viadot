@@ -245,6 +245,8 @@ def with_state_tracking_and_downstream_triggering(  # noqa: C901
         state_store_credentials_secret (str | None): Secret name for state store
             credentials.
         deployments_dir (str | None): Directory with Prefect deployments.
+        sla_default_timezone (str): Default timezone for cron-based SLAs
+            missing an explicit timezone (default: "UTC").
         sla_breach_grace_period_minutes (int): Grace period in minutes before SLA breach
             (default: 30).
         trigger_downstream_nodes (bool): Whether to trigger downstream nodes
@@ -275,6 +277,7 @@ def with_state_tracking_and_downstream_triggering(  # noqa: C901
         ("state_store_type", "s3", str),
         ("state_store_credentials_secret", None, str | None),
         ("deployments_dir", None, str | None),
+        ("sla_default_timezone", "UTC", str),
         ("sla_breach_grace_period_minutes", 30, int),
         ("trigger_downstream_nodes", False, bool),
         ("trigger_downstream_nodes_delay", 0, int),
@@ -314,6 +317,7 @@ def with_state_tracking_and_downstream_triggering(  # noqa: C901
                 else None,
                 "deployments_dir": options["deployments_dir"],
                 "trigger_delay": options["trigger_downstream_nodes_delay"],
+                "sla_default_timezone": options.get("sla_default_timezone", "UTC"),
                 "sla_breach_grace_period_minutes": options[
                     "sla_breach_grace_period_minutes"
                 ],
