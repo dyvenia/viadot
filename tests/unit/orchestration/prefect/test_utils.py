@@ -280,6 +280,7 @@ def test_state_tracking_can_stay_successful_after_later_failure(monkeypatch):
         state_path="s3://bucket/state.json",
         state_store_credentials=None,
         tags=None,
+        on_missing_downstream_deployment="raise",
     )
 
 
