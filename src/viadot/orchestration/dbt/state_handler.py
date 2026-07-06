@@ -349,9 +349,7 @@ class StateHandler:
         sla_default_timezone: str = "UTC",
         sla_breach_grace_period_minutes: int = 30,
         owners: list[dict] | None = None,
-        effective_source_data_slot: str | None = None,
-        batch_id: int | None = None,
-        schedules: list[dict[str, str]] | None = None,
+        schedules: list | None = None,
         trigger_delay: int = 0,
         reference_time: datetime | None = None,
     ) -> dict:
@@ -370,8 +368,6 @@ class StateHandler:
                 cron-based SLA dict entries that omit a timezone.
             sla_breach_grace_period_minutes: Grace period before an SLA breach.
             owners: Optional list of owner dicts.
-            effective_source_data_slot: Optional effective source data slot.
-            batch_id: Optional batch identifier.
             schedules: Optional list of schedule dicts or strings.
             trigger_delay: Delay in minutes before triggering downstream nodes.
             reference_time: Reference time for freshness calculations. Defaults to
@@ -407,8 +403,6 @@ class StateHandler:
             "fresh_until": fresh_until,
             "SLA": sla_to_store,
             "owners": owners,
-            "effective_source_data_slot": effective_source_data_slot,
-            "batch_id": batch_id,
             "schedules": schedules,
             "trigger_delay": trigger_delay,
             "sla_breach_grace_period": sla_breach_grace_period_minutes,
