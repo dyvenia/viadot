@@ -886,8 +886,6 @@ class TestUpdateNodeStateTask:
             sla_default_timezone="UTC",
             sla_breach_grace_period_minutes=30,
             owners=None,
-            effective_source_data_slot=None,
-            batch_id=None,
             schedules=None,
             trigger_delay=0,
         )

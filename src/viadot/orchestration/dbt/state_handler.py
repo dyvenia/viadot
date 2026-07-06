@@ -340,7 +340,7 @@ class StateHandler:
             return time(hour=int(wc.group(1)), minute=int(wc.group(2)))
         return None
 
-    def build_node_state(  # noqa: PLR0913
+    def build_node_state(
         self,
         node_name: str,
         status: str,
