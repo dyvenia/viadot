@@ -314,3 +314,37 @@ def test_state_tracking_failure_still_blocks_downstreams(monkeypatch):
     assert update_node_state.call_args_list[0].kwargs["status"] == "running"
     assert update_node_state.call_args_list[1].kwargs["status"] == "failed"
     trigger_downstream_nodes.assert_not_called()
+
+
+def test_state_tracking_forwards_sla_default_timezone(monkeypatch):
+    update_node_state = MagicMock(side_effect=[None, {"manifest": "value"}])
+    trigger_downstream_nodes = MagicMock()
+
+    monkeypatch.setattr(prefect_tasks.dbt, "update_node_state", update_node_state)
+    monkeypatch.setattr(
+        prefect_tasks.dbt,
+        "trigger_downstream_nodes",
+        trigger_downstream_nodes,
+    )
+
+    @with_state_tracking_and_downstream_triggering(
+        node_name_param="model_name",
+        node_type="model",
+    )
+    def sample_flow() -> None:
+        return None
+
+    sample_flow(
+        model_name="orders",
+        track_state=True,
+        state_path="s3://bucket/state.json",
+        artifact_store_path="s3://bucket/artifacts",
+        sla_default_timezone="Europe/Warsaw",
+    )
+
+    assert update_node_state.call_args_list[0].kwargs["sla_default_timezone"] == (
+        "Europe/Warsaw"
+    )
+    assert update_node_state.call_args_list[1].kwargs["sla_default_timezone"] == (
+        "Europe/Warsaw"
+    )
