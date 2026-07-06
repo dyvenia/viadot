@@ -421,6 +421,10 @@ class StateHandler:
         if sla is None:
             return None
 
+        # Preserve special values accepted by _calc_fresh_until_from_sla.
+        if isinstance(sla, str) and sla.strip().lower() in ("ignored", "n/a"):
+            return sla
+
         parsed = self._parse_sla(sla, default_timezone=default_timezone)
         # Cron SLAs are parsed into a list of dicts or strings.
         if isinstance(parsed, list):

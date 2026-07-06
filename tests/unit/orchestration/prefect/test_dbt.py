@@ -614,6 +614,21 @@ class TestBuildNodeState:
             {"cron": "0 12 * * *", "timezone": "Etc/GMT-1"},
         ]
 
+    @pytest.mark.parametrize("special_sla", ["ignored", "n/a"])
+    def test_preserves_special_sla_values_without_parsing(self, special_sla):
+        handler = StateHandler(store=MagicMock())
+
+        node_state = handler.build_node_state(
+            node_name="mart_sales",
+            status="success",
+            node_type="model",
+            sla=special_sla,
+            reference_time=_FROZEN_NOW,
+        )
+
+        assert node_state["SLA"] == special_sla
+        assert node_state["fresh_until"] is None
+
 
 # ---------------------------------------------------------------------------
 # deployment_config
