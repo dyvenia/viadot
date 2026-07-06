@@ -210,15 +210,13 @@ class StateHandler:
                 )
                 return None
 
-    def build_node_state(  # noqa: PLR0913
+    def build_node_state(
         self,
         node_name: str,
         status: str,
         node_type: str,
         sla: str | None = None,
         owners: list[dict] | None = None,
-        effective_source_data_slot: str | None = None,
-        batch_id: int | None = None,
         schedules: list | None = None,
         trigger_delay: int = 0,
         sla_breach_grace_period_minutes: int = 30,
@@ -232,8 +230,6 @@ class StateHandler:
             node_type: The dbt node type (e.g. ``"model"``, ``"source"``).
             sla: Optional SLA string (e.g. ``"24h"``, ``"10:00"``).
             owners: Optional list of owner dicts.
-            effective_source_data_slot: Optional effective source data slot.
-            batch_id: Optional batch identifier.
             schedules: Optional list of schedule dicts or strings.
             trigger_delay: Delay in minutes before triggering downstream nodes.
             sla_breach_grace_period_minutes: Grace period before an SLA breach.
@@ -260,8 +256,6 @@ class StateHandler:
             "fresh_until": fresh_until,
             "SLA": sla,
             "owners": owners,
-            "effective_source_data_slot": effective_source_data_slot,
-            "batch_id": batch_id,
             "schedules": schedules,
             "trigger_delay": trigger_delay,
             "sla_breach_grace_period": sla_breach_grace_period_minutes,
