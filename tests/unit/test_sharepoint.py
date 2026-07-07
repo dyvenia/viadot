@@ -383,6 +383,46 @@ def test_download_file_stream_unsupported_param(sharepoint_mock):
         sharepoint_mock._download_file_stream(url, nrows=10)
 
 
+def test_download_file_stream_passes_file_like_object_to_pandas(sharepoint):
+    url = "https://example.sharepoint.com/sites/site/Shared%20Documents/file.xlsx"
+
+    class FakeDownloadResult:
+        def execute_query(self):
+            return self
+
+    class FakeFileItem:
+        def download(self, bytes_buffer):
+            bytes_buffer.write(create_excel_file())
+            return FakeDownloadResult()
+
+    class FakeGetResult:
+        def execute_query(self):
+            return FakeFileItem()
+
+    class FakeDriveItem:
+        def get(self):
+            return FakeGetResult()
+
+    class FakeShare:
+        drive_item = FakeDriveItem()
+
+    class FakeShares:
+        def by_url(self, _url):
+            return FakeShare()
+
+    class FakeClient:
+        shares = FakeShares()
+
+    with (
+        patch.object(Sharepoint, "get_client", return_value=FakeClient()),
+        patch("viadot.sources.sharepoint.pd.ExcelFile") as excel_file,
+    ):
+        sharepoint._download_file_stream(url)
+
+    excel_arg = excel_file.call_args.args[0]
+    assert isinstance(excel_arg, BytesIO)
+
+
 def test_successful_download(sharepoint):
     url = "https://example.sharepoint.com/sites/site/Shared%20Documents/file.xlsx"
     with patch.object(
