@@ -483,8 +483,7 @@ class SAPRFC(Source):
             # SELECTed fields.
             cols_to_add = [v.split()[0] for v in self.client_side_filters.values()]
             if aliased:
-                cols_to_add = [aliases_keyed_by_columns[col] for col in cols_to_add]
-            columns.extend(cols_to_add)
+                cols_to_add = [self._resolve_col_name(col) for col in cols_to_add]
             columns = list(dict.fromkeys(columns))  # remove duplicates
 
         return columns
