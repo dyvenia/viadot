@@ -14,7 +14,7 @@ dependencies = [
     "sendgrid>=6.11.0",
     "pydantic>=2.0.0, <3",
     "aiolimiter>=1.1.0",
-    "trino==0.328.*",
+    "trino>=0.328,<0.339",
     "imagehash>=4.2.1",
     "shapely>=1.8.0",
     "sqlalchemy==2.0.*",
