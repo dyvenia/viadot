@@ -30,7 +30,7 @@ dependencies = [
     "numpy>=2.0.0",
     "defusedxml>=0.7.1",
     "aiohttp>=3.10.5",
-    "simple-salesforce==1.12.6",
+    "simple-salesforce==1.12.10",
     "pandas-gbq==0.23.1",
     "paramiko>=3.5.0,<4",
     "tm1py>=2.0.4",
