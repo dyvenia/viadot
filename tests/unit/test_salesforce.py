@@ -130,7 +130,6 @@ def test_salesforce_to_df_with_columns(mock_sf_instance):
     result_df.drop(
         columns=["_viadot_source", "_viadot_downloaded_at_utc"],
         inplace=True,
-        axis=1,
     )
 
     pd.testing.assert_frame_equal(

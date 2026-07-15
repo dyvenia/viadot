@@ -50,9 +50,17 @@ def get_node_schedules_prefect_yaml(
         if yaml_file == base_yaml:
             continue
 
+        file_count += 1
+
         logger.debug(f"Inspecting deployment file '{yaml_file}'...")
 
-        file_content = textwrap.indent(yaml_file.read_text().strip(), "  ")
+        raw_content = yaml_file.read_text()
+        if node_name not in raw_content or not any(
+            key in raw_content for key in NODE_NAME_PARAM_NAMES
+        ):
+            continue
+
+        file_content = textwrap.indent(raw_content.strip(), "  ")
         deployments = _yaml.load(base_content + "\n" + file_content).get("deployments")
         for deployment in deployments:
             params = deployment.get("parameters", {})
@@ -61,12 +69,13 @@ def get_node_schedules_prefect_yaml(
                     f"Deployment '{deployment.get('name')}' has no parameters defined."
                 )
 
-            for key in NODE_NAME_PARAM_NAMES:
-                if params.get(key) == node_name:
-                    schedules = deployment.get("schedules")
-                    logger.info(f"Retrieved the following schedules: {schedules}")
-                    return schedules
-        file_count += 1
+            if (
+                params.get("table") == node_name
+                or params.get("redshift_table") == node_name
+            ):
+                schedules = deployment.get("schedules")
+                logger.info(f"Retrieved the following schedules: {schedules}")
+                return schedules
 
     logger.info(
         f"No schedules found for node '{node_name}' (checked {file_count} deployment files)."

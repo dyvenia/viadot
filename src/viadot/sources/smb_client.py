@@ -879,13 +879,22 @@ def _stream_file_from_smb_to_s3(  # noqa: C901, PLR0912, PLR0915
         SMBFileOperationError: If the streaming operation fails.
         SMBInvalidFilenameError: If filename contains problematic characters.
     """
-    logger.info(
-        f"Streaming file from SMB to S3: {remote_path} from {server}/{share} -> {s3_path}"
-    )
-
     _ensure_smb_session(server=server, username=smb_username, password=smb_password)
 
     filename = remote_path.split("\\")[-1].split("/")[-1]
+    is_zip_with_filter = filename.lower().endswith(".zip") and zip_inner_file_regexes
+
+    if is_zip_with_filter:
+        logger.info(
+            "Processing ZIP archive for inner file extraction: "
+            f"{remote_path} from {server}/{share} -> {s3_path}"
+        )
+    else:
+        logger.info(
+            f"Streaming file from SMB to S3: {remote_path} "
+            f"from {server}/{share} -> {s3_path}"
+        )
+
     if prefix_levels_to_add and prefix_levels_to_add > 0:
         prefix = _build_prefix_from_path(remote_path, prefix_levels_to_add)
         filename = _add_prefix_to_filename(filename, prefix)
@@ -943,8 +952,6 @@ def _stream_file_from_smb_to_s3(  # noqa: C901, PLR0912, PLR0915
     unc_remote_path = _to_unc_path(
         server=server, share=share, relative_path=remote_path
     )
-
-    is_zip_with_filter = filename.lower().endswith(".zip") and zip_inner_file_regexes
 
     if is_zip_with_filter:
         s3_paths = []

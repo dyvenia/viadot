@@ -138,15 +138,13 @@ def test__cast_df_cols():
             "object_column": ["apple", "banana", "melon", "orange"],
         }
     )
-    test_df["datetime_column"] = pd.to_datetime(
-        test_df["datetime_column"], infer_datetime_format=True
-    )
+    test_df["datetime_column"] = pd.to_datetime(test_df["datetime_column"])
     result_df = cast_df_cols(
         test_df, types_to_convert=["datetime", "bool", "int", "object"]
     )
 
     assert result_df["bool_column"].dtype == pd.Int64Dtype()
-    assert pd.api.types.is_object_dtype(result_df["datetime_column"])
+    assert pd.api.types.is_string_dtype(result_df["datetime_column"])
     assert result_df["int_column"].dtype == pd.Int64Dtype()
     assert result_df["object_column"].dtype == pd.StringDtype()
 

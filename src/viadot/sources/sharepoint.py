@@ -269,7 +269,7 @@ class Sharepoint(Source):
             raise
 
         try:
-            return pd.ExcelFile(bytes_buffer.getvalue())
+            return pd.ExcelFile(bytes_buffer)
         except ValueError:
             self.logger.exception(f"Invalid Excel file: {url}")
             raise
