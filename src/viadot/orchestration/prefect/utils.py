@@ -401,10 +401,10 @@ def with_state_tracking_and_downstream_triggering(  # noqa: C901
 
         @wraps(func)
         def wrapped(*args: object, **kwargs: object) -> object:
-            from viadot.orchestration.prefect.tasks.dbt import (  # noqa: PLC0415
+            from viadot.orchestration.prefect.tasks.dbt import (
                 trigger_downstream_nodes as trigger_downstream_nodes_task,
             )
-            from viadot.orchestration.prefect.tasks.dbt import (  # noqa: PLC0415
+            from viadot.orchestration.prefect.tasks.dbt import (
                 update_node_state,
             )
 
