@@ -340,7 +340,7 @@ class StateHandler:
             return time(hour=int(wc.group(1)), minute=int(wc.group(2)))
         return None
 
-    def build_node_state(
+    def build_node_state(  # noqa: PLR0913
         self,
         node_name: str,
         status: str,
@@ -352,6 +352,8 @@ class StateHandler:
         schedules: list | None = None,
         trigger_delay: int = 0,
         reference_time: datetime | None = None,
+        event_id: str | None = None,
+        flow_run_id: str | None = None,
     ) -> dict:
         """Build the node state payload.
 
@@ -372,11 +374,21 @@ class StateHandler:
             trigger_delay: Delay in minutes before triggering downstream nodes.
             reference_time: Reference time for freshness calculations. Defaults to
                 ``datetime.now(timezone.utc)``.
+            event_id: Optional logical attempt identifier used by event-driven
+                downstream triggering.
+            flow_run_id: Optional Prefect flow-run identifier recorded as event
+                provenance.
 
         Returns:
             Node state dict ready to be passed to ``StateStore.write``.
         """
         logger.info("Building node state payload ...")
+        if event_id is not None and (
+            not isinstance(event_id, str) or not event_id.strip()
+        ):
+            msg = "event_id must be a non-empty string when provided."
+            raise ValueError(msg)
+
         now = reference_time or datetime.now(timezone.utc)
         # fresh_until is only calculated on success; on failure it is preserved
         # by the StateStore._merge_node_state logic.
@@ -395,7 +407,7 @@ class StateHandler:
         sla_to_store = self._ensure_cron_sla_timezone(
             sla, default_timezone=sla_default_timezone
         )
-        return {
+        node_state = {
             "table_name": node_name,
             "node_type": node_type,
             "status": status,
@@ -407,6 +419,12 @@ class StateHandler:
             "trigger_delay": trigger_delay,
             "sla_breach_grace_period": sla_breach_grace_period_minutes,
         }
+        if status == "success" and event_id is not None:
+            event_success = {"completed_at": now.isoformat()}
+            if flow_run_id:
+                event_success["flow_run_id"] = flow_run_id
+            node_state["_event_successes"] = {event_id: event_success}
+        return node_state
 
     def _ensure_cron_sla_timezone(
         self, sla: str | dict | list | None, default_timezone: str

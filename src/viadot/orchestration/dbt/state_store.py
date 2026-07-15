@@ -81,6 +81,17 @@ def _merge_node_state(node_states: dict, new_node_state: dict) -> dict:
     previous_node_state = node_states[node_name]
     merged_node_state = {**previous_node_state, **new_node_state}
 
+    # Event successes form an append-only logical-attempt ledger. A shallow merge
+    # would replace successes from overlapping events with the most recent write.
+    # Preserve the first successful record for an event so retries are idempotent.
+    previous_event_successes = previous_node_state.get("_event_successes", {})
+    new_event_successes = new_node_state.get("_event_successes", {})
+    if previous_event_successes or new_event_successes:
+        merged_node_state["_event_successes"] = {
+            **new_event_successes,
+            **previous_event_successes,
+        }
+
     node_states[node_name] = merged_node_state
     return node_states
 

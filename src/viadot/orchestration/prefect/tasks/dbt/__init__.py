@@ -1,5 +1,6 @@
 """Prefect tasks for dbt orchestration."""
 
+import hashlib
 import logging
 import os
 from pathlib import Path
@@ -8,6 +9,7 @@ from typing import Any, Literal
 from prefect import get_run_logger, task
 from prefect.deployments import run_deployment
 from prefect.exceptions import ObjectNotFound
+from prefect.runtime import flow_run
 
 from viadot.orchestration.dbt.artifact_store import ArtifactStore
 from viadot.orchestration.dbt.manifest_handler import ManifestHandler
@@ -78,6 +80,64 @@ async def dbt_task(
     )
 
 
+def _require_event_id(event_id: str | None) -> str:
+    """Return a validated event identifier."""
+    if not isinstance(event_id, str) or not event_id.strip():
+        msg = "event_id must be a non-empty string in event mode."
+        raise ValueError(msg)
+    return event_id
+
+
+def _select_runnable_nodes(
+    handler: ManifestHandler,
+    node_name: str,
+    state: dict,
+    mode: Literal["freshness", "event"],
+    event_id: str | None,
+) -> tuple[list[str], dict[str, list[str]]]:
+    """Select runnable nodes using the requested readiness policy."""
+    if mode == "event":
+        return handler.get_runnable_nodes_for_event(
+            node_name, state, _require_event_id(event_id)
+        )
+    if mode == "freshness":
+        if event_id is not None:
+            msg = "event_id can only be provided when mode='event'."
+            raise ValueError(msg)
+        return handler.get_runnable_nodes(node_name, state)
+    msg = f"Unsupported downstream trigger mode: {mode!r}."
+    raise ValueError(msg)
+
+
+def _run_downstream_deployment(
+    deployment_name: str,
+    tags: list[str] | None,
+    mode: Literal["freshness", "event"],
+    event_id: str | None,
+) -> None:
+    """Dispatch a downstream deployment with event idempotency when requested."""
+    if mode == "freshness":
+        run_deployment(name=deployment_name, timeout=0, tags=tags)
+        return
+
+    validated_event_id = _require_event_id(event_id)
+    idempotency_payload = f"{deployment_name}\0{validated_event_id}".encode()
+    idempotency_key = (
+        "viadot-dbt-event-v1:" + hashlib.sha256(idempotency_payload).hexdigest()
+    )
+    run_deployment(
+        name=deployment_name,
+        parameters={
+            "trigger_downstream_nodes_mode": "event",
+            "trigger_downstream_nodes_event_id": validated_event_id,
+        },
+        timeout=0,
+        tags=tags,
+        idempotency_key=idempotency_key,
+        as_subflow=False,
+    )
+
+
 @task(retries=3, retry_delay_seconds=10, timeout_seconds=10 * 60)
 def update_node_state(  # noqa: PLR0913
     node_name: str,
@@ -93,6 +153,7 @@ def update_node_state(  # noqa: PLR0913
     trigger_delay: int = 0,
     sla_breach_grace_period_minutes: int = 30,
     sla_default_timezone: str = "UTC",
+    event_id: str | None = None,
 ) -> dict:
     """Build and write node state to the state store.
 
@@ -116,6 +177,7 @@ def update_node_state(  # noqa: PLR0913
         sla_breach_grace_period_minutes: Grace period in minutes before an SLA breach.
         sla_default_timezone: Optional timezone used as default for model cron-based SLA
             dict entries that omit a timezone.
+        event_id: Optional logical attempt identifier used by event-driven triggering.
 
     Returns:
         The dbt manifest dict (re-used by callers to avoid a second store read).
@@ -139,16 +201,25 @@ def update_node_state(  # noqa: PLR0913
             node_name, deployments_dir=deployments_dir
         )
 
+    build_state_params = {
+        "node_name": node_name,
+        "status": status,
+        "node_type": node_type,
+        "sla": meta.get("SLA"),
+        "sla_default_timezone": sla_default_timezone,
+        "sla_breach_grace_period_minutes": sla_breach_grace_period_minutes,
+        "owners": meta.get("owners"),
+        "schedules": schedules,
+        "trigger_delay": trigger_delay,
+    }
+    if event_id is not None:
+        runtime_flow_run_id = flow_run.id
+        build_state_params.update(
+            event_id=event_id,
+            flow_run_id=str(runtime_flow_run_id) if runtime_flow_run_id else None,
+        )
     node_state = state_handler.build_node_state(
-        node_name=node_name,
-        status=status,
-        node_type=node_type,
-        sla=meta.get("SLA"),
-        sla_default_timezone=sla_default_timezone,
-        sla_breach_grace_period_minutes=sla_breach_grace_period_minutes,
-        owners=meta.get("owners"),
-        schedules=schedules,
-        trigger_delay=trigger_delay,
+        **build_state_params,
     )
     state_handler.update(node_state)
     logger.info("Deployment status updated successfully.")
@@ -160,10 +231,12 @@ def trigger_downstream_nodes(
     node_name: str,
     manifest: dict,
     state_path: str,
-    state_store_credentials: dict[str, Any],
+    state_store_credentials: dict[str, Any] | None,
     flow_name: str = "Transform and Catalog",
     tags: list[str] | None = None,
     on_missing_downstream_deployment: Literal["warn", "raise"] = "raise",
+    mode: Literal["freshness", "event"] = "freshness",
+    event_id: str | None = None,
 ) -> None:
     """Trigger downstream dbt nodes whose upstream dependencies are all fresh.
 
@@ -178,6 +251,10 @@ def trigger_downstream_nodes(
         on_missing_downstream_deployment: Behavior when a downstream Prefect
             deployment is missing. ``"warn"`` logs and continues, while
             ``"raise"`` fails the task.
+        mode: ``"freshness"`` preserves legacy SLA-based gating. ``"event"``
+            requires exact logical-attempt success from all cycle-bound parents.
+        event_id: Opaque logical attempt identifier. Required in event mode and
+            propagated to downstream deployments.
     """
     logger = get_run_logger()
     logger.info("Finding runnable nodes ...")
@@ -188,7 +265,9 @@ def trigger_downstream_nodes(
     state, _ = store._read()
 
     handler = ManifestHandler(manifest)
-    nodes_to_run, stale_nodes = handler.get_runnable_nodes(node_name, state)
+    nodes_to_run, stale_nodes = _select_runnable_nodes(
+        handler, node_name, state, mode, event_id
+    )
 
     if stale_nodes:
         logger.warning(
@@ -204,7 +283,7 @@ def trigger_downstream_nodes(
             # Use ``timeout=0`` so flow metadata is returned immediately.
             deployment_name = f"{flow_name}/dbt_{node}"
             try:
-                run_deployment(name=deployment_name, timeout=0, tags=tags)
+                _run_downstream_deployment(deployment_name, tags, mode, event_id)
             except ObjectNotFound:
                 if on_missing_downstream_deployment == "warn":
                     logger.warning(

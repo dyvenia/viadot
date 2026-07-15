@@ -150,6 +150,94 @@ def _split_decorator_options_and_bind(
     return call_kwargs, options, bound_arguments
 
 
+def _validate_downstream_trigger_options(
+    mode: object, event_id: object
+) -> tuple[Literal["freshness", "event"], str | None]:
+    """Validate and narrow downstream trigger options."""
+    if mode not in ("freshness", "event"):
+        msg = f"Unsupported downstream trigger mode: {mode!r}."
+        raise ValueError(msg)
+    if mode == "event":
+        if not isinstance(event_id, str) or not event_id.strip():
+            msg = (
+                "trigger_downstream_nodes_event_id must be a non-empty string in "
+                "event mode."
+            )
+            raise ValueError(msg)
+        return "event", event_id
+    if event_id is not None:
+        msg = (
+            "trigger_downstream_nodes_event_id can only be provided when "
+            "trigger_downstream_nodes_mode='event'."
+        )
+        raise ValueError(msg)
+    return "freshness", None
+
+
+def _build_downstream_trigger_params(
+    *,
+    node_name: object,
+    manifest: dict,
+    options: dict[str, object],
+    state_update_params: dict[str, Any],
+    mode: Literal["freshness", "event"],
+    event_id: str | None,
+) -> dict[str, Any]:
+    """Build task parameters while leaving legacy calls unchanged."""
+    params = {
+        "node_name": node_name,
+        "manifest": manifest,
+        "state_path": options["state_path"],
+        "state_store_credentials": state_update_params["state_store_credentials"],
+        "tags": options["trigger_downstream_nodes_tags"],
+        "on_missing_downstream_deployment": cast(
+            Literal["warn", "raise"],
+            options["on_missing_downstream_deployment"],
+        ),
+    }
+    if mode == "event":
+        params.update(mode="event", event_id=event_id)
+    return params
+
+
+def _build_state_update_params(
+    *,
+    options: dict[str, object],
+    node_name: object,
+    node_type: str,
+) -> dict[str, Any]:
+    """Build state-update task parameters for both trigger modes."""
+    state_store_secret = cast(
+        str | None,
+        options["state_store_credentials_secret"],
+    )
+    artifact_store_secret = cast(
+        str | None,
+        options["artifact_store_credentials_secret"],
+    )
+    params = {
+        "node_name": node_name,
+        "node_type": node_type,
+        "state_path": options["state_path"],
+        "state_store_type": options["state_store_type"],
+        "state_store_credentials": get_credentials(state_store_secret)
+        if state_store_secret
+        else None,
+        "artifact_store_path": options["artifact_store_path"],
+        "artifact_store_type": options["artifact_store_type"],
+        "artifact_store_credentials": get_credentials(artifact_store_secret)
+        if artifact_store_secret
+        else None,
+        "deployments_dir": options["deployments_dir"],
+        "trigger_delay": options["trigger_downstream_nodes_delay"],
+        "sla_default_timezone": options.get("sla_default_timezone", "UTC"),
+        "sla_breach_grace_period_minutes": options["sla_breach_grace_period_minutes"],
+    }
+    if options["trigger_downstream_nodes_mode"] == "event":
+        params["event_id"] = options["trigger_downstream_nodes_event_id"]
+    return params
+
+
 def with_flow_timeout_param(
     default_timeout_seconds: int = DEFAULT_TIMEOUT_SECONDS,
 ) -> Callable[[F], F]:
@@ -251,8 +339,14 @@ def with_state_tracking_and_downstream_triggering(  # noqa: C901
             (default: 30).
         trigger_downstream_nodes (bool): Whether to trigger downstream nodes
             (default: False).
-        trigger_downstream_nodes_delay (int): Delay in seconds before triggering
+        trigger_downstream_nodes_delay (int): Freshness margin in minutes before
+            triggering
             (default: 0).
+        trigger_downstream_nodes_mode (Literal["freshness", "event"]): Readiness
+            mode. Event mode requires an explicit logical attempt ID (default:
+            "freshness").
+        trigger_downstream_nodes_event_id (str | None): Opaque logical attempt ID
+            shared by cycle-bound upstreams and propagated downstream (default: None).
         trigger_downstream_nodes_tags (list[str] | None): Optional tags to apply to
             triggered downstream deployments (default: None).
         on_missing_downstream_deployment (Literal["warn", "raise"]): Behavior
@@ -284,6 +378,12 @@ def with_state_tracking_and_downstream_triggering(  # noqa: C901
         ("sla_breach_grace_period_minutes", 30, int),
         ("trigger_downstream_nodes", False, bool),
         ("trigger_downstream_nodes_delay", 0, int),
+        (
+            "trigger_downstream_nodes_mode",
+            "freshness",
+            Literal["freshness", "event"],
+        ),
+        ("trigger_downstream_nodes_event_id", None, str | None),
         ("trigger_downstream_nodes_tags", None, list | None),
         (
             "on_missing_downstream_deployment",
@@ -299,44 +399,12 @@ def with_state_tracking_and_downstream_triggering(  # noqa: C901
             param_specs=param_specs,
         )
 
-        def _build_state_update_params(
-            options: dict[str, object], node_name: object
-        ) -> dict[str, Any]:
-            state_store_secret = cast(
-                str | None,
-                options["state_store_credentials_secret"],
-            )
-            artifact_store_secret = cast(
-                str | None,
-                options["artifact_store_credentials_secret"],
-            )
-            return {
-                "node_name": node_name,
-                "node_type": node_type,
-                "state_path": options["state_path"],
-                "state_store_type": options["state_store_type"],
-                "state_store_credentials": get_credentials(state_store_secret)
-                if state_store_secret
-                else None,
-                "artifact_store_path": options["artifact_store_path"],
-                "artifact_store_type": options["artifact_store_type"],
-                "artifact_store_credentials": get_credentials(artifact_store_secret)
-                if artifact_store_secret
-                else None,
-                "deployments_dir": options["deployments_dir"],
-                "trigger_delay": options["trigger_downstream_nodes_delay"],
-                "sla_default_timezone": options.get("sla_default_timezone", "UTC"),
-                "sla_breach_grace_period_minutes": options[
-                    "sla_breach_grace_period_minutes"
-                ],
-            }
-
         @wraps(func)
         def wrapped(*args: object, **kwargs: object) -> object:
-            from viadot.orchestration.prefect.tasks.dbt import (
+            from viadot.orchestration.prefect.tasks.dbt import (  # noqa: PLC0415
                 trigger_downstream_nodes as trigger_downstream_nodes_task,
             )
-            from viadot.orchestration.prefect.tasks.dbt import (
+            from viadot.orchestration.prefect.tasks.dbt import (  # noqa: PLC0415
                 update_node_state,
             )
 
@@ -351,6 +419,21 @@ def with_state_tracking_and_downstream_triggering(  # noqa: C901
                 kwargs=kwargs,
             )
             should_trigger_downstreams = options["trigger_downstream_nodes"]
+            trigger_mode, event_id = _validate_downstream_trigger_options(
+                options["trigger_downstream_nodes_mode"],
+                options["trigger_downstream_nodes_event_id"],
+            )
+
+            def _trigger_downstreams(manifest: dict) -> None:
+                trigger_params = _build_downstream_trigger_params(
+                    node_name=node_name,
+                    manifest=manifest,
+                    options=options,
+                    state_update_params=state_update_params,
+                    mode=trigger_mode,
+                    event_id=event_id,
+                )
+                trigger_downstream_nodes_task(**trigger_params)
 
             # Exit early if state tracking is disabled.
             if not options["track_state"]:
@@ -370,7 +453,9 @@ def with_state_tracking_and_downstream_triggering(  # noqa: C901
 
             # Mark node as running before executing the flow.
             state_update_params = _build_state_update_params(
-                options, cast(object, node_name)
+                options=options,
+                node_name=cast(object, node_name),
+                node_type=node_type,
             )
             update_node_state(**state_update_params, status="running")
 
@@ -391,19 +476,7 @@ def with_state_tracking_and_downstream_triggering(  # noqa: C901
                 )
 
                 if should_trigger_downstreams and _STATE_TRACKING_SUCCESS_CONTEXT.get():
-                    trigger_downstream_nodes_task(
-                        node_name=node_name,
-                        manifest=manifest,
-                        state_path=options["state_path"],
-                        state_store_credentials=state_update_params[
-                            "state_store_credentials"
-                        ],
-                        tags=options["trigger_downstream_nodes_tags"],
-                        on_missing_downstream_deployment=cast(
-                            Literal["warn", "raise"],
-                            options["on_missing_downstream_deployment"],
-                        ),
-                    )
+                    _trigger_downstreams(manifest)
                 raise
 
             manifest = update_node_state(
@@ -412,19 +485,7 @@ def with_state_tracking_and_downstream_triggering(  # noqa: C901
             )
             # Flow succeeded; trigger downstreams if requested.
             if should_trigger_downstreams:
-                trigger_downstream_nodes_task(
-                    node_name=node_name,
-                    manifest=manifest,
-                    state_path=options["state_path"],
-                    state_store_credentials=state_update_params[
-                        "state_store_credentials"
-                    ],
-                    tags=options["trigger_downstream_nodes_tags"],
-                    on_missing_downstream_deployment=cast(
-                        Literal["warn", "raise"],
-                        options["on_missing_downstream_deployment"],
-                    ),
-                )
+                _trigger_downstreams(manifest)
 
             return result
 

@@ -7,6 +7,8 @@ from viadot.orchestration.dbt.state_handler import is_fresh
 
 logger = logging.getLogger(__name__)
 
+_REFERENCE_UPSTREAMS_META_KEY = "trigger_downstream_nodes_reference_upstreams"
+
 
 class ManifestHandler:
     """Encapsulates traversal and freshness-gating logic over a dbt manifest.
@@ -136,3 +138,84 @@ class ManifestHandler:
                 runnable.append(node)
         logger.info("Runnable downstream nodes selection finished.")
         return runnable, stale
+
+    def get_runnable_nodes_for_event(
+        self,
+        node_name: str,
+        state: dict,
+        event_id: str,
+    ) -> tuple[list[str], dict[str, list[str]]]:
+        """Return direct downstream nodes ready for one logical event.
+
+        Event-bound upstreams must have immutable success evidence for the exact
+        ``event_id``. Unlike freshness mode, this checks every direct upstream,
+        including ``node_name``. A child can explicitly declare reference upstreams
+        in ``meta.trigger_downstream_nodes_reference_upstreams``; those must have a
+        current successful state and satisfy the existing freshness policy.
+
+        Args:
+            node_name: Source or model node whose completion caused the evaluation.
+            state: Full state dict loaded from the state store.
+            event_id: Opaque logical attempt identifier shared by cycle-bound nodes.
+
+        Returns:
+            A ``(runnable, blocked)`` tuple. ``blocked`` maps each excluded child to
+            direct upstreams that have not satisfied its event barrier.
+
+        Raises:
+            ValueError: If ``event_id`` is blank or reference metadata is invalid.
+        """
+        if not isinstance(event_id, str) or not event_id.strip():
+            msg = "event_id must be a non-empty string in event mode."
+            raise ValueError(msg)
+
+        logger.info("Selecting runnable downstream nodes for event '%s'.", event_id)
+        downstream_nodes = self.get_direct_downstream_nodes(node_name)
+        runnable: list[str] = []
+        blocked: dict[str, list[str]] = {}
+
+        for downstream_node in downstream_nodes:
+            upstreams = self.get_upstreams(downstream_node)
+            references = self.get_node_meta(downstream_node).get(
+                _REFERENCE_UPSTREAMS_META_KEY, []
+            )
+            if references is None:
+                references = []
+            if not isinstance(references, list) or any(
+                not isinstance(reference, str) for reference in references
+            ):
+                msg = (
+                    f"Node '{downstream_node}' metadata "
+                    f"'{_REFERENCE_UPSTREAMS_META_KEY}' must be a list of strings."
+                )
+                raise ValueError(msg)
+
+            unknown_references = set(references) - set(upstreams)
+            if unknown_references:
+                msg = (
+                    f"Node '{downstream_node}' declares non-upstream references: "
+                    f"{sorted(unknown_references)}."
+                )
+                raise ValueError(msg)
+
+            blocked_upstreams = []
+            for upstream in upstreams:
+                upstream_state = state.get(upstream, {})
+                if upstream in references:
+                    is_ready = upstream_state.get("status") == "success" and is_fresh(
+                        upstream, state
+                    )
+                else:
+                    event_successes = upstream_state.get("_event_successes", {})
+                    is_ready = event_id in event_successes
+
+                if not is_ready:
+                    blocked_upstreams.append(upstream)
+
+            if blocked_upstreams:
+                blocked[downstream_node] = blocked_upstreams
+            else:
+                runnable.append(downstream_node)
+
+        logger.info("Event-based runnable downstream node selection finished.")
+        return runnable, blocked
