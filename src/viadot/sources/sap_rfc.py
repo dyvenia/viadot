@@ -1132,9 +1132,11 @@ class SAPRFC(Source):
         elapsed_time = time.monotonic() - start_time
 
         if table.num_rows > 0:
+            size_mb = table.nbytes / (1024 * 1024)
             self.logger.info(
                 f"Data downloaded successfully in {elapsed_time:.2f}s: "
-                f"{table.num_rows} rows, {table.num_columns} columns."
+                f"{table.num_rows} rows, {table.num_columns} columns, "
+                f"{size_mb:.2f} MB."
             )
             self.logger.info(f"Arrow schema: {table.schema}")
         else:
