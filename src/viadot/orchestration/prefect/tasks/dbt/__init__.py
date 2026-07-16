@@ -3,10 +3,11 @@
 import logging
 import os
 from pathlib import Path
-from typing import Any
+from typing import Any, Literal
 
 from prefect import get_run_logger, task
 from prefect.deployments import run_deployment
+from prefect.exceptions import ObjectNotFound
 
 from viadot.orchestration.dbt.artifact_store import ArtifactStore
 from viadot.orchestration.dbt.manifest_handler import ManifestHandler
@@ -89,10 +90,9 @@ def update_node_state(  # noqa: PLR0913
     state_store_credentials: dict[str, Any] | None = None,
     artifact_store_credentials: dict[str, Any] | None = None,
     deployments_dir: str | Path | None = None,
-    effective_source_data_slot: str | None = None,
-    batch_id: int | None = None,
     trigger_delay: int = 0,
     sla_breach_grace_period_minutes: int = 30,
+    sla_default_timezone: str = "UTC",
 ) -> dict:
     """Build and write node state to the state store.
 
@@ -112,10 +112,10 @@ def update_node_state(  # noqa: PLR0913
         deployments_dir: Directory containing Prefect deployment YAML files, used to
             retrieve the schedules in case the node is a source node. If not provided,
             defaults to ``<this_file's_parent>/../../deployments``.
-        effective_source_data_slot: Optional effective source data slot.
-        batch_id: Optional batch identifier.
         trigger_delay: Delay in minutes before triggering downstream nodes.
         sla_breach_grace_period_minutes: Grace period in minutes before an SLA breach.
+        sla_default_timezone: Optional timezone used as default for model cron-based SLA
+            dict entries that omit a timezone.
 
     Returns:
         The dbt manifest dict (re-used by callers to avoid a second store read).
@@ -144,12 +144,11 @@ def update_node_state(  # noqa: PLR0913
         status=status,
         node_type=node_type,
         sla=meta.get("SLA"),
+        sla_default_timezone=sla_default_timezone,
+        sla_breach_grace_period_minutes=sla_breach_grace_period_minutes,
         owners=meta.get("owners"),
-        effective_source_data_slot=effective_source_data_slot,
-        batch_id=batch_id,
         schedules=schedules,
         trigger_delay=trigger_delay,
-        sla_breach_grace_period_minutes=sla_breach_grace_period_minutes,
     )
     state_handler.update(node_state)
     logger.info("Deployment status updated successfully.")
@@ -164,6 +163,7 @@ def trigger_downstream_nodes(
     state_store_credentials: dict[str, Any],
     flow_name: str = "Transform and Catalog",
     tags: list[str] | None = None,
+    on_missing_downstream_deployment: Literal["warn", "raise"] = "raise",
 ) -> None:
     """Trigger downstream dbt nodes whose upstream dependencies are all fresh.
 
@@ -175,6 +175,9 @@ def trigger_downstream_nodes(
         state_store_credentials: AWS credentials for the state store.
         flow_name: The name of the Prefect flow that owns the downstream deployments.
         tags: Optional list of tags to apply to triggered deployments.
+        on_missing_downstream_deployment: Behavior when a downstream Prefect
+            deployment is missing. ``"warn"`` logs and continues, while
+            ``"raise"`` fails the task.
     """
     logger = get_run_logger()
     logger.info("Finding runnable nodes ...")
@@ -199,7 +202,17 @@ def trigger_downstream_nodes(
         logger.info("Triggering downstream nodes ...")
         for node in nodes_to_run:
             # Use ``timeout=0`` so flow metadata is returned immediately.
-            run_deployment(name=f"{flow_name}/dbt_{node}", timeout=0, tags=tags)
+            deployment_name = f"{flow_name}/dbt_{node}"
+            try:
+                run_deployment(name=deployment_name, timeout=0, tags=tags)
+            except ObjectNotFound:
+                if on_missing_downstream_deployment == "warn":
+                    logger.warning(
+                        "Skipping missing downstream deployment '%s'.",
+                        deployment_name,
+                    )
+                    continue
+                raise
         return
     logger.info(
         "No nodes to trigger. All downstream nodes are either up to date or "

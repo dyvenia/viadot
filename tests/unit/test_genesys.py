@@ -482,7 +482,6 @@ def test_to_df(mock_super, mock_handle_if_empty, genesys):
     result_df.drop(
         columns=["_viadot_source", "_viadot_downloaded_at_utc"],
         inplace=True,
-        axis=1,
     )
     expected_df = pd.DataFrame({"A": [1, 2, 2, 3], "B": [3, 4, 4, 5]})
 
@@ -507,7 +506,6 @@ def test_to_df_duplicates(mock_super, mock_handle_if_empty, genesys):
     result_df_no_duplicates.drop(
         columns=["_viadot_source", "_viadot_downloaded_at_utc"],
         inplace=True,
-        axis=1,
     )
 
     assert result_df_no_duplicates.equals(expected_df_no_duplicates)
@@ -532,7 +530,6 @@ def test_to_df_validate(mock_super, mock_handle_if_empty, mock_validate, genesys
     result_df.drop(
         columns=["_viadot_source", "_viadot_downloaded_at_utc"],
         inplace=True,
-        axis=1,
     )
 
     mock_validate.assert_called_once_with(df=result_df, tests=validate_df_dict)
