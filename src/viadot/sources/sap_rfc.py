@@ -1132,7 +1132,7 @@ class SAPRFC(Source):
                 f"Data downloaded successfully in {elapsed_time:.2f}s: "
                 f"{table.num_rows} rows, {table.num_columns} columns."
             )
-            logger.debug(f"Arrow schema: {table.schema}")
+            logger.info(f"Arrow schema: {table.schema}")
         else:
             logger.warning(
                 f"Query finished in {elapsed_time:.2f}s but no rows were returned."
