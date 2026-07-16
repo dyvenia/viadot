@@ -117,34 +117,18 @@ def sap_rfc_to_df(  # noqa: PLR0913
         dynamic_date_format=dynamic_date_format,
         dynamic_date_timezone=dynamic_date_timezone,
     )
-    logger.info(f"Query after dynamic date parsing:\n{query}")
 
-    logger.info("Sending query to SAP RFC connection...")
-    start_time = time.monotonic()
+    sap.query(query)
+    logger.info("Downloading data from SAP to a DataFrame...")
+    logger.debug(f"Running query: \n{sap.sql}.")
 
-    try:
-        sap.query(query)
-        logger.debug(f"Running query: \n{sap.sql}.")
-        arrow_table = sap.to_arrow(tests=tests)
-    except Exception:
-        logger.exception("Error occurred while running SAP query.")
-        raise
-
-    elapsed_time = time.monotonic() - start_time
-    logger.info(f"SAP query finished in {elapsed_time:.2f}s")
+    arrow_table = sap.to_arrow(tests=tests)
 
     if arrow_table.num_rows > 0:
-        logger.info(
-            f"Data has been downloaded successfully: "
-            f"{arrow_table.num_rows} rows, {arrow_table.num_columns} columns."
-        )
-        logger.debug(f"Arrow schema: {arrow_table.schema}")
+        logger.info("Data has been downloaded successfully.")
     else:
-        logger.warning("Task finished but NO data was downloaded.")
+        logger.warn("Task finished but NO data was downloaded.")
 
-    logger.info("Converting Arrow table to pandas DataFrame...")
-    df = arrow_table.to_pandas(types_mapper=None, split_blocks=True, self_destruct=True)
-    mem_mb = df.memory_usage(deep=True).sum() / 1024**2
-    logger.info(f"Final DataFrame shape: {df.shape}, memory usage: {mem_mb:.2f} MB")
-
-    return df
+    return arrow_table.to_pandas(
+        types_mapper=None, split_blocks=True, self_destruct=True
+    )
