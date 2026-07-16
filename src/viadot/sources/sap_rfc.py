@@ -5,6 +5,7 @@ from collections import OrderedDict as OrderedDictType
 from collections.abc import Iterable, Iterator
 import logging
 import re
+import time
 from typing import (
     Any,
     ClassVar,
@@ -496,7 +497,7 @@ class SAPRFC(Source):
         if not limit_match:
             return None
 
-        return int(sql[limit_match.span()[1] :].split()[0])
+        return int(sql[limit_match.span()[1] :].split(maxsplit=1)[0])
 
     @staticmethod
     def _get_offset(sql: str) -> int | None:
@@ -505,7 +506,7 @@ class SAPRFC(Source):
         if not offset_match:
             return None
 
-        return int(sql[offset_match.span()[1] :].split()[0])
+        return int(sql[offset_match.span()[1] :].split(maxsplit=1)[0])
 
     def _parse_dates(
         self,
@@ -547,6 +548,7 @@ class SAPRFC(Source):
             )
             raise TypeError(msg)
 
+        self.logger.info(f"Query after dynamic date parsing:\n{query}")
         return processed_sql_or_list
 
     # Holy crap what a mess. TODO: refactor this so it can be even remotely tested...
@@ -573,6 +575,9 @@ class SAPRFC(Source):
         self.extract_values(sql)
 
         table_name = self._get_table_name(sql)
+        self.logger.info(
+            f"Target table: '{table_name}', columns requested: {len(self.select_columns)}"
+        )
         # this has to be called before checking client_side_filters
         where = self.where
         columns = self.select_columns
@@ -648,6 +653,10 @@ class SAPRFC(Source):
         query_json_filtered = {
             key: query_json[key] for key in query_json if query_json[key] is not None
         }
+        logger.info(
+            f"Query built for '{table_name}': {len(lists_of_columns)} column chunk(s), "
+            f"limit={limit}, offset={offset}"
+        )
         self._query = query_json_filtered
 
     def call(self, func: str, *args, **kwargs) -> dict[str, Any]:
@@ -1095,8 +1104,21 @@ class SAPRFC(Source):
         Returns:
             pa.Table: The results as an Arrow table.
         """
+        start_time = time.monotonic()
         rows = self.to_records()
         table = pa.Table.from_pylist(rows)
+        elapsed_time = time.monotonic() - start_time
+
+        if table.num_rows > 0:
+            logger.info(
+                f"Data downloaded successfully in {elapsed_time:.2f}s: "
+                f"{table.num_rows} rows, {table.num_columns} columns."
+            )
+            logger.debug(f"Arrow schema: {table.schema}")
+        else:
+            logger.warning(
+                f"Query finished in {elapsed_time:.2f}s but no rows were returned."
+            )
         if tests:
             validate(df=table.to_pandas(), tests=tests)
         return table
