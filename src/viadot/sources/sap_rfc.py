@@ -723,6 +723,7 @@ class SAPRFC(Source):
             pd.DataFrame: A DataFrame representing the result of the query provided in
                 `PyRFC.query()`.
         """
+        start_time = time.monotonic()
         params = self._query
         sep = self._query.get("DELIMITER")
         fields_lists = self._query.get("FIELDS")
@@ -754,6 +755,10 @@ class SAPRFC(Source):
                     raise
                 # Check and skip if there is no data returned.
                 if response["DATA"]:
+                    logger.info(
+                        f"Chunk {chunk} returned {len(response['DATA'])} raw record(s) "
+                        f"for {len(fields)} column(s) using separator '{sep}'."
+                    )
                     record_key = "WA"
                     data_raw = np.array(response["DATA"])
                     del response
@@ -774,7 +779,12 @@ class SAPRFC(Source):
                         df_tmp = pd.DataFrame(columns=fields)
                         df_tmp[fields] = records
                         df_tmp = self._adjust_whitespaces(df_tmp)
+                        pre_merge_rows = len(df)
                         df = pd.merge(df, df_tmp, on=self.rfc_unique_id, how="outer")
+                        logger.info(
+                            f"Merged chunk {chunk} on unique id column(s) "
+                            f"{self.rfc_unique_id}: {pre_merge_rows} -> {len(df)} row(s)."
+                        )
                     elif not start:
                         df[fields] = records
                     else:
@@ -799,12 +809,20 @@ class SAPRFC(Source):
                 for col in client_side_filter_cols_aliased
                 if col not in self.select_columns_aliased
             ]
+            if cols_to_drop:
+                logger.debug(
+                    f"Dropping helper column(s) used only for client-side filtering: {cols_to_drop}."
+                )
             df.drop(cols_to_drop, axis=1, inplace=True)
         self.close_connection()
 
         if tests:
+            logger.info("Running data validation tests on the resulting DataFrame.")
             validate(df=df, tests=tests)
+            logger.info("Data validation tests passed.")
 
+        elapsed_time = time.monotonic() - start_time
+        logger.info(f"to_df() finished in {elapsed_time:.2f}s: final shape {df.shape}.")
         return df
 
     def split_wa_records(
