@@ -1,7 +1,6 @@
 """Task for interacting with SAP."""
 
 import contextlib
-import time
 from typing import Any
 
 import pandas as pd
