@@ -811,7 +811,7 @@ class SAPRFC(Source):
             ]
             if cols_to_drop:
                 self.logger.debug(
-                    f"Dropping helper column(s) used only for client-side filtering: {cols_to_drop}."
+                    f"Dropping helper column(s) used only for filtering: {cols_to_drop}."
                 )
             df.drop(cols_to_drop, axis=1, inplace=True)
         self.close_connection()
