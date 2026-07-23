@@ -511,16 +511,15 @@ wheels = [
 
 [[package]]
 name = "azure-core"
-version = "1.30.1"
+version = "1.41.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "requests" },
-    { name = "six" },
     { name = "typing-extensions" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/51/0d/b76383f028aa3570419edf97ab504cb84b839e3cbc8c8b2048f16bbea2d3/azure-core-1.30.1.tar.gz", hash = "sha256:26273a254131f84269e8ea4464f3560c731f29c0c1f69ac99010845f239c1a8f", size = 269862, upload-time = "2024-02-29T21:06:08.243Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/a6/f3/b416179e408990df5db0d516283022dde0f5d0111d98c1a848e41853e81c/azure_core-1.41.0.tar.gz", hash = "sha256:f46ff5dfcd230f25cf1c19e8a34b8dc08a337b2503e268bb600a16c00db8ad5a", size = 381042, upload-time = "2026-05-07T23:30:54.302Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/d7/70/180df3b43ebc7a1ec957d9e5c2c76e6c54398ec61a67dff88d3e0131be80/azure_core-1.30.1-py3-none-any.whl", hash = "sha256:7c5ee397e48f281ec4dd773d67a0a47a0962ed6fa833036057f9ea067f688e74", size = 193383, upload-time = "2024-02-29T21:06:11.223Z" },
+    { url = "https://files.pythonhosted.org/packages/5b/db/325c6d7312d2200251c52323878281045aaffcb5586612296484e4280eaa/azure_core-1.41.0-py3-none-any.whl", hash = "sha256:522b4011e8180b1a3dcd2024396a4e7fe9ac37fb8597db47163d230b5efe892d", size = 220920, upload-time = "2026-05-07T23:30:56.357Z" },
 ]
 
 [[package]]
@@ -7900,7 +7899,7 @@ requires-dist = [
     { name = "aiolimiter", specifier = ">=1.1.0" },
     { name = "awswrangler", specifier = ">=3.12.1" },
     { name = "awswrangler", marker = "extra == 'aws'", specifier = ">=3.12.1" },
-    { name = "azure-core", marker = "extra == 'azure'", specifier = "==1.30.1" },
+    { name = "azure-core", marker = "extra == 'azure'", specifier = "==1.41.0" },
     { name = "azure-identity", marker = "extra == 'azure'", specifier = ">=1.16.0" },
     { name = "azure-storage-blob", marker = "extra == 'azure'", specifier = "==12.20.0" },
     { name = "boto3", marker = "extra == 'aws'", specifier = ">=1.36.26,<2.0.0" },
