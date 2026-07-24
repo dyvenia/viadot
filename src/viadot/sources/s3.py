@@ -86,6 +86,7 @@ class S3(Source):
             credentials
             or get_source_credentials(config_key)
             or self._get_env_credentials()
+            or {}
         )
         validated_creds = dict(S3Credentials(**raw_creds))  # validate the credentials
 

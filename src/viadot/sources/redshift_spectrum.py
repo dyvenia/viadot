@@ -95,7 +95,7 @@ class RedshiftSpectrum(Source):
             redshift.get_schemas()
         ```
         """
-        raw_creds = credentials or get_source_credentials(config_key)
+        raw_creds = credentials or get_source_credentials(config_key) or {}
         validated_creds = dict(RedshiftSpectrumCredentials(**raw_creds))
 
         super().__init__(*args, credentials=validated_creds, **kwargs)
