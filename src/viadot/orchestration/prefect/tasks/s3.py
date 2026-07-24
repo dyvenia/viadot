@@ -7,7 +7,6 @@ from prefect import task
 from prefect.logging import get_run_logger
 
 from viadot.config import get_source_credentials
-from viadot.orchestration.prefect.exceptions import MissingSourceCredentialsError
 from viadot.orchestration.prefect.utils import get_credentials
 
 
@@ -56,9 +55,6 @@ def s3_upload_file(
         test_flow()
         ```
     """
-    if not credentials and not (credentials_secret or config_key):
-        raise MissingSourceCredentialsError
-
     if not credentials:
         credentials = get_source_credentials(config_key) or get_credentials(
             credentials_secret
@@ -114,9 +110,6 @@ def s3_download_file(
         test_flow()
         ```
     """
-    if not credentials and not (credentials_secret or config_key):
-        raise MissingSourceCredentialsError
-
     if not credentials:
         credentials = get_source_credentials(config_key) or get_credentials(
             credentials_secret
