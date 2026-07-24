@@ -82,15 +82,13 @@ class S3(Source):
         config_key (str, optional): The key in the viadot config holding relevant
             credentials. Defaults to None.
         """
-        raw_creds = (
+        creds = (
             credentials
             or get_source_credentials(config_key)
             or self._get_env_credentials()
             or {}
         )
-        validated_creds = dict(S3Credentials(**raw_creds))  # validate the credentials
-
-        super().__init__(*args, credentials=validated_creds, **kwargs)
+        super().__init__(*args, credentials=creds, **kwargs)
 
         if not self.credentials:
             self.logger.debug(
