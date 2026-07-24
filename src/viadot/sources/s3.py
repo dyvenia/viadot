@@ -57,11 +57,11 @@ class S3Credentials(BaseModel):
 
         profile_credential = profile_name and region_name
         direct_credential = aws_access_key_id and aws_secret_access_key and region_name
-        machine_credential = region_name
 
-        if not (profile_credential or direct_credential or machine_credential):
+        if not (profile_credential or direct_credential):
             msg = "Either `profile_name` and `region_name`, or `aws_access_key_id`, "
             msg += "`aws_secret_access_key`, and `region_name`, or `region_name` only must be specified."
+            # TODO: implement machine credential check instead of raising here already
             raise CredentialError(msg)
         return credentials
 
