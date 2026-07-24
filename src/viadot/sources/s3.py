@@ -30,19 +30,25 @@ from viadot.sources.base import Source
 
 class S3Credentials(BaseModel):
     region_name: str  # The name of the AWS region.
-    aws_access_key_id: str  # The AWS access key ID.
-    aws_secret_access_key: str  # The AWS secret access key.
+    # AWS access keys are not required if auth is configured at the machine level
+    # (eg. when using IRSA).
+    aws_access_key_id: str | None = None  # The AWS access key ID.
+    aws_secret_access_key: str | None = None  # The AWS secret access key.
     profile_name: str | None = None  # The name of the IAM profile to use.
+    # Used for custom S3 endpoints, e.g. when using MinIO or other S3-compatible
+    # services.
+    endpoint_url: str | None = None  # The endpoint of the S3 service.
 
     @model_validator(mode="before")
     @classmethod
-    def is_configured(cls, credentials: dict) -> dict:
+    def is_configured(cls, credentials: dict[str, Any]) -> dict[str, Any]:
         """Validate credentials.
 
-        Ensure that at least one of the
-        following is provided:
+        Ensure that at least one of the following is provided:
         - profile_name and region_name
         - aws_access_key_id, aws_secret_access_key, and region_name
+        - region_name only (for cases where credentials are configured at the machine
+          level, e.g., using IRSA)
         """
         profile_name = credentials.get("profile_name")
         region_name = credentials.get("region_name")
@@ -51,10 +57,11 @@ class S3Credentials(BaseModel):
 
         profile_credential = profile_name and region_name
         direct_credential = aws_access_key_id and aws_secret_access_key and region_name
+        machine_credential = region_name
 
-        if not (profile_credential or direct_credential):
+        if not (profile_credential or direct_credential or machine_credential):
             msg = "Either `profile_name` and `region_name`, or `aws_access_key_id`, "
-            msg += "`aws_secret_access_key`, and `region_name` must be specified."
+            msg += "`aws_secret_access_key`, and `region_name`, or `region_name` only must be specified."
             raise CredentialError(msg)
         return credentials
 
@@ -94,6 +101,7 @@ class S3(Source):
             region_name=self.credentials.get("region_name"),
             key=self.credentials.get("aws_access_key_id"),
             secret=self.credentials.get("aws_secret_access_key"),
+            endpoint_url=self.credentials.get("endpoint_url"),
         )
 
         self._session = None
